@@ -1,7 +1,7 @@
 # 121 Unified Value Adapter For All Field Types Plan
 
 > Plan Status: completed
-> Last Reviewed: 2026-04-20 (3rd review — consensus reached)
+> Last Reviewed: 2026-04-21 (fresh closure audit after follow-up cleanup)
 > Review Consensus: 3 review rounds completed. Round 1: 6 issues (all fixed). Round 2: 4 issues (all fixed). Round 3: 3 minor notes (all addressed). No remaining critical/major issues.
 > Source: `docs/architecture/value-adaptation-and-detail-field.md`, `docs/experiments/flux-pragmatic-adoptable-runtime-upgrades.md` §3.4, `docs/experiments/variant-object-field-and-flow-designer-on-next-gen-kernel.md` §2-4, `docs/experiments/algebraic-kernel-design.md` §8
 > Related: `docs/plans/70-composite-value-fields-and-validation-integration-plan.md` (completed predecessor)
@@ -243,12 +243,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 统一 `ValueAdapter` 协议、简单字段迁移、`object-field` / `variant-field` 接入、以及 `detail-field` / `detail-view` 内部统一都已 landed，并经 focused tests 与 workspace verification 复核；无剩余 plan-owned work。
+Status Note: 统一 `ValueAdapter` 协议、简单字段迁移、`object-field` / `variant-field` 接入、以及 `detail-field` / `detail-view` 内部统一都已 landed。2026-04-21 对后续 helper cleanup 的 fresh audit 未发现 reopened gap，workspace verification 也保持全绿；无剩余 plan-owned work。
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: independent `general` subagent closure audit (`task_id: ses_254973942ffeFkqWx9maZuGkkr`)
-- Evidence: fresh-session audit rechecked live code, docs, and tests after final fixes; confirmed `packages/flux-core/src/value-adapter.ts`, `packages/flux-renderers-form/src/field-utils.tsx`, `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx`, `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx`, `packages/flux-renderers-form-advanced/src/detail-view/value-adaptation-helper.ts`, focused tests, architecture doc, and daily log all satisfy the plan scope. Final verification passed: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
+- Evidence: fresh-session audit rechecked live code, docs, and tests after final fixes; confirmed `packages/flux-core/src/value-adapter.ts`, `packages/flux-renderers-form/src/field-utils.tsx`, `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx`, `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx`, `packages/flux-renderers-form-advanced/src/detail-view/value-adaptation-helper.ts`, focused tests, architecture doc, and daily log all satisfy the plan scope. A fresh 2026-04-21 audit after detail-helper cleanup again found no reopened plan-owned gap. Final verification passed: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
 
 Follow-up:
 

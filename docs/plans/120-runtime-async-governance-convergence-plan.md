@@ -1,7 +1,7 @@
 # 120 Runtime Async Governance Convergence Plan
 
 > Plan Status: in progress
-> Last Reviewed: 2026-04-20
+> Last Reviewed: 2026-04-21
 > Source: `docs/architecture/api-data-source.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/form-validation.md`, `docs/architecture/debugger-runtime.md`, `docs/architecture/action-interaction-state.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/experiments/flux-pragmatic-adoptable-runtime-upgrades.md`, `docs/experiments/next-gen-runtime-vs-current-flux-comparison-v5.md`
 > Related: `docs/plans/110-api-request-and-cache-hygiene-plan.md`, `docs/plans/118-flux-internal-kernel-session-refactor-plan.md`, `docs/plans/119-action-precompile-and-args-unification-plan.md`, `docs/plans/09-form-validation-lowcode-integrated-refactor-roadmap.md`
 
@@ -244,10 +244,10 @@ Exit Criteria:
 - [x] `statusPath` / owner-facing interaction state 没有被新的 internal protocol 污染成 breaking author-visible contract。
 - [x] focused verification 已完成。
 - [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -259,12 +259,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Plan-owned async-governance convergence work is landed and closure-audited. Full workspace verification is still blocked by unrelated repo failures outside this plan's touch set, so the verification checklist remains partially unchecked while the plan scope itself is complete.
+Status Note: Plan-owned async-governance convergence work remains landed and closure-audited. A fresh 2026-04-21 workspace verification rerun also completed green, so the previous external-blocker note is no longer needed.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: general subagent `ses_254b9e11cffeUdf6oSBECb4Igb`
-- Evidence: Live audit confirmed shared async governance is landed across runtime-owned async owners (`data-source`, `reaction`, async validation), additive `flux-core` inspection/types, `flux-react` host runtime callback forwarding, and `nop-debugger` async snapshot forwarding. The audit originally found a plan-owned validation cleanup gap on form refresh/dispose; that gap was fixed in `packages/flux-runtime/src/form-runtime-owner.ts` with focused regression coverage in `packages/flux-runtime/src/__tests__/runtime-validation.test.ts`. Remaining workspace failures from `pnpm typecheck` / `pnpm build` (`packages/flux-core/src/value-adapter.ts` fanout into downstream packages), `pnpm lint` (`packages/flux-renderers-form/src/field-utils.tsx`), and `pnpm test` (`packages/flux-renderers-form` failing tests) are outside this plan's changed surfaces.
+- Evidence: Live audit confirmed shared async governance is landed across runtime-owned async owners (`data-source`, `reaction`, async validation), additive `flux-core` inspection/types, `flux-react` host runtime callback forwarding, and `nop-debugger` async snapshot forwarding. The audit originally found a plan-owned validation cleanup gap on form refresh/dispose; that gap was fixed in `packages/flux-runtime/src/form-runtime-owner.ts` with focused regression coverage in `packages/flux-runtime/src/__tests__/runtime-validation.test.ts`. Fresh workspace verification rerun on 2026-04-21 also passed: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
 
 Follow-up:
 

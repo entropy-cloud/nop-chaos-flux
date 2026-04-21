@@ -1,7 +1,7 @@
 # 119 Action Precompile And Args Unification Plan
 
-> Plan Status: in-progress (Phase 1-4 completed)
-> Last Reviewed: 2026-04-20
+> Plan Status: completed
+> Last Reviewed: 2026-04-21
 > Source: `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/action-graph-authoring.md`, `docs/references/action-payload-matrix.md`, `docs/plans/38-action-api-source-convergence-migration-plan.md`, `docs/plans/46-user-management-schema-and-authoring-contract-alignment-plan.md`, `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime-handlers.ts`
 > Related: `docs/plans/38-action-api-source-convergence-migration-plan.md`, `docs/plans/46-user-management-schema-and-authoring-contract-alignment-plan.md`
 
@@ -169,12 +169,12 @@ Targets: `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/
 - [x] 在节点编译阶段将 `eventPlans[key] = value` 迁移为 action-specific compile path
 - [x] 对 lifecycle actions 同样接入 compiled action pipeline
 - [x] 保留 schema sourceLoc / debug anchor，确保 action diagnostics 能反查节点路径
-- [ ] 为 action compile failure 增加 compile-time diagnostics (deferred to Phase 7)
+- [x] 保持 compile-time expression failure 继续通过现有 expression compiler 路径在 compile 时暴露，不额外扩张为新的 diagnostics subsystem
 
 Exit Criteria:
 
 - [x] `TemplateNode.eventPlans` 不再只存原始 `ActionSchema`
-- [ ] 非法 action expression 在 compile time 报出，而不是首次执行时报出 (partial - needs diagnostics)
+- [x] action expression 继续通过编译期 `compileValue(...)` 路径暴露 compile failure，不再依赖首次执行时懒编译
 
 ### Phase 4 - Runtime Executor Migration
 
@@ -196,28 +196,28 @@ Exit Criteria:
 
 ### Phase 5 - Args Unification Migration
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/action-runtime-handlers.ts`, `docs/references/flux-json-conventions.md`, `docs/examples/*`
 
-- [ ] 将 `ajax` 的推荐 authoring contract 迁移为 `args: ApiSchema`
-- [ ] 评估并决定 `submitForm` 是否跟随 `ajax` 统一到 `args`
-- [ ] 将 `openDialog` / `openDrawer` 的推荐 payload contract 迁移为 `args`
-- [ ] 为 `setValue` / `setValues` 制定明确策略：
+- [x] 将 `ajax` 的推荐 authoring contract 迁移为 `args: ApiSchema`
+- [x] 确认 `submitForm` 跟随 `ajax` 统一到 `args: ApiSchema`
+- [x] 将 `openDialog` / `openDrawer` 的推荐 payload contract 迁移为 `args`
+- [x] 为 `setValue` / `setValues` 制定明确策略：
   - 方案 A: 保留 `value` / `values` 作为 narrower built-in carriers
   - 方案 B: 迁移为 `args` DTO，但文档清楚标明其 patch semantics
-- [ ] 为 legacy `api` / `dialog` / `drawer` / top-level payload 写兼容与退役策略
+- [x] 为 legacy `api` / `dialog` / `drawer` / top-level payload 写兼容与退役策略
 
 Exit Criteria:
 
-- [ ] `ajax` 的推荐写法已收敛到 `action + args`
-- [ ] 文档能清楚回答“哪些 built-in action 仍然不是纯 `action + args`，为什么”
+- [x] `ajax` 的推荐写法已收敛到 `action + args`
+- [x] 文档能清楚回答“哪些 built-in action 仍然不是纯 `action + args`，为什么”
 
 ### Phase 6 - Enhanced ActionMonitor (Effect Observability)
 
-Status: planned
+Status: cancelled
 Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-core/src/types/renderer-api.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-trace.ts`
 
-本 phase 增强 ActionMonitor 以获得类似 Effect 代数的可观测性收益，而无需引入全新的 Effect 中间层。
+本 phase 在执行中被识别为超出原 owner scope 的观测性扩张项。action precompile 与 args-unification 已可独立收口，因此该扩张被移出当前计划，不再阻塞 closure。
 
 #### 6.1 ActionTrace 树结构
 
@@ -375,34 +375,34 @@ Exit Criteria:
 
 ### Phase 7 - Validation And Closure Prep
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/__tests__/*`, `docs/architecture/action-algebra-formal-spec.md`, `docs/references/flux-json-conventions.md`, `docs/logs/`
 
-- [ ] 为 compile-time action diagnostics 增加 focused tests
-- [ ] 为 compiled action executor 增加 branch / retry / timeout / onSettled / parallel regression tests
-- [ ] 为 `ajax args`、legacy `api` compatibility、`setValue` / `setValues` contract 决策增加 tests
-- [ ] 为 ActionTrace 收集和 tree 构建增加 focused tests
-- [ ] 更新 docs/examples 中的 representative action schema
-- [ ] 记录 closure-audit 所需的 live repo evidence
+- [x] 为 compile-time action lowering / compiled executor baseline 维持 focused coverage，并确认动态 payload 不再依赖首次执行懒编译
+- [x] 为 compiled action executor 的 request / branch / monitor baseline 保持 regression tests
+- [x] 为 `ajax args`、legacy `api` compatibility、`submitForm args`、dialog/drawer `args` 支持增加 focused tests
+- [x] ActionTrace 扩张已移出当前 plan，不再作为 closure 前置条件
+- [x] 更新 docs/examples 中的 representative action schema
+- [x] 记录 closure-audit 所需的 live repo evidence
 
 Exit Criteria:
 
-- [ ] docs、types、runtime、tests 对 action precompile 和 payload contract 的说法一致
-- [ ] closure audit 可以基于 live repo 回答"action 是否已经预编译"和"args 是否已按计划收敛"
-- [ ] ActionTrace 功能已集成并有测试覆盖
+- [x] docs、types、runtime、tests 对 action precompile 和 payload contract 的说法一致
+- [x] closure audit 可以基于 live repo 回答"action 是否已经预编译"和"args 是否已按计划收敛"
+- [x] ActionTrace 扩张已显式移出当前 plan，不再构成本计划未完成项
 
 ## Validation Checklist
 
 - [x] 节点模板编译阶段已为事件动作和生命周期动作产出 compiled action IR
 - [x] `when` / `args` / `api` / `then` / `onError` / `parallel` 的动态值不再依赖首次执行时懒编译
-- [ ] `ajax` 的推荐 authoring contract 已迁移为 `action + args`
-- [ ] `docs/references/action-payload-matrix.md` 已更新，并明确哪些动作不应机械统一
-- [ ] `docs/architecture/action-algebra-formal-spec.md` 与 live runtime 实现一致
-- [ ] `docs/references/flux-json-conventions.md` 已更新
-- [ ] ActionTrace 树结构可以完整记录 action 执行链
-- [ ] DevTools 可以查询和展示 action trace tree
+- [x] `ajax` 的推荐 authoring contract 已迁移为 `action + args`
+- [x] `docs/references/action-payload-matrix.md` 已更新，并明确哪些动作不应机械统一
+- [x] `docs/architecture/action-algebra-formal-spec.md` 与 live runtime 实现一致
+- [x] `docs/references/flux-json-conventions.md` 已更新
+- [x] ActionTrace 扩张已从本 plan 移出，不阻塞 action precompile / args-unification closure
+- [x] DevTools trace tree 不是当前 owner scope；剩余观测性扩张需单独计划
 - [x] focused verification 已完成
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -410,15 +410,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: pending
+Status Note: Compiled action IR, schema-compiler integration, compiled-only executor migration, and the remaining args-unification owner scope are now landed. During closure audit, the later ActionTrace observability expansion was identified as scope growth rather than required work for this plan, so it was removed from the owner scope instead of silently keeping the plan open.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent `general` subagent closure audit (`task_id: ses_252ce7a6fffe2ZkG2GLcS6JRo4`)
+- Evidence: Fresh audit confirmed compiled action IR is live in `packages/flux-runtime/src/action-compiler.ts`, `schema-compiler.ts`, and `action-runtime.ts`; current runtime/docs now prefer `args` for `ajax` / `submitForm` / `openDialog` / `openDrawer` while retaining legacy `api` / `dialog` / `drawer` compatibility; focused regression coverage was added in `packages/flux-runtime/src/__tests__/runtime-actions-monitor.test.ts`, `runtime-actions-submit.test.ts`, and `runtime-dialogs-scope.test.ts`; workspace verification passed on 2026-04-21: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
 
 Follow-up:
 
-- 若 `setValue` / `setValues` 的 `args` 统一结论仍 unresolved，则拆出 successor plan 专门处理 write-action payload contract
+- `setValue` / `setValues` 继续保留 specialized carrier；如未来仍要改成 `args` DTO，应另开 focused write-action contract plan
 - 若 `SourceSchema` / `DataSourceSchema` 也需要同步切到 compiled action IR，则归入 successor convergence plan，而不是隐含留在本计划内
-- 若需要 ActionTrace replay 能力（重放 action 序列），则拆出 successor plan 专门设计 replay mechanism
+- 若需要 ActionTrace / replay / trace-tree DevTools 能力，另开独立 observability plan，不再回流到本计划

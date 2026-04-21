@@ -7,14 +7,13 @@
 1. payload
 2. targeting
 3. control-flow / execution control
-4. compatibility residue
+4. specialized built-in payloads
 
 它是 `ActionSchema` 收敛、action precompile、`args` 统一化工作的参考矩阵，不单独拥有执行语义规范。执行语义仍以 `docs/architecture/action-algebra-formal-spec.md` 为准。
 
 ## Source Of Truth
 
 - `packages/flux-core/src/types/actions.ts`
-- `packages/flux-runtime/src/action-runtime.ts`
 - `packages/flux-runtime/src/action-runtime-core.ts`
 - `packages/flux-runtime/src/action-runtime-handlers.ts`
 
@@ -23,9 +22,6 @@
 ### Payload Fields
 
 - `args`
-- `api`
-- `dialog`
-- `drawer`
 - `value`
 - `values`
 
@@ -55,20 +51,20 @@
 
 ## Built-In Action Matrix
 
-| Action | Current payload field(s) | Current targeting field(s) | `args`-ready? | Notes |
+| Action | Current payload field(s) | Current targeting field(s) | `args` usage | Notes |
 | --- | --- | --- | --- | --- |
-| `showToast` | `args` or top-level payload fallback | none | yes | 当前最接近标准 `action + args` |
-| `navigate` | `args` or top-level payload fallback | none | yes | 当前要求 `args.url` 或 `args.back` |
-| `ajax` | `api` | none | migratable | 推荐迁移为 `args: ApiSchema` |
-| `submitForm` | `api` | implicit `ctx.form` | migratable | 可评估迁移到 `args: ApiSchema` 或 submit DTO |
-| `openDialog` / `dialog` | `dialog` | implicit `ctx.surfaceRuntime` | migratable | 推荐迁移为 `args: DialogOpenArgs` |
-| `openDrawer` / `drawer` | `drawer` | none | migratable | 推荐迁移为 `args: DrawerOpenArgs` |
-| `closeDialog` | none | `dialogId` optional | low-value | 主要是无 payload + optional targeting |
-| `closeDrawer` | none | `dialogId` optional, else current context | low-value | 当前实现实际也复用了 `dialogId` carrier |
-| `refreshTable` | none | implicit `ctx.page` | low-value | 更像 semantic entry，不需要 `args` |
-| `refreshSource` | none | `targetId` / `componentId` / `componentPath` | partial | 可改成 `args.targetId`，但 targeting family 需先决策 |
-| `setValue` | `value` | `componentPath` / `componentId` / `formId` | hard | 需要新的 DTO，如 `{ path, value }` |
-| `setValues` | `values` | `formId` optional | hard | `values` 是 patch map，不等同普通 payload DTO |
+| `showToast` | `args` or top-level payload fallback | none | canonical | 推荐写 `args` |
+| `navigate` | `args` or top-level payload fallback | none | canonical | 推荐写 `args` |
+| `ajax` | `args` | none | canonical | `args` 必须是 `ApiSchema` |
+| `submitForm` | `args` | implicit `ctx.form` | canonical | `args` 必须是 `ApiSchema` |
+| `openDialog` | `args` | implicit `ctx.surfaceRuntime` | canonical | `args` 承载 dialog surface payload |
+| `openDrawer` | `args` | none | canonical | `args` 承载 drawer surface payload |
+| `closeDialog` | none | `dialogId` optional | no payload | 主要是无 payload + optional targeting |
+| `closeDrawer` | none | `dialogId` optional, else current context | no payload | 当前实现实际也复用了 `dialogId` carrier |
+| `refreshTable` | none | implicit `ctx.page` | no payload | 更像 semantic entry，不需要 `args` |
+| `refreshSource` | none | `targetId` / `componentId` / `componentPath` | no payload | targeting 仍独立存在 |
+| `setValue` | `value` | `componentPath` / `componentId` / `formId` | specialized | 保留单值 carrier |
+| `setValues` | `values` | `formId` optional | specialized | 保留 patch map carrier |
 
 ## Non-Built-In Matrix
 
@@ -85,9 +81,9 @@
 
 1. schema compiler / dispatch entry 先把 raw action lowering 成 `CompiledActionProgram`
 2. 若存在 `args`，则在 compiled action node 上直接求值 `payload.args`
-3. 否则保留 legacy top-level payload fallback，并在 lowering 阶段把提取后的 payload map 编译进 `payload.args`
+3. 对内置 action，执行器只读取该求值结果或专用 `value` / `values` carrier
 
-这意味着当前仍兼容：
+非 built-in namespaced action 之外，公开 authoring 仍建议显式写 `args`。例如：
 
 ```json
 {
@@ -97,7 +93,7 @@
 }
 ```
 
-但收敛方向应优先改成：
+推荐写法：
 
 ```json
 {
@@ -109,15 +105,13 @@
 }
 ```
 
-### `api` Is Not Yet `args`
+### Request And Surface Payloads Use `args`
 
-当前 `ajax` / `submitForm` 仍保留独立 `api` carrier，但它们已经在 lowering 阶段进入 compiled action payload：
+当前 `ajax` / `submitForm` / `openDialog` / `openDrawer` 都只通过 `args` 读取 payload：
 
-1. raw authoring surface 仍可写 `action.api`
-2. action compiler 将其 lowering 到 `CompiledActionNode.payload.api`
-3. executor 只从 compiled payload 读取并求值，不再在执行期首次编译 `api`
-
-因此 live repo 里，`ajax` 还不是严格的 `action + args`，但已经不再依赖运行时懒编译。
+1. `ajax` / `submitForm` 使用 `args: ApiSchema`
+2. `openDialog` / `openDrawer` 使用 `args` 承载 surface payload
+3. `action: 'dialog'` / `action: 'drawer'` 不是正式 contract
 
 ### `setValue` / `setValues` Are Structurally Different
 
@@ -147,10 +141,7 @@
 
 | Field | Scope | Contract Status |
 |-------|-------|-----------------|
-| `args` | 通用 payload map | **canonical** — 推荐的 author-visible payload 载体 |
-| `api` | ApiSchema carrier for `ajax`/`submitForm` | **migratable** — 推荐迁移到 `args: ApiSchema` |
-| `dialog` | DialogOpenArgs carrier | **migratable** — 推荐迁移到 `args: DialogOpenArgs` |
-| `drawer` | DrawerOpenArgs carrier | **migratable** — 推荐迁移到 `args: DrawerOpenArgs` |
+| `args` | 通用 payload map | **canonical** — 正式 author-visible payload 载体 |
 | `value` | 单值 carrier for `setValue` | **specialized** — 保留，因为语义特殊 |
 | `values` | patch map carrier for `setValues` | **specialized** — 保留，因为语义特殊 |
 
@@ -184,46 +175,41 @@
 
 ## Convergence Decisions
 
-### `ajax` → `args: ApiSchema` (DECIDED: YES)
+### `ajax` → `args: ApiSchema` (LANDED)
 
 **Decision**: `ajax` 应收敛为 `action: 'ajax' + args: ApiSchema`
 
 **Rationale**:
-- `api` 是 payload，不是 targeting 或 control-flow
-- `ApiSchema` 结构已经定义清楚，可直接作为 `args` 值
-- 迁移后 `ajax` 完全符合 `action + args` 模式
+- 请求配置属于 payload
+- `ApiSchema` 可直接作为 `args` 值
+- `ajax` 完全符合 `action + args` 模式
 
-**Migration Path**:
-1. 当前写法 (legacy): `{ action: 'ajax', api: { url, method, data } }`
-2. 推荐写法 (target): `{ action: 'ajax', args: { url, method, data } }`
-3. Runtime 兼容: 若 `args` 存在且为 ApiSchema，优先使用 `args`；否则回退到 `api`
+**Authoring**:
+1. `{ action: 'ajax', args: { url, method, data } }`
 
-### `submitForm` → `args: ApiSchema` (DECIDED: YES)
+### `submitForm` → `args: ApiSchema` (LANDED)
 
 **Decision**: `submitForm` 跟随 `ajax` 统一到 `args: ApiSchema`
 
 **Rationale**:
-- `submitForm` 的 `api` 用途与 `ajax` 相同
+- 请求配置与 `ajax` 语义一致
 - 表单数据来自 `ctx.form`，不需要额外 wrapper
 - 统一后减少 author 心智负担
 
-**Migration Path**:
-1. 当前写法 (legacy): `{ action: 'submitForm', api: { url, method } }`
-2. 推荐写法 (target): `{ action: 'submitForm', args: { url, method } }`
-3. Runtime 兼容: 同 `ajax`
+**Authoring**:
+1. `{ action: 'submitForm', args: { url, method } }`
 
-### `openDialog`/`openDrawer` → `args` (DECIDED: YES)
+### `openDialog`/`openDrawer` → `args` (LANDED)
 
-**Decision**: `openDialog`/`openDrawer` 推荐迁移到 `args`
+**Decision**: `openDialog`/`openDrawer` 使用 `args`
 
 **Rationale**:
-- `dialog`/`drawer` 是 payload，不是 targeting
+- surface 打开配置属于 payload
 - 迁移后符合 `action + args` 模式
 
-**Migration Path**:
-1. 当前写法 (legacy): `{ action: 'openDialog', dialog: { ... } }`
-2. 推荐写法 (target): `{ action: 'openDialog', args: { ... } }`
-3. Runtime 兼容: 若 `args` 存在，优先使用 `args`；否则回退到 `dialog`/`drawer`
+**Authoring**:
+1. `{ action: 'openDialog', args: { ... } }`
+2. `{ action: 'openDrawer', args: { ... } }`
 
 ### `setValue`/`setValues` (DECIDED: KEEP SPECIALIZED)
 
@@ -237,14 +223,13 @@
 
 **Status**: 保留 `value`/`values` 作为 narrower built-in carriers
 
-### `closeDialog`/`closeDrawer`/`refreshTable` (DECIDED: LOW-PRIORITY)
+### `closeDialog`/`closeDrawer`/`refreshTable`
 
-**Decision**: 这些 action 保持现状，不优先迁移
+**Decision**: 这些 action 保持现状
 
 **Rationale**:
 - `closeDialog`/`closeDrawer` 几乎无 payload，主要是 targeting（`dialogId`）
 - `refreshTable` 无 payload，只有 implicit targeting（`ctx.page`）
-- 迁移收益极低，不值得增加 migration noise
 
 ## Immediate Conclusions
 
@@ -253,12 +238,12 @@
    - `navigate`
    - `component:<method>`
    - `namespace:method`
-2. 已决定迁移到 `args` 的 built-in action：
+2. 已收敛到 `args` 正式 contract 的 built-in action：
    - `ajax` → `args: ApiSchema`
    - `submitForm` → `args: ApiSchema`
    - `openDialog` → `args: DialogOpenArgs`
    - `openDrawer` → `args: DrawerOpenArgs`
-3. 决定不迁移的 action：
+3. 保留专用 payload carrier 的 action：
    - `setValue` — 保留 `value`
    - `setValues` — 保留 `values`
    - `closeDialog` — 保留 `dialogId` targeting

@@ -1,7 +1,7 @@
 # 118 Flux Internal Kernel Session Refactor Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-04-20
+> Plan Status: cancelled
+> Last Reviewed: 2026-04-21
 > Source: `docs/experiments/requirements.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/flux-dsl-vm-extensibility.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/renderer-runtime.md`
 > Related: `docs/experiments/flux-pragmatic-adoptable-runtime-upgrades.md`, `docs/experiments/next-gen-low-code-runtime-kernel-design.md`
 
@@ -61,7 +61,7 @@
 
 ### Phase 1 - Mount-Local State Inventory And Session Ownership
 
-Status: planned
+Status: cancelled
 Targets: `packages/flux-runtime/src/runtime-factory.ts`, `packages/flux-runtime/src/page-runtime.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/surface-runtime.ts`, `packages/flux-runtime/src/source-registry.ts`, `packages/flux-runtime/src/reaction-runtime.ts`, `packages/flux-react/src/index.tsx`
 
 - [ ] 审计当前 `RendererRuntime` 挂载期会创建、更新、销毁的 live state 与 sidecar，并写成 repo-observable inventory。
@@ -77,7 +77,7 @@ Exit Criteria:
 
 ### Phase 2 - Internal Kernel-Like Substrate Extraction
 
-Status: planned
+Status: cancelled
 Targets: `packages/flux-runtime/src/runtime-factory.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-runtime/src/*`
 
 - [ ] 抽出 internal kernel-like substrate，只承载近似只读、可复用的 shared runtime substrate。
@@ -93,7 +93,7 @@ Exit Criteria:
 
 ### Phase 3 - RendererRuntime Facade Thinning
 
-Status: planned
+Status: cancelled
 Targets: `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-runtime/src/runtime-factory.ts`, `packages/flux-react/src/index.tsx`
 
 - [ ] 保留 `RendererRuntime` 公开 facade，不对外暴露 `kernel` / `session`。
@@ -109,7 +109,7 @@ Exit Criteria:
 
 ### Phase 4 - Inspector, Teardown, And Embedded Runtime Audit
 
-Status: planned
+Status: cancelled
 Targets: `packages/flux-runtime/src/*`, `packages/flux-react/src/index.tsx`, `docs/architecture/renderer-runtime.md`, `docs/references/runtime-and-renderer-faq.md`
 
 - [ ] 把 live inspector、mounted registry、session summary 明确收口到 mount-local session state。
@@ -146,13 +146,36 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Not started. This plan is ready for execution once implementation work begins.
+Status Note: Cancelled during closure audit. The explicit internal `kernel/session` topology proposed here never landed in the live repo, and the runtime baseline continued through narrower focused plans without adopting this naming or ownership split. No plan-owned execution work remains because the refactor direction itself is abandoned rather than pending.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: Pending
-- Evidence: Pending
+- Reviewer / Agent: independent `general` subagent closure audit (`task_id: ses_252ce7a6fffe2ZkG2GLcS6JRo4`)
+- Evidence: Fresh audit confirmed `packages/flux-runtime/src/runtime-factory.ts` still directly owns compile/eval helpers, imported namespace management, action scope/component registry creation, page/surface ownership sets, source/reaction registries, async governance, and disposal. No observable `kernel` / `session` implementation layer or doc baseline exists outside this plan, so the proposed refactor direction is not landed and is now explicitly abandoned.
 
 Follow-up:
 
-- No remaining plan-owned follow-up yet. Split successor plans only if execution reveals a scope that cannot be cleanly closed here.
+- No successor plan. If runtime ownership refactoring is revisited later, start from the then-current live baseline with a new focused owner plan instead of reopening this abandoned proposal.
+
+## Related Handling In Live Baseline
+
+The runtime ownership problems that motivated this abandoned proposal were handled piecemeal through narrower owner docs and plans rather than through an explicit internal `kernel/session` split.
+
+- Teardown responsibility remained on `RendererRuntime.dispose()` and is documented in `docs/architecture/renderer-runtime.md`; the live cleanup path is still centered in `packages/flux-runtime/src/runtime-factory.ts`.
+- Creator-owned boundary rules were preserved and frozen in `docs/architecture/renderer-runtime.md`: page, form, fragment child scope, and surface boundaries are still created by concrete owner paths instead of a generic session layer.
+- Source and reaction ownership moved toward focused runtime sidecars rather than a single session object: see `docs/architecture/api-data-source.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `packages/flux-runtime/src/source-registry.ts`, and `packages/flux-runtime/src/reaction-runtime.ts`.
+- Async in-flight ownership, stale-result publication, and async diagnostics were converged under `docs/plans/120-runtime-async-governance-convergence-plan.md` instead of under a broader `session` abstraction.
+- Imported namespace lifetime, ref-counting, and teardown were formalized in `docs/architecture/action-scope-and-imports.md` and `packages/flux-runtime/src/imports.ts`; however, the full lexical `ImportStack` follow-up remains separately tracked in `docs/plans/116-module-cache-import-stack-compile-symbol-resolution-plan.md`.
+- Mounted inspect truth-source guidance was documented in `docs/architecture/debugger-runtime.md`, with live inspect state still primarily routed through component/runtime registry paths such as `packages/flux-runtime/src/component-handle-registry.ts` and `packages/nop-debugger/src/controller.ts`.
+
+Remaining observable gaps relative to this abandoned design direction:
+
+- No explicit internal `mount-local session state` object exists; runtime-owned bookkeeping remains assembled directly in `packages/flux-runtime/src/runtime-factory.ts`.
+- No explicit internal `shared kernel-like substrate` type or topology exists in live code or owner docs.
+- Import lexical ownership is only partially converged until plan 116's `ImportStack` phase lands.
+- Inspect state is documented as runtime/registry truth, but it is not unified under a dedicated session-owned inspect tree.
+
+## Outdated Note
+
+- This plan described an explicit internal `kernel/session` split that was never adopted into the live runtime baseline.
+- Subsequent runtime work converged through narrower owner plans without introducing these internal topology terms as a governing implementation contract.

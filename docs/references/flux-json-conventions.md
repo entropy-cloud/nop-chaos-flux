@@ -104,7 +104,7 @@
 {
   "onClick": {
     "action": "ajax",
-    "api": {
+    "args": {
       "url": "/api/users/save",
       "method": "post"
     },
@@ -124,16 +124,15 @@
 - `then` / `onError` 可以是单个对象，也可以是按顺序执行的数组
 - `when` 是导出 DSL 中表达 optional step / guarded step 的正式字段，不新增裸 `optional`
 - `parallel` 仍是显式并发 aggregate 节点，不改写成 `steps` + mode 布尔值
+- `ajax` / `submitForm` 使用 `args: ApiSchema`
+- `openDialog` / `openDrawer` 使用 `args` 承载 surface payload
+- `action: 'dialog'` / `action: 'drawer'` 不是正式 authoring contract
 
 定向调用推荐矩阵：
 
 - 组件实例能力：`component:<method>` + `componentId` / `componentName`
 - 对话框栈控制：`closeDialog`，默认关闭最近活动 dialog；仅在需要显式目标时再传 `dialogId`
 - source/runtime 入口：`refreshSource` + `targetId`
-
-兼容说明：
-
-- `submitForm`、`refreshTable`、`formId`、`componentPath` 等旧入口可能仍存在于运行时代码或测试中，但不应作为新示例的首选 authoring 写法
 
 ### 2.6 Source 值
 
