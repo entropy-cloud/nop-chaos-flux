@@ -19,7 +19,8 @@ import type {
   SurfaceRuntime,
   SourceSchema,
   ModuleCache,
-  ImportedLibraryModule
+  ImportedLibraryModule,
+  ImportFrame
 } from '@nop-chaos/flux-core';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -32,6 +33,7 @@ import { createComponentHandleRegistry } from './component-handle-registry';
 import { createDataSourceController, createSourceExecutor } from './data-source-runtime';
 import { createManagedFormRuntime } from './form-runtime';
 import { createImportManager } from './imports';
+import { createImportStack } from './import-stack';
 import { createNodeRuntime } from './node-runtime';
 import { createRuntimeNodeResolver } from './node-resolver';
 import { createManagedPageRuntime } from './page-runtime';
@@ -117,6 +119,18 @@ export function createRendererRuntime(input: {
   const ownedSurfaceRuntimes = new Set<SurfaceRuntime>();
   let disposed = false;
   const moduleCache = input.moduleCache ?? createModuleCache();
+  const importStack = createImportStack({
+    moduleCache,
+    getLoader: () => getEnv().importLoader,
+    getRuntime: () => {
+      if (!runtimeRef.current) {
+        throw new Error('Renderer runtime is not initialized yet');
+      }
+
+      return runtimeRef.current;
+    },
+    getEnv
+  });
 
   function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
     actionScopeCounter += 1;
@@ -147,7 +161,8 @@ export function createRendererRuntime(input: {
       return runtimeRef.current;
     },
     getEnv,
-    moduleCache
+    moduleCache,
+    importStack
   });
 
   const { evaluate, compileValue, evaluateCompiled } = createRuntimeEvalHelpers(expressionCompiler, getEnv);
@@ -224,6 +239,7 @@ export function createRendererRuntime(input: {
     expressionCompiler,
     schemaCompiler,
     plugins,
+    importStack,
     moduleCache,
     compile(schema) {
       return schemaCompiler.compile(schema);
@@ -434,6 +450,7 @@ export function createRendererRuntime(input: {
       ownedPages.clear();
       ownedSurfaceRuntimes.clear();
       importManager.dispose({ actionScopes: Array.from(ownedActionScopes) });
+      importStack.dispose();
       ownedActionScopes.clear();
       executeApiRequest.dispose?.();
     },

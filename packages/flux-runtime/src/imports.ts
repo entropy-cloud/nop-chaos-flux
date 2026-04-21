@@ -1,17 +1,14 @@
 import type {
-  ActionContext,
   ActionScope,
-  ActionNamespaceProvider,
   ComponentHandleRegistry,
+  ImportStack,
   ImportedLibraryLoader,
-  ImportedLibraryModule,
-  ImportedNamespaceContext,
   ModuleCache,
+  NodeInstance,
   RendererEnv,
   RendererRuntime,
   ScopeRef,
-  XuiImportSpec,
-  NodeInstance
+  XuiImportSpec
 } from '@nop-chaos/flux-core';
 
 export interface ImportManager {
@@ -26,10 +23,12 @@ export interface ImportManager {
   getImportedExpressionBindings(args: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;
+    schemaUrl: string;
   }): Readonly<Record<string, unknown>>;
   releaseImportedNamespaces(args: {
     imports?: readonly XuiImportSpec[];
     actionScope?: ActionScope;
+    schemaUrl: string;
   }): void;
   dispose(args?: { actionScopes?: readonly ActionScope[] }): void;
 }
@@ -42,21 +41,6 @@ function normalizeImportSpec(spec: XuiImportSpec): XuiImportSpec {
   };
 }
 
-function createImportKey(spec: XuiImportSpec): string {
-  return JSON.stringify({
-    from: spec.from,
-    as: spec.as,
-    options: spec.options ?? null
-  });
-}
-
-function createModuleKey(spec: XuiImportSpec): string {
-  return JSON.stringify({
-    from: spec.from,
-    options: spec.options ?? null
-  });
-}
-
 function resolveImportSpec(env: RendererEnv, schemaUrl: string, spec: XuiImportSpec): XuiImportSpec {
   return {
     ...spec,
@@ -64,26 +48,15 @@ function resolveImportSpec(env: RendererEnv, schemaUrl: string, spec: XuiImportS
   };
 }
 
-function createImportError(message: string, cause?: unknown): Error {
-  const error = new Error(message);
-
-  if (cause !== undefined) {
-    (error as Error & { cause?: unknown }).cause = cause;
-  }
-
-  return error;
+function normalizeImports(env: RendererEnv, schemaUrl: string, imports?: readonly XuiImportSpec[]) {
+  return imports
+    ?.map(normalizeImportSpec)
+    .map((spec) => resolveImportSpec(env, schemaUrl, spec))
+    .filter((spec) => spec.from && spec.as) ?? [];
 }
 
-type ReportedImportError = Error & {
-  __fluxImportReported?: boolean;
-};
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
+function createFrameKey(imports: readonly XuiImportSpec[]): string {
+  return JSON.stringify(imports.map((spec) => ({ from: spec.from, as: spec.as, options: spec.options ?? null })));
 }
 
 export function createImportManager(input: {
@@ -91,163 +64,23 @@ export function createImportManager(input: {
   getRuntime: () => RendererRuntime;
   getEnv: () => RendererEnv;
   moduleCache: ModuleCache;
+  importStack: ImportStack;
 }): ImportManager {
-  type ImportState = 'loading' | 'ready' | 'error';
-  type ScopeRegistrationEntry = {
-    pending: Promise<void>;
-    release?: () => void;
-    refCount: number;
-    provider?: ActionNamespaceProvider;
-    expressionHelpers?: Readonly<Record<string, unknown>>;
-    state: ImportState;
-    error?: Error;
-    abortController?: AbortController;
-  };
-  const scopeRegistrations = new WeakMap<ActionScope, Map<string, ScopeRegistrationEntry>>();
+  void input.getLoader;
+  void input.getRuntime;
+  void input.moduleCache;
 
-  function reportImportError(error: Error, spec?: XuiImportSpec) {
-    const env = input.getEnv();
-    (error as ReportedImportError).__fluxImportReported = true;
-    env.notify('error', error.message);
-    env.monitor?.onError?.({
-      phase: 'render',
-      error,
-      details: {
-        reason: 'import-namespace-setup-failed',
-        imports: spec ? [spec] : []
-      }
-    });
-  }
+  const framesByActionScope = new WeakMap<ActionScope, Map<string, { frameId: string; refCount: number }>>();
 
-  function createPlaceholderProvider(spec: XuiImportSpec, entry: ScopeRegistrationEntry): ActionNamespaceProvider {
-    return {
-      kind: 'import',
-      invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext) {
-        if (entry.state === 'ready' && entry.provider) {
-          return entry.provider.invoke(method, payload, ctx);
-        }
+  function getScopeFrames(actionScope: ActionScope) {
+    let frames = framesByActionScope.get(actionScope);
 
-        if (entry.state === 'loading') {
-          return {
-            ok: false,
-            error: createImportError(`Imported namespace ${spec.as} is still loading`)
-          };
-        }
-
-        return {
-          ok: false,
-          error: entry.error ?? createImportError(`Imported namespace ${spec.as} failed to load`)
-        };
-      },
-      listMethods() {
-        return entry.state === 'ready' ? entry.provider?.listMethods?.() ?? [] : [];
-      },
-      dispose() {
-        entry.provider?.dispose?.();
-      }
-    };
-  }
-
-  async function loadModule(spec: XuiImportSpec, signal?: AbortSignal): Promise<ImportedLibraryModule> {
-    const loader = input.getLoader();
-
-    if (!loader) {
-      throw new Error(`No import loader configured for namespace ${spec.as}`);
+    if (!frames) {
+      frames = new Map<string, { frameId: string; refCount: number }>();
+      framesByActionScope.set(actionScope, frames);
     }
 
-    const key = createModuleKey(spec);
-    const cached = input.moduleCache.get(key);
-
-    if (cached) {
-      return cached;
-    }
-
-    const existing = input.moduleCache.getPending(key);
-
-    if (existing) {
-      try {
-        return await existing;
-      } catch {
-        input.moduleCache.removePending(key);
-      }
-    }
-
-    const pending = loader.load(spec, signal);
-    input.moduleCache.setPending(key, pending);
-
-    try {
-      const module = await pending;
-      input.moduleCache.set(key, module);
-      input.moduleCache.removePending(key);
-      return module;
-    } catch (error) {
-      input.moduleCache.removePending(key);
-      throw error;
-    }
-  }
-
-  function createReadyPromise(args: {
-    spec: XuiImportSpec;
-    entry: ScopeRegistrationEntry;
-    actionScope: ActionScope;
-    componentRegistry?: ComponentHandleRegistry;
-    scope: ScopeRef;
-    schemaUrl: string;
-    nodeInstance?: NodeInstance;
-  }) {
-    return (async () => {
-      try {
-        if (args.entry.abortController?.signal.aborted) {
-          return;
-        }
-
-        const module = await loadModule(args.spec);
-        if (args.entry.abortController?.signal.aborted) {
-          return;
-        }
-        const context: ImportedNamespaceContext = {
-          runtime: input.getRuntime(),
-          env: input.getEnv(),
-          actionScope: args.actionScope,
-          componentRegistry: args.componentRegistry,
-          scope: args.scope,
-          spec: args.spec,
-          nodeInstance: args.nodeInstance
-        };
-        const provider = await module.createNamespace(context);
-        if (args.entry.abortController?.signal.aborted) {
-          provider.dispose?.();
-          return;
-        }
-        const expressionHelpers = module.createExpressionHelpers
-          ? await module.createExpressionHelpers(context)
-          : undefined;
-        if (args.entry.abortController?.signal.aborted) {
-          provider.dispose?.();
-          return;
-        }
-        args.entry.provider = {
-          ...provider,
-          kind: provider.kind ?? 'import'
-        };
-        args.entry.expressionHelpers = expressionHelpers ?? undefined;
-        args.entry.state = 'ready';
-      } catch (error) {
-        if (args.entry.abortController?.signal.aborted) {
-          args.entry.state = 'error';
-          args.entry.error = createImportError(`Imported namespace ${args.spec.as} load was aborted`, error);
-          return;
-        }
-
-        args.entry.state = 'error';
-        args.entry.error = createImportError(
-          `Imported namespace ${args.spec.as} failed to load: ${toErrorMessage(error)}`,
-          error
-        );
-          reportImportError(args.entry.error, args.spec);
-          throw args.entry.error;
-        }
-      })();
+    return frames;
   }
 
   async function ensureImportedNamespaces(args: {
@@ -258,154 +91,33 @@ export function createImportManager(input: {
     schemaUrl: string;
     nodeInstance?: NodeInstance;
   }) {
-    const imports = args.imports
-      ?.map(normalizeImportSpec)
-      .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
-      .filter((spec) => spec.from && spec.as) ?? [];
+    const imports = normalizeImports(input.getEnv(), args.schemaUrl, args.imports);
 
     if (!args.actionScope || imports.length === 0) {
       return;
     }
 
-    let registrations = scopeRegistrations.get(args.actionScope);
+    const scopeFrames = getScopeFrames(args.actionScope);
+    const frameKey = createFrameKey(imports);
+    const existing = scopeFrames.get(frameKey);
 
-    if (!registrations) {
-      registrations = new Map<string, ScopeRegistrationEntry>();
-      scopeRegistrations.set(args.actionScope, registrations);
-    }
-
-    for (const spec of imports) {
-      const key = createImportKey(spec);
-      const existing = registrations.get(key);
-
-      if (existing) {
-        const currentState = existing.state;
-
-        if (currentState === 'error') {
-          existing.refCount = Math.max(existing.refCount, 1);
-          existing.state = 'loading';
-          existing.error = undefined;
-          existing.provider = undefined;
-          existing.expressionHelpers = undefined;
-
-          const retryPromise = createReadyPromise({
-            spec,
-            entry: existing,
-            actionScope: args.actionScope,
-            componentRegistry: args.componentRegistry,
-            scope: args.scope,
-            schemaUrl: args.schemaUrl,
-            nodeInstance: args.nodeInstance
-          });
-
-          existing.pending = retryPromise.catch(() => undefined);
-          await retryPromise;
-          continue;
-        }
-
-        existing.refCount += 1;
-        await existing.pending;
-
-        if (existing.state === 'error' && existing.error) {
-          throw existing.error;
-        }
-
-        continue;
-      }
-
-      const entry: ScopeRegistrationEntry = {
-        pending: Promise.resolve(),
-        release: undefined,
-        refCount: 1,
-        provider: undefined,
-        expressionHelpers: undefined,
-        state: 'loading' as ImportState,
-        error: undefined,
-        abortController: new AbortController()
-      };
-
-      if (args.actionScope.listNamespaces().includes(spec.as)) {
-        const sameAliasRegistration = Array.from(registrations.entries()).find(([existingKey, candidate]) => {
-          if (existingKey === key) {
-            return false;
-          }
-
-          const candidateSpec = JSON.parse(existingKey) as XuiImportSpec;
-          return candidateSpec.as === spec.as && candidate.refCount > 0;
-        });
-
-        if (sameAliasRegistration) {
-          entry.state = 'error';
-          entry.error = createImportError(`Namespace collision for import alias: ${spec.as}`);
-          reportImportError(entry.error, spec);
-          throw entry.error;
-        }
-
-        registrations.delete(key);
-      }
-
-      entry.release = args.actionScope.registerNamespace(spec.as, createPlaceholderProvider(spec, entry));
-
-      const readyPromise = createReadyPromise({
-        spec,
-        entry,
-        actionScope: args.actionScope,
-        componentRegistry: args.componentRegistry,
-        scope: args.scope,
-        schemaUrl: args.schemaUrl,
-        nodeInstance: args.nodeInstance
-      });
-
-      entry.pending = readyPromise.catch(() => undefined);
-
-      registrations.set(key, entry);
-      await readyPromise;
-    }
-  }
-
-  function releaseImportedNamespaces(args: {
-    imports?: readonly XuiImportSpec[];
-    actionScope?: ActionScope;
-    schemaUrl: string;
-  }) {
-    const imports = args.imports
-      ?.map(normalizeImportSpec)
-      .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
-      .filter((spec) => spec.from && spec.as) ?? [];
-
-    if (!args.actionScope || imports.length === 0) {
+    if (existing) {
+      existing.refCount += 1;
       return;
     }
 
-    const registrations = scopeRegistrations.get(args.actionScope);
+    const frame = await input.importStack.push({
+      ownerNodeId: args.nodeInstance?.templateNode.id ?? `${args.actionScope.id}:imports`,
+      imports,
+      actionScope: args.actionScope,
+      componentRegistry: args.componentRegistry,
+      scope: args.scope,
+      schemaUrl: args.schemaUrl,
+      nodeInstance: args.nodeInstance
+    });
 
-    if (!registrations) {
-      return;
-    }
-
-    for (const spec of imports) {
-      const key = createImportKey(spec);
-      const entry = registrations.get(key);
-
-      if (!entry) {
-        continue;
-      }
-
-      entry.refCount = Math.max(0, entry.refCount - 1);
-
-      if (entry.refCount > 0) {
-        continue;
-      }
-
-      entry.abortController?.abort();
-      registrations.delete(key);
-      void entry.pending.finally(() => {
-        entry.release?.();
-      });
-    }
-
-    if (registrations.size === 0) {
-      scopeRegistrations.delete(args.actionScope);
+    if (frame) {
+      scopeFrames.set(frameKey, { frameId: frame.id, refCount: 1 });
     }
   }
 
@@ -414,51 +126,55 @@ export function createImportManager(input: {
     actionScope?: ActionScope;
     schemaUrl: string;
   }): Readonly<Record<string, unknown>> {
-    const imports = args.imports
-      ?.map(normalizeImportSpec)
-      .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
-      .filter((spec) => spec.from && spec.as) ?? [];
+    const imports = normalizeImports(input.getEnv(), args.schemaUrl, args.imports);
 
     if (!args.actionScope || imports.length === 0) {
       return {};
     }
 
-    const registrations = scopeRegistrations.get(args.actionScope);
+    const frameRef = framesByActionScope.get(args.actionScope)?.get(createFrameKey(imports));
+    return frameRef ? input.importStack.currentBindings(frameRef.frameId) : {};
+  }
 
-    if (!registrations) {
-      return {};
+  function releaseImportedNamespaces(args: {
+    imports?: readonly XuiImportSpec[];
+    actionScope?: ActionScope;
+    schemaUrl: string;
+  }) {
+    const imports = normalizeImports(input.getEnv(), args.schemaUrl, args.imports);
+
+    if (!args.actionScope || imports.length === 0) {
+      return;
     }
 
-    return Object.fromEntries(
-      imports.flatMap((spec) => {
-        const entry = registrations.get(createImportKey(spec));
+    const scopeFrames = framesByActionScope.get(args.actionScope);
+    const frameKey = createFrameKey(imports);
+    const frameRef = scopeFrames?.get(frameKey);
 
-        if (!entry || entry.state !== 'ready' || !entry.provider) {
-          return [];
-        }
+    if (!frameRef) {
+      return;
+    }
 
-        return [[`$${spec.as}`, entry.expressionHelpers ?? entry.provider] as const];
-      })
-    );
+    frameRef.refCount = Math.max(0, frameRef.refCount - 1);
+
+    if (frameRef.refCount === 0) {
+      input.importStack.pop(frameRef.frameId);
+      scopeFrames?.delete(frameKey);
+    }
+
+    if (scopeFrames && scopeFrames.size === 0) {
+      framesByActionScope.delete(args.actionScope);
+    }
   }
 
   function dispose(args?: { actionScopes?: readonly ActionScope[] }) {
-    for (const actionScope of args?.actionScopes ?? []) {
-      const registrations = scopeRegistrations.get(actionScope);
-
-      if (!registrations) {
-        continue;
-      }
-
-      for (const [key, entry] of Array.from(registrations.entries())) {
-        entry.refCount = 0;
-        entry.abortController?.abort();
-        registrations.delete(key);
-        void entry.pending.finally(() => {
-          entry.release?.();
-        });
+    if (args?.actionScopes) {
+      for (const actionScope of args.actionScopes) {
+        framesByActionScope.delete(actionScope);
       }
     }
+
+    input.importStack.dispose();
   }
 
   return {

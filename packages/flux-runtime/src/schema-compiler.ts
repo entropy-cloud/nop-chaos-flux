@@ -6,6 +6,7 @@ import type {
   CompiledTemplate,
   CompileNodeOptions,
   CompileSchemaOptions,
+  CompileSymbolTable,
   ExpressionCompiler,
   NodeMetaProgram as _NodeMetaProgram,
   RendererPlugin,
@@ -37,22 +38,74 @@ import {
   type SchemaCompilerDiagnosticsContext
 } from './schema-compiler/diagnostics';
 import { compileActions } from './action-compiler';
+import { createBaseCompileSymbolTable } from './compile-symbol-table';
 
 const PROVIDER_BUILD_ORDER = ['actionScope', 'componentRegistry', 'classAliases'] as const;
 
 const MAX_COMPILE_DEPTH = 64;
 
-function extractLibraryNames(imports: unknown): ReadonlySet<string> | undefined {
+function pushImportSymbols(symbolTable: CompileSymbolTable, imports: unknown, id: string): CompileSymbolTable {
   if (!Array.isArray(imports) || imports.length === 0) {
-    return undefined;
+    return symbolTable;
   }
-  const names = new Set<string>();
+
+  const symbols: Record<string, import('@nop-chaos/flux-core').SymbolInfo> = {};
+
   for (const spec of imports as XuiImportSpec[]) {
     if (spec.as) {
-      names.add(`$${spec.as}`);
+      symbols[`$${spec.as}`] = {
+        name: `$${spec.as}`,
+        kind: 'import-alias'
+      };
     }
   }
-  return names.size > 0 ? names : undefined;
+
+  return Object.keys(symbols).length === 0
+    ? symbolTable
+    : symbolTable.push({
+        id,
+        kind: 'imports',
+        symbols
+      });
+}
+
+function pushInjectedLocalSymbols(symbolTable: CompileSymbolTable, renderer: import('@nop-chaos/flux-core').RendererDefinition, id: string): CompileSymbolTable {
+  const symbols = Object.fromEntries(
+    Object.entries(renderer.injectedLocals ?? {}).map(([name, info]) => [
+      name,
+      {
+        name,
+        ...info
+      }
+    ])
+  ) as Record<string, import('@nop-chaos/flux-core').SymbolInfo>;
+
+  return Object.keys(symbols).length === 0
+    ? symbolTable
+    : symbolTable.push({
+        id,
+        kind: 'owner',
+        symbols
+      });
+}
+
+function pushRegionParamSymbols(symbolTable: CompileSymbolTable, params: readonly string[] | undefined, id: string): CompileSymbolTable {
+  if (!params?.length) {
+    return symbolTable;
+  }
+
+  const members = [...params, '$parent'];
+  return symbolTable.push({
+    id,
+    kind: 'region',
+    symbols: {
+      '$slot': {
+        name: '$slot',
+        kind: 'slot-root',
+        members
+      }
+    }
+  });
 }
 
 function buildWrapProvidersClosure(providers: TemplateNode['providerPlan']): WrapProvidersFn {
@@ -93,6 +146,7 @@ export function createSchemaCompiler(input: {
     const prepared = applyBeforeCompilePlugins(schema);
     const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'compile');
     const cidState = options.cidState ?? input.defaultCidState ?? createCompiledCidState();
+    const symbolTable = options.symbolTable ?? createBaseCompileSymbolTable();
 
     if (!isSchemaInput(prepared)) {
       diagnostics.emit({
@@ -119,11 +173,12 @@ export function createSchemaCompiler(input: {
         const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
 
       return compileSingleNode(item, {
-        path,
-        parentPath: options.parentPath,
-        schemaUrl: options.schemaUrl,
-        renderer: wrappedRenderer
-      }, diagnostics, depth);
+          path,
+          parentPath: options.parentPath,
+          schemaUrl: options.schemaUrl,
+          symbolTable,
+          renderer: wrappedRenderer
+        }, diagnostics, depth);
       });
 
       const nodes = enrichTemplateNodeIds(compiled, cidState);
@@ -145,6 +200,7 @@ export function createSchemaCompiler(input: {
         path,
         parentPath: options.parentPath,
         schemaUrl: options.schemaUrl,
+        symbolTable,
         renderer: wrappedRenderer
       }, diagnostics, depth),
       cidState
@@ -172,6 +228,13 @@ export function createSchemaCompiler(input: {
     const rawEventPlans: Record<string, ActionSchema | ActionSchema[]> = {};
     const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
 
+    let symbolTable = pushInjectedLocalSymbols(
+      options.symbolTable ?? createBaseCompileSymbolTable(),
+      renderer,
+      `${path}:owner-symbols`
+    );
+    symbolTable = pushImportSymbols(symbolTable, fieldInspection.extensions?.['xui:imports'], `${path}:imports`);
+
     for (const key of Object.keys(schema)) {
       if (fieldInspection.skippedPropKeys.has(key) || isNamespacedSchemaKey(key)) {
         continue;
@@ -198,7 +261,10 @@ export function createSchemaCompiler(input: {
           rule.regionKey ?? key,
           value,
           `${path}.${rule.regionKey ?? key}`,
-          compileAtNextDepth,
+          (inputValue, regionOptions) => compileAtNextDepth(inputValue, {
+            ...regionOptions,
+            symbolTable: pushRegionParamSymbols(symbolTable, rule.params, `${path}.${rule.regionKey ?? key}:slot`)
+          }),
           regionMeta
         );
         continue;
@@ -222,9 +288,16 @@ export function createSchemaCompiler(input: {
       }
     }
 
-    const libraryNames = extractLibraryNames(fieldInspection.extensions?.['xui:imports']);
-    const propsProgram = expressionCompiler.compileValue(propSource, libraryNames ? { libraryNames } : undefined);
-    const compileOptions = libraryNames ? { libraryNames } : undefined;
+    const propsProgram = expressionCompiler.compileValue(propSource, {
+      symbolTable,
+      sourcePath: path,
+      reportDiagnostic: (issue) => diagnostics.emit(issue)
+    });
+    const compileOptions = {
+      symbolTable,
+      sourcePath: path,
+      reportDiagnostic: (issue: { code: import('@nop-chaos/flux-core').SchemaDiagnosticCode; message: string; path: string; severity?: import('@nop-chaos/flux-core').SchemaDiagnosticSeverity; source?: import('@nop-chaos/flux-core').SchemaDiagnosticSource; }) => diagnostics.emit(issue)
+    };
 
     const eventPlans: Record<string, CompiledActionProgram> = {};
     for (const [key, rawActions] of Object.entries(rawEventPlans)) {
