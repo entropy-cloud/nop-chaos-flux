@@ -217,6 +217,7 @@ interface ConformanceCaseSpec {
 1. rowKey 稳定
 2. reorder 不 remount 全部子树
 3. remove 后被删除项状态清理
+4. 无 `itemKey` 时必须退化到 index mode，并产出 continuity-risk diagnostics
 
 ### structural-sharing-*
 
@@ -239,6 +240,7 @@ interface ConformanceCaseSpec {
 
 1. `validate -> transformOut -> commit -> parent revalidate`
 2. transformOut failure mapping
+3. row draft keyed target 按 `rowKey` 重定位，index mode shape 变化后必须 reject 或 reopen
 
 ### child-owner-contract-*
 
