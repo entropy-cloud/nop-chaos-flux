@@ -217,12 +217,14 @@ type InactiveBranchPolicy = 'drop' | 'preserve' | 'project';
 1. 值地址按 index。
 2. runtime identity 优先按 `itemKey`。
 3. reorder 不得默认 remount 全部 item subtree。
+4. `itemKey -> rowKey` lowering 与无 `itemKey` 时的 index mode 语义，见 `19-composite-field-lowering-and-identity.md`。
 
 ### detail-view
 
 1. detail-view 是 draft owner。
 2. open 时创建 draft scope，优先 patch overlay，不 deep clone 整对象。
 3. confirm 时执行 `validate -> transformOut -> commit -> parent revalidate`。
+4. `editable-staged` row draft 的 commit target bridge，见 `19-composite-field-lowering-and-identity.md`。
 
 ### transformOut 归属与顺序
 
@@ -253,7 +255,7 @@ type InactiveBranchPolicy = 'drop' | 'preserve' | 'project';
 
 ```ts
 interface RowEntry {
-  rowKey: string;
+  rowKey?: string;
   sourceIndex: number;
   record: Record<string, unknown>;
 }
@@ -267,7 +269,7 @@ interface RowEntry {
 规则：
 
 1. collection owner 必须把 parent collection change 翻译为 row-local change。
-2. row scope cache 按 `rowKey` 管理。
+2. keyed collection 的 row scope cache 按 `rowKey` 管理；index mode 可按 shape/index 失效，不承诺 stable row identity。
 3. selection、expanded、editing、pagination、sort 属于 row-local 或 table-local UI state，不直接写入业务值。
 
 ### table.mode

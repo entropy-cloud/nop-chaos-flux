@@ -90,16 +90,17 @@ interface RowScopeCacheEntry {
 
 规则：
 
-1. row cache 按 `rowKey` 索引
-2. windowing 可驱逐旧 row scope
-3. reorder 不重建同一 `rowKey`
-4. eviction 使用 LRU + maxEntries 双约束
+1. `keyed` mode 的 row cache 按 `rowKey` 索引
+2. `index` mode 不要求 reorder 后命中同一 row cache
+3. windowing 可驱逐旧 row scope
+4. reorder 不重建同一 `rowKey`
+5. eviction 使用 LRU + maxEntries 双约束
 
 四元组：
 
-1. key: `ownerId + rowKey`
+1. keyed key: `ownerId + rowKey`
 2. populate: 首次 materialize row scope
-3. invalidate: row remove / owner dispose / itemKey change
+3. invalidate: row remove / owner dispose / itemKey change / index-mode shape change
 4. eviction: `maxEntries` 或 LRU 过期
 
 ### 4.5 Node resolution cache
@@ -170,7 +171,8 @@ interface RowScopeCacheEntry {
 最小验收场景：
 
 1. 1000 行对象数组，编辑一行 leaf field，不允许 1000 行全部重算 node contract。
-2. reorder 一行后，同 `rowKey` 的 row scope cache 命中率应接近 100%。
+2. keyed reorder 一行后，同 `rowKey` 的 row scope cache 命中率应接近 100%。
+3. index mode reorder/remove 后允许按 contract 失效，但必须有 continuity-risk diagnostics。
 
 ## 6. 异步性能策略
 

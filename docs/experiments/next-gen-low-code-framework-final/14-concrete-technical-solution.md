@@ -432,7 +432,7 @@ const WRITE_PRIORITY = {
 冲突处理规则：
 
 1. `a` 与 `a.b` 同 tx 冲突时，以父路径 structural op 为准，子写进入 diagnostics 记录为 dropped-by-collapse。
-2. `array-move` / `array-remove` 与同数组叶子写冲突时，先执行结构变换，再根据 remap 规则重写叶子写目标；若无法重写则 dropped-by-collapse。
+2. `array-move` / `array-remove` 与同数组叶子写冲突时，先执行结构变换，再根据 collection identity mode 重写叶子写目标；若无法重写则 dropped-by-collapse。`keyed` / `index` 双模式见 `19-composite-field-lowering-and-identity.md`。
 
 ## 8. Async Governance 实现
 
@@ -700,10 +700,11 @@ interface JournalAdapter {
 
 数组结构写入的可逆表示：
 
-1. `array-insert` 记录 `index + insertedValue + rowKey`
-2. `array-remove` 记录 `index + removedValue + rowKey`
-3. `array-move` 记录 `from + to + rowKey`
-4. inverse patch 按结构写回放，不用通用 diff 反推
+1. `keyed` mode 的 `array-insert` 记录 `index + insertedValue + rowKey`
+2. `keyed` mode 的 `array-remove` 记录 `index + removedValue + rowKey`
+3. `keyed` mode 的 `array-move` 记录 `from + to + rowKey`
+4. `index` mode 只要求记录结构位置与必要值快照，不承诺 stable row continuity
+5. inverse patch 按结构写回放，不用通用 diff 反推
 
 ## 16. Diagnostics 实现
 

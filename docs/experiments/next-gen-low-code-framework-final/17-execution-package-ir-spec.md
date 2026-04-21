@@ -307,6 +307,8 @@ type FieldBindingDefinition =
 
 ## 12. Composite Field IR
 
+与 authoring / runtime bridge 相关的 `itemKey -> rowKey` lowering、`useItemSchema` 语义和 row draft commit target，见 `19-composite-field-lowering-and-identity.md`。
+
 ### 12.1 Object field
 
 ```ts

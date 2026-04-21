@@ -272,6 +272,8 @@ settleValidationRun(run, result)
 
 ## 16. Detail / Draft Confirm 伪代码
 
+row draft commit target 的进一步细化，见 `19-composite-field-lowering-and-identity.md`。
+
 ```text
 confirmDraftOwner(childOwnerId, parentOwnerId)
   result = validateAll(childOwnerId, reason='commit')
@@ -289,32 +291,37 @@ confirmDraftOwner(childOwnerId, parentOwnerId)
 
 ## 17. Variant Switch 伪代码
 
+`project` 策略必须导致 subtree revalidation；bridge 细化见 `19-composite-field-lowering-and-identity.md`。
+
 ```text
-switchVariant(path, nextBranch)
-  policy = getInactiveBranchPolicy(path)
-  enqueueTxInput({ kind: 'write', payload: [{ path, op: 'set', value: nextBranch }] })
+switchVariant(fieldPath, nextBranch)
+  discriminatorPath = getVariantDiscriminatorPath(fieldPath)
+  policy = getInactiveBranchPolicy(fieldPath)
+  enqueueTxInput({ kind: 'write', payload: [{ path: discriminatorPath, op: 'set', value: nextBranch }] })
   if policy == 'drop'
-    enqueueTxInput({ kind: 'reconcile', payload: { type: 'variant-drop-inactive', path } })
+    enqueueTxInput({ kind: 'reconcile', payload: { type: 'variant-drop-inactive', fieldPath } })
   if policy == 'preserve'
-    enqueueTxInput({ kind: 'reconcile', payload: { type: 'variant-preserve-inactive', path } })
+    enqueueTxInput({ kind: 'reconcile', payload: { type: 'variant-preserve-inactive', fieldPath } })
   if policy == 'project'
-    projected = runVariantProjection(path, nextBranch)
+    projected = runVariantProjection(fieldPath, nextBranch)
     enqueueTxInput({ kind: 'write', payload: projected.writes })
-  enqueueTxInput({ kind: 'reconcile', payload: { type: 'variant-switch', path } })
+  enqueueTxInput({ kind: 'reconcile', payload: { type: 'variant-switch', fieldPath, discriminatorPath } })
 ```
 
 ## 18. Array Reorder / Remove 伪代码
 
+`itemKey` / `rowKey` / index mode 的 identity lowering 细化，见 `19-composite-field-lowering-and-identity.md`。
+
 ```text
 reorderArrayItems(path, from, to)
-  rowKeyMap = getRowKeyMap(path)
+  identityContext = getArrayIdentityContext(path)
   enqueueTxInput({ kind: 'write', payload: [{ path, op: 'array-move', value: { from, to } }] })
-  enqueueTxInput({ kind: 'reconcile', payload: { type: 'array-reorder', path, rowKeyMap } })
+  enqueueTxInput({ kind: 'reconcile', payload: { type: 'array-reorder', path, identityContext } })
 
 removeArrayItem(path, index)
-  removedRowKey = getRowKeyAt(path, index)
+  identityContext = getArrayIdentityContext(path)
   enqueueTxInput({ kind: 'write', payload: [{ path, op: 'array-remove', value: { index } }] })
-  enqueueTxInput({ kind: 'reconcile', payload: { type: 'array-remove', path, removedRowKey } })
+  enqueueTxInput({ kind: 'reconcile', payload: { type: 'array-remove', path, index, identityContext } })
 ```
 
 ## 19. Host Snapshot Replacement 伪代码
