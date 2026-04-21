@@ -166,11 +166,13 @@
 1. page/form/draft/surface/collection owner
 2. collection identity / row scope cache
 3. structural sharing
+4. keyed / index collection identity mode
 
 退出条件：
 
 1. form/draft/collection owner lifecycle 有固定行为。
 2. conformance cases `owner-lifecycle-*`、`collection-identity-*`、`structural-sharing-*` 通过。
+3. `itemKey` lowering 为 keyed mode，缺失 `itemKey` 时固定退化到 index mode。
 
 允许 mock/stub：
 
@@ -187,12 +189,14 @@
 1. validation runtime
 2. child owner contract
 3. draft confirm / `transformOut`
+4. row draft commit target freeze / resolve
 
 退出条件：
 
 1. form submit / draft confirm / collection row identity 跑通。
 2. hidden/disabled/readonly/variant-switch/reorder-remove edge cases 有固定行为。
 3. conformance cases `validation-edge-*`、`draft-confirm-*`、`child-owner-contract-*` 通过。
+4. row draft owner open 时已冻结 commit target；`useItemSchema: true` 不生成第二套 item schema；keyed row draft confirm 可按 `rowKey` 重定位，index mode shape 变化后 reject/reopen。
 
 允许 mock/stub：
 
@@ -281,11 +285,13 @@
 1. snapshot export/import
 2. journal entry / checkpoint / replay cursor
 3. recovery modes
+4. keyed / index array identity replay contract
 
 退出条件：
 
 1. `snapshot-only`、`snapshot+journal-replay`、`degraded-host-rebind` 可验证。
 2. conformance cases `recovery-mode-*`、`checkpoint-replay-*`、`crash-consistency-*` 通过。
+3. keyed collection replay 可按 journal identity metadata 维持 row continuity；index mode 只恢复结构结果，不承诺 row continuity。
 
 允许 mock/stub：
 
@@ -362,6 +368,7 @@ owner/validation 复杂度膨胀，renderer 反向偷逻辑。
 
 1. validation edge cases 必须集中到 `kernel-validation`。
 2. draft/transformOut 只允许在 `kernel-owners/draft-owner`。
+3. keyed/index identity lowering 只允许在 compiler lowering + collection owner 中实现，不允许 renderer 私拼。
 
 ### C. Phase 7/8
 

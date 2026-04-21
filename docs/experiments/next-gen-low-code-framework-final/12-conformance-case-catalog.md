@@ -218,6 +218,7 @@ interface ConformanceCaseSpec {
 2. reorder 不 remount 全部子树
 3. remove 后被删除项状态清理
 4. 无 `itemKey` 时必须退化到 index mode，并产出 continuity-risk diagnostics
+5. `itemKeyPath` 为空、重复或非稳定标量时必须拒绝 keyed execution，并产出 diagnostics
 
 ### structural-sharing-*
 
@@ -235,12 +236,15 @@ interface ConformanceCaseSpec {
 5. variant switch
 6. array reorder/remove
 7. stale async validation
+8. `variant-field.project` 切换后 subtree revalidation
 
 ### draft-confirm-*
 
 1. `validate -> transformOut -> commit -> parent revalidate`
 2. transformOut failure mapping
 3. row draft keyed target 按 `rowKey` 重定位，index mode shape 变化后必须 reject 或 reopen
+4. keyed row target 缺失时必须 `stale-dropped` 或 `business-error`，不得静默 fallback
+5. `useItemSchema: true` 不允许物化第二套 item schema
 
 ### child-owner-contract-*
 

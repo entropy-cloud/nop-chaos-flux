@@ -121,6 +121,7 @@ next-gen-lowcode/
 4. source-map
 5. diagnostics
 6. determinism/hash
+7. composite field bridge lowering such as `itemKey -> itemKeyPath` and `useItemSchema -> itemTemplate reuse`
 
 规则：
 
@@ -140,6 +141,7 @@ next-gen-lowcode/
 5. resource/reaction substrate
 6. published snapshot
 7. failure taxonomy
+8. journal/checkpoint/replay substrate including array identity metadata persistence and replay continuity checks
 
 规则：
 
@@ -183,6 +185,7 @@ next-gen-lowcode/
 2. owner lifecycle
 3. child owner contract
 4. composite value structure runtime helpers
+5. keyed/index collection identity consumption, rowKey derivation, row draft commit target freeze/resolve
 
 规则：
 
@@ -290,6 +293,7 @@ next-gen-lowcode/
 1. conformance case schema
 2. harness helpers
 3. deterministic compiler/runtime test fixtures
+4. keyed/index collection identity, row draft confirm, and replay continuity fixtures
 
 ## 5. 强制依赖方向
 
@@ -375,16 +379,18 @@ react-host -> conformance-kit
 
 如果第一阶段希望最小可运行，可先只建：
 
-1. `package-compiler`
-2. `kernel-core`
-3. `kernel-actions`
-4. `kernel-validation`
-5. `kernel-owners`
-6. `renderer-contracts`
-7. `react-host`
-8. `builtin-renderers`
-9. `builtin-capabilities`
-10. `conformance-kit`
+1. `runtime-contracts`
+2. `package-compiler`
+3. `kernel-core`
+4. `kernel-actions`
+5. `kernel-validation`
+6. `kernel-owners`
+7. `renderer-contracts`
+8. `runtime-facade`
+9. `react-host`
+10. `builtin-renderers`
+11. `builtin-capabilities`
+12. `conformance-kit`
 
 `host-protocol` 和 `debugger-sdk` 也建议尽早建壳，即使先只放 types。
 
@@ -411,6 +417,7 @@ react-host -> conformance-kit
 | 06 | kernel-core + host-protocol + conformance-kit |
 | 07 | debugger-sdk + conformance-kit |
 | 08 | examples + conformance-kit |
+| 19 | package-compiler + kernel-owners + kernel-core + conformance-kit |
 
 ## 10. 与当前仓库的映射提示
 

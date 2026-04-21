@@ -206,7 +206,7 @@ const productsField: ArrayFieldBindingDefinition = {
 const commitTarget: RowDraftCommitTarget = {
   collectionPath: 'products',
   identityMode: 'keyed',
-  rowKey: 'products:id=p-100',
+  rowKey: 'id=p-100',
   sourceIndexAtOpen: 0
 };
 ```

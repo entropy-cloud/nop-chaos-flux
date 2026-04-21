@@ -596,8 +596,15 @@ interface TransactionJournalEntry {
   reversible: boolean;
   forward: ScopeWrite[];
   inverse?: ScopeWrite[];
+  arrayIdentity?: ArrayIdentityJournalMetadata[];
   groupId?: string;
   committedAt: number;
+}
+
+interface ArrayIdentityJournalMetadata {
+  path: string;
+  identityMode: 'keyed' | 'index';
+  rowKey?: string;
 }
 
 interface CheckpointRecord {

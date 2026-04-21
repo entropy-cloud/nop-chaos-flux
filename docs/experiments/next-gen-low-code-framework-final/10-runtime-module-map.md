@@ -60,6 +60,7 @@ package-compiler/
 
 1. 把 authoring constructs 路由到 template/value/event/action/resource/reaction/validation lowering
 2. 确保每个 construct 只有一个 lowering owner
+3. 负责 `itemKey -> itemKeyPath`、`useItemSchema -> itemTemplate reuse` 等 composite field bridge lowering
 
 #### `determinism/`
 
@@ -143,6 +144,15 @@ kernel-core/
 2. `RuntimeFailureEnvelope`
 3. source -> failure mapping helpers
 
+#### `journal/`
+
+职责：
+
+1. `TransactionJournalEntry` emit/load
+2. keyed / index array identity metadata persistence
+3. replay continuity checks
+4. checkpoint anchor and cursor handling
+
 ## 4. `kernel-actions` 模块图
 
 ```text
@@ -222,6 +232,7 @@ kernel-owners/
 1. draft scope lifecycle
 2. confirm/cancel pipeline
 3. `transformOut` orchestration
+4. row draft commit target freeze / resolve
 
 #### `collection-owner/`
 
@@ -231,6 +242,8 @@ kernel-owners/
 2. row scope cache
 3. collection-shape invalidation
 4. reorder/remove migration handoff to validation
+5. consume compiled keyed / index identity mode
+6. rowKey derivation and continuity-risk diagnostics
 
 ## 7. `host-protocol` 模块图
 
@@ -407,6 +420,7 @@ conformance-kit/
 | validation edge cases | `kernel-validation` | `edge-cases/` |
 | draft confirm/transformOut | `kernel-owners` | `draft-owner/` |
 | row identity/cache | `kernel-owners` | `collection-owner/` |
+| composite field lowering bridge | `package-compiler` | `lowering/` |
 | host command envelope | `host-protocol` | `commands/` |
 | node contract | `renderer-contracts` | `node-contract/` |
 | React hooks | `react-host` | `hooks/` |
