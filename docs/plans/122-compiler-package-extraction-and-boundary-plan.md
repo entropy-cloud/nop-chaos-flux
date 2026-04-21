@@ -24,12 +24,22 @@
 - `docs/experiments/next-gen-low-code-framework-final/16-current-implementation-comparison.md` 与 `02-execution-package-and-admission.md` 都把“compiler 独立于 runtime”视为未来方向；但 live repo 目前仍是 “schema + runtime compile” 主入口。
 - `docs/plans/118-flux-internal-kernel-session-refactor-plan.md` 已被取消；当前更现实的收口路径不是重写 `kernel/session`，而是先把 compile-time 责任从 runtime 包中拆出来。
 
+## Consensus Update
+
+- 三次独立子 agent 审核一致认为：方向正确，但本计划初稿把几个边界写窄了，需要先修正再执行。
+- `packages/flux-runtime/src/validation/rules.ts` 里的 `collectSchemaValidationRules(...)`、`mergeValidationRules(...)`、`compileValidationRules(...)`、`normalizeValidationTriggers(...)`、`normalizeValidationVisibilityTriggers(...)` 当前服务的是 compiler-owned validation-model lowering，应整体迁移到 `flux-compiler`，而不是只把两个 normalizer 单独下沉到 `flux-core`。
+- `packages/flux-runtime/src/form-runtime-subtree.ts` 不应继续通过 compiler helper `createValidationTraversalOrder(...)` 做 fallback；该逻辑应直接改用 `@nop-chaos/flux-core` 的 `buildCompiledValidationOrder(...)`。
+- `packages/flux-runtime/src/registry.ts` 当前是纯 registry helper，更适合迁移到 `flux-core`，否则 direct compiler consumers 仍需要为了构造 registry 而依赖 runtime package。
+- `packages/flux-runtime/src/compile-symbol-table.ts` 仍保持 compiler owner 归属；虽然实现纯，但它属于 compile substrate，而不是 `flux-core` 的默认公共汇聚点。
+- `flux-core` 不应成为“所有纯函数的默认归宿”；只有确实跨 package 共享、且属于公共 contract 的纯 helper 才应进入 `flux-core`。
+
 ## Goals
 
 - 新增独立 `@nop-chaos/flux-compiler` package，成为 schema compile / validate / action precompile 的物理 owner。
 - 把 compile-time 纯逻辑从 `flux-runtime` 中移出，同时保持现有 public runtime 用法基本兼容。
 - 明确 compiler 与 runtime 的边界：compiler 负责 schema 结构分析、静态语义校验、lowering、compiled validation model 组装；runtime 负责 live scope、instantiation、dispatch、request/source/reaction/form/page/surface 生命周期与 runtime value validation execution。
 - 让 `validateSchema(...)` 与 `createSchemaCompiler(...)` 的 owner 与文档表述一致，不再继续驻留在 runtime package。
+- 让 direct compiler consumers 可以通过 `@nop-chaos/flux-core` 的 registry helper 配合 `@nop-chaos/flux-compiler` 使用，而不是继续依赖 `@nop-chaos/flux-runtime` 承担 registry owner。
 - 为后续 execution package / admission / IDE tooling / CI validation 预留正确的 package 边界，但本计划本身不强推这些上层能力落地。
 
 ## Non-Goals
@@ -71,7 +81,7 @@ packages/
       types/
       schema-diagnostics/
       validation-model.ts
-      compile-utils/                # 如有需要，用于纯 compile-time shared helpers
+      registry.ts
 
   flux-formula/
     src/
@@ -146,7 +156,7 @@ packages/
 - diagnostics model types
 - pure validation-model data structures and ordering helpers
 - pure schema/path/node-id helpers
-- any pure normalization helpers that must be used by both compiler and runtime packages
+- registry helper implementation and similar public-contract pure helpers with real multi-package consumers
 
 ## File Movement Plan
 
@@ -164,6 +174,12 @@ packages/
 - `packages/flux-runtime/src/schema-compiler/index.ts`
 - `packages/flux-runtime/src/action-compiler.ts`
 - `packages/flux-runtime/src/compile-symbol-table.ts`
+- compiler-owned helpers split from `packages/flux-runtime/src/validation/rules.ts`:
+  - `collectSchemaValidationRules(...)`
+  - `mergeValidationRules(...)`
+  - `compileValidationRules(...)`
+  - `normalizeValidationTriggers(...)`
+  - `normalizeValidationVisibilityTriggers(...)`
 - compiler-owned tests:
   - `packages/flux-runtime/src/__tests__/schema-compiler-registry.test.ts`
   - `packages/flux-runtime/src/schema-compiler-diagnostics.test.ts`
@@ -191,19 +207,14 @@ packages/
 - `validation-runtime.ts`
 - sync/async validator registry and execution helpers under `src/validation/`
 
-### Move Or Duplicate As Pure Helpers In `packages/flux-core`
+### Move To `packages/flux-core`
 
-这部分要在 execution 中逐项判断，避免把 runtime-specific 代码硬搬到 core：
+- `packages/flux-runtime/src/registry.ts`
 
-- `normalizeValidationTriggers(...)`
-- `normalizeValidationVisibilityTriggers(...)`
+### Notes On Validation Helpers
 
-判断原则：
-
-- 如果 helper 只是对 schema authoring 值做纯归一化，且 compiler/runtime 都要调用，则应移动到 `flux-core`。
-- 如果 helper 依赖 runtime owner semantics、validator registry、或 live field behavior，则必须留在 `flux-runtime`。
-
-当前 live code 看，`normalizeValidationTriggers(...)` 与 `normalizeValidationVisibilityTriggers(...)` 是纯函数，更适合作为 `flux-core` 共享 helper，而不是继续从 runtime 反向被 compiler 借用。
+- `normalizeValidationTriggers(...)` 与 `normalizeValidationVisibilityTriggers(...)` 虽然是纯函数，但当前 live repo 中它们只服务 compiler-owned validation lowering，不属于 `flux-core` 的默认沉淀目标。
+- 因此 `packages/flux-runtime/src/validation/rules.ts` 需要拆分：compiler-side lowering helpers 移到 `flux-compiler`，runtime-side validator execution helpers 留在 `flux-runtime`。
 
 ## Public API Target State
 
@@ -224,6 +235,7 @@ packages/
   - `export { createSchemaCompiler, validateSchema } from '@nop-chaos/flux-compiler'`
   - `export { compileAction, compileActions } from '@nop-chaos/flux-compiler'`
 - 这类 re-export 仅作为迁移兼容层，不应继续让 runtime 成为 compiler 的物理 owner。
+- 兼容层只覆盖迁移期；新代码不应继续新增从 `@nop-chaos/flux-runtime` 导入 compiler API 的用法。
 
 ### `RendererRuntime` assembly target state
 
@@ -250,6 +262,7 @@ Targets: `docs/architecture/schema-file-validator.md`, `docs/architecture/flux-r
 - [ ] Re-audit current compiler-owned files and tests against the live repo so the migration starts from current reality rather than older plan text.
 - [ ] Freeze the package-boundary target in docs: compiler owns compile/validate/lowering; runtime owns live execution.
 - [ ] Decide whether `flux-runtime` keeps temporary compiler re-exports, and write that migration policy explicitly into the plan/docs before moving code.
+- [ ] Freeze the consensus boundary changes from independent audits: registry moves to `flux-core`; compiler-side validation lowering moves to `flux-compiler`; runtime subtree fallback stops importing compiler wrappers.
 - [ ] Add or refresh focused tests if any current compiler behavior is untested but will become migration-sensitive.
 
 Exit Criteria:
@@ -295,6 +308,7 @@ Targets: `packages/flux-compiler/src/action-compiler.ts`, `packages/flux-compile
 - [ ] Move `action-compiler.ts` into `flux-compiler` and update runtime dispatch code to import it from the new package.
 - [ ] Move `compile-symbol-table.ts` into `flux-compiler` and update schema compiler imports.
 - [ ] Confirm no live runtime-only module still imports compiler internals via old relative paths.
+- [ ] Remove runtime call sites that depend on compiler helper wrappers for validation traversal fallback.
 - [ ] If action precompile tests are missing, add focused coverage in the new package before deleting old copies.
 
 Exit Criteria:
@@ -305,16 +319,18 @@ Exit Criteria:
 ### Phase 5 - Cut Compiler-To-Runtime Pure Helper Dependencies
 
 Status: planned
-Targets: `packages/flux-core/src/`, `packages/flux-runtime/src/validation/rules.ts`, `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-compiler/src/schema-compiler/validation-collection.ts`
+Targets: `packages/flux-core/src/`, `packages/flux-runtime/src/validation/rules.ts`, `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-compiler/src/schema-compiler/validation-collection.ts`, `packages/flux-runtime/src/form-runtime-subtree.ts`
 
 - [ ] Identify every compiler import that still points into `flux-runtime` after the move.
-- [ ] Move pure shared helpers into `flux-core` when they are compile/runtime shared contracts rather than runtime semantics.
-- [ ] Initially target `normalizeValidationTriggers(...)` and `normalizeValidationVisibilityTriggers(...)` as shared pure helpers.
+- [ ] Split `packages/flux-runtime/src/validation/rules.ts` so compiler-owned validation-lowering helpers move to `flux-compiler`, while runtime execution and registry helpers stay in `flux-runtime`.
+- [ ] Move only genuinely shared public-contract helpers into `flux-core`; do not use `flux-core` as a generic sink for every pure function.
+- [ ] Move `createRendererRegistry(...)` and `registerRendererDefinitions(...)` to `flux-core` so direct compiler consumers no longer need runtime-owned registry assembly.
 - [ ] Keep validator registry, runtime validation execution, and owner orchestration inside `flux-runtime`.
 
 Exit Criteria:
 
 - [ ] `flux-compiler` no longer imports any source file from `flux-runtime`.
+- [ ] Runtime no longer imports compiler helper wrappers for fallback validation traversal.
 - [ ] Any helper moved to `flux-core` is demonstrably pure and shared by contract.
 
 ### Phase 6 - Rewire Public Exports And Downstream Consumers
@@ -325,6 +341,7 @@ Targets: `packages/flux-compiler/src/index.ts`, `packages/flux-runtime/src/index
 - [ ] Export compiler public APIs from `@nop-chaos/flux-compiler`.
 - [ ] Update runtime assembly to consume compiler from the new package.
 - [ ] Update tests and packages that currently import compiler APIs from `@nop-chaos/flux-runtime` to either use `@nop-chaos/flux-compiler` directly or intentionally rely on temporary runtime re-exports.
+- [ ] Update direct compiler consumers to pair `@nop-chaos/flux-core` registry helpers with `@nop-chaos/flux-compiler` APIs where appropriate.
 - [ ] Document the migration policy for downstream callers so future code does not continue adding new compiler imports to `flux-runtime`.
 
 Exit Criteria:
