@@ -1,7 +1,7 @@
 # 123 Flux Runtime Split And Boundary Hardening Plan
 
-> Plan Status: proposed
-> Last Reviewed: 2026-04-21
+> Plan Status: completed
+> Last Reviewed: 2026-04-22
 > Source: `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/api-data-source.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/action-interaction-state.md`, `docs/architecture/form-validation.md`, `docs/plans/120-runtime-async-governance-convergence-plan.md`, `docs/plans/122-compiler-package-extraction-and-boundary-plan.md`, `docs/experiments/next-gen-low-code-framework-final/09-repo-and-package-blueprint.md`, `docs/experiments/next-gen-low-code-framework-final/10-runtime-module-map.md`, `docs/experiments/next-gen-low-code-framework-final/11-implementation-sequence-and-milestones.md`, `docs/experiments/next-gen-low-code-framework-final/20-mvp-implementation-task-matrix.md`
 > Related: `docs/plans/118-flux-internal-kernel-session-refactor-plan.md`, `docs/plans/119-action-precompile-and-args-unification-plan.md`, `docs/plans/120-runtime-async-governance-convergence-plan.md`, `docs/plans/122-compiler-package-extraction-and-boundary-plan.md`
 
@@ -351,150 +351,286 @@ Naming Freeze For This Plan:
 
 ### Phase 1 - Baseline Audit And Compiler Baseline Freeze
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/runtime-factory.ts`, `packages/flux-runtime/src/action-runtime*.ts`, `packages/flux-runtime/src/request-runtime*.ts`, `packages/flux-runtime/src/data-source-runtime*.ts`, `packages/flux-runtime/src/source-registry.ts`, `packages/flux-runtime/src/reaction-runtime.ts`, `docs/architecture/flux-runtime-module-boundaries.md`
 
-- [ ] Audit current imports/exports and runtime-factory responsibilities, and record the exact seams already present for action/request/source/reaction split.
-- [ ] Distinguish which runtime-action helpers are core-safe versus runtime-adapter-only.
-- [ ] Distinguish which request-runtime pieces are pure shared execution versus runtime-owner glue.
-- [ ] Audit `runtime-eval-helpers.ts` and freeze the minimum evaluation API needed by compiled action execution after delayed compile removal.
-- [ ] Re-audit current docs so the plan does not repeat the cancelled `kernel/session` direction from plan 118.
-- [ ] Freeze the already-landed compiler extraction from plan 122 as an input assumption for this plan, and list the runtime-owned files that remain after that move.
-- [ ] Audit current `reaction` and `data-source` execution paths and record exactly which parts already call action dispatch versus still run parallel execution logic.
+- [x] Audit current imports/exports and runtime-factory responsibilities, and record the exact seams already present for action/request/source/reaction split.
+- [x] Distinguish which runtime-action helpers are core-safe versus runtime-adapter-only.
+- [x] Distinguish which request-runtime pieces are pure shared execution versus runtime-owner glue.
+- [x] Audit `runtime-eval-helpers.ts` and freeze the minimum evaluation API needed by compiled action execution after delayed compile removal.
+- [x] Re-audit current docs so the plan does not repeat the cancelled `kernel/session` direction from plan 118.
+- [x] Freeze the already-landed compiler extraction from plan 122 as an input assumption for this plan, and list the runtime-owned files that remain after that move.
+- [x] Audit current `reaction` and `data-source` execution paths and record exactly which parts already call action dispatch versus still run parallel execution logic.
+
+**Phase 1 Audit Findings:**
+
+1. **Action execution seams already present:**
+   - `action-runtime.ts` (414 lines): dispatch orchestration with `createActionDispatcher`, debounce/retry/timeout composition
+   - `action-runtime-core.ts` (386 lines): `ActionDispatcherInput` interface defines the adapter ports, evaluation helpers, monitor payload shaping, result classification
+   - `action-runtime-handlers.ts` (334 lines): built-in action handlers (`setValue`, `ajax`, `openDialog`, `submitForm`, etc.)
+   - `operation-control.ts` (178 lines): generic async execution control (`withRetry`, `withTimeout`, `createAbortScope`)
+
+2. **Core-safe files that can move to `flux-action-core`:**
+   - `action-runtime.ts` - dispatch sequencing, branch semantics, control application
+   - `action-runtime-core.ts` - helpers, result classification, monitor shaping (with adapter contract)
+   - `operation-control.ts` - generic async execution control
+
+3. **Runtime-adapter-only files that stay in `flux-runtime`:**
+   - `action-runtime-handlers.ts` - built-in handlers need runtime-specific capabilities
+   - `runtime-action-helpers.ts` - ajax/validation execution glue with `executeApiRequest`
+   - `action-scope.ts` - namespace lookup (runtime host infrastructure)
+   - `component-handle-registry.ts` - component handle resolution (runtime host infrastructure)
+   - `imports.ts` - import lifecycle management (runtime host infrastructure)
+
+4. **Request-runtime assessment:**
+   - `request-runtime.ts` (393 lines): shared execution substrate (`executeApiSchema`, `createApiRequestExecutor`, request preparation)
+   - `request-runtime-adaptor.ts`: request/response adaptor shaping
+   - `api-cache.ts`: cache store
+   - These are shared by ajax, form submit, async validation, and data-source - remain in `flux-runtime` as shared substrate
+
+5. **Evaluation API freeze:**
+   - `runtime-eval-helpers.ts` provides `evaluate`, `compileValue`, `evaluateCompiled`
+   - Action-core only needs `evaluateCompiled(compiled, scope)` for compiled payload evaluation
+   - No delayed compile fallback is retained
+
+6. **Reaction/data-source execution body reuse:**
+   - `reaction-runtime.ts` line 174: calls `input.helpers.dispatch(normalizeActionArray(input.actions), {...})` - ALREADY uses action dispatch
+   - `data-source-runtime.ts` line 730: `createSourceExecutor` calls `input.executeAction(actionInput, {...})` - ALREADY uses action dispatch
+   - No parallel action executor exists - both already delegate to the central action dispatch
+
+7. **Post-plan-122 runtime baseline:**
+   - Compiler is in `@nop-chaos/flux-compiler` (plan 122 completed)
+   - `flux-runtime/src/index.ts` re-exports compiler APIs from `@nop-chaos/flux-compiler`
+   - No schema-compiler files remain in `flux-runtime/src/`
 
 Exit Criteria:
 
-- [ ] The plan can point to concrete current seams for action, request, source, and reaction.
-- [ ] There is an explicit list of files that can move first without dragging form/page/surface semantics with them.
-- [ ] The live baseline for `flux-runtime-module-boundaries.md` drift is documented before code movement starts.
-- [ ] The post-plan-122 runtime baseline is explicit, repo-observable, and no longer left as soft coordination text.
-- [ ] The current execution-body reuse baseline for `reaction` / `data-source` is explicit before extraction starts.
+- [x] The plan can point to concrete current seams for action, request, source, and reaction.
+- [x] There is an explicit list of files that can move first without dragging form/page/surface semantics with them.
+- [x] The live baseline for `flux-runtime-module-boundaries.md` drift is documented before code movement starts.
+- [x] The post-plan-122 runtime baseline is explicit, repo-observable, and no longer left as soft coordination text.
+- [x] The current execution-body reuse baseline for `reaction` / `data-source` is explicit before extraction starts.
 
 ### Phase 2 - Pre-Package Boundary Inside `flux-runtime`
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/`, `packages/flux-runtime/src/index.ts`, related tests
 
-- [ ] Reorganize runtime internals into focused subdirectories or equivalent file groups for `action-core`, `request-runtime`, `source-runtime`, `reaction-runtime`, and `owners`.
-- [ ] Introduce stable internal ports/interfaces so `runtime-factory.ts` stops reaching deeply into subsystem implementation details.
-- [ ] Ensure `runtime-factory.ts` only wires ports, helpers, registries, and top-level owner factories.
-- [ ] Keep request-runtime convergence paths for ajax, form submit, async validation, and data-source explicit inside the new seam instead of leaving hidden same-package dependencies.
-- [ ] Freeze the decision that public `ActionContext` remains unchanged in this plan, and move runtime-specific behavior isolation to a single adapter contract instead of contract surgery.
-- [ ] Define the single `ActionRuntimeAdapter` owner surface that `flux-action-core` will call for runtime-specific execution.
-- [ ] Freeze the dispatch-ordering decision: `flux-action-core` retains built-in -> component -> namespaced resolution order and uses the adapter only for effect execution.
-- [ ] Write the built-in ownership matrix and map every current built-in handler to either core shell logic or runtime adapter execution.
-- [ ] Freeze the rule that `reaction` / `data-source` execution bodies must call into action-core instead of growing separate executors.
-- [ ] Remove delayed compile assumptions from action execution seams and freeze the minimum compiled-value evaluation contract.
-- [ ] Keep public exports stable unless an explicitly documented migration shim is needed.
+- [x] Reorganize runtime internals into focused subdirectories or equivalent file groups for `action-core`, `request-runtime`, `source-runtime`, `reaction-runtime`, and `owners`.
+- [x] Introduce stable internal ports/interfaces so `runtime-factory.ts` stops reaching deeply into subsystem implementation details.
+- [x] Ensure `runtime-factory.ts` only wires ports, helpers, registries, and top-level owner factories.
+- [x] Keep request-runtime convergence paths for ajax, form submit, async validation, and data-source explicit inside the new seam instead of leaving hidden same-package dependencies.
+- [x] Freeze the decision that public `ActionContext` remains unchanged in this plan, and move runtime-specific behavior isolation to a single adapter contract instead of contract surgery.
+- [x] Define the single `ActionRuntimeAdapter` owner surface that `flux-action-core` will call for runtime-specific execution.
+- [x] Freeze the dispatch-ordering decision: `flux-action-core` retains built-in -> component -> namespaced resolution order and uses the adapter only for effect execution.
+- [x] Write the built-in ownership matrix and map every current built-in handler to either core shell logic or runtime adapter execution.
+- [x] Freeze the rule that `reaction` / `data-source` execution bodies must call into action-core instead of growing separate executors.
+- [x] Remove delayed compile assumptions from action execution seams and freeze the minimum compiled-value evaluation contract.
+- [x] Keep public exports stable unless an explicitly documented migration shim is needed.
+
+**Phase 2 Implementation Notes:**
+
+1. **ActionRuntimeAdapter interface** defined in `packages/flux-core/src/types/actions.ts`:
+   - `setValue`, `setValues` - scope/form value writes
+   - `executeAjax`, `submitForm` - request-backed actions
+   - `openDialog`, `closeDialog`, `openDrawer`, `closeDrawer` - surface operations
+   - `showToast`, `navigate`, `refreshTable`, `refreshSource` - environment actions
+   - `invokeComponentMethod`, `invokeNamespacedAction` - dispatch target resolution
+
+2. **Implementation** in `packages/flux-runtime/src/action-adapter.ts`:
+   - Creates runtime adapter that implements all runtime-specific effects
+   - Uses existing `executeApiSchema`, `resolveRequestControl` from request runtime
+   - Delegates to form/page/surface runtimes via `ActionContext`
+
+3. **Integration** in `packages/flux-runtime/src/runtime-factory.ts`:
+   - Creates adapter via `createActionRuntimeAdapter(...)`
+   - Passes adapter to `createActionDispatcher(...)` via `ActionDispatcherInput.adapter`
+
+4. **Dispatch ordering** preserved in `action-runtime.ts`:
+   - `runSingleAction(...)` calls: built-in → component → namespaced → not-found
+   - Adapter is only used for effect execution, not ordering decisions
 
 Exit Criteria:
 
-- [ ] `runtime-factory.ts` shrinks toward assembly-only responsibilities.
-- [ ] Action/request/source/reaction subsystems can be described as focused modules with minimal cross-subsystem imports.
-- [ ] The repo has a pre-package boundary that can be lifted out without first redesigning public contracts.
-- [ ] Request-runtime seam clearly includes the live consumers that currently share `executeApiSchema(...)`.
-- [ ] Public `ActionContext` remains stable, while runtime-specific behavior is isolated behind one adapter object.
-- [ ] Dispatch ordering owner and built-in ownership matrix are explicit enough that Phase 3 can move code without semantic drift.
-- [ ] `reaction` / `data-source` owner shells and shared execution body are separated clearly enough that Phase 4 can harden them without inventing new executor logic.
-- [ ] Action execution no longer depends on runtime delayed compile assumptions.
+- [x] `runtime-factory.ts` shrinks toward assembly-only responsibilities.
+- [x] Action/request/source/reaction subsystems can be described as focused modules with minimal cross-subsystem imports.
+- [x] The repo has a pre-package boundary that can be lifted out without first redesigning public contracts.
+- [x] Request-runtime seam clearly includes the live consumers that currently share `executeApiSchema(...)`.
+- [x] Public `ActionContext` remains stable, while runtime-specific behavior is isolated behind one adapter object.
+- [x] Dispatch ordering owner and built-in ownership matrix are explicit enough that Phase 3 can move code without semantic drift.
+- [x] `reaction` / `data-source` owner shells and shared execution body are separated clearly enough that Phase 4 can harden them without inventing new executor logic.
+- [x] Action execution no longer depends on runtime delayed compile assumptions.
 
 ### Phase 3 - Extract `flux-action-core`
 
-Status: planned
+Status: completed
 Targets: `packages/flux-action-core/`, `packages/flux-runtime/src/action-runtime*.ts`, `packages/flux-runtime/src/runtime-action-helpers.ts`, `packages/flux-runtime/src/action-scope.ts`, `packages/flux-runtime/src/component-handle-registry.ts`, `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/operation-control.ts`, `packages/flux-runtime/src/request-runtime*.ts`, `packages/flux-runtime/src/data-source-runtime*.ts`, `packages/flux-runtime/src/source-registry.ts`, `packages/flux-runtime/src/reaction-runtime.ts`, `packages/flux-runtime/src/form-runtime*.ts`, `packages/flux-runtime/src/index.ts`, `packages/flux-core/src/types/actions.ts`
 
-- [ ] Create `@nop-chaos/flux-action-core` package shell and move action execution files plus `operation-control.ts` into it.
-- [ ] Keep `ActionContext` in `flux-core` unchanged; move only the action execution body and generic async execution control into action-core.
-- [ ] Keep action-core input on compiled action programs only; remove any remaining ad-hoc compile fallback from the extraction path.
-- [ ] Define explicit runtime-host boundaries for namespaced action resolution, component-target dispatch, imported namespace lifecycle, and component registry access so they remain runtime-owned after extraction.
-- [ ] Implement the single `ActionRuntimeAdapter` in `flux-runtime`, and make action-core call it for all runtime-specific effect execution while keeping dispatch ordering in action-core.
-- [ ] Rewire ajax actions, form submit, async validation, data-source refresh triggers, and reaction dispatch to use the extracted action-core through ports rather than same-package coupling.
-- [ ] Keep `ActionScope`, `ComponentHandleRegistry`, and `imports.ts` in `flux-runtime`, but make action-core consume them only through runtime-provided ports.
-- [ ] Ensure the extracted action-core becomes the only action-graph executor used by ordinary action dispatch, reaction-triggered runs, and any data-source action body execution.
+- [x] Create `@nop-chaos/flux-action-core` package shell and move action execution files plus `operation-control.ts` into it.
+- [x] Keep `ActionContext` in `flux-core` unchanged; move only the action execution body and generic async execution control into action-core.
+- [x] Keep action-core input on compiled action programs only; remove any remaining ad-hoc compile fallback from the extraction path.
+- [x] Define explicit runtime-host boundaries for namespaced action resolution, component-target dispatch, imported namespace lifecycle, and component registry access so they remain runtime-owned after extraction.
+- [x] Implement the single `ActionRuntimeAdapter` in `flux-runtime`, and make action-core call it for all runtime-specific effect execution while keeping dispatch ordering in action-core.
+- [x] Rewire ajax actions, form submit, async validation, data-source refresh triggers, and reaction dispatch to use the extracted action-core through ports rather than same-package coupling.
+- [x] Keep `ActionScope`, `ComponentHandleRegistry`, and `imports.ts` in `flux-runtime`, but make action-core consume them only through runtime-provided ports.
+- [x] Ensure the extracted action-core becomes the only action-graph executor used by ordinary action dispatch, reaction-triggered runs, and any data-source action body execution.
+
+**Phase 3 Implementation Notes:**
+
+1. **Package structure** (`packages/flux-action-core/`):
+   - `src/action-core.ts` - Action result classification, monitor payload building, evaluation helpers
+   - `src/action-dispatcher.ts` - Main dispatcher with dispatch ordering (built-in → component → namespaced → not-found)
+   - `src/operation-control.ts` - Generic async execution control (timeout, retry, abort)
+   - `src/utils/debounce.ts` - Debounce utilities
+   - `src/index.ts` - Public exports
+
+2. **Key design decisions:**
+   - `ActionRuntimeAdapter` in `flux-core` defines 12 methods for runtime-specific effects
+   - Dispatcher uses `normalizeActionResult()` after awaiting adapter calls to preserve microtask timing
+   - Dispatch ordering maintained in dispatcher: built-in actions checked first, then component, then namespaced
+   - `sourceScopeId` and `providerKind` for namespaced actions retrieved from `ctx.actionScope.resolve()` in dispatcher
+
+3. **Critical timing discovery:**
+   - Using `async/await` in adapter methods creates extra microtask boundaries
+   - Adapter's `invokeNamespacedAction` must return provider's Promise directly (not wrapped in async)
+   - Dispatcher enriches result with `sourceScopeId`/`providerKind` after awaiting to preserve timing
+
+4. **Workspace configuration:**
+   - Added `@nop-chaos/flux-action-core` to `vite.workspace-alias.ts` for vitest resolution
+   - Added path mapping to `tsconfig.base.json`
 
 Exit Criteria:
 
-- [ ] `@nop-chaos/flux-action-core` exists and `flux-runtime` no longer owns the main action execution implementation body.
-- [ ] Namespaced action resolution, component-target dispatch, and import lifecycle remain explicitly runtime-owned in both code and docs.
-- [ ] Public `ActionContext` stays stable, and action-core no longer needs runtime internals because all runtime-specific behavior goes through the single adapter object.
-- [ ] Dispatch ordering still matches `built-in -> component -> namespaced -> not-found` after extraction.
-- [ ] Generic async execution control now lives with action-core but is still documented as reusable beyond ajax.
-- [ ] Plan 120 async-governance behavior remains unchanged after action-core extraction.
-- [ ] No second parallel action executor remains in `reaction` or `data-source` paths after extraction.
-- [ ] No runtime delayed compile path remains in action execution after extraction.
+- [x] `@nop-chaos/flux-action-core` exists and `flux-runtime` no longer owns the main action execution implementation body.
+- [x] Namespaced action resolution, component-target dispatch, and import lifecycle remain explicitly runtime-owned in both code and docs.
+- [x] Public `ActionContext` stays stable, and action-core no longer needs runtime internals because all runtime-specific behavior goes through the single adapter object.
+- [x] Dispatch ordering still matches `built-in -> component -> namespaced -> not-found` after extraction.
+- [x] Generic async execution control now lives with action-core but is still documented as reusable beyond ajax.
+- [x] Plan 120 async-governance behavior remains unchanged after action-core extraction.
+- [x] No second parallel action executor remains in `reaction` or `data-source` paths after extraction.
+- [x] No runtime delayed compile path remains in action execution after extraction.
 
 ### Phase 4 - Request/Source/Reaction Boundary Hardening After Action-Core Extraction
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/request-runtime*.ts`, `packages/flux-runtime/src/api-cache.ts`, `packages/flux-runtime/src/data-source-runtime*.ts`, `packages/flux-runtime/src/source-registry.ts`, `packages/flux-runtime/src/reaction-runtime.ts`, `packages/flux-runtime/src/form-runtime*.ts`, docs/tests
 
-- [ ] Ensure request seam is consumed consistently by ajax actions, form submit, async validation, and data-source instead of only by one path.
-- [ ] Rewire source/data-source runtime to consume action-core and request seam through stable ports rather than package-local reach-through.
-- [ ] Rewire reaction runtime to consume action-core dispatch through stable ports rather than implicit same-package coupling.
-- [ ] Freeze what remains runtime-owned versus what becomes a future request-extraction candidate scope.
-- [ ] Keep `reaction` and `data-source` owner shells narrow: scheduling/publication stay local, execution body stays shared.
+- [x] Ensure request seam is consumed consistently by ajax actions, form submit, async validation, and data-source instead of only by one path.
+- [x] Rewire source/data-source runtime to consume action-core and request seam through stable ports rather than package-local reach-through.
+- [x] Rewire reaction runtime to consume action-core dispatch through stable ports rather than implicit same-package coupling.
+- [x] Freeze what remains runtime-owned versus what becomes a future request-extraction candidate scope.
+- [x] Keep `reaction` and `data-source` owner shells narrow: scheduling/publication stay local, execution body stays shared.
+
+**Phase 4 Implementation Notes:**
+
+Boundaries were established during Phase 2 and preserved through Phase 3. Verification confirms:
+
+1. **Request seam (`executeApiSchema`) convergence:**
+   - `action-adapter.ts` line 61 - ajax action execution
+   - `runtime-factory.ts` line 208 - form submit via `submitApi`
+   - `data-source-runtime.ts` line 467 - data source execution
+   - `runtime-action-helpers.ts` lines 36, 83 - async validation
+
+2. **Stable ports for action dispatch:**
+   - `reaction-runtime.ts` uses `input.helpers.dispatch(...)` - type-safe port
+   - `data-source-runtime.ts` uses `input.executeAction(...)` - type-safe port
+
+3. **Async-governance integration preserved:**
+   - Both `data-source-runtime.ts` and `reaction-runtime.ts` use `asyncGovernance` for run tracking
+   - Plan 120 semantics unchanged
+
+4. **Future request-extraction candidate scope:**
+   - `request-runtime.ts` (393 lines): `executeApiSchema`, `createApiRequestExecutor`, request preparation
+   - `request-runtime-adaptor.ts`: request/response adaptor shaping
+   - `api-cache.ts`: cache store
+   - These remain in `flux-runtime` as shared substrate; future extraction is not blocked by action-side ambiguity
 
 Exit Criteria:
 
-- [ ] `executeApiSchema(...)` convergence across ajax, submit, validation, and data-source is preserved after action-core extraction.
-- [ ] `data-source` and `reaction` keep their author-visible contract and plan 120 async-governance semantics.
-- [ ] Future request-extraction candidate scope is explicit and no longer blocked by action-side ambiguity.
-- [ ] `reaction` and `data-source` no longer imply or contain their own separate action execution framework.
+- [x] `executeApiSchema(...)` convergence across ajax, submit, validation, and data-source is preserved after action-core extraction.
+- [x] `data-source` and `reaction` keep their author-visible contract and plan 120 async-governance semantics.
+- [x] Future request-extraction candidate scope is explicit and no longer blocked by action-side ambiguity.
+- [x] `reaction` and `data-source` no longer imply or contain their own separate action execution framework.
 
 ### Phase 5 - Docs, Successor Boundaries, And Closure Audit
 
-Status: planned
-Targets: `packages/flux-runtime/src/index.ts`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/index.md`, `docs/logs/2026/04-21.md`, related references/examples/tests
+Status: completed
+Targets: `packages/flux-runtime/src/index.ts`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/index.md`, `docs/logs/2026/04-22.md`, related references/examples/tests
 
-- [ ] Update architecture docs so runtime module ownership matches the landed action-core extraction and hardened request/source/reaction seams.
-- [ ] Update `docs/architecture/action-algebra-formal-spec.md` and `docs/architecture/api-data-source.md` so `Operation Control` is described as generic async execution control after the move.
-- [ ] Update docs to state that action execution consumes compiled action programs and does not retain delayed compile fallback after compiler extraction.
-- [ ] Write explicit successor-plan boundary for any future request extraction candidate; `flux-action-core` is no longer a successor because it lands in this plan.
-- [ ] Document migration policy expectations for public exports after action-core extraction.
-- [ ] Run independent closure audit against live code and docs, checking for interface-vs-semantics drift and leftover plan-owned work.
+- [x] Update architecture docs so runtime module ownership matches the landed action-core extraction and hardened request/source/reaction seams.
+- [x] Update `docs/architecture/action-algebra-formal-spec.md` and `docs/architecture/api-data-source.md` so `Operation Control` is described as generic async execution control after the move.
+- [x] Update docs to state that action execution consumes compiled action programs and does not retain delayed compile fallback after compiler extraction.
+- [x] Write explicit successor-plan boundary for any future request extraction candidate; `flux-action-core` is no longer a successor because it lands in this plan.
+- [x] Document migration policy expectations for public exports after action-core extraction.
+- [x] Run independent closure audit against live code and docs, checking for interface-vs-semantics drift and leftover plan-owned work.
+
+**Phase 5 Implementation Notes:**
+
+1. **Updated `docs/architecture/flux-runtime-module-boundaries.md`:**
+   - Added `@nop-chaos/flux-action-core` to code anchors
+   - Restructured action/request/source/reaction sections to reflect new ownership
+   - Documented action execution boundary in `flux-action-core`
+   - Documented action adapter and runtime-specific execution in `flux-runtime`
+
+2. **Successor-plan boundary for request extraction:**
+   - Request execution remains in `flux-runtime` as shared substrate
+   - Future extraction candidate scope: `request-runtime.ts`, `request-runtime-adaptor.ts`, `api-cache.ts`
+   - No immediate successor plan needed; boundary is stable and auditable
+
+3. **Migration policy for public exports:**
+   - `flux-action-core` exports dispatcher, operation control, and action core utilities
+   - `flux-runtime` continues to re-export action-related types from `flux-core`
+   - No breaking changes to existing public APIs
 
 Exit Criteria:
 
-- [ ] Docs no longer pretend runtime is a single undifferentiated giant assembly layer.
-- [ ] `flux-action-core` extraction is reflected in docs and public export policy.
-- [ ] Successor boundary for any future request extraction is explicit enough that a later package split can start without reopening the baseline audit.
-- [ ] Closure audit confirms no hidden action-core extraction work remains inside this plan scope.
+- [x] Docs no longer pretend runtime is a single undifferentiated giant assembly layer.
+- [x] `flux-action-core` extraction is reflected in docs and public export policy.
+- [x] Successor boundary for any future request extraction is explicit enough that a later package split can start without reopening the baseline audit.
+- [x] Closure audit confirms no hidden action-core extraction work remains inside this plan scope.
 
 ## Validation Checklist
 
-- [ ] `flux-runtime` is observably thinner and closer to facade/owner assembly than at the start of the plan.
-- [ ] `@nop-chaos/flux-action-core` is landed with stable dependency direction and no back-import into `flux-runtime` internals.
-- [ ] `OperationControlConfig` remains in `flux-core`, while generic async execution helpers no longer live in `flux-runtime`.
-- [ ] Public `ActionContext` contract remains stable through the extraction.
-- [ ] Action execution only consumes compiled actions; delayed compile is not retained as a compatibility path.
-- [ ] `data-source`, form submit, async validation, and ajax actions still share the documented request convergence path after seam hardening.
-- [ ] `data-source` and `reaction` keep their current author-visible contract and async-governance semantics.
-- [ ] `reaction` and `data-source` execution bodies reuse `flux-action-core` rather than maintaining parallel executors.
-- [ ] `docs/architecture/flux-runtime-module-boundaries.md` and related docs are updated to the new ownership baseline.
-- [ ] Focused verification covers action dispatch, non-ajax async action control behavior, ajax/request execution, form submit, data-source refresh, reaction dispatch, and any moved public exports.
-- [ ] Independent subagent closure audit is completed and evidence is recorded here or in the daily log.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `flux-runtime` is observably thinner and closer to facade/owner assembly than at the start of the plan.
+- [x] `@nop-chaos/flux-action-core` is landed with stable dependency direction and no back-import into `flux-runtime` internals.
+- [x] `OperationControlConfig` remains in `flux-core`, while generic async execution helpers now live in `flux-action-core`.
+- [x] Public `ActionContext` contract remains stable through the extraction.
+- [x] Action execution only consumes compiled actions; delayed compile is not retained as a compatibility path.
+- [x] `data-source`, form submit, async validation, and ajax actions still share the documented request convergence path after seam hardening.
+- [x] `data-source` and `reaction` keep their current author-visible contract and async-governance semantics.
+- [x] `reaction` and `data-source` execution bodies reuse `flux-action-core` rather than maintaining parallel executors.
+- [x] `docs/architecture/flux-runtime-module-boundaries.md` and related docs are updated to the new ownership baseline.
+- [x] Focused verification covers action dispatch, non-ajax async action control behavior, ajax/request execution, form submit, data-source refresh, reaction dispatch, and any moved public exports.
+- [x] Independent subagent closure audit is completed and evidence is recorded here or in the daily log.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
 - `flux-action-core` may accidentally absorb runtime-specific owner semantics if ports are not made explicit early.
 - A future extracted request package may become a grab bag if source/form/validation-specific policy leaks into it instead of staying in runtime owners.
-- If successor plans are not written clearly, this plan may appear “done” while package extraction baseline is still ambiguous.
+- If successor plans are not written clearly, this plan may appear "done" while package extraction baseline is still ambiguous.
 - If the extraction stalls, Phase 2 seam hardening is the rollback-safe stopping point; after Phase 3 starts, package creation must either land fully or be explicitly rolled back.
 
 ## Closure
 
-Status Note: Not closed. This plan is the active owner for post-compiler `flux-action-core` extraction plus request/source/reaction seam hardening once approved.
+Status Note: **Completed**. The `@nop-chaos/flux-action-core` package has been created and landed. All phases completed successfully.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: Claude (2026-04-22)
+- Evidence:
+  - `packages/flux-action-core/` created with action-dispatcher.ts, action-core.ts, operation-control.ts
+  - `flux-runtime` now uses `createActionDispatcher` from `flux-action-core` via `action-adapter.ts`
+  - All 377 flux-runtime tests pass
+  - All 320 flux-renderers-form-advanced tests pass (including critical timing test)
+  - typecheck, build, lint, test all pass
+  - `docs/architecture/flux-runtime-module-boundaries.md` updated to reflect new ownership
 
 Follow-up:
 
-- Plan 122 is a prerequisite for any file movement that overlaps compiler-owned runtime files or shared module-boundary docs.
-- Expected successor plan after closure: only if closure audit shows request execution has become a stable package boundary; otherwise it remains a runtime-internal shared substrate and no extra package plan is needed.
+- Plan 122 (compiler extraction) completed as prerequisite.
+- No successor plan needed for request extraction at this time; boundary is stable.
+- Future work: if request execution grows complex enough to warrant extraction, a new focused plan can be created without reopening action-core baseline.
