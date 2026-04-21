@@ -2,6 +2,7 @@ import type { SchemaCompileDiagnosticsOptions, SchemaCompileValidationOptions, S
 import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
 import type { CompiledCidState } from '../compiled-cid';
 import type { CompiledTemplate } from './node-identity';
+import type { CompileSymbolTable } from './compilation';
 
 export type WrapProvidersFn = (
   wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,
@@ -32,6 +33,7 @@ export interface CompileSchemaOptions {
   schemaUrl?: string;
   parentScopePolicy?: ScopePolicy;
   cidState?: CompiledCidState;
+  symbolTable?: CompileSymbolTable;
   diagnostics?: SchemaCompileDiagnosticsOptions;
   validation?: SchemaCompileValidationOptions;
 }
@@ -40,6 +42,7 @@ export interface CompileNodeOptions {
   path: SchemaPath;
   parentPath?: SchemaPath;
   schemaUrl?: string;
+  symbolTable?: CompileSymbolTable;
   renderer: import('./renderer-core').RendererDefinition;
   fieldRules?: readonly SchemaFieldRule[];
 }

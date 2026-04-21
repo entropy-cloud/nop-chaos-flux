@@ -1,6 +1,31 @@
+import type { ActionNamespaceProvider, ActionScope, ImportedLibraryModule } from './actions';
 import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope';
 import type { RendererEnv } from './renderer';
-import type { ImportedLibraryModule } from './actions';
+
+export type CompileSymbolKind =
+  | 'builtin-namespace'
+  | 'import-alias'
+  | 'injected-local'
+  | 'slot-root'
+  | 'ambient';
+
+export interface SymbolInfo {
+  name: string;
+  kind: CompileSymbolKind;
+  members?: readonly string[];
+}
+
+export interface SymbolFrame {
+  id: string;
+  kind: 'root' | 'imports' | 'region' | 'owner';
+  symbols: Readonly<Record<string, SymbolInfo>>;
+}
+
+export interface CompileSymbolTable {
+  readonly frames: readonly SymbolFrame[];
+  push(frame: Omit<SymbolFrame, 'id'> & { id?: string }): CompileSymbolTable;
+  resolve(name: string): SymbolInfo | undefined;
+}
 
 export interface ModuleCache {
   get(absUrl: string): ImportedLibraryModule | undefined;
@@ -11,20 +36,68 @@ export interface ModuleCache {
   removePending(absUrl: string): void;
 }
 
+export interface ImportStackEntry {
+  alias: string;
+  spec: import('./schema').XuiImportSpec;
+  actionProvider?: ActionNamespaceProvider;
+  expressionHelpers?: Readonly<Record<string, unknown>>;
+}
+
+export interface ImportFrame {
+  id: string;
+  ownerNodeId: string;
+  parentFrameId?: string;
+  actionScope?: ActionScope;
+  entries: Readonly<Record<string, ImportStackEntry>>;
+}
+
+export interface ImportStack {
+  readonly frames: readonly ImportFrame[];
+  preload(input: {
+    imports?: readonly import('./schema').XuiImportSpec[];
+    schemaUrl: string;
+  }): Promise<void>;
+  push(input: {
+    ownerNodeId: string;
+    parentFrameId?: string;
+    imports?: readonly import('./schema').XuiImportSpec[];
+    actionScope?: ActionScope;
+    componentRegistry?: import('./renderer-component').ComponentHandleRegistry;
+    scope: ScopeRef;
+    schemaUrl: string;
+    nodeInstance?: import('./node-identity').NodeInstance;
+  }): Promise<ImportFrame | undefined>;
+  pop(frameId: string): void;
+  resolveAlias(alias: string, frameId?: string): ImportStackEntry | undefined;
+  currentBindings(frameId?: string): Readonly<Record<string, unknown>>;
+  dispose(): void;
+}
+
 export interface CompiledExpression<T = unknown> {
   kind: 'expression';
   source: string;
+  staticValue?: T;
   exec(context: EvalContext | object, env: RendererEnv): T;
 }
 
 export interface CompiledStringTemplate<T = unknown> {
   kind: 'template';
   source: string;
+  staticValue?: T;
   exec(context: EvalContext | object, env: RendererEnv): T;
 }
 
 export interface ExpressionCompileOptions {
   libraryNames?: ReadonlySet<string>;
+  symbolTable?: CompileSymbolTable;
+  sourcePath?: string;
+  reportDiagnostic?: (issue: {
+    code: import('../schema-diagnostics').SchemaDiagnosticCode;
+    message: string;
+    path: string;
+    severity?: import('../schema-diagnostics').SchemaDiagnosticSeverity;
+    source?: import('../schema-diagnostics').SchemaDiagnosticSource;
+  }) => void;
 }
 
 export interface FormulaCompiler {

@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope, CompiledActionProgram } from './actions';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
-import type { ExpressionCompiler, ModuleCache } from './compilation';
+import type { ExpressionCompiler, ImportStack, ModuleCache, SymbolInfo } from './compilation';
 import type {
   CapabilityMethodContract,
   FluxValueShape,
@@ -148,6 +148,7 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
    * This is not host projection and must not be used as a host-manifest substitute.
    */
   scopeExportContracts?: Readonly<Record<string, FluxValueShape>>;
+  injectedLocals?: Readonly<Record<string, Omit<SymbolInfo, 'name'>>>;
   sourcePackage?: string;
   regions?: readonly string[];
   fields?: readonly SchemaFieldRule[];
@@ -181,6 +182,7 @@ export interface RendererRuntime {
   expressionCompiler: ExpressionCompiler;
   schemaCompiler: SchemaCompiler;
   plugins: readonly RendererPlugin[];
+  importStack: ImportStack;
   compile(schema: SchemaInput): CompiledTemplate;
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
   allocateMountedCid(): number;

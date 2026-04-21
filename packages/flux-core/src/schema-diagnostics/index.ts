@@ -21,7 +21,12 @@ export type SchemaDiagnosticCode =
   | 'invalid-host-projection-path'
   | 'unknown-host-capability-method'
   | 'invalid-host-capability-args'
-  | 'host-contract-version-mismatch';
+  | 'host-contract-version-mismatch'
+  | 'unknown-import-alias'
+  | 'unknown-slot-param'
+  | 'slot-used-outside-region'
+  | 'unknown-builtin-member'
+  | 'ambient-dollar-reference';
 
 export interface SchemaDiagnostic {
   code: SchemaDiagnosticCode;

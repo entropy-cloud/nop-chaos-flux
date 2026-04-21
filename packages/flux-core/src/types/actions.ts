@@ -1,5 +1,5 @@
 import type { NodeInstance, InstanceFrame } from './node-identity';
-import type { SchemaObject, SchemaValue, SchemaPath, ApiSchema, OperationControlConfig } from './schema';
+import type { SchemaObject, SchemaValue, SchemaPath, OperationControlConfig } from './schema';
 import type { ScopeRef } from './scope';
 import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer';
 import type { FormRuntime, PageRuntime, SurfaceRuntime } from './runtime';
