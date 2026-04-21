@@ -14,7 +14,7 @@ import {
 describe('dataRendererDefinitions table behavior', () => {
   it('renders row-scope actions that open dialogs with row data', async () => {
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
-    render(<SchemaRenderer schemaUrl="test://data/table" schema={{ type: 'page', body: [{ type: 'table', source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }], columns: [{ label: 'Name', name: 'name' }, { type: 'operation', label: 'Actions', buttons: [{ type: 'button', label: 'Inspect', onClick: { action: 'dialog', dialog: { title: 'Record details', body: [{ type: 'text', text: 'User: ${$slot.record.name}' }] } } }] }] }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(<SchemaRenderer schemaUrl="test://data/table" schema={{ type: 'page', body: [{ type: 'table', source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }], columns: [{ label: 'Name', name: 'name' }, { type: 'operation', label: 'Actions', buttons: [{ type: 'button', label: 'Inspect', onClick: { action: 'openDialog', args: { title: 'Record details', body: [{ type: 'text', text: 'User: ${$slot.record.name}' }] } } }] }] }] }} env={env} formulaCompiler={formulaCompiler} />);
     const inspectButtons = screen.getAllByText('Inspect');
     fireEvent.click(inspectButtons[1]);
     expect(await screen.findByText('Record details')).toBeTruthy();
@@ -26,7 +26,7 @@ describe('dataRendererDefinitions table behavior', () => {
   it('dispatches row click events against the row scope', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
-    render(<SchemaRenderer schemaUrl="test://data/table" schema={{ type: 'page', body: [{ type: 'table', source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }], onRowClick: { action: 'dialog', dialog: { title: 'Row click', body: [{ type: 'text', text: 'Selected ${record.name}' }] } }, columns: [{ label: 'Name', name: 'name' }] }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(<SchemaRenderer schemaUrl="test://data/table" schema={{ type: 'page', body: [{ type: 'table', source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }], onRowClick: { action: 'openDialog', args: { title: 'Row click', body: [{ type: 'text', text: 'Selected ${record.name}' }] } }, columns: [{ label: 'Name', name: 'name' }] }] }} env={env} formulaCompiler={formulaCompiler} />);
     fireEvent.click(screen.getByText('Bob'));
     expect(await screen.findByText('Row click')).toBeTruthy();
     expect(screen.getByText((content) => content.includes('Selected') && content.includes('Bob'))).toBeTruthy();
