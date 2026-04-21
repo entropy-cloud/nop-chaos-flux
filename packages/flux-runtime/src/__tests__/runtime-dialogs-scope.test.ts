@@ -5,7 +5,7 @@ import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, pageRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
-  it('opens and closes dialogs through dialog actions', async () => {
+  it('opens and closes dialogs through openDialog actions', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -17,8 +17,8 @@ describe('createRendererRuntime', () => {
 
     const openResult = await runtime.dispatch(
       {
-        action: 'dialog',
-        dialog: {
+        action: 'openDialog',
+        args: {
           title: 'Runtime dialog',
       body: [{ type: 'text', text: '${message}' }]
         }
@@ -67,8 +67,8 @@ describe('createRendererRuntime', () => {
 
     await runtime.dispatch(
       {
-        action: 'dialog',
-        dialog: {
+        action: 'openDialog',
+        args: {
           title: { type: 'text', text: 'Compiled title' },
           body: [{ type: 'text', text: 'Compiled body' }]
         }
@@ -85,6 +85,39 @@ describe('createRendererRuntime', () => {
     expect(dialogState.title).toEqual({ type: 'text', text: 'Compiled title' });
     expect(Array.isArray(dialogState.body)).toBe(true);
     expect(dialogState.body[0]).toEqual({ type: 'text', text: 'Compiled body' });
+  });
+
+  it('supports args as the recommended dialog payload carrier', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ dialogTitle: 'Args dialog' });
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    const result = await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: '${dialogTitle}',
+          body: [{ type: 'text', text: 'Body from args' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(1);
+    const dialogState = surfaceRuntime.store.getState().entries[0] as any;
+    expect(dialogState.surface.title).toBe('Args dialog');
+    expect(dialogState.body).toEqual([{ type: 'text', text: 'Body from args' }]);
   });
 
   it('stores ownerNodeInstance in dialog state when opened from a trigger node', async () => {
@@ -125,8 +158,8 @@ describe('createRendererRuntime', () => {
 
     await runtime.dispatch(
       {
-        action: 'dialog',
-        dialog: {
+        action: 'openDialog',
+        args: {
           title: { type: 'text', text: 'Compiled title' },
           body: [{ type: 'text', text: 'Compiled body' }]
         }
@@ -260,8 +293,8 @@ describe('createRendererRuntime', () => {
 
     await runtime.dispatch(
       {
-        action: 'dialog',
-        dialog: {
+        action: 'openDialog',
+        args: {
           title: 'First',
           body: [{ type: 'text', text: 'First body' }]
         }
@@ -276,8 +309,8 @@ describe('createRendererRuntime', () => {
 
     await runtime.dispatch(
       {
-        action: 'dialog',
-        dialog: {
+        action: 'openDialog',
+        args: {
           title: 'Second',
           body: [{ type: 'text', text: 'Second body' }]
         }
@@ -311,7 +344,7 @@ describe('createRendererRuntime', () => {
     expect(surfaceRuntime.store.getState().entries[0].id).toBe(entries[0].id);
   });
 
-  it('opens and closes drawers through drawer actions', async () => {
+  it('opens and closes drawers through openDrawer actions', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -325,7 +358,7 @@ describe('createRendererRuntime', () => {
     const openResult = await runtime.dispatch(
       {
         action: 'openDrawer',
-        drawer: {
+        args: {
           title: 'Runtime drawer',
           body: [{ type: 'text', text: 'Drawer body' }],
           statusPath: 'drawerStatus'
@@ -374,5 +407,37 @@ describe('createRendererRuntime', () => {
       opening: false,
       closing: false,
     });
+  });
+
+  it('supports args as the recommended drawer payload carrier', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ drawerTitle: 'Args drawer' });
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    const result = await runtime.dispatch(
+      {
+        action: 'openDrawer',
+        args: {
+          title: '${drawerTitle}',
+          body: [{ type: 'text', text: 'Drawer from args' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(1);
+    expect(surfaceRuntime.store.getState().entries[0].kind).toBe('drawer');
+    expect(surfaceRuntime.store.getState().entries[0].surface.title).toBe('Args drawer');
   });
 });

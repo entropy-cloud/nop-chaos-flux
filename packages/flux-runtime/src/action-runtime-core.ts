@@ -76,12 +76,16 @@ export function createTimedOutResult(error?: unknown): ActionResult {
 
 export function createActionKey(action: CompiledActionNode, ctx: ActionContext): string {
   const owner = ctx.nodeInstance?.templateNode.id ?? ctx.form?.id ?? ctx.scope.id;
+  const args = action.source.args;
+  const requestUrl = args && typeof args === 'object' && typeof (args as Record<string, unknown>).url === 'string'
+    ? (args as Record<string, unknown>).url as string
+    : '';
   const target = action.targeting.targetId
     ?? action.targeting.componentPath
     ?? action.targeting.componentId
     ?? action.targeting.formId
     ?? action.targeting.dialogId
-    ?? action.source.api?.url
+    ?? requestUrl
     ?? '';
   return `${owner}:${action.action}:${target}`;
 }
@@ -311,21 +315,16 @@ export function evaluateActionValues(action: CompiledActionNode, ctx: ActionCont
 }
 
 export function evaluateActionApi(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): ApiSchema | undefined {
-  return action.payload.api
-    ? evaluateCompiledInActionContext<ApiSchema>(action.payload.api, ctx, input)
-    : undefined;
+  const args = evaluateActionArgs(action, ctx, input);
+  return args as ApiSchema | undefined;
 }
 
 export function evaluateActionDialog(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): Record<string, unknown> | undefined {
-  return action.payload.dialog
-    ? evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.dialog, ctx, input)
-    : undefined;
+  return evaluateActionArgs(action, ctx, input);
 }
 
 export function evaluateActionDrawer(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): Record<string, unknown> | undefined {
-  return action.payload.drawer
-    ? evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.drawer, ctx, input)
-    : undefined;
+  return evaluateActionArgs(action, ctx, input);
 }
 
 export function shouldRunActionWhen(action: CompiledActionNode, ctx: ActionContext, input: ActionDispatcherInput): boolean {

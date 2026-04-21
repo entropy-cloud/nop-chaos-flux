@@ -29,7 +29,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/users',
           method: 'get'
         },
@@ -76,7 +76,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/users',
           method: 'get',
           requestAdaptor: "return {headers: {Authorization: scope.token}, data: {query: scope.token}};",
@@ -132,7 +132,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/users/${userId}',
           method: 'post',
           includeScope: ['token'],
@@ -187,7 +187,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/adaptor-check',
           method: 'post',
           requestAdaptor: 'return {headers: {Authorization: scope.token}, data: {username: scope.username}};'

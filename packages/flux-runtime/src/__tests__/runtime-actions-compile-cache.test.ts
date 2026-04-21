@@ -8,7 +8,7 @@ import {
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
-  it('reuses compiled action payload/api objects across repeated dispatches', async () => {
+  it('reuses compiled action payload objects across repeated dispatches', async () => {
     const customCompiler = createExpressionCompiler(createFormulaCompiler());
     const originalCompileValue = customCompiler.compileValue.bind(customCompiler);
     customCompiler.compileValue = ((input: unknown) => {
@@ -42,7 +42,7 @@ describe('createRendererRuntime', () => {
 
     const ajaxAction = {
       action: 'ajax',
-      api: {
+      args: {
         url: '/api/items/${baseX}',
         params: {
           token: '${token}'
@@ -74,10 +74,10 @@ describe('createRendererRuntime', () => {
     });
 
     const compiledArgsCount = compileValueSpy.mock.calls.filter(([input]) => input === action.args).length;
-    const compiledApiCount = compileValueSpy.mock.calls.filter(([input]) => input === ajaxAction.api).length;
+    const compiledAjaxArgsCount = compileValueSpy.mock.calls.filter(([input]) => input === ajaxAction.args).length;
 
     expect(compiledArgsCount).toBe(1);
-    expect(compiledApiCount).toBe(1);
+    expect(compiledAjaxArgsCount).toBe(1);
     expect(invoke).toHaveBeenCalledTimes(2);
   });
 

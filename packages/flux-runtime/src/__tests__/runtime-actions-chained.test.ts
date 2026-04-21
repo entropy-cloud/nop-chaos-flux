@@ -24,7 +24,7 @@ describe('createRendererRuntime', () => {
       [
         {
           action: 'ajax',
-          api: {
+          args: {
             url: '/api/fail',
             method: 'get'
           }
@@ -63,7 +63,7 @@ describe('createRendererRuntime', () => {
       [
         {
           action: 'ajax',
-          api: {
+          args: {
             url: '/api/fail',
             method: 'get'
           },
@@ -168,7 +168,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/fail',
           method: 'get'
         },
@@ -236,7 +236,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: { url: '/api/fail', method: 'get' },
+        args: { url: '/api/fail', method: 'get' },
         onSettled: {
           action: 'setValue',
           componentPath: 'settled',
@@ -269,7 +269,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/fail',
           method: 'get'
         },
@@ -405,7 +405,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/fail',
           method: 'get'
         }
@@ -455,7 +455,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'submitForm',
-        api: {
+        args: {
           url: '/api/profile',
           method: 'post'
         }

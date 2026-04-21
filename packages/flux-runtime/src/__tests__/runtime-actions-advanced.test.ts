@@ -51,7 +51,7 @@ describe('createRendererRuntime', () => {
     const firstPromise = runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/search',
           method: 'get'
         }
@@ -66,7 +66,7 @@ describe('createRendererRuntime', () => {
     const secondResult = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/search',
           method: 'get'
         }
@@ -301,7 +301,7 @@ describe('createRendererRuntime', () => {
             {
               action: 'ajax',
               timeout: 5,
-              api: { url: '/api/slow' }
+              args: { url: '/api/slow' }
             }
           ]
         },
@@ -351,11 +351,11 @@ describe('createRendererRuntime', () => {
       const page = runtime.createPageRuntime({});
 
       const resultPromise = runtime.dispatch(
-        {
-          action: 'ajax',
-          timeout: 10,
-          api: { url: '/api/slow' }
-        },
+      {
+        action: 'ajax',
+        timeout: 10,
+        args: { url: '/api/slow' }
+      },
         {
           runtime,
           scope: page.scope,
@@ -403,7 +403,7 @@ describe('createRendererRuntime', () => {
       {
         action: 'ajax',
         timeout: 5,
-        api: { url: '/api/slow' }
+        args: { url: '/api/slow' }
       },
       {
         runtime,

@@ -64,14 +64,13 @@ export async function runBuiltInAction(
           input,
           { ...actionPayload, dispatchMode: 'built-in' },
           startedAt,
-          { ok: false, error: new Error('Missing api in ajax action') }
+          { ok: false, error: new Error('ajax requires args payload') }
         );
       }
 
       const result = await input.executeAjaxAction(api, action, ctx, signal);
       return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
     }
-    case 'dialog':
     case 'openDialog': {
       const dialog = evaluateActionDialog(action, ctx, input);
 
@@ -80,7 +79,7 @@ export async function runBuiltInAction(
           input,
           { ...actionPayload, dispatchMode: 'built-in' },
           startedAt,
-          { ok: false, error: new Error('Dialog action requires surface runtime and dialog config') }
+          { ok: false, error: new Error('openDialog requires surface runtime and args payload') }
         );
       }
 
@@ -99,7 +98,6 @@ export async function runBuiltInAction(
       dialogScope.update('dialogId', dialogId);
       return finishAction(input, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, { ok: true, data: { dialogId } });
     }
-    case 'drawer':
     case 'openDrawer': {
       const drawer = evaluateActionDrawer(action, ctx, input);
 
@@ -108,7 +106,7 @@ export async function runBuiltInAction(
           input,
           { ...actionPayload, dispatchMode: 'built-in' },
           startedAt,
-          { ok: false, error: new Error('openDrawer requires drawer config') }
+          { ok: false, error: new Error('openDrawer requires args payload') }
         );
       }
 

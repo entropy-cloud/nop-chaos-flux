@@ -41,7 +41,7 @@ describe('createRendererRuntime', () => {
       {
         action: 'ajax',
         retry: { times: 2, delay: 0 },
-        api: { url: '/api/retry-success' }
+        args: { url: '/api/retry-success' }
       },
       {
         runtime,
@@ -76,7 +76,7 @@ describe('createRendererRuntime', () => {
       {
         action: 'ajax',
         retry: { times: 2, delay: 0 },
-        api: { url: '/api/retry-fail' }
+        args: { url: '/api/retry-fail' }
       },
       {
         runtime,
@@ -123,7 +123,7 @@ describe('createRendererRuntime', () => {
         {
           action: 'ajax',
           retry: { times: 2, delay: 10, strategy: 'exponential' },
-          api: { url: '/api/retry-exp' }
+          args: { url: '/api/retry-exp' }
         },
         {
           runtime,
@@ -256,7 +256,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/monitored',
           method: 'get'
         }
@@ -293,6 +293,54 @@ describe('createRendererRuntime', () => {
     );
   });
 
+  it('supports args as the recommended ajax api carrier', async () => {
+    const onApiRequest = vi.fn();
+    const fetcher = vi.fn(async <T>(api: ApiSchema, _ctx?: { signal?: AbortSignal }) => ({
+      ok: true,
+      status: 200,
+      data: { url: api.url, method: api.method } as T
+    }));
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        monitor: {
+          onApiRequest
+        },
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ path: '/api/from-args' });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'ajax',
+        args: {
+          url: '${path}',
+          method: 'get'
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, data: { url: '/api/from-args', method: 'get' } });
+    expect(onApiRequest).toHaveBeenCalledWith(expect.objectContaining({
+      api: expect.objectContaining({
+        url: '/api/from-args',
+        method: 'get'
+      })
+    }));
+    expect(fetcher).toHaveBeenCalledWith(expect.objectContaining({
+      url: '/api/from-args',
+      method: 'get'
+    }), expect.any(Object));
+  });
+
   it('monitors the final executable ajax request after params canonicalization', async () => {
     const onApiRequest = vi.fn();
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
@@ -317,7 +365,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/items',
           method: 'get',
           params: { mode: '${token}' }

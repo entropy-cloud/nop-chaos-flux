@@ -15,9 +15,6 @@ export interface ActionSchema extends SchemaObject {
   componentPath?: string;
   formId?: string;
   dialogId?: string;
-  api?: ApiSchema;
-  dialog?: Record<string, any>;
-  drawer?: Record<string, any>;
   dataPath?: string;
   value?: SchemaValue;
   values?: Record<string, SchemaValue>;
@@ -153,9 +150,6 @@ export interface ActionMonitorPayload {
  */
 export interface CompiledActionPayload {
   args?: CompiledRuntimeValue<Record<string, unknown>>;
-  api?: CompiledRuntimeValue<ApiSchema>;
-  dialog?: CompiledRuntimeValue<Record<string, unknown>>;
-  drawer?: CompiledRuntimeValue<Record<string, unknown>>;
   value?: CompiledRuntimeValue<SchemaValue>;
   values?: CompiledRuntimeValue<Record<string, SchemaValue>>;
 }

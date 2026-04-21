@@ -1,6 +1,5 @@
 import type {
   ActionSchema,
-  ApiSchema,
   CompiledActionControl,
   CompiledActionNode,
   CompiledActionPayload,
@@ -20,9 +19,6 @@ const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
   'componentPath',
   'formId',
   'dialogId',
-  'api',
-  'dialog',
-  'drawer',
   'dataPath',
   'value',
   'values',
@@ -67,18 +63,6 @@ function compilePayload(
     if (legacy !== undefined) {
       payload.args = compiler.compileValue<Record<string, unknown>>(legacy, options);
     }
-  }
-
-  if (action.api !== undefined) {
-    payload.api = compiler.compileValue<ApiSchema>(action.api, options);
-  }
-
-  if (action.dialog !== undefined) {
-    payload.dialog = compiler.compileValue<Record<string, unknown>>(action.dialog, options);
-  }
-
-  if (action.drawer !== undefined) {
-    payload.drawer = compiler.compileValue<Record<string, unknown>>(action.drawer, options);
   }
 
   if (action.value !== undefined) {
@@ -168,9 +152,6 @@ function compileActionNode(
 function isPayloadFullyStatic(payload: CompiledActionPayload): boolean {
   const values = [
     payload.args,
-    payload.api,
-    payload.dialog,
-    payload.drawer,
     payload.value,
     payload.values,
   ];

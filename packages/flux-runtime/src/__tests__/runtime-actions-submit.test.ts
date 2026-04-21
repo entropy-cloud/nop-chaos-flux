@@ -27,7 +27,7 @@ describe('createRendererRuntime', () => {
     const firstResult = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/env',
           method: 'get',
           headers: {
@@ -57,7 +57,7 @@ describe('createRendererRuntime', () => {
     const secondResult = await runtime.dispatch(
       {
         action: 'ajax',
-        api: {
+        args: {
           url: '/api/env',
           method: 'get',
           headers: {
@@ -109,7 +109,7 @@ describe('createRendererRuntime', () => {
     const firstPromise = runtime.dispatch(
       {
         action: 'submitForm',
-        api: {
+        args: {
           url: '/api/profile',
           method: 'post'
         }
@@ -125,7 +125,7 @@ describe('createRendererRuntime', () => {
     const secondResult = await runtime.dispatch(
       {
         action: 'submitForm',
-        api: {
+        args: {
           url: '/api/profile',
           method: 'post'
         }
@@ -182,7 +182,7 @@ describe('createRendererRuntime', () => {
     const firstPromise = runtime.dispatch(
       {
         action: 'submitForm',
-        api: {
+        args: {
           url: '/api/profile',
           method: 'post'
         }
@@ -198,7 +198,7 @@ describe('createRendererRuntime', () => {
     const secondResult = await runtime.dispatch(
       {
         action: 'submitForm',
-        api: {
+        args: {
           url: '/api/profile',
           method: 'post'
         }
@@ -256,7 +256,7 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'submitForm',
-        api: {
+        args: {
           url: '/api/profile',
           method: 'post',
           requestAdaptor: 'return {headers: {Authorization: scope.token}, data: {formUser: scope.username}};',
@@ -286,6 +286,55 @@ describe('createRendererRuntime', () => {
         saved: true,
         username: 'Alice'
       }
+    });
+  });
+
+  it('supports args as the recommended submitForm api carrier', async () => {
+    const fetchCalls: ApiSchema[] = [];
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>(api: ApiSchema) => {
+          fetchCalls.push(api);
+          return {
+            ok: true,
+            status: 200,
+            data: { saved: true } as T
+          };
+        }
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({ apiPath: '/api/profile' });
+    const form = runtime.createFormRuntime({
+      id: 'args-submit-form',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page
+    });
+
+    const result = await runtime.dispatch(
+      {
+        action: 'submitForm',
+        args: {
+          url: '${apiPath}',
+          method: 'post'
+        }
+      },
+      {
+        runtime,
+        scope: form.scope,
+        page,
+        form
+      }
+    );
+
+    expect(result).toMatchObject({ ok: true, data: { saved: true } });
+    expect(fetchCalls).toHaveLength(1);
+    expect(fetchCalls[0]).toMatchObject({
+      url: '/api/profile',
+      method: 'post'
     });
   });
 
@@ -323,7 +372,7 @@ describe('createRendererRuntime', () => {
       {
         action: 'submitForm',
         retry: { times: 2, delay: 0 },
-        api: {
+        args: {
           url: '/api/profile',
           method: 'post'
         }
@@ -370,7 +419,7 @@ describe('createRendererRuntime', () => {
       {
         action: 'submitForm',
         timeout: 5,
-        api: {
+        args: {
           url: '/api/profile',
           method: 'post'
         }
