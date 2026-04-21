@@ -87,7 +87,7 @@ describe('composite form - six-component integration', () => {
               body: [{ type: 'text', text: '${$slot.item}' }]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
@@ -199,7 +199,7 @@ describe('composite form - submit supersedes debounced validation', () => {
             body: [
               { type: 'input-text', name: 'title', label: 'Title', required: true }
             ],
-            submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+            submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
             actions: [
               {
                 type: 'button',

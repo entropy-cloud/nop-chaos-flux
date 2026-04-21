@@ -43,7 +43,7 @@ describe('composite form - variant-field branch-only validation', () => {
               ]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
@@ -141,7 +141,7 @@ describe('composite form - detail-field draft validation gating', () => {
               ]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
@@ -204,7 +204,7 @@ describe('composite form - detail-field draft validation gating', () => {
               ]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
@@ -352,7 +352,7 @@ describe('composite form - loop renders form data and is not a validation owner'
               body: [{ type: 'text', text: '${$slot.item}' }]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',

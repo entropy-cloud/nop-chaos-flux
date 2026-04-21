@@ -23,7 +23,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
           id: 'second-edit-text-form',
           data: { username: 'Alice' },
           body: [{ type: 'input-text', name: 'username', label: 'Username' }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-text-form' } }]
         }}
         env={env}
@@ -57,7 +57,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
           id: 'second-edit-pw-form',
           data: { password: '' },
           body: [{ type: 'input-password', name: 'password', label: 'Password' }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-pw-form' } }]
         }}
         env={env}
@@ -90,7 +90,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
           id: 'second-edit-ta-form',
           data: { notes: 'Initial' },
           body: [{ type: 'textarea', name: 'notes', label: 'Notes' }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-ta-form' } }]
         }}
         env={env}
@@ -127,7 +127,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
               { label: 'Viewer', value: 'viewer' }
             ]
           }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-sel-form' } }]
         }}
         env={env}
@@ -156,7 +156,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
           id: 'second-edit-cb-form',
           data: { approved: false },
           body: [{ type: 'checkbox', name: 'approved', label: 'Approved', option: { label: 'Yes' } }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-cb-form' } }]
         }}
         env={env}
@@ -186,7 +186,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
           id: 'second-edit-sw-form',
           data: { active: false },
           body: [{ type: 'switch', name: 'active', label: 'Active' }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-sw-form' } }]
         }}
         env={env}
@@ -223,7 +223,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
               { label: 'Archived', value: 'archived' }
             ]
           }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-rg-form' } }]
         }}
         env={env}
@@ -258,7 +258,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
               { label: 'Beta', value: 'beta' }
             ]
           }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-cg-form' } }]
         }}
         env={env}
@@ -293,7 +293,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
               { label: 'Runtime', value: 'runtime' }
             ]
           }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-it-form' } }]
         } as any}
         env={env}
@@ -379,7 +379,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
           body: [{ type: 'tag-list', name: 'tags', label: 'Tags', tags: ['alpha', 'beta', 'gamma'] }],
           actions: [{
             type: 'button', label: 'Submit',
-            onClick: { action: 'submitForm', api: { url: '/api/test', method: 'post' } }
+            onClick: { action: 'submitForm', args: { url: '/api/test', method: 'post' } }
           }]
         }}
         env={env}
@@ -415,7 +415,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
             type: 'key-value', name: 'metadata', label: 'Metadata',
             keyLabel: 'Key', valueLabel: 'Value'
           }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-kv-form' } }]
         }}
         env={env}
@@ -452,7 +452,7 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
           body: [{
             type: 'array-editor', name: 'reviewers', label: 'Reviewers', itemLabel: 'Reviewer'
           }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'second-edit-ae-form' } }]
         }}
         env={env}

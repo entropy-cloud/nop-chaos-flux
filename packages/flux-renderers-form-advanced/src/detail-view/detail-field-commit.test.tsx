@@ -33,7 +33,7 @@ describe('detail-field renderer commit behavior', () => {
           ],
           submitAction: {
             action: 'ajax',
-            api: { url: '/api/test', method: 'post' },
+            args: { url: '/api/test', method: 'post' },
           },
           actions: [
             {
@@ -96,7 +96,7 @@ describe('detail-field renderer commit behavior', () => {
           ],
           submitAction: {
             action: 'ajax',
-            api: { url: '/api/test', method: 'post' },
+            args: { url: '/api/test', method: 'post' },
           },
           actions: [
             {
@@ -159,7 +159,7 @@ describe('detail-field renderer commit behavior', () => {
           ],
           submitAction: {
             action: 'ajax',
-            api: { url: '/api/test', method: 'post' },
+            args: { url: '/api/test', method: 'post' },
           },
           actions: [
             {
@@ -255,7 +255,7 @@ describe('detail-field renderer commit behavior', () => {
           ],
           submitAction: {
             action: 'ajax',
-            api: { url: '/api/test', method: 'post' },
+            args: { url: '/api/test', method: 'post' },
           },
           actions: [
             {

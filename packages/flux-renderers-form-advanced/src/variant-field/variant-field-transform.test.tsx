@@ -180,7 +180,7 @@ describe('variant-field renderer transform behavior', () => {
               ],
             },
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',

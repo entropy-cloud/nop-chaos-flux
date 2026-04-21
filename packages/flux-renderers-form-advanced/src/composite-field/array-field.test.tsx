@@ -141,7 +141,7 @@ describe('array-field renderer (scalar)', () => {
           ],
           submitAction: {
             action: 'ajax',
-            api: { url: '/api/test', method: 'post' }
+            args: { url: '/api/test', method: 'post' }
           },
           actions: [
             {
@@ -318,7 +318,7 @@ describe('array-field renderer (object itemKind)', () => {
           ],
           submitAction: {
             action: 'ajax',
-            api: { url: '/api/test', method: 'post' }
+            args: { url: '/api/test', method: 'post' }
           },
           actions: [
             {
@@ -412,7 +412,7 @@ describe('array-field renderer (object itemKind)', () => {
               { type: 'input-text', name: 'email', label: 'Email' }
             ]
           }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'arr-second-edit-form' } }]
         }}
         env={{ ...env, fetcher: makeCapturingFetcher(submitValues) }}

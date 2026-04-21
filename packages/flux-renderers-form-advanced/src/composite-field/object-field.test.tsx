@@ -161,7 +161,7 @@ describe('object-field renderer', () => {
           ],
           submitAction: {
             action: 'ajax',
-            api: { url: '/api/test', method: 'post' }
+            args: { url: '/api/test', method: 'post' }
           },
           actions: [
             {
@@ -304,7 +304,7 @@ describe('object-field renderer', () => {
               { type: 'input-text', name: 'lastName', label: 'Last Name' }
             ]
           }],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'obj-second-edit-form' } }]
         }}
         env={{ ...env, fetcher: makeCapturingFetcher(submitValues) }}
@@ -441,7 +441,7 @@ describe('object-field renderer', () => {
               ]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             { type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'obj-transform-out-form' } }
           ]

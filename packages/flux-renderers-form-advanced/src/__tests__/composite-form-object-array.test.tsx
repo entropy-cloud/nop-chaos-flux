@@ -44,7 +44,7 @@ describe('composite form - object-field validation', () => {
               ]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
@@ -96,7 +96,7 @@ describe('composite form - object-field validation', () => {
               ]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
@@ -147,7 +147,7 @@ describe('composite form - object-field validation', () => {
               ]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
@@ -237,7 +237,7 @@ describe('composite form - array-field add/remove', () => {
               item: [{ type: 'input-text', name: 'value', label: 'Tag', required: true }]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
@@ -287,7 +287,7 @@ describe('composite form - array-field add/remove', () => {
               item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
             }
           ],
-          submitAction: { action: 'ajax', api: { url: '/api/test', method: 'post' } },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
