@@ -27,7 +27,7 @@
       "onClick": {
         "action": "submitForm",
         "formId": "profile-form",
-        "api": {
+        "args": {
           "method": "post",
           "url": "/api/profile"
         }

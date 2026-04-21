@@ -52,7 +52,7 @@ Covered capabilities:
           "submitAction": {
             "action": "ajax",
             "debounce": 300,
-            "api": {
+            "args": {
               "method": "post",
               "url": "/api/users/search",
               "requestAdaptor": "return {data: {keyword: scope.keyword, page: scope.page, perPage: scope.perPage}};",
@@ -84,7 +84,7 @@ Covered capabilities:
               "visible": "${currentUser.role === 'admin'}",
               "onClick": {
                 "action": "openDialog",
-                "dialog": {
+                "args": {
                   "title": "新增用户",
                   "body": {
                     "type": "form",
@@ -96,7 +96,7 @@ Covered capabilities:
                     },
                     "submitAction": {
                       "action": "ajax",
-                      "api": {
+                      "args": {
                         "method": "post",
                         "url": "/api/users",
                         "requestAdaptor": "return {data: {username: scope.username, email: scope.email, role: scope.role}};",
@@ -201,7 +201,7 @@ Covered capabilities:
                   "label": "查看",
                   "onClick": {
                     "action": "openDialog",
-                    "dialog": {
+                    "args": {
                       "title": "用户详情",
                       "body": {
                         "type": "container",

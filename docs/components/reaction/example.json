@@ -6,7 +6,7 @@
   "once": true,
   "actions": {
     "action": "openDialog",
-    "dialog": {
+    "args": {
       "title": "管理员提示",
       "body": {
         "type": "text",

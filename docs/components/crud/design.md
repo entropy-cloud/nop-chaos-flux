@@ -13,7 +13,7 @@
 **CRUD 不统一管理对话框**。这是与早期设计的关键区别。
 
 - 在 `toolbar` 或 `columns` 的 operation 列中配置按钮
-- 按钮使用 `action: 'dialog'` 和 `dialog: {...}` 配置对话框
+- 按钮使用 `action: 'openDialog'` 和 `args: {...}` 配置对话框
 - 对话框中的表单提交成功后，通过 `reload` 属性或 `component:refresh` action 刷新 CRUD
 
 这与 AMIS 的设计一致：每个按钮携带完整的 dialog 定义，CRUD 只负责渲染 shell 和协调刷新。
@@ -114,8 +114,8 @@
       "type": "button",
       "label": "新增",
       "onClick": {
-        "action": "dialog",
-        "dialog": {
+        "action": "openDialog",
+        "args": {
           "title": "新增用户",
           "body": {
             "type": "form",
@@ -125,7 +125,7 @@
             ],
             "submitAction": {
               "action": "ajax",
-              "api": { "url": "/api/users", "method": "post" }
+                "args": { "url": "/api/users", "method": "post" }
             },
             "onSubmitSuccess": {
               "action": "component:refresh",
@@ -151,7 +151,7 @@
       "disabled": "${!$crud.hasSelection}",
       "onClick": {
         "action": "ajax",
-        "api": {
+        "args": {
           "url": "/api/users/bulk-delete",
           "method": "post",
           "data": { "ids": "${$crud.selectedRowKeys}" }
@@ -174,8 +174,8 @@
           "type": "button",
           "label": "编辑",
           "onClick": {
-            "action": "dialog",
-            "dialog": {
+            "action": "openDialog",
+            "args": {
               "title": "编辑用户",
               "body": {
                 "type": "form",
@@ -186,7 +186,7 @@
                 ],
                 "submitAction": {
                   "action": "ajax",
-                  "api": { "url": "/api/users/${record.id}", "method": "put" }
+                  "args": { "url": "/api/users/${record.id}", "method": "put" }
                 },
                 "onSubmitSuccess": {
                   "action": "component:refresh",
@@ -201,7 +201,7 @@
           "label": "删除",
           "onClick": {
             "action": "ajax",
-            "api": { "url": "/api/users/${record.id}", "method": "delete" },
+            "args": { "url": "/api/users/${record.id}", "method": "delete" },
             "then": {
               "action": "component:refresh",
               "componentId": "users-crud"
