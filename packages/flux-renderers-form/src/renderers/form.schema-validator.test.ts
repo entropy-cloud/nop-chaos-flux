@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createSchemaCompiler } from '@nop-chaos/flux-runtime';
 import { formRendererDefinition } from './form';
 
 describe('form schemaValidator', () => {

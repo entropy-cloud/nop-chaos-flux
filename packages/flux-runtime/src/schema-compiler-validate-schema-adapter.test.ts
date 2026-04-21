@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { createRendererRegistry } from './registry';
-import { validateSchema } from './schema-compiler';
+import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { validateSchema } from '@nop-chaos/flux-compiler';
 
 const buttonRenderer: RendererDefinition = {
   type: 'button',

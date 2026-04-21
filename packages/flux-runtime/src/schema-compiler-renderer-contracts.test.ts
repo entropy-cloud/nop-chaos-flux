@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { validateSchema } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry } from './registry';
-import { validateSchema } from './schema-compiler';
 
 describe('schema compiler renderer contract integration', () => {
   it('treats propContracts as a closed authoring prop model for diagnostics', () => {

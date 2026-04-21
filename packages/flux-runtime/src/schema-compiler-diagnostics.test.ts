@@ -3,16 +3,17 @@ import type {
   HostCapabilityProjectionManifest,
   RendererDefinition,
 } from '@nop-chaos/flux-core';
-import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry } from './registry';
-import { createSchemaCompiler, validateSchema } from './schema-compiler';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import {
   createHostActionValidationContext,
+  createSchemaCompiler,
+  createSchemaCompilerDiagnosticsContext,
   isInsideCapableRegion,
   parseNamespacedAction,
-  validateHostAction
-} from './schema-compiler/host-action-validation';
-import { createSchemaCompilerDiagnosticsContext } from './schema-compiler/diagnostics';
+  validateHostAction,
+  validateSchema
+} from '@nop-chaos/flux-compiler';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 const strictTextRenderer: RendererDefinition = {
   type: 'strict-text',

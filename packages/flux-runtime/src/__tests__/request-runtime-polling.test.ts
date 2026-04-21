@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
-import { createRendererRegistry } from '../registry';
+import { createRendererRegistry, type ApiSchema, type RendererEnv } from '@nop-chaos/flux-core';
 import { createRendererRuntime } from '../index';
 
 describe('createDataSourceController', () => {
