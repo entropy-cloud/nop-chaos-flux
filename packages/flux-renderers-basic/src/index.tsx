@@ -43,6 +43,11 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'page', body: [] },
     component: PageRenderer,
+    injectedLocals: {
+      '$page': {
+        kind: 'injected-local'
+      }
+    },
     regions: ['body', 'header', 'footer'],
     fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'modalContainer', kind: 'prop' }]
   },

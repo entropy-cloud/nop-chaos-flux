@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
+  ImportFrame,
   NodeInstance,
   ScopeRef,
   TemplateNode
@@ -10,6 +11,7 @@ import {
   ActionScopeContext,
   ClassAliasesContext,
   ComponentRegistryContext,
+  ImportFrameContext,
   NodeMetaContext,
   ScopeContext
 } from './contexts';
@@ -32,6 +34,7 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
   nodeInstance: NodeInstance;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  importFrame?: ImportFrame;
   scope: ScopeRef;
   classAliases?: Record<string, string>;
 }>) {
@@ -67,9 +70,11 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
       templateNode: props.templateNode,
       node: props.nodeInstance
     }), [props.templateNode, props.nodeInstance])}>
-      <ScopeContext.Provider value={props.scope}>
-        {children as React.ReactNode}
-      </ScopeContext.Provider>
+      <ImportFrameContext.Provider value={props.importFrame}>
+        <ScopeContext.Provider value={props.scope}>
+          {children as React.ReactNode}
+        </ScopeContext.Provider>
+      </ImportFrameContext.Provider>
     </NodeMetaContext.Provider>
   );
 }

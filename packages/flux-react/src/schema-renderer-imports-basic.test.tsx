@@ -37,7 +37,7 @@ describe('createSchemaRenderer import basics', () => {
     fireEvent.click(screen.getByText('Run import action'));
 
     await waitFor(() => {
-      expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' }, undefined);
+      expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' }, expect.any(AbortSignal));
     });
   });
 
@@ -245,6 +245,53 @@ describe('createSchemaRenderer import basics', () => {
       expect(screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length).toBeGreaterThan(0);
     });
     expect(resolveImportUrl).toHaveBeenCalledWith('https://app.local/schema/page.json', './demo-lib.js', undefined);
-    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib.js', as: 'demo' }, undefined);
+    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib.js', as: 'demo' }, expect.any(AbortSignal));
+  });
+
+  it('keeps nested imported helpers shadowed by the nearest import frame', async () => {
+    const importLoader = {
+      load: vi.fn(async (spec: { from: string; as: string }) => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({ ok: true })
+        }),
+        createExpressionHelpers: () => ({
+          label() {
+            return spec.from;
+          }
+        })
+      }))
+    };
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, scopedHostRenderer, textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'scoped-host',
+              'xui:imports': [{ from: 'outer-lib', as: 'demo' }],
+              body: [
+                { type: 'text', text: 'Outer ${$demo.label()}' },
+                {
+                  type: 'scoped-host',
+                  'xui:imports': [{ from: 'inner-lib', as: 'demo' }],
+                  body: [{ type: 'text', text: 'Inner ${$demo.label()}' }]
+                }
+              ]
+            }
+          ]
+        } as any}
+        schemaUrl="https://app.local/schema/page.json"
+        env={{ ...env, importLoader }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Outer outer-lib')).toBeTruthy();
+      expect(screen.getByText('Inner inner-lib')).toBeTruthy();
+    });
   });
 });

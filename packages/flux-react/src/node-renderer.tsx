@@ -18,7 +18,7 @@ import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 import {
   ClassAliasesContext,
 } from './contexts';
-import { useRenderInstancePath, useRendererRuntime, useCurrentForm, useCurrentPage, useCurrentSurfaceRuntime } from './hooks';
+import { useRenderInstancePath, useRendererRuntime, useCurrentForm, useCurrentPage, useCurrentSurfaceRuntime, useCurrentImportFrame } from './hooks';
 import { createHelpers } from './helpers';
 import { createNormalizedActionEvent } from './helpers';
 import { RenderNodes } from './render-nodes';
@@ -47,6 +47,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   scope: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  importFrame?: import('@nop-chaos/flux-core').ImportFrame;
   mountedCid: number;
 }) {
   const runtime = useRendererRuntime();
@@ -299,6 +300,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       nodeInstance={nodeInstance}
       actionScope={activeActionScope}
       componentRegistry={activeComponentRegistry}
+      importFrame={props.importFrame}
       scope={renderScope}
       classAliases={mergedClassAliases}
     >
@@ -315,6 +317,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 }) {
   const runtime = useRendererRuntime();
   const instancePath = useRenderInstancePath();
+  const parentImportFrame = useCurrentImportFrame();
   const mountedCid = useMountedCid(runtime);
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
     nodeId: props.node.id,
@@ -340,6 +343,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const importState = useNodeImports(
     runtime,
     nodeImports,
+    parentImportFrame,
     activeActionScope,
     activeComponentRegistry,
     props.scope,
@@ -367,6 +371,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         scope={renderScope}
         actionScope={activeActionScope}
         componentRegistry={activeComponentRegistry}
+        importFrame={importState.frame}
         mountedCid={mountedCid}
       />
     </NodeErrorBoundary>

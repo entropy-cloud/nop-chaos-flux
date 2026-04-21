@@ -486,6 +486,11 @@ export const formRendererDefinition: RendererDefinition = {
       optional: ['id', 'name']
     }
   },
+  injectedLocals: {
+    '$form': {
+      kind: 'injected-local'
+    }
+  },
   component: FormRenderer,
   regions: ['body', 'actions'],
   fields: [

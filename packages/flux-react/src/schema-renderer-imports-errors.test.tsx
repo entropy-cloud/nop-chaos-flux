@@ -37,7 +37,7 @@ describe('createSchemaRenderer import failures and retries', () => {
     );
 
     await waitFor(() => {
-      expect(notify).toHaveBeenCalledWith('error', 'Imported namespace broken failed to load: loader exploded');
+      expect(notify).toHaveBeenCalledWith('error', 'Imported namespaces failed for $.body[1]: loader exploded');
     });
 
     resolveModule?.({
@@ -120,7 +120,7 @@ describe('createSchemaRenderer import failures and retries', () => {
     render(<Host />);
 
     await waitFor(() => {
-      expect(notify).toHaveBeenCalledWith('error', 'Imported namespace retry failed to load: loader exploded 0');
+      expect(notify).toHaveBeenCalledWith('error', 'Imported namespaces failed for $.body[0]: loader exploded 0');
     });
 
     shouldFail = false;

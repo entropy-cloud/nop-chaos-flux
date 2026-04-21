@@ -3,6 +3,7 @@ import type { Context } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
+  ImportFrame,
   FormRuntime,
   InstanceFrame,
   PageRuntime,
@@ -18,6 +19,7 @@ export const RenderInstancePathContext = createContext<readonly InstanceFrame[] 
 export const ScopeContext = createContext<ScopeRef | null>(null);
 export const ActionScopeContext = createContext<ActionScope | undefined>(undefined);
 export const ComponentRegistryContext = createContext<ComponentHandleRegistry | undefined>(undefined);
+export const ImportFrameContext = createContext<ImportFrame | undefined>(undefined);
 export const FormContext = createContext<FormRuntime | undefined>(undefined);
 export const PageContext = createContext<PageRuntime | undefined>(undefined);
 export const SurfaceContext = createContext<SurfaceRuntime | undefined>(undefined);

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ActionScope,
   ComponentHandleRegistry,
+  ImportFrame,
   NodeInstance,
   RendererRuntime,
   ScopeRef,
@@ -14,6 +15,7 @@ const EMPTY_IMPORT_BINDINGS: Readonly<Record<string, unknown>> = Object.freeze({
 interface AsyncImportState {
   requestKey: symbol | null;
   error?: unknown;
+  frame?: ImportFrame;
   expressionBindings: Readonly<Record<string, unknown>>;
 }
 
@@ -32,12 +34,14 @@ export interface NodeImportsState {
   ready: boolean;
   loading: boolean;
   error?: unknown;
+  frame?: ImportFrame;
   expressionBindings: Readonly<Record<string, unknown>>;
 }
 
 export function useNodeImports(
   runtime: RendererRuntime,
   nodeImports: readonly XuiImportSpec[] | undefined,
+  parentImportFrame: ImportFrame | undefined,
   activeActionScope: ActionScope | undefined,
   activeComponentRegistry: ComponentHandleRegistry | undefined,
   activeScope: ScopeRef,
@@ -45,56 +49,67 @@ export function useNodeImports(
   nodeInstance: NodeInstance
 ): NodeImportsState {
   const hasImports = Boolean(nodeImports?.length && activeActionScope);
-  const activeImportLoader = runtime.env.importLoader;
   const shouldLoad = hasImports;
   const requestKey = useMemo(
-    () => createImportRequestKey(runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope),
-    [runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope]
+    () => createImportRequestKey(runtime, shouldLoad, nodeImports, parentImportFrame?.id, activeActionScope, activeComponentRegistry, activeScope, schemaUrl, nodeInstance.templateNode.id),
+    [runtime, shouldLoad, nodeImports, parentImportFrame?.id, activeActionScope, activeComponentRegistry, activeScope, schemaUrl, nodeInstance.templateNode.id]
   );
   const [asyncState, setAsyncState] = useState<AsyncImportState>(INITIAL_IMPORT_STATE);
   const nodeInstanceRef = useRef(nodeInstance);
+  const frameRef = useRef<ImportFrame | undefined>(undefined);
 
   useEffect(() => {
     nodeInstanceRef.current = nodeInstance;
   }, [nodeInstance]);
 
   useEffect(() => {
-    if (!shouldLoad || !activeActionScope) {
+    if (!shouldLoad || !activeActionScope || !nodeImports?.length) {
+      frameRef.current = undefined;
+      setAsyncState({
+        requestKey,
+        error: undefined,
+        frame: parentImportFrame,
+        expressionBindings: runtime.importStack.currentBindings(parentImportFrame?.id)
+      });
       return;
     }
 
-    const controller = new AbortController();
-    const { signal } = controller;
+    let disposed = false;
 
-    void runtime.ensureImportedNamespaces({
+    void runtime.importStack.push({
+      ownerNodeId: nodeInstance.templateNode.id,
+      parentFrameId: parentImportFrame?.id,
       imports: nodeImports,
       actionScope: activeActionScope,
       componentRegistry: activeComponentRegistry,
       scope: activeScope,
       schemaUrl,
-      nodeInstance: nodeInstanceRef.current
-    }).then(() => {
-      if (signal.aborted) {
+      nodeInstance
+      }).then((frame) => {
+      if (disposed) {
+        if (frame) {
+          runtime.importStack.pop(frame.id);
+        }
         return;
       }
+
+      frameRef.current = frame;
 
       setAsyncState({
         requestKey,
         error: undefined,
-        expressionBindings: runtime.getImportedExpressionBindings({
-          imports: nodeImports,
-          actionScope: activeActionScope,
-          schemaUrl
-        })
+        frame,
+        expressionBindings: runtime.importStack.currentBindings(frame?.id)
       });
     }).catch((error) => {
-      if (signal.aborted) {
+      if (disposed) {
         return;
       }
 
       setAsyncState({
         requestKey,
         error,
+        frame: undefined,
         expressionBindings: EMPTY_IMPORT_BINDINGS
       });
 
@@ -127,14 +142,14 @@ export function useNodeImports(
     });
 
     return () => {
-      controller.abort();
-      runtime.releaseImportedNamespaces({
-        imports: nodeImports,
-        actionScope: activeActionScope,
-        schemaUrl
-      });
+      disposed = true;
+      const frame = frameRef.current;
+      frameRef.current = undefined;
+      if (frame) {
+        runtime.importStack.pop(frame.id);
+      }
     };
-  }, [requestKey, runtime, activeImportLoader, shouldLoad, nodeImports, activeActionScope, activeComponentRegistry, activeScope, schemaUrl]);
+  }, [requestKey, runtime, shouldLoad, nodeImports, parentImportFrame, activeActionScope, activeComponentRegistry, activeScope, schemaUrl, nodeInstance]);
 
   const loading = shouldLoad && asyncState.requestKey !== requestKey;
   const error = shouldLoad && asyncState.requestKey === requestKey ? asyncState.error : undefined;
@@ -143,10 +158,11 @@ export function useNodeImports(
     ready: !shouldLoad || (!loading && !error),
     loading,
     error,
+    frame: shouldLoad && asyncState.requestKey === requestKey ? asyncState.frame : parentImportFrame,
     expressionBindings: shouldLoad
       ? asyncState.requestKey === requestKey
         ? asyncState.expressionBindings
-        : EMPTY_IMPORT_BINDINGS
-      : EMPTY_IMPORT_BINDINGS
+        : runtime.importStack.currentBindings(parentImportFrame?.id)
+      : runtime.importStack.currentBindings(parentImportFrame?.id)
   };
 }

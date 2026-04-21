@@ -9,6 +9,7 @@ import type {
   FormRuntime,
   FormStoreApi,
   FormStoreState,
+  ImportFrame,
   PageRuntime,
   RenderNodeMeta,
   RendererRuntime,
@@ -19,6 +20,7 @@ import {
   ActionScopeContext,
   ComponentRegistryContext,
   FormContext,
+  ImportFrameContext,
   NodeMetaContext,
   PageContext,
   RenderInstancePathContext,
@@ -114,6 +116,10 @@ export function useCurrentActionScope(): ActionScope | undefined {
 
 export function useCurrentComponentRegistry(): ComponentHandleRegistry | undefined {
   return useContext(ComponentRegistryContext);
+}
+
+export function useCurrentImportFrame(): ImportFrame | undefined {
+  return useContext(ImportFrameContext);
 }
 
 export function useRendererEnv() {
