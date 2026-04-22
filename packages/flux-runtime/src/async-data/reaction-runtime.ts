@@ -11,9 +11,9 @@ import type {
   ScopeDependencySet,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { collectRuntimeDependencies } from './node-runtime';
-import { isAbortError } from './error-utils';
-import { createRootDependencySet, scopeChangeHitsDependencies } from './scope-change';
+import { collectRuntimeDependencies } from '../node-runtime';
+import { isAbortError } from '../error-utils';
+import { createRootDependencySet, scopeChangeHitsDependencies } from '../scope-change';
 
 export interface ReactionRegistration {
   id: string;

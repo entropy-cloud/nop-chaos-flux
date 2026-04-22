@@ -1,6 +1,6 @@
 import type { DataSourceState, ScopeRef } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
-import { publishOwnerStatus } from './status-owner';
+import { publishOwnerStatus } from '../status-owner';
 
 export function writeStatusToScope(scope: ScopeRef, statusPath: string | undefined, state: DataSourceState): void {
   const loading = state.fetchStatus === 'fetching';

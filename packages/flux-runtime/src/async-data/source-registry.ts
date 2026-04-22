@@ -11,7 +11,7 @@ import type {
 import { normalizeRootPaths } from '@nop-chaos/flux-core';
 import type { ApiCacheStore } from './api-cache';
 import { createDataSourceController, createFormulaDataSourceController } from './data-source-runtime';
-import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHitsDependencies } from './scope-change';
+import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHitsDependencies } from '../scope-change';
 
 interface RuntimeSourceEntry {
   id: string;

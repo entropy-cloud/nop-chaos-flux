@@ -20,7 +20,7 @@ import {
   getCompiledValidationNode,
 } from '@nop-chaos/flux-core';
 import { createFormStore } from './form-store';
-import { createAsyncGovernanceStore } from './async-governance';
+import { createAsyncGovernanceStore } from './async-data/async-governance';
 import { buildFormOwnerRuntime } from './form-runtime-owner';
 import { buildInitialFieldState } from './form-runtime-state';
 import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status';

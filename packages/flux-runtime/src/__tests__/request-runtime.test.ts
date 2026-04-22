@@ -9,7 +9,7 @@ import {
   finalizeApiRequest,
   prepareApiData,
   prepareApiRequestForExecution
-} from '../request-runtime';
+} from '../async-data/request-runtime';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 function createTestScope(data: Record<string, any>): ScopeRef {

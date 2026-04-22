@@ -7,7 +7,7 @@ import type {
   ScopeRef,
   StaticRuntimeValue
 } from '@nop-chaos/flux-core';
-import { collectRuntimeDependencies } from './node-runtime';
+import { collectRuntimeDependencies } from '../node-runtime';
 
 export { collectRuntimeDependencies };
 

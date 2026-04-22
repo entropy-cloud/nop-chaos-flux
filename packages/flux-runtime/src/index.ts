@@ -8,4 +8,4 @@ export { publishOwnerStatus } from './status-owner';
 export { createProjectedScopeStore } from './projected-scope-store';
 export {
   executeApiObject,
-} from './request-runtime';
+} from './async-data/request-runtime';

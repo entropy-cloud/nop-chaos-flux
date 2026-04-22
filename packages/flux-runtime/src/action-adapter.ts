@@ -10,8 +10,8 @@ import type {
 } from '@nop-chaos/flux-core';
 import { resolveRequestControl } from '@nop-chaos/flux-action-core';
 import { isAbortError } from './error-utils';
-import { applyResponseDataPath, executeApiSchema } from './request-runtime';
-import type { ApiRequestExecutor } from './request-runtime';
+import { applyResponseDataPath, executeApiSchema } from './async-data/request-runtime';
+import type { ApiRequestExecutor } from './async-data/request-runtime';
 
 export interface ActionAdapterInput {
   getEnv: () => RendererEnv;

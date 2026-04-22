@@ -29,7 +29,7 @@ import {
   trackApiRequestDependencies,
   writeDataToScope
 } from './data-source-runtime-utils';
-import { isAbortError } from './error-utils';
+import { isAbortError } from '../error-utils';
 import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
 
 export function createFormulaDataSourceController(input: {
