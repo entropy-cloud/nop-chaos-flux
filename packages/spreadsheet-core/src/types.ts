@@ -1,3 +1,14 @@
+export interface SpreadsheetHostStatusSummary {
+  kind: 'spreadsheet';
+  dirty: boolean;
+  busy: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  readonly: boolean;
+  activeSheetId?: string;
+  selectionKind?: string;
+}
+
 export interface SpreadsheetDocument {
   id: string;
   kind: string;

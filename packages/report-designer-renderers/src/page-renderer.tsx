@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, RenderNodeInput, ReportDesignerHostStatusSummary } from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, RenderNodeInput } from '@nop-chaos/flux-core';
+import type { ReportDesignerHostStatusSummary } from '@nop-chaos/report-designer-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, WorkbenchShell } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';

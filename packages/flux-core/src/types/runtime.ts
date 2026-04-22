@@ -123,48 +123,8 @@ export interface TabsStatusSummary {
   itemCount: number;
 }
 
-export interface DesignerHostStatusSummary {
-  kind: 'designer';
-  dirty: boolean;
-  busy: boolean;
-  canUndo: boolean;
-  canRedo: boolean;
-  selectionKind: 'node' | 'edge' | 'none';
-  selectionCount: number;
-}
-
-export interface SpreadsheetHostStatusSummary {
-  kind: 'spreadsheet';
-  dirty: boolean;
-  busy: boolean;
-  canUndo: boolean;
-  canRedo: boolean;
-  readonly: boolean;
-  activeSheetId?: string;
-  selectionKind?: string;
-}
-
-export interface ReportDesignerHostStatusSummary {
-  kind: 'report-designer';
-  dirty: boolean;
-  busy: boolean;
-  canUndo: boolean;
-  canRedo: boolean;
-  previewRunning: boolean;
-  selectionKind?: string;
-  fieldSourceCount: number;
-}
-
-export interface WordEditorHostStatusSummary {
-  kind: 'word-editor';
-  dirty: boolean;
-  busy: boolean;
-  canUndo: boolean;
-  canRedo: boolean;
-  wordCount: number;
-  datasetCount: number;
-  chartCount: number;
-  codeCount: number;
+export interface DomainHostStatusSummary {
+  kind: string;
 }
 
 export interface DataSourceStatusSummary {

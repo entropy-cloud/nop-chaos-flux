@@ -1,4 +1,5 @@
 export type {
+  ReportDesignerHostStatusSummary,
   ReportSelectionTargetKind,
   ReportSelectionTarget,
   MetadataBag,

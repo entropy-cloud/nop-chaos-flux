@@ -1,4 +1,5 @@
 export type {
+  SpreadsheetHostStatusSummary,
   SpreadsheetDocument,
   SpreadsheetViewportSnapshot,
   WorkbookDocument,

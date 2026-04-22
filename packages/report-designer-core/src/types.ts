@@ -4,6 +4,17 @@ import type {
   SpreadsheetRange,
 } from '@nop-chaos/spreadsheet-core';
 
+export interface ReportDesignerHostStatusSummary {
+  kind: 'report-designer';
+  dirty: boolean;
+  busy: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  previewRunning: boolean;
+  selectionKind?: string;
+  fieldSourceCount: number;
+}
+
 export type ReportSelectionTargetKind = 'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range';
 
 export type ReportSelectionTarget =

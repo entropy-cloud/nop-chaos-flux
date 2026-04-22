@@ -1,4 +1,4 @@
-import type { SchemaInput } from '@nop-chaos/flux-core';
+import type { DomainHostStatusSummary, SchemaInput } from '@nop-chaos/flux-core';
 
 export interface GraphDocument {
   id: string;
@@ -337,4 +337,14 @@ export interface TreeDomainAdapter {
   kind: string;
   importToTree(external: Record<string, unknown>): TreeDocument;
   exportFromTree(tree: TreeDocument): Record<string, unknown>;
+}
+
+export interface DesignerHostStatusSummary extends DomainHostStatusSummary {
+  kind: 'designer';
+  dirty: boolean;
+  busy: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  selectionKind: 'node' | 'edge' | 'none';
+  selectionCount: number;
 }

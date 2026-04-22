@@ -1,3 +1,5 @@
+export type { WordEditorHostStatusSummary } from './host-status.js'
+
 export { CanvasEditorBridge } from './canvas-editor-bridge.js'
 export type { CanvasEditorBridgeOptions, IRangeStyle } from './canvas-editor-bridge.js'
 export { createEditorStore } from './editor-store.js'
