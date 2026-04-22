@@ -12,7 +12,7 @@ import type {
   ValidationError,
   ValidationRule
 } from '@nop-chaos/flux-core';
-import { resolveRequestControl } from './action-runtime-core';
+import { resolveRequestControl } from '@nop-chaos/flux-action-core';
 import { isAbortError } from './error-utils';
 import { applyResponseDataPath, executeApiSchema } from './request-runtime';
 import { createValidationError } from './validation';

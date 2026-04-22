@@ -11,7 +11,7 @@ import type {
   SchemaValue
 } from '@nop-chaos/flux-core';
 import { isPlainObject, setIn } from '@nop-chaos/flux-core';
-import { withRetry, type RetryResult } from './operation-control';
+import { withRetry, type RetryResult } from '@nop-chaos/flux-action-core';
 import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
 import { stableStringify } from './api-cache';
 
