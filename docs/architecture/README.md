@@ -35,6 +35,7 @@ Start here for contract precedence and primitive/core-boundary rules.
 - `flux-core.md` - current codebase-wide architecture baseline and high-level runtime composition
 - `renderer-runtime.md` - renderer/runtime/React integration contract; local precedence for renderer behavior
 - `flux-runtime-module-boundaries.md` - package ownership and runtime placement rules
+- `data-domain-owner.md` - normative owner-semantics architecture for data ownership, validation ownership, and staged/live publish boundaries
 - `action-algebra-formal-spec.md`
 - `action-scope-and-imports.md`
 - `api-data-source.md`
@@ -76,6 +77,7 @@ They should:
 
 - rendering and slots: `scoped-render-slots.md`, `component-resolution.md`
 - value and field families: `value-adaptation-and-detail-field.md`, `variant-field.md`, `object-field.md`, `array-field.md`, `composite-value-owner-clean-slate.md`
+- owner semantics: `data-domain-owner.md`, `scope-ownership-and-isolation.md`, `surface-owner.md`, `form-validation.md`
 - UI and styling: `styling-system.md`, `renderer-markers-and-selectors.md`, `theme-compatibility.md`, `surface-owner.md`, `field-frame.md`
 - validation/performance/security/tooling specialties: `dependency-tracking.md`, `table-row-identity-and-scope-performance.md`, `schema-file-validator.md`, `debugger-runtime.md`, `playground-experience.md`, `security-design-requirements.md`, `performance-design-requirements.md`
 

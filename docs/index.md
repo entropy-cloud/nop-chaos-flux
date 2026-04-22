@@ -34,6 +34,7 @@ Choose the smallest document that matches the task.
 | Understand action control flow such as `when`, `then`, `onError`, `parallel`, result classes, and chained result context | `docs/architecture/action-algebra-formal-spec.md` | `docs/architecture/action-scope-and-imports.md` |
 | 设计 action 可视化编排、optional step、graph lowering，或判断是否要把 `parallel` 改成 `steps` | `docs/architecture/action-graph-authoring.md` | `docs/architecture/action-algebra-formal-spec.md` |
 | 设计值转换、字段 draft 生命周期、组合式详情字段/详情视图，或判断哪些控件应采用 `transformInAction` / `transformOutAction` / `validateValueAction` 的 staged owner 语义 | `docs/architecture/value-adaptation-and-detail-field.md` | `docs/architecture/action-scope-and-imports.md`, `docs/architecture/renderer-runtime.md` |
+| 设计数据 owner、validation 与 staged/live 编辑边界，或判断 `form` / `detail-*` / `row` / `dialog` / `loop` 各自是不是独立数据域 | `docs/architecture/data-domain-owner.md` | `docs/architecture/form-validation.md`, `docs/architecture/scope-ownership-and-isolation.md`, `docs/architecture/surface-owner.md` |
 | 从零设计 `object-field` / `variant-field` / `array-field` / `detail-view` / `table` 的统一运行时，并明确每个控件如何取值、校验、提交 | `docs/architecture/composite-value-owner-clean-slate.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/form-validation.md`, `docs/architecture/table-row-identity-and-scope-performance.md` |
 | 设计 field binding、`name` vs `value`、shared field schema base，或判断哪些字段属于 `props` / `meta` | `docs/architecture/field-binding-and-renderer-contract.md` | `docs/architecture/field-metadata-slot-modeling.md`, `docs/architecture/renderer-runtime.md` |
 | 设计多态值字段、`string | object`/`string | ActionSchema` 这类 union-like 编辑、自动识别变体，或切换不同编辑器 | `docs/architecture/variant-field.md` | `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/action-scope-and-imports.md` |
@@ -124,6 +125,7 @@ Architecture intent lives primarily in:
 - `docs/architecture/schema-file-validator.md`
 - `docs/architecture/frontend-programming-model.md`
 - `docs/architecture/flux-core.md`
+- `docs/architecture/data-domain-owner.md`
 - `docs/architecture/action-algebra-formal-spec.md`
 - `docs/architecture/action-graph-authoring.md`
 - `docs/architecture/action-interaction-state.md`
