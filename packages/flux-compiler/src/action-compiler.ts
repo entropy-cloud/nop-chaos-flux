@@ -8,46 +8,7 @@ import type {
   CompiledRuntimeValue,
   ExpressionCompiler,
   ExpressionCompileOptions,
-  SchemaValue,
 } from '@nop-chaos/flux-core';
-
-const ACTION_PAYLOAD_RESERVED_KEYS = new Set([
-  'action',
-  'targetId',
-  'componentId',
-  'componentName',
-  'componentPath',
-  'formId',
-  'dialogId',
-  'dataPath',
-  'value',
-  'values',
-  'when',
-  'parallel',
-  'control',
-  'timeout',
-  'retry',
-  'debounce',
-  'continueOnError',
-  'then',
-  'onError',
-  'onSettled',
-  'args',
-  '_targetCid',
-  '_targetTemplateId',
-]);
-
-function extractLegacyTopLevelPayload(action: ActionSchema): Record<string, SchemaValue> | undefined {
-  const payloadEntries = Object.entries(action).filter(
-    ([key]) => !ACTION_PAYLOAD_RESERVED_KEYS.has(key)
-  );
-
-  if (payloadEntries.length === 0) {
-    return undefined;
-  }
-
-  return Object.fromEntries(payloadEntries) as Record<string, SchemaValue>;
-}
 
 function compilePayload(
   action: ActionSchema,
@@ -58,19 +19,6 @@ function compilePayload(
 
   if (action.args !== undefined) {
     payload.args = compiler.compileValue<Record<string, unknown>>(action.args, options);
-  } else {
-    const legacy = extractLegacyTopLevelPayload(action);
-    if (legacy !== undefined) {
-      payload.args = compiler.compileValue<Record<string, unknown>>(legacy, options);
-    }
-  }
-
-  if (action.value !== undefined) {
-    payload.value = compiler.compileValue<SchemaValue>(action.value, options);
-  }
-
-  if (action.values !== undefined) {
-    payload.values = compiler.compileValue<Record<string, SchemaValue>>(action.values, options);
   }
 
   return payload;
@@ -83,7 +31,6 @@ function compileTargeting(action: ActionSchema): CompiledActionTargeting {
     targetId: action.targetId,
     componentId: action.componentId,
     componentName: action.componentName,
-    componentPath: action.componentPath,
     formId: action.formId,
     dialogId: action.dialogId,
     dataPath: action.dataPath,
@@ -152,8 +99,6 @@ function compileActionNode(
 function isPayloadFullyStatic(payload: CompiledActionPayload): boolean {
   const values = [
     payload.args,
-    payload.value,
-    payload.values,
   ];
 
   return values.every((v) => v === undefined || v.isStatic);

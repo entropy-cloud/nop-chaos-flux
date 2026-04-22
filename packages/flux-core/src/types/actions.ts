@@ -1,23 +1,41 @@
 import type { NodeInstance, InstanceFrame } from './node-identity';
-import type { SchemaObject, SchemaValue, SchemaPath, OperationControlConfig } from './schema';
+import type { ApiSchema, SchemaObject, SchemaValue, SchemaPath, OperationControlConfig } from './schema';
 import type { ScopeRef } from './scope';
 import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer';
 import type { FormRuntime, PageRuntime, SurfaceRuntime } from './runtime';
 import type { CompiledRuntimeValue } from './compilation';
 
-export interface ActionSchema extends SchemaObject {
-  action: string;
+export interface SetValueActionArgs extends SchemaObject {
+  path?: string;
+  value: SchemaValue;
+}
+
+export interface SetValuesActionArgs extends SchemaObject {
+  path?: string;
+  values: Record<string, SchemaValue>;
+}
+
+export interface NavigateActionArgs extends SchemaObject {
+  url?: SchemaValue;
+  replace?: SchemaValue;
+  back?: SchemaValue;
+}
+
+export interface ShowToastActionArgs extends SchemaObject {
+  level?: SchemaValue;
+  message?: SchemaValue;
+}
+
+export interface ActionShapeFields extends SchemaObject {
+  action?: string;
   _targetCid?: number;
   _targetTemplateId?: string;
   targetId?: string;
   componentId?: string;
   componentName?: string;
-  componentPath?: string;
   formId?: string;
   dialogId?: string;
   dataPath?: string;
-  value?: SchemaValue;
-  values?: Record<string, SchemaValue>;
   args?: Record<string, SchemaValue>;
   control?: OperationControlConfig;
   timeout?: number;
@@ -29,6 +47,91 @@ export interface ActionSchema extends SchemaObject {
   then?: ActionSchema | ActionSchema[];
   onError?: ActionSchema | ActionSchema[];
   onSettled?: ActionSchema | ActionSchema[];
+}
+
+export interface AjaxActionSchema extends ActionShapeFields {
+  action: 'ajax';
+  args: ApiSchema;
+}
+
+export interface SubmitFormActionSchema extends ActionShapeFields {
+  action: 'submitForm';
+  args: ApiSchema;
+}
+
+export interface OpenDialogActionSchema extends ActionShapeFields {
+  action: 'openDialog';
+  args: Record<string, SchemaValue>;
+}
+
+export interface OpenDrawerActionSchema extends ActionShapeFields {
+  action: 'openDrawer';
+  args: Record<string, SchemaValue>;
+}
+
+export interface CloseDialogActionSchema extends ActionShapeFields {
+  action: 'closeDialog';
+}
+
+export interface CloseDrawerActionSchema extends ActionShapeFields {
+  action: 'closeDrawer';
+}
+
+export interface RefreshTableActionSchema extends ActionShapeFields {
+  action: 'refreshTable';
+}
+
+export interface RefreshSourceActionSchema extends ActionShapeFields {
+  action: 'refreshSource';
+  targetId: string;
+}
+
+export interface SetValueActionSchema extends ActionShapeFields {
+  action: 'setValue';
+  args: SetValueActionArgs;
+}
+
+export interface SetValuesActionSchema extends ActionShapeFields {
+  action: 'setValues';
+  args: SetValuesActionArgs;
+}
+
+export interface ShowToastActionSchema extends ActionShapeFields {
+  action: 'showToast';
+  args: ShowToastActionArgs;
+}
+
+export interface NavigateActionSchema extends ActionShapeFields {
+  action: 'navigate';
+  args: NavigateActionArgs;
+}
+
+export interface ComponentActionSchema extends ActionShapeFields {
+  action: `component:${string}`;
+  args?: Record<string, SchemaValue>;
+}
+
+export interface NamespacedActionSchema extends ActionShapeFields {
+  action: `${string}:${string}`;
+  args?: Record<string, SchemaValue>;
+}
+
+export type BuiltInActionSchema =
+  | AjaxActionSchema
+  | SubmitFormActionSchema
+  | OpenDialogActionSchema
+  | OpenDrawerActionSchema
+  | CloseDialogActionSchema
+  | CloseDrawerActionSchema
+  | RefreshTableActionSchema
+  | RefreshSourceActionSchema
+  | SetValueActionSchema
+  | SetValuesActionSchema
+  | ShowToastActionSchema
+  | NavigateActionSchema;
+
+export interface ActionSchema extends ActionShapeFields {
+  action: string;
 }
 
 export interface ActionResult {
@@ -156,8 +259,6 @@ export interface ActionMonitorPayload {
  */
 export interface CompiledActionPayload {
   args?: CompiledRuntimeValue<Record<string, unknown>>;
-  value?: CompiledRuntimeValue<SchemaValue>;
-  values?: CompiledRuntimeValue<Record<string, SchemaValue>>;
 }
 
 /**
@@ -170,7 +271,6 @@ export interface CompiledActionTargeting {
   targetId?: string;
   componentId?: string;
   componentName?: string;
-  componentPath?: string;
   formId?: string;
   dialogId?: string;
   dataPath?: string;

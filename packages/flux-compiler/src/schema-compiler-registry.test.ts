@@ -215,8 +215,10 @@ describe('createSchemaCompiler', () => {
       type: 'action-button',
       onClick: {
         action: 'setValue',
-        componentPath: 'message',
-        value: 'clicked'
+        args: {
+          path: 'message',
+          value: 'clicked'
+        }
       }
     });
     const node = compiled.root as any;
@@ -228,8 +230,14 @@ describe('createSchemaCompiler', () => {
       nodes: [
         expect.objectContaining({
           action: 'setValue',
-          targeting: expect.objectContaining({
-            componentPath: 'message'
+          payload: expect.objectContaining({
+            args: expect.objectContaining({
+              isStatic: true,
+              value: expect.objectContaining({
+                path: 'message',
+                value: 'clicked'
+              })
+            })
           })
         })
       ]

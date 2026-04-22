@@ -64,11 +64,22 @@ function injectDefaultArgs(
 ): ActionSchema | ActionSchema[] {
   const schemaPayload = payload as Record<string, SchemaValue>;
 
-  if (Array.isArray(actionSchema)) {
-    return actionSchema.map((entry) => (entry.args === undefined ? { ...entry, args: schemaPayload } : entry));
+  function supportsArgsInjection(action: ActionSchema) {
+    return action.action !== 'closeDialog'
+      && action.action !== 'closeDrawer'
+      && action.action !== 'refreshTable'
+      && action.action !== 'refreshSource';
   }
 
-  return actionSchema.args === undefined ? { ...actionSchema, args: schemaPayload } : actionSchema;
+  if (Array.isArray(actionSchema)) {
+    return actionSchema.map((entry) => (entry.args === undefined && supportsArgsInjection(entry)
+      ? { ...entry, args: schemaPayload }
+      : entry));
+  }
+
+  return actionSchema.args === undefined && supportsArgsInjection(actionSchema)
+    ? { ...actionSchema, args: schemaPayload }
+    : actionSchema;
 }
 
 function toValidationIssues(error: unknown): AdapterValidationIssue[] {

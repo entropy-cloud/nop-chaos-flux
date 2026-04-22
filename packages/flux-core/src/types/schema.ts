@@ -1,4 +1,4 @@
-import type { ActionSchema } from './actions';
+import type { ActionSchema, ActionShapeFields } from './actions';
 
 export type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
@@ -132,7 +132,7 @@ export interface BaseDataSourceSchema extends BaseSchema {
   mergeKey?: string;
 }
 
-export interface SourceActionSchema extends Omit<ActionSchema, 'action'> {
+export interface SourceActionSchema extends ActionShapeFields {
   action?: string;
   formula?: SchemaValue;
 }
@@ -141,7 +141,7 @@ export interface SourceSchema extends SourceActionSchema {
   type: 'source';
 }
 
-export interface FormulaDataSourceSchema extends BaseDataSourceSchema, Omit<ActionSchema, 'action'> {
+export interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionShapeFields {
   formula: SchemaValue;
   action?: never;
   api?: never;

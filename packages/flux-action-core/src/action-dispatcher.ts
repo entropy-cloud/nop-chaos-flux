@@ -22,8 +22,8 @@ import {
   createTimedOutResult,
   createBranchEvaluationBindings,
   evaluateActionArgs,
-  evaluateActionValue,
-  evaluateActionValues,
+  resolveSetValuePayload,
+  resolveSetValuesPayload,
   getNumericControl,
   getRetryControl,
   isFailureClass,
@@ -190,14 +190,17 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
   ): Promise<ActionResult | undefined> {
     switch (action.action) {
       case 'setValue': {
-        const targetPath = action.targeting.componentPath ?? action.targeting.componentId ?? '';
-        const evaluated = evaluateActionValue(action, ctx, evaluator);
-        const result = await adapter.setValue(targetPath, evaluated, ctx, action.targeting);
+        const payload = resolveSetValuePayload(action, ctx, evaluator);
+        const targetPath = payload.path ?? action.targeting.componentId ?? '';
+        const result = await adapter.setValue(targetPath, payload.value, ctx, action.targeting);
         return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
       }
       case 'setValues': {
-        const evaluatedValues = evaluateActionValues(action, ctx, evaluator);
-        const result = await adapter.setValues(evaluatedValues, ctx, action.targeting);
+        const payload = resolveSetValuesPayload(action, ctx, evaluator);
+        const result = await adapter.setValues(payload.values, ctx, {
+          ...action.targeting,
+          targetId: action.targeting.targetId
+        });
         return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
       }
       case 'ajax': {
@@ -260,7 +263,7 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
         return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
       }
       case 'refreshSource': {
-        const sourceId = action.targeting.targetId ?? action.targeting.componentId ?? action.targeting.componentPath;
+        const sourceId = action.targeting.targetId;
         if (!sourceId) {
           return finishAction(
             { ...actionPayload, dispatchMode: 'built-in' },

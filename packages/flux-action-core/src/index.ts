@@ -18,8 +18,6 @@ export {
   evaluateInActionContext,
   evaluateCompiledInActionContext,
   evaluateActionArgs,
-  evaluateActionValue,
-  evaluateActionValues,
   shouldRunActionWhen,
   isAbortError,
   type ActionResultClass,

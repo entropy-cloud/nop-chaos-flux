@@ -39,7 +39,6 @@ export function createActionKey(action: CompiledActionNode, ctx: ActionContext):
     ? (args as Record<string, unknown>).url as string
     : '';
   const target = action.targeting.targetId
-    ?? action.targeting.componentPath
     ?? action.targeting.componentId
     ?? action.targeting.formId
     ?? action.targeting.dialogId
@@ -295,16 +294,36 @@ export function evaluateActionArgs(action: CompiledActionNode, ctx: ActionContex
   return evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.args, ctx, evaluator);
 }
 
-export function evaluateActionValue(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator): unknown {
-  return action.payload.value === undefined
-    ? undefined
-    : evaluateCompiledInActionContext(action.payload.value, ctx, evaluator);
+export function resolveSetValuePayload(
+  action: CompiledActionNode,
+  ctx: ActionContext,
+  evaluator: ActionEvaluator
+): { path?: string; value: unknown } {
+  const args = evaluateActionArgs(action, ctx, evaluator);
+  if (!args || !Object.prototype.hasOwnProperty.call(args, 'value')) {
+    throw new Error('setValue requires args.value');
+  }
+
+  return {
+    path: typeof args.path === 'string' ? args.path : undefined,
+    value: args.value
+  };
 }
 
-export function evaluateActionValues(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator): Record<string, unknown> {
-  return action.payload.values
-    ? evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.values, ctx, evaluator)
-    : {};
+export function resolveSetValuesPayload(
+  action: CompiledActionNode,
+  ctx: ActionContext,
+  evaluator: ActionEvaluator
+): { path?: string; values: Record<string, unknown> } {
+  const args = evaluateActionArgs(action, ctx, evaluator);
+  if (!args || !args.values || typeof args.values !== 'object' || Array.isArray(args.values)) {
+    throw new Error('setValues requires args.values');
+  }
+
+  return {
+    path: typeof args.path === 'string' ? args.path : undefined,
+    values: args.values as Record<string, unknown>
+  };
 }
 
 export function shouldRunActionWhen(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator): boolean {
