@@ -203,14 +203,14 @@ Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/a
 - [x] 确认 `submitForm` 跟随 `ajax` 统一到 `args: ApiSchema`
 - [x] 将 `openDialog` / `openDrawer` 的推荐 payload contract 迁移为 `args`
 - [x] 为 `setValue` / `setValues` 制定明确策略：
-  - 方案 A: 保留 `value` / `values` 作为 narrower built-in carriers
-  - 方案 B: 迁移为 `args` DTO，但文档清楚标明其 patch semantics
+  - 历史方案 A: 保留 `value` / `values` 作为 narrower built-in carriers（已过时）
+  - 当前结论: 迁移为 `args` DTO，并在 active docs 中清楚标明其 patch semantics
 - [x] 为 legacy `api` / `dialog` / `drawer` / top-level payload 写兼容与退役策略
 
 Exit Criteria:
 
 - [x] `ajax` 的推荐写法已收敛到 `action + args`
-- [x] 文档能清楚回答“哪些 built-in action 仍然不是纯 `action + args`，为什么”
+- [x] 文档能清楚回答 payload 如何统一到 `args`，以及 targeting/control-flow 为什么仍保留独立字段族
 
 ### Phase 6 - Enhanced ActionMonitor (Effect Observability)
 
@@ -419,6 +419,6 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- `setValue` / `setValues` 继续保留 specialized carrier；如未来仍要改成 `args` DTO，应另开 focused write-action contract plan
+- `setValue` / `setValues` 的后续 write-action contract 已收敛到 `args` narrow DTO；本计划原先“keep specialized carrier”的结论已被后续文档与实现替代，应以当前 active docs 为准
 - 若 `SourceSchema` / `DataSourceSchema` 也需要同步切到 compiled action IR，则归入 successor convergence plan，而不是隐含留在本计划内
 - 若需要 ActionTrace / replay / trace-tree DevTools 能力，另开独立 observability plan，不再回流到本计划

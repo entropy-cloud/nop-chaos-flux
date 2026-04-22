@@ -27,6 +27,8 @@ If this document conflicts with the top-level programming-model document about p
 
 `Action Algebra` is the runtime system that composes, sequences, branches, aggregates, and classifies `Capability` dispatch through `ActionSchema` and `ActionResult`.
 
+It belongs inside the `Flux` `Execution Model` as a derived runtime system. It is neither a peer primitive nor an external authoring-layer concern.
+
 It answers questions that `Capability` does not answer:
 
 - when a step is skipped
@@ -133,42 +135,58 @@ interface CompiledActionNode {
 | Category | Compiled Form | Rationale |
 |----------|--------------|-----------|
 | `when` | `CompiledRuntimeValue<boolean>` | Expression evaluated at dispatch time |
-| `args`, `api`, `dialog`, `drawer`, `value`, `values` | `CompiledRuntimeValue<T>` | Payload fields with potential dynamic values |
-| `targetId`, `componentId`, `componentPath`, `formId`, `dialogId`, etc. | Original values (uncompiled) | Typically static identifiers |
+| `args` | `CompiledRuntimeValue<Record<string, unknown>>` | Payload is authored through one explicit carrier and may contain dynamic values |
+| `targetId`, `componentId`, `formId`, `dialogId`, `dataPath`, etc. | Original values (uncompiled) | Targeting and publication fields are structural selectors, not runtime value payloads |
 | `timeout`, `retry`, `debounce`, `continueOnError`, `control` | Original values (uncompiled) | Static execution control config |
 | `then`, `onError`, `onSettled`, `parallel` | `CompiledActionNode[]` | Recursive branch compilation |
 
 ### Compiler Lowering Rules
 
 1. `when`: Compile the expression string to `CompiledRuntimeValue<boolean>`. At dispatch, evaluate and skip if false.
-2. `args`: Compile to `CompiledRuntimeValue<Record<string, unknown>>`. If `args` is absent, extract and compile legacy top-level payload.
-3. `api`, `dialog`, `drawer`, `value`, `values`: Compile each to its typed `CompiledRuntimeValue` if present.
-4. `then`, `onError`, `onSettled`, `parallel`: Recursively compile each branch action to `CompiledActionNode[]`.
-5. Targeting and control fields are passed through unchanged as they are typically static configuration.
+2. `args`: Compile to `CompiledRuntimeValue<Record<string, unknown>>`.
+3. `then`, `onError`, `onSettled`, `parallel`: Recursively compile each branch action to `CompiledActionNode[]`.
+4. Targeting and control fields are passed through unchanged because they are structural configuration, not expression payload.
 
-### Legacy Top-Level Payload Fallback
+Reasons for this choice:
 
-For compatibility, if `args` is absent, the compiler extracts non-reserved top-level fields and compiles them as the `args` payload. This supports existing schemas that use:
+1. one payload carrier keeps action parsing and diagnostics simple
+2. payload and targeting stay separate, so authors can tell whether a field changes data or chooses a target
+3. compile-time action validation becomes narrower because each built-in action can demand one DTO shape under `args`
+4. runtime execution no longer needs fallback shape inference, which reduces branching and ambiguity
 
-```json
-{
-  "action": "showToast",
-  "level": "success",
-  "message": "Saved"
-}
-```
-
-The recommended authoring form remains:
+For write actions, the authoring baseline is also `args`-first:
 
 ```json
 {
-  "action": "showToast",
+  "action": "setValue",
   "args": {
-    "level": "success",
-    "message": "Saved"
+    "path": "config.host",
+    "value": "127.0.0.1"
   }
 }
 ```
+
+```json
+{
+  "action": "setValues",
+  "args": {
+    "path": "config",
+    "values": {
+      "host": "127.0.0.1",
+      "port": 8080
+    }
+  }
+}
+```
+
+`setValues.args.path` defines the base path. When present, keys inside `args.values` are relative to that base path. Without `args.path`, `args.values` keys are ordinary target paths.
+
+Reasons for this choice:
+
+1. `setValue` and `setValues` share the same mental model: optional base path plus write payload
+2. `path` is shorter and matches the existing runtime vocabulary used by scope reads, writes, validation, and dependency tracking
+3. `dataPath` is reserved for other semantics such as API response publication, so reusing it here would blur two different concepts
+4. `setValues.args.path` allows concise subtree patching without forcing every patch key to repeat the same prefix
 
 ### Static Optimization Hint
 
@@ -190,6 +208,15 @@ Current typed schema fields already include control-flow carriers such as:
 - `onError`
 
 Built-in platform actions use plain camelCase selectors such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`.
+
+`args` is the only author-visible payload carrier.
+
+Reasons for this choice:
+
+1. one payload carrier reduces schema surface area and author confusion
+2. built-in actions, component actions, and namespace actions all follow the same payload entry point
+3. control-flow fields remain visually distinct from payload fields, which keeps action graphs readable
+4. runtime and compiler can reject malformed actions earlier because they do not need to guess which top-level fields were intended as payload
 
 Instance and imported capabilities keep explicit selector forms such as `component:<method>` and `namespace:method`.
 

@@ -519,11 +519,10 @@ Authoring rule:
 - event entry points such as `onClick`, `onChange`, `submitAction`, and `reaction.actions` should accept one root `ActionSchema` object
 - action lists remain a runtime convenience or a lowered internal form, not the preferred authoring root shape
 
-Runtime compatibility note:
+Current runtime baseline:
 
-- the dispatcher now evaluates `args` when present
-- if `args` is omitted, namespaced actions also treat non-reserved top-level action fields as payload
-- that compatibility path keeps existing schemas such as `{ action: 'designer:addNode', nodeType: 'task' }` working while newer shared docs can still prefer `args`
+- the dispatcher evaluates payload from `args`
+- namespaced actions follow the same payload rule as built-in and component actions: payload lives under `args`
 - `when` now acts as a structured precondition; a false result returns a normal `ActionResult` with `skipped: true`
 - `parallel` now runs child actions with `Promise.allSettled`-style aggregate semantics and returns an aggregate `ActionResult` with `results` in stable input order
 - `retry` now supports a first-cut fixed-count/fixed-delay policy and returns `attempts` on the final `ActionResult`

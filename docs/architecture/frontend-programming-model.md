@@ -104,6 +104,38 @@ A platform built on `Flux` should be understood as four layers:
 
 `Flux` is the execution core of the platform, not the whole platform.
 
+The four platform layers describe end-to-end ownership only. They must not be confused with the internal taxonomy used inside the `Flux` `Execution Model`.
+
+## Execution-Model Taxonomy
+
+Inside the `Flux` `Execution Model`, concepts fall into three categories:
+
+| Category | Meaning |
+| --- | --- |
+| `Core Primitive` | an irreducible semantic category in the closed primitive set |
+| `Primitive-Owned Surface` | an author-visible or evaluator-visible surface that expresses one primitive without becoming a new primitive |
+| `Derived Runtime System` | a stable runtime system composed from the primitive set |
+
+This taxonomy is internal to the `Flux` `Execution Model`. It is not a second platform-layer stack.
+
+Examples:
+
+| Concept | Platform layer | Execution-model category |
+| --- | --- | --- |
+| JSON/XML authoring schema | `Authoring Model` | not part of execution-model taxonomy |
+| `Final Execution Schema` | boundary into `Flux` `Execution Model` | assembled execution contract, not a primitive |
+| expression and template interpolation | `Flux` `Execution Model` | `Primitive-Owned Surface` of `Value` |
+| `Action Algebra` | `Flux` `Execution Model` | `Derived Runtime System` above `Capability` |
+| `ApiSchema` | `Flux` `Execution Model` | declarative contract surface around `Resource` |
+| `Operation Control` | `Flux` `Execution Model` | `Derived Runtime System` |
+| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | `Flux` `Execution Model` | `Derived Runtime System` |
+| CRDT / OT / domain bridge / graph engine | host and domain runtimes | outside `Flux` core |
+
+Two clarifications are required:
+
+1. `Action Algebra` is inside `Flux` execution, but outside the primitive closure.
+2. authoring syntaxes such as JSON or XML stay outside `Flux` core even when they eventually compile into `Final Execution Schema`.
+
 Key rule:
 
 > if a problem can be solved by structure transformation before runtime, it should not be promoted into the `Flux` runtime surface.
@@ -271,6 +303,8 @@ The following systems are important, but they are derived from the primitive set
 | debugger runtime and complex host wiring | inspection, tooling, and host protocol layers | `docs/architecture/debugger-runtime.md`, `docs/architecture/complex-control-host-protocol.md` |
 
 These systems may evolve without increasing the primitive count.
+
+They still belong to the `Flux` `Execution Model` unless a narrower owner document explicitly places them in host/domain architecture.
 
 ## What Stays Outside `Flux` Core
 

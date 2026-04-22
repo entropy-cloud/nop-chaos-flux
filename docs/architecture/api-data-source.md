@@ -232,10 +232,10 @@ Current baseline note:
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
 - current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with legacy status fields such as `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`, and now also includes additive convenience fields such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`; api sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
 - current runtime baseline now also exposes explicit source refresh by id at the runtime boundary; refresh remains scope-scoped first, so duplicate source ids in different scopes do not collapse into one page-global namespace
-- current code may still accept older built-in target field names for `refreshSource` for compatibility, but the architecture baseline treats source refresh as built-in runtime-entry targeting rather than component-handle targeting
+- current `refreshSource` targets a registered source id through `targetId`; source refresh is built-in runtime-entry targeting rather than component-handle targeting
 - current source runtime now has a dependency-aware invalidation baseline: formula sources automatically recompute and api sources automatically refresh when changed scope paths hit the dependencies collected from formula evaluation or request-config evaluation
 - current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `name` binding
-- current action/runtime integration now includes a built-in `refreshSource` action that targets a registered source id via a built-in target field such as `targetId` and delegates to the runtime-owned source registry refresh semantics; this is runtime-entry targeting, not component-handle dispatch, even if older field naming remains in code for compatibility
+- current action/runtime integration includes a built-in `refreshSource` action that targets a registered source id through `targetId` and delegates to the runtime-owned source registry refresh semantics; this is runtime-entry targeting, not component-handle dispatch
 
 ## SourceSchema
 

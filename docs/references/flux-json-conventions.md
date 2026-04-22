@@ -126,7 +126,22 @@
 - `parallel` 仍是显式并发 aggregate 节点，不改写成 `steps` + mode 布尔值
 - `ajax` / `submitForm` 使用 `args: ApiSchema`
 - `openDialog` / `openDrawer` 使用 `args` 承载 surface payload
+- `setValue` 使用 `args: { path, value }`
+- `setValues` 使用 `args: { values }` 或 `args: { path, values }`
 - `action: 'dialog'` / `action: 'drawer'` 不是正式 authoring contract
+
+写入动作约定：
+
+- `path` 是推荐字段名，不使用 `dataPath`
+- `setValues.args.path` 存在时，`args.values` 的 key 相对这个基准路径
+- `setValue` / `setValues` 不使用 `componentPath` / 顶层 `value` / 顶层 `values`
+
+这样设计的原因：
+
+- payload 统一走 `args`，所有 action 在 authoring 侧有一个一致入口
+- `path` 明确表示写入目标，`value` / `values` 明确表示写入内容，语义边界清晰
+- `setValues` 允许可选 `path`，既支持绝对 patch，也支持同一 subtree 的相对 patch，减少重复路径前缀
+- `refreshSource` 保持 `targetId`，因为它是 runtime-owned source entry，不是数据写入动作
 
 定向调用推荐矩阵：
 
