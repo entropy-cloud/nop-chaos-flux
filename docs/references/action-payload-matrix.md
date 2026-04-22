@@ -14,8 +14,8 @@
 ## Source Of Truth
 
 - `packages/flux-core/src/types/actions.ts`
-- `packages/flux-runtime/src/action-runtime-core.ts`
-- `packages/flux-runtime/src/action-runtime-handlers.ts`
+- `packages/flux-action-core/src/action-core.ts`
+- `packages/flux-action-core/src/action-dispatcher.ts`
 
 ## Top-Level Field Families
 

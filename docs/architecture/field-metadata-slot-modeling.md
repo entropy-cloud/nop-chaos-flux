@@ -11,7 +11,7 @@ Use this document when designing renderer definitions, schema DSL fields such as
 When this document needs to be checked against code, start with:
 
 - `packages/flux-core/src/index.ts` for `SchemaFieldRule` and renderer contracts
-- `packages/flux-runtime/src/schema-compiler.ts` for field classification and region extraction
+- `packages/flux-compiler/src/schema-compiler.ts` for field classification and region extraction
 - `packages/flux-react/src/index.tsx` for slot-resolution helpers
 - renderer package definitions such as `packages/flux-renderers-basic/src/index.tsx` and `packages/flux-renderers-data/src/index.tsx`
 
@@ -88,7 +88,7 @@ The current architecture already has the base pieces for this direction:
 
 - `RendererDefinition.fields` in `packages/flux-core/src/index.ts`
 - `SchemaFieldRule` in `packages/flux-core/src/index.ts`
-- `classifyField()` in `packages/flux-runtime/src/schema-compiler.ts`
+- `classifyField()` in `packages/flux-compiler/src/schema-compiler.ts`
 - `CompiledRegion` in `packages/flux-core/src/index.ts`
 - `RenderRegionHandle` in `packages/flux-core/src/index.ts`
 
@@ -519,7 +519,7 @@ The next architectural improvement is to keep extending renderer field metadata 
 That change should be implemented in:
 
 - `packages/flux-core/src/index.ts`
-- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-compiler/src/schema-compiler.ts`
 
 ## Related Documents
 

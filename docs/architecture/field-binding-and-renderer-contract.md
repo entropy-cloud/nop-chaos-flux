@@ -26,8 +26,8 @@
 - `packages/flux-core/src/types/schema.ts`
 - `packages/flux-core/src/constants.ts`
 - `packages/flux-core/src/types/renderer-core.ts`
-- `packages/flux-runtime/src/schema-compiler/fields.ts`
-- `packages/flux-runtime/src/schema-compiler.ts`
+- `packages/flux-compiler/src/schema-compiler/fields.ts`
+- `packages/flux-compiler/src/schema-compiler.ts`
 - `packages/flux-react/src/node-frame-wrapper.tsx`
 - `packages/flux-renderers-form/src/schemas.ts`
 - `packages/flux-renderers-form-advanced/src/composite-field/composite-schemas.ts`

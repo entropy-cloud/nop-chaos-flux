@@ -231,11 +231,8 @@ packages/
 ### `@nop-chaos/flux-runtime` exports after migration
 
 - 默认不再导出 compiler implementation，本体 owner 改到 `@nop-chaos/flux-compiler`。
-- 为减少第一阶段破坏，可保留一轮 compatibility re-export：
-  - `export { createSchemaCompiler, validateSchema } from '@nop-chaos/flux-compiler'`
-  - `export { compileAction, compileActions } from '@nop-chaos/flux-compiler'`
-- 这类 re-export 仅作为迁移兼容层，不应继续让 runtime 成为 compiler 的物理 owner。
-- 兼容层只覆盖迁移期；新代码不应继续新增从 `@nop-chaos/flux-runtime` 导入 compiler API 的用法。
+- 早期执行切片曾允许临时 compatibility re-export，但这不是最终 baseline。
+- 当前 live baseline 已移除 runtime 对 compiler API 的 re-export；downstream 必须直接从 `@nop-chaos/flux-compiler` 导入 compile APIs。
 
 ### `RendererRuntime` assembly target state
 
@@ -390,13 +387,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Completed on 2026-04-21. `@nop-chaos/flux-compiler` is now the physical owner of schema compile/validate, diagnostics, action precompile, compile symbol tables, and compiler-side validation lowering. `@nop-chaos/flux-runtime` retains only compatibility re-exports plus runtime assembly/execution ownership.
+Status Note: Completed on 2026-04-21, with 2026-04-22/2026-04-23 closure correction. `@nop-chaos/flux-compiler` is the physical owner of schema compile/validate, diagnostics, action precompile, compile symbol tables, and compiler-side validation lowering. The original migration-stage runtime compatibility re-export note was closure drift and is now superseded by the direct-owner baseline enforced by plan 124.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: OpenCode closure audit plus prior independent subagent audits used during plan shaping
-- Evidence: `packages/flux-compiler/package.json` depends only on `@nop-chaos/flux-core` and `@nop-chaos/flux-formula`; `packages/flux-runtime/src/index.ts` re-exports compiler APIs from `@nop-chaos/flux-compiler`; no compiler implementation files remain under `packages/flux-runtime/src/`; the five remaining `schema-compiler-*.test.ts` files were moved from `packages/flux-runtime/src/` to `packages/flux-compiler/src/`; workspace verification passed on 2026-04-21 via `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
+- Evidence: `packages/flux-compiler/package.json` depends only on `@nop-chaos/flux-core` and `@nop-chaos/flux-formula`; no compiler implementation files remain under `packages/flux-runtime/src/`; compiler-facing tests live under `packages/flux-compiler/src/`, including `schema-compiler-registry.test.ts`; the temporary runtime compiler re-export described during migration has been explicitly removed by follow-up cleanup under plan 124.
 
 Follow-up:
 
-- No remaining plan-owned follow-up is defined yet. Any post-extraction work such as execution package IR, admission, or compiler CLI should be captured in successor plans rather than silently expanding this one.
+- Follow-up cleanup for temporary migration re-exports and residual boundary drift moved to `docs/plans/124-runtime-compat-removal-and-boundary-cleanup-plan.md`.

@@ -1,6 +1,6 @@
 # 124 Runtime Compat Removal And Boundary Cleanup Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-22
 > Source: `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/schema-file-validator.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/api-data-source.md`, `docs/plans/122-compiler-package-extraction-and-boundary-plan.md`, `docs/plans/123-flux-runtime-split-and-boundary-hardening-plan.md`
 > Related: `docs/plans/120-runtime-async-governance-convergence-plan.md`, `docs/plans/122-compiler-package-extraction-and-boundary-plan.md`, `docs/plans/123-flux-runtime-split-and-boundary-hardening-plan.md`
@@ -18,14 +18,12 @@
 
 ## Current Baseline
 
-- `@nop-chaos/flux-compiler` 已经存在，`@nop-chaos/flux-runtime` 当前通过 re-export 暴露 `createSchemaCompiler` / `validateSchema` / `compileAction` / `compileActions`，这属于 plan 122 落地后的兼容残留，而不是 first-version 最佳基线。见 `packages/flux-runtime/src/index.ts`。
+- 审计基线已确认：plan 122/123 的 closure note 对 compat cleanup 有过度表述，live repo 直到本计划执行前仍残留 runtime-side compat exports / duplicate action helpers / mis-owned compiler test。
 - `@nop-chaos/flux-action-core` 已经存在，`runtime-factory.ts` 主路径已经从该包创建 action dispatcher。见 `packages/flux-runtime/src/runtime-factory.ts`。
-- `packages/flux-runtime/src/action-runtime.ts`、`action-runtime-handlers.ts` 仍保留一整套旧 action dispatch 实现；它们不是当前主路径所必需，却继续驻留在 runtime 包中。
-- `packages/flux-runtime/src/action-runtime-core.ts` 仍保留大量与 `@nop-chaos/flux-action-core` 重复的 helper / control 逻辑；其中 `resolveRequestControl(...)` 仍被 `action-adapter.ts` 与 `runtime-action-helpers.ts` 使用，说明 extraction 后 helper owner 没有完全收口。
-- `packages/flux-runtime/src/operation-control.ts` 仍被 `request-runtime.ts` 使用，说明 generic async execution control 仍有 runtime-side duplicate owner，而没有完全归到 `@nop-chaos/flux-action-core`。
-- `packages/flux-runtime/src/__tests__/schema-compiler-registry.test.ts` 仍停留在 runtime 包下；它主要覆盖 compiler/registry baseline，与 plan 122 的“compiler tests moved” closure note 不一致。
+- 本轮执行已删除 `packages/flux-runtime/src/action-runtime.ts`、`action-runtime-core.ts`、`action-runtime-handlers.ts`、`operation-control.ts`，并把 runtime internals 改为直接依赖 `@nop-chaos/flux-action-core`。
+- 本轮执行已删除 runtime-side compiler compat exports，并将 `packages/flux-runtime/src/__tests__/schema-compiler-registry.test.ts` 迁移到 `packages/flux-compiler/src/schema-compiler-registry.test.ts`。
 - `reaction-runtime.ts` 与 `data-source-runtime.ts` 已通过稳定端口调用共享 action dispatch，本身不构成 leftover；这类 runtime owner 文件应保留在 `flux-runtime`。
-- `docs/architecture/flux-runtime-module-boundaries.md` 已写入新 baseline，但仍混入“legacy action dispatch implementation retained for reference”这类过渡性描述；如果本计划执行，文档必须切换到无兼容层的正式 baseline。
+- active docs 仍需要与新 baseline 做最终同步，移除对已删除 runtime duplicate file 的 code anchor 和迁移措辞。
 
 ## Goals
 
@@ -121,102 +119,102 @@
 
 ### Phase 1 - Freeze Cleanup Baseline And Import Audit
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/index.ts`, `packages/flux-runtime/src/action-runtime*.ts`, `packages/flux-runtime/src/operation-control.ts`, workspace imports, related tests/docs
 
-- [ ] Audit every live import of compiler APIs that still comes from `@nop-chaos/flux-runtime`.
-- [ ] Audit every live import of action helper/control logic that still comes from `packages/flux-runtime/src/action-runtime-core.ts` or `operation-control.ts`.
-- [ ] Classify all remaining runtime-side tests touching compiler behavior into owner tests versus runtime integration tests.
-- [ ] Record which current docs still describe compatibility or legacy retention rather than final ownership.
+- [x] Audit every live import of compiler APIs that still comes from `@nop-chaos/flux-runtime`.
+- [x] Audit every live import of action helper/control logic that still comes from `packages/flux-runtime/src/action-runtime-core.ts` or `operation-control.ts`.
+- [x] Classify all remaining runtime-side tests touching compiler behavior into owner tests versus runtime integration tests.
+- [x] Record which current docs still describe compatibility or legacy retention rather than final ownership.
 
 Exit Criteria:
 
-- [ ] The repo has an explicit list of compat exports, legacy files, duplicated helpers, and mis-owned tests that this plan will remove or re-home.
-- [ ] The cleanup baseline distinguishes intentional runtime-owned files from actual post-plan-122/123 drift.
+- [x] The repo has an explicit list of compat exports, legacy files, duplicated helpers, and mis-owned tests that this plan will remove or re-home.
+- [x] The cleanup baseline distinguishes intentional runtime-owned files from actual post-plan-122/123 drift.
 
 ### Phase 2 - Remove Runtime Compatibility Exports And Legacy Action Copies
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/index.ts`, `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-runtime-handlers.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/operation-control.ts`
 
-- [ ] Remove compiler API re-exports from `@nop-chaos/flux-runtime`.
-- [ ] Delete `action-runtime.ts` and `action-runtime-handlers.ts` once all consumers are migrated to `@nop-chaos/flux-action-core`.
-- [ ] Delete or drastically shrink `action-runtime-core.ts` so that no action-core-owned helper remains duplicated inside runtime.
-- [ ] Remove `packages/flux-runtime/src/operation-control.ts` and make request/runtime code consume `@nop-chaos/flux-action-core` helpers directly.
-- [ ] Ensure no runtime file continues to carry “reference copy” code that is no longer on the main execution path.
+- [x] Remove compiler API re-exports from `@nop-chaos/flux-runtime`.
+- [x] Delete `action-runtime.ts` and `action-runtime-handlers.ts` once all consumers are migrated to `@nop-chaos/flux-action-core`.
+- [x] Delete or drastically shrink `action-runtime-core.ts` so that no action-core-owned helper remains duplicated inside runtime.
+- [x] Remove `packages/flux-runtime/src/operation-control.ts` and make request/runtime code consume `@nop-chaos/flux-action-core` helpers directly.
+- [x] Ensure no runtime file continues to carry “reference copy” code that is no longer on the main execution path.
 
 Exit Criteria:
 
-- [ ] `@nop-chaos/flux-runtime` no longer exports compiler APIs.
-- [ ] No legacy action dispatcher implementation remains inside runtime.
-- [ ] Generic async execution control has exactly one live implementation owner: `@nop-chaos/flux-action-core`.
+- [x] `@nop-chaos/flux-runtime` no longer exports compiler APIs.
+- [x] No legacy action dispatcher implementation remains inside runtime.
+- [x] Generic async execution control has exactly one live implementation owner: `@nop-chaos/flux-action-core`.
 
 ### Phase 3 - Rewire Runtime Internals And Workspace Imports To Direct Owners
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/request-runtime.ts`, `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-runtime/src/runtime-action-helpers.ts`, downstream packages/tests/examples
 
-- [ ] Rewire runtime internals to import action-core helpers directly from `@nop-chaos/flux-action-core` instead of local duplicates.
-- [ ] Update all workspace packages/tests/examples that import compiler APIs from runtime to import from `@nop-chaos/flux-compiler` directly.
-- [ ] Update any action-core helper consumers to import from `@nop-chaos/flux-action-core` directly instead of runtime-local files.
-- [ ] Remove any remaining same-package wrappers whose only purpose is to proxy another package owner.
+- [x] Rewire runtime internals to import action-core helpers directly from `@nop-chaos/flux-action-core` instead of local duplicates.
+- [x] Update all workspace packages/tests/examples that import compiler APIs from runtime to import from `@nop-chaos/flux-compiler` directly.
+- [x] Update any action-core helper consumers to import from `@nop-chaos/flux-action-core` directly instead of runtime-local files.
+- [x] Remove any remaining same-package wrappers whose only purpose is to proxy another package owner.
 
 Exit Criteria:
 
-- [ ] There is one obvious import path per owner surface across the workspace.
-- [ ] Runtime internals no longer depend on duplicated local copies of action-core helpers.
-- [ ] No package outside runtime imports compiler APIs through runtime.
+- [x] There is one obvious import path per owner surface across the workspace.
+- [x] Runtime internals no longer depend on duplicated local copies of action-core helpers.
+- [x] No package outside runtime imports compiler APIs through runtime.
 
 ### Phase 4 - Re-home Tests To Match Ownership
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/**/*.test.ts`, `packages/flux-compiler/src/**/*.test.ts`, `packages/flux-action-core/src/**/*.test.ts`
 
-- [ ] Move compiler-owned tests out of `flux-runtime` and into `flux-compiler`.
-- [ ] Split mixed owner/integration tests where necessary so compiler/action-core behavior is asserted in the owning package, while runtime keeps only runtime integration coverage.
-- [ ] Add focused tests in `flux-action-core` if cleanup removes the last owner-level coverage for moved helpers.
-- [ ] Remove stale runtime-side tests whose only purpose was to cover compatibility exports or deleted legacy paths.
+- [x] Move compiler-owned tests out of `flux-runtime` and into `flux-compiler`.
+- [x] Split mixed owner/integration tests where necessary so compiler/action-core behavior is asserted in the owning package, while runtime keeps only runtime integration coverage.
+- [x] Add focused tests in `flux-action-core` if cleanup removes the last owner-level coverage for moved helpers.
+- [x] Remove stale runtime-side tests whose only purpose was to cover compatibility exports or deleted legacy paths.
 
 Exit Criteria:
 
-- [ ] No compiler-owned test remains misfiled under `flux-runtime`.
-- [ ] Runtime test suite no longer depends on compatibility exports or deleted legacy files.
-- [ ] Moved helper behavior remains covered in the correct owner package.
+- [x] No compiler-owned test remains misfiled under `flux-runtime`.
+- [x] Runtime test suite no longer depends on compatibility exports or deleted legacy files.
+- [x] Moved helper behavior remains covered in the correct owner package.
 
 ### Phase 5 - Docs, Plan Closure Corrections, And Verification
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/schema-file-validator.md`, `docs/architecture/action-algebra-formal-spec.md`, `docs/index.md`, `docs/plans/122-*.md`, `docs/plans/123-*.md`, `docs/logs/2026/04-22.md`
 
-- [ ] Update architecture docs so they describe the post-cleanup owner baseline only.
-- [ ] Remove migration/compat wording from active docs and replace it with direct owner/import guidance.
-- [ ] Update plan 122 and 123 with explicit closure-note corrections or supersession notes where their completion text no longer matches the audited repo baseline.
-- [ ] Add daily log entries recording the cleanup baseline, key owner decisions, and follow-up expectations.
-- [ ] Run required verification after code changes: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
-- [ ] Perform an independent closure audit that checks imports, deleted legacy files, test placement, and docs for owner drift.
+- [x] Update architecture docs so they describe the post-cleanup owner baseline only.
+- [x] Remove migration/compat wording from active docs and replace it with direct owner/import guidance.
+- [x] Update plan 122 and 123 with explicit closure-note corrections or supersession notes where their completion text no longer matches the audited repo baseline.
+- [x] Add daily log entries recording the cleanup baseline, key owner decisions, and follow-up expectations.
+- [x] Run required verification after code changes: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
+- [x] Perform an independent closure audit that checks imports, deleted legacy files, test placement, and docs for owner drift.
 
 Exit Criteria:
 
-- [ ] Docs and code agree on the no-compat first-version baseline.
-- [ ] Plans 122 and 123 no longer overstate closure relative to the live repo.
-- [ ] Full workspace verification passes after cleanup.
+- [x] Docs and code agree on the no-compat first-version baseline.
+- [x] Plans 122 and 123 no longer overstate closure relative to the live repo.
+- [x] Full workspace verification passes after cleanup.
 
 ## Validation Checklist
 
-- [ ] `@nop-chaos/flux-runtime` no longer re-exports compiler APIs.
-- [ ] No legacy action dispatcher / handler implementation remains in runtime.
-- [ ] `action-runtime-core.ts` no longer duplicates action-core-owned helpers, or the file is deleted if no runtime-owned residue remains.
-- [ ] `operation-control` lives only in `@nop-chaos/flux-action-core`.
-- [ ] All workspace imports use direct owner packages rather than runtime compatibility paths.
-- [ ] Compiler-owned tests are housed in `flux-compiler`; runtime keeps only runtime-owned integration coverage.
-- [ ] Architecture docs and docs index describe the corrected package ownership baseline.
-- [ ] Plan closure text for 122/123 is corrected to match the audited live repo.
-- [ ] `docs/logs/` updated with the cleanup decision record.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] Independent closure audit recorded with evidence.
+- [x] `@nop-chaos/flux-runtime` no longer re-exports compiler APIs.
+- [x] No legacy action dispatcher / handler implementation remains in runtime.
+- [x] `action-runtime-core.ts` no longer duplicates action-core-owned helpers, or the file is deleted if no runtime-owned residue remains.
+- [x] `operation-control` lives only in `@nop-chaos/flux-action-core`.
+- [x] All workspace imports use direct owner packages rather than runtime compatibility paths.
+- [x] Compiler-owned tests are housed in `flux-compiler`; runtime keeps only runtime-owned integration coverage.
+- [x] Architecture docs and docs index describe the corrected package ownership baseline.
+- [x] Plan closure text for 122/123 is corrected to match the audited live repo.
+- [x] `docs/logs/` updated with the cleanup decision record.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] Independent closure audit recorded with evidence.
 
 ## Risks And Rollback
 
@@ -227,12 +225,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Pending. This plan closes only when runtime no longer provides compiler/action compatibility surfaces, no legacy duplicate action implementation remains, tests are re-homed by owner, and docs have been corrected to the no-compat baseline.
+Status Note: Completed. `@nop-chaos/flux-runtime` no longer provides compiler or action-core compatibility surfaces, runtime-side duplicate action and operation-control implementations are removed, owner tests are re-homed, and active docs now describe the no-compat first-version baseline only.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent fresh-audit passes on 2026-04-22
+- Evidence: first audit caught stale active-doc anchors that still described deleted runtime action files; second audit caught two remaining owner-text drifts plus one lint blocker in `packages/flux-compiler/src/schema-compiler-registry.test.ts`; all findings were fixed, and workspace verification passed with `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` before closure.
 
 Follow-up:
 

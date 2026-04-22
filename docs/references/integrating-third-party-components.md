@@ -183,7 +183,7 @@ The only required fields on `RendererDefinition` are `type` and `component`:
 
 ```ts
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import { createRendererRegistry } from '@nop-chaos/flux-runtime';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 
 function ChartRenderer(props: RendererComponentProps) {
   return <Chart data={props.props.data} options={props.props.options} />;
@@ -375,7 +375,7 @@ This pattern is used in the codebase for input variants — see `packages/flux-r
 Pass definitions when creating the registry:
 
 ```ts
-import { createRendererRegistry } from '@nop-chaos/flux-runtime';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 
 const registry = createRendererRegistry([
   chartDefinition,
@@ -386,7 +386,7 @@ const registry = createRendererRegistry([
 Or register onto an existing registry:
 
 ```ts
-import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
+import { registerRendererDefinitions } from '@nop-chaos/flux-core';
 
 registerRendererDefinitions(registry, myDefinitions);
 ```

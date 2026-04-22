@@ -21,7 +21,7 @@ When this document needs to be checked against code, start with:
 - `packages/flux-runtime/src/validation/` for reusable validation helpers
 - `packages/flux-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
 - `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-runtime/src/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
-- `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/action-scope.ts`, and `packages/flux-runtime/src/component-handle-registry.ts` for action/capability/import/runtime-host boundaries
+- `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/action-scope.ts`, and `packages/flux-runtime/src/component-handle-registry.ts` for action/capability/import/runtime-host boundaries
 
 ## Main Rule
 
@@ -168,13 +168,9 @@ Note:
   - implements `ActionRuntimeAdapter` interface from `flux-core`
   - provides runtime-specific effect execution (setValue, ajax, dialog, navigate, etc.)
   - delegates to form/page/surface runtimes via `ActionContext`
-- `packages/flux-runtime/src/action-runtime.ts`
-  - legacy action dispatch implementation (retained for reference, superseded by action-core dispatcher)
-- `packages/flux-runtime/src/action-runtime-core.ts`
-  - action evaluation helpers consumed by action adapter
-  - request control resolution
-- `packages/flux-runtime/src/action-runtime-handlers.ts`
-  - built-in action handler implementations consumed by action adapter
+- `packages/flux-runtime/src/runtime-action-helpers.ts`
+  - runtime-owned async validation helpers and ajax-side request glue
+  - delegates generic request-control resolution to `@nop-chaos/flux-action-core`
 
 ### Request execution boundary (`flux-runtime`)
 

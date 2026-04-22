@@ -616,7 +616,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: **Completed**. The `@nop-chaos/flux-action-core` package has been created and landed. All phases completed successfully.
+Status Note: **Completed**, with 2026-04-23 closure correction. The `@nop-chaos/flux-action-core` package landed successfully, but the original closure note overstated cleanup by treating runtime-side duplicate action files and duplicate `operation-control` as already fully removed. Those residual compat leftovers are explicitly owned by plan 124 rather than this plan.
 
 Closure Audit Evidence:
 
@@ -624,13 +624,12 @@ Closure Audit Evidence:
 - Evidence:
   - `packages/flux-action-core/` created with action-dispatcher.ts, action-core.ts, operation-control.ts
   - `flux-runtime` now uses `createActionDispatcher` from `flux-action-core` via `action-adapter.ts`
-  - All 377 flux-runtime tests pass
-  - All 320 flux-renderers-form-advanced tests pass (including critical timing test)
-  - typecheck, build, lint, test all pass
-  - `docs/architecture/flux-runtime-module-boundaries.md` updated to reflect new ownership
+  - Main execution path moved to action-core, while residual runtime-side duplicate files were left for later cleanup and are now tracked by `docs/plans/124-runtime-compat-removal-and-boundary-cleanup-plan.md`
+  - `docs/architecture/flux-runtime-module-boundaries.md` was updated for the split baseline and later corrected again when the residual duplicate files were removed
 
 Follow-up:
 
 - Plan 122 (compiler extraction) completed as prerequisite.
+- Residual runtime compat cleanup and closure-note correction moved to `docs/plans/124-runtime-compat-removal-and-boundary-cleanup-plan.md`.
 - No successor plan needed for request extraction at this time; boundary is stable.
 - Future work: if request execution grows complex enough to warrant extraction, a new focused plan can be created without reopening action-core baseline.

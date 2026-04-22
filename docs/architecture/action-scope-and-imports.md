@@ -22,7 +22,7 @@ The architecture baseline keeps these properties:
 - `ScopeRef` is a data scope, not a behavior registry; see `packages/flux-runtime/src/scope.ts`
 - source/reaction runtime ownership may still be scoped by `ScopeRef.id`, but that ownership should live in runtime sidecars rather than as methods on `ScopeRef`
 - if a scope-scoped runtime sidecar is needed, prefer a `RendererRuntime`-owned `scopeEntries` structure keyed by `ScopeRef.id`
-- actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/flux-runtime/src/action-runtime.ts`
+- actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/flux-action-core/src/action-dispatcher.ts`
 - `ActionSchema` uses `action: string` and optional structured fields such as `args?: Record<string, SchemaValue>`; see `packages/flux-core/src/types/actions.ts`
 - React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ data })`; see `packages/flux-react/src/index.tsx`
 - flow-designer and report-designer architecture already assume `schema reads fixed host scope snapshot` and `writes go through namespaced actions`; see `docs/architecture/flow-designer/design.md` and `docs/architecture/report-designer/design.md`
@@ -445,7 +445,7 @@ Compatibility note:
 
 ### Built-In Versus Extended Actions
 
-Built-in actions stay inside `action-runtime` because they are platform semantics.
+Built-in actions stay inside the centralized `@nop-chaos/flux-action-core` dispatcher because they are platform semantics.
 
 Examples:
 

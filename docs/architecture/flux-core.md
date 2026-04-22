@@ -39,8 +39,8 @@ flux-core is the **foundation contracts and shared utilities** package — the l
 When this document needs to be checked against code, start with:
 
 - `packages/flux-core/src/index.ts` for core contracts and shared utilities
-- `packages/flux-runtime/src/schema-compiler.ts` for template node assembly
-- `packages/flux-runtime/src/action-runtime.ts` for action semantics
+- `packages/flux-compiler/src/schema-compiler.ts` for template node assembly
+- `packages/flux-action-core/src/action-dispatcher.ts` for action semantics
 - `packages/flux-runtime/src/page-runtime.ts` and `packages/flux-runtime/src/form-runtime.ts` for page/form runtime behavior
 - `packages/flux-react/src/index.tsx` for React integration boundaries
 
@@ -202,7 +202,7 @@ This keeps data scope, namespaced behavior lookup, and instance-targeted capabil
 
 Current orchestration boundary note:
 
-- `action-runtime.ts` should stay the action entry/composition root, but payload evaluation, result classification, binding overlays, and target-enrichment helpers may live in internal runtime modules so dispatch-order changes do not require editing one monolithic file.
+- `@nop-chaos/flux-action-core` owns the action entry/composition root, while runtime-specific effects stay behind the `ActionRuntimeAdapter` boundary in `@nop-chaos/flux-runtime`.
 
 ### `Store` and `Scope`
 

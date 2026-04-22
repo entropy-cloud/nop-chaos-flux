@@ -60,7 +60,7 @@ Review:
 
 Examples:
 
-- changes in `packages/flux-runtime/src/schema-compiler.ts`
+- changes in `packages/flux-compiler/src/schema-compiler.ts`
 - new field kinds
 - different region extraction behavior
 - changed event-field handling
@@ -95,7 +95,7 @@ Review:
 
 Examples:
 
-- changes in `packages/flux-runtime/src/action-runtime.ts`
+- changes in `packages/flux-action-core/src/action-dispatcher.ts`
 - changed `setValue`, `ajax`, `dialog`, `closeDialog`, or `refreshTable` behavior
 - changed chained action context or `prevResult` flow
 

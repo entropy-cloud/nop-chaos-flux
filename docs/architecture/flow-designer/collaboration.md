@@ -16,7 +16,7 @@
 
 - `packages/flux-react/src/index.tsx`
 - `packages/flux-runtime/src/index.ts`
-- `packages/flux-runtime/src/action-runtime.ts`
+- `packages/flux-action-core/src/action-dispatcher.ts`
 - `packages/flow-designer-renderers/src/index.tsx`
 - `packages/flow-designer-renderers/src/designer-command-adapter.ts`
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
