@@ -9,8 +9,10 @@ const localScopeDebugSchema = {
       label: 'Increment count',
       onClick: {
         action: 'setValue',
-        componentPath: 'count',
-        value: '${count + 1}'
+        args: {
+          path: 'count',
+          value: '${count + 1}'
+        }
       }
     },
     {

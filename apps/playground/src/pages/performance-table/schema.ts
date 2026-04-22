@@ -115,8 +115,10 @@ const TABLE_COLUMNS: ColumnDef[] = [
         size: 'sm',
         onClick: {
           action: 'setValue',
-          componentPath: 'perfState.lastAction',
-          value: 'ping:${$slot.record.id}:${$slot.record.status}'
+          args: {
+            path: 'perfState.lastAction',
+            value: 'ping:${$slot.record.id}:${$slot.record.status}'
+          }
         }
       }
     ]
@@ -148,8 +150,10 @@ const ACTIONS_SCHEMA: SchemaInput = {
       label: 'Shuffle Scores',
       onClick: {
         action: 'setValue',
-        componentPath: 'perfRows',
-        value: '${perfRows.map((row, idx) => ({ ...row, score: ((row.score + idx + 13) % 100) + 1, progress: ((row.progress + idx + 17) % 100) }))}'
+        args: {
+          path: 'perfRows',
+          value: '${perfRows.map((row, idx) => ({ ...row, score: ((row.score + idx + 13) % 100) + 1, progress: ((row.progress + idx + 17) % 100) }))}'
+        }
       }
     },
     {
@@ -157,8 +161,10 @@ const ACTIONS_SCHEMA: SchemaInput = {
       label: 'Toggle Active Flags',
       onClick: {
         action: 'setValue',
-        componentPath: 'perfRows',
-        value: '${perfRows.map((row, idx) => idx % 3 === 0 ? { ...row, active: !row.active, verified: !row.verified } : row)}'
+        args: {
+          path: 'perfRows',
+          value: '${perfRows.map((row, idx) => idx % 3 === 0 ? { ...row, active: !row.active, verified: !row.verified } : row)}'
+        }
       }
     },
     {
@@ -166,8 +172,10 @@ const ACTIONS_SCHEMA: SchemaInput = {
       label: 'Append Tag To All Rows',
       onClick: {
         action: 'setValue',
-        componentPath: 'perfRows',
-        value: '${perfRows.map((row, idx) => ({ ...row, tags: [...row.tags, `burst-${idx % 4}`], tagsText: [...row.tags, `burst-${idx % 4}`].join(`, `) }))}'
+        args: {
+          path: 'perfRows',
+          value: '${perfRows.map((row, idx) => ({ ...row, tags: [...row.tags, `burst-${idx % 4}`], tagsText: [...row.tags, `burst-${idx % 4}`].join(`, `) }))}'
+        }
       }
     },
     {
@@ -175,8 +183,10 @@ const ACTIONS_SCHEMA: SchemaInput = {
       label: 'Reset Dataset',
       onClick: {
         action: 'setValue',
-        componentPath: 'perfRows',
-        value: '${initialPerfRows}'
+        args: {
+          path: 'perfRows',
+          value: '${initialPerfRows}'
+        }
       }
     }
   ]
