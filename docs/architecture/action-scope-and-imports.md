@@ -402,7 +402,7 @@ The active design therefore keeps namespaced action lookup explicit and separate
 
 ### Resolution Order
 
-When an action is dispatched, runtime should resolve it in this order:
+When an action is dispatched, `flux-action-core` should classify it in this order before handing final invocation to the runtime adapter:
 
 1. built-in platform action handled directly by the core dispatcher
 2. component-targeted action matching `component:<method>` through `ComponentHandleRegistry`
@@ -410,7 +410,7 @@ When an action is dispatched, runtime should resolve it in this order:
 4. parent `ActionScope` chain lookup
 5. not-found error with namespace and scope trace
 
-This means built-in actions such as `ajax` and `submitForm` remain first-class runtime features, component-targeted calls such as `component:submit` stay explicit, and namespaced calls such as `designer:addNode` or `demo:open` are delegated to the action-scope layer.
+This means built-in actions such as `ajax` and `submitForm` remain first-class runtime features, component-targeted calls such as `component:submit` stay explicit, and namespaced calls such as `designer:addNode` or `demo:open` continue to resolve through `ActionScope`. The important execution-boundary rule is that selector classification lives in `flux-action-core`, while the final built-in/component/namespace invocation is unified behind `ActionRuntimeAdapter` inside `flux-runtime`.
 
 ### Naming Rule
 

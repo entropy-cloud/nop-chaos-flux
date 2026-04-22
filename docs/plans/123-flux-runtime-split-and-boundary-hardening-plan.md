@@ -431,14 +431,12 @@ Targets: `packages/flux-runtime/src/`, `packages/flux-runtime/src/index.ts`, rel
 **Phase 2 Implementation Notes:**
 
 1. **ActionRuntimeAdapter interface** defined in `packages/flux-core/src/types/actions.ts`:
-   - `setValue`, `setValues` - scope/form value writes
-   - `executeAjax`, `submitForm` - request-backed actions
-   - `openDialog`, `closeDialog`, `openDrawer`, `closeDrawer` - surface operations
-   - `showToast`, `navigate`, `refreshTable`, `refreshSource` - environment actions
-   - `invokeComponentMethod`, `invokeNamespacedAction` - dispatch target resolution
+   - `invokeBuiltInAction` - unified built-in invocation entry with args-centric payload
+   - `invokeComponentAction` - unified component-targeted invocation entry
+   - `invokeNamespacedAction` - unified namespaced invocation entry
 
 2. **Implementation** in `packages/flux-runtime/src/action-adapter.ts`:
-   - Creates runtime adapter that implements all runtime-specific effects
+   - Creates runtime adapter that implements the single runtime invocation outlet for all three action families
    - Uses existing `executeApiSchema`, `resolveRequestControl` from request runtime
    - Delegates to form/page/surface runtimes via `ActionContext`
 
@@ -485,15 +483,14 @@ Targets: `packages/flux-action-core/`, `packages/flux-runtime/src/action-runtime
    - `src/index.ts` - Public exports
 
 2. **Key design decisions:**
-   - `ActionRuntimeAdapter` in `flux-core` defines 12 methods for runtime-specific effects
-   - Dispatcher uses `normalizeActionResult()` after awaiting adapter calls to preserve microtask timing
+   - `ActionRuntimeAdapter` in `flux-core` defines three unified invocation methods: built-in / component / namespace
+   - Dispatcher uses `normalizeActionResult()` after awaiting adapter calls to preserve microtask timing where needed
    - Dispatch ordering maintained in dispatcher: built-in actions checked first, then component, then namespaced
-   - `sourceScopeId` and `providerKind` for namespaced actions retrieved from `ctx.actionScope.resolve()` in dispatcher
+   - `sourceScopeId` and `providerKind` for namespaced actions now come back through the adapter boundary rather than dispatcher-side enrichment
 
 3. **Critical timing discovery:**
-   - Using `async/await` in adapter methods creates extra microtask boundaries
-   - Adapter's `invokeNamespacedAction` must return provider's Promise directly (not wrapped in async)
-   - Dispatcher enriches result with `sourceScopeId`/`providerKind` after awaiting to preserve timing
+   - Earlier extraction work found that wrapping provider promises carelessly can introduce extra microtask boundaries
+   - The stable rule is that namespaced invocation must preserve provider Promise behavior closely enough that existing action timing semantics do not drift
 
 4. **Workspace configuration:**
    - Added `@nop-chaos/flux-action-core` to `vite.workspace-alias.ts` for vitest resolution

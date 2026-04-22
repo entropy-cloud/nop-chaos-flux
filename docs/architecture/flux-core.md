@@ -202,7 +202,8 @@ This keeps data scope, namespaced behavior lookup, and instance-targeted capabil
 
 Current orchestration boundary note:
 
-- `@nop-chaos/flux-action-core` owns the action entry/composition root, while runtime-specific effects stay behind the `ActionRuntimeAdapter` boundary in `@nop-chaos/flux-runtime`.
+- `@nop-chaos/flux-action-core` owns the action entry/composition root, selector classification, compiled payload evaluation, and control-flow semantics.
+- Final built-in / component / namespaced invocation now stays behind the unified `ActionRuntimeAdapter` boundary in `@nop-chaos/flux-runtime`.
 
 ### `Store` and `Scope`
 

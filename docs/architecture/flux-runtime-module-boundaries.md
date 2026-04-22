@@ -149,8 +149,9 @@ Note:
 - `packages/flux-action-core/src/action-dispatcher.ts`
   - top-level action dispatch orchestration
   - dispatch ordering across built-in / component / namespaced paths
+  - selector classification + args evaluation before runtime invocation
   - debounce, retry, and timeout composition entry
-  - consumes `ActionRuntimeAdapter` for runtime-specific effects
+  - consumes `ActionRuntimeAdapter` as the single runtime invocation outlet for built-in / component / namespaced actions
 - `packages/flux-action-core/src/action-core.ts`
   - action-evaluation helpers
   - compiled-value evaluation in action context
@@ -166,7 +167,8 @@ Note:
 
 - `packages/flux-runtime/src/action-adapter.ts`
   - implements `ActionRuntimeAdapter` interface from `flux-core`
-  - provides runtime-specific effect execution (setValue, ajax, dialog, navigate, etc.)
+  - provides the unified runtime invocation boundary for built-in, component-targeted, and namespaced actions
+  - keeps built-in payload args-centric at the adapter surface; narrower DTO normalization stays inside runtime implementation details
   - delegates to form/page/surface runtimes via `ActionContext`
 - `packages/flux-runtime/src/runtime-action-helpers.ts`
   - runtime-owned async validation helpers and ajax-side request glue
@@ -229,6 +231,12 @@ Note:
 These modules are runtime-host infrastructure.
 
 They should not be folded into `ScopeRef`, pure domain cores, or generic renderer components.
+
+Important boundary note:
+
+- `flux-action-core` still knows how to classify selectors (`built-in` vs `component:<method>` vs `namespace:method`) and evaluate compiled payloads.
+- But it no longer reaches directly into component or namespace providers as an execution boundary concern; all three action families now enter runtime through `ActionRuntimeAdapter`.
+- `ActionScope` and `ComponentHandleRegistry` remain runtime-owned capability registries, not parallel action executors and not action-core-owned infrastructure.
 
 ### Scope and state plumbing
 
