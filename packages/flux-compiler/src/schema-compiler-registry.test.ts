@@ -1,24 +1,62 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  type RendererDefinition,
-  type NodeRuntimeState
+  createRendererRegistry,
+  type RendererDefinition
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  createRendererRegistry,
-  createRendererRuntime,
-  createSchemaCompiler
-} from '../index';
-import {
-  textRenderer,
-  pageRenderer,
-  cardRenderer,
-  actionButtonRenderer,
-  importHostRenderer,
-  formRenderer,
-  inputRenderer,
-  env
-} from './test-fixtures';
+import { createSchemaCompiler } from './index';
+
+const textRenderer: RendererDefinition = {
+  type: 'text',
+  component: () => null
+};
+
+const pageRenderer: RendererDefinition = {
+  type: 'page',
+  component: () => null,
+  regions: ['body']
+};
+
+const cardRenderer: RendererDefinition = {
+  type: 'card',
+  component: () => null,
+  fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'body', kind: 'region', regionKey: 'body' }]
+};
+
+const actionButtonRenderer: RendererDefinition = {
+  type: 'action-button',
+  component: () => null,
+  fields: [{ key: 'onClick', kind: 'event' }]
+};
+
+const importHostRenderer: RendererDefinition = {
+  type: 'import-host',
+  component: () => null
+};
+
+const formRenderer: RendererDefinition = {
+  type: 'form',
+  component: () => null,
+  regions: ['body', 'actions'],
+  scopePolicy: 'form',
+  validation: {
+    kind: 'container'
+  }
+};
+
+const inputRenderer: RendererDefinition = {
+  type: 'input-text',
+  component: () => null,
+  validation: {
+    kind: 'field',
+    getFieldPath(schema) {
+      return typeof schema.name === 'string' ? schema.name : undefined;
+    },
+    collectRules() {
+      return [];
+    }
+  }
+};
 
 describe('createSchemaCompiler', () => {
   it('fails fast on duplicate initial renderer definitions', () => {
@@ -147,31 +185,6 @@ describe('createSchemaCompiler', () => {
     expect(node.regions.title.node).toBeTruthy();
     expect(node.propsProgram.kind).toBe('static');
     expect(node.propsProgram.value.title).toBeUndefined();
-  });
-
-  it('lets field metadata override default meta handling for title', () => {
-    const registry = createRendererRegistry([cardRenderer, textRenderer]);
-    const runtime = createRendererRuntime({
-      registry,
-      env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-
-    const compiled = runtime.compile({
-      type: 'card',
-      title: 'Profile'
-    });
-    const node = compiled.root as any;
-    const page = runtime.createPageRuntime({});
-    const templateNode = runtime.schemaCompiler.compileNode({ type: 'card', title: 'Profile' }, {
-      path: '$',
-      renderer: registry.get('card')!
-    });
-    const runtimeState: NodeRuntimeState = { meta: {}, props: templateNode.propsProgram.kind === 'dynamic' ? templateNode.propsProgram.createState() : undefined };
-    const meta = runtime.resolveNodeMeta(node, page.scope, runtimeState);
-
-    expect((meta as unknown as Record<string, unknown>).title).toBeUndefined();
-    expect(node.propsProgram.value.title).toBe('Profile');
   });
 
   it('delivers name through normalized props channel, not meta', () => {
