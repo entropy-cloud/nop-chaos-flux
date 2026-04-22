@@ -31,7 +31,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
   const { getEnv, expressionCompiler, evaluate, executeApiRequest, runtime } = input;
 
   return {
-    async invokeBuiltInAction(invocation, ctx) {
+    async invokeBuiltInAction(invocation: BuiltInActionInvocation, ctx) {
       switch (invocation.action) {
         case 'setValue': {
           const path = typeof invocation.args?.path === 'string' ? invocation.args.path : invocation.targeting.componentId ?? '';
@@ -291,7 +291,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
       }
     },
 
-    async invokeComponentAction(invocation, ctx) {
+    async invokeComponentAction(invocation: ComponentActionInvocation, ctx) {
       if (!ctx.componentRegistry) {
         return { ok: false, error: new Error('Component registry not available') };
       }
@@ -339,7 +339,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
       };
     },
 
-    invokeNamespacedAction(invocation, ctx) {
+    invokeNamespacedAction(invocation: NamespacedActionInvocation, ctx) {
       if (!ctx.actionScope) {
         return Promise.resolve({ ok: false, error: new Error('Action scope not available') });
       }
