@@ -1,5 +1,5 @@
 import type { RendererDefinition, SchemaRendererProps } from '@nop-chaos/flux-core';
-import { createRendererRegistry } from '@nop-chaos/flux-runtime';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 
 export function createDefaultRegistry(definitions: RendererDefinition[] = []) {
   return createRendererRegistry(definitions);
@@ -26,4 +26,3 @@ export function createDefaultEnv(input?: Partial<SchemaRendererProps['env']>) {
     ...input
   };
 }
-

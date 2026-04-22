@@ -1,5 +1,4 @@
-import { parsePath, type BaseSchema, type RendererDefinition, type RendererRegistry, type RendererSchemaValidationContext } from '@nop-chaos/flux-core';
-import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
+import { parsePath, registerRendererDefinitions, type BaseSchema, type RendererDefinition, type RendererRegistry, type RendererSchemaValidationContext } from '@nop-chaos/flux-core';
 import { TableRenderer } from './table-renderer';
 import { DataSourceRenderer } from './data-source-renderer';
 import { ChartRenderer } from './chart-renderer';

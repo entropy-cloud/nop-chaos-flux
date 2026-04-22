@@ -2,9 +2,9 @@
 import React, { useLayoutEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
-import type { ScopeRef } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
+import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { RuntimeContext, ScopeContext } from '../contexts';
 import { useHostScope } from './hooks';
 

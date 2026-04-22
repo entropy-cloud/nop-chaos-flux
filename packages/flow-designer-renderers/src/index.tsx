@@ -1,6 +1,5 @@
 import './designer-theme.css';
-import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
-import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
+import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
 import { DesignerPageRenderer, DesignerCanvasRenderer, DesignerPaletteRenderer } from './designer-page';
 import { DesignerFieldRenderer } from './designer-field';
 import { designerHostContract } from './designer-manifest';

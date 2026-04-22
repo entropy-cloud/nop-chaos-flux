@@ -2,7 +2,7 @@ import type {
   RendererDefinition,
   RendererRegistry,
 } from '@nop-chaos/flux-core';
-import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
+import { registerRendererDefinitions } from '@nop-chaos/flux-core';
 import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
 import { ReportInspectorShellRenderer } from './inspector-shell-renderer.js';
 import { ReportDesignerPageRenderer } from './page-renderer.js';

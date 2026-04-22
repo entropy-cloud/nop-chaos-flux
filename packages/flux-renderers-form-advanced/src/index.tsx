@@ -1,5 +1,4 @@
-import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
-import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
+import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
 import { arrayEditorRendererDefinition } from './array-editor';
 import { arrayFieldRendererDefinition } from './composite-field/array-field';
 import { conditionBuilderRendererDefinition } from './condition-builder/condition-builder';

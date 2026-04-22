@@ -1,6 +1,5 @@
 import './form-renderers.css';
-import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
-import { registerRendererDefinitions } from '@nop-chaos/flux-runtime';
+import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
 import { formRendererDefinition } from './renderers/form';
 import { inputRendererDefinitions } from './renderers/input';
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createModuleCache } from '@nop-chaos/flux-runtime';import { createSchemaRenderer } from './index';
+import { createModuleCache } from '@nop-chaos/flux-runtime';
+import { createSchemaRenderer } from './index';
 import { buttonRenderer, dispatchProbeRenderer, env, pageRenderer, scopedHostRenderer, sharedFormulaCompiler, textRenderer } from './test-support';
 
 describe('createSchemaRenderer import basics', () => {
