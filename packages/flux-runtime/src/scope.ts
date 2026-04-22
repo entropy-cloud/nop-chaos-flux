@@ -6,7 +6,8 @@ function createDefaultChange(scopeId?: string): ScopeChange {
   return {
     paths: ['*'],
     sourceScopeId: scopeId,
-    kind: 'replace'
+    kind: 'replace',
+    revision: 0
   };
 }
 
@@ -20,6 +21,7 @@ function normalizeScopeChange(change: ScopeChange | undefined, scopeId?: string)
 
 export function createScopeStore(initialData: Record<string, any>): ScopeStore<Record<string, any>> {
   let scopeId: string | undefined;
+  let revision = 0;
   const store = createStore<{
     snapshot: Record<string, any>;
     lastChange: ScopeChange;
@@ -36,9 +38,13 @@ export function createScopeStore(initialData: Record<string, any>): ScopeStore<R
       return store.getState().lastChange;
     },
     setSnapshot(next, change) {
+      revision += 1;
       store.setState({
         snapshot: next,
-        lastChange: normalizeScopeChange(change, scopeId)
+        lastChange: {
+          ...normalizeScopeChange(change, scopeId),
+          revision
+        }
       });
     },
     subscribe(listener) {

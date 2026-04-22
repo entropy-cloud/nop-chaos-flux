@@ -2,6 +2,7 @@ export interface ScopeChange {
   paths: readonly string[];
   sourceScopeId?: string;
   kind?: 'update' | 'merge' | 'replace';
+  revision?: number;
 }
 
 export interface ScopeDependencySet {

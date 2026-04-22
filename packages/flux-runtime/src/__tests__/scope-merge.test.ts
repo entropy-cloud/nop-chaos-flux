@@ -55,7 +55,8 @@ describe('ScopeRef.merge', () => {
     expect(listener).toHaveBeenCalledWith({
       paths: ['a', 'b'],
       sourceScopeId: 'test-scope',
-      kind: 'merge'
+      kind: 'merge',
+      revision: 1
     });
     expect(scope.readOwn()).toEqual({ a: 1, b: 99 });
   });
@@ -71,7 +72,8 @@ describe('ScopeRef.merge', () => {
     expect(listener).toHaveBeenCalledWith({
       paths: ['b'],
       sourceScopeId: 'test-scope',
-      kind: 'merge'
+      kind: 'merge',
+      revision: 1
     });
     expect(scope.readOwn()).toEqual({ a: 1, b: 2 });
   });
@@ -137,7 +139,8 @@ describe('ScopeRef.merge', () => {
     expect(listener).toHaveBeenCalledWith({
       paths: ['user.name'],
       sourceScopeId: 'test-scope',
-      kind: 'update'
+      kind: 'update',
+      revision: 1
     });
     expect(scope.get('user.name')).toBe('Bob');
   });
@@ -153,8 +156,25 @@ describe('ScopeRef.merge', () => {
     expect(listener).toHaveBeenCalledWith({
       paths: ['user.name'],
       sourceScopeId: 'test-scope',
-      kind: 'update'
+      kind: 'update',
+      revision: 1
     });
     expect(child.get('user.name')).toBe('Bob');
+  });
+
+  it('increments revision for each local change', () => {
+    const scope = createTestScope({ a: 1 });
+
+    scope.update('a', 2);
+    expect(scope.store?.getLastChange()).toMatchObject({
+      paths: ['a'],
+      revision: 1
+    });
+
+    scope.merge({ b: 3 });
+    expect(scope.store?.getLastChange()).toMatchObject({
+      paths: ['b'],
+      revision: 2
+    });
   });
 });

@@ -74,6 +74,7 @@ export function createInitialFormScopeChange(formId: string): ScopeChange {
   return {
     paths: ['*'],
     sourceScopeId: formId,
-    kind: 'replace'
+    kind: 'replace',
+    revision: 0
   } as const;
 }

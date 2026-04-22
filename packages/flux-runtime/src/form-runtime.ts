@@ -71,9 +71,14 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   let isSubmittingInternal = false;
   let lastChange: ScopeChange = createInitialFormScopeChange(formId);
   let currentValidation = inputValue.validation;
+  let nextChangeRevision = lastChange.revision ?? 0;
 
   function setLastChange(change: ScopeChange) {
-    lastChange = change;
+    nextChangeRevision += 1;
+    lastChange = {
+      ...change,
+      revision: change.revision ?? nextChangeRevision
+    };
   }
 
   const scope = createScopeRef({

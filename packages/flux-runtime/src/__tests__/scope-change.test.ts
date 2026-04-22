@@ -32,12 +32,13 @@ describe('scopeChangeHitsDependencies', () => {
 
   it('filters ignored self roots before dependency matching', () => {
     expect(filterScopeChangeByIgnoredRoots(
-      { paths: ['payload.total', 'note'], sourceScopeId: 'scope', kind: 'merge' },
+      { paths: ['payload.total', 'note'], sourceScopeId: 'scope', kind: 'merge', revision: 7 },
       ['payload']
     )).toEqual({
       paths: ['note'],
       sourceScopeId: 'scope',
-      kind: 'merge'
+      kind: 'merge',
+      revision: 7
     });
   });
 

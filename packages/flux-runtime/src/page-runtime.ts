@@ -14,14 +14,20 @@ export function createManagedPageRuntime(input: {
   const data = input.data ?? {};
   const store = input.pageStore ?? createPageStore(data);
   store.setData(data);
+  let nextRevision = 0;
   let lastChange: ScopeChange = {
     paths: ['*'],
     sourceScopeId: 'page',
-    kind: 'replace'
+    kind: 'replace',
+    revision: nextRevision
   };
 
   function setLastChange(change: ScopeChange) {
-    lastChange = change;
+    nextRevision += 1;
+    lastChange = {
+      ...change,
+      revision: change.revision ?? nextRevision
+    };
   }
 
   const scope = createScopeRef({
