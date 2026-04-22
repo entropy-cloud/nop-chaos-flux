@@ -76,7 +76,7 @@ describe('dataRendererDefinitions table behavior', () => {
   it('uses controlled pagination when configured and waits for external prop updates', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();
-    const controlledSchema = { type: 'page', body: [{ type: 'table', paginationOwnership: 'controlled', onPageChange: { action: 'setValue', componentPath: 'pageState', value: '${page}' }, columns: [{ label: 'Name', name: 'name' }], source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }, { id: 3, name: 'Carol' }], pagination: { currentPage: '${pageState || 1}', pageSize: 1, pageSizeOptions: [1] } }] } as const;
+    const controlledSchema = { type: 'page', body: [{ type: 'table', paginationOwnership: 'controlled', onPageChange: { action: 'setValue', args: { path: 'pageState', value: '${page}' } }, columns: [{ label: 'Name', name: 'name' }], source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }, { id: 3, name: 'Carol' }], pagination: { currentPage: '${pageState || 1}', pageSize: 1, pageSizeOptions: [1] } }] } as const;
     const { rerender } = render(<SchemaRenderer schemaUrl="test://data/table-controlled-pagination" schema={controlledSchema} data={{ pageState: 1 }} env={env} formulaCompiler={formulaCompiler} />);
     fireEvent.click(document.querySelector('[data-slot="table-pagination"] [aria-label="Go to next page"]')!);
     rerender(<SchemaRenderer schemaUrl="test://data/table-controlled-pagination" schema={controlledSchema} data={{ pageState: 2 }} env={env} formulaCompiler={formulaCompiler} />);
@@ -133,7 +133,7 @@ describe('dataRendererDefinitions table behavior', () => {
   it('exposes table selection through component handle actions', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
-    render(<SchemaRenderer schemaUrl="test://data/table" schema={{ type: 'page', body: [{ type: 'table', id: 'users-table', rowSelection: { type: 'checkbox', selectedRowKeys: [] }, columns: [{ label: 'Name', name: 'name' }], source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] }, { type: 'button', label: 'Select Alice', onClick: { action: 'component:setSelection', componentId: 'users-table', args: { selectedRowKeys: ['1'] } } }, { type: 'button', label: 'Read Selection', onClick: { action: 'component:getSelection', componentId: 'users-table', then: { action: 'setValue', componentPath: 'selectionResult', value: '${result.data}' } } }, { type: 'text', text: '${selectionResult}' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(<SchemaRenderer schemaUrl="test://data/table" schema={{ type: 'page', body: [{ type: 'table', id: 'users-table', rowSelection: { type: 'checkbox', selectedRowKeys: [] }, columns: [{ label: 'Name', name: 'name' }], source: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] }, { type: 'button', label: 'Select Alice', onClick: { action: 'component:setSelection', componentId: 'users-table', args: { selectedRowKeys: ['1'] } } }, { type: 'button', label: 'Read Selection', onClick: { action: 'component:getSelection', componentId: 'users-table', then: { action: 'setValue', args: { path: 'selectionResult', value: '${result.data}' } } } }, { type: 'text', text: '${selectionResult}' }] }} env={env} formulaCompiler={formulaCompiler} />);
     fireEvent.click(screen.getByText('Select Alice'));
     await waitFor(() => {
       const checkboxes = document.querySelectorAll('[data-slot="checkbox"]');
@@ -152,7 +152,7 @@ describe('dataRendererDefinitions table behavior', () => {
     });
     const fetcher = (async () => fetcherSpy()) as typeof env.fetcher;
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
-    render(<SchemaRenderer schemaUrl="test://data/table-refresh" schema={{ type: 'page', body: [{ type: 'data-source', id: 'table-source', api: { url: '/api/table-refresh', cacheTTL: 0 }, name: 'tableData' }, { type: 'table', id: 'refreshable-table', source: '${tableData ? [tableData] : []}', onRefresh: { action: 'refreshSource', componentId: 'table-source' }, columns: [{ label: 'Value', name: 'value' }] }, { type: 'button', label: 'Refresh Table', onClick: { action: 'component:refresh', componentId: 'refreshable-table' } }] }} env={{ ...env, fetcher }} formulaCompiler={formulaCompiler} />);
+    render(<SchemaRenderer schemaUrl="test://data/table-refresh" schema={{ type: 'page', body: [{ type: 'data-source', id: 'table-source', api: { url: '/api/table-refresh', cacheTTL: 0 }, name: 'tableData' }, { type: 'table', id: 'refreshable-table', source: '${tableData ? [tableData] : []}', onRefresh: { action: 'refreshSource', targetId: 'table-source' }, columns: [{ label: 'Value', name: 'value' }] }, { type: 'button', label: 'Refresh Table', onClick: { action: 'component:refresh', componentId: 'refreshable-table' } }] }} env={{ ...env, fetcher }} formulaCompiler={formulaCompiler} />);
     await waitFor(() => expect(fetcherSpy).toHaveBeenCalled());
     const initialCalls = fetcherSpy.mock.calls.length;
     fireEvent.click(screen.getByText('Refresh Table'));
