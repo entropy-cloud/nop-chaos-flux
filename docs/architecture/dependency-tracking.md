@@ -161,7 +161,7 @@ Examples:
 
 ### 1.7 Source Invalidation
 
-Source: `packages/flux-runtime/src/source-registry.ts`
+Source: `packages/flux-runtime/src/async-data/source-registry.ts`
 
 On registration, each source subscribes to `scope.store`:
 
@@ -187,7 +187,7 @@ For API sources, `trackApiRequestDependencies()` re-evaluates the API schema on 
 
 ### 1.8 Reaction Invalidation
 
-Source: `packages/flux-runtime/src/reaction-runtime.ts`
+Source: `packages/flux-runtime/src/async-data/reaction-runtime.ts`
 
 On registration, each reaction evaluates `watch` once, stores the resulting dependency set, and then subscribes to `scope.store`. Explicit `dependsOn` roots override runtime fallback collection when present.
 
@@ -391,7 +391,7 @@ The current hierarchical `pathMatchesDependency` behavior is a reasonable deep-p
 
 ### 3.5 Source Invalidation
 
-Source targets: `packages/flux-runtime/src/source-registry.ts`, `packages/flux-runtime/src/data-source-runtime.ts`
+Source targets: `packages/flux-runtime/src/async-data/source-registry.ts`, `packages/flux-runtime/src/async-data/data-source-runtime.ts`
 
 Source invalidation rules under the target model:
 - formula sources use explicit roots when declared, otherwise runtime-collected roots
@@ -403,7 +403,7 @@ Formula and API sources still share the same dependency substrate. The differenc
 
 ### 3.6 Reaction Invalidation
 
-Source target: `packages/flux-runtime/src/reaction-runtime.ts`
+Source target: `packages/flux-runtime/src/async-data/reaction-runtime.ts`
 
 Reaction invalidation rules under the target model:
 - the `watch` value owns the reaction's dependency roots
@@ -562,9 +562,9 @@ This direction is correct because data visibility flows downward through lexical
 | `scopeChangeHitsDependencies` | `packages/flux-runtime/src/scope-change.ts` | normalize writes to roots before matching |
 | `collectRuntimeDependencies` | `packages/flux-runtime/src/node-runtime.ts` | unchanged aggregation shape |
 | Explicit dependency carrier | `packages/flux-core/src/types/schema.ts` (`dependsOn` on `DataSourceSchema` / `ReactionSchema`) | keep explicit roots first, runtime fallback second |
-| Source dependency init | `packages/flux-runtime/src/source-registry.ts` | explicit roots first, runtime fallback second |
-| API request dependency tracking | `packages/flux-runtime/src/data-source-runtime.ts` | collect request-config roots only when explicit roots are absent |
-| Reaction dependency init | `packages/flux-runtime/src/reaction-runtime.ts` | explicit roots first, runtime fallback second |
-| Self-write guard | `packages/flux-runtime/src/source-registry.ts` | filter self roots before match |
+| Source dependency init | `packages/flux-runtime/src/async-data/source-registry.ts` | explicit roots first, runtime fallback second |
+| API request dependency tracking | `packages/flux-runtime/src/async-data/data-source-runtime.ts` | collect request-config roots only when explicit roots are absent |
+| Reaction dependency init | `packages/flux-runtime/src/async-data/reaction-runtime.ts` | explicit roots first, runtime fallback second |
+| Self-write guard | `packages/flux-runtime/src/async-data/source-registry.ts` | filter self roots before match |
 | Collection/row root translation | collection-owning renderer/runtime code | publish row-local root changes for affected rows only |
 | Validation dependency system | `packages/flux-runtime/src/validation/*` | keep separate unless a concrete reuse case appears |

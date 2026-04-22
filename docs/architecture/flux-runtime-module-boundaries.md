@@ -20,7 +20,7 @@ When this document needs to be checked against code, start with:
 - `packages/flux-compiler/src/index.ts` and `packages/flux-compiler/src/schema-compiler.ts` for compiler ownership
 - `packages/flux-runtime/src/validation/` for reusable validation helpers
 - `packages/flux-runtime/src/form-runtime.ts` and related `form-runtime-*` files for form flow ownership
-- `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-runtime/src/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
+- `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-runtime/src/async-data/request-runtime.ts`, and `packages/flux-runtime/src/scope.ts` for runtime subsystem placement
 - `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/action-scope.ts`, and `packages/flux-runtime/src/component-handle-registry.ts` for action/capability/import/runtime-host boundaries
 
 ## Main Rule
@@ -172,31 +172,34 @@ Note:
   - runtime-owned async validation helpers and ajax-side request glue
   - delegates generic request-control resolution to `@nop-chaos/flux-action-core`
 
-### Request execution boundary (`flux-runtime`)
+### Request and async-data boundary (`flux-runtime`)
 
-- `packages/flux-runtime/src/request-runtime.ts`
+- `packages/flux-runtime/src/async-data/request-runtime.ts`
   - request execution (`executeApiSchema`)
   - adaptor application
   - request cancellation plumbing
   - consumed by: ajax actions, form submit, async validation, data-source
-- `packages/flux-runtime/src/request-runtime-adaptor.ts`
+- `packages/flux-runtime/src/async-data/request-runtime-adaptor.ts`
   - request/response adaptor shaping shared by request execution paths
-- `packages/flux-runtime/src/api-cache.ts`
+- `packages/flux-runtime/src/async-data/api-cache.ts`
   - cache store for request results
+- `packages/flux-runtime/src/async-data/async-governance.ts`
+  - runtime-local async run governance shared by data-source, reaction, and async validation paths
+  - internal substrate only; not evidence of a separate request/data package owner
 
 ### Source and reaction runtime (`flux-runtime`)
 
-- `packages/flux-runtime/src/data-source-runtime.ts`
+- `packages/flux-runtime/src/async-data/data-source-runtime.ts`
   - api-backed source execution
   - source status publication and result mapping application
   - request dependency tracking for runtime-owned sources
   - runtime normalization of `SourceSchema` top-level `api` into action-dispatch input
   - uses `executeAction` port to consume action-core dispatcher
-- `packages/flux-runtime/src/source-registry.ts`
+- `packages/flux-runtime/src/async-data/source-registry.ts`
   - scope-scoped source registration and replacement
   - source invalidation/refresh routing
   - source debug snapshot ownership
-- `packages/flux-runtime/src/reaction-runtime.ts`
+- `packages/flux-runtime/src/async-data/reaction-runtime.ts`
   - scope-scoped reaction registration and replacement
   - reaction scheduling / loop guard behavior
   - reaction debug snapshot ownership
