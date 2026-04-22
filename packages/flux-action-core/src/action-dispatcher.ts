@@ -4,8 +4,11 @@ import type {
   ActionResult,
   ActionRuntimeAdapter,
   ActionSchema,
+  BuiltInActionInvocation,
   CompiledActionNode,
+  ComponentActionInvocation,
   CompiledActionProgram,
+  NamespacedActionInvocation,
   OperationControlConfig,
   RendererEnv,
   RendererPlugin,
@@ -188,20 +191,37 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
     actionPayload: ActionMonitorPayload,
     signal?: AbortSignal
   ): Promise<ActionResult | undefined> {
+    let invocation: BuiltInActionInvocation | undefined;
+
     switch (action.action) {
       case 'setValue': {
         const payload = resolveSetValuePayload(action, ctx, evaluator);
         const targetPath = payload.path ?? action.targeting.componentId ?? '';
-        const result = await adapter.setValue(targetPath, payload.value, ctx, action.targeting);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'setValue',
+          args: {
+            path: targetPath,
+            value: payload.value
+          },
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'setValues': {
         const payload = resolveSetValuesPayload(action, ctx, evaluator);
-        const result = await adapter.setValues(payload.values, ctx, {
-          ...action.targeting,
-          targetId: action.targeting.targetId
-        });
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'setValues',
+          args: {
+            path: action.targeting.targetId,
+            values: payload.values
+          },
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'ajax': {
         const api = evaluateActionArgs(action, ctx, evaluator);
@@ -212,8 +232,14 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
             { ok: false, error: new Error('ajax requires args payload') }
           );
         }
-        const result = await adapter.executeAjax(api, action, ctx, signal);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'ajax',
+          args: api,
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'openDialog': {
         const dialog = evaluateActionArgs(action, ctx, evaluator);
@@ -224,8 +250,14 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
             { ok: false, error: new Error('openDialog requires args payload') }
           );
         }
-        const result = await adapter.openDialog(dialog, ctx);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'openDialog',
+          args: dialog,
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'openDrawer': {
         const drawer = evaluateActionArgs(action, ctx, evaluator);
@@ -236,31 +268,54 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
             { ok: false, error: new Error('openDrawer requires args payload') }
           );
         }
-        const result = await adapter.openDrawer(drawer, ctx);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'openDrawer',
+          args: drawer,
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'closeDrawer': {
-        const result = await adapter.closeDrawer(
-          action.targeting.dialogId ? String(action.targeting.dialogId) : undefined,
-          ctx
-        );
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'closeDrawer',
+          args: action.targeting.dialogId ? { dialogId: String(action.targeting.dialogId) } : undefined,
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'showToast': {
         const payload = evaluateActionArgs(action, ctx, evaluator);
-        const result = await adapter.showToast(payload, ctx);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'showToast',
+          args: payload,
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'closeDialog': {
-        const result = await adapter.closeDialog(
-          action.targeting.dialogId ? String(action.targeting.dialogId) : undefined,
-          ctx
-        );
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'closeDialog',
+          args: action.targeting.dialogId ? { dialogId: String(action.targeting.dialogId) } : undefined,
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'refreshTable': {
-        const result = await adapter.refreshTable(ctx);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'refreshTable',
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'refreshSource': {
         const sourceId = action.targeting.targetId;
@@ -271,8 +326,14 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
             { ok: false, error: new Error('refreshSource requires targetId') }
           );
         }
-        const result = await adapter.refreshSource(String(sourceId), ctx);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'refreshSource',
+          args: { sourceId: String(sourceId) },
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'submitForm': {
         if (!ctx.form) {
@@ -283,21 +344,36 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
           );
         }
         const api = evaluateActionArgs(action, ctx, evaluator);
-        const result = await adapter.submitForm(api, action, ctx, signal);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'submitForm',
+          args: api,
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       case 'navigate': {
         const args = evaluateActionArgs(action, ctx, evaluator) ?? {};
-        const result = await adapter.navigate({
-          url: typeof args.url === 'string' ? args.url : undefined,
-          back: Boolean(args.back),
-          replace: Boolean(args.replace)
-        }, ctx);
-        return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
+        invocation = {
+          action: 'navigate',
+          args: {
+            url: typeof args.url === 'string' ? args.url : undefined,
+            back: Boolean(args.back),
+            replace: Boolean(args.replace)
+          },
+          targeting: action.targeting,
+          actionNode: action,
+          signal
+        };
+        break;
       }
       default:
         return undefined;
     }
+
+    const result = await adapter.invokeBuiltInAction(invocation!, ctx);
+    return finishAction({ ...actionPayload, dispatchMode: 'built-in' }, startedAt, result);
   }
 
   async function runComponentAction(
@@ -332,7 +408,12 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
     }
 
     const payload = evaluateActionArgs(action, ctx, evaluator);
-    const result = await adapter.invokeComponentMethod(method, target, payload, ctx);
+    const invocation: ComponentActionInvocation = {
+      method,
+      target,
+      payload
+    };
+    const result = await adapter.invokeComponentAction(invocation, ctx);
     return finishAction(
       { ...actionPayload, dispatchMode: 'component', method },
       startedAt,
@@ -358,21 +439,18 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
       });
     }
 
-    const resolved = ctx.actionScope?.resolve(action.action);
-    const sourceScopeId = resolved?.sourceScopeId;
-    const providerKind = resolved?.provider.kind ?? 'host';
-
     const payload = evaluateActionArgs(action, ctx, evaluator);
-    const rawResult = await adapter.invokeNamespacedAction(parsed.namespace, parsed.method, payload, ctx);
-    const result = normalizeActionResult(rawResult);
+    const invocation: NamespacedActionInvocation = {
+      actionName: action.action,
+      namespace: parsed.namespace,
+      method: parsed.method,
+      payload
+    };
+    const result = normalizeActionResult(await adapter.invokeNamespacedAction(invocation, ctx));
     return finishAction(
       { ...actionPayload, dispatchMode: 'namespace', namespace: parsed.namespace, method: parsed.method },
       startedAt,
-      {
-        ...result,
-        sourceScopeId,
-        providerKind
-      }
+      result
     );
   }
 

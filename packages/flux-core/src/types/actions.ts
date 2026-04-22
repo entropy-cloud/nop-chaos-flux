@@ -315,133 +315,53 @@ export interface CompiledActionProgram {
   isFullyStatic: boolean;
 }
 
+export interface BuiltInActionInvocation {
+  action: string;
+  args?: Record<string, unknown>;
+  targeting: CompiledActionTargeting;
+  actionNode: CompiledActionNode;
+  signal?: AbortSignal;
+}
+
+export interface ComponentActionInvocation {
+  method: string;
+  target: { _targetCid?: number; componentId?: string; componentName?: string };
+  payload: Record<string, unknown> | undefined;
+}
+
+export interface NamespacedActionInvocation {
+  actionName: string;
+  namespace: string;
+  method: string;
+  payload: Record<string, unknown> | undefined;
+}
+
 /**
  * Runtime adapter interface for action execution.
- * 
- * flux-action-core owns dispatch ordering, built-in recognition, and result normalization.
- * The runtime adapter owns actual effect execution that requires runtime-specific capabilities.
- * 
+ *
+ * flux-action-core owns dispatch ordering, selector recognition, payload evaluation,
+ * and result classification. The runtime adapter owns the final runtime invocation
+ * boundary for built-in, component-targeted, and namespaced actions.
+ *
  * This interface isolates runtime-specific behavior behind a single adapter object,
  * allowing action-core to remain independent of form/page/surface/source runtime internals.
  */
 export interface ActionRuntimeAdapter {
   /**
-   * Execute a setValue action by updating scope or form values.
+   * Execute a built-in action invocation.
+   *
+   * Built-in payload remains args-centric at this boundary; action-specific DTO
+   * normalization is a runtime implementation detail below the adapter surface.
    */
-  setValue(
-    path: string,
-    value: unknown,
-    ctx: ActionContext,
-    targeting: CompiledActionTargeting
-  ): Promise<ActionResult>;
+  invokeBuiltInAction(invocation: BuiltInActionInvocation, ctx: ActionContext): Promise<ActionResult>;
 
   /**
-   * Execute a setValues action by updating multiple scope or form values.
+   * Resolve a component handle and invoke a component-targeted action.
    */
-  setValues(
-    values: Record<string, unknown>,
-    ctx: ActionContext,
-    targeting: CompiledActionTargeting
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute an ajax action by performing an API request.
-   */
-  executeAjax(
-    api: unknown,
-    action: CompiledActionNode,
-    ctx: ActionContext,
-    signal?: AbortSignal
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute a submitForm action by triggering form submission.
-   */
-  submitForm(
-    api: unknown | undefined,
-    action: CompiledActionNode,
-    ctx: ActionContext,
-    signal?: AbortSignal
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute an openDialog action by opening a dialog surface.
-   */
-  openDialog(
-    dialog: Record<string, unknown>,
-    ctx: ActionContext
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute a closeDialog action by closing a dialog surface.
-   */
-  closeDialog(
-    dialogId: string | undefined,
-    ctx: ActionContext
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute an openDrawer action by opening a drawer surface.
-   */
-  openDrawer(
-    drawer: Record<string, unknown>,
-    ctx: ActionContext
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute a closeDrawer action by closing a drawer surface.
-   */
-  closeDrawer(
-    drawerId: string | undefined,
-    ctx: ActionContext
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute a showToast action by displaying a notification.
-   */
-  showToast(
-    args: Record<string, unknown> | undefined,
-    ctx: ActionContext
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute a navigate action by navigating to a URL.
-   */
-  navigate(
-    args: { url?: string; back?: boolean; replace?: boolean },
-    ctx: ActionContext
-  ): Promise<ActionResult>;
-
-  /**
-   * Execute a refreshTable action by refreshing the page.
-   */
-  refreshTable(ctx: ActionContext): Promise<ActionResult>;
-
-  /**
-   * Execute a refreshSource action by refreshing a data source.
-   */
-  refreshSource(
-    sourceId: string,
-    ctx: ActionContext
-  ): Promise<ActionResult>;
-
-  /**
-   * Resolve a component handle and invoke a method on it.
-   */
-  invokeComponentMethod(
-    method: string,
-    target: { _targetCid?: number; componentId?: string; componentName?: string },
-    payload: Record<string, unknown> | undefined,
-    ctx: ActionContext
-  ): Promise<ActionResult>;
+  invokeComponentAction(invocation: ComponentActionInvocation, ctx: ActionContext): Promise<ActionResult>;
 
   /**
    * Resolve a namespaced action and invoke it.
    */
-  invokeNamespacedAction(
-    namespace: string,
-    method: string,
-    payload: Record<string, unknown> | undefined,
-    ctx: ActionContext
-  ): Promise<ActionResult>;
+  invokeNamespacedAction(invocation: NamespacedActionInvocation, ctx: ActionContext): Promise<ActionResult>;
 }
