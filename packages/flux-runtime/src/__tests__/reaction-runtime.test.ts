@@ -41,7 +41,7 @@ describe('registerReaction dispose race with scheduled microtask', () => {
         type: 'reaction',
         watch: '${count}',
         debounce: 50,
-        actions: { action: 'setValue', componentPath: 'flag', value: true }
+        actions: { action: 'setValue', args: { path: 'flag', value: true } }
       },
       dispatch: vi.fn()
     });
@@ -71,7 +71,7 @@ describe('registerReaction dispose race with scheduled microtask', () => {
         type: 'reaction',
         watch: '${count}',
         debounce: 50,
-        actions: { action: 'setValue', componentPath: 'flag', value: true }
+        actions: { action: 'setValue', args: { path: 'flag', value: true } }
       },
       dispatch
     });
@@ -98,7 +98,7 @@ describe('registerReaction dispose race with scheduled microtask', () => {
         type: 'reaction',
         watch: '${count}',
         debounce: 20,
-        actions: { action: 'setValue', componentPath: 'message', value: 'fired' }
+        actions: { action: 'setValue', args: { path: 'message', value: 'fired' } }
       },
       dispatch: (action, ctx) =>
         runtime.dispatch(action, { runtime, scope: ctx?.scope ?? page.scope, page })

@@ -24,8 +24,10 @@ describe('createRendererRuntime', () => {
     await runtime.dispatch(
       {
         action: 'setValue',
-        componentPath: 'message',
-        value: 'World'
+        args: {
+          path: 'message',
+          value: 'World'
+        }
       },
       {
         runtime,
@@ -92,9 +94,11 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'setValues',
-        values: {
-          message: 'World',
-          status: 'done'
+        args: {
+          values: {
+            message: 'World',
+            status: 'done'
+          }
         }
       },
       {

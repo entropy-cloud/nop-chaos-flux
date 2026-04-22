@@ -31,8 +31,10 @@ describe('createRendererRuntime', () => {
         },
         {
           action: 'setValue',
-          componentPath: 'status',
-          value: 'done'
+          args: {
+            path: 'status',
+            value: 'done'
+          }
         }
       ],
       {
@@ -71,8 +73,10 @@ describe('createRendererRuntime', () => {
         },
         {
           action: 'setValue',
-          componentPath: 'status',
-          value: 'done'
+          args: {
+            path: 'status',
+            value: 'done'
+          }
         }
       ],
       {
@@ -98,12 +102,16 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'setValue',
-        componentPath: 'status',
-        value: 'loading',
+        args: {
+          path: 'status',
+          value: 'loading'
+        },
         then: {
           action: 'setValue',
-          componentPath: 'lastResult',
-          value: '${result.data}'
+          args: {
+            path: 'lastResult',
+            value: '${result.data}'
+          }
         }
       },
       {
@@ -131,13 +139,17 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'setValue',
-        componentPath: 'status',
-        value: 'loading',
+        args: {
+          path: 'status',
+          value: 'loading'
+        },
         when: '${false}',
         then: {
           action: 'setValue',
-          componentPath: 'marker',
-          value: 'then-ran'
+          args: {
+            path: 'marker',
+            value: 'then-ran'
+          }
         }
       },
       {
@@ -174,8 +186,10 @@ describe('createRendererRuntime', () => {
         },
         onError: {
           action: 'setValue',
-          componentPath: 'failure',
-          value: '${error.message}:${result.ok}:${prevResult.ok}'
+          args: {
+            path: 'failure',
+            value: '${error.message}:${result.ok}:${prevResult.ok}'
+          }
         }
       },
       {
@@ -203,12 +217,16 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'setValue',
-        componentPath: 'status',
-        value: 'done',
+        args: {
+          path: 'status',
+          value: 'done'
+        },
         onSettled: {
           action: 'setValue',
-          componentPath: 'settled',
-          value: '${result.data}'
+          args: {
+            path: 'settled',
+            value: '${result.data}'
+          }
         }
       },
       {
@@ -239,8 +257,10 @@ describe('createRendererRuntime', () => {
         args: { url: '/api/fail', method: 'get' },
         onSettled: {
           action: 'setValue',
-          componentPath: 'settled',
-          value: '${error.message}'
+          args: {
+            path: 'settled',
+            value: '${error.message}'
+          }
         }
       },
       {
@@ -276,13 +296,17 @@ describe('createRendererRuntime', () => {
         continueOnError: true,
         then: {
           action: 'setValue',
-          componentPath: 'success',
-          value: 'then-ran'
+          args: {
+            path: 'success',
+            value: 'then-ran'
+          }
         },
         onError: {
           action: 'setValue',
-          componentPath: 'failure',
-          value: '${error.message}'
+          args: {
+            path: 'failure',
+            value: '${error.message}'
+          }
         }
       },
       {
@@ -317,11 +341,15 @@ describe('createRendererRuntime', () => {
     await runtime.dispatch(
       {
         action: 'designer:addNode',
-        nodeType: 'task',
+        args: {
+          nodeType: 'task'
+        },
         onError: {
           action: 'setValue',
-          componentPath: 'ignored',
-          value: 'ignored'
+          args: {
+            path: 'ignored',
+            value: 'ignored'
+          }
         }
       } as any,
       {
@@ -351,7 +379,10 @@ describe('createRendererRuntime', () => {
 
         return {
           ...action,
-          value: 'rewritten'
+          args: {
+            ...(action.args ?? {}),
+            value: 'rewritten'
+          }
         } as ActionSchema;
       }
     };
@@ -366,8 +397,10 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'setValue',
-        componentPath: 'status',
-        value: 'original'
+        args: {
+          path: 'status',
+          value: 'original'
+        }
       },
       {
         runtime,

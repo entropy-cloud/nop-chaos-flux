@@ -215,8 +215,10 @@ describe('createRendererRuntime', () => {
       {
         action: 'setValue',
         when: '${enabled}',
-        componentPath: 'message',
-        value: 'updated'
+        args: {
+          path: 'message',
+          value: 'updated'
+        }
       },
       {
         runtime,
@@ -243,13 +245,17 @@ describe('createRendererRuntime', () => {
         parallel: [
           {
             action: 'setValue',
-            componentPath: 'left',
-            value: 'left-updated'
+            args: {
+              path: 'left',
+              value: 'left-updated'
+            }
           },
           {
             action: 'setValue',
-            componentPath: 'right',
-            value: 'right-updated'
+            args: {
+              path: 'right',
+              value: 'right-updated'
+            }
           }
         ]
       },
@@ -295,8 +301,10 @@ describe('createRendererRuntime', () => {
           parallel: [
             {
               action: 'setValue',
-              componentPath: 'left',
-              value: 'ok'
+              args: {
+                path: 'left',
+                value: 'ok'
+              }
             },
             {
               action: 'ajax',

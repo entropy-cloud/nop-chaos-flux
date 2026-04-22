@@ -42,13 +42,33 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         return { ok: true, data: values };
       }
 
+      const basePath = targeting.targetId;
+
       if (ctx.form && targeting.formId && ctx.form.id === targeting.formId) {
+        if (basePath) {
+          const nextValues = Object.fromEntries(
+            Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val])
+          );
+          ctx.form.setValues(nextValues);
+          return { ok: true, data: nextValues };
+        }
+
         ctx.form.setValues(values);
       } else {
         for (const [targetPath, val] of Object.entries(values)) {
-          ctx.scope.update(targetPath, val);
+          ctx.scope.update(basePath ? `${basePath}.${targetPath}` : targetPath, val);
         }
       }
+
+      if (basePath) {
+        return {
+          ok: true,
+          data: Object.fromEntries(
+            Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val])
+          )
+        };
+      }
+
       return { ok: true, data: values };
     },
 

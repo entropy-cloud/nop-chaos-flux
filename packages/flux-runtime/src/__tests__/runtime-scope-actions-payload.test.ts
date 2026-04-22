@@ -8,7 +8,7 @@ import {
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
-  it('treats top-level action fields as payload when args is omitted', async () => {
+  it('passes namespaced action args through the compiled payload path', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
@@ -26,10 +26,12 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'designer:addNode',
-        nodeType: 'task',
-        position: {
-          x: '${baseX}',
-          y: 120
+        args: {
+          nodeType: 'task',
+          position: {
+            x: '${baseX}',
+            y: 120
+          }
         }
       } as any,
       {

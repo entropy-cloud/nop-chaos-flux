@@ -30,9 +30,11 @@ describe('createRendererRuntime', () => {
       {
         action: 'setValues',
         formId: 'profile-form',
-        values: {
-          username: 'Bob',
-          role: 'admin'
+        args: {
+          values: {
+            username: 'Bob',
+            role: 'admin'
+          }
         }
       },
       {
@@ -81,14 +83,18 @@ describe('createRendererRuntime', () => {
         {
           action: 'setValue',
           formId: 'profile-form',
-          componentPath: 'username',
-          value: 'Bob'
+          args: {
+            path: 'username',
+            value: 'Bob'
+          }
         },
         {
           action: 'setValue',
           formId: 'profile-form',
-          componentPath: 'role',
-          value: 'admin'
+          args: {
+            path: 'role',
+            value: 'admin'
+          }
         }
       ],
       {
@@ -114,9 +120,11 @@ describe('createRendererRuntime', () => {
       {
         action: 'setValues',
         formId: 'profile-form',
-        values: {
-          username: 'Bob',
-          role: 'admin'
+        args: {
+          values: {
+            username: 'Bob',
+            role: 'admin'
+          }
         }
       },
       {

@@ -21,8 +21,10 @@ describe('createRendererRuntime', () => {
         watch: '${count}',
         actions: {
           action: 'setValue',
-          componentPath: 'message',
-          value: 'first:${count}'
+          args: {
+            path: 'message',
+            value: 'first:${count}'
+          }
         }
       },
       dispatch: async (action, ctx) => {
@@ -43,8 +45,10 @@ describe('createRendererRuntime', () => {
         watch: '${count}',
         actions: {
           action: 'setValue',
-          componentPath: 'message',
-          value: 'second:${count}'
+          args: {
+            path: 'message',
+            value: 'second:${count}'
+          }
         }
       },
       dispatch: async (action, ctx) => {
@@ -86,8 +90,10 @@ describe('createRendererRuntime', () => {
         immediate: true,
         actions: {
           action: 'setValue',
-          componentPath: 'message',
-          value: 'count:${count}'
+          args: {
+            path: 'message',
+            value: 'count:${count}'
+          }
         }
       },
       dispatch: (action, ctx) => runtime.dispatch(action, {
@@ -135,8 +141,10 @@ describe('createRendererRuntime', () => {
         debounce: 20,
         actions: {
           action: 'setValue',
-          componentPath: 'message',
-          value: 'count:${count}'
+          args: {
+            path: 'message',
+            value: 'count:${count}'
+          }
         }
       },
       dispatch: (action, ctx) => runtime.dispatch(action, {
@@ -176,8 +184,10 @@ describe('createRendererRuntime', () => {
         watch: '${count}',
         actions: {
           action: 'setValue',
-          componentPath: 'message',
-          value: 'count:${count}'
+          args: {
+            path: 'message',
+            value: 'count:${count}'
+          }
         }
       },
       dispatch: (action, ctx) => {
@@ -228,8 +238,10 @@ describe('createRendererRuntime', () => {
         watch: '${count}',
         actions: {
           action: 'setValue',
-          componentPath: 'count',
-          value: '${count + 1}'
+          args: {
+            path: 'count',
+            value: '${count + 1}'
+          }
         }
       },
       dispatch: (action, ctx) => runtime.dispatch(action, {
@@ -275,8 +287,10 @@ describe('createRendererRuntime', () => {
         watch: '${count}',
         actions: {
           action: 'setValue',
-          componentPath: 'message',
-          value: '${value}:${prev}:${changed}:${changedPaths[0]}'
+          args: {
+            path: 'message',
+            value: '${value}:${prev}:${changed}:${changedPaths[0]}'
+          }
         }
       },
       dispatch: (action, ctx) => runtime.dispatch(action, {

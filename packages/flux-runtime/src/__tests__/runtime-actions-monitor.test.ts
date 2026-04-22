@@ -185,8 +185,10 @@ describe('createRendererRuntime', () => {
       const firstPromise = runtime.dispatch(
         {
           action: 'setValue',
-          componentPath: 'status',
-          value: 'first',
+          args: {
+            path: 'status',
+            value: 'first'
+          },
           debounce: 50
         },
         {
@@ -199,8 +201,10 @@ describe('createRendererRuntime', () => {
       const secondPromise = runtime.dispatch(
         {
           action: 'setValue',
-          componentPath: 'status',
-          value: 'second',
+          args: {
+            path: 'status',
+            value: 'second'
+          },
           debounce: 50
         },
         {
@@ -496,8 +500,10 @@ describe('createRendererRuntime', () => {
       const firstPromise = runtime.dispatch(
         {
           action: 'setValue',
-          componentPath: 'status',
-          value: 'first',
+          args: {
+            path: 'status',
+            value: 'first'
+          },
           debounce: 25
         },
         {
@@ -510,8 +516,10 @@ describe('createRendererRuntime', () => {
       const secondPromise = runtime.dispatch(
         {
           action: 'setValue',
-          componentPath: 'status',
-          value: 'second',
+          args: {
+            path: 'status',
+            value: 'second'
+          },
           debounce: 25
         },
         {

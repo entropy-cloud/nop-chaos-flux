@@ -164,8 +164,10 @@ describe('audit-backed runtime fixes', () => {
         watch: '${count}',
         actions: {
           action: 'setValue',
-          componentPath: 'message',
-          value: 'count:${count}'
+          args: {
+            path: 'message',
+            value: 'count:${count}'
+          }
         }
       },
       dispatch: async () => {

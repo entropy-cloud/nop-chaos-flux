@@ -154,8 +154,10 @@ describe('explicit dependency roots', () => {
         dependsOn: ['price'],
         actions: {
           action: 'setValue',
-          componentPath: 'message',
-          value: '${price}:${qty}'
+          args: {
+            path: 'message',
+            value: '${price}:${qty}'
+          }
         }
       },
       dispatch: (action, ctx) => runtime.dispatch(action, {
