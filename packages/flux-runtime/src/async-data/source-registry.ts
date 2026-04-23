@@ -1,6 +1,7 @@
 import type {
   AsyncGovernanceStore,
   ApiSchema,
+  CompiledDataSource,
   DataSourceController,
   DataSourceRegistration,
   DataSourceSchema,
@@ -55,11 +56,29 @@ function asOperationControl(value: unknown): import('@nop-chaos/flux-core').Oper
     : undefined;
 }
 
+function extractExpressionSource(compiled: import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown> | undefined): string | undefined {
+  if (!compiled || compiled.isStatic) return undefined;
+  const node = compiled.node;
+  if (node.kind === 'expression-node' || node.kind === 'template-node') {
+    return node.source;
+  }
+  return undefined;
+}
+
+function extractFormulaValue(compiled: import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown> | undefined): unknown {
+  if (!compiled) return undefined;
+  if (compiled.isStatic) return compiled.value;
+  const source = extractExpressionSource(compiled);
+  return source ?? undefined;
+}
+
 export interface RuntimeSourceRegistry {
   registerDataSource(input: {
     id: string;
-    schema: DataSourceSchema;
     scope: ScopeRef;
+    /** @deprecated Use compiledSource instead */
+    schema?: DataSourceSchema;
+    compiledSource?: CompiledDataSource;
   }): DataSourceRegistration;
   refreshDataSource(input: {
     id: string;
@@ -81,8 +100,9 @@ export function createRuntimeSourceRegistry(input: {
 
   function registerDataSource(args: {
     id: string;
-    schema: DataSourceSchema;
     scope: ScopeRef;
+    schema?: DataSourceSchema;
+    compiledSource?: CompiledDataSource;
   }): DataSourceRegistration {
     const ownerScopeId = args.scope.id;
     const bucket = scopeEntries.get(ownerScopeId) ?? new Map<string, RuntimeSourceEntry>();
@@ -93,29 +113,92 @@ export function createRuntimeSourceRegistry(input: {
       existing.dispose();
     }
 
-    const explicitDependencies = createRootDependencySet(args.schema.dependsOn);
+    const compiled = args.compiledSource;
+    const schema = args.schema;
+
+    if (!compiled && !schema) {
+      throw new Error('Either schema or compiledSource must be provided to registerDataSource');
+    }
+
+    const evaluateCompiledValue = <T>(value: import('@nop-chaos/flux-core').CompiledRuntimeValue<T> | undefined): T | undefined => {
+      if (!value) return undefined;
+      if (value.isStatic) return value.value;
+      return input.runtime.expressionCompiler.evaluateValue(value, args.scope, input.runtime.env);
+    };
+
+    const dependsOn = compiled?.dependsOn ?? schema?.dependsOn;
+    const explicitDependencies = createRootDependencySet(dependsOn);
     let dependencies: ScopeDependencySet | undefined = explicitDependencies;
-    const targetPath = resolvePublishedTarget(args.schema, args.id);
-    const controller = 'api' in args.schema && args.schema.api
+
+    const targetPath = compiled
+      ? evaluateCompiledValue(compiled.targetPath) ?? args.id
+      : resolvePublishedTarget(schema!, args.id);
+
+    const statusPath = compiled
+      ? evaluateCompiledValue(compiled.statusPath)
+      : schema?.statusPath;
+
+    const isApiSource = compiled
+      ? compiled.kind === 'api'
+      : 'api' in schema! && schema!.api;
+
+    const controller = isApiSource
       ? createDataSourceController({
           runtime: input.runtime,
           apiCache: input.apiCache,
           asyncGovernance: input.asyncGovernance,
           executeApiRequest: input.executeApiRequest,
-          api: args.schema.api as ApiSchema,
+          api: compiled?.api
+            ? {
+                url: evaluateCompiledValue(compiled.api.url) ?? '',
+                method: evaluateCompiledValue(compiled.api.method),
+                data: evaluateCompiledValue(compiled.api.data),
+                headers: evaluateCompiledValue(compiled.api.headers),
+                params: evaluateCompiledValue(compiled.api.params),
+                includeScope: compiled.api.includeScope,
+                responseAdaptor: compiled.api.responseAdaptor,
+                requestAdaptor: compiled.api.requestAdaptor,
+                cacheTTL: compiled.api.cacheTTL,
+                cacheKey: compiled.api.cacheKey,
+                dedupStrategy: compiled.api.dedupStrategy
+              } as ApiSchema
+            : schema!.api as ApiSchema,
           scope: args.scope,
           ownerId: `data-source:${ownerScopeId}:${args.id}`,
           targetPath,
-          mergeToScope: args.schema.mergeToScope,
-          resultMapping: args.schema.resultMapping,
-          mergeStrategy: args.schema.mergeStrategy,
-          mergeKey: args.schema.mergeKey,
-          statusPath: args.schema.statusPath,
-          interval: asNumber(args.schema.interval),
-          stopWhen: asString(args.schema.stopWhen),
-          silent: asBoolean(args.schema.silent),
-          initialData: args.schema.initialData,
-          control: asOperationControl(args.schema.control),
+          mergeToScope: compiled
+            ? evaluateCompiledValue(compiled.mergeToScope)
+            : schema!.mergeToScope,
+          resultMapping: compiled
+            ? evaluateCompiledValue(compiled.resultMapping)
+            : schema!.resultMapping,
+          mergeStrategy: compiled
+            ? evaluateCompiledValue(compiled.mergeStrategy)
+            : schema!.mergeStrategy,
+          mergeKey: compiled
+            ? evaluateCompiledValue(compiled.mergeKey)
+            : schema!.mergeKey,
+          statusPath,
+          interval: compiled
+            ? evaluateCompiledValue(compiled.interval)
+            : asNumber((schema as { interval?: number })?.interval),
+          stopWhen: compiled
+            ? extractExpressionSource(compiled.stopWhen)
+            : asString((schema as { stopWhen?: string })?.stopWhen),
+          silent: compiled
+            ? evaluateCompiledValue(compiled.silent)
+            : asBoolean((schema as { silent?: boolean })?.silent),
+          initialData: compiled
+            ? evaluateCompiledValue(compiled.initialData)
+            : schema!.initialData,
+          control: compiled?.control
+            ? {
+                dedup: compiled.control.dedup,
+                throttle: compiled.control.throttle,
+                cacheTTL: compiled.control.cacheTTL,
+                cacheKey: compiled.control.cacheKey
+              }
+            : asOperationControl((schema as { control?: unknown })?.control),
           onDependenciesChange(nextDependencies: ScopeDependencySet | undefined) {
             if (!explicitDependencies) {
               dependencies = nextDependencies;
@@ -128,13 +211,25 @@ export function createRuntimeSourceRegistry(input: {
           ownerId: `data-source:${ownerScopeId}:${args.id}`,
           asyncGovernance: input.asyncGovernance,
           targetPath,
-          mergeToScope: args.schema.mergeToScope,
-          resultMapping: args.schema.resultMapping,
-          mergeStrategy: args.schema.mergeStrategy,
-          mergeKey: args.schema.mergeKey,
-          statusPath: args.schema.statusPath,
-          formula: args.schema.formula,
-          initialData: args.schema.initialData,
+          mergeToScope: compiled
+            ? evaluateCompiledValue(compiled.mergeToScope)
+            : schema!.mergeToScope,
+          resultMapping: compiled
+            ? evaluateCompiledValue(compiled.resultMapping)
+            : schema!.resultMapping,
+          mergeStrategy: compiled
+            ? evaluateCompiledValue(compiled.mergeStrategy)
+            : schema!.mergeStrategy,
+          mergeKey: compiled
+            ? evaluateCompiledValue(compiled.mergeKey)
+            : schema!.mergeKey,
+          statusPath,
+          formula: compiled
+            ? extractFormulaValue(compiled.formula)
+            : (schema as { formula?: unknown })?.formula,
+          initialData: compiled
+            ? evaluateCompiledValue(compiled.initialData)
+            : schema!.initialData,
           onDependenciesChange(nextDependencies) {
             if (!explicitDependencies) {
               dependencies = nextDependencies;
@@ -142,7 +237,7 @@ export function createRuntimeSourceRegistry(input: {
           }
         });
 
-    const ignoredRootPaths = [targetPath, args.schema.statusPath].filter((value): value is string => Boolean(value));
+    const ignoredRootPaths = [targetPath, statusPath].filter((value): value is string => Boolean(value));
     const ignoredRootsSet: Set<string> | undefined = ignoredRootPaths.length > 0 ? new Set(normalizeRootPaths(ignoredRootPaths)) : undefined;
 
     const unsubscribe = args.scope.store?.subscribe((change) => {
@@ -167,15 +262,19 @@ export function createRuntimeSourceRegistry(input: {
 
     let disposed = false;
 
+    const sourceName = compiled
+      ? (compiled.targetPath?.isStatic ? compiled.targetPath.value : undefined)
+      : schema?.name;
+
     const entry: RuntimeSourceEntry = {
       id: args.id,
-      name: args.schema.name,
+      name: sourceName,
       ownerScopeId,
       scope: args.scope,
       controller,
       dependencies,
       targetPath,
-      statusPath: args.schema.statusPath,
+      statusPath,
       dispose() {
         if (disposed) {
           return;

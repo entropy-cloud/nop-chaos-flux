@@ -1,18 +1,19 @@
-import type {
-  AsyncGovernanceStore,
-  ActionContext,
-  ActionResult,
-  ActionSchema,
-  ApiSchema,
-  DataSourceController,
-  DataSourceState,
-  DynamicRuntimeValue,
-  OperationControlConfig,
-  RendererRuntime,
-  RuntimeValueState,
-  ScopeDependencySet,
-  ScopeRef,
-  StaticRuntimeValue
+import {
+  reportRuntimeHostIssue,
+  type AsyncGovernanceStore,
+  type ActionContext,
+  type ActionResult,
+  type ActionSchema,
+  type ApiSchema,
+  type DataSourceController,
+  type DataSourceState,
+  type DynamicRuntimeValue,
+  type OperationControlConfig,
+  type RendererRuntime,
+  type RuntimeValueState,
+  type ScopeDependencySet,
+  type ScopeRef,
+  type StaticRuntimeValue
 } from '@nop-chaos/flux-core';
 import { resolveCacheKey, type ApiCacheStore } from './api-cache';
 import {
@@ -330,8 +331,11 @@ export function createDataSourceController(input: {
         failureReason: error
       }));
       if (!silent) {
-        const message = error instanceof Error ? error.message : String(error);
-        runtime.env.notify('error', message);
+        reportRuntimeHostIssue({
+          env: runtime.env,
+          error,
+          phase: 'api'
+        });
       }
       stop();
       return true;
@@ -583,8 +587,11 @@ export function createDataSourceController(input: {
       }));
 
       if (!silent) {
-        const message = caughtError instanceof Error ? caughtError.message : String(caughtError);
-        runtime.env.notify('error', message);
+        reportRuntimeHostIssue({
+          env: runtime.env,
+          error: caughtError,
+          phase: 'api'
+        });
       }
 
       updateState((current) => current);

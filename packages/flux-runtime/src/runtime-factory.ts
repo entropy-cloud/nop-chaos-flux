@@ -367,7 +367,8 @@ export function createRendererRuntime(input: {
     },
     registerDataSource(inputValue: {
       id: string;
-      schema: import('@nop-chaos/flux-core').DataSourceSchema;
+      schema?: import('@nop-chaos/flux-core').DataSourceSchema;
+      compiledSource?: import('@nop-chaos/flux-core').CompiledDataSource;
       scope: ScopeRef;
     }) {
       if (!sourceRegistryRef.current) {
@@ -375,7 +376,10 @@ export function createRendererRuntime(input: {
       }
 
       return sourceRegistryRef.current.registerDataSource({
-        ...inputValue
+        id: inputValue.id,
+        scope: inputValue.scope,
+        schema: inputValue.schema,
+        compiledSource: inputValue.compiledSource
       });
     },
     refreshDataSource(inputValue: {
@@ -390,12 +394,30 @@ export function createRendererRuntime(input: {
     },
     registerReaction(inputValue: {
       id: string;
-      schema: import('@nop-chaos/flux-core').ReactionSchema;
+      schema?: import('@nop-chaos/flux-core').ReactionSchema;
+      compiledReaction?: import('@nop-chaos/flux-core').CompiledReaction;
       scope: ScopeRef;
       dispatch: (action: import('@nop-chaos/flux-core').ActionSchema | import('@nop-chaos/flux-core').ActionSchema[] | import('@nop-chaos/flux-core').CompiledActionProgram, ctx?: Partial<import('@nop-chaos/flux-core').ActionContext>) => Promise<import('@nop-chaos/flux-core').ActionResult>;
     }) {
       if (!reactionRegistryRef.current) {
         throw new Error('Runtime reaction registry is not initialized yet');
+      }
+
+      if (inputValue.compiledReaction) {
+        return reactionRegistryRef.current.registerReaction({
+          id: inputValue.id,
+          runtime,
+          scope: inputValue.scope,
+          asyncGovernance,
+          compiledReaction: inputValue.compiledReaction,
+          helpers: {
+            dispatch: inputValue.dispatch
+          }
+        });
+      }
+
+      if (!inputValue.schema) {
+        throw new Error('Either schema or compiledReaction must be provided');
       }
 
       return reactionRegistryRef.current.registerReaction({

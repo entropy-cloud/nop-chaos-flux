@@ -1,15 +1,17 @@
-import type {
-  AsyncGovernanceStore,
-  ActionSchema,
-  AsyncRunHandle,
-  CompiledRuntimeValue,
-  DynamicRuntimeValue,
-  ReactionRegistryDebugSnapshot,
-  RendererHelpers,
-  RendererRuntime,
-  RuntimeValueState,
-  ScopeDependencySet,
-  ScopeRef
+import {
+  reportRuntimeHostIssue,
+  type AsyncGovernanceStore,
+  type ActionSchema,
+  type AsyncRunHandle,
+  type CompiledReaction,
+  type CompiledRuntimeValue,
+  type DynamicRuntimeValue,
+  type ReactionRegistryDebugSnapshot,
+  type RendererHelpers,
+  type RendererRuntime,
+  type RuntimeValueState,
+  type ScopeDependencySet,
+  type ScopeRef
 } from '@nop-chaos/flux-core';
 import { collectRuntimeDependencies } from '../node-runtime';
 import { isAbortError } from '../error-utils';
@@ -26,13 +28,21 @@ export interface RuntimeReactionRegistry {
     runtime: RendererRuntime;
     scope: ScopeRef;
     asyncGovernance?: AsyncGovernanceStore;
-    watch: unknown;
+    /** @deprecated Use compiledReaction instead */
+    watch?: unknown;
+    /** @deprecated Use compiledReaction instead */
     dependsOn?: readonly string[];
+    /** @deprecated Use compiledReaction instead */
     when?: string;
+    /** @deprecated Use compiledReaction instead */
     immediate?: boolean;
+    /** @deprecated Use compiledReaction instead */
     debounce?: number;
+    /** @deprecated Use compiledReaction instead */
     once?: boolean;
-    actions: unknown;
+    /** @deprecated Use compiledReaction instead */
+    actions?: unknown;
+    compiledReaction?: CompiledReaction;
     helpers: Pick<RendererHelpers, 'dispatch'>;
   }): ReactionRegistration;
   disposeScope(scopeId: string): void;
@@ -52,18 +62,28 @@ function normalizeActionArray(actions: unknown): ActionSchema | ActionSchema[] {
   return actions as ActionSchema | ActionSchema[];
 }
 
+function extractExpressionSource(compiled: CompiledRuntimeValue<unknown> | undefined): string | undefined {
+  if (!compiled || compiled.isStatic) return undefined;
+  const node = compiled.node;
+  if (node.kind === 'expression-node' || node.kind === 'template-node') {
+    return node.source;
+  }
+  return undefined;
+}
+
 export function registerReaction(input: {
   id: string;
   runtime: RendererRuntime;
   scope: ScopeRef;
   asyncGovernance?: AsyncGovernanceStore;
-  watch: unknown;
+  watch?: unknown;
   dependsOn?: readonly string[];
   when?: string;
   immediate?: boolean;
   debounce?: number;
   once?: boolean;
-  actions: unknown;
+  actions?: unknown;
+  compiledReaction?: CompiledReaction;
   helpers: Pick<RendererHelpers, 'dispatch'>;
   onDebugUpdate?: (debug: {
     disposed: boolean;
@@ -75,12 +95,30 @@ export function registerReaction(input: {
   }) => void;
   onDispose?: () => void;
 }): ReactionRegistration {
-  const compiledWatch = input.runtime.expressionCompiler.compileValue(input.watch);
+  const compiled = input.compiledReaction;
+
+  const watchSource = compiled?.watch ?? input.watch;
+  const dependsOnSource = compiled?.dependsOn ?? input.dependsOn;
+  const whenSource = compiled?.when ?? (input.when ? input.runtime.expressionCompiler.compileValue(input.when) as unknown as CompiledRuntimeValue<boolean> : undefined);
+  const immediateSource = compiled?.immediate ?? input.immediate;
+  const debounceSource = compiled?.debounce ?? input.debounce;
+  const onceSource = compiled?.once ?? input.once;
+  const actionsSource = compiled?.action ?? input.actions;
+
+  if (!watchSource && !compiled) {
+    throw new Error('Either watch/actions or compiledReaction must be provided to registerReaction');
+  }
+
+  const compiledWatch = compiled
+    ? { isStatic: true, value: compiled.watch } as CompiledRuntimeValue<unknown>
+    : input.runtime.expressionCompiler.compileValue(watchSource);
   const dynamicWatch = compiledWatch.isStatic ? undefined : compiledWatch as DynamicRuntimeValue<unknown>;
   const watchState: RuntimeValueState<unknown> | undefined = dynamicWatch?.createState();
-  const explicitDependencies = createRootDependencySet(input.dependsOn);
-  const compiledWhen = input.when
-    ? input.runtime.expressionCompiler.formulaCompiler.compileExpression<boolean>(input.when)
+  const explicitDependencies = createRootDependencySet(dependsOnSource);
+  
+  const whenExpressionSource = extractExpressionSource(whenSource);
+  const compiledWhen = whenExpressionSource
+    ? input.runtime.expressionCompiler.formulaCompiler.compileExpression<boolean>(whenExpressionSource)
     : undefined;
 
   let disposed = false;
@@ -171,7 +209,7 @@ export function registerReaction(input: {
         return;
       }
 
-      await input.helpers.dispatch(normalizeActionArray(input.actions), {
+      await input.helpers.dispatch(normalizeActionArray(actionsSource), {
         scope: input.scope,
         event: {
           type: 'reaction',
@@ -190,7 +228,7 @@ export function registerReaction(input: {
 
       fireCount += 1;
 
-      if (input.once && fireCount >= 1) {
+      if (onceSource && fireCount >= 1) {
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
         }
@@ -205,10 +243,12 @@ export function registerReaction(input: {
           scope: input.scope,
           fireCount
         });
-        input.runtime.env.notify('warning', error.message);
-        input.runtime.env.monitor?.onError?.({
-          phase: 'action',
+        reportRuntimeHostIssue({
+          env: input.runtime.env,
+          level: 'warning',
+          message: error.message,
           error,
+          phase: 'action',
           details: {
             reason: 'reaction-fire-count-limit',
             reactionId: input.id,
@@ -300,7 +340,7 @@ export function registerReaction(input: {
       pendingChangedPaths = new Set<string>();
       pendingForce = false;
 
-      if (input.debounce && input.debounce > 0) {
+      if (debounceSource && debounceSource > 0) {
         if (debounceTimer) {
           clearTimeout(debounceTimer);
         }
@@ -308,7 +348,7 @@ export function registerReaction(input: {
         debounceTimer = setTimeout(() => {
           debounceTimer = undefined;
           void runReaction(nextChangedPaths, nextForce);
-        }, input.debounce);
+        }, debounceSource);
         return;
       }
 
@@ -342,7 +382,7 @@ export function registerReaction(input: {
   initialized = true;
   emitDebug();
 
-  if (input.immediate) {
+  if (immediateSource) {
     scheduleReaction([], true);
   }
 
@@ -375,13 +415,14 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     runtime: RendererRuntime;
     scope: ScopeRef;
     asyncGovernance?: AsyncGovernanceStore;
-    watch: unknown;
+    watch?: unknown;
     dependsOn?: readonly string[];
     when?: string;
     immediate?: boolean;
     debounce?: number;
     once?: boolean;
-    actions: unknown;
+    actions?: unknown;
+    compiledReaction?: CompiledReaction;
     helpers: Pick<RendererHelpers, 'dispatch'>;
   }): ReactionRegistration {
     const ownerScopeId = input.scope.id;
@@ -392,6 +433,13 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     if (existing) {
       existing.dispose();
     }
+
+    const compiled = input.compiledReaction;
+    const watchSource = compiled?.watch ?? input.watch;
+    const whenSource = compiled?.when ? undefined : input.when;
+    const immediateSource = compiled?.immediate ?? input.immediate;
+    const debounceSource = compiled?.debounce ?? input.debounce;
+    const onceSource = compiled?.once ?? input.once;
 
     let latestDependencies: readonly string[] | undefined;
     let disposed = false;
@@ -445,11 +493,11 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
         return {
           id: input.id,
           scopeId: ownerScopeId,
-          watch: input.watch,
-          when: input.when,
-          immediate: input.immediate,
-          debounce: input.debounce,
-          once: input.once,
+          watch: watchSource,
+          when: whenSource,
+          immediate: immediateSource,
+          debounce: debounceSource,
+          once: onceSource,
           disposed,
           queued,
           running,
