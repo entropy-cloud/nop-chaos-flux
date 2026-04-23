@@ -110,7 +110,69 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
-  it('updates declarative surface statusPath after local close interactions', async () => {
+  it('updates declarative dialog statusPath after local close interactions', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              statusPath: 'ui.dialogStatus',
+              defaultOpen: true,
+              body: [{ type: 'text', text: 'Dialog body' }]
+            },
+            { type: 'text', text: '${ui.dialogStatus?.open}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('true')).toBeTruthy());
+
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]') as Element);
+    await waitFor(() => expect(screen.getByText('false')).toBeTruthy());
+    cleanup();
+  });
+
+  it('keeps declarative surfaces closed by default when open and defaultOpen are omitted', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              statusPath: 'ui.dialogStatus',
+              body: [{ type: 'text', text: 'Dialog body' }]
+            },
+            {
+              type: 'drawer',
+              title: 'Drawer title',
+              statusPath: 'ui.drawerStatus',
+              body: [{ type: 'text', text: 'Drawer body' }]
+            },
+            { type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('false:false')).toBeTruthy());
+    cleanup();
+  });
+
+  it('marks only the top declarative surface as active', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     render(
       <SchemaRenderer
@@ -132,7 +194,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               defaultOpen: true,
               body: [{ type: 'text', text: 'Drawer body' }]
             },
-            { type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' }
+            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' }
           ]
         }}
         env={env}
@@ -140,13 +202,71 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       />
     );
 
-    await waitFor(() => expect(screen.getByText('true:true')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('false:true')).toBeTruthy());
+    cleanup();
+  });
 
-    fireEvent.click(document.querySelector('[data-slot="dialog-close"]') as Element);
+  it('reactivates the next declarative surface when the top one closes', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              statusPath: 'ui.dialogStatus',
+              defaultOpen: true,
+              body: [{ type: 'text', text: 'Dialog body' }]
+            },
+            {
+              type: 'drawer',
+              title: 'Drawer title',
+              statusPath: 'ui.drawerStatus',
+              defaultOpen: true,
+              body: [{ type: 'text', text: 'Drawer body' }]
+            },
+            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
     await waitFor(() => expect(screen.getByText('false:true')).toBeTruthy());
 
-    fireEvent.click(document.querySelector('[data-slot="drawer-overlay"]') as Element);
-    await waitFor(() => expect(screen.getByText('false:false')).toBeTruthy());
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              statusPath: 'ui.dialogStatus',
+              defaultOpen: true,
+              body: [{ type: 'text', text: 'Dialog body' }]
+            },
+            {
+              type: 'drawer',
+              title: 'Drawer title',
+              statusPath: 'ui.drawerStatus',
+              open: false,
+              body: [{ type: 'text', text: 'Drawer body' }]
+            },
+            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('true:false')).toBeTruthy());
     cleanup();
   });
 

@@ -4,22 +4,24 @@ import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedCon
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, cn } from '@nop-chaos/ui';
 import type { DialogSchema } from './schemas';
+import { getDeclarativeSurfaceStackSnapshot, isDeclarativeSurfaceActive, registerDeclarativeSurface, subscribeDeclarativeSurfaceStack, unregisterDeclarativeSurface } from './declarative-surface-stack';
 
 export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const bodyContent = props.regions.body?.render();
   const actionsContent = props.regions.actions?.render();
   const controlledOpen = props.props.open;
-  const [localOpen, setLocalOpen] = React.useState(Boolean(props.props.defaultOpen ?? true));
+  const [localOpen, setLocalOpen] = React.useState(Boolean(props.props.defaultOpen ?? false));
   const effectiveOpen = controlledOpen ?? localOpen;
+  const [surfaceStackSnapshot, setSurfaceStackSnapshot] = React.useState(getDeclarativeSurfaceStackSnapshot());
   const summary = useMemo<SurfaceStatusSummary>(() => ({
     id: props.id,
     kind: 'dialog',
     open: Boolean(effectiveOpen),
-    active: Boolean(effectiveOpen),
+    active: Boolean(effectiveOpen) && isDeclarativeSurfaceActive(props.id),
     opening: false,
     closing: false,
-  }), [effectiveOpen, props.id]);
+  }), [effectiveOpen, props.id, surfaceStackSnapshot]);
 
   const containerId = typeof props.props.container === 'string' ? props.props.container : undefined;
   const showMask = props.props.showMask !== false;
@@ -29,8 +31,31 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
   const ownerScope = props.node.scope.parent ?? props.node.scope;
 
   React.useEffect(() => {
+    setSurfaceStackSnapshot(getDeclarativeSurfaceStackSnapshot());
+    return subscribeDeclarativeSurfaceStack(() => {
+      setSurfaceStackSnapshot(getDeclarativeSurfaceStackSnapshot());
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (effectiveOpen) {
+      registerDeclarativeSurface(props.id);
+    } else {
+      unregisterDeclarativeSurface(props.id);
+    }
+
+    return () => {
+      unregisterDeclarativeSurface(props.id);
+    };
+  }, [effectiveOpen, props.id]);
+
+  React.useEffect(() => {
     publishOwnerStatus(ownerScope, statusPath, summary);
 
+    return undefined;
+  }, [ownerScope, statusPath, summary]);
+
+  React.useEffect(() => {
     return () => {
       publishOwnerStatus(ownerScope, statusPath, {
         id: props.id,
@@ -41,7 +66,7 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
         closing: false,
       });
     };
-  }, [ownerScope, props.id, statusPath, summary]);
+  }, [ownerScope, props.id, statusPath]);
 
   React.useEffect(() => {
     if (controlledOpen !== undefined) {

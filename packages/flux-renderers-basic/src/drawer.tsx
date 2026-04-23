@@ -4,22 +4,24 @@ import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedCon
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, cn } from '@nop-chaos/ui';
 import type { DrawerSchema } from './schemas';
+import { getDeclarativeSurfaceStackSnapshot, isDeclarativeSurfaceActive, registerDeclarativeSurface, subscribeDeclarativeSurfaceStack, unregisterDeclarativeSurface } from './declarative-surface-stack';
 
 export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const bodyContent = props.regions.body?.render();
   const actionsContent = props.regions.actions?.render();
   const controlledOpen = props.props.open;
-  const [localOpen, setLocalOpen] = React.useState(Boolean(props.props.defaultOpen ?? true));
+  const [localOpen, setLocalOpen] = React.useState(Boolean(props.props.defaultOpen ?? false));
   const effectiveOpen = controlledOpen ?? localOpen;
+  const [surfaceStackSnapshot, setSurfaceStackSnapshot] = React.useState(getDeclarativeSurfaceStackSnapshot());
   const summary = useMemo<SurfaceStatusSummary>(() => ({
     id: props.id,
     kind: 'drawer',
     open: Boolean(effectiveOpen),
-    active: Boolean(effectiveOpen),
+    active: Boolean(effectiveOpen) && isDeclarativeSurfaceActive(props.id),
     opening: false,
     closing: false,
-  }), [effectiveOpen, props.id]);
+  }), [effectiveOpen, props.id, surfaceStackSnapshot]);
 
   const containerId = typeof props.props.container === 'string' ? props.props.container : undefined;
   const showMask = props.props.showMask !== false;
@@ -31,8 +33,31 @@ export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
   const direction = props.props.side === 'left' ? 'left' : props.props.side === 'top' ? 'top' : props.props.side === 'bottom' ? 'bottom' : props.props.side === 'right' ? 'right' : 'bottom';
 
   React.useEffect(() => {
+    setSurfaceStackSnapshot(getDeclarativeSurfaceStackSnapshot());
+    return subscribeDeclarativeSurfaceStack(() => {
+      setSurfaceStackSnapshot(getDeclarativeSurfaceStackSnapshot());
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (effectiveOpen) {
+      registerDeclarativeSurface(props.id);
+    } else {
+      unregisterDeclarativeSurface(props.id);
+    }
+
+    return () => {
+      unregisterDeclarativeSurface(props.id);
+    };
+  }, [effectiveOpen, props.id]);
+
+  React.useEffect(() => {
     publishOwnerStatus(ownerScope, statusPath, summary);
 
+    return undefined;
+  }, [ownerScope, statusPath, summary]);
+
+  React.useEffect(() => {
     return () => {
       publishOwnerStatus(ownerScope, statusPath, {
         id: props.id,
@@ -43,7 +68,7 @@ export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
         closing: false,
       });
     };
-  }, [ownerScope, props.id, statusPath, summary]);
+  }, [ownerScope, props.id, statusPath]);
 
   React.useEffect(() => {
     if (controlledOpen !== undefined) {

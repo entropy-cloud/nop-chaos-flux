@@ -1,18 +1,19 @@
-import type {
-  ActionContext,
-  ActionMonitorPayload,
-  ActionResult,
-  ActionRuntimeAdapter,
-  ActionSchema,
-  BuiltInActionInvocation,
-  CompiledActionNode,
-  ComponentActionInvocation,
-  CompiledActionProgram,
-  NamespacedActionInvocation,
-  OperationControlConfig,
-  RendererEnv,
-  RendererPlugin,
-  RendererRuntime
+import {
+  reportRuntimeHostIssue,
+  type ActionContext,
+  type ActionMonitorPayload,
+  type ActionResult,
+  type ActionRuntimeAdapter,
+  type ActionSchema,
+  type BuiltInActionInvocation,
+  type CompiledActionNode,
+  type ComponentActionInvocation,
+  type CompiledActionProgram,
+  type NamespacedActionInvocation,
+  type OperationControlConfig,
+  type RendererEnv,
+  type RendererPlugin,
+  type RendererRuntime
 } from '@nop-chaos/flux-core';
 import { compileActions } from '@nop-chaos/flux-compiler';
 import { withRetry, withTimeout } from './operation-control';
@@ -698,8 +699,18 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
             });
           }
 
-          const message = error instanceof Error ? error.message : String(error);
-          getEnv().notify('error', message);
+          reportRuntimeHostIssue({
+            env: getEnv(),
+            error,
+            phase: 'action',
+            nodeId: ctx.nodeInstance?.templateNode.id,
+            path: ctx.nodeInstance?.templateNode.templatePath,
+            details: {
+              reason: 'action-on-settled-branch-failed',
+              actionType: normalizedAction.action
+            },
+            monitor: false
+          });
         }
       }
 
