@@ -1,5 +1,5 @@
 type NavigationTarget = 'component-lab' | 'flux-basic' | 'flow-designer' | 'dingtalk-flow-demo' | 'report-designer' | 'debugger-lab' | 'condition-builder' | 'code-editor' | 'word-editor' | 'performance-table';
-import { Card } from '@nop-chaos/ui';
+import { Button } from '@nop-chaos/ui';
 
 interface NavCard {
   id: NavigationTarget;
@@ -86,16 +86,18 @@ export function HomePage({ onNavigate }: HomePageProps) {
         </p>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mt-6">
           {NAV_CARDS.map((card) => (
-            <Card
+            <Button
               key={card.id}
-              className="group relative overflow-hidden text-left p-6 rounded-[20px] bg-[var(--nop-nav-surface)] border border-[var(--nop-nav-border)] cursor-pointer transition-[transform,box-shadow,border-color] duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:shadow-[var(--nop-nav-shadow)] hover:border-[var(--nop-nav-hover-border)] ring-0 gap-0"
+              type="button"
+              variant="ghost"
+              className="group relative h-auto overflow-hidden text-left p-6 rounded-[20px] bg-[var(--nop-nav-surface)] border border-[var(--nop-nav-border)] cursor-pointer transition-[transform,box-shadow,border-color] duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:shadow-[var(--nop-nav-shadow)] hover:border-[var(--nop-nav-hover-border)] ring-0 gap-0 justify-start whitespace-normal"
               onClick={() => onNavigate(card.id)}
             >
               <p className="mb-2 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-accent-muted)]">{card.eyebrow}</p>
               <h2 className="mb-2 text-xl font-bold text-[var(--nop-text-strong)]">{card.title}</h2>
               <p className="text-sm leading-relaxed text-[var(--nop-body-copy)]">{card.description}</p>
               <span className="absolute right-4 bottom-4 text-xl text-[var(--nop-accent)] opacity-0 -translate-x-1 transition-all duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-100 group-hover:translate-x-0">→</span>
-            </Card>
+            </Button>
           ))}
         </div>
       </section>
