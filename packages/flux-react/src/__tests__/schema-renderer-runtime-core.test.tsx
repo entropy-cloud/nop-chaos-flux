@@ -33,6 +33,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
     expect(root.scopePlan.kind).toBe('form');
     const scopedHost = Array.isArray(root.regions.body.node) ? root.regions.body.node[0] : root.regions.body.node;
     expect(scopedHost!.component.actionScopePolicy).toBe('new');
+    expect(root.providerPlan?.actionScope).toBe(false);
   });
 
   it('renders compiled schema in React', () => {
