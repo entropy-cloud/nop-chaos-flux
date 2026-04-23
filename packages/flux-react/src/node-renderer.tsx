@@ -42,6 +42,13 @@ function useMountedCid(runtime: import('@nop-chaos/flux-core').RendererRuntime) 
   return useMemo(() => runtime.allocateMountedCid(), [runtime]);
 }
 
+function createImportOwnedActionScope(runtime: import('@nop-chaos/flux-core').RendererRuntime, parent: ActionScope | undefined, nodeId: string) {
+  return runtime.createActionScope({
+    id: `${nodeId}:action-scope`,
+    parent
+  });
+}
+
 const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   node: TemplateNode;
   scope: ScopeRef;
@@ -299,6 +306,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       templateNode={props.node}
       nodeInstance={nodeInstance}
       actionScope={activeActionScope}
+      provideActionScope={props.node.component.actionScopePolicy !== 'new' && Boolean(getNodeImports(props.node)?.length)}
       componentRegistry={activeComponentRegistry}
       importFrame={props.importFrame}
       scope={renderScope}
@@ -319,12 +327,20 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const instancePath = useRenderInstancePath();
   const parentImportFrame = useCurrentImportFrame();
   const mountedCid = useMountedCid(runtime);
+  const nodeImports = getNodeImports(props.node);
+  const importOwnedActionScope = useMemo(() => {
+    if (!nodeImports?.length) {
+      return undefined;
+    }
+
+    return createImportOwnedActionScope(runtime, props.actionScope, props.node.id);
+  }, [runtime, props.actionScope, props.node.id, nodeImports]);
   const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
     nodeId: props.node.id,
-    actionScopePolicy: props.node.component.actionScopePolicy ?? (getNodeImports(props.node)?.length ? 'new' : undefined),
+    actionScopePolicy: props.node.component.actionScopePolicy,
     componentRegistryPolicy: props.node.component.componentRegistryPolicy
   }, props.actionScope, props.componentRegistry);
-  const nodeImports = getNodeImports(props.node);
+  const resolvedActionScope = importOwnedActionScope ?? activeActionScope;
   const importSetupState = useMemo<NodeRuntimeState>(
     () => createTemplateNodeRuntimeState(props.node),
     [props.node]
@@ -344,7 +360,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     runtime,
     nodeImports,
     parentImportFrame,
-    activeActionScope,
+    resolvedActionScope,
     activeComponentRegistry,
     props.scope,
     props.node.schemaUrl ?? props.node.templatePath,
@@ -369,7 +385,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       <NodeRendererResolved
         node={props.node}
         scope={renderScope}
-        actionScope={activeActionScope}
+        actionScope={resolvedActionScope}
         componentRegistry={activeComponentRegistry}
         importFrame={importState.frame}
         mountedCid={mountedCid}

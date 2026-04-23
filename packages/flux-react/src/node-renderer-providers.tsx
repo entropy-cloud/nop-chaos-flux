@@ -33,13 +33,14 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
   templateNode: TemplateNode;
   nodeInstance: NodeInstance;
   actionScope?: ActionScope;
+  provideActionScope?: boolean;
   componentRegistry?: ComponentHandleRegistry;
   importFrame?: ImportFrame;
   scope: ScopeRef;
   classAliases?: Record<string, string>;
 }>) {
   const providerWrap = (props.templateNode as TemplateNodeWithProviderPlan).providerWrap;
-  const children = providerWrap
+  const wrappedChildren = providerWrap
     ? providerWrap((kind, value, nestedChildren) => {
       if (kind === 'actionScope') {
         return <ActionScopeContext.Provider value={value as ActionScope | undefined}>{nestedChildren as React.ReactNode}</ActionScopeContext.Provider>;
@@ -60,6 +61,10 @@ export function NodeRendererProviders(props: React.PropsWithChildren<{
       classAliases: props.classAliases
     }, props.children)
     : props.children;
+
+  const children = props.provideActionScope
+    ? <ActionScopeContext.Provider value={props.actionScope}>{wrappedChildren as React.ReactNode}</ActionScopeContext.Provider>
+    : wrappedChildren;
 
   return (
     <NodeMetaContext.Provider value={useMemo(() => ({

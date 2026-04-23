@@ -425,9 +425,7 @@ export function createSchemaCompiler(input: {
           : { kind: 'inherit' };
 
     const providerPlan = {
-      actionScope:
-        renderer.actionScopePolicy === 'new' ||
-        Boolean(fieldInspection.extensions?.['xui:imports']),
+      actionScope: renderer.actionScopePolicy === 'new',
       componentRegistry: renderer.componentRegistryPolicy === 'new',
       classAliases: Boolean(schema.classAliases && Object.keys(schema.classAliases as Record<string, unknown>).length > 0)
     };
