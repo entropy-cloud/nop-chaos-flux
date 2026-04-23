@@ -6,18 +6,20 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
   const runtime = useRendererRuntime();
   const scope = useRenderScope();
   const schema = props.schema;
+  const compiledSource = props.templateNode.compiledSources?.[0];
 
   useEffect(() => {
     const registration = runtime.registerDataSource({
       id: props.id,
       scope,
-      schema
+      schema,
+      compiledSource
     });
 
     return () => {
       registration.dispose();
     };
-  }, [props.id, runtime, scope, schema]);
+  }, [props.id, runtime, scope, schema, compiledSource]);
 
   return null;
 }
