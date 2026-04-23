@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
-import { useRenderScope } from '@nop-chaos/flux-react';
+import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
 import { CodeEditorBody } from './code-editor-renderer/code-editor-body';
 import { CodeEditorToolbar } from './code-editor-renderer/code-editor-toolbar';
@@ -16,6 +17,7 @@ import { getDefaultAutoHeight, getDefaultHeight, getDefaultLineNumbers, resolveF
 import { useCodeMirror } from './use-code-mirror';
 
 export const codeEditorFieldRules: SchemaFieldRule[] = [
+  { key: 'label', kind: 'value-or-region', regionKey: 'label' },
   { key: 'value', kind: 'prop' },
   { key: 'language', kind: 'prop' },
   { key: 'mode', kind: 'prop' },
@@ -50,6 +52,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const expressionConfig = props.props.expressionConfig as ExpressionEditorConfig | undefined;
   const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
   const name = String(props.props.name ?? props.schema.name ?? '');
+  const labelContent = resolveRendererSlotContent(props, 'label');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const toggleFullscreen = useCallback(() => setIsFullscreen((value) => !value), []);
 
@@ -141,8 +144,9 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const showToolbar = (allowFullscreen && !isFullscreen) || hasSQLToolbar;
 
   return (
-    <div
-      className="nop-code-editor"
+      <div
+      className={cn('nop-code-editor', props.meta.className)}
+      data-cid={props.node.cid}
       data-testid={props.meta.testid}
       data-theme={editorTheme}
       data-fullscreen={isFullscreen || undefined}
@@ -151,7 +155,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
     >
       {isFullscreen && allowFullscreen ? (
         <div data-slot="code-editor-header">
-          <span data-slot="code-editor-header-title">{String(props.props.label ?? props.schema.label ?? '')}</span>
+          <span data-slot="code-editor-header-title">{String(labelContent ?? '')}</span>
           <Button
             variant="ghost"
             size="icon-xs"

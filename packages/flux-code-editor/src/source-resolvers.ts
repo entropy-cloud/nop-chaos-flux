@@ -80,7 +80,7 @@ function useAsyncApiResolver<T>(
     });
 
     const action = { action: 'ajax', args: currentApi } as ActionSchema;
-    dispatch(action)
+    dispatch(action, { signal })
       .then((result: ActionResult) => {
         if (signal.aborted) return;
         if (result.ok && result.data != null) {
