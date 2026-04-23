@@ -1,6 +1,6 @@
 # 126 Runtime Effect Channel Convergence Plan
 
-> Plan Status: proposed
+> Plan Status: deferred
 > Last Reviewed: 2026-04-22
 > Source: `docs/analysis/experiment-retrospective-value-assessment.md`, `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/api-data-source.md`, `docs/plans/123-flux-runtime-split-and-boundary-hardening-plan.md`, `docs/plans/120-runtime-async-governance-convergence-plan.md`, `docs/plans/125-flux-runtime-async-data-internal-reorganization-plan.md`
 > Related: `docs/plans/123-flux-runtime-split-and-boundary-hardening-plan.md`, `docs/plans/120-runtime-async-governance-convergence-plan.md`
@@ -184,7 +184,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 未开始执行。只有在 built-in action、host-boundary interception、以及至少一个实际 cancellation/audit consumer 落地后，才应评估是否关闭。
+Status Note: Deferred without execution. The action invocation unification that originally motivated this follow-up has since landed, but the remaining EffectChannel scope still lacks a strong live consumer that justifies widening runtime scope in the active queue. Revisit this plan only when host-boundary interception, effect-audit timelines, or surface-owned cancellation semantics become concrete owner work rather than exploratory architecture direction.
 
 Closure Audit Evidence:
 
@@ -193,5 +193,5 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- 如果后续确实出现 worker replay / effect journal / pure-data protocol 的真实消费者，再拆 successor plan 处理 effect serialization。
-- 如果最终发现只有 request/notify/navigate 需要统一 interception，而不需要完整 middleware taxonomy，可缩小本计划并把剩余 effect-algebra 方向移出当前 scope。
+- 如果后续确实出现 debugger effect timeline、surface-owned cancellation、或跨 request/notify/navigate 的统一 interception 需求，再重新激活本计划或拆 successor plan。
+- 如果最终只需要 env-level request/notify/navigate interception，而不需要完整 middleware taxonomy，应改写为更窄的新 owner plan，而不是恢复本计划的整套 EffectChannel 范围。

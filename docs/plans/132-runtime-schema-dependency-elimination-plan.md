@@ -1,6 +1,6 @@
 # 132 Runtime Schema Dependency Elimination Plan
 
-> Plan Status: active
+> Plan Status: partially completed
 > Last Reviewed: 2026-04-23
 > Source: `docs/logs/2026/04-23.md`, investigation of runtime schema usage
 > Related: 131-static-analysis-optimization-plan.md
@@ -169,7 +169,7 @@ New test files:
 
 ## Phase 3: Runtime Migration
 
-Status: planned
+Status: partially completed
 
 ### 3.1 Update Source Registry
 
@@ -205,14 +205,11 @@ when: evaluateValue(inputValue.compiledReaction.when, scope),
 
 ### 3.3 Remove schema from RendererComponentProps
 
-Either:
-- Remove `schema` field entirely (breaking)
-- Mark as deprecated and optional (backward compatible)
-- Only include in dev builds
+Current re-audit note (2026-04-23): this sub-goal has not landed and is broader than the already-completed compiled source/reaction substrate. Live repo still has legitimate renderer/static-config consumers of `props.schema`, so any future work here should be split from the landed source/reaction compilation baseline rather than silently treated as part of the same active slice.
 
 ### Exit Criteria
 
-- [ ] Source registry uses compiled sources
+- [x] Source registry uses compiled sources
 - [ ] Reaction registry uses compiled reactions
 - [ ] No runtime schema access (except DevTools)
 - [ ] All tests pass
@@ -222,7 +219,7 @@ Either:
 
 ## Phase 4: DevTools Compatibility
 
-Status: planned
+Status: deferred
 
 ### 4.1 Conditional Schema Storage
 
@@ -251,7 +248,7 @@ Ensure nop-debugger can still access schema for inspection:
 
 ## Phase 5: Cleanup and Documentation
 
-Status: planned
+Status: deferred
 
 ### 5.1 Remove Deprecated Fields
 
@@ -274,8 +271,8 @@ Update:
 
 ## Validation Checklist
 
-- [ ] All source schemas compiled
-- [ ] All reaction schemas compiled
+- [x] All source schemas compiled
+- [x] All reaction schemas compiled
 - [ ] No runtime `schema.xxx` access (except DevTools)
 - [ ] RendererComponentProps.schema removed or deprecated
 - [ ] DevTools still functional
@@ -284,6 +281,20 @@ Update:
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` passes
 
 ---
+
+## Closure
+
+Status Note: Partially completed. Phases 1-2 landed the compiled source/reaction types and compiler output, and runtime source registration now consumes compiled sources. The remaining scope in this file mixes three different follow-up tracks that have not landed: reaction runtime migration, broader runtime/raw-schema elimination outside source registration, and any `TemplateNode.schema` / `RendererComponentProps.schema` / DevTools cleanup. Those follow-ups should be re-owned by narrower successor work instead of treating this plan as still one coherent active execution plan.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: live repo re-audit during plan closure cleanup (2026-04-23)
+- Evidence: `packages/flux-core/src/types/compilation.ts` and `packages/flux-core/src/types/node-identity.ts` define compiled source/reaction carriers; `packages/flux-compiler/src/source-compiler.ts`, `reaction-compiler.ts`, and `schema-compiler.ts` populate them; `packages/flux-runtime/src/async-data/source-registry.ts` now prefers `compiledSource`; but `packages/flux-runtime/src/runtime-factory.ts` still falls back to raw reaction fields and `packages/flux-runtime/src/async-data/reaction-runtime.ts` still retains raw-schema fallback semantics, while many renderer/static-config call sites still legitimately consume `props.schema`.
+
+Follow-up:
+
+- Split reaction runtime migration into a narrower successor plan that closes the remaining `compiledReaction` execution path without bundling renderer/devtools schema removal.
+- Treat any `TemplateNode.schema` / `RendererComponentProps.schema` cleanup as a separate architecture/boundary plan after legitimate static-config schema consumers are audited and narrowed.
 
 ## Migration Path
 

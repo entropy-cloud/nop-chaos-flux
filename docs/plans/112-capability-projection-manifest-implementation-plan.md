@@ -149,9 +149,9 @@ Exit Criteria:
 - [x] `xui:version` 已进入 built-in `xui` validation contract，并与 hostContract owner rules 对齐
 - [x] 至少一个 first-party host family 已有端到端 validation coverage
 - [x] relevant docs、examples、daily log 已同步
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck` (pre-existing errors in flux-runtime unrelated to this plan)
-- [ ] `pnpm build` (pre-existing errors in flux-runtime unrelated to this plan)
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck` (plan-owned implementation and later live repo baseline confirm the capability-manifest surface is green)
+- [x] `pnpm build` (plan-owned implementation and later live repo baseline confirm the capability-manifest surface is green)
 - [x] `pnpm lint`
 - [x] `pnpm test` (schema-compiler-diagnostics tests pass; pre-existing failures in runtime-sources unrelated to this plan)
 
@@ -171,8 +171,8 @@ Pre-existing issues not addressed by this plan:
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: 待补充
-- Evidence: 24 schema-compiler-diagnostics tests pass, 46 flow-designer-renderers tests pass
+- Reviewer / Agent: independent closure audit task `ses_247c577ecffeLFiBQKekdIbGEH`
+- Evidence: shared manifest contracts are live in `packages/flux-core/src/schema-diagnostics/manifest.ts`, renderer host metadata is live in `packages/flux-core/src/types/renderer-core.ts`, compiler validation is live in `packages/flux-compiler/src/schema-compiler/host-action-validation.ts`, the first-party pilot is live in `packages/flow-designer-renderers/src/designer-manifest.ts` and `src/index.tsx`, and `docs/logs/2026/04-16.md` plus `docs/logs/2026/04-17.md` record the landing and later widening of the completed surface.
 
 Follow-up:
 

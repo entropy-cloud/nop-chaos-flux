@@ -28,16 +28,21 @@ Final re-check performed on 2026-04-08:
 
 ## Exit Criteria
 
-- [ ] All BEM CSS rules deleted (3 files)
-- [ ] All renderer components use Tailwind + shadcn/ui
-- [ ] State modifiers converted to `data-*` attributes
-- [ ] shadcn/ui wrappers removed (checkbox, switch, radio, input, textarea)
-- [ ] Dialog host refactored to shadcn Dialog
-- [ ] Table renderer refactored to shadcn Table
-- [ ] Playground pages rewritten with Tailwind
-- [ ] All test assertions migrated (~16 BEM class assertions)
-- [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` all pass
-- [ ] `docs/logs/index.md` updated
+- [x] All BEM CSS rules deleted (3 files)
+- [x] All renderer components use Tailwind + shadcn/ui
+- [x] State modifiers converted to `data-*` attributes
+- [x] shadcn/ui wrappers removed (checkbox, switch, radio, input, textarea)
+- [x] Dialog host refactored to shadcn Dialog
+- [x] Table renderer refactored to shadcn Table
+- [x] Playground pages rewritten with Tailwind
+- [x] All test assertions migrated (~16 BEM class assertions)
+- [x] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` all pass
+- [x] `docs/logs/index.md` updated
+
+## Closure Audit Evidence
+
+- Reviewer / Agent: independent closure audit task `ses_247c577ecffeLFiBQKekdIbGEH`
+- Evidence: `docs/logs/2026/04-08.md` records the final live-code re-audit and cleanup of remaining internal `__` markers; active source grep shows no BEM `__` class usage in live `packages/` or `apps/`; and `packages/flux-renderers-data/src/table-renderer.tsx` now uses `@nop-chaos/ui` table primitives. Remaining unchecked lines were stale after the later re-audit.
 
 ---
 
@@ -639,4 +644,3 @@ Each phase is independent and reversible:
 | Test files modified | 2 |
 | Doc files updated | 3 |
 | **Total** | **~23 files** |
-

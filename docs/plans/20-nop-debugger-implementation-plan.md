@@ -9,6 +9,8 @@
 > **Phase 4 completion:** Timeline search supports `path:` queries, `/regex/flags` matching, plain-text highlight, and local history persistence; the event model includes `state:snapshot` entries for attach-time `ActionScope.getDebugSnapshot()` payloads; and large timeline lists now use a lightweight virtualized rendering path when no row is expanded.
 >
 > This status was re-verified against the codebase on 2026-04-04.
+>
+> **Independent closure audit (2026-04-23):** task `ses_247c577ecffeLFiBQKekdIbGEH` rechecked the live debugger surface and confirmed the plan can remain `completed`. Current code exposes `window.__NOP_DEBUGGER_API__`, records `state:snapshot` events, supports timeline search/virtualization, and ships the Node inspector UI; the old unchecked verification bullets below are historical checklist drift rather than missing feature work.
 
 > åˆ¶å®šæ—¥æœŸ: 2026-03-29
 > åŸºäºŽ: `docs/analysis/2026-03-21-framework-debugger-design.md` è®¾è®¡è‰æ¡ˆ

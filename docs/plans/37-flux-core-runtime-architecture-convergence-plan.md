@@ -408,19 +408,24 @@ pnpm test
 
 ## Acceptance Criteria
 
-- [ ] 无关 scope path 变化不再触发无关节点的 meta/props 重算。
-- [ ] `ScopeStore` 变更通知能够携带 changed paths，且 parent/child scope 传播语义可验证。
-- [ ] 条件表达式或短路表达式在依赖切换后会刷新依赖集，不存在“只首轮依赖生效”的错误缓存。
-- [ ] action/request/source 热路径不再依赖 ad hoc `compileValue()`。
-- [ ] `executeApiObject()` 统一兑现 `includeScope`、`params`、request/response adaptor 语义。
-- [ ] source registry 与 `refreshSource` 语义明确，`data-source` 的动态输入不再是半动态模型。
-- [ ] source/reaction 以 `ScopeRef.id` 为归属注册到当前 data scope 的 runtime sidecar，子 scope 销毁时对应注册项可正确释放。
-- [ ] 第一版 source/reaction registry 以 `RendererRuntime` 内部 `scopeEntries` 形式落地，不依赖 page-global bag 或 `ScopeRef` 行为扩展。
-- [ ] `reaction` 与 source 共享同一依赖与失效底座，并具备 loop guard / dedupe / post-commit scheduling。
-- [ ] action 具备最小可用的 `when` / `parallel` / `retry` / `timeout`，且 `ActionResult`/monitor/debugger 语义同步更新。
-- [ ] `RendererDefinition`/`RendererPlugin`/`ScopePolicy` 公开合同与真实实现重新对齐。
-- [ ] renderer 注册冲突不再静默覆盖，renderer 元数据有稳定事实来源。
-- [ ] 至少一个复杂 renderer 的状态 ownership 完成显式化落地，且 table 首版覆盖 `pagination` 与 `selection`。
+- [x] 无关 scope path 变化不再触发无关节点的 meta/props 重算。
+- [x] `ScopeStore` 变更通知能够携带 changed paths，且 parent/child scope 传播语义可验证。
+- [x] 条件表达式或短路表达式在依赖切换后会刷新依赖集，不存在“只首轮依赖生效”的错误缓存。
+- [x] action/request/source 热路径不再依赖 ad hoc `compileValue()`。
+- [x] `executeApiObject()` 统一兑现 `includeScope`、`params`、request/response adaptor 语义。
+- [x] source registry 与 `refreshSource` 语义明确，`data-source` 的动态输入不再是半动态模型。
+- [x] source/reaction 以 `ScopeRef.id` 为归属注册到当前 data scope 的 runtime sidecar，子 scope 销毁时对应注册项可正确释放。
+- [x] 第一版 source/reaction registry 以 `RendererRuntime` 内部 `scopeEntries` 形式落地，不依赖 page-global bag 或 `ScopeRef` 行为扩展。
+- [x] `reaction` 与 source 共享同一依赖与失效底座，并具备 loop guard / dedupe / post-commit scheduling。
+- [x] action 具备最小可用的 `when` / `parallel` / `retry` / `timeout`，且 `ActionResult`/monitor/debugger 语义同步更新。
+- [x] `RendererDefinition`/`RendererPlugin`/`ScopePolicy` 公开合同与真实实现重新对齐。
+- [x] renderer 注册冲突不再静默覆盖，renderer 元数据有稳定事实来源。
+- [x] 至少一个复杂 renderer 的状态 ownership 完成显式化落地，且 table 首版覆盖 `pagination` 与 `selection`。
+
+## Closure Audit Evidence
+
+- Reviewer / Agent: independent closure audit task `ses_247c577ecffeLFiBQKekdIbGEH`
+- Evidence: major owner outcomes are live across `packages/flux-react/src/node-renderer.tsx`, `packages/flux-runtime/src/async-data/source-registry.ts`, `packages/flux-runtime/src/async-data/reaction-runtime.ts`, `packages/flux-core/src/types/actions.ts`, `packages/flux-runtime/src/runtime-plugins.ts`, and `packages/flux-renderers-data/src/table-renderer.tsx`; remaining unchecked acceptance text was historical doc drift, and the plan itself already marks old dependency-tracking wording as superseded by Plan 39.
 
 ## Deferred Follow-Ups
 

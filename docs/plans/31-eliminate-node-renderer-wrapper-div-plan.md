@@ -18,6 +18,8 @@ Implemented in the current workspace:
 - renderer roots emit `data-cid={props.meta.cid}` directly where they render DOM
 - regression coverage exists in `packages/flux-react/src/index.test.tsx`
 
+Closure audit evidence (2026-04-23): independent task `ses_247c577ecffeLFiBQKekdIbGEH` rechecked the live code and confirmed this plan can remain `completed`. `packages/flux-react/src/node-renderer.tsx` now delegates framing through `NodeFrameWrapper` without the old wrapper div branch, renderer roots emit `data-cid`, and focused runtime tests still lock the no-extra-wrapper behavior.
+
 ## 1. é—®é¢˜åˆ†æž
 
 ### 1.1 å½“å‰å®žçŽ°

@@ -8,6 +8,8 @@
 > Status: Completed
 > Triggered by: SpringReport SQL Editor 功能对比分析
 > Affects: `packages/flux-code-editor/`
+>
+> Re-audit note (2026-04-23): the originally documented SQL execution surface had one real live-code gap: `execution.params` mappings were declared in types/docs but were not injected into dispatched requests, and `showPreview: false` did not suppress the result panel. Both gaps are now closed in `packages/flux-code-editor/src/code-editor-renderer/use-sql-editor-state.ts` and `packages/flux-code-editor/src/code-editor-renderer.tsx`, so this plan can remain genuinely `completed`.
 
 ---
 
@@ -424,5 +426,14 @@ export function formatSQL(
 - [ ] Playground 页面新增 SQL editor 完整演示（格式化 + snippets + 变量面板 + 执行预览）
 - [ ] JSON Schema 向后兼容（现有配置不受影响）
 - [ ] `docs/architecture/code-editor.md` 同步更新
+
+## Closure
+
+Status Note: Completed. The originally planned SQL editor surface is now live: formatting, snippets, variable panel, and SQL execution preview all exist, `execution.params` now injects mapped scope values into dispatched requests, and `showPreview: false` suppresses the result panel as documented.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: live repo re-audit plus focused package verification (2026-04-23)
+- Evidence: `packages/flux-code-editor/src/code-editor-renderer/use-sql-editor-state.ts` now maps `execution.params` into dispatched action/ajax requests, `packages/flux-code-editor/src/code-editor-renderer.tsx` respects `execution.showPreview`, `apps/playground/src/pages/code-editor-page.tsx` exercises the SQL editor surface, and focused verification is green for `pnpm --filter @nop-chaos/flux-code-editor typecheck` and `pnpm --filter @nop-chaos/flux-code-editor test`.
 
 

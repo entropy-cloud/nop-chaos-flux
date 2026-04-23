@@ -8,6 +8,8 @@
 > All 5 phases implemented: `buildInspectResult()` now fills `formState`/`scopeData` from `handle.capabilities.store` and `tagName`/`className` from the DOM element. Node Tab shows a full Component Inspector panel with handle info, Form State tabs (Values/Errors/Meta), Scope Data viewer, and Expression Evaluator. Inspect mode shows hint text and supports Esc to cancel. New CSS styles for `ndbg-inspect-*` classes. 3 new tests in `controller-inspect.test.ts` verify formState filling and DOM info extraction.
 >
 > This status was verified against the codebase on 2026-03-31.
+>
+> **Independent closure audit (2026-04-23):** task `ses_247c577ecffeLFiBQKekdIbGEH` rechecked `controller-component-inspector.ts`, `panel/node-tab.tsx`, and `controller-inspect.test.ts` and confirmed the plan can remain `completed`; the old unchecked verification list is historical doc drift rather than missing behavior.
 
 > åˆ¶å®šæ—¥æœŸ: 2026-03-30
 > åŸºäºŽ: `docs/analysis/2026-03-21-framework-debugger-design.md` Â§10.4 Node / Â§12.5 DOM cid åæŸ¥æœºåˆ¶

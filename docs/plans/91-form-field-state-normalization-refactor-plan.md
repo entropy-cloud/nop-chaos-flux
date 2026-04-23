@@ -1,6 +1,6 @@
 # 91 Form Field State Normalization Refactor Plan
 
-> Plan Status: completed
+> Plan Status: partially completed
 > Last Reviewed: 2026-04-16
 > Source: `docs/architecture/form-validation.md`, `docs/architecture/performance-design-requirements.md`, conversation analysis on React state best practices
 > Related: Plan 90 (per-path subscription), `docs/logs/2026/04-15.md`, `docs/logs/2026/04-16.md`
@@ -227,7 +227,7 @@ Exit Criteria:
 
 ### Phase 6 - 渲染器层清理
 
-Status: deferred (optional cleanup)
+Status: deferred (optional cleanup; not required for the landed normalization/refactor baseline)
 Targets: `packages/flux-renderers-form/src/field-utils.tsx`, 9+ 个渲染器文件
 
 Note: The data-attribute pattern is already working via `useCompositeFieldFrame` which returns `'data-field-*'` attributes. Renderers use `presentation['data-field-visited']` spread syntax. This phase is optional cleanup that doesn't affect functionality.

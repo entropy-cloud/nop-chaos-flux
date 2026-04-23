@@ -96,195 +96,195 @@ Historical note (2026-04-13): this completed plan predates the later architectur
 
 ### Phase 1 - Shared Substrate And Boundary Freeze
 
-Status: planned
+Status: completed
 Targets: architecture docs listed above, `packages/flux-renderers-form/src/schemas.ts`, `packages/flux-renderers-form/src/index.tsx`, new shared helper files, minimal core/runtime contract files if required
 
-- [ ] Freeze the shipping support matrix for this owner plan so implementation cannot sprawl mid-flight:
-- [ ] `object-field`: inline object editor bound to one `name`, child field names relative to object root.
-- [ ] `array-field`: one field bound to one array value, supports `itemKind: 'scalar' | 'object'`, add/remove/reorder, and child field names relative to current item root.
-- [ ] `variant-field`: one field bound to one polymorphic value, active branch only participates in validation, minimum selector modes `tabs` and `select`.
-- [ ] `detail-field`: one field bound to one value, viewer + editable draft surface, minimum surface modes `dialog` / `drawer`, confirm/cancel semantics.
-- [ ] `detail-view`: scope/object projection owner using `scopePath` and `data`, minimum surface modes `dialog` / `drawer`, commit result supports `updates` and `patch`.
-- [ ] `loop`: already landed structural baseline; this plan only owns integration coverage and bug fixes required by the new composite scenario.
-- [ ] Introduce one shared value adaptation / draft owner helper so `transformInAction`, `transformOutAction`, `validateValueAction`, confirm gating, and draft reset semantics are not duplicated across renderers.
-- [ ] Decide and document owner boundaries for live implementation:
-- [ ] `object-field` / `array-field` / `variant-field` inherit the parent validation owner.
-- [ ] `detail-field` / `detail-view` create a child owner only while editable draft content is active.
-- [ ] `loop` does not create a validation owner and must remain purely structural.
-- [ ] Extend schema validation and runtime diagnostics for invalid composite configs: missing required `name`, invalid `itemKind`, duplicate variant keys, unsupported selector/surface mode, invalid `scopePath` / `data` usage, and impossible readOnly+confirm combinations.
-- [ ] If the current validation collector cannot safely exclude child draft content from the parent owner model, add the minimal owner-boundary extension required for this family rather than silently merging child draft validation into the parent form.
+- [x] Freeze the shipping support matrix for this owner plan so implementation cannot sprawl mid-flight:
+- [x] `object-field`: inline object editor bound to one `name`, child field names relative to object root.
+- [x] `array-field`: one field bound to one array value, supports `itemKind: 'scalar' | 'object'`, add/remove/reorder, and child field names relative to current item root.
+- [x] `variant-field`: one field bound to one polymorphic value, active branch only participates in validation, minimum selector modes `tabs` and `select`.
+- [x] `detail-field`: one field bound to one value, viewer + editable draft surface, minimum surface modes `dialog` / `drawer`, confirm/cancel semantics.
+- [x] `detail-view`: scope/object projection owner using `scopePath` and `data`, minimum surface modes `dialog` / `drawer`, commit result supports `updates` and `patch`.
+- [x] `loop`: already landed structural baseline; this plan only owns integration coverage and bug fixes required by the new composite scenario.
+- [x] Introduce one shared value adaptation / draft owner helper so `transformInAction`, `transformOutAction`, `validateValueAction`, confirm gating, and draft reset semantics are not duplicated across renderers.
+- [x] Decide and document owner boundaries for live implementation:
+- [x] `object-field` / `array-field` / `variant-field` inherit the parent validation owner.
+- [x] `detail-field` / `detail-view` create a child owner only while editable draft content is active.
+- [x] `loop` does not create a validation owner and must remain purely structural.
+- [x] Extend schema validation and runtime diagnostics for invalid composite configs: missing required `name`, invalid `itemKind`, duplicate variant keys, unsupported selector/surface mode, invalid `scopePath` / `data` usage, and impossible readOnly+confirm combinations.
+- [x] If the current validation collector cannot safely exclude child draft content from the parent owner model, add the minimal owner-boundary extension required for this family rather than silently merging child draft validation into the parent form.
 
 Exit Criteria:
 
-- [ ] One reader can answer which of the five new components inherit the parent owner and which create a child owner.
-- [ ] The shared helper boundary is explicit enough that later phases do not need to copy transform/validate/commit logic into each renderer.
-- [ ] Unsupported selector/surface/config shapes fail predictably in schema validation or focused tests.
-- [ ] The repo has one clear shipping support matrix for this plan's closure scope.
+- [x] One reader can answer which of the five new components inherit the parent owner and which create a child owner.
+- [x] The shared helper boundary is explicit enough that later phases do not need to copy transform/validate/commit logic into each renderer.
+- [x] Unsupported selector/surface/config shapes fail predictably in schema validation or focused tests.
+- [x] The repo has one clear shipping support matrix for this plan's closure scope.
 
 ### Phase 2 - `object-field` Landing
 
-Status: planned
+Status: completed
 Targets: new `object-field` renderer files, `packages/flux-renderers-form/src/schemas.ts`, `packages/flux-renderers-form/src/index.tsx`, focused tests
 
-- [ ] Add `ObjectFieldSchema` and register `type: 'object-field'` in `@nop-chaos/flux-renderers-form`.
-- [ ] Implement relative child-name rebasing from local field names to the bound object root path.
-- [ ] Historical note: this item was superseded by the later architecture decision that `object-field` remains an inline live-edit control rather than a staged owner-submit control.
-- [ ] Ensure object-level aggregate errors attach to the object root path while child-field errors still render on rebased child paths.
-- [ ] Keep object-field body layout arbitrary and renderer-agnostic; do not bake fixed row/grid chrome into the renderer.
-- [ ] Add focused tests for:
-- [ ] relative child name mapping (`profile.firstName`, `profile.lastName`, etc.)
-- [ ] object root writeback and parent submit behavior
-- [ ] object-level aggregate error rendering plus child-field error rendering
-- [ ] Historical note: later architecture convergence kept `object-field` on inline live-edit semantics instead of staged transform/validate/transformOut sequencing.
+- [x] Add `ObjectFieldSchema` and register `type: 'object-field'` in `@nop-chaos/flux-renderers-form`.
+- [x] Implement relative child-name rebasing from local field names to the bound object root path.
+- [x] Historical note: this item was superseded by the later architecture decision that `object-field` remains an inline live-edit control rather than a staged owner-submit control.
+- [x] Ensure object-level aggregate errors attach to the object root path while child-field errors still render on rebased child paths.
+- [x] Keep object-field body layout arbitrary and renderer-agnostic; do not bake fixed row/grid chrome into the renderer.
+- [x] Add focused tests for:
+- [x] relative child name mapping (`profile.firstName`, `profile.lastName`, etc.)
+- [x] object root writeback and parent submit behavior
+- [x] object-level aggregate error rendering plus child-field error rendering
+- [x] Historical note: later architecture convergence kept `object-field` on inline live-edit semantics instead of staged transform/validate/transformOut sequencing.
 
 Exit Criteria:
 
-- [ ] `object-field` can edit an object value through relative child names without requiring authors to spell full outer paths.
-- [ ] Focused tests prove object-root and child-path validation both publish correctly.
-- [ ] Focused tests prove inline live-edit object persistence and relative child-path behavior.
+- [x] `object-field` can edit an object value through relative child names without requiring authors to spell full outer paths.
+- [x] Focused tests prove object-root and child-path validation both publish correctly.
+- [x] Focused tests prove inline live-edit object persistence and relative child-path behavior.
 
 ### Phase 3 - `array-field` Landing
 
-Status: planned
+Status: completed
 Targets: new `array-field` renderer files, shared helper files, form runtime helpers if needed, focused tests
 
-- [ ] Add `ArrayFieldSchema` and register `type: 'array-field'`.
-- [ ] Implement scalar-array editing and object-array editing under one renderer contract with explicit `itemKind`.
-- [ ] Use form runtime array mutation helpers for add/remove/reorder instead of ad hoc state rewrites that bypass validation bookkeeping.
-- [ ] For `itemKind: 'object'`, rebase child field names relative to the current item root path.
-- [ ] Keep registration/error/touched state coherent after remove and reorder operations, including child path remap.
-- [ ] Add focused tests for:
-- [ ] scalar item add/remove/submit behavior
-- [ ] object item relative child-name mapping
-- [ ] array aggregate validation (`minItems`, `uniqueBy`, or equivalent live root-path rules)
-- [ ] remove/reorder remapping of values, errors, and touched state
+- [x] Add `ArrayFieldSchema` and register `type: 'array-field'`.
+- [x] Implement scalar-array editing and object-array editing under one renderer contract with explicit `itemKind`.
+- [x] Use form runtime array mutation helpers for add/remove/reorder instead of ad hoc state rewrites that bypass validation bookkeeping.
+- [x] For `itemKind: 'object'`, rebase child field names relative to the current item root path.
+- [x] Keep registration/error/touched state coherent after remove and reorder operations, including child path remap.
+- [x] Add focused tests for:
+- [x] scalar item add/remove/submit behavior
+- [x] object item relative child-name mapping
+- [x] array aggregate validation (`minItems`, `uniqueBy`, or equivalent live root-path rules)
+- [x] remove/reorder remapping of values, errors, and touched state
 
 Exit Criteria:
 
-- [ ] `array-field` supports both scalar and object item modes without requiring separate author-facing component names.
-- [ ] Focused tests prove array root aggregate validation stays attached to the array root path.
-- [ ] Focused tests prove remove/reorder do not leave stale child errors or stale registration state behind.
+- [x] `array-field` supports both scalar and object item modes without requiring separate author-facing component names.
+- [x] Focused tests prove array root aggregate validation stays attached to the array root path.
+- [x] Focused tests prove remove/reorder do not leave stale child errors or stale registration state behind.
 
 ### Phase 4 - `variant-field` Landing
 
-Status: planned
+Status: completed
 Targets: new `variant-field` renderer files, shared helper files, minimal runtime/compiler glue if needed, focused tests
 
-- [ ] Add `VariantFieldSchema`, `VariantOption`, and register `type: 'variant-field'`.
-- [ ] Implement built-in variant detection priority in the shipping order documented by the architecture: stable discriminator / declared `match` / `detectVariantAction` / `defaultVariant`.
-- [ ] Ensure only the active variant branch participates in validation, error publication, and async work.
-- [ ] On variant switch, clear stale inactive-branch errors and invalidate inactive-branch async validation before validating the new branch.
-- [ ] Use target variant `initialValue` as the default switch baseline; only explicit transform logic may migrate old values.
-- [ ] Add focused tests for:
-- [ ] variant detection priority and fallback behavior
-- [ ] active-branch-only validation
-- [ ] stale error and stale async cleanup after branch switch
-- [ ] Historical note: variant switching keeps explicit migration semantics, but submit-time variant-level owner sequencing is no longer part of the shipped inline `variant-field` baseline.
+- [x] Add `VariantFieldSchema`, `VariantOption`, and register `type: 'variant-field'`.
+- [x] Implement built-in variant detection priority in the shipping order documented by the architecture: stable discriminator / declared `match` / `detectVariantAction` / `defaultVariant`.
+- [x] Ensure only the active variant branch participates in validation, error publication, and async work.
+- [x] On variant switch, clear stale inactive-branch errors and invalidate inactive-branch async validation before validating the new branch.
+- [x] Use target variant `initialValue` as the default switch baseline; only explicit transform logic may migrate old values.
+- [x] Add focused tests for:
+- [x] variant detection priority and fallback behavior
+- [x] active-branch-only validation
+- [x] stale error and stale async cleanup after branch switch
+- [x] Historical note: variant switching keeps explicit migration semantics, but submit-time variant-level owner sequencing is no longer part of the shipped inline `variant-field` baseline.
 
 Exit Criteria:
 
-- [ ] `variant-field` submit/validate paths only observe the active branch.
-- [ ] Focused tests prove branch switch clears old branch validation state and activates the new branch correctly.
-- [ ] The shipping implementation does not implicitly preserve old branch values unless explicit transform logic requests it.
+- [x] `variant-field` submit/validate paths only observe the active branch.
+- [x] Focused tests prove branch switch clears old branch validation state and activates the new branch correctly.
+- [x] The shipping implementation does not implicitly preserve old branch values unless explicit transform logic requests it.
 
 ### Phase 5 - `detail-field` Landing
 
-Status: planned
+Status: completed
 Targets: new `detail-field` renderer files, shared helper files, surface integration glue, focused tests
 
-- [ ] Add `DetailFieldSchema` and register `type: 'detail-field'`.
-- [ ] Implement summary viewer + editable surface flow for `dialog` and `drawer` using a child draft owner.
-- [ ] Seed the child draft through `transformInAction` when opening editable content.
-- [ ] Run child-owner `validateAll('commit')` plus `validateValueAction` before confirm can succeed.
-- [ ] On successful confirm, run `transformOutAction`, write back the committed value to the bound field, and trigger parent owner revalidation of the impacted path.
-- [ ] On cancel, dispose the child draft owner and drop draft state without mutating parent values.
-- [ ] Preserve a pure readOnly path where viewer and surface are allowed but no confirm/writeback path exists.
-- [ ] Add focused tests for:
-- [ ] open/viewer behavior and editable open behavior
-- [ ] invalid child draft blocks confirm and leaves parent value unchanged
-- [ ] successful confirm writes back and revalidates the parent path
-- [ ] cancel semantics discard draft state
-- [ ] readOnly mode does not expose accidental mutation paths
+- [x] Add `DetailFieldSchema` and register `type: 'detail-field'`.
+- [x] Implement summary viewer + editable surface flow for `dialog` and `drawer` using a child draft owner.
+- [x] Seed the child draft through `transformInAction` when opening editable content.
+- [x] Run child-owner `validateAll('commit')` plus `validateValueAction` before confirm can succeed.
+- [x] On successful confirm, run `transformOutAction`, write back the committed value to the bound field, and trigger parent owner revalidation of the impacted path.
+- [x] On cancel, dispose the child draft owner and drop draft state without mutating parent values.
+- [x] Preserve a pure readOnly path where viewer and surface are allowed but no confirm/writeback path exists.
+- [x] Add focused tests for:
+- [x] open/viewer behavior and editable open behavior
+- [x] invalid child draft blocks confirm and leaves parent value unchanged
+- [x] successful confirm writes back and revalidates the parent path
+- [x] cancel semantics discard draft state
+- [x] readOnly mode does not expose accidental mutation paths
 
 Exit Criteria:
 
-- [ ] `detail-field` behaves as an isolated draft owner while editing and does not leak draft validation into the parent form before confirm.
-- [ ] Focused tests prove invalid draft confirm is blocked and valid confirm triggers parent writeback + revalidation.
-- [ ] Focused tests prove cancel leaves parent state untouched.
+- [x] `detail-field` behaves as an isolated draft owner while editing and does not leak draft validation into the parent form before confirm.
+- [x] Focused tests prove invalid draft confirm is blocked and valid confirm triggers parent writeback + revalidation.
+- [x] Focused tests prove cancel leaves parent state untouched.
 
 ### Phase 6 - `detail-view` Landing
 
-Status: planned
+Status: completed
 Targets: new `detail-view` renderer files, shared helper files, scope writeback helpers, focused tests
 
-- [ ] Add `DetailViewSchema` and register `type: 'detail-view'`.
-- [ ] Support both external input modes required for closure: `scopePath` and `data` projection.
-- [ ] Implement child draft owner behavior for editable content with `dialog` and `drawer` surfaces.
-- [ ] Support confirm results shaped as `updates` and `patch`, and keep the owner responsible for applying those writes rather than letting child content mutate parent scope directly.
-- [ ] Ensure confirm-time success applies writes and triggers parent revalidation of all impacted paths.
-- [ ] Preserve readOnly mode and cancel semantics with no parent mutation.
-- [ ] Add focused tests for:
-- [ ] `scopePath`-based projection editing
-- [ ] `data` projection editing and owner-applied writeback
-- [ ] `updates` result handling and `patch` result handling
-- [ ] invalid draft blocks confirm
-- [ ] cancel keeps parent scope unchanged
+- [x] Add `DetailViewSchema` and register `type: 'detail-view'`.
+- [x] Support both external input modes required for closure: `scopePath` and `data` projection.
+- [x] Implement child draft owner behavior for editable content with `dialog` and `drawer` surfaces.
+- [x] Support confirm results shaped as `updates` and `patch`, and keep the owner responsible for applying those writes rather than letting child content mutate parent scope directly.
+- [x] Ensure confirm-time success applies writes and triggers parent revalidation of all impacted paths.
+- [x] Preserve readOnly mode and cancel semantics with no parent mutation.
+- [x] Add focused tests for:
+- [x] `scopePath`-based projection editing
+- [x] `data` projection editing and owner-applied writeback
+- [x] `updates` result handling and `patch` result handling
+- [x] invalid draft blocks confirm
+- [x] cancel keeps parent scope unchanged
 
 Exit Criteria:
 
-- [ ] `detail-view` can edit projected object data without directly mutating parent scope during the draft phase.
-- [ ] Focused tests prove both `scopePath` and `data` source modes work for the closure slice.
-- [ ] Focused tests prove `updates` and `patch` confirm results are both owner-applied and revalidated.
+- [x] `detail-view` can edit projected object data without directly mutating parent scope during the draft phase.
+- [x] Focused tests prove both `scopePath` and `data` source modes work for the closure slice.
+- [x] Focused tests prove `updates` and `patch` confirm results are both owner-applied and revalidated.
 
 ### Phase 7 - `loop` Integration And Comprehensive Validation Scenario
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-basic/src/index.test.tsx` only if needed, new composite integration test file under `packages/flux-renderers-form/src/__tests__/`, runtime tests if submit/commit arbitration or child-owner cleanup need support
 
-- [ ] Re-audit the existing `loop` baseline against the new composite renderers and add only the regression coverage or runtime fixes required for this feature family.
-- [ ] Add one dedicated comprehensive form test file instead of burying the scenario in `index.test.tsx`, so the scenario remains readable and plan-owned.
-- [ ] Build the comprehensive schema around one coherent form that combines all six components. Minimum scenario contents:
-- [ ] one `object-field`
-- [ ] one `array-field`
-- [ ] one `variant-field`
-- [ ] one `detail-field`
-- [ ] one `detail-view`
-- [ ] one `loop` rendering repeated summary/detail output from live form data
-- [ ] The comprehensive test must exercise the following validation paths in one scenario or in a tightly-coupled scenario block inside the same test file:
-- [ ] parent submit hits object-level or array-level aggregate validation
-- [ ] variant switch deactivates old branch validation and activates the new branch
-- [ ] `detail-field` child draft confirm is blocked by child validation, then succeeds and triggers parent revalidation
-- [ ] `detail-view` commit applies `updates` or `patch` and triggers dependent parent revalidation
-- [ ] array add/remove/reorder interacts correctly with repeated rendering and validation state
-- [ ] `loop` reflects current committed state and does not create an accidental extra validation owner
-- [ ] at least one async or debounced validation path is present, and either submit or commit supersedes lower-priority work on that path
-- [ ] If the UI-level comprehensive test cannot cover one of the required low-level validation semantics without becoming brittle, add a paired runtime-focused test in `packages/flux-runtime/src/__tests__/` and cross-link it from this phase rather than silently dropping the path.
+- [x] Re-audit the existing `loop` baseline against the new composite renderers and add only the regression coverage or runtime fixes required for this feature family.
+- [x] Add one dedicated comprehensive form test file instead of burying the scenario in `index.test.tsx`, so the scenario remains readable and plan-owned.
+- [x] Build the comprehensive schema around one coherent form that combines all six components. Minimum scenario contents:
+- [x] one `object-field`
+- [x] one `array-field`
+- [x] one `variant-field`
+- [x] one `detail-field`
+- [x] one `detail-view`
+- [x] one `loop` rendering repeated summary/detail output from live form data
+- [x] The comprehensive test must exercise the following validation paths in one scenario or in a tightly-coupled scenario block inside the same test file:
+- [x] parent submit hits object-level or array-level aggregate validation
+- [x] variant switch deactivates old branch validation and activates the new branch
+- [x] `detail-field` child draft confirm is blocked by child validation, then succeeds and triggers parent revalidation
+- [x] `detail-view` commit applies `updates` or `patch` and triggers dependent parent revalidation
+- [x] array add/remove/reorder interacts correctly with repeated rendering and validation state
+- [x] `loop` reflects current committed state and does not create an accidental extra validation owner
+- [x] at least one async or debounced validation path is present, and either submit or commit supersedes lower-priority work on that path
+- [x] If the UI-level comprehensive test cannot cover one of the required low-level validation semantics without becoming brittle, add a paired runtime-focused test in `packages/flux-runtime/src/__tests__/` and cross-link it from this phase rather than silently dropping the path.
 
 Exit Criteria:
 
-- [ ] The repo contains one dedicated comprehensive test file owned by this plan.
-- [ ] That file proves the six-component scenario works as one form rather than as disconnected widget demos.
-- [ ] The comprehensive coverage reaches complex validation paths instead of only smoke-testing rendering.
-- [ ] Any extra runtime-focused companion tests are explicit and justified by the comprehensive scenario's coverage boundary.
+- [x] The repo contains one dedicated comprehensive test file owned by this plan.
+- [x] That file proves the six-component scenario works as one form rather than as disconnected widget demos.
+- [x] The comprehensive coverage reaches complex validation paths instead of only smoke-testing rendering.
+- [x] Any extra runtime-focused companion tests are explicit and justified by the comprehensive scenario's coverage boundary.
 
 ### Phase 8 - Documentation, Verification, And Closure Audit Prep
 
-Status: planned
+Status: completed
 Targets: touched architecture docs, touched package docs/tests, `docs/logs/2026/04-12.md`
 
-- [ ] Update architecture docs so the landed support matrix, owner boundaries, and deferred modes match the live implementation rather than the broader future design text.
-- [ ] If the implementation introduces a representative example schema that improves future maintenance, add one small example or test fixture and cite it from docs.
-- [ ] Record implementation slices and closure evidence in `docs/logs/2026/04-12.md` or the then-current daily log file.
-- [ ] Run full repo verification required by this workspace after code changes: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
-- [ ] Re-audit the whole plan before closure so component existence is not mistaken for component semantics.
-- [ ] Run a separate independent subagent closure audit in a fresh task session and record the task id plus findings in this plan or the daily log before changing `Plan Status` to `completed`.
+- [x] Update architecture docs so the landed support matrix, owner boundaries, and deferred modes match the live implementation rather than the broader future design text.
+- [x] If the implementation introduces a representative example schema that improves future maintenance, add one small example or test fixture and cite it from docs.
+- [x] Record implementation slices and closure evidence in `docs/logs/2026/04-12.md` or the then-current daily log file.
+- [x] Run full repo verification required by this workspace after code changes: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
+- [x] Re-audit the whole plan before closure so component existence is not mistaken for component semantics.
+- [x] Run a separate independent subagent closure audit in a fresh task session and record the task id plus findings in this plan or the daily log before changing `Plan Status` to `completed`.
 
 Exit Criteria:
 
-- [ ] Docs describe the shipped support matrix for these components and their validation boundaries.
-- [ ] The daily log records what landed and the key decisions made.
-- [ ] Full repo verification is green.
-- [ ] An independent subagent closure audit has been completed, with evidence recorded and any findings resolved or moved to follow-up.
+- [x] Docs describe the shipped support matrix for these components and their validation boundaries.
+- [x] The daily log records what landed and the key decisions made.
+- [x] Full repo verification is green.
+- [x] An independent subagent closure audit has been completed, with evidence recorded and any findings resolved or moved to follow-up.
 
 ## Risks And Rollback
 
@@ -301,21 +301,21 @@ Rollback guidance:
 
 ## Validation Checklist
 
-- [ ] `object-field` focused tests cover relative child names and object-root live-edit behavior
-- [ ] `array-field` focused tests cover scalar mode, object mode, aggregate validation, and remove/reorder remap
-- [ ] `variant-field` focused tests cover detection priority, active-branch-only validation participation, switch migration, and stale branch cleanup
-- [ ] `detail-field` focused tests cover child draft isolation, confirm gating, confirm writeback, and cancel semantics
-- [ ] `detail-view` focused tests cover `scopePath`, `data`, `updates`, `patch`, and cancel semantics
-- [ ] `loop` regression coverage exists for the composite integration path and confirms it remains a structural node rather than a validation owner
-- [ ] The comprehensive form test covers all six components together and reaches complex validation execution paths
-- [ ] Any runtime-level companion tests needed for async supersession, owner cleanup, or remap semantics are explicit and green
-- [ ] Relevant architecture docs are updated to match the shipped support matrix
-- [ ] `docs/logs/` updated with execution notes and closure evidence
-- [ ] Independent subagent closure-audit evidence is recorded before marking the plan `completed`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `object-field` focused tests cover relative child names and object-root live-edit behavior
+- [x] `array-field` focused tests cover scalar mode, object mode, aggregate validation, and remove/reorder remap
+- [x] `variant-field` focused tests cover detection priority, active-branch-only validation participation, switch migration, and stale branch cleanup
+- [x] `detail-field` focused tests cover child draft isolation, confirm gating, confirm writeback, and cancel semantics
+- [x] `detail-view` focused tests cover `scopePath`, `data`, `updates`, `patch`, and cancel semantics
+- [x] `loop` regression coverage exists for the composite integration path and confirms it remains a structural node rather than a validation owner
+- [x] The comprehensive form test covers all six components together and reaches complex validation execution paths
+- [x] Any runtime-level companion tests needed for async supersession, owner cleanup, or remap semantics are explicit and green
+- [x] Relevant architecture docs are updated to match the shipped support matrix
+- [x] `docs/logs/` updated with execution notes and closure evidence
+- [x] Independent subagent closure-audit evidence is recorded before marking the plan `completed`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 

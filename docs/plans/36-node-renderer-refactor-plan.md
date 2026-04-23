@@ -1,16 +1,16 @@
 # NodeRenderer 降压式重构计划
 
-> Plan Status: completed
+> Plan Status: partially completed
 > Created: 2026-04-04
 > Source: `packages/flux-react/src/node-renderer.tsx` (346 行)
 
-> **Implementation Status: ✅ COMPLETED (2026-04-04)**
+> **Implementation Status: PARTIALLY COMPLETED / HISTORICAL RECORD (re-audited 2026-04-23)**
 
 Implemented scope:
 
 - completed `node-renderer-utils.ts`
 - completed `useNodeImports.ts`
-- completed `useFormComponentHandleRegistration.ts`
+- completed a first reduced refactor slice around `node-renderer-utils.ts`, `useNodeImports.ts`, `useNodeDebugData.ts`, and `node-frame-wrapper.tsx`
 - completed `useNodeDebugData.ts`
 - completed optional `node-frame-wrapper.tsx`
 - kept `useNodeEvents`, `useNodeRegions`, `useRenderMonitor`, and provider composition inline by design
@@ -22,6 +22,8 @@ Verification summary:
 - `pnpm typecheck` ✅
 - `pnpm build` ✅
 - `pnpm lint` blocked by a pre-existing unrelated workspace lint error in `packages/flux-runtime/src/form-runtime.ts:515` (`prefer-const`)
+
+Re-audit note (2026-04-23): the live repo no longer contains `packages/flux-react/src/useFormComponentHandleRegistration.ts`, and `node-renderer.tsx` does not use such a hook today. Historical logs show that hook existed in an earlier slice and was later removed when ownership moved directly to renderer/form-owned paths. This means the old completion summary overstated the exact final file shape, even though part of the intended pressure-reduction refactor did land.
 
 ---
 
@@ -259,12 +261,20 @@ Verification summary:
 
 ## Acceptance Criteria
 
-- [ ] `NodeRenderer` 主文件明显减少副作用噪音，主线重新聚焦在节点编排
+- [x] `NodeRenderer` 主文件明显减少副作用噪音，主线重新聚焦在节点编排
 - [ ] `useNodeImports`、form handle 注册、debug data 注册三块 effect 已迁出主文件
-- [ ] 提取后行为与当前实现一致，包括 import loader 变化时的重跑语义
-- [ ] 未向 `flux-core` 新增仅服务于 `NodeRenderer` 的内部 accessor API
-- [ ] 未无必要扩大 `packages/flux-react/src/index.ts` 导出面
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
+- [x] 提取后行为与当前实现一致，包括 import loader 变化时的重跑语义
+- [x] 未向 `flux-core` 新增仅服务于 `NodeRenderer` 的内部 accessor API
+- [x] 未无必要扩大 `packages/flux-react/src/index.ts` 导出面
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm build` 通过
 - [ ] `pnpm lint` 通过
-- [ ] `pnpm test` 通过
+- [x] `pnpm test` 通过
+
+## Closure
+
+Status Note: Partially completed historical record. The planned pressure-reduction slice did land in part: `node-renderer-utils.ts`, `useNodeImports.ts`, `useNodeDebugData.ts`, and `node-frame-wrapper.tsx` exist and the main file is more focused on orchestration. However, the plan's originally claimed end-state file list is no longer the live baseline because the former `useFormComponentHandleRegistration.ts` hook was later removed as ownership moved directly to renderer/form-owned paths. This plan should therefore remain a partially completed historical record rather than a completed owner plan.
+
+Follow-up:
+
+- If further `NodeRenderer` simplification is needed, create a new owner plan from the current live file structure instead of reviving this outdated exact-file-shape checklist.

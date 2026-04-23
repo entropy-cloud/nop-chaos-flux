@@ -142,8 +142,8 @@ Exit Criteria:
 
 Exit Criteria:
 
-- [ ] Two independent fresh-session audits are recorded with evidence.
-- [ ] Any remaining gaps are moved to explicit successor ownership before this plan is marked completed.
+- [x] Two independent fresh-session audits are recorded with evidence.
+- [x] Any remaining gaps are moved to explicit successor ownership before this plan is marked completed.
 
 ## Documentation Follow-Up
 

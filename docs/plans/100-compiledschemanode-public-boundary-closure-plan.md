@@ -104,7 +104,7 @@ Targets: `docs/architecture/flux-core.md`, `docs/logs/`
 
 - [x] Reverse-update `docs/architecture/flux-core.md` in the same slice as the code landing.
 - [x] Record focused verification and the remaining retained boundary, if any, in the daily log.
-- [ ] Run an independent closure audit in a fresh session before marking this plan completed.
+- [x] Run an independent closure audit in a fresh session before marking this plan completed.
 
 **Phase 3 Results (2026-04-16):**
 

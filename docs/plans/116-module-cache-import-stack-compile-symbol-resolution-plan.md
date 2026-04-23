@@ -257,8 +257,8 @@ Rollback approach:
 
 ## Validation Checklist
 
-- [ ] `ModuleCache` interface is in `flux-core`, `ImportManager` uses it, and cross-Runtime sharing works.
-- [ ] Relative import path resolution works when `schemaUrl` and `resolveImportUrl` are provided.
+- [x] `ModuleCache` interface is in `flux-core`, `ImportManager` uses it, and cross-Runtime sharing works.
+- [x] Relative import path resolution works when `schemaUrl` and `resolveImportUrl` are provided.
 - [x] `ImportStack` push/pop provides proper lexical scope isolation for import aliases.
 - [x] Root preload populates `ModuleCache` but does not leak aliases to root scope.
 - [x] `CompileSymbolTable` is populated from renderer metadata, region params, and `xui:imports` during compilation.
@@ -269,11 +269,11 @@ Rollback approach:
 - [x] All existing focused tests pass.
 - [x] `docs/architecture/module-cache-and-import-stack.md` reflects implemented state (completed phases marked).
 - [x] `docs/architecture/action-scope-and-imports.md` runtime notes updated to reference `ImportStack`.
-- [ ] Independent closure audit completed and evidence recorded below.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Independent closure audit completed and evidence recorded below.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
@@ -281,8 +281,8 @@ Status Note: Plan 116 is now complete. The repo no longer relies on a flat impor
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending independent closure audit
-- Evidence: implementation pass landed `ImportStack`, compile-symbol metadata, diagnostics, folding, targeted tests, and doc sync in the live repo; final independent closure audit should recheck full-workspace verification and plan/doc drift before freezing this note.
+- Reviewer / Agent: independent closure audit task `ses_247c577ecffeLFiBQKekdIbGEH`
+- Evidence: `ModuleCache`, `ImportStack`, and `CompileSymbolTable` are live in `packages/flux-core/src/types/compilation.ts`; runtime factory wires the shared module/import infrastructure; `packages/flux-react/src/use-node-imports.ts` uses push/pop import frames; compile-time symbol plumbing is live in `packages/flux-compiler/src/schema-compiler.ts`; and `docs/logs/2026/04-21.md` records both landing and later full-workspace verification.
 
 Follow-up:
 

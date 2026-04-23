@@ -209,10 +209,10 @@ Exit Criteria:
 - [x] The open-items note is no longer an open-ended backlog note by the time this plan closes.
 - [x] Focused verification exists for every code fix landed under this plan.
 - [x] Closure evidence is recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Documentation Follow-Up
 

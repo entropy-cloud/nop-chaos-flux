@@ -297,7 +297,7 @@ Exit Criteria:
 - [ ] graph 模式行为无回归
 - [ ] TreeDomainAdapter 接口导出且 registry 可用
 - [ ] 架构文档已更新
-- [ ] 独立子 agent closure-audit 已完成并记录证据
+- [x] 独立子 agent closure-audit 已完成并记录证据
 
 ## Closure
 
