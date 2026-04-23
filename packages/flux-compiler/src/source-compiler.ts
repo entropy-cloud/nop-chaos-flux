@@ -13,7 +13,7 @@ export interface SourceCompilerOptions extends ExpressionCompileOptions {
   basePath?: string;
 }
 
-function compileApiConfig(
+export function compileApiConfig(
   api: ApiSchema,
   compiler: ExpressionCompiler,
   options?: ExpressionCompileOptions
