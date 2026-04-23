@@ -13,6 +13,7 @@
     }
   },
   "dependencies": {
+    "@nop-chaos/flux-compiler": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",

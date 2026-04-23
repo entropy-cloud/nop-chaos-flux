@@ -9,6 +9,8 @@ import type {
   RendererHelpers,
   ScopeRef
 } from '@nop-chaos/flux-core';
+import { compileDataSource } from '@nop-chaos/flux-compiler';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
   ActionScopeContext,
@@ -32,6 +34,8 @@ import {
 } from './index';
 import { RenderNodes } from './helpers';
 import { fragmentScopedProbeFormSchema } from './test-support-core';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 function CompositeErrorProbe() {
   const form = useCurrentForm();
@@ -122,7 +126,7 @@ function PollingSource(props: RendererComponentProps<DataSourceSchema>) {
     const registration = runtime.registerDataSource({
       id: props.id,
       scope,
-      schema: props.schema
+      compiledSource: compileDataSource(props.id, props.schema, expressionCompiler)
     });
 
     return () => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createActionScope } from '@nop-chaos/flux-runtime';
 import { createSchemaRenderer, NodeMetaContext, RenderNodes, RuntimeContext, ScopeContext, useDataSourceStatus, useRenderScope, useRendererRuntime, useScopeSelector } from '../index';
 import {
@@ -21,6 +22,8 @@ import {
   textRenderer,
   wrapProbeRenderer,
 } from '../test-support';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createSchemaRenderer runtime core behavior', () => {
   it('compiles runtime boundary flags for form, scope, provider, and class alias changes', () => {
@@ -175,12 +178,12 @@ describe('createSchemaRenderer runtime core behavior', () => {
           const registration = runtime.registerDataSource({
             id: props.id,
             scope,
-            schema: {
+            compiledSource: compileDataSource(props.id, {
               type: 'data-source',
               api: { url: '/api/user/1' },
               name: 'user',
               statusPath: 'userStatus'
-            }
+            }, expressionCompiler)
           });
 
           return () => {
@@ -345,11 +348,11 @@ describe('createSchemaRenderer runtime core behavior', () => {
           const registration = runtime.registerDataSource({
             id: props.id,
             scope,
-            schema: {
+            compiledSource: compileDataSource(props.id, {
               type: 'data-source',
               api: { url: '/api/user/1' },
               name: 'user'
-            }
+            }, expressionCompiler)
           });
 
           return () => {
