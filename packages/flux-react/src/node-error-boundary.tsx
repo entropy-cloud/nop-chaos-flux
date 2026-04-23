@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import type { ReactNode } from 'react';
 import { AlertCircleIcon } from 'lucide-react';
+import { Button } from '@nop-chaos/ui';
 
 interface NodeErrorBoundaryProps {
   children: ReactNode;
@@ -58,14 +59,13 @@ export class NodeErrorBoundary extends Component<NodeErrorBoundaryProps, NodeErr
           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {nodeId}: {message || 'Render error'}
           </span>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={this.handleRetry}
             style={{
-              background: 'none',
-              border: 'none',
               padding: '0 0.25rem',
-              cursor: 'pointer',
               fontSize: '0.6875rem',
               lineHeight: '1rem',
               color: 'inherit',
@@ -74,7 +74,7 @@ export class NodeErrorBoundary extends Component<NodeErrorBoundaryProps, NodeErr
             }}
           >
             retry
-          </button>
+          </Button>
         </div>
       );
     }

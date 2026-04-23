@@ -1,6 +1,7 @@
 import * as React from "react"
 import { JsonView, allExpanded, defaultStyles } from "react-json-view-lite"
 import { stringify } from "yaml"
+import { Tabs, TabsList, TabsTrigger } from "./tabs"
 import { cn } from "../../lib/utils"
 
 type JsonViewerProps = {
@@ -41,22 +42,12 @@ function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) 
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="flex flex-col space-y-2">
-        <div className="grid w-full grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => setFormat("json")}
-            className="px-4 py-2 rounded-md bg-muted hover:bg-muted/80"
-          >
-            JSON
-          </button>
-          <button
-            type="button"
-            onClick={() => setFormat("yaml")}
-            className="px-4 py-2 rounded-md bg-muted hover:bg-muted/80"
-          >
-            YAML
-          </button>
-        </div>
+        <Tabs value={format} onValueChange={(value) => setFormat(value as "json" | "yaml")}>
+          <TabsList className="grid w-full grid-cols-2 gap-2">
+            <TabsTrigger value="json">JSON</TabsTrigger>
+            <TabsTrigger value="yaml">YAML</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="overflow-auto min-h-[300px] max-h-[calc(100vh-200px)]">
           {format === "json" ? (
             <JsonViewer data={data} defaultExpand={defaultExpand} />
