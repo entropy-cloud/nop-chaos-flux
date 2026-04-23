@@ -85,7 +85,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
   const [directoryUsers, setDirectoryUsers] = useState(users);
   const [searchResults, setSearchResults] = useState(users);
   const [searchQuery, setSearchQuery] = useState('');
-  const [decoratedEnv, setDecoratedEnv] = useState<RendererEnv | null>(null);
+  const plugins = useMemo(() => [debuggerController.plugin], [debuggerController]);
 
   const directoryUsersRef = useRef(directoryUsers);
   const searchQueryRef = useRef(searchQuery);
@@ -203,9 +203,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
     []
   );
 
-  useEffect(() => {
-    setDecoratedEnv(debuggerController.decorateEnv(env));
-  }, [debuggerController, env]);
+  const decoratedEnv = useMemo(() => debuggerController.decorateEnv(env), [debuggerController, env]);
 
   return (
     <main className="min-h-screen grid place-items-center p-6">
@@ -271,10 +269,10 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
                 users: directoryUsers,
                 searchResults
               }}
-              env={decoratedEnv ?? env}
+              env={decoratedEnv}
               registry={registry}
               formulaCompiler={formulaCompiler}
-              plugins={[debuggerController.plugin]}
+              plugins={plugins}
               onRuntimeChange={(runtime) => debuggerController.setRuntime(runtime)}
               onComponentRegistryChange={(componentRegistry) => debuggerController.setComponentRegistry(componentRegistry)}
               onActionScopeChange={(actionScope) => debuggerController.setActionScope(actionScope)}
