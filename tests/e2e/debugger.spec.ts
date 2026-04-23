@@ -24,7 +24,7 @@ async function prepareFreshPage(page: import('@playwright/test').Page): Promise<
 
 async function openFluxBasicPage(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/#/flux-basic');
-  await page.getByRole('heading', { name: 'Renderer Playground' }).waitFor({ state: 'visible', timeout: 15000 });
+  await page.getByRole('heading', { name: 'Renderer Playground', level: 1 }).waitFor({ state: 'visible', timeout: 15000 });
 }
 
 test.describe('Nop Debugger', () => {
