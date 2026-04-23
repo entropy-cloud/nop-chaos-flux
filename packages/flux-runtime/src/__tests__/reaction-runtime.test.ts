@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { compileReaction } from '@nop-chaos/flux-compiler';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 
 const textRenderer = {
@@ -21,6 +22,8 @@ function createRuntime() {
   });
 }
 
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
 describe('registerReaction dispose race with scheduled microtask', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -37,12 +40,12 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     const registration = runtime.registerReaction({
       id: 'debounce-dispose-race',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('debounce-dispose-race', {
         type: 'reaction',
         watch: '${count}',
         debounce: 50,
         actions: { action: 'setValue', args: { path: 'flag', value: true } }
-      },
+      }, expressionCompiler),
       dispatch: vi.fn()
     });
 
@@ -67,12 +70,12 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     const registration = runtime.registerReaction({
       id: 'debounce-dispose-no-action',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('debounce-dispose-no-action', {
         type: 'reaction',
         watch: '${count}',
         debounce: 50,
         actions: { action: 'setValue', args: { path: 'flag', value: true } }
-      },
+      }, expressionCompiler),
       dispatch
     });
 
@@ -94,12 +97,12 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     const registration = runtime.registerReaction({
       id: 'debounce-normal',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('debounce-normal', {
         type: 'reaction',
         watch: '${count}',
         debounce: 20,
         actions: { action: 'setValue', args: { path: 'message', value: 'fired' } }
-      },
+      }, expressionCompiler),
       dispatch: (action, ctx) =>
         runtime.dispatch(action, { runtime, scope: ctx?.scope ?? page.scope, page })
     });
@@ -127,11 +130,11 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     const registration = runtime.registerReaction({
       id: 'async-reaction-diagnostics',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('async-reaction-diagnostics', {
         type: 'reaction',
         watch: '${count}',
         actions: { action: 'custom:noop' }
-      },
+      }, expressionCompiler),
       dispatch: vi.fn(async () => {
         dispatchCount += 1;
 

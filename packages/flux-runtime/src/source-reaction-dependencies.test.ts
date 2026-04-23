@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { compileReaction } from '@nop-chaos/flux-compiler';
 import { createRendererRegistry, createRendererRuntime } from './index';
 
 const textRenderer: RendererDefinition = {
@@ -16,6 +17,8 @@ const env: RendererEnv = {
   }),
   notify: () => undefined
 };
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('explicit dependency roots', () => {
   it('uses explicit dependsOn roots for formula sources instead of runtime-collected fallback', async () => {
@@ -141,14 +144,14 @@ describe('explicit dependency roots', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3 });
 
     const registration = runtime.registerReaction({
       id: 'explicit-reaction',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('explicit-reaction', {
         type: 'reaction',
         watch: '${(price || 0) * (qty || 0)}',
         dependsOn: ['price'],
@@ -159,7 +162,7 @@ describe('explicit dependency roots', () => {
             value: '${price}:${qty}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: (action, ctx) => runtime.dispatch(action, {
         runtime,
         scope: ctx?.scope ?? page.scope,

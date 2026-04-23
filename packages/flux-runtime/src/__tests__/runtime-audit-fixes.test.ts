@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiSchema, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { compileReaction } from '@nop-chaos/flux-compiler';
 import { createManagedFormRuntime } from '../form-runtime';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { env, textRenderer } from './test-fixtures';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 function createStubScope(): ScopeRef {
   return {
@@ -159,7 +162,7 @@ describe('audit-backed runtime fixes', () => {
     const registration = runtime.registerReaction({
       id: 'failing-reaction',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('failing-reaction', {
         type: 'reaction',
         watch: '${count}',
         actions: {
@@ -169,7 +172,7 @@ describe('audit-backed runtime fixes', () => {
             value: 'count:${count}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: async () => {
         throw new Error('reaction exploded');
       }

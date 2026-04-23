@@ -1,14 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { compileReaction } from '@nop-chaos/flux-compiler';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createRendererRuntime', () => {
   it('replaces same-id reactions within the same scope through runtime registry ownership', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ count: 1 });
     const updates: string[] = [];
@@ -16,7 +19,7 @@ describe('createRendererRuntime', () => {
     const first = runtime.registerReaction({
       id: 'count-reaction',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('count-reaction', {
         type: 'reaction',
         watch: '${count}',
         actions: {
@@ -26,7 +29,7 @@ describe('createRendererRuntime', () => {
             value: 'first:${count}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: async (action, ctx) => {
         updates.push('first');
         return runtime.dispatch(action, {
@@ -40,7 +43,7 @@ describe('createRendererRuntime', () => {
     const second = runtime.registerReaction({
       id: 'count-reaction',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('count-reaction', {
         type: 'reaction',
         watch: '${count}',
         actions: {
@@ -50,7 +53,7 @@ describe('createRendererRuntime', () => {
             value: 'second:${count}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: async (action, ctx) => {
         updates.push('second');
         return runtime.dispatch(action, {
@@ -77,14 +80,14 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ count: 1 });
 
     const registration = runtime.registerReaction({
       id: 'debug-reaction',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('debug-reaction', {
         type: 'reaction',
         watch: '${count}',
         immediate: true,
@@ -95,7 +98,7 @@ describe('createRendererRuntime', () => {
             value: 'count:${count}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: (action, ctx) => runtime.dispatch(action, {
         runtime,
         scope: ctx?.scope ?? page.scope,
@@ -128,14 +131,14 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ count: 0, message: 'start' });
 
     const registration = runtime.registerReaction({
       id: 'debounced-reaction',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('debounced-reaction', {
         type: 'reaction',
         watch: '${count}',
         debounce: 20,
@@ -146,7 +149,7 @@ describe('createRendererRuntime', () => {
             value: 'count:${count}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: (action, ctx) => runtime.dispatch(action, {
         runtime,
         scope: ctx?.scope ?? page.scope,
@@ -171,7 +174,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ count: 0 });
     const dispatches: number[] = [];
@@ -179,7 +182,7 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerReaction({
       id: 'async-reaction',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('async-reaction', {
         type: 'reaction',
         watch: '${count}',
         actions: {
@@ -189,7 +192,7 @@ describe('createRendererRuntime', () => {
             value: 'count:${count}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: (action, ctx) => {
         dispatches.push(Number(page.scope.get('count') ?? 0));
         return runtime.dispatch(action, {
@@ -226,14 +229,14 @@ describe('createRendererRuntime', () => {
         notify,
         monitor: { onError }
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ count: 0 });
 
     runtime.registerReaction({
       id: 'bounded-reaction',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('bounded-reaction', {
         type: 'reaction',
         watch: '${count}',
         actions: {
@@ -243,7 +246,7 @@ describe('createRendererRuntime', () => {
             value: '${count + 1}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: (action, ctx) => runtime.dispatch(action, {
         runtime,
         scope: ctx?.scope ?? page.scope,
@@ -275,14 +278,14 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ count: 1 });
 
     const registration = runtime.registerReaction({
       id: 'reaction-bindings',
       scope: page.scope,
-      schema: {
+      compiledReaction: compileReaction('reaction-bindings', {
         type: 'reaction',
         watch: '${count}',
         actions: {
@@ -292,7 +295,7 @@ describe('createRendererRuntime', () => {
             value: '${value}:${prev}:${changed}:${changedPaths[0]}'
           }
         }
-      },
+      }, expressionCompiler),
       dispatch: (action, ctx) => runtime.dispatch(action, {
         runtime,
         scope: ctx?.scope ?? page.scope,
