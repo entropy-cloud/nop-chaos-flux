@@ -98,8 +98,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
     searchQueryRef.current = searchQuery;
   }, [searchQuery]);
 
-  const env = useMemo<RendererEnv>(
-    () => ({
+  const [env] = useState<RendererEnv>(() => ({
       async fetcher<T>(api: ExecutableApiRequest, ctx: ApiRequestContext) {
         if (api.url === '/api/search') {
           await delay(700, ctx.signal);
@@ -199,11 +198,13 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
 
         console.info(`[playground notify] ${level}: ${message}`);
       }
-    }),
-    []
-  );
+    }));
 
-  const decoratedEnv = useMemo(() => debuggerController.decorateEnv(env), [debuggerController, env]);
+  const [decoratedEnv, setDecoratedEnv] = useState<RendererEnv | null>(null);
+
+  useEffect(() => {
+    setDecoratedEnv(debuggerController.decorateEnv(env));
+  }, [debuggerController, env]);
 
   return (
     <main className="min-h-screen grid place-items-center p-6">
@@ -261,23 +262,25 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
         </div>
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,360px)] gap-6 items-start">
           <div className="p-6 rounded-[20px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]">
-            <SchemaRenderer
-              schemaUrl="playground://pages/flux-basic"
-              schema={fluxBasicPageSchema}
-              data={{
-                currentUser: { name: 'Architect' },
-                users: directoryUsers,
-                searchResults
-              }}
-              env={decoratedEnv}
-              registry={registry}
-              formulaCompiler={formulaCompiler}
-              plugins={plugins}
-              onRuntimeChange={(runtime) => debuggerController.setRuntime(runtime)}
-              onComponentRegistryChange={(componentRegistry) => debuggerController.setComponentRegistry(componentRegistry)}
-              onActionScopeChange={(actionScope) => debuggerController.setActionScope(actionScope)}
-              onActionError={debuggerController.onActionError}
-            />
+            {decoratedEnv ? (
+              <SchemaRenderer
+                schemaUrl="playground://pages/flux-basic"
+                schema={fluxBasicPageSchema}
+                data={{
+                  currentUser: { name: 'Architect' },
+                  users: directoryUsers,
+                  searchResults
+                }}
+                env={decoratedEnv}
+                registry={registry}
+                formulaCompiler={formulaCompiler}
+                plugins={plugins}
+                onRuntimeChange={(runtime) => debuggerController.setRuntime(runtime)}
+                onComponentRegistryChange={(componentRegistry) => debuggerController.setComponentRegistry(componentRegistry)}
+                onActionScopeChange={(actionScope) => debuggerController.setActionScope(actionScope)}
+                onActionError={debuggerController.onActionError}
+              />
+            ) : null}
           </div>
         </div>
       </section>

@@ -6,12 +6,12 @@ import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { HomePage } from './pages/home-page';
+import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { Spinner } from '@nop-chaos/ui';
 
-const LazyFluxBasicPage = lazy(() => import('./pages/flux-basic-page').then((m) => ({ default: m.FluxBasicPage })));
 const LazyReportDesignerPage = lazy(() => import('./pages/report-designer-page').then((m) => ({ default: m.ReportDesignerPage })));
 const LazyDebuggerLabPage = lazy(() => import('./pages/debugger-lab-page').then((m) => ({ default: m.DebuggerLabPage })));
 const LazyConditionBuilderPage = lazy(() => import('./pages/condition-builder-page').then((m) => ({ default: m.ConditionBuilderPage })));
@@ -102,7 +102,7 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
     case 'domain':
       switch (route.domainId) {
         case 'flux-basic':
-          return <LazyFluxBasicPage debuggerController={debuggerController} onBack={goHome} />;
+          return <FluxBasicPage debuggerController={debuggerController} onBack={goHome} />;
         case 'flow-designer':
           return <LazyFlowDesignerPageWithRegistration onBack={goHome} />;
         case 'dingtalk-flow-demo':
