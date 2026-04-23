@@ -302,12 +302,12 @@ describe('createRendererRuntime', () => {
     const page = runtime.createPageRuntime({ existing: 'keep' });
 
     const registration = runtime.registerDataSource({
-      id: 'total-source',
+      id: 'implicit-merge-source',
       scope: page.scope,
-      compiledSource: compileDataSource('total-source', {
+      compiledSource: compileDataSource('implicit-merge-source', {
         type: 'data-source',
-        name: 'total',
-        formula: '${(price || 0) * (qty || 0)}'
+        api: { url: '/api/object' },
+        initialData: { merged: true }
       }, expressionCompiler)
     });
 

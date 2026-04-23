@@ -369,19 +369,19 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ price: 3, qty: 4 });
 
     const registration = runtime.registerDataSource({
       id: 'debug-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('debug-source', {
         type: 'data-source',
         name: 'total',
         statusPath: 'totalStatus',
         formula: '${(price || 0) * (qty || 0)}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
