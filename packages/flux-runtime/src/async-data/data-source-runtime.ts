@@ -4,7 +4,6 @@ import {
   type ActionContext,
   type ActionResult,
   type ActionSchema,
-  type ApiSchema,
   type CompiledApiConfig,
   type CompiledRuntimeValue,
   type DataSourceController,
@@ -31,7 +30,6 @@ import {
   collectRuntimeDependencies,
   createApiConfigRuntimeState,
   evaluateCompiledApiConfig,
-  trackApiRequestDependencies,
   writeDataToScope,
   type ApiConfigRuntimeState
 } from './data-source-runtime-utils';

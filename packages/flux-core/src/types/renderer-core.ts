@@ -15,7 +15,7 @@ import type { ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './rend
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
 import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime } from './runtime';
-import type { ApiSchema, BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
+import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type { CompiledFormValidationModel, ValidationRule } from './validation';
 import type { CompiledTemplate } from './node-identity';

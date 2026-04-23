@@ -186,7 +186,7 @@ export interface ApiConfigRuntimeState {
 
 export function createApiConfigRuntimeState(
   compiledApi: CompiledApiConfig,
-  runtime: RendererRuntime
+  _runtime: RendererRuntime
 ): ApiConfigRuntimeState {
   const state: ApiConfigRuntimeState = {};
 
