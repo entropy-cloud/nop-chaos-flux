@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { ActionResult, ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -479,7 +479,7 @@ describe('object-field renderer', () => {
       load: vi.fn(async () => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: (method: string, payload: Record<string, unknown> | undefined) => {
+          invoke: (method: string, _payload: Record<string, unknown> | undefined): Promise<ActionResult> => {
             if (method !== 'toPersisted') {
               return Promise.resolve({ ok: true });
             }

@@ -16,6 +16,22 @@ import { createProjectedFormRuntime, createProjectedFormStore } from '../detail-
 
 type BaseNodeInstance = RendererComponentProps['node'];
 
+const transformOutSequences = new WeakMap<object, number>();
+
+function nextTransformOutSequence(owner: object): number {
+  const next = (transformOutSequences.get(owner) ?? 0) + 1;
+  transformOutSequences.set(owner, next);
+  return next;
+}
+
+function invalidateTransformOutSequence(owner: object): void {
+  transformOutSequences.set(owner, (transformOutSequences.get(owner) ?? 0) + 1);
+}
+
+function isTransformOutSequenceCurrent(owner: object, sequence: number): boolean {
+  return transformOutSequences.get(owner) === sequence;
+}
+
 function isPromiseLike<T>(value: T | Promise<T>): value is Promise<T> {
   return typeof value === 'object' && value !== null && 'then' in value;
 }
@@ -129,7 +145,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   );
 
   const [resolvedValue, setResolvedValue] = React.useState(rawValue);
-  const transformOutSequence = React.useRef(0);
+  const transformOutOwner = parentForm ?? parentScope;
 
   React.useEffect(() => {
     let active = true;
@@ -194,9 +210,9 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       });
 
       if (isPromiseLike(committedValue)) {
-        const sequence = ++transformOutSequence.current;
+        const sequence = nextTransformOutSequence(transformOutOwner);
         void committedValue.then((resolvedCommittedValue: unknown) => {
-          if (transformOutSequence.current !== sequence) {
+          if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
             return;
           }
 
@@ -210,7 +226,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
         return;
       }
 
-      transformOutSequence.current += 1;
+      invalidateTransformOutSequence(transformOutOwner);
       if (parentForm && name) {
         parentForm.setValue(name, committedValue);
         return;
@@ -236,7 +252,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     }
 
     parentScope.update(`${name}.${path}`, nextLeafValue);
-  }, [name, parentForm, parentScope, props.meta.disabled, rawValue, readOnly, resolvedValue, schema.transformOutAction, valueAdapter]);
+  }, [name, parentForm, parentScope, props.meta.disabled, rawValue, readOnly, resolvedValue, schema.transformOutAction, transformOutOwner, valueAdapter]);
 
   const childScope = React.useMemo(
     () => (name
