@@ -15,7 +15,7 @@ import type { ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './rend
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
 import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime } from './runtime';
-import type { ApiSchema, BaseSchema, DataSourceSchema, ReactionSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
+import type { ApiSchema, BaseSchema, DataSourceSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type { CompiledFormValidationModel, ValidationRule } from './validation';
 import type { CompiledTemplate } from './node-identity';
@@ -261,9 +261,7 @@ export interface RendererRuntime {
   registerReaction(input: {
     id: string;
     scope: ScopeRef;
-    /** @deprecated Use compiledReaction instead */
-    schema?: ReactionSchema;
-    compiledReaction?: CompiledReaction;
+    compiledReaction: CompiledReaction;
     dispatch: (action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
   }): { id: string; dispose(): void };
   getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;

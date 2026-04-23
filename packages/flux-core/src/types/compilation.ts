@@ -1,7 +1,7 @@
 import type { ActionNamespaceProvider, ActionScope, CompiledActionProgram, ImportedLibraryModule } from './actions';
 import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope';
 import type { RendererEnv } from './renderer';
-import type { OperationControlConfig, RequestDedupStrategy } from './schema';
+import type { RequestDedupStrategy } from './schema';
 
 export type CompileSymbolKind =
   | 'builtin-namespace'
@@ -311,21 +311,30 @@ export interface CompiledDataSource {
  * Compiled reaction - all expressions pre-compiled.
  * Replaces runtime access to raw schema.reactions.
  *
+ * Runtime MUST use only compiled data, never raw schema.
+ *
  * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
  */
 export interface CompiledReaction {
   id: string;
 
-  /** Static watch paths to observe for changes */
-  watch: readonly string[];
+  /**
+   * Compiled watch expression - evaluated to get the watched value.
+   * Runtime uses this directly without re-compilation.
+   */
+  watch: CompiledRuntimeValue<unknown>;
 
-  /** Compiled condition - reaction fires only when true */
-  when?: CompiledRuntimeValue<boolean>;
+  /**
+   * Compiled condition expression - reaction fires only when true.
+   * Unlike watch, this is a raw expression (not a template) that receives
+   * special bindings: value, prev, changed, changedPaths, scope.
+   */
+  when?: CompiledExpression<boolean>;
 
   /** Compiled action program to execute */
   action: CompiledActionProgram;
 
-  /** Static dependency paths (reactions that must complete first) */
+  /** Static dependency paths for change detection */
   dependsOn?: readonly string[];
 
   /** Fire immediately on mount (before first watch trigger) */
