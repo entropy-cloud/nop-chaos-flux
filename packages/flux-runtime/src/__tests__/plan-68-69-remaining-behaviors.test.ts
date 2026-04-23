@@ -190,6 +190,31 @@ describe('applyExternalErrors - sourceId-scoped clear-on-write', () => {
 
     expect(runtime.getFieldState('address.street').errors).toHaveLength(0);
   });
+
+  it('clears ancestor external errors when a descendant path is written', () => {
+    const { runtime } = makeRuntime(undefined);
+
+    runtime.applyExternalErrors({
+      sourceId: 'server',
+      errors: [{ path: 'account', rule: 'required', message: 'Account invalid' }]
+    });
+
+    runtime.setValue('account.email', 'next@example.com');
+
+    expect(runtime.getFieldState('account').errors).toHaveLength(0);
+  });
+
+  it('ignores external errors for paths not owned by the current owner', () => {
+    const { runtime } = makeRuntime(makeFormModel({ email: makeNode('email') }, { rootPath: 'account' }));
+
+    const snapshot = runtime.applyExternalErrors({
+      sourceId: 'server',
+      errors: [{ path: 'foreign.path', rule: 'required', message: 'Not owned' }]
+    });
+
+    expect(snapshot.hasErrors).toBe(false);
+    expect(runtime.getFieldState('foreign.path').errors).toHaveLength(0);
+  });
 });
 
 describe('submit supersession', () => {

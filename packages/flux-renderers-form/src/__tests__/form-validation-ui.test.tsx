@@ -367,6 +367,10 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
     fireEvent.click(screen.getByText('Submit email'));
 
     expect(await screen.findByText('Email is required')).toBeTruthy();
+    fireEvent.focus(input);
+    await waitFor(() => {
+      expect(screen.getByText('Email is required')).toBeTruthy();
+    });
     expect(submitCalls).toHaveLength(0);
   });
 
