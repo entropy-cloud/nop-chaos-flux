@@ -390,24 +390,28 @@ Exit criteria:
 
 ## Recommended Test Strategy
 
+> Historical note (2026-04-23): the unchecked items below are preserved as pre-closure parity-analysis test ideas, not remaining active execution work for this completed plan.
+
 Add parity-oriented tests in this repository that mirror the legacy e2e checklist conceptually.
 
 Existing tests:
 - `packages/flow-designer-core/src/core.test.ts` - 13 tests covering node/edge CRUD, undo/redo, dirty, viewport, reconnection
 - `packages/flow-designer-renderers/src/canvas-bridge.test.tsx` - Bridge callback verification for Card/XyflowPreview/Xyflow adapters
 
-Priority tests to add:
+Priority test ideas captured during the pre-closure parity audit:
 
-- [ ] grouped palette sections visible
-- [ ] drag palette item to canvas creates node at drop position
-- [ ] minimap visible in main showcase
-- [ ] double-click node opens property editing path
-- [ ] double-click edge opens edge editing path
-- [ ] hover toolbars appear for node and edge and keep visible while hovered
-- [ ] save/restore/export and dirty-state badge behavior
-- [ ] leave guard path
+- grouped palette sections visible
+- drag palette item to canvas creates node at drop position
+- minimap visible in main showcase
+- double-click node opens property editing path
+- double-click edge opens edge editing path
+- hover toolbars appear for node and edge and keep visible while hovered
+- save/restore/export and dirty-state badge behavior
+- leave guard path
 
 ## Immediate Next Implementation Slice
+
+> Historical note (2026-04-23): this section is retained as archival context from the pre-closure gap-analysis stage. It is not an active backlog for the already completed parity plan.
 
 The next implementation slice should not try to finish all parity dimensions at once.
 

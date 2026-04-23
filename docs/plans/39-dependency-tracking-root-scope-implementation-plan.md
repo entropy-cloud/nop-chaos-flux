@@ -1,7 +1,7 @@
 # 39 Dependency Tracking Root Scope Implementation Plan
 
 > Plan Status: completed
-> Last Reviewed: 2026-04-07; audited against codebase on 2026-04-07
+> Last Reviewed: 2026-04-23; completed status re-audited against codebase and logs on 2026-04-23
 > Source: `docs/architecture/dependency-tracking.md`, `docs/architecture/api-data-source.md`
 
 ## Purpose
@@ -207,19 +207,33 @@ Exit criteria: 文档、类型、运行时和测试都指向同一套 root-level
 
 ## Validation Checklist
 
-- [ ] `scope.user.name` 只收集 `user`
-- [ ] `Object.keys(user)` 收集 `user`，不升级成 whole-scope wildcard
-- [ ] `Object.keys(scope)` 与 whole-scope `materialize()` 仍会退化到 wildcard
-- [ ] `scopeChangeHitsDependencies()` 基于 normalized roots 工作
-- [ ] `DataSourceSchema` / `ReactionSchema` 可以声明显式 root dependencies
-- [ ] 显式 dependency roots 在 source/reaction 中优先于 runtime fallback
-- [ ] source self-write guard 会先过滤自身 root，再做 hit 判断
-- [ ] fragment scope 更新不会默认发布 wildcard
-- [ ] table row 更新只影响对应 `record` / `row` scope
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `scope.user.name` 只收集 `user`
+- [x] `Object.keys(user)` 收集 `user`，不升级成 whole-scope wildcard
+- [x] `Object.keys(scope)` 与 whole-scope `materialize()` 仍会退化到 wildcard
+- [x] `scopeChangeHitsDependencies()` 基于 normalized roots 工作
+- [x] `DataSourceSchema` / `ReactionSchema` 可以声明显式 root dependencies
+- [x] 显式 dependency roots 在 source/reaction 中优先于 runtime fallback
+- [x] source self-write guard 会先过滤自身 root，再做 hit 判断
+- [x] fragment scope 更新不会默认发布 wildcard
+- [x] table row 更新只影响对应 `record` / `row` scope
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Closure
+
+Status Note: completed. The repo landed the root-binding dependency baseline described by this plan: runtime dependency collection and invalidation now normalize to lexical roots, `dependsOn` is available as the explicit dependency carrier for sources and reactions, fragment/child-scope updates publish narrower root-level changes, and the row-scope path was advanced enough for Plan 39 to close and for parent plans to point to it as the active dependency-tracking baseline.
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: live repo re-audit against logs and code/tests (2026-04-23)
+- Evidence:
+  - `docs/logs/2026/04-07.md` records the end-to-end landing slice for root-level dependency tracking, explicit `dependsOn`, normalized root matching, fragment-scope change publication, and source self-write filtering.
+  - `docs/logs/2026/04-08.md` explicitly records that Plan 39 was marked completed after the verified dependency-tracking delivery.
+  - `packages/flux-core/src/types/schema.ts` now exposes `dependsOn?: string[]` on source/reaction schema surfaces.
+  - `packages/flux-runtime/src/__tests__/scope-change.test.ts` verifies normalized-root matching and ignored-root filtering.
+  - `packages/flux-runtime/src/source-reaction-dependencies.test.ts` verifies explicit dependency roots override runtime fallback for both sources and reactions.
 
 ## Suggested Execution Order
 

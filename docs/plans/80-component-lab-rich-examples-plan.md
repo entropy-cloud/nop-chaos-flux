@@ -245,8 +245,8 @@ Status: completed
 Targets: `docs/logs/2026/04-12.md` (or next log date), `docs/plans/80-component-lab-rich-examples-plan.md`
 
 - [x] `pnpm typecheck` all packages (pre-existing OOM in flux-renderers-data is unrelated; playground typecheck passes with 0 new errors).
-- [ ] `pnpm build` all packages.
-- [ ] `pnpm lint` all packages.
+- [x] `pnpm build` all packages.
+- [x] `pnpm lint` all packages.
 - [x] `pnpm --filter @nop-chaos/flux-playground test` — existing route-matrix tests still pass (39/39).
 - [x] Update daily log with landed examples.
 - [x] Mark plan completed after independent closure audit.
@@ -261,7 +261,7 @@ Targets: `docs/logs/2026/04-12.md` (or next log date), `docs/plans/80-component-
 - [x] `MultiScenarioLabPage` infrastructure is in place and used by all 40 renderer pages.
 - [x] All 40 lab pages have a non-empty `introDescription`.
 - [x] `pnpm typecheck` ✓ (playground, 0 new errors from this change)
-- [ ] `pnpm build` ✓
+- [x] `pnpm build` ✓
 - [x] `pnpm lint` ✓ (component-lab dir, 0 errors)
 - [x] `pnpm test` ✓ (39/39 playground tests pass)
 

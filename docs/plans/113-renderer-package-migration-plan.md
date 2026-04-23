@@ -188,28 +188,30 @@ const allDefinitions = [...formRendererDefinitions, ...formAdvancedRendererDefin
 
 ## Execution Plan
 
+> Reconciliation note (2026-04-23): the unchecked step bullets retained inside the completed phases below are historical execution draft text. The live closure state for this plan is defined by the completed phase statuses, the completed validation checklist, and the closure evidence recorded at the end of the document.
+
 ### Phase 1 - 创建新包骨架 + 确保 form 公开 export
 
 Status: completed
 Targets: `packages/flux-renderers-form-advanced/`, `packages/flux-renderers-form/src/index.tsx`
 
-- [ ] 创建 `packages/flux-renderers-form-advanced/` 目录结构
-- [ ] 创建 `package.json`（name: `@nop-chaos/flux-renderers-form-advanced`，dependencies 含 `@nop-chaos/flux-renderers-form`, `@dnd-kit/core`, `@dnd-kit/sortable` 等）
-- [ ] 创建 `tsconfig.json`（extends `../../tsconfig.base.json`）
-- [ ] 创建 `tsconfig.build.json`
-- [ ] 创建 `vitest.config.ts`
-- [ ] 在根 `tsconfig.json` 中添加 project reference
-- [ ] 在 `vite.workspace-alias.ts` 中添加 alias（如需要）
-- [ ] 在 `pnpm-workspace.yaml` 中确认包被识别（已通过 glob 自动包含）
-- [ ] 确认 `flux-renderers-form/src/index.tsx` 已公开导出 `shared/` 模块（`export * from './renderers/shared'`）— 当前已存在
-- [ ] 确认 `flux-renderers-form/src/index.tsx` 已公开导出 `field-utils`（`export * from './field-utils'`）— 当前已存在
-- [ ] 运行 `pnpm install` 确保新包被 workspace 识别
+- 创建 `packages/flux-renderers-form-advanced/` 目录结构
+- 创建 `package.json`（name: `@nop-chaos/flux-renderers-form-advanced`，dependencies 含 `@nop-chaos/flux-renderers-form`, `@dnd-kit/core`, `@dnd-kit/sortable` 等）
+- 创建 `tsconfig.json`（extends `../../tsconfig.base.json`）
+- 创建 `tsconfig.build.json`
+- 创建 `vitest.config.ts`
+- 在根 `tsconfig.json` 中添加 project reference
+- 在 `vite.workspace-alias.ts` 中添加 alias（如需要）
+- 在 `pnpm-workspace.yaml` 中确认包被识别（已通过 glob 自动包含）
+- 确认 `flux-renderers-form/src/index.tsx` 已公开导出 `shared/` 模块（`export * from './renderers/shared'`）— 当前已存在
+- 确认 `flux-renderers-form/src/index.tsx` 已公开导出 `field-utils`（`export * from './field-utils'`）— 当前已存在
+- 运行 `pnpm install` 确保新包被 workspace 识别
 
 Exit Criteria:
 
-- [ ] `packages/flux-renderers-form-advanced/` 目录存在且结构完整
-- [ ] `pnpm install` 成功
-- [ ] 新包能被 `pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck` 识别（即使 src/ 为空）
+- `packages/flux-renderers-form-advanced/` 目录存在且结构完整
+- `pnpm install` 成功
+- 新包能被 `pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck` 识别（即使 src/ 为空）
 
 ### Phase 2 - 复制文件 + 修复 import 路径
 
@@ -218,7 +220,7 @@ Targets: `packages/flux-renderers-form-advanced/src/`, `packages/flux-renderers-
 
 此阶段只复制文件，不修改原包。原包保持完整可用。
 
-- [ ] 复制子系统模块到新包对应目录：
+- 复制子系统模块到新包对应目录：
   - `renderers/condition-builder/` → `src/condition-builder/`
   - `renderers/variant-field*.ts(x)` → `src/variant-field/`（6 个文件）
   - `renderers/detail-view.tsx`, `renderers/detail-field.tsx`, `renderers/detail-surface.tsx` → `src/detail-view/`
@@ -227,22 +229,22 @@ Targets: `packages/flux-renderers-form-advanced/src/`, `packages/flux-renderers-
   - `renderers/object-field.tsx` → `src/composite-field/`
   - `renderers/array-field.tsx`, `renderers/array-field-runtime.ts` → `src/composite-field/`
   - `renderers/composite-item-id.ts`, `renderers/composite-schemas.ts` → `src/composite-field/`
-- [ ] 复制组件文件到新包根目录：
+- 复制组件文件到新包根目录：
   - `renderers/array-editor.tsx` → `src/array-editor.tsx`
   - `renderers/tag-list.tsx` → `src/tag-list.tsx`
   - `renderers/key-value.tsx` → `src/key-value.tsx`
   - `renderers/tree-controls.tsx` → `src/tree-controls.tsx`（包含 input-tree 和 tree-select renderer 定义）
   - `tree-options.ts` → `src/tree-options.ts`
   - `renderers/test-support.tsx` → `src/test-support.tsx`
-- [ ] 复制测试文件：
+- 复制测试文件：
   - 所有上表列出的测试文件 → `src/__tests__/` 或对应子系统目录
-- [ ] 创建 `src/schemas.ts`（从 form 的 schemas.ts 中提取属于迁出组件的 schema 定义）
-- [ ] 创建 `src/index.tsx`：
+- 创建 `src/schemas.ts`（从 form 的 schemas.ts 中提取属于迁出组件的 schema 定义）
+- 创建 `src/index.tsx`：
   - import 所有迁出的 renderer 组件
   - 组装 `formAdvancedRendererDefinitions` 数组
   - 导出 `registerFormAdvancedRenderers(registry)` 函数
   - 重新导出所有公开 API（组件、类型、工具函数）
-- [ ] **修复所有 import 路径**（这是最关键的一步）：
+- **修复所有 import 路径**（这是最关键的一步）：
   - 包内相对路径：根据新目录结构调整（如 `../tree-options` → `./tree-options`）
   - 对 `@nop-chaos/flux-renderers-form` 的引用改为 workspace 包 import（如 shared/ 模块、field-utils、schemas 类型、form-test-support 测试工具）
   - 对 `@nop-chaos/flux-core`/`flux-react`/`flux-runtime` 的引用保持不变
@@ -250,7 +252,7 @@ Targets: `packages/flux-renderers-form-advanced/src/`, `packages/flux-renderers-
   - 特别注意：condition-builder 内部各文件的相对引用路径
   - 特别注意：variant-field*.ts(x) 文件之间的相对引用
   - 特别注意：detail-view 子系统对 projected-form-runtime、value-adaptation-helper 的引用
-- [ ] **修复测试文件中的 definitions 引用**：
+- **修复测试文件中的 definitions 引用**：
   - 迁移的测试中 import `formRendererDefinitions` 的地方改为合并引用：
     ```ts
     import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -261,21 +263,21 @@ Targets: `packages/flux-renderers-form-advanced/src/`, `packages/flux-renderers-
     ```ts
     import { env, formStateProbeRenderer, ... } from '@nop-chaos/flux-renderers-form';
     ```
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-renderers-form-advanced test`
+- 运行 `pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck`
+- 运行 `pnpm --filter @nop-chaos/flux-renderers-form-advanced test`
 
 Exit Criteria:
 
-- [ ] 新包 typecheck 通过
-- [ ] 新包所有测试通过
-- [ ] 原包 `flux-renderers-form` 仍完整可用（此阶段不修改原包）
+- 新包 typecheck 通过
+- 新包所有测试通过
+- 原包 `flux-renderers-form` 仍完整可用（此阶段不修改原包）
 
 ### Phase 3 - 从原包删除已迁移文件
 
 Status: completed
 Targets: `packages/flux-renderers-form/src/`
 
-- [ ] 从 `packages/flux-renderers-form/src/renderers/` 删除已迁移的文件：
+- 从 `packages/flux-renderers-form/src/renderers/` 删除已迁移的文件：
   - `condition-builder/` 目录（含 `config-test-support.tsx` 等所有非 test 文件）
   - `variant-field*.ts(x)` 文件（7 个）
   - `detail-view.tsx`, `detail-field*.tsx`, `detail-surface.tsx`
@@ -289,9 +291,9 @@ Targets: `packages/flux-renderers-form/src/`
   - `key-value.tsx`
   - `tree-controls.tsx`
   - `test-support.tsx`
-- [ ] 从 `packages/flux-renderers-form/src/` 删除：
+- 从 `packages/flux-renderers-form/src/` 删除：
   - `tree-options.ts`
-- [ ] 从 `packages/flux-renderers-form/src/__tests__/` 删除已迁移的测试文件：
+- 从 `packages/flux-renderers-form/src/__tests__/` 删除已迁移的测试文件：
   - `composite-form-*.tsx`
   - `composite-item-id.test.tsx`
   - `form-array-validation.test.tsx`
@@ -299,24 +301,24 @@ Targets: `packages/flux-renderers-form/src/`
   - `form-source-options.test.tsx`
   - `form-tree-checkbox-fields.test.tsx`
   - `bug-dual-state.test.tsx`
-- [ ] 更新 `packages/flux-renderers-form/src/index.tsx`：
+- 更新 `packages/flux-renderers-form/src/index.tsx`：
   - 移除所有已迁移 renderer 的 import 和 export
   - `formRendererDefinitions` 数组只保留 form + input definitions
   - 保留 `registerFormRenderers` 函数
   - 保留 `shared/`, `field-utils`, `schemas` 的 export
   - 移除 `composite-schemas` export（所有引用方都已迁移）
   - 确保 `form-test-support.tsx` 中的测试工具函数（`env`, `formStateProbeRenderer`, `buttonRenderer`, `submitCalls`, `selectOption`, `sharedFormulaCompiler`, `scopeStateProbeRenderer`）作为公开 export（如果尚未导出则添加）
-- [ ] 更新 `packages/flux-renderers-form/package.json`：
+- 更新 `packages/flux-renderers-form/package.json`：
   - 移除 `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-renderers-form typecheck`
-- [ ] 运行 `pnpm --filter @nop-chaos/flux-renderers-form test`
+- 运行 `pnpm --filter @nop-chaos/flux-renderers-form typecheck`
+- 运行 `pnpm --filter @nop-chaos/flux-renderers-form test`
 
 Exit Criteria:
 
-- [ ] `flux-renderers-form` typecheck 通过
-- [ ] `flux-renderers-form` 剩余测试全部通过
-- [ ] `flux-renderers-form` 不再包含已迁移的文件
-- [ ] `flux-renderers-form/package.json` 不再依赖 `@dnd-kit`
+- `flux-renderers-form` typecheck 通过
+- `flux-renderers-form` 剩余测试全部通过
+- `flux-renderers-form` 不再包含已迁移的文件
+- `flux-renderers-form/package.json` 不再依赖 `@dnd-kit`
 
 ### Phase 4 - 更新 Playground + 全量验证
 
@@ -325,11 +327,11 @@ Targets: `apps/playground/src/`, workspace root configs
 
 **重要**：Phase 3 和 Phase 4 应在 **同一次提交** 中完成。Phase 3 删除 form 中的迁移文件后 playground 立即 break（registry 中缺少 condition-builder 等 renderer），Phase 4 修复此问题。中间状态不可独立验证。
 
-- [ ] 更新 `apps/playground/package.json`：添加 `@nop-chaos/flux-renderers-form-advanced` 依赖
-- [ ] 更新 `apps/playground/src/App.tsx`：
+- 更新 `apps/playground/package.json`：添加 `@nop-chaos/flux-renderers-form-advanced` 依赖
+- 更新 `apps/playground/src/App.tsx`：
   - 添加 `import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced'`
   - 在 renderer 注册流程中调用 `registerFormAdvancedRenderers(registry)`
-- [ ] 全量搜索 playground 中所有引用（import 或字符串字面量）`@nop-chaos/flux-renderers-form` 的文件，逐一核查和更新：
+- 全量搜索 playground 中所有引用（import 或字符串字面量）`@nop-chaos/flux-renderers-form` 的文件，逐一核查和更新：
   - `ConditionBuilderPage.tsx` — 可能需要 import form-advanced
   - `ConditionBuilderPage.test.tsx` — 测试中 registry 需包含 form-advanced definitions
   - `FluxBasicPage.tsx` — 如使用迁出组件需更新
@@ -343,53 +345,53 @@ Targets: `apps/playground/src/`, workspace root configs
   - `MultiScenarioLabPage.tsx` / `SchemaLabPage.tsx` — 核查
   - `schema-examples.test.ts` — 核查
   - `App.test.tsx` — 核查
-- [ ] 运行 `pnpm typecheck`（全量）
-- [ ] 运行 `pnpm build`（全量）
-- [ ] 运行 `pnpm test`（全量）
-- [ ] 运行 `pnpm lint`（全量）
-- [ ] 启动 dev server 确认 playground 正常加载
+- 运行 `pnpm typecheck`（全量）
+- 运行 `pnpm build`（全量）
+- 运行 `pnpm test`（全量）
+- 运行 `pnpm lint`（全量）
+- 启动 dev server 确认 playground 正常加载
 
 Exit Criteria:
 
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
-- [ ] `pnpm test` 通过（所有现有测试不退化）
-- [ ] `pnpm lint` 通过
-- [ ] Playground dev server 正常启动
-- [ ] 关键页面可访问：ConditionBuilder、FormWithTable、基础表单页面
+- `pnpm typecheck` 通过
+- `pnpm build` 通过
+- `pnpm test` 通过（所有现有测试不退化）
+- `pnpm lint` 通过
+- Playground dev server 正常启动
+- 关键页面可访问：ConditionBuilder、FormWithTable、基础表单页面
 
 ### Phase 5 - 更新文档
 
 Status: completed
 Targets: `docs/components/package-splitting-strategy.md`, `docs/components/examples.manifest.json`, `docs/logs/`
 
-- [ ] 更新 `docs/components/package-splitting-strategy.md`：
+- 更新 `docs/components/package-splitting-strategy.md`：
   - §1.2 更新 `flux-renderers-form` 行数和 renderer 数
   - §1.2 新增 `flux-renderers-form-advanced` 行
   - §2.5 和 §2.6 确认与实际一致
   - §5 Phase 3 状态改为 completed
-- [ ] 更新 `docs/components/examples.manifest.json`：确认迁出组件的 sourcePackage 字段
-- [ ] 在 `docs/logs/2026/04-16.md` 记录迁移结果
+- 更新 `docs/components/examples.manifest.json`：确认迁出组件的 sourcePackage 字段
+- 在 `docs/logs/2026/04-16.md` 记录迁移结果
 
 Exit Criteria:
 
-- [ ] `package-splitting-strategy.md` §1.2 的行数和 renderer 数与实际吻合（±500 行偏差内）
-- [ ] Dev log 已更新
+- `package-splitting-strategy.md` §1.2 的行数和 renderer 数与实际吻合（±500 行偏差内）
+- Dev log 已更新
 
 ## Validation Checklist
 
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
-- [ ] `pnpm lint` 通过
-- [ ] `pnpm test` 通过（所有现有测试不退化，无 skip）
-- [ ] `flux-renderers-form` 源码行数 < 5,000（含测试）
-- [ ] `flux-renderers-form-advanced` 源码行数 > 8,000（含测试）
-- [ ] `flux-renderers-form/package.json` 不包含 `@dnd-kit`
-- [ ] `flux-renderers-form-advanced/package.json` 包含 `@dnd-kit`
-- [ ] 依赖方向无环：form-advanced → form → basic（可通过 `pnpm why` 或 `depcheck` 验证）
-- [ ] Playground 所有页面正常加载
-- [ ] 独立子 agent closure-audit 已完成并记录证据
-- [ ] 相关 docs 已更新
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm build` 通过
+- [x] `pnpm lint` 通过
+- [x] `pnpm test` 通过（所有现有测试不退化，无 skip）
+- [x] `flux-renderers-form` 源码行数 < 5,000（含测试）
+- [x] `flux-renderers-form-advanced` 源码行数 > 8,000（含测试）
+- [x] `flux-renderers-form/package.json` 不包含 `@dnd-kit`
+- [x] `flux-renderers-form-advanced/package.json` 包含 `@dnd-kit`
+- [x] 依赖方向无环：form-advanced → form → basic（可通过 `pnpm why` 或 `depcheck` 验证）
+- [x] Playground 所有页面正常加载
+- [x] 独立子 agent closure-audit 已完成并记录证据
+- [x] 相关 docs 已更新
 
 ## Closure
 

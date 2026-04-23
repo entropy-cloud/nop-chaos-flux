@@ -1,7 +1,7 @@
 # 22 Code Editor SQL Enhancement Plan
 
 > Plan Status: completed
-> Last Reviewed: 2026-04-02
+> Last Reviewed: 2026-04-23
 
 
 > Date: 2026-03-31
@@ -284,11 +284,11 @@ export function formatSQL(
 
 ### 4.5 Verification
 
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
-- [ ] `pnpm test` 通过
-- [ ] Playground SQL editor 格式化按钮可用
-- [ ] 各方言 SQL 格式化结果正确
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm build` 通过
+- [x] `pnpm test` 通过
+- [x] Playground SQL editor 格式化按钮可用
+- [x] 各方言 SQL 格式化结果正确
 
 ---
 
@@ -311,9 +311,9 @@ export function formatSQL(
 
 ### 5.3 Verification
 
-- [ ] 类型正确
-- [ ] 插入位置正确（光标处）
-- [ ] Playground 演示可用
+- [x] 类型正确
+- [x] 插入位置正确（光标处）
+- [x] Playground 演示可用
 
 ---
 
@@ -348,11 +348,11 @@ export function formatSQL(
 
 ### 6.3 Verification
 
-- [ ] 变量列表正确渲染
-- [ ] 复制到剪贴板可用
-- [ ] 插入到光标位置可用
-- [ ] insertTemplate 渲染正确
-- [ ] 面板折叠/展开可用
+- [x] 变量列表正确渲染
+- [x] 复制到剪贴板可用
+- [x] 插入到光标位置可用
+- [x] insertTemplate 渲染正确
+- [x] 面板折叠/展开可用
 
 ---
 
@@ -386,10 +386,10 @@ export function formatSQL(
 
 ### 7.4 Verification
 
-- [ ] 执行按钮触发正确
-- [ ] loading 状态显示
-- [ ] 结果表格正确渲染
-- [ ] 错误处理（网络错误、SQL 语法错误）
+- [x] 执行按钮触发正确
+- [x] loading 状态显示
+- [x] 结果表格正确渲染
+- [x] 错误处理（网络错误、SQL 语法错误）
 
 ---
 
@@ -405,7 +405,7 @@ export function formatSQL(
 | `packages/flux-code-editor/src/variable-panel.tsx` | 3 | 新增 |
 | `packages/flux-code-editor/src/sql-result-panel.tsx` | 4 | 新增 |
 | `packages/flux-code-editor/package.json` | 1 | 新增 sql-formatter 依赖 |
-| `docs/architecture/code-editor.md` | 1-4 | 更新文档 |
+| `docs/components/code-editor/design.md` | 1-4 | 更新文档 |
 
 ---
 
@@ -422,10 +422,10 @@ export function formatSQL(
 
 ## 10. Acceptance Criteria
 
-- [ ] 所有 Phase 完成后 `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 全部通过
-- [ ] Playground 页面新增 SQL editor 完整演示（格式化 + snippets + 变量面板 + 执行预览）
-- [ ] JSON Schema 向后兼容（现有配置不受影响）
-- [ ] `docs/architecture/code-editor.md` 同步更新
+- [x] 所有 Phase 完成后 `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 全部通过
+- [x] Playground 页面新增 SQL editor 完整演示（格式化 + snippets + 变量面板 + 执行预览）
+- [x] JSON Schema 向后兼容（现有配置不受影响）
+- [x] `docs/components/code-editor/design.md` 与 `docs/architecture/code-editor.md` redirect 已同步到当前 owner 文档结构
 
 ## Closure
 
@@ -434,6 +434,6 @@ Status Note: Completed. The originally planned SQL editor surface is now live: f
 Closure Audit Evidence:
 
 - Reviewer / Agent: live repo re-audit plus focused package verification (2026-04-23)
-- Evidence: `packages/flux-code-editor/src/code-editor-renderer/use-sql-editor-state.ts` now maps `execution.params` into dispatched action/ajax requests, `packages/flux-code-editor/src/code-editor-renderer.tsx` respects `execution.showPreview`, `apps/playground/src/pages/code-editor-page.tsx` exercises the SQL editor surface, and focused verification is green for `pnpm --filter @nop-chaos/flux-code-editor typecheck` and `pnpm --filter @nop-chaos/flux-code-editor test`.
+- Evidence: `packages/flux-code-editor/src/code-editor-renderer/use-sql-editor-state.ts` now maps `execution.params` into dispatched action/ajax requests, `packages/flux-code-editor/src/code-editor-renderer.tsx` respects `execution.showPreview`, `apps/playground/src/pages/code-editor-page.tsx` exercises the SQL editor surface, `docs/components/code-editor/design.md` still documents the landed SQL enhancement surface through the current owner-doc path, and focused verification is green for `pnpm --filter @nop-chaos/flux-code-editor typecheck`, `pnpm --filter @nop-chaos/flux-code-editor build`, `pnpm --filter @nop-chaos/flux-code-editor lint`, and `pnpm --filter @nop-chaos/flux-code-editor test`.
 
 

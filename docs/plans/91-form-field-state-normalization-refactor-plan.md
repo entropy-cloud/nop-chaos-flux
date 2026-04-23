@@ -1,7 +1,7 @@
 # 91 Form Field State Normalization Refactor Plan
 
-> Plan Status: partially completed
-> Last Reviewed: 2026-04-16
+> Plan Status: completed
+> Last Reviewed: 2026-04-23
 > Source: `docs/architecture/form-validation.md`, `docs/architecture/performance-design-requirements.md`, conversation analysis on React state best practices
 > Related: Plan 90 (per-path subscription), `docs/logs/2026/04-15.md`, `docs/logs/2026/04-16.md`
 
@@ -227,7 +227,7 @@ Exit Criteria:
 
 ### Phase 6 - 渲染器层清理
 
-Status: deferred (optional cleanup; not required for the landed normalization/refactor baseline)
+Status: deferred historical optional cleanup (not required for the landed normalization/refactor baseline)
 Targets: `packages/flux-renderers-form/src/field-utils.tsx`, 9+ 个渲染器文件
 
 Note: The data-attribute pattern is already working via `useCompositeFieldFrame` which returns `'data-field-*'` attributes. Renderers use `presentation['data-field-visited']` spread syntax. This phase is optional cleanup that doesn't affect functionality.
@@ -314,13 +314,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: All phases completed on 2026-04-16. Phase 6 (optional cleanup) deferred as not needed — existing pattern via `useCompositeFieldFrame` already works.
+Status Note: Completed. The landed owner scope of this plan closed on 2026-04-16: the form state substrate was normalized onto `fieldStates`, runtime/store/hooks/projection/docs were updated, and all verification passed. Phase 6 is retained only as historical optional cleanup text because it was explicitly not required for the landed normalization baseline.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: Claude (conversation agent)
 - Evidence: All verification commands passed (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`)
 - Documentation updates: `form-validation.md` updated with new `FormStoreState` structure and `FieldState` interface; `performance-design-requirements.md` updated with cross-reference to Plan 91.
+- Repo/log confirmation: `docs/logs/2026/04-16.md` explicitly records that Plan 91 core phases and docs phase were completed and that the plan was fully completed, while the Phase 6 cleanup remained optional rather than blocking closure.
 
 Follow-up:
 

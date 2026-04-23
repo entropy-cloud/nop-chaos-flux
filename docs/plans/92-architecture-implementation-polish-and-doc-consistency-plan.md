@@ -88,6 +88,8 @@ The following renderers contain inline layout styles that violate the "No Defaul
 
 ## Execution Plan
 
+> Reconciliation note (2026-04-23): the unchecked pre-check/change bullets inside completed phases below are retained as historical execution draft text. Closure for this plan is determined by the completed phase statuses, exit criteria, validation checklist, and closure-audit evidence at the end of the document.
+
 ### Phase 1 - Renderer Styling Contract Compliance
 
 Status: completed
@@ -103,19 +105,19 @@ For form input renderers, the correct approach is:
 Changes:
 
 Pre-check:
-- [ ] Grep flux-renderers-* packages for additional `gap-` patterns to ensure no other violations exist outside input.tsx
+- Grep flux-renderers-* packages for additional `gap-` patterns to ensure no other violations exist outside input.tsx
 
-- [ ] SelectRenderer: Remove `className="grid gap-2"` from wrapper div, add marker class `nop-select-wrapper`
-- [ ] CheckboxRenderer: Remove `className="inline-flex items-center gap-2.5"` from wrapper span, add marker class `nop-checkbox-wrapper`
-- [ ] SwitchRenderer: Remove `className="inline-flex items-center gap-3"` from wrapper span, add marker class `nop-switch-wrapper`
-- [ ] RadioGroupRenderer wrapper: Remove `className="grid gap-2.5"` from outer div, add marker class `nop-radio-group-wrapper`
-- [ ] RadioGroupRenderer loading span: Remove `className="inline-flex items-center gap-2 ..."` 
-- [ ] RadioGroupRenderer RadioGroup: Remove `className="grid gap-2.5"`
-- [ ] RadioGroupRenderer Label: Remove `className="inline-flex items-center gap-2.5"`
-- [ ] CheckboxGroupRenderer wrapper: Remove `className="grid gap-2.5"` from outer div, add marker class `nop-checkbox-group-wrapper`
-- [ ] CheckboxGroupRenderer loading span: Remove `className="inline-flex items-center gap-2 ..."`
-- [ ] CheckboxGroupRenderer Label: Remove `className="inline-flex items-center gap-2.5"`
-- [ ] Add default styling rules to playground CSS (`apps/playground/src/styles.css`) to preserve current visual appearance
+- SelectRenderer: Remove `className="grid gap-2"` from wrapper div, add marker class `nop-select-wrapper`
+- CheckboxRenderer: Remove `className="inline-flex items-center gap-2.5"` from wrapper span, add marker class `nop-checkbox-wrapper`
+- SwitchRenderer: Remove `className="inline-flex items-center gap-3"` from wrapper span, add marker class `nop-switch-wrapper`
+- RadioGroupRenderer wrapper: Remove `className="grid gap-2.5"` from outer div, add marker class `nop-radio-group-wrapper`
+- RadioGroupRenderer loading span: Remove `className="inline-flex items-center gap-2 ..."`
+- RadioGroupRenderer RadioGroup: Remove `className="grid gap-2.5"`
+- RadioGroupRenderer Label: Remove `className="inline-flex items-center gap-2.5"`
+- CheckboxGroupRenderer wrapper: Remove `className="grid gap-2.5"` from outer div, add marker class `nop-checkbox-group-wrapper`
+- CheckboxGroupRenderer loading span: Remove `className="inline-flex items-center gap-2 ..."`
+- CheckboxGroupRenderer Label: Remove `className="inline-flex items-center gap-2.5"`
+- Add default styling rules to playground CSS (`apps/playground/src/styles.css`) to preserve current visual appearance
 
 Exit Criteria:
 
@@ -136,13 +138,13 @@ The function IS a pure utility, but it should not be in the `types/` directory. 
 Changes:
 
 Pre-check:
-- [ ] Identify all files importing `normalizeInstancePath` from flux-core
-- [ ] Verify the function is pure (no side effects)
+- Identify all files importing `normalizeInstancePath` from flux-core
+- Verify the function is pure (no side effects)
 
-- [ ] Create `packages/flux-core/src/utils/instance-path.ts` with `normalizeInstancePath` function
-- [ ] Update `packages/flux-core/src/types/node-identity.ts` to remove the function
-- [ ] Update `packages/flux-core/src/index.ts` to export from new location
-- [ ] Update any imports across the codebase
+- Create `packages/flux-core/src/utils/instance-path.ts` with `normalizeInstancePath` function
+- Update `packages/flux-core/src/types/node-identity.ts` to remove the function
+- Update `packages/flux-core/src/index.ts` to export from new location
+- Update any imports across the codebase
 
 Exit Criteria:
 
@@ -159,15 +161,15 @@ Targets: `packages/flux-renderers-basic/src/button.tsx`
 The `as any` casts may be unnecessary if shadcn/ui Button accepts these variant strings.
 
 Pre-check:
-- [ ] Verify ButtonSchema `variant` and `size` types
-- [ ] Verify shadcn/ui Button's `variant` and `size` prop types
-- [ ] Determine if types are compatible or need mapping
+- Verify ButtonSchema `variant` and `size` types
+- Verify shadcn/ui Button's `variant` and `size` prop types
+- Determine if types are compatible or need mapping
 
 Changes:
 
-- [ ] Remove `as any` from variant prop (if types compatible)
-- [ ] Remove `as any` from size prop (if types compatible)
-- [ ] If type mismatch exists, create proper type mapping or extend ButtonSchema to match shadcn/ui types
+- Remove `as any` from variant prop (if types compatible)
+- Remove `as any` from size prop (if types compatible)
+- If type mismatch exists, create proper type mapping or extend ButtonSchema to match shadcn/ui types
 
 Exit Criteria:
 
@@ -182,22 +184,24 @@ Targets: `docs/architecture/styling-system.md`, `docs/architecture/flux-core.md`
 
 Documentation checks:
 
-- [ ] Verify styling-system.md line 96-108: ButtonRenderer example matches actual button.tsx
-- [ ] Verify flux-core.md: Check if `utils/` directory is documented
-- [ ] If new marker classes added (nop-select-wrapper, etc.), document them in appropriate location
-- [ ] Verify no contradictions exist between docs and implementation
+- Verify styling-system.md line 96-108: ButtonRenderer example matches actual button.tsx
+- Verify flux-core.md: Check if `utils/` directory is documented
+- If new marker classes added (nop-select-wrapper, etc.), document them in appropriate location
+- Verify no contradictions exist between docs and implementation
+
+Phase 4 reconciliation note: this phase closed by verification that no owner-doc updates were needed after the code fixes landed, so the unchecked draft bullets above are historical plan text rather than remaining execution work.
 
 Changes:
 
-- [ ] Update any documentation that has drifted from implementation
-- [ ] Add note about marker classes used in form renderers if needed
-- [ ] Update daily log with changes
+- Update any documentation that has drifted from implementation
+- Add note about marker classes used in form renderers if needed
+- Update daily log with changes
 
 Exit Criteria:
 
-- [ ] Documentation accurately describes current implementation
-- [ ] No contradictions between docs and code
-- [ ] Daily log updated with changes
+- Documentation accurately describes current implementation
+- No contradictions between docs and code
+- Daily log updated with changes
 
 ## Validation Checklist
 

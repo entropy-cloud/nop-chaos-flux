@@ -138,7 +138,7 @@ Targets: `packages/word-editor-renderers/src/WordEditorPage.tsx`, `packages/flux
 - [x] Replace the four audited `catch(() => {})` branches in `source-resolvers.ts` with observable error handling.
 - [x] Extract one shared resolver helper in `source-resolvers.ts` so the repeated request flow cited by C-11 is no longer duplicated.
 - [x] Remove the audited `dispatch(... as any)` and `reduce((obj: any, ...))` type escapes from `source-resolvers.ts`.
-- [ ] Add or update focused tests for resolver failure handling. → Deferred to test baseline workstream (Workstream 7)
+- [x] Add or update focused tests for resolver failure handling. Closed via test baseline workstream (Workstream 7).
 
 Exit Criteria:
 
@@ -185,7 +185,7 @@ Targets: `packages/flux-renderers-basic/src/icon.tsx`, `packages/flow-designer-r
 
 - [x] Extract `toIconLookupKey`, `normalizeIconName`, and `toLucideKey` into one shared helper.
 - [x] Update both icon renderers to use the shared helper.
-- [ ] Add focused tests for normalization behavior if missing. → Deferred to test baseline workstream (Workstream 7)
+- [x] Add focused tests for normalization behavior if missing. Closed via test baseline workstream (Workstream 7).
 
 Exit Criteria:
 
