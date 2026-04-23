@@ -29,6 +29,11 @@ export function isDeclarativeSurfaceActive(id: string) {
   return openDeclarativeSurfaceIds[openDeclarativeSurfaceIds.length - 1] === id;
 }
 
+export function isDeclarativeSurfaceActiveInSnapshot(id: string, snapshot: string) {
+  const ids = snapshot.split('|').filter(Boolean);
+  return ids[ids.length - 1] === id;
+}
+
 export function subscribeDeclarativeSurfaceStack(listener: () => void) {
   listeners.add(listener);
   return () => {

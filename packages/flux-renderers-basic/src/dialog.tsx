@@ -4,7 +4,7 @@ import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedCon
 import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, cn } from '@nop-chaos/ui';
 import type { DialogSchema } from './schemas';
-import { getDeclarativeSurfaceStackSnapshot, isDeclarativeSurfaceActive, registerDeclarativeSurface, subscribeDeclarativeSurfaceStack, unregisterDeclarativeSurface } from './declarative-surface-stack';
+import { getDeclarativeSurfaceStackSnapshot, isDeclarativeSurfaceActiveInSnapshot, registerDeclarativeSurface, subscribeDeclarativeSurfaceStack, unregisterDeclarativeSurface } from './declarative-surface-stack';
 
 export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
@@ -18,7 +18,7 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
     id: props.id,
     kind: 'dialog',
     open: Boolean(effectiveOpen),
-    active: Boolean(effectiveOpen) && isDeclarativeSurfaceActive(props.id),
+    active: Boolean(effectiveOpen) && isDeclarativeSurfaceActiveInSnapshot(props.id, surfaceStackSnapshot),
     opening: false,
     closing: false,
   }), [effectiveOpen, props.id, surfaceStackSnapshot]);
