@@ -1,10 +1,13 @@
 # NodeRenderer 降压式重构计划
 
-> Plan Status: partially completed
+> Plan Status: superseded
+> Last Reviewed: 2026-04-23
 > Created: 2026-04-04
 > Source: `packages/flux-react/src/node-renderer.tsx` (346 行)
 
-> **Implementation Status: PARTIALLY COMPLETED / HISTORICAL RECORD (re-audited 2026-04-23)**
+> **Implementation Status: SUPERSEDED HISTORICAL RECORD (re-audited 2026-04-23)**
+
+> **Supersession Note:** This file no longer owns active `NodeRenderer` work. The remaining live problem is runtime stack / import-boundary minimization, now tracked by `docs/plans/133-node-renderer-runtime-stack-and-import-boundary-refactor-plan.md`. This older file is kept only as a historical record of the earlier file-shape/effect-extraction slice.
 
 Implemented scope:
 
@@ -273,8 +276,9 @@ Re-audit note (2026-04-23): the live repo no longer contains `packages/flux-reac
 
 ## Closure
 
-Status Note: Partially completed historical record. The planned pressure-reduction slice did land in part: `node-renderer-utils.ts`, `useNodeImports.ts`, `useNodeDebugData.ts`, and `node-frame-wrapper.tsx` exist and the main file is more focused on orchestration. However, the plan's originally claimed end-state file list is no longer the live baseline because the former `useFormComponentHandleRegistration.ts` hook was later removed as ownership moved directly to renderer/form-owned paths. This plan should therefore remain a partially completed historical record rather than a completed owner plan.
+Status Note: Superseded historical record. Part of the original pressure-reduction slice did land: `node-renderer-utils.ts`, `useNodeImports.ts`, `useNodeDebugData.ts`, and `node-frame-wrapper.tsx` exist and the main file is more focused on orchestration. However, the plan's file-shape target is no longer the live problem statement, and the originally claimed end-state file list is not the current baseline because `useFormComponentHandleRegistration.ts` was later removed. Active follow-up now belongs to Plan 133, which reframes the work around runtime stack minimization and import-boundary semantics instead of file extraction.
 
 Follow-up:
 
-- If further `NodeRenderer` simplification is needed, create a new owner plan from the current live file structure instead of reviving this outdated exact-file-shape checklist.
+- Successor owner plan: `docs/plans/133-node-renderer-runtime-stack-and-import-boundary-refactor-plan.md`
+- Do not reopen this file as the active owner plan for `NodeRenderer`; use the successor plan for any new implementation work.
