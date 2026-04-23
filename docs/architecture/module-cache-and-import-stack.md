@@ -27,6 +27,25 @@ The current implementation now has all three landed layers:
 | Alias + lexical frame ownership | `packages/flux-runtime/src/import-stack.ts` | Per-runtime `ImportStack` push/pop, nearest-frame shadowing, namespace registration/release |
 | Expression bindings | `packages/flux-react/src/use-node-imports.ts` + child scope overlay | merged current-frame bindings published as ordinary `$alias` scope keys for expression evaluation |
 
+### Relationship To ActionScope
+
+`ImportStack` and `ActionScope` are intentionally related but not identical:
+
+- `ImportStack` owns lexical import frames and imported alias visibility for expression helpers such as `$demo`
+- `ActionScope` owns lexical capability lookup for namespaced actions such as `demo:open`
+
+Current baseline:
+
+- runtime `ImportStack.push(...)` loads modules, creates an `ImportFrame`, and records imported alias entries
+- if the imported module exposes an action namespace provider, that provider is attached to the current import-owned child `ActionScope`
+- `NodeRenderer` guarantees that import-owned capability boundary by creating a child `ActionScope` whenever the node declares `xui:imports`; this rule is import-owned runtime semantics, not renderer `actionScopePolicy`
+
+Important consequence:
+
+- `ImportFrame` should not be described as a replacement for `ActionScope`
+- `ActionScope` should not be described as the expression-alias carrier
+- the two mechanisms cooperate to implement one `xui:imports` declaration
+
 ### Current Constraints
 
 1. `ImportStack` is now implemented, but import helper manifests are still runtime-only. Compile-time validation currently knows alias names and builtin/slot/injected-local categories, not library-specific helper signatures.
@@ -246,34 +265,31 @@ root (xui:imports: [{ from: "lib-a", as: "common" }])
 ### 1. Schema Compilation (Compile Time)
 
 ```
-SchemaRenderer receives { schema, schemaUrl, env }
+Schema compilation receives { schema, schemaUrl, env }
         │
         ▼
-Collect all xui:imports from schema tree
+Compiler records `xui:imports` declarations into symbol visibility and node metadata
         │
         ▼
-For each import spec:
-  absUrl = env.resolveImportUrl(schemaUrl, spec.from)
-  moduleKey = absUrl + serialize(spec.options)
-  ModuleCache.get(moduleKey)
-        │
-        ├── cache hit → skip
-        └── cache miss → env.importLoader.load({ from: absUrl, as: spec.as, options: spec.options })
-                         │
-                         └── ModuleCache.set(moduleKey, loadedModule)
-        │
-        ▼
-All imports resolved → compile schema with import alias information
-  (compile context knows which $alias names are available at each node)
+CompileSymbolTable learns which `$alias` names are lexically visible at each node
         │
         ▼
 TemplateNodes are produced with import metadata attached
 ```
 
+Compile-time rule:
+
+- compilation validates declaration visibility and emits import-aware node metadata
+- compilation does not own runtime import loading, provider registration, or mounted lifetime
+- preload/cache warming may happen as a performance optimization, but it must not become the semantic source of lexical visibility
+
 ### 2. Node Rendering (Runtime)
 
 ```
 NodeRenderer encounters node with xui:imports
+        │
+        ▼
+    ensure import-owned capability boundary (current baseline: child `ActionScope` for every `xui:imports` node)
         │
         ▼
 ImportStack.push({ nodeId, imports, cache, actionScope })
@@ -286,7 +302,7 @@ ImportStack.push({ nodeId, imports, cache, actionScope })
     - record { alias: spec.as, actionProvider, expressionHelpers } in frame
         │
         ▼
-Create child scope with current frame's expression helpers as $alias bindings
+Create child data scope with current frame's expression helpers as `$alias` bindings when bindings are non-empty
         │
         ▼
 Render node content (expressions can see $alias.xxx)
@@ -297,6 +313,13 @@ On unmount / exit:
   - unregister action providers from ActionScope
   - frame is removed from stack
 ```
+
+Runtime rule:
+
+- `xui:imports` causes both an import frame and a child `ActionScope`, but for different reasons
+- the import frame owns alias visibility and imported helper lifetime
+- the child `ActionScope` owns imported namespace capability lookup
+- runtime/docs must preserve this conceptual split and must not recast the child `ActionScope` as renderer-owned policy
 
 ## Relationship to Existing Documents
 

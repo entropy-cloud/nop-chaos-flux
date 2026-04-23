@@ -153,7 +153,7 @@ Practical ownership split:
 - build `events` from declarative event fields
 - build region handles for child schema
 - create stable `helpers`
-- execute node-local optional provider closures such as action-scope overlays or class-alias publication
+- execute node-local optional provider closures such as import-owned capability boundaries or class-alias publication
 - dispatch node lifecycle actions
 - invoke the concrete renderer component
 
@@ -655,21 +655,24 @@ Not every boundary in the render tree has the same creator. The table below is t
 | Boundary | Owner | Creation Site | Notes |
 |---|---|---|------|
 | `classAliases` publication | Node-local (compile-time closure) | `NodeRenderer` executes compiled closure | Compiled into `renderPlan.wrapProviders` |
-| `xui:imports`-driven `ActionScope` overlay | Node-local (compile-time closure) | `NodeRenderer` executes compiled closure | Only when node declares `xui:imports`. Loading, caching, and lexical scoping mechanics are defined in `docs/architecture/module-cache-and-import-stack.md` |
+| `xui:imports`-driven import boundary | Import-owned node boundary | `NodeRenderer` creates import-owned `ActionScope` and executes import wiring | Introduces import-owned lexical boundary. `xui:imports` always creates a child `ActionScope` for imported namespace providers; `ImportStack` separately owns alias frames and expression bindings |
 | Fragment child data scope | Fragment render path (`RenderNodes`) | Created inside `RenderNodes` when `options.data` is passed | Not `NodeRenderer`'s responsibility |
 | Page data scope + `PageRuntime` | Page owner/renderer | Created by page renderer/host at mount | Published via `PageContext` |
 | Form data scope + `FormRuntime` | Form owner/renderer | Created by form renderer at mount | Published via `FormContext`; form scope is the active child scope for form children |
 | Dialog surface scope + `SurfaceRuntime` | Dialog host/renderer | Created per opened dialog entry | `SurfaceRuntime`/`SurfaceStore` shared with drawer; `page` store is NOT reused |
 | Drawer surface scope + `SurfaceRuntime` | Drawer host/renderer | Created per opened drawer entry | Same `SurfaceRuntime`/`SurfaceStore` model as dialog, `kind: 'drawer'` |
-| `ActionScope` (host-level) | Host owner (e.g. `designer-page`) | Created at host lifecycle | Registered namespace provider during owned lifecycle |
-| `ComponentHandleRegistry` | Form renderer (or other explicit boundary owner) | Created by form renderer at mount | Only concrete owners that need a new registry boundary create one |
+| `ActionScope` (host-level) | Host owner (e.g. `designer-page`) | Created at host lifecycle | Capability lexical scope for namespaced actions; not equivalent to host projection |
+| `ComponentHandleRegistry` | Form renderer (or other explicit boundary owner) | Created by form renderer at mount | Instance-target lookup boundary for mounted component handles; not equivalent to `ActionScope` |
+| `ImportFrame` / `ImportStack` | Runtime import boundary | Pushed/popped during import-owned node lifecycle | Alias visibility and import lifetime only; not a replacement for `ActionScope` or `ScopeRef` |
 
 Rules derived from this table:
 
-- Node-local optional execution boundaries (`classAliases`, `xui:imports` overlays) are compiled into `renderPlan.wrapProviders` closures and executed by `NodeRenderer`. `NodeRenderer` does not re-derive these at React render time.
+- `classAliases` remains a compiled node-local provider closure executed by `NodeRenderer`.
+- `xui:imports` is a separate import-owned boundary rule: `NodeRenderer` creates a child `ActionScope` whenever the node declares imports, but this is not derived from renderer `actionScopePolicy` and not encoded as renderer-owned provider metadata.
 - Data scope, page/form runtime, and surface state are **creator-owned boundaries**: each is created and published by the concrete owner, not by a generic `NodeRenderer` provider layer.
 - `dialog` and `drawer` share one `SurfaceRuntime`/`SurfaceStore` model. `page` runtime/store is NOT the owner of dialog/drawer state.
 - `NodeRenderer` does not create or re-publish page, form, fragment data scope, or surface runtime. It only executes the node-local compiled closure and calls the concrete renderer.
+- `Host Projection`, `ActionScope`, `ComponentHandleRegistry`, and `ImportFrame` are separate boundary types. One owner may publish more than one, but runtime/docs must not collapse them into one generic stack concept.
 
 Common reading shortcut:
 
@@ -743,6 +746,10 @@ The active React layer now carries three separate execution lookups through expl
 - `ActionScope` for namespaced action resolution such as `designer:export`
 - `ComponentHandleRegistry` for instance-targeted capability invocation such as `component:submit`
 
+And one related import-visibility layer:
+
+- `ImportFrame` / `ImportStack` for lexical imported alias visibility such as `$demo.formatName(...)`
+
 This document only describes how React render boundaries carry those execution contexts. The resolution model, lexical-visibility rules, and `xui:imports` provisioning semantics belong to `docs/architecture/action-scope-and-imports.md`.
 
 Node-local capability boundaries should be created by the owner that actually introduces them.
@@ -751,7 +758,7 @@ Normative baseline:
 
 - fragment `render({ data })` creates the child data scope in the fragment render path itself
 - page and form renderers/owners create and publish their own data/runtime boundaries
-- node-local `xui:imports` or similar capability overlays may still be compiled into a node-local closure that `NodeRenderer` executes for that node
+- node-local `xui:imports` boundaries create an import-owned child `ActionScope` plus import-frame wiring for that node; this remains distinct from renderer-owned `actionScopePolicy` and does not imply host projection or component-registry boundaries
 - component registries should be created only by the concrete owner that needs a new registry boundary, not by every node pre-emptively
 
 Representative uses:

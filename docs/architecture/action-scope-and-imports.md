@@ -82,7 +82,33 @@ The current runtime should be read as four distinct layers:
 - `ScopeRef` = data lexical scope
 - `ActionScope` = capability lexical scope
 - `ComponentHandleRegistry` = instance-target capability lookup
-- `xui:imports` = declarative provisioning of imported namespace providers into the local `ActionScope`
+- `xui:imports` = declarative provisioning of imported namespace providers into an import-owned child `ActionScope`
+
+### Relationship To Host Projection And Import Frames
+
+The runtime must keep four different concepts separate even when one owner publishes more than one of them:
+
+- `Host Projection` = readonly host snapshot admitted into schema-visible data scope
+- `ActionScope` = lexical namespace lookup for namespaced actions
+- `ComponentHandleRegistry` = instance-target lookup for one mounted renderer/component handle
+- `ImportFrame` / `ImportStack` = lexical alias ownership for imported helpers and imported namespace lifetime
+
+These layers are related, but they must not be collapsed into one generic "host boundary" bag.
+
+Rules:
+
+- `Host Projection` is about readonly data visibility. It does not by itself imply `actionScopePolicy: 'new'`.
+- `ComponentHandleRegistry` is about instance lookup. It does not replace `ActionScope`, and `ActionScope` does not replace it.
+- `xui:imports` is an import declaration, not a host projection declaration, not a component-registration declaration, and not a renderer policy flag.
+- `ImportFrame` tracks lexical alias ownership (`$demo`) and import lifetime; the import-owned child `ActionScope` carries imported capability providers (`demo:open`).
+- A renderer may own more than one of these boundaries at once, but each boundary still keeps its own contract and lifecycle.
+
+Practical reading shortcut:
+
+- `${activeNode.id}` is `Host Projection` / scope visibility
+- `designer:addNode` is `ActionScope` lookup
+- `component:submit` with `componentId` targets `ComponentHandleRegistry`
+- `$demo.formatName(...)` is `ImportFrame` expression alias visibility
 
 Important consequences:
 
@@ -1158,9 +1184,14 @@ Not all action-scope and component-registry boundaries have the same creation ow
 These are capability boundaries that belong to a specific node and are compiled into the node-local `renderPlan.wrapProviders` closure at compile time.
 
 - `classAliases` publication — compiled into the node's render plan; `NodeRenderer` executes the closure without re-deriving it at React render time
-- `xui:imports`-driven `ActionScope` overlay — compiled into the render plan when the node declares `xui:imports`; the new `ActionScope` child boundary is created by executing the compiled closure, while runtime loading/preload gating ensures descendant execution waits until the declared imports are ready
+- `xui:imports`-driven import boundary — compiled into the node's render plan when the node declares `xui:imports`; runtime creates the node-local import boundary, pushes an `ImportFrame`, and may attach imported namespace providers to a child `ActionScope` so descendant execution waits until the declared imports are ready
 
 Rule: if the boundary truly belongs to the node itself and can be determined from the schema at compile time, it is a node-local optional execution boundary. The compiled closure receives the current parent boundary and children as inputs.
+
+Important clarification:
+
+- `xui:imports` should be read as "this node introduces an import-owned lexical boundary", not as "every import declaration is the same thing as a host owner boundary".
+- The node-local import boundary always creates a child `ActionScope`, because imported namespace capabilities resolve through capability scope and then fall back through the parent `ActionScope` chain. That does not make `Host Projection`, `ComponentHandleRegistry`, `ImportFrame`, and `ActionScope` interchangeable concepts.
 
 ### Owner-Local Data And Runtime Boundaries
 
@@ -1187,6 +1218,7 @@ The active decisions from this document are:
 - use namespaced actions for domain hosts and imported libraries
 - do not treat store methods as automatically callable public API; components explicitly expose supported capabilities
 - define `xui:imports` with declaration-style import semantics: order-independent, repeatable, deduplicated, and scope-visible by container ownership
+- keep `Host Projection`, `ActionScope`, `ComponentHandleRegistry`, and `ImportFrame` as four distinct layers even when one owner publishes more than one of them
 - require imported boundaries to preload/gate before descendant execution, instead of relying on render order or best-effort late registration
 - implement lexical alias ownership through runtime `ImportStack` frames rather than any flat root import map; nearest import frame wins and sibling-only aliases stay isolated
 - release imported namespace registrations when the declaring render boundary unmounts or changes schema ownership; keep module loading deduplicated, but do not let stale namespace bindings remain attached to an action scope after release
