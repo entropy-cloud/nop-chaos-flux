@@ -47,14 +47,6 @@ const formRenderer: RendererDefinition = {
   staticCapable: false
 };
 
-const fragmentRenderer: RendererDefinition = {
-  type: 'fragment',
-  component: () => null,
-  regions: ['body'],
-  fields: [{ key: 'data', kind: 'prop' }],
-  staticCapable: true
-};
-
 function createTestCompiler(renderers: RendererDefinition[]) {
   const registry = createRendererRegistry(renderers);
   return createSchemaCompiler({

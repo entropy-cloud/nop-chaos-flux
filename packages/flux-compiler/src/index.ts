@@ -1,5 +1,7 @@
 export { createSchemaCompiler, validateSchema } from './schema-compiler';
 export { compileAction, compileActions, type ActionCompilerOptions } from './action-compiler';
+export { compileDataSource, isDataSourceFullyStatic, type SourceCompilerOptions } from './source-compiler';
+export { compileReaction, isReactionFullyStatic, type ReactionCompilerOptions } from './reaction-compiler';
 export { createCompileSymbolTable, createBaseCompileSymbolTable } from './compile-symbol-table';
 export {
   createSchemaCompilerDiagnosticsContext,

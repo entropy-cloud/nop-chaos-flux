@@ -7,7 +7,9 @@ import type {
   CompileNodeOptions,
   CompileSchemaOptions,
   CompileSymbolTable,
+  DataSourceSchema,
   ExpressionCompiler,
+  ReactionSchema,
   RendererPlugin,
   RendererRegistry,
   SchemaCompiler,
@@ -36,6 +38,8 @@ import {
   type SchemaCompilerDiagnosticsContext
 } from './schema-compiler/diagnostics';
 import { compileActions } from './action-compiler';
+import { compileDataSource } from './source-compiler';
+import { compileReaction } from './reaction-compiler';
 import { createBaseCompileSymbolTable } from './compile-symbol-table';
 import { normalizeValidationTriggers, normalizeValidationVisibilityTriggers } from './validation-lowering';
 
@@ -465,6 +469,24 @@ export function createSchemaCompiler(input: {
     };
 
     node.staticAnalysis = computeStaticAnalysis(node, schema);
+
+    if (schema.type === 'data-source') {
+      node.compiledSources = [
+        compileDataSource(node.id, schema as DataSourceSchema, expressionCompiler, {
+          ...compileOptions,
+          basePath: path,
+        })
+      ];
+    }
+
+    if (schema.type === 'reaction') {
+      node.compiledReactions = [
+        compileReaction(node.id, schema as ReactionSchema, expressionCompiler, {
+          ...compileOptions,
+          basePath: path,
+        })
+      ];
+    }
 
     return node;
   }
