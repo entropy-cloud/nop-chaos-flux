@@ -3,25 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 async function openCodeEditor(page: import('@playwright/test').Page) {
-  await page.goto('/');
-
-  const signInButton = page.getByRole('button', { name: 'Sign in' });
-  if (await signInButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await signInButton.click();
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('admin');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123456');
-      await signInButton.click();
-    }
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('nop');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123');
-      await signInButton.click();
-    }
-  }
-
-  await expect(signInButton).toHaveCount(0, { timeout: 10000 });
-  await page.getByRole('button', { name: 'Code Editor' }).click();
+  await page.goto('/#/code-editor');
   await expect(page.locator('text=Code Editor Playground')).toBeVisible({ timeout: 15000 });
 }
 

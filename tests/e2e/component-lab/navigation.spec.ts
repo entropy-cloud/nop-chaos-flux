@@ -57,7 +57,8 @@ test('back button navigates to home page', async ({ page }) => {
     if (btn) btn.click();
   });
   await expect(page).toHaveURL(/\/(#\/?)?$/, { timeout: 10_000 });
-  await expect(page.getByRole('button', { name: 'Component Lab' })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('heading', { name: 'Playground' })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('Component Lab').first()).toBeVisible();
 });
 
 test('sidebar shows all category groups', async ({ page }) => {

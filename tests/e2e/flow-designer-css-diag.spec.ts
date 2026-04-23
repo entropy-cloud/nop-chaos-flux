@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 async function openFlowDesigner(page: import('@playwright/test').Page) {
-  await page.goto('/');
-  await page.locator('button', { hasText: 'Visual Workflow' }).click();
+  await page.goto('/#/flow-designer');
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
@@ -245,8 +244,7 @@ test('dumps console warnings for React Flow error 004', async ({ page }) => {
 });
 
 test('verifies canvas layout with Tailwind classes', async ({ page }) => {
-  await page.goto('/');
-  await page.locator('button', { hasText: 'Visual Workflow' }).click();
+  await page.goto('/#/flow-designer');
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 

@@ -1,23 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 async function openFlowDesigner(page: import('@playwright/test').Page) {
-  await page.goto('/');
-  const signInButton = page.getByRole('button', { name: 'Sign in' });
-  if (await signInButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await signInButton.click();
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('admin');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123456');
-      await signInButton.click();
-    }
-    if (await signInButton.isVisible({ timeout: 1500 }).catch(() => false)) {
-      await page.getByRole('textbox', { name: 'Username' }).fill('nop');
-      await page.getByRole('textbox', { name: 'Password' }).fill('123');
-      await signInButton.click();
-    }
-  }
-  await expect(signInButton).toHaveCount(0, { timeout: 10000 });
-  await page.locator('button', { hasText: 'Visual Workflow' }).click();
+  await page.goto('/#/flow-designer');
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
   await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 15000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});

@@ -24,11 +24,8 @@ async function prepareFreshPage(page: import('@playwright/test').Page): Promise<
 }
 
 async function openFluxBasicPage(page: import('@playwright/test').Page): Promise<void> {
-  await prepareFreshPage(page);
-  // Click the card that contains "Flux Basic" title
-  await page.locator('button', { hasText: 'Flux Basic' }).click();
-  // Wait for FluxBasicPage to render - the form has a Username field
-  await page.getByLabel('Username').waitFor({ state: 'visible', timeout: 15000 });
+  await page.goto('/#/flux-basic');
+  await page.getByRole('heading', { name: 'Renderer Playground' }).waitFor({ state: 'visible', timeout: 15000 });
 }
 
 test.describe('Nop Debugger', () => {
@@ -87,10 +84,7 @@ test.describe('Nop Debugger', () => {
 
   test('debugger launcher renders on FluxBasicPage', async ({ page }) => {
     const errors = collectConsoleErrors(page);
-    await prepareFreshPage(page);
-
-    await page.getByRole('button', { name: /Flux Basic/ }).click();
-    await page.waitForTimeout(1500);
+    await openFluxBasicPage(page);
 
     await expect(page.locator('.nop-debugger-launcher')).toBeVisible();
     expect(filterFaviconErrors(errors)).toEqual([]);
@@ -98,20 +92,16 @@ test.describe('Nop Debugger', () => {
 
   test('debugger launcher renders on DebuggerLabPage', async ({ page }) => {
     const errors = collectConsoleErrors(page);
-    await prepareFreshPage(page);
-
-    await page.getByRole('button', { name: /Debugger Lab/ }).click();
-    await page.waitForTimeout(1500);
+    await page.goto('/#/debugger-lab');
+    await page.getByRole('heading', { name: 'Debugger Lab' }).waitFor({ state: 'visible', timeout: 15000 });
 
     await expect(page.locator('.nop-debugger-launcher')).toBeVisible();
     expect(filterFaviconErrors(errors)).toEqual([]);
   });
 
   test('DebuggerLabPage controls fire events and query diagnostics', async ({ page }) => {
-    await prepareFreshPage(page);
-
-    await page.getByRole('button', { name: /Debugger Lab/ }).click();
-    await page.waitForTimeout(500);
+    await page.goto('/#/debugger-lab');
+    await page.getByRole('heading', { name: 'Debugger Lab' }).waitFor({ state: 'visible', timeout: 15000 });
 
     const outputPanel = page.locator('pre').first();
 
@@ -156,15 +146,11 @@ test.describe('Nop Debugger', () => {
 
     const errors1 = [...errors];
 
-    await page.getByRole('button', { name: /Flux Basic/ }).click();
-    await page.waitForTimeout(1500);
+    await openFluxBasicPage(page);
     const errors2 = [...errors];
 
-    await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.waitForTimeout(500);
-    await page.getByRole('button', { name: /Debugger Lab/ }).click();
-    await page.waitForTimeout(1500);
+    await page.goto('/#/debugger-lab');
+    await page.getByRole('heading', { name: 'Debugger Lab' }).waitFor({ state: 'visible', timeout: 15000 });
     const errors3 = [...errors];
 
     expect(filterFaviconErrors(errors1)).toEqual([]);
@@ -296,10 +282,8 @@ test.describe('Nop Debugger', () => {
   });
 
   test('minimized bar shows error count badge when errors exist', async ({ page }) => {
-    await prepareFreshPage(page);
-
-    await page.getByRole('button', { name: /Debugger Lab/ }).click();
-    await page.waitForTimeout(1000);
+    await page.goto('/#/debugger-lab');
+    await page.getByRole('heading', { name: 'Debugger Lab' }).waitFor({ state: 'visible', timeout: 15000 });
 
     await page.locator('.nop-debugger-launcher').click();
     await page.waitForTimeout(500);
