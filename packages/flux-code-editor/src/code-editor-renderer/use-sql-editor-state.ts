@@ -1,10 +1,69 @@
 import { useCallback, useState } from 'react';
-import type { ActionResult, ActionSchema, ApiSchema } from '@nop-chaos/flux-core';
+import type { ActionResult, ActionSchema, ApiSchema, SchemaValue } from '@nop-chaos/flux-core';
 import type { EditorView } from '@codemirror/view';
 import { formatSQL } from '../extensions/sql/format';
 import type { SQLResultState } from '../sql-result-panel';
 import type { SQLEditorConfig } from '../types';
 import type { CodeEditorRendererProps } from './shared';
+
+function isSchemaValue(value: unknown): value is SchemaValue {
+  if (value == null) {
+    return true;
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint' || typeof value === 'symbol') {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.every(isSchemaValue);
+  }
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).every(isSchemaValue);
+  }
+  return false;
+}
+
+function readScopePath(props: CodeEditorRendererProps, path: string): SchemaValue | undefined {
+  const trimmed = path.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (trimmed === 'value') {
+    return isSchemaValue(props.props.value) ? props.props.value : undefined;
+  }
+
+  if (trimmed.startsWith('value.')) {
+    const rest = trimmed.slice('value.'.length);
+    const currentValue = props.props.value;
+    if (!rest || currentValue == null || typeof currentValue !== 'object') {
+      return isSchemaValue(currentValue) ? currentValue : undefined;
+    }
+
+    let current: unknown = currentValue;
+    for (const key of rest.split('.')) {
+      if (current == null || typeof current !== 'object') {
+        return undefined;
+      }
+      current = (current as Record<string, unknown>)[key];
+    }
+    return isSchemaValue(current) ? current : undefined;
+  }
+
+  const resolved = props.node.scope.get(trimmed);
+  return isSchemaValue(resolved) ? resolved : undefined;
+}
+
+function buildExecutionParams(props: CodeEditorRendererProps, mappings: Record<string, string> | undefined): Record<string, SchemaValue> | undefined {
+  if (!mappings) {
+    return undefined;
+  }
+
+  const entries = Object.entries(mappings)
+      .map(([key, path]) => [key, typeof path === 'string' ? readScopePath(props, path) : undefined] as const)
+    .filter(([, value]) => typeof value !== 'undefined');
+
+  return entries.length > 0 ? Object.fromEntries(entries) as Record<string, SchemaValue> : undefined;
+}
 
 function mapExecutionResult(result: ActionResult, resultPath: string | undefined): SQLResultState {
   if (!result.ok || result.data == null) {
@@ -75,12 +134,16 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
     try {
       const sqlText = view.state.doc.toString();
       const onExecute = sqlConfig.execution.onExecute;
+      const executionParams = buildExecutionParams(props, sqlConfig.execution.params);
 
       let result: ActionResult;
       if (typeof onExecute === 'string') {
         const action: ActionSchema = {
           action: onExecute,
-          args: { sql: sqlText },
+          args: {
+            sql: sqlText,
+            ...(executionParams ?? {}),
+          },
         };
         result = await props.helpers.dispatch(action);
       } else if (onExecute && typeof onExecute === 'object') {
@@ -88,7 +151,14 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
           action: 'ajax',
           args: {
             ...(onExecute as ApiSchema),
-            data: { sql: sqlText },
+            params: {
+              ...(((onExecute as ApiSchema).params as Record<string, SchemaValue> | undefined) ?? {}),
+              ...(executionParams ?? {}),
+            },
+            data: {
+              ...(((onExecute as ApiSchema).data as Record<string, unknown> | undefined) ?? {}),
+              sql: sqlText,
+            },
           },
         };
         result = await props.helpers.dispatch(action);
@@ -98,6 +168,7 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
           args: {
             url: '/api/report/execSql',
             method: 'POST',
+            params: executionParams,
             data: { sql: sqlText },
           },
         };

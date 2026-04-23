@@ -193,7 +193,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
         onToggleVariablePanel={() => setVariablePanelCollapsed((value) => !value)}
       />
 
-      {hasExecution && sqlResult.status !== 'idle' ? (
+      {hasExecution && sqlConfig?.execution?.showPreview !== false && sqlResult.status !== 'idle' ? (
         <div data-slot="code-editor-result-container">
           <SQLResultPanel result={sqlResult} onClose={handleClearResult} />
         </div>
