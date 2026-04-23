@@ -5,6 +5,8 @@ import {
   type ActionResult,
   type ActionSchema,
   type ApiSchema,
+  type CompiledApiConfig,
+  type CompiledRuntimeValue,
   type DataSourceController,
   type DataSourceState,
   type DynamicRuntimeValue,
@@ -27,8 +29,11 @@ import {
 import {
   applyResultMapping,
   collectRuntimeDependencies,
+  createApiConfigRuntimeState,
+  evaluateCompiledApiConfig,
   trackApiRequestDependencies,
-  writeDataToScope
+  writeDataToScope,
+  type ApiConfigRuntimeState
 } from './data-source-runtime-utils';
 import { isAbortError } from '../error-utils';
 import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
@@ -40,7 +45,7 @@ export function createFormulaDataSourceController(input: {
   asyncGovernance?: AsyncGovernanceStore;
   targetPath?: string;
   mergeToScope?: boolean;
-  resultMapping?: unknown;
+  compiledResultMapping?: CompiledRuntimeValue<unknown>;
   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
   mergeKey?: string;
   statusPath?: string;
@@ -105,7 +110,7 @@ export function createFormulaDataSourceController(input: {
     const nextValue = applyResultMapping({
       runtime: input.runtime,
       scope: input.scope,
-      resultMapping: input.resultMapping,
+      compiledResultMapping: input.compiledResultMapping,
       payload: rawValue
     });
 
@@ -201,13 +206,13 @@ export function createDataSourceController(input: {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;
   executeApiRequest: <T>(actionType: string, api: import('@nop-chaos/flux-core').ExecutableApiRequest, scope: ScopeRef, options?: { signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) => Promise<{ ok: boolean; status: number; data: T }>;
-  api: ApiSchema;
+  compiledApi: CompiledApiConfig;
   scope: ScopeRef;
   ownerId?: string;
   asyncGovernance?: AsyncGovernanceStore;
   targetPath?: string;
   mergeToScope?: boolean;
-  resultMapping?: unknown;
+  compiledResultMapping?: CompiledRuntimeValue<unknown>;
   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
   mergeKey?: string;
   statusPath?: string;
@@ -222,11 +227,11 @@ export function createDataSourceController(input: {
     runtime,
     apiCache,
     executeApiRequest,
-    api,
+    compiledApi,
     scope,
     targetPath,
     mergeToScope,
-    resultMapping,
+    compiledResultMapping,
     mergeStrategy,
     mergeKey,
     statusPath,
@@ -247,9 +252,8 @@ export function createDataSourceController(input: {
   let nextRequestSequence = 0;
   let latestSettledRequestSequence = 0;
   let state = createInitialDataSourceState(initialData);
-  const compiledApi = input.runtime.expressionCompiler.compileValue(api);
-  const apiState: RuntimeValueState<ApiSchema> | undefined = compiledApi.isStatic ? undefined : (compiledApi as DynamicRuntimeValue<ApiSchema>).createState();
-  const refreshDedup = control?.dedup ?? api.dedupStrategy ?? 'cancel-previous';
+  const apiConfigState: ApiConfigRuntimeState = createApiConfigRuntimeState(compiledApi, runtime);
+  const refreshDedup = control?.dedup ?? compiledApi.dedupStrategy ?? 'cancel-previous';
   const asyncOwnerId = input.ownerId;
 
   function updateAsyncState(nextState: DataSourceState): DataSourceState {
@@ -392,15 +396,15 @@ export function createDataSourceController(input: {
 
     try {
       const requestScope = runtime.createChildScope(scope, {}, { source: 'custom', pathSuffix: 'data-source-request' });
-      const trackedApi = trackApiRequestDependencies({
-        runtime,
-        api,
+      const trackedApi = evaluateCompiledApiConfig({
+        compiledApi,
         scope,
-        state: apiState
+        runtime,
+        state: apiConfigState
       });
       input.onDependenciesChange?.(trackedApi.dependencies);
       const preparedRequest = prepareApiRequestForExecution(trackedApi.resolvedApi, requestScope, runtime.env, runtime.expressionCompiler);
-      const cacheKey = resolveCacheKey(preparedRequest.request, api);
+      const cacheKey = resolveCacheKey(preparedRequest.request, trackedApi.resolvedApi);
 
         if (cacheKey) {
           const cached = apiCache.get<unknown>(cacheKey);
@@ -435,7 +439,7 @@ export function createDataSourceController(input: {
             const mappedValue = applyResultMapping({
             runtime,
             scope,
-            resultMapping,
+            compiledResultMapping,
             payload: cached.data
           });
 
@@ -506,14 +510,14 @@ export function createDataSourceController(input: {
 
       latestSettledRequestSequence = Math.max(latestSettledRequestSequence, requestSequence);
 
-      if (cacheKey && api.cacheTTL && api.cacheTTL > 0) {
-        apiCache.set(cacheKey, response.data, api.cacheTTL);
+      if (cacheKey && compiledApi.cacheTTL && compiledApi.cacheTTL > 0) {
+        apiCache.set(cacheKey, response.data, compiledApi.cacheTTL);
       }
 
       const mappedValue = applyResultMapping({
         runtime,
         scope,
-        resultMapping,
+        compiledResultMapping,
         payload: response.data
       });
 

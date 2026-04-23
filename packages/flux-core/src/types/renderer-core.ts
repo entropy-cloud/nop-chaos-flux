@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope, CompiledActionProgram } from './actions';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
-import type { CompiledDataSource, CompiledReaction, ExpressionCompiler, ImportStack, ModuleCache, SymbolInfo } from './compilation';
+import type { CompiledApiConfig, CompiledDataSource, CompiledReaction, CompiledRuntimeValue, ExpressionCompiler, ImportStack, ModuleCache, SymbolInfo } from './compilation';
 import type {
   CapabilityMethodContract,
   FluxValueShape,
@@ -239,13 +239,14 @@ export interface RendererRuntime {
     disposeScope?: (scopeId: string) => void;
   }): import('./runtime').SurfaceRuntime;
   createDataSourceController(input: {
-    api: ApiSchema;
+    compiledApi: CompiledApiConfig;
     scope: ScopeRef;
     targetPath?: string;
     interval?: number;
     stopWhen?: string;
     silent?: boolean;
     initialData?: unknown;
+    compiledResultMapping?: CompiledRuntimeValue<unknown>;
   }): DataSourceController;
   registerDataSource(input: {
     id: string;

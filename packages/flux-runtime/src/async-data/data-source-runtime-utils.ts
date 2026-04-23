@@ -1,8 +1,11 @@
 import type {
   ApiSchema,
+  CompiledApiConfig,
+  CompiledRuntimeValue,
   DynamicRuntimeValue,
   RendererRuntime,
   RuntimeValueState,
+  SchemaValue,
   ScopeDependencySet,
   ScopeRef,
   StaticRuntimeValue
@@ -90,10 +93,10 @@ function applyMergeStrategy(input: {
 export function applyResultMapping(input: {
   runtime: RendererRuntime;
   scope: ScopeRef;
-  resultMapping?: unknown;
+  compiledResultMapping?: CompiledRuntimeValue<unknown>;
   payload: unknown;
 }): unknown {
-  if (!isObjectRecord(input.resultMapping)) {
+  if (!input.compiledResultMapping) {
     return input.payload;
   }
 
@@ -107,7 +110,15 @@ export function applyResultMapping(input: {
     { source: 'custom', pathSuffix: 'data-source-result-mapping' }
   );
 
-  return input.runtime.evaluate(input.resultMapping, mappingScope);
+  if (input.compiledResultMapping.isStatic) {
+    return input.compiledResultMapping.value;
+  }
+
+  return input.runtime.expressionCompiler.evaluateValue(
+    input.compiledResultMapping,
+    mappingScope,
+    input.runtime.env
+  );
 }
 
 export function writeDataToScope(input: {
@@ -162,5 +173,119 @@ export function trackApiRequestDependencies(input: {
   return {
     resolvedApi: result.value,
     dependencies: collectRuntimeDependencies(runtimeState)
+  };
+}
+
+export interface ApiConfigRuntimeState {
+  url?: RuntimeValueState<string>;
+  method?: RuntimeValueState<string>;
+  data?: RuntimeValueState<unknown>;
+  params?: RuntimeValueState<unknown>;
+  headers?: RuntimeValueState<Record<string, string>>;
+}
+
+export function createApiConfigRuntimeState(
+  compiledApi: CompiledApiConfig,
+  runtime: RendererRuntime
+): ApiConfigRuntimeState {
+  const state: ApiConfigRuntimeState = {};
+
+  if (!compiledApi.url.isStatic) {
+    state.url = (compiledApi.url as DynamicRuntimeValue<string>).createState();
+  }
+  if (compiledApi.method && !compiledApi.method.isStatic) {
+    state.method = (compiledApi.method as DynamicRuntimeValue<string>).createState();
+  }
+  if (compiledApi.data && !compiledApi.data.isStatic) {
+    state.data = (compiledApi.data as DynamicRuntimeValue<unknown>).createState();
+  }
+  if (compiledApi.params && !compiledApi.params.isStatic) {
+    state.params = (compiledApi.params as DynamicRuntimeValue<unknown>).createState();
+  }
+  if (compiledApi.headers && !compiledApi.headers.isStatic) {
+    state.headers = (compiledApi.headers as DynamicRuntimeValue<Record<string, string>>).createState();
+  }
+
+  return state;
+}
+
+function evaluateCompiledValue<T>(
+  compiled: CompiledRuntimeValue<T> | undefined,
+  scope: ScopeRef,
+  runtime: RendererRuntime,
+  state?: RuntimeValueState<T>
+): T | undefined {
+  if (!compiled) return undefined;
+  if (compiled.isStatic) return compiled.value;
+
+  if (state) {
+    return runtime.expressionCompiler.evaluateWithState(
+      compiled as DynamicRuntimeValue<T>,
+      scope,
+      runtime.env,
+      state
+    ).value;
+  }
+
+  return runtime.expressionCompiler.evaluateValue(compiled, scope, runtime.env);
+}
+
+export function evaluateCompiledApiConfig(input: {
+  compiledApi: CompiledApiConfig;
+  scope: ScopeRef;
+  runtime: RendererRuntime;
+  state?: ApiConfigRuntimeState;
+}): {
+  resolvedApi: ApiSchema;
+  dependencies?: ScopeDependencySet;
+} {
+  const { compiledApi, scope, runtime, state } = input;
+
+  const resolvedApi: ApiSchema = {
+    url: evaluateCompiledValue(compiledApi.url, scope, runtime, state?.url) ?? '',
+    method: evaluateCompiledValue(compiledApi.method, scope, runtime, state?.method),
+    data: evaluateCompiledValue(compiledApi.data, scope, runtime, state?.data) as SchemaValue | undefined,
+    params: evaluateCompiledValue(compiledApi.params, scope, runtime, state?.params) as SchemaValue | undefined,
+    headers: evaluateCompiledValue(compiledApi.headers, scope, runtime, state?.headers),
+    includeScope: compiledApi.includeScope as '*' | string[] | undefined,
+    responseAdaptor: compiledApi.responseAdaptor,
+    requestAdaptor: compiledApi.requestAdaptor,
+    cacheTTL: compiledApi.cacheTTL,
+    cacheKey: compiledApi.cacheKey,
+    dedupStrategy: compiledApi.dedupStrategy
+  };
+
+  if (!state) {
+    return { resolvedApi, dependencies: undefined };
+  }
+
+  const allStates = [state.url, state.method, state.data, state.params, state.headers].filter(Boolean) as RuntimeValueState<unknown>[];
+  const allDependencies = allStates.map(s => collectRuntimeDependencies(s)).filter(Boolean) as ScopeDependencySet[];
+
+  if (allDependencies.length === 0) {
+    return { resolvedApi, dependencies: undefined };
+  }
+
+  const mergedPaths: string[] = [];
+  let hasWildcard = false;
+  let hasBroadAccess = false;
+
+  for (const dep of allDependencies) {
+    if (dep.paths) {
+      for (const path of dep.paths) {
+        if (!mergedPaths.includes(path)) {
+          mergedPaths.push(path);
+        }
+      }
+    }
+    if (dep.wildcard) hasWildcard = true;
+    if (dep.broadAccess) hasBroadAccess = true;
+  }
+
+  return {
+    resolvedApi,
+    dependencies: mergedPaths.length > 0 || hasWildcard || hasBroadAccess
+      ? { paths: mergedPaths, wildcard: hasWildcard, broadAccess: hasBroadAccess }
+      : undefined
   };
 }
