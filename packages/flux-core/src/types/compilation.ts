@@ -1,6 +1,7 @@
-import type { ActionNamespaceProvider, ActionScope, ImportedLibraryModule } from './actions';
+import type { ActionNamespaceProvider, ActionScope, CompiledActionProgram, ImportedLibraryModule } from './actions';
 import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope';
 import type { RendererEnv } from './renderer';
+import type { OperationControlConfig, RequestDedupStrategy } from './schema';
 
 export type CompileSymbolKind =
   | 'builtin-namespace'
@@ -217,4 +218,122 @@ export interface ExpressionCompiler {
     env: RendererEnv,
     state: RuntimeValueState<T>
   ): ValueEvaluationResult<T>;
+}
+
+/**
+ * Compiled API configuration - all expressions pre-compiled.
+ * Used in data sources with API requests.
+ *
+ * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
+ */
+export interface CompiledApiConfig {
+  url: CompiledRuntimeValue<string>;
+  method?: CompiledRuntimeValue<string>;
+  data?: CompiledRuntimeValue<unknown>;
+  params?: CompiledRuntimeValue<unknown>;
+  headers?: CompiledRuntimeValue<Record<string, string>>;
+  includeScope?: '*' | readonly string[];
+  responseAdaptor?: string;
+  requestAdaptor?: string;
+  cacheTTL?: number;
+  cacheKey?: string;
+  dedupStrategy?: RequestDedupStrategy;
+}
+
+/**
+ * Compiled operation control configuration.
+ * Controls request dedup, throttle, cache behavior.
+ */
+export interface CompiledOperationControl {
+  dedup?: RequestDedupStrategy;
+  throttle?: number;
+  cacheTTL?: number;
+  cacheKey?: string;
+}
+
+/**
+ * Compiled data source - all expressions pre-compiled.
+ * Replaces runtime access to raw schema.sources.
+ *
+ * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
+ */
+export interface CompiledDataSource {
+  id: string;
+  kind: 'api' | 'formula';
+
+  /** Compiled target path for storing results in scope */
+  targetPath?: CompiledRuntimeValue<string>;
+
+  /** API source configuration (when kind === 'api') */
+  api?: CompiledApiConfig;
+
+  /** Formula source expression (when kind === 'formula') */
+  formula?: CompiledRuntimeValue<unknown>;
+
+  /** Action to execute (alternative to api/formula) */
+  action?: string;
+
+  /** Whether to merge result directly to scope (vs. at targetPath) */
+  mergeToScope?: CompiledRuntimeValue<boolean>;
+
+  /** Field mapping from response to scope paths */
+  resultMapping?: CompiledRuntimeValue<Record<string, string>>;
+
+  /** How to merge data into existing scope value */
+  mergeStrategy?: CompiledRuntimeValue<'replace' | 'append' | 'prepend' | 'merge' | 'upsert'>;
+
+  /** Key field for upsert merge strategy */
+  mergeKey?: CompiledRuntimeValue<string>;
+
+  /** Path to publish loading/error status */
+  statusPath?: CompiledRuntimeValue<string>;
+
+  /** Polling interval in milliseconds */
+  interval?: CompiledRuntimeValue<number>;
+
+  /** Expression to stop polling when true */
+  stopWhen?: CompiledRuntimeValue<boolean>;
+
+  /** Suppress error notifications */
+  silent?: CompiledRuntimeValue<boolean>;
+
+  /** Initial data before first fetch */
+  initialData?: CompiledRuntimeValue<unknown>;
+
+  /** Static dependency paths (sources that must complete first) */
+  dependsOn?: readonly string[];
+
+  /** Operation control configuration */
+  control?: CompiledOperationControl;
+}
+
+/**
+ * Compiled reaction - all expressions pre-compiled.
+ * Replaces runtime access to raw schema.reactions.
+ *
+ * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
+ */
+export interface CompiledReaction {
+  id: string;
+
+  /** Static watch paths to observe for changes */
+  watch: readonly string[];
+
+  /** Compiled condition - reaction fires only when true */
+  when?: CompiledRuntimeValue<boolean>;
+
+  /** Compiled action program to execute */
+  action: CompiledActionProgram;
+
+  /** Static dependency paths (reactions that must complete first) */
+  dependsOn?: readonly string[];
+
+  /** Fire immediately on mount (before first watch trigger) */
+  immediate?: boolean;
+
+  /** Debounce delay in milliseconds */
+  debounce?: number;
+
+  /** Fire only once then auto-dispose */
+  once?: boolean;
 }

@@ -1,4 +1,4 @@
-import type { CompiledRuntimeValue, RuntimeValueState } from './compilation';
+import type { CompiledRuntimeValue, RuntimeValueState, CompiledDataSource, CompiledReaction } from './compilation';
 import type { CompiledActionProgram } from './actions';
 import type { BaseSchema, SchemaPath } from './schema';
 import type { ScopeDependencySet, ScopeRef } from './scope';
@@ -133,6 +133,22 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
    * @see docs/plans/131-static-analysis-optimization-plan.md
    */
   staticAnalysis?: StaticAnalysisResult;
+
+  /**
+   * Compiled data sources - all expressions pre-compiled.
+   * Replaces runtime access to raw schema.sources.
+   *
+   * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
+   */
+  compiledSources?: readonly CompiledDataSource[];
+
+  /**
+   * Compiled reactions - all expressions pre-compiled.
+   * Replaces runtime access to raw schema.reactions.
+   *
+   * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
+   */
+  compiledReactions?: readonly CompiledReaction[];
 }
 
 export interface RepeatedTemplate {

@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope, CompiledActionProgram } from './actions';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
-import type { ExpressionCompiler, ImportStack, ModuleCache, SymbolInfo } from './compilation';
+import type { CompiledDataSource, CompiledReaction, ExpressionCompiler, ImportStack, ModuleCache, SymbolInfo } from './compilation';
 import type {
   CapabilityMethodContract,
   FluxValueShape,
@@ -249,8 +249,10 @@ export interface RendererRuntime {
   }): DataSourceController;
   registerDataSource(input: {
     id: string;
-    schema: DataSourceSchema;
     scope: ScopeRef;
+    /** @deprecated Use compiledSource instead */
+    schema?: DataSourceSchema;
+    compiledSource?: CompiledDataSource;
   }): DataSourceRegistration;
   refreshDataSource(input: {
     id: string;
@@ -258,8 +260,10 @@ export interface RendererRuntime {
   }): Promise<boolean>;
   registerReaction(input: {
     id: string;
-    schema: ReactionSchema;
     scope: ScopeRef;
+    /** @deprecated Use compiledReaction instead */
+    schema?: ReactionSchema;
+    compiledReaction?: CompiledReaction;
     dispatch: (action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
   }): { id: string; dispose(): void };
   getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;
