@@ -7,6 +7,7 @@ import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-ad
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
+import { CodeEditorPage } from './pages/code-editor-page';
 import { ComponentLabPage } from './component-lab';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
@@ -15,7 +16,6 @@ import { Spinner } from '@nop-chaos/ui';
 const LazyReportDesignerPage = lazy(() => import('./pages/report-designer-page').then((m) => ({ default: m.ReportDesignerPage })));
 const LazyDebuggerLabPage = lazy(() => import('./pages/debugger-lab-page').then((m) => ({ default: m.DebuggerLabPage })));
 const LazyConditionBuilderPage = lazy(() => import('./pages/condition-builder-page').then((m) => ({ default: m.ConditionBuilderPage })));
-const LazyCodeEditorPage = lazy(() => import('./pages/code-editor-page').then((m) => ({ default: m.CodeEditorPage })));
 const LazyWordEditorPage = lazy(() => import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })));
 const LazyPerformanceTablePage = lazy(() => import('./pages/performance-table-page').then((m) => ({ default: m.PerformanceTablePage })));
 
@@ -114,7 +114,7 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'condition-builder':
           return <LazyConditionBuilderPage onBack={goHome} />;
         case 'code-editor':
-          return <LazyCodeEditorPage onBack={goHome} />;
+          return <CodeEditorPage onBack={goHome} />;
         case 'word-editor':
           return <LazyWordEditorPage onBack={goHome} />;
         case 'performance-table':
