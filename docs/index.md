@@ -98,6 +98,7 @@ Choose the smallest document that matches the task.
 | Review security boundary and runtime safety requirements | `docs/architecture/security-design-requirements.md` | `docs/architecture/action-scope-and-imports.md` |
 | Review performance design constraints and hot-path rules | `docs/architecture/performance-design-requirements.md` | `docs/architecture/renderer-runtime.md` |
 | Review recurring regression guardrails distilled from historical bug fixes | `docs/references/architecture-guardrails-from-bugs.md` | `docs/architecture/renderer-runtime.md` |
+| Understand static analysis, staticCapable renderer declaration, or bottom-up optimization computation | `docs/architecture/static-analysis.md` | `docs/architecture/renderer-runtime.md`, `docs/plans/131-static-analysis-optimization-plan.md` |
 | Review general UI interaction quality, workspace layout priority, collapsibility, or obvious convention violations | `docs/references/ui-interaction-review-checklist.md` | the relevant file in `docs/architecture/` |
 | Check shared terminology such as `CompiledValueNode`, `RenderRegionHandle`, `value-or-region`, or `FormRuntime` | `docs/references/terminology.md` | `docs/references/renderer-interfaces.md` |
 | Understand how `RendererRuntime`, `PageRuntime`, `SurfaceRuntime`, `SurfaceEntry`, and schema renderers such as `type: 'page'` fit together | `docs/references/runtime-and-renderer-faq.md` | `docs/references/terminology.md`, `docs/architecture/renderer-runtime.md` |

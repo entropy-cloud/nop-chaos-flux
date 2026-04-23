@@ -7,7 +7,7 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前代码库有 `@nop-chaos/ui` Drawer primitive，但尚未落位通用 renderer。
+- 当前代码库已同时具备 declarative `drawer` renderer 和 `@nop-chaos/ui` Drawer primitive。
 - 首版应优先保留方向、打开态和内容区，不额外复制一整套 dialog 专属字段别名。
 
 ## 3. Flux 中的 renderer/type 定义
@@ -20,6 +20,11 @@
 
 - 建议字段为 `title`、`body`、`actions`、`data`、`open`、`defaultOpen`、`side`、`size`、`showCloseButton`、`statusPath`。
 - `data` 若存在，其语义应与 `page` / `form` / `dialog` 保持一致：初始化 drawer own scope patch。
+
+Current live implementation note:
+
+- 通用 declarative `type: 'drawer'` renderer 已落位，但这里描述的完整 surface contract 仍在逐步补齐
+- `data` / `statusPath` 在 drawer design 中仍属于 target/recommended baseline，不应误读为 declarative renderer 已完整支持
 
 ## 5. 字段分类
 
@@ -41,6 +46,12 @@
 - 若未来需要 subtree-local 读取当前弹层状态，优先与 dialog 共用 `$surface`，不要单独发明 `$drawer`。
 - 共享 surface owner 规则以 `docs/architecture/surface-owner.md` 为准。
 
+Current live implementation note:
+
+- shared `SurfaceRuntime` / root host stack 当前主要适用于 action-opened managed drawer path
+- declarative drawer renderer 当前是直接 UI wrapper path，不应自动视为已经接入同一套 host-managed surface runtime
+- declarative drawer 当前已支持在 renderer path 上发布 `statusPath` summary，但这不等于它已经接入 managed surface runtime
+
 ## 8. 事件、动作与组件句柄能力
 
 - 推荐支持 `component:open`、`component:close`。
@@ -51,6 +62,11 @@
 
 - 与 `dialog` 一致，内容与标题支持表达式和 regions。
 - `data` 初始化 drawer own scope；drawer subtree 默认仍按普通 lexical scope 规则继承父级，除非某个更窄 fragment 显式 `isolate`。
+
+Current live implementation note:
+
+- action-opened managed drawer 当前会创建 child scope
+- declarative drawer renderer 当前不应被表述为已经完整支持 `data` 初始化 own scope patch
 
 ## 10. 样式与 DOM marker 约定
 

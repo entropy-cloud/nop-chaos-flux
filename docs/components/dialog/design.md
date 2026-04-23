@@ -7,7 +7,7 @@
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
-- 当前代码库已有 `DialogHost` 和 `@nop-chaos/ui` Dialog primitive，但通用 `dialog` renderer 还未落位。
+- 当前代码库已同时具备 declarative `dialog` renderer、`DialogHost` 和 `@nop-chaos/ui` Dialog primitive。
 - 文档基线应优先围绕 title/body/actions/open-state 这些稳定能力，不急于覆盖全部历史 mode。
 
 ## 3. Flux 中的 renderer/type 定义
@@ -21,6 +21,11 @@
 - 正式字段建议为 `title`、`body`、`actions`、`data`、`open`、`defaultOpen`、`size`、`showCloseButton`、`closeOnOutsideClick`、`statusPath`。
 - 打开态命名应优先对齐 UI primitive 的 `open/defaultOpen`。
 - `data` 若存在，其语义应与 `page` / `form` 保持一致：初始化 dialog own scope patch，而不是第二套局部 props 系统。
+
+Current live implementation note:
+
+- 通用 declarative `type: 'dialog'` renderer 已落位，但这里描述的完整 surface contract 仍在逐步补齐
+- `data` / `statusPath` 在 dialog design 中仍属于 target/recommended baseline，不应误读为 declarative renderer 已完整支持
 
 ## 5. 字段分类
 
@@ -48,6 +53,12 @@
 - 如果未来确认 subtree-local authoring 频繁需要读取当前弹层状态，优先考虑共享 `$surface`，而不是单独发明 `$dialog`。
 - 共享 surface owner 规则以 `docs/architecture/surface-owner.md` 为准。
 
+Current live implementation note:
+
+- shared `SurfaceRuntime` / `SurfaceStore` 与根 host stack 当前主要适用于 action-opened managed dialog path
+- declarative dialog renderer 当前是直接 UI wrapper path，不应自动视为已经接入同一套 host-managed surface runtime
+- declarative dialog 当前已支持在 renderer path 上发布 `statusPath` summary，但这不等于它已经接入 managed surface runtime
+
 嵌套 dialog 基线：
 
 - 在 dialog 中再打开 dialog 时，新 surface 仍注册到根 surface host，而不是渲染成当前 dialog DOM 子树内的第二个独立 host
@@ -67,6 +78,11 @@
 - 标题和 body 内部内容支持表达式和 region 渲染。
 - `data` 初始化 dialog own scope；dialog subtree 默认仍按普通 lexical scope 规则继承父级，除非某个更窄 fragment 显式 `isolate`。
 - 打开前数据准备应由 action 或 loader 完成，不让 dialog 自己发明请求协议。
+
+Current live implementation note:
+
+- action-opened managed dialog 当前会创建 child scope
+- declarative dialog renderer 当前不应被表述为已经完整支持 `data` 初始化 own scope patch
 
 ## 10. 样式与 DOM marker 约定
 
