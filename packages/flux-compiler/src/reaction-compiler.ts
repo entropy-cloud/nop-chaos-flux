@@ -10,16 +10,22 @@ export interface ReactionCompilerOptions extends ExpressionCompileOptions {
   basePath?: string;
 }
 
-function normalizeWatchPaths(watch: unknown): readonly string[] {
+/**
+ * Extract the first watch template from schema.watch.
+ * schema.watch can be a string like '${status}' or an array like ['${status}', '${count}'].
+ * For now, we only support single watch expression (first one if array).
+ */
+function extractWatchTemplate(watch: unknown): string {
   if (typeof watch === 'string') {
-    return [watch];
+    return watch;
   }
 
-  if (Array.isArray(watch)) {
-    return watch.filter((item): item is string => typeof item === 'string');
+  if (Array.isArray(watch) && watch.length > 0 && typeof watch[0] === 'string') {
+    return watch[0];
   }
 
-  return [];
+  // Return empty template that evaluates to undefined
+  return '';
 }
 
 export function compileReaction(
@@ -30,20 +36,29 @@ export function compileReaction(
 ): CompiledReaction {
   const basePath = options?.basePath ?? '$';
 
+  // Compile the watch expression - this is a template like '${status}'
+  const watchTemplate = extractWatchTemplate(schema.watch);
+  const compiledWatch = compiler.compileValue(watchTemplate, {
+    ...options,
+    sourcePath: `${basePath}.watch`,
+  });
+
   const compiled: CompiledReaction = {
     id,
-    watch: normalizeWatchPaths(schema.watch),
+    watch: compiledWatch,
     action: compileActions(schema.actions, compiler, {
       ...options,
       basePath: `${basePath}.actions`,
     }),
   };
 
+  // Compile the when condition - this is a raw expression (not a template)
+  // that receives special bindings: value, prev, changed, changedPaths, scope
   if (schema.when !== undefined) {
-    compiled.when = compiler.compileValue(schema.when, {
+    compiled.when = compiler.formulaCompiler.compileExpression<boolean>(schema.when, {
       ...options,
       sourcePath: `${basePath}.when`,
-    }) as unknown as import('@nop-chaos/flux-core').CompiledRuntimeValue<boolean>;
+    });
   }
 
   if (schema.dependsOn !== undefined && schema.dependsOn.length > 0) {
@@ -66,9 +81,9 @@ export function compileReaction(
 }
 
 export function isReactionFullyStatic(compiled: CompiledReaction): boolean {
-  if (compiled.when !== undefined && !compiled.when.isStatic) {
-    return false;
+  if (compiled.when !== undefined) {
+    return false; // when expressions always need runtime evaluation
   }
 
-  return compiled.action.isFullyStatic;
+  return compiled.watch.isStatic && compiled.action.isFullyStatic;
 }
