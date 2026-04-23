@@ -180,7 +180,7 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
       const message = err instanceof Error ? err.message : String(err);
       setSqlResult({ status: 'error', message });
     }
-  }, [props.helpers, sqlConfig, view]);
+  }, [props, sqlConfig, view]);
 
   const handleClearResult = useCallback(() => {
     setSqlResult({ status: 'idle' });
