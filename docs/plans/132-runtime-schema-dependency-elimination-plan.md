@@ -1,6 +1,6 @@
 # 132 Runtime Schema Dependency Elimination Plan
 
-> Plan Status: proposed
+> Plan Status: active
 > Last Reviewed: 2026-04-23
 > Source: `docs/logs/2026/04-23.md`, investigation of runtime schema usage
 > Related: 131-static-analysis-optimization-plan.md
@@ -80,163 +80,90 @@ when: inputValue.schema.when,
 
 ## Phase 1: Define Compiled Types
 
-Status: planned
+Status: ✅ completed
 
 ### 1.1 Compiled Data Source
 
 File: `packages/flux-core/src/types/compilation.ts`
 
-```typescript
-/**
- * Compiled data source - all expressions pre-compiled.
- */
-export interface CompiledDataSource {
-  id: string;
-  kind: 'api' | 'formula';
-  
-  // Compiled target path
-  targetPath: CompiledRuntimeValue<string>;
-  
-  // API source specific
-  api?: CompiledApiConfig;
-  
-  // Formula source specific
-  formula?: CompiledRuntimeValue<unknown>;
-  
-  // Common config (all pre-compiled)
-  mergeToScope?: CompiledRuntimeValue<boolean>;
-  resultMapping?: CompiledRuntimeValue<Record<string, string>>;
-  mergeStrategy?: CompiledRuntimeValue<'replace' | 'merge' | 'append'>;
-  mergeKey?: CompiledRuntimeValue<string>;
-  statusPath?: CompiledRuntimeValue<string>;
-  interval?: CompiledRuntimeValue<number>;
-  stopWhen?: CompiledRuntimeValue<boolean>;
-  silent?: CompiledRuntimeValue<boolean>;
-  initialData?: CompiledRuntimeValue<unknown>;
-  dependsOn?: readonly string[];  // Static dependency list
-  control?: CompiledOperationControl;
-}
-
-export interface CompiledApiConfig {
-  url: CompiledRuntimeValue<string>;
-  method: CompiledRuntimeValue<string>;
-  data?: CompiledRuntimeValue<unknown>;
-  headers?: CompiledRuntimeValue<Record<string, string>>;
-  // ... other API fields
-}
-```
+Implemented types:
+- `CompiledApiConfig` - compiled API configuration
+- `CompiledOperationControl` - operation control settings
+- `CompiledDataSource` - full compiled data source
 
 ### 1.2 Compiled Reaction
 
-```typescript
-/**
- * Compiled reaction - all expressions pre-compiled.
- */
-export interface CompiledReaction {
-  id: string;
-  
-  // Static watch paths
-  watch: readonly string[];
-  
-  // Compiled condition
-  when?: CompiledRuntimeValue<boolean>;
-  
-  // Compiled action
-  action: CompiledActionProgram;
-  
-  // Config
-  dependsOn?: readonly string[];
-  immediate?: boolean;
-  debounce?: number;
-  once?: boolean;
-}
-```
+File: `packages/flux-core/src/types/compilation.ts`
+
+Implemented `CompiledReaction` with:
+- `id`, `watch` (static paths), `when` (compiled condition)
+- `action` (CompiledActionProgram), timing/dependency options
 
 ### 1.3 Update TemplateNode
 
-```typescript
-export interface TemplateNode<S extends BaseSchema = BaseSchema> {
-  // ... existing fields
-  
-  // Compiled sources (replaces runtime schema.sources access)
-  compiledSources?: Readonly<Record<string, CompiledDataSource>>;
-  
-  // Compiled reactions (replaces runtime schema.reactions access)
-  compiledReactions?: readonly CompiledReaction[];
-  
-  // Original schema - DEBUG ONLY, may be undefined in production
-  schema?: S;  // ← Make optional
-}
-```
+File: `packages/flux-core/src/types/node-identity.ts`
+
+Added:
+- `compiledSources?: readonly CompiledDataSource[]`
+- `compiledReactions?: readonly CompiledReaction[]`
 
 ### Exit Criteria
 
-- [ ] Types defined
-- [ ] Types exported
-- [ ] `pnpm typecheck` passes
+- [x] Types defined
+- [x] Types exported
+- [x] `pnpm typecheck` passes
 
 ---
 
 ## Phase 2: Compiler Implementation
 
-Status: planned
+Status: ✅ completed
 
 ### 2.1 Data Source Compilation
 
 File: `packages/flux-compiler/src/source-compiler.ts` (new)
 
-```typescript
-export function compileDataSource(
-  schema: DataSourceSchema,
-  expressionCompiler: ExpressionCompiler
-): CompiledDataSource {
-  return {
-    id: schema.name,
-    kind: 'api' in schema ? 'api' : 'formula',
-    targetPath: expressionCompiler.compileValue(schema.target ?? schema.name),
-    api: schema.api ? compileApiConfig(schema.api, expressionCompiler) : undefined,
-    formula: schema.formula ? expressionCompiler.compileValue(schema.formula) : undefined,
-    mergeToScope: compileOptional(schema.mergeToScope, expressionCompiler),
-    resultMapping: compileOptional(schema.resultMapping, expressionCompiler),
-    // ... etc
-  };
-}
-```
+Implemented:
+- `compileDataSource(id, schema, compiler, options)` - compiles DataSourceSchema to CompiledDataSource
+- `isDataSourceFullyStatic(compiled)` - checks if all fields are static
+- Handles API sources (url, method, data, params, headers, adaptors)
+- Handles formula sources
+- Compiles all merge options (strategy, key, mapping)
+- Compiles timing options (interval, stopWhen, silent)
 
 ### 2.2 Reaction Compilation
 
 File: `packages/flux-compiler/src/reaction-compiler.ts` (new)
 
-```typescript
-export function compileReaction(
-  schema: ReactionSchema,
-  expressionCompiler: ExpressionCompiler,
-  actionCompiler: ActionCompiler
-): CompiledReaction {
-  return {
-    id: schema.name,
-    watch: normalizeWatchPaths(schema.watch),
-    when: schema.when ? expressionCompiler.compileValue(schema.when) : undefined,
-    action: actionCompiler.compile(schema.actions),
-    dependsOn: schema.dependsOn,
-    immediate: schema.immediate,
-    debounce: schema.debounce,
-    once: schema.once,
-  };
-}
-```
+Implemented:
+- `compileReaction(id, schema, compiler, options)` - compiles ReactionSchema to CompiledReaction
+- `isReactionFullyStatic(compiled)` - checks if when/action are static
+- Normalizes watch paths (string → array)
+- Compiles when condition
+- Uses existing `compileActions()` for action compilation
 
 ### 2.3 Integrate into Schema Compiler
 
-Update schema-compiler to call source/reaction compilers and store results in TemplateNode.
+File: `packages/flux-compiler/src/schema-compiler.ts`
+
+Integration:
+- Detects `type: 'data-source'` nodes and populates `compiledSources`
+- Detects `type: 'reaction'` nodes and populates `compiledReactions`
+- Added imports for new compilers
+
+### 2.4 Unit Tests
+
+New test files:
+- `packages/flux-compiler/src/source-compiler.test.ts` (14 tests)
+- `packages/flux-compiler/src/reaction-compiler.test.ts` (12 tests)
 
 ### Exit Criteria
 
-- [ ] Source compiler implemented
-- [ ] Reaction compiler implemented
-- [ ] Schema compiler integration
-- [ ] Unit tests for compilation
-- [ ] `pnpm typecheck && pnpm test` passes
+- [x] Source compiler implemented
+- [x] Reaction compiler implemented
+- [x] Schema compiler integration
+- [x] Unit tests for compilation (26 new tests)
+- [x] `pnpm typecheck && pnpm test` passes
 
 ---
 

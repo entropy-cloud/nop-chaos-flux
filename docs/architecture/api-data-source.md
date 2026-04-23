@@ -291,6 +291,8 @@ Current note:
 
 - import failure reporting is now partially converged through a shared helper in `@nop-chaos/flux-core`, so runtime and react integration no longer hand-roll separate `notify + monitor` payload shapes
 - remaining work in this area is no longer shape convergence, but deciding whether import failures should still be reported from two code locations or whether one owner should become the single semantic reporter
+- data-source failure notifications and reaction fire-count-limit warning reporting now also share a thin runtime host-reporting helper, so the remaining notify/reporting gaps are narrower and more semantic than structural
+- the `flux-action-core` `onSettled` branch fallback notify path now uses the same shared host-reporting seam as well, so host reporting shape is largely unified across action-core, runtime controllers, and import setup paths
 
 Recommended first hook:
 

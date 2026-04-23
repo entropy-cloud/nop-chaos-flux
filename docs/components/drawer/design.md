@@ -24,7 +24,8 @@
 Current live implementation note:
 
 - 通用 declarative `type: 'drawer'` renderer 已落位，但这里描述的完整 surface contract 仍在逐步补齐
-- `data` / `statusPath` 在 drawer design 中仍属于 target/recommended baseline，不应误读为 declarative renderer 已完整支持
+- `statusPath` 已是 declarative drawer 的 current live capability
+- `data` 仍属于 target/recommended baseline，不应误读为 declarative renderer 已完整支持
 
 ## 5. 字段分类
 
