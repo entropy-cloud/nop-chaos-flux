@@ -69,10 +69,24 @@ function createFormErrorSubscribe(store: FormStoreApi | undefined, path: string 
     }
 
     if (path && typeof store.subscribeToPath === 'function') {
-      return store.subscribeToPath(path, listener);
+      const unsubPath = store.subscribeToPath(path, listener);
+      const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
+        ? store.subscribeToSubmitting(listener)
+        : () => undefined;
+      return () => {
+        unsubPath();
+        unsubSubmitting();
+      };
     }
 
-    return store.subscribe(listener);
+    const unsubStore = store.subscribe(listener);
+    const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
+      ? store.subscribeToSubmitting(listener)
+      : () => undefined;
+    return () => {
+      unsubStore();
+      unsubSubmitting();
+    };
   };
 }
 

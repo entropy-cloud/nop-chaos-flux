@@ -76,7 +76,8 @@ export function FieldFrame(props: FieldFrameProps) {
       touched: fieldState.touched,
       dirty: fieldState.dirty,
       visited: fieldState.visited,
-      submitting: fieldState.submitting
+      submitting: fieldState.submitting,
+      submitAttempted: fieldState.submitAttempted
     })
   );
 

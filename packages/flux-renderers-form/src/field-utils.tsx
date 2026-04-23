@@ -289,7 +289,8 @@ export function getChildFieldUiState(input: {
         touched,
         dirty,
         visited,
-        submitting: input.fieldState.submitting
+        submitting: input.fieldState.submitting,
+        submitAttempted: input.fieldState.submitAttempted
       })
   );
 
@@ -334,6 +335,7 @@ export function useFieldPresentation(
       left.dirty === right.dirty &&
       left.visited === right.visited &&
       left.submitting === right.submitting &&
+      left.submitAttempted === right.submitAttempted &&
       left.effectiveDisabled === right.effectiveDisabled &&
       left.effectiveRequired === right.effectiveRequired &&
       left.showError === right.showError &&
@@ -352,7 +354,8 @@ export function useFieldPresentation(
               touched: fieldState.touched,
               dirty: fieldState.dirty,
               visited: fieldState.visited,
-              submitting: fieldState.submitting
+              submitting: fieldState.submitting,
+              submitAttempted: fieldState.submitAttempted
             })
         ),
         interactive: !options?.disabled && !options?.readOnly,
