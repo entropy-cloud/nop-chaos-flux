@@ -108,9 +108,9 @@ test.describe('array-editor renderer', () => {
     await expect(stage).toBeVisible();
     // Runtime gap: array-editor pre-populates rows but inputs are empty (data not injected).
     // Verify rows exist via Remove buttons (each row has a Remove button).
-    await expect(stage.getByRole('button', { name: 'Remove' }).first()).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByRole('button', { name: '删除' }).first()).toBeVisible({ timeout: 5_000 });
     // Verify Add item button exists
-    await expect(stage.getByRole('button', { name: 'Add item' }).or(stage.getByRole('button', { name: /Add/ }))).toBeVisible();
+    await expect(stage.getByRole('button', { name: '添加项' }).or(stage.getByRole('button', { name: /Add/ }))).toBeVisible();
   });
 });
 
@@ -178,7 +178,7 @@ test.describe('array-field renderer', () => {
     await expect(stage.getByText(/Add contacts and submit/)).toBeVisible();
 
     // Verify Add button exists
-    const addButton = stage.getByText('Add item').first();
+    const addButton = stage.getByText('添加项').first();
     await expect(addButton).toBeVisible();
     // Submit button exists
     await expect(stage.getByRole('button', { name: 'Submit' })).toBeVisible();
@@ -222,7 +222,7 @@ test.describe('detail-field renderer', () => {
     await expect(page.getByLabel('First Name')).toBeVisible({ timeout: 5_000 });
 
     await page.getByLabel('First Name').fill('Grace');
-    await page.getByRole('button', { name: /Confirm|Save/ }).first().click();
+    await page.getByRole('button', { name: /确认|Confirm|Save/ }).first().click();
 
     await expect(stage.getByText(/Grace Lovelace/)).toBeVisible({ timeout: 5_000 });
   });
@@ -258,7 +258,7 @@ test.describe('detail-view renderer', () => {
     await expect(page.getByLabel('Title')).toBeVisible({ timeout: 5_000 });
 
     await page.getByLabel('Title').fill('Annual Report 2026');
-    await page.getByRole('button', { name: /Confirm|Save/ }).first().click();
+    await page.getByRole('button', { name: /确认|Confirm|Save/ }).first().click();
 
     // Runtime gap: form writeback via dialog doesn't update parent scope.
     // Verify the dialog closed after confirm.

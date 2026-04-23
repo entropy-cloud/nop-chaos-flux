@@ -35,7 +35,7 @@ test.describe('table renderer', () => {
     // emptyText is shown — may be the schema prop or a default 'No data' message
     await expect(
       stage.getByText('No users found. Try adjusting your search filters.')
-        .or(stage.getByText(/No data|No results/i))
+        .or(stage.getByText(/No data|No results|暂无数据/i))
     ).toBeVisible({ timeout: 5_000 });
   });
 });
