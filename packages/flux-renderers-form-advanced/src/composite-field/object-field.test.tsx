@@ -470,4 +470,90 @@ describe('object-field renderer', () => {
       readOnly: false
     });
   });
+
+  it('suppresses stale async transformOutAction results', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    const resolvers: Array<(value: { ok: boolean; data: Record<string, unknown> }) => void> = [];
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: (method: string, payload: Record<string, unknown> | undefined) => {
+            if (method !== 'toPersisted') {
+              return Promise.resolve({ ok: true });
+            }
+
+            return new Promise((resolve) => {
+              resolvers.push(resolve as (value: { ok: boolean; data: Record<string, unknown> }) => void);
+            });
+          }
+        })
+      }))
+    };
+    const buttonRenderer: RendererDefinition = {
+      type: 'button',
+      component: (props) => (
+        <button type="button" onClick={() => void props.events.onClick?.()}>
+          {String(props.props.label ?? 'Button')}
+        </button>
+      ),
+      fields: [{ key: 'onClick', kind: 'event' }]
+    };
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#8"
+        schema={{
+          type: 'form',
+          id: 'obj-transform-out-race-form',
+          data: {
+            profile: {
+              firstName: 'Alice',
+              lastName: 'Smith'
+            }
+          },
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              label: 'Profile',
+              'xui:imports': [{ from: 'object-lib', as: 'objectLib' }],
+              transformOutAction: { action: 'objectLib:toPersisted' },
+              body: [
+                { type: 'input-text', name: 'firstName', label: 'First Name' },
+                { type: 'input-text', name: 'lastName', label: 'Last Name' }
+              ]
+            }
+          ],
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+          actions: [
+            { type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'obj-transform-out-race-form' } }
+          ]
+        }}
+        env={{
+          ...env,
+          importLoader,
+          fetcher: makeCapturingFetcher(submitValues)
+        }}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    const input = await screen.findByLabelText('First Name');
+    fireEvent.change(input, { target: { value: 'Bob' } });
+    fireEvent.change(input, { target: { value: 'Carol' } });
+
+    expect(resolvers).toHaveLength(2);
+    resolvers[1]({ ok: true, data: { firstName: 'CAROL', lastName: 'Smith' } });
+    resolvers[0]({ ok: true, data: { firstName: 'BOB', lastName: 'Smith' } });
+
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(submitValues.length).toBe(1));
+    expect(submitValues[0]).toMatchObject({
+      profile: { firstName: 'CAROL', lastName: 'Smith' }
+    });
+  });
 });

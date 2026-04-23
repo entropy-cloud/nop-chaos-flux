@@ -129,6 +129,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   );
 
   const [resolvedValue, setResolvedValue] = React.useState(rawValue);
+  const transformOutSequence = React.useRef(0);
 
   React.useEffect(() => {
     let active = true;
@@ -193,7 +194,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       });
 
       if (isPromiseLike(committedValue)) {
+        const sequence = ++transformOutSequence.current;
         void committedValue.then((resolvedCommittedValue: unknown) => {
+          if (transformOutSequence.current !== sequence) {
+            return;
+          }
+
           if (parentForm && name) {
             parentForm.setValue(name, resolvedCommittedValue);
             return;
@@ -204,6 +210,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
         return;
       }
 
+      transformOutSequence.current += 1;
       if (parentForm && name) {
         parentForm.setValue(name, committedValue);
         return;
