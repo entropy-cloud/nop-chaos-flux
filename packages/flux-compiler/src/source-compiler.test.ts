@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { compileDataSource, isDataSourceFullyStatic } from './source-compiler';
-import type { DataSourceSchema } from '@nop-chaos/flux-core';
+import type { CompiledRuntimeValue, DataSourceSchema } from '@nop-chaos/flux-core';
+
+function getStaticValue<T>(compiled: CompiledRuntimeValue<T> | undefined): T | undefined {
+  if (!compiled) return undefined;
+  if (compiled.isStatic) return compiled.value;
+  return undefined;
+}
 
 describe('compileDataSource', () => {
   const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
@@ -23,12 +29,12 @@ describe('compileDataSource', () => {
       expect(compiled.kind).toBe('api');
       expect(compiled.targetPath).toBeDefined();
       expect(compiled.targetPath?.isStatic).toBe(true);
-      expect(compiled.targetPath?.value).toBe('users');
+      expect(getStaticValue(compiled.targetPath)).toBe('users');
       expect(compiled.api).toBeDefined();
       expect(compiled.api?.url.isStatic).toBe(true);
-      expect(compiled.api?.url.value).toBe('/api/users');
+      expect(getStaticValue(compiled.api?.url)).toBe('/api/users');
       expect(compiled.api?.method?.isStatic).toBe(true);
-      expect(compiled.api?.method?.value).toBe('GET');
+      expect(getStaticValue(compiled.api?.method)).toBe('GET');
     });
 
     it('compiles API data source with expression in url', () => {
@@ -58,7 +64,7 @@ describe('compileDataSource', () => {
 
       expect(compiled.interval).toBeDefined();
       expect(compiled.interval?.isStatic).toBe(true);
-      expect(compiled.interval?.value).toBe(5000);
+      expect(getStaticValue(compiled.interval)).toBe(5000);
       expect(compiled.stopWhen).toBeDefined();
       expect(compiled.stopWhen?.isStatic).toBe(false);
     });
@@ -78,7 +84,7 @@ describe('compileDataSource', () => {
       expect(compiled.kind).toBe('formula');
       expect(compiled.formula).toBeDefined();
       expect(compiled.formula?.isStatic).toBe(true);
-      expect(compiled.formula?.value).toBe(42);
+      expect(getStaticValue(compiled.formula)).toBe(42);
     });
 
     it('compiles a formula data source with expression', () => {
@@ -108,9 +114,9 @@ describe('compileDataSource', () => {
       const compiled = compileDataSource('ds-6', schema, expressionCompiler);
 
       expect(compiled.mergeStrategy?.isStatic).toBe(true);
-      expect(compiled.mergeStrategy?.value).toBe('upsert');
+      expect(getStaticValue(compiled.mergeStrategy)).toBe('upsert');
       expect(compiled.mergeKey?.isStatic).toBe(true);
-      expect(compiled.mergeKey?.value).toBe('id');
+      expect(getStaticValue(compiled.mergeKey)).toBe('id');
     });
 
     it('compiles result mapping', () => {
