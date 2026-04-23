@@ -350,12 +350,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         return Promise.resolve({ ok: false, error: new Error(`Unsupported action: ${invocation.actionName}`) });
       }
 
-      return Promise.resolve(resolved.provider.invoke(resolved.method, invocation.payload, ctx)).then((result) => ({
-        ...(result && typeof result === 'object' && 'ok' in result ? result as ActionResult : { ok: true, data: result }),
-        namespace: invocation.namespace,
-        sourceScopeId: resolved.sourceScopeId,
-        providerKind: resolved.provider.kind ?? 'host'
-      }));
+      return resolved.provider.invoke(resolved.method, invocation.payload, ctx) as Promise<ActionResult>;
     }
   };
 }

@@ -440,6 +440,9 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
     }
 
     const payload = evaluateActionArgs(action, ctx, evaluator);
+    const resolved = ctx.actionScope?.resolve(action.action);
+    const sourceScopeId = resolved?.sourceScopeId;
+    const providerKind = resolved?.provider.kind ?? 'host';
     const invocation: NamespacedActionInvocation = {
       actionName: action.action,
       namespace: parsed.namespace,
@@ -450,7 +453,11 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
     return finishAction(
       { ...actionPayload, dispatchMode: 'namespace', namespace: parsed.namespace, method: parsed.method },
       startedAt,
-      result
+      {
+        ...result,
+        sourceScopeId,
+        providerKind
+      }
     );
   }
 

@@ -16,12 +16,79 @@ function compilePayload(
   options?: ExpressionCompileOptions
 ): CompiledActionPayload {
   const payload: CompiledActionPayload = {};
+  const legacyPayload = extractLegacyPayload(action);
 
   if (action.args !== undefined) {
     payload.args = compiler.compileValue<Record<string, unknown>>(action.args, options);
+  } else if (legacyPayload !== undefined) {
+    payload.args = compiler.compileValue<Record<string, unknown>>(legacyPayload, options);
   }
 
   return payload;
+}
+
+function extractLegacyPayload(action: ActionSchema): Record<string, unknown> | undefined {
+  if (action.api !== undefined) {
+    return action.api as Record<string, unknown>;
+  }
+
+  if (action.dialog !== undefined) {
+    return action.dialog as Record<string, unknown>;
+  }
+
+  if (action.drawer !== undefined) {
+    return action.drawer as Record<string, unknown>;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(action, 'value')) {
+    return {
+      path: typeof action.componentPath === 'string' ? action.componentPath : undefined,
+      value: action.value
+    };
+  }
+
+  if (Object.prototype.hasOwnProperty.call(action, 'values')) {
+    return {
+      values: action.values as Record<string, unknown>
+    };
+  }
+
+  const reservedKeys = new Set([
+    'action',
+    '_targetCid',
+    '_targetTemplateId',
+    'targetId',
+    'componentId',
+    'componentName',
+    'formId',
+    'dialogId',
+    'dataPath',
+    'args',
+    'control',
+    'timeout',
+    'retry',
+    'debounce',
+    'when',
+    'parallel',
+    'continueOnError',
+    'then',
+    'onError',
+    'onSettled',
+    'api',
+    'dialog',
+    'drawer',
+    'value',
+    'values',
+    'componentPath'
+  ]);
+
+  const entries = Object.entries(action).filter(([key]) => !reservedKeys.has(key));
+
+  if (entries.length === 0) {
+    return undefined;
+  }
+
+  return Object.fromEntries(entries);
 }
 
 function compileTargeting(action: ActionSchema): CompiledActionTargeting {
