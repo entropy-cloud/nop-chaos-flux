@@ -24,7 +24,7 @@ async function openWordEditor(page: import('@playwright/test').Page) {
 
   await page.getByRole('button', { name: 'Word Editor' }).click();
 
-  await expect(page.getByText('Word Editor').first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 15000 });
 }
 
 test.describe('Dataset Sidebar Panel', () => {
@@ -32,10 +32,10 @@ test.describe('Dataset Sidebar Panel', () => {
     await openWordEditor(page);
 
     await expect(
-      page.getByRole('tab', { name: 'Datasets' })
+      page.getByRole('tab', { name: '数据集' })
     ).toBeVisible({ timeout: 15000 });
     await expect(
-      page.getByRole('tab', { name: 'Fields' })
+      page.getByRole('tab', { name: '字段' })
     ).toBeVisible();
   });
 
@@ -61,7 +61,7 @@ test.describe('Dataset Sidebar Panel', () => {
     await expect(page.getByText('Create Dataset')).toBeVisible();
 
     await page.getByPlaceholder('Enter dataset name').fill('TestDataset');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: '保存' }).click();
     await page.waitForTimeout(500);
 
     await expect(page.getByText('TestDataset')).toBeVisible();
@@ -70,13 +70,13 @@ test.describe('Dataset Sidebar Panel', () => {
   test('Fields tab shows empty state when no dataset is selected', async ({ page }) => {
     await openWordEditor(page);
 
-    const fieldsTab = page.getByRole('tab', { name: 'Fields' });
+    const fieldsTab = page.getByRole('tab', { name: '字段' });
     await expect(fieldsTab).toBeVisible({ timeout: 15000 });
     await fieldsTab.click();
     await page.waitForTimeout(300);
 
-    await expect(page.getByText('No dataset selected')).toBeVisible();
-    await expect(page.getByText('Select a dataset to view its fields')).toBeVisible();
+    await expect(page.getByText('未选择数据集')).toBeVisible();
+    await expect(page.getByText('选择数据集查看字段')).toBeVisible();
   });
 
   test('clicking a dataset opens the dialog in edit mode', async ({ page }) => {
@@ -88,7 +88,7 @@ test.describe('Dataset Sidebar Panel', () => {
     await page.waitForTimeout(300);
 
     await page.getByPlaceholder('Enter dataset name').fill('EditTarget');
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: '保存' }).click();
     await page.waitForTimeout(500);
 
     await expect(page.getByText('EditTarget')).toBeVisible();

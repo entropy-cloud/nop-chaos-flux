@@ -198,7 +198,7 @@ test('execute button is visible in enhanced SQL editor', async ({ page }) => {
 
   const executeBtn = field.locator('[data-slot="code-editor-toolbar-execute"]').first();
   await expect(executeBtn).toBeVisible();
-  await expect(executeBtn).toContainText('Run');
+  await expect(executeBtn).toContainText('运行');
 });
 
 test('SQL result panel shows loading and error states on execute', async ({ page }) => {
@@ -212,8 +212,8 @@ test('SQL result panel shows loading and error states on execute', async ({ page
 
   const resultContainer = field.locator('[data-slot="code-editor-result-container"]').first();
 
-  const loadingOrError = await resultContainer.locator('text=Executing...').isVisible({ timeout: 3000 })
-    || await resultContainer.locator('text=Error').isVisible({ timeout: 10000 });
+  const loadingOrError = await resultContainer.locator('text=执行中...').isVisible({ timeout: 3000 })
+    || await resultContainer.locator('text=错误').isVisible({ timeout: 10000 });
 
   expect(loadingOrError).toBe(true);
 });

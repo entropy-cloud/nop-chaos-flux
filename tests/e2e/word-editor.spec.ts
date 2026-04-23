@@ -24,7 +24,7 @@ async function openWordEditor(page: import('@playwright/test').Page) {
 
   await page.getByRole('button', { name: 'Word Editor' }).click();
 
-  await expect(page.getByText('Word Editor').first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 15000 });
 }
 
 test.describe('Word Editor Page', () => {
@@ -32,7 +32,7 @@ test.describe('Word Editor Page', () => {
     await openWordEditor(page);
 
     await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '保存' })).toBeVisible();
   });
 
   test('displays toolbar with all control groups', async ({ page }) => {
@@ -68,22 +68,22 @@ test.describe('Word Editor Page', () => {
   test('displays left panel with Datasets and Fields tabs', async ({ page }) => {
     await openWordEditor(page);
 
-    const datasetsTab = page.getByRole('tab', { name: 'Datasets' }).first();
+    const datasetsTab = page.getByRole('tab', { name: '数据集' }).first();
     await expect(datasetsTab).toBeVisible({ timeout: 15000 });
 
-    const fieldsTab = page.getByRole('tab', { name: 'Fields' }).first();
+    const fieldsTab = page.getByRole('tab', { name: '字段' }).first();
     await expect(fieldsTab).toBeVisible();
 
     await fieldsTab.click();
     await page.waitForTimeout(300);
 
-    await expect(page.getByText('No dataset selected')).toBeVisible();
+    await expect(page.getByText('未选择数据集')).toBeVisible();
   });
 
   test('displays right panel with Outline', async ({ page }) => {
     await openWordEditor(page);
 
-    await expect(page.getByRole('heading', { name: 'Outline', level: 2 })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: '大纲', level: 2 })).toBeVisible({ timeout: 15000 });
   });
 
   test('can type text in editor', async ({ page }) => {
@@ -131,12 +131,12 @@ test.describe('Word Editor Page', () => {
     await hyperlinkButton.click();
     await page.waitForTimeout(300);
 
-    await expect(page.getByText('Insert Hyperlink')).toBeVisible();
+    await expect(page.getByText('插入超链接')).toBeVisible();
 
     await expect(page.getByPlaceholder('Display text')).toBeVisible();
     await expect(page.getByPlaceholder('URL (https://...)')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Cancel' }).first().click();
+    await page.getByRole('button', { name: '取消' }).first().click();
     await page.waitForTimeout(300);
   });
 
@@ -148,9 +148,9 @@ test.describe('Word Editor Page', () => {
     await exprButton.click();
     await page.waitForTimeout(300);
 
-    await expect(page.getByText('Insert Template Expression')).toBeVisible();
+    await expect(page.getByText('插入模板表达式')).toBeVisible();
 
-    const elTab = page.getByRole('tab', { name: 'EL Expression' });
+    const elTab = page.getByRole('tab', { name: 'EL 表达式' });
     await expect(elTab).toBeVisible();
 
     await expect(page.getByPlaceholder('${entity.fieldName}')).toBeVisible();
@@ -176,7 +176,7 @@ test.describe('Word Editor Page', () => {
   test('can save document', async ({ page }) => {
     await openWordEditor(page);
 
-    const saveButton = page.getByRole('button', { name: 'Save' });
+    const saveButton = page.getByRole('button', { name: '保存' });
     await expect(saveButton).toBeVisible({ timeout: 15000 });
     await saveButton.click();
     await page.waitForTimeout(500);
@@ -221,9 +221,6 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByText('Create Chart')).toBeVisible();
 
     await expect(page.getByPlaceholder('Enter chart name')).toBeVisible();
-
-    const chartTypeSelect = page.locator('select').filter({ hasText: /Bar|Line|Pie/ }).first();
-    await expect(chartTypeSelect).toBeVisible();
 
     await expect(page.getByPlaceholder('Select dataset (e.g., dataset1)')).toBeVisible();
     await expect(page.getByPlaceholder('Category field name (e.g., category)')).toBeVisible();

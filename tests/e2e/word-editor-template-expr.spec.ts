@@ -24,7 +24,7 @@ async function openWordEditor(page: import('@playwright/test').Page) {
 
   await page.getByRole('button', { name: 'Word Editor' }).click();
 
-  await expect(page.getByText('Word Editor').first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 15000 });
 }
 
 test.describe('Template Expression Insertion', () => {
@@ -43,7 +43,7 @@ test.describe('Template Expression Insertion', () => {
     await insertExprButton.click();
 
     await expect(
-      page.getByText('Insert Template Expression')
+      page.getByText('插入模板表达式')
     ).toBeVisible({ timeout: 5000 });
   });
 
@@ -53,7 +53,7 @@ test.describe('Template Expression Insertion', () => {
     await page.getByTitle('Insert Expression').click();
     await page.waitForTimeout(300);
 
-    const elTab = page.getByRole('tab', { name: 'EL Expression' });
+    const elTab = page.getByRole('tab', { name: 'EL 表达式' });
     await expect(elTab).toBeVisible();
 
     await expect(page.getByPlaceholder('${entity.fieldName}')).toBeVisible();
@@ -65,11 +65,11 @@ test.describe('Template Expression Insertion', () => {
     await page.getByTitle('Insert Expression').click();
     await page.waitForTimeout(300);
 
-    const xplTab = page.getByRole('tab', { name: 'XPL Tag' });
+    const xplTab = page.getByRole('tab', { name: 'XPL 标签' });
     await xplTab.click();
 
-    await expect(page.getByText('Tag Name', { exact: false })).toBeVisible();
-    await expect(page.getByRole('combobox')).toBeVisible();
+    await expect(page.getByText('标签名称', { exact: false })).toBeVisible();
+    await expect(page.getByRole('combobox').last()).toBeVisible();
   });
 
   test('tag name dropdown shows available tags', async ({ page }) => {
@@ -78,10 +78,10 @@ test.describe('Template Expression Insertion', () => {
     await page.getByTitle('Insert Expression').click();
     await page.waitForTimeout(300);
 
-    await page.getByRole('tab', { name: 'XPL Tag' }).click();
+    await page.getByRole('tab', { name: 'XPL 标签' }).click();
     await page.waitForTimeout(200);
 
-    const tagSelect = page.getByRole('combobox');
+    const tagSelect = page.getByRole('combobox').last();
     await expect(tagSelect).toBeVisible();
     await expect(tagSelect).toHaveValue('c:if');
 
@@ -97,11 +97,11 @@ test.describe('Template Expression Insertion', () => {
     await page.getByTitle('Insert Expression').click();
     await page.waitForTimeout(300);
 
-    await expect(page.getByText('Insert Template Expression')).toBeVisible();
+    await expect(page.getByText('插入模板表达式')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Cancel' }).click();
+    await page.getByRole('button', { name: '取消' }).click();
     await page.waitForTimeout(300);
 
-    await expect(page.getByText('Insert Template Expression')).toHaveCount(0);
+    await expect(page.getByText('插入模板表达式')).toHaveCount(0);
   });
 });
