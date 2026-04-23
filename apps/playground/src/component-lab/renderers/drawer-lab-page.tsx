@@ -8,9 +8,8 @@ const rightDrawer = {
       type: 'button',
       label: 'Open Right Drawer',
       onClick: {
-        action: 'drawer',
-        drawer: {
-          type: 'drawer',
+        action: 'openDrawer',
+        args: {
           title: 'Add Note',
           side: 'right',
           body: [
@@ -48,9 +47,8 @@ const leftDrawer = {
       label: 'Open Left Drawer',
       variant: 'outline',
       onClick: {
-        action: 'drawer',
-        drawer: {
-          type: 'drawer',
+        action: 'openDrawer',
+        args: {
           title: 'Navigation',
           side: 'left',
           body: [

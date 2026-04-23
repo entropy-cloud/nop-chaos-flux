@@ -8,9 +8,8 @@ const basicDialog = {
       type: 'button',
       label: 'Open Dialog',
       onClick: {
-        action: 'dialog',
-        dialog: {
-          type: 'dialog',
+        action: 'openDialog',
+        args: {
           title: 'Example Dialog',
           body: [
             { type: 'text', text: 'This is the dialog body content.' },
@@ -33,9 +32,8 @@ const formDialog = {
       type: 'button',
       label: 'Edit Contact',
       onClick: {
-        action: 'dialog',
-        dialog: {
-          type: 'dialog',
+        action: 'openDialog',
+        args: {
           title: 'Edit Contact',
           body: [
             {

@@ -59,13 +59,13 @@
             "approved": false,
             "status": "draft",
             "notes": "",
-            "featured": false,
-            "tags": ["stable"],
-          "labels": [],
-          "metadata": [],
-          "reviewers": [],
-          "filterExpression": ""
-        },
+        "featured": false,
+        "tags": ["stable"],
+        "labels": [],
+        "metadata": [],
+        "reviewers": [],
+        "filterExpression": ""
+      },
           "body": [
             {
               "type": "input-text",
@@ -184,7 +184,7 @@
               "visible": "${currentUser.name === \"Architect\"}",
               "onClick": {
                 "action": "openDialog",
-                "dialog": {
+                "args": {
                   "title": "Form Preview",
                   "body": {
                     "type": "container",
@@ -371,7 +371,7 @@
                   "label": "Inspect",
                   "onClick": {
                     "action": "openDialog",
-                    "dialog": {
+                    "args": {
                       "title": "User Details",
                       "body": {
                         "type": "container",
