@@ -99,7 +99,6 @@ export function registerReaction(input: {
 
   const watchSource = compiled?.watch ?? input.watch;
   const dependsOnSource = compiled?.dependsOn ?? input.dependsOn;
-  const whenSource = compiled?.when ?? (input.when ? input.runtime.expressionCompiler.compileValue(input.when) as unknown as CompiledRuntimeValue<boolean> : undefined);
   const immediateSource = compiled?.immediate ?? input.immediate;
   const debounceSource = compiled?.debounce ?? input.debounce;
   const onceSource = compiled?.once ?? input.once;
@@ -116,7 +115,11 @@ export function registerReaction(input: {
   const watchState: RuntimeValueState<unknown> | undefined = dynamicWatch?.createState();
   const explicitDependencies = createRootDependencySet(dependsOnSource);
   
-  const whenExpressionSource = extractExpressionSource(whenSource);
+  // Handle when condition - either from compiled reaction or raw expression string
+  // Note: input.when is a raw expression string (not a ${...} template), so we compile it directly
+  const whenExpressionSource = compiled?.when
+    ? extractExpressionSource(compiled.when)
+    : input.when;
   const compiledWhen = whenExpressionSource
     ? input.runtime.expressionCompiler.formulaCompiler.compileExpression<boolean>(whenExpressionSource)
     : undefined;
