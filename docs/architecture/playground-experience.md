@@ -13,7 +13,7 @@ It answers two questions:
 
 ## Current Code Anchors
 
-- `apps/playground/src/App.tsx`
+- `apps/playground/src/app.tsx`
 - `apps/playground/src/route-model.ts`
 - `apps/playground/src/useRoute.ts`
 - `apps/playground/src/component-lab/ComponentLabPage.tsx`
@@ -121,7 +121,7 @@ Rules:
 
 ### Playground Side
 
-- `App.tsx` should remain a route host, not a giant scenario page
+- `app.tsx` should remain a route host, not a giant scenario page
 - major scenario families should live in dedicated page modules
 - example-shell styling may live in `apps/playground/src/styles.css`
 - reusable renderer/domain visuals must follow their package-owned contracts rather than depending on playground-only styling

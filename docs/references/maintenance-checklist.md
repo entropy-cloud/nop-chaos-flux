@@ -180,7 +180,7 @@ Review:
 
 Examples:
 
-- changes in `apps/playground/src/App.tsx`
+- changes in `apps/playground/src/app.tsx`
 - changed recommended authoring patterns
 - changed representative schema flows
 

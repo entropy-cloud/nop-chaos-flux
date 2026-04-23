@@ -8,7 +8,7 @@ The goal is not to introduce a React `ThemeProvider` requirement. The goal is to
 
 ## Current Code Anchors
 
-- `apps/playground/src/App.tsx`
+- `apps/playground/src/app.tsx`
 - `apps/playground/src/styles.css`
 - `apps/playground/src/pages/FlowDesignerPage.tsx`
 - `packages/flux-react/src/index.tsx`

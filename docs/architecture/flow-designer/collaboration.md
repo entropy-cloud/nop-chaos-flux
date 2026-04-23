@@ -21,7 +21,7 @@
 - `packages/flow-designer-renderers/src/designer-command-adapter.ts`
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 - `packages/flow-designer-core/src/core.ts`
-- `apps/playground/src/App.tsx`
+- `apps/playground/src/app.tsx`
 
 ## 一句话模型
 
@@ -158,7 +158,7 @@ flowchart TD
 ### 文件级调用链图: 从宿主挂载到 graph mutation
 
 ```text
-apps/playground/src/App.tsx
+apps/playground/src/app.tsx
   -> registerFlowDesignerRenderers(registry)
   -> SchemaRenderer(schema)
 
@@ -190,7 +190,7 @@ packages/flow-designer-renderers/src/index.tsx
 
 ```mermaid
 flowchart TD
-  A[apps/playground/src/App.tsx] --> B[packages/flux-react/src/index.tsx]
+  A[apps/playground/src/app.tsx] --> B[packages/flux-react/src/index.tsx]
   B --> C[packages/flow-designer-renderers/src/index.tsx]
   C --> D[packages/flow-designer-renderers/src/canvas-bridge.tsx]
   C --> E[packages/flow-designer-renderers/src/designer-command-adapter.ts]
@@ -200,7 +200,7 @@ flowchart TD
 
 阅读顺序建议:
 
-1. 先看 `apps/playground/src/App.tsx` 怎么注册 renderers
+1. 先看 `apps/playground/src/app.tsx` 怎么注册 renderers
 2. 再看 `packages/flux-react/src/index.tsx` 怎么给 `designer-page` 建立 runtime / action scope 边界
 3. 再看 `packages/flow-designer-renderers/src/index.tsx` 怎么创建 core、注册 `designer` namespace、渲染 canvas host
 4. 最后看 `packages/flow-designer-renderers/src/designer-command-adapter.ts` 和 `packages/flow-designer-core/src/core.ts` 的命令落地
