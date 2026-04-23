@@ -545,7 +545,9 @@ describe('object-field renderer', () => {
     fireEvent.change(input, { target: { value: 'Bob' } });
     fireEvent.change(input, { target: { value: 'Carol' } });
 
-    expect(resolvers).toHaveLength(2);
+    await waitFor(() => {
+      expect(resolvers).toHaveLength(2);
+    });
     resolvers[1]({ ok: true, data: { firstName: 'CAROL', lastName: 'Smith' } });
     resolvers[0]({ ok: true, data: { firstName: 'BOB', lastName: 'Smith' } });
 

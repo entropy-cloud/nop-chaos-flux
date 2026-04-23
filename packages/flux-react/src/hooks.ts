@@ -44,7 +44,8 @@ function shallowEqualFormFieldState(
     a.touched === b.touched &&
     a.dirty === b.dirty &&
     a.visited === b.visited &&
-    a.submitting === b.submitting
+    a.submitting === b.submitting &&
+    a.submitAttempted === b.submitAttempted
   );
 }
 
