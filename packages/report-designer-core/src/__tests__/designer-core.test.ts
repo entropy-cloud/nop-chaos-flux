@@ -9,6 +9,10 @@ import {
   type ReportDesignerConfig,
 } from './test-utils.js';
 
+function cloneStructured<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 const defaultConfig: ReportDesignerConfig = {
   kind: 'report-template',
 };
@@ -177,6 +181,22 @@ describe('createReportDesignerCore', () => {
   it('should export document', () => {
     const exported = core.exportDocument();
     expect(exported.id).toBe(doc.id);
+  });
+
+  it('syncs spreadsheet document into the exported report document', () => {
+    const nextSpreadsheet = cloneStructured(doc.spreadsheet);
+    nextSpreadsheet.workbook.sheets[0].cells = {
+      ...(nextSpreadsheet.workbook.sheets[0].cells ?? {}),
+      A1: {
+      value: 'synced-cell',
+      type: 'string',
+      } as any,
+    };
+
+    core.syncSpreadsheetDocument(nextSpreadsheet);
+
+    expect(core.getSnapshot().document.spreadsheet.workbook.sheets[0].cells.A1?.value).toBe('synced-cell');
+    expect(core.exportDocument().spreadsheet.workbook.sheets[0].cells.A1?.value).toBe('synced-cell');
   });
 
   it('should track field drag state', async () => {

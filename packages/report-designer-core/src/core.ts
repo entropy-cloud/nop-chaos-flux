@@ -55,6 +55,7 @@ export interface ReportDesignerCore {
   dispatch(command: ReportDesignerCommand): Promise<ReportDesignerCommandResult>;
   getMetadata(target: ReportSelectionTarget): MetadataBag | undefined;
   setMetadata(target: ReportSelectionTarget, nextMeta: MetadataBag): void;
+  syncSpreadsheetDocument(nextDocument: ReportTemplateDocument['spreadsheet']): void;
   setSelectionTarget(target?: ReportSelectionTarget): Promise<void>;
   getInspectorPanels(): InspectorPanelDescriptor[];
   refreshFieldSources(): Promise<FieldSourceSnapshot[]>;
@@ -100,7 +101,6 @@ export function createReportDesignerCore(
   const registry = resolveRegistry(providedAdapters);
 
   const initialDocument = cloneDocument(document);
-  const spreadsheetCore = createSpreadsheetCore({ document: initialDocument.spreadsheet });
   const selectedFieldSourceIds = new Set(getProfileFieldSourceIds(config, profile));
   const selectedInspectorIds = new Set(getProfileInspectorIds(config, profile));
   const allowedFieldDropIds = getProfileFieldDropIds(profile);
@@ -141,7 +141,7 @@ export function createReportDesignerCore(
 
   async function refreshDerivedState() {
     const snapshot = store.getState();
-    const spreadsheet = spreadsheetCore.getSnapshot();
+    const spreadsheet = createSpreadsheetCore({ document: snapshot.document.spreadsheet }).getSnapshot();
     try {
       const fieldSources = await loadFieldSources({
         config,
@@ -278,6 +278,29 @@ export function createReportDesignerCore(
         const result = updateMetadata(current.document, target, nextMeta);
         return result.changed ? { ...current, document: result.document } : current;
       });
+    },
+
+    syncSpreadsheetDocument(nextDocument) {
+      let changed = false;
+      store.setState((current) => {
+        if (current.document.spreadsheet === nextDocument) {
+          return current;
+        }
+
+        changed = true;
+
+        return {
+          ...current,
+          document: {
+            ...current.document,
+            spreadsheet: cloneDocument({ ...current.document, spreadsheet: nextDocument }).spreadsheet,
+          },
+        };
+      });
+
+      if (changed) {
+        void refreshDerivedState();
+      }
     },
 
     setSelectionTarget,

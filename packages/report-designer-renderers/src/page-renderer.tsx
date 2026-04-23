@@ -141,6 +141,10 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
     spreadsheetCore.getSnapshot,
   );
 
+  useEffect(() => {
+    core.syncSpreadsheetDocument(spreadsheetSnapshot.document);
+  }, [core, spreadsheetSnapshot.document]);
+
   const reportDesignerScope = useReportDesignerHostScope(core, snapshot, props.path, spreadsheetSnapshot);
 
   const toolbarSchema = props.props.toolbar as RenderNodeInput | undefined;

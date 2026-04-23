@@ -39,7 +39,7 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
   const setActivePanelId = useCallback(
     (panelId: string) => {
       void props.helpers.dispatch(
-        { type: 'report-designer:setActivePanel', panelId } as any,
+        { action: 'report-designer:setActivePanel', args: { panelId } },
         { scope },
       );
     },
