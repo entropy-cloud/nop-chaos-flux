@@ -55,7 +55,8 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
   const store = createStore<FormStoreState>(() => ({
     values: initialValues,
     fieldStates: {},
-    submitting: false
+    submitting: false,
+    submitAttempted: false
   }));
 
   const pathListeners = new Map<string, Set<() => void>>();
@@ -183,6 +184,13 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       store.setState({ submitting });
       notifySubmitting();
     },
+    setSubmitAttempted(submitAttempted) {
+      if (store.getState().submitAttempted === submitAttempted) {
+        return;
+      }
+      store.setState({ submitAttempted });
+      notifySubmitting();
+    },
     batchUpdate(updates) {
       const before = store.getState();
       store.setState(updates);
@@ -196,7 +204,10 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
         }
       }
 
-      if (updates.submitting !== undefined && before.submitting !== after.submitting) {
+      if (
+        (updates.submitting !== undefined && before.submitting !== after.submitting)
+        || (updates.submitAttempted !== undefined && before.submitAttempted !== after.submitAttempted)
+      ) {
         notifySubmitting();
       }
     }

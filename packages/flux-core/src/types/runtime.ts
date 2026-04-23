@@ -35,6 +35,7 @@ export interface FormStoreState {
   values: Record<string, any>;
   fieldStates: Record<string, FieldState>;
   submitting: boolean;
+  submitAttempted: boolean;
 }
 
 export interface FormErrorQuery {
@@ -51,6 +52,7 @@ export interface FormFieldStateSnapshot {
   dirty: boolean;
   visited: boolean;
   submitting: boolean;
+  submitAttempted: boolean;
 }
 
 export interface FormFieldPresentationSnapshot extends FormFieldStateSnapshot {
@@ -87,6 +89,7 @@ export interface FormStoreApi {
   setDirty(path: string, dirty: boolean): void;
   setVisited(path: string, visited: boolean): void;
   setSubmitting(submitting: boolean): void;
+  setSubmitAttempted(submitAttempted: boolean): void;
   batchUpdate(updates: Partial<FormStoreState>): void;
 }
 

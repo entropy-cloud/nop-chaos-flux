@@ -395,7 +395,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       store.batchUpdate({
         values: nextValues,
         fieldStates: {},
-        submitting: false
+        submitting: false,
+        submitAttempted: false
       });
     },
 

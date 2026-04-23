@@ -11,7 +11,7 @@ export function resolveShowErrorTriggers(
 
 export function shouldShowFieldError(
   behavior: Pick<CompiledValidationBehavior, 'showErrorOn'> | ValidationVisibilityBehavior | undefined,
-  state: { touched: boolean; dirty: boolean; visited: boolean; submitting: boolean }
+  state: { touched: boolean; dirty: boolean; visited: boolean; submitting: boolean; submitAttempted: boolean }
 ): boolean {
   return resolveShowErrorTriggers(behavior).some((trigger) => {
     switch (trigger) {
@@ -22,7 +22,7 @@ export function shouldShowFieldError(
       case 'visited':
         return state.visited;
       case 'submit':
-        return state.submitting;
+        return state.submitAttempted;
       default:
         return false;
     }

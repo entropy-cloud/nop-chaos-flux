@@ -88,9 +88,9 @@ export async function executeFormSubmit(
     return { ok: false, cancelled: true, error: new Error('Submit aborted') };
   }
 
-  setIsSubmitting(true);
-
   const { store, runtimeFieldRegistrations } = sharedState;
+  setIsSubmitting(true);
+  store.setSubmitAttempted(true);
   let submittingTimer: ReturnType<typeof setTimeout> | undefined;
 
   if (submittingDelay > 0) {

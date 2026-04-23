@@ -154,7 +154,13 @@ export function buildFormOwnerRuntime(input: {
 
     for (const [sourceId, entry] of input.sharedState.externalErrors) {
       const filtered = entry.errors.filter(
-        (error: ValidationError) => error.path !== name && !error.path.startsWith(`${name}.`)
+        (error: ValidationError) => {
+          if (error.path === name || error.path.startsWith(`${name}.`)) {
+            return false;
+          }
+
+          return !(name.startsWith(`${error.path}.`) || error.path === input.getThisForm().rootPath);
+        }
       );
 
       if (filtered.length !== entry.errors.length) {
@@ -172,12 +178,13 @@ export function buildFormOwnerRuntime(input: {
 
   function applyExternalErrors(inputValue: ApplyExternalErrorsInput): ScopeValidationStateSnapshot {
     const { sourceId, errors, replace } = inputValue;
+    const ownedErrors = errors.filter((error) => input.getThisForm().isPathOwned(error.path));
     const existing = input.sharedState.externalErrors.get(sourceId);
 
     if (replace || !existing) {
-      input.sharedState.externalErrors.set(sourceId, { sourceId, errors });
+      input.sharedState.externalErrors.set(sourceId, { sourceId, errors: ownedErrors });
     } else {
-      input.sharedState.externalErrors.set(sourceId, { sourceId, errors: [...existing.errors, ...errors] });
+      input.sharedState.externalErrors.set(sourceId, { sourceId, errors: [...existing.errors, ...ownedErrors] });
     }
 
     const fieldStates = input.sharedState.store.getState().fieldStates;

@@ -5,7 +5,8 @@ import { resolveShowErrorTriggers, shouldShowFieldError } from './field-error-vi
 export const EMPTY_FORM_STORE_STATE: FormStoreState = {
   values: {},
   fieldStates: {},
-  submitting: false
+  submitting: false,
+  submitAttempted: false
 };
 
 export const EMPTY_FORM_FIELD_STATE: FormFieldStateSnapshot = {
@@ -14,7 +15,8 @@ export const EMPTY_FORM_FIELD_STATE: FormFieldStateSnapshot = {
   touched: false,
   dirty: false,
   visited: false,
-  submitting: false
+  submitting: false,
+  submitAttempted: false
 };
 
 function matchesFormErrorQuery(error: ValidationError, query?: FormErrorQuery): boolean {
@@ -74,7 +76,8 @@ export function selectCurrentFormFieldState(
     touched: fieldState?.touched === true,
     dirty: fieldState?.dirty === true,
     visited: fieldState?.visited === true,
-    submitting: state.submitting
+    submitting: state.submitting,
+    submitAttempted: state.submitAttempted
   };
 }
 
@@ -126,7 +129,8 @@ export function selectCurrentFormFieldPresentation(
       touched: fieldState.touched,
       dirty: fieldState.dirty,
       visited: fieldState.visited,
-      submitting: fieldState.submitting
+      submitting: fieldState.submitting,
+      submitAttempted: fieldState.submitAttempted
     })
   );
   const effectiveDisabled = Boolean(input.disabled);
