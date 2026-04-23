@@ -13,6 +13,7 @@ import type {
   SchemaCompiler,
   SchemaInput,
   ScopePlan,
+  StaticAnalysisResult,
   TemplateNode,
   TemplateRegion,
   WrapProvidersFn,
@@ -117,6 +118,93 @@ function buildWrapProvidersClosure(providers: TemplateNode['providerPlan']): Wra
   }
 
   return fn;
+}
+
+function collectDependencies(_node: TemplateNode): readonly string[] {
+  return [];
+}
+
+function getRegionChildren(region: TemplateRegion): readonly TemplateNode[] {
+  if (!region.node) {
+    return [];
+  }
+
+  if (Array.isArray(region.node)) {
+    return region.node;
+  }
+
+  return [region.node] as readonly TemplateNode[];
+}
+
+function isMetaProgramStatic(metaProgram: TemplateNode['metaProgram']): boolean {
+  for (const field of Object.values(metaProgram)) {
+    if (field && !field.isStatic) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function computeStaticAnalysis(
+  node: TemplateNode,
+  schema: BaseSchema
+): StaticAnalysisResult {
+  const renderer = node.component;
+
+  if (!renderer.staticCapable) {
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node)
+    };
+  }
+
+  if (!node.propsProgram.isStatic) {
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node)
+    };
+  }
+
+  if (!isMetaProgramStatic(node.metaProgram)) {
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node)
+    };
+  }
+
+  if (schema.name) {
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node)
+    };
+  }
+
+  if (Object.keys(node.eventPlans).length > 0) {
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node)
+    };
+  }
+
+  if (node.scopePlan.kind !== 'inherit') {
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node)
+    };
+  }
+
+  for (const region of Object.values(node.regions)) {
+    for (const child of getRegionChildren(region)) {
+      if (!child.staticAnalysis?.isStaticContent) {
+        return {
+          isStaticContent: false,
+          dependencies: collectDependencies(node)
+        };
+      }
+    }
+  }
+
+  return { isStaticContent: true, dependencies: [] };
 }
 
 export function createSchemaCompiler(input: {
@@ -342,7 +430,7 @@ export function createSchemaCompiler(input: {
 
     const providerWrap = buildWrapProvidersClosure(providerPlan);
 
-    return {
+    const node: TemplateNode = {
       templateNodeId: 0,
       id: createNodeId(path, schema),
       type: schema.type,
@@ -375,6 +463,10 @@ export function createSchemaCompiler(input: {
       sourcePropKeys: Array.from(sourcePropKeys).sort(),
       sourceStatePropKeys
     };
+
+    node.staticAnalysis = computeStaticAnalysis(node, schema);
+
+    return node;
   }
 
   function validateSchemaInput(schema: SchemaInput, options: CompileSchemaOptions = {}) {
