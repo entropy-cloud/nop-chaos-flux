@@ -110,7 +110,7 @@ test.describe('dialog renderer', () => {
     await expect(page.getByText('Example Dialog')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText('This is the dialog body content.')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('button', { name: /Close|关闭/ }).click();
     await expect(page.getByText('Example Dialog')).not.toBeVisible({ timeout: 5_000 });
   });
 

@@ -19,8 +19,7 @@ async function prepareFreshPage(page: import('@playwright/test').Page): Promise<
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  // Wait for homepage to be fully interactive - use the main heading
-  await page.getByRole('heading', { name: 'Playground' }).waitFor({ state: 'visible', timeout: 10000 });
+  await page.locator('.nop-debugger-launcher').waitFor({ state: 'visible', timeout: 10000 });
 }
 
 async function openFluxBasicPage(page: import('@playwright/test').Page): Promise<void> {
@@ -166,7 +165,7 @@ test.describe('Nop Debugger', () => {
     await expect(page.locator('.nop-debugger')).toBeVisible();
 
     await page.reload();
-    await page.waitForTimeout(500);
+    await page.locator('.nop-debugger').waitFor({ state: 'visible', timeout: 10000 });
     await expect(page.locator('.nop-debugger')).toBeVisible();
 
     const minimizeBtn = page.locator('[data-tooltip="Minimize"]');
@@ -175,7 +174,7 @@ test.describe('Nop Debugger', () => {
     await expect(page.locator('.ndbg-minimized')).toBeVisible();
 
     await page.reload();
-    await page.waitForTimeout(500);
+    await page.locator('.ndbg-minimized').waitFor({ state: 'visible', timeout: 10000 });
     await expect(page.locator('.ndbg-minimized')).toBeVisible();
 
     await page.locator('.ndbg-minimized').click();
