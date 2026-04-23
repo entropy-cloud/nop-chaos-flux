@@ -44,7 +44,7 @@ Rationale:
   - `packages/flux-action-core/src/action-dispatcher.ts` on `onSettled` branch failure reporting
 - Host navigation outside schema-authored built-in navigate actions if such paths appear later.
 - Import-load failure reporting shape has been converged through a shared helper, but semantic ownership is still duplicated between runtime and react integration.
-- Data-source failure notify, reaction fire-count warning notify, and the `flux-action-core` `onSettled` fallback notify path have all been converged through shared host-reporting helpers; the remaining gaps are now mostly semantic ownership questions and any future non-action host reports that still hand-roll their own semantics.
+- Data-source failure notify and reaction fire-count warning notify have been converged through shared host-reporting helpers. The remaining obvious standalone seam is still the `flux-action-core` `onSettled` fallback notify path, plus any future non-action host reports that still hand-roll their own semantics.
 - A thinner request/audit seam above `env.fetcher(...)` if debugger / audit tooling needs one effect timeline across ajax, validation, form submit, and data-source requests.
 
 Recommended convergence hook:
