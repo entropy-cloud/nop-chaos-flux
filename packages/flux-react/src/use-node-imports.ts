@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type {
-  ActionScope,
-  ComponentHandleRegistry,
-  ImportFrame,
-  NodeInstance,
-  RendererRuntime,
-  ScopeRef,
-  XuiImportSpec
+import {
+  isReportedImportError,
+  reportImportFailure,
+  type ActionScope,
+  type ComponentHandleRegistry,
+  type ImportFrame,
+  type NodeInstance,
+  type RendererRuntime,
+  type ScopeRef,
+  type XuiImportSpec
 } from '@nop-chaos/flux-core';
-import { isReportedImportError, shouldWarnOnImportFailure } from './node-renderer-utils';
+import { shouldWarnOnImportFailure } from './node-renderer-utils';
 
 const EMPTY_IMPORT_BINDINGS: Readonly<Record<string, unknown>> = Object.freeze({});
 
@@ -121,16 +123,13 @@ export function useNodeImports(
       });
 
       if (!isReportedImportError(error)) {
-        runtime.env.notify('error', `Imported namespaces failed for ${templateNode.templatePath}: ${error instanceof Error ? error.message : String(error)}`);
-        runtime.env.monitor?.onError?.({
-          phase: 'render',
-          error,
+        reportImportFailure({
+          env: runtime.env,
+          error: error instanceof Error ? error : new Error(String(error)),
+          imports: nodeImports ?? [],
           nodeId: templateNode.id,
           path: templateNode.templatePath,
-          details: {
-            reason: 'import-namespace-setup-failed',
-            imports: nodeImports ?? []
-          }
+          message: `Imported namespaces failed for ${templateNode.templatePath}: ${error instanceof Error ? error.message : String(error)}`
         });
       }
     });

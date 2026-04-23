@@ -82,7 +82,3 @@ export function shouldWarnOnImportFailure(): boolean {
     : undefined;
   return nodeEnv !== 'production';
 }
-
-export function isReportedImportError(error: unknown): boolean {
-  return error instanceof Error && Boolean((error as Error & { __fluxImportReported?: boolean }).__fluxImportReported);
-}

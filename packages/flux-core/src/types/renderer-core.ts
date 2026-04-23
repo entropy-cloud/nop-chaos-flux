@@ -159,6 +159,18 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   validation?: ValidationContributor<S>;
   wrap?: boolean;
   /**
+   * Whether this renderer supports static rendering (no client interaction needed).
+   * Used by the compiler for bottom-up static analysis.
+   *
+   * - true: display-only renderers (text, image, container, flex, heading, etc.)
+   * - false: interactive renderers (input, button, select, form, etc.)
+   *
+   * Default: false (safe default - assume interactive unless declared otherwise)
+   *
+   * @see docs/plans/131-static-analysis-optimization-plan.md
+   */
+  staticCapable?: boolean;
+  /**
    * Host contract metadata for publishing owner renderers.
    * Only renderers that act as host boundaries (e.g., designer-page, report-designer-page)
    * should define this field.

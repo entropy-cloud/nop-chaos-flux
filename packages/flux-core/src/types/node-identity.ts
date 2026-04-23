@@ -4,6 +4,33 @@ import type { BaseSchema, SchemaPath } from './schema';
 import type { ScopeDependencySet, ScopeRef } from './scope';
 import type { WrapProvidersFn } from './renderer-compiler';
 
+/**
+ * Compiler-computed static analysis results.
+ * Computed bottom-up during schema compilation (post-order traversal).
+ *
+ * @see docs/plans/131-static-analysis-optimization-plan.md
+ */
+export interface StaticAnalysisResult {
+  /**
+   * This node and all descendants are fully static.
+   * True only when ALL conditions are met:
+   * - Renderer declares staticCapable: true
+   * - Props have no expressions (propsProgram.isStatic)
+   * - No name binding in schema
+   * - No event handlers (eventPlans is empty)
+   * - No scope creation (scopePlan doesn't create scope)
+   * - All children are static (recursive, computed bottom-up)
+   */
+  isStaticContent: boolean;
+
+  /**
+   * Extracted dependency paths from expressions.
+   * Empty array if node is fully static.
+   * Used for fine-grained reactivity tracking.
+   */
+  dependencies: readonly string[];
+}
+
 export type TemplateNodeId = number;
 export type RepeatedTemplateId = string;
 export type RuntimeId = string;
@@ -98,6 +125,14 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   validationPlan?: ValidationPlan;
   sourcePropKeys: readonly string[];
   sourceStatePropKeys: Readonly<Record<string, string>>;
+  /**
+   * Compiler-computed static analysis results.
+   * Used by framework adapters for optimization decisions.
+   * Computed bottom-up during schema compilation (children first, then parents).
+   *
+   * @see docs/plans/131-static-analysis-optimization-plan.md
+   */
+  staticAnalysis?: StaticAnalysisResult;
 }
 
 export interface RepeatedTemplate {

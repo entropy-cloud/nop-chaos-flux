@@ -14,6 +14,7 @@ import type {
   ScopeRef,
   XuiImportSpec
 } from '@nop-chaos/flux-core';
+import { reportImportFailure } from '@nop-chaos/flux-core';
 
 function normalizeImportSpec(spec: XuiImportSpec): XuiImportSpec {
   return {
@@ -150,17 +151,11 @@ export function createImportStack(input: {
     return `${ownerNodeId}:import-frame-${nextFrameId}`;
   }
 
-function reportImportFailure(error: Error, spec?: XuiImportSpec) {
-    (error as Error & { __fluxImportReported?: boolean }).__fluxImportReported = true;
-    const env = input.getEnv();
-    env.notify('error', error.message);
-    env.monitor?.onError?.({
-      phase: 'render',
+  function notifyImportFailure(error: Error, spec?: XuiImportSpec) {
+    reportImportFailure({
+      env: input.getEnv(),
       error,
-      details: {
-        reason: 'import-namespace-setup-failed',
-        imports: spec ? [spec] : []
-      }
+      imports: spec ? [spec] : []
     });
   }
 
@@ -209,7 +204,7 @@ function reportImportFailure(error: Error, spec?: XuiImportSpec) {
     for (const spec of imports) {
       if (Object.prototype.hasOwnProperty.call(entries, spec.as)) {
         const error = createImportError(`Duplicate import alias in the same node boundary: ${spec.as}`);
-        reportImportFailure(error, spec);
+        notifyImportFailure(error, spec);
         throw error;
       }
 
@@ -220,7 +215,7 @@ function reportImportFailure(error: Error, spec?: XuiImportSpec) {
 
         if (!inherited && !inheritedProvider) {
           const error = createImportError(`Namespace collision for import alias: ${spec.as}`);
-          reportImportFailure(error, spec);
+          notifyImportFailure(error, spec);
           throw error;
         }
       }
@@ -256,7 +251,7 @@ function reportImportFailure(error: Error, spec?: XuiImportSpec) {
         };
       } catch (error) {
         const wrappedError = createImportError(`Imported namespace ${spec.as} failed to load: ${toErrorMessage(error)}`, error);
-        reportImportFailure(wrappedError, spec);
+        notifyImportFailure(wrappedError, spec);
         throw wrappedError;
       }
 
