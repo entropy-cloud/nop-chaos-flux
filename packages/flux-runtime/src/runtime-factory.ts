@@ -367,8 +367,7 @@ export function createRendererRuntime(input: {
     },
     registerDataSource(inputValue: {
       id: string;
-      schema?: import('@nop-chaos/flux-core').DataSourceSchema;
-      compiledSource?: import('@nop-chaos/flux-core').CompiledDataSource;
+      compiledSource: import('@nop-chaos/flux-core').CompiledDataSource;
       scope: ScopeRef;
     }) {
       if (!sourceRegistryRef.current) {
@@ -378,7 +377,6 @@ export function createRendererRuntime(input: {
       return sourceRegistryRef.current.registerDataSource({
         id: inputValue.id,
         scope: inputValue.scope,
-        schema: inputValue.schema,
         compiledSource: inputValue.compiledSource
       });
     },
