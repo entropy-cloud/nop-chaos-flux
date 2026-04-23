@@ -25,6 +25,7 @@
 - 它解决的是“多态值 / union-like value”的识别和编辑，不是 detail surface 的展开问题。
 - 它应复用共享的 detection / payload / switch-migration 规则，但不应为了统一而强行引入 submit-time owner validate/transformOut。
 - 本文档描述当前推荐 baseline：variant detection 和 switch migration 是一等能力；commit 仍由父表单正常 live-edit 提交承担。
+- 在 `docs/architecture/data-domain-owner.md` 的 owner vocabulary 下，`variant-field` 默认是 parent-owned `inherit-owner` projected polymorphic editor，不是 child data domain。
 
 ## Core Model
 
@@ -44,7 +45,7 @@ interface VariantFieldSchema extends BaseSchema {
   readOnly?: boolean;
   variants: VariantOption[];
   selector?: {
-    mode?: 'tabs' | 'select' | 'radio' | 'segmented';
+    mode?: 'tabs' | 'select';
     label?: string;
   };
   defaultVariant?: string;
@@ -118,7 +119,8 @@ type VariantMatch =
 - `variant-field` 默认没有独立 draft runtime
 - `variant-field` 默认不要求 `variant validate -> field validate -> variant transformOut -> field transformOut` 这类 submit-time owner pipeline
 - 如果某个 variant 的编辑器本身需要 staged edit，应在该 variant 内部组合 `detail-field` / `detail-view` 等 surface-backed owner
-- `variant-field` 默认不创建新的 `FormRuntime`
+- `variant-field` 默认不创建新的独立 owner runtime
+- 当前 live implementation 会创建 projected `FormRuntime` / `ScopeRef` view，但这些 view 继续把 registration、validation、writeback 绑定到 parent owner
 - 推荐实现是复用父 `FormRuntime` / `ValidationScopeRuntime`，再为当前变体发布一个很窄的 projected scope payload，例如 `{ value, variant, readOnly }`
 
 ## Variant Switching
@@ -135,6 +137,11 @@ Mounted-subtree rule:
 - 默认只挂载当前 active variant 的 viewer / content subtree
 - 不推荐为了“切换更快”长期同时挂载所有 variant subtree
 - hidden variant subtree 的内部运行态如果确实需要保留，应由更具体的 owner 明确声明，而不是作为 `variant-field` 的默认基线
+
+默认 parent-owned validation implication:
+
+- 只有 active variant subtree 参与当前 parent-owned validation/materialization
+- inactive branches 在默认基线下不应继续作为 blocking validation subtree 保持参与
 
 这样比“尝试自动保留旧值”更可预测。
 
@@ -154,7 +161,16 @@ Mounted-subtree rule:
 
 ## Result And Validation Order
 
-推荐顺序：
+下面的顺序是 future-capable ordering，不应误读成当前 live implementation 已完整落地。
+
+当前 live baseline 更窄：
+
+- built-in match + optional `detectVariantAction`
+- switch 时使用目标 variant `initialValue` 或目标 variant `transformInAction`
+- 切换后直接把结果写回 parent field value
+- 当前并没有完整落地 field-level / variant-level `validateValueAction` 与 `transformOutAction` pipeline
+
+如果未来要扩展 richer adapter ordering，推荐顺序是：
 
 ### Inbound
 
@@ -170,6 +186,21 @@ Mounted-subtree rule:
 
 1. 变体级 `transformOutAction`
 2. 控件级 `transformOutAction`
+
+### Validation And Addressing
+
+`variant-field` 的默认模型应与 parent owner validation 保持同一条轴：
+
+- child field state bucket 仍属于 parent owner
+- owner-local absolute path 仍是 parent owner 下的 `${name}` 或 `${name}.foo` 这类路径
+- projected variant form 只是把 child field path rebasing 到 parent owner 的 owner-local absolute path
+
+因此：
+
+- `variant-field` 默认属于 `inherit-owner`
+- projected variant scope/view 不等于 child owner
+- scalar/root variant child input 如需直接编辑字段根值，当前 live baseline 应使用空路径 `name: ''`，而不是把 `value` 当成 projected form alias
+- 若某个 variant 真正需要独立 validation/publish boundary，应在该 variant subtree 内显式组合 staged owner
 
 ## `detectVariantAction`
 
@@ -209,7 +240,7 @@ Mounted-subtree rule:
   "type": "variant-field",
   "name": "validateAction",
   "selector": {
-    "mode": "segmented",
+    "mode": "tabs",
     "label": "Type"
   },
   "variants": [
@@ -219,7 +250,7 @@ Mounted-subtree rule:
       "match": { "kind": "typeof", "value": "string" },
       "content": {
         "type": "input-text",
-        "name": "value"
+        "name": ""
       },
       "initialValue": ""
     },
@@ -229,7 +260,7 @@ Mounted-subtree rule:
       "match": { "kind": "has-key", "key": "action" },
       "content": {
         "type": "detail-field",
-        "name": "value",
+        "name": "",
         "viewer": {
           "type": "tpl",
           "tpl": "${value?.action || '未设置'}"
@@ -266,6 +297,9 @@ Mounted-subtree rule:
 
 ## Related Documents
 
+- `docs/architecture/data-domain-owner.md`
+- `docs/architecture/form-validation.md`
+- `docs/architecture/unified-runtime-indexing-and-path-binding.md`
 - `docs/architecture/value-adaptation-and-detail-field.md`
 - `docs/architecture/action-scope-and-imports.md`
 - `docs/architecture/renderer-runtime.md`

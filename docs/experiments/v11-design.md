@@ -1,8 +1,23 @@
 # V11: Next-Generation Frontend Programming Model
 
-**Version**: 0.2.0  
-**Status**: Revised Design (Post-Review)  
-**Review Cycle**: 1
+**Version**: 0.2.1  
+**Status**: Revised Design (Architectural Issues Identified)  
+**Review Cycle**: 2
+
+---
+
+> **⚠️ ARCHITECTURAL WARNING**
+> 
+> This document contains execution strategy designs (Resumability, Islands, ExecutionStrategy, QRL) that are **architecturally flawed**. These concepts assume the DSL layer can control framework-level execution, which is incorrect.
+> 
+> **What's wrong:**
+> - `ExecutionStrategy` per node cannot be honored by React
+> - `Resumability` requires Qwik's architecture, not implementable on React
+> - `Islands` / `hydration: visible|interaction` require framework-level support
+> 
+> **See**: `v11-final-design.md` for the corrected design that properly separates DSL concerns from framework concerns.
+> 
+> **What remains valid**: Seven Primitives, Algebraic Schema Calculus, Security Sandbox, Expression Engine design.
 
 ---
 

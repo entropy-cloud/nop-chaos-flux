@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This document defines the final validation architecture for Flux.
+This document defines the target validation architecture for Flux and the current live baseline that existing code must stay aligned with.
 
-It is self-contained and is the active source of truth for:
+It is self-contained and is the active local source of truth for:
 
 - schema-driven validation rules
 - nested form/object/array/table validation behavior
@@ -15,6 +15,11 @@ It is self-contained and is the active source of truth for:
 ## Core Claim
 
 Validation in Flux is owned by the nearest **validation-capable scope runtime**.
+
+Current live baseline note:
+
+- the concrete owner runtime in live code is still `FormRuntime`
+- `ValidationScopeRuntime` is already the right architectural abstraction and type contract, but it is not yet a separately mature generic runtime/factory used across page/root and non-form scopes
 
 This means:
 
@@ -266,11 +271,17 @@ Validation does not introduce a second parallel author-facing scope DSL.
 
 A validation scope exists when an existing data/value owner owns validation-participating nodes.
 
-Typical cases are:
+Target architecture cases are:
 
 1. `form` owning bound fields and aggregate validation
 2. page/root data scope owning bound fields when there is no nearer form or draft owner
 3. a local draft/value owner created by an existing value-lifecycle construct
+
+Current live baseline:
+
+1. `form` is the only concrete validation owner runtime family in ordinary shipped code paths
+2. renderer-local draft editors such as `detail-field` / `detail-view` create temporary `FormRuntime` instances to obtain isolated validation
+3. page/root and generic non-form validation owners remain target architecture, not current live concrete baseline
 
 A plain visual container with no validation content does not create a validation runtime.
 
@@ -291,10 +302,16 @@ Therefore:
 
 Validation ownership should be inferred from existing data/value ownership, not from a second explicit `validationScope` authoring block.
 
+This is the validation-facet reading of `docs/architecture/data-domain-owner.md`:
+
+- `ValidationScopeRuntime` is the validation facet of a `Data Domain Owner`
+- staged/live editing remains the same owner's publish facet
+- owner-local field/validation keys continue to use owner-local absolute paths, while cross-owner bookkeeping uses `OwnerQualifiedPath`
+
 Authoring guidance:
 
 1. use `form` when the subtree really has form semantics and a submit/confirm lifecycle
-2. let ordinary fields inside `page` / current lexical data scope attach to that existing owner by default
+2. treat page/root attachment as target owner guidance, not as current live validation-owner behavior
 3. use existing local-value or draft owner patterns when edits must stay isolated before commit
 4. do not require authors to invent a validation-only id or kind for ordinary containers
 
@@ -302,7 +319,7 @@ This keeps validation attached to the same owner model that already governs data
 
 ### Owner Resolution Algorithm
 
-> **Implementation Status**: This section describes the target architecture for multi-owner validation. Current implementation (Phase 2) uses a single-owner model where all validation belongs to the nearest `form`. Draft isolation for `detail-field` / `detail-view` is handled by renderers creating their own temporary `FormRuntime` instances. The compiler-level owner resolution described below is planned for Phase 3.
+> **Implementation Status**: This section describes the target architecture for multi-owner validation. Current implementation is still form-first: `FormRuntime` is the concrete validation owner runtime, parent-owned inline editors stay inside that owner via projected form proxies, and draft isolation for `detail-field` / `detail-view` is handled by renderers creating their own temporary `FormRuntime` instances. The compiler-level owner resolution described below is planned for a future phase.
 
 Each schema boundary that may introduce a scope should be classifiable as one of:
 
@@ -354,6 +371,12 @@ In the current implementation, draft isolation is achieved at the renderer level
 4. On cancel, the draft form is simply discarded
 
 This approach satisfies the core draft-isolation requirement without requiring compiler-level owner resolution. The trade-off is that each renderer needing draft semantics must implement its own isolation logic.
+
+Current live nearest-owner summary:
+
+1. inline/object/array/variant editors stay in the parent owner via projected form proxies and owner-root path rebasing
+2. `detail-field` / `detail-view` obtain isolated validation today by creating temporary draft `FormRuntime`
+3. there is not yet a generalized compiler-resolved owner tree used across all validation-capable scope families
 
 ### Future: Compiler-Level Owner Resolution (Phase 3)
 
@@ -941,7 +964,7 @@ In the current implementation:
 
 1. `detail-field` / `detail-view` create temporary draft `FormRuntime` instances
 2. These draft forms do not register child contracts with the parent — they are fully isolated
-3. On confirm, the renderer validates locally, transforms values, and writes back to parent via `parentForm.setValue()`
+3. On confirm, the renderer validates locally, transforms values, and writes back to the parent form or parent scope through renderer-managed writeback
 4. The parent has no awareness of the draft form's existence during editing
 
 This achieves the core isolation requirement without the full child contract mechanism.
@@ -975,10 +998,10 @@ Parent `canSubmit` semantics:
 
 1. parent-owned errors always affect parent `canSubmit`
 2. child scopes in `ignore` mode do not affect parent `canSubmit`
-3. child scopes in `summary-gate` mode affect parent `canSubmit` through `ready` and `validating` (using `ready` rather than `valid`, to prevent misreading a FormRuntime child as ready when allTouched is false)
+3. child scopes in `summary-gate` mode affect parent `canSubmit` through child summary state; current live code blocks on `!ready`, `validating`, and `!valid`
 4. child scopes in `recurse-submit` mode are validated during parent submit and may block submit
 
-Parent submit orchestration uses a deterministic child snapshot.
+Parent submit orchestration target model uses a deterministic child snapshot.
 
 Rules:
 
@@ -986,6 +1009,12 @@ Rules:
 2. the set of child contracts consulted by one submit attempt is the set of active contracts at that snapshot point
 3. a child owner that has not reached `active` state by that snapshot point does not participate in that submit attempt because it does not yet have an active contract
 4. a child owner already included in the submit snapshot but still refreshing at invocation time blocks completion until it becomes `active` or is disposed
+
+Current live implementation note:
+
+- current submit flow is narrower than the target snapshot model above
+- live code iterates the current child-contract map and triggers `recurse-submit` validation for contracts whose `active` flag is true
+- lifecycle-aware activation snapshots and broader automatic orchestration remain future work
 
 Commit propagation is also owner-local.
 
@@ -1005,12 +1034,18 @@ Default contracts:
 
 ## Scenario Mapping
 
+Current live concrete cases:
+
 1. normal form: `FormRuntime`
-2. filter panel: `ValidationScopeRuntime`
-3. inline table editing bound to parent values: parent owner
-4. row draft editor: child validation scope runtime
-5. detail dialog editing draft data: child validation scope runtime
-6. pure action controls: no validation scope runtime
+2. inline table editing bound to parent values: parent `FormRuntime`
+3. detail dialog editing draft data: temporary child `FormRuntime`
+4. pure action controls: no validation scope runtime
+
+Target architecture cases:
+
+1. filter panel: `ValidationScopeRuntime`
+2. row draft editor: child validation scope runtime
+3. page/root owner: validation-capable non-form owner when there is no nearer form or draft owner
 
 ## Implementation Phases
 
@@ -1032,7 +1067,7 @@ Default contracts:
 ### Phase 3 — Future
 
 1. common validation scope runtime beneath form
-2. non-form validation scopes (filter panels, search panels)
+2. non-form validation scopes (filter panels, search panels, page/root owner)
 3. compiler-driven `create-owner` / `inherit-owner` / `no-owner` boundary classification
 4. automatic draft scope ownership without renderer-level form creation
 

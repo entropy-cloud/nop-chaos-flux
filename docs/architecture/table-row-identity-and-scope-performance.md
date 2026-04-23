@@ -663,6 +663,12 @@ The split is:
 - form runtime owns index-addressed value semantics
 - table rendering owns `rowKey`-addressed runtime identity and row-scope reuse
 
+Under `docs/architecture/data-domain-owner.md`, this split also means:
+
+- row scope itself is not a `Data Domain Owner` by default
+- a future row-local staged editor may become a child data domain, but its commit target must still resolve through the row owner's current `rowKey -> sourceIndex` bridge
+- owner-local value paths may remain index-addressed even when runtime identity and retargeting are `rowKey`-addressed
+
 ### Row Index Bridge
 
 The collection owner must maintain or derive a current bridge between `rowKey` and `sourceIndex` for each reconciliation turn.
@@ -672,6 +678,7 @@ Required properties:
 - O(1) lookup by `rowKey` during reconciliation
 - correct routing of source-index changes into row-local `index` publication
 - deterministic behavior across insert, remove, reorder, filter, and pagination projection
+- row-local staged child-owner commit, if present, must resolve through this bridge rather than blindly reusing a stale opening-time index
 
 This bridge may be:
 

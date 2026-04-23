@@ -237,6 +237,75 @@ Current baseline note:
 - current invalidation also includes a self-target loop guard so a source does not immediately retrigger itself from writes to its own published `name` binding
 - current action/runtime integration includes a built-in `refreshSource` action that targets a registered source id through `targetId` and delegates to the runtime-owned source registry refresh semantics; this is runtime-entry targeting, not component-handle dispatch
 
+### Action Adapter Convergence Boundary
+
+Current convergence baseline:
+
+- `ActionRuntimeAdapter` is now the unified runtime invocation boundary for built-in, `component:<method>`, and namespaced actions.
+- `reaction.actions` already reuses that boundary indirectly because reaction execution dispatches actions through `runtime.dispatch(...)`, and `flux-action-core` then routes final built-in/component/namespace invocation through `ActionRuntimeAdapter`.
+- `type: 'source'` already reuses that same boundary for action-backed and api-backed execution bodies through `createSourceExecutor(...)->executeAction(...) -> runtime.dispatch(...) -> ActionRuntimeAdapter`.
+
+Important distinction:
+
+- The reusable execution body of a source or reaction can and should flow through action dispatch and the unified adapter boundary.
+- But a `data-source` owner is not reducible to an ordinary action run. It still owns scheduling, polling, dedup/refresh policy, async governance, stale-result handling, publish-to-scope semantics, and scope disposal cleanup.
+
+Normative rule:
+
+- If a source/reaction concern is "execute this schema-authored action body", it should reuse `runtime.dispatch(...)` and therefore `ActionRuntimeAdapter`.
+- If a concern is owner lifecycle orchestration (`data-source` refresh scheduling, request status state, polling loop, stale/drop semantics, scope-tree disposal), it remains in runtime-owned source/reaction controllers and should not be forced into `ActionRuntimeAdapter`.
+
+This means the current architecture already has one unified action invocation boundary, but it intentionally does not collapse all runtime owner semantics into the adapter.
+
+### Remaining Runtime Effect Seams
+
+After the current convergence work, the remaining seams should be read in three buckets.
+
+1. Already converged
+
+- built-in / component / namespaced actions
+- `reaction.actions`
+- action-backed/api-backed `source` execution bodies
+
+These all reach runtime through `runtime.dispatch(...)` and the unified `ActionRuntimeAdapter` boundary.
+
+2. Intentionally owner-local
+
+- `data-source` refresh orchestration
+- polling, dedup, stale-drop, and async-governance state
+- publish-to-scope and status publication
+- scope-tree disposal / abort cleanup
+
+These are runtime owner semantics, not missing action adapter coverage.
+
+3. Candidate future host-boundary convergence
+
+- data-source failure notifications
+- reaction warning notifications
+- any future non-action host navigation seam
+- a possible request/audit interception layer above `env.fetcher(...)`
+
+These are the realistic next places to evaluate if the project wants a broader effect channel. They should be treated as host/runtime side-effect seams, not as evidence that action-family invocation is still fragmented.
+
+Current note:
+
+- import failure reporting is now partially converged through a shared helper in `@nop-chaos/flux-core`, so runtime and react integration no longer hand-roll separate `notify + monitor` payload shapes
+- remaining work in this area is no longer shape convergence, but deciding whether import failures should still be reported from two code locations or whether one owner should become the single semantic reporter
+
+Recommended first hook:
+
+- prefer an env decorator / adapter at the `SchemaRenderer` host boundary for `fetcher` / `notify` / `navigate` interception
+- this pattern is already proven in the repo by debugger integration (`decorateEnv(env)` plus `runtime.setEnv(env)` when env identity changes)
+- the repo now also has a shared low-level env decorator utility in `@nop-chaos/flux-core` so host-boundary wrappers no longer need to each reimplement basic `fetcher` / `notify` / `navigate` forwarding
+
+This makes env decoration the most pragmatic first step for host-boundary observability or audit convergence.
+
+However, env decoration is not a full replacement for runtime boundary design:
+
+- it does not unify owner lifecycle semantics such as `data-source` polling or stale-drop
+- it does not remove duplicate semantic reporting sites by itself; code may still need de-duplication about who emits import/data-source/reaction failure notifications
+- it does not replace `ActionRuntimeAdapter`, which remains the action invocation boundary rather than the host wiring boundary
+
 ## SourceSchema
 
 `type: 'source'` is the anonymous execution-backed value form.

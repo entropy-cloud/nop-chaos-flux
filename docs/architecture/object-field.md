@@ -17,6 +17,7 @@
 - 它与 `detail-field`、`detail-view`、`variant-field` 同属 value-oriented family，但默认是 inline live-edit control，而不是 surface-backed staged owner。
 - 它解决的是“一个字段值是对象，内部需要像局部 subform 一样编辑其属性”的问题。
 - 本文档描述当前推荐 baseline：`object-field` 不引入独立 confirm/cancel 提交流程。
+- 在 `docs/architecture/data-domain-owner.md` 的 owner vocabulary 下，`object-field` 默认是 parent-owned `inherit-owner` projected editor，不是 child data domain。
 
 ## Core Model
 
@@ -33,6 +34,11 @@ interface ObjectFieldSchema extends BaseSchema {
   validateValueAction?: ActionSchema | ActionSchema[];
 }
 ```
+
+当前 live implementation note:
+
+- `transformInAction` / `transformOutAction` 已接线
+- `validateValueAction` 仍不是当前已接线 baseline，不应误读为 object-field 当前会额外跑 owner-level validate pipeline
 
 ## Key Rule: Child Names Are Relative
 
@@ -82,8 +88,9 @@ interface ObjectFieldSchema extends BaseSchema {
 - `object-field` 默认没有独立 draft object
 - `object-field` 默认没有 owner-level confirm / cancel
 - `object-field` 默认不要求 submit-time owner `validateValueAction` / `transformOutAction`
-- `object-field` 默认不创建新的 `FormRuntime`
-- 推荐实现是复用父 `FormRuntime` / `ValidationScopeRuntime`，并对 `name` 对应对象根做 path-prefix projection
+- `object-field` 默认不创建新的独立 owner runtime
+- 当前 live implementation 会创建 projected `FormRuntime` / `ScopeRef` view，但这些 view 继续把 registration、validation、writeback 绑定到 parent owner
+- 推荐实现是复用父 `FormRuntime` / `ValidationScopeRuntime`，并对 `name` 对应对象根做 owner-root projection
 
 如果某个对象值真的需要“编辑中”和“已确认”两阶段语义，应优先使用 `detail-field` 或其它 surface-backed owner，而不是把 `object-field` 本身升级成 staged submit owner。
 
@@ -109,8 +116,22 @@ interface ObjectFieldSchema extends BaseSchema {
 当前更推荐的实现方向不是“局部 draft object”，而是：
 
 1. 子字段名相对对象根
-2. 运行时把子字段路径前缀映射到父 form path
+2. 运行时通过 `ownerRootPath = name` 把子字段相对路径 rebasing 到 parent owner 的 owner-local absolute path
 3. 继续复用父 form 的 field registration、subtree validation、submit 流程
+
+### Validation And Addressing
+
+`object-field` 的默认模型应与 parent owner validation 保持同一条轴：
+
+- child field state bucket 仍属于 parent owner
+- owner-local absolute path 仍是 parent owner 下的 `profile.firstName` 这类路径
+- projected child form 只是把 `firstName` 映射到 `profile.firstName`，不是创建新的 owner-qualified identity
+
+因此：
+
+- `object-field` 默认属于 `inherit-owner`
+- child subtree validation 仍在 parent owner 上执行
+- 如果某个对象编辑场景需要独立 child-owner validation/publish boundary，应显式改用 `detail-field` / `detail-view` 或其它 staged owner
 
 ## Layout
 
@@ -167,6 +188,9 @@ interface ObjectFieldSchema extends BaseSchema {
 
 ## Related Documents
 
+- `docs/architecture/data-domain-owner.md`
+- `docs/architecture/form-validation.md`
+- `docs/architecture/unified-runtime-indexing-and-path-binding.md`
 - `docs/architecture/value-adaptation-and-detail-field.md`
 - `docs/architecture/variant-field.md`
 - `docs/architecture/action-scope-and-imports.md`

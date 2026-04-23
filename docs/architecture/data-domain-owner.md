@@ -201,6 +201,219 @@ Data Domain Owner =
 
 `staged` 不一定意味着 surface，但具有 confirm/cancel 时，默认应采用 staged publish。
 
+## Operational Boundary Rules
+
+上面的定义还需要落到几个操作性判断上。
+
+### Scope Creation Does Not Imply Owner Creation
+
+推荐先分三层看：
+
+1. 是否创建 lexical read scope
+2. 是否创建 surface owner
+3. 是否创建 data domain owner
+
+这三件事有关联，但默认不等价。
+
+例如：
+
+- `dialog` 打开时可以创建 own scope，也一定会创建 `Surface Owner`，但这不等于 surface 本身就是 `Data Domain Owner`
+- `object-field` / `array-field` / `variant-field` 可以创建 projected child scope 或 projected form/runtime view，但这不等于默认创建 child data domain
+- table row 创建 row scope，也不等于 row scope 默认拥有独立 validation/publish boundary
+
+### Page Or Root Owner Rule
+
+`page` / root data scope 可以是 `Data Domain Owner`。
+
+判断规则：
+
+1. 如果当前页面级数据域承载了一组直接绑定的值
+2. 且这些值没有被更近的 `form` 或 local draft owner 接管
+3. 且当前 runtime 需要对这些值维护 validation 或 publish semantics
+
+则 page/root data scope 应被视为当前 nearest data domain owner。
+
+这条规则与 `form-validation.md` 保持一致：
+
+- `form` 不是唯一 validation-capable owner
+- page/root data scope 在没有更近 owner 时可以承接 validation ownership
+
+需要注意：
+
+- page shell 自身不是 surface owner family 的替代品
+- page 作为 data domain owner，不意味着 dialog/drawer 状态应上卷到 page
+
+### Surface Scope Rule
+
+`dialog` / `drawer` 可以拥有 own scope，也可以通过 `data` 初始化该 scope。
+
+这不与本文“surface 不是 data domain owner”冲突。
+
+正确解释是：
+
+1. surface own scope 解决的是 surface subtree 的 lexical read environment
+2. `Surface Owner` 解决的是 open/close/active/opening/closing
+3. `Data Domain Owner` 只在该 surface 内部明确承载业务值 + validation + publish boundary 时才成立
+
+因此：
+
+- “surface 里有 own scope” 不等于 “surface 本身拥有业务提交语义”
+- “surface 里出现 form / detail / local draft editor” 才表示 surface subtree 内承载了 data domain owner
+
+## Canonical Identity And Addressing
+
+`Data Domain Owner` 不只回答“谁拥有值”，还必须回答“owner 内的 canonical address 是什么”。
+
+### Owner-Local Absolute Path
+
+在 owner 已知前提下，值路径、field path、validation path 的 canonical key 应继续使用 **owner-local absolute path**。
+
+例如：
+
+- `profile.firstName`
+- `items.3.name`
+
+这里的“绝对”指：
+
+- 相对当前 owner 的 owning scope address space 是绝对路径
+- 它不是跨所有 owner/runtime 的全局统一地址
+
+### Owner-Qualified Identity
+
+跨 owner bookkeeping 时，规范 identity 应是：
+
+```text
+OwnerQualifiedPath = ownerId + owner-local absolute path
+```
+
+它至少用于：
+
+- validation bucket identity
+- async validation run ownership
+- child/parent owner bookkeeping
+- debugger-facing owner-aware diagnostics
+
+这与当前 `form-validation.md` 中的 `OwnerQualifiedPath` 基线一致。
+
+### `rootPath` Rule
+
+每个 data domain owner 都应有自己的 `rootPath` 语义。
+
+它回答：
+
+- 当前 owner 拥有哪些路径
+- 哪些 runtime write / validation descriptor 应被 owner 接受或拒绝
+- child-domain confirm 之后的 writeback 落到 parent owner 的哪个 subtree
+
+因此：
+
+- owner 不能接受落在其 `rootPath` 之外的 owned write
+- projected editor 的 path rebasing 仍然只是把相对字段映射回 parent owner 的 `rootPath` 子树
+- `instancePath` 不是值地址，也不替代 `rootPath`
+
+### Row Identity And Addressing
+
+row-local child domain 必须同时处理两条轴：
+
+1. owner-local value path 仍可 index-addressed
+2. commit target identity 必须优先按 `rowKey` resolve
+
+这意味着：
+
+- `items.3.name` 仍可作为 owner-local absolute path
+- 但 child-domain confirm 时，不能假设原 index 仍然代表同一个逻辑 row
+- table owner 必须维护当前 turn 的 `rowKey -> sourceIndex` resolve bridge
+
+resolve 失败时的规范结果应是 owner-level semantic result，而不是静默盲写：
+
+- `reject`
+- `reopen-required`
+- owner-specific conflict result
+
+## Lifecycle And Generation Rules
+
+`Data Domain Owner` 不是纯静态边界；它必须拥有 lifecycle。
+
+推荐最小状态：
+
+1. `bootstrapping`
+2. `active`
+3. `refreshing`
+4. `disposed`
+
+语义：
+
+- `bootstrapping`：owner 已创建，但 compiled model / child contract / initial publish state 尚未完全可执行
+- `active`：owner 当前可执行 validation、publish、submit、confirm 等正常工作
+- `refreshing`：owner 正在经历 model replacement 或 owner-local refresh，不应把旧 generation 结果静默发布为新 baseline
+- `disposed`：owner 已失效，必须拒绝新的 registration / validation / publish 请求
+
+需要注意：
+
+- owner-boundary changes across recompilation 是 lifecycle/model-replacement event，不是“在原 owner 上静默换语义”
+- child owner activation 也必须是 generation-aware 的，不能让旧 child contract 污染新 owner generation
+
+## Parent And Child Domain Contract
+
+child data domain 不是随便“confirm 一下就行”，它和 parent 之间需要稳定 contract。
+
+### Child Activation Rule
+
+child owner 只有在进入 `active` 状态后，才应视为真正参与 parent coordination。
+
+因此：
+
+- 未打开的 staged child owner 不应影响 parent gating
+- 已 dispose 的 child owner 不应继续保留 active contract
+- parent 在一个 submit/confirm attempt 内，应基于 snapshot 的 active child contract 集合工作
+
+### Parent Visibility Rule
+
+parent 默认不枚举 child owner 的内部 field errors。
+
+parent 读取 child 的规范方式应是：
+
+1. child summary state
+2. child commit result
+3. explicit child contract metadata
+
+而不是：
+
+- 任意深挖 child field-state map
+- 越过 child owner 直接把 child internals 当成 parent field tree 的一部分
+
+### Contract Modes
+
+与当前 `form-validation.md` 保持一致，child owner coordination 的基础模式应是：
+
+1. `ignore`
+2. `summary-gate`
+3. `recurse-submit`
+
+含义：
+
+1. `ignore`：parent 不用 child 来做 gating 或 submit orchestration
+2. `summary-gate`：parent 只读取 child summary state 来决定 owner readiness / gating
+3. `recurse-submit`：parent 的 submit/confirm 会显式触发 child submit-time validation / commit coordination
+
+当前推荐默认：
+
+- child draft editor 默认 `ignore`，直到自己的 confirm/commit 发生
+- filter/search/wizard 只在 action 或 page-level gating 需要时采用 `summary-gate`
+- nested submit-capable form 默认仍应保持显式 contract，而不是隐式递归 submit
+
+### Commit Propagation Rule
+
+child owner commit 只写入其 **immediate parent owner**。
+
+因此：
+
+- child 不应直接写 grandparent owner
+- grandchild 不能绕过 parent contract 直接落入更高层 owner
+- parent 收到 child commit 结果后，再决定是否继续向上 publish
+
+这条规则保证 owner tree 的 publish semantics 是逐层收敛的，而不是跨层跳写。
+
 ## Ingress And Egress Policies
 
 同一个 staged data domain 是否合理，关键不在“是不是又开了一个 scope”，而在下面两条方向策略。
@@ -234,6 +447,44 @@ Data Domain Owner =
 - `publish-patch` 是 `commit-only` 的结果形式特化，不是第三套并列编辑世界
 - 有 confirm/cancel 的 owner 默认应使用 `commit-only` 或 `publish-patch`
 
+### Recommended Family Defaults
+
+| Owner family | Ingress default | Egress default | Notes |
+| --- | --- | --- | --- |
+| `form` | owner-local current value | `live-write-through` | form 默认是 live owner，但可承载 staged child domains |
+| `detail-field` / `detail-view` | `seed-on-open` | `commit-only` or `publish-patch` | 当前最成熟的 staged child-domain baseline |
+| row-local staged editor | `seed-on-open` | `publish-patch` | commit target resolve 必须优先按 `rowKey` |
+| filter/search panel | owner-specific seed | `commit-only` | 是否发布到 page/query owner 由 action contract 决定 |
+| wizard step | owner-specific seed | `commit-only` | staged boundary 由 step confirm/next 决定 |
+
+这些默认值是 owner-family baseline，不排除更窄的 schema option 特化。
+
+## Owner Taxonomy Under This Model
+
+## Decision Matrix
+
+下表用于回答三个问题：
+
+1. 是否创建 scope
+2. 是否创建 `Surface Owner`
+3. 是否创建 `Data Domain Owner`
+
+| Boundary | Own scope | Surface owner | Data domain owner | Default interpretation |
+| --- | --- | --- | --- | --- |
+| `page` root | yes | no | conditional yes | 在没有更近 form/draft owner 时可承接 page/root data ownership |
+| `form` | yes | no | yes | live publish 的 submit-capable domain owner |
+| `dialog` / `drawer` shell | yes | yes | no | own scope + surface state，不默认拥有业务 submit boundary |
+| `detail-field` / `detail-view` | yes | usually hosted in surface | yes | 当前 staged child-domain baseline |
+| `object-field` | maybe projected scope/view | no | no | parent-owned projected editor |
+| `array-field(item)` | yes or projected item view | no | no | parent-owned item editor；item scope 不等于 item owner |
+| `variant-field` | maybe projected scope/view | no | no | parent-owned polymorphic editor |
+| table row scope | yes | no | no | isolated row scope 默认不是 child domain |
+| row-local staged editor | yes | optional | conditional yes | 只有显式 local validation + publish boundary 时才 create-owner |
+| filter/search panel | yes | optional | conditional yes | 非 form owner，但可以是 validation-capable data domain |
+| wizard step | yes | no | conditional yes | 取决于是否拥有独立 publish boundary |
+| `loop item` | yes | no | no | lexical repeated scope，不默认 create-owner |
+| `recurse` | structural only | no | no | recursive structure 本身不构成 owner boundary |
+
 ## Owner Taxonomy Under This Model
 
 ### `form`
@@ -250,6 +501,21 @@ Data Domain Owner =
 默认 `form` 是 live publish。
 
 但 `form` 可以承载 staged child domains。
+
+### `page` / root data scope
+
+`page` / root data scope 在没有更近 `form` 或 local draft owner 时，可以是 `Data Domain Owner`。
+
+它不是最推荐的 submit-oriented owner family，但它可以承接：
+
+- page-level bound values
+- page-level validation ownership
+- page-local publish semantics
+
+需要保持的边界：
+
+- page owner 不替代 `Surface Owner`
+- page owner 不自动吞并 surface-local status
 
 ### `detail-field` / `detail-view`
 
@@ -297,6 +563,8 @@ surface 负责：
 - open/close/active/opening/closing
 
 但 surface 内部可以承载一个或多个 data domain owner。
+
+如果 surface 仅承载只读内容或 parent-owned live editor，则该 surface 内部可能根本没有新的 data domain owner。
 
 ### `object-field` / `array-field` / `variant-field`
 
@@ -349,6 +617,12 @@ surface 负责：
 - 为什么 staged/live 是同一数据域的 publish policy
 - 为什么并不是每个 local scope 都 create-owner
 
+同时本文要求与 `form-validation.md` 的以下实现锚点保持一致：
+
+- owner acceptance / rejection 仍按 `rootPath` 和 owner-qualified path 边界工作
+- parent/child coordination 仍按 `ignore` / `summary-gate` / `recurse-submit` 解释
+- current renderer-level draft `FormRuntime` 仍是合法 interim implementation，而不是文档错误
+
 ## Relationship To Existing Scope Architecture
 
 本文明确拒绝以下误读：
@@ -365,6 +639,11 @@ surface 负责：
 - `Data Domain Owner` 负责 ownership
 
 二者相关，但不等价。
+
+更具体地说：
+
+- 创建 own scope 只回答“这棵子树从哪里读数据”
+- 创建 data domain owner 才回答“谁拥有 validation / publish / lifecycle / commit authority”
 
 ## Relationship To Existing Composite Field Docs
 
@@ -402,6 +681,31 @@ surface 负责：
 3. 把 `dialog` / `drawer` 变成 draft owner
 4. 把 `object-field` / `array-field` / `variant-field` 默认改造成 staged submit controls
 5. 因为引入 Data Domain 就强迫 validation 与通用 dependency graph 彻底合并
+6. 把新的 lens-like 全局地址替换成 owner-local absolute path 作为当前 canonical runtime addressing
+
+## Current Implementation Status
+
+本文定义的是 target architecture baseline，但当前 live code 的成熟度并不均衡。
+
+当前已成立的实现事实：
+
+1. `ValidationScopeRuntime` / `FormRuntime` 已经具备 owner-local `rootPath`、owner-qualified error/path bookkeeping、child contract 以及 owner rejection rules 的基础能力
+2. `detail-field` / `detail-view` 已经通过 renderer-level draft `FormRuntime` 落地 staged child-domain baseline
+3. `object-field` / `array-field` / `variant-field` 已经通过 projected form/runtime view 与 path binding 实现 parent-owned local editing
+4. table 已有 row scope isolation、`rowKey` identity、row scope cache；但 row-local staged editor 仍不是一个已经成熟落地的共享 owner family
+
+当前尚未完全落地的部分：
+
+1. compiler-aware `inherit-owner` / `create-owner` / `no-owner` owner tree partition 仍未在所有 renderer family 中完成
+2. row-local staged child domain 仍缺正式 shared contract
+3. filter/search/wizard 这类非-form validation owner 仍缺统一 reusable substrate
+
+因此阅读本文时应明确区分：
+
+- target owner semantics
+- current implementation center of gravity
+
+不要把“target baseline 已清晰”误读成“所有 owner family 都已同等成熟实现”。
 
 ## Migration Path
 

@@ -17,6 +17,7 @@
 - 它与 `object-field`、`detail-field`、`detail-view`、`variant-field` 同属 value-oriented family，但默认是 inline live-edit control，而不是 staged submit owner。
 - 它解决的是“一个字段值是数组，内部需要编辑多个元素”的问题。
 - 本文档描述当前推荐 baseline：数组元素编辑直接作用于父表单当前值，不额外引入 owner draft/commit 层。
+- 在 `docs/architecture/data-domain-owner.md` 的 owner vocabulary 下，`array-field` 默认是 parent-owned `inherit-owner` projected editor，不是 child data domain。
 
 ## Not The Same As `list` Or `loop`
 
@@ -54,6 +55,12 @@ interface ArrayFieldSchema extends BaseSchema {
   validateValueAction?: ActionSchema | ActionSchema[];
 }
 ```
+
+当前 live implementation note:
+
+- `itemKind` / `itemKey` / add/remove baseline 已落地
+- schema-level `transformInAction` / `transformOutAction` / `validateValueAction` 仍不是当前已接线 baseline
+- `sortable` 目前也不应被表述为已完整落地的默认能力
 
 ## Item Kinds
 
@@ -109,13 +116,15 @@ interface ArrayFieldSchema extends BaseSchema {
 1. `schema.itemKey`
 2. `record.__rowKey`
 3. `record.id`
-4. development warning plus last-resort compatibility fallback to the current index
+4. last-resort compatibility fallback to the current index
 
 说明：
 
 - `itemKey` 解决的是 item continuity，不是值写回路径
 - add / remove / reorder 后，值和校验 remap 仍按 index 处理
 - 稳定 `itemKey` 主要用于避免对象数组 item subtree 在 reorder/remap 时不必要地 remount
+- parent owner 的 value path、validation path、writeback path 仍保持 index-addressed
+- 当前 live implementation 只会在 duplicate preferred keys 时输出 development warning；missing preferred key 时会直接退回 compatibility index identity
 
 ## Lifecycle
 
@@ -131,6 +140,8 @@ interface ArrayFieldSchema extends BaseSchema {
 - `array-field` 默认没有独立 draft array
 - `array-field` 默认没有 owner-level confirm / cancel
 - `array-field` 默认不要求 submit-time owner `validateValueAction` / `transformOutAction`
+- `array-field` 默认不创建新的独立 owner runtime
+- 当前 live implementation 会为每个 item 创建 projected scope 和 projected `FormRuntime` view；这些 view 继续把 registration、validation、writeback 绑定到 parent owner
 
 如果某个数组编辑场景确实需要 staged edit、确认后统一提交、或复杂 commit-time transformation，应使用明确的 surface-backed owner 包住该数组编辑器，而不是把 `array-field` 默认模型改成 owner-submit。
 
@@ -145,6 +156,17 @@ interface ArrayFieldSchema extends BaseSchema {
   readOnly
 }
 ```
+
+当前 live implementation 对标量 item 使用：
+
+- `ownerRootPath = ${name}.${index}`
+- `scalarValueAlias = 'value'`
+
+这意味着：
+
+- authoring 上子字段仍写 `value`
+- runtime canonical path 仍是 parent owner 下的 `${name}.${index}`
+- `value` 只是 projected alias，不是新的值地址层
 
 ### Object Item
 
@@ -173,6 +195,20 @@ interface ArrayFieldSchema extends BaseSchema {
 { "name": "value.sku" }
 ```
 
+### Validation And Addressing
+
+`array-field` 的默认模型应与 parent owner validation 保持同一条轴：
+
+- item child field state bucket 仍属于 parent owner
+- owner-local absolute path 仍是 `${name}.0.sku`、`${name}.1` 这类 index-addressed 路径
+- `itemKey` 只解决 repeated item continuity / scope reuse / instance identity，不替代值路径
+
+因此：
+
+- object item continuity 可以按 `itemKey`
+- 但 value writeback 和 validation 仍按 index-addressed parent-owned path 执行
+- projected item form 只是把相对 item 字段 rebasing 到 parent owner 的 owner-local absolute path
+
 ## Example: Scalar Array
 
 ```json
@@ -186,8 +222,7 @@ interface ArrayFieldSchema extends BaseSchema {
     "label": "Tag"
   },
   "addable": true,
-  "removable": true,
-  "sortable": true
+  "removable": true
 }
 ```
 
@@ -208,8 +243,7 @@ interface ArrayFieldSchema extends BaseSchema {
     ]
   },
   "addable": true,
-  "removable": true,
-  "sortable": true
+  "removable": true
 }
 ```
 
@@ -258,9 +292,13 @@ interface ArrayFieldSchema extends BaseSchema {
 - 对 `object` item，优先提供稳定 `itemKey`
 - 不必在作者层面再拆 `input-array` / `combo-field` 两套名字
 - 但实现层可以像 AMIS 一样，共享一个底层 repeated item editor 内核
+- richer transform/validate/sortable pipeline 只有在 live code 真正接线后，才应提升为 current baseline
 
 ## Related Documents
 
+- `docs/architecture/data-domain-owner.md`
+- `docs/architecture/form-validation.md`
+- `docs/architecture/unified-runtime-indexing-and-path-binding.md`
 - `docs/architecture/object-field.md`
 - `docs/architecture/value-adaptation-and-detail-field.md`
 - `docs/components/list/design.md`

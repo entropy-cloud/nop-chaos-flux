@@ -17,6 +17,14 @@
 - 本文档只收口 surface owner family 的窄规则。
 - 本文档描述的是目标 owner 基线，不要求当前代码已经完全落地同名 runtime/store 实现。
 
+Current live implementation note:
+
+- 当前代码库同时存在两条 surface path：
+  1. action-opened managed surfaces：通过 `openDialog` / `openDrawer` 进入 `SurfaceRuntime` + `DialogHost`
+  2. declarative `type: 'dialog'` / `type: 'drawer'` renderers：直接包裹 UI primitive 的 renderer path
+- 本文中的 shared `SurfaceRuntime` / root host 规则，优先适用于 managed surface path，不应自动外推为 declarative renderer 已全部共享同一路径
+- current live baseline 也已支持 declarative `dialog` / `drawer` 在 renderer path 上发布 `statusPath` summary；但它们仍不是 `SurfaceRuntime`-managed entries
+
 ## Core Claim
 
 `dialog`、`drawer` 这类组件首先是 **surface owner**，不是 page shell，也不是语义生命周期 owner。
@@ -121,6 +129,12 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 - `statusPath` 由 `SurfaceRuntime` 在 owner scope（通常是 `surface.scope.parent ?? surface.scope`）统一发布；React host 只负责渲染，不应重复写同一路径
 - surface close 时仍要把同一路径写回 `{ open: false, active: false, opening: false, closing: false }`，避免外部读者长期停留在陈旧的“已打开”快照
 
+Current live implementation note:
+
+- 上面的 `statusPath` 规则当前适用于 action-opened managed surfaces
+- declarative `dialog` / `drawer` renderers 当前也会在 renderer path 上发布自己的 summary DTO
+- 但 declarative path 仍不是通过 `SurfaceRuntime` store/stack 完成该发布
+
 局部读取规则：
 
 - 不建议一开始就分别暴露 `$dialog`、`$drawer`
@@ -186,6 +200,11 @@ future `sheet` 不能因为名字不同就自动获得独立 owner family。
 - `page` runtime/store is created by the page renderer; `NodeRenderer` does not publish it as a generic provider
 - the concrete host/owner creates one surface-family entry per opened surface, not `NodeRenderer`
 - each opened dialog or drawer entry owns its own surface-family owner instance; ownership is disposed when the surface closes
+
+Current live split:
+
+- managed surfaces 满足这条规则
+- declarative `dialog` / `drawer` renderers 当前只是 renderer-level UI wrapper，不等于“每个 declarative dialog 都已经注册成 host-managed surface entry”
 
 This rule is part of the broader creator-owned boundary model documented in `docs/architecture/renderer-runtime.md` → "Execution Boundary Ownership Matrix".
 
