@@ -43,6 +43,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
   const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
   const validationMessage = t('flux.common.detailDraftValidationError');
+  const effectiveDisabled = Boolean(props.meta.disabled);
 
   const labelContent = resolveFieldLabelContent(props);
 
@@ -89,7 +90,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   );
 
   async function handleOpen() {
-    if (readOnly) return;
+    if (effectiveDisabled) return;
 
     const adaptedValue = await runTransformIn(
       schema.transformInAction,
@@ -119,8 +120,6 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   }
 
   async function applyCommitResult(draftValues: Record<string, unknown>) {
-    if (!parentForm && !scopePath) return;
-
     const commitValue = Object.prototype.hasOwnProperty.call(draftValues, '__value')
       ? draftValues.__value
       : draftValues;
@@ -172,7 +171,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   }
 
   async function handleConfirm() {
-    if (!draftForm) return;
+    if (readOnly || !draftForm) return;
 
     setConfirming(true);
     setDraftError(undefined);
@@ -249,7 +248,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       <div data-slot="detail-view-viewer">
         {viewerContent}
       </div>
-      {!readOnly && (
+      {!effectiveDisabled && (
         <Button
           type="button"
           variant="outline"
@@ -264,6 +263,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         mode={surfaceMode}
         title={surfaceTitle}
         bodySlot="detail-view-surface-body"
+        readOnly={readOnly}
         onClose={handleCancel}
         footer={(
           <DetailDraftFooter

@@ -1,13 +1,15 @@
-import type {
-  ActionContext,
-  ApiRequestContext,
-  ApiResponse,
-  ExecutableApiRequest,
-  RendererEnv,
-  RendererMonitor,
-  RendererPlugin,
-  SchemaInput,
-  CompiledTemplate
+import {
+  decorateRendererEnv,
+  type ActionContext,
+  type ApiFetcher,
+  type ApiRequestContext,
+  type ApiResponse,
+  type ExecutableApiRequest,
+  type RendererEnv,
+  type RendererMonitor,
+  type RendererPlugin,
+  type SchemaInput,
+  type CompiledTemplate
 } from '@nop-chaos/flux-core';
 import { buildNetworkSummary, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
 import { redactData, type NormalizedRedactionOptions } from './redaction';
@@ -193,7 +195,7 @@ export function decorateDebuggerEnv(input: {
     }
   };
 
-  const decoratedFetcher = async <T,>(api: ExecutableApiRequest, ctx: ApiRequestContext): Promise<ApiResponse<T>> => {
+  const decoratedFetcher = async <T,>(next: ApiFetcher, api: ExecutableApiRequest, ctx: ApiRequestContext): Promise<ApiResponse<T>> => {
     const requestKey = createRequestKey(api);
     const startedAt = Date.now();
     const requestInstanceId = ctx.requestInstanceId ?? input.nextRequestInstanceId();
@@ -223,7 +225,7 @@ export function decorateDebuggerEnv(input: {
     }
 
     try {
-      const response = await input.env.fetcher<T>(api, ctx);
+      const response = await next<T>(api, ctx);
       const responseShape = summarizeValueShape(response.data);
       input.store.append({
         kind: 'api:end',
@@ -267,10 +269,12 @@ export function decorateDebuggerEnv(input: {
     }
   };
 
-  return {
+  return decorateRendererEnv({
     ...input.env,
+    monitor: decoratedMonitor
+  }, {
     fetcher: decoratedFetcher,
-    notify(level, message) {
+    notify(next, level, message) {
       input.store.append({
         kind: 'notify',
         group: 'notify',
@@ -278,10 +282,9 @@ export function decorateDebuggerEnv(input: {
         source: 'env.notify',
         summary: `${level}: ${message}`
       });
-      input.env.notify(level, message);
-    },
-    monitor: decoratedMonitor
-  };
+      next(level, message);
+    }
+  });
 }
 
 export function appendActionErrorEvent(store: NopDebuggerStore, error: unknown, ctx: ActionContext) {

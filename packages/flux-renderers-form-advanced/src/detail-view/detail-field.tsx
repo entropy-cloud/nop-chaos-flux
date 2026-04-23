@@ -45,7 +45,10 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
   const validationMessage = t('flux.common.detailDraftValidationError');
 
-  const presentation = useFieldPresentation(name, parentForm, { readOnly });
+  const presentation = useFieldPresentation(name, parentForm, {
+    disabled: props.meta.disabled,
+    readOnly
+  });
 
   const currentValue = useCurrentFormState(
     (state) => (name ? (state.values as Record<string, unknown>)[name] : undefined),
@@ -74,7 +77,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   );
 
   async function handleOpen() {
-    if (readOnly || presentation.effectiveDisabled) return;
+    if (presentation.effectiveDisabled) return;
 
     const adaptedValue = await runTransformIn(
       schema.transformInAction,
@@ -103,7 +106,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   }
 
   async function handleConfirm() {
-    if (!draftForm || !parentForm) return;
+    if (readOnly || !draftForm || !parentForm) return;
 
     setConfirming(true);
     setDraftError(undefined);
@@ -174,7 +177,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         <div data-slot="detail-field-viewer">
           {viewerContent ?? <span>{fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '—'}</span>}
         </div>
-        {!readOnly && !presentation.effectiveDisabled && (
+        {!presentation.effectiveDisabled && (
           <Button
             type="button"
             variant="outline"
@@ -190,6 +193,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         mode={surfaceMode}
         title={surfaceTitle}
         bodySlot="detail-field-surface-body"
+        readOnly={readOnly}
         onClose={handleCancel}
         footer={(
           <DetailDraftFooter

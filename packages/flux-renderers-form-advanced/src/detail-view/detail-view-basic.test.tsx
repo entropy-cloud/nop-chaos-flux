@@ -40,7 +40,7 @@ describe('detail-view renderer basic behavior', () => {
     expect(root?.querySelector('[data-slot="detail-view-draft-body"]')).toBeNull();
   });
 
-  it('does not render trigger button when readOnly', async () => {
+  it('allows opening in readOnly mode without confirm action', async () => {
     cleanup();
     const SchemaRenderer = createPageSchemaRenderer();
 
@@ -54,6 +54,8 @@ describe('detail-view renderer basic behavior', () => {
               type: 'detail-view',
               readOnly: true,
               triggerLabel: 'Edit Settings',
+              data: { theme: 'dark' },
+              surface: { mode: 'dialog', title: 'Settings' },
               content: [{ type: 'input-text', name: 'theme', label: 'Theme' }],
             },
           ],
@@ -63,7 +65,14 @@ describe('detail-view renderer basic behavior', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.queryByText('Edit Settings')).toBeNull());
+    await waitFor(() => expect(screen.getByText('Edit Settings')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Settings'));
+
+    await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
+
+    expect(screen.queryByText('Confirm')).toBeNull();
+    expect(screen.getByText('Close')).toBeTruthy();
   });
 
   it('opens dialog with static data pre-populated', async () => {
@@ -181,5 +190,72 @@ describe('detail-view renderer basic behavior', () => {
 
     expect(screen.getByLabelText('Name', { exact: false })).toBeTruthy();
     expect(document.querySelector('[data-slot="detail-view-draft-error"]')?.textContent).toContain('Please fix validation errors before confirming.');
+  });
+
+  it('applies confirmed updates for data-only detail-view on page scope', async () => {
+    cleanup();
+    const SchemaRenderer = createPageSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-basic.test.tsx#6"
+        schema={{
+          type: 'page',
+          data: { theme: 'dark' },
+          body: [
+            {
+              type: 'detail-view',
+              data: { theme: '${theme}' },
+              triggerLabel: 'Edit Config',
+              surface: { mode: 'dialog', title: 'Edit Config' },
+              content: [{ type: 'input-text', name: 'theme', label: 'Theme' }],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Config')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Config'));
+    await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
+
+    fireEvent.change(screen.getByLabelText('Theme'), { target: { value: 'light' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(screen.queryByLabelText('Theme')).toBeNull());
+
+    fireEvent.click(screen.getByText('Edit Config'));
+    await waitFor(() => expect(screen.getByLabelText('Theme')).toBeTruthy());
+    expect((screen.getByLabelText('Theme') as HTMLInputElement).value).toBe('light');
+  });
+
+  it('does not render trigger button when disabled', async () => {
+    cleanup();
+    const SchemaRenderer = createPageSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-view-basic.test.tsx#7"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-view',
+              disabled: true,
+              triggerLabel: 'Edit Settings',
+              data: { theme: 'dark' },
+              content: [{ type: 'input-text', name: 'theme', label: 'Theme' }],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByText('Edit Settings')).toBeNull());
   });
 });

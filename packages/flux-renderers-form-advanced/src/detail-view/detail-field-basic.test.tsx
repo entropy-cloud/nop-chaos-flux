@@ -43,7 +43,7 @@ describe('detail-field renderer basic behavior', () => {
     expect(field?.querySelector('[data-slot="detail-field-draft-body"]')).toBeNull();
   });
 
-  it('does not render trigger button when readOnly', async () => {
+  it('allows opening in readOnly mode without confirm action', async () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();
 
@@ -69,7 +69,14 @@ describe('detail-field renderer basic behavior', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.queryByText('Edit Address')).toBeNull());
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Address'));
+
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+
+    expect(screen.queryByText('Confirm')).toBeNull();
+    expect(screen.getByText('Close')).toBeTruthy();
   });
 
   it('opens a dialog with the edit content when trigger is clicked', async () => {
@@ -157,5 +164,34 @@ describe('detail-field renderer basic behavior', () => {
 
     expect(screen.getByLabelText('Name', { exact: false })).toBeTruthy();
     expect(document.querySelector('[data-slot="detail-field-draft-error"]')?.textContent).toContain('Please fix validation errors before confirming.');
+  });
+
+  it('does not render trigger button when disabled', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#5"
+        schema={{
+          type: 'form',
+          data: { address: { street: '123 Main St' } },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              label: 'Address',
+              disabled: true,
+              triggerLabel: 'Edit Address',
+              content: [{ type: 'input-text', name: 'street', label: 'Street' }],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByText('Edit Address')).toBeNull());
   });
 });

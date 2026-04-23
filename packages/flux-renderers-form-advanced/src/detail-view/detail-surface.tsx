@@ -21,6 +21,7 @@ export interface DetailSurfaceProps {
   mode?: string;
   title?: React.ReactNode;
   bodySlot: string;
+  readOnly?: boolean;
   onClose: () => void;
   children: React.ReactNode;
   footer: React.ReactNode;
@@ -70,8 +71,17 @@ export function DetailDraftFooter(props: DetailDraftFooterProps) {
   );
 }
 
+export function DetailReadonlyFooter(props: { onClose: () => void }) {
+  return (
+    <Button type="button" variant="outline" onClick={props.onClose}>
+      {t('flux.common.close')}
+    </Button>
+  );
+}
+
 export function DetailSurface(props: DetailSurfaceProps) {
   const mode = props.mode ?? 'dialog';
+  const footer = props.readOnly ? <DetailReadonlyFooter onClose={props.onClose} /> : props.footer;
 
   if (mode === 'drawer') {
     return (
@@ -81,7 +91,7 @@ export function DetailSurface(props: DetailSurfaceProps) {
             <DrawerTitle>{props.title}</DrawerTitle>
           </DrawerHeader>
           <div data-slot={props.bodySlot}>{props.children}</div>
-          <DrawerFooter>{props.footer}</DrawerFooter>
+          <DrawerFooter>{footer}</DrawerFooter>
         </DrawerContent>
       </Drawer>
     );
@@ -94,7 +104,7 @@ export function DetailSurface(props: DetailSurfaceProps) {
           <DialogTitle>{props.title}</DialogTitle>
         </DialogHeader>
         <div data-slot={props.bodySlot}>{props.children}</div>
-        <DialogFooter>{props.footer}</DialogFooter>
+        <DialogFooter>{footer}</DialogFooter>
       </DialogContent>
     </Dialog>
   );

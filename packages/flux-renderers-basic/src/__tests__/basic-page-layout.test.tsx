@@ -60,6 +60,96 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
+  it('publishes declarative dialog and drawer status summaries through statusPath', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              statusPath: 'ui.dialogStatus',
+              open: true,
+              body: [{ type: 'text', text: 'Dialog body' }]
+            },
+            {
+              type: 'drawer',
+              title: 'Drawer title',
+              statusPath: 'ui.drawerStatus',
+              open: true,
+              body: [{ type: 'text', text: 'Drawer body' }]
+            },
+            { type: 'text', text: '${ui.dialogStatus?.kind}:${ui.dialogStatus?.open}:${ui.drawerStatus?.kind}:${ui.drawerStatus?.open}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('dialog:true:drawer:true')).toBeTruthy());
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('false:false')).toBeTruthy());
+    cleanup();
+  });
+
+  it('updates declarative surface statusPath after local close interactions', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              statusPath: 'ui.dialogStatus',
+              defaultOpen: true,
+              body: [{ type: 'text', text: 'Dialog body' }]
+            },
+            {
+              type: 'drawer',
+              title: 'Drawer title',
+              statusPath: 'ui.drawerStatus',
+              defaultOpen: true,
+              body: [{ type: 'text', text: 'Drawer body' }]
+            },
+            { type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('true:true')).toBeTruthy());
+
+    fireEvent.click(document.querySelector('[data-slot="dialog-close"]') as Element);
+    await waitFor(() => expect(screen.getByText('false:true')).toBeTruthy());
+
+    fireEvent.click(document.querySelector('[data-slot="drawer-overlay"]') as Element);
+    await waitFor(() => expect(screen.getByText('false:false')).toBeTruthy());
+    cleanup();
+  });
+
   it('renders page header and footer through normalized regions', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', title: 'Workspace', header: [{ type: 'text', text: 'Header tools' }], body: [{ type: 'text', text: 'Page body' }], footer: [{ type: 'text', text: 'Footer actions' }] }} env={env} formulaCompiler={formulaCompiler} />);

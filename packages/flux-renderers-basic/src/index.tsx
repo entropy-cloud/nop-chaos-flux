@@ -57,7 +57,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
-    regions: ['body', 'header', 'footer']
+    regions: ['body', 'header', 'footer'],
+    staticCapable: true
   },
   {
     type: 'fragment',
@@ -70,7 +71,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'data', kind: 'prop' },
       { key: 'isolate', kind: 'prop' }
-    ]
+    ],
+    staticCapable: true
   },
   {
     type: 'loop',
@@ -113,7 +115,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'flex', body: [] },
     component: FlexRenderer,
-    regions: ['body', 'items']
+    regions: ['body', 'items'],
+    staticCapable: true
   },
   {
     type: 'text',
@@ -125,7 +128,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'text', kind: 'prop', allowSource: true },
       { key: 'body', kind: 'prop' }
-    ]
+    ],
+    staticCapable: true
   },
   {
     type: 'button',
@@ -208,14 +212,16 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     displayName: 'Icon',
     category: 'content',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
-    component: IconRenderer
+    component: IconRenderer,
+    staticCapable: true
   },
   {
     type: 'badge',
     displayName: 'Badge',
     category: 'content',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
-    component: BadgeRenderer
+    component: BadgeRenderer,
+    staticCapable: true
   },
   {
     type: 'scope-debug',
