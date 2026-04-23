@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createRendererRuntime', () => {
   it('registers data sources in a scope-local runtime registry and replaces same-id entries', async () => {
@@ -25,11 +28,11 @@ describe('createRendererRuntime', () => {
     const first = runtime.registerDataSource({
       id: 'users',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('users', {
         type: 'data-source',
         api: { url: '/api/first' },
         name: 'payload'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -39,11 +42,11 @@ describe('createRendererRuntime', () => {
     const second = runtime.registerDataSource({
       id: 'users',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('users', {
         type: 'data-source',
         api: { url: '/api/second' },
         name: 'payload'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -91,11 +94,11 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerDataSource({
       id: 'slow-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('slow-source', {
         type: 'data-source',
         api: { url: '/api/slow' },
         name: 'payload'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -127,12 +130,12 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerDataSource({
       id: 'stateful-api-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('stateful-api-source', {
         type: 'data-source',
         api: { url: '/api/stateful' },
         name: 'payload',
         initialData: { value: 'initial' }
-      }
+      }, expressionCompiler)
     });
 
     expect(registration.controller.getState()).toMatchObject({
@@ -192,12 +195,12 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerDataSource({
       id: 'failing-api-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('failing-api-source', {
         type: 'data-source',
         api: { url: '/api/fail' },
         name: 'payload',
         initialData: { value: 'initial' }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -233,11 +236,11 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerDataSource({
       id: 'total-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('total-source', {
         type: 'data-source',
         name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -276,11 +279,11 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerDataSource({
       id: 'total-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('total-source', {
         type: 'data-source',
         name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -299,13 +302,13 @@ describe('createRendererRuntime', () => {
     const page = runtime.createPageRuntime({ existing: 'keep' });
 
     const registration = runtime.registerDataSource({
-      id: 'implicit-merge-source',
+      id: 'total-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('total-source', {
         type: 'data-source',
-        api: { url: '/api/object' },
-        initialData: { merged: true }
-      }
+        name: 'total',
+        formula: '${(price || 0) * (qty || 0)}'
+      }, expressionCompiler)
     });
 
     await Promise.resolve();
@@ -327,12 +330,12 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerDataSource({
       id: 'merge-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('merge-source', {
         type: 'data-source',
         name: 'payload',
         mergeToScope: true,
         formula: '${{ merged: true, count: 3 }}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {

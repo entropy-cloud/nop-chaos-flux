@@ -1,26 +1,29 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
+import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createRendererRuntime', () => {
   it('refreshes registered data sources by id within an explicit scope', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3 });
 
     const registration = runtime.registerDataSource({
       id: 'scoped-total',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('scoped-total', {
         type: 'data-source',
         name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -39,18 +42,18 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3, note: 'ignore' });
 
     const registration = runtime.registerDataSource({
       id: 'auto-total',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('auto-total', {
         type: 'data-source',
         name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -83,18 +86,18 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ userId: 1, note: 'ignore' });
 
     const registration = runtime.registerDataSource({
       id: 'user-api-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('user-api-source', {
         type: 'data-source',
         api: { url: '/api/users/${userId}' },
         name: 'payload'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -145,18 +148,18 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: fetcher as RendererEnv['fetcher']
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ userId: 1 });
 
     const registration = runtime.registerDataSource({
       id: 'latest-user-api-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('latest-user-api-source', {
         type: 'data-source',
         api: { url: '/api/users/${userId}' },
         name: 'payload'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -204,21 +207,21 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ userId: 1 });
 
     const registration = runtime.registerDataSource({
       id: 'stable-user-api-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('stable-user-api-source', {
         type: 'data-source',
         api: { url: '/api/users/${userId}' },
         name: 'payload',
         control: {
           dedup: 'ignore-new'
         }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -272,21 +275,21 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ userId: 1 });
 
     const registration = runtime.registerDataSource({
       id: 'parallel-user-api-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('parallel-user-api-source', {
         type: 'data-source',
         api: { url: '/api/users/${userId}' },
         name: 'payload',
         control: {
           dedup: 'parallel'
         }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -362,21 +365,21 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ userId: 1 });
 
     const registration = runtime.registerDataSource({
       id: 'parallel-latest-authoritative',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('parallel-latest-authoritative', {
         type: 'data-source',
         api: { url: '/api/users/${userId}' },
         name: 'payload',
         control: {
           dedup: 'parallel'
         }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -416,7 +419,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
     const firstScope = runtime.createChildScope(page.scope, { value: 1 }, { pathSuffix: 'first-source-scope' });
@@ -425,20 +428,20 @@ describe('createRendererRuntime', () => {
     const first = runtime.registerDataSource({
       id: 'shared-source',
       scope: firstScope,
-      schema: {
+      compiledSource: compileDataSource('shared-source', {
         type: 'data-source',
         name: 'derived',
         formula: '${value}'
-      }
+      }, expressionCompiler)
     });
     const second = runtime.registerDataSource({
       id: 'shared-source',
       scope: secondScope,
-      schema: {
+      compiledSource: compileDataSource('shared-source', {
         type: 'data-source',
         name: 'derived',
         formula: '${value}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {

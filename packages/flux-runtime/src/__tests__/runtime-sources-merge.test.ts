@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createRendererRuntime', () => {
   it('applies resultMapping before publishing api-backed data-source values', async () => {
@@ -16,14 +19,14 @@ describe('createRendererRuntime', () => {
           data: { items: [{ id: 'a-1', label: 'Alice' }], total: 1 } as T
         })
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
 
     const registration = runtime.registerDataSource({
       id: 'users-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('users-source', {
         type: 'data-source',
         name: 'usersPayload',
         api: { url: '/api/users' },
@@ -31,7 +34,7 @@ describe('createRendererRuntime', () => {
           rows: '${payload.items}',
           count: '${payload.total}'
         }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -48,14 +51,14 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({ price: 3, qty: 4 });
 
     const registration = runtime.registerDataSource({
       id: 'pricing-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('pricing-source', {
         type: 'data-source',
         name: 'pricing',
         mergeToScope: true,
@@ -64,7 +67,7 @@ describe('createRendererRuntime', () => {
           total: '${payload.amount}',
           currencyCode: '${payload.currency}'
         }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -80,20 +83,20 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
 
     const registration = runtime.registerDataSource({
       id: 'append-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('append-source', {
         type: 'data-source',
         name: 'items',
         mergeStrategy: 'append',
         initialData: [1],
         formula: '${[2, 3]}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -114,20 +117,20 @@ describe('createRendererRuntime', () => {
           data: [1, 2] as T
         })
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
 
     const registration = runtime.registerDataSource({
       id: 'prepend-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('prepend-source', {
         type: 'data-source',
         name: 'items',
         mergeStrategy: 'prepend',
         initialData: [3],
         api: { url: '/api/items' }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -141,20 +144,20 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
 
     const registration = runtime.registerDataSource({
       id: 'merge-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('merge-source', {
         type: 'data-source',
         name: 'payload',
         mergeStrategy: 'merge',
         initialData: { keep: true, count: 1 },
         formula: '${{ count: 2, added: "yes" }}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -168,14 +171,14 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
 
     const registration = runtime.registerDataSource({
       id: 'upsert-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('upsert-source', {
         type: 'data-source',
         name: 'rows',
         mergeStrategy: 'upsert',
@@ -186,7 +189,7 @@ describe('createRendererRuntime', () => {
           { note: 'passthrough' }
         ],
         formula: '${[{ id: 1, label: "New one" }, { id: 3, label: "Added" }]}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -214,14 +217,14 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
 
     const first = runtime.registerDataSource({
       id: 'cached-mapped-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('cached-mapped-source', {
         type: 'data-source',
         name: 'payload',
         mergeStrategy: 'merge',
@@ -231,7 +234,7 @@ describe('createRendererRuntime', () => {
           rows: '${payload.items}',
           count: '${payload.items.length}'
         }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -268,20 +271,20 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
 
     const registration = runtime.registerDataSource({
       id: 'statusful-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('statusful-source', {
         type: 'data-source',
         name: 'payload',
         statusPath: 'payloadStatus',
         api: { url: '/api/status' },
         initialData: { value: 'initial' }
-      }
+      }, expressionCompiler)
     });
 
     expect(page.scope.get('payloadStatus')).toMatchObject({
@@ -335,18 +338,18 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: fetcherImpl
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
 
     const registration = runtime.registerDataSource({
       id: 'shared-ref-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('shared-ref-source', {
         type: 'data-source',
         name: 'payload',
         api: { url: '/api/same' }
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
