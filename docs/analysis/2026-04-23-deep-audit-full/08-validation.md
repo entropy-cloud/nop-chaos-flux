@@ -10,11 +10,11 @@
 
 2. [维度复核通过] `registerField` 仍是单路径单注册；`registrationId` 尚未成为实例级参与主键。
 
-3. [子项复核通过] `applyExternalErrors()` 未校验当前 owner 的路径归属。
+3. [已修复] `applyExternalErrors()` 现在会过滤非当前 owner 拥有的路径，只把 owned errors 注入 field state。
 
-4. [子项复核通过] `clearExternalErrorsForPath()` 只清当前路径及后代，不清祖先链外部错误。
+4. [已修复] `clearExternalErrorsForPath()` 现在会同时清当前路径、后代和当前 owner 内祖先链上的 external errors。
 
-5. [维度复核通过] `showErrorOn: 'submit'` 当前仅绑定 `submitting`，提交结束后错误会消失。
+5. [已修复] `showErrorOn: 'submit'` 现在基于 `submitAttempted` 持续生效，提交结束后错误不会立即消失。
 
 6. [维度复核通过] `applyChangesAndRevalidate()` 先发布 `values` 再更新 validation state，存在非原子观察窗口。
 

@@ -6,8 +6,8 @@
 
 ## 保留
 
-1. [维度复核通过] `packages/flux-react/src/node-error-boundary.tsx` 使用原生 `<button>`，可直接替换为 `@nop-chaos/ui` 的 `Button`。
-2. [子项复核通过] `packages/ui/src/components/ui/json-viewer.tsx` 中 JSON/YAML 切换仍用原生 `<button>`，现有 `Button`/`Tabs` 足以承接。
+1. [已修复] `packages/flux-react/src/node-error-boundary.tsx` 已改用 `@nop-chaos/ui` 的 `Button`。
+2. [已修复] `packages/ui/src/components/ui/json-viewer.tsx` 已用 `Tabs` 承接 JSON/YAML 切换，不再使用原生 `<button>`。
 
 ## 降级
 

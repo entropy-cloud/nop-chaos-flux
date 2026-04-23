@@ -11,7 +11,7 @@
 
 ## 降级
 
-1. [已降级] `flux-code-editor` 的问题不是“FieldFrame 完全没 label 通道”，而是当前实现没有兑现组件文档里 `label: value-or-region` 的契约。
+1. [已修复] `flux-code-editor` 已补 `label: value-or-region` field rule，并在 fullscreen header 走 label slot/value 通道。
 
 ## 复核摘要
 

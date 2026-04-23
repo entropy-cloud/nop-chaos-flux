@@ -6,7 +6,7 @@
 
 ## 保留
 
-1. [子项复核通过] `report-designer-page` 目前没有单一同步的 workbook source of truth：UI 使用 renderer 侧 `SpreadsheetCore`，save/export/preview 使用 `report-designer-core.store.document`，inspector provider 又读取 core 内部单独 `SpreadsheetCore`。
+1. [已修复] `report-designer-page` 现在会把 renderer 侧 live spreadsheet document 同步回 `report-designer-core`，save/export/preview/inspector provider 读取的 workbook 已与 UI 主路径对齐。
 
 ## 降级
 

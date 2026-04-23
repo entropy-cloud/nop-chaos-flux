@@ -7,7 +7,7 @@
 ## 保留
 
 1. [维度复核通过] `flux-code-editor/use-code-editor-binding.ts` 仍在 render 路径直接读取 store/scope。
-2. [维度复核通过] code-editor 的事件 payload 与根节点 `meta.className` / `data-cid` 传递不完整。
+2. [已部分修复] code-editor 根节点现在已合并 `meta.className` 并补齐 `data-cid`；事件 payload 问题仍待后续收口。
 3. [维度复核通过] `dialog.tsx` / `drawer.tsx` 的 open/close 事件缺少语义 payload。
 4. [维度复核通过] 多个 host renderer 未完整透传 root `meta.className` / `data-testid` / `data-cid`。
 5. [维度复核通过] `word-editor-page` 仍在 render 路径直接读取 dataset store。

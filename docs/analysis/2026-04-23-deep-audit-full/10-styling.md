@@ -6,7 +6,7 @@
 
 ## 保留
 
-1. [维度复核通过] 多个 widget/host renderer 根节点未合并 `props.meta.className`，尤其是 `flux-code-editor`、`flow-designer-renderers`、`spreadsheet-renderers`、`designer-field`。
+1. [已部分修复] `flux-code-editor` 根节点已合并 `props.meta.className`；其余 `flow-designer-renderers`、`spreadsheet-renderers`、`designer-field` 仍待后续收口。
 2. [维度复核通过] code-editor 的包级样式仍放在 `apps/playground/src/styles.css`，脱离 playground 会丢包级视觉。
 3. [维度复核通过] Flow Designer palette 依赖 playground 私有 `nop-gradient-*` 动态类，且覆盖不完整。
 4. [维度复核通过] Flow Designer 根节点未挂 `.nop-theme-root`，且 `--fd-*` 默认值直接绑 `--primary`。

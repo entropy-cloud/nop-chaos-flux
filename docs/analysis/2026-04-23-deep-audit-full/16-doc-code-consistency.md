@@ -7,7 +7,7 @@
 ## 保留
 
 1. [维度复核通过] `AGENTS.md` 的 workspace package 清单与依赖流未同步 `flux-compiler`、`flux-action-core`。
-2. [维度复核通过] 多个 active docs 仍引用 `apps/playground/src/App.tsx`，live 文件已是 `apps/playground/src/app.tsx`。
+2. [已修复] active docs 中命中的 `apps/playground/src/App.tsx` 引用已更新为 live 路径 `apps/playground/src/app.tsx`。
 3. [维度复核通过] `docs/references/terminology.md` 对 `RendererComponentProps` 的字段说明不完整，缺 `id/path/templateNode`。
 4. [维度复核通过] 至少一份已标 `completed` 的计划仍保留未完成 validation checklist；`docs/plans/133-...md` 是直接命中，`18-...md`、`27-...md` 也应继续复查。
 

@@ -26,11 +26,11 @@
 
 | 主题 | 关键文件 |
 |---|---|
-| Report Designer workbook source-of-truth 分叉 | `packages/report-designer-renderers/src/page-renderer.tsx`, `packages/report-designer-core/src/core.ts`, `packages/report-designer-core/src/core-dispatch.ts` |
-| object-field async 回写竞态 | `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx` |
-| validation external errors owner 边界缺失 | `packages/flux-runtime/src/form-runtime-owner.ts`, `packages/flux-runtime/src/form-runtime.ts` |
-| submit-only 错误可见性错误 | `packages/flux-react/src/field-error-visibility.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts` |
-| report-designer action DTO/type 混淆 | `packages/report-designer-renderers/src/inspector-shell-renderer.tsx`, `packages/report-designer-core/src/types.ts` |
+| [已修复] Report Designer workbook source-of-truth 分叉 | `packages/report-designer-renderers/src/page-renderer.tsx`, `packages/report-designer-core/src/core.ts`, `packages/report-designer-core/src/core-dispatch.ts` |
+| [已修复] object-field async 回写竞态 | `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx` |
+| [已修复] validation external errors owner 边界缺失 | `packages/flux-runtime/src/form-runtime-owner.ts`, `packages/flux-runtime/src/form-runtime.ts` |
+| [已修复] submit-only 错误可见性错误 | `packages/flux-react/src/field-error-visibility.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts` |
+| [已修复] report-designer action DTO/type 混淆 | `packages/report-designer-renderers/src/inspector-shell-renderer.tsx`, `packages/report-designer-core/src/types.ts` |
 | >700 行必须拆分文件 | `packages/flux-runtime/src/async-data/data-source-runtime.ts`, `packages/flux-formula/src/compile.ts`, `packages/flux-action-core/src/action-dispatcher.ts` |
 
 ## 高频问题文件
@@ -48,8 +48,8 @@
 
 - owner/source-of-truth 分裂：`object-field`、Report Designer workbook、`$crud`/statusPath 导出机制
 - root meta / className / marker / slot 契约收口不一致：host renderer、code-editor、report designer
-- runtime/documentation 演进后，旧兼容层与 stale artifacts 未完全清理：`CompiledSchemaNode`、旧 action payload、completed plan checklist、旧 playground 路径
-- 测试与 docs 导航的“过渡态留痕”较多：测试跨包导入、component-lab smoke、`App.tsx` 路径残留
+- runtime/documentation 演进后，旧兼容层与 stale artifacts 未完全清理：`CompiledSchemaNode`、completed plan checklist 等仍需后续收口
+- 测试与 docs 导航的“过渡态留痕”较多：测试跨包导入、component-lab smoke；active docs 的 `app.tsx` 路径残留已在本轮修正
 
 ## 已自动化的检查项
 
