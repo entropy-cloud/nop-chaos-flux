@@ -28,21 +28,7 @@ export interface RuntimeReactionRegistry {
     runtime: RendererRuntime;
     scope: ScopeRef;
     asyncGovernance?: AsyncGovernanceStore;
-    /** @deprecated Use compiledReaction instead */
-    watch?: unknown;
-    /** @deprecated Use compiledReaction instead */
-    dependsOn?: readonly string[];
-    /** @deprecated Use compiledReaction instead */
-    when?: string;
-    /** @deprecated Use compiledReaction instead */
-    immediate?: boolean;
-    /** @deprecated Use compiledReaction instead */
-    debounce?: number;
-    /** @deprecated Use compiledReaction instead */
-    once?: boolean;
-    /** @deprecated Use compiledReaction instead */
-    actions?: unknown;
-    compiledReaction?: CompiledReaction;
+    compiledReaction: CompiledReaction;
     helpers: Pick<RendererHelpers, 'dispatch'>;
   }): ReactionRegistration;
   disposeScope(scopeId: string): void;
@@ -62,28 +48,12 @@ function normalizeActionArray(actions: unknown): ActionSchema | ActionSchema[] {
   return actions as ActionSchema | ActionSchema[];
 }
 
-function extractExpressionSource(compiled: CompiledRuntimeValue<unknown> | undefined): string | undefined {
-  if (!compiled || compiled.isStatic) return undefined;
-  const node = compiled.node;
-  if (node.kind === 'expression-node' || node.kind === 'template-node') {
-    return node.source;
-  }
-  return undefined;
-}
-
 export function registerReaction(input: {
   id: string;
   runtime: RendererRuntime;
   scope: ScopeRef;
   asyncGovernance?: AsyncGovernanceStore;
-  watch?: unknown;
-  dependsOn?: readonly string[];
-  when?: string;
-  immediate?: boolean;
-  debounce?: number;
-  once?: boolean;
-  actions?: unknown;
-  compiledReaction?: CompiledReaction;
+  compiledReaction: CompiledReaction;
   helpers: Pick<RendererHelpers, 'dispatch'>;
   onDebugUpdate?: (debug: {
     disposed: boolean;
@@ -97,32 +67,18 @@ export function registerReaction(input: {
 }): ReactionRegistration {
   const compiled = input.compiledReaction;
 
-  const watchSource = compiled?.watch ?? input.watch;
-  const dependsOnSource = compiled?.dependsOn ?? input.dependsOn;
-  const immediateSource = compiled?.immediate ?? input.immediate;
-  const debounceSource = compiled?.debounce ?? input.debounce;
-  const onceSource = compiled?.once ?? input.once;
-  const actionsSource = compiled?.action ?? input.actions;
+  // All data comes from compiled reaction - no fallback to raw schema
+  const compiledWatch = compiled.watch;
+  const compiledWhen = compiled.when;
+  const dependsOnSource = compiled.dependsOn;
+  const immediateSource = compiled.immediate;
+  const debounceSource = compiled.debounce;
+  const onceSource = compiled.once;
+  const actionsSource = compiled.action;
 
-  if (!watchSource && !compiled) {
-    throw new Error('Either watch/actions or compiledReaction must be provided to registerReaction');
-  }
-
-  const compiledWatch = compiled
-    ? { isStatic: true, value: compiled.watch } as CompiledRuntimeValue<unknown>
-    : input.runtime.expressionCompiler.compileValue(watchSource);
   const dynamicWatch = compiledWatch.isStatic ? undefined : compiledWatch as DynamicRuntimeValue<unknown>;
   const watchState: RuntimeValueState<unknown> | undefined = dynamicWatch?.createState();
   const explicitDependencies = createRootDependencySet(dependsOnSource);
-  
-  // Handle when condition - either from compiled reaction or raw expression string
-  // Note: input.when is a raw expression string (not a ${...} template), so we compile it directly
-  const whenExpressionSource = compiled?.when
-    ? extractExpressionSource(compiled.when)
-    : input.when;
-  const compiledWhen = whenExpressionSource
-    ? input.runtime.expressionCompiler.formulaCompiler.compileExpression<boolean>(whenExpressionSource)
-    : undefined;
 
   let disposed = false;
   let initialized = false;
@@ -195,6 +151,7 @@ export function registerReaction(input: {
         return;
       }
 
+      // Execute pre-compiled when expression with special bindings
       const whenAllowed = compiledWhen
         ? compiledWhen.exec({
             scope: input.scope.readVisible(),
@@ -418,14 +375,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     runtime: RendererRuntime;
     scope: ScopeRef;
     asyncGovernance?: AsyncGovernanceStore;
-    watch?: unknown;
-    dependsOn?: readonly string[];
-    when?: string;
-    immediate?: boolean;
-    debounce?: number;
-    once?: boolean;
-    actions?: unknown;
-    compiledReaction?: CompiledReaction;
+    compiledReaction: CompiledReaction;
     helpers: Pick<RendererHelpers, 'dispatch'>;
   }): ReactionRegistration {
     const ownerScopeId = input.scope.id;
@@ -438,11 +388,6 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     }
 
     const compiled = input.compiledReaction;
-    const watchSource = compiled?.watch ?? input.watch;
-    const whenSource = compiled?.when ? undefined : input.when;
-    const immediateSource = compiled?.immediate ?? input.immediate;
-    const debounceSource = compiled?.debounce ?? input.debounce;
-    const onceSource = compiled?.once ?? input.once;
 
     let latestDependencies: readonly string[] | undefined;
     let disposed = false;
@@ -496,11 +441,12 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
         return {
           id: input.id,
           scopeId: ownerScopeId,
-          watch: watchSource,
-          when: whenSource,
-          immediate: immediateSource,
-          debounce: debounceSource,
-          once: onceSource,
+          // Debug info from compiled data
+          watch: compiled.watch.isStatic ? compiled.watch.value : '[dynamic]',
+          when: compiled.when ? '[expression]' : undefined,
+          immediate: compiled.immediate,
+          debounce: compiled.debounce,
+          once: compiled.once,
           disposed,
           queued,
           running,
