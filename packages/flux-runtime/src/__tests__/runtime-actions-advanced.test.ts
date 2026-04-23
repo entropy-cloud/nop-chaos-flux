@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiSchema, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createRendererRuntime', () => {
   it('treats nested scope ownership by lexical level instead of materialized fallback', () => {
@@ -130,11 +133,11 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerDataSource({
       id: 'total-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('total-source', {
         type: 'data-source',
         name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -172,11 +175,11 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerDataSource({
       id: 'total-source-id',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('total-source-id', {
         type: 'data-source',
         name: 'total',
         formula: '${(price || 0) * (qty || 0)}'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {

@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiSchema, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
+import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createModuleCache, createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
+
+const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createRendererRuntime', () => {
   it('releases imported namespaces after the final matching release call', async () => {
@@ -25,7 +28,7 @@ describe('createRendererRuntime', () => {
         ...env,
         importLoader
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'import-scope' });
@@ -140,7 +143,7 @@ describe('createRendererRuntime', () => {
           }))
         }
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'import-scope' });
@@ -155,11 +158,11 @@ describe('createRendererRuntime', () => {
     void runtime.registerDataSource({
       id: 'slow-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('slow-source', {
         type: 'data-source',
         api: { url: '/api/slow' },
         name: 'payload'
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -193,7 +196,7 @@ describe('createRendererRuntime', () => {
         ...env,
         importLoader
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
     const parentActionScope = runtime.createActionScope({ id: 'parent-import-scope' });
@@ -265,7 +268,7 @@ describe('createRendererRuntime', () => {
         ...env,
         importLoader
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'collision-scope' });
@@ -312,7 +315,7 @@ describe('createRendererRuntime', () => {
         ...env,
         importLoader
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'retry-import-scope' });
@@ -371,7 +374,7 @@ describe('createRendererRuntime', () => {
         ...env,
         importLoader
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'node-instance-import-scope' });
@@ -416,13 +419,13 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: { ...env, importLoader },
       moduleCache,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const runtimeB = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: { ...env, importLoader },
       moduleCache,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const pageA = runtimeA.createPageRuntime({});
     const pageB = runtimeB.createPageRuntime({});
@@ -458,7 +461,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: { ...env, importLoader, resolveImportUrl },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'resolved-scope' });

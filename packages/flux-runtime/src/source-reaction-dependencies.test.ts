@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { compileReaction } from '@nop-chaos/flux-compiler';
+import { compileDataSource, compileReaction } from '@nop-chaos/flux-compiler';
 import { createRendererRegistry, createRendererRuntime } from './index';
 
 const textRenderer: RendererDefinition = {
@@ -32,12 +32,12 @@ describe('explicit dependency roots', () => {
     const registration = runtime.registerDataSource({
       id: 'explicit-formula-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('explicit-formula-source', {
         type: 'data-source',
         name: 'total',
         formula: '${(price || 0) * (qty || 0)}',
         dependsOn: ['price']
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -81,12 +81,12 @@ describe('explicit dependency roots', () => {
     const registration = runtime.registerDataSource({
       id: 'explicit-api-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('explicit-api-source', {
         type: 'data-source',
         api: { url: '/api/users/${userId}/${note}' },
         name: 'payload',
         dependsOn: ['userId']
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {
@@ -120,12 +120,12 @@ describe('explicit dependency roots', () => {
     const registration = runtime.registerDataSource({
       id: 'self-guarded-source',
       scope: page.scope,
-      schema: {
+      compiledSource: compileDataSource('self-guarded-source', {
         type: 'data-source',
         name: 'total',
         formula: '${(total || 0) + 1}',
         dependsOn: ['total']
-      }
+      }, expressionCompiler)
     });
 
     await vi.waitFor(() => {

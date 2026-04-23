@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createRendererRegistry, type ApiSchema, type RendererEnv } from '@nop-chaos/flux-core';
+import { compileApiConfig } from '@nop-chaos/flux-compiler';
 import { createRendererRuntime } from '../index';
 
 describe('createDataSourceController', () => {
@@ -22,7 +23,7 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      api: { url: '/api/job' },
+      compiledApi: compileApiConfig({ url: '/api/job' }, runtime.expressionCompiler),
       scope: page.scope,
       targetPath: 'job',
       interval: 10,
@@ -61,7 +62,7 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      api: { url: '/api/job' },
+      compiledApi: compileApiConfig({ url: '/api/job' }, runtime.expressionCompiler),
       scope: page.scope,
       targetPath: 'job',
       interval: 10,
@@ -108,7 +109,7 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      api: { url: '/api/slow' },
+      compiledApi: compileApiConfig({ url: '/api/slow' }, runtime.expressionCompiler),
       scope: page.scope,
       targetPath: 'payload'
     });
@@ -138,7 +139,7 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      api: { url: '/api/cache', cacheTTL: 60_000, cacheKey: 'shared-cache' },
+      compiledApi: compileApiConfig({ url: '/api/cache', cacheTTL: 60_000, cacheKey: 'shared-cache' }, runtime.expressionCompiler),
       scope: page.scope,
       targetPath: 'payload'
     });
@@ -174,12 +175,12 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({ page: 1 });
     const first = runtime.createDataSourceController({
-      api: { url: '/api/cache?page=1', cacheTTL: 60_000 },
+      compiledApi: compileApiConfig({ url: '/api/cache?page=1', cacheTTL: 60_000 }, runtime.expressionCompiler),
       scope: page.scope,
       targetPath: 'payload'
     });
     const second = runtime.createDataSourceController({
-      api: { url: '/api/cache', params: { page: 1 }, cacheTTL: 60_000 },
+      compiledApi: compileApiConfig({ url: '/api/cache', params: { page: 1 }, cacheTTL: 60_000 }, runtime.expressionCompiler),
       scope: page.scope,
       targetPath: 'payload2'
     });
