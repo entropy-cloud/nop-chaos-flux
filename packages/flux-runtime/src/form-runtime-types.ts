@@ -21,12 +21,16 @@ export interface CreateManagedFormRuntimeInput {
   id?: string;
   name?: string;
   initialValues?: Record<string, any>;
-  parentScope: ScopeRef;
+  parentScope?: ScopeRef;
   page?: PageRuntime;
   validation?: CompiledFormValidationModel;
   lifecycle?: FormLifecycleHandlers;
   validatingDelay?: number;
   submittingDelay?: number;
+  existingStore?: FormStoreApi;
+  existingScope?: ScopeRef;
+  scopePath?: string;
+  scopeBinding?: 'form' | 'none';
   executeValidationRule: (
     compiledRule: CompiledValidationRule,
     rule: Extract<ValidationRule, { kind: 'async' }>,

@@ -12,17 +12,6 @@ async function prepareImports(runtime: ReturnType<typeof createRendererRuntime>,
   return Array.from(prepared?.preparedImports.values() ?? []);
 }
 
-function toPreparedImports(imports: ReadonlyArray<{ from: string; as: string; options?: Record<string, unknown> }>, schemaUrl: string, resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string) {
-  return imports.map((spec) => ({
-    schemaUrl,
-    spec,
-    resolvedSpec: {
-      ...spec,
-      from: resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
-    }
-  }));
-}
-
 describe('createRendererRuntime', () => {
   it('releases imported namespaces after the final matching release call', async () => {
     const dispose = vi.fn();

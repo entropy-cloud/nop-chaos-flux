@@ -142,15 +142,6 @@ export function createRendererRuntime(input: {
     });
   }
 
-  function normalizeImportKey(schemaUrl: string, spec: XuiImportSpec): string {
-    return JSON.stringify({
-      schemaUrl,
-      from: spec.from,
-      as: spec.as,
-      options: spec.options ?? null
-    });
-  }
-
   function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
     actionScopeCounter += 1;
     const actionScope = createActionScope({
@@ -189,10 +180,12 @@ export function createRendererRuntime(input: {
   const evalCtx = { getEnv, expressionCompiler, evaluate, executeApiRequest };
 
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
+    const externalPageStore = input.pageStore;
+    const initialData = externalPageStore?.getState().data ?? data;
     const pageValidation = createValidationScopeRuntime({
       id: 'page-root-validation',
       scopePath: '$page',
-      initialValues: data
+      initialValues: initialData
     });
     const validationStore = pageValidation.store as import('@nop-chaos/flux-core').FormStoreApi;
     let refreshTick = 0;
@@ -225,9 +218,59 @@ export function createRendererRuntime(input: {
         }
       }
     };
+
+    let syncingFromValidation = false;
+    let syncingFromExternalPageStore = false;
+
+    if (externalPageStore) {
+      const externalData = externalPageStore.getState().data;
+      if (externalData !== validationStore.getState().values) {
+        validationStore.setValues(externalData);
+      }
+
+      const syncExternalPageStoreToValidation = () => {
+        if (syncingFromValidation) {
+          return;
+        }
+
+        const pageData = externalPageStore.getState().data;
+        if (pageData === validationStore.getState().values) {
+          return;
+        }
+
+        syncingFromExternalPageStore = true;
+        try {
+          validationStore.setValues(pageData);
+        } finally {
+          syncingFromExternalPageStore = false;
+        }
+      };
+
+      const syncValidationToExternalPageStore = () => {
+        if (syncingFromExternalPageStore) {
+          return;
+        }
+
+        const validationData = validationStore.getState().values;
+        if (validationData === externalPageStore.getState().data) {
+          return;
+        }
+
+        syncingFromValidation = true;
+        try {
+          externalPageStore.setData(validationData);
+        } finally {
+          syncingFromValidation = false;
+        }
+      };
+
+      externalPageStore.subscribe(syncExternalPageStoreToValidation);
+      validationStore.subscribe(syncValidationToExternalPageStore);
+    }
+
     const page = createManagedPageRuntime({
-      data,
-      pageStore: input.pageStore ?? pageStore,
+      data: initialData,
+      pageStore: pageStore,
       validationOwner: pageValidation,
       scope: pageValidation.scope
     });
@@ -244,36 +287,13 @@ export function createRendererRuntime(input: {
     initialValues?: Record<string, any>;
   }): ValidationScopeRuntime {
     const store = createFormStore(inputValue.initialValues ?? {});
-    const scopeId = inputValue.id ?? `${inputValue.parentScope?.id ?? 'scope'}-validation`;
-    const scope = createScopeRef({
-      id: scopeId,
-      path: inputValue.scopePath ?? `${inputValue.parentScope?.path ?? '$root'}.validation`,
-      parent: inputValue.parentScope,
-      store: {
-        getSnapshot: () => store.getState().values,
-        getLastChange: () => ({ paths: ['*'], sourceScopeId: scopeId, kind: 'replace', revision: 0 }),
-        setSnapshot: (next) => {
-          store.setValues(next);
-        },
-        subscribe: (listener) => store.subscribe(() => listener({
-          paths: ['*'],
-          sourceScopeId: scopeId,
-          kind: 'replace',
-          revision: 0
-        }))
-      },
-      update: (path, value) => {
-        store.setValue(path, value);
-      }
-    });
 
     return createManagedFormRuntime({
-      id: scopeId,
+      id: inputValue.id,
       parentScope: inputValue.parentScope,
       validation: inputValue.validation,
       initialValues: inputValue.initialValues,
       existingStore: store,
-      existingScope: scope,
       scopePath: inputValue.scopePath,
       scopeBinding: 'none',
       executeValidationRule: (compiledRule, rule, field, validationScope, signal) =>

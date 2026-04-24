@@ -51,8 +51,8 @@ import {
 import { createScopeRef, toRecord } from './scope';
 
 export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInput): FormRuntime {
-  const store = createFormStore(inputValue.initialValues ?? {});
-  const formId = inputValue.id ?? `${inputValue.parentScope.id}-form`;
+  const store = inputValue.existingStore ?? createFormStore(inputValue.initialValues ?? {});
+  const formId = inputValue.id ?? `${inputValue.parentScope?.id ?? 'scope'}-form`;
   const formName = inputValue.name;
   const validationRuns = new Map<string, number>();
   const pendingValidationDebounces = new Map<string, {
@@ -81,9 +81,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     };
   }
 
-  const scope = createScopeRef({
+  const scope = inputValue.existingScope ?? createScopeRef({
     id: formId,
-    path: `${inputValue.parentScope.path}.form`,
+    path: inputValue.scopePath ?? `${inputValue.parentScope?.path ?? '$root'}.form`,
     parent: inputValue.parentScope,
     store: {
       getSnapshot: () => store.getState().values,
@@ -108,17 +108,19 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     }
   });
 
-  const formScopeWithBinding = createFormScopeWithBinding({
-    scope,
-    formId,
-    formName,
-    getStoreState: () => store.getState()
-  });
+  const runtimeScope = inputValue.scopeBinding === 'none'
+    ? scope
+    : createFormScopeWithBinding({
+        scope,
+        formId,
+        formName,
+        getStoreState: () => store.getState()
+      });
 
   const sharedState: ManagedFormRuntimeSharedState = {
     inputValue,
     store,
-    scope: formScopeWithBinding,
+    scope: runtimeScope,
     initialFieldState,
     validationRuns,
     pendingValidationDebounces,
@@ -197,7 +199,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     id: formId,
     name: formName,
     store,
-    scope: formScopeWithBinding,
+    scope: runtimeScope,
 
     get validation() {
       return currentValidation;
