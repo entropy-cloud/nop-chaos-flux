@@ -90,7 +90,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
               key={card.id}
               type="button"
               variant="ghost"
-              className="group relative h-auto overflow-hidden text-left p-6 rounded-[20px] bg-[var(--nop-nav-surface)] border border-[var(--nop-nav-border)] cursor-pointer transition-[transform,box-shadow,border-color] duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:shadow-[var(--nop-nav-shadow)] hover:border-[var(--nop-nav-hover-border)] ring-0 gap-0 justify-start whitespace-normal"
+              className="group relative flex h-auto w-full flex-col items-start overflow-hidden rounded-[20px] border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] p-6 text-left whitespace-normal cursor-pointer justify-start gap-0 ring-0 transition-[transform,box-shadow,border-color] duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:shadow-[var(--nop-nav-shadow)] hover:border-[var(--nop-nav-hover-border)]"
               onClick={() => onNavigate(card.id)}
             >
               <p className="mb-2 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-accent-muted)]">{card.eyebrow}</p>

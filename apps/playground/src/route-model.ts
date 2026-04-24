@@ -51,6 +51,7 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
   { id: 'key-value', title: 'Key Value', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form-advanced', description: 'Editable list of key-value pairs.' },
   { id: 'array-editor', title: 'Array Editor', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form-advanced', description: 'Structured array editor with per-item column fields and add/remove controls.' },
   { id: 'condition-builder', title: 'Condition Builder', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form-advanced', description: 'Visual AND/OR condition tree builder with nested groups.' },
+  { id: 'fieldset', title: 'Fieldset', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Semantic field grouping container with optional legend and collapsible body.' },
   { id: 'object-field', title: 'Object Field', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form-advanced', description: 'Inline composite field editing a nested object scope.' },
   { id: 'array-field', title: 'Array Field', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form-advanced', description: 'Inline composite array editing with per-item form regions.' },
   { id: 'variant-field', title: 'Variant Field', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form-advanced', description: 'Discriminated union field that switches schema based on a type selector.' },

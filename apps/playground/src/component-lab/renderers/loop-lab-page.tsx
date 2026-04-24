@@ -9,7 +9,7 @@ const userLoop = {
       itemName: 'item',
       indexName: 'idx',
       body: [
-        { type: 'text', text: '${idx + 1}. ${item.name} — ${item.role}' }
+        { type: 'text', text: '${$slot.idx + 1}. ${$slot.item.name} — ${$slot.item.role}' }
       ]
     }
   ]
@@ -35,23 +35,23 @@ const productLoop = {
               type: 'flex',
               direction: 'row',
               align: 'center',
-              gap: 2,
-              body: [
-                { type: 'icon', icon: 'Package', size: 16 },
-                { type: 'text', text: '${product.name}' }
-              ]
-            },
-            {
-              type: 'flex',
-              direction: 'row',
-              gap: 2,
-              body: [
-                { type: 'badge', label: '${product.category}', variant: 'secondary' },
-                { type: 'text', text: '$${product.price}' }
-              ]
-            }
-          ]
-        }
+               gap: 2,
+               body: [
+                 { type: 'icon', icon: 'Package', size: 16 },
+                 { type: 'text', text: '${$slot.product.name}' }
+               ]
+             },
+             {
+               type: 'flex',
+               direction: 'row',
+               gap: 2,
+               body: [
+                 { type: 'badge', text: '${$slot.product.category}', variant: 'secondary' },
+                 { type: 'text', text: '$${$slot.product.price}' }
+               ]
+             }
+           ]
+         }
       ]
     }
   ]

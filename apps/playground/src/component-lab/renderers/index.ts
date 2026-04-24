@@ -24,6 +24,7 @@ export { CheckboxLabPage } from './checkbox-lab-page';
 export { SwitchLabPage } from './switch-lab-page';
 export { RadioGroupLabPage } from './radio-group-lab-page';
 export { CheckboxGroupLabPage } from './checkbox-group-lab-page';
+export { FieldsetLabPage } from './fieldset-lab-page';
 export { InputTreeLabPage } from './input-tree-lab-page';
 export { TreeSelectLabPage } from './tree-select-lab-page';
 export { TagListLabPage } from './tag-list-lab-page';

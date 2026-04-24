@@ -4,11 +4,22 @@ const basicRecurse = {
   type: 'page',
   body: [
     {
-      type: 'recurse',
+      type: 'loop',
       items: '${tree}',
       itemName: 'node',
+      keyBy: 'item.label',
       body: [
-        { type: 'text', text: '${node.label}' }
+        { type: 'text', text: '${$slot.node.label}' },
+        {
+          type: 'fragment',
+          when: '${$slot.node.children && $slot.node.children.length > 0}',
+          body: [
+            {
+              type: 'recurse',
+              items: '${$slot.node.children}'
+            }
+          ]
+        }
       ]
     }
   ]
@@ -18,9 +29,10 @@ const richRecurse = {
   type: 'page',
   body: [
     {
-      type: 'recurse',
+      type: 'loop',
       items: '${orgTree}',
       itemName: 'node',
+      keyBy: 'item.label',
       body: [
         {
           type: 'flex',
@@ -29,8 +41,18 @@ const richRecurse = {
           gap: 2,
           body: [
             { type: 'icon', icon: 'FolderOpen', size: 14 },
-            { type: 'text', text: '${node.label}' },
-            { type: 'badge', label: 'L${node.depth ?? 0}', variant: 'secondary' }
+            { type: 'text', text: '${$slot.node.label}' },
+            { type: 'badge', text: 'L${$slot.node.depth ?? 0}', variant: 'secondary' }
+          ]
+        },
+        {
+          type: 'fragment',
+          when: '${$slot.node.children && $slot.node.children.length > 0}',
+          body: [
+            {
+              type: 'recurse',
+              items: '${$slot.node.children}'
+            }
           ]
         }
       ]
