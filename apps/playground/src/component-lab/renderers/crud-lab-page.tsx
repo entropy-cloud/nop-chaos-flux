@@ -5,11 +5,11 @@ const basicCrud = {
   body: [
     {
       type: 'crud',
-      data: '${records}',
+      source: '${records}',
       rowKey: 'id',
       columns: [
         { title: 'ID', name: 'id' },
-        { title: 'Name', name: 'name' },
+        { title: 'Name', name: 'name', fixed: 'left', width: 160 },
         { title: 'Status', name: 'status', type: 'badge' }
       ],
       toolbar: [
@@ -24,13 +24,19 @@ const queryCrud = {
   body: [
     {
       type: 'crud',
-      data: '${records}',
+      source: '${records}',
       rowKey: 'id',
       queryForm: {
-        type: 'form',
         body: [
           { type: 'input-text', name: 'keyword', label: 'Keyword' }
         ]
+      },
+      footerToolbar: [
+        { type: 'text', text: 'Visible rows: ${$crud.itemCount}' }
+      ],
+      toolbarLayout: {
+        header: ['listActions', 'pagination'],
+        footer: ['statistics', 'switch-per-page']
       },
       toolbar: [
         { type: 'button', label: 'Refresh' }
@@ -39,9 +45,19 @@ const queryCrud = {
         { type: 'button', label: 'Delete Selected' }
       ],
       columns: [
-        { title: 'ID', name: 'id' },
-        { title: 'Name', name: 'name' },
-        { title: 'Owner', name: 'owner' }
+        { title: 'ID', name: 'id', fixed: 'left', width: 120 },
+        { title: 'Name', name: 'name', width: 180 },
+        { title: 'Owner', name: 'owner', width: 160 },
+        {
+          type: 'operation',
+          title: 'Actions',
+          label: 'Actions',
+          fixed: 'right',
+          width: 180,
+          buttons: [
+            { type: 'button', label: 'Inspect' }
+          ]
+        }
       ]
     }
   ]
@@ -65,8 +81,8 @@ export function CrudLabPage() {
           data: { records }
         },
         {
-          title: 'CRUD with query form and bulk actions',
-          description: 'Shows the full shell shape: query form, toolbar, list actions, and table body in one renderer.',
+          title: 'CRUD workflow with query, toolbars, and fixed columns',
+          description: 'Shows query-driven workflow, list actions, footer summary, and fixed left/right columns including an operation column.',
           schema: queryCrud,
           data: { records }
         }
