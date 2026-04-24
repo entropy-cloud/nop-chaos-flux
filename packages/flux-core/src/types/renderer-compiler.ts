@@ -34,8 +34,16 @@ export interface CompileSchemaOptions {
   parentScopePolicy?: ScopePolicy;
   cidState?: CompiledCidState;
   symbolTable?: CompileSymbolTable;
+  preparedImports?: ReadonlyMap<string, import('./compilation').PreparedImportSpec>;
+  importLoader?: import('./actions').ImportedLibraryLoader;
+  resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
   diagnostics?: SchemaCompileDiagnosticsOptions;
   validation?: SchemaCompileValidationOptions;
+}
+
+export interface PreparedSchemaCompileResult {
+  schema: SchemaInput;
+  preparedImports: ReadonlyMap<string, import('./compilation').PreparedImportSpec>;
 }
 
 export interface CompileNodeOptions {
@@ -43,12 +51,14 @@ export interface CompileNodeOptions {
   parentPath?: SchemaPath;
   schemaUrl?: string;
   symbolTable?: CompileSymbolTable;
+  preparedImports?: ReadonlyMap<string, import('./compilation').PreparedImportSpec>;
   renderer: import('./renderer-core').RendererDefinition;
   fieldRules?: readonly SchemaFieldRule[];
 }
 
 export interface SchemaCompiler {
   compile(schema: SchemaInput, options?: CompileSchemaOptions): CompiledTemplate;
+  prepare?(schema: SchemaInput, options?: CompileSchemaOptions): Promise<PreparedSchemaCompileResult>;
   compileNode(schema: BaseSchema, options: CompileNodeOptions): import('./node-identity').TemplateNode;
   validate?(schema: SchemaInput, options?: CompileSchemaOptions): SchemaDiagnostic[];
 }

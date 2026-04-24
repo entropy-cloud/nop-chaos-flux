@@ -101,6 +101,17 @@ export interface TemplateProviderPlan {
   classAliases: boolean;
 }
 
+export interface TemplateImportsPlan {
+  imports: readonly import('./schema').XuiImportSpec[];
+  resolvedImports: readonly import('./schema').XuiImportSpec[];
+  preparedImports: readonly import('./compilation').PreparedImportSpec[];
+  staticMeta?: Readonly<Record<string, import('./compilation').ImportedLibraryStaticMeta>>;
+}
+
+export interface TemplateClassAliasesPlan {
+  aliases: Readonly<Record<string, string>>;
+}
+
 export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   templateNodeId: TemplateNodeId;
   id: string;
@@ -120,6 +131,8 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   regions: Readonly<Record<string, TemplateRegion>>;
   providerPlan?: TemplateProviderPlan;
   providerWrap?: WrapProvidersFn;
+  classAliasesPlan?: TemplateClassAliasesPlan;
+  importsPlan?: TemplateImportsPlan;
   scopePlan: ScopePlan;
   registryPlan?: RegistryPlan;
   validationPlan?: ValidationPlan;

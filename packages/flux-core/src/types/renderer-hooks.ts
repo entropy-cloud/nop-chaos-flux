@@ -6,7 +6,7 @@ import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { RendererHelpers, RendererRegistry, RendererRuntime } from './renderer-core';
 import type { RendererPlugin } from './renderer-plugin';
-import type { DataSourceStatusSummary, FormErrorQuery, FormFieldStateSnapshot, FormRuntime, PageRuntime, PageStoreApi, SurfaceRuntime } from './runtime';
+import type { DataSourceStatusSummary, FormErrorQuery, FormFieldStateSnapshot, FormRuntime, PageRuntime, PageStoreApi, SurfaceRuntime, ValidationScopeRuntime } from './runtime';
 import type { SchemaInput, SchemaPath } from './schema';
 import type { ScopeRef } from './scope';
 import type { ValidationError } from './validation';
@@ -117,6 +117,7 @@ export interface RendererHookApi {
   useRendererEnv(): RendererEnv;
   useActionDispatcher(): RendererRuntime['dispatch'];
   useCurrentForm(): FormRuntime | undefined;
+  useCurrentValidationScope(): ValidationScopeRuntime | undefined;
   useCurrentFormErrors(query?: FormErrorQuery): ValidationError[];
   useCurrentFormError(query: FormErrorQuery): ValidationError | undefined;
   useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;

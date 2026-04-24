@@ -93,6 +93,15 @@ export interface FormStoreApi {
   batchUpdate(updates: Partial<FormStoreState>): void;
 }
 
+export interface ValidationStoreApi {
+  getState(): FormStoreState;
+  subscribe(listener: () => void): () => void;
+  subscribeToPath(path: string, listener: () => void): () => void;
+  subscribeToSubmitting(listener: () => void): () => void;
+  getPathState(path: string): FormPathState;
+  getFieldState(path: string): FieldState | undefined;
+}
+
 export interface FormStatusSummary {
   id?: string;
   name?: string;
@@ -261,6 +270,9 @@ export interface ValidationScopeRuntime {
   readonly rootPath: string;
   readonly lifecycleState: ValidationOwnerLifecycleState;
   readonly modelGeneration: number;
+  readonly store?: ValidationStoreApi;
+  readonly scope?: ScopeRef;
+  readonly validation?: CompiledFormValidationModel;
 
   validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
   validateSubtree(path: string, reason?: ValidationReason): Promise<FormValidationResult>;
@@ -325,6 +337,7 @@ export interface FormRuntime extends ValidationScopeRuntime {
 export interface PageRuntime {
   store: PageStoreApi;
   scope: ScopeRef;
+  validationOwner?: ValidationScopeRuntime;
   refresh(): void;
   modalContainer?: string;
 }

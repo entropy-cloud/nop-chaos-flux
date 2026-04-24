@@ -1,7 +1,17 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { ActionContext, ActionResult, ActionSchema, ActionScope, CompiledActionProgram } from './actions';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
-import type { CompiledApiConfig, CompiledDataSource, CompiledReaction, CompiledRuntimeValue, ExpressionCompiler, ImportStack, ModuleCache, SymbolInfo } from './compilation';
+import type {
+  CompiledApiConfig,
+  CompiledDataSource,
+  CompiledReaction,
+  CompiledRuntimeValue,
+  ExpressionCompiler,
+  ImportStack,
+  ModuleCache,
+  PreparedImportSpec,
+  SymbolInfo
+} from './compilation';
 import type {
   CapabilityMethodContract,
   FluxValueShape,
@@ -14,7 +24,7 @@ import type { RendererEnv } from './renderer-api';
 import type { ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
-import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime } from './runtime';
+import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime, ValidationScopeRuntime } from './runtime';
 import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type { CompiledFormValidationModel, ValidationRule } from './validation';
@@ -196,6 +206,11 @@ export interface RendererRuntime {
   plugins: readonly RendererPlugin[];
   importStack: ImportStack;
   compile(schema: SchemaInput): CompiledTemplate;
+  prepareSchema?(schema: SchemaInput, options?: {
+    schemaUrl?: string;
+  }): Promise<{
+    preparedImports: ReadonlyMap<string, PreparedImportSpec>;
+  }>;
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
   allocateMountedCid(): number;
   resolveTarget(target: ComponentTarget, ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry }): NodeInstance | undefined;
@@ -210,8 +225,12 @@ export interface RendererRuntime {
   }): ScopeRef;
   createActionScope(input?: { id?: string; parent?: ActionScope }): ActionScope;
   createComponentHandleRegistry(input?: { id?: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry;
-  ensureImportedNamespaces(input: {
+  resolvePreparedImports(input: {
     imports?: readonly XuiImportSpec[];
+    schemaUrl: string;
+  }): readonly PreparedImportSpec[];
+  ensureImportedNamespaces(input: {
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
@@ -219,12 +238,12 @@ export interface RendererRuntime {
     nodeInstance?: NodeInstance;
   }): Promise<void>;
   getImportedExpressionBindings(input: {
-    imports?: readonly XuiImportSpec[];
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     schemaUrl: string;
   }): Readonly<Record<string, unknown>>;
   releaseImportedNamespaces(input: {
-    imports?: readonly XuiImportSpec[];
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     schemaUrl: string;
   }): void;
@@ -235,6 +254,13 @@ export interface RendererRuntime {
     ctx?: Partial<ActionContext>;
   }): Promise<ActionResult>;
   createPageRuntime(data?: Record<string, any>): PageRuntime;
+  createValidationScopeRuntime(input: {
+    id?: string;
+    parentScope: ScopeRef;
+    scopePath?: string;
+    validation?: CompiledFormValidationModel;
+    initialValues?: Record<string, any>;
+  }): ValidationScopeRuntime;
   createSurfaceRuntime(input?: {
     disposeScope?: (scopeId: string) => void;
   }): import('./runtime').SurfaceRuntime;

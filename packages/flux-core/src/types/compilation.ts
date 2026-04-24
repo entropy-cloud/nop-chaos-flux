@@ -14,6 +14,29 @@ export interface SymbolInfo {
   name: string;
   kind: CompileSymbolKind;
   members?: readonly string[];
+  memberDefinitions?: Readonly<Record<string, ImportHelperDefinition>>;
+}
+
+export interface ImportParameterDefinition {
+  name: string;
+  required?: boolean;
+}
+
+export interface ImportHelperDefinition {
+  kind?: 'function' | 'value';
+  params?: readonly ImportParameterDefinition[];
+}
+
+export interface ImportedLibraryStaticMeta {
+  helpers?: Readonly<Record<string, ImportHelperDefinition>>;
+  namespaceMethods?: readonly string[];
+}
+
+export interface PreparedImportSpec {
+  schemaUrl: string;
+  spec: import('./schema').XuiImportSpec;
+  resolvedSpec: import('./schema').XuiImportSpec;
+  staticMeta?: ImportedLibraryStaticMeta;
 }
 
 export interface SymbolFrame {
@@ -42,12 +65,14 @@ export interface ImportStackEntry {
   spec: import('./schema').XuiImportSpec;
   actionProvider?: ActionNamespaceProvider;
   expressionHelpers?: Readonly<Record<string, unknown>>;
+  staticMeta?: ImportedLibraryStaticMeta;
 }
 
 export interface ImportFrame {
   id: string;
   ownerNodeId: string;
   parentFrameId?: string;
+  parentFrame?: ImportFrame;
   actionScope?: ActionScope;
   entries: Readonly<Record<string, ImportStackEntry>>;
 }
@@ -68,6 +93,15 @@ export interface ImportStack {
     schemaUrl: string;
     nodeInstance?: import('./node-identity').NodeInstance;
   }): Promise<ImportFrame | undefined>;
+  installPrepared(input: {
+    ownerNodeId: string;
+    parentFrame?: ImportFrame;
+    imports?: readonly PreparedImportSpec[];
+    actionScope?: ActionScope;
+    componentRegistry?: import('./renderer-component').ComponentHandleRegistry;
+    scope: ScopeRef;
+    nodeInstance?: import('./node-identity').NodeInstance;
+  }): ImportFrame | undefined;
   pop(frameId: string): void;
   resolveAlias(alias: string, frameId?: string): ImportStackEntry | undefined;
   currentBindings(frameId?: string): Readonly<Record<string, unknown>>;
