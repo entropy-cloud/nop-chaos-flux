@@ -88,7 +88,7 @@ describe('FieldFrame', () => {
 
     const field = container.querySelector('.nop-field');
     expect(field).toBeTruthy();
-    expect(field?.className).toBe('nop-field');
+    expect(field?.className).toContain('nop-field');
     expect(field?.getAttribute('data-field-visited')).toBe('');
     expect(field?.getAttribute('data-field-touched')).toBe('');
     expect(field?.getAttribute('data-field-dirty')).toBe('');

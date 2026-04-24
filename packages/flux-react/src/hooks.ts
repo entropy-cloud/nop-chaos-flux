@@ -32,7 +32,9 @@ import {
   SurfaceContext,
   ValidationContext,
   NO_VALIDATION_OWNER,
-  useRequiredContext
+  useRequiredContext,
+  FormLayoutContext,
+  type FormLayoutContextValue
 } from './contexts';
 import { getIn } from '@nop-chaos/flux-core';
 import { createHelpers } from './helpers';
@@ -470,6 +472,10 @@ export function useCurrentFormModelGeneration(): number {
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, (n) => n, Object.is);
 }
 
+export function useFormLayout(): FormLayoutContextValue {
+  return useContext(FormLayoutContext) ?? {};
+}
+
 export const rendererHooks = {
   useRendererRuntime,
   useRenderScope,
@@ -481,6 +487,8 @@ export const rendererHooks = {
   useRendererEnv,
   useActionDispatcher,
   useCurrentForm,
+  useCurrentValidationScope,
+  useCurrentFormState,
   useCurrentFormErrors,
   useCurrentFormError,
   useCurrentFormFieldState,
@@ -496,5 +504,6 @@ export const rendererHooks = {
   useCurrentNodeInstance,
   useStructuralLoopContext,
   useRenderFragment,
-  useCurrentFormModelGeneration
+  useCurrentFormModelGeneration,
+  useFormLayout
 };

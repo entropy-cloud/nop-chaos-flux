@@ -26,6 +26,9 @@ export interface FormSchema extends BaseSchema {
   body?: BaseSchema[];
   actions?: BaseSchema[];
   data?: Record<string, any>;
+  mode?: 'normal' | 'horizontal';
+  labelAlign?: 'top' | 'left' | 'right';
+  labelWidth?: string | number;
   statusPath?: string;
   initAction?: ActionSchema | ActionSchema[];
   submitAction?: ActionSchema | ActionSchema[];
@@ -34,6 +37,8 @@ export interface FormSchema extends BaseSchema {
   onValidateError?: ActionSchema | ActionSchema[];
   hiddenFieldPolicy?: HiddenFieldPolicy;
 }
+
+export type { FieldsetSchema } from './renderers/fieldset';
 
 export interface SelectSchema extends InputSchema {
   options?: SelectOptionsValue;

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import {
   FormContext,
+  FormLayoutContext,
   ScopeContext,
 } from '@nop-chaos/flux-react';
 import {
@@ -259,7 +260,16 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     void initAction(undefined, { scope: lifecycleScope, form: ownedForm });
   }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm]);
 
-  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+  const statusPath = typeof (props.props as FormSchema).statusPath === 'string' ? (props.props as FormSchema).statusPath : undefined;
+
+  const formLayoutValue = useMemo(() => {
+    const schemaProps = props.props as FormSchema;
+    const value: import('@nop-chaos/flux-react').FormLayoutContextValue = {};
+    if (schemaProps.mode) value.mode = schemaProps.mode;
+    if (schemaProps.labelAlign) value.labelAlign = schemaProps.labelAlign;
+    if (schemaProps.labelWidth !== undefined) value.labelWidth = schemaProps.labelWidth;
+    return Object.keys(value).length > 0 ? value : undefined;
+  }, [(props.props as FormSchema).mode, (props.props as FormSchema).labelAlign, (props.props as FormSchema).labelWidth]);
 
   useEffect(() => {
     if (!statusPath || !parentScope) {
@@ -338,10 +348,12 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   return (
       <FormContext.Provider value={ownedForm}>
       <ScopeContext.Provider value={ownedForm.scope}>
+      <FormLayoutContext.Provider value={formLayoutValue}>
         <section className={cn('nop-form', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
           {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body">{bodyContent}</div> : null}
           {hasRendererSlotContent(actionsContent) ? <div data-slot="form-actions">{actionsContent}</div> : null}
         </section>
+      </FormLayoutContext.Provider>
       </ScopeContext.Provider>
     </FormContext.Provider>
   );
@@ -498,7 +510,11 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'submitAction', kind: 'event' },
     { key: 'onSubmitSuccess', kind: 'event' },
     { key: 'onSubmitError', kind: 'event' },
-    { key: 'onValidateError', kind: 'event' }
+    { key: 'onValidateError', kind: 'event' },
+    { key: 'statusPath', kind: 'prop' },
+    { key: 'mode', kind: 'prop' },
+    { key: 'labelAlign', kind: 'prop' },
+    { key: 'labelWidth', kind: 'prop' }
   ],
   scopePolicy: 'form',
   componentRegistryPolicy: 'new',

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useAggregateError, useCurrentForm, useCurrentFormFieldState, useCurrentFormState, useCurrentValidationScope } from './hooks';
+import { useAggregateError, useCurrentForm, useCurrentFormFieldState, useCurrentFormState, useCurrentValidationScope, useFormLayout } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired } from './form-state';
@@ -7,13 +7,24 @@ import { shouldShowFieldError } from './field-error-visibility';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
+export interface FieldRemarkProps {
+  icon?: string;
+  content: ReactNode;
+  placement?: 'top' | 'right' | 'bottom' | 'left';
+  trigger?: ('click' | 'hover' | 'focus')[];
+}
+
 export interface FieldFrameProps {
   name?: string;
   label?: ReactNode;
   required?: boolean;
   hint?: ReactNode;
   description?: ReactNode;
+  remark?: FieldRemarkProps;
+  labelRemark?: FieldRemarkProps;
   layout?: 'default' | 'checkbox' | 'radio';
+  labelAlign?: 'top' | 'left' | 'right';
+  labelWidth?: string | number;
   rootTag?: 'label' | 'div';
   validationBehavior?: CompiledValidationBehavior;
   className?: string;
@@ -35,7 +46,11 @@ export function FieldFrame(props: FieldFrameProps) {
     required,
     hint,
     description,
+    remark,
+    labelRemark,
     layout,
+    labelAlign: labelAlignProp,
+    labelWidth: labelWidthProp,
     rootTag,
     validationBehavior,
     className,
@@ -45,16 +60,14 @@ export function FieldFrame(props: FieldFrameProps) {
     children
   } = props;
 
+  const formLayout = useFormLayout();
+
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
   
-  // Path-scoped subscription for field state (O(1) wakeup when other fields change)
-  // Falls back to whole-store subscription if store doesn't support subscribeToPath
-  // Always call the hook with a stable path to satisfy Rules of Hooks
   const rawFieldState = useCurrentFormFieldState(name ?? '', { path: name ?? '', ownerPath: name ?? '' });
   const fieldState = name ? rawFieldState : EMPTY_FORM_FIELD_STATE;
   
-  // Aggregate errors from array/object/form level
   const aggregateError = useAggregateError(name ?? '', { enabled: Boolean(name) });
   const validationModel = currentForm?.validation ?? currentValidationScope?.validation;
   const validationField = name ? getCompiledValidationField(validationModel, name) : undefined;
@@ -88,26 +101,40 @@ export function FieldFrame(props: FieldFrameProps) {
   const LabelTag = isGroup ? 'legend' : 'span';
   const effectiveRequired = Boolean(required) || Boolean(dynamicRequired);
 
+  const effectiveLabelAlign = labelAlignProp ?? formLayout.labelAlign;
+  const effectiveLabelWidth = labelWidthProp ?? formLayout.labelWidth;
+  const formMode = formLayout.mode ?? 'normal';
+
+  const labelStyle = effectiveLabelWidth != null ? { width: effectiveLabelWidth } : undefined;
+  const isLabelTop = effectiveLabelAlign === 'top' || (formMode === 'normal' && !effectiveLabelAlign);
+
   return (
     <Tag
       {...rootProps}
-      className={cn('nop-field', className)}
+      className={cn(
+        'nop-field',
+        isLabelTop ? 'nop-field--label-top' : 'nop-field--label-left',
+        className
+      )}
       data-testid={testid || undefined}
       data-cid={cid != null ? cid : undefined}
       data-field-visited={fieldState.visited ? '' : undefined}
       data-field-touched={fieldState.touched ? '' : undefined}
       data-field-dirty={fieldState.dirty ? '' : undefined}
       data-field-invalid={showError ? '' : undefined}
+      data-field-mode={formMode}
     >
       {label ? (
-        <LabelTag data-slot="field-label">
+        <LabelTag data-slot="field-label" style={labelStyle}>
           {label}
           {effectiveRequired ? <span data-slot="field-required" aria-hidden="true">*</span> : null}
+          {labelRemark ? <span data-slot="field-label-remark" title={typeof labelRemark.content === 'string' ? labelRemark.content : undefined}>{labelRemark.icon ?? '?'}</span> : null}
         </LabelTag>
       ) : null}
 
       <div data-slot="field-control">
         {children}
+        {remark ? <span data-slot="field-remark" title={typeof remark.content === 'string' ? remark.content : undefined}>{remark.icon ?? '?'}</span> : null}
       </div>
 
       {error && showError ? (

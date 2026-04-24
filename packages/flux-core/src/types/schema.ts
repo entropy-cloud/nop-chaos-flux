@@ -38,10 +38,24 @@ export interface BaseSchema extends SchemaObject {
 
 export type SchemaInput = BaseSchema | BaseSchema[];
 
+export interface FieldRemarkSchema extends SchemaObject {
+  icon?: string;
+  content: string;
+  placement?: 'top' | 'right' | 'bottom' | 'left';
+  trigger?: ('click' | 'hover' | 'focus')[];
+}
+
 export interface BoundFieldSchemaBase extends BaseSchema {
   name: string;
   readOnly?: boolean;
   required?: boolean;
+  mode?: 'normal' | 'horizontal';
+  labelAlign?: 'top' | 'left' | 'right' | 'inherit';
+  labelWidth?: string | number;
+  hint?: string;
+  description?: string;
+  remark?: FieldRemarkSchema;
+  labelRemark?: FieldRemarkSchema;
 }
 
 export interface SchemaFieldRule {

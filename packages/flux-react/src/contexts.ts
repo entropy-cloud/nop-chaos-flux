@@ -15,6 +15,12 @@ import type {
   ValidationScopeRuntime
 } from '@nop-chaos/flux-core';
 
+export interface FormLayoutContextValue {
+  mode?: 'normal' | 'horizontal';
+  labelAlign?: 'top' | 'left' | 'right';
+  labelWidth?: string | number;
+}
+
 export const NO_VALIDATION_OWNER = Symbol('NO_VALIDATION_OWNER');
 export type ValidationContextValue = ValidationScopeRuntime | typeof NO_VALIDATION_OWNER | undefined;
 
@@ -31,6 +37,7 @@ export const SurfaceContext = createContext<SurfaceRuntime | undefined>(undefine
 export const NodeMetaContext = createContext<RenderNodeMeta | null>(null);
 export const ClassAliasesContext = createContext<Record<string, string> | undefined>(undefined);
 export const StructuralLoopContext = createContext<StructuralLoopRenderContext | undefined>(undefined);
+export const FormLayoutContext = createContext<FormLayoutContextValue | undefined>(undefined);
 
 export function useRequiredContext<T>(context: Context<T | null>, label: string): T {
   const value = useContext(context);

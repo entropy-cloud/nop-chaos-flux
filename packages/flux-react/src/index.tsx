@@ -10,6 +10,7 @@ export {
 export { DialogHost } from './dialog-host';
 export { FieldFrame } from './field-frame';
 export type { FieldFrameProps } from './field-frame';
+export type { FormLayoutContextValue } from './contexts';
 export { NodeRenderer } from './node-renderer';
 export {
   useRendererRuntime,
@@ -40,6 +41,7 @@ export {
   useActionDispatcher,
   useRenderFragment,
   useCurrentFormModelGeneration,
+  useFormLayout,
   rendererHooks
 } from './hooks';
 export {
@@ -47,6 +49,7 @@ export {
   ClassAliasesContext,
   ComponentRegistryContext,
   FormContext,
+  FormLayoutContext,
   NodeMetaContext,
   PageContext,
   RenderInstancePathContext,
