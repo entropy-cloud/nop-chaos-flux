@@ -591,7 +591,7 @@ export interface InspectorPanelDescriptor {
   order?: number;
   mode?: 'tab' | 'section' | 'inline';
   body: SchemaInput;
-  submitAction?: Record<string, unknown>;
+  submitAction?: ActionSchema | ActionSchema[];
   readonly?: boolean;
   badge?: string;
 }

@@ -1,4 +1,4 @@
-import type { DomainHostStatusSummary, SchemaInput } from '@nop-chaos/flux-core';
+import type { ActionSchema, DomainHostStatusSummary, SchemaInput } from '@nop-chaos/flux-core';
 
 export interface GraphDocument {
   id: string;
@@ -80,7 +80,7 @@ export interface NodeTypeConfig {
   createDialog?: {
     title?: string;
     body: SchemaInput;
-    submitAction?: Record<string, unknown>;
+    submitAction?: ActionSchema | ActionSchema[];
   };
   quickActions?: SchemaInput;
 }

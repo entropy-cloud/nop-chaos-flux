@@ -1,8 +1,5 @@
-import type {
-  SpreadsheetDocument,
-  SpreadsheetCellRef,
-  SpreadsheetRange,
-} from '@nop-chaos/spreadsheet-core';
+import type { ActionSchema } from '@nop-chaos/flux-core';
+import type { SpreadsheetDocument, SpreadsheetCellRef, SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
 
 export interface ReportDesignerHostStatusSummary {
   kind: 'report-designer';
@@ -127,7 +124,7 @@ export interface ReportDesignerConfig {
       match: { kinds: ReportSelectionTargetKind[] };
       body?: Record<string, unknown>;
       provider?: string;
-      submitAction?: Record<string, unknown>;
+      submitAction?: ActionSchema | ActionSchema[];
       readonly?: boolean;
       badge?: string;
       group?: string;

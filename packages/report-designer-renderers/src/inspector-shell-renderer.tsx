@@ -82,7 +82,7 @@ export function ReportInspectorShellRenderer(props: RendererComponentProps<Repor
     setSubmittingPanelId(panel.id);
     setSubmitResult(undefined);
     try {
-      const result = await props.helpers.dispatch(panel.submitAction as any, { scope });
+      const result = await props.helpers.dispatch(panel.submitAction, { scope });
       setSubmitResult(result);
     } catch (error) {
       setSubmitResult({ ok: false, error });

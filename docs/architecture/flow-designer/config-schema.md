@@ -194,7 +194,7 @@ interface NodeTypeConfig {
   createDialog?: {
     title?: string
     body: SchemaInput
-    submitAction?: Record<string, unknown>
+    submitAction?: ActionSchema | ActionSchema[]
   }
   quickActions?: SchemaInput
 }

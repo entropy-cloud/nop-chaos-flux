@@ -1,3 +1,4 @@
+import type { ActionSchema } from '@nop-chaos/flux-core';
 import type {
   ReportSelectionTarget,
   ReportSelectionTargetKind,
@@ -30,7 +31,7 @@ export interface InspectorPanelDescriptor {
   order?: number;
   mode?: 'tab' | 'section' | 'inline';
   body: Record<string, unknown>;
-  submitAction?: Record<string, unknown>;
+  submitAction?: ActionSchema | ActionSchema[];
   readonly?: boolean;
   badge?: string;
 }

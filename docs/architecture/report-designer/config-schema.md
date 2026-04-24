@@ -296,7 +296,7 @@ interface InspectorProviderConfig {
   priority?: number
   body?: SchemaInput
   provider?: string
-  submitAction?: Record<string, unknown>
+  submitAction?: ActionSchema | ActionSchema[]
 }
 
 interface SelectionTargetMatch {

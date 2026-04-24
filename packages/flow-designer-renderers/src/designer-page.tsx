@@ -294,7 +294,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
 
       const submitAction = pendingCreateDialog.nodeType.createDialog?.submitAction;
       if (submitAction) {
-        const result = await props.helpers.dispatch(submitAction as any, {
+        const result = await props.helpers.dispatch(submitAction, {
           scope: designerScope,
           actionScope,
         });

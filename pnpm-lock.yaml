@@ -366,6 +366,9 @@ importers:
 
   packages/flux-react:
     dependencies:
+      '@nop-chaos/flux-compiler':
+        specifier: workspace:*
+        version: link:../flux-compiler
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
@@ -577,6 +580,9 @@ importers:
 
   packages/report-designer-core:
     dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
       '@nop-chaos/spreadsheet-core':
         specifier: workspace:*
         version: link:../spreadsheet-core
