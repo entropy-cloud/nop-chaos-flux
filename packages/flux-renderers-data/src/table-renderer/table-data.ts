@@ -1,6 +1,11 @@
 import { getIn } from '@nop-chaos/flux-core';
 import type { FilterState, SortState, TableRowEntry } from './types';
 
+function isDevRuntime() {
+  const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };
+  return importMeta.env?.DEV === true;
+}
+
 export function normalizeRowKey(record: Record<string, any>, sourceIndex: number, rowKeyField?: string): string {
   const explicitValue = rowKeyField ? getIn(record, rowKeyField) : undefined;
   const compatibilityValue = explicitValue ?? record.__rowKey ?? record.id;
@@ -21,7 +26,7 @@ export function buildTableRowEntries(source: Array<Record<string, any>>, rowKeyF
 }
 
 export function warnOnDuplicateRowKeys(entries: TableRowEntry[]): void {
-  if (!import.meta.env.DEV) return;
+  if (!isDevRuntime()) return;
 
   const seen = new Set<string>();
   const duplicates = new Set<string>();
@@ -64,8 +69,13 @@ export function processTableData(
   }
 
   Object.entries(filterState).forEach(([columnName, values]) => {
-    if (values.size > 0) {
-      data = data.filter((row) => values.has(String(row.record[columnName])));
+    if (values.values.size > 0) {
+      data = data.filter((row) => values.values.has(String(row.record[columnName])));
+    }
+
+    if (values.keyword && values.keyword.trim().length > 0) {
+      const needle = values.keyword.trim().toLowerCase();
+      data = data.filter((row) => String(row.record[columnName] ?? '').toLowerCase().includes(needle));
     }
   });
 

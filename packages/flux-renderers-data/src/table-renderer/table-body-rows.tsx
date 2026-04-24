@@ -4,6 +4,7 @@ import { Button, Checkbox, RadioGroupItem, TableBody, TableCell, TableRow } from
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { TableSchema } from '../schemas';
+import type { FixedColumnLayout } from './fixed-columns';
 import type { TableRowEntry } from './types';
 
 const DEFAULT_ROW_ESTIMATE = 44;
@@ -71,6 +72,7 @@ function buildFlattenedItems(
 
 interface TableBodyRowsProps {
   props: RendererComponentProps<TableSchema>;
+  columns: import('../schemas').TableColumnSchema[];
   processedData: TableRowEntry[];
   rowScopeCache: Map<string, ScopeRef>;
   rowRepeatedTemplateId: string;
@@ -78,6 +80,7 @@ interface TableBodyRowsProps {
   selectedRowKeys: Set<string>;
   columnCount: number;
   isStriped: boolean;
+  fixedColumnLayout: FixedColumnLayout;
   emptyContent: React.ReactNode;
   onToggleExpand: (rowKey: string) => void;
   onSelectRow: (rowKey: string, checked: boolean) => void;
@@ -91,6 +94,7 @@ function renderDataRow(
   columns: import('../schemas').TableColumnSchema[],
   helpers: RendererComponentProps<TableSchema>['helpers'],
   parentProps: RendererComponentProps<TableSchema>,
+  fixedColumnLayout: FixedColumnLayout,
   onToggleExpand: (rowKey: string) => void,
   onSelectRow: (rowKey: string, checked: boolean) => void,
   isStriped: boolean
@@ -112,7 +116,7 @@ function renderDataRow(
       }
     >
       {schemaProps.expandable ? (
-        <TableCell data-slot="table-expand-cell">
+        <TableCell data-slot="table-expand-cell" className={fixedColumnLayout.getExpandCellProps().className} style={fixedColumnLayout.getExpandCellProps().style}>
           <Button
             type="button"
             variant="ghost"
@@ -130,7 +134,7 @@ function renderDataRow(
       ) : null}
 
       {schemaProps.rowSelection ? (
-        <TableCell data-slot="table-select-cell" onClick={(event) => event.stopPropagation()}>
+        <TableCell data-slot="table-select-cell" className={fixedColumnLayout.getSelectionCellProps().className} style={fixedColumnLayout.getSelectionCellProps().style} onClick={(event) => event.stopPropagation()}>
           {schemaProps.rowSelection.type === 'checkbox' ? (
             <Checkbox checked={isSelected} onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))} />
           ) : (
@@ -145,7 +149,7 @@ function renderDataRow(
 
         if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
           return (
-            <TableCell key={column.name ?? `op-${columnIndex}`} style={column.width ? { width: column.width } : undefined}>
+            <TableCell key={column.name ?? `op-${columnIndex}`} className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className} style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style }} data-fixed={fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined}>
               <div data-slot="table-actions" className="flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
                 {buttonRegion
                   ? buttonRegion.render({
@@ -169,7 +173,7 @@ function renderDataRow(
 
         if (cellRegion) {
           return (
-            <TableCell key={`${column.name ?? columnIndex}`} style={column.width ? { width: column.width } : undefined}>
+            <TableCell key={`${column.name ?? columnIndex}`} className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className} style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style }} data-fixed={fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined}>
               {cellRegion.render({
                 bindings: { record: entry.record, index: entry.sourceIndex },
                 instancePath: rowInstancePath,
@@ -180,7 +184,7 @@ function renderDataRow(
         }
 
         return (
-          <TableCell key={`${column.name ?? columnIndex}`} style={column.width ? { width: column.width } : undefined}>
+          <TableCell key={`${column.name ?? columnIndex}`} className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className} style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style }} data-fixed={fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined}>
             {column.name ? String(entry.record[column.name] ?? '') : ''}
           </TableCell>
         );
@@ -225,6 +229,7 @@ function renderExpandedRow(
 
 export function TableBodyRows({
   props,
+  columns,
   processedData,
   rowScopeCache,
   rowRepeatedTemplateId,
@@ -232,6 +237,7 @@ export function TableBodyRows({
   selectedRowKeys,
   columnCount,
   isStriped,
+  fixedColumnLayout,
   emptyContent,
   onToggleExpand,
   onSelectRow,
@@ -240,15 +246,17 @@ export function TableBodyRows({
 }: TableBodyRowsProps) {
   if (!virtualEnabled || processedData.length === 0) {
     return (
-      <NonVirtualBody
-        props={props}
-        processedData={processedData}
-        rowScopeCache={rowScopeCache}
+        <NonVirtualBody
+          props={props}
+          columns={columns}
+          processedData={processedData}
+          rowScopeCache={rowScopeCache}
         rowRepeatedTemplateId={rowRepeatedTemplateId}
         expandedRowKeys={expandedRowKeys}
         selectedRowKeys={selectedRowKeys}
         columnCount={columnCount}
         isStriped={isStriped}
+        fixedColumnLayout={fixedColumnLayout}
         emptyContent={emptyContent}
         onToggleExpand={onToggleExpand}
         onSelectRow={onSelectRow}
@@ -259,6 +267,7 @@ export function TableBodyRows({
   return (
     <VirtualBody
       props={props}
+      columns={columns}
       processedData={processedData}
       rowScopeCache={rowScopeCache}
       rowRepeatedTemplateId={rowRepeatedTemplateId}
@@ -266,6 +275,7 @@ export function TableBodyRows({
       selectedRowKeys={selectedRowKeys}
       columnCount={columnCount}
       isStriped={isStriped}
+      fixedColumnLayout={fixedColumnLayout}
       emptyContent={emptyContent}
       onToggleExpand={onToggleExpand}
       onSelectRow={onSelectRow}
@@ -276,6 +286,7 @@ export function TableBodyRows({
 
 function NonVirtualBody({
   props,
+  columns,
   processedData,
   rowScopeCache,
   rowRepeatedTemplateId,
@@ -283,12 +294,12 @@ function NonVirtualBody({
   selectedRowKeys,
   columnCount,
   isStriped,
+  fixedColumnLayout,
   emptyContent,
   onToggleExpand,
   onSelectRow,
 }: TableBodyRowsProps) {
   const schemaProps = props.props as TableSchema;
-  const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : [];
   const helpers = props.helpers;
 
   return (
@@ -315,10 +326,10 @@ function NonVirtualBody({
 
           return (
             <React.Fragment key={rowKey}>
-              {renderDataRow(
-                { kind: 'data', entry, rowScope, rowKey, rowInstancePath, isExpanded, isSelected, isEven },
-                schemaProps, columns, helpers, props, onToggleExpand, onSelectRow, isStriped
-              )}
+                  {renderDataRow(
+                    { kind: 'data', entry, rowScope, rowKey, rowInstancePath, isExpanded, isSelected, isEven },
+                    schemaProps, columns, helpers, props, fixedColumnLayout, onToggleExpand, onSelectRow, isStriped
+                  )}
               {isExpanded && schemaProps.expandable?.expandedRowRegionKey
                 ? renderExpandedRow(
                     { kind: 'expanded', rowKey, columnCount },
@@ -335,6 +346,7 @@ function NonVirtualBody({
 /* eslint-disable react-hooks/incompatible-library */
 function VirtualBody({
   props,
+  columns,
   processedData,
   rowScopeCache,
   rowRepeatedTemplateId,
@@ -342,13 +354,13 @@ function VirtualBody({
   selectedRowKeys,
   columnCount,
   isStriped,
+  fixedColumnLayout,
   onToggleExpand,
   onSelectRow,
   scrollRef,
 }: TableBodyRowsProps) {
   const parentRef = scrollRef;
   const schemaProps = props.props as TableSchema;
-  const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : [];
   const helpers = props.helpers;
 
   const flattenedItems = React.useMemo(
@@ -396,7 +408,7 @@ function VirtualBody({
               return (
                 <React.Fragment key={virtualRow.key}>
                   {renderDataRow(
-                    item, schemaProps, columns, helpers, props, onToggleExpand, onSelectRow, isStriped
+                    item, schemaProps, columns, helpers, props, fixedColumnLayout, onToggleExpand, onSelectRow, isStriped
                   )}
                 </React.Fragment>
               );

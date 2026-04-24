@@ -33,6 +33,8 @@ export const enUS: Resource = {
       expand: 'Expand',
       filter: 'Filter',
       sort: 'Sort',
+      moveUp: 'Move Up',
+      moveDown: 'Move Down',
       noData: 'No Data',
     },
     form: {

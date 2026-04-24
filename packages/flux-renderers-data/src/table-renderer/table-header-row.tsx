@@ -1,8 +1,9 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { Button, Checkbox, cn, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, TableHead, TableRow } from '@nop-chaos/ui';
+import { Button, Checkbox, cn, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, Input, TableHead, TableRow } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ArrowUpDownIcon, ChevronDownIcon } from 'lucide-react';
 import type { TableColumnSchema, TableSchema } from '../schemas';
+import type { FixedColumnLayout } from './fixed-columns';
 import type { FilterState, SortState } from './types';
 
 interface TableHeaderRowProps {
@@ -13,8 +14,10 @@ interface TableHeaderRowProps {
   filterState: FilterState;
   allSelected: boolean;
   selectedRowCount: number;
+  fixedColumnLayout: FixedColumnLayout;
   onSort: (column: string) => void;
   onFilter: (column: string, option: string, checked: boolean) => void;
+  onSearch: (column: string, keyword: string) => void;
   onSelectAll: (checked: boolean) => void;
 }
 
@@ -26,8 +29,10 @@ export function TableHeaderRow({
   filterState,
   allSelected,
   selectedRowCount,
+  fixedColumnLayout,
   onSort,
   onFilter,
+  onSearch,
   onSelectAll
 }: TableHeaderRowProps) {
   const schemaProps = props.props as TableSchema;
@@ -35,13 +40,13 @@ export function TableHeaderRow({
   return (
     <TableRow>
       {schemaProps.expandable ? (
-        <TableHead data-slot="table-expand-column" style={{ width: '40px' }}>
+        <TableHead data-slot="table-expand-column" className={fixedColumnLayout.getExpandCellProps().className} style={{ width: '40px', ...fixedColumnLayout.getExpandCellProps().style }}>
           <span className="sr-only">{t('flux.table.expand')}</span>
         </TableHead>
       ) : null}
 
       {schemaProps.rowSelection ? (
-        <TableHead data-slot="table-select-column" style={{ width: '40px' }}>
+        <TableHead data-slot="table-select-column" className={fixedColumnLayout.getSelectionCellProps().className} style={{ width: '40px', ...fixedColumnLayout.getSelectionCellProps().style }}>
           {schemaProps.rowSelection.type === 'checkbox' && (
             <Checkbox
               checked={allSelected && selectedRowCount === sourceLength && sourceLength > 0}
@@ -55,19 +60,25 @@ export function TableHeaderRow({
         const labelRegion = typeof column.labelRegionKey === 'string' ? props.regions[column.labelRegionKey] : undefined;
         const labelContent = labelRegion?.render() ?? column.label ?? column.name;
         const isSortable = column.sortable === true;
-        const isFilterable = column.filterable === true && Array.isArray(column.filterOptions) && column.filterOptions.length > 0;
+        const filterConfig = typeof column.filterable === 'object' && column.filterable ? column.filterable : undefined;
+        const filterOptions = Array.isArray(column.filterOptions) ? column.filterOptions : filterConfig?.options;
+        const isFilterable = (column.filterable === true || Boolean(filterConfig)) && Array.isArray(filterOptions) && filterOptions.length > 0;
+        const isSearchable = column.searchable === true || Boolean(filterConfig?.searchable);
         const currentSort = sortState.column === column.name ? sortState.direction : null;
-        const activeFilters = column.name ? (filterState[column.name] ?? new Set<string>()) : new Set<string>();
+        const activeFilters = column.name ? (filterState[column.name]?.values ?? new Set<string>()) : new Set<string>();
+        const currentKeyword = column.name ? (filterState[column.name]?.keyword ?? '') : '';
         const columnKey = column.name ?? (typeof column.label === 'string' ? column.label : undefined) ?? `column-${index}`;
 
         return (
           <TableHead
             key={columnKey}
-            style={column.width ? { width: column.width } : undefined}
+            className={fixedColumnLayout.getColumnCellProps(column, index).className}
+            style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, index).style }}
             data-slot="table-head"
+            data-fixed={fixedColumnLayout.getColumnCellProps(column, index).fixed || undefined}
             data-interactive={isSortable || isFilterable || undefined}
           >
-            {isSortable || isFilterable ? (
+            {isSortable || isFilterable || isSearchable ? (
               <div className="flex items-center gap-1">
                 <span
                   className={isSortable ? 'cursor-pointer hover:text-primary' : ''}
@@ -84,7 +95,7 @@ export function TableHeaderRow({
                   )}
                 </span>
 
-                {isFilterable && (
+                {(isFilterable || isSearchable) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       render={
@@ -104,7 +115,16 @@ export function TableHeaderRow({
                       }
                     />
                     <DropdownMenuContent>
-                      {column.filterOptions!.map((option) => (
+                      {isSearchable && column.name ? (
+                        <div className="p-2">
+                          <Input
+                            value={currentKeyword}
+                            placeholder={typeof column.searchable === 'object' && column.searchable ? String((column.searchable as { placeholder?: string }).placeholder ?? 'Search') : 'Search'}
+                            onChange={(event) => onSearch(column.name!, event.target.value)}
+                          />
+                        </div>
+                      ) : null}
+                      {isFilterable ? filterOptions!.map((option) => (
                         <DropdownMenuCheckboxItem
                           key={option.value}
                           checked={activeFilters.has(option.value)}
@@ -112,7 +132,7 @@ export function TableHeaderRow({
                         >
                           {option.label}
                         </DropdownMenuCheckboxItem>
-                      ))}
+                      )) : null}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}

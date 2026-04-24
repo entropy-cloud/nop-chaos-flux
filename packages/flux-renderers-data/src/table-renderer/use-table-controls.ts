@@ -3,7 +3,9 @@ import { getIn } from '@nop-chaos/flux-core';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas';
+import { areStringArraysEqual, normalizeOrderedColumns } from './column-settings-state';
 import { toPositiveNumber, toStringArray } from './table-data';
+import type { FilterState, SortState } from './types';
 
 export function useTablePagination(
   schemaProps: TableSchema,
@@ -194,11 +196,35 @@ export function useTableSelection(
 }
 
 export function useTableSort(
+  schemaProps: TableSchema,
   onSortChange: RendererComponentProps<TableSchema>['events']['onSortChange'],
   columns: NonNullable<TableSchema['columns']>,
   helpers: RendererComponentProps<TableSchema>['helpers']
 ) {
-  const [sortState, setSortState] = useState<{ column: string; direction: 'asc' | 'desc' | null }>({ column: '', direction: null });
+  const renderScope = useRenderScope();
+  const sortOwnership = schemaProps.sortOwnership ?? 'local';
+  const sortStatePath = typeof schemaProps.sortStatePath === 'string' ? schemaProps.sortStatePath : undefined;
+  const [localSortState, setLocalSortState] = useState<SortState>({ column: '', direction: null });
+
+  const scopeSortState = useScopeSelector(
+    (scopeData) => {
+      if (sortOwnership !== 'scope' || !sortStatePath) {
+        return undefined;
+      }
+
+      const value = getIn(scopeData, sortStatePath) as Record<string, unknown> | undefined;
+      return {
+        column: typeof value?.column === 'string' ? value.column : '',
+        direction: value?.direction === 'asc' || value?.direction === 'desc' ? value.direction : null,
+      } satisfies SortState;
+    },
+    (a, b) => a?.column === b?.column && a?.direction === b?.direction
+  );
+
+  const sortState = useMemo(
+    () => (sortOwnership === 'scope' ? (scopeSortState ?? { column: '', direction: null }) : localSortState),
+    [localSortState, scopeSortState, sortOwnership]
+  );
 
   const handleSort = useCallback(
     (columnName: string) => {
@@ -206,7 +232,7 @@ export function useTableSort(
         return;
       }
 
-      setSortState((prev) => {
+      const prev = sortState;
         let newDirection: 'asc' | 'desc' | null;
         if (prev.column !== columnName) {
           newDirection = 'asc';
@@ -218,55 +244,137 @@ export function useTableSort(
           newDirection = 'asc';
         }
 
-        const newState = { column: columnName, direction: newDirection };
+        const newState = { column: columnName, direction: newDirection } satisfies SortState;
+        startTransition(() => {
+          if (sortOwnership === 'scope' && sortStatePath) {
+            renderScope.update(sortStatePath, newState);
+          } else {
+            setLocalSortState(newState);
+          }
+        });
+
         onSortChange?.(null, {
           scope: helpers.createScope({ column: columnName, direction: newDirection }, { scopeKey: 'sort', pathSuffix: 'sort' }),
         });
-
-        return newState;
-      });
     },
-    [columns, onSortChange, helpers]
+    [columns, helpers, onSortChange, renderScope, sortOwnership, sortState, sortStatePath]
   );
 
   return { sortState, handleSort };
 }
 
 export function useTableFilter(
+  schemaProps: TableSchema,
   onFilterChange: RendererComponentProps<TableSchema>['events']['onFilterChange'],
   helpers: RendererComponentProps<TableSchema>['helpers']
 ) {
-  const [filterState, setFilterState] = useState<Record<string, Set<string>>>({});
+  const renderScope = useRenderScope();
+  const filterOwnership = schemaProps.filterOwnership ?? 'local';
+  const filterStatePath = typeof schemaProps.filterStatePath === 'string' ? schemaProps.filterStatePath : undefined;
+  const [localFilterState, setLocalFilterState] = useState<FilterState>({});
+
+  const scopeFilterState = useScopeSelector(
+    (scopeData) => {
+      if (filterOwnership !== 'scope' || !filterStatePath) {
+        return undefined;
+      }
+
+      const value = getIn(scopeData, filterStatePath) as Record<string, { filters?: string[]; keyword?: string } | undefined> | undefined;
+      const next: FilterState = {};
+      Object.entries(value ?? {}).forEach(([key, entry]) => {
+        next[key] = {
+          values: new Set(Array.isArray(entry?.filters) ? entry.filters : []),
+          keyword: typeof entry?.keyword === 'string' ? entry.keyword : undefined,
+        };
+      });
+      return next;
+    },
+    (a, b) => {
+      if (a === b) return true;
+      const aKeys = Object.keys(a ?? {});
+      const bKeys = Object.keys(b ?? {});
+      if (aKeys.length !== bKeys.length) return false;
+      return aKeys.every((key) => {
+        const left = a?.[key];
+        const right = b?.[key];
+        if (!left || !right) return left === right;
+        if (left.keyword !== right.keyword) return false;
+        if (left.values.size !== right.values.size) return false;
+        for (const value of left.values) {
+          if (!right.values.has(value)) return false;
+        }
+        return true;
+      });
+    }
+  );
+
+  const filterState = useMemo(
+    () => (filterOwnership === 'scope' ? (scopeFilterState ?? {}) : localFilterState),
+    [filterOwnership, localFilterState, scopeFilterState]
+  );
 
   const handleFilter = useCallback(
     (columnName: string, value: string, checked: boolean) => {
-      setFilterState((prev) => {
-        const newFilters = { ...prev };
-        const currentFilters = new Set(newFilters[columnName] ?? []);
+      const prev = filterState;
+      const newFilters: FilterState = { ...prev };
+      const current = newFilters[columnName] ?? { values: new Set<string>(), keyword: undefined };
+      const currentFilters = new Set(current.values);
 
-        if (checked) {
-          currentFilters.add(value);
+      if (checked) {
+        currentFilters.add(value);
+      } else {
+        currentFilters.delete(value);
+      }
+
+      if (currentFilters.size === 0 && !current.keyword) {
+        delete newFilters[columnName];
+      } else {
+        newFilters[columnName] = { values: currentFilters, keyword: current.keyword };
+      }
+
+      startTransition(() => {
+        if (filterOwnership === 'scope' && filterStatePath) {
+          renderScope.update(filterStatePath, Object.fromEntries(Object.entries(newFilters).map(([key, entry]) => [key, { filters: Array.from(entry.values), keyword: entry.keyword }])));
         } else {
-          currentFilters.delete(value);
+          setLocalFilterState(newFilters);
         }
+      });
 
-        if (currentFilters.size === 0) {
-          delete newFilters[columnName];
-        } else {
-          newFilters[columnName] = currentFilters;
-        }
-
-        onFilterChange?.(null, {
-          scope: helpers.createScope({ column: columnName, filters: Array.from(currentFilters) }, { scopeKey: 'filter', pathSuffix: 'filter' }),
-        });
-
-        return newFilters;
+      onFilterChange?.(null, {
+        scope: helpers.createScope({ column: columnName, filters: Array.from(currentFilters), keyword: current.keyword }, { scopeKey: 'filter', pathSuffix: 'filter' }),
       });
     },
-    [onFilterChange, helpers]
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope]
   );
 
-  return { filterState, handleFilter };
+  const handleSearch = useCallback(
+    (columnName: string, keyword: string) => {
+      const prev = filterState;
+      const newFilters: FilterState = { ...prev };
+      const current = newFilters[columnName] ?? { values: new Set<string>(), keyword: undefined };
+
+      if (!keyword && current.values.size === 0) {
+        delete newFilters[columnName];
+      } else {
+        newFilters[columnName] = { values: new Set(current.values), keyword: keyword || undefined };
+      }
+
+      startTransition(() => {
+        if (filterOwnership === 'scope' && filterStatePath) {
+          renderScope.update(filterStatePath, Object.fromEntries(Object.entries(newFilters).map(([key, entry]) => [key, { filters: Array.from(entry.values), keyword: entry.keyword }])));
+        } else {
+          setLocalFilterState(newFilters);
+        }
+      });
+
+      onFilterChange?.(null, {
+        scope: helpers.createScope({ column: columnName, filters: Array.from(current.values), keyword }, { scopeKey: 'filter', pathSuffix: 'filter' }),
+      });
+    },
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope]
+  );
+
+  return { filterState, handleFilter, handleSearch };
 }
 
 export function useTableExpand(schemaProps: TableSchema) {
@@ -287,4 +395,107 @@ export function useTableExpand(schemaProps: TableSchema) {
   }, []);
 
   return { expandedRowKeys, handleToggleExpand };
+}
+
+export function useTableVisibleColumns(
+  schemaProps: TableSchema,
+  columns: NonNullable<TableSchema['columns']>
+) {
+  const renderScope = useRenderScope();
+  const toggledStatePath = typeof schemaProps.columnSettings?.toggledColumnsStatePath === 'string'
+    ? schemaProps.columnSettings.toggledColumnsStatePath
+    : undefined;
+  const orderedStatePath = typeof schemaProps.columnSettings?.orderedColumnsStatePath === 'string'
+    ? schemaProps.columnSettings.orderedColumnsStatePath
+    : undefined;
+
+  const defaultOrderedColumns = useMemo(
+    () => columns.map((column, index) => column.name ?? `column-${index}`),
+    [columns]
+  );
+
+  const defaultVisibleColumns = useMemo(
+    () => columns.filter((column) => column.hidden !== true).map((column, index) => column.name ?? `column-${index}`),
+    [columns]
+  );
+
+  const [localVisibleColumns, setLocalVisibleColumns] = useState<string[]>(defaultVisibleColumns);
+  const [localOrderedColumns, setLocalOrderedColumns] = useState<string[]>(defaultOrderedColumns);
+  const scopeVisibleColumns = useScopeSelector(
+    (scopeData) => toggledStatePath ? toStringArray(getIn(scopeData, toggledStatePath)) : undefined,
+    areStringArraysEqual
+  );
+  const scopeOrderedColumns = useScopeSelector(
+    (scopeData) => orderedStatePath ? toStringArray(getIn(scopeData, orderedStatePath)) : undefined,
+    areStringArraysEqual
+  );
+
+  const enabled = schemaProps.columnSettings?.enabled === true;
+  const orderedColumns = useMemo(
+    () => normalizeOrderedColumns(
+      orderedStatePath ? (scopeOrderedColumns?.length ? scopeOrderedColumns : defaultOrderedColumns) : localOrderedColumns,
+      defaultOrderedColumns
+    ),
+    [defaultOrderedColumns, localOrderedColumns, orderedStatePath, scopeOrderedColumns]
+  );
+  const visibleColumns = enabled
+    ? (toggledStatePath ? (scopeVisibleColumns?.length ? scopeVisibleColumns : defaultVisibleColumns) : localVisibleColumns)
+    : defaultVisibleColumns;
+
+  const visibleColumnsSet = useMemo(() => new Set(visibleColumns), [visibleColumns]);
+  const columnsByKey = useMemo(
+    () => new Map(columns.map((column, index) => [column.name ?? `column-${index}`, column] as const)),
+    [columns]
+  );
+
+  const tableColumns = useMemo(
+    () => orderedColumns
+      .filter((key) => visibleColumnsSet.has(key))
+      .map((key) => columnsByKey.get(key))
+      .filter((column): column is NonNullable<typeof column> => Boolean(column)),
+    [columnsByKey, orderedColumns, visibleColumnsSet]
+  );
+
+  const toggleColumn = useCallback((columnKey: string, visible: boolean) => {
+    const next = visible
+      ? Array.from(new Set([...visibleColumns, columnKey]))
+      : visibleColumns.filter((value) => value !== columnKey);
+
+    startTransition(() => {
+      if (toggledStatePath) {
+        renderScope.update(toggledStatePath, next);
+      } else {
+        setLocalVisibleColumns(next);
+      }
+    });
+  }, [renderScope, toggledStatePath, visibleColumns]);
+
+  const moveColumn = useCallback((columnKey: string, direction: 'up' | 'down') => {
+    const currentIndex = orderedColumns.indexOf(columnKey);
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= orderedColumns.length) {
+      return;
+    }
+
+    const next = [...orderedColumns];
+    const [column] = next.splice(currentIndex, 1);
+    next.splice(targetIndex, 0, column);
+
+    startTransition(() => {
+      if (orderedStatePath) {
+        renderScope.update(orderedStatePath, next);
+      } else {
+        setLocalOrderedColumns(next);
+      }
+    });
+  }, [orderedColumns, orderedStatePath, renderScope]);
+
+  return {
+    columnSettingsEnabled: enabled,
+    visibleColumns,
+    orderedColumns,
+    tableColumns,
+    toggleColumn,
+    moveColumn,
+  };
 }

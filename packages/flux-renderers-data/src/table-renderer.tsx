@@ -2,14 +2,15 @@ import { useMemo, useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Table, TableHeader, cn } from '@nop-chaos/ui';
+import { Button, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Table, TableHeader, cn } from '@nop-chaos/ui';
 import type { TableColumnSchema, TableSchema } from './schemas';
 import { createTableRowRepeatedTemplateId, processTableData, serializeInstancePath } from './table-renderer/table-data';
 import { TableBodyRows } from './table-renderer/table-body-rows';
+import { createFixedColumnLayout } from './table-renderer/fixed-columns';
 import { TableHeaderRow } from './table-renderer/table-header-row';
 import { TableLoadingOverlay } from './table-renderer/table-loading-overlay';
 import { TablePaginationBar } from './table-renderer/table-pagination-bar';
-import { useTablePagination, useTableSelection, useTableSort, useTableFilter, useTableExpand } from './table-renderer/use-table-controls';
+import { useTablePagination, useTableSelection, useTableSort, useTableFilter, useTableExpand, useTableVisibleColumns } from './table-renderer/use-table-controls';
 import { useTableHandle } from './table-renderer/use-table-handle';
 import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache';
 
@@ -39,6 +40,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const ownerKey = createTableOwnerKey(props);
   const rowRepeatedTemplateId = useMemo(() => createTableRowRepeatedTemplateId(templateNodeId), [templateNodeId]);
 
+  const { columnSettingsEnabled, visibleColumns, orderedColumns, tableColumns, toggleColumn, moveColumn } = useTableVisibleColumns(schemaProps, columns);
   const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange } = useTablePagination(
     schemaProps,
     props.events.onPageChange,
@@ -50,14 +52,15 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     props.events.onSelectionChange,
     helpers
   );
-  const { sortState, handleSort } = useTableSort(props.events.onSortChange, columns, helpers);
-  const { filterState, handleFilter } = useTableFilter(props.events.onFilterChange, helpers);
+  const { sortState, handleSort } = useTableSort(schemaProps, props.events.onSortChange, tableColumns, helpers);
+  const { filterState, handleFilter, handleSearch } = useTableFilter(schemaProps, props.events.onFilterChange, helpers);
   const { expandedRowKeys, handleToggleExpand } = useTableExpand(schemaProps);
 
   const processedData = useMemo(
     () => processTableData(source, schemaProps.rowKey, sortState, filterState, paginationEnabled, currentPage, pageSize),
     [source, schemaProps.rowKey, sortState, filterState, paginationEnabled, currentPage, pageSize]
   );
+  const fixedColumnLayout = useMemo(() => createFixedColumnLayout(schemaProps, tableColumns), [schemaProps, tableColumns]);
 
   const rowScopeCache = useTableRowScopeCache(processedData, ownerKey, helpers, props.path);
 
@@ -81,7 +84,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isLoading = schemaProps.loading === true;
   const isStriped = schemaProps.stripe === true;
   const isBordered = schemaProps.bordered === true;
-  const columnCount = columns.length + (schemaProps.rowSelection ? 1 : 0) + (schemaProps.expandable ? 1 : 0);
+  const columnCount = tableColumns.length + (schemaProps.rowSelection ? 1 : 0) + (schemaProps.expandable ? 1 : 0);
 
   const virtualThreshold = schemaProps.virtualThreshold;
   const scrollHeight = schemaProps.scrollHeight;
@@ -92,10 +95,55 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   return (
     <div className={cn('nop-table', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(headerContent) ? <div data-slot="table-header-region">{headerContent}</div> : null}
+      {columnSettingsEnabled ? (
+        <div className="mb-2 flex justify-end" data-slot="table-column-settings">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={<Button variant="outline" size="sm">{t('flux.editor.columns')}</Button>}
+            />
+            <DropdownMenuContent>
+              {orderedColumns.map((key) => {
+                const columnIndex = columns.findIndex((column, index) => (column.name ?? `column-${index}`) === key);
+                if (columnIndex < 0) {
+                  return null;
+                }
+
+                const column = columns[columnIndex];
+                const label = typeof column.label === 'string' ? column.label : column.name ?? key;
+                const orderedIndex = orderedColumns.indexOf(key);
+                return (
+                  <div key={key} data-slot="table-column-settings-item">
+                    <DropdownMenuCheckboxItem checked={visibleColumns.includes(key)} onCheckedChange={(checked) => toggleColumn(key, checked)}>
+                      {label}
+                    </DropdownMenuCheckboxItem>
+                    <div className="flex gap-1 px-1.5 pb-1" data-slot="table-column-settings-actions">
+                      <DropdownMenuItem
+                        aria-label={`${t('flux.table.moveUp')} ${label}`}
+                        disabled={orderedIndex === 0}
+                        onClick={() => moveColumn(key, 'up')}
+                      >
+                        {t('flux.table.moveUp')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        aria-label={`${t('flux.table.moveDown')} ${label}`}
+                        disabled={orderedIndex === orderedColumns.length - 1}
+                        onClick={() => moveColumn(key, 'down')}
+                      >
+                        {t('flux.table.moveDown')}
+                      </DropdownMenuItem>
+                    </div>
+                    {orderedIndex < orderedColumns.length - 1 ? <DropdownMenuSeparator /> : null}
+                  </div>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ) : null}
 
       <div
         ref={virtualEnabled ? scrollRef : undefined}
-        className={virtualEnabled ? 'overflow-auto' : 'relative'}
+        className={cn(virtualEnabled ? 'overflow-auto' : 'relative', fixedColumnLayout.hasStickyColumns ? 'overflow-x-auto' : undefined)}
         style={virtualEnabled && scrollHeight ? { maxHeight: scrollHeight } : undefined}
         data-slot="table-container"
       >
@@ -103,20 +151,23 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
           <TableHeader data-slot="table-header">
             <TableHeaderRow
               props={props}
-              columns={columns}
+              columns={tableColumns}
               sourceLength={source.length}
               sortState={sortState}
               filterState={filterState}
               allSelected={allSelected}
               selectedRowCount={selectedRowKeys.size}
+              fixedColumnLayout={fixedColumnLayout}
               onSort={handleSort}
               onFilter={handleFilter}
+              onSearch={handleSearch}
               onSelectAll={handleSelectAll}
             />
           </TableHeader>
 
           <TableBodyRows
             props={props}
+            columns={tableColumns}
             processedData={processedData}
             rowScopeCache={rowScopeCache}
             rowRepeatedTemplateId={rowRepeatedTemplateId}
@@ -124,6 +175,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             selectedRowKeys={selectedRowKeys}
             columnCount={columnCount}
             isStriped={isStriped}
+            fixedColumnLayout={fixedColumnLayout}
             emptyContent={emptyContent}
             onToggleExpand={handleToggleExpand}
             onSelectRow={handleSelectRow}

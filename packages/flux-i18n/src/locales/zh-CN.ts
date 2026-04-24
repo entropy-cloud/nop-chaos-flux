@@ -33,6 +33,8 @@ export const zhCN: Resource = {
       expand: '展开',
       filter: '筛选',
       sort: '排序',
+      moveUp: '上移',
+      moveDown: '下移',
       noData: '暂无数据',
     },
     form: {
