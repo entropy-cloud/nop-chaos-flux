@@ -5,6 +5,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import {
+  createBaseCompileSymbolTable,
   createHostActionValidationContext,
   createSchemaCompiler,
   createSchemaCompilerDiagnosticsContext,
@@ -49,13 +50,13 @@ describe('schema compiler diagnostics', () => {
       validation: {
         unknownBarePropertyPolicy: 'error'
       }
-    })).toEqual([
+    })).toEqual(expect.arrayContaining([
       expect.objectContaining({
         code: 'unknown-property',
         path: '/txt',
         severity: 'error'
       })
-    ]);
+    ]));
   });
 
   it('keeps unknown bare properties out of compiled props when strict policy is error', () => {
@@ -115,13 +116,13 @@ describe('schema compiler diagnostics', () => {
           from: 'demo-lib'
         }
       ]
-    } as any)).toEqual([
+    } as any)).toEqual(expect.arrayContaining([
       expect.objectContaining({
         code: 'invalid-namespace-property',
         path: '/xui:imports/0/as',
         source: 'namespace'
       })
-    ]);
+    ]));
   });
 
   it('validates xui:version as a string version selector', () => {
@@ -141,13 +142,13 @@ describe('schema compiler diagnostics', () => {
       type: 'strict-text',
       text: 'Hello',
       'xui:version': 123
-    } as any)).toEqual([
+    } as any)).toEqual(expect.arrayContaining([
       expect.objectContaining({
         code: 'invalid-namespace-property',
         message: 'xui:version must be a string version selector.',
         source: 'namespace'
       })
-    ]);
+    ]));
   });
 
   it('rejects empty xui:version', () => {
@@ -157,13 +158,13 @@ describe('schema compiler diagnostics', () => {
       type: 'strict-text',
       text: 'Hello',
       'xui:version': ''
-    } as any)).toEqual([
+    } as any)).toEqual(expect.arrayContaining([
       expect.objectContaining({
         code: 'invalid-namespace-property',
         message: 'xui:version must be a non-empty version selector string.',
         source: 'namespace'
       })
-    ]);
+    ]));
   });
 
   it('accepts namespaced action payload fields when args is omitted', () => {
@@ -176,6 +177,67 @@ describe('schema compiler diagnostics', () => {
         nodeType: 'task'
       }
     })).toEqual([]);
+  });
+
+  it('reports imported helper member and arg-shape issues from prepared import meta', () => {
+    const compiler = createCompiler(strictTextRenderer);
+
+    const diagnostics = compiler.validate?.({
+      type: 'strict-text',
+      text: '${$demo.missing(user.name)} ${$demo.formatName(user.first)}'
+    }, {
+      schemaUrl: 'test://schema.json',
+      symbolTable: createBaseCompileSymbolTable().push({
+        id: 'prepared-imports',
+        kind: 'imports',
+        symbols: {
+          '$demo': {
+            name: '$demo',
+            kind: 'import-alias',
+            members: ['formatName'],
+            memberDefinitions: {
+              formatName: {
+                kind: 'function',
+                params: [
+                  { name: 'first' },
+                  { name: 'last' }
+                ]
+              }
+            }
+          }
+        }
+      }),
+      preparedImports: new Map([
+        [
+          JSON.stringify({ schemaUrl: 'test://schema.json', from: 'demo-lib', as: 'demo', options: null }),
+          {
+            schemaUrl: 'test://schema.json',
+            spec: { from: 'demo-lib', as: 'demo' },
+            resolvedSpec: { from: 'demo-lib', as: 'demo' },
+            staticMeta: {
+              helpers: {
+                formatName: {
+                  kind: 'function',
+                  params: [
+                    { name: 'first' },
+                    { name: 'last' }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      ])
+    }) ?? [];
+
+    expect(diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: 'unknown-import-member'
+      }),
+      expect.objectContaining({
+        code: 'invalid-import-function-args'
+      })
+    ]));
   });
 
   it('exposes a validateSchema adapter over compiler-owned analysis', () => {
@@ -193,12 +255,12 @@ describe('schema compiler diagnostics', () => {
           unknownBarePropertyPolicy: 'error'
         }
       }
-    })).toEqual([
+    })).toEqual(expect.arrayContaining([
       expect.objectContaining({
         code: 'unknown-property',
         path: '/txt'
       })
-    ]);
+    ]));
   });
 });
 

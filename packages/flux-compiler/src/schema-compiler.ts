@@ -18,6 +18,7 @@ import type {
   StaticAnalysisResult,
   TemplateNode,
   TemplateRegion,
+  PreparedImportSpec,
   WrapProvidersFn,
   XuiImportSpec
 } from '@nop-chaos/flux-core';
@@ -61,6 +62,96 @@ function pushImportSymbols(symbolTable: CompileSymbolTable, imports: unknown, id
         kind: 'import-alias'
       };
     }
+  }
+
+  return Object.keys(symbols).length === 0
+    ? symbolTable
+    : symbolTable.push({
+        id,
+        kind: 'imports',
+        symbols
+      });
+}
+
+function normalizeImportSpecKey(schemaUrl: string, spec: XuiImportSpec): string {
+  return JSON.stringify({
+    schemaUrl,
+    from: spec.from,
+    as: spec.as,
+    options: spec.options ?? null
+  });
+}
+
+function collectSchemaImportSpecs(input: SchemaInput, schemaUrl: string): XuiImportSpec[] {
+  const collected = new Map<string, XuiImportSpec>();
+
+  function visit(value: unknown): void {
+    if (!value || typeof value !== 'object') {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        visit(item);
+      }
+      return;
+    }
+
+    const record = value as Record<string, unknown>;
+    const imports = record['xui:imports'];
+    if (Array.isArray(imports)) {
+      for (const entry of imports) {
+        if (!entry || typeof entry !== 'object') {
+          continue;
+        }
+        const spec = entry as XuiImportSpec;
+        if (!spec.from || !spec.as) {
+          continue;
+        }
+        collected.set(normalizeImportSpecKey(schemaUrl, spec), spec);
+      }
+    }
+
+    for (const child of Object.values(record)) {
+      visit(child);
+    }
+  }
+
+  visit(input);
+  return Array.from(collected.values());
+}
+
+function buildImportMetaMembers(meta: PreparedImportSpec | undefined): readonly string[] | undefined {
+  return meta?.staticMeta?.helpers
+    ? Object.keys(meta.staticMeta.helpers)
+    : undefined;
+}
+
+function pushPreparedImportSymbols(
+  symbolTable: CompileSymbolTable,
+  imports: readonly XuiImportSpec[] | undefined,
+  preparedImports: ReadonlyMap<string, PreparedImportSpec> | undefined,
+  schemaUrl: string | undefined,
+  id: string
+): CompileSymbolTable {
+  if (!imports?.length || !schemaUrl) {
+    return symbolTable;
+  }
+
+  const symbols: Record<string, import('@nop-chaos/flux-core').SymbolInfo> = {};
+
+  for (const spec of imports) {
+    if (!spec.as) {
+      continue;
+    }
+
+    const prepared = preparedImports?.get(normalizeImportSpecKey(schemaUrl, spec));
+    symbols[`$${spec.as}`] = {
+      name: `$${spec.as}`,
+      kind: 'import-alias',
+      members: buildImportMetaMembers(prepared),
+      memberDefinitions: prepared?.staticMeta?.helpers
+    };
   }
 
   return Object.keys(symbols).length === 0
@@ -267,6 +358,7 @@ export function createSchemaCompiler(input: {
           parentPath: options.parentPath,
           schemaUrl: options.schemaUrl,
           symbolTable,
+          preparedImports: options.preparedImports,
           renderer: wrappedRenderer
         }, diagnostics, depth);
       });
@@ -291,6 +383,7 @@ export function createSchemaCompiler(input: {
         parentPath: options.parentPath,
         schemaUrl: options.schemaUrl,
         symbolTable,
+        preparedImports: options.preparedImports,
         renderer: wrappedRenderer
       }, diagnostics, depth),
       cidState
@@ -318,12 +411,18 @@ export function createSchemaCompiler(input: {
     const rawEventPlans: Record<string, ActionSchema | ActionSchema[]> = {};
     const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
 
+    const nodeImports = Array.isArray(fieldInspection.extensions?.['xui:imports'])
+      ? fieldInspection.extensions?.['xui:imports'] as XuiImportSpec[]
+      : undefined;
+
     let symbolTable = pushInjectedLocalSymbols(
       options.symbolTable ?? createBaseCompileSymbolTable(),
       renderer,
       `${path}:owner-symbols`
     );
-    symbolTable = pushImportSymbols(symbolTable, fieldInspection.extensions?.['xui:imports'], `${path}:imports`);
+    symbolTable = options.schemaUrl
+      ? pushPreparedImportSymbols(symbolTable, nodeImports, options.preparedImports, options.schemaUrl, `${path}:imports`)
+      : pushImportSymbols(symbolTable, nodeImports, `${path}:imports`);
 
     for (const key of Object.keys(schema)) {
       if (fieldInspection.skippedPropKeys.has(key) || isNamespacedSchemaKey(key)) {
@@ -353,6 +452,8 @@ export function createSchemaCompiler(input: {
           `${path}.${rule.regionKey ?? key}`,
           (inputValue, regionOptions) => compileAtNextDepth(inputValue, {
             ...regionOptions,
+            schemaUrl: regionOptions?.schemaUrl ?? options.schemaUrl,
+            preparedImports: options.preparedImports,
             symbolTable: pushRegionParamSymbols(symbolTable, rule.params, `${path}.${rule.regionKey ?? key}:slot`)
           }),
           regionMeta
@@ -365,7 +466,11 @@ export function createSchemaCompiler(input: {
             value,
             path,
             regions,
-            compileSchema: (s: SchemaInput, o?: CompileSchemaOptions) => compileSchemaToTemplateNodes(s, o, depth + 1)
+            compileSchema: (s: SchemaInput, o?: CompileSchemaOptions) => compileSchemaToTemplateNodes(s, {
+              ...o,
+              schemaUrl: o?.schemaUrl ?? options.schemaUrl,
+              preparedImports: o?.preparedImports ?? options.preparedImports
+            }, depth + 1)
           })
         : value;
 
@@ -420,14 +525,39 @@ export function createSchemaCompiler(input: {
     const scopePlan: ScopePlan =
       renderer.scopePolicy === 'form'
         ? { kind: 'form' }
-        : fieldInspection.extensions?.['xui:imports']
+        : nodeImports
           ? { kind: 'child' }
           : { kind: 'inherit' };
+
+    const classAliasesPlan = schema.classAliases && Object.keys(schema.classAliases as Record<string, unknown>).length > 0
+      ? {
+          aliases: schema.classAliases as Record<string, string>
+        }
+      : undefined;
+
+    const preparedNodeImports = options.schemaUrl && nodeImports?.length
+      ? nodeImports
+          .map((spec) => options.preparedImports?.get(normalizeImportSpecKey(options.schemaUrl!, spec)))
+          .filter((entry): entry is PreparedImportSpec => Boolean(entry))
+      : [];
+
+    const importsPlan = nodeImports?.length
+      ? {
+          imports: nodeImports,
+          resolvedImports: preparedNodeImports.length > 0
+            ? preparedNodeImports.map((entry) => entry.resolvedSpec)
+            : nodeImports,
+          preparedImports: preparedNodeImports,
+          staticMeta: preparedNodeImports.length > 0
+            ? Object.fromEntries(preparedNodeImports.map((entry) => [entry.spec.as, entry.staticMeta ?? {}]))
+            : undefined
+        }
+      : undefined;
 
     const providerPlan = {
       actionScope: renderer.actionScopePolicy === 'new',
       componentRegistry: renderer.componentRegistryPolicy === 'new',
-      classAliases: Boolean(schema.classAliases && Object.keys(schema.classAliases as Record<string, unknown>).length > 0)
+      classAliases: Boolean(classAliasesPlan)
     };
 
     const providerWrap = buildWrapProvidersClosure(providerPlan);
@@ -448,9 +578,11 @@ export function createSchemaCompiler(input: {
       regions,
       providerPlan,
       providerWrap,
+      classAliasesPlan,
+      importsPlan,
       scopePlan,
       validationPlan:
-        renderer.scopePolicy === 'form'
+        renderer.scopePolicy === 'form' || schema.type === 'page'
           ? collectValidationModel(
               Object.values(regions)
                 .map((region) => region.node)
@@ -492,6 +624,7 @@ export function createSchemaCompiler(input: {
   function validateSchemaInput(schema: SchemaInput, options: CompileSchemaOptions = {}) {
     const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'validate');
     const prepared = applyBeforeCompilePlugins(schema);
+    const schemaUrl = options.schemaUrl ?? '$';
 
     if (!isSchemaInput(prepared)) {
       diagnostics.emit({
@@ -502,8 +635,58 @@ export function createSchemaCompiler(input: {
       return diagnostics.diagnostics;
     }
 
+    try {
+      compileSchemaToTemplateNodes(prepared, {
+        ...options,
+        schemaUrl,
+        diagnostics: {
+          ...(options.diagnostics ?? {}),
+          enabled: true,
+          continueOnError: true,
+          reporter: (issue) => diagnostics.emit(issue)
+        }
+      });
+    } catch {
+      // validation stays non-throwing and collects diagnostics only
+    }
+
     analyzeSchemaInput(prepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
     return diagnostics.diagnostics;
+  }
+
+  async function prepareSchemaInput(schema: SchemaInput, options: CompileSchemaOptions = {}) {
+    const schemaUrl = options.schemaUrl ?? '$inline';
+    const imports = collectSchemaImportSpecs(schema, schemaUrl);
+    const preparedImports = new Map<string, PreparedImportSpec>();
+
+    if (imports.length === 0) {
+      return {
+        schema,
+        preparedImports
+      };
+    }
+
+    const resolveImportUrl = (options as CompileSchemaOptions & {
+      resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
+    }).resolveImportUrl;
+
+    for (const spec of imports) {
+      const resolvedSpec: XuiImportSpec = {
+        ...spec,
+        from: resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
+      };
+
+      preparedImports.set(normalizeImportSpecKey(schemaUrl, spec), {
+        schemaUrl,
+        spec,
+        resolvedSpec
+      });
+    }
+
+    return {
+      schema,
+      preparedImports
+    };
   }
 
   return {
@@ -513,6 +696,9 @@ export function createSchemaCompiler(input: {
         root: nodes,
         repeatedTemplates: new Map()
       };
+    },
+    async prepare(schema, options) {
+      return prepareSchemaInput(schema, options);
     },
     compileNode(schema, options) {
       return compileSingleNode(schema, options);

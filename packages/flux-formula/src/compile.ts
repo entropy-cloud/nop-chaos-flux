@@ -258,6 +258,26 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
           emit('unknown-slot-param', `Unknown slot param ${path[1]} on $slot.`);
         } else if (resolved.kind === 'builtin-namespace' && path.length > 1 && resolved.members && !resolved.members.includes(path[1])) {
           emit('unknown-builtin-member', `Unknown builtin member ${path[1]} on ${path[0]}.`);
+        } else if (resolved.kind === 'import-alias' && path.length > 1 && resolved.members && !resolved.members.includes(path[1])) {
+          emit('unknown-import-member', `Unknown imported member ${path[1]} on ${path[0]}.`, 'warning');
+        }
+      }
+    }
+
+    if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
+      const path = buildMemberPath(node.callee);
+      if (path && path[0].startsWith('$')) {
+        const resolved = requiredSymbolTable.resolve(path[0]);
+        const definition = path.length > 1 ? resolved?.memberDefinitions?.[path[1]] : undefined;
+        if (definition?.kind === 'function' && definition.params) {
+          const requiredCount = definition.params.filter((param) => param.required !== false).length;
+          const maxCount = definition.params.length;
+          if (node.arguments.length < requiredCount || node.arguments.length > maxCount) {
+            emit(
+              'invalid-import-function-args',
+              `Imported function ${path[0]}.${path[1]} expects ${requiredCount === maxCount ? requiredCount : `${requiredCount}-${maxCount}`} args but got ${node.arguments.length}.`
+            );
+          }
         }
       }
     }
