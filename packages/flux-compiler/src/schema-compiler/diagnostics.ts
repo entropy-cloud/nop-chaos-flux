@@ -197,6 +197,7 @@ export function createSchemaCompilerDiagnosticsContext(
   const continueOnError = mode === 'validate' ? true : diagnosticsOptions?.continueOnError ?? false;
   const maxIssues = diagnosticsOptions?.maxIssues;
   const validation = resolveValidationOptions(options, mode);
+  const seen = new Set<string>();
 
   function hasReachedLimit() {
     return maxIssues !== undefined && diagnostics.length >= maxIssues;
@@ -220,6 +221,12 @@ export function createSchemaCompilerDiagnosticsContext(
       severity: issue.severity ?? 'error',
       source: issue.source ?? 'core'
     };
+
+    const key = `${diagnostic.source}:${diagnostic.code}:${diagnostic.path}:${diagnostic.message}`;
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
 
     diagnostics.push(diagnostic);
     diagnosticsOptions?.collector?.add(diagnostic);
