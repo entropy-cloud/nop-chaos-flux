@@ -4,6 +4,7 @@ import { DataSourceRenderer } from './data-source-renderer';
 import { ChartRenderer } from './chart-renderer';
 import { TreeRenderer } from './tree-renderer';
 import { CrudRenderer } from './crud-renderer';
+import type { CrudSchema } from './crud-schema';
 import type { TableSchema } from './schemas';
 
 function escapeJsonPointerSegment(segment: string) {
@@ -97,6 +98,97 @@ function validateTableSchema(context: RendererSchemaValidationContext<BaseSchema
   }
 }
 
+function validateCrudSchema(context: RendererSchemaValidationContext<BaseSchema>) {
+  if (context.schema.type !== 'crud') {
+    return;
+  }
+
+  const schema = context.schema as CrudSchema;
+  const { path, emit } = context;
+
+  if (schema.columns !== undefined && !Array.isArray(schema.columns)) {
+    emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(path, 'columns'),
+      message: 'crud.columns must be an array when provided.'
+    });
+  }
+
+  if (Array.isArray(schema.columns)) {
+    schema.columns.forEach((column, index) => {
+      if (!column || typeof column !== 'object' || Array.isArray(column)) {
+        emit({
+          code: 'invalid-property-shape',
+          path: toJsonPointer(path, 'columns', index),
+          message: 'crud.columns entries must be objects.'
+        });
+      }
+    });
+  }
+
+  if (schema.paginationOwnership === 'scope' && typeof schema.paginationStatePath !== 'string') {
+    emit({
+      code: 'missing-required-field',
+      path: toJsonPointer(path, 'paginationStatePath'),
+      message: 'crud.paginationStatePath is required when paginationOwnership is "scope".'
+    });
+  }
+
+  if (schema.selectionOwnership === 'scope' && typeof schema.selectionStatePath !== 'string') {
+    emit({
+      code: 'missing-required-field',
+      path: toJsonPointer(path, 'selectionStatePath'),
+      message: 'crud.selectionStatePath is required when selectionOwnership is "scope".'
+    });
+  }
+
+  if (schema.sortOwnership === 'scope' && typeof schema.sortStatePath !== 'string') {
+    emit({
+      code: 'missing-required-field',
+      path: toJsonPointer(path, 'sortStatePath'),
+      message: 'crud.sortStatePath is required when sortOwnership is "scope".'
+    });
+  }
+
+  if (schema.filterOwnership === 'scope' && typeof schema.filterStatePath !== 'string') {
+    emit({
+      code: 'missing-required-field',
+      path: toJsonPointer(path, 'filterStatePath'),
+      message: 'crud.filterStatePath is required when filterOwnership is "scope".'
+    });
+  }
+}
+
+function transformCrudAuthoringSchema(context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<BaseSchema>) {
+  if (context.schema.type !== 'crud') {
+    return context.schema;
+  }
+
+  const schema = context.schema as CrudSchema & { bulkActions?: unknown };
+
+  if (schema.bulkActions === undefined) {
+    return schema;
+  }
+
+  if (schema.listActions !== undefined) {
+    context.emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(context.path, 'bulkActions'),
+      message: 'crud.bulkActions cannot be used together with canonical crud.listActions.'
+    });
+    const { bulkActions, ...rest } = schema;
+    void bulkActions;
+    return rest;
+  }
+
+  const { bulkActions, ...rest } = schema;
+
+  return {
+    ...rest,
+    listActions: bulkActions as CrudSchema['listActions']
+  };
+}
+
 export * from './schemas';
 export * from './crud-schema';
 export { TableRenderer } from './table-renderer';
@@ -140,7 +232,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'onClick', kind: 'event' },
       { key: 'onHover', kind: 'event' },
-      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' }
+      { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+      { key: 'componentId', kind: 'prop' }
     ]
   },
   {
@@ -168,6 +261,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-data',
     rendererClass: 'flux-owner-renderer',
     rendererTraits: ['semantic-owner', 'composite'],
+    authoringTransform: transformCrudAuthoringSchema,
+    schemaValidator: validateCrudSchema,
     propContracts: {
       statusPath: {
         shape: { kind: 'string' },
@@ -190,23 +285,97 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       queryForm: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Query Form',
-        description: 'Optional embedded query form configuration.',
+        description: 'Optional embedded query form configuration or migrated AMIS filter form.',
         editorType: 'object'
       },
       columns: {
         shape: { kind: 'array', item: { kind: 'object', fields: {} } },
         displayName: 'Columns',
-        description: 'Table column declarations.',
+        description: 'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
         editorType: 'crud-columns'
+      },
+      toolbar: {
+        shape: { kind: 'unknown' },
+        displayName: 'Toolbar',
+        description: 'Top toolbar region or migrated headerToolbar content.',
+        editorType: 'region'
+      },
+      listActions: {
+        shape: { kind: 'unknown' },
+        displayName: 'List Actions',
+        description: 'List-level actions such as create, refresh, export, or selection-driven batch actions.',
+        editorType: 'region'
+      },
+      footerToolbar: {
+        shape: { kind: 'unknown' },
+        displayName: 'Footer Toolbar',
+        description: 'Bottom toolbar region or migrated footerToolbar content.',
+        editorType: 'region'
       },
       selectionStatePath: {
         shape: { kind: 'string' },
         displayName: 'Selection Path',
         description: 'Scope path used when selection ownership is scope-based.',
         editorType: 'path'
+      },
+      selectionOwnership: {
+        shape: { kind: 'string' },
+        displayName: 'Selection Ownership',
+        description: 'Controls whether selection state is local, controlled, or scope-owned.',
+        editorType: 'select'
+      },
+      paginationOwnership: {
+        shape: { kind: 'string' },
+        displayName: 'Pagination Ownership',
+        description: 'Controls whether pagination state is local, controlled, or scope-owned.',
+        editorType: 'select'
+      },
+      paginationStatePath: {
+        shape: { kind: 'string' },
+        displayName: 'Pagination Path',
+        description: 'Scope path used when pagination ownership is scope-based.',
+        editorType: 'path'
+      },
+      sortOwnership: {
+        shape: { kind: 'string' },
+        displayName: 'Sort Ownership',
+        description: 'Controls whether sort state is local, controlled, or scope-owned.',
+        editorType: 'select'
+      },
+      sortStatePath: {
+        shape: { kind: 'string' },
+        displayName: 'Sort Path',
+        description: 'Scope path used when sort ownership is scope-based.',
+        editorType: 'path'
+      },
+      filterOwnership: {
+        shape: { kind: 'string' },
+        displayName: 'Filter Ownership',
+        description: 'Controls whether filter state is local, controlled, or scope-owned.',
+        editorType: 'select'
+      },
+      filterStatePath: {
+        shape: { kind: 'string' },
+        displayName: 'Filter Path',
+        description: 'Scope path used when filter ownership is scope-based.',
+        editorType: 'path'
+      },
+      columnSettings: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Column Settings',
+        description: 'Column visibility and order management, aligned with AMIS columns-toggler scenes.',
+        editorType: 'object'
       }
     },
     eventContracts: {
+      onQuerySubmit: {
+        displayName: 'Query Submit',
+        description: 'Runs when the CRUD query form submits.'
+      },
+      onQueryReset: {
+        displayName: 'Query Reset',
+        description: 'Runs when the CRUD query form resets.'
+      },
       onRowClick: {
         displayName: 'Row Click',
         description: 'Runs when the user activates a row.'
@@ -254,16 +423,26 @@ export const dataRendererDefinitions: RendererDefinition[] = [
           total: { kind: 'number' },
           hasSelection: { kind: 'boolean' },
           selectionCount: { kind: 'number' },
-          selectedRowKeys: { kind: 'array', item: { kind: 'string' } }
+          selectedRowKeys: { kind: 'array', item: { kind: 'string' } },
+          query: { kind: 'object', fields: {} },
+          pagination: { kind: 'object', fields: {} },
+          sort: { kind: 'object', fields: {} },
+          filters: { kind: 'object', fields: {} },
+          visibleColumnNames: { kind: 'array', item: { kind: 'string' } }
         },
-        optional: ['total']
+        optional: ['total', 'query', 'pagination', 'sort', 'filters', 'visibleColumnNames']
       }
     },
     component: CrudRenderer,
     fields: [
+      { key: 'name', kind: 'prop' },
+      { key: 'queryForm', kind: 'prop' },
       { key: 'toolbar', kind: 'region' },
-      { key: 'bulkActions', kind: 'region' },
+      { key: 'listActions', kind: 'region' },
+      { key: 'footerToolbar', kind: 'region' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+      { key: 'onQuerySubmit', kind: 'event' },
+      { key: 'onQueryReset', kind: 'event' },
       { key: 'onRowClick', kind: 'event' },
       { key: 'onSelectionChange', kind: 'event' },
       { key: 'onRefresh', kind: 'event' }

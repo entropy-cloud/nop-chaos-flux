@@ -21,7 +21,7 @@ const formRenderer: RendererDefinition = {
 };
 
 describe('CRUD renderer', () => {
-  it('renders crud shell with toolbar and table regions', async () => {
+  it('renders crud shell with toolbar and list action regions', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
     render(
@@ -46,7 +46,7 @@ describe('CRUD renderer', () => {
                   label: '新增',
                 },
               ],
-              bulkActions: [
+              listActions: [
                 {
                   type: 'button',
                   label: '批量删除',
@@ -103,7 +103,7 @@ describe('CRUD renderer', () => {
                 { id: '2', name: 'Bob' },
               ],
               columns: [{ name: 'name', label: '姓名' }],
-              bulkActions: [
+              listActions: [
                 {
                   type: 'text',
                   text: 'Selection: ${$crud.hasSelection ? "yes" : "no"}',
@@ -139,7 +139,7 @@ describe('CRUD renderer', () => {
                 { id: '2', name: 'Bob' },
               ],
               columns: [{ name: 'name', label: '姓名' }],
-              bulkActions: [
+              listActions: [
                 {
                   type: 'text',
                   text: 'Selected: ${$crud.selectionCount}',
@@ -301,7 +301,7 @@ describe('CRUD renderer', () => {
               source: [{ id: '1', name: 'Alice' }],
               columns: [{ name: 'name', label: '姓名' }],
               toolbar: [{ type: 'button', label: 'Add' }],
-              bulkActions: [{ type: 'button', label: 'Delete' }],
+               listActions: [{ type: 'button', label: 'Delete' }],
             },
           ],
         }}
@@ -315,7 +315,7 @@ describe('CRUD renderer', () => {
     expect(crudRoot?.classList.contains('custom-crud')).toBe(true);
     expect(document.querySelector('[data-slot="crud-toolbar"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="crud-toolbar-main"]')).toBeTruthy();
-    expect(document.querySelector('[data-slot="crud-bulk-actions"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="crud-list-actions"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="crud-table"]')).toBeTruthy();
   });
 });

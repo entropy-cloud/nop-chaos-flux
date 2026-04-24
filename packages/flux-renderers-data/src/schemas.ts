@@ -1,4 +1,39 @@
-import type { BaseSchema, SchemaInput, SchemaValue } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+
+export interface TableColumnFilterOption extends SchemaObject {
+  label: string;
+  value: string;
+}
+
+export interface TableColumnFilterConfig extends SchemaObject {
+  options?: TableColumnFilterOption[];
+  source?: SchemaValue;
+  searchable?: boolean;
+  searchConfig?: SchemaValue;
+  multiple?: boolean;
+}
+
+export interface TableColumnQuickEditConfig extends SchemaObject {
+  mode?: 'dialog' | 'inline';
+  body?: SchemaInput;
+  saveImmediately?: boolean | SchemaValue;
+}
+
+export interface TableColumnSettingsConfig extends SchemaObject {
+  enabled?: boolean;
+  draggable?: boolean;
+  overlay?: boolean;
+  align?: 'left' | 'right';
+  toggledColumnsStatePath?: string;
+  orderedColumnsStatePath?: string;
+}
+
+export interface TableResponsiveConfig extends SchemaObject {
+  mode?: 'table' | 'expand';
+  breakpoint?: 'xs' | 'sm' | 'md' | 'lg' | number;
+  expandTrigger?: 'button' | 'row';
+  defaultExpanded?: boolean;
+}
 
 export interface TableColumnSchema extends BaseSchema {
   label?: string;
@@ -8,20 +43,33 @@ export interface TableColumnSchema extends BaseSchema {
   buttons?: BaseSchema[];
   buttonsRegionKey?: string;
   width?: number | string;
+  fixed?: 'left' | 'right';
+  hidden?: boolean;
+  toggled?: boolean;
+  align?: 'left' | 'center' | 'right';
   sortable?: boolean;
-  filterable?: boolean;
-  filterOptions?: Array<{label: string; value: string}>;
+  searchable?: boolean | SchemaInput;
+  filterable?: boolean | TableColumnFilterConfig;
+  filterOptions?: TableColumnFilterOption[];
+  quickEdit?: boolean | TableColumnQuickEditConfig;
 }
 
 export interface TableSchema extends BaseSchema {
   type: 'table';
+  source?: SchemaValue;
   rowKey?: string;
   paginationOwnership?: 'local' | 'controlled' | 'scope';
   selectionOwnership?: 'local' | 'controlled' | 'scope';
+  sortOwnership?: 'local' | 'controlled' | 'scope';
+  filterOwnership?: 'local' | 'controlled' | 'scope';
   paginationStatePath?: string;
   selectionStatePath?: string;
+  sortStatePath?: string;
+  filterStatePath?: string;
   columns?: TableColumnSchema[];
   onRowClick?: BaseSchema;
+  header?: SchemaInput | string;
+  footer?: SchemaInput | string;
   empty?: BaseSchema | BaseSchema[] | string;
   loading?: boolean;
   loadingSlot?: BaseSchema | BaseSchema[] | string;
@@ -29,6 +77,8 @@ export interface TableSchema extends BaseSchema {
   bordered?: boolean;
   virtualThreshold?: number;
   scrollHeight?: number;
+  columnSettings?: TableColumnSettingsConfig;
+  responsive?: TableResponsiveConfig;
   pagination?: {
     enabled?: boolean;
     currentPage?: number;

@@ -35,7 +35,7 @@ const queryCrud = {
       toolbar: [
         { type: 'button', label: 'Refresh' }
       ],
-      bulkActions: [
+      listActions: [
         { type: 'button', label: 'Delete Selected' }
       ],
       columns: [
@@ -66,7 +66,7 @@ export function CrudLabPage() {
         },
         {
           title: 'CRUD with query form and bulk actions',
-          description: 'Shows the full shell shape: query form, toolbar, bulk actions, and table body in one renderer.',
+          description: 'Shows the full shell shape: query form, toolbar, list actions, and table body in one renderer.',
           schema: queryCrud,
           data: { records }
         }

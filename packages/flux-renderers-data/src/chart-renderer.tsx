@@ -121,7 +121,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   const chartHeight = typeof height === 'number' ? `${height}px` : (height || '400px');
   const chartHandle = useMemo<ComponentHandle>(() => ({
-    id: typeof props.schema.componentId === 'string' ? props.schema.componentId : props.id,
+    id: typeof (props.props as ChartSchema).componentId === 'string' ? (props.props as ChartSchema).componentId : props.id,
     type: 'chart',
     get ref() {
       return chartRef.current;
@@ -148,7 +148,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         return ['resize', 'setOption', 'getDataURL'];
       }
     }
-  }), [props.id, props.schema.componentId]);
+  }), [props.id, (props.props as ChartSchema).componentId]);
 
   useEffect(() => {
     if (!componentRegistry) {

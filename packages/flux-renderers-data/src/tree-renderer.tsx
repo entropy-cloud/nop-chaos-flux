@@ -144,7 +144,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const keyField = typeof schemaProps.keyField === 'string' && schemaProps.keyField ? schemaProps.keyField : DEFAULT_KEY_FIELD;
   const expandOnClickNode = schemaProps.expandOnClickNode === true;
   const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: t('flux.common.noData') });
-  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+  const statusPath = typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
 
   useEffect(() => {
     if (!statusPath) {

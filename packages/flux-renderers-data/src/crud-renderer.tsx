@@ -52,7 +52,7 @@ function useCrudHandle(
   const componentRegistry = useCurrentComponentRegistry();
   const cid = props.meta.cid;
   const id = props.id;
-  const name = (props.schema as CrudSchema).name;
+  const name = (props.props as CrudSchema).name as string | undefined;
 
   useEffect(() => {
     if (!componentRegistry || cid === undefined) {
@@ -160,11 +160,11 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   }, [scope, summary]);
 
   const toolbarContent = resolveRendererSlotContent(props, 'toolbar');
-  const bulkActionsContent = resolveRendererSlotContent(props, 'bulkActions');
+  const listActionsContent = resolveRendererSlotContent(props, 'listActions');
   const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: defaultEmptyLabel });
 
   const hasToolbar = hasRendererSlotContent(toolbarContent);
-  const hasBulkActions = hasRendererSlotContent(bulkActionsContent);
+  const hasListActions = hasRendererSlotContent(listActionsContent);
   const hasQueryForm = normalizedSchema.queryForm && normalizedSchema.queryForm.body;
 
   const crudId = props.id;
@@ -220,10 +220,10 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         </div>
       ) : null}
 
-      {hasToolbar || hasBulkActions ? (
+      {hasToolbar || hasListActions ? (
         <div className="nop-crud-toolbar" data-slot="crud-toolbar">
           {hasToolbar ? <div data-slot="crud-toolbar-main">{toolbarContent}</div> : null}
-          {hasBulkActions ? <div data-slot="crud-bulk-actions">{bulkActionsContent}</div> : null}
+          {hasListActions ? <div data-slot="crud-list-actions">{listActionsContent}</div> : null}
         </div>
       ) : null}
 

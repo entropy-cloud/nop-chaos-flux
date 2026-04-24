@@ -5,9 +5,14 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux
 import { dataRendererDefinitions } from './index';
 
 const tableRendererDefinition = dataRendererDefinitions.find((definition) => definition.type === 'table');
+const crudRendererDefinition = dataRendererDefinitions.find((definition) => definition.type === 'crud');
 
 if (!tableRendererDefinition) {
   throw new Error('table renderer definition is required for schema validator tests');
+}
+
+if (!crudRendererDefinition) {
+  throw new Error('crud renderer definition is required for schema validator tests');
 }
 
 describe('table schemaValidator', () => {
@@ -61,6 +66,88 @@ describe('table schemaValidator', () => {
       expect.objectContaining({
         code: 'invalid-property-shape',
         path: '/expandable/expandedRowKeys',
+        source: 'renderer'
+      })
+    ]);
+  });
+});
+
+describe('crud schemaValidator', () => {
+  const compiler = createSchemaCompiler({
+    registry: createRendererRegistry([crudRendererDefinition, {
+      type: 'text',
+      component: () => null
+    }]),
+    expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+  });
+
+  it('requires scope ownership state paths', () => {
+    expect(compiler.validate?.({
+      type: 'crud',
+      paginationOwnership: 'scope',
+      selectionOwnership: 'scope',
+      sortOwnership: 'scope',
+      filterOwnership: 'scope'
+    } as any)).toEqual([
+      expect.objectContaining({
+        code: 'missing-required-field',
+        path: '/paginationStatePath',
+        source: 'renderer'
+      }),
+      expect.objectContaining({
+        code: 'missing-required-field',
+        path: '/selectionStatePath',
+        source: 'renderer'
+      }),
+      expect.objectContaining({
+        code: 'missing-required-field',
+        path: '/sortStatePath',
+        source: 'renderer'
+      }),
+      expect.objectContaining({
+        code: 'missing-required-field',
+        path: '/filterStatePath',
+        source: 'renderer'
+      })
+    ]);
+  });
+
+  it('reports invalid columns shape', () => {
+    expect(compiler.validate?.({
+      type: 'crud',
+      columns: 'bad'
+    } as any)).toEqual([
+      expect.objectContaining({
+        code: 'invalid-property-shape',
+        path: '/columns',
+        source: 'renderer'
+      })
+    ]);
+  });
+
+  it('accepts legacy bulkActions authoring by lowering it to listActions before validation', () => {
+    expect(compiler.validate?.({
+      type: 'crud',
+      bulkActions: [
+        {
+          type: 'text',
+          text: 'Delete'
+        }
+      ],
+      columns: []
+    } as any)).toEqual([]);
+  });
+
+  it('rejects legacy bulkActions when canonical listActions is also present', () => {
+    expect(compiler.validate?.({
+      type: 'crud',
+      bulkActions: [{ type: 'text', text: 'Delete' }],
+      listActions: [{ type: 'text', text: 'Refresh' }],
+      columns: []
+    } as any)).toEqual([
+      expect.objectContaining({
+        code: 'invalid-property-shape',
+        path: '/bulkActions',
         source: 'renderer'
       })
     ]);
