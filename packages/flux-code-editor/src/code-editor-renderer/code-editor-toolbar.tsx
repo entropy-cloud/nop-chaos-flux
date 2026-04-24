@@ -1,7 +1,7 @@
-import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ChevronDownIcon, ChevronRightIcon, Maximize2Icon, PlayIcon } from 'lucide-react';
 import { SnippetPanel } from '../extensions/snippet-panel';
+import { ToolbarButton } from './toolbar-button';
 import type { CodeSnippetTemplate, SQLFormatConfig } from '../types';
 
 interface CodeEditorToolbarProps {
@@ -40,20 +40,18 @@ export function CodeEditorToolbar({
       {language === 'sql' && (
         <>
           {formatConfig && (
-            <Button
-              variant="ghost"
+            <ToolbarButton
               size="xs"
               data-slot="code-editor-toolbar-format"
               onClick={onFormatSQL}
               title={t('flux.codeEditor.formatSQL')}
             >
               {t('flux.codeEditor.format')}
-            </Button>
+            </ToolbarButton>
           )}
           {snippets?.length ? <SnippetPanel snippets={snippets} onInsert={onInsertSnippet} /> : null}
           {hasVariablePanel && (
-            <Button
-              variant="ghost"
+            <ToolbarButton
               size="xs"
               data-slot="code-editor-toolbar-var-toggle"
               onClick={onToggleVariables}
@@ -61,11 +59,10 @@ export function CodeEditorToolbar({
             >
               {variablePanelCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
               {t('flux.codeEditor.vars')}
-            </Button>
+            </ToolbarButton>
           )}
           {hasExecution && (
-            <Button
-              variant="ghost"
+            <ToolbarButton
               size="xs"
               data-slot="code-editor-toolbar-execute"
               onClick={onExecuteSQL}
@@ -73,21 +70,19 @@ export function CodeEditorToolbar({
             >
               <PlayIcon />
               {t('flux.codeEditor.run')}
-            </Button>
+            </ToolbarButton>
           )}
         </>
       )}
       {allowFullscreen && !isFullscreen && (
-        <Button
-          variant="ghost"
-          size="icon-xs"
+        <ToolbarButton
           data-slot="code-editor-toolbar-fullscreen"
           onClick={onEnterFullscreen}
           aria-label="Enter fullscreen"
           title="Fullscreen"
         >
           <Maximize2Icon />
-        </Button>
+        </ToolbarButton>
       )}
     </div>
   );

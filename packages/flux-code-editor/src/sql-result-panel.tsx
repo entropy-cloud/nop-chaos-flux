@@ -1,6 +1,7 @@
-import { Button, Spinner, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@nop-chaos/ui';
+import { Spinner, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { XIcon } from 'lucide-react';
+import { ToolbarButton } from './code-editor-renderer/toolbar-button';
 
 export type SQLResultState =
   | { status: 'idle' }
@@ -31,9 +32,9 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
         <div data-slot="code-editor-result-header">
           <span>{t('flux.codeEditor.error')}</span>
           {onClose && (
-            <Button data-slot="code-editor-result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+            <ToolbarButton data-slot="code-editor-result-close" onClick={onClose} aria-label="Close">
               <XIcon />
-            </Button>
+            </ToolbarButton>
           )}
         </div>
         <div>{result.message}</div>
@@ -48,9 +49,9 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
       <div data-slot="code-editor-result-header">
         <span>{t('flux.codeEditor.resultRows', { count: result.data.length })}</span>
         {onClose && (
-          <Button data-slot="code-editor-result-close" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+          <ToolbarButton data-slot="code-editor-result-close" onClick={onClose} aria-label="Close">
             <XIcon />
-          </Button>
+          </ToolbarButton>
         )}
       </div>
       <div data-slot="code-editor-result-table-wrapper">

@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { Button, ScrollArea } from '@nop-chaos/ui';
+import { ScrollArea } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ChevronRightIcon, ChevronLeftIcon, CopyIcon, CornerDownRightIcon } from 'lucide-react';
 import type { VariableItem } from './types';
 import { renderInsertTemplate } from './types';
+import { ToolbarButton } from './code-editor-renderer/toolbar-button';
 
 interface VariablePanelProps {
   variables: VariableItem[];
@@ -23,16 +24,14 @@ export function VariablePanel({
   if (collapsed) {
     return (
       <div data-slot="code-editor-var-panel" data-collapsed="">
-        <Button
-          variant="ghost"
-          size="icon-xs"
+        <ToolbarButton
           data-slot="code-editor-var-panel-toggle"
           onClick={onToggleCollapse}
           title={t('flux.codeEditor.expandVariablePanel')}
           aria-label={t('flux.codeEditor.expandVariablePanel')}
         >
           <ChevronRightIcon />
-        </Button>
+        </ToolbarButton>
       </div>
     );
   }
@@ -57,16 +56,14 @@ export function VariablePanel({
       <div data-slot="code-editor-var-panel-header">
         <span data-slot="code-editor-var-panel-title">{t('flux.codeEditor.variables')}</span>
         {onToggleCollapse && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
+          <ToolbarButton
             data-slot="code-editor-var-panel-toggle"
             onClick={onToggleCollapse}
             title={t('flux.codeEditor.collapseVariablePanel')}
             aria-label={t('flux.codeEditor.collapseVariablePanel')}
           >
             <ChevronLeftIcon />
-          </Button>
+          </ToolbarButton>
         )}
       </div>
       <ScrollArea data-slot="code-editor-var-panel-list">
@@ -89,26 +86,22 @@ function renderVariableList(
         <span data-slot="code-editor-var-item-value">{variable.value}</span>
       </div>
       <div data-slot="code-editor-var-item-actions">
-        <Button
-          variant="ghost"
-          size="icon-xs"
+        <ToolbarButton
           data-slot="code-editor-var-item-copy"
           onClick={() => onCopy(variable)}
           title="Copy to clipboard"
           aria-label="Copy to clipboard"
         >
           <CopyIcon />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
+        </ToolbarButton>
+        <ToolbarButton
           data-slot="code-editor-var-item-insert"
           onClick={() => onInsert(variable)}
           title="Insert at cursor"
           aria-label="Insert at cursor"
         >
           <CornerDownRightIcon />
-        </Button>
+        </ToolbarButton>
       </div>
       {variable.children && variable.children.length > 0 && (
         <div data-slot="code-editor-var-item-children">

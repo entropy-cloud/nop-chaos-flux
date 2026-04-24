@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
-import { Button } from '@nop-chaos/ui';
 import { cn } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
+import { ToolbarButton } from './code-editor-renderer/toolbar-button';
 import { CodeEditorBody } from './code-editor-renderer/code-editor-body';
 import { CodeEditorToolbar } from './code-editor-renderer/code-editor-toolbar';
 import type { CodeEditorRendererProps } from './code-editor-renderer/shared';
@@ -156,15 +156,13 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
       {isFullscreen && allowFullscreen ? (
         <div data-slot="code-editor-header">
           <span data-slot="code-editor-header-title">{String(labelContent ?? '')}</span>
-          <Button
-            variant="ghost"
-            size="icon-xs"
+          <ToolbarButton
             data-slot="code-editor-header-close"
             onClick={() => setIsFullscreen(false)}
             aria-label="Exit fullscreen"
           >
             <XIcon />
-          </Button>
+          </ToolbarButton>
         </div>
       ) : null}
 
