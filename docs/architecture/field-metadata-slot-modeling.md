@@ -211,6 +211,36 @@ Recommended examples:
 
 Those fields still carry declarative action schemas, not raw JavaScript functions.
 
+Do not force every action-bearing field into `onXX` form.
+
+Recommended naming split:
+
+- user interaction events and generic lifecycle notifications use `onXX`
+- owner-controlled semantic pipeline entry points may use `xxxAction`
+- post-result follow-up hooks use `onXX`
+
+Recommended examples:
+
+- `onClick`, `onChange`, `onSubmit`, `onMount`, `onUnmount`
+- `submitAction`, `initAction`, `transformInAction`, `transformOutAction`, `validateValueAction`
+- `onSubmitSuccess`, `onSubmitError`, `onValidateError`
+
+Interpretation rule:
+
+- `onXX` means an event-like entry point or notification hook
+- `xxxAction` means the owner's primary semantic action slot for a lifecycle stage, transform stage, or commit pipeline stage
+
+Why this distinction exists:
+
+- `submitAction` is the form owner's main submit pipeline, not merely a post-event callback
+- `transformInAction` / `transformOutAction` / `validateValueAction` are owner semantic action slots, not DOM-style events
+- forcing those fields into `onXX` names would blur the difference between triggering a pipeline and observing a pipeline outcome
+
+Compiler classification note:
+
+- a field may still be classified as `event` metadata even when its schema name is not `onXX`
+- field kind and naming convention are related but not identical concerns
+
 ## Schema-Level Function Boundary
 
 Do not expose real function props directly at the schema level.

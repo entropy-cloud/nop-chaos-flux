@@ -23,6 +23,7 @@
 - 目标导出字段为 `body`、`actions`、`data`、`statusPath`、`initAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`。
 - `statusPath` 用于把当前 form 的只读语义状态摘要发布到外层 scope。
 - 提交逻辑继续以 action/runtime 为主，不直接把请求逻辑塞进 renderer JSX。
+- 命名上不应把 `initAction`、`submitAction` 机械改为 `onInit`、`onSubmit`。它们表示 form owner 的主生命周期入口；`onSubmitSuccess`、`onSubmitError`、`onValidateError` 才是 follow-up hook 风格的结果分支入口。
 
 ## 5. 字段分类
 
