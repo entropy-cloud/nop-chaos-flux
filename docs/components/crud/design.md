@@ -4,7 +4,7 @@
 
 - `crud` 是面向业务数据工作流的复合 renderer，用来把查询表单、数据加载、表格展示、工具栏动作、列表级动作、行操作和列管理组织成一个稳定的 schema 契约。
 - `crud` 继续采用 Flux 当前 owner 分层，不把 `table`、`form`、`dialog`、`data-source` 重新揉成一个黑盒 owner。
-- 本轮工作的重点不是一次性补全全部运行时，而是先把正式设计和定义收敛到能够覆盖 AMIS `crud` 主能力面，并让 AMIS 配置迁移到 Flux JSON 时尽量低心智负担。
+- 当前 live baseline 已补齐 CRUD 主工作流的最小闭环：queryForm -> refresh params summary、`$crud` 摘要发布、header/footer toolbar blocks、selection-aware listActions、operation 列回归验证，以及 left/right fixed columns 的 table-level live behavior。
 
 ## 2. 设计目标
 
@@ -214,17 +214,17 @@ interface CrudStatusSummary {
 | --- | --- | --- | --- |
 | operation 列按钮 | 已支持 | 已支持 | 已覆盖 |
 | 行点击动作 | 已支持 | 已支持 | 已覆盖 |
-| 查询表单 | 已支持 | 已支持基础版 | 已覆盖 |
+| 查询表单 | 已支持 | 已支持基础版（submit/reset 已接入 CRUD query summary） | 已覆盖 |
 | 自动生成查询区 | 已支持 | 未实现 | 已定义 |
-| 顶部/底部工具栏 | 已支持 | 顶部基础版 | 已定义 |
+| 顶部/底部工具栏 | 已支持 | 已支持 header/footer region + 标准 toolbar blocks 基础版 | 已覆盖 |
 | 列表级动作 | 已支持 | 已支持基础版 | 已覆盖 |
 | 批量操作 | 已支持 | 可由 `listActions + $crud selection` 表达 | 已覆盖 |
 | 列排序 | 已支持 | table 已有基础 sort state | 已覆盖 |
 | 列头快速搜索 | 已支持 | 未实现 | 已定义 |
 | 列头快速过滤 | 已支持 | table 已有基础 filter state | 已定义 |
-| 左/右固定列 | 已支持 | 未实现 | 已定义 |
-| 多列时的字段选择 | 已支持 | 未实现 | 已定义 |
-| 列拖拽排序 | 已支持 | 未实现 | 已定义 |
+| 左/右固定列 | 已支持 | 已支持 table/crud live sticky columns 基础版 | 已覆盖 |
+| 多列时的字段选择 | 已支持 | 已支持基础版（列显隐 + 最小列顺序调整） | 已覆盖基础版 |
+| 列拖拽排序 | 已支持 | 未实现（当前为非拖拽的最小上下移动） | 已定义 |
 | 响应式更多列展开 | 已支持 | table expandable 已有基础能力 | 已定义 |
 | 服务端分页 | 已支持 | 已支持基础版 | 已覆盖 |
 | 前端一次性加载分页/过滤 | 已支持 | 部分 table 本地处理能力存在 | 已定义 |
@@ -236,6 +236,7 @@ interface CrudStatusSummary {
 
 - “当前运行时”反映仓库当前代码状态。
 - “本次契约基线”表示已经进入正式设计和 TypeScript schema，可作为后续实现与迁移工具的依据。
+- 当前仍未完成的 table-heavy / editing-heavy 能力包括更完整的 `columnSettings` parity（如拖拽、overlay、持久化策略）、responsive more-columns expansion、header quick search/filter UI、`quickEdit`、`syncLocation`、`clientMode.loadDataOnce` 等，不应误读为已全部落地。
 
 ## 10. 迁移策略
 

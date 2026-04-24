@@ -99,8 +99,10 @@
   },
   "targetFlux": {
     "type": "crud",
+    "id": "users-crud",
     "source": "/api/users",
     "queryForm": {
+      "layout": "inline",
       "body": [
         {
           "type": "input-text",
@@ -119,23 +121,34 @@
         }
       ]
     },
+    "columnSettings": {
+      "enabled": true
+    },
+    "toolbarLayout": {
+      "header": ["listActions", "pagination"],
+      "footer": ["statistics", "switch-per-page"]
+    },
     "toolbar": [
-      "listActions",
-      "pagination"
+      {
+        "type": "button",
+        "label": "刷新",
+        "onClick": {
+          "action": "component:refresh",
+          "componentId": "users-crud"
+        }
+      }
     ],
     "footerToolbar": [
-      "statistics",
-      "switch-per-page",
-      "pagination"
+      {
+        "type": "text",
+        "text": "共 ${$crud.total || $crud.itemCount} 条"
+      }
     ],
-    "columnSettings": {
-      "enabled": true,
-      "draggable": true
-    },
     "listActions": [
       {
         "type": "button",
         "label": "批量删除",
+        "disabled": "${!$crud.hasSelection}",
         "onClick": {
           "action": "ajax",
           "args": {
@@ -152,37 +165,32 @@
     "pageField": "pageNo",
     "pageSizeField": "pageSize",
     "selection": {
-      "keepOnPageChange": true,
-      "maxKeepSelectionLength": 20
+      "type": "checkbox"
     },
     "columns": [
       {
         "name": "id",
         "label": "ID",
+        "width": 80,
         "fixed": "left"
       },
       {
         "name": "name",
         "label": "姓名",
         "sortable": true,
-        "searchable": true,
+        "width": 180,
         "fixed": "left"
       },
       {
         "name": "status",
         "label": "状态",
-        "filterable": {
-          "searchable": true,
-          "options": [
-            { "label": "启用", "value": "active" },
-            { "label": "禁用", "value": "disabled" }
-          ]
-        }
+        "width": 140
       },
       {
         "type": "operation",
         "label": "操作",
         "fixed": "right",
+        "width": 180,
         "buttons": [
           {
             "type": "button",
@@ -206,9 +214,11 @@
     "migrationHints": {
       "amisApi": "/api/users",
       "notes": [
-        "headerToolbar 中的动作块被提炼到 listActions，columns-toggler 被提炼到 columnSettings",
+        "headerToolbar 中的动作块被拆分为 toolbar region 与 toolbarLayout 标准块，bulkActions 降为 listActions",
+        "columns-toggler / columnsTogglable 迁移为 columnSettings；当前 live baseline 已支持列显隐和最小上下移动顺序调整",
         "primaryField 迁移为 rowKey",
         "perPageField 迁移为 pageSizeField",
+        "filter 迁移为 queryForm",
         "actionType/dialog 迁移为 Flux action/openDialog"
       ]
     }

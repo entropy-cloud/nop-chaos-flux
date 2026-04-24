@@ -57,3 +57,9 @@
 3. **A code comment is present** explaining the `<span>` choice — do not "fix" it back to `<button>` without understanding the `<label>` forwarding issue.
 4. **Alternative fix**: change `FieldFrame` to use `<div>` instead of `<label>` when the child is a code editor. This would be a broader framework change with its own trade-offs.
 5. **Follow-up**: the framework now supports `BaseSchema.frameWrap` as a per-instance opt-out for wrap-compatible renderers, but code-editor itself remains on the explicit `<span role="button">` fix rather than depending on schema migration.
+
+## Regression History
+
+- **Commit `d5ae387`** ("refactor(flux-code-editor): migrate to @nop-chaos/ui components") reverted the original fix by replacing all `<span role="button">` elements with `<Button>` from `@nop-chaos/ui`. This re-introduced the label click forwarding bug for ALL toolbar buttons (format SQL, variable toggle, execute SQL, fullscreen toggle) and the fullscreen close button.
+- **Re-fix**: Replaced all `<Button>` instances inside the `wrap: true` renderer context with a new `ToolbarButton` component (`packages/flux-code-editor/src/code-editor-renderer/toolbar-button.tsx`) that renders `<span role="button" tabIndex={0}>`. The `ToolbarButton` provides the same visual appearance and keyboard accessibility as `<Button variant="ghost">` but uses a non-labelable `<span>` element.
+- **PopoverContent items are exempt**: The snippet panel's dropdown items remain as `<Button>` because they render inside a portal (outside the `<label>`). Only the trigger element was changed to `ToolbarTrigger`.

@@ -16,12 +16,9 @@
   "pageField": "pageNo",
   "pageSizeField": "pageSize",
   "selection": {
-    "type": "checkbox",
-    "keepOnPageChange": true,
-    "maxKeepSelectionLength": 20
+    "type": "checkbox"
   },
   "queryForm": {
-    "mode": "manual",
     "layout": "inline",
     "data": {
       "keywords": "",
@@ -45,19 +42,16 @@
           { "label": "草稿", "value": "draft" }
         ]
       }
-    ],
-    "actions": [
-      {
-        "type": "button",
-        "label": "查询",
-        "variant": "primary"
-      },
-      {
-        "type": "button",
-        "label": "重置",
-        "variant": "outline"
-      }
     ]
+  },
+  "columnSettings": {
+    "enabled": true,
+    "toggledColumnsStatePath": "usersCrud.visibleColumns",
+    "orderedColumnsStatePath": "usersCrud.orderedColumns"
+  },
+  "toolbarLayout": {
+    "header": ["listActions", "pagination"],
+    "footer": ["statistics", "switch-per-page"]
   },
   "toolbar": [
     {
@@ -103,7 +97,7 @@
   "footerToolbar": [
     {
       "type": "text",
-      "text": "共 ${$crud.total || $crud.itemCount} 条"
+      "text": "Query=${$crud.query.keywords || \"none\"}，共 ${$crud.total || $crud.itemCount} 条"
     }
   ],
   "listActions": [
@@ -128,21 +122,9 @@
       }
     }
   ],
-  "columnSettings": {
-    "enabled": true,
-    "draggable": true,
-    "overlay": true,
-    "toggledColumnsStatePath": "usersCrud.visibleColumns",
-    "orderedColumnsStatePath": "usersCrud.columnOrder"
-  },
-  "responsive": {
-    "mode": "expand",
-    "breakpoint": "md",
-    "expandTrigger": "row"
-  },
-  "clientMode": {
-    "loadDataOnce": false,
-    "fetchOnFilter": true
+  "defaultParams": {
+    "keywords": "",
+    "status": []
   },
   "source": "${users}",
   "columns": [
@@ -156,48 +138,23 @@
       "name": "name",
       "label": "姓名",
       "sortable": true,
-      "searchable": true,
+      "width": 180,
       "fixed": "left"
-    },
-    {
-      "name": "email",
-      "label": "邮箱",
-      "searchable": {
-        "type": "input-text",
-        "name": "email",
-        "placeholder": "输入邮箱"
-      }
     },
     {
       "name": "status",
       "label": "状态",
-      "filterable": {
-        "searchable": true,
-        "options": [
-          { "label": "启用", "value": "active" },
-          { "label": "禁用", "value": "disabled" },
-          { "label": "草稿", "value": "draft" }
-        ]
-      },
-      "quickEdit": {
-        "mode": "inline",
-        "type": "select",
-        "options": [
-          { "label": "启用", "value": "active" },
-          { "label": "禁用", "value": "disabled" },
-          { "label": "草稿", "value": "draft" }
-        ]
-      }
+      "width": 140
     },
     {
       "name": "department",
-      "label": "部门",
-      "toggled": true
+      "label": "部门"
     },
     {
       "type": "operation",
       "label": "操作",
       "fixed": "right",
+      "width": 180,
       "buttons": [
         {
           "type": "button",
