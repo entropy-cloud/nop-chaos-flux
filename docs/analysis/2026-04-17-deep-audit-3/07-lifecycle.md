@@ -1,5 +1,7 @@
 # 维度 07：生命周期与副作用归属
 
+> Historical Note: This audit predates the compile-time import-preparation convergence work. References to `useNodeImports` describe the old node-local async import-loading path, not the current baseline.
+
 ## 发现清单
 
 ### [维度07-01] DynamicRenderer 在 effect 中执行 API 获取

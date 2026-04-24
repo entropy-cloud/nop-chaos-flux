@@ -1,0 +1,301 @@
+{
+  "_comment": "AMIS-to-Flux 迁移示例。展示 AMIS 表单分组、标签布局、提示信息的完整迁移。",
+  "_migration_notes": {
+    "type_mappings": {
+      "form": "form（保留，增加 mode/labelAlign/labelWidth）",
+      "fieldset/fieldSet": "fieldset（新增独立组件）",
+      "group": "flex（direction:'row'）",
+      "input-group": "专用复合字段 renderer",
+      "input-text": "input-text（保留）",
+      "input-email": "input-email（保留）",
+      "input-password": "input-password（保留）",
+      "select": "select（保留）",
+      "checkbox": "checkbox（保留）",
+      "input-date": "input-date（保留）"
+    },
+    "field_chrome_mappings": {
+      "desc / description": "description",
+      "hint": "hint",
+      "remark": "remark（从 renderer type 改为字段属性对象）",
+      "labelRemark": "labelRemark（同 remark）",
+      "caption": "使用 description 或 hint 替代",
+      "validationErrors": "通过 validation 规则配置",
+      "collapsable": "collapsible（修正拼写）"
+    },
+    "layout_mappings": {
+      "form.mode": "form.mode",
+      "form.horizontal.leftFixed": "form.labelWidth",
+      "form.horizontal.left": "form.labelWidth",
+      "form.horizontal.labelAlign": "form.labelAlign",
+      "form.labelAlign": "form.labelAlign",
+      "form.columnCount": "flex + 手动列分配",
+      "item.mode": "item.mode（字段级覆盖）",
+      "item.labelAlign": "item.labelAlign（字段级覆盖）",
+      "item.horizontal": "item.labelWidth（字段级覆盖）",
+      "group.direction": "flex.direction",
+      "group.gap": "flex.gap",
+      "group.body": "flex.items",
+      "group.subFormMode": "由 form.mode 和字段级 mode 覆盖控制，fieldset 不参与",
+      "group.columnClassName": "flex 子项的 className",
+      "fieldset.subFormMode": "由 form.mode 和字段级 mode 覆盖控制，fieldset 不参与",
+      "fieldset.subFormHorizontal": "由 form.labelAlign/labelWidth 和字段级覆盖控制，fieldset 不参与"
+    }
+  },
+
+  "original_amis": {
+    "type": "form",
+    "mode": "horizontal",
+    "title": "用户信息表单",
+    "collapsable": true,
+    "horizontal": {
+      "leftFixed": "sm"
+    },
+    "labelAlign": "right",
+    "body": [
+      {
+        "type": "fieldset",
+        "title": "基本信息",
+        "collapsable": true,
+        "body": [
+          {
+            "type": "group",
+            "body": [
+              {
+                "type": "input-text",
+                "name": "firstName",
+                "label": "名",
+                "required": true,
+                "hint": "请输入您的名字"
+              },
+              {
+                "type": "input-text",
+                "name": "lastName",
+                "label": "姓",
+                "required": true
+              }
+            ]
+          },
+          {
+            "type": "input-email",
+            "name": "email",
+            "label": "邮箱",
+            "required": true,
+            "desc": "用于接收系统通知",
+            "remark": {
+              "icon": "warning-mark",
+              "content": "请使用公司邮箱"
+            }
+          },
+          {
+            "type": "input-password",
+            "name": "password",
+            "label": "密码",
+            "required": true,
+            "hint": "至少8位，包含字母和数字",
+            "labelRemark": {
+              "content": "密码强度要求：至少8位"
+            }
+          }
+        ]
+      },
+      {
+        "type": "fieldset",
+        "title": "联系方式",
+        "collapsable": true,
+        "collapsed": true,
+        "subFormMode": "normal",
+        "body": [
+          {
+            "type": "input-text",
+            "name": "phone",
+            "label": "手机号",
+            "description": "11位手机号码"
+          },
+          {
+            "type": "input-text",
+            "name": "address",
+            "label": "地址",
+            "labelAlign": "top",
+            "description": "省/市/区/详细地址"
+          }
+        ]
+      },
+      {
+        "type": "fieldset",
+        "title": "其他信息",
+        "body": [
+          {
+            "type": "group",
+            "direction": "vertical",
+            "gap": "sm",
+            "body": [
+              {
+                "type": "select",
+                "name": "department",
+                "label": "部门",
+                "options": [
+                  { "label": "技术部", "value": "tech" },
+                  { "label": "产品部", "value": "product" }
+                ]
+              },
+              {
+                "type": "input-date",
+                "name": "joinDate",
+                "label": "入职日期"
+              },
+              {
+                "type": "checkbox",
+                "name": "agree",
+                "option": "同意用户协议",
+                "labelRemark": {
+                  "content": "点击查看用户协议详情"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "actions": [
+      { "type": "submit", "label": "提交" },
+      { "type": "reset", "label": "重置" }
+    ]
+  },
+
+  "migrated_flux": {
+    "type": "form",
+    "mode": "horizontal",
+    "labelAlign": "right",
+    "labelWidth": "sm",
+    "data": {
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "password": "",
+      "phone": "",
+      "address": "",
+      "department": "",
+      "joinDate": "",
+      "agree": false
+    },
+    "body": [
+      {
+        "type": "fieldset",
+        "title": "基本信息",
+        "collapsible": true,
+        "body": [
+          {
+            "type": "flex",
+            "direction": "row",
+            "gap": "md",
+            "items": [
+              {
+                "type": "input-text",
+                "name": "firstName",
+                "label": "名",
+                "required": true,
+                "hint": "请输入您的名字"
+              },
+              {
+                "type": "input-text",
+                "name": "lastName",
+                "label": "姓",
+                "required": true
+              }
+            ]
+          },
+          {
+            "type": "input-email",
+            "name": "email",
+            "label": "邮箱",
+            "required": true,
+            "description": "用于接收系统通知",
+            "remark": {
+              "content": "请使用公司邮箱"
+            }
+          },
+          {
+            "type": "input-password",
+            "name": "password",
+            "label": "密码",
+            "required": true,
+            "hint": "至少8位，包含字母和数字",
+            "labelRemark": {
+              "content": "密码强度要求：至少8位"
+            }
+          }
+        ]
+      },
+      {
+        "type": "fieldset",
+        "title": "联系方式",
+        "collapsible": true,
+        "collapsed": true,
+        "body": [
+          {
+            "type": "input-text",
+            "name": "phone",
+            "label": "手机号",
+            "description": "11位手机号码",
+            "mode": "normal"
+          },
+          {
+            "type": "input-text",
+            "name": "address",
+            "label": "地址",
+            "mode": "normal",
+            "description": "省/市/区/详细地址"
+          }
+        ]
+      },
+      {
+        "type": "fieldset",
+        "title": "其他信息",
+        "body": [
+          {
+            "type": "flex",
+            "direction": "column",
+            "gap": "sm",
+            "items": [
+              {
+                "type": "select",
+                "name": "department",
+                "label": "部门",
+                "options": [
+                  { "label": "技术部", "value": "tech" },
+                  { "label": "产品部", "value": "product" }
+                ]
+              },
+              {
+                "type": "input-date",
+                "name": "joinDate",
+                "label": "入职日期"
+              },
+              {
+                "type": "checkbox",
+                "name": "agree",
+                "label": "同意用户协议",
+                "labelRemark": {
+                  "content": "点击查看用户协议详情"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "button",
+        "label": "提交",
+        "variant": "primary",
+        "onClick": { "action": "component:submit" }
+      },
+      {
+        "type": "button",
+        "label": "重置",
+        "onClick": { "action": "component:reset" }
+      }
+    ]
+  }
+}

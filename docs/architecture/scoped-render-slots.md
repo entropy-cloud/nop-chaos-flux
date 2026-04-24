@@ -179,7 +179,7 @@ Compiled regions should carry their declared parameter metadata.
 Recommended shape:
 
 ```ts
-interface CompiledRegion {
+interface TemplateRegion {
   key: string;
   path: string;
   node: TemplateNode | readonly TemplateNode[] | null;

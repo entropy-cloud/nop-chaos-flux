@@ -235,6 +235,12 @@ Exit Criteria:
 - [x] The form renderer declares `$form`; page metadata now declares `$page` for compile-time symbol visibility.
 - [x] Architecture docs reflect the implemented state.
 
+## Outdated Note
+
+- This plan remains the historical record for landing `ModuleCache`, `ImportStack`, and compile-time symbol visibility.
+- Its original runtime narrative still references the now-retired `use-node-imports.ts` async node-loading path. That path was later removed by Plan 134, which moved ordinary schema imports to schema-level preparation/preload followed by synchronous `ImportStack.installPrepared(...)` during node execution.
+- Current import lifecycle and static import-meta validation baselines now live in `docs/architecture/module-cache-and-import-stack.md`, `docs/architecture/action-scope-and-imports.md`, and `docs/plans/134-node-renderer-compile-time-execution-plan-convergence-plan.md`.
+
 ## Risks And Rollback
 
 Outdated Note:
@@ -282,7 +288,7 @@ Status Note: Plan 116 is now complete. The repo no longer relies on a flat impor
 Closure Audit Evidence:
 
 - Reviewer / Agent: independent closure audit task `ses_247c577ecffeLFiBQKekdIbGEH`
-- Evidence: `ModuleCache`, `ImportStack`, and `CompileSymbolTable` are live in `packages/flux-core/src/types/compilation.ts`; runtime factory wires the shared module/import infrastructure; `packages/flux-react/src/use-node-imports.ts` uses push/pop import frames; compile-time symbol plumbing is live in `packages/flux-compiler/src/schema-compiler.ts`; and `docs/logs/2026/04-21.md` records both landing and later full-workspace verification.
+- Evidence: `ModuleCache`, `ImportStack`, and `CompileSymbolTable` are live in `packages/flux-core/src/types/compilation.ts`; runtime factory wires the shared module/import infrastructure; compile-time symbol plumbing is live in `packages/flux-compiler/src/schema-compiler.ts`; and `docs/logs/2026/04-21.md` records both landing and later full-workspace verification. Later follow-up in Plan 134 retired the old `use-node-imports.ts` node-local async path in favor of schema preparation plus synchronous prepared-import installation.
 
 Follow-up:
 

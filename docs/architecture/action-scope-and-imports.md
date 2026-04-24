@@ -877,9 +877,9 @@ These behaviors are baseline architecture, not optional convenience details.
 - import visibility is lexical by owning `ActionScope`, not global
 - module loads are deduplicated by normalized module key
 - scope registrations are deduplicated and reference-counted per owning `ActionScope`
-- runtime installs a placeholder provider immediately so dispatch fails explicitly while the namespace is still loading
 - same-scope alias collisions fail fast instead of silently overriding another provider
 - unmount or boundary replacement releases the owned registration through the action-scope lifecycle
+- schema preparation resolves and preloads declared imports before template compilation, so ordinary node execution does not install per-node loading placeholders
 
 Recommended expression-helper semantics:
 
@@ -887,11 +887,11 @@ Recommended expression-helper semantics:
 - helper publication should remain lexical by the declaring boundary, just like action namespaces
 - if an imported library exposes both action methods and expression helpers, the doc surface should describe those as two channels with different usage intent, even if they come from one module load
 
-The placeholder-provider behavior is especially important:
+The current preload-first behavior is especially important:
 
-- before the module is ready, `namespace:method` dispatch returns a normal failed `ActionResult`
-- after a load failure, subsequent dispatches keep returning that recorded failure instead of degrading into `Unsupported action`
-- when the same owned import boundary retries the same import key, the existing failed entry is retried in place
+- ordinary schema imports are either prepared before compile or fail before node execution begins
+- after a preload failure, the schema does not continue into node-local import execution with a partially ready namespace boundary
+- once prepared imports are installed, namespaced dispatch resolves against the synchronous imported namespace provider owned by that lexical boundary
 
 ### Deduplication Rules
 
@@ -1114,27 +1114,16 @@ Rules:
 
 ### Loading States
 
-Imported namespaces may be:
-
-- `loading`
-- `ready`
-- `error`
-
-Before a namespace is ready, runtime should either:
-
-- return a structured action error on invocation
-- or expose loading state to schema/UI so authors can disable controls
-
-The runtime must not silently no-op.
+The active baseline no longer treats node execution as an import-loading phase.
 
 Normative implementation semantics:
 
-- React-owned import registration installs a scope-local placeholder provider immediately during owned lifecycle, so namespaced dispatch can fail explicitly even before the module finishes loading
-- dispatch against a still-loading namespace returns a normal failed `ActionResult` with an error message like `Imported namespace <alias> is still loading`
-- loader failures and same-scope alias collisions are reported through `env.notify('error', ...)` and `monitor.onError(...)` during render-owned registration
-- once a load fails, later dispatches against that namespace continue returning the stored failure instead of falling back to `Unsupported action`
-- if the same owned import boundary re-runs registration for the same import key (for example after `env.importLoader` changes), the failed entry is retried in place rather than requiring full runtime teardown
-- import registrations remain reference-counted per action scope and are released on owning subtree unmount or replacement
+- `SchemaRenderer` / runtime preparation collects all reachable `xui:imports` before compilation.
+- Each declared import is resolved, loaded, and queried for static meta through `ImportedLibraryModule.getStaticMeta()` before the template is compiled.
+- If preload fails, compilation is blocked and the schema does not enter node execution with a partially ready import boundary.
+- During node execution, `NodeRenderer` only installs a synchronous import-owned capability boundary from compiled `importsPlan` data plus already prepared imports.
+- Namespaced dispatch therefore does not see node-local `loading` placeholders for ordinary schema imports; the relevant outcomes are `prepared successfully` or `compile/render blocked by preload failure`.
+- Loader failures are still reported through the normal env diagnostic path during preparation, and import registrations remain reference-counted per action scope once installed.
 
 ## Diagnostics
 

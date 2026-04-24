@@ -64,7 +64,7 @@ Defined in `node-identity.ts`, it carries compiled runtime values for standard m
 
 Each field is an optional `CompiledRuntimeValue<T>` that resolves at render time. This type was formerly exposed as `CompiledSchemaMeta` via a type alias.
 
-## `CompiledRegion`
+## `TemplateRegion`
 
 The compiled representation of a named child fragment on a node.
 

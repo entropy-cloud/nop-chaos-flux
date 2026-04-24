@@ -38,6 +38,7 @@ Start here for contract precedence and primitive/core-boundary rules.
 - `data-domain-owner.md` - normative owner-semantics architecture for data ownership, validation ownership, and staged/live publish boundaries
 - `action-algebra-formal-spec.md`
 - `action-scope-and-imports.md`
+- `node-level-compile-time-transforms.md`
 - `api-data-source.md`
 - `form-validation.md`
 - `field-binding-and-renderer-contract.md`
@@ -79,7 +80,7 @@ They should:
 - value and field families: `value-adaptation-and-detail-field.md`, `variant-field.md`, `object-field.md`, `array-field.md`, `composite-value-owner-clean-slate.md`
 - owner semantics: `data-domain-owner.md`, `scope-ownership-and-isolation.md`, `surface-owner.md`, `form-validation.md`
 - UI and styling: `styling-system.md`, `renderer-markers-and-selectors.md`, `theme-compatibility.md`, `surface-owner.md`, `field-frame.md`
-- validation/performance/security/tooling specialties: `dependency-tracking.md`, `table-row-identity-and-scope-performance.md`, `schema-file-validator.md`, `debugger-runtime.md`, `playground-experience.md`, `security-design-requirements.md`, `performance-design-requirements.md`
+- validation/performance/security/tooling specialties: `dependency-tracking.md`, `table-row-identity-and-scope-performance.md`, `schema-file-validator.md`, `node-level-compile-time-transforms.md`, `debugger-runtime.md`, `playground-experience.md`, `security-design-requirements.md`, `performance-design-requirements.md`
 
 Some focused docs are stable long-term architecture. Others are candidates for later move or tightening. Use `docs/references/architecture-doc-status-matrix.md` for the current role and placement decision.
 

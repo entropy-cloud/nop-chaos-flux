@@ -52,8 +52,10 @@ Schema instances can then refine that default with `frameWrap` on `BaseSchema`:
 
 Multiple hint types with priority:
 1. **Error** - validation failure (highest priority, shown when `showError` is true)
-2. **Hint** - focus-time guidance (shown when control is focused)
-3. **Description** - always-visible helper text (lowest priority)
+2. **Hint** - focus-time guidance (shown when control is focused and no error)
+3. **Description** - always-visible helper text (shown when no error and no hint)
+
+**Remark** and **LabelRemark** are independent icon tooltips that are always visible and do **not** participate in the error/hint/description priority chain.
 
 ### Layout flexibility
 
@@ -84,17 +86,28 @@ That means FieldFrame should not bake in classes such as `grid`, `gap-*`, `flex`
 ## Component API
 
 ```tsx
+interface FieldRemarkProps {
+  icon?: string;
+  content: ReactNode;
+  placement?: 'top' | 'right' | 'bottom' | 'left';
+  trigger?: ('click' | 'hover' | 'focus')[];
+}
+
 interface FieldFrameProps {
   name?: string;
   label?: ReactNode;
   required?: boolean;
   hint?: ReactNode;
   description?: ReactNode;
+  remark?: FieldRemarkProps;
+  labelRemark?: FieldRemarkProps;
   layout?: 'default' | 'checkbox' | 'radio';
+  labelAlign?: 'top' | 'left' | 'right';
+  labelWidth?: string | number;
   validationBehavior?: CompiledValidationBehavior;
   className?: string;
   testid?: string;
-   cid?: number;
+  cid?: number;
   children: ReactNode;
 }
 ```
@@ -106,9 +119,13 @@ Key props:
 | `name` | `string?` | Field name used to select current form state, aggregate errors, and compiled validation behavior. |
 | `label` | `ReactNode?` | Resolved field label content. In the common path this already comes from normalized `props.label` / `regions.label` via `NodeFrameWrapper`. |
 | `required` | `boolean?` | Explicit required override. The final required marker may also come from compiled validation rules such as `requiredWhen` / `requiredUnless`. |
-| `hint` | `ReactNode?` | Hint text shown when no error is present. |
-| `description` | `ReactNode?` | Description text shown when no error or hint is present. |
+| `hint` | `ReactNode?` | Hint text shown when no error is present and the control is focused. |
+| `description` | `ReactNode?` | Description text shown when no error and no hint are present. |
+| `remark` | `FieldRemarkProps?` | Icon tooltip rendered next to the control. Always visible, independent of error/hint/description priority. |
+| `labelRemark` | `FieldRemarkProps?` | Icon tooltip rendered next to the label. Always visible, independent of error/hint/description priority. |
 | `layout` | `'default' \| 'checkbox' \| 'radio'?` | Layout mode. `checkbox`/`radio` render a `<fieldset>` + `<legend>` wrapper; `default` renders `<label>` + `<span>`. |
+| `labelAlign` | `'top' \| 'left' \| 'right'?` | Override label alignment for this field. Falls back to form-level `labelAlign`. |
+| `labelWidth` | `string \| number?` | Override label column width for this field in horizontal mode. Falls back to form-level `labelWidth`. |
 | `validationBehavior` | `CompiledValidationBehavior?` | Override the per-field validation behavior (controls when errors become visible). Falls back to form-level behavior. |
 | `className` | `string?` | Additional CSS classes on the semantic root marker. |
 | `testid` | `string?` | Test anchoring attribute, rendered as `data-testid`. |
@@ -349,27 +366,34 @@ These data attributes follow the convention documented in `docs/architecture/ren
 
 ## Comparison with AMIS FormItem
 
+FieldFrame corresponds to AMIS's `FormItem` / `FormItemWrap` — the per-field chrome wrapper. It does **not** correspond to `Group` (row layout) or `FieldSet` (multi-field grouping), which are independent container components in both AMIS and Flux.
+
 | Feature | AMIS FormItem | FieldFrame |
 |---------|---------------|------------|
+| Scope | Single field chrome | Single field chrome |
 | Label | Yes | Yes |
 | Required indicator | Yes | Yes |
 | Error message | Yes | Yes |
 | Hint (focus) | Yes | Yes |
 | Description | Yes | Yes |
-| Remark (icon tooltip) | Yes | Not yet |
-| Caption | Yes | Not yet |
-| Layout modes | 5 modes | CSS-based |
+| Remark (icon tooltip) | Yes | Planned (schema → NodeFrameWrapper → FieldFrame) |
+| LabelRemark (label tooltip) | Yes | Planned (same path) |
+| Layout modes | 5 modes (in FormItem) | CSS-based; form-level `mode`/`labelAlign`/`labelWidth` propagated via context |
 | wrap: false | Yes | Definition-level `wrap: false` or instance-level `frameWrap: false` |
 | Internal validation state | External | Yes (via `name` prop) |
 | Per-field validation behavior | No | Yes (`validationBehavior` prop) |
+| Multi-field grouping | **No** (handled by `Group`/`FieldSet`) | **No** (handled by `fieldset`/`flex` components) |
+
+For multi-field grouping, see:
+- `docs/components/form/design.md` §13 — `fieldset` (grouping container) and `flex` (row layout)
+- AMIS `FieldSet` → Flux `fieldset` (independent renderer)
+- AMIS `Group` → Flux `flex` (existing renderer)
 
 ## Future Extensions
 
-1. **Remark** - icon tooltip next to label
-2. **Caption** - inline description next to control
-3. **Label width** - for horizontal layouts
-4. **Label align** - left/right alignment
-5. **Size variants** - xs/sm/md/lg
+1. **Remark / LabelRemark** — icon tooltip next to label or control; schema wiring through `NodeFrameWrapper`
+2. **Label width / align per-field** — propagated from form context, with per-field override via `labelAlign` / `labelWidth` props
+3. **Size variants** — xs/sm/md/lg
 
 ## Related Documents
 

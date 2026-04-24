@@ -1,8 +1,8 @@
 # 134 NodeRenderer Compile-Time Execution Plan Convergence Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-24
-> Source: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/module-cache-and-import-stack.md`, `docs/architecture/capability-projection-manifest.md`, `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/node-renderer-providers.tsx`, `packages/flux-react/src/use-node-imports.ts`
+> Source: `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/module-cache-and-import-stack.md`, `docs/architecture/capability-projection-manifest.md`, `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/node-renderer-providers.tsx`, `packages/flux-react/src/schema-renderer.tsx`
 > Related: `docs/plans/36-node-renderer-refactor-plan.md`, `docs/plans/133-node-renderer-runtime-stack-and-import-boundary-refactor-plan.md`, `docs/plans/116-module-cache-import-stack-compile-symbol-resolution-plan.md`
 
 ## Purpose
@@ -84,7 +84,7 @@ Targets: `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-core/sr
 Exit Criteria:
 
 - [x] The live plan/code now distinguishes pure provider wrap from preloaded import execution-boundary installation.
-- [ ] Owner docs still need to be updated to make this the normative documented baseline.
+- [x] Owner docs now describe this as the normative documented baseline.
 
 ### Phase 2 - Add Schema-Level Import Collection And Static Import Meta
 
@@ -109,7 +109,7 @@ Targets: `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-react/s
 
 - [x] Compiled `classAliases` into a node-local plan payload so runtime no longer needs raw schema reads for the normal execution path.
 - [x] Removed runtime-only `classAliases` branching from `NodeRendererResolved` and kept alias resolution on the plan-owned path.
-- [ ] Add a dedicated focused test asserting the zero-extra-work absence path rather than only covering the positive path indirectly.
+- [x] Added a dedicated focused test asserting the zero-extra-work absence path rather than only covering the positive path indirectly.
 
 Exit Criteria:
 
@@ -136,47 +136,47 @@ Exit Criteria:
 
 ### Phase 5 - Use Import Meta For Compile-Time Validation And Update Docs
 
-Status: in progress
+Status: completed
 Targets: `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-formula/src/compile.ts`, diagnostics, docs
 
 - [x] Extended symbol metadata carriers so imported helper/member references can consume static import meta when present.
-- [ ] Validate callable imported functions against declared parameter definitions when manifest data is available.
-- [ ] Document the standard import meta contract and fallback/error policy in owner docs.
+- [x] Validate callable imported functions against declared parameter definitions when manifest data is available.
+- [x] Document the standard import meta contract and fallback/error policy in owner docs.
 
 Exit Criteria:
 
-- [ ] Compiler can validate imported helper/member/function references against static import meta.
-- [ ] Docs describe the import-meta contract as the live baseline for compile-time import validation.
+- [x] Compiler can validate imported helper/member/function references against static import meta.
+- [x] Docs describe the import-meta contract as the live baseline for compile-time import validation.
 
 ### Phase 6 - Collapse NodeRenderer Onto Plan Execution And Update Docs
 
-Status: in progress
+Status: completed
 Targets: `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/node-renderer-providers.tsx`, `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/module-cache-and-import-stack.md`, `docs/logs/2026/04-24.md`
 
 - [x] Simplified `NodeRenderer` so the runtime mainline now executes compiled plan data for `classAliases` and `xui:imports` instead of hand-rolled raw-schema feature checks.
-- [ ] Update architecture docs to describe `NodeRenderer` as an execution-plan runner for node-local optional boundaries, while keeping owner-local boundaries outside the generic layer.
-- [ ] Update docs to state that import loading happens before compilation, not during node execution.
-- [ ] Record the landing, key decisions, and explicit leftovers in the daily log.
+- [x] Update architecture docs to describe `NodeRenderer` as an execution-plan runner for node-local optional boundaries, while keeping owner-local boundaries outside the generic layer.
+- [x] Update docs to state that import loading happens before compilation, not during node execution.
+- [x] Record the landing, key decisions, and explicit leftovers in the daily log.
 
 Exit Criteria:
 
-- [ ] Docs no longer describe `classAliases` and `xui:imports` as mixed compile/runtime ad-hoc paths.
-- [ ] `NodeRenderer` mainline is observably smaller and no longer contains feature-specific branching for these node-local optional boundaries.
+- [x] Docs no longer describe `classAliases` and `xui:imports` as mixed compile/runtime ad-hoc paths.
+- [x] `NodeRenderer` mainline is observably smaller and no longer contains feature-specific branching for these node-local optional boundaries.
 
 ### Phase 7 - Verification And Closure
 
-Status: in progress
+Status: completed
 Targets: focused tests, verification commands, this plan file
 
 - [x] Ran focused tests covering schema preload failure, synchronous import path, namespace dispatch, expression bindings, and a no-import renderer smoke path.
-- [ ] Run required verification commands and record unrelated blockers if any remain outside this plan's scope.
-- [ ] Perform an independent closure audit before marking the plan completed.
+- [x] Run required verification commands and record unrelated blockers if any remain outside this plan's scope.
+- [x] Perform an independent closure audit before marking the plan completed.
 
 Exit Criteria:
 
-- [ ] Focused verification proves the plan-owned path and the zero-extra-work path.
-- [ ] Daily log and closure evidence are recorded.
-- [ ] No remaining plan-owned gap remains hidden behind older completed plans.
+- [x] Focused verification proves the plan-owned path and the zero-extra-work path.
+- [x] Daily log and closure evidence are recorded.
+- [x] No remaining plan-owned gap remains hidden behind older completed plans.
 
 ## Validation Checklist
 
@@ -184,30 +184,30 @@ Exit Criteria:
 - [x] `NodeRenderer` no longer runtime-reads `xui:imports` from raw schema.
 - [x] Schema-level import collection and preload happen before compilation.
 - [x] Missing import modules fail before template generation.
-- [ ] Imported helper/member/function validation uses static import meta when available.
-- [ ] Nodes without `classAliases` pay no alias-specific runtime branching or provider setup cost.
-- [ ] Nodes without `xui:imports` pay no import-specific runtime branching, scope creation, or hook/setup cost.
+- [x] Imported helper/member/function validation uses static import meta when available.
+- [x] Nodes without `classAliases` pay no alias-specific runtime branching or provider setup cost.
+- [x] Nodes without `xui:imports` pay no import-specific runtime branching, scope creation, or hook/setup cost.
 - [x] `NodeRenderer` no longer carries async import ready/loading/error gating for node-local imports.
 - [x] Nodes with imports still preserve current import-owned boundary semantics after synchronous installation.
-- [ ] Relevant architecture docs describe the preloaded compile-time import model and compile-time execution-plan model as the live baseline.
-- [x] Focused tests cover the main presence path and preload failure path; an explicit zero-overhead absence-path assertion still needs to be added.
-- [ ] `docs/logs/2026/04-24.md` records the implementation and closure context.
-- [ ] Independent closure audit is completed and recorded before plan closure.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Relevant architecture docs describe the preloaded compile-time import model and compile-time execution-plan model as the live baseline.
+- [x] Focused tests cover the main presence path, preload failure path, and explicit zero-overhead absence path.
+- [x] `docs/logs/2026/04-24.md` records the implementation and closure context.
+- [x] Independent closure audit is completed and recorded before plan closure.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed after `NodeRenderer` fully converged onto compiled `classAliasesPlan` / `importsPlan`, schema-level import preload became the only standard import-loading path, static import meta diagnostics landed for imported helper/member/function arity checks, explicit absence-path tests were added, and full workspace verification passed.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: Pending.
-- Evidence: Pending.
+- Reviewer / Agent: independent general subagent
+- Evidence: `task_id ses_241180a63ffe3oowP6MVCz07wS` re-audited the live repo after the final fast-path tests/docs landed and confirmed the remaining gaps were stale plan/log bookkeeping rather than code/doc/verification gaps.
 
 Follow-up:
 
-- Pending execution.
-- If execution discovers additional owner-local boundary work outside node-local optional plan convergence, move that work into a separate successor plan instead of silently widening this plan.
+- No remaining plan-owned work.
+- If future work extends import static metadata beyond current helper/member/function arity validation into richer type contracts or IDE tooling, track that in a successor plan instead of reopening this convergence plan.

@@ -1,0 +1,21 @@
+{
+  "type": "fieldset",
+  "title": "基本信息",
+  "collapsible": true,
+  "collapsed": false,
+  "body": [
+    {
+      "type": "input-text",
+      "name": "name",
+      "label": "姓名",
+      "required": true
+    },
+    {
+      "type": "input-email",
+      "name": "email",
+      "label": "邮箱",
+      "required": true,
+      "description": "用于接收系统通知"
+    }
+  ]
+}

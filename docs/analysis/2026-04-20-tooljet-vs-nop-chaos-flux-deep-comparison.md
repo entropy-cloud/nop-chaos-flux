@@ -4,6 +4,8 @@
 > 分析范围: `c:/can/ai/tooljet` (ToolJet) vs `c:/can/nop/nop-chaos-flux` (nop-chaos-flux)
 > 分析方法: 全量源码静态分析，覆盖架构、代码质量、设计模式、工程实践等维度
 
+> Historical Note: This comparison reflects the repo state on 2026-04-20. Later work in Plan 134 retired the old `use-node-imports` React-side async import-loading path. Current import lifecycle baseline is schema preparation/preload before compile plus synchronous prepared-import installation during node execution.
+
 ---
 
 ## 目录
@@ -348,7 +350,7 @@ nop-chaos-flux 有完整的**编译器管线**：
 ```
 Schema JSON → SchemaCompiler.compile() → CompiledTemplate (TemplateNode 树)
     → NodeRenderer (React.memo 包裹)
-        → useNodeImports (命名空间导入)
+        → prepared import boundary installation (命名空间导入)
         → useSyncExternalStoreWithSelector (依赖追踪订阅)
         → resolveNodeMeta/Props (运行时值解析)
         → Renderer Component

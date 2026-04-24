@@ -146,7 +146,7 @@ Targets: `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-runtime/s
 - [ ] 让 `invokeComponentAction(...)` 和 `invokeNamespacedAction(...)` 通过 effect channel 记录统一 metadata，并保留现有 provider contract。
 - [ ] 为 request execute、notify、navigate 增加可复用的 effect handler，使 `data-source` / `reaction` / import failure 至少可共享 host-boundary interception，而不是各自直连 env。
 - [ ] 明确哪些 runtime-owned side effects 仍保留 direct call 作为刻意例外，并记录原因。
-- [ ] 评估是否需要统一 import failure reporting seam，避免 `import-stack.ts` 与 `use-node-imports.ts` 各自重复 `notify + monitor`。
+- [ ] 评估是否需要统一 import failure reporting seam，覆盖当前 schema-prepare/import-stack 路径中的 `notify + monitor`，避免 import failure reporting 再次在不同 owner boundary 上分叉。
 - [ ] 如果 env decorator 已足够覆盖 host-boundary observability，则缩小 runtime-internal effect channel 的实现范围，避免重复抽象。
 
 Exit Criteria:

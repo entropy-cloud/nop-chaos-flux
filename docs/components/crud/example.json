@@ -3,25 +3,34 @@
   "id": "users-crud",
   "name": "usersCrud",
   "statusPath": "usersCrudStatus",
-  "paginationOwnership": "scope",
-  "paginationStatePath": "usersTablePagination",
-  "selectionOwnership": "scope",
-  "selectionStatePath": "usersTableSelection",
-  "sortOwnership": "scope",
-  "sortStatePath": "usersTableSort",
-  "filterOwnership": "scope",
-  "filterStatePath": "usersTableFilter",
   "rowKey": "id",
-  "autoClearSelectionOnRefresh": true,
+  "selectionOwnership": "scope",
+  "selectionStatePath": "usersCrud.selection",
+  "paginationOwnership": "scope",
+  "paginationStatePath": "usersCrud.pagination",
+  "sortOwnership": "scope",
+  "sortStatePath": "usersCrud.sort",
+  "filterOwnership": "scope",
+  "filterStatePath": "usersCrud.filters",
+  "syncLocation": false,
+  "pageField": "pageNo",
+  "pageSizeField": "pageSize",
+  "selection": {
+    "type": "checkbox",
+    "keepOnPageChange": true,
+    "maxKeepSelectionLength": 20
+  },
   "queryForm": {
+    "mode": "manual",
+    "layout": "inline",
     "data": {
-      "keyword": "",
-      "status": "all"
+      "keywords": "",
+      "status": []
     },
     "body": [
       {
         "type": "input-text",
-        "name": "keyword",
+        "name": "keywords",
         "label": "关键字",
         "placeholder": "姓名 / 邮箱"
       },
@@ -29,10 +38,11 @@
         "type": "select",
         "name": "status",
         "label": "状态",
+        "multiple": true,
         "options": [
-          { "label": "全部", "value": "all" },
           { "label": "启用", "value": "active" },
-          { "label": "禁用", "value": "disabled" }
+          { "label": "禁用", "value": "disabled" },
+          { "label": "草稿", "value": "draft" }
         ]
       }
     ],
@@ -40,39 +50,14 @@
       {
         "type": "button",
         "label": "查询",
-        "variant": "primary",
-        "onClick": {
-          "action": "component:submit",
-          "componentId": "users-crud"
-        }
+        "variant": "primary"
       },
       {
         "type": "button",
         "label": "重置",
-        "variant": "outline",
-        "onClick": {
-          "action": "component:clearSelection",
-          "componentId": "users-crud"
-        }
+        "variant": "outline"
       }
     ]
-  },
-  "source": {
-    "type": "source",
-    "action": "ajax",
-    "api": {
-      "url": "/api/users",
-      "method": "get",
-      "params": {
-        "keyword": "${query.keyword}",
-        "status": "${query.status}",
-        "page": "${pagination.currentPage}",
-        "pageSize": "${pagination.pageSize}",
-        "sortField": "${sort.field}",
-        "sortOrder": "${sort.order}"
-      },
-      "responseAdaptor": "${{ items: payload.items, total: payload.total, page: payload.page, pageSize: payload.pageSize }}"
-    }
   },
   "toolbar": [
     {
@@ -83,7 +68,6 @@
         "action": "openDialog",
         "args": {
           "title": "新增用户",
-          "size": "lg",
           "body": {
             "type": "form",
             "body": [
@@ -116,7 +100,13 @@
       }
     }
   ],
-  "bulkActions": [
+  "footerToolbar": [
+    {
+      "type": "text",
+      "text": "共 ${$crud.total || $crud.itemCount} 条"
+    }
+  ],
+  "listActions": [
     {
       "type": "button",
       "label": "批量删除",
@@ -127,7 +117,9 @@
         "args": {
           "url": "/api/users/bulk-delete",
           "method": "post",
-          "data": { "ids": "${$crud.selectedRowKeys}" }
+          "data": {
+            "ids": "${$crud.selectedRowKeys}"
+          }
         },
         "then": {
           "action": "component:refresh",
@@ -136,86 +128,91 @@
       }
     }
   ],
+  "columnSettings": {
+    "enabled": true,
+    "draggable": true,
+    "overlay": true,
+    "toggledColumnsStatePath": "usersCrud.visibleColumns",
+    "orderedColumnsStatePath": "usersCrud.columnOrder"
+  },
+  "responsive": {
+    "mode": "expand",
+    "breakpoint": "md",
+    "expandTrigger": "row"
+  },
+  "clientMode": {
+    "loadDataOnce": false,
+    "fetchOnFilter": true
+  },
+  "source": "${users}",
   "columns": [
-    { "name": "name", "label": "姓名", "sortable": true },
-    { "name": "email", "label": "邮箱" },
+    {
+      "name": "id",
+      "label": "ID",
+      "width": 80,
+      "fixed": "left"
+    },
+    {
+      "name": "name",
+      "label": "姓名",
+      "sortable": true,
+      "searchable": true,
+      "fixed": "left"
+    },
+    {
+      "name": "email",
+      "label": "邮箱",
+      "searchable": {
+        "type": "input-text",
+        "name": "email",
+        "placeholder": "输入邮箱"
+      }
+    },
     {
       "name": "status",
       "label": "状态",
-      "filterable": true,
-      "filterOptions": [
-        { "label": "启用", "value": "active" },
-        { "label": "禁用", "value": "disabled" }
-      ]
+      "filterable": {
+        "searchable": true,
+        "options": [
+          { "label": "启用", "value": "active" },
+          { "label": "禁用", "value": "disabled" },
+          { "label": "草稿", "value": "draft" }
+        ]
+      },
+      "quickEdit": {
+        "mode": "inline",
+        "type": "select",
+        "options": [
+          { "label": "启用", "value": "active" },
+          { "label": "禁用", "value": "disabled" },
+          { "label": "草稿", "value": "draft" }
+        ]
+      }
+    },
+    {
+      "name": "department",
+      "label": "部门",
+      "toggled": true
     },
     {
       "type": "operation",
       "label": "操作",
+      "fixed": "right",
       "buttons": [
         {
           "type": "button",
           "label": "查看",
-          "variant": "ghost",
-          "onClick": {
-            "action": "openDialog",
-            "args": {
-              "title": "用户详情",
-              "size": "lg",
-              "body": [
-                { "type": "text", "text": "姓名: ${record.name}" },
-                { "type": "text", "text": "邮箱: ${record.email}" },
-                { "type": "text", "text": "状态: ${record.status}" }
-              ]
-            }
-          }
+          "variant": "ghost"
         },
         {
           "type": "button",
           "label": "编辑",
-          "variant": "ghost",
-          "onClick": {
-            "action": "openDialog",
-            "args": {
-              "title": "编辑用户",
-              "size": "lg",
-              "body": {
-                "type": "form",
-                "data": "${record}",
-                "body": [
-                  { "type": "input-text", "name": "name", "label": "姓名" },
-                  { "type": "input-email", "name": "email", "label": "邮箱" }
-                ],
-                "submitAction": {
-                  "action": "ajax",
-                  "args": {
-                    "url": "/api/users/${record.id}",
-                    "method": "put",
-                    "data": "${$form.values}"
-                  }
-                },
-                "onSubmitSuccess": {
-                  "action": "component:refresh",
-                  "componentId": "users-crud"
-                }
-              }
-            }
-          }
+          "variant": "ghost"
         },
         {
           "type": "button",
           "label": "删除",
-          "variant": "ghost",
-          "onClick": {
-            "action": "ajax",
-            "args": {
-              "url": "/api/users/${record.id}",
-              "method": "delete"
-            },
-            "then": {
-              "action": "component:refresh",
-              "componentId": "users-crud"
-            }
-          }
+          "variant": "ghost"
         }
       ]
     }

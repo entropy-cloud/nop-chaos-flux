@@ -112,6 +112,22 @@ Do not move generic validation helpers back into compiler modules when they can 
 - `packages/flux-runtime/src/form-runtime.ts`
   - `FormRuntime` assembly and form-specific specialization
   - submit orchestration, touched/visited/dirty policy, ordinary value writes, array mutation dispatch
+- `packages/flux-runtime/src/form-runtime-submit-flow.ts`
+  - form submit flow orchestration (async submit sequence, commit/before-submit hooks)
+- `packages/flux-runtime/src/form-runtime-submit.ts`
+  - submit entry point and submit state management
+- `packages/flux-runtime/src/form-runtime-field-ops.ts`
+  - field registration and update operations
+- `packages/flux-runtime/src/form-runtime-values.ts`
+  - form value write helpers and batch update operations
+- `packages/flux-runtime/src/form-runtime-lifecycle.ts`
+  - form lifecycle helpers (mount/unmount/dispose coordination)
+- `packages/flux-runtime/src/form-runtime-status.ts`
+  - form status publication and summary helpers
+- `packages/flux-runtime/src/form-runtime-array-ops.ts`
+  - array field mutation operations (add/remove/move)
+- `packages/flux-runtime/src/form-runtime-types.ts`
+  - form-runtime-internal type definitions
 
 These files own runtime sequencing and form lifecycle behavior.
 
@@ -227,6 +243,10 @@ Note:
   - import-module load dedupe
   - action-scope-local imported namespace registration lifecycle
   - expression-helper publication for imported aliases
+- `packages/flux-runtime/src/import-stack.ts`
+  - ImportFrame/ImportStack frame lifecycle management
+  - alias visibility and import-frame push/pop
+  - expression-binding resolution for imported aliases
 
 These modules are runtime-host infrastructure.
 

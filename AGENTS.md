@@ -9,6 +9,8 @@
 **Workspace Packages**:
 - `@nop-chaos/flux-core` - Foundation contracts and shared utilities. Contains type definitions, constants, and side-effect-free pure utility functions shared across all packages.
 - `@nop-chaos/flux-formula` - Expression compiler/evaluator.
+- `@nop-chaos/flux-compiler` - Schema compiler (compilation, validation model lowering, diagnostics).
+- `@nop-chaos/flux-action-core` - Action precompile and dispatch core (compile-time action lowering, dispatch ordering).
 - `@nop-chaos/flux-i18n` - Internationalization (i18next integration). Supports zh-CN (default) and en-US. All keys use `flux.` prefix.
 - `@nop-chaos/flux-runtime` - Core runtime (Zustand stores, validation, actions).
 - `@nop-chaos/flux-react` - React rendering layer.
@@ -33,16 +35,18 @@
 
 **Dependency Flow**:
 ```
-flux-core -> flux-formula -> flux-i18n -> flux-runtime -> flux-react -> flux-renderers-* (includes flux-renderers-form-advanced)
-                                                                       -> flux-code-editor
-                                                                       -> flow-designer-renderers
-                                                                       -> spreadsheet-renderers
-                                                                       -> report-designer-renderers
-                                                                       -> word-editor-renderers
-                                                                       -> nop-debugger
+flux-core -> flux-formula -> flux-compiler -> flux-action-core -> flux-runtime -> flux-react -> flux-renderers-* (includes flux-renderers-form-advanced)
+                                                                                             -> flux-code-editor
+                                                                                             -> flow-designer-renderers
+                                                                                             -> spreadsheet-renderers
+                                                                                             -> report-designer-renderers
+                                                                                             -> word-editor-renderers
+                                                                                             -> nop-debugger
 
-tailwind-preset -> ui
-theme-tokens -> ui
+flux-core -> flux-i18n -> flux-react, ui
+
+tailwind-preset (standalone Tailwind config)
+theme-tokens (standalone CSS token variables)
 flux-i18n -> ui
 spreadsheet-core -> report-designer-core -> report-designer-renderers
 flow-designer-core -> flow-designer-renderers

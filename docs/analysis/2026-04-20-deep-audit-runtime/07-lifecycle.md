@@ -2,6 +2,8 @@
 
 ## 审核日期: 2026-04-20
 
+> Historical Note: This audit captures the runtime/lifecycle state from 2026-04-20. Any references to `use-node-imports.ts` describe a retired path; later work removed that hook in favor of schema-level import preparation/preload plus synchronous prepared-import installation.
+
 ## 发现清单（经初审+维度复核+子项复核）
 
 ### [P1] F01: DynamicRenderer mountedRef 竞态条件

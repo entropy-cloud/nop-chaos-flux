@@ -3,6 +3,8 @@
 - Task ID: `ses_268e2be72ffeZkORV4FIongYPl`
 - Source prompt: `docs/skills/deep-audit-prompts.md`
 
+> Historical Note: File/path references in this audit reflect the repo state at audit time. `packages/flux-react/src/useNodeImports.ts` was later renamed and ultimately removed when the import lifecycle moved to schema preparation plus synchronous prepared-import installation.
+
 # 1. 测试覆盖统计（按包）
 
 | 包 | 测试文件数 | 测试代码行数 |

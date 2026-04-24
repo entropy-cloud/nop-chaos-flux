@@ -3,6 +3,8 @@
 **审核日期**: 2026-04-18
 **审核范围**: flux-react/src 全部非测试文件中的 useEffect 和 useLayoutEffect（共 21 个 effect）
 
+> Historical Note: This report reflects an older `flux-react` baseline. Mentions of `useNodeImports` / `use-node-imports.ts` refer to a path that was later retired; they should not be read as the current import lifecycle implementation.
+
 ---
 
 ## 发现清单

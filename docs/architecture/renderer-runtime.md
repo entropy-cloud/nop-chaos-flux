@@ -176,7 +176,7 @@ Renderer components receive:
 ```ts
 interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   id: string;
-  path: string;
+  path: SchemaPath;
   schema: S;
   templateNode: TemplateNode<S>;
   node: NodeInstance<S>;
@@ -495,7 +495,7 @@ function useCurrentPage(): PageRuntime | undefined;
 function useCurrentSurfaceRuntime(): SurfaceRuntime | undefined;
 function useCurrentNodeMeta(): {
   id: string;
-  path: string;
+  path: SchemaPath;
   type: string;
   cid?: number;
   templateNode: TemplateNode;
@@ -505,6 +505,8 @@ function useCurrentNodeInstance(): NodeInstance | undefined;
 function useStructuralLoopContext(): StructuralLoopRenderContext | undefined;
 function useRenderFragment(): RendererHelpers['render'];
 function useCurrentFormModelGeneration(): number;
+function useCurrentValidationScope(): ValidationScopeRuntime | undefined;
+function useDataSourceStatus(path: string, options?: { enabled?: boolean }): DataSourceStatusSummary | undefined;
 ```
 
 Current scope-hook semantics are:
@@ -711,6 +713,12 @@ Normative split context areas are:
 - node-instance context (single carrier for current node identity)
 - form context
 - page context
+- surface context
+- validation context (carries `ValidationScopeRuntime` for `useCurrentValidationScope`)
+- import-frame context (carries `ImportFrame` for import boundary alias visibility)
+- class-aliases context (carries merged `ClassAliasesMap` for renderer className resolution)
+- structural-loop context (carries `StructuralLoopRenderContext` for loop iteration metadata)
+- render-instance-path context (carries `InstanceFrame[]` for nested renderer instance tracking)
 
 Why:
 
@@ -794,6 +802,7 @@ Normative root props are:
 ```ts
 interface SchemaRendererProps {
   schema: SchemaInput;
+  schemaUrl: string;
   data?: Record<string, any>;
   env: RendererEnv;
   formulaCompiler: FormulaCompiler;
@@ -801,9 +810,11 @@ interface SchemaRendererProps {
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
   surfaceRuntime?: SurfaceRuntime;
+  moduleCache?: ModuleCache;
   parentScope?: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  onRuntimeChange?: (runtime: RendererRuntime | null) => void;
   onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
   onActionScopeChange?: (actionScope: ActionScope | null) => void;
   onActionError?: (error: unknown, ctx: ActionContext) => void;

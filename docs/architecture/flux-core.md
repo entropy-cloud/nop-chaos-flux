@@ -274,6 +274,7 @@ interface ScopeChange {
   paths: readonly string[];
   sourceScopeId?: string;
   kind?: 'update' | 'merge' | 'replace';
+  revision?: number;
 }
 
 interface ScopeStore<T = Record<string, any>> {
@@ -288,13 +289,15 @@ interface ScopeRef {
   path: string;
   parent?: ScopeRef;
   store?: ScopeStore;
-  value: Record<string, any>;
+  readonly value: Record<string, any>;
   get(path: string): unknown;
   has(path: string): boolean;
   readOwn(): Record<string, any>;
   readVisible(): Record<string, any>;
   materializeVisible(): Record<string, any>;
   update(path: string, value: unknown): void;
+  merge(data: Record<string, unknown>): void;
+  replace?(data: Record<string, unknown>): void;
 }
 ```
 

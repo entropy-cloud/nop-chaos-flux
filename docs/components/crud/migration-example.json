@@ -1,0 +1,216 @@
+{
+  "example": "amis-crud-to-flux-crud",
+  "sourceAmis": {
+    "type": "crud",
+    "api": "/api/users",
+    "filter": {
+      "title": "查询条件",
+      "body": [
+        {
+          "type": "input-text",
+          "name": "keywords",
+          "label": "关键字"
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "状态",
+          "multiple": true,
+          "options": [
+            { "label": "启用", "value": "active" },
+            { "label": "禁用", "value": "disabled" }
+          ]
+        }
+      ]
+    },
+    "headerToolbar": [
+      {
+        "type": "columns-toggler",
+        "draggable": true,
+        "align": "right"
+      },
+      "bulkActions",
+      "pagination"
+    ],
+    "footerToolbar": [
+      "statistics",
+      "switch-per-page",
+      "pagination"
+    ],
+    "bulkActions": [
+      {
+        "label": "批量删除",
+        "type": "button",
+        "actionType": "ajax",
+        "api": "delete:/api/users/${ids|raw}"
+      }
+    ],
+    "primaryField": "id",
+    "pageField": "pageNo",
+    "perPageField": "pageSize",
+    "keepItemSelectionOnPageChange": true,
+    "maxKeepItemSelectionLength": 20,
+    "columns": [
+      {
+        "name": "id",
+        "label": "ID",
+        "fixed": "left"
+      },
+      {
+        "name": "name",
+        "label": "姓名",
+        "sortable": true,
+        "searchable": true,
+        "fixed": "left"
+      },
+      {
+        "name": "status",
+        "label": "状态",
+        "filterable": {
+          "searchable": true,
+          "options": [
+            { "label": "启用", "value": "active" },
+            { "label": "禁用", "value": "disabled" }
+          ]
+        }
+      },
+      {
+        "type": "operation",
+        "label": "操作",
+        "fixed": "right",
+        "buttons": [
+          {
+            "type": "button",
+            "label": "编辑",
+            "actionType": "dialog",
+            "dialog": {
+              "title": "编辑用户",
+              "body": {
+                "type": "form",
+                "body": [
+                  { "type": "input-text", "name": "name", "label": "姓名" }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "targetFlux": {
+    "type": "crud",
+    "source": "/api/users",
+    "queryForm": {
+      "body": [
+        {
+          "type": "input-text",
+          "name": "keywords",
+          "label": "关键字"
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "状态",
+          "multiple": true,
+          "options": [
+            { "label": "启用", "value": "active" },
+            { "label": "禁用", "value": "disabled" }
+          ]
+        }
+      ]
+    },
+    "toolbar": [
+      "listActions",
+      "pagination"
+    ],
+    "footerToolbar": [
+      "statistics",
+      "switch-per-page",
+      "pagination"
+    ],
+    "columnSettings": {
+      "enabled": true,
+      "draggable": true
+    },
+    "listActions": [
+      {
+        "type": "button",
+        "label": "批量删除",
+        "onClick": {
+          "action": "ajax",
+          "args": {
+            "url": "/api/users",
+            "method": "delete",
+            "data": {
+              "ids": "${$crud.selectedRowKeys}"
+            }
+          }
+        }
+      }
+    ],
+    "rowKey": "id",
+    "pageField": "pageNo",
+    "pageSizeField": "pageSize",
+    "selection": {
+      "keepOnPageChange": true,
+      "maxKeepSelectionLength": 20
+    },
+    "columns": [
+      {
+        "name": "id",
+        "label": "ID",
+        "fixed": "left"
+      },
+      {
+        "name": "name",
+        "label": "姓名",
+        "sortable": true,
+        "searchable": true,
+        "fixed": "left"
+      },
+      {
+        "name": "status",
+        "label": "状态",
+        "filterable": {
+          "searchable": true,
+          "options": [
+            { "label": "启用", "value": "active" },
+            { "label": "禁用", "value": "disabled" }
+          ]
+        }
+      },
+      {
+        "type": "operation",
+        "label": "操作",
+        "fixed": "right",
+        "buttons": [
+          {
+            "type": "button",
+            "label": "编辑",
+            "onClick": {
+              "action": "openDialog",
+              "args": {
+                "title": "编辑用户",
+                "body": {
+                  "type": "form",
+                  "body": [
+                    { "type": "input-text", "name": "name", "label": "姓名" }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "migrationHints": {
+      "amisApi": "/api/users",
+      "notes": [
+        "headerToolbar 中的动作块被提炼到 listActions，columns-toggler 被提炼到 columnSettings",
+        "primaryField 迁移为 rowKey",
+        "perPageField 迁移为 pageSizeField",
+        "actionType/dialog 迁移为 Flux action/openDialog"
+      ]
+    }
+  }
+}

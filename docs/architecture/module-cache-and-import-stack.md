@@ -51,7 +51,7 @@ Important consequence:
 
 ### Current Constraints
 
-1. Import static metadata is now available to compilation through prepared imports, but the current validation slice is still limited: helper/member metadata is wired in, while richer callable contract coverage remains a follow-up.
+1. Import static metadata is available to compilation through prepared imports, including imported helper/member lookup and callable parameter-count validation when `ImportedLibraryStaticMeta.helpers` includes function parameter definitions.
 
 2. Compile-time symbol visibility is additive and conservative. Unknown `$` references outside the known categories remain informational or runtime-resolved rather than becoming hard compile blockers.
 
@@ -283,8 +283,9 @@ TemplateNodes are produced with import metadata attached
 Compile-time rule:
 
 - compilation validates declaration visibility and emits import-aware node metadata
-- compilation does not own runtime import loading, provider registration, or mounted lifetime
-- preload/cache warming may happen as a performance optimization, but it must not become the semantic source of lexical visibility
+- schema preparation plus compilation own import readiness for ordinary schema rendering: declared imports are resolved, preloaded, and queried for static meta before template generation completes
+- mounted lifetime and lexical provider registration still remain runtime responsibilities through `ImportStack.installPrepared(...)` and import-owned `ActionScope` boundaries
+- lexical visibility still comes from compiled node ownership plus runtime import-frame installation, not from cache warming alone
 
 ### 2. Node Rendering (Runtime)
 
@@ -501,24 +502,24 @@ The compile-time validation produces the following diagnostic categories:
 
 ### Interaction With Module Manifests
 
-For `unknown-import-member` diagnostics to work, imported modules must provide a **capability manifest** that describes their expression helpers at the type level:
+For `unknown-import-member` and imported callable diagnostics to work, imported modules must provide static metadata through `ImportedLibraryModule.getStaticMeta()`.
 
 ```typescript
-interface ImportCapabilityManifest {
-  alias: string;
-  expressionHelpers?: Record<string, {
-    signature?: string;      // e.g. "(first: string, last: string) => string"
-    returnType?: TypeDescriptor;
+interface ImportedLibraryStaticMeta {
+  helpers?: Record<string, {
+    kind?: 'function' | 'value';
+    params?: Array<{
+      name: string;
+      required?: boolean;
+    }>;
   }>;
+  namespaceMethods?: readonly string[];
 }
 ```
 
-This manifest is separate from the runtime `createExpressionHelpers()` output. It is a static declaration that can be:
-- Embedded in the module's source (e.g. a `manifest` export).
-- Provided as a sidecar JSON file adjacent to the module URL.
-- Built from TypeScript type information during the library's build process.
+This metadata is separate from the runtime `createExpressionHelpers()` output. It is a static declaration returned during schema preparation, before template compilation.
 
-When a manifest is available, the compiler validates member access against it. When no manifest is available, the compiler skips `unknown-import-member` checks for that alias (the alias itself is still validated, just not its members).
+When static meta is available, the compiler validates imported member access and imported function argument counts against it. When no static meta is available, the compiler skips those helper/member diagnostics for that alias and falls back to runtime resolution.
 
 ### Static Expression Folding
 
@@ -544,4 +545,4 @@ Rules for folding:
 - **ModuleCache persistence**: should the cache survive page navigations in an SPA? If yes, should it have an LRU eviction policy or TTL? Currently the design assumes the cache lives as long as the host application.
 - **Hot reload**: when a library module is updated on the server, how does the cache invalidate? The host can provide a new `env.importLoader` or clear cache entries, but this document does not define a standard invalidation protocol.
 - **Lazy loading vs eager preload**: the current `SchemaRenderer` preloads all imports before rendering. With the new design, preload still populates `ModuleCache`, but the `ImportStack` push can be lazy (the module is already cached). Whether to preload or load-on-demand is a host-level decision, not a Flux-level mandate.
-- **Interaction with compile-time imports**: Phase 4 assumes that import manifests (capability signatures) are available at compile time. This requires libraries to provide static manifests, which is not currently part of `ImportedLibraryModule`. This is a separate design concern.
+- **Richer callable contracts**: the current baseline validates imported function arity from static parameter definitions, but it does not yet model full argument type checking or return-type-aware IDE tooling.

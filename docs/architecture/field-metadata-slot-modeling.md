@@ -89,7 +89,7 @@ The current architecture already has the base pieces for this direction:
 - `RendererDefinition.fields` in `packages/flux-core/src/index.ts`
 - `SchemaFieldRule` in `packages/flux-core/src/index.ts`
 - `classifyField()` in `packages/flux-compiler/src/schema-compiler.ts`
-- `CompiledRegion` in `packages/flux-core/src/index.ts`
+- `TemplateRegion` in `packages/flux-core/src/index.ts`
 - `RenderRegionHandle` in `packages/flux-core/src/index.ts`
 
 Today the active field rule model already supports:
@@ -100,6 +100,8 @@ Today the active field rule model already supports:
 - `value-or-region`
 - `event`
 - `ignored`
+
+Each `SchemaFieldRule` also supports optional `params?: readonly string[]` (parameter names for scoped slot regions) and `isolate?: boolean` (isolation policy for the region).
 
 That means the repository has already moved beyond the older `meta / prop / region / ignored` split.
 
@@ -142,7 +144,7 @@ Recommended semantic categories:
 - `value`
   - normal compiled runtime value stored in `props`
 - `region`
-  - nested schema compiled into a `CompiledRegion`
+  - nested schema compiled into a `TemplateRegion`
 - `value-or-region`
   - field accepts either a plain value or a renderable schema fragment
 - `event`
@@ -171,7 +173,7 @@ Recommended behavior by field semantic:
   - if `sourceStateKey` is also present, runtime injects a transient state prop alongside the resolved value prop
 - `region`
   - require schema or schema array input
-  - compile recursively into a `CompiledRegion`
+  - compile recursively into a `TemplateRegion`
 - `value-or-region`
   - if the raw value is a schema or schema array, compile to `region`
   - otherwise compile as a normal value prop

@@ -239,7 +239,7 @@ Notes:
 | `panel` | panel semantics are better expressed by card/container/collapse composition | composition |
 | `hbox` | duplicated layout naming | `flex` |
 | `vbox` | duplicated layout naming | `flex` |
-| `fieldset` | belongs to field chrome or form grouping, not a separate general renderer | `form` + composition |
+| `fieldset` | 表单分组容器，需独立渲染 `<fieldset>/<legend>`，可折叠，可传播 form mode | `fieldset`（独立组件，`targetContract`） |
 | `group` | generic grouping is better expressed structurally or by layout/container families | `container` / `flex` / `fragment` |
 | `input-group` | group chrome belongs to field composition, not a top-level owner | composition |
 | `pagination-wrapper` | wrapper-plus-pagination should not become its own canonical type | `pagination` + collection renderer |

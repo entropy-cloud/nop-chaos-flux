@@ -521,6 +521,8 @@ Rules:
 
 ## Compile-Time Collection
 
+> **Implementation Status**: The target interface below (`ValidationCompileContribution`) is a **Phase 3 goal**. The current codebase uses `ValidationContributor` (defined in `flux-core/src/types/renderer-core.ts`) which provides a subset of these capabilities (`kind`, `valueKind`, `getFieldPath`, `collectRules`, `getChildFieldPathPrefix`). The full `ownerResolution`-driven boundary classification and `collectDependencies` are not yet implemented. Do not search for `ValidationCompileContribution` in code; search for `ValidationContributor` instead.
+
 Validation structure is compiled by component-aware collector hooks.
 
 ```ts

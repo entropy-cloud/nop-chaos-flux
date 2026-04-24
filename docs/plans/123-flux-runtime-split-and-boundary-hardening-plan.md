@@ -25,7 +25,7 @@
 - `packages/flux-runtime/src/operation-control.ts` 当前只承载 timeout / retry / abort helpers，被 action 与 request 共用；`OperationControlConfig` 协议类型已在 `packages/flux-core/src/types/schema.ts`。
 - `docs/architecture/flux-runtime-module-boundaries.md` 已切到 compiler package baseline；本计划应直接建立在这一 baseline 上，而不是重新讨论 compiler owner。
 - `docs/plans/118-flux-internal-kernel-session-refactor-plan.md` 已被取消；因此本计划不能回到“先发明 internal kernel/session topology”的宽计划，而必须沿 focused subsystem 边界收口。
-- `packages/flux-react/src/use-node-imports.ts` 仍有 React-side async import loading；这属于 import/host runtime boundary，不属于本计划首轮 action/request/source/reaction split 的核心目标。
+- Import / host runtime boundary work remained outside this plan's core action/request/source/reaction split scope. At the time this plan closed, that still included a React-side async import-loading path; later work in Plan 134 retired that path in favor of schema preparation plus synchronous prepared-import installation.
 
 ## Goals
 

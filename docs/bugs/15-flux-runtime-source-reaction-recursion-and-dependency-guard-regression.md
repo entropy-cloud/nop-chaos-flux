@@ -2,7 +2,7 @@
 
 ## Status
 
-Open.
+Closed on 2026-04-24 after verification showed the previously reported failure was no longer reproducible.
 
 ## Discovered
 
@@ -10,35 +10,27 @@ Open.
 
 ## Symptoms
 
-- `pnpm test` fails in `packages/flux-runtime`.
-- Multiple source/reaction tests report `RangeError: Maximum call stack size exceeded`.
-- The stack traces repeatedly point at `packages/flux-runtime/src/async-data/data-source-runtime.ts:130` during `writeDataToScope(...)`.
-- Affected tests include:
-  - `packages/flux-runtime/src/source-reaction-dependencies.test.ts`
-  - `packages/flux-runtime/src/__tests__/runtime-sources.test.ts`
-  - `packages/flux-runtime/src/__tests__/runtime-sources-refresh.test.ts`
-  - `packages/flux-runtime/src/__tests__/runtime-reactions.test.ts`
-  - `packages/flux-runtime/src/__tests__/runtime-actions-advanced.test.ts`
+- Original report: `packages/flux-runtime` tests were believed to be failing with recursive source/reaction refresh behavior and `RangeError: Maximum call stack size exceeded` near `packages/flux-runtime/src/async-data/data-source-runtime.ts:130`.
+- Current verification on 2026-04-24 did not reproduce the failure.
 
 ## Current Understanding
 
-- The failing area is the async-data / reaction subsystem, not the NodeRenderer import-plan path.
-- The likely fault line is interaction between:
-  - `packages/flux-runtime/src/async-data/data-source-runtime.ts`
-  - `packages/flux-runtime/src/async-data/source-registry.ts`
-  - `packages/flux-runtime/src/async-data/reaction-runtime.ts`
-  - dependency filtering via `packages/flux-runtime/src/scope-change.ts`
-- The observed failure mode suggests a scope writeback is re-triggering source/reaction refresh recursively, or explicit `dependsOn` guards are not being applied the way the tests expect.
-- Two speculative edits were tried locally during investigation and then reverted because they were not the correct fix direction; no intentional runtime behavior change from those experiments remains.
+- The originally suspected owner area was still the async-data / reaction subsystem, not the NodeRenderer import-plan path.
+- Reproduction attempts on 2026-04-24 all passed without code changes:
+  - `pnpm exec vitest run "src/source-reaction-dependencies.test.ts"` in `packages/flux-runtime`
+  - `pnpm exec vitest run "src/__tests__/runtime-sources.test.ts" "src/__tests__/runtime-sources-refresh.test.ts" "src/__tests__/runtime-reactions.test.ts" "src/__tests__/runtime-actions-advanced.test.ts"` in `packages/flux-runtime`
+  - `pnpm test` in `packages/flux-runtime`
+  - workspace-root `pnpm test`
+- The most likely explanation is that the failure was transient or already eliminated by subsequent changes elsewhere before this follow-up verification.
+- No runtime code changes were made as part of closing this bug note.
 
 ## Why This Is Separate From Plan 134
 
 - Plan 134 changed import preloading, compile-time node plans, and `NodeRenderer` execution.
-- The failing tests exercise source/reaction dependency refresh logic in `flux-runtime`, a separate owner area.
-- Full-workspace verification is correctly surfacing this blocker, but it should be tracked and fixed as its own bug line rather than silently broadening Plan 134.
+- If a similar failure reappears, it should still be tracked as source/reaction runtime behavior in `flux-runtime`, not silently folded into Plan 134.
 
 ## Recommended Next Step
 
-- Create a focused execution plan for the `flux-runtime` source/reaction dependency guard path.
-- Reproduce with `pnpm exec vitest run "src/source-reaction-dependencies.test.ts"` in `packages/flux-runtime`.
-- Audit the actual change events reaching source/reaction subscriptions and compare them against expected `dependsOn`, target-path, and self-published write filtering semantics before changing runtime behavior.
+- No immediate runtime fix is required.
+- If the regression reappears, start by rerunning the focused `flux-runtime` test commands above before changing code.
+- Reopen or replace this bug note only if the failure becomes reproducible again with concrete failing output.

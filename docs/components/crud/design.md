@@ -2,248 +2,169 @@
 
 ## 1. 组件定位
 
-- `crud` 是面向业务数据工作流的复合 renderer，用来把查询表单、数据加载、表格展示、工具栏动作、批量操作组织成一个稳定的 schema 契约。
-- `crud` 是一个有明确领域边界的组合组件，但它不是新的全局 owner，也不是把 `table`、`form`、`dialog`、`data-source` 粗暴塞进一个黑盒实现。
-- `crud` 的目标是提供类似 AMIS `CRUD` 的业务能力密度，同时坚持 Flux 当前的 owner 分层、命名规范、region 建模和 action/source 语义。
+- `crud` 是面向业务数据工作流的复合 renderer，用来把查询表单、数据加载、表格展示、工具栏动作、列表级动作、行操作和列管理组织成一个稳定的 schema 契约。
+- `crud` 继续采用 Flux 当前 owner 分层，不把 `table`、`form`、`dialog`、`data-source` 重新揉成一个黑盒 owner。
+- 本轮工作的重点不是一次性补全全部运行时，而是先把正式设计和定义收敛到能够覆盖 AMIS `crud` 主能力面，并让 AMIS 配置迁移到 Flux JSON 时尽量低心智负担。
 
-## 2. 核心设计原则
+## 2. 设计目标
 
-### 2.1 对话框由按钮自己控制
+1. 覆盖 AMIS `crud` 的高频业务能力面，包括 operation 列、查询过滤、列排序、列显隐、固定列、响应式展开、列表级动作、批量操作模式、顶部/底部工具栏、前端一次性加载模式、快速编辑入口等。
+2. 保持 Flux 自己的命名和 owner 语义，避免把 AMIS 的历史字段名原样复制为最终 DSL。
+3. 提供一套简单、稳定、可文档化的 AMIS -> Flux 迁移映射。
+4. 将尚未完全实现的能力明确标注为“契约已定义 / 运行时待补齐”，避免文档制造假已完成基线。
 
-**CRUD 不统一管理对话框**。这是与早期设计的关键区别。
+## 3. 非目标
 
-- 在 `toolbar` 或 `columns` 的 operation 列中配置按钮
-- 按钮使用 `action: 'openDialog'` 和 `args: {...}` 配置对话框
-- 对话框中的表单提交成功后，通过 `reload` 属性或 `component:refresh` action 刷新 CRUD
+- 不保留 AMIS 的字符串脚本事件、`actionType` 风格事件协议、`xxxApi` 顶层命名作为 Flux 正式命名。
+- 不在本轮把 `crud` 运行时一次性扩成巨型实现。
+- 不把 `crud` 定义成新的请求 owner；请求仍由 `source`、`data-source` 或 action 承担。
 
-这与 AMIS 的设计一致：每个按钮携带完整的 dialog 定义，CRUD 只负责渲染 shell 和协调刷新。
+## 4. 核心原则
 
-### 2.2 Operation 列由用户定义
+### 4.1 CRUD 是工作流壳，不是第二个 Table
 
-用户在 `columns` 中自行定义 `type: 'operation'` 列，在 `buttons` 中配置按钮。CRUD 不进行 `rowActions` -> operation 列的自动 lowering。
+- 查询表单仍是 `form` 语义。
+- 列展示、排序、筛选、选择、展开、分页仍以 `table` 为底层载体。
+- 对话框和抽屉仍由按钮自己通过 action 打开。
+- `crud` 负责的是这些子能力的组合协作和迁移友好 authoring 面。
 
-## 3. Flux 中的 renderer/type 定义
+### 4.2 Operation 列继续由用户声明
 
-- 目标 `type: 'crud'`
-- 归属 `@nop-chaos/flux-renderers-data`
-- 组件性质：`category: 'data'`
-- 设计定位：复合 renderer shell，不是新的 runtime primitive family
+- 用户在 `columns` 中自行声明 `type: 'operation'` 列。
+- 行操作按钮继续写在 `columns[].buttons`。
+- 不引入 `rowActions -> operation 列` 的隐式 lowering。
 
-## 4. 设计目标
+### 4.3 优先支持“简单迁移”，不是“字段原样克隆”
 
-1. 用一个稳定的 schema 节点表达"列表页 CRUD 工作流"。
-2. 保持查询、加载、表格交互、表单提交、弹层开关各自 owner 清晰。
-3. 支持后续逐步逼近 AMIS CRUD 能力，但不在首版正式契约里复制历史兼容噪音。
-4. 保持与 `table`、`form`、`dialog`、`data-source`、`page` 现有文档一致的命名与状态模型。
+- Flux 正式字段使用 `queryForm`、`toolbar`、`footerToolbar`、`rowKey`、`pageSizeField`、`columnSettings` 等命名。
+- 对应 AMIS 的 `filter`、`headerToolbar`、`footerToolbar`、`primaryField`、`perPageField`、`columns-toggler` 能稳定映射过来。
+- 迁移示例里允许通过 `migrationHints` 记录原始 AMIS 来源，方便工具链和人工核对，但它不是运行时依赖。
 
-## 5. 非目标
+## 5. 组件边界
 
-- 不把 `crud` 定义成新的请求协议 owner；请求仍由 `source` / `data-source` / action 承担。
-- 不把行内编辑、卡片模式、无限滚动、移动端特化视图、树表、嵌套 master-detail 全部挤进首版正式契约。
-- 不为了兼容 AMIS 而保留 `xxxApi`、`xxxSource`、`xxxOn`、字符串脚本事件等历史命名。
-- 不暴露 renderer 私有 store、React ref 或内部子组件实例给 schema。
-- **不在 CRUD 顶层定义 `createDialog`/`editDialog`/`detailDialog`**；对话框由按钮自己携带。
+`crud` 负责：
 
-## 6. 组件边界
+- 查询区与列表刷新协作
+- 顶部/底部工具栏布局与列表级动作入口
+- 列管理、字段选择、列顺序、固定列、响应式展开这类 CRUD authoring 高频能力的统一入口
+- 通过 `$crud` / `statusPath` 暴露只读摘要，供内外部消费
 
-`crud` 负责的是业务组合与默认协作关系：
+`crud` 不负责重新定义：
 
-- 查询区如何与列表刷新协作
-- 列表数据如何进入表格
-- 顶部工具栏、批量操作如何共享当前列表上下文
-- 常见空态、刷新、选择、分页如何收敛为统一 authoring 模式
-- 通过 `$crud` 状态摘要暴露 `hasSelection`、`selectionCount` 等供按钮条件渲染
+- 表单验证规则
+- 数据请求协议
+- dialog/drawer surface 生命周期
+- 单元格渲染原语
 
-`crud` 不负责重新定义这些底层能力：
+## 6. 正式 Schema 设计
 
-- 查询字段验证规则仍由 `form` 负责
-- 数据请求、轮询、失败、取消、缓存仍由 `data-source` / source runtime 负责
-- 分页、排序、筛选、选择、row scope 仍由 `table` 负责
-- 对话框开合仍由 `dialog` / surface owner 负责，**由按钮 action 触发**
+### 6.1 顶层字段
 
-## 7. Flux 正式 schema 设计
+核心字段：
 
-### 7.1 顶层字段
+- `name`
+- `statusPath`
+- `queryForm`
+- `source`
+- `toolbar`
+- `footerToolbar`
+- `toolbarLayout`
+- `listActions`
+- `columns`
+- `empty`
+- `rowKey`
+- `selectionOwnership` / `selectionStatePath`
+- `paginationOwnership` / `paginationStatePath`
+- `sortOwnership` / `sortStatePath`
+- `filterOwnership` / `filterStatePath`
+- `selection`
+- `pageField` / `pageSizeField`
+- `defaultParams`
+- `syncLocation`
+- `columnSettings`
+- `responsive`
+- `autoGenerateQueryForm`
+- `clientMode`
+- `quickSaveAction` / `quickSaveItemAction`
+- `migrationHints`
+- `onQuerySubmit` / `onQueryReset` / `onRowClick` / `onSelectionChange` / `onRefresh`
 
-正式字段：
+### 6.2 列字段
 
-- `name` - 组件名称，用于 component handle 查找
-- `statusPath` - 状态摘要发布路径
-- `queryForm` - 查询表单配置对象
-- `source` - 数据源，可以是数组或 data-source
-- `toolbar` - 工具栏 region
-- `bulkActions` - 批量操作 region
-- `columns` - 表格列配置，**用户在此定义 operation 列**
-- `empty` - 空数据时显示的内容
-- `selectionOwnership` / `selectionStatePath` - 选择状态
-- `paginationOwnership` / `paginationStatePath` - 分页状态
-- `sortOwnership` / `sortStatePath` - 排序状态
-- `filterOwnership` / `filterStatePath` - 筛选状态
-- `rowKey` - 行主键字段名
-- `autoClearSelectionOnRefresh` - 刷新后是否自动清空选择
-- `onRowClick` / `onSelectionChange` / `onRefresh` - 事件
+`columns[]` 在 `table` 现有列定义基础上扩展下列迁移关键字段：
 
-### 7.2 推荐最小形态
+- `fixed: 'left' | 'right'`
+- `hidden`
+- `toggled`
+- `align`
+- `sortable`
+- `searchable: boolean | SchemaInput`
+- `filterable: boolean | { options, source, searchable, searchConfig, multiple }`
+- `quickEdit: boolean | { mode, body, saveImmediately }`
+- `buttons`
 
-```json
-{
-  "type": "crud",
-  "name": "usersCrud",
-  "source": [
-    { "id": "1", "name": "Alice" },
-    { "id": "2", "name": "Bob" }
-  ],
-  "columns": [
-    { "name": "name", "label": "姓名" }
-  ]
+这使 Flux `crud` 在设计层可覆盖 AMIS 中最常见的：
+
+- operation 列
+- left/right fixed columns
+- header quick search / filter
+- quick edit
+- columns toggler 所需的列显隐基础元数据
+
+### 6.3 工具栏与列表动作建模
+
+Flux 不复制 AMIS 的字符串数组工具栏协议作为正式契约，但要覆盖其能力：
+
+- `listActions`: 列表级动作集合，包括新增、刷新、导出，以及依赖 selection 的批量动作
+- `toolbar`: 顶部 region
+- `footerToolbar`: 底部 region
+- `toolbarLayout`: 对分页、统计、批量操作、每页数量切换等标准块做结构化声明
+
+对迁移工具而言：
+
+- `headerToolbar` -> `toolbar` 和 `listActions`
+- `footerToolbar` -> `footerToolbar`
+- `columns-toggler` -> `columnSettings`
+
+批量操作不再是单独 canonical 字段：
+
+- 依赖 selection 的操作直接写进 `listActions`
+- 是否禁用、显示哪些统计、传哪些 id，统一通过 `$crud.hasSelection`、`$crud.selectedRowKeys`、`$crud.selectionCount` 表达
+- `bulkActions` 只适合作为迁移别名或 authoring sugar，不应进入最终 canonical schema
+
+### 6.4 查询区建模
+
+Flux 统一用 `queryForm` 表达 AMIS 的 `filter` / `autoGenerateFilter`：
+
+- 显式查询表单 -> `queryForm.body`
+- 自动生成查询区 -> `autoGenerateQueryForm`
+- 地址栏同步 -> `syncLocation`
+- Query 原始类型解析 -> `queryForm.parsePrimitiveQuery`
+
+### 6.5 前端一次性加载模式
+
+AMIS 的 `loadDataOnce`、`loadDataOnceFetchOnFilter`、`matchFunc` 在 Flux 里收敛为：
+
+```ts
+clientMode: {
+  loadDataOnce?: boolean;
+  fetchOnFilter?: boolean;
+  filterOnAllColumns?: boolean;
+  matchFunc?: SchemaValue;
 }
 ```
 
-### 7.3 带工具栏和操作列的完整示例
+这比零散顶层字段更容易扩展，也更符合 Flux 复合配置风格。
 
-```json
-{
-  "type": "crud",
-  "id": "users-crud",
-  "name": "usersCrud",
-  "statusPath": "crudStatus",
-  "rowKey": "id",
-  "source": "${userList}",
-  "toolbar": [
-    {
-      "type": "button",
-      "label": "新增",
-      "onClick": {
-        "action": "openDialog",
-        "args": {
-          "title": "新增用户",
-          "body": {
-            "type": "form",
-            "body": [
-              { "type": "input-text", "name": "name", "label": "姓名" },
-              { "type": "input-email", "name": "email", "label": "邮箱" }
-            ],
-            "submitAction": {
-              "action": "ajax",
-                "args": { "url": "/api/users", "method": "post" }
-            },
-            "onSubmitSuccess": {
-              "action": "component:refresh",
-              "componentId": "users-crud"
-            }
-          }
-        }
-      }
-    },
-    {
-      "type": "button",
-      "label": "刷新",
-      "onClick": {
-        "action": "component:refresh",
-        "componentId": "users-crud"
-      }
-    }
-  ],
-  "bulkActions": [
-    {
-      "type": "button",
-      "label": "批量删除",
-      "disabled": "${!$crud.hasSelection}",
-      "onClick": {
-        "action": "ajax",
-        "args": {
-          "url": "/api/users/bulk-delete",
-          "method": "post",
-          "data": { "ids": "${$crud.selectedRowKeys}" }
-        },
-        "then": {
-          "action": "component:refresh",
-          "componentId": "users-crud"
-        }
-      }
-    }
-  ],
-  "columns": [
-    { "name": "name", "label": "姓名", "sortable": true },
-    { "name": "email", "label": "邮箱" },
-    {
-      "type": "operation",
-      "label": "操作",
-      "buttons": [
-        {
-          "type": "button",
-          "label": "编辑",
-          "onClick": {
-            "action": "openDialog",
-            "args": {
-              "title": "编辑用户",
-              "body": {
-                "type": "form",
-                "data": "${record}",
-                "body": [
-                  { "type": "input-text", "name": "name", "label": "姓名" },
-                  { "type": "input-email", "name": "email", "label": "邮箱" }
-                ],
-                "submitAction": {
-                  "action": "ajax",
-                  "args": { "url": "/api/users/${record.id}", "method": "put" }
-                },
-                "onSubmitSuccess": {
-                  "action": "component:refresh",
-                  "componentId": "users-crud"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "button",
-          "label": "删除",
-          "onClick": {
-            "action": "ajax",
-            "args": { "url": "/api/users/${record.id}", "method": "delete" },
-            "then": {
-              "action": "component:refresh",
-              "componentId": "users-crud"
-            }
-          }
-        }
-      ]
-    }
-  ],
-  "empty": "暂无用户数据"
-}
-```
-
-## 8. 字段分类
-
-| 字段 | 分类 | 说明 |
-| --- | --- | --- |
-| `name`、`statusPath` | `value` | 组件标识、只读状态摘要发布路径 |
-| `queryForm` | `object-field-like value` | CRUD 内建查询区配置对象 |
-| `source` | `source-enabled value` | 列表结果生产者 |
-| `toolbar`、`bulkActions` | `region` | 工具区、批量动作区 |
-| `columns` | `value` | 表格列定义，包含 operation 列 |
-| `empty` | `value-or-region` | 空态 |
-| `selectionOwnership` 等 | `value` | interaction owner 模式 |
-| `rowKey` | `value` | row identity |
-| `autoClearSelectionOnRefresh` | `value` | 组合级协作策略 |
-| `onRowClick`、`onSelectionChange`、`onRefresh` | `event` | 事件 |
-
-## 9. 运行期状态归属
-
-`crud` 必须明确声明自己是组合模式，不是单一 owner。
-
-状态拆分如下：
+## 7. 运行期状态归属
 
 - 查询提交状态 -> `queryForm` 内部 `form`
 - 列表加载/刷新/错误 -> `source` owner
-- 表格分页/排序/筛选/选择 -> 内部 `table`
-- 对话框开合 -> **按钮触发的 dialog surface owner**
-- 表单提交 -> **dialog 内部 form**
-- bulk delete/export/import 之类长操作 -> `Explicit Tracked Operation`
+- 表格分页/排序/筛选/选择/展开 -> 底层 `table`
+- dialog/drawer 开合 -> 对应 surface owner
+- quick edit 提交 -> 显式 action 或后续表格编辑 owner
 
-`crud.statusPath` 发布的是一份组合摘要 DTO，而不是底层 owner store：
+`crud.statusPath` 和 `$crud` 暴露的是只读摘要：
 
 ```ts
 interface CrudStatusSummary {
@@ -254,74 +175,107 @@ interface CrudStatusSummary {
   hasSelection: boolean;
   selectionCount: number;
   selectedRowKeys: string[];
+  query?: Record<string, unknown>;
+  pagination?: { currentPage?: number; pageSize?: number };
+  sort?: { field?: string; order?: 'asc' | 'desc' };
+  filters?: Record<string, unknown>;
+  visibleColumnNames?: string[];
 }
 ```
 
-规则：
+## 8. AMIS 迁移映射
 
-- 这是外部观察面，不是内部 authoring 的唯一读面。
-- `crud` 子树内部默认提供只读 `$crud` 摘要绑定，供工具栏、批量动作、空态等内部子树直接读取。
-- 如果声明了 `statusPath`，同一份只读摘要会同时发布到该路径，供 CRUD 子树外部观察或宿主集成读取。
-- `$crud` 与 `statusPath` 不是二选一，也不是两份独立状态；它们是同一个 `CrudStatusSummary` 的两个只读访问入口。
-- 这两条通道都只允许暴露窄 summary，不暴露 store / methods，也不允许把 `$crud` 当作可写 façade。
-- `statusPath` 是组合摘要；`selectionStatePath` / `paginationStatePath` 等仍然是具体交互轴的可写状态路径。
+| AMIS 字段 | Flux 正式字段 | 说明 |
+| --- | --- | --- |
+| `api` | `source` | 用统一 source 语义承载 |
+| `filter` | `queryForm` | 查询表单统一映射 |
+| `autoGenerateFilter` | `autoGenerateQueryForm` | 自动生成查询区 |
+| `headerToolbar` | `toolbar` | 顶部工具栏 region |
+| `footerToolbar` | `footerToolbar` | 底部工具栏 region |
+| `bulkActions` | `listActions` | 批量动作降级为列表级动作中的 selection-aware 普通 action |
+| `primaryField` | `rowKey` | 行唯一键 |
+| `pageField` | `pageField` | 分页页码参数名 |
+| `perPageField` | `pageSizeField` | 每页数量参数名 |
+| `columnsTogglable` / `columns-toggler` | `columnSettings` | 列选择/列排序入口 |
+| `keepItemSelectionOnPageChange` | `selection.keepOnPageChange` | 跨页保留勾选 |
+| `maxItemSelectionLength` | `selection.maxSelectionLength` | 当前页最大勾选数 |
+| `maxKeepItemSelectionLength` | `selection.maxKeepSelectionLength` | 跨页保留时的最大勾选数 |
+| `itemCheckableOn` | `selection.checkableWhen` | 可勾选条件 |
+| `loadDataOnce` | `clientMode.loadDataOnce` | 前端一次性加载 |
+| `loadDataOnceFetchOnFilter` | `clientMode.fetchOnFilter` | 查询后是否重新请求 |
+| `matchFunc` | `clientMode.matchFunc` | 前端匹配函数 |
+| `quickSaveApi` | `quickSaveAction` | 批量 quick edit 保存 |
+| `quickSaveItemApi` | `quickSaveItemAction` | 单条即时保存 |
+| `itemAction` | `onRowClick` 或 operation 列按钮 | 推荐落到显式 row action |
 
-## 10. 组件句柄
+## 9. 特性对比列表
 
-推荐组件句柄：
+| 能力 | AMIS CRUD | Flux 当前运行时 | Flux 本次契约基线 |
+| --- | --- | --- | --- |
+| operation 列按钮 | 已支持 | 已支持 | 已覆盖 |
+| 行点击动作 | 已支持 | 已支持 | 已覆盖 |
+| 查询表单 | 已支持 | 已支持基础版 | 已覆盖 |
+| 自动生成查询区 | 已支持 | 未实现 | 已定义 |
+| 顶部/底部工具栏 | 已支持 | 顶部基础版 | 已定义 |
+| 列表级动作 | 已支持 | 已支持基础版 | 已覆盖 |
+| 批量操作 | 已支持 | 可由 `listActions + $crud selection` 表达 | 已覆盖 |
+| 列排序 | 已支持 | table 已有基础 sort state | 已覆盖 |
+| 列头快速搜索 | 已支持 | 未实现 | 已定义 |
+| 列头快速过滤 | 已支持 | table 已有基础 filter state | 已定义 |
+| 左/右固定列 | 已支持 | 未实现 | 已定义 |
+| 多列时的字段选择 | 已支持 | 未实现 | 已定义 |
+| 列拖拽排序 | 已支持 | 未实现 | 已定义 |
+| 响应式更多列展开 | 已支持 | table expandable 已有基础能力 | 已定义 |
+| 服务端分页 | 已支持 | 已支持基础版 | 已覆盖 |
+| 前端一次性加载分页/过滤 | 已支持 | 部分 table 本地处理能力存在 | 已定义 |
+| quick edit | 已支持 | 未实现 | 已定义 |
+| 动态列 | 已支持 | 部分可通过 source 注入 | 已覆盖设计入口 |
+| 地址栏同步查询参数 | 已支持 | 未实现 | 已定义 |
 
-- `component:refresh` - 刷新列表
-- `component:getSelection` - 获取当前选中的行键
-- `component:clearSelection` - 清空选择
+说明：
 
-使用示例：
+- “当前运行时”反映仓库当前代码状态。
+- “本次契约基线”表示已经进入正式设计和 TypeScript schema，可作为后续实现与迁移工具的依据。
+
+## 10. 迁移策略
+
+建议迁移器遵循下面顺序：
+
+1. 直接保留 `type: 'crud'` 和 `columns`。
+2. 将 `api` 转成 `source`。
+3. 将 `filter` / `autoGenerateFilter` 转成 `queryForm` / `autoGenerateQueryForm`。
+4. 将 `headerToolbar` / `footerToolbar` 转成 `toolbar` / `footerToolbar`，并把动作类块归并到 `listActions`。
+5. 将 `primaryField` 转成 `rowKey`。
+6. 将 `columns-toggler`、`columnsTogglable` 提炼到 `columnSettings`。
+7. 将 `loadDataOnce` 相关字段提炼到 `clientMode`。
+8. 将 `quickSaveApi` / `quickSaveItemApi` 转成 action 形式。
+
+## 11. 最小示例
 
 ```json
 {
-  "type": "button",
-  "label": "刷新",
-  "onClick": {
-    "action": "component:refresh",
-    "componentId": "users-crud"
-  }
+  "type": "crud",
+  "rowKey": "id",
+  "source": "${users}",
+  "columns": [
+    { "name": "name", "label": "姓名" },
+    {
+      "type": "operation",
+      "label": "操作",
+      "buttons": [
+        { "type": "button", "label": "查看" }
+      ]
+    }
+  ]
 }
 ```
 
-## 11. 样式与 DOM marker 约定
+## 12. 关联示例
 
-- 根节点保留 `nop-crud` marker
-- 查询区：`nop-crud-query`，`data-slot="crud-query"`
-- 工具栏：`nop-crud-toolbar`，`data-slot="crud-toolbar"`
-- 表格区：`nop-crud-table`，`data-slot="crud-table"`
-- 批量动作区：`data-slot="crud-bulk-actions"`
+- `docs/components/crud/example.json`
+- `docs/components/crud/migration-example.json`
 
-这些 marker 只表达结构语义，不携带隐式视觉布局。视觉布局仍来自 schema `className` / `classAliases` 和底层 `@nop-chaos/ui` primitive。
-
-## 12. 与 AMIS 命名对照
-
-| AMIS 概念 | Flux 正式建议 | 说明 |
-| --- | --- | --- |
-| `type: 'crud'` | `type: 'crud'` | 类型名可直接保留 |
-| `api` | `source` | Flux 优先用统一 source/value producer 语义 |
-| `filter` | `queryForm` | 查询区统一落到表单配置 |
-| `headerToolbar` | `toolbar` | 使用自然 region 名 |
-| `bulkActions` | `bulkActions` | 可保留，已符合 Flux 命名 |
-| `itemActions` | `columns[].buttons` | operation 列由用户在 columns 中定义 |
-| `primaryField` | `rowKey` | 对齐 table row identity 术语 |
-
-## 13. 风险、取舍与后续阶段
-
-- 最大风险是把 `crud` 重新实现成一个单文件巨型 renderer，再次混合查询、请求、表格、弹层、表单、批量操作逻辑。
-- 第二个风险是把 CRUD 做成"只是示例组合"，没有统一 schema 契约。
-- 正确方向是保持 CRUD 作为轻量 shell，复用现有 `table`、`form`、`dialog` 等组件。
-
-后续可扩展方向：
-
-- 远端分页/排序/筛选联动
-- 导出、权限控制
-- 行内编辑、列设置、保存查询
-
-## 14. 关联文档
+## 13. 关联文档
 
 - `docs/components/table/design.md`
 - `docs/components/form/design.md`

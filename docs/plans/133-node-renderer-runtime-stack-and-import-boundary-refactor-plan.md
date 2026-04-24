@@ -2,7 +2,7 @@
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-23
-> Source: `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/module-cache-and-import-stack.md`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/use-node-imports.ts`, `packages/flux-runtime/src/imports.ts`
+> Source: `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/module-cache-and-import-stack.md`, `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/schema-renderer.tsx`, `packages/flux-runtime/src/imports.ts`
 > Related: `docs/plans/36-node-renderer-refactor-plan.md`, `docs/plans/116-module-cache-import-stack-compile-symbol-resolution-plan.md`, `docs/plans/112-capability-projection-manifest-implementation-plan.md`
 
 ## Purpose
@@ -120,3 +120,9 @@ Closure Audit Evidence:
 Follow-up:
 
 - No remaining plan-owned work. Future changes to import capability semantics should update this plan only if the repo reopens import-owned boundary ownership rather than extending adjacent host/runtime features.
+
+## Outdated Note
+
+- This plan closed before Plan 134 finished the compile-time execution-plan convergence work.
+- The live repo no longer uses `packages/flux-react/src/use-node-imports.ts`; schema-level import preparation plus compiled `importsPlan` now own ordinary import readiness, and `NodeRenderer` only installs synchronous prepared import boundaries.
+- Keep this plan as the historical record for boundary-ownership clarification, not as the current source of truth for import-loading lifecycle details.
