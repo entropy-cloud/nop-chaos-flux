@@ -273,6 +273,43 @@ describe('createSchemaCompiler', () => {
     expect(node.eventPlans.onUnmount).toBeUndefined();
   });
 
+  it('applies renderer authoringTransform before compilation', () => {
+    const transformedRenderer: RendererDefinition = {
+      type: 'transform-probe',
+      component: () => null,
+      authoringTransform: ({ schema }) => {
+        const next = { ...schema } as Record<string, unknown>;
+        if (next.legacyLabel !== undefined && next.label === undefined) {
+          next.label = next.legacyLabel;
+          delete next.legacyLabel;
+        }
+        return next as any;
+      },
+      propContracts: {
+        label: {
+          shape: { kind: 'string' },
+          displayName: 'Label'
+        }
+      }
+    };
+
+    const registry = createRendererRegistry([transformedRenderer]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const compiled = compiler.compile({
+      type: 'transform-probe',
+      legacyLabel: 'hello'
+    } as any);
+    const node = compiled.root as any;
+
+    expect(node.schema.label).toBe('hello');
+    expect(node.schema.legacyLabel).toBeUndefined();
+    expect(node.propsProgram.value.label).toBe('hello');
+  });
+
   it('keeps componentId targets selector-based during compile even when the id is unique', () => {
     const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
     const compiler = createSchemaCompiler({

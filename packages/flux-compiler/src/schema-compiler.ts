@@ -27,6 +27,7 @@ import {
   createNodeId,
   isSchemaInput,
 } from '@nop-chaos/flux-core';
+import { canonicalizeSchemaInput } from './schema-compiler/authoring-transform';
 import { createTemplateRegion } from './schema-compiler/regions';
 import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables';
 import { classifyField, buildMetaProgram } from './schema-compiler/fields';
@@ -338,12 +339,20 @@ export function createSchemaCompiler(input: {
       throw new Error('Invalid schema root');
     }
 
+    const canonicalPrepared = canonicalizeSchemaInput(prepared, {
+      basePath: options.basePath ?? '$',
+      schemaUrl: options.schemaUrl,
+      registry: input.registry,
+      plugins: input.plugins,
+      maxDepth: MAX_COMPILE_DEPTH
+    }, diagnostics);
+
     if (diagnostics.enabled) {
-      analyzeSchemaInput(prepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
+      analyzeSchemaInput(canonicalPrepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
     }
 
-    if (Array.isArray(prepared)) {
-      const compiled = prepared.map((item, index) => {
+    if (Array.isArray(canonicalPrepared)) {
+      const compiled = canonicalPrepared.map((item, index) => {
         const path = options.basePath ? `${options.basePath}[${index}]` : `$[${index}]`;
         const renderer = input.registry.get(item.type);
 
@@ -369,16 +378,16 @@ export function createSchemaCompiler(input: {
     }
 
     const path = options.basePath ?? '$';
-    const renderer = input.registry.get(prepared.type);
+    const renderer = input.registry.get(canonicalPrepared.type);
 
     if (!renderer) {
-      throw new Error(`Renderer not found for type: ${prepared.type}`);
+      throw new Error(`Renderer not found for type: ${canonicalPrepared.type}`);
     }
 
     const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
 
     const node = enrichTemplateNodeIds(
-      compileSingleNode(prepared, {
+      compileSingleNode(canonicalPrepared, {
         path,
         parentPath: options.parentPath,
         schemaUrl: options.schemaUrl,
@@ -635,8 +644,16 @@ export function createSchemaCompiler(input: {
       return diagnostics.diagnostics;
     }
 
+    const canonicalPrepared = canonicalizeSchemaInput(prepared, {
+      basePath: options.basePath ?? '$',
+      schemaUrl,
+      registry: input.registry,
+      plugins: input.plugins,
+      maxDepth: MAX_COMPILE_DEPTH
+    }, diagnostics);
+
     try {
-      compileSchemaToTemplateNodes(prepared, {
+      compileSchemaToTemplateNodes(canonicalPrepared, {
         ...options,
         schemaUrl,
         diagnostics: {
@@ -650,7 +667,7 @@ export function createSchemaCompiler(input: {
       // validation stays non-throwing and collects diagnostics only
     }
 
-    analyzeSchemaInput(prepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
+    analyzeSchemaInput(canonicalPrepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
     return diagnostics.diagnostics;
   }
 
@@ -701,7 +718,18 @@ export function createSchemaCompiler(input: {
       return prepareSchemaInput(schema, options);
     },
     compileNode(schema, options) {
-      return compileSingleNode(schema, options);
+      const diagnostics = createSchemaCompilerDiagnosticsContext({
+        schemaUrl: options.schemaUrl,
+        diagnostics: { enabled: false }
+      }, 'compile');
+      const canonicalSchema = canonicalizeSchemaInput(schema, {
+        basePath: options.path,
+        schemaUrl: options.schemaUrl,
+        registry: input.registry,
+        plugins: input.plugins,
+        maxDepth: MAX_COMPILE_DEPTH
+      }, diagnostics) as BaseSchema;
+      return compileSingleNode(canonicalSchema, options);
     },
     validate(schema, options) {
       return validateSchemaInput(schema, options);

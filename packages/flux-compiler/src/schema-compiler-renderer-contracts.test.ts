@@ -44,4 +44,41 @@ describe('schema compiler renderer contract integration', () => {
       })
     ]);
   });
+
+  it('runs authoringTransform before closed prop diagnostics', () => {
+    const renderer: RendererDefinition = {
+      type: 'contract-transform-button',
+      component: () => null,
+      authoringTransform: ({ schema }) => {
+        const next = { ...schema } as Record<string, unknown>;
+        if (next.legacyLabel !== undefined && next.label === undefined) {
+          next.label = next.legacyLabel;
+          delete next.legacyLabel;
+        }
+        return next as any;
+      },
+      propContracts: {
+        label: {
+          shape: { kind: 'string' },
+          displayName: 'Label'
+        }
+      }
+    };
+
+    const diagnostics = validateSchema({
+      schema: {
+        type: 'contract-transform-button',
+        legacyLabel: 'Hello'
+      } as any,
+      registry: createRendererRegistry([renderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+      options: {
+        validation: {
+          unknownBarePropertyPolicy: 'error'
+        }
+      }
+    });
+
+    expect(diagnostics).toEqual([]);
+  });
 });

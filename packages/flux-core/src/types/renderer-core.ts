@@ -15,6 +15,7 @@ import type {
 import type {
   CapabilityMethodContract,
   FluxValueShape,
+  RendererAuthoringTransform,
   RendererSchemaValidator,
   RendererHostContract
 } from '../schema-diagnostics';
@@ -162,6 +163,7 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   sourcePackage?: string;
   regions?: readonly string[];
   fields?: readonly SchemaFieldRule[];
+  authoringTransform?: RendererAuthoringTransform<S>;
   schemaValidator?: RendererSchemaValidator<S>;
   scopePolicy?: ScopePolicy;
   actionScopePolicy?: 'inherit' | 'new';

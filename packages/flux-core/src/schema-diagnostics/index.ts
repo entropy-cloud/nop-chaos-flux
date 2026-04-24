@@ -93,7 +93,21 @@ export interface RendererSchemaValidationContext<S extends BaseSchema = BaseSche
   }): void;
 }
 
+export interface RendererAuthoringTransformContext<S extends BaseSchema = BaseSchema> {
+  schema: S;
+  path: SchemaPath;
+  schemaUrl?: string;
+  emit(issue: {
+    code: SchemaDiagnosticCode;
+    message: string;
+    path?: string;
+    severity?: SchemaDiagnosticSeverity;
+    source?: SchemaDiagnosticSource;
+  }): void;
+}
+
 export type RendererSchemaValidator<S extends BaseSchema = BaseSchema> = (context: RendererSchemaValidationContext<S>) => void;
+export type RendererAuthoringTransform<S extends BaseSchema = BaseSchema> = (context: RendererAuthoringTransformContext<S>) => S;
 
 export function createSchemaDiagnosticCollector() {
   const diagnostics: SchemaDiagnostic[] = [];
