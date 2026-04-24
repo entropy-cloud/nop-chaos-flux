@@ -8,6 +8,7 @@ import {
   type FormRuntime,
   type RendererComponentProps,
   type SchemaFieldRule,
+  type ValidationScopeRuntime,
   type ValueAdapter
 } from '@nop-chaos/flux-core';
 import {
@@ -15,6 +16,7 @@ import {
   selectCurrentFormFieldPresentation,
   resolveRendererSlotContent,
   useCurrentForm,
+  useCurrentValidationScope,
   useCurrentFormState,
   useChildFieldState,
   useOwnedFieldState,
@@ -42,8 +44,21 @@ export function getFieldValidationBehavior(name: string, currentForm: FormRuntim
   return field?.behavior ?? currentForm.validation?.behavior ?? defaultValidationBehavior;
 }
 
+export function getValidationBehaviorForOwner(name: string, owner: ValidationScopeRuntime | undefined): CompiledValidationBehavior {
+  if (!owner || !name) {
+    return defaultValidationBehavior;
+  }
+
+  const field = getCompiledValidationField(owner.validation, name);
+  return field?.behavior ?? owner.validation?.behavior ?? defaultValidationBehavior;
+}
+
 export function shouldValidateOn(name: string, currentForm: FormRuntime | undefined, trigger: 'change' | 'blur' | 'submit') {
   return getFieldValidationBehavior(name, currentForm).triggers.includes(trigger);
+}
+
+export function shouldValidateOnOwner(name: string, owner: ValidationScopeRuntime | undefined, trigger: 'change' | 'blur' | 'submit') {
+  return getValidationBehaviorForOwner(name, owner).triggers.includes(trigger);
 }
 
 export function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: string): unknown {
@@ -75,15 +90,20 @@ export function useBoundFieldValue(name: string, currentForm: FormRuntime | unde
 export function createFieldHandlers(args: {
   name: string;
   currentForm: FormRuntime | undefined;
+  currentValidationScope: ValidationScopeRuntime | undefined;
   setValue: (value: unknown) => void | Promise<void>;
 }) {
-  const { name, currentForm, setValue } = args;
+  const { name, currentForm, currentValidationScope, setValue } = args;
+  const validationOwnerWithFieldState = currentValidationScope as Partial<FormRuntime> | undefined;
 
   return {
     onFocus() {
       if (currentForm) {
         currentForm.visitField(name);
+        return;
       }
+
+      validationOwnerWithFieldState?.visitField?.(name);
     },
     onChange(nextValue: unknown) {
       if (currentForm) {
@@ -98,6 +118,18 @@ export function createFieldHandlers(args: {
         return;
       }
 
+      if (currentValidationScope) {
+        void (async () => {
+          await setValue(nextValue);
+
+          if (shouldValidateOnOwner(name, currentValidationScope, 'change')) {
+            await currentValidationScope.validateAt(name, 'change');
+          }
+        })();
+
+        return;
+      }
+
       void setValue(nextValue);
     },
     onBlur() {
@@ -106,6 +138,16 @@ export function createFieldHandlers(args: {
 
         if (shouldValidateOn(name, currentForm, 'blur')) {
           void currentForm.validateField(name);
+        }
+
+        return;
+      }
+
+      if (currentValidationScope) {
+        validationOwnerWithFieldState?.touchField?.(name);
+
+        if (shouldValidateOnOwner(name, currentValidationScope, 'blur')) {
+          void currentValidationScope.validateAt(name, 'blur');
         }
       }
     }
@@ -129,11 +171,13 @@ export function useFieldHandlers(args: {
   adapterContext?: AdapterContext;
 }) {
   const { name, currentForm, scope, toFormValue = identityValue, adapter, adapterContext } = args;
+  const currentValidationScope = useCurrentValidationScope();
 
   return useMemo(
     () => createFieldHandlers({
       name,
       currentForm,
+      currentValidationScope,
       setValue(nextValue) {
         const convertedValue = adapter
           ? adapter.out(nextValue, adapterContext ?? { name, readOnly: false })
@@ -158,7 +202,7 @@ export function useFieldHandlers(args: {
         scope.update(name, convertedValue);
       }
     }),
-    [name, currentForm, scope, toFormValue, adapter, adapterContext]
+    [name, currentForm, currentValidationScope, scope, toFormValue, adapter, adapterContext]
   );
 }
 
@@ -227,6 +271,7 @@ export function useFormFieldController(
 ) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
+  const currentValidationScope = useCurrentValidationScope();
   const rawValue = useBoundFieldValue(name, currentForm, options?.areValuesEqual);
   const adapterContext = useMemo(
     () => ({
@@ -236,7 +281,7 @@ export function useFormFieldController(
     [name, options?.readOnly]
   );
   const value = useAdaptedFieldValue(rawValue, options?.adapter, adapterContext);
-  const presentation = useFieldPresentation(name, currentForm, {
+  const presentation = useFieldPresentation(name, currentValidationScope, {
     disabled: options?.disabled,
     required: options?.required,
     readOnly: options?.readOnly
@@ -310,7 +355,7 @@ export function getChildFieldUiState(input: {
 
 export function useFieldPresentation(
   name: string,
-  currentForm: FormRuntime | undefined,
+  currentValidationScope: ValidationScopeRuntime | undefined,
   options?: {
     disabled?: boolean;
     readOnly?: boolean;
@@ -318,11 +363,12 @@ export function useFieldPresentation(
   }
 ) {
   const fieldState = useFormFieldState(name);
-  const behavior = getFieldValidationBehavior(name, currentForm);
+  const currentForm = useCurrentForm();
+  const behavior = getValidationBehaviorForOwner(name, currentValidationScope);
   const currentPresentation = useCurrentFormState(
     (state) => selectCurrentFormFieldPresentation(state, {
       path: name,
-      validation: currentForm?.validation,
+      validation: currentValidationScope?.validation,
       disabled: options?.disabled,
       readOnly: options?.readOnly,
       required: options?.required,
@@ -386,16 +432,18 @@ export function useCompositeChildFieldState(path: string) {
 
 export function useHiddenFieldPolicy(name: string, hidden: boolean) {
   const currentForm = useCurrentForm();
+  const currentValidationScope = useCurrentValidationScope();
+  const hiddenOwner = currentForm ?? currentValidationScope;
 
   useEffect(() => {
-    if (!currentForm || !name) {
+    if (!hiddenOwner || !name || !('notifyFieldHidden' in hiddenOwner)) {
       return;
     }
 
-    currentForm.notifyFieldHidden(name, hidden);
+    (hiddenOwner as FormRuntime).notifyFieldHidden(name, hidden);
 
     return () => {
-      currentForm.notifyFieldHidden(name, false);
+      (hiddenOwner as FormRuntime).notifyFieldHidden(name, false);
     };
-  }, [currentForm, name, hidden]);
+  }, [hiddenOwner, name, hidden]);
 }

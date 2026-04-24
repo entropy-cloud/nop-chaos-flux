@@ -5,6 +5,7 @@ import type { ApiSchema, ApiRequestContext } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index';
 import { buttonRenderer, env, submitCalls } from './form-test-support';
 
@@ -411,5 +412,35 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
     await waitFor(() => {
       expect(screen.queryByText('Email is required')).toBeNull();
     });
+  });
+
+  it('validates page-owned root fields outside form on blur', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://page/validation-ui"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email',
+              required: true
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const input = screen.getByLabelText(/Email/);
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+
+    expect(await screen.findByText('Email is required')).toBeTruthy();
   });
 });
