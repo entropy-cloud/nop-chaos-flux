@@ -37,8 +37,10 @@ export function createInputRenderer(inputType: string) {
     return (
       <Input
         type={inputType}
+        name={name || undefined}
         value={inputValue}
-          disabled={presentation.effectiveDisabled}
+        disabled={presentation.effectiveDisabled}
+        aria-label={String((props.props.label ?? name) || '') || undefined}
         aria-invalid={presentation.showError ? true : undefined}
         placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
         onFocus={handlers.onFocus}
@@ -163,9 +165,11 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
 
   return (
     <Textarea
+      name={name || undefined}
       value={textareaValue}
       rows={typeof props.props.rows === 'number' ? props.props.rows : 4}
       disabled={presentation.effectiveDisabled}
+      aria-label={String((props.props.label ?? name) || '') || undefined}
       aria-invalid={presentation.showError ? true : undefined}
       placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
       onFocus={handlers.onFocus}

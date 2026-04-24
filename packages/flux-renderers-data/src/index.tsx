@@ -164,29 +164,52 @@ function transformCrudAuthoringSchema(context: import('@nop-chaos/flux-core').Re
     return context.schema;
   }
 
-  const schema = context.schema as CrudSchema & { bulkActions?: unknown };
+  const schema = context.schema as CrudSchema & {
+    bulkActions?: unknown;
+    filter?: unknown;
+    primaryField?: unknown;
+    perPageField?: unknown;
+  };
 
-  if (schema.bulkActions === undefined) {
-    return schema;
+  const nextSchema: Record<string, unknown> = { ...schema };
+
+  if (nextSchema.filter !== undefined && nextSchema.queryForm === undefined) {
+    nextSchema.queryForm = nextSchema.filter;
   }
 
-  if (schema.listActions !== undefined) {
+  if (nextSchema.primaryField !== undefined && nextSchema.rowKey === undefined) {
+    nextSchema.rowKey = nextSchema.primaryField;
+  }
+
+  if (nextSchema.perPageField !== undefined && nextSchema.pageSizeField === undefined) {
+    nextSchema.pageSizeField = nextSchema.perPageField;
+  }
+
+  delete nextSchema.filter;
+  delete nextSchema.primaryField;
+  delete nextSchema.perPageField;
+
+  if (nextSchema.bulkActions === undefined) {
+    return nextSchema as CrudSchema;
+  }
+
+  if (nextSchema.listActions !== undefined) {
     context.emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(context.path, 'bulkActions'),
       message: 'crud.bulkActions cannot be used together with canonical crud.listActions.'
     });
-    const { bulkActions, ...rest } = schema;
+    const { bulkActions, ...rest } = nextSchema;
     void bulkActions;
-    return rest;
+    return rest as CrudSchema;
   }
 
-  const { bulkActions, ...rest } = schema;
+  const { bulkActions, ...rest } = nextSchema;
 
   return {
     ...rest,
     listActions: bulkActions as CrudSchema['listActions']
-  };
+  } as CrudSchema;
 }
 
 export * from './schemas';
@@ -294,6 +317,30 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         description: 'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
         editorType: 'crud-columns'
       },
+      rowKey: {
+        shape: { kind: 'string' },
+        displayName: 'Row Key',
+        description: 'Stable record key field used by CRUD/table selection and row identity.',
+        editorType: 'text'
+      },
+      pageField: {
+        shape: { kind: 'string' },
+        displayName: 'Page Field',
+        description: 'Request/query field name used for the current page parameter.',
+        editorType: 'text'
+      },
+      pageSizeField: {
+        shape: { kind: 'string' },
+        displayName: 'Page Size Field',
+        description: 'Request/query field name used for the page size parameter.',
+        editorType: 'text'
+      },
+      defaultParams: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Default Params',
+        description: 'Default query/refresh parameters merged into the CRUD workflow input.',
+        editorType: 'object'
+      },
       toolbar: {
         shape: { kind: 'unknown' },
         displayName: 'Toolbar',
@@ -311,6 +358,18 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         displayName: 'Footer Toolbar',
         description: 'Bottom toolbar region or migrated footerToolbar content.',
         editorType: 'region'
+      },
+      toolbarLayout: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Toolbar Layout',
+        description: 'Structured toolbar blocks such as pagination, statistics, and columns toggler.',
+        editorType: 'object'
+      },
+      selection: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Selection',
+        description: 'CRUD selection configuration such as checkbox/radio mode and selection limits.',
+        editorType: 'object'
       },
       selectionStatePath: {
         shape: { kind: 'string' },

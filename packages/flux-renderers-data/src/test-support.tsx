@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Button } from '@nop-chaos/ui';
 import type { ActionContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { createSchemaRenderer, useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
 import { dataRendererDefinitions } from './index';
 
@@ -91,7 +92,7 @@ export const buttonRenderer: RendererDefinition = {
 };
 
 export function createDataSchemaRenderer(extra: RendererDefinition[] = []) {
-  return createSchemaRenderer([pageRenderer, textRenderer, ...extra, ...dataRendererDefinitions]);
+  return createSchemaRenderer([pageRenderer, textRenderer, ...formRendererDefinitions, ...extra, ...dataRendererDefinitions]);
 }
 
 export const formulaCompiler = createFormulaCompiler();
