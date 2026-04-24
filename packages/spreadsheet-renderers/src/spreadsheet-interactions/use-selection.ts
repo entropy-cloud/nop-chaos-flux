@@ -10,6 +10,30 @@ export interface DragState {
   endCol: number;
 }
 
+function createRange(sheetId: string, startRow: number, startCol: number, endRow: number, endCol: number): SpreadsheetRange {
+  return {
+    sheetId,
+    startRow: Math.min(startRow, endRow),
+    startCol: Math.min(startCol, endCol),
+    endRow: Math.max(startRow, endRow),
+    endCol: Math.max(startCol, endCol),
+  };
+}
+
+function isSameRange(left: SpreadsheetRange | null, right: SpreadsheetRange | null): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (!left || !right) {
+    return false;
+  }
+  return left.sheetId === right.sheetId
+    && left.startRow === right.startRow
+    && left.startCol === right.startCol
+    && left.endRow === right.endRow
+    && left.endCol === right.endCol;
+}
+
 export function useSelection(
   snapshot: SpreadsheetHostSnapshot,
   bridge: SpreadsheetBridge,
@@ -28,7 +52,7 @@ export function useSelection(
         : null,
     [snapshot.activeCell],
   );
-  const [, setDragEnd] = useState<{ row: number; col: number } | null>(null);
+  const [previewRange, setPreviewRange] = useState<SpreadsheetRange | null>(null);
   const dragStateRef = useRef<DragState>({ isDragging: false, startRow: -1, startCol: -1, endRow: -1, endCol: -1 });
   const hasDraggedRef = useRef(false);
 
@@ -67,27 +91,21 @@ export function useSelection(
   );
 
   const getSelectedRange = useCallback((): SpreadsheetRange | null => {
+    if (previewRange) {
+      return previewRange;
+    }
+    if (snapshot.activeRange) {
+      return snapshot.activeRange;
+    }
     const state = dragStateRef.current;
     if (state.startRow >= 0 && state.endRow >= 0) {
-      return {
-        sheetId,
-        startRow: Math.min(state.startRow, state.endRow),
-        startCol: Math.min(state.startCol, state.endCol),
-        endRow: Math.max(state.startRow, state.endRow),
-        endCol: Math.max(state.startCol, state.endCol),
-      };
+      return createRange(sheetId, state.startRow, state.startCol, state.endRow, state.endCol);
     }
     if (selectedCell) {
-      return {
-        sheetId,
-        startRow: selectedCell.row,
-        startCol: selectedCell.col,
-        endRow: selectedCell.row,
-        endCol: selectedCell.col,
-      };
+      return createRange(sheetId, selectedCell.row, selectedCell.col, selectedCell.row, selectedCell.col);
     }
     return null;
-  }, [selectedCell, sheetId]);
+  }, [previewRange, selectedCell, sheetId, snapshot.activeRange]);
 
   const isInRange = useCallback((row: number, col: number): boolean => {
     const range = getSelectedRange();
@@ -113,6 +131,7 @@ export function useSelection(
       }
       setSelectedCell({ row, col });
       dragStateRef.current = { isDragging: false, startRow: row, startCol: col, endRow: row, endCol: col };
+      setPreviewRange(null);
       const cell = snapshot.activeSheet?.cells?.[cellAddress(row, col)];
       setCellValue(String(cell?.value ?? ''));
       const comment = cell?.comment;
@@ -127,17 +146,24 @@ export function useSelection(
     e.preventDefault();
     hasDraggedRef.current = false;
     dragStateRef.current = { isDragging: true, startRow: row, startCol: col, endRow: row, endCol: col };
-    setDragEnd(null);
+    setPreviewRange(createRange(sheetId, row, col, row, col));
     setSelectedCell({ row, col });
-  }, [setSelectedCell]);
+  }, [setSelectedCell, sheetId]);
 
   const handleCellMouseEnter = useCallback((row: number, col: number) => {
     if (dragStateRef.current.isDragging) {
       hasDraggedRef.current = true;
       dragStateRef.current = { ...dragStateRef.current, endRow: row, endCol: col };
-      setDragEnd({ row, col });
+      const nextRange = createRange(
+        sheetId,
+        dragStateRef.current.startRow,
+        dragStateRef.current.startCol,
+        row,
+        col,
+      );
+      setPreviewRange((current) => (isSameRange(current, nextRange) ? current : nextRange));
     }
-  }, []);
+  }, [sheetId]);
 
   const handleMouseUp = useCallback((isResizing: boolean, onResizeEnd: () => void, getSelectedRangeFn: () => SpreadsheetRange | null) => {
     if (dragStateRef.current.isDragging) {
@@ -145,7 +171,10 @@ export function useSelection(
       const range = getSelectedRangeFn();
       if (range && hasDraggedRef.current) {
         syncRangeSelectionToCore(range);
+        setPreviewRange(null);
         addLog(`Selected range ${cellAddress(range.startRow, range.startCol)}:${cellAddress(range.endRow, range.endCol)}`);
+      } else {
+        setPreviewRange(null);
       }
     }
     if (isResizing) {

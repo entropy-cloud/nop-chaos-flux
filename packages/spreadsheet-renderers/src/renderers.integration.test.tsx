@@ -5,8 +5,14 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry, useScopeSelector } from '@nop-chaos/flux-react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
-import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
-import { defineSpreadsheetPageSchema, registerSpreadsheetRenderers } from './index.js';
+import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
+import {
+  createSpreadsheetBridge,
+  defineSpreadsheetPageSchema,
+  registerSpreadsheetRenderers,
+  SpreadsheetGrid,
+  useSpreadsheetInteractions,
+} from './index.js';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -76,6 +82,41 @@ const pageRenderer: RendererDefinition = {
   component: (props) => <section>{props.regions.body?.render()}</section>,
   regions: ['body']
 };
+
+function SpreadsheetGridHarness(props: { sheetId: string; bridge: ReturnType<typeof createSpreadsheetBridge> }) {
+  const interactions = useSpreadsheetInteractions({ bridge: props.bridge, sheetId: props.sheetId, rows: 5, cols: 5 });
+
+  return (
+    <SpreadsheetGrid
+      snapshot={interactions.snapshot}
+      bridge={props.bridge}
+      rows={5}
+      cols={5}
+      columnWidths={interactions.columnWidths}
+      rowHeights={interactions.rowHeights}
+      selectedCell={interactions.selectedCell}
+      editingCell={interactions.editingCell}
+      editValue={interactions.editValue}
+      fillHandleState={interactions.fillHandleState}
+      isInRange={interactions.isInRange}
+      isFillPreview={interactions.isFillPreview}
+      getSelectedRange={interactions.getSelectedRange}
+      getMergeInfo={interactions.getMergeInfo}
+      onCellClick={interactions.handleCellClick}
+      onCellDoubleClick={interactions.handleCellDoubleClick}
+      onCellMouseDown={interactions.handleCellMouseDown}
+      onCellMouseEnter={interactions.handleCellMouseEnter}
+      onColumnResizeStart={interactions.handleColumnResizeStart}
+      onRowResizeStart={interactions.handleRowResizeStart}
+      onFillHandleMouseDown={interactions.handleFillHandleMouseDown}
+      onEditValueChange={interactions.handleEditValueChange}
+      onEditSave={interactions.handleEditSave}
+      onEditCancel={interactions.handleEditCancel}
+      dropTargetCell={interactions.dropTargetCell}
+      draggingField={null}
+    />
+  );
+}
 
 afterEach(() => {
   cleanup();
@@ -239,5 +280,29 @@ describe('spreadsheet-page namespaced actions integration', () => {
     expect(document.querySelector('.nop-spreadsheet-page')).toBeTruthy();
     expect(document.querySelector('[data-slot="spreadsheet-page-header"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="spreadsheet-page-body"]')).toBeTruthy();
+  });
+
+  it('shows range highlight while dragging before mouseup', async () => {
+    const documentModel = createEmptyDocument('drag-selection-preview');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const cells = container.querySelectorAll('td.ss-cell');
+    const firstCell = cells[0] as HTMLElement | undefined;
+    const secondRowSecondColCell = cells[6] as HTMLElement | undefined;
+
+    expect(firstCell).toBeTruthy();
+    expect(secondRowSecondColCell).toBeTruthy();
+
+    fireEvent.mouseDown(firstCell!, { button: 0 });
+    fireEvent.mouseEnter(secondRowSecondColCell!);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('td.ss-cell[data-range-highlight]').length).toBeGreaterThan(1);
+    });
+
+    fireEvent.mouseUp(window);
   });
 });
