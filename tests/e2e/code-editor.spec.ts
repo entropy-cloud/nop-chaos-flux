@@ -3,8 +3,8 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 async function openCodeEditor(page: import('@playwright/test').Page) {
-  await page.goto('/#/code-editor');
-  await expect(page.locator('text=Code Editor Playground')).toBeVisible({ timeout: 15000 });
+  await page.goto('/#/code-editor', { waitUntil: 'commit' });
+  await expect(page.getByRole('heading', { name: 'Code Editor Playground' })).toBeVisible({ timeout: 15000 });
 }
 
 /**
@@ -198,7 +198,8 @@ test('execute button is visible in enhanced SQL editor', async ({ page }) => {
 
   const executeBtn = field.locator('[data-slot="code-editor-toolbar-execute"]').first();
   await expect(executeBtn).toBeVisible();
-  await expect(executeBtn).toContainText('运行');
+  await expect(executeBtn).toBeEnabled();
+  await expect(executeBtn).toContainText(/运行|执行|Run/);
 });
 
 test('SQL result panel shows loading and error states on execute', async ({ page }) => {

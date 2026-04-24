@@ -18,7 +18,7 @@ export { COMPONENT_LAB_COVERAGE_MANIFEST, COVERED_RENDERER_IDS };
  * Does not go through the home page — faster and more reliable for smoke tests.
  */
 export async function openRendererDirect(page: Page, rendererId: string): Promise<void> {
-  await page.goto(`/#/lab/${rendererId}`);
+  await page.goto(`/#/lab/${rendererId}`, { waitUntil: 'commit' });
   await expect(page.getByTestId('component-lab')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId(`component-lab-renderer-${rendererId}`)).toBeVisible({ timeout: 10_000 });
 }
@@ -27,7 +27,7 @@ export async function openRendererDirect(page: Page, rendererId: string): Promis
  * Navigate to the component lab home page (no renderer selected).
  */
 export async function openLabHome(page: Page): Promise<void> {
-  await page.goto('/#/lab');
+  await page.goto('/#/lab', { waitUntil: 'commit' });
   await expect(page.getByTestId('component-lab')).toBeVisible({ timeout: 15_000 });
 }
 
