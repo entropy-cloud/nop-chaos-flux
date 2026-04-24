@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 async function openFlowDesigner(page: import('@playwright/test').Page) {
-  await page.goto('/#/flow-designer');
+  await page.goto('/#/flow-designer', { waitUntil: 'commit' });
   await expect(page.locator('.react-flow__node')).toHaveCount(6, { timeout: 15000 });
   await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 15000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
@@ -25,26 +25,17 @@ test('debug core state via React fiber', async ({ page }) => {
   // Click the collapse button
   const collapseButton = page.locator('[data-testid="collapse-palette"]');
   
-  // Listen for React re-renders by monitoring DOM mutations
-  const mutationPromise = page.evaluate(() => {
-    return new Promise<{ mutations: string[] }>((resolve) => {
-      const mutations: string[] = [];
-      const observer = new MutationObserver((mutationList) => {
-        for (const mutation of mutationList) {
-          const target = mutation.target as HTMLElement;
-          const testId = target.getAttribute?.('data-testid') || target.parentElement?.getAttribute?.('data-testid') || '';
-          mutations.push(`${mutation.type}: ${testId} ${mutation.addedNodes.length}/${mutation.removedNodes.length}`);
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-      setTimeout(() => {
-        observer.disconnect();
-        resolve({ mutations });
-      }, 3000);
-    });
-  });
-  
   await collapseButton.click();
-  const mutations = await mutationPromise;
+  await page.waitForTimeout(500);
+
+  const mutations = await page.evaluate(() => {
+    return {
+      hasExpanded: !!document.querySelector('[data-testid="left-panel-expanded"]'),
+      hasCollapsed: !!document.querySelector('[data-testid="left-panel-collapsed"]'),
+      allTestIds: Array.from(document.querySelectorAll('[data-testid]')).map((el) => el.getAttribute('data-testid')),
+    };
+  });
   console.log('MUTATIONS:', JSON.stringify(mutations, null, 2));
+
+  expect(mutations.hasCollapsed).toBe(true);
 });
