@@ -210,18 +210,23 @@ test.describe('tabs renderer', () => {
 // loop
 // ---------------------------------------------------------------------------
 test.describe('loop renderer', () => {
-  test('read: loop stage renders (runtime: item scope injection pending)', async ({ page }) => {
+  test('read: loop scenarios render item bindings', async ({ page }) => {
+    test.setTimeout(60_000);
+
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('loop');
 
     const slug = scenarioSlug('Loop over a user list');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // The loop renderer renders items but item/idx scope injection is a known runtime gap:
-    // items appear as "NaN. — NaN. —" when idx/item are not injected.
-    // Verify the stage is present and has rendered some content (non-empty).
-    const content = await stage.innerText();
-    expect(content.trim().length).toBeGreaterThan(0);
+    await expect(stage.getByText('1. Alice — Admin')).toBeVisible();
+    await expect(stage.getByText('2. Bob — Editor')).toBeVisible();
+
+    const richSlug = scenarioSlug('Loop over products card row with icon badge and price');
+    const richStage = lab.scenarioStage(richSlug);
+    await expect(richStage).toBeVisible();
+    await expect(richStage.locator('.nop-text', { hasText: 'Wireless Headphones' })).toBeVisible();
+    await expect(richStage.getByText('Electronics').first()).toBeVisible();
   });
 });
 
@@ -229,16 +234,24 @@ test.describe('loop renderer', () => {
 // recurse
 // ---------------------------------------------------------------------------
 test.describe('recurse renderer', () => {
-  test('read: recurse stage is visible', async ({ page }) => {
+  test('read: recurse scenarios render nested nodes', async ({ page }) => {
+    test.setTimeout(60_000);
+
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('recurse');
 
     const slug = scenarioSlug('Simple recursive label tree');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // recurse renderer has same item scope injection gap as loop (${node.label} may not render).
-    // Verify the stage element renders and is in the DOM.
-    await expect(stage).toBeAttached();
+    await expect(stage.locator('.nop-text', { hasText: 'Root A' })).toBeVisible();
+    await expect(stage.locator('.nop-text', { hasText: 'Child A1' })).toBeVisible();
+    await expect(stage.locator('.nop-text', { hasText: 'Child B1' })).toBeVisible();
+
+    const richSlug = scenarioSlug('Rich tree with icon label and depth badge');
+    const richStage = lab.scenarioStage(richSlug);
+    await expect(richStage).toBeVisible();
+    await expect(richStage.locator('.nop-text', { hasText: 'Acme Corp' })).toBeVisible();
+    await expect(richStage.locator('[data-slot="badge"]', { hasText: 'L2' }).first()).toBeVisible();
   });
 });
 

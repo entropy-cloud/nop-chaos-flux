@@ -100,7 +100,7 @@
   "targetFlux": {
     "type": "crud",
     "id": "users-crud",
-    "source": "/api/users",
+    "source": "${users}",
     "queryForm": {
       "layout": "inline",
       "body": [
@@ -219,7 +219,8 @@
         "primaryField 迁移为 rowKey",
         "perPageField 迁移为 pageSizeField",
         "filter 迁移为 queryForm",
-        "actionType/dialog 迁移为 Flux action/openDialog"
+        "actionType/dialog 迁移为 Flux action/openDialog",
+        "api -> source 是 canonical authoring 目标；当前 live baseline 仍以数组型 source workflow 为主，请求 owner 协作需由后续计划继续收口"
       ]
     }
   }

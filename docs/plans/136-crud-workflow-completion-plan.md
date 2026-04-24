@@ -1,6 +1,6 @@
 # 136 CRUD Workflow Completion Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-04-24
 > Source: `docs/components/crud/design.md`, `docs/components/table/design.md`, `docs/components/form/design.md`, `docs/components/dialog/design.md`, `docs/components/data-source/design.md`, `docs/architecture/action-interaction-state.md`, `docs/architecture/node-level-compile-time-transforms.md`, `docs/architecture/renderer-runtime.md`, `docs/plans/114-crud-component-implementation-plan.md`, live repo audit of `packages/flux-renderers-data`, `packages/flux-compiler`, `apps/playground`, and `c:/can/nop/amis-react19`
 > Related: `docs/plans/114-crud-component-implementation-plan.md`
@@ -146,17 +146,17 @@ Exit Criteria:
 
 ### Phase 6 - Verification And Independent Closure Audit
 
-Status: in_progress
+Status: completed
 Targets: touched CRUD/compiler files, focused tests, `docs/plans/136-crud-workflow-completion-plan.md`, `docs/logs/2026/04-24.md`
 
 - [x] 扩充 CRUD focused tests，至少覆盖查询、重置、刷新、分页/排序/过滤摘要发布、selection-driven list actions、fixed columns、operation regression、migration alias
 - [x] 运行完整验证并更新 daily log
-- [ ] 进行一次独立子 agent closure audit，确认“契约字段存在”与“语义真正落地”没有被混淆
+- [x] 进行一次独立子 agent closure audit，确认“契约字段存在”与“语义真正落地”没有被混淆
 
 Exit Criteria:
 
-- [ ] tests/docs/playground 与 live CRUD workflow baseline 一致
-- [ ] 本计划可以用独立 closure audit 证据回答“CRUD workflow 主路径什么时候算真正可用”
+- [x] tests/docs/playground 与 live CRUD workflow baseline 一致
+- [x] 本计划可以用独立 closure audit 证据回答“CRUD workflow 主路径什么时候算真正可用”
 
 ## Validation Checklist
 
@@ -165,7 +165,7 @@ Exit Criteria:
 - [x] `authoringTransform` 已承接关键 AMIS/legacy CRUD workflow alias，且有 compiler tests
 - [x] `docs/components/crud/design.md`、`docs/components/crud/example.json`、`docs/components/crud/migration-example.json`、playground 示例已同步
 - [x] 特性对比表已按 live behavior 重写，不再把“契约已定义”误写成“已实现”
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -184,16 +184,17 @@ Rollback:
 
 ## Closure
 
-Status Note: partially completed; Phases 1-5 are now repo-observable and package verification is green, but the plan cannot be marked `completed` until an independent closure audit is performed and recorded.
+Status Note: completed; a fresh independent closure audit re-verified the live repo and confirmed that Plan 136's CRUD workflow baseline is now fully landed. Live code, focused CRUD/table/compiler tests, playground/docs/examples, and full workspace verification all match the plan scope, and no remaining plan-owned gaps were found.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+ - Reviewer / Agent: independent general subagent (`task_id: ses_23f9e92abffe671s4w7pEVjVCo`)
+ - Evidence: final closure audit returned `Decision: completed` after re-checking `packages/flux-renderers-data/src/crud-renderer.tsx`, focused CRUD/table tests, compiler alias tests, playground CRUD lab, CRUD docs/examples, and full workspace verification (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`). The prior negative audit (`task_id: ses_23fe7053effe4xc26Paps0ZwsP`) remains recorded as the evidence trail for the last plan-owned gaps that were fixed before closure.
 
 Follow-up:
 
-- Successor plan A: table-heavy parity for CRUD dependencies (`columnSettings`, `responsive expansion`, `header search/filter UI`)
+- no remaining plan-owned work
+- Successor plan A: table-heavy parity for CRUD dependencies beyond the minimum landed baseline (`columnSettings` richer parity, `responsive expansion`, `header search/filter UI`)
 - Successor plan B: editing/runtime extensions (`quickEdit`, `quickSaveAction`, `quickSaveItemAction`, `clientMode.loadDataOnce`, `syncLocation`)
 - Successor plan C: AMIS CRUD full-parity closure audit and remaining migration/runtime gaps after A+B land
 
