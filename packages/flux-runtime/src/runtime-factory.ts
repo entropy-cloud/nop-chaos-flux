@@ -19,7 +19,10 @@ import type {
   SurfaceRuntime,
   SourceSchema,
   ModuleCache,
-  ImportedLibraryModule
+  ImportedLibraryModule,
+  PreparedImportSpec,
+  ValidationScopeRuntime,
+  XuiImportSpec
 } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
@@ -32,6 +35,7 @@ import { createAsyncGovernanceStore } from './async-data/async-governance';
 import { createComponentHandleRegistry } from './component-handle-registry';
 import { createDataSourceController, createSourceExecutor } from './async-data/data-source-runtime';
 import { createManagedFormRuntime } from './form-runtime';
+import { createFormStore } from './form-store';
 import { createImportManager } from './imports';
 import { createImportStack } from './import-stack';
 import { createNodeRuntime } from './node-runtime';
@@ -131,6 +135,22 @@ export function createRendererRuntime(input: {
     getEnv
   });
 
+  function createModuleKey(spec: XuiImportSpec): string {
+    return JSON.stringify({
+      from: spec.from,
+      options: spec.options ?? null
+    });
+  }
+
+  function normalizeImportKey(schemaUrl: string, spec: XuiImportSpec): string {
+    return JSON.stringify({
+      schemaUrl,
+      from: spec.from,
+      as: spec.as,
+      options: spec.options ?? null
+    });
+  }
+
   function createOwnedActionScope(scopeInput: { id?: string; parent?: ActionScope } = {}) {
     actionScopeCounter += 1;
     const actionScope = createActionScope({
@@ -169,13 +189,99 @@ export function createRendererRuntime(input: {
   const evalCtx = { getEnv, expressionCompiler, evaluate, executeApiRequest };
 
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
+    const pageValidation = createValidationScopeRuntime({
+      id: 'page-root-validation',
+      scopePath: '$page',
+      initialValues: data
+    });
+    const validationStore = pageValidation.store as import('@nop-chaos/flux-core').FormStoreApi;
+    let refreshTick = 0;
+    const refreshListeners = new Set<() => void>();
+    const pageStore: PageStoreApi = {
+      getState() {
+        return {
+          data: validationStore.getState().values,
+          refreshTick
+        };
+      },
+      subscribe(listener) {
+        const unsubscribeValidation = validationStore.subscribe(listener);
+        refreshListeners.add(listener);
+        return () => {
+          unsubscribeValidation();
+          refreshListeners.delete(listener);
+        };
+      },
+      setData(nextData) {
+        validationStore.setValues(nextData);
+      },
+      updateData(path, value) {
+        validationStore.setValue(path, value);
+      },
+      refresh() {
+        refreshTick += 1;
+        for (const listener of refreshListeners) {
+          listener();
+        }
+      }
+    };
     const page = createManagedPageRuntime({
       data,
-      pageStore: input.pageStore
+      pageStore: input.pageStore ?? pageStore,
+      validationOwner: pageValidation,
+      scope: pageValidation.scope
     });
 
     ownedPages.add(page);
     return page;
+  }
+
+  function createValidationScopeRuntime(inputValue: {
+    id?: string;
+    parentScope?: ScopeRef;
+    scopePath?: string;
+    validation?: CompiledFormValidationModel;
+    initialValues?: Record<string, any>;
+  }): ValidationScopeRuntime {
+    const store = createFormStore(inputValue.initialValues ?? {});
+    const scopeId = inputValue.id ?? `${inputValue.parentScope?.id ?? 'scope'}-validation`;
+    const scope = createScopeRef({
+      id: scopeId,
+      path: inputValue.scopePath ?? `${inputValue.parentScope?.path ?? '$root'}.validation`,
+      parent: inputValue.parentScope,
+      store: {
+        getSnapshot: () => store.getState().values,
+        getLastChange: () => ({ paths: ['*'], sourceScopeId: scopeId, kind: 'replace', revision: 0 }),
+        setSnapshot: (next) => {
+          store.setValues(next);
+        },
+        subscribe: (listener) => store.subscribe(() => listener({
+          paths: ['*'],
+          sourceScopeId: scopeId,
+          kind: 'replace',
+          revision: 0
+        }))
+      },
+      update: (path, value) => {
+        store.setValue(path, value);
+      }
+    });
+
+    return createManagedFormRuntime({
+      id: scopeId,
+      parentScope: inputValue.parentScope,
+      validation: inputValue.validation,
+      initialValues: inputValue.initialValues,
+      existingStore: store,
+      existingScope: scope,
+      scopePath: inputValue.scopePath,
+      scopeBinding: 'none',
+      executeValidationRule: (compiledRule, rule, field, validationScope, signal) =>
+        executeRuntimeValidationRule(compiledRule, rule, field, validationScope, signal, evalCtx),
+      validateRule: (compiledRule, value, field, validationScope) =>
+        validateRule(compiledRule, value, field, validationScope, validationRegistry),
+      submitApi: async () => ({ ok: true, error: undefined, data: undefined })
+    });
   }
 
   function createSurfaceRuntime(inputValue: { disposeScope?: (scopeId: string) => void } = {}): SurfaceRuntime {
@@ -242,6 +348,64 @@ export function createRendererRuntime(input: {
     moduleCache,
     compile(schema) {
       return schemaCompiler.compile(schema);
+    },
+    async prepareSchema(schema, options) {
+      const prepare = schemaCompiler.prepare;
+      if (!prepare) {
+        return { preparedImports: new Map() };
+      }
+
+      const result = await prepare(schema, {
+        schemaUrl: options?.schemaUrl,
+        importLoader: getEnv().importLoader,
+        resolveImportUrl: getEnv().resolveImportUrl
+      });
+
+      const importLoader = getEnv().importLoader;
+
+      if (result.preparedImports.size > 0 && !importLoader) {
+        throw new Error('Schema preparation requires env.importLoader when xui:imports are present.');
+      }
+
+      const preparedEntries = await Promise.all(
+        Array.from(result.preparedImports.entries()).map(async ([key, prepared]) => {
+          const moduleKey = createModuleKey(prepared.resolvedSpec);
+
+          try {
+            let loadedModule = moduleCache.get(moduleKey);
+
+            if (!loadedModule) {
+              const pending = moduleCache.getPending(moduleKey);
+
+              if (pending) {
+                loadedModule = await pending;
+              } else if (importLoader) {
+                const promise = importLoader.load(prepared.resolvedSpec);
+                moduleCache.setPending(moduleKey, promise);
+                try {
+                  loadedModule = await promise;
+                  moduleCache.set(moduleKey, loadedModule);
+                } finally {
+                  moduleCache.removePending(moduleKey);
+                }
+              }
+            }
+
+            if (!loadedModule) {
+              throw new Error(`Prepared import missing cached module for ${prepared.spec.as}`);
+            }
+
+            return [key, {
+              ...prepared,
+              staticMeta: await loadedModule.getStaticMeta?.()
+            } satisfies PreparedImportSpec] as const;
+          } catch (error) {
+            throw new Error(`Imported namespace ${prepared.spec.as} failed to load: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        })
+      );
+
+      return { preparedImports: new Map(preparedEntries) };
     },
     evaluate,
     allocateMountedCid() {
@@ -335,6 +499,17 @@ export function createRendererRuntime(input: {
     },
     createActionScope: createOwnedActionScope,
     createComponentHandleRegistry: createOwnedComponentRegistry,
+    resolvePreparedImports(inputValue) {
+      const schemaUrl = inputValue.schemaUrl;
+      return (inputValue.imports ?? []).map((spec): PreparedImportSpec => ({
+        schemaUrl,
+        spec,
+        resolvedSpec: {
+          ...spec,
+          from: getEnv().resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
+        }
+      }));
+    },
     ensureImportedNamespaces(args) {
       return importManager.ensureImportedNamespaces(args);
     },
@@ -355,6 +530,7 @@ export function createRendererRuntime(input: {
       return executeSourceRef.current(inputValue.source, inputValue.scope, inputValue.ctx);
     },
     createPageRuntime,
+    createValidationScopeRuntime,
     createSurfaceRuntime,
     createDataSourceController(inputValue) {
       return createDataSourceController({

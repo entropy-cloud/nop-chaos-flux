@@ -1,7 +1,9 @@
 import type {
   PageRuntime,
   PageStoreApi,
-  ScopeChange
+  ScopeChange,
+  ScopeRef,
+  ValidationScopeRuntime
 } from '@nop-chaos/flux-core';
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
@@ -10,6 +12,8 @@ export function createManagedPageRuntime(input: {
   data?: Record<string, any>;
   pageStore?: PageStoreApi;
   modalContainer?: string;
+  validationOwner?: ValidationScopeRuntime;
+  scope?: ScopeRef;
 } = {}): PageRuntime {
   const data = input.data ?? {};
   const store = input.pageStore ?? createPageStore(data);
@@ -30,7 +34,7 @@ export function createManagedPageRuntime(input: {
     };
   }
 
-  const scope = createScopeRef({
+  const scope = input.scope ?? createScopeRef({
     id: 'page',
     path: '$page',
     initialData: store.getState().data,
@@ -72,6 +76,7 @@ export function createManagedPageRuntime(input: {
   return {
     store,
     scope,
+    validationOwner: input.validationOwner,
     modalContainer: input.modalContainer,
     refresh() {
       store.refresh();

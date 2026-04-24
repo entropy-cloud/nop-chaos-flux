@@ -5,15 +5,15 @@ import type {
   ImportedLibraryLoader,
   ModuleCache,
   NodeInstance,
+  PreparedImportSpec,
   RendererEnv,
   RendererRuntime,
   ScopeRef,
-  XuiImportSpec
 } from '@nop-chaos/flux-core';
 
 export interface ImportManager {
   ensureImportedNamespaces(args: {
-    imports?: readonly XuiImportSpec[];
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
@@ -21,34 +21,24 @@ export interface ImportManager {
     nodeInstance?: NodeInstance;
   }): Promise<void>;
   getImportedExpressionBindings(args: {
-    imports?: readonly XuiImportSpec[];
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     schemaUrl: string;
   }): Readonly<Record<string, unknown>>;
   releaseImportedNamespaces(args: {
-    imports?: readonly XuiImportSpec[];
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     schemaUrl: string;
   }): void;
   dispose(args?: { actionScopes?: readonly ActionScope[] }): void;
 }
 
-function normalizeImportSpec(spec: XuiImportSpec): XuiImportSpec {
-  return {
-    ...spec,
-    from: spec.from.trim(),
-    as: spec.as.trim()
-  };
+function normalizeImports(imports: readonly PreparedImportSpec[] | undefined) {
+  return imports?.filter((spec) => spec.resolvedSpec.from && spec.resolvedSpec.as) ?? [];
 }
 
-function normalizeImports(imports?: readonly XuiImportSpec[]) {
-  return imports
-    ?.map(normalizeImportSpec)
-    .filter((spec) => spec.from && spec.as) ?? [];
-}
-
-function createFrameKey(imports: readonly XuiImportSpec[]): string {
-  return JSON.stringify(imports.map((spec) => ({ from: spec.from, as: spec.as, options: spec.options ?? null })));
+function createFrameKey(imports: readonly PreparedImportSpec[]): string {
+  return JSON.stringify(imports.map((entry) => ({ from: entry.resolvedSpec.from, as: entry.resolvedSpec.as, options: entry.resolvedSpec.options ?? null })));
 }
 
 export function createImportManager(input: {
@@ -76,7 +66,7 @@ export function createImportManager(input: {
   }
 
   async function ensureImportedNamespaces(args: {
-    imports?: readonly XuiImportSpec[];
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     scope: ScopeRef;
@@ -98,13 +88,13 @@ export function createImportManager(input: {
       return;
     }
 
-    const frame = await input.importStack.push({
+    const frame = input.importStack.installPrepared({
       ownerNodeId: args.nodeInstance?.templateNode.id ?? `${args.actionScope.id}:imports`,
       imports,
+      parentFrame: undefined,
       actionScope: args.actionScope,
       componentRegistry: args.componentRegistry,
       scope: args.scope,
-      schemaUrl: args.schemaUrl,
       nodeInstance: args.nodeInstance
     });
 
@@ -114,7 +104,7 @@ export function createImportManager(input: {
   }
 
   function getImportedExpressionBindings(args: {
-    imports?: readonly XuiImportSpec[];
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     schemaUrl: string;
   }): Readonly<Record<string, unknown>> {
@@ -129,7 +119,7 @@ export function createImportManager(input: {
   }
 
   function releaseImportedNamespaces(args: {
-    imports?: readonly XuiImportSpec[];
+    imports?: readonly PreparedImportSpec[];
     actionScope?: ActionScope;
     schemaUrl: string;
   }) {

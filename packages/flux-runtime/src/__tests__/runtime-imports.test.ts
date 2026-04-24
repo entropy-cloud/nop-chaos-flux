@@ -7,6 +7,22 @@ import { textRenderer, env } from './test-fixtures';
 
 const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
+async function prepareImports(runtime: ReturnType<typeof createRendererRuntime>, imports: readonly { from: string; as: string }[], schemaUrl: string) {
+  const prepared = await runtime.prepareSchema?.({ type: 'text', text: 'prepare', 'xui:imports': imports } as any, { schemaUrl });
+  return Array.from(prepared?.preparedImports.values() ?? []);
+}
+
+function toPreparedImports(imports: ReadonlyArray<{ from: string; as: string; options?: Record<string, unknown> }>, schemaUrl: string, resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string) {
+  return imports.map((spec) => ({
+    schemaUrl,
+    spec,
+    resolvedSpec: {
+      ...spec,
+      from: resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
+    }
+  }));
+}
+
 describe('createRendererRuntime', () => {
   it('releases imported namespaces after the final matching release call', async () => {
     const dispose = vi.fn();
@@ -32,7 +48,7 @@ describe('createRendererRuntime', () => {
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'import-scope' });
-    const imports = [{ from: 'demo-lib', as: 'demo' }] as const;
+    const imports = await prepareImports(runtime, [{ from: 'demo-lib', as: 'demo' }], '/schema/root.json');
 
     await runtime.ensureImportedNamespaces({
       imports,
@@ -147,9 +163,10 @@ describe('createRendererRuntime', () => {
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'import-scope' });
+    const imports = await prepareImports(runtime, [{ from: 'demo-lib', as: 'demo' }], '/schema/root.json');
 
     await runtime.ensureImportedNamespaces({
-      imports: [{ from: 'demo-lib', as: 'demo' }],
+      imports,
       actionScope,
       scope: page.scope,
       schemaUrl: '/schema/root.json'
@@ -201,15 +218,17 @@ describe('createRendererRuntime', () => {
     const page = runtime.createPageRuntime({});
     const parentActionScope = runtime.createActionScope({ id: 'parent-import-scope' });
     const childActionScope = runtime.createActionScope({ id: 'child-import-scope', parent: parentActionScope });
+    const parentImports = await prepareImports(runtime, [{ from: 'parent-lib', as: 'demo' }], '/schema/root.json');
+    const childImports = await prepareImports(runtime, [{ from: 'child-lib', as: 'demo' }], '/schema/root.json');
 
     await runtime.ensureImportedNamespaces({
-      imports: [{ from: 'parent-lib', as: 'demo' }],
+      imports: parentImports,
       actionScope: parentActionScope,
       scope: page.scope,
       schemaUrl: '/schema/root.json'
     });
     await runtime.ensureImportedNamespaces({
-      imports: [{ from: 'child-lib', as: 'demo' }],
+      imports: childImports,
       actionScope: childActionScope,
       scope: page.scope,
       schemaUrl: '/schema/root.json'
@@ -231,7 +250,7 @@ describe('createRendererRuntime', () => {
     expect(shadowedResult).toMatchObject({ ok: true, data: 'child-lib:ping:child' });
 
     runtime.releaseImportedNamespaces({
-      imports: [{ from: 'child-lib', as: 'demo' }],
+      imports: childImports,
       actionScope: childActionScope,
       schemaUrl: '/schema/root.json'
     });
@@ -272,9 +291,11 @@ describe('createRendererRuntime', () => {
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'collision-scope' });
+    const firstImports = await prepareImports(runtime, [{ from: 'first-lib', as: 'demo' }], '/schema/root.json');
+    const secondImports = await prepareImports(runtime, [{ from: 'second-lib', as: 'demo' }], '/schema/root.json');
 
     await runtime.ensureImportedNamespaces({
-      imports: [{ from: 'first-lib', as: 'demo' }],
+      imports: firstImports,
       actionScope,
       scope: page.scope,
       schemaUrl: '/schema/root.json'
@@ -282,7 +303,7 @@ describe('createRendererRuntime', () => {
 
     await expect(
       runtime.ensureImportedNamespaces({
-        imports: [{ from: 'second-lib', as: 'demo' }],
+        imports: secondImports,
         actionScope,
         scope: page.scope,
         schemaUrl: '/schema/root.json'
@@ -319,18 +340,15 @@ describe('createRendererRuntime', () => {
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'retry-import-scope' });
-    const imports = [{ from: 'retry-lib', as: 'retry' }] as const;
-
     await expect(
-      runtime.ensureImportedNamespaces({
-        imports,
-        actionScope,
-        scope: page.scope,
+      runtime.prepareSchema?.({ type: 'text', text: 'retry', 'xui:imports': [{ from: 'retry-lib', as: 'retry' }] } as any, {
         schemaUrl: '/schema/root.json'
       })
-    ).rejects.toThrow('Imported namespace retry failed to load: loader exploded');
+    ).rejects.toThrow('loader exploded');
 
     shouldFail = false;
+
+    const imports = await prepareImports(runtime, [{ from: 'retry-lib', as: 'retry' }], '/schema/root.json');
 
     await expect(
       runtime.ensureImportedNamespaces({
@@ -380,6 +398,7 @@ describe('createRendererRuntime', () => {
     const actionScope = runtime.createActionScope({ id: 'node-instance-import-scope' });
     const compiled = runtime.compile({ type: 'text', text: 'imports' });
     const templateNode = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    const imports = await prepareImports(runtime, [{ from: 'demo-lib', as: 'demo' }], '/schema/root.json');
     const nodeInstance = {
       cid: templateNode.templateNodeId,
       templateNode,
@@ -388,7 +407,7 @@ describe('createRendererRuntime', () => {
     } as any;
 
     await runtime.ensureImportedNamespaces({
-      imports: [{ from: 'demo-lib', as: 'demo' }],
+      imports,
       actionScope,
       scope: page.scope,
       schemaUrl: '/schema/root.json',
@@ -431,15 +450,17 @@ describe('createRendererRuntime', () => {
     const pageB = runtimeB.createPageRuntime({});
     const actionScopeA = runtimeA.createActionScope({ id: 'scope-a' });
     const actionScopeB = runtimeB.createActionScope({ id: 'scope-b' });
+    const importsA = await prepareImports(runtimeA, [{ from: 'demo-lib', as: 'demo' }], '/schema/a.json');
+    const importsB = await prepareImports(runtimeB, [{ from: 'demo-lib', as: 'demo' }], '/schema/b.json');
 
     await runtimeA.ensureImportedNamespaces({
-      imports: [{ from: 'demo-lib', as: 'demo' }],
+      imports: importsA,
       actionScope: actionScopeA,
       scope: pageA.scope,
       schemaUrl: '/schema/a.json'
     });
     await runtimeB.ensureImportedNamespaces({
-      imports: [{ from: 'demo-lib', as: 'demo' }],
+      imports: importsB,
       actionScope: actionScopeB,
       scope: pageB.scope,
       schemaUrl: '/schema/b.json'
@@ -465,18 +486,16 @@ describe('createRendererRuntime', () => {
     });
     const page = runtime.createPageRuntime({});
     const actionScope = runtime.createActionScope({ id: 'resolved-scope' });
+    const imports = await prepareImports(runtime, [{ from: './demo-lib', as: 'demo' }], 'https://app.local/schema/page.json');
 
     await runtime.ensureImportedNamespaces({
-      imports: [{ from: './demo-lib', as: 'demo' }],
+      imports,
       actionScope,
       scope: page.scope,
       schemaUrl: 'https://app.local/schema/page.json'
     });
 
     expect(resolveImportUrl).toHaveBeenCalledWith('https://app.local/schema/page.json', './demo-lib', undefined);
-    expect(importLoader.load).toHaveBeenCalledWith(
-      { from: 'resolved:https://app.local/schema/page.json:./demo-lib', as: 'demo' },
-      expect.any(AbortSignal)
-    );
+    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib', as: 'demo' });
   });
 });
