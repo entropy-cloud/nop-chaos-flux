@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createActionScope } from '@nop-chaos/flux-runtime';
-import { createSchemaRenderer, NodeMetaContext, RenderNodes, RuntimeContext, ScopeContext, useDataSourceStatus, useRenderScope, useRendererRuntime, useScopeSelector } from '../index';
+import * as fluxCore from '@nop-chaos/flux-core';
+import { createSchemaRenderer, NodeMetaContext, NodeRenderer, RenderNodes, RuntimeContext, ScopeContext, useDataSourceStatus, useRenderScope, useRendererRuntime, useScopeSelector } from '../index';
 import {
   cidProbeRenderer,
   createExpressionCompiler,
@@ -40,6 +41,58 @@ describe('createSchemaRenderer runtime core behavior', () => {
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
     render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'text', text: 'Hello renderer' }} env={env} formulaCompiler={createFormulaCompiler()} />);
     expect(screen.getByText('Hello renderer')).toBeTruthy();
+  });
+
+  it('keeps the no-import path off the import boundary setup fast path', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const compiled = runtime.compile({ type: 'text', text: 'No imports' });
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    const installPreparedSpy = vi.spyOn(runtime.importStack, 'installPrepared');
+    const currentBindingsSpy = vi.spyOn(runtime.importStack, 'currentBindings');
+    const createChildScopeSpy = vi.spyOn(runtime, 'createChildScope');
+
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <NodeRenderer node={root as any} scope={page.scope} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>
+    );
+
+    expect(screen.getByText('No imports')).toBeTruthy();
+    expect(installPreparedSpy).not.toHaveBeenCalled();
+    expect(currentBindingsSpy).not.toHaveBeenCalled();
+    expect(createChildScopeSpy).not.toHaveBeenCalled();
+  });
+
+  it('keeps the no-class-alias path off alias merge and resolution work', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const compiled = runtime.compile({ type: 'text', text: 'No aliases' });
+    const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    const mergeClassAliasesSpy = vi.spyOn(fluxCore, 'mergeClassAliases');
+    const resolveClassAliasesSpy = vi.spyOn(fluxCore, 'resolveClassAliases');
+
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <NodeRenderer node={root as any} scope={page.scope} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>
+    );
+
+    expect(screen.getByText('No aliases')).toBeTruthy();
+    expect(mergeClassAliasesSpy).not.toHaveBeenCalled();
+    expect(resolveClassAliasesSpy).not.toHaveBeenCalled();
   });
 
   it('releases root-level imported namespaces when the schema changes', async () => {

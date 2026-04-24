@@ -19,12 +19,6 @@ export function resolveFrameWrapMode(
   return 'label';
 }
 
-export function getNodeImports(node: TemplateNode): readonly XuiImportSpec[] | undefined {
-  return 'xui:imports' in node.schema
-    ? ((node.schema as { 'xui:imports'?: readonly XuiImportSpec[] })['xui:imports'])
-    : undefined;
-}
-
 export function collectSchemaImports(input: unknown): readonly XuiImportSpec[] {
   const seen = new Map<string, XuiImportSpec>();
 
@@ -66,10 +60,6 @@ export function collectSchemaImports(input: unknown): readonly XuiImportSpec[] {
 
   visit(input);
   return Array.from(seen.values());
-}
-
-export function getNodeClassAliases(node: TemplateNode): Record<string, string> | undefined {
-  return (node.schema as { classAliases?: Record<string, string> }).classAliases;
 }
 
 export function getNodeSchemaFrameWrap(node: TemplateNode): boolean | 'label' | 'group' | 'none' | undefined {

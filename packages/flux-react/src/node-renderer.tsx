@@ -111,12 +111,18 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   );
 
   const nodeClassAliases = props.node.classAliasesPlan?.aliases;
+  const hasNodeClassAliases = Boolean(nodeClassAliases);
+  const hasParentClassAliases = Boolean(parentClassAliases);
   const mergedClassAliases = useMemo(
-    () => mergeClassAliases(parentClassAliases, nodeClassAliases),
-    [parentClassAliases, nodeClassAliases]
+    () => hasParentClassAliases || hasNodeClassAliases
+      ? mergeClassAliases(parentClassAliases, nodeClassAliases)
+      : undefined,
+    [hasNodeClassAliases, hasParentClassAliases, parentClassAliases, nodeClassAliases]
   );
   const resolvedMeta = useMemo(() => {
-    const resolvedClassName = resolveClassAliases(baseMeta.className, mergedClassAliases);
+    const resolvedClassName = mergedClassAliases
+      ? resolveClassAliases(baseMeta.className, mergedClassAliases)
+      : baseMeta.className;
     const nextMeta = resolvedClassName !== baseMeta.className
       ? { ...baseMeta, className: resolvedClassName }
       : baseMeta;
@@ -338,20 +344,24 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     componentRegistryPolicy: props.node.component.componentRegistryPolicy
   }, props.actionScope, props.componentRegistry);
   const resolvedActionScope = importOwnedActionScope ?? activeActionScope;
-  const importSetupState = useMemo<NodeRuntimeState>(
-    () => createTemplateNodeRuntimeState(props.node),
-    [props.node]
+  const importSetupState = useMemo<NodeRuntimeState | undefined>(
+    () => nodeImports?.length
+      ? createTemplateNodeRuntimeState(props.node)
+      : undefined,
+    [props.node, nodeImports]
   );
   const importOwnerNodeInstance = useMemo(
-    () => createNodeInstance({
-      templateNode: props.node,
-      scope: props.scope,
-      state: importSetupState,
-      cid: mountedCid,
-      instancePath,
-      mounted: true
-    }),
-    [props.node, props.scope, importSetupState, mountedCid, instancePath]
+    () => nodeImports?.length && importSetupState
+      ? createNodeInstance({
+          templateNode: props.node,
+          scope: props.scope,
+          state: importSetupState,
+          cid: mountedCid,
+          instancePath,
+          mounted: true
+        })
+      : undefined,
+    [props.node, props.scope, importSetupState, mountedCid, instancePath, nodeImports]
   );
   const importFrame = useMemo(
     () => nodeImports?.length
@@ -375,11 +385,11 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     };
   }, [runtime, importFrame, parentImportFrame]);
   const importBindings = useMemo(
-    () => importFrame ? runtime.importStack.currentBindings(importFrame.id) : {},
+    () => importFrame ? runtime.importStack.currentBindings(importFrame.id) : undefined,
     [runtime, importFrame]
   );
   const renderScope = useMemo(
-    () => Object.keys(importBindings).length === 0
+    () => !importBindings || Object.keys(importBindings).length === 0
       ? props.scope
       : runtime.createChildScope(props.scope, importBindings, {
           pathSuffix: 'imports',
