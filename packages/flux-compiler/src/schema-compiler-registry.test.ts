@@ -5,6 +5,7 @@ import {
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index';
+import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
 
 const textRenderer: RendererDefinition = {
   type: 'text',
@@ -538,6 +539,83 @@ describe('createSchemaCompiler', () => {
     expect(node.regions['columns.0.cell']?.node).toBeTruthy();
     expect(node.propsProgram.value.columns[0].cell).toBeUndefined();
     expect(node.propsProgram.value.columns[0].cellRegionKey).toBe('columns.0.cell');
+  });
+
+  it('canonicalizes crud migration aliases before compilation', () => {
+    const registry = createRendererRegistry([...dataRendererDefinitions]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const compiled = compiler.compile({
+      type: 'crud',
+      filter: {
+        body: [{ type: 'text', text: 'Query region' }]
+      },
+      primaryField: 'id',
+      perPageField: 'pageSize',
+      columns: [{ name: 'name', label: 'Name' }]
+    } as any);
+    const node = compiled.root as any;
+
+    expect(node.schema.queryForm).toBeTruthy();
+    expect(node.schema.rowKey).toBe('id');
+    expect(node.schema.pageSizeField).toBe('pageSize');
+    expect(node.schema.filter).toBeUndefined();
+    expect(node.schema.primaryField).toBeUndefined();
+    expect(node.schema.perPageField).toBeUndefined();
+  });
+
+  it('canonicalizes crud bulkActions to listActions before compilation', () => {
+    const registry = createRendererRegistry([textRenderer, ...dataRendererDefinitions]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const compiled = compiler.compile({
+      type: 'crud',
+      bulkActions: [{ type: 'text', text: 'Delete selected' }],
+      columns: [{ name: 'name', label: 'Name' }]
+    } as any);
+    const node = compiled.root as any;
+
+    expect(node.schema.listActions).toEqual([{ type: 'text', text: 'Delete selected' }]);
+    expect(node.schema.bulkActions).toBeUndefined();
+  });
+
+  it('keeps canonical crud fields when legacy aliases are also present', () => {
+    const registry = createRendererRegistry([...dataRendererDefinitions]);
+    const compiler = createSchemaCompiler({
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const compiled = compiler.compile({
+      type: 'crud',
+      filter: {
+        body: [{ type: 'text', text: 'Legacy query region' }]
+      },
+      queryForm: {
+        body: [{ type: 'text', text: 'Canonical query region' }]
+      },
+      primaryField: 'legacy-id',
+      rowKey: 'canonical-id',
+      perPageField: 'legacyPageSize',
+      pageSizeField: 'canonicalPageSize',
+      columns: [{ name: 'name', label: 'Name' }]
+    } as any);
+    const node = compiled.root as any;
+
+    expect(node.schema.queryForm).toEqual({
+      body: [{ type: 'text', text: 'Canonical query region' }]
+    });
+    expect(node.schema.rowKey).toBe('canonical-id');
+    expect(node.schema.pageSizeField).toBe('canonicalPageSize');
+    expect(node.schema.filter).toBeUndefined();
+    expect(node.schema.primaryField).toBeUndefined();
+    expect(node.schema.perPageField).toBeUndefined();
   });
 
   it('treats table empty as a plain prop or compiled region based on field metadata', () => {

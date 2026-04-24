@@ -152,4 +152,16 @@ describe('crud schemaValidator', () => {
       })
     ]);
   });
+
+  it('lowers legacy filter, primaryField, and perPageField into live canonical crud fields before validation', () => {
+    expect(compiler.validate?.({
+      type: 'crud',
+      filter: {
+        body: [{ type: 'text', text: 'Query form' }]
+      },
+      primaryField: 'id',
+      perPageField: 'pageSize',
+      columns: []
+    } as any)).toEqual([]);
+  });
 });
