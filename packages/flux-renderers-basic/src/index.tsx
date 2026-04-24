@@ -48,7 +48,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       }
     },
     regions: ['body', 'header', 'footer'],
-    fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'modalContainer', kind: 'prop' }]
+    fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'modalContainer', kind: 'prop' }, { key: 'statusPath', kind: 'prop' }]
   },
   {
     type: 'container',

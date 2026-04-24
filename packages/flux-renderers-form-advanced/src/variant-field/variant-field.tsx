@@ -52,8 +52,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const parentForm = useCurrentForm();
   const parentScope = useRenderScope();
   const schema = props.schema as VariantFieldSchema;
-  const name = String(props.props.name ?? '');
-  const readOnly = Boolean(props.props.readOnly);
+  const schemaProps = props.props as VariantFieldSchema;
+  const name = String(schemaProps.name ?? '');
+  const readOnly = Boolean(schemaProps.readOnly);
   const variants = React.useMemo(() => (schema.variants ?? []) as VariantOption[], [schema.variants]);
   const selectorMode = (schema.selector as { mode?: string } | undefined)?.mode ?? schema.selectorMode ?? 'tabs';
   const defaultVariant = schema.defaultVariant;
@@ -262,6 +263,7 @@ export const variantFieldRendererDefinition: RendererDefinition = {
     formLabelFieldRule,
     { key: 'variants', kind: 'ignored' },
     { key: 'selector', kind: 'ignored' },
+    { key: 'selectorMode', kind: 'ignored' },
     { key: 'defaultVariant', kind: 'ignored' },
     { key: 'detectVariantAction', kind: 'ignored' },
     { key: 'transformInAction', kind: 'ignored' },

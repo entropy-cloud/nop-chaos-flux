@@ -311,7 +311,11 @@ export const objectFieldRendererDefinition: RendererDefinition = {
   component: ObjectFieldRenderer,
   wrap: true,
   regions: ['body'],
-  fields: [formLabelFieldRule],
+  fields: [
+    formLabelFieldRule,
+    { key: 'transformInAction', kind: 'ignored' },
+    { key: 'transformOutAction', kind: 'ignored' }
+  ],
   validation: {
     kind: 'field',
     valueKind: 'object',

@@ -38,11 +38,12 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const schema = props.schema as DetailFieldSchema;
-  const name = String(props.props.name ?? '');
-  const readOnly = Boolean(props.props.readOnly);
+  const schemaProps = props.props as DetailFieldSchema;
+  const name = String(schemaProps.name ?? '');
+  const readOnly = Boolean(schemaProps.readOnly);
   const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
-  const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
+  const triggerLabel = String(schemaProps.triggerLabel ?? 'Edit');
   const validationMessage = t('flux.common.detailDraftValidationError');
 
   const presentation = useFieldPresentation(name, parentForm, {
@@ -218,7 +219,15 @@ export const detailFieldRendererDefinition: RendererDefinition = {
   component: DetailFieldRenderer as any,
   wrap: true,
   regions: ['viewer', 'content'],
-  fields: [formLabelFieldRule],
+  fields: [
+    formLabelFieldRule,
+    { key: 'triggerLabel', kind: 'prop' },
+    { key: 'readOnly', kind: 'prop' },
+    { key: 'surface', kind: 'ignored' },
+    { key: 'transformInAction', kind: 'ignored' },
+    { key: 'validateValueAction', kind: 'ignored' },
+    { key: 'transformOutAction', kind: 'ignored' }
+  ],
   scopePolicy: 'form',
   validation: {
     kind: 'field',

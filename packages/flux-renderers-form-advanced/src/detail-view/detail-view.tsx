@@ -36,12 +36,13 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const schema = props.schema as DetailViewSchema;
-  const readOnly = Boolean(props.props.readOnly);
-  const scopePath = schema.scopePath ?? (typeof schema.name === 'string' ? schema.name : undefined);
-  const staticData = props.props.data as Record<string, unknown> | undefined;
+  const schemaProps = props.props as DetailViewSchema;
+  const readOnly = Boolean(schemaProps.readOnly);
+  const scopePath = schemaProps.scopePath ?? (typeof schemaProps.name === 'string' ? schemaProps.name : undefined);
+  const staticData = schemaProps.data as Record<string, unknown> | undefined;
   const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
-  const triggerLabel = String(props.props.triggerLabel ?? 'Edit');
+  const triggerLabel = String(schemaProps.triggerLabel ?? 'Edit');
   const validationMessage = t('flux.common.detailDraftValidationError');
   const effectiveDisabled = Boolean(props.meta.disabled);
 
@@ -93,8 +94,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     if (effectiveDisabled) return;
 
     const adaptedValue = await runTransformIn(
-      schema.transformInAction,
-      {
+      schema.transformInAction,      {
         rawValue: currentValue,
         readOnly
       },
@@ -287,7 +287,17 @@ export const detailViewRendererDefinition: RendererDefinition = {
   type: 'detail-view',
   component: DetailViewRenderer as any,
   regions: ['viewer', 'content'],
-  fields: [formLabelFieldRule],
+  fields: [
+    formLabelFieldRule,
+    { key: 'scopePath', kind: 'prop' },
+    { key: 'data', kind: 'prop' },
+    { key: 'triggerLabel', kind: 'prop' },
+    { key: 'readOnly', kind: 'prop' },
+    { key: 'surface', kind: 'ignored' },
+    { key: 'transformInAction', kind: 'ignored' },
+    { key: 'validateValueAction', kind: 'ignored' },
+    { key: 'transformOutAction', kind: 'ignored' }
+  ],
   scopePolicy: 'form',
   validation: {
     kind: 'container'

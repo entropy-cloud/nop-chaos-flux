@@ -15,7 +15,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
     refreshTick
   }), [refreshTick]);
 
-  useStatusPathPublication(props.node.scope, typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined, summary);
+  useStatusPathPublication(props.node.scope, typeof (props.props as PageSchema).statusPath === 'string' ? (props.props as PageSchema).statusPath : undefined, summary);
 
   return (
     <section className={cn('nop-page', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>

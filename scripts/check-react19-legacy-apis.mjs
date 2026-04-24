@@ -31,7 +31,16 @@ function toPosixPath(filePath) {
 
 async function collectSourceFiles(dir) {
   const files = [];
-  const entries = await readdir(dir, { withFileTypes: true });
+  let entries;
+
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+      return files;
+    }
+    throw error;
+  }
 
   for (const entry of entries) {
     if (ignoreDirectoryNames.has(entry.name)) {
@@ -201,7 +210,17 @@ async function main() {
   const issues = [];
 
   for (const filePath of files) {
-    const content = await readFile(filePath, 'utf8');
+    let content;
+
+    try {
+      content = await readFile(filePath, 'utf8');
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+        continue;
+      }
+      throw error;
+    }
+
     const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
     issues.push(...scanSourceFile(sourceFile));
   }
