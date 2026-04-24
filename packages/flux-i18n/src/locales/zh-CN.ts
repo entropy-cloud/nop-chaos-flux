@@ -30,6 +30,7 @@ export const zhCN: Resource = {
       goto: '跳至',
     },
     table: {
+      columns: '列设置',
       expand: '展开',
       filter: '筛选',
       sort: '排序',

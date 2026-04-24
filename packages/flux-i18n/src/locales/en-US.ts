@@ -30,6 +30,7 @@ export const enUS: Resource = {
       goto: 'Go to',
     },
     table: {
+      columns: 'Columns',
       expand: 'Expand',
       filter: 'Filter',
       sort: 'Sort',

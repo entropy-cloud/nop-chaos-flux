@@ -66,7 +66,7 @@ describe('dataRendererDefinitions table behavior', () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();
     render(<SchemaRenderer schemaUrl="test://data/table-column-settings" schema={{ type: 'page', body: [{ type: 'table', columnSettings: { enabled: true }, columns: [{ label: 'Name', name: 'name' }, { label: 'Email', name: 'email' }], source: [{ id: 1, name: 'Alice', email: 'alice@example.com' }] }] }} env={env} formulaCompiler={formulaCompiler} />);
-    fireEvent.click(screen.getByRole('button', { name: t('flux.editor.columns') }));
+    fireEvent.click(screen.getByRole('button', { name: t('flux.table.columns') }));
     fireEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Email' }));
     await waitFor(() => {
       expect(screen.queryByText('alice@example.com')).toBeNull();
@@ -94,7 +94,7 @@ describe('dataRendererDefinitions table behavior', () => {
     const SchemaRenderer = createDataSchemaRenderer();
     render(<SchemaRenderer schemaUrl="test://data/table-column-settings-order-local" schema={{ type: 'page', body: [{ type: 'table', columnSettings: { enabled: true }, columns: [{ label: 'Name', name: 'name' }, { label: 'Email', name: 'email' }, { label: 'Role', name: 'role' }], source: [{ id: 1, name: 'Alice', email: 'alice@example.com', role: 'Admin' }] }] }} env={env} formulaCompiler={formulaCompiler} />);
 
-    fireEvent.click(screen.getByRole('button', { name: t('flux.editor.columns') }));
+    fireEvent.click(screen.getByRole('button', { name: t('flux.table.columns') }));
     fireEvent.click(screen.getByRole('menuitem', { name: `${t('flux.table.moveDown')} Name` }));
 
     await waitFor(() => {

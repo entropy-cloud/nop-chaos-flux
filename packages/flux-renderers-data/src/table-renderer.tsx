@@ -99,7 +99,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         <div className="mb-2 flex justify-end" data-slot="table-column-settings">
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<Button variant="outline" size="sm">{t('flux.editor.columns')}</Button>}
+              render={<Button variant="outline" size="sm">{t('flux.table.columns')}</Button>}
             />
             <DropdownMenuContent>
               {orderedColumns.map((key) => {
