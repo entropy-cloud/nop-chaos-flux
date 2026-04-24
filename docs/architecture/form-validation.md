@@ -281,7 +281,9 @@ Current live baseline:
 
 1. `form` is the only concrete validation owner runtime family in ordinary shipped code paths
 2. renderer-local draft editors such as `detail-field` / `detail-view` create temporary `FormRuntime` instances to obtain isolated validation
-3. page/root and generic non-form validation owners remain target architecture, not current live concrete baseline
+3. `SchemaRenderer` page-owned root now provisions the first concrete non-form validation owner family when the render tree uses its own page scope
+4. embedded `SchemaRenderer` trees that render against `props.parentScope` remain parent-owned in the current baseline and do not auto-create a second page/root fallback owner
+5. generic non-form owner families such as filter/search panels still remain target architecture rather than broadly landed live behavior
 
 A plain visual container with no validation content does not create a validation runtime.
 
@@ -311,7 +313,7 @@ This is the validation-facet reading of `docs/architecture/data-domain-owner.md`
 Authoring guidance:
 
 1. use `form` when the subtree really has form semantics and a submit/confirm lifecycle
-2. treat page/root attachment as target owner guidance, not as current live validation-owner behavior
+2. page/root attachment is now a live fallback only for `SchemaRenderer` page-owned root renders; embedded `parentScope` schema renders remain parent-owned
 3. use existing local-value or draft owner patterns when edits must stay isolated before commit
 4. do not require authors to invent a validation-only id or kind for ordinary containers
 
@@ -1037,9 +1039,10 @@ Default contracts:
 Current live concrete cases:
 
 1. normal form: `FormRuntime`
-2. inline table editing bound to parent values: parent `FormRuntime`
-3. detail dialog editing draft data: temporary child `FormRuntime`
-4. pure action controls: no validation scope runtime
+2. `SchemaRenderer` page-owned root: page/root-backed non-form validation owner for bound fields outside `<form>`
+3. inline table editing bound to parent values: parent `FormRuntime`
+4. detail dialog editing draft data: temporary child `FormRuntime`
+5. pure action controls: no validation scope runtime
 
 Target architecture cases:
 
@@ -1064,10 +1067,10 @@ Target architecture cases:
 4. minimal active instance graph handling for branches and repeated instances
 5. **renderer-level draft isolation** — `detail-field` / `detail-view` create temporary `FormRuntime` for draft editing
 
-### Phase 3 — Future
+### Phase 3 — In Progress
 
 1. common validation scope runtime beneath form
-2. non-form validation scopes (filter panels, search panels, page/root owner)
+2. non-form validation scopes (page/root owner first; filter panels and search panels still future)
 3. compiler-driven `create-owner` / `inherit-owner` / `no-owner` boundary classification
 4. automatic draft scope ownership without renderer-level form creation
 

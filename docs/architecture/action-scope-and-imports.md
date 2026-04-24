@@ -1184,7 +1184,7 @@ Not all action-scope and component-registry boundaries have the same creation ow
 These are capability boundaries that belong to a specific node and are compiled into the node-local `renderPlan.wrapProviders` closure at compile time.
 
 - `classAliases` publication — compiled into the node's render plan; `NodeRenderer` executes the closure without re-deriving it at React render time
-- `xui:imports`-driven import boundary — compiled into the node's render plan when the node declares `xui:imports`; runtime creates the node-local import boundary, pushes an `ImportFrame`, and may attach imported namespace providers to a child `ActionScope` so descendant execution waits until the declared imports are ready
+- `xui:imports`-driven import boundary — the schema is prepared before compilation, all declared imports are preloaded, and the compiled node carries prepared import metadata; runtime then synchronously creates the node-local import boundary, pushes an `ImportFrame`, and attaches imported namespace providers to a child `ActionScope`
 
 Rule: if the boundary truly belongs to the node itself and can be determined from the schema at compile time, it is a node-local optional execution boundary. The compiled closure receives the current parent boundary and children as inputs.
 

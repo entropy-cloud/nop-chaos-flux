@@ -25,7 +25,8 @@ The current implementation now has all three landed layers:
 |---|---|---|
 | Module loading dedup | `packages/flux-runtime/src/runtime-factory.ts` `createModuleCache()` + `packages/flux-runtime/src/import-stack.ts` | Shared `ModuleCache` dedup keyed by resolved `from+options` |
 | Alias + lexical frame ownership | `packages/flux-runtime/src/import-stack.ts` | Per-runtime `ImportStack` push/pop, nearest-frame shadowing, namespace registration/release |
-| Expression bindings | `packages/flux-react/src/use-node-imports.ts` + child scope overlay | merged current-frame bindings published as ordinary `$alias` scope keys for expression evaluation |
+| Schema preparation + static import metadata | `packages/flux-runtime/src/runtime-factory.ts` `prepareSchema()` + `packages/flux-compiler/src/schema-compiler.ts` | Collects all `xui:imports` before compile, resolves URLs, preloads modules, and feeds prepared import metadata into compilation |
+| Expression bindings | `packages/flux-react/src/node-renderer.tsx` + child scope overlay | compiled node installs current-frame bindings synchronously as ordinary `$alias` scope keys for expression evaluation |
 
 ### Relationship To ActionScope
 
@@ -36,9 +37,11 @@ The current implementation now has all three landed layers:
 
 Current baseline:
 
-- runtime `ImportStack.push(...)` loads modules, creates an `ImportFrame`, and records imported alias entries
+- `SchemaRenderer` / runtime preparation collects schema imports and preloads modules before compilation
+- compiled nodes carry prepared import metadata rather than forcing `NodeRenderer` to rediscover raw `xui:imports` from schema
+- runtime `ImportStack.installPrepared(...)` creates an `ImportFrame` synchronously from preloaded module data and records imported alias entries
 - if the imported module exposes an action namespace provider, that provider is attached to the current import-owned child `ActionScope`
-- `NodeRenderer` guarantees that import-owned capability boundary by creating a child `ActionScope` whenever the node declares `xui:imports`; this rule is import-owned runtime semantics, not renderer `actionScopePolicy`
+- `NodeRenderer` guarantees that import-owned capability boundary by creating a child `ActionScope` whenever the compiled node carries `importsPlan`; this rule is import-owned runtime semantics, not renderer `actionScopePolicy`
 
 Important consequence:
 
@@ -48,7 +51,7 @@ Important consequence:
 
 ### Current Constraints
 
-1. `ImportStack` is now implemented, but import helper manifests are still runtime-only. Compile-time validation currently knows alias names and builtin/slot/injected-local categories, not library-specific helper signatures.
+1. Import static metadata is now available to compilation through prepared imports, but the current validation slice is still limited: helper/member metadata is wired in, while richer callable contract coverage remains a follow-up.
 
 2. Compile-time symbol visibility is additive and conservative. Unknown `$` references outside the known categories remain informational or runtime-resolved rather than becoming hard compile blockers.
 

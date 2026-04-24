@@ -153,7 +153,8 @@ Practical ownership split:
 - build `events` from declarative event fields
 - build region handles for child schema
 - create stable `helpers`
-- execute node-local optional provider closures such as import-owned capability boundaries or class-alias publication
+- execute node-local optional provider closures such as class-alias publication
+- synchronously install compiled import-owned capability boundaries from preloaded import data
 - dispatch node lifecycle actions
 - invoke the concrete renderer component
 

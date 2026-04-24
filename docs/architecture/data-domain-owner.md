@@ -225,6 +225,12 @@ Data Domain Owner =
 
 `page` / root data scope 可以是 `Data Domain Owner`。
 
+当前 live baseline 补充：
+
+1. `SchemaRenderer` 的 page-owned root render 已经落地为第一个 concrete non-form validation owner family
+2. 该 fallback 只适用于 render tree 使用自身 `page.scope` 的场景
+3. 当 `SchemaRenderer` 通过 `props.parentScope` 嵌入到父作用域时，当前基线仍保持 parent-owned，而不会自动创建第二个 page/root owner
+
 判断规则：
 
 1. 如果当前页面级数据域承载了一组直接绑定的值
@@ -698,7 +704,7 @@ surface 负责：
 
 1. compiler-aware `inherit-owner` / `create-owner` / `no-owner` owner tree partition 仍未在所有 renderer family 中完成
 2. row-local staged child domain 仍缺正式 shared contract
-3. filter/search/wizard 这类非-form validation owner 仍缺统一 reusable substrate
+3. filter/search/wizard 这类非-form validation owner 仍缺统一 reusable substrate；当前只落地了 `SchemaRenderer` page-owned root 这一条 non-form owner family
 
 因此阅读本文时应明确区分：
 
