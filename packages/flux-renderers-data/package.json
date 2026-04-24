@@ -18,12 +18,13 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.13.24",
-    "echarts": "^6.0.0",
     "lucide-react": "^1.7.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "recharts": "^3.8.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

@@ -1,22 +1,6 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createDataSchemaRenderer, env, formulaCompiler, iconRenderer, nodeInstanceProbeRenderer } from '../test-support';
-
-vi.mock('echarts/core', async () => {
-  const chartInstance = {
-    setOption: vi.fn(),
-    resize: vi.fn(),
-    getDataURL: vi.fn(() => 'data:image/png;base64,mock'),
-    dispose: vi.fn(),
-    showLoading: vi.fn(),
-    hideLoading: vi.fn()
-  };
-
-  return {
-    use: vi.fn(),
-    init: vi.fn(() => chartInstance)
-  };
-});
 
 describe('dataRendererDefinitions tree and chart behavior', () => {
   it('renders visual tree nodes through the node region with inherited bindings', async () => {
@@ -70,8 +54,6 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
       expect(handle?.type).toBe('chart');
       expect(handle?.ref).toBeTruthy();
       expect(handle?.capabilities.hasMethod?.('resize')).toBe(true);
-      expect(handle?.capabilities.hasMethod?.('setOption')).toBe(true);
-      expect(handle?.capabilities.hasMethod?.('getDataURL')).toBe(true);
     });
     const chartRoot = document.querySelector('.nop-chart');
     expect(chartRoot).toBeTruthy();
