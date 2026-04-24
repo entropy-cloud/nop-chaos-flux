@@ -21,6 +21,7 @@ export {
   useScopeSelector,
   useOwnScopeSelector,
   useCurrentForm,
+  useCurrentValidationScope,
   useCurrentFormState,
   useCurrentFormErrors,
   useCurrentFormError,
@@ -53,6 +54,7 @@ export {
   ScopeContext,
   StructuralLoopContext,
   SurfaceContext,
+  ValidationContext,
   useRequiredContext
 } from './contexts';
 export { EMPTY_FORM_STORE_STATE, isFieldEffectivelyRequired, selectCurrentFormErrors, selectCurrentFormFieldPresentation, selectCurrentFormFieldState } from './form-state';

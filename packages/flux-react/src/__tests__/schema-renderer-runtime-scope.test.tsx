@@ -54,7 +54,7 @@ describe('createSchemaRenderer scope behavior', () => {
   });
 
   it('uses lexical scope data by default and isolates own-scope subscriptions when requested', async () => {
-    const pageStore = createRendererRuntime({ registry: createRendererRegistry([]), env, expressionCompiler: createExpressionCompiler(sharedFormulaCompiler) }).createPageRuntime({ data: { shared: 'parent-a' } }).store;
+    const pageStore = createRendererRuntime({ registry: createRendererRegistry([]), env, expressionCompiler: createExpressionCompiler(sharedFormulaCompiler) }).createPageRuntime({ shared: 'parent-a' }).store;
     const SchemaRenderer = createSchemaRenderer([fragmentScopeProbeHostRenderer, scopeLayerProbeRenderer, ownScopeValueProbeRenderer]);
     render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'fragment-scope-probe-host', body: [{ type: 'scope-layer-probe' }, { type: 'own-scope-value-probe' }] } as any} data={{ shared: 'parent-a' }} env={env} formulaCompiler={sharedFormulaCompiler} pageStore={pageStore} />);
     expect(screen.getByTestId('lexical-value').textContent).toBe('parent-a');

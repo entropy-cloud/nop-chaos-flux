@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useAggregateError, useCurrentForm, useCurrentFormFieldState, useCurrentFormState } from './hooks';
+import { useAggregateError, useCurrentForm, useCurrentFormFieldState, useCurrentFormState, useCurrentValidationScope } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired } from './form-state';
@@ -46,6 +46,7 @@ export function FieldFrame(props: FieldFrameProps) {
   } = props;
 
   const currentForm = useCurrentForm();
+  const currentValidationScope = useCurrentValidationScope();
   
   // Path-scoped subscription for field state (O(1) wakeup when other fields change)
   // Falls back to whole-store subscription if store doesn't support subscribeToPath
@@ -55,16 +56,17 @@ export function FieldFrame(props: FieldFrameProps) {
   
   // Aggregate errors from array/object/form level
   const aggregateError = useAggregateError(name ?? '', { enabled: Boolean(name) });
-  const validationField = name ? getCompiledValidationField(currentForm?.validation, name) : undefined;
+  const validationModel = currentForm?.validation ?? currentValidationScope?.validation;
+  const validationField = name ? getCompiledValidationField(validationModel, name) : undefined;
   const fieldBehavior = validationField?.behavior;
-  const behavior = validationBehavior ?? fieldBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
+  const behavior = validationBehavior ?? fieldBehavior ?? validationModel?.behavior ?? defaultBehavior;
   const hasDynamicRequiredRule = Boolean(
     validationField?.rules.some(({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless')
   );
   const dynamicRequired = useCurrentFormState(
     (state) => {
       if (!hasDynamicRequiredRule || !name) return false;
-      return isFieldEffectivelyRequired(currentForm?.validation, name, state.values);
+      return isFieldEffectivelyRequired(validationModel, name, state.values);
     },
     Object.is,
     { enabled: hasDynamicRequiredRule && Boolean(name) }

@@ -14,6 +14,8 @@ import type {
   RenderNodeMeta,
   RendererRuntime,
   ScopeRef,
+  ValidationStoreApi,
+  ValidationScopeRuntime,
   ValidationError
 } from '@nop-chaos/flux-core';
 import {
@@ -28,6 +30,8 @@ import {
   ScopeContext,
   StructuralLoopContext,
   SurfaceContext,
+  ValidationContext,
+  NO_VALIDATION_OWNER,
   useRequiredContext
 } from './contexts';
 import { getIn } from '@nop-chaos/flux-core';
@@ -200,6 +204,22 @@ export function useCurrentForm(): FormRuntime | undefined {
   return useContext(FormContext);
 }
 
+export function useCurrentValidationScope(): ValidationScopeRuntime | undefined {
+  const validationScope = useContext(ValidationContext);
+  const currentForm = useCurrentForm();
+  const currentPage = useCurrentPage();
+
+  if (validationScope === NO_VALIDATION_OWNER) {
+    return currentForm;
+  }
+
+  return validationScope ?? currentForm ?? currentPage?.validationOwner;
+}
+
+function useCurrentValidationStore(): ValidationStoreApi | undefined {
+  return useCurrentValidationScope()?.store;
+}
+
 export function useCurrentFormState<T>(
   selector: (state: FormStoreState) => T,
   equalityFn: (a: T, b: T) => boolean = Object.is,
@@ -221,12 +241,14 @@ export function useCurrentFormState<T>(
 
 export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] {
   const form = useCurrentForm();
+  const validationStore = useCurrentValidationStore();
+  const store = form?.store ?? validationStore;
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
   const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
-  const subscribe = useMemo(() => createFormErrorSubscribe(form?.store, stablePath), [form, stablePath]);
-  const getSnapshot = useMemo(() => () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE, [form]);
+  const subscribe = useMemo(() => createFormErrorSubscribe(store as FormStoreApi | undefined, stablePath), [store, stablePath]);
+  const getSnapshot = useMemo(() => () => store?.getState() ?? EMPTY_FORM_STORE_STATE, [store]);
   const selector = useCallback(
     (state: FormStoreState): ValidationError[] => {
       const q: FormErrorQuery | undefined = stablePath || stableOwnerPath || stableRule || sourceKindsKey
@@ -242,18 +264,20 @@ export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] 
 
 export function useCurrentFormError(query: FormErrorQuery, options?: { enabled?: boolean }): ValidationError | undefined {
   const form = useCurrentForm();
+  const validationStore = useCurrentValidationStore();
+  const store = form?.store ?? validationStore;
   const enabled = options?.enabled !== false;
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
   const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
   const subscribe = useMemo(
-    () => enabled ? createFormErrorSubscribe(form?.store, stablePath) : () => emptyUnsubscribe,
-    [enabled, form, stablePath]
+    () => enabled ? createFormErrorSubscribe(store as FormStoreApi | undefined, stablePath) : () => emptyUnsubscribe,
+    [enabled, store, stablePath]
   );
   const getSnapshot = useMemo(
-    () => enabled ? () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE,
-    [enabled, form]
+    () => enabled ? () => store?.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE,
+    [enabled, store]
   );
   const selector = useCallback(
     (state: FormStoreState): ValidationError | undefined => {
@@ -268,7 +292,8 @@ export function useCurrentFormError(query: FormErrorQuery, options?: { enabled?:
 
 export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot {
   const form = useCurrentForm();
-  const store: FormStoreApi | undefined = form?.store;
+  const validationStore = useCurrentValidationStore();
+  const store = form?.store ?? validationStore;
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
   const stableRule = query?.rule;
@@ -322,7 +347,8 @@ export function useValidationNodeState(path: string): FormFieldStateSnapshot {
 
 export function useFieldError(path: string): ValidationError | undefined {
   const form = useCurrentForm();
-  const store: FormStoreApi | undefined = form?.store;
+  const validationStore = useCurrentValidationStore();
+  const store = form?.store ?? validationStore;
 
   const subscribe = useCallback(
     (listener: () => void) => {

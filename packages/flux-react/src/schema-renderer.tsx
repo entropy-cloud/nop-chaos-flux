@@ -11,6 +11,7 @@ import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
+  NO_VALIDATION_OWNER,
   PageContext,
   RuntimeContext,
   ScopeContext,
@@ -22,6 +23,16 @@ import { DialogHost } from './dialog-host';
 import { collectSchemaImports } from './node-renderer-utils';
 
 const EMPTY_PREPARED_IMPORTS = new Map<string, import('@nop-chaos/flux-core').PreparedImportSpec>();
+
+function getSingleRootNode(
+  template: import('@nop-chaos/flux-core').CompiledTemplate | null
+): import('@nop-chaos/flux-core').TemplateNode | undefined {
+  if (!template || Array.isArray(template.root)) {
+    return undefined;
+  }
+
+  return template.root as import('@nop-chaos/flux-core').TemplateNode;
+}
 
 export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
   const registry = createRendererRegistry(registryDefinitions);
@@ -90,6 +101,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [runtime]);
 
     const rootScope = props.parentScope ?? page.scope;
+    const rootValidationOwner = props.parentScope ? NO_VALIDATION_OWNER : page.validationOwner;
     const rootActionScope = useMemo(
       () => props.actionScope ?? runtime.createActionScope({ id: 'root-action-scope' }),
       [props.actionScope, runtime]
@@ -177,7 +189,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       };
     }, [runtime, props.schema, props.schemaUrl, props.env, hasSchemaImports]);
 
-    const compiledRoot = useMemo(() => {
+    const compiledRoot = useMemo<import('@nop-chaos/flux-core').CompiledTemplate | null>(() => {
       if (!preparedImports) {
         return null;
       }
@@ -189,6 +201,20 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         preparedImports
       });
     }, [runtime, props.schema, props.schemaUrl, props.env.importLoader, props.env.resolveImportUrl, preparedImports]);
+
+    useEffect(() => {
+      const rootNode = getSingleRootNode(compiledRoot);
+      if (!rootNode) {
+        return;
+      }
+
+      const validationPlan = rootNode.validationPlan;
+      if (!validationPlan) {
+        return;
+      }
+
+      page.validationOwner?.refreshCompiledModel(validationPlan);
+    }, [compiledRoot, page]);
 
     if (prepareError) {
       return null;
@@ -205,7 +231,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
             <ComponentRegistryContext.Provider value={rootComponentRegistry}>
               <ScopeContext.Provider value={renderScope}>
                 <PageContext.Provider value={page}>
-                  <ValidationContext.Provider value={page.validationOwner}>
+                  <ValidationContext.Provider value={rootValidationOwner}>
                     <SurfaceContext.Provider value={surfaceRuntime}>
                       <RenderNodes input={compiledRoot} options={{ scope: renderScope, actionScope: rootActionScope, componentRegistry: rootComponentRegistry }} />
                       <DialogHost />
