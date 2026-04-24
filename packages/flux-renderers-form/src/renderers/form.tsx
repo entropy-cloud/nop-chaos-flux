@@ -140,7 +140,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const currentComponentRegistry = useCurrentComponentRegistry();
   const currentPage = useCurrentPage();
   const parentScope = useRenderScope();
-  const nodeImports = Array.isArray(props.schema['xui:imports']) ? props.schema['xui:imports'] : undefined;
+  const nodeImports = props.templateNode.importsPlan?.preparedImports;
   const bodyContent = resolveRendererSlotContent(props, 'body');
   const actionsContent = resolveRendererSlotContent(props, 'actions');
   const importBindings = useMemo(
@@ -151,7 +151,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     }),
     [runtime, nodeImports, currentActionScope, props.templateNode.schemaUrl, props.path]
   );
-  const importsReady = !nodeImports?.length || Object.keys(importBindings).length === nodeImports.length;
+  const importsReady = true;
 
   const formId = typeof props.props.id === 'string' ? props.props.id : props.id;
   const formName = typeof props.props.name === 'string' ? props.props.name : undefined;

@@ -6,6 +6,30 @@ import { createSchemaRenderer } from './index';
 import { buttonRenderer, dispatchProbeRenderer, env, pageRenderer, scopedHostRenderer, sharedFormulaCompiler, textRenderer } from './test-support';
 
 describe('createSchemaRenderer import basics', () => {
+  it('does not invoke import preload when the schema has no xui imports', async () => {
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () => ({ ok: true })
+        })
+      }))
+    };
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schema={{ type: 'text', text: 'No imports' }}
+        schemaUrl="https://app.local/schema/no-imports.json"
+        env={{ ...env, importLoader }}
+        formulaCompiler={sharedFormulaCompiler}
+      />
+    );
+
+    expect(await screen.findByText('No imports')).toBeTruthy();
+    expect(importLoader.load).not.toHaveBeenCalled();
+  });
+
   it('loads xui imports and dispatches imported namespace actions', async () => {
     const importLoader = {
       load: vi.fn(async () => ({
@@ -38,7 +62,7 @@ describe('createSchemaRenderer import basics', () => {
     fireEvent.click(screen.getByText('Run import action'));
 
     await waitFor(() => {
-      expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' }, expect.any(AbortSignal));
+      expect(importLoader.load).toHaveBeenCalledWith({ from: 'demo-lib', as: 'demo' });
     });
   });
 
@@ -246,7 +270,7 @@ describe('createSchemaRenderer import basics', () => {
       expect(screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length).toBeGreaterThan(0);
     });
     expect(resolveImportUrl).toHaveBeenCalledWith('https://app.local/schema/page.json', './demo-lib.js', undefined);
-    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib.js', as: 'demo' }, expect.any(AbortSignal));
+    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib.js', as: 'demo' });
   });
 
   it('keeps nested imported helpers shadowed by the nearest import frame', async () => {

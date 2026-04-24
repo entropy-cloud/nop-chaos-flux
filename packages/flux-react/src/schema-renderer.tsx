@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   BaseSchema,
   RendererDefinition,
   SchemaRendererProps
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { reportImportFailure } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
@@ -13,10 +14,14 @@ import {
   PageContext,
   RuntimeContext,
   ScopeContext,
-  SurfaceContext
+  SurfaceContext,
+  ValidationContext
 } from './contexts';
 import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers';
 import { DialogHost } from './dialog-host';
+import { collectSchemaImports } from './node-renderer-utils';
+
+const EMPTY_PREPARED_IMPORTS = new Map<string, import('@nop-chaos/flux-core').PreparedImportSpec>();
 
 export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
   const registry = createRendererRegistry(registryDefinitions);
@@ -119,7 +124,79 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       };
     }, [onActionScopeChange, rootActionScope]);
     const renderScope = rootScope;
-    const compiledRoot = useMemo(() => runtime.schemaCompiler.compile(props.schema, { schemaUrl: props.schemaUrl }), [runtime, props.schema, props.schemaUrl]);
+    const hasSchemaImports = useMemo(() => collectSchemaImports(props.schema).length > 0, [props.schema]);
+    const [preparedImports, setPreparedImports] = useState<ReadonlyMap<string, import('@nop-chaos/flux-core').PreparedImportSpec> | null>(
+      hasSchemaImports ? null : EMPTY_PREPARED_IMPORTS
+    );
+    const [prepareError, setPrepareError] = useState<unknown>(null);
+
+    useEffect(() => {
+      let disposed = false;
+
+      setPreparedImports(hasSchemaImports ? null : EMPTY_PREPARED_IMPORTS);
+      setPrepareError(null);
+
+      if (!hasSchemaImports) {
+        return () => {
+          disposed = true;
+        };
+      }
+
+      const prepare = runtime.prepareSchema;
+      if (!prepare) {
+        setPreparedImports(EMPTY_PREPARED_IMPORTS);
+        return;
+      }
+
+      void prepare(props.schema, {
+        schemaUrl: props.schemaUrl,
+      }).then((result) => {
+        if (disposed) {
+          return;
+        }
+        setPreparedImports(result.preparedImports);
+      }).catch((error) => {
+        if (disposed) {
+          return;
+        }
+        if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {
+          console.warn('[flux-react] Schema import preload failed', error);
+        }
+        reportImportFailure({
+          env: props.env,
+          error: error instanceof Error ? error : new Error(String(error)),
+          message: error instanceof Error ? error.message : String(error),
+          phase: 'compile',
+          path: props.schemaUrl
+        });
+        setPrepareError(error);
+      });
+
+      return () => {
+        disposed = true;
+      };
+    }, [runtime, props.schema, props.schemaUrl, props.env, hasSchemaImports]);
+
+    const compiledRoot = useMemo(() => {
+      if (!preparedImports) {
+        return null;
+      }
+
+      return runtime.schemaCompiler.compile(props.schema, {
+        schemaUrl: props.schemaUrl,
+        importLoader: props.env.importLoader,
+        resolveImportUrl: props.env.resolveImportUrl,
+        preparedImports
+      });
+    }, [runtime, props.schema, props.schemaUrl, props.env.importLoader, props.env.resolveImportUrl, preparedImports]);
+
+    if (prepareError) {
+      return null;
+    }
+
+    if (!compiledRoot) {
+      return null;
+    }
 
     return (
       <div data-runtime-id={runtime.runtimeId} className="contents">
@@ -128,10 +205,12 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
             <ComponentRegistryContext.Provider value={rootComponentRegistry}>
               <ScopeContext.Provider value={renderScope}>
                 <PageContext.Provider value={page}>
-                  <SurfaceContext.Provider value={surfaceRuntime}>
-                    <RenderNodes input={compiledRoot} options={{ scope: renderScope, actionScope: rootActionScope, componentRegistry: rootComponentRegistry }} />
-                    <DialogHost />
-                  </SurfaceContext.Provider>
+                  <ValidationContext.Provider value={page.validationOwner}>
+                    <SurfaceContext.Provider value={surfaceRuntime}>
+                      <RenderNodes input={compiledRoot} options={{ scope: renderScope, actionScope: rootActionScope, componentRegistry: rootComponentRegistry }} />
+                      <DialogHost />
+                    </SurfaceContext.Provider>
+                  </ValidationContext.Provider>
                 </PageContext.Provider>
               </ScopeContext.Provider>
             </ComponentRegistryContext.Provider>

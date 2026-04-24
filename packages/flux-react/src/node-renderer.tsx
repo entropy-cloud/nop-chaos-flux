@@ -18,18 +18,13 @@ import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 import {
   ClassAliasesContext,
 } from './contexts';
-import { useRenderInstancePath, useRendererRuntime, useCurrentForm, useCurrentPage, useCurrentSurfaceRuntime, useCurrentImportFrame } from './hooks';
+import { useRenderInstancePath, useRendererRuntime, useCurrentForm, useCurrentPage, useCurrentSurfaceRuntime, useCurrentImportFrame, useCurrentValidationScope } from './hooks';
 import { createHelpers } from './helpers';
 import { createNormalizedActionEvent } from './helpers';
 import { RenderNodes } from './render-nodes';
-import {
-  getNodeClassAliases,
-  getNodeImports
-} from './node-renderer-utils';
 import { NodeFrameWrapper } from './node-frame-wrapper';
 import { createNodeInstance, createTemplateNodeRuntimeState } from './node-instance';
 import { useNodeScopes } from './use-node-scopes';
-import { useNodeImports } from './use-node-imports';
 import { useNodeDebugData } from './use-node-debug-data';
 import { useNodeSourceProps } from './use-node-source-props';
 import { useNodeLifecycleActions, useRenderMonitor } from './node-renderer-effects';
@@ -61,6 +56,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const instancePath = useRenderInstancePath();
   const parentClassAliases = useContext(ClassAliasesContext);
   const currentForm = useCurrentForm();
+  const currentValidationScope = useCurrentValidationScope();
   const currentPage = useCurrentPage();
   const currentSurfaceRuntime = useCurrentSurfaceRuntime();
   const mountedCid = props.mountedCid;
@@ -114,7 +110,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     }
   );
 
-  const nodeClassAliases = useMemo(() => getNodeClassAliases(props.node), [props.node]);
+  const nodeClassAliases = props.node.classAliasesPlan?.aliases;
   const mergedClassAliases = useMemo(
     () => mergeClassAliases(parentClassAliases, nodeClassAliases),
     [parentClassAliases, nodeClassAliases]
@@ -270,18 +266,19 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
 
   const fieldName = typeof props.node.schema.name === 'string' ? props.node.schema.name : undefined;
   const isFieldHidden = Boolean(!finalResolvedMeta.visible || finalResolvedMeta.hidden);
+  const hiddenOwner = currentForm ?? currentValidationScope;
 
   useEffect(() => {
-    if (!currentForm || !fieldName) {
+    if (!hiddenOwner || !fieldName || !('notifyFieldHidden' in hiddenOwner)) {
       return;
     }
 
-    currentForm.notifyFieldHidden(fieldName, isFieldHidden);
+    (hiddenOwner as import('@nop-chaos/flux-core').FormRuntime).notifyFieldHidden(fieldName, isFieldHidden);
 
     return () => {
-      currentForm.notifyFieldHidden(fieldName, false);
+      (hiddenOwner as import('@nop-chaos/flux-core').FormRuntime).notifyFieldHidden(fieldName, false);
     };
-  }, [currentForm, fieldName, isFieldHidden]);
+  }, [hiddenOwner, fieldName, isFieldHidden]);
 
   if (!finalResolvedMeta.visible || finalResolvedMeta.hidden) {
     return null;
@@ -306,7 +303,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       templateNode={props.node}
       nodeInstance={nodeInstance}
       actionScope={activeActionScope}
-      provideActionScope={props.node.component.actionScopePolicy !== 'new' && Boolean(getNodeImports(props.node)?.length)}
+      provideActionScope={props.node.component.actionScopePolicy !== 'new' && Boolean(props.node.importsPlan?.preparedImports.length)}
       componentRegistry={activeComponentRegistry}
       importFrame={props.importFrame}
       scope={renderScope}
@@ -327,7 +324,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
   const instancePath = useRenderInstancePath();
   const parentImportFrame = useCurrentImportFrame();
   const mountedCid = useMountedCid(runtime);
-  const nodeImports = getNodeImports(props.node);
+  const nodeImports = props.node.importsPlan?.preparedImports;
   const importOwnedActionScope = useMemo(() => {
     if (!nodeImports?.length) {
       return undefined;
@@ -356,29 +353,40 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     }),
     [props.node, props.scope, importSetupState, mountedCid, instancePath]
   );
-  const importState = useNodeImports(
-    runtime,
-    nodeImports,
-    parentImportFrame,
-    resolvedActionScope,
-    activeComponentRegistry,
-    props.scope,
-    props.node.schemaUrl ?? props.node.templatePath,
-    importOwnerNodeInstance
+  const importFrame = useMemo(
+    () => nodeImports?.length
+      ? runtime.importStack.installPrepared({
+          ownerNodeId: props.node.id,
+          parentFrame: parentImportFrame,
+          imports: nodeImports,
+          actionScope: resolvedActionScope,
+          componentRegistry: activeComponentRegistry,
+          scope: props.scope,
+          nodeInstance: importOwnerNodeInstance
+        })
+      : parentImportFrame,
+    [runtime, props.node.id, parentImportFrame, nodeImports, resolvedActionScope, activeComponentRegistry, props.scope, importOwnerNodeInstance]
+  );
+  useEffect(() => {
+    return () => {
+      if (importFrame && importFrame !== parentImportFrame) {
+        runtime.importStack.pop(importFrame.id);
+      }
+    };
+  }, [runtime, importFrame, parentImportFrame]);
+  const importBindings = useMemo(
+    () => importFrame ? runtime.importStack.currentBindings(importFrame.id) : {},
+    [runtime, importFrame]
   );
   const renderScope = useMemo(
-    () => Object.keys(importState.expressionBindings).length === 0
+    () => Object.keys(importBindings).length === 0
       ? props.scope
-      : runtime.createChildScope(props.scope, importState.expressionBindings, {
+      : runtime.createChildScope(props.scope, importBindings, {
           pathSuffix: 'imports',
           scopeKey: `${props.node.id}:imports`
         }),
-    [runtime, props.scope, importState.expressionBindings, props.node.id]
+    [runtime, props.scope, importBindings, props.node.id]
   );
-
-  if (!importState.ready) {
-    return null;
-  }
 
   return (
     <NodeErrorBoundary nodeId={props.node.id}>
@@ -387,7 +395,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
         scope={renderScope}
         actionScope={resolvedActionScope}
         componentRegistry={activeComponentRegistry}
-        importFrame={importState.frame}
+        importFrame={importFrame}
         mountedCid={mountedCid}
       />
     </NodeErrorBoundary>
