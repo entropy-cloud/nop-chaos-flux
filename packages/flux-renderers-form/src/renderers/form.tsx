@@ -261,15 +261,17 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm]);
 
   const statusPath = typeof (props.props as FormSchema).statusPath === 'string' ? (props.props as FormSchema).statusPath : undefined;
+  const formMode = (props.props as FormSchema).mode;
+  const formLabelAlign = (props.props as FormSchema).labelAlign;
+  const formLabelWidth = (props.props as FormSchema).labelWidth;
 
   const formLayoutValue = useMemo(() => {
-    const schemaProps = props.props as FormSchema;
     const value: import('@nop-chaos/flux-react').FormLayoutContextValue = {};
-    if (schemaProps.mode) value.mode = schemaProps.mode;
-    if (schemaProps.labelAlign) value.labelAlign = schemaProps.labelAlign;
-    if (schemaProps.labelWidth !== undefined) value.labelWidth = schemaProps.labelWidth;
+    if (formMode) value.mode = formMode;
+    if (formLabelAlign) value.labelAlign = formLabelAlign;
+    if (formLabelWidth !== undefined) value.labelWidth = formLabelWidth;
     return Object.keys(value).length > 0 ? value : undefined;
-  }, [(props.props as FormSchema).mode, (props.props as FormSchema).labelAlign, (props.props as FormSchema).labelWidth]);
+  }, [formLabelAlign, formLabelWidth, formMode]);
 
   useEffect(() => {
     if (!statusPath || !parentScope) {
