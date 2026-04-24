@@ -472,6 +472,99 @@ describe('CRUD renderer', () => {
     });
   });
 
+  it('publishes pagination, sort, and filter summary through $crud', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-summary-publication"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              source: [{ id: '1', name: 'Alice', status: 'active' }],
+              paginationOwnership: 'scope',
+              paginationStatePath: 'crudState.pagination',
+              sortOwnership: 'scope',
+              sortStatePath: 'crudState.sort',
+              filterOwnership: 'scope',
+              filterStatePath: 'crudState.filters',
+              footerToolbar: [
+                {
+                  type: 'text',
+                  text: 'Summary: page=${$crud.pagination.currentPage}/${$crud.pagination.pageSize}; sort=${$crud.sort.field || "none"}:${$crud.sort.order || "none"}; filter=${$crud.filters.status || "none"}',
+                },
+              ],
+              columns: [{ name: 'name', label: 'Name' }],
+            },
+          ],
+        }}
+        data={{
+          crudState: {
+            pagination: { currentPage: 3, pageSize: 20 },
+            sort: { field: 'name', order: 'asc' },
+            filters: { status: 'active' },
+          },
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Summary: page=3/20; sort=name:asc; filter=active')).toBeTruthy();
+    });
+  });
+
+  it('keeps operation column interactions working inside CRUD tables', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-operation-column"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              source: [{ id: '1', name: 'Alice' }, { id: '2', name: 'Bob' }],
+              columns: [
+                { name: 'name', label: 'Name' },
+                {
+                  type: 'operation',
+                  label: 'Actions',
+                  buttons: [
+                    {
+                      type: 'button',
+                      label: 'Inspect',
+                      onClick: {
+                        action: 'openDialog',
+                        args: {
+                          title: 'Inspect record',
+                          body: [{ type: 'text', text: 'User: ${$slot.record.name}' }],
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    const inspectButtons = screen.getAllByText('Inspect');
+    fireEvent.click(inspectButtons[1]);
+
+    expect(await screen.findByText('Inspect record')).toBeTruthy();
+  });
+
   it('renders footer toolbar and toolbar layout blocks', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
