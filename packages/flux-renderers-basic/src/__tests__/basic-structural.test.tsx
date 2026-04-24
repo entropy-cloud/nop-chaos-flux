@@ -45,6 +45,17 @@ describe('basicRendererDefinitions structural rendering', () => {
     cleanup();
   });
 
+  it('inherits enclosing loop bindings for recurse when not overridden', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer([scopeProbeRenderer]);
+    render(<SchemaRenderer schemaUrl="test://basic/structural" schema={{ type: 'page', body: [{ type: 'loop', items: '${nodes}', itemName: 'node', indexName: 'nodeIndex', keyName: 'nodeKey', keyBy: 'item.id', body: [{ type: 'scope-probe', testid: 'node-probe', value: '${$slot.node.label + ":" + $slot.nodeIndex + ":" + $slot.nodeKey}' }, { type: 'fragment', when: '${$slot.node.children && $slot.node.children.length > 0}', body: [{ type: 'recurse', items: '${$slot.node.children}' }] }] }] }} data={{ nodes: [{ id: 'root', label: 'Root', children: [{ id: 'child', label: 'Child', children: [] }] }] }} env={env} formulaCompiler={formulaCompiler} />);
+    await waitFor(() => {
+      const texts = screen.getAllByTestId('node-probe').map((node) => node.textContent ?? '');
+      expect(texts.some((text) => text.includes('Root:0:root'))).toBe(true);
+      expect(texts.some((text) => text.includes('Child:0:child'))).toBe(true);
+    });
+    cleanup();
+  });
+
   it('stops recurse when maxDepth is reached', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     render(<SchemaRenderer schemaUrl="test://basic/structural" schema={{ type: 'page', body: [{ type: 'loop', items: '${nodes}', body: [{ type: 'text', text: '${$slot.item.label}' }, { type: 'fragment', when: '${$slot.item.children && $slot.item.children.length > 0}', body: [{ type: 'recurse', items: '${$slot.item.children}', maxDepth: 1 }] }] }] }} data={{ nodes: [{ label: 'Root', children: [{ label: 'Child', children: [{ label: 'Grandchild', children: [] }] }] }] }} env={env} formulaCompiler={formulaCompiler} />);
