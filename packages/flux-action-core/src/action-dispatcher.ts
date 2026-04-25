@@ -14,6 +14,7 @@ import type {
   RendererPlugin,
   RendererRuntime
 } from '@nop-chaos/flux-core';
+import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import { compileActions } from '@nop-chaos/flux-compiler';
 import { withRetry, withTimeout } from './operation-control';
 import {
@@ -136,6 +137,28 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
     };
   }
 
+  function evaluateSurfaceArgs(
+    action: CompiledActionNode,
+    ctx: ActionContext
+  ): Record<string, unknown> | undefined {
+    const rawArgs = action.source.args;
+
+    if (!rawArgs || typeof rawArgs !== 'object' || Array.isArray(rawArgs)) {
+      return evaluateActionArgs(action, ctx, evaluator);
+    }
+
+    const evaluated = evaluateActionArgs(action, ctx, evaluator) ?? {};
+    const result: Record<string, unknown> = { ...evaluated };
+
+    for (const [key, value] of Object.entries(rawArgs)) {
+      if (isSchema(value) || isSchemaArray(value as unknown[])) {
+        result[key] = value;
+      }
+    }
+
+    return result;
+  }
+
   function finishAction(
     actionPayload: ActionMonitorPayload,
     startedAt: number,
@@ -242,7 +265,7 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
         break;
       }
       case 'openDialog': {
-        const dialog = evaluateActionArgs(action, ctx, evaluator);
+        const dialog = evaluateSurfaceArgs(action, ctx);
         if (!dialog) {
           return finishAction(
             { ...actionPayload, dispatchMode: 'built-in' },
@@ -260,7 +283,7 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
         break;
       }
       case 'openDrawer': {
-        const drawer = evaluateActionArgs(action, ctx, evaluator);
+        const drawer = evaluateSurfaceArgs(action, ctx);
         if (!drawer) {
           return finishAction(
             { ...actionPayload, dispatchMode: 'built-in' },
@@ -344,10 +367,9 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
             { ok: false, error: new Error('submit requires form runtime') }
           );
         }
-        const api = evaluateActionArgs(action, ctx, evaluator);
         invocation = {
           action: 'submitForm',
-          args: api,
+          args: undefined,
           targeting: action.targeting,
           actionNode: action,
           signal
