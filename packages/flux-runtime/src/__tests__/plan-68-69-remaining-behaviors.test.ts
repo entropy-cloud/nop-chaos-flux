@@ -74,7 +74,6 @@ function makeRuntime(
 ) {
   const parentStore = createScopeStore(initialValues);
   const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
-  const submitApi = vi.fn().mockResolvedValue({ ok: true });
 
   const runtime = createManagedFormRuntime({
     id: 'test-form',
@@ -82,11 +81,10 @@ function makeRuntime(
     parentScope,
     validation,
     validateRule: realValidateRule,
-    executeValidationRule: vi.fn().mockResolvedValue(undefined),
-    submitApi
+    executeValidationRule: vi.fn().mockResolvedValue(undefined)
   });
 
-  return { runtime, submitApi };
+  return { runtime };
 }
 
 describe('isOwnerCompatible', () => {

@@ -39,13 +39,10 @@ describe('audit-backed runtime fixes', () => {
       parentScope: createStubScope(),
       lifecycle: { onSubmitError },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => {
-        throw new Error('server exploded');
-      }
+      validateRule: () => undefined
     });
 
-    const result = await form.submit({ url: '/api/submit', method: 'post' });
+    const result = await form.submit();
 
     expect(onSubmitError).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({
@@ -110,7 +107,7 @@ describe('audit-backed runtime fixes', () => {
             rules: [
               {
                 id: 'email#0:async',
-                rule: { kind: 'async', api: { url: '/api/validate-email', method: 'post' } },
+                rule: { kind: 'async', action: { action: 'ajax', args: { url: '/api/validate-email', method: 'post' } } },
                 dependencyPaths: []
               }
             ],

@@ -42,7 +42,7 @@ import { createNodeRuntime } from './node-runtime';
 import { createRuntimeNodeResolver } from './node-resolver';
 import { createManagedPageRuntime } from './page-runtime';
 import { createRuntimeReactionRegistry } from './async-data/reaction-runtime';
-import { createApiRequestExecutor, executeApiSchema } from './async-data/request-runtime';
+import { createApiRequestExecutor } from './async-data/request-runtime';
 import { executeRuntimeValidationRule } from './runtime-action-helpers';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers';
 import { sortRendererPlugins } from './runtime-plugins';
@@ -179,6 +179,8 @@ export function createRendererRuntime(input: {
 
   const evalCtx = { getEnv, expressionCompiler, evaluate, executeApiRequest };
 
+  const actionDispatcherRef: { current?: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
+
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
     const externalPageStore = input.pageStore;
     const initialData = externalPageStore?.getState().data ?? data;
@@ -297,10 +299,14 @@ export function createRendererRuntime(input: {
       scopePath: inputValue.scopePath,
       scopeBinding: 'none',
       executeValidationRule: (compiledRule, rule, field, validationScope, signal) =>
-        executeRuntimeValidationRule(compiledRule, rule, field, validationScope, signal, evalCtx),
+        executeRuntimeValidationRule(compiledRule, rule, field, validationScope, signal, {
+          dispatch: (action, ctx) => {
+            if (!actionDispatcherRef.current) throw new Error('Action dispatcher not initialized');
+            return actionDispatcherRef.current(action, ctx);
+          }
+        }),
       validateRule: (compiledRule, value, field, validationScope) =>
-        validateRule(compiledRule, value, field, validationScope, validationRegistry),
-      submitApi: async () => ({ ok: true, error: undefined, data: undefined })
+        validateRule(compiledRule, value, field, validationScope, validationRegistry)
     });
   }
 
@@ -328,28 +334,13 @@ export function createRendererRuntime(input: {
     return createManagedFormRuntime({
       ...inputValue,
       executeValidationRule: (compiledRule, rule, field, scope, signal) =>
-        executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, evalCtx),
-      validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry),
-      submitApi: async (api, scope, options) => {
-        const response = await executeApiSchema(api, scope, getEnv(), expressionCompiler, {
-          signal: options?.signal,
-          evaluate,
-          executor: (adaptedApi) => executeApiRequest('submitForm', adaptedApi, scope, undefined, {
-            signal: options?.signal,
-            interactionId: options?.interactionId,
-            control: options?.control
-          }),
-          control: options?.control
-        });
-
-        return {
-          ok: true,
-          data: response.data,
-          attempts: response.attempts,
-          failureCount: response.failureCount,
-          error: undefined
-        };
-      }
+        executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, {
+          dispatch: (action, ctx) => {
+            if (!actionDispatcherRef.current) throw new Error('Action dispatcher not initialized');
+            return actionDispatcherRef.current(action, ctx);
+          }
+        }),
+      validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry)
     });
   }
 
@@ -673,6 +664,8 @@ export function createRendererRuntime(input: {
     adapter,
     runtime
   });
+
+  actionDispatcherRef.current = (action, ctx) => actionDispatcher.dispatch(action, ctx as ActionContext);
 
   sourceRegistryRef.current = createRuntimeSourceRegistry({
     runtime,

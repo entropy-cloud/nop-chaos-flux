@@ -30,6 +30,13 @@ describe('scopeChangeHitsDependencies', () => {
     )).toBe(false);
   });
 
+  it('does not invalidate when no dependency set is tracked', () => {
+    expect(scopeChangeHitsDependencies(
+      { paths: ['note'], sourceScopeId: 'scope', kind: 'update' },
+      undefined
+    )).toBe(false);
+  });
+
   it('filters ignored self roots before dependency matching', () => {
     expect(filterScopeChangeByIgnoredRoots(
       { paths: ['payload.total', 'note'], sourceScopeId: 'scope', kind: 'merge', revision: 7 },

@@ -56,7 +56,6 @@ export interface AjaxActionSchema extends ActionShapeFields {
 
 export interface SubmitFormActionSchema extends ActionShapeFields {
   action: 'submitForm';
-  args: ApiSchema;
 }
 
 export interface OpenDialogActionSchema extends ActionShapeFields {

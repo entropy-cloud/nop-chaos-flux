@@ -1,5 +1,4 @@
 import type {
-  ApiSchema,
   ApplyExternalErrorsInput,
   ApplyScopeChangesInput,
   ChildValidationContractRegistration,
@@ -369,7 +368,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       store.setPathErrors(path);
     },
 
-    async submit(api?: ApiSchema, options?: { interactionId?: string; signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) {
+    async submit(options?: { interactionId?: string; signal?: AbortSignal }) {
       return executeFormSubmit(
         {
           sharedState,
@@ -380,10 +379,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           setIsSubmitting: (v) => { isSubmittingInternal = v; },
           getLifecycleHandlers: () => lifecycleHandlers,
           getCurrentValidation: () => currentValidation,
-          submitApiCall: (a, opts) => inputValue.submitApi(a, scope, opts),
           validateForm: (reason) => thisForm.validateForm(reason as import('@nop-chaos/flux-core').ValidationReason | undefined)
         },
-        api,
         options
       );
     },

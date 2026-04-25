@@ -1,4 +1,4 @@
-import type { ScopeRef } from '@nop-chaos/flux-core';
+import { getIn, parsePath, type ScopeRef } from '@nop-chaos/flux-core';
 import { createProjectedScopeStore } from './projected-scope-store';
 
 export function publishOwnerStatus<TSummary>(scope: ScopeRef | undefined, statusPath: string | undefined, summary: TSummary): void {
@@ -28,13 +28,29 @@ export function createReadonlyScopeBinding<TSummary>(scope: ScopeRef, bindingKey
     ...scope,
     store,
     get(path) {
-      if (path === bindingKey) {
-        return getSummary();
+      const segments = parsePath(path);
+
+      if (segments[0] === bindingKey) {
+        if (segments.length === 1) {
+          return getSummary();
+        }
+
+        return getIn(getSummary(), segments.slice(1).join('.'));
       }
 
       return scope.get(path);
     },
     has(path) {
+      const segments = parsePath(path);
+
+      if (segments[0] === bindingKey) {
+        if (segments.length === 1) {
+          return true;
+        }
+
+        return getIn(getSummary(), segments.slice(1).join('.')) !== undefined;
+      }
+
       if (path === bindingKey) {
         return true;
       }

@@ -1,7 +1,5 @@
 import type { ActionResult } from './actions';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
-import type { ApiSchema } from './schema';
-import type { OperationControlConfig } from './schema';
 import type { NodeInstance, TemplateNode } from './node-identity';
 import type { ScopeRef } from './scope';
 import type {
@@ -317,7 +315,7 @@ export interface FormRuntime extends ValidationScopeRuntime {
   touchField(path: string): void;
   visitField(path: string): void;
   clearErrors(path?: string): void;
-  submit(api?: ApiSchema, options?: { interactionId?: string; signal?: AbortSignal; control?: OperationControlConfig }): Promise<ActionResult>;
+  submit(options?: { interactionId?: string; signal?: AbortSignal }): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
   setValues(values: Record<string, unknown>): void;

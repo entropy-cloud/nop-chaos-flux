@@ -1,8 +1,6 @@
 import type {
-  ApiSchema,
   FieldState,
   FormValidationResult,
-  OperationControlConfig,
   ActionResult,
   ValidationReason
 } from '@nop-chaos/flux-core';
@@ -23,7 +21,6 @@ export interface SubmitFormInput {
   setIsSubmitting: (value: boolean) => void;
   getLifecycleHandlers: () => import('@nop-chaos/flux-core').FormLifecycleHandlers | undefined;
   getCurrentValidation: () => import('@nop-chaos/flux-core').CompiledFormValidationModel | undefined;
-  submitApiCall: (api: ApiSchema, options?: { interactionId?: string; signal?: AbortSignal; control?: OperationControlConfig }) => Promise<import('@nop-chaos/flux-core').ActionResult>;
   validateForm: (reason?: ValidationReason) => Promise<FormValidationResult>;
 }
 
@@ -56,8 +53,7 @@ function extractTouchedPaths(fieldStates: Record<string, FieldState>): Record<st
 
 export async function executeFormSubmit(
   input: SubmitFormInput,
-  api?: ApiSchema,
-  options?: { interactionId?: string; signal?: AbortSignal; control?: OperationControlConfig }
+  options?: { interactionId?: string; signal?: AbortSignal }
 ): Promise<import('@nop-chaos/flux-core').ActionResult> {
   const {
     sharedState,
@@ -68,7 +64,6 @@ export async function executeFormSubmit(
     setIsSubmitting,
     getLifecycleHandlers,
     getCurrentValidation,
-    submitApiCall,
     validateForm
   } = input;
 
@@ -197,9 +192,7 @@ export async function executeFormSubmit(
   const submitLifecycleAction = lifecycleHandlers?.submitAction;
   const executeSubmit = submitLifecycleAction
     ? () => submitLifecycleAction(options)
-    : api
-      ? () => submitApiCall(api, options)
-      : () => Promise.resolve({ ok: true, data: store.getState().values });
+    : () => Promise.resolve({ ok: true, data: store.getState().values });
 
   if (options?.signal?.aborted) {
     return { ok: false, cancelled: true, error: new Error('Submit aborted') };

@@ -1,13 +1,10 @@
 import type {
-  ActionResult,
   AsyncGovernanceStore,
-  ApiSchema,
   CompiledFormValidationField,
   CompiledFormValidationModel,
   CompiledValidationRule,
   FormLifecycleHandlers,
   FormStoreApi,
-  OperationControlConfig,
   PageRuntime,
   RuntimeFieldRegistration,
   ScopeRef,
@@ -44,7 +41,6 @@ export interface CreateManagedFormRuntimeInput {
     field: CompiledFormValidationField,
     scope: ScopeRef
   ) => ValidationError | undefined;
-  submitApi: (api: ApiSchema, scope: ScopeRef, options?: { interactionId?: string; signal?: AbortSignal; control?: OperationControlConfig }) => Promise<ActionResult>;
 }
 
 export interface InitialFieldState {

@@ -60,8 +60,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         dependents: {}
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     let commits = 0;
@@ -84,8 +83,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       initialValues: {},
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     let commits = 0;
@@ -134,8 +132,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         }
 
         return undefined;
-      },
-      submitApi: async () => ({ ok: true, data: {} })
+      }
     });
 
     await form.validateForm();
@@ -157,8 +154,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       initialValues: { name: '', role: 'viewer' },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     form.store.setPathErrors('name', [err('name', 'Required')]);

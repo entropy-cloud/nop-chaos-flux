@@ -93,7 +93,7 @@ export function scopeChangeHitsDependencies(
   dependencies: ScopeDependencySet | undefined
 ): boolean {
   if (!change || !dependencies) {
-    return true;
+    return false;
   }
 
   if (dependencies.wildcard || change.paths.includes('*')) {

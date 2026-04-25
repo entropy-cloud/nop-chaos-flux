@@ -315,4 +315,5 @@ describe('createRendererRuntime', () => {
       registration.dispose();
     }
   });
+
 });

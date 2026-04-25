@@ -62,8 +62,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
           return err('name', 'Name is required');
         }
         return undefined;
-      },
-      submitApi: async () => ({ ok: true, data: {} })
+      }
     });
 
     // Pre-set errors for paths outside the validation traversal
@@ -117,8 +116,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
           return err('name', 'Name is required');
         }
         return undefined;
-      },
-      submitApi: async () => ({ ok: true, data: {} })
+      }
     });
 
     const result = await form.validateForm();
@@ -163,8 +161,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
           return err('name', 'Name is required');
         }
         return undefined;
-      },
-      submitApi: async () => ({ ok: true, data: {} })
+      }
     });
 
     form.registerField({
@@ -208,8 +205,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
         dependents: {}
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     // Override the compiled field's validateRule to make it pass (return no error)
@@ -240,8 +236,6 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
   });
 
   it('should block submit when validateForm keeps side-effect errors in the store', async () => {
-    let submitCount = 0;
-
     const form = createManagedFormRuntime({
       id: 'test-form',
       initialValues: { name: '' },
@@ -263,11 +257,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
         dependents: {}
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => {
-        submitCount++;
-        return { ok: true, data: {} };
-      }
+      validateRule: () => undefined
     });
 
     form.registerField({
@@ -279,10 +269,9 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       }
     });
 
-    const result = await form.submit({ url: '/api/submit', method: 'post' });
+    const result = await form.submit();
 
     expect(result.ok).toBe(false);
-    expect(submitCount).toBe(0);
     expect(form.store.getState().fieldStates['name.confirm']?.errors).toEqual([err('name.confirm', 'Confirm does not match')]);
   });
 
@@ -334,8 +323,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       validateRule: (_compiledRule, value, field) => {
         callOrder.push(`validate:${field.path}`);
         return value === '' ? err(field.path, `${field.path} required`) : undefined;
-      },
-      submitApi: async () => ({ ok: true, data: {} })
+      }
     });
 
     await form.validateForm();
@@ -383,8 +371,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
         }
 
         return undefined;
-      },
-      submitApi: async () => ({ ok: true, data: {} })
+      }
     });
 
     await form.validateForm();

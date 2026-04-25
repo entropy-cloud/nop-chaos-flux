@@ -59,10 +59,13 @@ describe('createRendererRuntime', () => {
             rules: [
               compiledRule({
                 kind: 'async',
-                api: {
-                  method: 'post',
-                  url: '/api/validate-username',
-                  requestAdaptor: 'return {data: {username: scope.username}};'
+                action: {
+                  action: 'ajax',
+                  args: {
+                    method: 'post',
+                    url: '/api/validate-username',
+                    requestAdaptor: 'return {data: {username: scope.username}};'
+                  }
                 },
                 message: 'Username already exists'
               }, 'username')
@@ -76,10 +79,7 @@ describe('createRendererRuntime', () => {
       }
     });
 
-    const result = await form.submit({
-      method: 'post',
-      url: '/api/users'
-    });
+    const result = await form.submit();
 
     expect(result.ok).toBe(false);
     expect(fetchCalls).toHaveLength(1);
@@ -125,9 +125,12 @@ describe('createRendererRuntime', () => {
             rules: [
               compiledRule({
                 kind: 'async',
-                api: {
-                  method: 'post',
-                  url: '/api/validate-username'
+                action: {
+                  action: 'ajax',
+                  args: {
+                    method: 'post',
+                    url: '/api/validate-username'
+                  }
                 }
               }, 'username')
             ],
@@ -196,9 +199,12 @@ describe('createRendererRuntime', () => {
             rules: [
               compiledRule({
                 kind: 'async',
-                api: {
-                  method: 'post',
-                  url: '/api/validate-username'
+                action: {
+                  action: 'ajax',
+                  args: {
+                    method: 'post',
+                    url: '/api/validate-username'
+                  }
                 },
                 message: 'Username already exists'
               }, 'username')
@@ -288,9 +294,12 @@ describe('createRendererRuntime', () => {
                 compiledRule({
                   kind: 'async',
                   debounce: 50,
-                  api: {
-                    method: 'post',
-                    url: '/api/validate-username'
+                  action: {
+                    action: 'ajax',
+                    args: {
+                      method: 'post',
+                      url: '/api/validate-username'
+                    }
                   }
                 }, 'username')
               ],
@@ -352,9 +361,12 @@ describe('createRendererRuntime', () => {
           rules: [
             compiledRule({
               kind: 'async',
-              api: {
-                method: 'post',
-                url: '/api/validate-username'
+              action: {
+                action: 'ajax',
+                args: {
+                  method: 'post',
+                  url: '/api/validate-username'
+                }
               }
             }, 'username')
           ],

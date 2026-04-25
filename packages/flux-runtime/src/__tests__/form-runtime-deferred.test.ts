@@ -64,8 +64,7 @@ function createUniqueByForm() {
       dependents: {}
     },
     executeValidationRule: async () => undefined,
-    validateRule: realValidateRule,
-    submitApi: async () => ({ ok: true, data: {} })
+    validateRule: realValidateRule
   });
 }
 

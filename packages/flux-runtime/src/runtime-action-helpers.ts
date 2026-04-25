@@ -10,7 +10,8 @@ import type {
   RendererEnv,
   ScopeRef,
   ValidationError,
-  ValidationRule
+  ValidationRule,
+  ActionSchema
 } from '@nop-chaos/flux-core';
 import { resolveRequestControl } from '@nop-chaos/flux-action-core';
 import { isAbortError } from './error-utils';
@@ -26,19 +27,16 @@ export async function executeRuntimeValidationRule(
   scope: ScopeRef,
   signal: AbortSignal | undefined,
   ctx: {
-    getEnv: () => RendererEnv;
-    expressionCompiler: ExpressionCompiler;
-    evaluate: RuntimeEvalHelpers['evaluate'];
-    executeApiRequest: ApiRequestExecutor;
+    dispatch: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
   }
 ): Promise<ValidationError | undefined> {
   try {
-    const response = await executeApiSchema(rule.api, scope, ctx.getEnv(), ctx.expressionCompiler, {
-      signal,
-      evaluate: ctx.evaluate,
-      executor: (adaptedApi) => ctx.executeApiRequest(`validate:${field.path}`, adaptedApi, scope, undefined, { signal })
+    const result = await ctx.dispatch(rule.action, {
+      scope,
+      signal
     });
-    const adaptedData = response.data;
+
+    const adaptedData = result.data;
 
     if (adaptedData && typeof adaptedData === 'object') {
       const candidate = adaptedData as { valid?: boolean; message?: string };

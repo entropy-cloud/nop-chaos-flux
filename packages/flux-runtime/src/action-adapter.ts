@@ -137,24 +137,9 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: false, error: new Error('submitForm requires form runtime') };
           }
 
-          const apiSchema = invocation.args as ApiSchema | undefined;
-          if (apiSchema) {
-            getEnv().monitor?.onApiRequest?.({
-              api: {
-                url: apiSchema.url,
-                method: apiSchema.method,
-                data: apiSchema.data,
-                headers: apiSchema.headers
-              },
-              nodeId: ctx.nodeInstance?.templateNode.id,
-              path: ctx.nodeInstance?.templateNode.templatePath
-            });
-          }
-
-          return ctx.form.submit(apiSchema, {
+          return ctx.form.submit({
             interactionId: ctx.interactionId,
-            signal: invocation.signal,
-            control: resolveRequestControl(invocation.actionNode)
+            signal: invocation.signal
           });
         }
 

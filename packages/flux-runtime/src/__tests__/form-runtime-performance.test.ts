@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import type { ApiSchema, ScopeRef, ValidationError } from '@nop-chaos/flux-core';
+import type { ScopeRef, ValidationError } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime';
 
 function createStubScope(): ScopeRef {
@@ -38,7 +38,7 @@ function createAsyncValidationModel() {
         rules: [
           {
             id: 'name#0:async',
-            rule: { kind: 'async' as const, api: { url: '/validate', method: 'post' } },
+            rule: { kind: 'async' as const, action: { action: 'ajax', args: { url: '/validate', method: 'post' } } },
             dependencyPaths: []
           }
         ],
@@ -76,8 +76,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         });
         return undefined;
       },
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     const promise = form.validateField('name');
@@ -105,8 +104,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         });
         return undefined;
       },
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     const promise = form.validateField('name');
@@ -131,16 +129,10 @@ describe('FormRuntime performance-oriented behavior', () => {
       parentScope: createStubScope(),
       submittingDelay: 20,
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => {
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 5);
-        });
-        return { ok: true, data: { saved: true } };
-      }
+      validateRule: () => undefined
     });
 
-    const promise = form.submit({ url: '/api/submit', method: 'post' });
+    const promise = form.submit();
     expect(form.store.getState().submitting).toBe(false);
 
     await vi.advanceTimersByTimeAsync(5);
@@ -158,16 +150,10 @@ describe('FormRuntime performance-oriented behavior', () => {
       parentScope: createStubScope(),
       submittingDelay: 20,
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => {
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 50);
-        });
-        return { ok: true, data: { saved: true } };
-      }
+      validateRule: () => undefined
     });
 
-    const promise = form.submit({ url: '/api/submit', method: 'post' });
+    const promise = form.submit();
 
     await vi.advanceTimersByTimeAsync(19);
     expect(form.store.getState().submitting).toBe(false);
@@ -185,7 +171,6 @@ describe('FormRuntime performance-oriented behavior', () => {
     vi.useFakeTimers();
 
     let resolveApi: (() => void) | undefined;
-    let apiCallCount = 0;
 
     const form = createManagedFormRuntime({
       id: 'test-form',
@@ -193,22 +178,13 @@ describe('FormRuntime performance-oriented behavior', () => {
       parentScope: createStubScope(),
       submittingDelay: 20,
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => {
-        apiCallCount += 1;
-        await new Promise<void>((resolve) => {
-          resolveApi = resolve;
-        });
-        return { ok: true, data: {} };
-      }
+      validateRule: () => undefined
     });
 
-    const api: ApiSchema = { url: '/api/submit', method: 'post' };
-    const first = form.submit(api);
-    const second = form.submit(api);
+    const first = form.submit();
+    const second = form.submit();
 
     await Promise.resolve();
-    expect(apiCallCount).toBe(1);
     expect(form.store.getState().submitting).toBe(false);
 
     await expect(second).resolves.toMatchObject({
@@ -268,8 +244,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         }
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     expect(form.getField('user.name')?.path).toBe('user.name');
@@ -284,8 +259,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       initialValues: { name: '' },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     form.store.setPathErrors('name', [err('name', 'Required')]);
@@ -309,8 +283,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     form.store.setPathErrors('list.1.name', [err('list.1.name', 'Bad')]);
@@ -341,8 +314,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     form.store.setPathErrors('list.1.name', [err('list.1.name', 'Bad')]);
@@ -384,8 +356,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         dependents: {}
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     form.registerField({
@@ -420,8 +391,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         });
         return err('name', 'Remote invalid', 'async');
       },
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     let commits = 0;
@@ -446,8 +416,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       initialValues: { email: '' },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined,
-      submitApi: async () => ({ ok: true, data: {} })
+      validateRule: () => undefined
     });
 
     form.registerField({

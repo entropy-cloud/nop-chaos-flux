@@ -62,7 +62,6 @@ function makeRuntime(
 
   const validateRule = vi.fn().mockReturnValue(undefined);
   const executeValidationRule = vi.fn().mockResolvedValue(undefined);
-  const submitApi = vi.fn().mockResolvedValue({ ok: true });
 
   const runtime = createManagedFormRuntime({
     id: 'test-form',
@@ -70,8 +69,7 @@ function makeRuntime(
     parentScope,
     validation,
     validateRule,
-    executeValidationRule,
-    submitApi
+    executeValidationRule
   });
 
   return { runtime, validateRule };

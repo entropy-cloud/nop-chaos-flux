@@ -70,7 +70,6 @@ function makeRuntime(
 
   const validateRule = vi.fn().mockReturnValue(undefined);
   const executeValidationRule = vi.fn().mockResolvedValue(undefined);
-  const submitApi = vi.fn().mockResolvedValue({ ok: true });
 
   const runtime = createManagedFormRuntime({
     id: 'test-form',
@@ -78,8 +77,7 @@ function makeRuntime(
     parentScope,
     validation,
     validateRule,
-    executeValidationRule,
-    submitApi
+    executeValidationRule
   });
 
   return { runtime, validateRule, executeValidationRule };
@@ -93,7 +91,6 @@ function makeRuntimeReal(
   const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
 
   const executeValidationRule = vi.fn().mockResolvedValue(undefined);
-  const submitApi = vi.fn().mockResolvedValue({ ok: true });
 
   const runtime = createManagedFormRuntime({
     id: 'test-form',
@@ -101,8 +98,7 @@ function makeRuntimeReal(
     parentScope,
     validation,
     validateRule: realValidateRule,
-    executeValidationRule,
-    submitApi
+    executeValidationRule
   });
 
   return { runtime, executeValidationRule };
@@ -129,8 +125,7 @@ describe('FieldRegistrationHandle - registrationId identity', () => {
       id: 'test-form',
       parentScope,
       validateRule,
-      executeValidationRule: vi.fn().mockResolvedValue(undefined),
-      submitApi: vi.fn().mockResolvedValue({ ok: true })
+      executeValidationRule: vi.fn().mockResolvedValue(undefined)
     });
 
     const handle = runtime.registerField({
@@ -437,7 +432,7 @@ describe('refreshCompiledModel', () => {
         path: 'email',
         kind: 'field',
         controlType: 'input-text',
-        rules: [{ id: 'email#async', rule: { kind: 'async', api: { url: '/check' } }, dependencyPaths: [] }],
+        rules: [{ id: 'email#async', rule: { kind: 'async', action: { action: 'ajax', args: { url: '/check' } } }, dependencyPaths: [] }],
         behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
         children: [],
         parent: ''
@@ -449,8 +444,7 @@ describe('refreshCompiledModel', () => {
       parentScope,
       validation: asyncModel,
       validateRule,
-      executeValidationRule,
-      submitApi: vi.fn().mockResolvedValue({ ok: true })
+      executeValidationRule
     });
 
     const validatePromise = runtime.validateField('email');
