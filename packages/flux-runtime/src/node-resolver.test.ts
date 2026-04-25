@@ -132,6 +132,44 @@ describe('node identity contracts', () => {
     expect(componentRegistry.getHandleByCid?.(20)).toBeUndefined();
   });
 
+  it('parent registry can inspect child registry debug data by cid', () => {
+    const parentRegistry = createComponentHandleRegistry({ id: 'parent-components' });
+    parentRegistry.setDebugEnabled?.(true);
+    const childRegistry = createComponentHandleRegistry({ id: 'child-components', parent: parentRegistry });
+    childRegistry.setDebugEnabled?.(true);
+
+    childRegistry.setHandleDebugData?.(9, {
+      nodeId: 'username-field',
+      path: '$.body[1].body[0]',
+      rendererType: 'input-text',
+      scope: {
+        id: 'form-scope',
+        path: '$form',
+        get: () => undefined,
+        has: () => false,
+        readOwn: () => ({ username: 'alice' }),
+        readVisible: () => ({ username: 'alice' }),
+        materializeVisible: () => ({ username: 'alice' }),
+        update: () => undefined,
+        merge: () => undefined,
+      } as any,
+      resolvedMeta: { visible: true, hidden: false, disabled: false, changed: true, cid: 9 } as any,
+      resolvedProps: { name: 'username', label: 'Username' },
+      updatedAt: Date.now()
+    });
+
+    expect(parentRegistry.getHandleDebugData?.(9)).toMatchObject({
+      nodeId: 'username-field',
+      resolvedProps: { name: 'username' }
+    });
+    expect(parentRegistry.inspectCid?.(9)).toMatchObject({
+      kind: 'resolved',
+      payload: {
+        resolvedProps: { name: 'username', label: 'Username' }
+      }
+    });
+  });
+
   it('resolveTarget returns nodeInstance from component debug data when cid resolves', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
