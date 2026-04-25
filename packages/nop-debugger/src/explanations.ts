@@ -185,7 +185,19 @@ export function explainNodeValue(args: {
       path: inspect.path
     });
   } else {
-    if (sourceHints?.fieldName === field && sourceHints.formValue !== undefined) {
+    const directScopeHit = inspect.scopeData && Object.prototype.hasOwnProperty.call(inspect.scopeData, field);
+    if (directScopeHit) {
+      value = inspect.scopeData?.[field];
+      valueSource = 'current-scope';
+      scopeLabel = inspect.scopeChain?.[0] ? summarizeScopeEntry(inspect.scopeChain[0]) : undefined;
+      truncated ||= pushEvidence(evidenceRefs, {
+        kind: 'scope',
+        summary: `${field} resolved from current scope snapshot`,
+        cid: inspect.cid,
+        nodeId: inspect.nodeId,
+        path: inspect.path
+      });
+    } else if (sourceHints?.fieldName === field && sourceHints.formValue !== undefined) {
       value = sourceHints.formValue;
       valueSource = 'form-state';
       truncated ||= pushEvidence(evidenceRefs, {
@@ -201,19 +213,6 @@ export function explainNodeValue(args: {
       truncated ||= pushEvidence(evidenceRefs, {
         kind: 'scope',
         summary: `${field} resolved from source hint scope value`,
-        cid: inspect.cid,
-        nodeId: inspect.nodeId,
-        path: inspect.path
-      });
-    } else {
-    const directScopeHit = inspect.scopeData && Object.prototype.hasOwnProperty.call(inspect.scopeData, field);
-    if (directScopeHit) {
-      value = inspect.scopeData?.[field];
-      valueSource = 'current-scope';
-      scopeLabel = inspect.scopeChain?.[0] ? summarizeScopeEntry(inspect.scopeChain[0]) : undefined;
-      truncated ||= pushEvidence(evidenceRefs, {
-        kind: 'scope',
-        summary: `${field} resolved from current scope snapshot`,
         cid: inspect.cid,
         nodeId: inspect.nodeId,
         path: inspect.path
@@ -255,7 +254,6 @@ export function explainNodeValue(args: {
         valueSource = 'unknown';
         limitations.push(`The debugger snapshot does not expose a reliable current source for ${field}.`);
       }
-    }
     }
   }
 

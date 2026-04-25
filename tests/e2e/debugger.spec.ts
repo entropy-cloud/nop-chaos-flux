@@ -209,18 +209,21 @@ test.describe('Nop Debugger', () => {
       kind: 'value',
       data: {
         field: 'username',
-        valueSource: 'unknown'
+        valueSource: 'current-scope'
       }
     });
-    expect(Array.isArray(result.value.limitations)).toBe(true);
-    expect(result.value.limitations.length).toBeGreaterThan(0);
+    expect(result.value.data.value).toBe('alice');
     expect(result.meta).toMatchObject({
       kind: 'meta',
       data: {
-        field: 'visible'
+        field: 'visible',
+        source: 'resolved-meta',
+        value: true,
+        dependencyPaths: ['role']
       }
     });
-    expect(Array.isArray(result.meta.limitations)).toBe(true);
+    expect(result.meta.answer).toContain('${role === "admin"}');
+    expect(result.meta.limitations).toEqual([]);
     expect(result.failure).toMatchObject({
       kind: 'failure'
     });
