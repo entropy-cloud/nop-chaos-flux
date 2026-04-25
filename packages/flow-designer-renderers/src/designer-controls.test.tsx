@@ -43,9 +43,11 @@ function createSnapshot(overrides: Partial<any> = {}) {
     canRedo: false,
     isDirty: false,
     gridEnabled: true,
+    selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null, activeBranchId: null },
     doc: { name: 'Test Flow', nodes: [{ id: 'n1' }], edges: [] },
     activeNode: null,
     activeEdge: null,
+    activeBranch: null,
     ...overrides
   };
 }
@@ -189,6 +191,87 @@ describe('flow designer controls', () => {
     expect(screen.getByText('Schema inspector body')).toBeTruthy();
     expect(screen.getByDisplayValue('Task')).toBeTruthy();
     expect(screen.queryByText('action')).toBeNull();
+  });
+
+  it('dispatches branch-group editing commands from inspector when active node exposes branches', () => {
+    mockSnapshot = createSnapshot({
+      selection: { selectedNodeIds: ['node-1'], selectedEdgeIds: [], activeNodeId: 'node-1', activeEdgeId: null, activeBranchId: 'b1' },
+      activeNode: {
+        id: 'node-1',
+        type: 'condition',
+        data: {
+          label: 'Gateway',
+          branches: [
+            { id: 'b1', data: { label: 'Branch 1', priority: 1 }, childId: 'n-branch-1', childLabel: 'Branch Node 1' },
+            { id: 'b2', data: { label: 'Branch 2', priority: 2 }, childId: 'n-branch-2', childLabel: 'Branch Node 2' },
+            { id: 'b3', data: { label: 'Branch 3', priority: 3 }, childId: 'n-branch-3', childLabel: 'Branch Node 3' },
+          ]
+        }
+      },
+      activeBranch: { id: 'b1', data: { label: 'Branch 1', priority: 1 }, childId: 'n-branch-1', childLabel: 'Branch Node 1' },
+      activeEdge: null
+    });
+
+    render(<DefaultInspector />);
+
+    fireEvent.change(screen.getByDisplayValue('Branch 1'), { target: { value: 'Renamed Branch 1' } });
+    expect(mockContext.dispatch).toHaveBeenCalledWith({
+      type: 'updateBranchData',
+      nodeId: 'node-1',
+      branchId: 'b1',
+      data: { label: 'Renamed Branch 1' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move branch 2 left' }));
+    expect(mockContext.dispatch).toHaveBeenCalledWith({
+      type: 'moveBranch',
+      nodeId: 'node-1',
+      branchId: 'b2',
+      direction: 'left'
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete branch 3' }));
+    expect(mockContext.dispatch).toHaveBeenCalledWith({
+      type: 'deleteBranch',
+      nodeId: 'node-1',
+      branchId: 'b3'
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '添加分支' }));
+    expect(mockContext.dispatch).toHaveBeenCalledWith({
+      type: 'addBranch',
+      nodeId: 'node-1',
+      branchData: { label: '分支 4' },
+      childType: 'condition',
+      childData: { label: '新分支 4' }
+    });
+
+    fireEvent.click(screen.getByText('分支 2'));
+    expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'selectBranch', nodeId: 'node-1', branchId: 'b2' });
+
+    mockSnapshot = createSnapshot({
+      selection: { selectedNodeIds: ['node-1'], selectedEdgeIds: [], activeNodeId: 'node-1', activeEdgeId: null, activeBranchId: 'b2' },
+      activeNode: {
+        id: 'node-1',
+        type: 'condition',
+        data: {
+          label: 'Gateway',
+          branches: [
+            { id: 'b1', data: { label: 'Branch 1', priority: 1 }, childId: 'n-branch-1', childLabel: 'Branch Node 1' },
+            { id: 'b2', data: { label: 'Branch 2', priority: 2 }, childId: 'n-branch-2', childLabel: 'Branch Node 2' },
+            { id: 'b3', data: { label: 'Branch 3', priority: 3 }, childId: 'n-branch-3', childLabel: 'Branch Node 3' },
+          ]
+        }
+      },
+      activeBranch: { id: 'b2', data: { label: 'Branch 2', priority: 2 }, childId: 'n-branch-2', childLabel: 'Branch Node 2' },
+      activeEdge: null
+    });
+
+    cleanup();
+    render(<DefaultInspector />);
+    expect(screen.getByText('Branch Node 2')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '定位节点' }));
+    expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'selectNode', nodeId: 'n-branch-2' });
   });
 
   it('opens createDialog-configured node types instead of dispatching addNode immediately', () => {

@@ -311,8 +311,8 @@ const definition: RendererDefinition = {
     getFieldPath: (schema) => schema.name,
     collectRules: (schema) => {
       const rules = [];
-      if (schema.validate?.api) {
-        rules.push({ kind: 'async', api: schema.validate.api, debounce: schema.validate.debounce });
+      if (schema.validate?.action) {
+        rules.push({ kind: 'async', action: schema.validate.action, debounce: schema.validate.debounce });
       }
       return rules;
     }

@@ -241,6 +241,7 @@ export const zhCN: Resource = {
       create: '创建',
       creating: '创建中...',
       addCondition: '添加条件',
+      addBranch: '添加分支',
       shortcutUndo: 'Ctrl+Z',
       shortcutRedo: 'Ctrl+Y',
       shortcutDelete: 'Delete',

@@ -249,6 +249,42 @@ function createSimpleTreeDocument(): TreeDocument {
   };
 }
 
+function createBranchingTreeDocument(): TreeDocument {
+  return {
+    id: 'branching-flow',
+    kind: 'dingtalk-workflow',
+    name: '分支流程',
+    version: '1.0.0',
+    root: {
+      id: 'n1',
+      type: 'dt-initiator',
+      data: { label: '发起人' },
+      child: {
+        id: 'n2',
+        type: 'dt-approval',
+        data: { label: '主管审批' },
+        branches: [
+          {
+            id: 'b1',
+            data: { label: '条件1', priority: 1 },
+            child: { id: 'n3', type: 'dt-approval', data: { label: '分支A审批' } },
+          },
+          {
+            id: 'b2',
+            data: { label: '条件2', priority: 2 },
+            child: { id: 'n4', type: 'dt-approval', data: { label: '分支B审批' } },
+          }
+        ],
+        child: {
+          id: 'n5',
+          type: 'dt-end',
+          data: { label: '结束' },
+        },
+      },
+    },
+  };
+}
+
 function projectTreeToDoc(treeDoc: TreeDocument, config: DesignerConfig): GraphDocument {
   const normalizedConfig = normalizeConfig(config);
   const projected = projectTree(treeDoc, normalizedConfig);
@@ -385,5 +421,118 @@ describe('insertChainNode in tree mode', () => {
     expect(ownedTree.root.child?.data.label).toBe('Tree Owned Approver');
     expect(ownedTree.root.child?.child?.id).toBe('n2');
     expect(core.getSnapshot().doc.nodes).toHaveLength(4);
+  });
+
+  it('updates node data through the owned TreeDocument when a tree owner is provided', () => {
+    const config = createDingFlowConfig();
+    let ownedTree = structuredClone(createSimpleTreeDocument());
+    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
+    const adapter = createDesignerCommandAdapter(core, {
+      getTreeDocument: () => ownedTree,
+      setTreeDocument: (next) => { ownedTree = next; },
+      config,
+    });
+
+    const result = adapter.execute({
+      type: 'updateNodeData',
+      nodeId: 'n2',
+      data: { label: 'Updated Approver' },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(ownedTree.root.child?.data.label).toBe('Updated Approver');
+    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'n2')?.data.label).toBe('Updated Approver');
+  });
+
+  it('deletes a chain node through the owned TreeDocument and reconnects its child', () => {
+    const config = createDingFlowConfig();
+    let ownedTree = structuredClone(createSimpleTreeDocument());
+    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
+    const adapter = createDesignerCommandAdapter(core, {
+      getTreeDocument: () => ownedTree,
+      setTreeDocument: (next) => { ownedTree = next; },
+      config,
+    });
+
+    const result = adapter.execute({
+      type: 'deleteNode',
+      nodeId: 'n2',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(ownedTree.root.child?.id).toBe('n3');
+    expect(core.getSnapshot().doc.nodes.map((node) => node.id)).toEqual(['n1', 'n3']);
+  });
+
+  it('adds a branch through the owned TreeDocument', () => {
+    const config = createDingFlowConfig();
+    let ownedTree = structuredClone(createBranchingTreeDocument());
+    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
+    const adapter = createDesignerCommandAdapter(core, {
+      getTreeDocument: () => ownedTree,
+      setTreeDocument: (next) => { ownedTree = next; },
+      config,
+    });
+
+    const result = adapter.execute({
+      type: 'addBranch',
+      nodeId: 'n2',
+      branchData: { label: '条件3' },
+      childType: 'dt-approval',
+      childData: { label: '分支C审批' },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(ownedTree.root.child?.branches).toHaveLength(3);
+    expect(ownedTree.root.child?.branches?.[2]?.data.priority).toBe(3);
+    expect(ownedTree.root.child?.branches?.[2]?.child?.data.label).toBe('分支C审批');
+  });
+
+  it('moves a branch through the owned TreeDocument', () => {
+    const config = createDingFlowConfig();
+    let ownedTree = structuredClone(createBranchingTreeDocument());
+    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
+    const adapter = createDesignerCommandAdapter(core, {
+      getTreeDocument: () => ownedTree,
+      setTreeDocument: (next) => { ownedTree = next; },
+      config,
+    });
+
+    const result = adapter.execute({
+      type: 'moveBranch',
+      nodeId: 'n2',
+      branchId: 'b2',
+      direction: 'left',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(ownedTree.root.child?.branches?.map((branch) => branch.id)).toEqual(['b2', 'b1']);
+    expect(ownedTree.root.child?.branches?.map((branch) => branch.data.priority)).toEqual([1, 2]);
+  });
+
+  it('deletes a branch through the owned TreeDocument while preserving minimum branch count', () => {
+    const config = createDingFlowConfig();
+    let ownedTree = structuredClone(createBranchingTreeDocument());
+    ownedTree.root.child!.branches!.push({
+      id: 'b3',
+      data: { label: '条件3', priority: 3 },
+      child: { id: 'n6', type: 'dt-approval', data: { label: '分支C审批' } },
+    });
+    const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
+    const adapter = createDesignerCommandAdapter(core, {
+      getTreeDocument: () => ownedTree,
+      setTreeDocument: (next) => { ownedTree = next; },
+      config,
+    });
+
+    const result = adapter.execute({
+      type: 'deleteBranch',
+      nodeId: 'n2',
+      branchId: 'b2',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(ownedTree.root.child?.branches?.map((branch) => branch.id)).toEqual(['b1', 'b3']);
+    expect(ownedTree.root.child?.branches?.map((branch) => branch.data.priority)).toEqual([1, 2]);
   });
 });

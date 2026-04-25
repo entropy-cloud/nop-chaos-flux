@@ -23,7 +23,7 @@ import '@xyflow/react/dist/style.css';
 import { DesignerXyflowNode } from './designer-xyflow-node';
 import { DesignerXyflowEdge } from './designer-xyflow-edge';
 import { DingFlowEdge } from '../dingflow';
-import { computeDingFlowOverlays, DingFlowAddConditionOverlay, DingFlowMergeOverlay } from '../dingflow';
+import { computeDingFlowOverlays, DingFlowAddBranchOverlay, DingFlowMergeOverlay } from '../dingflow';
 import { createXyflowNodes, createXyflowEdges, normalizeControlledViewport, viewportsEqual, normalizeViewportChange, normalizePositionSignature } from './xyflow-utils';
 import type { XyflowViewportChange } from './types';
 import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
@@ -58,14 +58,14 @@ export interface DesignerXyflowCanvasProps {
   onEdgeHover?(edgeId: string | null, event?: React.MouseEvent): void;
   onDrop?(nodeTypeId: string, position: { x: number; y: number }): void;
   documentMode?: 'graph' | 'tree';
-  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number) => void;
+  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => void;
 }
 
 function TreeModeOverlays({ nodes, edges, nodeTypeSizeMap, onPlusButtonClick }: {
   nodes: import('@nop-chaos/flow-designer-core').GraphNode[];
   edges: import('@nop-chaos/flow-designer-core').GraphEdge[];
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>;
-  onPlusButtonClick: (sourceId: string, clientX: number, clientY: number) => void;
+  onPlusButtonClick: (sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => void;
 }) {
   const overlays = useMemo(() => computeDingFlowOverlays(nodes, edges, nodeTypeSizeMap), [nodes, edges, nodeTypeSizeMap]);
 
@@ -79,15 +79,15 @@ function TreeModeOverlays({ nodes, edges, nodeTypeSizeMap, onPlusButtonClick }: 
             transform: `translate(${overlay.x}px, ${overlay.y}px) translate(-50%, -50%)`,
           }}
         >
-          {overlay.kind === 'addCondition' ? (
-            <DingFlowAddConditionOverlay
-              onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY)}
-            />
-          ) : (
-            <DingFlowMergeOverlay
-              onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY)}
-            />
-          )}
+            {overlay.kind === 'addCondition' ? (
+              <DingFlowAddBranchOverlay
+                onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY, 'branch-group')}
+              />
+            ) : (
+              <DingFlowMergeOverlay
+                onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY, 'merge')}
+              />
+            )}
         </div>
       ))}
     </ViewportPortal>
@@ -133,6 +133,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   const showMinimap = props.showMinimap !== false;
   const showControls = props.showControls !== false;
   const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const viewportRef = useRef(viewport);
   const isTreeMode = props.documentMode === 'tree';
   const gridSize = props.canvasConfig?.gridSize ?? 24;
   const minZoom = props.canvasConfig?.minZoom ?? 0.1;
@@ -147,6 +148,11 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
       ? BackgroundVariant.Cross
       : BackgroundVariant.Lines;
   const showBackground = props.snapshot.gridEnabled && backgroundType !== 'none';
+  const onViewportChange = props.onViewportChange;
+
+  useEffect(() => {
+    viewportRef.current = viewport;
+  }, [viewport]);
 
   useEffect(() => {
     if (!showMinimap) return;
@@ -156,6 +162,55 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
       minimapSvg.setAttribute('preserveAspectRatio', 'none');
     }
   }, [showMinimap]);
+
+  useEffect(() => {
+    if (!showMinimap) return;
+
+    const svgEl = surfaceRef.current?.querySelector('.react-flow__minimap svg');
+    if (!svgEl) return;
+
+    let startClient: { x: number; y: number } | null = null;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      startClient = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (!startClient) return;
+      const dx = e.clientX - startClient.x;
+      const dy = e.clientY - startClient.y;
+      startClient = null;
+
+      if (dx * dx + dy * dy > 25) return;
+
+      const viewBox = svgEl.getAttribute('viewBox');
+      if (!viewBox) return;
+      const [vx, vy, vw, vh] = viewBox.split(/[\s,]+/).map(Number);
+      const rect = svgEl.getBoundingClientRect();
+      const relX = (e.clientX - rect.left) / rect.width;
+      const relY = (e.clientY - rect.top) / rect.height;
+      const flowX = vx + relX * vw;
+      const flowY = vy + relY * vh;
+
+      const cw = surfaceRef.current?.clientWidth ?? 0;
+      const ch = surfaceRef.current?.clientHeight ?? 0;
+      const z = viewportRef.current.zoom;
+      onViewportChange({
+        x: cw / 2 - flowX * z,
+        y: ch / 2 - flowY * z,
+        zoom: z,
+      }, undefined);
+    };
+
+    svgEl.addEventListener('mousedown', onMouseDown as EventListener);
+    window.addEventListener('mouseup', onMouseUp as EventListener, true);
+
+    return () => {
+      svgEl.removeEventListener('mousedown', onMouseDown as EventListener);
+      window.removeEventListener('mouseup', onMouseUp as EventListener, true);
+    };
+  }, [showMinimap, onViewportChange]);
 
   useEffect(() => {
     const snapshotPositionMap = new Map(
@@ -337,6 +392,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             maxZoom={maxZoom}
             snapToGrid={snapToGrid}
             snapGrid={[gridSize, gridSize]}
+            onMove={(_event, nextViewport) => handleViewportChange(nextViewport as XyflowViewportChange)}
             onMoveEnd={(_event, nextViewport) => handleViewportChange(nextViewport as XyflowViewportChange)}
             onPaneClick={() => {
               props.onPaneClick();

@@ -12,15 +12,20 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
     listMethods() {
       return [
         'addNode',
+        'addBranch',
         'addEdge',
         'clearSelection',
+        'selectBranch',
         'selectNode',
         'selectEdge',
         'deleteNode',
+        'deleteBranch',
         'deleteEdge',
         'duplicateNode',
         'moveNode',
+        'moveBranch',
         'reconnectEdge',
+        'updateBranchData',
         'updateNodeData',
         'updateEdgeData',
         'export',
@@ -55,6 +60,17 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
         }
+        case 'addBranch': {
+          const result = adapter.execute({
+            type: 'addBranch',
+            nodeId: String(payload?.nodeId ?? ''),
+            branchData: payload?.branchData as Record<string, unknown> | undefined,
+            childType: typeof payload?.childType === 'string' ? payload.childType : undefined,
+            childData: payload?.childData as Record<string, unknown> | undefined,
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
         case 'addEdge': {
           const result = adapter.execute({
             type: 'addEdge',
@@ -73,12 +89,29 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
           const result = adapter.execute({ type: 'selectNode', nodeId: typeof payload?.nodeId === 'string' ? payload.nodeId : null });
           return toActionResult(result);
         }
+        case 'selectBranch': {
+          const result = adapter.execute({
+            type: 'selectBranch',
+            nodeId: String(payload?.nodeId ?? ''),
+            branchId: typeof payload?.branchId === 'string' ? payload.branchId : null
+          });
+          return toActionResult(result);
+        }
         case 'selectEdge': {
           const result = adapter.execute({ type: 'selectEdge', edgeId: typeof payload?.edgeId === 'string' ? payload.edgeId : null });
           return toActionResult(result);
         }
         case 'deleteNode': {
           const result = adapter.execute({ type: 'deleteNode', nodeId: String(payload?.nodeId ?? '') });
+          return toActionResult(result);
+        }
+        case 'deleteBranch': {
+          const result = adapter.execute({
+            type: 'deleteBranch',
+            nodeId: String(payload?.nodeId ?? ''),
+            branchId: String(payload?.branchId ?? ''),
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
         }
         case 'deleteEdge': {
@@ -95,6 +128,26 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
             type: 'moveNode',
             nodeId: String(payload?.nodeId ?? ''),
             position: (payload?.position as { x: number; y: number } | undefined) ?? { x: 0, y: 0 }
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'moveBranch': {
+          const result = adapter.execute({
+            type: 'moveBranch',
+            nodeId: String(payload?.nodeId ?? ''),
+            branchId: String(payload?.branchId ?? ''),
+            direction: payload?.direction === 'left' ? 'left' : 'right'
+          });
+          notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
+          return toActionResult(result);
+        }
+        case 'updateBranchData': {
+          const result = adapter.execute({
+            type: 'updateBranchData',
+            nodeId: String(payload?.nodeId ?? ''),
+            branchId: String(payload?.branchId ?? ''),
+            data: (payload?.data as Record<string, unknown>) ?? {}
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);

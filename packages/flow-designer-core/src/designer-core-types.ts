@@ -27,6 +27,7 @@ export interface DesignerCore {
 
   selectNode(nodeId: string | null): void;
   selectEdge(edgeId: string | null): void;
+  selectBranch(ownerNodeId: string, branchId: string | null): void;
   clearSelection(): void;
 
   toggleNodeSelection(nodeId: string): void;

@@ -244,6 +244,15 @@ export interface SelectionSummary {
   selectedEdgeIds: string[];
   activeNodeId: string | null;
   activeEdgeId: string | null;
+  activeBranchId: string | null;
+}
+
+export interface BranchSummary {
+  id: string;
+  data: Record<string, unknown>;
+  childId?: string;
+  childType?: string;
+  childLabel?: string;
 }
 
 export interface DesignerSnapshot {
@@ -251,6 +260,7 @@ export interface DesignerSnapshot {
   selection: SelectionSummary;
   activeNode: GraphNode | null;
   activeEdge: GraphEdge | null;
+  activeBranch: BranchSummary | null;
   canUndo: boolean;
   canRedo: boolean;
   isDirty: boolean;

@@ -176,7 +176,8 @@ function createSnapshot(): DesignerSnapshot {
       selectedNodeIds: ['node-1'],
       selectedEdgeIds: ['edge-1'],
       activeNodeId: 'node-1',
-      activeEdgeId: 'edge-1'
+      activeEdgeId: 'edge-1',
+      activeBranchId: null
     },
     activeNode: {
       id: 'node-1',
@@ -191,6 +192,7 @@ function createSnapshot(): DesignerSnapshot {
       target: 'node-2',
       data: { label: 'Edge 1' }
     },
+    activeBranch: null,
     canUndo: false,
     canRedo: false,
     isDirty: false,

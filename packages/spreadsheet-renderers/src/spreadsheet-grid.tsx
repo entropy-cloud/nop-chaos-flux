@@ -141,6 +141,23 @@ function getAnchorCellFromSelection(selection: SpreadsheetHostSnapshot['selectio
   return null;
 }
 
+function getSelectedAxisInfo(selection: SpreadsheetHostSnapshot['selection'], axis: 'row' | 'column') {
+  const values = axis === 'row' ? selection.rows : selection.columns;
+  if (!values?.length) {
+    return null;
+  }
+
+  const sorted = [...values].sort((a, b) => a - b);
+  const start = sorted[0]!;
+  const end = sorted[sorted.length - 1]!;
+
+  return {
+    start,
+    end,
+    count: end - start + 1,
+  };
+}
+
 export function SpreadsheetGrid({
   snapshot,
   bridge,
@@ -181,6 +198,8 @@ export function SpreadsheetGrid({
   const activeSheetId = snapshot.activeSheet?.id ?? '';
   const selectedRange = getSelectedRange();
   const selectionAnchorCell = useMemo(() => getAnchorCellFromSelection(selection), [selection]);
+  const selectedRowInfo = useMemo(() => getSelectedAxisInfo(selection, 'row'), [selection]);
+  const selectedColumnInfo = useMemo(() => getSelectedAxisInfo(selection, 'column'), [selection]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -366,79 +385,130 @@ export function SpreadsheetGrid({
     if (!activeSheetId) {
       return;
     }
-    const row = selection.kind === 'row' && selection.rows?.length
-      ? [...selection.rows].sort((a, b) => a - b)[0]!
-      : selectionAnchorCell?.row;
+    const row = selectedRowInfo?.start ?? selectionAnchorCell?.row;
     if (row == null) {
       return;
     }
-    await bridge.dispatch({ type: 'spreadsheet:insertRow', sheetId: activeSheetId, row });
-  }, [activeSheetId, bridge, selection, selectionAnchorCell]);
+    await bridge.dispatch({
+      type: 'spreadsheet:insertRow',
+      sheetId: activeSheetId,
+      row,
+      count: selectedRowInfo?.count,
+    });
+  }, [activeSheetId, bridge, selectedRowInfo, selectionAnchorCell]);
 
   const handleContextInsertRowBelow = useCallback(async () => {
     if (!activeSheetId) {
       return;
     }
-    const row = selection.kind === 'row' && selection.rows?.length
-      ? [...selection.rows].sort((a, b) => a - b).at(-1)
-      : selectionAnchorCell?.row;
+    const row = selectedRowInfo?.end ?? selectionAnchorCell?.row;
     if (row == null) {
       return;
     }
-    await bridge.dispatch({ type: 'spreadsheet:insertRow', sheetId: activeSheetId, row: row + 1 });
-  }, [activeSheetId, bridge, selection, selectionAnchorCell]);
+    await bridge.dispatch({
+      type: 'spreadsheet:insertRow',
+      sheetId: activeSheetId,
+      row: row + 1,
+      count: selectedRowInfo?.count,
+    });
+  }, [activeSheetId, bridge, selectedRowInfo, selectionAnchorCell]);
 
   const handleContextDeleteRow = useCallback(async () => {
     if (!activeSheetId) {
       return;
     }
-    const row = selection.kind === 'row' && selection.rows?.length
-      ? [...selection.rows].sort((a, b) => a - b)[0]!
-      : selectionAnchorCell?.row;
+    const row = selectedRowInfo?.start ?? selectionAnchorCell?.row;
     if (row == null) {
       return;
     }
-    await bridge.dispatch({ type: 'spreadsheet:deleteRow', sheetId: activeSheetId, row });
-  }, [activeSheetId, bridge, selection, selectionAnchorCell]);
+    await bridge.dispatch({
+      type: 'spreadsheet:deleteRow',
+      sheetId: activeSheetId,
+      row,
+      count: selectedRowInfo?.count,
+    });
+  }, [activeSheetId, bridge, selectedRowInfo, selectionAnchorCell]);
 
   const handleContextInsertColumn = useCallback(async () => {
     if (!activeSheetId) {
       return;
     }
-    const col = selection.kind === 'column' && selection.columns?.length
-      ? [...selection.columns].sort((a, b) => a - b)[0]!
-      : selectionAnchorCell?.col;
+    const col = selectedColumnInfo?.start ?? selectionAnchorCell?.col;
     if (col == null) {
       return;
     }
-    await bridge.dispatch({ type: 'spreadsheet:insertColumn', sheetId: activeSheetId, col });
-  }, [activeSheetId, bridge, selection, selectionAnchorCell]);
+    await bridge.dispatch({
+      type: 'spreadsheet:insertColumn',
+      sheetId: activeSheetId,
+      col,
+      count: selectedColumnInfo?.count,
+    });
+  }, [activeSheetId, bridge, selectedColumnInfo, selectionAnchorCell]);
 
   const handleContextInsertColumnRight = useCallback(async () => {
     if (!activeSheetId) {
       return;
     }
-    const col = selection.kind === 'column' && selection.columns?.length
-      ? [...selection.columns].sort((a, b) => a - b).at(-1)
-      : selectionAnchorCell?.col;
+    const col = selectedColumnInfo?.end ?? selectionAnchorCell?.col;
     if (col == null) {
       return;
     }
-    await bridge.dispatch({ type: 'spreadsheet:insertColumn', sheetId: activeSheetId, col: col + 1 });
-  }, [activeSheetId, bridge, selection, selectionAnchorCell]);
+    await bridge.dispatch({
+      type: 'spreadsheet:insertColumn',
+      sheetId: activeSheetId,
+      col: col + 1,
+      count: selectedColumnInfo?.count,
+    });
+  }, [activeSheetId, bridge, selectedColumnInfo, selectionAnchorCell]);
 
   const handleContextDeleteColumn = useCallback(async () => {
     if (!activeSheetId) {
       return;
     }
-    const col = selection.kind === 'column' && selection.columns?.length
-      ? [...selection.columns].sort((a, b) => a - b)[0]!
-      : selectionAnchorCell?.col;
+    const col = selectedColumnInfo?.start ?? selectionAnchorCell?.col;
     if (col == null) {
       return;
     }
-    await bridge.dispatch({ type: 'spreadsheet:deleteColumn', sheetId: activeSheetId, col });
-  }, [activeSheetId, bridge, selection, selectionAnchorCell]);
+    await bridge.dispatch({
+      type: 'spreadsheet:deleteColumn',
+      sheetId: activeSheetId,
+      col,
+      count: selectedColumnInfo?.count,
+    });
+  }, [activeSheetId, bridge, selectedColumnInfo, selectionAnchorCell]);
+
+  const handleContextMerge = useCallback(async () => {
+    if (!selectedRange) {
+      return;
+    }
+    await bridge.dispatch({ type: 'spreadsheet:mergeRange', range: selectedRange });
+  }, [bridge, selectedRange]);
+
+  const handleContextUnmerge = useCallback(async () => {
+    if (!selectedRange) {
+      return;
+    }
+    await bridge.dispatch({ type: 'spreadsheet:unmergeRange', range: selectedRange });
+  }, [bridge, selectedRange]);
+
+  const handleContextFreeze = useCallback(async () => {
+    if (!activeSheetId || !selectionAnchorCell) {
+      return;
+    }
+    await bridge.dispatch({
+      type: 'spreadsheet:freezePanes',
+      sheetId: activeSheetId,
+      row: selectionAnchorCell.row,
+      col: selectionAnchorCell.col,
+    });
+  }, [activeSheetId, bridge, selectionAnchorCell]);
+
+  const handleContextUnfreeze = useCallback(async () => {
+    if (!activeSheetId) {
+      return;
+    }
+    await bridge.dispatch({ type: 'spreadsheet:unfreezePanes', sheetId: activeSheetId });
+  }, [activeSheetId, bridge]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -586,13 +656,26 @@ export function SpreadsheetGrid({
           <ContextMenuShortcut>{t('flux.spreadsheet.clearShortcut').replace(/^.*\s/, '')}</ContextMenuShortcut>
         </ContextMenuItem>
         <ContextMenuSeparator />
+        <ContextMenuItem data-testid="spreadsheet-context-merge" onClick={() => void handleContextMerge()} disabled={!selectedRange}>
+          {t('flux.spreadsheet.mergeCells')}
+        </ContextMenuItem>
+        <ContextMenuItem data-testid="spreadsheet-context-unmerge" onClick={() => void handleContextUnmerge()} disabled={!selectedRange}>
+          {t('flux.spreadsheet.unmergeCells')}
+        </ContextMenuItem>
+        <ContextMenuItem data-testid="spreadsheet-context-freeze" onClick={() => void handleContextFreeze()} disabled={!selectionAnchorCell || !activeSheetId}>
+          {t('flux.spreadsheet.freezePanes')}
+        </ContextMenuItem>
+        <ContextMenuItem data-testid="spreadsheet-context-unfreeze" onClick={() => void handleContextUnfreeze()} disabled={!activeSheetId}>
+          {t('flux.spreadsheet.unfreezePanes')}
+        </ContextMenuItem>
+        <ContextMenuSeparator />
         <ContextMenuItem data-testid="spreadsheet-context-insert-row-above" onClick={() => void handleContextInsertRow()} disabled={!selectionAnchorCell || !activeSheetId}>
           {t('flux.spreadsheet.insertRowAbove')}
         </ContextMenuItem>
         <ContextMenuItem data-testid="spreadsheet-context-insert-row-below" onClick={() => void handleContextInsertRowBelow()} disabled={!selectionAnchorCell || !activeSheetId}>
           {t('flux.spreadsheet.insertRowBelow')}
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => void handleContextDeleteRow()} disabled={!selectionAnchorCell || !activeSheetId}>
+        <ContextMenuItem data-testid="spreadsheet-context-delete-row" onClick={() => void handleContextDeleteRow()} disabled={!selectionAnchorCell || !activeSheetId}>
           {t('flux.spreadsheet.deleteRow')}
         </ContextMenuItem>
         <ContextMenuItem data-testid="spreadsheet-context-insert-column-left" onClick={() => void handleContextInsertColumn()} disabled={!selectionAnchorCell || !activeSheetId}>
@@ -601,7 +684,7 @@ export function SpreadsheetGrid({
         <ContextMenuItem data-testid="spreadsheet-context-insert-column-right" onClick={() => void handleContextInsertColumnRight()} disabled={!selectionAnchorCell || !activeSheetId}>
           {t('flux.spreadsheet.insertColumnRight')}
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => void handleContextDeleteColumn()} disabled={!selectionAnchorCell || !activeSheetId}>
+        <ContextMenuItem data-testid="spreadsheet-context-delete-column" onClick={() => void handleContextDeleteColumn()} disabled={!selectionAnchorCell || !activeSheetId}>
           {t('flux.spreadsheet.deleteColumn')}
         </ContextMenuItem>
       </ContextMenuContent>

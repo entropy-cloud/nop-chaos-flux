@@ -15,7 +15,7 @@ export interface DesignerContextValue {
   dispatch: (command: import('./designer-command-adapter').DesignerCommand) => import('./designer-command-adapter').DesignerCommandResult;
   config: DesignerConfig;
   openCreateDialog?: (nodeType: NodeTypeConfig, position: { x: number; y: number }) => void;
-  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number) => void;
+  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => void;
 }
 
 export const DesignerContext = React.createContext<DesignerContextValue | null>(null);
@@ -101,7 +101,7 @@ export function buildDesignerScopeData(input: {
   core: DesignerCore;
 }) {
   const { snapshot } = input;
-  const selectionKind = snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none';
+  const selectionKind = snapshot.activeBranch ? 'branch' : snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none';
   const nodeIds = snapshot.selection.selectedNodeIds;
   const edgeIds = snapshot.selection.selectedEdgeIds;
 
@@ -115,10 +115,12 @@ export function buildDesignerScopeData(input: {
       selectedNodeIds: nodeIds,
       selectedEdgeIds: edgeIds,
       activeNodeId: snapshot.selection.activeNodeId,
-      activeEdgeId: snapshot.selection.activeEdgeId
+      activeEdgeId: snapshot.selection.activeEdgeId,
+      activeBranchId: snapshot.selection.activeBranchId
     },
     activeNode: snapshot.activeNode,
     activeEdge: snapshot.activeEdge,
+    activeBranch: snapshot.activeBranch,
     runtime: {
       canUndo: snapshot.canUndo,
       canRedo: snapshot.canRedo,

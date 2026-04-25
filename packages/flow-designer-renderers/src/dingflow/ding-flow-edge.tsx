@@ -49,7 +49,10 @@ function DingFlowEdgeInner({
     <>
       <BaseEdge
         path={path}
-        style={{ stroke: CONNECTOR_COLOR, strokeWidth: 2 }}
+        style={{
+          stroke: (data as { __fdBranchFocused?: boolean } | undefined)?.__fdBranchFocused ? 'var(--primary)' : CONNECTOR_COLOR,
+          strokeWidth: (data as { __fdBranchFocused?: boolean } | undefined)?.__fdBranchFocused ? 3 : 2
+        }}
         markerEnd={markerEnd}
       />
       {label && (

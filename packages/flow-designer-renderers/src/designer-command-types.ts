@@ -17,6 +17,9 @@ export type DesignerCommand =
   | { type: 'deleteEdge'; edgeId: string }
   | { type: 'deleteNode'; nodeId: string }
   | { type: 'duplicateNode'; nodeId: string }
+  | { type: 'addBranch'; nodeId: string; branchData?: Record<string, unknown>; childType?: string; childData?: Record<string, unknown> }
+  | { type: 'deleteBranch'; nodeId: string; branchId: string }
+  | { type: 'moveBranch'; nodeId: string; branchId: string; direction: 'left' | 'right' }
   | { type: 'copySelection' }
   | { type: 'pasteClipboard' }
   | { type: 'deleteSelection' }
@@ -26,6 +29,7 @@ export type DesignerCommand =
   | { type: 'redo' }
   | { type: 'restore' }
   | { type: 'save' }
+  | { type: 'selectBranch'; nodeId: string; branchId: string | null }
   | { type: 'selectEdge'; edgeId: string | null }
   | { type: 'selectNode'; nodeId: string | null }
   | { type: 'setViewport'; viewport: { x: number; y: number; zoom: number } }
@@ -35,6 +39,7 @@ export type DesignerCommand =
   | { type: 'undo' }
   | { type: 'updateEdgeData'; edgeId: string; data: Record<string, unknown> }
   | { type: 'updateNodeData'; nodeId: string; data: Record<string, unknown> }
+  | { type: 'updateBranchData'; nodeId: string; branchId: string; data: Record<string, unknown> }
   | { type: 'insertChainNode'; sourceId: string; nodeType: string; data?: Record<string, unknown> }
   | { type: 'insertChainNodeAtMerge'; targetId: string; nodeType: string; data?: Record<string, unknown> }
   | { type: 'insertBranchPair'; sourceId: string; condNodeType: string; condData?: Record<string, unknown> };

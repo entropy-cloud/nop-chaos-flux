@@ -53,8 +53,8 @@ export function DesignerXyflowEdge(props: EdgeProps) {
   const showQuickActions = props.selected || edgeData?.__fdHovered === true;
 
   const edgeStyle: React.CSSProperties = {
-    stroke: appearance?.stroke ?? 'var(--fd-edge-stroke)',
-    strokeWidth: appearance?.strokeWidth ?? 2
+    stroke: edgeData?.__fdBranchFocused ? 'var(--primary)' : (appearance?.stroke ?? 'var(--fd-edge-stroke)'),
+    strokeWidth: edgeData?.__fdBranchFocused ? Math.max((appearance?.strokeWidth ?? 2) + 1, 3) : (appearance?.strokeWidth ?? 2)
   };
 
   if (lineStyle === 'dashed') {

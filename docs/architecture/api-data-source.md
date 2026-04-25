@@ -546,7 +546,7 @@ For API-backed `data-source`, dependency invalidation, explicit `refreshSource`,
 
 Normative rule:
 
-- source-level refresh reentry must honor `control.dedup` / legacy `api.dedupStrategy` rather than hardcoding one internal policy for all sources
+- source-level refresh reentry must honor `control.dedup` rather than hardcoding one internal policy for all sources
 
 Current baseline semantics:
 

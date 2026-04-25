@@ -240,6 +240,7 @@ interface DesignerPageSchema {
 推荐 bridge 最小能力：
 
 - `getSnapshot()` - 读取当前 `doc`、`selection`、`activeNode`、`activeEdge`、runtime summary
+- tree mode 补充：`selection.activeBranchId` 与 `activeBranch`，用于 branch-group 结构选择；该选择依附于 branch owner，不把 branch 伪装成 graph node
 - `dispatch(command)` - 提交归一化后的 designer 命令
 - `subscribe(listener)` - 供 renderer shell 做局部订阅
 - `emit(event)` - 向宿主和插件发布 designer 事件

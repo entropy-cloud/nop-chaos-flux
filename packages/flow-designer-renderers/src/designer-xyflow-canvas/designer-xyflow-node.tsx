@@ -83,8 +83,11 @@ export function DesignerXyflowNode(props: NodeProps) {
     } else if (appearance.borderColor) {
       s.borderColor = appearance.borderColor;
     }
+    if (data.__fdBranchFocused) {
+      s.boxShadow = '0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent)';
+    }
     return Object.keys(s).length > 0 ? s : undefined;
-  }, [nodeType, props.selected]);
+  }, [nodeType, props.selected, data.__fdBranchFocused]);
 
   if (!nodeType?.body || !isSchemaInput(nodeType.body)) {
     return (
@@ -108,6 +111,7 @@ export function DesignerXyflowNode(props: NodeProps) {
         className={cn('nop-designer-node', 'relative', nodeType.appearance?.className)}
         style={appearanceStyle}
         data-selected={props.selected ? '' : undefined}
+        data-branch-focused={data.__fdBranchFocused ? '' : undefined}
         onMouseEnter={showToolbarNow}
         onMouseLeave={scheduleHideToolbar}
       >
@@ -120,7 +124,7 @@ export function DesignerXyflowNode(props: NodeProps) {
         </ClassAliasesContext.Provider>
         {showPlusButton && (
           <DingFlowPlusButton
-            onClick={(e) => onPlusButtonClick!(props.id, e.clientX, e.clientY)}
+            onClick={(e) => onPlusButtonClick!(props.id, e.clientX, e.clientY, 'node')}
           />
         )}
       </div>

@@ -261,9 +261,9 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   }, [core, config.documentMode]);
 
   const isTreeMode = config.documentMode === 'tree';
-  const onPlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
+  const onPlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => {
     if (isTreeMode) {
-      plusButtonHandlerHolder.current?.(sourceId, clientX, clientY);
+      plusButtonHandlerHolder.current?.(sourceId, clientX, clientY, sourceKind);
     }
   }, [isTreeMode]);
 

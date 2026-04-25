@@ -241,6 +241,7 @@ export const enUS: Resource = {
       create: 'Create',
       creating: 'Creating...',
       addCondition: 'Add Condition',
+      addBranch: 'Add Branch',
       shortcutUndo: 'Ctrl+Z',
       shortcutRedo: 'Ctrl+Y',
       shortcutDelete: 'Delete',

@@ -7,6 +7,14 @@ import { useDesignerContext, useDesignerFullSnapshot } from './designer-context'
 import { DesignerIcon } from './designer-icon';
 import { resolveNodeTypeAccent, resolveNodeTypeMeta } from './designer-node-appearance';
 
+interface BranchItemData {
+  id: string;
+  data: Record<string, unknown>;
+  childId?: string;
+  childType?: string;
+  childLabel?: string;
+}
+
 export interface DefaultInspectorProps {
   renderSchema?: (schema: SchemaInput) => React.ReactNode;
 }
@@ -20,6 +28,14 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
 
   const activeNodeTypeConfig = useNodeTypeConfig(activeNode?.type ?? '');
   const activeInspectorSchema = activeNodeTypeConfig?.inspector?.body;
+  const branchItems = React.useMemo(
+    () => (Array.isArray(activeNode?.data.branches) ? activeNode.data.branches as BranchItemData[] : []),
+    [activeNode]
+  );
+  const activeBranch = snapshot.activeBranch;
+  const focusedBranch = activeBranch && branchItems.some((branch) => branch.id === activeBranch.id)
+    ? activeBranch
+    : branchItems[0] ?? null;
 
   const renderNodeTypeHeader = () => {
     if (!activeNode) return null;
@@ -77,6 +93,122 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
         </div>
       );
     });
+  };
+
+  const renderBranchInspector = () => {
+    if (!activeNode || branchItems.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="fd-panel-card rounded-lg border border-border p-4 mt-4">
+        <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">分支组</div>
+        <div className="mt-4 flex flex-col gap-4">
+          {branchItems.map((branch, index) => {
+            const canMoveLeft = index > 0;
+            const canMoveRight = index < branchItems.length - 1;
+            const isFocused = focusedBranch?.id === branch.id;
+            return (
+              <div
+                key={branch.id}
+                className={cn('rounded-lg border p-3 cursor-pointer', isFocused ? 'border-primary bg-primary/5' : 'border-border/70')}
+                onClick={() => dispatch({ type: 'selectBranch', nodeId: activeNode.id, branchId: branch.id })}
+              >
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div>
+                    <div className="text-sm font-medium text-foreground">分支 {index + 1}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{branch.id}</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Move branch ${index + 1} left`}
+                      disabled={!canMoveLeft}
+                      onClick={() => dispatch({ type: 'moveBranch', nodeId: activeNode.id, branchId: branch.id, direction: 'left' })}
+                    >
+                      <DesignerIcon icon="chevron-left" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Move branch ${index + 1} right`}
+                      disabled={!canMoveRight}
+                      onClick={() => dispatch({ type: 'moveBranch', nodeId: activeNode.id, branchId: branch.id, direction: 'right' })}
+                    >
+                      <DesignerIcon icon="chevron-right" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Delete branch ${index + 1}`}
+                      className="hover:bg-destructive/15 hover:text-destructive"
+                      disabled={branchItems.length <= 2}
+                      onClick={() => dispatch({ type: 'deleteBranch', nodeId: activeNode.id, branchId: branch.id })}
+                    >
+                      <DesignerIcon icon="trash-2" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-sm font-medium text-foreground">分支名称</Label>
+                  <Input
+                    type="text"
+                    value={String(branch.data.label ?? '')}
+                    onChange={(e) => dispatch({
+                      type: 'updateBranchData',
+                      nodeId: activeNode.id,
+                      branchId: branch.id,
+                      data: { label: e.target.value }
+                    })}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => dispatch({
+              type: 'addBranch',
+              nodeId: activeNode.id,
+              branchData: { label: `分支 ${branchItems.length + 1}` },
+              childType: activeNode.type,
+              childData: { label: `新分支 ${branchItems.length + 1}` }
+            })}
+          >
+            添加分支
+          </Button>
+          {focusedBranch && (
+            <div className="rounded-lg border border-border/70 p-3 bg-muted/20">
+              <div className="text-sm font-medium text-foreground">当前分支</div>
+              <div className="text-xs text-muted-foreground mt-1">{String(focusedBranch.data.label ?? focusedBranch.id)}</div>
+              {focusedBranch.childId ? (
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs text-muted-foreground">首节点</div>
+                    <div className="text-sm text-foreground">{focusedBranch.childLabel ?? focusedBranch.childId}</div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => dispatch({ type: 'selectNode', nodeId: focusedBranch.childId ?? null })}
+                  >
+                    定位节点
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-3 text-xs text-muted-foreground">该分支当前为空。</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -138,6 +270,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                   : renderGenericFields()}
               </div>
             </div>
+            {renderBranchInspector()}
           </>
         ) : activeEdge ? (
           <>

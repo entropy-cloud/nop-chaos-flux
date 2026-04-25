@@ -1,6 +1,7 @@
 import {
   clearSelectionState,
   getSelectionSummary,
+  selectActiveBranch,
   selectAllNodeIds,
   selectSingleEdge,
   selectSingleNode,
@@ -35,6 +36,9 @@ export function createSelectionController(args: SelectionControllerArgs) {
     },
     selectEdge(edgeId: string | null) {
       apply(selectSingleEdge(args.getSelectionState(), edgeId));
+    },
+    selectBranch(ownerNodeId: string, branchId: string | null) {
+      apply(selectActiveBranch(args.getSelectionState(), ownerNodeId, branchId));
     },
     clearSelection() {
       apply(clearSelectionState(args.getSelectionState()));

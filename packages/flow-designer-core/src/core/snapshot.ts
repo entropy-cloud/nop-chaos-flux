@@ -7,8 +7,18 @@ import type {
 } from './shell-state';
 import type {
   DesignerSnapshot,
+  BranchSummary,
   GraphDocument
 } from '../types';
+
+function resolveActiveBranch(activeNode: DesignerSnapshot['activeNode'], activeBranchId: string | null): BranchSummary | null {
+  if (!activeNode || !activeBranchId) {
+    return null;
+  }
+
+  const branches = Array.isArray(activeNode.data.branches) ? activeNode.data.branches as BranchSummary[] : [];
+  return branches.find((branch) => branch.id === activeBranchId) ?? null;
+}
 
 export interface DesignerSnapshotCache {
   selection: DesignerSnapshot['selection'];
@@ -32,6 +42,7 @@ export function createDesignerSnapshotCache(input: {
       selection,
       activeNode: null,
       activeEdge: null,
+      activeBranch: null,
       canUndo: input.canUndo,
       canRedo: input.canRedo,
       isDirty: input.isDirty,
@@ -57,10 +68,12 @@ export function getDesignerSnapshot(input: {
   const activeEdgeId = selection.activeEdgeId;
   const activeNode = activeNodeId ? input.doc.nodes.find((n) => n.id === activeNodeId) ?? null : null;
   const activeEdge = activeEdgeId ? input.doc.edges.find((e) => e.id === activeEdgeId) ?? null : null;
+  const activeBranch = resolveActiveBranch(activeNode, selection.activeBranchId);
 
   const selectionUnchanged =
     input.cache.selection.activeNodeId === selection.activeNodeId &&
     input.cache.selection.activeEdgeId === selection.activeEdgeId &&
+    input.cache.selection.activeBranchId === selection.activeBranchId &&
     input.cache.selection.selectedNodeIds === selection.selectedNodeIds &&
     input.cache.selection.selectedEdgeIds === selection.selectedEdgeIds;
 
@@ -69,6 +82,7 @@ export function getDesignerSnapshot(input: {
     selectionUnchanged &&
     input.cache.snapshot.activeNode === activeNode &&
     input.cache.snapshot.activeEdge === activeEdge &&
+    input.cache.snapshot.activeBranch === activeBranch &&
     input.cache.snapshot.canUndo === input.canUndo &&
     input.cache.snapshot.canRedo === input.canRedo &&
     input.cache.snapshot.isDirty === input.isDirty &&
@@ -86,6 +100,7 @@ export function getDesignerSnapshot(input: {
     selection,
     activeNode,
     activeEdge,
+    activeBranch,
     canUndo: input.canUndo,
     canRedo: input.canRedo,
     isDirty: input.isDirty,

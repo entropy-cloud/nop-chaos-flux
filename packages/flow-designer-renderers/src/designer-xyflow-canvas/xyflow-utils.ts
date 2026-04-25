@@ -45,6 +45,7 @@ export function createXyflowNodes(
   snapshot: DesignerSnapshot,
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>
 ): Node[] {
+  const branchFocusedNodeId = snapshot.activeBranch?.childId;
   return snapshot.doc.nodes.map((node) => ({
     ...(() => {
       const resolved = resolveNodeSize(node, nodeTypeSizeMap?.get(node.type));
@@ -62,13 +63,15 @@ export function createXyflowNodes(
       ...(node.data ?? {}),
       label: String(node.data.label ?? node.id),
       typeLabel: node.type,
-      typeId: node.type
+      typeId: node.type,
+      __fdBranchFocused: branchFocusedNodeId === node.id
     } satisfies DesignerFlowNodeData
   }));
 }
 
 export function createXyflowEdges(snapshot: DesignerSnapshot, documentMode?: 'graph' | 'tree'): Edge[] {
   const edgeType = documentMode === 'tree' ? 'dingflowEdge' : 'designerEdge';
+  const branchFocusedNodeId = snapshot.activeBranch?.childId;
   return snapshot.doc.edges.map((edge) => ({
     id: edge.id,
     type: edgeType,
@@ -78,7 +81,8 @@ export function createXyflowEdges(snapshot: DesignerSnapshot, documentMode?: 'gr
     data: {
       ...(edge.data ?? {}),
       label: String(edge.data.label ?? edge.id),
-      typeId: edge.type
+      typeId: edge.type,
+      __fdBranchFocused: branchFocusedNodeId != null && (edge.source === branchFocusedNodeId || edge.target === branchFocusedNodeId)
     } satisfies DesignerFlowEdgeData,
     selected: snapshot.selection.activeEdgeId === edge.id
   }));

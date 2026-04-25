@@ -86,9 +86,10 @@ describe('createDesignerActionProvider', () => {
     const core = {
       getSnapshot: () => ({
         doc: { id: 'doc-1', kind: 'flow', name: 'Example', version: '1.0.0', nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
-        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null },
+        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null, activeBranchId: null },
         activeNode: null,
         activeEdge: null,
+        activeBranch: null,
         canUndo: false,
         canRedo: false,
         isDirty: false,
@@ -106,6 +107,7 @@ describe('createDesignerActionProvider', () => {
       addNode: (type: string, position: { x: number; y: number }, data?: Record<string, unknown>) => ({ id: 'n1', type, position, data }),
       clearSelection: () => undefined,
       selectNode: () => undefined,
+      selectBranch: () => undefined,
       selectEdge: () => undefined,
       deleteNode: () => undefined,
       deleteEdge: () => undefined,
@@ -123,9 +125,11 @@ describe('createDesignerActionProvider', () => {
     const provider = createDesignerActionProvider(core);
     const addResult = await provider.invoke('addNode', { nodeType: 'task', position: { x: 1, y: 2 } }, {} as any);
     const exportResult = await provider.invoke('export', undefined, {} as any);
+    const branchResult = await provider.invoke('selectBranch', { nodeId: 'gateway-1', branchId: 'b2' }, {} as any);
 
     expect(addResult).toMatchObject({ ok: true, data: expect.objectContaining({ type: 'task' }) });
     expect(exportResult).toMatchObject({ ok: true, data: '{"ok":true}' });
+    expect(branchResult).toMatchObject({ ok: true });
   });
 
   it('routes validation failures through warning notify while returning a failed action result', async () => {
@@ -143,9 +147,10 @@ describe('createDesignerActionProvider', () => {
           edges: [],
           viewport: { x: 0, y: 0, zoom: 1 }
         },
-        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null },
+        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null, activeBranchId: null },
         activeNode: null,
         activeEdge: null,
+        activeBranch: null,
         canUndo: false,
         canRedo: false,
         isDirty: false,
@@ -189,9 +194,10 @@ describe('createDesignerActionProvider', () => {
     const core = {
       getSnapshot: () => ({
         doc: { id: 'doc-1', kind: 'flow', name: 'Example', version: '1.0.0', nodes: [], edges: [], viewport },
-        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null },
+        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null, activeBranchId: null },
         activeNode: null,
         activeEdge: null,
+        activeBranch: null,
         canUndo: true,
         canRedo: false,
         isDirty: true,
@@ -230,9 +236,10 @@ describe('createDesignerActionProvider', () => {
           edges: [],
           viewport: { x: 0, y: 0, zoom: 1 }
         },
-        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null },
+        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null, activeBranchId: null },
         activeNode: null,
         activeEdge: null,
+        activeBranch: null,
         canUndo: true,
         canRedo: false,
         isDirty: true,
@@ -380,7 +387,7 @@ describe('flow-designer manifest', () => {
     const { createDesignerActionProvider } = await import('./designer-action-provider');
 
     const mockCore = {
-      getSnapshot: () => ({ doc: {}, selection: {}, activeNode: null, activeEdge: null }),
+      getSnapshot: () => ({ doc: {}, selection: { activeBranchId: null }, activeNode: null, activeEdge: null, activeBranch: null }),
       getDocument: () => ({ nodes: [], edges: [] }),
       getConfig: () => ({ nodeTypes: new Map(), rules: {}, edgeTypes: new Map(), features: {}, canvas: {} })
     } as any;

@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { renderDesignerCanvasBridge } from './canvas-bridge';
 import { useDesignerContext, useDesignerFullSnapshot } from './designer-context';
 import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow';
+import { createDingFlowMenuCommand } from './dingflow/dingflow-command-dispatch';
 import { DesignerIcon } from './designer-icon';
 import { compareTreeMenuNodeTypes, resolveNodeTypeAccent, resolveNodeTypeMeta, shouldIncludeInTreeAddMenu } from './designer-node-appearance';
 
-const plusButtonHandlerHolder: { current: ((sourceId: string, clientX: number, clientY: number) => void) | null } = { current: null };
+const plusButtonHandlerHolder: { current: ((sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => void) | null } = { current: null };
 
 export { plusButtonHandlerHolder };
 
@@ -13,6 +14,7 @@ interface PopoverState {
   sourceId: string;
   screenX: number;
   screenY: number;
+  sourceKind: 'node' | 'branch-group' | 'merge';
 }
 
 export function DesignerCanvasContent() {
@@ -29,8 +31,8 @@ export function DesignerCanvasContent() {
     dispatch({ type: 'clearSelection' });
   }, [dispatch]);
 
-  const handlePlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
-    setPopover({ sourceId, screenX: clientX, screenY: clientY });
+  const handlePlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number, sourceKind: 'node' | 'branch-group' | 'merge' = 'node') => {
+    setPopover({ sourceId, screenX: clientX, screenY: clientY, sourceKind });
   }, []);
 
   useEffect(() => {
@@ -55,33 +57,10 @@ export function DesignerCanvasContent() {
 
   const handleMenuSelect = useCallback((type: string) => {
     if (!popover) return;
-    const { sourceId } = popover;
-    const isMerge = sourceId.startsWith('merge:');
-    const effectiveId = isMerge ? sourceId.slice('merge:'.length) : sourceId;
+    const { sourceId, sourceKind } = popover;
     setPopover(null);
 
-    if (type === 'dt-condition') {
-      dispatch({
-        type: 'insertBranchPair',
-        sourceId: effectiveId,
-        condNodeType: type,
-        condData: { title: 'Condition', desc: 'Please set' },
-      });
-    } else if (isMerge) {
-      dispatch({
-        type: 'insertChainNodeAtMerge',
-        targetId: effectiveId,
-        nodeType: type,
-        data: { label: type === 'dt-approval' ? 'Approver' : 'CC', desc: 'Please set' },
-      });
-    } else {
-      dispatch({
-        type: 'insertChainNode',
-        sourceId: effectiveId,
-        nodeType: type,
-        data: { label: type === 'dt-approval' ? 'Approver' : 'CC', desc: 'Please set' },
-      });
-    }
+    dispatch(createDingFlowMenuCommand(sourceId, type, sourceKind));
   }, [popover, dispatch]);
 
   const handleNodeClick = useCallback(

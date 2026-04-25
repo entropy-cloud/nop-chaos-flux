@@ -239,6 +239,10 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     deleteEdgeCommand(buildEdgeCtx(), edgeId);
   }
 
+  function selectBranch(ownerNodeId: string, branchId: string | null): void {
+    selectionController.selectBranch(ownerNodeId, branchId);
+  }
+
   function moveNodes(deltas: Record<string, { dx: number; dy: number }>): void {
     moveNodesCommand(buildNodeCtx(), deltas);
   }
@@ -463,6 +467,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     deleteEdge,
     selectNode: selectionController.selectNode,
     selectEdge: selectionController.selectEdge,
+    selectBranch,
     clearSelection: selectionController.clearSelection,
     toggleNodeSelection: selectionController.toggleNodeSelection,
     toggleEdgeSelection: selectionController.toggleEdgeSelection,

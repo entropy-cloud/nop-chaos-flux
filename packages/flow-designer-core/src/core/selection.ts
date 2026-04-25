@@ -3,6 +3,7 @@ import type { SelectionSummary } from '../types';
 export interface DesignerSelectionState {
   selectedNodeIds: string[];
   selectedEdgeIds: string[];
+  activeBranchId: string | null;
 }
 
 function sameIds(left: string[], right: string[]): boolean {
@@ -19,6 +20,7 @@ export function createSelectionState(): DesignerSelectionState {
   return {
     selectedNodeIds: [],
     selectedEdgeIds: [],
+    activeBranchId: null,
   };
 }
 
@@ -28,6 +30,7 @@ export function getSelectionSummary(state: DesignerSelectionState): SelectionSum
     selectedEdgeIds: state.selectedEdgeIds,
     activeNodeId: state.selectedNodeIds[0] ?? null,
     activeEdgeId: state.selectedEdgeIds[0] ?? null,
+    activeBranchId: state.activeBranchId,
   };
 }
 
@@ -42,6 +45,7 @@ export function selectSingleNode(
   return {
     selectedNodeIds: nodeId ? [nodeId] : [],
     selectedEdgeIds: [],
+    activeBranchId: null,
   };
 }
 
@@ -56,6 +60,7 @@ export function selectSingleEdge(
   return {
     selectedNodeIds: [],
     selectedEdgeIds: edgeId ? [edgeId] : [],
+    activeBranchId: null,
   };
 }
 
@@ -76,12 +81,14 @@ export function toggleNodeSelection(
     return {
       selectedNodeIds: state.selectedNodeIds.filter((id) => id !== nodeId),
       selectedEdgeIds: state.selectedEdgeIds,
+      activeBranchId: state.activeBranchId,
     };
   }
 
   return {
     selectedNodeIds: [...state.selectedNodeIds, nodeId],
     selectedEdgeIds: [],
+    activeBranchId: null,
   };
 }
 
@@ -93,12 +100,14 @@ export function toggleExistingEdgeSelection(
     return {
       selectedNodeIds: state.selectedNodeIds,
       selectedEdgeIds: state.selectedEdgeIds.filter((id) => id !== edgeId),
+      activeBranchId: state.activeBranchId,
     };
   }
 
   return {
     selectedNodeIds: [],
     selectedEdgeIds: [...state.selectedEdgeIds, edgeId],
+    activeBranchId: null,
   };
 }
 
@@ -113,6 +122,7 @@ export function selectAllNodeIds(
   return {
     selectedNodeIds: nodeIds,
     selectedEdgeIds: [],
+    activeBranchId: null,
   };
 }
 
@@ -128,6 +138,7 @@ export function setSelectionState(
   return {
     selectedNodeIds: nodeIds,
     selectedEdgeIds: edgeIds,
+    activeBranchId: null,
   };
 }
 
@@ -142,6 +153,7 @@ export function removeNodeFromSelection(
   return {
     selectedNodeIds: state.selectedNodeIds.filter((id) => id !== nodeId),
     selectedEdgeIds: state.selectedEdgeIds,
+    activeBranchId: state.selectedNodeIds[0] === nodeId ? null : state.activeBranchId,
   };
 }
 
@@ -156,5 +168,22 @@ export function removeEdgeFromSelection(
   return {
     selectedNodeIds: state.selectedNodeIds,
     selectedEdgeIds: state.selectedEdgeIds.filter((id) => id !== edgeId),
+    activeBranchId: state.activeBranchId,
+  };
+}
+
+export function selectActiveBranch(
+  state: DesignerSelectionState,
+  ownerNodeId: string,
+  branchId: string | null,
+): DesignerSelectionState {
+  if (state.selectedNodeIds.length === 1 && state.selectedNodeIds[0] === ownerNodeId && state.activeBranchId === branchId) {
+    return state;
+  }
+
+  return {
+    selectedNodeIds: [ownerNodeId],
+    selectedEdgeIds: [],
+    activeBranchId: branchId,
   };
 }

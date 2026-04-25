@@ -304,6 +304,33 @@ describe('projectTree', () => {
     expect(branchEdges[1].data.branchType).toBe('onError');
   });
 
+  it('exposes branch header summaries on branch-owner node data', () => {
+    const tree: TreeDocument = {
+      id: 'branch-summary',
+      kind: 'test',
+      name: 'Branch Summary',
+      version: '1.0',
+      root: {
+        id: 'gw',
+        type: 'condition',
+        data: { label: 'Gateway' },
+        branches: [
+          { id: 'b1', data: { label: 'Branch 1', priority: 1 }, child: { id: 't1', type: 'task', data: {} } },
+          { id: 'b2', data: { label: 'Branch 2', priority: 2 }, child: { id: 't2', type: 'task', data: {} } },
+        ],
+        child: { id: 'end', type: 'end', data: {} },
+      },
+    };
+    const config = makeConfig();
+    const { nodes } = projectTree(tree, config);
+
+    const owner = nodes.find((node) => node.id === 'gw');
+    expect(owner?.data.branches).toEqual([
+      { id: 'b1', data: { label: 'Branch 1', priority: 1 }, childId: 't1', childType: 'task', childLabel: undefined },
+      { id: 'b2', data: { label: 'Branch 2', priority: 2 }, childId: 't2', childType: 'task', childLabel: undefined },
+    ]);
+  });
+
   it('resolves edge type from TreeNodeTypeConfig.branchEdgeType', () => {
     const tree: TreeDocument = {
       id: 'node-type-edge',

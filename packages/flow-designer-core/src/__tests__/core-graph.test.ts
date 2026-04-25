@@ -293,4 +293,36 @@ describe('createDesignerCore - graph operations', () => {
       target: 'task-1'
     });
   });
+
+  it('tracks branch selection alongside the owning active node', () => {
+    const core = createDesignerCore({
+      id: 'doc-branches',
+      kind: 'flow',
+      name: 'Branches',
+      version: '1.0.0',
+      nodes: [
+        {
+          id: 'gateway-1',
+          type: 'task',
+          position: { x: 0, y: 0 },
+          data: {
+            label: 'Gateway',
+            branches: [
+              { id: 'b1', data: { label: 'Branch 1' }, childId: 'child-1', childType: 'task', childLabel: 'Child 1' },
+              { id: 'b2', data: { label: 'Branch 2' }, childId: 'child-2', childType: 'task', childLabel: 'Child 2' }
+            ]
+          }
+        }
+      ],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 }
+    }, createTestDesignerConfig());
+
+    core.selectBranch('gateway-1', 'b2');
+
+    expect(core.getSnapshot().selection.activeNodeId).toBe('gateway-1');
+    expect(core.getSnapshot().selection.activeBranchId).toBe('b2');
+    expect(core.getSnapshot().activeNode?.id).toBe('gateway-1');
+    expect(core.getSnapshot().activeBranch).toMatchObject({ id: 'b2', childId: 'child-2' });
+  });
 });

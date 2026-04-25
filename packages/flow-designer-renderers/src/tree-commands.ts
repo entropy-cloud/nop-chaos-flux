@@ -80,6 +80,71 @@ function createNode(type: string, data?: Record<string, unknown>): TreeNode {
   };
 }
 
+function findBranchOwner(node: TreeNode, nodeId: string): TreeNode | null {
+  if (node.id === nodeId && Array.isArray(node.branches) && node.branches.length > 0) {
+    return node;
+  }
+
+  if (node.child) {
+    const hit = findBranchOwner(node.child, nodeId);
+    if (hit) return hit;
+  }
+
+  for (const branch of node.branches ?? []) {
+    if (branch.child) {
+      const hit = findBranchOwner(branch.child, nodeId);
+      if (hit) return hit;
+    }
+  }
+
+  return null;
+}
+
+function updateNodeDataRecursive(node: TreeNode, nodeId: string, data: Record<string, unknown>): boolean {
+  if (node.id === nodeId) {
+    node.data = { ...node.data, ...data };
+    return true;
+  }
+
+  if (node.child && updateNodeDataRecursive(node.child, nodeId, data)) {
+    return true;
+  }
+
+  for (const branch of node.branches ?? []) {
+    if (branch.child && updateNodeDataRecursive(branch.child, nodeId, data)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function deleteNodeRecursive(parent: TreeNode, nodeId: string): boolean {
+  if (parent.child?.id === nodeId) {
+    const deleting = parent.child;
+    parent.child = deleting.child;
+    return true;
+  }
+
+  if (parent.child && deleteNodeRecursive(parent.child, nodeId)) {
+    return true;
+  }
+
+  for (const branch of parent.branches ?? []) {
+    if (branch.child?.id === nodeId) {
+      const deleting = branch.child;
+      branch.child = deleting.child;
+      return true;
+    }
+
+    if (branch.child && deleteNodeRecursive(branch.child, nodeId)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function insertChainNodeInTreeDocument(
   tree: TreeDocument,
   sourceId: string,
@@ -144,6 +209,128 @@ export function insertBranchPairInTreeDocument(
 
   source.branches = branches;
   source.child = downstream;
+  return nextTree;
+}
+
+export function updateNodeDataInTreeDocument(
+  tree: TreeDocument,
+  nodeId: string,
+  data: Record<string, unknown>
+): TreeDocument | null {
+  const nextTree = cloneTree(tree);
+  const updated = updateNodeDataRecursive(nextTree.root, nodeId, data);
+  return updated ? nextTree : null;
+}
+
+export function deleteNodeInTreeDocument(
+  tree: TreeDocument,
+  nodeId: string
+): TreeDocument | null {
+  if (tree.root.id === nodeId) {
+    return null;
+  }
+
+  const nextTree = cloneTree(tree);
+  const deleted = deleteNodeRecursive(nextTree.root, nodeId);
+  return deleted ? nextTree : null;
+}
+
+export function addBranchInTreeDocument(
+  tree: TreeDocument,
+  nodeId: string,
+  branchData?: Record<string, unknown>,
+  childType?: string,
+  childData?: Record<string, unknown>
+): TreeDocument | null {
+  const nextTree = cloneTree(tree);
+  const owner = findBranchOwner(nextTree.root, nodeId);
+  if (!owner?.branches) {
+    return null;
+  }
+
+  const nextPriority = owner.branches.length + 1;
+  owner.branches.push({
+    id: createTreeNodeId('branch'),
+    data: { ...(branchData ?? {}), priority: nextPriority },
+    child: childType ? createNode(childType, childData) : undefined,
+  });
+  return nextTree;
+}
+
+export function deleteBranchInTreeDocument(
+  tree: TreeDocument,
+  nodeId: string,
+  branchId: string
+): TreeDocument | null {
+  const nextTree = cloneTree(tree);
+  const owner = findBranchOwner(nextTree.root, nodeId);
+  if (!owner?.branches || owner.branches.length <= 2) {
+    return null;
+  }
+
+  const nextBranches = owner.branches.filter((branch) => branch.id !== branchId);
+  if (nextBranches.length === owner.branches.length) {
+    return null;
+  }
+
+  owner.branches = nextBranches.map((branch, index) => ({
+    ...branch,
+    data: { ...branch.data, priority: index + 1 },
+  }));
+  return nextTree;
+}
+
+export function moveBranchInTreeDocument(
+  tree: TreeDocument,
+  nodeId: string,
+  branchId: string,
+  direction: 'left' | 'right'
+): TreeDocument | null {
+  const nextTree = cloneTree(tree);
+  const owner = findBranchOwner(nextTree.root, nodeId);
+  if (!owner?.branches) {
+    return null;
+  }
+
+  const index = owner.branches.findIndex((branch) => branch.id === branchId);
+  if (index < 0) {
+    return null;
+  }
+
+  const targetIndex = direction === 'left' ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= owner.branches.length) {
+    return null;
+  }
+
+  const nextBranches = owner.branches.slice();
+  const temp = nextBranches[index];
+  nextBranches[index] = nextBranches[targetIndex];
+  nextBranches[targetIndex] = temp;
+  owner.branches = nextBranches.map((branch, branchIndex) => ({
+    ...branch,
+    data: { ...branch.data, priority: branchIndex + 1 },
+  }));
+  return nextTree;
+}
+
+export function updateBranchDataInTreeDocument(
+  tree: TreeDocument,
+  nodeId: string,
+  branchId: string,
+  data: Record<string, unknown>
+): TreeDocument | null {
+  const nextTree = cloneTree(tree);
+  const owner = findBranchOwner(nextTree.root, nodeId);
+  if (!owner?.branches) {
+    return null;
+  }
+
+  const branch = owner.branches.find((item) => item.id === branchId);
+  if (!branch) {
+    return null;
+  }
+
+  branch.data = { ...branch.data, ...data };
   return nextTree;
 }
 

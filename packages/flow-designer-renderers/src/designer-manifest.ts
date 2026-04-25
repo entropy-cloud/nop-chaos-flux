@@ -152,6 +152,19 @@ const designerCapabilities: HostCapabilityContract = {
       result: { kind: 'object', fields: { nodeId: { kind: 'string' } } },
       description: 'Add a new node to the graph'
     },
+    addBranch: {
+      args: {
+        kind: 'object',
+        fields: {
+          nodeId: { kind: 'string' },
+          branchData: nodeDataShape,
+          childType: { kind: 'string' },
+          childData: nodeDataShape
+        },
+        optional: ['branchData', 'childType', 'childData']
+      },
+      description: 'Add a branch to a tree-mode branch group'
+    },
     addEdge: {
       args: {
         kind: 'object',
@@ -178,6 +191,16 @@ const designerCapabilities: HostCapabilityContract = {
       },
       description: 'Select a single node'
     },
+    selectBranch: {
+      args: {
+        kind: 'object',
+        fields: {
+          nodeId: { kind: 'string' },
+          branchId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] }
+        }
+      },
+      description: 'Select a single branch within a tree-mode branch group'
+    },
     selectEdge: {
       args: {
         kind: 'object',
@@ -195,6 +218,16 @@ const designerCapabilities: HostCapabilityContract = {
         }
       },
       description: 'Delete a node from the graph'
+    },
+    deleteBranch: {
+      args: {
+        kind: 'object',
+        fields: {
+          nodeId: { kind: 'string' },
+          branchId: { kind: 'string' }
+        }
+      },
+      description: 'Delete a branch from a tree-mode branch group'
     },
     deleteEdge: {
       args: {
@@ -224,6 +257,28 @@ const designerCapabilities: HostCapabilityContract = {
         }
       },
       description: 'Move a node to a new position'
+    },
+    moveBranch: {
+      args: {
+        kind: 'object',
+        fields: {
+          nodeId: { kind: 'string' },
+          branchId: { kind: 'string' },
+          direction: { kind: 'string', description: 'left or right' }
+        }
+      },
+      description: 'Move a branch left or right within a tree-mode branch group'
+    },
+    updateBranchData: {
+      args: {
+        kind: 'object',
+        fields: {
+          nodeId: { kind: 'string' },
+          branchId: { kind: 'string' },
+          data: nodeDataShape
+        }
+      },
+      description: 'Update branch header data in a tree-mode branch group'
     },
     reconnectEdge: {
       args: {

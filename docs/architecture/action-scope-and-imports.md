@@ -501,7 +501,6 @@ Recommended authoring shape:
 interface ActionSchema {
   action: string;
   args?: Record<string, SchemaValue>;
-  api?: ApiSchema;
   control?: Record<string, SchemaValue>;
   when?: string;
   parallel?: ActionSchema[];

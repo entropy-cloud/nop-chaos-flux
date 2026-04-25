@@ -7,10 +7,16 @@ import type {
   DesignerCommandResult
 } from './designer-command-types';
 import {
+  addBranchInTreeDocument,
+  deleteNodeInTreeDocument,
+  deleteBranchInTreeDocument,
   insertBranchPairInTreeDocument,
   insertChainNodeAtMergeInTreeDocument,
   insertChainNodeInTreeDocument,
+  moveBranchInTreeDocument,
   projectTreeDocumentToGraph,
+  updateBranchDataInTreeDocument,
+  updateNodeDataInTreeDocument,
 } from './tree-commands';
 
 export type { DesignerCommand, DesignerCommandAdapter, DesignerCommandReason, DesignerCommandResult };
@@ -151,6 +157,23 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
 
         return createSuccess(core, { data: node });
       }
+      case 'addBranch': {
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = addBranchInTreeDocument(
+            treeOwner.getTreeDocument(),
+            command.nodeId,
+            command.branchData,
+            command.childType,
+            command.childData
+          );
+          if (!nextTree) {
+            return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
+        return createFailure(core, 'addBranch is only available in tree mode.', 'unavailable');
+      }
       case 'clearSelection':
         core.clearSelection();
         return createSuccess(core);
@@ -159,9 +182,28 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         relayoutAfterTreeMutation(core);
         return createSuccess(core);
       case 'deleteNode':
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = deleteNodeInTreeDocument(treeOwner.getTreeDocument(), command.nodeId);
+          if (!nextTree) {
+            return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
         core.deleteNode(command.nodeId);
         relayoutAfterTreeMutation(core);
         return createSuccess(core);
+      case 'deleteBranch': {
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = deleteBranchInTreeDocument(treeOwner.getTreeDocument(), command.nodeId, command.branchId);
+          if (!nextTree) {
+            return createFailure(core, `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
+        return createFailure(core, 'deleteBranch is only available in tree mode.', 'unavailable');
+      }
       case 'duplicateNode': {
         const node = core.duplicateNode(command.nodeId);
         if (!node) {
@@ -179,9 +221,7 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
       case 'deleteSelection': {
         const snapshot = core.getSnapshot();
         if (snapshot.activeNode?.id) {
-          core.deleteNode(snapshot.activeNode.id);
-          relayoutAfterTreeMutation(core);
-          return createSuccess(core);
+          return execute({ type: 'deleteNode', nodeId: snapshot.activeNode.id });
         }
         if (snapshot.activeEdge?.id) {
           core.deleteEdge(snapshot.activeEdge.id);
@@ -206,6 +246,17 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
 
         core.moveNode(command.nodeId, command.position);
         return createSuccess(core, { data: core.getDocument().nodes.find((nextNode) => nextNode.id === command.nodeId) });
+      }
+      case 'moveBranch': {
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = moveBranchInTreeDocument(treeOwner.getTreeDocument(), command.nodeId, command.branchId, command.direction);
+          if (!nextTree) {
+            return createFailure(core, `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
+        return createFailure(core, 'moveBranch is only available in tree mode.', 'unavailable');
       }
       case 'reconnectEdge': {
         if (!hasEdge(core.getDocument(), command.edgeId)) {
@@ -241,6 +292,9 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         return createSuccess(core);
       case 'selectEdge':
         core.selectEdge(command.edgeId);
+        return createSuccess(core);
+      case 'selectBranch':
+        core.selectBranch(command.nodeId, command.branchId);
         return createSuccess(core);
       case 'selectNode':
         core.selectNode(command.nodeId);
@@ -284,7 +338,25 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         }
         core.updateEdge(command.edgeId, command.data);
         return createSuccess(core);
+      case 'updateBranchData':
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = updateBranchDataInTreeDocument(treeOwner.getTreeDocument(), command.nodeId, command.branchId, command.data);
+          if (!nextTree) {
+            return createFailure(core, `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
+        return createFailure(core, 'updateBranchData is only available in tree mode.', 'unavailable');
       case 'updateNodeData':
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = updateNodeDataInTreeDocument(treeOwner.getTreeDocument(), command.nodeId, command.data);
+          if (!nextTree) {
+            return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
         if (!hasNode(core.getDocument(), command.nodeId)) {
           return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
         }

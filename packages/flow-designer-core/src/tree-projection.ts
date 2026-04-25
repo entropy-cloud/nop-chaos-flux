@@ -55,11 +55,24 @@ export function projectTree(
   const edges: GraphEdge[] = [];
 
   function visit(node: TreeNode, parentIds: string[], parentType?: string): string[] {
+    const nodeData = node.branches && node.branches.length > 0
+      ? {
+          ...node.data,
+          branches: node.branches.map((branch) => ({
+            id: branch.id,
+            data: branch.data,
+            childId: branch.child?.id,
+            childType: branch.child?.type,
+            childLabel: branch.child?.data?.label,
+          }))
+        }
+      : node.data;
+
     nodes.push({
       id: node.id,
       type: node.type,
       position: { x: 0, y: 0 },
-      data: node.data,
+      data: nodeData,
     });
 
     for (const pid of parentIds) {

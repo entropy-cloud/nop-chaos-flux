@@ -4,6 +4,7 @@ export interface DesignerFlowNodeData extends Record<string, unknown> {
   label: string;
   typeLabel: string;
   typeId: string;
+  __fdBranchFocused?: boolean;
 }
 
 export interface DesignerFlowEdgeData extends Record<string, unknown> {
@@ -11,6 +12,7 @@ export interface DesignerFlowEdgeData extends Record<string, unknown> {
   typeId: string;
   lineStyle?: 'solid' | 'dashed' | 'dotted' | string;
   __fdHovered?: boolean;
+  __fdBranchFocused?: boolean;
 }
 
 export interface DesignerXyflowControlledViewport {
