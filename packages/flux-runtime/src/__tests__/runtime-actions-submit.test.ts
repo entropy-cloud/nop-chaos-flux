@@ -103,39 +103,24 @@ describe('createRendererRuntime', () => {
       id: 'concurrent-submit-form',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
+      lifecycle: {
+        submitAction: async (options) =>
+          runtime.dispatch(
+            { action: 'ajax', args: { url: '/api/profile', method: 'post' } },
+            { runtime, scope: form.scope, page, signal: options?.signal }
+          )
+      }
     });
 
     const firstPromise = runtime.dispatch(
-      {
-        action: 'submitForm',
-        args: {
-          url: '/api/profile',
-          method: 'post'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     const secondResult = await runtime.dispatch(
-      {
-        action: 'submitForm',
-        args: {
-          url: '/api/profile',
-          method: 'post'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     expect(apiCallCount).toBe(1);
@@ -176,39 +161,24 @@ describe('createRendererRuntime', () => {
       id: 'monitored-concurrent-submit-form',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
+      lifecycle: {
+        submitAction: async (options) =>
+          runtime.dispatch(
+            { action: 'ajax', args: { url: '/api/profile', method: 'post' } },
+            { runtime, scope: form.scope, page, signal: options?.signal }
+          )
+      }
     });
 
     const firstPromise = runtime.dispatch(
-      {
-        action: 'submitForm',
-        args: {
-          url: '/api/profile',
-          method: 'post'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     const secondResult = await runtime.dispatch(
-      {
-        action: 'submitForm',
-        args: {
-          url: '/api/profile',
-          method: 'post'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     expect(secondResult).toMatchObject({ cancelled: true });
@@ -223,7 +193,7 @@ describe('createRendererRuntime', () => {
     await firstPromise;
   });
 
-  it('applies adaptors during submitForm api execution', async () => {
+  it('applies adaptors during ajax action dispatched from submitAction', async () => {
     const fetchCalls: ApiSchema[] = [];
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
@@ -250,25 +220,27 @@ describe('createRendererRuntime', () => {
       id: 'profile-form',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
+      lifecycle: {
+        submitAction: async () =>
+          runtime.dispatch(
+            {
+              action: 'ajax',
+              args: {
+                url: '/api/profile',
+                method: 'post',
+                requestAdaptor: 'return {headers: {Authorization: scope.token}, data: {formUser: scope.username}};',
+                responseAdaptor: 'return payload.payload;'
+              }
+            },
+            { runtime, scope: form.scope, page }
+          )
+      }
     });
 
     const result = await runtime.dispatch(
-      {
-        action: 'submitForm',
-        args: {
-          url: '/api/profile',
-          method: 'post',
-          requestAdaptor: 'return {headers: {Authorization: scope.token}, data: {formUser: scope.username}};',
-          responseAdaptor: 'return payload.payload;'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     expect(fetchCalls).toHaveLength(1);
@@ -289,7 +261,7 @@ describe('createRendererRuntime', () => {
     });
   });
 
-  it('supports args as the recommended submitForm api carrier', async () => {
+  it('resolves dynamic expressions in ajax action args from submitAction', async () => {
     const fetchCalls: ApiSchema[] = [];
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
@@ -311,23 +283,19 @@ describe('createRendererRuntime', () => {
       id: 'args-submit-form',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
+      lifecycle: {
+        submitAction: async () =>
+          runtime.dispatch(
+            { action: 'ajax', args: { url: '${apiPath}', method: 'post' } },
+            { runtime, scope: form.scope, page }
+          )
+      }
     });
 
     const result = await runtime.dispatch(
-      {
-        action: 'submitForm',
-        args: {
-          url: '${apiPath}',
-          method: 'post'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     expect(result).toMatchObject({ ok: true, data: { saved: true } });
@@ -338,7 +306,7 @@ describe('createRendererRuntime', () => {
     });
   });
 
-  it('retries submitForm requests through shared request execution', async () => {
+  it('retries ajax requests from submitAction through shared request execution', async () => {
     let callCount = 0;
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
@@ -365,31 +333,26 @@ describe('createRendererRuntime', () => {
       id: 'retry-submit-form',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
+      lifecycle: {
+        submitAction: async () =>
+          runtime.dispatch(
+            { action: 'ajax', args: { url: '/api/profile', method: 'post' }, retry: { times: 2, delay: 0 } },
+            { runtime, scope: form.scope, page }
+          )
+      }
     });
 
     const result = await runtime.dispatch(
-      {
-        action: 'submitForm',
-        retry: { times: 2, delay: 0 },
-        args: {
-          url: '/api/profile',
-          method: 'post'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     expect(result).toMatchObject({ ok: true, data: { saved: true }, attempts: 3, failureCount: 2 });
     expect(callCount).toBe(3);
   });
 
-  it('aborts submitForm requests when action timeouts fire', async () => {
+  it('aborts ajax requests from submitAction when action timeouts fire', async () => {
     let capturedSignal: AbortSignal | undefined;
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
@@ -412,24 +375,19 @@ describe('createRendererRuntime', () => {
       id: 'timeout-submit-form',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
+      lifecycle: {
+        submitAction: async () =>
+          runtime.dispatch(
+            { action: 'ajax', args: { url: '/api/profile', method: 'post' }, timeout: 5 },
+            { runtime, scope: form.scope, page }
+          )
+      }
     });
 
     const resultPromise = runtime.dispatch(
-      {
-        action: 'submitForm',
-        timeout: 5,
-        args: {
-          url: '/api/profile',
-          method: 'post'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     await new Promise((resolve) => setTimeout(resolve, 20));

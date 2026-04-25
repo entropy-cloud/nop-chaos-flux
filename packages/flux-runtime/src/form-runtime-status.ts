@@ -53,19 +53,11 @@ export function createFormScopeWithBinding(input: {
   formName: string | undefined;
   getStoreState: () => FormStoreState;
 }) {
-  let formScopeWithBinding = createReadonlyScopeBinding(
+  const formScopeWithBinding = createReadonlyScopeBinding(
     input.scope,
     '$form',
     () => buildFormStatusSummary(input.getStoreState(), input.formId, input.formName)
   );
-
-  if (input.formName) {
-    formScopeWithBinding = createReadonlyScopeBinding(
-      formScopeWithBinding,
-      input.formName,
-      () => input.getStoreState().values
-    );
-  }
 
   Object.defineProperty(formScopeWithBinding, 'value', {
     get() {

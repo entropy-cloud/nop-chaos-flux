@@ -76,12 +76,12 @@ function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>
 function createFormLifecycleScope(
   scope: ScopeRef,
   importBindings: Readonly<Record<string, unknown>>,
-  formName: string | undefined,
-  getFormValues: () => Record<string, unknown>
+  _formName: string | undefined,
+  _getFormValues: () => Record<string, unknown>
 ): ScopeRef {
   const hasImports = Object.keys(importBindings).length > 0;
 
-  if (!hasImports && !formName) {
+  if (!hasImports) {
     return scope;
   }
 
@@ -89,12 +89,7 @@ function createFormLifecycleScope(
   let materialized: Record<string, unknown> | undefined;
 
   function getDynamicBindings(): Record<string, unknown> {
-    return formName
-      ? {
-          ...importBindings,
-          [formName]: getFormValues()
-        }
-      : { ...importBindings };
+    return { ...importBindings };
   }
 
   return {

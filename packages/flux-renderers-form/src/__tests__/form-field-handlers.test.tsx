@@ -105,6 +105,13 @@ describe('formRendererDefinitions - input types and field handlers', () => {
           data: {
             approved: false
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/approval',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'checkbox',
@@ -120,11 +127,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               type: 'button',
               label: 'Submit approval',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/approval',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -158,6 +161,13 @@ describe('formRendererDefinitions - input types and field handlers', () => {
             notes: 'Initial note',
             status: 'draft'
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/article',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'textarea',
@@ -180,11 +190,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               type: 'button',
               label: 'Submit article',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/article',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -222,6 +228,13 @@ describe('formRendererDefinitions - input types and field handlers', () => {
             featured: false,
             tags: ['stable']
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/release',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'switch',
@@ -247,11 +260,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               type: 'button',
               label: 'Submit release',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/release',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -316,6 +325,13 @@ describe('formRendererDefinitions - input types and field handlers', () => {
           data: {
             approved: true
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/approval',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'checkbox',
@@ -331,11 +347,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               type: 'button',
               label: 'Submit approval',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/approval',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]

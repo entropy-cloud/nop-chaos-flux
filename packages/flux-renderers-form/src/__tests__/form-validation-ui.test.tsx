@@ -33,6 +33,13 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
           data: {
             email: ''
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/email',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'input-email',
@@ -46,11 +53,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
               type: 'button',
               label: 'Submit email',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/email',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -241,6 +244,13 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
           data: {
             email: ''
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/email',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'input-email',
@@ -254,11 +264,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
               type: 'button',
               label: 'Submit email',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/email',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -331,6 +337,13 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
           data: {
             email: ''
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/email',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'input-email',
@@ -344,11 +357,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
               type: 'button',
               label: 'Submit email',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/email',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]

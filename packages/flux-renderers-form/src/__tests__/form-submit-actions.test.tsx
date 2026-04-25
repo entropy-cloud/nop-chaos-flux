@@ -264,6 +264,13 @@ describe('formRendererDefinitions - submit and init actions', () => {
             username: 'Alice',
             role: 'admin'
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/profile',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'input-text',
@@ -285,11 +292,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
               type: 'button',
               label: 'Submit profile',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/profile',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -318,7 +321,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
     });
   });
 
-  it('runs submit success in parent scope while preserving form-name bindings', async () => {
+  it('runs submit success in parent scope without exposing form-name value aliases', async () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;
     cleanup();
@@ -330,16 +333,14 @@ describe('formRendererDefinitions - submit and init actions', () => {
         schema={{
           type: 'page',
           body: [
-            {
-              type: 'form',
-              id: 'feedback-form',
-              name: 'feedbackForm',
+             {
+               type: 'form',
+               id: 'feedback-form',
               onSubmitSuccess: [
-                { action: 'setValue', args: { path: 'submitted', value: true } },
-                { action: 'setValue', args: { path: 'submittedUsername', value: '${feedbackForm.username}' } }
-              ],
-              data: {
-                username: ''
+                 { action: 'setValue', args: { path: 'submitted', value: true } }
+               ],
+               data: {
+                 username: ''
               },
               body: [
                 {
@@ -349,7 +350,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
                 },
                 {
                   type: 'text',
-                  text: '${feedbackForm.username ?? ""}'
+                  text: '${username ?? ""}'
                 }
               ],
               actions: [
@@ -387,7 +388,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
     fireEvent.click(screen.getByText('Submit feedback form'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('scope-state:submittedUsername').textContent).toBe('"Carol"');
+      expect(screen.getByTestId('scope-state:submittedUsername').textContent).toBe('null');
       expect(screen.getByTestId('scope-state:submitted').textContent).toBe('true');
     });
   });
@@ -413,9 +414,8 @@ describe('formRendererDefinitions - submit and init actions', () => {
                 {
                   type: 'form',
                   id: 'surface-form',
-                  name: 'surfaceForm',
                   onSubmitSuccess: [
-                    { action: 'setValue', args: { path: 'savedName', value: '${surfaceForm.name}' } }
+                    { action: 'setValue', args: { path: 'savedName', value: 'Dana' } }
                   ],
                   data: {
                     name: 'Dana'
@@ -451,7 +451,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
     });
   });
 
-  it('writes submit success through a surface shell when triggered by built-in submit action', async () => {
+  it('does not implicitly expose local form values to the surface parent write scope', async () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;
     cleanup();
@@ -471,9 +471,8 @@ describe('formRendererDefinitions - submit and init actions', () => {
               body: [
                 {
                   type: 'form',
-                  name: 'surfaceForm',
                   onSubmitSuccess: [
-                    { action: 'setValue', args: { path: 'savedName', value: '${surfaceForm.name}' } }
+                    { action: 'setValue', args: { path: 'submitted', value: true } }
                   ],
                   body: [
                     {
@@ -495,6 +494,10 @@ describe('formRendererDefinitions - submit and init actions', () => {
             {
               type: 'scope-state-probe',
               name: 'savedName'
+            },
+            {
+              type: 'scope-state-probe',
+              name: 'submitted'
             }
           ]
         }}
@@ -508,7 +511,8 @@ describe('formRendererDefinitions - submit and init actions', () => {
     fireEvent.click(screen.getByText('Submit via built-in submit'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('scope-state:savedName').textContent).toBe('"Erin"');
+      expect(screen.getByTestId('scope-state:savedName').textContent).toBe('null');
+      expect(screen.getByTestId('scope-state:submitted').textContent).toBe('true');
     });
   });
 });

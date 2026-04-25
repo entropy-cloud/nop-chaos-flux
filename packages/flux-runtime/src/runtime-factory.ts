@@ -177,8 +177,6 @@ export function createRendererRuntime(input: {
 
   const { evaluate, compileValue, evaluateCompiled } = createRuntimeEvalHelpers(expressionCompiler, getEnv);
 
-  const evalCtx = { getEnv, expressionCompiler, evaluate, executeApiRequest };
-
   const actionDispatcherRef: { current?: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
 
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
