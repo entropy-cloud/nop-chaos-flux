@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Excel</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>Web Excel</h1>
+          <p>纯前端表格，支持区域选择、样式工具栏、复制粘贴和拖拽调宽高。</p>
+        </div>
+        <div class="actions">
+          <button id="new-sheet-btn" type="button">新建</button>
+          <button id="save-btn" type="button">保存到本地</button>
+          <button id="export-json-btn" type="button">导出 JSON</button>
+          <button id="export-csv-btn" type="button">导出 CSV</button>
+          <label class="import-label" for="import-input">导入 JSON</label>
+          <input id="import-input" type="file" accept="application/json" />
+        </div>
+      </header>
+
+      <section class="toolbar-panel">
+        <div class="toolbar-group">
+          <span class="panel-label">字体</span>
+          <select id="font-size-select">
+            <option value="12">12</option>
+            <option value="14" selected>14</option>
+            <option value="16">16</option>
+            <option value="18">18</option>
+            <option value="20">20</option>
+            <option value="24">24</option>
+          </select>
+          <button id="bold-btn" class="tool-btn" type="button">B</button>
+          <button id="italic-btn" class="tool-btn" type="button">I</button>
+          <button id="underline-btn" class="tool-btn" type="button">U</button>
+        </div>
+
+        <div class="toolbar-group">
+          <span class="panel-label">对齐</span>
+          <button class="tool-btn" data-align="left" type="button">左</button>
+          <button class="tool-btn" data-align="center" type="button">中</button>
+          <button class="tool-btn" data-align="right" type="button">右</button>
+        </div>
+
+        <div class="toolbar-group color-group">
+          <label>
+            <span class="panel-label">字色</span>
+            <input id="text-color-input" type="color" value="#152033" />
+          </label>
+          <label>
+            <span class="panel-label">填充</span>
+            <input id="fill-color-input" type="color" value="#ffffff" />
+          </label>
+          <button id="clear-style-btn" class="tool-btn" type="button">清除样式</button>
+        </div>
+      </section>
+
+      <section class="formula-panel">
+        <div class="active-cell-wrap">
+          <span class="panel-label">单元格</span>
+          <span id="active-cell-label" class="active-cell-label">A1</span>
+        </div>
+        <label class="formula-bar" for="formula-input">
+          <span class="panel-label">fx</span>
+          <input id="formula-input" type="text" spellcheck="false" placeholder="输入内容或公式，例如 =A1+B1" />
+        </label>
+      </section>
+
+      <section class="sheet-controls">
+        <label>
+          行数
+          <input id="rows-input" type="number" min="5" max="200" value="30" />
+        </label>
+        <label>
+          列数
+          <input id="cols-input" type="number" min="5" max="52" value="16" />
+        </label>
+        <button id="resize-btn" type="button">调整表格</button>
+        <span id="status-text" class="status-text">未保存</span>
+      </section>
+
+      <main id="sheet-wrap" class="sheet-wrap" tabindex="0">
+        <div id="sheet-canvas" class="sheet-canvas">
+          <div id="grid" class="grid" role="grid" aria-label="Web Excel 表格"></div>
+          <div id="selection-overlay" class="selection-overlay" hidden></div>
+        </div>
+      </main>
+
+      <section class="sheet-tabs-panel excel-sheet-bar">
+        <div class="sheet-bar-left">
+          <button class="sheet-nav-btn" type="button" aria-label="工作表导航">≡</button>
+          <button id="add-sheet-btn" class="sheet-add-btn" type="button" aria-label="新增工作表">+</button>
+        </div>
+        <div id="sheet-tabs" class="sheet-tabs" aria-label="工作表列表"></div>
+        <div class="sheet-tab-actions">
+          <button id="remove-sheet-btn" type="button">删除当前工作表</button>
+        </div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+  </html>
