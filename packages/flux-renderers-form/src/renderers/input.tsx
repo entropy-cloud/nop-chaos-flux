@@ -1,7 +1,6 @@
 import {
   booleanStringAdapter,
   stringAdapter,
-  type ApiSchema,
   type RendererComponentProps,
   type RendererDefinition,
   type ValueAdapter,
@@ -93,14 +92,14 @@ export function createFieldValidation(nameResolver?: (schema: InputSchema) => st
       return nameResolver ? nameResolver(schema) : schema.name;
     },
     collectRules(schema: InputSchema) {
-      const rules: Array<{ kind: 'email' } | { kind: 'async'; api: ApiSchema; debounce?: number; message?: string }> = email
+      const rules: Array<{ kind: 'email' } | { kind: 'async'; action: import('@nop-chaos/flux-core').ActionSchema; debounce?: number; message?: string }> = email
         ? [{ kind: 'email' }]
         : [];
 
-      if (schema.validate?.api) {
+      if (schema.validate?.action) {
         rules.push({
           kind: 'async',
-          api: schema.validate.api,
+          action: schema.validate.action,
           debounce: schema.validate.debounce,
           message: schema.validate.message
         });
@@ -126,6 +125,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const placeholder = loading ? 'Loading...' : undefined;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   const selectedValue = value as string;
+  const selectedLabel = options.find((option) => option.value === selectedValue)?.label;
 
   return (
     <div className={cn('nop-select-wrapper', props.meta.className)} data-slot="select-wrapper">
@@ -138,7 +138,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           onBlur={handlers.onBlur}
         >
           {loading ? <Spinner className="size-4 text-muted-foreground" aria-hidden="true" /> : null}
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder}>{selectedLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {options?.map((option) => (

@@ -1,4 +1,4 @@
-import type { ActionSchema, ApiSchema, BaseSchema, BoundFieldSchemaBase, HiddenFieldPolicy, SourceSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, BoundFieldSchemaBase, HiddenFieldPolicy, SourceSchema } from '@nop-chaos/flux-core';
 
 export interface SelectOptionSchema {
   [key: string]: import('@nop-chaos/flux-core').SchemaValue;
@@ -14,7 +14,7 @@ export interface InputSchema extends BoundFieldSchemaBase {
   maxLength?: number;
   pattern?: string;
   validate?: {
-    api?: ApiSchema;
+    action?: ActionSchema;
     debounce?: number;
     message?: string;
   };

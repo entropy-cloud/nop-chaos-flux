@@ -303,6 +303,9 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     fireEvent.change(usernameInput, { target: { value: 'Bob' } });
     await selectOption('Role', 'Editor');
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Role' }).textContent).toContain('Editor');
+    });
     fireEvent.click(screen.getByText('Submit profile'));
 
     await waitFor(() => {
@@ -445,6 +448,67 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('scope-state:savedName').textContent).toBe('"Dana"');
+    });
+  });
+
+  it('writes submit success through a surface shell when triggered by built-in submit action', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/surface-built-in-submit"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'fragment',
+              data: {
+                dialogId: 'dialog-1'
+              },
+              body: [
+                {
+                  type: 'form',
+                  name: 'surfaceForm',
+                  onSubmitSuccess: [
+                    { action: 'setValue', args: { path: 'savedName', value: '${surfaceForm.name}' } }
+                  ],
+                  body: [
+                    {
+                      type: 'input-text',
+                      name: 'name',
+                      label: 'Name'
+                    }
+                  ],
+                  actions: [
+                    {
+                      type: 'button',
+                      label: 'Submit via built-in submit',
+                      onClick: { action: 'submit' }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'scope-state-probe',
+              name: 'savedName'
+            }
+          ]
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Erin' } });
+    fireEvent.click(screen.getByText('Submit via built-in submit'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scope-state:savedName').textContent).toBe('"Erin"');
     });
   });
 });
