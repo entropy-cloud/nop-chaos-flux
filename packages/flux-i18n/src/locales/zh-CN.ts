@@ -33,6 +33,8 @@ export const zhCN: Resource = {
       columns: '列设置',
       expand: '展开',
       filter: '筛选',
+      filterActive: '筛选已生效',
+      clearFilters: '清除筛选',
       sort: '排序',
       moveUp: '上移',
       moveDown: '下移',

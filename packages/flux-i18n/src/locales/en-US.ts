@@ -33,6 +33,8 @@ export const enUS: Resource = {
       columns: 'Columns',
       expand: 'Expand',
       filter: 'Filter',
+      filterActive: 'Filter Active',
+      clearFilters: 'Clear Filters',
       sort: 'Sort',
       moveUp: 'Move Up',
       moveDown: 'Move Down',
