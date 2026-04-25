@@ -74,6 +74,7 @@ export function mergeActionContext(base: {
   page?: PageRuntime;
   surfaceRuntime?: SurfaceRuntime;
   nodeInstance?: NodeInstance;
+  dialogId?: string;
 }, partial?: Partial<ActionContext>): ActionContext {
   const rawEvent = partial?.event as unknown;
 
@@ -89,7 +90,7 @@ export function mergeActionContext(base: {
     page: partial?.page ?? base.page,
     surfaceRuntime: partial?.surfaceRuntime ?? base.surfaceRuntime,
     event: normalizeActionEvent(rawEvent),
-    dialogId: partial?.dialogId,
+    dialogId: partial?.dialogId ?? base.dialogId,
     prevResult: partial?.prevResult,
     evaluationBindings: partial?.evaluationBindings
   };

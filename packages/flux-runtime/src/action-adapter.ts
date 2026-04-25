@@ -222,7 +222,11 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         }
 
         case 'closeDrawer': {
-          const drawerId = typeof invocation.args?.dialogId === 'string' ? invocation.args.dialogId : undefined;
+          const drawerId = typeof invocation.args?.drawerId === 'string'
+            ? invocation.args.drawerId
+            : typeof invocation.args?.dialogId === 'string'
+              ? invocation.args.dialogId
+              : undefined;
           if (ctx.surfaceRuntime) {
             if (drawerId) {
               ctx.surfaceRuntime.close(drawerId);

@@ -84,7 +84,7 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
   }>();
 
   function isRequestBackedAction(action: CompiledActionNode): boolean {
-    return action.action === 'ajax' || action.action === 'submitForm';
+    return action.action === 'ajax' || action.action === 'submitForm' || action.action === 'submit';
   }
 
   function isCompiledActionProgram(action: unknown): action is CompiledActionProgram {
@@ -335,12 +335,13 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
         };
         break;
       }
+      case 'submit':
       case 'submitForm': {
         if (!ctx.form) {
           return finishAction(
             { ...actionPayload, dispatchMode: 'built-in' },
             startedAt,
-            { ok: false, error: new Error('submitForm requires form runtime') }
+            { ok: false, error: new Error('submit requires form runtime') }
           );
         }
         const api = evaluateActionArgs(action, ctx, evaluator);
