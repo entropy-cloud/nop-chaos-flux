@@ -141,6 +141,8 @@ Flux 统一用 `queryForm` 表达 AMIS 的 `filter` / `autoGenerateFilter`：
 - 地址栏同步 -> `syncLocation`
 - Query 原始类型解析 -> `queryForm.parsePrimitiveQuery`
 
+当前 live runtime 仍未实现 `syncLocation`。是否需要它取决于 CRUD 查询状态是否必须进入页面级导航语义，例如刷新后保留筛选、浏览器前进/后退恢复查询、或复制 URL 分享同一列表视图。若没有这类明确产品需求，建议保持 deferred，避免把 CRUD query owner 扩展成 route/location owner。
+
 ### 6.5 前端一次性加载模式
 
 AMIS 的 `loadDataOnce`、`loadDataOnceFetchOnFilter`、`matchFunc` 在 Flux 里收敛为：
@@ -230,13 +232,13 @@ interface CrudStatusSummary {
 | 前端一次性加载分页/过滤 | 已支持 | 部分 table 本地处理能力存在 | 已定义 |
 | quick edit | 已支持 | 未实现 | 已定义 |
 | 动态列 | 已支持 | 部分可通过 source 注入 | 已覆盖设计入口 |
-| 地址栏同步查询参数 | 已支持 | 未实现 | 已定义 |
+| 地址栏同步查询参数 | 已支持 | 未实现，且当前阶段显式 deferred | 已定义 |
 
 说明：
 
 - “当前运行时”反映仓库当前代码状态。
 - “本次契约基线”表示已经进入正式设计和 TypeScript schema，可作为后续实现与迁移工具的依据。
-- 当前仍未完成的 table-heavy / editing-heavy 能力包括更完整的 `columnSettings` parity（尤其是 `draggable` 和持久化策略；`overlay: false` inline panel 已落地）、richer responsive expansion parity、更丰富的 header search/filter source/search UX、`quickEdit`、`syncLocation`、`clientMode.loadDataOnce`，以及更完整的 API/request-owned `source` 驱动 CRUD workflow（当前只落地了 source-result consumption + upstream refresh cooperation 基线），不应误读为已全部落地。
+- 当前仍未完成或显式 deferred 的 table-heavy / editing-heavy 能力包括更完整的 `columnSettings` parity（尤其是 `draggable` 和持久化策略；`overlay: false` inline panel 已落地）、richer responsive expansion parity、更丰富的 header search/filter source/search UX、`syncLocation` / primitive query parsing、`matchFunc`，以及更完整的 API/request-owned `source` 驱动 CRUD workflow（当前已落地 source-result consumption、upstream refresh cooperation、quickEdit baseline 与 `clientMode.loadDataOnce` / `fetchOnFilter` 基线），不应误读为已全部落地。
 
 ## 10. 迁移策略
 
