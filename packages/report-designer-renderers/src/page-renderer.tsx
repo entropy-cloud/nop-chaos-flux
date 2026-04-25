@@ -15,6 +15,7 @@ import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import { renderFallbackFieldPanel, renderFallbackInspector } from './fallbacks.js';
+import { defaultSelectionSummaryInspectorProvider } from './default-selection-summary-inspector.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 import { getFieldCount } from './helpers.js';
 import { useReportDesignerHostScope } from './host-data.js';
@@ -127,6 +128,8 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
   }, [actionScope, spreadsheetProvider]);
 
   useEffect(() => {
+    core.registerInspector(defaultSelectionSummaryInspectorProvider);
+    void core.setSelectionTarget(core.getSnapshot().selectionTarget);
     void core.refreshFieldSources();
   }, [core]);
 

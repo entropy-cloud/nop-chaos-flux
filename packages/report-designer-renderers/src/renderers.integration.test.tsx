@@ -41,6 +41,12 @@ const textRenderer: RendererDefinition = {
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
 
+const containerRenderer: RendererDefinition = {
+  type: 'container',
+  component: (props) => <div>{props.regions.body?.render()}</div>,
+  regions: ['body'],
+};
+
 const pageRenderer: RendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render()}</section>,
@@ -133,6 +139,7 @@ function renderReportDesignerPage(input: {
   const registry = createDefaultRegistry([
     actionButtonRenderer,
     textRenderer,
+    containerRenderer,
     sheetTitleProbeRenderer,
     reportRuntimeDirtyProbeRenderer,
     reportTargetKindProbeRenderer,
@@ -544,6 +551,19 @@ describe('report-designer namespaced actions integration', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('report-provider-spreadsheet').textContent).toBe(sheetId);
+    });
+  });
+
+  it('registers default selection summary provider for inspector shell', async () => {
+    renderReportDesignerPage({
+      inspector: {
+        type: 'report-inspector-shell',
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Selection')).toBeTruthy();
+      expect(screen.getByText(/Sheet:/)).toBeTruthy();
     });
   });
 });
