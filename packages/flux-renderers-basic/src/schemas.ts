@@ -48,6 +48,18 @@ export interface TabsItemSchema {
   toolbarRegionKey?: string;
 }
 
+export type TabsMode =
+  | ''
+  | 'line'
+  | 'card'
+  | 'radio'
+  | 'vertical'
+  | 'chrome'
+  | 'simple'
+  | 'strong'
+  | 'tiled'
+  | 'sidebar';
+
 export interface TabsSchema extends BaseSchema {
   type: 'tabs';
   items?: Array<Record<string, any>>;
@@ -59,6 +71,8 @@ export interface TabsSchema extends BaseSchema {
   toolbar?: BaseSchema | BaseSchema[];
   orientation?: 'horizontal' | 'vertical';
   variant?: 'default' | 'line';
+  tabsMode?: TabsMode;
+  sidePosition?: 'left' | 'right';
 }
 
 export interface ContainerSchema extends BaseSchema {

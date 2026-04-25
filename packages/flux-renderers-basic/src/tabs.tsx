@@ -13,6 +13,16 @@ function getItemValue(item: TabsItemSchema, index: number): string {
   return String(candidate ?? index);
 }
 
+function resolveTabsVariant(tabsMode?: string): 'default' | 'line' {
+  if (tabsMode === 'line' || tabsMode === 'simple' || tabsMode === 'strong') return 'line';
+  return 'default';
+}
+
+function resolveTabsOrientation(tabsMode?: string, fallback?: 'horizontal' | 'vertical'): 'horizontal' | 'vertical' {
+  if (tabsMode === 'vertical' || tabsMode === 'sidebar') return 'vertical';
+  return fallback ?? 'horizontal';
+}
+
 export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const schemaProps = useSchemaProps(props);
@@ -26,6 +36,12 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     statePath: schemaProps.valueStatePath,
     fallbackValue: firstValue,
   });
+
+  const tabsMode = schemaProps.tabsMode ?? '';
+  const sidePosition = schemaProps.sidePosition ?? 'left';
+  const isSidebarRight = tabsMode === 'sidebar' && sidePosition === 'right';
+  const orientation = resolveTabsOrientation(tabsMode, schemaProps.orientation);
+  const variant = resolveTabsVariant(tabsMode);
 
   const activeIndex = Math.max(0, items.findIndex((item, index) => getItemValue(item, index) === ownedAxis.value));
   const summary = useMemo<TabsStatusSummary>(() => ({
@@ -77,39 +93,64 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     });
   }, [componentRegistry, props.meta.cid, tabsHandle]);
 
+  const tabsList = (
+    <TabsList variant={schemaProps.variant ?? variant}>
+      {items.map((item, index) => {
+        const value = getItemValue(item, index);
+        const titleRegion = typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
+        const titleContent = titleRegion?.render() ?? item.title ?? item.label ?? value;
+        return (
+          <TabsTrigger key={value} value={value} disabled={Boolean(item.disabled)}>
+            {titleContent}
+          </TabsTrigger>
+        );
+      })}
+    </TabsList>
+  );
+
+  const tabsPanels = (
+    <>
+      {items.map((item, index) => {
+        const value = getItemValue(item, index);
+        const bodyRegion = typeof item.bodyRegionKey === 'string' ? props.regions[item.bodyRegionKey] : undefined;
+        const toolbarRegion = typeof item.toolbarRegionKey === 'string' ? props.regions[item.toolbarRegionKey] : undefined;
+        return (
+          <TabsContent key={value} value={value} data-slot="tabs-content">
+            {toolbarRegion ? <div data-slot="tabs-item-toolbar">{toolbarRegion.render()}</div> : null}
+            {bodyRegion ? bodyRegion.render() : null}
+          </TabsContent>
+        );
+      })}
+    </>
+  );
+
   return (
-    <section className={cn('nop-tabs', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+    <section
+      className={cn(
+        'nop-tabs',
+        tabsMode ? `nop-tabs--${tabsMode}` : undefined,
+        isSidebarRight ? 'nop-tabs--sidebar-right' : undefined,
+        props.meta.className
+      )}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
+    >
       {toolbarContent ? <div data-slot="tabs-toolbar">{toolbarContent}</div> : null}
-      <Tabs value={ownedAxis.value} onValueChange={(next) => {
-        ownedAxis.setValue(String(next));
-        const nextIndex = items.findIndex((item, index) => getItemValue(item, index) === String(next));
-        void props.events.onChange?.(null, {
-          scope: props.helpers.createScope({ value: next, index: nextIndex }, { scopeKey: 'tabs', pathSuffix: 'tabs' })
-        });
-      }} orientation={schemaProps.orientation ?? 'horizontal'} data-slot="tabs-root">
-        <TabsList variant={schemaProps.variant ?? 'default'}>
-          {items.map((item, index) => {
-            const value = getItemValue(item, index);
-            const titleRegion = typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
-            const titleContent = titleRegion?.render() ?? item.title ?? item.label ?? value;
-            return (
-              <TabsTrigger key={value} value={value} disabled={Boolean(item.disabled)}>
-                {titleContent}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-        {items.map((item, index) => {
-          const value = getItemValue(item, index);
-          const bodyRegion = typeof item.bodyRegionKey === 'string' ? props.regions[item.bodyRegionKey] : undefined;
-          const toolbarRegion = typeof item.toolbarRegionKey === 'string' ? props.regions[item.toolbarRegionKey] : undefined;
-          return (
-            <TabsContent key={value} value={value} data-slot="tabs-content">
-              {toolbarRegion ? <div data-slot="tabs-item-toolbar">{toolbarRegion.render()}</div> : null}
-              {bodyRegion ? bodyRegion.render() : null}
-            </TabsContent>
-          );
-        })}
+      <Tabs
+        value={ownedAxis.value}
+        onValueChange={(next) => {
+          ownedAxis.setValue(String(next));
+          const nextIndex = items.findIndex((item, index) => getItemValue(item, index) === String(next));
+          void props.events.onChange?.(null, {
+            scope: props.helpers.createScope({ value: next, index: nextIndex }, { scopeKey: 'tabs', pathSuffix: 'tabs' })
+          });
+        }}
+        orientation={orientation}
+        data-slot="tabs-root"
+        className={cn(isSidebarRight && 'flex-row-reverse')}
+      >
+        {tabsList}
+        {tabsPanels}
       </Tabs>
     </section>
   );
