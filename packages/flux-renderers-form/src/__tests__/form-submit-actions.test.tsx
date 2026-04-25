@@ -250,6 +250,88 @@ describe('formRendererDefinitions - submit and init actions', () => {
     });
   });
 
+  it('publishes initial form values through valuesPath to the parent scope', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/values-path-initial"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              id: 'values-path-form',
+              valuesPath: 'ui.formValues',
+              data: {
+                username: 'Alice',
+                role: 'admin'
+              }
+            },
+            {
+              type: 'scope-state-probe',
+              name: 'ui.formValues'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scope-state:ui.formValues').textContent).toBe('{"username":"Alice","role":"admin"}');
+    });
+  });
+
+  it('publishes live form value edits through valuesPath to the parent scope', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/values-path-live"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              id: 'values-path-live-form',
+              valuesPath: 'ui.formValues',
+              data: {
+                username: 'Alice'
+              },
+              body: [
+                {
+                  type: 'input-text',
+                  name: 'username',
+                  label: 'Username'
+                }
+              ]
+            },
+            {
+              type: 'scope-state-probe',
+              name: 'ui.formValues'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'Bob' } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scope-state:ui.formValues').textContent).toBe('{"username":"Bob"}');
+    });
+  });
+
   it('submits updated form values from input and select renderers', async () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;

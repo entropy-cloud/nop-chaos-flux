@@ -30,6 +30,7 @@ export interface FormSchema extends BaseSchema {
   labelAlign?: 'top' | 'left' | 'right';
   labelWidth?: string | number;
   statusPath?: string;
+  valuesPath?: string;
   initAction?: ActionSchema | ActionSchema[];
   submitAction?: ActionSchema | ActionSchema[];
   onSubmitSuccess?: ActionSchema | ActionSchema[];

@@ -287,6 +287,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm]);
 
   const statusPath = typeof (props.props as FormSchema).statusPath === 'string' ? (props.props as FormSchema).statusPath : undefined;
+  const valuesPath = typeof (props.props as FormSchema).valuesPath === 'string' ? (props.props as FormSchema).valuesPath : undefined;
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;
   const formLabelWidth = (props.props as FormSchema).labelWidth;
@@ -364,6 +365,31 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   }, [statusPath, ownedForm, parentScope]);
 
   useEffect(() => {
+    if (!valuesPath || !parentScope) {
+      return;
+    }
+
+    const resolvedValuesPath = valuesPath;
+    const resolvedParentScope = parentScope;
+    let lastPublishedJson: string | undefined;
+
+    function publishValues() {
+      const values = ownedForm.store.getState().values;
+      const nextJson = JSON.stringify(values);
+      if (lastPublishedJson === nextJson) {
+        return;
+      }
+
+      lastPublishedJson = nextJson;
+      resolvedParentScope.update(resolvedValuesPath, values);
+    }
+
+    publishValues();
+
+    return ownedForm.store.subscribe(publishValues);
+  }, [valuesPath, ownedForm, parentScope]);
+
+  useEffect(() => {
     if (!currentComponentRegistry) {
       return;
     }
@@ -406,6 +432,12 @@ export const formRendererDefinition: RendererDefinition = {
       shape: { kind: 'string' },
       displayName: 'Status Path',
       description: 'Publishes the readonly form status summary to parent scope.',
+      editorType: 'path'
+    },
+    valuesPath: {
+      shape: { kind: 'string' },
+      displayName: 'Values Path',
+      description: 'Publishes the readonly form values snapshot to parent scope.',
       editorType: 'path'
     },
     hiddenFieldPolicy: {
@@ -540,6 +572,7 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'onSubmitError', kind: 'event' },
     { key: 'onValidateError', kind: 'event' },
     { key: 'statusPath', kind: 'prop' },
+    { key: 'valuesPath', kind: 'prop' },
     { key: 'mode', kind: 'prop' },
     { key: 'labelAlign', kind: 'prop' },
     { key: 'labelWidth', kind: 'prop' }
