@@ -2,6 +2,7 @@ import type {
   SpreadsheetCellRef,
   SpreadsheetRange,
   SpreadsheetSelection,
+  SpreadsheetSortDirection,
 } from './types.js';
 
 export interface SpreadsheetCommandBase {
@@ -243,5 +244,26 @@ export interface FreezePanesCommand extends SpreadsheetCommandBase {
 
 export interface UnfreezePanesCommand extends SpreadsheetCommandBase {
   type: 'spreadsheet:unfreezePanes';
+  sheetId: string;
+}
+
+export interface SortRangeCommand extends SpreadsheetCommandBase {
+  type: 'spreadsheet:sortRange';
+  range: SpreadsheetRange;
+  keyCol: number;
+  direction: SpreadsheetSortDirection;
+  hasHeader?: boolean;
+}
+
+export interface FilterRowsByCellValueCommand extends SpreadsheetCommandBase {
+  type: 'spreadsheet:filterRowsByCellValue';
+  sheetId: string;
+  col: number;
+  value: unknown;
+  hasHeader?: boolean;
+}
+
+export interface ClearRowFiltersCommand extends SpreadsheetCommandBase {
+  type: 'spreadsheet:clearRowFilters';
   sheetId: string;
 }

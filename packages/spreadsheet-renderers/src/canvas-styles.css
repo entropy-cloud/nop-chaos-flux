@@ -36,6 +36,10 @@
   cursor: crosshair;
 }
 
+.spreadsheet-grid[data-sheet-filtered] {
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(59, 130, 246, 0.28);
+}
+
 .spreadsheet-grid[data-fill-dragging] .ss-cell,
 .spreadsheet-grid .ss-fill-handle {
   cursor: crosshair;
@@ -90,6 +94,22 @@
 .header-corner:hover {
   background: #dbeafe;
   color: #1d4ed8;
+}
+
+.col-header[data-col-filtered] {
+  color: rgb(29, 78, 216);
+  background: linear-gradient(180deg, rgb(232, 244, 255) 0%, rgb(219, 234, 254) 100%);
+}
+
+.col-header[data-col-filtered]::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 9999px;
+  background: currentColor;
+  vertical-align: middle;
 }
 
 .header-corner {

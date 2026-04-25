@@ -16,6 +16,8 @@ import type {
   UnfreezePanesCommand,
   AutoFitRowCommand,
   AutoFitColumnCommand,
+  FilterRowsByCellValueCommand,
+  ClearRowFiltersCommand,
 } from '../commands.js';
 import {
   applyAddSheet,
@@ -33,6 +35,7 @@ import {
   applyFreezePanes,
   applyUnfreezePanes,
 } from '../core/sheet-operations.js';
+import { applyClearRowFilters, applyFilterRowsByCellValue } from '../core/filter-operations.js';
 import { applySimpleDocumentMutation, pushUndo } from '../core/internal-state.js';
 
 export const handleAddSheet: CommandHandler<AddSheetCommand> = (store, command) => {
@@ -138,6 +141,20 @@ export const handleUnfreezePanes: CommandHandler<UnfreezePanesCommand> = (store,
   return { ok: true, changed: true };
 };
 
+export const handleFilterRowsByCellValue: CommandHandler<FilterRowsByCellValueCommand> = (store, command) => {
+  const state = store.getState();
+  const nextDoc = applyFilterRowsByCellValue(state.document, command.sheetId, command.col, command.value, command.hasHeader);
+  store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
+  return { ok: true, changed: true };
+};
+
+export const handleClearRowFilters: CommandHandler<ClearRowFiltersCommand> = (store, command) => {
+  const state = store.getState();
+  const nextDoc = applyClearRowFilters(state.document, command.sheetId);
+  store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
+  return { ok: true, changed: true };
+};
+
 export const handleAutoFitRow: CommandHandler<AutoFitRowCommand> = () => {
   return { ok: false, changed: false, error: new Error('autoFitRow requires host measurement support') };
 };
@@ -161,6 +178,8 @@ export function registerSheetHandlers(registry: Map<string, CommandHandler>) {
   registry.set('spreadsheet:hideColumn', handleHideColumn as CommandHandler);
   registry.set('spreadsheet:freezePanes', handleFreezePanes as CommandHandler);
   registry.set('spreadsheet:unfreezePanes', handleUnfreezePanes as CommandHandler);
+  registry.set('spreadsheet:filterRowsByCellValue', handleFilterRowsByCellValue as CommandHandler);
+  registry.set('spreadsheet:clearRowFilters', handleClearRowFilters as CommandHandler);
   registry.set('spreadsheet:autoFitRow', handleAutoFitRow as CommandHandler);
   registry.set('spreadsheet:autoFitColumn', handleAutoFitColumn as CommandHandler);
 }

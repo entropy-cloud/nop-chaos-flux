@@ -3,6 +3,8 @@ import type {
   NopComponentInspectResult,
   NopDebugEvent,
   NopDebugEventQuery,
+  NopNodeAsyncExplanation,
+  NopNodeAsyncExplanationQuery,
   NopDebuggerAutomationApi,
   NopDebuggerController,
   NopDebuggerFailureSummary,
@@ -21,6 +23,12 @@ import type {
   NopNodeAnomalySummary,
   NopNodeDiagnostics,
   NopNodeDiagnosticsOptions,
+  NopNodeFailureExplanation,
+  NopNodeFailureExplanationQuery,
+  NopNodeMetaExplanation,
+  NopNodeMetaExplanationQuery,
+  NopNodeValueExplanation,
+  NopNodeValueExplanationQuery,
   NopWaitForEventOptions,
   InstallNopDebuggerWindowFlagOptions
 } from './types';
@@ -60,6 +68,10 @@ export function createAutomationApi(input: {
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;
+  explainNodeValue(query: NopNodeValueExplanationQuery): NopNodeValueExplanation;
+  explainNodeMeta(query: NopNodeMetaExplanationQuery): NopNodeMetaExplanation;
+  explainNodeFailure(query?: NopNodeFailureExplanationQuery): NopNodeFailureExplanation;
+  explainNodeAsync(query?: NopNodeAsyncExplanationQuery): NopNodeAsyncExplanation;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -96,7 +108,11 @@ export function createAutomationApi(input: {
     setPanelPosition: input.setPanelPosition,
     inspectByCid: input.inspectByCid,
     inspectByElement: input.inspectByElement,
-    evaluateNodeExpression: input.evaluateNodeExpression
+    evaluateNodeExpression: input.evaluateNodeExpression,
+    explainNodeValue: input.explainNodeValue,
+    explainNodeMeta: input.explainNodeMeta,
+    explainNodeFailure: input.explainNodeFailure,
+    explainNodeAsync: input.explainNodeAsync
   };
 }
 

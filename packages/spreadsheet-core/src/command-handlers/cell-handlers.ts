@@ -24,6 +24,7 @@ import type {
   AddCommentCommand,
   EditCommentCommand,
   DeleteCommentCommand,
+  SortRangeCommand,
 } from '../commands.js';
 import type { CellStyle } from '../types.js';
 import {
@@ -41,6 +42,7 @@ import {
   applyEditComment,
   applyDeleteComment,
 } from '../core/cell-operations.js';
+import { applySortRange as applySortRangeOperation } from '../core/sort-operations.js';
 import { applySimpleDocumentMutation } from '../core/internal-state.js';
 
 export const handleSetCellValue: CommandHandler<SetCellValueCommand> = (store, command) => {
@@ -178,6 +180,13 @@ export const handleDeleteComment: CommandHandler<DeleteCommentCommand> = (store,
   return { ok: true, changed: true };
 };
 
+export const handleSortRange: CommandHandler<SortRangeCommand> = (store, command) => {
+  const state = store.getState();
+  const nextDoc = applySortRangeOperation(state.document, command.range, command.keyCol, command.direction, command.hasHeader);
+  store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
+  return { ok: true, changed: true };
+};
+
 export function registerCellHandlers(registry: Map<string, CommandHandler>) {
   registry.set('spreadsheet:setCellValue', handleSetCellValue as CommandHandler);
   registry.set('spreadsheet:setCellFormula', handleSetCellFormula as CommandHandler);
@@ -203,4 +212,5 @@ export function registerCellHandlers(registry: Map<string, CommandHandler>) {
   registry.set('spreadsheet:addComment', handleAddComment as CommandHandler);
   registry.set('spreadsheet:editComment', handleEditComment as CommandHandler);
   registry.set('spreadsheet:deleteComment', handleDeleteComment as CommandHandler);
+  registry.set('spreadsheet:sortRange', handleSortRange as CommandHandler);
 }

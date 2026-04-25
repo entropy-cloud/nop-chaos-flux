@@ -40,6 +40,9 @@ export type {
   MergeCellsCenterCommand,
   FreezePanesCommand,
   UnfreezePanesCommand,
+  SortRangeCommand,
+  FilterRowsByCellValueCommand,
+  ClearRowFiltersCommand,
 } from './commands-base.js';
 
 export type {
@@ -110,6 +113,9 @@ import type {
   MergeCellsCenterCommand,
   FreezePanesCommand,
   UnfreezePanesCommand,
+  SortRangeCommand,
+  FilterRowsByCellValueCommand,
+  ClearRowFiltersCommand,
 } from './commands-base.js';
 
 import type {
@@ -196,6 +202,9 @@ export type SpreadsheetCommand =
   | MergeCellsCenterCommand
   | FreezePanesCommand
   | UnfreezePanesCommand
+  | SortRangeCommand
+  | FilterRowsByCellValueCommand
+  | ClearRowFiltersCommand
   | FindCommand
   | FindNextCommand
   | ReplaceCommand

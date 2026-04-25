@@ -1,14 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cellAddress, type SpreadsheetRange, type SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
-import { t } from '@nop-chaos/flux-i18n';
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuShortcut, ContextMenuTrigger } from '@nop-chaos/ui';
+import { ContextMenu, ContextMenuTrigger } from '@nop-chaos/ui';
 import type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
 import { mapCellStyle } from './cell-style-map.js';
-
-const DEFAULT_ROW_HEIGHT = 24;
-const DEFAULT_COL_WIDTH = 80;
-const ROW_HEADER_WIDTH = 40;
-const OVERSCAN = 5;
+import {
+  DEFAULT_ROW_HEIGHT,
+  DEFAULT_COL_WIDTH,
+  ROW_HEADER_WIDTH,
+  OVERSCAN,
+  computeRowOffsets,
+  computeColOffsets,
+  findFirstVisible,
+  isCellWithinSelection,
+  getAnchorCellFromSelection,
+  getSelectedAxisInfo,
+  rangesEqual,
+  expandSortRangeToUsedColumns,
+} from './spreadsheet-grid/constants.js';
+import { useContextMenuActions } from './spreadsheet-grid/use-context-menu-actions.js';
+import { SpreadsheetGridContextMenu } from './spreadsheet-grid/spreadsheet-grid-context-menu.js';
 
 export interface SpreadsheetGridProps {
   snapshot: SpreadsheetHostSnapshot;
@@ -45,117 +55,6 @@ export interface SpreadsheetGridProps {
   getCellMetadata?: (row: number, col: number) => unknown;
   onFieldDragOver?: (row: number, col: number) => void;
   onFieldDragLeave?: () => void;
-}
-
-function computeRowOffsets(rows: number, rowHeights: Record<number, number>): number[] {
-  const offsets = new Array<number>(rows + 1);
-  offsets[0] = 0;
-  for (let r = 0; r < rows; r++) {
-    offsets[r + 1] = offsets[r] + (rowHeights[r] ?? DEFAULT_ROW_HEIGHT);
-  }
-  return offsets;
-}
-
-function computeColOffsets(cols: number, colWidths: Record<number, number>): number[] {
-  const offsets = new Array<number>(cols + 1);
-  offsets[0] = 0;
-  for (let c = 0; c < cols; c++) {
-    offsets[c + 1] = offsets[c] + (colWidths[c] ?? DEFAULT_COL_WIDTH);
-  }
-  return offsets;
-}
-
-function findFirstVisible(offsets: number[], scrollPos: number): number {
-  let lo = 0;
-  let hi = offsets.length - 2;
-  while (lo < hi) {
-    const mid = (lo + hi) >>> 1;
-    if (offsets[mid + 1] <= scrollPos) {
-      lo = mid + 1;
-    } else {
-      hi = mid;
-    }
-  }
-  return lo;
-}
-
-function isCellWithinSelection(
-  selection: SpreadsheetHostSnapshot['selection'],
-  row: number,
-  col: number,
-  sheetId: string,
-) {
-  if (selection.sheetId && selection.sheetId !== sheetId) {
-    return false;
-  }
-
-  if (selection.kind === 'cell') {
-    return selection.anchor?.row === row && selection.anchor?.col === col;
-  }
-
-  if (selection.kind === 'range' && selection.range) {
-    return row >= selection.range.startRow
-      && row <= selection.range.endRow
-      && col >= selection.range.startCol
-      && col <= selection.range.endCol;
-  }
-
-  if (selection.kind === 'row') {
-    return selection.rows?.includes(row) ?? false;
-  }
-
-  if (selection.kind === 'column') {
-    return selection.columns?.includes(col) ?? false;
-  }
-
-  if (selection.kind === 'sheet') {
-    return true;
-  }
-
-  return false;
-}
-
-function getAnchorCellFromSelection(selection: SpreadsheetHostSnapshot['selection']) {
-  if (selection.kind === 'cell' && selection.anchor) {
-    return { row: selection.anchor.row, col: selection.anchor.col };
-  }
-
-  if (selection.kind === 'range' && selection.range) {
-    return { row: selection.range.startRow, col: selection.range.startCol };
-  }
-
-  if (selection.kind === 'row' && selection.rows?.length) {
-    const row = [...selection.rows].sort((a, b) => a - b)[0]!;
-    return { row, col: 0 };
-  }
-
-  if (selection.kind === 'column' && selection.columns?.length) {
-    const col = [...selection.columns].sort((a, b) => a - b)[0]!;
-    return { row: 0, col };
-  }
-
-  if (selection.kind === 'sheet') {
-    return { row: 0, col: 0 };
-  }
-
-  return null;
-}
-
-function getSelectedAxisInfo(selection: SpreadsheetHostSnapshot['selection'], axis: 'row' | 'column') {
-  const values = axis === 'row' ? selection.rows : selection.columns;
-  if (!values?.length) {
-    return null;
-  }
-
-  const sorted = [...values].sort((a, b) => a - b);
-  const start = sorted[0]!;
-  const end = sorted[sorted.length - 1]!;
-
-  return {
-    start,
-    end,
-    count: end - start + 1,
-  };
 }
 
 export function SpreadsheetGrid({
@@ -200,6 +99,34 @@ export function SpreadsheetGrid({
   const selectionAnchorCell = useMemo(() => getAnchorCellFromSelection(selection), [selection]);
   const selectedRowInfo = useMemo(() => getSelectedAxisInfo(selection, 'row'), [selection]);
   const selectedColumnInfo = useMemo(() => getSelectedAxisInfo(selection, 'column'), [selection]);
+  const canUseRowStructureActions = selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'row';
+  const canUseColumnStructureActions = selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'column';
+  const canSort = !!selectedRange && canUseColumnStructureActions;
+  const canFilter = !!selectionAnchorCell && !!activeSheetId && selection.kind === 'cell';
+  const sortRange = useMemo(
+    () => (selectedRange ? expandSortRangeToUsedColumns(selectedRange, snapshot.activeSheet?.cells) : null),
+    [selectedRange, snapshot.activeSheet?.cells],
+  );
+  const canMerge = !!selectedRange && (selectedRange.startRow !== selectedRange.endRow || selectedRange.startCol !== selectedRange.endCol);
+  const canUnmerge = !!selectedRange && (snapshot.activeSheet?.merges ?? []).some((merge) => rangesEqual(selectedRange, merge));
+  const canFreeze = !!selectionAnchorCell && !!activeSheetId && selection.kind !== 'sheet';
+  const hasActiveRowFilters = (snapshot.activeSheet?.filters?.columns?.length ?? 0) > 0;
+  const filteredColumnSet = useMemo(
+    () => new Set((snapshot.activeSheet?.filters?.columns ?? []).map((entry) => entry.col)),
+    [snapshot.activeSheet?.filters?.columns],
+  );
+
+  const contextActions = useContextMenuActions({
+    bridge,
+    selectedRange,
+    selectionAnchorCell,
+    selectedRowInfo,
+    selectedColumnInfo,
+    sortRange,
+    activeSheetId,
+    cells: snapshot.activeSheet?.cells,
+  });
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -244,8 +171,12 @@ export function SpreadsheetGrid({
   for (let c = visStartCol; c <= visEndCol; c++) visibleColIndices.push(c);
 
   const visibleRowIndices: number[] = [];
-  for (let r = 0; r < frozenRows; r++) visibleRowIndices.push(r);
-  for (let r = visStartRow; r <= visEndRow; r++) visibleRowIndices.push(r);
+  for (let r = 0; r < frozenRows; r++) {
+    if (!snapshot.activeSheet?.rows?.[String(r)]?.filteredOut) visibleRowIndices.push(r);
+  }
+  for (let r = visStartRow; r <= visEndRow; r++) {
+    if (!snapshot.activeSheet?.rows?.[String(r)]?.filteredOut) visibleRowIndices.push(r);
+  }
 
   function renderCell(r: number, c: number) {
     const addr = cellAddress(r, c);
@@ -343,173 +274,6 @@ export function SpreadsheetGrid({
   const isDraggingRef = useRef(false);
   const lastDragCellRef = useRef<{ row: number; col: number } | null>(null);
 
-  const handleContextCopy = useCallback(async () => {
-    if (!selectedRange) {
-      return;
-    }
-    await bridge.dispatch({ type: 'spreadsheet:copyCells', range: selectedRange });
-  }, [bridge, selectedRange]);
-
-  const handleContextCut = useCallback(async () => {
-    if (!selectedRange) {
-      return;
-    }
-    await bridge.dispatch({ type: 'spreadsheet:cutCells', range: selectedRange });
-  }, [bridge, selectedRange]);
-
-  const handleContextPaste = useCallback(async () => {
-    const targetCell = selectionAnchorCell;
-    if (!targetCell || !activeSheetId) {
-      return;
-    }
-
-    await bridge.dispatch({
-      type: 'spreadsheet:pasteCells',
-      target: {
-        sheetId: activeSheetId,
-        address: cellAddress(targetCell.row, targetCell.col),
-        row: targetCell.row,
-        col: targetCell.col,
-      },
-    });
-  }, [activeSheetId, bridge, selectionAnchorCell]);
-
-  const handleContextClear = useCallback(async () => {
-    if (!selectedRange) {
-      return;
-    }
-    await bridge.dispatch({ type: 'spreadsheet:clearCells', target: selectedRange });
-  }, [bridge, selectedRange]);
-
-  const handleContextInsertRow = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    const row = selectedRowInfo?.start ?? selectionAnchorCell?.row;
-    if (row == null) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:insertRow',
-      sheetId: activeSheetId,
-      row,
-      count: selectedRowInfo?.count,
-    });
-  }, [activeSheetId, bridge, selectedRowInfo, selectionAnchorCell]);
-
-  const handleContextInsertRowBelow = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    const row = selectedRowInfo?.end ?? selectionAnchorCell?.row;
-    if (row == null) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:insertRow',
-      sheetId: activeSheetId,
-      row: row + 1,
-      count: selectedRowInfo?.count,
-    });
-  }, [activeSheetId, bridge, selectedRowInfo, selectionAnchorCell]);
-
-  const handleContextDeleteRow = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    const row = selectedRowInfo?.start ?? selectionAnchorCell?.row;
-    if (row == null) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:deleteRow',
-      sheetId: activeSheetId,
-      row,
-      count: selectedRowInfo?.count,
-    });
-  }, [activeSheetId, bridge, selectedRowInfo, selectionAnchorCell]);
-
-  const handleContextInsertColumn = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    const col = selectedColumnInfo?.start ?? selectionAnchorCell?.col;
-    if (col == null) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:insertColumn',
-      sheetId: activeSheetId,
-      col,
-      count: selectedColumnInfo?.count,
-    });
-  }, [activeSheetId, bridge, selectedColumnInfo, selectionAnchorCell]);
-
-  const handleContextInsertColumnRight = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    const col = selectedColumnInfo?.end ?? selectionAnchorCell?.col;
-    if (col == null) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:insertColumn',
-      sheetId: activeSheetId,
-      col: col + 1,
-      count: selectedColumnInfo?.count,
-    });
-  }, [activeSheetId, bridge, selectedColumnInfo, selectionAnchorCell]);
-
-  const handleContextDeleteColumn = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    const col = selectedColumnInfo?.start ?? selectionAnchorCell?.col;
-    if (col == null) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:deleteColumn',
-      sheetId: activeSheetId,
-      col,
-      count: selectedColumnInfo?.count,
-    });
-  }, [activeSheetId, bridge, selectedColumnInfo, selectionAnchorCell]);
-
-  const handleContextMerge = useCallback(async () => {
-    if (!selectedRange) {
-      return;
-    }
-    await bridge.dispatch({ type: 'spreadsheet:mergeRange', range: selectedRange });
-  }, [bridge, selectedRange]);
-
-  const handleContextUnmerge = useCallback(async () => {
-    if (!selectedRange) {
-      return;
-    }
-    await bridge.dispatch({ type: 'spreadsheet:unmergeRange', range: selectedRange });
-  }, [bridge, selectedRange]);
-
-  const handleContextFreeze = useCallback(async () => {
-    if (!activeSheetId || !selectionAnchorCell) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:freezePanes',
-      sheetId: activeSheetId,
-      row: selectionAnchorCell.row,
-      col: selectionAnchorCell.col,
-    });
-  }, [activeSheetId, bridge, selectionAnchorCell]);
-
-  const handleContextUnfreeze = useCallback(async () => {
-    if (!activeSheetId) {
-      return;
-    }
-    await bridge.dispatch({ type: 'spreadsheet:unfreezePanes', sheetId: activeSheetId });
-  }, [activeSheetId, bridge]);
-
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDraggingRef.current || e.buttons !== 1) {
@@ -578,6 +342,7 @@ export function SpreadsheetGrid({
                   style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
                   className="col-header"
                   data-col-header-active={selection.kind === 'column' && selection.columns?.includes(c) ? true : undefined}
+                  data-col-filtered={filteredColumnSet.has(c) || undefined}
                   onClick={(event) => onSelectColumn(c, event.shiftKey)}
                   onContextMenu={() => {
                     if (selection.kind !== 'column' || !selection.columns?.includes(c)) {
@@ -638,56 +403,20 @@ export function SpreadsheetGrid({
           </table>
         </div>
       </ContextMenuTrigger>
-        <ContextMenuContent>
-        <ContextMenuItem onClick={() => void handleContextCopy()} disabled={!selectedRange}>
-          {t('flux.spreadsheet.copy')}
-          <ContextMenuShortcut>{t('flux.spreadsheet.copyShortcut').replace(/^.*\s/, '')}</ContextMenuShortcut>
-        </ContextMenuItem>
-        <ContextMenuItem onClick={() => void handleContextCut()} disabled={!selectedRange}>
-          {t('flux.spreadsheet.cut')}
-          <ContextMenuShortcut>{t('flux.spreadsheet.cutShortcut').replace(/^.*\s/, '')}</ContextMenuShortcut>
-        </ContextMenuItem>
-        <ContextMenuItem onClick={() => void handleContextPaste()} disabled={!selectionAnchorCell || !activeSheetId}>
-          {t('flux.spreadsheet.paste')}
-          <ContextMenuShortcut>{t('flux.spreadsheet.pasteShortcut').replace(/^.*\s/, '')}</ContextMenuShortcut>
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-clear" onClick={() => void handleContextClear()} disabled={!selectedRange}>
-          {t('flux.common.clear')}
-          <ContextMenuShortcut>{t('flux.spreadsheet.clearShortcut').replace(/^.*\s/, '')}</ContextMenuShortcut>
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem data-testid="spreadsheet-context-merge" onClick={() => void handleContextMerge()} disabled={!selectedRange}>
-          {t('flux.spreadsheet.mergeCells')}
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-unmerge" onClick={() => void handleContextUnmerge()} disabled={!selectedRange}>
-          {t('flux.spreadsheet.unmergeCells')}
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-freeze" onClick={() => void handleContextFreeze()} disabled={!selectionAnchorCell || !activeSheetId}>
-          {t('flux.spreadsheet.freezePanes')}
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-unfreeze" onClick={() => void handleContextUnfreeze()} disabled={!activeSheetId}>
-          {t('flux.spreadsheet.unfreezePanes')}
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem data-testid="spreadsheet-context-insert-row-above" onClick={() => void handleContextInsertRow()} disabled={!selectionAnchorCell || !activeSheetId}>
-          {t('flux.spreadsheet.insertRowAbove')}
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-insert-row-below" onClick={() => void handleContextInsertRowBelow()} disabled={!selectionAnchorCell || !activeSheetId}>
-          {t('flux.spreadsheet.insertRowBelow')}
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-delete-row" onClick={() => void handleContextDeleteRow()} disabled={!selectionAnchorCell || !activeSheetId}>
-          {t('flux.spreadsheet.deleteRow')}
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-insert-column-left" onClick={() => void handleContextInsertColumn()} disabled={!selectionAnchorCell || !activeSheetId}>
-          {t('flux.spreadsheet.insertColumnLeft')}
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-insert-column-right" onClick={() => void handleContextInsertColumnRight()} disabled={!selectionAnchorCell || !activeSheetId}>
-          {t('flux.spreadsheet.insertColumnRight')}
-        </ContextMenuItem>
-        <ContextMenuItem data-testid="spreadsheet-context-delete-column" onClick={() => void handleContextDeleteColumn()} disabled={!selectionAnchorCell || !activeSheetId}>
-          {t('flux.spreadsheet.deleteColumn')}
-        </ContextMenuItem>
-      </ContextMenuContent>
+      <SpreadsheetGridContextMenu
+        actions={contextActions}
+        selectedRange={selectedRange}
+        selectionAnchorCell={selectionAnchorCell}
+        activeSheetId={activeSheetId}
+        canSort={canSort}
+        canFilter={canFilter}
+        canMerge={canMerge}
+        canUnmerge={canUnmerge}
+        canFreeze={canFreeze}
+        canUseRowStructureActions={canUseRowStructureActions}
+        canUseColumnStructureActions={canUseColumnStructureActions}
+        hasActiveRowFilters={hasActiveRowFilters}
+      />
     </ContextMenu>
   );
 }

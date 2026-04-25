@@ -429,3 +429,69 @@ describe('addSheet/removeSheet', () => {
     expect(snap.activeSheetId).toBe(snap.document.workbook.sheets[0].id);
   });
 });
+
+describe('filterRowsByCellValue/clearRowFilters', () => {
+  let core: SpreadsheetCore;
+  let sheetId: string;
+
+  beforeEach(async () => {
+    const doc = createEmptyDocument();
+    sheetId = doc.workbook.sheets[0].id;
+    core = createSpreadsheetCore({ document: doc });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'x' });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'y' });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A3', row: 2, col: 0 }, value: 'x' });
+  });
+
+  it('should mark non-matching rows as filteredOut', async () => {
+    await core.dispatch({ type: 'spreadsheet:filterRowsByCellValue', sheetId, col: 0, value: 'x' });
+    const snap = core.getSnapshot();
+    expect(snap.document.workbook.sheets[0].filters?.columns).toEqual([
+      { col: 0, kind: 'cellValue', value: 'x' },
+    ]);
+    expect(snap.document.workbook.sheets[0].rows?.['0']?.filteredOut).toBe(false);
+    expect(snap.document.workbook.sheets[0].rows?.['1']?.filteredOut).toBe(true);
+    expect(snap.document.workbook.sheets[0].rows?.['2']?.filteredOut).toBe(false);
+  });
+
+  it('should clear only filteredOut flags', async () => {
+    await core.dispatch({ type: 'spreadsheet:filterRowsByCellValue', sheetId, col: 0, value: 'x' });
+    await core.dispatch({ type: 'spreadsheet:hideRow', sheetId, row: 2, hidden: true });
+    await core.dispatch({ type: 'spreadsheet:clearRowFilters', sheetId });
+    const snap = core.getSnapshot();
+    expect(snap.document.workbook.sheets[0].filters?.columns).toEqual([]);
+    expect(snap.document.workbook.sheets[0].rows?.['1']?.filteredOut).toBe(false);
+    expect(snap.document.workbook.sheets[0].rows?.['2']?.hidden).toBe(true);
+  });
+});
+
+describe('sortRange', () => {
+  let core: SpreadsheetCore;
+  let sheetId: string;
+
+  beforeEach(async () => {
+    const doc = createEmptyDocument();
+    sheetId = doc.workbook.sheets[0].id;
+    core = createSpreadsheetCore({ document: doc });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'b' });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'row-b' });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'a' });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B2', row: 1, col: 1 }, value: 'row-a' });
+  });
+
+  it('should sort a range ascending by the key column and move whole rows', async () => {
+    await core.dispatch({
+      type: 'spreadsheet:sortRange',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 1, endCol: 1 },
+      keyCol: 0,
+      direction: 'asc',
+    });
+
+    const snap = core.getSnapshot();
+    const cells = snap.document.workbook.sheets[0].cells;
+    expect(cells?.A1?.value).toBe('a');
+    expect(cells?.B1?.value).toBe('row-a');
+    expect(cells?.A2?.value).toBe('b');
+    expect(cells?.B2?.value).toBe('row-b');
+  });
+});

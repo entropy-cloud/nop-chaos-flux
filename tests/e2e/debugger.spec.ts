@@ -27,6 +27,40 @@ async function openFluxBasicPage(page: import('@playwright/test').Page): Promise
   await page.getByRole('heading', { name: 'Renderer Playground', level: 1 }).waitFor({ state: 'visible', timeout: 15000 });
 }
 
+async function seedFluxBasicExplanationFixture(page: import('@playwright/test').Page): Promise<{
+  usernameCid: number;
+  adminCodeCid: number;
+  searchButtonCid: number;
+}> {
+  await openFluxBasicPage(page);
+  await page.getByLabel('Username').fill('alice');
+  await page.getByLabel('Username').blur();
+  await page.getByLabel('Role').click();
+  await page.getByRole('option', { name: 'Admin' }).click();
+  await page.getByRole('button', { name: 'Search Directory' }).click();
+  await page.getByRole('button', { name: 'Search Directory' }).click();
+  await page.waitForTimeout(900);
+
+  const cids = await page.evaluate(() => {
+    const labels = Array.from(document.querySelectorAll('[data-slot="field-label"]'));
+    const readCidForLabel = (text: string) => {
+      const label = labels.find((node) => node.textContent?.includes(text));
+      return Number(label?.closest('[data-cid]')?.getAttribute('data-cid'));
+    };
+
+    return {
+      usernameCid: readCidForLabel('Username'),
+      adminCodeCid: readCidForLabel('Admin Code'),
+      searchButtonCid: Number(Array.from(document.querySelectorAll('button')).find((node) => node.textContent?.includes('Search Directory'))?.getAttribute('data-cid'))
+    };
+  });
+
+  expect(cids.usernameCid).toBeGreaterThan(0);
+  expect(cids.adminCodeCid).toBeGreaterThan(0);
+  expect(cids.searchButtonCid).toBeGreaterThan(0);
+  return cids as { usernameCid: number; adminCodeCid: number; searchButtonCid: number };
+}
+
 test.describe('Nop Debugger', () => {
   test('launcher renders on home page with zero console errors', async ({ page }) => {
     const errors = collectConsoleErrors(page);
@@ -137,6 +171,62 @@ test.describe('Nop Debugger', () => {
     expect(result.snapshotEnabled).toBe(true);
     expect(result.exportedEventsIsArray).toBe(true);
     expect(result.latestFailedRequest ?? null).toBeNull();
+  });
+
+  test('automation explanation contracts answer value/meta/failure/async questions on live page', async ({ page }) => {
+    const { usernameCid, adminCodeCid, searchButtonCid } = await seedFluxBasicExplanationFixture(page);
+
+    const result = await page.evaluate(async ({ usernameCid, adminCodeCid, searchButtonCid }) => {
+      const api = (window as unknown as {
+        __NOP_DEBUGGER_API__?: {
+          explainNodeValue(query: { cid: number; field?: string }): any;
+          explainNodeMeta(query: { cid: number; field: string }): any;
+          explainNodeFailure(query?: { cid?: number }): any;
+          explainNodeAsync(query?: { cid?: number }): any;
+        };
+      }).__NOP_DEBUGGER_API__;
+
+      if (!api) {
+        return { available: false };
+      }
+
+      return {
+        available: true,
+        value: api.explainNodeValue({ cid: usernameCid, field: 'username' }),
+        meta: api.explainNodeMeta({ cid: adminCodeCid, field: 'visible' }),
+        failure: api.explainNodeFailure({ cid: searchButtonCid }),
+        asyncInfo: api.explainNodeAsync({ cid: usernameCid })
+      };
+    }, { usernameCid, adminCodeCid, searchButtonCid });
+
+    expect(result.available).toBe(true);
+    expect(result.value).toMatchObject({
+      kind: 'value',
+      data: {
+        field: 'username',
+        valueSource: 'form-state',
+        value: 'alice'
+      }
+    });
+    expect(result.meta).toMatchObject({
+      kind: 'meta',
+      data: {
+        field: 'visible',
+        source: 'resolved-meta',
+        value: true
+      }
+    });
+    expect(Array.isArray(result.meta.data.dependencyPaths)).toBe(true);
+    expect(result.failure).toMatchObject({
+      kind: 'failure',
+      data: {
+        failureType: 'request-aborted'
+      }
+    });
+    expect(result.asyncInfo).toMatchObject({
+      kind: 'async'
+    });
+    expect(Array.isArray(result.asyncInfo.data.owners)).toBe(true);
   });
 
   test('no console errors on any page', async ({ page }) => {

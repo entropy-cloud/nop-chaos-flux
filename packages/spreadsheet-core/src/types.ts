@@ -44,6 +44,7 @@ export interface WorksheetDocument {
   name: string;
   order: number;
   props?: Record<string, unknown>;
+  filters?: WorksheetFilterState;
   rows?: Record<string, RowDocument>;
   columns?: Record<string, ColumnDocument>;
   cells?: Record<string, CellDocument>;
@@ -73,6 +74,7 @@ export interface RowDocument {
   index: number;
   height?: number;
   hidden?: boolean;
+  filteredOut?: boolean;
   styleId?: string;
 }
 
@@ -81,6 +83,16 @@ export interface ColumnDocument {
   width?: number;
   hidden?: boolean;
   styleId?: string;
+}
+
+export interface WorksheetFilterState {
+  columns: WorksheetColumnFilter[];
+}
+
+export interface WorksheetColumnFilter {
+  col: number;
+  kind: 'cellValue';
+  value: unknown;
 }
 
 export interface CellDocument {
@@ -191,6 +203,8 @@ export interface SpreadsheetFrozenPane {
   row?: number;
   col?: number;
 }
+
+export type SpreadsheetSortDirection = 'asc' | 'desc';
 
 export interface ClipboardData {
   type: 'copy' | 'cut';

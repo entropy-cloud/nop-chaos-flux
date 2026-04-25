@@ -65,7 +65,13 @@ export function buildInspectResult(
       nodeState: {
         mounted: debugData.nodeInstance.state.mounted,
         hasMetaDependencies: Boolean(debugData.nodeInstance.state.metaDependencies),
-        hasPropsDependencies: Boolean(debugData.nodeInstance.state.propsDependencies)
+        hasPropsDependencies: Boolean(debugData.nodeInstance.state.propsDependencies),
+        metaDependencyPaths: debugData.nodeInstance.state.metaDependencies?.paths ?? [],
+        metaDependencyWildcard: debugData.nodeInstance.state.metaDependencies?.wildcard ?? false,
+        metaDependencyBroadAccess: debugData.nodeInstance.state.metaDependencies?.broadAccess ?? false,
+        propsDependencyPaths: debugData.nodeInstance.state.propsDependencies?.paths ?? [],
+        propsDependencyWildcard: debugData.nodeInstance.state.propsDependencies?.wildcard ?? false,
+        propsDependencyBroadAccess: debugData.nodeInstance.state.propsDependencies?.broadAccess ?? false
       }
     };
   }

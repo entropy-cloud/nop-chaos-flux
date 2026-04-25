@@ -230,8 +230,42 @@ Stable automation-facing methods include:
 - `getRecentFailures()`
 - `getNodeAnomalies()`
 - `evaluateNodeExpression()`
+- `explainNodeValue()`
+- `explainNodeMeta()`
+- `explainNodeFailure()`
+- `explainNodeAsync()`
 
 AI/E2E should prefer these APIs over panel DOM inspection.
+
+### AI-First Explanation Contracts
+
+The debugger now exposes explanation-oriented automation contracts in addition to raw inspect and event APIs.
+
+- `explainNodeValue({ cid, field })` answers where a node value currently comes from using bounded evidence such as form state, scope snapshots, resolved props, or resolved meta.
+- `explainNodeMeta({ cid, field })` answers why a key meta field such as `visible`, `hidden`, `disabled`, `label`, `title`, or `className` currently resolves the way it does.
+- `explainNodeFailure({ cid | nodeId | path })` answers the latest node-scoped failure using bounded related events instead of forcing automation to manually join request, error, and interaction traces.
+- `explainNodeAsync({ cid | nodeId | path })` answers which async owners are directly attributable to the current node from the bounded runtime async snapshot.
+
+Each explanation result is machine-oriented and bounded. The stable output shape includes:
+
+- `kind`
+- `subject`
+- `answer`
+- `confidence`
+- `limitations`
+- `evidenceRefs`
+- `related`
+- `truncated`
+- `data`
+
+Contract rules:
+
+- explanation payloads must stay bounded; evidence, dependency paths, related events, and async owners are capped rather than returned as unbounded runtime objects
+- explanations may use current inspect snapshots, recent events, and async owner snapshots as evidence, but they must not expose raw runtime-private objects as the public contract
+- explanations must include `limitations` whenever the debugger can only give a conservative snapshot-based answer rather than a full causal proof
+- explanation values must obey the same redaction boundary as session export data
+
+AI/E2E should use explanation methods as the preferred entry point for “why” questions and fall back to lower-level inspect/trace methods only when explanation limitations make that necessary.
 
 ## Developer-Facing UI
 
@@ -253,7 +287,7 @@ Expected stable UI pieces include:
 The debugger should be protected by:
 
 - unit tests for controller / automation / diagnostics / inspect / panel
-- E2E coverage for launcher/panel behavior and automation API access
+- E2E coverage for launcher/panel behavior, automation API access, and explanation-contract semantics on deterministic fixtures
 - a debugger lab page suitable for both manual and automated use
 
 Performance-sensitive debugger behavior should also be protected by focused regression checks such as:

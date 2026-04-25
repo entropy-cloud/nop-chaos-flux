@@ -7,6 +7,62 @@ import { NopDebuggerPanel } from './panel';
 import type { NopComponentTreeItem } from './types';
 import type { NopDebuggerController, NopDebuggerOverview, NopDebuggerSnapshot, NopDiagnosticReport, NopInteractionTrace } from './types';
 
+function createValueExplanation() {
+  return {
+    kind: 'value' as const,
+    subject: { cid: 1, field: 'value' },
+    answer: 'value explanation',
+    confidence: 'low' as const,
+    limitations: [],
+    evidenceRefs: [],
+    related: { cid: 1 },
+    truncated: false,
+    data: { field: 'value', valueSource: 'unknown' as const }
+  };
+}
+
+function createMetaExplanation() {
+  return {
+    kind: 'meta' as const,
+    subject: { cid: 1, field: 'visible' as const },
+    answer: 'meta explanation',
+    confidence: 'low' as const,
+    limitations: [],
+    evidenceRefs: [],
+    related: { cid: 1 },
+    truncated: false,
+    data: { field: 'visible' as const, source: 'unknown' as const, dependencyPaths: [] }
+  };
+}
+
+function createFailureExplanation() {
+  return {
+    kind: 'failure' as const,
+    subject: { cid: 1 },
+    answer: 'failure explanation',
+    confidence: 'low' as const,
+    limitations: [],
+    evidenceRefs: [],
+    related: { cid: 1 },
+    truncated: false,
+    data: { failureType: 'unknown' as const, hints: [], relatedEventIds: [] }
+  };
+}
+
+function createAsyncExplanation() {
+  return {
+    kind: 'async' as const,
+    subject: { cid: 1 },
+    answer: 'async explanation',
+    confidence: 'low' as const,
+    limitations: [],
+    evidenceRefs: [],
+    related: { cid: 1, ownerIds: [] },
+    truncated: false,
+    data: { ownerCount: 0, owners: [] }
+  };
+}
+
 export function createSnapshot(): NopDebuggerSnapshot {
   return {
     enabled: true,
@@ -109,7 +165,11 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
       setPanelPosition,
       inspectByCid: vi.fn(() => undefined),
       inspectByElement: vi.fn(() => undefined),
-      evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 }))
+      evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 })),
+      explainNodeValue: vi.fn(() => createValueExplanation()),
+      explainNodeMeta: vi.fn(() => createMetaExplanation()),
+      explainNodeFailure: vi.fn(() => createFailureExplanation()),
+      explainNodeAsync: vi.fn(() => createAsyncExplanation())
     },
     decorateEnv: (env) => env,
     onActionError() {},
@@ -149,6 +209,10 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     inspectByCid: vi.fn(() => undefined),
     inspectByElement: vi.fn(() => undefined),
     evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 })),
+    explainNodeValue: vi.fn(() => createValueExplanation()),
+    explainNodeMeta: vi.fn(() => createMetaExplanation()),
+    explainNodeFailure: vi.fn(() => createFailureExplanation()),
+    explainNodeAsync: vi.fn(() => createAsyncExplanation()),
     subscribe: () => () => {},
     getSnapshot: () => snapshot
   };

@@ -4,15 +4,75 @@ import { createAutomationApi, getNopDebuggerAutomationApi, installNopDebuggerWin
 import type {
   NopDebugEvent,
   NopDebuggerFilterKind,
+  NopNodeAsyncExplanation,
   NopDebuggerOverview,
+  NopNodeFailureExplanation,
+  NopNodeMetaExplanation,
   NopDebuggerSnapshot,
   NopDiagnosticReport,
   NopDebuggerSessionExport,
   NopInteractionTrace,
-  NopNodeDiagnostics
+  NopNodeDiagnostics,
+  NopNodeValueExplanation
 } from './types';
 
 const windowStub = {} as Window & typeof globalThis;
+
+function createValueExplanation(): NopNodeValueExplanation {
+  return {
+    kind: 'value',
+    subject: { cid: 1, field: 'value' },
+    answer: 'value explanation',
+    confidence: 'low',
+    limitations: [],
+    evidenceRefs: [],
+    related: { cid: 1 },
+    truncated: false,
+    data: { field: 'value', valueSource: 'unknown' }
+  };
+}
+
+function createMetaExplanation(): NopNodeMetaExplanation {
+  return {
+    kind: 'meta',
+    subject: { cid: 1, field: 'visible' },
+    answer: 'meta explanation',
+    confidence: 'low',
+    limitations: [],
+    evidenceRefs: [],
+    related: { cid: 1 },
+    truncated: false,
+    data: { field: 'visible', source: 'unknown', dependencyPaths: [] }
+  };
+}
+
+function createFailureExplanation(): NopNodeFailureExplanation {
+  return {
+    kind: 'failure',
+    subject: { cid: 1 },
+    answer: 'failure explanation',
+    confidence: 'low',
+    limitations: [],
+    evidenceRefs: [],
+    related: { cid: 1 },
+    truncated: false,
+    data: { failureType: 'unknown', hints: [], relatedEventIds: [] }
+  };
+}
+
+function createAsyncExplanation(): NopNodeAsyncExplanation {
+  return {
+    kind: 'async',
+    subject: { cid: 1 },
+    answer: 'async explanation',
+    confidence: 'low',
+    limitations: [],
+    evidenceRefs: [],
+    related: { cid: 1, ownerIds: [] },
+    truncated: false,
+    data: { ownerCount: 0, owners: [] }
+  };
+}
 
 Object.defineProperty(globalThis, 'window', {
   value: windowStub,
@@ -139,6 +199,10 @@ describe('debugger automation helpers', () => {
     const asyncOwnerSnapshot: AsyncOwnerDebugSnapshot = { owners: [] };
     const getAsyncOwnerDebugSnapshot = vi.fn(() => asyncOwnerSnapshot);
     const evaluateNodeExpression = vi.fn(() => ({ expression: 'x', ok: true, value: 1 }));
+    const explainNodeValue = vi.fn(() => createValueExplanation());
+    const explainNodeMeta = vi.fn(() => createMetaExplanation());
+    const explainNodeFailure = vi.fn(() => createFailureExplanation());
+    const explainNodeAsync = vi.fn(() => createAsyncExplanation());
 
     const automation = createAutomationApi({
       controllerId: 'controller-a',
@@ -174,13 +238,21 @@ describe('debugger automation helpers', () => {
       inspectNode,
       inspectByCid,
       inspectByElement,
-      evaluateNodeExpression
+      evaluateNodeExpression,
+      explainNodeValue,
+      explainNodeMeta,
+      explainNodeFailure,
+      explainNodeAsync
     });
 
     expect(automation.controllerId).toBe('controller-a');
     expect(automation.version).toBe('1');
     expect(automation.getSnapshot()).toMatchObject({ enabled: true });
     expect(automation.getAsyncOwnerDebugSnapshot()).toBe(asyncOwnerSnapshot);
+    expect(automation.explainNodeValue({ cid: 1 })).toMatchObject({ kind: 'value' });
+    expect(automation.explainNodeMeta({ cid: 1, field: 'visible' })).toMatchObject({ kind: 'meta' });
+    expect(automation.explainNodeFailure()).toMatchObject({ kind: 'failure' });
+    expect(automation.explainNodeAsync()).toMatchObject({ kind: 'async' });
     automation.clear();
     automation.pause();
     automation.resume();
@@ -304,7 +376,11 @@ describe('debugger automation helpers', () => {
       inspectNode: vi.fn(() => undefined),
       inspectByCid: vi.fn(() => undefined),
       inspectByElement: vi.fn(() => undefined),
-      evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 }))
+      evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 })),
+      explainNodeValue: vi.fn(() => createValueExplanation()),
+      explainNodeMeta: vi.fn(() => createMetaExplanation()),
+      explainNodeFailure: vi.fn(() => createFailureExplanation()),
+      explainNodeAsync: vi.fn(() => createAsyncExplanation())
     });
     const automationB = { ...automationA, controllerId: 'b', sessionId: 's-b' };
 

@@ -6,7 +6,6 @@ import type {
   CompiledTemplate,
   CompileNodeOptions,
   CompileSchemaOptions,
-  CompileSymbolTable,
   DataSourceSchema,
   ExpressionCompiler,
   ReactionSchema,
@@ -15,11 +14,9 @@ import type {
   SchemaCompiler,
   SchemaInput,
   ScopePlan,
-  StaticAnalysisResult,
   TemplateNode,
   TemplateRegion,
   PreparedImportSpec,
-  WrapProvidersFn,
   XuiImportSpec
 } from '@nop-chaos/flux-core';
 import {
@@ -39,269 +36,22 @@ import {
   schemaPathToJsonPointer,
   type SchemaCompilerDiagnosticsContext
 } from './schema-compiler/diagnostics';
+import {
+  normalizeImportSpecKey,
+  collectSchemaImportSpecs,
+  pushImportSymbols,
+  pushPreparedImportSymbols,
+  pushInjectedLocalSymbols,
+  pushRegionParamSymbols
+} from './schema-compiler/symbol-helpers';
+import { buildWrapProvidersClosure, computeStaticAnalysis } from './schema-compiler/static-analysis';
 import { compileActions } from './action-compiler';
 import { compileDataSource } from './source-compiler';
 import { compileReaction } from './reaction-compiler';
 import { createBaseCompileSymbolTable } from './compile-symbol-table';
 import { normalizeValidationTriggers, normalizeValidationVisibilityTriggers } from './validation-lowering';
 
-const PROVIDER_BUILD_ORDER = ['actionScope', 'componentRegistry', 'classAliases'] as const;
-
 const MAX_COMPILE_DEPTH = 64;
-
-function pushImportSymbols(symbolTable: CompileSymbolTable, imports: unknown, id: string): CompileSymbolTable {
-  if (!Array.isArray(imports) || imports.length === 0) {
-    return symbolTable;
-  }
-
-  const symbols: Record<string, import('@nop-chaos/flux-core').SymbolInfo> = {};
-
-  for (const spec of imports as XuiImportSpec[]) {
-    if (spec.as) {
-      symbols[`$${spec.as}`] = {
-        name: `$${spec.as}`,
-        kind: 'import-alias'
-      };
-    }
-  }
-
-  return Object.keys(symbols).length === 0
-    ? symbolTable
-    : symbolTable.push({
-        id,
-        kind: 'imports',
-        symbols
-      });
-}
-
-function normalizeImportSpecKey(schemaUrl: string, spec: XuiImportSpec): string {
-  return JSON.stringify({
-    schemaUrl,
-    from: spec.from,
-    as: spec.as,
-    options: spec.options ?? null
-  });
-}
-
-function collectSchemaImportSpecs(input: SchemaInput, schemaUrl: string): XuiImportSpec[] {
-  const collected = new Map<string, XuiImportSpec>();
-
-  function visit(value: unknown): void {
-    if (!value || typeof value !== 'object') {
-      return;
-    }
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        visit(item);
-      }
-      return;
-    }
-
-    const record = value as Record<string, unknown>;
-    const imports = record['xui:imports'];
-    if (Array.isArray(imports)) {
-      for (const entry of imports) {
-        if (!entry || typeof entry !== 'object') {
-          continue;
-        }
-        const spec = entry as XuiImportSpec;
-        if (!spec.from || !spec.as) {
-          continue;
-        }
-        collected.set(normalizeImportSpecKey(schemaUrl, spec), spec);
-      }
-    }
-
-    for (const child of Object.values(record)) {
-      visit(child);
-    }
-  }
-
-  visit(input);
-  return Array.from(collected.values());
-}
-
-function buildImportMetaMembers(meta: PreparedImportSpec | undefined): readonly string[] | undefined {
-  return meta?.staticMeta?.helpers
-    ? Object.keys(meta.staticMeta.helpers)
-    : undefined;
-}
-
-function pushPreparedImportSymbols(
-  symbolTable: CompileSymbolTable,
-  imports: readonly XuiImportSpec[] | undefined,
-  preparedImports: ReadonlyMap<string, PreparedImportSpec> | undefined,
-  schemaUrl: string | undefined,
-  id: string
-): CompileSymbolTable {
-  if (!imports?.length || !schemaUrl) {
-    return symbolTable;
-  }
-
-  const symbols: Record<string, import('@nop-chaos/flux-core').SymbolInfo> = {};
-
-  for (const spec of imports) {
-    if (!spec.as) {
-      continue;
-    }
-
-    const prepared = preparedImports?.get(normalizeImportSpecKey(schemaUrl, spec));
-    symbols[`$${spec.as}`] = {
-      name: `$${spec.as}`,
-      kind: 'import-alias',
-      members: buildImportMetaMembers(prepared),
-      memberDefinitions: prepared?.staticMeta?.helpers
-    };
-  }
-
-  return Object.keys(symbols).length === 0
-    ? symbolTable
-    : symbolTable.push({
-        id,
-        kind: 'imports',
-        symbols
-      });
-}
-
-function pushInjectedLocalSymbols(symbolTable: CompileSymbolTable, renderer: import('@nop-chaos/flux-core').RendererDefinition, id: string): CompileSymbolTable {
-  const symbols = Object.fromEntries(
-    Object.entries(renderer.injectedLocals ?? {}).map(([name, info]) => [
-      name,
-      {
-        name,
-        ...info
-      }
-    ])
-  ) as Record<string, import('@nop-chaos/flux-core').SymbolInfo>;
-
-  return Object.keys(symbols).length === 0
-    ? symbolTable
-    : symbolTable.push({
-        id,
-        kind: 'owner',
-        symbols
-      });
-}
-
-function pushRegionParamSymbols(symbolTable: CompileSymbolTable, params: readonly string[] | undefined, id: string): CompileSymbolTable {
-  if (!params?.length) {
-    return symbolTable;
-  }
-
-  const members = [...params, '$parent'];
-  return symbolTable.push({
-    id,
-    kind: 'region',
-    symbols: {
-      '$slot': {
-        name: '$slot',
-        kind: 'slot-root',
-        members
-      }
-    }
-  });
-}
-
-function buildWrapProvidersClosure(providers: TemplateNode['providerPlan']): WrapProvidersFn {
-  let fn: WrapProvidersFn = (_wp, _v, ch) => ch;
-
-  for (const kind of PROVIDER_BUILD_ORDER) {
-    if (providers?.[kind]) {
-      const inner = fn;
-      fn = (wp, v, ch) => wp(kind, v[kind], inner(wp, v, ch));
-    }
-  }
-
-  return fn;
-}
-
-function collectDependencies(_node: TemplateNode): readonly string[] {
-  return [];
-}
-
-function getRegionChildren(region: TemplateRegion): readonly TemplateNode[] {
-  if (!region.node) {
-    return [];
-  }
-
-  if (Array.isArray(region.node)) {
-    return region.node;
-  }
-
-  return [region.node] as readonly TemplateNode[];
-}
-
-function isMetaProgramStatic(metaProgram: TemplateNode['metaProgram']): boolean {
-  for (const field of Object.values(metaProgram)) {
-    if (field && !field.isStatic) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function computeStaticAnalysis(
-  node: TemplateNode,
-  schema: BaseSchema
-): StaticAnalysisResult {
-  const renderer = node.component;
-
-  if (!renderer.staticCapable) {
-    return {
-      isStaticContent: false,
-      dependencies: collectDependencies(node)
-    };
-  }
-
-  if (!node.propsProgram.isStatic) {
-    return {
-      isStaticContent: false,
-      dependencies: collectDependencies(node)
-    };
-  }
-
-  if (!isMetaProgramStatic(node.metaProgram)) {
-    return {
-      isStaticContent: false,
-      dependencies: collectDependencies(node)
-    };
-  }
-
-  if (schema.name) {
-    return {
-      isStaticContent: false,
-      dependencies: collectDependencies(node)
-    };
-  }
-
-  if (Object.keys(node.eventPlans).length > 0) {
-    return {
-      isStaticContent: false,
-      dependencies: collectDependencies(node)
-    };
-  }
-
-  if (node.scopePlan.kind !== 'inherit') {
-    return {
-      isStaticContent: false,
-      dependencies: collectDependencies(node)
-    };
-  }
-
-  for (const region of Object.values(node.regions)) {
-    for (const child of getRegionChildren(region)) {
-      if (!child.staticAnalysis?.isStaticContent) {
-        return {
-          isStaticContent: false,
-          dependencies: collectDependencies(node)
-        };
-      }
-    }
-  }
-
-  return { isStaticContent: true, dependencies: [] };
-}
 
 export function createSchemaCompiler(input: {
   registry: RendererRegistry;
@@ -663,8 +413,8 @@ export function createSchemaCompiler(input: {
           reporter: (issue) => diagnostics.emit(issue)
         }
       });
-    } catch {
-      // validation stays non-throwing and collects diagnostics only
+    } catch (_e) {
+      void _e;
     }
 
     analyzeSchemaInput(canonicalPrepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);

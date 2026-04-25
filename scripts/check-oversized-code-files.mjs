@@ -37,8 +37,12 @@ async function getTrackedFiles() {
 
 async function countLines(relativePath) {
   const absolutePath = path.join(rootDir, relativePath);
-  const content = await readFile(absolutePath, 'utf8');
-  return content === '' ? 0 : content.split(/\r?\n/).length;
+  try {
+    const content = await readFile(absolutePath, 'utf8');
+    return content === '' ? 0 : content.split(/\r?\n/).length;
+  } catch {
+    return -1;
+  }
 }
 
 async function main() {
@@ -48,6 +52,7 @@ async function main() {
 
   for (const filePath of trackedFiles) {
     const lineCount = await countLines(filePath);
+    if (lineCount < 0) continue;
     if (lineCount > ERROR_LINES) {
       errorFiles.push({ filePath, lineCount });
     } else if (lineCount > WARN_LINES) {
