@@ -1,8 +1,13 @@
 import type { RendererDefinition, SchemaRendererProps } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { ensureRendererComponent } from './auto-renderer';
 
 export function createDefaultRegistry(definitions: RendererDefinition[] = []) {
-  return createRendererRegistry(definitions);
+  const registry = createRendererRegistry();
+  for (const raw of definitions) {
+    registry.register(ensureRendererComponent(raw));
+  }
+  return registry;
 }
 
 export function createDefaultEnv(input?: Partial<SchemaRendererProps['env']>) {

@@ -1,9 +1,18 @@
 import type { RendererDefinition, RendererRegistry } from './types';
 
+function validateDefinition(definition: RendererDefinition): void {
+  if (!definition.component && !definition.reactComponent) {
+    throw new Error(
+      `Renderer definition for type "${definition.type}" must specify either "component" or "reactComponent".`
+    );
+  }
+}
+
 export function createRendererRegistry(initialDefinitions: RendererDefinition[] = []): RendererRegistry {
   const map = new Map<string, RendererDefinition>();
 
   for (const definition of initialDefinitions) {
+    validateDefinition(definition);
     if (map.has(definition.type)) {
       throw new Error(`Duplicate renderer definition for type "${definition.type}"`);
     }
@@ -13,6 +22,7 @@ export function createRendererRegistry(initialDefinitions: RendererDefinition[] 
 
   return {
     register(definition, options) {
+      validateDefinition(definition);
       const existing = map.get(definition.type);
 
       if (existing && existing !== definition && !options?.override) {

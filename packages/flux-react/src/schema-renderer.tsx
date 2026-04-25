@@ -8,6 +8,7 @@ import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { reportImportFailure } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
+import { ensureRendererComponent } from './auto-renderer';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
@@ -35,7 +36,7 @@ function getSingleRootNode(
 }
 
 export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
-  const registry = createRendererRegistry(registryDefinitions);
+  const registry = createRendererRegistry(registryDefinitions.map(ensureRendererComponent));
 
   return function SchemaRenderer(props: SchemaRendererProps) {
     const onRuntimeChange = props.onRuntimeChange;

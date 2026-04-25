@@ -143,7 +143,8 @@ export interface RendererCapabilityContract extends CapabilityMethodContract {
 
 export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   type: S['type'];
-  component: ComponentType<RendererComponentProps<any>>;
+  component?: ComponentType<RendererComponentProps<any>>;
+  reactComponent?: ComponentType<Record<string, unknown>>;
   displayName?: string;
   icon?: string;
   category?: string;
