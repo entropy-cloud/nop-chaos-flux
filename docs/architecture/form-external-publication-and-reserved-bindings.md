@@ -132,7 +132,7 @@ text: ${ui.profileFormStatus?.valid}
 
 form 外部若需要读取当前 form values，不使用 `form.name`。
 
-推荐未来使用显式：
+使用显式：
 
 - `valuesPath`
 
@@ -145,11 +145,9 @@ valuesPath: ui.profileDraft
 
 语义：
 
-- external readonly values publication
+- external readonly values snapshot publication
 - 与 `statusPath` 分离
 - 明确作者意图
-
-本文不要求当前立刻实现 `valuesPath`，但它是未来唯一推荐的外部值发布方向。
 
 ## Common Principle Across Owners
 
@@ -177,7 +175,7 @@ publish facet 解决：
 对 form：
 
 - status -> `statusPath`
-- values -> future `valuesPath`
+- values -> `valuesPath`
 
 ## Why The Split Matters
 
@@ -274,7 +272,7 @@ userForm.username.$state.errors
 - in-form values -> field `name`
 - in-form status -> `$form`
 - external status -> `statusPath`
-- external values -> future `valuesPath`
+- external values -> `valuesPath`
 
 不同点在于：
 
@@ -342,7 +340,7 @@ Flux 的正式设计更强调：
 因此当前推荐：
 
 - 要么 `statusPath`
-- 要么 future `valuesPath`
+- 要么 `valuesPath`
 - 不额外引入 `publishWhen`
 
 ## Quick Contract Table
@@ -353,7 +351,7 @@ Flux 的正式设计更强调：
 | direct field-name reads (`${username}`) | form subtree | preferred in-form values read |
 | `$form` | form subtree / lifecycle | owner-local readonly status summary |
 | `statusPath` | external scope | explicit readonly external status publication |
-| future `valuesPath` | external scope | explicit readonly external values publication |
+| `valuesPath` | external scope | explicit readonly external values snapshot publication |
 
 ## Current Recommendation
 
@@ -363,7 +361,7 @@ Flux 的正式设计更强调：
 - form 内部 values = direct field-name reads
 - form 内部 status = `$form`
 - form 外部 status = `statusPath`
-- form 外部 values = future `valuesPath`
+- form 外部 values = `valuesPath`
 
 不采用：
 
