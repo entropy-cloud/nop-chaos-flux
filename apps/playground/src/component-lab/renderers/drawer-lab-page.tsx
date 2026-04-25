@@ -16,6 +16,10 @@ const rightDrawer = {
             {
               type: 'form',
               name: 'noteForm',
+              onSubmitSuccess: [
+                { action: 'setValue', args: { path: 'savedNote', value: '${noteForm.note}' } },
+                { action: 'closeDrawer' }
+              ],
               body: [
                 { type: 'textarea', name: 'note', label: 'Note', placeholder: 'Write something...', required: true }
               ],
@@ -23,11 +27,7 @@ const rightDrawer = {
                 {
                   type: 'button',
                   label: 'Save',
-                  onClick: [
-                    { action: 'submit', formName: 'noteForm' },
-                    { action: 'setValue', args: { path: 'savedNote', value: '${noteForm.note}' } },
-                    { action: 'closeDrawer' }
-                  ]
+                  onClick: { action: 'submit' }
                 },
                 { type: 'button', label: 'Cancel', variant: 'outline', onClick: { action: 'closeDrawer' } }
               ]

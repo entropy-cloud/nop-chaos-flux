@@ -14,7 +14,7 @@ const expandCollapseTree = {
   ]
 };
 
-const selectableTree = {
+const customNodeTree = {
   type: 'page',
   body: [
     {
@@ -24,11 +24,20 @@ const selectableTree = {
       keyField: 'id',
       childrenKey: 'children',
       initiallyExpanded: true,
-      selectable: true,
-      selectedIds: '${selectedIds}',
-      onSelect: { action: 'setValue', args: { path: 'selectedIds', value: '${selectedIds}' } }
+      node: [
+        {
+          type: 'flex',
+          direction: 'row',
+          align: 'center',
+          gap: 2,
+          body: [
+            { type: 'text', text: '${$slot.node.name}' },
+            { type: 'badge', text: 'depth:${$slot.depth}' }
+          ]
+        }
+      ]
     },
-    { type: 'text', text: 'Selected IDs: ${(selectedIds ?? []).join(", ") || "(none)"}' }
+    { type: 'text', text: 'Custom node template uses the node region bindings.' }
   ]
 };
 
@@ -53,7 +62,7 @@ const orgTreeData = [
 export function TreeLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Hierarchical tree view with expand/collapse and custom node templates. Supports selectable (checkbox) mode."
+      introDescription="Hierarchical tree view with expand/collapse and optional custom node templates."
       scenarios={[
         {
           title: 'Expand/collapse org tree',
@@ -62,10 +71,10 @@ export function TreeLabPage() {
           data: { orgTree: orgTreeData }
         },
         {
-          title: 'Selectable tree with selected IDs display',
-          description: 'With selectable: true, checkboxes appear on each node. Selected node IDs are shown live below the tree.',
-          schema: selectableTree,
-          data: { orgTree: orgTreeData, selectedIds: [] }
+          title: 'Custom node template with depth badge',
+          description: 'The node region can render custom content using node, index, depth, key, and parentNode bindings.',
+          schema: customNodeTree,
+          data: { orgTree: orgTreeData }
         }
       ]}
     />

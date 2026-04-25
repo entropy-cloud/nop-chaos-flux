@@ -29,7 +29,7 @@ const formWithSubmitFeedback = {
     {
       type: 'form',
       name: 'feedbackForm',
-      onSubmit: [
+      onSubmitSuccess: [
         { action: 'setValue', args: { path: 'submitted', value: true } },
         { action: 'setValue', args: { path: 'submittedUsername', value: '${feedbackForm.username}' } }
       ],

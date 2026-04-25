@@ -17,20 +17,18 @@ const basicInputs = {
   ]
 };
 
-const richInputs = {
+const constrainedInputs = {
   type: 'page',
   body: [
     {
       type: 'form',
-      name: 'richInputForm',
+      name: 'constrainedInputForm',
       body: [
         {
           type: 'input-text',
           name: 'search',
           label: 'Search',
-          placeholder: 'Search users...',
-          prefix: 'Search',
-          clearable: true
+          placeholder: 'Search users...'
         },
         {
           type: 'input-text',
@@ -50,7 +48,7 @@ const richInputs = {
 export function InputTextLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Single-line text input bound to a named form field. Supports clearable, prefix, suffix, maxLength, and placeholder."
+      introDescription="Single-line text input bound to a named form field. Supports placeholder and standard input validation such as maxLength."
       scenarios={[
         {
           title: 'Basic required and optional fields',
@@ -58,9 +56,9 @@ export function InputTextLabPage() {
           schema: basicInputs
         },
         {
-          title: 'Clearable, prefix icon, and maxLength',
-          description: 'The Search field has clearable: true and a prefix label. The Bio field has a 100 character limit.',
-          schema: richInputs
+          title: 'Placeholder and maxLength constraints',
+          description: 'The Search field demonstrates placeholder usage. The Bio field applies a 100 character limit.',
+          schema: constrainedInputs
         }
       ]}
     />

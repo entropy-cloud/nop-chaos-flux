@@ -25,9 +25,9 @@ export const BASIC_RENDERER_ROUTES: RendererRouteEntry[] = [
   { id: 'tabs', title: 'Tabs', category: 'layout', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Tabbed navigation with per-item body regions.' },
   { id: 'loop', title: 'Loop', category: 'layout', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Iterates over an array and renders each item via a body region.' },
   { id: 'recurse', title: 'Recurse', category: 'layout', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Recursive tree renderer that walks nested item arrays to a configurable max depth.' },
-  { id: 'text', title: 'Text', category: 'content', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a text or HTML string from schema or scope expression.' },
-  { id: 'icon', title: 'Icon', category: 'content', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a named Lucide icon with configurable size and color.' },
-  { id: 'badge', title: 'Badge', category: 'content', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a styled badge/tag with label and optional variant.' },
+  { id: 'text', title: 'Text', category: 'content', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a text string from schema or scope expression.' },
+  { id: 'icon', title: 'Icon', category: 'content', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a named Lucide icon.' },
+  { id: 'badge', title: 'Badge', category: 'content', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a styled badge/tag from text and semantic level.' },
   { id: 'button', title: 'Button', category: 'actions', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Action button with configurable variant, size, and onClick handler.' },
   { id: 'scope-debug', title: 'Scope Debug', category: 'advanced', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Debug-only JSON viewer that reacts to current scope changes and can be inserted at any schema position.' },
   { id: 'dynamic-renderer', title: 'Dynamic Renderer', category: 'advanced', sourcePackage: '@nop-chaos/flux-renderers-basic', description: 'Renders a schema node whose type is resolved at runtime from the current scope.' },
@@ -40,7 +40,7 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
   { id: 'input-email', title: 'Input Email', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Email input with built-in format validation.' },
   { id: 'input-password', title: 'Input Password', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Password input with masked characters.' },
   { id: 'textarea', title: 'Textarea', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Multi-line text input bound to a form field.' },
-  { id: 'select', title: 'Select', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Single-value dropdown; options from schema or async source.' },
+  { id: 'select', title: 'Select', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Single-value dropdown with inline or async options.' },
   { id: 'checkbox', title: 'Checkbox', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Boolean toggle bound to a form field.' },
   { id: 'switch', title: 'Switch', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Toggle switch bound to a form field.' },
   { id: 'radio-group', title: 'Radio Group', category: 'form', sourcePackage: '@nop-chaos/flux-renderers-form', description: 'Single-choice radio group; options from schema or async source.' },
@@ -62,9 +62,9 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
 export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
   { id: 'crud', title: 'Crud', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Composite data workflow with query form, toolbar, bulk actions, and table shell.' },
   { id: 'table', title: 'Table', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Data table with sorting, pagination, selection, and expandable rows.' },
-  { id: 'tree', title: 'Tree', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Hierarchical tree view with expand/collapse and custom node templates.' },
-  { id: 'data-source', title: 'Data Source', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Logic-only renderer: loads remote data and injects results into the scope.' },
-  { id: 'chart', title: 'Chart', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Recharts-based chart with configurable series, axes, and click handlers.' },
+  { id: 'tree', title: 'Tree', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Hierarchical tree view with expand/collapse and optional custom node templates.' },
+  { id: 'data-source', title: 'Data Source', category: 'logic', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Logic-only renderer: loads remote data and injects results into the scope.' },
+  { id: 'chart', title: 'Chart', category: 'data', sourcePackage: '@nop-chaos/flux-renderers-data', description: 'Recharts-based chart driven by source data, configured axes, and series.' },
 ];
 
 export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [

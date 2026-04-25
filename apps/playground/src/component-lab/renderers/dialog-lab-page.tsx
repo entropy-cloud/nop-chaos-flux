@@ -39,6 +39,10 @@ const formDialog = {
             {
               type: 'form',
               name: 'contactForm',
+              onSubmitSuccess: [
+                { action: 'setValue', args: { path: 'submittedName', value: '${contactForm.name}' } },
+                { action: 'closeDialog' }
+              ],
               body: [
                 { type: 'input-text', name: 'name', label: 'Full Name', required: true },
                 { type: 'input-email', name: 'email', label: 'Email', required: true }
@@ -47,11 +51,7 @@ const formDialog = {
                 {
                   type: 'button',
                   label: 'Confirm',
-                  onClick: [
-                    { action: 'submit', formName: 'contactForm' },
-                    { action: 'setValue', args: { path: 'submittedName', value: '${contactForm.name}' } },
-                    { action: 'closeDialog' }
-                  ]
+                  onClick: { action: 'submit' }
                 },
                 { type: 'button', label: 'Cancel', variant: 'outline', onClick: { action: 'closeDialog' } }
               ]

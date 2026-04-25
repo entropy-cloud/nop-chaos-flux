@@ -51,7 +51,7 @@ const singleSelect = {
   ]
 };
 
-const multiSelect = {
+const checkboxTreeSelect = {
   type: 'page',
   body: [
     {
@@ -61,8 +61,8 @@ const multiSelect = {
         {
           type: 'tree-select',
           name: 'departments',
-          label: 'Departments (multi-select)',
-          multiple: true,
+          label: 'Departments (checkbox mode)',
+          treeMode: 'checkbox',
           searchable: true,
           options: orgTreeOptions
         }
@@ -78,7 +78,7 @@ const multiSelect = {
 export function TreeSelectLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Popover-based tree selector. Click the trigger to open an expandable tree. Supports single and multi-select modes with search."
+      introDescription="Popover-based tree selector. Click the trigger to open an expandable tree. Supports single-value and checkbox tree modes with search."
       scenarios={[
         {
           title: 'Single-value tree select with search',
@@ -86,9 +86,9 @@ export function TreeSelectLabPage() {
           schema: singleSelect
         },
         {
-          title: 'Multi-select tree with search',
-          description: 'With multiple: true, several nodes can be selected. All selected IDs are shown as a comma-separated list.',
-          schema: multiSelect
+          title: 'Checkbox tree-select with search',
+          description: 'With treeMode: checkbox, several nodes can be selected. All selected IDs are shown as a comma-separated list.',
+          schema: checkboxTreeSelect
         }
       ]}
     />

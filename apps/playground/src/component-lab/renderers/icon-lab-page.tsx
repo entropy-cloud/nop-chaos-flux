@@ -1,6 +1,6 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
 
-const sizeVariants = {
+const iconGallery = {
   type: 'page',
   body: [
     {
@@ -9,28 +9,10 @@ const sizeVariants = {
       align: 'center',
       gap: 4,
       body: [
-        { type: 'icon', icon: 'Star', size: 16 },
-        { type: 'icon', icon: 'Star', size: 20 },
-        { type: 'icon', icon: 'Star', size: 32 },
-        { type: 'icon', icon: 'Star', size: 48 }
-      ]
-    }
-  ]
-};
-
-const colorVariants = {
-  type: 'page',
-  body: [
-    {
-      type: 'flex',
-      direction: 'row',
-      align: 'center',
-      gap: 3,
-      body: [
-        { type: 'icon', icon: 'CheckCircle', size: 24, color: '#22c55e' },
-        { type: 'icon', icon: 'AlertCircle', size: 24, color: '#f59e0b' },
-        { type: 'icon', icon: 'XCircle', size: 24, color: '#ef4444' },
-        { type: 'icon', icon: 'Info', size: 24, color: '#6366f1' }
+        { type: 'icon', icon: 'Star' },
+        { type: 'icon', icon: 'Heart' },
+        { type: 'icon', icon: 'Bell' },
+        { type: 'icon', icon: 'Settings' }
       ]
     }
   ]
@@ -50,7 +32,7 @@ const inlineWithText = {
           align: 'center',
           gap: 2,
           body: [
-            { type: 'icon', icon: 'User', size: 16 },
+            { type: 'icon', icon: 'User' },
             { type: 'text', text: 'Alice Johnson' }
           ]
         },
@@ -60,7 +42,7 @@ const inlineWithText = {
           align: 'center',
           gap: 2,
           body: [
-            { type: 'icon', icon: 'Mail', size: 16 },
+            { type: 'icon', icon: 'Mail' },
             { type: 'text', text: 'alice@example.com' }
           ]
         },
@@ -70,7 +52,7 @@ const inlineWithText = {
           align: 'center',
           gap: 2,
           body: [
-            { type: 'icon', icon: 'MapPin', size: 16 },
+            { type: 'icon', icon: 'MapPin' },
             { type: 'text', text: 'San Francisco, CA' }
           ]
         }
@@ -82,17 +64,12 @@ const inlineWithText = {
 export function IconLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Renders a named Lucide icon with configurable size and optional color. Use inline alongside text for labelled icon rows."
+      introDescription="Renders a named Lucide icon. Use inline alongside text for labelled icon rows."
       scenarios={[
         {
-          title: 'Size variants',
-          description: 'The same icon rendered at 16, 20, 32, and 48px. Size is in pixels.',
-          schema: sizeVariants
-        },
-        {
-          title: 'Color variants',
-          description: 'Pass a CSS color string to the color prop to tint the icon.',
-          schema: colorVariants
+          title: 'Named icon gallery',
+          description: 'Different Lucide icon names rendered with the current default icon presentation.',
+          schema: iconGallery
         },
         {
           title: 'Inline with text labels',

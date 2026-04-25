@@ -16,7 +16,7 @@ const basicTextarea = {
   ]
 };
 
-const richTextarea = {
+const rowVariants = {
   type: 'page',
   body: [
     {
@@ -26,18 +26,16 @@ const richTextarea = {
         {
           type: 'textarea',
           name: 'notes',
-          label: 'Notes (max 200 chars)',
+          label: 'Notes (5 rows)',
           placeholder: 'Enter your notes...',
-          rows: 5,
-          maxLength: 200
+          rows: 5
         },
         {
           type: 'textarea',
-          name: 'fixedDescription',
-          label: 'Description (no resize)',
-          placeholder: 'Fixed size textarea...',
-          rows: 3,
-          resize: false
+          name: 'summary',
+          label: 'Summary (3 rows)',
+          placeholder: 'Compact textarea...',
+          rows: 3
         }
       ],
       actions: [
@@ -50,7 +48,7 @@ const richTextarea = {
 export function TextareaLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Multi-line text input bound to a form field. Supports rows, maxLength with counter, and resize control."
+      introDescription="Multi-line text input bound to a form field. Supports placeholder and row count configuration."
       scenarios={[
         {
           title: 'Basic required textarea',
@@ -58,9 +56,9 @@ export function TextareaLabPage() {
           schema: basicTextarea
         },
         {
-          title: 'Fixed rows, maxLength counter, and no-resize',
-          description: 'The Notes field has 5 rows and a 200 character limit. The Description field has resize disabled.',
-          schema: richTextarea
+          title: 'Fixed row counts',
+          description: 'Different textarea fields can use different row counts to fit the surrounding form layout.',
+          schema: rowVariants
         }
       ]}
     />

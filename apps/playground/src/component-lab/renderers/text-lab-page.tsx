@@ -17,18 +17,19 @@ const expressionOnly = {
   ]
 };
 
-const htmlMode = {
+const tagVariants = {
   type: 'page',
   body: [
-    { type: 'text', html: true, text: 'This is <strong>bold</strong> and <em>italic</em> text.' },
-    { type: 'text', html: true, text: 'Styled: <span style="color:#6366f1;font-weight:600">Indigo highlight</span>' }
+    { type: 'text', tag: 'h3', text: 'Section heading rendered via tag prop' },
+    { type: 'text', tag: 'p', text: 'Body copy remains plain text even when the tag changes.' },
+    { type: 'text', tag: 'label', text: 'Compact label-style text renderer output.' }
   ]
 };
 
 export function TextLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Renders a text string from a literal value or scope expression. Supports template interpolation and optional HTML mode."
+      introDescription="Renders a text string from a literal value or scope expression. Supports template interpolation and semantic tag selection."
       scenarios={[
         {
           title: 'Literal and interpolated text',
@@ -43,9 +44,9 @@ export function TextLabPage() {
           data: { score: 82 }
         },
         {
-          title: 'HTML mode',
-          description: 'Set html: true to render the text as HTML. Use sparingly — only for trusted content.',
-          schema: htmlMode
+          title: 'Semantic tag variants',
+          description: 'The tag prop changes the semantic wrapper element while preserving plain-text rendering.',
+          schema: tagVariants
         }
       ]}
     />

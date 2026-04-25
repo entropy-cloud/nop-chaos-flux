@@ -8,7 +8,6 @@ const basicTabs = {
       items: [
         {
           title: 'Overview',
-          icon: 'LayoutDashboard',
           body: [
             { type: 'text', text: 'Project status: In Progress' },
             {
@@ -24,7 +23,6 @@ const basicTabs = {
         },
         {
           title: 'Team',
-          icon: 'Users',
           body: [
             { type: 'text', text: 'Alice Johnson — Lead' },
             { type: 'text', text: 'Bob Smith — Developer' },
@@ -33,10 +31,134 @@ const basicTabs = {
         },
         {
           title: 'Settings',
-          icon: 'Settings',
           disabled: true,
           body: [
             { type: 'text', text: 'Settings are not available yet.' }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const lineTabs = {
+  type: 'page',
+  body: [
+    {
+      type: 'tabs',
+      tabsMode: 'line',
+      items: [
+        {
+          title: 'Overview',
+          body: [
+            { type: 'text', text: 'Line-style tab with underline indicator.' }
+          ]
+        },
+        {
+          title: 'Details',
+          body: [
+            { type: 'text', text: 'Content for details tab.' }
+          ]
+        },
+        {
+          title: 'Archive',
+          body: [
+            { type: 'text', text: 'Content for archive tab.' }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const verticalTabs = {
+  type: 'page',
+  body: [
+    {
+      type: 'tabs',
+      tabsMode: 'vertical',
+      items: [
+        {
+          title: 'Overview',
+          body: [
+            { type: 'text', text: 'Vertical tabs with nav on the left side.' },
+            { type: 'text', text: 'Content area fills the remaining space.' }
+          ]
+        },
+        {
+          title: 'Team',
+          body: [
+            { type: 'text', text: 'Alice Johnson — Lead' },
+            { type: 'text', text: 'Bob Smith — Developer' },
+            { type: 'text', text: 'Carol White — Designer' }
+          ]
+        },
+        {
+          title: 'Settings',
+          body: [
+            { type: 'text', text: 'Settings content goes here.' }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const sidebarLeftTabs = {
+  type: 'page',
+  body: [
+    {
+      type: 'tabs',
+      tabsMode: 'sidebar',
+      sidePosition: 'left',
+      items: [
+        {
+          title: 'Dashboard',
+          body: [
+            { type: 'text', text: 'Sidebar on the left with Dashboard content.' }
+          ]
+        },
+        {
+          title: 'Analytics',
+          body: [
+            { type: 'text', text: 'Analytics content displayed here.' }
+          ]
+        },
+        {
+          title: 'Reports',
+          body: [
+            { type: 'text', text: 'Report viewer content.' }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const sidebarRightTabs = {
+  type: 'page',
+  body: [
+    {
+      type: 'tabs',
+      tabsMode: 'sidebar',
+      sidePosition: 'right',
+      items: [
+        {
+          title: 'Dashboard',
+          body: [
+            { type: 'text', text: 'Sidebar on the right with Dashboard content.' }
+          ]
+        },
+        {
+          title: 'Analytics',
+          body: [
+            { type: 'text', text: 'Analytics content displayed here.' }
+          ]
+        },
+        {
+          title: 'Reports',
+          body: [
+            { type: 'text', text: 'Report viewer content.' }
           ]
         }
       ]
@@ -90,12 +212,32 @@ const formTabs = {
 export function TabsLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Tabbed navigation container. Each tab has a title, optional icon, optional disabled flag, and a body region."
+      introDescription="Tabbed navigation container with multiple display modes: default, line, vertical, sidebar (left/right)."
       scenarios={[
         {
-          title: 'Tabs with icons and a disabled tab',
-          description: 'The "Settings" tab is disabled and cannot be activated. Icons are shown next to tab titles.',
+          title: 'Default tabs',
+          description: 'Standard horizontal tabs with a disabled tab.',
           schema: basicTabs
+        },
+        {
+          title: 'Line-style tabs',
+          description: 'Horizontal tabs with an underline indicator (tabsMode: "line").',
+          schema: lineTabs
+        },
+        {
+          title: 'Vertical tabs',
+          description: 'Navigation on the left, content on the right (tabsMode: "vertical").',
+          schema: verticalTabs
+        },
+        {
+          title: 'Sidebar left',
+          description: 'Sidebar navigation on the left side (tabsMode: "sidebar", sidePosition: "left").',
+          schema: sidebarLeftTabs
+        },
+        {
+          title: 'Sidebar right',
+          description: 'Sidebar navigation on the right side (tabsMode: "sidebar", sidePosition: "right").',
+          schema: sidebarRightTabs
         },
         {
           title: 'Tabs containing form fields',

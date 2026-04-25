@@ -12,13 +12,12 @@ const singleSelect = {
           name: 'country',
           label: 'Country',
           required: true,
-          clearable: true,
           options: [
             { label: 'United States', value: 'us' },
             { label: 'United Kingdom', value: 'uk' },
             { label: 'Canada', value: 'ca' },
             { label: 'Australia', value: 'au' },
-            { label: 'Germany', value: 'de', disabled: true }
+            { label: 'Germany', value: 'de' }
           ]
         }
       ],
@@ -29,19 +28,17 @@ const singleSelect = {
   ]
 };
 
-const multiSelect = {
+const inlineOptions = {
   type: 'page',
   body: [
     {
       type: 'form',
-      name: 'multiSelectForm',
+      name: 'skillSelectForm',
       body: [
         {
           type: 'select',
-          name: 'skills',
-          label: 'Skills',
-          multiple: true,
-          clearable: true,
+          name: 'skill',
+          label: 'Primary Skill',
           options: [
             { label: 'TypeScript', value: 'ts' },
             { label: 'React', value: 'react' },
@@ -61,17 +58,17 @@ const multiSelect = {
 export function SelectLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Dropdown selector for single or multiple values. Options can be provided inline or from an async source. Supports clearable and disabled options."
+      introDescription="Single-value dropdown selector. Options can be provided inline or from an async source."
       scenarios={[
         {
-          title: 'Single-value select with clearable and disabled option',
-          description: 'A required country selector. clearable: true adds an X button. Germany is disabled and cannot be selected.',
+          title: 'Single-value select with inline options',
+          description: 'A required country selector backed by inline options.',
           schema: singleSelect
         },
         {
-          title: 'Multi-select with clearable',
-          description: 'With multiple: true, the user can pick multiple skills. clearable: true allows clearing all selections at once.',
-          schema: multiSelect
+          title: 'Single-value skill select',
+          description: 'A second single-value select showing another inline option set for form usage.',
+          schema: inlineOptions
         }
       ]}
     />

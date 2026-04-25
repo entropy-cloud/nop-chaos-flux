@@ -6,14 +6,12 @@ const barChart = {
     {
       type: 'chart',
       chartType: 'bar',
-      data: '${chartData}',
-      xField: 'month',
-      xAxisLabel: 'Month',
-      yAxisLabel: 'Amount ($)',
-      legend: true,
+      source: '${chartData}',
+      xAxis: { dataKey: 'month', label: 'Month' },
+      yAxis: { label: 'Amount ($)' },
       series: [
-        { dataKey: 'revenue', label: 'Revenue', color: '#6366f1' },
-        { dataKey: 'expenses', label: 'Expenses', color: '#f43f5e' }
+        { dataRegionKey: 'revenue', name: 'Revenue' },
+        { dataRegionKey: 'expenses', name: 'Expenses' }
       ]
     }
   ]
@@ -25,14 +23,12 @@ const lineChart = {
     {
       type: 'chart',
       chartType: 'line',
-      data: '${chartData}',
-      xField: 'month',
-      xAxisLabel: 'Month',
-      yAxisLabel: 'Amount ($)',
-      legend: true,
+      source: '${chartData}',
+      xAxis: { dataKey: 'month', label: 'Month' },
+      yAxis: { label: 'Amount ($)' },
       series: [
-        { dataKey: 'revenue', label: 'Revenue', color: '#6366f1' },
-        { dataKey: 'expenses', label: 'Expenses', color: '#f43f5e' }
+        { dataRegionKey: 'revenue', name: 'Revenue' },
+        { dataRegionKey: 'expenses', name: 'Expenses' }
       ]
     }
   ]
@@ -50,11 +46,11 @@ const chartData = [
 export function ChartLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Recharts-based chart renderer with configurable chart type, series, axes, and legend. Supports bar, line, area, and pie chart types."
+      introDescription="Recharts-based chart renderer with configurable chart type, source data, axes, and series. Supports bar, line, pie, and scatter chart types."
       scenarios={[
         {
-          title: 'Bar chart with axis labels and legend',
-          description: 'Monthly revenue vs expenses rendered as a grouped bar chart. xAxisLabel, yAxisLabel, and legend: true are all shown.',
+          title: 'Bar chart with configured axes and series',
+          description: 'Monthly revenue vs expenses rendered as a grouped bar chart using source, xAxis, yAxis, and named series.',
           schema: barChart,
           data: { chartData }
         },

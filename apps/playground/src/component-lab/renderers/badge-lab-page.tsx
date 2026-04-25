@@ -7,11 +7,11 @@ const variantShowcase = {
       type: 'flex',
       direction: 'row',
       gap: 2,
-      body: [
-        { type: 'badge', label: 'Default' },
-        { type: 'badge', label: 'Secondary', variant: 'secondary' },
-        { type: 'badge', label: 'Outline', variant: 'outline' },
-        { type: 'badge', label: 'Destructive', variant: 'destructive' }
+        body: [
+        { type: 'badge', text: 'Info' },
+        { type: 'badge', text: 'Success', level: 'success' },
+        { type: 'badge', text: 'Warning', level: 'warning' },
+        { type: 'badge', text: 'Danger', level: 'danger' }
       ]
     }
   ]
@@ -27,7 +27,7 @@ const expressionLabel = {
       align: 'center',
       body: [
         { type: 'text', text: 'User status:' },
-        { type: 'badge', label: '${status}' }
+        { type: 'badge', text: '${status}' }
       ]
     }
   ]
@@ -48,11 +48,7 @@ const statusVariantMapping = {
           align: 'center',
           body: [
             { type: 'text', text: 'active →' },
-            {
-              type: 'badge',
-              label: 'active',
-              variant: 'default'
-            }
+            { type: 'badge', text: 'active' }
           ]
         },
         {
@@ -62,11 +58,7 @@ const statusVariantMapping = {
           align: 'center',
           body: [
             { type: 'text', text: 'pending →' },
-            {
-              type: 'badge',
-              label: 'pending',
-              variant: 'secondary'
-            }
+            { type: 'badge', text: 'pending', level: 'warning' }
           ]
         },
         {
@@ -76,11 +68,7 @@ const statusVariantMapping = {
           align: 'center',
           body: [
             { type: 'text', text: 'error →' },
-            {
-              type: 'badge',
-              label: 'error',
-              variant: 'destructive'
-            }
+            { type: 'badge', text: 'error', level: 'danger' }
           ]
         },
         {
@@ -90,11 +78,7 @@ const statusVariantMapping = {
           align: 'center',
           body: [
             { type: 'text', text: 'Dynamic from scope: ${userStatus} →' },
-            {
-              type: 'badge',
-              label: '${userStatus}',
-              variant: '${userStatus === "active" ? "default" : userStatus === "error" ? "destructive" : "secondary"}'
-            }
+            { type: 'badge', text: '${userStatus}', level: '${userStatus === "active" ? "success" : userStatus === "error" ? "danger" : "warning"}' }
           ]
         }
       ]
@@ -105,22 +89,22 @@ const statusVariantMapping = {
 export function BadgeLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Renders a styled badge or tag with label and optional variant. Label and variant can be driven by scope expressions."
+      introDescription="Renders a styled badge or tag from text and semantic level. Both text and level can be driven by scope expressions."
       scenarios={[
         {
           title: 'All badge variants',
-          description: 'The four built-in variants: default, secondary, outline, and destructive.',
+          description: 'The live badge renderer maps semantic levels to visual variants: info, success, warning, and danger.',
           schema: variantShowcase
         },
         {
           title: 'Expression-driven label from scope',
-          description: 'The label prop accepts a ${...} expression, so the badge content can be dynamic.',
+          description: 'The text prop accepts a ${...} expression, so the badge content can be dynamic.',
           schema: expressionLabel,
           data: { status: 'Active' }
         },
         {
-          title: 'Status-to-variant mapping',
-          description: 'Both label and variant can be expressions. The bottom row dynamically picks the variant based on the userStatus scope variable.',
+          title: 'Status-to-level mapping',
+          description: 'Both text and level can be expressions. The bottom row dynamically picks the semantic level based on the userStatus scope variable.',
           schema: statusVariantMapping,
           data: { userStatus: 'error' }
         }
