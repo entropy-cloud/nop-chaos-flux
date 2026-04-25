@@ -327,6 +327,23 @@ Quick rule:
 - if the concrete component needs it as a normal input, it is usually in `props`
 - if the runtime needs it to control the node or its outer wrapper, it is usually in `meta`
 
+### Per-Slot ClassName Props
+
+Layout container renderers (page, container, form, fieldset, tabs) support per-slot `className` props that route Tailwind classes to inner slot wrappers (`data-slot` elements) instead of the root element.
+
+- `props.meta.className` targets the root element (`.nop-page`, `.nop-container`, `.nop-form`, `.nop-fieldset`, `.nop-tabs`)
+- Per-slot props like `bodyClassName`, `headerClassName`, etc. target the corresponding inner `data-slot` wrapper
+
+| Renderer | Slot Prop | Target |
+|----------|-----------|--------|
+| Page | `bodyClassName`, `headerClassName`, `footerClassName`, `toolbarClassName` | `page-body`, `page-header`, `page-footer`, `page-toolbar` |
+| Container | `bodyClassName`, `headerClassName`, `footerClassName` | `container-body`, `container-header`, `container-footer` |
+| Form | `bodyClassName`, `actionsClassName` | `form-body`, `form-actions` |
+| Fieldset | `bodyClassName`, `titleClassName` | `fieldset-body`, `fieldset-title` |
+| Tabs | `contentClassName`, `toolbarClassName` | `tabs-content`, `tabs-toolbar` |
+
+All slot className props are optional. When omitted, no class is emitted. See `docs/architecture/container-spacing-design.md` for the full per-slot className reference.
+
 Current orchestration boundary note:
 
 - `NodeRenderer` remains the orchestration boundary for compiled-node resolution, lifecycle dispatch, import/capability setup, and final renderer invocation.

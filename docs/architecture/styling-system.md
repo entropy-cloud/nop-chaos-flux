@@ -408,6 +408,15 @@ Renderer components emit marker classes and schema-derived classes only. Default
 
 The default spacing rules in `@layer base` apply `display: flex`, `flex-direction`, `gap`, and `padding` to layout renderer slots (page-body, form-body, fieldset-body, container-body, tabs-content, field-frame). These are overridable because Tailwind utilities live in `@layer utilities` which takes precedence over `@layer base`.
 
+### Per-Slot ClassName Props
+
+Layout containers support per-slot `className` props for controlling inner slot styling (grid layout, flex direction on body, etc.):
+
+- `className` on schema targets the root element
+- `bodyClassName`, `headerClassName`, `footerClassName`, `toolbarClassName`, `actionsClassName`, `titleClassName`, `contentClassName` target the corresponding `data-slot` wrapper
+
+See `docs/architecture/container-spacing-design.md` → "Per-Slot ClassName Override" for the complete prop-to-slot mapping table.
+
 ### Marker Class Naming
 
 Renderer marker classes use the `nop-` prefix for root-level semantic markers only:

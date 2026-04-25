@@ -134,6 +134,47 @@ When the flex-child path is active but no explicit `gap` prop was provided (e.g.
 
 The resolved Tailwind gap class (in `@layer utilities`) overrides the CSS default (in `@layer base`) on the `[data-slot="form-body"]` / `[data-slot="fieldset-body"]` div.
 
+## Per-Slot ClassName Override
+
+Layout container schemas support per-slot `className` props that apply Tailwind classes to individual slot wrappers instead of the root element. This is the primary mechanism for grid layouts and other inner-body styling.
+
+### Available Props
+
+| Renderer | Prop | Target `data-slot` |
+|----------|------|-------------------|
+| Page | `bodyClassName` | `page-body` |
+| Page | `headerClassName` | `page-header` |
+| Page | `footerClassName` | `page-footer` |
+| Page | `toolbarClassName` | `page-toolbar` |
+| Container | `bodyClassName` | `container-body` |
+| Container | `headerClassName` | `container-header` |
+| Container | `footerClassName` | `container-footer` |
+| Form | `bodyClassName` | `form-body` |
+| Form | `actionsClassName` | `form-actions` |
+| Fieldset | `bodyClassName` | `fieldset-body` |
+| Fieldset | `titleClassName` | `fieldset-title` |
+| Tabs | `contentClassName` | `tabs-content` |
+| Tabs | `toolbarClassName` | `tabs-toolbar` |
+
+### Usage
+
+```json
+{
+  "type": "container",
+  "bodyClassName": "grid grid-cols-2 gap-4",
+  "body": [
+    { "type": "text", "text": "Left" },
+    { "type": "text", "text": "Right" }
+  ]
+}
+```
+
+Root `className` still targets the root element (no breaking change). All slot className props are optional; existing schemas work unchanged.
+
+### Why not a `slots` configuration object
+
+Per-slot props are simpler, match the existing pattern (`gap`, `direction`), and avoid nesting. A future `slots` object pattern is deferred.
+
 ## Override Mechanism
 
 | What to override | Mechanism |
@@ -145,7 +186,7 @@ The resolved Tailwind gap class (in `@layer utilities`) overrides the CSS defaul
 | Gap between form-body and form-actions | `className: "gap-1"` on `.nop-form` root |
 | All spacing to zero (host embedding) | Set all `--space-*` tokens to `0px` |
 
-**Limitation**: `className` on schema targets the root element (e.g., `.nop-form`), not internal slots like `[data-slot="form-body"]`. To control internal slot spacing, use `gap` prop or theme tokens.
+**Limitation**: `className` on schema targets the root element (e.g., `.nop-form`), not internal slots like `[data-slot="form-body"]`. For per-slot styling control, use the `bodyClassName`, `headerClassName`, `footerClassName`, `toolbarClassName`, `actionsClassName`, `titleClassName`, or `contentClassName` props documented below.
 
 ## Container Inventory
 
@@ -165,7 +206,7 @@ The resolved Tailwind gap class (in `@layer utilities`) overrides the CSS defaul
 ## Known Limitations
 
 - **Spacing accumulation**: Nested containers accumulate gaps (page 24px + container 16px + form 16px). For compact layouts, use `gap: "sm"` on inner containers or adjust theme tokens.
-- **Container `className: "gap-2"` without semantic props**: Adds `gap-2` to `.nop-container` root, not to inner `[data-slot="container-body"]`. Use semantic props or `gap` prop to control inner body gap.
+- **Container `className: "gap-2"` without semantic props**: Adds `gap-2` to `.nop-container` root, not to inner `[data-slot="container-body"]`. Use `bodyClassName` or semantic props to control inner body gap.
 - **Drawer body spacing**: `DrawerContent` has no `gap`. Body content sits adjacent to header/footer. Should be fixed in UI component.
 - **No `padding` semantic prop on Container**: Add padding via `className: "p-4"`.
 
@@ -174,7 +215,7 @@ The resolved Tailwind gap class (in `@layer utilities`) overrides the CSS defaul
 - **AMIS-style `margin-bottom` with `:last-child` zeroing**: CSS `gap` is simpler (declared on parent, no last-child rule), more predictable, and supported by all modern browsers.
 - **Default gap in renderer component code**: Violates the "no hardcoded layout styles in renderer code" principle. Defaults belong in theme CSS (`@layer base`), not in JSX.
 - **Scale tokens (`--space-1` through `--space-12`)**: Duplicates Tailwind's existing `--spacing-*` scale with no benefit.
-- **Per-slot `className` support**: Would require renderer-level plumbing for every internal slot. The `gap` prop on Form/FieldSet is a narrower, sufficient solution.
+- **Per-slot `className` support**: Added per-slot `className` props (`bodyClassName`, `headerClassName`, etc.) to Page, Container, Form, Fieldset, and Tabs schemas. Each prop routes classes to the corresponding `data-slot` wrapper.
 
 ## Future Work
 
@@ -183,6 +224,5 @@ The resolved Tailwind gap class (in `@layer utilities`) overrides the CSS defaul
 - Container `padding` semantic prop
 - Card renderer type (wrapping `@nop-chaos/ui` Card)
 - Mobile responsive spacing (`@media` breakpoints adjusting `--space-*`)
-- Per-slot className support
 - AMIS theme bridge mapping (`amis-theme-bridge.css`)
 - Host embedding opt-out preset (`.flux-spacing-none`)
