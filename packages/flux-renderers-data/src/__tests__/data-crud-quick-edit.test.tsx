@@ -84,6 +84,57 @@ describe('CRUD renderer quick-edit baseline', () => {
     });
   });
 
+  it('falls back to quickSaveAction when quickSaveItemAction is not configured', async () => {
+    cleanup();
+    const observeSave = vi.fn((_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {
+      return { ok: true, data: ctx.scope.get('record') };
+    });
+
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer, saveProbeRenderer]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-quick-edit-fallback-save"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'quick-edit-crud-fallback-save',
+              source: [{ id: '1', name: 'Alice' }],
+              quickSaveAction: { action: 'probe:saveItem' },
+              columns: [
+                { name: 'name', label: 'Name', quickEdit: true },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onActionScopeChange={(actionScope) => {
+          actionScope?.registerNamespace('probe', {
+            kind: 'host',
+            invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext) {
+              if (method === 'saveItem') {
+                return observeSave(payload, ctx);
+              }
+
+              return { ok: false, error: new Error(`Unsupported method: ${method}`) };
+            },
+          });
+        }}
+      />
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Name' }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Alicia' } });
+    fireEvent.click(screen.getByRole('button', { name: t('flux.common.save') }));
+
+    await waitFor(() => {
+      expect(observeSave).toHaveBeenCalledTimes(1);
+      expect(observeSave.mock.calls[0]?.[1].scope.get('record')).toMatchObject({ id: '1', name: 'Alicia' });
+    });
+  });
+
   it('auto-saves inline quick-edit cells on blur when saveImmediately is enabled', async () => {
     cleanup();
     const observeSave = vi.fn((_payload: Record<string, unknown> | undefined, ctx: ActionContext) => {

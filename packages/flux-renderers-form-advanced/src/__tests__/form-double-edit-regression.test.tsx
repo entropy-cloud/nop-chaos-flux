@@ -376,10 +376,11 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
           type: 'form',
           id: 'second-edit-tl-form',
           data: { tags: ['alpha'] },
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           body: [{ type: 'tag-list', name: 'tags', label: 'Tags', tags: ['alpha', 'beta', 'gamma'] }],
           actions: [{
             type: 'button', label: 'Submit',
-            onClick: { action: 'submitForm', args: { url: '/api/test', method: 'post' } }
+            onClick: { action: 'submitForm' }
           }]
         }}
         env={env}

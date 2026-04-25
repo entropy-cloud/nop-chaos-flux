@@ -119,6 +119,13 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           data: {
             reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }]
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/reviewers/reordered',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'array-editor',
@@ -136,11 +143,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               type: 'button',
               label: 'Submit reordered reviewers',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/reviewers/reordered',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -382,6 +385,13 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               { key: 'region', value: 'us-east' }
             ]
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/metadata/reordered',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'key-value',
@@ -399,11 +409,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               type: 'button',
               label: 'Submit reordered metadata',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/metadata/reordered',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]

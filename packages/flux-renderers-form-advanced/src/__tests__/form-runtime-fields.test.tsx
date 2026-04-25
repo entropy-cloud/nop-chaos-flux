@@ -28,6 +28,13 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
           data: {
             tags: []
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/tags',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'tag-list',
@@ -41,11 +48,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
               type: 'button',
               label: 'Submit tags',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/tags',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -93,6 +96,13 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
           data: {
             metadata: []
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/metadata',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'key-value',
@@ -106,11 +116,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
               type: 'button',
               label: 'Submit metadata',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/metadata',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -215,6 +221,13 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
           data: {
             reviewers: []
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/reviewers',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'array-editor',
@@ -228,11 +241,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
               type: 'button',
               label: 'Submit reviewers',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/reviewers',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]

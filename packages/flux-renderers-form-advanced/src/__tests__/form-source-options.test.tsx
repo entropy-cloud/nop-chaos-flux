@@ -24,6 +24,13 @@ describe('formRendererDefinitions - source-backed options', () => {
           data: {
             role: 'admin'
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/dynamic-role',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'select',
@@ -43,11 +50,7 @@ describe('formRendererDefinitions - source-backed options', () => {
               type: 'button',
               label: 'Submit dynamic role',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/dynamic-role',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]

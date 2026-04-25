@@ -31,6 +31,13 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
           data: {
             categoryIds: []
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/categories',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'input-tree',
@@ -51,11 +58,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
               type: 'button',
               label: 'Submit categories',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/categories',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
@@ -262,6 +265,13 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
           data: {
             flags: [0]
           },
+          submitAction: {
+            action: 'ajax',
+            args: {
+              url: '/api/flags',
+              method: 'post'
+            }
+          },
           body: [
             {
               type: 'checkbox-group',
@@ -282,11 +292,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
               type: 'button',
               label: 'Submit flags',
               onClick: {
-                action: 'submitForm',
-                api: {
-                  url: '/api/flags',
-                  method: 'post'
-                }
+                action: 'submitForm'
               }
             }
           ]
