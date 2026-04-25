@@ -314,4 +314,137 @@ describe('formRendererDefinitions - submit and init actions', () => {
       role: 'editor'
     });
   });
+
+  it('runs submit success in parent scope while preserving form-name bindings', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/submit-parent-writeback"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'form',
+              id: 'feedback-form',
+              name: 'feedbackForm',
+              onSubmitSuccess: [
+                { action: 'setValue', args: { path: 'submitted', value: true } },
+                { action: 'setValue', args: { path: 'submittedUsername', value: '${feedbackForm.username}' } }
+              ],
+              data: {
+                username: ''
+              },
+              body: [
+                {
+                  type: 'input-text',
+                  name: 'username',
+                  label: 'Username'
+                },
+                {
+                  type: 'text',
+                  text: '${feedbackForm.username ?? ""}'
+                }
+              ],
+              actions: [
+                {
+                  type: 'button',
+                  label: 'Submit feedback form',
+                  onClick: {
+                    action: 'component:submit',
+                    componentId: 'feedback-form'
+                  }
+                }
+              ]
+            },
+            {
+              type: 'scope-state-probe',
+              name: 'submittedUsername'
+            },
+            {
+              type: 'scope-state-probe',
+              name: 'submitted'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const usernameInput = screen.getByLabelText('Username');
+    fireEvent.change(usernameInput, { target: { value: 'Carol' } });
+    await waitFor(() => {
+      expect(screen.getByText('Carol')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Submit feedback form'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scope-state:submittedUsername').textContent).toBe('"Carol"');
+      expect(screen.getByTestId('scope-state:submitted').textContent).toBe('true');
+    });
+  });
+
+  it('writes submit success through the business parent when the immediate parent is a surface shell', async () => {
+    submitCalls.length = 0;
+    notifyCalls.length = 0;
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/surface-parent-writeback"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'fragment',
+              data: {
+                dialogId: 'dialog-1'
+              },
+              body: [
+                {
+                  type: 'form',
+                  id: 'surface-form',
+                  name: 'surfaceForm',
+                  onSubmitSuccess: [
+                    { action: 'setValue', args: { path: 'savedName', value: '${surfaceForm.name}' } }
+                  ],
+                  data: {
+                    name: 'Dana'
+                  },
+                  actions: [
+                    {
+                      type: 'button',
+                      label: 'Submit surface form',
+                      onClick: {
+                        action: 'component:submit',
+                        componentId: 'surface-form'
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'scope-state-probe',
+              name: 'savedName'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Submit surface form'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scope-state:savedName').textContent).toBe('"Dana"');
+    });
+  });
 });

@@ -73,13 +73,29 @@ function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>
   }
 }
 
-function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Record<string, unknown>>): ScopeRef {
-  if (Object.keys(importBindings).length === 0) {
+function createFormLifecycleScope(
+  scope: ScopeRef,
+  importBindings: Readonly<Record<string, unknown>>,
+  formName: string | undefined,
+  getFormValues: () => Record<string, unknown>
+): ScopeRef {
+  const hasImports = Object.keys(importBindings).length > 0;
+
+  if (!hasImports && !formName) {
     return scope;
   }
 
   let visibleView: Record<string, unknown> | undefined;
   let materialized: Record<string, unknown> | undefined;
+
+  function getDynamicBindings(): Record<string, unknown> {
+    return formName
+      ? {
+          ...importBindings,
+          [formName]: getFormValues()
+        }
+      : { ...importBindings };
+  }
 
   return {
     id: scope.id,
@@ -90,14 +106,16 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
       return this.readVisible();
     },
     get(path) {
-      if (Object.prototype.hasOwnProperty.call(importBindings, path)) {
-        return importBindings[path];
+      const bindings = getDynamicBindings();
+      if (Object.prototype.hasOwnProperty.call(bindings, path)) {
+        return bindings[path];
       }
 
       return scope.get(path);
     },
     has(path) {
-      if (Object.prototype.hasOwnProperty.call(importBindings, path)) {
+      const bindings = getDynamicBindings();
+      if (Object.prototype.hasOwnProperty.call(bindings, path)) {
         return true;
       }
 
@@ -107,19 +125,17 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
       return scope.readOwn();
     },
     readVisible() {
-      if (!visibleView) {
-        visibleView = Object.assign(Object.create(scope.readVisible()) as Record<string, unknown>, importBindings);
-      }
+      const bindings = getDynamicBindings();
+      visibleView = Object.assign(Object.create(scope.readVisible()) as Record<string, unknown>, bindings);
 
       return visibleView as Record<string, any>;
     },
     materializeVisible() {
-      if (!materialized) {
-        materialized = {
-          ...scope.materializeVisible(),
-          ...importBindings
-        };
-      }
+      const bindings = getDynamicBindings();
+      materialized = {
+        ...scope.materializeVisible(),
+        ...bindings
+      };
 
       return materialized as Record<string, any>;
     },
@@ -133,6 +149,17 @@ function createFormLifecycleScope(scope: ScopeRef, importBindings: Readonly<Reco
       scope.replace?.(data);
     }
   };
+}
+
+function resolveLifecycleWriteScope(parentScope: ScopeRef): ScopeRef {
+  const visible = parentScope.readVisible();
+  const parentVisible = parentScope.parent?.readVisible();
+  const looksLikeSurfaceShell = typeof visible.dialogId === 'string' || typeof visible.drawerId === 'string';
+  const parentLooksLikeSurfaceShell = typeof parentVisible?.dialogId === 'string' || typeof parentVisible?.drawerId === 'string';
+
+  return looksLikeSurfaceShell && parentScope.parent && !parentLooksLikeSurfaceShell
+    ? parentScope.parent
+    : parentScope;
 }
 
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
@@ -175,8 +202,12 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
 
   const baseLifecycleScope = ownedForm.scope;
   const lifecycleScope = useMemo(
-    () => createFormLifecycleScope(baseLifecycleScope, importBindings),
-    [baseLifecycleScope, importBindings]
+    () => createFormLifecycleScope(baseLifecycleScope, importBindings, formName, () => ownedForm.store.getState().values),
+    [baseLifecycleScope, formName, importBindings, ownedForm.store]
+  );
+  const lifecycleWriteScope = useMemo(
+    () => createFormLifecycleScope(resolveLifecycleWriteScope(parentScope), importBindings, formName, () => ownedForm.store.getState().values),
+    [parentScope, formName, importBindings, ownedForm.store]
   );
   const initAction = props.events['initAction'];
   const submitAction = props.events['submitAction'];
@@ -200,7 +231,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         : undefined,
       onSubmitSuccess: submitSuccessAction
         ? (result, options) => submitSuccessAction(undefined, {
-            scope: lifecycleScope,
+            scope: lifecycleWriteScope,
             form: ownedForm,
             interactionId: options?.interactionId,
             signal: options?.signal,
@@ -214,7 +245,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         : undefined,
       onSubmitError: submitErrorAction
         ? (result, options) => submitErrorAction(undefined, {
-            scope: lifecycleScope,
+            scope: lifecycleWriteScope,
             form: ownedForm,
             interactionId: options?.interactionId,
             signal: options?.signal,
@@ -228,7 +259,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         : undefined,
       onValidateError: validateErrorAction
         ? (result, options) => validateErrorAction(undefined, {
-            scope: lifecycleScope,
+            scope: lifecycleWriteScope,
             form: ownedForm,
             interactionId: options?.interactionId,
             signal: options?.signal,
@@ -245,7 +276,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     return () => {
       ownedForm.setLifecycleHandlers(undefined);
     };
-  }, [ownedForm, lifecycleScope, submitAction, submitErrorAction, submitSuccessAction, validateErrorAction]);
+  }, [ownedForm, lifecycleScope, lifecycleWriteScope, submitAction, submitErrorAction, submitSuccessAction, validateErrorAction]);
 
   useEffect(() => {
     if (!initAction || !importsReady) {
