@@ -154,7 +154,7 @@ test.describe('dialog renderer', () => {
     await expect(page.getByText('Example Dialog')).not.toBeVisible({ timeout: 5_000 });
   });
 
-  test('edit: dialog confirm closes and writes submitted name back', async ({ page }) => {
+  test('edit: dialog confirm closes after local form success handling', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('dialog');
 
@@ -171,9 +171,9 @@ test.describe('dialog renderer', () => {
     // Verify form fields are filled correctly
     await expect(page.getByLabel('Full Name')).toHaveValue('Jane Doe');
     await expect(page.getByLabel('Email')).toHaveValue('jane@example.com');
+    await expect(page.getByText('Submitted name: (none)')).toBeVisible();
     await page.getByRole('button', { name: 'Confirm' }).click();
     await expect(page.getByLabel('Full Name')).not.toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByText('Submitted name: Jane Doe')).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -181,7 +181,7 @@ test.describe('dialog renderer', () => {
 // drawer
 // ---------------------------------------------------------------------------
 test.describe('drawer renderer', () => {
-  test('edit: right drawer save closes and writes submitted note back', async ({ page }) => {
+  test('edit: right drawer save closes after local form success handling', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('drawer');
 
@@ -197,9 +197,9 @@ test.describe('drawer renderer', () => {
     await expect(noteField).toBeVisible();
     await noteField.fill('My test note');
     await expect(noteField).toHaveValue('My test note');
+    await expect(page.getByText('Submitted message: (none)')).toBeVisible();
     await page.getByRole('button', { name: 'Save' }).first().click();
     await expect(noteField).not.toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByText('Submitted message: My test note')).toBeVisible({ timeout: 5_000 });
   });
 
   test('write: open left drawer and verify navigation links visible', async ({ page }) => {

@@ -11,7 +11,7 @@ import { ComponentLabHelper, scenarioSlug } from './helpers';
 // form
 // ---------------------------------------------------------------------------
 test.describe('form renderer', () => {
-  test('write: form submit shows visible success state with submitted username', async ({ page }) => {
+  test('write: form submit toggles local success state and renders the local username', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('form');
 
@@ -199,11 +199,11 @@ test.describe('select renderer', () => {
 // checkbox
 // ---------------------------------------------------------------------------
 test.describe('checkbox renderer', () => {
-  test('write: toggle email checkbox updates checkbox state while the live text remains a static prefix', async ({ page }) => {
+  test('write: toggle email checkbox updates checkbox state and in-form live summary text', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('checkbox');
 
-    const slug = scenarioSlug('Multiple checkboxes with live scope display');
+    const slug = scenarioSlug('Multiple checkboxes with in-form live summary');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
@@ -211,11 +211,11 @@ test.describe('checkbox renderer', () => {
     const emailCheckbox = stage.getByRole('checkbox', { name: 'Receive email notifications' });
     await expect(emailCheckbox).toBeVisible();
     await expect(emailCheckbox).not.toBeChecked();
-    await expect(stage.getByText('Email: | SMS:')).toBeVisible();
+    await expect(stage.getByText('Email: OFF | SMS: OFF')).toBeVisible();
 
     await emailCheckbox.click();
     await expect(emailCheckbox).toBeChecked({ timeout: 5_000 });
-    await expect(stage.getByText('Email: | SMS:')).toBeVisible();
+    await expect(stage.getByText('Email: ON | SMS: OFF')).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -223,11 +223,11 @@ test.describe('checkbox renderer', () => {
 // switch
 // ---------------------------------------------------------------------------
 test.describe('switch renderer', () => {
-  test('write: toggle switch changes aria-checked state while the summary text stays a static prefix', async ({ page }) => {
+  test('write: toggle switch changes aria-checked state and in-form live summary text', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('switch');
 
-    const slug = scenarioSlug('Switch with state reflected in text renderer');
+    const slug = scenarioSlug('Switch with in-form live summary');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
@@ -235,12 +235,12 @@ test.describe('switch renderer', () => {
     await expect(switchEl).toBeVisible();
     // Initial state: unchecked/off
     await expect(switchEl).toHaveAttribute('aria-checked', 'false');
-    await expect(stage.getByText('Feature is:')).toBeVisible();
+    await expect(stage.getByText('Feature is: OFF')).toBeVisible();
 
     await switchEl.click();
     // After toggle: checked/on
     await expect(switchEl).toHaveAttribute('aria-checked', 'true', { timeout: 5_000 });
-    await expect(stage.getByText('Feature is:')).toBeVisible();
+    await expect(stage.getByText('Feature is: ON')).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -248,11 +248,11 @@ test.describe('switch renderer', () => {
 // radio-group
 // ---------------------------------------------------------------------------
 test.describe('radio-group renderer', () => {
-  test('write: select High radio updates selection while the summary text remains a static prefix', async ({ page }) => {
+  test('write: select High radio updates selection and in-form live summary text', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('radio-group');
 
-    const slug = scenarioSlug('Horizontal inline layout with live selection display');
+    const slug = scenarioSlug('Horizontal inline layout with in-form live summary');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
@@ -261,7 +261,7 @@ test.describe('radio-group renderer', () => {
     await expect(highRadio).toBeVisible();
     await highRadio.click();
     await expect(highRadio).toBeChecked({ timeout: 5_000 });
-    await expect(stage.getByText('Selected priority:')).toBeVisible();
+    await expect(stage.getByText('Selected priority: high')).toBeVisible({ timeout: 5_000 });
   });
 
   test('write: Pro plan pre-selected in vertical radio group', async ({ page }) => {

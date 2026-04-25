@@ -205,7 +205,7 @@ test.describe('variant-field renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('variant-field');
 
-    const slug = scenarioSlug('String vs list editor with visible submit result');
+    const slug = scenarioSlug('String vs list editor with scope-state switching');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByRole('button', { name: /Submit/i })).toBeVisible({ timeout: 5_000 });

@@ -71,7 +71,7 @@ test.describe('reaction renderer', () => {
     await expect(stage.getByText('doubled: 2')).toBeVisible({ timeout: 5_000 });
   });
 
-  test('write: message field accepts input while the character count remains at the current baseline', async ({ page }) => {
+  test('write: typing in the watched field updates the visible character count', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('reaction');
 
@@ -84,8 +84,8 @@ test.describe('reaction renderer', () => {
 
     await messageField.fill('hello');
     await expect(messageField).toHaveValue('hello');
-    await expect(stage.getByText('Character count: 0')).toBeVisible();
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"message": "hello"');
+    await expect(stage.getByText('Character count: 5')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"charCount": 5');
   });
 });
 
