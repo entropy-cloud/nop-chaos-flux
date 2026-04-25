@@ -1,13 +1,13 @@
 import React from 'react';
+import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index';
 import { env } from './form-test-support';
 
-const formSchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+const FormSchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
 const formulaCompiler = createFormulaCompiler();
 
 describe('per-slot className props for form renderers', () => {
@@ -15,12 +15,12 @@ describe('per-slot className props for form renderers', () => {
 
   it('applies bodyClassName to form-body', () => {
     const { container } = render(
-      <formSchemaRenderer
+      <FormSchemaRenderer
         schemaUrl="test://slot-className/form"
         schema={{
           type: 'form',
           bodyClassName: 'grid grid-cols-2',
-          body: [{ type: 'input', name: 'a' }]
+          body: [{ type: 'input-text', name: 'a' }]
         }}
         env={env}
         formulaCompiler={formulaCompiler}
@@ -33,12 +33,12 @@ describe('per-slot className props for form renderers', () => {
 
   it('applies actionsClassName to form-actions', () => {
     const { container } = render(
-      <formSchemaRenderer
+      <FormSchemaRenderer
         schemaUrl="test://slot-className/form"
         schema={{
           type: 'form',
           actionsClassName: 'flex justify-end',
-          body: [{ type: 'input', name: 'a' }],
+          body: [{ type: 'input-text', name: 'a' }],
           actions: [{ type: 'button', label: 'Submit' }]
         }}
         env={env}
@@ -52,12 +52,12 @@ describe('per-slot className props for form renderers', () => {
 
   it('applies bodyClassName to fieldset-body', () => {
     const { container } = render(
-      <formSchemaRenderer
+      <FormSchemaRenderer
         schemaUrl="test://slot-className/fieldset"
         schema={{
           type: 'fieldset',
           bodyClassName: 'space-y-2',
-          body: [{ type: 'input', name: 'a' }]
+          body: [{ type: 'input-text', name: 'a' }]
         }}
         env={env}
         formulaCompiler={formulaCompiler}
@@ -69,13 +69,13 @@ describe('per-slot className props for form renderers', () => {
 
   it('applies titleClassName to fieldset-title', () => {
     const { container } = render(
-      <formSchemaRenderer
+      <FormSchemaRenderer
         schemaUrl="test://slot-className/fieldset"
         schema={{
           type: 'fieldset',
           title: 'Personal Info',
           titleClassName: 'text-lg font-bold',
-          body: [{ type: 'input', name: 'a' }]
+          body: [{ type: 'input-text', name: 'a' }]
         }}
         env={env}
         formulaCompiler={formulaCompiler}
@@ -88,17 +88,17 @@ describe('per-slot className props for form renderers', () => {
 
   it('emits no extra class when form slot props are omitted', () => {
     const { container } = render(
-      <formSchemaRenderer
+      <FormSchemaRenderer
         schemaUrl="test://slot-className/form"
         schema={{
           type: 'form',
-          body: [{ type: 'input', name: 'a' }]
+          body: [{ type: 'input-text', name: 'a' }]
         }}
         env={env}
         formulaCompiler={formulaCompiler}
       />
     );
     const body = container.querySelector('[data-slot="form-body"]');
-    expect(body?.getAttribute('class')).toBe('');
+    expect(body?.getAttribute('class') ?? '').toBe('');
   });
 });
