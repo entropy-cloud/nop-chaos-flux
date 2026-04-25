@@ -374,7 +374,31 @@ export function useTableFilter(
     [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope]
   );
 
-  return { filterState, handleFilter, handleSearch };
+  const clearFilters = useCallback(
+    (columnName: string) => {
+      if (!filterState[columnName]) {
+        return;
+      }
+
+      const newFilters: FilterState = { ...filterState };
+      delete newFilters[columnName];
+
+      startTransition(() => {
+        if (filterOwnership === 'scope' && filterStatePath) {
+          renderScope.update(filterStatePath, Object.fromEntries(Object.entries(newFilters).map(([key, entry]) => [key, { filters: Array.from(entry.values), keyword: entry.keyword }])));
+        } else {
+          setLocalFilterState(newFilters);
+        }
+      });
+
+      onFilterChange?.(null, {
+        scope: helpers.createScope({ column: columnName, filters: [], keyword: '' }, { scopeKey: 'filter', pathSuffix: 'filter' }),
+      });
+    },
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope]
+  );
+
+  return { filterState, handleFilter, handleSearch, clearFilters };
 }
 
 export function useTableExpand(schemaProps: TableSchema) {

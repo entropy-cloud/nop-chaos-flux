@@ -229,8 +229,12 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       base.columnSettings = normalizedSchema.columnSettings;
     }
 
+    if (normalizedSchema.responsive) {
+      base.responsive = normalizedSchema.responsive;
+    }
+
     return base as BaseSchema;
-  }, [defaultEmptyLabel, emptyContent, filterStatePath, filteredRows, normalizedSchema.columnSettings, normalizedSchema.columns, normalizedSchema.onRefresh, normalizedSchema.onRowClick, normalizedSchema.rowKey, normalizedSchema.selection?.type, normalizedSchema.selectionOwnership, paginationState.currentPage, paginationState.pageSize, paginationStatePath, props.id, selectedRowKeys, selectionStatePath, sortStatePath]);
+  }, [defaultEmptyLabel, emptyContent, filterStatePath, filteredRows, normalizedSchema.columnSettings, normalizedSchema.columns, normalizedSchema.onRefresh, normalizedSchema.onRowClick, normalizedSchema.responsive, normalizedSchema.rowKey, normalizedSchema.selection?.type, normalizedSchema.selectionOwnership, paginationState.currentPage, paginationState.pageSize, paginationStatePath, props.id, selectedRowKeys, selectionStatePath, sortStatePath]);
 
   const queryFormSchema = useMemo<BaseSchema | null>(() => {
     const queryForm = normalizedSchema.queryForm;

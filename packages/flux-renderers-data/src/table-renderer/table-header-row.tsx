@@ -1,5 +1,5 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { Button, Checkbox, cn, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, Input, TableHead, TableRow } from '@nop-chaos/ui';
+import { Button, Checkbox, cn, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuTrigger, Input, TableHead, TableRow } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ArrowUpDownIcon, ChevronDownIcon } from 'lucide-react';
 import type { TableColumnSchema, TableSchema } from '../schemas';
@@ -15,9 +15,11 @@ interface TableHeaderRowProps {
   allSelected: boolean;
   selectedRowCount: number;
   fixedColumnLayout: FixedColumnLayout;
+  showExpandColumn: boolean;
   onSort: (column: string) => void;
   onFilter: (column: string, option: string, checked: boolean) => void;
   onSearch: (column: string, keyword: string) => void;
+  onClearFilters: (column: string) => void;
   onSelectAll: (checked: boolean) => void;
 }
 
@@ -30,16 +32,18 @@ export function TableHeaderRow({
   allSelected,
   selectedRowCount,
   fixedColumnLayout,
+  showExpandColumn,
   onSort,
   onFilter,
   onSearch,
+  onClearFilters,
   onSelectAll
 }: TableHeaderRowProps) {
   const schemaProps = props.props as TableSchema;
 
   return (
     <TableRow>
-      {schemaProps.expandable ? (
+      {showExpandColumn ? (
         <TableHead data-slot="table-expand-column" className={fixedColumnLayout.getExpandCellProps().className} style={{ width: '40px', ...fixedColumnLayout.getExpandCellProps().style }}>
           <span className="sr-only">{t('flux.table.expand')}</span>
         </TableHead>
@@ -67,6 +71,7 @@ export function TableHeaderRow({
         const currentSort = sortState.column === column.name ? sortState.direction : null;
         const activeFilters = column.name ? (filterState[column.name]?.values ?? new Set<string>()) : new Set<string>();
         const currentKeyword = column.name ? (filterState[column.name]?.keyword ?? '') : '';
+        const hasActiveFilterState = activeFilters.size > 0 || currentKeyword.length > 0;
         const columnKey = column.name ?? (typeof column.label === 'string' ? column.label : undefined) ?? `column-${index}`;
 
         return (
@@ -105,9 +110,9 @@ export function TableHeaderRow({
                           size="icon-xs"
                           className={cn(
                             'h-6 w-6 rounded hover:bg-accent',
-                            activeFilters.size > 0 ? 'text-primary' : 'text-muted-foreground'
+                            hasActiveFilterState ? 'text-primary' : 'text-muted-foreground'
                           )}
-                          aria-label="Filter"
+                          aria-label={hasActiveFilterState ? t('flux.table.filterActive') : t('flux.table.filter')}
                         >
                           <span className="sr-only">{t('flux.table.filter')}</span>
                           <ChevronDownIcon className="size-3" />
@@ -133,6 +138,22 @@ export function TableHeaderRow({
                           {option.label}
                         </DropdownMenuCheckboxItem>
                       )) : null}
+                      {column.name && hasActiveFilterState ? (
+                        <>
+                          <DropdownMenuSeparator />
+                          <div className="p-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start"
+                              onClick={() => onClearFilters(column.name!)}
+                            >
+                              {t('flux.table.clearFilters')}
+                            </Button>
+                          </div>
+                        </>
+                      ) : null}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}

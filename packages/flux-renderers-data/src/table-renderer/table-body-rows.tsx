@@ -73,6 +73,7 @@ function buildFlattenedItems(
 interface TableBodyRowsProps {
   props: RendererComponentProps<TableSchema>;
   columns: import('../schemas').TableColumnSchema[];
+  responsiveHiddenColumns: import('../schemas').TableColumnSchema[];
   processedData: TableRowEntry[];
   rowScopeCache: Map<string, ScopeRef>;
   rowRepeatedTemplateId: string;
@@ -82,6 +83,8 @@ interface TableBodyRowsProps {
   isStriped: boolean;
   fixedColumnLayout: FixedColumnLayout;
   emptyContent: React.ReactNode;
+  showExpandColumn: boolean;
+  expandRowByClick: boolean;
   onToggleExpand: (rowKey: string) => void;
   onSelectRow: (rowKey: string, checked: boolean) => void;
   virtualEnabled?: boolean;
@@ -95,6 +98,8 @@ function renderDataRow(
   helpers: RendererComponentProps<TableSchema>['helpers'],
   parentProps: RendererComponentProps<TableSchema>,
   fixedColumnLayout: FixedColumnLayout,
+  showExpandColumn: boolean,
+  expandRowByClick: boolean,
   onToggleExpand: (rowKey: string) => void,
   onSelectRow: (rowKey: string, checked: boolean) => void,
   isStriped: boolean
@@ -110,12 +115,12 @@ function renderDataRow(
       onClick={
         parentProps.events.onRowClick
           ? (event) => void parentProps.events.onRowClick?.(event, { scope: rowScope })
-          : schemaProps.expandable?.expandRowByClick
+          : expandRowByClick
             ? () => onToggleExpand(rowKey)
             : undefined
       }
     >
-      {schemaProps.expandable ? (
+      {showExpandColumn ? (
         <TableCell data-slot="table-expand-cell" className={fixedColumnLayout.getExpandCellProps().className} style={fixedColumnLayout.getExpandCellProps().style}>
           <Button
             type="button"
@@ -199,10 +204,12 @@ function renderExpandedRow(
   helpers: RendererComponentProps<TableSchema>['helpers'],
   parentProps: RendererComponentProps<TableSchema>,
   rowScopeCache: Map<string, ScopeRef>,
-  rowRepeatedTemplateId: string
+  rowRepeatedTemplateId: string,
+  responsiveHiddenColumns: import('../schemas').TableColumnSchema[]
 ) {
   const regionKey = schemaProps.expandable?.expandedRowRegionKey;
-  if (!regionKey) return null;
+  const hasResponsiveHiddenColumns = responsiveHiddenColumns.length > 0;
+  if (!regionKey && !hasResponsiveHiddenColumns) return null;
 
   const rowScope = rowScopeCache.get(item.rowKey);
   if (!rowScope) return null;
@@ -215,7 +222,35 @@ function renderExpandedRow(
   return (
     <TableRow data-slot="table-expanded-row">
       <TableCell colSpan={item.columnCount} data-slot="table-expanded-cell">
-        {parentProps.regions[regionKey]
+        {hasResponsiveHiddenColumns ? (
+          <div className="grid gap-2 sm:grid-cols-2" data-slot="table-responsive-expanded">
+            {responsiveHiddenColumns.map((column, index) => {
+              const cellRegion = typeof column.cellRegionKey === 'string' ? parentProps.regions[column.cellRegionKey] : undefined;
+              const label = typeof column.label === 'string' ? column.label : column.name ?? `Column ${index + 1}`;
+              const columnKey = column.name ?? `${label}-${column.type ?? 'value'}`;
+              return (
+                <div key={columnKey} className="rounded-md border bg-muted/20 px-3 py-2" data-slot="table-responsive-expanded-item">
+                  <div className="text-xs font-medium text-muted-foreground" data-slot="table-responsive-expanded-label">{label}</div>
+                  <div className="mt-1 text-sm" data-slot="table-responsive-expanded-value">
+                    {cellRegion
+                      ? cellRegion.render({
+                          bindings: {
+                            record: rowScope.get('record'),
+                            index: rowScope.get('index'),
+                          },
+                          instancePath: rowInstancePath,
+                          pathSuffix: `responsive.${index}`,
+                        })
+                      : column.name
+                        ? String(((rowScope.get('record') as Record<string, unknown> | undefined)?.[column.name]) ?? '')
+                        : ''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+        {regionKey && parentProps.regions[regionKey]
           ? helpers.render(parentProps.regions[regionKey].templateNode, {
               scope: rowScope,
               instancePath: rowInstancePath,
@@ -230,6 +265,7 @@ function renderExpandedRow(
 export function TableBodyRows({
   props,
   columns,
+  responsiveHiddenColumns,
   processedData,
   rowScopeCache,
   rowRepeatedTemplateId,
@@ -239,6 +275,8 @@ export function TableBodyRows({
   isStriped,
   fixedColumnLayout,
   emptyContent,
+  showExpandColumn,
+  expandRowByClick,
   onToggleExpand,
   onSelectRow,
   virtualEnabled,
@@ -249,6 +287,7 @@ export function TableBodyRows({
         <NonVirtualBody
           props={props}
           columns={columns}
+          responsiveHiddenColumns={responsiveHiddenColumns}
           processedData={processedData}
           rowScopeCache={rowScopeCache}
         rowRepeatedTemplateId={rowRepeatedTemplateId}
@@ -258,6 +297,8 @@ export function TableBodyRows({
         isStriped={isStriped}
         fixedColumnLayout={fixedColumnLayout}
         emptyContent={emptyContent}
+        showExpandColumn={showExpandColumn}
+        expandRowByClick={expandRowByClick}
         onToggleExpand={onToggleExpand}
         onSelectRow={onSelectRow}
       />
@@ -268,6 +309,7 @@ export function TableBodyRows({
     <VirtualBody
       props={props}
       columns={columns}
+      responsiveHiddenColumns={responsiveHiddenColumns}
       processedData={processedData}
       rowScopeCache={rowScopeCache}
       rowRepeatedTemplateId={rowRepeatedTemplateId}
@@ -277,6 +319,8 @@ export function TableBodyRows({
       isStriped={isStriped}
       fixedColumnLayout={fixedColumnLayout}
       emptyContent={emptyContent}
+      showExpandColumn={showExpandColumn}
+      expandRowByClick={expandRowByClick}
       onToggleExpand={onToggleExpand}
       onSelectRow={onSelectRow}
       scrollRef={scrollRef}
@@ -287,6 +331,7 @@ export function TableBodyRows({
 function NonVirtualBody({
   props,
   columns,
+  responsiveHiddenColumns,
   processedData,
   rowScopeCache,
   rowRepeatedTemplateId,
@@ -296,6 +341,8 @@ function NonVirtualBody({
   isStriped,
   fixedColumnLayout,
   emptyContent,
+  showExpandColumn,
+  expandRowByClick,
   onToggleExpand,
   onSelectRow,
 }: TableBodyRowsProps) {
@@ -328,14 +375,19 @@ function NonVirtualBody({
             <React.Fragment key={rowKey}>
                   {renderDataRow(
                     { kind: 'data', entry, rowScope, rowKey, rowInstancePath, isExpanded, isSelected, isEven },
-                    schemaProps, columns, helpers, props, fixedColumnLayout, onToggleExpand, onSelectRow, isStriped
+                    schemaProps, columns, helpers, props, fixedColumnLayout, showExpandColumn, expandRowByClick, onToggleExpand, onSelectRow, isStriped
                   )}
               {isExpanded && schemaProps.expandable?.expandedRowRegionKey
                 ? renderExpandedRow(
                     { kind: 'expanded', rowKey, columnCount },
-                    schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId
+                    schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId, responsiveHiddenColumns
                   )
-                : null}
+                : isExpanded && responsiveHiddenColumns.length > 0
+                  ? renderExpandedRow(
+                      { kind: 'expanded', rowKey, columnCount },
+                      schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId, responsiveHiddenColumns
+                    )
+                  : null}
             </React.Fragment>
           );
         })
@@ -347,6 +399,7 @@ function NonVirtualBody({
 function VirtualBody({
   props,
   columns,
+  responsiveHiddenColumns,
   processedData,
   rowScopeCache,
   rowRepeatedTemplateId,
@@ -355,6 +408,8 @@ function VirtualBody({
   columnCount,
   isStriped,
   fixedColumnLayout,
+  showExpandColumn,
+  expandRowByClick,
   onToggleExpand,
   onSelectRow,
   scrollRef,
@@ -408,7 +463,7 @@ function VirtualBody({
               return (
                 <React.Fragment key={virtualRow.key}>
                   {renderDataRow(
-                    item, schemaProps, columns, helpers, props, fixedColumnLayout, onToggleExpand, onSelectRow, isStriped
+                    item, schemaProps, columns, helpers, props, fixedColumnLayout, showExpandColumn, expandRowByClick, onToggleExpand, onSelectRow, isStriped
                   )}
                 </React.Fragment>
               );
@@ -417,7 +472,7 @@ function VirtualBody({
             return (
               <React.Fragment key={virtualRow.key}>
                 {renderExpandedRow(
-                  item, schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId
+                  item, schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId, responsiveHiddenColumns
                 )}
               </React.Fragment>
             );

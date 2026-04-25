@@ -41,11 +41,11 @@ function createStickyStyle(fixed: 'left' | 'right', offset: number, width?: numb
   };
 }
 
-export function createFixedColumnLayout(schemaProps: TableSchema, columns: TableColumnSchema[]) {
+export function createFixedColumnLayout(schemaProps: TableSchema, columns: TableColumnSchema[], showExpandColumn = Boolean(schemaProps.expandable)) {
   const hasLeftFixedDataColumn = columns.some((column) => column.fixed === 'left');
   const entries: FixedColumnEntry[] = [];
 
-  if (schemaProps.expandable && hasLeftFixedDataColumn) {
+  if (showExpandColumn && hasLeftFixedDataColumn) {
     entries.push({ key: '__expand__', fixed: 'left', width: CONTROL_COLUMN_WIDTH });
   }
 

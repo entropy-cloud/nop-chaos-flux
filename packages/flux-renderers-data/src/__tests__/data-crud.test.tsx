@@ -472,6 +472,56 @@ describe('CRUD renderer', () => {
     });
   });
 
+  it('forwards responsive expand baseline through crud into the internal table', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-responsive-expand"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              rowKey: 'id',
+              responsive: {
+                mode: 'expand',
+                breakpoint: 1400,
+                expandTrigger: 'row',
+              },
+              source: [
+                { id: '1', name: 'Alpha', owner: 'Alice', status: 'active' },
+              ],
+              columns: [
+                { name: 'name', label: 'Name' },
+                { name: 'owner', label: 'Owner' },
+                { name: 'status', label: 'Status' },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      const headers = Array.from(document.querySelectorAll('[data-slot="table-head"]')).map((node) => node.textContent?.replace(/\s+/g, ' ').trim());
+      expect(headers).toEqual(['Name']);
+      expect(screen.queryByText('Alice')).toBeNull();
+    });
+
+    fireEvent.click(screen.getByText('Alpha'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Owner')).toBeTruthy();
+      expect(screen.getByText('Alice')).toBeTruthy();
+      expect(screen.getByText('Status')).toBeTruthy();
+      expect(screen.getByText('active')).toBeTruthy();
+    });
+  });
+
   it('publishes pagination, sort, and filter summary through $crud', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer();

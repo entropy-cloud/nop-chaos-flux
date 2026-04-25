@@ -422,7 +422,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       columnSettings: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Column Settings',
-        description: 'Column visibility and order management, aligned with AMIS columns-toggler scenes.',
+        description: 'Column visibility and order management, including overlay and inline entry modes; drag reorder is still deferred.',
         editorType: 'object'
       }
     },
