@@ -57,6 +57,7 @@ export * from './components/toolbar';
 export { Toaster } from './components/ui/sonner';
 export { toast } from 'sonner';
 export { cn } from './lib/utils';
+export { useIsMobile } from './hooks/use-mobile';
 export {
   toIconLookupKey,
   normalizeIconName,
