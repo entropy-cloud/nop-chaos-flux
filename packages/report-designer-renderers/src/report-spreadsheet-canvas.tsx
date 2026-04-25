@@ -70,6 +70,28 @@ export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spr
   const prevSelectedCell = useRef<{ row: number; col: number } | null>(null);
 
   useEffect(() => {
+    const selection = ssSnapshot.selection;
+    if (selection.kind === 'column' && selection.columns?.length) {
+      prevSelectedCell.current = null;
+      void core.setSelectionTarget({ kind: 'column', sheetId, col: selection.columns[0]! });
+      return;
+    }
+    if (selection.kind === 'row' && selection.rows?.length) {
+      prevSelectedCell.current = null;
+      void core.setSelectionTarget({ kind: 'row', sheetId, row: selection.rows[0]! });
+      return;
+    }
+    if (selection.kind === 'sheet') {
+      prevSelectedCell.current = null;
+      void core.setSelectionTarget({ kind: 'sheet', sheetId });
+      return;
+    }
+    if (selection.kind === 'range' && selection.range) {
+      prevSelectedCell.current = null;
+      void core.setSelectionTarget({ kind: 'range', range: selection.range });
+      return;
+    }
+
     const prev = prevSelectedCell.current;
     if (!selectedCell) {
       prevSelectedCell.current = null;
@@ -88,7 +110,7 @@ export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spr
         col: selectedCell.col,
       },
     });
-  }, [selectedCell, core, sheetId]);
+  }, [selectedCell, core, sheetId, ssSnapshot.selection]);
 
   const getCellMetadata = useCallback(
     (row: number, col: number) =>
@@ -140,6 +162,7 @@ export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spr
         columnWidths={columnWidths}
         rowHeights={rowHeights}
         selectedCell={selectedCell}
+        selection={ssSnapshot.selection}
         editingCell={editingCell}
         editValue={editValue}
         fillHandleState={fillHandleState}
@@ -151,6 +174,9 @@ export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spr
         onCellDoubleClick={handleCellDoubleClick}
         onCellMouseDown={handleCellMouseDown}
         onCellMouseEnter={handleCellMouseEnter}
+        onSelectRow={interactions.handleSelectRow}
+        onSelectColumn={interactions.handleSelectColumn}
+        onSelectAll={interactions.handleSelectAll}
         onColumnResizeStart={handleColumnResizeStart}
         onRowResizeStart={handleRowResizeStart}
         onFillHandleMouseDown={handleFillHandleMouseDown}

@@ -222,13 +222,14 @@ body {
 .report-designer-demo {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
 }
 
 [data-slot="report-demo-header"] {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   padding: 8px 12px;
   background: rgb(248, 250, 252);
   border-bottom: 1px solid rgb(226, 232, 240);
@@ -241,12 +242,43 @@ body {
   overflow: hidden;
 }
 
+[data-slot="report-demo-field-panel-shell"] {
+  display: flex;
+  min-width: 0;
+  border-right: 1px solid rgb(226, 232, 240);
+  background: rgb(255, 255, 255);
+}
+
+[data-slot="report-demo-field-panel-shell"][data-collapsed] {
+  width: 42px;
+  min-width: 42px;
+}
+
+[data-slot="report-demo-panel-toolbar"] {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px 6px;
+}
+
+[data-slot="report-demo-panel-toggle"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgb(226, 232, 240);
+  border-radius: 8px;
+  background: rgb(248, 250, 252);
+  color: rgb(71, 85, 105);
+  cursor: pointer;
+}
+
 [data-slot="report-demo-field-panel"] {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   padding: 16px;
-  border-right: 1px solid rgb(226, 232, 240);
   background: rgb(255, 255, 255);
   min-width: 250px;
   max-width: 250px;

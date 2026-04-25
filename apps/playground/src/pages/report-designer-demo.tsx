@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { createSchemaRenderer, createDefaultEnv, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
+import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import {
   createSpreadsheetCore,
   createEmptyDocument,
@@ -23,6 +29,8 @@ import {
 import {
   createReportDesignerBridge,
   ReportFieldPanel,
+  buildReportDesignerScopeData,
+  registerReportDesignerRenderers,
 } from '@nop-chaos/report-designer-renderers';
 
 const fieldSources: FieldSourceSnapshot[] = [
@@ -84,6 +92,137 @@ const dropAdapter: FieldDropAdapter = {
 
 const ROWS = 30;
 const COLS = 10;
+const SchemaRenderer = createSchemaRenderer();
+const inspectorRegistry = createDefaultRegistry();
+registerBasicRenderers(inspectorRegistry);
+registerFormRenderers(inspectorRegistry);
+registerFormAdvancedRenderers(inspectorRegistry);
+registerDataRenderers(inspectorRegistry);
+registerReportDesignerRenderers(inspectorRegistry);
+const inspectorEnv = createDefaultEnv();
+const inspectorFormulaCompiler = createFormulaCompiler();
+
+const selectionSummaryInspectorProvider: InspectorProvider = {
+  id: 'selection-summary-inspector',
+  match: (target) => ['cell', 'row', 'column', 'sheet', 'range'].includes(target.kind),
+  priority: 1,
+  getPanels: (context): InspectorPanelDescriptor[] => {
+    const { target, spreadsheet, metadata } = context;
+    const selection = spreadsheet.selection;
+    const selectedRows = selection.kind === 'row' ? [...(selection.rows ?? [])].sort((a, b) => a - b) : [];
+    const selectedColumns = selection.kind === 'column' ? [...(selection.columns ?? [])].sort((a, b) => a - b) : [];
+    const activeSheetId = spreadsheet.activeSheetId;
+
+    if (target.kind === 'cell') {
+      const cell = target.cell;
+      const cellDoc = spreadsheet.document.workbook.sheets.find((sheet) => sheet.id === cell.sheetId)?.cells?.[cell.address];
+      return [{
+        id: 'selection-summary',
+        title: 'Selection',
+        targetKind: 'cell',
+        mode: 'tab',
+        order: 0,
+        body: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: `Cell: ${cell.address}` },
+            { type: 'text', text: `Row: ${cell.row + 1}` },
+            { type: 'text', text: `Column: ${cell.col + 1}` },
+            { type: 'text', text: `Value: ${String(cellDoc?.value ?? '(empty)')}` },
+            { type: 'text', text: `Metadata keys: ${Object.keys(metadata ?? {}).length}` },
+          ],
+        },
+      }];
+    }
+
+    if (target.kind === 'row') {
+      const rows = selectedRows.length ? selectedRows : [target.row];
+      return [{
+        id: 'selection-summary',
+        title: 'Selection',
+        targetKind: 'row',
+        mode: 'tab',
+        order: 0,
+        body: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: `Sheet: ${target.sheetId}` },
+            { type: 'text', text: `Count: ${rows.length}` },
+            { type: 'text', text: `Start: ${rows[0]! + 1}` },
+            { type: 'text', text: `End: ${rows[rows.length - 1]! + 1}` },
+            { type: 'text', text: `Rows: ${rows.map((row) => row + 1).join(', ')}` },
+          ],
+        },
+      }];
+    }
+
+    if (target.kind === 'column') {
+      const columns = selectedColumns.length ? selectedColumns : [target.col];
+      return [{
+        id: 'selection-summary',
+        title: 'Selection',
+        targetKind: 'column',
+        mode: 'tab',
+        order: 0,
+        body: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: `Sheet: ${target.sheetId}` },
+            { type: 'text', text: `Count: ${columns.length}` },
+            { type: 'text', text: `Start: ${cellAddress(0, columns[0]!).replace(/[0-9]/g, '')}` },
+            { type: 'text', text: `End: ${cellAddress(0, columns[columns.length - 1]!).replace(/[0-9]/g, '')}` },
+            { type: 'text', text: `Columns: ${columns.map((col) => cellAddress(0, col).replace(/[0-9]/g, '')).join(', ')}` },
+          ],
+        },
+      }];
+    }
+
+    if (target.kind === 'sheet') {
+      return [{
+        id: 'selection-summary',
+        title: 'Selection',
+        targetKind: 'sheet',
+        mode: 'tab',
+        order: 0,
+        body: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: `Sheet: ${target.sheetId}` },
+            { type: 'text', text: `Active sheet: ${activeSheetId}` },
+            { type: 'text', text: `Metadata keys: ${Object.keys(metadata ?? {}).length}` },
+          ],
+        },
+      }];
+    }
+
+    if (target.kind === 'range') {
+      return [{
+        id: 'selection-summary',
+        title: 'Selection',
+        targetKind: 'range',
+        mode: 'tab',
+        order: 0,
+        body: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: `Sheet: ${target.range.sheetId}` },
+            { type: 'text', text: `Start: ${cellAddress(target.range.startRow, target.range.startCol)}` },
+            { type: 'text', text: `End: ${cellAddress(target.range.endRow, target.range.endCol)}` },
+            { type: 'text', text: `Rows: ${target.range.endRow - target.range.startRow + 1}` },
+            { type: 'text', text: `Columns: ${target.range.endCol - target.range.startCol + 1}` },
+          ],
+        },
+      }];
+    }
+
+    return [];
+  },
+};
 
 export function ReportDesignerDemo() {
   const [log, setLog] = useState<string[]>([]);
@@ -94,6 +233,7 @@ export function ReportDesignerDemo() {
   const [draggingField, setDraggingField] = useState<{
     sourceId: string; fieldId: string; label: string;
   } | null>(null);
+  const [paletteCollapsed, setPaletteCollapsed] = useState(false);
 
   const spreadsheetDoc = useMemo(() => createEmptyDocument('demo-spreadsheet'), []);
   const spreadsheetCore = useMemo(() => createSpreadsheetCore({ document: spreadsheetDoc }), [spreadsheetDoc]);
@@ -105,10 +245,22 @@ export function ReportDesignerDemo() {
   }), []);
   const designerCore = useMemo(() => createReportDesignerCore({ document: reportDoc, config: designerConfig }), [reportDoc, designerConfig]);
   const designerBridge = useMemo(() => createReportDesignerBridge(spreadsheetBridge, designerCore), [spreadsheetBridge, designerCore]);
+  const designerSnapshot = useSyncExternalStore(
+    designerCore.subscribe,
+    designerCore.getSnapshot,
+    designerCore.getSnapshot,
+  );
+  const spreadsheetRuntimeSnapshot = useSyncExternalStore(
+    spreadsheetCore.subscribe,
+    spreadsheetCore.getSnapshot,
+    spreadsheetCore.getSnapshot,
+  );
 
   useEffect(() => {
     designerCore.registerInspector(cellInspectorProvider);
+    designerCore.registerInspector(selectionSummaryInspectorProvider);
     designerCore.registerFieldDrop(dropAdapter);
+    void designerCore.setSelectionTarget(designerCore.getSnapshot().selectionTarget);
   }, [designerCore]);
 
   const sheetId = spreadsheetDoc.workbook.sheets[0].id;
@@ -131,6 +283,9 @@ export function ReportDesignerDemo() {
     handleCellDoubleClick,
     handleCellMouseDown,
     handleCellMouseEnter,
+    handleSelectRow,
+    handleSelectColumn,
+    handleSelectAll,
     handleColumnResizeStart,
     handleRowResizeStart,
     columnWidths,
@@ -209,6 +364,10 @@ export function ReportDesignerDemo() {
   const frozen = snapshot.activeSheet?.frozen;
 
   const currentCellAddr = selectedCell ? cellAddress(selectedCell.row, selectedCell.col) : '';
+  const inspectorScopeData = useMemo(
+    () => buildReportDesignerScopeData(designerCore, designerSnapshot, spreadsheetRuntimeSnapshot),
+    [designerCore, designerSnapshot, spreadsheetRuntimeSnapshot],
+  );
 
   const getCellMetadata = useCallback((row: number, col: number) => {
     return designerCore.getMetadata({
@@ -268,11 +427,25 @@ export function ReportDesignerDemo() {
       </div>
 
       <div data-slot="report-demo-body">
-        <div data-slot="report-demo-field-panel">
-          <ReportFieldPanel
-            fieldSources={fieldSources}
-            onFieldDragStart={(sourceId, fieldId, label) => setDraggingField({ sourceId, fieldId, label })}
-          />
+        <div data-slot="report-demo-field-panel-shell" data-collapsed={paletteCollapsed || undefined}>
+          <div data-slot="report-demo-panel-toolbar">
+            <button
+              type="button"
+              data-slot="report-demo-panel-toggle"
+              aria-label={paletteCollapsed ? 'Expand palette' : 'Collapse palette'}
+              onClick={() => setPaletteCollapsed((value) => !value)}
+            >
+              {paletteCollapsed ? '>' : '<'}
+            </button>
+          </div>
+          {!paletteCollapsed ? (
+            <div data-slot="report-demo-field-panel">
+              <ReportFieldPanel
+                fieldSources={fieldSources}
+                onFieldDragStart={(sourceId, fieldId, label) => setDraggingField({ sourceId, fieldId, label })}
+              />
+            </div>
+          ) : null}
         </div>
 
         <div
@@ -294,6 +467,7 @@ export function ReportDesignerDemo() {
             columnWidths={columnWidths}
             rowHeights={rowHeights}
             selectedCell={selectedCell}
+            selection={snapshot.selection}
             editingCell={editingCell}
             editValue={editValue}
             fillHandleState={fillHandleState}
@@ -305,6 +479,9 @@ export function ReportDesignerDemo() {
             onCellDoubleClick={handleCellDoubleClick}
             onCellMouseDown={handleCellMouseDown}
             onCellMouseEnter={handleCellMouseEnter}
+            onSelectRow={handleSelectRow}
+            onSelectColumn={handleSelectColumn}
+            onSelectAll={handleSelectAll}
             onColumnResizeStart={handleColumnResizeStart}
             onRowResizeStart={handleRowResizeStart}
             onFillHandleMouseDown={handleFillHandleMouseDown}
@@ -330,64 +507,17 @@ export function ReportDesignerDemo() {
         </div>
 
         <div data-slot="report-demo-inspector">
-          <h3>Inspector</h3>
-          {selectedCell ? (
-            <div className="inspector-content">
-              <div className="inspector-section">
-                <h4>Cell: {currentCellAddr}</h4>
-                <div className="inspector-field">
-                  <span>Row:</span> <span>{selectedCell.row + 1}</span>
-                </div>
-                <div className="inspector-field">
-                  <span>Col:</span> <span>{selectedCell.col + 1}</span>
-                </div>
-                <div className="inspector-field">
-                  <span>Value:</span> <span>{String(currentCell?.value ?? '(empty)')}</span>
-                </div>
-              </div>
-              <div className="inspector-section">
-                <h4>Style</h4>
-                <div className="inspector-field">
-                  <span>Bold:</span> <span>{currentCell?.style?.fontWeight === 'bold' ? '✓' : '✗'}</span>
-                </div>
-                <div className="inspector-field">
-                  <span>Italic:</span> <span>{currentCell?.style?.fontStyle === 'italic' ? '✓' : '✗'}</span>
-                </div>
-                <div className="inspector-field">
-                  <span>Color:</span>
-                  <span className="color-preview" style={{ backgroundColor: currentCell?.style?.fontColor ?? '#000' }} />
-                </div>
-                <div className="inspector-field">
-                  <span>BG:</span>
-                  <span className="color-preview" style={{ backgroundColor: currentCell?.style?.backgroundColor ?? 'transparent' }} />
-                </div>
-                <div className="inspector-field">
-                  <span>Align:</span> <span>{currentCell?.style?.textAlign ?? 'left'}</span>
-                </div>
-              </div>
-              {currentCell?.comment && (
-                <div className="inspector-section">
-                  <h4>Comment</h4>
-                  <p className="comment-text">
-                    {typeof currentCell.comment === 'string' ? currentCell.comment : currentCell.comment.text}
-                  </p>
-                </div>
-              )}
-              {frozen && (
-                <div className="inspector-section">
-                  <h4>Frozen Panes</h4>
-                  <div className="inspector-field">
-                    <span>Row:</span> <span>{frozen.row ?? 0}</span>
-                  </div>
-                  <div className="inspector-field">
-                    <span>Col:</span> <span>{frozen.col ?? 0}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="inspector-empty">Click a cell to inspect.</p>
-          )}
+          <SchemaRenderer
+            schemaUrl="playground://report-designer/demo-inspector"
+            schema={{
+              type: 'report-inspector-shell',
+              title: 'Inspector',
+            } as any}
+            registry={inspectorRegistry}
+            env={inspectorEnv}
+            formulaCompiler={inspectorFormulaCompiler}
+            data={inspectorScopeData}
+          />
         </div>
       </div>
 
