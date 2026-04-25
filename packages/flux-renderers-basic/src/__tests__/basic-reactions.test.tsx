@@ -74,6 +74,15 @@ describe('basicRendererDefinitions reaction and action behavior', () => {
     cleanup();
   });
 
+  it('recomputes derived values when a watched field changes through button actions', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(<SchemaRenderer schemaUrl="test://basic/reactions" schema={{ type: 'page', body: [{ type: 'text', text: 'counter: ${counter}' }, { type: 'button', label: 'Increment', onClick: { action: 'setValue', args: { path: 'counter', value: '${(counter ?? 0) + 1}' } } }, { type: 'reaction', watch: ['counter'], actions: [{ action: 'setValue', args: { path: 'doubled', value: '${(counter ?? 0) * 2}' } }] }, { type: 'text', text: 'doubled: ${doubled}' }] }} data={{ counter: 0, doubled: 0 }} env={env} formulaCompiler={formulaCompiler} />);
+    fireEvent.click(screen.getByText('Increment'));
+    await waitFor(() => expect(screen.getByText('counter: 1')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('doubled: 2')).toBeTruthy());
+    cleanup();
+  });
+
   it('applies repeated button setValue actions against the latest scope value', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     render(<SchemaRenderer schemaUrl="test://basic/reactions" schema={{ type: 'page', body: [{ type: 'button', label: 'Inc', onClick: { action: 'setValue', args: { path: 'count', value: '${count + 1}' } } }, { type: 'text', text: '${count}' }] }} data={{ count: 0 }} env={env} formulaCompiler={formulaCompiler} />);

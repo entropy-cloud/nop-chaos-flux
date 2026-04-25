@@ -4,6 +4,7 @@ import type {
   ExpressionCompileOptions,
   ReactionSchema,
 } from '@nop-chaos/flux-core';
+import { normalizeRootPath } from '@nop-chaos/flux-core';
 import { compileActions } from './action-compiler';
 
 export interface ReactionCompilerOptions extends ExpressionCompileOptions {
@@ -21,11 +22,20 @@ function extractWatchTemplate(watch: unknown): string {
   }
 
   if (Array.isArray(watch) && watch.length > 0 && typeof watch[0] === 'string') {
-    return watch[0];
+    return normalizeWatchEntry(watch[0]);
   }
 
   // Return empty template that evaluates to undefined
   return '';
+}
+
+function normalizeWatchEntry(watch: string): string {
+  if (watch.includes('${')) {
+    return watch;
+  }
+
+  const rootPath = normalizeRootPath(watch);
+  return rootPath ? `\${${watch}}` : watch;
 }
 
 export function compileReaction(

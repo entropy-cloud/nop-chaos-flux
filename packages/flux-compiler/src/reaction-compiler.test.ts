@@ -60,6 +60,20 @@ describe('compileReaction', () => {
       expect(compiled.watch.isStatic).toBe(false);
     });
 
+    it('treats array root-path watch entries as dynamic scope reads', () => {
+      const schema: ReactionSchema = {
+        type: 'reaction',
+        watch: ['counter'],
+        actions: {
+          action: 'reload'
+        }
+      };
+
+      const compiled = compileReaction('rx-3b', schema, expressionCompiler);
+
+      expect(compiled.watch.isStatic).toBe(false);
+    });
+
     it('compiles a reaction with when condition', () => {
       const schema: ReactionSchema = {
         type: 'reaction',
