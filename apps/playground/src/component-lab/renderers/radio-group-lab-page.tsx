@@ -32,7 +32,6 @@ const inlineRadioGroup = {
   body: [
     {
       type: 'form',
-      name: 'inlineRadioForm',
       body: [
         {
           type: 'radio-group',
@@ -46,13 +45,13 @@ const inlineRadioGroup = {
             { label: 'High', value: 'high' },
             { label: 'Critical', value: 'critical' }
           ]
-        }
+        },
+        { type: 'text', text: 'Selected priority: ${priority ?? "(none)"}' }
       ],
       actions: [
         { type: 'button', label: 'Save', onClick: { action: 'submit' } }
       ]
-    },
-    { type: 'text', text: 'Selected priority: ${inlineRadioForm.priority ?? "(none)"}' }
+    }
   ]
 };
 
@@ -67,8 +66,8 @@ export function RadioGroupLabPage() {
           schema: basicRadioGroup
         },
         {
-          title: 'Horizontal inline layout with live selection display',
-          description: 'With layout: horizontal, options are shown in a row. The checked radio state updates live; the text line below currently remains a static summary prefix in the lab surface.',
+          title: 'Horizontal inline layout with in-form live summary',
+          description: 'With layout: horizontal, options are shown in a row. The selected value is rendered by a text node inside the same form scope.',
           schema: inlineRadioGroup
         }
       ]}

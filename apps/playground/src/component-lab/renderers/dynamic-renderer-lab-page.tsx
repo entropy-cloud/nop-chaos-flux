@@ -15,8 +15,6 @@ const dynamicRendererEnv = {
     }
 
     if (api.url === '/api/component-lab/dynamic-renderer/by-type') {
-      const schemaType = 'badge';
-
       return {
         ok: true,
         status: 200,

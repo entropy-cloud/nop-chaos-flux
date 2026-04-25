@@ -6,10 +6,9 @@ const stringOrListVariant = {
     {
       type: 'form',
       id: 'variant-field-string-or-list',
-      name: 'variantFieldForm',
       onSubmitSuccess: [
-        { action: 'setValue', args: { path: 'submittedVariantValue', value: '${variantFieldForm.filterValue}' } },
-        { action: 'setValue', args: { path: 'submittedVariantText', value: '${Array.isArray(variantFieldForm.filterValue) ? "LIST => " + ((variantFieldForm.filterValue ?? []).join(", ") || "(empty)") : "TEXT => " + (variantFieldForm.filterValue ?? "")}' } }
+        { action: 'setValue', args: { path: 'submittedVariantValue', value: '${filterValue}' } },
+        { action: 'setValue', args: { path: 'submittedVariantText', value: '${Array.isArray(filterValue) ? "LIST => " + ((filterValue ?? []).join(", ") || "(empty)") : "TEXT => " + (filterValue ?? "")}' } }
       ],
       data: {
         filterValue: 'status = active'
@@ -17,7 +16,7 @@ const stringOrListVariant = {
       body: [
         {
           type: 'text',
-          text: 'Current runtime value: ${Array.isArray(variantFieldForm.filterValue) ? "List editor active" : "String editor active"}'
+          text: 'Current runtime value: ${Array.isArray(filterValue) ? "List editor active" : "String editor active"}'
         },
         {
           type: 'variant-field',
@@ -69,10 +68,10 @@ const stringOrListVariant = {
 export function VariantFieldLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Variant field edits one value with multiple shapes. This demo uses a very obvious string-vs-list switch so you can see both the active editor and the submitted output change together."
+      introDescription="Variant field edits one value with multiple shapes. This demo uses a very obvious string-vs-list switch so you can see the active editor and bound scope state change together."
       scenarios={[
         {
-          title: 'String vs list editor with visible submit result',
+          title: 'String vs list editor with scope-state switching',
           description: 'The selected tab should be visibly active. Switch between a single string input and a list editor, edit both forms, and verify the active editor plus bound scope state change with the selected variant.',
           schema: stringOrListVariant
         }

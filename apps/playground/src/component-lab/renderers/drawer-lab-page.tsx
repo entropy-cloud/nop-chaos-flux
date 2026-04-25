@@ -3,7 +3,6 @@ import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
 const rightDrawer = {
   type: 'page',
   body: [
-    { type: 'text', text: 'Submitted message: ${savedNote ?? "(none)"}' },
     {
       type: 'button',
       label: 'Open Right Drawer',
@@ -15,13 +14,13 @@ const rightDrawer = {
           body: [
             {
               type: 'form',
-              name: 'noteForm',
               onSubmitSuccess: [
-                { action: 'setValue', args: { path: 'savedNote', value: '${noteForm.note}' } },
+                { action: 'setValue', args: { path: 'submitted', value: true } },
                 { action: 'closeDrawer' }
               ],
               body: [
-                { type: 'textarea', name: 'note', label: 'Note', placeholder: 'Write something...', required: true }
+                { type: 'textarea', name: 'note', label: 'Note', placeholder: 'Write something...', required: true },
+                { type: 'text', text: '${submitted ? "Submitted message: " + note : "Submitted message: (none)"}' }
               ],
               actions: [
                 {
@@ -72,7 +71,7 @@ export function DrawerLabPage() {
       scenarios={[
         {
           title: 'Right drawer with form and writeback',
-          description: 'Click "Open Right Drawer" to slide in a panel from the right with a form. Saving writes the note back to the parent scope.',
+          description: 'Click "Open Right Drawer" to slide in a panel from the right with a form. Saving writes the local note field back to the parent scope.',
           schema: rightDrawer
         },
         {

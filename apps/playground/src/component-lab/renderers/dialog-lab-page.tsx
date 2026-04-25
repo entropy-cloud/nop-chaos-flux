@@ -27,7 +27,6 @@ const basicDialog = {
 const formDialog = {
   type: 'page',
   body: [
-    { type: 'text', text: 'Submitted name: ${submittedName ?? "(none)"}' },
     {
       type: 'button',
       label: 'Edit Contact',
@@ -38,14 +37,14 @@ const formDialog = {
           body: [
             {
               type: 'form',
-              name: 'contactForm',
               onSubmitSuccess: [
-                { action: 'setValue', args: { path: 'submittedName', value: '${contactForm.name}' } },
+                { action: 'setValue', args: { path: 'submitted', value: true } },
                 { action: 'closeDialog' }
               ],
               body: [
                 { type: 'input-text', name: 'name', label: 'Full Name', required: true },
-                { type: 'input-email', name: 'email', label: 'Email', required: true }
+                { type: 'input-email', name: 'email', label: 'Email', required: true },
+                { type: 'text', text: '${submitted ? "Submitted name: " + name : "Submitted name: (none)"}' }
               ],
               actions: [
                 {
@@ -75,7 +74,7 @@ export function DialogLabPage() {
         },
         {
           title: 'Dialog with form fields and writeback',
-          description: 'Click "Edit Contact" to open a dialog with a form. Confirming writes the entered name back to the parent scope.',
+          description: 'Click "Edit Contact" to open a dialog with a form. Confirming writes the local form field back to the parent scope.',
           schema: formDialog
         }
       ]}

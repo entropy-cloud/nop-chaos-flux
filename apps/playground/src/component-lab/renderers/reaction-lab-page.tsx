@@ -27,23 +27,23 @@ const charCountWatcher = {
       type: 'form',
       name: 'watchForm',
       body: [
-        { type: 'input-text', name: 'message', label: 'Message', placeholder: 'Type something...' }
-      ]
-    },
-    {
-      type: 'reaction',
-      watch: ['watchForm.message'],
-      actions: [
+        { type: 'input-text', name: 'message', label: 'Message', placeholder: 'Type something...' },
         {
-          action: 'setValue',
-          args: {
-            path: 'charCount',
-            value: '${(watchForm.message ?? "").length}'
-          }
-        }
+          type: 'reaction',
+          watch: ['message'],
+          actions: [
+            {
+              action: 'setValue',
+              args: {
+                path: 'charCount',
+                value: '${(message ?? "").length}'
+              }
+            }
+          ]
+        },
+        { type: 'text', text: 'Character count: ${charCount ?? 0}' }
       ]
-    },
-    { type: 'text', text: 'Character count: ${charCount ?? 0}' }
+    }
   ]
 };
 
@@ -60,7 +60,7 @@ export function ReactionLabPage() {
         },
         {
           title: 'Field-watch for character count',
-          description: 'Type in the message field to exercise the current form-bound reaction baseline. The field value updates and is visible in scope-debug, while the visible charCount display remains at its current runtime baseline until the cross-scope watch gap is fixed.',
+          description: 'Type in the message field. Inside the form scope, the reaction watches the local field value and updates a charCount display in real time.',
           schema: charCountWatcher
         }
       ]}

@@ -21,16 +21,15 @@ const checkboxWithReaction = {
   body: [
     {
       type: 'form',
-      name: 'notifyForm',
       body: [
         { type: 'checkbox', name: 'emailNotify', label: 'Receive email notifications' },
-        { type: 'checkbox', name: 'smsNotify', label: 'Receive SMS notifications' }
+        { type: 'checkbox', name: 'smsNotify', label: 'Receive SMS notifications' },
+        { type: 'text', text: 'Email: ${emailNotify ? "ON" : "OFF"} | SMS: ${smsNotify ? "ON" : "OFF"}' }
       ],
       actions: [
         { type: 'button', label: 'Save Preferences', onClick: { action: 'submit' } }
       ]
-    },
-    { type: 'text', text: 'Email: ${notifyForm.emailNotify ? "ON" : "OFF"} | SMS: ${notifyForm.smsNotify ? "ON" : "OFF"}' }
+    }
   ]
 };
 
@@ -45,8 +44,8 @@ export function CheckboxLabPage() {
           schema: acceptTerms
         },
         {
-          title: 'Multiple checkboxes with live scope display',
-          description: 'Toggle the checkboxes to exercise the current bound boolean state. The controls update correctly; the text line below is currently only a static summary prefix in the live lab surface.',
+          title: 'Multiple checkboxes with in-form live summary',
+          description: 'Toggle the checkboxes to exercise the current bound boolean state. The summary text is rendered inside the form scope and updates live.',
           schema: checkboxWithReaction
         }
       ]}

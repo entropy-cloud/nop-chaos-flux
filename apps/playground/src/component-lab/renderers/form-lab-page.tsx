@@ -28,20 +28,18 @@ const formWithSubmitFeedback = {
   body: [
     {
       type: 'form',
-      name: 'feedbackForm',
       onSubmitSuccess: [
-        { action: 'setValue', args: { path: 'submitted', value: true } },
-        { action: 'setValue', args: { path: 'submittedUsername', value: '${feedbackForm.username}' } }
+        { action: 'setValue', args: { path: 'submitted', value: true } }
       ],
       body: [
         { type: 'input-text', name: 'username', label: 'Username', placeholder: 'Enter username', required: true },
-        { type: 'input-email', name: 'email', label: 'Email', placeholder: 'user@example.com', required: true }
+        { type: 'input-email', name: 'email', label: 'Email', placeholder: 'user@example.com', required: true },
+        { type: 'text', text: '${submitted ? "Success! Submitted username: " + username : ""}' }
       ],
       actions: [
         { type: 'button', label: 'Submit', onClick: { action: 'submit' } }
       ]
-    },
-    { type: 'text', text: '${submitted ? "Success! Submitted username: " + submittedUsername : ""}' }
+    }
   ]
 };
 
@@ -57,7 +55,7 @@ export function FormLabPage() {
         },
         {
           title: 'Form with visible submit success state',
-          description: 'Fill in username and email, then click Submit. An onSubmit action sets a submitted flag and a success message appears.',
+          description: 'Fill in username and email, then click Submit. The form lifecycle writes the local username into a parent success message.',
           schema: formWithSubmitFeedback
         }
       ]}

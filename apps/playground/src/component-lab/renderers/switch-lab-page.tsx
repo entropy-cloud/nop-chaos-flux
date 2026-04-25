@@ -5,20 +5,19 @@ const basicSwitch = {
   body: [
     {
       type: 'form',
-      name: 'switchForm',
       body: [
         {
           type: 'switch',
           name: 'enabled',
           label: 'Feature enabled',
           description: 'Toggle this to enable or disable the feature for your account.'
-        }
+        },
+        { type: 'text', text: 'Feature is: ${enabled ? "ON" : "OFF"}' }
       ],
       actions: [
         { type: 'button', label: 'Save', onClick: { action: 'submit' } }
       ]
-    },
-    { type: 'text', text: 'Feature is: ${switchForm.enabled ? "ON" : "OFF"}' }
+    }
   ]
 };
 
@@ -46,8 +45,8 @@ export function SwitchLabPage() {
       introDescription="Toggle switch bound to a boolean form field. Supports label and description text. The current state is immediately readable from the form scope."
       scenarios={[
         {
-          title: 'Switch with state reflected in text renderer',
-          description: 'Toggle the switch to exercise the current boolean control state. The switch itself updates live; the text line below currently renders only the static summary prefix in this lab surface.',
+          title: 'Switch with in-form live summary',
+          description: 'Toggle the switch to exercise the current boolean control state. The summary text is rendered inside the form scope and updates live.',
           schema: basicSwitch
         },
         {

@@ -33,7 +33,6 @@ const radioMode = {
   body: [
     {
       type: 'form',
-      name: 'inputTreeForm',
       body: [
         {
           type: 'input-tree',
@@ -41,13 +40,13 @@ const radioMode = {
           label: 'Department (single select)',
           treeMode: 'radio',
           options: orgTreeOptions
-        }
+        },
+        { type: 'text', text: 'Selected: ${department ?? "(none)"}' }
       ],
       actions: [
         { type: 'button', label: 'Save', onClick: { action: 'submit' } }
       ]
-    },
-    { type: 'text', text: 'Selected: ${inputTreeForm.department ?? "(none)"}' }
+    }
   ]
 };
 
@@ -56,7 +55,6 @@ const checkboxMode = {
   body: [
     {
       type: 'form',
-      name: 'inputTreeCheckForm',
       body: [
         {
           type: 'input-tree',
@@ -64,13 +62,13 @@ const checkboxMode = {
           label: 'Teams (multi-select)',
           treeMode: 'checkbox',
           options: orgTreeOptions
-        }
+        },
+        { type: 'text', text: 'Selected IDs: ${(teams ?? []).join(", ") || "(none)"}' }
       ],
       actions: [
         { type: 'button', label: 'Save', onClick: { action: 'submit' } }
       ]
-    },
-    { type: 'text', text: 'Selected IDs: ${(inputTreeCheckForm.teams ?? []).join(", ") || "(none)"}' }
+    }
   ]
 };
 
@@ -81,7 +79,7 @@ export function InputTreeLabPage() {
       scenarios={[
         {
           title: 'Radio mode — single department selection',
-          description: 'Only one node can be selected at a time. The selected department ID is shown below.',
+          description: 'Only one node can be selected at a time. The selected department ID is reflected in the rendered text summary.',
           schema: radioMode
         },
         {

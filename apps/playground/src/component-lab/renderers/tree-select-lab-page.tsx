@@ -33,7 +33,6 @@ const singleSelect = {
   body: [
     {
       type: 'form',
-      name: 'treeSelectForm',
       body: [
         {
           type: 'tree-select',
@@ -41,13 +40,13 @@ const singleSelect = {
           label: 'Select Team',
           searchable: true,
           options: orgTreeOptions
-        }
+        },
+        { type: 'text', text: 'Selected: ${team ?? "(none)"}' }
       ],
       actions: [
         { type: 'button', label: 'Save', onClick: { action: 'submit' } }
       ]
-    },
-    { type: 'text', text: 'Selected: ${treeSelectForm.team ?? "(none)"}' }
+    }
   ]
 };
 
@@ -56,7 +55,6 @@ const checkboxTreeSelect = {
   body: [
     {
       type: 'form',
-      name: 'treeMultiSelectForm',
       body: [
         {
           type: 'tree-select',
@@ -65,13 +63,13 @@ const checkboxTreeSelect = {
           treeMode: 'checkbox',
           searchable: true,
           options: orgTreeOptions
-        }
+        },
+        { type: 'text', text: 'Selected: ${(departments ?? []).join(", ") || "(none)"}' }
       ],
       actions: [
         { type: 'button', label: 'Save', onClick: { action: 'submit' } }
       ]
-    },
-    { type: 'text', text: 'Selected: ${(treeMultiSelectForm.departments ?? []).join(", ") || "(none)"}' }
+    }
   ]
 };
 
@@ -82,7 +80,7 @@ export function TreeSelectLabPage() {
       scenarios={[
         {
           title: 'Single-value tree select with search',
-          description: 'Click the trigger to open the popover tree. Use the search box to filter nodes. The selected value is shown below.',
+          description: 'Click the trigger to open the popover tree. Use the search box to filter nodes. The selected value is reflected in the trigger and scope-debug state.',
           schema: singleSelect
         },
         {
