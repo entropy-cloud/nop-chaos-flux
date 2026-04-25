@@ -1,6 +1,6 @@
 # 138 CRUD Editing And Request-Owned Runtime Successor Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-25
 > Source: `docs/plans/136-crud-workflow-completion-plan.md`, `docs/components/crud/design.md`, `docs/components/table/design.md`, `docs/components/form/design.md`, `docs/architecture/action-interaction-state.md`, live repo audit of `packages/flux-renderers-data/src/crud-renderer.tsx`, `packages/flux-renderers-data/src/crud-schema.ts`, and current focused CRUD tests
 > Related: `docs/plans/136-crud-workflow-completion-plan.md`, `docs/plans/137-crud-table-heavy-parity-successor-plan.md`
@@ -80,6 +80,7 @@ Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`, related table/for
 - [x] 落地第一版 `quickEdit` / `quickSaveAction` / `quickSaveItemAction` baseline
 - [x] 落地第一版 `clientMode.loadDataOnce` / `fetchOnFilter` baseline
 - [x] 明确将 `syncLocation` / primitive query parsing baseline 后置，不在当前 Phase 3 收口
+- [x] 明确将 `clientMode.matchFunc` baseline 后置，不在当前 Phase 3 收口
 
 Exit Criteria:
 
@@ -87,41 +88,42 @@ Exit Criteria:
 - [x] 当前未 landed extension 在 plan/docs 中保持显式 deferred
 - [x] 已 landed 的 `clientMode.loadDataOnce` / `fetchOnFilter` baseline 有 focused tests
 - [x] `syncLocation` / primitive query parsing 在当前 plan state 中被显式 deferred，而不是保持模糊
+- [x] `clientMode.matchFunc` 在当前 plan state 中被显式 deferred，而不是保持模糊
 
 ### Phase 4 - Docs, Verification, And Closure Audit
 
-Status: planned
+Status: completed
 Targets: CRUD docs/examples, playground CRUD lab, daily log, this plan
 
-- [ ] 同步 docs/examples/playground
-- [ ] 运行 package/workspace verification
-- [ ] 做独立 closure audit
+- [x] 同步 docs/examples/playground
+- [x] 运行 package/workspace verification
+- [x] 做独立 closure audit
 
 Exit Criteria:
 
-- [ ] docs/examples/playground 与 live editing/request-owned baseline 一致
-- [ ] 独立 closure audit 明确无剩余 plan-owned gap
+- [x] docs/examples/playground 与 live editing/request-owned baseline 一致
+- [x] 独立 closure audit 明确无剩余 plan-owned gap
 
 ## Validation Checklist
 
-- [ ] request-owned/source-owned CRUD baseline 具备 focused behavior tests
-- [ ] quick edit / quick save baseline 具备 focused behavior tests
-- [ ] `clientMode` / `syncLocation` baseline 具备 focused behavior tests or are explicitly deferred
-- [ ] CRUD docs/examples/playground 已同步
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
+- [x] request-owned/source-owned CRUD baseline 具备 focused behavior tests
+- [x] quick edit / quick save baseline 具备 focused behavior tests
+- [x] `clientMode` / `syncLocation` baseline 具备 focused behavior tests or are explicitly deferred
+- [x] CRUD docs/examples/playground 已同步
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
 
 ## Closure
 
-Status Note: pending
+Status Note: completed. Plan-owned CRUD editing/runtime scope is landed and independently re-audited clean. Remaining workspace lint/test noise is outside this plan's owned files and does not block closure.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent general subagent
+- Evidence: `task_id: ses_23c4c10a0ffelzd3faTDRoVl8z`
 
 Follow-up:
 
@@ -134,4 +136,6 @@ Follow-up:
 - Phase 2 request-owned proof required two live fixes before it became stable: CRUD `onRefresh` must keep the owner scope when delegating to `refreshSource`, and the runtime source-registry invalidation path must not treat dependency-less sources as “refresh on every scope write”. Without those fixes, CRUD's own `$crud` / `$_crud.*` scope publication could keep retriggering the upstream source and leave the focused test hanging.
 - Phase 3 now has a broader but still intentionally narrow live `quickEdit` slice through the table-backed CRUD bridge: columns with `quickEdit: true`, `quickEdit: { saveImmediately }`, inline `quickEdit.body`, or `quickEdit.mode: 'dialog'` render editors on the existing row scope and reuse the same `quickSaveItemAction` / `quickSaveAction` bridge. The current dialog mode is a local quick-edit dialog shell, not a convergence of CRUD quick-edit with the managed `openDialog` surface-runtime path.
 - Phase 3 also now has a first `clientMode` baseline for request-owned/source-owned CRUD: when `clientMode.loadDataOnce` is true, query submit/reset stay local by default and do not re-enter upstream query refresh actions; when `clientMode.fetchOnFilter` is also true, those query actions opt back into upstream source refresh while CRUD still applies its local visible-row filtering to the refreshed result set.
-- `syncLocation` and primitive query parsing are now explicitly deferred from this plan's live runtime scope. They are useful only when CRUD query state must participate in page-level navigation, refresh persistence, or shareable deep links, and that routing/state-ownership slice is broader than the current Phase 3 goal. `matchFunc` also remains deferred.
+- `syncLocation` and primitive query parsing are now explicitly deferred from this plan's live runtime scope. They are useful only when CRUD query state must participate in page-level navigation, refresh persistence, or shareable deep links, and that routing/state-ownership slice is broader than the current Phase 3 goal.
+- `clientMode.matchFunc` is also explicitly deferred from this plan's live runtime scope. It becomes valuable only once the repo needs a shared contract for custom client-side record matching beyond the current default local filtering behavior, and that matching contract is broader than the narrow `loadDataOnce` baseline landed here.
+- Phase 4 closure evidence is now recorded. The independent closure audit found no remaining plan-owned gaps after docs/playground sync and quick-save fallback coverage were added. Plan-owned verification passed with focused CRUD tests plus `flux-renderers-data` and `flux-playground` typecheck/build; ambient workspace noise remains limited to an unrelated `apps/playground/src/component-lab/renderers/dynamic-renderer-lab-page.tsx` lint failure and non-blocking playground build chunk warnings.

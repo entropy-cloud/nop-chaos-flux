@@ -158,6 +158,8 @@ clientMode: {
 
 这比零散顶层字段更容易扩展，也更符合 Flux 复合配置风格。
 
+当前 live runtime 已落地 `loadDataOnce` / `fetchOnFilter` 的第一版语义，但仍未实现 `matchFunc`。`matchFunc` 只有在仓库需要一条明确的“自定义前端记录匹配”契约时才值得收口，例如多字段联合匹配、非默认字符串匹配规则、或业务自定义 record/query 布尔判定。若当前没有这类明确需求，建议继续 deferred，避免在 CRUD 本地过滤之上过早引入更宽的匹配契约。
+
 ## 7. 运行期状态归属
 
 - 查询提交状态 -> `queryForm` 内部 `form`
@@ -229,8 +231,8 @@ interface CrudStatusSummary {
 | 列拖拽排序 | 已支持 | 未实现（当前为非拖拽的最小上下移动；`draggable` 仍属后续） | 已定义 |
 | 响应式更多列展开 | 已支持 | 已支持基础版：`responsive.mode: 'expand'` 会在低于 `breakpoint` 时把次要列移入 expandable detail row | 已覆盖基础版 |
 | 服务端分页 | 已支持 | 未实现完整请求 owner baseline；当前支持消费上游 source-result object（如 `{ items, total }`）并通过 `onRefresh -> refreshSource` 回到上游请求 owner | 已定义 |
-| 前端一次性加载分页/过滤 | 已支持 | 部分 table 本地处理能力存在 | 已定义 |
-| quick edit | 已支持 | 未实现 | 已定义 |
+| 前端一次性加载分页/过滤 | 已支持 | 已支持基础版：`loadDataOnce` / `fetchOnFilter` | 已覆盖基础版 |
+| quick edit | 已支持 | 已支持基础版：inline / custom body / local dialog quick-edit + quick save bridge | 已覆盖基础版 |
 | 动态列 | 已支持 | 部分可通过 source 注入 | 已覆盖设计入口 |
 | 地址栏同步查询参数 | 已支持 | 未实现，且当前阶段显式 deferred | 已定义 |
 

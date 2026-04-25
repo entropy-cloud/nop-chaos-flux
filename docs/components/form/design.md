@@ -22,6 +22,7 @@
 
 - 目标导出字段为 `body`、`actions`、`data`、`statusPath`、`initAction`、`submitAction`、`onSubmitSuccess`、`onSubmitError`、`onValidateError`。
 - `statusPath` 用于把当前 form 的只读语义状态摘要发布到外层 scope。
+- `name` 仍是 form owner identity，不应在组件文档里被解释成“自动对外发布路径”；外部值发布边界见 `docs/architecture/form-external-publication-and-reserved-bindings.md`。
 - 提交逻辑继续以 action/runtime 为主，不直接把请求逻辑塞进 renderer JSX。
 - 命名上不应把 `initAction`、`submitAction` 机械改为 `onInit`、`onSubmit`。它们表示 form owner 的主生命周期入口；`onSubmitSuccess`、`onSubmitError`、`onValidateError` 才是 follow-up hook 风格的结果分支入口。
 
@@ -41,9 +42,12 @@
 
 - 表单值、校验状态、访问状态、提交状态和数组操作统一归 `FormRuntime`。
 - 字段 renderer 不应自行再维护第二套验证图。
+- form subtree 内部的普通值读取应直接使用字段 `name`，例如 `${username}`。
 - form subtree 内的表达式通过只读 `$form` 读取当前 form 语义状态，例如 `${$form.submitting}`。
+- 当前 live 实现中，当 `form.name` 存在时，form subtree / lifecycle 仍可见 `formName` values alias；但这不属于首版目标 contract，应视为待清理的实现漂移，也不等于 form 外 sibling 的正式 reactive contract。
 - form subtree 外若需要读取同一状态，应通过 `statusPath` 读取只读 summary DTO，而不是通过 `id` / `name` 做隐式查找。
-- `$form` 和 `statusPath` 都不暴露底层 store 或可调用方法。
+- `$form`、当前实现里仍存在的 `formName` values alias、以及 `statusPath` 都不暴露底层 store 或可调用方法。
+- 若未来需要 form 外部读取 values，应优先新增显式 `valuesPath` 机制，而不是扩大默认 `formName.*` sibling 可见性。
 
 ## 8. 事件、动作与组件句柄能力
 

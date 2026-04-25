@@ -220,7 +220,8 @@
         "perPageField 迁移为 pageSizeField",
         "filter 迁移为 queryForm",
         "actionType/dialog 迁移为 Flux action/openDialog",
-        "api -> source 是 canonical authoring 目标；当前 live baseline 仍以数组型 source workflow 为主，请求 owner 协作需由后续计划继续收口"
+        "api -> source 是 canonical authoring 目标；当前 live baseline 已支持 CRUD 消费上游 source-result object（如 { items, total }）并通过 onRefresh / onQuerySubmit 与上游 source owner 协作",
+        "loadDataOnce / loadDataOnceFetchOnFilter 迁移为 clientMode.loadDataOnce / clientMode.fetchOnFilter；syncLocation 与 matchFunc 仍属后续 deferred 范围"
       ]
     }
   }
