@@ -21,9 +21,20 @@ export function DingFlowCanvasOverlay({ children }: { children: React.ReactNode 
   const edges = useDesignerSnapshotSelector((s) => s.doc.edges);
   const [popover, setPopover] = useState<PopoverState | null>(null);
 
+  const nodeSizeMap = useMemo(() => {
+    const map = new Map<string, { minWidth?: number; minHeight?: number }>();
+    for (const nodeType of config.nodeTypes) {
+      map.set(nodeType.id, {
+        minWidth: nodeType.appearance?.minWidth,
+        minHeight: nodeType.appearance?.minHeight
+      });
+    }
+    return map;
+  }, [config.nodeTypes]);
+
   const overlays = useMemo(
-    () => computeDingFlowOverlays(nodes, edges),
-    [nodes, edges],
+    () => computeDingFlowOverlays(nodes, edges, nodeSizeMap),
+    [nodes, edges, nodeSizeMap],
   );
 
   const menuItems = useMemo<DingFlowMenuItem[]>(() => config.nodeTypes

@@ -136,9 +136,11 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         return createSuccess(core);
       case 'deleteEdge':
         core.deleteEdge(command.edgeId);
+        relayoutAfterTreeMutation(core);
         return createSuccess(core);
       case 'deleteNode':
         core.deleteNode(command.nodeId);
+        relayoutAfterTreeMutation(core);
         return createSuccess(core);
       case 'duplicateNode': {
         const node = core.duplicateNode(command.nodeId);
@@ -158,10 +160,12 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         const snapshot = core.getSnapshot();
         if (snapshot.activeNode?.id) {
           core.deleteNode(snapshot.activeNode.id);
+          relayoutAfterTreeMutation(core);
           return createSuccess(core);
         }
         if (snapshot.activeEdge?.id) {
           core.deleteEdge(snapshot.activeEdge.id);
+          relayoutAfterTreeMutation(core);
           return createSuccess(core);
         }
         return createSuccess(core, { reason: 'unchanged' });

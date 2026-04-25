@@ -61,12 +61,13 @@ export interface DesignerXyflowCanvasProps {
   onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number) => void;
 }
 
-function TreeModeOverlays({ nodes, edges, onPlusButtonClick }: {
+function TreeModeOverlays({ nodes, edges, nodeTypeSizeMap, onPlusButtonClick }: {
   nodes: import('@nop-chaos/flow-designer-core').GraphNode[];
   edges: import('@nop-chaos/flow-designer-core').GraphEdge[];
+  nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>;
   onPlusButtonClick: (sourceId: string, clientX: number, clientY: number) => void;
 }) {
-  const overlays = useMemo(() => computeDingFlowOverlays(nodes, edges), [nodes, edges]);
+  const overlays = useMemo(() => computeDingFlowOverlays(nodes, edges, nodeTypeSizeMap), [nodes, edges, nodeTypeSizeMap]);
 
   return (
     <ViewportPortal>
@@ -399,6 +400,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               <TreeModeOverlays
                 nodes={props.snapshot.doc.nodes}
                 edges={props.snapshot.doc.edges}
+                nodeTypeSizeMap={props.nodeTypeSizeMap}
                 onPlusButtonClick={props.onPlusButtonClick}
               />
             )}

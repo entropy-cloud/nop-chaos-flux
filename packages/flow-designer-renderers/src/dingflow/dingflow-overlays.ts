@@ -1,19 +1,29 @@
 import type { GraphNode, GraphEdge } from '@nop-chaos/flow-designer-core';
 
 import {
-  CARD_W,
-  CARD_H,
   BRANCH_SHORT_LEG,
   MERGE_SHORT_LEG,
   BTN_DIST,
 } from './dingflow-constants';
 import type { DingFlowOverlay } from './dingflow-constants';
 
+const DW = 220;
+const DH = 80;
+
 export function computeDingFlowOverlays(
   nodes: GraphNode[],
   edges: GraphEdge[],
+  nodeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>,
 ): DingFlowOverlay[] {
   const result: DingFlowOverlay[] = [];
+
+  function getWidth(node: GraphNode): number {
+    return nodeSizeMap?.get(node.type)?.minWidth ?? DW;
+  }
+
+  function getHeight(node: GraphNode): number {
+    return nodeSizeMap?.get(node.type)?.minHeight ?? DH;
+  }
 
   const nodeMap = new Map<string, GraphNode>();
   for (const n of nodes) {
@@ -40,7 +50,7 @@ export function computeDingFlowOverlays(
     if (!sourceNode) continue;
     const firstTarget = nodeMap.get(outs[0].target);
     if (!firstTarget) continue;
-    const cx = Math.round(sourceNode.position.x + CARD_W / 2);
+    const cx = Math.round(sourceNode.position.x + getWidth(sourceNode) / 2);
     const branchLineY = Math.round(
       firstTarget.position.y - BRANCH_SHORT_LEG,
     );
@@ -59,9 +69,9 @@ export function computeDingFlowOverlays(
     if (!targetNode) continue;
     const firstSource = nodeMap.get(ins[0].source);
     if (!firstSource) continue;
-    const cx = Math.round(targetNode.position.x + CARD_W / 2);
+    const cx = Math.round(targetNode.position.x + getWidth(targetNode) / 2);
     const mergeLineY = Math.round(
-      firstSource.position.y + CARD_H + MERGE_SHORT_LEG,
+      firstSource.position.y + getHeight(firstSource) + MERGE_SHORT_LEG,
     );
     result.push({
       id: `overlay-merge-${targetId}`,

@@ -29,14 +29,14 @@ function resolveNodeSize(
     toFiniteNumber(data.nodeWidth) ??
     toFiniteNumber(size.width) ??
     toFiniteNumber(nodeTypeSize?.minWidth) ??
-    192;
+    220;
 
   const height =
     toFiniteNumber(data.height) ??
     toFiniteNumber(data.nodeHeight) ??
     toFiniteNumber(size.height) ??
     toFiniteNumber(nodeTypeSize?.minHeight) ??
-    110;
+    80;
 
   return { width, height };
 }

@@ -65,29 +65,37 @@ export function simpleTreeLayout(
     }
   }
 
+  const DW = 220;
+  const DH = 80;
+
   const positions = new Map<string, { x: number; y: number }>();
+  let offset = 0;
 
   if (isVertical) {
     for (let li = 0; li < layers.length; li++) {
       const layer = layers[li];
-      const totalHeight = layer.reduce((sum, id) => sum + (nodeHeights.get(id) ?? 80) + nodeSpacing, -nodeSpacing);
-      let y = 0;
+      const totalSpan = layer.reduce((sum, id) => sum + (nodeWidths.get(id) ?? DW) + nodeSpacing, -nodeSpacing);
+      let cursor = 0;
       for (const id of layer) {
-        const w = nodeWidths.get(id) ?? 220;
-        positions.set(id, { x: -totalHeight / 2 + y + w / 2, y: li * (80 + layerSpacing) });
-        y += w + nodeSpacing;
+        const w = nodeWidths.get(id) ?? DW;
+        positions.set(id, { x: -totalSpan / 2 + cursor + w / 2, y: offset });
+        cursor += w + nodeSpacing;
       }
+      const layerMaxHeight = layer.reduce((max, id) => Math.max(max, nodeHeights.get(id) ?? DH), 0);
+      offset += layerMaxHeight + layerSpacing;
     }
   } else {
     for (let li = 0; li < layers.length; li++) {
       const layer = layers[li];
-      const totalWidth = layer.reduce((sum, id) => sum + (nodeWidths.get(id) ?? 220) + nodeSpacing, -nodeSpacing);
-      let x = 0;
+      const totalSpan = layer.reduce((sum, id) => sum + (nodeHeights.get(id) ?? DH) + nodeSpacing, -nodeSpacing);
+      let cursor = 0;
       for (const id of layer) {
-        const h = nodeHeights.get(id) ?? 80;
-        positions.set(id, { x: li * (220 + layerSpacing), y: -totalWidth / 2 + x + h / 2 });
-        x += h + nodeSpacing;
+        const h = nodeHeights.get(id) ?? DH;
+        positions.set(id, { x: offset, y: -totalSpan / 2 + cursor + h / 2 });
+        cursor += h + nodeSpacing;
       }
+      const layerMaxWidth = layer.reduce((max, id) => Math.max(max, nodeWidths.get(id) ?? DW), 0);
+      offset += layerMaxWidth + layerSpacing;
     }
   }
 
