@@ -186,6 +186,31 @@ Example:
 }
 ```
 
+### Design Direction: ApiSchema As Ajax Action Transport Contract
+
+`ApiSchema` 描述一次 HTTP 请求的 url / method / headers / params / adaptors，这一职责不变。变化在于：`ApiSchema` 不再作为 schema 上的 authoring 属性或 runtime 的独立执行入口，而是成为 `ajax` action 的**内部传输描述类型**。
+
+两层关系：
+
+1. **Action dispatch（运行时唯一执行路径）**：所有远程调用（form submit、data-source、async validation、reaction）统一走 `runtime.dispatch(...)` → `ActionRuntimeAdapter`。schema 中直接写 `{ action: "ajax", args: { url, method, ... } }`
+2. **ApiSchema（ajax action 内部）**：`ajax` action 的实现内部将 `args` 构造为 `ApiSchema` 格式，再走 `executeApiSchema(...)` → fetcher。这是 action 实现细节，不是 schema 层可见的概念
+
+被删除的内容：
+
+- schema 上的 `api: ApiSchema` 属性（form、data-source、validation 等位置）。项目从未发布，不需要兼容层
+- runtime 中 `submitApiCall(api)` 等绕过 action dispatch 的旁路
+- async validation 中的 `{ kind: 'async', api: ApiSchema }` 变体
+
+选择这个方向的原因：
+
+- **统一执行路径**：提交、校验、数据源、事件处理所有远程调用最终都走 `runtime.dispatch(...)` → `ActionRuntimeAdapter` 这一条链路。拦截、日志、重试、幂等、超时只需要在一层实现
+- **统一扩展模型**：用户注册一个自定义 action 后，校验、提交、数据源都可以复用，不需要分别为校验写 plugin、为提交写 hook
+- **本地/远程校验无差别**：`{ action: "customCheck" }` 内部是 JS 函数还是 HTTP 调用，对消费者透明
+- **测试统一**：mock action dispatch 即可覆盖所有场景
+- **概念模型更简单**：用户只需要理解 action 是所有行为的统一入口，不需要同时理解 `api` 和 `action` 两套写法
+
+`ApiSchema` 作为 `ajax` action 内部的传输描述类型继续存在，定义 HTTP 请求的 url / method / headers / params / adaptors，但只被 `ajax` action 实现消费。
+
 ### Operation Control
 
 Request coordination does not belong to `ApiSchema`.
@@ -227,7 +252,7 @@ Current baseline note:
 - adaptor expressions and object-shaped runtime values are now cached by source/object identity on the hot path so repeated dispatch/request execution avoids ad hoc recompilation where schema identity is stable
 - ajax-side API monitor callbacks should observe the final executable request shape, not the pre-canonical declarative request object, so diagnostics line up with what fetch/dedup/cache actually execute
 - current source-runtime baseline now includes a runtime-owned source registry scoped by `ScopeRef.id`; `DataSourceRenderer` only registers/disposes entries while runtime owns controller start/stop and replacement semantics
-- current `DataSourceSchema` baseline now supports both `api` and `formula` producers under the same runtime-owned registration path
+- current `DataSourceSchema` baseline now supports both action-backed (via `action: "ajax"`) and `formula` producers under the same runtime-owned registration path
 - formula `data-source` uses `name` as the normative publication path for both api and formula producers
 - current formula-source baseline publishes on mount and explicit refresh using the shared runtime registry, but it does not yet implement the full dependency-indexed lazy invalidation model described below
 - current `DataSourceController` baseline now exposes `DataSourceState` via `getState()` with legacy status fields such as `started`, `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`, and now also includes additive convenience fields such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`; api sources drive fetch lifecycle while formula sources publish the same public contract with synchronous semantics
@@ -359,7 +384,8 @@ Illustrative schematic shape:
     {
       "type": "data-source",
       "name": "companyLookup",
-      "api": {
+      "action": "ajax",
+      "args": {
         "url": "/api/company/${companyId}"
       },
       "mergeToScope": false
@@ -404,7 +430,8 @@ Recommended publication shape for linked field writeback:
     {
       "type": "data-source",
       "name": "companyLookup",
-      "api": {
+      "action": "ajax",
+      "args": {
         "url": "/api/company/${companyId}"
       },
       "resultMapping": {
@@ -443,7 +470,7 @@ Examples:
   "options": {
     "type": "source",
     "action": "ajax",
-    "api": {
+    "args": {
       "url": "/api/countries",
       "params": {
         "region": "${form.region}"
@@ -506,7 +533,7 @@ interface DataSourceSchema extends BaseDataSourceSchema, ActionSchema {
 Rules:
 
 - `data-source` extends source-style action execution with named publication and scheduling controls
-- `action`, `args`, `api`, `control`, `then`, `onError`, and `parallel` follow the same execution semantics used by action-backed sources
+- `action`, `args`, `control`, `then`, `onError`, and `parallel` follow the same execution semantics used by action-backed sources
 - `resultMapping`, when present, maps the fetched/produced payload into a target object shape before named publication or `mergeToScope`
 - `name` is the normative author-visible identity and default publication path
 - `mergeToScope: true` is the only narrowed special publish extension beyond the named publication path
@@ -768,7 +795,8 @@ Once those controls are resolved, request execution owns the actual retry/backof
     {
       "type": "data-source",
       "name": "tasks",
-      "api": {
+      "action": "ajax",
+      "args": {
         "url": "/api/tasks",
         "includeScope": ["projectId"],
         "params": { "status": "active" }
@@ -791,7 +819,8 @@ Once those controls are resolved, request execution owns the actual retry/backof
     {
       "type": "data-source",
       "name": "status",
-      "api": { "url": "/api/job/${jobId}/status" },
+      "action": "ajax",
+      "args": { "url": "/api/job/${jobId}/status" },
       "interval": 3000,
       "stopWhen": "${status.complete}"
     },

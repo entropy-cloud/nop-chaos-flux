@@ -187,7 +187,7 @@ interface CrudStatusSummary {
 
 | AMIS 字段 | Flux 正式字段 | 说明 |
 | --- | --- | --- |
-| `api` | `source` | canonical 迁移目标统一收敛到 `source`；当前 live baseline 仅证明数组型 `source` 工作流，请求 owner 协作仍属后续范围 |
+| `api` | `source` | canonical 迁移目标统一收敛到 `source`；当前 live baseline 已证明数组型 `source` 与上游 source-result object（如 `{ items, total }`）工作流，请求 owner 协作仍属后续范围 |
 | `filter` | `queryForm` | 查询表单统一映射 |
 | `autoGenerateFilter` | `autoGenerateQueryForm` | 自动生成查询区 |
 | `headerToolbar` | `toolbar` | 顶部工具栏 region |
@@ -226,7 +226,7 @@ interface CrudStatusSummary {
 | 多列时的字段选择 | 已支持 | 已支持基础版（列显隐 + 最小列顺序调整，`overlay: false` inline panel 已落地） | 已覆盖基础版 |
 | 列拖拽排序 | 已支持 | 未实现（当前为非拖拽的最小上下移动；`draggable` 仍属后续） | 已定义 |
 | 响应式更多列展开 | 已支持 | 已支持基础版：`responsive.mode: 'expand'` 会在低于 `breakpoint` 时把次要列移入 expandable detail row | 已覆盖基础版 |
-| 服务端分页 | 已支持 | 未实现（当前仅数组型 `source` workflow baseline） | 已定义 |
+| 服务端分页 | 已支持 | 未实现完整请求 owner baseline；当前支持消费上游 source-result object（如 `{ items, total }`）并通过 `onRefresh -> refreshSource` 回到上游请求 owner | 已定义 |
 | 前端一次性加载分页/过滤 | 已支持 | 部分 table 本地处理能力存在 | 已定义 |
 | quick edit | 已支持 | 未实现 | 已定义 |
 | 动态列 | 已支持 | 部分可通过 source 注入 | 已覆盖设计入口 |
@@ -236,7 +236,7 @@ interface CrudStatusSummary {
 
 - “当前运行时”反映仓库当前代码状态。
 - “本次契约基线”表示已经进入正式设计和 TypeScript schema，可作为后续实现与迁移工具的依据。
-- 当前仍未完成的 table-heavy / editing-heavy 能力包括更完整的 `columnSettings` parity（尤其是 `draggable` 和持久化策略；`overlay: false` inline panel 已落地）、richer responsive expansion parity、更丰富的 header search/filter source/search UX、`quickEdit`、`syncLocation`、`clientMode.loadDataOnce`，以及 API/request-owned `source` 驱动的 CRUD workflow，不应误读为已全部落地。
+- 当前仍未完成的 table-heavy / editing-heavy 能力包括更完整的 `columnSettings` parity（尤其是 `draggable` 和持久化策略；`overlay: false` inline panel 已落地）、richer responsive expansion parity、更丰富的 header search/filter source/search UX、`quickEdit`、`syncLocation`、`clientMode.loadDataOnce`，以及更完整的 API/request-owned `source` 驱动 CRUD workflow（当前只落地了 source-result consumption + upstream refresh cooperation 基线），不应误读为已全部落地。
 
 ## 10. 迁移策略
 

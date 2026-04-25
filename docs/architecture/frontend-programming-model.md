@@ -86,7 +86,7 @@ The current programming model includes these stable design rules:
 | structure | `visible` -> `when` -> `loop` -> `dynamic-renderer` |
 
 7. Keep `Capability` focused on authority lookup and targeting; keep `Action Algebra` as derived control flow layered above it.
-8. Keep `ApiSchema` as the declarative transport/adaptor contract, `Operation Control` as the shared execution-control layer, and consumer-specific policy above both.
+8. `ApiSchema` is the internal transport descriptor used by the `ajax` action; it is not an independent execution path. Authoring-level `api` fields compile to standard `ajax` actions. `Operation Control` remains the shared execution-control layer.
 9. Keep `Semantic Lifecycle Entry` owned by semantic nodes such as forms, pages, dialogs, and semantic hosts instead of scattering the full business pipeline across UI triggers.
 10. Keep `Resource` publication converged around `name` as the identity and default publication path, `mergeToScope: true` as the only narrowed special publish extension, and `statusPath` as readonly status summary.
 11. Keep host boundaries strict: read through readonly `Host Projection`, write through `Capability`, and keep bridge/controller/protocol objects host-private.
@@ -126,7 +126,7 @@ Examples:
 | `Final Execution Schema` | boundary into `Flux` `Execution Model` | assembled execution contract, not a primitive |
 | expression and template interpolation | `Flux` `Execution Model` | `Primitive-Owned Surface` of `Value` |
 | `Action Algebra` | `Flux` `Execution Model` | `Derived Runtime System` above `Capability` |
-| `ApiSchema` | `Flux` `Execution Model` | declarative contract surface around `Resource` |
+| `ApiSchema` | `Flux` `Execution Model` | internal transport descriptor for the `ajax` action |
 | `Operation Control` | `Flux` `Execution Model` | `Derived Runtime System` |
 | `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | `Flux` `Execution Model` | `Derived Runtime System` |
 | CRDT / OT / domain bridge / graph engine | host and domain runtimes | outside `Flux` core |
@@ -347,7 +347,7 @@ They may appear to `Flux` only through narrow boundaries such as:
 11. `Capability` is the authority primitive; `Action Algebra` is derived control flow layered above it.
 12. Dependency tracking is a first-class execution baseline, and dependency change does not directly dispatch arbitrary actions.
 13. New domain complexity does not automatically create new primitives.
-14. `ApiSchema` remains the transport/adaptor contract; shared execution control belongs to `Operation Control`.
+14. `ApiSchema` is the internal transport descriptor used by the `ajax` action; all runtime execution goes through action dispatch. `Operation Control` remains the shared execution-control layer.
 15. `Semantic Lifecycle Entry` belongs to the owning semantic node when that boundary exists.
 16. Host integration follows readonly `Host Projection` plus `Capability` write boundaries.
 

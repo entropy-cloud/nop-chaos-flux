@@ -1,6 +1,6 @@
 # 138 CRUD Editing And Request-Owned Runtime Successor Plan
 
-> Plan Status: planned
+> Plan Status: in progress
 > Last Reviewed: 2026-04-25
 > Source: `docs/plans/136-crud-workflow-completion-plan.md`, `docs/components/crud/design.md`, `docs/components/table/design.md`, `docs/components/form/design.md`, `docs/architecture/action-interaction-state.md`, live repo audit of `packages/flux-renderers-data/src/crud-renderer.tsx`, `packages/flux-renderers-data/src/crud-schema.ts`, and current focused CRUD tests
 > Related: `docs/plans/136-crud-workflow-completion-plan.md`, `docs/plans/137-crud-table-heavy-parity-successor-plan.md`
@@ -46,43 +46,46 @@
 
 ### Phase 1 - Freeze Editing And Request-Owned Baseline
 
-Status: planned
+Status: completed
 Targets: `docs/components/crud/design.md`, `packages/flux-renderers-data/src/crud-schema.ts`, `packages/flux-renderers-data/src/crud-renderer.tsx`
 
-- [ ] 明确 request-owned `source` workflow 的目标 baseline
-- [ ] 明确 `quickEdit` / quick save / `clientMode` / `syncLocation` 中哪些要在本计划落地，哪些继续后置
+- [x] 明确 request-owned `source` workflow 的目标 baseline
+- [x] 明确 `quickEdit` / quick save / `clientMode` / `syncLocation` 中哪些要在本计划落地，哪些继续后置
 
 Exit Criteria:
 
-- [ ] editing/runtime target baseline 在 plan 与 docs 中明确
-- [ ] 与 table-heavy successor 的边界清晰
+- [x] editing/runtime target baseline 在 plan 与 docs 中明确
+- [x] 与 table-heavy successor 的边界清晰
 
 ### Phase 2 - Land Request-Owned CRUD Source Workflow
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`, focused CRUD tests, playground CRUD lab
 
-- [ ] 让 CRUD 与 request-owned / source-owned workflow 形成明确的 live baseline，而不再只有数组型 `source`
-- [ ] 收敛 `api -> source` canonical target 到真正可观察的运行时语义
+- [x] 让 CRUD 与 request-owned / source-owned workflow 形成明确的 live baseline，而不再只有数组型 `source`
+- [x] 收敛 `api -> source` canonical target 到真正可观察的运行时语义
+- [x] 修复 request-owned proof 中的 owner-scope refresh contract 与 dependency-less source invalidation loop，确保 focused request-owned test 可稳定结束
 
 Exit Criteria:
 
-- [ ] 至少一条 focused test 证明 request-owned/source-owned CRUD baseline 成立
-- [ ] docs/examples/playground 与该 baseline 一致
+- [x] 至少一条 focused test 证明 request-owned/source-owned CRUD baseline 成立
+- [x] docs/examples/playground 与该 baseline 一致
+- [x] request-owned refresh proof 不再因 CRUD scope publication 触发 dependency-less `data-source` refresh loop
 
 ### Phase 3 - Land Editing And Query-Sync Extensions
 
-Status: planned
+Status: in progress
 Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`, related table/form integration, focused tests, docs/examples
 
-- [ ] 落地 `quickEdit` / `quickSaveAction` / `quickSaveItemAction` baseline
-- [ ] 评估并落地 `clientMode.loadDataOnce` / `fetchOnFilter` / `matchFunc` baseline
+- [x] 落地第一版 `quickEdit` / `quickSaveAction` / `quickSaveItemAction` baseline
+- [x] 落地第一版 `clientMode.loadDataOnce` / `fetchOnFilter` baseline
 - [ ] 评估并落地 `syncLocation` / primitive query parsing baseline
 
 Exit Criteria:
 
-- [ ] 每项 landed extension 都有 focused tests
-- [ ] 未 landed extension 明确保留在 docs/plan out-of-scope，而非保持模糊
+- [x] 已 landed 的 `quickEdit` baseline 有 focused tests
+- [x] 当前未 landed extension 在 plan/docs 中保持显式 deferred
+- [x] 已 landed 的 `clientMode.loadDataOnce` / `fetchOnFilter` baseline 有 focused tests
 
 ### Phase 4 - Docs, Verification, And Closure Audit
 
@@ -122,3 +125,11 @@ Closure Audit Evidence:
 Follow-up:
 
 - After this plan and Plan 137 close, a later successor can own AMIS CRUD full-parity / migration closure audit.
+
+## Documentation Follow-Up
+
+- Phase 1 baseline is now explicit: the first request-owned/source-owned CRUD slice does not invent a CRUD-private fetch protocol. Instead, CRUD accepts common upstream source result objects such as `{ items, total }`, `{ rows, total }`, `{ records, total }`, or `{ list, total }` from scope/data-source publication and preserves upstream total in `$crud.total` while applying local query filtering to visible rows.
+- Phase 2 baseline now also has a request-owned refresh path: CRUD can consume a real upstream `data-source` result object via `source`, and `component:refresh` on CRUD can re-enter that upstream owner through `onRefresh: { action: 'refreshSource', targetId }` instead of inventing a CRUD-local request protocol.
+- Phase 2 request-owned proof required two live fixes before it became stable: CRUD `onRefresh` must keep the owner scope when delegating to `refreshSource`, and the runtime source-registry invalidation path must not treat dependency-less sources as “refresh on every scope write”. Without those fixes, CRUD's own `$crud` / `$_crud.*` scope publication could keep retriggering the upstream source and leave the focused test hanging.
+- Phase 3 now has a broader but still intentionally narrow live `quickEdit` slice through the table-backed CRUD bridge: columns with `quickEdit: true`, `quickEdit: { saveImmediately }`, inline `quickEdit.body`, or `quickEdit.mode: 'dialog'` render editors on the existing row scope and reuse the same `quickSaveItemAction` / `quickSaveAction` bridge. The current dialog mode is a local quick-edit dialog shell, not a convergence of CRUD quick-edit with the managed `openDialog` surface-runtime path.
+- Phase 3 also now has a first `clientMode` baseline for request-owned/source-owned CRUD: when `clientMode.loadDataOnce` is true, query submit/reset stay local by default and do not re-enter upstream query refresh actions; when `clientMode.fetchOnFilter` is also true, those query actions opt back into upstream source refresh while CRUD still applies its local visible-row filtering to the refreshed result set. `matchFunc` and `syncLocation` remain deferred.
