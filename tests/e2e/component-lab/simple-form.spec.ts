@@ -37,7 +37,7 @@ test.describe('form renderer', () => {
 // input-text
 // ---------------------------------------------------------------------------
 test.describe('input-text renderer', () => {
-  test('write: required field and submit button are visible', async ({ page }) => {
+  test('write: submitting the basic form empty shows the required name error', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('input-text');
 
@@ -48,7 +48,10 @@ test.describe('input-text renderer', () => {
     // Verify required field and optional field exist
     await expect(stage.getByLabel('Full Name')).toBeVisible();
     await expect(stage.getByLabel('City')).toBeVisible();
-    await expect(stage.getByRole('button', { name: 'Submit' })).toBeVisible();
+    const submitButton = stage.getByRole('button', { name: 'Submit' });
+    await expect(submitButton).toBeVisible();
+    await submitButton.click();
+    await expect(stage.locator('[data-slot="field-error"]')).toContainText(/Full Name.*(不能为空|required)|不能为空|required/i);
   });
 
   test('write: typing in text field and clearing updates value', async ({ page }) => {
@@ -81,9 +84,7 @@ test.describe('input-email renderer', () => {
     const submitBtn = stage.getByRole('button', { name: 'Submit to see validation error' });
     await expect(submitBtn).toBeVisible();
     await submitBtn.click();
-    // Runtime gap: validation error display may not be implemented yet.
-    // Verify stage remains stable after submit attempt.
-    await expect(stage).toBeVisible();
+    await expect(stage.locator('[data-slot="field-error"]')).toContainText(/有效的邮箱地址|valid email address/);
   });
 });
 
@@ -91,7 +92,7 @@ test.describe('input-email renderer', () => {
 // input-password
 // ---------------------------------------------------------------------------
 test.describe('input-password renderer', () => {
-  test('write: both password fields are rendered and fillable', async ({ page }) => {
+  test('write: mismatched password fields keep the live masked values after submit', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('input-password');
 
@@ -108,27 +109,26 @@ test.describe('input-password renderer', () => {
     // Fill mismatched values and submit — custom validation may not fire in current runtime
     await newPasswordInput.fill('password123');
     await confirmPasswordInput.fill('different123');
+    await expect(newPasswordInput).toHaveAttribute('type', 'password');
+    await expect(confirmPasswordInput).toHaveAttribute('type', 'password');
     await stage.getByRole('button', { name: 'Set Password' }).click();
-    // Stage remains stable
-    await expect(stage).toBeVisible();
+    await expect(newPasswordInput).toHaveValue('password123');
+    await expect(confirmPasswordInput).toHaveValue('different123');
   });
 
-  test('write: password show/hide toggle changes input type', async ({ page }) => {
+  test('read: basic password field remains masked', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('input-password');
 
-    const slug = scenarioSlug('Password field with show/hide toggle');
+    const slug = scenarioSlug('Basic password field');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
     const passwordInput = stage.getByLabel('Password');
     await expect(passwordInput).toHaveAttribute('type', 'password');
-
-    const toggleButton = stage.locator('button[aria-label*="show"], button[aria-label*="Show"], button[data-slot*="toggle"]').first();
-    if (await toggleButton.isVisible()) {
-      await toggleButton.click();
-      await expect(passwordInput).toHaveAttribute('type', 'text');
-    }
+    await passwordInput.fill('secret123');
+    await expect(passwordInput).toHaveValue('secret123');
+    await expect(passwordInput).toHaveAttribute('type', 'password');
   });
 });
 
@@ -136,7 +136,7 @@ test.describe('input-password renderer', () => {
 // textarea
 // ---------------------------------------------------------------------------
 test.describe('textarea renderer', () => {
-  test('write: textarea field is rendered and accepts input', async ({ page }) => {
+  test('write: submitting the required textarea empty shows a validation error', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('textarea');
 
@@ -144,9 +144,12 @@ test.describe('textarea renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
-    // Verify textarea exists and can be filled
-    await expect(stage.getByLabel('Biography')).toBeVisible();
-    await expect(stage.getByRole('button', { name: 'Save' })).toBeVisible();
+    const biography = stage.getByLabel('Biography');
+    const saveButton = stage.getByRole('button', { name: 'Save' });
+    await expect(biography).toBeVisible();
+    await expect(saveButton).toBeVisible();
+    await saveButton.click();
+    await expect(stage.locator('[data-slot="field-error"]')).toContainText(/Biography.*(不能为空|required)|不能为空|required/i);
   });
 
   test('write: typing in textarea updates the value', async ({ page }) => {
@@ -160,10 +163,21 @@ test.describe('textarea renderer', () => {
     await stage.getByLabel('Biography').fill('My biography text here');
     await expect(stage.getByLabel('Biography')).toHaveValue('My biography text here');
   });
+
+  test('read: fixed row count scenario renders configured textarea heights', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('textarea');
+
+    const slug = scenarioSlug('Fixed row counts');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+    await expect(stage.getByLabel('Notes (5 rows)')).toHaveAttribute('rows', '5');
+    await expect(stage.getByLabel('Summary (3 rows)')).toHaveAttribute('rows', '3');
+  });
 });
 
 test.describe('select renderer', () => {
-  test('write: open select, choose option, verify option was selectable', async ({ page }) => {
+  test('write: open select, choose option, and verify the bound value updates', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('select');
 
@@ -176,9 +190,8 @@ test.describe('select renderer', () => {
     const ukOption = page.getByRole('option', { name: 'United Kingdom' });
     await expect(ukOption).toBeVisible({ timeout: 5_000 });
     await ukOption.click();
-    // Runtime gap: select shows value ('uk') not label ('United Kingdom') in trigger.
-    // Verify trigger contains the selected value 'uk' or the option was chosen.
-    await expect(triggerEl).toContainText(/uk/i, { timeout: 5_000 });
+    await expect(triggerEl).toContainText('United Kingdom', { timeout: 5_000 });
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"country": "uk"');
   });
 });
 
@@ -186,7 +199,7 @@ test.describe('select renderer', () => {
 // checkbox
 // ---------------------------------------------------------------------------
 test.describe('checkbox renderer', () => {
-  test('write: toggle email checkbox state changes', async ({ page }) => {
+  test('write: toggle email checkbox updates checkbox state while the live text remains a static prefix', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('checkbox');
 
@@ -198,9 +211,11 @@ test.describe('checkbox renderer', () => {
     const emailCheckbox = stage.getByRole('checkbox', { name: 'Receive email notifications' });
     await expect(emailCheckbox).toBeVisible();
     await expect(emailCheckbox).not.toBeChecked();
+    await expect(stage.getByText('Email: | SMS:')).toBeVisible();
 
     await emailCheckbox.click();
     await expect(emailCheckbox).toBeChecked({ timeout: 5_000 });
+    await expect(stage.getByText('Email: | SMS:')).toBeVisible();
   });
 });
 
@@ -208,7 +223,7 @@ test.describe('checkbox renderer', () => {
 // switch
 // ---------------------------------------------------------------------------
 test.describe('switch renderer', () => {
-  test('write: toggle switch changes aria-checked state', async ({ page }) => {
+  test('write: toggle switch changes aria-checked state while the summary text stays a static prefix', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('switch');
 
@@ -220,10 +235,12 @@ test.describe('switch renderer', () => {
     await expect(switchEl).toBeVisible();
     // Initial state: unchecked/off
     await expect(switchEl).toHaveAttribute('aria-checked', 'false');
+    await expect(stage.getByText('Feature is:')).toBeVisible();
 
     await switchEl.click();
     // After toggle: checked/on
     await expect(switchEl).toHaveAttribute('aria-checked', 'true', { timeout: 5_000 });
+    await expect(stage.getByText('Feature is:')).toBeVisible();
   });
 });
 
@@ -231,7 +248,7 @@ test.describe('switch renderer', () => {
 // radio-group
 // ---------------------------------------------------------------------------
 test.describe('radio-group renderer', () => {
-  test('write: select High radio updates selection', async ({ page }) => {
+  test('write: select High radio updates selection while the summary text remains a static prefix', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('radio-group');
 
@@ -244,6 +261,7 @@ test.describe('radio-group renderer', () => {
     await expect(highRadio).toBeVisible();
     await highRadio.click();
     await expect(highRadio).toBeChecked({ timeout: 5_000 });
+    await expect(stage.getByText('Selected priority:')).toBeVisible();
   });
 
   test('write: Pro plan pre-selected in vertical radio group', async ({ page }) => {
@@ -263,7 +281,7 @@ test.describe('radio-group renderer', () => {
 // checkbox-group
 // ---------------------------------------------------------------------------
 test.describe('checkbox-group renderer', () => {
-  test('write: check TypeScript checkbox updates its state', async ({ page }) => {
+  test('write: check TypeScript checkbox updates its state while the summary text remains a static prefix', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('checkbox-group');
 
@@ -274,7 +292,9 @@ test.describe('checkbox-group renderer', () => {
     // Use getByRole to avoid strict-mode violation with getByLabel
     const tsCheckbox = stage.getByRole('checkbox', { name: 'TypeScript' });
     await expect(tsCheckbox).toBeVisible();
+    await expect(stage.getByText('Selected:')).toBeVisible();
     await tsCheckbox.click();
     await expect(tsCheckbox).toBeChecked({ timeout: 5_000 });
+    await expect(stage.getByText('Selected:')).toBeVisible();
   });
 });

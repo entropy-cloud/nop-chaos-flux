@@ -34,17 +34,19 @@ test.describe('input-tree renderer', () => {
 // tree-select
 // ---------------------------------------------------------------------------
 test.describe('tree-select renderer', () => {
-  test('write: tree-select stage renders with available interaction', async ({ page }) => {
+  test('write: tree-select opens popover, selects an option, and updates the bound value', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tree-select');
 
     const slug = scenarioSlug('Single-value tree select with search');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Runtime gap: tree-select may not render a combobox trigger.
-    // Verify stage is visible and has interactive content (button or combobox).
-    const interactiveCount = await stage.locator('button, [role="combobox"], input').count();
-    expect(interactiveCount).toBeGreaterThan(0);
+
+    await stage.getByRole('button', { name: 'Select Team' }).click();
+    await expect(page.getByPlaceholder('Search tree options')).toBeVisible({ timeout: 5_000 });
+    await page.getByRole('button', { name: /Platform/ }).click();
+    await expect(stage.getByRole('button', { name: 'Select Team' })).toContainText('Platform');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"team": "platform"');
   });
 });
 
@@ -52,27 +54,37 @@ test.describe('tree-select renderer', () => {
 // tag-list
 // ---------------------------------------------------------------------------
 test.describe('tag-list renderer', () => {
-  test('write: tag-list form renders with Save button', async ({ page }) => {
+  test('write: pre-populated tags render and toggling a tag updates the live text', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tag-list');
 
     const slug = scenarioSlug('Pre-populated technology tags');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Runtime gap: form scope not initialized — tag values not shown as text.
-    // Verify the form renders with its Save button.
     await expect(stage.getByRole('button', { name: 'Save' })).toBeVisible({ timeout: 5_000 });
+    await expect(stage.locator('[data-slot="field-control"] button').first()).toContainText('react');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"tags": [');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"react"');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"typescript"');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"vite"');
+
+    await stage.locator('[data-slot="field-control"] button').filter({ hasText: 'typescript' }).click();
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).not.toContainText('"typescript"');
   });
 
-  test('write: tag-list empty scenario renders with Apply Labels button', async ({ page }) => {
+  test('write: empty tag-list scenario adds a label and updates the count', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tag-list');
 
     const slug = scenarioSlug('Starting from empty — add issue labels');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Verify the form action button is present
     await expect(stage.getByRole('button', { name: 'Apply Labels' })).toBeVisible({ timeout: 5_000 });
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"labels": []');
+
+    await stage.getByText('bug').click();
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"labels": [');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"bug"');
   });
 });
 
@@ -99,17 +111,16 @@ test.describe('key-value renderer', () => {
 // array-editor
 // ---------------------------------------------------------------------------
 test.describe('array-editor renderer', () => {
-  test('read: array-editor renders rows with Remove buttons', async ({ page }) => {
+  test('read: array-editor renders pre-populated scalar item values', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('array-editor');
 
-    const slug = scenarioSlug('Contact list with text columns');
+    const slug = scenarioSlug('Contact list with pre-populated scalar items');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Runtime gap: array-editor pre-populates rows but inputs are empty (data not injected).
-    // Verify rows exist via Remove buttons (each row has a Remove button).
+    await expect(stage.locator('input[value="Alice Johnson <alice@example.com>"]')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.locator('input[value="Bob Smith <bob@example.com>"]')).toBeVisible();
     await expect(stage.getByRole('button', { name: '删除' }).first()).toBeVisible({ timeout: 5_000 });
-    // Verify Add item button exists
     await expect(stage.getByRole('button', { name: '添加项' }).or(stage.getByRole('button', { name: /Add/ }))).toBeVisible();
   });
 });
@@ -118,16 +129,16 @@ test.describe('array-editor renderer', () => {
 // condition-builder
 // ---------------------------------------------------------------------------
 test.describe('condition-builder renderer', () => {
-  test('read: condition builder stage renders with some content', async ({ page }) => {
+  test('read: simple condition builder publishes its preloaded rule shape into scope state', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('condition-builder');
 
     const slug = scenarioSlug('Simple single-rule AND group');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Use a simple non-strict check — just verify the stage has content
-    const content = await stage.innerText();
-    expect(content.trim().length).toBeGreaterThan(0);
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"field": "status"');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"operator": "eq"');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"value": "active"');
   });
 });
 
@@ -168,7 +179,7 @@ test.describe('object-field renderer', () => {
 // array-field
 // ---------------------------------------------------------------------------
 test.describe('array-field renderer', () => {
-  test('write: Add button is present and the form can be submitted', async ({ page }) => {
+  test('write: add a contact row and verify the array scope grows by one item', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('array-field');
 
@@ -176,11 +187,12 @@ test.describe('array-field renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByText(/Add contacts and submit/)).toBeVisible();
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"contacts": []');
 
-    // Verify Add button exists
     const addButton = stage.getByText('添加项').first();
     await expect(addButton).toBeVisible();
-    // Submit button exists
+    await addButton.click();
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"contacts": [ {} ]');
     await expect(stage.getByRole('button', { name: 'Submit' })).toBeVisible();
   });
 });
@@ -189,18 +201,31 @@ test.describe('array-field renderer', () => {
 // variant-field
 // ---------------------------------------------------------------------------
 test.describe('variant-field renderer', () => {
-  test('write: form renders and type selector switches field sets', async ({ page }) => {
+  test('write: switch between text and list editors while preserving the active variant state', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('variant-field');
 
     const slug = scenarioSlug('String vs list editor with visible submit result');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Verify the form renders (Submit button visible)
     await expect(stage.getByRole('button', { name: /Submit/i })).toBeVisible({ timeout: 5_000 });
-    // Verify the stage has some interactive content (the variant type selector or field)
-    const interactiveCount = await stage.locator('button, input, [role="radio"], [role="combobox"], [role="tab"]').count();
-    expect(interactiveCount).toBeGreaterThan(0);
+    await expect(stage.getByRole('tab', { name: 'Single String' })).toHaveAttribute('aria-selected', 'true');
+    await expect(stage.getByLabel('Expression')).toHaveValue('status = active');
+
+    await stage.getByRole('tab', { name: 'String List' }).click();
+    await expect(stage.getByRole('tab', { name: 'String List' })).toHaveAttribute('aria-selected', 'true');
+    const listExpressions = stage.getByLabel('Expression');
+    await expect(listExpressions.first()).toHaveValue('status = active');
+    await expect(listExpressions.nth(1)).toHaveValue('role = admin');
+    await listExpressions.first().fill('team = ops');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"filterValue": [');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"team = ops"');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"role = admin"');
+
+    await stage.getByRole('tab', { name: 'Single String' }).click();
+    await expect(stage.getByRole('tab', { name: 'Single String' })).toHaveAttribute('aria-selected', 'true');
+    await stage.getByLabel('Expression').fill('priority = high');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"filterValue": "priority = high"');
   });
 });
 

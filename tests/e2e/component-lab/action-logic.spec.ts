@@ -71,18 +71,21 @@ test.describe('reaction renderer', () => {
     await expect(stage.getByText('doubled: 2')).toBeVisible({ timeout: 5_000 });
   });
 
-  test('write: Message field is present and Character count text is rendered', async ({ page }) => {
+  test('write: message field accepts input while the character count remains at the current baseline', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('reaction');
 
     const slug = scenarioSlug('Field-watch for character count');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Verify the message field is rendered
-    await expect(stage.getByLabel('Message')).toBeVisible();
-    // The display region is present even though the watched writeback is not
-    // yet asserted end-to-end here.
-    await expect(stage.getByText(/Character count:/)).toBeVisible();
+    const messageField = stage.getByLabel('Message');
+    await expect(messageField).toBeVisible();
+    await expect(stage.getByText('Character count: 0')).toBeVisible();
+
+    await messageField.fill('hello');
+    await expect(messageField).toHaveValue('hello');
+    await expect(stage.getByText('Character count: 0')).toBeVisible();
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"message": "hello"');
   });
 });
 
@@ -90,19 +93,17 @@ test.describe('reaction renderer', () => {
 // dynamic-renderer
 // ---------------------------------------------------------------------------
 test.describe('dynamic-renderer renderer', () => {
-  test('read: static schema injected as scope data — description text renders', async ({ page }) => {
+  test('read: schemaApi-loaded schema renders the returned fragment', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('dynamic-renderer');
 
-    const slug = scenarioSlug('Static schema injected as scope data');
+    const slug = scenarioSlug('Static schema loaded through schemaApi');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Runtime gap: dynamic-renderer has an error reading schema from scope.
-    // Verify the static description text renders correctly (the text renderer above it).
-    await expect(stage.getByText('The dynamic-renderer reads its schema from the scope.')).toBeVisible();
+    await expect(stage.getByText('Rendered from schemaApi')).toBeVisible({ timeout: 5_000 });
   });
 
-  test('write: schema-switching buttons are present and stage renders', async ({ page }) => {
+  test('write: schema-switching buttons reload the dynamic schema fragment', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('dynamic-renderer');
 
@@ -113,14 +114,15 @@ test.describe('dynamic-renderer renderer', () => {
     await expect(stage.getByRole('button', { name: 'Show Badge' })).toBeVisible();
     await expect(stage.getByRole('button', { name: 'Show Text' })).toBeVisible();
     await expect(stage.getByRole('button', { name: 'Show Button' })).toBeVisible();
+    await expect(stage.getByText('Currently rendering: badge')).toBeVisible();
+    await expect(stage.getByText('Dynamically rendered badge')).toBeVisible({ timeout: 5_000 });
 
-    // The 'Currently rendering:' text element is visible (runtime gap: expression
-    // value may not update reactively after setValue)
-    await expect(stage.getByText(/Currently rendering:/)).toBeVisible();
-
-    // Clicking the buttons should not throw errors
     await stage.getByRole('button', { name: 'Show Text' }).click();
+    await expect(stage.getByText('Currently rendering: text')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Dynamically rendered text content.')).toBeVisible({ timeout: 5_000 });
+
     await stage.getByRole('button', { name: 'Show Button' }).click();
-    await expect(stage).toBeVisible();
+    await expect(stage.getByText('Currently rendering: button')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByRole('button', { name: 'A button from dynamic schema' })).toBeVisible({ timeout: 5_000 });
   });
 });

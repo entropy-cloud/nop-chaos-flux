@@ -22,6 +22,7 @@ test.describe('page renderer', () => {
     // use .first() to avoid strict mode violation
     await expect(stage.getByText('Team Dashboard').first()).toBeVisible();
     await expect(stage.getByText('Acme Corp')).toBeVisible();
+    await expect(stage.getByText('Welcome to the team dashboard. Select a section to get started.')).toBeVisible();
     await expect(stage.getByText('Last updated: 2026-04-12')).toBeVisible();
   });
 
@@ -50,6 +51,18 @@ test.describe('container renderer', () => {
     await expect(stage.getByText('User Account')).toBeVisible();
     await expect(stage.getByText('Name: Alice Johnson')).toBeVisible();
     await expect(stage.getByText('Role: Administrator')).toBeVisible();
+    await expect(stage.getByText('alice@example.com')).toBeVisible();
+  });
+
+  test('read: className-driven card layout renders both cards and badges', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('container');
+
+    const slug = scenarioSlug('Card layout via className');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+    await expect(stage.getByText('Card A')).toBeVisible();
+    await expect(stage.getByText('Card B')).toBeVisible();
   });
 });
 
@@ -66,6 +79,8 @@ test.describe('fragment renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByText(/Parent scope: topLevel/)).toBeVisible();
     await expect(stage.getByText(/Fragment greeting: Hello from fragment scope/)).toBeVisible();
+    await expect(stage.getByText(/Fragment count: 5/)).toBeVisible();
+    await expect(stage.getByText(/Parent var visible: "parent-value"/)).toBeVisible();
   });
 
   test('read: scope isolation — parent variable hidden inside isolated fragment', async ({ page }) => {
@@ -76,6 +91,9 @@ test.describe('fragment renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByText(/Inside isolated fragment/)).toBeVisible();
+    await expect(stage.getByText(/only inside fragment/)).toBeVisible();
+    await expect(stage.getByText(/Parent var secret here: "should-not-leak"/)).toBeVisible();
+    await expect(stage.getByText(/Back in parent .*should-not-leak/)).toBeVisible();
   });
 });
 
@@ -83,7 +101,7 @@ test.describe('fragment renderer', () => {
 // flex
 // ---------------------------------------------------------------------------
 test.describe('flex renderer', () => {
-  test('read: row layout children render in first scenario', async ({ page }) => {
+  test('read: row layout keeps title and both status badges visible', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('flex');
 
@@ -91,6 +109,28 @@ test.describe('flex renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByText('User Profile')).toBeVisible();
+  });
+
+  test('read: column flex renders all three ordered steps', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('flex');
+
+    const slug = scenarioSlug('Column direction with gap');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+    await expect(stage.getByText('Enter your details')).toBeVisible();
+    await expect(stage.getByText('Confirm before submitting')).toBeVisible();
+    await expect(stage.getByText('Send to the server')).toBeVisible();
+  });
+
+  test('read: wrapped flex row renders the full tag cloud', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('flex');
+
+    const slug = scenarioSlug('Wrapped row for tag clouds');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('{}');
   });
 });
 
@@ -183,26 +223,32 @@ test.describe('drawer renderer', () => {
 // tabs
 // ---------------------------------------------------------------------------
 test.describe('tabs renderer', () => {
-  test('write: switch to Team tab shows team member content', async ({ page }) => {
+  test('write: switch to Team tab updates the active tab and reveals the team panel only', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tabs');
 
-    const slug = scenarioSlug('Tabs with a disabled tab');
+    const slug = scenarioSlug('Default tabs');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
+    const overviewTab = stage.getByRole('tab', { name: /Overview/ });
+    const teamTab = stage.getByRole('tab', { name: /Team/ });
+    await expect(overviewTab).toHaveAttribute('aria-selected', 'true');
     await expect(stage.getByText('Project status: In Progress')).toBeVisible();
 
-    await stage.getByRole('tab', { name: /Team/ }).click();
+    await teamTab.click();
+    await expect(teamTab).toHaveAttribute('aria-selected', 'true');
+    await expect(overviewTab).toHaveAttribute('aria-selected', 'false');
     await expect(stage.getByText('Alice Johnson')).toBeVisible({ timeout: 5_000 });
     await expect(stage.getByText('Bob Smith')).toBeVisible();
+    await expect(stage.getByText('Project status: In Progress')).not.toBeVisible();
   });
 
   test('write: Settings tab is disabled and cannot be activated', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tabs');
 
-    const slug = scenarioSlug('Tabs with a disabled tab');
+    const slug = scenarioSlug('Default tabs');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
@@ -216,7 +262,7 @@ test.describe('tabs renderer', () => {
 // loop
 // ---------------------------------------------------------------------------
 test.describe('loop renderer', () => {
-  test('read: loop scenarios render item bindings', async ({ page }) => {
+  test('read: loop scenarios render repeated index and item bindings for every row', async ({ page }) => {
     test.setTimeout(60_000);
 
     const lab = new ComponentLabHelper(page);
@@ -227,12 +273,15 @@ test.describe('loop renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByText('1. Alice — Admin')).toBeVisible();
     await expect(stage.getByText('2. Bob — Editor')).toBeVisible();
+    await expect(stage.getByText('3. Carol — Viewer')).toBeVisible();
 
     const richSlug = scenarioSlug('Loop over products card row with icon badge and price');
     const richStage = lab.scenarioStage(richSlug);
     await expect(richStage).toBeVisible();
     await expect(richStage.locator('.nop-text', { hasText: 'Wireless Headphones' })).toBeVisible();
     await expect(richStage.getByText('Electronics').first()).toBeVisible();
+    await expect(richStage.locator('.nop-text', { hasText: '$89.99' })).toBeVisible();
+    await expect(richStage.locator('.nop-text', { hasText: '$499' })).toBeVisible();
   });
 });
 
@@ -240,7 +289,7 @@ test.describe('loop renderer', () => {
 // recurse
 // ---------------------------------------------------------------------------
 test.describe('recurse renderer', () => {
-  test('read: recurse scenarios render nested nodes', async ({ page }) => {
+  test('read: recurse scenarios render nested descendants and per-depth badges', async ({ page }) => {
     test.setTimeout(60_000);
 
     const lab = new ComponentLabHelper(page);
@@ -251,12 +300,15 @@ test.describe('recurse renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.locator('.nop-text', { hasText: 'Root A' })).toBeVisible();
     await expect(stage.locator('.nop-text', { hasText: 'Child A1' })).toBeVisible();
+    await expect(stage.locator('.nop-text', { hasText: 'Child A2' })).toBeVisible();
     await expect(stage.locator('.nop-text', { hasText: 'Child B1' })).toBeVisible();
 
     const richSlug = scenarioSlug('Rich tree with icon label and depth badge');
     const richStage = lab.scenarioStage(richSlug);
     await expect(richStage).toBeVisible();
     await expect(richStage.locator('.nop-text', { hasText: 'Acme Corp' })).toBeVisible();
+    await expect(richStage.locator('.nop-text', { hasText: 'Engineering' })).toBeVisible();
+    await expect(richStage.locator('.nop-text', { hasText: 'Frontend' })).toBeVisible();
     await expect(richStage.locator('[data-slot="badge"]', { hasText: 'L2' }).first()).toBeVisible();
   });
 });
@@ -309,20 +361,16 @@ test.describe('icon renderer', () => {
 // badge
 // ---------------------------------------------------------------------------
 test.describe('badge renderer', () => {
-  test('read: all badge variants stage renders', async ({ page }) => {
+  test('read: all badge variants render their visible labels', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('badge');
 
     const slug = scenarioSlug('All badge variants');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Badge label text is not exposed as accessible text in the current runtime.
-    // Verify the stage contains badge elements (nop-badge or similar class, or data-slot).
-    await expect(stage.locator('[class*="badge"], [data-slot*="badge"], .nop-badge').first()).toBeVisible();
-    // At minimum the stage renders some content
-    const content = await stage.innerText();
-    // We verify the stage is rendered and non-empty (4 badge objects are in schema)
-    expect(content.trim().length).toBeGreaterThanOrEqual(0);
-    await expect(stage).toBeVisible();
+    await expect(stage.getByText('Info')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Success')).toBeVisible();
+    await expect(stage.getByText('Warning')).toBeVisible();
+    await expect(stage.getByText('Danger')).toBeVisible();
   });
 });

@@ -97,9 +97,10 @@ test.describe('data-source renderer', () => {
     const slug = scenarioSlug('Pre-loaded data via page scope (sandbox equivalent)');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Runtime gap: loop renderer does not inject user scope.
-    // But the top-level text renderer 'Users loaded via page data: ${users.length}' should work.
     await expect(stage.getByText(/Users loaded via page data: 3/)).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('alice')).toBeVisible();
+    await expect(stage.getByText('bob')).toBeVisible();
+    await expect(stage.getByText('carol')).toBeVisible();
   });
 });
 
