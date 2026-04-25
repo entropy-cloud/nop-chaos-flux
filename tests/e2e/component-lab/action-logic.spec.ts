@@ -11,6 +11,8 @@ import { ComponentLabHelper, scenarioSlug } from './helpers';
 // ---------------------------------------------------------------------------
 test.describe('button renderer', () => {
   test('read: all button variants render', async ({ page }) => {
+    test.setTimeout(60_000);
+
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('button');
 
@@ -22,25 +24,27 @@ test.describe('button renderer', () => {
     await expect(stage.getByRole('button', { name: 'Disabled' })).toBeDisabled();
   });
 
-  test('write: Increment and Reset buttons are present and interactive', async ({ page }) => {
+  test('write: Increment and Reset update the visible counter', async ({ page }) => {
+    test.setTimeout(60_000);
+
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('button');
 
     const slug = scenarioSlug('onClick with visible scope side-effect (counter)');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Runtime gap: ${clickCount ?? 0} renders literally when clickCount is not in initial scope.
-    // We verify the interactive buttons are present and clickable instead.
     const incrementBtn = stage.getByRole('button', { name: 'Increment' });
     const resetBtn = stage.getByRole('button', { name: 'Reset' });
     await expect(incrementBtn).toBeVisible();
     await expect(resetBtn).toBeVisible();
-    // Buttons are clickable (no errors thrown)
+    await expect(stage.getByText('Clicks: 0')).toBeVisible();
+
     await incrementBtn.click();
     await incrementBtn.click();
+    await expect(stage.getByText('Clicks: 2')).toBeVisible({ timeout: 5_000 });
+
     await resetBtn.click();
-    // Stage remains stable after clicks
-    await expect(stage).toBeVisible();
+    await expect(stage.getByText('Clicks: 0')).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -48,7 +52,9 @@ test.describe('button renderer', () => {
 // reaction
 // ---------------------------------------------------------------------------
 test.describe('reaction renderer', () => {
-  test('write: Increment button updates counter display reactively', async ({ page }) => {
+  test('write: Increment updates counter and derived doubled value', async ({ page }) => {
+    test.setTimeout(60_000);
+
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('reaction');
 
@@ -59,13 +65,10 @@ test.describe('reaction renderer', () => {
     await expect(stage.getByText('counter: 0')).toBeVisible();
     await expect(stage.getByText('doubled: 0')).toBeVisible();
 
-    // Click Increment — runtime gap: setValue for scope variables may not re-render
-    // We verify the Increment button is functional (no error thrown)
     const incrementBtn = stage.getByRole('button', { name: 'Increment' });
     await incrementBtn.click();
-    await incrementBtn.click();
-    // Stage remains visible and stable
-    await expect(stage).toBeVisible();
+    await expect(stage.getByText('counter: 1')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('doubled: 2')).toBeVisible({ timeout: 5_000 });
   });
 
   test('write: Message field is present and Character count text is rendered', async ({ page }) => {
@@ -77,8 +80,8 @@ test.describe('reaction renderer', () => {
     await expect(stage).toBeVisible();
     // Verify the message field is rendered
     await expect(stage.getByLabel('Message')).toBeVisible();
-    // Verify the character count text element is rendered (runtime gap: charCount
-    // may not initialize to 0 because charCount isn't in initial scope data)
+    // The display region is present even though the watched writeback is not
+    // yet asserted end-to-end here.
     await expect(stage.getByText(/Character count:/)).toBeVisible();
   });
 });

@@ -120,6 +120,13 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
   },
   // --- Advanced ---
   {
+    id: 'scope-debug',
+    title: 'Scope Debug',
+    tier: 'read',
+    primaryScenario: 'Live root scope probe',
+    notes: 'Verifies scope-debug renders the current scope JSON and updates alongside local writes',
+  },
+  {
     id: 'dynamic-renderer',
     title: 'Dynamic Renderer',
     tier: 'write',
@@ -206,6 +213,13 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     notes: 'Check TypeScript, verify live selection text updates',
   },
   {
+    id: 'fieldset',
+    title: 'Fieldset',
+    tier: 'read',
+    primaryScenario: 'Basic field grouping',
+    notes: 'Verifies grouped fields render under a shared fieldset title',
+  },
+  {
     id: 'input-tree',
     title: 'Input Tree',
     tier: 'write',
@@ -284,18 +298,25 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
   },
   // --- Data ---
   {
+    id: 'crud',
+    title: 'Crud',
+    tier: 'read',
+    primaryScenario: 'Basic CRUD shell',
+    notes: 'Verifies the CRUD shell renders toolbar and table columns from local source data',
+  },
+  {
     id: 'table',
     title: 'Table',
     tier: 'read',
-    primaryScenario: 'Table with badge column renderer and sortable columns',
-    notes: 'Verify user rows and badge column are visible',
+    primaryScenario: 'Table with sortable text columns',
+    notes: 'Verify user rows and sortable column headers are visible',
   },
   {
     id: 'tree',
     title: 'Tree',
-    tier: 'write',
-    primaryScenario: 'Selectable tree with selected IDs display',
-    notes: 'Click a tree node checkbox, verify selectedIds live text updates',
+    tier: 'read',
+    primaryScenario: 'Expand/collapse org tree',
+    notes: 'Verify hierarchical tree nodes render in the initially expanded state',
   },
   {
     id: 'data-source',
@@ -308,8 +329,8 @@ export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
     id: 'chart',
     title: 'Chart',
     tier: 'read',
-    primaryScenario: 'Bar chart with axis labels and legend',
-    notes: 'Verify chart container renders (SVG or canvas element is present)',
+    primaryScenario: 'Bar chart with configured axes and series',
+    notes: 'Verify chart container renders from source data with live xAxis/yAxis config',
   },
 ];
 

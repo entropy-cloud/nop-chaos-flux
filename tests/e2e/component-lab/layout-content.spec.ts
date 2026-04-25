@@ -114,7 +114,7 @@ test.describe('dialog renderer', () => {
     await expect(page.getByText('Example Dialog')).not.toBeVisible({ timeout: 5_000 });
   });
 
-  test('edit: dialog with form writeback — fill and submit opens dialog', async ({ page }) => {
+  test('edit: dialog confirm closes and writes submitted name back', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('dialog');
 
@@ -131,6 +131,9 @@ test.describe('dialog renderer', () => {
     // Verify form fields are filled correctly
     await expect(page.getByLabel('Full Name')).toHaveValue('Jane Doe');
     await expect(page.getByLabel('Email')).toHaveValue('jane@example.com');
+    await page.getByRole('button', { name: 'Confirm' }).click();
+    await expect(page.getByLabel('Full Name')).not.toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Submitted name: Jane Doe')).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -138,7 +141,7 @@ test.describe('dialog renderer', () => {
 // drawer
 // ---------------------------------------------------------------------------
 test.describe('drawer renderer', () => {
-  test('edit: open right drawer, fill note field', async ({ page }) => {
+  test('edit: right drawer save closes and writes submitted note back', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('drawer');
 
@@ -154,6 +157,9 @@ test.describe('drawer renderer', () => {
     await expect(noteField).toBeVisible();
     await noteField.fill('My test note');
     await expect(noteField).toHaveValue('My test note');
+    await page.getByRole('button', { name: 'Save' }).first().click();
+    await expect(noteField).not.toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Submitted message: My test note')).toBeVisible({ timeout: 5_000 });
   });
 
   test('write: open left drawer and verify navigation links visible', async ({ page }) => {
@@ -181,7 +187,7 @@ test.describe('tabs renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tabs');
 
-    const slug = scenarioSlug('Tabs with icons and a disabled tab');
+    const slug = scenarioSlug('Tabs with a disabled tab');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
@@ -196,7 +202,7 @@ test.describe('tabs renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tabs');
 
-    const slug = scenarioSlug('Tabs with icons and a disabled tab');
+    const slug = scenarioSlug('Tabs with a disabled tab');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
@@ -312,7 +318,7 @@ test.describe('badge renderer', () => {
     await expect(stage).toBeVisible();
     // Badge label text is not exposed as accessible text in the current runtime.
     // Verify the stage contains badge elements (nop-badge or similar class, or data-slot).
-    const badgeCount = await stage.locator('[class*="badge"], [data-slot*="badge"], .nop-badge').count();
+    await expect(stage.locator('[class*="badge"], [data-slot*="badge"], .nop-badge').first()).toBeVisible();
     // At minimum the stage renders some content
     const content = await stage.innerText();
     // We verify the stage is rendered and non-empty (4 badge objects are in schema)

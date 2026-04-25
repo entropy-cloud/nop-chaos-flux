@@ -244,7 +244,7 @@ test.describe('detail-view renderer', () => {
     await expect(stage.getByText(/Author:.*Finance Team/)).toBeVisible();
   });
 
-  test('edit: click Edit, fill title, confirm, dialog closes', async ({ page }) => {
+  test('edit: click Edit, fill title, confirm, verify updated title in viewer', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('detail-view');
 
@@ -260,8 +260,7 @@ test.describe('detail-view renderer', () => {
     await page.getByLabel('Title').fill('Annual Report 2026');
     await page.getByRole('button', { name: /确认|Confirm|Save/ }).first().click();
 
-    // Runtime gap: form writeback via dialog doesn't update parent scope.
-    // Verify the dialog closed after confirm.
     await expect(page.getByLabel('Title')).not.toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText(/Title:.*Annual Report 2026/)).toBeVisible({ timeout: 5_000 });
   });
 });

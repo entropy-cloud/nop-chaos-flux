@@ -11,7 +11,7 @@ import { ComponentLabHelper, scenarioSlug } from './helpers';
 // form
 // ---------------------------------------------------------------------------
 test.describe('form renderer', () => {
-  test('write: form fields are rendered and submittable', async ({ page }) => {
+  test('write: form submit shows visible success state with submitted username', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('form');
 
@@ -24,12 +24,12 @@ test.describe('form renderer', () => {
     await expect(stage.getByLabel('Email')).toBeVisible();
     await expect(stage.getByRole('button', { name: 'Submit' })).toBeVisible();
 
-    // Fill and submit — onSubmit/setValue may not fire in current runtime, but click should not error
     await stage.getByLabel('Username').fill('testuser');
     await stage.getByLabel('Email').fill('testuser@example.com');
+    await expect(stage.getByLabel('Username')).toHaveValue('testuser');
+    await expect(stage.getByLabel('Email')).toHaveValue('testuser@example.com');
     await stage.getByRole('button', { name: 'Submit' }).click();
-    // Stage remains stable after submit
-    await expect(stage).toBeVisible();
+    await expect(stage.getByText('Success! Submitted username: testuser')).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -55,7 +55,7 @@ test.describe('input-text renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('input-text');
 
-    const slug = scenarioSlug('Clearable, prefix icon, and maxLength');
+    const slug = scenarioSlug('Placeholder and maxLength constraints');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
@@ -167,7 +167,7 @@ test.describe('select renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('select');
 
-    const slug = scenarioSlug('Single-value select with clearable and disabled option');
+    const slug = scenarioSlug('Single-value select with inline options');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 

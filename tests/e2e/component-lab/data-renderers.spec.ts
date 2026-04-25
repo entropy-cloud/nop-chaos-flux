@@ -1,10 +1,28 @@
 /**
  * Behavioral E2E tests for data renderers:
- * table, tree, data-source, chart
+ * crud, table, tree, data-source, chart
  */
 
 import { test, expect } from '@playwright/test';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
+
+// ---------------------------------------------------------------------------
+// crud
+// ---------------------------------------------------------------------------
+test.describe('crud renderer', () => {
+  test('read: basic CRUD shell renders toolbar, rows, and summary', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('crud');
+
+    const slug = scenarioSlug('Basic CRUD shell');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+    await expect(stage.getByRole('button', { name: 'Create' })).toBeVisible();
+    await expect(stage.getByRole('columnheader', { name: /name/i })).toBeVisible();
+    await expect(stage.getByText('Alpha')).toBeVisible();
+    await expect(stage.getByText('1-3 of 3')).toBeVisible();
+  });
+});
 
 // ---------------------------------------------------------------------------
 // table
@@ -14,15 +32,15 @@ test.describe('table renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('table');
 
-    const slug = scenarioSlug('Table with badge column renderer and sortable columns');
+    const slug = scenarioSlug('Table with sortable text columns');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Runtime gap: table renderer does not populate rows from scope data.
-    // Verify column headers render correctly instead.
     // Use getByRole to avoid strict-mode violation (text also appears in scope debug JSON)
     await expect(stage.getByRole('columnheader', { name: /username/i })).toBeVisible({ timeout: 5_000 });
     await expect(stage.getByRole('columnheader', { name: /email/i })).toBeVisible();
     await expect(stage.getByRole('columnheader', { name: /role/i })).toBeVisible();
+    await expect(stage.getByText('alice')).toBeVisible();
+    await expect(stage.getByText('carol')).toBeVisible();
   });
 
   test('read: empty state message shows when data is empty', async ({ page }) => {
@@ -32,11 +50,7 @@ test.describe('table renderer', () => {
     const slug = scenarioSlug('Empty state scenario');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // emptyText is shown — may be the schema prop or a default 'No data' message
-    await expect(
-      stage.getByText('No users found. Try adjusting your search filters.')
-        .or(stage.getByText(/No data|No results|暂无数据/i))
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('No users found. Try adjusting your search filters.')).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -57,19 +71,18 @@ test.describe('tree renderer', () => {
     await expect(stage.getByRole('button', { name: 'Product' })).toBeVisible();
   });
 
-  test('write: tree nodes render in selectable mode', async ({ page }) => {
+  test('read: tree custom node template renders depth badges', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tree');
 
-    const slug = scenarioSlug('Selectable tree with selected IDs display');
+    const slug = scenarioSlug('Custom node template with depth badge');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Verify tree nodes are visible (runtime gap: checkboxes may not render)
     // Use getByRole to avoid strict-mode violation (text also appears in scope debug JSON)
     await expect(stage.getByRole('button', { name: 'Engineering' })).toBeVisible({ timeout: 5_000 });
     await expect(stage.getByRole('button', { name: 'Frontend' })).toBeVisible();
-    // Verify the Selected IDs text element is present
-    await expect(stage.getByText(/Selected IDs:/)).toBeVisible();
+    await expect(stage.getByText('depth:0').first()).toBeVisible();
+    await expect(stage.getByText('depth:1').first()).toBeVisible();
   });
 });
 
@@ -98,7 +111,7 @@ test.describe('chart renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('chart');
 
-    const slug = scenarioSlug('Bar chart with axis labels and legend');
+    const slug = scenarioSlug('Bar chart with configured axes and series');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 

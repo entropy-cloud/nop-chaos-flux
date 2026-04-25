@@ -13,9 +13,9 @@
 import { test, expect } from '@playwright/test';
 import { ComponentLabHelper, openLabHome, COMPONENT_LAB_COVERAGE_MANIFEST, COVERED_RENDERER_IDS } from './helpers';
 
-test('coverage manifest is non-empty and covers all 40 shared renderer routes', async () => {
-  expect(COMPONENT_LAB_COVERAGE_MANIFEST.length).toBeGreaterThanOrEqual(40);
-  expect(COVERED_RENDERER_IDS.size).toBeGreaterThanOrEqual(40);
+test('coverage manifest is non-empty and covers all shared renderer routes', async () => {
+  expect(COMPONENT_LAB_COVERAGE_MANIFEST.length).toBeGreaterThanOrEqual(43);
+  expect(COVERED_RENDERER_IDS.size).toBeGreaterThanOrEqual(43);
 });
 
 test('direct route open: #/lab/button renders ComponentLab with Button active', async ({ page }) => {
