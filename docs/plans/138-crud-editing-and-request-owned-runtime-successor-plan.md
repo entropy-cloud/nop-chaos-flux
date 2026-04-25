@@ -79,13 +79,14 @@ Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`, related table/for
 
 - [x] 落地第一版 `quickEdit` / `quickSaveAction` / `quickSaveItemAction` baseline
 - [x] 落地第一版 `clientMode.loadDataOnce` / `fetchOnFilter` baseline
-- [ ] 评估并落地 `syncLocation` / primitive query parsing baseline
+- [x] 明确将 `syncLocation` / primitive query parsing baseline 后置，不在当前 Phase 3 收口
 
 Exit Criteria:
 
 - [x] 已 landed 的 `quickEdit` baseline 有 focused tests
 - [x] 当前未 landed extension 在 plan/docs 中保持显式 deferred
 - [x] 已 landed 的 `clientMode.loadDataOnce` / `fetchOnFilter` baseline 有 focused tests
+- [x] `syncLocation` / primitive query parsing 在当前 plan state 中被显式 deferred，而不是保持模糊
 
 ### Phase 4 - Docs, Verification, And Closure Audit
 
@@ -132,4 +133,5 @@ Follow-up:
 - Phase 2 baseline now also has a request-owned refresh path: CRUD can consume a real upstream `data-source` result object via `source`, and `component:refresh` on CRUD can re-enter that upstream owner through `onRefresh: { action: 'refreshSource', targetId }` instead of inventing a CRUD-local request protocol.
 - Phase 2 request-owned proof required two live fixes before it became stable: CRUD `onRefresh` must keep the owner scope when delegating to `refreshSource`, and the runtime source-registry invalidation path must not treat dependency-less sources as “refresh on every scope write”. Without those fixes, CRUD's own `$crud` / `$_crud.*` scope publication could keep retriggering the upstream source and leave the focused test hanging.
 - Phase 3 now has a broader but still intentionally narrow live `quickEdit` slice through the table-backed CRUD bridge: columns with `quickEdit: true`, `quickEdit: { saveImmediately }`, inline `quickEdit.body`, or `quickEdit.mode: 'dialog'` render editors on the existing row scope and reuse the same `quickSaveItemAction` / `quickSaveAction` bridge. The current dialog mode is a local quick-edit dialog shell, not a convergence of CRUD quick-edit with the managed `openDialog` surface-runtime path.
-- Phase 3 also now has a first `clientMode` baseline for request-owned/source-owned CRUD: when `clientMode.loadDataOnce` is true, query submit/reset stay local by default and do not re-enter upstream query refresh actions; when `clientMode.fetchOnFilter` is also true, those query actions opt back into upstream source refresh while CRUD still applies its local visible-row filtering to the refreshed result set. `matchFunc` and `syncLocation` remain deferred.
+- Phase 3 also now has a first `clientMode` baseline for request-owned/source-owned CRUD: when `clientMode.loadDataOnce` is true, query submit/reset stay local by default and do not re-enter upstream query refresh actions; when `clientMode.fetchOnFilter` is also true, those query actions opt back into upstream source refresh while CRUD still applies its local visible-row filtering to the refreshed result set.
+- `syncLocation` and primitive query parsing are now explicitly deferred from this plan's live runtime scope. They are useful only when CRUD query state must participate in page-level navigation, refresh persistence, or shareable deep links, and that routing/state-ownership slice is broader than the current Phase 3 goal. `matchFunc` also remains deferred.
