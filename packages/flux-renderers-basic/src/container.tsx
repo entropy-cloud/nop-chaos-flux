@@ -28,6 +28,7 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
       {useFlexChild ? (
         <div
           data-slot="container-body"
+          data-flex=""
           className={cn(
             'flex',
             resolveDirection(direction),

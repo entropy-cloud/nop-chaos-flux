@@ -1,7 +1,7 @@
 # Plan Authoring And Execution Guide
 
 > Status: active workflow guide
-> Last Reviewed: 2026-04-12
+> Last Reviewed: 2026-04-25
 > Sources: `docs/logs/2026/03-31.md`, `docs/logs/2026/04-03.md`, `docs/logs/2026/04-04.md`, `docs/logs/2026/04-07.md`, `docs/logs/2026/04-08.md`, `docs/logs/2026/04-09.md`, `docs/logs/2026/04-10.md`
 
 ## Goal
@@ -40,6 +40,8 @@
 10. 如果目标本身是一个用户可感知的完整 feature，优先写成能收口该 feature 的完整实现计划；不要默认先拆成多个彼此依赖的零散计划，除非 live repo 证据已经表明该 feature 无法由一个 owner plan 清晰收口。
 11. 关闭计划时，必须区分“contract surface 已出现”和“contract semantics 已落地”；前者不能替代后者。
 12. 标记 `completed` 前，必须完成一次由独立审阅者或独立子 agent 执行的 closure audit，并把证据写进 plan 或对应 daily log。self-audit 可用于执行中的自查，但不能替代 `completed` 所需的独立 closure audit。
+13. **每个 Phase 的 Exit Criteria 必须包含该 Phase 涉及的文档更新项**（`docs/logs/`、相关 `docs/architecture/`、相关 `docs/components/` 等）。文档同步不是收尾动作，不能推到最后单独一个 Phase 处理。代码变更和文档更新必须在同一个 Phase 内完成。
+14. `docs/architecture/` 下的文档**只描述当前最新设计状态**：最终方案、选择原因、拒绝的替代方案及原因。不写历史变迁、不写"Proposed vs Current"对比、不写演进叙事。如果一个 design doc 包含 "Proposed Design" 或 "Current vs Proposed" 章节，说明它还停留在 draft 状态，实施完成后必须重写为最终设计文档。
 
 ## Required Status Markers
 
@@ -146,6 +148,8 @@ Exit Criteria:
 
 - [ ] <<完成判定>>
 - [ ] <<验证点>>
+- [ ] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
+- [ ] `docs/logs/` 对应日期条目已更新
 
 ### Phase 2 - <<名称>>
 
@@ -159,6 +163,8 @@ Exit Criteria:
 
 - [ ] <<完成判定>>
 - [ ] <<验证点>>
+- [ ] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
+- [ ] `docs/logs/` 对应日期条目已更新
 
 ### Workstream 1 - <<名称>>
 
@@ -172,6 +178,8 @@ Exit Criteria:
 
 - [ ] <<完成判定>>
 - [ ] <<验证点>>
+- [ ] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
+- [ ] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 
@@ -219,6 +227,7 @@ Follow-up:
 5. 如果你正在规划的是一个完整 feature，先问自己这份 plan 是否真的能把 feature 收口；如果答案是否定的，再考虑拆成 successor plans，而不是一开始就把 feature 切碎。
 6. `Exit Criteria` 尽量写成 repo-observable 结果：具体 API、具体行为、具体测试，而不是只写抽象语义。
 7. 如果计划要处理重构热点或大文件治理，先基于 live repo audit 写清当前超大文件清单、目标阈值，以及 closure 时将使用的复核命令；不要只引用旧日志或旧计划里的行数结论。
+8. **每个 Phase 的 Exit Criteria 必须包含文档更新项**。如果某个 Phase 改了代码或行为，该 Phase 的 exit criteria 必须列出需要更新的 `docs/architecture/`、`docs/components/` 或 `docs/logs/` 条目。文档更新不是全局收尾工作，而是 Phase 内的工作。`docs/architecture/` 下的文档只写最终设计状态（见 Minimum Rules 第 14 条）。
 
 ### When Executing
 

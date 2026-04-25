@@ -93,12 +93,12 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   let componentRegistry: ComponentHandleRegistry | undefined;
   let runtime: RendererRuntime | undefined;
 
-  const inspectByCid = buildInspectByCid(componentRegistry);
-  const inspectByElement = buildInspectByElement(componentRegistry);
-  const getComponentTree = buildGetComponentTree(componentRegistry);
-  const evaluateNodeExpression = buildEvaluateNodeExpression(inspectByCid);
+  let currentInspectByCid = buildInspectByCid(componentRegistry);
+  let currentInspectByElement = buildInspectByElement(componentRegistry);
+  let currentGetComponentTree = buildGetComponentTree(componentRegistry);
+  let currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
 
-  const inspectNode = (cid: number) => inspectByCid(cid);
+  const inspectNode = (cid: number) => currentInspectByCid(cid);
 
   const getSnapshot = () => store.getSnapshot();
   const getOverview = () => buildOverview(getSnapshot().events);
@@ -117,22 +117,22 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const getAsyncOwnerDebugSnapshot = () => runtime?.getAsyncOwnerDebugSnapshot?.() ?? { owners: [] };
   const explainValue = (query: Parameters<NopDebuggerController['explainNodeValue']>[0]) => explainNodeValue({
     query,
-    inspect: inspectByCid(query.cid),
+    inspect: currentInspectByCid(query.cid),
     redaction
   });
   const explainMeta = (query: Parameters<NopDebuggerController['explainNodeMeta']>[0]) => explainNodeMeta({
     query,
-    inspect: inspectByCid(query.cid),
+    inspect: currentInspectByCid(query.cid),
     redaction
   });
   const explainFailure = (query?: Parameters<NopDebuggerController['explainNodeFailure']>[0]) => explainNodeFailure({
     query,
-    inspectByCid,
+    inspectByCid: currentInspectByCid,
     events: getSnapshot().events
   });
   const explainAsyncSummary = (query?: Parameters<NopDebuggerController['explainNodeAsync']>[0]) => explainNodeAsync({
     query,
-    inspectByCid,
+    inspectByCid: currentInspectByCid,
     asyncSnapshot: getAsyncOwnerDebugSnapshot()
   });
   const createReport = (reportOptions?: NopDiagnosticReportOptions) => createDiagnosticReport(debuggerId, getSnapshot(), reportOptions);
@@ -226,9 +226,15 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       store.setPosition(position);
       persistPosition(debuggerId, position);
     },
-    inspectByCid,
-    inspectByElement,
-    evaluateNodeExpression,
+    inspectByCid(cid: number) {
+      return currentInspectByCid(cid);
+    },
+    inspectByElement(element: HTMLElement) {
+      return currentInspectByElement(element);
+    },
+    evaluateNodeExpression(args: { cid: number; expression: string }) {
+      return currentEvaluateNodeExpression(args);
+    },
     explainNodeValue: explainValue,
     explainNodeMeta: explainMeta,
     explainNodeFailure: explainFailure,
@@ -332,26 +338,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       if (componentRegistry) {
         componentRegistry.setDebugEnabled?.(true);
       }
-      const updatedInspectByCid = buildInspectByCid(componentRegistry);
-      Object.assign(controller, {
-        inspectByCid: updatedInspectByCid,
-        inspectByElement: buildInspectByElement(componentRegistry),
-        getComponentTree: buildGetComponentTree(componentRegistry),
-        evaluateNodeExpression: buildEvaluateNodeExpression(updatedInspectByCid),
-        inspectNode: updatedInspectByCid,
-        explainNodeValue(query: Parameters<NopDebuggerController['explainNodeValue']>[0]) {
-          return explainNodeValue({ query, inspect: updatedInspectByCid(query.cid), redaction });
-        },
-        explainNodeMeta(query: Parameters<NopDebuggerController['explainNodeMeta']>[0]) {
-          return explainNodeMeta({ query, inspect: updatedInspectByCid(query.cid), redaction });
-        },
-        explainNodeFailure(query: Parameters<NopDebuggerController['explainNodeFailure']>[0]) {
-          return explainNodeFailure({ query, inspectByCid: updatedInspectByCid, events: getSnapshot().events });
-        },
-        explainNodeAsync(query: Parameters<NopDebuggerController['explainNodeAsync']>[0]) {
-          return explainNodeAsync({ query, inspectByCid: updatedInspectByCid, asyncSnapshot: getAsyncOwnerDebugSnapshot() });
-        }
-      });
+      currentInspectByCid = buildInspectByCid(componentRegistry);
+      currentInspectByElement = buildInspectByElement(componentRegistry);
+      currentGetComponentTree = buildGetComponentTree(componentRegistry);
+      currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
     },
     setActionScope(nextActionScope: ActionScope | null) {
       const actionScope = nextActionScope ?? undefined;
@@ -362,11 +352,19 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         });
       }
     },
-    getComponentTree,
+    getComponentTree() {
+      return currentGetComponentTree();
+    },
     inspectNode,
-    inspectByCid,
-    inspectByElement,
-    evaluateNodeExpression
+    inspectByCid(cid: number) {
+      return currentInspectByCid(cid);
+    },
+    inspectByElement(element: HTMLElement) {
+      return currentInspectByElement(element);
+    },
+    evaluateNodeExpression(args: { cid: number; expression: string }) {
+      return currentEvaluateNodeExpression(args);
+    }
   } satisfies NopDebuggerController;
 
   if (exposeAutomationApi) {

@@ -5,10 +5,12 @@ const basicTabs = {
   body: [
     {
       type: 'tabs',
+      orientation: 'horizontal',
       items: [
         {
           title: 'Overview',
           body: [
+            { type: 'text', text: 'Default horizontal tabs render the tab list above the active panel.' },
             { type: 'text', text: 'Project status: In Progress' },
             {
               type: 'flex',
@@ -212,36 +214,36 @@ const formTabs = {
 export function TabsLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Tabbed navigation container with multiple display modes: default, line, vertical, sidebar (left/right)."
+      introDescription="Tabbed navigation container with multiple display modes. Compare the default horizontal layout (tabs above, panel below) with left-side vertical navigation and sidebar-style layouts on both sides."
       scenarios={[
         {
-          title: 'Default tabs',
-          description: 'Standard horizontal tabs with a disabled tab.',
+          title: 'Horizontal tabs (top)',
+          description: 'Default horizontal layout. The tab list stays on top and the active panel renders underneath.',
           schema: basicTabs
         },
         {
-          title: 'Line-style tabs',
-          description: 'Horizontal tabs with an underline indicator (tabsMode: "line").',
+          title: 'Horizontal tabs (line style)',
+          description: 'Still top-aligned, but with an underline indicator (`tabsMode: "line"`).',
           schema: lineTabs
         },
         {
-          title: 'Vertical tabs',
-          description: 'Navigation on the left, content on the right (tabsMode: "vertical").',
+          title: 'Vertical tabs (left nav)',
+          description: 'Navigation on the left and content on the right (`tabsMode: "vertical"`).',
           schema: verticalTabs
         },
         {
-          title: 'Sidebar left',
-          description: 'Sidebar navigation on the left side (tabsMode: "sidebar", sidePosition: "left").',
+          title: 'Sidebar tabs (left)',
+          description: 'Sidebar-style navigation on the left side (`tabsMode: "sidebar", sidePosition: "left"`).',
           schema: sidebarLeftTabs
         },
         {
-          title: 'Sidebar right',
-          description: 'Sidebar navigation on the right side (tabsMode: "sidebar", sidePosition: "right").',
+          title: 'Sidebar tabs (right)',
+          description: 'Sidebar-style navigation on the right side (`tabsMode: "sidebar", sidePosition: "right"`).',
           schema: sidebarRightTabs
         },
         {
-          title: 'Tabs containing form fields',
-          description: 'Each tab panel can host a full form. Tabs are a natural way to organize multi-step or multi-section forms.',
+          title: 'Tabs with forms',
+          description: 'Each tab panel can host a full form, which is useful for multi-section editors.',
           schema: formTabs
         }
       ]}

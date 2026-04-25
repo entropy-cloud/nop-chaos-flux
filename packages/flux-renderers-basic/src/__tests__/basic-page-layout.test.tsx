@@ -60,6 +60,38 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
+  it('stacks default tabs above the active panel and keeps vertical tabs side by side', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [{ type: 'tabs', items: [{ key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] }] }]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    expect(document.querySelector('[data-slot="tabs-root"]')?.className).toContain('flex-col');
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [{ type: 'tabs', tabsMode: 'vertical', items: [{ key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] }] }]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    expect(document.querySelector('[data-slot="tabs-root"]')?.className).not.toContain('flex-col');
+    cleanup();
+  });
+
   it('publishes declarative dialog and drawer status summaries through statusPath', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { rerender } = render(

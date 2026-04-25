@@ -19,6 +19,17 @@
   --transition-fast: 0.15s ease;
   --transition-base: 0.2s ease;
   --transition-slow: 0.3s ease;
+
+  --space-page-body: 16px;
+  --space-section-gap: 24px;
+  --space-form-item-gap: 16px;
+  --space-fieldset-body-gap: 16px;
+  --space-form-actions-gap: 12px;
+  --space-form-body-to-actions: 16px;
+  --space-field-internal: 4px;
+  --space-field-label-gap: 8px;
+  --space-field-label-h-gap: 16px;
+  --space-tabs-content-gap: 16px;
 }
 
 :root[data-theme='classic'][data-mode='light'] {

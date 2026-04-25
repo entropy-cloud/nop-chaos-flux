@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@nop-chaos/theme-tokens/styles.css";
+@import "@nop-chaos/flux-react/default-spacing.css";
 @import "../../../packages/ui/src/styles/base.css";
 @import "./styles-theme-utilities.css";
 @source "../../../packages";
@@ -152,71 +153,6 @@ body {
 [data-slot="dialog-overlay"] {
   background-color: var(--nop-dialog-backdrop);
   backdrop-filter: blur(2px);
-}
-
-/* ── Field Frame Layout ── */
-.nop-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nop-field--label-left {
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.nop-field--label-left [data-slot="field-label"] {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  padding-top: 6px;
-}
-
-.nop-field--label-left [data-slot="field-control"] {
-  flex: 1;
-  min-width: 0;
-}
-
-[data-slot="field-label"] {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--foreground);
-  line-height: 1.4;
-}
-
-[data-slot="field-required"] {
-  color: var(--nop-field-error);
-  margin-left: 2px;
-}
-
-[data-slot="field-control"] {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-[data-slot="field-error"] {
-  font-size: 12px;
-  color: var(--nop-field-error);
-  line-height: 1.4;
-}
-
-[data-slot="field-hint"],
-[data-slot="field-description"] {
-  font-size: 12px;
-  color: var(--muted-foreground);
-  line-height: 1.4;
-}
-
-[data-slot="field-remark"],
-[data-slot="field-label-remark"] {
-  display: inline-flex;
-  align-items: center;
-  cursor: help;
-  font-size: 11px;
-  color: var(--muted-foreground);
 }
 
 .report-designer-demo {

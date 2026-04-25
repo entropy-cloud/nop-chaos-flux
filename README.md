@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Write JSON, get UI. A schema-driven runtime for low-code systems, built around seven primitives.**
+**Schema that executes, not just renders. A schema-driven runtime for low-code systems, built around seven primitives.**
 
 [Docs Index](docs/index.md) |
 [Architecture Intro](docs/articles/flux-design-introduction.md) |
@@ -16,7 +16,7 @@
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38bdf8.svg)](https://tailwindcss.com/)
 [![pnpm](https://img.shields.io/badge/pnpm-10-f69220.svg)](https://pnpm.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![AMIS Compatible](https://img.shields.io/badge/AMIS-Compat-yellow.svg)](https://github.com/baidu/amis)
+[![AMIS Informed](https://img.shields.io/badge/AMIS-Informed-yellow.svg)](https://github.com/baidu/amis)
 
 </div>
 
@@ -50,10 +50,10 @@ If you need exact contracts or implementation details, continue into `docs/`.
 | **Plugin Loading** | Not provided | SystemJS remote plugin loading |
 
 In short:
-- **Flux** = "How to generate UI from JSON" (底层 runtime)
-- **Next** = "How to build extensible business applications" (应用框架)
+- **Flux** = "How to generate UI from JSON" (foundational runtime)
+- **Next** = "How to build extensible business applications" (application framework)
 
-The two projects can collaborate: Next can integrate Flux's designer and runtime capabilities. For Next README, see [../nop-chaos-next/README.md](../nop-chaos-next/README.md).
+The two projects can collaborate: Next can integrate Flux's designer and runtime capabilities.
 
 ## Future Migration Plan
 
@@ -65,9 +65,9 @@ The two projects can collaborate: Next can integrate Flux's designer and runtime
 - Both can collaborate through integration points
 
 ### Migration Roadmap
-- **Phase 1 (共存期)**: Introduce Flux as an optional rendering layer, develop AMIS to Flux JSON conversion compatibility layer
-- **Phase 2 (过渡期)**: Gradually migrate new pages to Flux, optimize conversion layer, refactor key pages
-- **Phase 3 (完整取代期)**: Complete migration to Flux as the sole runtime and rendering layer, remove AMIS dependency
+- **Phase 1 (Coexistence)**: Introduce Flux as an optional rendering layer and develop an AMIS-to-Flux schema compatibility layer
+- **Phase 2 (Transition)**: Gradually migrate new pages to Flux, improve the compatibility layer, and refactor key pages
+- **Phase 3 (Full Migration)**: Complete migration to Flux as the sole runtime and rendering layer and remove the AMIS dependency
 
 ### AMIS to Flux Conversion Layer
 A compatibility layer will be developed to:
@@ -78,7 +78,7 @@ A compatibility layer will be developed to:
 
 This ensures existing AMIS schemas can run on Flux with minimal changes.
 
-For the complete migration plan, see [../nop-chaos-next/README.md](../nop-chaos-next/README.md#迁移路线图).
+For the broader migration context, refer to the companion `nop-chaos-next` repository when it is available in the same workspace.
 
 ## At A Glance
 
@@ -89,7 +89,7 @@ For the complete migration plan, see [../nop-chaos-next/README.md](../nop-chaos-
 - The monorepo also contains Flow Designer, Spreadsheet/Report Designer, Word Editor, and debugger tooling
 - Workspace packages are currently `private`; the main runnable surface is `apps/playground`
 - Architecture rules stay visible through package boundaries, renderer contracts, action scope, and host integration
-- **AMIS Compatibility**: Planned compatibility layer to run existing AMIS schemas on Flux runtime, enabling gradual migration from AMIS-based applications
+- **AMIS Compatibility**: Planned compatibility work to run existing AMIS schemas on Flux, enabling gradual migration from AMIS-based applications
 
 ## A 30-Second Example
 
@@ -303,4 +303,4 @@ If you are implementing or contributing:
 
 MIT — see [LICENSE](LICENSE).
 
-Flux is informed by [Baidu AMIS](https://github.com/baidu/amis). Parts of this repository were rewritten by using AI to analyze existing AMIS behavior and implementations, then re-expressing those ideas under Flux's own architecture, contracts, and coding rules.
+Flux is informed by [Baidu AMIS](https://github.com/baidu/amis). Parts of this repository were rewritten with AI assistance to study existing AMIS behavior and implementations, then re-express those ideas under Flux's own architecture, contracts, and coding rules.

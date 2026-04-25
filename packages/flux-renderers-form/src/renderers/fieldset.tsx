@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, hasRendererSlotContent } from '@nop-chaos/flux-react';
+import { resolveGap } from '@nop-chaos/flux-renderers-basic';
 import { cn } from '@nop-chaos/ui';
 
 export interface FieldsetSchema extends BaseSchema {
@@ -8,6 +9,7 @@ export interface FieldsetSchema extends BaseSchema {
   title?: string;
   collapsible?: boolean;
   collapsed?: boolean;
+  gap?: number | string;
   body?: BaseSchema[];
 }
 
@@ -16,12 +18,17 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
   const bodyContent = resolveRendererSlotContent(props, 'body');
   const collapsible = Boolean(props.props.collapsible);
   const [collapsed, setCollapsed] = useState(Boolean(props.props.collapsed) && collapsible);
+  const fieldsetGap = resolveGap(props.props.gap as number | string | undefined);
 
   const toggle = useCallback(() => {
     if (collapsible) {
       setCollapsed((prev) => !prev);
     }
   }, [collapsible]);
+
+  const bodyStyle = collapsed
+    ? { display: 'none', ...fieldsetGap.style }
+    : fieldsetGap.style;
 
   return (
     <fieldset
@@ -36,7 +43,7 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
           {title}
         </legend>
       ) : null}
-      <div data-slot="fieldset-body" style={collapsed ? { display: 'none' } : undefined}>
+      <div data-slot="fieldset-body" className={cn(fieldsetGap.className)} style={bodyStyle}>
         {hasRendererSlotContent(bodyContent) ? bodyContent : null}
       </div>
     </fieldset>

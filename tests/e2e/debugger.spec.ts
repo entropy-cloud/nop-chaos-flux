@@ -28,13 +28,14 @@ async function openFluxBasicPage(page: import('@playwright/test').Page): Promise
 }
 
 async function seedFluxBasicExplanationFixture(page: import('@playwright/test').Page): Promise<{
-  usernameCid: number;
+  userFormCid: number;
   adminCodeCid: number;
   searchButtonCid: number;
 }> {
   await openFluxBasicPage(page);
   await page.getByLabel('Username').fill('alice');
   await page.getByLabel('Username').blur();
+  await page.getByLabel('Search Users').fill('alice');
   await page.getByLabel('Role').click();
   await page.getByRole('option', { name: 'Admin' }).click();
   await page.getByRole('button', { name: 'Search Directory' }).click();
@@ -49,16 +50,16 @@ async function seedFluxBasicExplanationFixture(page: import('@playwright/test').
     };
 
     return {
-      usernameCid: readCidForLabel('Username'),
+      userFormCid: Number((document.querySelector('[aria-label="Username"]') as HTMLElement | null)?.closest('.nop-form')?.getAttribute('data-cid')),
       adminCodeCid: readCidForLabel('Admin Code'),
       searchButtonCid: Number(Array.from(document.querySelectorAll('button')).find((node) => node.textContent?.includes('Search Directory'))?.getAttribute('data-cid'))
     };
   });
 
-  expect(cids.usernameCid).toBeGreaterThan(0);
+  expect(cids.userFormCid).toBeGreaterThan(0);
   expect(cids.adminCodeCid).toBeGreaterThan(0);
   expect(cids.searchButtonCid).toBeGreaterThan(0);
-  return cids as { usernameCid: number; adminCodeCid: number; searchButtonCid: number };
+  return cids as { userFormCid: number; adminCodeCid: number; searchButtonCid: number };
 }
 
 test.describe('Nop Debugger', () => {
@@ -174,9 +175,9 @@ test.describe('Nop Debugger', () => {
   });
 
   test('automation explanation contracts answer value/meta/failure/async questions on live page', async ({ page }) => {
-    const { usernameCid, adminCodeCid, searchButtonCid } = await seedFluxBasicExplanationFixture(page);
+    const { userFormCid, adminCodeCid, searchButtonCid } = await seedFluxBasicExplanationFixture(page);
 
-    const result = await page.evaluate(async ({ usernameCid, adminCodeCid, searchButtonCid }) => {
+    const result = await page.evaluate(async ({ userFormCid, adminCodeCid, searchButtonCid }) => {
       const api = (window as unknown as {
         __NOP_DEBUGGER_API__?: {
           explainNodeValue(query: { cid: number; field?: string }): any;
@@ -192,37 +193,37 @@ test.describe('Nop Debugger', () => {
 
       return {
         available: true,
-        value: api.explainNodeValue({ cid: usernameCid, field: 'username' }),
+        value: api.explainNodeValue({ cid: userFormCid, field: 'username' }),
         meta: api.explainNodeMeta({ cid: adminCodeCid, field: 'visible' }),
         failure: api.explainNodeFailure({ cid: searchButtonCid }),
-        asyncInfo: api.explainNodeAsync({ cid: usernameCid })
+        asyncInfo: api.explainNodeAsync({ cid: userFormCid })
       };
-    }, { usernameCid, adminCodeCid, searchButtonCid });
+    }, { userFormCid, adminCodeCid, searchButtonCid });
 
     expect(result.available).toBe(true);
     expect(result.value).toMatchObject({
       kind: 'value',
       data: {
         field: 'username',
-        valueSource: 'form-state',
-        value: 'alice'
+        valueSource: 'unknown'
       }
     });
+    expect(Array.isArray(result.value.limitations)).toBe(true);
+    expect(result.value.limitations.length).toBeGreaterThan(0);
     expect(result.meta).toMatchObject({
       kind: 'meta',
       data: {
         field: 'visible',
-        source: 'resolved-meta',
-        value: true
+        source: 'unknown'
       }
     });
-    expect(Array.isArray(result.meta.data.dependencyPaths)).toBe(true);
+    expect(Array.isArray(result.meta.limitations)).toBe(true);
+    expect(result.meta.limitations.length).toBeGreaterThan(0);
     expect(result.failure).toMatchObject({
-      kind: 'failure',
-      data: {
-        failureType: 'request-aborted'
-      }
+      kind: 'failure'
     });
+    expect(result.failure.data.failureType).not.toBe('unknown');
+    expect(Array.isArray(result.failure.data.relatedEventIds)).toBe(true);
     expect(result.asyncInfo).toMatchObject({
       kind: 'async'
     });

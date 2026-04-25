@@ -2,7 +2,7 @@
   "name": "@nop-chaos/flux-react",
   "version": "0.1.0",
   "private": true,
-  "sideEffects": false,
+  "sideEffects": ["*.css"],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./default-spacing.css": "./src/default-spacing.css"
   },
   "dependencies": {
     "@nop-chaos/flux-compiler": "workspace:*",

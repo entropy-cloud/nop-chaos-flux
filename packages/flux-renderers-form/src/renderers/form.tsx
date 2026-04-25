@@ -24,6 +24,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { createFormComponentHandle } from '@nop-chaos/flux-runtime';
+import { resolveGap } from '@nop-chaos/flux-renderers-basic';
 import type { FormSchema } from '../schemas';
 
 function escapeJsonPointerSegment(segment: string) {
@@ -166,6 +167,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const nodeImports = props.templateNode.importsPlan?.preparedImports;
   const bodyContent = resolveRendererSlotContent(props, 'body');
   const actionsContent = resolveRendererSlotContent(props, 'actions');
+  const formGap = resolveGap(props.props.gap as number | string | undefined);
   const importBindings = useMemo(
     () => runtime.getImportedExpressionBindings({
       imports: nodeImports,
@@ -404,7 +406,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       <ScopeContext.Provider value={ownedForm.scope}>
       <FormLayoutContext.Provider value={formLayoutValue}>
         <section className={cn('nop-form', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-          {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body">{bodyContent}</div> : null}
+          {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body" className={cn(formGap.className)} style={formGap.style}>{bodyContent}</div> : null}
           {hasRendererSlotContent(actionsContent) ? <div data-slot="form-actions">{actionsContent}</div> : null}
         </section>
       </FormLayoutContext.Provider>

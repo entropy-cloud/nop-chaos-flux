@@ -390,19 +390,23 @@ Widget renderers are self-styled UI controls. Their internal components use Tail
 - Use `data-*` / `aria-*` for state, not BEM-style modifier classes.
 - Respect schema `className` and `classAliases` for consumer overrides.
 
-### Rule: No Default Layout Styles in Layout Renderers
+### Rule: No Hardcoded Layout Styles in Renderer Code
+
+Renderer components emit marker classes and schema-derived classes only. Default spacing comes from theme CSS in `@layer base` (`flux-react/default-spacing.css`), not from renderer component code. This ensures defaults are theme-tunable and always overridable by Tailwind utilities.
 
 ```
-// Good: renderer is a transparent wrapper
+// Good: renderer is a transparent wrapper (default spacing comes from CSS)
 <div className={classNames('nop-container', props.meta.className)}>
   {children}
 </div>
 
-// Bad: renderer injects invisible layout
+// Bad: renderer injects invisible hardcoded layout
 <div className={classNames('nop-container grid gap-4', props.meta.className)}>
   {children}
 </div>
 ```
+
+The default spacing rules in `@layer base` apply `display: flex`, `flex-direction`, `gap`, and `padding` to layout renderer slots (page-body, form-body, fieldset-body, container-body, tabs-content, field-frame). These are overridable because Tailwind utilities live in `@layer utilities` which takes precedence over `@layer base`.
 
 ### Marker Class Naming
 
@@ -415,9 +419,9 @@ Renderer marker classes use the `nop-` prefix for root-level semantic markers on
 | Text | (none) | Inline element, no wrapper needed |
 | Button | (handled by shadcn/ui) | `data-slot="button"` via shadcn |
 
-Marker classes must NOT carry any visual styles. They exist solely for CSS selectors, debugging, host integration, and test anchoring.
+Marker classes must NOT carry any visual styles. They exist solely for CSS selectors, debugging, host integration, and test anchoring. Visual defaults (gap, padding, flex-direction) are provided by `@layer base` CSS rules in `flux-react/default-spacing.css`, not by marker class styles.
 
-This includes `FieldFrame`: `nop-field` is a semantic field marker only. Label/control/error spacing is not an implicit renderer default; it must come from schema styling, host styling, or shared UI component styling.
+This includes `FieldFrame`: `nop-field` is a semantic field marker. Label/control/error spacing comes from `@layer base` CSS rules using `--space-*` theme tokens, not from renderer component code.
 
 Flow-designer follows the same ownership rule: node and edge visual choices belong to `config.nodeTypes[].appearance`, `config.edgeTypes[].appearance`, schema `className`, and `classAliases`. Renderer code may keep structural chrome and narrow fallback defaults, but those fallbacks must remain secondary to config-defined visuals and metadata.
 

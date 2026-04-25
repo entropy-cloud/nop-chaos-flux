@@ -8,6 +8,7 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-i18n': fileURLToPath(new URL('./packages/flux-i18n/src/index.ts', import.meta.url)),
   '@nop-chaos/nop-debugger': fileURLToPath(new URL('./packages/nop-debugger/src/index.tsx', import.meta.url)),
   '@nop-chaos/flux-runtime': fileURLToPath(new URL('./packages/flux-runtime/src/index.ts', import.meta.url)),
+  '@nop-chaos/flux-react/default-spacing.css': fileURLToPath(new URL('./packages/flux-react/src/default-spacing.css', import.meta.url)),
   '@nop-chaos/flux-react': fileURLToPath(new URL('./packages/flux-react/src/index.tsx', import.meta.url)),
   '@nop-chaos/flux-renderers-basic': fileURLToPath(new URL('./packages/flux-renderers-basic/src/index.tsx', import.meta.url)),
   '@nop-chaos/flux-renderers-form': fileURLToPath(new URL('./packages/flux-renderers-form/src/index.tsx', import.meta.url)),

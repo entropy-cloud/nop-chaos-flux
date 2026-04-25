@@ -24,6 +24,23 @@ const MAX_DEPENDENCY_PATHS = 6;
 const MAX_ASYNC_OWNERS = 4;
 const MAX_RELATED_EVENTS = 6;
 
+function matchesSensitiveKey(key: string, redaction: NormalizedRedactionOptions) {
+  const normalizedKey = key.toLowerCase();
+  return redaction.redactKeys.some((candidate) => normalizedKey.includes(candidate.toLowerCase()));
+}
+
+function redactFieldValue(field: string, value: unknown, redaction: NormalizedRedactionOptions) {
+  if (!redaction.enabled || !matchesSensitiveKey(field, redaction)) {
+    return redactData(value, redaction);
+  }
+
+  return redaction.redactValue?.({
+    key: field,
+    path: [field],
+    value
+  }) ?? redaction.mask;
+}
+
 function summarizeValue(value: unknown) {
   if (typeof value === 'string') {
     return value.length > 60 ? `${value.slice(0, 57)}...` : value;
@@ -152,45 +169,59 @@ export function explainNodeValue(args: {
       path: inspect.path
     });
   } else {
-    const scopeIndex = inspect.scopeChain?.findIndex((entry) => Object.prototype.hasOwnProperty.call(entry.data, field)) ?? -1;
-    if (scopeIndex >= 0) {
-      value = inspect.scopeChain?.[scopeIndex]?.data?.[field];
-      scopeLabel = inspect.scopeChain?.[scopeIndex] ? summarizeScopeEntry(inspect.scopeChain[scopeIndex]) : undefined;
-      valueSource = scopeIndex === 0 ? 'current-scope' : 'ancestor-scope';
+    const directScopeHit = inspect.scopeData && Object.prototype.hasOwnProperty.call(inspect.scopeData, field);
+    if (directScopeHit) {
+      value = inspect.scopeData?.[field];
+      valueSource = 'current-scope';
+      scopeLabel = inspect.scopeChain?.[0] ? summarizeScopeEntry(inspect.scopeChain[0]) : undefined;
       truncated ||= pushEvidence(evidenceRefs, {
         kind: 'scope',
-        summary: `${field} resolved from ${scopeLabel ?? 'scope chain'}`,
-        cid: inspect.cid,
-        nodeId: inspect.nodeId,
-        path: inspect.path
-      });
-    } else if (inspect.propsSummary && Object.prototype.hasOwnProperty.call(inspect.propsSummary, field)) {
-      value = inspect.propsSummary[field];
-      valueSource = 'resolved-props';
-      truncated ||= pushEvidence(evidenceRefs, {
-        kind: 'props',
-        summary: `${field} exists in resolved props snapshot`,
-        cid: inspect.cid,
-        nodeId: inspect.nodeId,
-        path: inspect.path
-      });
-    } else if (inspect.metaSummary && Object.prototype.hasOwnProperty.call(inspect.metaSummary, field)) {
-      value = inspect.metaSummary[field];
-      valueSource = 'resolved-meta';
-      truncated ||= pushEvidence(evidenceRefs, {
-        kind: 'meta',
-        summary: `${field} exists in resolved meta snapshot`,
+        summary: `${field} resolved from current scope snapshot`,
         cid: inspect.cid,
         nodeId: inspect.nodeId,
         path: inspect.path
       });
     } else {
-      valueSource = 'unknown';
-      limitations.push(`The debugger snapshot does not expose a reliable current source for ${field}.`);
+      const scopeIndex = inspect.scopeChain?.findIndex((entry) => Object.prototype.hasOwnProperty.call(entry.data, field)) ?? -1;
+      if (scopeIndex >= 0) {
+        value = inspect.scopeChain?.[scopeIndex]?.data?.[field];
+        scopeLabel = inspect.scopeChain?.[scopeIndex] ? summarizeScopeEntry(inspect.scopeChain[scopeIndex]) : undefined;
+        valueSource = scopeIndex === 0 ? 'current-scope' : 'ancestor-scope';
+        truncated ||= pushEvidence(evidenceRefs, {
+          kind: 'scope',
+          summary: `${field} resolved from ${scopeLabel ?? 'scope chain'}`,
+          cid: inspect.cid,
+          nodeId: inspect.nodeId,
+          path: inspect.path
+        });
+      } else if (inspect.propsSummary && Object.prototype.hasOwnProperty.call(inspect.propsSummary, field)) {
+        value = inspect.propsSummary[field];
+        valueSource = 'resolved-props';
+        truncated ||= pushEvidence(evidenceRefs, {
+          kind: 'props',
+          summary: `${field} exists in resolved props snapshot`,
+          cid: inspect.cid,
+          nodeId: inspect.nodeId,
+          path: inspect.path
+        });
+      } else if (inspect.metaSummary && Object.prototype.hasOwnProperty.call(inspect.metaSummary, field)) {
+        value = inspect.metaSummary[field];
+        valueSource = 'resolved-meta';
+        truncated ||= pushEvidence(evidenceRefs, {
+          kind: 'meta',
+          summary: `${field} exists in resolved meta snapshot`,
+          cid: inspect.cid,
+          nodeId: inspect.nodeId,
+          path: inspect.path
+        });
+      } else {
+        valueSource = 'unknown';
+        limitations.push(`The debugger snapshot does not expose a reliable current source for ${field}.`);
+      }
     }
   }
 
-  const redactedValue = redactData(value, redaction);
+  const redactedValue = redactFieldValue(field, value, redaction);
   const answer = valueSource === 'unknown'
     ? `${field} is not reliably explainable from the current debugger snapshot.`
     : `${field} currently comes from ${valueSource} and resolves to ${summarizeValue(redactedValue)}.`;
