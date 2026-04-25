@@ -1,4 +1,5 @@
 import type { BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionSchema } from '@nop-chaos/flux-core';
 
 export interface TableColumnFilterOption extends SchemaObject {
   label: string;
@@ -95,6 +96,8 @@ export interface TableSchema extends BaseSchema {
     expandRowByClick?: boolean;
     expandedRowRegionKey?: string;
   };
+  quickSaveAction?: ActionSchema;
+  quickSaveItemAction?: ActionSchema;
   onSortChange?: BaseSchema;
   onFilterChange?: BaseSchema;
   onPageChange?: BaseSchema;

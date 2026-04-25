@@ -30,6 +30,11 @@ export interface CrudQueryState {
   refreshCount: number;
 }
 
+export interface CrudResolvedSource {
+  rows: unknown[];
+  total?: number;
+}
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
@@ -107,6 +112,37 @@ export function applyQueryToRows(rows: unknown[], query: Record<string, unknown>
       return cell === value;
     });
   });
+}
+
+export function normalizeCrudSourceValue(value: unknown): CrudResolvedSource {
+  if (Array.isArray(value)) {
+    return {
+      rows: value,
+      total: value.length,
+    };
+  }
+
+  const record = toRecord(value);
+  const rows = Array.isArray(record.items)
+    ? record.items
+    : Array.isArray(record.rows)
+      ? record.rows
+      : Array.isArray(record.records)
+        ? record.records
+        : Array.isArray(record.list)
+          ? record.list
+          : EMPTY_ROWS;
+
+  const total = typeof record.total === 'number' && Number.isFinite(record.total)
+    ? record.total
+    : typeof record.count === 'number' && Number.isFinite(record.count)
+      ? record.count
+      : rows.length;
+
+  return {
+    rows,
+    total,
+  };
 }
 
 export function useCrudStatusPublisher(

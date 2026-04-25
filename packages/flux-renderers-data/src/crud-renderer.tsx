@@ -10,6 +10,7 @@ import {
   DEFAULT_PAGE_SIZE,
   DEFAULT_PAGE_SIZE_OPTIONS,
   EMPTY_ROWS,
+  normalizeCrudSourceValue,
   toRecord,
   useCrudHandle,
   useCrudRuntimeState,
@@ -93,7 +94,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     });
   }, [filterState, ownerStatePath, paginationState, queryState, scope, selectedRowKeys, sortState]);
 
-  const source = useMemo(() => (Array.isArray(schemaProps.source) ? (schemaProps.source as unknown[]) : EMPTY_ROWS), [schemaProps.source]);
+  const resolvedSource = useMemo(() => normalizeCrudSourceValue(schemaProps.source), [schemaProps.source]);
+  const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
   const effectiveQuery = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
   const filteredRows = useMemo(() => applyQueryToRows(source, effectiveQuery), [effectiveQuery, source]);
   const [loading] = useState(false);
@@ -105,6 +107,9 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const sortStatePath = normalizedSchema.sortStatePath ?? `${ownerStatePath}.sort`;
   const filterStatePath = normalizedSchema.filterStatePath ?? `${ownerStatePath}.filters`;
   const selectionStatePath = normalizedSchema.selectionStatePath ?? `${ownerStatePath}.selection`;
+  const shouldFetchOnQueryChange = normalizedSchema.clientMode?.loadDataOnce === true
+    ? normalizedSchema.clientMode.fetchOnFilter === true
+    : true;
 
   const handleRefresh = useCallback(() => {
     internalTableRef.current?.refreshSource?.();
@@ -119,31 +124,29 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     });
 
     props.events.onRefresh?.(undefined, {
-      scope: props.helpers.createScope(
-        {
-          query: queryState.values,
-          params: {
-            ...queryState.values,
-            [normalizedSchema.pageField ?? 'page']: paginationState.currentPage,
-            [normalizedSchema.pageSizeField ?? 'perPage']: paginationState.pageSize,
-          },
-          refreshCount: queryState.refreshCount + 1,
-        },
-        { scopeKey: 'crudRefresh', pathSuffix: 'refresh' }
-      ),
+      // Keep refresh actions on the owner scope so runtime-owned refreshSource can resolve the upstream source entry.
+      scope,
     });
-  }, [normalizedSchema.autoClearSelectionOnRefresh, normalizedSchema.pageField, normalizedSchema.pageSizeField, paginationState.currentPage, paginationState.pageSize, props.events, props.helpers, queryState.refreshCount, queryState.values, queryStatePath, scope, selectionStatePath]);
+  }, [normalizedSchema.autoClearSelectionOnRefresh, props.events, queryState.refreshCount, queryState.values, queryStatePath, scope, selectionStatePath]);
 
   const queryFormId = `${props.id}-query-form`;
 
   const handleQuerySubmit = useCallback(async () => {
+    const nextValues = readQueryValues(queryContainerRef.current);
     const handle = componentRegistry?.resolve({ componentId: queryFormId });
     if (handle?.capabilities?.hasMethod?.('submit')) {
       await handle.capabilities.invoke('submit', undefined, {} as never);
+
+      if (shouldFetchOnQueryChange) {
+        props.events.onQuerySubmit?.(undefined, {
+          scope,
+          evaluationBindings: { query: nextValues },
+        });
+      }
+
       return;
     }
 
-    const nextValues = readQueryValues(queryContainerRef.current);
     if (scope) {
       scope.update(queryStatePath, {
         values: nextValues,
@@ -151,16 +154,19 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       });
     }
 
-    props.events.onQuerySubmit?.(undefined, {
-      scope: props.helpers.createScope({ query: nextValues }, { scopeKey: 'crudQuery', pathSuffix: 'query' }),
-    });
-  }, [componentRegistry, props.events, props.helpers, queryFormId, queryState.refreshCount, queryStatePath, scope]);
+    if (shouldFetchOnQueryChange) {
+      props.events.onQuerySubmit?.(undefined, {
+        scope,
+        evaluationBindings: { query: nextValues },
+      });
+    }
+  }, [componentRegistry, props.events, queryFormId, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
 
   const summary = useMemo<CrudStatusSummary>(() => ({
     loading,
     refreshing: loading,
     itemCount: filteredRows.length,
-    total: filteredRows.length,
+    total: resolvedSource.total,
     hasSelection: selectedRowKeys.length > 0,
     selectionCount: selectedRowKeys.length,
     selectedRowKeys,
@@ -168,7 +174,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     pagination: paginationState,
     sort: sortState,
     filters: filterState,
-  }), [effectiveQuery, filterState, filteredRows.length, loading, paginationState, selectedRowKeys, sortState]);
+  }), [effectiveQuery, filterState, filteredRows.length, loading, paginationState, resolvedSource.total, selectedRowKeys, sortState]);
 
   useCrudHandle(props, internalTableRef, handleRefresh);
   useCrudStatusPublisher(scope, normalizedSchema.statusPath, summary);
@@ -211,6 +217,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         showSizeChanger: true,
       },
       empty: typeof emptyContent === 'string' ? emptyContent : defaultEmptyLabel,
+      quickSaveAction: normalizedSchema.quickSaveAction,
+      quickSaveItemAction: normalizedSchema.quickSaveItemAction,
     };
 
     if (normalizedSchema.selectionOwnership) {
@@ -234,7 +242,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     }
 
     return base as BaseSchema;
-  }, [defaultEmptyLabel, emptyContent, filterStatePath, filteredRows, normalizedSchema.columnSettings, normalizedSchema.columns, normalizedSchema.onRefresh, normalizedSchema.onRowClick, normalizedSchema.responsive, normalizedSchema.rowKey, normalizedSchema.selection?.type, normalizedSchema.selectionOwnership, paginationState.currentPage, paginationState.pageSize, paginationStatePath, props.id, selectedRowKeys, selectionStatePath, sortStatePath]);
+  }, [defaultEmptyLabel, emptyContent, filterStatePath, filteredRows, normalizedSchema.columnSettings, normalizedSchema.columns, normalizedSchema.onRefresh, normalizedSchema.onRowClick, normalizedSchema.quickSaveAction, normalizedSchema.quickSaveItemAction, normalizedSchema.responsive, normalizedSchema.rowKey, normalizedSchema.selection?.type, normalizedSchema.selectionOwnership, paginationState.currentPage, paginationState.pageSize, paginationStatePath, props.id, selectedRowKeys, selectionStatePath, sortStatePath]);
 
   const queryFormSchema = useMemo<BaseSchema | null>(() => {
     const queryForm = normalizedSchema.queryForm;
@@ -268,12 +276,12 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       base.statusPath = queryForm.statusPath;
     }
 
-    if (normalizedSchema.onQuerySubmit) {
+    if (normalizedSchema.onQuerySubmit && shouldFetchOnQueryChange) {
       base.onSubmitSuccess = normalizedSchema.onQuerySubmit;
     }
 
     return base as BaseSchema;
-  }, [normalizedSchema.onQuerySubmit, normalizedSchema.queryForm, queryFormId, queryState.refreshCount, queryState.values, queryStatePath]);
+  }, [normalizedSchema.onQuerySubmit, normalizedSchema.queryForm, queryFormId, queryState.refreshCount, queryState.values, queryStatePath, shouldFetchOnQueryChange]);
 
   const handleQueryReset = useCallback(() => {
     const handle = componentRegistry?.resolve({ componentId: queryFormId });
@@ -290,10 +298,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       scope.update(paginationStatePath, { currentPage: 1, pageSize: paginationState.pageSize });
     });
 
-    props.events.onQueryReset?.(undefined, {
-      scope: props.helpers.createScope({ query: defaultQuery }, { scopeKey: 'crudQuery', pathSuffix: 'query' }),
-    });
-  }, [componentRegistry, defaultQuery, paginationState.pageSize, paginationStatePath, props.events, props.helpers, queryFormId, queryState.refreshCount, queryStatePath, scope]);
+    if (shouldFetchOnQueryChange) {
+      props.events.onQueryReset?.(undefined, {
+        scope,
+        evaluationBindings: { query: defaultQuery },
+      });
+    }
+  }, [componentRegistry, defaultQuery, paginationState.pageSize, paginationStatePath, props.events, queryFormId, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
 
   const handleToolbarPageChange = useCallback((page: number) => {
     scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });

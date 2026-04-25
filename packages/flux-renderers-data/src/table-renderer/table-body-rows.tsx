@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { TableSchema } from '../schemas';
 import type { FixedColumnLayout } from './fixed-columns';
+import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell';
 import type { TableRowEntry } from './types';
 
 const DEFAULT_ROW_ESTIMATE = 44;
@@ -184,6 +185,22 @@ function renderDataRow(
                 instancePath: rowInstancePath,
                 pathSuffix: `cells.${columnIndex}`,
               })}
+            </TableCell>
+          );
+        }
+
+        const quickEditConfig = resolveTableQuickEditConfig(column);
+        if (quickEditConfig && column.name) {
+          return (
+            <TableCell key={`${column.name ?? columnIndex}`} className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className} style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style }} data-fixed={fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined}>
+              <TableQuickEditCell
+                column={column}
+                rowScope={rowScope}
+                record={entry.record}
+                helpers={helpers}
+                quickSaveAction={schemaProps.quickSaveAction}
+                quickSaveItemAction={schemaProps.quickSaveItemAction}
+              />
             </TableCell>
           );
         }
