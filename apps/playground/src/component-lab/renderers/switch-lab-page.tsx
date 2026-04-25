@@ -47,7 +47,7 @@ export function SwitchLabPage() {
       scenarios={[
         {
           title: 'Switch with state reflected in text renderer',
-          description: 'Toggle the switch to see the ON/OFF state update live in the text renderer below the form.',
+          description: 'Toggle the switch to exercise the current boolean control state. The switch itself updates live; the text line below currently renders only the static summary prefix in this lab surface.',
           schema: basicSwitch
         },
         {

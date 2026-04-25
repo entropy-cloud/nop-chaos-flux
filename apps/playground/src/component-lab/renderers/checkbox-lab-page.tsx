@@ -46,7 +46,7 @@ export function CheckboxLabPage() {
         },
         {
           title: 'Multiple checkboxes with live scope display',
-          description: 'Toggle the checkboxes to see the current ON/OFF status reflected in the text renderer below the form.',
+          description: 'Toggle the checkboxes to exercise the current bound boolean state. The controls update correctly; the text line below is currently only a static summary prefix in the live lab surface.',
           schema: checkboxWithReaction
         }
       ]}

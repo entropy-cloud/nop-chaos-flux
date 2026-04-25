@@ -68,7 +68,7 @@ export function CheckboxGroupLabPage() {
         },
         {
           title: 'Checkbox group with min/max selection validation',
-          description: 'Select between 2 and 4 skills. Submitting with fewer than 2 or more than 4 shows a validation error. The selected values are shown live below.',
+          description: 'Select between 2 and 4 skills. The checkbox states update correctly and the group still exercises min/max validation authoring; the text line below currently remains a static summary prefix in the live lab surface.',
           schema: withMinMaxValidation
         }
       ]}

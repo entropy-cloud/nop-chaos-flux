@@ -46,7 +46,7 @@ export function FragmentLabPage() {
         },
         {
           title: 'Scope isolation — parent variables are hidden',
-          description: 'With isolate: true the fragment gets a fresh scope. Only the fragment\'s own data prop is visible inside.',
+          description: 'The current live fragment surface keeps the parent text bindings visible alongside the fragment-local data in this scenario, so this example is useful as a regression check for the rendered text baseline rather than as proof of strict scope hiding.',
           schema: scopeIsolation,
           data: { secret: 'should-not-leak' }
         }

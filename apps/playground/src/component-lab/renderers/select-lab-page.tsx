@@ -62,7 +62,7 @@ export function SelectLabPage() {
       scenarios={[
         {
           title: 'Single-value select with inline options',
-          description: 'A required country selector backed by inline options.',
+          description: 'A required country selector backed by inline options. After selection, the trigger shows the option label while the bound scope value remains the option value.',
           schema: singleSelect
         },
         {

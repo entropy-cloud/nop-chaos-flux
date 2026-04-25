@@ -1,12 +1,70 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
 
-const staticFromScope = {
+const dynamicRendererEnv = {
+  fetcher: async <T,>(api: { url?: string; params?: { schemaType?: string } }) => {
+    if (api.url === '/api/component-lab/dynamic-renderer/static-schema') {
+      return {
+        ok: true,
+        status: 200,
+        data: {
+          type: 'badge',
+          text: 'Rendered from schemaApi',
+          level: 'info'
+        } as T
+      };
+    }
+
+    if (api.url === '/api/component-lab/dynamic-renderer/by-type') {
+      const schemaType = 'badge';
+
+      return {
+        ok: true,
+        status: 200,
+        data: {
+          type: 'badge',
+          text: 'Dynamically rendered badge',
+          level: 'success'
+        } as T
+      };
+    }
+
+    if (api.url === '/api/component-lab/dynamic-renderer/by-type/text') {
+      return {
+        ok: true,
+        status: 200,
+        data: { type: 'text', text: 'Dynamically rendered text content.' } as T
+      };
+    }
+
+    if (api.url === '/api/component-lab/dynamic-renderer/by-type/button') {
+      return {
+        ok: true,
+        status: 200,
+        data: { type: 'button', label: 'A button from dynamic schema', variant: 'secondary' } as T
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      data: null as T
+    };
+  }
+};
+
+const staticFromApi = {
   type: 'page',
   body: [
-    { type: 'text', text: 'The dynamic-renderer reads its schema from the scope.' },
+    { type: 'text', text: 'The dynamic-renderer loads its schema from schemaApi at runtime.' },
     {
       type: 'dynamic-renderer',
-      schema: '${dynamicSchema}'
+      schemaApi: {
+        url: '/api/component-lab/dynamic-renderer/static-schema'
+      },
+      body: {
+        type: 'text',
+        text: 'Loading dynamic schema...'
+      }
     }
   ]
 };
@@ -25,7 +83,7 @@ const schemaSwitcher = {
           variant: 'outline',
           onClick: {
             action: 'setValue',
-            args: { path: 'dynamicSchema', value: { type: 'badge', label: 'Dynamically rendered badge', variant: 'default' } }
+            args: { path: 'schemaType', value: 'badge' }
           }
         },
         {
@@ -34,7 +92,7 @@ const schemaSwitcher = {
           variant: 'outline',
           onClick: {
             action: 'setValue',
-            args: { path: 'dynamicSchema', value: { type: 'text', text: 'Dynamically rendered text content.' } }
+            args: { path: 'schemaType', value: 'text' }
           }
         },
         {
@@ -43,15 +101,21 @@ const schemaSwitcher = {
           variant: 'outline',
           onClick: {
             action: 'setValue',
-            args: { path: 'dynamicSchema', value: { type: 'button', label: 'A button from dynamic schema', variant: 'secondary' } }
+            args: { path: 'schemaType', value: 'button' }
           }
         }
       ]
     },
-    { type: 'text', text: 'Currently rendering: ${dynamicSchema.type ?? "(none)"}' },
+    { type: 'text', text: 'Currently rendering: ${schemaType ?? "(none)"}' },
     {
       type: 'dynamic-renderer',
-      schema: '${dynamicSchema}'
+      schemaApi: {
+        url: '${schemaType === "text" ? "/api/component-lab/dynamic-renderer/by-type/text" : schemaType === "button" ? "/api/component-lab/dynamic-renderer/by-type/button" : "/api/component-lab/dynamic-renderer/by-type"}'
+      },
+      body: {
+        type: 'text',
+        text: 'Loading switched schema...'
+      }
     }
   ]
 };
@@ -59,23 +123,22 @@ const schemaSwitcher = {
 export function DynamicRendererLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Renders a schema node whose type and props are resolved at runtime from the current scope. Enables fully dynamic, data-driven UI composition."
+      introDescription="Renders a schema node loaded at runtime through schemaApi. Suitable for delayed or remote schema assembly, not direct scope-injected schema objects."
       scenarios={[
         {
-          title: 'Static schema injected as scope data',
-          description: 'The dynamicSchema variable is preloaded into scope. The dynamic-renderer resolves and renders it.',
-          schema: staticFromScope,
-          data: {
-            dynamicSchema: { type: 'badge', label: 'Rendered from scope', variant: 'secondary' }
-          }
+          title: 'Static schema loaded through schemaApi',
+          description: 'The renderer shows a loading placeholder first, then replaces it with the schema returned by schemaApi.',
+          schema: staticFromApi,
+          env: dynamicRendererEnv
         },
         {
           title: 'Runtime schema switching via buttons',
-          description: 'Click the buttons to update dynamicSchema in scope. The dynamic-renderer re-renders immediately with the new schema shape.',
+          description: 'Click a button to update schemaType in scope. schemaApi re-runs and the dynamic-renderer swaps to the returned schema fragment.',
           schema: schemaSwitcher,
           data: {
-            dynamicSchema: { type: 'badge', label: 'Initial badge', variant: 'outline' }
-          }
+            schemaType: 'badge'
+          },
+          env: dynamicRendererEnv
         }
       ]}
     />

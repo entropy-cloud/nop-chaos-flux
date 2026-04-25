@@ -60,7 +60,7 @@ export function ReactionLabPage() {
         },
         {
           title: 'Field-watch for character count',
-          description: 'Type in the message field. The reaction watches the field value and updates a charCount display in real time.',
+          description: 'Type in the message field to exercise the current form-bound reaction baseline. The field value updates and is visible in scope-debug, while the visible charCount display remains at its current runtime baseline until the cross-scope watch gap is fixed.',
           schema: charCountWatcher
         }
       ]}

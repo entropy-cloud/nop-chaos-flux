@@ -68,7 +68,7 @@ export function RadioGroupLabPage() {
         },
         {
           title: 'Horizontal inline layout with live selection display',
-          description: 'With layout: horizontal, options are shown in a row. The selected value is shown live in the text renderer below.',
+          description: 'With layout: horizontal, options are shown in a row. The checked radio state updates live; the text line below currently remains a static summary prefix in the lab surface.',
           schema: inlineRadioGroup
         }
       ]}

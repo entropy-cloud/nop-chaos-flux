@@ -100,6 +100,30 @@ const responsiveCrud = {
   ]
 };
 
+const sourceResultCrud = {
+  type: 'page',
+  body: [
+    {
+      type: 'crud',
+      source: '${pagedRecords}',
+      rowKey: 'id',
+      queryForm: {
+        body: [
+          { type: 'input-text', name: 'keyword', label: 'Keyword' }
+        ]
+      },
+      footerToolbar: [
+        { type: 'text', text: 'Visible rows: ${$crud.itemCount}; Total: ${$crud.total}' }
+      ],
+      columns: [
+        { label: 'Name', name: 'name' },
+        { label: 'Owner', name: 'owner' },
+        { label: 'Status', name: 'status' }
+      ]
+    }
+  ]
+};
+
 const records = [
   { id: 1, name: 'Alpha', status: 'active', owner: 'Alice', category: 'Platform' },
   { id: 2, name: 'Beta', status: 'draft', owner: 'Bob', category: 'Design' },
@@ -128,6 +152,12 @@ export function CrudLabPage() {
           description: 'Shows the CRUD-owned responsive more-columns baseline. Below the configured breakpoint, the primary column stays in the main row while secondary columns move into the expandable detail row via the internal table bridge.',
           schema: responsiveCrud,
           data: { records }
+        },
+        {
+          title: 'CRUD source-result baseline',
+          description: 'Shows the first request-owned/source-owned baseline: CRUD consumes a scope-resolved source result object with `items` and `total`, keeps upstream total in `$crud.total`, and still applies local query filtering to the visible rows.',
+          schema: sourceResultCrud,
+          data: { pagedRecords: { items: records, total: 42 } }
         }
       ]}
     />

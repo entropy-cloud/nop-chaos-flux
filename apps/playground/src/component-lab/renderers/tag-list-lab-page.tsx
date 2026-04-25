@@ -8,7 +8,12 @@ const techTags = {
       name: 'tagListForm',
       data: { tags: ['react', 'typescript', 'vite'] },
       body: [
-        { type: 'tag-list', name: 'tags', label: 'Technologies' }
+        {
+          type: 'tag-list',
+          name: 'tags',
+          label: 'Technologies',
+          tags: ['react', 'typescript', 'vite', 'vitest', 'zustand']
+        }
       ],
       actions: [
         { type: 'button', label: 'Save', onClick: { action: 'submit' } }
@@ -30,7 +35,7 @@ const emptyStart = {
           type: 'tag-list',
           name: 'labels',
           label: 'Issue Labels',
-          placeholder: 'Type a label and press Enter...'
+          tags: ['bug', 'feature', 'docs', 'help wanted']
         }
       ],
       actions: [
@@ -44,16 +49,16 @@ const emptyStart = {
 export function TagListLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Editable list of free-text tags. Type a value and press Enter to add a tag. Click a tag to remove it. The value is stored as a string array."
+      introDescription="Toggleable predefined tags backed by a string-array form field. Click a tag to add or remove it; the selected values are shown below."
       scenarios={[
         {
           title: 'Pre-populated technology tags',
-          description: 'Three tags are pre-loaded. Type a new value and press Enter to add; click an existing tag to remove it. The current list is shown live below.',
+          description: 'Three tags start selected. Click any technology tag to toggle it on or off. The current list is shown live below.',
           schema: techTags
         },
         {
           title: 'Starting from empty — add issue labels',
-          description: 'The field starts empty. Add any labels you need. The count is shown below.',
+          description: 'The field starts empty. Click one or more issue labels to build the selection. The count is shown below.',
           schema: emptyStart
         }
       ]}

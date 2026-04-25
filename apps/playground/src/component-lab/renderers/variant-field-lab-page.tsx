@@ -73,7 +73,7 @@ export function VariantFieldLabPage() {
       scenarios={[
         {
           title: 'String vs list editor with visible submit result',
-          description: 'The selected tab should be visibly active. Switch between a single string input and a list editor, edit both forms, submit, then switch again to verify the second edit still binds to the correct variant.',
+          description: 'The selected tab should be visibly active. Switch between a single string input and a list editor, edit both forms, and verify the active editor plus bound scope state change with the selected variant.',
           schema: stringOrListVariant
         }
       ]}
