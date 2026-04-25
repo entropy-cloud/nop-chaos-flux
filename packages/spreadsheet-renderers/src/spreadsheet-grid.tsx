@@ -16,6 +16,7 @@ export interface SpreadsheetGridProps {
   columnWidths: Record<number, number>;
   rowHeights: Record<number, number>;
   selectedCell: { row: number; col: number } | null;
+  selection: SpreadsheetHostSnapshot['selection'];
   editingCell: { row: number; col: number } | null;
   editValue: string;
   fillHandleState: { isFilling: boolean; startRow: number; startCol: number; endRow: number; endCol: number; currentRow: number; currentCol: number };
@@ -27,6 +28,9 @@ export interface SpreadsheetGridProps {
   onCellDoubleClick: (row: number, col: number) => void;
   onCellMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
   onCellMouseEnter: (row: number, col: number) => void;
+  onSelectRow: (row: number, extend?: boolean) => void;
+  onSelectColumn: (col: number, extend?: boolean) => void;
+  onSelectAll: () => void;
   onColumnResizeStart: (col: number, e: React.MouseEvent) => void;
   onRowResizeStart: (row: number, e: React.MouseEvent) => void;
   onFillHandleMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
@@ -79,6 +83,7 @@ export function SpreadsheetGrid({
   columnWidths,
   rowHeights,
   selectedCell,
+  selection,
   editingCell,
   editValue,
   fillHandleState,
@@ -90,6 +95,9 @@ export function SpreadsheetGrid({
   onCellDoubleClick,
   onCellMouseDown,
   onCellMouseEnter,
+  onSelectRow,
+  onSelectColumn,
+  onSelectAll,
   onColumnResizeStart,
   onRowResizeStart,
   onFillHandleMouseDown,
@@ -288,13 +296,15 @@ export function SpreadsheetGrid({
         <table>
           <thead>
             <tr>
-              <th className="row-header header-corner" style={{ width: ROW_HEADER_WIDTH }}></th>
+              <th className="row-header header-corner" style={{ width: ROW_HEADER_WIDTH }} onClick={onSelectAll}></th>
               {leftSpacerWidth > 0 && <th style={{ width: leftSpacerWidth, padding: 0 }} />}
               {visibleColIndices.map((c) => (
                 <th
                   key={c}
                   style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
                   className="col-header"
+                  data-col-header-active={selection.kind === 'column' && selection.columns?.includes(c) ? true : undefined}
+                  onClick={(event) => onSelectColumn(c, event.shiftKey)}
                 >
                   {cellAddress(0, c).replace(/[0-9]/g, '')}
                   <div
@@ -318,8 +328,10 @@ export function SpreadsheetGrid({
                 style={{ height: rowHeights[r] ?? DEFAULT_ROW_HEIGHT }}
                 className={frozen && r < (frozen.row ?? 0) ? 'frozen-row' : ''}
               >
-                <td className="row-header">
-                  {r + 1}
+                <td className="row-header" data-row-header-active={selection.kind === 'row' && selection.rows?.includes(r) ? true : undefined}>
+                  <button type="button" className="ss-row-header-button" onClick={(event) => onSelectRow(r, event.shiftKey)}>
+                    {r + 1}
+                  </button>
                   <div
                     className="row-resize-handle"
                     onMouseDown={(e) => onRowResizeStart(r, e)}

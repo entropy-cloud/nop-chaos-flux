@@ -51,6 +51,9 @@ export interface SpreadsheetInteractionsReturn {
   handleCellMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
   handleCellMouseEnter: (row: number, col: number) => void;
   handleMouseUp: () => void;
+  handleSelectRow: (row: number, extend?: boolean) => void;
+  handleSelectColumn: (col: number, extend?: boolean) => void;
+  handleSelectAll: () => void;
   handleColumnResizeStart: (col: number, e: React.MouseEvent) => void;
   handleRowResizeStart: (row: number, e: React.MouseEvent) => void;
   columnWidths: Record<number, number>;
@@ -137,6 +140,9 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     handleCellMouseDown,
     handleCellMouseEnter,
     handleMouseUp: selectionMouseUp,
+    handleSelectRow,
+    handleSelectColumn,
+    handleSelectAll,
   } = useSelection(snapshot, bridge, sheetId, addLog, editingCellRef, editValueRef, setEditingCell, setCommentText, setCellValue);
 
   const { fillHandleState, fillHandleRef, isFillPreview, handleFillHandleMouseDown } = useFillHandle(
@@ -232,6 +238,9 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     handleCellMouseDown,
     handleCellMouseEnter,
     handleMouseUp,
+    handleSelectRow,
+    handleSelectColumn,
+    handleSelectAll,
     handleColumnResizeStart,
     handleRowResizeStart,
     columnWidths,

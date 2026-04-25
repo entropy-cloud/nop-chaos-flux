@@ -26,22 +26,24 @@ export function useClipboard(
   }, [getSelectedRange, bridge, addLog]);
 
   const handlePaste = useCallback(async () => {
-    if (!selectedCell) return;
+    const range = getSelectedRange();
+    const targetCell = selectedCell ?? (range ? { row: range.startRow, col: range.startCol } : null);
+    if (!targetCell) return;
     const result = await bridge.dispatch({
       type: 'spreadsheet:pasteCells',
       target: {
         sheetId,
-        address: cellAddress(selectedCell.row, selectedCell.col),
-        row: selectedCell.row,
-        col: selectedCell.col,
+        address: cellAddress(targetCell.row, targetCell.col),
+        row: targetCell.row,
+        col: targetCell.col,
       },
     });
     if (result.ok) {
-      addLog(`Pasted to ${cellAddress(selectedCell.row, selectedCell.col)}`);
+      addLog(`Pasted to ${cellAddress(targetCell.row, targetCell.col)}`);
     } else {
       addLog(`Paste failed: ${result.error}`);
     }
-  }, [selectedCell, sheetId, bridge, addLog]);
+  }, [selectedCell, getSelectedRange, sheetId, bridge, addLog]);
 
   const handleClear = useCallback(async () => {
     const range = getSelectedRange();

@@ -45,6 +45,9 @@ export function useSelection(
   setCommentText: (text: string) => void,
   setCellValue: (value: string) => void
 ) {
+  const totalRows = 100;
+  const totalCols = 26;
+
   const selectedCell = useMemo(
     () =>
       snapshot.activeCell
@@ -97,6 +100,17 @@ export function useSelection(
     if (snapshot.activeRange) {
       return snapshot.activeRange;
     }
+    if (snapshot.selection.kind === 'row' && snapshot.selection.rows?.length) {
+      const rows = [...snapshot.selection.rows].sort((a, b) => a - b);
+      return createRange(sheetId, rows[0]!, 0, rows[rows.length - 1]!, totalCols - 1);
+    }
+    if (snapshot.selection.kind === 'column' && snapshot.selection.columns?.length) {
+      const columns = [...snapshot.selection.columns].sort((a, b) => a - b);
+      return createRange(sheetId, 0, columns[0]!, totalRows - 1, columns[columns.length - 1]!);
+    }
+    if (snapshot.selection.kind === 'sheet') {
+      return createRange(sheetId, 0, 0, totalRows - 1, totalCols - 1);
+    }
     const state = dragStateRef.current;
     if (state.startRow >= 0 && state.endRow >= 0) {
       return createRange(sheetId, state.startRow, state.startCol, state.endRow, state.endCol);
@@ -105,7 +119,7 @@ export function useSelection(
       return createRange(sheetId, selectedCell.row, selectedCell.col, selectedCell.row, selectedCell.col);
     }
     return null;
-  }, [previewRange, selectedCell, sheetId, snapshot.activeRange]);
+  }, [previewRange, selectedCell, sheetId, snapshot.activeRange, snapshot.selection]);
 
   const isInRange = useCallback((row: number, col: number): boolean => {
     const range = getSelectedRange();
@@ -182,6 +196,27 @@ export function useSelection(
     }
   }, [addLog, syncRangeSelectionToCore]);
 
+  const handleSelectRow = useCallback((row: number, extend = false) => {
+    void bridge.dispatch({ type: 'spreadsheet:selectRow', sheetId, row, extend });
+    dragStateRef.current = { isDragging: false, startRow: row, startCol: 0, endRow: row, endCol: 0 };
+    setPreviewRange(null);
+    addLog(`Selected row ${row + 1}`);
+  }, [addLog, bridge, sheetId]);
+
+  const handleSelectColumn = useCallback((col: number, extend = false) => {
+    void bridge.dispatch({ type: 'spreadsheet:selectColumn', sheetId, col, extend });
+    dragStateRef.current = { isDragging: false, startRow: 0, startCol: col, endRow: 0, endCol: col };
+    setPreviewRange(null);
+    addLog(`Selected column ${cellAddress(0, col).replace(/[0-9]/g, '')}`);
+  }, [addLog, bridge, sheetId]);
+
+  const handleSelectAll = useCallback(() => {
+    void bridge.dispatch({ type: 'spreadsheet:selectAll', sheetId });
+    dragStateRef.current = { isDragging: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0 };
+    setPreviewRange(null);
+    addLog('Selected entire sheet');
+  }, [addLog, bridge, sheetId]);
+
   return {
     selectedCell,
     setSelectedCell,
@@ -193,5 +228,8 @@ export function useSelection(
     handleCellMouseDown,
     handleCellMouseEnter,
     handleMouseUp,
+    handleSelectRow,
+    handleSelectColumn,
+    handleSelectAll,
   };
 }
