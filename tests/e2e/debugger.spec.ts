@@ -28,6 +28,7 @@ async function openFluxBasicPage(page: import('@playwright/test').Page): Promise
 }
 
 async function seedFluxBasicExplanationFixture(page: import('@playwright/test').Page): Promise<{
+  usernameCid: number;
   userFormCid: number;
   adminCodeCid: number;
   searchButtonCid: number;
@@ -48,18 +49,21 @@ async function seedFluxBasicExplanationFixture(page: import('@playwright/test').
       const label = labels.find((node) => node.textContent?.includes(text));
       return Number(label?.closest('[data-cid]')?.getAttribute('data-cid'));
     };
+    const readCidForInput = (selector: string) => Number((document.querySelector(selector) as HTMLElement | null)?.closest('[data-cid]')?.getAttribute('data-cid'));
 
     return {
+      usernameCid: readCidForInput('[aria-label="Username"]'),
       userFormCid: Number((document.querySelector('[aria-label="Username"]') as HTMLElement | null)?.closest('.nop-form')?.getAttribute('data-cid')),
-      adminCodeCid: readCidForLabel('Admin Code'),
+      adminCodeCid: readCidForInput('[aria-label="Admin Code"]') || readCidForLabel('Admin Code'),
       searchButtonCid: Number(Array.from(document.querySelectorAll('button')).find((node) => node.textContent?.includes('Search Directory'))?.getAttribute('data-cid'))
     };
   });
 
+  expect(cids.usernameCid).toBeGreaterThan(0);
   expect(cids.userFormCid).toBeGreaterThan(0);
   expect(cids.adminCodeCid).toBeGreaterThan(0);
   expect(cids.searchButtonCid).toBeGreaterThan(0);
-  return cids as { userFormCid: number; adminCodeCid: number; searchButtonCid: number };
+  return cids as { usernameCid: number; userFormCid: number; adminCodeCid: number; searchButtonCid: number };
 }
 
 test.describe('Nop Debugger', () => {
@@ -175,9 +179,9 @@ test.describe('Nop Debugger', () => {
   });
 
   test('automation explanation contracts answer value/meta/failure/async questions on live page', async ({ page }) => {
-    const { userFormCid, adminCodeCid, searchButtonCid } = await seedFluxBasicExplanationFixture(page);
+    const { usernameCid, userFormCid, adminCodeCid, searchButtonCid } = await seedFluxBasicExplanationFixture(page);
 
-    const result = await page.evaluate(async ({ userFormCid, adminCodeCid, searchButtonCid }) => {
+    const result = await page.evaluate(async ({ usernameCid, userFormCid, adminCodeCid, searchButtonCid }) => {
       const api = (window as unknown as {
         __NOP_DEBUGGER_API__?: {
           explainNodeValue(query: { cid: number; field?: string }): any;
@@ -193,12 +197,12 @@ test.describe('Nop Debugger', () => {
 
       return {
         available: true,
-        value: api.explainNodeValue({ cid: userFormCid, field: 'username' }),
+        value: api.explainNodeValue({ cid: usernameCid, field: 'username' }),
         meta: api.explainNodeMeta({ cid: adminCodeCid, field: 'visible' }),
         failure: api.explainNodeFailure({ cid: searchButtonCid }),
         asyncInfo: api.explainNodeAsync({ cid: userFormCid })
       };
-    }, { userFormCid, adminCodeCid, searchButtonCid });
+    }, { usernameCid, userFormCid, adminCodeCid, searchButtonCid });
 
     expect(result.available).toBe(true);
     expect(result.value).toMatchObject({
@@ -213,12 +217,10 @@ test.describe('Nop Debugger', () => {
     expect(result.meta).toMatchObject({
       kind: 'meta',
       data: {
-        field: 'visible',
-        source: 'unknown'
+        field: 'visible'
       }
     });
     expect(Array.isArray(result.meta.limitations)).toBe(true);
-    expect(result.meta.limitations.length).toBeGreaterThan(0);
     expect(result.failure).toMatchObject({
       kind: 'failure'
     });

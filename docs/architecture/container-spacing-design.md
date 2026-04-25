@@ -122,6 +122,8 @@ When `ContainerRenderer` activates the flex-child path (semantic props `directio
 - CSS default gap overriding the renderer's explicit gap class
 - Duplicate `display: flex` declarations
 
+When the flex-child path is active but no explicit `gap` prop was provided (e.g., `direction: "column"` without `gap`), the renderer applies `gap: var(--space-form-item-gap)` as an inline style fallback so spacing is preserved even though the CSS `:not([data-flex])` rule doesn't match.
+
 ## Form/FieldSet `gap` Semantic Prop
 
 `FormSchema` and `FieldsetSchema` accept `gap?: number | string`:

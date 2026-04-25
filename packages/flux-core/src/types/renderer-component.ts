@@ -28,6 +28,12 @@ export interface ComponentHandleDebugData {
   scope?: ScopeRef;
   resolvedMeta?: ResolvedNodeMeta;
   resolvedProps?: ResolvedNodeProps['value'];
+  sourceHints?: {
+    fieldName?: string;
+    formValue?: unknown;
+    scopeValue?: unknown;
+    metaRules?: Partial<Record<'visible' | 'hidden' | 'disabled', string>>;
+  };
   updatedAt?: number;
 }
 

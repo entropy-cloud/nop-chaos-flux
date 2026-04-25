@@ -23,6 +23,35 @@ function getAvailableMethods(handle: ComponentHandle | undefined) {
   return handle?.capabilities?.listMethods?.();
 }
 
+function applyResolvedInspectFallbacks(
+  result: NopComponentInspectResult,
+  payload: {
+    scopeChain?: readonly { data: Record<string, unknown> }[];
+    state?: {
+      resolvedMeta?: unknown;
+      resolvedProps?: unknown;
+    };
+  }
+) {
+  if (!result.scopeData && payload.scopeChain?.[0]?.data) {
+    result.scopeData = payload.scopeChain[0].data;
+  }
+
+  if (!result.metaSummary) {
+    result.metaSummary = pickRecord(
+      payload.state?.resolvedMeta as Record<string, unknown> | undefined,
+      ['id', 'name', 'label', 'title', 'className', 'visible', 'hidden', 'disabled', 'testid', 'cid']
+    );
+  }
+
+  if (!result.propsSummary) {
+    result.propsSummary = pickRecord(
+      payload.state?.resolvedProps as Record<string, unknown> | undefined,
+      ['id', 'name', 'label', 'title', 'type', 'value', 'placeholder', 'options']
+    );
+  }
+}
+
 export function buildInspectResult(
   cid: number,
   handle: ReturnType<NonNullable<ComponentHandleRegistry['getHandleByCid']>> | undefined,
@@ -60,19 +89,25 @@ export function buildInspectResult(
 
   result.metaSummary = pickRecord(debugData?.resolvedMeta as Record<string, unknown> | undefined, ['id', 'name', 'label', 'title', 'className', 'visible', 'hidden', 'disabled', 'testid', 'cid']);
   result.propsSummary = pickRecord(debugData?.resolvedProps as Record<string, unknown> | undefined, ['id', 'name', 'label', 'title', 'type', 'value', 'placeholder', 'options']);
-  if (!result.debugData && debugData?.nodeInstance?.state) {
+  if (debugData?.nodeInstance?.state || debugData?.sourceHints) {
     result.debugData = {
-      nodeState: {
-        mounted: debugData.nodeInstance.state.mounted,
-        hasMetaDependencies: Boolean(debugData.nodeInstance.state.metaDependencies),
-        hasPropsDependencies: Boolean(debugData.nodeInstance.state.propsDependencies),
-        metaDependencyPaths: debugData.nodeInstance.state.metaDependencies?.paths ?? [],
-        metaDependencyWildcard: debugData.nodeInstance.state.metaDependencies?.wildcard ?? false,
-        metaDependencyBroadAccess: debugData.nodeInstance.state.metaDependencies?.broadAccess ?? false,
-        propsDependencyPaths: debugData.nodeInstance.state.propsDependencies?.paths ?? [],
-        propsDependencyWildcard: debugData.nodeInstance.state.propsDependencies?.wildcard ?? false,
-        propsDependencyBroadAccess: debugData.nodeInstance.state.propsDependencies?.broadAccess ?? false
-      }
+      ...(result.debugData ?? {}),
+      ...(debugData?.sourceHints ? { sourceHints: debugData.sourceHints } : {}),
+      ...(debugData?.nodeInstance?.state
+        ? {
+            nodeState: {
+              mounted: debugData.nodeInstance.state.mounted,
+              hasMetaDependencies: Boolean(debugData.nodeInstance.state.metaDependencies),
+              hasPropsDependencies: Boolean(debugData.nodeInstance.state.propsDependencies),
+              metaDependencyPaths: debugData.nodeInstance.state.metaDependencies?.paths ?? [],
+              metaDependencyWildcard: debugData.nodeInstance.state.metaDependencies?.wildcard ?? false,
+              metaDependencyBroadAccess: debugData.nodeInstance.state.metaDependencies?.broadAccess ?? false,
+              propsDependencyPaths: debugData.nodeInstance.state.propsDependencies?.paths ?? [],
+              propsDependencyWildcard: debugData.nodeInstance.state.propsDependencies?.wildcard ?? false,
+              propsDependencyBroadAccess: debugData.nodeInstance.state.propsDependencies?.broadAccess ?? false
+            }
+          }
+        : {})
     };
   }
 
@@ -164,6 +199,7 @@ export function buildInspectByCid(componentRegistry: ComponentHandleRegistry | u
       );
       result.instancePath = inspected.payload.instancePath;
       result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
+      applyResolvedInspectFallbacks(result, inspected.payload);
       return result;
     }
 
@@ -198,6 +234,7 @@ export function buildInspectByElement(componentRegistry: ComponentHandleRegistry
       );
       result.instancePath = inspected.payload.instancePath;
       result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
+      applyResolvedInspectFallbacks(result, inspected.payload);
       return result;
     }
 

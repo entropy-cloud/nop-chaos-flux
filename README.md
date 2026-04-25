@@ -2,7 +2,11 @@
 
 <div align="center">
 
-**Schema that executes, not just renders. A schema-driven runtime for low-code systems, built around seven primitives.**
+**Schema that executes, not just renders.**
+
+*A schema-driven runtime for low-code systems, built around seven primitives.*
+
+[English](README.md) | [简体中文](README.zh-CN.md)
 
 [Docs Index](docs/index.md) |
 [Architecture Intro](docs/articles/flux-design-introduction.md) |
@@ -55,30 +59,11 @@ In short:
 
 The two projects can collaborate: Next can integrate Flux's designer and runtime capabilities.
 
-## Future Migration Plan
+## AMIS Context
 
-**Flux is the planned future rendering layer for NOP Chaos Next.**
-
-### Current State
-- Next uses AMIS (React 19 migrated) as the primary rendering layer
-- Flux runs as an independent runtime project
-- Both can collaborate through integration points
-
-### Migration Roadmap
-- **Phase 1 (Coexistence)**: Introduce Flux as an optional rendering layer and develop an AMIS-to-Flux schema compatibility layer
-- **Phase 2 (Transition)**: Gradually migrate new pages to Flux, improve the compatibility layer, and refactor key pages
-- **Phase 3 (Full Migration)**: Complete migration to Flux as the sole runtime and rendering layer and remove the AMIS dependency
-
-### AMIS to Flux Conversion Layer
-A compatibility layer will be developed to:
-- Map AMIS schema → Flux schema
-- Convert AMIS expressions → Flux expressions
-- Adapt AMIS event handling → Flux ActionScope
-- Transform AMIS data binding → Flux ScopeRef
-
-This ensures existing AMIS schemas can run on Flux with minimal changes.
-
-For the broader migration context, refer to the companion `nop-chaos-next` repository when it is available in the same workspace.
+- Flux is developed as an independent runtime and renderer stack; it does not depend on AMIS at runtime
+- The project is informed by AMIS schema conventions and observed behavior where that helps migration and interoperability
+- Compatibility work for existing AMIS schemas is planned, but it is not the primary public contract of this repository today
 
 ## At A Glance
 
@@ -89,7 +74,7 @@ For the broader migration context, refer to the companion `nop-chaos-next` repos
 - The monorepo also contains Flow Designer, Spreadsheet/Report Designer, Word Editor, and debugger tooling
 - Workspace packages are currently `private`; the main runnable surface is `apps/playground`
 - Architecture rules stay visible through package boundaries, renderer contracts, action scope, and host integration
-- **AMIS Compatibility**: Planned compatibility work to run existing AMIS schemas on Flux, enabling gradual migration from AMIS-based applications
+- **AMIS Context**: Flux is informed by AMIS and may grow targeted compatibility layers where that improves migration and interoperability
 
 ## A 30-Second Example
 
@@ -303,4 +288,4 @@ If you are implementing or contributing:
 
 MIT — see [LICENSE](LICENSE).
 
-Flux is informed by [Baidu AMIS](https://github.com/baidu/amis). Parts of this repository were rewritten with AI assistance to study existing AMIS behavior and implementations, then re-express those ideas under Flux's own architecture, contracts, and coding rules.
+Flux is informed by [Baidu AMIS](https://github.com/baidu/amis). Parts of this repository were rewritten with AI assistance to study existing AMIS behavior and implementations, then re-express those ideas through Flux's own architecture, contracts, and coding rules.

@@ -14,22 +14,23 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const summary = useMemo<PageStatusSummary>(() => ({
     refreshTick
   }), [refreshTick]);
+  const slotProps = props.props as PageSchema;
 
-  useStatusPathPublication(props.node.scope, typeof (props.props as PageSchema).statusPath === 'string' ? (props.props as PageSchema).statusPath : undefined, summary);
+  useStatusPathPublication(props.node.scope, typeof slotProps.statusPath === 'string' ? slotProps.statusPath : undefined, summary);
 
   return (
     <section className={cn('nop-page', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {hasRendererSlotContent(titleContent) ? (
-        <header data-slot="page-header">
+        <header data-slot="page-header" className={cn(slotProps.headerClassName)}>
           <h2>{titleContent}</h2>
         </header>
       ) : null}
       {hasRendererSlotContent(headerContent) ? (
-        <div data-slot="page-toolbar">{headerContent}</div>
+        <div data-slot="page-toolbar" className={cn(slotProps.toolbarClassName)}>{headerContent}</div>
       ) : null}
-      <div data-slot="page-body">{props.regions.body?.render()}</div>
+      <div data-slot="page-body" className={cn(slotProps.bodyClassName)}>{props.regions.body?.render()}</div>
       {hasRendererSlotContent(footerContent) ? (
-        <footer data-slot="page-footer">{footerContent}</footer>
+        <footer data-slot="page-footer" className={cn(slotProps.footerClassName)}>{footerContent}</footer>
       ) : null}
     </section>
   );

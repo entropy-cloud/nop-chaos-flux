@@ -321,6 +321,44 @@ describe('controller inspector methods', () => {
     });
   });
 
+  it('inspectByCid falls back to resolved inspect payload data when registry debug data is sparse', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-resolved-fallbacks', enabled: true });
+    const div = document.createElement('div');
+    div.setAttribute('data-cid', '103');
+    document.body.appendChild(div);
+
+    const mockRegistry = {
+      id: 'reg-1',
+      inspectCid: (cid: number) => cid === 103
+        ? {
+            kind: 'resolved',
+            payload: {
+              cid: 103,
+              state: {
+                mounted: true,
+                resolvedMeta: { visible: true, disabled: false },
+                resolvedProps: { label: 'Username', value: 'alice' }
+              },
+              scopeChain: [
+                { id: 'scope-103', path: '$form', label: '$form', data: { username: 'alice' } }
+              ]
+            }
+          }
+        : { kind: 'notFound' },
+      getHandleByCid: () => undefined,
+      getHandleDebugData: () => ({ nodeId: 'field-username', path: 'body.0', rendererType: 'input-text' })
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+    const result = ctrl.inspectByCid(103);
+
+    expect(result).toMatchObject({
+      scopeData: { username: 'alice' },
+      metaSummary: { visible: true, disabled: false },
+      propsSummary: { label: 'Username', value: 'alice' }
+    });
+  });
+
   it('explains value source, meta causality, failure, and async owners with bounded machine-oriented results', () => {
     const ctrl = createNopDebugger({ id: 'inspect-explanations', enabled: true });
     const div = document.createElement('div');

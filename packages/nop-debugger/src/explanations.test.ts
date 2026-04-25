@@ -76,6 +76,56 @@ describe('explanation helpers', () => {
     expect(result.evidenceRefs.length).toBeLessThanOrEqual(6);
   });
 
+  it('uses source hints to explain field value origin when form state snapshot is absent', () => {
+    const result = explainNodeValue({
+      query: { cid: 1, field: 'username' },
+      inspect: createInspectResult({
+        debugData: {
+          sourceHints: {
+            fieldName: 'username',
+            formValue: 'alice'
+          }
+        }
+      }),
+      redaction: normalizeRedactionOptions(undefined)
+    });
+
+    expect(result).toMatchObject({
+      kind: 'value',
+      data: {
+        field: 'username',
+        valueSource: 'form-state',
+        value: 'alice'
+      }
+    });
+    expect(result.evidenceRefs[0]?.summary).toContain('source hint form value');
+  });
+
+  it('includes meta rule hints in meta explanations', () => {
+    const result = explainNodeMeta({
+      query: { cid: 1, field: 'visible' },
+      inspect: createInspectResult({
+        metaSummary: { visible: true },
+        debugData: {
+          sourceHints: {
+            metaRules: {
+              visible: '${role === "admin"}'
+            }
+          },
+          nodeState: {
+            metaDependencyPaths: ['role'],
+            metaDependencyWildcard: false
+          }
+        }
+      }),
+      redaction: normalizeRedactionOptions(undefined)
+    });
+
+    expect(result.kind).toBe('meta');
+    expect(result.answer).toContain('${role === "admin"}');
+    expect(result.evidenceRefs.some((entry) => entry.summary.includes('visible rule'))).toBe(true);
+  });
+
   it('bounds failure evidence and related events', () => {
     const events: NopDebugEvent[] = [
       createEvent({

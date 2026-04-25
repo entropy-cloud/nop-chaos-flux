@@ -115,7 +115,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
         const bodyRegion = typeof item.bodyRegionKey === 'string' ? props.regions[item.bodyRegionKey] : undefined;
         const toolbarRegion = typeof item.toolbarRegionKey === 'string' ? props.regions[item.toolbarRegionKey] : undefined;
         return (
-          <TabsContent key={value} value={value} data-slot="tabs-content">
+          <TabsContent key={value} value={value} data-slot="tabs-content" className={cn(schemaProps.contentClassName)}>
             {toolbarRegion ? <div data-slot="tabs-item-toolbar">{toolbarRegion.render()}</div> : null}
             {bodyRegion ? bodyRegion.render() : null}
           </TabsContent>
@@ -135,7 +135,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >
-      {toolbarContent ? <div data-slot="tabs-toolbar">{toolbarContent}</div> : null}
+      {toolbarContent ? <div data-slot="tabs-toolbar" className={cn(schemaProps.toolbarClassName)}>{toolbarContent}</div> : null}
       <Tabs
         value={ownedAxis.value}
         onValueChange={(next) => {

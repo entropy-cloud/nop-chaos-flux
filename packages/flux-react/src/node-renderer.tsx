@@ -149,7 +149,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     [props.node, renderScope, nodeState, finalResolvedMeta.cid, instancePath]
   );
 
-  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, renderScope, finalResolvedMeta, resolvedComponentProps);
+  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, renderScope, finalResolvedMeta, resolvedComponentProps, currentForm);
 
   const helpers = useMemo(
     () =>

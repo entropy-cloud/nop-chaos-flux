@@ -9,6 +9,10 @@ export interface PageSchema extends BaseSchema {
    header?: BaseSchema[];
    footer?: BaseSchema[];
   modalContainer?: string;
+  bodyClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
+  toolbarClassName?: string;
 }
 
 export interface DialogSchema extends BaseSchema {
@@ -73,19 +77,22 @@ export interface TabsSchema extends BaseSchema {
   variant?: 'default' | 'line';
   tabsMode?: TabsMode;
   sidePosition?: 'left' | 'right';
+  contentClassName?: string;
+  toolbarClassName?: string;
 }
 
 export interface ContainerSchema extends BaseSchema {
   type: 'container';
-  /** 布局方向：row（默认）| column */
   direction?: 'row' | 'column';
-  /** 是否换行（仅 row 方向有效） */
   wrap?: boolean;
-  /** 对齐方式 */
   align?: 'start' | 'center' | 'end' | 'stretch';
-  /** 间距：命名 token ('none'|'xs'|'sm'|'md'|'lg'|'xl')、数字(px) 或 CSS 值 (如 '1rem') */
   gap?: number | string;
   body?: BaseSchema[];
+  header?: BaseSchema[];
+  footer?: BaseSchema[];
+  bodyClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
 }
 
 export interface FragmentSchema extends BaseSchema {

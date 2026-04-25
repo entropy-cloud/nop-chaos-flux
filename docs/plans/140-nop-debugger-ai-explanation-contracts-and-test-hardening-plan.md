@@ -174,15 +174,17 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: keep this plan at `partially completed`. The AI-first explanation surface, bounded schema, controller/automation wiring, docs sync, package-level verification, targeted Playwright contract coverage, and focused boundedness/redaction unit tests are landed. The previous environment-level Vite/Tailwind overlay blocker has been fixed, but live value/meta explanations still often degrade to conservative `unknown + limitations`, so the semantic closure bar for this plan is still not met.
+Status Note: keep this plan at `partially completed`. The AI-first explanation surface, bounded schema, controller/automation wiring, docs sync, package-level verification, targeted Playwright contract coverage, focused boundedness/redaction unit tests, inspect-result fallback improvements, and a first `sourceHints` debug-data channel are landed. The previous environment-level Vite/Tailwind overlay blocker has been fixed, but live value/meta explanations still often degrade to conservative `unknown + limitations`, so the semantic closure bar for this plan is still not met.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: independent draft review `ses_23af1f5c3ffeUBnDr3UNrwRBl3`; independent closure-audit `ses_23ab35b15ffeo8l0fYxH4CkKs2`
-- Evidence: closure audit concluded Phase 1 is complete and docs sync is landed; follow-up implementation since that audit also added focused boundedness/redaction tests and fixed the missing workspace CSS alias that caused the `flux-basic` Vite/Tailwind overlay failure, but the plan still must remain `partially completed` because live value/meta explanations still degrade to conservative `unknown`, and failure attribution is only partially strict.
+- Evidence: closure audit concluded Phase 1 is complete and docs sync is landed; follow-up implementation since that audit also added focused boundedness/redaction tests, fixed the missing workspace CSS alias that caused the `flux-basic` Vite/Tailwind overlay failure, improved `inspectByCid()` fallback wiring so resolved inspect payload data can feed explanation APIs even when registry debug data is sparse, and added a first `sourceHints` channel (`fieldName`, `formValue`, `scopeValue`, `metaRules`) from `useNodeDebugData()` into debugger inspect data. Additional probing also verified that falling back from `resolvedProps.name` to `templateNode.schema.name` still did not make the targeted live field-node query resolve `username` from `form-state`. That further narrows the remaining gap to owner-node coverage / cid alignment in live render trees, not just missing field-name metadata.
 
 Follow-up:
 
 - 继续补强 Phase 2/4：让 deterministic live fixtures 能产出更有用的 value/meta explanations，而不是主要落到 `unknown + limitations`。
+- 如果要把 value/meta explanation 提升到 closure bar，优先补充 field/node 级 debug-safe source hints 或 expression-origin hints，而不是继续在现有 snapshot 上叠更多 fallback。
+- 下一步更可能需要一次专门的 owner-node tracing：定位哪些 renderer/frame nodes actually own the live field cid in E2E, then ensure those exact nodes receive `sourceHints` consistently; the current evidence suggests the hints exist in principle but miss the queried node.
 - 继续补强 deterministic live fixtures 与 inspect/debug data，让 value/meta explanation 在真实页面上更常返回有用依据，而不是主要落到 `unknown + limitations`。
 - 如果后续需要“依赖传播全链路解释”或“更精细的值来源证明”，应拆 successor plan；不要在本计划 closure 时隐含保留未归属 debt。

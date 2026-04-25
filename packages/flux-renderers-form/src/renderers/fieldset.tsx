@@ -11,14 +11,17 @@ export interface FieldsetSchema extends BaseSchema {
   collapsed?: boolean;
   gap?: number | string;
   body?: BaseSchema[];
+  bodyClassName?: string;
+  titleClassName?: string;
 }
 
 function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
-  const title = typeof props.props.title === 'string' ? props.props.title : undefined;
+  const slotProps = props.props as FieldsetSchema;
+  const title = typeof slotProps.title === 'string' ? slotProps.title : undefined;
   const bodyContent = resolveRendererSlotContent(props, 'body');
-  const collapsible = Boolean(props.props.collapsible);
-  const [collapsed, setCollapsed] = useState(Boolean(props.props.collapsed) && collapsible);
-  const fieldsetGap = resolveGap(props.props.gap as number | string | undefined);
+  const collapsible = Boolean(slotProps.collapsible);
+  const [collapsed, setCollapsed] = useState(Boolean(slotProps.collapsed) && collapsible);
+  const fieldsetGap = resolveGap(slotProps.gap as number | string | undefined);
 
   const toggle = useCallback(() => {
     if (collapsible) {
@@ -39,11 +42,11 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
       data-collapsed={collapsible && collapsed || undefined}
     >
       {title ? (
-        <legend data-slot="fieldset-title" onClick={toggle} style={collapsible ? { cursor: 'pointer' } : undefined}>
+        <legend data-slot="fieldset-title" className={cn(slotProps.titleClassName)} onClick={toggle} style={collapsible ? { cursor: 'pointer' } : undefined}>
           {title}
         </legend>
       ) : null}
-      <div data-slot="fieldset-body" className={cn(fieldsetGap.className)} style={bodyStyle}>
+      <div data-slot="fieldset-body" className={cn(fieldsetGap.className, slotProps.bodyClassName)} style={bodyStyle}>
         {hasRendererSlotContent(bodyContent) ? bodyContent : null}
       </div>
     </fieldset>

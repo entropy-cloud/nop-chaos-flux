@@ -78,6 +78,21 @@ function getNodeStateDebugData(inspect: NopComponentInspectResult | undefined) {
   return debugData?.nodeState;
 }
 
+function getSourceHints(inspect: NopComponentInspectResult | undefined) {
+  const debugData = inspect?.debugData as
+    | {
+        sourceHints?: {
+          fieldName?: string;
+          formValue?: unknown;
+          scopeValue?: unknown;
+          metaRules?: Partial<Record<'visible' | 'hidden' | 'disabled', string>>;
+        };
+      }
+    | undefined;
+
+  return debugData?.sourceHints;
+}
+
 function getDependencyPaths(dependencyPaths: unknown, wildcard: unknown) {
   const paths = Array.isArray(dependencyPaths)
     ? dependencyPaths.filter((value): value is string => typeof value === 'string')
@@ -155,6 +170,7 @@ export function explainNodeValue(args: {
   const evidenceRefs: NopDebuggerEvidenceRef[] = [];
   const limitations: string[] = [];
   let truncated = false;
+  const sourceHints = getSourceHints(inspect);
 
   let value = inspect.formState?.values?.[field];
   let valueSource: NopNodeValueExplanation['data']['valueSource'] = 'form-state';
@@ -169,6 +185,27 @@ export function explainNodeValue(args: {
       path: inspect.path
     });
   } else {
+    if (sourceHints?.fieldName === field && sourceHints.formValue !== undefined) {
+      value = sourceHints.formValue;
+      valueSource = 'form-state';
+      truncated ||= pushEvidence(evidenceRefs, {
+        kind: 'form-state',
+        summary: `${field} resolved from source hint form value`,
+        cid: inspect.cid,
+        nodeId: inspect.nodeId,
+        path: inspect.path
+      });
+    } else if (sourceHints?.fieldName === field && sourceHints.scopeValue !== undefined) {
+      value = sourceHints.scopeValue;
+      valueSource = 'current-scope';
+      truncated ||= pushEvidence(evidenceRefs, {
+        kind: 'scope',
+        summary: `${field} resolved from source hint scope value`,
+        cid: inspect.cid,
+        nodeId: inspect.nodeId,
+        path: inspect.path
+      });
+    } else {
     const directScopeHit = inspect.scopeData && Object.prototype.hasOwnProperty.call(inspect.scopeData, field);
     if (directScopeHit) {
       value = inspect.scopeData?.[field];
@@ -218,6 +255,7 @@ export function explainNodeValue(args: {
         valueSource = 'unknown';
         limitations.push(`The debugger snapshot does not expose a reliable current source for ${field}.`);
       }
+    }
     }
   }
 
@@ -297,6 +335,7 @@ export function explainNodeMeta(args: {
   const limitations: string[] = [];
   const resolved = readMetaField(inspect, query.field);
   const nodeStateDebug = getNodeStateDebugData(inspect);
+  const sourceHints = getSourceHints(inspect);
   const dependencyInfo = getDependencyPaths(
     nodeStateDebug?.metaDependencyPaths,
     nodeStateDebug?.metaDependencyWildcard
@@ -313,6 +352,20 @@ export function explainNodeMeta(args: {
     });
   } else {
     limitations.push(`The debugger snapshot does not expose ${query.field} in resolved meta or resolved props.`);
+  }
+
+  const metaRule = (query.field === 'visible' || query.field === 'hidden' || query.field === 'disabled')
+    ? sourceHints?.metaRules?.[query.field]
+    : undefined;
+
+  if (metaRule) {
+    truncated ||= pushEvidence(evidenceRefs, {
+      kind: 'meta',
+      summary: `${query.field} rule: ${metaRule}`,
+      cid: inspect.cid,
+      nodeId: inspect.nodeId,
+      path: inspect.path
+    });
   }
 
   if (dependencyInfo.paths.length > 0) {
@@ -337,7 +390,7 @@ export function explainNodeMeta(args: {
     },
     answer: resolved.source === 'unknown'
       ? `${query.field} cannot be reliably attributed from the current debugger snapshot.`
-      : `${query.field} currently resolves from ${resolved.source} as ${summarizeValue(redactedValue)}.` ,
+      : `${query.field} currently resolves from ${resolved.source} as ${summarizeValue(redactedValue)}.${metaRule ? ` Rule: ${metaRule}` : ''}` ,
     confidence: resolved.source === 'unknown' ? 'low' : dependencyInfo.paths.length > 0 ? 'high' : 'medium',
     limitations,
     evidenceRefs,

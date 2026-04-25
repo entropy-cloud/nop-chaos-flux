@@ -38,6 +38,8 @@ export interface FormSchema extends BaseSchema {
   onSubmitError?: ActionSchema | ActionSchema[];
   onValidateError?: ActionSchema | ActionSchema[];
   hiddenFieldPolicy?: HiddenFieldPolicy;
+  bodyClassName?: string;
+  actionsClassName?: string;
 }
 
 export type { FieldsetSchema } from './renderers/fieldset';
