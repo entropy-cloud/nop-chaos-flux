@@ -43,6 +43,13 @@
 - schema 片段通过宿主 scope 读取 designer snapshot，通过 `designer:*` actions 提交写操作。
 - `designer-page` 属于 `Domain Host Owner`：内部读面是 `Host Projection`，宿主外部若需要观测其状态，应通过窄 `statusPath` 摘要而不是通过 `id` / `name` 或全局 host scope 注入读取。
 
+### Tree Mode Constraint
+
+- 当 `config.documentMode === 'tree'` 时，`designer-page` 承载的是 structured process tree，而不是自由 graph。
+- 画布上的 nodes/edges 在 tree mode 下是投影结果和交互桥接面，不是 authoring source of truth。
+- tree mode 下的结构编辑应通过结构化命令完成，例如插入链节点、插入 branch group、在 merge continuation 之前插入节点、删除节点、调整 branch 顺序。
+- tree mode 不应默认暴露自由连线、自由重连、手工拖拽排版这类 graph-first 操作。
+
 ## 8. 事件、动作与组件句柄能力
 
 - 当前通过 `designer` namespace 暴露动作能力。

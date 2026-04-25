@@ -168,6 +168,32 @@ describe('createDesignerCore - graph operations', () => {
     expect(exported).toContain('"nodes"');
   });
 
+  it('replaces the full document through the shared core host path', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    core.replaceDocument({
+      id: 'doc-2',
+      kind: 'flow',
+      name: 'Replaced',
+      version: '1.0.0',
+      nodes: [
+        {
+          id: 'end-1',
+          type: 'end',
+          position: { x: 240, y: 120 },
+          data: { label: 'End', description: 'Exit', config: '{}' }
+        }
+      ],
+      edges: [],
+      viewport: { x: 4.2, y: 5.5, zoom: 1.25 }
+    });
+
+    expect(core.getSnapshot().doc.name).toBe('Replaced');
+    expect(core.getSnapshot().doc.nodes).toHaveLength(1);
+    expect(core.getSnapshot().viewport).toEqual({ x: 4.2, y: 5.5, zoom: 1.25 });
+    expect(core.getSnapshot().isDirty).toBe(true);
+  });
+
   it('rejects duplicate edges when allowMultiEdge is false', () => {
     const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfigNoMultiEdge());
 

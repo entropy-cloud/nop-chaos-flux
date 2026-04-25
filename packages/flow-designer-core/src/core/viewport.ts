@@ -5,13 +5,13 @@ export function normalizeViewport(viewport: GraphDocument['viewport']) {
 }
 
 export function clampZoom(zoom: number) {
-  return Math.max(0.1, Math.min(4, Number(zoom.toFixed(1))));
+  return Math.max(0.1, Math.min(4, Number(zoom.toFixed(3))));
 }
 
 export function normalizeViewportInput(viewport: { x: number; y: number; zoom: number }) {
   return {
-    x: Math.round(viewport.x),
-    y: Math.round(viewport.y),
+    x: Number(viewport.x.toFixed(2)),
+    y: Number(viewport.y.toFixed(2)),
     zoom: clampZoom(viewport.zoom),
   };
 }

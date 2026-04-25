@@ -7,7 +7,7 @@ import type {
   XyflowViewportChange
 } from './types';
 
-const VIEWPORT_EPSILON = 0.01;
+const VIEWPORT_EPSILON = 0.001;
 
 function toFiniteNumber(value: unknown): number | undefined {
   if (typeof value !== 'number') {
@@ -86,9 +86,9 @@ export function createXyflowEdges(snapshot: DesignerSnapshot, documentMode?: 'gr
 
 export function normalizeControlledViewport(viewport: { x: number; y: number; zoom: number }): DesignerXyflowControlledViewport {
   return {
-    x: Math.round(viewport.x),
-    y: Math.round(viewport.y),
-    zoom: Number(viewport.zoom.toFixed(1))
+    x: Number(viewport.x.toFixed(2)),
+    y: Number(viewport.y.toFixed(2)),
+    zoom: Number(viewport.zoom.toFixed(3))
   };
 }
 

@@ -503,14 +503,16 @@ Flow Designer 需要统一的事务边界，即使历史底层实现最终同时
 
 ### 17.1 概述
 
-Tree Mode 是 Flow Designer 的投影视图能力，允许同一 React Flow 画布同时渲染图结构和树结构两种视图。
+Tree Mode 是 Flow Designer 的结构化流程树投影视图能力，允许同一 React Flow 画布同时承载 graph 模式和 structured process tree 模式两种视图。
 
 关键设计原则：
 
 - 复用现有 graph runtime 和画布适配层，不创建第二套渲染路径
-- `TreeDocument` 作为领域输入，投影到 `GraphDocument`，再通过 `createDesignerCore` 进入 React Flow
+- `TreeDocument` 作为 structured process tree 领域输入，投影到 `GraphDocument`，再通过 `createDesignerCore` 进入 React Flow
 - 投影层是单向转换，不支持反向投影或树结构就地编辑
-- Tree mode 当前仅支持渲染和投影，不提供树结构的 CRUD 编辑能力
+- tree mode 的 graph 只是渲染/命令桥接产物，不应对外暴露自由 graph 编辑语义
+
+对 DingFlow 一类 domain，要把 tree mode 理解为“chain + branch group + implicit merge continuation”，而不是“任意 tree”或“伪装成树的自由 graph”。
 
 ### 17.2 数据流
 
@@ -543,8 +545,13 @@ Tree Mode 定义了三种核心结构原语：
 
 #### `branches`（扇出）
 - 表示节点的多分支能力
-- 投影为多个 `GraphNode` 实例，每个分支对应一个节点
+- 投影为多个 `GraphNode` 实例，每个分支对应一个 branch subtree
 - 分支数量受 `TreeNodeTypeConfig.tree.maxBranches` / `minBranches` 约束
+
+#### implicit merge（隐含汇合）
+- 当节点同时拥有 `branches` 和 `child` 时，`child` 表示整个 branch group 汇合后的 continuation
+- merge 线和 merge overlay 是投影/渲染语义，不要求文档里显式保存 merge 节点
+- 这与 `wflow-web-next` 一类 DingFlow 实现一致：分支组内部结构化展开，汇合后回到单一下游主干
 
 #### `TreeNodeBranch.child`（分支子树）
 - 表示单个分支的递归子结构
@@ -641,9 +648,9 @@ Tree Mode 当前实现的范围和约束：
 - 领域适配器的导入导出能力
 
 **不支持（非目标）：**
-- TreeDocument 的就地编辑（CRUD）
 - 反向投影（GraphDocument → TreeDocument）
-- 树结构专用的交互语义（如拖拽调整分支顺序）
-- Gateway 节点和 Merge 节点的可视化编辑
+- 在 tree mode 中把 React Flow 暴露成任意连线/任意重连的自由 graph 编辑器
+- 通过自由 edge 操作制造 branch merge 结构
+- Gateway 节点和 Merge 节点作为持久化 graph 实体让用户直接编辑
 
 当 `DesignerConfig.documentMode` 设置为 `'tree'` 时，Flow Designer 进入 Tree Mode 视图，但底层仍然操作 `GraphDocument` 和 `DesignerCore` 实例。

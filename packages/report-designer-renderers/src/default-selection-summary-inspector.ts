@@ -1,8 +1,35 @@
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
-import type { InspectorPanelDescriptor, InspectorProvider } from '@nop-chaos/report-designer-core';
+import type { InspectorPanelDescriptor, InspectorProvider, ReportDesignerConfig } from '@nop-chaos/report-designer-core';
+
+export const DEFAULT_SELECTION_SUMMARY_PROVIDER_ID = 'default-selection-summary';
+
+export function withDefaultSelectionSummaryInspector(config: ReportDesignerConfig): ReportDesignerConfig {
+  const providers = config.inspector?.providers ?? [];
+  if (providers.some((provider) => provider.id === DEFAULT_SELECTION_SUMMARY_PROVIDER_ID)) {
+    return config;
+  }
+
+  return {
+    ...config,
+    inspector: {
+      ...config.inspector,
+      providers: [
+        {
+          id: DEFAULT_SELECTION_SUMMARY_PROVIDER_ID,
+          label: 'Selection',
+          match: { kinds: ['cell', 'row', 'column', 'sheet', 'range'] },
+          provider: DEFAULT_SELECTION_SUMMARY_PROVIDER_ID,
+          mode: 'tab',
+          order: -100,
+        },
+        ...providers,
+      ],
+    },
+  };
+}
 
 export const defaultSelectionSummaryInspectorProvider: InspectorProvider = {
-  id: 'default-selection-summary',
+  id: DEFAULT_SELECTION_SUMMARY_PROVIDER_ID,
   match: (target) => ['cell', 'row', 'column', 'sheet', 'range'].includes(target.kind),
   priority: -100,
   getPanels: (context): InspectorPanelDescriptor[] => {
@@ -19,7 +46,7 @@ export const defaultSelectionSummaryInspectorProvider: InspectorProvider = {
         id: 'selection-summary',
         title: 'Selection',
         targetKind: 'cell',
-        mode: 'tab',
+        mode: 'section',
         order: -100,
         body: {
           type: 'container',
@@ -41,7 +68,7 @@ export const defaultSelectionSummaryInspectorProvider: InspectorProvider = {
         id: 'selection-summary',
         title: 'Selection',
         targetKind: 'row',
-        mode: 'tab',
+        mode: 'section',
         order: -100,
         body: {
           type: 'container',
@@ -63,7 +90,7 @@ export const defaultSelectionSummaryInspectorProvider: InspectorProvider = {
         id: 'selection-summary',
         title: 'Selection',
         targetKind: 'column',
-        mode: 'tab',
+        mode: 'section',
         order: -100,
         body: {
           type: 'container',
@@ -84,7 +111,7 @@ export const defaultSelectionSummaryInspectorProvider: InspectorProvider = {
         id: 'selection-summary',
         title: 'Selection',
         targetKind: 'sheet',
-        mode: 'tab',
+        mode: 'section',
         order: -100,
         body: {
           type: 'container',
@@ -103,7 +130,7 @@ export const defaultSelectionSummaryInspectorProvider: InspectorProvider = {
         id: 'selection-summary',
         title: 'Selection',
         targetKind: 'range',
-        mode: 'tab',
+        mode: 'section',
         order: -100,
         body: {
           type: 'container',

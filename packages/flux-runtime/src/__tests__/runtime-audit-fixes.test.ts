@@ -31,13 +31,18 @@ function createStubScope(): ScopeRef {
 }
 
 describe('audit-backed runtime fixes', () => {
-  it('calls onSubmitError when submitApi throws', async () => {
+  it('calls onSubmitError when submitAction throws', async () => {
     const onSubmitError = vi.fn(async (result) => result);
     const form = createManagedFormRuntime({
       id: 'submit-error-form',
       initialValues: { name: 'Alice' },
       parentScope: createStubScope(),
-      lifecycle: { onSubmitError },
+      lifecycle: {
+        onSubmitError,
+        submitAction: async () => {
+          throw new Error('server exploded');
+        }
+      },
       executeValidationRule: async () => undefined,
       validateRule: () => undefined
     });

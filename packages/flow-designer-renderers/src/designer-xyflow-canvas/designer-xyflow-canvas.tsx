@@ -133,7 +133,13 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   const showMinimap = props.showMinimap !== false;
   const showControls = props.showControls !== false;
   const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const isTreeMode = props.documentMode === 'tree';
   const gridSize = props.canvasConfig?.gridSize ?? 24;
+  const minZoom = props.canvasConfig?.minZoom ?? 0.1;
+  const maxZoom = props.canvasConfig?.maxZoom ?? 4;
+  const pannable = props.canvasConfig?.pannable !== false;
+  const zoomable = props.canvasConfig?.zoomable !== false;
+  const snapToGrid = props.canvasConfig?.snapToGrid === true;
   const backgroundType = props.canvasConfig?.background ?? 'lines';
   const backgroundVariant = backgroundType === 'dots'
     ? BackgroundVariant.Dots
@@ -317,17 +323,26 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             nodeTypes={xyflowNodeTypes}
             edgeTypes={xyflowEdgeTypes}
             onInit={(instance) => setReactFlowInstance(instance)}
-          viewport={viewport}
+            viewport={viewport}
             fitView
-            nodesConnectable
+            nodesConnectable={!isTreeMode}
             elementsSelectable
-            nodesDraggable
+            nodesDraggable={!isTreeMode}
+            panOnDrag={pannable}
+            panOnScroll={pannable}
+            zoomOnScroll={zoomable}
+            zoomOnPinch={zoomable}
+            zoomOnDoubleClick={zoomable}
+            minZoom={minZoom}
+            maxZoom={maxZoom}
+            snapToGrid={snapToGrid}
+            snapGrid={[gridSize, gridSize]}
             onMoveEnd={(_event, nextViewport) => handleViewportChange(nextViewport as XyflowViewportChange)}
             onPaneClick={() => {
               props.onPaneClick();
             }}
-            onConnect={handleConnect}
-            onReconnect={handleReconnect}
+            onConnect={isTreeMode ? undefined : handleConnect}
+            onReconnect={isTreeMode ? undefined : handleReconnect}
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onSelectionChange={handleSelectionChange}

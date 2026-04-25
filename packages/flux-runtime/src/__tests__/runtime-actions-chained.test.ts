@@ -480,32 +480,28 @@ describe('createRendererRuntime', () => {
       id: 'profile-form',
       initialValues: { username: 'Alice', email: 'alice@example.com' },
       parentScope: page.scope,
-      page
+      page,
+      lifecycle: {
+        submitAction: async (options) =>
+          runtime.dispatch(
+            { action: 'ajax', args: { url: '/api/profile', method: 'post' } },
+            { runtime, scope: form.scope, page, signal: options?.signal }
+          )
+      }
     });
 
     form.setValue('role', 'admin');
 
     const result = await runtime.dispatch(
-      {
-        action: 'submitForm',
-        args: {
-          url: '/api/profile',
-          method: 'post'
-        }
-      },
-      {
-        runtime,
-        scope: form.scope,
-        page,
-        form
-      }
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form }
     );
 
     expect(result.ok).toBe(true);
     expect(fetchCalls).toHaveLength(1);
     expect(fetchCalls[0].api).toMatchObject({ url: '/api/profile', method: 'post' });
     expect(fetchCalls[0].scopeData).toMatchObject({ username: 'Alice', email: 'alice@example.com', role: 'admin' });
-    expect(result.data).toEqual({
+    expect(result.data).toMatchObject({
       submitted: {
         username: 'Alice',
         email: 'alice@example.com',

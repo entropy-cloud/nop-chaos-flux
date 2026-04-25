@@ -109,7 +109,12 @@ function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | undefined):
 
 function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema> & { config: DesignerConfig; rawSchemaProps: Record<string, SchemaValue> }) {
   const { config, rawSchemaProps } = props;
-  const treeDocument = rawSchemaProps.treeDocument as TreeDocument | undefined;
+  const inputTreeDocument = rawSchemaProps.treeDocument as TreeDocument | undefined;
+  const [treeDocument, setTreeDocument] = React.useState<TreeDocument | undefined>(inputTreeDocument);
+
+  useEffect(() => {
+    setTreeDocument(inputTreeDocument);
+  }, [inputTreeDocument]);
 
   const normalizedConfig = useMemo(() => normalizeTreeModeConfig(config), [config]);
   const projected = useMemo(() => treeDocument ? projectTree(treeDocument, normalizedConfig) : { nodes: [] as GraphNode[], edges: [] as GraphEdge[] }, [treeDocument, normalizedConfig]);
@@ -138,7 +143,7 @@ function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema>
     return <div>{t('flux.flowDesigner.treeDocumentRequired')}</div>;
   }
 
-  return <DesignerPageInner rendererProps={props} document={document} config={config} />;
+  return <DesignerPageInner rendererProps={props} document={document} config={config} treeDocument={treeDocument} setTreeDocument={setTreeDocument} />;
 }
 
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {
@@ -176,6 +181,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const [layoutBusy, setLayoutBusy] = React.useState(false);
   const layoutRequestRef = useRef(0);
+  const initialTreeAutolayoutDoneRef = useRef(false);
   const handleAutoLayout = useCallback(async () => {
     const requestId = layoutRequestRef.current + 1;
     layoutRequestRef.current = requestId;
@@ -216,6 +222,44 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     }
   }, [core, config.documentMode]);
 
+  useEffect(() => {
+    if (config.documentMode !== 'tree') {
+      return;
+    }
+
+    const normalizedCfg = core.getConfig();
+    const treeConfig = normalizedCfg.treeConfig;
+    if (!treeConfig || treeConfig.autoLayout === false || initialTreeAutolayoutDoneRef.current) {
+      return;
+    }
+
+    const doc = core.getDocument();
+    if (doc.nodes.length === 0) {
+      initialTreeAutolayoutDoneRef.current = true;
+      return;
+    }
+
+    initialTreeAutolayoutDoneRef.current = true;
+    const requestId = layoutRequestRef.current + 1;
+    layoutRequestRef.current = requestId;
+    setLayoutBusy(true);
+
+    void layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes)
+      .then((layoutedNodes) => {
+        if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
+          return;
+        }
+
+        const positions = new Map(layoutedNodes.map((n) => [n.id, n.position]));
+        core.layoutNodes(positions);
+      })
+      .finally(() => {
+        if (layoutRequestRef.current === requestId) {
+          setLayoutBusy(false);
+        }
+      });
+  }, [core, config.documentMode]);
+
   const isTreeMode = config.documentMode === 'tree';
   const onPlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number) => {
     if (isTreeMode) {
@@ -226,7 +270,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   const ctxOnPlusButtonClick = isTreeMode ? onPlusButtonClick : undefined;
 
   const actionScope = useCurrentActionScope();
-  const designerProvider = useMemo(() => createDesignerActionProvider(core), [core]);
+  const designerProvider = useMemo(() => createDesignerActionProvider(core, commandAdapter), [core, commandAdapter]);
   const upstreamBackHandler = useMemo(() => actionScope?.resolve('designer:navigate-back'), [actionScope]);
   const mergedDesignerProvider = useMemo<ActionNamespaceProvider | undefined>(() => {
     if (!designerProvider) {
@@ -497,12 +541,23 @@ interface DesignerPageInnerProps {
   rendererProps: RendererComponentProps<DesignerPageSchema>;
   document: GraphDocument;
   config: DesignerConfig;
+  treeDocument?: TreeDocument;
+  setTreeDocument?: React.Dispatch<React.SetStateAction<TreeDocument | undefined>>;
 }
 
-function DesignerPageInner({ rendererProps: props, document, config }: DesignerPageInnerProps) {
+function DesignerPageInner({ rendererProps: props, document, config, treeDocument, setTreeDocument }: DesignerPageInnerProps) {
   const env = useRendererEnv();
   const core = useMemo(() => createDesignerCore(document, config), [document, config]);
-  const commandAdapter = useMemo(() => createDesignerCommandAdapter(core), [core]);
+  const commandAdapter = useMemo(() => createDesignerCommandAdapter(
+    core,
+    config.documentMode === 'tree' && treeDocument && setTreeDocument
+      ? {
+          getTreeDocument: () => treeDocument,
+          setTreeDocument: (next) => setTreeDocument(next),
+          config,
+        }
+      : undefined
+  ), [core, config, treeDocument, setTreeDocument]);
   const dispatch = useCallback(
     (command: import('./designer-command-adapter').DesignerCommand) => {
       const result = commandAdapter.execute(command);

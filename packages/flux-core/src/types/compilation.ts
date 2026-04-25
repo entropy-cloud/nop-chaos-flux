@@ -293,12 +293,12 @@ export interface CompiledOperationControl {
  */
 export interface CompiledDataSource {
   id: string;
-  kind: 'api' | 'formula';
+  kind: 'action' | 'formula';
 
   /** Compiled target path for storing results in scope */
   targetPath?: CompiledRuntimeValue<string>;
 
-  /** API source configuration (when kind === 'api') */
+  /** Compiled API configuration derived from action args (when kind === 'action' and action is ajax-like) */
   api?: CompiledApiConfig;
 
   /** Formula source expression (when kind === 'formula') */

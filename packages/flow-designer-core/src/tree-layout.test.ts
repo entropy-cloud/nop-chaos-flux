@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { GraphNode, GraphEdge, TreeConfig } from './types';
-import { layoutTreeWithElk } from './tree-layout';
+import { layoutTreeWithElk, simpleTreeLayout } from './tree-layout';
 
 function makeNodes(count: number): GraphNode[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -72,5 +72,21 @@ describe('layoutTreeWithElk', () => {
     const result = await layoutTreeWithElk(nodes, [], tbConfig);
     expect(result).toHaveLength(1);
     expect(result[0].position.x).toBeGreaterThanOrEqual(0);
+  });
+
+  it('simpleTreeLayout returns top-left positions that keep vertical chain centers aligned', () => {
+    const nodes = makeNodes(3);
+    const edges = chainEdges(nodes);
+
+    const result = simpleTreeLayout(nodes, edges, tbConfig);
+
+    expect(result).toHaveLength(3);
+
+    const centerX = result[0].position.x + 110;
+    for (const node of result) {
+      expect(node.position.x + 110).toBe(centerX);
+    }
+    expect(result[1].position.y).toBeGreaterThan(result[0].position.y);
+    expect(result[2].position.y).toBeGreaterThan(result[1].position.y);
   });
 });

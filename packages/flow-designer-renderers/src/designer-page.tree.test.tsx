@@ -7,7 +7,19 @@ import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import { flowDesignerRendererDefinitions } from './index';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { render, within } from '@testing-library/react';
+import { render, waitFor, within } from '@testing-library/react';
+
+const { layoutTreeWithElkMock } = vi.hoisted(() => ({
+  layoutTreeWithElkMock: vi.fn(async (nodes: any[]) => nodes)
+}));
+
+vi.mock('@nop-chaos/flow-designer-core', async () => {
+  const actual = await vi.importActual<typeof import('@nop-chaos/flow-designer-core')>('@nop-chaos/flow-designer-core');
+  return {
+    ...actual,
+    layoutTreeWithElk: layoutTreeWithElkMock
+  };
+});
 
 const textRenderer: RendererDefinition = {
   type: 'text',
@@ -35,6 +47,7 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
 }
 
 beforeEach(async () => {
+  layoutTreeWithElkMock.mockClear();
   resetFluxI18n();
   initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
   await changeLanguage('en-US');
@@ -136,6 +149,49 @@ describe('DesignerPageRenderer tree mode', () => {
     expect(canvas.getByRole('application')).toBeTruthy();
     expect(view.container.querySelectorAll('.react-flow__node')).toHaveLength(3);
     expect(view.container.querySelector('.react-flow__edges')).toBeTruthy();
+  });
+
+  it('runs ELK auto-layout once after initial tree-mode mount', async () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, ...flowDesignerRendererDefinitions]);
+
+    const treeDocument = {
+      id: 'tree-elk-init',
+      kind: 'test-tree',
+      name: 'Tree ELK Init',
+      version: '1.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'task-1',
+          type: 'task',
+          data: { label: 'Do Work' },
+          child: {
+            id: 'end',
+            type: 'end',
+            data: { label: 'End' }
+          }
+        }
+      }
+    };
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-elk-init"
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig()
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(layoutTreeWithElkMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('renders tree mode with branches correctly', () => {

@@ -2,34 +2,37 @@
 
 ## Purpose
 
-本文档定义 Flow Designer 的 tree 模式——一种与 graph 模式并列的文档结构，用于描述链式序列 + 扇出分支的树形配置。
+本文档定义 Flow Designer 的 tree 模式——一种与 graph 模式并列的结构化流程树（structured process tree）文档结构，用于描述链式序列、扇出分支，以及分支组隐含 merge 后继续流向下游 `child` 的流程配置。
 
 Use it when you need to:
 
 - 理解 tree 模式的数据模型和结构原语
 - 为新的 domain（钉钉工作流、逻辑决策树、规则引擎等）编写 tree 配置
-- 理解 tree 如何投影为 React Flow 可渲染的 nodes + edges
+- 理解 structured process tree 如何投影为 React Flow 可渲染的 nodes + edges
 - 判断某个 domain 应该使用 tree 模式还是 graph 模式
 
 ## Position
 
 - `docs/architecture/flow-designer/design.md` 拥有 Flow Designer 的整体分层架构
 - `docs/architecture/flow-designer/config-schema.md` 拥有 GraphDocument、NodeTypeConfig、EdgeTypeConfig 的完整定义
-- 本文档只定义 TreeDocument 数据模型、TreeProjection（tree → graph 投影）、以及 tree 模式下的配置扩展
+- 本文档只定义 TreeDocument 数据模型、隐含 group merge 语义、TreeProjection（tree → graph 投影）、以及 tree 模式下的配置扩展
 - tree 模式复用 graph 模式的 NodeTypeConfig 渲染能力和 EdgeTypeConfig 边样式，不引入新的渲染概念
 
 ## Core Claim
 
-Tree 模式和 graph 模式共享同一个 React Flow 画布，区别仅在数据拓扑：
+Tree 模式和 graph 模式共享同一个 React Flow 画布，但 DingFlow 一类 tree domain 不是“任意树”，而是更窄的 structured process tree：
 
 - **graph 模式**：用户自由创建 nodes 和 edges，表达任意有向图
-- **tree 模式**：数据是递归树结构（链式 child + 扇出 branches），通过投影层展平为 nodes + edges 后喂给 React Flow
+- **tree 模式**：数据是结构化流程树（链式 `child` + 扇出 `branches` + branch-group 隐含 merge），通过投影层展平为 nodes + edges 后喂给 React Flow
 
-两者在渲染层面没有区别——都是 `GraphNode[]` + `GraphEdge[]` → React Flow。
+两者在渲染层都表现为 `GraphNode[]` + `GraphEdge[]` → React Flow，但交互语义不同：
+
+- graph 模式允许自由创建和重连 edges
+- tree 模式必须通过结构化命令编辑 sequence、branch group 和 continuation，不应把 React Flow 暴露成自由 graph 编辑器
 
 ## Structural Primitives
 
-树的全部拓扑只需要 3 个结构字段：
+structured process tree 的全部拓扑只需要 3 个显式结构字段，加 1 个隐含结构语义：
 
 ```
 TreeNode
@@ -37,6 +40,8 @@ TreeNode
 └── branches?: TreeNodeBranch[] # 扇出分支：从当前节点展开 N 条子树
     └── each: TreeNodeBranch
         └── child?: TreeNode    # 该分支的子树
+
+implicit merge(branches)        # 整个 branch group 汇合后，再流向当前节点的 downstream child
 ```
 
 | 原语 | 含义 | 对应可视化 |
@@ -44,15 +49,16 @@ TreeNode
 | `child` | 链式序列，A → B → C | 纵向/横向直线连接 |
 | `branches` | 从一个节点扇出 N 条分支 | 分叉连接 |
 | `TreeNodeBranch.child` | 每条分支独立的子树 | 分支内的纵向序列 |
+| implicit group merge | 分支组结束后隐含汇合到单一下游 continuation | 汇合线 / merge overlay，不一定是持久化节点 |
 
 这 3 个原语足以描述：
 
-- **钉钉审批流**：发起人 → 条件分支（排他/并行/包容）→ 审批 → 抄送 → 结束
+- **钉钉审批流**：发起人 → 审批 → 条件/并行分支组 → 隐含汇合 → 抄送 → 结束
 - **Action flow**：主链 → parallel 扇出 → then/onError 条件扇出 → 继续
 - **逻辑决策树**：根决策 → 条件分支 → 子决策 → 叶子动作
 - **规则引擎**：规则集 → 规则分支 → 动作
 
-所有领域差异通过 `data: Record<string, unknown>` 承载，DSL 不解释领域语义。
+所有领域差异通过 `data: Record<string, unknown>` 承载，DSL 不解释审批、路由或执行语义本身；DSL 只拥有 structured branch group 与隐含 merge 语义。
 
 ## Data Model
 
@@ -98,6 +104,7 @@ interface TreeNodeBranch {
 | 决策 | 理由 |
 |------|------|
 | `branches` 是 `TreeNode` 的字段 | 树形语义中分支从属于分叉节点，不是独立实体 |
+| 分支汇合是隐含语义，不是必需持久化节点 | DingFlow / structured concurrency 的 continuation 天然是“branch group 结束后回到单一下游 continuation” |
 | `data` 类型为 `Record<string, unknown>` | DSL 不绑定任何领域语义；condition、mode、priority 等全部是领域数据 |
 | 没有 `parent` 反向引用 | 纯树结构不需要；跨引用（route jump）在 `data` 层面用 id 处理 |
 | `TreeNodeBranch` 没有 `type` 字段 | 分支项的身份由所属的 `TreeNode` 和 `data` 决定 |
@@ -193,6 +200,27 @@ TreeDocument
 1. **展平**：递归遍历 TreeNode，每个 TreeNode 产出一个 GraphNode
 2. **连线**：根据 child 和 branches 产出 GraphEdge
 3. **布局**：调用 ELK/dagre 计算 position
+
+### Hidden Group Merge
+
+当节点同时拥有 `branches` 和 `child` 时，`child` 不是某一条 branch 的直接 child，而是整个 branch group 的 continuation：
+
+```text
+source
+  ├─ branch A subtree ─┐
+  ├─ branch B subtree ─┤
+  └─ branch C subtree ─┘
+            ↓
+        implicit merge
+            ↓
+        source.child
+```
+
+这意味着：
+
+- 分支叶子到 continuation 的 merge 边是投影结果，不是用户自由画出来的结构
+- merge overlay / merge add button 是 branch group 的 UI affordance，不代表持久化 graph 节点
+- tree mode 不应向用户暴露“任意给两个节点加一条边”来制造 merge
 
 ### 展平规则
 

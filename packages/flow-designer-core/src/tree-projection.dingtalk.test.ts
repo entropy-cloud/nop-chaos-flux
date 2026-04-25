@@ -59,7 +59,14 @@ function makeDingtalkTree(): TreeDocument {
                 data: { label: 'CEO审批', type: 1, setType: 1, examineMode: 2 },
               },
             },
-            { id: 'b2', data: { label: '短期请假', priority: 2 } },
+            {
+              id: 'b2',
+              data: { label: '短期请假', priority: 2 },
+              child: {
+                id: 'k004b', type: 'dt-approval',
+                data: { label: '直接主管审批', type: 1, setType: 2, examineMode: 1 },
+              },
+            },
           ],
           child: {
             id: 'k005', type: 'dt-cc',
@@ -104,9 +111,9 @@ describe('钉钉审批流 Tree Projection', () => {
     const config = makeDingtalkConfig();
     const { nodes } = projectTree(tree, config);
 
-    expect(nodes).toHaveLength(9);
+    expect(nodes).toHaveLength(10);
     const ids = nodes.map((n) => n.id);
-    expect(ids).toEqual(['k001', 'k002', 'k003', 'k004', 'k005', 'k006', 'k007', 'k008', 'k009']);
+    expect(ids).toEqual(['k001', 'k002', 'k003', 'k004', 'k004b', 'k005', 'k006', 'k007', 'k008', 'k009']);
   });
 
   it('projects correct edge count', () => {
@@ -115,7 +122,7 @@ describe('钉钉审批流 Tree Projection', () => {
     const config = makeDingtalkConfig();
     const { edges } = projectTree(tree, config);
 
-    expect(edges).toHaveLength(10);
+    expect(edges).toHaveLength(11);
   });
 
   it('creates chain edges for the main spine', () => {
@@ -133,7 +140,7 @@ describe('钉钉审批流 Tree Projection', () => {
     expect(chainTargets).toContain('k006');
   });
 
-  it('creates branch edges from condition node k003 to k004 only (b2 has no child)', () => {
+  it('creates branch edges from condition node k003 to both condition approvals', () => {
     resetProjectionState();
     const tree = makeDingtalkTree();
     const config = makeDingtalkConfig();
@@ -142,8 +149,9 @@ describe('钉钉审批流 Tree Projection', () => {
     const branchEdgesFromK003 = edges.filter(
       (e) => e.source === 'k003' && e.type === 'dt-branch',
     );
-    expect(branchEdgesFromK003).toHaveLength(1);
-    expect(branchEdgesFromK003[0].target).toBe('k004');
+    expect(branchEdgesFromK003).toHaveLength(2);
+    const targets = branchEdgesFromK003.map((e) => e.target).sort();
+    expect(targets).toEqual(['k004', 'k004b']);
   });
 
   it('creates branch edges from parallel node k006 to k007 and k008', () => {
@@ -171,7 +179,7 @@ describe('钉钉审批流 Tree Projection', () => {
     );
     expect(mergeToK005).toHaveLength(2);
     const sources = mergeToK005.map((e) => e.source).sort();
-    expect(sources).toEqual(['k003', 'k004']);
+    expect(sources).toEqual(['k004', 'k004b']);
   });
 
   it('creates merge edges converging at k009 (parallel merge)', () => {

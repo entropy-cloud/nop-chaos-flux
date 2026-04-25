@@ -1,13 +1,25 @@
 import { simpleTreeLayout } from '@nop-chaos/flow-designer-core';
-import type { DesignerCore, GraphDocument, GraphNode } from '@nop-chaos/flow-designer-core';
+import type { DesignerCore, GraphDocument, GraphNode, TreeDocument } from '@nop-chaos/flow-designer-core';
 import type {
   DesignerCommand,
   DesignerCommandAdapter,
   DesignerCommandReason,
   DesignerCommandResult
 } from './designer-command-types';
+import {
+  insertBranchPairInTreeDocument,
+  insertChainNodeAtMergeInTreeDocument,
+  insertChainNodeInTreeDocument,
+  projectTreeDocumentToGraph,
+} from './tree-commands';
 
 export type { DesignerCommand, DesignerCommandAdapter, DesignerCommandReason, DesignerCommandResult };
+
+interface TreeCommandOwner {
+  getTreeDocument(): TreeDocument;
+  setTreeDocument(next: TreeDocument): void;
+  config: { documentMode?: 'graph' | 'tree' };
+}
 
 const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
 const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
@@ -106,7 +118,15 @@ function relayoutAfterTreeMutation(core: DesignerCore): void {
   core.layoutNodes(positions);
 }
 
-export function createDesignerCommandAdapter(core: DesignerCore): DesignerCommandAdapter {
+export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: TreeCommandOwner): DesignerCommandAdapter {
+  function applyTreeDocument(nextTree: TreeDocument): void {
+    if (!treeOwner) {
+      return;
+    }
+    treeOwner.setTreeDocument(nextTree);
+    core.replaceDocument(projectTreeDocumentToGraph(nextTree, core.getConfig()));
+  }
+
   function execute(command: DesignerCommand): DesignerCommandResult {
     switch (command.type) {
       case 'addEdge': {
@@ -271,6 +291,15 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         core.updateNode(command.nodeId, command.data);
         return createSuccess(core);
       case 'insertChainNode': {
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = insertChainNodeInTreeDocument(treeOwner.getTreeDocument(), command.sourceId, command.nodeType, command.data);
+          if (!nextTree) {
+            return createFailure(core, `Unknown source node: ${command.sourceId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
+
         const doc = core.getDocument();
         const sourceNode = getNode(doc, command.sourceId);
         if (!sourceNode) {
@@ -307,6 +336,15 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         return createSuccess(core, { data: newNode });
       }
       case 'insertChainNodeAtMerge': {
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = insertChainNodeAtMergeInTreeDocument(treeOwner.getTreeDocument(), command.targetId, command.nodeType, command.data);
+          if (!nextTree) {
+            return createFailure(core, `Unknown target node: ${command.targetId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
+
         const doc = core.getDocument();
         const targetNode = getNode(doc, command.targetId);
         if (!targetNode) {
@@ -337,6 +375,15 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         return createSuccess(core, { data: newNode });
       }
       case 'insertBranchPair': {
+        if (treeOwner?.config.documentMode === 'tree') {
+          const nextTree = insertBranchPairInTreeDocument(treeOwner.getTreeDocument(), command.sourceId, command.condNodeType, command.condData);
+          if (!nextTree) {
+            return createFailure(core, `Unknown source node: ${command.sourceId}`, 'missing-node');
+          }
+          applyTreeDocument(nextTree);
+          return createSuccess(core);
+        }
+
         const doc = core.getDocument();
         const sourceNode = getNode(doc, command.sourceId);
         if (!sourceNode) {

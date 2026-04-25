@@ -83,7 +83,7 @@ describe('explicit dependency roots', () => {
       scope: page.scope,
       compiledSource: compileDataSource('explicit-api-source', {
         type: 'data-source',
-        api: { url: '/api/users/${userId}/${note}' },
+        action: 'ajax', args: { url: '/api/users/${userId}/${note}' },
         name: 'payload',
         dependsOn: ['userId']
       }, expressionCompiler)

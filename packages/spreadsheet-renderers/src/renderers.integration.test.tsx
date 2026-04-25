@@ -113,6 +113,7 @@ function SpreadsheetGridHarness(props: { sheetId: string; bridge: ReturnType<typ
       onColumnResizeStart={interactions.handleColumnResizeStart}
       onRowResizeStart={interactions.handleRowResizeStart}
       onFillHandleMouseDown={interactions.handleFillHandleMouseDown}
+      onFillHandleDoubleClick={interactions.handleFillHandleDoubleClick}
       onEditValueChange={interactions.handleEditValueChange}
       onEditSave={interactions.handleEditSave}
       onEditCancel={interactions.handleEditCancel}
@@ -372,6 +373,151 @@ describe('spreadsheet-page namespaced actions integration', () => {
     await waitFor(() => {
       expect(core.getSnapshot().selection.kind).toBe('row');
       expect(core.getSnapshot().selection.rows).toEqual([1, 3]);
+    });
+  });
+
+  it('selects the right-clicked cell before opening a context action path', async () => {
+    const documentModel = createEmptyDocument('contextmenu-cell-selection');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const cells = container.querySelectorAll('td.ss-cell');
+    const firstCell = cells[0] as HTMLElement | undefined;
+    const secondRowSecondColCell = cells[6] as HTMLElement | undefined;
+
+    expect(firstCell).toBeTruthy();
+    expect(secondRowSecondColCell).toBeTruthy();
+
+    fireEvent.click(firstCell!);
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.kind).toBe('cell');
+      expect(core.getSnapshot().selection.anchor?.address).toBe('A1');
+    });
+
+    fireEvent.contextMenu(secondRowSecondColCell!);
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.kind).toBe('cell');
+      expect(core.getSnapshot().selection.anchor?.address).toBe('B2');
+    });
+  });
+
+  it('opens the shared context menu and clears the selected cell', async () => {
+    const documentModel = createEmptyDocument('contextmenu-clear-cell');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: '42',
+    });
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell') as HTMLElement | null;
+
+    expect(firstCell).toBeTruthy();
+
+    fireEvent.click(firstCell!);
+    fireEvent.contextMenu(firstCell!);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="context-menu-content"]')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('spreadsheet-context-clear'));
+
+    await waitFor(() => {
+      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      expect(activeSheet?.cells?.A1?.value).toBeUndefined();
+    });
+  });
+
+  it('double-clicks the fill handle to auto-fill downward using adjacent data extent', async () => {
+    const documentModel = createEmptyDocument('double-click-fill-handle');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 1 });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'x' });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B2', row: 1, col: 1 }, value: 'x' });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B3', row: 2, col: 1 }, value: 'x' });
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+
+    fireEvent.click(firstCell!);
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.anchor?.address).toBe('A1');
+    });
+
+    const fillHandle = container.querySelector('.ss-fill-handle') as HTMLElement | null;
+    expect(fillHandle).toBeTruthy();
+    fireEvent.doubleClick(fillHandle!);
+
+    await waitFor(() => {
+      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      expect(activeSheet?.cells?.A1?.value).toBe(1);
+      expect(activeSheet?.cells?.A2?.value).toBe(2);
+      expect(activeSheet?.cells?.A3?.value).toBe(3);
+    });
+  });
+
+  it('does not auto-fill on fill-handle double-click when no adjacent data extent exists', async () => {
+    const documentModel = createEmptyDocument('double-click-fill-handle-no-adjacent-data');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 1 });
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+
+    fireEvent.click(firstCell!);
+
+    const fillHandle = container.querySelector('.ss-fill-handle') as HTMLElement | null;
+    expect(fillHandle).toBeTruthy();
+    fireEvent.doubleClick(fillHandle!);
+
+    await waitFor(() => {
+      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      expect(activeSheet?.cells?.A2).toBeUndefined();
+      expect(activeSheet?.cells?.A3).toBeUndefined();
+    });
+  });
+
+  it('inserts a row below from the shared context menu using Excel-style directional semantics', async () => {
+    const documentModel = createEmptyDocument('contextmenu-insert-row-below');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'top' });
+    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'second' });
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+
+    fireEvent.click(firstCell!);
+    fireEvent.contextMenu(firstCell!);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="context-menu-content"]')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('spreadsheet-context-insert-row-below'));
+
+    await waitFor(() => {
+      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      expect(activeSheet?.cells?.A1?.value).toBe('top');
+      expect(activeSheet?.cells?.A2).toBeUndefined();
+      expect(activeSheet?.cells?.A3?.value).toBe('second');
     });
   });
 });

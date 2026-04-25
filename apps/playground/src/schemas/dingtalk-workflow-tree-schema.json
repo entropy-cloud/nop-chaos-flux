@@ -29,7 +29,12 @@
             },
             {
               "id": "b2",
-              "data": { "label": "短期请假", "priority": 2, "conditionList": [] }
+              "data": { "label": "短期请假", "priority": 2, "conditionList": [] },
+              "child": {
+                "id": "k004b",
+                "type": "dt-approval",
+                "data": { "label": "直接主管审批", "type": 1, "setType": 2, "examineMode": 1 }
+              }
             }
           ],
           "child": {

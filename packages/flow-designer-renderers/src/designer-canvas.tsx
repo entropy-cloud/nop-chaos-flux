@@ -142,6 +142,9 @@ export function DesignerCanvasContent() {
     onNodeSelect: handleNodeClick,
     onEdgeSelect: handleEdgeClick,
     onStartConnection: (nodeId: string, event?: React.MouseEvent) => {
+      if (config.documentMode === 'tree') {
+        return;
+      }
       event?.stopPropagation();
       setReconnectingEdgeId(null);
       setPendingConnectionSourceId(nodeId);
@@ -153,6 +156,9 @@ export function DesignerCanvasContent() {
       }
     },
     onCompleteConnection: (nodeId: string, event?: React.MouseEvent) => {
+      if (config.documentMode === 'tree') {
+        return;
+      }
       event?.stopPropagation();
       if (!pendingConnectionSourceId || pendingConnectionSourceId === nodeId) {
         return;
@@ -164,6 +170,9 @@ export function DesignerCanvasContent() {
       }
     },
     onStartReconnect: (edgeId: string, event?: React.MouseEvent) => {
+      if (config.documentMode === 'tree') {
+        return;
+      }
       event?.stopPropagation();
       setPendingConnectionSourceId(null);
       setReconnectingEdgeId(edgeId);
@@ -175,6 +184,9 @@ export function DesignerCanvasContent() {
       }
     },
     onCompleteReconnect: (edgeId: string, sourceId: string, nodeId: string, event?: React.MouseEvent) => {
+      if (config.documentMode === 'tree') {
+        return;
+      }
       event?.stopPropagation();
       const edge = snapshot.doc.edges.find((item) => item.id === edgeId);
       if (!edge || edge.target === nodeId) {
@@ -199,6 +211,9 @@ export function DesignerCanvasContent() {
       handleDeleteEdge(edgeId);
     },
     onMoveNode: (nodeId: string, event?: React.MouseEvent, position?: { x: number; y: number }) => {
+      if (config.documentMode === 'tree') {
+        return;
+      }
       event?.stopPropagation();
       const node = snapshot.doc.nodes.find((item) => item.id === nodeId);
       if (!node) {

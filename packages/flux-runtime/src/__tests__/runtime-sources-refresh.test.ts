@@ -95,7 +95,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('user-api-source', {
         type: 'data-source',
-        api: { url: '/api/users/${userId}' },
+        action: 'ajax', args: { url: '/api/users/${userId}' },
         name: 'payload'
       }, expressionCompiler)
     });
@@ -157,7 +157,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('latest-user-api-source', {
         type: 'data-source',
-        api: { url: '/api/users/${userId}' },
+        action: 'ajax', args: { url: '/api/users/${userId}' },
         name: 'payload'
       }, expressionCompiler)
     });
@@ -216,7 +216,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('stable-user-api-source', {
         type: 'data-source',
-        api: { url: '/api/users/${userId}' },
+        action: 'ajax', args: { url: '/api/users/${userId}' },
         name: 'payload',
         control: {
           dedup: 'ignore-new'
@@ -284,7 +284,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('parallel-user-api-source', {
         type: 'data-source',
-        api: { url: '/api/users/${userId}' },
+        action: 'ajax', args: { url: '/api/users/${userId}' },
         name: 'payload',
         control: {
           dedup: 'parallel'
@@ -374,7 +374,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('parallel-latest-authoritative', {
         type: 'data-source',
-        api: { url: '/api/users/${userId}' },
+        action: 'ajax', args: { url: '/api/users/${userId}' },
         name: 'payload',
         control: {
           dedup: 'parallel'

@@ -30,7 +30,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('users', {
         type: 'data-source',
-        api: { url: '/api/first' },
+        action: 'ajax', args: { url: '/api/first' },
         name: 'payload'
       }, expressionCompiler)
     });
@@ -44,7 +44,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('users', {
         type: 'data-source',
-        api: { url: '/api/second' },
+        action: 'ajax', args: { url: '/api/second' },
         name: 'payload'
       }, expressionCompiler)
     });
@@ -96,7 +96,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('slow-source', {
         type: 'data-source',
-        api: { url: '/api/slow' },
+        action: 'ajax', args: { url: '/api/slow' },
         name: 'payload'
       }, expressionCompiler)
     });
@@ -132,7 +132,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('stateful-api-source', {
         type: 'data-source',
-        api: { url: '/api/stateful' },
+        action: 'ajax', args: { url: '/api/stateful' },
         name: 'payload',
         initialData: { value: 'initial' }
       }, expressionCompiler)
@@ -197,7 +197,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('failing-api-source', {
         type: 'data-source',
-        api: { url: '/api/fail' },
+        action: 'ajax', args: { url: '/api/fail' },
         name: 'payload',
         initialData: { value: 'initial' }
       }, expressionCompiler)
@@ -306,7 +306,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('implicit-merge-source', {
         type: 'data-source',
-        api: { url: '/api/object' },
+        action: 'ajax', args: { url: '/api/object' },
         initialData: { merged: true }
       }, expressionCompiler)
     });

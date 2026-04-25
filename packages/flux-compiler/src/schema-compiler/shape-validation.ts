@@ -451,18 +451,18 @@ export function inspectSchemaNodeFields(
 
   if (schema.type === 'data-source') {
     const hasFormula = schema.formula !== undefined;
-    const hasApi = schema.api !== undefined;
+    const hasAction = schema.action !== undefined;
 
-    if ((hasFormula && hasApi) || (!hasFormula && !hasApi)) {
+    if ((hasFormula && hasAction) || (!hasFormula && !hasAction)) {
       emitSchemaDiagnostic(diagnostics, {
         code: 'invalid-source-shape',
         path: pointer,
-        message: 'data-source requires exactly one of formula or api.'
+        message: 'data-source requires exactly one of formula or action.'
       }, enabled);
     }
 
-    if (hasApi) {
-      validateApiSchemaShape(schema.api, appendJsonPointer(pointer, 'api'), diagnostics, enabled, 'invalid-source-shape');
+    if (hasAction && schema.args && typeof schema.args === 'object' && 'url' in (schema.args as object)) {
+      validateApiSchemaShape(schema.args as import('@nop-chaos/flux-core').ApiSchema, appendJsonPointer(pointer, 'args'), diagnostics, enabled, 'invalid-source-shape');
     }
   }
 

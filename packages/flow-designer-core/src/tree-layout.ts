@@ -101,7 +101,21 @@ export function simpleTreeLayout(
 
   return nodes.map((node) => {
     const pos = positions.get(node.id);
-    return pos ? { ...node, position: pos } : node;
+    if (!pos) {
+      return node;
+    }
+
+    const width = nodeWidths.get(node.id) ?? DW;
+    const height = nodeHeights.get(node.id) ?? DH;
+
+    // React Flow expects node.position to be the top-left corner.
+    return {
+      ...node,
+      position: {
+        x: Math.round(pos.x - width / 2),
+        y: Math.round(pos.y - height / 2)
+      }
+    };
   });
 }
 

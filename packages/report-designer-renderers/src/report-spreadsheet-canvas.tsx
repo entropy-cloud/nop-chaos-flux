@@ -180,6 +180,7 @@ export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spr
         onColumnResizeStart={handleColumnResizeStart}
         onRowResizeStart={handleRowResizeStart}
         onFillHandleMouseDown={handleFillHandleMouseDown}
+        onFillHandleDoubleClick={interactions.handleFillHandleDoubleClick}
         onEditValueChange={handleEditValueChange}
         onEditSave={handleEditSave}
         onEditCancel={handleEditCancel}

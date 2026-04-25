@@ -93,9 +93,9 @@ export function createRuntimeSourceRegistry(input: {
     const targetPath = evaluateCompiledValue(compiled.targetPath) ?? args.id;
     const statusPath = evaluateCompiledValue(compiled.statusPath);
 
-    const isApiSource = compiled.kind === 'api';
+    const isActionSource = compiled.kind === 'action';
 
-    const controller = isApiSource
+    const controller = isActionSource
       ? createDataSourceController({
           runtime: input.runtime,
           apiCache: input.apiCache,

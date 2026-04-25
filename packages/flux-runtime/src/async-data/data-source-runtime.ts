@@ -724,17 +724,11 @@ export function createSourceExecutor(input: {
       return { ok: true, data: value };
     }
 
-    if (!source.action && source.api === undefined) {
+    if (!source.action) {
       return { ok: false, error: new Error('Source requires action or formula') };
     }
 
-    const actionInput: ActionSchema = source.api !== undefined
-      ? {
-          ...source,
-          action: source.action ?? 'ajax',
-          args: source.api as Record<string, import('@nop-chaos/flux-core').SchemaValue>
-        }
-      : source as ActionSchema;
+    const actionInput: ActionSchema = source as ActionSchema;
 
     const result = await input.executeAction(actionInput, {
       runtime: input.runtime,

@@ -30,6 +30,7 @@ import {
   createReportDesignerBridge,
   ReportFieldPanel,
   buildReportDesignerScopeData,
+  withDefaultSelectionSummaryInspector,
   defaultSelectionSummaryInspectorProvider,
   registerReportDesignerRenderers,
 } from '@nop-chaos/report-designer-renderers';
@@ -104,11 +105,6 @@ const inspectorEnv = createDefaultEnv();
 const inspectorFormulaCompiler = createFormulaCompiler();
 
 export function ReportDesignerDemo() {
-  const [log, setLog] = useState<string[]>([]);
-  const addLog = useCallback((msg: string) => {
-    setLog((prev) => [...prev.slice(-30), `[${new Date().toLocaleTimeString()}] ${msg}`]);
-  }, []);
-
   const [draggingField, setDraggingField] = useState<{
     sourceId: string; fieldId: string; label: string;
   } | null>(null);
@@ -118,7 +114,7 @@ export function ReportDesignerDemo() {
   const spreadsheetCore = useMemo(() => createSpreadsheetCore({ document: spreadsheetDoc }), [spreadsheetDoc]);
   const spreadsheetBridge = useMemo(() => createSpreadsheetBridge(spreadsheetCore), [spreadsheetCore]);
   const reportDoc = useMemo(() => createReportTemplateDocument(spreadsheetDoc, 'Demo Report'), [spreadsheetDoc]);
-  const designerConfig: ReportDesignerConfig = useMemo(() => ({
+  const designerConfig: ReportDesignerConfig = useMemo(() => withDefaultSelectionSummaryInspector({
     kind: 'report-template',
     fieldSources: fieldSources.map(fs => ({ ...fs, provider: undefined })),
   }), []);
@@ -212,7 +208,8 @@ export function ReportDesignerDemo() {
     dropTargetCell,
     handleFieldDragOver,
     handleFieldDragLeave,
-  } = useSpreadsheetInteractions({ bridge: spreadsheetBridge, sheetId, rows: ROWS, cols: COLS, onLog: addLog });
+    handleFillHandleDoubleClick,
+  } = useSpreadsheetInteractions({ bridge: spreadsheetBridge, sheetId, rows: ROWS, cols: COLS });
 
   const handleFieldDrop = useCallback(async () => {
     const targetCell = dropTargetCell || selectedCell;
@@ -236,9 +233,8 @@ export function ReportDesignerDemo() {
         cell: { sheetId, address: addr, row: targetCell.row, col: targetCell.col },
       },
     });
-    addLog(`Bound field "${draggingField.label}" to ${addr}`);
     setDraggingField(null);
-  }, [draggingField, dropTargetCell, selectedCell, spreadsheetBridge, designerBridge, sheetId, addLog]);
+  }, [draggingField, dropTargetCell, selectedCell, spreadsheetBridge, designerBridge, sheetId]);
 
   const frozen = snapshot.activeSheet?.frozen;
 
@@ -364,6 +360,7 @@ export function ReportDesignerDemo() {
             onColumnResizeStart={handleColumnResizeStart}
             onRowResizeStart={handleRowResizeStart}
             onFillHandleMouseDown={handleFillHandleMouseDown}
+            onFillHandleDoubleClick={handleFillHandleDoubleClick}
             onEditValueChange={handleEditValueChange}
             onEditSave={handleEditSave}
             onEditCancel={handleEditCancel}
@@ -400,38 +397,6 @@ export function ReportDesignerDemo() {
         </div>
       </div>
 
-      <div data-slot="report-demo-log">
-        <h3>Event Log</h3>
-        <div className="log-content">
-          {log.length === 0 ? (
-            <p className="log-empty">Interact with the spreadsheet to see events.</p>
-          ) : (
-            log.map((entry, index) => {
-              const logKey = `${entry}-${index}`
-              return <div key={logKey} className="log-entry">{entry}</div>
-            })
-          )}
-        </div>
-      </div>
-
-      <div className="shortcuts-help">
-        <h4>Keyboard Shortcuts</h4>
-        <div className="shortcuts-grid">
-          <span><kbd>Ctrl+C</kbd> Copy</span>
-          <span><kbd>Ctrl+X</kbd> Cut</span>
-          <span><kbd>Ctrl+V</kbd> Paste</span>
-          <span><kbd>Ctrl+Z</kbd> Undo</span>
-          <span><kbd>Ctrl+Y</kbd> Redo</span>
-          <span><kbd>Ctrl+B</kbd> Bold</span>
-          <span><kbd>Ctrl+I</kbd> Italic</span>
-          <span><kbd>Ctrl+U</kbd> Underline</span>
-          <span><kbd>Ctrl+F</kbd> Find</span>
-          <span><kbd>Delete</kbd> Clear</span>
-          <span><kbd>Esc</kbd> Close panels</span>
-          <span><kbd>Drag</kbd> Select range</span>
-          <span><kbd>DblClick</kbd> Rename sheet</span>
-        </div>
-      </div>
     </div>
   );
 }

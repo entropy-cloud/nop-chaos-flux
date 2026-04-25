@@ -89,7 +89,7 @@ describe('createDesignerCommandAdapter', () => {
 
     const result = adapter.execute({
       type: 'setViewport',
-      viewport: { x: 0.2, y: 0.4, zoom: 1.04 }
+      viewport: { x: 0.004, y: 0.004, zoom: 1.0004 }
     });
 
     expect(result).toMatchObject({ ok: true, reason: 'unchanged' });
@@ -358,5 +358,32 @@ describe('insertChainNode in tree mode', () => {
     expect(after).not.toBe(before);
     // Node count should differ
     expect(after.doc.nodes.length).not.toBe(beforeDocRef.nodes.length);
+  });
+
+  it('updates the source TreeDocument when a tree owner is provided', () => {
+    const config = createDingFlowConfig();
+    const initialTree = createSimpleTreeDocument();
+    let ownedTree = structuredClone(initialTree);
+    const doc = projectTreeToDoc(ownedTree, config);
+    const core = createDesignerCore(doc, config);
+    const adapter = createDesignerCommandAdapter(core, {
+      getTreeDocument: () => ownedTree,
+      setTreeDocument: (next) => { ownedTree = next; },
+      config,
+    });
+
+    const result = adapter.execute({
+      type: 'insertChainNode',
+      sourceId: 'n1',
+      nodeType: 'dt-approval',
+      data: { label: 'Tree Owned Approver' },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(ownedTree.root.child?.id).not.toBe('n2');
+    expect(ownedTree.root.child?.type).toBe('dt-approval');
+    expect(ownedTree.root.child?.data.label).toBe('Tree Owned Approver');
+    expect(ownedTree.root.child?.child?.id).toBe('n2');
+    expect(core.getSnapshot().doc.nodes).toHaveLength(4);
   });
 });

@@ -234,7 +234,8 @@ describe('createSchemaRenderer runtime core behavior', () => {
             scope,
             compiledSource: compileDataSource(props.id, {
               type: 'data-source',
-              api: { url: '/api/user/1' },
+              action: 'ajax',
+              args: { url: '/api/user/1' },
               name: 'user',
               statusPath: 'userStatus'
             }, expressionCompiler)
@@ -404,7 +405,8 @@ describe('createSchemaRenderer runtime core behavior', () => {
             scope,
             compiledSource: compileDataSource(props.id, {
               type: 'data-source',
-              api: { url: '/api/user/1' },
+              action: 'ajax',
+              args: { url: '/api/user/1' },
               name: 'user'
             }, expressionCompiler)
           });

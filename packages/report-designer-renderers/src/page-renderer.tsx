@@ -15,7 +15,7 @@ import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import { renderFallbackFieldPanel, renderFallbackInspector } from './fallbacks.js';
-import { defaultSelectionSummaryInspectorProvider } from './default-selection-summary-inspector.js';
+import { defaultSelectionSummaryInspectorProvider, withDefaultSelectionSummaryInspector } from './default-selection-summary-inspector.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 import { getFieldCount } from './helpers.js';
 import { useReportDesignerHostScope } from './host-data.js';
@@ -80,7 +80,11 @@ function createSpreadsheetActionProvider(
 export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportDesignerPageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const resolvedDocument = props.props.document as ReportTemplateDocument;
-  const resolvedDesigner = props.props.designer as ReportDesignerConfig;
+  const inputDesigner = props.props.designer as ReportDesignerConfig;
+  const resolvedDesigner = useMemo(
+    () => withDefaultSelectionSummaryInspector(inputDesigner),
+    [inputDesigner],
+  );
   const resolvedProfile = props.props.profile as ReportDesignerProfile | undefined;
   const resolvedAdapters = props.props.adapters as Partial<ReportDesignerAdapterRegistry> | undefined;
   const spreadsheetCore = useMemo(
@@ -129,7 +133,6 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
 
   useEffect(() => {
     core.registerInspector(defaultSelectionSummaryInspectorProvider);
-    void core.setSelectionTarget(core.getSnapshot().selectionTarget);
     void core.refreshFieldSources();
   }, [core]);
 

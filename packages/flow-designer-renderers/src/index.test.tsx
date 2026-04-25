@@ -207,14 +207,14 @@ describe('createDesignerActionProvider', () => {
         canvas: {}
       }),
       setViewport: (nextViewport: { x: number; y: number; zoom: number }) => {
-        viewport = { x: Math.round(nextViewport.x), y: Math.round(nextViewport.y), zoom: Math.max(0.1, Math.min(4, Number(nextViewport.zoom.toFixed(1)))) };
+        viewport = { x: Number(nextViewport.x.toFixed(2)), y: Number(nextViewport.y.toFixed(2)), zoom: Math.max(0.1, Math.min(4, Number(nextViewport.zoom.toFixed(3)))) };
       }
     } as any;
 
     const provider = createDesignerActionProvider(core);
     const result = await provider.invoke('setViewport', { viewport: { x: 12.4, y: 24.6, zoom: 1.26 } }, {} as any);
 
-    expect(result).toMatchObject({ ok: true, data: { x: 12, y: 25, zoom: 1.3 } });
+    expect(result).toMatchObject({ ok: true, data: { x: 12.4, y: 24.6, zoom: 1.26 } });
   });
 
   it('routes moveNode through the provider command surface', async () => {

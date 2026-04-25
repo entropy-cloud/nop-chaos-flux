@@ -40,4 +40,8 @@ export { createHostData, buildReportDesignerScopeData, useReportDesignerHostScop
 export { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 export type { ReportSpreadsheetCanvasProps } from './report-spreadsheet-canvas.js';
 
-export { defaultSelectionSummaryInspectorProvider } from './default-selection-summary-inspector.js';
+export {
+  DEFAULT_SELECTION_SUMMARY_PROVIDER_ID,
+  defaultSelectionSummaryInspectorProvider,
+  withDefaultSelectionSummaryInspector,
+} from './default-selection-summary-inspector.js';

@@ -144,13 +144,21 @@ describe('FormRuntime performance-oriented behavior', () => {
   it('shows submitting for long submit after submittingDelay elapses', async () => {
     vi.useFakeTimers();
 
+    let resolveApi: (() => void) | undefined;
+
     const form = createManagedFormRuntime({
       id: 'test-form',
       initialValues: { name: 'Alice' },
       parentScope: createStubScope(),
       submittingDelay: 20,
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
+      lifecycle: {
+        submitAction: async () => {
+          await new Promise<void>((resolve) => { resolveApi = resolve; });
+          return { ok: true, data: {} };
+        }
+      }
     });
 
     const promise = form.submit();
@@ -161,6 +169,7 @@ describe('FormRuntime performance-oriented behavior', () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(form.store.getState().submitting).toBe(true);
 
+    resolveApi?.();
     await vi.advanceTimersByTimeAsync(30);
     await promise;
 
@@ -178,7 +187,13 @@ describe('FormRuntime performance-oriented behavior', () => {
       parentScope: createStubScope(),
       submittingDelay: 20,
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
+      lifecycle: {
+        submitAction: async () => {
+          await new Promise<void>((resolve) => { resolveApi = resolve; });
+          return { ok: true, data: {} };
+        }
+      }
     });
 
     const first = form.submit();

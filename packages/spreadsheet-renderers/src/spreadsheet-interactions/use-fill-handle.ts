@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cellAddress, type SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
-import type { SpreadsheetBridge } from '../bridge.js';
+import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
 export interface FillHandleState {
   isFilling: boolean;
@@ -14,6 +14,7 @@ export interface FillHandleState {
 
 export function useFillHandle(
   bridge: SpreadsheetBridge,
+  snapshot: SpreadsheetHostSnapshot,
   sheetId: string,
   addLog: (msg: string) => void,
   getSelectedRange: () => SpreadsheetRange | null
@@ -54,6 +55,63 @@ export function useFillHandle(
     fillHandleRef.current = state;
     setFillHandleState(state);
   }, [getSelectedRange]);
+
+  const handleFillHandleDoubleClick = useCallback(async () => {
+    const range = getSelectedRange();
+    const activeSheet = snapshot.activeSheet;
+    if (!range || !activeSheet) {
+      return;
+    }
+
+    const candidateCols = [] as number[];
+    if (range.endCol + 1 < 26) {
+      candidateCols.push(range.endCol + 1);
+    }
+    if (range.startCol - 1 >= 0) {
+      candidateCols.push(range.startCol - 1);
+    }
+
+    const cells = activeSheet.cells ?? {};
+    let fillEndRow = range.endRow;
+
+    const hasValue = (row: number, col: number) => {
+      const cell = cells[cellAddress(row, col)];
+      return cell?.value !== undefined && cell?.value !== null && cell?.value !== '';
+    };
+
+    for (const candidateCol of candidateCols) {
+      if (!hasValue(range.startRow, candidateCol)) {
+        continue;
+      }
+
+      let probeRow = range.endRow + 1;
+      while (probeRow < 100 && hasValue(probeRow, candidateCol)) {
+        fillEndRow = probeRow;
+        probeRow += 1;
+      }
+
+      if (fillEndRow > range.endRow) {
+        break;
+      }
+    }
+
+    if (fillEndRow <= range.endRow) {
+      return;
+    }
+
+    await bridge.dispatch({
+      type: 'spreadsheet:fillSeries',
+      range: {
+        sheetId,
+        startRow: range.startRow,
+        startCol: range.startCol,
+        endRow: fillEndRow,
+        endCol: range.endCol,
+      },
+      direction: 'down',
+    });
+    addLog(`Series fill down: ${cellAddress(range.startRow, range.startCol)}:${cellAddress(fillEndRow, range.endCol)}`);
+  }, [addLog, bridge, getSelectedRange, sheetId, snapshot.activeSheet]);
 
   useEffect(() => {
     if (!fillHandleState.isFilling) return;
@@ -115,5 +173,5 @@ export function useFillHandle(
     };
   }, [fillHandleState.isFilling, bridge, sheetId, addLog]);
 
-  return { fillHandleState, fillHandleRef, isFillPreview, handleFillHandleMouseDown };
+  return { fillHandleState, fillHandleRef, isFillPreview, handleFillHandleMouseDown, handleFillHandleDoubleClick };
 }

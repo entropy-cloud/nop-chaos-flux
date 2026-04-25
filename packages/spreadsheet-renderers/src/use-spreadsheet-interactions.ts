@@ -46,6 +46,7 @@ export interface SpreadsheetInteractionsReturn {
   fillHandleRef: ReturnType<typeof useFillHandle>['fillHandleRef'];
   isFillPreview: (row: number, col: number) => boolean;
   handleFillHandleMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
+  handleFillHandleDoubleClick: () => Promise<void>;
   handleCellClick: (row: number, col: number) => void;
   handleCellDoubleClick: (row: number, col: number) => void;
   handleCellMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
@@ -145,8 +146,8 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     handleSelectAll,
   } = useSelection(snapshot, bridge, sheetId, addLog, editingCellRef, editValueRef, setEditingCell, setCommentText, setCellValue);
 
-  const { fillHandleState, fillHandleRef, isFillPreview, handleFillHandleMouseDown } = useFillHandle(
-    bridge, sheetId, addLog, getSelectedRange
+  const { fillHandleState, fillHandleRef, isFillPreview, handleFillHandleMouseDown, handleFillHandleDoubleClick } = useFillHandle(
+    bridge, snapshot, sheetId, addLog, getSelectedRange
   );
 
   const { resizeState, columnWidths, rowHeights, handleColumnResizeStart, handleRowResizeStart, endResize } = useResize();
@@ -233,6 +234,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     fillHandleRef,
     isFillPreview,
     handleFillHandleMouseDown,
+    handleFillHandleDoubleClick,
     handleCellClick,
     handleCellDoubleClick,
     handleCellMouseDown,

@@ -351,6 +351,18 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     updateDirtyState();
   }
 
+  function replaceDocumentFromHost(nextDoc: GraphDocument): void {
+    const cloned = cloneDocument(nextDoc);
+    setDocument(cloned);
+    resetShellViewportFromDocument(shellState, doc);
+    if (transactionStack.length === 0) {
+      pushHistory();
+    }
+    emit({ type: 'documentChanged', doc });
+    emit({ type: 'viewportChanged', viewport: shellState.viewport });
+    updateDirtyState();
+  }
+
   function save(): void {
     savedDoc = cloneDocument(doc);
     savedRevision = docRevision;
@@ -471,6 +483,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     toggleInspector,
     setInspectorCollapsed,
     setViewport,
+    replaceDocument: replaceDocumentFromHost,
     save,
     restore,
     exportDocument,

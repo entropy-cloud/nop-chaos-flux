@@ -162,8 +162,8 @@ export interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionSha
 }
 
 export interface ActionDataSourceSchema extends BaseDataSourceSchema, SourceActionSchema {
-  action?: string;
-  api: ApiSchema;
+  action: string;
+  args?: Record<string, SchemaValue>;
   interval?: number;
   stopWhen?: string;
   silent?: boolean;

@@ -12,12 +12,13 @@ function getStaticValue<T>(compiled: CompiledRuntimeValue<T> | undefined): T | u
 describe('compileDataSource', () => {
   const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
-  describe('api data source', () => {
-    it('compiles a basic API data source', () => {
+  describe('action data source', () => {
+    it('compiles a basic action data source with ajax', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
         name: 'users',
-        api: {
+        action: 'ajax',
+        args: {
           url: '/api/users',
           method: 'GET'
         }
@@ -26,7 +27,7 @@ describe('compileDataSource', () => {
       const compiled = compileDataSource('ds-1', schema, expressionCompiler);
 
       expect(compiled.id).toBe('ds-1');
-      expect(compiled.kind).toBe('api');
+      expect(compiled.kind).toBe('action');
       expect(compiled.targetPath).toBeDefined();
       expect(compiled.targetPath?.isStatic).toBe(true);
       expect(getStaticValue(compiled.targetPath)).toBe('users');
@@ -37,10 +38,11 @@ describe('compileDataSource', () => {
       expect(getStaticValue(compiled.api?.method)).toBe('GET');
     });
 
-    it('compiles API data source with expression in url', () => {
+    it('compiles action data source with expression in url', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
-        api: {
+        action: 'ajax',
+        args: {
           url: '${"/api/users/" + userId}'
         }
       };
@@ -50,10 +52,11 @@ describe('compileDataSource', () => {
       expect(compiled.api?.url.isStatic).toBe(false);
     });
 
-    it('compiles API data source with interval and stopWhen', () => {
+    it('compiles action data source with interval and stopWhen', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
-        api: {
+        action: 'ajax',
+        args: {
           url: '/api/status'
         },
         interval: 5000,
@@ -104,7 +107,8 @@ describe('compileDataSource', () => {
     it('compiles merge strategy and key', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
-        api: {
+        action: 'ajax',
+        args: {
           url: '/api/items'
         },
         mergeStrategy: 'upsert',
@@ -122,7 +126,8 @@ describe('compileDataSource', () => {
     it('compiles result mapping', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
-        api: {
+        action: 'ajax',
+        args: {
           url: '/api/data'
         },
         resultMapping: {
@@ -142,7 +147,8 @@ describe('compileDataSource', () => {
     it('preserves dependsOn array', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
-        api: {
+        action: 'ajax',
+        args: {
           url: '/api/details'
         },
         dependsOn: ['users', 'config']
@@ -179,10 +185,11 @@ describe('compileDataSource', () => {
       expect(isDataSourceFullyStatic(compiled)).toBe(false);
     });
 
-    it('returns false when api url has expression', () => {
+    it('returns false when action args url has expression', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
-        api: {
+        action: 'ajax',
+        args: {
           url: '${baseUrl + "/users"}'
         }
       };

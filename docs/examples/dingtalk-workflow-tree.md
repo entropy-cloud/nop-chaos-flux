@@ -30,8 +30,8 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
 ```
 发起人
   → 条件路由（排他分支）
-     ├─ 长期（day > 7）→ CEO审批 → 抄送HR
-     └─ 短期（默认）→ 主管审批
+     ├─ 长期（day > 7）→ CEO审批 ┐
+     └─ 短期（默认）→ 直接主管审批 ┤ → 抄送HR
        → 并行处理
           ├─ 并行分支1 → 人事确认
           └─ 并行分支2 → 工作交接（子流程）
@@ -119,6 +119,22 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
               "label": "短期请假",
               "priority": 2,
               "conditionList": []
+            },
+            "child": {
+              "id": "k004b",
+              "type": "dt-approval",
+              "data": {
+                "label": "直接主管审批",
+                "type": 1,
+                "setType": 2,
+                "examineMode": 1,
+                "nodeAssigneeList": [],
+                "rejectStrategy": 2,
+                "allowTransfer": true,
+                "allowAppendNode": false,
+                "allowRollback": true,
+                "termAuto": false
+              }
             }
           }
         ],

@@ -1,4 +1,5 @@
 import type {
+  ActionDataSourceSchema,
   ApiSchema,
   CompiledApiConfig,
   CompiledDataSource,
@@ -65,12 +66,12 @@ export function compileDataSource(
   options?: SourceCompilerOptions
 ): CompiledDataSource {
   const basePath = options?.basePath ?? '$';
-  const isApiSource = 'api' in schema && schema.api !== undefined;
   const isFormulaSource = 'formula' in schema && schema.formula !== undefined;
+  const isActionSource = !isFormulaSource;
 
   const compiled: CompiledDataSource = {
     id,
-    kind: isApiSource ? 'api' : 'formula',
+    kind: isFormulaSource ? 'formula' : 'action',
   };
 
   if (schema.name !== undefined) {
@@ -80,29 +81,36 @@ export function compileDataSource(
     });
   }
 
-  if (isApiSource) {
-    compiled.api = compileApiConfig(schema.api as ApiSchema, compiler, {
-      ...options,
-      sourcePath: `${basePath}.api`,
-    });
+  if (isActionSource) {
+    const actionSchema = schema as ActionDataSourceSchema;
+    const actionArgs = actionSchema.args;
 
-    if ((schema as { interval?: number }).interval !== undefined) {
+    if (actionArgs && actionSchema.action === 'ajax' && 'url' in actionArgs) {
+      compiled.api = compileApiConfig(actionArgs as unknown as ApiSchema, compiler, {
+        ...options,
+        sourcePath: `${basePath}.args`,
+      });
+    }
+
+    compiled.action = actionSchema.action;
+
+    if (actionSchema.interval !== undefined) {
       compiled.interval = compiler.compileValue<number>(
-        (schema as { interval: number }).interval,
+        actionSchema.interval,
         { ...options, sourcePath: `${basePath}.interval` }
       );
     }
 
-    if ((schema as { stopWhen?: string }).stopWhen !== undefined) {
+    if (actionSchema.stopWhen !== undefined) {
       compiled.stopWhen = compiler.compileValue(
-        (schema as { stopWhen: string }).stopWhen,
+        actionSchema.stopWhen,
         { ...options, sourcePath: `${basePath}.stopWhen` }
       ) as unknown as CompiledRuntimeValue<boolean>;
     }
 
-    if ((schema as { silent?: boolean }).silent !== undefined) {
+    if (actionSchema.silent !== undefined) {
       compiled.silent = compiler.compileValue(
-        (schema as { silent: boolean }).silent,
+        actionSchema.silent,
         { ...options, sourcePath: `${basePath}.silent` }
       ) as unknown as CompiledRuntimeValue<boolean>;
     }

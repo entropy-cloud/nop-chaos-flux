@@ -166,7 +166,7 @@ describe('createRendererRuntime', () => {
       scope: page.scope,
       compiledSource: compileDataSource('slow-source', {
         type: 'data-source',
-        api: { url: '/api/slow' },
+        action: 'ajax', args: { url: '/api/slow' },
         name: 'payload'
       }, expressionCompiler)
     });

@@ -301,6 +301,36 @@ describe('DesignerXyflowCanvasBridge', () => {
     expect(() => latestReactFlowProps.onNodesChange(mockNodeChanges)).not.toThrow();
     expect(onMoveNode).toHaveBeenCalledWith('node-1', undefined, { x: 50, y: 50 });
   });
+
+  it('disables free connect and node dragging in tree mode', () => {
+    render(
+      <DesignerXyflowCanvasBridge
+        snapshot={createSnapshot()}
+        pendingConnectionSourceId={null}
+        reconnectingEdgeId={null}
+        onPaneClick={vi.fn()}
+        onNodeSelect={vi.fn()}
+        onEdgeSelect={vi.fn()}
+        onStartConnection={vi.fn()}
+        onCancelConnection={vi.fn()}
+        onCompleteConnection={vi.fn()}
+        onStartReconnect={vi.fn()}
+        onCancelReconnect={vi.fn()}
+        onCompleteReconnect={vi.fn()}
+        onDuplicateNode={vi.fn()}
+        onDeleteNode={vi.fn()}
+        onDeleteEdge={vi.fn()}
+        onMoveNode={vi.fn()}
+        onViewportChange={vi.fn()}
+        documentMode="tree"
+      />
+    );
+
+    expect(latestReactFlowProps.nodesConnectable).toBe(false);
+    expect(latestReactFlowProps.nodesDraggable).toBe(false);
+    expect(latestReactFlowProps.onConnect).toBeUndefined();
+    expect(latestReactFlowProps.onReconnect).toBeUndefined();
+  });
 });
 
 describe('renderDesignerCanvasBridge', () => {

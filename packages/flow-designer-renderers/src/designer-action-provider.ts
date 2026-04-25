@@ -1,10 +1,11 @@
 import type { ActionNamespaceProvider } from '@nop-chaos/flux-core';
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
+import type { DesignerCommandAdapter } from './designer-command-adapter';
 import { notifyCommandFailure, toActionResult } from './designer-context';
 
-export function createDesignerActionProvider(core: DesignerCore): ActionNamespaceProvider {
-  const adapter = createDesignerCommandAdapter(core);
+export function createDesignerActionProvider(core: DesignerCore, adapterInput?: DesignerCommandAdapter): ActionNamespaceProvider {
+  const adapter = adapterInput ?? createDesignerCommandAdapter(core);
 
   return {
     kind: 'host',

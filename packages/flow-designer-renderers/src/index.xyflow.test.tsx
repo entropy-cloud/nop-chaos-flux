@@ -78,6 +78,45 @@ function createTestConfig(): DesignerConfig {
   };
 }
 
+function createTreeTestConfig(): DesignerConfig {
+  return {
+    version: '1.0.0',
+    kind: 'dingtalk-workflow',
+    documentMode: 'tree',
+    treeConfig: {
+      layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
+      showGatewayNodes: false,
+      showMergeNodes: false,
+      autoLayout: true,
+      chainEdgeType: 'dt-chain',
+      branchEdgeType: 'dt-branch',
+      mergeEdgeType: 'dt-merge'
+    },
+    nodeTypes: [
+      {
+        id: 'dt-approval',
+        label: 'Approval',
+        body: { type: 'text', text: 'Approval' },
+        defaults: { label: 'Approval' }
+      },
+      {
+        id: 'dt-condition',
+        label: 'Condition',
+        body: { type: 'text', text: 'Condition' },
+        defaults: { label: 'Condition' }
+      }
+    ],
+    edgeTypes: [
+      { id: 'dt-chain', label: 'Chain', defaults: {} },
+      { id: 'dt-branch', label: 'Branch', defaults: {} },
+      { id: 'dt-merge', label: 'Merge', defaults: {} }
+    ],
+    palette: {
+      groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['dt-approval', 'dt-condition'] }]
+    }
+  };
+}
+
 function createRendererEnv(notify = vi.fn()) {
   return {
     fetcher: async function <T>() {
@@ -230,5 +269,50 @@ describe('designer-page live xyflow intent retention', () => {
     await waitFor(() => {
       expect(within(view.container).getByText('nodes:1')).toBeTruthy();
     });
+  });
+
+  it('does not keep free-graph connect intent in tree mode', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      ...flowDesignerRendererDefinitions,
+      {
+        type: 'text',
+        component: (props: any) => <span>{String(props.props.text ?? '')}</span>
+      }
+    ]);
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/xyflow-tree-mode"
+        schema={{
+          type: 'designer-page',
+          treeDocument: {
+            id: 'tree-1',
+            kind: 'dingtalk-workflow',
+            name: 'Tree Example',
+            version: '1.0.0',
+            root: {
+              id: 'node-1',
+              type: 'dt-approval',
+              data: { label: 'Task 1' },
+              child: {
+                id: 'node-2',
+                type: 'dt-approval',
+                data: { label: 'Task 2' }
+              }
+            }
+          },
+          config: createTreeTestConfig()
+        } as any}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    const canvas = within(view.container);
+    fireEvent.click(canvas.getByText('Start connection node-1'));
+    expect(canvas.getByText('pending:none')).toBeTruthy();
+
+    fireEvent.click(canvas.getByText('Start reconnect edge-2'));
+    expect(canvas.getByText('reconnecting:none')).toBeTruthy();
   });
 });

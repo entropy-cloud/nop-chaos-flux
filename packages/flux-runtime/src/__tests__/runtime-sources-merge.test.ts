@@ -29,7 +29,7 @@ describe('createRendererRuntime', () => {
       compiledSource: compileDataSource('users-source', {
         type: 'data-source',
         name: 'usersPayload',
-        api: { url: '/api/users' },
+        action: 'ajax', args: { url: '/api/users' },
         resultMapping: {
           rows: '${payload.items}',
           count: '${payload.total}'
@@ -129,7 +129,7 @@ describe('createRendererRuntime', () => {
         name: 'items',
         mergeStrategy: 'prepend',
         initialData: [3],
-        api: { url: '/api/items' }
+        action: 'ajax', args: { url: '/api/items' }
       }, expressionCompiler)
     });
 
@@ -229,7 +229,7 @@ describe('createRendererRuntime', () => {
         name: 'payload',
         mergeStrategy: 'merge',
         initialData: { seeded: true },
-        api: { url: '/api/items', cacheTTL: 60_000 },
+        action: 'ajax', args: { url: '/api/items', cacheTTL: 60_000 },
         resultMapping: {
           rows: '${payload.items}',
           count: '${payload.items.length}'
@@ -282,7 +282,7 @@ describe('createRendererRuntime', () => {
         type: 'data-source',
         name: 'payload',
         statusPath: 'payloadStatus',
-        api: { url: '/api/status' },
+        action: 'ajax', args: { url: '/api/status' },
         initialData: { value: 'initial' }
       }, expressionCompiler)
     });
@@ -348,7 +348,7 @@ describe('createRendererRuntime', () => {
       compiledSource: compileDataSource('shared-ref-source', {
         type: 'data-source',
         name: 'payload',
-        api: { url: '/api/same' }
+        action: 'ajax', args: { url: '/api/same' }
       }, expressionCompiler)
     });
 
