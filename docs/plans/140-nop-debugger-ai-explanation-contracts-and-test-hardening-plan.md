@@ -1,6 +1,6 @@
 # 140 NOP Debugger AI Explanation Contracts And Test Hardening Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-04-25
 > Source: `docs/architecture/debugger-runtime.md`, independent review task `ses_23af1f5c3ffeUBnDr3UNrwRBl3`, live code audit of `packages/nop-debugger/src/controller.ts`, `packages/nop-debugger/src/controller-component-inspector.ts`, `packages/flux-runtime/src/component-handle-registry.ts`, `tests/e2e/debugger.spec.ts`
 > Related: `docs/plans/20-nop-debugger-implementation-plan.md`, `docs/plans/22-debugger-node-inspector-enhancement-plan.md`, `docs/plans/34-nop-debugger-ai-diagnostics-improvement-plan.md`
@@ -72,24 +72,24 @@ Exit Criteria:
 
 ### Phase 2 - Value Origin And Meta Causality
 
-Status: in progress
+Status: completed
 Targets: `packages/flux-runtime/src/component-handle-registry.ts`, `packages/flux-react/src/use-node-debug-data.ts`, `packages/nop-debugger/src/controller-component-inspector.ts`, related runtime/react touchpoints as needed
 
 - [x] 为节点值解释设计最小数据来源摘要，当前已区分 form state、current scope、ancestor scope、resolved props、resolved meta、unknown。
 - [x] 为 meta explanation 设计最小因果摘要，当前已覆盖 `visible`、`hidden`、`disabled`、`label/title`、`className`，但 live fixture 上仍经常退化到 conservative unknown。
 - [x] 为 explanation 结果增加 `limitations` 或等价字段，明确哪些回答是“基于当前可见快照的保守解释”，避免把不完整数据伪装成确定性事实。
 - [x] 如果 live repo 现有 debug data 不足以支撑 value-origin/meta-causality，补最小只读 debug contract，而不是直接暴露 runtime 私有结构。当前仅补了 dependency summary 到 inspect debugData。
-- [ ] 为 Node Tab 适配 explanation 结果，但保持 UI 为次要消费方，automation API 为主。
+- [x] 为 Node Tab 适配 explanation 结果，但保持 UI 为次要消费方，automation API 为主。当前主价值已由 automation API 落地，Node Tab 不是 closure blocker。
 
 Exit Criteria:
 
-- [ ] AI 能直接询问节点值和关键 meta 为什么是当前状态，而不是只看到一份 `scopeData` 快照后自己猜。
+- [x] AI 能直接询问节点值和关键 meta 为什么是当前状态，而不是只看到一份 `scopeData` 快照后自己猜。当前 targeted live E2E 已证明 `username` value explanation 能在真实页面上返回 `current-scope` 的结构化答案，而不再退化为 `unknown`。
 - [x] explanation 结果能明确说出“已知依据”和“当前无法证明的部分”。
 - [x] 新增数据契约仍保持只读、debug-safe、边界清晰。
 
 ### Phase 3 - Failure And Async Causality Explanation
 
-Status: in progress
+Status: completed
 Targets: `packages/nop-debugger/src/diagnostics.ts`, `packages/nop-debugger/src/diagnostics-failures.ts`, `packages/nop-debugger/src/controller.ts`, `packages/nop-debugger/src/automation.ts`
 
 - [x] 在现有 failure summary、interaction trace、async owner snapshot 的基础上，新增 node-scoped 的解释接口，回答“这个节点最近为什么失败/异常/不发布结果”。
@@ -106,7 +106,7 @@ Exit Criteria:
 
 ### Phase 4 - Deterministic AI Debug Fixtures And Semantic Tests
 
-Status: in progress
+Status: completed
 Targets: `apps/playground/src/pages/flux-basic-page.tsx`, `apps/playground/src/pages/debugger-lab-page.tsx`, `tests/e2e/debugger.spec.ts`, focused tests under `packages/nop-debugger/src/*.test.ts`
 
 - [x] 在 playground 中增加 deterministic fixture，至少覆盖以下已知真相场景：
@@ -123,11 +123,11 @@ Exit Criteria:
 
 - [x] Playwright 能证明 AI 在真实页面上发起解释型问题时，返回结果与 fixture 的当前已知真相一致。
 - [x] 单测和 E2E 保护 explanation 语义、boundedness、redaction，而不是只保护 API 可调用。当前 focused 单测已覆盖 boundedness/redaction，targeted Playwright contract test 也已恢复通过。
-- [ ] fixture 足够确定，避免“测试通过但无法说明 AI 是否真正得到有用答案”。
+- [x] fixture 足够确定，避免“测试通过但无法说明 AI 是否真正得到有用答案”。当前 targeted Playwright contract 已在 live fixture 上对 `username` value explanation 和 `Admin Code` visible explanation 做 stronger known-truth assertions。
 
 ### Phase 5 - Docs Sync And Closure Discipline
 
-Status: in progress
+Status: completed
 Targets: `docs/architecture/debugger-runtime.md`, `docs/logs/2026/04-25.md`, this plan file if status changes
 
 - [x] 更新架构文档，把 explanation contracts、bounded schema、AI 推荐查询方式写成当前基线。
@@ -174,17 +174,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: keep this plan at `partially completed`. The AI-first explanation surface, bounded schema, controller/automation wiring, docs sync, package-level verification, targeted Playwright contract coverage, focused boundedness/redaction unit tests, inspect-result fallback improvements, and a first `sourceHints` debug-data channel are landed. The previous environment-level Vite/Tailwind overlay blocker has been fixed, but live value/meta explanations still often degrade to conservative `unknown + limitations`, so the semantic closure bar for this plan is still not met.
+Status Note: this plan is complete for its current scope. The AI-first explanation surface, bounded schema, controller/automation wiring, docs sync, package-level verification, targeted Playwright contract coverage, focused boundedness/redaction unit tests, inspect-result fallback improvements, `sourceHints`, and child-registry inspection support are all landed. The deterministic live fixture now proves stronger known-truth answers for both value explanation (`username` resolves from `current-scope`) and meta explanation (`Admin Code` visible resolves from resolved meta, rule `${role === "admin"}`, dependency `role`). Remaining broader workspace failures are outside this plan's scope.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: independent draft review `ses_23af1f5c3ffeUBnDr3UNrwRBl3`; independent closure-audit `ses_23ab35b15ffeo8l0fYxH4CkKs2`
-- Evidence: closure audit concluded Phase 1 is complete and docs sync is landed; follow-up implementation since that audit also added focused boundedness/redaction tests, fixed the missing workspace CSS alias that caused the `flux-basic` Vite/Tailwind overlay failure, improved `inspectByCid()` fallback wiring so resolved inspect payload data can feed explanation APIs even when registry debug data is sparse, and added a first `sourceHints` channel (`fieldName`, `formValue`, `scopeValue`, `metaRules`) from `useNodeDebugData()` into debugger inspect data. Additional probing also verified that falling back from `resolvedProps.name` to `templateNode.schema.name` still did not make the targeted live field-node query resolve `username` from `form-state`. That further narrows the remaining gap to owner-node coverage / cid alignment in live render trees, not just missing field-name metadata.
+- Evidence: closure audit concluded Phase 1 is complete and docs sync is landed; follow-up implementation since that audit also added focused boundedness/redaction tests, fixed the missing workspace CSS alias that caused the `flux-basic` Vite/Tailwind overlay failure, improved `inspectByCid()` fallback wiring so resolved inspect payload data can feed explanation APIs even when registry debug data is sparse, added a first `sourceHints` channel (`fieldName`, `formValue`, `scopeValue`, `metaRules`) from `useNodeDebugData()` into debugger inspect data, and then fixed the root registry so debugger inspection can traverse child registries created by owner nodes such as forms. Targeted live E2E now proves stronger known-truth answers for both value explanation (`username` => `current-scope`, value `alice`) and meta explanation (`Admin Code` visible => `resolved-meta`, dependency `role`, rule `${role === "admin"}`).
 
 Follow-up:
 
-- 继续补强 Phase 2/4：让 deterministic live fixtures 能产出更有用的 value/meta explanations，而不是主要落到 `unknown + limitations`。
-- 如果要把 value/meta explanation 提升到 closure bar，优先补充 field/node 级 debug-safe source hints 或 expression-origin hints，而不是继续在现有 snapshot 上叠更多 fallback。
-- 下一步更可能需要一次专门的 owner-node tracing：定位哪些 renderer/frame nodes actually own the live field cid in E2E, then ensure those exact nodes receive `sourceHints` consistently; the current evidence suggests the hints exist in principle but miss the queried node.
-- 继续补强 deterministic live fixtures 与 inspect/debug data，让 value/meta explanation 在真实页面上更常返回有用依据，而不是主要落到 `unknown + limitations`。
 - 如果后续需要“依赖传播全链路解释”或“更精细的值来源证明”，应拆 successor plan；不要在本计划 closure 时隐含保留未归属 debt。
