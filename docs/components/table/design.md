@@ -8,7 +8,10 @@
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - 当前已实现列定义、分页、选择、expandable、empty 区域和多类事件。
-- 排序、筛选和行内编辑仍处于收敛阶段，文档需要优先强调现有 ownership 与 handle 基线，而不是过早承诺 AMIS 全量能力。
+- 当前 table-heavy live baseline 还包括：left/right fixed columns、列显隐、scope-backed ordered columns、最小 move-up/move-down 排序、`columnSettings.overlay: false` 的 inline panel、以及基础 header search/filter controls。
+- richer drag reorder、以及更完整的 header search/filter UX 仍在收敛阶段，文档需要优先强调现有 ownership 与 handle 基线，而不是过早承诺 AMIS 全量能力。
+- `responsive.mode: 'expand'` 现已具备第一版 live baseline：在视口低于配置 `breakpoint` 时，table 保留 primary/fixed columns 于主行，把其余列移动到可展开的 detail row 中；它复用现有 expand-row 机制，而不是引入独立第二套 row detail owner。
+- header search/filter 现已具备更稳定的第一版 live baseline：列头菜单支持 keyword search、option filter、active trigger state，以及按列清除当前 search/filter 的统一入口。
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -21,6 +24,8 @@
 
 - 关键字段包括 `columns`、`pagination`、`rowSelection`、`expandable`、`empty`、`loading`、`data`、`rowData`。
 - 当前已落地 `paginationOwnership`、`selectionOwnership`、`paginationStatePath`、`selectionStatePath`。
+- `columnSettings` 当前 live 语义是：`enabled` 打开列管理入口，`toggledColumnsStatePath` / `orderedColumnsStatePath` 可接入 scope owner，`overlay: false` 时以内联面板渲染，未声明或非 `false` 时使用 dropdown overlay；`draggable` 仍未落地，不应误读为 live drag-sort。
+- `responsive` 不再只是 schema surface：`mode: 'expand'` 已接通首版 more-columns baseline，`breakpoint` 控制激活阈值，`expandTrigger: 'row'` 可让整行打开 detail row。更完整的 responsive parity（例如 richer trigger/layout 策略）仍待后续收敛。
 - 目标设计中，table 若需要对外暴露自身的只读交互状态摘要，也应复用 `statusPath`，而不是发明第二套外部读取命名。
 - `data` 的目标语义应与其他 scope-owning 节点保持一致：初始化 table shell own scope patch。
 - `rowData` 的目标语义是显式声明每个 isolated row scope 还需要哪些额外字段投影，避免 `$parentScope` 一类隐式穿透。
@@ -40,6 +45,8 @@
 
 - 当前明确支持 `paginationOwnership` 和 `selectionOwnership`，可取 `local`、`controlled`、`scope`。
 - 排序、筛选和展开尚未完整进入同一 ownership 体系，需要在后续阶段继续统一。
+- 当前 header search/filter 已有可观察的基础行为：列头菜单可驱动 keyword/filter state 并影响本地数据处理；但 richer filter source/search UX、统一 ownership 收口和更完整回归证据仍属于后续 table-heavy parity。
+- 当前 header search/filter 已有可观察且更稳定的行为：列头菜单可驱动 keyword/filter state、通过 active trigger 表达当前列已有筛选，并提供按列 clear action 一次性清理 keyword + option filters。更丰富的 filter source/search UX 与 ownership 收口仍属于后续 table-heavy parity。
 - table 的 `loading` 默认应视为上游 source/query owner 状态的 UI 投影，而不是 table 自己发明请求协议。
 - 真正属于 table 自己的状态是 selection、pagination，以及未来的 sort/filter/inline-edit 等 interaction state。
 - 目标设计里，table subtree 若需要高频读取这些状态，可提供只读 `$table` 绑定；table 外部观察者仍应通过显式 `statusPath` 读取只读 summary DTO。
@@ -73,3 +80,5 @@
 
 - 表格是复杂状态最容易失控的组件，需要持续坚持 ownership 模型。
 - 列级渲染定制必须控制边界，避免引回任意 React 函数 slot。
+- `columnSettings` 容易在“字段已声明”与“完整 parity 已完成”之间产生误读；当前只应把 visibility/order/inline-vs-overlay entry 当作 live baseline。
+- `responsive` 已有首版窄屏列折叠/展开 UX，但仍不是完整 parity；后续应继续收敛 richer trigger/layout 细节，而不是把当前第一版 baseline 误写成终态。

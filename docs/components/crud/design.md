@@ -220,12 +220,12 @@ interface CrudStatusSummary {
 | 列表级动作 | 已支持 | 已支持基础版 | 已覆盖 |
 | 批量操作 | 已支持 | 可由 `listActions + $crud selection` 表达 | 已覆盖 |
 | 列排序 | 已支持 | table 已有基础 sort state | 已覆盖 |
-| 列头快速搜索 | 已支持 | 未实现 | 已定义 |
-| 列头快速过滤 | 已支持 | table 已有基础 filter state | 已定义 |
+| 列头快速搜索 | 已支持 | 已支持基础版：header search input + active-state trigger + clear action | 已覆盖基础版 |
+| 列头快速过滤 | 已支持 | 已支持基础版：header filter menu/state + active-state trigger + clear action | 已覆盖基础版 |
 | 左/右固定列 | 已支持 | 已支持 table/crud live sticky columns 基础版 | 已覆盖 |
-| 多列时的字段选择 | 已支持 | 已支持基础版（列显隐 + 最小列顺序调整） | 已覆盖基础版 |
-| 列拖拽排序 | 已支持 | 未实现（当前为非拖拽的最小上下移动） | 已定义 |
-| 响应式更多列展开 | 已支持 | table expandable 已有基础能力 | 已定义 |
+| 多列时的字段选择 | 已支持 | 已支持基础版（列显隐 + 最小列顺序调整，`overlay: false` inline panel 已落地） | 已覆盖基础版 |
+| 列拖拽排序 | 已支持 | 未实现（当前为非拖拽的最小上下移动；`draggable` 仍属后续） | 已定义 |
+| 响应式更多列展开 | 已支持 | 已支持基础版：`responsive.mode: 'expand'` 会在低于 `breakpoint` 时把次要列移入 expandable detail row | 已覆盖基础版 |
 | 服务端分页 | 已支持 | 未实现（当前仅数组型 `source` workflow baseline） | 已定义 |
 | 前端一次性加载分页/过滤 | 已支持 | 部分 table 本地处理能力存在 | 已定义 |
 | quick edit | 已支持 | 未实现 | 已定义 |
@@ -236,7 +236,7 @@ interface CrudStatusSummary {
 
 - “当前运行时”反映仓库当前代码状态。
 - “本次契约基线”表示已经进入正式设计和 TypeScript schema，可作为后续实现与迁移工具的依据。
-- 当前仍未完成的 table-heavy / editing-heavy 能力包括更完整的 `columnSettings` parity（如拖拽、overlay、持久化策略）、responsive more-columns expansion、header quick search/filter UI、`quickEdit`、`syncLocation`、`clientMode.loadDataOnce`，以及 API/request-owned `source` 驱动的 CRUD workflow，不应误读为已全部落地。
+- 当前仍未完成的 table-heavy / editing-heavy 能力包括更完整的 `columnSettings` parity（尤其是 `draggable` 和持久化策略；`overlay: false` inline panel 已落地）、richer responsive expansion parity、更丰富的 header search/filter source/search UX、`quickEdit`、`syncLocation`、`clientMode.loadDataOnce`，以及 API/request-owned `source` 驱动的 CRUD workflow，不应误读为已全部落地。
 
 ## 10. 迁移策略
 
