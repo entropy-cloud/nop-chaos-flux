@@ -1,4 +1,4 @@
-import type { ActionNamespaceProvider, RendererComponentProps, SchemaInput } from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, ActionScope, RendererComponentProps, SchemaInput, ScopeRef } from '@nop-chaos/flux-core';
 import type { DesignerCommandResult } from './designer-command-types';
 import type { DesignerPageSchema } from './schemas';
 import type { DesignerContextValue } from './designer-context';
@@ -167,8 +167,8 @@ export interface DesignerCreateDialogState {
 export async function confirmCreateDialog(args: {
   pendingCreateDialog: DesignerCreateDialogState;
   helpers: RendererComponentProps<DesignerPageSchema>['helpers'];
-  designerScope: Record<string, unknown> | any;
-  actionScope: unknown;
+  designerScope: ScopeRef;
+  actionScope: ActionScope | undefined;
   dispatch: (command: import('./designer-command-types').DesignerCommand) => DesignerCommandResult;
 }) {
   let nextData: Record<string, unknown> | undefined = args.pendingCreateDialog.nodeType.defaults
@@ -208,8 +208,8 @@ export async function confirmCreateDialog(args: {
 export function renderDesignerSchema(args: {
   schema: SchemaInput;
   helpers: RendererComponentProps<DesignerPageSchema>['helpers'];
-  designerScope: unknown;
-  actionScope: unknown;
+  designerScope: ScopeRef;
+  actionScope: ActionScope | undefined;
 }) {
   return args.helpers.render(args.schema as any, { scope: args.designerScope, actionScope: args.actionScope });
 }

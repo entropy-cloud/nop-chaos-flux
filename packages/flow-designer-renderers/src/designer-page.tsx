@@ -4,7 +4,7 @@ import type { DesignerHostStatusSummary } from '@nop-chaos/flow-designer-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, WorkbenchShell } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
-import { createDesignerCore, layoutWithElk, layoutTreeWithElk } from '@nop-chaos/flow-designer-core';
+import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { Button, cn, DataViewer, Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
@@ -22,7 +22,6 @@ import {
   confirmCreateDialog,
   createDesignerContextValue,
   createMergedDesignerProvider,
-  matchesShortcut,
   renderDesignerSchema,
   type DesignerCreateDialogState
 } from './designer-page-helpers';
@@ -30,6 +29,8 @@ import { DesignerPaletteContent } from './designer-palette';
 import { DesignerCanvasContent, plusButtonHandlerHolder } from './designer-canvas';
 import { DefaultInspector } from './designer-inspector';
 import { DesignerToolbarContent } from './designer-toolbar';
+import { useDesignerAutoLayout } from './use-designer-auto-layout';
+import { useDesignerShortcuts } from './use-designer-shortcuts';
 
 function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema> & { config: DesignerConfig; rawSchemaProps: Record<string, SchemaValue> }) {
   const { config, rawSchemaProps } = props;
@@ -86,86 +87,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   const rootRef = useRef<HTMLDivElement | null>(null);
   const snapshot = useDesignerSnapshot(core);
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
-  const [layoutBusy, setLayoutBusy] = React.useState(false);
-  const layoutRequestRef = useRef(0);
-  const initialTreeAutolayoutDoneRef = useRef(false);
-  const handleAutoLayout = useCallback(async () => {
-    const requestId = layoutRequestRef.current + 1;
-    layoutRequestRef.current = requestId;
-    setLayoutBusy(true);
-    const doc = core.getDocument();
-    if (doc.nodes.length === 0) {
-      if (layoutRequestRef.current === requestId) {
-        setLayoutBusy(false);
-      }
-      return;
-    }
-
-    try {
-      if (config.documentMode === 'tree') {
-        const normalizedCfg = core.getConfig();
-        const treeConfig = normalizedCfg.treeConfig;
-        if (!treeConfig) {
-          return;
-        }
-        const layoutedNodes = await layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes);
-        if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
-          return;
-        }
-        const positions = new Map(layoutedNodes.map((n) => [n.id, n.position]));
-        core.layoutNodes(positions);
-        return;
-      }
-
-      const positions = await layoutWithElk(doc.nodes, doc.edges, core.getConfig().nodeTypes);
-      if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
-        return;
-      }
-      core.layoutNodes(positions);
-    } finally {
-      if (layoutRequestRef.current === requestId) {
-        setLayoutBusy(false);
-      }
-    }
-  }, [core, config.documentMode]);
-
-  useEffect(() => {
-    if (config.documentMode !== 'tree') {
-      return;
-    }
-
-    const normalizedCfg = core.getConfig();
-    const treeConfig = normalizedCfg.treeConfig;
-    if (!treeConfig || treeConfig.autoLayout === false || initialTreeAutolayoutDoneRef.current) {
-      return;
-    }
-
-    const doc = core.getDocument();
-    if (doc.nodes.length === 0) {
-      initialTreeAutolayoutDoneRef.current = true;
-      return;
-    }
-
-    initialTreeAutolayoutDoneRef.current = true;
-    const requestId = layoutRequestRef.current + 1;
-    layoutRequestRef.current = requestId;
-    setLayoutBusy(true);
-
-    void layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes)
-      .then((layoutedNodes) => {
-        if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
-          return;
-        }
-
-        const positions = new Map(layoutedNodes.map((n) => [n.id, n.position]));
-        core.layoutNodes(positions);
-      })
-      .finally(() => {
-        if (layoutRequestRef.current === requestId) {
-          setLayoutBusy(false);
-        }
-      });
-  }, [core, config.documentMode]);
+  const { layoutBusy, handleAutoLayout } = useDesignerAutoLayout(core, config);
 
   const isTreeMode = config.documentMode === 'tree';
   const onPlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => {
@@ -248,69 +170,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     return actionScope.registerNamespace('designer', mergedDesignerProvider);
   }, [actionScope, mergedDesignerProvider]);
 
-  useEffect(() => {
-    if (!core.getConfig().features.shortcuts) {
-      return;
-    }
-
-    const shortcuts = core.getConfig().shortcuts;
-    const features = core.getConfig().features;
-    const canUseClipboard = features.clipboard !== false;
-    const isEditableTarget = (target: EventTarget | null) => {
-      if (!(target instanceof HTMLElement)) {
-        return false;
-      }
-      const tag = target.tagName.toLowerCase();
-      return target.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select';
-    };
-
-    const isInsideDesigner = (target: EventTarget | null) => {
-      if (!(target instanceof Node)) {
-        return false;
-      }
-
-      return rootRef.current?.contains(target) ?? false;
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target) || !isInsideDesigner(event.target)) {
-        return;
-      }
-
-      if (matchesShortcut(event, shortcuts.undo) && features.undo !== false) {
-        event.preventDefault();
-        dispatch({ type: 'undo' });
-        return;
-      }
-      if (matchesShortcut(event, shortcuts.redo) && features.redo !== false) {
-        event.preventDefault();
-        dispatch({ type: 'redo' });
-        return;
-      }
-      if (canUseClipboard && matchesShortcut(event, shortcuts.copy)) {
-        event.preventDefault();
-        dispatch({ type: 'copySelection' });
-        return;
-      }
-      if (canUseClipboard && matchesShortcut(event, shortcuts.paste)) {
-        event.preventDefault();
-        dispatch({ type: 'pasteClipboard' });
-        return;
-      }
-      if (matchesShortcut(event, shortcuts.delete)) {
-        event.preventDefault();
-        dispatch({ type: 'deleteSelection' });
-        return;
-      }
-      if (matchesShortcut(event, shortcuts.save)) {
-        event.preventDefault();
-        dispatch({ type: 'save' });
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [core, dispatch]);
+  useDesignerShortcuts({ core, rootRef, dispatch });
 
   const toolbarSlot = props.regions.toolbar
     ? props.helpers.render(props.regions.toolbar.templateNode, { scope: designerScope, actionScope })

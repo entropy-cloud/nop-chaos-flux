@@ -1,4 +1,4 @@
-import type { DesignerCore } from '@nop-chaos/flow-designer-core';
+import type { DesignerCore, TreeDocument } from '@nop-chaos/flow-designer-core';
 import type {
   DesignerCommand,
   DesignerCommandAdapter,
@@ -9,6 +9,7 @@ import {
   createFailure,
   createSuccess,
   getNode,
+  hasNode,
   relayoutAfterTreeMutation,
   type TreeCommandOwner
 } from './designer-command-adapter-helpers';
@@ -28,6 +29,23 @@ import {
 
 export type { DesignerCommand, DesignerCommandAdapter, DesignerCommandReason, DesignerCommandResult };
 
+function isTreeOwnedCommand(command: DesignerCommand): boolean {
+  switch (command.type) {
+    case 'addBranch':
+    case 'deleteNode':
+    case 'deleteBranch':
+    case 'moveBranch':
+    case 'updateBranchData':
+    case 'updateNodeData':
+    case 'insertChainNode':
+    case 'insertChainNodeAtMerge':
+    case 'insertBranchPair':
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: TreeCommandOwner): DesignerCommandAdapter {
   function applyTreeDocument(nextTree: TreeDocument): void {
     if (!treeOwner) {
@@ -38,7 +56,9 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
   }
 
   function execute(command: DesignerCommand): DesignerCommandResult {
-    const graphResult = executeGraphOnlyCommand(core, command);
+    const graphResult = treeOwner?.config.documentMode === 'tree' && isTreeOwnedCommand(command)
+      ? undefined
+      : executeGraphOnlyCommand(core, command);
     if (graphResult) {
       return graphResult;
     }
@@ -333,6 +353,8 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         core.commitTransaction();
         return createSuccess(core);
       }
+      default:
+        return createFailure(core, `Unsupported command: ${(command as { type: string }).type}`, 'unavailable');
     }
   }
 
