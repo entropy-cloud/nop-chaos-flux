@@ -1,4 +1,5 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef } from 'react';
+import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentComponentRegistry, useRenderScope, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -11,7 +12,6 @@ import {
   DEFAULT_PAGE_SIZE_OPTIONS,
   EMPTY_ROWS,
   normalizeCrudSourceValue,
-  toRecord,
   useCrudHandle,
   useCrudRuntimeState,
   useCrudStatusPublisher,
@@ -98,7 +98,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
   const effectiveQuery = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
   const filteredRows = useMemo(() => applyQueryToRows(source, effectiveQuery), [effectiveQuery, source]);
-  const [loading] = useState(false);
   const internalTableRef = useRef<InternalTableHandle>({});
   const queryContainerRef = useRef<HTMLDivElement>(null);
 
@@ -163,8 +162,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   }, [componentRegistry, props.events, queryFormId, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
 
   const summary = useMemo<CrudStatusSummary>(() => ({
-    loading,
-    refreshing: loading,
+    loading: false,
+    refreshing: false,
     itemCount: filteredRows.length,
     total: resolvedSource.total,
     hasSelection: selectedRowKeys.length > 0,
@@ -174,7 +173,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     pagination: paginationState,
     sort: sortState,
     filters: filterState,
-  }), [effectiveQuery, filterState, filteredRows.length, loading, paginationState, resolvedSource.total, selectedRowKeys, sortState]);
+  }), [effectiveQuery, filterState, filteredRows.length, paginationState, resolvedSource.total, selectedRowKeys, sortState]);
 
   useCrudHandle(props, internalTableRef, handleRefresh);
   useCrudStatusPublisher(scope, normalizedSchema.statusPath, summary);
