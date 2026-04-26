@@ -17,7 +17,7 @@ describe('createProjectedScopeStore', () => {
     expect(projected.store).toBeUndefined();
     expect(projected.readSnapshot()).toEqual({ projected: 1 });
     expect(projected.readSnapshot()).toEqual({ projected: 1 });
-    expect(projectSnapshot).toHaveBeenCalledTimes(2);
+    expect(projectSnapshot).toHaveBeenCalledTimes(1);
   });
 
   it('exposes a derived store, caches by base snapshot, and rejects setSnapshot', () => {
