@@ -1,7 +1,5 @@
 import {
-  reportRuntimeHostIssue,
   type AsyncGovernanceStore,
-  type ActionSchema,
   type AsyncRunHandle,
   type CompiledReaction,
   type CompiledRuntimeValue,
@@ -9,13 +7,20 @@ import {
   type ReactionRegistryDebugSnapshot,
   type RendererHelpers,
   type RendererRuntime,
-  type RuntimeValueState,
   type ScopeDependencySet,
   type ScopeRef
 } from '@nop-chaos/flux-core';
-import { collectRuntimeDependencies } from '../node-runtime';
 import { isAbortError } from '../error-utils';
 import { createRootDependencySet, scopeChangeHitsDependencies } from '../scope-change';
+import {
+  createReactionOwnerId,
+  createRunHandle,
+  evaluateReactionWatchValue,
+  MAX_REACTION_FIRE_COUNT,
+  normalizeActionArray,
+  reportReactionFireLimit,
+  type OwnedReactionRegistration
+} from './reaction-runtime-helpers';
 
 export interface ReactionRegistration {
   id: string;
@@ -34,18 +39,6 @@ export interface RuntimeReactionRegistry {
   disposeScope(scopeId: string): void;
   disposeScopeTree(scopeId: string): void;
   getDebugSnapshot(): ReactionRegistryDebugSnapshot;
-}
-
-const MAX_REACTION_FIRE_COUNT = 10;
-
-function createReactionLimitError(input: { id: string; scope: ScopeRef; fireCount: number }) {
-  return new Error(
-    `Reaction "${input.id}" in scope "${input.scope.id}" exceeded MAX_REACTION_FIRE_COUNT (${MAX_REACTION_FIRE_COUNT}) and was disposed`
-  );
-}
-
-function normalizeActionArray(actions: unknown): ActionSchema | ActionSchema[] {
-  return actions as ActionSchema | ActionSchema[];
 }
 
 export function registerReaction(input: {
@@ -77,7 +70,7 @@ export function registerReaction(input: {
   const actionsSource = compiled.action;
 
   const dynamicWatch = compiledWatch.isStatic ? undefined : compiledWatch as DynamicRuntimeValue<unknown>;
-  const watchState: RuntimeValueState<unknown> | undefined = dynamicWatch?.createState();
+  const watchState = dynamicWatch?.createState();
   const explicitDependencies = createRootDependencySet(dependsOnSource);
 
   let disposed = false;
@@ -92,15 +85,6 @@ export function registerReaction(input: {
   let pendingChangedPaths = new Set<string>();
   let pendingRun: AsyncRunHandle | undefined;
 
-  function createRunHandle(force: boolean): AsyncRunHandle | undefined {
-    return input.asyncGovernance?.beginRun({
-      ownerKind: 'reaction',
-      ownerId: `reaction:${input.scope.id}:${input.id}`,
-      scopeId: input.scope.id,
-      cause: force ? 'immediate' : 'dependency-change'
-    });
-  }
-
   function emitDebug() {
     input.onDebugUpdate?.({
       disposed,
@@ -108,23 +92,25 @@ export function registerReaction(input: {
       running,
       fireCount,
       dependencies: dependencies?.paths,
-      async: input.asyncGovernance?.getOwnerState(`reaction:${input.scope.id}:${input.id}`)
+      async: input.asyncGovernance?.getOwnerState(createReactionOwnerId(input.scope.id, input.id))
     });
   }
 
   function evaluateWatchValue() {
-    const value = dynamicWatch
-      ? input.runtime.expressionCompiler.evaluateWithState(dynamicWatch, input.scope, input.runtime.env, watchState!).value
-      : (compiledWatch as CompiledRuntimeValue<unknown> & { value: unknown }).value;
-
-    if (!explicitDependencies) {
-      dependencies = collectRuntimeDependencies(watchState);
-    }
-
-    return value;
+    const result = evaluateReactionWatchValue({
+      dynamicWatch,
+      compiledWatch: compiledWatch as CompiledRuntimeValue<unknown> & { value?: unknown },
+      runtime: input.runtime,
+      scope: input.scope,
+      watchState,
+      explicitDependencies,
+      dependencies
+    });
+    dependencies = result.dependencies;
+    return result.value;
   }
 
-  async function runReaction(changePaths: readonly string[], force = false, run: AsyncRunHandle | undefined = createRunHandle(force)) {
+  async function runReaction(changePaths: readonly string[], force = false, run: AsyncRunHandle | undefined = createRunHandle({ asyncGovernance: input.asyncGovernance, scope: input.scope, id: input.id, force })) {
 
     try {
       if (disposed) {
@@ -198,25 +184,7 @@ export function registerReaction(input: {
       }
 
       if (fireCount >= MAX_REACTION_FIRE_COUNT) {
-        const error = createReactionLimitError({
-          id: input.id,
-          scope: input.scope,
-          fireCount
-        });
-        reportRuntimeHostIssue({
-          env: input.runtime.env,
-          level: 'warning',
-          message: error.message,
-          error,
-          phase: 'action',
-          details: {
-            reason: 'reaction-fire-count-limit',
-            reactionId: input.id,
-            scopeId: input.scope.id,
-            fireCount,
-            maxFireCount: MAX_REACTION_FIRE_COUNT
-          }
-        });
+        const error = reportReactionFireLimit({ runtime: input.runtime, id: input.id, scope: input.scope, fireCount });
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
         }
@@ -279,7 +247,7 @@ export function registerReaction(input: {
       pendingForce = pendingForce || force;
       if (!disposed) {
         triggerQueued = true;
-        pendingRun ??= createRunHandle(force);
+        pendingRun ??= createRunHandle({ asyncGovernance: input.asyncGovernance, scope: input.scope, id: input.id, force });
         emitDebug();
       }
       return;
@@ -365,9 +333,6 @@ export function registerReaction(input: {
 }
 
 export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
-  type OwnedReactionRegistration = ReactionRegistration & {
-    getDebugEntry(): ReactionRegistryDebugSnapshot['reactions'][number];
-  };
   const scopeEntries = new Map<string, Map<string, OwnedReactionRegistration>>();
 
   function register(input: {

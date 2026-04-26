@@ -1,10 +1,10 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index';
-import { buttonRenderer, env } from './form-test-support';
+import { buttonRenderer, env, formStateProbeRenderer, formStateProbeRenderCounts } from './form-test-support';
 
 describe('form render performance optimization', () => {
   it('changing one field does not trigger NodeRenderer re-renders for other fields', async () => {
@@ -72,5 +72,64 @@ describe('form render performance optimization', () => {
 
     expect(onRenderStart).not.toHaveBeenCalled();
     expect(onRenderEnd).not.toHaveBeenCalled();
+  });
+
+  it('does not rerender a field-value probe for unrelated field updates', async () => {
+    cleanup();
+    formStateProbeRenderCounts.username = 0;
+    formStateProbeRenderCounts.email = 0;
+    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/render-performance-probe"
+        schema={{
+          type: 'form',
+          data: {
+            username: 'initial',
+            email: 'test@example.com'
+          },
+          body: [
+            {
+              type: 'input-text',
+              name: 'username',
+              label: 'Username'
+            },
+            {
+              type: 'input-email',
+              name: 'email',
+              label: 'Email'
+            },
+            {
+              type: 'form-state-probe',
+              name: 'username'
+            },
+            {
+              type: 'form-state-probe',
+              name: 'email'
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('form-state:username').textContent).toBe('"initial"');
+      expect(screen.getByTestId('form-state:email').textContent).toBe('"test@example.com"');
+    });
+
+    const usernameRenderCountBefore = formStateProbeRenderCounts.username;
+    const emailRenderCountBefore = formStateProbeRenderCounts.email;
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'next@example.com' } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('form-state:email').textContent).toBe('"next@example.com"');
+    });
+
+    expect(formStateProbeRenderCounts.username).toBe(usernameRenderCountBefore);
+    expect(formStateProbeRenderCounts.email).toBeGreaterThan(emailRenderCountBefore);
   });
 });

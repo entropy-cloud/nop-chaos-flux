@@ -76,7 +76,8 @@ export function useBoundFieldValue(name: string, currentForm: FormRuntime | unde
   const eq = areValuesEqual ?? Object.is;
   const formValue = useCurrentFormState(
     currentForm ? (state) => (name ? getIn(state.values, name) : state.values) : () => UNUSED_VALUE,
-    eq
+    eq,
+    { enabled: Boolean(currentForm), path: name || undefined }
   );
   const scopeValue = useScopeSelector(
     (scopeData) => (name ? getIn(scopeData, name) : scopeData),

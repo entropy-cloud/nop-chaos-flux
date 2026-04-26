@@ -39,85 +39,13 @@ import {
 import { getIn } from '@nop-chaos/flux-core';
 import { createHelpers } from './helpers';
 import { EMPTY_FORM_FIELD_STATE, EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
-
-function shallowEqualFormFieldState(
-  a: FormFieldStateSnapshot,
-  b: FormFieldStateSnapshot
-): boolean {
-  return (
-    a.error === b.error &&
-    a.validating === b.validating &&
-    a.touched === b.touched &&
-    a.dirty === b.dirty &&
-    a.visited === b.visited &&
-    a.submitting === b.submitting &&
-    a.submitAttempted === b.submitAttempted
-  );
-}
-
-function shallowEqualArrays<T>(a: T[], b: T[]): boolean {
-  if (a === b) return true;
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
-function emptyUnsubscribe() {
-  return undefined;
-}
-
-function createFormErrorSubscribe(store: FormStoreApi | undefined, path: string | undefined) {
-  return (listener: () => void) => {
-    if (!store) {
-      return emptyUnsubscribe;
-    }
-
-    if (path && typeof store.subscribeToPath === 'function') {
-      const unsubPath = store.subscribeToPath(path, listener);
-      const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
-        ? store.subscribeToSubmitting(listener)
-        : () => undefined;
-      return () => {
-        unsubPath();
-        unsubSubmitting();
-      };
-    }
-
-    const unsubStore = store.subscribe(listener);
-    const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
-      ? store.subscribeToSubmitting(listener)
-      : () => undefined;
-    return () => {
-      unsubStore();
-      unsubSubmitting();
-    };
-  };
-}
-
-function createScopeOwnSubscribe(scope: ScopeRef) {
-  return (listener: () => void) => {
-    const subscribe = scope.store?.subscribe;
-
-    if (!subscribe) {
-      return emptyUnsubscribe;
-    }
-
-    let previousSnapshot = scope.readOwn();
-
-    return subscribe(() => {
-      const nextSnapshot = scope.readOwn();
-
-      if (nextSnapshot === previousSnapshot) {
-        return;
-      }
-
-      previousSnapshot = nextSnapshot;
-      listener();
-    });
-  };
-}
+import {
+  createFormErrorSubscribe,
+  createScopeOwnSubscribe,
+  emptyUnsubscribe,
+  shallowEqualArrays,
+  shallowEqualFormFieldState
+} from './hook-subscriptions';
 
 export function useRendererRuntime(): RendererRuntime {
   return useRequiredContext(RuntimeContext, 'RendererRuntime');
@@ -225,17 +153,29 @@ function useCurrentValidationStore(): ValidationStoreApi | undefined {
 export function useCurrentFormState<T>(
   selector: (state: FormStoreState) => T,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean; path?: string }
 ): T {
   const form = useCurrentForm();
   const enabled = options?.enabled !== false;
-  const subscribe = useMemo(
-    () => (enabled ? form?.store.subscribe ?? (() => () => undefined) : () => () => undefined),
-    [enabled, form]
+  const path = options?.path;
+  const store = form?.store;
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      if (!enabled || !store) {
+        return emptyUnsubscribe;
+      }
+
+      if (path && typeof store.subscribeToPath === 'function') {
+        return store.subscribeToPath(path, listener);
+      }
+
+      return store.subscribe(listener);
+    },
+    [enabled, store, path]
   );
-  const getSnapshot = useMemo(
-    () => (enabled ? () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE),
-    [enabled, form]
+  const getSnapshot = useCallback(
+    () => (enabled && store ? store.getState() : EMPTY_FORM_STORE_STATE),
+    [enabled, store]
   );
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);

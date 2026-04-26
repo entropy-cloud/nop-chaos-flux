@@ -55,6 +55,114 @@ describe('createRendererRuntime', () => {
     expect(surfaceRuntime.store.getState().entries).toHaveLength(0);
   });
 
+  it('closes surfaces through closeSurface actions', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: 'Runtime dialog',
+          body: [{ type: 'text', text: 'Body' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime
+      }
+    );
+
+    const entry = surfaceRuntime.store.getState().entries[0];
+    const closeResult = await runtime.dispatch(
+      {
+        action: 'closeSurface'
+      },
+      {
+        runtime,
+        scope: entry.scope,
+        page,
+        surfaceRuntime,
+        dialogId: entry.id
+      }
+    );
+
+    expect(closeResult.ok).toBe(true);
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(0);
+  });
+
+  it('closes explicit surface ids through closeSurface actions', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: 'First',
+          body: [{ type: 'text', text: 'First body' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime
+      }
+    );
+
+    await runtime.dispatch(
+      {
+        action: 'openDrawer',
+        args: {
+          title: 'Second',
+          body: [{ type: 'text', text: 'Second body' }]
+        }
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime
+      }
+    );
+
+    const entries = surfaceRuntime.store.getState().entries;
+    const firstId = entries[0].id;
+    const secondId = entries[1].id;
+    const closeResult = await runtime.dispatch(
+      {
+        action: 'closeSurface',
+        surfaceId: firstId
+      },
+      {
+        runtime,
+        scope: entries[1].scope,
+        page,
+        surfaceRuntime,
+        dialogId: entries[1].id
+      }
+    );
+
+    expect(closeResult.ok).toBe(true);
+    expect(surfaceRuntime.store.getState().entries).toHaveLength(1);
+    expect(surfaceRuntime.store.getState().entries[0].id).toBe(secondId);
+  });
+
   it('stores schema-based dialog title and body as raw schema when opening dialogs', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({

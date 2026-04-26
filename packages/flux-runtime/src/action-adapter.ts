@@ -164,11 +164,19 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           return { ok: true, data: { dialogId } };
         }
 
-        case 'closeDialog': {
-          const dialogId = typeof invocation.args?.dialogId === 'string' ? invocation.args.dialogId : undefined;
+        case 'closeDialog':
+        case 'closeDrawer':
+        case 'closeSurface': {
+          const surfaceId = typeof invocation.args?.surfaceId === 'string'
+            ? invocation.args.surfaceId
+            : typeof invocation.args?.dialogId === 'string'
+              ? invocation.args.dialogId
+              : typeof invocation.args?.drawerId === 'string'
+                ? invocation.args.drawerId
+                : undefined;
           if (ctx.surfaceRuntime) {
-            if (dialogId) {
-              ctx.surfaceRuntime.close(dialogId);
+            if (surfaceId) {
+              ctx.surfaceRuntime.close(surfaceId);
             } else {
               ctx.surfaceRuntime.close(ctx.dialogId);
             }
@@ -206,21 +214,6 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           return { ok: true, data: { drawerId } };
         }
 
-        case 'closeDrawer': {
-          const drawerId = typeof invocation.args?.drawerId === 'string'
-            ? invocation.args.drawerId
-            : typeof invocation.args?.dialogId === 'string'
-              ? invocation.args.dialogId
-              : undefined;
-          if (ctx.surfaceRuntime) {
-            if (drawerId) {
-              ctx.surfaceRuntime.close(drawerId);
-            } else {
-              ctx.surfaceRuntime.close(ctx.dialogId);
-            }
-          }
-          return { ok: true };
-        }
 
         case 'showToast': {
           const level = typeof invocation.args?.level === 'string' && ['info', 'success', 'warning', 'error'].includes(invocation.args.level)

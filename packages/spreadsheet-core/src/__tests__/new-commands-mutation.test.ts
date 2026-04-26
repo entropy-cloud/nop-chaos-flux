@@ -72,6 +72,24 @@ describe('clipboard operations', () => {
     expect(core.getClipboard()).toBeNull();
   });
 
+  it('should preserve pasted overlap when cutting and pasting within the same sheet', async () => {
+    await core.dispatch({
+      type: 'spreadsheet:cutCells',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 1 },
+    });
+
+    await core.dispatch({
+      type: 'spreadsheet:pasteCells',
+      target: { sheetId, address: 'B1', row: 0, col: 1 },
+    });
+
+    const snap = core.getSnapshot();
+    expect(snap.document.workbook.sheets[0].cells?.['A1']).toBeUndefined();
+    expect(snap.document.workbook.sheets[0].cells?.['B1']?.value).toBe('A');
+    expect(snap.document.workbook.sheets[0].cells?.['C1']?.value).toBe('B');
+    expect(core.getClipboard()).toBeNull();
+  });
+
   it('should fail paste when clipboard is empty', async () => {
     const result = await core.dispatch({
       type: 'spreadsheet:pasteCells',

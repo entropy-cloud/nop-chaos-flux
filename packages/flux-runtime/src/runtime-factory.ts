@@ -3,11 +3,8 @@ import type {
   ActionScope,
   ActionResult,
   ActionSchema,
-  CompiledFormValidationModel,
   ComponentHandleRegistry,
   ExpressionCompiler,
-  FormLifecycleHandlers,
-  FormRuntime,
   PageRuntime,
   PageStoreApi,
   RendererEnv,
@@ -21,7 +18,6 @@ import type {
   ModuleCache,
   ImportedLibraryModule,
   PreparedImportSpec,
-  ValidationScopeRuntime,
   XuiImportSpec
 } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
@@ -34,23 +30,19 @@ import { createApiCacheStore } from './async-data/api-cache';
 import { createAsyncGovernanceStore } from './async-data/async-governance';
 import { createComponentHandleRegistry } from './component-handle-registry';
 import { createDataSourceController, createSourceExecutor } from './async-data/data-source-runtime';
-import { createManagedFormRuntime } from './form-runtime';
-import { createFormStore } from './form-store';
 import { createImportManager } from './imports';
 import { createImportStack } from './import-stack';
+import { createHostProjectionScope } from './runtime-host-projection-scope';
 import { createNodeRuntime } from './node-runtime';
 import { createRuntimeNodeResolver } from './node-resolver';
-import { createManagedPageRuntime } from './page-runtime';
 import { createRuntimeReactionRegistry } from './async-data/reaction-runtime';
 import { createApiRequestExecutor } from './async-data/request-runtime';
-import { executeRuntimeValidationRule } from './runtime-action-helpers';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers';
+import { createRuntimeOwnedFactories } from './runtime-owned-factories';
 import { sortRendererPlugins } from './runtime-plugins';
 import { createScopeRef, createScopeStore, toRecord } from './scope';
 import { createRuntimeSourceRegistry } from './async-data/source-registry';
-import { createManagedSurfaceRuntime } from './surface-runtime';
 import { createBuiltInValidationRegistry } from './validation';
-import { validateRule } from './validation-runtime';
 
 export function createModuleCache(): ModuleCache {
   const resolved = new Map<string, ImportedLibraryModule>();
@@ -178,169 +170,24 @@ export function createRendererRuntime(input: {
   const { evaluate, compileValue, evaluateCompiled } = createRuntimeEvalHelpers(expressionCompiler, getEnv);
 
   const actionDispatcherRef: { current?: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
-
-  function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
-    const externalPageStore = input.pageStore;
-    const initialData = externalPageStore?.getState().data ?? data;
-    const pageValidation = createValidationScopeRuntime({
-      id: 'page-root-validation',
-      scopePath: '$page',
-      initialValues: initialData
-    });
-    const validationStore = pageValidation.store as import('@nop-chaos/flux-core').FormStoreApi;
-    let refreshTick = 0;
-    const refreshListeners = new Set<() => void>();
-    const pageStore: PageStoreApi = {
-      getState() {
-        return {
-          data: validationStore.getState().values,
-          refreshTick
-        };
-      },
-      subscribe(listener) {
-        const unsubscribeValidation = validationStore.subscribe(listener);
-        refreshListeners.add(listener);
-        return () => {
-          unsubscribeValidation();
-          refreshListeners.delete(listener);
-        };
-      },
-      setData(nextData) {
-        validationStore.setValues(nextData);
-      },
-      updateData(path, value) {
-        validationStore.setValue(path, value);
-      },
-      refresh() {
-        refreshTick += 1;
-        for (const listener of refreshListeners) {
-          listener();
-        }
-      }
-    };
-
-    let syncingFromValidation = false;
-    let syncingFromExternalPageStore = false;
-
-    if (externalPageStore) {
-      const externalData = externalPageStore.getState().data;
-      if (externalData !== validationStore.getState().values) {
-        validationStore.setValues(externalData);
+  const runtimeOwnedFactories = createRuntimeOwnedFactories({
+    pageStore: input.pageStore,
+    ownedPages,
+    ownedSurfaceRuntimes,
+    createValidationScopeRuntime: (inputValue) => runtimeOwnedFactories.createValidationScopeRuntime(inputValue),
+    dispatchAction: (action, ctx) => {
+      if (!actionDispatcherRef.current) {
+        throw new Error('Action dispatcher not initialized');
       }
 
-      const syncExternalPageStoreToValidation = () => {
-        if (syncingFromValidation) {
-          return;
-        }
-
-        const pageData = externalPageStore.getState().data;
-        if (pageData === validationStore.getState().values) {
-          return;
-        }
-
-        syncingFromExternalPageStore = true;
-        try {
-          validationStore.setValues(pageData);
-        } finally {
-          syncingFromExternalPageStore = false;
-        }
-      };
-
-      const syncValidationToExternalPageStore = () => {
-        if (syncingFromExternalPageStore) {
-          return;
-        }
-
-        const validationData = validationStore.getState().values;
-        if (validationData === externalPageStore.getState().data) {
-          return;
-        }
-
-        syncingFromValidation = true;
-        try {
-          externalPageStore.setData(validationData);
-        } finally {
-          syncingFromValidation = false;
-        }
-      };
-
-      externalPageStore.subscribe(syncExternalPageStoreToValidation);
-      validationStore.subscribe(syncValidationToExternalPageStore);
+      return actionDispatcherRef.current(action, ctx);
+    },
+    validationRegistry,
+    disposeScopeTree: (scopeId) => {
+      sourceRegistryRef.current?.disposeScopeTree(scopeId);
+      reactionRegistryRef.current?.disposeScopeTree(scopeId);
     }
-
-    const page = createManagedPageRuntime({
-      data: initialData,
-      pageStore: pageStore,
-      validationOwner: pageValidation,
-      scope: pageValidation.scope
-    });
-
-    ownedPages.add(page);
-    return page;
-  }
-
-  function createValidationScopeRuntime(inputValue: {
-    id?: string;
-    parentScope?: ScopeRef;
-    scopePath?: string;
-    validation?: CompiledFormValidationModel;
-    initialValues?: Record<string, any>;
-  }): ValidationScopeRuntime {
-    const store = createFormStore(inputValue.initialValues ?? {});
-
-    return createManagedFormRuntime({
-      id: inputValue.id,
-      parentScope: inputValue.parentScope,
-      validation: inputValue.validation,
-      initialValues: inputValue.initialValues,
-      existingStore: store,
-      scopePath: inputValue.scopePath,
-      scopeBinding: 'none',
-      executeValidationRule: (compiledRule, rule, field, validationScope, signal) =>
-        executeRuntimeValidationRule(compiledRule, rule, field, validationScope, signal, {
-          dispatch: (action, ctx) => {
-            if (!actionDispatcherRef.current) throw new Error('Action dispatcher not initialized');
-            return actionDispatcherRef.current(action, ctx);
-          }
-        }),
-      validateRule: (compiledRule, value, field, validationScope) =>
-        validateRule(compiledRule, value, field, validationScope, validationRegistry)
-    });
-  }
-
-  function createSurfaceRuntime(inputValue: { disposeScope?: (scopeId: string) => void } = {}): SurfaceRuntime {
-    const surfaceRuntime = createManagedSurfaceRuntime({
-      disposeScope: inputValue.disposeScope ?? ((scopeId) => {
-        sourceRegistryRef.current?.disposeScopeTree(scopeId);
-        reactionRegistryRef.current?.disposeScopeTree(scopeId);
-      })
-    });
-
-    ownedSurfaceRuntimes.add(surfaceRuntime);
-    return surfaceRuntime;
-  }
-
-  function createFormRuntime(inputValue: {
-    id?: string;
-    name?: string;
-    initialValues?: Record<string, any>;
-    parentScope: ScopeRef;
-    page?: PageRuntime;
-    validation?: CompiledFormValidationModel;
-    lifecycle?: FormLifecycleHandlers;
-  }): FormRuntime {
-    return createManagedFormRuntime({
-      ...inputValue,
-      executeValidationRule: (compiledRule, rule, field, scope, signal) =>
-        executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, {
-          dispatch: (action, ctx) => {
-            if (!actionDispatcherRef.current) throw new Error('Action dispatcher not initialized');
-            return actionDispatcherRef.current(action, ctx);
-          }
-        }),
-      validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, validationRegistry)
-    });
-  }
+  });
 
   const executeSourceRef: { current?: (source: SourceSchema, scope: ScopeRef, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
 
@@ -453,58 +300,13 @@ export function createRendererRuntime(input: {
       path: string;
       scopeLabel: string;
     }) {
-      let reservedKeys = new Set(Object.keys(projection));
-      const hostScope = runtime.createChildScope(parentScope, projection, {
-        scopeKey: `${path}:${scopeLabel}-host`,
-        pathSuffix: scopeLabel
+      return createHostProjectionScope({
+        parentScope,
+        projection,
+        path,
+        scopeLabel,
+        createChildScope: runtime.createChildScope
       });
-
-      return {
-        id: hostScope.id,
-        path: hostScope.path,
-        parent: hostScope.parent,
-        store: hostScope.store,
-        get value() {
-          return this.readVisible();
-        },
-        get(targetPath: string) {
-          return hostScope.get(targetPath);
-        },
-        has(targetPath: string) {
-          return hostScope.has(targetPath);
-        },
-        readOwn() {
-          return hostScope.readOwn();
-        },
-        readVisible() {
-          return hostScope.readVisible();
-        },
-        materializeVisible() {
-          return hostScope.materializeVisible();
-        },
-        update(targetPath: string, value: unknown) {
-          const rootKey = targetPath.split('.')[0];
-
-          if (reservedKeys.has(rootKey)) {
-            throw new Error(`Cannot write projected host field: ${targetPath}`);
-          }
-
-          hostScope.update(targetPath, value);
-        },
-        merge(data: Record<string, unknown>) {
-          const nextKeys = Object.keys(data);
-
-          if (nextKeys.some((key) => reservedKeys.has(key))) {
-            throw new Error(`Cannot merge projected host fields into host scope: ${nextKeys.join(', ')}`);
-          }
-
-          hostScope.merge(data);
-        },
-        replace(data: Record<string, unknown>) {
-          reservedKeys = new Set(Object.keys(data));
-          hostScope.replace?.(data);
-        }
-      };
     },
     createActionScope: createOwnedActionScope,
     createComponentHandleRegistry: createOwnedComponentRegistry,
@@ -538,9 +340,9 @@ export function createRendererRuntime(input: {
 
       return executeSourceRef.current(inputValue.source, inputValue.scope, inputValue.ctx);
     },
-    createPageRuntime,
-    createValidationScopeRuntime,
-    createSurfaceRuntime,
+    createPageRuntime: runtimeOwnedFactories.createPageRuntime,
+    createValidationScopeRuntime: runtimeOwnedFactories.createValidationScopeRuntime,
+    createSurfaceRuntime: runtimeOwnedFactories.createSurfaceRuntime,
     createDataSourceController(inputValue) {
       return createDataSourceController({
         runtime,
@@ -634,7 +436,7 @@ export function createRendererRuntime(input: {
       ownedActionScopes.clear();
       executeApiRequest.dispose?.();
     },
-    createFormRuntime
+    createFormRuntime: runtimeOwnedFactories.createFormRuntime
   };
 
   const adapter = createActionRuntimeAdapter({

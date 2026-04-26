@@ -191,9 +191,9 @@ describe('CRUD renderer', () => {
               onRefresh: {
                 action: 'probe:recordRefresh',
                 args: {
-                  query: '${query}',
-                  params: '${params}',
-                  refreshCount: '${refreshCount}',
+                  query: '${$crud.query}',
+                  pageNo: '${$crud.pagination.currentPage}',
+                  limit: '${$crud.pagination.pageSize}',
                 },
               },
               footerToolbar: [{ type: 'text', text: 'Active query: ${$crud.query.keyword || "none"}' }],
@@ -212,7 +212,11 @@ describe('CRUD renderer', () => {
             kind: 'host',
             invoke(method: string, payload: Record<string, unknown> | undefined, _ctx: ActionContext) {
               if (method === 'recordRefresh') {
-                observedRefreshPayloads.push(payload ?? {});
+                const query = (payload?.query ?? {}) as Record<string, unknown>;
+                const pageNo = payload?.pageNo;
+                const limit = payload?.limit;
+                const params: Record<string, unknown> = { ...query, pageNo, limit };
+                observedRefreshPayloads.push({ query, params });
                 return { ok: true, data: payload };
               }
 
@@ -239,7 +243,6 @@ describe('CRUD renderer', () => {
       expect(observedRefreshPayloads[0]).toEqual({
         query: { keyword: 'Ali' },
         params: { keyword: 'Ali', pageNo: 1, limit: 10 },
-        refreshCount: 2,
       });
     });
 
@@ -254,7 +257,6 @@ describe('CRUD renderer', () => {
       expect(observedRefreshPayloads[1]).toEqual({
         query: {},
         params: { pageNo: 1, limit: 10 },
-        refreshCount: 4,
       });
     });
   });

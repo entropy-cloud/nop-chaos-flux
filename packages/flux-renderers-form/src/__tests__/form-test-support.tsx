@@ -36,6 +36,7 @@ export async function selectOption(labelText: string, optionText: string) {
 
 export const submitCalls: Array<Record<string, any>> = [];
 export const notifyCalls: Array<{ level: string; message: string }> = [];
+export const formStateProbeRenderCounts: Record<string, number> = {};
 export const sharedFormulaCompiler = createFormulaCompiler();
 
 export const env: RendererEnv = {
@@ -125,7 +126,15 @@ export const contactGroupRenderer: RendererDefinition = {
 
 function FormStateProbeRenderer(props: RendererComponentProps) {
   const path = String(props.props.name ?? props.schema.name ?? '');
-  const value = useCurrentFormState((state) => (path ? getIn(state.values, path) : state.values));
+  const value = useCurrentFormState(
+    (state) => (path ? getIn(state.values, path) : state.values),
+    Object.is,
+    { path: path || undefined }
+  );
+
+  React.useEffect(() => {
+    formStateProbeRenderCounts[path] = (formStateProbeRenderCounts[path] ?? 0) + 1;
+  });
 
   return <pre data-testid={`form-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
 }

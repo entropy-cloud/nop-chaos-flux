@@ -194,4 +194,34 @@ describe('detail-field renderer basic behavior', () => {
 
     await waitFor(() => expect(screen.queryByText('Edit Address')).toBeNull());
   });
+
+  it('reads nested path values from scope fallback when no parent form exists', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-basic.test.tsx#6"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'detail-field',
+              name: 'user.profile.title',
+              label: 'Profile Title',
+              triggerLabel: 'Edit Profile Title',
+              content: [{ type: 'input-text', name: '__value', label: 'Title' }],
+            },
+          ],
+        }}
+        data={{ user: { profile: { title: 'Architect' } } }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Architect')).toBeTruthy();
+    });
+  });
 });

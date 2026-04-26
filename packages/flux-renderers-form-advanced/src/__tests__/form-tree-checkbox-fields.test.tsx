@@ -450,7 +450,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
       expect(screen.getByText('Compiler')).toBeTruthy();
     });
 
-    const collapseBtn = screen.getByLabelText('Collapse node');
+    const collapseBtn = screen.getAllByLabelText('Collapse node')[0];
     fireEvent.click(collapseBtn);
 
     await waitFor(() => {
@@ -459,7 +459,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
     });
     expect(screen.getByText('Platform')).toBeTruthy();
 
-    const expandBtn = screen.getByLabelText('Expand node');
+    const expandBtn = screen.getAllByLabelText('Expand node')[0];
     fireEvent.click(expandBtn);
 
     await waitFor(() => {
@@ -508,7 +508,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
       expect(screen.getByText('Backend')).toBeTruthy();
     });
 
-    const collapseBtn = screen.getByLabelText('Collapse node');
+    const collapseBtn = screen.getAllByLabelText('Collapse node')[0];
     fireEvent.click(collapseBtn);
 
     await waitFor(() => {
@@ -517,7 +517,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
     });
     expect(screen.getByText('Engineering')).toBeTruthy();
 
-    const expandBtn = screen.getByLabelText('Expand node');
+    const expandBtn = screen.getAllByLabelText('Expand node')[0];
     fireEvent.click(expandBtn);
 
     await waitFor(() => {
@@ -613,14 +613,14 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
       expect(screen.getByText('Frontend')).toBeTruthy();
     });
 
-    const collapseBtn = screen.getByLabelText('Collapse node');
+    const collapseBtn = screen.getAllByLabelText('Collapse node')[0];
     fireEvent.click(collapseBtn);
 
     await waitFor(() => {
       expect(screen.queryByText('Frontend')).toBeNull();
     });
 
-    const expandBtn = screen.getByLabelText('Expand node');
+    const expandBtn = screen.getAllByLabelText('Expand node')[0];
     fireEvent.click(expandBtn);
 
     await waitFor(() => {

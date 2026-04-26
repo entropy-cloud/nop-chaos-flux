@@ -225,6 +225,71 @@ describe('createRendererRuntime', () => {
     registration.dispose();
   });
 
+  it('reports publish failures after a successful api response instead of swallowing them', async () => {
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>() => ({
+      ok: true,
+      status: 200,
+      data: { value: 'loaded' } as T
+    });
+    const fetcher = vi.fn(fetcherImpl);
+    const notify = vi.fn();
+    const onError = vi.fn();
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        notify,
+        monitor: { onError },
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+    const page = runtime.createPageRuntime({});
+    const originalUpdate = page.scope.update.bind(page.scope);
+    const updateSpy = vi.spyOn(page.scope, 'update').mockImplementation((path, value) => {
+      if (path === 'payload') {
+        throw new Error('publish exploded');
+      }
+
+      return originalUpdate(path, value);
+    });
+
+    const registration = runtime.registerDataSource({
+      id: 'publish-failing-api-source',
+      scope: page.scope,
+      compiledSource: compileDataSource('publish-failing-api-source', {
+        type: 'data-source',
+        action: 'ajax', args: { url: '/api/publish-fail' },
+        name: 'payload'
+      }, expressionCompiler)
+    });
+
+    await vi.waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('error', 'publish exploded');
+    });
+
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
+      phase: 'api',
+      error: expect.objectContaining({ message: 'publish exploded' })
+    }));
+    expect(registration.controller.getState()).toMatchObject({
+      started: true,
+      status: 'error',
+      fetchStatus: 'idle',
+      stale: false,
+      hasData: false,
+      hasError: true,
+      isInitialLoading: false,
+      isRefreshing: false,
+      inFlightCount: 0,
+      failureCount: 1
+    });
+    expect(registration.controller.getState().error).toBeInstanceOf(Error);
+
+    updateSpy.mockRestore();
+    registration.dispose();
+  });
+
   it('registers formula data sources and refreshes derived values through runtime ownership', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),

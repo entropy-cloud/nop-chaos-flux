@@ -30,6 +30,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   const bridge = useMemo(() => new CanvasEditorBridge(), [])
   const editorStore = useMemo(() => createEditorStore(), [])
   const datasetStore = useMemo(() => createDatasetStore(), [])
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets')
@@ -93,6 +94,27 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     })
   )
 
+  const datasets = useSyncExternalStoreWithSelector(
+    datasetStore.subscribe,
+    datasetStore.getState,
+    datasetStore.getState,
+    (state) => state.datasets,
+  )
+
+  const runtimeHostSummary = useMemo(() => ({
+    ready: runtimeSnapshot.ready,
+    dirty: runtimeSnapshot.dirty,
+    wordCount: runtimeSnapshot.wordCount,
+    canUndo: runtimeSnapshot.canUndo,
+    canRedo: runtimeSnapshot.canRedo,
+    currentPage: runtimeSnapshot.currentPage,
+    totalPages: runtimeSnapshot.totalPages,
+    scale: runtimeSnapshot.scale,
+    datasetCount: datasets.length,
+    chartCount: charts.length,
+    codeCount: codes.length,
+  }), [charts.length, codes.length, datasets.length, runtimeSnapshot])
+
   const hostScope = useHostScope({
     document: savedDocument?.data ?? {
       header: [],
@@ -101,8 +123,8 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       charts,
       codes,
     },
-    datasets: datasetStore.getAll(),
-    runtime: runtimeSnapshot,
+    datasets,
+    runtime: runtimeHostSummary,
     selection,
   }, props.path, 'word-editor')
 
@@ -141,7 +163,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     }
   }, [bridge, charts, codes, datasetStore, editorStore])
 
-  useWordEditorShortcuts({ bridge, onSave: handleSave })
+  useWordEditorShortcuts({ bridge, onSave: handleSave, scopeRef: rootRef })
 
   const handleBack = useCallback(() => {
     if (isDirty && !window.confirm(t('wordEditor.unsavedChangesLeave'))) return
@@ -222,15 +244,15 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       canUndo: runtimeSnapshot.canUndo,
       canRedo: runtimeSnapshot.canRedo,
       wordCount: runtimeSnapshot.wordCount,
-      datasetCount: runtimeSnapshot.datasetCount,
-      chartCount: runtimeSnapshot.chartCount,
-      codeCount: runtimeSnapshot.codeCount,
+      datasetCount: datasets.length,
+      chartCount: charts.length,
+      codeCount: codes.length,
     }
     publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary)
-  }, [props.node.scope, runtimeSnapshot, statusPath])
+  }, [charts.length, codes.length, datasets.length, props.node.scope, runtimeSnapshot, statusPath])
 
   const editingDataset = editingDatasetId
-    ? datasetStore.getState().datasets.find(ds => ds.id === editingDatasetId)
+    ? datasets.find(ds => ds.id === editingDatasetId)
     : null
 
   const headerSlot = (
@@ -331,7 +353,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     : <OutlinePanel bridge={bridge} />
 
   return (
-    <div className={cn('nop-word-editor-page h-screen overflow-hidden bg-[var(--nop-app-bg)]', props.meta.className)}>
+    <div ref={rootRef} className={cn('nop-word-editor-page h-screen overflow-hidden bg-[var(--nop-app-bg)]', props.meta.className)}>
       <WorkbenchShell
         style={{ padding: 0 }}
         header={headerSlot}

@@ -3,13 +3,16 @@ import type {
   ArrowFunctionExpressionNode,
   FormulaAstNode,
   IdentifierNode,
-  LiteralNode,
-  MemberExpressionNode,
   ObjectExpressionNode,
-  PropertyNode,
-  SourceLocation
+  PropertyNode
 } from './ast';
 import { tokenizeFormula, type FormulaToken } from './lexer';
+import {
+  createIdentifierNode,
+  createLiteralNode,
+  createMemberExpressionNode,
+  createSourceLocation
+} from './parser-node-factories';
 
 export interface FormulaSyntaxError extends Error {
   index: number;
@@ -63,10 +66,6 @@ class Parser {
     throw error;
   }
 
-  private loc(start: number, end: number): SourceLocation {
-    return { start, end };
-  }
-
   private parseArrowExpression(): FormulaAstNode {
     if (this.match('identifier') && this.lookahead().type === 'arrow') {
       const param = this.consume();
@@ -74,10 +73,10 @@ class Parser {
       const body = this.parseArrowExpression();
       return {
         type: 'ArrowFunctionExpression',
-        params: [this.identifierNode(param)],
-        body,
-        loc: this.loc(param.start, body.loc.end)
-      } satisfies ArrowFunctionExpressionNode;
+          params: [createIdentifierNode(param)],
+          body,
+          loc: createSourceLocation(param.start, body.loc.end)
+        } satisfies ArrowFunctionExpressionNode;
     }
 
     if (this.isArrowParameterList()) {
@@ -88,7 +87,7 @@ class Parser {
         type: 'ArrowFunctionExpression',
         params,
         body,
-        loc: this.loc(start, body.loc.end)
+        loc: createSourceLocation(start, body.loc.end)
       } satisfies ArrowFunctionExpressionNode;
     }
 
@@ -132,14 +131,14 @@ class Parser {
 
   private parseArrowParameters(): IdentifierNode[] {
     this.expect('punctuation', '(');
-    const params: IdentifierNode[] = [];
+    const params = [];
     if (!this.match('punctuation', ')')) {
       for (;;) {
         const token = this.expect('identifier');
         if (token.value.startsWith('$')) {
           this.throwSyntaxError('Lambda parameters cannot start with $');
         }
-        params.push(this.identifierNode(token));
+        params.push(createIdentifierNode(token));
         if (!this.match('punctuation', ',')) {
           break;
         }
@@ -166,7 +165,7 @@ class Parser {
       test,
       consequent,
       alternate,
-      loc: this.loc(test.loc.start, alternate.loc.end)
+      loc: createSourceLocation(test.loc.start, alternate.loc.end)
     };
   }
 
@@ -179,7 +178,7 @@ class Parser {
         type: 'NullCoalesceExpression',
         left,
         right,
-        loc: this.loc(left.loc.start, right.loc.end)
+        loc: createSourceLocation(left.loc.start, right.loc.end)
       };
     }
     return left;
@@ -237,7 +236,7 @@ class Parser {
       op: '**',
       left,
       right,
-      loc: this.loc(left.loc.start, right.loc.end)
+      loc: createSourceLocation(left.loc.start, right.loc.end)
     };
   }
 
@@ -249,7 +248,7 @@ class Parser {
         type: 'UnaryExpression',
         op: operator.value,
         argument,
-        loc: this.loc(operator.start, argument.loc.end)
+        loc: createSourceLocation(operator.start, argument.loc.end)
       };
     }
 
@@ -262,15 +261,14 @@ class Parser {
     while (true) {
       if (this.match('operator', '?.')) {
         const operator = this.consume();
-        const property = this.identifierNode(this.expect('identifier'));
-        expression = {
-          type: 'MemberExpression',
+        const property = createIdentifierNode(this.expect('identifier'));
+        expression = createMemberExpressionNode({
           object: expression,
           property,
           computed: false,
           optional: true,
-          loc: this.loc(expression.loc.start, property.loc.end)
-        } satisfies MemberExpressionNode;
+          end: property.loc.end
+        });
         if (this.match('punctuation', '(')) {
           this.throwSyntaxError('Optional call is not supported');
         }
@@ -280,31 +278,28 @@ class Parser {
 
       if (this.match('punctuation', '.')) {
         this.consume();
-        const property = this.identifierNode(this.expect('identifier'));
-        expression = {
-          type: 'MemberExpression',
+        const property = createIdentifierNode(this.expect('identifier'));
+        expression = createMemberExpressionNode({
           object: expression,
           property,
           computed: false,
           optional: false,
-          loc: this.loc(expression.loc.start, property.loc.end)
-        } satisfies MemberExpressionNode;
+          end: property.loc.end
+        });
         continue;
       }
 
       if (this.match('punctuation', '[')) {
-        const start = expression.loc.start;
         this.consume();
         const property = this.parseArrowExpression();
         const closing = this.expect('punctuation', ']');
-        expression = {
-          type: 'MemberExpression',
+        expression = createMemberExpressionNode({
           object: expression,
           property,
           computed: true,
           optional: false,
-          loc: this.loc(start, closing.end)
-        } satisfies MemberExpressionNode;
+          end: closing.end
+        });
         continue;
       }
 
@@ -314,7 +309,7 @@ class Parser {
           type: 'CallExpression',
           callee: expression,
           arguments: args,
-          loc: this.loc(expression.loc.start, this.tokens[this.index - 1].end)
+          loc: createSourceLocation(expression.loc.start, this.tokens[this.index - 1].end)
         };
         continue;
       }
@@ -346,32 +341,32 @@ class Parser {
 
     if (this.match('number')) {
       this.consume();
-      return this.literalNode(Number(token.value), token.value, token.start, token.end);
+      return createLiteralNode(Number(token.value), token.value, token.start, token.end);
     }
 
     if (this.match('string')) {
       this.consume();
-      return this.literalNode(JSON.parse(token.value), token.value, token.start, token.end);
+      return createLiteralNode(JSON.parse(token.value), token.value, token.start, token.end);
     }
 
     if (this.match('keyword', 'true') || this.match('keyword', 'false')) {
       this.consume();
-      return this.literalNode(token.value === 'true', token.value, token.start, token.end);
+      return createLiteralNode(token.value === 'true', token.value, token.start, token.end);
     }
 
     if (this.match('keyword', 'null')) {
       this.consume();
-      return this.literalNode(null, token.value, token.start, token.end);
+      return createLiteralNode(null, token.value, token.start, token.end);
     }
 
     if (this.match('keyword', 'undefined')) {
       this.consume();
-      return this.literalNode(undefined, token.value, token.start, token.end);
+      return createLiteralNode(undefined, token.value, token.start, token.end);
     }
 
     if (this.match('identifier')) {
       this.consume();
-      return this.identifierNode(token);
+      return createIdentifierNode(token);
     }
 
     if (this.match('punctuation', '(')) {
@@ -408,7 +403,7 @@ class Parser {
     return {
       type: 'ArrayExpression',
       elements,
-      loc: this.loc(start, end)
+      loc: createSourceLocation(start, end)
     };
   }
 
@@ -428,10 +423,10 @@ class Parser {
           this.expect('punctuation', ']');
           computed = true;
         } else if (this.match('identifier')) {
-          key = this.identifierNode(this.consume());
+            key = createIdentifierNode(this.consume());
         } else if (this.match('string')) {
           const token = this.consume();
-          key = this.literalNode(JSON.parse(token.value), token.value, token.start, token.end);
+          key = createLiteralNode(JSON.parse(token.value), token.value, token.start, token.end);
         } else {
           this.throwSyntaxError('Invalid object key');
         }
@@ -453,7 +448,7 @@ class Parser {
           value,
           computed,
           shorthand,
-          loc: this.loc(keyToken.start, value.loc.end)
+          loc: createSourceLocation(keyToken.start, value.loc.end)
         });
 
         if (!this.match('punctuation', ',')) {
@@ -467,7 +462,7 @@ class Parser {
     return {
       type: 'ObjectExpression',
       properties,
-      loc: this.loc(start, end)
+      loc: createSourceLocation(start, end)
     };
   }
 
@@ -481,27 +476,10 @@ class Parser {
         op: operator.value,
         left: expression,
         right,
-        loc: this.loc(expression.loc.start, right.loc.end)
-      } as FormulaAstNode;
+          loc: createSourceLocation(expression.loc.start, right.loc.end)
+        } as FormulaAstNode;
     }
     return expression;
-  }
-
-  private literalNode(value: unknown, raw: string, start: number, end: number): LiteralNode {
-    return {
-      type: 'Literal',
-      value,
-      raw,
-      loc: this.loc(start, end)
-    };
-  }
-
-  private identifierNode(token: FormulaToken): IdentifierNode {
-    return {
-      type: 'Identifier',
-      name: token.value,
-      loc: this.loc(token.start, token.end)
-    };
   }
 }
 

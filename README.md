@@ -99,23 +99,34 @@ The two projects can collaborate: Next can integrate Flux's designer and runtime
       "name": "email",
       "label": "Email",
       "required": true
-    },
+    }
+  ],
+  "submitAction": {
+    "action": "ajax",
+    "args": {
+      "method": "post",
+      "url": "/api/profile"
+    }
+  },
+  "actions": [
     {
       "type": "button",
       "label": "Submit",
       "onClick": {
         "action": "submitForm"
       }
-    }
+    },
   ]
 }
 ```
 
-Flux compiles that schema into executable values, instantiates a form runtime, resolves renderer props and metadata, validates the form, and dispatches the submit action through the capability layer.
+Flux compiles that schema into executable values, instantiates a form runtime, resolves renderer props and metadata, validates the form, and routes the trigger through the form's semantic submit lifecycle.
 
 - `Authoring`: schema authors describe fields, events, and API intent in JSON
 - `Compilation`: Flux classifies values, expressions, templates, and renderer metadata before hot-path rendering
 - `Runtime guarantees`: data scope, action scope, validation, and side effects keep distinct runtime boundaries
+
+For semantic-owner surfaces, Flux also keeps a small set of owner-aware built-in actions. For example, `submitForm` acts on the current form runtime, and `closeDialog` closes the nearest active dialog by default. Explicit instance targeting such as `component:submit` remains available when a trigger needs to address a specific component outside the local owner context.
 
 The same execution model scales from simple forms to tables, dialogs, and designer workbenches.
 
@@ -162,7 +173,7 @@ Flux keeps its core vocabulary deliberately small. These seven primitives are th
 
 | Primitive | Responsibility |
 |---|---|
-| `Template` | Schema structure and node lifecycle |
+| `Template` | Compiled program structure, region composition, and lifecycle anchoring |
 | `ScopeRef` | Lexical data environment |
 | `Value` | Literal, expression, template, array, and object execution model |
 | `Resource` | Runtime-owned value producer such as data loading |
@@ -202,6 +213,8 @@ flowchart LR
 |---|---|---|
 | Core contracts | `@nop-chaos/flux-core` | Primitive contracts, shared types, and pure utilities |
 | Formula layer | `@nop-chaos/flux-formula` | Expression and template compilation |
+| Compiler layer | `@nop-chaos/flux-compiler` | Schema compilation, normalization, and diagnostics |
+| Action core | `@nop-chaos/flux-action-core` | Action lowering, selector classification, and control-flow execution |
 | Runtime layer | `@nop-chaos/flux-runtime` | Scope, actions, validation, page and form runtime |
 | React bridge | `@nop-chaos/flux-react` | Hooks, render handles, and renderer integration |
 
@@ -214,7 +227,7 @@ flowchart LR
 | Shared UI and styling | `ui`, `tailwind-preset` | Visual baseline, primitives, and styling conventions |
 | Diagnostics and app surface | `nop-debugger`, `apps/playground` | Debugger tooling and integrated playground scenarios |
 
-The reusable execution backbone is `flux-core -> flux-formula -> flux-runtime -> flux-react`. Many larger feature areas then split into `*-core` packages for framework-independent logic and `*-renderers` packages for Flux/React integration.
+The reusable execution backbone is `flux-core -> flux-formula -> flux-compiler -> flux-action-core -> flux-runtime -> flux-react`. Many larger feature areas then split into `*-core` packages for framework-independent logic and `*-renderers` packages for Flux/React integration.
 
 For the current baseline of any subsystem, prefer `docs/index.md` and the relevant architecture doc.
 

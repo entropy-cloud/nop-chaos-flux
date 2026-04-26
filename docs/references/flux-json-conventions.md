@@ -57,7 +57,7 @@
 
 推荐规则：
 
-- 内置 action 使用 camelCase：`ajax`、`setValue`、`refreshSource`、`openDialog`、`showToast`
+- 内置 action 使用 camelCase：`ajax`、`setValue`、`refreshSource`、`openDialog`、`closeSurface`、`showToast`
 - 组件实例 action 使用 `component:<method>`：`component:submit`
 - 导入库/宿主 action 使用 `namespace:method`：`designer:addNode`、`dict:getCountryOptions`
 
@@ -90,7 +90,7 @@
 ```json
 {
   "onClick": {
-    "action": "closeDialog",
+    "action": "closeSurface",
     "then": { "action": "designer:save" }
   }
 }

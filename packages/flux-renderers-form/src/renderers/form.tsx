@@ -278,3 +278,5 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     </FormContext.Provider>
   );
 }
+
+export { formRendererDefinition } from './form-definition';

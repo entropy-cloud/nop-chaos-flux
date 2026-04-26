@@ -16,10 +16,15 @@ import {
   setIn,
   validationErrorsEqual
 } from '@nop-chaos/flux-core';
-import { computeRefreshErrorRetention } from './form-runtime-lifecycle';
+import {
+  clearExternalErrorsForPath,
+  rebuildStoreErrorsFromExternal,
+  storeOwnedExternalErrors
+} from './form-runtime-owner-external-errors';
+import { disposeOwnerState, refreshCompiledModelState } from './form-runtime-owner-lifecycle';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree';
-import { cancelAllValidationDebounces, cancelValidationDebounce, validatePath, validateSubtreeByNode } from './form-runtime-validation';
-import type { ExternalErrorEntry, ManagedFormRuntimeSharedState } from './form-runtime-types';
+import { cancelValidationDebounce, validatePath, validateSubtreeByNode } from './form-runtime-validation';
+import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 
 export function buildFormOwnerRuntime(input: {
   sharedState: ManagedFormRuntimeSharedState;
@@ -32,16 +37,6 @@ export function buildFormOwnerRuntime(input: {
 }) {
   let cachedFieldStatesRef: Record<string, FieldState> | undefined;
   let cachedScopeState: ScopeValidationStateSnapshot | undefined;
-
-  function clearValidationAsyncOwners() {
-    for (const path of input.sharedState.validationRuns.keys()) {
-      input.sharedState.validationAsyncGovernance.clearOwner(`validation:${input.sharedState.scope.id}:${path}`);
-    }
-
-    for (const path of input.sharedState.validationAbortControllers.keys()) {
-      input.sharedState.validationAsyncGovernance.clearOwner(`validation:${input.sharedState.scope.id}:${path}`);
-    }
-  }
 
   function computeScopeState(): ScopeValidationStateSnapshot {
     const state = input.sharedState.store.getState();
@@ -123,72 +118,15 @@ export function buildFormOwnerRuntime(input: {
     }
   }
 
-  function rebuildStoreErrorsFromExternal(
-    fieldStates: Record<string, FieldState>
-  ): Record<string, ValidationError[]> {
-    const next: Record<string, ValidationError[]> = {};
-
-    for (const [path, fs] of Object.entries(fieldStates)) {
-      const pathErrors = fs.errors;
-      if (pathErrors) {
-        const nonExternal = pathErrors.filter((error) => error.sourceKind !== 'external');
-        if (nonExternal.length > 0) {
-          next[path] = nonExternal;
-        }
-      }
-    }
-
-    for (const entry of input.sharedState.externalErrors.values()) {
-      for (const error of entry.errors) {
-        const externalError: ValidationError = { ...error, sourceKind: 'external' };
-        const existing = next[error.path];
-        next[error.path] = existing ? [...existing, externalError] : [externalError];
-      }
-    }
-
-    return next;
-  }
-
-  function clearExternalErrorsForPath(name: string): boolean {
-    let changed = false;
-
-    for (const [sourceId, entry] of input.sharedState.externalErrors) {
-      const filtered = entry.errors.filter(
-        (error: ValidationError) => {
-          if (error.path === name || error.path.startsWith(`${name}.`)) {
-            return false;
-          }
-
-          return !(name.startsWith(`${error.path}.`) || error.path === input.getThisForm().rootPath);
-        }
-      );
-
-      if (filtered.length !== entry.errors.length) {
-        changed = true;
-        if (filtered.length === 0) {
-          input.sharedState.externalErrors.delete(sourceId);
-        } else {
-          input.sharedState.externalErrors.set(sourceId, { sourceId, errors: filtered } satisfies ExternalErrorEntry);
-        }
-      }
-    }
-
-    return changed;
-  }
-
   function applyExternalErrors(inputValue: ApplyExternalErrorsInput): ScopeValidationStateSnapshot {
-    const { sourceId, errors, replace } = inputValue;
-    const ownedErrors = errors.filter((error) => input.getThisForm().isPathOwned(error.path));
-    const existing = input.sharedState.externalErrors.get(sourceId);
-
-    if (replace || !existing) {
-      input.sharedState.externalErrors.set(sourceId, { sourceId, errors: ownedErrors });
-    } else {
-      input.sharedState.externalErrors.set(sourceId, { sourceId, errors: [...existing.errors, ...ownedErrors] });
-    }
+    storeOwnedExternalErrors({
+      inputValue,
+      sharedState: input.sharedState,
+      isPathOwned: (path) => input.getThisForm().isPathOwned(path)
+    });
 
     const fieldStates = input.sharedState.store.getState().fieldStates;
-    const nextErrors = rebuildStoreErrorsFromExternal(fieldStates);
+    const nextErrors = rebuildStoreErrorsFromExternal(input.sharedState, fieldStates);
 
     const nextFieldStates = { ...fieldStates };
     for (const path of Object.keys(nextFieldStates)) {
@@ -461,106 +399,29 @@ export function buildFormOwnerRuntime(input: {
   }
 
   function refreshCompiledModel(newModel: NonNullable<FormRuntime['validation']>) {
-    if (input.sharedState.lifecycleState === 'disposed') {
-      return;
-    }
-
-    input.sharedState.lifecycleState = 'refreshing';
-    input.sharedState.modelGeneration += 1;
-
-    const oldModel = input.getCurrentValidation();
-    input.setCurrentValidation(newModel);
-    input.sharedState.inputValue = { ...input.sharedState.inputValue, validation: newModel };
-
-    cancelAllValidationDebounces(input.sharedState);
-    clearValidationAsyncOwners();
-    input.sharedState.validationRuns.clear();
-    input.sharedState.validationAbortControllers.clear();
-
-    const staleRegistrations = Array.from(input.sharedState.runtimeFieldRegistrations.entries());
-    for (const [regId, entry] of staleRegistrations) {
-      input.sharedState.runtimeFieldRegistrations.delete(regId);
-      input.sharedState.pathToRegistrationId.delete(entry.registration.path);
-    }
-
-    if (oldModel) {
-      const currentFieldStates = input.sharedState.store.getState().fieldStates;
-      const currentErrors: Record<string, ValidationError[]> = {};
-      for (const [path, fs] of Object.entries(currentFieldStates)) {
-        if (fs.errors && fs.errors.length > 0) {
-          currentErrors[path] = fs.errors;
-        }
-      }
-      const retainedErrors = computeRefreshErrorRetention(oldModel, newModel, currentErrors);
-
-      const nextFieldStates = { ...currentFieldStates };
-      for (const path of Object.keys(currentFieldStates)) {
-        if (currentFieldStates[path]?.errors && !retainedErrors[path]) {
-          const { errors: _removed, ...rest } = currentFieldStates[path];
-          nextFieldStates[path] = Object.keys(rest).length > 0 ? rest : undefined!;
-          if (!nextFieldStates[path]) delete nextFieldStates[path];
-        }
-      }
-      for (const [path, pathErrors] of Object.entries(retainedErrors)) {
-        nextFieldStates[path] = { ...nextFieldStates[path], errors: pathErrors };
-      }
-      input.setLastChange({
-        paths: [],
-        sourceScopeId: input.formId,
-        kind: 'update'
-      });
-      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
-    } else {
-      const currentFieldStates = input.sharedState.store.getState().fieldStates;
-      const nextFieldStates: Record<string, FieldState> = {};
-      for (const [path, fs] of Object.entries(currentFieldStates)) {
-        if (fs.errors) {
-          const { errors: _removed, ...rest } = fs;
-          if (Object.keys(rest).length > 0) {
-            nextFieldStates[path] = rest;
-          }
-        } else {
-          nextFieldStates[path] = fs;
-        }
-      }
-      input.setLastChange({
-        paths: [],
-        sourceScopeId: input.formId,
-        kind: 'update'
-      });
-      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
-    }
-
-    input.sharedState.lifecycleState = 'active';
+    refreshCompiledModelState({
+      sharedState: input.sharedState,
+      getCurrentValidation: input.getCurrentValidation,
+      setCurrentValidation: input.setCurrentValidation,
+      newModel,
+      formId: input.formId,
+      setLastChange: input.setLastChange
+    });
   }
 
   function dispose() {
-    if (input.sharedState.lifecycleState === 'disposed') {
-      return;
-    }
-
-    input.sharedState.lifecycleState = 'disposed';
-    cancelAllValidationDebounces(input.sharedState);
-    clearValidationAsyncOwners();
-    input.sharedState.validationRuns.clear();
-    input.sharedState.validationAbortControllers.clear();
-    input.sharedState.runtimeFieldRegistrations.clear();
-    input.sharedState.pathToRegistrationId.clear();
-    input.sharedState.childContracts.clear();
-    input.sharedState.externalErrors.clear();
-    input.setLastChange({
-      paths: [],
-      sourceScopeId: input.formId,
-      kind: 'update'
+    disposeOwnerState({
+      sharedState: input.sharedState,
+      formId: input.formId,
+      setLastChange: input.setLastChange
     });
-    input.sharedState.store.batchUpdate({ fieldStates: {} });
   }
 
   return {
     computeScopeState,
     revalidateDependents,
-    rebuildStoreErrorsFromExternal,
-    clearExternalErrorsForPath,
+    rebuildStoreErrorsFromExternal: (fieldStates: Record<string, FieldState>) => rebuildStoreErrorsFromExternal(input.sharedState, fieldStates),
+    clearExternalErrorsForPath: (name: string) => clearExternalErrorsForPath({ name, sharedState: input.sharedState, getThisForm: input.getThisForm }),
     applyExternalErrors,
     supersedeLowerPriorityWork,
     applyChangesAndRevalidate,

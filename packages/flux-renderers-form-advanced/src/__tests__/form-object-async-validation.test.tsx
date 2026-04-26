@@ -148,9 +148,12 @@ describe('formRendererDefinitions - object validation, async validation, and fie
               label: 'Username',
               validate: {
                 debounce: 80,
-                api: {
-                  url: '/api/validate-username',
-                  method: 'post'
+                action: {
+                  action: 'ajax',
+                  args: {
+                    url: '/api/validate-username',
+                    method: 'post'
+                  }
                 },
                 message: 'Username is already taken'
               }

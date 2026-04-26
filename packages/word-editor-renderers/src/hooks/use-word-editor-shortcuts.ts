@@ -1,17 +1,39 @@
-import { useEffect } from 'react'
+import { useEffect, type RefObject } from 'react'
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
 import { RowFlex } from '@nop-chaos/word-editor-core'
 
 interface UseWordEditorShortcutsOptions {
   bridge: CanvasEditorBridge | null
   onSave?: () => void
+  scopeRef?: RefObject<HTMLElement | null>
 }
 
 export function useWordEditorShortcuts(options: UseWordEditorShortcutsOptions): void {
-  const { bridge, onSave } = options
+  const { bridge, onSave, scopeRef } = options
 
   useEffect(() => {
+    function isEditableTarget(target: EventTarget | null): boolean {
+      if (!(target instanceof HTMLElement)) {
+        return false
+      }
+
+      const tag = target.tagName.toLowerCase()
+      return target.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select'
+    }
+
+    function isInsideScope(target: EventTarget | null): boolean {
+      if (!(target instanceof Node)) {
+        return false
+      }
+
+      return scopeRef?.current?.contains(target) ?? false
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
+      if (isEditableTarget(event.target) || !isInsideScope(event.target)) {
+        return
+      }
+
       const mod = event.metaKey || event.ctrlKey
       if (!mod) return
 
@@ -81,5 +103,5 @@ export function useWordEditorShortcuts(options: UseWordEditorShortcutsOptions): 
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [bridge, onSave])
+  }, [bridge, onSave, scopeRef])
 }

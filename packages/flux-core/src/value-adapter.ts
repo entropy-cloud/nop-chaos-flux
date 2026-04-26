@@ -67,6 +67,7 @@ function injectDefaultArgs(
   function supportsArgsInjection(action: ActionSchema) {
     return action.action !== 'closeDialog'
       && action.action !== 'closeDrawer'
+      && action.action !== 'closeSurface'
       && action.action !== 'refreshTable'
       && action.action !== 'refreshSource';
   }

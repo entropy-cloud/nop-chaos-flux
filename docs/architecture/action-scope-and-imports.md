@@ -455,7 +455,7 @@ Do not make the design depend on implicit bare action names like `save` or `vali
 
 For clarity, the runtime action namespace separator is `:` for dispatched action names such as `designer:addNode`, `report-designer:preview`, and `demo:open`.
 
-Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `dialog`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`.
+Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `dialog`, `openDialog`, `closeSurface`, `openDrawer`, and `showToast`.
 
 Schema authoring preference:
 
@@ -463,6 +463,7 @@ Schema authoring preference:
 - `dialog` remains supported for compatibility but should be treated as a legacy alias.
 - Both names resolve to the same runtime behavior; this is a naming convention choice, not a functional difference.
 - When writing new examples or shared schema libraries, use `openDialog` consistently.
+- New schema should prefer `closeSurface` for closing the current surface. `closeDialog` and `closeDrawer` remain compatibility aliases.
 
 Compatibility note:
 
@@ -622,7 +623,7 @@ The method name is extracted from the action string after the `component:` prefi
 Preferred targeting matrix:
 
 - component instance -> `component:<method>` plus `componentId` or `componentName`
-- dialog stack -> built-in `closeDialog`, which closes the nearest active dialog by default and only needs `dialogId` for an explicit non-default target
+- surface family -> built-in `closeSurface`, which closes the current surface by default and only needs `surfaceId` for an explicit non-default target
 - runtime-owned source entry -> built-in `refreshSource` plus `targetId`
 
 Compatibility carriers:

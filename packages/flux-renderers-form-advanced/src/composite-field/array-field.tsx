@@ -158,7 +158,8 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, i) => item === b[i]);
-    }
+    },
+    { path: name || undefined }
   );
   const scopeValue = useScopeSelector(
     (scopeData) => (parentForm ? undefined : toArrayItems(name ? getIn(scopeData, name) : scopeData)),

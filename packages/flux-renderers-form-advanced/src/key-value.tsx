@@ -216,7 +216,8 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       return a.every((pair, index) =>
         pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value
       );
-    }
+    },
+    { path: name || undefined }
   );
   const scopeExternalValue = useScopeSelector(
     (scopeData) => (currentForm || !name ? undefined : toKeyValuePairs(getIn(scopeData, name))),

@@ -119,12 +119,13 @@ The production direction is:
 - resolve variables through `resolve(path)` and `has(path)`
 - avoid prototype `new Function(...)` and `with(scope)` execution
 
-### `closeDialog` default behavior
+### `closeSurface` default behavior
 
-`closeDialog` closes the nearest active dialog by default.
+`closeSurface` closes the current surface by default.
 
-- normal schema authors should not need to pass `dialogId`
-- explicit dialog targeting exists as a narrow extension path
+- normal schema authors should not need to pass `surfaceId`
+- explicit surface targeting exists as a narrow extension path
+- `closeDialog` and `closeDrawer` remain supported as compatibility aliases
 
 Architecturally, this should resolve through the nearest creator-owned surface boundary rather than through page-owned dialog state.
 
@@ -194,7 +195,7 @@ Owns:
 
 Current action dispatch now resolves through three explicit paths in order:
 
-1. built-in platform actions such as `setValue`, `ajax`, `dialog`, `closeDialog`, `refreshTable`, and `submitForm`
+1. built-in platform actions such as `setValue`, `ajax`, `dialog`, `closeSurface`, `refreshTable`, and `submitForm`
 2. component-targeted actions matching `component:<method>` pattern through `ComponentHandleRegistry`
 3. namespaced actions such as `designer:export` through `ActionScope`
 

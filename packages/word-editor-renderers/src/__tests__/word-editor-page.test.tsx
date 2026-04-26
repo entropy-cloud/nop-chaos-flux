@@ -1,55 +1,91 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import { createFormulaCompiler } from '@nop-chaos/flux-formula'
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n'
-import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-react'
+import { createDefaultRegistry, createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react'
+import type { RendererDefinition } from '@nop-chaos/flux-core'
 import type { RendererEnv } from '@nop-chaos/flux-core'
 import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js'
+
+const editorStoreState = {
+  isReady: true,
+  isDirty: false,
+  wordCount: 0,
+  currentPage: 1,
+  totalPages: 1,
+  scale: 1,
+  selection: {
+    bold: false,
+    italic: false,
+    underline: false,
+    strikeout: false,
+    superscript: false,
+    subscript: false,
+    font: null,
+    size: 16,
+    color: null,
+    highlight: null,
+    rowFlex: null,
+    level: null,
+    listType: null,
+    listStyle: null,
+    rowMargin: 0,
+    undo: false,
+    redo: false,
+  },
+}
+
+const editorStore = {
+  subscribe: () => () => undefined,
+  getState: () => editorStoreState,
+  setDirty: vi.fn(),
+}
+
+const datasetListeners = new Set<() => void>()
+let datasetState = {
+  datasets: [] as Array<{ id: string; name: string }>,
+  selectedDatasetId: null as string | null,
+}
+
+const datasetStore = {
+  subscribe: (listener: () => void) => {
+    datasetListeners.add(listener)
+    return () => datasetListeners.delete(listener)
+  },
+  getState: () => datasetState,
+  load: vi.fn((datasets: Array<{ id: string; name: string }>) => {
+    datasetState = { ...datasetState, datasets }
+    for (const listener of datasetListeners) listener()
+  }),
+  getAll: vi.fn(() => datasetState.datasets),
+  getById: vi.fn((id: string) => datasetState.datasets.find((dataset) => dataset.id === id) ?? null),
+  add: vi.fn((dataset: { name: string }) => {
+    const next = { id: `dataset-${datasetState.datasets.length + 1}`, ...dataset }
+    datasetState = { ...datasetState, datasets: [...datasetState.datasets, next] }
+    for (const listener of datasetListeners) listener()
+    return next
+  }),
+  update: vi.fn(),
+}
+
+function resetMockStores() {
+  datasetState = {
+    datasets: [],
+    selectedDatasetId: null,
+  }
+  editorStore.setDirty.mockClear()
+  datasetStore.load.mockClear()
+  datasetStore.getAll.mockClear()
+  datasetStore.getById.mockClear()
+  datasetStore.add.mockClear()
+  datasetStore.update.mockClear()
+}
 
 vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@nop-chaos/word-editor-core')>()
   class CanvasEditorBridge {}
-  const state = {
-    isReady: true,
-    isDirty: false,
-    wordCount: 0,
-    currentPage: 1,
-    totalPages: 1,
-    scale: 1,
-    selection: {
-      bold: false,
-      italic: false,
-      underline: false,
-      strikeout: false,
-      superscript: false,
-      subscript: false,
-      font: null,
-      size: 16,
-      color: null,
-      highlight: null,
-      rowFlex: null,
-      level: null,
-      listType: null,
-      listStyle: null,
-      rowMargin: 0,
-      undo: false,
-      redo: false,
-    },
-  }
-  const editorStore = {
-    subscribe: () => () => undefined,
-    getState: () => state,
-    setDirty: vi.fn(),
-  }
-  const datasetStore = {
-    load: vi.fn(),
-    getAll: vi.fn(() => []),
-    getById: vi.fn(() => null),
-    add: vi.fn(),
-    update: vi.fn(),
-  }
   return {
     ...actual,
     CanvasEditorBridge,
@@ -109,6 +145,53 @@ vi.mock('../hooks/use-word-editor-shortcuts.js', () => ({
 }))
 
 describe('WordEditorPage', () => {
+  it('updates host scope dataset projection when dataset store changes', async () => {
+    resetFluxI18n()
+    initFluxI18n()
+
+    const HostDatasetProbe: RendererDefinition = {
+      type: 'host-dataset-probe',
+      component: function HostDatasetProbeComponent() {
+        const count = useScopeSelector((data: Record<string, unknown>) => (data.datasets as unknown[] | undefined)?.length ?? 0)
+        return <span data-testid="dataset-count">{String(count)}</span>
+      },
+    }
+
+    const registry = createDefaultRegistry([HostDatasetProbe])
+    registerWordEditorRenderers(registry)
+    const SchemaRenderer = createSchemaRenderer()
+    const env: RendererEnv = {
+      fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+      notify: () => undefined,
+    }
+
+    resetMockStores()
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://word-editor/page-datasets"
+        schema={defineWordEditorPageSchema({
+          type: 'word-editor-page',
+          leftPanel: { type: 'host-dataset-probe' },
+        })}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dataset-count').textContent).toBe('0')
+    })
+
+    datasetStore.add({ name: 'Customers' })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dataset-count').textContent).toBe('1')
+    })
+  })
+
   it('keeps the semantic root marker on the page shell', () => {
     resetFluxI18n()
     initFluxI18n()
@@ -119,6 +202,7 @@ describe('WordEditorPage', () => {
       fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
       notify: () => undefined,
     }
+    resetMockStores()
     const schema = defineWordEditorPageSchema({
       type: 'word-editor-page',
       title: 'Word Editor',

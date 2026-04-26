@@ -32,7 +32,7 @@ describe('CRUD renderer request-owned baseline', () => {
               type: 'data-source',
               id: 'crud-users-source',
               name: 'pagedUsers',
-              api: { url: '/api/crud-users', cacheTTL: 0 },
+              action: 'ajax', args: { url: '/api/crud-users', cacheTTL: 0 },
             },
             {
               type: 'crud',
@@ -104,7 +104,7 @@ describe('CRUD renderer request-owned baseline', () => {
               type: 'data-source',
               id: 'crud-users-source',
               name: 'pagedUsers',
-              api: { url: '/api/crud-users', cacheTTL: 0 },
+              action: 'ajax', args: { url: '/api/crud-users', cacheTTL: 0 },
             },
             {
               type: 'crud',
@@ -171,7 +171,7 @@ describe('CRUD renderer request-owned baseline', () => {
               type: 'data-source',
               id: 'crud-users-source',
               name: 'pagedUsers',
-              api: { url: '/api/crud-users', cacheTTL: 0 },
+              action: 'ajax', args: { url: '/api/crud-users', cacheTTL: 0 },
             },
             {
               type: 'crud',

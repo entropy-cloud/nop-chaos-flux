@@ -7,7 +7,27 @@ import type {
   CellDocument,
 } from '../types.js';
 import { cellAddress, normalizeRange } from '../types.js';
-import { ensureSheetCells, setCell } from './document-access.js';
+import { ensureSheetCells, setCell, setCells } from './document-access.js';
+
+function deleteCells(sheet: import('../types.js').WorksheetDocument, keys: ReadonlyArray<string>) {
+  if (!sheet.cells || keys.length === 0) {
+    return sheet;
+  }
+
+  const cells = { ...sheet.cells };
+  let changed = false;
+
+  for (const key of keys) {
+    if (!(key in cells)) {
+      continue;
+    }
+
+    delete cells[key];
+    changed = true;
+  }
+
+  return changed ? { ...sheet, cells } : sheet;
+}
 
 export function copyRangeToClipboard(
   doc: SpreadsheetDocument,
@@ -47,15 +67,18 @@ export function applyPasteCells(
   target: SpreadsheetCellRef,
 ): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, target.sheetId);
-  let newSheet = sheet;
+  const pasteEntries: Array<{ row: number; col: number; cell: CellDocument }> = [];
   for (let rowOffset = 0; rowOffset < clipboard.cells.length; rowOffset++) {
     for (let colOffset = 0; colOffset < clipboard.cells[rowOffset].length; colOffset++) {
       const targetRow = target.row + rowOffset;
       const targetCol = target.col + colOffset;
       const sourceCell = clipboard.cells[rowOffset][colOffset];
       const key = cellAddress(targetRow, targetCol);
-      const existing = newSheet.cells?.[key];
-      newSheet = setCell(newSheet, targetRow, targetCol, {
+      const existing = sheet.cells?.[key];
+      pasteEntries.push({
+        row: targetRow,
+        col: targetCol,
+        cell: {
         ...(existing ?? { address: key, row: targetRow, col: targetCol }),
         value: sourceCell.value,
         formula: sourceCell.formula,
@@ -66,42 +89,39 @@ export function applyPasteCells(
         address: key,
         row: targetRow,
         col: targetCol,
+        }
       });
     }
   }
+
+  let newSheet = setCells(sheet, pasteEntries);
 
   if (clipboard.type === 'cut') {
     const sourceSheetId = clipboard.sourceSheetId;
     const isSameSheet = sourceSheetId === target.sheetId;
     if (isSameSheet) {
+      const keysToDelete: string[] = [];
       for (let row = clipboard.range.startRow; row <= clipboard.range.endRow; row++) {
         for (let col = clipboard.range.startCol; col <= clipboard.range.endCol; col++) {
           const key = cellAddress(row, col);
           const pasteEndRow = target.row + clipboard.cells.length - 1;
           const pasteEndCol = target.col + (clipboard.cells[0]?.length ?? 1) - 1;
           if (row < target.row || row > pasteEndRow || col < target.col || col > pasteEndCol) {
-            if (newSheet.cells?.[key]) {
-              const cells = { ...newSheet.cells };
-              delete cells[key];
-              newSheet = { ...newSheet, cells };
-            }
+            keysToDelete.push(key);
           }
         }
       }
+      newSheet = deleteCells(newSheet, keysToDelete);
     } else {
       const sourceSheet = updated.workbook.sheets.find((sheetDoc) => sheetDoc.id === sourceSheetId);
       if (sourceSheet) {
-        let clearedSheet = sourceSheet;
+        const keysToDelete: string[] = [];
         for (let row = clipboard.range.startRow; row <= clipboard.range.endRow; row++) {
           for (let col = clipboard.range.startCol; col <= clipboard.range.endCol; col++) {
-            const key = cellAddress(row, col);
-            if (clearedSheet.cells?.[key]) {
-              const cells = { ...clearedSheet.cells };
-              delete cells[key];
-              clearedSheet = { ...clearedSheet, cells };
-            }
+            keysToDelete.push(cellAddress(row, col));
           }
         }
+        const clearedSheet = deleteCells(sourceSheet, keysToDelete);
         const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
           sheetDoc.id === sourceSheetId ? clearedSheet : sheetDoc.id === target.sheetId ? newSheet : sheetDoc,
         ) };

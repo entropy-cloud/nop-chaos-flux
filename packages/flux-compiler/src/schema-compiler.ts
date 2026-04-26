@@ -20,10 +20,15 @@ import type {
   XuiImportSpec
 } from '@nop-chaos/flux-core';
 import {
-  createCompiledCidState,
   createNodeId,
   isSchemaInput,
 } from '@nop-chaos/flux-core';
+import {
+  createCompilerPluginAppliers,
+  MAX_COMPILE_DEPTH,
+  prepareSchemaImports,
+  prepareSchemaRoot
+} from './schema-compiler-helpers';
 import { canonicalizeSchemaInput } from './schema-compiler/authoring-transform';
 import { createTemplateRegion } from './schema-compiler/regions';
 import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables';
@@ -36,22 +41,13 @@ import {
   schemaPathToJsonPointer,
   type SchemaCompilerDiagnosticsContext
 } from './schema-compiler/diagnostics';
-import {
-  normalizeImportSpecKey,
-  collectSchemaImportSpecs,
-  pushImportSymbols,
-  pushPreparedImportSymbols,
-  pushInjectedLocalSymbols,
-  pushRegionParamSymbols
-} from './schema-compiler/symbol-helpers';
+import { normalizeImportSpecKey, pushImportSymbols, pushPreparedImportSymbols, pushInjectedLocalSymbols, pushRegionParamSymbols } from './schema-compiler/symbol-helpers';
 import { buildWrapProvidersClosure, computeStaticAnalysis } from './schema-compiler/static-analysis';
 import { compileActions } from './action-compiler';
 import { compileDataSource } from './source-compiler';
 import { compileReaction } from './reaction-compiler';
 import { createBaseCompileSymbolTable } from './compile-symbol-table';
 import { normalizeValidationTriggers, normalizeValidationVisibilityTriggers } from './validation-lowering';
-
-const MAX_COMPILE_DEPTH = 64;
 
 export function createSchemaCompiler(input: {
   registry: RendererRegistry;
@@ -61,14 +57,7 @@ export function createSchemaCompiler(input: {
 }): SchemaCompiler {
   const expressionCompiler = input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
   const noopDiagnostics = createSchemaCompilerDiagnosticsContext(undefined, 'compile');
-
-  function applyBeforeCompilePlugins(schema: SchemaInput): SchemaInput {
-    return (input.plugins ?? []).reduce((current, plugin) => plugin.beforeCompile?.(current) ?? current, schema);
-  }
-
-  function applyAfterCompilePlugins(template: CompiledTemplate): CompiledTemplate {
-    return (input.plugins ?? []).reduce((current, plugin) => plugin.afterCompile?.(current) ?? current, template);
-  }
+  const { applyBeforeCompilePlugins, applyAfterCompilePlugins } = createCompilerPluginAppliers(input.plugins);
 
   function compileSchemaToTemplateNodes(schema: SchemaInput, options: CompileSchemaOptions = {}, depth = 0): TemplateNode | TemplateNode[] {
     if (depth > MAX_COMPILE_DEPTH) {
@@ -76,26 +65,16 @@ export function createSchemaCompiler(input: {
     }
 
     const prepared = applyBeforeCompilePlugins(schema);
-    const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'compile');
-    const cidState = options.cidState ?? input.defaultCidState ?? createCompiledCidState();
     const symbolTable = options.symbolTable ?? createBaseCompileSymbolTable();
-
-    if (!isSchemaInput(prepared)) {
-      diagnostics.emit({
-        code: 'invalid-root',
-        path: schemaPathToJsonPointer(options.basePath ?? '$'),
-        message: 'Schema root must be an object or an array of schema objects.'
-      });
-      throw new Error('Invalid schema root');
-    }
-
-    const canonicalPrepared = canonicalizeSchemaInput(prepared, {
-      basePath: options.basePath ?? '$',
-      schemaUrl: options.schemaUrl,
+    const { diagnostics, cidState, canonicalPrepared } = prepareSchemaRoot({
+      schema: prepared,
+      options: {
+        ...options,
+        cidState: options.cidState ?? input.defaultCidState
+      },
       registry: input.registry,
-      plugins: input.plugins,
-      maxDepth: MAX_COMPILE_DEPTH
-    }, diagnostics);
+      plugins: input.plugins
+    });
 
     if (diagnostics.enabled) {
       analyzeSchemaInput(canonicalPrepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
@@ -422,38 +401,7 @@ export function createSchemaCompiler(input: {
   }
 
   async function prepareSchemaInput(schema: SchemaInput, options: CompileSchemaOptions = {}) {
-    const schemaUrl = options.schemaUrl ?? '$inline';
-    const imports = collectSchemaImportSpecs(schema, schemaUrl);
-    const preparedImports = new Map<string, PreparedImportSpec>();
-
-    if (imports.length === 0) {
-      return {
-        schema,
-        preparedImports
-      };
-    }
-
-    const resolveImportUrl = (options as CompileSchemaOptions & {
-      resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
-    }).resolveImportUrl;
-
-    for (const spec of imports) {
-      const resolvedSpec: XuiImportSpec = {
-        ...spec,
-        from: resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
-      };
-
-      preparedImports.set(normalizeImportSpecKey(schemaUrl, spec), {
-        schemaUrl,
-        spec,
-        resolvedSpec
-      });
-    }
-
-    return {
-      schema,
-      preparedImports
-    };
+    return prepareSchemaImports(schema, options);
   }
 
   return {

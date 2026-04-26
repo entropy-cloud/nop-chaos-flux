@@ -149,7 +149,8 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
-    }
+    },
+    { path: name || undefined }
   );
   const scopeExternalValue = useScopeSelector(
     (scopeData) => (currentForm || !name ? undefined : toArrayEditorItems(getIn(scopeData, name))),

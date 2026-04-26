@@ -4,8 +4,8 @@ import type { DesignerHostStatusSummary } from '@nop-chaos/flow-designer-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, WorkbenchShell } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
-import { createDesignerCore, layoutWithElk, layoutTreeWithElk, simpleTreeLayout, projectTree } from '@nop-chaos/flow-designer-core';
-import type { DesignerConfig, GraphDocument, GraphEdge, GraphNode, NormalizedDesignerConfig, TreeDocument } from '@nop-chaos/flow-designer-core';
+import { createDesignerCore, layoutWithElk, layoutTreeWithElk } from '@nop-chaos/flow-designer-core';
+import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { Button, cn, DataViewer, Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 import type { DesignerPageSchema } from './schemas';
@@ -17,95 +17,19 @@ import {
   notifyCommandFailure
 } from './designer-context';
 import { createDesignerActionProvider } from './designer-action-provider';
+import {
+  computeTreeModeDocument,
+  confirmCreateDialog,
+  createDesignerContextValue,
+  createMergedDesignerProvider,
+  matchesShortcut,
+  renderDesignerSchema,
+  type DesignerCreateDialogState
+} from './designer-page-helpers';
 import { DesignerPaletteContent } from './designer-palette';
 import { DesignerCanvasContent, plusButtonHandlerHolder } from './designer-canvas';
 import { DefaultInspector } from './designer-inspector';
 import { DesignerToolbarContent } from './designer-toolbar';
-
-function normalizeTreeModeConfig(config: DesignerConfig): NormalizedDesignerConfig {
-  return {
-    version: config.version,
-    kind: config.kind,
-    nodeTypes: new Map(config.nodeTypes.map((nodeType) => [nodeType.id, nodeType])),
-    edgeTypes: new Map((config.edgeTypes ?? []).map((edgeType) => [edgeType.id, edgeType])),
-    palette: config.palette,
-    toolbar: config.toolbar,
-    shortcuts: {
-      undo: ['Ctrl+Z', 'Cmd+Z'],
-      redo: ['Ctrl+Y', 'Cmd+Y', 'Ctrl+Shift+Z', 'Cmd+Shift+Z'],
-      copy: ['Ctrl+C', 'Cmd+C'],
-      paste: ['Ctrl+V', 'Cmd+V'],
-      delete: ['Delete', 'Backspace'],
-      ...config.shortcuts,
-    },
-    features: {
-      undo: true,
-      redo: true,
-      history: true,
-      grid: true,
-      minimap: true,
-      fitView: true,
-      export: true,
-      shortcuts: true,
-      floatingToolbar: true,
-      clipboard: true,
-      autoLayout: false,
-      multiSelect: false,
-      ...config.features,
-    },
-    rules: {
-      allowSelfLoop: false,
-      allowMultiEdge: true,
-      defaultEdgeType: 'default',
-      ...config.rules,
-    },
-    canvas: {
-      background: 'dots',
-      gridSize: 24,
-      minZoom: 0.1,
-      maxZoom: 4,
-      defaultZoom: 1,
-      pannable: true,
-      zoomable: true,
-      snapToGrid: true,
-      ...config.canvas,
-    },
-    hooks: config.hooks,
-    classAliases: config.classAliases,
-    themeStyles: config.themeStyles,
-    documentMode: config.documentMode,
-    treeConfig: config.treeConfig,
-  };
-}
-
-function normalizeShortcut(input: string): string[] {
-  return input.toLowerCase().split('+').map((part) => part.trim()).filter(Boolean);
-}
-
-function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | undefined): boolean {
-  if (!shortcuts || shortcuts.length === 0) {
-    return false;
-  }
-
-  const eventKey = event.key.toLowerCase();
-  return shortcuts.some((shortcut) => {
-    const keys = normalizeShortcut(shortcut);
-    const wantsCtrl = keys.includes('ctrl');
-    const wantsMeta = keys.includes('cmd') || keys.includes('meta');
-    const wantsShift = keys.includes('shift');
-    const wantsAlt = keys.includes('alt') || keys.includes('option');
-    const key = keys.find((part) => !['ctrl', 'cmd', 'meta', 'shift', 'alt', 'option'].includes(part));
-    if (!key) {
-      return false;
-    }
-
-    if (wantsCtrl !== event.ctrlKey) return false;
-    if (wantsMeta !== event.metaKey) return false;
-    if (wantsShift !== event.shiftKey) return false;
-    if (wantsAlt !== event.altKey) return false;
-    return key === eventKey.toLowerCase();
-  });
-}
 
 function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema> & { config: DesignerConfig; rawSchemaProps: Record<string, SchemaValue> }) {
   const { config, rawSchemaProps } = props;
@@ -116,28 +40,10 @@ function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema>
     setTreeDocument(inputTreeDocument);
   }, [inputTreeDocument]);
 
-  const normalizedConfig = useMemo(() => normalizeTreeModeConfig(config), [config]);
-  const projected = useMemo(() => treeDocument ? projectTree(treeDocument, normalizedConfig) : { nodes: [] as GraphNode[], edges: [] as GraphEdge[] }, [treeDocument, normalizedConfig]);
-
-  const document: GraphDocument = useMemo(() => {
-    if (!treeDocument) {
-      return { id: '', kind: '', name: '', version: '', nodes: [], edges: [] };
-    }
-    const treeConfig = normalizedConfig.treeConfig;
-    let nodes = projected.nodes;
-    if (treeConfig) {
-      nodes = simpleTreeLayout(projected.nodes, projected.edges, treeConfig, normalizedConfig.nodeTypes);
-    }
-    return {
-      id: treeDocument.id,
-      kind: treeDocument.kind,
-      name: treeDocument.name,
-      version: treeDocument.version,
-      meta: treeDocument.meta,
-      nodes,
-      edges: projected.edges,
-    };
-  }, [treeDocument, projected, normalizedConfig]);
+  const document: GraphDocument = useMemo(
+    () => treeDocument ? computeTreeModeDocument(treeDocument, config) : { id: '', kind: '', name: '', version: '', nodes: [], edges: [] },
+    [config, treeDocument]
+  );
 
   if (!treeDocument) {
     return <div>{t('flux.flowDesigner.treeDocumentRequired')}</div>;
@@ -177,6 +83,7 @@ interface DesignerPageBodyProps {
 }
 
 function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch, config }: DesignerPageBodyProps) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const snapshot = useDesignerSnapshot(core);
   const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
   const [layoutBusy, setLayoutBusy] = React.useState(false);
@@ -272,40 +179,13 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   const actionScope = useCurrentActionScope();
   const designerProvider = useMemo(() => createDesignerActionProvider(core, commandAdapter), [core, commandAdapter]);
   const upstreamBackHandler = useMemo(() => actionScope?.resolve('designer:navigate-back'), [actionScope]);
-  const mergedDesignerProvider = useMemo<ActionNamespaceProvider | undefined>(() => {
-    if (!designerProvider) {
-      return undefined;
-    }
-    if (!upstreamBackHandler) {
-      return designerProvider;
-    }
-
-    return {
-      kind: designerProvider.kind ?? 'host',
-      listMethods() {
-        const methods = designerProvider.listMethods?.() ?? [];
-        if (methods.includes('navigate-back')) {
-          return methods;
-        }
-        return [...methods, 'navigate-back'];
-      },
-      invoke(method, payload, ctx) {
-        if (method === 'navigate-back') {
-          return upstreamBackHandler.provider.invoke(upstreamBackHandler.method, payload, ctx);
-        }
-        return designerProvider.invoke(method, payload, ctx);
-      },
-      dispose() {
-        designerProvider.dispose?.();
-      }
-    };
-  }, [designerProvider, upstreamBackHandler]);
+  const mergedDesignerProvider = useMemo<ActionNamespaceProvider | undefined>(
+    () => createMergedDesignerProvider({ designerProvider, upstreamBackHandler }),
+    [designerProvider, upstreamBackHandler]
+  );
   const designerScope = useDesignerHostScope({ snapshot, config, core, path: props.path });
   const [jsonOpen, setJsonOpen] = React.useState(false);
-  const [pendingCreateDialog, setPendingCreateDialog] = React.useState<{
-    nodeType: import('@nop-chaos/flow-designer-core').NodeTypeConfig;
-    position: { x: number; y: number };
-  } | null>(null);
+  const [pendingCreateDialog, setPendingCreateDialog] = React.useState<DesignerCreateDialogState | null>(null);
   const [creatingNode, setCreatingNode] = React.useState(false);
   const jsonOffsetRef = useRef({ x: 0, y: 0 });
   const jsonDocument = useMemo(() => {
@@ -332,37 +212,15 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
 
     setCreatingNode(true);
     try {
-      let nextData: Record<string, unknown> | undefined = pendingCreateDialog.nodeType.defaults
-        ? { ...pendingCreateDialog.nodeType.defaults }
-        : undefined;
-
-      const submitAction = pendingCreateDialog.nodeType.createDialog?.submitAction;
-      if (submitAction) {
-        const result = await props.helpers.dispatch(submitAction, {
-          scope: designerScope,
-          actionScope,
-        });
-
-        if (!result.ok) {
-          return;
-        }
-
-        if (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) {
-          nextData = {
-            ...(nextData ?? {}),
-            ...(result.data as Record<string, unknown>),
-          };
-        }
-      }
-
-      const addResult = dispatch({
-        type: 'addNode',
-        nodeType: pendingCreateDialog.nodeType.id,
-        position: pendingCreateDialog.position,
-        data: nextData,
+      const result = await confirmCreateDialog({
+        pendingCreateDialog,
+        helpers: props.helpers,
+        designerScope,
+        actionScope,
+        dispatch,
       });
 
-      if (addResult.ok) {
+      if (result.ok && result.result.ok) {
         setPendingCreateDialog(null);
       }
     } finally {
@@ -371,7 +229,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
   }, [actionScope, designerScope, dispatch, pendingCreateDialog, props.helpers]);
 
   const ctxValue = useMemo<DesignerContextValue>(
-    () => ({
+    () => createDesignerContextValue({
       core,
       commandAdapter,
       dispatch,
@@ -406,8 +264,16 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
       return target.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select';
     };
 
+    const isInsideDesigner = (target: EventTarget | null) => {
+      if (!(target instanceof Node)) {
+        return false;
+      }
+
+      return rootRef.current?.contains(target) ?? false;
+    };
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target)) {
+      if (isEditableTarget(event.target) || !isInsideDesigner(event.target)) {
         return;
       }
 
@@ -456,7 +322,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     ? props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope, actionScope })
     : ((props.props as Record<string, unknown>).dialogs as React.ReactNode);
   const renderInspectorSchema = useCallback((schema: import('@nop-chaos/flux-core').SchemaInput) => {
-    return props.helpers.render(schema as any, { scope: designerScope, actionScope });
+    return renderDesignerSchema({ schema, helpers: props.helpers, designerScope, actionScope });
   }, [actionScope, designerScope, props.helpers]);
 
   useEffect(() => {
@@ -478,21 +344,23 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
 
   return (
     <DesignerContext.Provider value={ctxValue}>
-      {config.themeStyles && <style>{config.themeStyles}</style>}
-      <WorkbenchShell
-        className={cn('nop-designer fd-theme-root text-foreground')}
-        header={hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} onAutoLayout={handleAutoLayout} autoLayoutBusy={layoutBusy} />}
-        leftPanel={<DesignerPaletteContent />}
-        leftCollapsed={snapshot.paletteCollapsed}
-        onLeftToggle={() => dispatch({ type: 'togglePalette' })}
-        leftLabel="Expand palette"
-        canvas={<DesignerCanvasContent />}
-        rightPanel={hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector renderSchema={renderInspectorSchema} />}
-        rightCollapsed={snapshot.inspectorCollapsed}
-        onRightToggle={() => dispatch({ type: 'toggleInspector' })}
-        rightLabel="Expand inspector"
-        dialogs={hasRendererSlotContent(dialogsSlot) ? dialogsSlot : undefined}
-      />
+      <div ref={rootRef} className="contents">
+        {config.themeStyles && <style>{config.themeStyles}</style>}
+        <WorkbenchShell
+          className={cn('nop-designer fd-theme-root text-foreground')}
+          header={hasRendererSlotContent(toolbarSlot) ? toolbarSlot : <DesignerToolbarContent exportActive={jsonOpen} onExportToggle={() => setJsonOpen((value) => !value)} onAutoLayout={handleAutoLayout} autoLayoutBusy={layoutBusy} />}
+          leftPanel={<DesignerPaletteContent />}
+          leftCollapsed={snapshot.paletteCollapsed}
+          onLeftToggle={() => dispatch({ type: 'togglePalette' })}
+          leftLabel="Expand palette"
+          canvas={<DesignerCanvasContent />}
+          rightPanel={hasRendererSlotContent(inspectorSlot) ? inspectorSlot : <DefaultInspector renderSchema={renderInspectorSchema} />}
+          rightCollapsed={snapshot.inspectorCollapsed}
+          onRightToggle={() => dispatch({ type: 'toggleInspector' })}
+          rightLabel="Expand inspector"
+          dialogs={hasRendererSlotContent(dialogsSlot) ? dialogsSlot : undefined}
+        />
+      </div>
       <Dialog open={jsonOpen} onOpenChange={setJsonOpen} draggable noOverlay noCenter closeOnOutsideClick={false}>
         <DialogContent
           offsetRef={jsonOffsetRef}

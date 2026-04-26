@@ -61,7 +61,8 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
   const rawValue = useCurrentFormState(
     (state) => (name ? getIn(state.values, name) : state.values),
-    Object.is
+    Object.is,
+    { path: name || undefined }
   );
   const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
   const currentValue = parentForm ? rawValue : scopeValue;

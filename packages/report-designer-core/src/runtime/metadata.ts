@@ -115,6 +115,32 @@ function buildNextSemanticWithAxisMeta(
   };
 }
 
+function buildNextSemanticWithBatchedCellMeta(
+  semantic: ReportSemanticDocument | undefined,
+  sheetId: string,
+  entries: ReadonlyArray<{ entryKey: string; normalized: MetadataBag | undefined }>,
+): ReportSemanticDocument {
+  const currentGroup = semantic?.cellMeta ?? {};
+  const currentSheetEntries = currentGroup[sheetId] ?? {};
+  const nextSheetEntries = { ...currentSheetEntries };
+
+  for (const entry of entries) {
+    if (entry.normalized) {
+      nextSheetEntries[entry.entryKey] = entry.normalized;
+    } else {
+      delete nextSheetEntries[entry.entryKey];
+    }
+  }
+
+  return {
+    ...(semantic ?? {}),
+    cellMeta: {
+      ...currentGroup,
+      [sheetId]: nextSheetEntries,
+    },
+  };
+}
+
 function buildNextSemanticWithRangeMeta(
   semantic: ReportSemanticDocument | undefined,
   sheetId: string,
@@ -246,24 +272,42 @@ export function applyFieldDrop(
     return updateMetadata(document, target, mergeMetadata(getTargetMeta(document.semantic, target), patch));
   }
 
-  let currentDocument = document;
-  let changed = false;
   const range = target.range;
+  const updates: Array<{ entryKey: string; normalized: MetadataBag | undefined }> = [];
+  let changed = false;
+
   for (let row = range.startRow; row <= range.endRow; row++) {
     for (let col = range.startCol; col <= range.endCol; col++) {
+      const entryKey = `${String.fromCharCode(65 + col)}${row + 1}`;
       const cellTarget: ReportSelectionTarget = {
         kind: 'cell',
         cell: {
           sheetId: range.sheetId,
-          address: `${String.fromCharCode(65 + col)}${row + 1}`,
+          address: entryKey,
           row,
           col,
         },
       };
-      const result = updateMetadata(currentDocument, cellTarget, mergeMetadata(getTargetMeta(currentDocument.semantic, cellTarget), patch));
-      currentDocument = result.document;
-      changed = changed || result.changed;
+      const nextMeta = mergeMetadata(getTargetMeta(document.semantic, cellTarget), patch);
+      const normalized = normalizeMetadataBag(nextMeta);
+      const currentMeta = document.semantic?.cellMeta?.[range.sheetId]?.[entryKey];
+      const entryChanged = !shallowEqualMetadata(currentMeta, normalized);
+      changed = changed || entryChanged;
+      if (entryChanged) {
+        updates.push({ entryKey, normalized });
+      }
     }
   }
-  return { changed, document: currentDocument };
+
+  if (!changed) {
+    return { changed: false, document };
+  }
+
+  return {
+    changed: true,
+    document: {
+      ...document,
+      semantic: buildNextSemanticWithBatchedCellMeta(document.semantic, range.sheetId, updates),
+    },
+  };
 }

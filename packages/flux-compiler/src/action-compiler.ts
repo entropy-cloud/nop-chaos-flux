@@ -62,6 +62,7 @@ function extractLegacyPayload(action: ActionSchema): Record<string, unknown> | u
     'componentName',
     'formId',
     'dialogId',
+    'surfaceId',
     'dataPath',
     'args',
     'control',
@@ -100,6 +101,7 @@ function compileTargeting(action: ActionSchema): CompiledActionTargeting {
     componentName: action.componentName,
     formId: action.formId,
     dialogId: action.dialogId,
+    surfaceId: action.surfaceId,
     dataPath: action.dataPath,
   };
 }

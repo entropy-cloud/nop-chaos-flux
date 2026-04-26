@@ -5,6 +5,7 @@ import type {
   RendererComponentProps,
   RendererDefinition
 } from '@nop-chaos/flux-core';
+import { getIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
   useCurrentForm,
@@ -53,10 +54,11 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
   const currentValue = useCurrentFormState(
     (state) => (name ? (state.values as Record<string, unknown>)[name] : undefined),
-    Object.is
+    Object.is,
+    { path: name || undefined }
   );
   const scopeValue = useScopeSelector(
-    (data) => (name ? (data as Record<string, unknown>)[name] : undefined),
+    (data) => (name ? getIn(data as Record<string, unknown>, name) : undefined),
     Object.is
   );
   const fieldValue = parentForm ? currentValue : scopeValue;

@@ -34,9 +34,8 @@ import {
 import {
   createDesignerShellState,
   resetShellViewportFromDocument,
-  setShellClipboard,
-  setShellViewport,
 } from './core/shell-state';
+import { createShellControls } from './core/shell-controls';
 import { createDesignerSnapshotCache, getDesignerSnapshot } from './core/snapshot';
 import { layoutNodesInDocument } from './core/node-operations';
 import {
@@ -184,6 +183,16 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     };
   }
 
+  const shellControls = createShellControls({
+    getDocument,
+    setDocument,
+    pushHistory,
+    emit,
+    updateDirtyState,
+    shellState,
+    getTransactionDepth: () => transactionStack.length
+  });
+
   function addNode(type: string, position: { x: number; y: number }, data?: Record<string, unknown>): GraphNode | null {
     return addNodeCommand(buildNodeCtx(), type, position, data);
   }
@@ -282,89 +291,43 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
   }
 
   function copySelection(): void {
-    const activeNodeId = selectionState.selectedNodeIds[0] ?? null;
-    if (!activeNodeId) {
-      return;
-    }
-
-    const node = doc.nodes.find((n) => n.id === activeNodeId);
-    if (node) {
-      setShellClipboard(shellState, node);
-    }
+    shellControls.copySelection(selectionState.selectedNodeIds[0] ?? null);
   }
 
   function pasteClipboard(): void {
-    if (!shellState.clipboard) {
-      return;
-    }
-
-    addNode(shellState.clipboard.type, { x: shellState.clipboard.position.x + 48, y: shellState.clipboard.position.y + 48 }, shellState.clipboard.data);
+    shellControls.pasteClipboard(addNode);
   }
 
   function toggleGrid(): void {
-    shellState.gridEnabled = !shellState.gridEnabled;
-    emit({ type: 'gridToggled', enabled: shellState.gridEnabled });
+    shellControls.toggleGrid();
   }
 
   function setGrid(enabled: boolean): void {
-    if (shellState.gridEnabled === enabled) {
-      return;
-    }
-
-    shellState.gridEnabled = enabled;
-    emit({ type: 'gridToggled', enabled: shellState.gridEnabled });
+    shellControls.setGrid(enabled);
   }
 
   function togglePalette(): void {
-    shellState.paletteCollapsed = !shellState.paletteCollapsed;
-    emit({ type: 'paletteCollapseChanged', collapsed: shellState.paletteCollapsed });
+    shellControls.togglePalette();
   }
 
   function setPaletteCollapsed(collapsed: boolean): void {
-    if (shellState.paletteCollapsed === collapsed) {
-      return;
-    }
-
-    shellState.paletteCollapsed = collapsed;
-    emit({ type: 'paletteCollapseChanged', collapsed: shellState.paletteCollapsed });
+    shellControls.setPaletteCollapsed(collapsed);
   }
 
   function toggleInspector(): void {
-    shellState.inspectorCollapsed = !shellState.inspectorCollapsed;
-    emit({ type: 'inspectorCollapseChanged', collapsed: shellState.inspectorCollapsed });
+    shellControls.toggleInspector();
   }
 
   function setInspectorCollapsed(collapsed: boolean): void {
-    if (shellState.inspectorCollapsed === collapsed) {
-      return;
-    }
-
-    shellState.inspectorCollapsed = collapsed;
-    emit({ type: 'inspectorCollapseChanged', collapsed: shellState.inspectorCollapsed });
+    shellControls.setInspectorCollapsed(collapsed);
   }
 
   function setViewport(newViewport: { x: number; y: number; zoom: number }): void {
-    if (!setShellViewport(shellState, newViewport)) {
-      return;
-    }
-
-    setDocument({ ...doc, viewport: shellState.viewport });
-    if (transactionStack.length === 0) pushHistory();
-    emit({ type: 'viewportChanged', viewport: shellState.viewport });
-    emit({ type: 'documentChanged', doc });
-    updateDirtyState();
+    shellControls.setViewport(newViewport);
   }
 
   function replaceDocumentFromHost(nextDoc: GraphDocument): void {
-    const cloned = cloneDocument(nextDoc);
-    setDocument(cloned);
-    resetShellViewportFromDocument(shellState, doc);
-    if (transactionStack.length === 0) {
-      pushHistory();
-    }
-    emit({ type: 'documentChanged', doc });
-    emit({ type: 'viewportChanged', viewport: shellState.viewport });
-    updateDirtyState();
+    shellControls.replaceDocumentFromHost(nextDoc);
   }
 
   function save(): void {

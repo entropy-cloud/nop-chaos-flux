@@ -3,7 +3,6 @@ import type {
   ApplyScopeChangesInput,
   ChildValidationContractRegistration,
   FieldRegistrationHandle,
-  FieldState,
   FormLifecycleHandlers,
   FormRuntime,
   FormValidationResult,
@@ -12,7 +11,6 @@ import type {
   ScopeValidationStateSnapshot,
 } from '@nop-chaos/flux-core';
 import {
-  getIn,
   getCompiledValidationDependents,
   getCompiledValidationField,
   getCompiledValidationTraversalOrder,
@@ -21,6 +19,11 @@ import {
 import { createFormStore } from './form-store';
 import { createAsyncGovernanceStore } from './async-data/async-governance';
 import { buildFormOwnerRuntime } from './form-runtime-owner';
+import {
+  buildArrayMutationContext,
+  computeCanSubmitState,
+  createAllTouchedComputer
+} from './form-runtime-derived-state';
 import { buildInitialFieldState } from './form-runtime-state';
 import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status';
 import {
@@ -134,42 +137,6 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     childContracts: new Map()
   };
 
-  function computeCanSubmit(): boolean {
-    const scopeState = ownerRuntime.computeScopeState();
-    if (!scopeState.valid || scopeState.validating) {
-      return false;
-    }
-
-    for (const contract of sharedState.childContracts.values()) {
-      if (contract.mode === 'summary-gate' && contract.active) {
-        const childState = contract.getState();
-        if (!childState.ready || childState.validating || !childState.valid) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  let cachedAllTouchedFieldStates: Record<string, FieldState> | undefined;
-  let cachedAllTouchedResult: boolean | undefined;
-
-  function computeAllTouched(): boolean {
-    const state = store.getState();
-    if (cachedAllTouchedResult !== undefined && cachedAllTouchedFieldStates === state.fieldStates) {
-      return cachedAllTouchedResult;
-    }
-    cachedAllTouchedFieldStates = state.fieldStates;
-    const order = getCompiledValidationTraversalOrder(currentValidation);
-    if (order.length === 0) {
-      cachedAllTouchedResult = true;
-      return true;
-    }
-    cachedAllTouchedResult = order.every((path) => state.fieldStates[path]?.touched === true);
-    return cachedAllTouchedResult;
-  }
-
   const formRuntimeRef: { current?: FormRuntime } = {};
   const ownerRuntime = buildFormOwnerRuntime({
     sharedState,
@@ -182,16 +149,18 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     getThisForm: () => formRuntimeRef.current as FormRuntime,
     setLastChange
   });
+  const computeAllTouched = createAllTouchedComputer({
+    store,
+    getCurrentValidation: () => currentValidation
+  });
 
   function buildArrayCtx(): ArrayMutationContext {
-    return {
+    return buildArrayMutationContext({
       sharedState,
       scope,
-      getArrayValue(path) {
-        return getIn(store.getState().values, path);
-      },
+      store,
       revalidateDependents: ownerRuntime.revalidateDependents
-    };
+    });
   }
 
   const thisForm: FormRuntime = {
@@ -221,7 +190,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     get canSubmit() {
-      return computeCanSubmit();
+      return computeCanSubmitState({ ownerRuntime: thisForm, sharedState });
     },
 
     get allTouched() {

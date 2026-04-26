@@ -168,6 +168,12 @@ surface owner 的典型 instance capability 是：
 - `component:open`
 - `component:close`
 
+对于内置 action authoring：
+
+- 打开 surface 时继续区分 `openDialog` / `openDrawer`
+- 关闭当前 surface 时应优先使用统一的 `closeSurface`
+- `closeDialog` / `closeDrawer` 仅作为兼容别名保留
+
 这些动作只解决 surface control，不替代内部更具体 owner 的入口，例如：
 
 - form 的 `component:submit`

@@ -35,6 +35,7 @@ export interface ActionShapeFields extends SchemaObject {
   componentName?: string;
   formId?: string;
   dialogId?: string;
+  surfaceId?: string;
   dataPath?: string;
   args?: Record<string, SchemaValue>;
   control?: OperationControlConfig;
@@ -74,6 +75,11 @@ export interface CloseDialogActionSchema extends ActionShapeFields {
 
 export interface CloseDrawerActionSchema extends ActionShapeFields {
   action: 'closeDrawer';
+}
+
+export interface CloseSurfaceActionSchema extends ActionShapeFields {
+  action: 'closeSurface';
+  surfaceId?: string;
 }
 
 export interface RefreshTableActionSchema extends ActionShapeFields {
@@ -122,6 +128,7 @@ export type BuiltInActionSchema =
   | OpenDrawerActionSchema
   | CloseDialogActionSchema
   | CloseDrawerActionSchema
+  | CloseSurfaceActionSchema
   | RefreshTableActionSchema
   | RefreshSourceActionSchema
   | SetValueActionSchema
@@ -273,6 +280,7 @@ export interface CompiledActionTargeting {
   componentName?: string;
   formId?: string;
   dialogId?: string;
+  surfaceId?: string;
   dataPath?: string;
 }
 

@@ -1,6 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 import type { FieldState, FormPathState, FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceEntry, SurfaceStoreApi, SurfaceStoreState } from '@nop-chaos/flux-core';
-import { setIn, validationErrorsEqual } from '@nop-chaos/flux-core';
+import { getIn, setIn, validationErrorsEqual } from '@nop-chaos/flux-core';
 
 function fieldStateEqual(left: FieldState | undefined, right: FieldState | undefined): boolean {
   if (left === right) {
@@ -67,6 +67,14 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     if (listeners) {
       for (const listener of listeners) {
         listener();
+      }
+    }
+  }
+
+  function diffAndNotifyValuePaths(before: Record<string, any>, after: Record<string, any>) {
+    for (const path of pathListeners.keys()) {
+      if (getIn(before, path) !== getIn(after, path)) {
+        notifyPath(path);
       }
     }
   }
@@ -156,11 +164,15 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       updateFieldState(path, state);
     },
     setValues(values) {
+      const before = store.getState().values;
       store.setState({ values });
+      diffAndNotifyValuePaths(before, values);
     },
     setValue(path, value) {
       const current = store.getState().values;
-      store.setState({ values: setIn(current, path, value) });
+      const nextValues = setIn(current, path, value);
+      store.setState({ values: nextValues });
+      diffAndNotifyValuePaths(current, nextValues);
     },
     setPathErrors(path, errors) {
       updateFieldState(path, { errors: errors && errors.length > 0 ? errors : undefined });
@@ -195,6 +207,10 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       const before = store.getState();
       store.setState(updates);
       const after = store.getState();
+
+      if (updates.values !== undefined && before.values !== after.values) {
+        diffAndNotifyValuePaths(before.values, after.values);
+      }
 
       if (updates.fieldStates !== undefined) {
         const changed = new Set<string>();

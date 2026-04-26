@@ -89,9 +89,12 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
               name: 'username',
               label: 'Username',
               validate: {
-                api: {
-                  url: '/api/validate-username',
-                  method: 'post'
+                action: {
+                  action: 'ajax',
+                  args: {
+                    url: '/api/validate-username',
+                    method: 'post'
+                  }
                 },
                 message: 'Username already exists'
               }

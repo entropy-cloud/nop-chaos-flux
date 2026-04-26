@@ -137,8 +137,12 @@ export async function runBuiltInAction(
     }
     case 'closeDrawer': {
       invocation = {
-        action: 'closeDrawer',
-        args: action.targeting.dialogId ? { dialogId: String(action.targeting.dialogId) } : undefined,
+        action: 'closeSurface',
+        args: action.targeting.surfaceId
+          ? { surfaceId: String(action.targeting.surfaceId) }
+          : action.targeting.dialogId
+            ? { surfaceId: String(action.targeting.dialogId) }
+            : undefined,
         targeting: action.targeting,
         actionNode: action,
         signal
@@ -158,8 +162,26 @@ export async function runBuiltInAction(
     }
     case 'closeDialog': {
       invocation = {
-        action: 'closeDialog',
-        args: action.targeting.dialogId ? { dialogId: String(action.targeting.dialogId) } : undefined,
+        action: 'closeSurface',
+        args: action.targeting.surfaceId
+          ? { surfaceId: String(action.targeting.surfaceId) }
+          : action.targeting.dialogId
+            ? { surfaceId: String(action.targeting.dialogId) }
+            : undefined,
+        targeting: action.targeting,
+        actionNode: action,
+        signal
+      };
+      break;
+    }
+    case 'closeSurface': {
+      invocation = {
+        action: 'closeSurface',
+        args: action.targeting.surfaceId
+          ? { surfaceId: String(action.targeting.surfaceId) }
+          : action.targeting.dialogId
+            ? { surfaceId: String(action.targeting.dialogId) }
+            : undefined,
         targeting: action.targeting,
         actionNode: action,
         signal

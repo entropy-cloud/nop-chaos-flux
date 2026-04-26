@@ -14,9 +14,7 @@ import { resolveCacheKey, type ApiCacheStore } from './api-cache';
 import {
   createInitialDataSourceState,
   deriveDataSourceState,
-  nextFailureCount,
   structuralShareData,
-  toNextDataSourceState,
   writeStatusToScope
 } from './data-source-state';
 import {
@@ -26,6 +24,14 @@ import {
   writeDataToScope,
   type ApiConfigRuntimeState
 } from './data-source-runtime-utils';
+import {
+  abortActiveControllers,
+  toActiveRequestState,
+  toErrorDataSourceState,
+  toIdleFetchState,
+  toStopConditionErrorState,
+  toSuccessDataSourceState
+} from './api-data-source-controller-helpers';
 import { isAbortError } from '../error-utils';
 import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
 
@@ -151,16 +157,7 @@ export function createDataSourceController(input: {
     try {
       return runtime.evaluate<boolean>(stopWhen, scope) ?? false;
     } catch (error) {
-      updateState((current) => ({
-        ...current,
-        status: typeof current.data === 'undefined' ? 'error' : current.status,
-        fetchStatus: 'idle',
-        stale: typeof current.data !== 'undefined',
-        error,
-        errorUpdatedAt: Date.now(),
-        failureCount: nextFailureCount(current.failureCount),
-        failureReason: error
-      }));
+      updateState((current) => toStopConditionErrorState(current, error));
       if (!silent) {
         reportRuntimeHostIssue({
           env: runtime.env,
@@ -247,10 +244,7 @@ export function createDataSourceController(input: {
                 });
               }
               if (!stopped && pendingRefresh) {
-                updateState((current) => ({
-                  ...current,
-                fetchStatus: 'idle'
-              }));
+                updateState((current) => toIdleFetchState(current));
               }
               updateState((current) => current);
               return;
@@ -272,22 +266,7 @@ export function createDataSourceController(input: {
 
             publishData(mappedValue);
             latestSettledRequestSequence = Math.max(latestSettledRequestSequence, requestSequence);
-            updateState((current) => {
-            const sharedData = structuralShareData(current.data, mappedValue);
-            return {
-              ...current,
-              status: 'success',
-              inFlightCount: Math.max(0, current.inFlightCount - 1),
-              fetchStatus: 'idle',
-              stale: false,
-              data: sharedData,
-              error: undefined,
-              dataUpdatedAt: Object.is(sharedData, current.data) ? current.dataUpdatedAt : Date.now(),
-              errorUpdatedAt: current.errorUpdatedAt,
-              failureCount: 0,
-              failureReason: undefined
-            };
-          });
+            updateState((current) => toSuccessDataSourceState(current, mappedValue));
 
             if (checkStopCondition()) {
               stop();
@@ -318,11 +297,7 @@ export function createDataSourceController(input: {
           });
         }
         if (!stopped && pendingRefresh) {
-          updateState((current) => ({
-            ...toNextDataSourceState(current, {
-            fetchStatus: 'idle'
-            })
-          }));
+          updateState((current) => toIdleFetchState(current));
         }
         updateState((current) => current);
         return;
@@ -349,22 +324,7 @@ export function createDataSourceController(input: {
       });
 
       publishData(mappedValue);
-      updateState((current) => {
-        const sharedData = structuralShareData(current.data, mappedValue);
-        return {
-          ...current,
-            status: 'success',
-            inFlightCount: Math.max(0, current.inFlightCount - 1),
-            fetchStatus: 'idle',
-            stale: false,
-            data: sharedData,
-          error: undefined,
-          dataUpdatedAt: Object.is(sharedData, current.data) ? current.dataUpdatedAt : Date.now(),
-          errorUpdatedAt: current.errorUpdatedAt,
-          failureCount: 0,
-          failureReason: undefined
-        };
-      });
+      updateState((current) => toSuccessDataSourceState(current, mappedValue));
 
       if (checkStopCondition()) {
         stop();
@@ -381,10 +341,7 @@ export function createDataSourceController(input: {
           });
         }
         if (!stopped && pendingRefresh) {
-          updateState((current) => ({
-            ...current,
-            fetchStatus: 'idle'
-          }));
+          updateState((current) => toIdleFetchState(current));
         }
         updateState((current) => current);
         return;
@@ -400,22 +357,15 @@ export function createDataSourceController(input: {
         return;
       }
 
-      if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run) && !settledRun) {
+      // Ignore failures only for truly stale older requests that were already superseded
+      // by a later settled request. If the same request sequence already marked success and
+      // then mapping/publish failed, we still need to surface that failure state and telemetry.
+      if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run) && !settledRun && requestSequence < latestSettledRequestSequence) {
         updateState((current) => current);
         return;
       }
 
-      updateState((current) => ({
-        ...current,
-        inFlightCount: Math.max(0, current.inFlightCount - 1),
-        status: typeof current.data === 'undefined' ? 'error' : current.status,
-        fetchStatus: 'idle',
-        stale: typeof current.data !== 'undefined',
-        error: caughtError,
-        errorUpdatedAt: Date.now(),
-        failureCount: nextFailureCount(current.failureCount),
-        failureReason: caughtError
-      }));
+      updateState((current) => toErrorDataSourceState(current, caughtError));
 
       if (!silent) {
         reportRuntimeHostIssue({
@@ -440,12 +390,7 @@ export function createDataSourceController(input: {
       }
 
       if (!stopped && (state.inFlightCount !== activeRequestCount || state.fetchStatus !== (activeRequestCount > 0 ? 'fetching' : 'idle'))) {
-        updateState((current) => ({
-          ...toNextDataSourceState(current, {
-          inFlightCount: activeRequestCount,
-          fetchStatus: activeRequestCount > 0 ? 'fetching' : 'idle'
-          })
-        }));
+        updateState((current) => toActiveRequestState(current, activeRequestCount));
       }
 
       if (!stopped && pendingRefresh) {
@@ -496,10 +441,7 @@ export function createDataSourceController(input: {
       pollTimer = undefined;
     }
 
-    for (const controller of activeControllers) {
-      controller.abort();
-    }
-    activeControllers.clear();
+    abortActiveControllers(activeControllers);
     abortController = undefined;
     activeRequestCount = 0;
     updateState((current) => ({
@@ -526,10 +468,7 @@ export function createDataSourceController(input: {
         pollTimer = undefined;
       }
 
-      for (const controller of activeControllers) {
-        controller.abort();
-      }
-      activeControllers.clear();
+      abortActiveControllers(activeControllers);
       abortController = undefined;
       activeRequestCount = 0;
 

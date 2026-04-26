@@ -99,27 +99,34 @@ Flux 不是简单地把 JSON 映射成组件，而是用一致的概念模型、
       "name": "email",
       "label": "Email",
       "required": true
-    },
+    }
+  ],
+  "submitAction": {
+    "action": "ajax",
+    "args": {
+      "method": "post",
+      "url": "/api/profile"
+    }
+  },
+  "actions": [
     {
       "type": "button",
       "label": "Submit",
       "onClick": {
-        "action": "submitForm",
-        "api": {
-          "method": "post",
-          "url": "/api/profile"
-        }
+        "action": "submitForm"
       }
-    }
+    },
   ]
 }
 ```
 
-Flux 会把这份 Schema 编译成可执行值，实例化表单运行时，解析渲染器属性和元数据，执行表单校验，并通过 capability 层分发提交动作。
+Flux 会把这份 Schema 编译成可执行值，实例化表单运行时，解析渲染器属性和元数据，执行表单校验，并把触发动作接入表单自身的语义化提交流程。
 
 - `Authoring`：用 JSON 描述字段、事件和 API 意图
 - `Compilation`：Flux 在热路径渲染之前先分类值、表达式、模板和渲染器元数据
 - `Runtime guarantees`：数据作用域、action scope、校验和副作用都保持清晰的运行时边界
+
+对于带有语义 owner 的界面，Flux 也保留了一小组 owner-aware 内置动作。例如，`submitForm` 会作用于当前表单运行时，`closeDialog` 默认关闭最近的活动对话框。当触发器需要从当前 owner 上下文之外显式定位某个实例时，仍然可以使用 `component:submit` 这类显式实例目标动作。
 
 同一套执行模型可以从简单表单扩展到表格、对话框和设计器工作台。
 
@@ -166,7 +173,7 @@ Flux 有意把核心词汇表保持得很小。这七个原语构成了表单、
 
 | 原语 | 职责 |
 |---|---|
-| `Base Tree` | Schema 结构和节点生命周期 |
+| `Template` | 编译后的程序结构、region 组合和生命周期锚点 |
 | `ScopeRef` | 词法数据环境 |
 | `Value` | 字面量、表达式、模板、数组和对象的执行模型 |
 | `Resource` | 运行时拥有的值生产者，例如数据加载 |
@@ -206,6 +213,8 @@ flowchart LR
 |---|---|---|
 | Core contracts | `@nop-chaos/flux-core` | 原语契约、共享类型和纯工具函数 |
 | Formula layer | `@nop-chaos/flux-formula` | 表达式和模板编译 |
+| Compiler layer | `@nop-chaos/flux-compiler` | Schema 编译、规范化和诊断 |
+| Action core | `@nop-chaos/flux-action-core` | 动作 lowering、selector 分类和控制流执行 |
 | Runtime layer | `@nop-chaos/flux-runtime` | scope、actions、validation、page 和 form 运行时 |
 | React bridge | `@nop-chaos/flux-react` | hooks、render handles 和渲染器集成 |
 
@@ -218,7 +227,7 @@ flowchart LR
 | 共享 UI 与样式 | `ui`, `tailwind-preset` | 视觉基线、基础组件和样式约定 |
 | 诊断与应用界面 | `nop-debugger`, `apps/playground` | debugger 工具和集成 playground 场景 |
 
-可复用的执行主干是 `flux-core -> flux-formula -> flux-runtime -> flux-react`。更大的功能区通常会继续拆成 `*-core` packages 承载与框架无关的逻辑，以及 `*-renderers` packages 承载 Flux / React 集成。
+可复用的执行主干是 `flux-core -> flux-formula -> flux-compiler -> flux-action-core -> flux-runtime -> flux-react`。更大的功能区通常会继续拆成 `*-core` packages 承载与框架无关的逻辑，以及 `*-renderers` packages 承载 Flux / React 集成。
 
 如果你要查看某个子系统的当前基线，请优先阅读 `docs/index.md` 和对应的架构文档。
 

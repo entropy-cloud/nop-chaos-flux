@@ -1,4 +1,4 @@
-import type { SpreadsheetDocument } from '../types.js';
+import type { SpreadsheetDocument, WorksheetFilterState } from '../types.js';
 import { cellAddress } from '../types.js';
 import { ensureSheetCells } from './document-access.js';
 
@@ -32,16 +32,20 @@ export function applyFilterRowsByCellValue(
     ...updated.workbook,
     sheets: updated.workbook.sheets.map((sheetDoc) => (
       sheetDoc.id === sheetId
-        ? {
-            ...sheetDoc,
-            rows,
-            filters: {
+        ? (() => {
+            const filters: WorksheetFilterState = {
               columns: [
                 ...((sheet.filters?.columns ?? []).filter((entry) => entry.col !== col)),
                 { col, kind: 'cellValue', value },
               ],
-            },
-          }
+            };
+
+            return {
+            ...sheetDoc,
+            rows,
+              filters,
+            };
+          })()
         : sheetDoc
     )),
   };
@@ -66,7 +70,10 @@ export function applyClearRowFilters(doc: SpreadsheetDocument, sheetId: string):
     ...updated.workbook,
     sheets: updated.workbook.sheets.map((sheetDoc) => (
       sheetDoc.id === sheetId
-        ? { ...sheetDoc, rows, filters: { columns: [] } }
+        ? (() => {
+            const filters: WorksheetFilterState = { columns: [] };
+            return { ...sheetDoc, rows, filters };
+          })()
         : sheetDoc
     )),
   };

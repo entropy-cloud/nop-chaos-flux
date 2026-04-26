@@ -20,7 +20,12 @@
 - `pnpm lint`
 - `pnpm check`
 
-人工 review 只报告这两步没有稳定拦住的问题。
+说明：
+
+- `pnpm lint` 是主入口，除了 ESLint 规则，还会先跑 `check:src-artifacts`、`check:react19`、`check:i18n-keys`
+- `pnpm check` 是补充脚本集合，当前会跑 `check:react19`、`check:src-artifacts`、`check:oversized-code-files`、`check:i18n-keys`
+- 人工 review 只报告这两步都没有稳定拦住的问题
+- 如果跳过 `pnpm lint`，本文里大量“已由自动化覆盖”的 React / Hooks / TypeScript 问题就不再视为已自动兜底
 
 ## 当前已启用的 lint / check 基线
 
@@ -29,20 +34,26 @@
 通过这些规则保证：
 
 - `react-hooks/rules-of-hooks`
+- `react-hooks/config`
 - `react-hooks/exhaustive-deps`
+- `react-hooks/gating`
 - `react-hooks/static-components`
 - `react-hooks/component-hook-factories`
 - `react-hooks/refs`
 - `react-hooks/immutability`
+- `react-hooks/incompatible-library`
 - `react-hooks/purity`
 - `react-hooks/globals`
 - `react-hooks/set-state-in-render`
 - `react-hooks/set-state-in-effect`
 - `react-hooks/error-boundaries`
+- `react-hooks/unsupported-syntax`
 - `react-hooks/use-memo`
 - `react-hooks/void-use-memo`
 - `react-hooks/preserve-manual-memoization`
 - `react-compiler/react-compiler`
+
+其中 React Hooks 规则集合来自 `eslint-plugin-react-hooks` 的 `recommended-latest`。
 
 这些规则主要确保：
 
@@ -107,7 +118,19 @@
 - 原因不是忽视类型安全，而是本项目是大型低代码引擎，schema、runtime payload、动态表单值、设计器节点数据里会存在大量弱类型对象；这些规则会把正常边界代码打成海量噪音。
 - TypeScript 安全仍要人工 review，但要关注真正危险的逃生口，而不是机械禁止所有弱类型。
 
-### 4. React 19 遗留 API 与结构性检查
+### 4. 工程卫生与 i18n 检查
+
+通过这些脚本保证：
+
+- `scripts/verify-no-src-artifacts.mjs`
+- `scripts/check-i18n-keys.mjs`
+
+这些检查主要确保：
+
+- `apps/*/src`、`packages/*/src` 下不混入 `.js`、`.d.ts`、`.js.map` 构建产物
+- 代码里使用的字面量 `t('flux.*')` key 能在 locale 文件中找到定义
+
+### 5. React 19 遗留 API 与结构性检查
 
 通过这些机制保证：
 
@@ -121,7 +144,7 @@
 - 不重新引入 legacy `react-dom` API
 - 不重新引入 `react-test-renderer`
 - 不回退到 `defaultProps` / `propTypes` / legacy context / string ref
-- tracked code files 不超过 500 行
+- tracked code files 超过 500 行时会告警，超过 700 行时失败
 
 ## 低代码项目例外
 
@@ -157,6 +180,8 @@
 
 ## 已由自动化覆盖，不必重复做人工 review 的问题
 
+以下结论以 `pnpm lint` 和 `pnpm check` 都已运行完成为前提：
+
 - Hook 条件调用
 - 依赖数组遗漏
 - `useEffectEvent` 被放进依赖数组
@@ -171,14 +196,50 @@
 - 缺失按钮 `type`
 - 无说明的 `@ts-ignore` / `@ts-nocheck`
 - 失效的 `eslint-disable`
-- tracked code files 超过 500 行
+- `src/` 目录内混入构建产物
+- 使用了未定义的字面量 `flux.*` i18n key
+- tracked code files 超过 700 行
 
 ## 自动化没有完全覆盖的点
 
 - `scripts/check-react19-legacy-apis.mjs` 只扫描 `apps/`、`packages/`、`tests/`
+- `scripts/check-i18n-keys.mjs` 只扫描 `apps/`、`packages/` 下的 `.ts` / `.tsx`，且只识别字面量 `t('flux.*')`
 - callback ref 的静态检查目前只覆盖 JSX inline arrow function 的隐式返回
+- tracked code files 在 501-700 行之间当前只告警，不会让 `pnpm check` 失败
 - lint 不能判断 waterfall、bundle 边界、竞态、取消逻辑、组件职责是否真的合理
 - lint 不能判断弱类型对象是否在正确边界内被收敛
+
+## 本项目的 React 19 使用约束
+
+以下内容不是通用 React 教程，而是 `nop-chaos-flux` 这类低代码运行时的额外约束。
+
+### 1. Store 订阅基线
+
+- `useSyncExternalStore` 是 runtime/store 订阅基线
+- Flux 的响应式结算语义定义在 store 层，不定义在 React effect 排序里
+- review 时不要把“是否用了某个 React effect 技巧”误当成运行时语义本身
+
+### 2. `startTransition` / `useTransition`
+
+- 只用于明显偏 UI 体验的非阻塞更新
+- 典型场景：设计器属性面板切换、搜索过滤、大纲树刷新、大视图切换
+- 不要把它作为核心 action、validation、source lifecycle 语义的一部分
+
+### 3. `useDeferredValue`
+
+- 只用于搜索词、过滤条件、列表视图这类显示延迟
+- 不要拿它承载 schema 数据一致性语义
+
+### 4. `useEffectEvent`
+
+- 适合 bridge 订阅、宿主事件转发、调试器监听
+- 不要借它绕过现有 `ActionScope`、`ComponentHandleRegistry`、standard renderer hooks 边界
+
+### 5. `Suspense` / `use`
+
+- 更适合资源加载、模块加载、按需 renderer 装载
+- 不要让 Flux primitive 的求值语义依赖 React suspend 机制
+- 它是宿主 UI 边界和加载边界工具，不是 runtime core semantics 的归属层
 
 ## 人工 Review 重点
 
@@ -204,9 +265,14 @@
 
 重点看：
 
-- 表单是否应改为 `useActionState` + `useFormStatus`
-- 乐观更新是否应改为 `useOptimistic`
-- `useEffect + loading/error` 是否应改为 `use(promise)` + `Suspense`
+- 在普通 React UI 或局部壳层场景下，表单是否适合改为 `useActionState` + `useFormStatus`
+- 在普通 React UI 或局部壳层场景下，乐观更新是否适合改为 `useOptimistic`
+- 在普通 React UI 或局部加载边界场景下，`useEffect + loading/error` 是否适合改为 `use(promise)` + `Suspense`
+
+补充约束：
+
+- 不要默认把这些模式当成 Flux form runtime、action/capability model、async/source lifecycle 的替代方案
+- 先判断当前代码是“普通 React UI 问题”，还是“低代码 runtime 语义问题”
 
 ### P1: 低代码引擎边界
 

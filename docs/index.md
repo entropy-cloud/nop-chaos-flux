@@ -28,6 +28,7 @@ Choose the smallest document that matches the task.
 
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
+| Review which Flux architecture improvements are still worth pursuing without changing the current normative baseline | `docs/analysis/2026-04-26-flux-architecture-improvement-opportunities.md` | `docs/architecture/flux-design-principles.md`, `docs/architecture/flux-dsl-vm-extensibility.md` |
 | Understand the architecture hierarchy, reading order, or which architecture docs own precedence | `docs/architecture/README.md` | `docs/references/architecture-doc-status-matrix.md` |
 | Understand the current architecture baseline | `docs/architecture/flux-design-principles.md` | `docs/architecture/frontend-programming-model.md` for top-level precedence, then `docs/architecture/flux-core.md` for the codebase-wide baseline |
 | Understand Flux's top-level frontend programming model, primitive categories, macro layering, and how the primitives compose into one execution model | `docs/architecture/frontend-programming-model.md` | `docs/architecture/flux-core.md` |

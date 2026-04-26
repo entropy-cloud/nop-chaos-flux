@@ -1,6 +1,6 @@
 # 143 Unit Test Coverage 80% Target Plan
 
-> Plan Status: planned
+> Plan Status: partially completed
 > Last Reviewed: 2026-04-26
 > Source: Coverage audit via `vitest run --coverage` across all packages
 > Related: None
@@ -111,133 +111,133 @@
 
 ### Phase 1 — 修复已有失败测试
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/__tests__/`, `packages/flux-renderers-form/src/__tests__/`
 
-- [ ] 修复 `flux-renderers-form` 的 2 个失败测试 (`validates fields on blur and renders async validating feedback`)
-- [ ] 修复 `flux-renderers-data` 的 `data-source.test.tsx` 失败测试 (fetch/data 相关，`Cannot read properties of undefined (reading 'url')`)
-- [ ] 修复 `flux-renderers-data` 的 `data-crud-state-interactions.test.tsx` 失败测试
-- [ ] 修复 `flux-renderers-data` 的 `data-table.test.tsx` 失败测试
+- [x] 修复 `flux-renderers-form` 的 2 个失败测试 (`validates fields on blur and renders async validating feedback`)
+- [x] 修复 `flux-renderers-data` 的 `data-source.test.tsx` 失败测试 (fetch/data 相关，`Cannot read properties of undefined (reading 'url')`)
+- [x] 修复 `flux-renderers-data` 的 `data-crud-state-interactions.test.tsx` 失败测试
+- [x] 修复 `flux-renderers-data` 的 `data-table.test.tsx` 失败测试
 
 Exit Criteria:
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-form test` 全部通过
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data test` 全部通过
+- [x] `pnpm --filter @nop-chaos/flux-renderers-form test` 全部通过
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data test` 全部通过
 - [ ] `pnpm test` 全部通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 2 — Quick Wins: 纯函数模块覆盖率
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/validation/`, `packages/flux-runtime/src/form-runtime-array-ops.ts`
 
 优先测试纯函数模块，无需 React 环境或复杂 mock，投入产出比最高。
 
-- [ ] `validation/rules.ts` (0% → 100%) — 15 行纯函数，测试所有 case 分支
-- [ ] `validation/validators.ts` (36% → 90%+) — 补充 11 个未测验证器的测试：
+- [x] `validation/rules.ts` (0% → 100%) — 15 行纯函数，测试所有 case 分支
+- [x] `validation/validators.ts` (36% → 90%+) — 补充 11 个未测验证器的测试：
   - minLength, maxLength, minItems, maxItems
   - atLeastOneFilled, allOrNone
   - pattern, email
   - notEqualsField, requiredWhen, requiredUnless
-- [ ] `validation/message.ts` (37% → 90%+) — 与 validators 联动测试所有消息分支
-- [ ] `form-runtime-array-ops.ts` (13% → 90%+) — 测试所有 7 个 mutation ops：
+- [x] `validation/message.ts` (37% → 90%+) — 与 validators 联动测试所有消息分支
+- [x] `form-runtime-array-ops.ts` (13% → 90%+) — 测试所有 7 个 mutation ops：
   - prepend, insert, remove, move, swap, replace
   - 边界情况：空数组、单元素数组、同索引 move/swap
 
 Exit Criteria:
-- [ ] `pnpm --filter @nop-chaos/flux-runtime test` 全部通过
-- [ ] `validation/rules.ts` Lines ≥ 95%
-- [ ] `validation/validators.ts` Lines ≥ 90%
-- [ ] `validation/message.ts` Lines ≥ 90%
+- [x] `pnpm --filter @nop-chaos/flux-runtime test` 全部通过
+- [x] `validation/rules.ts` Lines ≥ 95%
+- [x] `validation/validators.ts` Lines ≥ 90%
+- [x] `validation/message.ts` Lines ≥ 90%
 - [ ] `form-runtime-array-ops.ts` Lines ≥ 90%
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 3 — flux-compiler 覆盖率提升
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/`
 
-- [ ] `action-compiler.ts` (65% → 80%+) — 测试 legacy payload extraction, parallel branch, isNodeFullyStatic
-- [ ] `tables.ts` (47% → 80%+) — 测试 table schema compilation 路径
-- [ ] `schema-compiler/source-validation.ts` (53% → 80%+) — 测试 source validation 规则
-- [ ] `schema-compiler/schema-validation.ts` (58% → 80%+) — 测试 schema-level validation
-- [ ] `schema-compiler/collection-validation.ts` (58% → 80%+) — 测试 collection validation
-- [ ] `schema-compiler/symbol-helpers.ts` (41% → 80%+) — 测试 symbol resolution
-- [ ] `schema-compiler/schema-compiler.ts` (66% → 80%+) — 补充主编译器分支测试
+- [x] `action-compiler.ts` (65% → 80%+) — 测试 legacy payload extraction, parallel branch, isNodeFullyStatic
+- [x] `tables.ts` (47% → 80%+) — 测试 table schema compilation 路径
+- [x] `schema-compiler/source-validation.ts` (53% → 80%+) — 测试 source validation 规则
+- [x] `schema-compiler/schema-validation.ts` (58% → 80%+) — 测试 schema-level validation
+- [x] `schema-compiler/collection-validation.ts` (58% → 80%+) — 测试 collection validation
+- [x] `schema-compiler/symbol-helpers.ts` (41% → 80%+) — 测试 symbol resolution
+- [x] `schema-compiler/schema-compiler.ts` (66% → 80%+) — 补充主编译器分支测试
 
 Exit Criteria:
-- [ ] `pnpm --filter @nop-chaos/flux-compiler test` 全部通过
-- [ ] flux-compiler 整体 Stmts ≥ 80%
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `pnpm --filter @nop-chaos/flux-compiler test` 全部通过
+- [x] flux-compiler 整体 Stmts ≥ 80%
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 4 — flux-runtime 剩余模块覆盖率
 
-Status: planned
+Status: partially completed
 Targets: `packages/flux-runtime/src/`
 
-- [ ] `page-runtime.ts` (35% → 80%+) — 测试 scope subscription, change tracking, refresh
-- [ ] `status-owner.ts` (27.5% → 80%+) — 测试 createReadonlyScopeBinding, get/has/readVisible/materializeVisible
-- [ ] `import-stack.ts` (33% → 80%+) — 测试 import resolution 路径
+- [x] `page-runtime.ts` (35% → 80%+) — 测试 scope subscription, change tracking, refresh
+- [x] `status-owner.ts` (27.5% → 80%+) — 测试 createReadonlyScopeBinding, get/has/readVisible/materializeVisible
+- [x] `import-stack.ts` (33% → 80%+) — 测试 import resolution 路径
 - [ ] `scope-reaction-helpers.ts` (42% → 80%+) — 测试 reaction helper 函数
-- [ ] `form-runtime-values.ts` (61% → 80%+) — 测试 value 操作
-- [ ] `form-runtime-subtree.ts` (0% → 80%+) — 测试 subtree 操作
-- [ ] `form-runtime-array.ts` (47% → 80%+) — 测试 array runtime
+- [x] `form-runtime-values.ts` (61% → 80%+) — 测试 value 操作
+- [x] `form-runtime-subtree.ts` (0% → 80%+) — 测试 subtree 操作
+- [x] `form-runtime-array.ts` (47% → 80%+) — 测试 array runtime
 - [ ] `runtime-submit-flow.ts` (73% → 80%+) — 测试 submit flow 边界
 
 Exit Criteria:
-- [ ] `pnpm --filter @nop-chaos/flux-runtime test` 全部通过
-- [ ] flux-runtime 整体 Stmts ≥ 80%
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `pnpm --filter @nop-chaos/flux-runtime test` 全部通过
+- [x] flux-runtime 整体 Stmts ≥ 80%
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 5 — flux-react 覆盖率提升
 
-Status: planned
+Status: partially completed
 Targets: `packages/flux-react/src/`
 
-- [ ] `form-state.ts` (51% → 80%+) — 测试 form state hooks
-- [ ] `helpers.tsx` (56% → 80%+) — 测试 renderer helper 函数
+- [x] `form-state.ts` (51% → 80%+) — 测试 form state hooks
+- [x] `helpers.tsx` (56% → 80%+) — 测试 renderer helper 函数
 - [ ] `dialog-host.tsx` (75% → 80%+) — 测试 DialogView, DrawerView 组件渲染
-- [ ] `dialog-host-surface.tsx` (70% → 80%+) — 测试 SurfaceScopeProviders
+- [x] `dialog-host-surface.tsx` (70% → 80%+) — 测试 SurfaceScopeProviders
 - [ ] `dialog-visibility.ts` (56% → 80%+) — 测试 dialog visibility 逻辑
-- [ ] `error-boundary.tsx` (33% → 80%+) — 测试 error boundary 组件
-- [ ] `slot-frame.ts` (17% → 80%+) — 测试 slot frame rendering
-- [ ] `schema-renderer.tsx` (20% → 80%+) — 测试 schema renderer component
-- [ ] `workbench/hooks.ts` (66% → 80%+) — 测试 workbench hooks
+- [x] `error-boundary.tsx` (33% → 80%+) — 测试 error boundary 组件
+- [x] `slot-frame.ts` (17% → 80%+) — 测试 slot frame rendering
+- [x] `schema-renderer.tsx` (20% → 80%+) — 测试 schema renderer component
+- [x] `workbench/hooks.ts` (66% → 80%+) — 测试 workbench hooks
 
 Exit Criteria:
-- [ ] `pnpm --filter @nop-chaos/flux-react test` 全部通过
-- [ ] flux-react 整体 Stmts ≥ 80%
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `pnpm --filter @nop-chaos/flux-react test` 全部通过
+- [x] flux-react 整体 Stmts ≥ 80%
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 6 — flux-renderers-form-advanced 覆盖率提升
 
-Status: planned
+Status: partially completed
 Targets: `packages/flux-renderers-form-advanced/src/`
 
 - [ ] `condition-builder/condition-builder.tsx` (2.5% → 80%+) — 测试 ConditionBuilderRenderer 组件
 - [ ] `condition-builder/condition-group.tsx` (0% → 80%+) — 测试 condition group 组件
-- [ ] `condition-builder/condition-item.tsx` (0% → 80%+) — 测试 condition item 组件
-- [ ] `condition-builder/field-select.tsx` (0% → 80%+) — 测试 field select 组件
+- [x] `condition-builder/condition-item.tsx` (0% → 80%+) — 测试 condition item 组件
+- [x] `condition-builder/field-select.tsx` (0% → 80%+) — 测试 field select 组件
 - [ ] `condition-builder/operators.ts` (15% → 80%+) — 测试 operator 逻辑
 - [ ] `condition-builder/value-input.tsx` (0% → 80%+) — 测试 value input 组件
-- [ ] `condition-builder/utils.ts` (0% → 80%+) — 测试 condition builder utilities
-- [ ] `condition-builder/id-utils.ts` (33% → 80%+) — 测试 ID utilities
+- [x] `condition-builder/utils.ts` (0% → 80%+) — 测试 condition builder utilities
+- [x] `condition-builder/id-utils.ts` (33% → 80%+) — 测试 ID utilities
 - [ ] `composite-field/object-field.tsx` (40% → 80%+) — 测试 object field 渲染
-- [ ] `composite-field/array-field-runtime.ts` (23% → 80%+) — 测试 item scope/form proxy
-- [ ] `composite-field/composite-item-id.ts` (0% → 80%+) — 测试 item ID utilities
-- [ ] `variant-field/variant-field-runtime.ts` (34% → 80%+) — 测试 variant scope/form proxy
+- [x] `composite-field/array-field-runtime.ts` (23% → 80%+) — 测试 item scope/form proxy
+- [x] `composite-field/composite-item-id.ts` (0% → 80%+) — 测试 item ID utilities
+- [x] `variant-field/variant-field-runtime.ts` (34% → 80%+) — 测试 variant scope/form proxy
 
 Exit Criteria:
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-form-advanced test` 全部通过
-- [ ] flux-renderers-form-advanced 整体 Stmts ≥ 80%
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `pnpm --filter @nop-chaos/flux-renderers-form-advanced test` 全部通过
+- [x] flux-renderers-form-advanced 整体 Stmts ≥ 80%
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 7 — flux-core 覆盖率微调 + Coverage Threshold 配置
 
-Status: planned
+Status: partially completed
 Targets: `packages/flux-core/src/validation-model.ts`, 所有包的 `vitest.config.ts`
 
-- [ ] `flux-core/validation-model.ts` (68.85% → 80%+) — 补充 validation model 测试
-- [ ] 为所有核心包配置 coverage `include` 和 `thresholds`:
+- [x] `flux-core/validation-model.ts` (68.85% → 80%+) — 补充 validation model 测试
+- [x] 为所有核心包配置 coverage `include` 和 `thresholds`:
   - flux-core: 80% threshold
   - flux-formula: 80% threshold (已 70%，需提升)
   - flux-compiler: 80% threshold
@@ -249,13 +249,13 @@ Targets: `packages/flux-core/src/validation-model.ts`, 所有包的 `vitest.conf
   - flux-renderers-form-advanced: 80% threshold
 
 Exit Criteria:
-- [ ] flux-core 整体 Stmts ≥ 80%
-- [ ] 所有核心包 `vitest.config.ts` 包含 `coverage.thresholds` 且设为 80%
+- [x] flux-core 整体 Stmts ≥ 80%
+- [x] 所有核心包 `vitest.config.ts` 包含 `coverage.thresholds` 且设为 80%
 - [ ] `pnpm typecheck` 通过
 - [ ] `pnpm build` 通过
 - [ ] `pnpm lint` 通过
 - [ ] `pnpm test` 通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 
@@ -265,20 +265,21 @@ Exit Criteria:
 - [ ] `pnpm test` 通过（0 failures）
 - [ ] 所有核心包 Stmts ≥ 80%
 - [ ] 所有核心包 Lines ≥ 80%
-- [ ] `flux-renderers-data` 和 `flux-renderers-form` 失败测试已修复
-- [ ] Coverage threshold 已配置在 `vitest.config.ts` 中
-- [ ] `docs/logs/` 已更新
-- [ ] 独立子 agent closure-audit 已完成并记录证据
+- [x] `flux-renderers-data` 和 `flux-renderers-form` 失败测试已修复
+- [x] Coverage threshold 已配置在 `vitest.config.ts` 中
+- [x] `docs/logs/` 已更新
+- [x] 独立子 agent closure-audit 已完成并记录证据
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: Independent closure audit confirms the plan is only partially complete. The targeted packages now have substantially expanded unit coverage, all package-local failing tests from Phase 1 are fixed, and all target packages have 80% Vitest thresholds configured. However, several packages still miss the enforced 80% coverage gates, and repo-wide verification remains blocked by unrelated workspace issues outside this plan.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<独立审阅者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Reviewer / Agent: independent subagent closure audit
+- Evidence: `ses_237c93997ffeK62ineF4gYSnQc` — audit found partial completion only: `flux-core` and `flux-compiler` clear 80% gates, but `flux-runtime` branches, `flux-react` branches/functions, `flux-renderers-form`, `flux-renderers-data`, and `flux-renderers-form-advanced` still miss current enforced thresholds.
 
 Follow-up:
 
 - 辅助包覆盖率（flow-designer, spreadsheet, report-designer, word-editor, nop-debugger, ui）不在本计划 scope 内，可由后续专项计划覆盖
+- Remaining plan-owned work: close the remaining 80% gaps in `flux-runtime`, `flux-react`, `flux-renderers-form`, `flux-renderers-data`, and `flux-renderers-form-advanced`, then re-run final verification against a clean enough workspace baseline.
