@@ -3,7 +3,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
+import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronRightIcon, DotIcon } from 'lucide-react';
 import type { TreeSchema } from './schemas';

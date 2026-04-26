@@ -3,7 +3,7 @@ import type { ActionNamespaceProvider, RendererComponentProps, SchemaValue } fro
 import type { DesignerHostStatusSummary } from '@nop-chaos/flow-designer-core';
 import { hasRendererSlotContent, useCurrentActionScope, useRendererEnv, WorkbenchShell } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
+import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { createDesignerCore, layoutWithElk, layoutTreeWithElk, simpleTreeLayout, projectTree } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, GraphEdge, GraphNode, NormalizedDesignerConfig, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { Button, cn, DataViewer, Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';

@@ -1,1 +1,1 @@
-export { createProjectedScopeStore as createProjectedScopeHelpers } from '@nop-chaos/flux-runtime';
+export { createProjectedScopeStore as createProjectedScopeHelpers } from '@nop-chaos/flux-react';

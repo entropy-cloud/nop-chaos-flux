@@ -68,3 +68,8 @@ export { useResolvedContainer, useContainerDomRegistration, resolveContainerElem
 export { useSourceValue } from './use-source-value';
 export type { SourceTransientState } from './use-node-source-props';
 export type { WorkbenchShellProps } from './workbench';
+
+export { publishOwnerStatus } from '@nop-chaos/flux-runtime';
+export { createFormComponentHandle } from '@nop-chaos/flux-runtime';
+export { executeApiObject } from '@nop-chaos/flux-runtime';
+export { createProjectedScopeStore } from '@nop-chaos/flux-runtime';

@@ -1,11 +1,11 @@
-import { useMemo, useEffect, useState, useCallback } from 'react'
+import { useMemo, useEffect, useRef, useState, useCallback } from 'react'
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react'
 import type { RendererComponentProps } from '@nop-chaos/flux-core'
 import type { WordEditorHostStatusSummary } from '@nop-chaos/word-editor-core'
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react'
 import { t } from '@nop-chaos/flux-i18n'
-import { publishOwnerStatus } from '@nop-chaos/flux-runtime'
+import { publishOwnerStatus } from '@nop-chaos/flux-react'
 import { CanvasEditorBridge, createDatasetStore, createEditorStore, createSavedDocumentData, saveDocument, saveDatasets, loadDatasets } from '@nop-chaos/word-editor-core'
 import type { DataSetSourceType, DataColumnInput, DataSet, DocChart, DocCode, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core'
 import {
@@ -31,6 +31,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   const editorStore = useMemo(() => createEditorStore(), [])
   const datasetStore = useMemo(() => createDatasetStore(), [])
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets')
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false)
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null)
@@ -44,6 +45,11 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
       : null
   })
+  useEffect(() => {
+    return () => {
+      if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current)
+    }
+  }, [])
   const titleContent = resolveRendererSlotContent(props, 'title')
   const actionScope = useCurrentActionScope()
 
@@ -130,7 +136,8 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       saveDatasets(datasetStore.getAll())
       editorStore.setDirty(false)
       setSaveMessage(t('wordEditor.saved'))
-      setTimeout(() => setSaveMessage(null), 2000)
+      if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current)
+      saveMessageTimerRef.current = setTimeout(() => setSaveMessage(null), 2000)
     }
   }, [bridge, charts, codes, datasetStore, editorStore])
 

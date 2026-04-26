@@ -3,7 +3,7 @@ import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } fr
 import type { SpreadsheetHostStatusSummary } from '@nop-chaos/spreadsheet-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
+import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { createSpreadsheetCore, type SpreadsheetConfig, type SpreadsheetDocument, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import { cn } from '@nop-chaos/ui';
 import { deriveHostSnapshot } from './bridge.js';

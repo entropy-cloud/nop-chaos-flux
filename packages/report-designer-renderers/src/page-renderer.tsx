@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalSt
 import type { ActionNamespaceProvider, ActionResult, RendererComponentProps, RenderNodeInput } from '@nop-chaos/flux-core';
 import type { ReportDesignerHostStatusSummary } from '@nop-chaos/report-designer-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, WorkbenchShell } from '@nop-chaos/flux-react';
-import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
+import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import { createSpreadsheetBridge } from '@nop-chaos/spreadsheet-renderers';
 import type {

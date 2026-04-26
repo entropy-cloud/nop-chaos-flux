@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { BaseSchema, DynamicRendererSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
-import { executeApiObject } from '@nop-chaos/flux-runtime';
+import { executeApiObject } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
