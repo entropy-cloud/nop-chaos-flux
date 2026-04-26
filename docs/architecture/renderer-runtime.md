@@ -501,7 +501,7 @@ function useActionDispatcher(): RendererRuntime['dispatch'];
 function useCurrentForm(): FormRuntime | undefined;
 function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[];
 function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined;
-function useCurrentFormState<T>(selector: (state: FormStoreState) => T, equalityFn?: (a: T, b: T) => boolean, options?: { enabled?: boolean }): T;
+function useCurrentFormState<T>(selector: (state: FormStoreState) => T, equalityFn?: (a: T, b: T) => boolean, options?: { enabled?: boolean; path?: string }): T;
 function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
 function useValidationNodeState(path: string): FormFieldStateSnapshot;
 function useFieldError(path: string): ValidationError | undefined;
@@ -533,6 +533,11 @@ Current scope-hook semantics are:
 - `readOwn()` remains a current-layer-only API; selector inheritance should come from hook choice, not hidden fields on own snapshots.
 
 Form-specific hooks such as `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormState`, `useCurrentFormFieldState`, `useValidationNodeState`, `useFieldError`, `useOwnedFieldState`, `useChildFieldState`, `useAggregateError`, and `useCurrentFormModelGeneration` also exist and are part of the active form integration surface.
+
+Current form-hook implementation note:
+
+- `useCurrentFormState`, `useCurrentFormFieldState`, and `useFieldError` now share named subscription helpers in `packages/flux-react/src/hook-subscriptions.ts`.
+- `useCurrentFormState(..., { path })` is the active path-aware subscription surface for single-path value reads; callers that only need one form value should prefer it over whole-store subscriptions.
 
 ## Regions And Fragment Rendering
 

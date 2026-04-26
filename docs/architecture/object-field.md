@@ -39,7 +39,8 @@ interface ObjectFieldSchema extends BaseSchema {
 
 - `transformInAction` / `transformOutAction` 已接线
 - `validateValueAction` 仍不是当前已接线 baseline，不应误读为 object-field 当前会额外跑 owner-level validate pipeline
-- 当前 projected `ScopeRef` / `FormRuntime` view 已开始复用共享 helper substrate；但 `object-field` 仍保留 renderer-local working copy + async writeback 的 live behavior，这与本文 target baseline 仍有差距，应由独立 successor plan 处理语义对齐
+- 默认 inline live-edit 路径现在直接投影 parent owner 当前值：当 parent owner 用整对象替换 `name` 对应值时，`object-field` child scope / projected form 会直接反映这次替换，而不是继续停留在 renderer-local working copy 上
+- 只有声明了 `transformInAction` 或 `transformOutAction` 的场景，`object-field` 才会保留局部 working value，用来承载 adapted draft value 与 committed parent value 之间的必要差异
 
 ## Key Rule: Child Names Are Relative
 
@@ -91,6 +92,7 @@ interface ObjectFieldSchema extends BaseSchema {
 - `object-field` 默认不要求 submit-time owner `validateValueAction` / `transformOutAction`
 - `object-field` 默认不创建新的独立 owner runtime
 - 当前 live implementation 会创建 projected `FormRuntime` / `ScopeRef` view，但这些 view 继续把 registration、validation、writeback 绑定到 parent owner
+- 默认未声明 transform actions 的场景下，这些 projected views 直接读取 parent owner 当前对象值，而不是额外维护独立 draft 副本
 - 推荐实现是复用父 `FormRuntime` / `ValidationScopeRuntime`，并对 `name` 对应对象根做 owner-root projection
 
 如果某个对象值真的需要“编辑中”和“已确认”两阶段语义，应优先使用 `detail-field` 或其它 surface-backed owner，而不是把 `object-field` 本身升级成 staged submit owner。

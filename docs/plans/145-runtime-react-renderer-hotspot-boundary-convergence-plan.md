@@ -1,6 +1,6 @@
 # 145 Runtime React Renderer Hotspot Boundary Convergence Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-26
 > Source: `docs/skills/code-refactor-discovery-prompt.md`, `docs/references/refactoring-guidelines.md`, `docs/analysis/2026-04-26-flux-architecture-improvement-opportunities.md`, live repo audit of `packages/flux-react`, `packages/flux-runtime`, `packages/flux-renderers-form-advanced`, `packages/flux-renderers-data`, `packages/flow-designer-renderers`, `packages/word-editor-renderers`, `packages/report-designer-renderers`, and `apps/playground`
 > Related: `docs/plans/123-flux-runtime-split-and-boundary-hardening-plan.md`, `docs/plans/125-flux-runtime-async-data-internal-reorganization-plan.md`, `docs/plans/133-node-renderer-runtime-stack-and-import-boundary-refactor-plan.md`, `docs/plans/138-crud-editing-and-request-owned-runtime-successor-plan.md`, `docs/plans/45-react19-compiler-and-high-frequency-interaction-refactor-plan.md`
@@ -173,50 +173,50 @@ Exit Criteria:
 
 ### Phase 5 - Converge Flux React And Form Runtime Internal Substrate
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/hooks.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-runtime-owner.ts`
 
-- [ ] 收敛 `hooks.ts` 内 subscribe/getSnapshot/selector 模板，减少重复样板并保持 external-store 订阅行为不变。
-- [ ] 收敛 `form-runtime.ts` 与 `form-runtime-owner.ts` 的 public API、owner orchestration、validation side effects 边界。
-- [ ] 只在明确有 ROI 的监听器场景评估 `useEffectEvent`，不做机械 React 19 迁移。
-- [ ] 为 runtime/react hooks 关键订阅语义补 focused tests，并运行相关 package verification。
+- [x] 收敛 `hooks.ts` 内 subscribe/getSnapshot/selector 模板，减少重复样板并保持 external-store 订阅行为不变。
+- [x] 收敛 `form-runtime.ts` 与 `form-runtime-owner.ts` 的 public API、owner orchestration、validation side effects 边界。
+- [x] 只在明确有 ROI 的监听器场景评估 `useEffectEvent`，不做机械 React 19 迁移。
+- [x] 为 runtime/react hooks 关键订阅语义补 focused tests，并运行相关 package verification。
 
 Exit Criteria:
 
-- [ ] `packages/flux-react/src/hooks.ts` 的 external-store subscribe/getSnapshot/selector 样板由命名良好的共享 helper 承载，或 `hooks.ts` 本身退化为薄 orchestrator / re-export 入口，而 hooks contract 保持不变
-- [ ] `form-runtime.ts` 与 `form-runtime-owner.ts` 的 owner orchestration、validation side-effect、public API bridging 由明确模块边界承载，不再让两侧继续平行生长同类 orchestration logic
-- [ ] 相关 `docs/architecture/renderer-runtime.md`、`docs/architecture/form-validation.md`、`docs/architecture/flux-runtime-module-boundaries.md` 已更新为最终设计状态
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `packages/flux-react/src/hooks.ts` 的 external-store subscribe/getSnapshot/selector 样板由命名良好的共享 helper 承载，或 `hooks.ts` 本身退化为薄 orchestrator / re-export 入口，而 hooks contract 保持不变
+- [x] `form-runtime.ts` 与 `form-runtime-owner.ts` 的 owner orchestration、validation side-effect、public API bridging 由明确模块边界承载，不再让两侧继续平行生长同类 orchestration logic
+- [x] 相关 `docs/architecture/renderer-runtime.md`、`docs/architecture/form-validation.md`、`docs/architecture/flux-runtime-module-boundaries.md` 已更新为最终设计状态
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 6 - Workspace Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: workspace verification, focused tests, affected architecture docs, daily log, this plan
 
-- [ ] 运行所有受影响包和工作区验证，确认重构未改变行为。
-- [ ] 进行完整 plan re-audit，确认没有剩余 plan-owned hotspot 仍停留在“半收口”状态。
-- [ ] 启动独立 closure audit，区分“接口已存在”与“语义已落地”。
+- [x] 运行所有受影响包和工作区验证，确认重构未改变行为。
+- [x] 进行完整 plan re-audit，确认没有剩余 plan-owned hotspot 仍停留在“半收口”状态。
+- [x] 启动独立 closure audit，区分“接口已存在”与“语义已落地”。
 
 Exit Criteria:
 
-- [ ] 所有 execution phases 均已完成并有可追溯验证证据
-- [ ] 相关 `docs/architecture/`、`docs/components/`、`docs/references/`、`docs/examples/` 中受影响条目已更新为最终设计状态
-- [ ] `docs/logs/` 对应日期条目已更新
-- [ ] 独立 closure audit 明确无剩余 plan-owned work
+- [x] 所有 execution phases 均已完成并有可追溯验证证据
+- [x] 相关 `docs/architecture/`、`docs/components/`、`docs/references/`、`docs/examples/` 中受影响条目已更新为最终设计状态
+- [x] `docs/logs/` 对应日期条目已更新
+- [x] 独立 closure audit 明确无剩余 plan-owned work
 
 ## Validation Checklist
 
 - [x] 高级表单 projection/proxy substrate 已有 focused behavior tests
 - [x] CRUD query/table ownership 收敛已有 focused behavior tests
 - [x] flow-designer tree/graph adapter 收敛已有 focused behavior tests
-- [ ] `flux-react` hooks 与 form runtime 收敛已有 focused behavior tests
+- [x] `flux-react` hooks 与 form runtime 收敛已有 focused behavior tests
 - [x] flow-designer 大型跨域测试已按 owner boundary 重新分组，或已明确最小保留理由
-- [ ] 相关 docs/components/examples 已同步
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 相关 docs/components/examples 已同步
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -229,13 +229,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写：为什么本计划可以关闭，以及哪些 hotspot 已被 live repo 重新审计确认收口>>
+Status Note: Plan 145 can close because the live repo now shows all six phases landed and re-audited within the intended `runtime -> react -> form-advanced / CRUD / flow-designer` result surface: advanced-form projected-owner substrate was converged without changing public semantics, CRUD/table ownership now stays on the owner-state / form-handle path, flow-designer page-shell and adapter boundaries were split and re-tested by owner surface, and the remaining `flux-react` / `flux-runtime` subscription-orchestration hotspot was reduced to shared helpers plus focused runtime field-state merge infrastructure. Full workspace verification now passes again (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`), and the only remaining adjacent semantic debt (`object-field` inline semantic alignment) has been explicitly moved to `docs/plans/147-object-field-inline-semantics-alignment-successor-plan.md` instead of staying as unnamed plan-owned residue.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<独立审阅者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Reviewer / Agent: independent general subagent
+- Evidence: `task_id ses_235f82372ffeNrcYm8Fd1AFzcc` re-audited the live repo against `docs/plans/00-plan-authoring-and-execution-guide.md`, confirmed Phases 1-4 were already closed, flagged the missing Phase 5 doc sync and unnamed `object-field` successor-plan reference, and those closure blockers were resolved before final plan closure.
 
 Follow-up:
 
 - `word-editor` / `report-designer` host projection and host-contract vocabulary convergence now move to `docs/plans/146-domain-host-projection-and-vocabulary-convergence-plan.md`; they are intentionally kept out of Plan 145 after the 2026-04-26 live audit narrowed this plan back to the `runtime -> react -> form-advanced / CRUD / flow-designer` result surface.
+- `object-field`'s remaining inline semantic alignment work now moves to `docs/plans/147-object-field-inline-semantics-alignment-successor-plan.md`.

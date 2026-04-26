@@ -519,6 +519,10 @@ Rules:
 6. owner-local value writes clear external errors from the same `sourceId` for the changed leaf path and its owned ancestor chain up to the current owner root, unless a caller deliberately reapplies them
 7. subtree-wide or scope-root external errors therefore clear when a descendant write invalidates the same owner-local external error context
 
+Current implementation note:
+
+- live code now routes this owner-local external-error rebuild through shared field-state merge helpers instead of duplicating the same merge/rebuild sequence in both `form-runtime.ts` and `form-runtime-owner.ts`
+
 ## Compile-Time Collection
 
 > **Implementation Status**: The target interface below (`ValidationCompileContribution`) is a **Phase 3 goal**. The current codebase uses `ValidationContributor` (defined in `flux-core/src/types/renderer-core.ts`) which provides a subset of these capabilities (`kind`, `valueKind`, `getFieldPath`, `collectRules`, `getChildFieldPathPrefix`). The full `ownerResolution`-driven boundary classification and `collectDependencies` are not yet implemented. Do not search for `ValidationCompileContribution` in code; search for `ValidationContributor` instead.

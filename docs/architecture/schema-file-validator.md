@@ -725,6 +725,6 @@ Rules:
 
 ### Integration With External Sources
 
-The `xui:location` schema extension field is the intended minimal carrier for authoring-origin source location on individual nodes. The Loader or a pre-compilation step may populate `xui:location` strings on schema nodes before the schema enters Flux. The compiler reads this field during diagnostics emission and propagates it into `sourceLocation`.
+The `xui:location` schema extension field remains the intended minimal carrier for authoring-origin source location on individual nodes. The Loader or a pre-compilation step may populate `xui:location` strings on schema nodes before the schema enters Flux, but the current compiler baseline does not yet read that field automatically. Today the compiler auto-populates `sourceLocation.file` from `schemaUrl`, and richer per-node locations must be supplied through explicit `sourceLocation` overrides at emit sites.
 
 If future requirements prove `xui:location` insufficient, a richer resource-level location structure may be introduced without changing the `SchemaDiagnosticSourceLocation` contract.

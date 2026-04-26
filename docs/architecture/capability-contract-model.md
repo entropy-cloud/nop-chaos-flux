@@ -139,6 +139,7 @@ interface ResolvedAuthoringContract {
   scopeExports?: Record<string, FluxValueShape>;
   hostProjection?: HostProjectionContract;
   hostActions?: Record<string, CapabilityMethodContract>;
+  hostManifest?: HostCapabilityProjectionManifest;
 }
 ```
 
@@ -156,6 +157,7 @@ Normative distinction inside that adapter:
 - `scopeExports` = narrow readonly Flux-native exports such as owner summaries, not host projection
 - `hostProjection` = readonly host/domain projection published only by `domain-host-renderer`
 - `hostActions` = namespaced host/domain capability methods published only by `domain-host-renderer`
+- `hostManifest` = the fully resolved host manifest for tools that need family, version, compatibility, or metadata in addition to the derived projection/actions view
 
 Authoring/runtime split:
 
@@ -167,7 +169,7 @@ Current assembly order for `ResolvedAuthoringContract`:
 
 1. start from `RendererDefinition.rendererClass` and `rendererTraits`
 2. project ordinary renderer metadata from `propContracts`, `eventContracts`, `componentCapabilityContracts`, and `scopeExportContracts`
-3. if `hostContract` exists, resolve the default manifest and derive `hostProjection` plus `hostActions`
+3. if `hostContract` exists, resolve the default manifest and derive `hostProjection`, `hostActions`, and `hostManifest`
 4. if `hostContract` does not exist, host-only fields stay absent
 
 Default behavior:
