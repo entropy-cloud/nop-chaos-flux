@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="46%" r="80%">
+      <stop offset="0%" stop-color="#182038"/>
+      <stop offset="55%" stop-color="#0c1224"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </radialGradient>
+    <radialGradient id="core" cx="38%" cy="30%" r="68%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="22%" stop-color="#f0faff"/>
+      <stop offset="48%" stop-color="#a0e4ff"/>
+      <stop offset="74%" stop-color="#4ab8f0"/>
+      <stop offset="100%" stop-color="#1466b8"/>
+    </radialGradient>
+    <radialGradient id="coreHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#90d8ff" stop-opacity="0.35"/>
+      <stop offset="40%" stop-color="#70c8ff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#5090d0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="basinInner" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3a80c0" stop-opacity="0.06"/>
+      <stop offset="40%" stop-color="#3080c0" stop-opacity="0.1"/>
+      <stop offset="75%" stop-color="#2870b0" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#2060a0" stop-opacity="0.04"/>
+    </radialGradient>
+    <radialGradient id="basinRim" cx="50%" cy="50%" r="50%">
+      <stop offset="85%" stop-color="#60b8f0" stop-opacity="0"/>
+      <stop offset="96%" stop-color="#70c0ff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#80c8ff" stop-opacity="0.08"/>
+    </radialGradient>
+    <linearGradient id="trajColor" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe080"/>
+      <stop offset="35%" stop-color="#ffb840"/>
+      <stop offset="70%" stop-color="#ffa030"/>
+      <stop offset="100%" stop-color="#ffe080"/>
+    </linearGradient>
+    <linearGradient id="divergeColor" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffa0a8"/>
+      <stop offset="100%" stop-color="#ff5870"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="bigGlow">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="out" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 1L9 5L0 9Z" fill="#ff6878"/>
+    </marker>
+    <marker id="in" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 1L9 5L0 9Z" fill="#5cc8ff"/>
+    </marker>
+    <marker id="toCore" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 1L9 5L0 9Z" fill="#ffd060"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+
+  <g opacity="0.15" fill="#c0d0e8">
+    <circle cx="90" cy="60" r="1"/><circle cx="310" cy="130" r="0.8"/>
+    <circle cx="540" cy="52" r="1.1"/><circle cx="860" cy="76" r="0.9"/>
+    <circle cx="1080" cy="48" r="1"/><circle cx="1210" cy="200" r="0.8"/>
+    <circle cx="170" cy="640" r="0.9"/><circle cx="960" cy="660" r="1"/>
+    <circle cx="1190" cy="580" r="0.7"/><circle cx="420" cy="668" r="0.9"/>
+  </g>
+
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="640" y="66" text-anchor="middle" fill="#eef4ff" font-size="30" font-weight="700" letter-spacing="0.6">The Dynamics of Controlled Convergence</text>
+    <text x="640" y="96" text-anchor="middle" fill="#8ea6c8" font-size="15" letter-spacing="2.4">受控收敛的动力系统</text>
+  </g>
+
+  <g transform="translate(540 400)">
+
+    <ellipse cx="0" cy="0" rx="320" ry="250" fill="url(#basinInner)"/>
+    <ellipse cx="0" cy="0" rx="320" ry="250" fill="url(#basinRim)"/>
+    <ellipse cx="0" cy="0" rx="320" ry="250" fill="none" stroke="#70b8e8" stroke-opacity="0.3" stroke-width="1.8"/>
+    <ellipse cx="0" cy="0" rx="290" ry="225" fill="none" stroke="#70b8e8" stroke-opacity="0.1" stroke-width="1" stroke-dasharray="6 10"/>
+
+    <circle cx="0" cy="0" r="130" fill="url(#coreHalo)"/>
+
+    <path d="M240 190C260 140 250 80 220 30C190 -20 130 -60 80 -80C30 -100 -40 -110 -100 -100C-160 -90 -210 -60 -240 -10C-270 40 -260 110 -220 160C-180 210 -110 230 -40 210C30 190 90 140 150 140C200 140 230 110 220 60C210 10 170 -30 130 -60C90 -90 50 -120 10 -160C-30 -170 -50 -150 -50 -120C-50 -90 -30 -60 -10 -42" fill="none" stroke="#ffb840" stroke-opacity="0.12" stroke-width="20" filter="url(#bigGlow)"/>
+    <path d="M240 190C260 140 250 80 220 30C190 -20 130 -60 80 -80C30 -100 -40 -110 -100 -100C-160 -90 -210 -60 -240 -10C-270 40 -260 110 -220 160C-180 210 -110 230 -40 210C30 190 90 140 150 140C200 140 230 110 220 60C210 10 170 -30 130 -60C90 -90 50 -120 10 -160C-30 -170 -50 -150 -50 -120C-50 -90 -30 -60 -10 -42" fill="none" stroke="url(#trajColor)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#toCore)" filter="url(#softGlow)"/>
+
+    <circle cx="80" cy="-80" r="5" fill="#ffd060" filter="url(#glow)"/>
+    <circle cx="-220" cy="160" r="5" fill="#ffd060" filter="url(#glow)"/>
+    <circle cx="150" cy="140" r="5" fill="#ffd060" filter="url(#glow)"/>
+    <circle cx="240" cy="190" r="3.5" fill="#ffd060" opacity="0.5"/>
+
+    <g stroke="url(#divergeColor)" stroke-width="2.6" stroke-linecap="round" fill="none" opacity="0.92">
+      <path d="M80 -80C96 -104 118 -126 142 -142" marker-end="url(#out)"/>
+      <path d="M80 -80C112 -90 138 -108 160 -132" marker-end="url(#out)"/>
+      <path d="M-220 160C-246 180 -274 196 -298 208" marker-end="url(#out)"/>
+      <path d="M-220 160C-250 170 -276 186 -298 202" marker-end="url(#out)"/>
+      <path d="M150 140C178 158 206 172 232 180" marker-end="url(#out)"/>
+      <path d="M150 140C182 150 208 164 234 176" marker-end="url(#out)"/>
+    </g>
+
+    <g stroke="#58c4f0" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.92">
+      <path d="M136 -136C118 -116 100 -100 86 -84" marker-end="url(#in)"/>
+      <path d="M-292 200C-268 190 -248 178 -230 164" marker-end="url(#in)"/>
+      <path d="M226 174C204 164 184 154 166 144" marker-end="url(#in)"/>
+    </g>
+
+    <circle cx="0" cy="0" r="56" fill="url(#core)" filter="url(#glow)"/>
+    <ellipse cx="-14" cy="-18" rx="20" ry="11" fill="#ffffff" fill-opacity="0.38"/>
+    <ellipse cx="-12" cy="-15" rx="9" ry="4.5" fill="#ffffff" fill-opacity="0.52"/>
+    <g fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="0.8">
+      <ellipse cx="0" cy="0" rx="56" ry="56"/>
+      <ellipse cx="0" cy="0" rx="56" ry="18" transform="rotate(40)"/>
+      <ellipse cx="0" cy="0" rx="56" ry="18" transform="rotate(100)"/>
+      <ellipse cx="0" cy="0" rx="56" ry="18" transform="rotate(160)"/>
+    </g>
+  </g>
+
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="608" y="394" fill="#b8e0ff" font-size="14" font-weight="700">Attractor</text>
+    <text x="608" y="410" fill="#7ea0c0" font-size="11">吸引子 · 架构基线</text>
+    <text x="608" y="424" fill="#6080a0" font-size="9.5">七个原语 · 编译优先 · 包边界 · 渲染器合约</text>
+    <line x1="600" y1="406" x2="598" y2="406" stroke="#b8e0ff" stroke-width="1.2" stroke-opacity="0.5"/>
+
+    <text x="540" y="148" text-anchor="middle" fill="#6ea8d0" font-size="13" font-weight="600">Basin of Attraction</text>
+    <text x="540" y="164" text-anchor="middle" fill="#5a88a8" font-size="11">吸引盆地 · 轨迹被约束在此区域内</text>
+
+    <text x="968" y="220" fill="#ffa0a8" font-size="15" font-weight="700">Divergence</text>
+    <text x="968" y="238" fill="#c89098" font-size="11">AI 扩张力 · 推离基线</text>
+
+    <text x="968" y="280" fill="#80dcff" font-size="15" font-weight="700">Convergence</text>
+    <text x="968" y="298" fill="#88b0c8" font-size="11">工程收敛力 · 拉回盆地</text>
+
+    <text x="180" y="618" fill="#ffc850" font-size="13" font-weight="600">Development Trajectory</text>
+    <text x="180" y="636" fill="#b8a060" font-size="11">开发轨迹 · 从偏离逐步收敛到吸引子</text>
+    <line x1="330" y1="610" x2="470" y2="520" stroke="#ffc850" stroke-width="1.2" stroke-opacity="0.4"/>
+  </g>
+
+  <g transform="translate(640 660)" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="0" y="0" text-anchor="middle" fill="#d0e0f4" font-size="13" font-weight="600">AI 扩张推离基线 → 工程收敛拉回 → 吸引子决定最终方向</text>
+    <text x="0" y="22" text-anchor="middle" fill="#7088a8" font-size="11" letter-spacing="1">DIVERGENCE → CONVERGENCE → RETURN TO ATTRACTOR</text>
+  </g>
+</svg>
