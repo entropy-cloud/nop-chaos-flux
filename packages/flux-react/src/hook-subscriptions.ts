@@ -1,5 +1,6 @@
 import type { FormStoreApi, ScopeRef } from '@nop-chaos/flux-core';
 import type { FormFieldStateSnapshot } from '@nop-chaos/flux-core';
+import { EMPTY_FORM_STORE_STATE, type FormStoreState } from './form-state';
 
 export function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,
@@ -52,6 +53,56 @@ export function createFormErrorSubscribe(store: FormStoreApi | undefined, path: 
       : () => undefined;
     return () => {
       unsubStore();
+      unsubSubmitting();
+    };
+  };
+}
+
+export function createFormStoreSubscribe(
+  store: FormStoreApi | undefined,
+  options?: { enabled?: boolean; path?: string }
+) {
+  const enabled = options?.enabled !== false;
+  const path = options?.path;
+
+  return (listener: () => void) => {
+    if (!enabled || !store) {
+      return emptyUnsubscribe;
+    }
+
+    if (path && typeof store.subscribeToPath === 'function') {
+      return store.subscribeToPath(path, listener);
+    }
+
+    return store.subscribe(listener);
+  };
+}
+
+export function createFormStoreSnapshot(
+  store: FormStoreApi | undefined,
+  enabled = true
+): () => FormStoreState {
+  return enabled && store ? () => store.getState() : () => EMPTY_FORM_STORE_STATE;
+}
+
+export function createFormFieldStateSubscribe(
+  store: FormStoreApi | undefined,
+  path: string,
+  skipSubscription = false
+) {
+  return (listener: () => void) => {
+    if (!store || skipSubscription) {
+      return emptyUnsubscribe;
+    }
+
+    const unsubPath = typeof store.subscribeToPath === 'function'
+      ? store.subscribeToPath(path, listener)
+      : store.subscribe(listener);
+    const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
+      ? store.subscribeToSubmitting(listener)
+      : emptyUnsubscribe;
+    return () => {
+      unsubPath();
       unsubSubmitting();
     };
   };

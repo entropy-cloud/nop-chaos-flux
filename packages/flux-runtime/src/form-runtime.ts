@@ -26,6 +26,7 @@ import {
 } from './form-runtime-derived-state';
 import { buildInitialFieldState } from './form-runtime-state';
 import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status';
+import { mergeFieldStateErrors } from './form-runtime-owner-field-states';
 import {
   cancelAllValidationDebounces,
   cancelValidationDebounce,
@@ -393,21 +394,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         const currentFieldStates = store.getState().fieldStates;
         const nextErrors = ownerRuntime.rebuildStoreErrorsFromExternal(currentFieldStates);
 
-        const updatedFieldStates = { ...currentFieldStates };
-        for (const path of Object.keys(updatedFieldStates)) {
-          const fs = updatedFieldStates[path];
-          if (fs?.errors && !nextErrors[path]) {
-            const { errors: _removed, ...rest } = fs;
-            if (Object.keys(rest).length > 0) {
-              updatedFieldStates[path] = rest;
-            } else {
-              delete updatedFieldStates[path];
-            }
-          }
-        }
-        for (const [path, pathErrors] of Object.entries(nextErrors)) {
-          updatedFieldStates[path] = { ...updatedFieldStates[path], errors: pathErrors };
-        }
+        const updatedFieldStates = mergeFieldStateErrors({ currentFieldStates, nextErrors });
         store.batchUpdate({ fieldStates: updatedFieldStates });
       }
 

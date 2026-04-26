@@ -1,0 +1,66 @@
+import React from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { WorkbenchShell } from './workbench-shell';
+
+afterEach(() => {
+  cleanup();
+});
+
+describe('WorkbenchShell', () => {
+  it('renders header, canvas, dialogs, and expanded panels', () => {
+    render(
+      <WorkbenchShell
+        data-testid="wb"
+        header={<div>Header</div>}
+        leftPanel={<div>Left</div>}
+        canvas={<div>Canvas</div>}
+        rightPanel={<div>Right</div>}
+        dialogs={<div>Dialogs</div>}
+      />
+    );
+
+    expect(screen.getByTestId('wb')).toBeTruthy();
+    expect(screen.getByText('Header')).toBeTruthy();
+    expect(screen.getByText('Canvas')).toBeTruthy();
+    expect(screen.getByText('Left')).toBeTruthy();
+    expect(screen.getByText('Right')).toBeTruthy();
+    expect(screen.getByText('Dialogs')).toBeTruthy();
+    expect(screen.getByTestId('left-panel-expanded')).toBeTruthy();
+    expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
+  });
+
+  it('renders collapsed left and right toggles', () => {
+    const onLeftToggle = vi.fn();
+    const onRightToggle = vi.fn();
+    render(
+      <WorkbenchShell
+        leftPanel={<div>Left</div>}
+        leftCollapsed={true}
+        onLeftToggle={onLeftToggle}
+        leftLabel="Open left"
+        canvas={<div>Canvas</div>}
+        rightPanel={<div>Right</div>}
+        rightCollapsed={true}
+        onRightToggle={onRightToggle}
+        rightLabel="Open right"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('expand-left-panel'));
+    fireEvent.click(screen.getByTestId('expand-right-panel'));
+    expect(onLeftToggle).toHaveBeenCalled();
+    expect(onRightToggle).toHaveBeenCalled();
+    expect(screen.getByTestId('left-panel-collapsed')).toBeTruthy();
+    expect(screen.getByTestId('right-panel-collapsed')).toBeTruthy();
+  });
+
+  it('renders canvas-only layout without side panels', () => {
+    render(<WorkbenchShell canvas={<div>Solo</div>} className="extra" />);
+    expect(screen.getByText('Solo')).toBeTruthy();
+    expect(screen.queryByTestId('left-panel-expanded')).toBeNull();
+    expect(screen.queryByTestId('left-panel-collapsed')).toBeNull();
+    expect(screen.queryByTestId('right-panel-expanded')).toBeNull();
+    expect(screen.queryByTestId('right-panel-collapsed')).toBeNull();
+  });
+});

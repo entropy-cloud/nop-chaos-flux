@@ -21,6 +21,7 @@ import {
   rebuildStoreErrorsFromExternal,
   storeOwnedExternalErrors
 } from './form-runtime-owner-external-errors';
+import { mergeFieldStateErrors } from './form-runtime-owner-field-states';
 import { disposeOwnerState, refreshCompiledModelState } from './form-runtime-owner-lifecycle';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree';
 import { cancelValidationDebounce, validatePath, validateSubtreeByNode } from './form-runtime-validation';
@@ -128,18 +129,7 @@ export function buildFormOwnerRuntime(input: {
     const fieldStates = input.sharedState.store.getState().fieldStates;
     const nextErrors = rebuildStoreErrorsFromExternal(input.sharedState, fieldStates);
 
-    const nextFieldStates = { ...fieldStates };
-    for (const path of Object.keys(nextFieldStates)) {
-      const existingFs = nextFieldStates[path];
-      if (existingFs?.errors && !nextErrors[path]) {
-        const { errors: _removed, ...rest } = existingFs;
-        nextFieldStates[path] = Object.keys(rest).length > 0 ? rest : undefined!;
-        if (!nextFieldStates[path]) delete nextFieldStates[path];
-      }
-    }
-    for (const [path, pathErrors] of Object.entries(nextErrors)) {
-      nextFieldStates[path] = { ...nextFieldStates[path], errors: pathErrors };
-    }
+    const nextFieldStates = mergeFieldStateErrors({ currentFieldStates: fieldStates, nextErrors });
     input.setLastChange({
       paths: [],
       sourceScopeId: input.formId,

@@ -40,6 +40,9 @@ import { getIn } from '@nop-chaos/flux-core';
 import { createHelpers } from './helpers';
 import { EMPTY_FORM_FIELD_STATE, EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
 import {
+  createFormFieldStateSubscribe,
+  createFormStoreSnapshot,
+  createFormStoreSubscribe,
   createFormErrorSubscribe,
   createScopeOwnSubscribe,
   emptyUnsubscribe,
@@ -159,24 +162,8 @@ export function useCurrentFormState<T>(
   const enabled = options?.enabled !== false;
   const path = options?.path;
   const store = form?.store;
-  const subscribe = useCallback(
-    (listener: () => void) => {
-      if (!enabled || !store) {
-        return emptyUnsubscribe;
-      }
-
-      if (path && typeof store.subscribeToPath === 'function') {
-        return store.subscribeToPath(path, listener);
-      }
-
-      return store.subscribe(listener);
-    },
-    [enabled, store, path]
-  );
-  const getSnapshot = useCallback(
-    () => (enabled && store ? store.getState() : EMPTY_FORM_STORE_STATE),
-    [enabled, store]
-  );
+  const subscribe = useMemo(() => createFormStoreSubscribe(store, { enabled, path }), [enabled, path, store]);
+  const getSnapshot = useMemo(() => createFormStoreSnapshot(store, enabled), [enabled, store]);
 
   return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);
 }
@@ -244,22 +231,7 @@ export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): 
   // When path is empty, skip subscription entirely and return empty state
   const skipSubscription = !path;
 
-  const subscribe = useCallback(
-    (listener: () => void) => {
-      if (!store || skipSubscription) return () => undefined;
-      const unsubPath = typeof store.subscribeToPath === 'function'
-        ? store.subscribeToPath(path, listener)
-        : store.subscribe(listener);
-      const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
-        ? store.subscribeToSubmitting(listener)
-        : () => undefined;
-      return () => {
-        unsubPath();
-        unsubSubmitting();
-      };
-    },
-    [store, path, skipSubscription]
-  );
+  const subscribe = useMemo(() => createFormFieldStateSubscribe(store as FormStoreApi | undefined, path, skipSubscription), [store, path, skipSubscription]);
 
   const getSnapshot = useCallback(
     (): FormStoreState => {
@@ -292,22 +264,7 @@ export function useFieldError(path: string): ValidationError | undefined {
   const validationStore = useCurrentValidationStore();
   const store = form?.store ?? validationStore;
 
-  const subscribe = useCallback(
-    (listener: () => void) => {
-      if (!store) return () => undefined;
-      const unsubPath = typeof store.subscribeToPath === 'function'
-        ? store.subscribeToPath(path, listener)
-        : store.subscribe(listener);
-      const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
-        ? store.subscribeToSubmitting(listener)
-        : () => undefined;
-      return () => {
-        unsubPath();
-        unsubSubmitting();
-      };
-    },
-    [store, path]
-  );
+  const subscribe = useMemo(() => createFormFieldStateSubscribe(store as FormStoreApi | undefined, path), [store, path]);
 
   const getSnapshot = useCallback(
     (): FormStoreState => (store ? store.getState() : EMPTY_FORM_STORE_STATE),
