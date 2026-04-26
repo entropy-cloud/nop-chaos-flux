@@ -240,6 +240,22 @@ describe('Action Flow Tree Projection', () => {
       label: '加载用户数据',
       action: 'ajax',
       timeout: 5000,
+      branches: [
+        {
+          id: 'then-fetch',
+          data: { branchType: 'then', label: '成功' },
+          childId: 'save-form',
+          childType: 'action-step',
+          childLabel: '保存表单'
+        },
+        {
+          id: 'onerror-fetch',
+          data: { branchType: 'onError', label: '失败' },
+          childId: 'retry-fetch',
+          childType: 'action-step',
+          childLabel: '重试加载'
+        }
+      ]
     });
   });
 

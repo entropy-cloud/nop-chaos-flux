@@ -123,7 +123,7 @@ describe('createDesignerCore - viewport and UI state', () => {
     core.setViewport({ x: 0.2, y: 0.4, zoom: 1.04 });
 
     expect(core.getSnapshot().viewport).toEqual({ x: 0.2, y: 0.4, zoom: 1.04 });
-    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
+    expect(core.getSnapshot().canUndo).toBe(true);
     expect(core.getSnapshot().canRedo).toBe(before.canRedo);
   });
 
