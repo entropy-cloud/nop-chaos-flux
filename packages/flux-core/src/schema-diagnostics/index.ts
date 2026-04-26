@@ -32,12 +32,19 @@ export type SchemaDiagnosticCode =
   | 'unknown-builtin-member'
   | 'ambient-dollar-reference';
 
+export interface SchemaDiagnosticSourceLocation {
+  readonly file?: string;
+  readonly line?: number;
+  readonly column?: number;
+}
+
 export interface SchemaDiagnostic {
   code: SchemaDiagnosticCode;
   path: string;
   message: string;
   severity: SchemaDiagnosticSeverity;
   source: SchemaDiagnosticSource;
+  sourceLocation?: SchemaDiagnosticSourceLocation;
 }
 
 export interface SchemaDiagnosticCollector {
