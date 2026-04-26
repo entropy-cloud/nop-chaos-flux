@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">The Feedback Loop: An Evolutionary Spiral</title>
+  <desc id="desc">A luminous ascending spiral track with five annotated nodes representing define attractor, AI expansion, convergence, closure audit, and attractor update.</desc>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#141b34"/>
+      <stop offset="60%" stop-color="#0b1120"/>
+      <stop offset="100%" stop-color="#04070d"/>
+    </radialGradient>
+    <linearGradient id="spiralGlow" x1="20%" y1="80%" x2="80%" y2="20%">
+      <stop offset="0%" stop-color="#56b7ff"/>
+      <stop offset="38%" stop-color="#69f0d0"/>
+      <stop offset="70%" stop-color="#d49cff"/>
+      <stop offset="100%" stop-color="#ffd66d"/>
+    </linearGradient>
+    <linearGradient id="spiralEdge" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#62bfff" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#ffd66d" stop-opacity="0.6"/>
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="2.6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <g fill="#ffffff" opacity="0.22">
+    <circle cx="132" cy="96" r="1"/>
+    <circle cx="324" cy="72" r="1.2"/>
+    <circle cx="1034" cy="84" r="1.1"/>
+    <circle cx="1174" cy="164" r="0.9"/>
+    <circle cx="164" cy="636" r="1.1"/>
+    <circle cx="428" cy="618" r="0.8"/>
+    <circle cx="916" cy="604" r="1.2"/>
+  </g>
+  <g opacity="0.18" stroke="#5070a5" stroke-width="1">
+    <path d="M160 600C346 548 516 526 690 536C904 548 1030 512 1142 432" fill="none"/>
+    <path d="M176 646C362 592 522 570 700 582C900 594 1042 560 1152 470" fill="none"/>
+    <path d="M146 560C334 508 504 486 678 496C882 510 1004 476 1116 396" fill="none"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M194 604C294 634 432 638 550 612C688 582 814 518 876 442C930 376 920 316 860 294C798 272 706 310 624 368C534 432 438 488 328 500C262 508 200 500 160 474C130 454 122 422 148 394C182 356 252 346 338 360C442 376 540 412 628 400C706 390 776 344 816 286C854 232 850 176 814 150C774 120 714 128 654 168C574 220 506 300 426 344C344 390 242 398 172 376" stroke="#b9ebff" stroke-opacity="0.18" stroke-width="28" filter="url(#glow)"/>
+    <path d="M194 604C294 634 432 638 550 612C688 582 814 518 876 442C930 376 920 316 860 294C798 272 706 310 624 368C534 432 438 488 328 500C262 508 200 500 160 474C130 454 122 422 148 394C182 356 252 346 338 360C442 376 540 412 628 400C706 390 776 344 816 286C854 232 850 176 814 150C774 120 714 128 654 168C574 220 506 300 426 344C344 390 242 398 172 376" stroke="url(#spiralGlow)" stroke-width="14" filter="url(#softGlow)"/>
+    <path d="M208 608C304 634 436 636 548 612C684 584 808 520 872 446C926 382 918 326 864 306C804 286 716 324 630 384C538 448 440 500 326 512C258 520 196 512 154 486C120 464 110 430 136 398C168 358 238 344 328 354C438 368 542 406 632 394C712 384 784 338 824 280C862 224 856 170 818 142" stroke="#ffffff" stroke-opacity="0.52" stroke-width="2" stroke-dasharray="3 9"/>
+  </g>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="640" y="84" text-anchor="middle" fill="#f5f8ff" font-size="28" font-weight="700" letter-spacing="1">The Feedback Loop: An Evolutionary Spiral</text>
+    <text x="640" y="110" text-anchor="middle" fill="#98abd2" font-size="14" letter-spacing="2.4">反馈闭环：一个演进的螺旋</text>
+  </g>
+  <g>
+    <circle cx="194" cy="604" r="26" fill="#56b7ff" fill-opacity="0.22" filter="url(#glow)"/>
+    <circle cx="194" cy="604" r="16" fill="#56b7ff" stroke="#d7f4ff" stroke-width="2"/>
+    <path d="M194 590L201 599L194 608L187 599Z" fill="#ffffff"/>
+    <path d="M194 608L194 622" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+    <text x="122" y="664" fill="#dff5ff" font-size="14" font-weight="700">Define Attractor</text>
+    <text x="122" y="684" fill="#9fc6da" font-size="11">定义吸引子</text>
+  </g>
+  <g>
+    <circle cx="338" cy="360" r="26" fill="#69f0d0" fill-opacity="0.22" filter="url(#glow)"/>
+    <circle cx="338" cy="360" r="16" fill="#32d8b1" stroke="#d7fff5" stroke-width="2"/>
+    <path d="M338 346L343 355L352 360L343 365L338 374L333 365L324 360L333 355Z" fill="#ffffff"/>
+    <text x="226" y="330" fill="#e2fff7" font-size="14" font-weight="700">AI Expansion</text>
+    <text x="226" y="350" fill="#9fd8ce" font-size="11">AI 扩张</text>
+  </g>
+  <g>
+    <circle cx="624" cy="368" r="26" fill="#d49cff" fill-opacity="0.22" filter="url(#glow)"/>
+    <circle cx="624" cy="368" r="16" fill="#c56dff" stroke="#f4deff" stroke-width="2"/>
+    <path d="M612 356H636L630 364V372L624 380L618 372V364Z" fill="#ffffff"/>
+    <text x="664" y="354" fill="#f7ebff" font-size="14" font-weight="700">Convergence</text>
+    <text x="664" y="374" fill="#d3b8e8" font-size="11">收敛</text>
+  </g>
+  <g>
+    <circle cx="860" cy="294" r="26" fill="#ffb778" fill-opacity="0.24" filter="url(#glow)"/>
+    <circle cx="860" cy="294" r="16" fill="#ff9b47" stroke="#fff0df" stroke-width="2"/>
+    <rect x="852" y="286" width="16" height="16" rx="3" fill="#ffffff"/>
+    <path d="M855 294L859 298L866 290" stroke="#ff9b47" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="900" y="282" fill="#fff3e6" font-size="14" font-weight="700">Closure Audit</text>
+    <text x="900" y="302" fill="#e4c2a7" font-size="11">关闭判定</text>
+  </g>
+  <g>
+    <circle cx="814" cy="150" r="26" fill="#ffd66d" fill-opacity="0.26" filter="url(#glow)"/>
+    <circle cx="814" cy="150" r="16" fill="#ffc94d" stroke="#fff6dd" stroke-width="2"/>
+    <path d="M814 136L820 145L829 145L822 152L824 161L814 156L804 161L806 152L799 145L808 145Z" fill="#ffffff"/>
+    <path d="M830 134L838 134L838 142" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="862" y="140" fill="#fff7dd" font-size="14" font-weight="700">Attractor Update</text>
+    <text x="862" y="160" fill="#dfd0a2" font-size="11">吸引子更新</text>
+  </g>
+  <g stroke="#b8d8f0" stroke-width="1.4" stroke-dasharray="7 7" fill="none" opacity="0.6">
+    <line x1="212" y1="604" x2="318" y2="376"/>
+    <line x1="354" y1="360" x2="604" y2="368"/>
+    <line x1="642" y1="366" x2="840" y2="298"/>
+    <line x1="856" y1="272" x2="818" y2="176"/>
+  </g>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="1028" y="590" fill="#dfe8fb" font-size="14" font-weight="700">Loop closes higher than it started</text>
+    <text x="1028" y="610" fill="#94a9c7" font-size="11">每一轮重复都在更高层次完成</text>
+    <line x1="1012" y1="582" x2="920" y2="520" stroke="#dfe8fb" stroke-width="1.2"/>
+    <text x="1032" y="648" fill="url(#spiralEdge)" font-size="12" letter-spacing="1.8">EVOLUTION THROUGH STRUCTURED FEEDBACK</text>
+  </g>
+</svg>

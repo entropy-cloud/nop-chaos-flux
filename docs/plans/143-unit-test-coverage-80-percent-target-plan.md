@@ -12,7 +12,8 @@
 ## Current Baseline
 
 - Execution update (2026-04-26): `flux-runtime` now clears its enforced package gate at `87.78%` statements, `80.16%` branches, `90.48%` functions, and `88.28%` lines after targeted tests for async-governance and form-owner lifecycle branches.
-- Remaining known package-level coverage gap in active execution: `flux-renderers-data` still misses the enforced 80% threshold, especially on branches.
+- Execution update (2026-04-26): `flux-renderers-data` now clears its enforced package gate at `92.32%` statements, `80.04%` branches, `94.23%` functions, and `93.33%` lines after focused coverage on chart, CRUD state, table controls, quick-edit, and virtual/body helper paths.
+- Active remaining work is now plan-level verification and a fresh independent closure audit, not another known package-local coverage gap.
 
 ### 覆盖率现状 (2026-04-26 audit)
 
@@ -268,8 +269,8 @@ Exit Criteria:
 - [ ] `pnpm build` 通过
 - [ ] `pnpm lint` 通过
 - [ ] `pnpm test` 通过（0 failures）
-- [ ] 所有核心包 Stmts ≥ 80%
-- [ ] 所有核心包 Lines ≥ 80%
+- [x] 所有核心包 Stmts ≥ 80%
+- [x] 所有核心包 Lines ≥ 80%
 - [x] `flux-renderers-data` 和 `flux-renderers-form` 失败测试已修复
 - [x] Coverage threshold 已配置在 `vitest.config.ts` 中
 - [x] `docs/logs/` 已更新
@@ -284,8 +285,9 @@ Closure Audit Evidence:
 - Reviewer / Agent: independent subagent closure audit
 - Evidence: `ses_237c93997ffeK62ineF4gYSnQc` — audit found partial completion only: `flux-core` and `flux-compiler` clear 80% gates, but `flux-runtime` branches, `flux-react` branches/functions, `flux-renderers-form`, `flux-renderers-data`, and `flux-renderers-form-advanced` still miss current enforced thresholds.
 - Post-audit execution update: package-local verification on 2026-04-26 moved `flux-runtime` over the enforced gate (`pnpm --filter @nop-chaos/flux-runtime typecheck`, `build`, `lint`, `test`, and `pnpm exec vitest run --config vitest.config.ts --coverage` all pass locally).
+- Post-audit execution update: package-local verification on 2026-04-26 moved `flux-renderers-data` over the enforced gate (`pnpm --filter @nop-chaos/flux-renderers-data typecheck`, `build`, `lint`, `test`, and `pnpm exec vitest run --config vitest.config.ts --coverage` all pass locally) with final package coverage at `92.32%` statements / `80.04%` branches / `94.23%` functions / `93.33%` lines.
 
 Follow-up:
 
 - 辅助包覆盖率（flow-designer, spreadsheet, report-designer, word-editor, nop-debugger, ui）不在本计划 scope 内，可由后续专项计划覆盖
-- Remaining plan-owned work: close the remaining enforced 80% gap in `flux-renderers-data`, then re-run final verification against a clean enough workspace baseline and finish a fresh independent closure audit before marking this plan `completed`.
+- Remaining plan-owned work: re-run final plan-level verification against a clean enough workspace baseline and finish a fresh independent closure audit before marking this plan `completed`.
