@@ -42,6 +42,9 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
   const childRegistries = new Set<ComponentHandleRegistry>();
 
   type RegistryWithChildren = ComponentHandleRegistry & { __childRegistries?: Set<ComponentHandleRegistry> };
+  type RegistryWithResolveTraversal = ComponentHandleRegistry & {
+    resolve?: (target: ComponentTarget, visited?: Set<ComponentHandleRegistry>) => ComponentHandle | undefined;
+  };
 
   function resolveHandleByCid(
     cid: number,
@@ -179,7 +182,13 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     }
   }
 
-  function resolveInScope(target: ComponentTarget): ComponentHandle | undefined {
+  function resolveInScope(target: ComponentTarget, visited: Set<ComponentHandleRegistry> = new Set()): ComponentHandle | undefined {
+    if (visited.has(registry)) {
+      return undefined;
+    }
+
+    visited.add(registry);
+
     if (typeof target._targetCid === 'number') {
       const byCid = handlesByCid.get(target._targetCid);
       if (byCid && byCid._mounted !== false) {
@@ -198,7 +207,14 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
         return byId;
       }
 
-      return input.parent?.resolve(target);
+      for (const child of childRegistries) {
+        const nested = (child as RegistryWithResolveTraversal).resolve?.(target, visited);
+        if (nested) {
+          return nested;
+        }
+      }
+
+      return (input.parent as RegistryWithResolveTraversal | undefined)?.resolve?.(target, visited);
     }
 
     if (target.componentName) {
@@ -215,7 +231,7 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       }
     }
 
-    return input.parent?.resolve(target);
+    return (input.parent as RegistryWithResolveTraversal | undefined)?.resolve?.(target, visited);
   }
 
   const registry = {

@@ -11,7 +11,8 @@ describe('form renderer static contracts', () => {
       'validate',
       'reset',
       'setValue',
-      'setValues'
+      'setValues',
+      'getValues'
     ]);
     expect(formRendererDefinition.eventContracts?.submitAction?.displayName).toBe('Submit');
   });

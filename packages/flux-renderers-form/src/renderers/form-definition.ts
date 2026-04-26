@@ -173,6 +173,15 @@ export const formRendererDefinition: RendererDefinition = {
           values: { kind: 'object', fields: {} }
         }
       }
+    },
+    {
+      handle: 'getValues',
+      displayName: 'Get Values',
+      description: 'Read the current form values snapshot.',
+      result: {
+        kind: 'object',
+        fields: {}
+      }
     }
   ],
   scopeExportContracts: {
