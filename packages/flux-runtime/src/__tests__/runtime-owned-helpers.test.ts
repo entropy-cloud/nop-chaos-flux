@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CompiledFormValidationModel } from '@nop-chaos/flux-core';
+import type { CompiledFormValidationModel, RendererRuntime } from '@nop-chaos/flux-core';
 import { executeRuntimeAjaxAction, executeRuntimeValidationRule } from '../runtime-action-helpers';
 import { createRuntimeOwnedFactories } from '../runtime-owned-factories';
 import { createFormComponentHandle } from '../form-component-handle';
 import { createScopeRef } from '../scope';
 
 describe('executeRuntimeValidationRule', () => {
-  const compiledRule = { kind: 'async', rule: 'server' } as any;
+  const compiledRule = { id: 'rule-1', rule: { kind: 'async', action: { action: 'ajax' } }, dependencyPaths: [] } as any;
   const rule = { kind: 'async', action: { action: 'ajax' }, message: 'rule failed' } as any;
   const field = { path: 'email', label: 'Email' } as any;
   const scope = { id: 'scope-1' } as any;
@@ -65,7 +65,10 @@ describe('executeRuntimeAjaxAction', () => {
       nodeInstance: { templateNode: { id: 'node-1', templatePath: '$.body[0]' } },
     } as any;
     const preparedApi = { url: '/api/demo', method: 'get' } as any;
-    const executeApiRequest = vi.fn().mockResolvedValue({ ok: true, status: 200, data: { next: 2 } });
+    const executeApiRequest = Object.assign(
+      vi.fn().mockResolvedValue({ ok: true, status: 200, data: { next: 2 } }),
+      { dispose: vi.fn() }
+    );
     const monitor = { onApiRequest: vi.fn() };
 
     const result = await executeRuntimeAjaxAction(
@@ -76,7 +79,7 @@ describe('executeRuntimeAjaxAction', () => {
       {
         getEnv: () => ({ monitor } as any),
         expressionCompiler: {} as any,
-        evaluate: <T,>(target: T) => target,
+        evaluate: <T,>(target: unknown) => target as T,
         executeApiRequest,
       }
     );
@@ -100,7 +103,10 @@ describe('executeRuntimeAjaxAction', () => {
   });
 
   it('skips monitoring and page writes when those contexts are absent', async () => {
-    const executeApiRequest = vi.fn().mockResolvedValue({ ok: true, status: 200, data: { ok: true } });
+    const executeApiRequest = Object.assign(
+      vi.fn().mockResolvedValue({ ok: true, status: 200, data: { ok: true } }),
+      { dispose: vi.fn() }
+    );
 
     const result = await executeRuntimeAjaxAction(
       { url: '/api/demo' } as any,
@@ -110,7 +116,7 @@ describe('executeRuntimeAjaxAction', () => {
       {
         getEnv: () => ({} as any),
         expressionCompiler: {} as any,
-        evaluate: <T,>(target: T) => target,
+        evaluate: <T,>(target: unknown) => target as T,
         executeApiRequest,
       }
     );
@@ -121,7 +127,10 @@ describe('executeRuntimeAjaxAction', () => {
 
 describe('createRuntimeOwnedFactories', () => {
   it('syncs external page stores both ways and refreshes page listeners', () => {
-    const externalState = { data: { synced: 'external' }, refreshTick: 0 };
+    const externalState: { data: Record<string, any>; refreshTick: number } = {
+      data: { synced: 'external' },
+      refreshTick: 0
+    };
     const externalListeners = new Set<() => void>();
     const externalPageStore = {
       getState: () => externalState,
@@ -167,7 +176,7 @@ describe('createRuntimeOwnedFactories', () => {
 
         return {
           store,
-          scope: { id: 'page-scope', path: '$page', parent: undefined },
+          scope: createScopeRef({ id: 'page-scope', path: '$page', initialData: initialValues ?? {} }),
           validation: undefined,
         } as any;
       }),
@@ -212,7 +221,8 @@ describe('createRuntimeOwnedFactories', () => {
     });
 
     const validationScope = factories.createValidationScopeRuntime({ id: 'validation-scope', initialValues: { email: '' } });
-    expect(validationScope.scope.id).toBe('validation-scope');
+    expect(validationScope.scope).toBeDefined();
+    expect(validationScope.scope!.id).toBe('validation-scope');
 
     const parentScope = createScopeRef({ id: 'parent-scope', path: '$parent', initialData: {} });
     const validation: CompiledFormValidationModel = {
@@ -234,7 +244,7 @@ describe('createRuntimeOwnedFactories', () => {
           controlType: 'input-text',
           label: 'Email',
           behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
-          rules: [{ rule: { kind: 'async', action: { action: 'ajax' } } }],
+          rules: [{ id: 'email-async', rule: { kind: 'async', action: { action: 'ajax' } }, dependencyPaths: [] }],
           children: [],
           parent: ''
         }
@@ -252,11 +262,13 @@ describe('createRuntimeOwnedFactories', () => {
     expect(validationResult.errors[0]?.message).toBe('invalid');
     expect(dispatchAction).toHaveBeenCalled();
 
+    const runtime = {} as RendererRuntime;
     const surfaceRuntime = factories.createSurfaceRuntime();
     const surfaceId = surfaceRuntime.open({
       kind: 'dialog',
       surface: { body: 'Body' },
-      scope: { id: 'surface-scope', path: '$surface', parent: parentScope, update() {}, readOwn: () => ({}), readVisible: () => ({}), materializeVisible: () => ({}) } as any,
+      scope: createScopeRef({ id: 'surface-scope', path: '$surface', parent: parentScope, initialData: {} }),
+      runtime,
       options: {}
     });
     expect(typeof surfaceId).toBe('string');
@@ -280,24 +292,25 @@ describe('createFormComponentHandle', () => {
     } as any;
 
     const handle = createFormComponentHandle(form);
+    const actionCtx = {} as any;
 
     expect(handle.capabilities?.hasMethod?.('submit')).toBe(true);
     expect(handle.capabilities?.hasMethod?.('missing')).toBe(false);
     expect(handle.capabilities?.listMethods?.()).toEqual(['submit', 'validate', 'reset', 'setValue', 'setValues', 'getValues']);
 
-    await expect(handle.capabilities?.invoke('submit', { interactionId: 123 })).resolves.toEqual({ ok: true });
-    await expect(handle.capabilities?.invoke('validate')).resolves.toEqual({ ok: false, data: { ok: false, errors: [{ message: 'required' }] }, error: [{ message: 'required' }] });
-    await expect(handle.capabilities?.invoke('reset', { values: { name: 'Bob' } })).resolves.toEqual({ ok: true });
-    await expect(handle.capabilities?.invoke('setValue', { name: 'role', value: 'admin' })).resolves.toEqual({ ok: true, data: 'admin' });
-    await expect(handle.capabilities?.invoke('setValues', { values: { active: true } })).resolves.toEqual({ ok: true, data: { active: true } });
-    await expect(handle.capabilities?.invoke('getValues')).resolves.toEqual({ ok: true, data: { name: 'Alice' } });
+    await expect(handle.capabilities?.invoke('submit', { interactionId: 123 }, actionCtx)).resolves.toEqual({ ok: true });
+    await expect(handle.capabilities?.invoke('validate', undefined, actionCtx)).resolves.toEqual({ ok: false, data: { ok: false, errors: [{ message: 'required' }] }, error: [{ message: 'required' }] });
+    await expect(handle.capabilities?.invoke('reset', { values: { name: 'Bob' } }, actionCtx)).resolves.toEqual({ ok: true });
+    await expect(handle.capabilities?.invoke('setValue', { name: 'role', value: 'admin' }, actionCtx)).resolves.toEqual({ ok: true, data: 'admin' });
+    await expect(handle.capabilities?.invoke('setValues', { values: { active: true } }, actionCtx)).resolves.toEqual({ ok: true, data: { active: true } });
+    await expect(handle.capabilities?.invoke('getValues', undefined, actionCtx)).resolves.toEqual({ ok: true, data: { name: 'Alice' } });
 
     expect(form.submit).toHaveBeenCalledWith({ interactionId: '123' });
     expect(form.reset).toHaveBeenCalledWith({ name: 'Bob' });
     expect(form.setValue).toHaveBeenCalledWith('role', 'admin');
     expect(form.setValues).toHaveBeenCalledWith({ active: true });
 
-    const unsupported = await handle.capabilities?.invoke('unknown');
+    const unsupported = await handle.capabilities?.invoke('unknown', undefined, actionCtx);
     expect(unsupported?.ok).toBe(false);
     expect(unsupported?.error).toBeInstanceOf(Error);
   });
