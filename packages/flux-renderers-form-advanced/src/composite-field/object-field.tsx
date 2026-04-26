@@ -11,8 +11,8 @@ import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
 import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { ObjectFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
-import { createProjectedScopeHelpers } from '../detail-view/projected-scope';
-import { createProjectedFormRuntime, createProjectedFormStore } from '../detail-view/projected-form-runtime';
+import { createProjectedInlineForm } from './projected-inline-form';
+import { createProjectedOwnerScope } from '../projected-owner-scope';
 
 type BaseNodeInstance = RendererComponentProps['node'];
 
@@ -43,55 +43,17 @@ function createObjectFieldChildScope(
   resolvedValue: unknown,
   writeValue: (path: string, value: unknown) => void,
 ): ScopeRef {
-  const buildPayload = () => ({
-    value: resolvedValue,
-    readOnly
-  });
-  const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
-
-  return {
-    id: `${parentScope.id}:obj:${name}`,
-    path: `${parentScope.path}.${name}`,
-    parent: parentScope.parent,
-    store,
-    get value() {
-      return readSnapshot();
-    },
-    get(path) {
-      if (!path) return buildPayload();
-      if (path === 'value') return resolvedValue;
-      if (path === 'readOnly') return readOnly;
-      if (path.startsWith('value.')) return getIn(resolvedValue, path.slice('value.'.length));
-      return getIn(resolvedValue, path);
-    },
-    has(path) {
-      if (!path) return true;
-      if (path === 'value' || path === 'readOnly') return true;
-      if (path.startsWith('value.')) return getIn(resolvedValue, path.slice('value.'.length)) !== undefined;
-      return getIn(resolvedValue, path) !== undefined;
-    },
-    readOwn() {
-      return readSnapshot();
-    },
-    readVisible() {
-      return readSnapshot();
-    },
-    materializeVisible() {
-      return readSnapshot();
-    },
-    update(path, value) {
-      if (!path || path === 'value') {
-        writeValue('', value);
-        return;
-      }
-
-      if (path.startsWith('value.')) {
-        writeValue(path.slice('value.'.length), value);
-        return;
-      }
-
-      writeValue(path, value);
-    },
+  return createProjectedOwnerScope({
+    parentScope,
+    scopeId: `${parentScope.id}:obj:${name}`,
+    scopePath: `${parentScope.path}.${name}`,
+    readOnly,
+    getValue: () => resolvedValue,
+    setValue: (value) => writeValue('', value),
+    setNestedValue: writeValue,
+    getAdditionalPath: (path) => getIn(resolvedValue, path),
+    hasAdditionalPath: (path) => getIn(resolvedValue, path) !== undefined,
+    setAdditionalPath: writeValue,
     merge(data) {
       if (data && typeof data === 'object' && 'value' in (data as Record<string, unknown>)) {
         writeValue('', (data as { value: unknown }).value);
@@ -111,7 +73,7 @@ function createObjectFieldChildScope(
 
       writeValue('', data);
     }
-  };
+  });
 }
 
 export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSchema>) {
@@ -268,7 +230,9 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
         return parentForm;
       }
 
-        return createProjectedFormRuntime(parentForm, {
+      return createProjectedInlineForm({
+        parentForm,
+        ownerRootPath: name,
         prefixPath(path) {
           if (!path || !name) {
             return path;
@@ -276,13 +240,9 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
           return `${name}.${path}`;
         },
-        store: createProjectedFormStore(parentForm.store, {
-          ownerRootPath: name,
-          projectValues(state) {
-            void state;
-            return ((resolvedValue ?? {}) as Record<string, unknown>);
-          }
-        }),
+        projectValues() {
+          return ((resolvedValue ?? {}) as Record<string, unknown>);
+        },
         setValue(path, value) {
           writeProjectedValue(path, value);
         },

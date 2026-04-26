@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createItemScope, createItemFormProxy } from './array-field-runtime';
-import type { ScopeRef, FormRuntime, FormStoreApi, FormStoreState } from '@nop-chaos/flux-core';
+import type {
+  FieldRegistrationHandle,
+  FormRuntime,
+  FormStoreApi,
+  FormStoreState,
+  RuntimeFieldRegistration,
+  ScopeRef,
+  ValidationResult,
+  FormValidationResult,
+} from '@nop-chaos/flux-core';
 
 function createMockScope(data: Record<string, unknown>): ScopeRef {
   const getAtPath = (path: string): unknown => {
@@ -162,7 +171,7 @@ describe('createItemScope (object)', () => {
   it('delegates replace to parent', () => {
     const parent = createMockScope({ contacts: [{ name: 'Alice' }] });
     const scope = createItemScope(parent, 'contacts', 0, 'object', false, 'id-0');
-    scope.replace({ name: 'Bob' });
+    scope.replace!({ name: 'Bob' });
     expect(parent.replace).toHaveBeenCalledWith({ name: 'Bob' });
   });
 });
@@ -172,12 +181,8 @@ describe('createItemFormProxy', () => {
     const state: FormStoreState = {
       values: { tags: ['alpha', 'beta'] },
       fieldStates: {},
-      errors: {},
-      submitCount: 0,
       submitting: false,
-      touched: {},
-      dirty: {},
-      visited: {},
+      submitAttempted: false,
     };
 
     return {
@@ -188,23 +193,55 @@ describe('createItemFormProxy', () => {
       subscribeToPath: () => () => {},
       subscribeToSubmitting: () => () => {},
       getPathState: vi.fn(),
+      setValues: vi.fn(),
+      setValue: vi.fn(),
+      setPathErrors: vi.fn(),
+      setValidating: vi.fn(),
+      setTouched: vi.fn(),
+      setDirty: vi.fn(),
+      setVisited: vi.fn(),
+      setSubmitting: vi.fn(),
+      setSubmitAttempted: vi.fn(),
+      batchUpdate: vi.fn(),
     };
   }
 
   function createMinimalFormRuntime(store: FormStoreApi): FormRuntime {
+    const okValidation: ValidationResult = { ok: true, errors: [] };
+    const okFormValidation: FormValidationResult = { ok: true, errors: [], fieldErrors: {} };
+    const acceptedRegistration: FieldRegistrationHandle = {
+      accepted: true,
+      registrationId: 'test-registration',
+      unregister: vi.fn(),
+    };
+
     return {
+      id: 'test-form',
       store,
+      scope: {} as ScopeRef,
       scopeId: 'form-scope',
       rootPath: '',
       get validation() { return undefined as any; },
-      get lifecycleState() { return 'ready' as const; },
+      get lifecycleState() { return 'active' as const; },
       get modelGeneration() { return 0; },
       get canSubmit() { return true; },
       get allTouched() { return false; },
+      setLifecycleHandlers: vi.fn(),
+      getScopeState: vi.fn(),
+      getAsyncOwnerDebugSnapshot: vi.fn(),
+      getScopeRootErrors: vi.fn(() => []),
+      applyChangesAndRevalidate: vi.fn(async () => okFormValidation),
+      applyExternalErrors: vi.fn(),
+      refreshCompiledModel: vi.fn(),
+      dispose: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
       isPathOwned: vi.fn(() => true),
       getFieldState: vi.fn(),
-      validateAt: vi.fn(async () => []),
-      validateField: vi.fn(async () => []),
+      validateAt: vi.fn(async () => okValidation),
+      validateField: vi.fn(async () => okValidation),
+      validateAll: vi.fn(async () => okFormValidation),
+      validateForm: vi.fn(async () => okFormValidation),
       getField: vi.fn(),
       getDependents: vi.fn(() => []),
       findByPrefix: vi.fn(() => []),
@@ -217,11 +254,21 @@ describe('createItemFormProxy', () => {
       touchField: vi.fn(),
       visitField: vi.fn(),
       clearErrors: vi.fn(),
+      submit: vi.fn(),
+      reset: vi.fn(),
       setValue: vi.fn(),
       setValues: vi.fn(),
-      registerField: vi.fn(() => ({ unregister: vi.fn() })),
+      appendValue: vi.fn(),
+      prependValue: vi.fn(),
+      insertValue: vi.fn(),
+      removeValue: vi.fn(),
+      moveValue: vi.fn(),
+      swapValue: vi.fn(),
+      replaceValue: vi.fn(),
+      registerField: vi.fn((_registration: RuntimeFieldRegistration) => acceptedRegistration),
+      updateFieldRegistration: vi.fn(),
       notifyFieldHidden: vi.fn(),
-      validateSubtree: vi.fn(async () => []),
+      validateSubtree: vi.fn(async () => okFormValidation),
     };
   }
 

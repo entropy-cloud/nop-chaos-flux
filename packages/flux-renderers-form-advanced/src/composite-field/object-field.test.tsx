@@ -275,6 +275,41 @@ describe('object-field renderer', () => {
     expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice');
   });
 
+  it('keeps relative payload paths writable through the shared projected owner scope', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#4b"
+        schema={{
+          type: 'form',
+          data: {
+            profile: { firstName: 'Alice', lastName: 'Smith' }
+          },
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              body: [
+                { type: 'input-text', name: 'firstName', label: 'First Name' },
+                { type: 'input-text', name: 'lastName', label: 'Last Name' }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    const firstName = await screen.findByLabelText('First Name');
+    fireEvent.change(firstName, { target: { value: 'Bob' } });
+
+    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Bob'));
+    expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Smith');
+  });
+
   it('second edit to the same child field is reflected on submit', async () => {
     cleanup();
     const submitValues: Record<string, unknown>[] = [];

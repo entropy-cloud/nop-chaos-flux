@@ -2,9 +2,9 @@ import type {
   FormRuntime,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
-import { createProjectedScopeHelpers } from '../detail-view/projected-scope';
-import { createProjectedFormRuntime, createProjectedFormStore } from '../detail-view/projected-form-runtime';
+import { getIn, toRecord } from '@nop-chaos/flux-core';
+import { createProjectedInlineForm } from './projected-inline-form';
+import { createProjectedOwnerScope } from '../projected-owner-scope';
 
 export function createItemScope(
   parentScope: ScopeRef,
@@ -19,93 +19,29 @@ export function createItemScope(
     ? `${parentScope.path}.${arrayPath}.itemsByKey.${itemIdentity}`
     : `${parentScope.path}.itemsByKey.${itemIdentity}`;
 
-  if (itemKind === 'scalar') {
-    const buildPayload = () => ({
-      value: parentScope.get(itemPrefix),
-      index,
-      readOnly
-    });
-    const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
-
-    return {
-      id: `${parentScope.id}:arr:${arrayPath}:${itemIdentity}`,
-      path: itemScopePath,
-      parent: parentScope.parent,
-      store,
-      get value() { return readSnapshot(); },
-      get(path) {
-        if (!path) return buildPayload();
-        if (path === 'value') return parentScope.get(itemPrefix);
-        if (path === 'index') return index;
-        if (path === 'readOnly') return readOnly;
-        return parentScope.get(`${itemPrefix}.${path}`);
-      },
-      has(path) {
-        if (!path || path === 'value') return parentScope.has(itemPrefix);
-        if (path === 'index' || path === 'readOnly') return true;
-        return parentScope.has(`${itemPrefix}.${path}`);
-      },
-      readOwn() { return readSnapshot(); },
-      readVisible() { return readSnapshot(); },
-      materializeVisible() { return readSnapshot(); },
-      update(path, value) {
-        if (!path || path === 'value') {
-          parentScope.update(itemPrefix, value);
-        } else {
-          parentScope.update(`${itemPrefix}.${path}`, value);
-        }
-      },
-      merge(data) { parentScope.merge(data); },
-      replace(data) { parentScope.replace?.(data); }
-    };
-  }
-
-  const buildPayload = () => ({
-    value: parentScope.get(itemPrefix),
-    index,
-    readOnly
-  });
-  const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
-
-  return {
-    id: `${parentScope.id}:arr:${arrayPath}:${itemIdentity}`,
-    path: itemScopePath,
-    parent: parentScope.parent,
-    store,
-    get value() {
-      return readSnapshot();
-    },
-    readOwn() {
-      return readSnapshot();
-    },
-    get(path) {
-      if (!path) return this.readVisible();
-      if (path === 'index') return index;
-      if (path === 'readOnly') return readOnly;
-      if (path === 'value') return parentScope.get(itemPrefix);
-      return parentScope.get(`${itemPrefix}.${path}`);
-    },
-    has(path) {
-      if (!path) return true;
-      if (path === 'index' || path === 'readOnly' || path === 'value') return true;
-      return parentScope.has(`${itemPrefix}.${path}`);
-    },
-    readVisible() {
-      return readSnapshot();
-    },
-    materializeVisible() {
-      return readSnapshot();
-    },
-    update(path, value) {
-      if (!path) {
-        parentScope.update(itemPrefix, value);
-      } else {
-        parentScope.update(`${itemPrefix}.${path}`, value);
+  return createProjectedOwnerScope({
+    parentScope,
+    scopeId: `${parentScope.id}:arr:${arrayPath}:${itemIdentity}`,
+    scopePath: itemScopePath,
+    readOnly,
+    getValue: () => parentScope.get(itemPrefix),
+    setValue: (value) => parentScope.update(itemPrefix, value),
+    getExtraPayload: () => ({ index }),
+    getNestedValue: (path) => parentScope.get(`${itemPrefix}.${path}`),
+    hasNestedValue: (path) => parentScope.has(`${itemPrefix}.${path}`),
+    setNestedValue: (path, value) => parentScope.update(`${itemPrefix}.${path}`, value),
+    getAdditionalPath: (path) => parentScope.get(`${itemPrefix}.${path}`),
+    hasAdditionalPath: (path) => parentScope.has(`${itemPrefix}.${path}`),
+    setAdditionalPath: (path, value) => parentScope.update(`${itemPrefix}.${path}`, value),
+    merge(data) {
+      if (data && typeof data === 'object') {
+        parentScope.merge(toRecord(data));
       }
     },
-    merge(data) { parentScope.merge(data); },
-    replace(data) { parentScope.replace?.(data); }
-  };
+    replace(data) {
+      parentScope.replace?.(data as Record<string, unknown>);
+    }
+  });
 }
 
 export function createItemFormProxy(
@@ -122,17 +58,16 @@ export function createItemFormProxy(
     return `${itemFullPrefix}.${path}`;
   }
 
-  return createProjectedFormRuntime(parentForm, {
+  return createProjectedInlineForm({
+    parentForm,
+    ownerRootPath: itemFullPrefix,
     prefixPath,
-    store: createProjectedFormStore(parentForm.store, {
-      ownerRootPath: itemFullPrefix,
-      scalarValueAlias: itemKind === 'scalar' ? 'value' : undefined,
-      projectValues(state) {
-        const rawItemValue = getIn(state.values, itemFullPrefix);
-        return itemKind === 'scalar'
-          ? { value: rawItemValue ?? '' }
-          : ((rawItemValue ?? {}) as Record<string, unknown>);
-      }
-    })
+    scalarValueAlias: itemKind === 'scalar' ? 'value' : undefined,
+    projectValues(state) {
+      const rawItemValue = getIn(state.values, itemFullPrefix);
+      return itemKind === 'scalar'
+        ? { value: rawItemValue ?? '' }
+        : ((rawItemValue ?? {}) as Record<string, unknown>);
+    },
   });
 }

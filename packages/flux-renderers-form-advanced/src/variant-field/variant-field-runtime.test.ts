@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createVariantScope, createVariantFormProxy } from './variant-field-runtime';
-import type { ScopeRef, FormRuntime, FormStoreApi, FormStoreState } from '@nop-chaos/flux-core';
+import type {
+  FieldRegistrationHandle,
+  FormRuntime,
+  FormStoreApi,
+  FormStoreState,
+  RuntimeFieldRegistration,
+  ScopeRef,
+  ValidationResult,
+  FormValidationResult,
+} from '@nop-chaos/flux-core';
 
 function createMockScope(data: Record<string, unknown>): ScopeRef {
   const getAtPath = (path: string): unknown => {
@@ -79,6 +88,12 @@ describe('createVariantScope', () => {
     const parent = createMockScope({ payload: 'alpha' });
     const scope = createVariantScope(parent, 'payload', 'text', false);
     expect(scope.get('variant')).toBe('text');
+  });
+
+  it('includes variant in readOwn payload', () => {
+    const parent = createMockScope({ payload: 'alpha' });
+    const scope = createVariantScope(parent, 'payload', 'text', false);
+    expect(scope.readOwn()).toEqual({ value: 'alpha', variant: 'text', readOnly: false });
   });
 
   it('returns readOnly via get("readOnly")', () => {
@@ -180,14 +195,14 @@ describe('createVariantScope', () => {
   it('replace with { value } delegates to parent.update(name, value)', () => {
     const parent = createMockScope({ payload: 'alpha' });
     const scope = createVariantScope(parent, 'payload', 'text', false);
-    scope.replace({ value: 'beta' });
+    scope.replace!({ value: 'beta' });
     expect(parent.update).toHaveBeenCalledWith('payload', 'beta');
   });
 
   it('replace without value delegates to parent.update(name, data)', () => {
     const parent = createMockScope({ payload: 'alpha' });
     const scope = createVariantScope(parent, 'payload', 'text', false);
-    scope.replace({ other: 'data' });
+    scope.replace!({ other: 'data' });
     expect(parent.update).toHaveBeenCalledWith('payload', { other: 'data' });
   });
 
@@ -205,12 +220,8 @@ describe('createVariantFormProxy', () => {
     const state: FormStoreState = {
       values: { payload: { name: 'test' } },
       fieldStates: {},
-      errors: {},
-      submitCount: 0,
       submitting: false,
-      touched: {},
-      dirty: {},
-      visited: {},
+      submitAttempted: false,
     };
 
     return {
@@ -221,23 +232,55 @@ describe('createVariantFormProxy', () => {
       subscribeToPath: () => () => {},
       subscribeToSubmitting: () => () => {},
       getPathState: vi.fn(),
+      setValues: vi.fn(),
+      setValue: vi.fn(),
+      setPathErrors: vi.fn(),
+      setValidating: vi.fn(),
+      setTouched: vi.fn(),
+      setDirty: vi.fn(),
+      setVisited: vi.fn(),
+      setSubmitting: vi.fn(),
+      setSubmitAttempted: vi.fn(),
+      batchUpdate: vi.fn(),
     };
   }
 
   function createMinimalFormRuntime(store: FormStoreApi): FormRuntime {
+    const okValidation: ValidationResult = { ok: true, errors: [] };
+    const okFormValidation: FormValidationResult = { ok: true, errors: [], fieldErrors: {} };
+    const acceptedRegistration: FieldRegistrationHandle = {
+      accepted: true,
+      registrationId: 'test-registration',
+      unregister: vi.fn(),
+    };
+
     return {
+      id: 'test-form',
       store,
+      scope: {} as ScopeRef,
       scopeId: 'form-scope',
       rootPath: '',
       get validation() { return undefined as any; },
-      get lifecycleState() { return 'ready' as const; },
+      get lifecycleState() { return 'active' as const; },
       get modelGeneration() { return 0; },
       get canSubmit() { return true; },
       get allTouched() { return false; },
+      setLifecycleHandlers: vi.fn(),
+      getScopeState: vi.fn(),
+      getAsyncOwnerDebugSnapshot: vi.fn(),
+      getScopeRootErrors: vi.fn(() => []),
+      applyChangesAndRevalidate: vi.fn(async () => okFormValidation),
+      applyExternalErrors: vi.fn(),
+      refreshCompiledModel: vi.fn(),
+      dispose: vi.fn(),
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn(),
       isPathOwned: vi.fn(() => true),
       getFieldState: vi.fn(),
-      validateAt: vi.fn(async () => []),
-      validateField: vi.fn(async () => []),
+      validateAt: vi.fn(async () => okValidation),
+      validateField: vi.fn(async () => okValidation),
+      validateAll: vi.fn(async () => okFormValidation),
+      validateForm: vi.fn(async () => okFormValidation),
       getField: vi.fn(),
       getDependents: vi.fn(() => []),
       findByPrefix: vi.fn(() => []),
@@ -250,11 +293,21 @@ describe('createVariantFormProxy', () => {
       touchField: vi.fn(),
       visitField: vi.fn(),
       clearErrors: vi.fn(),
+      submit: vi.fn(),
+      reset: vi.fn(),
       setValue: vi.fn(),
       setValues: vi.fn(),
-      registerField: vi.fn(() => ({ unregister: vi.fn() })),
+      appendValue: vi.fn(),
+      prependValue: vi.fn(),
+      insertValue: vi.fn(),
+      removeValue: vi.fn(),
+      moveValue: vi.fn(),
+      swapValue: vi.fn(),
+      replaceValue: vi.fn(),
+      registerField: vi.fn((_registration: RuntimeFieldRegistration) => acceptedRegistration),
+      updateFieldRegistration: vi.fn(),
       notifyFieldHidden: vi.fn(),
-      validateSubtree: vi.fn(async () => []),
+      validateSubtree: vi.fn(async () => okFormValidation),
     };
   }
 
@@ -305,10 +358,9 @@ describe('createVariantFormProxy', () => {
 
   it('delegates appendValue with prefixed path', () => {
     const store = createMinimalFormStore();
-    const form = createMinimalFormRuntime(store) as FormRuntime & { appendValue: (path: string, value: unknown) => void };
-    form.appendValue = vi.fn();
+    const form = createMinimalFormRuntime(store);
     const proxy = createVariantFormProxy(form, 'items');
-    proxy.appendValue!('list', 'new');
+    proxy.appendValue('list', 'new');
     expect(form.appendValue).toHaveBeenCalledWith('items.list', 'new');
   });
 
@@ -316,7 +368,7 @@ describe('createVariantFormProxy', () => {
     const store = createMinimalFormStore();
     const form = createMinimalFormRuntime(store);
     const proxy = createVariantFormProxy(form, 'payload');
-    proxy.registerField({ path: 'name', childPaths: [] });
+    proxy.registerField({ path: 'name', getValue: () => 'value', childPaths: [] });
     expect(form.registerField).toHaveBeenCalledWith(expect.objectContaining({ path: 'payload.name' }));
   });
 

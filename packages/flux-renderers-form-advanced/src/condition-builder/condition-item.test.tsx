@@ -218,7 +218,7 @@ describe('ConditionItem', () => {
         onChange={() => {}}
         onRemove={() => {}}
         draggable={true}
-        dragHandleProps={{ 'data-dnd-listeners': true }}
+        dragHandleProps={{ 'data-dnd-listeners': true } as React.HTMLAttributes<HTMLElement>}
       />,
     );
     expect(container.querySelector('.cursor-grab')).toBeTruthy();
@@ -246,7 +246,7 @@ describe('ConditionItem', () => {
         onChange={() => {}}
         onRemove={() => {}}
         draggable={true}
-        dragHandleProps={{ 'data-testid': 'drag-handle' }}
+        dragHandleProps={{ 'data-testid': 'drag-handle' } as React.HTMLAttributes<HTMLElement>}
       />,
     );
     expect(container.querySelector('[data-testid="drag-handle"]')).toBeTruthy();
