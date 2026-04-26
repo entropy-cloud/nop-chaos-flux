@@ -5,6 +5,7 @@ import type {
   SchemaDiagnostic,
   SchemaDiagnosticCode,
   SchemaDiagnosticSeverity,
+  SchemaDiagnosticSourceLocation,
   SchemaNamespaceValidator
 } from '@nop-chaos/flux-core';
 import { parsePath } from '@nop-chaos/flux-core';
@@ -17,12 +18,14 @@ export interface SchemaCompilerDiagnosticsContext {
   maxIssues?: number;
   validation: ResolvedValidationOptions;
   diagnostics: SchemaDiagnostic[];
+  schemaUrl?: string;
   emit(issue: {
     code: SchemaDiagnosticCode;
     message: string;
     path: string;
     severity?: SchemaDiagnosticSeverity;
     source?: SchemaDiagnostic['source'];
+    sourceLocation?: SchemaDiagnosticSourceLocation;
   }): void;
   hasReachedLimit(): boolean;
 }
@@ -189,7 +192,8 @@ function resolveValidationOptions(
 
 export function createSchemaCompilerDiagnosticsContext(
   options: CompileSchemaOptions | undefined,
-  mode: SchemaCompilerDiagnosticsMode
+  mode: SchemaCompilerDiagnosticsMode,
+  schemaUrl?: string
 ): SchemaCompilerDiagnosticsContext {
   const diagnostics: SchemaDiagnostic[] = [];
   const diagnosticsOptions = options?.diagnostics;
@@ -209,17 +213,21 @@ export function createSchemaCompilerDiagnosticsContext(
     path: string;
     severity?: SchemaDiagnosticSeverity;
     source?: SchemaDiagnostic['source'];
+    sourceLocation?: SchemaDiagnosticSourceLocation;
   }) {
     if (!enabled || hasReachedLimit()) {
       return;
     }
+
+    const sourceLocation = issue.sourceLocation ?? (schemaUrl ? { file: schemaUrl } : undefined);
 
     const diagnostic: SchemaDiagnostic = {
       code: issue.code,
       message: issue.message,
       path: issue.path,
       severity: issue.severity ?? 'error',
-      source: issue.source ?? 'core'
+      source: issue.source ?? 'core',
+      ...(sourceLocation ? { sourceLocation } : {})
     };
 
     const key = `${diagnostic.source}:${diagnostic.code}:${diagnostic.path}:${diagnostic.message}`;
@@ -239,6 +247,7 @@ export function createSchemaCompilerDiagnosticsContext(
     maxIssues,
     validation,
     diagnostics,
+    schemaUrl,
     emit,
     hasReachedLimit
   };

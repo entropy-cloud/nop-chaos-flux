@@ -360,7 +360,7 @@ export function createSchemaCompiler(input: {
   }
 
   function validateSchemaInput(schema: SchemaInput, options: CompileSchemaOptions = {}) {
-    const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'validate');
+    const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'validate', options.schemaUrl);
     const prepared = applyBeforeCompilePlugins(schema);
     const schemaUrl = options.schemaUrl ?? '$';
 
@@ -419,7 +419,7 @@ export function createSchemaCompiler(input: {
       const diagnostics = createSchemaCompilerDiagnosticsContext({
         schemaUrl: options.schemaUrl,
         diagnostics: { enabled: false }
-      }, 'compile');
+      }, 'compile', options.schemaUrl);
       const canonicalSchema = canonicalizeSchemaInput(schema, {
         basePath: options.path,
         schemaUrl: options.schemaUrl,

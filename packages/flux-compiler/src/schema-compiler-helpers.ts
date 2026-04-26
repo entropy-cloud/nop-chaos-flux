@@ -27,7 +27,7 @@ export function prepareSchemaRoot(args: {
   plugins?: RendererPlugin[];
 }) {
   const prepared = args.schema;
-  const diagnostics = createSchemaCompilerDiagnosticsContext(args.options, 'compile');
+  const diagnostics = createSchemaCompilerDiagnosticsContext(args.options, 'compile', args.options.schemaUrl);
   const cidState = args.options.cidState ?? createCompiledCidState();
 
   if (!isSchemaInput(prepared)) {
