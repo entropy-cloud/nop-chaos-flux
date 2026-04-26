@@ -410,4 +410,227 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
       expect(debugJson?.textContent).toContain('"pages": 48');
     });
   });
+
+  it('collapses and expands input-tree child nodes via the chevron toggle', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#9"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'input-tree',
+              name: 'category',
+              label: 'Category',
+              treeMode: 'radio',
+              options: [
+                {
+                  label: 'Platform',
+                  value: 'platform',
+                  children: [
+                    { label: 'Runtime', value: 'runtime' },
+                    { label: 'Compiler', value: 'compiler' }
+                  ]
+                }
+              ]
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Platform')).toBeTruthy();
+      expect(screen.getByText('Runtime')).toBeTruthy();
+      expect(screen.getByText('Compiler')).toBeTruthy();
+    });
+
+    const collapseBtn = screen.getByLabelText('Collapse node');
+    fireEvent.click(collapseBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Runtime')).toBeNull();
+      expect(screen.queryByText('Compiler')).toBeNull();
+    });
+    expect(screen.getByText('Platform')).toBeTruthy();
+
+    const expandBtn = screen.getByLabelText('Expand node');
+    fireEvent.click(expandBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Runtime')).toBeTruthy();
+      expect(screen.getByText('Compiler')).toBeTruthy();
+    });
+  });
+
+  it('collapses and expands tree-select child nodes via the chevron toggle', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#10"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'tree-select',
+              name: 'department',
+              label: 'Department',
+              options: [
+                {
+                  label: 'Engineering',
+                  value: 'eng',
+                  children: [
+                    { label: 'Frontend', value: 'frontend' },
+                    { label: 'Backend', value: 'backend' }
+                  ]
+                }
+              ]
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Department/ }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Engineering')).toBeTruthy();
+      expect(screen.getByText('Frontend')).toBeTruthy();
+      expect(screen.getByText('Backend')).toBeTruthy();
+    });
+
+    const collapseBtn = screen.getByLabelText('Collapse node');
+    fireEvent.click(collapseBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Frontend')).toBeNull();
+      expect(screen.queryByText('Backend')).toBeNull();
+    });
+    expect(screen.getByText('Engineering')).toBeTruthy();
+
+    const expandBtn = screen.getByLabelText('Expand node');
+    fireEvent.click(expandBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Frontend')).toBeTruthy();
+      expect(screen.getByText('Backend')).toBeTruthy();
+    });
+  });
+
+  it('renders input-tree with correct data-depth and data-slot markers on option nodes', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#11"
+        schema={{
+          type: 'form',
+          body: [
+            {
+              type: 'input-tree',
+              name: 'teams',
+              label: 'Teams',
+              treeMode: 'checkbox',
+              options: [
+                {
+                  label: 'Engineering',
+                  value: 'eng',
+                  children: [
+                    { label: 'Frontend', value: 'frontend', children: [] }
+                  ]
+                }
+              ]
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Engineering')).toBeTruthy();
+      expect(screen.getByText('Frontend')).toBeTruthy();
+    });
+
+    const optionNodes = document.querySelectorAll('[data-slot="tree-option-node"]');
+    expect(optionNodes.length).toBeGreaterThanOrEqual(2);
+
+    const depthValues = Array.from(optionNodes).map((el) => el.getAttribute('data-depth'));
+    expect(depthValues).toContain('0');
+    expect(depthValues).toContain('1');
+  });
+
+  it('selects a value in input-tree radio mode after expanding a collapsed parent', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs, formStateProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-checkbox-fields.test.tsx#12"
+        schema={{
+          type: 'form',
+          data: { dept: '' },
+          body: [
+            {
+              type: 'input-tree',
+              name: 'dept',
+              label: 'Dept',
+              treeMode: 'radio',
+              options: [
+                {
+                  label: 'Engineering',
+                  value: 'eng',
+                  children: [
+                    { label: 'Frontend', value: 'frontend', children: [] }
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'form-state-probe',
+              name: 'dept'
+            }
+          ]
+        } as any}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Engineering')).toBeTruthy();
+      expect(screen.getByText('Frontend')).toBeTruthy();
+    });
+
+    const collapseBtn = screen.getByLabelText('Collapse node');
+    fireEvent.click(collapseBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Frontend')).toBeNull();
+    });
+
+    const expandBtn = screen.getByLabelText('Expand node');
+    fireEvent.click(expandBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Frontend')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Frontend'));
+
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('form-state:dept').textContent ?? 'null')).toBe('frontend');
+    });
+  });
 });

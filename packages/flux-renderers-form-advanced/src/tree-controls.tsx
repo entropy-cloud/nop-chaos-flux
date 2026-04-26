@@ -43,6 +43,63 @@ function isMultipleMode(treeMode: unknown) {
   return treeMode === 'checkbox';
 }
 
+function TreeOptionNode(props: {
+  option: TreeOptionMeta;
+  value: unknown;
+  multiple: boolean;
+  showPathLabel: boolean;
+  disabled: boolean;
+  onChange: (value: unknown) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const checked = isTreeSelectionChecked(props.value, props.option.value, props.multiple);
+  const hasChildren = props.option.children.length > 0;
+
+  return (
+    <div data-slot="tree-option-node" data-depth={props.option.depth}>
+      <div className="flex items-center gap-1" style={{ paddingInlineStart: `${props.option.depth * 16}px` }}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-label={expanded ? 'Collapse node' : 'Expand node'}
+          disabled={props.disabled}
+          onClick={() => setExpanded((prev) => !prev)}
+          className={cn(hasChildren ? '' : 'invisible')}
+        >
+          <ChevronRightIcon className={cn('size-3.5 transition-transform', expanded ? 'rotate-90' : '')} />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className={cn(
+            'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted',
+            checked ? 'bg-muted' : ''
+          )}
+          disabled={props.disabled}
+          onClick={() => props.onChange(toggleTreeSelection(props.value, props.option.value, props.multiple))}
+        >
+          {props.multiple ? <Checkbox checked={checked} aria-label={props.option.label} /> : null}
+          <span className="truncate">{props.showPathLabel ? props.option.pathLabel : props.option.label}</span>
+        </Button>
+      </div>
+      {hasChildren && expanded
+        ? props.option.children.map((child) => (
+            <TreeOptionNode
+              key={`${child.valueKey}:${child.depth}`}
+              option={child}
+              value={props.value}
+              multiple={props.multiple}
+              showPathLabel={props.showPathLabel}
+              disabled={props.disabled}
+              onChange={props.onChange}
+            />
+          ))
+        : null}
+    </div>
+  );
+}
+
 function TreeOptionList(props: {
   options: TreeOptionMeta[];
   value: unknown;
@@ -76,32 +133,6 @@ function TreeOptionList(props: {
     return filterEntries(props.options);
   }, [props.options, props.searchable, query]);
 
-  function renderNode(option: TreeOptionMeta) {
-    const checked = isTreeSelectionChecked(props.value, option.value, props.multiple);
-
-    return (
-      <div key={`${option.valueKey}:${option.depth}`} className="grid gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn(
-            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted',
-            checked ? 'bg-muted' : ''
-          )}
-          disabled={props.disabled}
-          onClick={() => props.onChange(toggleTreeSelection(props.value, option.value, props.multiple))}
-        >
-          <span style={{ paddingInlineStart: `${option.depth * 16}px` }} className="inline-flex items-center gap-2 flex-1 min-w-0">
-            {option.children.length > 0 ? <ChevronRightIcon className="size-3.5 text-muted-foreground" /> : <span className="size-3.5" />}
-            {props.multiple ? <Checkbox checked={checked} aria-label={option.label} /> : null}
-            <span className="truncate">{props.showPathLabel ? option.pathLabel : option.label}</span>
-          </span>
-        </Button>
-        {option.children.length > 0 ? option.children.map(renderNode) : null}
-      </div>
-    );
-  }
-
   return (
     <div data-slot="tree-option-list">
       {props.searchable ? (
@@ -116,7 +147,17 @@ function TreeOptionList(props: {
         </Label>
       ) : null}
       <div data-slot="tree-option-items">
-        {filteredOptions.map(renderNode)}
+        {filteredOptions.map((option) => (
+          <TreeOptionNode
+            key={`${option.valueKey}:${option.depth}`}
+            option={option}
+            value={props.value}
+            multiple={props.multiple}
+            showPathLabel={props.showPathLabel}
+            disabled={props.disabled}
+            onChange={props.onChange}
+          />
+        ))}
       </div>
     </div>
   );
