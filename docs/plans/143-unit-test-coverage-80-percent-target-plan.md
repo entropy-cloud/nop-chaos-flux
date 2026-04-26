@@ -1,7 +1,7 @@
 # 143 Unit Test Coverage 80% Target Plan
 
 > Plan Status: partially completed
-> Last Reviewed: 2026-04-26
+> Last Reviewed: 2026-04-27
 > Source: Coverage audit via `vitest run --coverage` across all packages
 > Related: None
 
@@ -13,7 +13,7 @@
 
 - Execution update (2026-04-26): `flux-runtime` now clears its enforced package gate at `87.78%` statements, `80.16%` branches, `90.48%` functions, and `88.28%` lines after targeted tests for async-governance and form-owner lifecycle branches.
 - Execution update (2026-04-26): `flux-renderers-data` now clears its enforced package gate at `92.32%` statements, `80.04%` branches, `94.23%` functions, and `93.33%` lines after focused coverage on chart, CRUD state, table controls, quick-edit, and virtual/body helper paths.
-- Active remaining work is now plan-level verification and a fresh independent closure audit, not another known package-local coverage gap.
+- Active remaining work is still substantive and in-scope: `flux-renderers-form` currently has a failing/timed-out validation test under coverage, and `flux-renderers-form-advanced` still misses the enforced 80% branch threshold.
 
 ### 覆盖率现状 (2026-04-26 audit)
 
@@ -278,7 +278,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Independent closure audit confirms the plan is only partially complete. The targeted packages now have substantially expanded unit coverage, all package-local failing tests from Phase 1 are fixed, and all target packages have 80% Vitest thresholds configured. However, several packages still miss the enforced 80% coverage gates, and repo-wide verification remains blocked by unrelated workspace issues outside this plan.
+Status Note: Independent closure audit still confirms the plan is only partially complete. The targeted packages now have substantially expanded unit coverage, and `flux-runtime`, `flux-react`, and `flux-renderers-data` all clear their enforced 80% gates package-locally. However, `flux-renderers-form` still has a failing/timed-out validation test under direct package coverage execution, and `flux-renderers-form-advanced` still misses the enforced 80% branch gate, so substantive in-scope work remains.
 
 Closure Audit Evidence:
 
@@ -286,8 +286,11 @@ Closure Audit Evidence:
 - Evidence: `ses_237c93997ffeK62ineF4gYSnQc` — audit found partial completion only: `flux-core` and `flux-compiler` clear 80% gates, but `flux-runtime` branches, `flux-react` branches/functions, `flux-renderers-form`, `flux-renderers-data`, and `flux-renderers-form-advanced` still miss current enforced thresholds.
 - Post-audit execution update: package-local verification on 2026-04-26 moved `flux-runtime` over the enforced gate (`pnpm --filter @nop-chaos/flux-runtime typecheck`, `build`, `lint`, `test`, and `pnpm exec vitest run --config vitest.config.ts --coverage` all pass locally).
 - Post-audit execution update: package-local verification on 2026-04-26 moved `flux-renderers-data` over the enforced gate (`pnpm --filter @nop-chaos/flux-renderers-data typecheck`, `build`, `lint`, `test`, and `pnpm exec vitest run --config vitest.config.ts --coverage` all pass locally) with final package coverage at `92.32%` statements / `80.04%` branches / `94.23%` functions / `93.33%` lines.
+- Reviewer / Agent: independent subagent closure audit
+- Evidence: `ses_235a1832fffeBbNYQhAWMXCLFx` — re-audit against the current live repo confirms partial completion remains: `flux-runtime`, `flux-react`, and `flux-renderers-data` now clear enforced package gates, but `flux-renderers-form` fails package coverage execution on `src/__tests__/form-validation-rules.test.tsx` timeout and `flux-renderers-form-advanced` still fails the enforced 80% branch threshold.
+- Plan-level verification update (2026-04-27): workspace `pnpm typecheck`, `pnpm build`, and `pnpm lint` complete successfully from repo root; workspace `pnpm test` progressed successfully through most packages but still timed out before the full recursive run returned, so it is supportive evidence only and not closure evidence by itself.
 
 Follow-up:
 
 - 辅助包覆盖率（flow-designer, spreadsheet, report-designer, word-editor, nop-debugger, ui）不在本计划 scope 内，可由后续专项计划覆盖
-- Remaining plan-owned work: re-run final plan-level verification against a clean enough workspace baseline and finish a fresh independent closure audit before marking this plan `completed`.
+- Remaining plan-owned work: fix the `flux-renderers-form` timed-out validation test under coverage, raise `flux-renderers-form-advanced` branch coverage to the enforced 80% gate, then re-run final plan-level verification and a fresh closure audit before marking this plan `completed`.

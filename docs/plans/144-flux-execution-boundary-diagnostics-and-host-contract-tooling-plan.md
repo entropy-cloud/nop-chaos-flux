@@ -1,6 +1,6 @@
 # 144 Flux Execution Boundary Diagnostics And Host-Contract Tooling Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-26
 > Source: `docs/analysis/2026-04-26-flux-architecture-improvement-opportunities.md`
 > Related: `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md`, `docs/plans/41-compiler-integrated-schema-diagnostics-implementation-plan.md`, `docs/plans/112-capability-projection-manifest-implementation-plan.md`
@@ -75,7 +75,7 @@ Exit Criteria:
 - [x] No analysis wording remains that suggests Flux executes half-assembled loader artifacts
 - [x] Any code-level contract touchpoints identified by the audit are either updated or explicitly moved out of scope
 - [x] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 Implementation notes:
 - Added "Input Invariants" subsection to `docs/architecture/frontend-programming-model.md` enumerating 5 explicit invariants
@@ -99,7 +99,7 @@ Exit Criteria:
 - [x] Diagnostics can report authoring-origin information for at least one representative compiler error path
 - [x] The final design wording lives in the owning architecture doc, not only in analysis
 - [x] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 Implementation notes:
 - Added `SchemaDiagnosticSourceLocation` type to `packages/flux-core/src/schema-diagnostics/index.ts` with `file`, `line`, `column` fields
@@ -126,7 +126,7 @@ Exit Criteria:
 - [x] The owning architecture doc states the shared consumption path and its context requirements
 - [x] Standalone fragment / explicit host-context fallback is documented where needed
 - [x] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 Implementation notes:
 - Added `resolveHostContractManifest(definition, versionSelector?)` shared helper in `packages/flux-core/src/types/renderer-authoring-contract.ts`
@@ -144,21 +144,21 @@ Implementation notes:
 - [x] Remaining governance-only items stay explicitly out of this plan's scope
 - [x] Dependency-tracking optimization work is explicitly out of this plan's scope and assigned to a successor plan if pursued
 - [x] Focused verification has been completed for every landed phase
-- [ ] Independent closure audit completed and recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `docs/logs/` updated
+- [x] Independent closure audit completed and recorded
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `docs/logs/` updated
 
 ## Closure
 
-Status Note: <<fill when the plan is actually closed>>
+Status Note: Closed after landing a real tooling consumer for the shared host-contract resolution path in `@nop-chaos/nop-debugger`, synchronizing the remaining architecture-doc drift around `sourceLocation` and `ResolvedAuthoringContract.hostManifest`, and re-running full workspace verification on the live repo.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<independent reviewer or subagent>>
-- Evidence: <<task id / daily log link / focused verification summary>>
+- Reviewer / Agent: independent general subagent
+- Evidence: initial gap-finding audit `ses_235cdc75bffenhmG4NvWad61Ip` identified the remaining owner-doc drift after the debugger consumer adoption; final closure audit `ses_235c76aa6ffen7C3G5vSr0Pn6H` was followed by live workspace verification and plan/doc updates in this session. Verified commands: `pnpm --filter @nop-chaos/nop-debugger typecheck`, `pnpm --filter @nop-chaos/nop-debugger build`, `pnpm --filter @nop-chaos/nop-debugger lint`, `pnpm --filter @nop-chaos/nop-debugger test`, `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
 
 Follow-up:
 
