@@ -23,7 +23,7 @@ import {
   shouldRunActionWhen,
   isAbortError
 } from '../action-core';
-import { cancelPendingDebounce, scheduleDebounce } from '../utils/debounce';
+import { cancelPendingDebounce, scheduleDebounce } from '@nop-chaos/flux-core';
 import type { ActionDispatcherConfig, ActionDispatcherContext } from './types';
 import { isRequestBackedAction, normalizeCompiledActionProgram, applyActionControl } from './program-utils';
 import { finishAction } from './action-runners';

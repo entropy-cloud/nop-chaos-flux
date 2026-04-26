@@ -35,31 +35,7 @@ export interface CrudResolvedSource {
   total?: number;
 }
 
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-export function toRecord(value: unknown): Record<string, unknown> {
-  return isRecord(value) ? value : {};
-}
-
-export function toStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-}
-
-export function toPositiveNumber(value: unknown, fallback: number) {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : fallback;
-}
-
-export function equalRecord(a: Record<string, unknown>, b: Record<string, unknown>) {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  if (aKeys.length !== bKeys.length) {
-    return false;
-  }
-
-  return aKeys.every((key) => a[key] === b[key]);
-}
+import { isRecord, toRecord, toPositiveNumber, toStringArray, shallowEqualRecords } from '@nop-chaos/flux-core';
 
 export function normalizePagination(value: unknown, fallbackPageSize: number): CrudPaginationState {
   const record = toRecord(value);
@@ -269,12 +245,12 @@ export function useCrudRuntimeState(args: {
     },
     (a, b) =>
       a.queryState.refreshCount === b.queryState.refreshCount
-      && equalRecord(a.queryState.values, b.queryState.values)
+      && shallowEqualRecords(a.queryState.values, b.queryState.values)
       && a.paginationState.currentPage === b.paginationState.currentPage
       && a.paginationState.pageSize === b.paginationState.pageSize
       && a.sortState.field === b.sortState.field
       && a.sortState.order === b.sortState.order
-      && equalRecord(a.filterState, b.filterState)
+      && shallowEqualRecords(a.filterState, b.filterState)
       && a.selectedRowKeys.length === b.selectedRowKeys.length
       && a.selectedRowKeys.every((value, index) => value === b.selectedRowKeys[index])
   );

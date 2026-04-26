@@ -40,4 +40,4 @@ export {
 export {
   cancelPendingDebounce,
   scheduleDebounce
-} from './utils/debounce';
+} from '@nop-chaos/flux-core';

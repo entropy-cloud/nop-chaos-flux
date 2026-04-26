@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { scheduleDebounce, cancelPendingDebounce } from '../utils/debounce';
+import { scheduleDebounce, cancelPendingDebounce } from '@nop-chaos/flux-core';
 
 describe('scheduleDebounce', () => {
   beforeEach(() => {

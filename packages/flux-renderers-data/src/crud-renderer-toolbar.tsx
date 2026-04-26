@@ -1,7 +1,8 @@
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import type { CrudStatusSummary } from './crud-schema';
-import { DEFAULT_PAGE_SIZE_OPTIONS, type CrudPaginationState, isRecord } from './crud-renderer-state';
+import { isRecord } from '@nop-chaos/flux-core';
+import { DEFAULT_PAGE_SIZE_OPTIONS, type CrudPaginationState } from './crud-renderer-state';
 import type { CrudSchema } from './crud-schema';
 
 export interface ToolbarBlockDefinition {

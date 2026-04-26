@@ -1,22 +1,19 @@
-import type {
-  ApiSchema,
-  CompiledApiConfig,
-  CompiledRuntimeValue,
-  DynamicRuntimeValue,
-  RendererRuntime,
-  RuntimeValueState,
-  SchemaValue,
-  ScopeDependencySet,
-  ScopeRef,
-  StaticRuntimeValue
+import {
+  isRecord,
+  type ApiSchema,
+  type CompiledApiConfig,
+  type CompiledRuntimeValue,
+  type DynamicRuntimeValue,
+  type RendererRuntime,
+  type RuntimeValueState,
+  type SchemaValue,
+  type ScopeDependencySet,
+  type ScopeRef,
+  type StaticRuntimeValue
 } from '@nop-chaos/flux-core';
 import { collectRuntimeDependencies } from '../node-runtime';
 
 export { collectRuntimeDependencies };
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
-}
 
 function applyMergeStrategy(input: {
   currentValue: unknown;
@@ -43,7 +40,7 @@ function applyMergeStrategy(input: {
   }
 
   if (strategy === 'merge') {
-    if (isObjectRecord(input.currentValue) && isObjectRecord(input.nextValue)) {
+    if (isRecord(input.currentValue) && isRecord(input.nextValue)) {
       return { ...input.currentValue, ...input.nextValue };
     }
 
@@ -62,7 +59,7 @@ function applyMergeStrategy(input: {
     const passthroughNextItems: unknown[] = [];
 
     for (const item of nextItems) {
-      if (isObjectRecord(item) && mergeKey in item) {
+      if (isRecord(item) && mergeKey in item) {
         keyedNextItems.set(item[mergeKey], item);
       } else {
         passthroughNextItems.push(item);
@@ -70,7 +67,7 @@ function applyMergeStrategy(input: {
     }
 
     const mergedItems = currentItems.map((item) => {
-      if (!isObjectRecord(item) || !(mergeKey in item)) {
+      if (!isRecord(item) || !(mergeKey in item)) {
         return item;
       }
 
@@ -143,7 +140,7 @@ export function writeDataToScope(input: {
     );
   }
 
-  if (mergeToScope && isObjectRecord(data)) {
+  if (mergeToScope && isRecord(data)) {
     scope.merge(data);
   }
 }

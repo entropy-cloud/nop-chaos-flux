@@ -17,7 +17,7 @@ export {
 
 export { resolveClassAliases, mergeClassAliases } from './class-aliases';
 
-export { isPlainObject, shallowEqual } from './utils/object';
+export { isPlainObject, isRecord, toRecord, toPositiveNumber, toStringArray, shallowEqualRecords, shallowEqual } from './utils/object';
 export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn } from './utils/path';
 export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema';
 export { decorateRendererEnv } from './utils/renderer-env';
@@ -31,6 +31,7 @@ export type { RuntimeHostIssueInput } from './utils/runtime-host-reporting';
 
 export { validationErrorsEqual } from './utils/validation-utils';
 export { normalizeInstancePath } from './utils/instance-path';
+export { cancelPendingDebounce, scheduleDebounce } from './utils/debounce';
 
 export { setMessageFormatter, getMessageFormatter } from './i18n-sink';
 export type { MessageFormatter } from './i18n-sink';

@@ -1,4 +1,4 @@
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, toPositiveNumber, toStringArray } from '@nop-chaos/flux-core';
 import type { FilterState, SortState, TableRowEntry } from './types';
 
 function isDevRuntime() {
@@ -87,14 +87,7 @@ export function processTableData(
   return data.map((entry, viewIndex) => ({ ...entry, viewIndex }));
 }
 
-export function toPositiveNumber(value: unknown, fallback: number): number {
-  const next = Number(value);
-  return Number.isFinite(next) && next > 0 ? next : fallback;
-}
-
-export function toStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.map((entry) => String(entry)) : [];
-}
+export { toPositiveNumber, toStringArray };
 
 export function toSelectionPayload(payload: Record<string, unknown> | undefined): Set<string> {
   return new Set(toStringArray(payload?.selectedRowKeys));

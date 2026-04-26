@@ -11,7 +11,7 @@ import { getCompiledValidationField, hasCompiledValidationNodes, validationError
 import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration';
 import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree';
 import type { FormRuntimeValidationState } from './form-runtime-types';
-import { scheduleDebounce } from './utils/debounce';
+import { scheduleDebounce } from '@nop-chaos/flux-core';
 import { normalizeRuntimeValidationErrors } from './validation';
 
 function createValidationResult(errors: ValidationError[]): ValidationResult {
