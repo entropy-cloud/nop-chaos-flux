@@ -104,11 +104,7 @@ The two projects can collaborate: Next can integrate Flux's designer and runtime
       "type": "button",
       "label": "Submit",
       "onClick": {
-        "action": "submitForm",
-        "api": {
-          "method": "post",
-          "url": "/api/profile"
-        }
+        "action": "submitForm"
       }
     }
   ]
@@ -166,7 +162,7 @@ Flux keeps its core vocabulary deliberately small. These seven primitives are th
 
 | Primitive | Responsibility |
 |---|---|
-| `Base Tree` | Schema structure and node lifecycle |
+| `Template` | Schema structure and node lifecycle |
 | `ScopeRef` | Lexical data environment |
 | `Value` | Literal, expression, template, array, and object execution model |
 | `Resource` | Runtime-owned value producer such as data loading |
