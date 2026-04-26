@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentComponentRegistry, useRenderScope, useSchemaProps } from '@nop-chaos/flux-react';
@@ -18,42 +18,7 @@ import {
   type InternalTableHandle,
 } from './crud-renderer-state';
 import { CrudToolbarBlocks, normalizeToolbarBlocks } from './crud-renderer-toolbar';
-
-function readQueryValues(container: HTMLElement | null): Record<string, unknown> {
-  if (!container) {
-    return {};
-  }
-
-  const values: Record<string, unknown> = {};
-  const fields = container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
-    '[data-slot="form-body"] input[name], [data-slot="form-body"] textarea[name], [data-slot="form-body"] select[name]'
-  );
-
-  fields.forEach((field) => {
-    const key = field.name;
-    if (!key) {
-      return;
-    }
-
-    if (field instanceof HTMLInputElement) {
-      if (field.type === 'checkbox') {
-        values[key] = field.checked;
-        return;
-      }
-
-      if (field.type === 'radio') {
-        if (field.checked) {
-          values[key] = field.value;
-        }
-        return;
-      }
-    }
-
-    values[key] = field.value;
-  });
-
-  return values;
-}
+import { createCrudOwnerPaths, useCrudQueryBridge, useCrudVisibleColumnNames } from './crud-renderer-ownership';
 
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const defaultEmptyLabel = t('flux.common.noData');
@@ -62,7 +27,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const scope = useRenderScope();
   const componentRegistry = useCurrentComponentRegistry();
 
-  const ownerStatePath = useMemo(() => `$_crud.${props.id ?? props.meta.cid ?? 'crud'}`, [props.id, props.meta.cid]);
+  const ownerPaths = useMemo(() => createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema }), [normalizedSchema, props.id, props.meta.cid]);
   const defaultQuery = useMemo(
     () => ({ ...toRecord(normalizedSchema.defaultParams), ...toRecord(normalizedSchema.queryForm?.defaultParams), ...toRecord(normalizedSchema.queryForm?.data) }),
     [normalizedSchema.defaultParams, normalizedSchema.queryForm?.data, normalizedSchema.queryForm?.defaultParams]
@@ -70,12 +35,12 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
   const { queryState, paginationState, sortState, filterState, selectedRowKeys } = useCrudRuntimeState({
     scope,
-    ownerStatePath,
-    queryStatePath: `${ownerStatePath}.query`,
-    paginationStatePath: normalizedSchema.paginationStatePath ?? `${ownerStatePath}.pagination`,
-    sortStatePath: normalizedSchema.sortStatePath ?? `${ownerStatePath}.sort`,
-    filterStatePath: normalizedSchema.filterStatePath ?? `${ownerStatePath}.filters`,
-    selectionStatePath: normalizedSchema.selectionStatePath ?? `${ownerStatePath}.selection`,
+    ownerStatePath: ownerPaths.ownerStatePath,
+    queryStatePath: ownerPaths.queryStatePath,
+    paginationStatePath: ownerPaths.paginationStatePath,
+    sortStatePath: ownerPaths.sortStatePath,
+    filterStatePath: ownerPaths.filterStatePath,
+    selectionStatePath: ownerPaths.selectionStatePath,
     defaultQuery,
     fallbackPageSize: DEFAULT_PAGE_SIZE,
   });
@@ -85,30 +50,38 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       return;
     }
 
-    scope.update(ownerStatePath, {
+    scope.update(ownerPaths.ownerStatePath, {
       query: queryState,
       pagination: paginationState,
       sort: sortState,
       filters: filterState,
       selection: selectedRowKeys,
     });
-  }, [filterState, ownerStatePath, paginationState, queryState, scope, selectedRowKeys, sortState]);
+  }, [filterState, ownerPaths.ownerStatePath, paginationState, queryState, scope, selectedRowKeys, sortState]);
 
   const resolvedSource = useMemo(() => normalizeCrudSourceValue(schemaProps.source), [schemaProps.source]);
   const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
   const effectiveQuery = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
   const filteredRows = useMemo(() => applyQueryToRows(source, effectiveQuery), [effectiveQuery, source]);
   const internalTableRef = useRef<InternalTableHandle>({});
-  const queryContainerRef = useRef<HTMLDivElement>(null);
-
-  const queryStatePath = `${ownerStatePath}.query`;
-  const paginationStatePath = normalizedSchema.paginationStatePath ?? `${ownerStatePath}.pagination`;
-  const sortStatePath = normalizedSchema.sortStatePath ?? `${ownerStatePath}.sort`;
-  const filterStatePath = normalizedSchema.filterStatePath ?? `${ownerStatePath}.filters`;
-  const selectionStatePath = normalizedSchema.selectionStatePath ?? `${ownerStatePath}.selection`;
+  const queryStatePath = ownerPaths.queryStatePath;
+  const paginationStatePath = ownerPaths.paginationStatePath;
+  const sortStatePath = ownerPaths.sortStatePath;
+  const filterStatePath = ownerPaths.filterStatePath;
+  const selectionStatePath = ownerPaths.selectionStatePath;
   const shouldFetchOnQueryChange = normalizedSchema.clientMode?.loadDataOnce === true
     ? normalizedSchema.clientMode.fetchOnFilter === true
     : true;
+  const defaultColumnNames = useMemo(
+    () => (normalizedSchema.columns ?? []).filter((column) => column.hidden !== true).map((column, index) => column.name ?? `column-${index}`),
+    [normalizedSchema.columns]
+  );
+  const visibleColumnNames = useCrudVisibleColumnNames({
+    schema: normalizedSchema,
+    defaultColumnNames,
+    toggledColumnsStatePath: ownerPaths.toggledColumnsStatePath,
+    orderedColumnsStatePath: ownerPaths.orderedColumnsStatePath,
+  });
 
   const handleRefresh = useCallback(() => {
     internalTableRef.current?.refreshSource?.();
@@ -129,37 +102,19 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   }, [normalizedSchema.autoClearSelectionOnRefresh, props.events, queryState.refreshCount, queryState.values, queryStatePath, scope, selectionStatePath]);
 
   const queryFormId = `${props.id}-query-form`;
-
-  const handleQuerySubmit = useCallback(async () => {
-    const nextValues = readQueryValues(queryContainerRef.current);
-    const handle = componentRegistry?.resolve({ componentId: queryFormId });
-    if (handle?.capabilities?.hasMethod?.('submit')) {
-      await handle.capabilities.invoke('submit', undefined, {} as never);
-
-      if (shouldFetchOnQueryChange) {
-        props.events.onQuerySubmit?.(undefined, {
-          scope,
-          evaluationBindings: { query: nextValues },
-        });
-      }
-
-      return;
-    }
-
-    if (scope) {
-      scope.update(queryStatePath, {
-        values: nextValues,
-        refreshCount: queryState.refreshCount + 1,
-      });
-    }
-
-    if (shouldFetchOnQueryChange) {
-      props.events.onQuerySubmit?.(undefined, {
-        scope,
-        evaluationBindings: { query: nextValues },
-      });
-    }
-  }, [componentRegistry, props.events, queryFormId, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
+  const { handleQuerySubmit, handleQueryReset } = useCrudQueryBridge({
+    componentRegistry,
+    queryFormId,
+    scope,
+    queryStatePath,
+    paginationStatePath,
+    queryState,
+    paginationState,
+    defaultQuery,
+    shouldFetchOnQueryChange,
+    onQuerySubmit: props.events.onQuerySubmit,
+    onQueryReset: props.events.onQueryReset,
+  });
 
   const summary = useMemo<CrudStatusSummary>(() => ({
     loading: false,
@@ -173,7 +128,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     pagination: paginationState,
     sort: sortState,
     filters: filterState,
-  }), [effectiveQuery, filterState, filteredRows.length, paginationState, resolvedSource.total, selectedRowKeys, sortState]);
+    visibleColumnNames,
+  }), [effectiveQuery, filterState, filteredRows.length, paginationState, resolvedSource.total, selectedRowKeys, sortState, visibleColumnNames]);
 
   useCrudHandle(props, internalTableRef, handleRefresh);
   useCrudStatusPublisher(scope, normalizedSchema.statusPath, summary);
@@ -282,29 +238,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     return base as BaseSchema;
   }, [normalizedSchema.onQuerySubmit, normalizedSchema.queryForm, queryFormId, queryState.refreshCount, queryState.values, queryStatePath, shouldFetchOnQueryChange]);
 
-  const handleQueryReset = useCallback(() => {
-    const handle = componentRegistry?.resolve({ componentId: queryFormId });
-    if (handle?.capabilities?.hasMethod?.('reset')) {
-      void handle.capabilities.invoke('reset', { values: defaultQuery }, {} as never);
-    }
-
-    if (!scope) {
-      return;
-    }
-
-    startTransition(() => {
-      scope.update(queryStatePath, { values: defaultQuery, refreshCount: queryState.refreshCount + 1 });
-      scope.update(paginationStatePath, { currentPage: 1, pageSize: paginationState.pageSize });
-    });
-
-    if (shouldFetchOnQueryChange) {
-      props.events.onQueryReset?.(undefined, {
-        scope,
-        evaluationBindings: { query: defaultQuery },
-      });
-    }
-  }, [componentRegistry, defaultQuery, paginationState.pageSize, paginationStatePath, props.events, queryFormId, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
-
   const handleToolbarPageChange = useCallback((page: number) => {
     scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
   }, [paginationState.pageSize, paginationStatePath, scope]);
@@ -316,7 +249,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   return (
     <div className={cn('nop-crud', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {queryFormSchema ? (
-        <div className="nop-crud-query" data-slot="crud-query" ref={queryContainerRef}>
+        <div className="nop-crud-query" data-slot="crud-query">
           {props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm' })}
           <div className="mt-2 flex gap-2" data-slot="crud-query-controls">
             <Button variant="outline" size="sm" onClick={() => void handleQuerySubmit()}>{t('flux.common.search')}</Button>

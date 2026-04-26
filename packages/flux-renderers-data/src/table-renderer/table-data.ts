@@ -89,7 +89,11 @@ export function processTableData(
 
 export { toPositiveNumber, toStringArray };
 
-export function toSelectionPayload(payload: Record<string, unknown> | undefined): Set<string> {
+export function toSelectionPayload(payload: Record<string, unknown> | string[] | undefined): Set<string> {
+  if (Array.isArray(payload)) {
+    return new Set(toStringArray(payload));
+  }
+
   return new Set(toStringArray(payload?.selectedRowKeys));
 }
 

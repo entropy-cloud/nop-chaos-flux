@@ -92,7 +92,7 @@ describe('data package units', () => {
 
 describe('useTableHandle', () => {
   it('registers a handle and supports refresh plus selection methods', async () => {
-    const register = vi.fn(() => () => undefined);
+    const register = vi.fn((_handle?: unknown) => () => undefined);
     const onRefresh = vi.fn();
     const onPageChange = vi.fn();
     const setSelectionExternal = vi.fn();
@@ -123,7 +123,7 @@ describe('useTableHandle', () => {
     render(
       <ComponentRegistryContext.Provider value={{ register: (...args: any[]) => {
         capturedHandle = args[0];
-        return register(...args);
+        return register(args[0]);
       } } as any}>
         <Probe />
       </ComponentRegistryContext.Provider>

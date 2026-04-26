@@ -1,0 +1,168 @@
+import { startTransition, useCallback, useMemo } from 'react';
+import { getIn, toRecord, type RendererEventHandler, type ScopeRef } from '@nop-chaos/flux-core';
+import { useScopeSelector } from '@nop-chaos/flux-react';
+import type { CrudSchema } from './crud-schema';
+import type { CrudPaginationState, CrudQueryState } from './crud-renderer-state';
+import { areStringArraysEqual } from './table-renderer/column-settings-state';
+
+interface CrudQueryFormHandle {
+  capabilities?: {
+    hasMethod?(method: string): boolean;
+    invoke(method: string, args?: unknown, ctx?: unknown): unknown;
+  };
+}
+
+interface CrudComponentRegistryLike {
+  resolve(args: { componentId: string }): CrudQueryFormHandle | undefined;
+}
+
+export interface CrudOwnerPaths {
+  ownerStatePath: string;
+  queryStatePath: string;
+  paginationStatePath: string;
+  sortStatePath: string;
+  filterStatePath: string;
+  selectionStatePath: string;
+  toggledColumnsStatePath?: string;
+  orderedColumnsStatePath?: string;
+}
+
+export function createCrudOwnerPaths(args: {
+  id: string | number | undefined;
+  cid: string | number | undefined;
+  schema: CrudSchema;
+}): CrudOwnerPaths {
+  const { id, cid, schema } = args;
+  const ownerStatePath = `$_crud.${String(id ?? cid ?? 'crud')}`;
+  return {
+    ownerStatePath,
+    queryStatePath: `${ownerStatePath}.query`,
+    paginationStatePath: schema.paginationStatePath ?? `${ownerStatePath}.pagination`,
+    sortStatePath: schema.sortStatePath ?? `${ownerStatePath}.sort`,
+    filterStatePath: schema.filterStatePath ?? `${ownerStatePath}.filters`,
+    selectionStatePath: schema.selectionStatePath ?? `${ownerStatePath}.selection`,
+    toggledColumnsStatePath: schema.columnSettings?.toggledColumnsStatePath,
+    orderedColumnsStatePath: schema.columnSettings?.orderedColumnsStatePath,
+  };
+}
+
+export function useCrudVisibleColumnNames(args: {
+  schema: CrudSchema;
+  defaultColumnNames: string[];
+  toggledColumnsStatePath?: string;
+  orderedColumnsStatePath?: string;
+}) {
+  const { schema, defaultColumnNames, toggledColumnsStatePath, orderedColumnsStatePath } = args;
+
+  const state = useScopeSelector((scopeData) => {
+    const toggledColumns = toggledColumnsStatePath ? getIn(scopeData, toggledColumnsStatePath) : undefined;
+    const orderedColumns = orderedColumnsStatePath ? getIn(scopeData, orderedColumnsStatePath) : undefined;
+    return {
+      toggledColumns: Array.isArray(toggledColumns) ? toggledColumns.filter((value): value is string => typeof value === 'string') : undefined,
+      orderedColumns: Array.isArray(orderedColumns) ? orderedColumns.filter((value): value is string => typeof value === 'string') : undefined,
+    };
+  }, (a, b) => areStringArraysEqual(a?.toggledColumns, b?.toggledColumns) && areStringArraysEqual(a?.orderedColumns, b?.orderedColumns));
+
+  return useMemo(() => {
+    const enabled = schema.columnSettings?.enabled === true;
+    if (!enabled) {
+      return undefined;
+    }
+
+    const visibleColumns = state.toggledColumns?.length ? state.toggledColumns : defaultColumnNames;
+    const orderedColumns = state.orderedColumns?.length ? state.orderedColumns : defaultColumnNames;
+    const visibleSet = new Set(visibleColumns);
+    return orderedColumns.filter((name) => visibleSet.has(name));
+  }, [defaultColumnNames, schema.columnSettings?.enabled, state.orderedColumns, state.toggledColumns]);
+}
+
+export function useCrudQueryBridge(args: {
+  componentRegistry: CrudComponentRegistryLike | undefined;
+  queryFormId: string;
+  scope: ScopeRef | undefined;
+  queryStatePath: string;
+  paginationStatePath: string;
+  queryState: CrudQueryState;
+  paginationState: CrudPaginationState;
+  defaultQuery: Record<string, unknown>;
+  shouldFetchOnQueryChange: boolean;
+  onQuerySubmit: RendererEventHandler | undefined;
+  onQueryReset: RendererEventHandler | undefined;
+}) {
+  const {
+    componentRegistry,
+    queryFormId,
+    scope,
+    queryStatePath,
+    paginationStatePath,
+    queryState,
+    paginationState,
+    defaultQuery,
+    shouldFetchOnQueryChange,
+    onQuerySubmit,
+    onQueryReset,
+  } = args;
+
+  const submitQueryValues = useCallback((nextValues: Record<string, unknown>) => {
+    if (scope) {
+      scope.update(queryStatePath, {
+        values: nextValues,
+        refreshCount: queryState.refreshCount + 1,
+      });
+    }
+
+    if (shouldFetchOnQueryChange) {
+      onQuerySubmit?.(undefined, {
+        scope,
+        evaluationBindings: { query: nextValues },
+      });
+    }
+  }, [onQuerySubmit, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
+
+  const resetQueryValues = useCallback(() => {
+    const handle = componentRegistry?.resolve({ componentId: queryFormId });
+    if (handle?.capabilities?.hasMethod?.('reset')) {
+      void Promise.resolve(handle.capabilities.invoke('reset', { values: defaultQuery }, {} as never));
+    }
+
+    if (!scope) {
+      return;
+    }
+
+    startTransition(() => {
+      scope.update(queryStatePath, { values: defaultQuery, refreshCount: queryState.refreshCount + 1 });
+      scope.update(paginationStatePath, { currentPage: 1, pageSize: paginationState.pageSize });
+    });
+
+    if (shouldFetchOnQueryChange) {
+      onQueryReset?.(undefined, {
+        scope,
+        evaluationBindings: { query: defaultQuery },
+      });
+    }
+  }, [componentRegistry, defaultQuery, onQueryReset, paginationState.pageSize, paginationStatePath, queryFormId, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
+
+  const handleQuerySubmit = useCallback(async () => {
+    const handle = componentRegistry?.resolve({ componentId: queryFormId });
+    if (handle?.capabilities?.hasMethod?.('submit')) {
+      let nextValues = queryState.values;
+      if (handle.capabilities.hasMethod?.('getValues')) {
+        const valuesResult = await Promise.resolve(handle.capabilities.invoke('getValues', undefined, {} as never)) as { ok?: boolean; data?: unknown };
+        if (valuesResult.ok && valuesResult.data && typeof valuesResult.data === 'object') {
+          nextValues = toRecord(valuesResult.data);
+        }
+      }
+
+      await Promise.resolve(handle.capabilities.invoke('submit', undefined, {} as never));
+      submitQueryValues(nextValues);
+      return;
+    }
+
+    submitQueryValues(queryState.values);
+  }, [componentRegistry, queryFormId, queryState.values, submitQueryValues]);
+
+  return {
+    handleQuerySubmit,
+    handleQueryReset: resetQueryValues,
+  };
+}

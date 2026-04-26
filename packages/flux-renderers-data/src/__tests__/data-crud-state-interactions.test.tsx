@@ -424,6 +424,48 @@ describe('CRUD renderer', () => {
     });
   });
 
+  it('publishes visibleColumnNames through $crud using the same column-settings ownership paths as the internal table', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-visible-columns-summary"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'visible-columns-crud',
+              columnSettings: {
+                enabled: true,
+                toggledColumnsStatePath: 'crudState.toggledColumns',
+                orderedColumnsStatePath: 'crudState.orderedColumns',
+              },
+              source: [{ id: '1', name: 'Alice', email: 'alice@example.com', role: 'Admin' }],
+              columns: [
+                { name: 'name', label: 'Name' },
+                { name: 'email', label: 'Email' },
+                { name: 'role', label: 'Role' },
+              ],
+              footerToolbar: [{ type: 'text', text: 'Visible: ${$crud.visibleColumnNames}' }],
+            },
+          ],
+        }}
+        data={{ crudState: { toggledColumns: ['role', 'name'], orderedColumns: ['role', 'name', 'email'] } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Visible: role,name')).toBeTruthy();
+      const headers = Array.from(document.querySelectorAll('[data-slot="table-head"]')).map((node) => node.textContent?.replace(/\s+/g, ' ').trim());
+      expect(headers).toEqual(['Role', 'Name']);
+      expect(screen.queryByText('alice@example.com')).toBeNull();
+    });
+  });
+
   it('keeps operation column interactions working inside CRUD tables', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
