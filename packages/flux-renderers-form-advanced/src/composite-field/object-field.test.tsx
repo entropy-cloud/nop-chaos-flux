@@ -593,4 +593,61 @@ describe('object-field renderer', () => {
       profile: { firstName: 'CAROL', lastName: 'Smith' }
     });
   });
+
+  it('reflects parent-owned object replacement through the projected view when no transform actions are declared', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...allFormDefs, scopeSelectorProbeRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#9"
+        schema={{
+          type: 'form',
+          data: {
+            profile: {
+              firstName: 'Alice',
+              lastName: 'Smith'
+            }
+          },
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              body: [
+                { type: 'scope-selector-probe' },
+                { type: 'input-text', name: 'firstName', label: 'First Name' }
+              ]
+            },
+            {
+              type: 'button',
+              label: 'Replace Profile',
+              onClick: {
+                action: 'setValue',
+                args: {
+                  path: 'profile',
+                  value: { firstName: 'Dana', lastName: 'Jones' }
+                }
+              }
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice'));
+    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
+      value: { firstName: 'Alice', lastName: 'Smith' },
+      readOnly: false
+    }));
+
+    fireEvent.click(screen.getByText('Replace Profile'));
+
+    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Dana'));
+    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
+      value: { firstName: 'Dana', lastName: 'Jones' },
+      readOnly: false
+    }));
+  });
 });

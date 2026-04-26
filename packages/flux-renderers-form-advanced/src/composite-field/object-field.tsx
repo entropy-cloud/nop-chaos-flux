@@ -90,6 +90,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   );
   const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
   const rawValue = parentForm ? formValue : scopeValue;
+  const usesWorkingValue = Boolean(schema.transformInAction || schema.transformOutAction);
 
   const runAdaptationAction = React.useCallback(
     (actionSchema: ObjectFieldSchema['transformInAction']) =>
@@ -108,12 +109,13 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   );
 
   const [resolvedValue, setResolvedValue] = React.useState(rawValue);
+  const projectedValue = usesWorkingValue ? resolvedValue : rawValue;
   const transformOutOwner = parentForm ?? parentScope;
 
   React.useEffect(() => {
     let active = true;
 
-    if (!schema.transformInAction) {
+    if (!usesWorkingValue || !schema.transformInAction) {
       setResolvedValue(rawValue);
       return;
     }
@@ -141,7 +143,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     return () => {
       active = false;
     };
-  }, [name, parentForm, parentScope, props.meta.disabled, rawValue, readOnly, schema.transformInAction, valueAdapter]);
+  }, [name, parentForm, parentScope, props.meta.disabled, rawValue, readOnly, schema.transformInAction, usesWorkingValue, valueAdapter]);
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
@@ -154,14 +156,16 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     const nextWorkingValue = !path
       ? nextLeafValue
       : setIn(
-          resolvedValue && typeof resolvedValue === 'object'
-            ? resolvedValue as Record<string, unknown>
+          projectedValue && typeof projectedValue === 'object'
+            ? projectedValue as Record<string, unknown>
             : {},
           path,
           nextLeafValue
         );
 
-    setResolvedValue(nextWorkingValue);
+    if (usesWorkingValue) {
+      setResolvedValue(nextWorkingValue);
+    }
 
     if (schema.transformOutAction) {
       const committedValue = valueAdapter.out(nextWorkingValue, {
@@ -215,13 +219,13 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     }
 
     parentScope.update(`${name}.${path}`, nextLeafValue);
-  }, [name, parentForm, parentScope, props.meta.disabled, rawValue, readOnly, resolvedValue, schema.transformOutAction, transformOutOwner, valueAdapter]);
+  }, [name, parentForm, parentScope, projectedValue, props.meta.disabled, rawValue, readOnly, schema.transformOutAction, transformOutOwner, usesWorkingValue, valueAdapter]);
 
   const childScope = React.useMemo(
     () => (name
-      ? createObjectFieldChildScope(parentScope, name, readOnly || presentation.effectiveDisabled, resolvedValue, writeProjectedValue)
+      ? createObjectFieldChildScope(parentScope, name, readOnly || presentation.effectiveDisabled, projectedValue, writeProjectedValue)
       : parentScope),
-    [name, parentScope, presentation.effectiveDisabled, readOnly, resolvedValue, writeProjectedValue]
+    [name, parentScope, presentation.effectiveDisabled, projectedValue, readOnly, writeProjectedValue]
   );
 
   const childForm = React.useMemo(
@@ -241,7 +245,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
           return `${name}.${path}`;
         },
         projectValues() {
-          return ((resolvedValue ?? {}) as Record<string, unknown>);
+          return ((projectedValue ?? {}) as Record<string, unknown>);
         },
         setValue(path, value) {
           writeProjectedValue(path, value);
@@ -253,7 +257,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
         }
       });
     },
-    [parentForm, name, resolvedValue, writeProjectedValue]
+    [parentForm, name, projectedValue, writeProjectedValue]
   );
 
   return (
