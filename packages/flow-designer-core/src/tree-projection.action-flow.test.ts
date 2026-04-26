@@ -217,6 +217,22 @@ describe('Action Flow Tree Projection', () => {
       label: '预检查',
       action: 'setValue',
       when: '${userId != null}',
+      branches: [
+        {
+          id: 'then-precheck',
+          data: { branchType: 'then', label: '成功' },
+          childId: 'fetch-user',
+          childType: 'action-step',
+          childLabel: '加载用户数据'
+        },
+        {
+          id: 'onerror-precheck',
+          data: { branchType: 'onError', label: '失败' },
+          childId: 'show-precheck-error',
+          childType: 'action-step',
+          childLabel: '提示选择用户'
+        }
+      ]
     });
 
     const fetchUser = nodes.find((n) => n.id === 'fetch-user');

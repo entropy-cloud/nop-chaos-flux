@@ -206,7 +206,27 @@ describe('钉钉审批流 Tree Projection', () => {
     expect(k001?.data).toEqual({ label: '发起人', type: 0 });
 
     const k003 = nodes.find((n) => n.id === 'k003');
-    expect(k003?.data).toEqual({ label: '条件路由', type: 4, mode: 'exclusive' });
+    expect(k003?.data).toEqual({
+      label: '条件路由',
+      type: 4,
+      mode: 'exclusive',
+      branches: [
+        {
+          id: 'b1',
+          data: { label: '长期请假', priority: 1 },
+          childId: 'k004',
+          childType: 'dt-approval',
+          childLabel: 'CEO审批'
+        },
+        {
+          id: 'b2',
+          data: { label: '短期请假', priority: 2 },
+          childId: 'k004b',
+          childType: 'dt-approval',
+          childLabel: '直接主管审批'
+        }
+      ]
+    });
 
     const k008 = nodes.find((n) => n.id === 'k008');
     expect(k008?.data).toEqual({ label: '工作交接', type: 5, callProcess: 'workHandover' });

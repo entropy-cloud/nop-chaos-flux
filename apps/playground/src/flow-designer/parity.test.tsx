@@ -59,7 +59,8 @@ function createEmptySnapshot(): DesignerSnapshot {
       selectedNodeIds: [],
       selectedEdgeIds: [],
       activeNodeId: null,
-      activeEdgeId: null
+      activeEdgeId: null,
+      activeBranchId: null
     },
     viewport: { x: 0, y: 0, zoom: 1 },
     activeNode: null,
@@ -156,7 +157,8 @@ describe('Flow Designer Parity Components', () => {
           selectedNodeIds: ['node-1'],
           selectedEdgeIds: [],
           activeNodeId: 'node-1',
-          activeEdgeId: null
+          activeEdgeId: null,
+          activeBranchId: null
         },
         viewport: { x: 0, y: 0, zoom: 1 },
         activeNode: { id: 'node-1', type: 'task', position: { x: 100, y: 100 }, data: { label: 'My Task', description: 'A task node' } },
@@ -201,7 +203,8 @@ describe('Flow Designer Parity Components', () => {
           selectedNodeIds: ['node-1'],
           selectedEdgeIds: [],
           activeNodeId: 'node-1',
-          activeEdgeId: null
+          activeEdgeId: null,
+          activeBranchId: null
         },
         viewport: { x: 0, y: 0, zoom: 1 },
         activeNode: { id: 'node-1', type: 'condition', position: { x: 100, y: 100 }, data: { label: 'Check Status', condition: 'status === active' } },
@@ -245,7 +248,8 @@ describe('Flow Designer Parity Components', () => {
           selectedNodeIds: [],
           selectedEdgeIds: ['edge-1'],
           activeNodeId: null,
-          activeEdgeId: 'edge-1'
+          activeEdgeId: 'edge-1',
+          activeBranchId: null
         },
         viewport: { x: 0, y: 0, zoom: 1 },
         activeNode: null,

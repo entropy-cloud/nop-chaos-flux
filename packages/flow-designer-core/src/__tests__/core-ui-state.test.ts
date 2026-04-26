@@ -105,7 +105,7 @@ describe('createDesignerCore - viewport and UI state', () => {
 
     core.save();
     core.setViewport({ x: 12.6, y: 24.4, zoom: 1.26 });
-    expect(core.getSnapshot().viewport).toEqual({ x: 13, y: 24, zoom: 1.3 });
+    expect(core.getSnapshot().viewport).toEqual({ x: 12.6, y: 24.4, zoom: 1.26 });
     expect(core.getSnapshot().isDirty).toBe(true);
     expect(core.getSnapshot().canUndo).toBe(true);
 
@@ -113,7 +113,7 @@ describe('createDesignerCore - viewport and UI state', () => {
     expect(core.getSnapshot().viewport).toEqual({ x: 0, y: 0, zoom: 1 });
 
     core.redo();
-    expect(core.getSnapshot().viewport).toEqual({ x: 13, y: 24, zoom: 1.3 });
+    expect(core.getSnapshot().viewport).toEqual({ x: 12.6, y: 24.4, zoom: 1.26 });
   });
 
   it('treats unchanged normalized viewport updates as a history no-op', () => {
@@ -122,7 +122,7 @@ describe('createDesignerCore - viewport and UI state', () => {
     const before = core.getSnapshot();
     core.setViewport({ x: 0.2, y: 0.4, zoom: 1.04 });
 
-    expect(core.getSnapshot().viewport).toEqual({ x: 0, y: 0, zoom: 1 });
+    expect(core.getSnapshot().viewport).toEqual({ x: 0.2, y: 0.4, zoom: 1.04 });
     expect(core.getSnapshot().canUndo).toBe(before.canUndo);
     expect(core.getSnapshot().canRedo).toBe(before.canRedo);
   });
