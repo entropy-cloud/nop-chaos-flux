@@ -7,7 +7,7 @@ function createAdapter() {
   return createActionRuntimeAdapter({
     getEnv: () => ({ notify: vi.fn() } as any),
     expressionCompiler: {} as any,
-    evaluate: <T,>(target: T) => target,
+    evaluate: <T,>(target: unknown) => target as T,
     executeApiRequest: vi.fn() as any,
     runtime: {
       env: { notify: vi.fn() },
@@ -38,15 +38,15 @@ function createBuiltInInvocation(action: string, args?: Record<string, unknown>)
 describe('createActionRuntimeAdapter direct branches', () => {
   it('covers dialog, drawer, toast, submit, refresh, and unsupported built-in action branches', async () => {
     const notify = vi.fn();
-    const createDialogScope = vi.fn(() => ({ update: vi.fn(), id: 'dialog-scope' }));
-    const createChildScope = vi.fn(() => ({ update: vi.fn(), id: 'drawer-scope' }));
+    const createDialogScope = vi.fn(() => createScopeRef({ id: 'dialog-scope', path: '$dialog', initialData: {} }));
+    const createChildScope = vi.fn(() => createScopeRef({ id: 'drawer-scope', path: '$scope.drawer', initialData: {} }));
     const refreshDataSource = vi.fn()
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(false);
     const adapter = createActionRuntimeAdapter({
       getEnv: () => ({ notify } as any),
       expressionCompiler: {} as any,
-      evaluate: <T,>(target: T) => target,
+      evaluate: <T,>(target: unknown) => target as T,
       executeApiRequest: vi.fn() as any,
       runtime: {
         env: { notify },

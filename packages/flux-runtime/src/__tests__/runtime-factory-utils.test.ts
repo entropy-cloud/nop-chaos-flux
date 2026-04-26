@@ -121,4 +121,49 @@ describe('runtime factory utilities', () => {
     runtime.dispose();
     runtime.dispose();
   });
+
+  it('allocates mounted cids, creates child scopes/action scopes/component registries, and exposes default debug snapshots', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+    });
+    const page = runtime.createPageRuntime({ pageValue: 'root' });
+
+    const firstCid = runtime.allocateMountedCid?.();
+    const secondCid = runtime.allocateMountedCid?.();
+    expect(secondCid).toBeGreaterThan(firstCid!);
+
+    const childScope = runtime.createChildScope(page.scope, { local: true }, { pathSuffix: 'child', scopeKey: 'child-scope', isolate: true });
+    expect(childScope.id).toBe('child-scope');
+    expect(childScope.path).toBe('$page.child');
+    expect(childScope.readVisible()).toEqual({ local: true });
+
+    const parentActionScope = runtime.createActionScope();
+    const childActionScope = runtime.createActionScope({ parent: parentActionScope });
+    expect(childActionScope.parent).toBe(parentActionScope);
+    expect(childActionScope.id).toContain('action-scope-');
+
+    const parentRegistry = runtime.createComponentHandleRegistry();
+    const childRegistry = runtime.createComponentHandleRegistry({ parent: parentRegistry });
+    expect(childRegistry.parent).toBe(parentRegistry);
+    expect(childRegistry.id).toContain('component-registry-');
+
+    expect(runtime.getSourceDebugSnapshot?.()).toEqual({ sources: [] });
+    expect(runtime.getReactionDebugSnapshot?.()).toEqual({ reactions: [] });
+    expect(runtime.getAsyncOwnerDebugSnapshot?.()).toEqual(expect.any(Object));
+  });
+
+  it('keeps executeSource callable after dispose', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+    });
+    const page = runtime.createPageRuntime({});
+
+    runtime.dispose();
+
+    await expect(runtime.executeSource?.({ source: { type: 'data-source', action: 'noop' } as any, scope: page.scope, ctx: {} })).resolves.toEqual(
+      expect.objectContaining({ ok: false, error: expect.any(Error) })
+    );
+  });
 });
