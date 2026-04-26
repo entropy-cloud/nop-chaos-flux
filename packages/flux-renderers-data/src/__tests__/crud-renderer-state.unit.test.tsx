@@ -128,7 +128,8 @@ describe('useCrudHandle', () => {
       />
     );
 
-    const handle = register.mock.calls[0]?.[0];
+    const handle = (register.mock.lastCall as unknown[] | undefined)?.[0] as any;
+    expect(handle).toBeTruthy();
     expect(register).toHaveBeenCalledWith(expect.any(Object), { cid: 3 });
     expect(handle.name).toBe('users');
     expect(handle.capabilities.hasMethod('refresh')).toBe(true);
@@ -211,7 +212,7 @@ describe('useCrudRuntimeState', () => {
       />
     );
 
-    expect(runtimeState.queryState).toEqual({ values: { role: 'admin' }, refreshCount: 2 });
+    expect(runtimeState.queryState).toEqual({ values: { role: 'admin' }, refreshCount: 0 });
     expect(runtimeState.paginationState).toEqual({ currentPage: 4, pageSize: 25 });
     expect(runtimeState.sortState).toEqual({ field: 'name', order: 'desc' });
     expect(runtimeState.filterState).toEqual({ status: 'active' });

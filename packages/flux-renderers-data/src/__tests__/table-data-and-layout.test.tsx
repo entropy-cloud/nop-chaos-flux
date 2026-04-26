@@ -1,7 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { TableCell, TableRow } from '@nop-chaos/ui';
 import { createFixedColumnLayout } from '../table-renderer/fixed-columns';
 import {
   buildTableRowEntries,

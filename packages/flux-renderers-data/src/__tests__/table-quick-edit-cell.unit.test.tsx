@@ -93,7 +93,7 @@ describe('TableQuickEditCell', () => {
 
     rerender(
       <TableQuickEditCell
-        column={{ name: 'name', label: 'Name', quickEdit: true }}
+        column={{ type: 'text', name: 'name', label: 'Name', quickEdit: true } as any}
         rowScope={rowScope}
         record={{ name: 'Bob' }}
         helpers={helpers}
@@ -123,7 +123,7 @@ describe('TableQuickEditCell', () => {
   it('renders custom inline body and tracks dirty state through change capture', async () => {
     const customBody = { type: 'input-text', label: 'Custom body' };
     const customHelpers = createHelpers();
-    customHelpers.render.mockImplementation((_body, options) => (
+    customHelpers.render.mockImplementation((_body: any, options: any) => (
       <input
         aria-label="Custom body"
         defaultValue={String((options?.scope.get('record') as Record<string, unknown>)?.name ?? '')}

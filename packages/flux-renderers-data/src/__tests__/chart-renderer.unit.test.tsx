@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChartRenderer } from '../chart-renderer';
@@ -56,7 +57,7 @@ function createMockComponent(name: string) {
         'data-testid': name,
         'data-props': JSON.stringify(simplifyProps(props)),
       },
-      props.children,
+      props.children as ReactNode,
     );
   };
 }
@@ -167,7 +168,8 @@ describe('ChartRenderer', () => {
       />,
     );
 
-    const handle = register.mock.calls[0]?.[0];
+    const handle = (register.mock.lastCall as unknown[] | undefined)?.[0] as any;
+    expect(handle).toBeTruthy();
     expect(register).toHaveBeenCalledWith(expect.any(Object), { cid: 7 });
     expect(handle.id).toBe('sales-chart');
     expect(handle.capabilities.hasMethod('resize')).toBe(true);
