@@ -1,8 +1,9 @@
 import type {
   ComponentHandle,
-  ComponentHandleRegistry
+  ComponentHandleRegistry,
+  RendererRuntime
 } from '@nop-chaos/flux-core';
-import { parsePath } from '@nop-chaos/flux-core';
+import { parsePath, resolveRendererAuthoringContract } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { buildScopeChain } from './controller-helpers';
 import type {
@@ -57,7 +58,8 @@ export function buildInspectResult(
   handle: ReturnType<NonNullable<ComponentHandleRegistry['getHandleByCid']>> | undefined,
   mounted: boolean,
   element?: HTMLElement,
-  registry?: ComponentHandleRegistry
+   registry?: ComponentHandleRegistry,
+   runtime?: RendererRuntime
 ): NopComponentInspectResult {
   const debugData = registry?.getHandleDebugData?.(cid);
   const result: NopComponentInspectResult = {
@@ -73,6 +75,12 @@ export function buildInspectResult(
   result.nodeId = debugData?.nodeId;
   result.path = debugData?.path;
   result.rendererType = debugData?.rendererType;
+  if (result.rendererType) {
+    const definition = runtime?.registry.get(result.rendererType);
+    if (definition) {
+      result.authoringContract = resolveRendererAuthoringContract(definition);
+    }
+  }
   result.availableMethods = getAvailableMethods(handle);
   result.registryEntry = handle ? {
     id: handle.id,
@@ -182,8 +190,12 @@ export function compareComponentTreeItems(left: NopComponentTreeItem, right: Nop
   return left.cid - right.cid;
 }
 
-export function buildInspectByCid(componentRegistry: ComponentHandleRegistry | undefined) {
+export function buildInspectByCid(
+  componentRegistry: ComponentHandleRegistry | undefined,
+  getRuntime?: () => RendererRuntime | undefined
+) {
   return (cid: number): NopComponentInspectResult | undefined => {
+    const runtime = getRuntime?.();
     if (!componentRegistry) return undefined;
     const inspected = componentRegistry.inspectCid?.(cid);
     const element = document.querySelector(`[data-cid="${cid}"]`);
@@ -195,7 +207,8 @@ export function buildInspectByCid(componentRegistry: ComponentHandleRegistry | u
         handle,
         inspected.payload.state?.mounted ?? handle?._mounted !== false,
         (element as HTMLElement) ?? undefined,
-        componentRegistry
+        componentRegistry,
+        runtime
       );
       result.instancePath = inspected.payload.instancePath;
       result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
@@ -204,18 +217,22 @@ export function buildInspectByCid(componentRegistry: ComponentHandleRegistry | u
     }
 
     if (inspected?.kind === 'notMaterialized') {
-      const result = buildInspectResult(cid, handle, false, (element as HTMLElement) ?? undefined, componentRegistry);
+      const result = buildInspectResult(cid, handle, false, (element as HTMLElement) ?? undefined, componentRegistry, runtime);
       result.instancePath = inspected.instancePath;
       return result;
     }
 
     if (!handle && !element) return undefined;
-    return buildInspectResult(cid, handle, !!element || handle?._mounted !== false, (element as HTMLElement) ?? undefined, componentRegistry);
+    return buildInspectResult(cid, handle, !!element || handle?._mounted !== false, (element as HTMLElement) ?? undefined, componentRegistry, runtime);
   };
 }
 
-export function buildInspectByElement(componentRegistry: ComponentHandleRegistry | undefined) {
+export function buildInspectByElement(
+  componentRegistry: ComponentHandleRegistry | undefined,
+  getRuntime?: () => RendererRuntime | undefined
+) {
   return (element: HTMLElement): NopComponentInspectResult | undefined => {
+    const runtime = getRuntime?.();
     const owner = findInspectableOwner(element);
     const cidAttr = owner?.getAttribute('data-cid');
     if (!cidAttr) return undefined;
@@ -230,7 +247,8 @@ export function buildInspectByElement(componentRegistry: ComponentHandleRegistry
         handle,
         inspected.payload.state?.mounted ?? handle?._mounted !== false,
         owner ?? undefined,
-        componentRegistry
+        componentRegistry,
+        runtime
       );
       result.instancePath = inspected.payload.instancePath;
       result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
@@ -239,12 +257,12 @@ export function buildInspectByElement(componentRegistry: ComponentHandleRegistry
     }
 
     if (inspected?.kind === 'notMaterialized') {
-      const result = buildInspectResult(cid, handle, false, owner ?? undefined, componentRegistry);
+      const result = buildInspectResult(cid, handle, false, owner ?? undefined, componentRegistry, runtime);
       result.instancePath = inspected.instancePath;
       return result;
     }
 
-    return buildInspectResult(cid, handle, true, owner ?? undefined, componentRegistry);
+    return buildInspectResult(cid, handle, true, owner ?? undefined, componentRegistry, runtime);
   };
 }
 

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNopDebugger } from './index';
 
 describe('controller inspector methods', () => {
@@ -156,6 +156,93 @@ describe('controller inspector methods', () => {
       scopeChain: [
         { id: 'form-1', path: '$form', label: '$form', data: { departmentId: 'runtime' } }
       ]
+    });
+  });
+
+  it('inspectByCid exposes resolved authoring contract from runtime registry when renderer metadata is available', () => {
+    const ctrl = createNopDebugger({ id: 'inspect-authoring-contract', enabled: true });
+    const div = document.createElement('div');
+    div.setAttribute('data-cid', '112');
+    document.body.appendChild(div);
+
+    const mockRegistry = {
+      id: 'reg-1',
+      inspectCid: (cid: number) => cid === 112
+        ? {
+            kind: 'resolved',
+            payload: {
+              cid: 112,
+              state: { mounted: true },
+              scopeChain: [],
+            }
+          }
+        : { kind: 'notFound' },
+      getHandleByCid: () => undefined,
+      getHandleDebugData: () => ({ rendererType: 'designer-page' })
+    };
+
+    ctrl.setComponentRegistry(mockRegistry as never);
+    ctrl.setRuntime({
+      registry: {
+        get: vi.fn((type: string) => type === 'designer-page' ? {
+          type: 'designer-page',
+          component: () => null,
+          rendererClass: 'domain-host-renderer',
+          propContracts: {
+            config: {
+              displayName: 'Config',
+              shape: { kind: 'object' },
+              required: true
+            }
+          },
+          hostContract: {
+            family: 'designer',
+            defaultVersion: '1.0',
+            capabilityPublication: { namespace: 'designer' },
+            resolveManifest(versionSelector: string) {
+              return versionSelector === '1.0'
+                ? {
+                    family: 'designer',
+                    version: '1.0',
+                    projection: {
+                      fields: {
+                        activeNode: { schema: { kind: 'object' }, description: 'Active node' }
+                      }
+                    },
+                    capabilities: {
+                      namespace: 'designer',
+                      methods: {
+                        addNode: {
+                          args: { kind: 'object' },
+                          result: { kind: 'object' }
+                        }
+                      }
+                    }
+                  }
+                : undefined;
+            }
+          }
+        } : undefined),
+        has: vi.fn(),
+        list: vi.fn()
+      }
+    } as never);
+
+    expect(ctrl.inspectByCid(112)).toMatchObject({
+      cid: 112,
+      rendererType: 'designer-page',
+      authoringContract: {
+        rendererType: 'designer-page',
+        rendererClass: 'domain-host-renderer',
+        editableProps: {
+          config: expect.objectContaining({ displayName: 'Config', required: true })
+        },
+        hostManifest: expect.objectContaining({ family: 'designer', version: '1.0' }),
+        hostProjection: expect.objectContaining({
+          fields: expect.objectContaining({ activeNode: expect.any(Object) })
+        }),
+        hostActions: expect.objectContaining({ addNode: expect.any(Object) })
+      }
     });
   });
 

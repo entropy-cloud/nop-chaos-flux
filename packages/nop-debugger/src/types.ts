@@ -4,6 +4,7 @@ import type {
   AsyncOwnerDebugSnapshot,
   ComponentHandleRegistry,
   InstanceFrame,
+  ResolvedAuthoringContract,
   RendererEnv,
   RendererPlugin,
   RendererRuntime
@@ -289,6 +290,7 @@ export interface NopComponentInspectResult {
   scopeChain?: NopScopeChainEntry[];
   metaSummary?: Record<string, unknown>;
   propsSummary?: Record<string, unknown>;
+  authoringContract?: ResolvedAuthoringContract;
   availableMethods?: readonly string[];
   registryEntry?: Record<string, unknown>;
   debugData?: Record<string, unknown>;

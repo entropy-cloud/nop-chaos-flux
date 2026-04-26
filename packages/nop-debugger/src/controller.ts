@@ -93,8 +93,9 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   let componentRegistry: ComponentHandleRegistry | undefined;
   let runtime: RendererRuntime | undefined;
 
-  let currentInspectByCid = buildInspectByCid(componentRegistry);
-  let currentInspectByElement = buildInspectByElement(componentRegistry);
+  const getRuntime = () => runtime;
+  let currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
+  let currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
   let currentGetComponentTree = buildGetComponentTree(componentRegistry);
   let currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
 
@@ -325,6 +326,9 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     explainNodeAsync: explainAsyncSummary,
     setRuntime(nextRuntime: RendererRuntime | null) {
       runtime = nextRuntime ?? undefined;
+      currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
+      currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
+      currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
     },
     subscribe(listener: () => void) {
       return store.subscribe(listener);
@@ -338,8 +342,8 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       if (componentRegistry) {
         componentRegistry.setDebugEnabled?.(true);
       }
-      currentInspectByCid = buildInspectByCid(componentRegistry);
-      currentInspectByElement = buildInspectByElement(componentRegistry);
+      currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
+      currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
       currentGetComponentTree = buildGetComponentTree(componentRegistry);
       currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
     },
