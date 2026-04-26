@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import type { RendererComponentProps, SurfaceStatusSummary } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedContainer } from '@nop-chaos/flux-react';
-import { publishOwnerStatus } from '@nop-chaos/flux-runtime';
+import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, cn } from '@nop-chaos/ui';
 import type { DialogSchema } from './schemas';
 import { getDeclarativeSurfaceStackSnapshot, isDeclarativeSurfaceActiveInSnapshot, registerDeclarativeSurface, subscribeDeclarativeSurfaceStack, unregisterDeclarativeSurface } from './declarative-surface-stack';
@@ -12,7 +12,7 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
   const actionsContent = props.regions.actions?.render();
   const controlledOpen = props.props.open;
   const [localOpen, setLocalOpen] = React.useState(Boolean(props.props.defaultOpen ?? false));
-  const effectiveOpen = controlledOpen ?? localOpen;
+  const effectiveOpen = controlledOpen !== undefined ? Boolean(controlledOpen) : localOpen;
   const [surfaceStackSnapshot, setSurfaceStackSnapshot] = React.useState(getDeclarativeSurfaceStackSnapshot());
   const summary = useMemo<SurfaceStatusSummary>(() => ({
     id: props.id,
@@ -67,12 +67,6 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
       });
     };
   }, [ownerScope, props.id, statusPath]);
-
-  React.useEffect(() => {
-    if (controlledOpen !== undefined) {
-      setLocalOpen(Boolean(controlledOpen));
-    }
-  }, [controlledOpen]);
 
   function handleOpenChange(nextOpen: boolean) {
     if (controlledOpen === undefined) {
