@@ -1,6 +1,5 @@
-import type { FormStoreApi, ScopeRef } from '@nop-chaos/flux-core';
-import type { FormFieldStateSnapshot } from '@nop-chaos/flux-core';
-import { EMPTY_FORM_STORE_STATE, type FormStoreState } from './form-state';
+import type { FormFieldStateSnapshot, FormStoreApi, FormStoreState, ScopeRef } from '@nop-chaos/flux-core';
+import { EMPTY_FORM_STORE_STATE } from './form-state';
 
 export function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,
