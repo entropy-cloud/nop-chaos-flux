@@ -122,7 +122,7 @@
   --nop-invalid-ring: rgba(181, 59, 44, 0.12);
   --nop-dirty-border: rgba(191, 111, 47, 0.45);
   --nop-field-error: #b53b2c;
-  --nop-dialog-backdrop: rgba(18, 31, 43, 0.36);
+  --nop-dialog-backdrop: rgba(0, 0, 0, 0.7);
   --nop-nav-surface: rgba(255, 255, 255, 0.94);
   --nop-nav-border: rgba(33, 53, 71, 0.12);
   --nop-nav-shadow: 0 12px 32px rgba(33, 53, 71, 0.12);
@@ -152,6 +152,11 @@ body {
 
 [data-slot="dialog-overlay"] {
   background-color: var(--nop-dialog-backdrop);
+  backdrop-filter: blur(2px);
+}
+
+[data-slot="drawer-overlay"] {
+  background-color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(2px);
 }
 
