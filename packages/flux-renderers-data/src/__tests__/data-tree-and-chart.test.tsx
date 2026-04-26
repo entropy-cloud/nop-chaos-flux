@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createDataSchemaRenderer, env, formulaCompiler, iconRenderer, nodeInstanceProbeRenderer } from '../test-support';
 
@@ -76,5 +76,150 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
     const SchemaRenderer = createDataSchemaRenderer([nodeInstanceProbeRenderer]);
     render(<SchemaRenderer schemaUrl="test://data/tree-and-chart" schema={{ type: 'page', body: [{ type: 'table', columns: [{ label: 'Probe', cell: { type: 'node-instance-probe' } }], source: [{ id: 1, name: 'Alice' }] }] }} env={env} formulaCompiler={formulaCompiler} />);
     expect((await screen.findByTestId('node-instance-probe')).textContent ?? '').toMatch(/^\[\{"repeatedTemplateId":"table-row:/);
+  });
+
+  it('collapses child nodes when the chevron trigger is clicked', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-expand-collapse"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              data: '${nodes}',
+              initiallyExpanded: true
+            }
+          ]
+        }}
+        data={{
+          nodes: [
+            {
+              id: 'root',
+              label: 'Root',
+              children: [
+                { id: 'child-a', label: 'Child A', children: [] },
+                { id: 'child-b', label: 'Child B', children: [] }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Root')).toBeTruthy();
+      expect(screen.getByText('Child A')).toBeTruthy();
+      expect(screen.getByText('Child B')).toBeTruthy();
+    });
+
+    const rootTrigger = screen.getByLabelText('Collapse node');
+    fireEvent.click(rootTrigger);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Child A')).toBeNull();
+      expect(screen.queryByText('Child B')).toBeNull();
+    });
+  });
+
+  it('expands child nodes when the collapsed chevron trigger is clicked', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-expand-collapse-2"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              data: '${nodes}',
+              initiallyExpanded: false
+            }
+          ]
+        }}
+        data={{
+          nodes: [
+            {
+              id: 'root',
+              label: 'Root',
+              children: [
+                { id: 'child', label: 'Child', children: [] }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Root')).toBeTruthy();
+    });
+
+    expect(screen.queryByText('Child')).toBeNull();
+
+    const expandTrigger = screen.getByLabelText('Expand node');
+    fireEvent.click(expandTrigger);
+
+    await waitFor(() => {
+      expect(screen.getByText('Child')).toBeTruthy();
+    });
+  });
+
+  it('toggles expand/collapse on node label click when expandOnClickNode is true', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-expand-on-click"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              data: '${nodes}',
+              initiallyExpanded: true,
+              expandOnClickNode: true
+            }
+          ]
+        }}
+        data={{
+          nodes: [
+            {
+              id: 'parent',
+              label: 'Parent',
+              children: [
+                { id: 'child', label: 'Child', children: [] }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Parent')).toBeTruthy();
+      expect(screen.getByText('Child')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Parent'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Child')).toBeNull();
+    });
+
+    fireEvent.click(screen.getByText('Parent'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Child')).toBeTruthy();
+    });
   });
 });

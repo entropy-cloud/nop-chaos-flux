@@ -81,10 +81,6 @@ function TreeNodeRenderer(props: {
                   variant="ghost"
                   size="icon-xs"
                   aria-label={open ? 'Collapse node' : 'Expand node'}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setOpen((previous) => !previous);
-                  }}
                 >
                   <ChevronRightIcon className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')} />
                 </Button>
