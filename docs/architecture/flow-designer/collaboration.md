@@ -113,6 +113,8 @@ Flow Designer 复用这层，而不是重新做一套页面状态机。
 
 `designer-page` 真正依赖的是通用 `NodeRenderer` 先给它搭好 runtime 边界，再在它自己的组件里创建 graph runtime。
 
+当前实现里，`DesignerPageRenderer` / `TreeModeLayoutWrapper` / `DesignerPageInner` 负责 page-shell 与 tree-document 装配，`DesignerPageBody` 负责 provider registration、region render、dialogs 和 shell 组合，auto-layout 与 keyboard shortcut 副作用则分别下沉到 `use-designer-auto-layout.ts` 与 `use-designer-shortcuts.ts`。
+
 ### 调用链图: `designer-page` 首次挂载
 
 ```text
@@ -204,6 +206,11 @@ flowchart TD
 2. 再看 `packages/flux-react/src/index.tsx` 怎么给 `designer-page` 建立 runtime / action scope 边界
 3. 再看 `packages/flow-designer-renderers/src/index.tsx` 怎么创建 core、注册 `designer` namespace、渲染 canvas host
 4. 最后看 `packages/flow-designer-renderers/src/designer-command-adapter.ts` 和 `packages/flow-designer-core/src/core.ts` 的命令落地
+
+如果要看 page-shell 与 focused tests 的 owner 边界，优先对照：
+
+- `packages/flow-designer-renderers/src/designer-page-shell.test.tsx`：statusPath、基本渲染、node toolbar shell contract
+- `packages/flow-designer-renderers/src/designer-provider-and-manifest.test.tsx`：provider/manifest/renderer-definition contract
 
 ## 为什么 toolbar / inspector 可以直接用 `designer:*`
 
@@ -456,7 +463,7 @@ playground registry setup
 
 如果后续改动涉及以下任一部分，优先从对应链路回看:
 
-- 改 `designer-page` region、scope、action 注册 -> 看挂载链路和 action 链路
+- 改 `designer-page` region、scope、action 注册 -> 看挂载链路和 action 链路，同时确认是否仍保持 `DesignerPageBody` 作为 page shell / provider / dialog composition root，避免把 auto-layout 或 shortcut 副作用重新堆回 page 入口
 - 改 canvas adapter 回调 -> 看 canvas 链路和失败语义
 - 改 command adapter 返回值 -> 看 schema action、canvas host、notify 协作点
 - 改 core selection/history/viewport -> 看 snapshot 订阅和 inspector / canvas 重渲染路径

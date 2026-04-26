@@ -46,7 +46,7 @@ const nestedInsideArray = {
           name: 'employees',
           label: 'Employees',
           itemKind: 'object',
-          itemBody: [
+          item: [
             { type: 'input-text', name: 'name', label: 'Name', required: true },
             {
               type: 'object-field',

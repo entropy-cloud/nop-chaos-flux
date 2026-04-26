@@ -183,6 +183,13 @@ interface SchemaDiagnostic {
   message: string;
   severity: 'error' | 'warning' | 'info';
   source: 'core' | 'renderer' | 'namespace' | 'host-contract';
+  sourceLocation?: SchemaDiagnosticSourceLocation;
+}
+
+interface SchemaDiagnosticSourceLocation {
+  readonly file?: string;
+  readonly line?: number;
+  readonly column?: number;
 }
 
 interface SchemaDiagnosticCollector {
@@ -690,3 +697,34 @@ Acceptance baseline:
 - existing compatibility shapes such as `{ action: 'designer:addNode', nodeType: 'task' }` do not regress under compile-time diagnostics
 - the compiler core remains deterministic and side-effect-light because reporting stays outside direct `console` ownership
 - compile return compatibility remains intact for existing call sites during the first migration slice
+
+## Source Location Backtracking
+
+### Purpose
+
+Diagnostics carry an optional `sourceLocation` field that records authoring-origin metadata for the diagnostic. This enables tools to trace a runtime or compiler error back to the originating authoring source (for example, an `XView` or `XPage` file).
+
+### Design
+
+`SchemaDiagnosticSourceLocation` is a minimal carrier:
+
+```ts
+interface SchemaDiagnosticSourceLocation {
+  readonly file?: string;
+  readonly line?: number;
+  readonly column?: number;
+}
+```
+
+Rules:
+
+- `sourceLocation` is optional on every `SchemaDiagnostic`. When absent, the diagnostic reports only its structural `path` (JSON Pointer) within the schema document.
+- When the compiler is given a `schemaUrl`, it populates `sourceLocation.file` automatically on every emitted diagnostic.
+- Individual emit sites may override `sourceLocation` with richer data (file + line + column) when available, for example from per-node `xui:location` metadata.
+- `sourceLocation` is a read-only sidecar. It does not change how the compiler evaluates, validates, or compiles the schema.
+
+### Integration With External Sources
+
+The `xui:location` schema extension field is the intended minimal carrier for authoring-origin source location on individual nodes. The Loader or a pre-compilation step may populate `xui:location` strings on schema nodes before the schema enters Flux. The compiler reads this field during diagnostics emission and propagates it into `sourceLocation`.
+
+If future requirements prove `xui:location` insufficient, a richer resource-level location structure may be introduced without changing the `SchemaDiagnosticSourceLocation` contract.

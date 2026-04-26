@@ -74,9 +74,11 @@
 
 ## 3. 改进方向一：收紧 `Final Execution Schema` 边界与输入不变量
 
+> **Status**: The input invariants proposed in this section have been codified in the owning architecture doc `docs/architecture/frontend-programming-model.md` under "Input Invariants". This section is retained as analysis context; the normative wording lives in the owner doc.
+
 ### 3.1 当前问题
 
-架构文档已经反复强调“最终模型原则”，但这里真正需要固定的，不是再给 Flux 发明一个比 `schema` 更高一层的执行对象，而是明确：
+架构文档已经反复强调"最终模型原则"，但这里真正需要固定的，不是再给 Flux 发明一个比 `schema` 更高一层的执行对象，而是明确：
 
 - Flux 执行的主体仍然是 crossing 了执行边界之后的 `schema`
 - 这个 `schema` 必须已经处于 `Final Execution Schema` 语义阶段

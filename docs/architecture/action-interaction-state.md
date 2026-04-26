@@ -81,6 +81,7 @@
 - `form` 外部：`statusPath`
 - `data-source` 外部：`statusPath`
 - `table` 外部：如需摘要，使用 `statusPath`
+- `crud` 外部：如需聚合读取 query + table interaction 结果，使用 `statusPath`
 - `dialog` / `drawer` 外部：`statusPath`
 - `dialog` / `drawer` 内部：如未来需要局部绑定，优先 `$surface`
 - `designer-page` / `spreadsheet-page` / `report-designer-page` 内部：通过 `Host Projection` 读取固定宿主快照字段
@@ -103,6 +104,9 @@
 
 - `form.statusPath` -> 外部观察 form summary
 - `table.selectionStatePath` -> 持久化可写 selection 轴
+- `table.sortStatePath` / `table.filterStatePath` -> 持久化可写 sort/filter 轴
+- `table.columnSettings.toggledColumnsStatePath` / `table.columnSettings.orderedColumnsStatePath` -> 持久化可写 visible-columns / ordered-columns 轴
+- `crud.queryStatePath` / `crud.paginationStatePath` 等内部 owner path 只服务 renderer 与子 owner 协作，不替代 `statusPath`
 - `tabs.valueStatePath` -> 持久化当前 active tab
 - future `tabs.statusPath` -> 只读 tabs summary
 

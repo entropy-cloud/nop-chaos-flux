@@ -1062,6 +1062,34 @@ Why this order:
 - action validation gives immediate value with lower ambiguity
 - projection-path validation is useful but needs publication attribution and more careful unknown/dynamic-shape escape hatches
 
+## Tooling Consumption Path
+
+### Standard Resolution Rule
+
+All tools (editor, debugger, docs export) should consume host manifests through the same resolution path:
+
+1. Given a renderer definition with `hostContract`
+2. Read `family`, `defaultVersion`, and `resolveManifest(...)` from `hostContract`
+3. Use a schema-provided `xui:version` or fall back to `defaultVersion`
+4. Resolve one concrete `HostCapabilityProjectionManifest`
+
+This path is codified in `resolveHostContractManifest(definition, versionSelector?)` from `packages/flux-core/src/types/renderer-authoring-contract.ts`.
+
+The full tooling adapter `resolveRendererAuthoringContract(definition, versionSelector?)` resolves the manifest and assembles a `ResolvedAuthoringContract` containing:
+- `hostProjection` — the projection contract fields
+- `hostActions` — capability methods adapted to `CapabilityMethodContract` shape
+- `hostManifest` — the full resolved manifest for tools that need family, version, or compatibility metadata
+
+### Standalone Fragment Fallback
+
+When no renderer definition is available (standalone fragment validation, CI validation of extracted fragments), tools must provide an explicit `HostContractContext` containing an already-resolved manifest. The standard resolution path cannot be used because there is no renderer definition to start from.
+
+### What Not To Do
+
+- Do not introduce a global host manifest registry.
+- Do not resolve manifests from ambient process state.
+- Do not duplicate the resolution logic in each tool. Use the shared `resolveHostContractManifest` or `resolveRendererAuthoringContract` helper.
+
 ## Decisions
 
 The active decisions from this document are:
@@ -1074,6 +1102,7 @@ The active decisions from this document are:
 - version host contracts explicitly and let schema declare compatible ranges
 - keep lexical runtime visibility and ownership rules unchanged; manifests validate contract, they do not grant authority
 - treat first-party complex hosts as the primary owners of this system, not every ordinary renderer or component handle
+- tooling consumption uses the shared `resolveHostContractManifest` / `resolveRendererAuthoringContract` path, not ad hoc resolution in each tool
 
 ## Related Documents
 

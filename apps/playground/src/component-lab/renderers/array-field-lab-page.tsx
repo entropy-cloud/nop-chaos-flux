@@ -18,7 +18,7 @@ const membersArray = {
           name: 'members',
           label: 'Team Members',
           itemKind: 'object',
-          itemBody: [
+          item: [
             { type: 'input-text', name: 'name', label: 'Name', required: true },
             { type: 'select', name: 'role', label: 'Role', options: [
               { label: 'Admin', value: 'admin' },
@@ -53,7 +53,7 @@ const contactsWithSubmit = {
           name: 'contacts',
           label: 'Contacts',
           itemKind: 'object',
-          itemBody: [
+          item: [
             { type: 'input-text', name: 'name', label: 'Name', required: true },
             { type: 'input-email', name: 'email', label: 'Email', required: true }
           ]
@@ -70,7 +70,7 @@ const contactsWithSubmit = {
 export function ArrayFieldLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Inline composite array editing. Each item has its own object scope exposed to itemBody child renderers. Supports add, remove, and per-item validation."
+      introDescription="Inline composite array editing. Each item has its own object scope exposed to item child renderers. Supports add, remove, and per-item validation."
       scenarios={[
         {
           title: 'Team members with name and role',

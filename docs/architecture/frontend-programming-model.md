@@ -165,11 +165,25 @@ That means:
 
 The architectural rule is about the contract that enters execution, not about where the last compile step physically runs.
 
+### Input Invariants
+
+The `Final Execution Schema` must satisfy these invariants before `Flux` consumes it:
+
+1. The only execution subject given to `Flux` is the schema that has already crossed the execution boundary.
+2. The schema has completed inheritance expansion, override resolution, deletion, static feature trimming, default value expansion, and structural normalization.
+3. The schema does not carry authoring merge semantics that require browser-side structural assembly — no unresolved `x:extends`, no unexpanded profile rules, no runtime patch scripts, and no inheritance chains that the renderer is expected to understand.
+4. Metadata that is unrelated to structural execution but aids diagnostics and tooling may exist alongside the schema — examples include `xui:version`, per-node source-location hints, and diagnostics sidecars.
+5. Such metadata must not require the renderer or runtime to change how they evaluate, dispatch, or render the schema. Metadata is read-only sidecar; execution behavior comes from the schema structure alone.
+
 If a delayed or host-admitted fragment is introduced after initial page load, it must still cross the same boundary before execution:
 
 - it is compiled or normalized into the same execution contract as the rest of the tree
 - it receives the same primitive model (`Template`, `ScopeRef`, `Value`, `Resource`, `Reaction`, `Capability`, `Host Projection`)
 - it does not reopen authoring-time inheritance expansion or ad hoc loader semantics inside the execution core
+
+For the Loader-side output contract that produces a `Final Execution Schema`, see `docs/architecture/flux-dsl-vm-extensibility.md` sections 6.7–6.8.
+
+### Runtime Ownership
 
 `Flux` still owns runtime work, including:
 

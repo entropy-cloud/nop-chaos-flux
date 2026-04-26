@@ -15,7 +15,8 @@
 - `packages/flow-designer-core/src/core.ts`
 - `packages/flow-designer-renderers/src/designer-page.tsx`
 - `packages/flow-designer-renderers/src/designer-context.ts`
-- `packages/flow-designer-renderers/src/index.test.tsx`
+- `packages/flow-designer-renderers/src/designer-page-shell.test.tsx`
+- `packages/flow-designer-renderers/src/designer-provider-and-manifest.test.tsx`
 
 ## 一句话结论
 

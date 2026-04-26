@@ -29,6 +29,7 @@ Current live implementation note:
 - `detail-field` / `detail-view` 当前仍是 renderer-local temporary draft `FormRuntime` baseline
 - 它们已经满足 staged child-domain 的核心语义，但还不是 shared/compiler-aware child-owner substrate
 - 当前 live detail surface 只实现 `dialog` 和 `drawer`
+- `object-field` / `array-field` / `variant-field` 这类 inline projected editors 现在已经共享 projected scope/form substrate，而不是继续各自维护完全独立的 ScopeRef/FormRuntime proxy 模板；但这不等于它们已经统一到同一个 owner semantic baseline
 
 ## Core Model
 

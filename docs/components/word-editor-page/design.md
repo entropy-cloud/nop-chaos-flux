@@ -70,8 +70,8 @@ interface WordEditorPageSchema {
 ## 6. regions 与 slot 约定
 
 - `toolbar` 承接顶部 Ribbon 风格动作区，包含格式化、插入、视图等功能组。
-- `leftPanel` 承接左侧面板，默认包含大纲导航和数据集管理两个 Tab。
-- `rightPanel` 承接右侧属性面板，用于选中元素的属性编辑。
+- `leftPanel` 承接左侧面板，默认包含数据集管理 (`datasets` tab) 和字段列表 (`fields` tab) 两个 Tab。
+- `rightPanel` 承接右侧大纲面板，默认渲染 `OutlinePanel`。
 - renderer definition 当前将 host capability publication 约束到 `toolbar`、`leftPanel`、`rightPanel` 三个 region。
 
 ## 7. 运行期状态归属
@@ -84,7 +84,21 @@ interface WordEditorPageSchema {
 
 - schema 片段通过宿主 scope 读取快照，并通过命名空间动作写操作。
 - `word-editor-page` 属于 `Domain Host Owner`：内部读面是 host projection，宿主外部若需要观测状态，应通过窄 `statusPath` 摘要。
-- 当前 host projection 至少包含 `document`、`datasets`、`runtime`、`selection` 四类只读字段。
+
+### 7.1 Host Projection Contract
+
+host scope 向下投影四个只读字段：
+
+| 字段 | 来源 | 时效性 | 说明 |
+|------|------|--------|------|
+| `document` | `savedDocument.data`（autosave 回调写入），null 时回退到空骨架 | **滞后** — 由 `EditorCanvas` 内部 500ms 防抖 autosave 回调驱动，不是实时编辑内容 | consumer 不应假定 `document` 反映当前屏幕上的实时编辑状态；若需实时脏标记，应读 `runtime.dirty` |
+| `datasets` | `dataset-store` | 实时 | 响应 dataset-store mutation |
+| `runtime` | `editor-store` + `dataset-store` 计数 + React state 计数 | 实时 | 聚合字段：`ready`/`dirty`/`wordCount`/`canUndo`/`canRedo`/`currentPage`/`totalPages`/`scale` 来自 editor-store；`datasetCount`/`chartCount`/`codeCount` 来自独立订阅 |
+| `selection` | `editor-store` | 实时 | 当前选区格式化快照 |
+
+关键约束：
+- `document` 与 `runtime`/`selection` 存在时效差异：`runtime.dirty=true` 时 `document` 可能仍为上一次 autosave 时的内容。
+- `runtime` 中 `datasetCount`/`chartCount`/`codeCount` 不从 editor-store selector 内读取，而是由独立订阅聚合，避免跨 store 热路径污染。
 
 ## 8. 事件、动作与组件句柄能力
 

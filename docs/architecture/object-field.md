@@ -39,6 +39,7 @@ interface ObjectFieldSchema extends BaseSchema {
 
 - `transformInAction` / `transformOutAction` 已接线
 - `validateValueAction` 仍不是当前已接线 baseline，不应误读为 object-field 当前会额外跑 owner-level validate pipeline
+- 当前 projected `ScopeRef` / `FormRuntime` view 已开始复用共享 helper substrate；但 `object-field` 仍保留 renderer-local working copy + async writeback 的 live behavior，这与本文 target baseline 仍有差距，应由独立 successor plan 处理语义对齐
 
 ## Key Rule: Child Names Are Relative
 

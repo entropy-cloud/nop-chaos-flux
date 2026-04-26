@@ -109,6 +109,14 @@ The Word Editor page is rendered as the `word-editor-page` host-owner renderer a
 
 The renderer publishes the `word-editor` host family manifest, host projection scope, and namespaced actions such as `word-editor:save`, `word-editor:insertField`, `word-editor:insertChart`, `word-editor:insertCode`, `word-editor:undo`, and `word-editor:redo`.
 
+### Host Projection Timing
+
+The host scope projects four read-only fields (`document`, `datasets`, `runtime`, `selection`) with mixed timing semantics:
+
+- `document` is populated by the `EditorCanvas` debounced autosave callback (~500ms lag). It is a persisted snapshot, not the real-time editor content. When `runtime.dirty` is true, `document` may still reflect a previous autosave state.
+- `runtime`, `selection`, and `datasets` are real-time, driven by their respective Zustand stores via `useSyncExternalStoreWithSelector`.
+- The `runtime` field aggregates editor-store state with cross-store counts (`datasetCount`, `chartCount`, `codeCount`) via independent subscriptions, avoiding cross-store hot-path contamination inside the editor-store selector.
+
 ### With nop-entropy Backend
 
 Template compilation flow:

@@ -43,12 +43,14 @@
 
 ## 7. 运行期状态归属
 
-- 当前明确支持 `paginationOwnership` 和 `selectionOwnership`，可取 `local`、`controlled`、`scope`。
-- 排序、筛选和展开尚未完整进入同一 ownership 体系，需要在后续阶段继续统一。
+- 当前明确支持 `paginationOwnership`、`selectionOwnership`、`sortOwnership`、`filterOwnership`，可取 `local`、`controlled`、`scope`。
+- `columnSettings.toggledColumnsStatePath` / `orderedColumnsStatePath` 现在也构成 table visible-columns / ordered-columns 的 scope owner 接入点；CRUD 等上层组合 renderer 应复用这些 path，而不是重新维护平行列状态。
+- 展开仍是 table-local interaction state，尚未收口到独立外部可写 owner path。
 - 当前 header search/filter 已有可观察的基础行为：列头菜单可驱动 keyword/filter state 并影响本地数据处理；但 richer filter source/search UX、统一 ownership 收口和更完整回归证据仍属于后续 table-heavy parity。
 - 当前 header search/filter 已有可观察且更稳定的行为：列头菜单可驱动 keyword/filter state、通过 active trigger 表达当前列已有筛选，并提供按列 clear action 一次性清理 keyword + option filters。更丰富的 filter source/search UX 与 ownership 收口仍属于后续 table-heavy parity。
 - table 的 `loading` 默认应视为上游 source/query owner 状态的 UI 投影，而不是 table 自己发明请求协议。
 - 真正属于 table 自己的状态是 selection、pagination，以及未来的 sort/filter/inline-edit 等 interaction state。
+- 当前 live baseline 下，sort/filter 与 visible-columns 已进入同一 interaction-owner 体系，只是 expand/inline-edit 仍未完全收口。
 - 目标设计里，table subtree 若需要高频读取这些状态，可提供只读 `$table` 绑定；table 外部观察者仍应通过显式 `statusPath` 读取只读 summary DTO。
 - table shell scope 默认继承 parent lexical scope；若声明 `data`，则在此基础上补充 table own patch。
 - materialized row scopes 默认应保持 `isolate: true`。

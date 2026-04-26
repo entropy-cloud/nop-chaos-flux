@@ -36,6 +36,7 @@ Flux 已经具备以下局部事实：
 - `detail-field` / `detail-view` 已经具备局部 draft + confirm/cancel 语义
 - row identity 已经与 index-addressed value path 分离
 - `object-field` / `array-field` / `variant-field` 已经明确是 parent-owned inline editors
+- `table` 已经具备多轴 interaction-owner 基线（pagination/selection/sort/filter/visible-columns 通过 state path 承载），而 `crud` 继续是聚合这些 owner 结果的 workflow shell，而不是第二个 data-domain owner
 - `dialog` / `drawer` 已经明确是 surface owner，而不是业务提交 owner
 
 这些事实方向上是一致的，但缺少一个更高层的统一命名和归纳模型。

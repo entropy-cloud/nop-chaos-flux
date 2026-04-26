@@ -165,8 +165,15 @@ clientMode: {
 - 查询提交状态 -> `queryForm` 内部 `form`
 - 列表加载/刷新/错误 -> `source` owner
 - 表格分页/排序/筛选/选择/展开 -> 底层 `table`
+- table visible-columns / ordered-columns -> 底层 `table` column-settings owner state
 - dialog/drawer 开合 -> 对应 surface owner
 - quick edit 提交 -> 显式 action 或后续表格编辑 owner
+
+当前 live baseline 中，`crud-renderer.tsx` 不再自己维护另一套 query/column-settings bridge 逻辑：
+
+- query submit/reset 继续通过 query-form component handle + owner state path 收口
+- table pagination/sort/filter/selection/visible-columns 继续通过内部 `table` 的 scope-owned state path 收口
+- CRUD 只把这些 owner 结果聚合成 `$crud` / `statusPath` 只读摘要，而不在 renderer 主体里重新发明第二套交互 state owner
 
 `crud.statusPath` 和 `$crud` 暴露的是只读摘要：
 
@@ -186,6 +193,8 @@ interface CrudStatusSummary {
   visibleColumnNames?: string[];
 }
 ```
+
+`visibleColumnNames` 的 live baseline 已接线到与内部 `table` 相同的 `columnSettings.toggledColumnsStatePath` / `orderedColumnsStatePath`，因此 CRUD footer/toolbar/statusPath 读取到的是同一份列可见性 owner 结果，而不是 renderer-local 推测值。
 
 ## 8. AMIS 迁移映射
 

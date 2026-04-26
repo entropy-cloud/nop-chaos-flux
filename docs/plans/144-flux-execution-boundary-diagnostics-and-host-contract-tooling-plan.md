@@ -1,6 +1,6 @@
 # 144 Flux Execution Boundary Diagnostics And Host-Contract Tooling Plan
 
-> Plan Status: proposed
+> Plan Status: in progress
 > Last Reviewed: 2026-04-26
 > Source: `docs/analysis/2026-04-26-flux-architecture-improvement-opportunities.md`
 > Related: `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md`, `docs/plans/41-compiler-integrated-schema-diagnostics-implementation-plan.md`, `docs/plans/112-capability-projection-manifest-implementation-plan.md`
@@ -9,7 +9,7 @@
 
 把 analysis 中已经形成共识、且可直接落地的三条主线收敛成一个 owner plan：固定 `Final Execution Schema` 输入边界、补齐最小 diagnostics 回溯链、统一 `RendererDefinition.hostContract -> resolveManifest(...)` 的工具消费路径。
 
-这份计划只处理“执行边界可诊断、且可被工具统一消费”这一类结果面，不处理依赖追踪/订阅粒度优化，也不把 analysis 本身升级为新的 architecture baseline。
+这份计划只处理"执行边界可诊断、且可被工具统一消费"这一类结果面，不处理依赖追踪/订阅粒度优化，也不把 analysis 本身升级为新的 architecture baseline。
 
 ## Current Baseline
 
@@ -61,71 +61,95 @@
 
 ### Phase 1 - Final Execution Schema Boundary Wording And Contract Audit
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-dsl-vm-extensibility.md`, `docs/analysis/2026-04-26-flux-architecture-improvement-opportunities.md`
 
-- [ ] Re-audit the live baseline and identify the smallest wording gaps around `Final Execution Schema` input invariants
-- [ ] Decide whether any code-level validation hook or type surface also needs tightening, or whether this phase is documentation-only
-- [ ] Update the owning architecture doc(s) to make the settled boundary wording explicit without introducing a second baseline
-- [ ] Keep the analysis doc synchronized if any of its wording becomes outdated after the owner-doc update
+- [x] Re-audit the live baseline and identify the smallest wording gaps around `Final Execution Schema` input invariants
+- [x] Decide whether any code-level validation hook or type surface also needs tightening, or whether this phase is documentation-only
+- [x] Update the owning architecture doc(s) to make the settled boundary wording explicit without introducing a second baseline
+- [x] Keep the analysis doc synchronized if any of its wording becomes outdated after the owner-doc update
 
 Exit Criteria:
 
-- [ ] `Final Execution Schema` input invariants are stated in the owning architecture doc as current baseline wording
-- [ ] No analysis wording remains that suggests Flux executes half-assembled loader artifacts
-- [ ] Any code-level contract touchpoints identified by the audit are either updated or explicitly moved out of scope
-- [ ] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
+- [x] `Final Execution Schema` input invariants are stated in the owning architecture doc as current baseline wording
+- [x] No analysis wording remains that suggests Flux executes half-assembled loader artifacts
+- [x] Any code-level contract touchpoints identified by the audit are either updated or explicitly moved out of scope
+- [x] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
 - [ ] `docs/logs/` 对应日期条目已更新
+
+Implementation notes:
+- Added "Input Invariants" subsection to `docs/architecture/frontend-programming-model.md` enumerating 5 explicit invariants
+- Added cross-reference to `docs/architecture/flux-dsl-vm-extensibility.md` sections 6.7–6.8 for Loader output contract
+- Added status note to analysis doc section 3 pointing to the updated owner doc
+- Decision: this phase is documentation-only; `FluxAssembledResource` type creation is explicitly moved out of scope
 
 ### Phase 2 - Minimal Diagnostics Backtracking
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/`, `packages/flux-compiler/`, `docs/architecture/schema-file-validator.md`, `docs/analysis/2026-04-26-flux-architecture-improvement-opportunities.md`
 
-- [ ] Audit the current diagnostics pipeline and identify the smallest viable carrier for source-location metadata
-- [ ] Choose one minimal approach for live implementation, directionally preferring schema-native node metadata unless the audit proves that insufficient
-- [ ] Wire expression / action / validation diagnostics to surface that location metadata where sound
-- [ ] Update the owning diagnostics architecture doc with final wording after implementation choice is settled
+- [x] Audit the current diagnostics pipeline and identify the smallest viable carrier for source-location metadata
+- [x] Choose one minimal approach for live implementation, directionally preferring schema-native node metadata unless the audit proves that insufficient
+- [x] Wire expression / action / validation diagnostics to surface that location metadata where sound
+- [x] Update the owning diagnostics architecture doc with final wording after implementation choice is settled
 
 Exit Criteria:
 
-- [ ] A concrete minimal diagnostics backtracking approach is implemented for the chosen carrier and covered by focused verification
-- [ ] Diagnostics can report authoring-origin information for at least one representative compiler error path
-- [ ] The final design wording lives in the owning architecture doc, not only in analysis
-- [ ] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
+- [x] A concrete minimal diagnostics backtracking approach is implemented for the chosen carrier and covered by focused verification
+- [x] Diagnostics can report authoring-origin information for at least one representative compiler error path
+- [x] The final design wording lives in the owning architecture doc, not only in analysis
+- [x] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
 - [ ] `docs/logs/` 对应日期条目已更新
+
+Implementation notes:
+- Added `SchemaDiagnosticSourceLocation` type to `packages/flux-core/src/schema-diagnostics/index.ts` with `file`, `line`, `column` fields
+- Added optional `sourceLocation` field to `SchemaDiagnostic`
+- Updated `SchemaCompilerDiagnosticsContext` to accept and propagate `sourceLocation` through `emit()`
+- Updated `createSchemaCompilerDiagnosticsContext()` to accept `schemaUrl` and auto-populate `sourceLocation.file`
+- Wired `schemaUrl` through all call sites: `validateSchemaInput`, `compileNode`, `prepareSchemaRoot`
+- Added "Source Location Backtracking" section to `docs/architecture/schema-file-validator.md`
+- Added focused tests for sourceLocation propagation in `packages/flux-compiler/src/schema-compiler-diagnostics.test.ts`
 
 ### Phase 3 - Host Contract Tool Consumption Path
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/`, relevant tool package(s), `docs/architecture/capability-projection-manifest.md`, `docs/architecture/capability-contract-model.md`
 
-- [ ] Audit current tool-side manifest resolution code paths, if any, and identify duplication or missing shared entry points
-- [ ] Define one shared consumption rule or helper for publishing-owner-context resolution through `RendererDefinition.hostContract -> resolveManifest(...)`
-- [ ] Apply that rule/helper to at least one concrete consumer path (editor, debugger, or docs export)
-- [ ] Update the owning architecture doc(s) to describe the final shared consumption path and the explicit host-context fallback for standalone fragment scenarios
+- [x] Audit current tool-side manifest resolution code paths, if any, and identify duplication or missing shared entry points
+- [x] Define one shared consumption rule or helper for publishing-owner-context resolution through `RendererDefinition.hostContract -> resolveManifest(...)`
+- [x] Apply that rule/helper to at least one concrete consumer path (editor, debugger, or docs export)
+- [x] Update the owning architecture doc(s) to describe the final shared consumption path and the explicit host-context fallback for standalone fragment scenarios
 
 Exit Criteria:
 
-- [ ] At least one concrete tool consumer path uses the shared `hostContract -> resolveManifest(...)` resolution approach
-- [ ] The owning architecture doc states the shared consumption path and its context requirements
-- [ ] Standalone fragment / explicit host-context fallback is documented where needed
-- [ ] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
+- [x] At least one concrete tool consumer path uses the shared `hostContract -> resolveManifest(...)` resolution approach
+- [x] The owning architecture doc states the shared consumption path and its context requirements
+- [x] Standalone fragment / explicit host-context fallback is documented where needed
+- [x] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
 - [ ] `docs/logs/` 对应日期条目已更新
+
+Implementation notes:
+- Added `resolveHostContractManifest(definition, versionSelector?)` shared helper in `packages/flux-core/src/types/renderer-authoring-contract.ts`
+- Enhanced `resolveRendererAuthoringContract()` to accept optional `versionSelector` parameter and expose `hostManifest` in result
+- Added `hostManifest` field to `ResolvedAuthoringContract` for tools that need full manifest access
+- Added "Tooling Consumption Path" section to `docs/architecture/capability-projection-manifest.md` documenting the standard resolution rule, standalone fragment fallback, and anti-patterns
+- Added tooling decision to the Decisions section
+- Added comprehensive tests for `resolveHostContractManifest` and the version selector override in `packages/flux-core/src/renderer-authoring-contract.test.ts`
 
 ## Validation Checklist
 
-- [ ] `Final Execution Schema` boundary wording is aligned across owner docs and the surviving analysis note
-- [ ] The diagnostics slice has a concrete minimal implementation and focused verification
-- [ ] The host-contract tool-consumption path is implemented or codified for at least one real consumer
-- [ ] Remaining governance-only items stay explicitly out of this plan's scope
-- [ ] Dependency-tracking optimization work is explicitly out of this plan's scope and assigned to a successor plan if pursued
-- [ ] Focused verification has been completed for every landed phase
+- [x] `Final Execution Schema` boundary wording is aligned across owner docs and the surviving analysis note
+- [x] The diagnostics slice has a concrete minimal implementation and focused verification
+- [x] The host-contract tool-consumption path is implemented or codified for at least one real consumer
+- [x] Remaining governance-only items stay explicitly out of this plan's scope
+- [x] Dependency-tracking optimization work is explicitly out of this plan's scope and assigned to a successor plan if pursued
+- [x] Focused verification has been completed for every landed phase
 - [ ] Independent closure audit completed and recorded
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
+- [ ] `docs/logs/` updated
 
 ## Closure
 
