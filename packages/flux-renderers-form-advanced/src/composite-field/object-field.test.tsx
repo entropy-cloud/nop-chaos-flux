@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ActionResult, ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import { getIn } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -70,6 +71,59 @@ function ScopeSelectorProbeRenderer() {
 const scopeSelectorProbeRenderer: RendererDefinition = {
   type: 'scope-selector-probe',
   component: () => <ScopeSelectorProbeRenderer />
+};
+
+function RootValueProbeRenderer(props: { name: string; 'data-testid': string }) {
+  const value = useScopeSelector((scopeData) => getIn(scopeData, props.name), Object.is);
+  return <span data-testid={props['data-testid']}>{JSON.stringify(value ?? '')}</span>;
+}
+
+const rootValueProbeRenderer: RendererDefinition = {
+  type: 'root-value-probe',
+  component: (p) => (
+    <RootValueProbeRenderer
+      name={String((p.props as Record<string, unknown>).name ?? '')}
+      data-testid={String((p.props as Record<string, unknown>).testid ?? 'root-value-probe')}
+    />
+  )
+};
+
+function ObjectScopeMutationRenderer() {
+  const scope = useRenderScope();
+
+  return (
+    <>
+      <button type="button" onClick={() => scope.update('firstName', 'Bob')}>
+        Set First Name
+      </button>
+      <button type="button" onClick={() => scope.merge({ lastName: 'Jones' } as Record<string, unknown>)}>
+        Merge Object
+      </button>
+      <button
+        type="button"
+        onClick={() => scope.merge({ value: { firstName: 'Merged', lastName: 'Value' } } as Record<string, unknown>)}
+      >
+        Merge Value Wrapper
+      </button>
+      <button
+        type="button"
+        onClick={() => scope.replace({ firstName: 'Dana', lastName: 'Lane' } as Record<string, unknown>)}
+      >
+        Replace Object
+      </button>
+      <button
+        type="button"
+        onClick={() => scope.replace({ value: { firstName: 'Fay', lastName: 'Mills' } } as Record<string, unknown>)}
+      >
+        Replace Value Wrapper
+      </button>
+    </>
+  );
+}
+
+const objectScopeMutationRenderer: RendererDefinition = {
+  type: 'object-scope-mutation-probe',
+  component: () => <ObjectScopeMutationRenderer />
 };
 
 describe('object-field renderer', () => {
@@ -650,4 +704,64 @@ describe('object-field renderer', () => {
       readOnly: false
     }));
   });
+
+  it('supports projected child scope merge replace and nested updates in a form owner', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...allFormDefs,
+      objectScopeMutationRenderer
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#10"
+        schema={{
+          type: 'form',
+          data: {
+            profile: {
+              firstName: 'Alice',
+              lastName: 'Smith'
+            }
+          },
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              body: [
+                { type: 'object-scope-mutation-probe' },
+                { type: 'input-text', name: 'firstName', label: 'First Name' },
+                { type: 'input-text', name: 'lastName', label: 'Last Name' }
+              ]
+            }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice'));
+    expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Smith');
+
+    fireEvent.click(screen.getByText('Set First Name'));
+    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Bob'));
+    expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Smith');
+
+    fireEvent.click(screen.getByText('Merge Object'));
+    await waitFor(() => expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Jones'));
+
+    fireEvent.click(screen.getByText('Merge Value Wrapper'));
+    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Merged'));
+    expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Value');
+
+    fireEvent.click(screen.getByText('Replace Object'));
+    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Dana'));
+    expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Lane');
+
+    fireEvent.click(screen.getByText('Replace Value Wrapper'));
+    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Fay'));
+    expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Mills');
+  });
+
 });
