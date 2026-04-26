@@ -68,13 +68,9 @@ export interface ReportDesignerHostData {
     fieldSourceCount: number;
     fieldCount: number;
   };
-  fieldSources: FieldSourceSnapshot[];
-  fieldDrag: ReportDesignerRuntimeSnapshot['fieldDrag'];
-  inspector: ReportDesignerRuntimeSnapshot['inspector'];
-  meta: ReportDesignerRuntimeSnapshot['activeMeta'];
-  preview: ReportDesignerRuntimeSnapshot['preview'];
-  inspectorPanels: ReturnType<ReportDesignerCore['getInspectorPanels']>;
+  /** @compat alias for selectionTarget — prefer selectionTarget in new schema */
   selection: ReportSelectionTarget | undefined;
+  /** @compat alias for selectionTarget — prefer selectionTarget in new schema */
   target: ReportSelectionTarget | undefined;
   selectionTarget: ReportSelectionTarget | undefined;
   reportDocument: ReportDesignerRuntimeSnapshot['document'];
@@ -115,12 +111,6 @@ export function createHostData(core: ReportDesignerCore, snapshot: ReportDesigne
       fieldSourceCount: snapshot.fieldSources.length,
       fieldCount,
     },
-    fieldSources: snapshot.fieldSources,
-    fieldDrag: snapshot.fieldDrag,
-    inspector: snapshot.inspector,
-    meta: snapshot.activeMeta,
-    preview: snapshot.preview,
-    inspectorPanels,
     selection: snapshot.selectionTarget,
     target: snapshot.selectionTarget,
     selectionTarget: snapshot.selectionTarget,
@@ -175,12 +165,6 @@ export function buildReportDesignerScopeData(
       dirty: runtimeDirty,
     },
     spreadsheet,
-    fieldSources: snapshot.fieldSources,
-    fieldDrag: snapshot.fieldDrag,
-    inspector: snapshot.inspector,
-    meta: snapshot.activeMeta,
-    preview: snapshot.preview,
-    inspectorPanels,
     selection: snapshot.selectionTarget,
     target: snapshot.selectionTarget,
     selectionTarget: snapshot.selectionTarget,
@@ -193,6 +177,9 @@ export function buildReportDesignerScopeData(
     canRedo: runtimeCanRedo,
     documentName: snapshot.document.name,
     fieldCount,
+    inspector: snapshot.inspector,
+    inspectorPanels,
+    meta: snapshot.activeMeta,
   };
 }
 

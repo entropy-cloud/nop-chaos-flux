@@ -75,7 +75,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     (state) => state.selection
   )
 
-  const runtimeSnapshot = useSyncExternalStoreWithSelector(
+  const editorRuntime = useSyncExternalStoreWithSelector(
     editorStore.subscribe,
     editorStore.getState,
     editorStore.getState,
@@ -88,9 +88,6 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       currentPage: state.currentPage,
       totalPages: state.totalPages,
       scale: state.scale,
-      datasetCount: datasetStore.getAll().length,
-      chartCount: charts.length,
-      codeCount: codes.length,
     })
   )
 
@@ -102,18 +99,18 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   )
 
   const runtimeHostSummary = useMemo(() => ({
-    ready: runtimeSnapshot.ready,
-    dirty: runtimeSnapshot.dirty,
-    wordCount: runtimeSnapshot.wordCount,
-    canUndo: runtimeSnapshot.canUndo,
-    canRedo: runtimeSnapshot.canRedo,
-    currentPage: runtimeSnapshot.currentPage,
-    totalPages: runtimeSnapshot.totalPages,
-    scale: runtimeSnapshot.scale,
+    ready: editorRuntime.ready,
+    dirty: editorRuntime.dirty,
+    wordCount: editorRuntime.wordCount,
+    canUndo: editorRuntime.canUndo,
+    canRedo: editorRuntime.canRedo,
+    currentPage: editorRuntime.currentPage,
+    totalPages: editorRuntime.totalPages,
+    scale: editorRuntime.scale,
     datasetCount: datasets.length,
     chartCount: charts.length,
     codeCount: codes.length,
-  }), [charts.length, codes.length, datasets.length, runtimeSnapshot])
+  }), [charts.length, codes.length, datasets.length, editorRuntime])
 
   const hostScope = useHostScope({
     document: savedDocument?.data ?? {
@@ -239,17 +236,17 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
 
     const summary: WordEditorHostStatusSummary = {
       kind: 'word-editor',
-      dirty: runtimeSnapshot.dirty,
+      dirty: editorRuntime.dirty,
       busy: false,
-      canUndo: runtimeSnapshot.canUndo,
-      canRedo: runtimeSnapshot.canRedo,
-      wordCount: runtimeSnapshot.wordCount,
+      canUndo: editorRuntime.canUndo,
+      canRedo: editorRuntime.canRedo,
+      wordCount: editorRuntime.wordCount,
       datasetCount: datasets.length,
       chartCount: charts.length,
       codeCount: codes.length,
     }
     publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary)
-  }, [charts.length, codes.length, datasets.length, props.node.scope, runtimeSnapshot, statusPath])
+  }, [charts.length, codes.length, datasets.length, editorRuntime, props.node.scope, statusPath])
 
   const editingDataset = editingDatasetId
     ? datasets.find(ds => ds.id === editingDatasetId)
