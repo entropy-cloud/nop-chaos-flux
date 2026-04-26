@@ -144,14 +144,14 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const [prepareError, setPrepareError] = useState<unknown>(null);
 
     useEffect(() => {
-      let disposed = false;
+      const controller = new AbortController();
 
       setPreparedImports(hasSchemaImports ? null : EMPTY_PREPARED_IMPORTS);
       setPrepareError(null);
 
       if (!hasSchemaImports) {
         return () => {
-          disposed = true;
+          controller.abort();
         };
       }
 
@@ -161,15 +161,17 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         return;
       }
 
+      const { signal } = controller;
+
       void prepare(props.schema, {
         schemaUrl: props.schemaUrl,
       }).then((result) => {
-        if (disposed) {
+        if (signal.aborted) {
           return;
         }
         setPreparedImports(result.preparedImports);
       }).catch((error) => {
-        if (disposed) {
+        if (signal.aborted) {
           return;
         }
         if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {
@@ -186,7 +188,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       });
 
       return () => {
-        disposed = true;
+        controller.abort();
       };
     }, [runtime, props.schema, props.schemaUrl, props.env, hasSchemaImports]);
 
