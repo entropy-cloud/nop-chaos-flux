@@ -5,16 +5,19 @@
 ## 文件命名
 
 ```
-{编号}-{简短主题}.md
+{YYYY-MM-DD}-{简短主题}.md
 ```
 
-- 编号从 `01` 开始递增，两位数字
+- 日期为讨论创建当天的年-月-日，格式 `YYYY-MM-DD`
+- 同一天多个讨论用递增后缀区分：`2026-04-22-theme-a.md`、`2026-04-22-theme-b.md`
 - 主题用英文短横线分隔（kebab-case），简要概括讨论内容
 
 示例：
-- `01-user-permission-redesign.md`
-- `02-form-validation-strategy.md`
-- `03-renderer-plugin-mechanism.md`
+- `2026-04-22-user-permission-redesign.md`
+- `2026-04-22-form-validation-strategy.md`
+- `2026-04-25-renderer-plugin-mechanism.md`
+
+> 历史文件（`01-` ~ `07-` 编号）保留原名不迁移，新讨论统一使用日期编号。
 
 ## 讨论流程
 
