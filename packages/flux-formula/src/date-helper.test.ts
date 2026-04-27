@@ -33,4 +33,22 @@ describe('dateHelper', () => {
     expect(Number.isNaN(dateHelper.year('not-a-date'))).toBe(true);
     expect(Number.isNaN(dateHelper.diff('not-a-date', '2026-04-13T00:00:00Z', 'day'))).toBe(true);
   });
+
+  it('covers Date inputs, nullish paths, and today normalization', () => {
+    const source = new Date('2026-04-13T12:34:56Z');
+    const parsed = dateHelper.parse(source);
+
+    expect(parsed).toBeInstanceOf(Date);
+    expect(parsed).not.toBe(source);
+    expect(parsed?.toISOString()).toBe('2026-04-13T12:34:56.000Z');
+
+    const invalidDate = new Date(Number.NaN);
+    expect(dateHelper.parse(invalidDate)).toBeNull();
+    expect(dateHelper.format(null as never, 'date')).toBe('');
+
+    const today = dateHelper.today();
+    expect(today.getUTCHours()).toBe(0);
+    expect(today.getUTCMinutes()).toBe(0);
+    expect(today.getUTCSeconds()).toBe(0);
+  });
 });

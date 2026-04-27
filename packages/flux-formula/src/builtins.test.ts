@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createFormulaCompiler, getFormulaRegistrySnapshot, resetFormulaRegistry } from './index';
+import { customEquals } from './builtins';
 
 describe('builtins', () => {
   afterEach(() => {
@@ -73,5 +74,42 @@ describe('builtins', () => {
       () => 'fallback'
     )).toBe('picked');
     expect(touched).toBe(false);
+  });
+
+  it('covers lazy fallbacks and empty-input builtin branches', () => {
+    createFormulaCompiler();
+    const snapshot = getFormulaRegistrySnapshot();
+
+    expect(snapshot.functions.IF(() => false, () => 'yes')).toBeNull();
+    expect(snapshot.functions.SWITCH(
+      () => 'miss',
+      () => 'match',
+      () => 'picked',
+      () => 'fallback'
+    )).toBe('fallback');
+    expect(snapshot.functions.SWITCH(
+      () => 'miss',
+      () => 'match',
+      () => 'picked'
+    )).toBeNull();
+
+    expect(snapshot.functions.COUNT(null)).toBe(0);
+    expect(snapshot.functions.ARRAYMAP(null, (value: unknown) => value)).toEqual([]);
+    expect(snapshot.functions.ARRAYFILTER(null, (value: unknown) => value)).toEqual([]);
+    expect(snapshot.functions.ARRAYFIND(null, (value: unknown) => value)).toBeUndefined();
+    expect(snapshot.functions.ARRAYFINDINDEX(null, (value: unknown) => value)).toBe(-1);
+    expect(snapshot.functions.ARRAYSOME(null, (value: unknown) => value)).toBe(false);
+    expect(snapshot.functions.ARRAYEVERY(null, (value: unknown) => value)).toBe(true);
+    expect(snapshot.functions.ARRAYINCLUDES([null], undefined)).toBe(true);
+    expect(snapshot.functions.JOIN(null, null)).toBe('');
+    expect(snapshot.functions.ISEMPTY('value')).toBe(false);
+  });
+
+  it('covers custom equality edge cases', () => {
+    expect(customEquals(null, undefined)).toBe(true);
+    expect(customEquals(undefined, null)).toBe(true);
+    expect(customEquals(1, 1)).toBe(true);
+    expect(customEquals('a', 'a')).toBe(true);
+    expect(customEquals('1', 1)).toBe(false);
   });
 });
