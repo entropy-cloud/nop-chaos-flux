@@ -2,7 +2,7 @@
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-07
-> Source: `docs/discussions/03-action-api-design-evolution.md`
+> Source: `docs/discussions/2026-04-06-action-api-design-evolution.md`
 
 ## Purpose
 

@@ -6,7 +6,7 @@ This file remains an analysis document, not the active normative baseline.
 
 It originally proposed a broad staged-reactive replacement for `docs/architecture/frontend-programming-model.md`.
 
-After the follow-up discussion recorded in `docs/discussions/02-programming-model-optimality-critique.md`, that broad replacement proposal is no longer considered appropriate for Nop's clarified architecture.
+After the follow-up discussion recorded in `docs/discussions/2026-04-06-programming-model-optimality-critique.md`, that broad replacement proposal is no longer considered appropriate for Nop's clarified architecture.
 
 This document is therefore rewritten as a reassessment memo:
 
@@ -283,4 +283,4 @@ The useful outcome of the alternative exercise is now narrower:
 - `docs/architecture/frontend-programming-model.md`
 - `docs/architecture/api-data-source.md`
 - `docs/architecture/flux-dsl-vm-extensibility.md`
-- `docs/discussions/02-programming-model-optimality-critique.md`
+- `docs/discussions/2026-04-06-programming-model-optimality-critique.md`

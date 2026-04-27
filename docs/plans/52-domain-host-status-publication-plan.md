@@ -2,7 +2,7 @@
 
 > Plan Status: completed
 > Last Reviewed: 2026-04-10
-> Source: `docs/discussions/06-cross-store-data-driven-design.md`, `docs/architecture/action-interaction-state.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/flow-designer/runtime-snapshot.md`
+> Source: `docs/discussions/2026-04-09-cross-store-data-driven-design.md`, `docs/architecture/action-interaction-state.md`, `docs/architecture/complex-control-host-protocol.md`, `docs/architecture/flow-designer/runtime-snapshot.md`
 
 ## Purpose
 
@@ -36,7 +36,7 @@
 - `docs/components/designer-page/design.md`
 - `docs/components/spreadsheet-page/design.md`
 - `docs/components/report-designer-page/design.md`
-- `docs/discussions/06-cross-store-data-driven-design.md`
+- `docs/discussions/2026-04-09-cross-store-data-driven-design.md`
 
 ### Out Of Scope
 
@@ -55,7 +55,7 @@ Targets: docs listed above
 Verified in:
 - `docs/architecture/action-interaction-state.md`: `Domain Host Owner` row in taxonomy table, `Host Projection` vs `statusPath` split documented, `publishScope` not listed
 - `docs/architecture/complex-control-host-protocol.md`: explicit `publishScope` rejection (line 112)
-- `docs/discussions/06-cross-store-data-driven-design.md` Round 3 header: `publishScope` replaced by `statusPath`
+- `docs/discussions/2026-04-09-cross-store-data-driven-design.md` Round 3 header: `publishScope` replaced by `statusPath`
 - All three component docs §7 use `Domain Host Owner`, `Host Projection`, and `statusPath` language consistently
 
 Exit Criteria:
