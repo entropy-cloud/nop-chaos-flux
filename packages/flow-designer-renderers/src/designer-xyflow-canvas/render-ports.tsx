@@ -10,8 +10,8 @@ export function renderPorts(ports: PortConfig[] | undefined) {
   if (!ports || ports.length === 0) {
     return (
       <>
-        <Handle type="target" position={Position.Top} className={defaultHandleClass} />
-        <Handle type="source" position={Position.Bottom} className={defaultHandleClass} />
+        <Handle type="target" position={Position.Top} className={defaultHandleClass} data-testid="designer-handle-target-default" data-handle-id="default" />
+        <Handle type="source" position={Position.Bottom} className={defaultHandleClass} data-testid="designer-handle-source-default" data-handle-id="default" />
       </>
     );
   }
@@ -27,6 +27,8 @@ export function renderPorts(ports: PortConfig[] | undefined) {
         position={position}
         id={port.id}
         className={cn(defaultHandleClass, port.appearance?.className)}
+        data-testid={`designer-handle-${type}-${port.id}`}
+        data-handle-id={port.id}
       />
     );
   });

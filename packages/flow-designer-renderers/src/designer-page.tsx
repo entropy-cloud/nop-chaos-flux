@@ -83,6 +83,11 @@ interface DesignerPageBodyProps {
   config: DesignerConfig;
 }
 
+interface DesignerTestConnectDetail {
+  source: string;
+  target: string;
+}
+
 function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch, config }: DesignerPageBodyProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const snapshot = useDesignerSnapshot(core);
@@ -201,6 +206,26 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
     };
     publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
   }, [layoutBusy, props.node.scope, snapshot, statusPath]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleTestConnect = (event: Event) => {
+      const detail = (event as CustomEvent<DesignerTestConnectDetail>).detail;
+      if (!detail?.source || !detail?.target) {
+        return;
+      }
+
+      dispatch({ type: 'addEdge', source: detail.source, target: detail.target });
+    };
+
+    window.addEventListener('nop-designer:test-connect', handleTestConnect as EventListener);
+    return () => {
+      window.removeEventListener('nop-designer:test-connect', handleTestConnect as EventListener);
+    };
+  }, [dispatch]);
 
   return (
     <DesignerContext.Provider value={ctxValue}>
