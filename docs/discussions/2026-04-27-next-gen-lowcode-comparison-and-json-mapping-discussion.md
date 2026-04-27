@@ -968,3 +968,129 @@ AI 最初把“草图的尖锐性”误当成了“架构的完成度”。
 
 1. 是否应把 comparison report 中仍然把 `proof`、`request/receipt/recovery` 当作 Flux runtime core 差距的表述全部删除或降级？
 2. 在最终结论里，是否应明确写出：`nop-next` 的一部分差异，其实属于“额外上推的一层系统设计”，而不是 Flux 当前核心边界中的缺口？
+
+---
+
+## 第 14 轮
+
+### 用户回答
+
+当前继续推进的方向不再是扩展 `nop-next` 术语，而是使用已经改进后的 attractor prompt，回头审计 Flux 自身：
+
+1. Flux 当前是否已经形成自己的稳定 attractor。
+2. 如果已经形成，它的中心到底是什么。
+3. 哪些 tension 只是局部待收敛问题，不能再被误读为“说明 Flux 还没有真正中心”。
+
+### AI 整理
+
+这一轮开始，讨论重心从“`nop-next` 是否更像下一代架构”进一步转向“Flux 当前的 attractor 审计”。
+
+要回答的问题变成：
+
+1. 使用已增强的 attractor prompt 审计后，Flux 会不会仍被判定为困在普通 schema runtime / action graph 的平均盆地里。
+2. 如果不会，那么 Flux 当前真正的 attractor 中心到底应如何描述。
+3. 这对 `nop-next` 的阶段性定位意味着什么。
+
+### AI 分析
+
+#### 1. 按新版 attractor prompt 审计后，Flux 更像已经形成稳定 attractor，而不是仍困在旧盆地
+
+结合当前 architecture 文档与前面多轮纠偏，Flux 不应再被概括为：
+
+1. 一个工程上很成熟、但概念上仍然主要依赖主流 schema runtime 习惯的系统。
+2. 一个只是在 AMIS / Formily / action-graph 平均路径上做得更完整的实现。
+
+更准确的判断是：
+
+1. Flux 已经形成了自己的稳定执行边界。
+2. 它的中心不是把所有问题压成一个通用 binding / cell / effect 语言。
+3. 它的中心是 `Final Execution Schema` 前提下的读写分离与闭包化 primitive 组合。
+
+这也是为什么仅仅把 Flux 说成“成熟实现”已经不够准确。
+
+#### 2. Flux 当前 attractor 的中心，应优先表述为以下结构闭包
+
+从 `frontend-programming-model.md`、`flux-core.md`、`action-scope-and-imports.md`、`data-domain-owner.md` 这几份文档联合看，Flux 当前真正稳定下来的中心更接近：
+
+1. `Final Execution Schema`
+2. 七原语闭包：
+   - `Template`
+   - `ScopeRef`
+   - `Value`
+   - `Resource`
+   - `Reaction`
+   - `Capability`
+   - `Host Projection`
+3. `ScopeRef` 作为 lexical data scope
+4. `ActionScope` 作为 capability lexical scope
+5. `ComponentHandleRegistry` 作为 instance-target capability lookup
+6. `Data Domain Owner` 作为统一 owner semantics
+7. `Semantic Lifecycle Entry` 作为 node-owned semantic entry
+
+如果把这一组东西放在一起看，Flux 的统一中心已经不是局部 feature 集合，而是一套相互约束的 execution-model 语言。
+
+#### 3. Flux 的 attractor 核心，不是“owner family 优先”，而是读写分离先行
+
+这一轮需要保留前面已经完成的纠偏，不再退回旧表述。
+
+更准确的概括是：
+
+1. 读通过 `ScopeRef` 与 lexical visibility 完成。
+2. 写通过 `Capability` 路径完成。
+3. `ActionScope`、`ComponentHandleRegistry`、`xui:imports`、`Host Projection` 分别承担不同的可见性与 authority 问题。
+4. `Data Domain Owner` 在这个基础上统一 owned data、validation、publish、lifecycle。
+
+因此 Flux 的 attractor 中心不是“owner family many implementations”，而是：
+
+1. 先把 data read path 和 effect path 拆开。
+2. 再在这个拆分上稳定 owner semantics。
+
+#### 4. Flux 已经通过作者面现实，证明它不是只停留在文档层的新中心
+
+按新版 prompt 的作者面审计与 compile/runtime 现实检查，Flux 的一个关键优势是：
+
+1. `event -> action + args` 本身已经是自然 authoring surface。
+2. JSON 与 schema-first execution contract 天然同构。
+3. `name / id / componentId / componentName / targetId` 等定位规则已经形成可工作的作者面现实。
+4. `Final Execution Schema` 边界、loader/runtime 边界、host/runtime 边界都已经被正式 architecture 文档明确写出。
+
+这意味着：
+
+1. Flux 的 compile/runtime separation 不是只在文档里宣称。
+2. Flux 的 authoring surface 也不是事后补叙，而是已经在现有系统中自然成立。
+
+#### 5. 当前仍存在的 tension，更像局部继续收敛点，而不是“Flux 还没有吸引子中心”的证据
+
+新版审计下，更合理的表述应是：
+
+1. `Data Domain Owner` 仍在继续把局部 owner 语义收敛成更统一的解释层。
+2. `action + args` 是否还应继续向更明确的 semantic action surface 收敛，仍然值得讨论。
+3. 一些 authority-like / replica-like / projection-like / semantic-entry-like 结构，是否需要在 Flux 文档里显式总结，仍然值得讨论。
+
+但这些问题更像：
+
+1. 已有 attractor 内部的再收敛。
+2. 文档表达与解释层的补强。
+
+而不是：
+
+1. 说明 Flux 仍停留在普通旧盆地。
+2. 说明必须另起一套 `nop-next` 式新中心来替换它。
+
+#### 6. 这轮 attractor 审计进一步下调了 `nop-next` 的定位
+
+一旦承认 Flux 本身已经形成稳定 attractor，那么 `nop-next` 当前更准确的角色就更清楚了：
+
+1. 它不是已经胜出的替代架构。
+2. 它更像一个批判性草图、分析框架、问题发现装置。
+3. 它逼出了 Flux 中哪些结构已经存在、哪些 tension 还值得继续显式化。
+
+因此这轮之后，更准确的阶段性判断应是：
+
+1. Flux 已经是自己的新 attractor，而不是等待 `nop-next` 来替代的未完成系统。
+2. `nop-next` 当前主要价值在于问题意识，而不是已经成立的新中心。
+
+### 待澄清问题
+
+1. 是否应单独新增一份 analysis 文档，专门总结这轮 Flux attractor 审计结果，而不是只留在 discussion 中？
+2. Flux 是否需要新增一份更正式的 architecture/analysis 文档，显式总结自身已有的 authority-like / replica-like / projection-like / semantic-entry-like 结构，避免未来再次被重命名术语误导？
