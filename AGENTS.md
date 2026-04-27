@@ -347,7 +347,7 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 
 - All files use UTF-8 encoding without BOM.
 - ESM-first (`"type": "module"`).
-- No comments unless requested.
+- Default to no comments. Add one only after repeated debugging, audit, or regression work shows a local constraint is easy to misread or accidentally break.
 - Follow existing code style in each file.
 - TypeScript strict mode.
 - Documentation files should generally stay under 40 KB. If a doc grows beyond 50 KB, split it by topic or ownership unless there is a clear reason to keep it together.
