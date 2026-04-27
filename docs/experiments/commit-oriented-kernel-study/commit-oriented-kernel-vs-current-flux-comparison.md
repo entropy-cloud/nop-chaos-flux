@@ -17,8 +17,8 @@
 
 ### 当前实验文档
 
-- `docs/experiments/next-gen-lowcode-attractor-discovery-independent-v1.md`
-- `docs/experiments/commit-oriented-lowcode-kernel-complete-design-v1.md`
+- `docs/experiments/commit-oriented-kernel-study/next-gen-lowcode-attractor-discovery-independent-v1.md`
+- `docs/experiments/commit-oriented-kernel-study/commit-oriented-lowcode-kernel-complete-design-v1.md`
 
 ### 当前项目文档
 

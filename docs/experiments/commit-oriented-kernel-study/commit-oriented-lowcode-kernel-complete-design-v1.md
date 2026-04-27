@@ -1,6 +1,6 @@
 # Commit-Oriented Low-Code Kernel 完整设计（v1）
 
-> 基线来源：`docs/experiments/next-gen-lowcode-attractor-discovery-independent-v1.md`
+> 基线来源：`docs/experiments/commit-oriented-kernel-study/next-gen-lowcode-attractor-discovery-independent-v1.md`
 >
 > 本文目标不是对主流页面-schema 方案做局部优化，而是把 `Commit Unit` 提升为低代码平台的一等执行对象，给出一套可编译、可运行、可协作、可审计、可接入 AI 的完整设计。
 
