@@ -1,6 +1,6 @@
 # 143 Unit Test Coverage 80% Target Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-04-27
 > Source: Coverage audit via `vitest run --coverage` across all packages
 > Related: None
@@ -280,11 +280,11 @@ Exit Criteria:
 - [x] `flux-renderers-data` 和 `flux-renderers-form` 失败测试已修复
 - [x] Coverage threshold 已配置在 `vitest.config.ts` 中
 - [x] `docs/logs/` 已更新
-- [ ] 独立子 agent closure-audit 已完成并记录证据
+- [x] 独立子 agent closure-audit 已完成并记录证据
 
 ## Closure
 
-Status Note: Independent closure audit evidence in this plan is now stale relative to the latest package-local execution. The current live repo has passing package-local 80% coverage gates for all in-scope core packages, and workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` now all pass from repo root. Plan 143 still remains `partially completed` until a fresh independent closure audit is recorded against this updated baseline.
+Status Note: All nine in-scope core packages now clear their enforced package-local 80% coverage thresholds, workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` all pass on the current live tree, and a fresh independent closure audit now confirms no remaining plan-owned work. Plan 143 is complete.
 
 Closure Audit Evidence:
 
@@ -301,8 +301,10 @@ Closure Audit Evidence:
 - Post-audit execution update (2026-04-27): `flux-renderers-basic` package-local verification now passes fully: `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm exec vitest run --config vitest.config.ts --coverage` all pass with final package coverage at `93.88%` statements / `81.27%` branches / `93.45%` functions / `94.11%` lines.
 - Post-audit execution update (2026-04-27): `flux-formula` package-local verification now passes fully: `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm exec vitest run --config vitest.config.ts --coverage` all pass with final package coverage at `94.78%` statements / `87.93%` branches / `100%` functions / `94.58%` lines.
 - Plan-level verification update (2026-04-27): workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` all complete successfully from repo root on the current live tree.
+- Reviewer / Agent: independent subagent closure audit
+- Evidence: `ses_233c0251affeU54LUevGOKNHZ7` — fresh audit against the current live repo concludes `completed`: all nine in-scope core packages pass enforced package-local 80% coverage thresholds, root `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` all pass, and no remaining plan-owned work remains.
 
 Follow-up:
 
 - 辅助包覆盖率（flow-designer, spreadsheet, report-designer, word-editor, nop-debugger, ui）不在本计划 scope 内，可由后续专项计划覆盖
-- Remaining plan-owned work: commission a fresh independent closure audit against the updated package-local and workspace verification baseline before marking this plan `completed`.
+- No remaining plan-owned work.
