@@ -633,4 +633,5 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
       expect(JSON.parse(screen.getByTestId('form-state:dept').textContent ?? 'null')).toBe('frontend');
     });
   });
+
 });

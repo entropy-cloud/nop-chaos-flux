@@ -10,6 +10,11 @@ import { formAdvancedRendererDefinitions } from './index';
 import { keyValueRendererDefinition } from './key-value';
 import { baseEnv, formulaCompiler } from './test-support';
 
+type KeyValueValidation = {
+  getFieldPath(schema: Record<string, unknown>, ctx?: unknown): string | undefined;
+  collectRules(schema: Record<string, unknown>, ctx?: unknown): Array<Record<string, unknown>>;
+};
+
 function FormValueProbeRenderer(props: { name: string; testid: string }) {
   const value = useCurrentFormState((state) => state.values[props.name], Object.is, { path: props.name });
   return <span data-testid={props.testid}>{JSON.stringify(value)}</span>;
@@ -123,10 +128,7 @@ describe('key-value renderer', () => {
   });
 
   it('collects unique-key validation rules with default and custom messages', () => {
-    const validation = keyValueRendererDefinition.validation as {
-      getFieldPath(schema: Record<string, unknown>): string | undefined;
-      collectRules(schema: Record<string, unknown>): Array<{ message: string }>;
-    };
+    const validation = keyValueRendererDefinition.validation as unknown as KeyValueValidation;
 
     expect(validation.getFieldPath({ name: 'settings' })).toBe('settings');
     expect(validation.getFieldPath({})).toBeUndefined();

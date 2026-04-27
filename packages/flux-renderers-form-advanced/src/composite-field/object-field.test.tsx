@@ -2,7 +2,6 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ActionResult, ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -73,21 +72,6 @@ const scopeSelectorProbeRenderer: RendererDefinition = {
   component: () => <ScopeSelectorProbeRenderer />
 };
 
-function RootValueProbeRenderer(props: { name: string; 'data-testid': string }) {
-  const value = useScopeSelector((scopeData) => getIn(scopeData, props.name), Object.is);
-  return <span data-testid={props['data-testid']}>{JSON.stringify(value ?? '')}</span>;
-}
-
-const rootValueProbeRenderer: RendererDefinition = {
-  type: 'root-value-probe',
-  component: (p) => (
-    <RootValueProbeRenderer
-      name={String((p.props as Record<string, unknown>).name ?? '')}
-      data-testid={String((p.props as Record<string, unknown>).testid ?? 'root-value-probe')}
-    />
-  )
-};
-
 function ObjectScopeMutationRenderer() {
   const scope = useRenderScope();
 
@@ -107,13 +91,17 @@ function ObjectScopeMutationRenderer() {
       </button>
       <button
         type="button"
-        onClick={() => scope.replace({ firstName: 'Dana', lastName: 'Lane' } as Record<string, unknown>)}
+        onClick={() => {
+          scope.replace?.({ firstName: 'Dana', lastName: 'Lane' } as Record<string, unknown>);
+        }}
       >
         Replace Object
       </button>
       <button
         type="button"
-        onClick={() => scope.replace({ value: { firstName: 'Fay', lastName: 'Mills' } } as Record<string, unknown>)}
+        onClick={() => {
+          scope.replace?.({ value: { firstName: 'Fay', lastName: 'Mills' } } as Record<string, unknown>);
+        }}
       >
         Replace Value Wrapper
       </button>
