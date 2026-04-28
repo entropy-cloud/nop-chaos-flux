@@ -89,6 +89,8 @@ Current live implementation note:
 
 - 根节点保留 `nop-dialog` marker。
 - 视觉和可访问性交互复用 `@nop-chaos/ui` Dialog。
+- 标准 shell 结构应为 `DialogContent -> DialogHeader? -> DialogBody -> DialogFooter?`。
+- `DialogContent` 负责弹层壳行为；默认 body spacing 应归 `DialogBody`，不要把正文 padding/gap 放回 `DialogContent`。
 
 ## 11. 实现拆分建议
 

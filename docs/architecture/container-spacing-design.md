@@ -207,7 +207,6 @@ Per-slot props are simpler, match the existing pattern (`gap`, `direction`), and
 
 - **Spacing accumulation**: Nested containers accumulate gaps (page 24px + container 16px + form 16px). For compact layouts, use `gap: "sm"` on inner containers or adjust theme tokens.
 - **Container `className: "gap-2"` without semantic props**: Adds `gap-2` to `.nop-container` root, not to inner `[data-slot="container-body"]`. Use `bodyClassName` or semantic props to control inner body gap.
-- **Drawer body spacing**: `DrawerContent` has no `gap`. Body content sits adjacent to header/footer. Should be fixed in UI component.
 - **No `padding` semantic prop on Container**: Add padding via `className: "p-4"`.
 
 ## Rejected Alternatives

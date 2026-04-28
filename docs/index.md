@@ -101,6 +101,7 @@ Choose the smallest document that matches the task.
 | Review security boundary and runtime safety requirements | `docs/architecture/security-design-requirements.md` | `docs/architecture/action-scope-and-imports.md` |
 | Review performance design constraints and hot-path rules | `docs/architecture/performance-design-requirements.md` | `docs/architecture/renderer-runtime.md` |
 | Review recurring regression guardrails distilled from historical bug fixes | `docs/references/architecture-guardrails-from-bugs.md` | `docs/architecture/renderer-runtime.md` |
+| Review implementation audit rules and consistency guardrails | `docs/references/audit-rules/README.md` | the specific rule under `docs/references/audit-rules/` |
 | 了解仓库为什么默认几乎不写代码注释，以及在 AI 辅助编辑下什么情况下才值得保留局部注释 | `docs/references/code-comment-policy.md` | `docs/references/architecture-guardrails-from-bugs.md`, `docs/references/refactoring-guidelines.md` |
 | Understand static analysis, staticCapable renderer declaration, or bottom-up optimization computation | `docs/architecture/static-analysis.md` | `docs/architecture/renderer-runtime.md`, `docs/plans/131-static-analysis-optimization-plan.md` |
 | Review general UI interaction quality, workspace layout priority, collapsibility, or obvious convention violations | `docs/references/ui-interaction-review-checklist.md` | the relevant file in `docs/architecture/` |

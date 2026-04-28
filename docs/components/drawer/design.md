@@ -73,6 +73,8 @@ Current live implementation note:
 
 - 根节点保留 `nop-drawer` marker。
 - 视觉和可访问性交互复用 `@nop-chaos/ui` Drawer。
+- 标准 shell 结构应为 `DrawerContent -> DrawerHeader? -> DrawerBody -> DrawerFooter?`。
+- `DrawerContent` 负责弹层壳行为；默认 body spacing 应归 `DrawerBody`，并与 dialog 保持相同的 body-slot 责任边界。
 
 ## 11. 实现拆分建议
 

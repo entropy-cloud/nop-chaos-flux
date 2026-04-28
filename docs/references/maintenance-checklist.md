@@ -38,6 +38,7 @@ If you do not know where to start, check these first:
 8. `docs/architecture/security-design-requirements.md` for boundary/safety-sensitive changes
 9. `docs/architecture/performance-design-requirements.md` for hot-path/perf-sensitive changes
 10. `docs/references/architecture-guardrails-from-bugs.md` for recurring regression patterns and review checks
+11. `docs/references/audit-rules/README.md` for reusable implementation audit rules when the change affects a repeated UI or renderer pattern
 
 ## Change Triggers
 
