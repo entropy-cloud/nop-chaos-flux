@@ -15,6 +15,8 @@ import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
+  DialogBody,
+  DialogFooter,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -141,7 +143,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
           <DialogHeader>
             <DialogTitle>{t('flux.wordEditor.pageMargins')}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
+          <DialogBody className="space-y-2">
             {(['Top', 'Right', 'Bottom', 'Left'] as const).map((label, i) => (
               <div key={label} className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground w-14">{label}</span>
@@ -158,11 +160,11 @@ export function PageControls({ bridge, store }: PageControlsProps) {
                 />
               </div>
             ))}
-          </div>
-          <div className="flex justify-end gap-2 mt-3">
+          </DialogBody>
+          <DialogFooter className="bg-transparent">
             <Button variant="ghost" size="sm" onClick={() => setShowMarginDialog(false)}>{t('flux.common.cancel')}</Button>
             <Button size="sm" onClick={handleApplyMargins}>{t('flux.common.confirm')}</Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -171,13 +173,15 @@ export function PageControls({ bridge, store }: PageControlsProps) {
           <DialogHeader>
             <DialogTitle>{t('flux.wordEditor.watermark')}</DialogTitle>
           </DialogHeader>
-          <Input
-            placeholder="Watermark text"
-            value={watermarkText}
-            onChange={(e) => setWatermarkText(e.target.value)}
-            size="sm"
-          />
-          <div className="flex justify-end gap-2 mt-3">
+          <DialogBody>
+            <Input
+              placeholder="Watermark text"
+              value={watermarkText}
+              onChange={(e) => setWatermarkText(e.target.value)}
+              size="sm"
+            />
+          </DialogBody>
+          <DialogFooter className="bg-transparent">
             <Button variant="destructive" size="sm" onClick={handleDeleteWatermark}>
               {t('flux.common.delete')}
             </Button>
@@ -187,7 +191,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
             <Button variant="ghost" size="sm" onClick={() => { setShowWatermarkDialog(false); setWatermarkText('') }}>
               {t('flux.common.cancel')}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </ToolbarGroup>

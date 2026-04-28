@@ -5,6 +5,8 @@ import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
+  DialogBody,
+  DialogFooter,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -84,7 +86,7 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
           <DialogHeader>
             <DialogTitle>{t('flux.wordEditor.insertHyperlink')}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <DialogBody className="space-y-3">
             <Input
               placeholder="Display text"
               value={hyperlinkDisplay}
@@ -97,15 +99,15 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
               onChange={(e) => setHyperlinkUrl(e.target.value)}
               size="sm"
             />
-          </div>
-          <div className="flex justify-end gap-2 mt-3">
+          </DialogBody>
+          <DialogFooter className="bg-transparent">
             <Button variant="ghost" size="sm" onClick={() => setShowLinkDialog(false)}>
               {t('flux.common.cancel')}
             </Button>
             <Button size="sm" onClick={handleInsertHyperlink} disabled={!hyperlinkUrl.trim()}>
               {t('flux.common.confirm')}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

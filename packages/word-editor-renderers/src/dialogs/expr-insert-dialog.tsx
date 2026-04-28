@@ -4,6 +4,8 @@ import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
+  DialogBody,
+  DialogFooter,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -68,76 +70,78 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
           <DialogTitle>{t('flux.wordEditor.insertTemplateExpr')}</DialogTitle>
         </DialogHeader>
 
-        <Tabs data-orientation="horizontal" className="flex-col gap-0">
-          <TabsList className="mb-4">
-            <TabsTrigger
-              value="el"
-              data-state={exprType === 'el' ? 'active' : 'inactive'}
-              onClick={() => setExprType('el')}
-            >
-              {t('flux.wordEditor.elExpression')}
-            </TabsTrigger>
-            <TabsTrigger
-              value="xpl"
-              data-state={exprType === 'xpl' ? 'active' : 'inactive'}
-              onClick={() => setExprType('xpl')}
-            >
-              {t('flux.wordEditor.xplTag')}
-            </TabsTrigger>
-          </TabsList>
+        <DialogBody>
+          <Tabs data-orientation="horizontal" className="flex-col gap-0">
+            <TabsList className="mb-4">
+              <TabsTrigger
+                value="el"
+                data-state={exprType === 'el' ? 'active' : 'inactive'}
+                onClick={() => setExprType('el')}
+              >
+                {t('flux.wordEditor.elExpression')}
+              </TabsTrigger>
+              <TabsTrigger
+                value="xpl"
+                data-state={exprType === 'xpl' ? 'active' : 'inactive'}
+                onClick={() => setExprType('xpl')}
+              >
+                {t('flux.wordEditor.xplTag')}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value={exprType} className="mb-4">
-            {exprType === 'el' ? (
-              <Textarea
-                value={expression}
-                onChange={(e) => setExpression(e.target.value)}
-                placeholder="${entity.fieldName}"
-                className="min-h-[80px]"
-              />
-            ) : (
-              <div className="space-y-3">
-              <div>
-                <Label>{t('flux.wordEditor.tagName')}</Label>
-                  <NativeSelect
-                    value={selectedTag}
-                    onChange={(e) => {
-                      setSelectedTag(e.target.value)
-                      setTagAttrs({})
-                    }}
-                    className="w-full"
-                  >
-                    {availableTags.map((tag) => (
-                      <NativeSelectOption key={tag} value={tag}>
-                        {tag}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </div>
-
-                {currentTagDef && currentTagDef.defaultAttrs && (
-                  <div className="space-y-2">
-                    {Object.entries(currentTagDef.defaultAttrs).map(([attrName]) => (
-                      <div key={attrName}>
-                        <Label>{attrName}</Label>
-                        <Input
-                          value={tagAttrs[attrName] || ''}
-                          onChange={(e) => setTagAttrs(prev => ({ ...prev, [attrName]: e.target.value }))}
-                          placeholder={currentTagDef.defaultAttrs?.[attrName] || ''}
-                          size="sm"
-                        />
-                      </div>
-                    ))}
+            <TabsContent value={exprType} className="mb-4">
+              {exprType === 'el' ? (
+                <Textarea
+                  value={expression}
+                  onChange={(e) => setExpression(e.target.value)}
+                  placeholder="${entity.fieldName}"
+                  className="min-h-[80px]"
+                />
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <Label>{t('flux.wordEditor.tagName')}</Label>
+                    <NativeSelect
+                      value={selectedTag}
+                      onChange={(e) => {
+                        setSelectedTag(e.target.value)
+                        setTagAttrs({})
+                      }}
+                      className="w-full"
+                    >
+                      {availableTags.map((tag) => (
+                        <NativeSelectOption key={tag} value={tag}>
+                          {tag}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
                   </div>
-                )}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
 
-        <div className="flex justify-end gap-2">
+                  {currentTagDef && currentTagDef.defaultAttrs && (
+                    <div className="space-y-2">
+                      {Object.entries(currentTagDef.defaultAttrs).map(([attrName]) => (
+                        <div key={attrName}>
+                          <Label>{attrName}</Label>
+                          <Input
+                            value={tagAttrs[attrName] || ''}
+                            onChange={(e) => setTagAttrs(prev => ({ ...prev, [attrName]: e.target.value }))}
+                            placeholder={currentTagDef.defaultAttrs?.[attrName] || ''}
+                            size="sm"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </DialogBody>
+
+        <DialogFooter className="bg-transparent">
           <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
           <Button size="sm" onClick={handleInsert}>{t('flux.common.confirm')}</Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

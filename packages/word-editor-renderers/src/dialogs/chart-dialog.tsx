@@ -10,6 +10,8 @@ import {
   ChartTooltipContent,
   Checkbox,
   Dialog,
+  DialogBody,
+  DialogFooter,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -141,7 +143,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
           <DialogTitle>{initialData ? 'Edit Chart' : 'Create Chart'}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <DialogBody className="flex-1 overflow-hidden min-h-0">
           <ScrollArea className="flex-1">
             <div className="p-1 space-y-4">
               <div>
@@ -230,12 +232,12 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
             </div>
           </ScrollArea>
-        </div>
+        </DialogBody>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <DialogFooter className="bg-transparent">
           <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
           <Button size="sm" onClick={handleSave} disabled={!chartName.trim()}>{t('flux.common.save')}</Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

@@ -4,6 +4,8 @@ import { t } from '@nop-chaos/flux-i18n'
 import {
   Button,
   Dialog,
+  DialogBody,
+  DialogFooter,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -61,7 +63,7 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           <DialogTitle>{isEditMode ? 'Edit Code' : 'Create Code'}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <DialogBody>
           <div>
             <Label>
               {t('flux.wordEditor.codeName')} <span className="text-destructive">*</span>
@@ -162,12 +164,12 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
               )}
             </div>
           </div>
-        </div>
+        </DialogBody>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <DialogFooter className="bg-transparent">
           <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
           <Button size="sm" onClick={handleSave} disabled={!codeName.trim() || !valueField.trim()}>{t('flux.common.save')}</Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

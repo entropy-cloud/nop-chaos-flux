@@ -19,6 +19,8 @@ vi.mock('@nop-chaos/ui', () => {
     ),
     Dialog: ({ children, open }: any) => open ? <div data-testid="dialog">{children}</div> : null,
     DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
+    DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
+    DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
     DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
     DialogTitle: ({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>,
     NativeSelect: ({ value, onChange, children: ch, ...props }: any) => (
