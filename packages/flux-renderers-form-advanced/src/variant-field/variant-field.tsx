@@ -14,7 +14,8 @@ import {
   useCurrentForm,
   useRenderScope,
   useScopeSelector,
-  useCurrentFormState
+  useCurrentFormState,
+  toFieldRemarkProps
 } from '@nop-chaos/flux-react';
 import {
   Select,
@@ -84,6 +85,11 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
   const activeOption = variants.find((v) => v.key === activeKey) ?? variants[0];
 
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const runDetectVariantAction = React.useCallback(
     async () => {
       if (!schema.detectVariantAction || matchedKey) {
@@ -100,6 +106,8 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         page: undefined,
         nodeInstance: props.node as BaseNodeInstance
       });
+
+      if (!mountedRef.current) return;
 
       if (!result.ok) {
         setDetectedKey(undefined);
@@ -240,10 +248,23 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     );
   };
 
+  const labelAlignValue = schema.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
+  const remarkValue = typeof schema.remark === 'object' && schema.remark !== null
+    ? toFieldRemarkProps(schema.remark as Parameters<typeof toFieldRemarkProps>[0]) : undefined;
+  const labelRemarkValue = typeof schema.labelRemark === 'object' && schema.labelRemark !== null
+    ? toFieldRemarkProps(schema.labelRemark as Parameters<typeof toFieldRemarkProps>[0]) : undefined;
+
   return (
     <FieldFrame
       name={name || undefined}
       label={labelContent}
+      required={Boolean(schemaProps.required) || undefined}
+      hint={schema.hint}
+      description={schema.description}
+      remark={remarkValue}
+      labelRemark={labelRemarkValue}
+      labelAlign={labelAlignValue === 'inherit' ? undefined : labelAlignValue}
+      labelWidth={schema.labelWidth}
       rootTag="div"
       className={props.meta.className}
       testid={props.meta.testid}

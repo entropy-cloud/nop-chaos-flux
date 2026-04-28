@@ -68,6 +68,11 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const [confirming, setConfirming] = React.useState(false);
   const [draftError, setDraftError] = React.useState<string | undefined>(undefined);
 
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const runAdaptationAction = React.useCallback(
     (actionSchema: DetailFieldSchema['transformInAction']) =>
       props.helpers.dispatch(actionSchema as any, {
@@ -91,6 +96,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       },
       runAdaptationAction
     );
+
+    if (!mountedRef.current) return;
 
     const initialValues: Record<string, unknown> = typeof adaptedValue === 'object' && adaptedValue !== null
       ? { ...(adaptedValue as Record<string, unknown>) }
@@ -116,6 +123,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
     try {
       const result = await draftForm.validateAll('submit');
+      if (!mountedRef.current) return;
+
       if (!result.ok) {
         setDraftError(validationMessage);
         return;
@@ -136,6 +145,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         runAdaptationAction
       );
 
+      if (!mountedRef.current) return;
+
       publishValidateResultErrors(validation, name, parentForm);
 
       if (!validation.valid) {
@@ -154,6 +165,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         runAdaptationAction
       );
 
+      if (!mountedRef.current) return;
+
       parentForm.setValue(name, writeback);
       parentForm.touchField(name);
       void parentForm.validateField(name);
@@ -161,7 +174,9 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       setOpen(false);
       disposeDraftForm(draftForm, setDraftForm);
     } finally {
-      setConfirming(false);
+      if (mountedRef.current) {
+        setConfirming(false);
+      }
     }
   }
 
