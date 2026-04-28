@@ -382,4 +382,142 @@ describe('host action validation', () => {
     expect(diagnostics.diagnostics).toHaveLength(1);
     expect(diagnostics.diagnostics[0].sourceLocation).toEqual({ file: 'override.xview', line: 42, column: 10 });
   });
+
+  describe('xui:actions validation', () => {
+    it('rejects non-object xui:actions', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(compiler.validate?.({
+        type: 'strict-text',
+        text: 'Hello',
+        'xui:actions': 'bad'
+      } as any)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-namespace-property',
+          message: 'xui:actions must be a non-null object mapping names to ActionSchema.',
+          source: 'namespace'
+        })
+      ]));
+    });
+
+    it('rejects array xui:actions', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(compiler.validate?.({
+        type: 'strict-text',
+        text: 'Hello',
+        'xui:actions': [{ action: 'ajax' }]
+      } as any)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-namespace-property',
+          message: 'xui:actions must be a non-null object mapping names to ActionSchema.',
+          source: 'namespace'
+        })
+      ]));
+    });
+
+    it('rejects null xui:actions', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(compiler.validate?.({
+        type: 'strict-text',
+        text: 'Hello',
+        'xui:actions': null
+      } as any)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-namespace-property',
+          message: 'xui:actions must be a non-null object mapping names to ActionSchema.',
+          source: 'namespace'
+        })
+      ]));
+    });
+
+    it('errors on name containing colon', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(compiler.validate?.({
+        type: 'strict-text',
+        text: 'Hello',
+        'xui:actions': {
+          'ns:method': { action: 'ajax' }
+        }
+      } as any)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-namespace-property',
+          message: expect.stringContaining('must not contain a colon'),
+          severity: 'error',
+          source: 'namespace'
+        })
+      ]));
+    });
+
+    it('warns on name conflicting with built-in action', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(compiler.validate?.({
+        type: 'strict-text',
+        text: 'Hello',
+        'xui:actions': {
+          ajax: { action: 'showToast' }
+        }
+      } as any)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-namespace-property',
+          message: expect.stringContaining('conflicts with a built-in action'),
+          severity: 'warning',
+          source: 'namespace'
+        })
+      ]));
+    });
+
+    it('errors on non-object action entry', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(compiler.validate?.({
+        type: 'strict-text',
+        text: 'Hello',
+        'xui:actions': {
+          bad: 'string-value'
+        }
+      } as any)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-namespace-property',
+          message: expect.stringContaining('must be an ActionSchema object'),
+          source: 'namespace'
+        })
+      ]));
+    });
+
+    it('warns on direct self-reference', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(compiler.validate?.({
+        type: 'strict-text',
+        text: 'Hello',
+        'xui:actions': {
+          loop: { action: 'loop' }
+        }
+      } as any)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-namespace-property',
+          message: expect.stringContaining('directly references itself'),
+          severity: 'warning',
+          source: 'namespace'
+        })
+      ]));
+    });
+
+    it('accepts valid xui:actions', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(compiler.validate?.({
+        type: 'strict-text',
+        text: 'Hello',
+        'xui:actions': {
+          save: { action: 'ajax', args: { url: '/save' } },
+          reset: { action: 'setValue', args: { path: 'x', value: 0 } }
+        }
+      } as any)).toEqual([]);
+    });
+  });
 });
