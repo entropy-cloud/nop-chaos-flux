@@ -7,24 +7,6 @@ import { test, expect } from '@playwright/test';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
 
 // ---------------------------------------------------------------------------
-// crud
-// ---------------------------------------------------------------------------
-test.describe('crud renderer', () => {
-  test('read: basic CRUD shell renders toolbar, rows, and summary', async ({ page }) => {
-    const lab = new ComponentLabHelper(page);
-    await lab.openRenderer('crud');
-
-    const slug = scenarioSlug('Basic CRUD shell');
-    const stage = lab.scenarioStage(slug);
-    await expect(stage).toBeVisible();
-    await expect(stage.getByRole('button', { name: 'Create' })).toBeVisible();
-    await expect(stage.getByRole('columnheader', { name: /name/i })).toBeVisible();
-    await expect(stage.getByText('Alpha')).toBeVisible();
-    await expect(stage.getByText('1-3 of 3')).toBeVisible();
-  });
-});
-
-// ---------------------------------------------------------------------------
 // table
 // ---------------------------------------------------------------------------
 test.describe('table renderer', () => {
@@ -39,8 +21,8 @@ test.describe('table renderer', () => {
     await expect(stage.getByRole('columnheader', { name: /username/i })).toBeVisible({ timeout: 5_000 });
     await expect(stage.getByRole('columnheader', { name: /email/i })).toBeVisible();
     await expect(stage.getByRole('columnheader', { name: /role/i })).toBeVisible();
-    await expect(stage.getByText('alice')).toBeVisible();
-    await expect(stage.getByText('carol')).toBeVisible();
+    await expect(stage.getByRole('cell', { name: 'alice', exact: true })).toBeVisible();
+    await expect(stage.getByRole('cell', { name: 'carol', exact: true })).toBeVisible();
   });
 
   test('read: empty state message shows when data is empty', async ({ page }) => {

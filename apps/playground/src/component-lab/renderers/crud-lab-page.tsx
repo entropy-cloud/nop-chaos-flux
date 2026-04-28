@@ -1,5 +1,42 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
 
+let requestOwnedFetchCount = 0;
+let clientModeFetchCount = 0;
+
+const crudLabEnv = {
+  fetcher: async <T,>(api: { url?: string }) => {
+    if (api.url === '/api/mock/users') {
+      requestOwnedFetchCount += 1;
+      return {
+        ok: true,
+        status: 200,
+        data: {
+          items: [{ id: requestOwnedFetchCount, name: `User-${requestOwnedFetchCount}`, owner: `Owner-${requestOwnedFetchCount}`, status: requestOwnedFetchCount % 2 === 0 ? 'draft' : 'active' }],
+          total: 42 + requestOwnedFetchCount,
+        } as T,
+      };
+    }
+
+    if (api.url === '/api/mock/client-mode') {
+      clientModeFetchCount += 1;
+      return {
+        ok: true,
+        status: 200,
+        data: {
+          items: [{ id: clientModeFetchCount, name: `Client-${clientModeFetchCount}`, owner: `Owner-${clientModeFetchCount}`, status: clientModeFetchCount % 2 === 0 ? 'draft' : 'active' }],
+          total: clientModeFetchCount,
+        } as T,
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      data: null as T,
+    };
+  },
+};
+
 const records = [
   { id: 1, name: 'Alpha', status: 'active', owner: 'Alice', category: 'Platform' },
   { id: 2, name: 'Beta', status: 'draft', owner: 'Bob', category: 'Design' },
@@ -137,7 +174,8 @@ const requestOwnedCrud = {
       type: 'data-source',
       id: 'crud-users-source',
       name: 'pagedRecords',
-      api: {
+      action: 'ajax',
+      args: {
         url: '/api/mock/users',
       },
       initialData: {
@@ -213,6 +251,44 @@ const quickEditCrud = {
   ],
 };
 
+const selectionRefreshCrud = {
+  type: 'page',
+  body: [
+    {
+      type: 'crud',
+      id: 'selection-refresh-crud',
+      source: '${records}',
+      rowKey: 'id',
+      autoClearSelectionOnRefresh: true,
+      toolbar: [
+        {
+          type: 'button',
+          label: 'Refresh current list',
+          onClick: {
+            action: 'component:refresh',
+            componentId: 'selection-refresh-crud',
+          },
+        },
+      ],
+      listActions: [
+        {
+          type: 'button',
+          label: 'Bulk Delete',
+          disabled: '${!$crud.hasSelection}',
+        },
+      ],
+      footerToolbar: [
+        { type: 'text', text: 'Selected rows: ${$crud.selectionCount}' },
+      ],
+      columns: [
+        { label: 'Name', name: 'name' },
+        { label: 'Owner', name: 'owner' },
+        { label: 'Status', name: 'status' },
+      ],
+    },
+  ],
+};
+
 const clientModeCrud = {
   type: 'page',
   body: [
@@ -248,7 +324,8 @@ const clientModeFetchOnFilterCrud = {
       type: 'data-source',
       id: 'client-mode-source',
       name: 'clientModeRecords',
-      api: {
+      action: 'ajax',
+      args: {
         url: '/api/mock/client-mode',
       },
       initialData: {
@@ -318,12 +395,19 @@ export function CrudLabPage() {
           title: 'CRUD request-owned refresh baseline',
           description: 'Shows the landed upstream owner cooperation path: CRUD consumes a data-source result object and `component:refresh` re-enters the source owner through `refreshSource` instead of inventing a CRUD-private fetch protocol.',
           schema: requestOwnedCrud,
-          data: { records }
+          data: { records },
+          env: crudLabEnv,
         },
         {
           title: 'CRUD quick-edit baseline',
           description: 'Shows the landed quick-edit runtime slice: inline scalar editing plus the local dialog-backed quick-edit shell, both reusing the same row-scope and quick-save bridge.',
           schema: quickEditCrud,
+          data: { records }
+        },
+        {
+          title: 'CRUD selection refresh baseline',
+          description: 'Shows selection-driven list-action state and the current auto-clear-on-refresh behavior on the CRUD owner surface.',
+          schema: selectionRefreshCrud,
           data: { records }
         },
         {
@@ -336,7 +420,8 @@ export function CrudLabPage() {
           title: 'CRUD client-mode fetch-on-filter baseline',
           description: 'Shows the opt-in `fetchOnFilter` path: with `loadDataOnce` enabled, CRUD still owns local visible-row filtering, but query submit can re-enter the upstream source owner when explicitly configured.',
           schema: clientModeFetchOnFilterCrud,
-          data: { records }
+          data: { records },
+          env: crudLabEnv,
         }
       ]}
     />
