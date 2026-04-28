@@ -13,7 +13,7 @@ import type {
   ScopeRef,
   TemplateNode
 } from '@nop-chaos/flux-core';
-import { mergeClassAliases, resolveClassAliases } from '@nop-chaos/flux-core';
+import { createNamedActionProvider, mergeClassAliases, resolveClassAliases } from '@nop-chaos/flux-core';
 import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 import {
   ClassAliasesContext,
@@ -384,6 +384,23 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       }
     };
   }, [runtime, importFrame, parentImportFrame]);
+  const namedActionPlans = props.node.namedActionPlans;
+  const namedActionCleanup = useMemo<(() => void) | undefined>(() => {
+    if (!namedActionPlans || !resolvedActionScope) {
+      return undefined;
+    }
+    const provider = createNamedActionProvider(
+      namedActionPlans,
+      resolvedActionScope.parent,
+      (program, ctx) => ctx.runtime.dispatch(program, ctx)
+    );
+    return resolvedActionScope.registerNamespace('__xui_actions__', provider);
+  }, [namedActionPlans, resolvedActionScope]);
+  useEffect(() => {
+    return () => {
+      namedActionCleanup?.();
+    };
+  }, [namedActionCleanup]);
   const importBindings = useMemo(
     () => importFrame ? runtime.importStack.currentBindings(importFrame.id) : undefined,
     [runtime, importFrame]
