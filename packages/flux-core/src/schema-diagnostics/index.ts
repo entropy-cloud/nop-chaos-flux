@@ -30,7 +30,8 @@ export type SchemaDiagnosticCode =
   | 'unknown-slot-param'
   | 'slot-used-outside-region'
   | 'unknown-builtin-member'
-  | 'ambient-dollar-reference';
+  | 'ambient-dollar-reference'
+  | 'unhandled-compilation-error';
 
 export interface SchemaDiagnosticSourceLocation {
   readonly file?: string;

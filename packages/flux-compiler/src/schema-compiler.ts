@@ -392,8 +392,15 @@ export function createSchemaCompiler(input: {
           reporter: (issue) => diagnostics.emit(issue)
         }
       });
-    } catch (_e) {
-      void _e;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      diagnostics.emit({
+        code: 'unhandled-compilation-error',
+        path: schemaPathToJsonPointer(options.basePath ?? '$'),
+        message,
+        severity: 'error',
+        source: 'core'
+      });
     }
 
     analyzeSchemaInput(canonicalPrepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
