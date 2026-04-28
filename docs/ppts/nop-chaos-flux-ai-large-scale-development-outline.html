@@ -243,12 +243,48 @@
             #presentation-container { display: block; width: 100%; height: auto; box-shadow: none; border: none; padding: 0; }
             .slides-viewport { overflow: visible; height: auto; }
             .slide { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; position: relative; page-break-after: always; page-break-inside: avoid; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: none; border-radius: 0; overflow: hidden; }
+            .slide.slide-compact-print { padding: 46px 54px; }
+            .slide.slide-compact-print h2 { font-size: 2.12rem; margin-bottom: 1.2rem; padding-bottom: 0.65rem; }
+            .slide.slide-compact-print h3 { font-size: 1.3rem; margin-bottom: 0.65rem; }
+            .slide.slide-compact-print .highlight-box,
+            .slide.slide-compact-print .key-quote,
+            .slide.slide-compact-print .golden-quote { margin-top: 0.65rem !important; margin-bottom: 0.65rem !important; }
+            .slide.slide-compact-print .highlight-box,
+            .slide.slide-compact-print .key-quote,
+            .slide.slide-compact-print .golden-quote,
+            .slide.slide-compact-print .icon-bullet { padding: 12px 14px; }
+            .slide.slide-compact-print p,
+            .slide.slide-compact-print li,
+            .slide.slide-compact-print .details,
+            .slide.slide-compact-print .sub-item { font-size: 1.1rem; line-height: 1.45; }
+            .slide.slide-compact-print .two-column { gap: 28px; }
+            .slide.slide-compact-print .icon-list { margin: 0.65rem 0; }
+            .slide.slide-compact-print .icon-bullet { margin-bottom: 10px; gap: 12px; }
+            .slide.slide-compact-print .icon-bullet p { font-size: 1.08rem; margin-bottom: 0.12rem; }
             .slide:last-of-type { page-break-after: avoid; }
         }
 
         /* === PDF Export === */
         .pdf-page-container { width: 100%; height: auto; background: white; color: black; box-shadow: none; }
         .pdf-slide { position: relative !important; opacity: 1 !important; visibility: visible !important; transform: none !important; height: auto !important; width: 100%; background: white; border: 1px solid #eeeeee; padding: 40px 50px; box-shadow: none; margin-bottom: 0; overflow: hidden; page-break-after: always; break-inside: avoid; aspect-ratio: 16 / 12; }
+        .pdf-slide.slide-compact-print { padding: 38px 44px; }
+        .pdf-slide.slide-compact-print h2 { font-size: 2rem; margin-bottom: 1rem; padding-bottom: 0.55rem; }
+        .pdf-slide.slide-compact-print h3 { font-size: 1.18rem; margin-bottom: 0.55rem; }
+        .pdf-slide.slide-compact-print .highlight-box,
+        .pdf-slide.slide-compact-print .key-quote,
+        .pdf-slide.slide-compact-print .golden-quote { margin-top: 0.6rem !important; margin-bottom: 0.6rem !important; }
+        .pdf-slide.slide-compact-print .highlight-box,
+        .pdf-slide.slide-compact-print .key-quote,
+        .pdf-slide.slide-compact-print .golden-quote,
+        .pdf-slide.slide-compact-print .icon-bullet { padding: 11px 13px; }
+        .pdf-slide.slide-compact-print p,
+        .pdf-slide.slide-compact-print li,
+        .pdf-slide.slide-compact-print .details,
+        .pdf-slide.slide-compact-print .sub-item { font-size: 1.02rem; line-height: 1.4; }
+        .pdf-slide.slide-compact-print .two-column { gap: 22px; }
+        .pdf-slide.slide-compact-print .icon-list { margin: 0.5rem 0; }
+        .pdf-slide.slide-compact-print .icon-bullet { margin-bottom: 8px; gap: 10px; }
+        .pdf-slide.slide-compact-print .icon-bullet p { font-size: 1.02rem; margin-bottom: 0.1rem; }
         .pdf-slide:last-of-type { page-break-after: avoid; }
         .pdf-slide, .pdf-slide * { animation: none !important; opacity: 1 !important; }
     </style>
@@ -573,7 +609,7 @@
 
             <!-- Slide 10: Engineering Consequence -->
             <section class="slide">
-                <h2>仓库真相带来的工程后果：生成和验收被真正拆开</h2>
+                <h2>仓库不再是认知的表达，而是系统真相本身</h2>
                 <div class="two-column">
                     <div class="column">
                         <div class="card" style="text-align:center;border:2px solid var(--color-border);padding:1.5rem;">
@@ -593,20 +629,14 @@
                     </div>
                     <div class="column">
                         <div class="highlight-box">
-                            <p><strong>对应关系：</strong></p>
+                            <p><strong>仓库产物的新角色：</strong></p>
                             <div class="sub-items">
                                 <div class="sub-item"><code>test / lint / audit</code> = 测量</div>
                                 <div class="sub-item"><code>owner doc / plan / closure</code> = 约束</div>
                                 <div class="sub-item"><code>logs / history / bugs</code> = 轨迹记录</div>
                             </div>
                         </div>
-                        <div class="quote" style="margin-top:0.5rem;">
-                            <p>案例：<code>CompiledSchemaNode</code> 被清除——仓库持续排除已不符合新基线的旧结构。</p>
-                        </div>
-                        <div class="quote">
-                            <p>案例：Plan 76 回滚——仓库保留了失败尝试和失败原因。</p>
-                        </div>
-                        <div class="golden-quote" style="margin-top:0.5rem;">
+                        <div class="golden-quote" style="margin-top:1rem;">
                             当作者不再持有完整模型，生成和验收就必须依赖仓库里的外部证据重新接起来。
                         </div>
                     </div>
@@ -615,7 +645,7 @@
 
             <!-- Slide 11: Key Differences from Traditional -->
             <section class="slide">
-                <h2>这个模型和传统开发的关键区别</h2>
+                <h2>动力系统模型与传统开发的关键区别</h2>
                 <div class="card-grid card-grid-3" style="margin-top:0.5rem;">
                     <div class="card" style="border-top:4px solid #9ca3af;">
                         <h4 style="font-size:1.1rem;">瀑布</h4>
@@ -660,8 +690,8 @@
                     <li class="icon-bullet">
                         <i class="fa-solid fa-magnet"></i>
                         <div>
-                            <p>吸引子 = <strong>可校验的架构约束</strong></p>
-                            <span class="details">七个原语闭合集、编译优先、数据/能力正交、统一渲染器合约、严格包边界</span>
+                            <p>吸引子 = <strong>系统长期稳定收敛的结构区域</strong></p>
+                            <span class="details">由七个原语闭合集、编译优先、数据/能力正交、统一渲染器合约、职责分层等基线共同定义</span>
                         </div>
                     </li>
                     <li class="icon-bullet">
@@ -722,7 +752,7 @@
 
             <!-- Slide 14: AI Role -->
             <section class="slide">
-                <h2>扩张力的角色定义：AI 负责展开，不负责最终裁决</h2>
+                <h2>扩张力：AI 负责展开，不负责裁决</h2>
                 <div class="two-column">
                     <div class="column">
                         <h3><span class="tag tag-success">AI 负责</span></h3>
@@ -774,13 +804,13 @@
 
             <!-- Slide 15: Plan as Convergence -->
             <section class="slide">
-                <h2>收敛力 1：Plan 从"路线图"变成"收口机制"</h2>
+                <h2>收敛力 1：Plan 为每一次扩张定义收口条件</h2>
                 <ul class="icon-list">
                     <li class="icon-bullet">
                         <i class="fa-solid fa-bullseye"></i>
                         <div>
-                            <p>Plan 不是路线图，而是<strong>局部收敛器</strong></p>
-                            <span class="details">定义吸引子（baseline + goals）&rarr; AI 扩张 &rarr; 收敛验证 &rarr; 关闭</span>
+                            <p>todo list 推动当前执行，Plan 定义整体完成</p>
+                            <span class="details">前者服务于当前会话的工作记忆，后者服务于跨会话、可验证、可审计的工程收敛</span>
                         </div>
                     </li>
                     <li class="icon-bullet">
@@ -804,7 +834,7 @@
                     </li>
                 </ul>
                 <div class="golden-quote">
-                    Plan 不是路线图，它是局部收敛器。
+                    Plan 不是待办列表，而是局部收敛器。
                 </div>
             </section>
 
@@ -883,18 +913,19 @@
 
             <!-- Slide 18: Verification System -->
             <section class="slide">
-                <h2>验证体系：自动化引力场</h2>
+                <h2>验证体系：三重验证手段构成吸引盆地</h2>
                 <ul class="icon-list">
                     <li class="icon-bullet">
-                        <i class="fa-solid fa-shield-halved"></i>
+                        <i class="fa-solid fa-water"></i>
                         <div>
-                            <p>验证体系 = <strong>自动化、持续的收敛力</strong></p>
+                            <p>梯度（软改进）——标记退化信号，不阻断当前执行，可延后集中处理</p>
+                            <span class="details">warn 级 lint 规则</span>
                         </div>
                     </li>
                     <li class="icon-bullet">
-                        <i class="fa-solid fa-gears"></i>
+                        <i class="fa-solid fa-shield-halved"></i>
                         <div>
-                            <p>根级质量门</p>
+                            <p>势垒（硬阻断）——越界即失败，不可逾越</p>
                             <div class="sub-items">
                                 <div class="sub-item"><code>check:react19</code> — 阻断旧 API</div>
                                 <div class="sub-item"><code>check:src-artifacts</code> — 阻断构建产物污染</div>
@@ -905,9 +936,10 @@
                         </div>
                     </li>
                     <li class="icon-bullet">
-                        <i class="fa-solid fa-arrow-down-short-wide"></i>
+                        <i class="fa-solid fa-brain"></i>
                         <div>
-                            <p>验证顺序也是收敛逻辑：先 focused verification &rarr; 修当前切片 &rarr; workspace 级 <code>typecheck/build/lint/test</code></p>
+                            <p>智能审计——覆盖自动化手段无法捕获的语义漂移与结构偏差</p>
+                            <span class="details">deep audit、closure audit，既有硬阻断也有软改进</span>
                         </div>
                     </li>
                 </ul>
@@ -997,7 +1029,7 @@
                     </div>
                 </div>
                 <div class="golden-quote" style="margin-top:1rem;">
-                    <code>completed</code> 不是"我写完了"，而是"这一轮工作确实已经收住了"。
+                    <code>completed</code> 不靠声明，靠证据。
                 </div>
             </section>
 
@@ -1105,14 +1137,14 @@
                         <p class="details"><code>CompiledSchemaNode</code> 被消除，模板实例化成为真实基线</p>
                     </div>
                     <div class="card" style="border-left:4px solid #ea580c;">
-                        <h4 style="color:#ea580c;">边界收敛</h4>
-                        <p class="details" style="font-weight:600;">从"能跑"到"边界正确"</p>
+                        <h4 style="color:#ea580c;">职责收敛</h4>
+                        <p class="details" style="font-weight:600;">从"能跑"到"结构稳定"</p>
                         <p class="details"><code>compiler / action-core / runtime</code> 三层拆分，系统更清晰</p>
                     </div>
                     <div class="card" style="border-left:4px solid #7c3aed;">
-                        <h4 style="color:#7c3aed;">审计收敛</h4>
-                        <p class="details" style="font-weight:600;">不是发现更多，而是删掉伪问题</p>
-                        <p class="details">审计结果本身也要再收敛，只保留 live repo 中仍成立的问题</p>
+                        <h4 style="color:#7c3aed;">问题收敛</h4>
+                        <p class="details" style="font-weight:600;">不是发现更多，而是让真实问题留下来</p>
+                        <p class="details">通过独立复核排除伪问题，只保留 live repo 中仍成立的偏离信号</p>
                     </div>
                 </div>
                 <div class="golden-quote" style="margin-top:0.5rem;">
@@ -1163,35 +1195,71 @@
                 </div>
             </section>
 
-            <!-- Slide 24: ACDD -->
-            <section class="slide">
-                <h2>这套方法的本质：Audit-and-Closure Driven Development</h2>
-                <div class="highlight-box" style="margin-top:0;">
-                    <p style="font-size:1.2rem;text-align:center;"><strong>Audit-and-Closure Driven Development（审计-收口驱动开发）</strong></p>
+            <!-- Slide 24: Correct Misunderstanding -->
+            <section class="slide slide-compact-print">
+                <h2>这不是“更严的边界 + 更多审计”</h2>
+                <div class="highlight-box" style="margin-top:0.5rem;">
+                    <p><strong>AI 大规模开发首先是动力系统问题</strong>，而不是治理强化问题。</p>
                 </div>
-                <ul class="icon-list">
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-arrows-rotate"></i>
-                        <div>
-                            <p>不是传统 waterfall，也不是 AI 自由发挥</p>
-                            <span class="details">把<strong>实现</strong>和<strong>完成判定</strong>明确拆开：人先定义吸引子，再让扩张和收敛交替发生</span>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-link"></i>
-                        <div>
-                            <p>把文档、discussion、plan、AI 实现、audit、closure、logs 组织成一个<strong>持续纠偏闭环</strong></p>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-brain"></i>
-                        <div>
-                            <p>承认一个事实：AI 会朝它见过的平均方案收敛，很难自己长出真正新的架构观念</p>
-                        </div>
-                    </li>
-                </ul>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>错误理解：视为更严格的治理</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-eye" style="color:var(--color-warning);"></i>
+                                <div>
+                                    <p>表面工具确实相似</p>
+                                    <span class="details">同样会出现 plan、lint、test、audit、closure，所以很容易被听成“治理加强版”</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-ban" style="color:var(--color-danger);"></i>
+                                <div>
+                                    <p><strong>边界</strong>：定义禁区，回答“什么不能做”</p>
+                                    <span class="details">plan / lint / audit 的作用是防违规、守红线</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-magnifying-glass" style="color:var(--color-danger);"></i>
+                                <div>
+                                    <p><strong>审计</strong>：识别并确认偏差，回答“哪里真的偏了”</p>
+                                    <span class="details">这些都还停留在“怎么管”的层面，没有定义系统长期应收敛到哪里</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>正确理解：先定义吸引子，再谈控制</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-magnet" style="color:var(--color-secondary);"></i>
+                                <div>
+                                    <p><strong>吸引子</strong>：定义合法稳定区，回答“系统应向哪里长期收敛”</p>
+                                    <span class="details">吸引子不是更强的边界，而是边界、验证、审计为何成立的前提</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-route" style="color:var(--color-primary);"></i>
+                                <div>
+                                    <p><strong>轨迹</strong>：描述 AI 扩张与工程纠偏后的实际演化路径</p>
+                                    <span class="details">重点不是某一步是否局部正确，而是整体是否持续落入吸引子附近</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-sitemap" style="color:var(--color-primary);"></i>
+                                <div>
+                                    <p><strong>控制</strong>：plan / lint / audit / closure 只在吸引子已定义后才有意义</p>
+                                    <span class="details">它们不是第一性原理；它们的作用是把偏离轨迹压回合法稳定区</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="key-quote" style="margin-top:0.7rem;">
+                    <p>状态空间 → 吸引子 → 轨迹 → 控制</p>
+                </div>
                 <div class="golden-quote" style="margin-top:0.5rem;">
-                    不要指望 AI 自己找到正确设计，要先定义一个不会把系统带偏的吸引子。
+                    重点不是把系统管得更严，而是先定义系统应向哪里稳定收敛。
                 </div>
             </section>
 
@@ -1222,7 +1290,7 @@
                     </div>
                 </div>
                 <div class="highlight-box" style="margin-top:1rem;">
-                    <p>这五个问题都有答案，你就有了闭环；没有答案，系统就很容易在高速推进中偏掉。</p>
+                    <p>五个问题都有答案，闭环就成立；答不上来，高速推进只会加速失控。</p>
                 </div>
                 <div class="golden-quote">
                     可复制的不是表面做法，而是这套闭环本身——人先定义方向，AI 再高速收敛。
