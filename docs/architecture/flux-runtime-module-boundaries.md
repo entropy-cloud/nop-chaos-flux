@@ -178,8 +178,9 @@ Note:
 - `packages/flux-action-core/src/operation-control.ts`
   - timeout / retry / abort helpers (generic async execution control)
   - shared by action and request execution paths
-- `packages/flux-action-core/src/utils/debounce.ts`
+- `packages/flux-core/src/utils/debounce.ts`
   - debounce utilities for action execution
+  - re-exported by `flux-action-core` (`cancelPendingDebounce`, `scheduleDebounce`)
 
 ### Action adapter and runtime-specific execution (`flux-runtime`)
 

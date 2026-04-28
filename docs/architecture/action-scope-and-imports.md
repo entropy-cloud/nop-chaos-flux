@@ -77,12 +77,13 @@ Static contract note:
 
 ## Mental Model
 
-The current runtime should be read as four distinct layers:
+The current runtime should be read as five distinct layers:
 
 - `ScopeRef` = data lexical scope
 - `ActionScope` = capability lexical scope
 - `ComponentHandleRegistry` = instance-target capability lookup
 - `xui:imports` = declarative provisioning of imported namespace providers into an import-owned child `ActionScope`
+- `xui:actions` = schema-local named action chain definitions, compiled into `ActionScope` registrations with lexical inheritance
 
 ### Relationship To Host Projection And Import Frames
 
@@ -109,6 +110,7 @@ Practical reading shortcut:
 - `designer:addNode` is `ActionScope` lookup
 - `component:submit` with `componentId` targets `ComponentHandleRegistry`
 - `$demo.formatName(...)` is `ImportFrame` expression alias visibility
+- `submitOrder` resolved from `xui:actions` is schema-local named action chain lookup
 
 Important consequences:
 
@@ -432,11 +434,12 @@ When an action is dispatched, `flux-action-core` should classify it in this orde
 
 1. built-in platform action handled directly by the core dispatcher
 2. component-targeted action matching `component:<method>` through `ComponentHandleRegistry`
-3. namespaced action resolved from the current `ActionScope`
-4. parent `ActionScope` chain lookup
-5. not-found error with namespace and scope trace
+3. schema-local named action resolved from `xui:actions` on the current node, then walking ancestor nodes
+4. namespaced action resolved from the current `ActionScope`
+5. parent `ActionScope` chain lookup
+6. not-found error with namespace and scope trace
 
-This means built-in actions such as `ajax` and `submitForm` remain first-class runtime features, component-targeted calls such as `component:submit` stay explicit, and namespaced calls such as `designer:addNode` or `demo:open` continue to resolve through `ActionScope`. The important execution-boundary rule is that selector classification lives in `flux-action-core`, while the final built-in/component/namespace invocation is unified behind `ActionRuntimeAdapter` inside `flux-runtime`.
+This means built-in actions such as `ajax` and `submitForm` remain first-class runtime features, component-targeted calls such as `component:submit` stay explicit, schema-local named action chains resolve from `xui:actions` definitions before reaching `ActionScope`, and namespaced calls such as `designer:addNode` or `demo:open` continue to resolve through `ActionScope`. The important execution-boundary rule is that selector classification lives in `flux-action-core`, while the final built-in/component/namespace invocation is unified behind `ActionRuntimeAdapter` inside `flux-runtime`.
 
 ### Naming Rule
 
@@ -726,6 +729,154 @@ function createFormComponentHandle(form: FormRuntime): ComponentHandle {
 ```
 
 The important rule is that `submit`, `validate`, `reset`, and `setValue` are explicit public capabilities. The caller is not permitted to assume that every property or method on the underlying store is externally callable.
+
+## `xui:actions` Design
+
+### Purpose
+
+`xui:actions` provides schema-local named action chain definitions. It solves action chain duplication in JSON schema: when multiple buttons or events share the same action chain (e.g., validate → submit → closeDialog), authors currently must inline the full chain at each usage point.
+
+With `xui:actions`, the chain is defined once and referenced by name:
+
+```json
+{
+  "type": "form",
+  "xui:actions": {
+    "submitOrder": {
+      "action": "validate",
+      "then": {
+        "action": "app:submitOrder",
+        "then": { "action": "closeDialog" }
+      }
+    },
+    "saveDraft": {
+      "action": "app:saveDraft",
+      "then": { "action": "showToast", "args": { "message": "已保存草稿" } }
+    }
+  },
+  "actions": [
+    { "type": "button", "label": "提交", "onClick": { "action": "submitOrder" } },
+    { "type": "button", "label": "保存草稿", "onClick": { "action": "saveDraft" } }
+  ]
+}
+```
+
+Note: `actions` is the form's button UI region. `xui:actions` is the named action chain definition block. They are distinct concepts sharing no relationship beyond proximity.
+
+### Any Node Can Define
+
+Any schema node may carry `xui:actions`, not just the root. Child nodes inherit parent definitions through lexical lookup:
+
+```json
+{
+  "type": "page",
+  "xui:actions": {
+    "refresh": { "action": "refreshSource", "args": { "targetId": "mainData" } }
+  },
+  "body": [
+    {
+      "type": "form",
+      "xui:actions": {
+        "submit": {
+          "action": "validate",
+          "then": { "action": "app:submit", "then": { "action": "refresh" } }
+        }
+      },
+      "body": [
+        {
+          "type": "dialog",
+          "xui:actions": {
+            "confirm": { "action": "submit" }
+          },
+          "body": [
+            { "type": "button", "onClick": { "action": "confirm" } },
+            { "type": "button", "onClick": { "action": "refresh" } }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+The button `confirm` in the dialog resolves to the dialog's `xui:actions.confirm`, which references `submit` from the form's `xui:actions`, which references `refresh` from the page's `xui:actions`.
+
+### Lexical Inheritance Rules
+
+- child nodes see their own `xui:actions` first, then walk up ancestor nodes
+- same name on a child node shadows the parent definition
+- `xui:actions` names do not use namespace syntax; they are plain identifiers (e.g., `submitOrder`, not `form:submitOrder`)
+- `xui:actions` names must not contain `:` to avoid confusion with namespaced actions
+
+### Resolution In The Action Pipeline
+
+`xui:actions` is resolved at step 3 of the resolution order, before `ActionScope` namespace lookup:
+
+1. built-in platform action
+2. component-targeted action (`component:<method>`)
+3. **`xui:actions` named action chain** (current node → ancestor walk)
+4. namespaced action through `ActionScope`
+5. parent `ActionScope` chain
+6. not-found error
+
+This ordering ensures:
+- built-in actions can never be shadowed by `xui:actions` definitions
+- component targeting remains explicit
+- `xui:actions` names (plain identifiers) never collide with namespaced actions (`ns:method`)
+- if a `xui:actions` definition references another name (e.g., `{ "action": "refresh" }`), that reference goes through the same resolution pipeline, allowing chains to compose across `xui:actions` boundaries
+
+### Compile-Time Behavior
+
+The compiler treats `xui:actions` as a field on any schema node:
+
+- each named action chain in `xui:actions` is compiled using the same `compileActions()` pipeline that compiles inline `ActionSchema`
+- the compilation produces `CompiledActionProgram` entries keyed by name
+- at runtime, when a node with `xui:actions` is instantiated, its compiled definitions are registered on the node's `ActionScope` as locally available named programs
+- the registration is lifecycle-aware: definitions are available during the node's active lifetime and cleaned up when the node unmounts
+
+This means `xui:actions` compiles down to the same `ActionScope` registration mechanism that `xui:imports` uses. The difference is the registration source: `xui:actions` comes from compiled schema-local definitions, while `xui:imports` comes from dynamically loaded external modules.
+
+### Relationship To `xui:imports`
+
+- `xui:actions` defines named action chains in schema; `xui:imports` provisions external namespace providers
+- `xui:actions` names are plain identifiers; `xui:imports` namespaces use `ns:method` syntax
+- an `xui:actions` definition may reference an imported namespace: `{ "action": "demo:open", "args": {...} }` resolves through `ActionScope` after the `xui:actions` lookup itself
+- both contribute registrations to `ActionScope` at the declaring node's boundary
+- both follow lexical inheritance and lifecycle rules
+
+### Relationship To Built-In Actions
+
+`xui:actions` does not replace built-in platform actions. It provides schema-local named wrappers around them:
+
+```json
+{
+  "xui:actions": {
+    "submitAndClose": {
+      "action": "validate",
+      "then": {
+        "action": "ajax",
+        "args": { "url": "mutation://orders" },
+        "then": { "action": "closeDialog" }
+      }
+    }
+  }
+}
+```
+
+The built-in actions (`validate`, `ajax`, `closeDialog`) remain platform semantics. `xui:actions` simply gives them a reusable name in the schema.
+
+### Naming Restrictions
+
+- names must be plain identifiers without `:` (to avoid collision with namespaced actions)
+- names must not match built-in action names (e.g., `ajax`, `setValue`, `validate`) — the compiler should emit a diagnostic if a name collides with a built-in, since it would be unreachable
+- names should use camelCase to match the existing action naming convention
+
+### When Not To Use
+
+`xui:actions` is a convenience for reducing JSON duplication. It should not be used when:
+
+- a single button has a unique action chain that no other element references — inline is clearer
+- the action chain is a single step with no branching — `{ "action": "ajax", "args": {...} }` is already concise enough
 
 ## `xui:imports` Design
 
@@ -1021,8 +1172,9 @@ Recommended order:
 
 1. built-in platform action
 2. component-targeted action matching `component:<method>` pattern
-3. namespaced action through `ActionScope`
-4. not-found error
+3. schema-local named action from `xui:actions`
+4. namespaced action through `ActionScope`
+5. not-found error
 
 Execution model for `component:<method>`:
 
@@ -1211,6 +1363,7 @@ The active decisions from this document are:
 - require imported boundaries to preload/gate before descendant execution, instead of relying on render order or best-effort late registration
 - implement lexical alias ownership through runtime `ImportStack` frames rather than any flat root import map; nearest import frame wins and sibling-only aliases stay isolated
 - release imported namespace registrations when the declaring render boundary unmounts or changes schema ownership; keep module loading deduplicated, but do not let stale namespace bindings remain attached to an action scope after release
+- define `xui:actions` as schema-local named action chain definitions on any schema node, compiled to `ActionScope` registrations with lexical inheritance; resolved before `ActionScope` namespace lookup in the resolution pipeline; names are plain identifiers without `:` to avoid collision with namespaced actions
 
 ## Related Documents
 
