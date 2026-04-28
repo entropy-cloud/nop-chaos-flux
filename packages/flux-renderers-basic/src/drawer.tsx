@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import type { RendererComponentProps, SurfaceStatusSummary } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedContainer } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, cn } from '@nop-chaos/ui';
+import { Drawer, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, cn } from '@nop-chaos/ui';
 import type { DrawerSchema } from './schemas';
 import { getDeclarativeSurfaceStackSnapshot, isDeclarativeSurfaceActiveInSnapshot, registerDeclarativeSurface, subscribeDeclarativeSurfaceStack, unregisterDeclarativeSurface } from './declarative-surface-stack';
 
@@ -91,7 +91,7 @@ export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
             <DrawerTitle>{titleContent}</DrawerTitle>
           </DrawerHeader>
         ) : null}
-        {bodyContent}
+        <DrawerBody>{bodyContent}</DrawerBody>
         {actionsContent ? <DrawerFooter>{actionsContent}</DrawerFooter> : null}
       </DrawerContent>
     </Drawer>

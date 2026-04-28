@@ -6,8 +6,8 @@ import type {
 import { useCurrentPage, useCurrentSurfaceRuntime } from './hooks';
 import { renderSurfaceNode, SurfaceScopeProviders, useSurfaceScopeSnapshot } from './dialog-host-surface';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
+import { Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';
 import { resolveContainerElement } from './container-hooks';
 
 function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
@@ -93,7 +93,7 @@ function DialogView(props: {
                   <DialogTitle>{titleNode}</DialogTitle>
                 </DialogHeader>
               )}
-              {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+              <DialogBody>{renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}</DialogBody>
         </SurfaceScopeProviders>
       </DialogContent>
     </Dialog>
@@ -143,7 +143,7 @@ function DrawerView(props: {
                   <DrawerTitle>{titleNode}</DrawerTitle>
                 </DrawerHeader>
               )}
-              {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+              <DrawerBody>{renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}</DrawerBody>
         </SurfaceScopeProviders>
       </DrawerContent>
     </Drawer>

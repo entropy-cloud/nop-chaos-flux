@@ -172,6 +172,27 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     cleanup();
   });
 
+  it('wraps declarative drawer body content in a drawer-body slot', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'drawer',
+          title: 'Drawer title',
+          open: true,
+          body: [{ type: 'text', text: 'Drawer body' }]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Drawer body')).toBeTruthy());
+    expect(document.querySelector('[data-slot="drawer-body"]')).toBeTruthy();
+    cleanup();
+  });
+
   it('keeps declarative surfaces closed by default when open and defaultOpen are omitted', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     render(

@@ -55,6 +55,7 @@ vi.mock('@nop-chaos/ui', () => ({
       {children}
     </div>
   ),
+  DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
   DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
   DialogTitle: ({ children }: any) => <div data-testid="dialog-title">{children}</div>,
   Drawer: ({ children, onOpenChange, direction }: any) => (
@@ -70,6 +71,7 @@ vi.mock('@nop-chaos/ui', () => ({
       {children}
     </div>
   ),
+  DrawerBody: ({ children }: any) => <div data-testid="drawer-body">{children}</div>,
   DrawerHeader: ({ children }: any) => <div data-testid="drawer-header">{children}</div>,
   DrawerTitle: ({ children }: any) => <div data-testid="drawer-title">{children}</div>,
 }));
@@ -158,6 +160,7 @@ describe('DialogHost', () => {
     expect(screen.getAllByTestId('dialog-root')).toHaveLength(2);
     expect(screen.getByTestId('dialog-title').textContent).toBe('dialog-title');
     expect(screen.getByText('fallback-dialog-body')).toBeTruthy();
+    expect(screen.getAllByTestId('dialog-body')).toHaveLength(2);
     expect(screen.getAllByTestId('dialog-root')[0]?.getAttribute('data-no-overlay')).toBe('true');
     expect(screen.getAllByTestId('dialog-root')[1]?.getAttribute('data-no-overlay')).toBe('false');
     expect(mocks.useSurfaceScopeSnapshot).toHaveBeenCalledTimes(2);
@@ -229,8 +232,9 @@ describe('DialogHost', () => {
     expect(drawers.map((node) => node.getAttribute('data-direction'))).toEqual(['left', 'top', 'bottom', 'right']);
     expect(screen.getAllByTestId('drawer-content')[0]?.getAttribute('data-show-mask')).toBe('false');
     expect(screen.getAllByTestId('drawer-content')[1]?.getAttribute('data-show-mask')).toBe('true');
+    expect(screen.getAllByTestId('drawer-body')).toHaveLength(4);
     expect(screen.getByTestId('drawer-title').textContent).toBe('drawer-title');
-
+  
     fireEvent.click(screen.getByText('Close drawer'));
     fireEvent.click(screen.getByTestId('drawer-open-change-right'));
 

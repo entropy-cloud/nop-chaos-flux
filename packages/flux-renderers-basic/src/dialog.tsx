@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import type { RendererComponentProps, SurfaceStatusSummary } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useCurrentComponentRegistry, useResolvedContainer } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, cn } from '@nop-chaos/ui';
+import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle, cn } from '@nop-chaos/ui';
 import type { DialogSchema } from './schemas';
 import { getDeclarativeSurfaceStackSnapshot, isDeclarativeSurfaceActiveInSnapshot, registerDeclarativeSurface, subscribeDeclarativeSurfaceStack, unregisterDeclarativeSurface } from './declarative-surface-stack';
 
@@ -89,7 +89,7 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
             <DialogTitle>{titleContent}</DialogTitle>
           </DialogHeader>
         ) : null}
-        {bodyContent}
+        <DialogBody>{bodyContent}</DialogBody>
         {actionsContent ? <DialogFooter>{actionsContent}</DialogFooter> : null}
       </DialogContent>
     </Dialog>
