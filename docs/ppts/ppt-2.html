@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOP Chaos Flux：使用 AI 进行大规模框架开发的实践经验</title>
+    <!-- External Libraries: Font Awesome & html2pdf.js -->
+    <link rel="stylesheet" href="../assets/css/all.min.css">
+    <script src="../assets/js/html2pdf.bundle.min.js"></script>
+    <script src="../assets/js/mermaid.min.js"></script>
+    <script src="../assets/js/lightbox.js"></script>
+    <style>
+        /* --- 1. Global Styles & Variables --- */
+        :root {
+            --color-primary: #2563eb;
+            --color-primary-dark: #1e40af;
+            --color-secondary: #059669;
+            --color-warning: #d97706;
+            --color-danger: #dc2626;
+            --color-text-dark: #1f2937;
+            --color-text-light: #4b5563;
+            --color-bg-main: #f4f6f9;
+            --color-bg-slide: #ffffff;
+            --color-border: #e5e7eb;
+            --color-code-bg: #f8fafc;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-code: 'Fira Code', monospace;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --font-size-base: 1.15rem;
+            --line-height-base: 1.7;
+            --controls-area-height: 40px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--color-bg-main);
+            color: var(--color-text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            line-height: var(--line-height-base);
+        }
+
+        /* --- 2. Core Layout & Container --- */
+        #presentation-container {
+            width: 90vw;
+            height: 90vh;
+            max-width: 1200px;
+            background: var(--color-bg-slide);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            padding-bottom: var(--controls-area-height);
+        }
+
+        .slides-viewport { flex-grow: 1; position: relative; overflow: hidden; }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 45px 55px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow-y: auto;
+            background-color: var(--color-bg-slide);
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            z-index: 1;
+        }
+
+        .title-slide .author {
+            font-size: 1.4rem;
+            color: var(--color-text-light);
+            margin-top: 1rem;
+            font-weight: 400;
+        }
+
+        /* --- 3. Typography --- */
+        h1, h2, h3 { font-weight: 700; line-height: 1.2; }
+        h1 { font-size: 2.8rem; margin-bottom: 1rem; }
+        h2 { font-size: 1.9rem; color: var(--color-text-dark); border-bottom: 3px solid var(--color-primary); padding-bottom: 0.6rem; margin-bottom: 1.5rem; font-weight: 600; }
+        h3 { font-size: 1.35rem; color: var(--color-primary); margin-bottom: 0.8rem; }
+        h4 { font-size: 1.15rem; font-weight: 600; color: var(--color-text-dark); margin-bottom: 0.5rem; }
+        p, li { font-size: var(--font-size-base); color: var(--color-text-light); margin-bottom: 0.8rem; }
+        strong { color: var(--color-primary); font-weight: 600; }
+        ul { list-style: none; padding-left: 0; }
+        li p { margin-bottom: 0.25rem; }
+
+        .font-bold { font-weight: bold; }
+
+        /* --- 4. UI Components --- */
+        #progress-bar { position: absolute; top: 0; left: 0; height: 4px; background-color: var(--color-primary); width: 0%; transition: width 0.4s ease; z-index: 10; }
+        .controls { position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 10; }
+        .btn { background-color: var(--color-primary); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; box-shadow: var(--shadow-md); }
+        .btn:hover:not(:disabled) { background-color: var(--color-primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .btn:disabled { background-color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: var(--shadow-md); }
+        #pdf-btn { background-color: var(--color-secondary); }
+        #pdf-btn:hover:not(:disabled) { background-color: #047857; }
+        #print-btn { background-color: #6366f1; }
+        #print-btn:hover:not(:disabled) { background-color: #4f46e5; }
+        #slide-counter { position: absolute; bottom: 20px; left: 20px; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: var(--color-text-dark); box-shadow: var(--shadow-md); z-index: 10; }
+        
+        #timer-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--color-text-dark);
+            box-shadow: var(--shadow-md);
+            z-index: 10;
+            font-family: var(--font-code);
+        }
+
+        /* --- 5. Content Modules --- */
+        .title-slide { text-align: center; align-items: center; }
+        .slide.title-slide {
+            justify-content: center;
+            align-items: center;
+        }
+        .title-slide h1 { font-size: 2.6rem; color: var(--color-text-dark); line-height: 1.3; }
+        .title-slide .subtitle { font-size: 1.3rem; color: var(--color-text-light); font-weight: 400; margin-top: 1.5rem; }
+        .icon-list { list-style: none; padding: 0; margin: 1rem 0; }
+        .icon-bullet { display: flex; gap: 14px; background-color: var(--color-code-bg); padding: 14px; border-radius: 10px; margin-bottom: 10px; border: 1px solid var(--color-border); transition: all 0.3s ease; }
+        .icon-bullet:hover { transform: translateX(5px); box-shadow: var(--shadow-md); }
+        .icon-bullet i { font-size: 1.15rem; color: var(--color-primary); margin-top: 4px; flex-shrink: 0; width: 22px; text-align: center; }
+        .icon-bullet div { flex-grow: 1; }
+        .icon-bullet p { margin-bottom: 0.2rem; color: var(--color-text-dark); font-weight: 500; }
+        .icon-bullet .details { font-size: calc(var(--font-size-base) - 0.15rem); color: var(--color-text-light); font-weight: 400; }
+        .sub-items { margin-top: 0.5rem; margin-left: 1rem; }
+        .sub-item { font-size: calc(var(--font-size-base) - 0.1rem); color: var(--color-text-light); margin-bottom: 0.25rem; position: relative; padding-left: 1rem; }
+        .sub-item::before { content: "•"; color: var(--color-secondary); position: absolute; left: 0; }
+        .two-column { display: flex; gap: 30px; align-items: flex-start; width: 100%; }
+        .column { flex: 1; }
+        .column-narrow { flex: 0.7; }
+        .column-wide { flex: 1.3; }
+        .code-block { background-color: var(--color-code-bg); color: var(--color-text-dark); padding: 1em 1.5em; border-radius: 8px; overflow-x: auto; font-family: var(--font-code); font-size: 0.9rem; line-height: 1.6; border: 1px solid var(--color-border); margin: 1rem 0; }
+        .code-block > code { font-size: inherit; background: transparent; padding: 0; border-radius: 0; }
+        
+        .highlight-box { background-color: #eff6ff; border-left: 4px solid var(--color-primary); padding: 16px; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        .quote { background: #fffbeb; border-left: 4px solid var(--color-warning); padding: 16px; margin: 1rem 0; border-radius: 0 8px 8px 0; font-style: italic; color: #92400e; }
+        .quote p { font-size: calc(var(--font-size-base) + 0.05rem); margin-bottom: 0; }
+        .quote-danger { background: #fef2f2; border-left: 4px solid var(--color-danger); padding: 16px; margin: 1rem 0; border-radius: 0 8px 8px 0; color: #991b1b; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 1.5rem 0; }
+        .stat-card { background: var(--color-code-bg); padding: 16px; border-radius: 12px; text-align: center; border: 1px solid var(--color-border); transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+        .stat-number { font-size: 2rem; font-weight: 700; color: var(--color-primary); display: block; }
+        .stat-label { font-size: 0.85rem; color: var(--color-text-light); margin-top: 0.25rem; }
+
+        /* Mermaid diagram styling */
+        .mermaid-container {
+            background-color: var(--color-code-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            margin: 1rem 0;
+            overflow: auto;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* Comparison table styling */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: calc(var(--font-size-base) - 0.05rem);
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid var(--color-border);
+        }
+
+        .comparison-table th {
+            background-color: var(--color-primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background-color: var(--color-code-bg);
+        }
+
+        /* Golden quote style */
+        .golden-quote {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 16px 20px;
+            margin: 1.2rem 0;
+            border-radius: 0 10px 10px 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #78350f;
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Loop diagram */
+        .loop-diagram {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+        .loop-step {
+            background: var(--color-code-bg);
+            border: 2px solid var(--color-border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+            min-width: 140px;
+            transition: all 0.3s ease;
+        }
+        .loop-step:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-3px);
+        }
+        .loop-step.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+        .loop-step.active strong { color: white; }
+        .loop-arrow {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            color: var(--color-primary);
+        }
+
+        /* --- 6. Responsive & Print Styles --- */
+        @media (max-width: 768px) {
+            .slide { padding: 25px; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.4rem; }
+            .two-column, .stat-grid { flex-direction: column; grid-template-columns: 1fr; }
+            .controls { right: auto; left: 50%; transform: translateX(-50%); }
+            #slide-counter, #timer-display { display: none; }
+            .comparison-table { font-size: 0.85rem; }
+        }
+
+        @media print {
+            body { background: #fff !important; height: auto; overflow: visible; display: block; }
+            .controls, #progress-bar, #slide-counter, #timer-display { display: none !important; }
+            #presentation-container { display: block; width: 100%; height: auto; box-shadow: none; border: none; padding: 0; }
+            .slides-viewport { overflow: visible; height: auto; }
+            .slide { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; position: relative; page-break-after: always; page-break-inside: avoid; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: none; border-radius: 0; overflow: hidden; }
+            .slide:last-of-type { page-break-after: avoid; }
+        }
+        
+        .pdf-page-container { width: 100%; height: auto; background: white; color: black; box-shadow: none; }
+        .pdf-slide { position: relative !important; opacity: 1 !important; visibility: visible !important; transform: none !important; height: auto !important; width: 100%; background: white; border: 1px solid #eeeeee; padding: 40px 50px; box-shadow: none; margin-bottom: 0; overflow: hidden; page-break-after: always; break-inside: avoid; aspect-ratio: 16 / 12; }
+        .pdf-slide:last-of-type { page-break-after: avoid; }
+    </style>
+</head>
+<body>
+    <div id="presentation-container">
+        <!-- UI Elements -->
+        <div id="progress-bar"></div>
+        <div id="slide-counter">1 / 30</div>
+        <div id="timer-display"></div>
+
+        <!-- Slides Viewport -->
+        <div class="slides-viewport">
+            
+            <!-- Slide 1: Title Slide -->
+            <section class="slide active title-slide">
+                <h1>NOP Chaos Flux：使用 AI 进行大规模框架开发的实践经验</h1>
+                <p class="subtitle">主题不是"怎么写 prompt"，而是"怎样让 AI 长期稳定地参与大型系统开发"</p>
+                <p class="author">Canonical</p>
+                <div class="golden-quote" style="margin-top: 2rem; max-width: 700px;">
+                    当前主流 AI 的危险，不只是会写错，而是会稳定回到它见过的平均方案。
+                </div>
+            </section>
+
+            <!-- Slide 2: Author Introduction -->
+            <section class="slide">
+                <h2>作者简介</h2>
+                <ul class="icon-list">
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <div>
+                            <p>毕业于清华大学工程物理系</p>
+                            <span class="details">拥有 20 多年软件架构设计经验</span>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <div>
+                            <p>致力于将物理学思想体系引入软件工程</p>
+                            <span class="details">原创性地提出可逆计算理论</span>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-cube"></i>
+                        <div>
+                            <p>NOP 低代码平台作者</p>
+                            <span class="details">独立设计并实现后端 nop-entropy 与前端 nop-chaos</span>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-rocket"></i>
+                        <div>
+                            <p>本次分享基于 nop-chaos-flux 的真实开发实践</p>
+                            <span class="details">它是在 NOP 体系内对 AMIS 方案的下一代升级替代</span>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Slide 3: What is nop-chaos-flux -->
+            <section class="slide">
+                <h2>nop-chaos-flux 是什么</h2>
+                <ul class="icon-list">
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-code"></i>
+                        <div>
+                            <p>全称：NOP Chaos Flux，一个 Schema 驱动的前端运行时和渲染框架</p>
+                            <span class="details">核心理念："Schema that executes, not just renders"</span>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-bullseye"></i>
+                        <div>
+                            <p>定位：为 NOP 低代码体系提供下一代前端运行时基础设施</p>
+                            <span class="details">不是应用框架，不是 UI 组件库</span>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-cubes"></i>
+                        <div>
+                            <p>围绕七个原语构建</p>
+                            <span class="details">Template、ScopeRef、Value、Resource、Reaction、Capability、Host Projection</span>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <div>
+                            <p>表单、表格、对话框、设计器、验证等都是这七个原语之上的派生系统</p>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Slide 4: Tech Stack -->
+            <section class="slide">
+                <h2>项目简介：技术栈与模块结构</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>技术栈</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-brands fa-react"></i>
+                                <div><p>React 19 + TypeScript 6</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-database"></i>
+                                <div><p>Zustand 状态管理</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-bolt"></i>
+                                <div><p>Vite 8 + Vitest 4</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-palette"></i>
+                                <div><p>Tailwind CSS 4</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>24 个 workspace packages</h3>
+                        <p style="font-size: 0.95rem;"><strong>核心流水线：</strong>flux-core → flux-formula → flux-compiler → flux-action-core → flux-runtime → flux-react</p>
+                        <p style="font-size: 0.95rem;"><strong>渲染器族：</strong>basic、form、form-advanced、data</p>
+                        <p style="font-size: 0.95rem;"><strong>设计器/编辑器：</strong>Flow Designer、Report Designer、Spreadsheet、Word Editor、Code Editor</p>
+                        <p style="font-size: 0.95rem;"><strong>共享基础设施：</strong>ui、tailwind-preset、theme-tokens、flux-i18n</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 5: Project Scale -->
+            <section class="slide">
+                <h2>项目规模与开发数据</h2>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">42</span>
+                        <span class="stat-label">天开发周期</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">1,091</span>
+                        <span class="stat-label">TypeScript 文件</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">169K</span>
+                        <span class="stat-label">代码行数 (LOC)</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">688</span>
+                        <span class="stat-label">Markdown 文档</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">1,336</span>
+                        <span class="stat-label">Git Commits</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">0.72</span>
+                        <span class="stat-label">测试/代码比</span>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p><strong>工程结构：</strong>非测试 source code 87,829 行，测试 code 62,820 行（347 个测试文件）</p>
+                    <p style="margin-bottom:0;"><strong>Git 活动总量：</strong>~595,000 行新增、~229,000 行删除</p>
+                </div>
+            </section>
+
+            <!-- Slide 6: Efficiency -->
+            <section class="slide">
+                <h2>高速生成下系统没有解体：效率只是副产品</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>稳定性的真正证据</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-cube"></i>
+                                <div>
+                                    <p>包边界越来越硬</p>
+                                    <span class="details">最终收敛为 compiler / action-core / runtime 三层分离</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-broom"></i>
+                                <div>
+                                    <p>结构越来越纯</p>
+                                    <span class="details">CompiledSchemaNode 等过渡结构被清除</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <div>
+                                    <p>审计越来越苛刻</p>
+                                    <span class="details">经过 meta-review 和 re-verification 继续收敛</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>效率估算</h3>
+                        <p><strong>实际投入：</strong>1 名开发者 + AI，6 周（1.5 人月）</p>
+                        <p><strong>传统估计：</strong>4-6 名高级前端工程师，3-4 个月 = 12-24 人月</p>
+                        <p><strong>效率倍数：</strong>约 8-16 倍</p>
+                        <div class="golden-quote" style="margin-top: 1rem;">
+                            真正罕见的不是快，而是在这种快里系统没有解体。
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 7: Core Problem -->
+            <section class="slide">
+                <h2>核心问题：AI 生成是扩张力，没有收敛机制就会持续漂移</h2>
+                <ul class="icon-list">
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-bolt"></i>
+                        <div>
+                            <p><strong>高带宽生成</strong>：AI 能在极短时间内产出大量代码、测试、文档</p>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-face-smile"></i>
+                        <div>
+                            <p><strong>乐观偏差</strong>：AI 倾向于流畅地叙述"已经完成"，即使行为闭环并未真正建立</p>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-shuffle"></i>
+                        <div>
+                            <p><strong>上下文漂移</strong>：旧前提在长上下文里不断被复用，整组文件一起偏离真实基线</p>
+                        </div>
+                    </li>
+                </ul>
+                <div class="quote-danger">
+                    <p>最危险的地方不是"写错一段代码"，而是<strong>局部都像对的，但整体在持续偏离</strong>。</p>
+                </div>
+                <div class="golden-quote">
+                    局部都像对的，往往正是系统正在整体跑偏的时候。
+                </div>
+            </section>
+
+            <!-- Slide 8: Our Answer -->
+            <section class="slide">
+                <h2>我们的答案：把开发组织成一个受控收敛的动力系统</h2>
+                <div class="loop-diagram">
+                    <div class="loop-step active">
+                        <strong>吸引子</strong><br>
+                        <span style="font-size: 0.85rem;">架构基线 / owner doc</span>
+                    </div>
+                    <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="loop-step">
+                        <strong>扩张力</strong><br>
+                        <span style="font-size: 0.85rem;">AI 生成代码/文档/方案</span>
+                    </div>
+                    <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="loop-step">
+                        <strong>收敛力</strong><br>
+                        <span style="font-size: 0.85rem;">Plan / lint / audit / logs</span>
+                    </div>
+                    <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="loop-step">
+                        <strong>基线更新</strong><br>
+                        <span style="font-size: 0.85rem;">升格为下一轮吸引子</span>
+                    </div>
+                    <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="loop-step" style="background: #f0fdf4; border-color: var(--color-secondary);">
+                        <strong style="color: var(--color-secondary);">循环</strong>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p><strong>关键前提：</strong>在当前主流模型的训练分布和偏置下，<strong>新吸引子通常不会由 AI 自己自然长出来</strong>。真正新的概念切分、边界定义和结构语言，仍然需要人先给出。</p>
+                </div>
+                <div class="golden-quote">
+                    没有吸引子，AI 不是在开发系统，而是在高效采样错误解空间。
+                </div>
+            </section>
+
+            <!-- Slide 9: What is Attractor -->
+            <section class="slide">
+                <h2>什么是动力系统，什么是吸引子</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>动力系统</h3>
+                        <p>状态随时间演化、且下一步依赖当前状态的系统。我们关心的不是某个静止点，而是<strong>轨迹</strong>。</p>
+                        <h3 style="margin-top: 1rem;">吸引子 (Attractor)</h3>
+                        <p>状态空间中的一个稳定区域或结构——从足够近的地方出发的轨迹，最终会被它吸引并长期停留在它附近。</p>
+                    </div>
+                    <div class="column">
+                        <h3>类比映射</h3>
+                        <table class="comparison-table">
+                            <tr>
+                                <th>动力学概念</th>
+                                <th>软件工程对应</th>
+                            </tr>
+                            <tr>
+                                <td>状态空间</td>
+                                <td>所有合法实现状态的集合</td>
+                            </tr>
+                            <tr>
+                                <td>吸引子</td>
+                                <td>架构基线允许的结构空间</td>
+                            </tr>
+                            <tr>
+                                <td>轨迹</td>
+                                <td>每一轮 AI 生成 + 收敛的演化路径</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="golden-quote">
+                    混沌不等于随机；局部不可预测，不等于整体失控。
+                </div>
+            </section>
+
+            <!-- Slide 10: Repository as Truth -->
+            <section class="slide">
+                <h2>仓库真相带来的工程后果：生成和验收被真正拆开</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>传统开发</h3>
+                        <p>仓库更多是认知的外化；作者认知持有系统模型。</p>
+                        <h3 style="margin-top: 1rem;">AI 深度参与后</h3>
+                        <p>仓库开始承担<strong>系统真相的载体</strong>。下一个 session 能重新加载的，不是作者脑中的完整模型，而是代码、diff、日志、测试和文档。</p>
+                    </div>
+                    <div class="column">
+                        <h3>对应关系变化</h3>
+                        <table class="comparison-table">
+                            <tr>
+                                <th>机制</th>
+                                <th>作用</th>
+                            </tr>
+                            <tr>
+                                <td>test / lint / audit</td>
+                                <td>测量</td>
+                            </tr>
+                            <tr>
+                                <td>owner doc / plan / closure</td>
+                                <td>约束</td>
+                            </tr>
+                            <tr>
+                                <td>logs / history / bugs</td>
+                                <td>轨迹记录</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="golden-quote">
+                    当作者不再持有完整模型，生成和验收就必须依赖仓库里的外部证据重新接起来。
+                </div>
+            </section>
+
+            <!-- Slide 11: Difference from Traditional -->
+            <section class="slide">
+                <h2>这个模型和传统开发的关键区别</h2>
+                <table class="comparison-table">
+                    <tr>
+                        <th>瀑布</th>
+                        <th>敏捷</th>
+                        <th>AI 深度参与</th>
+                    </tr>
+                    <tr>
+                        <td>强蓝图 / 长流水线</td>
+                        <td>弱蓝图 / 短流水线</td>
+                        <td>动力系统 / 轨迹控制</td>
+                    </tr>
+                    <tr>
+                        <td>先设计，再实现，再测试</td>
+                        <td>迭代设计，快速反馈</td>
+                        <td>生成速度超出人脑自然收敛速度</td>
+                    </tr>
+                    <tr>
+                        <td>默认人类可同步把关</td>
+                        <td>默认团队能跟上系统演化</td>
+                        <td>生成与验收被拆开</td>
+                    </tr>
+                    <tr>
+                        <td>按图施工</td>
+                        <td>迭代施工</td>
+                        <td><strong>控制系统轨迹</strong></td>
+                    </tr>
+                </table>
+                <div class="golden-quote">
+                    再用流水线思维管理 AI 高速生成，只会把混乱组织得更整齐。
+                </div>
+            </section>
+
+            <!-- Slide 12: Attractor Implementation 1 -->
+            <section class="slide">
+                <h2>吸引子的工程实现 1：架构基线与文档权威链</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>核心约束</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-cubes"></i>
+                                <div><p>七个原语闭合集</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-code"></i>
+                                <div><p>编译优先</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-arrows-split-up-and-left"></i>
+                                <div><p>数据/能力正交</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-file-contract"></i>
+                                <div><p>统一渲染器合约</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-border-all"></i>
+                                <div><p>严格包边界</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>文档权威链</h3>
+                        <p><strong>docs/index.md</strong> → 导航入口</p>
+                        <p><strong>docs/architecture/</strong> → 定义现行基线</p>
+                        <p><strong>docs/analysis/</strong> → 提供候选发现</p>
+                        <p><strong>docs/plans/</strong> → 负责执行收口</p>
+                        <p><strong>docs/logs/</strong> → 保存开发记忆</p>
+                    </div>
+                </div>
+                <div class="golden-quote">
+                    架构的价值不在于描述一切，而在于让错误结构无法合法存在。
+                </div>
+            </section>
+
+            <!-- Slide 13: Attractor Implementation 2 -->
+            <section class="slide">
+                <h2>吸引子的工程实现 2：保留澄清过程，而不只保留结论</h2>
+                <ul class="icon-list">
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-comments"></i>
+                        <div>
+                            <p>专门保留了 docs/discussions/</p>
+                            <span class="details">讨论文档不只写最终结论，也保留澄清过程</span>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-route"></i>
+                        <div>
+                            <p>记录：原始表达 → AI 复述与提问 → 用户补充 → 纠正记录 → 最终总结</p>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-brain"></i>
+                        <div>
+                            <p>后续 AI 不用凭空猜"为什么这样设计"，也能看到"为什么不能那样设计"</p>
+                        </div>
+                    </li>
+                </ul>
+                <div class="highlight-box">
+                    <p><strong>核心价值：</strong>对复杂系统来说，早期理解偏差往往比编码错误更致命。</p>
+                </div>
+            </section>
+
+            <!-- Slide 14: Role of Expansion -->
+            <section class="slide">
+                <h2>扩张力的角色定义：AI 负责展开，不负责最终裁决</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>AI 主要承担</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-code"></i>
+                                <div><p>代码生成</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-file-lines"></i>
+                                <div><p>文档整理</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-diagram-project"></i>
+                                <div><p>方案展开</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-list-check"></i>
+                                <div><p>审计候选生成</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>没有交给 AI 的</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-gavel"></i>
+                                <div><p>架构裁决</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <div><p>概念发明</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-border-none"></i>
+                                <div><p>边界重定义</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <div><p>方案淘汰</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p><strong>人机分工：</strong>人定义边界和收口标准，AI 高速扩张，多 agent 交叉验证把结果拉回基线，收敛规则由人工抽样校准。</p>
+                </div>
+            </section>
+
+            <!-- Slide 15: Plan as Convergence -->
+            <section class="slide">
+                <h2>收敛力 1：Plan 从"路线图"变成"收口机制"</h2>
+                <ul class="icon-list">
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-file-signature"></i>
+                        <div>
+                            <p>Plan 在这里不是路线图，而是<strong>局部收敛器</strong></p>
+                            <span class="details">核心文档：docs/plans/00-plan-authoring-and-execution-guide.md</span>
+                        </div>
+                    </li>
+                </ul>
+                <h3>每个 Plan 至少要写清</h3>
+                <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr);">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-flag" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">Current Baseline</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-bullseye" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">Goals / Non-Goals</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-door-open" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">Exit Criteria</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-list-check" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">Validation Checklist</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-certificate" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">Closure Audit Evidence</span>
+                    </div>
+                </div>
+                <div class="golden-quote">
+                    Plan 不是路线图，它是局部收敛器。
+                </div>
+            </section>
+
+            <!-- Slide 16: Plan Effect -->
+            <section class="slide">
+                <h2>Plan 作为收敛力的实际效果</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>漂移模式 → Plan 机制</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-arrows-left-right-to-line"></i>
+                                <div>
+                                    <p>计划过宽 → 拆 successor plan</p>
+                                    <span class="details">每个 plan 只负责一个可关闭的结果面</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-code-compare"></i>
+                                <div>
+                                    <p>接口存在 ≠ 行为落地</p>
+                                    <span class="details">closure audit 必须区分 interface presence 和 behavior landing</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-user-check"></i>
+                                <div>
+                                    <p>自我宣布完成 → 独立 closure audit</p>
+                                    <span class="details">completed 必须来自独立审计</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>真实案例</h3>
+                        <div class="highlight-box">
+                            <p><strong>Plan 145：</strong>closure/audit 后，将新确认的 domain-host projection / vocabulary convergence 跟进面分离为 Plan 146。把不同结果面硬塞在一起，是在制造假关闭。</p>
+                        </div>
+                        <div class="highlight-box">
+                            <p><strong>Plan 143：</strong>closure assumption 被独立审计连续推翻，直到 2026-04-27 独立复核确认 live repo 全部过线，才真正允许关闭。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 17: Dev Logs -->
+            <section class="slide">
+                <h2>收敛力 2：开发日志作为外部化工作记忆</h2>
+                <h3>日志最少记录四件事</h3>
+                <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-pen" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">改了什么</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-question" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">为什么这么改</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-folder-tree" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">相关路径</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-arrow-right" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">下一步是什么</span>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p><strong>日志的隐藏价值——保留"为什么不这么做"：</strong></p>
+                    <p style="margin-bottom: 0;">• 某个收敛尝试回滚了，因为暴露了另一个 runtime regression<br>
+                    • 某个架构方向先只收敛文档语义，不强推 runtime 重写<br>
+                    • 某个能力先作为 docs-only alignment 落地，不把 scope 扩大</p>
+                </div>
+                <div class="golden-quote">
+                    日志不是收尾材料，而是系统记忆。
+                </div>
+            </section>
+
+            <!-- Slide 18: Verification System -->
+            <section class="slide">
+                <h2>验证体系：自动化引力场与验证顺序</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>根级质量门</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-brands fa-react"></i>
+                                <div><p>check:react19</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-file-code"></i>
+                                <div><p>check:src-artifacts</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-expand"></i>
+                                <div><p>check:oversized-code-files</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-language"></i>
+                                <div><p>check:i18n-keys</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <div><p>lint (eslint)</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>验证顺序</h3>
+                        <p>1. <strong>focused verification</strong> 确认当前切片</p>
+                        <p>2. <strong>修当前切片</strong></p>
+                        <p>3. <strong>workspace 级</strong> typecheck/build/lint/test</p>
+                        <div class="highlight-box" style="margin-top: 1rem;">
+                            <p><strong>高信号规则升到 error：</strong>react-hooks/exhaustive-deps、react-compiler、i18n 硬编码字符串</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="golden-quote">
+                    能靠机器提前失败的，就不要留给人类事后理解。
+                </div>
+            </section>
+
+            <!-- Slide 19: Audit Loop -->
+            <section class="slide">
+                <h2>审计闭环：从多 Agent 发散到共识收敛</h2>
+                <div class="loop-diagram">
+                    <div class="loop-step">
+                        <strong>发散</strong><br>
+                        <span style="font-size: 0.85rem;">18 subagent 并发</span>
+                    </div>
+                    <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="loop-step">
+                        <strong>过滤</strong><br>
+                        <span style="font-size: 0.85rem;">分类 / 证据检查</span>
+                    </div>
+                    <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="loop-step">
+                        <strong>Meta-Review</strong><br>
+                        <span style="font-size: 0.85rem;">重叠 / 冲突分析</span>
+                    </div>
+                    <div class="loop-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    <div class="loop-step active">
+                        <strong>共识确认</strong><br>
+                        <span style="font-size: 0.85rem;">re-verification</span>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p><strong>关键规则：</strong>只有经过收敛的结论，才允许进入 owner doc、plan 或 backlog。</p>
+                </div>
+                <div class="golden-quote">
+                    高质量审计，不是堆问题，而是尽快排除假问题。
+                </div>
+            </section>
+
+            <!-- Slide 20: Long-term Convergence -->
+            <section class="slide">
+                <h2>长期收敛力：Debugger、Bug 记忆与完成判定</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>Bug 记录保存的不是 diff</h3>
+                        <p>而是<strong>排查路径</strong>：为什么难定位、先看了什么、排除了哪些假设、最后依据什么确认了问题。</p>
+                        <h3 style="margin-top: 1rem;">nop-debugger 设计原则</h3>
+                        <p>按"AI 可消费"设计：以 live cid 为中心，暴露 automation-facing API，AI 和 E2E 优先读调试 API，不读截图。</p>
+                    </div>
+                    <div class="column">
+                        <h3>"完成"的苛刻定义</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-route"></i>
+                                <div><p>live code path 真经过</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-check-double"></i>
+                                <div><p>focused/full verification 收口</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-file-lines"></i>
+                                <div><p>文档同步</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-user-tag"></i>
+                                <div><p>leftover work 归属明确</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-certificate"></i>
+                                <div><p>独立 closure audit</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 21: Complete Cycle -->
+            <section class="slide">
+                <h2>闭环如何实际运转：一个完整周期</h2>
+                <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">1. 定义吸引子</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">owner doc 固定基线</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">2. AI 扩张</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">代码/方案/文档</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">3. 实时收敛</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">lint/check/typecheck</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">4. 切片收敛</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">focused verification</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">5. 记忆沉淀</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">开发日志</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">6. 全局收敛</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">full repo verification</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">7. 审计收敛</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">meta-review</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">8. 关闭判定</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">独立 closure audit</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px;">
+                        <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">9. 吸引子更新</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">更新 owner doc</span>
+                    </div>
+                    <div class="stat-card" style="padding: 10px; background: #f0fdf4;">
+                        <span style="font-size: 0.75rem; color: var(--color-secondary); font-weight: 600;">10. 下一轮</span>
+                        <span class="stat-label" style="font-size: 0.7rem;">新基线继续扩张</span>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p><strong>完整实例：</strong>先有编译优先和包边界吸引子 → AI 大量实现编译/动作/运行时逻辑 → 审计发现运行时包里仍混有 compiler 与 action 责任 → 最终拆出 flux-compiler 和 flux-action-core → 文档和日志把三层职责重新固定为新基线。</p>
+                </div>
+                <div class="golden-quote">
+                    这不是流程图，是系统的呼吸方式。
+                </div>
+            </section>
+
+            <!-- Slide 22: Repository History -->
+            <section class="slide">
+                <h2>从仓库历史看这个闭环的实际轨迹</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>时间线</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-1"></i>
+                                <div>
+                                    <p><strong>03-20~03-23</strong> 早期建模期</p>
+                                    <span class="details">建立最初吸引子：ActionScope/Import 语义、调试器设计原则</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-2"></i>
+                                <div>
+                                    <p><strong>03-25~03-29</strong> 首次大规模扩张期</p>
+                                    <span class="details">重命名、样式系统、组件迁移加速</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-3"></i>
+                                <div>
+                                    <p><strong>04-12~04-20</strong> 高密度收敛期</p>
+                                    <span class="details">深度审计、性能优化、form-advanced 拆分</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-4"></i>
+                                <div>
+                                    <p><strong>04-21~04-25</strong> 精确吸引子形成期</p>
+                                    <span class="details">compiler/action-core/runtime 三层拆分</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>三个落地案例</h3>
+                        <div class="highlight-box">
+                            <p><strong>结构收敛：</strong>CompiledSchemaNode 被消除，模板实例化成为真实基线</p>
+                        </div>
+                        <div class="highlight-box">
+                            <p><strong>边界收敛：</strong>三层拆分，把"能跑"进一步收敛为"边界正确"</p>
+                        </div>
+                        <div class="highlight-box">
+                            <p><strong>审计收敛：</strong>deep audit → meta-review → unresolved-only recheck</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="golden-quote">
+                    42 天真正了不起的不是产出快，而是在这种速度下，架构越来越清晰。
+                </div>
+            </section>
+
+            <!-- Slide 23: Why Attractor Works -->
+            <section class="slide">
+                <h2>吸引子为什么能起作用——它解决了 AI 的三个核心偏差</h2>
+                <table class="comparison-table">
+                    <tr>
+                        <th>AI 偏差</th>
+                        <th>表现</th>
+                        <th>收敛机制</th>
+                    </tr>
+                    <tr>
+                        <td><strong>乐观偏差</strong></td>
+                        <td>"看起来做完了"</td>
+                        <td>Plan 的 Exit Criteria + Closure Audit</td>
+                    </tr>
+                    <tr>
+                        <td><strong>上下文漂移</strong></td>
+                        <td>"旧前提不断被复用"</td>
+                        <td>开发日志 + 文档权威链</td>
+                    </tr>
+                    <tr>
+                        <td><strong>局部正确全局漂移</strong></td>
+                        <td>"在错误的层做了正确的修复"</td>
+                        <td>架构基线 + owner doc</td>
+                    </tr>
+                </table>
+                <div class="highlight-box">
+                    <p><strong>吸引子模型的核心价值：</strong>不依赖 AI 自己发现问题，而是构造外部的力场，让漂移自动被修正。</p>
+                </div>
+                <div class="golden-quote">
+                    重点不是让 AI 不犯错，而是让错误不能长期存活。
+                </div>
+            </section>
+
+            <!-- Slide 24: Methodology -->
+            <section class="slide">
+                <h2>这套方法的本质：Audit-and-Closure Driven Development</h2>
+                <ul class="icon-list">
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-code-branch"></i>
+                        <div>
+                            <p>项目最终形成的模式：<strong>审计-收口驱动开发</strong></p>
+                            <span class="details">把实现和完成判定明确拆开：人先定义吸引子，再让扩张和收敛交替发生</span>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-arrows-spin"></i>
+                        <div>
+                            <p>把文档、discussion、plan、AI 实现、audit、closure、logs 组织成持续纠偏闭环</p>
+                        </div>
+                    </li>
+                    <li class="icon-bullet">
+                        <i class="fa-solid fa-brain"></i>
+                        <div>
+                            <p>默认承认：当前主流 AI 擅长在既有知识边界内高效执行</p>
+                            <span class="details">但受训练分布和偏置影响，很难自己长出真正新的架构观念</span>
+                        </div>
+                    </li>
+                </ul>
+                <div class="golden-quote">
+                    不要指望 AI 自己找到正确设计，要先定义一个不会把系统带偏的吸引子。
+                </div>
+            </section>
+
+            <!-- Slide 25: Replicable Structure -->
+            <section class="slide">
+                <h2>可复制结构与核心结论</h2>
+                <h3>你很可能必须回答五个问题</h3>
+                <div class="stat-grid" style="grid-template-columns: repeat(5, 1fr);">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-compass" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">谁定义方向？</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-scale-balanced" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">冲突时信谁？</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-magnifying-glass-chart" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">怎么发现漂移？</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-brain" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">怎么保留记忆？</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-flag-checkered" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span class="stat-label">怎么判定完成？</span>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p>这五个问题都有答案，你就有了闭环；没有答案，系统就很容易在高速推进中偏掉。</p>
+                </div>
+                <div class="golden-quote">
+                    可复制的不是表面做法，而是在当前主流 AI 条件下，人先定义新吸引子，AI 再围绕它高效收敛。
+                </div>
+            </section>
+
+            <!-- Slide 26: True Boundary -->
+            <section class="slide">
+                <h2>真正边界：当前主流 AI 擅长收敛执行，不擅长原创架构</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>AI 最适合承担的</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-check"></i>
+                                <div><p>实现</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-check"></i>
+                                <div><p>展开</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-check"></i>
+                                <div><p>补全</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-check"></i>
+                                <div><p>验证</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-check"></i>
+                                <div><p>整理</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>AI 最不适合单独承担的</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-xmark" style="color: var(--color-danger);"></i>
+                                <div><p>核心概念发明</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-xmark" style="color: var(--color-danger);"></i>
+                                <div><p>边界重定义</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-xmark" style="color: var(--color-danger);"></i>
+                                <div><p>第一性原理层面的架构突破</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p><strong>例子：</strong>ActionScope 与 Data Scope 分离并采用词法作用域，这类方案不是让 AI 自由采样平均解能自然长出来的，而必须先由人定义吸引子。</p>
+                </div>
+                <div class="golden-quote">
+                    当前主流 AI 最擅长把已有知识执行到极致，但很难自然长出真正新的架构观念。
+                </div>
+            </section>
+
+            <!-- Slide 27: Appendix A -->
+            <section class="slide">
+                <h2>附录：分享中可引用的仓库材料</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>入门材料</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-file"></i>
+                                <div><p>README.md / README.zh-CN.md</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-compass"></i>
+                                <div><p>docs/index.md</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-file-signature"></i>
+                                <div><p>docs/plans/00-plan-authoring-and-execution-guide.md</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-comments"></i>
+                                <div><p>docs/discussions/README.md</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-bug"></i>
+                                <div><p>docs/bugs/00-bug-fix-note-writing-guide.md</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>深度材料</h3>
+                        <ul class="icon-list">
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-list-check"></i>
+                                <div><p>docs/references/maintenance-checklist.md</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <div><p>docs/analysis/2026-04-17-deep-audit/index.md</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-bug-slash"></i>
+                                <div><p>docs/architecture/debugger-runtime.md</p></div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-book"></i>
+                                <div><p>docs/articles/flux-architecture-evolution.md</p></div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 28: Appendix B - Data Table -->
+            <section class="slide">
+                <h2>附录：项目数据速查表</h2>
+                <table class="comparison-table">
+                    <tr>
+                        <th>指标</th>
+                        <th>数值</th>
+                    </tr>
+                    <tr>
+                        <td>Workspace packages</td>
+                        <td>24</td>
+                    </tr>
+                    <tr>
+                        <td>TypeScript 文件（.ts + .tsx）</td>
+                        <td>1,091</td>
+                    </tr>
+                    <tr>
+                        <td>TypeScript 总 LOC</td>
+                        <td>169,372</td>
+                    </tr>
+                    <tr>
+                        <td>TypeScript 有效代码</td>
+                        <td>146,951</td>
+                    </tr>
+                    <tr>
+                        <td>非测试 source code</td>
+                        <td>87,829（764 files）</td>
+                    </tr>
+                    <tr>
+                        <td>测试 code</td>
+                        <td>62,820（347 files，ratio 0.72）</td>
+                    </tr>
+                    <tr>
+                        <td>文档文件</td>
+                        <td>688 个 Markdown</td>
+                    </tr>
+                    <tr>
+                        <td>总 commits</td>
+                        <td>1,336（截至 2026-04-26）</td>
+                    </tr>
+                    <tr>
+                        <td>开发周期</td>
+                        <td>42 天（41 天活跃）</td>
+                    </tr>
+                    <tr>
+                        <td>日均 commits</td>
+                        <td>~33</td>
+                    </tr>
+                    <tr>
+                        <td>峰值日 commits</td>
+                        <td>86（Apr 16）</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Slide 29: Appendix C - Terminology -->
+            <section class="slide">
+                <h2>附录：吸引子模型的关键术语速查</h2>
+                <table class="comparison-table">
+                    <tr>
+                        <th>动力学概念</th>
+                        <th>软件工程对应</th>
+                        <th>仓库实例</th>
+                    </tr>
+                    <tr>
+                        <td>吸引子 (Attractor)</td>
+                        <td>架构基线——系统应该收敛到的状态</td>
+                        <td>docs/architecture/*.md</td>
+                    </tr>
+                    <tr>
+                        <td>扩张力 (Divergence)</td>
+                        <td>AI 生成——把系统推向更大的状态空间</td>
+                        <td>代码实现、方案展开</td>
+                    </tr>
+                    <tr>
+                        <td>收敛力 (Convergence)</td>
+                        <td>工程机制——把扩张结果拉回基线</td>
+                        <td>Plan、lint/check/test、closure audit</td>
+                    </tr>
+                    <tr>
+                        <td>闭环 (Feedback Loop)</td>
+                        <td>扩张 → 收敛 → 基线更新 → 再扩张</td>
+                        <td>完整的开发周期</td>
+                    </tr>
+                    <tr>
+                        <td>漂移 (Drift)</td>
+                        <td>代码/文档/计划偏离真实基线</td>
+                        <td>文档漂移、计划漂移</td>
+                    </tr>
+                    <tr>
+                        <td>势能井 (Potential Well)</td>
+                        <td>自动化验证规则——偏离即触发失败</td>
+                        <td>eslint error 规则、check 脚本</td>
+                    </tr>
+                    <tr>
+                        <td>记忆 (Memory)</td>
+                        <td>跨 session 可追溯的上下文</td>
+                        <td>docs/logs/、docs/bugs/</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Slide 30: Q&A -->
+            <section class="slide title-slide">
+                <h1>Q&A</h1>
+                <p class="subtitle">感谢聆听</p>
+                <div class="golden-quote" style="margin-top: 2rem; max-width: 700px;">
+                    如果只带走一条经验：AI 大规模参与后，系统不会自动停在正确位置；你必须先定义不会把系统带偏的吸引子，再构造持续把结果拉回来的收敛机制。
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="prev-btn" class="btn" disabled><i class="fa-solid fa-chevron-left"></i> 上一页</button>
+            <button id="next-btn" class="btn">下一页 <i class="fa-solid fa-chevron-right"></i></button>
+            <button id="fullscreen-btn" class="btn"><i class="fa-solid fa-expand"></i></button>
+            <button id="pdf-btn" class="btn"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+
+        // Presentation Logic
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const pdfBtn = document.getElementById('pdf-btn');
+        const slideCounter = document.getElementById('slide-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const timerDisplay = document.getElementById('timer-display');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        // Timer variables
+        let startTime = null;
+        let timerInterval = null;
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (startTime === null) {
+                startTime = Date.now();
+                timerInterval = setInterval(() => {
+                    const elapsed = Date.now() - startTime;
+                    timerDisplay.textContent = formatTime(elapsed);
+                }, 1000);
+                timerDisplay.textContent = '00:00';
+            }
+        }
+
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                slide.classList.toggle('active', index === currentSlide);
+            });
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function goToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                updateSlide();
+                startTimer();
+            }
+        }
+
+        prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+        nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); goToSlide(currentSlide - 1); }
+            if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+            if (e.key === 'End') { e.preventDefault(); goToSlide(totalSlides - 1); }
+        });
+
+        // Touch support
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+        document.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].screenX;
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) goToSlide(currentSlide + 1);
+                else goToSlide(currentSlide - 1);
+            }
+        });
+
+        // PDF Export
+        pdfBtn.addEventListener('click', async () => {
+            pdfBtn.disabled = true;
+            pdfBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 生成中...';
+            
+            const container = document.createElement('div');
+            container.className = 'pdf-page-container';
+            
+            slides.forEach(slide => {
+                const clone = slide.cloneNode(true);
+                clone.classList.remove('active');
+                clone.classList.add('pdf-slide');
+                container.appendChild(clone);
+            });
+            
+            document.body.appendChild(container);
+
+            const opt = {
+                margin: 0,
+                filename: 'nop-chaos-flux-ai-development.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' },
+                pagebreak: { mode: ['css', 'legacy'], after: '.pdf-slide' }
+            };
+
+            try {
+                await html2pdf().set(opt).from(container).save();
+            } catch (error) {
+                console.error('PDF generation failed:', error);
+                alert('PDF 生成失败，请重试');
+            } finally {
+                document.body.removeChild(container);
+                pdfBtn.disabled = false;
+                pdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> PDF';
+            }
+        });
+
+        // Initialize
+        updateSlide();
+    </script>
+</body>
+</html>

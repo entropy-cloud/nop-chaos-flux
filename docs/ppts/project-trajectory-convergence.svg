@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#09131f"/>
+      <stop offset="100%" stop-color="#13263d"/>
+    </linearGradient>
+    <linearGradient id="corridor" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1f4d7a" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#5cc0ff" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#1f4d7a" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="trace" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffd166"/>
+      <stop offset="40%" stop-color="#ff9f43"/>
+      <stop offset="70%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="640" y="64" text-anchor="middle" fill="#eef4ff" font-size="30" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Project Trajectory: Correction and Convergence Over Time</text>
+  <text x="640" y="92" text-anchor="middle" fill="#8aa4c4" font-size="15" font-family="Segoe UI, Arial, sans-serif" letter-spacing="2">项目轨迹：随时间演进的纠偏与收敛</text>
+  <g transform="translate(90 0)">
+    <rect x="0" y="255" width="1100" height="170" rx="84" fill="url(#corridor)" stroke="#5ba9e6" stroke-opacity="0.16"/>
+    <path d="M0 340 C120 260 190 252 268 340 C360 442 430 450 516 340 C610 220 670 220 748 340 C824 456 898 456 976 340 C1034 252 1076 258 1100 320"
+      fill="none" stroke="url(#trace)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+    <path d="M0 340 C110 322 220 322 330 340 C440 358 550 358 660 340 C770 322 880 322 990 340 C1030 346 1068 346 1100 338"
+      fill="none" stroke="#90cdfc" stroke-width="2" stroke-dasharray="8 10" opacity="0.45"/>
+    <g stroke="#66c2ff" stroke-width="2" opacity="0.7">
+      <line x1="268" y1="180" x2="268" y2="508"/>
+      <line x1="516" y1="180" x2="516" y2="508"/>
+      <line x1="748" y1="180" x2="748" y2="508"/>
+      <line x1="976" y1="180" x2="976" y2="508"/>
+    </g>
+    <g fill="#ff8aa0" opacity="0.28">
+      <circle cx="268" cy="340" r="72"/>
+      <circle cx="516" cy="340" r="72"/>
+      <circle cx="748" cy="340" r="72"/>
+      <circle cx="976" cy="340" r="72"/>
+    </g>
+    <g fill="#eaf2ff" font-family="Segoe UI, Arial, sans-serif">
+      <text x="0" y="560" font-size="12" letter-spacing="2">03-20</text>
+      <text x="220" y="560" font-size="12" letter-spacing="2">03-29</text>
+      <text x="470" y="560" font-size="12" letter-spacing="2">04-12</text>
+      <text x="700" y="560" font-size="12" letter-spacing="2">04-17</text>
+      <text x="930" y="560" font-size="12" letter-spacing="2">04-25</text>
+      <text x="1050" y="560" font-size="12" letter-spacing="2">04-26</text>
+    </g>
+    <g font-family="Segoe UI, Arial, sans-serif">
+      <text x="190" y="178" fill="#ffca7a" font-size="14" font-weight="700">边界收敛</text>
+      <text x="170" y="198" fill="#c9a46b" font-size="11">flux-core 拆分与渲染器合约确立</text>
+      <text x="430" y="164" fill="#ffca7a" font-size="14" font-weight="700">高密度收敛</text>
+      <text x="410" y="184" fill="#c9a46b" font-size="11">性能优化、form-advanced 拆分、IR 收敛</text>
+      <text x="660" y="160" fill="#ffca7a" font-size="14" font-weight="700">深度审计</text>
+      <text x="632" y="180" fill="#c9a46b" font-size="11">meta-review + unresolved-only recheck</text>
+      <text x="868" y="176" fill="#ffca7a" font-size="14" font-weight="700">精确吸引子形成</text>
+      <text x="850" y="196" fill="#c9a46b" font-size="11">compiler / action-core / runtime 三层拆分</text>
+    </g>
+  </g>
+  <text x="640" y="666" text-anchor="middle" fill="#cbd8ec" font-size="13" font-family="Segoe UI, Arial, sans-serif" font-weight="600">从粗粒度吸引子 → 高频纠偏 → 精确吸引子</text>
+</svg>
