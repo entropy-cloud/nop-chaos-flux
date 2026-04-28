@@ -68,9 +68,9 @@
         /* === Title Slide === */
         .title-slide { text-align: center; align-items: center; }
         .slide.title-slide { justify-content: center; align-items: center; }
-        .title-slide h1 { font-size: 3rem; color: var(--color-text-dark); }
-        .title-slide .subtitle { font-size: 1.4rem; color: var(--color-text-light); font-weight: 400; }
-        .title-slide .author { font-size: 1.3rem; color: var(--color-text-light); margin-top: 1rem; font-weight: 400; }
+        .title-slide h1 { font-size: 2.8rem; color: var(--color-text-dark); line-height: 1.3; }
+        .title-slide .subtitle { font-size: 1.3rem; color: var(--color-text-light); font-weight: 400; margin-top: 0.5rem; }
+        .title-slide .author { font-size: 1.2rem; color: var(--color-text-light); margin-top: 1rem; font-weight: 400; }
 
         /* === Icon List === */
         .icon-list { list-style: none; padding: 0; margin: 0.8rem 0; }
@@ -159,11 +159,70 @@
         .tag-danger { background: #fee2e2; color: #991b1b; }
         .tag-success { background: #dcfce7; color: #166534; }
 
+        /* === Code Styling Enhancement === */
+        code { 
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-family: var(--font-code); 
+            font-size: 0.9em; 
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .icon-bullet code, .details code, .sub-item code {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--color-primary-dark);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
         /* === Cycle Diagram (from ppt-7) === */
         .cycle-diagram { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; margin: 1.5rem 0; }
         .cycle-step { background: var(--color-code-bg); border: 2px solid var(--color-border); padding: 12px 18px; border-radius: 10px; font-weight: 500; text-align: center; min-width: 140px; }
         .cycle-step.highlight { background: var(--color-primary); color: white; border-color: var(--color-primary-dark); }
         .cycle-arrow { font-size: 1.5rem; color: var(--color-primary); }
+
+        /* === Slide Animation Enhancement === */
+        .slide { animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+        .slide.active .icon-bullet { animation: slideInLeft 0.4s ease-out both; }
+        .slide.active .icon-bullet:nth-child(1) { animation-delay: 0.1s; }
+        .slide.active .icon-bullet:nth-child(2) { animation-delay: 0.15s; }
+        .slide.active .icon-bullet:nth-child(3) { animation-delay: 0.2s; }
+        .slide.active .icon-bullet:nth-child(4) { animation-delay: 0.25s; }
+        .slide.active .icon-bullet:nth-child(5) { animation-delay: 0.3s; }
+        .slide.active .card { animation: fadeInUp 0.4s ease-out both; }
+        .slide.active .card:nth-child(1) { animation-delay: 0.1s; }
+        .slide.active .card:nth-child(2) { animation-delay: 0.15s; }
+        .slide.active .card:nth-child(3) { animation-delay: 0.2s; }
+        .slide.active .stat-card { animation: scaleIn 0.3s ease-out both; }
+        .slide.active .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .slide.active .stat-card:nth-child(2) { animation-delay: 0.1s; }
+        .slide.active .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .slide.active .stat-card:nth-child(4) { animation-delay: 0.2s; }
+        .slide.active .stat-card:nth-child(5) { animation-delay: 0.25s; }
+        .slide.active .stat-card:nth-child(6) { animation-delay: 0.3s; }
+        .slide.active .stat-card:nth-child(7) { animation-delay: 0.35s; }
+        .slide.active .stat-card:nth-child(8) { animation-delay: 0.4s; }
+        .slide.active .golden-quote { animation: fadeInUp 0.5s ease-out 0.3s both; }
+        .slide.active .highlight-box { animation: fadeInUp 0.4s ease-out 0.2s both; }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* === Keyboard Hints === */
+        .keyboard-hint { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; opacity: 0; transition: opacity 0.3s; z-index: 100; pointer-events: none; }
+        .keyboard-hint.show { opacity: 1; }
+        .keyboard-hint kbd { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px; margin: 0 2px; font-family: var(--font-code); }
 
         /* === Responsive === */
         @media (max-width: 768px) {
@@ -198,14 +257,15 @@
         <div id="progress-bar"></div>
         <div id="slide-counter">1 / 30</div>
         <div id="timer-display"></div>
+        <div id="keyboard-hint" class="keyboard-hint"><kbd>←</kbd><kbd>→</kbd> 翻页 &nbsp;|&nbsp; <kbd>Home</kbd> 首页 &nbsp;|&nbsp; <kbd>F</kbd> 全屏 &nbsp;|&nbsp; <kbd>?</kbd> 帮助</div>
         <div class="slides-viewport">
 
             <!-- Slide 1: Title -->
             <section class="slide active title-slide">
-                <h1>NOP Chaos Flux<br>使用 AI 进行大规模框架开发的实践经验</h1>
-                <p class="subtitle">AI 开发大型系统的本质：动力系统的受控收敛</p>
-                <p class="author">canonical &nbsp;|&nbsp; 2026 年 4 月</p>
-                <div class="golden-quote" style="margin-top: 2rem; max-width: 700px;">
+                <h1 style="animation: fadeInUp 0.8s ease-out;">NOP Chaos Flux<br><span style="font-size:0.85em;">使用 AI 进行大规模框架开发的实践经验</span></h1>
+                <p class="subtitle" style="animation: fadeInUp 0.8s ease-out 0.2s both;">AI 开发大型系统的本质：动力系统的受控收敛</p>
+                <p class="author" style="animation: fadeInUp 0.8s ease-out 0.4s both;">canonical &nbsp;|&nbsp; 2026 年 4 月</p>
+                <div class="golden-quote" style="margin-top: 2rem; max-width: 700px; animation: fadeInUp 0.8s ease-out 0.6s both;">
                     当前主流 AI 的危险，不只是会写错，而是会稳定回到它见过的平均方案。
                 </div>
             </section>
@@ -408,34 +468,67 @@
             <section class="slide">
                 <h2>我们找到的答案：受控收敛的动力系统</h2>
                 <div style="display:flex;justify-content:center;margin:0.5rem 0;">
-                    <svg width="680" height="420" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg" font-family="'Inter',-apple-system,BlinkMacSystemFont,sans-serif">
+                    <svg width="720" height="380" viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" font-family="'Inter',-apple-system,BlinkMacSystemFont,sans-serif">
                         <defs>
-                            <marker id="arr" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#1e3a8a"/></marker>
-                            <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.1"/></filter>
+                            <marker id="arr" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#475569"/></marker>
+                            <marker id="arr-blue" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#2563eb"/></marker>
+                            <filter id="sh"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.12"/></filter>
+                            <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#f8fafc"/>
+                                <stop offset="100%" stop-color="#f1f5f9"/>
+                            </linearGradient>
                         </defs>
-                        <rect width="100%" height="100%" fill="#f8fafc" rx="12"/>
-                        <circle cx="340" cy="80" r="60" fill="#1e40af" filter="url(#sh)" opacity="0.95"/>
-                        <text x="340" y="75" text-anchor="middle" fill="white" font-size="14" font-weight="600">AI 大型系统开发</text>
-                        <text x="340" y="95" text-anchor="middle" fill="#dbeafe" font-size="11">= 动力系统的受控收敛</text>
-                        <path d="M 310 140 L 200 200" stroke="#1e3a8a" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
-                        <path d="M 370 140 L 480 200" stroke="#1e3a8a" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
-                        <circle cx="160" cy="240" r="55" fill="#1e40af" filter="url(#sh)" opacity="0.9"/>
-                        <text x="160" y="235" text-anchor="middle" fill="white" font-size="16" font-weight="700">吸引子</text>
-                        <text x="160" y="255" text-anchor="middle" fill="#dbeafe" font-size="9">架构基线 / owner doc</text>
-                        <text x="160" y="268" text-anchor="middle" fill="#dbeafe" font-size="9">文档权威链</text>
-                        <circle cx="520" cy="240" r="55" fill="#ea580c" filter="url(#sh)" opacity="0.9"/>
-                        <text x="520" y="235" text-anchor="middle" fill="white" font-size="16" font-weight="700">扩张力</text>
-                        <text x="520" y="255" text-anchor="middle" fill="#fed7aa" font-size="9">AI 生成代码/文档/方案</text>
-                        <path d="M 200 290 L 290 340" stroke="#1e3a8a" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
-                        <text x="230" y="318" fill="#64748b" font-size="10" font-weight="500">定义方向</text>
-                        <path d="M 480 290 L 390 340" stroke="#ea580c" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
-                        <text x="445" y="318" fill="#64748b" font-size="10" font-weight="500">高速展开</text>
-                        <circle cx="340" cy="370" r="55" fill="#2563eb" filter="url(#sh)" opacity="0.9"/>
-                        <text x="340" y="365" text-anchor="middle" fill="white" font-size="16" font-weight="700">收敛力</text>
-                        <text x="340" y="385" text-anchor="middle" fill="#dbeafe" font-size="9">Plan / lint / test / audit</text>
-                        <text x="340" y="398" text-anchor="middle" fill="#dbeafe" font-size="9">closure / logs</text>
-                        <path d="M 395 370 Q 580 370 580 300 Q 580 240 575 240" stroke="#2563eb" stroke-width="2" fill="none" stroke-dasharray="6 3" marker-end="url(#arr)"/>
-                        <text x="570" y="310" fill="#2563eb" font-size="9" font-weight="500" text-anchor="end">基线更新</text>
+                        <rect width="100%" height="100%" fill="url(#bgGrad)" rx="16"/>
+                        
+                        <!-- Center Title -->
+                        <circle cx="360" cy="75" r="55" fill="#1e40af" filter="url(#sh)"/>
+                        <text x="360" y="68" text-anchor="middle" fill="white" font-size="12" font-weight="600">AI 大型系统开发</text>
+                        <text x="360" y="85" text-anchor="middle" fill="#93c5fd" font-size="10">=动力系统的受控收敛</text>
+                        
+                        <!-- Three main nodes - Triangle layout -->
+                        <!-- Attractor (top-left) -->
+                        <g transform="translate(140, 200)">
+                            <rect x="-70" y="-45" width="140" height="90" rx="12" fill="#1e40af" filter="url(#sh)"/>
+                            <text x="0" y="-15" text-anchor="middle" fill="white" font-size="16" font-weight="700">吸引子</text>
+                            <text x="0" y="5" text-anchor="middle" fill="#93c5fd" font-size="9">架构基线 / owner doc</text>
+                            <text x="0" y="18" text-anchor="middle" fill="#93c5fd" font-size="9">文档权威链</text>
+                            <text x="0" y="35" text-anchor="middle" fill="#bfdbfe" font-size="8" font-style="italic">定义方向</text>
+                        </g>
+                        
+                        <!-- Divergence (top-right) -->
+                        <g transform="translate(580, 200)">
+                            <rect x="-70" y="-45" width="140" height="90" rx="12" fill="#ea580c" filter="url(#sh)"/>
+                            <text x="0" y="-15" text-anchor="middle" fill="white" font-size="16" font-weight="700">扩张力</text>
+                            <text x="0" y="5" text-anchor="middle" fill="#fed7aa" font-size="9">AI 生成代码/文档/方案</text>
+                            <text x="0" y="18" text-anchor="middle" fill="#fed7aa" font-size="9">快速展开状态空间</text>
+                            <text x="0" y="35" text-anchor="middle" fill="#ffedd5" font-size="8" font-style="italic">高速展开</text>
+                        </g>
+                        
+                        <!-- Convergence (bottom-center) -->
+                        <g transform="translate(360, 320)">
+                            <rect x="-85" y="-45" width="170" height="90" rx="12" fill="#2563eb" filter="url(#sh)"/>
+                            <text x="0" y="-15" text-anchor="middle" fill="white" font-size="16" font-weight="700">收敛力</text>
+                            <text x="0" y="5" text-anchor="middle" fill="#bfdbfe" font-size="9">Plan / lint / test / audit</text>
+                            <text x="0" y="18" text-anchor="middle" fill="#bfdbfe" font-size="9">closure / logs</text>
+                            <text x="0" y="35" text-anchor="middle" fill="#dbeafe" font-size="8" font-style="italic">压回轨道</text>
+                        </g>
+                        
+                        <!-- Connecting arrows -->
+                        <!-- Attractor to Divergence -->
+                        <path d="M 210 180 Q 360 140 510 180" stroke="#475569" stroke-width="2.5" fill="none" marker-end="url(#arr)" stroke-dasharray="6 3"/>
+                        <text x="360" y="155" text-anchor="middle" fill="#64748b" font-size="9" font-weight="500">AI 在方向内展开</text>
+                        
+                        <!-- Divergence to Convergence -->
+                        <path d="M 530 250 Q 500 290 445 305" stroke="#475569" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
+                        <text x="495" y="280" fill="#64748b" font-size="9" font-weight="500">生成结果</text>
+                        
+                        <!-- Convergence to Attractor -->
+                        <path d="M 275 305 Q 200 290 180 250" stroke="#475569" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
+                        <text x="215" y="282" fill="#64748b" font-size="9" font-weight="500">校验&amp;更新</text>
+                        
+                        <!-- Loop indicator -->
+                        <path d="M 200 130 Q 360 95 520 130" stroke="#2563eb" stroke-width="1.5" fill="none" stroke-dasharray="4 2" opacity="0.6"/>
+                        <text x="360" y="120" text-anchor="middle" fill="#2563eb" font-size="8" opacity="0.8">闭环迭代</text>
                     </svg>
                 </div>
                 <div class="golden-quote">
@@ -452,32 +545,70 @@
                 <div class="two-column">
                     <div class="column-wide">
                         <div style="display:flex;justify-content:center;">
-                            <svg width="420" height="340" viewBox="0 0 420 340" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="100%" height="100%" fill="#f8fafc" rx="12"/>
-                                <text x="210" y="25" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="700">Lorenz Attractor 示意</text>
-                                <path d="M 80,200 C 100,100 150,80 180,120 C 210,160 200,200 220,240 C 240,280 280,260 300,200 C 320,140 310,100 330,140 C 350,180 340,220 350,240 C 360,260 300,280 280,260 C 260,240 250,200 270,160 C 290,120 320,100 340,140 C 360,180 350,220 360,200 C 370,180 330,160 310,180 C 290,200 280,240 300,260 C 320,280 340,260 350,240" fill="none" stroke="url(#lorenzGrad)" stroke-width="2.5" opacity="0.8"/>
-                                <path d="M 200,180 C 180,120 160,100 180,80 C 200,60 230,90 240,140 C 250,190 230,240 210,260 C 190,280 160,260 150,220 C 140,180 160,120 200,180" fill="none" stroke="#ea580c" stroke-width="1.5" opacity="0.4" stroke-dasharray="4 2"/>
-                                <path d="M 300,180 C 280,120 260,100 280,80 C 300,60 330,90 340,140 C 350,190 330,240 310,260 C 290,280 260,260 250,220 C 240,180 260,120 300,180" fill="none" stroke="#ea580c" stroke-width="1.5" opacity="0.4" stroke-dasharray="4 2"/>
+                            <svg width="400" height="320" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg">
                                 <defs>
                                     <linearGradient id="lorenzGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                                         <stop offset="0%" stop-color="#06b6d4"/>
-                                        <stop offset="50%" stop-color="#8b5cf6"/>
+                                        <stop offset="30%" stop-color="#3b82f6"/>
+                                        <stop offset="60%" stop-color="#8b5cf6"/>
                                         <stop offset="100%" stop-color="#ec4899"/>
                                     </linearGradient>
+                                    <filter id="glow">
+                                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                    </filter>
                                 </defs>
-                                <text x="160" y="160" fill="#64748b" font-size="10" transform="rotate(-30,160,160)">局部看很乱</text>
-                                <text x="210" y="310" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="600">整体被限制在一个稳定形状里</text>
-                                <text x="155" y="100" fill="#ea580c" font-size="9" opacity="0.7">吸引区域</text>
-                                <text x="290" y="100" fill="#ea580c" font-size="9" opacity="0.7">吸引区域</text>
+                                <rect width="100%" height="100%" fill="#0f172a" rx="12"/>
+                                <text x="200" y="22" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">Lorenz Attractor 示意</text>
+                                
+                                <!-- Attractor regions (subtle) -->
+                                <ellipse cx="120" cy="160" rx="70" ry="80" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.2" stroke-dasharray="4 2"/>
+                                <ellipse cx="280" cy="160" rx="70" ry="80" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.2" stroke-dasharray="4 2"/>
+                                
+                                <!-- Main trajectory - more realistic butterfly pattern -->
+                                <path d="M 200,160 
+                                         C 180,120 140,90 100,110 
+                                         C 60,130 50,170 70,200 
+                                         C 90,230 130,240 160,220 
+                                         C 190,200 200,170 200,160
+                                         C 200,150 210,120 240,100 
+                                         C 270,80 310,90 330,120 
+                                         C 350,150 340,190 310,210 
+                                         C 280,230 240,220 220,190 
+                                         C 200,160 180,130 150,120 
+                                         C 120,110 90,130 80,160 
+                                         C 70,190 90,220 120,230 
+                                         C 150,240 180,220 190,190 
+                                         C 200,160 220,140 250,130 
+                                         C 280,120 310,140 320,170 
+                                         C 330,200 310,230 280,240 
+                                         C 250,250 220,230 210,200" 
+                                      fill="none" stroke="url(#lorenzGrad)" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
+                                
+                                <!-- Additional trajectory lines for depth -->
+                                <path d="M 110,150 C 90,130 80,160 100,180 C 120,200 140,190 130,170" 
+                                      fill="none" stroke="#06b6d4" stroke-width="1" opacity="0.4"/>
+                                <path d="M 290,150 C 310,130 320,160 300,180 C 280,200 260,190 270,170" 
+                                      fill="none" stroke="#ec4899" stroke-width="1" opacity="0.4"/>
+                                
+                                <!-- Labels -->
+                                <text x="100" y="75" fill="#f59e0b" font-size="9" opacity="0.9">吸引区域</text>
+                                <text x="270" y="75" fill="#f59e0b" font-size="9" opacity="0.9">吸引区域</text>
+                                <text x="55" y="145" fill="#94a3b8" font-size="8" transform="rotate(-20,55,145)">局部不可预测</text>
+                                <text x="200" y="290" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600">整体被限制在稳定形状里</text>
+                                
+                                <!-- Arrow pointing to trajectory -->
+                                <path d="M 200,250 L 200,220" stroke="#64748b" stroke-width="1" fill="none" marker-end="url(#arr)"/>
+                                <text x="200" y="265" text-anchor="middle" fill="#64748b" font-size="8">轨迹=一轮轮实现与收敛</text>
                             </svg>
                         </div>
                     </div>
                     <div class="column">
                         <h3>动力系统</h3>
-                        <p style="font-size:1.05rem;">状态随时间演化、且下一步依赖当前状态的系统。我们关心的是<strong>轨迹</strong>——从哪里出发，往哪里演化。</p>
-                        <h3 style="margin-top:1rem;">吸引子</h3>
-                        <p style="font-size:1.05rem;">状态空间中的一个稳定区域——从足够近的地方出发的轨迹，最终会被它吸引并长期停留在它附近。</p>
-                        <h3 style="margin-top:1rem;">对 AI 开发的映射</h3>
+                        <p style="font-size:1rem;">状态随时间演化、且下一步依赖当前状态的系统。我们关心的是<strong>轨迹</strong>——从哪里出发，往哪里演化。</p>
+                        <h3 style="margin-top:0.8rem;">吸引子</h3>
+                        <p style="font-size:1rem;">状态空间中的一个稳定区域——从足够近的地方出发的轨迹，最终会被它吸引并长期停留在它附近。</p>
+                        <h3 style="margin-top:0.8rem;">对 AI 开发的映射</h3>
                         <ul class="icon-list">
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-map"></i>
@@ -847,24 +978,50 @@
             <!-- Slide 19: Audit Loop -->
             <section class="slide">
                 <h2>审计闭环：从多 Agent 发散到共识收敛</h2>
-                <div class="flow-layout" style="margin-top:0.5rem;">
-                    <div class="flow-step" style="flex:1.2;border-top:4px solid var(--color-warning);">
-                        <h4 style="color:var(--color-warning);">1. 发散</h4>
-                        <p class="details">18 个 subagent 并发发散<br/>覆盖不同维度</p>
-                    </div>
-                    <div class="flow-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
-                    <div class="flow-step" style="flex:1.2;border-top:4px solid var(--color-primary);">
-                        <h4>2. 过滤</h4>
-                        <p class="details">meta-review<br/>重叠/冲突/证据不足分类<br/>删除伪问题</p>
-                    </div>
-                    <div class="flow-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
-                    <div class="flow-step" style="flex:1.2;border-top:4px solid var(--color-secondary);">
-                        <h4 style="color:var(--color-secondary);">3. 确认</h4>
-                        <p class="details">re-verification<br/>核对 live repo<br/>只保留仍成立的问题</p>
-                    </div>
+                <div style="display:flex;justify-content:center;margin:0.5rem 0;">
+                    <svg width="650" height="130" viewBox="0 0 650 130" xmlns="http://www.w3.org/2000/svg" font-family="'Inter',-apple-system,sans-serif">
+                        <defs>
+                            <marker id="arr4" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker>
+                            <filter id="cardShadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.1"/></filter>
+                        </defs>
+                        <rect width="100%" height="100%" fill="#f8fafc" rx="10"/>
+                        
+                        <!-- Step 1: Diverge -->
+                        <g transform="translate(100, 65)">
+                            <rect x="-80" y="-45" width="160" height="90" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" filter="url(#cardShadow)"/>
+                            <text x="0" y="-22" text-anchor="middle" fill="#92400e" font-size="14" font-weight="700">1. 发散</text>
+                            <text x="0" y="-3" text-anchor="middle" fill="#78350f" font-size="10">18 个 subagent</text>
+                            <text x="0" y="12" text-anchor="middle" fill="#78350f" font-size="10">并发发散</text>
+                            <text x="0" y="30" text-anchor="middle" fill="#a16207" font-size="9">覆盖不同维度</text>
+                        </g>
+                        
+                        <!-- Arrow 1-2 -->
+                        <path d="M 185 65 L 225 65" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arr4)"/>
+                        
+                        <!-- Step 2: Filter -->
+                        <g transform="translate(325, 65)">
+                            <rect x="-80" y="-45" width="160" height="90" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" filter="url(#cardShadow)"/>
+                            <text x="0" y="-22" text-anchor="middle" fill="#1e40af" font-size="14" font-weight="700">2. 过滤</text>
+                            <text x="0" y="-3" text-anchor="middle" fill="#1e3a8a" font-size="10">meta-review</text>
+                            <text x="0" y="12" text-anchor="middle" fill="#1e3a8a" font-size="10">重叠/冲突/证据不足分类</text>
+                            <text x="0" y="30" text-anchor="middle" fill="#3b82f6" font-size="9">删除伪问题</text>
+                        </g>
+                        
+                        <!-- Arrow 2-3 -->
+                        <path d="M 410 65 L 450 65" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arr4)"/>
+                        
+                        <!-- Step 3: Confirm -->
+                        <g transform="translate(550, 65)">
+                            <rect x="-80" y="-45" width="160" height="90" rx="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2" filter="url(#cardShadow)"/>
+                            <text x="0" y="-22" text-anchor="middle" fill="#166534" font-size="14" font-weight="700">3. 确认</text>
+                            <text x="0" y="-3" text-anchor="middle" fill="#15803d" font-size="10">re-verification</text>
+                            <text x="0" y="12" text-anchor="middle" fill="#15803d" font-size="10">核对 live repo</text>
+                            <text x="0" y="30" text-anchor="middle" fill="#22c55e" font-size="9">只保留仍成立的问题</text>
+                        </g>
+                    </svg>
                 </div>
-                <div class="highlight-box" style="margin-top:1.2rem;">
-                    <p><strong>实际数据：</strong>2026-04-17 全量审计 28 项初审判定中，经独立复核后 11 项被归为非问题，假阳性率约 39%。</p>
+                <div class="highlight-box" style="margin-top:0.5rem;">
+                    <p><strong>实际数据：</strong>2026-04-17 全量审计 28 项初审判定中，经独立复核后 11 项被归为非问题，<strong>假阳性率约 39%</strong>。</p>
                 </div>
                 <ul class="icon-list">
                     <li class="icon-bullet">
@@ -906,36 +1063,85 @@
             <!-- Slide 21: Complete Cycle -->
             <section class="slide">
                 <h2>闭环如何实际运转：一个完整周期</h2>
-                <div style="display:flex;justify-content:center;margin:0.5rem 0;">
-                    <svg width="700" height="320" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" font-family="'Inter',-apple-system,sans-serif">
+                <div style="display:flex;justify-content:center;margin:0.3rem 0;">
+                    <svg width="700" height="280" viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg" font-family="'Inter',-apple-system,sans-serif">
                         <defs>
-                            <marker id="arr2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#475569"/></marker>
+                            <marker id="arr3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker>
+                            <filter id="shadow2"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.1"/></filter>
                         </defs>
                         <rect width="100%" height="100%" fill="#f8fafc" rx="10"/>
-                        <g transform="translate(350,140)">
-                            <ellipse rx="260" ry="110" fill="none" stroke="#e5e7eb" stroke-width="2" stroke-dasharray="6 3"/>
-                            <g transform="translate(0,-110)"><rect x="-50" y="-16" width="100" height="32" rx="16" fill="#1e40af"/><text x="0" y="5" text-anchor="middle" fill="white" font-size="11" font-weight="600">1. 定义吸引子</text></g>
-                            <g transform="translate(260,0)"><rect x="-50" y="-16" width="100" height="32" rx="16" fill="#ea580c"/><text x="0" y="5" text-anchor="middle" fill="white" font-size="11" font-weight="600">2. AI 扩张</text></g>
-                            <g transform="translate(0,110)"><rect x="-55" y="-16" width="110" height="32" rx="16" fill="#2563eb"/><text x="0" y="5" text-anchor="middle" fill="white" font-size="11" font-weight="600">3-6. 实时+全局收敛</text></g>
-                            <g transform="translate(-260,0)"><rect x="-55" y="-16" width="110" height="32" rx="16" fill="#059669"/><text x="0" y="5" text-anchor="middle" fill="white" font-size="11" font-weight="600">7-10. 审计+更新</text></g>
-                            <path d="M 50,-110 Q 180,-80 210,-10" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arr2)"/>
-                            <path d="M 260,30 Q 230,100 55,110" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arr2)"/>
-                            <path d="M -55,110 Q -230,100 -260,30" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arr2)"/>
-                            <path d="M -260,-30 Q -230,-80 -50,-110" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arr2)"/>
+                        
+                        <!-- Central ellipse path -->
+                        <ellipse cx="350" cy="145" rx="280" ry="100" fill="none" stroke="#e2e8f0" stroke-width="3" stroke-dasharray="8 4"/>
+                        
+                        <!-- Step nodes around the ellipse -->
+                        <!-- 1. Define Attractor (top) -->
+                        <g transform="translate(350, 45)">
+                            <rect x="-55" y="-18" width="110" height="36" rx="18" fill="#1e40af" filter="url(#shadow2)"/>
+                            <text x="0" y="5" text-anchor="middle" fill="white" font-size="11" font-weight="600">① 定义吸引子</text>
                         </g>
+                        
+                        <!-- 2. AI Expand (top-right) -->
+                        <g transform="translate(550, 85)">
+                            <rect x="-50" y="-18" width="100" height="36" rx="18" fill="#ea580c" filter="url(#shadow2)"/>
+                            <text x="0" y="5" text-anchor="middle" fill="white" font-size="11" font-weight="600">② AI 扩张</text>
+                        </g>
+                        
+                        <!-- 3-4. Realtime Converge (right) -->
+                        <g transform="translate(620, 145)">
+                            <rect x="-55" y="-18" width="110" height="36" rx="18" fill="#2563eb" filter="url(#shadow2)"/>
+                            <text x="0" y="5" text-anchor="middle" fill="white" font-size="10" font-weight="600">③④ 实时+切片收敛</text>
+                        </g>
+                        
+                        <!-- 5. Memory (bottom-right) -->
+                        <g transform="translate(550, 205)">
+                            <rect x="-50" y="-18" width="100" height="36" rx="18" fill="#059669" filter="url(#shadow2)"/>
+                            <text x="0" y="5" text-anchor="middle" fill="white" font-size="11" font-weight="600">⑤ 记忆沉淀</text>
+                        </g>
+                        
+                        <!-- 6. Global Converge (bottom) -->
+                        <g transform="translate(350, 245)">
+                            <rect x="-55" y="-18" width="110" height="36" rx="18" fill="#2563eb" filter="url(#shadow2)"/>
+                            <text x="0" y="5" text-anchor="middle" fill="white" font-size="11" font-weight="600">⑥ 全局收敛</text>
+                        </g>
+                        
+                        <!-- 7-8. Audit & Closure (bottom-left) -->
+                        <g transform="translate(150, 205)">
+                            <rect x="-55" y="-18" width="110" height="36" rx="18" fill="#7c3aed" filter="url(#shadow2)"/>
+                            <text x="0" y="5" text-anchor="middle" fill="white" font-size="10" font-weight="600">⑦⑧ 审计+关闭判定</text>
+                        </g>
+                        
+                        <!-- 9-10. Update & Next (left) -->
+                        <g transform="translate(80, 145)">
+                            <rect x="-55" y="-18" width="110" height="36" rx="18" fill="#1e40af" filter="url(#shadow2)"/>
+                            <text x="0" y="5" text-anchor="middle" fill="white" font-size="10" font-weight="600">⑨⑩ 更新+下一轮</text>
+                        </g>
+                        
+                        <!-- Connecting arrows -->
+                        <path d="M 405 50 Q 480 55 500 70" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arr3)"/>
+                        <path d="M 595 100 Q 620 115 620 127" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arr3)"/>
+                        <path d="M 620 163 Q 620 180 595 190" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arr3)"/>
+                        <path d="M 500 210 Q 430 225 405 227" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arr3)"/>
+                        <path d="M 295 240 Q 220 230 205 210" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arr3)"/>
+                        <path d="M 105 187 Q 85 170 85 155" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arr3)"/>
+                        <path d="M 100 127 Q 130 80 295 50" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arr3)"/>
+                        
+                        <!-- Center label -->
+                        <text x="350" y="140" text-anchor="middle" fill="#64748b" font-size="10">持续循环</text>
+                        <text x="350" y="155" text-anchor="middle" fill="#94a3b8" font-size="9">扩张 → 收敛 → 更新</text>
                     </svg>
                 </div>
                 <div class="card-grid card-grid-2" style="margin-top:0.3rem;">
                     <div class="card">
                         <h4><i class="fa-solid fa-list-ol"></i> 完整周期（10 步）</h4>
-                        <p class="details" style="font-size:0.88rem;line-height:1.6;">① 定义吸引子 &rarr; ② AI 扩张 &rarr; ③ 实时收敛(lint/check) &rarr; ④ 切片收敛 &rarr; ⑤ 记忆沉淀(logs) &rarr; ⑥ 全局收敛(full repo verification) &rarr; ⑦ 审计收敛 &rarr; ⑧ 关闭判定(closure audit) &rarr; ⑨ 吸引子更新 &rarr; ⑩ 下一轮</p>
+                        <p class="details" style="font-size:0.85rem;line-height:1.5;">① 定义吸引子 → ② AI 扩张 → ③ 实时收敛(lint/check) → ④ 切片收敛 → ⑤ 记忆沉淀(logs) → ⑥ 全局收敛(full repo verification) → ⑦ 审计收敛 → ⑧ 关闭判定(closure audit) → ⑨ 吸引子更新 → ⑩ 下一轮</p>
                     </div>
                     <div class="card">
                         <h4><i class="fa-solid fa-star"></i> 典型实例</h4>
-                        <p class="details">编译优先+包边界吸引子 &rarr; AI 大量实现编译/动作/运行时逻辑 &rarr; 审计发现运行时包仍混有 compiler 责任 &rarr; 最终拆出 <code>flux-compiler</code> 和 <code>flux-action-core</code> &rarr; 三层职责固定为新基线</p>
+                        <p class="details" style="font-size:0.85rem;line-height:1.5;">编译优先+包边界吸引子 → AI 大量实现编译/动作/运行时逻辑 → 审计发现运行时包仍混有 compiler 责任 → 最终拆出 <code>flux-compiler</code> 和 <code>flux-action-core</code> → 三层职责固定为新基线</p>
                     </div>
                 </div>
-                <div class="golden-quote" style="margin-top:0.5rem;">
+                <div class="golden-quote" style="margin-top:0.3rem;">
                     这不是流程图，是系统的呼吸方式。
                 </div>
             </section>
@@ -1158,29 +1364,29 @@
 
             <!-- Q&A -->
             <section class="slide title-slide">
-                <h1>Q&amp;A</h1>
-                <p class="subtitle">问题与讨论</p>
+                <h1 style="font-size:3.5rem;">Q&amp;A</h1>
+                <p class="subtitle" style="font-size:1.5rem;">问题与讨论</p>
 
-                <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 3rem;">
+                <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 3rem;">
                     <div style="text-align: center;">
-                        <p style="font-weight: 600; margin-bottom: 1rem;">微信公众号</p>
-                        <svg width="250" height="250" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" shape-rendering="crispEdges" style="width: 250px; height: 250px; border-radius: 8px; border: 1px solid var(--color-border);">
+                        <p style="font-weight: 600; margin-bottom: 0.8rem; color: var(--color-text-dark);">微信公众号</p>
+                        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" shape-rendering="crispEdges" style="width: 200px; height: 200px; border-radius: 8px; border: 1px solid var(--color-border); box-shadow: var(--shadow-md);">
                             <path fill="#ffffff" d="M0 0h41v41H0z"/>
                             <path stroke="#000000" d="M4 4.5h7m3 0h2m2 0h1m4 0h1m2 0h3m1 0h7M4 5.5h1m5 0h1m1 0h3m1 0h2m1 0h3m1 0h3m1 0h1m2 0h1m5 0h1M4 6.5h1m1 0h3m1 0h1m4 0h2m2 0h2m2 0h1m3 0h1m2 0h1m1 0h3m1 0h1M4 7.5h1m1 0h3m1 0h1m3 0h4m1 0h1m1 0h1m3 0h1m4 0h1m1 0h3m1 0h1M4 8.5h1m1 0h3m1 0h1m1 0h1m1 0h4m7 0h1m4 0h1m1 0h3m1 0h1M4 9.5h1m5 0h1m5 0h2m8 0h1m3 0h1m5 0h1M4 10.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M13 11.5h2m1 0h2m2 0h2m2 0h2m2 0h1M4 12.5h1m1 0h1m1 0h1m1 0h1m2 0h1m1 0h1m3 0h7m1 0h2m3 0h1m2 0h1M4 13.5h1m1 0h2m1 0h1m1 0h5m3 0h2m5 0h1m1 0h1m1 0h1m5 0h1M6 14.5h1m3 0h1m1 0h2m2 0h2m3 0h1m3 0h1m3 0h3m2 0h3M6 15.5h2m1 0h1m4 0h1m4 0h2m2 0h2m2 0h1m1 0h2m1 0h1m2 0h2M5 16.5h2m1 0h3m4 0h1m3 0h1m3 0h1m3 0h2m1 0h1m2 0h1m1 0h1M4 17.5h4m5 0h2m1 0h2m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h1M4 18.5h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m4 0h1m1 0h4m3 0h2M7 19.5h2m3 0h3m3 0h2m1 0h3m1 0h2m1 0h1m1 0h1m4 0h1M6 20.5h2m1 0h2m1 0h2m6 0h1m3 0h2m1 0h4M4 21.5h1m1 0h2m1 0h1m4 0h2m5 0h1m2 0h3m1 0h4m3 0h2M8 22.5h3m2 0h3m1 0h1m4 0h1m3 0h1m1 0h1m2 0h1m2 0h3M5 23.5h5m2 0h2m1 0h4m2 0h2m1 0h4m4 0h1m2 0h2M6 24.5h7m2 0h2m1 0h3m1 0h3m1 0h3m1 0h4m1 0h1M6 25.5h4m1 0h3m3 0h4m1 0h5m1 0h1m1 0h1m2 0h4M4 26.5h1m2 0h1m2 0h2m1 0h1m2 0h6m1 0h2m1 0h1m2 0h3m2 0h3M5 27.5h1m5 0h1m5 0h1m2 0h2m2 0h3m9 0h1M4 28.5h1m2 0h1m1 0h5m4 0h3m2 0h4m1 0h6M12 29.5h1m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m3 0h1m3 0h2m1 0h2M4 30.5h7m3 0h1m5 0h2m3 0h1m1 0h2m1 0h1m1 0h1m1 0h3M4 31.5h1m5 0h1m2 0h2m1 0h2m1 0h2m7 0h1m3 0h2M4 32.5h1m1 0h3m1 0h1m1 0h6m1 0h1m8 0h6m1 0h2M4 33.5h1m1 0h3m1 0h1m5 0h1m1 0h2m1 0h1m1 0h1m7 0h3m1 0h2M4 34.5h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h2m2 0h2m2 0h1m6 0h1m3 0h1M4 35.5h1m5 0h1m3 0h1m1 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h2m2 0h1M4 36.5h7m1 0h3m1 0h2m2 0h1m3 0h2m1 0h2m1 0h1m2 0h4"/>
                         </svg>
                     </div>
                     <div style="text-align: center;">
-                        <p style="font-weight: 600; margin-bottom: 1rem;">微信群</p>
-                        <svg width="250" height="250" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" shape-rendering="crispEdges" style="width: 250px; height: 250px; border-radius: 8px; border: 1px solid var(--color-border);">
+                        <p style="font-weight: 600; margin-bottom: 0.8rem; color: var(--color-text-dark);">微信群</p>
+                        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" shape-rendering="crispEdges" style="width: 200px; height: 200px; border-radius: 8px; border: 1px solid var(--color-border); box-shadow: var(--shadow-md);">
                             <path fill="#ffffff" d="M0 0h41v41H0z"/>
                             <path stroke="#000000" d="M4 4.5h7m3 0h1m2 0h1m1 0h1m1 0h2m2 0h3m2 0h7M4 5.5h1m5 0h1m1 0h1m2 0h2m1 0h3m1 0h3m1 0h3m1 0h1m5 0h1M4 6.5h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h2m2 0h3m1 0h4m1 0h1m1 0h3m1 0h1M4 7.5h1m1 0h3m1 0h1m3 0h2m1 0h6m1 0h4m2 0h1m1 0h3m1 0h1M4 8.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h1M4 9.5h1m5 0h1m5 0h2m1 0h7m1 0h2m1 0h1m5 0h1M4 10.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M13 11.5h2m1 0h2m1 0h1m1 0h3m1 0h1m1 0h1M4 12.5h1m1 0h1m1 0h1m1 0h1m3 0h2m1 0h1m2 0h1m3 0h2m1 0h2m3 0h1m2 0h1M4 13.5h2m5 0h2m1 0h4m2 0h2m3 0h1m2 0h4m3 0h1M6 14.5h1m2 0h3m2 0h1m1 0h1m1 0h1m3 0h1m3 0h1m3 0h2m2 0h3M6 15.5h1m1 0h2m4 0h2m1 0h2m1 0h10m2 0h1M4 16.5h3m1 0h3m4 0h1m2 0h3m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1M6 17.5h2m3 0h3m1 0h1m1 0h12m1 0h1m3 0h1m1 0h1M8 18.5h1m1 0h2m2 0h3m2 0h3m1 0h2m1 0h1m2 0h1m2 0h2m1 0h2M4 19.5h1m2 0h2m2 0h1m1 0h2m1 0h1m3 0h2m2 0h3m3 0h1m4 0h1M5 20.5h3m1 0h3m2 0h1m2 0h1m1 0h3m1 0h3m1 0h4m2 0h1M4 21.5h4m1 0h1m3 0h5m1 0h2m3 0h1m1 0h1m1 0h1m1 0h2m3 0h1M4 22.5h1m3 0h1m1 0h1m2 0h3m4 0h2m3 0h1m4 0h1m3 0h3M5 23.5h1m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m4 0h1m3 0h1m2 0h2M4 24.5h1m1 0h2m1 0h2m4 0h4m4 0h1m4 0h6M6 25.5h1m1 0h1m2 0h1m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h3m5 0h2M4 26.5h1m3 0h4m2 0h1m1 0h1m1 0h1m9 0h6m1 0h2M5 27.5h2m4 0h1m2 0h4m1 0h1m1 0h1m1 0h1m1 0h1m6 0h1m2 0h1M4 28.5h1m1 0h1m2 0h2m1 0h3m1 0h3m2 0h1m2 0h3m1 0h5m1 0h2M12 29.5h3m5 0h3m1 0h2m2 0h1m3 0h2m1 0h2M4 30.5h7m4 0h1m4 0h1m1 0h1m3 0h3m1 0h1m1 0h1m1 0h3M4 31.5h1m5 0h1m3 0h5m1 0h3m2 0h2m1 0h1m3 0h1m2 0h1M4 32.5h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h4m1 0h1m1 0h1m1 0h1m1 0h6M4 33.5h1m1 0h3m1 0h1m5 0h1m2 0h6m1 0h4m2 0h1m1 0h3M4 34.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h3m2 0h3m1 0h1m4 0h1m3 0h1M4 35.5h1m5 0h1m5 0h1m1 0h1m1 0h3m1 0h2m1 0h4m1 0h1m2 0h1M4 36.5h7m1 0h1m1 0h1m2 0h4m2 0h3m1 0h4m1 0h1m2 0h2"/>
                         </svg>
                     </div>
                 </div>
 
-                <div style="margin-top: 2rem; text-align: center; font-size: 1.2rem;">
-                    <p style="font-weight: 600; margin-bottom: 1rem;">项目地址</p>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <p style="font-weight: 600; margin-bottom: 0.8rem; color: var(--color-text-dark);">项目地址</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 1.1rem;">
                         <div>GitHub: <a style="color: var(--color-primary); text-decoration:none;" href="https://github.com/entropy-cloud/nop-chaos-flux">https://github.com/entropy-cloud/nop-chaos-flux</a></div>
                         <div>Gitee: <a style="color: var(--color-primary); text-decoration:none;" href="https://gitee.com/canonical-entropy/nop-chaos-flux">https://gitee.com/canonical-entropy/nop-chaos-flux</a></div>
                     </div>
@@ -1190,10 +1396,10 @@
         </div>
 
         <div class="controls">
-            <button class="btn" id="home-btn" title="First Slide"><i class="fa-solid fa-home"></i></button>
-            <button class="btn" id="prev-btn" title="Previous"><i class="fa-solid fa-arrow-left"></i></button>
-            <button class="btn" id="next-btn" title="Next"><i class="fa-solid fa-arrow-right"></i></button>
-            <button class="btn" id="fullscreen-btn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="btn" id="home-btn" title="First Slide (Home)"><i class="fa-solid fa-home"></i></button>
+            <button class="btn" id="prev-btn" title="Previous (←)"><i class="fa-solid fa-arrow-left"></i></button>
+            <button class="btn" id="next-btn" title="Next (→ / Space)"><i class="fa-solid fa-arrow-right"></i></button>
+            <button class="btn" id="fullscreen-btn" title="Fullscreen (F)"><i class="fa-solid fa-expand"></i></button>
             <button class="btn" id="print-btn" title="Print"><i class="fa-solid fa-print"></i></button>
             <button class="btn" id="pdf-btn" title="Export to PDF"><i class="fa-solid fa-file-pdf"></i></button>
         </div>
@@ -1212,9 +1418,19 @@
         const slideCounter = document.getElementById('slide-counter');
         const progressBar = document.getElementById('progress-bar');
         const timerDisplay = document.getElementById('timer-display');
+        const keyboardHint = document.getElementById('keyboard-hint');
 
         let currentSlide = 0;
         const totalSlides = allSlides.length;
+        let hintTimeout = null;
+
+        function showKeyboardHint() {
+            if (keyboardHint) {
+                keyboardHint.classList.add('show');
+                clearTimeout(hintTimeout);
+                hintTimeout = setTimeout(() => keyboardHint.classList.remove('show'), 3000);
+            }
+        }
 
         function showSlide(index, skipHashUpdate = false) {
             if (index < 0 || index >= totalSlides) return;
@@ -1309,6 +1525,8 @@
             if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
             if (e.key === 'Home') { e.preventDefault(); goToFirstSlide(); }
             if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
+            if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFullscreen(); }
+            if (e.key === '?' || e.key === 'h' || e.key === 'H') { e.preventDefault(); showKeyboardHint(); }
         });
 
         let touchStartX = 0;
