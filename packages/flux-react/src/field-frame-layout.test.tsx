@@ -18,18 +18,18 @@ function createMockForm(overrides?: Record<string, unknown>) {
 }
 
 describe('FieldFrame — form layout context', () => {
-  it('uses nop-field--label-top by default (normal mode, no context)', () => {
+  it('uses data-label-align="top" by default (normal mode, no context)', () => {
     const { container } = render(
       <FormContext.Provider value={createMockForm()}>
         <FieldFrame name="f1" label="Name">input</FieldFrame>
       </FormContext.Provider>
     );
     const field = container.querySelector('.nop-field');
-    expect(field?.className).toContain('nop-field--label-top');
+    expect(field?.getAttribute('data-label-align')).toBe('top');
     expect(field?.getAttribute('data-field-mode')).toBe('normal');
   });
 
-  it('uses nop-field--label-left when form context sets horizontal mode', () => {
+  it('uses data-label-align="left" when form context sets horizontal mode', () => {
     const { container } = render(
       <FormContext.Provider value={createMockForm()}>
         <FormLayoutContext.Provider value={{ mode: 'horizontal' }}>
@@ -38,7 +38,7 @@ describe('FieldFrame — form layout context', () => {
       </FormContext.Provider>
     );
     const field = container.querySelector('.nop-field');
-    expect(field?.className).toContain('nop-field--label-left');
+    expect(field?.getAttribute('data-label-align')).toBe('left');
     expect(field?.getAttribute('data-field-mode')).toBe('horizontal');
   });
 
@@ -51,7 +51,7 @@ describe('FieldFrame — form layout context', () => {
       </FormContext.Provider>
     );
     const field = container.querySelector('.nop-field');
-    expect(field?.className).toContain('nop-field--label-top');
+    expect(field?.getAttribute('data-label-align')).toBe('top');
   });
 
   it('applies labelWidth as inline style on the label element', () => {

@@ -106,13 +106,13 @@ File: `packages/flux-react/src/default-spacing.css`
 | Selector | Rules |
 |----------|-------|
 | `.nop-field` | `display: flex; flex-direction: column; gap: var(--space-field-internal)` |
-| `.nop-field--label-top` | `flex-direction: column; gap: var(--space-field-label-gap)` |
-| `.nop-field--label-left` | `flex-direction: row; align-items: flex-start; gap: var(--space-field-label-h-gap)` |
+| `.nop-field[data-label-align="top"]` | `flex-direction: column; gap: var(--space-field-label-gap)` |
+| `.nop-field[data-label-align="left"]` | `flex-direction: row; align-items: flex-start; gap: var(--space-field-label-h-gap)` |
 | `.nop-field > [data-slot="field-control"]` | `display: flex; flex-direction: column; gap: var(--space-field-internal)` |
 
 ### Field label/error/hint styling
 
-Also in `default-spacing.css`: font-size, font-weight, color, and layout rules for `[data-slot="field-label"]`, `[data-slot="field-required"]`, `[data-slot="field-error"]`, `[data-slot="field-hint"]`, `[data-slot="field-description"]`, `[data-slot="field-remark"]`, `[data-slot="field-label-remark"]`, and `.nop-field--label-left` label/control layout.
+Also in `default-spacing.css`: font-size, font-weight, color, and layout rules for `[data-slot="field-label"]`, `[data-slot="field-required"]`, `[data-slot="field-error"]`, `[data-slot="field-hint"]`, `[data-slot="field-description"]`, `[data-slot="field-remark"]`, `[data-slot="field-label-remark"]`, and `.nop-field[data-label-align="left"]` label/control layout.
 
 ## Container `data-flex` Attribute
 
