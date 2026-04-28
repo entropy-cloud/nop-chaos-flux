@@ -18,6 +18,8 @@ import {
   parseNamespacedAction
 } from './action-parsing';
 
+const XUI_ACTIONS_NAMESPACE = '__xui_actions__';
+
 export function finishAction(
   ctx: ActionDispatcherContext,
   actionPayload: ActionMonitorPayload,
@@ -121,6 +123,45 @@ export async function runNamespacedAction(
   return finishAction(
     internals,
     { ...actionPayload, dispatchMode: 'namespace', namespace: parsed.namespace, method: parsed.method },
+    startedAt,
+    {
+      ...result,
+      sourceScopeId,
+      providerKind
+    }
+  );
+}
+
+export async function runNamedAction(
+  action: CompiledActionNode,
+  ctx: ActionContext,
+  startedAt: number,
+  actionPayload: ActionMonitorPayload,
+  internals: ActionDispatcherContext
+): Promise<ActionResult | undefined> {
+  if (action.action.indexOf(':') >= 0) {
+    return undefined;
+  }
+
+  const namespacedName = `${XUI_ACTIONS_NAMESPACE}:${action.action}`;
+  const resolved = ctx.actionScope?.resolve(namespacedName);
+  if (!resolved) {
+    return undefined;
+  }
+
+  const payload = evaluateActionArgs(action, ctx, internals.evaluator);
+  const sourceScopeId = resolved.sourceScopeId;
+  const providerKind = resolved.provider.kind ?? 'import';
+  const invocation: NamespacedActionInvocation = {
+    actionName: namespacedName,
+    namespace: XUI_ACTIONS_NAMESPACE,
+    method: action.action,
+    payload
+  };
+  const result = normalizeActionResult(await internals.adapter.invokeNamespacedAction(invocation, ctx));
+  return finishAction(
+    internals,
+    { ...actionPayload, dispatchMode: 'namespace', namespace: XUI_ACTIONS_NAMESPACE, method: action.action },
     startedAt,
     {
       ...result,

@@ -28,7 +28,7 @@ import type { ActionDispatcherConfig, ActionDispatcherContext } from './types';
 import { isRequestBackedAction, normalizeCompiledActionProgram, applyActionControl } from './program-utils';
 import { finishAction } from './action-runners';
 import { runBuiltInAction } from './built-in-actions';
-import { runComponentAction, runNamespacedAction } from './action-runners';
+import { runComponentAction, runNamespacedAction, runNamedAction } from './action-runners';
 
 async function runParallelActions(
   ctx: ActionDispatcherContext,
@@ -103,6 +103,11 @@ async function runSingleAction(
     const componentResult = await runComponentAction(processedAction, activeCtx, startedAt, actionPayload, ctx);
     if (componentResult) {
       return componentResult;
+    }
+
+    const namedResult = await runNamedAction(processedAction, activeCtx, startedAt, actionPayload, ctx);
+    if (namedResult) {
+      return namedResult;
     }
 
     const namespacedResult = await runNamespacedAction(processedAction, activeCtx, startedAt, actionPayload, ctx);
