@@ -128,10 +128,10 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     <section
       className={cn(
         'nop-tabs',
-        tabsMode ? `nop-tabs--${tabsMode}` : undefined,
-        isSidebarRight ? 'nop-tabs--sidebar-right' : undefined,
         props.meta.className
       )}
+      data-tabs-mode={tabsMode || undefined}
+      data-tabs-sidebar-right={isSidebarRight ? '' : undefined}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >
