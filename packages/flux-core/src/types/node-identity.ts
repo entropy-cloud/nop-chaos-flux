@@ -162,6 +162,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
    * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
    */
   compiledReactions?: readonly CompiledReaction[];
+  namedActionPlans?: Readonly<Record<string, import('./actions').CompiledActionProgram>>;
 }
 
 export interface RepeatedTemplate {

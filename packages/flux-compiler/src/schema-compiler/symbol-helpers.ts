@@ -158,3 +158,17 @@ export function pushRegionParamSymbols(symbolTable: CompileSymbolTable, params: 
     }
   });
 }
+
+export function pushNamedActionSymbols(symbolTable: CompileSymbolTable, names: readonly string[], id: string): CompileSymbolTable {
+  if (names.length === 0) {
+    return symbolTable;
+  }
+
+  return symbolTable.push({
+    id,
+    kind: 'xui-actions',
+    symbols: Object.fromEntries(
+      names.map(name => [name, { name, kind: 'xui-action-definition' as const }])
+    )
+  });
+}

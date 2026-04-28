@@ -8,7 +8,8 @@ export type CompileSymbolKind =
   | 'import-alias'
   | 'injected-local'
   | 'slot-root'
-  | 'ambient';
+  | 'ambient'
+  | 'xui-action-definition';
 
 export interface SymbolInfo {
   name: string;
@@ -41,7 +42,7 @@ export interface PreparedImportSpec {
 
 export interface SymbolFrame {
   id: string;
-  kind: 'root' | 'imports' | 'region' | 'owner';
+  kind: 'root' | 'imports' | 'region' | 'owner' | 'xui-actions';
   symbols: Readonly<Record<string, SymbolInfo>>;
 }
 

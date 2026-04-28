@@ -41,7 +41,7 @@ import {
   schemaPathToJsonPointer,
   type SchemaCompilerDiagnosticsContext
 } from './schema-compiler/diagnostics';
-import { normalizeImportSpecKey, pushImportSymbols, pushPreparedImportSymbols, pushInjectedLocalSymbols, pushRegionParamSymbols } from './schema-compiler/symbol-helpers';
+import { normalizeImportSpecKey, pushImportSymbols, pushPreparedImportSymbols, pushInjectedLocalSymbols, pushRegionParamSymbols, pushNamedActionSymbols } from './schema-compiler/symbol-helpers';
 import { buildWrapProvidersClosure, computeStaticAnalysis } from './schema-compiler/static-analysis';
 import { compileActions } from './action-compiler';
 import { compileDataSource } from './source-compiler';
@@ -161,6 +161,16 @@ export function createSchemaCompiler(input: {
     symbolTable = options.schemaUrl
       ? pushPreparedImportSymbols(symbolTable, nodeImports, options.preparedImports, options.schemaUrl, `${path}:imports`)
       : pushImportSymbols(symbolTable, nodeImports, `${path}:imports`);
+
+    const rawXuiActions = typeof schema['xui:actions'] === 'object'
+      && schema['xui:actions'] !== null
+      && !Array.isArray(schema['xui:actions'])
+      ? schema['xui:actions'] as Record<string, ActionSchema>
+      : undefined;
+    const xuiActionNames = rawXuiActions ? Object.keys(rawXuiActions) : [];
+    if (xuiActionNames.length > 0) {
+      symbolTable = pushNamedActionSymbols(symbolTable, xuiActionNames, `${path}:xui-actions`);
+    }
 
     for (const key of Object.keys(schema)) {
       if (fieldInspection.skippedPropKeys.has(key) || isNamespacedSchemaKey(key)) {
@@ -300,6 +310,29 @@ export function createSchemaCompiler(input: {
 
     const providerWrap = buildWrapProvidersClosure(providerPlan);
 
+    const namedActionPlans: Record<string, CompiledActionProgram> | undefined = rawXuiActions
+      ? Object.fromEntries(
+          Object.entries(rawXuiActions).map(([name, actionSchema]) => {
+            if (typeof actionSchema !== 'object' || actionSchema === null) {
+              diagnostics.emit({
+                code: 'invalid-namespace-property' as import('@nop-chaos/flux-core').SchemaDiagnosticCode,
+                path: `${path}.xui:actions.${name}`,
+                message: `xui:actions entry "${name}" must be an ActionSchema object.`,
+                severity: 'error'
+              });
+              return [name, compileActions({ action: 'noop' }, expressionCompiler, compileOptions)];
+            }
+            return [
+              name,
+              compileActions(actionSchema, expressionCompiler, {
+                ...compileOptions,
+                basePath: `${path}.xui:actions.${name}`,
+              })
+            ];
+          })
+        )
+      : undefined;
+
     const node: TemplateNode = {
       templateNodeId: 0,
       id: createNodeId(path, schema),
@@ -333,7 +366,8 @@ export function createSchemaCompiler(input: {
             )
           : undefined,
       sourcePropKeys: Array.from(sourcePropKeys).sort(),
-      sourceStatePropKeys
+      sourceStatePropKeys,
+      ...(namedActionPlans && Object.keys(namedActionPlans).length > 0 ? { namedActionPlans } : {})
     };
 
     node.staticAnalysis = computeStaticAnalysis(node, schema);

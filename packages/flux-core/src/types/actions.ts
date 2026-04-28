@@ -140,6 +140,8 @@ export interface ActionSchema extends ActionShapeFields {
   action: string;
 }
 
+export type XuiActionDefinitions = Record<string, ActionSchema>;
+
 export interface ActionResult {
   ok: boolean;
   cancelled?: boolean;

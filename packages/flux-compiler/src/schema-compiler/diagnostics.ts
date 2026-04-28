@@ -8,7 +8,7 @@ import type {
   SchemaDiagnosticSourceLocation,
   SchemaNamespaceValidator
 } from '@nop-chaos/flux-core';
-import { parsePath } from '@nop-chaos/flux-core';
+import { BUILT_IN_ACTION_NAMES, parsePath } from '@nop-chaos/flux-core';
 
 export type SchemaCompilerDiagnosticsMode = 'compile' | 'validate';
 
@@ -114,6 +114,63 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
               });
             }
           });
+          return;
+        }
+
+        if (context.key === 'xui:actions') {
+          if (typeof context.value !== 'object' || context.value === null || Array.isArray(context.value)) {
+            context.add({
+              code: 'invalid-namespace-property',
+              message: 'xui:actions must be a non-null object mapping names to ActionSchema.',
+              source: 'namespace'
+            });
+            return;
+          }
+
+          const entries = Object.entries(context.value as Record<string, unknown>);
+          for (const [name, val] of entries) {
+            const entryPath = appendJsonPointer(context.path, name);
+
+            if (name.includes(':')) {
+              context.add({
+                code: 'invalid-namespace-property',
+                message: `xui:actions name "${name}" must not contain a colon (:).`,
+                path: entryPath,
+                severity: 'error',
+                source: 'namespace'
+              });
+            }
+
+            if (BUILT_IN_ACTION_NAMES.has(name)) {
+              context.add({
+                code: 'invalid-namespace-property',
+                message: `xui:actions name "${name}" conflicts with a built-in action name.`,
+                path: entryPath,
+                severity: 'warning',
+                source: 'namespace'
+              });
+            }
+
+            if (typeof val !== 'object' || val === null || Array.isArray(val)) {
+              context.add({
+                code: 'invalid-namespace-property',
+                message: `xui:actions entry "${name}" must be an ActionSchema object.`,
+                path: entryPath,
+                source: 'namespace'
+              });
+            } else {
+              const record = val as Record<string, unknown>;
+              if (typeof record.action === 'string' && record.action === name) {
+                context.add({
+                  code: 'invalid-namespace-property',
+                  message: `xui:actions entry "${name}" directly references itself, which would cause infinite recursion at runtime.`,
+                  path: entryPath,
+                  severity: 'warning',
+                  source: 'namespace'
+                });
+              }
+            }
+          }
           return;
         }
 
