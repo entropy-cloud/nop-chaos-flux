@@ -1,6 +1,6 @@
 # 149 Deep Audit Remediation Plan
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-04-28
 > Source: `docs/analysis/2026-04-27-deep-audit-full/summary.md` + 全部 18 份维度详细报告 (18-dimension deep audit, 38 sub-agents + 3 review sub-agents)
 > Related: None
@@ -74,7 +74,7 @@ WS2, WS3, WS4, WS6 各自独立 [并行]
 
 ### Workstream 1 - variant-field FieldFrame 属性补全
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx`
 
 **取值来源**（参考 `node-frame-wrapper.tsx:24-51`）：
@@ -109,7 +109,7 @@ Exit Criteria:
 
 ### Workstream 2 - BEM `--` 修饰符清除
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/field-frame.tsx`, `packages/flux-react/src/default-spacing.css`, `packages/flux-react/src/__tests__/field-frame-layout.test.tsx`, `packages/flux-renderers-basic/src/tabs.tsx`
 
 **完整替换清单**：
@@ -140,7 +140,7 @@ Exit Criteria:
 
 ### Workstream 3 - schema-compiler 异常可观测性
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-core/src/schema-diagnostics/index.ts`
 
 **技术背景**：
@@ -164,7 +164,7 @@ Exit Criteria:
 
 ### Workstream 4 - 文档路径修正
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/flux-runtime-module-boundaries.md`
 
 - [ ] 将第 181 行 `packages/flux-action-core/src/utils/debounce.ts` 修正为 `packages/flux-core/src/utils/debounce.ts`
@@ -179,7 +179,7 @@ Exit Criteria:
 
 ### Workstream 5 - 异步操作卸载保护
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx`, `packages/flux-renderers-form-advanced/src/detail-view/detail-field.tsx`
 
 **前置条件**：WS1 完成后再执行（共改 variant-field.tsx）
@@ -206,7 +206,7 @@ Exit Criteria:
 
 ### Workstream 6 - 测试文件拆分
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/composite-field/object-field.test.tsx`, `packages/nop-debugger/src/controller-inspect.test.ts`
 
 - [ ] object-field.test.tsx (755 行): 按领域拆分为 2-3 个文件（如渲染测试、验证测试、嵌套/联动测试）
@@ -236,12 +236,19 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: (完成后填写)
+Status Note: All 6 workstreams completed successfully. P1 fixed, BEM cleanup done, compiler observability added, doc path corrected, async unmount protection added, test files split.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent:
+- Reviewer / Agent: opencode (glm-5.1)
 - Evidence:
+  - WS1: variant-field.tsx now passes all 7 BoundFieldSchemaBase attributes to FieldFrame
+  - WS2: grep confirms zero `nop-field--` or `nop-tabs--` in source/tests; data attributes used instead
+  - WS3: `unhandled-compilation-error` added to SchemaDiagnosticCode; validateSchemaInput catch block emits diagnostic
+  - WS4: flux-runtime-module-boundaries.md debounce path corrected to flux-core with re-export note
+  - WS5: mountedRef stale-check added to variant-field (useEffect) and detail-field (handleOpen/handleConfirm)
+  - WS6: object-field.test.tsx split into 3 files (<320 lines each); controller-inspect.test.ts split into 2 files (<450 lines each); test counts preserved
+  - `pnpm typecheck` ✓, `pnpm build` ✓, `pnpm lint` ✓, `pnpm test` ✓, `pnpm check:oversized-code-files` 0 errors
 
 Follow-up:
 
