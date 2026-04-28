@@ -301,9 +301,9 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
       />
     );
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Platform' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Runtime' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Platform' }));
+    fireEvent.click(document.querySelector('[role="checkbox"][aria-label="Platform"]')!);
+    fireEvent.click(document.querySelector('[role="checkbox"][aria-label="Runtime"]')!);
+    fireEvent.click(document.querySelector('[role="checkbox"][aria-label="Platform"]')!);
 
     fireEvent.click(screen.getByText('Submit'));
     await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));

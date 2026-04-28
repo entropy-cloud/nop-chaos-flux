@@ -57,31 +57,48 @@ function TreeOptionNode(props: {
 
   return (
     <div data-slot="tree-option-node" data-depth={props.option.depth}>
-      <div className="flex items-center gap-1" style={{ paddingInlineStart: `${props.option.depth * 16}px` }}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={expanded ? 'Collapse node' : 'Expand node'}
-          disabled={props.disabled}
-          onClick={() => setExpanded((prev) => !prev)}
-          className={cn(hasChildren ? '' : 'invisible')}
+      <div
+        className={cn(
+          'flex w-full items-center rounded-md py-1.5 pr-2 text-sm',
+          props.disabled ? 'opacity-50' : 'cursor-pointer',
+          checked ? 'bg-muted' : 'hover:bg-muted'
+        )}
+        style={{ paddingInlineStart: `${props.option.depth * 16 + 8}px` }}
+        role="treeitem"
+        aria-selected={checked}
+        tabIndex={props.disabled ? -1 : 0}
+        onClick={() => !props.disabled && props.onChange(toggleTreeSelection(props.value, props.option.value, props.multiple))}
+        onKeyDown={(e) => {
+          if (props.disabled) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            props.onChange(toggleTreeSelection(props.value, props.option.value, props.multiple));
+          }
+          if (e.key === 'ArrowRight' && hasChildren) { e.preventDefault(); setExpanded(true); }
+          if (e.key === 'ArrowLeft' && hasChildren) { e.preventDefault(); setExpanded(false); }
+        }}
+      >
+        <span
+          className={cn(
+            'inline-flex size-5 shrink-0 items-center justify-center rounded-sm',
+            hasChildren ? 'cursor-pointer hover:bg-accent' : '',
+            !hasChildren ? 'invisible' : ''
+          )}
+          aria-label={hasChildren ? (expanded ? 'Collapse node' : 'Expand node') : undefined}
+          role={hasChildren ? 'button' : undefined}
+          tabIndex={hasChildren ? 0 : undefined}
+          onClick={(e) => { e.stopPropagation(); setExpanded((prev) => !prev); }}
         >
           <ChevronRightIcon className={cn('size-3.5 transition-transform', expanded ? 'rotate-90' : '')} />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn(
-            'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted',
-            checked ? 'bg-muted' : ''
-          )}
-          disabled={props.disabled}
-          onClick={() => props.onChange(toggleTreeSelection(props.value, props.option.value, props.multiple))}
-        >
-          {props.multiple ? <Checkbox checked={checked} aria-label={props.option.label} /> : null}
-          <span className="truncate">{props.showPathLabel ? props.option.pathLabel : props.option.label}</span>
-        </Button>
+        </span>
+        {props.multiple ? (
+          <Checkbox
+            checked={checked}
+            aria-label={props.option.label}
+            className="pointer-events-none ml-1.5 mr-1.5 shrink-0"
+          />
+        ) : null}
+        <span className="min-w-0 truncate pl-1">{props.showPathLabel ? props.option.pathLabel : props.option.label}</span>
       </div>
       {hasChildren && expanded
         ? props.option.children.map((child) => (

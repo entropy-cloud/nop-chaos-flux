@@ -197,7 +197,7 @@ describe('formRendererDefinitions - tree controls, checkbox values, and scope de
       />
     );
 
-    const inputTreeField = screen.getByRole('checkbox', { name: 'Runtime' }).closest('.nop-field');
+    const inputTreeField = document.querySelector('[role="checkbox"][aria-label="Runtime"]')?.closest('.nop-field');
     expect(inputTreeField).toBeTruthy();
     expect(inputTreeField?.querySelector('[data-slot="field-label"]')?.textContent).toContain('Categories');
     expect(inputTreeField?.querySelector('[data-slot="input-tree-control"]')).toBeTruthy();

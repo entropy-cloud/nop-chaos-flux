@@ -38,7 +38,7 @@ describe('tree controls source state and picker branches', () => {
 
     expect(await screen.findByText('Loading...')).toBeTruthy();
     expect((screen.getByPlaceholderText('Search tree options') as HTMLInputElement).disabled).toBe(true);
-    expect((screen.getByRole('button', { name: 'Collapse node' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('treeitem', { name: 'Runtime' }).tabIndex).toBe(-1);
   });
 
   it('renders object and fallback source errors for input-tree and tree-select', async () => {
