@@ -24,6 +24,8 @@ export { decorateRendererEnv } from './utils/renderer-env';
 export { isReportedImportError, markImportErrorReported, reportImportFailure } from './utils/import-failure';
 export { reportRuntimeHostIssue } from './utils/runtime-host-reporting';
 
+export { createNamedActionProvider } from './named-action-provider';
+
 export type { PathBindingContext, PathBindingService } from './utils/path-binding';
 export { createPathBinding, projectBooleanMap, projectFieldStates } from './utils/path-binding';
 export type { RendererEnvDecoratorHooks } from './utils/renderer-env';
