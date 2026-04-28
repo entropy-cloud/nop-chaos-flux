@@ -14,6 +14,22 @@ export interface FieldRemarkProps {
   trigger?: ('click' | 'hover' | 'focus')[];
 }
 
+export interface FieldRemarkSchemaLike {
+  icon?: string;
+  content: string;
+  placement?: 'top' | 'right' | 'bottom' | 'left';
+  trigger?: ('click' | 'hover' | 'focus')[];
+}
+
+export function toFieldRemarkProps(schema: FieldRemarkSchemaLike): FieldRemarkProps {
+  return {
+    icon: schema.icon,
+    content: schema.content,
+    placement: schema.placement,
+    trigger: schema.trigger
+  };
+}
+
 export interface FieldFrameProps {
   name?: string;
   label?: ReactNode;
@@ -113,9 +129,9 @@ export function FieldFrame(props: FieldFrameProps) {
       {...rootProps}
       className={cn(
         'nop-field',
-        isLabelTop ? 'nop-field--label-top' : 'nop-field--label-left',
         className
       )}
+      data-label-align={isLabelTop ? 'top' : 'left'}
       data-testid={testid || undefined}
       data-cid={cid != null ? cid : undefined}
       data-field-visited={fieldState.visited ? '' : undefined}

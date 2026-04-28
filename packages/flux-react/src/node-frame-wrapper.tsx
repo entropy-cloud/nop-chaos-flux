@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import type { FieldRemarkSchema, RenderRegionHandle, ResolvedNodeMeta, TemplateNode } from '@nop-chaos/flux-core';
-import { FieldFrame } from './field-frame';
-import type { FieldRemarkProps } from './field-frame';
+import type { RenderRegionHandle, ResolvedNodeMeta, TemplateNode } from '@nop-chaos/flux-core';
+import { FieldFrame, toFieldRemarkProps } from './field-frame';
+import type { FieldRemarkSchemaLike } from './field-frame';
 import { resolveFrameWrapMode } from './node-renderer-utils';
 
 export function NodeFrameWrapper(props: {
@@ -33,9 +33,9 @@ export function NodeFrameWrapper(props: {
   const descriptionValue = typeof schema.description === 'string' ? schema.description : undefined;
 
   const remarkValue = typeof schema.remark === 'object' && schema.remark !== null
-    ? toFieldRemarkProps(schema.remark as FieldRemarkSchema) : undefined;
+    ? toFieldRemarkProps(schema.remark as FieldRemarkSchemaLike) : undefined;
   const labelRemarkValue = typeof schema.labelRemark === 'object' && schema.labelRemark !== null
-    ? toFieldRemarkProps(schema.labelRemark as FieldRemarkSchema) : undefined;
+    ? toFieldRemarkProps(schema.labelRemark as FieldRemarkSchemaLike) : undefined;
 
   const labelAlignValue = schema.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
   const labelWidthValue = schema.labelWidth as string | number | undefined;
@@ -54,13 +54,4 @@ export function NodeFrameWrapper(props: {
       {props.children}
     </FieldFrame>
   );
-}
-
-function toFieldRemarkProps(schema: FieldRemarkSchema): FieldRemarkProps {
-  return {
-    icon: schema.icon,
-    content: schema.content,
-    placement: schema.placement,
-    trigger: schema.trigger
-  };
 }

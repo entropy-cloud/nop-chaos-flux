@@ -9,8 +9,8 @@ export {
   RenderNodes
 } from './helpers';
 export { DialogHost } from './dialog-host';
-export { FieldFrame } from './field-frame';
-export type { FieldFrameProps } from './field-frame';
+export { FieldFrame, toFieldRemarkProps } from './field-frame';
+export type { FieldFrameProps, FieldRemarkProps, FieldRemarkSchemaLike } from './field-frame';
 export type { FormLayoutContextValue } from './contexts';
 export { NodeRenderer } from './node-renderer';
 export {
