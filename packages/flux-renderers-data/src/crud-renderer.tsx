@@ -3,6 +3,7 @@ import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentComponentRegistry, useRenderScope, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
+import { createReadonlyScopeBinding } from '@nop-chaos/flux-runtime';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema';
 import { normalizeCrudSchema } from './crud-schema';
@@ -130,13 +131,10 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     filters: filterState,
     visibleColumnNames,
   }), [effectiveQuery, filterState, filteredRows.length, paginationState, resolvedSource.total, selectedRowKeys, sortState, visibleColumnNames]);
+  const crudScope = useMemo(() => createReadonlyScopeBinding(scope, '$crud', () => summary), [scope, summary]);
 
   useCrudHandle(props, internalTableRef, handleRefresh);
   useCrudStatusPublisher(scope, normalizedSchema.statusPath, summary);
-
-  useEffect(() => {
-    scope?.update('$crud', summary);
-  }, [scope, summary]);
 
   const toolbarContent = resolveRendererSlotContent(props, 'toolbar');
   const listActionsContent = resolveRendererSlotContent(props, 'listActions');
@@ -250,7 +248,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     <div className={cn('nop-crud', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
       {queryFormSchema ? (
         <div className="nop-crud-query" data-slot="crud-query">
-          {props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm' })}
+          {props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm', scope: crudScope })}
           <div className="mt-2 flex gap-2" data-slot="crud-query-controls">
             <Button variant="outline" size="sm" onClick={() => void handleQuerySubmit()}>{t('flux.common.search')}</Button>
             <Button variant="outline" size="sm" onClick={handleQueryReset}>{t('flux.common.reset')}</Button>
@@ -267,7 +265,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       ) : null}
 
       <div className="nop-crud-table" data-slot="crud-table">
-        {props.helpers.render(tableSchema, { pathSuffix: 'table' })}
+        {props.helpers.render(tableSchema, { pathSuffix: 'table', scope: crudScope })}
       </div>
 
       {hasFooterToolbar || footerBlocks.length > 0 ? (

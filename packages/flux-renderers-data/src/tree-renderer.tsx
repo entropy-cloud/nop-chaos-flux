@@ -4,7 +4,7 @@ import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
-import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronRightIcon, DotIcon } from 'lucide-react';
 import type { TreeSchema } from './schemas';
 
@@ -77,13 +77,14 @@ function TreeNodeRenderer(props: {
           {hasChildren ? (
             <CollapsibleTrigger
               render={
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
+                <span
+                  role="button"
+                  tabIndex={0}
                   aria-label={open ? 'Collapse node' : 'Expand node'}
+                  className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-accent"
                 >
                   <ChevronRightIcon className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')} />
-                </Button>
+                </span>
               }
             />
           ) : (
@@ -92,9 +93,7 @@ function TreeNodeRenderer(props: {
             </span>
           )}
 
-          <Button
-            type="button"
-            variant="ghost"
+          <div
             className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
             onClick={() => {
               if (hasChildren && expandOnClickNode) {
@@ -103,7 +102,7 @@ function TreeNodeRenderer(props: {
             }}
           >
             {hasRendererSlotContent(nodeContent) ? nodeContent : <span>{String(label ?? nodeKey)}</span>}
-          </Button>
+          </div>
         </div>
 
         {hasChildren ? (

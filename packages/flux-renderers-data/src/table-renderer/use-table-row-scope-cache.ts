@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useMemo, useRef } from 'react';
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas';
 import type { TableRowEntry } from './types';
@@ -23,79 +23,40 @@ export function useTableRowScopeCache(
   helpers: RendererComponentProps<TableSchema>['helpers'],
   path: RendererComponentProps<TableSchema>['path']
 ) {
-  const rowScopeCacheStore = useMemo(() => {
-    const state = {
-      cache: new Map<string, ScopeRef>(),
-      generation: 0,
-      snapshot: {
-        cache: new Map<string, ScopeRef>(),
-        generation: 0
-      },
-      listeners: new Set<() => void>()
-    };
-
-    state.snapshot = {
-      cache: state.cache,
-      generation: state.generation
-    };
-
-    return {
-      getSnapshot: () => state.snapshot,
-      getCache: () => state.cache,
-      mutate(updater: (cache: Map<string, ScopeRef>) => void) {
-        updater(state.cache);
-        state.generation += 1;
-        state.snapshot = { cache: state.cache, generation: state.generation };
-        state.listeners.forEach((listener) => listener());
-      },
-      subscribe(listener: () => void) {
-        state.listeners.add(listener);
-        return () => {
-          state.listeners.delete(listener);
-        };
-      }
-    };
-  }, []);
-
-  const rowScopeSnapshot = useSyncExternalStore(rowScopeCacheStore.subscribe, rowScopeCacheStore.getSnapshot);
-  const rowScopeCache = rowScopeSnapshot.cache;
+  const rowScopeCache = useMemo(() => new Map<string, ScopeRef>(), []);
   const rowScopeSnapshotRef = useRef(new Map<string, { record: Record<string, any>; index: number }>());
 
-  useLayoutEffect(() => {
-    rowScopeCacheStore.mutate((next) => {
-      const nextVisibleKeys = new Set<string>();
+  const nextVisibleKeys = new Set<string>();
 
-      for (const entry of processedData) {
-        nextVisibleKeys.add(entry.rowKey);
-        const existingScope = next.get(entry.rowKey);
-        const payload = { record: entry.record, index: entry.sourceIndex };
+  for (const entry of processedData) {
+    nextVisibleKeys.add(entry.rowKey);
+    const existingScope = rowScopeCache.get(entry.rowKey);
+    const payload = { record: entry.record, index: entry.sourceIndex };
 
-        if (!existingScope) {
-          const createdScope = helpers.createScope(payload, {
-            scopeKey: createRowScopeId(ownerKey, entry.rowKey),
-            pathSuffix: createRowScopePath(path, entry.rowKey),
-            isolate: true,
-            source: 'row'
-          });
-          next.set(entry.rowKey, createdScope);
-          rowScopeSnapshotRef.current.set(entry.rowKey, payload);
-          continue;
-        }
+    if (!existingScope) {
+      const createdScope = helpers.createScope(payload, {
+        scopeKey: createRowScopeId(ownerKey, entry.rowKey),
+        pathSuffix: createRowScopePath(path, entry.rowKey),
+        isolate: true,
+        source: 'row'
+      });
+      rowScopeCache.set(entry.rowKey, createdScope);
+      rowScopeSnapshotRef.current.set(entry.rowKey, payload);
+      continue;
+    }
 
-        const previous = rowScopeSnapshotRef.current.get(entry.rowKey);
-        syncRowScope(existingScope, payload, previous);
-        rowScopeSnapshotRef.current.set(entry.rowKey, payload);
-      }
+    const previous = rowScopeSnapshotRef.current.get(entry.rowKey);
+    syncRowScope(existingScope, payload, previous);
+    rowScopeSnapshotRef.current.set(entry.rowKey, payload);
+  }
 
-      for (const key of Array.from(next.keys())) {
-        if (nextVisibleKeys.has(key)) {
-          continue;
-        }
-        next.delete(key);
-        rowScopeSnapshotRef.current.delete(key);
-      }
-    });
-  }, [processedData, ownerKey, helpers, path, rowScopeCacheStore]);
+  for (const key of Array.from(rowScopeCache.keys())) {
+    if (nextVisibleKeys.has(key)) {
+      continue;
+    }
+    rowScopeCache.delete(key);
+    rowScopeSnapshotRef.current.delete(key);
+  }
 
   return rowScopeCache;
 }

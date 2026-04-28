@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input } from '@nop-chaos/ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input } from '@nop-chaos/ui';
 import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas';
 
 interface ResolvedTableQuickEditConfig {
@@ -152,8 +152,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
             <DialogHeader>
               <DialogTitle>{typeof column.label === 'string' ? column.label : field ?? t('flux.common.save')}</DialogTitle>
             </DialogHeader>
-            <div
-              className="py-2"
+            <DialogBody
               data-slot="table-quick-edit-dialog-body"
               onChangeCapture={() => {
                 if (hasCustomBody) {
@@ -162,7 +161,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
               }}
             >
               {editorNode}
-            </div>
+            </DialogBody>
             <DialogFooter showCloseButton={false}>
               <Button type="button" variant="outline" onClick={() => {
                 restoreSavedValue();
