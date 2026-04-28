@@ -5,11 +5,13 @@ import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   Drawer,
+  DrawerBody,
   DrawerContent,
   DrawerFooter,
   DrawerHeader,
@@ -90,7 +92,9 @@ export function DetailSurface(props: DetailSurfaceProps) {
           <DrawerHeader>
             <DrawerTitle>{props.title}</DrawerTitle>
           </DrawerHeader>
-          <div data-slot={props.bodySlot}>{props.children}</div>
+          <DrawerBody>
+            <div data-slot={props.bodySlot}>{props.children}</div>
+          </DrawerBody>
           <DrawerFooter>{footer}</DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -98,14 +102,16 @@ export function DetailSurface(props: DetailSurfaceProps) {
   }
 
   return (
-    <Dialog open={props.open} onOpenChange={(next) => { if (!next) props.onClose(); }}>
-      <DialogContent showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle>{props.title}</DialogTitle>
-        </DialogHeader>
-        <div data-slot={props.bodySlot}>{props.children}</div>
-        <DialogFooter>{footer}</DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <Dialog open={props.open} onOpenChange={(next) => { if (!next) props.onClose(); }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{props.title}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div data-slot={props.bodySlot}>{props.children}</div>
+          </DialogBody>
+          <DialogFooter>{footer}</DialogFooter>
+        </DialogContent>
+      </Dialog>
   );
 }

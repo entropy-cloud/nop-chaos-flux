@@ -6,7 +6,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
-import { Button, cn, DataViewer, Dialog, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
+import { Button, cn, DataViewer, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 import type { DesignerPageSchema } from './schemas';
 import {
@@ -250,12 +250,13 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
         <DialogContent
           offsetRef={jsonOffsetRef}
           aria-describedby={undefined}
+          data-slot="designer-json-panel"
           className="right-4 top-[72px] w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-96px)] p-0 overflow-hidden z-60 flex flex-col sm:max-w-2xl"
         >
           <DialogHeader className="px-4 pt-4 pb-0 shrink-0">
             <DialogTitle className="text-sm">{t('flux.flowDesigner.flowJson')}</DialogTitle>
           </DialogHeader>
-          <div className="px-4 pb-4">
+          <div data-slot="designer-json-panel-body" className="px-4 pb-4">
             {jsonDocument && (
               <DataViewer data={jsonDocument} />
             )}
@@ -267,7 +268,7 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
           <DialogHeader>
             <DialogTitle>{pendingCreateDialog?.nodeType.createDialog?.title ?? `Create ${pendingCreateDialog?.nodeType.label ?? 'Node'}`}</DialogTitle>
           </DialogHeader>
-          <div data-slot="designer-create-dialog-body">
+          <DialogBody data-slot="designer-create-dialog-body">
             {pendingCreateDialog?.nodeType.createDialog?.body
               ? props.helpers.render(pendingCreateDialog.nodeType.createDialog.body as any, {
                   scope: designerScope,
@@ -275,15 +276,15 @@ function DesignerPageBody({ rendererProps: props, core, commandAdapter, dispatch
                   pathSuffix: `create-dialog:${pendingCreateDialog.nodeType.id}`,
                 })
               : null}
-          </div>
-          <div data-slot="designer-create-dialog-actions" className="flex justify-end gap-2">
+          </DialogBody>
+          <DialogFooter data-slot="designer-create-dialog-actions" className="bg-transparent">
             <Button type="button" variant="outline" onClick={handleCloseCreateDialog} disabled={creatingNode}>
               {t('flux.flowDesigner.cancel')}
             </Button>
             <Button type="button" onClick={() => void handleConfirmCreateDialog()} disabled={creatingNode}>
               {creatingNode ? t('flux.flowDesigner.creating') : t('flux.flowDesigner.create')}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DesignerContext.Provider>
