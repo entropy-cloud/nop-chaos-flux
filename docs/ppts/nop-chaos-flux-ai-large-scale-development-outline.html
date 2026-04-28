@@ -1107,15 +1107,15 @@
                 <div class="card-grid card-grid-2" style="margin-top:0.3rem;">
                     <div class="card">
                         <h4><i class="fa-solid fa-list-ol"></i> 完整周期（10 步）</h4>
-                        <p class="details" style="font-size:0.85rem;line-height:1.5;">① 定义吸引子 → ② AI 扩张 → ③ 实时收敛(lint/check) → ④ 切片收敛 → ⑤ 记忆沉淀(logs) → ⑥ 全局收敛(full repo verification) → ⑦ 审计收敛 → ⑧ 关闭判定(closure audit) → ⑨ 吸引子更新 → ⑩ 下一轮</p>
+                        <p class="details" style="font-size:0.85rem;line-height:1.5;">① 定义吸引子 → ② AI 扩张 → ③④ 局部测量与纠偏 → ⑤ 记忆沉淀 → ⑥ 全局验证轨迹是否仍落在稳定区 → ⑦⑧ 审计与关闭判定 → ⑨ 吸引子更新 → ⑩ 下一轮</p>
                     </div>
                     <div class="card">
-                        <h4><i class="fa-solid fa-star"></i> 典型实例</h4>
-                        <p class="details" style="font-size:0.85rem;line-height:1.5;">编译优先+包边界吸引子 → AI 大量实现编译/动作/运行时逻辑 → 审计发现运行时包仍混有 compiler 责任 → 最终拆出 <code>flux-compiler</code> 和 <code>flux-action-core</code> → 三层职责固定为新基线</p>
+                        <h4><i class="fa-solid fa-star"></i> 典型实例：不是“修边界”，而是澄清吸引子</h4>
+                        <p class="details" style="font-size:0.85rem;line-height:1.5;">先定义“编译优先、职责分层”的稳定收敛方向 → AI 大量展开实现 → 复核发现系统轨迹仍未落入该稳定区 → 最终拆出 <code>flux-compiler</code> 和 <code>flux-action-core</code>，让三层职责重新收敛到既定基线</p>
                     </div>
                 </div>
                 <div class="golden-quote" style="margin-top:0.3rem;">
-                    这不是流程图，是系统的呼吸方式。
+                    lint / check / audit / closure 是测量与纠偏手段，不是这套方法的第一性定义。
                 </div>
             </section>
 
@@ -1203,53 +1203,53 @@
                 </div>
                 <div class="two-column">
                     <div class="column">
-                        <h3>错误理解：视为更严格的治理</h3>
+                        <h3>边界 / 护栏模型</h3>
                         <ul class="icon-list">
-                            <li class="icon-bullet">
-                                <i class="fa-solid fa-eye" style="color:var(--color-warning);"></i>
-                                <div>
-                                    <p>表面工具确实相似</p>
-                                    <span class="details">同样会出现 plan、lint、test、audit、closure，所以很容易被听成“治理加强版”</span>
-                                </div>
-                            </li>
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-ban" style="color:var(--color-danger);"></i>
                                 <div>
-                                    <p><strong>边界</strong>：定义禁区，回答“什么不能做”</p>
-                                    <span class="details">plan / lint / audit 的作用是防违规、守红线</span>
+                                    <p>先回答：<strong>什么不能做</strong></p>
+                                    <span class="details">核心是定义禁区、守住红线，防止系统越线</span>
                                 </div>
                             </li>
                             <li class="icon-bullet">
-                                <i class="fa-solid fa-magnifying-glass" style="color:var(--color-danger);"></i>
+                                <i class="fa-solid fa-triangle-exclamation" style="color:var(--color-danger);"></i>
                                 <div>
-                                    <p><strong>审计</strong>：识别并确认偏差，回答“哪里真的偏了”</p>
-                                    <span class="details">这些都还停留在“怎么管”的层面，没有定义系统长期应收敛到哪里</span>
+                                    <p>错误主要表现为：<strong>越线</strong></p>
+                                    <span class="details">判断重点是哪里违规、哪里破坏约束</span>
+                                </div>
+                            </li>
+                            <li class="icon-bullet">
+                                <i class="fa-solid fa-screwdriver-wrench" style="color:var(--color-warning);"></i>
+                                <div>
+                                    <p><code>plan / lint / audit</code> 的作用是：<strong>防违规、守红线</strong></p>
+                                    <span class="details">即使没有定义长期收敛方向，这套机制也能局部运转</span>
                                 </div>
                             </li>
                         </ul>
                     </div>
                     <div class="column">
-                        <h3>正确理解：先定义吸引子，再谈控制</h3>
+                        <h3>吸引子模型</h3>
                         <ul class="icon-list">
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-magnet" style="color:var(--color-secondary);"></i>
                                 <div>
-                                    <p><strong>吸引子</strong>：定义合法稳定区，回答“系统应向哪里长期收敛”</p>
-                                    <span class="details">吸引子不是更强的边界，而是边界、验证、审计为何成立的前提</span>
+                                    <p>先回答：<strong>系统应向哪里长期收敛</strong></p>
+                                    <span class="details">先定义合法稳定区，再谈什么算偏离、如何纠偏</span>
                                 </div>
                             </li>
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-route" style="color:var(--color-primary);"></i>
                                 <div>
-                                    <p><strong>轨迹</strong>：描述 AI 扩张与工程纠偏后的实际演化路径</p>
-                                    <span class="details">重点不是某一步是否局部正确，而是整体是否持续落入吸引子附近</span>
+                                    <p>错误主要表现为：<strong>整体漂移</strong></p>
+                                    <span class="details">重点不是某一步是否局部正确，而是系统轨迹是否持续落入吸引子附近</span>
                                 </div>
                             </li>
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-sitemap" style="color:var(--color-primary);"></i>
                                 <div>
-                                    <p><strong>控制</strong>：plan / lint / audit / closure 只在吸引子已定义后才有意义</p>
-                                    <span class="details">它们不是第一性原理；它们的作用是把偏离轨迹压回合法稳定区</span>
+                                    <p><code>plan / lint / audit</code> 的作用是：<strong>把轨迹压回稳定区</strong></p>
+                                    <span class="details">它们不是第一性原理；不先定义吸引子，控制就没有目标</span>
                                 </div>
                             </li>
                         </ul>
@@ -1259,7 +1259,7 @@
                     <p>状态空间 → 吸引子 → 轨迹 → 控制</p>
                 </div>
                 <div class="golden-quote" style="margin-top:0.5rem;">
-                    重点不是把系统管得更严，而是先定义系统应向哪里稳定收敛。
+                    区别不在约束更多，而在先定义长期收敛方向，再让所有约束服务于它。
                 </div>
             </section>
 
