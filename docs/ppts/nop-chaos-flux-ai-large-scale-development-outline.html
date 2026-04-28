@@ -250,6 +250,7 @@
         .pdf-page-container { width: 100%; height: auto; background: white; color: black; box-shadow: none; }
         .pdf-slide { position: relative !important; opacity: 1 !important; visibility: visible !important; transform: none !important; height: auto !important; width: 100%; background: white; border: 1px solid #eeeeee; padding: 40px 50px; box-shadow: none; margin-bottom: 0; overflow: hidden; page-break-after: always; break-inside: avoid; aspect-ratio: 16 / 12; }
         .pdf-slide:last-of-type { page-break-after: avoid; }
+        .pdf-slide, .pdf-slide * { animation: none !important; opacity: 1 !important; }
     </style>
 </head>
 <body>
@@ -263,11 +264,8 @@
             <!-- Slide 1: Title -->
             <section class="slide active title-slide">
                 <h1 style="animation: fadeInUp 0.8s ease-out;">NOP Chaos Flux<br><span style="font-size:0.85em;">使用 AI 进行大规模框架开发的实践经验</span></h1>
-                <p class="subtitle" style="animation: fadeInUp 0.8s ease-out 0.2s both;">AI 开发大型系统的本质：动力系统的受控收敛</p>
-                <p class="author" style="animation: fadeInUp 0.8s ease-out 0.4s both;">canonical &nbsp;|&nbsp; 2026 年 4 月</p>
-                <div class="golden-quote" style="margin-top: 2rem; max-width: 700px; animation: fadeInUp 0.8s ease-out 0.6s both;">
-                    当前主流 AI 的危险，不只是会写错，而是会稳定回到它见过的平均方案。
-                </div>
+                <p class="subtitle" style="animation: fadeInUp 0.8s ease-out 0.2s both;">AI 大规模开发的本质：动力系统的受控收敛</p>
+                <p class="author" style="animation: fadeInUp 0.8s ease-out 0.4s both;">canonical &nbsp;|&nbsp; 2026 年 5 月</p>
             </section>
 
             <!-- Slide 2: Author -->
@@ -329,7 +327,7 @@
                     <li class="icon-bullet">
                         <i class="fa-solid fa-arrows-rotate"></i>
                         <div>
-                            <p>在 NOP 体系中的位置：<code>nop-chaos</code> 过去基于 AMIS，Flux 是下一代独立重写</p>
+                            <p>在 NOP 体系中的位置：<code>nop-chaos</code> 过去基于 AMIS，Flux 是脱离 AMIS 的独立重写</p>
                         </div>
                     </li>
                 </ul>
@@ -391,7 +389,7 @@
 
             <!-- Slide 6: Efficiency is a byproduct -->
             <section class="slide">
-                <h2>高速生成下系统没有解体：效率只是副产品</h2>
+                <h2>高速生成下架构持续收敛：效率只是副产品</h2>
                 <div class="two-column">
                     <div class="column">
                         <h3>稳定性的真正证据</h3>
@@ -399,22 +397,22 @@
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-shield-halved"></i>
                                 <div>
-                                    <p>包边界越来越硬</p>
+                                    <p>边界越来越明晰</p>
                                     <span class="details"><code>flux-compiler</code> / <code>flux-action-core</code> / <code>flux-runtime</code> 三层分离</span>
                                 </div>
                             </li>
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-broom"></i>
                                 <div>
-                                    <p>结构越来越纯</p>
+                                    <p>结构越来越纯净</p>
                                     <span class="details"><code>CompiledSchemaNode</code> 等过渡结构被清除</span>
                                 </div>
                             </li>
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-microscope"></i>
                                 <div>
-                                    <p>审计越来越苛刻</p>
-                                    <span class="details">deep audit &rarr; meta-review &rarr; re-verification</span>
+                                    <p>验证越来越严格</p>
+                                    <span class="details">lint/check 持续收紧，deep audit 多轮过滤</span>
                                 </div>
                             </li>
                         </ul>
@@ -432,7 +430,7 @@
                     </div>
                 </div>
                 <div class="golden-quote" style="margin-top:0.5rem;">
-                    真正罕见的不是快，而是在这种快里系统没有解体。
+                    真正罕见的不是快，而是在这种快里系统没有退化。
                 </div>
             </section>
 
@@ -446,7 +444,7 @@
                     </div>
                     <div class="card" style="border-left: 4px solid var(--color-danger);">
                         <h4><i class="fa-solid fa-face-smile"></i> 乐观偏差</h4>
-                        <p class="details">AI 倾向于流畅地叙述"已经完成"，即使行为闭环并未真正建立</p>
+                        <p class="details">AI 会流畅地报告"已经完成"，但行为根本没落地</p>
                     </div>
                     <div class="card" style="border-left: 4px solid var(--color-danger);">
                         <h4><i class="fa-solid fa-arrows-spin"></i> 上下文漂移</h4>
@@ -457,16 +455,16 @@
                     <p><strong>最危险的地方</strong>：不是"写错一段代码"，而是<strong>局部都像对的，但整体在持续偏离</strong>。</p>
                 </div>
                 <div class="quote" style="margin-top:0.5rem;">
-                    <p>仓库实例：Plan 76 尝试移除本地状态镜像，结果打出 11 个测试失败——测试也绑定了旧实现时序。</p>
+                    <p>仓库实例：Plan 76 尝试移除本地状态镜像，结果暴露 11 个测试失败——测试也绑定了旧实现时序。</p>
                 </div>
                 <div class="golden-quote" style="margin-top:0.5rem;">
-                    局部都像对的，往往正是系统正在整体跑偏的时候。
+                    AI 的自洽叙事，恰恰是整体漂移最好的掩护。
                 </div>
             </section>
 
             <!-- Slide 8: Our Answer - Dynamic System -->
             <section class="slide">
-                <h2>我们找到的答案：受控收敛的动力系统</h2>
+                <h2>AI 时代需要新的工程隐喻：动力系统的受控收敛</h2>
                 <div style="display:flex;justify-content:center;margin:0.5rem 0;">
                     <svg width="720" height="380" viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" font-family="'Inter',-apple-system,BlinkMacSystemFont,sans-serif">
                         <defs>
@@ -532,10 +530,7 @@
                     </svg>
                 </div>
                 <div class="golden-quote">
-                    没有吸引子，AI 不是在开发系统，而是在高效采样错误解空间。
-                </div>
-                <div class="highlight-box" style="margin-top:0.5rem;">
-                    <p>关键前提：在当前主流模型的训练分布和偏置下，<strong>新吸引子通常不会由 AI 自己自然长出来</strong>。真正新的概念切分、边界定义和结构语言，仍然需要人先给出。</p>
+                    没有吸引子，AI 不是在开发系统，而是在解空间中盲目扩张。
                 </div>
             </section>
 
@@ -544,63 +539,9 @@
                 <h2>什么是动力系统，什么是吸引子</h2>
                 <div class="two-column">
                     <div class="column-wide">
-                        <div style="display:flex;justify-content:center;">
-                            <svg width="400" height="320" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <linearGradient id="lorenzGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#06b6d4"/>
-                                        <stop offset="30%" stop-color="#3b82f6"/>
-                                        <stop offset="60%" stop-color="#8b5cf6"/>
-                                        <stop offset="100%" stop-color="#ec4899"/>
-                                    </linearGradient>
-                                    <filter id="glow">
-                                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                                        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                                    </filter>
-                                </defs>
-                                <rect width="100%" height="100%" fill="#0f172a" rx="12"/>
-                                <text x="200" y="22" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">Lorenz Attractor 示意</text>
-                                
-                                <!-- Attractor regions (subtle) -->
-                                <ellipse cx="120" cy="160" rx="70" ry="80" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.2" stroke-dasharray="4 2"/>
-                                <ellipse cx="280" cy="160" rx="70" ry="80" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.2" stroke-dasharray="4 2"/>
-                                
-                                <!-- Main trajectory - more realistic butterfly pattern -->
-                                <path d="M 200,160 
-                                         C 180,120 140,90 100,110 
-                                         C 60,130 50,170 70,200 
-                                         C 90,230 130,240 160,220 
-                                         C 190,200 200,170 200,160
-                                         C 200,150 210,120 240,100 
-                                         C 270,80 310,90 330,120 
-                                         C 350,150 340,190 310,210 
-                                         C 280,230 240,220 220,190 
-                                         C 200,160 180,130 150,120 
-                                         C 120,110 90,130 80,160 
-                                         C 70,190 90,220 120,230 
-                                         C 150,240 180,220 190,190 
-                                         C 200,160 220,140 250,130 
-                                         C 280,120 310,140 320,170 
-                                         C 330,200 310,230 280,240 
-                                         C 250,250 220,230 210,200" 
-                                      fill="none" stroke="url(#lorenzGrad)" stroke-width="2.5" filter="url(#glow)" opacity="0.9"/>
-                                
-                                <!-- Additional trajectory lines for depth -->
-                                <path d="M 110,150 C 90,130 80,160 100,180 C 120,200 140,190 130,170" 
-                                      fill="none" stroke="#06b6d4" stroke-width="1" opacity="0.4"/>
-                                <path d="M 290,150 C 310,130 320,160 300,180 C 280,200 260,190 270,170" 
-                                      fill="none" stroke="#ec4899" stroke-width="1" opacity="0.4"/>
-                                
-                                <!-- Labels -->
-                                <text x="100" y="75" fill="#f59e0b" font-size="9" opacity="0.9">吸引区域</text>
-                                <text x="270" y="75" fill="#f59e0b" font-size="9" opacity="0.9">吸引区域</text>
-                                <text x="55" y="145" fill="#94a3b8" font-size="8" transform="rotate(-20,55,145)">局部不可预测</text>
-                                <text x="200" y="290" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="600">整体被限制在稳定形状里</text>
-                                
-                                <!-- Arrow pointing to trajectory -->
-                                <path d="M 200,250 L 200,220" stroke="#64748b" stroke-width="1" fill="none" marker-end="url(#arr)"/>
-                                <text x="200" y="265" text-anchor="middle" fill="#64748b" font-size="8">轨迹=一轮轮实现与收敛</text>
-                            </svg>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+                            <img src="assets/lorenz-attractor.png" alt="Lorenz Attractor" style="width:100%;max-width:480px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+                            <p style="font-size:0.85rem;color:#64748b;text-align:center;margin:0;">数值积分计算 · 40,000 步轨迹</p>
                         </div>
                     </div>
                     <div class="column">
@@ -608,7 +549,7 @@
                         <p style="font-size:1rem;">状态随时间演化、且下一步依赖当前状态的系统。我们关心的是<strong>轨迹</strong>——从哪里出发，往哪里演化。</p>
                         <h3 style="margin-top:0.8rem;">吸引子</h3>
                         <p style="font-size:1rem;">状态空间中的一个稳定区域——从足够近的地方出发的轨迹，最终会被它吸引并长期停留在它附近。</p>
-                        <h3 style="margin-top:0.8rem;">对 AI 开发的映射</h3>
+                        <h3 style="margin-top:0.8rem;">映射到 AI 开发</h3>
                         <ul class="icon-list">
                             <li class="icon-bullet">
                                 <i class="fa-solid fa-map"></i>
@@ -1245,7 +1186,7 @@
                     <li class="icon-bullet">
                         <i class="fa-solid fa-brain"></i>
                         <div>
-                            <p>承认一个事实：当前主流 AI 擅长在既有知识边界内高效执行，但受训练分布和偏置影响，很难自己长出真正新的架构观念</p>
+                            <p>承认一个事实：AI 会朝它见过的平均方案收敛，很难自己长出真正新的架构观念</p>
                         </div>
                     </li>
                 </ul>
@@ -1284,14 +1225,17 @@
                     <p>这五个问题都有答案，你就有了闭环；没有答案，系统就很容易在高速推进中偏掉。</p>
                 </div>
                 <div class="golden-quote">
-                    可复制的不是表面做法，而是在当前主流 AI 条件下，人先定义新吸引子，AI 再围绕它高效收敛。
+                    可复制的不是表面做法，而是这套闭环本身——人先定义方向，AI 再高速收敛。
                 </div>
             </section>
 
             <!-- Slide 26: Boundary -->
             <section class="slide">
-                <h2>真正边界：当前主流 AI 擅长收敛执行，不擅长原创架构</h2>
-                <div class="two-column">
+                <h2>AI 会朝平均方案收敛——真正新的概念突破仍需人的判断</h2>
+                <div class="highlight-box">
+                    <p>受训练偏置影响，AI 的收敛目标是它见过的平均解。即使要求它"创新"，给出的往往仍是当前知识体系里的主流方案，而不是真正新的结构观念。</p>
+                </div>
+                <div class="two-column" style="margin-top:0.5rem;">
                     <div class="column">
                         <div class="card" style="border-top:4px solid var(--color-secondary);height:calc(100% - 2px);">
                             <h4 style="color:var(--color-secondary);"><i class="fa-solid fa-check-double"></i> AI 最适合承担</h4>
@@ -1301,17 +1245,17 @@
                     </div>
                     <div class="column">
                         <div class="card" style="border-top:4px solid var(--color-danger);height:calc(100% - 2px);">
-                            <h4 style="color:var(--color-danger);"><i class="fa-solid fa-triangle-exclamation"></i> 最不适合单独承担</h4>
+                            <h4 style="color:var(--color-danger);"><i class="fa-solid fa-triangle-exclamation"></i> 不适合单独承担</h4>
                             <p class="details" style="margin-top:0.5rem;">核心概念发明 · 边界重定义 · 第一性原理层面的架构突破</p>
-                            <p class="details" style="margin-top:0.5rem;">在当前训练分布下，AI 会朝平均情况收敛</p>
+                            <p class="details" style="margin-top:0.5rem;">这些在当前条件下不会由 AI 自己长出来</p>
                         </div>
                     </div>
                 </div>
-                <div class="highlight-box" style="margin-top:1rem;">
-                    <p><strong>案例：</strong><code>ActionScope</code> 与 <code>Data Scope</code> 分离并采用词法作用域——这类方案不是让 AI 自由采样平均解能自然长出来的，必须先由人定义吸引子。</p>
+                <div class="highlight-box" style="margin-top:0.5rem;">
+                    <p><strong>案例：</strong><code>ActionScope</code> 与 <code>Data Scope</code> 分离并采用词法作用域——这类方案不是让 AI 自由采样能自然长出来的，必须先由人定义吸引子，再让 AI 在其内收敛执行。</p>
                 </div>
                 <div class="golden-quote">
-                    当前主流 AI 最擅长把已有知识执行到极致，但很难自然长出真正新的架构观念。
+                    执行力是 AI 的强项，但新的概念发明仍然来自人的判断。
                 </div>
             </section>
 

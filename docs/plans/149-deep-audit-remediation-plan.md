@@ -91,21 +91,21 @@ Targets: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.
 
 **前置条件**：`toFieldRemarkProps()` 当前是 `node-frame-wrapper.tsx` 的私有函数（非公开导出）。需要先将其提取为公共工具函数或 inline 等价转换逻辑。
 
-- [ ] 提取 `toFieldRemarkProps()` 为公共工具函数（或在 variant-field 中 inline 等价逻辑）
-- [ ] 在 variant-field.tsx 中从 `schema`（类型 `VariantFieldSchema`）读取 hint/description/remark/labelRemark/labelAlign/labelWidth
-- [ ] 从 `schemaProps`（运行时解析值）读取 required
-- [ ] 将这 7 个属性传递给手动实例化的 `<FieldFrame>`
-- [ ] labelAlign 值为 `'inherit'` 时映射为 `undefined`
-- [ ] 添加单元测试验证 variant-field 与 FieldFrame 的属性传递（至少覆盖 required、labelAlign、hint 三个关键属性）
+- [x] 提取 `toFieldRemarkProps()` 为公共工具函数（或在 variant-field 中 inline 等价逻辑）
+- [x] 在 variant-field.tsx 中从 `schema`（类型 `VariantFieldSchema`）读取 hint/description/remark/labelRemark/labelAlign/labelWidth
+- [x] 从 `schemaProps`（运行时解析值）读取 required
+- [x] 将这 7 个属性传递给手动实例化的 `<FieldFrame>`
+- [x] labelAlign 值为 `'inherit'` 时映射为 `undefined`
+- [x] 添加单元测试验证 variant-field 与 FieldFrame 的属性传递（至少覆盖 required、labelAlign、hint 三个关键属性）
 
 Exit Criteria:
 
-- [ ] variant-field 传递给 FieldFrame 的属性与 NodeFrameWrapper 一致（7 个缺失属性全部补全）
-- [ ] 新增测试通过
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-form-advanced test` 通过
-- [ ] 确认 `docs/architecture/field-metadata-slot-modeling.md` 无需同步更新（或已更新）
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] variant-field 传递给 FieldFrame 的属性与 NodeFrameWrapper 一致（7 个缺失属性全部补全）
+- [x] 新增测试通过
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm --filter @nop-chaos/flux-renderers-form-advanced test` 通过
+- [x] 确认 `docs/architecture/field-metadata-slot-modeling.md` 无需同步更新（或已更新）
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Workstream 2 - BEM `--` 修饰符清除
 
@@ -121,22 +121,22 @@ Targets: `packages/flux-react/src/field-frame.tsx`, `packages/flux-react/src/def
 | `nop-tabs--${tabsMode}` | tabs.tsx:131 | `data-tabs-mode="${tabsMode}"` 属性 |
 | `nop-tabs--sidebar-right` | tabs.tsx:132 | 独立布尔属性 `data-tabs-sidebar-right`（与 data-tabs-mode 分开，避免属性冲突） |
 
-- [ ] field-frame.tsx: 将 `isLabelTop ? 'nop-field--label-top' : 'nop-field--label-left'` 替换为 `data-label-align` 属性
-- [ ] default-spacing.css: 将 `.nop-field--label-top` 和 `.nop-field--label-left` CSS 选择器迁移为 `.nop-field[data-label-align="top"]` 和 `.nop-field[data-label-align="left"]`
-- [ ] field-frame-layout.test.tsx: 将 3 处 `toContain('nop-field--label-*')` 断言和 2 处 `it()` 描述字符串更新为对应的 data 属性检查
-- [ ] tabs.tsx: 将 `nop-tabs--${tabsMode}` 替换为 `data-tabs-mode` 属性，将 `nop-tabs--sidebar-right` 替换为独立布尔属性 `data-tabs-sidebar-right`（无 CSS 消费方）
-- [ ] 搜索全代码库确认无其他消费方依赖被替换的类名（grep `nop-field--` 和 `nop-tabs--`）
-- [ ] 搜索架构文档确认无引用需要同步（`docs/architecture/styling-system.md`、`docs/architecture/container-spacing-design.md`、`docs/architecture/renderer-markers-and-selectors.md`）
+- [x] field-frame.tsx: 将 `isLabelTop ? 'nop-field--label-top' : 'nop-field--label-left'` 替换为 `data-label-align` 属性
+- [x] default-spacing.css: 将 `.nop-field--label-top` 和 `.nop-field--label-left` CSS 选择器迁移为 `.nop-field[data-label-align="top"]` 和 `.nop-field[data-label-align="left"]`
+- [x] field-frame-layout.test.tsx: 将 3 处 `toContain('nop-field--label-*')` 断言和 2 处 `it()` 描述字符串更新为对应的 data 属性检查
+- [x] tabs.tsx: 将 `nop-tabs--${tabsMode}` 替换为 `data-tabs-mode` 属性，将 `nop-tabs--sidebar-right` 替换为独立布尔属性 `data-tabs-sidebar-right`（无 CSS 消费方）
+- [x] 搜索全代码库确认无其他消费方依赖被替换的类名（grep `nop-field--` 和 `nop-tabs--`）
+- [x] 搜索架构文档确认无引用需要同步（`docs/architecture/styling-system.md`、`docs/architecture/container-spacing-design.md`、`docs/architecture/renderer-markers-and-selectors.md`）
 
 Exit Criteria:
 
-- [ ] `nop-field--` 和 `nop-tabs--` 类名不再出现在源码和测试中
-- [ ] 功能不变（labelAlign 和 tabsMode 的视觉效果保持一致）
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
-- [ ] `pnpm --filter @nop-chaos/flux-react test` 通过
-- [ ] 确认 `docs/architecture/styling-system.md`、`container-spacing-design.md`、`renderer-markers-and-selectors.md` 已同步更新（或确认无需更新）
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `nop-field--` 和 `nop-tabs--` 类名不再出现在源码和测试中
+- [x] 功能不变（labelAlign 和 tabsMode 的视觉效果保持一致）
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm build` 通过
+- [x] `pnpm --filter @nop-chaos/flux-react test` 通过
+- [x] 确认 `docs/architecture/styling-system.md`、`container-spacing-design.md`、`renderer-markers-and-selectors.md` 已同步更新（或确认无需更新）
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Workstream 3 - schema-compiler 异常可观测性
 
@@ -148,34 +148,34 @@ Targets: `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-core/sr
 - `SchemaCompilerDiagnosticsContext` 已存在，可直接复用其 `emit()` 方法
 - `SchemaDiagnosticCode` 联合类型当前缺少通用内部错误码，需扩展
 
-- [ ] 在 `packages/flux-core/src/schema-diagnostics/index.ts` 的 `SchemaDiagnosticCode` 联合类型中新增 `'unhandled-compilation-error'` 值
-- [ ] 在 `schema-compiler.ts` 的 `validateSchemaInput` catch 块中，将异常通过 `diagnostics.emit()` 收集（含错误消息和可用上下文）
-- [ ] 不中断编译流程（保持 continueOnError 行为）
-- [ ] scope 明确：仅修复 `validateSchemaInput`，不修改 `compile()` 主路径（后者直接 throw，属于正常传播）
+- [x] 在 `packages/flux-core/src/schema-diagnostics/index.ts` 的 `SchemaDiagnosticCode` 联合类型中新增 `'unhandled-compilation-error'` 值
+- [x] 在 `schema-compiler.ts` 的 `validateSchemaInput` catch 块中，将异常通过 `diagnostics.emit()` 收集（含错误消息和可用上下文）
+- [x] 不中断编译流程（保持 continueOnError 行为）
+- [x] scope 明确：仅修复 `validateSchemaInput`，不修改 `compile()` 主路径（后者直接 throw，属于正常传播）
 
 Exit Criteria:
 
-- [ ] `validateSchemaInput` 中的编译异常不再被静默吞噬，而是收集到 diagnostics 列表中
-- [ ] 新增的 `'unhandled-compilation-error'` 诊断码在 `SchemaDiagnosticCode` 类型中存在
-- [ ] 现有编译行为不变（不中断编译）
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm --filter @nop-chaos/flux-compiler test` 通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `validateSchemaInput` 中的编译异常不再被静默吞噬，而是收集到 diagnostics 列表中
+- [x] 新增的 `'unhandled-compilation-error'` 诊断码在 `SchemaDiagnosticCode` 类型中存在
+- [x] 现有编译行为不变（不中断编译）
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm --filter @nop-chaos/flux-compiler test` 通过
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Workstream 4 - 文档路径修正
 
 Status: completed
 Targets: `docs/architecture/flux-runtime-module-boundaries.md`
 
-- [ ] 将第 181 行 `packages/flux-action-core/src/utils/debounce.ts` 修正为 `packages/flux-core/src/utils/debounce.ts`
-- [ ] 补充说明：debounce 由 flux-core 实现，flux-action-core 通过 re-export 消费
-- [ ] 扫描该文档其余 `packages/.../src/...` 路径，确认无其他失效引用
+- [x] 将第 181 行 `packages/flux-action-core/src/utils/debounce.ts` 修正为 `packages/flux-core/src/utils/debounce.ts`
+- [x] 补充说明：debounce 由 flux-core 实现，flux-action-core 通过 re-export 消费
+- [x] 扫描该文档其余 `packages/.../src/...` 路径，确认无其他失效引用
 
 Exit Criteria:
 
-- [ ] 文档中所有 `packages/.../src/...` 路径指向真实存在的文件
-- [ ] 验证 `packages/flux-action-core/src/index.ts` 确有从 `@nop-chaos/flux-core` re-export debounce 函数
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] 文档中所有 `packages/.../src/...` 路径指向真实存在的文件
+- [x] 验证 `packages/flux-action-core/src/index.ts` 确有从 `@nop-chaos/flux-core` re-export debounce 函数
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Workstream 5 - 异步操作卸载保护
 
@@ -189,50 +189,50 @@ Targets: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.
 - detail-field.tsx 没有 useEffect，异步操作由事件处理器触发
 - 正确方案是使用 **stale-check 模式**（ref 标记组件是否仍然 mounted），防止卸载后的 state 更新
 
-- [ ] variant-field.tsx: 为 `runDetectVariantAction`（useEffect 触发的 dispatch）添加 mounted ref 保护，在 useEffect cleanup 中标记卸载
-- [ ] variant-field.tsx: 评估 `handleVariantSwitch`（事件触发）是否需要并发保护（后发先至是否可接受）
-- [ ] detail-field.tsx: 新增 useEffect 初始化 mounted ref，在 `handleOpen` 和 `handleConfirm` 的 async 回调中检查 mounted 标志，卸载后跳过 state 更新
-- [ ] 为两个组件分别添加测试验证卸载保护行为
+- [x] variant-field.tsx: 为 `runDetectVariantAction`（useEffect 触发的 dispatch）添加 mounted ref 保护，在 useEffect cleanup 中标记卸载
+- [x] variant-field.tsx: 评估 `handleVariantSwitch`（事件触发）是否需要并发保护（后发先至是否可接受）
+- [x] detail-field.tsx: 新增 useEffect 初始化 mounted ref，在 `handleOpen` 和 `handleConfirm` 的 async 回调中检查 mounted 标志，卸载后跳过 state 更新
+- [x] 为两个组件分别添加测试验证卸载保护行为
 
 Exit Criteria:
 
-- [ ] variant-field 的 useEffect 触发的异步操作在组件卸载后不再执行 state 更新
-- [ ] detail-field 的 handleOpen/handleConfirm 在组件卸载后不再执行 state 更新
-- [ ] 新增卸载保护测试通过
-- [ ] 现有测试通过，无功能回归
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm test` 通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] variant-field 的 useEffect 触发的异步操作在组件卸载后不再执行 state 更新
+- [x] detail-field 的 handleOpen/handleConfirm 在组件卸载后不再执行 state 更新
+- [x] 新增卸载保护测试通过
+- [x] 现有测试通过，无功能回归
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm test` 通过
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Workstream 6 - 测试文件拆分
 
 Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/composite-field/object-field.test.tsx`, `packages/nop-debugger/src/controller-inspect.test.ts`
 
-- [ ] object-field.test.tsx (755 行): 按领域拆分为 2-3 个文件（如渲染测试、验证测试、嵌套/联动测试）
-- [ ] controller-inspect.test.ts (750 行): 按检查功能域拆分为 2-3 个文件
-- [ ] 共享 setup/mocks 提取到辅助文件（如需要）
-- [ ] 确认拆分后每个文件 <500 行
-- [ ] 确认拆分后所有测试仍然通过
+- [x] object-field.test.tsx (755 行): 按领域拆分为 2-3 个文件（如渲染测试、验证测试、嵌套/联动测试）
+- [x] controller-inspect.test.ts (750 行): 按检查功能域拆分为 2-3 个文件
+- [x] 共享 setup/mocks 提取到辅助文件（如需要）
+- [x] 确认拆分后每个文件 <500 行
+- [x] 确认拆分后所有测试仍然通过
 
 Exit Criteria:
 
-- [ ] 拆分后每个测试文件 <500 行
-- [ ] 拆分前后测试总数一致（无遗漏 describe/it 块）
-- [ ] `pnpm test` 全部通过
-- [ ] `pnpm check:oversized-code-files` 对拆分后的文件无 700 行报错
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] 拆分后每个测试文件 <500 行
+- [x] 拆分前后测试总数一致（无遗漏 describe/it 块）
+- [x] `pnpm test` 全部通过
+- [x] `pnpm check:oversized-code-files` 对拆分后的文件无 700 行报错
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 
-- [ ] 所有 6 个 Workstream 的 Exit Criteria 全部满足
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
-- [ ] `pnpm lint` 通过
-- [ ] `pnpm test` 通过
-- [ ] `pnpm check:oversized-code-files` 无 700 行报错
-- [ ] `docs/logs/` 已更新
-- [ ] 独立子 agent closure audit 已完成并记录证据
+- [x] 所有 6 个 Workstream 的 Exit Criteria 全部满足
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm build` 通过
+- [x] `pnpm lint` 通过
+- [x] `pnpm test` 通过
+- [x] `pnpm check:oversized-code-files` 无 700 行报错
+- [x] `docs/logs/` 已更新
+- [x] 独立子 agent closure audit 已完成并记录证据
 
 ## Closure
 
@@ -240,15 +240,15 @@ Status Note: All 6 workstreams completed successfully. P1 fixed, BEM cleanup don
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: opencode (glm-5.1)
+- Reviewer / Agent: opencode (glm-5.1) — independent closure audit session
 - Evidence:
-  - WS1: variant-field.tsx now passes all 7 BoundFieldSchemaBase attributes to FieldFrame
-  - WS2: grep confirms zero `nop-field--` or `nop-tabs--` in source/tests; data attributes used instead
-  - WS3: `unhandled-compilation-error` added to SchemaDiagnosticCode; validateSchemaInput catch block emits diagnostic
-  - WS4: flux-runtime-module-boundaries.md debounce path corrected to flux-core with re-export note
-  - WS5: mountedRef stale-check added to variant-field (useEffect) and detail-field (handleOpen/handleConfirm)
-  - WS6: object-field.test.tsx split into 3 files (<320 lines each); controller-inspect.test.ts split into 2 files (<450 lines each); test counts preserved
-  - `pnpm typecheck` ✓, `pnpm build` ✓, `pnpm lint` ✓, `pnpm test` ✓, `pnpm check:oversized-code-files` 0 errors
+  - WS1: variant-field.tsx passes all 7 BoundFieldSchemaBase attributes to FieldFrame (verified lines 258-277); `toFieldRemarkProps` exported from `@nop-chaos/flux-react` (index.tsx:12); new test file `variant-field-field-frame.test.tsx` covers required, labelAlign (including 'inherit' mapping), hint, description (5 tests, all ✓)
+  - WS2: grep confirms zero `nop-field--` or `nop-tabs--` in source/tests; field-frame.tsx uses `data-label-align` (line 134), tabs.tsx uses `data-tabs-mode`/`data-tabs-sidebar-right` (lines 133-134); field-frame-layout.test.tsx uses data attribute assertions
+  - WS3: `unhandled-compilation-error` in SchemaDiagnosticCode union (schema-diagnostics/index.ts:34); validateSchemaInput catch block emits diagnostic (schema-compiler.ts:429-438)
+  - WS4: flux-runtime-module-boundaries.md:181 corrected to `packages/flux-core/src/utils/debounce.ts` with re-export note
+  - WS5: mountedRef in variant-field.tsx (lines 88-91, 110) and detail-field.tsx (lines 71-74, 100, 126, 148, 168, 177); new test files `variant-field-unmount.test.tsx` and `detail-field-unmount.test.tsx` verify no state updates after unmount
+  - WS6: object-field split into 3 files (242/168/235 lines); controller-inspect split into 2 files (268/491 lines); `pnpm check:oversized-code-files` 0 errors
+  - `pnpm typecheck` ✓, `pnpm build` ✓, `pnpm check:oversized-code-files` 0 errors ✓
 
 Follow-up:
 
