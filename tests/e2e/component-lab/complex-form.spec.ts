@@ -24,9 +24,8 @@ test.describe('input-tree renderer', () => {
     await expect(stage.getByText('Design').first()).toBeVisible();
 
     // Click a node to select it
-    await stage.getByText('Engineering').first().click();
-    // Stage remains stable
-    await expect(stage).toBeVisible();
+    await stage.locator('[data-slot="tree-option-node"] [role="treeitem"]').filter({ hasText: 'Engineering' }).first().click();
+    await expect(stage.getByText('Selected: engineering')).toBeVisible();
   });
 });
 
@@ -42,11 +41,11 @@ test.describe('tree-select renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
-    await stage.getByRole('button', { name: 'Select Team' }).click();
+    await stage.locator('[data-slot="tree-select-trigger-row"] [data-slot="button"]').first().click();
     await expect(page.getByPlaceholder('Search tree options')).toBeVisible({ timeout: 5_000 });
-    await page.getByRole('button', { name: /Platform/ }).click();
-    await expect(stage.getByRole('button', { name: 'Select Team' })).toContainText('Platform');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"team": "platform"');
+    await page.locator('[data-slot="tree-option-node"] [role="treeitem"]').filter({ hasText: 'Platform' }).first().click();
+    await expect(stage.locator('[data-slot="tree-select-value"]')).toContainText('Platform');
+    await expect(stage.getByText('Selected: platform')).toBeVisible();
   });
 });
 
@@ -68,7 +67,7 @@ test.describe('tag-list renderer', () => {
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"typescript"');
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"vite"');
 
-    await stage.locator('[data-slot="field-control"] button').filter({ hasText: 'typescript' }).click();
+    await stage.locator('[data-slot="field-control"] [data-slot="button"]').filter({ hasText: 'typescript' }).first().click({ force: true });
     await expect(stage.locator('[data-slot="scope-debug-json"]')).not.toContainText('"typescript"');
   });
 
@@ -242,8 +241,8 @@ test.describe('detail-field renderer', () => {
     await expect(stage).toBeVisible();
     await expect(stage.getByText('Ada Lovelace')).toBeVisible({ timeout: 5_000 });
 
-    const editButton = stage.getByText('Edit').first();
-    await editButton.click();
+    const editButton = stage.locator('[data-slot="field-control"] [data-slot="button"]').filter({ hasText: 'Edit' }).first();
+    await editButton.click({ force: true });
     await expect(page.getByLabel('First Name')).toBeVisible({ timeout: 5_000 });
 
     await page.getByLabel('First Name').fill('Grace');

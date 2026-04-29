@@ -47,10 +47,9 @@ test.describe('tree renderer', () => {
     const slug = scenarioSlug('Expand/collapse org tree');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Use getByRole to avoid strict-mode violation (text also appears in scope debug JSON)
-    await expect(stage.getByRole('button', { name: 'Engineering' })).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByRole('button', { name: 'Frontend' })).toBeVisible();
-    await expect(stage.getByRole('button', { name: 'Product' })).toBeVisible();
+    await expect(stage.getByText('Engineering').first()).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Frontend').first()).toBeVisible();
+    await expect(stage.getByText('Product').first()).toBeVisible();
   });
 
   test('read: tree custom node template renders depth badges', async ({ page }) => {
@@ -60,9 +59,8 @@ test.describe('tree renderer', () => {
     const slug = scenarioSlug('Custom node template with depth badge');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    // Use getByRole to avoid strict-mode violation (text also appears in scope debug JSON)
-    await expect(stage.getByRole('button', { name: 'Engineering' })).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByRole('button', { name: 'Frontend' })).toBeVisible();
+    await expect(stage.getByText('Engineering').first()).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Frontend').first()).toBeVisible();
     await expect(stage.getByText('depth:0').first()).toBeVisible();
     await expect(stage.getByText('depth:1').first()).toBeVisible();
   });

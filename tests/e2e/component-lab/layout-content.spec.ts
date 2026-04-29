@@ -227,7 +227,7 @@ test.describe('tabs renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tabs');
 
-    const slug = scenarioSlug('Default tabs');
+    const slug = scenarioSlug('Horizontal tabs (top)');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
@@ -248,7 +248,7 @@ test.describe('tabs renderer', () => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tabs');
 
-    const slug = scenarioSlug('Default tabs');
+    const slug = scenarioSlug('Horizontal tabs (top)');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
