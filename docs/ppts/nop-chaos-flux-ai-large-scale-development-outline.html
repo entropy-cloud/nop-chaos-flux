@@ -1482,17 +1482,82 @@
         async function prepareForPdf() {
             const pdfContainer = document.createElement('div');
             pdfContainer.className = 'pdf-page-container';
+            const localMode = isLocalFile();
             allSlides.forEach(slide => {
                 const clone = slide.cloneNode(true);
                 clone.classList.remove('active');
                 clone.classList.add('pdf-slide');
+                if (localMode) {
+                    clone.querySelectorAll('img').forEach(img => {
+                        const src = img.getAttribute('src') || '';
+                        if (!src.startsWith('data:') && !src.startsWith('http://') && !src.startsWith('https://')) {
+                            const placeholder = document.createElement('div');
+                            placeholder.style.cssText = 'border:2px dashed #d1d5db;border-radius:12px;padding:24px;text-align:center;color:#9ca3af;font-size:0.95rem;background:#f9fafb;';
+                            placeholder.textContent = '📷 本地图片需要通过 HTTP 服务器访问才能导出到 PDF';
+                            img.replaceWith(placeholder);
+                        }
+                    });
+                }
                 pdfContainer.appendChild(clone);
             });
             document.body.appendChild(pdfContainer);
             return pdfContainer;
         }
 
-        function exportToPDF() {
+        function isLocalFile() {
+            return location.protocol === 'file:';
+        }
+
+        function showLocalFileWarning() {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            const dialog = document.createElement('div');
+            dialog.style.cssText = 'background:white;border-radius:16px;padding:32px 40px;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:Inter,-apple-system,sans-serif;';
+            dialog.innerHTML = `
+                <h3 style="margin:0 0 16px;font-size:1.3rem;color:#1f2937;">⚠️ 本地文件模式</h3>
+                <p style="color:#4b5563;font-size:1rem;line-height:1.7;margin:0 0 12px;">
+                    当前通过 <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.9em;">file://</code> 协议直接打开，页面中的本地图片（如 Lorenz 吸引子图）将无法嵌入 PDF，导出后对应位置会显示为空白。
+                </p>
+                <p style="color:#4b5563;font-size:1rem;line-height:1.7;margin:0 0 8px;">
+                    <strong>如需完整导出（含图片），请通过 HTTP 服务器访问：</strong>
+                </p>
+                <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:14px 18px;margin:0 0 20px;font-family:monospace;font-size:0.9rem;line-height:1.8;color:#1f2937;">
+                    <div>cd docs/ppts</div>
+                    <div>python -m http.server 8080</div>
+                    <div style="color:#64748b;margin-top:4px;"># 然后浏览器打开 http://localhost:8080/nop-chaos-flux-ai-large-scale-development-outline.html</div>
+                </div>
+                <div style="display:flex;gap:12px;justify-content:flex-end;">
+                    <button id="pdf-cancel-btn" style="padding:10px 20px;border:1px solid #d1d5db;border-radius:8px;background:white;cursor:pointer;font-size:1rem;font-weight:600;color:#4b5563;">取消导出</button>
+                    <button id="pdf-continue-btn" style="padding:10px 20px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer;font-size:1rem;font-weight:600;">继续导出（图片将为空白）</button>
+                </div>
+            `;
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+
+            return new Promise(resolve => {
+                dialog.querySelector('#pdf-cancel-btn').onclick = () => {
+                    document.body.removeChild(overlay);
+                    resolve(false);
+                };
+                dialog.querySelector('#pdf-continue-btn').onclick = () => {
+                    document.body.removeChild(overlay);
+                    resolve(true);
+                };
+                overlay.onclick = e => {
+                    if (e.target === overlay) {
+                        document.body.removeChild(overlay);
+                        resolve(false);
+                    }
+                };
+            });
+        }
+
+        async function exportToPDF() {
+            if (isLocalFile()) {
+                const proceed = await showLocalFileWarning();
+                if (!proceed) return;
+            }
+
             const originalButtonContent = pdfBtn.innerHTML;
             pdfBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
             pdfBtn.disabled = true;
@@ -1513,7 +1578,7 @@
                     document.body.removeChild(pdfContainer);
                     pdfBtn.innerHTML = originalButtonContent;
                     pdfBtn.disabled = false;
-                    alert('PDF export failed.');
+                    alert('PDF export failed: ' + (err.message || err));
                 });
             });
         }
