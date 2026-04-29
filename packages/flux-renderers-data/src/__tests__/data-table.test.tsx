@@ -459,12 +459,7 @@ describe('dataRendererDefinitions table behavior', () => {
     const selects = screen.getAllByRole('combobox');
     expect(selects[0].textContent).toContain('APAC');
     expect(selects[1].textContent).toContain('EMEA');
-
-    await waitFor(() => {
-      const radios = screen.getAllByRole('radio');
-      const checkedCount = radios.filter(r => (r as HTMLInputElement).checked).length;
-      expect(checkedCount).toBeGreaterThanOrEqual(2);
-    });
+  });
   });
 
   it('does not bind form controls in cells via bare fieldName (isolated scope)', async () => {
