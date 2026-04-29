@@ -19,11 +19,16 @@ export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
       <div data-slot="code-editor-snippet-panel">
         <PopoverTrigger
           render={
-            <ToolbarTrigger data-slot="code-editor-snippet-toggle" title="Insert snippet" />
+            <button
+              type="button"
+              data-slot="code-editor-snippet-toggle"
+              title="Insert snippet"
+              className="inline-flex items-center justify-center gap-1 h-6 px-2 rounded-md text-xs cursor-pointer select-none text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors"
+            >
+              {'{…}'}
+            </button>
           }
-        >
-          {'{…}'}
-        </PopoverTrigger>
+        />
       </div>
       <PopoverContent align="start" className="w-48 p-1" data-slot="code-editor-snippet-dropdown">
         {snippets.map((snippet, index) => (
@@ -42,22 +47,5 @@ export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
         ))}
       </PopoverContent>
     </Popover>
-  );
-}
-
-function ToolbarTrigger(props: { 'data-slot'?: string; title?: string; children?: React.ReactNode }) {
-  return (
-    <span
-      role="button"
-      tabIndex={0}
-      data-slot={props['data-slot']}
-      title={props.title}
-      className="inline-flex items-center justify-center gap-1 h-6 px-2 rounded-md text-xs cursor-pointer select-none text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-      }}
-    >
-      {props.children}
-    </span>
   );
 }
