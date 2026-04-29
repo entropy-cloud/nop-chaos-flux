@@ -28,6 +28,7 @@ Choose the smallest document that matches the task.
 
 | If you need to... | Read this first | Then read |
 | --- | --- | --- |
+| Understand the AI large-scale development methodology around attractors, harnesses, owner-doc precedence, and convergence infrastructure | `docs/articles/attractor-before-harness-ai-large-scale-development-methodology.md` | `docs/architecture/README.md`, `docs/architecture/flux-design-principles.md`, `docs/discussions/2026-04-28-ai-development-attractor-model-discussion.md` |
 | Review which Flux architecture improvements are still worth pursuing without changing the current normative baseline | `docs/analysis/2026-04-26-flux-architecture-improvement-opportunities.md` | `docs/architecture/flux-design-principles.md`, `docs/architecture/flux-dsl-vm-extensibility.md` |
 | Understand the architecture hierarchy, reading order, or which architecture docs own precedence | `docs/architecture/README.md` | `docs/references/architecture-doc-status-matrix.md` |
 | Understand the current architecture baseline | `docs/architecture/flux-design-principles.md` | `docs/architecture/frontend-programming-model.md` for top-level precedence, then `docs/architecture/flux-core.md` for the codebase-wide baseline |
