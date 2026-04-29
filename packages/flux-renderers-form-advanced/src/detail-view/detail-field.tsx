@@ -70,6 +70,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
   const mountedRef = React.useRef(true);
   React.useEffect(() => {
+    mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 

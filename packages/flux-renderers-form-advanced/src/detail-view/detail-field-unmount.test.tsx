@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import React from 'react';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support';
 
 describe('detail-field unmount protection', () => {
@@ -133,5 +134,38 @@ describe('detail-field unmount protection', () => {
     expect(reactUpdateWarnings).toHaveLength(0);
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it('still opens after React StrictMode remount cycles', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <React.StrictMode>
+        <SchemaRenderer
+          schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-unmount.test.tsx#3"
+          schema={{
+            type: 'form',
+            data: { profile: { firstName: 'Ada', lastName: 'Lovelace' } },
+            body: [
+              {
+                type: 'detail-field',
+                name: 'profile',
+                triggerLabel: 'Edit Profile',
+                content: [{ type: 'input-text', name: 'firstName', label: 'First Name' }],
+              },
+            ],
+          }}
+          env={baseEnv}
+          formulaCompiler={formulaCompiler}
+        />
+      </React.StrictMode>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Profile')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Profile'));
+
+    await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());
   });
 });
