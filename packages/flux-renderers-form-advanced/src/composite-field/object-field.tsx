@@ -111,6 +111,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const [resolvedValue, setResolvedValue] = React.useState(rawValue);
   const projectedValue = usesWorkingValue ? resolvedValue : rawValue;
   const transformOutOwner = parentForm ?? parentScope;
+  const pendingTransformOutRef = React.useRef<Promise<unknown> | null>(null);
 
   React.useEffect(() => {
     let active = true;
@@ -178,6 +179,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
       if (isPromiseLike(committedValue)) {
         const sequence = nextTransformOutSequence(transformOutOwner);
+        pendingTransformOutRef.current = committedValue;
         void committedValue.then((resolvedCommittedValue: unknown) => {
           if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
             return;
@@ -189,11 +191,16 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
           }
 
           parentScope.update(name, resolvedCommittedValue);
+        }).finally(() => {
+          if (pendingTransformOutRef.current === committedValue) {
+            pendingTransformOutRef.current = null;
+          }
         });
         return;
       }
 
       invalidateTransformOutSequence(transformOutOwner);
+      pendingTransformOutRef.current = null;
       if (parentForm && name) {
         parentForm.setValue(name, committedValue);
         return;
@@ -259,6 +266,38 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     },
     [parentForm, name, projectedValue, writeProjectedValue]
   );
+
+  React.useEffect(() => {
+    if (!parentForm || !name || !schema.transformOutAction) {
+      return;
+    }
+
+    const childOwnerId = `${parentForm.id}:${name}:object-field`;
+    parentForm.registerChildContract({
+      childOwnerId,
+      mode: 'recurse-submit',
+      active: true,
+      unregister() {
+        parentForm.unregisterChildContract(childOwnerId);
+      },
+      getState() {
+        return {
+          ready: pendingTransformOutRef.current === null,
+          validating: pendingTransformOutRef.current !== null,
+          valid: true,
+          hasErrors: false,
+        };
+      },
+      async triggerValidation() {
+        await pendingTransformOutRef.current;
+        return parentForm.validateField(name, 'commit');
+      },
+    });
+
+    return () => {
+      parentForm.unregisterChildContract(childOwnerId);
+    };
+  }, [name, parentForm, schema.transformOutAction]);
 
   return (
     <div data-slot="field-control">
