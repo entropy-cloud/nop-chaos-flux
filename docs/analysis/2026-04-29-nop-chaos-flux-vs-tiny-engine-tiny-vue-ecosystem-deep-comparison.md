@@ -23,6 +23,12 @@
 4. `nop-chaos-flux` 更像一个语义收敛的底层内核；`tiny-engine + tiny-vue` 更像一个由工作台、物料协议、组件库和代码生成器共同组成的上层生态。
 5. 如果你的目标是“让 schema 本身成为长期稳定的运行时契约”，`nop-chaos-flux` 更强。如果你的目标是“快速构建并定制一个低代码设计器，再把结果交付为 Vue 应用代码”，`tiny-engine + tiny-vue` 更强。
 
+### 1.1 如果只问“设计水平、架构水平、编码水平”
+
+- 设计水平: 各胜一面。若重点看问题抽象、执行模型设计和长期语义闭包，`nop-chaos-flux` 更强；若重点看工作台产品化、组件生态装配和源码交付链设计，`tiny-engine + tiny-vue` 更强。
+- 架构水平: 在本次审阅范围内，`nop-chaos-flux` 更高，因为 compile/runtime/host boundary、owner semantics、dependency tracking 和 action algebra 被更集中地正式化了。
+- 编码水平: 需要拆开看。以当前仓库可见证据看，`flux` 核心代码整体更现代、更一致；`tiny-vue` 是成熟组件库工程水准；`tiny-engine` 更像承担平台胶水、动态装配和历史兼容负担的工程层。因此如果必须做粗粒度排序，更接近 `flux core > tiny-vue > tiny-engine`，而 Tiny 生态的工业成熟度又高于只看 `tiny-engine` 单仓时的观感。
+
 ---
 
 ## 2. 范围、方法与置信度
@@ -47,8 +53,8 @@
 
 所以更准确的说法是：
 
-- `tiny-engine` 的协议层是**组件库无关**的。
-- 但其官方工作台、预览、默认出码模板和产品发行方式，明显对 OpenTiny Vue 生态有**强偏置**。
+- 在本次审阅范围内，`tiny-engine` 的物料协议看起来**可以承载多组件库映射**，而不是只能表达 `tiny-vue`。
+- 但以当前仓库可见证据看，它的官方工作台、预览、默认出码模板和产品发行方式，仍然**明显偏向 OpenTiny Vue 生态**。
 
 ### 2.3 方法与置信度说明
 
@@ -187,7 +193,7 @@
 - `packages/flux-react/src/node-renderer.tsx` 在节点级别使用 `useSyncExternalStoreWithSelector` 订阅 scope change，只在依赖命中时重新解析 props/meta。
 - `packages/flux-action-core/src/action-dispatcher/action-execution.ts` 则在动作层统一处理 `when`、`parallel`、`then`、`onError`、debounce、retry、timeout、result classification。
 
-也就是说，Flux 把“结构编译”“数据读取”“渲染解析”“动作控制流”都放进了同一套正式 runtime 语言里。
+也就是说，Flux 把“结构编译”“数据读取”“渲染解析”“动作控制流”都收敛在同一套统一执行架构里。
 
 ### 5.2 `tiny-engine + tiny-vue` 的处理链条
 
@@ -203,7 +209,7 @@ tiny 生态至少存在三条主链。
 
 第三条是生成后应用运行链：
 
-`generated page .vue files + generated stores + generated dataSource config + generated package.json -> ordinary Vue app runtime -> @opentiny/vue component runtime`
+`generated page .vue files + generated stores + generated dataSource config + generated package.json -> ordinary Vue app runtime -> vue/pinia/vue-router/axios/@opentiny/vue 等运行时组合`
 
 设计器运行链中，`tiny-engine/packages/canvas/render/src/render.ts` 的职责非常重：
 
@@ -337,7 +343,7 @@ tiny 生态也有不少约束，但形态不同：
 - 设置器组件
 - 组件运行时本身
 
-它们组合起来能工作，但没有像 Flux 那样形成一个以 compiler/runtime owner 为中心的统一诊断系统。
+它们组合起来能工作，但在本次审阅到的 tiny 侧代码与文档中，没有看到像 Flux 那样以 compiler/runtime owner 为中心收敛出的统一诊断系统。
 
 ### 7.3 一个重要的结构性差异
 
@@ -389,9 +395,9 @@ tiny 生态当然也有事件与行为，但风格完全不同：
 - 生成后应用中的事件、状态和数据源逻辑还会进一步被拆分到页面 SFC、Pinia store、dataSource 配置和组件库 emit 中。
 - `tiny-vue` 组件内部仍遵循普通 Vue `emit` 模式。
 
-这使 tiny 生态在作者体验上更自由，但代价是：
+这使 tiny 生态在作者体验上更自由，但基于当前审阅到的实现，也更容易出现以下倾向：
 
-- 控制流不容易形成统一 IR
+- 控制流较难收敛成统一 IR
 - 静态校验边界较弱
 - 运行时信任边界更宽
 
@@ -510,10 +516,32 @@ tiny 生态的扩展面则非常宽：
 - Flux 擅长的是**运行时语言和宿主协议扩展**。
 - Tiny 生态擅长的是**工作台、物料、组件和交付流程扩展**。
 
+这里还要补一个在本次审阅后必须写清的区分：
+
+- 在 Flux 里，`hostContract` / manifest 负责的是 host boundary: projection、capability、version 与编译期校验。
+- 在 Flux 里，实际显示出来的工作台内容并不由 manifest 描述，而是由 owner schema 与 domain config 描述。
+- Flow Designer 的现行基线就是：
+  - `designer-page.toolbar / inspector / dialogs: SchemaInput`
+  - `NodeTypeConfig.body / inspector.body / createDialog.body / quickActions: SchemaInput`
+- live code 也按这条线工作：`packages/flow-designer-renderers/src/designer-page.tsx`、`designer-inspector.tsx`、`packages/report-designer-renderers/src/page-renderer.tsx` 都优先渲染 schema/config 提供的内容，只在缺省时才走窄的 React fallback。
+
+所以如果要把 tiny 的统一 workbench registry 哲学对位到 Flux，更准确的说法不是“Flux 也缺一个 registry”，而是：
+
+- Flux 已经把 tiny registry 里混在一起的几类职责拆开了
+- host boundary -> manifest
+- visible workbench content -> schema/config
+- shell reuse -> `WorkbenchShell`
+- 默认 baseline 装配 -> loader / tooling / owner renderer fallback
+
 ### 10.4 证据锚点
 
 - `packages/flux-core/src/types/renderer-core.ts`
 - `packages/flow-designer-renderers/src/designer-manifest.ts`
+- `docs/architecture/flow-designer/design.md`
+- `docs/architecture/flow-designer/config-schema.md`
+- `packages/flow-designer-renderers/src/designer-page.tsx`
+- `packages/flow-designer-renderers/src/designer-inspector.tsx`
+- `packages/report-designer-renderers/src/page-renderer.tsx`
 - `tiny-engine/docs/extension-capabilities-overview/registry.md`
 - `tiny-engine/docs/extension-capabilities-overview/meta-services-and-meta-apps.md`
 - `tiny-engine/packages/register/src/service.ts`
@@ -534,6 +562,17 @@ tiny 生态的扩展面则非常宽：
 - `word-editor-core` / `word-editor-renderers`
 
 这说明它承认一个事实：复杂设计器应该拥有自己的 core，而不是永远当成工作台壳上的小插件。
+
+更重要的是，在 Flux 里这些复杂设计器并不是靠一个统一工作台注册表来定义可见内容。以当前仓库可见证据看：
+
+- `designer-page`、`report-designer-page` 这类 host family 已经把 toolbar / inspector / dialogs / body 等可见区域定义为 `SchemaInput`
+- Flow Designer 的节点正文、节点 inspector、创建对话框、quick actions 也都是 `SchemaInput`
+- 因此“显示什么”在 Flux 里首先是 schema/config 问题，而不是 manifest 或 plugin 壳层问题
+
+这条边界很关键：
+
+- `hostContract` 负责的是宿主边界与校验
+- `SchemaInput` / domain config 负责的是作者看到的实际 UI 内容
 
 ### 11.2 `tiny-engine`: 复杂能力更多通过统一工作台接线
 
@@ -609,8 +648,8 @@ Tiny 的预览不是“同一个 runtime 换个壳”，而是一套独立的 pr
 
 ### 12.4 结论
 
-- 若你关心“schema 持续是最终执行契约”，Flux 更强。
-- 若你关心“设计器只是生产代码的上游工具”，Tiny 生态更强。
+- 在本次审阅范围内，若你关心“schema 持续是最终执行契约”，Flux 覆盖得更系统化。
+- 以当前仓库可见证据看，若你关心“设计器主要是生产代码的上游工具”，Tiny 生态覆盖得更系统化。
 
 ### 12.5 证据锚点
 
@@ -725,7 +764,7 @@ Flux 在安全文档中给出了一组很清楚的底线：
 
 ### 15.1 `nop-chaos-flux`: 热路径约束更明确
 
-Flux 在性能上有三个很明显的架构优势：
+在本次审阅范围内，Flux 在性能相关架构形态上有三个更明确的特征：
 
 1. compile once, execute many
 2. selective subscription 与 dependency tracking
@@ -768,9 +807,11 @@ Tiny 生态更擅长把兼容性、组件生态与设计器体验放在第一位
 
 ---
 
-## 16. 可观测性、调试能力与 AI 友好性
+## 16. 可观测性、调试能力与 AI 可操作性补充观察
 
-### 16.1 `nop-chaos-flux`: 调试和 AI 操作面是架构的一部分
+这一节是补充观察，不与前面的执行模型、数据模型、扩展模型和交付模型等核心架构维度等权。
+
+### 16.1 `nop-chaos-flux`: 调试与自动化操作面覆盖更系统化
 
 Flux 在这个维度上很突出：
 
@@ -789,9 +830,9 @@ Flux 在这个维度上很突出：
 - `explainNodeFailure()`
 - `explainNodeAsync()`
 
-这意味着它不仅能让人调试，也在主动为自动化系统和 AI agent 提供低歧义操作面。
+这意味着它不仅能让人调试，也在主动为自动化系统和 AI agent 提供较低歧义的操作面。
 
-### 16.2 `tiny-engine + tiny-vue`: AI 友好性是分裂的
+### 16.2 `tiny-engine + tiny-vue`: 自动化与 AI 相关支持分布在不同仓位
 
 Tiny 生态在这方面不能一概而论。
 
@@ -810,7 +851,7 @@ Tiny 生态在这方面不能一概而论。
 因此更准确的结论是：
 
 - tiny 生态在“AI 辅助组件库开发”和“OSS 工作流自动化”上并不弱。
-- 但在“低代码 runtime/debugger 的 explainability 和 agent-operable architecture”上，当前审阅到的 `tiny-engine` 文档与代码中没有发现与 Flux debugger automation contract 对应的正式机制。
+- 但在“低代码 runtime/debugger 的 explainability 和 agent-operable architecture”上，以当前仓库可见证据看，`tiny-engine` 文档与代码中没有发现与 Flux debugger automation contract 对应的正式机制。
 
 ### 16.3 证据锚点
 
@@ -825,7 +866,9 @@ Tiny 生态在这方面不能一概而论。
 
 ---
 
-## 17. 工程治理、测试、文档与组织扩展性
+## 17. 工程治理、测试、文档与组织扩展性补充观察
+
+这一节同样是补充观察，主要讨论协作与治理成本，不与前面的核心执行语义判断等权。
 
 ### 17.1 `nop-chaos-flux`: 单仓收敛能力强
 
@@ -836,7 +879,7 @@ Flux 的优势在于单仓 convergence：
 - 文档 owner 体系明确
 - daily logs、analysis、plans、architecture docs 形成完整维护闭环
 
-这使它非常适合一个强调架构一致性的内部平台团队。
+这使它在本次审阅范围内非常适合一个强调架构一致性的内部平台团队。
 
 ### 17.2 `tiny-engine + tiny-vue`: 生态拆仓更利于专业分工，但合同同步成本更高
 
@@ -859,7 +902,7 @@ Tiny 生态的好处是：
 - `tiny-engine` 的 root test / typecheck / CI 仍偏轻，而且文档与脚本确实存在可验证漂移，例如 `docs/development-getting-started/dev-quick-start.md` 仍写 `pnpm dev:demo`，`CONTRIBUTING.md` 仍写 `npm install` / `npm run serve`，而 root `package.json` 的实际命令是 `pnpm dev`、`serve:frontend`、`serve:backend`。
 - `tiny-vue` 则已经有更完整的 unit/E2E workflow、AGENTS、测试触发规范。
 
-因此生态整体的工程成熟度高于 `tiny-engine` 单仓，但仍弱于 Flux 在“单一语义内核全链收敛”上的程度。
+因此生态整体的工程成熟度高于 `tiny-engine` 单仓，但以当前仓库可见证据看，仍弱于 Flux 在“单一语义内核全链收敛”上的系统化程度。
 
 ### 17.4 一个很关键的组织结论
 
@@ -881,25 +924,31 @@ Tiny 生态的好处是：
 
 ## 18. 强项、成本与适用场景
 
+### 18.1 如果强行压缩成三句判断
+
+- 设计水平: 各胜一面；若重点看执行模型与抽象密度，Flux 更强；若重点看工作台、生态和交付链设计，Tiny 生态更强。
+- 架构水平: 在本次审阅范围内，Flux 更高。原因不是功能更多，而是核心执行语义、边界和契约更集中。
+- 编码水平: 需要拆开看。以当前仓库可见证据看，Flux 核心代码整体最干净一致，`tiny-vue` 体现出成熟组件库工程能力，`tiny-engine` 则更像承担平台胶水、动态装配和历史兼容负担的工程层。
+
 | 维度 | nop-chaos-flux 更强的地方 | tiny-engine + tiny-vue 更强的地方 |
 | --- | --- | --- |
-| 运行时语义 | compile/runtime 边界、owner 语义、action algebra、dependency tracking 更集中 | 语义更多分布在 canvas 解释器、material protocol、codegen 和生成后 Vue 应用运行链里 |
-| 设计器工作台 | 复杂 designer 可做 kernel，但默认产品壳层不如 Tiny 直接 | registry、plugins、toolbars、settings、configurators 更成熟 |
+| 运行时语义 | 在本次审阅范围内，compile/runtime 边界、owner 语义、action algebra、dependency tracking 更集中 | 语义更多分布在 canvas 解释器、material protocol、codegen 和生成后 Vue 应用运行链里 |
+| 设计器工作台 | 复杂 designer 可做 kernel；而且以当前仓库可见证据看，visible content 已更明确地走 `SchemaInput` / domain config 路线 | 以当前仓库可见证据看，registry、plugins、toolbars、settings、configurators 覆盖更系统化 |
 | 组件与设计系统生态 | 当前更偏 runtime/renderers 自有体系 | `tiny-vue` 的组件、主题、图标、运行时资源更完整 |
 | 出码与交付 | 不是当前中心叙事 | codegen pipeline 与 deploy-without-engine 路线更完整 |
-| 嵌入式宿主与 host contract | host projection/capability manifest 更清晰 | 更偏产品型工作台集成 |
+| 嵌入式宿主与 host contract | 在本次审阅范围内，host projection/capability manifest 更清晰 | 更偏产品型工作台集成 |
 | 安全与信任边界 | 更严格、更明确 | 更灵活，但边界更宽 |
-| AI 运维与 explainability | debugger automation + owner docs 明显领先 | tiny-vue 对 AI 辅助组件开发更友好，但 engine runtime explainability 较弱 |
+| 可观测性与 AI 可操作性（补充） | debugger automation + owner docs 覆盖更系统化 | tiny-vue 对 AI 辅助组件开发更友好，但 engine runtime explainability 较弱 |
 | 组织模式 | 单仓语义收敛强 | 分仓生态与专业分工更自然 |
 
-### 18.1 更适合参考 `nop-chaos-flux` 的情况
+### 18.2 更适合参考 `nop-chaos-flux` 的情况
 
 - 你要做的是低代码执行内核，不是单纯设计器产品
 - 你需要统一 action、validation、scope、host integration 语义
-- 你希望 AI agent 能参与长期维护与调试
+- 你希望自动化系统或 AI agent 能参与长期维护与调试，且这不是唯一主导因素
 - 你预期未来会有多个复杂领域设计器在同一执行模型上共存
 
-### 18.2 更适合参考 `tiny-engine + tiny-vue` 的情况
+### 18.3 更适合参考 `tiny-engine + tiny-vue` 的情况
 
 - 你要尽快搭建可二开的设计器工作台
 - 你重视物料协议、设置器、插件面板、工具栏布局
@@ -912,7 +961,7 @@ Tiny 生态的好处是：
 
 ### 19.1 `nop-chaos-flux` 可以借鉴 tiny 生态
 
-- 更直接的工作台拼装机制
+- 更成熟的 loader/tooling 层工作台 baseline 生成能力，但前提仍是生成 `SchemaInput` / domain config，而不是转向 registry 驱动可见内容
 - 更面向生态贡献者的插件/设置器/工具栏故事
 - 更成熟的 schema-to-code plugin pipeline
 - 更强的组件库/主题生态包装能力
@@ -930,21 +979,24 @@ Tiny 生态的好处是：
 ## 20. 最稳健的结论
 
 1. 这不是 `tiny-engine` 单仓对 `nop-chaos-flux` 单仓的公平对比，公平边界必须是 `tiny-engine + tiny-vue` 生态。
-2. `nop-chaos-flux` 的核心竞争力在“把低代码执行语义做成正式 runtime architecture”。
-3. `tiny-engine + tiny-vue` 的核心竞争力在“把低代码设计器、组件生态、物料协议和代码生成做成可组合生态”。
+2. 在本次审阅范围内，`nop-chaos-flux` 的核心竞争力在“把低代码执行语义做成正式 runtime architecture”。
+3. 以当前仓库可见证据看，`tiny-engine + tiny-vue` 的核心竞争力在“把低代码设计器、组件生态、物料协议和代码生成做成可组合生态”。
 4. Flux 的架构更集中，Tiny 生态的架构更分布。
-5. Flux 更像语义内核，Tiny 更像产品工作台 + 组件运行时 + 交付工具链。
-6. 在数据 owner、依赖追踪、动作代数、宿主能力 manifest、debugger explainability 上，Flux 明显更强。
-7. 在 registry、插件面板、设置器、物料 bundle、组件生态、主题资源、导出源码交付上，Tiny 生态明显更强。
-8. Tiny 的低代码契约并不直接来自 `tiny-vue` 源码，而是来自独立 material protocol；这是它灵活性的来源，也是 drift 风险的来源。
-9. Flux 的单仓 owner-doc 与统一 runtime 让长期语义收敛更容易，但也意味着更高的抽象与维护门槛。
-10. Tiny 生态的分仓与分层让专业分工更自然，但也把版本协调、物料契约、组件契约和出码契约分散成跨仓治理问题。
-11. 若目标是“运行时长期可解释、可验证、可被 AI 运维”，Flux 更优。
-12. 若目标是“设计器快速产品化、组件生态复用、交付为普通 Vue 工程”，Tiny 生态更优。
+5. 更具体地说，Flux 更接近“schema/compiled program 作为稳定执行契约”，Tiny 更接近“schema + materials/componentsMap + preview assembly + generated app 作为分布式契约”。
+6. 如果强行比较设计水平，那么更准确的说法不是“谁全面碾压谁”，而是 Flux 更强于执行模型与系统抽象设计，Tiny 生态更强于工作台、组件生态与交付链设计。
+7. 如果强行比较架构水平，那么在本次审阅范围内，Flux 更高，因为它把 compile/runtime/host contract、owner semantics 和依赖追踪更系统化地收敛成了一套统一内核。
+8. 如果强行比较编码水平，那么以当前仓库可见证据看，Flux 核心代码整体更现代、更一致，`tiny-vue` 体现出成熟组件库工程能力，`tiny-engine` 则更像承担平台胶水、动态装配和历史兼容负担的工程层。
+9. 在数据 owner、依赖追踪、动作代数、宿主能力 manifest、以及“manifest 只负责边界、visible content 继续由 schema/config 驱动”这类边界清晰度维度上，Flux 在本次审阅范围内更占优。
+10. 在 registry、插件面板、设置器、物料 bundle、组件生态、主题资源、导出源码交付这些维度上，Tiny 生态在本次审阅范围内更占优。
+11. Tiny 的低代码契约不是只来自 `tiny-vue` 源码，也不是只来自独立 material protocol；以当前仓库可见证据看，它更像由 material protocol、preview assembly、codegen 映射和生成后应用共同组成的分布式契约。这是它灵活性的来源之一，也是 drift 风险的来源之一。
+12. Flux 的单仓 owner-doc 与统一 runtime 让长期语义收敛更容易，但也意味着更高的抽象与维护门槛。
+13. Tiny 生态的分仓与分层让专业分工更自然，但也把版本协调、物料契约、组件契约和出码契约分散成跨仓治理问题。
+14. 若目标是“运行时长期可解释、可验证、并具备更系统化的自动化操作面”，Flux 在本次审阅范围内更适合作为优先参考。
+15. 若目标是“设计器快速产品化、组件生态复用、交付为普通 Vue 工程”，Tiny 生态在本次审阅范围内更适合作为优先参考。
 
 ### 20.1 限定语
 
-以上结论应理解为“基于本次审阅到的 `nop-chaos-flux`、`tiny-engine`、`tiny-vue` 三个仓库当前代码与文档状态的判断”，而不是对整个 OpenTiny 外围生态或未来演进路径的绝对判定。
+以上结论应理解为“基于本次审阅到的 `nop-chaos-flux`、`tiny-engine`、`tiny-vue` 三个仓库当前代码与文档状态的相对判断”，而不是对整个 OpenTiny 外围生态或未来演进路径的绝对判定。
 
 ---
 
