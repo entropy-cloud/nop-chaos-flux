@@ -16,8 +16,11 @@ interface SpreadsheetPageSchema {
   title?: string
   document: SpreadsheetDocumentInput
   config?: SpreadsheetConfig
+  readOnly?: boolean
+  statusPath?: string
   toolbar?: SchemaInput
-  statusbar?: SchemaInput
+  body?: SchemaInput
+  dialogs?: SchemaInput
 }
 
 interface ReportDesignerPageSchema {
@@ -27,12 +30,22 @@ interface ReportDesignerPageSchema {
   document: ReportTemplateDocumentInput
   spreadsheet?: SpreadsheetConfig
   designer: ReportDesignerConfig
+  profile?: ReportDesignerProfile
+  adapters?: ReportDesignerAdapterConfig
+  statusPath?: string
   toolbar?: SchemaInput
   fieldPanel?: SchemaInput
   inspector?: SchemaInput
   dialogs?: SchemaInput
+  body?: SchemaInput
 }
 ```
+
+当前实现补充：
+
+- `spreadsheet-page` 的 live renderer 当前支持 `toolbar` / `body` / `dialogs` 三个 region；未覆盖 `body` 时使用内置 spreadsheet canvas。
+- `report-designer-page` 的 live renderer 当前支持 `toolbar` / `fieldPanel` / `inspector` / `dialogs` / `body` 五个 region；未覆盖时分别使用内置 field panel、canvas 与 inspector。
+- 两者当前都支持 `statusPath`，向宿主外部发布窄只读状态摘要。
 
 ## 2. SpreadsheetDocument
 

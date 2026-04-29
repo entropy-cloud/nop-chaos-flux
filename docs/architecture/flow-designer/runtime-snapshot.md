@@ -208,13 +208,13 @@ interface DesignerContextValue {
 
 ### 已通过 child scope 注入给 region schema 片段
 
-`designer-page.tsx:118` 调用 `useDesignerHostScope({ snapshot, config, core, path })` 创建 child scope，
-然后在 `toolbar`、`inspector`、`dialogs` region 渲染时传入:
+`designer-page.tsx` 调用 `useDesignerHostScope({ snapshot, config, core, path })` 创建 child scope，
+然后在 `toolbar`、`inspector`、`dialogs` region 渲染时通过 `helpers.render(...)` 显式传入:
 
 ```ts
-props.regions.toolbar?.render({ scope: designerScope, actionScope })
-props.regions.inspector?.render({ scope: designerScope, actionScope })
-props.regions.dialogs?.render({ scope: designerScope, actionScope })
+props.helpers.render(props.regions.toolbar.templateNode, { scope: designerScope, actionScope })
+props.helpers.render(props.regions.inspector.templateNode, { scope: designerScope, actionScope })
+props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope, actionScope })
 ```
 
 因此这三个 region 内部的 schema 表达式当前稳定可读取由 `buildDesignerScopeData` 投影出的字段:
@@ -225,7 +225,7 @@ props.regions.dialogs?.render({ scope: designerScope, actionScope })
 - `activeEdge`
 - `runtime`（含 `canUndo`、`canRedo`、`dirty`、`isDirty`、`gridEnabled`、`zoom`、`viewport`）
 
-注意边界: 这些字段只对通过 `render({ scope: designerScope })` 挂载的 region 内部有效；`designer-page` 之外的 schema 全局 scope 不自动获得这些字段。
+注意边界: 这些字段只对通过 `helpers.render(..., { scope: designerScope, actionScope })` 挂载的 region 内部有效；`designer-page` 之外的 schema 全局 scope 不自动获得这些字段。
 
 `palette`、`nodeTypes`、`edgeTypes` 属于更完整的目标 host scope 设计，但本文件不再把它们混写进“当前稳定已注入字段”列表。
 

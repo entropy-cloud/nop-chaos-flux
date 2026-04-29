@@ -148,8 +148,11 @@ interface SpreadsheetPageSchema {
   title?: string
   document: SpreadsheetDocumentInput
   config?: SpreadsheetConfig
+  readOnly?: boolean
+  statusPath?: string
   toolbar?: SchemaInput
-  statusbar?: SchemaInput
+  body?: SchemaInput
+  dialogs?: SchemaInput
 }
 ```
 
@@ -167,17 +170,21 @@ interface ReportDesignerPageSchema {
   document: ReportTemplateDocumentInput
   spreadsheet?: SpreadsheetConfig
   designer: ReportDesignerConfig
+  profile?: ReportDesignerProfile
+  adapters?: ReportDesignerAdapterConfig
+  statusPath?: string
   toolbar?: SchemaInput
   fieldPanel?: SchemaInput
   inspector?: SchemaInput
   dialogs?: SchemaInput
+  body?: SchemaInput
 }
 ```
 
 说明:
 
-- `spreadsheet-page` 只关心 workbook 编辑
-- `report-designer-page` 在 workbook 之上叠加字段拖拽、metadata、preview、inspector 适配
+- `spreadsheet-page` 只关心 workbook 编辑，并已支持 `toolbar` / `body` / `dialogs` 三个 region 与 `statusPath` 摘要发布
+- `report-designer-page` 在 workbook 之上叠加字段拖拽、metadata、preview、inspector 适配，并已支持 `toolbar` / `fieldPanel` / `inspector` / `dialogs` / `body` 五个 region 与 `statusPath`
 
 ## 6. 数据模型分层
 

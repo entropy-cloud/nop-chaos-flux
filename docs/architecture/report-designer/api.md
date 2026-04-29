@@ -72,8 +72,11 @@ interface SpreadsheetPageSchema {
   title?: string
   document: SpreadsheetDocumentInput
   config?: SpreadsheetConfig
+  readOnly?: boolean
+  statusPath?: string
   toolbar?: SchemaInput
-  statusbar?: SchemaInput
+  body?: SchemaInput
+  dialogs?: SchemaInput
 }
 ```
 
@@ -81,8 +84,9 @@ interface SpreadsheetPageSchema {
 
 - 初始化 spreadsheet runtime
 - 将 spreadsheet runtime 注入固定宿主 scope
-- 渲染 toolbar、canvas、statusbar 区域
+- 渲染 `toolbar`、`body`、`dialogs` 区域；未覆盖 `body` 时由 renderer 提供默认 spreadsheet canvas
 - 在 page-owned `ActionScope` 上注册 `spreadsheet:*` namespace
+- 通过 `statusPath` 向宿主发布窄只读状态摘要
 
 ## 3. `report-designer-page` Schema
 
@@ -94,10 +98,14 @@ interface ReportDesignerPageSchema {
   document: ReportTemplateDocumentInput
   spreadsheet?: SpreadsheetConfig
   designer: ReportDesignerConfig
+  profile?: ReportDesignerProfile
+  adapters?: ReportDesignerAdapterConfig
+  statusPath?: string
   toolbar?: SchemaInput
   fieldPanel?: SchemaInput
   inspector?: SchemaInput
   dialogs?: SchemaInput
+  body?: SchemaInput
 }
 ```
 
@@ -105,8 +113,9 @@ interface ReportDesignerPageSchema {
 
 - 初始化 spreadsheet runtime 与 report designer runtime
 - 注入字段面板、metadata、selection 和 preview 相关宿主 scope
-- 渲染 field panel、canvas、inspector 区域
+- 渲染 `fieldPanel`、`body`、`inspector`、`toolbar`、`dialogs` 等工作台区域；未覆盖时由 renderer 提供默认 field panel / canvas / inspector
 - 在 page-owned `ActionScope` 上注册 `spreadsheet:*` 与 `report-designer:*` namespace
+- 通过 `statusPath` 向宿主发布窄只读状态摘要
 
 ## 1.1 Action Namespace Ownership
 
