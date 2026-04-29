@@ -43,6 +43,35 @@ describe('basic renderer coverage gaps', () => {
     expect(screen.getByText('Warning').className).toContain('bg-amber');
     expect(screen.getByTestId('danger-badge').className).toContain('bg-destructive');
     expect(screen.getByTestId('empty-badge').textContent).toBe('');
+
+    cleanup();
+  });
+
+  it('renders badge with text and level props, ignoring invalid label/variant props', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/badge-props"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'badge', text: 'Correct', level: 'success', testid: 'badge-correct' },
+            { type: 'badge', label: 'WrongProps', variant: 'default', testid: 'badge-wrong' }
+          ]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    const correctBadge = screen.getByTestId('badge-correct');
+    expect(correctBadge.textContent).toBe('Correct');
+    expect(correctBadge.className).toContain('bg-emerald');
+
+    const wrongBadge = screen.getByTestId('badge-wrong');
+    expect(wrongBadge.textContent).toBe('');
+    expect(wrongBadge.className).not.toContain('bg-emerald');
+
     cleanup();
   });
 
