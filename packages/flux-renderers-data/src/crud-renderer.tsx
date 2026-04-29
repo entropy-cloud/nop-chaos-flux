@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentComponentRegistry, useRenderScope, useSchemaProps } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, useCurrentComponentRegistry, useRenderScope, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { createReadonlyScopeBinding } from '@nop-chaos/flux-runtime';
 import { Button, Separator, cn } from '@nop-chaos/ui';
@@ -84,39 +84,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     orderedColumnsStatePath: ownerPaths.orderedColumnsStatePath,
   });
 
-  const handleRefresh = useCallback(() => {
-    internalTableRef.current?.refreshSource?.();
-    if (normalizedSchema.autoClearSelectionOnRefresh) {
-      internalTableRef.current?.clearSelection?.();
-      scope?.update(selectionStatePath, []);
-    }
-
-    scope?.update(queryStatePath, {
-      values: queryState.values,
-      refreshCount: queryState.refreshCount + 1,
-    });
-
-    props.events.onRefresh?.(undefined, {
-      // Keep refresh actions on the owner scope so runtime-owned refreshSource can resolve the upstream source entry.
-      scope,
-    });
-  }, [normalizedSchema.autoClearSelectionOnRefresh, props.events, queryState.refreshCount, queryState.values, queryStatePath, scope, selectionStatePath]);
-
-  const queryFormId = `${props.id}-query-form`;
-  const { handleQuerySubmit, handleQueryReset } = useCrudQueryBridge({
-    componentRegistry,
-    queryFormId,
-    scope,
-    queryStatePath,
-    paginationStatePath,
-    queryState,
-    paginationState,
-    defaultQuery,
-    shouldFetchOnQueryChange,
-    onQuerySubmit: props.events.onQuerySubmit,
-    onQueryReset: props.events.onQueryReset,
-  });
-
   const summary = useMemo<CrudStatusSummary>(() => ({
     loading: false,
     refreshing: false,
@@ -133,13 +100,66 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   }), [effectiveQuery, filterState, filteredRows.length, paginationState, resolvedSource.total, selectedRowKeys, sortState, visibleColumnNames]);
   const crudScope = useMemo(() => createReadonlyScopeBinding(scope, '$crud', () => summary), [scope, summary]);
 
+  const handleRefresh = useCallback(() => {
+    internalTableRef.current?.refreshSource?.();
+    if (normalizedSchema.autoClearSelectionOnRefresh) {
+      internalTableRef.current?.clearSelection?.();
+      scope?.update(selectionStatePath, []);
+    }
+
+    scope?.update(queryStatePath, {
+      values: queryState.values,
+      refreshCount: queryState.refreshCount + 1,
+    });
+
+    props.events.onRefresh?.(undefined, {
+      scope: crudScope,
+    });
+  }, [crudScope, normalizedSchema.autoClearSelectionOnRefresh, props.events, queryState.refreshCount, queryState.values, queryStatePath, scope, selectionStatePath]);
+
+  const queryFormId = `${props.id}-query-form`;
+  const { handleQuerySubmit, handleQueryReset } = useCrudQueryBridge({
+    componentRegistry,
+    queryFormId,
+    scope,
+    queryStatePath,
+    paginationStatePath,
+    queryState,
+    paginationState,
+    defaultQuery,
+    shouldFetchOnQueryChange,
+    onQuerySubmit: props.events.onQuerySubmit,
+    onQueryReset: props.events.onQueryReset,
+  });
+
   useCrudHandle(props, internalTableRef, handleRefresh);
   useCrudStatusPublisher(scope, normalizedSchema.statusPath, summary);
 
-  const toolbarContent = resolveRendererSlotContent(props, 'toolbar');
-  const listActionsContent = resolveRendererSlotContent(props, 'listActions');
-  const footerToolbarContent = resolveRendererSlotContent(props, 'footerToolbar');
-  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: defaultEmptyLabel });
+  function resolveCrudSlotContent(slotKey: string, options?: { metaKey?: string; fallback?: React.ReactNode }) {
+    const regionContent = props.regions[slotKey]?.render({ scope: crudScope });
+    if (regionContent !== undefined && regionContent !== null) {
+      return regionContent;
+    }
+
+    const propValue = (props.props as Record<string, unknown>)[slotKey] as React.ReactNode | undefined;
+    if (propValue !== undefined && propValue !== null) {
+      return propValue;
+    }
+
+    if (options?.metaKey) {
+      const metaValue = (props.meta as unknown as Record<string, unknown>)[options.metaKey] as React.ReactNode | undefined;
+      if (metaValue !== undefined && metaValue !== null) {
+        return metaValue;
+      }
+    }
+
+    return options?.fallback;
+  }
+
+  const toolbarContent = resolveCrudSlotContent('toolbar');
+  const listActionsContent = resolveCrudSlotContent('listActions');
+  const footerToolbarContent = resolveCrudSlotContent('footerToolbar');
+  const emptyContent = resolveCrudSlotContent('empty', { fallback: defaultEmptyLabel });
 
   const headerBlocks = useMemo(() => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header'), [normalizedSchema.toolbarLayout]);
   const footerBlocks = useMemo(() => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer'), [normalizedSchema.toolbarLayout]);

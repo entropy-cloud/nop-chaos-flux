@@ -1,13 +1,36 @@
-import { useMemo, useRef } from 'react';
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas';
 import type { TableRowEntry } from './types';
 import { createRowScopeId, createRowScopePath } from './table-data';
 
+interface RowScopePayload {
+  record: Record<string, any>;
+  index: number;
+}
+
+interface RowScopeCacheState {
+  scopes: Map<string, ScopeRef>;
+  snapshots: Map<string, RowScopePayload>;
+}
+
+const tableRowScopeCaches = new Map<string, RowScopeCacheState>();
+
+function getRowScopeCacheState(cacheKey: string): RowScopeCacheState {
+  let state = tableRowScopeCaches.get(cacheKey);
+  if (!state) {
+    state = {
+      scopes: new Map<string, ScopeRef>(),
+      snapshots: new Map<string, RowScopePayload>(),
+    };
+    tableRowScopeCaches.set(cacheKey, state);
+  }
+  return state;
+}
+
 function syncRowScope(
   scope: ScopeRef,
-  payload: { record: Record<string, any>; index: number },
-  previous: { record: Record<string, any>; index: number } | undefined
+  payload: RowScopePayload,
+  previous: RowScopePayload | undefined
 ): void {
   if (!previous || previous.record !== payload.record) {
     scope.merge({ record: payload.record });
@@ -23,8 +46,9 @@ export function useTableRowScopeCache(
   helpers: RendererComponentProps<TableSchema>['helpers'],
   path: RendererComponentProps<TableSchema>['path']
 ) {
-  const rowScopeCache = useMemo(() => new Map<string, ScopeRef>(), []);
-  const rowScopeSnapshotRef = useRef(new Map<string, { record: Record<string, any>; index: number }>());
+  const cacheState = getRowScopeCacheState(`${ownerKey}::${path}`);
+  const rowScopeCache = cacheState.scopes;
+  const rowScopeSnapshots = cacheState.snapshots;
 
   const nextVisibleKeys = new Set<string>();
 
@@ -41,13 +65,13 @@ export function useTableRowScopeCache(
         source: 'row'
       });
       rowScopeCache.set(entry.rowKey, createdScope);
-      rowScopeSnapshotRef.current.set(entry.rowKey, payload);
+      rowScopeSnapshots.set(entry.rowKey, payload);
       continue;
     }
 
-    const previous = rowScopeSnapshotRef.current.get(entry.rowKey);
+    const previous = rowScopeSnapshots.get(entry.rowKey);
     syncRowScope(existingScope, payload, previous);
-    rowScopeSnapshotRef.current.set(entry.rowKey, payload);
+    rowScopeSnapshots.set(entry.rowKey, payload);
   }
 
   for (const key of Array.from(rowScopeCache.keys())) {
@@ -55,7 +79,7 @@ export function useTableRowScopeCache(
       continue;
     }
     rowScopeCache.delete(key);
-    rowScopeSnapshotRef.current.delete(key);
+    rowScopeSnapshots.delete(key);
   }
 
   return rowScopeCache;
