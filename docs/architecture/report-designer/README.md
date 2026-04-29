@@ -10,6 +10,13 @@ It is not a narrow product appendix for `nop-report`. This family documents how 
 - keeps spreadsheet/report document semantics and codecs in domain layers
 - reuses Flux contracts for shell composition, action routing, host projections, and surrounding UI integration
 
+Boundary reminder for this family:
+
+- Spreadsheet/Report editors share the same host-manifest / host-projection / namespaced-action / `WorkbenchShell` pattern as other domain hosts
+- but they do not participate in one universal workbench baseline object shared across all designers
+- each host family still owns its built-in default UI and its own explicit override surfaces
+- any future tooling should consume those per-family override surfaces rather than invent a second ambient workbench registry model
+
 Owner boundary:
 
 - this family owns Report Designer and Spreadsheet Editor platform-extension architecture, host boundaries, adapter contracts, and reusable workbench abstractions

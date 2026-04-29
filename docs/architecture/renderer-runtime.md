@@ -276,6 +276,13 @@ Representative mapping:
 - `crud` -> `flux-owner-renderer` + `composite`
 - `designer-page`, `report-designer-page`, `spreadsheet-page`, `word-editor-page` -> `domain-host-renderer` + `workbench-shell`
 
+Important boundary for `domain-host-renderer` + `workbench-shell` families:
+
+- they share the host-manifest / host-projection / namespaced-action / `WorkbenchShell` pattern
+- they do **not** imply one universal workbench schema or one shared baseline type for visible UI composition
+- each host family owns its own built-in default UI and its own explicit override surfaces
+- tooling may later consume those per-family override contracts, but runtime should not assume a cross-family ambient "workbench registry" or one canonical host-page baseline object
+
 Cross-reference:
 
 - `docs/architecture/capability-contract-model.md`

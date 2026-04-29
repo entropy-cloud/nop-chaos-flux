@@ -164,6 +164,7 @@ interface DesignerPageSchema {
 - `document` 是当前图文档初始值
 - `config` 是 designer 专用配置，定义 nodeTypes、ports、edgeTypes 等领域规则
 - `toolbar`、`inspector`、`dialogs` 是当前已实际挂载的 schema 片段，由 `SchemaRenderer` 渲染
+- 但 `designer-page` 当前并不是“所有可见工作台内容都必须 schema 化”的模型；它仍保留默认 palette、默认 toolbar/inspector fallback 与其他 renderer-owned workbench UI，只是在选定区域开放 schema override 面
 - `dialogs` region 本身现在已经会被 `DesignerPageRenderer` 挂载；但通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径，两者不应混为一谈
 
 ## 6. 数据模型分层

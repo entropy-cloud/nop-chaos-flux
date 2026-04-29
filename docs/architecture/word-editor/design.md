@@ -112,6 +112,7 @@ Current live workbench behavior is:
 - substantial built-in default UI remains renderer-owned, including the Ribbon toolbar, the default dataset/field left panel, and the default outline right panel
 - `toolbar`, `leftPanel`, and `rightPanel` are explicit override surfaces; when provided, the renderer mounts those schema regions with the word-editor host scope and action scope
 - this is a host-family-specific “default UI + differential override” pattern, not a requirement that every visible control be declared by schema
+- this pattern is intentionally owned by `word-editor-page` itself; Flux does not currently define one universal cross-designer baseline object that all workbench families must implement
 
 The renderer publishes the `word-editor` host family manifest, host projection scope, and namespaced actions such as `word-editor:save`, `word-editor:insertField`, `word-editor:insertChart`, `word-editor:insertCode`, `word-editor:undo`, and `word-editor:redo`.
 
