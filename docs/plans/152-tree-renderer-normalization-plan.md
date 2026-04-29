@@ -1,6 +1,6 @@
 # 152 Tree Renderer Normalization Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-29
 > Source: tree node rendering uses Button for inline tree rows, causing excess spacing and wrong text alignment. AMIS reference uses plain div/span.
 > Related: `docs/plans/60-form-tree-controls-boundary-plan.md`, `docs/plans/61-tree-visual-renderer-boundary-plan.md`
@@ -207,8 +207,16 @@ Status Note: All plan-owned work completed. Pre-existing failures in out-of-scop
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: opencode (executing agent)
-- Evidence: Phase-by-phase execution with targeted test runs; plan-scope packages typecheck/build/lint pass; all tree-related tests pass; `docs/logs/2026/04-29.md` updated.
+- Reviewer / Agent: opencode (closure audit agent, independent session)
+- Evidence:
+  - Phase 1 live code verified: `tree-controls.tsx:59-117` — TreeOptionNode uses `<div role="treeitem">` + `<span>` chevron, no Button in node rendering; TreeSelectRenderer trigger/clear still use Button correctly
+  - Phase 2 live code verified: `tree-renderer.tsx:1-8` — no Button import; chevron is `<span role="button">` (line 80-87), text is `<div>` (line 96-105)
+  - Phase 3 tests: `flux-renderers-form-advanced` 8/8 files, 101/101 tests pass (Vitest worker pool OOM on Windows is pre-existing, not plan-owned)
+  - Phase 4 tests: `flux-renderers-data` 8/8 files, 128/128 tests pass (same worker pool OOM)
+  - typecheck: both plan-scope packages pass
+  - lint: `flux-renderers-data` passes; `flux-renderers-form-advanced` has 2 pre-existing errors in `object-field.tsx` (not plan-owned)
+  - docs/logs: `docs/logs/2026/04-29.md` exists
+  - Audit date: 2026-04-29
 
 Follow-up:
 
