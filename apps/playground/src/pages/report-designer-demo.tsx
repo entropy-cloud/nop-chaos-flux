@@ -211,6 +211,42 @@ export function ReportDesignerDemo() {
     handleFillHandleDoubleClick,
   } = useSpreadsheetInteractions({ bridge: spreadsheetBridge, sheetId, rows: ROWS, cols: COLS });
 
+  useEffect(() => {
+    const selection = snapshot.selection;
+
+    if (selection.kind === 'column' && selection.columns?.length) {
+      void designerCore.setSelectionTarget({ kind: 'column', sheetId, col: selection.columns[0]! });
+      return;
+    }
+
+    if (selection.kind === 'row' && selection.rows?.length) {
+      void designerCore.setSelectionTarget({ kind: 'row', sheetId, row: selection.rows[0]! });
+      return;
+    }
+
+    if (selection.kind === 'sheet') {
+      void designerCore.setSelectionTarget({ kind: 'sheet', sheetId });
+      return;
+    }
+
+    if (selection.kind === 'range' && selection.range) {
+      void designerCore.setSelectionTarget({ kind: 'range', range: selection.range });
+      return;
+    }
+
+    if (selectedCell) {
+      void designerCore.setSelectionTarget({
+        kind: 'cell',
+        cell: {
+          sheetId,
+          address: cellAddress(selectedCell.row, selectedCell.col),
+          row: selectedCell.row,
+          col: selectedCell.col,
+        },
+      });
+    }
+  }, [designerCore, selectedCell, sheetId, snapshot.selection]);
+
   const handleFieldDrop = useCallback(async () => {
     const targetCell = dropTargetCell || selectedCell;
     if (!draggingField || !targetCell) return;

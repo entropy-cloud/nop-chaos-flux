@@ -45,7 +45,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'select',
-      name: 'record.region',
+      name: '$slot.record.region',
       options: [
         { label: 'APAC', value: 'apac' },
         { label: 'EMEA', value: 'emea' },
@@ -59,7 +59,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'checkbox',
-      name: 'record.verified',
+      name: '$slot.record.verified',
       option: 'Verified'
     }
   },
@@ -69,7 +69,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'switch',
-      name: 'record.active'
+      name: '$slot.record.active'
     }
   },
   {
@@ -77,7 +77,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     name: 'notes',
     cell: {
       type: 'textarea',
-      name: 'record.notes',
+      name: '$slot.record.notes',
       minRows: 2,
       maxRows: 4
     }
@@ -87,7 +87,8 @@ const TABLE_COLUMNS: ColumnDef[] = [
     name: 'tagsText',
     cell: {
       type: 'tag-list',
-      name: 'record.tags'
+      name: '$slot.record.tags',
+      tags: ['tag-0', 'tag-1', 'tag-2', 'tag-3', 'tag-4', 'grp-0', 'grp-1', 'grp-2', 'grp-3', 'grp-4', 'grp-5', 'grp-6', 'admin', 'editor', 'viewer']
     }
   },
   {
@@ -96,7 +97,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'radio-group',
-      name: 'record.scoreBand',
+      name: '$slot.record.scoreBand',
       options: [
         { label: 'Low', value: 'low' },
         { label: 'Mid', value: 'mid' },
@@ -135,7 +136,7 @@ const HEADER_SCHEMA: SchemaInput = {
     },
     {
       type: 'text',
-      text: 'Total: ${perfRows.length} rows | Selected: ${perfState.selectedKeys ? perfState.selectedKeys.length : 0} | Page: ${perfState.pagination.currentPage} of ${Math.ceil(perfRows.length / perfState.pagination.pageSize)}'
+      text: 'Total: ${perfRows.length} rows | Selected: ${perfState.selectedKeys ? perfState.selectedKeys.length : 0} | Page: ${perfState.pagination.currentPage}'
     }
   ]
 };

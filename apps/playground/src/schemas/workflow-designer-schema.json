@@ -129,8 +129,8 @@
       "node-icon--condition": "nop-gradient-condition",
       "node-icon--parallel": "nop-gradient-parallel",
       "node-icon--loop": "nop-gradient-loop",
-      "node-title": "block text-sm font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis",
-      "node-subtitle": "block text-sm text-muted-foreground line-clamp-2",
+      "node-title": "block text-sm leading-none font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis",
+      "node-subtitle": "block text-sm leading-none text-muted-foreground line-clamp-2",
       "node-footer": "flex items-center justify-between gap-2 mt-3 text-sm text-muted-foreground",
       "node-badge": "text-sm px-2 py-1 rounded-full font-medium",
       "node-badge--start": "text-emerald-700 bg-emerald-100",
@@ -164,6 +164,7 @@
                 {
                   "type": "container",
                   "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
                   "body": [
                     {
                       "type": "text",
@@ -256,6 +257,7 @@
                 {
                   "type": "container",
                   "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
                   "body": [
                     {
                       "type": "text",
@@ -346,6 +348,7 @@
                 {
                   "type": "container",
                   "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
                   "body": [
                     {
                       "type": "text",
@@ -436,6 +439,7 @@
                 {
                   "type": "container",
                   "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
                   "body": [
                     {
                       "type": "text",
@@ -515,6 +519,7 @@
                 {
                   "type": "container",
                   "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
                   "body": [
                     {
                       "type": "text",
@@ -593,6 +598,7 @@
                 {
                   "type": "container",
                   "className": "node-info",
+                  "bodyClassName": "flex flex-col gap-0",
                   "body": [
                     {
                       "type": "text",
