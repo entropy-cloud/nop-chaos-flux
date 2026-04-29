@@ -460,7 +460,6 @@ describe('dataRendererDefinitions table behavior', () => {
     expect(selects[0].textContent).toContain('APAC');
     expect(selects[1].textContent).toContain('EMEA');
   });
-  });
 
   it('does not bind form controls in cells via bare fieldName (isolated scope)', async () => {
     cleanup();
