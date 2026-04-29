@@ -26,8 +26,8 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'badge',
-      label: '${$slot.record.role}',
-      variant: '${$slot.record.role === `admin` ? `default` : ($slot.record.role === `editor` ? `secondary` : `outline`)}'
+      text: '${$slot.record.role}',
+      level: '${$slot.record.role === "admin" ? "success" : ($slot.record.role === "editor" ? "warning" : "info")}'
     }
   },
   {
@@ -36,7 +36,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'text',
-      text: '${$slot.record.active ? `ACTIVE` : `PAUSED`} / ${$slot.record.status}'
+      text: '${$slot.record.active ? "ACTIVE" : "PAUSED"} / ${$slot.record.status}'
     }
   },
   {
@@ -45,7 +45,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'select',
-      name: 'region',
+      name: 'record.region',
       options: [
         { label: 'APAC', value: 'apac' },
         { label: 'EMEA', value: 'emea' },
@@ -59,7 +59,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'checkbox',
-      name: 'verified',
+      name: 'record.verified',
       option: 'Verified'
     }
   },
@@ -69,7 +69,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'switch',
-      name: 'active'
+      name: 'record.active'
     }
   },
   {
@@ -77,7 +77,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     name: 'notes',
     cell: {
       type: 'textarea',
-      name: 'notes',
+      name: 'record.notes',
       minRows: 2,
       maxRows: 4
     }
@@ -87,7 +87,7 @@ const TABLE_COLUMNS: ColumnDef[] = [
     name: 'tagsText',
     cell: {
       type: 'tag-list',
-      name: 'tags'
+      name: 'record.tags'
     }
   },
   {
@@ -96,13 +96,12 @@ const TABLE_COLUMNS: ColumnDef[] = [
     sortable: true,
     cell: {
       type: 'radio-group',
-      name: 'scoreBand',
+      name: 'record.scoreBand',
       options: [
         { label: 'Low', value: 'low' },
         { label: 'Mid', value: 'mid' },
         { label: 'High', value: 'high' }
-      ],
-      value: '${$slot.record.score < 60 ? `low` : ($slot.record.score < 85 ? `mid` : `high`)}'
+      ]
     }
   },
   {
@@ -136,7 +135,7 @@ const HEADER_SCHEMA: SchemaInput = {
     },
     {
       type: 'text',
-      text: 'Dataset size: ${perfRows.length} rows | selected: ${perfState.selectedKeys ? perfState.selectedKeys.length : 0} | page: ${perfState.pagination.currentPage}'
+      text: 'Total: ${perfRows.length} rows | Selected: ${perfState.selectedKeys ? perfState.selectedKeys.length : 0} | Page: ${perfState.pagination.currentPage} of ${Math.ceil(perfRows.length / perfState.pagination.pageSize)}'
     }
   ]
 };
@@ -152,7 +151,7 @@ const ACTIONS_SCHEMA: SchemaInput = {
         action: 'setValue',
         args: {
           path: 'perfRows',
-          value: '${perfRows.map((row, idx) => ({ ...row, score: ((row.score + idx + 13) % 100) + 1, progress: ((row.progress + idx + 17) % 100) }))}'
+          value: '${perfRows.map((row, idx) => ({ ...row, score: ((row.score + idx + 13) % 100) + 1, scoreBand: ((row.score + idx + 13) % 100) + 1 < 60 ? "low" : (((row.score + idx + 13) % 100) + 1 < 85 ? "mid" : "high"), progress: ((row.progress + idx + 17) % 100) }))}'
         }
       }
     },
@@ -174,7 +173,7 @@ const ACTIONS_SCHEMA: SchemaInput = {
         action: 'setValue',
         args: {
           path: 'perfRows',
-          value: '${perfRows.map((row, idx) => ({ ...row, tags: [...row.tags, `burst-${idx % 4}`], tagsText: [...row.tags, `burst-${idx % 4}`].join(`, `) }))}'
+          value: '${perfRows.map((row, idx) => ({ ...row, tags: [...row.tags, "burst-" + (idx % 4)], tagsText: [...row.tags, "burst-" + (idx % 4)].join(", ") }))}'
         }
       }
     },
@@ -292,9 +291,9 @@ const FULL_STRESS_SCENARIOS: SchemaInput[] = [
     body: [
       { type: 'text', text: 'Scenario C: Scope-owned selection and pagination', className: 'font-semibold' },
       { type: 'text', text: 'Exercises table state stored in scope to surface selection/pagination update churn.' },
-      { type: 'text', text: 'Selected keys: ${perfState.selectedKeys ? perfState.selectedKeys.join(`, `) : `none`}' },
+      { type: 'text', text: 'Selected keys: ${perfState.selectedKeys ? perfState.selectedKeys.join(", ") : "none"}' },
       { type: 'text', text: 'Current page size: ${perfState.pagination.pageSize}' },
-      { type: 'text', text: 'Last action: ${perfState.lastAction || `none`}' }
+      { type: 'text', text: 'Last action: ${perfState.lastAction || "none"}' }
     ]
   },
   {
