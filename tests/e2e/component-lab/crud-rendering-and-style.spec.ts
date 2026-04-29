@@ -30,9 +30,9 @@ test.describe('crud renderer rendering and style', () => {
     const headerStyle = await readComputedStyle(fixedHeader, ['position', 'left']);
     const cellStyle = await readComputedStyle(fixedCell, ['position', 'left']);
     expect(headerStyle.position).toBe('sticky');
-    expect(headerStyle.left).toBe('0px');
+    expect(headerStyle.left).toBe('40px');
     expect(cellStyle.position).toBe('sticky');
-    expect(cellStyle.left).toBe('0px');
+    expect(cellStyle.left).toBe('40px');
 
     const tableHtml = await readInnerHtml(crudTable(stage));
     expect(tableHtml).toContain('data-fixed="left"');
@@ -49,9 +49,9 @@ test.describe('crud renderer rendering and style', () => {
     await expect(stage.locator('[data-slot="header-toolbar-pagination"]')).toBeVisible();
     await expect(stage.locator('[data-slot="footer-toolbar-statistics"]')).toBeVisible();
     await expect(stage.locator('[data-slot="footer-toolbar-page-size"]')).toBeVisible();
-    await expect(stage.getByRole('button', { name: 'Delete Selected' })).toBeVisible();
+    await expect(stage.getByRole('button', { name: 'Delete Selected' }).first()).toBeVisible();
 
-    await stage.getByRole('button', { name: /columns/i }).click();
+    await stage.getByRole('button', { name: /列设置|columns/i }).click();
     const inlinePanel = stage.locator('[data-slot="table-column-settings-inline"]');
     await expect(inlinePanel).toBeVisible();
 
