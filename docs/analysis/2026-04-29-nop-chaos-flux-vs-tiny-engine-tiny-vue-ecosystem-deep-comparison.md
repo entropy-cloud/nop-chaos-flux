@@ -519,19 +519,20 @@ tiny 生态的扩展面则非常宽：
 这里还要补一个在本次审阅后必须写清的区分：
 
 - 在 Flux 里，`hostContract` / manifest 负责的是 host boundary: projection、capability、version 与编译期校验。
-- 在 Flux 里，实际显示出来的工作台内容并不由 manifest 描述，而是由 owner schema 与 domain config 描述。
-- Flow Designer 的现行基线就是：
+- 在 Flux 里，实际显示出来的工作台内容并不由 manifest 描述；更准确的说法是：各 host family 采用“内置缺省 UI + 选定区域允许 owner schema / domain config 差量覆盖”的模式。
+- Flow Designer / Report Designer 等当前已经暴露出明确的 schema/config override 面，例如：
   - `designer-page.toolbar / inspector / dialogs: SchemaInput`
   - `NodeTypeConfig.body / inspector.body / createDialog.body / quickActions: SchemaInput`
-- live code 也按这条线工作：`packages/flow-designer-renderers/src/designer-page.tsx`、`designer-inspector.tsx`、`packages/report-designer-renderers/src/page-renderer.tsx` 都优先渲染 schema/config 提供的内容，只在缺省时才走窄的 React fallback。
+  - `report-designer-page.toolbar / fieldPanel / inspector / dialogs: SchemaInput`
+- live code 也按“默认内置 + 差量覆盖”这条线工作：`packages/flow-designer-renderers/src/designer-page.tsx`、`designer-inspector.tsx`、`packages/report-designer-renderers/src/page-renderer.tsx`、`packages/word-editor-renderers/src/word-editor-page.tsx` 都保留了 built-in default UI，同时对选定区域开放 schema/config override。
 
 所以如果要把 tiny 的统一 workbench registry 哲学对位到 Flux，更准确的说法不是“Flux 也缺一个 registry”，而是：
 
 - Flux 已经把 tiny registry 里混在一起的几类职责拆开了
 - host boundary -> manifest
-- visible workbench content -> schema/config
+- visible workbench content -> built-in default UI + schema/config override surfaces
 - shell reuse -> `WorkbenchShell`
-- 默认 baseline 装配 -> loader / tooling / owner renderer fallback
+- 默认 baseline 与 override 入口装配 -> loader / tooling / owner renderer
 
 ### 10.4 证据锚点
 
@@ -565,14 +566,14 @@ tiny 生态的扩展面则非常宽：
 
 更重要的是，在 Flux 里这些复杂设计器并不是靠一个统一工作台注册表来定义可见内容。以当前仓库可见证据看：
 
-- `designer-page`、`report-designer-page` 这类 host family 已经把 toolbar / inspector / dialogs / body 等可见区域定义为 `SchemaInput`
+- `designer-page`、`report-designer-page`、`word-editor-page` 这类 host family 都已经暴露出一部分可由 schema/config 覆盖的区域
 - Flow Designer 的节点正文、节点 inspector、创建对话框、quick actions 也都是 `SchemaInput`
-- 因此“显示什么”在 Flux 里首先是 schema/config 问题，而不是 manifest 或 plugin 壳层问题
+- 但这不等于所有工作台可见内容都必须 schema 化；更准确的说法是 Flux 把“默认内置什么、哪些区域允许覆盖”当成 host family 自己的 contract，而不是 manifest 或 plugin 壳层问题
 
 这条边界很关键：
 
 - `hostContract` 负责的是宿主边界与校验
-- `SchemaInput` / domain config 负责的是作者看到的实际 UI 内容
+- `SchemaInput` / domain config 负责的是选定区域的差量覆盖内容；built-in default UI 仍由 owner renderer 保留
 
 ### 11.2 `tiny-engine`: 复杂能力更多通过统一工作台接线
 
@@ -933,7 +934,7 @@ Tiny 生态的好处是：
 | 维度 | nop-chaos-flux 更强的地方 | tiny-engine + tiny-vue 更强的地方 |
 | --- | --- | --- |
 | 运行时语义 | 在本次审阅范围内，compile/runtime 边界、owner 语义、action algebra、dependency tracking 更集中 | 语义更多分布在 canvas 解释器、material protocol、codegen 和生成后 Vue 应用运行链里 |
-| 设计器工作台 | 复杂 designer 可做 kernel；而且以当前仓库可见证据看，visible content 已更明确地走 `SchemaInput` / domain config 路线 | 以当前仓库可见证据看，registry、plugins、toolbars、settings、configurators 覆盖更系统化 |
+| 设计器工作台 | 复杂 designer 可做 kernel；而且以当前仓库可见证据看，工作台采用“内置缺省 UI + 选定区域 schema/config 覆盖”的更清晰 contract | 以当前仓库可见证据看，registry、plugins、toolbars、settings、configurators 覆盖更系统化 |
 | 组件与设计系统生态 | 当前更偏 runtime/renderers 自有体系 | `tiny-vue` 的组件、主题、图标、运行时资源更完整 |
 | 出码与交付 | 不是当前中心叙事 | codegen pipeline 与 deploy-without-engine 路线更完整 |
 | 嵌入式宿主与 host contract | 在本次审阅范围内，host projection/capability manifest 更清晰 | 更偏产品型工作台集成 |
@@ -961,7 +962,7 @@ Tiny 生态的好处是：
 
 ### 19.1 `nop-chaos-flux` 可以借鉴 tiny 生态
 
-- 更成熟的 loader/tooling 层工作台 baseline 生成能力，但前提仍是生成 `SchemaInput` / domain config，而不是转向 registry 驱动可见内容
+- 更成熟的 loader/tooling 层工作台 baseline 生成能力，但前提仍是围绕现有 override 面做差量配置，而不是要求把所有默认 UI 转成 registry 驱动或全量 schema 化
 - 更面向生态贡献者的插件/设置器/工具栏故事
 - 更成熟的 schema-to-code plugin pipeline
 - 更强的组件库/主题生态包装能力
@@ -986,7 +987,7 @@ Tiny 生态的好处是：
 6. 如果强行比较设计水平，那么更准确的说法不是“谁全面碾压谁”，而是 Flux 更强于执行模型与系统抽象设计，Tiny 生态更强于工作台、组件生态与交付链设计。
 7. 如果强行比较架构水平，那么在本次审阅范围内，Flux 更高，因为它把 compile/runtime/host contract、owner semantics 和依赖追踪更系统化地收敛成了一套统一内核。
 8. 如果强行比较编码水平，那么以当前仓库可见证据看，Flux 核心代码整体更现代、更一致，`tiny-vue` 体现出成熟组件库工程能力，`tiny-engine` 则更像承担平台胶水、动态装配和历史兼容负担的工程层。
-9. 在数据 owner、依赖追踪、动作代数、宿主能力 manifest、以及“manifest 只负责边界、visible content 继续由 schema/config 驱动”这类边界清晰度维度上，Flux 在本次审阅范围内更占优。
+9. 在数据 owner、依赖追踪、动作代数、宿主能力 manifest、以及“manifest 只负责边界，host family 自己定义默认 UI 与 override 面”这类边界清晰度维度上，Flux 在本次审阅范围内更占优。
 10. 在 registry、插件面板、设置器、物料 bundle、组件生态、主题资源、导出源码交付这些维度上，Tiny 生态在本次审阅范围内更占优。
 11. Tiny 的低代码契约不是只来自 `tiny-vue` 源码，也不是只来自独立 material protocol；以当前仓库可见证据看，它更像由 material protocol、preview assembly、codegen 映射和生成后应用共同组成的分布式契约。这是它灵活性的来源之一，也是 drift 风险的来源之一。
 12. Flux 的单仓 owner-doc 与统一 runtime 让长期语义收敛更容易，但也意味着更高的抽象与维护门槛。
