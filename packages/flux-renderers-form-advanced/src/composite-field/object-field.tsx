@@ -17,6 +17,7 @@ import { createProjectedOwnerScope } from '../projected-owner-scope';
 type BaseNodeInstance = RendererComponentProps['node'];
 
 const transformOutSequences = new WeakMap<object, number>();
+const pendingTransformOutByOwner = new WeakMap<object, Promise<unknown> | null>();
 
 function nextTransformOutSequence(owner: object): number {
   const next = (transformOutSequences.get(owner) ?? 0) + 1;
@@ -30,6 +31,14 @@ function invalidateTransformOutSequence(owner: object): void {
 
 function isTransformOutSequenceCurrent(owner: object, sequence: number): boolean {
   return transformOutSequences.get(owner) === sequence;
+}
+
+function getPendingTransformOut(owner: object): Promise<unknown> | null {
+  return pendingTransformOutByOwner.get(owner) ?? null;
+}
+
+function setPendingTransformOut(owner: object, value: Promise<unknown> | null): void {
+  pendingTransformOutByOwner.set(owner, value);
 }
 
 function isPromiseLike<T>(value: T | Promise<T>): value is Promise<T> {
@@ -111,7 +120,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const [resolvedValue, setResolvedValue] = React.useState(rawValue);
   const projectedValue = usesWorkingValue ? resolvedValue : rawValue;
   const transformOutOwner = parentForm ?? parentScope;
-  const pendingTransformOutRef = React.useRef<Promise<unknown> | null>(null);
+  const pendingTransformOutOwner = React.useMemo(() => ({}), []);
 
   React.useEffect(() => {
     let active = true;
@@ -179,7 +188,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
       if (isPromiseLike(committedValue)) {
         const sequence = nextTransformOutSequence(transformOutOwner);
-        pendingTransformOutRef.current = committedValue;
+        setPendingTransformOut(pendingTransformOutOwner, committedValue);
         void committedValue.then((resolvedCommittedValue: unknown) => {
           if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
             return;
@@ -192,15 +201,15 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
           parentScope.update(name, resolvedCommittedValue);
         }).finally(() => {
-          if (pendingTransformOutRef.current === committedValue) {
-            pendingTransformOutRef.current = null;
+          if (getPendingTransformOut(pendingTransformOutOwner) === committedValue) {
+            setPendingTransformOut(pendingTransformOutOwner, null);
           }
         });
         return;
       }
 
       invalidateTransformOutSequence(transformOutOwner);
-      pendingTransformOutRef.current = null;
+      setPendingTransformOut(pendingTransformOutOwner, null);
       if (parentForm && name) {
         parentForm.setValue(name, committedValue);
         return;
@@ -226,7 +235,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     }
 
     parentScope.update(`${name}.${path}`, nextLeafValue);
-  }, [name, parentForm, parentScope, projectedValue, props.meta.disabled, rawValue, readOnly, schema.transformOutAction, transformOutOwner, usesWorkingValue, valueAdapter]);
+  }, [name, parentForm, parentScope, pendingTransformOutOwner, projectedValue, props.meta.disabled, rawValue, readOnly, schema.transformOutAction, transformOutOwner, usesWorkingValue, valueAdapter]);
 
   const childScope = React.useMemo(
     () => (name
@@ -277,27 +286,27 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       childOwnerId,
       mode: 'recurse-submit',
       active: true,
-      unregister() {
-        parentForm.unregisterChildContract(childOwnerId);
-      },
-      getState() {
-        return {
-          ready: pendingTransformOutRef.current === null,
-          validating: pendingTransformOutRef.current !== null,
-          valid: true,
-          hasErrors: false,
-        };
-      },
-      async triggerValidation() {
-        await pendingTransformOutRef.current;
-        return parentForm.validateField(name, 'commit');
-      },
-    });
+        unregister() {
+          parentForm.unregisterChildContract(childOwnerId);
+        },
+        getState() {
+          return {
+            ready: getPendingTransformOut(pendingTransformOutOwner) === null,
+            validating: getPendingTransformOut(pendingTransformOutOwner) !== null,
+            valid: true,
+            hasErrors: false,
+          };
+        },
+        async triggerValidation() {
+          await getPendingTransformOut(pendingTransformOutOwner);
+          return parentForm.validateField(name, 'commit');
+        },
+      });
 
     return () => {
       parentForm.unregisterChildContract(childOwnerId);
     };
-  }, [name, parentForm, schema.transformOutAction]);
+  }, [name, parentForm, pendingTransformOutOwner, schema.transformOutAction]);
 
   return (
     <div data-slot="field-control">
