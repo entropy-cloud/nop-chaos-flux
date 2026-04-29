@@ -383,4 +383,119 @@ describe('dataRendererDefinitions table behavior', () => {
     rerender(<SchemaRenderer schemaUrl="test://data/table-row-scope" schema={{ type: 'page', body: [{ type: 'table', rowKey: 'id', columns: [{ label: 'Scope', cell: { type: 'row-scope-id-probe' } }], source: [{ id: 1, name: 'Alice updated' }] }] }} env={env} formulaCompiler={formulaCompiler} />);
     expect((await screen.findByTestId('row-scope-id-probe')).textContent).toBe(initialScopeId);
   });
+
+  it('binds form controls in cells via $slot.record.fieldName path', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/table-form-controls"
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'table',
+            columns: [
+              {
+                label: 'Active',
+                name: 'active',
+                cell: {
+                  type: 'switch',
+                  name: '$slot.record.active'
+                }
+              },
+              {
+                label: 'Verified',
+                name: 'verified',
+                cell: {
+                  type: 'checkbox',
+                  name: '$slot.record.verified',
+                  option: 'Verified'
+                }
+              },
+              {
+                label: 'Region',
+                name: 'region',
+                cell: {
+                  type: 'select',
+                  name: '$slot.record.region',
+                  options: [
+                    { label: 'APAC', value: 'apac' },
+                    { label: 'EMEA', value: 'emea' }
+                  ]
+                }
+              },
+              {
+                label: 'Score',
+                name: 'scoreBand',
+                cell: {
+                  type: 'radio-group',
+                  name: '$slot.record.scoreBand',
+                  options: [
+                    { label: 'Low', value: 'low' },
+                    { label: 'High', value: 'high' }
+                  ]
+                }
+              }
+            ],
+            source: [
+              { id: 1, active: true, verified: false, region: 'apac', scoreBand: 'low' },
+              { id: 2, active: false, verified: true, region: 'emea', scoreBand: 'high' }
+            ]
+          }]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    const switches = await screen.findAllByRole('switch');
+    expect(switches[0].getAttribute('aria-checked')).toBe('true');
+    expect(switches[1].getAttribute('aria-checked')).toBe('false');
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    expect(checkboxes[0].getAttribute('aria-checked')).toBe('false');
+    expect(checkboxes[1].getAttribute('aria-checked')).toBe('true');
+
+    const selects = screen.getAllByRole('combobox');
+    expect(selects[0].textContent).toContain('APAC');
+    expect(selects[1].textContent).toContain('EMEA');
+
+    await waitFor(() => {
+      const radios = screen.getAllByRole('radio');
+      const checkedCount = radios.filter(r => (r as HTMLInputElement).checked).length;
+      expect(checkedCount).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('does not bind form controls in cells via bare fieldName (isolated scope)', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/table-form-controls-bare"
+        schema={{
+          type: 'page',
+          body: [{
+            type: 'table',
+            columns: [{
+              label: 'Active',
+              name: 'active',
+              cell: {
+                type: 'switch',
+                name: 'active'
+              }
+            }],
+            source: [
+              { id: 1, active: true }
+            ]
+          }]
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    const sw = await screen.findByRole('switch');
+    expect(sw.getAttribute('aria-checked')).toBe('false');
+  });
 });
