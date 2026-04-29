@@ -36,4 +36,86 @@ test.describe('Performance Table Page', () => {
     await page.getByRole('button', { name: 'Reset Metrics' }).click();
     await expect(page.getByText('Last Measurement')).toHaveCount(0);
   });
+
+  test('renders all cell types with correct record-bound values on first and last pages', async ({ page }) => {
+    test.setTimeout(120_000);
+    await openPerformanceTable(page);
+
+    const firstRow = await page.evaluate(() => {
+      const rows = document.querySelectorAll('table tbody tr');
+      const dataRow = rows[0];
+      if (!dataRow) return null;
+      const cells = dataRow.querySelectorAll('td');
+      const profile = cells[2]?.textContent?.trim();
+      const badge = cells[3]?.textContent?.trim();
+      const status = cells[4]?.textContent?.trim();
+      const selectBtn = cells[5]?.querySelector('button[role="combobox"]');
+      const checkbox = cells[6]?.querySelector('[role="checkbox"]');
+      const sw = cells[7]?.querySelector('[role="switch"]');
+      const textarea = cells[8]?.querySelector('textarea');
+      return {
+        profile,
+        badge,
+        status,
+        select: selectBtn?.textContent?.trim(),
+        checkboxChecked: checkbox?.getAttribute('aria-checked'),
+        switchChecked: sw?.getAttribute('aria-checked'),
+        notes: textarea?.value?.trim()
+      };
+    });
+
+    expect(firstRow).not.toBeNull();
+    expect(firstRow!.profile).toBe('1. user_1 <user_1@perf.dev>');
+    expect(firstRow!.badge).toBe('editor');
+    expect(firstRow!.status).toBe('PAUSED / offline');
+    expect(firstRow!.select).toContain('EMEA');
+    expect(firstRow!.checkboxChecked).toBe('true');
+    expect(firstRow!.switchChecked).toBe('false');
+    expect(firstRow!.notes).toContain('Row 1 note');
+
+    const lastPageBtn = page.locator('[data-slot="table-pagination"]').getByText('20');
+    if (await lastPageBtn.isVisible()) {
+      await lastPageBtn.click();
+    } else {
+      for (let i = 0; i < 20; i++) {
+        const next = page.locator('[data-slot="table-pagination"] button, [data-slot="table-pagination"] a').last();
+        await next.click();
+        await page.waitForTimeout(500);
+      }
+    }
+    await page.waitForTimeout(2000);
+
+    const lastPageFirstRow = await page.evaluate(() => {
+      const rows = document.querySelectorAll('table tbody tr');
+      for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].querySelectorAll('td');
+        const profile = cells[2]?.textContent?.trim();
+        if (profile && profile.includes('951')) {
+          const sw = cells[7]?.querySelector('[role="switch"]');
+          return { profile, switchChecked: sw?.getAttribute('aria-checked') };
+        }
+      }
+      return null;
+    });
+    expect(lastPageFirstRow).not.toBeNull();
+    expect(lastPageFirstRow!.profile).toContain('951');
+
+    const lastRow = await page.evaluate(() => {
+      const rows = document.querySelectorAll('table tbody tr');
+      for (let i = rows.length - 1; i >= 0; i--) {
+        const cells = rows[i].querySelectorAll('td');
+        const profile = cells[2]?.textContent?.trim();
+        if (profile && profile.includes('1000')) {
+          const sw = cells[7]?.querySelector('[role="switch"]');
+          const cb = cells[6]?.querySelector('[role="checkbox"]');
+          return { profile, switchChecked: sw?.getAttribute('aria-checked'), checkboxChecked: cb?.getAttribute('aria-checked') };
+        }
+      }
+      return null;
+    });
+    expect(lastRow).not.toBeNull();
+    expect(lastRow!.profile).toContain('1000');
+    expect(lastRow!.switchChecked).toBe('true');
+    expect(lastRow!.checkboxChecked).toBe('false');
+  });
 });

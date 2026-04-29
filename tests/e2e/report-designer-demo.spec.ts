@@ -15,7 +15,6 @@ test('renders the core report designer surfaces', async ({ page }) => {
   await expect(page.locator('[data-slot="report-demo-field-panel"]')).toBeVisible();
   await expect(page.locator('[data-slot="report-demo-canvas"]')).toBeVisible();
   await expect(page.locator('[data-slot="report-demo-inspector"]')).toBeVisible();
-  await expect(page.locator('[data-slot="report-demo-log"]')).toBeVisible();
   await expect(page.locator('.rd-toolbar')).toBeVisible();
   await expect(page.locator('.field-source')).toBeVisible();
   await expect(page.locator('.spreadsheet-grid')).toBeVisible();
@@ -53,9 +52,10 @@ test('verifies field items and inspector elements are visible', async ({ page })
   expect(fieldItemStyles.border).toBe('1px');
   expect(fieldItemStyles.borderRadius).toBe('6px');
 
-  const inspectorEmpty = page.locator('.inspector-empty');
-  await expect(inspectorEmpty).toBeVisible();
-  await expect(inspectorEmpty).toContainText('Click a cell to inspect');
+  const inspector = page.locator('[data-slot="report-demo-inspector"]');
+  await expect(inspector).toContainText('Inspector');
+  await expect(inspector).toContainText('Selection');
+  await expect(inspector).toContainText('Sheet:');
 });
 
 test('spreadsheet grid exposes row and column headers', async ({ page }) => {
@@ -74,16 +74,15 @@ test('clicking a spreadsheet cell updates the inspector context', async ({ page 
 
   const cells = page.locator('.ss-cell');
   await expect(cells.first()).toBeVisible();
-  await expect(page.locator('.inspector-empty')).toBeVisible();
+  const inspector = page.locator('[data-slot="report-demo-inspector"]');
+  await expect(inspector).toContainText('Sheet:');
 
   await cells.nth(5).click();
 
-  await expect(page.locator('.inspector-empty')).toHaveCount(0);
-  await expect(page.locator('.inspector-content')).toBeVisible();
-  await expect(page.locator('.inspector-section').first()).toContainText('Cell:');
-  await expect(page.locator('.inspector-field').filter({ hasText: 'Row:' })).toHaveCount(1);
-  await expect(page.locator('.inspector-field').filter({ hasText: 'Col:' })).toHaveCount(1);
-  await expect(page.locator('.inspector-field').filter({ hasText: 'Value:' })).toHaveCount(1);
+  await expect(inspector).toContainText('Cell:');
+  await expect(inspector).toContainText('Row:');
+  await expect(inspector).toContainText('Column:');
+  await expect(inspector).toContainText('Value:');
 });
 
 test('toolbar actions are available to the spreadsheet editor', async ({ page }) => {

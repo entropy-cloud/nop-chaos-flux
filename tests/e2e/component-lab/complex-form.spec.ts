@@ -41,7 +41,7 @@ test.describe('tree-select renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
 
-    await stage.locator('[data-slot="tree-select-trigger-row"] [data-slot="button"]').first().click();
+    await stage.locator('[data-slot="tree-select-trigger-row"] [data-slot="popover-trigger"]').first().click();
     await expect(page.getByPlaceholder('Search tree options')).toBeVisible({ timeout: 5_000 });
     await page.locator('[data-slot="tree-option-node"] [role="treeitem"]').filter({ hasText: 'Platform' }).first().click();
     await expect(stage.locator('[data-slot="tree-select-value"]')).toContainText('Platform');

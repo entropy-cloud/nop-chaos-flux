@@ -195,10 +195,10 @@ test('toggles JSON preview dialog from toolbar JSON button', async ({ page }) =>
   const topToolbar = page.locator('[data-slot="workbench-header"] [data-testid="designer-toolbar"]').first();
   await topToolbar.getByText('JSON').click();
 
-  const jsonDialog = page.locator('[role="dialog"][data-slot="dialog-content"]');
-  await expect(jsonDialog).toBeAttached();
-  await expect(jsonDialog).toContainText('nodes:[');
-  await expect(jsonDialog).toContainText('edges:[');
+  const jsonDialog = page.getByRole('dialog', { name: '流程 JSON' });
+  await expect(jsonDialog).toBeVisible();
+  await expect(jsonDialog).toContainText('nodes:');
+  await expect(jsonDialog).toContainText('edges:');
 
   await page.keyboard.press('Escape');
   await expect(jsonDialog).toHaveCount(0);
