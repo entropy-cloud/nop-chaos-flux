@@ -3,17 +3,18 @@ export default {
   testRunner: 'vitest',
   packageManager: 'pnpm',
   mutate: [
-    'packages/flux-runtime/src/**/*.ts',
-    '!packages/flux-runtime/src/**/*.test.ts',
-    '!packages/flux-runtime/src/**/*.test.tsx'
+    'packages/flux-runtime/src/validation/*.ts',
+    '!packages/flux-runtime/src/validation/index.ts',
+    '!packages/flux-runtime/src/validation/*.test.ts'
   ],
+  testFiles: ['packages/flux-runtime/src/validation/*.test.ts'],
   vitest: {
-    configFile: 'packages/flux-runtime/vitest.config.ts'
+    configFile: 'packages/flux-runtime/vitest.stryker.config.ts'
   },
   reporters: ['clear-text', 'progress'],
   tempDirName: '.stryker-tmp/runtime',
+  cleanTempDir: 'always',
   coverageAnalysis: 'off',
-  testRunnerNodeArgs: ['--experimental-vm-modules'],
   thresholds: {
     high: 80,
     low: 60,

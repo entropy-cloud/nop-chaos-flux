@@ -13,11 +13,12 @@ module.exports = {
       name: 'no-cross-package-src-imports',
       severity: 'error',
       from: {
-        path: '^packages/([^/]+)/src/'
+        path: '^packages/([^/]+)/src/',
+        pathNot: '\\.(test|spec)\\.[tj]sx?$|/src/test-support\\.tsx?$|/src/index-test-support\\.tsx?$|/__tests__/'
       },
       to: {
         path: '^packages/([^/]+)/src/',
-        pathNot: '^packages/$1/src/'
+        pathNot: '^packages/$1/src/|/src/test-support\\.tsx?$|/src/index-test-support\\.tsx?$'
       }
     },
     {

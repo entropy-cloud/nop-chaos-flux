@@ -125,12 +125,24 @@ importers:
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../../packages/flux-core
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../../packages/flux-formula
       '@nop-chaos/flux-i18n':
         specifier: workspace:*
         version: link:../../packages/flux-i18n
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../../packages/flux-react
+      '@nop-chaos/flux-renderers-basic':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-basic
+      '@nop-chaos/flux-renderers-data':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-data
+      '@nop-chaos/flux-renderers-form':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-form
       '@nop-chaos/flux-renderers-form-advanced':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-form-advanced
