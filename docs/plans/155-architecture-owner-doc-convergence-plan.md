@@ -1,6 +1,6 @@
 # 155 Architecture Owner-Doc Convergence Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-30
 > Source: `docs/analysis/2026-04-30-architecture-doc-code-consistency-audit.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/flux-dsl-vm-extensibility.md`, `docs/architecture/complex-control-host-protocol.md`
 
@@ -114,63 +114,63 @@ Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`, focused tests for
 - [x] Remove or replace `${$form.values}` usage in CRUD query-form submit flow so the implementation respects the owner contract that `$form` is summary-only.
 - [x] Add or update focused tests proving CRUD query-form submit behavior without `${$form.values}`.
 - [x] Verify with repo-observable search that no package-level consumer in the checked scope still uses `\$form.values`.
-- [ ] Re-run required verification for code changes.
+- [x] Re-run required verification for code changes.
 
 Exit Criteria:
 
 - [x] No package-level consumer in the checked repo scope treats `$form` as a values object, verified by search over `packages/**` for `\$form.values` plus updated code paths.
 - [x] Focused tests cover the corrected CRUD query-form behavior.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` succeed after the code change.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` succeed after the code change.
 - [x] Related docs remain aligned with the resulting implementation.
 - [x] The corresponding execution-date `docs/logs/` entry is updated.
 
 ### Phase 4 - Independent Closure Audit
 
-Status: planned
+Status: completed
 Targets: `docs/plans/155-architecture-owner-doc-convergence-plan.md`, `docs/analysis/2026-04-30-architecture-doc-code-consistency-audit.md`, scoped docs/code changed by this plan, corresponding execution-date `docs/logs/` entry
 
-- [ ] Launch fresh independent subagent closure audit(s) after execution is complete.
-- [ ] Re-check every phase exit criterion against live repo state, not just implementation notes.
-- [ ] Record repeated audit evidence and resolve any final disagreements before marking the plan completed.
+- [x] Launch fresh independent subagent closure audit(s) after execution is complete.
+- [x] Re-check every phase exit criterion against live repo state, not just implementation notes.
+- [x] Record repeated audit evidence and resolve any final disagreements before marking the plan completed.
 
 Exit Criteria:
 
-- [ ] Fresh independent subagent review confirms the scoped doc/code drift for this plan is resolved or explicitly moved out of scope.
-- [ ] Repeated audit evidence is recorded with task ids and outcomes in this plan and/or the corresponding daily log.
-- [ ] Every Phase in this plan is marked `completed` before plan-level closure.
-- [ ] The corresponding execution-date `docs/logs/` entry is updated with closure-audit evidence.
+- [x] Fresh independent subagent review confirms the scoped doc/code drift for this plan is resolved or explicitly moved out of scope.
+- [x] Repeated audit evidence is recorded with task ids and outcomes in this plan and/or the corresponding daily log.
+- [x] Every Phase in this plan is marked `completed` before plan-level closure.
+- [x] The corresponding execution-date `docs/logs/` entry is updated with closure-audit evidence.
 
 ## Validation Checklist
 
-- [ ] The scoped owner docs now distinguish `docs lagging behind code`, `code lagging behind docs`, and mixed-owner drift outcomes correctly
-- [ ] Report Designer family docs and component owner docs no longer blur renderer-contract ownership in this plan’s scope
-- [ ] Styling-family docs no longer directly contradict shipped default-spacing behavior
-- [ ] `docs/references/architecture-doc-status-matrix.md` contains the concrete missing active docs named in this plan
+- [x] The scoped owner docs now distinguish `docs lagging behind code`, `code lagging behind docs`, and mixed-owner drift outcomes correctly
+- [x] Report Designer family docs and component owner docs no longer blur renderer-contract ownership in this plan’s scope
+- [x] Styling-family docs no longer directly contradict shipped default-spacing behavior
+- [x] `docs/references/architecture-doc-status-matrix.md` contains the concrete missing active docs named in this plan
 - [x] `${$form.values}` contract violation is removed from live code
 - [x] Focused verification for changed code paths is complete
-- [ ] Repeated independent subagent audits have been completed and recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Repeated independent subagent audits have been completed and recorded
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Audit Evidence Log
 
-- Plan review round 1: reviewer/task id/outcome pending
-- Plan review round 2: reviewer/task id/outcome pending
-- Post-execution audit round 1: reviewer/task id/outcome pending
-- Post-execution audit round 2: reviewer/task id/outcome pending
+- Plan review round 1: independent subagent review `ses_223ae0ac6ffettZASzIsc9xdOk` flagged plan-shape and scope issues; revised plan before execution.
+- Plan review round 2: independent subagent review `ses_223ae0abdffeKQDHudrH7GXlEb` accepted the revised execution plan as ready to run.
+- Post-execution audit round 1: independent closure audit `ses_22342d974ffef0vdxeis4rSqyT` found two remaining blockers: an unqualified `report-designer/contracts.md` reference in `docs/architecture/action-scope-and-imports.md` and missing focused validation-block coverage / closure recording.
+- Post-execution audit round 2: focused Phase 3 audit `ses_2230ab8c3ffeOkAf2sjqUV7SGF` passed after the validation-block regression test was added, and final closure audit `ses_2230ab8d6ffeugnf1CYh2cCUGH` confirmed all scoped doc/code drift was resolved. Final repo verification then passed with `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
 
 ## Closure
 
-Status Note: pending
+Status Note: completed. The scoped owner-doc drift, CRUD `$form` contract violation, routing/matrix cleanup, and closure-audit evidence are all landed and re-verified against live repo state.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending fresh post-execution closure audit
-- Evidence: pending
+- Reviewer / Agent: independent closure audits `ses_22342d974ffef0vdxeis4rSqyT`, `ses_2230ab8c3ffeOkAf2sjqUV7SGF`, and `ses_2230ab8d6ffeugnf1CYh2cCUGH`
+- Evidence: round 1 found the final doc qualification + validation-test gaps; those were fixed in `docs/architecture/action-scope-and-imports.md` and `packages/flux-renderers-data/src/__tests__/data-crud-state-interactions.test.tsx`. Round 2 confirmed the Phase 3 contract fix and full plan scope were closed. Final repo verification passed: `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`.
 
 Follow-up:
 
-- If additional architecture drift is found outside this plan’s scoped files during execution, record it in `docs/analysis/` or move it to a successor plan instead of silently widening this plan.
-- Otherwise, no remaining plan-owned work.
+- If additional architecture drift is found outside this plan’s scoped files after closure, record it in `docs/analysis/` or move it to a successor plan instead of reopening this closed plan without a new baseline.
+- No remaining plan-owned work.
