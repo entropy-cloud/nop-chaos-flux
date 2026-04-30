@@ -90,6 +90,7 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
   - target enrichment helpers for compiled nodes
 - `packages/flux-compiler/src/action-compiler.ts`
   - compiled action program assembly for static/ad-hoc precompile paths
+  - `extractLegacyPayload` has been deleted; legacy payload extraction is no longer needed
 - `packages/flux-compiler/src/compile-symbol-table.ts`
   - compile-time `$` symbol visibility substrate
 
@@ -220,11 +221,14 @@ Note:
   - scope-scoped source registration and replacement
   - source invalidation/refresh routing
   - source debug snapshot ownership
+  - migrated from `let disposed = false` to `AbortController` for async cancellation
 - `packages/flux-runtime/src/async-data/reaction-runtime.ts`
   - scope-scoped reaction registration and replacement
   - reaction scheduling / loop guard behavior
   - reaction debug snapshot ownership
   - uses `helpers.dispatch` port to consume action-core dispatcher
+  - migrated from `let disposed = false` to `AbortController` for async cancellation
+- `runtime-factory.ts` still uses the boolean `disposed` pattern for synchronous dispose gating (by design)
 - `packages/flux-runtime/src/surface-runtime.ts`
   - shared dialog/drawer surface ownership
   - stack-based open/close behavior and disposal hooks
@@ -340,6 +344,12 @@ If a helper can be reused without knowledge of compiled regions or deep schema t
 
 Shared field chrome lives in `packages/flux-renderers-form/src/renderers/shared/`.
 
+`resolveGap` has been moved from `flux-renderers-basic` to `flux-react` (at `flux-react/src/resolve-gap.ts`).
+
+`crud-renderer.tsx` now imports `createReadonlyScopeBinding` from `@nop-chaos/flux-react` instead of `@nop-chaos/flux-renderers-basic`.
+
+`schema-compiler-registry.test.ts` no longer imports `@nop-chaos/flux-renderers-data`.
+
 Use that area for small repeated presentation primitives such as:
 
 - field labels
@@ -370,6 +380,10 @@ Current rule for plugin ordering:
 - sort renderer plugins once at runtime creation
 - lower `priority` runs first
 - equal priorities preserve original declaration order
+
+## Compatibility Layer Cleanup
+
+The `selection`/`target` compatibility aliases for `selectionTarget` have been removed from the report-designer manifest (`report-designer-manifest.ts`); only `selectionTarget` remains in scope data.
 
 ## Related Documents
 

@@ -103,6 +103,15 @@ The repository should keep these checks passing:
 - `pnpm lint`
 - `node scripts/verify-no-src-artifacts.mjs`
 
+Additional audit-oriented tooling now tracked at the root:
+
+- `pnpm audit:deps` - dependency-cruiser baseline for circulars and cross-package internal source imports
+- `pnpm audit:knip` - repo-wide unused file/export/dependency scan baseline
+- `pnpm audit:knip:packages` - package-focused knip scan used to separate package noise from playground-only findings
+- `pnpm audit:knip:playground` - playground-only knip scan for app dependency cleanup
+- `pnpm audit:mutants` - Stryker mutation-test entry point for the current `flux-runtime/src/validation` pilot using an isolated Vitest config
+- `pnpm audit:semgrep` - local Semgrep rule entry point when the host Python environment supports Semgrep installation
+
 Source artifact policy:
 
 - `packages/*/src/` and `apps/*/src/` are source-only across the workspace
