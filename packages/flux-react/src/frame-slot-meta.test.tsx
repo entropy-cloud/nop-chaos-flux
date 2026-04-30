@@ -1,11 +1,12 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createSchemaRenderer, hasRendererSlotContent, resolveRendererSlotContent } from './index';
+import { FormContext } from './contexts';
+import { createSchemaRenderer } from './schema-renderer';
+import { hasRendererSlotContent, resolveRendererSlotContent } from './render-nodes';
 import { FieldFrame } from './field-frame';
 import { EMPTY_FORM_STORE_STATE } from './form-state';
 import { resolveFrameWrapMode } from './node-renderer-utils';
-import { FormContext } from './test-support';
 import { buttonRenderer, env, formRenderer, pageRenderer, probeButtonRenderer, probeQueryInputRenderer, sharedFormulaCompiler, textRenderer } from './test-support';
 
 describe('resolveFrameWrapMode', () => {

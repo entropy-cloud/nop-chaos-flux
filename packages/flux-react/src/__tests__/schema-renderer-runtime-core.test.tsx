@@ -4,7 +4,11 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createActionScope } from '@nop-chaos/flux-runtime';
 import * as fluxCore from '@nop-chaos/flux-core';
-import { createSchemaRenderer, NodeMetaContext, NodeRenderer, RenderNodes, RuntimeContext, ScopeContext, useDataSourceStatus, useRenderScope, useRendererRuntime, useScopeSelector } from '../index';
+import { NodeMetaContext, RuntimeContext, ScopeContext } from '../contexts';
+import { createSchemaRenderer } from '../schema-renderer';
+import { RenderNodes } from '../helpers';
+import { useDataSourceStatus, useRenderScope, useRendererRuntime, useScopeSelector } from '../hooks';
+import { NodeRenderer } from '../node-renderer';
 import {
   cidProbeRenderer,
   createExpressionCompiler,

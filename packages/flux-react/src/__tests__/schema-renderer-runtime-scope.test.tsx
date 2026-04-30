@@ -3,25 +3,27 @@ import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '../hooks';
-import { createSchemaRenderer } from '../index';
+import { createSchemaRenderer } from '../schema-renderer';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
   countingTextRenderer,
-  createExpressionCompiler,
-  createRendererRegistry,
-  createRendererRuntime,
   env,
   formRenderer,
-  fragmentRenderHostRenderer,
-  fragmentScopeProbeHostRenderer,
   ownScopeValueProbeRenderer,
   pageRenderer,
   pageValueProbeRenderer,
   pageWithProbeFormSchema,
   probeInputRenderer,
-  renderWithRuntimeProviders,
   scopeLayerProbeRenderer,
   sharedFormulaCompiler,
-} from '../test-support';
+} from '../test-support-core';
+import {
+  fragmentRenderHostRenderer,
+  fragmentScopeProbeHostRenderer,
+  renderWithRuntimeProviders,
+} from '../test-support-runtime';
 
 function FormStatusProbeRenderer() {
   const formStatus = useScopeSelector((scope) => scope.$form, Object.is) as { id?: string; valid: boolean; invalid: boolean } | undefined;

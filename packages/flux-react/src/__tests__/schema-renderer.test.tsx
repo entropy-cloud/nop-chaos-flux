@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { createSchemaRenderer } from '../schema-renderer';
-import { textRenderer, pageRenderer, env } from '../test-support';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer } from '../schema-renderer';
+import { env, pageRenderer, textRenderer } from '../test-support-core';
 
 describe('SchemaRenderer callbacks', () => {
   it('calls onRuntimeChange on mount and null on unmount', async () => {

@@ -11,6 +11,8 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
   FormContext,
   ScopeContext,
+} from './contexts';
+import {
   useCurrentActionScope,
   useCurrentComponentRegistry,
   useCurrentForm,
@@ -19,7 +21,7 @@ import {
   useRenderScope,
   useRendererRuntime,
   useScopeSelector
-} from './index';
+} from './hooks';
 
 afterEach(() => {
   cleanup();

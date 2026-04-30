@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createSchemaRenderer } from '../index';
-import { compositeProbeRenderer, createFormulaCompiler, env, formRenderer, pageRenderer, textRenderer, toggleHostRenderer } from '../test-support';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer } from '../schema-renderer';
+import { compositeProbeRenderer, toggleHostRenderer } from '../test-support-runtime';
+import { env, formRenderer, pageRenderer, textRenderer } from '../test-support-core';
 
 describe('createSchemaRenderer lifecycle and monitoring behavior', () => {
   it('dispatches lifecycle actions on mount and unmount', async () => {

@@ -2,8 +2,9 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, useCurrentValidationScope } from '../index';
-import { env, pageRenderer } from '../test-support';
+import { createSchemaRenderer } from '../schema-renderer';
+import { useCurrentValidationScope } from '../hooks';
+import { env, pageRenderer } from '../test-support-core';
 
 const validationOwnerProbeRenderer = {
   type: 'validation-owner-probe',

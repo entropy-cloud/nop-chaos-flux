@@ -1,18 +1,20 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createSchemaRenderer } from './index';
+import { createSchemaRenderer } from './schema-renderer';
 import {
   componentHandleProviderRenderer,
   createDispatchCaptureRenderer,
   dispatchProbeRenderer,
-  env,
   namespaceProviderRenderer,
-  pageRenderer,
   scopedHostRenderer,
-  sharedFormulaCompiler,
   toggleHostRenderer
-} from './test-support';
+} from './test-support-runtime';
+import {
+  env,
+  pageRenderer,
+  sharedFormulaCompiler,
+} from './test-support-core';
 import { useCurrentActionScope } from './hooks';
 
 describe('createSchemaRenderer import scope boundaries', () => {

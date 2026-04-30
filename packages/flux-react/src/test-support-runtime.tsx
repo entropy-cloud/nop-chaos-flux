@@ -19,6 +19,8 @@ import {
   RuntimeContext,
   ScopeContext,
   SurfaceContext,
+} from './contexts';
+import {
   useAggregateError,
   useChildFieldState,
   useCurrentActionScope,
@@ -31,7 +33,7 @@ import {
   useRenderScope,
   useRendererRuntime,
   useValidationNodeState
-} from './index';
+} from './hooks';
 import { RenderNodes } from './helpers';
 import { fragmentScopedProbeFormSchema } from './test-support-core';
 

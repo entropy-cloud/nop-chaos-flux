@@ -1,8 +1,9 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createSchemaRenderer } from './index';
-import { buttonRenderer, dispatchProbeRenderer, env, pageRenderer, sharedFormulaCompiler } from './test-support';
+import { createSchemaRenderer } from './schema-renderer';
+import { buttonRenderer, dispatchProbeRenderer } from './test-support-runtime';
+import { env, pageRenderer, sharedFormulaCompiler } from './test-support-core';
 
 describe('createSchemaRenderer import failures and retries', () => {
   it('reports preload failures through env notifications before child render', async () => {
