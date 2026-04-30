@@ -2,17 +2,26 @@ import { defineConfig } from 'vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { workspacePackageAliases } from '../../vite.workspace-alias';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   resolve: {
     alias: workspacePackageAliases
   },
   plugins: [
     tailwindcss(),
     react(),
-    babel({ presets: [reactCompilerPreset({ target: '19' })] })
-  ],
+    babel({ presets: [reactCompilerPreset({ target: '19' })] }),
+    mode === 'analyze'
+      ? visualizer({
+          filename: 'dist/stats.html',
+          gzipSize: true,
+          brotliSize: true,
+          open: false
+        })
+      : undefined
+  ].filter(Boolean),
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
@@ -43,4 +52,4 @@ export default defineConfig({
       }
     }
   }
-});
+}));
