@@ -1,6 +1,5 @@
 import React from 'react';
 import type {
-  FormRuntime,
   RendererComponentProps,
   RendererDefinition
 } from '@nop-chaos/flux-core';
@@ -20,16 +19,12 @@ import type { DetailViewSchema } from '../composite-field/composite-schemas';
 import { formLabelFieldRule, resolveFieldLabelContent, FieldLabel } from '@nop-chaos/flux-renderers-form';
 import { publishValidateResultErrors, runTransformIn, runTransformOut, runValidate } from './value-adaptation-helper';
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
-
-type BaseNodeInstance = RendererComponentProps['node'];
-
-function disposeDraftForm(
-  draftForm: FormRuntime | undefined,
-  setDraftForm: React.Dispatch<React.SetStateAction<FormRuntime | undefined>>
-) {
-  draftForm?.dispose();
-  setDraftForm(undefined);
-}
+import {
+  buildDetailDraftInitialValues,
+  readDetailDraftValues,
+  useDetailAdaptationAction,
+  useDetailDraftControllerState
+} from './detail-draft-controller';
 
 export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchema>) {
   const parentForm = useCurrentForm();
@@ -66,10 +61,17 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     return {};
   }
 
-  const [open, setOpen] = React.useState(false);
-  const [draftForm, setDraftForm] = React.useState<FormRuntime | undefined>(undefined);
-  const [confirming, setConfirming] = React.useState(false);
-  const [draftError, setDraftError] = React.useState<string | undefined>(undefined);
+  const {
+    open,
+    draftForm,
+    confirming,
+    draftError,
+    openDraft,
+    closeDraft,
+    beginConfirm,
+    finishConfirm,
+    setDraftErrorSafe
+  } = useDetailDraftControllerState();
 
   const currentValue = React.useMemo(() => {
     if (staticData) {
@@ -79,16 +81,12 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     return scopeProjectedValue;
   }, [scopeProjectedValue, staticData]);
 
-  const runAdaptationAction = React.useCallback(
-    (actionSchema: DetailViewSchema['transformInAction']) =>
-      props.helpers.dispatch(actionSchema as any, {
-        scope: parentScope,
-        form: parentForm ?? undefined,
-        page: undefined,
-        nodeInstance: props.node as BaseNodeInstance
-      }),
-    [parentForm, parentScope, props.helpers, props.node]
-  );
+  const runAdaptationAction = useDetailAdaptationAction({
+    helpers: props.helpers,
+    parentScope,
+    parentForm,
+    node: props.node
+  });
 
   async function handleOpen() {
     if (effectiveDisabled) return;
@@ -101,11 +99,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       runAdaptationAction
     );
 
-    const initialValues = typeof adaptedValue === 'object' && adaptedValue !== null
-      ? { ...(adaptedValue as Record<string, unknown>) }
-      : adaptedValue !== undefined
-        ? { __value: adaptedValue }
-        : getInitialValues();
+    const initialValues = buildDetailDraftInitialValues(adaptedValue, getInitialValues());
 
     const newDraftForm = runtime.createFormRuntime({
       id: `detail-view-draft:${scopePath ?? 'static'}:${Date.now()}`,
@@ -114,9 +108,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       validation: props.templateNode.validationPlan
     });
 
-    setDraftForm(newDraftForm);
-    setDraftError(undefined);
-    setOpen(true);
+    openDraft(newDraftForm);
   }
 
   async function applyCommitResult(draftValues: Record<string, unknown>) {
@@ -173,20 +165,16 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   async function handleConfirm() {
     if (readOnly || !draftForm) return;
 
-    setConfirming(true);
-    setDraftError(undefined);
+    beginConfirm();
 
     try {
       const result = await draftForm.validateAll('submit');
       if (!result.ok) {
-        setDraftError(validationMessage);
+        setDraftErrorSafe(validationMessage);
         return;
       }
 
-      const rawDraftValues = draftForm.scope.readOwn() as Record<string, unknown> & { $form?: unknown };
-      const draftValues = { ...rawDraftValues };
-      delete draftValues.$form;
-      const workingValue = draftValues.__value !== undefined ? draftValues.__value : draftValues;
+      const { workingValue } = readDetailDraftValues(draftForm);
 
       const validation = await runValidate(
         schema.validateValueAction,
@@ -202,7 +190,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       }
 
       if (!validation.valid) {
-        setDraftError(validation.issues?.[0]?.message ?? validationMessage);
+        setDraftErrorSafe(validation.issues?.[0]?.message ?? validationMessage);
         return;
       }
 
@@ -222,17 +210,14 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
           : { __value: commitResult }
       );
 
-      setOpen(false);
-      disposeDraftForm(draftForm, setDraftForm);
+      closeDraft();
     } finally {
-      setConfirming(false);
+      finishConfirm();
     }
   }
 
   function handleCancel() {
-    setOpen(false);
-    disposeDraftForm(draftForm, setDraftForm);
-    setDraftError(undefined);
+    closeDraft();
   }
 
   const viewerContent = resolveRendererSlotContent(props, 'viewer');

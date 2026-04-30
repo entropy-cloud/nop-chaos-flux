@@ -1,7 +1,6 @@
 import React from 'react';
 import type {
   BaseSchema,
-  FormRuntime,
   RendererComponentProps,
   RendererDefinition
 } from '@nop-chaos/flux-core';
@@ -23,16 +22,12 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import { publishValidateResultErrors, runTransformIn, runTransformOut, runValidate } from './value-adaptation-helper';
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
-
-type BaseNodeInstance = RendererComponentProps['node'];
-
-function disposeDraftForm(
-  draftForm: FormRuntime | undefined,
-  setDraftForm: React.Dispatch<React.SetStateAction<FormRuntime | undefined>>
-) {
-  draftForm?.dispose();
-  setDraftForm(undefined);
-}
+import {
+  buildDetailDraftInitialValues,
+  readDetailDraftValues,
+  useDetailAdaptationAction,
+  useDetailDraftControllerState
+} from './detail-draft-controller';
 
 export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSchema>) {
   const parentForm = useCurrentForm();
@@ -63,27 +58,25 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   );
   const fieldValue = parentForm ? currentValue : scopeValue;
 
-  const [open, setOpen] = React.useState(false);
-  const [draftForm, setDraftForm] = React.useState<FormRuntime | undefined>(undefined);
-  const [confirming, setConfirming] = React.useState(false);
-  const [draftError, setDraftError] = React.useState<string | undefined>(undefined);
+  const {
+    open,
+    draftForm,
+    confirming,
+    draftError,
+    mountedRef,
+    openDraft,
+    closeDraft,
+    beginConfirm,
+    finishConfirm,
+    setDraftErrorSafe
+  } = useDetailDraftControllerState();
 
-  const mountedRef = React.useRef(true);
-  React.useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
-
-  const runAdaptationAction = React.useCallback(
-    (actionSchema: DetailFieldSchema['transformInAction']) =>
-      props.helpers.dispatch(actionSchema as any, {
-        scope: parentScope,
-        form: parentForm ?? undefined,
-        page: undefined,
-        nodeInstance: props.node as BaseNodeInstance
-      }),
-    [parentForm, parentScope, props.helpers, props.node]
-  );
+  const runAdaptationAction = useDetailAdaptationAction({
+    helpers: props.helpers,
+    parentScope,
+    parentForm,
+    node: props.node
+  });
 
   async function handleOpen() {
     if (presentation.effectiveDisabled) return;
@@ -100,9 +93,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
     if (!mountedRef.current) return;
 
-    const initialValues: Record<string, unknown> = typeof adaptedValue === 'object' && adaptedValue !== null
-      ? { ...(adaptedValue as Record<string, unknown>) }
-      : { __value: adaptedValue };
+    const initialValues = buildDetailDraftInitialValues(adaptedValue);
 
     const newDraftForm = runtime.createFormRuntime({
       id: `detail-field-draft:${name}:${Date.now()}`,
@@ -111,30 +102,24 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       validation: props.templateNode.validationPlan
     });
 
-    setDraftForm(newDraftForm);
-    setDraftError(undefined);
-    setOpen(true);
+    openDraft(newDraftForm);
   }
 
   async function handleConfirm() {
     if (readOnly || !draftForm || !parentForm) return;
 
-    setConfirming(true);
-    setDraftError(undefined);
+    beginConfirm();
 
     try {
       const result = await draftForm.validateAll('submit');
       if (!mountedRef.current) return;
 
       if (!result.ok) {
-        setDraftError(validationMessage);
+        setDraftErrorSafe(validationMessage);
         return;
       }
 
-      const rawDraftValues = draftForm.scope.readOwn() as Record<string, unknown> & { $form?: unknown };
-      const draftValues = { ...rawDraftValues };
-      delete draftValues.$form;
-      const workingValue = draftValues.__value !== undefined ? draftValues.__value : draftValues;
+      const { workingValue } = readDetailDraftValues(draftForm);
 
       const validation = await runValidate(
         schema.validateValueAction,
@@ -151,7 +136,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       publishValidateResultErrors(validation, name, parentForm);
 
       if (!validation.valid) {
-        setDraftError(validation.issues?.[0]?.message ?? validationMessage);
+        setDraftErrorSafe(validation.issues?.[0]?.message ?? validationMessage);
         return;
       }
 
@@ -172,19 +157,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       parentForm.touchField(name);
       void parentForm.validateField(name);
 
-      setOpen(false);
-      disposeDraftForm(draftForm, setDraftForm);
+      closeDraft();
     } finally {
-      if (mountedRef.current) {
-        setConfirming(false);
-      }
+      finishConfirm();
     }
   }
 
   function handleCancel() {
-    setOpen(false);
-    disposeDraftForm(draftForm, setDraftForm);
-    setDraftError(undefined);
+    closeDraft();
   }
 
   const viewerContent = resolveRendererSlotContent(props, 'viewer');
