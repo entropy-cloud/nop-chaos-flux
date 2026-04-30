@@ -1,4 +1,4 @@
-import type { ApiSchema, ExecutableApiRequest } from '@nop-chaos/flux-core';
+import type { ExecutableApiRequest } from '@nop-chaos/flux-core';
 
 interface CacheEntry<T> {
   data: T;

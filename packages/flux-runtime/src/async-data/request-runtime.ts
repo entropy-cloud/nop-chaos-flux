@@ -10,7 +10,7 @@ import type {
   ScopeRef,
   SchemaValue
 } from '@nop-chaos/flux-core';
-import { isPlainObject, setIn } from '@nop-chaos/flux-core';
+import { isPlainObject } from '@nop-chaos/flux-core';
 import { withRetry, type RetryResult } from '@nop-chaos/flux-action-core';
 import { applyRequestAdaptor, applyResponseAdaptor } from './request-runtime-adaptor';
 import { stableStringify } from './api-cache';
@@ -58,20 +58,6 @@ export async function executeRequestWithControl<T>(input: {
     response: retryResult.result,
     retry: retryResult
   };
-}
-
-function getPathValue(input: unknown, path: string): unknown {
-  if (!path || input == null || typeof input !== 'object') {
-    return undefined;
-  }
-
-  return path.split('.').reduce<unknown>((current, segment) => {
-    if (current == null || typeof current !== 'object') {
-      return undefined;
-    }
-
-    return (current as Record<string, unknown>)[segment];
-  }, input);
 }
 
 function createRequestKey(actionType: string, api: ExecutableApiRequest, scope: ScopeRef, form?: FormRuntime): string {
