@@ -445,6 +445,9 @@ importers:
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../flux-react
+      '@nop-chaos/flux-renderers-form':
+        specifier: workspace:*
+        version: link:../flux-renderers-form
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../flux-runtime

@@ -229,9 +229,10 @@ const TABLE_SCHEMA: SchemaInput = {
       {
         type: 'loop',
         items: '${value.children}',
+        itemName: 'child',
         body: {
           type: 'text',
-          text: '${item.label}: ${item.value}'
+          text: '${$slot.child.label}: ${$slot.child.value}'
         }
       }
     ]
@@ -271,15 +272,17 @@ const FULL_STRESS_SCENARIOS: SchemaInput[] = [
       {
         type: 'loop',
         items: '${perfRows.slice(0, 80)}',
+        itemName: 'row',
         body: {
           type: 'container',
           className: 'stack-xs border rounded-md p-3',
           body: [
-            { type: 'text', text: '${item.username} / ${item.region} / ${item.status}' },
+            { type: 'text', text: '${$slot.row.username} / ${$slot.row.region} / ${$slot.row.status}' },
             {
               type: 'loop',
-              items: '${item.children}',
-              body: { type: 'text', text: '${item.label}: ${item.value}' }
+              items: '${$slot.row.children}',
+              itemName: 'child',
+              body: { type: 'text', text: '${$slot.child.label}: ${$slot.child.value}' }
             }
           ]
         }

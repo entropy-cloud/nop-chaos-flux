@@ -14,13 +14,18 @@ test.describe('Performance Table Page', () => {
 
     await openPerformanceTable(page);
 
+    await expect(page.getByText('user_1 / emea / offline')).toBeVisible();
+    await expect(page.getByText('Primary: editor-offline').first()).toBeVisible();
+    await expect(page.getByText('Region: emea').first()).toBeVisible();
     await expect(page.getByText('Scenario D: Editable subset form')).toBeVisible();
 
     await page.getByRole('button', { name: 'Table Only' }).click();
-    await expect(page.getByText('Scenario D: Editable subset form')).toHaveCount(0);
+    await expect(page.getByText('Scenario D: Editable subset form')).toHaveCount(0, { timeout: 20_000 });
+    await expect(page.getByText('user_1 / emea / offline')).toHaveCount(0, { timeout: 20_000 });
 
     await page.getByRole('button', { name: 'Full Stress' }).click();
-    await expect(page.getByText('Scenario D: Editable subset form')).toBeVisible();
+    await expect(page.getByText('Scenario D: Editable subset form')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('user_1 / emea / offline')).toBeVisible({ timeout: 20_000 });
 
     await page.getByRole('button', { name: 'Run 20 Host Mutations' }).click();
     await expect(page.getByText('Last Measurement')).toBeVisible({ timeout: 60_000 });
