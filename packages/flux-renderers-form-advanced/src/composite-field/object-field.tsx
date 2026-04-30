@@ -123,13 +123,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const pendingTransformOutOwner = React.useMemo(() => ({}), []);
 
   React.useEffect(() => {
-    let active = true;
-
     if (!usesWorkingValue || !schema.transformInAction) {
       setResolvedValue(rawValue);
       return;
     }
 
+    const ac = new AbortController();
     const nextValue = valueAdapter.in(rawValue, {
       name,
       readOnly: readOnly || Boolean(props.meta.disabled),
@@ -139,19 +138,24 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
     if (isPromiseLike(nextValue)) {
       void nextValue.then((resolvedNextValue: unknown) => {
-        if (active) {
+        if (!ac.signal.aborted) {
           setResolvedValue(resolvedNextValue);
+        }
+      }).catch((error: unknown) => {
+        if (!ac.signal.aborted) {
+          setResolvedValue(rawValue);
+          console.warn('[object-field] transformIn failed', error);
         }
       });
       return () => {
-        active = false;
+        ac.abort();
       };
     }
 
     setResolvedValue(nextValue);
 
     return () => {
-      active = false;
+      ac.abort();
     };
   }, [name, parentForm, parentScope, props.meta.disabled, rawValue, readOnly, schema.transformInAction, usesWorkingValue, valueAdapter]);
 
@@ -200,6 +204,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
           }
 
           parentScope.update(name, resolvedCommittedValue);
+        }).catch((error: unknown) => {
+          if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
+            return;
+          }
+
+          console.warn('[object-field] transformOut failed', error);
         }).finally(() => {
           if (getPendingTransformOut(pendingTransformOutOwner) === committedValue) {
             setPendingTransformOut(pendingTransformOutOwner, null);

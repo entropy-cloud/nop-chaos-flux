@@ -48,7 +48,7 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
       if (!controller.signal.aborted) {
         setWordCount(count)
       }
-    })
+    }).catch(() => {})
 
     return () => {
       controller.abort()

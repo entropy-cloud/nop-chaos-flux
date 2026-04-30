@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   getIn,
   getCompiledValidationField,
@@ -114,7 +114,9 @@ export function createFieldHandlers(args: {
           if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
             await currentForm.validateField(name);
           }
-        })();
+        })().catch((error: unknown) => {
+          console.warn('[field-utils] adapter.out failed in onChange', error);
+        });
 
         return;
       }
@@ -126,12 +128,21 @@ export function createFieldHandlers(args: {
           if (shouldValidateOnOwner(name, currentValidationScope, 'change')) {
             await currentValidationScope.validateAt(name, 'change');
           }
-        })();
+        })().catch((error: unknown) => {
+          console.warn('[field-utils] adapter.out failed in onChange', error);
+        });
 
         return;
       }
 
-      void setValue(nextValue);
+      const result = setValue(nextValue);
+      if (isPromiseLike(result)) {
+        void result.catch((error: unknown) => {
+          console.warn('[field-utils] adapter.out failed in onChange', error);
+        });
+      } else {
+        void result;
+      }
     },
     onBlur() {
       if (currentForm) {
@@ -218,7 +229,6 @@ function useAdaptedFieldValue(
     ? (adapter ? adapter.in(value, context) : value)
     : value;
   const [adaptedValue, setAdaptedValue] = useState(value);
-  const seq = useRef(0);
 
   useEffect(() => {
     if (!adapter) {
@@ -229,30 +239,32 @@ function useAdaptedFieldValue(
       return;
     }
 
-    const currentSeq = seq.current + 1;
-    seq.current = currentSeq;
-    let active = true;
+    const ac = new AbortController();
     const result = adapter.in(value, context);
 
     if (!isPromiseLike(result)) {
       queueMicrotask(() => {
-        if (seq.current === currentSeq && active) {
+        if (!ac.signal.aborted) {
           setAdaptedValue(result);
         }
       });
       return () => {
-        active = false;
+        ac.abort();
       };
     }
 
     void result.then((nextValue) => {
-      if (active && seq.current === currentSeq) {
+      if (!ac.signal.aborted) {
         setAdaptedValue(nextValue);
+      }
+    }).catch((error: unknown) => {
+      if (!ac.signal.aborted) {
+        console.warn('[field-utils] adapter.in failed', error);
       }
     });
 
     return () => {
-      active = false;
+      ac.abort();
     };
   }, [adapter, context, syncAdapter, value]);
 

@@ -81,6 +81,9 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         const positions = new Map(layoutedNodes.map((node) => [node.id, node.position]));
         core.layoutNodes(positions);
       })
+      .catch((error: unknown) => {
+        console.warn('[flow-designer] Auto-layout failed', error);
+      })
       .finally(() => {
         if (layoutRequestRef.current === requestId) {
           setLayoutBusy(false);

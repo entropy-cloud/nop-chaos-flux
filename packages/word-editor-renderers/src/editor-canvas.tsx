@@ -117,7 +117,7 @@ export function EditorCanvas({ editorStore, bridge, initialDocument, onAutosave 
     const wordCountPromise = bridge.getWordCount()
     wordCountPromise.then((count) => {
       if (!controller.signal.aborted) editorStore.setWordCount(count)
-    })
+    }).catch(() => {})
 
     return () => {
       controller.abort()
