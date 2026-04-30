@@ -3,6 +3,7 @@
 > 分析日期: 2026-03-31
 > 分析范围: 全项目源码 + 文档体系
 > 分析方法: 源码逐包审查 + 架构文档交叉验证 + 依赖图谱分析
+> Status note (2026-04-30): This analysis captures the 2026-03-31 repo state. Mentions of report-designer adapter/provider patterns such as `InspectorProvider` reflect then-visible implementation detail, not today's active inspector baseline. See `docs/architecture/report-designer/inspector-design.md` and `docs/architecture/complex-control-host-protocol.md` for the current DSL-first/schema-form path.
 
 ---
 

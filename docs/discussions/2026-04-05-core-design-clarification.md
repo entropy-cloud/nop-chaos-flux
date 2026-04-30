@@ -1,5 +1,7 @@
 ﻿# Core Design Clarification
 
+> Historical note (2026-04-30): This discussion predates the current inspector convergence. Mentions of provider/adapter-heavy report-designer inspector paths reflect then-visible implementation detail, not the active architecture baseline. See `docs/architecture/report-designer/inspector-design.md` and `docs/architecture/complex-control-host-protocol.md` for the current DSL-first/schema-form path.
+
 ## ç¬¬ 1 è½®
 
 ### ç”¨æˆ·åŽŸå§‹è¡¨è¿°

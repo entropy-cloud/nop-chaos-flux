@@ -11,6 +11,16 @@
 
 真正值得 `nop-chaos-flux` 参考的，不是把自己改造成另一套 `tiny-engine`，而是吸收 tiny 生态里那些已经被证明对工作台产品化、物料组织、作者体验和交付链有价值、同时又不破坏 Flux 核心边界的设计。
 
+这里要先把 Flux 自己的定位说得更准确：Flux 当前首先仍是**执行/runtime core**，但它已经为一个**通用异构设计器内核**提供统一的 runtime 支撑。它共享的重点是：
+
+- `domain-host-renderer` 边界
+- host manifest / host projection / namespaced action
+- `WorkbenchShell`
+- selection-aware inspector + schema/form body
+- 各 host family 的 default UI + override surface contract
+
+也正因为如此，Flux 可以同时承载 `flow-designer`、`word-editor`、`report-designer`、`spreadsheet-page` 这类异构编辑器家族，而不是只围绕页面/组件树设计器展开。
+
 在本次审阅范围内，最值得参考的设计有七类。
 
 | 设计 | 来源锚点 | 与当前 Flux 边界的适配度 | 推荐优先级 | 首个落点 |
@@ -27,6 +37,7 @@
 
 - Tiny 最值得 Flux 学的不是动态执行模型。
 - Tiny 最值得 Flux 学的是工作台装配、物料组织、配置器协议、预览隔离和导出链路这些**tooling/productization surface**。
+- 但这些借鉴必须建立在 Flux 作为“执行/runtime core，并为通用异构设计器内核提供 runtime 支撑”的既有定位之上：借鉴的是上层产品化能力，不是把 Flux 改写成页面设计器平台内核。
 - 这些能力应该被放在 `Flux` core 之外，作为 loader/tooling/workbench layer 渐进补齐。
 
 ---
@@ -318,7 +329,7 @@ interface RendererDefinition {
 
 ---
 
-## 6. 可直接参考的设计三：基于 `ResolvedAuthoringContract` 的属性面板/配置器协议
+## 6. 可直接参考的设计三：让 `inspector` 成为属性编辑的唯一入口
 
 ### 6.1 Tiny 的现成做法
 
@@ -333,38 +344,33 @@ interface RendererDefinition {
 
 Flux 在静态 contract 上已经具备很好的起点：
 
-- `RendererPropContract.editorType`
 - `ResolvedAuthoringContract.editableProps`
 - `renderer-runtime.md` 和 `capability-contract-model.md` 已经明确说 future tooling 应建立在这条线之上
 - `nop-debugger` 已经开始消费 `resolveRendererAuthoringContract()`
 
-这里也需要收紧说法：通用层面并不缺一个更厚的 property panel protocol。
+这里也需要进一步收紧说法：通用层面既不缺一个更厚的 property panel protocol，也不一定需要把单个属性的 editor hint 作为核心方向。
 
 - 对大多数场景，`form` 已经足够承担 panel body 的布局、字段渲染、校验和读写。
-- 真正可以补的，是一个更薄的 authoring editor resolution layer，让通用在线编辑器或 schema 节点检查器不用各自猜测 `editorType`。
-- 像 `Report Designer` 这种更复杂的 inspector shell/provider 组织问题，属于 domain-specific 复杂度，不应被误写成整个 Flux 都缺一套通用 property panel protocol。
+- `propContracts` 更适合保留 schema 语义：`shape`、`required`、`defaultValue`、parse/validate 所需约束。
+- 属性编辑本身的信息更适合全部集中在 `inspector`：布局、分组、tab、字段拆分/组合、`object-field` / `variant-field` 使用、`transformIn/transformOut` 等。
+- 如果某个信息只用于属性编辑 UI，就不必再保留在运行时 `RendererDefinition` 的普通字段合同上。
 
 ### 6.3 推荐的具体设计
 
-推荐定义一个 tooling 层的 editor resolution layer，而不是让每个在线编辑器自己猜测 prop 怎样编辑。
+推荐把属性编辑的主路径明确成：**`inspector` 直接复用 Flux 自己的 DSL，也就是直接给 `SchemaInput` / form schema**。
 
-最小设计：
+这里要特别强调：
 
-```ts
-interface AuthoringFieldEditorContext {
-  rendererType: string;
-  propName: string;
-  contract: RendererPropContract;
-  value: unknown;
-  onChange(nextValue: unknown): void;
-}
+- `inspector` 不是第二套模型
+- 如果再单独定义一组 `RendererInspectorConfig` 一类的类型，本质上就是重新定义一个属性编辑 DSL
+- 这和 Flux “整体 DSL 化、能用现有 DSL 描述的问题就不要再发明一套模型”的方向不一致
 
-type AuthoringFieldEditor = (ctx: AuthoringFieldEditorContext) => React.ReactNode;
+因此更准确的主张是：
 
-interface AuthoringFieldEditorResolver {
-  resolve(editorType: string): AuthoringFieldEditor | undefined;
-}
-```
+- 属性编辑器本身就是 Flux 已经解决的问题之一
+- 直接复用 `SchemaInput` + form runtime
+- 如果想简化 authoring，优先在 JSON/schema 组装层通过元编程生成 inspector form 定义
+- 对前端 Flux 运行时来说，这仍然只是普通 schema，完全透明
 
 这里有两个关键约束：
 
@@ -373,18 +379,9 @@ interface AuthoringFieldEditorResolver {
 
 ### 6.4 最小可实现路径
 
-1. 先做一组通用内置 editor：
-   - `text`
-   - `select`
-   - `switch`
-   - `path`
-   - `object`
-   - `region`
-   - `source`
-2. 先在一个最小 consumer 上验证，例如：
-   - 通用 schema node inspector
-   - 或 `designer-field` 的共享编辑器层
-3. 像 `designer-config` 这种 domain-specific editor 不应作为通用内置 editor，而应由对应 domain tooling 自己注册覆盖项。
+1. 对有属性编辑需求的 renderer / host family，直接提供 `inspector.body` 作为唯一属性编辑入口。
+2. `inspector.body` 内部自由使用 `form`、`object-field`、`variant-field`、tabs、sections 等 Flux 已有 DSL/renderer 能力，不要求按单个属性自动装配。
+3. 如果 authored schema 与编辑态值之间需要拆分/组合或局部转换，优先在 schema 组装层通过元编程生成最终 inspector form；必要时再在提交动作里做局部适配。
 4. 写路径不要直接耦合任意 store，先通过显式 adapter 提交补丁，例如：
 
 ```ts
@@ -396,16 +393,16 @@ interface AuthoringNodeAdapter {
 
 ### 6.5 为什么这条值得优先做
 
-这是当前最容易转化为真实生产力的地方，但它解决的是“通用 authoring tooling 如何选 editor”，不是重写现有 form/panel 模型。
+这是更符合 Flow Designer 现状和 Flux DSL 方向的路径，因为它把属性编辑 UI 的全部信息集中在一个地方，并直接复用现有 schema/form 体系，而不是再定义一层属性编辑模型。
 
 一旦这条线建立起来：
 
 - 在线编辑器
-- palette 插入后的默认属性编辑
-- renderer docs 自动生成
-- 调试器里的 authoring contract 展示
+- designer 内部属性编辑
+- 复杂字段拆分/组合编辑
+- 基于 schema 组装层元编程的 inspector 生成
 
-都能复用同一套 contract 和 editor resolution layer。
+都能围绕同一个 `inspector` 定义组织，而 schema 语义仍由 `propContracts.shape` / parse/validate 负责。
 
 ### 6.6 边界约束
 
@@ -413,7 +410,8 @@ interface AuthoringNodeAdapter {
 
 - 不直接编辑 runtime-resolved props
 - 不把 host projection 误当作可写数据域
-- 不把 `ResolvedAuthoringContract` 重新膨胀成新的 runtime protocol
+- 不要为了属性编辑 UI 再重复发明一套与 parse/validate 脱节的字段语义模型
+- 如果能通过 schema 组装/元编程解决，就不要把问题提升为新的运行时 inspector 模型
 
 ---
 
@@ -741,10 +739,10 @@ function useTreeSelectController(input: {
 
 如果把这个判断再压缩一点，就是：
 
-- Flux 的强项已经是执行内核与正式 contract
-- Tiny 最值得借鉴的是如何把这些 contract 进一步产品化成作者可直接使用的工作台能力
+- Flux 的强项首先仍是执行内核，同时它已经为可承载多种文档模型与交互模型的通用异构设计器内核提供了统一 runtime 支撑
+- Tiny 最值得借鉴的是如何把这些 runtime support / contract 进一步产品化成作者可直接使用的工作台能力
 
-因此，`nop-chaos-flux` 真正值得做的改进，不是重写 core，而是补齐上层 tooling/workbench/productization 闭环。
+因此，`nop-chaos-flux` 真正值得做的改进，不是重写 core，而是围绕这套 runtime support 补齐上层 tooling/workbench/productization 闭环。
 
 ---
 
