@@ -22,16 +22,12 @@ import {
   createReportTemplateDocument,
   type ReportDesignerConfig,
   type FieldSourceSnapshot,
-  type InspectorProvider,
-  type InspectorPanelDescriptor,
   type FieldDropAdapter,
 } from '@nop-chaos/report-designer-core';
 import {
   createReportDesignerBridge,
   ReportFieldPanel,
   buildReportDesignerScopeData,
-  withDefaultSelectionSummaryInspector,
-  defaultSelectionSummaryInspectorProvider,
   registerReportDesignerRenderers,
 } from '@nop-chaos/report-designer-renderers';
 
@@ -54,30 +50,6 @@ const fieldSources: FieldSourceSnapshot[] = [
     ],
   },
 ];
-
-const cellInspectorProvider: InspectorProvider = {
-  id: 'cell-basic-inspector',
-  match: (target) => target.kind === 'cell',
-  priority: 0,
-  getPanels: (context): InspectorPanelDescriptor[] => {
-    const cell = context.target.kind === 'cell' ? context.target.cell : undefined;
-    if (!cell) return [];
-    const meta = context.metadata;
-    return [{
-      id: 'cell-basic',
-      title: 'Cell',
-      targetKind: 'cell',
-      mode: 'tab',
-      order: 0,
-      body: {
-        address: cell.address,
-        row: cell.row + 1,
-        col: cell.col + 1,
-        metadata: meta ?? {},
-      },
-    }];
-  },
-};
 
 const dropAdapter: FieldDropAdapter = {
   id: 'basic-field-drop',
@@ -114,9 +86,61 @@ export function ReportDesignerDemo() {
   const spreadsheetCore = useMemo(() => createSpreadsheetCore({ document: spreadsheetDoc }), [spreadsheetDoc]);
   const spreadsheetBridge = useMemo(() => createSpreadsheetBridge(spreadsheetCore), [spreadsheetCore]);
   const reportDoc = useMemo(() => createReportTemplateDocument(spreadsheetDoc, 'Demo Report'), [spreadsheetDoc]);
-  const designerConfig: ReportDesignerConfig = useMemo(() => withDefaultSelectionSummaryInspector({
+  const designerConfig: ReportDesignerConfig = useMemo(() => ({
     kind: 'report-template',
-    fieldSources: fieldSources.map(fs => ({ ...fs, provider: undefined })),
+    fieldSources: fieldSources.map((fs) => ({ ...fs, provider: undefined })),
+    inspector: {
+      byTarget: {
+        workbook: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: 'Workbook selected' },
+            { type: 'text', text: 'Use toolbar actions to edit metadata.' },
+          ],
+        },
+        sheet: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: 'Sheet selected' },
+            { type: 'text', text: 'Switch sheets or drop fields onto cells.' },
+          ],
+        },
+        row: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: 'Row selected' },
+            { type: 'text', text: 'Row metadata will be written through report-designer actions.' },
+          ],
+        },
+        column: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: 'Column selected' },
+            { type: 'text', text: 'Column metadata will be written through report-designer actions.' },
+          ],
+        },
+        range: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: 'Range selected' },
+            { type: 'text', text: 'Drop a field onto a range to fill cell bindings.' },
+          ],
+        },
+        cell: {
+          type: 'container',
+          className: 'stack-sm text-sm',
+          body: [
+            { type: 'text', text: 'Cell selected' },
+            { type: 'text', text: 'Use drop from the field panel to bind a dataset field.' },
+          ],
+        },
+      },
+    },
   }), []);
   const designerCore = useMemo(() => createReportDesignerCore({ document: reportDoc, config: designerConfig }), [reportDoc, designerConfig]);
   const designerBridge = useMemo(() => createReportDesignerBridge(spreadsheetBridge, designerCore), [spreadsheetBridge, designerCore]);
@@ -132,8 +156,6 @@ export function ReportDesignerDemo() {
   );
 
   useEffect(() => {
-    designerCore.registerInspector(cellInspectorProvider);
-    designerCore.registerInspector(defaultSelectionSummaryInspectorProvider);
     designerCore.registerFieldDrop(dropAdapter);
     void designerCore.setSelectionTarget(designerCore.getSnapshot().selectionTarget);
   }, [designerCore]);
