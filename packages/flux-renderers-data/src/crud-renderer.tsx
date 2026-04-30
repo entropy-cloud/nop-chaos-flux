@@ -229,16 +229,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       data: queryState.values,
       body: queryForm.body,
       mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
-      submitAction: {
-        action: 'setValue',
-        args: {
-          path: queryStatePath,
-          value: {
-            values: '${$form.values}',
-            refreshCount: queryState.refreshCount + 1,
-          },
-        },
-      },
     };
 
     if (queryForm.actions !== undefined) {
@@ -249,12 +239,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       base.statusPath = queryForm.statusPath;
     }
 
-    if (normalizedSchema.onQuerySubmit && shouldFetchOnQueryChange) {
-      base.onSubmitSuccess = normalizedSchema.onQuerySubmit;
-    }
-
     return base as BaseSchema;
-  }, [normalizedSchema.onQuerySubmit, normalizedSchema.queryForm, queryFormId, queryState.refreshCount, queryState.values, queryStatePath, shouldFetchOnQueryChange]);
+  }, [normalizedSchema.queryForm, queryFormId, queryState.values]);
 
   const handleToolbarPageChange = useCallback((page: number) => {
     scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });

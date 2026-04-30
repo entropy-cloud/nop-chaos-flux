@@ -144,18 +144,19 @@ export function useCrudQueryBridge(args: {
 
   const handleQuerySubmit = useCallback(async () => {
     const handle = componentRegistry?.resolve({ componentId: queryFormId });
-    if (handle?.capabilities?.hasMethod?.('submit')) {
-      let nextValues = queryState.values;
-      if (handle.capabilities.hasMethod?.('getValues')) {
-        const valuesResult = await Promise.resolve(handle.capabilities.invoke('getValues', undefined, {} as never)) as { ok?: boolean; data?: unknown };
-        if (valuesResult.ok && valuesResult.data && typeof valuesResult.data === 'object') {
-          nextValues = toRecord(valuesResult.data);
+    if (handle?.capabilities?.hasMethod?.('getValues')) {
+      if (handle.capabilities.hasMethod?.('validate')) {
+        const validateResult = await Promise.resolve(handle.capabilities.invoke('validate', undefined, {} as never)) as { ok?: boolean };
+        if (!validateResult?.ok) {
+          return;
         }
       }
 
-      await Promise.resolve(handle.capabilities.invoke('submit', undefined, {} as never));
-      submitQueryValues(nextValues);
-      return;
+      const valuesResult = await Promise.resolve(handle.capabilities.invoke('getValues', undefined, {} as never)) as { ok?: boolean; data?: unknown };
+      if (valuesResult.ok && valuesResult.data && typeof valuesResult.data === 'object') {
+        submitQueryValues(toRecord(valuesResult.data));
+        return;
+      }
     }
 
     submitQueryValues(queryState.values);

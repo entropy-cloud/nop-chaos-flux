@@ -206,7 +206,7 @@ describe('CRUD renderer request-owned baseline', () => {
     fireEvent.click(screen.getByRole('button', { name: t('flux.common.search') }));
 
     await waitFor(() => {
-      expect(fetcherSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+      expect(fetcherSpy).toHaveBeenCalledTimes(2);
       expect(screen.getByText('Rows: 0/2; Query: Ali')).toBeTruthy();
     });
   });
