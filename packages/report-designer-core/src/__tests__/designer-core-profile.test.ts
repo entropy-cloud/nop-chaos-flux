@@ -61,7 +61,6 @@ describe('designer-core profile and adapters', () => {
       id: 'nop-profile',
       kind: 'report-template',
       fieldSourceIds: ['orders'],
-      inspectorIds: [],
       fieldDropIds: [],
     };
     const profileCore = createReportDesignerCore({
@@ -76,37 +75,30 @@ describe('designer-core profile and adapters', () => {
     expect(sources[0].id).toBe('orders');
   });
 
-  it('should filter inspector providers by profile ids', async () => {
+  it('prefers byProfile inspector schema over byTarget and body', async () => {
     const spreadsheetDoc = createEmptyDocument();
     const profileDoc = createReportTemplateDocument(spreadsheetDoc);
     const profileSheetId = spreadsheetDoc.workbook.sheets[0].id;
     const profileConfig: ReportDesignerConfig = {
       kind: 'report-template',
       inspector: {
-        providers: [
-          {
-            id: 'allowed',
-            label: 'Allowed Panel',
-            match: { kinds: ['sheet'] },
-            mode: 'tab',
-            body: { title: 'allowed' },
+        body: { type: 'text', text: 'body' },
+        byTarget: {
+          sheet: { type: 'text', text: 'target' },
+        },
+        byProfile: {
+          'nop-inspector': {
+            sheet: { type: 'text', text: 'profile' },
           },
-          {
-            id: 'blocked',
-            label: 'Blocked Panel',
-            match: { kinds: ['sheet'] },
-            mode: 'tab',
-            body: { title: 'blocked' },
-          },
-        ],
+        },
       },
     };
     const profile: ReportDesignerProfile = {
       id: 'nop-profile',
       kind: 'report-template',
       fieldSourceIds: [],
-      inspectorIds: ['allowed'],
       fieldDropIds: [],
+      inspectorSchemaId: 'nop-inspector',
     };
     const profileCore = createReportDesignerCore({
       document: profileDoc,
@@ -115,85 +107,37 @@ describe('designer-core profile and adapters', () => {
     });
 
     await profileCore.setSelectionTarget({ kind: 'sheet', sheetId: profileSheetId });
-    const panels = profileCore.getInspectorPanels();
 
-    expect(panels).toHaveLength(1);
-    expect(panels[0].id).toBe('allowed');
+    expect(profileCore.getSnapshot().inspector.resolvedSchema).toEqual({ type: 'text', text: 'profile' });
   });
 
-  it('captures inspector provider load failures in snapshot state', async () => {
-    const failingCore = createReportDesignerCore({
+  it('falls back from byTarget to body and leaves explicit empty state when no schema exists', async () => {
+    const fallbackCore = createReportDesignerCore({
       document: doc,
       config: {
         kind: 'report-template',
         inspector: {
-          providers: [
-            {
-              id: 'failing-panel',
-              label: 'Failing Panel',
-              match: { kinds: ['sheet'] },
-              provider: 'failing-provider',
-            },
-          ],
+          body: { type: 'text', text: 'body fallback' },
+          byTarget: {
+            workbook: { type: 'text', text: 'workbook target' },
+          },
         },
-      },
-      adapters: {
-        inspectors: new Map([
-          ['failing-provider', {
-            id: 'failing-provider',
-            match: () => true,
-            getPanels: () => {
-              throw new Error('Inspector load failed');
-            },
-          }],
-        ]),
       },
     });
 
-    await failingCore.setSelectionTarget({ kind: 'sheet', sheetId });
+    await fallbackCore.setSelectionTarget({ kind: 'workbook' });
+    expect(fallbackCore.getSnapshot().inspector.resolvedSchema).toEqual({ type: 'text', text: 'workbook target' });
 
-    const snap = failingCore.getSnapshot();
-    expect(snap.inspector.loading).toBe(false);
-    expect(String(snap.inspector.error)).toContain('Inspector load failed');
-    expect(failingCore.getInspectorPanels()).toEqual([]);
-  });
+    await fallbackCore.setSelectionTarget({ kind: 'sheet', sheetId });
+    expect(fallbackCore.getSnapshot().inspector.resolvedSchema).toEqual({ type: 'text', text: 'body fallback' });
 
-  it('passes spreadsheet snapshot into inspector provider context', async () => {
-    let seenSpreadsheet: any;
-    const providerCore = createReportDesignerCore({
+    const emptyCore = createReportDesignerCore({
       document: doc,
-      config: {
-        kind: 'report-template',
-        inspector: {
-          providers: [
-            {
-              id: 'sheet-provider',
-              label: 'Sheet Provider',
-              match: { kinds: ['sheet'] },
-              provider: 'sheet-provider',
-            },
-          ],
-        },
-      },
-      adapters: {
-        inspectors: new Map([
-          ['sheet-provider', {
-            id: 'sheet-provider',
-            match: () => true,
-            getPanels: (context) => {
-              seenSpreadsheet = context.spreadsheet;
-              return [{ id: 'from-provider', title: 'From Provider', targetKind: 'sheet', body: {} }];
-            },
-          }],
-        ]),
-      },
+      config: { kind: 'report-template' },
     });
 
-    await providerCore.setSelectionTarget({ kind: 'sheet', sheetId });
-
-    expect(seenSpreadsheet?.activeSheetId).toBe(sheetId);
-    expect(Array.isArray(seenSpreadsheet?.document?.workbook?.sheets)).toBe(true);
-    expect(providerCore.getInspectorPanels().map((panel) => panel.id)).toEqual(['from-provider']);
+    await emptyCore.setSelectionTarget({ kind: 'workbook' });
+    expect(emptyCore.getSnapshot().inspector.resolvedSchema).toBeUndefined();
   });
 
   it('should select field drop adapters by profile ids', async () => {
@@ -204,7 +148,6 @@ describe('designer-core profile and adapters', () => {
       id: 'nop-profile',
       kind: 'report-template',
       fieldSourceIds: [],
-      inspectorIds: [],
       fieldDropIds: ['allowed-drop'],
     };
     const profileCore = createReportDesignerCore({
@@ -257,7 +200,6 @@ describe('designer-core profile and adapters', () => {
       id: 'nop-profile',
       kind: 'report-template',
       fieldSourceIds: [],
-      inspectorIds: [],
       fieldDropIds: [],
       previewId: 'profile-preview',
     };

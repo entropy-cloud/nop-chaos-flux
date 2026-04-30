@@ -1,4 +1,4 @@
-import type { ActionSchema } from '@nop-chaos/flux-core';
+import type { SchemaInput } from '@nop-chaos/flux-core';
 import type { SpreadsheetDocument, SpreadsheetCellRef, SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
 
 export interface ReportDesignerHostStatusSummary {
@@ -89,9 +89,8 @@ export interface FieldDragPayload {
 
 export interface InspectorRuntimeState {
   open: boolean;
-  activePanelId?: string;
-  providerIds: string[];
-  panelIds: string[];
+  mode?: 'panel' | 'drawer';
+  resolvedSchema?: SchemaInput;
   loading: boolean;
   error?: unknown;
 }
@@ -118,19 +117,10 @@ export interface ReportDesignerConfig {
   fieldSources?: FieldSourceSnapshot[];
   maxUndoDepth?: number;
   inspector?: {
-    providers: Array<{
-      id: string;
-      label?: string;
-      match: { kinds: ReportSelectionTargetKind[] };
-      body?: Record<string, unknown>;
-      provider?: string;
-      submitAction?: ActionSchema | ActionSchema[];
-      readonly?: boolean;
-      badge?: string;
-      group?: string;
-      order?: number;
-      mode?: 'tab' | 'section' | 'inline';
-    }>;
+    mode?: 'panel' | 'drawer';
+    body?: SchemaInput;
+    byTarget?: Partial<Record<ReportSelectionTargetKind, SchemaInput>>;
+    byProfile?: Record<string, Partial<Record<ReportSelectionTargetKind, SchemaInput>>>;
   };
   preview?: {
     provider?: string;

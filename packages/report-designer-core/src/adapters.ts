@@ -1,4 +1,3 @@
-import type { ActionSchema } from '@nop-chaos/flux-core';
 import type {
   ReportSelectionTarget,
   ReportSelectionTargetKind,
@@ -9,7 +8,6 @@ import type {
   ReportTemplateDocument,
   ReportDesignerConfig,
 } from './types.js';
-import type { SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 
 export interface ReportDesignerAdapterContext {
   config: ReportDesignerConfig;
@@ -21,34 +19,6 @@ export interface ReportDesignerAdapterContext {
 export interface FieldSourceProvider {
   id: string;
   load(context: ReportDesignerAdapterContext): Promise<FieldSourceSnapshot[]> | FieldSourceSnapshot[];
-}
-
-export interface InspectorPanelDescriptor {
-  id: string;
-  title: string;
-  targetKind: ReportSelectionTargetKind;
-  group?: string;
-  order?: number;
-  mode?: 'tab' | 'section' | 'inline';
-  body: Record<string, unknown>;
-  submitAction?: ActionSchema | ActionSchema[];
-  readonly?: boolean;
-  badge?: string;
-}
-
-export interface InspectorPanelContext {
-  target: ReportSelectionTarget;
-  metadata?: MetadataBag;
-  designer: ReportDesignerRuntimeSnapshot;
-  spreadsheet: SpreadsheetRuntimeSnapshot;
-  adapterContext: ReportDesignerAdapterContext;
-}
-
-export interface InspectorProvider {
-  id: string;
-  match(target: ReportSelectionTarget, context: ReportDesignerAdapterContext): boolean;
-  getPanels(context: InspectorPanelContext): InspectorPanelDescriptor[] | Promise<InspectorPanelDescriptor[]>;
-  priority?: number;
 }
 
 export interface FieldDropAdapter {
@@ -126,44 +96,23 @@ export interface ReferencePickerAdapter {
   pick(context: ReferencePickerContext): Promise<string | undefined>;
 }
 
-export interface InspectorValueAdapter {
-  id: string;
-  read(
-    target: ReportSelectionTarget,
-    context: InspectorPanelContext,
-  ): Record<string, unknown>;
-  write(
-    values: Record<string, unknown>,
-    target: ReportSelectionTarget,
-    context: InspectorPanelContext,
-  ): InspectorWritePlan;
-}
-
-export interface InspectorWritePlan {
-  actions: Array<Record<string, unknown>>;
-}
-
 export interface ReportDesignerAdapterRegistry {
   fieldSources: Map<string, FieldSourceProvider>;
-  inspectors: Map<string, InspectorProvider>;
   fieldDrops: Map<string, FieldDropAdapter>;
   previews: Map<string, PreviewAdapter>;
   codecs: Map<string, TemplateCodecAdapter>;
   expressions: Map<string, ExpressionEditorAdapter>;
   references: Map<string, ReferencePickerAdapter>;
-  inspectorValues: Map<string, InspectorValueAdapter>;
 }
 
 export function createEmptyAdapterRegistry(): ReportDesignerAdapterRegistry {
   return {
     fieldSources: new Map(),
-    inspectors: new Map(),
     fieldDrops: new Map(),
     previews: new Map(),
     codecs: new Map(),
     expressions: new Map(),
     references: new Map(),
-    inspectorValues: new Map(),
   };
 }
 
@@ -181,22 +130,6 @@ export function createStaticFieldSourceProvider(
           fields: group.fields.map((field) => ({ ...field })),
         })),
       }));
-    },
-  };
-}
-
-export function createStaticInspectorProvider(
-  id: string,
-  targetKind: InspectorPanelDescriptor['targetKind'],
-  panels: InspectorPanelDescriptor[],
-): InspectorProvider {
-  return {
-    id,
-    match(target) {
-      return target.kind === targetKind;
-    },
-    getPanels() {
-      return panels.map((panel) => ({ ...panel }));
     },
   };
 }
@@ -233,8 +166,8 @@ export interface ReportDesignerProfile {
   id: string;
   kind: string;
   fieldSourceIds: string[];
-  inspectorIds: string[];
   fieldDropIds: string[];
+  inspectorSchemaId?: string;
   previewId?: string;
   codecId?: string;
   expressionEditorId?: string;

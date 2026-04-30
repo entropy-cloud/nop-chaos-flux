@@ -56,9 +56,6 @@ export { isReportDesignerCommand } from './commands.js';
 export type {
   ReportDesignerAdapterContext,
   FieldSourceProvider,
-  InspectorPanelDescriptor,
-  InspectorPanelContext,
-  InspectorProvider,
   FieldDropAdapter,
   PreviewAdapter,
   PreviewResult,
@@ -68,8 +65,6 @@ export type {
   ExpressionEditorAdapter,
   ReferencePickerContext,
   ReferencePickerAdapter,
-  InspectorValueAdapter,
-  InspectorWritePlan,
   ReportDesignerAdapterRegistry,
   ReportDesignerProfile,
 } from './adapters.js';
@@ -77,7 +72,6 @@ export type {
 export {
   createEmptyAdapterRegistry,
   createStaticFieldSourceProvider,
-  createStaticInspectorProvider,
   createMetaPatchDropAdapter,
   createUnsupportedTemplateCodecAdapter,
 } from './adapters.js';
@@ -88,14 +82,3 @@ export type {
 } from './core.js';
 
 export { createReportDesignerCore } from './core.js';
-
-export type {
-  InspectorMatchResult,
-} from './inspector.js';
-
-export {
-  matchInspectorProviders,
-  resolveInspectorPanels,
-  groupPanelsByMode,
-  findDefaultActivePanel,
-} from './inspector.js';

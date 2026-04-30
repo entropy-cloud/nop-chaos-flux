@@ -4,13 +4,11 @@ import type { ReportDesignerConfig } from '../types.js';
 export function createAdapterRegistrySnapshot(input?: Partial<ReportDesignerAdapterRegistry>): ReportDesignerAdapterRegistry {
   return {
     fieldSources: new Map(input?.fieldSources ?? []),
-    inspectors: new Map(input?.inspectors ?? []),
     fieldDrops: new Map(input?.fieldDrops ?? []),
     previews: new Map(input?.previews ?? []),
     codecs: new Map(input?.codecs ?? []),
     expressions: new Map(input?.expressions ?? []),
     references: new Map(input?.references ?? []),
-    inspectorValues: new Map(input?.inspectorValues ?? []),
   };
 }
 

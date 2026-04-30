@@ -171,15 +171,6 @@ export async function dispatchReportDesignerCommand(
         return { ok: true, changed: wasOpen };
       }
 
-      case 'report-designer:setActivePanel': {
-        const panelId = command.panelId;
-        store.setState((current) => ({
-          ...current,
-          inspector: { ...current.inspector, activePanelId: panelId },
-        }));
-        return { ok: true, changed: true };
-      }
-
       case 'report-designer:preview': {
         store.setState((current) => ({
           ...current,

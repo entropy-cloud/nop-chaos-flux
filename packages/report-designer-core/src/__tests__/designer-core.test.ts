@@ -286,9 +286,25 @@ describe('createReportDesignerCore', () => {
     expect(snap.selectionTarget?.kind).toBe('workbook');
   });
 
-  it('should get inspector panels', () => {
-    const panels = core.getInspectorPanels();
-    expect(Array.isArray(panels)).toBe(true);
+  it('resolves inspector schema from byTarget config for current selection', async () => {
+    const inspectorCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        inspector: {
+          byTarget: {
+            workbook: { type: 'text', text: 'Workbook inspector' },
+          },
+        },
+      },
+    });
+
+    await inspectorCore.setSelectionTarget({ kind: 'workbook' });
+
+    expect(inspectorCore.getSnapshot().inspector.resolvedSchema).toEqual({
+      type: 'text',
+      text: 'Workbook inspector',
+    });
   });
 
   it('should refresh field sources', async () => {

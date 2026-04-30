@@ -1,5 +1,4 @@
 import { createStore } from 'zustand/vanilla';
-import { createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import type {
   ReportDesignerConfig,
   ReportTemplateDocument,
@@ -18,8 +17,6 @@ import type {
 } from './commands.js';
 import type {
   ReportDesignerAdapterRegistry,
-  InspectorProvider,
-  InspectorPanelDescriptor,
   FieldDropAdapter,
   ReportDesignerProfile,
 } from './adapters.js';
@@ -33,9 +30,7 @@ import {
   updateMetadata,
 } from './runtime/metadata.js';
 import {
-  buildInspectorProvidersByKind,
-  getProfileInspectorIds,
-  resolveInspectorPanelsForTarget,
+  resolveInspectorSchemaForTarget,
 } from './runtime/inspector-panels.js';
 import {
   getProfileFieldSourceIds,
@@ -57,12 +52,10 @@ export interface ReportDesignerCore {
   setMetadata(target: ReportSelectionTarget, nextMeta: MetadataBag): void;
   syncSpreadsheetDocument(nextDocument: ReportTemplateDocument['spreadsheet']): void;
   setSelectionTarget(target?: ReportSelectionTarget): Promise<void>;
-  getInspectorPanels(): InspectorPanelDescriptor[];
   refreshFieldSources(): Promise<FieldSourceSnapshot[]>;
   exportDocument(): ReportTemplateDocument;
   getAdapterRegistry(): ReportDesignerAdapterRegistry;
   registerFieldSource(provider: import('./adapters.js').FieldSourceProvider): void;
-  registerInspector(provider: InspectorProvider): void;
   registerFieldDrop(adapter: FieldDropAdapter): void;
   registerPreview(adapter: import('./adapters.js').PreviewAdapter): void;
   registerCodec(adapter: import('./adapters.js').TemplateCodecAdapter): void;
@@ -102,7 +95,6 @@ export function createReportDesignerCore(
 
   const initialDocument = cloneDocument(document);
   const selectedFieldSourceIds = new Set(getProfileFieldSourceIds(config, profile));
-  const selectedInspectorIds = new Set(getProfileInspectorIds(config, profile));
   const allowedFieldDropIds = getProfileFieldDropIds(profile);
   const staticFieldSourceTemplates: FieldSourceSnapshot[] = (config.fieldSources ?? [])
     .filter((fieldSource) => !fieldSource.provider && selectedFieldSourceIds.has(fieldSource.id))
@@ -116,18 +108,15 @@ export function createReportDesignerCore(
         fields: group.fields.map((field) => ({ ...field })),
       })),
     }));
-  const configuredInspectorProviders = (config.inspector?.providers ?? []).filter((provider) => selectedInspectorIds.has(provider.id));
-  const inspectorProvidersByKind = buildInspectorProvidersByKind(configuredInspectorProviders);
   const initialSelectionTarget = getDefaultSelectionTarget(initialDocument);
-  let inspectorPanelsCache: InspectorPanelDescriptor[] = [];
 
   const store = createStore<ReportDesignerInternalState>(() => ({
     document: initialDocument,
     selectionTarget: initialSelectionTarget,
     inspector: {
       open: false,
-      providerIds: [],
-      panelIds: [],
+      mode: config.inspector?.mode,
+      resolvedSchema: resolveInspectorSchemaForTarget({ config, target: initialSelectionTarget, profile }),
       loading: false,
     },
     fieldSources: [],
@@ -141,7 +130,6 @@ export function createReportDesignerCore(
 
   async function refreshDerivedState() {
     const snapshot = store.getState();
-    const spreadsheet = createSpreadsheetCore({ document: snapshot.document.spreadsheet }).getSnapshot();
     try {
       const fieldSources = await loadFieldSources({
         config,
@@ -153,45 +141,31 @@ export function createReportDesignerCore(
         getSnapshot: () => buildSnapshot(store.getState()),
       });
 
-      const panels = await resolveInspectorPanelsForTarget({
+      const resolvedSchema = resolveInspectorSchemaForTarget({
         config,
-        document: snapshot.document,
-        spreadsheet,
-        adapters: registry,
         target: snapshot.selectionTarget,
         profile,
-        providersByKind: inspectorProvidersByKind,
-        designer: buildSnapshot(store.getState()),
       });
-
-      const providerIds = panels.map((panel) => panel.id);
-      inspectorPanelsCache = panels.map((panel) => ({ ...panel }));
 
       store.setState((current) => ({
         ...current,
         fieldSources,
         inspector: {
           ...current.inspector,
-          providerIds,
-          panelIds: panels.map((panel) => panel.id),
-          activePanelId: current.inspector.activePanelId && panels.some((panel) => panel.id === current.inspector.activePanelId)
-            ? current.inspector.activePanelId
-            : panels[0]?.id,
+          mode: config.inspector?.mode,
+          resolvedSchema,
           loading: false,
           error: undefined,
         },
       }));
 
-      return panels;
+      return resolvedSchema;
     } catch (error) {
-      inspectorPanelsCache = [];
       store.setState((current) => ({
         ...current,
         inspector: {
           ...current.inspector,
-          providerIds: [],
-          panelIds: [],
-          activePanelId: undefined,
+          resolvedSchema: undefined,
           loading: false,
           error,
         },
@@ -305,10 +279,6 @@ export function createReportDesignerCore(
 
     setSelectionTarget,
 
-    getInspectorPanels() {
-      return inspectorPanelsCache.map((panel) => ({ ...panel }));
-    },
-
     refreshFieldSources,
 
     exportDocument() {
@@ -321,10 +291,6 @@ export function createReportDesignerCore(
 
     registerFieldSource(provider) {
       registry.fieldSources.set(provider.id, provider);
-    },
-
-    registerInspector(provider) {
-      registry.inspectors.set(provider.id, provider);
     },
 
     registerFieldDrop(adapter) {
