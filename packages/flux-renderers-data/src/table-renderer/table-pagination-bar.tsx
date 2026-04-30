@@ -1,34 +1,16 @@
-import { Fragment } from 'react';
 import { NativeSelect, NativeSelectOption, Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
-export function computePaginationPages(currentPage: number, totalPages: number): number[] {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
+export function computeWindowRange(currentPage: number, totalPages: number): [number, number] {
+  if (totalPages <= 7) return [1, totalPages];
 
   let start = currentPage - 1;
   let end = currentPage + 1;
 
-  if (start < 1) {
-    end += 1 - start;
-    start = 1;
-  }
-  if (end > totalPages) {
-    start -= end - totalPages;
-    end = totalPages;
-  }
-  start = Math.max(1, start);
-  end = Math.min(totalPages, end);
+  if (start < 1) { end += 1 - start; start = 1; }
+  if (end > totalPages) { start -= end - totalPages; end = totalPages; }
 
-  const pages = new Set<number>();
-  pages.add(1);
-  pages.add(totalPages);
-  for (let i = start; i <= end; i++) {
-    pages.add(i);
-  }
-
-  return [...pages].sort((a, b) => a - b);
+  return [Math.max(1, start), Math.min(totalPages, end)];
 }
 
 interface TablePaginationBarProps {
@@ -50,7 +32,7 @@ export function TablePaginationBar({
   onPageChange,
   onPageSizeChange
 }: TablePaginationBarProps) {
-  const pages = computePaginationPages(currentPage, totalPages);
+  const [winStart, winEnd] = computeWindowRange(currentPage, totalPages);
 
   return (
     <div data-slot="table-pagination" className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -79,29 +61,43 @@ export function TablePaginationBar({
             />
           </PaginationItem>
 
-          {pages.map((page, index) => {
-            const prevPage = index > 0 ? pages[index - 1] : page;
-            const needsEllipsis = index > 0 && page - prevPage > 1;
-
-            return (
-              <Fragment key={page}>
-                {needsEllipsis && (
-                  <PaginationItem>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                )}
+          {winStart > 1 && (
+            <>
+              <PaginationItem>
+                <PaginationLink onClick={() => onPageChange(1)} isActive={currentPage === 1} className="cursor-pointer">
+                  1
+                </PaginationLink>
+              </PaginationItem>
+              {winStart > 2 && (
                 <PaginationItem>
-                  <PaginationLink
-                    onClick={() => onPageChange(page)}
-                    isActive={page === currentPage}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
+                  <PaginationEllipsis />
                 </PaginationItem>
-              </Fragment>
-            );
-          })}
+              )}
+            </>
+          )}
+
+          {Array.from({ length: winEnd - winStart + 1 }, (_, i) => winStart + i).map((page) => (
+            <PaginationItem key={page}>
+              <PaginationLink onClick={() => onPageChange(page)} isActive={page === currentPage} className="cursor-pointer">
+                {page}
+              </PaginationLink>
+            </PaginationItem>
+          ))}
+
+          {winEnd < totalPages && (
+            <>
+              {winEnd < totalPages - 1 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationLink onClick={() => onPageChange(totalPages)} isActive={currentPage === totalPages} className="cursor-pointer">
+                  {totalPages}
+                </PaginationLink>
+              </PaginationItem>
+            </>
+          )}
 
           <PaginationItem>
             <PaginationNext

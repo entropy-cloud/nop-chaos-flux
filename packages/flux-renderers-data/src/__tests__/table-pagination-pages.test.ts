@@ -1,85 +1,75 @@
 import { describe, it, expect } from 'vitest';
-import { computePaginationPages } from '../table-renderer/table-pagination-bar';
+import { computeWindowRange } from '../table-renderer/table-pagination-bar';
 
-describe('computePaginationPages', () => {
-  it('returns all pages when totalPages <= 7', () => {
-    expect(computePaginationPages(1, 1)).toEqual([1]);
-    expect(computePaginationPages(1, 3)).toEqual([1, 2, 3]);
-    expect(computePaginationPages(3, 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+describe('computeWindowRange', () => {
+  it('returns [1, 0] for 0 pages', () => {
+    expect(computeWindowRange(1, 0)).toEqual([1, 0]);
   });
 
-  it('never produces duplicate page numbers', () => {
-    const totalPages = 20;
-    for (let page = 1; page <= totalPages; page++) {
-      const pages = computePaginationPages(page, totalPages);
-      const unique = [...new Set(pages)];
-      expect(pages).toEqual(unique);
-    }
+  it('returns [1, 1] for 1 page', () => {
+    expect(computeWindowRange(1, 1)).toEqual([1, 1]);
   });
 
-  it('always includes page 1 and last page', () => {
-    const totalPages = 100;
-    for (let page = 1; page <= totalPages; page++) {
-      const pages = computePaginationPages(page, totalPages);
-      expect(pages[0]).toBe(1);
-      expect(pages[pages.length - 1]).toBe(totalPages);
-    }
+  it('returns [1, 2] for 2 pages', () => {
+    expect(computeWindowRange(1, 2)).toEqual([1, 2]);
+    expect(computeWindowRange(2, 2)).toEqual([1, 2]);
   });
 
-  it('always includes current page', () => {
-    const totalPages = 50;
-    for (let page = 1; page <= totalPages; page++) {
-      const pages = computePaginationPages(page, totalPages);
-      expect(pages).toContain(page);
-    }
+  it('returns [1, n] for totalPages <= 7 (show all)', () => {
+    expect(computeWindowRange(1, 3)).toEqual([1, 3]);
+    expect(computeWindowRange(2, 5)).toEqual([1, 5]);
+    expect(computeWindowRange(4, 7)).toEqual([1, 7]);
   });
 
-  it('produces sorted ascending pages', () => {
-    const totalPages = 30;
-    for (let page = 1; page <= totalPages; page++) {
-      const pages = computePaginationPages(page, totalPages);
-      for (let i = 1; i < pages.length; i++) {
-        expect(pages[i]).toBeGreaterThan(pages[i - 1]);
+  it('window always contains currentPage', () => {
+    for (let tp = 8; tp <= 30; tp += 7) {
+      for (let cp = 1; cp <= tp; cp++) {
+        const [s, e] = computeWindowRange(cp, tp);
+        expect(s).toBeLessThanOrEqual(cp);
+        expect(e).toBeGreaterThanOrEqual(cp);
       }
     }
   });
 
-  it('shows [1, 2, 3, 20] for page 1 of 20', () => {
-    expect(computePaginationPages(1, 20)).toEqual([1, 2, 3, 20]);
+  it('window never produces duplicates with first/last page', () => {
+    const tp = 20;
+    for (let cp = 1; cp <= tp; cp++) {
+      const [s, e] = computeWindowRange(cp, tp);
+      if (s === 1 || e === tp) continue;
+      expect(s).toBeGreaterThan(1);
+      expect(e).toBeLessThan(tp);
+    }
   });
 
-  it('shows [1, 19, 20] for page 20 of 20', () => {
-    expect(computePaginationPages(20, 20)).toEqual([1, 19, 20]);
+  it('page 1 of 20: window is [1, 3]', () => {
+    expect(computeWindowRange(1, 20)).toEqual([1, 3]);
   });
 
-  it('shows [1, 2, 3, 20] for page 2 of 20', () => {
-    expect(computePaginationPages(2, 20)).toEqual([1, 2, 3, 20]);
+  it('page 2 of 20: window is [1, 3]', () => {
+    expect(computeWindowRange(2, 20)).toEqual([1, 3]);
   });
 
-  it('shows [1, 2, 3, 4, 20] for page 3 of 20', () => {
-    expect(computePaginationPages(3, 20)).toEqual([1, 2, 3, 4, 20]);
+  it('page 3 of 20: window is [2, 4]', () => {
+    expect(computeWindowRange(3, 20)).toEqual([2, 4]);
   });
 
-  it('shows [1, 9, 10, 11, 20] for page 10 of 20', () => {
-    expect(computePaginationPages(10, 20)).toEqual([1, 9, 10, 11, 20]);
+  it('page 10 of 20: window is [9, 11]', () => {
+    expect(computeWindowRange(10, 20)).toEqual([9, 11]);
   });
 
-  it('shows [1, 18, 19, 20] for page 19 of 20', () => {
-    expect(computePaginationPages(19, 20)).toEqual([1, 18, 19, 20]);
+  it('page 19 of 20: window is [18, 20]', () => {
+    expect(computeWindowRange(19, 20)).toEqual([18, 20]);
   });
 
-  it('handles edge case: 8 pages (just above threshold)', () => {
-    expect(computePaginationPages(1, 8)).toEqual([1, 2, 3, 8]);
-    expect(computePaginationPages(4, 8)).toEqual([1, 3, 4, 5, 8]);
-    expect(computePaginationPages(8, 8)).toEqual([1, 7, 8]);
+  it('page 20 of 20: window is [18, 20]', () => {
+    expect(computeWindowRange(20, 20)).toEqual([18, 20]);
   });
 
-  it('handles single page', () => {
-    expect(computePaginationPages(1, 1)).toEqual([1]);
+  it('page 1 of 8: window is [1, 3]', () => {
+    expect(computeWindowRange(1, 8)).toEqual([1, 3]);
   });
 
-  it('handles 2 pages', () => {
-    expect(computePaginationPages(1, 2)).toEqual([1, 2]);
-    expect(computePaginationPages(2, 2)).toEqual([1, 2]);
+  it('page 8 of 8: window is [6, 8]', () => {
+    expect(computeWindowRange(8, 8)).toEqual([6, 8]);
   });
 });

@@ -155,6 +155,59 @@ describe('CRUD renderer', () => {
     });
   });
 
+  it('keeps the active CRUD query when query-form validation blocks submit', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/crud-query-validation"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              id: 'query-validation-crud',
+              source: [
+                { id: '1', name: 'Alice', status: 'active' },
+                { id: '2', name: 'Bob', status: 'draft' },
+              ],
+              queryForm: {
+                body: [{ type: 'input-text', name: 'keyword', label: 'Keyword', required: true }],
+              },
+              columns: [{ name: 'name', label: 'Name' }],
+              footerToolbar: [{ type: 'text', text: 'Query: ${$crud.query.keyword || "none"}' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    const input = screen.getByLabelText('Keyword') as HTMLInputElement;
+    const queryControls = document.querySelector('[data-slot="crud-query-controls"]');
+    expect(queryControls).toBeTruthy();
+
+    fireEvent.change(input, { target: { value: 'Ali' } });
+    fireEvent.click(within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Query: Ali')).toBeTruthy();
+      expect(screen.getByText('Alice')).toBeTruthy();
+      expect(screen.queryByText('Bob')).toBeNull();
+    });
+
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.click(within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Query: Ali')).toBeTruthy();
+      expect(screen.getByText('Alice')).toBeTruthy();
+      expect(screen.queryByText('Bob')).toBeNull();
+    });
+  });
+
   it('uses query submit and reset values as the next refresh input', async () => {
     cleanup();
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);

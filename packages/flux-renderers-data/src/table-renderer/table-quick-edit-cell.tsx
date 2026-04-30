@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input } from '@nop-chaos/ui';
 import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas';
+import { useTableQuickEditController } from './table-quick-edit-controller';
 
 interface ResolvedTableQuickEditConfig {
   mode: 'inline' | 'dialog';
@@ -35,15 +36,6 @@ export function resolveTableQuickEditConfig(column: TableColumnSchema): Resolved
   };
 }
 
-function toDraftValue(record: Record<string, unknown>, field: string) {
-  const value = record[field];
-  return value == null ? '' : String(value);
-}
-
-function toOptionalDraftValue(record: Record<string, unknown>, field: string | undefined) {
-  return field ? toDraftValue(record, field) : '';
-}
-
 export interface TableQuickEditCellProps {
   column: TableColumnSchema;
   rowScope: ScopeRef;
@@ -59,93 +51,43 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
   const field = column.name;
   const containerRef = useRef<HTMLDivElement>(null);
   const hasCustomBody = config?.body !== undefined;
-  const initialValue = toOptionalDraftValue(record, field);
-  const [draftValue, setDraftValue] = useState(initialValue);
-  const [savedValue, setSavedValue] = useState(initialValue);
-  const [bodyDirty, setBodyDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  useEffect(() => {
-    const nextValue = toOptionalDraftValue(record, field);
-    setDraftValue(nextValue);
-    setSavedValue(nextValue);
-    setBodyDirty(false);
-    setDialogOpen(false);
-  }, [field, record]);
 
   const saveAction = quickSaveItemAction ?? quickSaveAction;
-  const dirty = hasCustomBody ? bodyDirty : draftValue !== savedValue;
   const mode = config?.mode ?? 'inline';
-
-  function restoreSavedValue() {
-    if (hasCustomBody) {
-      if (field) {
-        rowScope.update(`record.${field}`, savedValue);
-      }
-      setBodyDirty(false);
-      return;
-    }
-
-    if (field) {
-      rowScope.update(`record.${field}`, savedValue);
-    }
-    setDraftValue(savedValue);
-  }
-
-  async function runSave() {
-    if (!saveAction || !dirty || saving) {
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await helpers.dispatch(saveAction, { scope: rowScope });
-      const nextSavedValue = field ? toOptionalDraftValue(rowScope.get('record') as Record<string, unknown> ?? record, field) : draftValue;
-      setSavedValue(nextSavedValue);
-      setDraftValue(nextSavedValue);
-      setBodyDirty(false);
-      setDialogOpen(false);
-    } finally {
-      setSaving(false);
-    }
-  }
+  const {
+    draftValue,
+    saving,
+    dialogOpen,
+    dirty,
+    markBodyDirty,
+    closeDialog,
+    openDialog,
+    handleInlineValueChange,
+    handleDialogOpenChange,
+    runSave
+  } = useTableQuickEditController({
+    field,
+    record,
+    rowScope,
+    helpers,
+    saveAction,
+    hasCustomBody
+  });
 
   const editorNode = hasCustomBody ? helpers.render(config.body!, { scope: rowScope, pathSuffix: `quickEdit.${field ?? 'custom'}` }) : (
     <Input
       name={`quick-edit-${field}`}
       value={draftValue}
       aria-label={typeof column.label === 'string' ? column.label : field}
-      onChange={(event) => {
-        const nextValue = event.target.value;
-        setDraftValue(nextValue);
-        rowScope.update(`record.${field}`, nextValue);
-      }}
+      onChange={(event) => handleInlineValueChange(event.target.value)}
     />
   );
 
   if (mode === 'dialog') {
     return (
       <div data-slot="table-quick-edit" onClick={(event) => event.stopPropagation()}>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          if (!open && dialogOpen && saving) {
-            return;
-          }
-
-          if (!open && dialogOpen && dirty) {
-            restoreSavedValue();
-          }
-
-          if (open) {
-            setDraftValue(savedValue);
-            if (field) {
-              rowScope.update(`record.${field}`, savedValue);
-            }
-          }
-
-          setDialogOpen(open);
-        }}>
-          <Button type="button" variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+        <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
+          <Button type="button" variant="outline" size="sm" onClick={openDialog}>
             {typeof column.label === 'string' ? column.label : t('flux.common.save')}
           </Button>
           <DialogContent data-slot="table-quick-edit-dialog" showCloseButton={false}>
@@ -154,19 +96,12 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
             </DialogHeader>
             <DialogBody
               data-slot="table-quick-edit-dialog-body"
-              onChangeCapture={() => {
-                if (hasCustomBody) {
-                  setBodyDirty(true);
-                }
-              }}
+              onChangeCapture={markBodyDirty}
             >
               {editorNode}
             </DialogBody>
             <DialogFooter showCloseButton={false}>
-              <Button type="button" variant="outline" onClick={() => {
-                restoreSavedValue();
-                setDialogOpen(false);
-              }}>
+              <Button type="button" variant="outline" onClick={closeDialog}>
                 {t('flux.common.close')}
               </Button>
               {saveAction ? (
@@ -187,11 +122,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
       className="flex items-center gap-2"
       data-slot="table-quick-edit"
       onClick={(event) => event.stopPropagation()}
-      onChangeCapture={() => {
-        if (hasCustomBody) {
-          setBodyDirty(true);
-        }
-      }}
+      onChangeCapture={markBodyDirty}
       onBlurCapture={(event) => {
         if (!config?.saveImmediately || mode !== 'inline') {
           return;
