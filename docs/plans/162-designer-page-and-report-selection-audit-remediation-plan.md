@@ -97,10 +97,10 @@ Exit Criteria:
 - [x] report designer 选择清空同步已修复
 - [x] focused verification 已完成
 - [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
@@ -116,6 +116,7 @@ Implementation Evidence:
 - `packages/flow-designer-renderers/src/designer-page.tsx` now reads `config` / `document` / `treeDocument` / `statusPath` through resolved renderer props and moves tree sync into an effect.
 - `packages/report-designer-renderers/src/report-spreadsheet-canvas.tsx` now mirrors from `ssSnapshot.selection` directly so `kind: 'none'` clears only spreadsheet-driven report targets.
 - Focused verification passed: `pnpm --filter @nop-chaos/flow-designer-renderers test -- designer-page.tree.test.tsx designer-page-shell.test.tsx`, `pnpm --filter @nop-chaos/report-designer-renderers test -- renderers.integration.test.tsx`.
+- Full verification passed sequentially: `pnpm typecheck && pnpm build && pnpm lint && pnpm test`.
 
 Follow-up:
 

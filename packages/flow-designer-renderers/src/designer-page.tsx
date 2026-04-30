@@ -1,8 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import type {
-  ActionNamespaceProvider,
-  RendererComponentProps,
-} from '@nop-chaos/flux-core';
+import type { ActionNamespaceProvider, RendererComponentProps } from '@nop-chaos/flux-core';
 import type { DesignerHostStatusSummary } from '@nop-chaos/flow-designer-core';
 import {
   hasRendererSlotContent,

@@ -367,4 +367,161 @@ describe('DesignerPageRenderer tree mode', () => {
       expect(document.querySelectorAll('.react-flow__node').length).toBeGreaterThan(0);
     });
   });
+
+  it('reads graph document and statusPath through resolved runtime props', async () => {
+    function StatusProbe(props: { data: Record<string, unknown> }) {
+      return <span data-testid="designer-status-probe">{String(props.data.designerStatus ?? '')}</span>;
+    }
+
+    const statusProbeRenderer: RendererDefinition = {
+      type: 'designer-status-probe',
+      component: (props) => <StatusProbe data={props.props as Record<string, unknown>} />,
+    };
+
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      statusProbeRenderer,
+      ...flowDesignerRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/graph-runtime-props"
+        schema={
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'designer-page',
+                document: '${$scope.document}',
+                config: '${$scope.config}',
+                statusPath: '${$scope.statusPath}',
+              },
+              {
+                type: 'designer-status-probe',
+                designerStatus: '${$scope.designerStatus.kind}:{$scope.designerStatus.selectionKind}:{$scope.designerStatus.selectionCount}',
+              },
+            ],
+          } as any
+        }
+        data={{
+          document: {
+            id: 'graph-runtime-props',
+            kind: 'test-graph',
+            name: 'Runtime Props Graph',
+            version: '1.0',
+            nodes: [
+              { id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task' } },
+              { id: 'n2', type: 'end', position: { x: 200, y: 0 }, data: { label: 'End' } },
+            ],
+            edges: [{ id: 'e1', type: 'default', source: 'n1', target: 'n2', data: {} }],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createGraphTestConfig(),
+          statusPath: 'designerStatus',
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('.react-flow__node').length).toBeGreaterThan(0);
+      expect(document.querySelector('[data-testid="designer-status-probe"]')?.textContent).toBe(
+        'designer:none:0',
+      );
+    });
+  });
+
+  it('does not warn about render-phase updates when treeDocument runtime props change', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...flowDesignerRendererDefinitions,
+    ]);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-runtime-rerender"
+        schema={
+          {
+            type: 'designer-page',
+            treeDocument: '${$scope.treeDocument}',
+            config: '${$scope.config}',
+          } as any
+        }
+        data={{
+          treeDocument: {
+            id: 'tree-runtime-rerender-1',
+            kind: 'test-tree',
+            name: 'Runtime Rerender Tree 1',
+            version: '1.0',
+            root: {
+              id: 'start',
+              type: 'start',
+              data: { label: 'Start' },
+            },
+          },
+          config: createTreeTestConfig(),
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('.react-flow__node').length).toBeGreaterThan(0);
+    });
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-runtime-rerender"
+        schema={
+          {
+            type: 'designer-page',
+            treeDocument: '${$scope.treeDocument}',
+            config: '${$scope.config}',
+          } as any
+        }
+        data={{
+          treeDocument: {
+            id: 'tree-runtime-rerender-2',
+            kind: 'test-tree',
+            name: 'Runtime Rerender Tree 2',
+            version: '1.0',
+            root: {
+              id: 'start',
+              type: 'start',
+              data: { label: 'Start' },
+              child: {
+                id: 'task-1',
+                type: 'task',
+                data: { label: 'Task 1' },
+              },
+            },
+          },
+          config: createTreeTestConfig(),
+        }}
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('.react-flow__node').length).toBeGreaterThan(0);
+    });
+
+    expect(
+      consoleErrorSpy.mock.calls.some((call) =>
+        call.some(
+          (arg) =>
+            typeof arg === 'string' && arg.includes('Cannot update a component while rendering'),
+        ),
+      ),
+    ).toBe(false);
+
+    consoleErrorSpy.mockRestore();
+  });
 });
