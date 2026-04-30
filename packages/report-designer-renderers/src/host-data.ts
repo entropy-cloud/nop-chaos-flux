@@ -67,10 +67,6 @@ export interface ReportDesignerHostData {
     fieldSourceCount: number;
     fieldCount: number;
   };
-  /** @compat alias for selectionTarget — prefer selectionTarget in new schema */
-  selection: ReportSelectionTarget | undefined;
-  /** @compat alias for selectionTarget — prefer selectionTarget in new schema */
-  target: ReportSelectionTarget | undefined;
   selectionTarget: ReportSelectionTarget | undefined;
   reportDocument: ReportDesignerRuntimeSnapshot['document'];
   workbook: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook'];
@@ -108,8 +104,6 @@ export function createHostData(core: ReportDesignerCore, snapshot: ReportDesigne
       fieldSourceCount: snapshot.fieldSources.length,
       fieldCount,
     },
-    selection: snapshot.selectionTarget,
-    target: snapshot.selectionTarget,
     selectionTarget: snapshot.selectionTarget,
     reportDocument,
     workbook: reportDocument.spreadsheet.workbook,
