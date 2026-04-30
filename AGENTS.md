@@ -533,6 +533,12 @@ src/
 
 ---
 
+## Feature Deprecation
+
+When refactoring makes a function, type, field, or export obsolete, follow `docs/skills/deprecated-feature-cleanup.md`. Core rule: code `@deprecated` + docs record before any removal.
+
+---
+
 ## Verification Checklist
 
 Before finishing any task:

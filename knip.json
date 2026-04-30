@@ -1,0 +1,44 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "package.json",
+    "apps/playground/src/**/*.{ts,tsx}",
+    "packages/*/src/index.{ts,tsx}"
+  ],
+  "project": [
+    "apps/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "packages/**/*.{ts,tsx,js,jsx,mjs,cjs}"
+  ],
+  "ignore": [
+    "docs/**",
+    ".opencode/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/test-results/**"
+  ],
+  "ignoreDependencies": [
+    "rimraf"
+  ],
+  "ignoreBinaries": [
+    "playwright"
+  ],
+  "workspaces": {
+    "apps/playground": {
+      "entry": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ]
+    },
+    "packages/*": {
+      "entry": [
+        "src/index.{ts,tsx}",
+        "src/**/*.{test,spec}.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+rules:
+  - id: no-cross-package-src-imports
+    message: Do not import another package's internal src files directly; use its public package entry instead.
+    severity: ERROR
+    languages: [typescript, tsx, javascript, jsx]
+    patterns:
+      - pattern-either:
+          - pattern: import ... from $PATH
+          - pattern: export ... from $PATH
+      - metavariable-regex:
+          metavariable: $PATH
+          regex: ^@nop-chaos/[^/]+/src/.*
+
+  - id: no-react-dom-render-legacy
+    message: React 19 code must not use ReactDOM.render or legacy React DOM entrypoints.
+    severity: ERROR
+    languages: [typescript, tsx, javascript, jsx]
+    patterns:
+      - pattern-either:
+          - pattern: ReactDOM.render(...)
+          - pattern: ReactDOM.hydrate(...)
+          - pattern: findDOMNode(...)
+
+  - id: no-new-function-in-runtime-paths
+    message: Avoid introducing dynamic code execution through new Function in app or package sources.
+    severity: WARNING
+    languages: [typescript, tsx, javascript, jsx]
+    paths:
+      include:
+        - apps
+        - packages
+    pattern: new Function(...)

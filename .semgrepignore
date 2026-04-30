@@ -1,0 +1,6 @@
+dist/
+coverage/
+node_modules/
+test-results/
+docs/
+.opencode/
