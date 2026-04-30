@@ -309,6 +309,18 @@ export function createSchemaCompiler(input: {
     };
 
     const providerWrap = buildWrapProvidersClosure(providerPlan);
+    const validationOwnerPlan = renderer.scopePolicy === 'form'
+      ? {
+          boundary: 'create-owner' as const,
+          childContractMode: renderer.validation?.childContractMode
+            ?? (schema.type === 'form' ? 'ignore' : 'summary-gate')
+        }
+      : renderer.validation?.ownerResolution
+        ? {
+            boundary: renderer.validation.ownerResolution,
+            childContractMode: renderer.validation.childContractMode
+          }
+        : undefined;
 
     const namedActionPlans: Record<string, CompiledActionProgram> | undefined = rawXuiActions
       ? Object.fromEntries(
@@ -352,6 +364,7 @@ export function createSchemaCompiler(input: {
       classAliasesPlan,
       importsPlan,
       scopePlan,
+      validationOwnerPlan,
       validationPlan:
         renderer.scopePolicy === 'form' || schema.type === 'page'
           ? collectValidationModel(

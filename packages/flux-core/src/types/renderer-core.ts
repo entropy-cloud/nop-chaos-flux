@@ -28,7 +28,12 @@ import type { RendererPlugin } from './renderer-plugin';
 import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime, ValidationScopeRuntime } from './runtime';
 import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
-import type { CompiledFormValidationModel, ValidationRule } from './validation';
+import type {
+  ChildValidationMode,
+  CompiledFormValidationModel,
+  ValidationOwnerBoundaryKind,
+  ValidationRule
+} from './validation';
 import type { CompiledTemplate } from './node-identity';
 
 export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
@@ -41,6 +46,8 @@ export interface ValidationCollectContext<S extends BaseSchema = BaseSchema> {
 export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
   kind: 'field' | 'container' | 'none';
   valueKind?: 'scalar' | 'array' | 'object';
+  ownerResolution?: ValidationOwnerBoundaryKind;
+  childContractMode?: ChildValidationMode;
   getFieldPath?(schema: S, ctx: ValidationCollectContext<S>): string | undefined;
   collectRules?(schema: S, ctx: ValidationCollectContext<S>): ValidationRule[];
   /**

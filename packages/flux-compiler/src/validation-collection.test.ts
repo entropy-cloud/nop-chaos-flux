@@ -128,6 +128,46 @@ describe('collectValidationModel', () => {
     expect(nodes['email'].kind).toBe('field');
     expect(nodes['email'].path).toBe('email');
     expect(nodes[''].children).toContain('email');
+    expect(root.validationOwnerPlan).toEqual({
+      boundary: 'create-owner',
+      childContractMode: 'ignore'
+    });
+  });
+
+  it('records explicit child owner metadata for non-form create-owner renderers', () => {
+    const detailRenderer: RendererDefinition = {
+      type: 'detail-view',
+      component: () => null,
+      regions: ['content'],
+      scopePolicy: 'form',
+      validation: {
+        kind: 'container',
+        ownerResolution: 'create-owner',
+        childContractMode: 'summary-gate'
+      }
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([formRenderer, detailRenderer, inputRenderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    });
+
+    const compiled = compiler.compile({
+      type: 'form',
+      body: {
+        type: 'detail-view',
+        content: { type: 'input-text', name: 'title', required: true }
+      }
+    });
+
+    const root = compiled.root as TemplateNode;
+    const detailNode = root.regions.body.node as TemplateNode;
+
+    expect(detailNode.validationOwnerPlan).toEqual({
+      boundary: 'create-owner',
+      childContractMode: 'summary-gate'
+    });
+    expect(detailNode.validationPlan).toBeDefined();
   });
 
   it('collects validation rules from schema', () => {

@@ -140,7 +140,14 @@ export interface ScopeValidationStateSnapshot {
   modelGeneration: number;
 }
 
+export type ValidationOwnerBoundaryKind = 'inherit-owner' | 'create-owner' | 'no-owner';
+
 export type ChildValidationMode = 'ignore' | 'summary-gate' | 'recurse-submit';
+
+export interface ValidationOwnerPlan {
+  boundary: ValidationOwnerBoundaryKind;
+  childContractMode?: ChildValidationMode;
+}
 
 export interface ChildValidationContract {
   childOwnerId: string;

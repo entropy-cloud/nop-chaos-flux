@@ -136,6 +136,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   scopePlan: ScopePlan;
   registryPlan?: RegistryPlan;
   validationPlan?: ValidationPlan;
+  validationOwnerPlan?: import('./validation').ValidationOwnerPlan;
   sourcePropKeys: readonly string[];
   sourceStatePropKeys: Readonly<Record<string, string>>;
   /**
