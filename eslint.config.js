@@ -136,7 +136,7 @@ module.exports = [
         'error',
         {
           case: 'kebabCase',
-          ignore: [/^[a-z]{2}-[A-Z]{2}(\.\w+)?$/],
+          ignore: [/^[a-z]{2}-[A-Z]{2}(\.\w+)?$/, /^App\.tsx$/],
         },
       ],
     },

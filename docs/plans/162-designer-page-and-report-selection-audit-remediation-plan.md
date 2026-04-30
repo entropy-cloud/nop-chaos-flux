@@ -1,6 +1,6 @@
 # 162 Designer Page And Report Selection Audit Remediation Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-01
 > Source: `docs/analysis/2026-05-01-deep-audit-full/summary.md`, `docs/components/designer-page/design.md`, `docs/architecture/renderer-runtime.md`
 > Related: `docs/plans/149-deep-audit-remediation-plan.md`
@@ -96,7 +96,7 @@ Exit Criteria:
 - [x] `designer-page` 通过 `props.props` 读取关键宿主输入
 - [x] report designer 选择清空同步已修复
 - [x] focused verification 已完成
-- [ ] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
+- [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -104,20 +104,23 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: in progress
+Status Note: completed after an independent closure audit re-checked the live code, scoped docs, and focused regression coverage. The remaining audit-owned gaps were closed by adding direct resolved-props/runtime regression coverage for `designer-page` and removing the last stale partial-complete wording from Plan 143.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: fresh general subagent closure audit `ses_21f5f2c0cffeRuNiMqgyS5L9Sr`
+- Evidence: initial audit returned `FAIL` on missing direct `designer-page` regression coverage and one remaining Plan 143 wording drift; follow-up landed in `packages/flow-designer-renderers/src/designer-page.resolved-props.test.ts`, `packages/flow-designer-renderers/src/designer-page.tree.test.tsx`, `packages/flow-designer-renderers/src/designer-page-shell.test.tsx`, `packages/flow-designer-renderers/src/index.tsx`, and `docs/plans/143-unit-test-coverage-80-percent-target-plan.md`, then focused verification passed again.
 
 Implementation Evidence:
 
 - `packages/flow-designer-renderers/src/designer-page.tsx` now reads `config` / `document` / `treeDocument` / `statusPath` through resolved renderer props and moves tree sync into an effect.
+- `packages/flow-designer-renderers/src/index.tsx` now declares `statusPath` / `document` / `treeDocument` / `config` as `kind: 'prop'` fields so runtime prop resolution matches the renderer contract.
 - `packages/report-designer-renderers/src/report-spreadsheet-canvas.tsx` now mirrors from `ssSnapshot.selection` directly so `kind: 'none'` clears only spreadsheet-driven report targets.
 - Focused verification passed: `pnpm --filter @nop-chaos/flow-designer-renderers test -- designer-page.tree.test.tsx designer-page-shell.test.tsx`, `pnpm --filter @nop-chaos/report-designer-renderers test -- renderers.integration.test.tsx`.
+- Closure-audit follow-up verification passed: `pnpm --filter @nop-chaos/flow-designer-renderers test -- designer-page.tree.test.tsx designer-page-shell.test.tsx designer-page.resolved-props.test.ts` and `pnpm --filter @nop-chaos/report-designer-renderers test -- renderers.integration.test.tsx`.
 - Full verification passed sequentially: `pnpm typecheck && pnpm build && pnpm lint && pnpm test`.
 
 Follow-up:
 
+- No remaining Plan 162-owned work.
 - Remaining audit items stay with their existing owner plans or future successor plans.

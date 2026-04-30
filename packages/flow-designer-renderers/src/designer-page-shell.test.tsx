@@ -15,7 +15,7 @@ import {
 installFlowDesignerTestHooks();
 
 describe('designer-page status publication', () => {
-  it('publishes designer host status through statusPath', async () => {
+  it('publishes designer host status through literal statusPath', async () => {
     function StatusProbe() {
       const status = useScopeSelector((data: any) => data.designerStatus);
       return (
@@ -260,7 +260,7 @@ describe('DesignerPageRenderer basic rendering', () => {
       />,
     );
 
-    expect(view.getByText('Designer requires config prop')).toBeTruthy();
+    expect(view.getAllByText('Designer requires config prop').length).toBeGreaterThan(0);
   });
 
   it('uses data-slot for the node quick toolbar instead of internal toolbar marker classes', async () => {

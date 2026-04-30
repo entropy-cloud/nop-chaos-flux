@@ -75,12 +75,15 @@ function DialogView(props: {
     surfaceRuntime.close(surface.id);
   }, [surface.id, surfaceRuntime]);
 
-  const surfaceContext = {
-    scope: surface.scope,
-    actionScope: surface.actionScope,
-    componentRegistry: surface.componentRegistry,
-    ownerNodeInstance: surface.ownerNodeInstance,
-  };
+  const surfaceContext = React.useMemo(
+    () => ({
+      scope: surface.scope,
+      actionScope: surface.actionScope,
+      componentRegistry: surface.componentRegistry,
+      ownerNodeInstance: surface.ownerNodeInstance,
+    }),
+    [surface.scope, surface.actionScope, surface.componentRegistry, surface.ownerNodeInstance],
+  );
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
   const containerId =
@@ -140,12 +143,15 @@ function DrawerView(props: {
     surfaceRuntime.close(surface.id);
   }, [surface.id, surfaceRuntime]);
 
-  const surfaceContext = {
-    scope: surface.scope,
-    actionScope: surface.actionScope,
-    componentRegistry: surface.componentRegistry,
-    ownerNodeInstance: surface.ownerNodeInstance,
-  };
+  const surfaceContext = React.useMemo(
+    () => ({
+      scope: surface.scope,
+      actionScope: surface.actionScope,
+      componentRegistry: surface.componentRegistry,
+      ownerNodeInstance: surface.ownerNodeInstance,
+    }),
+    [surface.scope, surface.actionScope, surface.componentRegistry, surface.ownerNodeInstance],
+  );
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
   const containerId =

@@ -7,12 +7,14 @@ import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-ad
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
-import { CodeEditorPage } from './pages/code-editor-page';
 import { ComponentLabPage } from './component-lab';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { Spinner } from '@nop-chaos/ui';
 
+const LazyCodeEditorPage = lazy(() =>
+  import('./pages/code-editor-page').then((m) => ({ default: m.CodeEditorPage })),
+);
 const LazyReportDesignerPage = lazy(() =>
   import('./pages/report-designer-page').then((m) => ({ default: m.ReportDesignerPage })),
 );
@@ -124,7 +126,7 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'condition-builder':
           return <LazyConditionBuilderPage onBack={goHome} />;
         case 'code-editor':
-          return <CodeEditorPage onBack={goHome} />;
+          return <LazyCodeEditorPage onBack={goHome} />;
         case 'word-editor':
           return <LazyWordEditorPage onBack={goHome} />;
         case 'performance-table':

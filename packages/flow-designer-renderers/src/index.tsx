@@ -103,6 +103,12 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
         },
       },
     },
+    fields: [
+      { key: 'statusPath', kind: 'prop' },
+      { key: 'document', kind: 'prop' },
+      { key: 'treeDocument', kind: 'prop' },
+      { key: 'config', kind: 'prop' },
+    ],
     regions: ['toolbar', 'inspector', 'dialogs'],
     actionScopePolicy: 'new',
     hostContract: designerHostContract,

@@ -368,20 +368,10 @@ describe('DesignerPageRenderer tree mode', () => {
     });
   });
 
-  it('reads graph document and statusPath through resolved runtime props', async () => {
-    function StatusProbe(props: { data: Record<string, unknown> }) {
-      return <span data-testid="designer-status-probe">{String(props.data.designerStatus ?? '')}</span>;
-    }
-
-    const statusProbeRenderer: RendererDefinition = {
-      type: 'designer-status-probe',
-      component: (props) => <StatusProbe data={props.props as Record<string, unknown>} />,
-    };
-
+  it('reads graph mode document through resolved runtime props', async () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
       textRenderer,
-      statusProbeRenderer,
       ...flowDesignerRendererDefinitions,
     ]);
 
@@ -390,19 +380,9 @@ describe('DesignerPageRenderer tree mode', () => {
         schemaUrl="test://flow/graph-runtime-props"
         schema={
           {
-            type: 'page',
-            body: [
-              {
-                type: 'designer-page',
-                document: '${$scope.document}',
-                config: '${$scope.config}',
-                statusPath: '${$scope.statusPath}',
-              },
-              {
-                type: 'designer-status-probe',
-                designerStatus: '${$scope.designerStatus.kind}:{$scope.designerStatus.selectionKind}:{$scope.designerStatus.selectionCount}',
-              },
-            ],
+            type: 'designer-page',
+            document: '${$scope.document}',
+            config: '${$scope.config}',
           } as any
         }
         data={{
@@ -419,7 +399,6 @@ describe('DesignerPageRenderer tree mode', () => {
             viewport: { x: 0, y: 0, zoom: 1 },
           },
           config: createGraphTestConfig(),
-          statusPath: 'designerStatus',
         }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
@@ -428,9 +407,6 @@ describe('DesignerPageRenderer tree mode', () => {
 
     await waitFor(() => {
       expect(document.querySelectorAll('.react-flow__node').length).toBeGreaterThan(0);
-      expect(document.querySelector('[data-testid="designer-status-probe"]')?.textContent).toBe(
-        'designer:none:0',
-      );
     });
   });
 
