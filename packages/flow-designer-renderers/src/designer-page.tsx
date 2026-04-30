@@ -36,14 +36,12 @@ function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema>
   const { config, rawSchemaProps } = props;
   const inputTreeDocument = rawSchemaProps.treeDocument as TreeDocument | undefined;
   const [treeDocument, setTreeDocument] = React.useState<TreeDocument | undefined>(inputTreeDocument);
-  const prevInputRef = React.useRef(inputTreeDocument);
+  const [prevInput, setPrevInput] = React.useState(inputTreeDocument);
 
-  useEffect(() => {
-    if (prevInputRef.current !== inputTreeDocument) {
-      prevInputRef.current = inputTreeDocument;
-      setTreeDocument(inputTreeDocument);
-    }
-  }, [inputTreeDocument]);
+  if (prevInput !== inputTreeDocument) {
+    setPrevInput(inputTreeDocument);
+    setTreeDocument(inputTreeDocument);
+  }
 
   const document: GraphDocument = useMemo(
     () => treeDocument ? computeTreeModeDocument(treeDocument, config) : { id: '', kind: '', name: '', version: '', nodes: [], edges: [] },
