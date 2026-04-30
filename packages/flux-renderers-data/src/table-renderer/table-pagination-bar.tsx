@@ -1,5 +1,35 @@
+import { Fragment } from 'react';
 import { NativeSelect, NativeSelectOption, Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+
+export function computePaginationPages(currentPage: number, totalPages: number): number[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  let start = currentPage - 1;
+  let end = currentPage + 1;
+
+  if (start < 1) {
+    end += 1 - start;
+    start = 1;
+  }
+  if (end > totalPages) {
+    start -= end - totalPages;
+    end = totalPages;
+  }
+  start = Math.max(1, start);
+  end = Math.min(totalPages, end);
+
+  const pages = new Set<number>();
+  pages.add(1);
+  pages.add(totalPages);
+  for (let i = start; i <= end; i++) {
+    pages.add(i);
+  }
+
+  return [...pages].sort((a, b) => a - b);
+}
 
 interface TablePaginationBarProps {
   currentPage: number;
@@ -20,6 +50,8 @@ export function TablePaginationBar({
   onPageChange,
   onPageSizeChange
 }: TablePaginationBarProps) {
+  const pages = computePaginationPages(currentPage, totalPages);
+
   return (
     <div data-slot="table-pagination" className="flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-2">
@@ -47,69 +79,29 @@ export function TablePaginationBar({
             />
           </PaginationItem>
 
-          {totalPages <= 7 ? (
-            Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-              <PaginationItem key={page}>
-                <PaginationLink
-                  onClick={() => onPageChange(page)}
-                  isActive={page === currentPage}
-                  className="cursor-pointer"
-                >
-                  {page}
-                </PaginationLink>
-              </PaginationItem>
-            ))
-          ) : (
-            <>
-              {currentPage > 3 && (
-                <>
+          {pages.map((page, index) => {
+            const prevPage = index > 0 ? pages[index - 1] : page;
+            const needsEllipsis = index > 0 && page - prevPage > 1;
+
+            return (
+              <Fragment key={page}>
+                {needsEllipsis && (
                   <PaginationItem>
-                    <PaginationLink onClick={() => onPageChange(1)} isActive={currentPage === 1} className="cursor-pointer">
-                      1
-                    </PaginationLink>
+                    <PaginationEllipsis />
                   </PaginationItem>
-                  {currentPage > 4 && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-                </>
-              )}
-
-              {Array.from({ length: Math.min(3, totalPages) }, (_, index) => {
-                let page = currentPage - 1 + index;
-                if (page < 1) page = 1;
-                if (page > totalPages) page = totalPages;
-
-                return (
-                  <PaginationItem key={page}>
-                    <PaginationLink onClick={() => onPageChange(page)} isActive={page === currentPage} className="cursor-pointer">
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              })}
-
-              {currentPage < totalPages - 2 && (
-                <>
-                  {currentPage < totalPages - 3 && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-                  <PaginationItem>
-                    <PaginationLink
-                      onClick={() => onPageChange(totalPages)}
-                      isActive={currentPage === totalPages}
-                      className="cursor-pointer"
-                    >
-                      {totalPages}
-                    </PaginationLink>
-                  </PaginationItem>
-                </>
-              )}
-            </>
-          )}
+                )}
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => onPageChange(page)}
+                    isActive={page === currentPage}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              </Fragment>
+            );
+          })}
 
           <PaginationItem>
             <PaginationNext
@@ -121,7 +113,7 @@ export function TablePaginationBar({
         </PaginationContent>
       </Pagination>
 
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground whitespace-nowrap">
         {`${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalRows)} of ${totalRows}`}
       </div>
     </div>
