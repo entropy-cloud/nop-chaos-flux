@@ -609,13 +609,13 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 审核维度 06：异步模式与取消安全
 
-目标：确保所有异步操作都有取消机制、并发保护、竞态防护。
+目标：确保所有异步操作都有取消机制、并发保护、竞态防护，且异常不会被静默吞掉。
 
 必读文档：
 - docs/architecture/performance-design-requirements.md（P5 AbortController）
 - docs/bugs/07-submit-concurrent-guard.md
 
-历史教训：双击 submit 曾触发重复 API 调用；cancelled/disposed boolean 已统一迁移为 AbortController。
+历史教训：双击 submit 曾触发重复 API 调用；cancelled/disposed boolean 已统一迁移为 AbortController。Promise 链中 `void promise.then(...)` 无 `.catch()` 曾导致数据源永久卡死、表单值静默丢失等难以诊断的缺陷。
 
 执行步骤：
 
@@ -633,9 +633,15 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    a. 是否有对应的清理逻辑
    b. 在组件卸载时是否清理
    c. 轮询场景是否支持停止（如 dialog 关闭时停止轮询）
-5. 搜索所有 Promise / then / catch：
-   a. 是否有未处理的 rejection（缺少 catch 或 try/catch）
-   b. async 函数是否总是返回 Promise 且调用方正确 await
+5. 异常吞掉检查（Promise / catch / then 链）：
+   a. 搜索所有 `catch (` 和 `catch{` 块：检查 catch 体是否至少做了以下之一——日志输出（console.error/warn）、monitor 上报、rethrow、写入结构化错误状态/返回值。空 catch 体或仅含控制流（return/break/continue）而无任何错误处理的，标记为吞掉异常。
+   b. 搜索所有 `void ...then(...)` 模式（fire-and-forget）：检查是否有对应的 `.catch()`。缺少 `.catch()` 意味着 rejection 被静默丢弃。特别注意 `void promise.then(...).finally(...)` —— `.finally()` 不处理 rejection，错误仍会被丢弃。
+   c. 搜索所有 `.then(...)` 链（无 `void` 前缀）：检查链尾是否有 `.catch()`。无 `.catch()` 的链如果前面的 promise reject，异常消失。
+   d. 搜索所有 `new Promise(executor)`：检查 executor 内部是否有 try-catch 包裹可能抛出的同步逻辑。executor 中的同步异常会导致 promise 永远不 settle（既不 resolve 也不 reject）。
+   e. 对每个发现的异常吞掉，评估严重度：
+      - **高**：失败导致状态永久卡死（如数据源卡在 fetching、表单提交无反馈）
+      - **中**：失败导致 UI 显示陈旧数据（如字段值不更新）
+      - **低**：失败影响非关键装饰性功能（如字数统计、可选 UI 特性）
 6. 检查 DataSource / ApiDataSource 相关代码：
    a. 轮询场景是否在组件卸载或 dialog 关闭时停止
    b. 缓存失效策略是否有竞态风险
@@ -650,8 +656,9 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 ### [维度06] 简短标题
 - **文件**: packages/xxx/src/yyy.ts:行号
 - **严重程度**: P0/P1/P2/P3
+- **问题类别**: 竞态/取消安全/异常吞掉
 - **异步操作**: 具体的异步操作描述
-- **竞态场景**: 步骤 1 用户做 X → 步骤 2 在操作完成前用户做 Y → 结果 Z
+- **竞态场景或吞掉路径**: 竞态类——步骤 1 用户做 X → 步骤 2 在操作完成前用户做 Y → 结果 Z；吞掉类——promise reject 后的传播路径描述
 - **用户可见故障**: 用户会看到什么
 - **建议**: 防护方案
 ```

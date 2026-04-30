@@ -311,8 +311,7 @@ region.render({
 
 Compatibility note:
 
-- `render({ data })` may still exist as a compatibility alias for `render({ bindings })`
-- `instantiate()` may still delegate to the same implementation for back-compat
+- `render({ bindings })` is the canonical API; the legacy `data` field and `instantiate()` method have been removed
 - renderers should prefer `instancePath` for repeated identity and only use `scopeKey` when they explicitly need a stable child-scope/cache hint
 
 Whether the internal implementation stores a literal `$slot` object or a narrower slot-frame carrier is an implementation detail. The architectural contract is the visible expression model and scope behavior.

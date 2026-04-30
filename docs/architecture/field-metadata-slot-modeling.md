@@ -341,7 +341,6 @@ const itemRender = (item: unknown, index: number) =>
 Preferred contract:
 
 - `render({ bindings, instancePath })` is the normative region-render API
-- `data` remains only as a compatibility alias for `bindings`
 - `scopeKey` is an advanced/internal child-scope reuse hint when a renderer truly needs it; it is not the primary public repeated-rendering contract
 
 This preserves:

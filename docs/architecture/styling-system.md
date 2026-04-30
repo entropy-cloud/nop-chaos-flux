@@ -553,7 +553,7 @@ The outer wrapper (`nop-container`) never injects layout styles.
 ### Gap Token Mapping
 
 ```typescript
-// packages/flux-renderers-basic/src/utils.ts
+// packages/flux-react/src/resolve-gap.ts
 export function resolveGap(gap: number | string | undefined): {
   className?: string;
   style?: React.CSSProperties;

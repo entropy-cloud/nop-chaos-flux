@@ -924,6 +924,12 @@ Current async-governance baseline:
 - async validation still keeps owner-local path/subtree/submit priority rules in `FormRuntime`, but stale publication and settle diagnostics now also flow through the shared async-governance substrate used by other runtime-owned async owners
 - validation causes currently surfaced through that substrate reuse existing validation reasons such as `change`, `blur`, `submit`, `commit`, `system`, and `manual`
 - abort/debounce cancellation and owner-local supersession remain the way validation invalidates obsolete work; shared governance records the settled outcome so stale late completions can be explained uniformly as `stale-dropped` or `cancelled`
+- async validation owners should consume the shared cancellation vocabulary coming from lower action/runtime helpers; both thrown aborts and structured `{ cancelled: true }` action results are part of the same cancellation semantic and must not diverge into separate owner-level meanings
+
+Cancellation ownership note:
+
+- `ValidationResult` itself does not currently expose a `cancelled` flag; owner-local validation APIs fold cancellation into `no published errors` / `cancelled async-governance settle` semantics before returning higher-level validation results
+- that folding belongs inside validation/runtime helpers and owner orchestration, not in callers trying to reconstruct cancellation later from arbitrary error shapes
 
 ## Parent And Child Scope Interaction
 

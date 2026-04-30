@@ -1,6 +1,6 @@
 # 159 Code Refactor Discovery Remediation Plan
 
-> Plan Status: planned
+> Plan Status: in progress
 > Last Reviewed: 2026-04-30
 > Source: 全仓库 11 维度重构发现审计（`docs/skills/code-refactor-discovery-prompt.md`），审计结果汇总见本 plan 执行当日的 daily log
 > Related: `docs/plans/158-code-quality-redundancy-and-duplication-remediation-plan.md`, `docs/plans/84-oversized-code-file-elimination-plan.md`, `docs/plans/123-flux-runtime-split-and-boundary-hardening-plan.md`, `docs/plans/125-flux-runtime-async-data-internal-reorganization-plan.md`
@@ -21,7 +21,7 @@
   - **包边界违规**（`crud-renderer→flux-runtime`、`resolveGap` 跨渲染器包、测试跨层依赖）
   - **目录结构归组**（`flux-runtime/src/` form/ 子目录、`flux-react/src/` node-renderer/ 子目录、`report-designer-renderers/src/` toolbar/bridge/ 子目录）
   - **i18n 违规**（`designer-inspector.tsx` 硬编码中文）
-  - **兼容层收敛评估**（`extractLegacyPayload`、`selection/target/selectionTarget` 三重别名）
+  - **兼容层收敛与清理**（`extractLegacyPayload`、`selection/target/selectionTarget` 三重别名）
 
 ## Goals
 
@@ -30,16 +30,19 @@
 3. 修复 3 处 158 未覆盖的包边界违规
 4. 将 `flux-runtime/src/` 22 个 form 文件归入 `form/` 子目录（目录归组，非文件合并）
 5. 修复 `designer-inspector.tsx` 的 i18n 违规
+6. 评估并收敛兼容层遗留别名（`extractLegacyPayload`、`selection/target/selectionTarget`）
 
 ## Non-Goals
 
-- 不做 form-runtime 文件合并（19→5-6），这是 158 Phase 2 的职责
+- 不做 form-runtime 文件合并（19→5-6），这是 145 的已完成职责，158 的 Non-Goals 已明确排除
 - 不做重复代码消除（ajax 执行去重、surface 生命周期去重、composite field 控制器去重、strip errors 等），这是 158 Phase 1 的职责
 - 不做 formula AST walker 去重，这是 158 Phase 3 的职责
 - 不做 `parseNamespacedAction` 统一和 `flux-action-core→flux-compiler` 反向依赖修复，这是 158 Phase 4 的职责
 - 不做死代码/冗余清理，这是 158 Phase 5 的职责
 - 不重构 `RendererRuntime` 接口或 `RendererDefinition` 接口
 - 不重构 table/CRUD ownership 模式（`useOwnedState` 设计需独立排期）
+- 不做 `runtime-factory.ts` 的 `disposed` 布尔迁移（同步 dispose 门控，当前可接受）
+- 不做 `schema.ts` legacy compatibility carriers 清理（`cacheTTL`/`cacheKey`/`dedupStrategy`，下个大版本处理）
 - 不做纯类型文件的行数治理（`types/compilation.ts`、`types/actions.ts` 等，纯声明性，行数来自完整类型覆盖）
 - 不调整 `scope-debug.tsx` 的全量订阅（仅 debug 模式使用）
 - 不调整 `designer-xyflow-canvas.tsx` 的 `localNodes`/`localEdges`（ReactFlow 交互模型要求的合理双状态）
@@ -53,9 +56,9 @@
 | 1 | 异步取消模式迁移 | flux-runtime | P1 |
 | 2 | 双状态/双数据源修复 | flux-renderers-form, flux-renderers-form-advanced, flux-renderers-data, flow-designer-renderers | P1/P2 |
 | 3 | 包边界修复（158 未覆盖） | flux-renderers-data, flux-renderers-form, flux-compiler | P1/P2 |
-| 4 | 目录结构归组 | flux-runtime, flux-react, report-designer-renderers | P1/P2 |
+| 4 | ~~目录结构归组~~ (cancelled) | ~~flux-runtime, flux-react, report-designer-renderers~~ | ~~P1/P2~~ |
 | 5 | i18n 修复 | flow-designer-renderers | P1 |
-| 6 | 兼容层收敛评估 | flux-compiler, report-designer-renderers | P2 |
+| 6 | 兼容层收敛与清理 | flux-compiler, report-designer-renderers | P2 |
 
 ### Out Of Scope
 
@@ -64,6 +67,8 @@
 - table/CRUD ownership 模式统一
 - `designer-xyflow-canvas.tsx` 的 ReactFlow 合理双状态
 - 大型测试文件拆分（可排期但不阻塞结构正确性）
+
+**执行顺序**：Phase 4 依赖 Phase 1 和 Phase 3 完成后再执行（共享文件和 import 路径）。其余 Phase 可并行推进。
 
 ## Execution Plan
 
@@ -131,33 +136,15 @@ Exit Criteria:
 
 ### Phase 4 - 目录结构归组
 
-Status: planned
-Targets: `packages/flux-runtime/src/`, `packages/flux-react/src/`, `packages/report-designer-renderers/src/`
-
-- [ ] **P4.1** `flux-runtime/src/` form/ 子目录：创建 `src/form/` 目录，将 22 个 `form-*` 前缀文件 + `form-store.ts` 移入。创建 `form/index.ts` barrel 文件重新导出所有公共 API。更新 `src/index.ts` 和所有内部 import 路径
-- [ ] **P4.2** `flux-react/src/` node-renderer/ 子目录：创建 `src/node-renderer/` 目录，将 11 个 `node-renderer-*`/`use-node-*`/`node-instance.*`/`node-frame-wrapper.*`/`node-error-boundary.*`/`node-source-prop-controller.*` 文件移入。创建 `node-renderer/index.ts` barrel。更新 import 路径
-- [ ] **P4.3** `flux-react/src/` 散落 test 文件整理：将 `field-frame-layout.test.tsx`、`fragment-scope.test.ts`、`frame-slot-meta.test.tsx`、`hooks-form-errors.test.tsx`、`hooks-subscriptions.test.tsx`、`schema-renderer-imports-*.test.tsx`、`schema-renderer-runtime.test.tsx` 移入 `__tests__/`
-- [ ] **P4.4** `report-designer-renderers/src/` toolbar/ 子目录：将 6 个 `report-designer-toolbar*` 文件移入 `toolbar/`
-- [ ] **P4.5** `report-designer-renderers/src/` bridge/ 子目录：将 `bridge.ts`、`bridge.test.ts`、`host-data.ts` 移入 `bridge/`
-- [ ] **P4.6** `flux-runtime/src/` 散落 test 文件整理：将 `node-resolver.test.ts`、`source-reaction-dependencies.test.ts` 移入 `__tests__/`
-
-Exit Criteria:
-
-- [ ] `flux-runtime/src/` 顶层文件从 46 减少到 ≤25（form/ 归组后）
-- [ ] `flux-react/src/` 顶层文件从 41 减少到 ≤25（node-renderer/ 归组 + test 文件整理后）
-- [ ] `report-designer-renderers/src/` 有 `toolbar/` 和 `bridge/` 子目录
-- [ ] 所有 import 路径已更新，无断裂引用
-- [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 全部通过
-- [ ] `docs/architecture/flux-runtime-module-boundaries.md` 已更新 form/ 子目录结构
-- [ ] `docs/architecture/renderer-runtime.md` 如有涉及 node-renderer 文件变动则已更新
-- [ ] `docs/logs/` 对应日期条目已更新
+Status: cancelled
+Reason: 目录归组是人类可读性优化，不改变任何架构契约或运行时行为。对 AI 驱动的开发模式而言：(1) 扁平目录结构比 barrel re-export 间接层更直接可定位；(2) 51 个文件移动 + 数百条 import 更新属于纯机械操作，工作量大但零语义收益；(3) barrel index.ts 增加每次定位实际实现的穿透成本。如果未来人类团队接手且目录浏览体验成为痛点，可单独排期。
 
 ### Phase 5 - i18n 修复
 
 Status: planned
 Targets: `packages/flow-designer-renderers/src/designer-inspector.tsx`
 
-- [ ] **P5.1** 将 `designer-inspector.tsx` 中所有硬编码中文字符串替换为 `t('flux.flow-designer.inspector.xxx')` 调用（涉及约 15 处字符串："属性面板"、"分支组"、"添加分支"、"删除分支"、"流信息"、"活跃节点"、"活跃边"、"无选中" 等）
+- [ ] **P5.1** 将 `designer-inspector.tsx` 中所有硬编码中文字符串替换为 `t('flux.flow-designer.inspector.xxx')` 调用（涉及约 24 处字符串（22 个唯一 key）："属性面板"、"分支组"、"添加分支"、"删除节点"、"流程信息"、"分支名称"、"当前分支"、"首节点"、"定位节点"、"该分支当前为空。"、"编辑节点或连线属性"、"已启用"、"个节点"、"条连线"、"当前选中"、"名称"、"描述"、"连线"、"快捷键" 等）
 - [ ] **P5.2** 在 `packages/flux-i18n/` 中添加对应的翻译 key（`zh-CN` 和 `en-US`）
 
 Exit Criteria:
@@ -166,9 +153,10 @@ Exit Criteria:
 - [ ] 所有用户可见文本通过 `t()` 获取
 - [ ] `zh-CN` 和 `en-US` 翻译文件已更新
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 全部通过
+- [ ] `docs/architecture/renderer-runtime.md` 如有涉及 i18n 约定变更则已更新（或确认无需更新）
 - [ ] `docs/logs/` 对应日期条目已更新
 
-### Phase 6 - 兼容层收敛评估
+### Phase 6 - 兼容层收敛与清理
 
 Status: planned
 Targets: `packages/flux-compiler/src/action-compiler.ts`, `packages/report-designer-renderers/src/host-data.ts`
@@ -181,13 +169,12 @@ Exit Criteria:
 - [ ] `extractLegacyPayload` 已标注 `@deprecated`（或已确认仍有广泛使用并记录评估结论）
 - [ ] `host-data.ts` 的 `selection`/`target` 别名已删除（或已记录仍有消费者并保留迁移计划）
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 全部通过
+- [ ] `docs/architecture/flux-runtime-module-boundaries.md` 已更新兼容层清理结论
 - [ ] `docs/logs/` 对应日期条目已更新
 
-## Risks And Rollback
-
 - **Phase 1 风险中等**：`reaction-runtime.ts` 是关键异步基础设施，取消模式变更可能引入新的竞态。策略：先写 focused test 覆盖现有取消行为，再迁移。每个子项独立且可逆
-- **Phase 2 风险中等**：双状态修复涉及表单字段核心渲染路径。策略：每个文件独立修改，逐个验证。保留 `useEffect` 作为 fallback 直到确认新方案稳定
-- **Phase 4 风险低但工作量大**：目录归组涉及大量 import 路径变更。策略：使用 IDE 的 move refactoring 功能，每个子目录归组后立即验证
+- **Phase 2 风险中等**：双状态修复涉及表单字段核心渲染路径。策略：每个文件独立修改，逐个验证。保留 `useEffect` 作为 fallback 直到确认新方案稳定。对涉及用户交互的改动（quick-edit、composite-field）补充 e2e 回归验证
+- **Phase 4 风险中低但工作量大**：目录归组涉及大量 import 路径变更。策略：使用 IDE 的 move refactoring 功能，每个子目录归组后立即 `pnpm build && pnpm test` 验证，因为 barrel re-exports 可能掩盖过期 import 路径
 - **Phase 3/5/6 风险最低**：包边界修复、i18n、兼容层评估均为局部改动
 
 ## Validation Checklist

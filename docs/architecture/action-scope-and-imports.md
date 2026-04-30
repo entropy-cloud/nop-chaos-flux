@@ -559,6 +559,18 @@ Current runtime baseline:
 - `then` is the success branch and `onError` is the failure branch for chained actions
 - `result`, `error`, and `prevResult` are now injected through transient action-evaluation bindings for chained branches rather than via ambient scope publication
 
+### Cancellation Ownership
+
+`cancelled` and `timedOut` are not ad hoc UI hints. They are normalized action/operation-control result semantics owned by the action/runtime execution stack.
+
+Rules:
+
+- abort classification belongs to the shared action/operation-control layer, not to individual renderers, debugger panels, or higher-level aggregators inventing their own narrow `AbortError` checks
+- request-style built-ins and other cancellable helpers should normalize abort into structured `ActionResult` failure-class results such as `{ ok: false, cancelled: true }` or `{ ok: false, cancelled: true, timedOut: true }`
+- higher-level owners may consume those normalized results and fold them into owner-local state machines, but they should not reinterpret cancellation by requiring thrown exceptions when a structured cancelled result already exists
+- UI/debugger layers may present cancellation differently, but they should follow the shared normalized result semantics rather than define a second incompatible cancellation vocabulary
+- non-cancellable work that only times out structurally may still settle later in the background; that late settlement must not change the original timeout-classified `ActionResult`
+
 ### Chained Action Result Context
 
 For expressions evaluated inside `then` and `onError`, the reserved branch-result context is:

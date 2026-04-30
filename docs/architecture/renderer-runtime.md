@@ -607,7 +607,6 @@ Normative rule:
 
 - use `render({ bindings, instancePath })` as the primary API
 - use `scope` only when the caller already owns the right child scope
-- treat `data` and `instantiate()` as compatibility carriers rather than the preferred contract
 - treat `scopeKey` as an advanced/internal child-scope reuse hint, not the primary repeated-identity contract
 
 `instancePath` and stable bindings are the primary repeated rendering contract. `scopeKey` may still exist for scope/cache reuse, but should not be presented as the author-facing identity model.
@@ -649,7 +648,7 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
 
 When `params` is declared on the region (e.g. `params: ['item', 'index']`), the `bindings` values are published under the reserved `$slot` frame (`$slot.item`, `$slot.index`) rather than flattened into the parent scope. Schema authors access them as `${$slot.item.name}`.
 
-For non-parameterized regions, `render()` behaves identically to the legacy `instantiate()`. `instantiate()` is retained for back-compat but deprecated.
+For non-parameterized regions, `render()` passes bindings directly into the child scope.
 
 ### Pattern 3: render an ad hoc fragment through helpers
 

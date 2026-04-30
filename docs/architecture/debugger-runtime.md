@@ -122,6 +122,7 @@ Current async-governance diagnostics baseline:
 - source/reaction snapshots also embed owner-local async summaries relevant to those registries
 - current in-scope owners are API-backed `data-source`, async `reaction` dispatch, and async validation runs; plain action/request execution still primarily reports execution-control and monitor metadata rather than becoming a first-class async owner epoch model
 - this keeps debugger/automation able to answer “why did this async result not publish?” without inflating the hot event stream with deep per-run payloads
+- debugger abort/cancelled presentation is downstream of runtime semantics: debugger adapters may classify `api:abort` or render `cancelled` / `timedOut` badges, but they should follow the same shared abort-like result vocabulary already used by runtime/action execution rather than maintaining a narrower debugger-only interpretation
 
 ### Event Budget And Retention Rules
 
