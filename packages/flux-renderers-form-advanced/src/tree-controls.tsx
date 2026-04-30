@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -12,36 +12,16 @@ import { createFieldValidation } from '@nop-chaos/flux-renderers-form';
 import type { InputTreeSchema, TreeSelectSchema } from '@nop-chaos/flux-renderers-form';
 import {
   buildTreeOptionMetaList,
-  flattenTreeOptions,
   getTreeOptionConfig,
-  isTreeSelectionChecked,
-  toggleTreeSelection,
   type TreeOptionMeta
 } from './tree-options';
-
-function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
-  if (sourceState?.status !== 'error') {
-    return undefined;
-  }
-
-  if (typeof sourceState.error === 'string' && sourceState.error) {
-    return sourceState.error;
-  }
-
-  if (sourceState.error && typeof sourceState.error === 'object' && 'message' in sourceState.error) {
-    const message = (sourceState.error as { message?: unknown }).message;
-
-    if (typeof message === 'string' && message) {
-      return message;
-    }
-  }
-
-  return 'Failed to load tree options.';
-}
-
-function isMultipleMode(treeMode: unknown) {
-  return treeMode === 'checkbox';
-}
+import {
+  getSourceErrorMessage,
+  isMultipleMode,
+  useTreeOptionListController,
+  useTreeOptionNodeController,
+  useTreeSelectController
+} from './tree-control-controllers';
 
 function TreeOptionNode(props: {
   option: TreeOptionMeta;
@@ -51,9 +31,14 @@ function TreeOptionNode(props: {
   disabled: boolean;
   onChange: (value: unknown) => void;
 }) {
-  const [expanded, setExpanded] = useState(true);
-  const checked = isTreeSelectionChecked(props.value, props.option.value, props.multiple);
-  const hasChildren = props.option.children.length > 0;
+  const {
+    expanded,
+    checked,
+    hasChildren,
+    handleSelect,
+    handleKeyDown,
+    handleChevronClick
+  } = useTreeOptionNodeController(props);
 
   return (
     <div data-slot="tree-option-node" data-depth={props.option.depth}>
@@ -67,16 +52,8 @@ function TreeOptionNode(props: {
         role="treeitem"
         aria-selected={checked}
         tabIndex={props.disabled ? -1 : 0}
-        onClick={() => !props.disabled && props.onChange(toggleTreeSelection(props.value, props.option.value, props.multiple))}
-        onKeyDown={(e) => {
-          if (props.disabled) return;
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            props.onChange(toggleTreeSelection(props.value, props.option.value, props.multiple));
-          }
-          if (e.key === 'ArrowRight' && hasChildren) { e.preventDefault(); setExpanded(true); }
-          if (e.key === 'ArrowLeft' && hasChildren) { e.preventDefault(); setExpanded(false); }
-        }}
+        onClick={handleSelect}
+        onKeyDown={handleKeyDown}
       >
         <span
           className={cn(
@@ -87,7 +64,7 @@ function TreeOptionNode(props: {
           aria-label={hasChildren ? (expanded ? 'Collapse node' : 'Expand node') : undefined}
           role={hasChildren ? 'button' : undefined}
           tabIndex={hasChildren ? 0 : undefined}
-          onClick={(e) => { e.stopPropagation(); setExpanded((prev) => !prev); }}
+          onClick={handleChevronClick}
         >
           <ChevronRightIcon className={cn('size-3.5 transition-transform', expanded ? 'rotate-90' : '')} />
         </span>
@@ -126,29 +103,10 @@ function TreeOptionList(props: {
   disabled: boolean;
   onChange: (value: unknown) => void;
 }) {
-  const [query, setQuery] = useState('');
-  const filteredOptions = useMemo(() => {
-    if (!props.searchable || !query.trim()) {
-      return props.options;
-    }
-
-    const lowerQuery = query.trim().toLowerCase();
-
-    function filterEntries(entries: TreeOptionMeta[]): TreeOptionMeta[] {
-      return entries.flatMap((entry) => {
-        const nextChildren = filterEntries(entry.children);
-        const matches = entry.label.toLowerCase().includes(lowerQuery) || entry.pathLabel.toLowerCase().includes(lowerQuery);
-
-        if (!matches && nextChildren.length === 0) {
-          return [];
-        }
-
-        return [{ ...entry, children: nextChildren }];
-      });
-    }
-
-    return filterEntries(props.options);
-  }, [props.options, props.searchable, query]);
+  const { query, setQuery, filteredOptions } = useTreeOptionListController({
+    options: props.options,
+    searchable: props.searchable
+  });
 
   return (
     <div data-slot="tree-option-list">
@@ -223,16 +181,13 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const treeConfig = getTreeOptionConfig(props.props as TreeSelectSchema);
   const options = buildTreeOptionMetaList(props.props.options, treeConfig);
-  const flattenedOptions = flattenTreeOptions(options, treeConfig);
-  const selectedLabels = multiple
-    ? flattenedOptions.filter((entry) => isTreeSelectionChecked(value, entry.value, true)).map((entry) => entry.label)
-    : flattenedOptions.find((entry) => Object.is(entry.value, value))?.label;
-  const triggerText = Array.isArray(selectedLabels)
-    ? selectedLabels.join(', ')
-    : selectedLabels;
-  const triggerLabel = typeof props.props.placeholder === 'string' && props.props.placeholder
-    ? props.props.placeholder
-    : 'Select tree option';
+  const { triggerText, triggerLabel, hasSelection } = useTreeSelectController({
+    options,
+    treeConfig,
+    value,
+    multiple,
+    placeholder: props.props.placeholder
+  });
   const sourceError = getSourceErrorMessage(optionsSourceState);
 
   return (
@@ -256,7 +211,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
               </Button>
             }
           />
-          {props.props.clearable === true && triggerText ? (
+          {props.props.clearable === true && hasSelection ? (
             <Button
               type="button"
               variant="ghost"
