@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
-import { render, waitFor, fireEvent, within } from '@testing-library/react';
+import { render, waitFor, fireEvent, within, screen } from '@testing-library/react';
 import { flowDesignerRendererDefinitions } from './index';
 import {
   basicTestRendererDefinitions,
@@ -51,6 +51,90 @@ describe('designer-page status publication', () => {
 
     await waitFor(() => {
       expect(document.querySelector('[data-testid="designer-status"]')?.textContent).toBe('designer:none:0');
+    });
+  });
+
+  it('mounts toolbar, inspector, and dialogs regions with designer host scope and keeps edge selection on fallback inspector path', async () => {
+    const actionButtonRenderer = {
+      type: 'action-button',
+      component: (props: any) => (
+        <button type="button" onClick={() => void props.events.onClick?.()}>
+          {String(props.props.label ?? 'Action')}
+        </button>
+      ),
+      fields: [{ key: 'onClick', kind: 'event' }],
+    } as any;
+
+    function RegionProbe() {
+      const summary = useScopeSelector((data: any) => {
+        const selection = data.selection
+        const runtime = data.runtime
+        return `${selection?.kind ?? 'missing'}:${runtime?.isDirty ?? 'missing'}`
+      })
+      return <span data-testid="designer-region-probe">{String(summary)}</span>
+    }
+
+    const regionProbeRenderer = {
+      type: 'designer-region-probe',
+      component: RegionProbe,
+    } as any;
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+      actionButtonRenderer,
+      regionProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-region-scope"
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [
+              { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } },
+              { id: 'node-2', type: 'end', position: { x: 220, y: 40 }, data: { label: 'Task 2' } },
+            ],
+            edges: [{ id: 'edge-1', type: 'default', source: 'node-1', target: 'node-2', data: { label: 'Edge 1' } }],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createTestConfig(),
+          toolbar: [
+            { type: 'designer-region-probe' },
+            {
+              type: 'action-button',
+              label: 'Select edge',
+              onClick: {
+                action: 'designer:selectEdge',
+                args: { edgeId: 'edge-1' },
+              },
+            },
+          ],
+          inspector: { type: 'designer-region-probe' },
+          dialogs: { type: 'designer-region-probe' },
+        } as any}
+        env={createRendererEnv() as any}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('designer-region-probe')).toHaveLength(3);
+      expect(screen.getAllByTestId('designer-region-probe').every((node) => node.textContent?.startsWith('none:'))).toBe(true);
+    });
+
+    window.dispatchEvent(new CustomEvent('nop-designer:test-connect', {
+      detail: { source: 'node-1', target: 'node-2' },
+    }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select edge' }));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('designer-region-probe').some((node) => node.textContent?.startsWith('edge:'))).toBe(true);
     });
   });
 });
