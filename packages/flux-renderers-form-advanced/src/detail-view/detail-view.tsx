@@ -23,13 +23,16 @@ import {
   buildDetailDraftInitialValues,
   readDetailDraftValues,
   useDetailAdaptationAction,
+  useDetailChildValidationContract,
   useDetailDraftControllerState
 } from './detail-draft-controller';
+import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
 export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchema>) {
   const parentForm = useCurrentForm();
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
+  const parentValidationOwner = useCurrentValidationScope();
   const schema = props.schema as DetailViewSchema;
   const schemaProps = props.props as DetailViewSchema;
   const readOnly = Boolean(schemaProps.readOnly);
@@ -72,6 +75,19 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     finishConfirm,
     setDraftErrorSafe
   } = useDetailDraftControllerState();
+
+  const childOwnerId = React.useMemo(
+    () => `detail-view:${props.id}:${scopePath ?? 'root'}`,
+    [props.id, scopePath]
+  );
+
+  useDetailChildValidationContract({
+    parentValidationOwner,
+    draftForm,
+    childOwnerId,
+    mode: props.templateNode.validationOwnerPlan?.childContractMode,
+    active: open
+  });
 
   const currentValue = React.useMemo(() => {
     if (staticData) {
@@ -285,6 +301,8 @@ export const detailViewRendererDefinition: RendererDefinition = {
   ],
   scopePolicy: 'form',
   validation: {
-    kind: 'container'
+    kind: 'container',
+    ownerResolution: 'create-owner',
+    childContractMode: 'summary-gate'
   }
 };

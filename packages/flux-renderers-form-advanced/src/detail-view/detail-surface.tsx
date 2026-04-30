@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FormRuntime } from '@nop-chaos/flux-core';
-import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
+import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
@@ -52,9 +52,11 @@ export function DetailDraftBody(props: DetailDraftBodyProps) {
 
   return (
     <FormContext.Provider value={props.form}>
-      <ScopeContext.Provider value={draftScope}>
-        <div data-slot={props.bodySlot}>{props.children}</div>
-      </ScopeContext.Provider>
+      <ValidationContext.Provider value={props.form}>
+        <ScopeContext.Provider value={draftScope}>
+          <div data-slot={props.bodySlot}>{props.children}</div>
+        </ScopeContext.Provider>
+      </ValidationContext.Provider>
     </FormContext.Provider>
   );
 }

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildDetailDraftInitialValues,
   readDetailDraftValues,
+  useDetailChildValidationContract,
   useDetailDraftControllerState
 } from './detail-draft-controller';
 
@@ -65,5 +66,57 @@ describe('useDetailDraftControllerState', () => {
     fireEvent.click(screen.getByRole('button', { name: 'close' }));
     expect(screen.getByTestId('open').textContent).toBe('false');
     expect(screen.getByTestId('error').textContent).toBe('');
+  });
+});
+
+function ChildContractHarness(props: {
+  parentValidationOwner: {
+    registerChildContract: ReturnType<typeof vi.fn>;
+    unregisterChildContract: ReturnType<typeof vi.fn>;
+  };
+  draftForm: any;
+  active: boolean;
+}) {
+  useDetailChildValidationContract({
+    parentValidationOwner: props.parentValidationOwner as any,
+    draftForm: props.draftForm,
+    childOwnerId: 'detail-child',
+    mode: 'summary-gate',
+    active: props.active
+  });
+
+  return null;
+}
+
+describe('useDetailChildValidationContract', () => {
+  it('registers and unregisters an active child contract', () => {
+    const parentValidationOwner = {
+      registerChildContract: vi.fn(),
+      unregisterChildContract: vi.fn()
+    };
+    const draftForm = {
+      getScopeState: vi.fn(() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+      validateAll: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} }))
+    };
+
+    const { unmount } = render(
+      <ChildContractHarness
+        parentValidationOwner={parentValidationOwner}
+        draftForm={draftForm}
+        active={true}
+      />
+    );
+
+    expect(parentValidationOwner.registerChildContract).toHaveBeenCalledTimes(1);
+    const registration = parentValidationOwner.registerChildContract.mock.calls[0]?.[0];
+    expect(registration).toMatchObject({
+      childOwnerId: 'detail-child',
+      mode: 'summary-gate',
+      active: true
+    });
+
+    unmount();
+
+    expect(parentValidationOwner.unregisterChildContract).toHaveBeenCalledWith('detail-child');
   });
 });

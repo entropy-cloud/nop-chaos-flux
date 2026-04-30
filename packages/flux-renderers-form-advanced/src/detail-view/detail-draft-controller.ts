@@ -1,5 +1,10 @@
 import React from 'react';
-import type { FormRuntime, RendererComponentProps } from '@nop-chaos/flux-core';
+import type {
+  ChildValidationMode,
+  FormRuntime,
+  RendererComponentProps,
+  ValidationScopeRuntime
+} from '@nop-chaos/flux-core';
 
 type BaseNodeInstance = RendererComponentProps<any>['node'];
 
@@ -126,4 +131,49 @@ export function useDetailDraftControllerState() {
     finishConfirm,
     setDraftErrorSafe
   };
+}
+
+export function useDetailChildValidationContract(input: {
+  parentValidationOwner?: ValidationScopeRuntime;
+  draftForm?: FormRuntime;
+  childOwnerId: string;
+  mode?: ChildValidationMode;
+  active: boolean;
+}) {
+  const { parentValidationOwner, draftForm, childOwnerId, mode = 'summary-gate', active } = input;
+
+  React.useEffect(() => {
+    if (!parentValidationOwner || !draftForm || !active) {
+      return;
+    }
+
+    parentValidationOwner.registerChildContract({
+      childOwnerId,
+      mode,
+      active: true,
+      unregister() {
+        parentValidationOwner.unregisterChildContract(childOwnerId);
+      },
+      getState() {
+        const state = draftForm.getScopeState();
+        return {
+          ready: state.ready,
+          validating: state.validating,
+          valid: state.valid,
+          hasErrors: state.hasErrors
+        };
+      },
+      async triggerValidation() {
+        const result = await draftForm.validateAll('submit');
+        return {
+          ok: result.ok,
+          errors: result.errors
+        };
+      }
+    });
+
+    return () => {
+      parentValidationOwner.unregisterChildContract(childOwnerId);
+    };
+  }, [active, childOwnerId, draftForm, mode, parentValidationOwner]);
 }

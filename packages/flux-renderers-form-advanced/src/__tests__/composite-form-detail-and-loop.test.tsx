@@ -240,6 +240,66 @@ describe('composite form - detail-field draft validation gating', () => {
       address: { street: '100 Main St', city: 'Oldtown' }
     });
   });
+
+  it('open invalid draft blocks parent submit until the child owner is resolved', async () => {
+    cleanup();
+    const submitValues: Record<string, unknown>[] = [];
+    const SchemaRenderer = createSchemaRenderer(allRenderers);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/__tests__/composite-form-detail-and-loop.test.tsx#4b"
+        schema={{
+          type: 'form',
+          id: 'detail-open-blocks-submit',
+          data: { address: { street: '', city: 'Oldtown' } },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              label: 'Address',
+              triggerLabel: 'Edit Address',
+              surface: { mode: 'dialog', title: 'Edit Address' },
+              content: [
+                { type: 'input-text', name: 'street', label: 'Street', required: true },
+                { type: 'input-text', name: 'city', label: 'City' }
+              ]
+            }
+          ],
+          submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit Form',
+              onClick: { action: 'component:submit', componentId: 'detail-open-blocks-submit' }
+            }
+          ]
+        }}
+        env={{
+          ...baseEnv,
+          fetcher: makeCapturingFetcher(submitValues)
+        }}
+        formulaCompiler={formulaCompiler}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Address'));
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Submit Form'));
+
+    await waitFor(() => {
+      expect(submitValues.length).toBe(0);
+    });
+
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Please fix validation errors before confirming.')).toBeTruthy();
+    });
+  });
 });
 
 describe('composite form - detail-view draft validation gating', () => {

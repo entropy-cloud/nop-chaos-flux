@@ -26,13 +26,16 @@ import {
   buildDetailDraftInitialValues,
   readDetailDraftValues,
   useDetailAdaptationAction,
+  useDetailChildValidationContract,
   useDetailDraftControllerState
 } from './detail-draft-controller';
+import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
 export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSchema>) {
   const parentForm = useCurrentForm();
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
+  const parentValidationOwner = useCurrentValidationScope();
   const schema = props.schema as DetailFieldSchema;
   const schemaProps = props.props as DetailFieldSchema;
   const name = String(schemaProps.name ?? '');
@@ -70,6 +73,19 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     finishConfirm,
     setDraftErrorSafe
   } = useDetailDraftControllerState();
+
+  const childOwnerId = React.useMemo(
+    () => `detail-field:${props.id}:${name || 'value'}`,
+    [props.id, name]
+  );
+
+  useDetailChildValidationContract({
+    parentValidationOwner,
+    draftForm,
+    childOwnerId,
+    mode: props.templateNode.validationOwnerPlan?.childContractMode,
+    active: open
+  });
 
   const runAdaptationAction = useDetailAdaptationAction({
     helpers: props.helpers,
@@ -229,6 +245,8 @@ export const detailFieldRendererDefinition: RendererDefinition = {
   scopePolicy: 'form',
   validation: {
     kind: 'field',
+    ownerResolution: 'create-owner',
+    childContractMode: 'summary-gate',
     valueKind: 'object',
     getFieldPath(schema: BaseSchema) {
       return typeof schema.name === 'string' ? schema.name : undefined;
