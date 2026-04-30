@@ -257,7 +257,7 @@ Review:
 
 - `docs/architecture/report-designer/design.md`
 - `docs/architecture/report-designer/config-schema.md`
-- `docs/architecture/report-designer/api.md`
+- `docs/architecture/report-designer/api.md` if the future package/API target also changes
 - `docs/index.md` if the recommended entry point changes
 
 ## 11. Security boundary or dynamic execution changes

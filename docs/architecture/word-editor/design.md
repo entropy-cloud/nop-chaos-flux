@@ -64,24 +64,40 @@ React 19 rendering layer. Contains:
 
 ## Document Model
 
-The editor uses a three-zone document structure matching canvas-editor's model:
+The live editor currently separates three related but distinct data surfaces:
+
+1. `WordDocument` - the editable template document projected into host scope
+2. `SavedDocumentData` - the persisted envelope used by document save/load
+3. dataset store state - the separate data-source model injected through host scope
+
+Current `WordDocument` shape:
 
 ```typescript
 interface WordDocument {
-  header: ElementList;   // Page header content
-  main: ElementList;     // Main body content
-  footer: ElementList;   // Page footer content
-  
-  // Metadata
-  paperSettings: PaperSettings;
-  watermark?: WatermarkConfig;
-  
-  // Template-specific
-  charts: ChartConfig[];     // Chart placeholders
-  codes: CodeConfig[];       // Code block configs
-  datasets: DatasetConfig[]; // Data source definitions
+  header: ElementList;
+  main: ElementList;
+  footer: ElementList;
+  charts?: ChartConfig[];
+  codes?: CodeConfig[];
 }
 ```
+
+Current persisted envelope:
+
+```typescript
+interface SavedDocumentData {
+  data: WordDocument;
+  paperSettings: PaperSettings;
+  savedAt: string;
+}
+```
+
+Notes:
+
+- `paperSettings` belongs to the saved envelope, not `WordDocument`
+- datasets are maintained in the separate dataset store and projected through host scope as `datasets`
+- the live document model does not currently expose `watermark`
+- `document` in host scope is the persisted/autosaved document snapshot, not the realtime in-memory editor internals
 
 ## Template Expression System
 

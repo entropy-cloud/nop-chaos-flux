@@ -28,7 +28,6 @@ interface ReportDesignerPageSchema {
   id?: string
   title?: string
   document: ReportTemplateDocumentInput
-  spreadsheet?: SpreadsheetConfig
   designer: ReportDesignerConfig
   profile?: ReportDesignerProfile
   adapters?: ReportDesignerAdapterConfig
@@ -46,6 +45,7 @@ interface ReportDesignerPageSchema {
 - `spreadsheet-page` 的 live renderer 当前支持 `toolbar` / `body` / `dialogs` 三个 region；未覆盖 `body` 时使用内置 spreadsheet canvas。
 - `report-designer-page` 的 live renderer 当前支持 `toolbar` / `fieldPanel` / `inspector` / `dialogs` / `body` 五个 region；未覆盖时分别使用内置 field panel、canvas 与 inspector。
 - 两者当前都支持 `statusPath`，向宿主外部发布窄只读状态摘要。
+- `report-designer-page` 当前 live schema 使用 `document.spreadsheet` 作为 spreadsheet 文档入口；本文件不再把额外 top-level `spreadsheet?: SpreadsheetConfig` 写成当前 renderer contract。
 
 ## 2. SpreadsheetDocument
 
@@ -308,6 +308,7 @@ interface ReportInspectorConfig {
 说明:
 
 - `body` 适合简单场景：由 schema 自己根据 `target` / `selection` 决定展示内容
+- 当前 host scope 的 canonical 选择字段是 `selectionTarget`；`selection` / `target` 仅保留为兼容 alias
 - `byTarget` 适合不同 selection kind 完全不同的编辑面板
 - `byProfile` 适合不同 profile 生成不同的 inspector schema
 - inspector 的实际编辑体直接就是普通 Flux schema/form；这里不再定义 provider/panel/value-adapter 这类平行 inspector 模型
@@ -348,7 +349,7 @@ interface ExpressionEditorBindingConfig {
 ```ts
 interface ExpressionEditorAdapter {
   id: string
-  render(props: ExpressionEditorProps): React.ReactNode
+  render(props: ExpressionEditorProps): unknown
 }
 
 interface ExpressionEditorProps {

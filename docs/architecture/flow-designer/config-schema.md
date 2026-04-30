@@ -245,28 +245,35 @@ interface NodeTypeConfig {
 1. **完全复用 Flux Renderer**：`body` 内部可以使用任何已注册的 renderer
 2. **组合而非硬编码**：用 `flex`、`container`、`grid` 等容器组合
 3. **自定义组件支持**：`{ "type": "my-custom-node" }` 引用自定义注册的 renderer
-4. **Scope 自动注入**：节点实例的 `data` 字段自动成为 `body` 的 scope
+4. **Scope 自动注入**：节点 body 当前接收 `{ node, data }` 形式的绑定，其中 `data` 是节点实例数据，`node` 是最小节点视图
 
-### 4.2 节点 Scope
+### 4.2 节点 Body 绑定
 
-节点组件渲染时，自动注入以下 scope：
+节点组件渲染时，当前 live renderer 为 `body` 提供的绑定形状是：
 
 ```ts
-interface NodeScope {
-  id: string           // 节点实例 ID
-  type: string         // 节点类型 ID
-  label: string        // 节点类型标签
-  position: { x: number; y: number }
-  data: Record<string, unknown>  // 节点实例数据
-  selected: boolean    // 是否选中
+interface NodeBodyBindings {
+  node: {
+    id: string
+    type: string
+    label: string
+    data: Record<string, unknown>
+  }
+  data: Record<string, unknown>
 }
 ```
 
-在 `body` 中可以直接使用：
+其中：
+
+- `data` 是节点实例数据本身，便于直接写 `${data.status}`
+- `node` 提供节点级元信息，便于写 `${node.label}`、`${node.id}`
+- `position` 与 `selected` 不是当前稳定注入到 body binding 的字段
+
+在 `body` 中当前更准确的写法是：
 ```json
 {
   "type": "tpl",
-  "tpl": "${label} - ${data.status}"
+  "tpl": "${node.label} - ${data.status}"
 }
 ```
 

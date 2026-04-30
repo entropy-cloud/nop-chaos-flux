@@ -43,13 +43,13 @@ Implementation note:
 - `designer:*` 动作不是通过 root `actionHandlers` 注入，也不是通过修改 built-in action switch 实现，而是由 `designer-page` 在自身 `ActionScope` 边界内注册 `designer` namespace provider。
 - `designer-page` 负责创建 `DesignerCore`，并向内部 React renderer 子树暴露 `DesignerContext`；关于当前 snapshot 契约与 host scope 落地状态，见 `docs/architecture/flow-designer/runtime-snapshot.md`。
 - `designer-page` 当前还会把 designer host `scope` 与当前 `actionScope` 显式传给 `toolbar` / `inspector` / `dialogs` region render，因此这些 schema 片段不是仅靠“位于同一 React 子树”才可用，而是明确绑定到同一份 designer snapshot 视图与 namespace 边界。
-- 保存和导出通过 `env.functions.saveFlowDocument` 与 `env.functions.publishFlowExport` 回传给 playground 宿主。
+- 当前 `designer:save` 直接调用 `core.save()`；`designer:export` 直接返回 `core.exportDocument()` 的 JSON 字符串，当前 playground 通过本地 JSON dialog 展示导出结果而不是经 `env.functions.publishFlowExport` 回传。
 - 当前 clipboard 也是 core 自身能力，先支持单节点 copy/paste，并通过 `designer:copySelection` / `designer:pasteClipboard` 对外暴露。
 - 当前删除确认不通过专用 designer action 实现，而是由 `designer-page` 外围 schema 使用共享 `dialog` action 包装 `designer:deleteSelection`。
 - 当前键盘快捷键也不通过 core 内建按键表实现，而是由 `designer-page.shortcuts` 在宿主层声明，再复用同一条 action dispatch 链。
 - 当前窄屏响应式行为也留在 `designer-page` shell：renderer 负责根据 media query 把 inspector 切换成 canvas 下方的可展开面板，但 inspector schema 和 nodeTypes/edgeTypes 的字段片段不需要改写成移动端专用协议。
-- 当前 minimap 仍是 renderer shell 层的轻量 overview 实现：它基于当前 `doc.nodes` 坐标生成 overview 按钮并复用 `selectNode`，尚未切到 React Flow 自带 minimap，但这不影响主画布已经固定走 `@xyflow/react`。
-- 当前 playground export 面板会直接消费 `designer:export` 通过 `env.functions.publishFlowExport` 回传的 JSON 字符串，并在宿主层派生 export summary；这说明导出后的结构检查仍然应由 host/example 负责，而不是把展示逻辑塞回 core 或 renderer action 本身。
+- 当前 minimap 已直接使用 React Flow 自带 `<MiniMap />`，而不是自定义 overview-only 实现。
+- 当前导出后的结构检查仍由 host/example 决定，但展示路径是 renderer shell 中的本地 JSON dialog，不是 `env.functions.publishFlowExport` 回传链。
 - 当前 React Flow 画布会把 connect / reconnect / selection / pane-click 等交互统一翻译到同一条命令链，不改变 core 作为唯一 graph mutation source of truth 的边界。
 - 当前 host toolbar 还可以继续声明 document-level flow actions，例如 `designer:clearSelection`；这类动作依旧通过 `designer-page` 所在的本地 `ActionScope` 解析，而不是要求 renderer 自带一套页面命令按钮协议。
 - 当前 pane-click 语义已经固定：空白 surface click 会归一化为退出 connect/reconnect intent 并清理 selection；这条语义直接由 React Flow pane 事件映射到共享命令边界。

@@ -1,5 +1,7 @@
 # Report Designer API
 
+> Status: target/reference
+
 This file defines the future package/API contract for the Report Designer family.
 
 Implementation status belongs in logs, plans, and focused runtime-snapshot/status docs. The API shapes here should remain the target design even when current code is behind them.
@@ -90,6 +92,8 @@ interface SpreadsheetPageSchema {
 
 ## 3. `report-designer-page` Schema
 
+Future target shape:
+
 ```ts
 interface ReportDesignerPageSchema {
   type: 'report-designer-page'
@@ -116,6 +120,8 @@ interface ReportDesignerPageSchema {
 - 渲染 `fieldPanel`、`body`、`inspector`、`toolbar`、`dialogs` 等工作台区域；未覆盖时由 renderer 提供默认 field panel / canvas / inspector
 - 在 page-owned `ActionScope` 上注册 `spreadsheet:*` 与 `report-designer:*` namespace
 - 通过 `statusPath` 向宿主发布窄只读状态摘要
+
+Current live renderer contract remains owned by `docs/components/report-designer-page/design.md` plus live code in `@nop-chaos/report-designer-renderers`.
 
 Inspector 规范主路径：
 

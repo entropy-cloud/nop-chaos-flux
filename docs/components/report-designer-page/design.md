@@ -130,4 +130,4 @@ host scope 向下投影以下字段。字段分为三类：
 
 - `docs/architecture/report-designer/README.md` - family 入口与 owner boundary
 - `docs/architecture/report-designer/design.md` - 平台扩展架构总览
-- `docs/architecture/report-designer/contracts.md` - family 级接口与 adapter contract
+- `docs/architecture/report-designer/contracts.md` - future contract draft；当前 renderer contract 仍以本文件和 live code 为准

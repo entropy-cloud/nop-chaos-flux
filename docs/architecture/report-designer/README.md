@@ -34,9 +34,9 @@ Read this family when you need to understand:
 
 1. `docs/architecture/complex-control-host-protocol.md`
 2. `docs/architecture/report-designer/design.md`
-3. `docs/architecture/report-designer/contracts.md`
-4. `docs/architecture/report-designer/config-schema.md`
-5. `docs/architecture/report-designer/api.md`
+3. `docs/architecture/report-designer/config-schema.md`
+4. `docs/architecture/report-designer/inspector-design.md`
+5. future/reference docs when needed: `docs/architecture/report-designer/contracts.md`, `docs/architecture/report-designer/api.md`
 6. the narrower family doc for the active topic
 
 ## Current Position
@@ -48,9 +48,9 @@ Read this family when you need to understand:
 ## Family Docs
 
 - `design.md` - overall architecture, runtime boundaries, module split, and performance strategy
-- `contracts.md` - implementation-oriented contracts and adapter interfaces
+- `contracts.md` - future contract draft for package/interface shaping, not a live renderer-contract mirror
 - `config-schema.md` - `spreadsheet-page`, `report-designer-page`, document model, and shell fragment config
-- `api.md` - package APIs, host scope, and namespaced actions
+- `api.md` - future package/API contract reference, not the current component owner contract
 - `inspector-design.md` - inspector 的 schema/form 主路径、selection-aware 组织方式，以及上游 schema 组装规则
 - `nop-report-profile.md` - how the generic designer adapts to `nop-report`
 - `codec-design.md` - round-trip codec design

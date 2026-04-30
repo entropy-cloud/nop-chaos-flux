@@ -65,12 +65,12 @@ Choose the smallest document that matches the task.
 | Design semantic props vs Tailwind className, custom style presets, or shadcn/ui integration | `docs/architecture/styling-system.md` | `docs/architecture/renderer-markers-and-selectors.md` |
 | Plan shadcn/ui migration from nop-chaos-next-master | `docs/plans/18-shadcn-ui-migration-plan.md` | `docs/architecture/styling-system.md` |
 | Plan dependency-tracking runtime convergence under the root-binding model | `docs/plans/39-dependency-tracking-root-scope-implementation-plan.md` | `docs/architecture/dependency-tracking.md` |
-| 了解基于 SchemaRenderer 的报表设计器与 spreadsheet editor 规划架构 | `docs/architecture/report-designer/README.md` | `docs/architecture/report-designer/design.md`, `docs/architecture/report-designer/contracts.md` |
+| 了解基于 SchemaRenderer 的报表设计器与 spreadsheet editor 规划架构 | `docs/architecture/report-designer/README.md` | `docs/architecture/report-designer/design.md`, `docs/architecture/report-designer/config-schema.md` |
 | Design or update the `report-designer-page` renderer contract | `docs/components/report-designer-page/design.md` | `docs/architecture/report-designer/README.md`, `docs/architecture/report-designer/design.md` |
 | Design or update the `spreadsheet-page` renderer contract | `docs/components/spreadsheet-page/design.md` | `docs/architecture/report-designer/README.md`, `docs/architecture/report-designer/design.md` |
 | 了解通用 report designer 如何适配 nop-report | `docs/architecture/report-designer/nop-report-profile.md` | `docs/analysis/2026-03-21-excel-report-designer-research.md` |
 | 了解 report designer 与 nop-report 的导入导出/round-trip 设计 | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
-| 设计 report designer 的右侧属性面板与 expression/reference 字段编辑边界 | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/contracts.md` |
+| 设计 report designer 的右侧属性面板与 expression/reference 字段编辑边界 | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/config-schema.md` |
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
 | Design or update the `condition-builder` component contract | `docs/components/condition-builder/design.md` | `docs/architecture/form-validation.md`, `docs/architecture/renderer-runtime.md` |
 | Design or update the `code-editor` component contract | `docs/components/code-editor/design.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` |

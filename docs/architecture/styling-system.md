@@ -428,7 +428,7 @@ Renderer marker classes use the `nop-` prefix for root-level semantic markers on
 | Text | (none) | Inline element, no wrapper needed |
 | Button | (handled by shadcn/ui) | `data-slot="button"` via shadcn |
 
-Marker classes must NOT carry any visual styles. They exist solely for CSS selectors, debugging, host integration, and test anchoring. Visual defaults (gap, padding, flex-direction) are provided by `@layer base` CSS rules in `flux-react/default-spacing.css`, not by marker class styles.
+Renderer component code must NOT hardcode implicit visual styles onto marker classes. Marker classes still exist primarily for CSS selectors, debugging, host integration, and test anchoring. Themeable shipped defaults such as gap, padding, flex-direction, and field chrome spacing may be provided by package-owned `@layer base` CSS using root markers together with slot selectors, as in `flux-react/default-spacing.css`.
 
 This includes `FieldFrame`: `nop-field` is a semantic field marker. Label/control/error spacing comes from `@layer base` CSS rules using `--space-*` theme tokens, not from renderer component code.
 

@@ -85,8 +85,8 @@ The `useRoute` hook in `apps/playground/src/useRoute.ts` reads and writes the ha
 
 The route inventory is code-backed in `apps/playground/src/route-model.ts`:
 
-- `ALL_SHARED_RENDERER_ROUTES` — all 41 currently implemented shared renderer entries (16 basic + 21 form + 4 data). Each entry carries: `id`, `title`, `category`, `sourcePackage`, `description`.
-- `DOMAIN_RENDERER_ROUTES` — all 6 domain host page entries: `flow-designer`, `report-designer`, `debugger-lab`, `condition-builder`, `code-editor`, `word-editor`.
+- `ALL_SHARED_RENDERER_ROUTES` — the current shared renderer inventory. Each entry carries: `id`, `title`, `category`, `sourcePackage`, `description`.
+- `DOMAIN_RENDERER_ROUTES` — the current domain host page inventory.
 - `parseRoute(hash)` and `buildRoute(spec)` — the canonical serialization pair. Tests in `apps/playground/src/route-matrix.test.ts` verify round-trip stability for all routes.
 
 The inventory is cross-checked against the live renderer registries by `route-matrix.test.ts` so adding a new renderer without updating the inventory will be caught automatically.
@@ -149,7 +149,7 @@ Benefits:
 - route parse/build round-trip tests for all route kinds
 - live registry alignment: verifies `ALL_SHARED_RENDERER_ROUTES` covers every registered type in the basic/form/data registries
 - lab registry coverage: verifies every route entry has a corresponding `RENDERER_LAB_REGISTRY` component
-- domain inventory completeness: verifies all 6 domain pages are registered
+- domain inventory completeness: verifies the current domain pages remain registered
 
 ## Related Documents
 

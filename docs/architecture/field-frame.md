@@ -376,8 +376,8 @@ FieldFrame corresponds to AMIS's `FormItem` / `FormItemWrap` — the per-field c
 | Error message | Yes | Yes |
 | Hint (focus) | Yes | Yes |
 | Description | Yes | Yes |
-| Remark (icon tooltip) | Yes | Planned (schema → NodeFrameWrapper → FieldFrame) |
-| LabelRemark (label tooltip) | Yes | Planned (same path) |
+| Remark (icon tooltip) | Yes | Yes |
+| LabelRemark (label tooltip) | Yes | Yes |
 | Layout modes | 5 modes (in FormItem) | CSS-based; form-level `mode`/`labelAlign`/`labelWidth` propagated via context |
 | wrap: false | Yes | Definition-level `wrap: false` or instance-level `frameWrap: false` |
 | Internal validation state | External | Yes (via `name` prop) |
@@ -391,9 +391,8 @@ For multi-field grouping, see:
 
 ## Future Extensions
 
-1. **Remark / LabelRemark** — icon tooltip next to label or control; schema wiring through `NodeFrameWrapper`
-2. **Label width / align per-field** — propagated from form context, with per-field override via `labelAlign` / `labelWidth` props
-3. **Size variants** — xs/sm/md/lg
+1. **Label width / align per-field** — propagated from form context, with per-field override via `labelAlign` / `labelWidth` props
+2. **Size variants** — xs/sm/md/lg
 
 ## Related Documents
 

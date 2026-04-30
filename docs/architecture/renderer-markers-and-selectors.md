@@ -83,9 +83,9 @@ Keep:
 - root semantic class markers such as `nop-container`, `nop-page`, `nop-table`, `nop-field`
 - renderer state attributes such as `data-field-dirty`, `data-field-invalid`
 
-Do not use root marker classes for visual styling.
+Do not use root marker classes as a license for renderer component code to inject implicit visual styling.
 
-Example: `FieldFrame` may emit `nop-field`, `data-slot="field-label"`, and `data-field-invalid`, but it must not rely on `nop-field` to inject implicit `grid`, `gap-*`, padding, or color styling.
+Example: `FieldFrame` may emit `nop-field`, `data-slot="field-label"`, and `data-field-invalid`, but renderer component code must not rely on `nop-field` to inject implicit `grid`, `gap-*`, padding, or color styling. Package-owned base CSS may still key default themeable rules off `nop-field` together with slot selectors.
 
 ### Layer 3: Visual classes
 
@@ -115,7 +115,7 @@ Rules:
 - root markers use the `nop-` prefix
 - root markers identify the renderer type only
 - root markers must not encode internal regions or state
-- root markers must not be the source of visual layout or color rules
+- root markers must not cause renderer component code to smuggle in implicit layout or color rules
 
 ## Internal Region Rules
 

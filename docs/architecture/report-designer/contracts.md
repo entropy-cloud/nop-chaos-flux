@@ -1,5 +1,7 @@
 # Report Designer Contract Draft
 
+> Status: future contract draft
+
 本文档把 `docs/architecture/report-designer/design.md`、`docs/architecture/report-designer/config-schema.md` 和 `docs/architecture/report-designer/api.md` 中的抽象设计，收敛为更接近未来 TypeScript 实现的接口草案。
 
 它不是当前代码镜像，而是 future contract draft。目标是:
@@ -7,6 +9,8 @@
 - 帮助后续拆分 package 与文件边界
 - 明确 spreadsheet core 与 report-designer core 的最小实现面
 - 明确哪些接口属于通用设计器，哪些应该由外部 profile 或 adapter 提供
+
+当前 live renderer contract 不由本文件拥有；单 renderer contract 仍以 `docs/components/report-designer-page/design.md` 和 live code 为准。
 
 ## 1. Package 级边界
 

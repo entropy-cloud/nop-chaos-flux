@@ -44,6 +44,7 @@ interface SelectionSummary {
   selectedEdgeIds: string[]
   activeNodeId: string | null
   activeEdgeId: string | null
+  activeBranchId: string | null
 }
 
 interface DesignerSnapshot {
@@ -51,10 +52,13 @@ interface DesignerSnapshot {
   selection: SelectionSummary
   activeNode: GraphNode | null
   activeEdge: GraphEdge | null
+  activeBranch: DesignerBranchSummary | null
   canUndo: boolean
   canRedo: boolean
   isDirty: boolean
   gridEnabled: boolean
+  paletteCollapsed: boolean
+  inspectorCollapsed: boolean
   viewport: { x: number; y: number; zoom: number }
 }
 ```
@@ -86,7 +90,7 @@ interface DesignerSnapshot {
 
 ### `selection`
 
-当前选中摘要，当前实现是单选模型，但摘要结构已经保留数组形态。
+当前选中摘要。当前 live code 已支持多节点 / 多边选择；摘要结构不是仅为将来预留。
 
 包含:
 
@@ -94,12 +98,14 @@ interface DesignerSnapshot {
 - `selectedEdgeIds`
 - `activeNodeId`
 - `activeEdgeId`
+- `activeBranchId`
 
 当前代码事实:
 
-- `selectedNodeIds` / `selectedEdgeIds` 只有 0 或 1 个元素
-- `activeNodeId` 与 `activeEdgeId` 二选一
-- `clearSelection()` 会同时清空两者
+- `selectedNodeIds` / `selectedEdgeIds` 可以包含多个元素
+- `activeNodeId` / `activeEdgeId` 仍然取对应集合中的当前锚点
+- `activeBranchId` 用于 tree/branch 场景
+- `clearSelection()` 会同时清空节点、边和当前 branch 选择
 
 ### `activeNode`
 
@@ -222,9 +228,10 @@ props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope,
 因此这三个 region 内部的 schema 表达式当前稳定可读取由 `buildDesignerScopeData` 投影出的字段:
 
 - `doc`
-- `selection`（含 `kind`、`count`、`nodeIds`、`edgeIds`、`activeNodeId`、`activeEdgeId`）
+- `selection`（含 `kind`、`count`、`nodeIds`、`edgeIds`、`selectedNodeIds`、`selectedEdgeIds`、`activeNodeId`、`activeEdgeId`、`activeBranchId`）
 - `activeNode`
 - `activeEdge`
+- `activeBranch`
 - `runtime`（含 `canUndo`、`canRedo`、`dirty`、`isDirty`、`gridEnabled`、`zoom`、`viewport`）
 
 注意边界: 这些字段只对通过 `helpers.render(..., { scope: designerScope, actionScope })` 挂载的 region 内部有效；`designer-page` 之外的 schema 全局 scope 不自动获得这些字段。
@@ -239,7 +246,7 @@ props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope,
 - `toolbar` / `inspector` / `dialogs` region 挂载点
 - 通过共享 `dialog` action runtime 打开的 dialog 内继续 dispatch `designer:*`
 - `designer-field` 这种由 Flow Designer 自己提供的专用 renderer
-- region 内部 schema 表达式可读取 `doc`、`selection`、`activeNode`、`activeEdge`、`runtime`（通过 child scope 注入，见第 4 节）
+- region 内部 schema 表达式可读取 `doc`、`selection`、`activeNode`、`activeEdge`、`activeBranch`、`runtime`（通过 child scope 注入，见第 4 节）
 
 ### Region capability matrix
 

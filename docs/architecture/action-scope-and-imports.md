@@ -235,7 +235,7 @@ interface ActionNamespaceProvider {
 
 Complex domain hosts should continue to expose a bridge, not their internal store implementation.
 
-For example, flow-designer should keep a bridge shaped like the documented `DesignerBridge` in `docs/architecture/flow-designer/api.md:98`, and spreadsheet/report designer should keep typed command dispatch contracts such as those described in `docs/architecture/report-designer/contracts.md:314`.
+For example, flow-designer should keep a bridge shaped like the documented `DesignerBridge` in `docs/architecture/flow-designer/api.md:98`, and spreadsheet/report designer should keep typed command dispatch contracts consistent with the active family owner docs plus any future contract drafts under `docs/architecture/report-designer/`.
 
 The action-scope layer sits on top of that bridge and maps namespaced actions to bridge commands.
 
