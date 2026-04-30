@@ -16,6 +16,7 @@ interface DesignerPageSchema {
   title?: string
   document: GraphDocumentInput
   config: DesignerConfig
+  statusPath?: string
   toolbar?: SchemaInput
   inspector?: SchemaInput
   dialogs?: SchemaInput
@@ -26,6 +27,7 @@ interface DesignerPageSchema {
 
 - `toolbar` 与 `inspector` 会作为 `designer-page` 的实际 region mount 渲染
 - `dialogs` 现在也会作为 `designer-page` 的实际 region mount 渲染，并与 `toolbar` / `inspector` 一样拿到 designer host `scope` 与 `actionScope`
+- `statusPath` 当前也已落地，用于向宿主外部发布 `DesignerHostStatusSummary` 这类窄摘要，不与 region host scope 混用
 - 当前真正生效的 dialog 路径，是 toolbar / inspector / 其他 schema 片段通过共享 `dialog` action 打开 `SchemaRenderer` 自带的 dialog runtime
 - 仍然需要区分两件事：一是 `dialogs` region 片段本身现在已经会挂载；二是通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径
 - `packages/flow-designer-renderers/src/designer-page-shell.test.tsx` 现在也有正向回归测试锁定该现状：直接传入 `dialogs` schema 会出现在页面上，避免文档与 live behavior 再次漂移
@@ -200,9 +202,9 @@ interface NodeTypeConfig {
 }
 ```
 
-### 4.1 节点组件 `body` - AMIS JSON 表示
+### 4.1 节点组件 `body` - Flux JSON 表示
 
-`body` 字段定义节点在画布上的渲染方式，使用标准 AMIS Schema：
+`body` 字段定义节点在画布上的渲染方式，使用标准 Flux schema：
 
 ```json
 {
@@ -240,7 +242,7 @@ interface NodeTypeConfig {
 
 **设计要点**：
 
-1. **完全复用 AMIS Renderer**：`body` 内部可以使用任何已注册的 renderer
+1. **完全复用 Flux Renderer**：`body` 内部可以使用任何已注册的 renderer
 2. **组合而非硬编码**：用 `flex`、`container`、`grid` 等容器组合
 3. **自定义组件支持**：`{ "type": "my-custom-node" }` 引用自定义注册的 renderer
 4. **Scope 自动注入**：节点实例的 `data` 字段自动成为 `body` 的 scope
@@ -381,6 +383,7 @@ function ApiNodeRenderer({ scope }) {
 - tree 模式 add-node 菜单项集合已直接从 `config.nodeTypes` 派生
 - renderer 内置的节点字段表单/菜单目录只保留为兼容兜底，不再是主配置来源
 - playground 中的 `workflow-designer-schema.json`、`dingtalk-workflow-tree-schema.json`、`action-flow-tree-schema.json` 现都已采用显式 `inspector.body` 作为维护路径，可作为 schema-first 参考样例
+- `edgeTypes[].inspector.body` 与 `mode?: 'panel' | 'drawer' | 'dialog'` 已在 schema 合同中定义，但当前 live renderer 仍主要对 edge 走简单 fallback 编辑，尚未像 node inspector 一样完整消费这些 schema 字段
 
 ## 5. PortConfig
 
@@ -474,7 +477,7 @@ interface EdgeTypeConfig {
 }
 ```
 
-### 9.1 边组件 `body` - AMIS JSON 表示（可选）
+### 9.1 边组件 `body` - Flux JSON 表示（可选）
 
 边的 `body` 用于渲染边上的标签或装饰：
 
@@ -651,7 +654,14 @@ interface CanvasConfig {
 
 ## 13.1 ToolbarConfig
 
-工具栏支持两种配置方式：
+`config.toolbar` 只负责配置 `designer-page` 内置默认 toolbar 的 item 集合；它不是完整 schema 容器。
+
+如果需要直接覆盖 page 级 toolbar UI，使用 `DesignerPageSchema.toolbar?: SchemaInput`。这两个入口的边界是：
+
+- `config.toolbar.items`：built-in default toolbar 的轻量 item config
+- `designer-page.toolbar`：显式 schema override surface，直接替换默认 toolbar 内容
+
+工具栏支持两种入口，但只有一种 schema 入口：
 
 ### 方式一：使用预定义按钮（推荐）
 
@@ -662,9 +672,9 @@ interface ToolbarConfig {
 
 type ToolbarItem =
   | { type: 'back'; label?: string }
-  | { type: 'title'; tpl: string }
+  | { type: 'title'; body: string }
   | { type: 'badge'; text: string; level: string }
-  | { type: 'text'; tpl: string }
+  | { type: 'text'; text: string }
   | { type: 'divider' }
   | { type: 'spacer' }
   | { type: 'button'; action: string; icon?: string; label?: string; disabled?: string; active?: string; variant?: 'default' | 'primary' | 'danger' }
@@ -682,47 +692,45 @@ interface DesignerConfig {
   "toolbar": {
     "items": [
       { "type": "back" },
-      { "type": "title", "tpl": "${doc.name}" },
-      { "type": "badge", "level": "${isDirty ? 'warning' : 'success'}", "text": "${isDirty ? '未保存' : '已保存'}" },
+      { "type": "title", "body": "${doc.name}" },
+      { "type": "badge", "level": "${runtime.dirty ? 'warning' : 'success'}", "text": "${runtime.dirty ? '未保存' : '已保存'}" },
       { "type": "divider" },
-      { "type": "text", "tpl": "${doc.nodes.length} 节点" },
+      { "type": "text", "text": "${doc.nodes.length} 节点" },
       { "type": "divider" },
-      { "type": "button", "action": "designer:undo", "icon": "RotateCcw", "label": "撤销", "disabled": "${!canUndo}" },
-      { "type": "button", "action": "designer:redo", "icon": "RotateCw", "label": "重做", "disabled": "${!canRedo}" },
+      { "type": "button", "action": "designer:undo", "icon": "RotateCcw", "label": "撤销", "disabled": "${!runtime.canUndo}" },
+      { "type": "button", "action": "designer:redo", "icon": "RotateCw", "label": "重做", "disabled": "${!runtime.canRedo}" },
       { "type": "spacer" },
-      { "type": "button", "action": "designer:save", "icon": "Save", "label": "保存", "variant": "primary", "disabled": "${!isDirty}" }
+      { "type": "button", "action": "designer:save", "icon": "Save", "label": "保存", "variant": "primary", "disabled": "${!runtime.dirty}" }
     ]
   }
 }
 ```
 
-### 方式二：使用完整 AMIS Schema
+### `designer-page.toolbar` schema override
 
 ```json
 {
+  "type": "designer-page",
   "toolbar": {
     "type": "container",
-    "className": "fd-toolbar",
     "body": [
       {
         "type": "button",
         "label": "撤销",
-        "disabled": "${!canUndo}",
+        "disabled": "${!runtime.canUndo}",
         "onClick": { "action": "designer:undo" }
       },
       {
         "type": "button",
         "label": "保存",
         "variant": "primary",
-        "disabled": "${!isDirty}",
+        "disabled": "${!runtime.dirty}",
         "onClick": { "action": "designer:save" }
       }
     ]
   }
 }
 ```
-
-> **注意**：统一使用 `${xxx}` 表达式，不需要 `xxxOn` 后缀。详见 `docs/references/flux-json-conventions.md`。
 
 ### 默认工具栏
 
@@ -731,13 +739,14 @@ interface DesignerConfig {
 ```ts
 const defaultToolbarItems: ToolbarItem[] = [
   { type: 'back' },
-  { type: 'title', tpl: '${doc.name}' },
-  { type: 'badge', level: '${isDirty ? "warning" : "success"}', text: '${isDirty ? "未保存" : "已保存"}' },
+  { type: 'title', body: '${doc.name}' },
+  { type: 'text', text: '${doc.nodes.length} 节点' },
+  { type: 'badge', level: '${runtime.dirty ? "warning" : "success"}', text: '${runtime.dirty ? "未保存" : "已保存"}' },
   { type: 'divider' },
-  { type: 'button', action: 'designer:undo', icon: 'RotateCcw', disabled: '${!canUndo}' },
-  { type: 'button', action: 'designer:redo', icon: 'RotateCw', disabled: '${!canRedo}' },
+  { type: 'button', action: 'designer:undo', icon: 'RotateCcw', disabled: '${!runtime.canUndo}' },
+  { type: 'button', action: 'designer:redo', icon: 'RotateCw', disabled: '${!runtime.canRedo}' },
   { type: 'spacer' },
-  { type: 'button', action: 'designer:save', icon: 'Save', variant: 'primary', disabled: '${!isDirty}' }
+  { type: 'button', action: 'designer:save', icon: 'Save', variant: 'primary', disabled: '${!runtime.dirty}' }
 ]
 ```
 
@@ -749,11 +758,17 @@ const defaultToolbarItems: ToolbarItem[] = [
 interface ToolbarScope {
   doc: GraphDocument       // 当前文档
   selection: SelectionSummary
-  canUndo: boolean
-  canRedo: boolean
-  isDirty: boolean
-  gridEnabled: boolean
-  viewport: { x: number; y: number; zoom: number }
+  activeNode: GraphNode | null
+  activeEdge: GraphEdge | null
+  runtime: {
+    canUndo: boolean
+    canRedo: boolean
+    dirty: boolean
+    isDirty: boolean
+    gridEnabled: boolean
+    zoom: number
+    viewport: { x: number; y: number; zoom: number }
+  }
 }
 ```
 
@@ -858,9 +873,9 @@ const schema = {
 
 **工具栏按钮**（从左到右）：
 1. 返回 - `{ type: 'back' }`
-2. 标题 - `{ type: 'title', tpl: '${doc.name}' }`
+2. 标题 - `{ type: 'title', body: '${doc.name}' }`
 3. 状态徽章 - `{ type: 'badge', ... }`
-4. 统计信息 - `{ type: 'text', tpl: '${doc.nodes.length} 节点' }`
+4. 统计信息 - `{ type: 'text', text: '${doc.nodes.length} 节点' }`
 5. 网格开关 - `{ type: 'button', action: 'designer:toggle-grid', ... }`
 6. 撤销/重做 - `{ type: 'button', action: 'designer:undo', ... }`
 7. 恢复/导出 - `{ type: 'button', action: 'designer:restore', ... }`
@@ -900,7 +915,7 @@ const schema = {
 - **Icon 命名**：配置用 kebab-case，运行时转 PascalCase
 - **JSON Key**：统一 camelCase
 - **Config 与 Data 分离**：`config` 定义类型，`document` 存实例
-- **Region 配置**：支持预定义类型或完整 AMIS Schema
+- **Region 配置**：支持 `config.toolbar.items` 这类轻量 config，或 `designer-page.toolbar` / `inspector` / `dialogs` 这类显式 schema override surface
 
 ## 17. 推荐约束
 

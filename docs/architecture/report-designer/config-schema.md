@@ -294,36 +294,26 @@ interface FieldItemConfig {
 
 ## 7. inspector 配置
 
-右侧属性面板必须外部可定制，因此 inspector 不采用固定字段列表，而采用匹配规则 + panel provider。
+右侧属性面板必须外部可定制，因此 inspector 不采用固定字段列表，而采用 selection-aware schema/config。
 
 ```ts
 interface ReportInspectorConfig {
   mode?: 'panel' | 'drawer'
-  providers: InspectorProviderConfig[]
-}
-
-interface InspectorProviderConfig {
-  id: string
-  label?: string
-  match: SelectionTargetMatch
-  priority?: number
   body?: SchemaInput
-  provider?: string
-  submitAction?: ActionSchema | ActionSchema[]
-}
-
-interface SelectionTargetMatch {
-  kinds: Array<'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range'>
-  when?: string
+  byTarget?: Partial<Record<'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range', SchemaInput>>
+  byProfile?: Record<string, Partial<Record<'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range', SchemaInput>>>
 }
 ```
 
 说明:
 
-- `body` 允许直接嵌入 schema 片段
-- `provider` 允许引用外部动态 panel provider
-- 多个 provider 可以组合为不同页签或分组
-- `when` 是附加匹配条件，表达式语义后续由现有表达式编译体系或适配器处理
+- `body` 适合简单场景：由 schema 自己根据 `target` / `selection` 决定展示内容
+- `byTarget` 适合不同 selection kind 完全不同的编辑面板
+- `byProfile` 适合不同 profile 生成不同的 inspector schema
+- inspector 的实际编辑体直接就是普通 Flux schema/form；这里不再定义 provider/panel/value-adapter 这类平行 inspector 模型
+- 如果存在大量重复配置，应优先在 schema 组装层通过元编程生成最终 inspector schema，而不是在 runtime 层定义额外匹配模型
+- `mode?: 'panel' | 'drawer'` 表示 inspector 容器显示方式的 schema/config 合同；当前 live renderer 是否已经完整支持某种 mode，需要以对应 renderer 实现为准，不应仅凭 schema shape 推断全部已落地
+- 如果某个 target 没有显式可编辑 schema，则可以没有可编辑内容；不要求 fallback form
 
 ## 8. preview 配置
 
@@ -417,7 +407,7 @@ interface ReportDesignerFeatures {
 
 - `kind: 'nop-report'`
 - 专用 `fieldSources` provider
-- 专用 inspector providers
+- 专用 `inspector.body` / `inspector.byTarget` / `inspector.byProfile` schema 组装
 - 专用 preview provider
 - 专用 import/export adapter
 - 专用 metadata 映射器，把通用 `cellMeta` 等结构映射到 `ExcelWorkbook + Xpt*Model`

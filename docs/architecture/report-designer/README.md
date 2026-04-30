@@ -51,7 +51,7 @@ Read this family when you need to understand:
 - `contracts.md` - implementation-oriented contracts and adapter interfaces
 - `config-schema.md` - `spreadsheet-page`, `report-designer-page`, document model, and shell fragment config
 - `api.md` - package APIs, host scope, and namespaced actions
-- `inspector-design.md` - property-panel shell/provider/panel descriptor design
+- `inspector-design.md` - inspector 的 schema/form 主路径、selection-aware 组织方式，以及上游 schema 组装规则
 - `nop-report-profile.md` - how the generic designer adapts to `nop-report`
 - `codec-design.md` - round-trip codec design
 - `spreadsheet-canvas-css.md` - performance-critical spreadsheet canvas styling strategy

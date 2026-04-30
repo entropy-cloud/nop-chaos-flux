@@ -117,6 +117,13 @@ interface ReportDesignerPageSchema {
 - 在 page-owned `ActionScope` 上注册 `spreadsheet:*` 与 `report-designer:*` namespace
 - 通过 `statusPath` 向宿主发布窄只读状态摘要
 
+Inspector 规范主路径：
+
+- `inspector` 片段直接挂载最终 Flux schema/form
+- selection-aware 切换由 host/profile/schema 组装层决定
+- 写回仍通过 `spreadsheet:*` / `report-designer:*`
+- 当前 live code 若仍带有 provider/panel 结构，应视为 implementation lag / compatibility detail，而不是本文件的规范目标
+
 ## 1.1 Action Namespace Ownership
 
 Report/Spreadsheet family 的 action 扩展应遵循词法 `ActionScope` owner 模型，而不是全局 runtime action registry。
@@ -420,7 +427,7 @@ registerReportDesignerRenderers(registry)
 
 - `designer.kind = 'nop-report'`
 - `fieldSources.provider = 'nop-report-datasets'`
-- `inspector.providers = ['nop-report-cell-panel', 'nop-report-sheet-panel']`
+- `designer.inspector.byProfile['nop-report-default'] = { ...最终 inspector schema... }`
 - `preview.provider = 'nop-report-preview'`
 
 把通用设计器收敛到具体模型。

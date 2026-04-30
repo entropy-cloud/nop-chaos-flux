@@ -153,6 +153,7 @@ interface DesignerPageSchema {
   title?: string
   document: GraphDocumentInput
   config: DesignerConfig
+  statusPath?: string
   toolbar?: SchemaInput
   inspector?: SchemaInput
   dialogs?: SchemaInput
@@ -163,7 +164,9 @@ interface DesignerPageSchema {
 
 - `document` 是当前图文档初始值
 - `config` 是 designer 专用配置，定义 nodeTypes、ports、edgeTypes 等领域规则
+- `statusPath` 用于向宿主外部发布 `DesignerHostStatusSummary` 这类窄摘要；它不是 host scope 投影的一部分
 - `toolbar`、`inspector`、`dialogs` 是当前已实际挂载的 schema 片段，由 `SchemaRenderer` 渲染
+- `toolbar`、`inspector`、`dialogs` 是 page 级 explicit override surfaces；palette 与 canvas 仍是 renderer-owned default UI，而不是同级 page region
 - 但 `designer-page` 当前并不是“所有可见工作台内容都必须 schema 化”的模型；它仍保留默认 palette、默认 toolbar/inspector fallback 与其他 renderer-owned workbench UI，只是在选定区域开放 schema override 面
 - `dialogs` region 本身现在已经会被 `DesignerPageRenderer` 挂载；但通过共享 `dialog` action 打开的弹窗仍然是另一条 dialog runtime 路径，两者不应混为一谈
 
@@ -254,12 +257,12 @@ interface DesignerPageSchema {
 - `quickActions` - 快速操作按钮
 - `emptyState` - 空节点空状态提示
 
-但 节点组件通过 `body: SchemaInput` 渲染，使用 AMIS Schema 组合现有 renderer
+但节点组件通过 `body: SchemaInput` 渲染，使用 Flux schema 组合现有 renderer
             - 内置节点图标通过 `icon` 字段（kebab-case 格式）
             - `label`、 `description` 秊外观样式
             - 边标签和说明节点类型
 - **节点组件支持自定义 renderer**
-  通过在 `nodeTypes[].body` 中使用自定义组件类型（如 `my-custom-node`），注册后通过 AMIS 渲染器引用。
+  通过在 `nodeTypes[].body` 中使用自定义组件类型（如 `my-custom-node`），注册后通过 Flux renderer 引用。
             - 或在 `nodeTypes` 中配置一个使用内置组件
             - 通过 `nodeTypes[].appearance` 配置基础样式（颜色、边框等）
 - 节点内部允许嵌入 schema 片段：
@@ -306,7 +309,8 @@ interface DesignerPageSchema {
 - 默认 inspector 与 `designer-field` 当前直接消费 `DesignerContext.snapshot`
 - 默认 inspector 现已优先渲染 `nodeType.inspector.body`；renderer 不再内置领域专属 inspector 表单，只保留名称/描述与通用标量字段 fallback
 - schema inspector 的写路径已经可以稳定复用 `designer:*` action
-- schema inspector 的读路径还不应在现状文档里写成“`${activeNode.*}` 已默认可用”；当前落地状态见 `docs/architecture/flow-designer/runtime-snapshot.md`
+- schema inspector 的读路径当前已稳定落在 `toolbar` / `inspector` / `dialogs` 三个 region 的 host scope 中；不要把它扩大表述成 `designer-page` 外部的全局 schema scope 都天然可见，当前落地状态见 `docs/architecture/flow-designer/runtime-snapshot.md`
+- node inspector 的 `inspector.body` 已是 live 主路径；`edgeTypes[].inspector.body` / `mode` 仍属于 schema 合同先行、renderer 未完整消费的状态
 - tree 模式 add-node 菜单项集合现已直接从 `config.nodeTypes` 派生，renderer 只保留窄的 fallback 过滤与排序规则
 
 ### 9.2 两阶段创建

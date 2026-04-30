@@ -242,7 +242,8 @@ interface RendererDefinition {
 Renderer metadata needs concepts that host manifest does not:
 
 - author-facing display names for inspector/palette tooling
-- editor UI hints (`editorType`)
+- schema-semantics metadata such as value shape, defaults, and validation-facing constraints
+- optional editor UI hints (`editorType`) for tooling/debugger use, but these should not be the primary architecture path for designer property editing
 - default schema values
 - layout or builder metadata
 

@@ -31,14 +31,16 @@ export interface DomainBridge<TSnapshot, TCommand, TResult> {
 
 | Domain | Bridge 类型 | 实现 |
 |--------|-------------|------|
-| Spreadsheet | `SpreadsheetBridge` | 直接实现 `DomainBridge<SpreadsheetHostSnapshot, SpreadsheetCommand, SpreadsheetCommandResult>` + `getCore()` |
+| Spreadsheet | `SpreadsheetBridge` | 结构兼容 `DomainBridge<SpreadsheetHostSnapshot, SpreadsheetCommand, SpreadsheetCommandResult>`，当前未显式 `extends`，并额外暴露 `getCore()` |
 | Report Designer | `ReportDesignerBridge` | 扩展 `SpreadsheetBridge`，附加 `getDesignerSnapshot()` / `dispatchDesigner()` / `getDesignerCore()` |
 | Flow Designer | 无独立 bridge 类型 | 通过 `DesignerCore` 的 `subscribe` / `getSnapshot` / `dispatch` 可适配为 `DomainBridge`，目前由 `designer-page` 内部处理 |
 | Word Editor | 无 bridge | 通过 `CanvasEditorBridge` + `editorStore`组合；暂无统一 `DomainBridge` 包装 |
 
 ## 4. `WorkbenchSessionState`
 
-描述工作台会话的横切状态，可由各域 bridge/snapshot 派生或独立维护：
+描述工作台会话的横切状态，可由各域 bridge/snapshot 派生或独立维护。
+
+当前 live repo 中，这些类型首先属于 protocol-level reserved types：定义已经存在于 `@nop-chaos/flux-core/src/workbench/types.ts`，但尚无直接 runtime consumer 要求所有 host family 统一落地它们。
 
 ```ts
 export interface WorkbenchSessionState {
@@ -52,7 +54,9 @@ export interface WorkbenchSessionState {
 
 ## 5. `BusyActionState`
 
-异步主动作的标准状态机，用于表示 preview、save、export 等动作的执行态：
+异步主动作的标准状态机，用于表示 preview、save、export 等动作的执行态。
+
+当前 live repo 中，它同样是协议保留类型，而不是每个 host family 都已经统一接线到同一份运行时状态对象。
 
 ```ts
 export type BusyActionPhase = 'idle' | 'running' | 'done' | 'error';
@@ -72,7 +76,9 @@ export interface BusyActionState {
 
 ## 6. `ResourceBrowserInteractionPolicy`
 
-资源面板（字段面板、片段库、模板库等）的交互约定：
+资源面板（字段面板、片段库、模板库等）的交互约定。
+
+当前它也是 protocol-level reserved contract，用来约束跨 workbench 的交互语义，不代表所有现有 renderer 已共享同一份实现对象：
 
 ```ts
 export interface ResourceBrowserInteractionPolicy {
@@ -125,7 +131,7 @@ Namespace 命名规则：
 - Flow Designer：`designer:*`
 - Spreadsheet：`spreadsheet:*`
 - Report Designer：`report-designer:*`
-- Word Editor：`word-editor:*`（计划中）
+- Word Editor：`word-editor:*`
 
 ## 9. Session / Dirty / Leave-guard 约定
 
@@ -137,10 +143,79 @@ Namespace 命名规则：
 
 当前跨域 baseline 可以概括为：
 
-- Flow Designer、Spreadsheet、Report Designer 都已经采用“只读 host projection + namespaced action 写入”的共同边界，而不是让 schema 片段直接持有 core store
+- Flow Designer、Spreadsheet、Report Designer、Word Editor 都已经采用“只读 host projection + namespaced action 写入”的共同边界，而不是让 schema 片段直接持有 core store
 - `designer-page`、`spreadsheet-page`、`report-designer-page` 都应把宿主摘要暴露为 projection/snapshot，而不是把 domain runtime 变成 page 全局可写对象
 - `WorkbenchShell` 可以作为共享视觉壳复用，但它不是共享协议成立的前提；协议的关键仍然是 `getSnapshot/subscribe/dispatch`、host scope 投影和 namespace wiring
-- Word Editor 是否完全接入同一协议，不改变本文的协议边界：未接入的域应视为未来采用者，而不是当前基线的例外许可
+- Word Editor 当前也已经是 live adopter；它的内核和默认 UI 仍是 domain-owned，但 host boundary、host scope、namespace action、`WorkbenchShell` 复用边界与其他家族一致
+
+更准确的定位应直接写清：
+
+- Flux 本身仍首先是执行/runtime 内核
+- 但它已经为一个**通用异构设计器内核**提供了统一的 runtime 支撑
+- 共享的是 host boundary、host projection、namespaced action、`WorkbenchShell`、selection-aware inspector 与 per-family override contract 这些 runtime 支撑面
+- 不共享的是每个 designer 的文档模型、默认 UI、交互语义和领域 runtime
+
+因此，Flow Designer、Report Designer、Spreadsheet、Word Editor 这些家族不是“同一页面设计器的不同插件”，而是“同一异构设计器内核之上、由 Flux runtime 提供统一支撑的不同 domain host family”
+
+### 10.1 共享工作台边界
+
+对于 `domain-host-renderer` + `workbench-shell` 家族，当前共享边界还包括：
+
+- 每个 host family 自己拥有 built-in default UI 与 explicit override surfaces
+- 不存在一个强制所有 designer 共享的 universal workbench baseline object
+- 可见内容的默认部分由 owner renderer 自己负责；override 面只在该 family 明确开放的区域成立
+- host manifest / host projection 负责宿主边界，不负责描述完整可见 UI
+
+因此，跨 designer 可以统一的是：
+
+- host scope 注入规则
+- namespaced action 写入规则
+- `statusPath` 摘要发布规则
+- override surface 的“有无、优先级、作用域”这类边界表达
+
+但不应强行统一：
+
+- region 集合
+- 默认 toolbar/panel 结构
+- 每个 designer 的具体 inspector/palette/field-panel UI 组织方式
+
+### 10.2 共享 inspector 基线
+
+跨 designer 的 inspector 共享基线应写成最小原则，而不是厚协议：
+
+- inspector 首先是一个 selection-aware host shell
+- inspector 的实际编辑体直接就是普通 Flux `SchemaInput` / form runtime，不需要再定义一套独立 inspector DSL、provider model 或 value-adapter model
+- 属性编辑 UI 的布局、tab、字段拆分/组合、`object-field` / `variant-field` 组合、以及 `transformIn/transformOut` 一类编辑适配，原则上都集中在 `inspector` 定义里
+- 如果某个 selection kind 没有显式可编辑 schema，则可以不提供可编辑内容；不要为了“统一体验”强行补一个 fallback form
+- 写操作仍通过 namespaced action 提交，不直接修改 host projection 或 core store 引用
+
+DSL 优先规则：
+
+- inspector/property editing 本身属于 Flux 已有 DSL 可以描述的问题域
+- 因此规范主路径就是直接复用 `SchemaInput` / form schema，而不是再定义第二套 inspector model
+- 如果要减少手写成本，优先在 JSON/schema 组装层通过元编程生成 inspector schema；对前端 Flux runtime 来说这仍然只是普通 schema
+- 只有在现有 DSL 真的无法表达时，才应讨论额外 host-side 组织层，而不是先发明新的属性编辑 DSL
+
+补充边界：
+
+- `propContracts.shape` / `required` / `defaultValue` 这类信息属于 authored schema 语义与 parse/validate 边界
+- 不要把只用于属性编辑 UI 的信息分散回普通运行时 definition；若某信息只服务 inspector，优先把它留在 `inspector` 中集中维护
+
+这意味着：
+
+- Flow Designer 的 `nodeType.inspector.body` / `edgeType.inspector.body`
+- Report Designer 的 `cell -> form -> patch`
+- 以及其他 designer 的 selection-specific schema editor
+
+都属于同一种共享模式：selection-aware shell + schema/form body + action-based writeback。
+
+当前更准确的统一说法是：
+
+- 不同类型的部分（node / edge / workbook / sheet / cell / range 等）都可以拥有自己对应的 inspector schema
+- inspector 的显示方式也可以由 schema/config 决定，例如 `panel` / `drawer` / `dialog`
+- 但这些 mode 选项是否已经在某个 family 的 live renderer 中全部接线，必须按各 family 当前实现分别判断，不能把“schema 已设计”直接写成“全部已落地”
+
+即使出现多 target / 多 panel / profile 组合，也应优先继续停留在 Flux DSL 框架内：通过上游 schema 组装/元编程生成最终 inspector schema，而不是在 runtime 层保留一套平行的 provider/panel descriptor 组织模型。
 
 参考实现判断：
 

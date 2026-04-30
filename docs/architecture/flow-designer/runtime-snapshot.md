@@ -22,6 +22,8 @@
 
 当前 Flow Designer 已经有稳定的运行时快照，并且快照数据通过 `useDesignerHostScope` 被投影为 child scope 注入给 `toolbar`、`inspector`、`dialogs` 三个 region 的 schema 片段。
 
+如果宿主外部需要读取该 designer 的窄状态摘要，则应使用 `statusPath`；`statusPath` 与 region host scope 是两条不同边界，不要混写。
+
 也就是说，当前实际存在并已落地的是:
 
 - `DesignerSnapshot`

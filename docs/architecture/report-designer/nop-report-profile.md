@@ -34,7 +34,7 @@
 - `SpreadsheetDocument` <-> Excel 结构层
 - `ReportSemanticDocument` <-> XPT 语义层
 - 字段拖拽行为 <-> `XptCellModel` patch 生成规则
-- inspector panels <-> workbook/sheet/cell 级 XPT 属性页
+- inspector schema <-> workbook/sheet/cell 级 XPT 属性页
 
 ## 2. Profile 定位
 
@@ -45,7 +45,7 @@ export interface ReportDesignerProfile {
   id: string;
   kind: string;
   fieldSourceIds: string[];
-  inspectorIds: string[];
+  inspectorSchemaId?: string;
   fieldDropIds: string[];
   previewId?: string;
   codecId?: string;
@@ -60,13 +60,7 @@ const nopReportProfile: ReportDesignerProfile = {
   id: 'nop-report-default',
   kind: 'nop-report',
   fieldSourceIds: ['nop-report-datasets'],
-  inspectorIds: [
-    'nop-report-workbook-panel',
-    'nop-report-sheet-panel',
-    'nop-report-cell-basic-panel',
-    'nop-report-cell-xpt-panel',
-    'nop-report-range-panel'
-  ],
+  inspectorSchemaId: 'nop-report-default',
   fieldDropIds: ['nop-report-cell-binding'],
   previewId: 'nop-report-preview',
   codecId: 'nop-report-xpt-codec',
@@ -173,7 +167,7 @@ interface NopReportCellMeta {
 - `semantic.workbookMeta['nop-report'].model`
 - `semantic.sheetMeta[sheetId]['nop-report'].model`
 
-是否在 UI 上完整展开这些字段，应由 inspector providers 决定。
+是否在 UI 上完整展开这些字段，应由 `nop-report` profile 生成的 inspector schema 决定。
 
 ## 5. 左侧字段面板适配
 
@@ -264,27 +258,27 @@ adapter 可根据字段类型增加默认值:
 
 ## 7. inspector 面板适配
 
-`nop-report` 的属性编辑不应是一个单一大表单，而应拆成多个 provider。
+`nop-report` 的属性编辑不应再建一套 provider 体系；如果需要多块内容，应由 profile 生成最终的多 tab / 多 section Flux schema。
 
-### 7.1 workbook panel
+### 7.1 workbook schema
 
-`nop-report-workbook-panel` 建议负责:
+`nop-report` 生成的 workbook inspector schema 建议覆盖:
 
 - workbook 基础属性
 - workbook 级 model
 - 默认样式和导出相关设置
 
-### 7.2 sheet panel
+### 7.2 sheet schema
 
-`nop-report-sheet-panel` 建议负责:
+`nop-report` 生成的 sheet inspector schema 建议覆盖:
 
 - sheet 基础属性
 - sheet 级 model
 - page setup、print、sheet options 的 profile 级编辑入口
 
-### 7.3 cell basic panel
+### 7.3 cell basic schema
 
-`nop-report-cell-basic-panel` 建议负责:
+`nop-report` 生成的 cell basic schema 建议覆盖:
 
 - 单元格显示值
 - 类型
@@ -295,9 +289,9 @@ adapter 可根据字段类型增加默认值:
 
 这些字段多数对应 `SpreadsheetDocument` 层。
 
-### 7.4 cell XPT panel
+### 7.4 cell XPT schema
 
-`nop-report-cell-xpt-panel` 建议负责:
+`nop-report` 生成的 cell XPT schema 建议覆盖:
 
 - `field`
 - `ds`
@@ -317,7 +311,7 @@ adapter 可根据字段类型增加默认值:
 
 ### 7.5 inspector 组织方式建议
 
-推荐由多个 provider 组合成 tabs:
+推荐由 profile 直接生成 tabs schema:
 
 - `Basic`
 - `Style`
@@ -327,7 +321,7 @@ adapter 可根据字段类型增加默认值:
 好处是:
 
 - 通用 inspector shell 不需要理解 `nop-report`
-- profile 可以逐步扩展面板，而不需要推翻原有结构
+- profile 可以逐步扩展 schema，而不需要推翻原有结构
 
 ## 8. 表达式字段与表达式编辑器接入
 
@@ -339,7 +333,7 @@ adapter 可根据字段类型增加默认值:
 - `styleIdExpr`
 - `linkExpr`
 
-这些字段都声明为 expression-kind property，由 inspector provider 标注需要调用表达式编辑器。
+这些字段都声明为 expression-kind property，由最终 inspector schema 标注需要调用表达式编辑器。
 
 `nop-report` profile 需要提供:
 
@@ -424,7 +418,7 @@ codec adapter 必须优先保证:
 - dataset/field 树加载与展示
 - 字段 drop 到 cell 的语义映射
 - XPT cell model 的字段定义与默认值
-- workbook/sheet/cell/range 的 `nop-report` inspector panels
+- workbook/sheet/cell/range 的 `nop-report` inspector schema
 - preview 请求协议
 - import/export codec
 - `rowParent` / `colParent` 等语义辅助交互
@@ -439,7 +433,7 @@ codec adapter 必须优先保证:
 - canvas 渲染、hit test、DOM overlay 编辑
 - history / transaction / command pipeline
 - bridge 与宿主 scope 注入
-- inspector shell 与 provider 匹配框架
+- inspector shell 与最终 schema 挂载边界
 - expression editor adapter 注入位
 
 ## 14. 推荐落地顺序
@@ -450,7 +444,7 @@ codec adapter 必须优先保证:
 2. 实现 `ReportSemanticDocument <-> Xpt*Model` 基础 codec
 3. 实现 `nop-report-datasets` field source provider
 4. 实现 `nop-report-cell-binding` field drop adapter
-5. 实现 cell basic / cell XPT inspector providers
+5. 生成 cell basic / cell XPT inspector schema
 6. 实现 `nop-report-preview` adapter
 7. 再增强 `rowParent` / `colParent` 交互和高级 sheet/workbook 面板
 
@@ -462,6 +456,6 @@ codec adapter 必须优先保证:
 
 - 用 `SpreadsheetDocument` 承载 Excel 结构
 - 用 `ReportSemanticDocument` 承载 XPT 语义
-- 用 `FieldSourceProvider`、`FieldDropAdapter`、`InspectorProvider`、`PreviewAdapter`、`TemplateCodecAdapter` 做领域映射
+- 用 `FieldSourceProvider`、`FieldDropAdapter`、`PreviewAdapter`、`TemplateCodecAdapter` 做领域映射，并为 profile 生成对应 inspector schema
 
 这样既能保证 `nop-report` 的 round-trip 和设计器体验，也不会破坏 `Report Designer` 作为通用设计器的定位。

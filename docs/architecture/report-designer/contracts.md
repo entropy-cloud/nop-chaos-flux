@@ -523,7 +523,7 @@ export interface ReportDesignerRuntimeSnapshot {
   activeMeta?: MetadataBag;
   inspector: {
     open: boolean;
-    providerIds: string[];
+    schemaKey?: string;
   };
   fieldSources: FieldSourceSnapshot[];
   fieldDrag: FieldDragState;
@@ -560,8 +560,7 @@ export interface CreateReportDesignerCoreOptions {
 ```ts
 export interface InspectorRuntimeState {
   open: boolean;
-  activePanelId?: string;
-  panelIds: string[];
+  schemaKey?: string;
   loading: boolean;
   error?: unknown;
 }
@@ -580,36 +579,20 @@ export interface FieldSourceProvider {
 }
 ```
 
-### 5.2 inspector provider
+### 5.2 inspector baseline
 
 ```ts
-export interface InspectorPanelDescriptor {
-  id: string;
-  title: string;
-  targetKind: ReportSelectionTargetKind;
-  group?: string;
-  order?: number;
-  mode?: 'tab' | 'section' | 'inline';
-  body: SchemaInput;
-  submitAction?: ActionSchema | ActionSchema[];
-  readonly?: boolean;
-  badge?: string;
-}
-
-export interface InspectorProvider {
-  id: string;
-  match(target: ReportSelectionTarget, context: ReportDesignerAdapterContext): boolean;
-  getPanels(context: InspectorPanelContext): InspectorPanelDescriptor[] | Promise<InspectorPanelDescriptor[]>;
-  priority?: number;
-}
-
-export interface InspectorPanelContext {
-  target: ReportSelectionTarget;
-  metadata?: MetadataBag;
-  designer: ReportDesignerRuntimeSnapshot;
-  spreadsheet: SpreadsheetRuntimeSnapshot;
+export interface ReportSelectionTarget {
+  kind: 'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range';
 }
 ```
+
+当前规范基线：
+
+- inspector 是 selection-aware host shell
+- 实际编辑体直接复用 `SchemaInput` + form runtime
+- tabs、sections、复杂布局，以及不同 profile 的差异，优先通过 schema 组装层生成最终 inspector schema，而不是额外定义 provider/panel-descriptor 平行模型
+- 提交仍通过 `spreadsheet:*` / `report-designer:*` namespaced action 写回
 
 ### 5.3 字段拖放映射器
 
@@ -698,30 +681,18 @@ export interface ReferencePickerContext {
 
 ### 5.8 inspector value adapter
 
-```ts
-export interface InspectorValueAdapter {
-  id: string;
-  read(target: ReportSelectionTarget, context: InspectorPanelContext): Record<string, unknown>;
-  write(values: Record<string, unknown>, target: ReportSelectionTarget, context: InspectorPanelContext): InspectorWritePlan;
-}
-
-export interface InspectorWritePlan {
-  actions: Array<Record<string, unknown>>;
-}
-```
+这类 value-adapter 结构不应再作为规范主路径。当前 live code 若仍存在 `providerIds`、`panelIds`、`InspectorValueAdapter` 一类结构，应视为 legacy implementation detail；规范目标仍是“直接挂载最终 Flux schema/form，然后通过 namespaced action 写回”。
 
 ## 6. Adapter Registry 合同
 
 ```ts
 export interface ReportDesignerAdapterRegistry {
   fieldSources: Map<string, FieldSourceProvider>;
-  inspectors: Map<string, InspectorProvider>;
   fieldDrops: Map<string, FieldDropAdapter>;
   previews: Map<string, PreviewAdapter>;
   codecs: Map<string, TemplateCodecAdapter>;
   expressions: Map<string, ExpressionEditorAdapter>;
   references: Map<string, ReferencePickerAdapter>;
-  inspectorValues: Map<string, InspectorValueAdapter>;
 }
 ```
 
@@ -775,7 +746,7 @@ export type ReportDesignerEvent =
 - `report-designer-page` 负责创建 `ReportDesignerCore` 与 `ReportDesignerBridge`
 - 左侧字段面板与右侧 inspector 的实际 UI 仍尽量通过现有 `SchemaRenderer` 渲染
 - 表达式字段通过 `ExpressionEditorAdapter` 注入，不在 renderer 层特判某一种表达式实现
-- inspector shell 负责 tabs/sections/空态/只读态/错误态，provider 只负责产出 panel descriptors
+- inspector shell 负责 selection-aware 容器、tabs/sections/空态/只读态/错误态，而具体编辑体仍直接是 schema/form
 
 ## 9. `nop-report` Profile 如何落位
 
@@ -786,7 +757,6 @@ export interface ReportDesignerProfile {
   id: string;
   kind: string;
   fieldSourceIds: string[];
-  inspectorIds: string[];
   fieldDropIds: string[];
   previewId?: string;
   codecId?: string;
@@ -810,9 +780,9 @@ export interface ReportDesignerProfile {
 1. `SpreadsheetDocument`、`SpreadsheetSelection`、`SpreadsheetCommand`
 2. `SpreadsheetCore`、`SpreadsheetBridge`
 3. `ReportSelectionTarget`、`ReportSemanticDocument`、`ReportDesignerCommand`
-4. `FieldSourceProvider`、`InspectorProvider`、`FieldDropAdapter`
+4. `FieldSourceProvider`、`FieldDropAdapter`
 5. `ExpressionEditorAdapter`
-6. `ReferencePickerAdapter`、`InspectorValueAdapter`
+6. `ReferencePickerAdapter`
 
 原因是这五组接口已经足够支撑:
 

@@ -66,6 +66,7 @@ interface DesignerPageSchema {
   title?: string
   document: GraphDocumentInput
   config: DesignerConfig
+  statusPath?: string
   toolbar?: SchemaInput
   inspector?: SchemaInput
   dialogs?: SchemaInput
@@ -74,7 +75,9 @@ interface DesignerPageSchema {
 
 说明：
 - `config` 包含 `toolbar?: ToolbarConfig` 和 `shortcuts?: ShortcutsConfig`，详见 `config-schema.md`
-- `toolbar` / `inspector` / `dialogs` 是可选的 schema 片段覆盖，如果 `config.toolbar` 已定义，这里通常不需要再配置
+- `statusPath` 用于向宿主外部发布 `DesignerHostStatusSummary`
+- `config.toolbar` 只配置 built-in default toolbar 的 item 集合，不是完整 schema 容器
+- `toolbar` / `inspector` / `dialogs` 是 page 级 schema override surfaces
 
 `designer-page` 是宿主入口，不是普通容器的简单别名。它负责：
 
@@ -82,6 +85,7 @@ interface DesignerPageSchema {
 - 将 graph runtime 注入固定宿主 scope
 - 渲染 palette、canvas、inspector 区域
 - 在本地 `ActionScope` 内注册 `designer:*` actions
+- 通过 `statusPath` 向宿主发布窄只读状态摘要
 
 Current implementation note:
 
@@ -128,7 +132,9 @@ interface DesignerBridge {
 - schema 层当前最稳定的能力是 `designer:*` namespaced actions
 - toolbar / inspector / dialog 中触发的 schema action 当前都沿用同一条 `designer-page` -> local `ActionScope` -> `designer` namespace provider 路径
 - `dialogs` region 片段本身现在也已经是 live mount，而不是仅存在于 schema shape 中的保留字段
-- `${doc.*}`、`${selection.*}`、`${activeNode.*}`、`${activeEdge.*}`、`${runtime.*}` 这类 designer host scope 变量不应在现状说明中写成“已全部落地”
+- `${doc.*}`、`${selection.*}`、`${activeNode.*}`、`${activeEdge.*}`、`${runtime.*}` 这类 designer host scope 变量，当前已经稳定落地在 `toolbar` / `inspector` / `dialogs` 三个 region 内部
+- 但这些字段不应被写成 `designer-page` 外部的全局 schema scope 自动可见
+- `nodeType.inspector.body` 已是 live 主路径；`edgeType.inspector.body` / `mode` 仍属于 schema 合同先行、renderer 未完整消费的实现滞后
 
 ## 4. Designer Actions
 

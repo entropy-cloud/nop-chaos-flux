@@ -265,6 +265,8 @@ Authoring/runtime split reminder:
 
 - `propContracts` and tooling `editableProps` describe authored schema fields
 - runtime `RendererComponentProps['props']` remains the resolved render-time value bag
+- `shape` / `required` / `defaultValue` belong to authored schema semantics and parse/validate boundaries
+- property editing UI itself is better owned by `inspector`/schema for designer-like scenarios; `editorType` should not be treated as the primary architecture path for attribute editing
 - `scopeExportContracts` describes narrow readonly Flux-native exports such as `$form` and `$crud`; it is not host projection
 - `hostContract` remains host-only and should appear only on `domain-host-renderer`
 
