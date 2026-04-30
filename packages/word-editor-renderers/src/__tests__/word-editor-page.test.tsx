@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import { createFormulaCompiler } from '@nop-chaos/flux-formula'
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n'
@@ -8,6 +8,13 @@ import { createDefaultRegistry, createSchemaRenderer, useScopeSelector } from '@
 import type { RendererDefinition } from '@nop-chaos/flux-core'
 import type { RendererEnv } from '@nop-chaos/flux-core'
 import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js'
+
+const mockedCore = vi.hoisted(() => ({
+  saveDocumentMock: vi.fn(() => true),
+  saveDatasetsMock: vi.fn(),
+  loadDatasetsMock: vi.fn(() => []),
+}))
+let shortcutOptions: { onSave?: () => void } | undefined
 
 const editorStoreState = {
   isReady: true,
@@ -76,6 +83,10 @@ function resetMockStores() {
     selectedDatasetId: null,
   }
   editorStore.setDirty.mockClear()
+  mockedCore.saveDocumentMock.mockClear()
+  mockedCore.saveDatasetsMock.mockClear()
+  mockedCore.loadDatasetsMock.mockClear()
+  shortcutOptions = undefined
   datasetStore.load.mockClear()
   datasetStore.getAll.mockClear()
   datasetStore.getById.mockClear()
@@ -109,10 +120,10 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
     },
     createEditorStore: () => editorStore,
     createDatasetStore: () => datasetStore,
-    saveDocument: vi.fn(() => true),
+    saveDocument: mockedCore.saveDocumentMock,
     loadDocument: vi.fn(() => null),
-    saveDatasets: vi.fn(),
-    loadDatasets: vi.fn(() => []),
+    saveDatasets: mockedCore.saveDatasetsMock,
+    loadDatasets: mockedCore.loadDatasetsMock,
   }
 })
 
@@ -141,8 +152,41 @@ vi.mock('../dialogs/dataset-dialog.js', () => ({
 }))
 
 vi.mock('../hooks/use-word-editor-shortcuts.js', () => ({
-  useWordEditorShortcuts: () => undefined,
+  useWordEditorShortcuts: (options: { onSave?: () => void }) => {
+    shortcutOptions = options
+  },
 }))
+
+function createEnv(notify: RendererEnv['notify'] = () => undefined): RendererEnv {
+  return {
+    fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+    notify,
+  }
+}
+
+function renderWordEditor(input?: {
+  schema?: Parameters<typeof defineWordEditorPageSchema>[0]
+  extraRenderers?: RendererDefinition[]
+  env?: RendererEnv
+}) {
+  const registry = createDefaultRegistry(input?.extraRenderers ?? [])
+  registerWordEditorRenderers(registry)
+  const SchemaRenderer = createSchemaRenderer()
+
+  render(
+    <SchemaRenderer
+      schemaUrl="test://word-editor/page"
+      schema={defineWordEditorPageSchema({
+        type: 'word-editor-page',
+        ...(input?.schema ?? {}),
+      })}
+      env={input?.env ?? createEnv()}
+      registry={registry}
+      formulaCompiler={createFormulaCompiler()}
+      data={{}}
+    />
+  )
+}
 
 describe('WordEditorPage', () => {
   it('updates host scope dataset projection when dataset store changes', async () => {
@@ -159,27 +203,9 @@ describe('WordEditorPage', () => {
 
     const registry = createDefaultRegistry([HostDatasetProbe])
     registerWordEditorRenderers(registry)
-    const SchemaRenderer = createSchemaRenderer()
-    const env: RendererEnv = {
-      fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
-      notify: () => undefined,
-    }
-
     resetMockStores()
 
-    render(
-      <SchemaRenderer
-        schemaUrl="test://word-editor/page-datasets"
-        schema={defineWordEditorPageSchema({
-          type: 'word-editor-page',
-          leftPanel: { type: 'host-dataset-probe' },
-        })}
-        env={env}
-        registry={registry}
-        formulaCompiler={createFormulaCompiler()}
-        data={{}}
-      />
-    )
+    renderWordEditor({ schema: { type: 'word-editor-page', leftPanel: { type: 'host-dataset-probe' } }, extraRenderers: [HostDatasetProbe] })
 
     await waitFor(() => {
       expect(screen.getByTestId('dataset-count').textContent).toBe('0')
@@ -220,29 +246,9 @@ describe('WordEditorPage', () => {
       },
     }
 
-    const registry = createDefaultRegistry([RuntimeProbe])
-    registerWordEditorRenderers(registry)
-    const SchemaRenderer = createSchemaRenderer()
-    const env: RendererEnv = {
-      fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
-      notify: () => undefined,
-    }
-
     resetMockStores()
 
-    render(
-      <SchemaRenderer
-        schemaUrl="test://word-editor/runtime-probe"
-        schema={defineWordEditorPageSchema({
-          type: 'word-editor-page',
-          leftPanel: { type: 'runtime-probe' },
-        })}
-        env={env}
-        registry={registry}
-        formulaCompiler={createFormulaCompiler()}
-        data={{}}
-      />
-    )
+    renderWordEditor({ schema: { type: 'word-editor-page', leftPanel: { type: 'runtime-probe' } }, extraRenderers: [RuntimeProbe] })
 
     await waitFor(() => {
       expect(screen.getByTestId('runtime-ready').textContent).toBe('true')
@@ -284,29 +290,9 @@ describe('WordEditorPage', () => {
       },
     }
 
-    const registry = createDefaultRegistry([DocumentProbe])
-    registerWordEditorRenderers(registry)
-    const SchemaRenderer = createSchemaRenderer()
-    const env: RendererEnv = {
-      fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
-      notify: () => undefined,
-    }
-
     resetMockStores()
 
-    render(
-      <SchemaRenderer
-        schemaUrl="test://word-editor/document-probe"
-        schema={defineWordEditorPageSchema({
-          type: 'word-editor-page',
-          leftPanel: { type: 'document-probe' },
-        })}
-        env={env}
-        registry={registry}
-        formulaCompiler={createFormulaCompiler()}
-        data={{}}
-      />
-    )
+    renderWordEditor({ schema: { type: 'word-editor-page', leftPanel: { type: 'document-probe' } }, extraRenderers: [DocumentProbe] })
 
     await waitFor(() => {
       expect(screen.getByTestId('doc-has-header').textContent).toBe('true')
@@ -320,23 +306,15 @@ describe('WordEditorPage', () => {
   it('keeps the semantic root marker on the page shell', () => {
     resetFluxI18n()
     initFluxI18n()
+    resetMockStores()
     const registry = createDefaultRegistry()
     registerWordEditorRenderers(registry)
     const SchemaRenderer = createSchemaRenderer()
-    const env: RendererEnv = {
-      fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
-      notify: () => undefined,
-    }
-    resetMockStores()
-    const schema = defineWordEditorPageSchema({
-      type: 'word-editor-page',
-      title: 'Word Editor',
-    })
     const { container } = render(
       <SchemaRenderer
         schemaUrl="test://word-editor/page"
-        schema={schema}
-        env={env}
+        schema={defineWordEditorPageSchema({ type: 'word-editor-page', title: 'Word Editor' })}
+        env={createEnv()}
         registry={registry}
         formulaCompiler={createFormulaCompiler()}
         data={{}}
@@ -345,5 +323,118 @@ describe('WordEditorPage', () => {
     expect(container.querySelector('.nop-word-editor-page')).toBeTruthy()
     expect(screen.getByTestId('editor-canvas')).toBeTruthy()
     expect(screen.getByTestId('ribbon-toolbar')).toBeTruthy()
+  })
+
+  it('saves through the word-editor action provider and forwards onSave', async () => {
+    resetFluxI18n()
+    initFluxI18n()
+    resetMockStores()
+    const notify = vi.fn()
+
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        onSave: { action: 'showToast', args: { message: 'save event fired' } },
+      },
+      env: createEnv(notify),
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '保存' }))
+
+    await waitFor(() => {
+      expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1)
+      expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1)
+      expect(editorStore.setDirty).toHaveBeenCalledWith(false)
+      expect(notify).toHaveBeenCalledWith('info', 'save event fired')
+    })
+  })
+
+  it('wires shortcut save through the same save handler', async () => {
+    resetFluxI18n()
+    initFluxI18n()
+    resetMockStores()
+
+    renderWordEditor()
+    shortcutOptions?.onSave?.()
+
+    await waitFor(() => {
+      expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1)
+      expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1)
+      expect(editorStore.setDirty).toHaveBeenCalledWith(false)
+    })
+  })
+
+  it('invokes onBack directly without local confirm handling', async () => {
+    resetFluxI18n()
+    initFluxI18n()
+    resetMockStores()
+    const notify = vi.fn()
+    const confirmSpy = vi.spyOn(window, 'confirm')
+
+    renderWordEditor({
+      schema: {
+        type: 'word-editor-page',
+        onBack: { action: 'showToast', args: { message: 'back event fired' } },
+      },
+      env: createEnv(notify),
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '返回' }))
+
+    await waitFor(() => {
+      expect(notify).toHaveBeenCalledWith('info', 'back event fired')
+    })
+    expect(confirmSpy).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('publishes host status and mounts override regions with word-editor scope', async () => {
+    resetFluxI18n()
+    initFluxI18n()
+    resetMockStores()
+
+    const StatusProbe: RendererDefinition = {
+      type: 'status-probe',
+      component: function StatusProbeComponent() {
+        const status = useScopeSelector((data: any) => data.wordEditorStatus)
+        return <span data-testid="word-editor-status">{status ? `${status.kind}:${status.datasetCount}:${status.wordCount}` : ''}</span>
+      },
+    }
+
+    const ScopeProbe: RendererDefinition = {
+      type: 'scope-probe',
+      component: function ScopeProbeComponent() {
+        const summary = useScopeSelector((data: any) => {
+          const runtime = data.runtime
+          const datasets = data.datasets
+          return `${runtime?.datasetCount ?? 'x'}:${Array.isArray(datasets) ? datasets.length : 'x'}`
+        })
+        return <span data-testid="scope-probe">{String(summary)}</span>
+      },
+    }
+
+    const registry = createDefaultRegistry([StatusProbe, ScopeProbe])
+    registerWordEditorRenderers(registry)
+    const SchemaRenderer = createSchemaRenderer()
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://word-editor/status"
+        schema={defineWordEditorPageSchema({
+          type: 'word-editor-page',
+          statusPath: 'wordEditorStatus',
+          toolbar: { type: 'scope-probe' },
+          leftPanel: { type: 'scope-probe' },
+          rightPanel: { type: 'scope-probe' },
+        })}
+        env={createEnv()}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{ wordEditorStatus: undefined }}
+      />
+    )
+
+    expect(screen.getAllByTestId('scope-probe')).toHaveLength(3)
+    expect(screen.getAllByTestId('scope-probe').every((node) => node.textContent === '0:0')).toBe(true)
   })
 })

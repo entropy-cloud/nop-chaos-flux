@@ -6,7 +6,7 @@ import type { WordEditorHostStatusSummary } from '@nop-chaos/word-editor-core'
 import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope, useNamespaceRegistration, WorkbenchShell } from '@nop-chaos/flux-react'
 import { t } from '@nop-chaos/flux-i18n'
 import { publishOwnerStatus } from '@nop-chaos/flux-react'
-import { CanvasEditorBridge, createDatasetStore, createEditorStore, createSavedDocumentData, saveDocument, saveDatasets, loadDatasets } from '@nop-chaos/word-editor-core'
+import { CanvasEditorBridge, createDatasetStore, createEditorStore, createSavedDocumentData, loadDatasets } from '@nop-chaos/word-editor-core'
 import type { DataSetSourceType, DataColumnInput, DataSet, DocChart, DocCode, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core'
 import {
   Button,
@@ -149,23 +149,20 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     }
   }, [datasetStore, props.props.datasets])
 
-  const handleSave = useCallback(() => {
-    const success = saveDocument(bridge, { charts, codes })
-    if (success) {
-      saveDatasets(datasetStore.getAll())
-      editorStore.setDirty(false)
+  const handleSave = useCallback(async () => {
+    const result = await actionProvider.invoke('save', undefined, {} as any)
+    if (result.ok) {
       setSaveMessage(t('wordEditor.saved'))
       if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current)
       saveMessageTimerRef.current = setTimeout(() => setSaveMessage(null), 2000)
     }
-  }, [bridge, charts, codes, datasetStore, editorStore])
+  }, [actionProvider])
 
   useWordEditorShortcuts({ bridge, onSave: handleSave, scopeRef: rootRef })
 
   const handleBack = useCallback(() => {
-    if (isDirty && !window.confirm(t('wordEditor.unsavedChangesLeave'))) return
     void props.events.onBack?.()
-  }, [isDirty, props.events])
+  }, [props.events])
 
   const handleAddDataset = () => {
     setEditingDatasetId(null)
@@ -278,7 +275,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           type="button"
           variant={isDirty ? 'default' : 'outline'}
           size="sm"
-          onClick={handleSave}
+          onClick={() => void handleSave()}
           className="rounded-full"
         >
           <Save className="w-4 h-4" />
