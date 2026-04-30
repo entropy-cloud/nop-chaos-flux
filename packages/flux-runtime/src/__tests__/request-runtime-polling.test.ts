@@ -139,10 +139,11 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/cache', cacheTTL: 60_000, cacheKey: 'shared-cache' }, runtime.expressionCompiler),
+      compiledApi: compileApiConfig({ url: '/api/cache' }, runtime.expressionCompiler),
       scope: page.scope,
-      targetPath: 'payload'
-    });
+      targetPath: 'payload',
+      control: { cacheTTL: 60_000, cacheKey: 'shared-cache' }
+    } as any);
 
     controller.start();
 
@@ -175,15 +176,17 @@ describe('createDataSourceController', () => {
     });
     const page = runtime.createPageRuntime({ page: 1 });
     const first = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/cache?page=1', cacheTTL: 60_000 }, runtime.expressionCompiler),
+      compiledApi: compileApiConfig({ url: '/api/cache?page=1' }, runtime.expressionCompiler),
       scope: page.scope,
-      targetPath: 'payload'
-    });
+      targetPath: 'payload',
+      control: { cacheTTL: 60_000 }
+    } as any);
     const second = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/cache', params: { page: 1 }, cacheTTL: 60_000 }, runtime.expressionCompiler),
+      compiledApi: compileApiConfig({ url: '/api/cache', params: { page: 1 } }, runtime.expressionCompiler),
       scope: page.scope,
-      targetPath: 'payload2'
-    });
+      targetPath: 'payload2',
+      control: { cacheTTL: 60_000 }
+    } as any);
 
     first.start();
 

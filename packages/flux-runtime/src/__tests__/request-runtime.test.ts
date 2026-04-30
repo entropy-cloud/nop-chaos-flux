@@ -359,8 +359,8 @@ describe('createApiRequestExecutor', () => {
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
-    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 }, dedupStrategy: 'parallel' }, scope);
-    const second = execute('ajax', { url: '/api/items', data: { requestId: 2 }, dedupStrategy: 'parallel' }, scope);
+    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 } }, scope, undefined, { control: { dedup: 'parallel' } });
+    const second = execute('ajax', { url: '/api/items', data: { requestId: 2 } }, scope, undefined, { control: { dedup: 'parallel' } });
 
     await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 1 } } });
     await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 2 } } });
@@ -376,8 +376,8 @@ describe('createApiRequestExecutor', () => {
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
-    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 }, dedupStrategy: 'ignore-new' }, scope);
-    const second = execute('ajax', { url: '/api/items', data: { requestId: 1 }, dedupStrategy: 'ignore-new' }, scope);
+    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 } }, scope, undefined, { control: { dedup: 'ignore-new' } });
+    const second = execute('ajax', { url: '/api/items', data: { requestId: 1 } }, scope, undefined, { control: { dedup: 'ignore-new' } });
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 
@@ -401,8 +401,8 @@ describe('createApiRequestExecutor', () => {
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
-    const first = execute('ajax', { url: '/api/items', params: { page: 1 }, dedupStrategy: 'ignore-new' }, scope);
-    const second = execute('ajax', { url: '/api/items', params: { page: 2 }, dedupStrategy: 'ignore-new' }, scope);
+    const first = execute('ajax', { url: '/api/items', params: { page: 1 } }, scope, undefined, { control: { dedup: 'ignore-new' } });
+    const second = execute('ajax', { url: '/api/items', params: { page: 2 } }, scope, undefined, { control: { dedup: 'ignore-new' } });
 
     expect(fetcher).toHaveBeenCalledTimes(2);
 
@@ -425,16 +425,14 @@ describe('createApiRequestExecutor', () => {
       url: '/api/items',
       params: { page: 1 },
       data: { filter: 'active' },
-      headers: { 'x-mode': 'live' },
-      dedupStrategy: 'ignore-new'
-    }, scope);
+      headers: { 'x-mode': 'live' }
+    }, scope, undefined, { control: { dedup: 'ignore-new' } });
     const second = execute('ajax', {
       url: '/api/items',
       params: { page: 1 },
       data: { filter: 'active' },
-      headers: { 'x-mode': 'live' },
-      dedupStrategy: 'ignore-new'
-    }, scope);
+      headers: { 'x-mode': 'live' }
+    }, scope, undefined, { control: { dedup: 'ignore-new' } });
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 
@@ -456,14 +454,12 @@ describe('createApiRequestExecutor', () => {
     const first = execute('ajax', {
       url: '/api/items?page=1',
       method: 'get',
-      dedupStrategy: 'ignore-new'
-    }, scope);
+    }, scope, undefined, { control: { dedup: 'ignore-new' } });
     const second = execute('ajax', {
       url: '/api/items',
       method: 'get',
       params: { page: 1 },
-      dedupStrategy: 'ignore-new'
-    }, scope);
+    }, scope, undefined, { control: { dedup: 'ignore-new' } });
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 

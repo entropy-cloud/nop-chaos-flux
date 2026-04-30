@@ -247,9 +247,6 @@ export function evaluateCompiledApiConfig(input: {
     includeScope: compiledApi.includeScope as '*' | string[] | undefined,
     responseAdaptor: compiledApi.responseAdaptor,
     requestAdaptor: compiledApi.requestAdaptor,
-    cacheTTL: compiledApi.cacheTTL,
-    cacheKey: compiledApi.cacheKey,
-    dedupStrategy: compiledApi.dedupStrategy
   };
 
   if (!state) {

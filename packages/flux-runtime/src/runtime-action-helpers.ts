@@ -14,7 +14,7 @@ import type {
   ActionSchema
 } from '@nop-chaos/flux-core';
 import { createCancelledResult, isAbortError, resolveRequestControl } from '@nop-chaos/flux-action-core';
-import { applyResponseDataPath, executeApiSchema } from './async-data/request-runtime';
+import { executeApiSchema } from './async-data/request-runtime';
 import { createValidationError } from './validation';
 import type { ApiRequestExecutor } from './async-data/request-runtime';
 import type { RuntimeEvalHelpers } from './runtime-eval-helpers';
@@ -103,13 +103,6 @@ export async function executeRuntimeAjaxAction(
         path: ctx.nodeInstance?.templateNode.templatePath,
         interactionId: ctx.interactionId
       });
-    }
-
-    const dataPath = action.targeting?.dataPath;
-
-    if (dataPath && ctx.page) {
-      const nextData = applyResponseDataPath(ctx.page.store.getState().data, dataPath, response.data);
-      ctx.page.store.setData(nextData);
     }
 
     return {

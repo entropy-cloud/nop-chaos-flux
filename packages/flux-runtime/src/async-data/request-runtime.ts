@@ -92,8 +92,8 @@ function normalizeParams(params: SchemaValue | undefined): Record<string, unknow
     : undefined;
 }
 
-function resolveRequestDedup(api: ApiSchema, control?: OperationControlConfig) {
-  return control?.dedup ?? api.dedupStrategy ?? 'cancel-previous';
+function resolveRequestDedup(control?: OperationControlConfig) {
+  return control?.dedup ?? 'cancel-previous';
 }
 
 export function extractScopeData(scope: ScopeRef, includeScope: '*' | string[] | undefined): Record<string, unknown> {
@@ -227,27 +227,6 @@ export function finalizeMaterializedApiRequest(api: ApiSchema): PreparedApiReque
   });
 }
 
-export function applyResponseDataPath(
-  currentData: Record<string, any>,
-  dataPath: string,
-  responseData: unknown
-): Record<string, any> {
-  const currentValue = getPathValue(responseData, dataPath);
-
-  if (currentValue !== undefined) {
-    return setIn(currentData, dataPath, currentValue);
-  }
-
-  if (isPlainObject(responseData)) {
-    return {
-      ...currentData,
-      ...(responseData as Record<string, any>)
-    };
-  }
-
-  return setIn(currentData, dataPath, responseData);
-}
-
 export function prepareApiRequestForExecution(
   api: ApiSchema,
   scope: ScopeRef,
@@ -332,7 +311,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
   ) {
     const executableApi = finalizeApiRequest(api as ApiSchema).request;
     const requestKey = createRequestKey(actionType, executableApi, scope, form);
-    const dedupStrategy = resolveRequestDedup(api as ApiSchema, options?.control);
+    const dedupStrategy = resolveRequestDedup(options?.control);
     const previousController = activeControllers.get(requestKey);
     const previousPromise = activePromises.get(requestKey);
     const env = getEnv();

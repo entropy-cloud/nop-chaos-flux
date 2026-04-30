@@ -135,7 +135,7 @@ export function generateCacheKey(api: ExecutableApiRequest): string {
   return `${method}:${url}:${dataStr}`;
 }
 
-export function resolveCacheKey(api: ExecutableApiRequest, control?: Pick<ApiSchema, 'cacheTTL' | 'cacheKey'>): string | null {
+export function resolveCacheKey(api: ExecutableApiRequest, control?: { cacheTTL?: number; cacheKey?: string }): string | null {
   if (control?.cacheTTL === undefined || control.cacheTTL <= 0) {
     return null;
   }

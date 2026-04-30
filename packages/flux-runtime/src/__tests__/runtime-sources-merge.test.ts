@@ -229,7 +229,8 @@ describe('createRendererRuntime', () => {
         name: 'payload',
         mergeStrategy: 'merge',
         initialData: { seeded: true },
-        action: 'ajax', args: { url: '/api/items', cacheTTL: 60_000 },
+        action: 'ajax', args: { url: '/api/items' },
+        control: { cacheTTL: 60_000 },
         resultMapping: {
           rows: '${payload.items}',
           count: '${payload.items.length}'

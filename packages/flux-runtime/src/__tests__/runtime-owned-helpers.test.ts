@@ -60,7 +60,7 @@ describe('executeRuntimeValidationRule', () => {
 });
 
 describe('executeRuntimeAjaxAction', () => {
-  it('prepares requests, monitors them, and writes dataPath into the page store', async () => {
+  it('prepares requests and monitors them', async () => {
     const pageStore = {
       getState: () => ({ data: { existing: true } }),
       setData: vi.fn(),
@@ -81,7 +81,7 @@ describe('executeRuntimeAjaxAction', () => {
 
     const result = await executeRuntimeAjaxAction(
       { url: '/api/demo' } as any,
-      { api: { url: '/api/demo' }, targeting: { dataPath: 'response.payload' } } as any,
+      { api: { url: '/api/demo' }, targeting: {} } as any,
       ctx,
       undefined,
       {
@@ -105,7 +105,6 @@ describe('executeRuntimeAjaxAction', () => {
       path: '$.body[0]',
       interactionId: 'interaction-1'
     });
-    expect(pageStore.setData).toHaveBeenCalledWith({ existing: true, next: 2 });
     expect(result).toEqual({ ok: true, data: { next: 2 }, attempts: 1, failureCount: 0, error: undefined });
     expect(preparedApi).toBeTruthy();
   });

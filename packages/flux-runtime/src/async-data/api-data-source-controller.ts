@@ -86,7 +86,7 @@ export function createDataSourceController(input: {
   let latestSettledRequestSequence = 0;
   let state = createInitialDataSourceState(initialData);
   const apiConfigState: ApiConfigRuntimeState = createApiConfigRuntimeState(compiledApi, runtime);
-  const refreshDedup = control?.dedup ?? compiledApi.dedupStrategy ?? 'cancel-previous';
+  const refreshDedup = control?.dedup ?? 'cancel-previous';
   const asyncOwnerId = input.ownerId;
 
   function updateAsyncState(nextState: DataSourceState): DataSourceState {
@@ -228,7 +228,7 @@ export function createDataSourceController(input: {
       });
       input.onDependenciesChange?.(trackedApi.dependencies);
       const preparedRequest = prepareApiRequestForExecution(trackedApi.resolvedApi, requestScope, runtime.env, runtime.expressionCompiler);
-      const cacheKey = resolveCacheKey(preparedRequest.request, trackedApi.resolvedApi);
+      const cacheKey = resolveCacheKey(preparedRequest.request, control);
 
         if (cacheKey) {
           const cached = apiCache.get<unknown>(cacheKey);
@@ -312,8 +312,8 @@ export function createDataSourceController(input: {
 
       latestSettledRequestSequence = Math.max(latestSettledRequestSequence, requestSequence);
 
-      if (cacheKey && compiledApi.cacheTTL && compiledApi.cacheTTL > 0) {
-        apiCache.set(cacheKey, response.data, compiledApi.cacheTTL);
+      if (cacheKey && control?.cacheTTL && control.cacheTTL > 0) {
+        apiCache.set(cacheKey, response.data, control.cacheTTL);
       }
 
       const mappedValue = applyResultMapping({

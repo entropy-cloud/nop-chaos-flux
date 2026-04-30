@@ -5,52 +5,6 @@ import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
-  it('writes ajax response data into page state via dataPath', async () => {
-    const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
-      env: {
-        ...env,
-        fetcher: async <T>() => {
-          return {
-            ok: true,
-            status: 200,
-            data: {
-              users: {
-                list: [{ id: 1, name: 'Alice' }]
-              }
-            } as T
-          };
-        }
-      },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-    const page = runtime.createPageRuntime({ filter: 'active' });
-
-    const result = await runtime.dispatch(
-      {
-        action: 'ajax',
-        args: {
-          url: '/api/users',
-          method: 'get'
-        },
-        dataPath: 'users.list'
-      },
-      {
-        runtime,
-        scope: page.scope,
-        page
-      }
-    );
-
-    expect(result.ok).toBe(true);
-    expect(page.store.getState().data).toEqual({
-      filter: 'active',
-      users: {
-        list: [{ id: 1, name: 'Alice' }]
-      }
-    });
-  });
-
   it('applies requestAdaptor before fetcher and responseAdaptor after fetcher', async () => {
     const fetchCalls: ApiSchema[] = [];
     const runtime = createRendererRuntime({

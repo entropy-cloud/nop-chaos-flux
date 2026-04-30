@@ -163,6 +163,15 @@ export function createFormulaDataSourceController(input: {
 
       void Promise.resolve().then(() => {
         publish();
+      }).catch((error: unknown) => {
+        updateState((current) => ({
+          ...current,
+          status: 'error',
+          fetchStatus: 'idle',
+          error,
+          failureCount: current.failureCount + 1,
+          failureReason: error instanceof Error ? error : new Error(String(error))
+        }));
       });
     },
     stop() {
