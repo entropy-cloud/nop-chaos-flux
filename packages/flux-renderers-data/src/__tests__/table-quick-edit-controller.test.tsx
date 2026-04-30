@@ -20,7 +20,7 @@ function createRowScope(record: Record<string, unknown>) {
   } as any;
 }
 
-function createHelpers(dispatch = vi.fn(async () => ({ ok: true }))) {
+function createHelpers(dispatch: ReturnType<typeof vi.fn<() => Promise<{ ok: boolean }>>> = vi.fn(async () => ({ ok: true }))) {
   return {
     dispatch,
   } as any;
@@ -61,7 +61,7 @@ function ControllerHarness(props: {
 describe('useTableQuickEditController', () => {
   it('tracks inline draft dirty state and saves through helpers.dispatch', async () => {
     cleanup();
-    const dispatch = vi.fn(async () => ({ ok: true }));
+    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(async () => ({ ok: true }));
     const rowScope = createRowScope({ name: 'Alice' });
 
     render(
@@ -118,7 +118,7 @@ describe('useTableQuickEditController', () => {
   it('opens dialog with saved value and ignores close while saving', async () => {
     cleanup();
     let resolveSave: (() => void) | undefined;
-    const dispatch = vi.fn(() => new Promise<{ ok: boolean }>((resolve) => {
+    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(() => new Promise<{ ok: boolean }>((resolve) => {
       resolveSave = () => resolve({ ok: true });
     }));
     const rowScope = createRowScope({ name: 'Alice' });

@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '../hooks';
 import { createSchemaRenderer } from '../schema-renderer';
-import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createExpressionCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
