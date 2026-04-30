@@ -19,6 +19,7 @@ When this document needs to be checked against code, start with:
 The repo is a `pnpm` workspace with the following fixed baseline:
 
 - `pnpm`
+- `Turborepo`
 - `React 19`
 - `Vite 8`
 - `TypeScript`
@@ -32,7 +33,15 @@ Root scripts in `package.json`:
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm lint`
+- `pnpm analyze`
 - `pnpm check:react19`
+
+Workspace task orchestration baseline:
+
+- root `build`, `typecheck`, `test`, and `lint` are orchestrated through `turbo run ...`
+- `dev` is routed through Turborepo for the playground app but remains a non-cached persistent task
+- `turbo.json` owns task dependencies, cache inputs, and cache outputs for workspace verification and builds
+- `apps/playground` exposes an on-demand bundle analysis entry point through `pnpm analyze`, which runs a Vite analyze-mode build and emits `stats.html`
 
 React rules for this baseline:
 

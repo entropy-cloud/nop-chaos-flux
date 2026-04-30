@@ -33,6 +33,8 @@ flux-core is the **foundation contracts and shared utilities** package — the l
 
 **What does NOT belong in flux-core**: Business logic with side effects, framework-specific code (React/Zustand), or any function that depends on external state. The dependency direction is strictly `flux-core ← all other packages`.
 
+**Known exception — `i18n-sink.ts`**: This module exports a module-level mutable singleton (`setMessageFormatter` / `getMessageFormatter`) that lets `flux-i18n` inject its concrete formatter at init time without creating a circular dependency. It is the **only** stateful module in flux-core and is documented as an intentional design trade-off. See the in-file JSDoc in `packages/flux-core/src/i18n-sink.ts` for ownership rules.
+
  ## flux-core Package
 
 

@@ -144,6 +144,7 @@ They should not become generic helper dumps.
   - compiled dependency path helpers
 - `packages/flux-runtime/src/validation/message.ts`
   - default validation message construction
+  - reads the global `MessageFormatter` from `@nop-chaos/flux-core/i18n-sink` (the only stateful read in validation)
 - `packages/flux-runtime/src/validation/errors.ts`
   - validation error shaping and normalization helpers
 - `packages/flux-runtime/src/validation/validators.ts`
