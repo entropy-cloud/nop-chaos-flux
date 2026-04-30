@@ -178,7 +178,6 @@ describe('renderer slot helpers', () => {
             key: 'title',
             templateNode: null,
             render: () => regionContent,
-            instantiate: () => regionContent
           }
         }
       },

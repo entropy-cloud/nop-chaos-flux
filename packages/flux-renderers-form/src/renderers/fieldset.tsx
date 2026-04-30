@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, hasRendererSlotContent } from '@nop-chaos/flux-react';
-import { resolveGap } from '@nop-chaos/flux-renderers-basic';
+import { resolveGap } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 
 export interface FieldsetSchema extends BaseSchema {

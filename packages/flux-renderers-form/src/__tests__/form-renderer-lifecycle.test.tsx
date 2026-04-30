@@ -29,16 +29,13 @@ vi.mock('@nop-chaos/flux-react', async () => {
     useRenderScope: mocks.useRenderScope,
     useRendererRuntime: mocks.useRendererRuntime,
     createFormComponentHandle: mocks.createFormComponentHandle,
+    resolveGap: mocks.resolveGap,
   };
 });
 
 vi.mock('../renderers/form-status-publication', () => ({
   usePublishedFormStatus: mocks.usePublishedFormStatus,
   usePublishedFormValues: mocks.usePublishedFormValues,
-}));
-
-vi.mock('@nop-chaos/flux-renderers-basic', () => ({
-  resolveGap: mocks.resolveGap,
 }));
 
 vi.mock('@nop-chaos/ui', () => ({

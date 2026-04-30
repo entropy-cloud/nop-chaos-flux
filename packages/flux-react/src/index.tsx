@@ -73,3 +73,5 @@ export { publishOwnerStatus } from '@nop-chaos/flux-runtime';
 export { createFormComponentHandle } from '@nop-chaos/flux-runtime';
 export { executeApiObject } from '@nop-chaos/flux-runtime';
 export { createProjectedScopeStore } from '@nop-chaos/flux-runtime';
+export { createReadonlyScopeBinding } from '@nop-chaos/flux-runtime';
+export { resolveGap, GAP_TOKENS } from './resolve-gap';

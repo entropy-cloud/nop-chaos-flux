@@ -174,7 +174,7 @@ function FragmentRenderHost(props: RendererComponentProps) {
         Refresh fragment {tick}
       </Button>
       {props.helpers.render(fragmentScopedProbeFormSchema, {
-        data: {
+        bindings: {
           currentUser: {
             role: 'architect'
           }
@@ -195,7 +195,7 @@ function FragmentScopeProbeHost(props: RendererComponentProps) {
         Refresh fragment {tick}
       </Button>
       {props.helpers.render(props.regions.body?.templateNode as any, {
-        data: {
+        bindings: {
           child: childValue
         },
         pathSuffix: 'fragment'

@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, useCurrentComponentRegistry, useRenderScope, useSchemaProps } from '@nop-chaos/flux-react';
+import { hasRendererSlotContent, useCurrentComponentRegistry, useRenderScope, useSchemaProps, createReadonlyScopeBinding } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { createReadonlyScopeBinding } from '@nop-chaos/flux-runtime';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema';
 import { normalizeCrudSchema } from './crud-schema';

@@ -194,7 +194,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
         const regionIsolate = region.isolate;
 
         function instantiateRegion(options?: import('@nop-chaos/flux-core').RenderFragmentOptions) {
-          const rawBindings = options?.bindings ?? (options?.data as Record<string, unknown> | undefined);
+          const rawBindings = options?.bindings;
 
           if (params && params.length > 0 && rawBindings) {
             const currentScopeData = renderScope.readVisible?.() as Record<string, unknown> | undefined ?? {};
@@ -231,7 +231,6 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
             templateNode: region.node,
             params,
             render: instantiateRegion,
-            instantiate: instantiateRegion
           }
         ];
       })

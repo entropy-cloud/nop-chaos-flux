@@ -190,7 +190,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const fragmentScopeCacheKey = useId();
   const options = props.options;
   const explicitScope = options?.scope;
-  const fragmentBindings = options?.bindings ?? (options?.data as Record<string, unknown> | undefined);
+  const fragmentBindings = options?.bindings;
   const isolate = options?.isolate;
   const pathSuffix = options?.pathSuffix;
   const scopeKey = options?.scopeKey;

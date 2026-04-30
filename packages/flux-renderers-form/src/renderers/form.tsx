@@ -19,7 +19,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { createFormComponentHandle } from '@nop-chaos/flux-react';
-import { resolveGap } from '@nop-chaos/flux-renderers-basic';
+import { resolveGap } from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas';
 import { usePublishedFormStatus, usePublishedFormValues } from './form-status-publication';
 

@@ -7,7 +7,7 @@ export function FragmentRenderer(props: RendererComponentProps<FragmentSchema>) 
     <>
       {props.regions.body?.templateNode
         ? props.helpers.render(props.regions.body.templateNode, {
-            data: props.props.data as Record<string, unknown> | undefined,
+            bindings: props.props.data as Record<string, unknown> | undefined,
             isolate: props.props.isolate === true,
             pathSuffix: 'body',
             scopeKey: `${props.id}:body`
