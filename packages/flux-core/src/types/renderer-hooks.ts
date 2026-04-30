@@ -13,12 +13,6 @@ import type { ValidationError } from './validation';
 
 export interface RenderFragmentOptions {
   /**
-   * @deprecated Use `bindings` instead. `data` remains as a compatibility carrier
-   * and is internally normalized to `bindings`. When both are provided, `bindings`
-   * takes precedence.
-   */
-  data?: object;
-  /**
    * Local bindings to inject into the child scope created for this fragment.
    * For parameterized regions, these values are published under the reserved $slot
    * frame rather than flattened into ordinary top-level scope names.
@@ -75,14 +69,6 @@ export interface RenderRegionHandle {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     ownerNodeInstance?: NodeInstance;
-  }): ReactNode;
-  /**
-   * @deprecated Use render() instead. instantiate() is kept for compatibility.
-   */
-  instantiate(options?: {
-    scope?: ScopeRef;
-    bindings?: Record<string, unknown>;
-    instancePath?: readonly InstanceFrame[];
   }): ReactNode;
 }
 

@@ -49,6 +49,14 @@ describe('executeRuntimeValidationRule', () => {
       })
     ).rejects.toThrow('boom');
   });
+
+  it('treats cancelled dispatch results as cancelled async validation', async () => {
+    await expect(
+      executeRuntimeValidationRule(compiledRule, rule, field, scope, undefined, {
+        dispatch: vi.fn().mockResolvedValue({ ok: false, cancelled: true, error: new Error('aborted') })
+      })
+    ).resolves.toBeUndefined();
+  });
 });
 
 describe('executeRuntimeAjaxAction', () => {

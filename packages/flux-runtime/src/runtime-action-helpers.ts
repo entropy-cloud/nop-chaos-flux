@@ -35,6 +35,10 @@ export async function executeRuntimeValidationRule(
       signal
     });
 
+    if (result.cancelled) {
+      return undefined;
+    }
+
     const adaptedData = result.data;
 
     if (adaptedData && typeof adaptedData === 'object') {
