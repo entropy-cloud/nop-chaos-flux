@@ -1,5 +1,9 @@
 import { useCallback } from 'react';
-import { cellAddress, type SpreadsheetRange, type WorksheetDocument } from '@nop-chaos/spreadsheet-core';
+import {
+  cellAddress,
+  type SpreadsheetRange,
+  type WorksheetDocument,
+} from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetBridge } from '../bridge.js';
 
 export interface UseContextMenuActionsParams {
@@ -212,23 +216,27 @@ export function useContextMenuActions(params: UseContextMenuActionsParams): Cont
     await bridge.dispatch({ type: 'spreadsheet:unfreezePanes', sheetId: activeSheetId });
   }, [activeSheetId, bridge]);
 
-  const handleContextSort = useCallback(async (direction: 'asc' | 'desc') => {
-    if (!sortRange || !selectionAnchorCell) {
-      return;
-    }
-    await bridge.dispatch({
-      type: 'spreadsheet:sortRange',
-      range: sortRange,
-      keyCol: selectionAnchorCell.col,
-      direction,
-    });
-  }, [bridge, selectionAnchorCell, sortRange]);
+  const handleContextSort = useCallback(
+    async (direction: 'asc' | 'desc') => {
+      if (!sortRange || !selectionAnchorCell) {
+        return;
+      }
+      await bridge.dispatch({
+        type: 'spreadsheet:sortRange',
+        range: sortRange,
+        keyCol: selectionAnchorCell.col,
+        direction,
+      });
+    },
+    [bridge, selectionAnchorCell, sortRange],
+  );
 
   const handleContextFilterBySelectedValue = useCallback(async () => {
     if (!activeSheetId || !selectionAnchorCell) {
       return;
     }
-    const selectedCellValue = cells?.[cellAddress(selectionAnchorCell.row, selectionAnchorCell.col)]?.value;
+    const selectedCellValue =
+      cells?.[cellAddress(selectionAnchorCell.row, selectionAnchorCell.col)]?.value;
     await bridge.dispatch({
       type: 'spreadsheet:filterRowsByCellValue',
       sheetId: activeSheetId,

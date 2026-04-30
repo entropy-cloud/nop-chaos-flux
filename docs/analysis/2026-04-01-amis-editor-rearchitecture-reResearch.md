@@ -8,10 +8,10 @@
 
 amis 采用**双编辑器架构**，不同场景使用不同编辑器：
 
-| 编辑器 | 包 | 用途 | 依赖形式 |
-|------|---------|------|------|
-| **CodeMirror 5** | `codemirror ^5.63.0` | 公式/表达式编辑 — 重量级，支持自定义语法模式、变量标记、函数高亮 |
-| **Monaco Editor** | `monaco-editor` (动态 import) | 通用代码编辑 (JSON/JS/HTML/CSS/TS) Diff 对比) 按需加载,功能全面 |
+| 编辑器            | 包                            | 用途                                                             | 依赖形式 |
+| ----------------- | ----------------------------- | ---------------------------------------------------------------- | -------- |
+| **CodeMirror 5**  | `codemirror ^5.63.0`          | 公式/表达式编辑 — 重量级，支持自定义语法模式、变量标记、函数高亮 |
+| **Monaco Editor** | `monaco-editor` (动态 import) | 通用代码编辑 (JSON/JS/HTML/CSS/TS) Diff 对比) 按需加载,功能全面  |
 
 **核心结论**: amis **没有 SQL 编辑器实现**，SQL 场景需要从零构建。
 
@@ -66,11 +66,11 @@ interface EditorBaseProps {
   height?: number | string;
   onChange?: (value: string, event: any) => void;
   disabled?: boolean;
-  language?: string;         // 'javascript' | 'json' | 'css' | 'html' | 'typescript'
-  editorTheme?: string;        // 'vs' | 'vs-dark'
+  language?: string; // 'javascript' | 'json' | 'css' | 'html' | 'typescript'
+  editorTheme?: string; // 'vs' | 'vs-dark'
   allowFullscreen?: boolean;
-  options?: Record<string, any>;  // Monaco 原生选项透传
-  context?: any;               // 自定义 monaco 实例来源 (默认 window)
+  options?: Record<string, any>; // Monaco 原生选项透传
+  context?: any; // 自定义 monaco 实例来源 (默认 window)
   placeholder?: string;
   onFocus?: (e: any) => void;
   onBlur?: (e: any) => void;
@@ -111,7 +111,7 @@ Monaco 需要 Web Worker 提供语言服务（语法检查、补全等），amis
       return `data:text/javascript;charset=utf-8,${encodeURIComponent(`importScripts('${url}');`)}`;
     }
     return url;
-  }
+  },
 };
 ```
 
@@ -233,18 +233,18 @@ handleFullscreenModeChange() {
 
 ### 2.10 设计总结
 
-| 设计要点 | 实现方式 |
-|---------|---------|
-| 按需加载 | `import('monaco-editor')` 动态导入 |
-| Worker 管理 | `MonacoEnvironment.getWorkerUrl` + CDN `importScripts` 回退 |
-| 工厂模式 | `editorFactory` prop 允许外部自定义创建逻辑 |
-| 生命周期钩子 | `editorWillMount` / `editorDidMount` / `editorWillUnmount` |
-| 值同步 | `model.pushEditOperations` 保持 undo 栈完整 |
-| 焦点/失焦 | `onDidFocusEditorWidget` / `onDidBlurEditorWidget` |
-| 自动布局 | `automaticLayout: true` |
-| 全屏模式 | 切换 CSS class + `editor.layout()` |
-| JSON 特殊处理 | 自动格式化 + 开启 schema 验证 |
-| placeholder | 自定义 `<span>` 覆盖层（非 Monaco 原生） |
+| 设计要点      | 实现方式                                                    |
+| ------------- | ----------------------------------------------------------- |
+| 按需加载      | `import('monaco-editor')` 动态导入                          |
+| Worker 管理   | `MonacoEnvironment.getWorkerUrl` + CDN `importScripts` 回退 |
+| 工厂模式      | `editorFactory` prop 允许外部自定义创建逻辑                 |
+| 生命周期钩子  | `editorWillMount` / `editorDidMount` / `editorWillUnmount`  |
+| 值同步        | `model.pushEditOperations` 保持 undo 栈完整                 |
+| 焦点/失焦     | `onDidFocusEditorWidget` / `onDidBlurEditorWidget`          |
+| 自动布局      | `automaticLayout: true`                                     |
+| 全屏模式      | 切换 CSS class + `editor.layout()`                          |
+| JSON 特殊处理 | 自动格式化 + 开启 schema 验证                               |
+| placeholder   | 自定义 `<span>` 覆盖层（非 Monaco 原生）                    |
 
 ---
 
@@ -320,6 +320,7 @@ setValue(value?: string) {
 ```
 
 **设计要点**：
+
 - `resizeSensor` 监听容器尺寸变化，触发 `editor.refresh()`
 - 弹窗场景延迟 350ms refresh，解决初次渲染光标异常
 - 值同步时保存并恢复光标位置，避免光标跳动
@@ -354,6 +355,7 @@ function registerLaunguageMode(cm: typeof CodeMirror) {
 ```
 
 **两种运行模式**：
+
 - `text/formula`（evalMode=true）：纯表达式，直接用 JS 语法高亮
 - `text/formula-template`（evalMode=false）：模板模式，`${...}` 内用 JS 高亮，外面当 HTML 文本
 
@@ -380,22 +382,22 @@ export function editorFactory(dom, cm, props, options?) {
 
 ```typescript
 interface VariableItem {
-  label: string;                // 显示名（如 "用户名"）
-  value?: string;               // 变量路径（如 "data.user.name"）
-  path?: string;                // 路径标签
-  children?: VariableItem[];    // 子属性（支持嵌套对象）
-  type?: string;                // 类型描述
-  tag?: string;                 // 标签
-  isMember?: boolean;           // 是否是数组成员（用于 items[0].field 场景）
+  label: string; // 显示名（如 "用户名"）
+  value?: string; // 变量路径（如 "data.user.name"）
+  path?: string; // 路径标签
+  children?: VariableItem[]; // 子属性（支持嵌套对象）
+  type?: string; // 类型描述
+  tag?: string; // 标签
+  isMember?: boolean; // 是否是数组成员（用于 items[0].field 场景）
 }
 
 interface FuncGroup {
-  groupName: string;             // 分组名（如 "逻辑函数"、"文本函数"）
+  groupName: string; // 分组名（如 "逻辑函数"、"文本函数"）
   items: FuncItem[];
 }
 
 interface FuncItem {
-  name: string;                  // 函数名（如 "IF"、"SUM"）
+  name: string; // 函数名（如 "IF"、"SUM"）
   example?: string;
   description?: string;
 }
@@ -521,6 +523,7 @@ markText(from, to, label, className = 'cm-func', rawString?) {
 ```
 
 **三种标记类型**：
+
 - `cm-func`：函数名标记（如 `IF` → 蓝色高亮）
 - `cm-field`：变量/属性标记（如 `data.name` → 显示为 "用户名"）
 - `cm-expression`：整个 `${...}` 表达式块标记（模板模式）
@@ -596,12 +599,12 @@ constructor(editor, cm) {
 ```typescript
 interface CodeEditorProps extends ThemeProps {
   readOnly?: boolean;
-  singleLine?: boolean;         // 单行模式（禁止换行）
-  evalMode?: boolean;           // 表达式模式 vs 模板模式
+  singleLine?: boolean; // 单行模式（禁止换行）
+  evalMode?: boolean; // 表达式模式 vs 模板模式
   autoFocus?: boolean;
   editorTheme?: 'dark' | 'light';
   editorOptions?: any;
-  highlightMode?: 'expression' | 'formula';  // 高亮策略
+  highlightMode?: 'expression' | 'formula'; // 高亮策略
   variables?: VariableItem[];
   functions?: FuncGroup[];
   placeholder?: string;
@@ -739,6 +742,7 @@ return (
 `FormulaPicker` 是最外层组件，整合了 `FormulaInput` + `FormulaEditor` 弹窗：
 
 **三种显示模式**：
+
 - `button`：纯按钮，点击弹窗
 - `input-button`：输入框 + 按钮（默认）
 - `input-group`：输入框 + 图标
@@ -746,6 +750,7 @@ return (
 **弹窗内容**：Modal（桌面）或 PopUp（移动端）内嵌 `FormulaEditor`。
 
 **变量数据源支持**：
+
 ```typescript
 variables?: VariableItem[] | string | ((props: any) => VariableItem[]);
 // - 直接数组
@@ -754,6 +759,7 @@ variables?: VariableItem[] | string | ((props: any) => VariableItem[]);
 ```
 
 **混合模式** (`mixedMode`)：
+
 - 允许用户输入普通文本或 `${表达式}`
 - 自动检测值是否为表达式，如果是则提取 `${` `}` 内部内容给编辑器
 - 确认时根据 AST 类型决定是否包裹 `${...}`
@@ -768,28 +774,28 @@ amis-formula 提供完整的 **Lexer → Parser → Evaluator** 管线。
 
 手写状态机驱动的词法分析器，主要状态：
 
-| 状态 | 含义 |
-|------|------|
-| `START` | 初始状态，扫描普通文本 |
-| `SCRIPT` | 进入 `${...}` 内部 |
+| 状态         | 含义                     |
+| ------------ | ------------------------ |
+| `START`      | 初始状态，扫描普通文本   |
+| `SCRIPT`     | 进入 `${...}` 内部       |
 | `EXPRESSION` | 纯表达式模式（evalMode） |
-| `BLOCK` | `{...}` 块 |
-| `Template` | 模板字符串 `` `...` `` |
-| `Filter` | 管道过滤器 `\| filter` |
+| `BLOCK`      | `{...}` 块               |
+| `Template`   | 模板字符串 `` `...` ``   |
+| `Filter`     | 管道过滤器 `\| filter`   |
 
 Token 类型：
 
-| Token | 含义 |
-|-------|------|
-| `BooleanLiteral` | `true` / `false` |
-| `RAW` | 普通文本（模板模式下的非表达式部分） |
-| `Variable` | 旧式 `$varName` 变量 |
-| `OpenScript` / `CloseScript` | `${` / `}` |
-| `Identifier` | 标识符 |
-| `NumericLiteral` / `StringLiteral` | 数字/字符串字面量 |
-| `Punctuator` | 运算符（`===`, `&&`, `.` 等） |
-| `OpenFilter` | 管道符 `\|`（过滤器） |
-| `TemplateRaw` / `TemplateLeftBrace` / `TemplateRightBrace` | 模板字符串内部 token |
+| Token                                                      | 含义                                 |
+| ---------------------------------------------------------- | ------------------------------------ |
+| `BooleanLiteral`                                           | `true` / `false`                     |
+| `RAW`                                                      | 普通文本（模板模式下的非表达式部分） |
+| `Variable`                                                 | 旧式 `$varName` 变量                 |
+| `OpenScript` / `CloseScript`                               | `${` / `}`                           |
+| `Identifier`                                               | 标识符                               |
+| `NumericLiteral` / `StringLiteral`                         | 数字/字符串字面量                    |
+| `Punctuator`                                               | 运算符（`===`, `&&`, `.` 等）        |
+| `OpenFilter`                                               | 管道符 `\|`（过滤器）                |
+| `TemplateRaw` / `TemplateLeftBrace` / `TemplateRightBrace` | 模板字符串内部 token                 |
 
 #### Parser（解析器）
 
@@ -797,25 +803,26 @@ Token 类型：
 
 递归下降解析器，支持的 AST 节点类型：
 
-| AST 类型 | 含义 | 示例 |
-|----------|------|------|
-| `variable` | 变量引用 | `data` |
-| `getter` | 属性访问 | `data.name`, `data['name']`, `items[0]` |
-| `func_call` | 函数调用 | `IF(a, b, c)` |
-| `filter` | 管道过滤器 | `${value \| html}` |
-| `conditional` | 三元表达式 | `a ? b : c` |
-| `binary` | 二元运算 | `a + b`, `a && b` |
-| `unary` | 一元运算 | `!a`, `-a` |
-| `template` | 模板字符串 | `` `hello ${name}` `` |
-| `object` | 对象字面量 | `{a: 1, b: 2}` |
-| `array` | 数组字面量 | `[1, 2, 3]` |
-| `script` | `${...}` 包裹 | `${expression}` |
-| `document` | 文档根节点 | 多个 script/raw 的容器 |
-| `ns-variable` | 命名空间变量 | `window:xxx`, `cookie:xxx` |
+| AST 类型      | 含义          | 示例                                    |
+| ------------- | ------------- | --------------------------------------- |
+| `variable`    | 变量引用      | `data`                                  |
+| `getter`      | 属性访问      | `data.name`, `data['name']`, `items[0]` |
+| `func_call`   | 函数调用      | `IF(a, b, c)`                           |
+| `filter`      | 管道过滤器    | `${value \| html}`                      |
+| `conditional` | 三元表达式    | `a ? b : c`                             |
+| `binary`      | 二元运算      | `a + b`, `a && b`                       |
+| `unary`       | 一元运算      | `!a`, `-a`                              |
+| `template`    | 模板字符串    | `` `hello ${name}` ``                   |
+| `object`      | 对象字面量    | `{a: 1, b: 2}`                          |
+| `array`       | 数组字面量    | `[1, 2, 3]`                             |
+| `script`      | `${...}` 包裹 | `${expression}`                         |
+| `document`    | 文档根节点    | 多个 script/raw 的容器                  |
+| `ns-variable` | 命名空间变量  | `window:xxx`, `cookie:xxx`              |
 
 **关键设计**：所有 AST 节点都携带 `start/end` 位置信息（`{index, line, column}`），这是 `autoMark` 标记高亮的基础。
 
 **解析模式**（由 options 控制）：
+
 - `evalMode=true`：输入直接作为表达式解析
 - `evalMode=false`：输入作为模板解析（`${...}` 内为表达式，外部为普通文本）
 - `variableMode=true`：仅解析变量路径（`xxx.yyy.zzz`）
@@ -824,22 +831,22 @@ Token 类型：
 
 ## 四、CodeMirror 5 → CodeMirror 6 迁移对照
 
-| 功能 | CM5 实现 | CM6 对应方案 |
-|------|---------|-------------|
-| **语法模式定义** | `cm.defineMode()` + `cm.multiplexingMode()` | Lezer grammar 文件（`@lezer/generator`），或复用 `@codemirror/lang-javascript` |
-| **模板多路复用** | `cm.multiplexingMode(base, {open, close, mode})` | `@lezer/html` 的 `parseMixed` 或自定义 `StreamParser` |
-| **文本标记替换** | `editor.markText(from, to, {atomic, replacedWith})` | `Decoration.replace({widget, atomic})` + `WidgetType` |
-| **行内小部件** | `editor.addLineWidget()` | `Gutter` 扩展或 `BlockType` 装饰 |
-| **错误 lint** | `addLineWidget` + 自定义 DOM | `@codemirror/lint` 的 `linter()` 扩展 |
-| **事件监听** | `editor.on('change'/'blur'/'focus')` | `EditorView.updateListener` / `focusChangeEffect` |
-| **值同步** | `doc.setValue()` + `doc.setCursor()` | `view.dispatch({changes: ...})` |
-| **光标操作** | `editor.setCursor()` / `editor.getCursor()` | `view.dispatch({selection: ...})` |
-| **文本替换** | `editor.replaceSelection()` | `view.dispatch(view.state.replaceSelection(...))` |
-| **自动补全** | 无内置（靠侧边面板） | `@codemirror/autocomplete` 内置补全弹出菜单 |
-| **配置更新** | `editor.setOption()` | `StateEffect.reconfigure` / `Compartment` |
-| **只读模式** | `readOnly: 'nocursor'` | `EditorState.readOnly` facet |
-| **主题** | CM5 主题字符串（'idea'/'base16-dark'） | `@codemirror/theme-one-dark` 或自定义 `Theme` |
-| **placeholder** | `addon/display/placeholder` | `@codemirror/view` 的 placeholder 扩展 |
+| 功能             | CM5 实现                                            | CM6 对应方案                                                                   |
+| ---------------- | --------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **语法模式定义** | `cm.defineMode()` + `cm.multiplexingMode()`         | Lezer grammar 文件（`@lezer/generator`），或复用 `@codemirror/lang-javascript` |
+| **模板多路复用** | `cm.multiplexingMode(base, {open, close, mode})`    | `@lezer/html` 的 `parseMixed` 或自定义 `StreamParser`                          |
+| **文本标记替换** | `editor.markText(from, to, {atomic, replacedWith})` | `Decoration.replace({widget, atomic})` + `WidgetType`                          |
+| **行内小部件**   | `editor.addLineWidget()`                            | `Gutter` 扩展或 `BlockType` 装饰                                               |
+| **错误 lint**    | `addLineWidget` + 自定义 DOM                        | `@codemirror/lint` 的 `linter()` 扩展                                          |
+| **事件监听**     | `editor.on('change'/'blur'/'focus')`                | `EditorView.updateListener` / `focusChangeEffect`                              |
+| **值同步**       | `doc.setValue()` + `doc.setCursor()`                | `view.dispatch({changes: ...})`                                                |
+| **光标操作**     | `editor.setCursor()` / `editor.getCursor()`         | `view.dispatch({selection: ...})`                                              |
+| **文本替换**     | `editor.replaceSelection()`                         | `view.dispatch(view.state.replaceSelection(...))`                              |
+| **自动补全**     | 无内置（靠侧边面板）                                | `@codemirror/autocomplete` 内置补全弹出菜单                                    |
+| **配置更新**     | `editor.setOption()`                                | `StateEffect.reconfigure` / `Compartment`                                      |
+| **只读模式**     | `readOnly: 'nocursor'`                              | `EditorState.readOnly` facet                                                   |
+| **主题**         | CM5 主题字符串（'idea'/'base16-dark'）              | `@codemirror/theme-one-dark` 或自定义 `Theme`                                  |
+| **placeholder**  | `addon/display/placeholder`                         | `@codemirror/view` 的 placeholder 扩展                                         |
 
 ### 推荐 CM6 包依赖
 
@@ -925,7 +932,7 @@ function buildVariableCompletions(variables: VariableItem[]) {
     let resolvedPath = '';
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i].replace(/['"\]]/g, '');
-      const found = currentVars.find(v => {
+      const found = currentVars.find((v) => {
         const vName = v.value?.split('.').pop();
         return vName === part;
       });
@@ -940,12 +947,12 @@ function buildVariableCompletions(variables: VariableItem[]) {
     return {
       from: word.from + text.lastIndexOf(lastPart),
       options: currentVars
-        .filter(v => v.label?.toLowerCase().startsWith(lastPart.toLowerCase()))
-        .map(v => ({
+        .filter((v) => v.label?.toLowerCase().startsWith(lastPart.toLowerCase()))
+        .map((v) => ({
           label: v.label,
           detail: v.type,
           apply: v.value?.split('.').pop() || v.label,
-          type: v.children ? 'variable' : 'property' as any,
+          type: v.children ? 'variable' : ('property' as any),
         })),
     };
   };
@@ -955,11 +962,23 @@ function buildVariableCompletions(variables: VariableItem[]) {
 #### 5.1.3 变量/函数标记（Decoration 替代 markText）
 
 ```typescript
-import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
+import {
+  Decoration,
+  DecorationSet,
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+  WidgetType,
+} from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
 
 class VariableWidget extends WidgetType {
-  constructor(readonly label: string, readonly raw: string) { super(); }
+  constructor(
+    readonly label: string,
+    readonly raw: string,
+  ) {
+    super();
+  }
   toDOM() {
     const span = document.createElement('span');
     span.className = 'cm-field';
@@ -967,46 +986,57 @@ class VariableWidget extends WidgetType {
     span.title = this.raw;
     return span;
   }
-  ignoreEvent() { return false; }
+  ignoreEvent() {
+    return false;
+  }
 }
 
-const formulaMarkerPlugin = ViewPlugin.fromClass(class {
-  decorations: DecorationSet = Decoration.none;
+const formulaMarkerPlugin = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet = Decoration.none;
 
-  constructor(view: EditorView) {
-    this.decorations = this.build(view);
-  }
-
-  update(update: ViewUpdate) {
-    if (update.docChanged || update.viewportChanged) {
-      this.decorations = this.build(update.view);
+    constructor(view: EditorView) {
+      this.decorations = this.build(view);
     }
-  }
 
-  build(view: EditorView): DecorationSet {
-    const doc = view.state.doc.toString();
-    const builder = new RangeSetBuilder<Decoration>();
-    try {
-      const ast = parse(doc, { evalMode: true });
-      traverseAst(ast, (node) => {
-        // 同 amis plugin.ts 的逻辑，使用 AST position 映射到 CM6 position
-        if (node.type === 'variable') {
-          const from = node.start.index;
-          const to = node.end.index;
-          const varDef = findVariable(variables, node.name);
-          if (varDef) {
-            builder.add(from, to, Decoration.replace({
-              widget: new VariableWidget(varDef.label, varDef.value),
-              atomic: true,
-            }));
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = this.build(update.view);
+      }
+    }
+
+    build(view: EditorView): DecorationSet {
+      const doc = view.state.doc.toString();
+      const builder = new RangeSetBuilder<Decoration>();
+      try {
+        const ast = parse(doc, { evalMode: true });
+        traverseAst(ast, (node) => {
+          // 同 amis plugin.ts 的逻辑，使用 AST position 映射到 CM6 position
+          if (node.type === 'variable') {
+            const from = node.start.index;
+            const to = node.end.index;
+            const varDef = findVariable(variables, node.name);
+            if (varDef) {
+              builder.add(
+                from,
+                to,
+                Decoration.replace({
+                  widget: new VariableWidget(varDef.label, varDef.value),
+                  atomic: true,
+                }),
+              );
+            }
           }
-        }
-        // ... getter chains, func_calls 等
-      });
-    } catch (e) { /* 语法错误忽略 */ }
-    return builder.finish();
-  }
-}, { decorations: v => v.decorations });
+          // ... getter chains, func_calls 等
+        });
+      } catch (e) {
+        /* 语法错误忽略 */
+      }
+      return builder.finish();
+    }
+  },
+  { decorations: (v) => v.decorations },
+);
 ```
 
 #### 5.1.4 错误诊断
@@ -1056,14 +1086,14 @@ function parseTableAliases(sql: string, tables: TableSchema[]): Map<string, Tabl
   const fromRegex = /(?:FROM|JOIN)\s+(\w+)(?:\s+(?:AS\s+)?(\w+))?/gi;
   let match;
   while ((match = fromRegex.exec(sql)) !== null) {
-    const table = tables.find(t => t.name === match[1]);
+    const table = tables.find((t) => t.name === match[1]);
     if (table) aliasMap.set(match[2] || match[1], table);
   }
   return aliasMap;
 }
 
 function sqlCompletionSource(schemas: TableSchema[]) {
-  return function(context: CompletionContext) {
+  return function (context: CompletionContext) {
     const doc = context.state.doc.toString();
     const textBefore = doc.slice(0, context.pos);
     const aliasMap = parseTableAliases(textBefore, schemas);
@@ -1077,8 +1107,8 @@ function sqlCompletionSource(schemas: TableSchema[]) {
         return {
           from: context.pos - partial.length,
           options: table.columns
-            .filter(c => c.name.toLowerCase().startsWith(partial.toLowerCase()))
-            .map(col => ({ label: col.name, detail: col.type, type: 'property' as any })),
+            .filter((c) => c.name.toLowerCase().startsWith(partial.toLowerCase()))
+            .map((col) => ({ label: col.name, detail: col.type, type: 'property' as any })),
         };
       }
     }
@@ -1090,12 +1120,44 @@ function sqlCompletionSource(schemas: TableSchema[]) {
     return {
       from: word.from,
       options: [
-        ...schemas.map(t => ({ label: t.name, type: 'type' as any })),
+        ...schemas.map((t) => ({ label: t.name, type: 'type' as any })),
         ...[...aliasMap.entries()].map(([alias, table]) => ({
-          label: alias, detail: `alias for ${table.name}`, type: 'variable' as any,
+          label: alias,
+          detail: `alias for ${table.name}`,
+          type: 'variable' as any,
         })),
-        ...['SELECT', 'FROM', 'WHERE', 'JOIN', 'ON', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'AND', 'OR', 'NOT', 'IN', 'EXISTS', 'AS', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'SET', 'INTO', 'VALUES', 'TABLE', 'INDEX']
-          .map(kw => ({ label: kw, type: 'keyword' as any })),
+        ...[
+          'SELECT',
+          'FROM',
+          'WHERE',
+          'JOIN',
+          'ON',
+          'GROUP BY',
+          'HAVING',
+          'ORDER BY',
+          'LIMIT',
+          'AND',
+          'OR',
+          'NOT',
+          'IN',
+          'EXISTS',
+          'AS',
+          'LEFT',
+          'RIGHT',
+          'INNER',
+          'OUTER',
+          'INSERT',
+          'UPDATE',
+          'DELETE',
+          'CREATE',
+          'ALTER',
+          'DROP',
+          'SET',
+          'INTO',
+          'VALUES',
+          'TABLE',
+          'INDEX',
+        ].map((kw) => ({ label: kw, type: 'keyword' as any })),
       ],
     };
   };
@@ -1119,7 +1181,12 @@ import { EditorView } from '@codemirror/view';
 const dynamicExtensions = new Compartment();
 
 function useCodeMirror({
-  value, onChange, extensions = [], placeholder, readOnly, elementRef,
+  value,
+  onChange,
+  extensions = [],
+  placeholder,
+  readOnly,
+  elementRef,
 }: {
   value?: string;
   onChange?: (value: string) => void;
@@ -1137,7 +1204,7 @@ function useCodeMirror({
       doc: value ?? '',
       extensions: [
         dynamicExtensions.of(extensions),
-        EditorView.updateListener.of(update => {
+        EditorView.updateListener.of((update) => {
           if (update.docChanged) onChange?.(update.state.doc.toString());
         }),
         EditorState.readOnly.of(readOnly ?? false),

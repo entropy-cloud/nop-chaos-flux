@@ -166,9 +166,9 @@ Targets: `docs/architecture/playground-experience.md`, `docs/logs/2026/04-13.md`
 
 Exit Criteria:
 
-  - [x] `pnpm test:e2e` passes for the Component Lab suite.
-  - [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and relevant tests pass after the landed changes.
-  - [x] Closure audit confirms every live shared renderer route has E2E ownership and no route is still smoke-only when it should have `write` or `edit` coverage.
+- [x] `pnpm test:e2e` passes for the Component Lab suite.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and relevant tests pass after the landed changes.
+- [x] Closure audit confirms every live shared renderer route has E2E ownership and no route is still smoke-only when it should have `write` or `edit` coverage.
 
 ## Validation Checklist
 

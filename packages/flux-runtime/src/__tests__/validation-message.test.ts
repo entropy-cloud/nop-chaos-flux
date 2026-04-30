@@ -3,7 +3,9 @@ import type { CompiledFormValidationField } from '@nop-chaos/flux-core';
 import { setMessageFormatter } from '@nop-chaos/flux-core';
 import { buildValidationMessage } from '../validation/message';
 
-function makeField(overrides: Partial<CompiledFormValidationField> = {}): CompiledFormValidationField {
+function makeField(
+  overrides: Partial<CompiledFormValidationField> = {},
+): CompiledFormValidationField {
   return {
     path: 'name',
     controlType: 'input-text',
@@ -104,7 +106,10 @@ describe('buildValidationMessage', () => {
   });
 
   it('formats allOrNone with formatter', () => {
-    const result = buildValidationMessage({ kind: 'allOrNone', itemPaths: ['a', 'b'] }, makeField());
+    const result = buildValidationMessage(
+      { kind: 'allOrNone', itemPaths: ['a', 'b'] },
+      makeField(),
+    );
     expect(result).toContain('validation.allOrNone');
     expect(calls[0].params).toEqual({ label: 'Name' });
   });
@@ -170,10 +175,7 @@ describe('buildValidationMessage', () => {
   });
 
   it('email returns custom message when provided', () => {
-    const result = buildValidationMessage(
-      { kind: 'email', message: 'Bad email' },
-      makeField(),
-    );
+    const result = buildValidationMessage({ kind: 'email', message: 'Bad email' }, makeField());
     expect(result).toBe('Bad email');
     expect(calls).toHaveLength(0);
   });
@@ -194,7 +196,10 @@ describe('buildValidationMessage', () => {
   });
 
   it('formats notEqualsField with label and field', () => {
-    const result = buildValidationMessage({ kind: 'notEqualsField', path: 'oldPassword' }, makeField());
+    const result = buildValidationMessage(
+      { kind: 'notEqualsField', path: 'oldPassword' },
+      makeField(),
+    );
     expect(result).toContain('validation.notEqualsField');
     expect(calls[0].params).toEqual({ label: 'Name', field: 'oldPassword' });
   });
@@ -245,10 +250,7 @@ describe('buildValidationMessage', () => {
   });
 
   it('empty string custom message is returned as-is (not nullish)', () => {
-    const result = buildValidationMessage(
-      { kind: 'minItems', value: 1, message: '' },
-      makeField(),
-    );
+    const result = buildValidationMessage({ kind: 'minItems', value: 1, message: '' }, makeField());
     expect(result).toBe('');
     expect(calls).toHaveLength(0);
   });

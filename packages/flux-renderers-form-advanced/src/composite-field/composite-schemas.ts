@@ -1,4 +1,10 @@
-import type { ActionSchema, BaseSchema, BoundFieldSchemaBase, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  ActionSchema,
+  BaseSchema,
+  BoundFieldSchemaBase,
+  SchemaObject,
+  SchemaValue,
+} from '@nop-chaos/flux-core';
 
 export type SchemaInput = BaseSchema | BaseSchema[];
 

@@ -38,7 +38,13 @@ function normalizeImports(imports: readonly PreparedImportSpec[] | undefined) {
 }
 
 function createFrameKey(imports: readonly PreparedImportSpec[]): string {
-  return JSON.stringify(imports.map((entry) => ({ from: entry.resolvedSpec.from, as: entry.resolvedSpec.as, options: entry.resolvedSpec.options ?? null })));
+  return JSON.stringify(
+    imports.map((entry) => ({
+      from: entry.resolvedSpec.from,
+      as: entry.resolvedSpec.as,
+      options: entry.resolvedSpec.options ?? null,
+    })),
+  );
 }
 
 export function createImportManager(input: {
@@ -52,7 +58,10 @@ export function createImportManager(input: {
   void input.getRuntime;
   void input.moduleCache;
 
-  const framesByActionScope = new WeakMap<ActionScope, Map<string, { frameId: string; refCount: number }>>();
+  const framesByActionScope = new WeakMap<
+    ActionScope,
+    Map<string, { frameId: string; refCount: number }>
+  >();
 
   function getScopeFrames(actionScope: ActionScope) {
     let frames = framesByActionScope.get(actionScope);
@@ -95,7 +104,7 @@ export function createImportManager(input: {
       actionScope: args.actionScope,
       componentRegistry: args.componentRegistry,
       scope: args.scope,
-      nodeInstance: args.nodeInstance
+      nodeInstance: args.nodeInstance,
     });
 
     if (frame) {
@@ -163,6 +172,6 @@ export function createImportManager(input: {
     ensureImportedNamespaces,
     getImportedExpressionBindings,
     releaseImportedNamespaces,
-    dispose
+    dispose,
   };
 }

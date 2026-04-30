@@ -4,14 +4,14 @@ import type {
   FormulaAstNode,
   IdentifierNode,
   ObjectExpressionNode,
-  PropertyNode
+  PropertyNode,
 } from './ast';
 import { tokenizeFormula, type FormulaToken } from './lexer';
 import {
   createIdentifierNode,
   createLiteralNode,
   createMemberExpressionNode,
-  createSourceLocation
+  createSourceLocation,
 } from './parser-node-factories';
 
 export interface FormulaSyntaxError extends Error {
@@ -73,10 +73,10 @@ class Parser {
       const body = this.parseArrowExpression();
       return {
         type: 'ArrowFunctionExpression',
-          params: [createIdentifierNode(param)],
-          body,
-          loc: createSourceLocation(param.start, body.loc.end)
-        } satisfies ArrowFunctionExpressionNode;
+        params: [createIdentifierNode(param)],
+        body,
+        loc: createSourceLocation(param.start, body.loc.end),
+      } satisfies ArrowFunctionExpressionNode;
     }
 
     if (this.isArrowParameterList()) {
@@ -87,7 +87,7 @@ class Parser {
         type: 'ArrowFunctionExpression',
         params,
         body,
-        loc: createSourceLocation(start, body.loc.end)
+        loc: createSourceLocation(start, body.loc.end),
       } satisfies ArrowFunctionExpressionNode;
     }
 
@@ -165,7 +165,7 @@ class Parser {
       test,
       consequent,
       alternate,
-      loc: createSourceLocation(test.loc.start, alternate.loc.end)
+      loc: createSourceLocation(test.loc.start, alternate.loc.end),
     };
   }
 
@@ -178,7 +178,7 @@ class Parser {
         type: 'NullCoalesceExpression',
         left,
         right,
-        loc: createSourceLocation(left.loc.start, right.loc.end)
+        loc: createSourceLocation(left.loc.start, right.loc.end),
       };
     }
     return left;
@@ -205,15 +205,27 @@ class Parser {
   }
 
   private parseEquality(): FormulaAstNode {
-    return this.parseBinaryChain(() => this.parseComparison(), ['==', '!=', '===', '!=='], 'BinaryExpression');
+    return this.parseBinaryChain(
+      () => this.parseComparison(),
+      ['==', '!=', '===', '!=='],
+      'BinaryExpression',
+    );
   }
 
   private parseComparison(): FormulaAstNode {
-    return this.parseBinaryChain(() => this.parseShift(), ['<', '<=', '>', '>=', 'instanceof'], 'BinaryExpression');
+    return this.parseBinaryChain(
+      () => this.parseShift(),
+      ['<', '<=', '>', '>=', 'instanceof'],
+      'BinaryExpression',
+    );
   }
 
   private parseShift(): FormulaAstNode {
-    return this.parseBinaryChain(() => this.parseAdditive(), ['<<', '>>', '>>>'], 'BinaryExpression');
+    return this.parseBinaryChain(
+      () => this.parseAdditive(),
+      ['<<', '>>', '>>>'],
+      'BinaryExpression',
+    );
   }
 
   private parseAdditive(): FormulaAstNode {
@@ -236,7 +248,7 @@ class Parser {
       op: '**',
       left,
       right,
-      loc: createSourceLocation(left.loc.start, right.loc.end)
+      loc: createSourceLocation(left.loc.start, right.loc.end),
     };
   }
 
@@ -248,7 +260,7 @@ class Parser {
         type: 'UnaryExpression',
         op: operator.value,
         argument,
-        loc: createSourceLocation(operator.start, argument.loc.end)
+        loc: createSourceLocation(operator.start, argument.loc.end),
       };
     }
 
@@ -267,7 +279,7 @@ class Parser {
           property,
           computed: false,
           optional: true,
-          end: property.loc.end
+          end: property.loc.end,
         });
         if (this.match('punctuation', '(')) {
           this.throwSyntaxError('Optional call is not supported');
@@ -284,7 +296,7 @@ class Parser {
           property,
           computed: false,
           optional: false,
-          end: property.loc.end
+          end: property.loc.end,
         });
         continue;
       }
@@ -298,7 +310,7 @@ class Parser {
           property,
           computed: true,
           optional: false,
-          end: closing.end
+          end: closing.end,
         });
         continue;
       }
@@ -309,7 +321,7 @@ class Parser {
           type: 'CallExpression',
           callee: expression,
           arguments: args,
-          loc: createSourceLocation(expression.loc.start, this.tokens[this.index - 1].end)
+          loc: createSourceLocation(expression.loc.start, this.tokens[this.index - 1].end),
         };
         continue;
       }
@@ -403,7 +415,7 @@ class Parser {
     return {
       type: 'ArrayExpression',
       elements,
-      loc: createSourceLocation(start, end)
+      loc: createSourceLocation(start, end),
     };
   }
 
@@ -423,7 +435,7 @@ class Parser {
           this.expect('punctuation', ']');
           computed = true;
         } else if (this.match('identifier')) {
-            key = createIdentifierNode(this.consume());
+          key = createIdentifierNode(this.consume());
         } else if (this.match('string')) {
           const token = this.consume();
           key = createLiteralNode(JSON.parse(token.value), token.value, token.start, token.end);
@@ -448,7 +460,7 @@ class Parser {
           value,
           computed,
           shorthand,
-          loc: createSourceLocation(keyToken.start, value.loc.end)
+          loc: createSourceLocation(keyToken.start, value.loc.end),
         });
 
         if (!this.match('punctuation', ',')) {
@@ -462,13 +474,20 @@ class Parser {
     return {
       type: 'ObjectExpression',
       properties,
-      loc: createSourceLocation(start, end)
+      loc: createSourceLocation(start, end),
     };
   }
 
-  private parseBinaryChain(parseOperand: () => FormulaAstNode, operators: string[], type: 'BinaryExpression' | 'LogicalExpression'): FormulaAstNode {
+  private parseBinaryChain(
+    parseOperand: () => FormulaAstNode,
+    operators: string[],
+    type: 'BinaryExpression' | 'LogicalExpression',
+  ): FormulaAstNode {
     let expression = parseOperand();
-    while ((this.match('operator') || this.match('keyword')) && operators.includes(this.current().value)) {
+    while (
+      (this.match('operator') || this.match('keyword')) &&
+      operators.includes(this.current().value)
+    ) {
       const operator = this.consume();
       const right = parseOperand();
       expression = {
@@ -476,8 +495,8 @@ class Parser {
         op: operator.value,
         left: expression,
         right,
-          loc: createSourceLocation(expression.loc.start, right.loc.end)
-        } as FormulaAstNode;
+        loc: createSourceLocation(expression.loc.start, right.loc.end),
+      } as FormulaAstNode;
     }
     return expression;
   }

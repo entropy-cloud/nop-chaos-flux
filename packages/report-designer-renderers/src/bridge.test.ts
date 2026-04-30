@@ -4,10 +4,7 @@ import {
   createEmptyDocument,
   type SpreadsheetCore,
 } from '@nop-chaos/spreadsheet-core';
-import {
-  createSpreadsheetBridge,
-  type SpreadsheetBridge,
-} from '@nop-chaos/spreadsheet-renderers';
+import { createSpreadsheetBridge, type SpreadsheetBridge } from '@nop-chaos/spreadsheet-renderers';
 import {
   createReportDesignerCore,
   createReportTemplateDocument,
@@ -46,7 +43,9 @@ describe('createEventEmitter', () => {
     const emitter = createEventEmitter();
     let count = 0;
 
-    const unsub = emitter.on(() => { count++; });
+    const unsub = emitter.on(() => {
+      count++;
+    });
     emitter.emit({ type: 'report-designer:fieldDragStart', payload: { active: true } });
     unsub();
     emitter.emit({ type: 'report-designer:fieldDragEnd', payload: { active: false } });
@@ -59,8 +58,12 @@ describe('createEventEmitter', () => {
     let count1 = 0;
     let count2 = 0;
 
-    emitter.on(() => { count1++; });
-    emitter.on(() => { count2++; });
+    emitter.on(() => {
+      count1++;
+    });
+    emitter.on(() => {
+      count2++;
+    });
 
     emitter.emit({ type: 'report-designer:previewStarted', payload: { mode: 'inline' } });
 
@@ -184,7 +187,9 @@ describe('createReportDesignerBridge', () => {
 
   it('should subscribe to changes', async () => {
     let notified = false;
-    designerBridge.subscribe(() => { notified = true; });
+    designerBridge.subscribe(() => {
+      notified = true;
+    });
 
     await designerBridge.dispatch({
       type: 'spreadsheet:setCellValue',

@@ -1,11 +1,10 @@
-import type {
-  BaseSchema,
-  TemplateNode,
-  TemplateRegion
-} from '@nop-chaos/flux-core';
+import type { BaseSchema, TemplateNode, TemplateRegion } from '@nop-chaos/flux-core';
 import { attachCompiledCidState } from '@nop-chaos/flux-core';
 
-function collectAllTemplateNodes(entry: TemplateNode | readonly TemplateNode[], out: TemplateNode[]) {
+function collectAllTemplateNodes(
+  entry: TemplateNode | readonly TemplateNode[],
+  out: TemplateNode[],
+) {
   const queue: Array<TemplateNode | readonly TemplateNode[]> = [entry];
   while (queue.length > 0) {
     const current = queue.pop()!;
@@ -50,7 +49,7 @@ export function extractLifecycleActions(schema: BaseSchema) {
 
 export function enrichTemplateNodeIds(
   compiled: TemplateNode | readonly TemplateNode[],
-  cidState: import('@nop-chaos/flux-core').CompiledCidState
+  cidState: import('@nop-chaos/flux-core').CompiledCidState,
 ): TemplateNode | readonly TemplateNode[] {
   const nodes: TemplateNode[] = [];
   collectAllTemplateNodes(compiled, nodes);

@@ -11,7 +11,7 @@ function createStubScope(): ScopeRef {
       getSnapshot: () => ({}),
       getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
-      subscribe: () => () => {}
+      subscribe: () => () => {},
     },
     value: {},
     update: () => {},
@@ -20,11 +20,15 @@ function createStubScope(): ScopeRef {
     readOwn: () => ({}),
     readVisible: () => ({}),
     materializeVisible: () => ({}),
-    merge: () => {}
+    merge: () => {},
   };
 }
 
-function err(path: string, message: string, rule: ValidationError['rule'] = 'required'): ValidationError {
+function err(
+  path: string,
+  message: string,
+  rule: ValidationError['rule'] = 'required',
+): ValidationError {
   return { path, message, rule };
 }
 
@@ -38,18 +42,21 @@ function createAsyncValidationModel() {
         rules: [
           {
             id: 'name#0:async',
-            rule: { kind: 'async' as const, action: { action: 'ajax', args: { url: '/validate', method: 'post' } } },
-            dependencyPaths: []
-          }
+            rule: {
+              kind: 'async' as const,
+              action: { action: 'ajax', args: { url: '/validate', method: 'post' } },
+            },
+            dependencyPaths: [],
+          },
         ],
         behavior: { triggers: ['blur' as const], showErrorOn: ['submit' as const] },
         children: [],
-        parent: ''
-      }
+        parent: '',
+      },
     },
     order: ['name'],
     behavior: { triggers: ['blur' as const], showErrorOn: ['submit' as const] },
-    dependents: {}
+    dependents: {},
   };
 }
 
@@ -76,7 +83,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         });
         return undefined;
       },
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     const promise = form.validateField('name');
@@ -104,7 +111,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         });
         return undefined;
       },
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     const promise = form.validateField('name');
@@ -129,7 +136,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       parentScope: createStubScope(),
       submittingDelay: 20,
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     const promise = form.submit();
@@ -155,10 +162,12 @@ describe('FormRuntime performance-oriented behavior', () => {
       validateRule: () => undefined,
       lifecycle: {
         submitAction: async () => {
-          await new Promise<void>((resolve) => { resolveApi = resolve; });
+          await new Promise<void>((resolve) => {
+            resolveApi = resolve;
+          });
           return { ok: true, data: {} };
-        }
-      }
+        },
+      },
     });
 
     const promise = form.submit();
@@ -190,10 +199,12 @@ describe('FormRuntime performance-oriented behavior', () => {
       validateRule: () => undefined,
       lifecycle: {
         submitAction: async () => {
-          await new Promise<void>((resolve) => { resolveApi = resolve; });
+          await new Promise<void>((resolve) => {
+            resolveApi = resolve;
+          });
           return { ok: true, data: {} };
-        }
-      }
+        },
+      },
     });
 
     const first = form.submit();
@@ -205,7 +216,7 @@ describe('FormRuntime performance-oriented behavior', () => {
     await expect(second).resolves.toMatchObject({
       ok: false,
       cancelled: true,
-      error: expect.any(Error)
+      error: expect.any(Error),
     });
 
     resolveApi?.();
@@ -225,7 +236,7 @@ describe('FormRuntime performance-oriented behavior', () => {
             rules: [],
             behavior: { triggers: ['blur'], showErrorOn: ['submit'] },
             children: ['user.name', 'user.email'],
-            parent: ''
+            parent: '',
           },
           'user.name': {
             path: 'user.name',
@@ -235,12 +246,12 @@ describe('FormRuntime performance-oriented behavior', () => {
               {
                 id: 'user.name#0:required',
                 rule: { kind: 'required', message: 'Required' },
-                dependencyPaths: ['user.email']
-              }
+                dependencyPaths: ['user.email'],
+              },
             ],
             behavior: { triggers: ['blur'], showErrorOn: ['submit'] },
             children: [],
-            parent: 'user'
+            parent: 'user',
           },
           'user.email': {
             path: 'user.email',
@@ -249,17 +260,17 @@ describe('FormRuntime performance-oriented behavior', () => {
             rules: [],
             behavior: { triggers: ['blur'], showErrorOn: ['submit'] },
             children: [],
-            parent: 'user'
-          }
+            parent: 'user',
+          },
         },
         order: ['user.name', 'user.email'],
         behavior: { triggers: ['blur'], showErrorOn: ['submit'] },
         dependents: {
-          'user.email': ['user.name']
-        }
+          'user.email': ['user.name'],
+        },
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     expect(form.getField('user.name')?.path).toBe('user.name');
@@ -274,7 +285,7 @@ describe('FormRuntime performance-oriented behavior', () => {
       initialValues: { name: '' },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     form.store.setPathErrors('name', [err('name', 'Required')]);
@@ -291,14 +302,11 @@ describe('FormRuntime performance-oriented behavior', () => {
     const form = createManagedFormRuntime({
       id: 'test-form',
       initialValues: {
-        list: [
-          { name: 'A' },
-          { name: 'B' }
-        ]
+        list: [{ name: 'A' }, { name: 'B' }],
       },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     form.store.setPathErrors('list.1.name', [err('list.1.name', 'Bad')]);
@@ -322,14 +330,11 @@ describe('FormRuntime performance-oriented behavior', () => {
     const form = createManagedFormRuntime({
       id: 'test-form',
       initialValues: {
-        list: [
-          { name: 'A' },
-          { name: 'B' }
-        ]
+        list: [{ name: 'A' }, { name: 'B' }],
       },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     form.store.setPathErrors('list.1.name', [err('list.1.name', 'Bad')]);
@@ -363,21 +368,21 @@ describe('FormRuntime performance-oriented behavior', () => {
             rules: [],
             behavior: { triggers: ['blur'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['name'],
         behavior: { triggers: ['blur'], showErrorOn: ['submit'] },
-        dependents: {}
+        dependents: {},
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     form.registerField({
       path: 'name',
       getValue: () => 'after',
-      syncValue: () => 'after'
+      syncValue: () => 'after',
     });
 
     let commits = 0;
@@ -406,7 +411,7 @@ describe('FormRuntime performance-oriented behavior', () => {
         });
         return err('name', 'Remote invalid', 'async');
       },
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     let commits = 0;
@@ -431,13 +436,13 @@ describe('FormRuntime performance-oriented behavior', () => {
       initialValues: { email: '' },
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     form.registerField({
       path: 'email',
       getValue: () => '',
-      validate: async () => [err('email', 'Invalid email')]
+      validate: async () => [err('email', 'Invalid email')],
     });
 
     let commits = 0;
@@ -452,5 +457,4 @@ describe('FormRuntime performance-oriented behavior', () => {
     expect(form.store.getState().fieldStates.email?.errors?.[0]?.message).toBe('Invalid email');
     expect(commits).toBeLessThanOrEqual(1);
   });
-
 });

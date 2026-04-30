@@ -1,7 +1,7 @@
 export function resolveClassAliases(
   className: string | undefined,
   aliases: Record<string, string> | undefined,
-  visited: Set<string> = new Set()
+  visited: Set<string> = new Set(),
 ): string {
   if (!className) return '';
   if (!aliases || Object.keys(aliases).length === 0) return className;
@@ -33,7 +33,7 @@ export function resolveClassAliases(
 
 export function mergeClassAliases(
   parent: Record<string, string> | undefined,
-  child: Record<string, string> | undefined
+  child: Record<string, string> | undefined,
 ): Record<string, string> | undefined {
   if (!parent && !child) return undefined;
   if (!parent) return child;

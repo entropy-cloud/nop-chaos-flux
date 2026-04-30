@@ -58,13 +58,13 @@
             "approved": false,
             "status": "draft",
             "notes": "",
-        "featured": false,
-        "tags": ["stable"],
-        "labels": [],
-        "metadata": [],
-        "reviewers": [],
-        "filterExpression": ""
-      },
+            "featured": false,
+            "tags": ["stable"],
+            "labels": [],
+            "metadata": [],
+            "reviewers": [],
+            "filterExpression": ""
+          },
           "body": [
             {
               "type": "input-text",

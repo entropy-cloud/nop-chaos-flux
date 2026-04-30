@@ -438,9 +438,21 @@ describe('filterRowsByCellValue/clearRowFilters', () => {
     const doc = createEmptyDocument();
     sheetId = doc.workbook.sheets[0].id;
     core = createSpreadsheetCore({ document: doc });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'x' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'y' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A3', row: 2, col: 0 }, value: 'x' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'x',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'y',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A3', row: 2, col: 0 },
+      value: 'x',
+    });
   });
 
   it('should mark non-matching rows as filteredOut', async () => {
@@ -473,10 +485,26 @@ describe('sortRange', () => {
     const doc = createEmptyDocument();
     sheetId = doc.workbook.sheets[0].id;
     core = createSpreadsheetCore({ document: doc });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'b' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'row-b' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'a' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B2', row: 1, col: 1 }, value: 'row-a' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'b',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'row-b',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'a',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B2', row: 1, col: 1 },
+      value: 'row-a',
+    });
   });
 
   it('should sort a range ascending by the key column and move whole rows', async () => {

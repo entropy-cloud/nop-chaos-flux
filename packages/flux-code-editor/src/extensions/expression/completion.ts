@@ -1,10 +1,7 @@
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import type { VariableItem, FuncGroup } from '../../types';
 
-export function resolveVariablePath(
-  variables: VariableItem[],
-  path: string,
-): VariableItem | null {
+export function resolveVariablePath(variables: VariableItem[], path: string): VariableItem | null {
   function findInTree(items: VariableItem[]): VariableItem | null {
     for (const item of items) {
       if (item.value === path) return item;
@@ -49,13 +46,8 @@ export function flattenFunctions(groups: FuncGroup[]) {
   return result;
 }
 
-export function expressionCompletionSource(
-  variables: VariableItem[],
-  functions: FuncGroup[],
-) {
-  return function contextCompletion(
-    context: CompletionContext,
-  ): CompletionResult | null {
+export function expressionCompletionSource(variables: VariableItem[], functions: FuncGroup[]) {
+  return function contextCompletion(context: CompletionContext): CompletionResult | null {
     if (context.view?.composing) return null;
 
     const textBefore = context.state.doc.sliceString(0, context.pos);
@@ -67,11 +59,7 @@ export function expressionCompletionSource(
       const resolved = resolveVariablePath(variables, path);
       if (resolved?.children?.length) {
         const options = resolved.children
-          .filter((c) =>
-            lastSegment(c.value)
-              .toLowerCase()
-              .startsWith(partial.toLowerCase()),
-          )
+          .filter((c) => lastSegment(c.value).toLowerCase().startsWith(partial.toLowerCase()))
           .map((c) => ({
             label: lastSegment(c.value),
             detail: c.type,
@@ -94,9 +82,7 @@ export function expressionCompletionSource(
     const partial = word.text.toLowerCase();
 
     const varOptions = flattenVariables(variables)
-      .filter((v) =>
-        lastSegment(v.value).toLowerCase().startsWith(partial),
-      )
+      .filter((v) => lastSegment(v.value).toLowerCase().startsWith(partial))
       .map((v) => ({
         label: lastSegment(v.value),
         detail: v.type,

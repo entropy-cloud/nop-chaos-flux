@@ -15,7 +15,20 @@ export interface FormulaToken {
   end: number;
 }
 
-const TWO_CHAR_OPERATORS = new Set(['?.', '??', '&&', '||', '==', '!=', '<=', '>=', '<<', '>>', '**', '=>']);
+const TWO_CHAR_OPERATORS = new Set([
+  '?.',
+  '??',
+  '&&',
+  '||',
+  '==',
+  '!=',
+  '<=',
+  '>=',
+  '<<',
+  '>>',
+  '**',
+  '=>',
+]);
 const THREE_CHAR_OPERATORS = new Set(['===', '!==', '>>>']);
 const PUNCTUATION = new Set(['(', ')', '[', ']', '{', '}', ',', ':', '?', '.']);
 const KEYWORDS = new Set(['true', 'false', 'null', 'undefined', 'instanceof', 'and', 'or']);
@@ -56,7 +69,7 @@ function readString(source: string, start: number): FormulaToken {
         type: 'string',
         value: source.slice(start, index + 1),
         start,
-        end: index + 1
+        end: index + 1,
       };
     }
     index += 1;
@@ -79,7 +92,11 @@ function readNumber(source: string, start: number): FormulaToken {
     }
   }
 
-  if ((source[index] === 'e' || source[index] === 'E') && (isDigit(source[index + 1]) || ((source[index + 1] === '+' || source[index + 1] === '-') && isDigit(source[index + 2])))) {
+  if (
+    (source[index] === 'e' || source[index] === 'E') &&
+    (isDigit(source[index + 1]) ||
+      ((source[index + 1] === '+' || source[index + 1] === '-') && isDigit(source[index + 2])))
+  ) {
     index += 1;
     if (source[index] === '+' || source[index] === '-') {
       index += 1;
@@ -93,7 +110,7 @@ function readNumber(source: string, start: number): FormulaToken {
     type: 'number',
     value: source.slice(start, index),
     start,
-    end: index
+    end: index,
   };
 }
 
@@ -108,7 +125,7 @@ function readIdentifier(source: string, start: number): FormulaToken {
     type: KEYWORDS.has(value) ? 'keyword' : 'identifier',
     value,
     start,
-    end: index
+    end: index,
   };
 }
 
@@ -133,7 +150,12 @@ export function tokenizeFormula(source: string): FormulaToken[] {
 
     const twoChars = source.slice(index, index + 2);
     if (TWO_CHAR_OPERATORS.has(twoChars)) {
-      tokens.push({ type: twoChars === '=>' ? 'arrow' : 'operator', value: twoChars, start: index, end: index + 2 });
+      tokens.push({
+        type: twoChars === '=>' ? 'arrow' : 'operator',
+        value: twoChars,
+        start: index,
+        end: index + 2,
+      });
       index += 2;
       continue;
     }

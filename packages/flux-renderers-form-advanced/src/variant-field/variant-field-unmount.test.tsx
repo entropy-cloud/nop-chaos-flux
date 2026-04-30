@@ -6,7 +6,9 @@ describe('variant-field unmount protection', () => {
   it('does not update state after unmount when detectVariantAction is in flight', async () => {
     cleanup();
     let resolveDetect: (value: any) => void;
-    const detectPromise = new Promise((resolve) => { resolveDetect = resolve; });
+    const detectPromise = new Promise((resolve) => {
+      resolveDetect = resolve;
+    });
     const importLoader = {
       load: vi.fn(async () => ({
         createNamespace: () => ({
@@ -37,8 +39,16 @@ describe('variant-field unmount protection', () => {
               'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
               detectVariantAction: { action: 'variantLib:detect' },
               variants: [
-                { key: 'first', label: 'First', content: [{ type: 'input-text', name: 'value', label: 'First Value' }] },
-                { key: 'second', label: 'Second', content: [{ type: 'input-text', name: 'value', label: 'Second Value' }] },
+                {
+                  key: 'first',
+                  label: 'First',
+                  content: [{ type: 'input-text', name: 'value', label: 'First Value' }],
+                },
+                {
+                  key: 'second',
+                  label: 'Second',
+                  content: [{ type: 'input-text', name: 'value', label: 'Second Value' }],
+                },
               ],
             },
           ],
@@ -59,7 +69,9 @@ describe('variant-field unmount protection', () => {
     const reactUpdateWarnings = consoleErrorSpy.mock.calls.filter(
       (call) =>
         typeof call[0] === 'string' &&
-        (call[0].includes('unmounted') || call[0].includes('unmount') || call[0].includes('perform a React state update'))
+        (call[0].includes('unmounted') ||
+          call[0].includes('unmount') ||
+          call[0].includes('perform a React state update')),
     );
     expect(reactUpdateWarnings).toHaveLength(0);
 

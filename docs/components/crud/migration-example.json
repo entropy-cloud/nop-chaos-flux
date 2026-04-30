@@ -32,11 +32,7 @@
       "bulkActions",
       "pagination"
     ],
-    "footerToolbar": [
-      "statistics",
-      "switch-per-page",
-      "pagination"
-    ],
+    "footerToolbar": ["statistics", "switch-per-page", "pagination"],
     "bulkActions": [
       {
         "label": "批量删除",
@@ -87,9 +83,7 @@
               "title": "编辑用户",
               "body": {
                 "type": "form",
-                "body": [
-                  { "type": "input-text", "name": "name", "label": "姓名" }
-                ]
+                "body": [{ "type": "input-text", "name": "name", "label": "姓名" }]
               }
             }
           }
@@ -201,9 +195,7 @@
                 "title": "编辑用户",
                 "body": {
                   "type": "form",
-                  "body": [
-                    { "type": "input-text", "name": "name", "label": "姓名" }
-                  ]
+                  "body": [{ "type": "input-text", "name": "name", "label": "姓名" }]
                 }
               }
             }

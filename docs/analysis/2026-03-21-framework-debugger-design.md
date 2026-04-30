@@ -180,7 +180,7 @@ packages/nop-debugger/
 
 ```ts
 const debuggerController = createAmisDebugger({
-  id: 'playground-main'
+  id: 'playground-main',
 });
 
 const env = debuggerController.decorateEnv(baseEnv);
@@ -218,7 +218,7 @@ const onActionError = debuggerController.onActionError;
 建议主开关：
 
 ```ts
-window.__NOP_FLUX_DEBUGGER__
+window.__NOP_FLUX_DEBUGGER__;
 ```
 
 允许两种形式：
@@ -230,7 +230,7 @@ window.__NOP_FLUX_DEBUGGER__ = {
   defaultOpen: true,
   defaultTab: 'timeline',
   position: { x: 24, y: 24 },
-  dock: 'floating'
+  dock: 'floating',
 };
 ```
 
@@ -527,7 +527,7 @@ window.__NOP_FLUX_DEBUGGER__ = {
 
 **在 DOM 节点上注入 data-cid 属性：**
 
-- NodeRenderer 渲染时，如果当前节点有已注册的 ComponentHandle（通过 ComponentRegistry），则将其 _cid 作为 data-cid 写入 DOM
+- NodeRenderer 渲染时，如果当前节点有已注册的 ComponentHandle（通过 ComponentRegistry），则将其 \_cid 作为 data-cid 写入 DOM
 - 对于有 wrap 行为的表单节点，data-cid 写在 FieldFrame 的根元素上
 - 对于非 wrap 节点，由具体 renderer 组件通过 props.meta.cid 获取并自行应用（可选）
 
@@ -536,7 +536,7 @@ window.__NOP_FLUX_DEBUGGER__ = {
 - ComponentRegistry 已有 handlesByCid Map，可直接按 cid 查找 ComponentHandle
 - 对于 form 类型的 handle，可通过 handle.capabilities.store 访问 FormStoreApi
 - 通过 NopDebuggerController 暴露 inspectByCid(cid) 方法，返回：
-  - handle 信息（id、name、type、_cid）
+  - handle 信息（id、name、type、\_cid）
   - 如果是 form 类型：form store state（values、errors、touched、dirty、visited）
   - scope chain 数据（当前 scope + parent scope 的合并快照）
 
@@ -623,7 +623,9 @@ export interface AmisDebuggerController {
 }
 
 export function createAmisDebugger(options?: AmisDebuggerOptions): AmisDebuggerController;
-export function AmisDebuggerPanel(props: { controller: AmisDebuggerController }): React.ReactElement | null;
+export function AmisDebuggerPanel(props: {
+  controller: AmisDebuggerController;
+}): React.ReactElement | null;
 ```
 
 ## 15. 面向 AI 自动诊断的内置支持
@@ -712,8 +714,8 @@ export interface AmisDebuggerAutomationApi {
 为了方便 browser automation、Playwright、DevTools Console、AI agent 直接读取，建议在 `window` 上暴露：
 
 ```ts
-window.__NOP_FLUX_DEBUGGER_API__
-window.__NOP_FLUX_DEBUGGER_HUB__
+window.__NOP_FLUX_DEBUGGER_API__;
+window.__NOP_FLUX_DEBUGGER_HUB__;
 ```
 
 语义建议：
@@ -745,7 +747,7 @@ const api = window.__NOP_FLUX_DEBUGGER_API__;
 await api?.waitForEvent({
   kind: 'api:end',
   text: '/api/users',
-  timeoutMs: 5000
+  timeoutMs: 5000,
 });
 ```
 
@@ -757,8 +759,8 @@ const api = window.__NOP_FLUX_DEBUGGER_API__;
 const report = api?.createDiagnosticReport({
   eventLimit: 25,
   query: {
-    sinceTimestamp: Date.now() - 10_000
-  }
+    sinceTimestamp: Date.now() - 10_000,
+  },
 });
 ```
 
@@ -908,11 +910,11 @@ export interface AmisDebuggerSessionExport {
 const api = window.__NOP_FLUX_DEBUGGER_API__;
 
 const trace = api?.getInteractionTrace({
-  path: 'body.1'
+  path: 'body.1',
 });
 
 const exported = api?.exportSession({
-  eventLimit: 50
+  eventLimit: 50,
 });
 ```
 
@@ -1043,4 +1045,3 @@ AI 的主接口应该始终是：
 - `C:/can/nop/templates/amis/packages/amis-core/src/SchemaRenderer.tsx`
 - `C:/can/nop/templates/amis/packages/amis-core/src/factory.tsx`
 - `C:/can/nop/templates/amis/docs/zh-CN/extend/debug.md`
-

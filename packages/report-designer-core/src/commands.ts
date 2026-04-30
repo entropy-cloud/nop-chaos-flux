@@ -1,8 +1,4 @@
-import type {
-  ReportSelectionTarget,
-  MetadataBag,
-  FieldDragPayload,
-} from './types.js';
+import type { ReportSelectionTarget, MetadataBag, FieldDragPayload } from './types.js';
 
 export type ReportDesignerCommand =
   | DropFieldToTargetCommand

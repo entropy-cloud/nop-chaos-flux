@@ -2,7 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { DEFAULT_TOOLBAR_ITEMS } from './report-designer-toolbar-defaults.js';
 import type { ToolbarItem } from './report-designer-toolbar-helpers.js';
 
-const VALID_TYPES: ToolbarItem['type'][] = ['button', 'divider', 'spacer', 'text', 'badge', 'switch', 'title'];
+const VALID_TYPES: ToolbarItem['type'][] = [
+  'button',
+  'divider',
+  'spacer',
+  'text',
+  'badge',
+  'switch',
+  'title',
+];
 
 describe('DEFAULT_TOOLBAR_ITEMS', () => {
   it('is non-empty', () => {
@@ -16,9 +24,9 @@ describe('DEFAULT_TOOLBAR_ITEMS', () => {
   });
 
   it('all items with an id have unique ids', () => {
-    const ids = DEFAULT_TOOLBAR_ITEMS
-      .map((item) => item.id)
-      .filter((id): id is string => id != null);
+    const ids = DEFAULT_TOOLBAR_ITEMS.map((item) => item.id).filter(
+      (id): id is string => id != null,
+    );
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
   });
@@ -60,9 +68,7 @@ describe('DEFAULT_TOOLBAR_ITEMS', () => {
   });
 
   it('has a title item', () => {
-    const hasTitle = DEFAULT_TOOLBAR_ITEMS.some(
-      (item) => item.type === 'title',
-    );
+    const hasTitle = DEFAULT_TOOLBAR_ITEMS.some((item) => item.type === 'title');
     expect(hasTitle).toBe(true);
   });
 });

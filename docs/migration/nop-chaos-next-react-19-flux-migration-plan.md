@@ -333,7 +333,7 @@
   - `react/jsx-runtime`
   - `react/jsx-dev-runtime`
   - `@nop-chaos/ui`
-  与主仓 React 19 / 新 UI 版本一致。
+    与主仓 React 19 / 新 UI 版本一致。
 - 评估是否需要额外暴露 `react-dom/client` 给插件侧；若插件构建或运行确实依赖，应显式加入 shared modules 或 external 约束策略。
 - 对齐 `examples/plugin-demo` 的 external 设定与 React 19 host 模块约定。
 
@@ -471,15 +471,15 @@
 
 ## 风险清单
 
-| 风险 | 影响 | 应对 |
-| --- | --- | --- |
-| React 19 切换后，主仓和 example 的 React 版本不一致 | 安装、typecheck、运行异常 | 统一根和各 package React 声明与 overrides |
-| `@nop-chaos/ui` 替换后样式或导出面细节回归 | 主应用/extension/plugin 页面异常 | 先做 Phase 2 Gate，再进入业务层接入 |
-| 漏拷 `flux/types/` | typecheck 失败 | 把 `types/` 作为必拷资产写入计划 |
-| plugin shared modules 仍按 React 18 假设运行 | plugin demo 或 host 挂载异常 | 单列 Phase 3 调整 shared modules |
-| `pageType` 不扩展导致 Flux 页面只能走 builtin hack | 后续迁移路径混乱 | 正式新增 `pageType: 'flux'` |
-| 升级后的 AMIS runtime 接口变化 | `AmisSchemaPage` 无法直接消费 | 把 `render` / `clearStoresCache` / `setDefaultLocale` 作为接入契约检查项 |
-| `apps/main/vite.config.ts` 的 workspace package 推断过于简单 | chunk 分类错误 | 单列 Phase 7 修 manualChunks 逻辑 |
+| 风险                                                         | 影响                             | 应对                                                                     |
+| ------------------------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------ |
+| React 19 切换后，主仓和 example 的 React 版本不一致          | 安装、typecheck、运行异常        | 统一根和各 package React 声明与 overrides                                |
+| `@nop-chaos/ui` 替换后样式或导出面细节回归                   | 主应用/extension/plugin 页面异常 | 先做 Phase 2 Gate，再进入业务层接入                                      |
+| 漏拷 `flux/types/`                                           | typecheck 失败                   | 把 `types/` 作为必拷资产写入计划                                         |
+| plugin shared modules 仍按 React 18 假设运行                 | plugin demo 或 host 挂载异常     | 单列 Phase 3 调整 shared modules                                         |
+| `pageType` 不扩展导致 Flux 页面只能走 builtin hack           | 后续迁移路径混乱                 | 正式新增 `pageType: 'flux'`                                              |
+| 升级后的 AMIS runtime 接口变化                               | `AmisSchemaPage` 无法直接消费    | 把 `render` / `clearStoresCache` / `setDefaultLocale` 作为接入契约检查项 |
+| `apps/main/vite.config.ts` 的 workspace package 推断过于简单 | chunk 分类错误                   | 单列 Phase 7 修 manualChunks 逻辑                                        |
 
 ## Go / No-Go 标准
 

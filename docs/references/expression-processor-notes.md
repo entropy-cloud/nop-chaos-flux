@@ -56,12 +56,12 @@ The production direction is:
 
 ## Mapping Prototype Lessons to Current Architecture
 
-| Prototype lesson | Current target |
-| --- | --- |
-| compile once | compile schema values into `CompiledValueNode` trees |
-| static fragments should be free | compile to `kind: 'static'` and return original references |
-| unchanged dynamic results should reuse references | keep per-node runtime state and shallow reuse rules |
-| scope object access is convenient | replace with resolver-driven `EvalContext` and `ScopeRef` |
+| Prototype lesson                                  | Current target                                             |
+| ------------------------------------------------- | ---------------------------------------------------------- |
+| compile once                                      | compile schema values into `CompiledValueNode` trees       |
+| static fragments should be free                   | compile to `kind: 'static'` and return original references |
+| unchanged dynamic results should reuse references | keep per-node runtime state and shallow reuse rules        |
+| scope object access is convenient                 | replace with resolver-driven `EvalContext` and `ScopeRef`  |
 
 ## When to Read This Note
 

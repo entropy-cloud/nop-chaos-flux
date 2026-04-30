@@ -10,7 +10,7 @@ export interface AdapterContext {
 
 export type AdapterDispatch = (
   action: ActionSchema | ActionSchema[],
-  ctx?: Partial<ActionContext>
+  ctx?: Partial<ActionContext>,
 ) => Promise<ActionResult>;
 
 export interface AdapterActionContext extends AdapterContext {
@@ -30,10 +30,17 @@ export interface AdapterValidationIssue {
   path?: string;
 }
 
-export interface ValueAdapter<TExternal = unknown, TInternal = unknown, TContext extends AdapterContext = AdapterContext> {
+export interface ValueAdapter<
+  TExternal = unknown,
+  TInternal = unknown,
+  TContext extends AdapterContext = AdapterContext,
+> {
   in(value: TExternal, ctx: TContext): TInternal | Promise<TInternal>;
   out(value: TInternal, ctx: TContext): TExternal | Promise<TExternal>;
-  validate?(value: TInternal, ctx: TContext): AdapterValidationResult | Promise<AdapterValidationResult>;
+  validate?(
+    value: TInternal,
+    ctx: TContext,
+  ): AdapterValidationResult | Promise<AdapterValidationResult>;
 }
 
 type SyncMarkedAdapter = {
@@ -43,7 +50,7 @@ type SyncMarkedAdapter = {
 
 function markSyncAdapter<TAdapter extends ValueAdapter>(
   adapter: TAdapter,
-  options: { in?: true; out?: true } = { in: true, out: true }
+  options: { in?: true; out?: true } = { in: true, out: true },
 ): TAdapter {
   const syncAdapter = adapter as TAdapter & SyncMarkedAdapter;
 
@@ -60,22 +67,26 @@ function markSyncAdapter<TAdapter extends ValueAdapter>(
 
 function injectDefaultArgs(
   actionSchema: ActionSchema | ActionSchema[],
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
 ): ActionSchema | ActionSchema[] {
   const schemaPayload = payload as Record<string, SchemaValue>;
 
   function supportsArgsInjection(action: ActionSchema) {
-    return action.action !== 'closeDialog'
-      && action.action !== 'closeDrawer'
-      && action.action !== 'closeSurface'
-      && action.action !== 'refreshTable'
-      && action.action !== 'refreshSource';
+    return (
+      action.action !== 'closeDialog' &&
+      action.action !== 'closeDrawer' &&
+      action.action !== 'closeSurface' &&
+      action.action !== 'refreshTable' &&
+      action.action !== 'refreshSource'
+    );
   }
 
   if (Array.isArray(actionSchema)) {
-    return actionSchema.map((entry) => (entry.args === undefined && supportsArgsInjection(entry)
-      ? { ...entry, args: schemaPayload }
-      : entry));
+    return actionSchema.map((entry) =>
+      entry.args === undefined && supportsArgsInjection(entry)
+        ? { ...entry, args: schemaPayload }
+        : entry,
+    );
   }
 
   return actionSchema.args === undefined && supportsArgsInjection(actionSchema)
@@ -84,10 +95,12 @@ function injectDefaultArgs(
 }
 
 function toValidationIssues(error: unknown): AdapterValidationIssue[] {
-  return [{
-    level: 'error',
-    message: String(error ?? 'Validation failed')
-  }];
+  return [
+    {
+      level: 'error',
+      message: String(error ?? 'Validation failed'),
+    },
+  ];
 }
 
 function getActionResultValue(result: ActionResult, fallback: unknown) {
@@ -102,7 +115,7 @@ async function runAction(
   actionSchema: ActionSchema | ActionSchema[] | undefined,
   payload: Record<string, unknown>,
   ctx: AdapterActionContext,
-  dispatch?: AdapterDispatch
+  dispatch?: AdapterDispatch,
 ): Promise<ActionResult | undefined> {
   if (!actionSchema) {
     return undefined;
@@ -112,13 +125,13 @@ async function runAction(
   if (!runner) {
     return {
       ok: false,
-      error: 'Missing adapter dispatch'
+      error: 'Missing adapter dispatch',
     };
   }
 
   return runner(injectDefaultArgs(actionSchema, payload), {
     scope: ctx.scope,
-    form: ctx.form ?? undefined
+    form: ctx.form ?? undefined,
   });
 }
 
@@ -129,7 +142,7 @@ export function identityAdapter<TValue = unknown>(): ValueAdapter<TValue, TValue
     },
     out(value) {
       return value;
-    }
+    },
   });
 }
 
@@ -140,7 +153,7 @@ export function stringAdapter(): ValueAdapter<unknown, string> {
     },
     out(value) {
       return value;
-    }
+    },
   });
 }
 
@@ -151,12 +164,12 @@ export function booleanStringAdapter(): ValueAdapter<unknown, boolean> {
     },
     out(value) {
       return Boolean(value);
-    }
+    },
   });
 }
 
 export function nullableAdapter<TValue, TContext extends AdapterContext = AdapterContext>(
-  inner: ValueAdapter<TValue, TValue, TContext>
+  inner: ValueAdapter<TValue, TValue, TContext>,
 ): ValueAdapter<TValue | null | undefined, TValue | null | undefined, TContext> {
   const adapter: ValueAdapter<TValue | null | undefined, TValue | null | undefined, TContext> = {
     in(value, ctx): TValue | Promise<TValue | null | undefined> | null | undefined {
@@ -179,13 +192,13 @@ export function nullableAdapter<TValue, TContext extends AdapterContext = Adapte
       }
 
       return inner.validate(value, ctx);
-    }
+    },
   };
 
   const syncInner = inner as SyncMarkedAdapter;
   return markSyncAdapter(adapter, {
     in: syncInner.__syncIn ? true : undefined,
-    out: syncInner.__syncOut ? true : undefined
+    out: syncInner.__syncOut ? true : undefined,
   });
 }
 
@@ -193,7 +206,7 @@ export function actionAdapter(
   transformInAction?: ActionSchema | ActionSchema[],
   transformOutAction?: ActionSchema | ActionSchema[],
   validateAction?: ActionSchema | ActionSchema[],
-  dispatch?: AdapterDispatch
+  dispatch?: AdapterDispatch,
 ): ValueAdapter<unknown, unknown, AdapterActionContext> {
   return {
     async in(value, ctx) {
@@ -202,11 +215,16 @@ export function actionAdapter(
       }
 
       try {
-        const result = await runAction(transformInAction, {
-          value,
-          readOnly: ctx.readOnly,
-          ...(ctx.name !== undefined ? { name: ctx.name } : {})
-        }, ctx, dispatch);
+        const result = await runAction(
+          transformInAction,
+          {
+            value,
+            readOnly: ctx.readOnly,
+            ...(ctx.name !== undefined ? { name: ctx.name } : {}),
+          },
+          ctx,
+          dispatch,
+        );
 
         if (!result?.ok) {
           return value;
@@ -224,12 +242,17 @@ export function actionAdapter(
       }
 
       try {
-        const result = await runAction(transformOutAction, {
-          value,
-          originalValue: ctx.originalValue,
-          readOnly: ctx.readOnly,
-          ...(ctx.name !== undefined ? { name: ctx.name } : {})
-        }, ctx, dispatch);
+        const result = await runAction(
+          transformOutAction,
+          {
+            value,
+            originalValue: ctx.originalValue,
+            readOnly: ctx.readOnly,
+            ...(ctx.name !== undefined ? { name: ctx.name } : {}),
+          },
+          ctx,
+          dispatch,
+        );
 
         if (!result?.ok) {
           return value;
@@ -247,16 +270,21 @@ export function actionAdapter(
       }
 
       try {
-        const result = await runAction(validateAction, {
-          value,
-          originalValue: ctx.originalValue,
-          ...(ctx.name !== undefined ? { name: ctx.name } : {})
-        }, ctx, dispatch);
+        const result = await runAction(
+          validateAction,
+          {
+            value,
+            originalValue: ctx.originalValue,
+            ...(ctx.name !== undefined ? { name: ctx.name } : {}),
+          },
+          ctx,
+          dispatch,
+        );
 
         if (!result?.ok) {
           return {
             valid: false,
-            issues: toValidationIssues(result?.error)
+            issues: toValidationIssues(result?.error),
           };
         }
 
@@ -273,7 +301,7 @@ export function actionAdapter(
         if (candidate.valid === false) {
           return {
             valid: false,
-            issues: Array.isArray(candidate.issues) ? candidate.issues : []
+            issues: Array.isArray(candidate.issues) ? candidate.issues : [],
           };
         }
 
@@ -281,9 +309,9 @@ export function actionAdapter(
       } catch (error) {
         return {
           valid: false,
-          issues: toValidationIssues(error)
+          issues: toValidationIssues(error),
         };
       }
-    }
+    },
   };
 }

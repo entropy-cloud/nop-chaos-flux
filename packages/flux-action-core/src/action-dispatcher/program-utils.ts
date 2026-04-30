@@ -2,7 +2,7 @@ import type {
   ActionSchema,
   CompiledActionNode,
   CompiledActionProgram,
-  OperationControlConfig
+  OperationControlConfig,
 } from '@nop-chaos/flux-core';
 import { compileActions } from '@nop-chaos/flux-compiler';
 import type { ActionDispatcherContext } from './types';
@@ -16,13 +16,13 @@ export function isCompiledActionProgram(action: unknown): action is CompiledActi
     action &&
     typeof action === 'object' &&
     'nodes' in action &&
-    Array.isArray((action as CompiledActionProgram).nodes)
+    Array.isArray((action as CompiledActionProgram).nodes),
   );
 }
 
 export function normalizeCompiledActionProgram(
   action: ActionSchema | ActionSchema[] | CompiledActionProgram,
-  ctx: ActionDispatcherContext
+  ctx: ActionDispatcherContext,
 ): CompiledActionProgram {
   if (isCompiledActionProgram(action)) {
     return action;
@@ -39,7 +39,10 @@ export function normalizeCompiledActionProgram(
   return compiled;
 }
 
-export function applyActionControl(action: CompiledActionNode, control: OperationControlConfig | undefined): CompiledActionNode {
+export function applyActionControl(
+  action: CompiledActionNode,
+  control: OperationControlConfig | undefined,
+): CompiledActionNode {
   if (!control) {
     if (action.control) {
       return action;
@@ -47,7 +50,7 @@ export function applyActionControl(action: CompiledActionNode, control: Operatio
 
     return {
       ...action,
-      control: {}
+      control: {},
     };
   }
 
@@ -58,7 +61,7 @@ export function applyActionControl(action: CompiledActionNode, control: Operatio
       timeout: action.control?.timeout ?? control.timeout,
       debounce: action.control?.debounce ?? control.debounce,
       retry: action.control?.retry ?? control.retry,
-      control: action.control?.control ?? control
-    }
+      control: action.control?.control ?? control,
+    },
   };
 }

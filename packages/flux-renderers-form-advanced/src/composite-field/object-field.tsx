@@ -3,12 +3,17 @@ import type {
   BaseSchema,
   RendererComponentProps,
   RendererDefinition,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { actionAdapter, getIn, setIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
-import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  useCurrentForm,
+  useCurrentFormState,
+  useRenderScope,
+  useScopeSelector,
+} from '@nop-chaos/flux-react';
 import type { ObjectFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createProjectedInlineForm } from './projected-inline-form';
@@ -70,8 +75,10 @@ function createObjectFieldChildScope(
       }
 
       writeValue('', {
-        ...(resolvedValue && typeof resolvedValue === 'object' ? resolvedValue as Record<string, unknown> : {}),
-        ...(data as Record<string, unknown>)
+        ...(resolvedValue && typeof resolvedValue === 'object'
+          ? (resolvedValue as Record<string, unknown>)
+          : {}),
+        ...(data as Record<string, unknown>),
       });
     },
     replace(data) {
@@ -81,7 +88,7 @@ function createObjectFieldChildScope(
       }
 
       writeValue('', data);
-    }
+    },
   });
 }
 
@@ -95,7 +102,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const formValue = useCurrentFormState(
     (state) => (name ? getIn(state.values, name) : state.values),
     Object.is,
-    { path: name || undefined }
+    { path: name || undefined },
   );
   const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
   const rawValue = parentForm ? formValue : scopeValue;
@@ -107,14 +114,20 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
         scope: parentScope,
         form: parentForm ?? undefined,
         page: undefined,
-        nodeInstance: props.node as BaseNodeInstance
+        nodeInstance: props.node as BaseNodeInstance,
       }),
-    [parentForm, parentScope, props.helpers, props.node]
+    [parentForm, parentScope, props.helpers, props.node],
   );
 
   const valueAdapter = React.useMemo(
-    () => actionAdapter(schema.transformInAction, schema.transformOutAction, undefined, runAdaptationAction),
-    [runAdaptationAction, schema.transformInAction, schema.transformOutAction]
+    () =>
+      actionAdapter(
+        schema.transformInAction,
+        schema.transformOutAction,
+        undefined,
+        runAdaptationAction,
+      ),
+    [runAdaptationAction, schema.transformInAction, schema.transformOutAction],
   );
 
   const [resolvedValue, setResolvedValue] = React.useState(rawValue);
@@ -133,20 +146,22 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       name,
       readOnly: readOnly || Boolean(props.meta.disabled),
       scope: parentScope,
-      form: parentForm ?? null
+      form: parentForm ?? null,
     });
 
     if (isPromiseLike(nextValue)) {
-      void nextValue.then((resolvedNextValue: unknown) => {
-        if (!ac.signal.aborted) {
-          setResolvedValue(resolvedNextValue);
-        }
-      }).catch((error: unknown) => {
-        if (!ac.signal.aborted) {
-          setResolvedValue(rawValue);
-          console.warn('[object-field] transformIn failed', error);
-        }
-      });
+      void nextValue
+        .then((resolvedNextValue: unknown) => {
+          if (!ac.signal.aborted) {
+            setResolvedValue(resolvedNextValue);
+          }
+        })
+        .catch((error: unknown) => {
+          if (!ac.signal.aborted) {
+            setResolvedValue(rawValue);
+            console.warn('[object-field] transformIn failed', error);
+          }
+        });
       return () => {
         ac.abort();
       };
@@ -157,134 +172,174 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     return () => {
       ac.abort();
     };
-  }, [name, parentForm, parentScope, props.meta.disabled, rawValue, readOnly, schema.transformInAction, usesWorkingValue, valueAdapter]);
+  }, [
+    name,
+    parentForm,
+    parentScope,
+    props.meta.disabled,
+    rawValue,
+    readOnly,
+    schema.transformInAction,
+    usesWorkingValue,
+    valueAdapter,
+  ]);
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
-    readOnly
+    readOnly,
   });
 
   const bodyContent = resolveRendererSlotContent(props, 'body');
 
-  const writeProjectedValue = React.useCallback((path: string, nextLeafValue: unknown) => {
-    const nextWorkingValue = !path
-      ? nextLeafValue
-      : setIn(
-          projectedValue && typeof projectedValue === 'object'
-            ? projectedValue as Record<string, unknown>
-            : {},
-          path,
-          nextLeafValue
-        );
+  const writeProjectedValue = React.useCallback(
+    (path: string, nextLeafValue: unknown) => {
+      const nextWorkingValue = !path
+        ? nextLeafValue
+        : setIn(
+            projectedValue && typeof projectedValue === 'object'
+              ? (projectedValue as Record<string, unknown>)
+              : {},
+            path,
+            nextLeafValue,
+          );
 
-    if (usesWorkingValue) {
-      setResolvedValue(nextWorkingValue);
-    }
+      if (usesWorkingValue) {
+        setResolvedValue(nextWorkingValue);
+      }
 
-    if (schema.transformOutAction) {
-      const committedValue = valueAdapter.out(nextWorkingValue, {
-        name,
-        readOnly: readOnly || Boolean(props.meta.disabled),
-        originalValue: rawValue,
-        scope: parentScope,
-        form: parentForm ?? null
-      });
-
-      if (isPromiseLike(committedValue)) {
-        const sequence = nextTransformOutSequence(transformOutOwner);
-        setPendingTransformOut(pendingTransformOutOwner, committedValue);
-        void committedValue.then((resolvedCommittedValue: unknown) => {
-          if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
-            return;
-          }
-
-          if (parentForm && name) {
-            parentForm.setValue(name, resolvedCommittedValue);
-            return;
-          }
-
-          parentScope.update(name, resolvedCommittedValue);
-        }).catch((error: unknown) => {
-          if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
-            return;
-          }
-
-          console.warn('[object-field] transformOut failed', error);
-        }).finally(() => {
-          if (getPendingTransformOut(pendingTransformOutOwner) === committedValue) {
-            setPendingTransformOut(pendingTransformOutOwner, null);
-          }
+      if (schema.transformOutAction) {
+        const committedValue = valueAdapter.out(nextWorkingValue, {
+          name,
+          readOnly: readOnly || Boolean(props.meta.disabled),
+          originalValue: rawValue,
+          scope: parentScope,
+          form: parentForm ?? null,
         });
+
+        if (isPromiseLike(committedValue)) {
+          const sequence = nextTransformOutSequence(transformOutOwner);
+          setPendingTransformOut(pendingTransformOutOwner, committedValue);
+          void committedValue
+            .then((resolvedCommittedValue: unknown) => {
+              if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
+                return;
+              }
+
+              if (parentForm && name) {
+                parentForm.setValue(name, resolvedCommittedValue);
+                return;
+              }
+
+              parentScope.update(name, resolvedCommittedValue);
+            })
+            .catch((error: unknown) => {
+              if (!isTransformOutSequenceCurrent(transformOutOwner, sequence)) {
+                return;
+              }
+
+              console.warn('[object-field] transformOut failed', error);
+            })
+            .finally(() => {
+              if (getPendingTransformOut(pendingTransformOutOwner) === committedValue) {
+                setPendingTransformOut(pendingTransformOutOwner, null);
+              }
+            });
+          return;
+        }
+
+        invalidateTransformOutSequence(transformOutOwner);
+        setPendingTransformOut(pendingTransformOutOwner, null);
+        if (parentForm && name) {
+          parentForm.setValue(name, committedValue);
+          return;
+        }
+
+        parentScope.update(name, committedValue);
         return;
       }
 
-      invalidateTransformOutSequence(transformOutOwner);
-      setPendingTransformOut(pendingTransformOutOwner, null);
+      if (!path) {
+        if (parentForm && name) {
+          parentForm.setValue(name, nextWorkingValue);
+          return;
+        }
+
+        parentScope.update(name, nextWorkingValue);
+        return;
+      }
+
       if (parentForm && name) {
-        parentForm.setValue(name, committedValue);
+        parentForm.setValue(`${name}.${path}`, nextLeafValue);
         return;
       }
 
-      parentScope.update(name, committedValue);
-      return;
-    }
-
-    if (!path) {
-      if (parentForm && name) {
-        parentForm.setValue(name, nextWorkingValue);
-        return;
-      }
-
-      parentScope.update(name, nextWorkingValue);
-      return;
-    }
-
-    if (parentForm && name) {
-      parentForm.setValue(`${name}.${path}`, nextLeafValue);
-      return;
-    }
-
-    parentScope.update(`${name}.${path}`, nextLeafValue);
-  }, [name, parentForm, parentScope, pendingTransformOutOwner, projectedValue, props.meta.disabled, rawValue, readOnly, schema.transformOutAction, transformOutOwner, usesWorkingValue, valueAdapter]);
+      parentScope.update(`${name}.${path}`, nextLeafValue);
+    },
+    [
+      name,
+      parentForm,
+      parentScope,
+      pendingTransformOutOwner,
+      projectedValue,
+      props.meta.disabled,
+      rawValue,
+      readOnly,
+      schema.transformOutAction,
+      transformOutOwner,
+      usesWorkingValue,
+      valueAdapter,
+    ],
+  );
 
   const childScope = React.useMemo(
-    () => (name
-      ? createObjectFieldChildScope(parentScope, name, readOnly || presentation.effectiveDisabled, projectedValue, writeProjectedValue)
-      : parentScope),
-    [name, parentScope, presentation.effectiveDisabled, projectedValue, readOnly, writeProjectedValue]
+    () =>
+      name
+        ? createObjectFieldChildScope(
+            parentScope,
+            name,
+            readOnly || presentation.effectiveDisabled,
+            projectedValue,
+            writeProjectedValue,
+          )
+        : parentScope,
+    [
+      name,
+      parentScope,
+      presentation.effectiveDisabled,
+      projectedValue,
+      readOnly,
+      writeProjectedValue,
+    ],
   );
 
-  const childForm = React.useMemo(
-    () => {
-      if (!name || !parentForm) {
-        return parentForm;
-      }
+  const childForm = React.useMemo(() => {
+    if (!name || !parentForm) {
+      return parentForm;
+    }
 
-      return createProjectedInlineForm({
-        parentForm,
-        ownerRootPath: name,
-        prefixPath(path) {
-          if (!path || !name) {
-            return path;
-          }
-
-          return `${name}.${path}`;
-        },
-        projectValues() {
-          return ((projectedValue ?? {}) as Record<string, unknown>);
-        },
-        setValue(path, value) {
-          writeProjectedValue(path, value);
-        },
-        setValues(values) {
-          for (const [path, value] of Object.entries(values)) {
-            writeProjectedValue(path, value);
-          }
+    return createProjectedInlineForm({
+      parentForm,
+      ownerRootPath: name,
+      prefixPath(path) {
+        if (!path || !name) {
+          return path;
         }
-      });
-    },
-    [parentForm, name, projectedValue, writeProjectedValue]
-  );
+
+        return `${name}.${path}`;
+      },
+      projectValues() {
+        return (projectedValue ?? {}) as Record<string, unknown>;
+      },
+      setValue(path, value) {
+        writeProjectedValue(path, value);
+      },
+      setValues(values) {
+        for (const [path, value] of Object.entries(values)) {
+          writeProjectedValue(path, value);
+        }
+      },
+    });
+  }, [parentForm, name, projectedValue, writeProjectedValue]);
 
   React.useEffect(() => {
     if (!parentForm || !name || !schema.transformOutAction) {
@@ -296,22 +351,22 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       childOwnerId,
       mode: 'recurse-submit',
       active: true,
-        unregister() {
-          parentForm.unregisterChildContract(childOwnerId);
-        },
-        getState() {
-          return {
-            ready: getPendingTransformOut(pendingTransformOutOwner) === null,
-            validating: getPendingTransformOut(pendingTransformOutOwner) !== null,
-            valid: true,
-            hasErrors: false,
-          };
-        },
-        async triggerValidation() {
-          await getPendingTransformOut(pendingTransformOutOwner);
-          return parentForm.validateField(name, 'commit');
-        },
-      });
+      unregister() {
+        parentForm.unregisterChildContract(childOwnerId);
+      },
+      getState() {
+        return {
+          ready: getPendingTransformOut(pendingTransformOutOwner) === null,
+          validating: getPendingTransformOut(pendingTransformOutOwner) !== null,
+          valid: true,
+          hasErrors: false,
+        };
+      },
+      async triggerValidation() {
+        await getPendingTransformOut(pendingTransformOutOwner);
+        return parentForm.validateField(name, 'commit');
+      },
+    });
 
     return () => {
       parentForm.unregisterChildContract(childOwnerId);
@@ -337,7 +392,7 @@ export const objectFieldRendererDefinition: RendererDefinition = {
   fields: [
     formLabelFieldRule,
     { key: 'transformInAction', kind: 'ignored' },
-    { key: 'transformOutAction', kind: 'ignored' }
+    { key: 'transformOutAction', kind: 'ignored' },
   ],
   validation: {
     kind: 'field',
@@ -350,6 +405,6 @@ export const objectFieldRendererDefinition: RendererDefinition = {
     },
     getChildFieldPathPrefix(schema: BaseSchema) {
       return typeof schema.name === 'string' ? schema.name : undefined;
-    }
-  }
+    },
+  },
 };

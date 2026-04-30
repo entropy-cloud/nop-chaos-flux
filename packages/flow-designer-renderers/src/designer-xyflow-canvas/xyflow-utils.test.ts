@@ -10,18 +10,57 @@ function createSnapshot(): DesignerSnapshot {
       name: 'Tree',
       version: '1.0.0',
       nodes: [
-        { id: 'owner', type: 'condition', position: { x: 0, y: 0 }, data: { label: 'Owner', branches: [{ id: 'b1', data: { label: 'Branch 1' }, childId: 'branch-node' }] } },
-        { id: 'branch-node', type: 'task', position: { x: 0, y: 120 }, data: { label: 'Branch Node' } },
-        { id: 'end', type: 'end', position: { x: 0, y: 240 }, data: { label: 'End' } }
+        {
+          id: 'owner',
+          type: 'condition',
+          position: { x: 0, y: 0 },
+          data: {
+            label: 'Owner',
+            branches: [{ id: 'b1', data: { label: 'Branch 1' }, childId: 'branch-node' }],
+          },
+        },
+        {
+          id: 'branch-node',
+          type: 'task',
+          position: { x: 0, y: 120 },
+          data: { label: 'Branch Node' },
+        },
+        { id: 'end', type: 'end', position: { x: 0, y: 240 }, data: { label: 'End' } },
       ],
       edges: [
-        { id: 'e1', type: 'branch', source: 'owner', target: 'branch-node', data: { leg: 'near-target' } },
-        { id: 'e2', type: 'merge', source: 'branch-node', target: 'end', data: { leg: 'near-source' } }
+        {
+          id: 'e1',
+          type: 'branch',
+          source: 'owner',
+          target: 'branch-node',
+          data: { leg: 'near-target' },
+        },
+        {
+          id: 'e2',
+          type: 'merge',
+          source: 'branch-node',
+          target: 'end',
+          data: { leg: 'near-source' },
+        },
       ],
-      viewport: { x: 0, y: 0, zoom: 1 }
+      viewport: { x: 0, y: 0, zoom: 1 },
     },
-    selection: { selectedNodeIds: ['owner'], selectedEdgeIds: [], activeNodeId: 'owner', activeEdgeId: null, activeBranchId: 'b1' },
-    activeNode: { id: 'owner', type: 'condition', position: { x: 0, y: 0 }, data: { label: 'Owner', branches: [{ id: 'b1', data: { label: 'Branch 1' }, childId: 'branch-node' }] } },
+    selection: {
+      selectedNodeIds: ['owner'],
+      selectedEdgeIds: [],
+      activeNodeId: 'owner',
+      activeEdgeId: null,
+      activeBranchId: 'b1',
+    },
+    activeNode: {
+      id: 'owner',
+      type: 'condition',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Owner',
+        branches: [{ id: 'b1', data: { label: 'Branch 1' }, childId: 'branch-node' }],
+      },
+    },
     activeEdge: null,
     activeBranch: { id: 'b1', data: { label: 'Branch 1' }, childId: 'branch-node' },
     canUndo: false,
@@ -30,7 +69,7 @@ function createSnapshot(): DesignerSnapshot {
     gridEnabled: true,
     paletteCollapsed: false,
     inspectorCollapsed: false,
-    viewport: { x: 0, y: 0, zoom: 1 }
+    viewport: { x: 0, y: 0, zoom: 1 },
   };
 }
 

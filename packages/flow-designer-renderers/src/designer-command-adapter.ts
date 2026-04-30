@@ -3,7 +3,7 @@ import type {
   DesignerCommand,
   DesignerCommandAdapter,
   DesignerCommandReason,
-  DesignerCommandResult
+  DesignerCommandResult,
 } from './designer-command-types';
 import {
   createFailure,
@@ -11,7 +11,7 @@ import {
   getNode,
   hasNode,
   relayoutAfterTreeMutation,
-  type TreeCommandOwner
+  type TreeCommandOwner,
 } from './designer-command-adapter-helpers';
 import { executeGraphOnlyCommand } from './designer-command-adapter-graph';
 import {
@@ -27,7 +27,12 @@ import {
   updateNodeDataInTreeDocument,
 } from './tree-commands';
 
-export type { DesignerCommand, DesignerCommandAdapter, DesignerCommandReason, DesignerCommandResult };
+export type {
+  DesignerCommand,
+  DesignerCommandAdapter,
+  DesignerCommandReason,
+  DesignerCommandResult,
+};
 
 function isTreeOwnedCommand(command: DesignerCommand): boolean {
   switch (command.type) {
@@ -46,7 +51,10 @@ function isTreeOwnedCommand(command: DesignerCommand): boolean {
   }
 }
 
-export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: TreeCommandOwner): DesignerCommandAdapter {
+export function createDesignerCommandAdapter(
+  core: DesignerCore,
+  treeOwner?: TreeCommandOwner,
+): DesignerCommandAdapter {
   function applyTreeDocument(nextTree: TreeDocument): void {
     if (!treeOwner) {
       return;
@@ -56,9 +64,10 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
   }
 
   function execute(command: DesignerCommand): DesignerCommandResult {
-    const graphResult = treeOwner?.config.documentMode === 'tree' && isTreeOwnedCommand(command)
-      ? undefined
-      : executeGraphOnlyCommand(core, command);
+    const graphResult =
+      treeOwner?.config.documentMode === 'tree' && isTreeOwnedCommand(command)
+        ? undefined
+        : executeGraphOnlyCommand(core, command);
     if (graphResult) {
       return graphResult;
     }
@@ -71,7 +80,7 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
             command.nodeId,
             command.branchData,
             command.childType,
-            command.childData
+            command.childData,
           );
           if (!nextTree) {
             return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
@@ -98,9 +107,17 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         return createSuccess(core);
       case 'deleteBranch': {
         if (treeOwner?.config.documentMode === 'tree') {
-          const nextTree = deleteBranchInTreeDocument(treeOwner.getTreeDocument(), command.nodeId, command.branchId);
+          const nextTree = deleteBranchInTreeDocument(
+            treeOwner.getTreeDocument(),
+            command.nodeId,
+            command.branchId,
+          );
           if (!nextTree) {
-            return createFailure(core, `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`, 'missing-node');
+            return createFailure(
+              core,
+              `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`,
+              'missing-node',
+            );
           }
           applyTreeDocument(nextTree);
           return createSuccess(core);
@@ -139,9 +156,18 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
       }
       case 'moveBranch': {
         if (treeOwner?.config.documentMode === 'tree') {
-          const nextTree = moveBranchInTreeDocument(treeOwner.getTreeDocument(), command.nodeId, command.branchId, command.direction);
+          const nextTree = moveBranchInTreeDocument(
+            treeOwner.getTreeDocument(),
+            command.nodeId,
+            command.branchId,
+            command.direction,
+          );
           if (!nextTree) {
-            return createFailure(core, `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`, 'missing-node');
+            return createFailure(
+              core,
+              `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`,
+              'missing-node',
+            );
           }
           applyTreeDocument(nextTree);
           return createSuccess(core);
@@ -186,17 +212,34 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         return createSuccess(core);
       case 'updateBranchData':
         if (treeOwner?.config.documentMode === 'tree') {
-          const nextTree = updateBranchDataInTreeDocument(treeOwner.getTreeDocument(), command.nodeId, command.branchId, command.data);
+          const nextTree = updateBranchDataInTreeDocument(
+            treeOwner.getTreeDocument(),
+            command.nodeId,
+            command.branchId,
+            command.data,
+          );
           if (!nextTree) {
-            return createFailure(core, `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`, 'missing-node');
+            return createFailure(
+              core,
+              `Unknown branch owner or branch: ${command.nodeId}/${command.branchId}`,
+              'missing-node',
+            );
           }
           applyTreeDocument(nextTree);
           return createSuccess(core);
         }
-        return createFailure(core, 'updateBranchData is only available in tree mode.', 'unavailable');
+        return createFailure(
+          core,
+          'updateBranchData is only available in tree mode.',
+          'unavailable',
+        );
       case 'updateNodeData':
         if (treeOwner?.config.documentMode === 'tree') {
-          const nextTree = updateNodeDataInTreeDocument(treeOwner.getTreeDocument(), command.nodeId, command.data);
+          const nextTree = updateNodeDataInTreeDocument(
+            treeOwner.getTreeDocument(),
+            command.nodeId,
+            command.data,
+          );
           if (!nextTree) {
             return createFailure(core, `Unknown node: ${command.nodeId}`, 'missing-node');
           }
@@ -210,7 +253,12 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         return createSuccess(core);
       case 'insertChainNode': {
         if (treeOwner?.config.documentMode === 'tree') {
-          const nextTree = insertChainNodeInTreeDocument(treeOwner.getTreeDocument(), command.sourceId, command.nodeType, command.data);
+          const nextTree = insertChainNodeInTreeDocument(
+            treeOwner.getTreeDocument(),
+            command.sourceId,
+            command.nodeType,
+            command.data,
+          );
           if (!nextTree) {
             return createFailure(core, `Unknown source node: ${command.sourceId}`, 'missing-node');
           }
@@ -224,7 +272,7 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
           return createFailure(core, `Unknown source node: ${command.sourceId}`, 'missing-node');
         }
 
-        const outgoingEdges = doc.edges.filter(e => e.source === command.sourceId);
+        const outgoingEdges = doc.edges.filter((e) => e.source === command.sourceId);
         const downstreamId = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
 
         core.beginTransaction('insert-chain-node');
@@ -232,7 +280,7 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         const newNode = core.addNode(
           command.nodeType,
           { x: sourceNode.position.x, y: sourceNode.position.y + 100 },
-          command.data
+          command.data,
         );
         if (!newNode) {
           core.rollbackTransaction();
@@ -255,7 +303,12 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
       }
       case 'insertChainNodeAtMerge': {
         if (treeOwner?.config.documentMode === 'tree') {
-          const nextTree = insertChainNodeAtMergeInTreeDocument(treeOwner.getTreeDocument(), command.targetId, command.nodeType, command.data);
+          const nextTree = insertChainNodeAtMergeInTreeDocument(
+            treeOwner.getTreeDocument(),
+            command.targetId,
+            command.nodeType,
+            command.data,
+          );
           if (!nextTree) {
             return createFailure(core, `Unknown target node: ${command.targetId}`, 'missing-node');
           }
@@ -269,14 +322,14 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
           return createFailure(core, `Unknown target node: ${command.targetId}`, 'missing-node');
         }
 
-        const incomingEdges = doc.edges.filter(e => e.target === command.targetId);
+        const incomingEdges = doc.edges.filter((e) => e.target === command.targetId);
 
         core.beginTransaction('insert-at-merge');
 
         const newNode = core.addNode(
           command.nodeType,
           { x: targetNode.position.x, y: targetNode.position.y },
-          command.data
+          command.data,
         );
         if (!newNode) {
           core.rollbackTransaction();
@@ -294,7 +347,12 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
       }
       case 'insertBranchPair': {
         if (treeOwner?.config.documentMode === 'tree') {
-          const nextTree = insertBranchPairInTreeDocument(treeOwner.getTreeDocument(), command.sourceId, command.condNodeType, command.condData);
+          const nextTree = insertBranchPairInTreeDocument(
+            treeOwner.getTreeDocument(),
+            command.sourceId,
+            command.condNodeType,
+            command.condData,
+          );
           if (!nextTree) {
             return createFailure(core, `Unknown source node: ${command.sourceId}`, 'missing-node');
           }
@@ -308,7 +366,7 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
           return createFailure(core, `Unknown source node: ${command.sourceId}`, 'missing-node');
         }
 
-        const outgoingEdges = doc.edges.filter(e => e.source === command.sourceId);
+        const outgoingEdges = doc.edges.filter((e) => e.source === command.sourceId);
         const downstreamId = outgoingEdges.length > 0 ? outgoingEdges[0].target : null;
 
         core.beginTransaction('insert-branch-pair');
@@ -318,7 +376,7 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         const leftNode = core.addNode(
           command.condNodeType,
           { x: sourceNode.position.x - 130, y: sourceNode.position.y + 100 },
-          { ...(command.condData ?? {}), priority: existingBranchCount + 1 }
+          { ...(command.condData ?? {}), priority: existingBranchCount + 1 },
         );
         if (!leftNode) {
           core.rollbackTransaction();
@@ -328,7 +386,7 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         const rightNode = core.addNode(
           command.condNodeType,
           { x: sourceNode.position.x + 130, y: sourceNode.position.y + 100 },
-          { ...(command.condData ?? {}), priority: existingBranchCount + 2 }
+          { ...(command.condData ?? {}), priority: existingBranchCount + 2 },
         );
         if (!rightNode) {
           core.rollbackTransaction();
@@ -354,7 +412,11 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
         return createSuccess(core);
       }
       default:
-        return createFailure(core, `Unsupported command: ${(command as { type: string }).type}`, 'unavailable');
+        return createFailure(
+          core,
+          `Unsupported command: ${(command as { type: string }).type}`,
+          'unavailable',
+        );
     }
   }
 
@@ -362,7 +424,7 @@ export function createDesignerCommandAdapter(core: DesignerCore, treeOwner?: Tre
     execute,
     getSnapshot() {
       return core.getSnapshot();
-    }
+    },
   };
 }
 

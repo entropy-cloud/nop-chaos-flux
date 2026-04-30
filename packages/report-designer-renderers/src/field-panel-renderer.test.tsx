@@ -37,9 +37,7 @@ const sampleFieldSources: FieldSourceSnapshot[] = [
         id: 'group-2',
         label: 'Metrics',
         expanded: true,
-        fields: [
-          { id: 'field-3', label: 'Total Sales' },
-        ],
+        fields: [{ id: 'field-3', label: 'Total Sales' }],
       },
     ],
   },

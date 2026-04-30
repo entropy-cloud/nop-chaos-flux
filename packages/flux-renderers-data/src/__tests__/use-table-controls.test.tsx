@@ -29,7 +29,11 @@ function PaginationProbe(props: {
   helpers?: any;
   onReady: (value: any) => void;
 }) {
-  const api = useTablePagination(props.schemaProps, props.onPageChange, props.helpers ?? createHelpers());
+  const api = useTablePagination(
+    props.schemaProps,
+    props.onPageChange,
+    props.helpers ?? createHelpers(),
+  );
   React.useEffect(() => {
     props.onReady(api);
   });
@@ -43,7 +47,12 @@ function SelectionProbe(props: {
   helpers?: any;
   onReady: (value: any) => void;
 }) {
-  const api = useTableSelection(props.schemaProps, props.source, props.onSelectionChange, props.helpers ?? createHelpers());
+  const api = useTableSelection(
+    props.schemaProps,
+    props.source,
+    props.onSelectionChange,
+    props.helpers ?? createHelpers(),
+  );
   React.useEffect(() => {
     props.onReady(api);
   });
@@ -57,7 +66,12 @@ function SortProbe(props: {
   helpers?: any;
   onReady: (value: any) => void;
 }) {
-  const api = useTableSort(props.schemaProps, props.onSortChange, props.columns, props.helpers ?? createHelpers());
+  const api = useTableSort(
+    props.schemaProps,
+    props.onSortChange,
+    props.columns,
+    props.helpers ?? createHelpers(),
+  );
   React.useEffect(() => {
     props.onReady(api);
   });
@@ -70,7 +84,11 @@ function FilterProbe(props: {
   helpers?: any;
   onReady: (value: any) => void;
 }) {
-  const api = useTableFilter(props.schemaProps, props.onFilterChange, props.helpers ?? createHelpers());
+  const api = useTableFilter(
+    props.schemaProps,
+    props.onFilterChange,
+    props.helpers ?? createHelpers(),
+  );
   React.useEffect(() => {
     props.onReady(api);
   });
@@ -137,7 +155,10 @@ describe('useTablePagination', () => {
 
     const { rerender } = render(
       <PaginationProbe
-        schemaProps={{ paginationOwnership: 'controlled', pagination: { currentPage: 4, pageSize: 25, enabled: false } }}
+        schemaProps={{
+          paginationOwnership: 'controlled',
+          pagination: { currentPage: 4, pageSize: 25, enabled: false },
+        }}
         onPageChange={onPageChange}
         helpers={helpers}
         onReady={(value) => {
@@ -158,7 +179,11 @@ describe('useTablePagination', () => {
     scopeData = { tableState: { pagination: { currentPage: 7, pageSize: 15 } } };
     rerender(
       <PaginationProbe
-        schemaProps={{ paginationOwnership: 'scope', paginationStatePath: 'tableState.pagination', pagination: { currentPage: 1, pageSize: 10 } }}
+        schemaProps={{
+          paginationOwnership: 'scope',
+          paginationStatePath: 'tableState.pagination',
+          pagination: { currentPage: 1, pageSize: 10 },
+        }}
         onPageChange={onPageChange}
         helpers={helpers}
         onReady={(value) => {
@@ -173,7 +198,10 @@ describe('useTablePagination', () => {
     act(() => {
       api.handlePageSizeChange(30);
     });
-    expect(renderScopeUpdate).toHaveBeenCalledWith('tableState.pagination', { currentPage: 1, pageSize: 30 });
+    expect(renderScopeUpdate).toHaveBeenCalledWith('tableState.pagination', {
+      currentPage: 1,
+      pageSize: 30,
+    });
   });
 });
 
@@ -228,7 +256,10 @@ describe('useTableSelection', () => {
 
     const controlled = render(
       <SelectionProbe
-        schemaProps={{ selectionOwnership: 'controlled', rowSelection: { selectedRowKeys: ['r2'] } }}
+        schemaProps={{
+          selectionOwnership: 'controlled',
+          rowSelection: { selectedRowKeys: ['r2'] },
+        }}
         source={[{ id: 'r1' }, { id: 'r2' }]}
         onSelectionChange={vi.fn()}
         helpers={helpers}
@@ -250,7 +281,11 @@ describe('useTableSelection', () => {
     scopeData = { tableState: { selected: ['r3'] } };
     render(
       <SelectionProbe
-        schemaProps={{ selectionOwnership: 'scope', selectionStatePath: 'tableState.selected', rowSelection: { selectedRowKeys: [] } }}
+        schemaProps={{
+          selectionOwnership: 'scope',
+          selectionStatePath: 'tableState.selected',
+          rowSelection: { selectedRowKeys: [] },
+        }}
         source={[{ id: 'r3' }]}
         onSelectionChange={vi.fn()}
         helpers={helpers}
@@ -284,7 +319,10 @@ describe('useTableSort', () => {
       <SortProbe
         schemaProps={{}}
         onSortChange={onSortChange}
-        columns={[{ name: 'name', sortable: true }, { name: 'age', sortable: false }]}
+        columns={[
+          { name: 'name', sortable: true },
+          { name: 'age', sortable: false },
+        ]}
         helpers={helpers}
         onReady={(value) => {
           api = value;
@@ -335,7 +373,10 @@ describe('useTableSort', () => {
     act(() => {
       api.handleSort('email');
     });
-    expect(renderScopeUpdate).toHaveBeenCalledWith('tableState.sort', { column: 'email', direction: null });
+    expect(renderScopeUpdate).toHaveBeenCalledWith('tableState.sort', {
+      column: 'email',
+      direction: null,
+    });
   });
 });
 

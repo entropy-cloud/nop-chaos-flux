@@ -188,8 +188,8 @@ Status Note: completed; a fresh independent closure audit re-verified the live r
 
 Closure Audit Evidence:
 
- - Reviewer / Agent: independent general subagent (`task_id: ses_23f9e92abffe671s4w7pEVjVCo`)
- - Evidence: final closure audit returned `Decision: completed` after re-checking `packages/flux-renderers-data/src/crud-renderer.tsx`, focused CRUD/table tests, compiler alias tests, playground CRUD lab, CRUD docs/examples, and full workspace verification (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`). The prior negative audit (`task_id: ses_23fe7053effe4xc26Paps0ZwsP`) remains recorded as the evidence trail for the last plan-owned gaps that were fixed before closure.
+- Reviewer / Agent: independent general subagent (`task_id: ses_23f9e92abffe671s4w7pEVjVCo`)
+- Evidence: final closure audit returned `Decision: completed` after re-checking `packages/flux-renderers-data/src/crud-renderer.tsx`, focused CRUD/table tests, compiler alias tests, playground CRUD lab, CRUD docs/examples, and full workspace verification (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`). The prior negative audit (`task_id: ses_23fe7053effe4xc26Paps0ZwsP`) remains recorded as the evidence trail for the last plan-owned gaps that were fixed before closure.
 
 Follow-up:
 

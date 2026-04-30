@@ -3,7 +3,7 @@ import type {
   CompiledValidationRule,
   ValidationRule,
   ValidationTrigger,
-  ValidationVisibilityTrigger
+  ValidationVisibilityTrigger,
 } from '@nop-chaos/flux-core';
 
 type ValidationRuleSource = BaseSchema & {
@@ -59,8 +59,14 @@ export function collectSchemaValidationRules(schema: BaseSchema): ValidationRule
   if (ruleSource.atLeastOneFilled) {
     rules.push({
       kind: 'atLeastOneFilled',
-      itemPath: typeof ruleSource.atLeastOneFilled === 'object' ? ruleSource.atLeastOneFilled.itemPath : undefined,
-      message: typeof ruleSource.atLeastOneFilled === 'object' ? ruleSource.atLeastOneFilled.message : undefined
+      itemPath:
+        typeof ruleSource.atLeastOneFilled === 'object'
+          ? ruleSource.atLeastOneFilled.itemPath
+          : undefined,
+      message:
+        typeof ruleSource.atLeastOneFilled === 'object'
+          ? ruleSource.atLeastOneFilled.message
+          : undefined,
     });
   }
 
@@ -68,7 +74,7 @@ export function collectSchemaValidationRules(schema: BaseSchema): ValidationRule
     rules.push({
       kind: 'allOrNone',
       itemPaths: ruleSource.allOrNone.itemPaths,
-      message: ruleSource.allOrNone.message
+      message: ruleSource.allOrNone.message,
     });
   }
 
@@ -76,7 +82,7 @@ export function collectSchemaValidationRules(schema: BaseSchema): ValidationRule
     rules.push({
       kind: 'uniqueBy',
       itemPath: ruleSource.uniqueBy.itemPath,
-      message: ruleSource.uniqueBy.message
+      message: ruleSource.uniqueBy.message,
     });
   }
 
@@ -84,7 +90,7 @@ export function collectSchemaValidationRules(schema: BaseSchema): ValidationRule
     rules.push({
       kind: 'atLeastOneOf',
       paths: ruleSource.atLeastOneOf.paths,
-      message: ruleSource.atLeastOneOf.message
+      message: ruleSource.atLeastOneOf.message,
     });
   }
 
@@ -92,53 +98,67 @@ export function collectSchemaValidationRules(schema: BaseSchema): ValidationRule
     rules.push({
       kind: 'pattern',
       value: ruleSource.pattern,
-      message: ruleSource.patternMessage
+      message: ruleSource.patternMessage,
     });
   }
 
   if (typeof ruleSource.equalsField === 'string' && ruleSource.equalsField) {
     rules.push({
       kind: 'equalsField',
-      path: ruleSource.equalsField
+      path: ruleSource.equalsField,
     });
   }
 
   if (typeof ruleSource.notEqualsField === 'string' && ruleSource.notEqualsField) {
     rules.push({
       kind: 'notEqualsField',
-      path: ruleSource.notEqualsField
+      path: ruleSource.notEqualsField,
     });
   }
 
-  if (ruleSource.requiredWhen && typeof ruleSource.requiredWhen.path === 'string' && ruleSource.requiredWhen.path) {
+  if (
+    ruleSource.requiredWhen &&
+    typeof ruleSource.requiredWhen.path === 'string' &&
+    ruleSource.requiredWhen.path
+  ) {
     rules.push({
       kind: 'requiredWhen',
       path: ruleSource.requiredWhen.path,
       equals: ruleSource.requiredWhen.equals,
-      message: ruleSource.requiredWhen.message
+      message: ruleSource.requiredWhen.message,
     });
   }
 
-  if (ruleSource.requiredUnless && typeof ruleSource.requiredUnless.path === 'string' && ruleSource.requiredUnless.path) {
+  if (
+    ruleSource.requiredUnless &&
+    typeof ruleSource.requiredUnless.path === 'string' &&
+    ruleSource.requiredUnless.path
+  ) {
     rules.push({
       kind: 'requiredUnless',
       path: ruleSource.requiredUnless.path,
       equals: ruleSource.requiredUnless.equals,
-      message: ruleSource.requiredUnless.message
+      message: ruleSource.requiredUnless.message,
     });
   }
 
   return rules;
 }
 
-export function mergeValidationRules(...groups: Array<ValidationRule[] | undefined>): ValidationRule[] {
+export function mergeValidationRules(
+  ...groups: Array<ValidationRule[] | undefined>
+): ValidationRule[] {
   return groups.flatMap((group) => group ?? []);
 }
 
-export function normalizeValidationTriggers(input: unknown, fallback: ValidationTrigger[] = ['blur']): ValidationTrigger[] {
+export function normalizeValidationTriggers(
+  input: unknown,
+  fallback: ValidationTrigger[] = ['blur'],
+): ValidationTrigger[] {
   const candidates = Array.isArray(input) ? input : input != null ? [input] : [];
   const normalized = candidates.filter(
-    (candidate): candidate is ValidationTrigger => candidate === 'change' || candidate === 'blur' || candidate === 'submit'
+    (candidate): candidate is ValidationTrigger =>
+      candidate === 'change' || candidate === 'blur' || candidate === 'submit',
   );
 
   return normalized.length > 0 ? Array.from(new Set(normalized)) : fallback;
@@ -146,12 +166,15 @@ export function normalizeValidationTriggers(input: unknown, fallback: Validation
 
 export function normalizeValidationVisibilityTriggers(
   input: unknown,
-  fallback: ValidationVisibilityTrigger[] = ['touched', 'submit']
+  fallback: ValidationVisibilityTrigger[] = ['touched', 'submit'],
 ): ValidationVisibilityTrigger[] {
   const candidates = Array.isArray(input) ? input : input != null ? [input] : [];
   const normalized = candidates.filter(
     (candidate): candidate is ValidationVisibilityTrigger =>
-      candidate === 'touched' || candidate === 'dirty' || candidate === 'visited' || candidate === 'submit'
+      candidate === 'touched' ||
+      candidate === 'dirty' ||
+      candidate === 'visited' ||
+      candidate === 'submit',
   );
 
   return normalized.length > 0 ? Array.from(new Set(normalized)) : fallback;
@@ -169,7 +192,10 @@ function collectValidationDependencyPaths(rule: ValidationRule): string[] {
   }
 }
 
-export function compileValidationRules(path: string, rules: ValidationRule[]): CompiledValidationRule[] {
+export function compileValidationRules(
+  path: string,
+  rules: ValidationRule[],
+): CompiledValidationRule[] {
   return rules.map((rule, index) => ({
     id: `${path}#${index}:${rule.kind}`,
     rule,
@@ -177,8 +203,8 @@ export function compileValidationRules(path: string, rules: ValidationRule[]): C
     precompiled:
       rule.kind === 'pattern'
         ? {
-            regex: new RegExp(rule.value)
+            regex: new RegExp(rule.value),
           }
-        : undefined
+        : undefined,
   }));
 }

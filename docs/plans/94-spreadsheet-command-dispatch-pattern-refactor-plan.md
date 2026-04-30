@@ -36,6 +36,7 @@
 4. **扩展性**：无法动态注册命令处理器
 
 现有命令已按功能分类到独立模块：
+
 - `core/cell-operations.ts` - 单元格操作
 - `core/clipboard-operations.ts` - 剪贴板操作
 - `core/sheet-operations.ts` - 工作表操作
@@ -91,7 +92,7 @@ Targets: `packages/spreadsheet-core/src/command-handlers/types.ts`
 // 目标接口
 export type CommandHandler<T extends SpreadsheetCommand = SpreadsheetCommand> = (
   store: SpreadsheetDispatchStore,
-  command: T
+  command: T,
 ) => Promise<SpreadsheetCommandResult>;
 
 export type CommandHandlerRegistry = Map<string, CommandHandler>;
@@ -148,7 +149,7 @@ Targets: `packages/spreadsheet-core/src/core-dispatch.ts`
 // 实现结果
 export async function dispatchSpreadsheetCommand(
   store: SpreadsheetDispatchStore,
-  command: SpreadsheetCommand
+  command: SpreadsheetCommand,
 ): Promise<SpreadsheetCommandResult> {
   const state = store.getState();
 
@@ -221,7 +222,7 @@ Status Note: Plan completed successfully. All 5 phases executed. 62 command hand
 Closure Audit Evidence:
 
 - Reviewer / Agent: Independent closure audit subagent (task ses_2697be714ffeAsqqbL7uh5dMDZ)
-- Evidence: 
+- Evidence:
   - `core-dispatch.ts`: 32 lines (goal < 100)
   - Handler files: 9 files in `command-handlers/` directory
   - Total handlers: 62 registered

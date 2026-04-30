@@ -7,19 +7,19 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux
 const containerRenderer: RendererDefinition = {
   type: 'container',
   component: () => null,
-  fields: [{ key: 'body', kind: 'region' }]
+  fields: [{ key: 'body', kind: 'region' }],
 };
 
 const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: () => null,
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 function createCompiler(...definitions: RendererDefinition[]) {
   return createSchemaCompiler({
     registry: createRendererRegistry(definitions),
-    expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
   });
 }
 
@@ -29,9 +29,9 @@ describe('xui:actions compilation', () => {
     const compiled = compiler.compile({
       type: 'button',
       'xui:actions': {
-        save: { action: 'ajax', args: { url: '/api/save' } }
+        save: { action: 'ajax', args: { url: '/api/save' } },
       },
-      onClick: { action: 'save' }
+      onClick: { action: 'save' },
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
@@ -53,7 +53,7 @@ describe('xui:actions compilation', () => {
     const compiler = createCompiler(buttonRenderer);
     const compiled = compiler.compile({
       type: 'button',
-      'xui:actions': {}
+      'xui:actions': {},
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
@@ -66,8 +66,8 @@ describe('xui:actions compilation', () => {
       type: 'button',
       'xui:actions': {
         save: { action: 'ajax', args: { url: '/save' } },
-        reset: { action: 'setValue', args: { path: 'form', value: {} } }
-      }
+        reset: { action: 'setValue', args: { path: 'form', value: {} } },
+      },
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
@@ -82,9 +82,9 @@ describe('xui:actions compilation', () => {
         saveAndClose: {
           action: 'ajax',
           args: { url: '/save' },
-          then: { action: 'closeDialog' }
-        }
-      }
+          then: { action: 'closeDialog' },
+        },
+      },
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
@@ -100,8 +100,8 @@ describe('xui:actions compilation', () => {
       type: 'button',
       label: 'Click',
       'xui:actions': {
-        save: { action: 'ajax' }
-      }
+        save: { action: 'ajax' },
+      },
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
@@ -114,12 +114,12 @@ describe('xui:actions compilation', () => {
     const compiled = compiler.compile({
       type: 'container',
       'xui:actions': {
-        save: { action: 'ajax', args: { url: '/save' } }
+        save: { action: 'ajax', args: { url: '/save' } },
       },
       body: {
         type: 'button',
-        onClick: { action: 'save' }
-      }
+        onClick: { action: 'save' },
+      },
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
@@ -135,15 +135,15 @@ describe('xui:actions compilation', () => {
     const compiled = compiler.compile({
       type: 'container',
       'xui:actions': {
-        save: { action: 'ajax', args: { url: '/parent-save' } }
+        save: { action: 'ajax', args: { url: '/parent-save' } },
       },
       body: {
         type: 'button',
         'xui:actions': {
-          save: { action: 'ajax', args: { url: '/child-save' } }
+          save: { action: 'ajax', args: { url: '/child-save' } },
         },
-        onClick: { action: 'save' }
-      }
+        onClick: { action: 'save' },
+      },
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
     const childNode = root.regions.body.node as any;
@@ -157,8 +157,8 @@ describe('xui:actions compilation', () => {
     const compiled = compiler.compile({
       type: 'button',
       'xui:actions': {
-        dynamicSave: { action: 'ajax', args: { url: '${apiUrl}', data: '${formData}' } }
-      }
+        dynamicSave: { action: 'ajax', args: { url: '${apiUrl}', data: '${formData}' } },
+      },
     } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
@@ -171,8 +171,8 @@ describe('xui:actions compilation', () => {
       type: 'button',
       'xui:actions': {
         bad: null as any,
-        good: { action: 'ajax' }
-      }
+        good: { action: 'ajax' },
+      },
     });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 

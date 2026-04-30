@@ -1,11 +1,20 @@
 import { normalizeConfig, projectTree, simpleTreeLayout } from '@nop-chaos/flow-designer-core';
-import type { DesignerConfig, GraphDocument, NormalizedDesignerConfig, TreeDocument, TreeNode, TreeNodeBranch } from '@nop-chaos/flow-designer-core';
+import type {
+  DesignerConfig,
+  GraphDocument,
+  NormalizedDesignerConfig,
+  TreeDocument,
+  TreeNode,
+  TreeNodeBranch,
+} from '@nop-chaos/flow-designer-core';
 
 function cloneTree<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-function isNormalizedDesignerConfig(config: DesignerConfig | NormalizedDesignerConfig): config is NormalizedDesignerConfig {
+function isNormalizedDesignerConfig(
+  config: DesignerConfig | NormalizedDesignerConfig,
+): config is NormalizedDesignerConfig {
   return config.nodeTypes instanceof Map;
 }
 
@@ -13,7 +22,10 @@ function createTreeNodeId(seed: string): string {
   return `${seed}:${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function buildProjectedDocument(tree: TreeDocument, config: DesignerConfig | NormalizedDesignerConfig): GraphDocument {
+function buildProjectedDocument(
+  tree: TreeDocument,
+  config: DesignerConfig | NormalizedDesignerConfig,
+): GraphDocument {
   const normalizedConfig = isNormalizedDesignerConfig(config) ? config : normalizeConfig(config);
   const projected = projectTree(tree, normalizedConfig);
   const treeConfig = normalizedConfig.treeConfig;
@@ -53,7 +65,11 @@ function findNodeById(root: TreeNode, nodeId: string): TreeNode | null {
 }
 
 function findBranchParentByContinuation(root: TreeNode, continuationId: string): TreeNode | null {
-  if (root.child?.id === continuationId && Array.isArray(root.branches) && root.branches.length > 0) {
+  if (
+    root.child?.id === continuationId &&
+    Array.isArray(root.branches) &&
+    root.branches.length > 0
+  ) {
     return root;
   }
 
@@ -100,7 +116,11 @@ function findBranchOwner(node: TreeNode, nodeId: string): TreeNode | null {
   return null;
 }
 
-function updateNodeDataRecursive(node: TreeNode, nodeId: string, data: Record<string, unknown>): boolean {
+function updateNodeDataRecursive(
+  node: TreeNode,
+  nodeId: string,
+  data: Record<string, unknown>,
+): boolean {
   if (node.id === nodeId) {
     node.data = { ...node.data, ...data };
     return true;
@@ -149,7 +169,7 @@ export function insertChainNodeInTreeDocument(
   tree: TreeDocument,
   sourceId: string,
   nodeType: string,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
 ): TreeDocument | null {
   const nextTree = cloneTree(tree);
   const source = findNodeById(nextTree.root, sourceId);
@@ -167,7 +187,7 @@ export function insertChainNodeAtMergeInTreeDocument(
   tree: TreeDocument,
   targetId: string,
   nodeType: string,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
 ): TreeDocument | null {
   const nextTree = cloneTree(tree);
   const branchOwner = findBranchParentByContinuation(nextTree.root, targetId);
@@ -185,7 +205,7 @@ export function insertBranchPairInTreeDocument(
   tree: TreeDocument,
   sourceId: string,
   condNodeType: string,
-  condData?: Record<string, unknown>
+  condData?: Record<string, unknown>,
 ): TreeDocument | null {
   const nextTree = cloneTree(tree);
   const source = findNodeById(nextTree.root, sourceId);
@@ -215,17 +235,14 @@ export function insertBranchPairInTreeDocument(
 export function updateNodeDataInTreeDocument(
   tree: TreeDocument,
   nodeId: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): TreeDocument | null {
   const nextTree = cloneTree(tree);
   const updated = updateNodeDataRecursive(nextTree.root, nodeId, data);
   return updated ? nextTree : null;
 }
 
-export function deleteNodeInTreeDocument(
-  tree: TreeDocument,
-  nodeId: string
-): TreeDocument | null {
+export function deleteNodeInTreeDocument(tree: TreeDocument, nodeId: string): TreeDocument | null {
   if (tree.root.id === nodeId) {
     return null;
   }
@@ -240,7 +257,7 @@ export function addBranchInTreeDocument(
   nodeId: string,
   branchData?: Record<string, unknown>,
   childType?: string,
-  childData?: Record<string, unknown>
+  childData?: Record<string, unknown>,
 ): TreeDocument | null {
   const nextTree = cloneTree(tree);
   const owner = findBranchOwner(nextTree.root, nodeId);
@@ -260,7 +277,7 @@ export function addBranchInTreeDocument(
 export function deleteBranchInTreeDocument(
   tree: TreeDocument,
   nodeId: string,
-  branchId: string
+  branchId: string,
 ): TreeDocument | null {
   const nextTree = cloneTree(tree);
   const owner = findBranchOwner(nextTree.root, nodeId);
@@ -284,7 +301,7 @@ export function moveBranchInTreeDocument(
   tree: TreeDocument,
   nodeId: string,
   branchId: string,
-  direction: 'left' | 'right'
+  direction: 'left' | 'right',
 ): TreeDocument | null {
   const nextTree = cloneTree(tree);
   const owner = findBranchOwner(nextTree.root, nodeId);
@@ -317,7 +334,7 @@ export function updateBranchDataInTreeDocument(
   tree: TreeDocument,
   nodeId: string,
   branchId: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): TreeDocument | null {
   const nextTree = cloneTree(tree);
   const owner = findBranchOwner(nextTree.root, nodeId);
@@ -334,6 +351,9 @@ export function updateBranchDataInTreeDocument(
   return nextTree;
 }
 
-export function projectTreeDocumentToGraph(tree: TreeDocument, config: DesignerConfig | NormalizedDesignerConfig): GraphDocument {
+export function projectTreeDocumentToGraph(
+  tree: TreeDocument,
+  config: DesignerConfig | NormalizedDesignerConfig,
+): GraphDocument {
   return buildProjectedDocument(tree, config);
 }

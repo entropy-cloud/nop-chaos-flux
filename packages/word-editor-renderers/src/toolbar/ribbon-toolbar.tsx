@@ -1,34 +1,41 @@
-import { useState } from 'react'
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
-import { Search } from 'lucide-react'
-import type { CanvasEditorBridge, DocChart, DocCode } from '@nop-chaos/word-editor-core'
-import type { EditorStoreApi } from '@nop-chaos/word-editor-core'
-import { FontControls } from './font-controls.js'
-import { ParagraphControls } from './paragraph-controls.js'
-import { InsertControls } from './insert-controls.js'
-import { TemplateControls } from './template-controls.js'
-import { PageControls } from './page-controls.js'
-import { SearchReplace } from './search-replace.js'
-import { ToolbarButton, ToolbarSeparator } from './shared.js'
+import { useState } from 'react';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { Search } from 'lucide-react';
+import type { CanvasEditorBridge, DocChart, DocCode } from '@nop-chaos/word-editor-core';
+import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
+import { FontControls } from './font-controls.js';
+import { ParagraphControls } from './paragraph-controls.js';
+import { InsertControls } from './insert-controls.js';
+import { TemplateControls } from './template-controls.js';
+import { PageControls } from './page-controls.js';
+import { SearchReplace } from './search-replace.js';
+import { ToolbarButton, ToolbarSeparator } from './shared.js';
 
 interface RibbonToolbarProps {
-  bridge: CanvasEditorBridge | null
-  store: EditorStoreApi
-  onInsertExpr: (expr: string) => void
-  onInsertTag: (tagName: string) => void
-  onChartSave?: (chart: DocChart) => void
-  onCodeSave?: (code: DocCode) => void
+  bridge: CanvasEditorBridge | null;
+  store: EditorStoreApi;
+  onInsertExpr: (expr: string) => void;
+  onInsertTag: (tagName: string) => void;
+  onChartSave?: (chart: DocChart) => void;
+  onCodeSave?: (code: DocCode) => void;
 }
 
-export function RibbonToolbar({ bridge, store, onInsertExpr, onInsertTag, onChartSave, onCodeSave }: RibbonToolbarProps) {
-  const [showSearch, setShowSearch] = useState(false)
+export function RibbonToolbar({
+  bridge,
+  store,
+  onInsertExpr,
+  onInsertTag,
+  onChartSave,
+  onCodeSave,
+}: RibbonToolbarProps) {
+  const [showSearch, setShowSearch] = useState(false);
 
   const selection = useSyncExternalStoreWithSelector(
     store.subscribe,
     store.getState,
     store.getState,
-    (state) => state.selection
-  )
+    (state) => state.selection,
+  );
 
   return (
     <div className="border-b bg-background/95">
@@ -43,9 +50,19 @@ export function RibbonToolbar({ bridge, store, onInsertExpr, onInsertTag, onChar
         <ToolbarSeparator />
         <PageControls bridge={bridge} store={store} />
         <ToolbarSeparator />
-        <ToolbarButton icon={Search} onClick={() => setShowSearch(!showSearch)} active={showSearch} title="Search & Replace" />
+        <ToolbarButton
+          icon={Search}
+          onClick={() => setShowSearch(!showSearch)}
+          active={showSearch}
+          title="Search & Replace"
+        />
       </div>
-      <SearchReplace key={showSearch ? 'search-open' : 'search-closed'} bridge={bridge} visible={showSearch} onClose={() => setShowSearch(false)} />
+      <SearchReplace
+        key={showSearch ? 'search-open' : 'search-closed'}
+        bridge={bridge}
+        visible={showSearch}
+        onClose={() => setShowSearch(false)}
+      />
     </div>
-  )
+  );
 }

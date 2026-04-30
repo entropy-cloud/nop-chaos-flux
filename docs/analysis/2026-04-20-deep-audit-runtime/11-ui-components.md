@@ -22,13 +22,13 @@
 
 ## 合理例外（不计入违规）
 
-| 文件 | 元素 | 例外原因 |
-|------|------|---------|
-| `word-editor-renderers/toolbar/insert-controls.tsx:75` | `<input type="file">` | UI 库无 FileInput 替代 |
-| `word-editor-renderers/toolbar/font-controls.tsx:86,93` | `<input type="color">` | UI 库无 ColorPicker 替代 |
-| `spreadsheet-renderers/src/spreadsheet-grid.tsx` | `<table>/<tr>/<td>` | 高性能宿主表面 |
-| `flux-renderers-data/table-renderer/table-body-rows.tsx:389,418` | `<tr>` spacer | 虚拟化 spacer 行，aria-hidden |
+| 文件                                                             | 元素                   | 例外原因                      |
+| ---------------------------------------------------------------- | ---------------------- | ----------------------------- |
+| `word-editor-renderers/toolbar/insert-controls.tsx:75`           | `<input type="file">`  | UI 库无 FileInput 替代        |
+| `word-editor-renderers/toolbar/font-controls.tsx:86,93`          | `<input type="color">` | UI 库无 ColorPicker 替代      |
+| `spreadsheet-renderers/src/spreadsheet-grid.tsx`                 | `<table>/<tr>/<td>`    | 高性能宿主表面                |
+| `flux-renderers-data/table-renderer/table-body-rows.tsx:389,418` | `<tr>` spacer          | 虚拟化 spacer 行，aria-hidden |
 
 ## 整体评估
 
-**渲染器层（flux-renderers-*）完全合规** — 无不合规的原生 HTML 使用。依赖隔离清晰（@base-ui 仅被 @nop-chaos/ui 直接依赖）。全量 91 处 UI 组件导入均使用统一的 `from '@nop-chaos/ui'` 路径。仅 2 个 P3 级边界情况。
+**渲染器层（flux-renderers-\*）完全合规** — 无不合规的原生 HTML 使用。依赖隔离清晰（@base-ui 仅被 @nop-chaos/ui 直接依赖）。全量 91 处 UI 组件导入均使用统一的 `from '@nop-chaos/ui'` 路径。仅 2 个 P3 级边界情况。

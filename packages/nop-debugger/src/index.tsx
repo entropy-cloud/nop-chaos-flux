@@ -4,5 +4,5 @@ export {
   createNopDebugger,
   createNopDiagnosticReport,
   getNopDebuggerAutomationApi,
-  installNopDebuggerWindowFlag
+  installNopDebuggerWindowFlag,
 } from './controller';

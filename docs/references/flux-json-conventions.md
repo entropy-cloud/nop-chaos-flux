@@ -10,16 +10,17 @@
 {
   "type": "button",
   "label": "撤销",
-  "disabled": "${!canUndo}",      // ✅ 推荐
+  "disabled": "${!canUndo}", // ✅ 推荐
   "visible": "${role === 'admin'}" // ✅ 推荐
 }
 ```
 
 **不推荐**：
+
 ```json
 {
-  "disabledOn": "${!canUndo}",  // ❌ 不需要 On 后缀
-  "hiddenOn": "${isLocked}"     // ❌ 不需要 On 后缀
+  "disabledOn": "${!canUndo}", // ❌ 不需要 On 后缀
+  "hiddenOn": "${isLocked}" // ❌ 不需要 On 后缀
 }
 ```
 
@@ -187,10 +188,10 @@
 
 ### 3.1 `variant` vs `level`
 
-| 组件类型 | 属性 | 值 | 用途 |
-|----------|------|-----|------|
-| **Button** | `variant` | `'default' \| 'primary' \| 'danger'` | 按钮样式变体 |
-| **Badge** | `level` | `'info' \| 'success' \| 'warning' \| 'danger'` | 状态级别 |
+| 组件类型   | 属性      | 值                                             | 用途         |
+| ---------- | --------- | ---------------------------------------------- | ------------ |
+| **Button** | `variant` | `'default' \| 'primary' \| 'danger'`           | 按钮样式变体 |
+| **Badge**  | `level`   | `'info' \| 'success' \| 'warning' \| 'danger'` | 状态级别     |
 
 **示例**：
 
@@ -221,9 +222,9 @@
 
 ```json
 {
-  "icon": "rotate-ccw",    // ✅ 推荐
-  "icon": "git-branch",    // ✅ 推荐
-  "icon": "grid-3x3"       // ✅ 推荐
+  "icon": "rotate-ccw", // ✅ 推荐
+  "icon": "git-branch", // ✅ 推荐
+  "icon": "grid-3x3" // ✅ 推荐
 }
 ```
 
@@ -235,11 +236,11 @@
 
 ```json
 {
-  "allowSelfLoop": false,     // ✅ 推荐
-  "gridSize": 16,             // ✅ 推荐
-  "snapToGrid": true,         // ✅ 推荐
-  "allow-self-loop": false,   // ❌ 避免
-  "grid_size": 16             // ❌ 避免
+  "allowSelfLoop": false, // ✅ 推荐
+  "gridSize": 16, // ✅ 推荐
+  "snapToGrid": true, // ✅ 推荐
+  "allow-self-loop": false, // ❌ 避免
+  "grid_size": 16 // ❌ 避免
 }
 ```
 
@@ -250,9 +251,7 @@
 ```json
 {
   "type": "page",
-  "xui:imports": [
-    { "from": "demo-lib", "as": "demo" }
-  ],
+  "xui:imports": [{ "from": "demo-lib", "as": "demo" }],
   "acme:layout": {
     "density": "compact"
   }
@@ -290,11 +289,11 @@
 }
 ```
 
-| | config | document |
-|---|---|---|
-| 来源 | 开发者定义 | 用户编辑 |
-| 变化频率 | 很少 | 频繁 |
-| 持久化 | 和代码一起 | 存数据库 |
+|          | config     | document |
+| -------- | ---------- | -------- |
+| 来源     | 开发者定义 | 用户编辑 |
+| 变化频率 | 很少       | 频繁     |
+| 持久化   | 和代码一起 | 存数据库 |
 
 ## 7. Region 配置
 
@@ -322,9 +321,7 @@
 {
   "toolbar": {
     "type": "flex",
-    "items": [
-      { "type": "button", "label": "自定义操作", "onClick": { "action": "custom:action" } }
-    ]
+    "items": [{ "type": "button", "label": "自定义操作", "onClick": { "action": "custom:action" } }]
   }
 }
 ```
@@ -339,9 +336,9 @@ const normalized = {
   toolbar: config.toolbar ?? defaultToolbar,
   shortcuts: {
     undo: ['Ctrl+Z', 'Cmd+Z'],
-    ...config.shortcuts  // 用户配置覆盖默认
-  }
-}
+    ...config.shortcuts, // 用户配置覆盖默认
+  },
+};
 ```
 
 ## 9. 文件引用
@@ -355,6 +352,7 @@ docs/examples/workflow-designer/
 ```
 
 文档中用文字说明引用：
+
 ```json
 {
   "document": { "参见": "docs/examples/workflow-designer/document.json" }

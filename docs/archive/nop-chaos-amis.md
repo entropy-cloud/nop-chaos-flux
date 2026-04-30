@@ -400,8 +400,8 @@ React 层遵循：
 自定义组件渲染局部 schema 时，不直接拿 raw child schema 自己递归，而是通过统一 render handle：
 
 ```ts
-props.regions.body?.render()
-props.helpers.render(schema, { scope })
+props.regions.body?.render();
+props.helpers.render(schema, { scope });
 ```
 
 这样能保证：
@@ -474,14 +474,14 @@ Env 监控钩子当前正式方向包括：
 
 ### 12.2 关键优化点
 
-| 目标 | 正式方案 |
-| --- | --- |
-| 静态 schema 执行 | compile 阶段识别为 `static` 节点，运行时直接返回原引用 |
-| 动态对象复用 | object/array 节点使用 child unchanged + shallowEqual 复用旧引用 |
-| scope 读取 | 高频走 `scope.get(path)` |
-| 表达式求值 | `EvalContext.resolve(path)` 驱动，不依赖完整上下文对象 |
-| 高频请求 | debounce + AbortController |
-| rerender 控制 | selector 订阅 + stable runtime helpers |
+| 目标             | 正式方案                                                        |
+| ---------------- | --------------------------------------------------------------- |
+| 静态 schema 执行 | compile 阶段识别为 `static` 节点，运行时直接返回原引用          |
+| 动态对象复用     | object/array 节点使用 child unchanged + shallowEqual 复用旧引用 |
+| scope 读取       | 高频走 `scope.get(path)`                                        |
+| 表达式求值       | `EvalContext.resolve(path)` 驱动，不依赖完整上下文对象          |
+| 高频请求         | debounce + AbortController                                      |
+| rerender 控制    | selector 订阅 + stable runtime helpers                          |
 
 ---
 

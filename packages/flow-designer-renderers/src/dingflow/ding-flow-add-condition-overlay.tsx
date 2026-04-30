@@ -10,7 +10,10 @@ export function DingFlowAddBranchOverlay({ onClick }: DingFlowAddConditionOverla
   return (
     <div
       className={DINGFLOW_CONDITION_BADGE_CLASSNAME}
-      onClick={(e) => { e.stopPropagation(); onClick(e); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(e);
+      }}
     >
       {t('flux.flowDesigner.addBranch')}
     </div>

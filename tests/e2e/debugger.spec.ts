@@ -24,7 +24,9 @@ async function prepareFreshPage(page: import('@playwright/test').Page): Promise<
 
 async function openFluxBasicPage(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/#/flux-basic');
-  await page.getByRole('heading', { name: 'Renderer Playground', level: 1 }).waitFor({ state: 'visible', timeout: 15000 });
+  await page
+    .getByRole('heading', { name: 'Renderer Playground', level: 1 })
+    .waitFor({ state: 'visible', timeout: 15000 });
 }
 
 async function seedFluxBasicExplanationFixture(page: import('@playwright/test').Page): Promise<{
@@ -49,13 +51,26 @@ async function seedFluxBasicExplanationFixture(page: import('@playwright/test').
       const label = labels.find((node) => node.textContent?.includes(text));
       return Number(label?.closest('[data-cid]')?.getAttribute('data-cid'));
     };
-    const readCidForInput = (selector: string) => Number((document.querySelector(selector) as HTMLElement | null)?.closest('[data-cid]')?.getAttribute('data-cid'));
+    const readCidForInput = (selector: string) =>
+      Number(
+        (document.querySelector(selector) as HTMLElement | null)
+          ?.closest('[data-cid]')
+          ?.getAttribute('data-cid'),
+      );
 
     return {
       usernameCid: readCidForInput('[aria-label="Username"]'),
-      userFormCid: Number((document.querySelector('[aria-label="Username"]') as HTMLElement | null)?.closest('.nop-form')?.getAttribute('data-cid')),
+      userFormCid: Number(
+        (document.querySelector('[aria-label="Username"]') as HTMLElement | null)
+          ?.closest('.nop-form')
+          ?.getAttribute('data-cid'),
+      ),
       adminCodeCid: readCidForInput('[aria-label="Admin Code"]') || readCidForLabel('Admin Code'),
-      searchButtonCid: Number(Array.from(document.querySelectorAll('button')).find((node) => node.textContent?.includes('Search Directory'))?.getAttribute('data-cid'))
+      searchButtonCid: Number(
+        Array.from(document.querySelectorAll('button'))
+          .find((node) => node.textContent?.includes('Search Directory'))
+          ?.getAttribute('data-cid'),
+      ),
     };
   });
 
@@ -63,7 +78,12 @@ async function seedFluxBasicExplanationFixture(page: import('@playwright/test').
   expect(cids.userFormCid).toBeGreaterThan(0);
   expect(cids.adminCodeCid).toBeGreaterThan(0);
   expect(cids.searchButtonCid).toBeGreaterThan(0);
-  return cids as { usernameCid: number; userFormCid: number; adminCodeCid: number; searchButtonCid: number };
+  return cids as {
+    usernameCid: number;
+    userFormCid: number;
+    adminCodeCid: number;
+    searchButtonCid: number;
+  };
 }
 
 test.describe('Nop Debugger', () => {
@@ -110,7 +130,7 @@ test.describe('Nop Debugger', () => {
         available: true,
         snapshotEnabled: snap?.enabled,
         snapshotPanelOpen: snap?.panelOpen,
-        overviewTotalEvents: typeof overview?.totalEvents
+        overviewTotalEvents: typeof overview?.totalEvents,
       };
     });
 
@@ -131,7 +151,9 @@ test.describe('Nop Debugger', () => {
   test('debugger launcher renders on DebuggerLabPage', async ({ page }) => {
     const errors = collectConsoleErrors(page);
     await page.goto('/#/debugger-lab');
-    await page.getByRole('heading', { name: 'Debugger Lab' }).waitFor({ state: 'visible', timeout: 15000 });
+    await page
+      .getByRole('heading', { name: 'Debugger Lab' })
+      .waitFor({ state: 'visible', timeout: 15000 });
 
     await expect(page.locator('.nop-debugger-launcher')).toBeVisible();
     expect(filterFaviconErrors(errors)).toEqual([]);
@@ -139,7 +161,9 @@ test.describe('Nop Debugger', () => {
 
   test('DebuggerLabPage controls fire events and query diagnostics', async ({ page }) => {
     await page.goto('/#/debugger-lab');
-    await page.getByRole('heading', { name: 'Debugger Lab' }).waitFor({ state: 'visible', timeout: 15000 });
+    await page
+      .getByRole('heading', { name: 'Debugger Lab' })
+      .waitFor({ state: 'visible', timeout: 15000 });
 
     const outputPanel = page.locator('pre').first();
 
@@ -157,9 +181,17 @@ test.describe('Nop Debugger', () => {
     await prepareFreshPage(page);
 
     const result = await page.evaluate(() => {
-      const api = (window as unknown as { __NOP_DEBUGGER_API__?: { getSnapshot(): any; exportSession(options?: unknown): any; getLatestFailedRequest(): any } }).__NOP_DEBUGGER_API__;
+      const api = (
+        window as unknown as {
+          __NOP_DEBUGGER_API__?: {
+            getSnapshot(): any;
+            exportSession(options?: unknown): any;
+            getLatestFailedRequest(): any;
+          };
+        }
+      ).__NOP_DEBUGGER_API__;
       if (!api) return { available: false };
-      
+
       const snapshot = api.getSnapshot();
       const exported = api.exportSession({ eventLimit: 10 });
       const latestFailedRequest = api.getLatestFailedRequest();
@@ -168,7 +200,7 @@ test.describe('Nop Debugger', () => {
         available: true,
         snapshotEnabled: snapshot?.enabled,
         exportedEventsIsArray: Array.isArray(exported?.events),
-        latestFailedRequest
+        latestFailedRequest,
       };
     });
 
@@ -178,39 +210,47 @@ test.describe('Nop Debugger', () => {
     expect(result.latestFailedRequest ?? null).toBeNull();
   });
 
-  test('automation explanation contracts answer value/meta/failure/async questions on live page', async ({ page }) => {
-    const { usernameCid, userFormCid, adminCodeCid, searchButtonCid } = await seedFluxBasicExplanationFixture(page);
+  test('automation explanation contracts answer value/meta/failure/async questions on live page', async ({
+    page,
+  }) => {
+    const { usernameCid, userFormCid, adminCodeCid, searchButtonCid } =
+      await seedFluxBasicExplanationFixture(page);
 
-    const result = await page.evaluate(async ({ usernameCid, userFormCid, adminCodeCid, searchButtonCid }) => {
-      const api = (window as unknown as {
-        __NOP_DEBUGGER_API__?: {
-          explainNodeValue(query: { cid: number; field?: string }): any;
-          explainNodeMeta(query: { cid: number; field: string }): any;
-          explainNodeFailure(query?: { cid?: number }): any;
-          explainNodeAsync(query?: { cid?: number }): any;
+    const result = await page.evaluate(
+      async ({ usernameCid, userFormCid, adminCodeCid, searchButtonCid }) => {
+        const api = (
+          window as unknown as {
+            __NOP_DEBUGGER_API__?: {
+              explainNodeValue(query: { cid: number; field?: string }): any;
+              explainNodeMeta(query: { cid: number; field: string }): any;
+              explainNodeFailure(query?: { cid?: number }): any;
+              explainNodeAsync(query?: { cid?: number }): any;
+            };
+          }
+        ).__NOP_DEBUGGER_API__;
+
+        if (!api) {
+          return { available: false };
+        }
+
+        return {
+          available: true,
+          value: api.explainNodeValue({ cid: usernameCid, field: 'username' }),
+          meta: api.explainNodeMeta({ cid: adminCodeCid, field: 'visible' }),
+          failure: api.explainNodeFailure({ cid: searchButtonCid }),
+          asyncInfo: api.explainNodeAsync({ cid: userFormCid }),
         };
-      }).__NOP_DEBUGGER_API__;
-
-      if (!api) {
-        return { available: false };
-      }
-
-      return {
-        available: true,
-        value: api.explainNodeValue({ cid: usernameCid, field: 'username' }),
-        meta: api.explainNodeMeta({ cid: adminCodeCid, field: 'visible' }),
-        failure: api.explainNodeFailure({ cid: searchButtonCid }),
-        asyncInfo: api.explainNodeAsync({ cid: userFormCid })
-      };
-    }, { usernameCid, userFormCid, adminCodeCid, searchButtonCid });
+      },
+      { usernameCid, userFormCid, adminCodeCid, searchButtonCid },
+    );
 
     expect(result.available).toBe(true);
     expect(result.value).toMatchObject({
       kind: 'value',
       data: {
         field: 'username',
-        valueSource: 'current-scope'
-      }
+        valueSource: 'current-scope',
+      },
     });
     expect(result.value.data.value).toBe('alice');
     expect(result.meta).toMatchObject({
@@ -219,18 +259,18 @@ test.describe('Nop Debugger', () => {
         field: 'visible',
         source: 'resolved-meta',
         value: true,
-        dependencyPaths: ['role']
-      }
+        dependencyPaths: ['role'],
+      },
     });
     expect(result.meta.answer).toContain('${role === "admin"}');
     expect(result.meta.limitations).toEqual([]);
     expect(result.failure).toMatchObject({
-      kind: 'failure'
+      kind: 'failure',
     });
     expect(result.failure.data.failureType).not.toBe('unknown');
     expect(Array.isArray(result.failure.data.relatedEventIds)).toBe(true);
     expect(result.asyncInfo).toMatchObject({
-      kind: 'async'
+      kind: 'async',
     });
     expect(Array.isArray(result.asyncInfo.data.owners)).toBe(true);
   });
@@ -245,7 +285,9 @@ test.describe('Nop Debugger', () => {
     const errors2 = [...errors];
 
     await page.goto('/#/debugger-lab');
-    await page.getByRole('heading', { name: 'Debugger Lab' }).waitFor({ state: 'visible', timeout: 15000 });
+    await page
+      .getByRole('heading', { name: 'Debugger Lab' })
+      .waitFor({ state: 'visible', timeout: 15000 });
     const errors3 = [...errors];
 
     expect(filterFaviconErrors(errors1)).toEqual([]);
@@ -349,7 +391,11 @@ test.describe('Nop Debugger', () => {
 
     await page.mouse.move(boxBefore.x + boxBefore.width / 2, boxBefore.y + boxBefore.height / 2);
     await page.mouse.down();
-    await page.mouse.move(boxBefore.x + boxBefore.width / 2 + 100, boxBefore.y + boxBefore.height / 2 + 80, { steps: 5 });
+    await page.mouse.move(
+      boxBefore.x + boxBefore.width / 2 + 100,
+      boxBefore.y + boxBefore.height / 2 + 80,
+      { steps: 5 },
+    );
     await page.mouse.up();
     await page.waitForTimeout(300);
 
@@ -378,7 +424,9 @@ test.describe('Nop Debugger', () => {
 
   test('minimized bar shows error count badge when errors exist', async ({ page }) => {
     await page.goto('/#/debugger-lab');
-    await page.getByRole('heading', { name: 'Debugger Lab' }).waitFor({ state: 'visible', timeout: 15000 });
+    await page
+      .getByRole('heading', { name: 'Debugger Lab' })
+      .waitFor({ state: 'visible', timeout: 15000 });
 
     await page.locator('.nop-debugger-launcher').click();
     await page.waitForTimeout(500);

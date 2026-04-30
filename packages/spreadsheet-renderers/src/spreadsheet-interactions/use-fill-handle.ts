@@ -17,44 +17,60 @@ export function useFillHandle(
   snapshot: SpreadsheetHostSnapshot,
   sheetId: string,
   addLog: (msg: string) => void,
-  getSelectedRange: () => SpreadsheetRange | null
+  getSelectedRange: () => SpreadsheetRange | null,
 ) {
   const [fillHandleState, setFillHandleState] = useState<FillHandleState>({
-    isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0,
+    isFilling: false,
+    startRow: 0,
+    startCol: 0,
+    endRow: 0,
+    endCol: 0,
+    currentRow: 0,
+    currentCol: 0,
   });
   const fillHandleRef = useRef<FillHandleState>(fillHandleState);
   useEffect(() => {
     fillHandleRef.current = fillHandleState;
   }, [fillHandleState]);
 
-  const isFillPreview = useCallback((row: number, col: number): boolean => {
-    if (!fillHandleState.isFilling) return false;
-    const { startRow, startCol, endRow, endCol, currentRow, currentCol } = fillHandleState;
-    let previewEndRow = endRow;
-    let previewEndCol = endCol;
-    if (currentRow > endRow) { previewEndRow = currentRow; }
-    else if (currentCol > endCol) { previewEndCol = currentCol; }
-    else { return false; }
-    return row >= startRow && row <= previewEndRow && col >= startCol && col <= previewEndCol;
-  }, [fillHandleState]);
+  const isFillPreview = useCallback(
+    (row: number, col: number): boolean => {
+      if (!fillHandleState.isFilling) return false;
+      const { startRow, startCol, endRow, endCol, currentRow, currentCol } = fillHandleState;
+      let previewEndRow = endRow;
+      let previewEndCol = endCol;
+      if (currentRow > endRow) {
+        previewEndRow = currentRow;
+      } else if (currentCol > endCol) {
+        previewEndCol = currentCol;
+      } else {
+        return false;
+      }
+      return row >= startRow && row <= previewEndRow && col >= startCol && col <= previewEndCol;
+    },
+    [fillHandleState],
+  );
 
-  const handleFillHandleMouseDown = useCallback((row: number, col: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const range = getSelectedRange();
-    if (!range) return;
-    const state: FillHandleState = {
-      isFilling: true,
-      startRow: range.startRow,
-      startCol: range.startCol,
-      endRow: range.endRow,
-      endCol: range.endCol,
-      currentRow: row,
-      currentCol: col,
-    };
-    fillHandleRef.current = state;
-    setFillHandleState(state);
-  }, [getSelectedRange]);
+  const handleFillHandleMouseDown = useCallback(
+    (row: number, col: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const range = getSelectedRange();
+      if (!range) return;
+      const state: FillHandleState = {
+        isFilling: true,
+        startRow: range.startRow,
+        startCol: range.startCol,
+        endRow: range.endRow,
+        endCol: range.endCol,
+        currentRow: row,
+        currentCol: col,
+      };
+      fillHandleRef.current = state;
+      setFillHandleState(state);
+    },
+    [getSelectedRange],
+  );
 
   const handleFillHandleDoubleClick = useCallback(async () => {
     const range = getSelectedRange();
@@ -110,7 +126,9 @@ export function useFillHandle(
       },
       direction: 'down',
     });
-    addLog(`Series fill down: ${cellAddress(range.startRow, range.startCol)}:${cellAddress(fillEndRow, range.endCol)}`);
+    addLog(
+      `Series fill down: ${cellAddress(range.startRow, range.startCol)}:${cellAddress(fillEndRow, range.endCol)}`,
+    );
   }, [addLog, bridge, getSelectedRange, sheetId, snapshot.activeSheet]);
 
   useEffect(() => {
@@ -129,7 +147,11 @@ export function useFillHandle(
         if (!rafId) {
           rafId = requestAnimationFrame(() => {
             rafId = 0;
-            setFillHandleState(prev => ({ ...prev, currentRow: fillHandleRef.current.currentRow, currentCol: fillHandleRef.current.currentCol }));
+            setFillHandleState((prev) => ({
+              ...prev,
+              currentRow: fillHandleRef.current.currentRow,
+              currentCol: fillHandleRef.current.currentCol,
+            }));
           });
         }
       }
@@ -155,10 +177,20 @@ export function useFillHandle(
           range: targetRange,
           direction: fillDirection,
         });
-        addLog(`Series fill ${fillDirection}: ${cellAddress(startRow, startCol)}:${cellAddress(targetRange.endRow, targetRange.endCol)}`);
+        addLog(
+          `Series fill ${fillDirection}: ${cellAddress(startRow, startCol)}:${cellAddress(targetRange.endRow, targetRange.endCol)}`,
+        );
       }
 
-      const reset: FillHandleState = { isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0 };
+      const reset: FillHandleState = {
+        isFilling: false,
+        startRow: 0,
+        startCol: 0,
+        endRow: 0,
+        endCol: 0,
+        currentRow: 0,
+        currentCol: 0,
+      };
       fillHandleRef.current = reset;
       setFillHandleState(reset);
     };
@@ -173,5 +205,11 @@ export function useFillHandle(
     };
   }, [fillHandleState.isFilling, bridge, sheetId, addLog]);
 
-  return { fillHandleState, fillHandleRef, isFillPreview, handleFillHandleMouseDown, handleFillHandleDoubleClick };
+  return {
+    fillHandleState,
+    fillHandleRef,
+    isFillPreview,
+    handleFillHandleMouseDown,
+    handleFillHandleDoubleClick,
+  };
 }

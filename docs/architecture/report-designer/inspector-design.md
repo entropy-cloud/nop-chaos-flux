@@ -161,7 +161,14 @@ Expression editor 不应由 shell 特判某个字段名，而应由 panel schema
 建议引入 property field kind:
 
 ```ts
-type InspectorFieldKind = 'scalar' | 'boolean' | 'enum' | 'expression' | 'reference' | 'style-ref' | 'custom';
+type InspectorFieldKind =
+  | 'scalar'
+  | 'boolean'
+  | 'enum'
+  | 'expression'
+  | 'reference'
+  | 'style-ref'
+  | 'custom';
 ```
 
 对于 `expression` 字段:

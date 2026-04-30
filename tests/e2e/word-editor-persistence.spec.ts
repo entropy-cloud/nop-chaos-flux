@@ -26,14 +26,24 @@ test('saves a document marker that survives a reload', async ({ page }) => {
   const saveButton = page.getByRole('button', { name: '保存' });
   await saveButton.click();
 
-  await expect.poll(async () => {
-    return page.evaluate(() => localStorage.getItem('nop-word-editor-document'));
-  }, { timeout: 10_000 }).toContain(marker);
+  await expect
+    .poll(
+      async () => {
+        return page.evaluate(() => localStorage.getItem('nop-word-editor-document'));
+      },
+      { timeout: 10_000 },
+    )
+    .toContain(marker);
 
   await page.reload({ waitUntil: 'commit' });
   await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 45_000 });
 
-  await expect.poll(async () => {
-    return page.evaluate(() => localStorage.getItem('nop-word-editor-document'));
-  }, { timeout: 10_000 }).toContain(marker);
+  await expect
+    .poll(
+      async () => {
+        return page.evaluate(() => localStorage.getItem('nop-word-editor-document'));
+      },
+      { timeout: 10_000 },
+    )
+    .toContain(marker);
 });

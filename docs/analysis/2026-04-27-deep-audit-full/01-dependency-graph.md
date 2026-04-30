@@ -94,11 +94,12 @@ theme-tokens (standalone)
 ## 合规包清单
 
 所有包均遵守核心规则：
+
 - flux-core 无 @nop-chaos 依赖 ✓
 - flux-formula 仅依赖 flux-core ✓
 - 无循环依赖 ✓
 - 无跨包内部路径导入 ✓
-- 无 *-core → *-renderers 反向依赖 ✓
+- 无 _-core → _-renderers 反向依赖 ✓
 - spreadsheet-core 不依赖 report-designer-core ✓
 - tailwind-preset 和 theme-tokens 无运行时包依赖 ✓
 

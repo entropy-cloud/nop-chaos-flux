@@ -9,7 +9,11 @@ vi.mock('@nop-chaos/ui', () => {
   function MockCombobox({ children, onValueChange, disabled }: any) {
     return (
       <div data-testid="mock-combobox" data-disabled={disabled ?? false}>
-        <button type="button" data-testid="combobox-select" onClick={() => onValueChange?.({ name: 'age', label: 'Age' })}>
+        <button
+          type="button"
+          data-testid="combobox-select"
+          onClick={() => onValueChange?.({ name: 'age', label: 'Age' })}
+        >
           select
         </button>
         {children}
@@ -18,7 +22,9 @@ vi.mock('@nop-chaos/ui', () => {
   }
 
   function MockComboboxInput({ placeholder, className }: any) {
-    return <input data-testid="mock-combobox-input" placeholder={placeholder} className={className} />;
+    return (
+      <input data-testid="mock-combobox-input" placeholder={placeholder} className={className} />
+    );
   }
 
   function MockComboboxContent({ children }: any) {
@@ -30,11 +36,17 @@ vi.mock('@nop-chaos/ui', () => {
   }
 
   function MockComboboxList({ children }: any) {
-    return <div data-testid="mock-combobox-list">{typeof children === 'function' ? null : children}</div>;
+    return (
+      <div data-testid="mock-combobox-list">{typeof children === 'function' ? null : children}</div>
+    );
   }
 
   function MockComboboxItem({ children, value, disabled }: any) {
-    return <div data-testid={`combobox-item-${value?.name ?? value}`} data-disabled={disabled ?? false}>{children}</div>;
+    return (
+      <div data-testid={`combobox-item-${value?.name ?? value}`} data-disabled={disabled ?? false}>
+        {children}
+      </div>
+    );
   }
 
   return {
@@ -72,54 +84,40 @@ const groupedFields: ConditionField[] = [
 
 describe('FieldSelect', () => {
   it('renders combobox component', () => {
-    render(
-      <FieldSelect fields={simpleFields} value="name" onChange={() => {}} />,
-    );
+    render(<FieldSelect fields={simpleFields} value="name" onChange={() => {}} />);
     expect(screen.getByTestId('mock-combobox')).toBeTruthy();
   });
 
   it('calls onChange when a field is selected', () => {
     const onChange = vi.fn();
-    render(
-      <FieldSelect fields={simpleFields} value="name" onChange={onChange} />,
-    );
+    render(<FieldSelect fields={simpleFields} value="name" onChange={onChange} />);
     screen.getByTestId('combobox-select').click();
     expect(onChange).toHaveBeenCalledWith('age');
   });
 
   it('does not call onChange when null value is passed', () => {
     const onChange = vi.fn();
-    render(
-      <FieldSelect fields={simpleFields} value="name" onChange={onChange} />,
-    );
+    render(<FieldSelect fields={simpleFields} value="name" onChange={onChange} />);
     expect(onChange).not.toHaveBeenCalled();
   });
 
   it('renders with grouped fields', () => {
-    render(
-      <FieldSelect fields={groupedFields} value="status" onChange={() => {}} />,
-    );
+    render(<FieldSelect fields={groupedFields} value="status" onChange={() => {}} />);
     expect(screen.getByTestId('mock-combobox')).toBeTruthy();
   });
 
   it('passes disabled to combobox', () => {
-    render(
-      <FieldSelect fields={simpleFields} value="name" onChange={() => {}} disabled={true} />,
-    );
+    render(<FieldSelect fields={simpleFields} value="name" onChange={() => {}} disabled={true} />);
     expect(screen.getByTestId('mock-combobox').dataset.disabled).toBe('true');
   });
 
   it('renders with undefined value', () => {
-    render(
-      <FieldSelect fields={simpleFields} value={undefined} onChange={() => {}} />,
-    );
+    render(<FieldSelect fields={simpleFields} value={undefined} onChange={() => {}} />);
     expect(screen.getByTestId('mock-combobox')).toBeTruthy();
   });
 
   it('renders with empty fields', () => {
-    render(
-      <FieldSelect fields={[]} value={undefined} onChange={() => {}} />,
-    );
+    render(<FieldSelect fields={[]} value={undefined} onChange={() => {}} />);
     expect(screen.getByTestId('mock-combobox')).toBeTruthy();
   });
 

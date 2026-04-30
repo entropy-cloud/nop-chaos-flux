@@ -94,10 +94,7 @@
         {
           "id": "basic",
           "label": "基础节点",
-          "nodeTypes": [
-            "start",
-            "task"
-          ],
+          "nodeTypes": ["start", "task"],
           "expanded": true
         }
       ]

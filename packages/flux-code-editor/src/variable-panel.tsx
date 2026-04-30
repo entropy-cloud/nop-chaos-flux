@@ -45,9 +45,7 @@ export function VariablePanel({
   };
 
   const handleInsert = (variable: VariableItem) => {
-    const text = insertTemplate
-      ? renderInsertTemplate(insertTemplate, variable)
-      : variable.value;
+    const text = insertTemplate ? renderInsertTemplate(insertTemplate, variable) : variable.value;
     onInsert(text);
   };
 

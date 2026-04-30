@@ -6,7 +6,7 @@ export function matchesVariant(
   value: unknown,
   evaluate?: RendererComponentProps['helpers']['evaluate'],
   scope?: ScopeRef,
-  createScope?: RendererComponentProps['helpers']['createScope']
+  createScope?: RendererComponentProps['helpers']['createScope'],
 ): boolean {
   void scope;
   const match = option.match;
@@ -19,7 +19,13 @@ export function matchesVariant(
     return Array.isArray(value);
   }
   if (kind === 'has-key') {
-    return value !== null && typeof value === 'object' && !Array.isArray(value) && match.key !== undefined && match.key in (value as object);
+    return (
+      value !== null &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      match.key !== undefined &&
+      match.key in (value as object)
+    );
   }
   if (kind === 'shape') {
     if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -41,7 +47,7 @@ export function detectMatchedVariant(
   value: unknown,
   evaluate?: RendererComponentProps['helpers']['evaluate'],
   scope?: ScopeRef,
-  createScope?: RendererComponentProps['helpers']['createScope']
+  createScope?: RendererComponentProps['helpers']['createScope'],
 ): string | undefined {
   for (const option of variants) {
     if (option.match && matchesVariant(option, value, evaluate, scope, createScope)) {
@@ -57,7 +63,7 @@ export function resolveInitialVariant(
   defaultVariant?: string,
   evaluate?: RendererComponentProps['helpers']['evaluate'],
   scope?: ScopeRef,
-  createScope?: RendererComponentProps['helpers']['createScope']
+  createScope?: RendererComponentProps['helpers']['createScope'],
 ): string | undefined {
   const matchedKey = detectMatchedVariant(variants, value, evaluate, scope, createScope);
   if (matchedKey) {

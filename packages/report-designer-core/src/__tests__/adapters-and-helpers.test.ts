@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createEmptyDocument,
-} from '@nop-chaos/spreadsheet-core';
+import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportDesignerCore,
   createReportTemplateDocument,
@@ -28,7 +26,13 @@ describe('importTemplate / exportTemplate commands', () => {
     const core = createReportDesignerCore({
       document: originalDoc,
       config: defaultConfig,
-      profile: { id: 'p1', kind: 'report-template', fieldSourceIds: [], fieldDropIds: [], codecId: 'json-codec' },
+      profile: {
+        id: 'p1',
+        kind: 'report-template',
+        fieldSourceIds: [],
+        fieldDropIds: [],
+        codecId: 'json-codec',
+      },
     });
 
     core.registerCodec({
@@ -62,7 +66,13 @@ describe('importTemplate / exportTemplate commands', () => {
     const core = createReportDesignerCore({
       document: doc,
       config: defaultConfig,
-      profile: { id: 'p1', kind: 'report-template', fieldSourceIds: [], fieldDropIds: [], codecId: 'json-codec' },
+      profile: {
+        id: 'p1',
+        kind: 'report-template',
+        fieldSourceIds: [],
+        fieldDropIds: [],
+        codecId: 'json-codec',
+      },
     });
 
     core.registerCodec({
@@ -92,7 +102,13 @@ describe('importTemplate / exportTemplate commands', () => {
     const core = createReportDesignerCore({
       document: doc,
       config: defaultConfig,
-      profile: { id: 'p1', kind: 'report-template', fieldSourceIds: [], fieldDropIds: [], codecId: 'missing-codec' },
+      profile: {
+        id: 'p1',
+        kind: 'report-template',
+        fieldSourceIds: [],
+        fieldDropIds: [],
+        codecId: 'missing-codec',
+      },
     });
 
     const importResult = await core.dispatch({
@@ -222,13 +238,25 @@ describe('factory helpers', () => {
     });
 
     expect(adapter.id).toBe('test-drop');
-    expect(adapter.canHandle({ type: 'field', sourceId: 's', fieldId: 'f', data: {} }, { kind: 'cell', cell: { sheetId: 's', address: 'A1', row: 0, col: 0 } })).toBe(true);
-    expect(adapter.canHandle({ type: 'other', sourceId: 's', fieldId: 'f', data: {} }, { kind: 'cell', cell: { sheetId: 's', address: 'A1', row: 0, col: 0 } })).toBe(false);
-    expect(adapter.mapDropToMetaPatch({
-      field: { type: 'field', sourceId: 's', fieldId: 'f', data: {} },
-      target: { kind: 'cell', cell: { sheetId: 's', address: 'A1', row: 0, col: 0 } },
-      context: {} as any,
-    })).toEqual({ binding: 'f' });
+    expect(
+      adapter.canHandle(
+        { type: 'field', sourceId: 's', fieldId: 'f', data: {} },
+        { kind: 'cell', cell: { sheetId: 's', address: 'A1', row: 0, col: 0 } },
+      ),
+    ).toBe(true);
+    expect(
+      adapter.canHandle(
+        { type: 'other', sourceId: 's', fieldId: 'f', data: {} },
+        { kind: 'cell', cell: { sheetId: 's', address: 'A1', row: 0, col: 0 } },
+      ),
+    ).toBe(false);
+    expect(
+      adapter.mapDropToMetaPatch({
+        field: { type: 'field', sourceId: 's', fieldId: 'f', data: {} },
+        target: { kind: 'cell', cell: { sheetId: 's', address: 'A1', row: 0, col: 0 } },
+        context: {} as any,
+      }),
+    ).toEqual({ binding: 'f' });
   });
 
   it('createUnsupportedTemplateCodecAdapter should throw on import/export', () => {

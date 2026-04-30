@@ -84,11 +84,11 @@ React host 仍是运行时生命周期的重要拥有者。
 
 ## 3.1 Runtime 总装
 
-| 维度 | 当前实现 | 新方案 |
-| --- | --- | --- |
-| runtime create | `createRendererRuntime()` 大总装 | `RuntimeSession + runtime-contracts + runtime-facade` 分层 |
-| React 角色 | 创建 runtime/page/surface | 只消费 facade + published snapshot |
-| compiler 关系 | runtime 内部直接创建/持有 compiler | compiler 独立生产 `ExecutionPackage` |
+| 维度           | 当前实现                           | 新方案                                                     |
+| -------------- | ---------------------------------- | ---------------------------------------------------------- |
+| runtime create | `createRendererRuntime()` 大总装   | `RuntimeSession + runtime-contracts + runtime-facade` 分层 |
+| React 角色     | 创建 runtime/page/surface          | 只消费 facade + published snapshot                         |
+| compiler 关系  | runtime 内部直接创建/持有 compiler | compiler 独立生产 `ExecutionPackage`                       |
 
 判断：
 
@@ -97,11 +97,11 @@ React host 仍是运行时生命周期的重要拥有者。
 
 ## 3.2 Scope / Store
 
-| 维度 | 当前实现 | 新方案 |
-| --- | --- | --- |
-| scope storage | vanilla scope store + page/form stores | 继续 vanilla，但统一成 shared transaction substrate |
-| path operations | 已有 path-based update | 保留并强化为 parsed-segment hot path |
-| React subscription | `useSyncExternalStore` 已在用 | 保留 |
+| 维度               | 当前实现                               | 新方案                                              |
+| ------------------ | -------------------------------------- | --------------------------------------------------- |
+| scope storage      | vanilla scope store + page/form stores | 继续 vanilla，但统一成 shared transaction substrate |
+| path operations    | 已有 path-based update                 | 保留并强化为 parsed-segment hot path                |
+| React subscription | `useSyncExternalStore` 已在用          | 保留                                                |
 
 判断：
 
@@ -116,11 +116,11 @@ React host 仍是运行时生命周期的重要拥有者。
 
 ## 3.3 Validation
 
-| 维度 | 当前实现 | 新方案 |
-| --- | --- | --- |
-| 主实现中心 | `FormRuntime` | `OwnerRuntime + ValidationOwnerRuntime` |
-| compiled model | 平坦 nodes + dependents + order | 保留 |
-| edge cases | 已覆盖很多 form-level细节 | 提升为 owner-level规范和 conformance family |
+| 维度           | 当前实现                        | 新方案                                      |
+| -------------- | ------------------------------- | ------------------------------------------- |
+| 主实现中心     | `FormRuntime`                   | `OwnerRuntime + ValidationOwnerRuntime`     |
+| compiled model | 平坦 nodes + dependents + order | 保留                                        |
+| edge cases     | 已覆盖很多 form-level细节       | 提升为 owner-level规范和 conformance family |
 
 判断：
 
@@ -128,11 +128,11 @@ React host 仍是运行时生命周期的重要拥有者。
 
 ## 3.4 Data source / Resource
 
-| 维度 | 当前实现 | 新方案 |
-| --- | --- | --- |
+| 维度           | 当前实现                                                                                                       | 新方案                                          |
+| -------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | producer model | formula 与 api data-source 分实现，但已共享部分 async governance、dependency tracking、structural sharing 思路 | `sync-value` + `refresh-capability` 两种 driver |
-| publish | controller 直接写 scope/status | 统一 lowering 到 `ScopeWrite[]` |
-| stale handling | request sequence + async governance | owner/lane/epoch authoritative gate |
+| publish        | controller 直接写 scope/status                                                                                 | 统一 lowering 到 `ScopeWrite[]`                 |
+| stale handling | request sequence + async governance                                                                            | owner/lane/epoch authoritative gate             |
 
 判断：
 
@@ -151,19 +151,19 @@ React host 仍是运行时生命周期的重要拥有者。
 
 ## 3.6 Reaction
 
-| 维度 | 当前实现 | 新方案 |
-| --- | --- | --- |
-| watch eval | compiled watch + runtime state | 保留 |
-| scheduling | reaction registry 自己调度 | transaction settle + async lane 统一调度 |
-| loop guard | max fire count + queued paths | 保留并纳入统一 diagnostics |
+| 维度       | 当前实现                       | 新方案                                   |
+| ---------- | ------------------------------ | ---------------------------------------- |
+| watch eval | compiled watch + runtime state | 保留                                     |
+| scheduling | reaction registry 自己调度     | transaction settle + async lane 统一调度 |
+| loop guard | max fire count + queued paths  | 保留并纳入统一 diagnostics               |
 
 ## 3.7 Async governance
 
-| 维度 | 当前实现 | 新方案 |
-| --- | --- | --- |
-| 目标 | 调试与 stale explain | 真正治理 lane/policy/publish |
-| owner model | owner current run + recent runs | owner + lane + epoch + policy |
-| scope | mostly source/reaction/validation owners | all async-bearing subsystems |
+| 维度        | 当前实现                                 | 新方案                        |
+| ----------- | ---------------------------------------- | ----------------------------- |
+| 目标        | 调试与 stale explain                     | 真正治理 lane/policy/publish  |
+| owner model | owner current run + recent runs          | owner + lane + epoch + policy |
+| scope       | mostly source/reaction/validation owners | all async-bearing subsystems  |
 
 ## 3.8 Host projection
 
@@ -180,11 +180,11 @@ React host 仍是运行时生命周期的重要拥有者。
 
 ## 3.9 Package / Admission
 
-| 维度 | 当前实现 | 新方案 |
-| --- | --- | --- |
-| runtime input | schema + runtime compile | `ExecutionPackage` only |
-| fragment attach | 未形成统一 admission 协议 | version/trust/namespace/atomic attach |
-| recovery | 局部 runtime state | snapshot + journal + checkpoint + replay |
+| 维度            | 当前实现                  | 新方案                                   |
+| --------------- | ------------------------- | ---------------------------------------- |
+| runtime input   | schema + runtime compile  | `ExecutionPackage` only                  |
+| fragment attach | 未形成统一 admission 协议 | version/trust/namespace/atomic attach    |
+| recovery        | 局部 runtime state        | snapshot + journal + checkpoint + replay |
 
 这是当前实现与新方案差异最大的部分。
 

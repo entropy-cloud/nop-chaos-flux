@@ -9,7 +9,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from '@nop-chaos/ui';
 
 export interface FlowItem {
@@ -36,7 +36,7 @@ export function FlowListPage({
   onEditFlow,
   onDuplicateFlow,
   onDeleteFlow,
-  onToggleStatus
+  onToggleStatus,
 }: FlowListPageProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
@@ -79,11 +79,7 @@ export function FlowListPage({
             <NativeSelectOption value="enabled">Enabled</NativeSelectOption>
             <NativeSelectOption value="disabled">Disabled</NativeSelectOption>
           </NativeSelect>
-          <Button
-            type="button"
-            className="flow-list-create"
-            onClick={onCreateFlow}
-          >
+          <Button type="button" className="flow-list-create" onClick={onCreateFlow}>
             + Create Flow
           </Button>
         </div>
@@ -123,9 +119,7 @@ export function FlowListPage({
                   </TableCell>
                   <TableCell>{flow.description || '-'}</TableCell>
                   <TableCell>
-                    <span className={`flow-status flow-status--${flow.status}`}>
-                      {flow.status}
-                    </span>
+                    <span className={`flow-status flow-status--${flow.status}`}>{flow.status}</span>
                   </TableCell>
                   <TableCell>{flow.updatedAt}</TableCell>
                   <TableCell>

@@ -12,7 +12,7 @@ describe('compileAction', () => {
     const compiler = createCompiler();
     const result = compileAction(
       { action: 'setValue', args: { path: 'name', value: 'test' } } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(true);
@@ -26,7 +26,7 @@ describe('compileAction', () => {
     const compiler = createCompiler();
     const result = compileAction(
       { action: 'setValue', args: { path: 'name', value: '${userInput}' } } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(false);
@@ -35,10 +35,7 @@ describe('compileAction', () => {
 
   it('returns empty payload when no args or legacy payload', () => {
     const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'closeDialog' } as ActionSchema,
-      compiler
-    );
+    const result = compileAction({ action: 'closeDialog' } as ActionSchema, compiler);
 
     expect(result.nodes[0].payload.args).toBeUndefined();
   });
@@ -47,29 +44,32 @@ describe('compileAction', () => {
     const compiler = createCompiler();
     const withArgs = compileAction(
       { action: 'ajax', args: { url: '/explicit' } } as ActionSchema,
-      compiler
+      compiler,
     );
     expect((withArgs.nodes[0].payload.args as any)?.value).toEqual({ url: '/explicit' });
 
     const withoutArgs = compileAction(
       { action: 'ajax', api: { url: '/legacy' } } as ActionSchema,
-      compiler
+      compiler,
     );
     expect(withoutArgs.nodes[0].payload.args).toBeUndefined();
   });
 
   it('compiles targeting fields', () => {
     const compiler = createCompiler();
-    const result = compileAction({
-      action: 'setValue',
-      args: { path: 'name', value: 'test' },
-      targetId: 'target-1',
-      componentId: 'comp-1',
-      componentName: 'myForm',
-      formId: 'form-1',
-      dialogId: 'dialog-1',
-      surfaceId: 'surface-1',
-    } as unknown as ActionSchema, compiler);
+    const result = compileAction(
+      {
+        action: 'setValue',
+        args: { path: 'name', value: 'test' },
+        targetId: 'target-1',
+        componentId: 'comp-1',
+        componentName: 'myForm',
+        formId: 'form-1',
+        dialogId: 'dialog-1',
+        surfaceId: 'surface-1',
+      } as unknown as ActionSchema,
+      compiler,
+    );
 
     const targeting = result.nodes[0].targeting;
     expect(targeting.targetId).toBe('target-1');
@@ -82,12 +82,15 @@ describe('compileAction', () => {
 
   it('compiles control fields', () => {
     const compiler = createCompiler();
-    const result = compileAction({
-      action: 'ajax',
-      args: { url: '/api' },
-      timeout: 5000,
-      continueOnError: true
-    } as unknown as ActionSchema, compiler);
+    const result = compileAction(
+      {
+        action: 'ajax',
+        args: { url: '/api' },
+        timeout: 5000,
+        continueOnError: true,
+      } as unknown as ActionSchema,
+      compiler,
+    );
 
     const control = result.nodes[0].control;
     expect(control.timeout).toBe(5000);
@@ -100,9 +103,9 @@ describe('compileAction', () => {
       {
         action: 'setValue',
         args: { path: 'name', value: 'test' },
-        when: '${isEnabled}'
+        when: '${isEnabled}',
       } as unknown as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.nodes[0].when).toBeDefined();
@@ -112,11 +115,14 @@ describe('compileAction', () => {
 
   it('compiles static when condition', () => {
     const compiler = createCompiler();
-    const result = compileAction({
-      action: 'setValue',
-      args: { path: 'name', value: 'test' },
-      when: 'true'
-    } as unknown as ActionSchema, compiler);
+    const result = compileAction(
+      {
+        action: 'setValue',
+        args: { path: 'name', value: 'test' },
+        when: 'true',
+      } as unknown as ActionSchema,
+      compiler,
+    );
 
     expect(result.nodes[0].when?.isStatic).toBe(true);
     expect(result.isFullyStatic).toBe(true);
@@ -128,9 +134,9 @@ describe('compileAction', () => {
       {
         action: 'ajax',
         args: { url: '/api' },
-        then: { action: 'navigate', args: { url: '/success' } }
+        then: { action: 'navigate', args: { url: '/success' } },
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.nodes[0].then).toHaveLength(1);
@@ -143,12 +149,9 @@ describe('compileAction', () => {
       {
         action: 'ajax',
         args: { url: '/api' },
-        then: [
-          { action: 'navigate', args: { url: '/success' } },
-          { action: 'closeDialog' }
-        ]
+        then: [{ action: 'navigate', args: { url: '/success' } }, { action: 'closeDialog' }],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.nodes[0].then).toHaveLength(2);
@@ -162,9 +165,9 @@ describe('compileAction', () => {
       {
         action: 'ajax',
         args: { url: '/api' },
-        onError: { action: 'alert', args: { message: 'Failed' } }
+        onError: { action: 'alert', args: { message: 'Failed' } },
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.nodes[0].onError).toHaveLength(1);
@@ -177,12 +180,9 @@ describe('compileAction', () => {
       {
         action: 'ajax',
         args: { url: '/api' },
-        onError: [
-          { action: 'alert', args: { message: 'Error' } },
-          { action: 'closeDialog' }
-        ]
+        onError: [{ action: 'alert', args: { message: 'Error' } }, { action: 'closeDialog' }],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.nodes[0].onError).toHaveLength(2);
@@ -194,9 +194,9 @@ describe('compileAction', () => {
       {
         action: 'ajax',
         args: { url: '/api' },
-        onSettled: { action: 'clearLoading' }
+        onSettled: { action: 'clearLoading' },
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.nodes[0].onSettled).toHaveLength(1);
@@ -209,12 +209,9 @@ describe('compileAction', () => {
       {
         action: 'ajax',
         args: { url: '/api' },
-        onSettled: [
-          { action: 'clearLoading' },
-          { action: 'logEvent' }
-        ]
+        onSettled: [{ action: 'clearLoading' }, { action: 'logEvent' }],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.nodes[0].onSettled).toHaveLength(2);
@@ -227,10 +224,10 @@ describe('compileAction', () => {
         action: 'parallel',
         parallel: [
           { action: 'fetchA', args: { url: '/a' } },
-          { action: 'fetchB', args: { url: '/b' } }
-        ]
+          { action: 'fetchB', args: { url: '/b' } },
+        ],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.nodes[0].parallel).toHaveLength(2);
@@ -240,11 +237,9 @@ describe('compileAction', () => {
 
   it('sets sourcePath on compiled nodes', () => {
     const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'test' } as ActionSchema,
-      compiler,
-      { basePath: '$.onClick' }
-    );
+    const result = compileAction({ action: 'test' } as ActionSchema, compiler, {
+      basePath: '$.onClick',
+    });
 
     expect(result.nodes[0].sourcePath).toBe('$.onClick');
   });
@@ -254,10 +249,10 @@ describe('compileAction', () => {
     const result = compileAction(
       {
         action: 'test',
-        then: [{ action: 'next' }]
+        then: [{ action: 'next' }],
       } as ActionSchema,
       compiler,
-      { basePath: '$.onClick' }
+      { basePath: '$.onClick' },
     );
 
     expect(result.nodes[0].then?.[0].sourcePath).toBe('$.onClick.then[0]');
@@ -268,10 +263,10 @@ describe('compileAction', () => {
     const result = compileAction(
       {
         action: 'test',
-        parallel: [{ action: 'p1' }, { action: 'p2' }]
+        parallel: [{ action: 'p1' }, { action: 'p2' }],
       } as ActionSchema,
       compiler,
-      { basePath: '$' }
+      { basePath: '$' },
     );
 
     expect(result.nodes[0].parallel?.[0].sourcePath).toBe('$.parallel[0]');
@@ -284,9 +279,9 @@ describe('compileAction', () => {
       {
         action: 'test',
         args: { path: 'x' },
-        then: [{ action: 'test', args: { val: '${dynamic}' } }]
+        then: [{ action: 'test', args: { val: '${dynamic}' } }],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(false);
@@ -298,9 +293,9 @@ describe('compileAction', () => {
       {
         action: 'test',
         args: { path: 'x' },
-        onError: [{ action: 'test', args: { val: '${dynamic}' } }]
+        onError: [{ action: 'test', args: { val: '${dynamic}' } }],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(false);
@@ -312,9 +307,9 @@ describe('compileAction', () => {
       {
         action: 'test',
         args: { path: 'x' },
-        onSettled: [{ action: 'test', args: { val: '${dynamic}' } }]
+        onSettled: [{ action: 'test', args: { val: '${dynamic}' } }],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(false);
@@ -326,9 +321,9 @@ describe('compileAction', () => {
       {
         action: 'test',
         args: { path: 'x' },
-        parallel: [{ action: 'test', args: { val: '${dynamic}' } }]
+        parallel: [{ action: 'test', args: { val: '${dynamic}' } }],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(false);
@@ -342,9 +337,9 @@ describe('compileAction', () => {
         args: { path: 'x' },
         then: [{ action: 'next', args: { step: 1 } }],
         onError: [{ action: 'error' }],
-        onSettled: [{ action: 'cleanup' }]
+        onSettled: [{ action: 'cleanup' }],
       } as ActionSchema,
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(true);
@@ -362,10 +357,7 @@ describe('compileAction', () => {
 describe('compileActions', () => {
   it('compiles a single action schema (not array)', () => {
     const compiler = createCompiler();
-    const result = compileActions(
-      { action: 'test', args: { a: 1 } } as ActionSchema,
-      compiler
-    );
+    const result = compileActions({ action: 'test', args: { a: 1 } } as ActionSchema, compiler);
 
     expect(result.nodes).toHaveLength(1);
     expect(result.isFullyStatic).toBe(true);
@@ -376,9 +368,9 @@ describe('compileActions', () => {
     const result = compileActions(
       [
         { action: 'test', args: { a: 1 } },
-        { action: 'other', args: { b: 2 } }
+        { action: 'other', args: { b: 2 } },
       ] as ActionSchema[],
-      compiler
+      compiler,
     );
 
     expect(result.nodes).toHaveLength(2);
@@ -391,9 +383,9 @@ describe('compileActions', () => {
     const result = compileActions(
       [
         { action: 'static', args: { a: 1 } },
-        { action: 'dynamic', args: { b: '${val}' } }
+        { action: 'dynamic', args: { b: '${val}' } },
       ] as ActionSchema[],
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(false);
@@ -404,9 +396,9 @@ describe('compileActions', () => {
     const result = compileActions(
       [
         { action: 'static1', args: { a: 1 } },
-        { action: 'static2', args: { b: 2 } }
+        { action: 'static2', args: { b: 2 } },
       ] as ActionSchema[],
-      compiler
+      compiler,
     );
 
     expect(result.isFullyStatic).toBe(true);
@@ -414,11 +406,9 @@ describe('compileActions', () => {
 
   it('uses basePath for all nodes', () => {
     const compiler = createCompiler();
-    const result = compileActions(
-      { action: 'test' } as ActionSchema,
-      compiler,
-      { basePath: '$.events.onClick' }
-    );
+    const result = compileActions({ action: 'test' } as ActionSchema, compiler, {
+      basePath: '$.events.onClick',
+    });
 
     expect(result.nodes[0].sourcePath).toBe('$.events.onClick[0]');
   });

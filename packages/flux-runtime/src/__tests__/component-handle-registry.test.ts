@@ -55,14 +55,22 @@ describe('createComponentHandleRegistry', () => {
     child.register(duplicateB);
 
     expect(child.resolve({ componentId: 'shared-form' })).toBe(parentHandle);
-    expect(child.resolve({ componentId: 'child-form', componentName: 'wrong-name' })).toBeUndefined();
-    expect(() => child.resolve({ componentName: 'duplicate' })).toThrow('Ambiguous component target: duplicate');
+    expect(
+      child.resolve({ componentId: 'child-form', componentName: 'wrong-name' }),
+    ).toBeUndefined();
+    expect(() => child.resolve({ componentName: 'duplicate' })).toThrow(
+      'Ambiguous component target: duplicate',
+    );
   });
 
   it('propagates debug mode, stores debug data, and inspects resolved and missing cids', () => {
     const parent = createComponentHandleRegistry({ id: 'parent-registry' });
     const child = createComponentHandleRegistry({ id: 'child-registry', parent });
-    const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: { title: 'Draft' } });
+    const scope = createScopeRef({
+      id: 'scope-1',
+      path: '$scope',
+      initialData: { title: 'Draft' },
+    });
     const handle = createHandle({ id: 'form-1', name: 'profile', _cid: 21 });
 
     child.register(handle, { cid: 21 });
@@ -89,13 +97,13 @@ describe('createComponentHandleRegistry', () => {
             id: 'scope-1',
             path: '$scope',
             label: '$scope',
-            data: { title: 'Draft' }
-          }
+            data: { title: 'Draft' },
+          },
         ],
         resolvedMeta: { disabled: false },
         resolvedProps: { title: 'Draft' },
-        state: { expanded: true }
-      }
+        state: { expanded: true },
+      },
     });
 
     handle._mounted = false;
@@ -109,13 +117,13 @@ describe('createComponentHandleRegistry', () => {
             id: 'scope-1',
             path: '$scope',
             label: '$scope',
-            data: { title: 'Draft' }
-          }
+            data: { title: 'Draft' },
+          },
         ],
         resolvedMeta: { disabled: false },
         resolvedProps: { title: 'Draft' },
-        state: { expanded: true }
-      }
+        state: { expanded: true },
+      },
     });
 
     child.setHandleDebugData!(21, undefined);
@@ -129,7 +137,12 @@ describe('createComponentHandleRegistry', () => {
   it('returns aggregated debug snapshots including child registries', () => {
     const parent = createComponentHandleRegistry({ id: 'parent-registry' });
     const child = createComponentHandleRegistry({ id: 'child-registry', parent });
-    const parentHandle = createHandle({ id: 'parent-form', name: 'parent', type: 'form', _cid: 31 });
+    const parentHandle = createHandle({
+      id: 'parent-form',
+      name: 'parent',
+      type: 'form',
+      _cid: 31,
+    });
     const childHandle = createHandle({ id: 'child-form', name: 'child', type: 'dialog', _cid: 32 });
 
     parent.register(parentHandle);
@@ -152,8 +165,8 @@ describe('createComponentHandleRegistry', () => {
           type: 'dialog',
           mounted: true,
           capabilities: childHandle.capabilities,
-        }
-      ]
+        },
+      ],
     });
   });
 });

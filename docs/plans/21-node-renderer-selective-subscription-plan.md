@@ -3,11 +3,11 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-02
 
-
 > **Implementation Status: ✅ COMPLETED**
 > Replaced broad `useSyncExternalStore` with `useSyncExternalStoreWithSelector` in `node-renderer.tsx`. The selector runs `resolveNodeMeta` + `resolveNodeProps` inside the selector callback and uses reference equality to prevent unnecessary re-renders. Static nodes (`flags.isStatic`) bypass the subscription entirely. Both `resolveNodeMeta` and `resolveNodeProps` now return reference-stable cached results when values haven't changed (using `state.resolvedMeta` and `state._staticPropsResult`/`state._lastPropsResult`). The skipped test in `flux-renderers-form/src/index.test.tsx` has been unskipped and passes.
 >
 > Key changes:
+>
 > - `packages/flux-core/src/types.ts`: Added `_staticPropsResult` and `_lastPropsResult` to `CompiledNodeRuntimeState`
 > - `packages/flux-runtime/src/node-runtime.ts`: Reference-stable caching for both `resolveNodeMeta` and `resolveNodeProps`
 > - `packages/flux-react/src/node-renderer.tsx`: `useSyncExternalStoreWithSelector` + static fast-path
@@ -26,7 +26,7 @@ Changing one form field triggers re-renders of ALL sibling NodeRenderers. In a f
 ```typescript
 useSyncExternalStore(
   props.scope.store?.subscribe ?? (() => () => undefined),
-  props.scope.store?.getSnapshot ?? (() => null)
+  props.scope.store?.getSnapshot ?? (() => null),
 );
 ```
 
@@ -94,5 +94,3 @@ This is the cleanest but requires auditing all renderer components to ensure the
 - [x] Plan approved
 - [x] Implementation
 - [x] Test un-skipped
-
-

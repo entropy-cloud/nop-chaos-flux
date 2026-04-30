@@ -22,23 +22,23 @@
 
 ### 运算符（按优先级从低到高）
 
-| 优先级 | 运算符 | 说明 |
-|--------|--------|------|
-| 1 | `? :` | 三元条件 |
-| 2 | `??` | 空值合并 |
-| 3 | `\|\|` `or` | 逻辑或 |
-| 4 | `&&` `and` | 逻辑与 |
-| 5 | `\|` | 位或 |
-| 6 | `^` | 位异或 |
-| 7 | `&` | 位与 |
-| 8 | `==` `!=` `===` `!==` | 相等（均严格，无类型转换） |
-| 9 | `<` `<=` `>` `>=` `instanceof` | 比较 |
-| 10 | `<<` `>>` `>>>` | 位移 |
-| 11 | `+` `-` | 加减 |
-| 12 | `*` `/` `%` | 乘除模 |
-| 13 | `**` | 幂 |
-| 14 | `!` `~` `-`(一元) `+`(一元) | 一元前缀 |
-| 15 | `.` `?.` `[]` `()` | 成员访问、可选链、下标、调用 |
+| 优先级 | 运算符                         | 说明                         |
+| ------ | ------------------------------ | ---------------------------- |
+| 1      | `? :`                          | 三元条件                     |
+| 2      | `??`                           | 空值合并                     |
+| 3      | `\|\|` `or`                    | 逻辑或                       |
+| 4      | `&&` `and`                     | 逻辑与                       |
+| 5      | `\|`                           | 位或                         |
+| 6      | `^`                            | 位异或                       |
+| 7      | `&`                            | 位与                         |
+| 8      | `==` `!=` `===` `!==`          | 相等（均严格，无类型转换）   |
+| 9      | `<` `<=` `>` `>=` `instanceof` | 比较                         |
+| 10     | `<<` `>>` `>>>`                | 位移                         |
+| 11     | `+` `-`                        | 加减                         |
+| 12     | `*` `/` `%`                    | 乘除模                       |
+| 13     | `**`                           | 幂                           |
+| 14     | `!` `~` `-`(一元) `+`(一元)    | 一元前缀                     |
+| 15     | `.` `?.` `[]` `()`             | 成员访问、可选链、下标、调用 |
 
 逻辑运算使用 `&&`/`||` 运算符或 `and`/`or` 关键字，不提供 `AND()`/`OR()` 函数。`&&`/`||` 本身就是短路求值，不需要额外函数包装。
 
@@ -94,20 +94,20 @@ interface ASTNode {
 
 ### 节点清单
 
-| type | 字段 | 说明 |
-|------|------|------|
-| `Literal` | `value: unknown` | 数字、字符串、布尔、null、undefined |
-| `Identifier` | `name: string` | 变量引用 |
-| `BinaryExpression` | `op: string, left: ASTNode, right: ASTNode` | 二元运算 |
-| `LogicalExpression` | `op: string, left: ASTNode, right: ASTNode` | `\|\|` / `&&` 链 |
-| `UnaryExpression` | `op: string, argument: ASTNode` | 一元前缀运算 |
-| `ConditionalExpression` | `test: ASTNode, consequent: ASTNode, alternate: ASTNode` | 三元 `? :` |
-| `MemberExpression` | `object: ASTNode, property: ASTNode, computed: boolean, optional: boolean` | `a.b` / `a[b]` / `a?.b` |
-| `CallExpression` | `callee: ASTNode, arguments: ASTNode[]` | 函数/方法调用 |
-| `ArrayExpression` | `elements: ASTNode[]` | 数组字面量 |
-| `ObjectExpression` | `properties: Property[]` | 对象字面量 |
-| `ArrowFunctionExpression` | `params: Identifier[], body: ASTNode` | 箭头函数 |
-| `NullCoalesceExpression` | `left: ASTNode, right: ASTNode` | `??` |
+| type                      | 字段                                                                       | 说明                                |
+| ------------------------- | -------------------------------------------------------------------------- | ----------------------------------- |
+| `Literal`                 | `value: unknown`                                                           | 数字、字符串、布尔、null、undefined |
+| `Identifier`              | `name: string`                                                             | 变量引用                            |
+| `BinaryExpression`        | `op: string, left: ASTNode, right: ASTNode`                                | 二元运算                            |
+| `LogicalExpression`       | `op: string, left: ASTNode, right: ASTNode`                                | `\|\|` / `&&` 链                    |
+| `UnaryExpression`         | `op: string, argument: ASTNode`                                            | 一元前缀运算                        |
+| `ConditionalExpression`   | `test: ASTNode, consequent: ASTNode, alternate: ASTNode`                   | 三元 `? :`                          |
+| `MemberExpression`        | `object: ASTNode, property: ASTNode, computed: boolean, optional: boolean` | `a.b` / `a[b]` / `a?.b`             |
+| `CallExpression`          | `callee: ASTNode, arguments: ASTNode[]`                                    | 函数/方法调用                       |
+| `ArrayExpression`         | `elements: ASTNode[]`                                                      | 数组字面量                          |
+| `ObjectExpression`        | `properties: Property[]`                                                   | 对象字面量                          |
+| `ArrowFunctionExpression` | `params: Identifier[], body: ASTNode`                                      | 箭头函数                            |
+| `NullCoalesceExpression`  | `left: ASTNode, right: ASTNode`                                            | `??`                                |
 
 ### Property 节点
 
@@ -212,7 +212,7 @@ evaluator(ast, scope, env?)
 #### 普通调用
 
 ```ts
-fn(arg1, arg2)
+fn(arg1, arg2);
 ```
 
 1. 先求值 `fn`
@@ -222,10 +222,10 @@ fn(arg1, arg2)
 #### 成员调用
 
 ```ts
-obj.method(arg1, arg2)
-$Math.abs(-3)
-$JSON.stringify(value)
-$Date.format(date, 'yyyy-MM-dd')
+obj.method(arg1, arg2);
+$Math.abs(-3);
+$JSON.stringify(value);
+$Date.format(date, 'yyyy-MM-dd');
 ```
 
 1. 先求值 `obj`
@@ -244,7 +244,7 @@ v1 仅支持可选成员访问 `obj?.prop`，不支持 `obj?.method()` 或 `fn?.
 
 ```typescript
 interface FormulaCompiler {
-  hasExpression(input: string): boolean;    // 检测是否包含 ${...}
+  hasExpression(input: string): boolean; // 检测是否包含 ${...}
   compileExpression<T>(source: string): CompiledExpression<T>;
   compileTemplate<T>(source: string): CompiledStringTemplate<T>;
 }
@@ -269,24 +269,24 @@ interface FormulaCompiler {
 公式模块维护全局默认注册表：
 
 ```ts
-type FormulaFunction = (...args: any[]) => any
-type FormulaInvokeMode = 'eager' | 'lazy'
+type FormulaFunction = (...args: any[]) => any;
+type FormulaInvokeMode = 'eager' | 'lazy';
 
-const defaultFunctions: Record<string, FormulaFunction> = {}
-const defaultNamespaces: Record<string, unknown> = {}
-const defaultFunctionMeta: Record<string, { invoke: FormulaInvokeMode }> = {}
+const defaultFunctions: Record<string, FormulaFunction> = {};
+const defaultNamespaces: Record<string, unknown> = {};
+const defaultFunctionMeta: Record<string, { invoke: FormulaInvokeMode }> = {};
 
 export function registerFunction(
   name: string,
   fn: FormulaFunction,
-  options: { invoke?: FormulaInvokeMode } = {}
+  options: { invoke?: FormulaInvokeMode } = {},
 ) {
-  defaultFunctions[name] = fn
-  defaultFunctionMeta[name] = { invoke: options.invoke ?? 'eager' }
+  defaultFunctions[name] = fn;
+  defaultFunctionMeta[name] = { invoke: options.invoke ?? 'eager' };
 }
 
 export function registerNamespace(name: string, value: unknown) {
-  defaultNamespaces[name] = value
+  defaultNamespaces[name] = value;
 }
 ```
 
@@ -298,7 +298,7 @@ const evaluator = new Evaluator({
   functions: defaultFunctions,
   namespaces: defaultNamespaces,
   functionMeta: defaultFunctionMeta,
-})
+});
 ```
 
 这与 amis-formula 的 `Evaluator.defaultFunctions + registerFunction()` 思路一致，只是这里除了函数外还增加了命名空间对象注册，以及函数调用模式元数据。
@@ -343,31 +343,31 @@ SWITCH(expr, ...caseValuePairs) {
 
 ### 条件函数
 
-| 函数 | 签名 | 说明 |
-|------|------|------|
-| `IF` | `(cond: thunk, then: thunk, else?: thunk) => any` | 条件分支，短路求值 |
+| 函数     | 签名                                                                    | 说明               |
+| -------- | ----------------------------------------------------------------------- | ------------------ |
+| `IF`     | `(cond: thunk, then: thunk, else?: thunk) => any`                       | 条件分支，短路求值 |
 | `SWITCH` | `(expr: thunk, case1: thunk, val1: thunk, ..., default?: thunk) => any` | 多值匹配，短路求值 |
 
 ### 命名空间对象
 
 通过内置变量直接暴露工具对象，收束相关方法，避免单独注册几十个顶层函数：
 
-| 变量 | 返回 | 用法示例 |
-|------|------|---------|
+| 变量    | 返回               | 用法示例                                               |
+| ------- | ------------------ | ------------------------------------------------------ |
 | `$Math` | `Math`（原生对象） | `$Math.abs(-3)`、`$Math.round(1.5)`、`$Math.max(1, 2)` |
-| `$JSON` | `JSON`（原生对象） | `$JSON.stringify(obj)`、`$JSON.parse(str)` |
-| `$Date` | `DateHelper` 对象 | `$Date.now()`、`$Date.format(d, 'iso-date')` |
+| `$JSON` | `JSON`（原生对象） | `$JSON.stringify(obj)`、`$JSON.parse(str)`             |
+| `$Date` | `DateHelper` 对象  | `$Date.now()`、`$Date.format(d, 'iso-date')`           |
 
 `$Math`、`$JSON`、`$Date` 通过全局命名空间注册表暴露，evaluator 将其作为内置 Identifier 处理，无需注册到 scope。
 
 ```typescript
-registerNamespace('$Math', Math)
-registerNamespace('$JSON', JSON)
-registerNamespace('$Date', dateHelper)
+registerNamespace('$Math', Math);
+registerNamespace('$JSON', JSON);
+registerNamespace('$Date', dateHelper);
 
 // evaluator Identifier 解析
 if (ast.type === 'Identifier' && namespaces[ast.name] !== undefined) {
-  return namespaces[ast.name]
+  return namespaces[ast.name];
 }
 ```
 
@@ -393,6 +393,7 @@ const dateHelper = {
 ```
 
 好处：
+
 1. 不需要为 `abs`/`round`/`max`/`min`/`ceil`/`floor`/`sqrt`/`pow` 等各注册一个顶层函数
 2. 不需要为 `stringify`/`parse` 各注册一个顶层函数
 3. 用户通过 `$Math.xxx()` 调用，与 JavaScript 完全一致，无学习成本
@@ -404,37 +405,37 @@ const dateHelper = {
 
 以下函数因调用约定特殊（短路求值）或无法归入命名空间对象，仍作为顶层函数注册在全局函数注册表中：
 
-| 函数 | 签名 | 说明 |
-|------|------|------|
-| `IF` | `(cond: thunk, then: thunk, else?: thunk) => any` | 条件分支，短路求值 |
-| `SWITCH` | `(expr: thunk, case1: thunk, val1: thunk, ..., default?: thunk) => any` | 多值匹配，短路求值 |
-| `SUM` | `(...args) => number` | 求和，支持数组展开 |
-| `AVG` | `(...args) => number` | 平均值，支持数组展开 |
-| `COUNT` | `(arr) => number` | 元素个数 |
-| `ARRAYMAP` | `(arr, fn) => array` | 映射，`fn` 接受箭头函数 |
-| `ARRAYFILTER` | `(arr, fn) => array` | 过滤 |
-| `ARRAYFIND` | `(arr, fn) => any` | 查找元素 |
-| `ARRAYFINDINDEX` | `(arr, fn) => number` | 查找索引 |
-| `ARRAYSOME` | `(arr, fn) => boolean` | 存在性判断 |
-| `ARRAYEVERY` | `(arr, fn) => boolean` | 全量判断 |
-| `ARRAYINCLUDES` | `(arr, item) => boolean` | 包含判断 |
-| `CONCAT` | `(...arrs) => array` | 数组合并 |
-| `UNIQ` | `(arr) => array` | 去重 |
-| `COMPACT` | `(arr) => array` | 去除假值 |
-| `LEN` | `(s) => number` | 字符串长度 |
-| `CONCATENATE` | `(...args) => string` | 拼接文本 |
-| `TRIM` | `(s) => string` | 去首尾空白 |
-| `UPPER` | `(s) => string` | 转大写 |
-| `LOWER` | `(s) => string` | 转小写 |
-| `REPLACE` | `(s, search, replace) => string` | 全量替换 |
-| `SPLIT` | `(s, sep) => string[]` | 分割字符串 |
-| `JOIN` | `(arr, sep) => string` | 数组连接 |
-| `CONTAINS` | `(s, search) => boolean` | 是否包含 |
-| `ISEMPTY` | `(s) => boolean` | 是否为空 |
-| `INT` | `(n) => number` | 取整 |
-| `MOD` | `(a, b) => number` | 取模 |
-| `RAND` | `() => number` | 随机数 |
-| `PI` | `() => number` | 圆周率 |
+| 函数             | 签名                                                                    | 说明                    |
+| ---------------- | ----------------------------------------------------------------------- | ----------------------- |
+| `IF`             | `(cond: thunk, then: thunk, else?: thunk) => any`                       | 条件分支，短路求值      |
+| `SWITCH`         | `(expr: thunk, case1: thunk, val1: thunk, ..., default?: thunk) => any` | 多值匹配，短路求值      |
+| `SUM`            | `(...args) => number`                                                   | 求和，支持数组展开      |
+| `AVG`            | `(...args) => number`                                                   | 平均值，支持数组展开    |
+| `COUNT`          | `(arr) => number`                                                       | 元素个数                |
+| `ARRAYMAP`       | `(arr, fn) => array`                                                    | 映射，`fn` 接受箭头函数 |
+| `ARRAYFILTER`    | `(arr, fn) => array`                                                    | 过滤                    |
+| `ARRAYFIND`      | `(arr, fn) => any`                                                      | 查找元素                |
+| `ARRAYFINDINDEX` | `(arr, fn) => number`                                                   | 查找索引                |
+| `ARRAYSOME`      | `(arr, fn) => boolean`                                                  | 存在性判断              |
+| `ARRAYEVERY`     | `(arr, fn) => boolean`                                                  | 全量判断                |
+| `ARRAYINCLUDES`  | `(arr, item) => boolean`                                                | 包含判断                |
+| `CONCAT`         | `(...arrs) => array`                                                    | 数组合并                |
+| `UNIQ`           | `(arr) => array`                                                        | 去重                    |
+| `COMPACT`        | `(arr) => array`                                                        | 去除假值                |
+| `LEN`            | `(s) => number`                                                         | 字符串长度              |
+| `CONCATENATE`    | `(...args) => string`                                                   | 拼接文本                |
+| `TRIM`           | `(s) => string`                                                         | 去首尾空白              |
+| `UPPER`          | `(s) => string`                                                         | 转大写                  |
+| `LOWER`          | `(s) => string`                                                         | 转小写                  |
+| `REPLACE`        | `(s, search, replace) => string`                                        | 全量替换                |
+| `SPLIT`          | `(s, sep) => string[]`                                                  | 分割字符串              |
+| `JOIN`           | `(arr, sep) => string`                                                  | 数组连接                |
+| `CONTAINS`       | `(s, search) => boolean`                                                | 是否包含                |
+| `ISEMPTY`        | `(s) => boolean`                                                        | 是否为空                |
+| `INT`            | `(n) => number`                                                         | 取整                    |
+| `MOD`            | `(a, b) => number`                                                      | 取模                    |
+| `RAND`           | `() => number`                                                          | 随机数                  |
+| `PI`             | `() => number`                                                          | 圆周率                  |
 
 对比之前的设计：`ABS`/`MAX`/`MIN`/`ROUND`/`FLOOR`/`CEIL`/`SQRT`/`POWER` 等数学函数不再作为顶层函数，改用 `$Math.abs()` 等调用。`ENCODEJSON`/`DECODEJSON` 改用 `$JSON.stringify()`/`$JSON.parse()`。`NOW`/`TODAY`/`YEAR`/`MONTH`/`DAY`/`FORMAT_DATE` 改用 `$Date.now()`/`$Date.format()` 等。
 
@@ -454,17 +455,17 @@ const dateHelper = {
 
 ### 相等语义示例
 
-| 表达式 | 结果 | 说明 |
-|------|------|------|
-| `1 == 1` | `true` | 同值数字 |
-| `1 == 1.0` | `true` | 数字按数值比较 |
-| `1 === 1.0` | `true` | `===` 与 `==` 同义 |
-| `"1" == 1` | `false` | 不做字符串到数字转换 |
-| `null == undefined` | `true` | 空值统一语义 |
-| `null === undefined` | `true` | `===` 与 `==` 同义 |
-| `"a" == "a"` | `true` | 字符串按值比较 |
-| `true == 1` | `false` | 不做布尔数字转换 |
-| `{}` == `{}` | `false` | 非数字非字符串对象不做深比较 |
+| 表达式               | 结果    | 说明                         |
+| -------------------- | ------- | ---------------------------- |
+| `1 == 1`             | `true`  | 同值数字                     |
+| `1 == 1.0`           | `true`  | 数字按数值比较               |
+| `1 === 1.0`          | `true`  | `===` 与 `==` 同义           |
+| `"1" == 1`           | `false` | 不做字符串到数字转换         |
+| `null == undefined`  | `true`  | 空值统一语义                 |
+| `null === undefined` | `true`  | `===` 与 `==` 同义           |
+| `"a" == "a"`         | `true`  | 字符串按值比较               |
+| `true == 1`          | `false` | 不做布尔数字转换             |
+| `{}` == `{}`         | `false` | 非数字非字符串对象不做深比较 |
 
 ---
 
@@ -472,19 +473,20 @@ const dateHelper = {
 
 参考 nop-xlang 的 `ExprFeatures` 位掩码设计，允许同一引擎在不同场景下启用/禁用语法特性：
 
-| Flag | 值 | 说明 |
-|------|----|------|
-| `FUNCTION_CALL` | `0x01` | 函数调用 `f()` |
-| `OBJECT_CALL` | `0x02` | 方法调用 `obj.method()` |
-| `OBJECT_PROP` | `0x04` | 属性访问 `obj.prop` |
-| `ARRAY_INDEX` | `0x08` | 下标访问 `arr[i]` |
-| `BIT_OP` | `0x10` | 位运算 `& \| ^ ~ << >> >>>` |
-| `JSON` | `0x20` | 数组/对象字面量 |
-| `LAMBDA` | `0x40` | 箭头函数 `x => expr` |
-| `OPTIONAL_CHAIN` | `0x80` | 可选链 `?.` |
-| `ALL` | `0x0FF` | 全部启用 |
+| Flag             | 值      | 说明                        |
+| ---------------- | ------- | --------------------------- |
+| `FUNCTION_CALL`  | `0x01`  | 函数调用 `f()`              |
+| `OBJECT_CALL`    | `0x02`  | 方法调用 `obj.method()`     |
+| `OBJECT_PROP`    | `0x04`  | 属性访问 `obj.prop`         |
+| `ARRAY_INDEX`    | `0x08`  | 下标访问 `arr[i]`           |
+| `BIT_OP`         | `0x10`  | 位运算 `& \| ^ ~ << >> >>>` |
+| `JSON`           | `0x20`  | 数组/对象字面量             |
+| `LAMBDA`         | `0x40`  | 箭头函数 `x => expr`        |
+| `OPTIONAL_CHAIN` | `0x80`  | 可选链 `?.`                 |
+| `ALL`            | `0x0FF` | 全部启用                    |
 
 预定义集合：
+
 - **`ALL`** — 默认模式，所有特性
 - **`SIMPLE`** — `FUNCTION_CALL | OBJECT_CALL | JSON | OBJECT_PROP | ARRAY_INDEX`
 - **`FILTER_EXPR`** — `OBJECT_PROP | JSON`（用于简单过滤条件）
@@ -495,88 +497,88 @@ const dateHelper = {
 
 ### 语法差异
 
-| 维度 | amis-formula | flux-formula（新） |
-|------|-------------|-------------------|
-| 基础语法风格 | Excel 公式 + 自定义模板混合 | 类 JS/TS 表达式子集 |
-| 模板语法 | `${expr}` 内嵌完整语言 | `${expr}` 仅作运行时求值，无多阶段 |
-| 过滤器管道 | `${x \| html\| truncate:10}` | 不支持，`|` 仅作位或运算符 |
-| `==` 语义 | 做隐式类型转换（`"1" == 1` 为 `true`） | 严格比较，不做类型转换 |
-| `===` | 支持，与 JS `===` 行为一致 | 支持，但与 `==` 同义，采用自定义相等规则 |
-| `and`/`or` 关键字 | 不支持 | 支持，与 `&&`/`||` 同义 |
-| `AND()`/`OR()` 函数 | 支持，接收 thunk 短路求值 | 不提供，用 `&&`/`||` 运算符或 `and`/`or` 关键字 |
-| `??` 空值合并 | 不支持 | 支持 |
-| `?.` 可选链 | 不支持 | 支持 |
-| `!` 非空断言 | 不支持 | 不支持 |
-| `instanceof` | 不支持 | 支持 |
-| `**` 幂运算 | 不支持 | 支持 |
-| `new` 表达式 | 不支持 | 不支持 |
-| 模板字符串 `` `...${}...` `` | 不支持 | 不支持（v1 延后） |
-| 正则字面量 | 不支持 | 不支持（v1 延后） |
-| 位运算 `& \| ^ ~ << >> >>>` | 仅 `\|` 用于过滤器 | 完整位运算（feature flag 控制） |
+| 维度                         | amis-formula                           | flux-formula（新）                       |
+| ---------------------------- | -------------------------------------- | ---------------------------------------- | ---------------- | -------------------------- |
+| 基础语法风格                 | Excel 公式 + 自定义模板混合            | 类 JS/TS 表达式子集                      |
+| 模板语法                     | `${expr}` 内嵌完整语言                 | `${expr}` 仅作运行时求值，无多阶段       |
+| 过滤器管道                   | `${x \| html\| truncate:10}`           | 不支持，`                                | ` 仅作位或运算符 |
+| `==` 语义                    | 做隐式类型转换（`"1" == 1` 为 `true`） | 严格比较，不做类型转换                   |
+| `===`                        | 支持，与 JS `===` 行为一致             | 支持，但与 `==` 同义，采用自定义相等规则 |
+| `and`/`or` 关键字            | 不支持                                 | 支持，与 `&&`/`                          |                  | ` 同义                     |
+| `AND()`/`OR()` 函数          | 支持，接收 thunk 短路求值              | 不提供，用 `&&`/`                        |                  | `运算符或`and`/`or` 关键字 |
+| `??` 空值合并                | 不支持                                 | 支持                                     |
+| `?.` 可选链                  | 不支持                                 | 支持                                     |
+| `!` 非空断言                 | 不支持                                 | 不支持                                   |
+| `instanceof`                 | 不支持                                 | 支持                                     |
+| `**` 幂运算                  | 不支持                                 | 支持                                     |
+| `new` 表达式                 | 不支持                                 | 不支持                                   |
+| 模板字符串 `` `...${}...` `` | 不支持                                 | 不支持（v1 延后）                        |
+| 正则字面量                   | 不支持                                 | 不支持（v1 延后）                        |
+| 位运算 `& \| ^ ~ << >> >>>`  | 仅 `\|` 用于过滤器                     | 完整位运算（feature flag 控制）          |
 
 ### 函数差异
 
-| 维度 | amis-formula | flux-formula（新） |
-|------|-------------|-------------------|
-| `IF` 实现 | 运行时函数，参数包装 thunk 短路求值 | 同 amis-formula 做法，参数包装 thunk 短路求值 |
-| `SWITCH` | 不支持（用嵌套 `IF` 替代） | 支持，参数包装 thunk 短路求值 |
-| 逻辑组合 | `AND()`/`OR()` 函数 + thunk 短路 | 用 `&&`/`||`/`and`/`or` 运算符，运算符级别短路 |
-| 数学函数 | `ABS()`/`MAX()`/`ROUND()` 等顶层函数 | `$Math.abs()`/`$Math.max()`/`$Math.round()` 等 |
-| JSON | `ENCODEJSON()`/`DECODEJSON()` 顶层函数 | `$JSON.stringify()`/`$JSON.parse()` |
-| 日期 | `NOW()`/`TODAY()`/`YEAR()` + moment.js | `$Date.now()`/`$Date.format()` + 原生 Intl |
-| 函数注册 | 静态注册到全局 `Evaluator` | 全局注册表，风格与 amis-formula 一致 |
-| 函数数量 | ~70 个顶层函数 | ~25 个顶层函数 + 3 个命名空间对象 |
-| 中文大写金额 | `UPPERMONEY()` | 不内置，按需通过全局 `registerFunction()` 扩展 |
+| 维度         | amis-formula                           | flux-formula（新）                             |
+| ------------ | -------------------------------------- | ---------------------------------------------- | --- | ----------------------------------- |
+| `IF` 实现    | 运行时函数，参数包装 thunk 短路求值    | 同 amis-formula 做法，参数包装 thunk 短路求值  |
+| `SWITCH`     | 不支持（用嵌套 `IF` 替代）             | 支持，参数包装 thunk 短路求值                  |
+| 逻辑组合     | `AND()`/`OR()` 函数 + thunk 短路       | 用 `&&`/`                                      |     | `/`and`/`or` 运算符，运算符级别短路 |
+| 数学函数     | `ABS()`/`MAX()`/`ROUND()` 等顶层函数   | `$Math.abs()`/`$Math.max()`/`$Math.round()` 等 |
+| JSON         | `ENCODEJSON()`/`DECODEJSON()` 顶层函数 | `$JSON.stringify()`/`$JSON.parse()`            |
+| 日期         | `NOW()`/`TODAY()`/`YEAR()` + moment.js | `$Date.now()`/`$Date.format()` + 原生 Intl     |
+| 函数注册     | 静态注册到全局 `Evaluator`             | 全局注册表，风格与 amis-formula 一致           |
+| 函数数量     | ~70 个顶层函数                         | ~25 个顶层函数 + 3 个命名空间对象              |
+| 中文大写金额 | `UPPERMONEY()`                         | 不内置，按需通过全局 `registerFunction()` 扩展 |
 
 ### 架构差异
 
-| 维度 | amis-formula | flux-formula（新） |
-|------|-------------|-------------------|
-| Lexer | 785 行，5 种状态机嵌套（START/SCRIPT/EXPRESSION/BLOCK/Filter/Template） | 预计 ~400 行，仅 EXPRESSION + Template 两种状态 |
-| Parser | 887 行，需处理过滤器管道 `\|` 与位或 `\|` 的歧义 | 预计 ~800 行，无过滤器歧义 |
-| Evaluator | 2902 行单类（`Evaluator`），含所有内置函数 | 分离为 `evaluator.ts`（~300 行）+ `builtins.ts`（~300 行） |
-| 求值方式 | tree-walking，`evalute(ast)` 按类型分派方法 | tree-walking，`evaluate(ast, scope)` 按类型 switch |
-| 外部依赖 | moment + lodash（6 个函数） | 零依赖 |
-| Feature flags | 3 种模式（evalMode / variableMode / allowFilter） | 8 位位掩码，精细控制 |
-| 浏览器绑定 | 直接访问 `document.cookie`、`window` | 无浏览器 API 依赖 |
+| 维度          | amis-formula                                                            | flux-formula（新）                                         |
+| ------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Lexer         | 785 行，5 种状态机嵌套（START/SCRIPT/EXPRESSION/BLOCK/Filter/Template） | 预计 ~400 行，仅 EXPRESSION + Template 两种状态            |
+| Parser        | 887 行，需处理过滤器管道 `\|` 与位或 `\|` 的歧义                        | 预计 ~800 行，无过滤器歧义                                 |
+| Evaluator     | 2902 行单类（`Evaluator`），含所有内置函数                              | 分离为 `evaluator.ts`（~300 行）+ `builtins.ts`（~300 行） |
+| 求值方式      | tree-walking，`evalute(ast)` 按类型分派方法                             | tree-walking，`evaluate(ast, scope)` 按类型 switch         |
+| 外部依赖      | moment + lodash（6 个函数）                                             | 零依赖                                                     |
+| Feature flags | 3 种模式（evalMode / variableMode / allowFilter）                       | 8 位位掩码，精细控制                                       |
+| 浏览器绑定    | 直接访问 `document.cookie`、`window`                                    | 无浏览器 API 依赖                                          |
 
 ### 兼容性
 
-| amis 写法 | 新引擎是否兼容 | 替代写法 |
-|-----------|--------------|---------|
-| `${a + b}` | 兼容 | 不变 |
-| `${a == 1 ? '是' : '否'}` | 兼容 | 不变 |
-| `${IF(a > 0, 1, 0)}` | 兼容 | 不变 |
-| `${SUM(scores)}` | 兼容 | 不变 |
-| `${a && b}` | 兼容 | 不变 |
-| `${a \|\| b}` | 兼容 | 不变 |
-| `${ABS(-3)}` | **不兼容** | `$Math.abs(-3)` |
-| `${MAX(1, 2, 3)}` | **不兼容** | `$Math.max(1, 2, 3)` |
-| `${ROUND(1.5)}` | **不兼容** | `$Math.round(1.5)` |
-| `${ENCODEJSON(obj)}` | **不兼容** | `$JSON.stringify(obj)` |
-| `${DECODEJSON(str)}` | **不兼容** | `$JSON.parse(str)` |
-| `${NOW()}` | **不兼容** | `$Date.now()` |
-| `${TODAY()}` | **不兼容** | `$Date.today()` |
-| `${FORMAT_DATE(d, fmt)}` | **不兼容** | `$Date.format(d, 'date')` 或 `$Date.format(d, 'iso-date')` |
-| `${AND(a, b)}` | **不兼容** | `a && b` 或 `a and b` |
-| `${OR(a, b)}` | **不兼容** | `a \|\| b` 或 `a or b` |
-| `${value \| html}` | **不兼容** | `html(value)` 或 `${value}` 自动转义 |
-| `${value \| truncate:10}` | **不兼容** | `$Math.trunc(value)` 或自定义函数 |
-| `${value \| isTrue:a:b}` | **不兼容** | `value ? a : b` |
-| `$varName`（旧变量语法） | **不兼容** | `${varName}` |
-| `$$`（当前上下文引用） | **不兼容** | 直接用变量名 |
-| `${window:xxx}` | **不兼容** | 从 scope 传入 |
-| `${cookie:key}` | **不兼容** | 从 scope 传入 |
-| 中文变量名 `${姓名}` | 兼容 | 不变 |
+| amis 写法                 | 新引擎是否兼容 | 替代写法                                                   |
+| ------------------------- | -------------- | ---------------------------------------------------------- |
+| `${a + b}`                | 兼容           | 不变                                                       |
+| `${a == 1 ? '是' : '否'}` | 兼容           | 不变                                                       |
+| `${IF(a > 0, 1, 0)}`      | 兼容           | 不变                                                       |
+| `${SUM(scores)}`          | 兼容           | 不变                                                       |
+| `${a && b}`               | 兼容           | 不变                                                       |
+| `${a \|\| b}`             | 兼容           | 不变                                                       |
+| `${ABS(-3)}`              | **不兼容**     | `$Math.abs(-3)`                                            |
+| `${MAX(1, 2, 3)}`         | **不兼容**     | `$Math.max(1, 2, 3)`                                       |
+| `${ROUND(1.5)}`           | **不兼容**     | `$Math.round(1.5)`                                         |
+| `${ENCODEJSON(obj)}`      | **不兼容**     | `$JSON.stringify(obj)`                                     |
+| `${DECODEJSON(str)}`      | **不兼容**     | `$JSON.parse(str)`                                         |
+| `${NOW()}`                | **不兼容**     | `$Date.now()`                                              |
+| `${TODAY()}`              | **不兼容**     | `$Date.today()`                                            |
+| `${FORMAT_DATE(d, fmt)}`  | **不兼容**     | `$Date.format(d, 'date')` 或 `$Date.format(d, 'iso-date')` |
+| `${AND(a, b)}`            | **不兼容**     | `a && b` 或 `a and b`                                      |
+| `${OR(a, b)}`             | **不兼容**     | `a \|\| b` 或 `a or b`                                     |
+| `${value \| html}`        | **不兼容**     | `html(value)` 或 `${value}` 自动转义                       |
+| `${value \| truncate:10}` | **不兼容**     | `$Math.trunc(value)` 或自定义函数                          |
+| `${value \| isTrue:a:b}`  | **不兼容**     | `value ? a : b`                                            |
+| `$varName`（旧变量语法）  | **不兼容**     | `${varName}`                                               |
+| `$$`（当前上下文引用）    | **不兼容**     | 直接用变量名                                               |
+| `${window:xxx}`           | **不兼容**     | 从 scope 传入                                              |
+| `${cookie:key}`           | **不兼容**     | 从 scope 传入                                              |
+| 中文变量名 `${姓名}`      | 兼容           | 不变                                                       |
 
 ### 迁移矩阵
 
-| 类别 | 范围 | 处理方式 |
-|------|------|---------|
-| 自动迁移 | `${expr | filter:arg}` 这类过滤器管道 | 在模板切分层预处理为 `filter(expr, arg)` |
-| 直接兼容 | 三元、算术、比较、`IF()`、`SUM()`、`&&`、`||` | 无需修改 |
+| 类别     | 范围                                                                   | 处理方式                                       |
+| -------- | ---------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------- | -------- |
+| 自动迁移 | `${expr                                                                | filter:arg}` 这类过滤器管道                    | 在模板切分层预处理为 `filter(expr, arg)` |
+| 直接兼容 | 三元、算术、比较、`IF()`、`SUM()`、`&&`、`                             |                                                | `                                        | 无需修改 |
 | 手工迁移 | `AND()`、`OR()`、`ABS()`、`MAX()`、`ROUND()`、`NOW()`、`FORMAT_DATE()` | 分别改写为运算符、`$Math.xxx()`、`$Date.xxx()` |
-| 不支持 | `$varName`、`$$`、`window:`、`cookie:` | 改为显式 scope 注入 |
+| 不支持   | `$varName`、`$$`、`window:`、`cookie:`                                 | 改为显式 scope 注入                            |
 
 上层接口（`FormulaCompiler`、`ExpressionCompiler`、`CompiledRuntimeValue`）保持不变，`flux-runtime` 和 `flux-react` 无需修改。文档不再声称“所有存量 schema 零修改迁移”，只有过滤器管道可自动迁移，其余不兼容项需按矩阵处理。
 

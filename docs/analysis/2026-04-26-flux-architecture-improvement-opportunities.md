@@ -205,8 +205,8 @@ Flux 已经很强调编译期结构校验，但从整个平台视角看，错误
 1. 继续保留现有 runtime/store 基线
 2. 保持运行期动态依赖收集作为基线语义
 3. 对可静态证明的简单表达式增加编译期依赖推断，用于优化订阅和收窄失效范围
-3. 优先在 owner-local 和 hot-path 区域实现窄订阅
-4. 不把 `ScopeRef`、`ActionScope`、`ComponentHandleRegistry` 再揉成统一大对象
+4. 优先在 owner-local 和 hot-path 区域实现窄订阅
+5. 不把 `ScopeRef`、`ActionScope`、`ComponentHandleRegistry` 再揉成统一大对象
 
 更具体地说，这里不主张“编译期和运行期双算常态化”。更合理的策略是：
 

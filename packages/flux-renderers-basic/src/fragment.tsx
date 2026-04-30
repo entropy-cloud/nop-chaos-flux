@@ -10,7 +10,7 @@ export function FragmentRenderer(props: RendererComponentProps<FragmentSchema>) 
             bindings: props.props.data as Record<string, unknown> | undefined,
             isolate: props.props.isolate === true,
             pathSuffix: 'body',
-            scopeKey: `${props.id}:body`
+            scopeKey: `${props.id}:body`,
           })
         : null}
     </>

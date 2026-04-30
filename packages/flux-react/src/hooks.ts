@@ -16,7 +16,7 @@ import type {
   ScopeRef,
   ValidationStoreApi,
   ValidationScopeRuntime,
-  ValidationError
+  ValidationError,
 } from '@nop-chaos/flux-core';
 import {
   ActionScopeContext,
@@ -34,11 +34,16 @@ import {
   NO_VALIDATION_OWNER,
   useRequiredContext,
   FormLayoutContext,
-  type FormLayoutContextValue
+  type FormLayoutContextValue,
 } from './contexts';
 import { getIn } from '@nop-chaos/flux-core';
 import { createHelpers } from './helpers';
-import { EMPTY_FORM_FIELD_STATE, EMPTY_FORM_STORE_STATE, selectCurrentFormErrors, selectCurrentFormFieldState } from './form-state';
+import {
+  EMPTY_FORM_FIELD_STATE,
+  EMPTY_FORM_STORE_STATE,
+  selectCurrentFormErrors,
+  selectCurrentFormFieldState,
+} from './form-state';
 import {
   createFormFieldStateSubscribe,
   createFormStoreSnapshot,
@@ -47,7 +52,7 @@ import {
   createScopeOwnSubscribe,
   emptyUnsubscribe,
   shallowEqualArrays,
-  shallowEqualFormFieldState
+  shallowEqualFormFieldState,
 } from './hook-subscriptions';
 
 export function useRendererRuntime(): RendererRuntime {
@@ -58,7 +63,9 @@ export function useRenderScope(): ScopeRef {
   return useRequiredContext(ScopeContext, 'RenderScope');
 }
 
-export function useRenderInstancePath(): readonly import('@nop-chaos/flux-core').InstanceFrame[] | undefined {
+export function useRenderInstancePath():
+  | readonly import('@nop-chaos/flux-core').InstanceFrame[]
+  | undefined {
   return useContext(RenderInstancePathContext);
 }
 
@@ -89,18 +96,21 @@ export function useRendererEnv() {
 export function useScopeSelector<T, S = Record<string, unknown>>(
   selector: (scopeData: S) => T,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-  options?: { enabled?: boolean; fallback?: T }
+  options?: { enabled?: boolean; fallback?: T },
 ): T {
   const scope = useRenderScope();
   const store = scope.store;
   const enabled = options?.enabled !== false;
   const subscribe = useMemo(
-    () => (enabled ? store?.subscribe ?? (() => emptyUnsubscribe) : () => emptyUnsubscribe),
-    [enabled, store]
+    () => (enabled ? (store?.subscribe ?? (() => emptyUnsubscribe)) : () => emptyUnsubscribe),
+    [enabled, store],
   );
   const getSnapshot = useMemo(
-    () => (enabled ? () => (store?.getSnapshot() ?? scope.readVisible()) as unknown as S : () => (undefined as unknown as S)),
-    [enabled, store, scope]
+    () =>
+      enabled
+        ? () => (store?.getSnapshot() ?? scope.readVisible()) as unknown as S
+        : () => undefined as unknown as S,
+    [enabled, store, scope],
   );
   const fallbackSelector = useCallback(() => options?.fallback as T, [options?.fallback]);
 
@@ -109,7 +119,7 @@ export function useScopeSelector<T, S = Record<string, unknown>>(
     getSnapshot,
     getSnapshot,
     enabled ? selector : fallbackSelector,
-    equalityFn
+    equalityFn,
   );
 }
 
@@ -119,7 +129,10 @@ export function useScopeSelector<T, S = Record<string, unknown>>(
  * Similar to `useScopeSelector`, the generic parameter `S` allows type-safe selection.
  * The internal cast is a type bridge for dynamic scope data.
  */
-export function useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T {
+export function useOwnScopeSelector<T, S = Record<string, unknown>>(
+  selector: (scopeData: S) => T,
+  equalityFn: (a: T, b: T) => boolean = Object.is,
+): T {
   const scope = useRenderScope();
   const subscribe = useMemo(() => createScopeOwnSubscribe(scope), [scope]);
   const getSnapshot = useCallback(() => scope.readOwn() as unknown as S, [scope]);
@@ -129,7 +142,7 @@ export function useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (s
     getSnapshot,
     getSnapshot,
     selector,
-    equalityFn
+    equalityFn,
   );
 }
 
@@ -164,7 +177,7 @@ function useFormStoreSelector<T>(args: {
     args.getSnapshot,
     args.getSnapshot,
     args.selector,
-    args.equalityFn
+    args.equalityFn,
   );
 }
 
@@ -194,7 +207,9 @@ function useStableFormErrorQuery(query?: FormErrorQuery) {
         path: stablePath,
         ownerPath: stableOwnerPath,
         rule: stableRule,
-        sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined,
+        sourceKinds: sourceKindsKey
+          ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds'])
+          : undefined,
       } satisfies FormErrorQuery,
     };
   }, [stablePath, stableOwnerPath, stableRule, sourceKindsKey]);
@@ -210,16 +225,17 @@ function useFormErrorStoreSelector<T>(args: {
   const enabled = args.enabled !== false;
   const { stablePath, resolvedQuery } = useStableFormErrorQuery(args.query);
   const subscribe = useMemo(
-    () => enabled ? createFormErrorSubscribe(store, stablePath) : () => emptyUnsubscribe,
-    [enabled, store, stablePath]
+    () => (enabled ? createFormErrorSubscribe(store, stablePath) : () => emptyUnsubscribe),
+    [enabled, store, stablePath],
   );
   const getSnapshot = useMemo(
-    () => enabled ? () => store?.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE,
-    [enabled, store]
+    () =>
+      enabled ? () => store?.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE,
+    [enabled, store],
   );
   const selector = useCallback(
     (state: FormStoreState) => args.selector(state, resolvedQuery),
-    [args, resolvedQuery]
+    [args, resolvedQuery],
   );
 
   return useFormStoreSelector({
@@ -240,11 +256,12 @@ function usePathFieldStoreSelector<T>(args: {
   const skipSubscription = args.skipSubscription ?? false;
   const subscribe = useMemo(
     () => createFormFieldStateSubscribe(store, args.path, skipSubscription),
-    [store, args.path, skipSubscription]
+    [store, args.path, skipSubscription],
   );
   const getSnapshot = useCallback(
-    (): FormStoreState => skipSubscription ? EMPTY_FORM_STORE_STATE : store?.getState() ?? EMPTY_FORM_STORE_STATE,
-    [store, skipSubscription]
+    (): FormStoreState =>
+      skipSubscription ? EMPTY_FORM_STORE_STATE : (store?.getState() ?? EMPTY_FORM_STORE_STATE),
+    [store, skipSubscription],
   );
 
   return useFormStoreSelector({
@@ -258,16 +275,25 @@ function usePathFieldStoreSelector<T>(args: {
 export function useCurrentFormState<T>(
   selector: (state: FormStoreState) => T,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-  options?: { enabled?: boolean; path?: string }
+  options?: { enabled?: boolean; path?: string },
 ): T {
   const form = useCurrentForm();
   const enabled = options?.enabled !== false;
   const path = options?.path;
   const store = form?.store;
-  const subscribe = useMemo(() => createFormStoreSubscribe(store, { enabled, path }), [enabled, path, store]);
+  const subscribe = useMemo(
+    () => createFormStoreSubscribe(store, { enabled, path }),
+    [enabled, path, store],
+  );
   const getSnapshot = useMemo(() => createFormStoreSnapshot(store, enabled), [enabled, store]);
 
-  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getSnapshot,
+    selector,
+    equalityFn,
+  );
 }
 
 export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] {
@@ -278,7 +304,10 @@ export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] 
   });
 }
 
-export function useCurrentFormError(query: FormErrorQuery, options?: { enabled?: boolean }): ValidationError | undefined {
+export function useCurrentFormError(
+  query: FormErrorQuery,
+  options?: { enabled?: boolean },
+): ValidationError | undefined {
   return useFormErrorStoreSelector({
     query,
     enabled: options?.enabled,
@@ -287,7 +316,10 @@ export function useCurrentFormError(query: FormErrorQuery, options?: { enabled?:
   });
 }
 
-export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot {
+export function useCurrentFormFieldState(
+  path: string,
+  query?: FormErrorQuery,
+): FormFieldStateSnapshot {
   // When path is empty, skip subscription entirely and return empty state
   const skipSubscription = !path;
   const { resolvedQuery } = useStableFormErrorQuery(query);
@@ -297,7 +329,7 @@ export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): 
       if (skipSubscription) return EMPTY_FORM_FIELD_STATE;
       return selectCurrentFormFieldState(state, path, resolvedQuery);
     },
-    [path, resolvedQuery, skipSubscription]
+    [path, resolvedQuery, skipSubscription],
   );
 
   return usePathFieldStoreSelector({
@@ -317,11 +349,11 @@ export function useFieldError(path: string): ValidationError | undefined {
     (state: FormStoreState): ValidationError | undefined => {
       const fieldState = state.fieldStates[path];
       const errors = fieldState?.errors;
-      return errors?.find((e) =>
-        !e.sourceKind || e.sourceKind === 'field' || e.sourceKind === 'runtime-registration'
+      return errors?.find(
+        (e) => !e.sourceKind || e.sourceKind === 'field' || e.sourceKind === 'runtime-registration',
       );
     },
-    [path]
+    [path],
   );
 
   return usePathFieldStoreSelector({
@@ -331,7 +363,10 @@ export function useFieldError(path: string): ValidationError | undefined {
   });
 }
 
-export function useDataSourceStatus(path: string, options?: { enabled?: boolean }): DataSourceStatusSummary | undefined {
+export function useDataSourceStatus(
+  path: string,
+  options?: { enabled?: boolean },
+): DataSourceStatusSummary | undefined {
   return useScopeSelector(
     (scopeData: Record<string, unknown>) => {
       if (!path) {
@@ -341,7 +376,7 @@ export function useDataSourceStatus(path: string, options?: { enabled?: boolean 
       return getIn(scopeData, path) as DataSourceStatusSummary | undefined;
     },
     Object.is,
-    { enabled: options?.enabled !== false, fallback: undefined }
+    { enabled: options?.enabled !== false, fallback: undefined },
   );
 }
 
@@ -357,8 +392,14 @@ export function useChildFieldState(path: string): FormFieldStateSnapshot {
   return useCurrentFormFieldState(path, { path });
 }
 
-export function useAggregateError(path: string, options?: { enabled?: boolean }): ValidationError | undefined {
-  return useCurrentFormError({ path, ownerPath: path, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] }, options);
+export function useAggregateError(
+  path: string,
+  options?: { enabled?: boolean },
+): ValidationError | undefined {
+  return useCurrentFormError(
+    { path, ownerPath: path, sourceKinds: ['array', 'object', 'form', 'runtime-registration'] },
+    options,
+  );
 }
 
 export function useCurrentPage(): PageRuntime | undefined {
@@ -396,18 +437,19 @@ export function useRenderFragment() {
   const nodeMeta = useContext(NodeMetaContext);
 
   return useMemo(
-    () => createHelpers({
-      runtime,
-      scope,
-      actionScope,
-      componentRegistry,
+    () =>
+      createHelpers({
+        runtime,
+        scope,
+        actionScope,
+        componentRegistry,
         form,
         page,
         surfaceRuntime,
         nodeInstance: nodeMeta?.node ?? undefined,
-        dialogId: scope.get('dialogId') as string | undefined
+        dialogId: scope.get('dialogId') as string | undefined,
       }).render,
-    [runtime, scope, actionScope, componentRegistry, form, page, surfaceRuntime, nodeMeta]
+    [runtime, scope, actionScope, componentRegistry, form, page, surfaceRuntime, nodeMeta],
   );
 }
 
@@ -452,5 +494,5 @@ export const rendererHooks = {
   useStructuralLoopContext,
   useRenderFragment,
   useCurrentFormModelGeneration,
-  useFormLayout
+  useFormLayout,
 };

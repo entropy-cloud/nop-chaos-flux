@@ -15,16 +15,18 @@ test('debug core state via React fiber', async ({ page }) => {
     // Try to read from React's internal state
     const expandedEl = document.querySelector('[data-testid="left-panel-expanded"]');
     if (!expandedEl) return { error: 'no expanded element' };
-    
+
     // Try to get React fiber
-    const fiberKey = Object.keys(expandedEl).find(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
+    const fiberKey = Object.keys(expandedEl).find(
+      (k) => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'),
+    );
     return { fiberKey };
   });
   console.log('FIBER:', stateBefore);
 
   // Click the collapse button
   const collapseButton = page.locator('[data-testid="collapse-palette"]');
-  
+
   await collapseButton.click();
   await page.waitForTimeout(500);
 
@@ -32,7 +34,9 @@ test('debug core state via React fiber', async ({ page }) => {
     return {
       hasExpanded: !!document.querySelector('[data-testid="left-panel-expanded"]'),
       hasCollapsed: !!document.querySelector('[data-testid="left-panel-collapsed"]'),
-      allTestIds: Array.from(document.querySelectorAll('[data-testid]')).map((el) => el.getAttribute('data-testid')),
+      allTestIds: Array.from(document.querySelectorAll('[data-testid]')).map((el) =>
+        el.getAttribute('data-testid'),
+      ),
     };
   });
   console.log('MUTATIONS:', JSON.stringify(mutations, null, 2));

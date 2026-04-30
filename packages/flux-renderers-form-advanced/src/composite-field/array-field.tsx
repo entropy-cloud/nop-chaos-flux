@@ -5,7 +5,7 @@ import type {
   InstanceFrame,
   RendererComponentProps,
   RendererDefinition,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
@@ -14,16 +14,13 @@ import {
   useCurrentFormState,
   useRenderInstancePath,
   useRenderScope,
-  useScopeSelector
+  useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';
-import {
-  formLabelFieldRule,
-  useFieldPresentation
-} from '@nop-chaos/flux-renderers-form';
+import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime';
 
 function toArrayItems(value: unknown): unknown[] {
@@ -38,12 +35,20 @@ function createArrayFieldRepeatedTemplateId(templateNodeId: number | undefined):
   return `array-field-item:${templateNodeId ?? 'unknown'}`;
 }
 
-function resolvePreferredObjectArrayItemKey(item: unknown, sourceIndex: number, itemKeyField?: string): string {
+function resolvePreferredObjectArrayItemKey(
+  item: unknown,
+  sourceIndex: number,
+  itemKeyField?: string,
+): string {
   if (isRecord(item)) {
     const explicitValue = itemKeyField ? getIn(item, itemKeyField) : undefined;
     const compatibilityValue = explicitValue ?? item.__rowKey ?? item.id;
 
-    if (compatibilityValue !== null && compatibilityValue !== undefined && compatibilityValue !== '') {
+    if (
+      compatibilityValue !== null &&
+      compatibilityValue !== undefined &&
+      compatibilityValue !== ''
+    ) {
       return String(compatibilityValue);
     }
   }
@@ -51,11 +56,16 @@ function resolvePreferredObjectArrayItemKey(item: unknown, sourceIndex: number, 
   return `legacy-index:${sourceIndex}`;
 }
 
-function buildObjectArrayItemKeys(items: unknown[], itemKeyField?: string): {
+function buildObjectArrayItemKeys(
+  items: unknown[],
+  itemKeyField?: string,
+): {
   itemKeys: string[];
   duplicatePreferredKeys: string[];
 } {
-  const preferredKeys = items.map((item, sourceIndex) => resolvePreferredObjectArrayItemKey(item, sourceIndex, itemKeyField));
+  const preferredKeys = items.map((item, sourceIndex) =>
+    resolvePreferredObjectArrayItemKey(item, sourceIndex, itemKeyField),
+  );
   const counts = new Map<string, number>();
 
   for (const key of preferredKeys) {
@@ -64,11 +74,11 @@ function buildObjectArrayItemKeys(items: unknown[], itemKeyField?: string): {
 
   return {
     itemKeys: preferredKeys.map((preferredKey, sourceIndex) =>
-      (counts.get(preferredKey) ?? 0) > 1 ? `legacy-index:${sourceIndex}` : preferredKey
+      (counts.get(preferredKey) ?? 0) > 1 ? `legacy-index:${sourceIndex}` : preferredKey,
     ),
     duplicatePreferredKeys: Array.from(counts.entries())
       .filter(([key, count]) => count > 1 && !key.startsWith('legacy-index:'))
-      .map(([key]) => key)
+      .map(([key]) => key),
   };
 }
 
@@ -84,34 +94,38 @@ function ArrayItem(props: {
   onRemove: (index: number) => void;
   renderItem: () => React.ReactNode;
 }) {
-  const { itemIdentity, index, arrayPath, itemKind, parentScope, parentForm, readOnly, removable, onRemove, renderItem } = props;
+  const {
+    itemIdentity,
+    index,
+    arrayPath,
+    itemKind,
+    parentScope,
+    parentForm,
+    readOnly,
+    removable,
+    onRemove,
+    renderItem,
+  } = props;
 
   const itemScope = React.useMemo(
     () => createItemScope(parentScope, arrayPath, index, itemKind, readOnly, itemIdentity),
-    [parentScope, arrayPath, index, itemKind, readOnly, itemIdentity]
+    [parentScope, arrayPath, index, itemKind, readOnly, itemIdentity],
   );
 
   const itemForm = React.useMemo(
     () => (parentForm ? createItemFormProxy(parentForm, arrayPath, index, itemKind) : parentForm),
-    [parentForm, arrayPath, index, itemKind]
+    [parentForm, arrayPath, index, itemKind],
   );
 
   return (
     <div data-slot="array-field-item">
       <div data-slot="array-field-item-body">
         <FormContext.Provider value={itemForm ?? undefined}>
-          <ScopeContext.Provider value={itemScope}>
-            {renderItem()}
-          </ScopeContext.Provider>
+          <ScopeContext.Provider value={itemScope}>{renderItem()}</ScopeContext.Provider>
         </FormContext.Provider>
       </div>
       {removable && (
-        <Button
-          type="button"
-          variant="destructive"
-          size="sm"
-          onClick={() => onRemove(index)}
-        >
+        <Button type="button" variant="destructive" size="sm" onClick={() => onRemove(index)}>
           {t('flux.form.remove')}
         </Button>
       )}
@@ -136,77 +150,91 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   const modelGeneration = useCurrentFormModelGeneration();
   const name = String(props.props.name ?? '');
   const itemKind = (props.props.itemKind ?? 'scalar') as 'scalar' | 'object';
-  const itemKeyField = typeof props.props.itemKey === 'string' && props.props.itemKey.trim().length > 0
-    ? props.props.itemKey.trim()
-    : undefined;
+  const itemKeyField =
+    typeof props.props.itemKey === 'string' && props.props.itemKey.trim().length > 0
+      ? props.props.itemKey.trim()
+      : undefined;
   const addable = props.props.addable !== false;
   const removable = props.props.removable !== false;
   const readOnly = Boolean(props.props.readOnly);
   const itemRepeatedTemplateId = React.useMemo(
     () => createArrayFieldRepeatedTemplateId(props.templateNode.templateNodeId),
-    [props.templateNode.templateNodeId]
+    [props.templateNode.templateNodeId],
   );
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
-    readOnly
+    readOnly,
   });
 
   const formValue = useCurrentFormState(
-    (state) => (parentForm ? toArrayItems(name ? getIn(state.values, name) : state.values) : undefined),
+    (state) =>
+      parentForm ? toArrayItems(name ? getIn(state.values, name) : state.values) : undefined,
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, i) => item === b[i]);
     },
-    { path: name || undefined }
+    { path: name || undefined },
   );
   const scopeValue = useScopeSelector(
-    (scopeData) => (parentForm ? undefined : toArrayItems(name ? getIn(scopeData, name) : scopeData)),
+    (scopeData) =>
+      parentForm ? undefined : toArrayItems(name ? getIn(scopeData, name) : scopeData),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, i) => item === b[i]);
-    }
+    },
   );
 
   const items = React.useMemo(
     () => (parentForm ? formValue : scopeValue) ?? [],
-    [parentForm, formValue, scopeValue]
+    [parentForm, formValue, scopeValue],
   );
   const nextItemKeyRef = React.useRef(items.length);
   const [compatibilityItemKeys, setCompatibilityItemKeys] = React.useState<string[]>(() =>
-    items.map((_, index) => `array-item-${index}`)
+    items.map((_, index) => `array-item-${index}`),
   );
   const objectItemKeyResolution = React.useMemo(
-    () => itemKind === 'object'
-      ? buildObjectArrayItemKeys(items, itemKeyField)
-      : { itemKeys: [], duplicatePreferredKeys: [] },
-    [itemKind, items, itemKeyField]
+    () =>
+      itemKind === 'object'
+        ? buildObjectArrayItemKeys(items, itemKeyField)
+        : { itemKeys: [], duplicatePreferredKeys: [] },
+    [itemKind, items, itemKeyField],
   );
   const itemEntries = React.useMemo(
-    () => items.map((item, index) => {
-      const itemIdentity = itemKind === 'object'
-        ? objectItemKeyResolution.itemKeys[index] ?? `legacy-index:${index}`
-        : compatibilityItemKeys[index] ?? `array-item-${index}`;
-      const itemInstancePath: readonly InstanceFrame[] = [
-        ...(parentInstancePath ?? []),
-        { repeatedTemplateId: itemRepeatedTemplateId, instanceKey: itemIdentity }
-      ];
+    () =>
+      items.map((item, index) => {
+        const itemIdentity =
+          itemKind === 'object'
+            ? (objectItemKeyResolution.itemKeys[index] ?? `legacy-index:${index}`)
+            : (compatibilityItemKeys[index] ?? `array-item-${index}`);
+        const itemInstancePath: readonly InstanceFrame[] = [
+          ...(parentInstancePath ?? []),
+          { repeatedTemplateId: itemRepeatedTemplateId, instanceKey: itemIdentity },
+        ];
 
-      return {
-        item,
-        index,
-        itemIdentity,
-        itemInstancePath
-      };
-    }),
-    [items, itemKind, objectItemKeyResolution.itemKeys, compatibilityItemKeys, parentInstancePath, itemRepeatedTemplateId]
+        return {
+          item,
+          index,
+          itemIdentity,
+          itemInstancePath,
+        };
+      }),
+    [
+      items,
+      itemKind,
+      objectItemKeyResolution.itemKeys,
+      compatibilityItemKeys,
+      parentInstancePath,
+      itemRepeatedTemplateId,
+    ],
   );
-  const scalarItemField = itemKind === 'scalar' ? getScalarItemFieldSchema(props.schema as ArrayFieldSchema) : undefined;
+  const scalarItemField =
+    itemKind === 'scalar' ? getScalarItemFieldSchema(props.schema as ArrayFieldSchema) : undefined;
   const scalarChildPaths = React.useMemo(
     () => (itemKind === 'scalar' && name ? items.map((_, index) => `${name}.${index}.value`) : []),
-    [itemKind, items, name]
+    [itemKind, items, name],
   );
 
   React.useEffect(() => {
@@ -222,7 +250,10 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       if (current.length < items.length) {
         return [
           ...current,
-          ...Array.from({ length: items.length - current.length }, () => `array-item-${nextItemKeyRef.current++}`)
+          ...Array.from(
+            { length: items.length - current.length },
+            () => `array-item-${nextItemKeyRef.current++}`,
+          ),
         ];
       }
 
@@ -236,7 +267,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
     }
 
     console.warn(
-      `[ArrayFieldRenderer] Duplicate itemKey values detected for "${name}": ${objectItemKeyResolution.duplicatePreferredKeys.join(', ')}. Falling back to compatibility index identity for conflicting items.`
+      `[ArrayFieldRenderer] Duplicate itemKey values detected for "${name}": ${objectItemKeyResolution.duplicatePreferredKeys.join(', ')}. Falling back to compatibility index identity for conflicting items.`,
     );
   }, [itemKind, name, objectItemKeyResolution.duplicatePreferredKeys]);
 
@@ -256,7 +287,9 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   function handleRemove(index: number) {
     if (parentForm) {
       if (itemKind === 'scalar') {
-        setCompatibilityItemKeys((current) => current.filter((_, currentIndex) => currentIndex !== index));
+        setCompatibilityItemKeys((current) =>
+          current.filter((_, currentIndex) => currentIndex !== index),
+        );
       }
 
       parentForm.removeValue(name, index);
@@ -269,9 +302,10 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
       return;
     }
 
-    const childLabel = typeof scalarItemField?.label === 'string' && scalarItemField.label
-      ? scalarItemField.label
-      : 'Item';
+    const childLabel =
+      typeof scalarItemField?.label === 'string' && scalarItemField.label
+        ? scalarItemField.label
+        : 'Item';
     const isRequired = Boolean(scalarItemField?.required);
 
     const registration = parentForm.registerField({
@@ -293,12 +327,14 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
           return [];
         }
 
-        return [{
-          path,
-          rule: 'required',
-          message: `${childLabel} is required`
-        }];
-      }
+        return [
+          {
+            path,
+            rule: 'required',
+            message: `${childLabel} is required`,
+          },
+        ];
+      },
     });
 
     return registration.unregister;
@@ -323,19 +359,14 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
               renderItem={() =>
                 props.regions.item?.render({
                   bindings: { index, value: item },
-                  instancePath: itemInstancePath
+                  instancePath: itemInstancePath,
                 }) ?? null
               }
             />
           );
         })}
         {addable && !readOnly && !presentation.effectiveDisabled && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleAdd}
-          >
+          <Button type="button" variant="outline" size="sm" onClick={handleAdd}>
             {t('flux.form.addItem')}
           </Button>
         )}
@@ -351,7 +382,7 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
   regions: ['item'],
   fields: [
     formLabelFieldRule,
-    { key: 'item', kind: 'region', regionKey: 'item', params: ['index', 'value'] }
+    { key: 'item', kind: 'region', regionKey: 'item', params: ['index', 'value'] },
   ],
   validation: {
     kind: 'field',
@@ -364,6 +395,6 @@ export const arrayFieldRendererDefinition: RendererDefinition = {
     },
     collectRules() {
       return [];
-    }
-  }
+    },
+  },
 };

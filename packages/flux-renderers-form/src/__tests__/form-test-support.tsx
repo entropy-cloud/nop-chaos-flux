@@ -1,10 +1,22 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
-import type { ApiSchema, ApiRequestContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type {
+  ApiSchema,
+  ApiRequestContext,
+  RendererComponentProps,
+  RendererDefinition,
+  RendererEnv,
+} from '@nop-chaos/flux-core';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { getIn } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { useAggregateError, useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  useAggregateError,
+  useCurrentForm,
+  useCurrentFormState,
+  useRenderScope,
+  useScopeSelector,
+} from '@nop-chaos/flux-react';
 import { useFieldHandlers } from '../field-utils';
 
 if (!Element.prototype.scrollIntoView) {
@@ -13,7 +25,10 @@ if (!Element.prototype.scrollIntoView) {
 
 if (typeof PointerEvent === 'undefined') {
   class PointerEvent extends MouseEvent {
-    constructor(type: string, props: MouseEventInit & { pointerId?: number; pressure?: number } = {}) {
+    constructor(
+      type: string,
+      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
+    ) {
       super(type, props);
     }
   }
@@ -45,25 +60,22 @@ export const env: RendererEnv = {
     return {
       ok: true,
       status: 200,
-      data: ctx.scope.readOwn() as T
+      data: ctx.scope.readOwn() as T,
     };
   },
   notify: (level, message) => {
     notifyCalls.push({ level, message });
-  }
+  },
 };
 
 export const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: (props) => (
-    <button
-      type="button"
-      onClick={(event) => void props.events.onClick?.(event)}
-    >
+    <button type="button" onClick={(event) => void props.events.onClick?.(event)}>
       {String(props.props.label ?? 'Button')}
     </button>
   ),
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 function ContactGroupRenderer(props: RendererComponentProps) {
@@ -119,9 +131,9 @@ export const contactGroupRenderer: RendererDefinition = {
     },
     collectRules() {
       return [];
-    }
+    },
   },
-  component: ContactGroupRenderer
+  component: ContactGroupRenderer,
 };
 
 function FormStateProbeRenderer(props: RendererComponentProps) {
@@ -129,7 +141,7 @@ function FormStateProbeRenderer(props: RendererComponentProps) {
   const value = useCurrentFormState(
     (state) => (path ? getIn(state.values, path) : state.values),
     Object.is,
-    { path: path || undefined }
+    { path: path || undefined },
   );
 
   React.useEffect(() => {
@@ -141,7 +153,7 @@ function FormStateProbeRenderer(props: RendererComponentProps) {
 
 export const formStateProbeRenderer: RendererDefinition = {
   type: 'form-state-probe',
-  component: FormStateProbeRenderer
+  component: FormStateProbeRenderer,
 };
 
 function ScopeStateProbeRenderer(props: RendererComponentProps) {
@@ -153,7 +165,7 @@ function ScopeStateProbeRenderer(props: RendererComponentProps) {
 
 export const scopeStateProbeRenderer: RendererDefinition = {
   type: 'scope-state-probe',
-  component: ScopeStateProbeRenderer
+  component: ScopeStateProbeRenderer,
 };
 
 export const handlerIdentitySnapshots: Array<ReturnType<typeof useFieldHandlers>> = [];
@@ -173,5 +185,5 @@ function HandlerIdentityProbeRenderer(props: RendererComponentProps) {
 
 export const handlerIdentityProbeRenderer: RendererDefinition = {
   type: 'handler-identity-probe',
-  component: HandlerIdentityProbeRenderer
+  component: HandlerIdentityProbeRenderer,
 };

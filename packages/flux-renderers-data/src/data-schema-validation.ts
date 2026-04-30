@@ -1,4 +1,8 @@
-import { parsePath, type BaseSchema, type RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import {
+  parsePath,
+  type BaseSchema,
+  type RendererSchemaValidationContext,
+} from '@nop-chaos/flux-core';
 import type { CrudSchema } from './crud-schema';
 import type { TableSchema } from './schemas';
 
@@ -7,7 +11,9 @@ function escapeJsonPointerSegment(segment: string) {
 }
 
 function toJsonPointer(path: string, ...segments: Array<string | number>) {
-  const parts = parsePath(path).filter((segment) => segment !== '$').concat(segments.map((segment) => String(segment)));
+  const parts = parsePath(path)
+    .filter((segment) => segment !== '$')
+    .concat(segments.map((segment) => String(segment)));
 
   if (parts.length === 0) {
     return '';
@@ -21,7 +27,10 @@ function validateStringArray(value: unknown) {
 }
 
 function validateNumberArray(value: unknown) {
-  return Array.isArray(value) && value.every((entry) => typeof entry === 'number' && Number.isFinite(entry));
+  return (
+    Array.isArray(value) &&
+    value.every((entry) => typeof entry === 'number' && Number.isFinite(entry))
+  );
 }
 
 export function validateTableSchema(context: RendererSchemaValidationContext<BaseSchema>) {
@@ -36,7 +45,7 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'columns'),
-      message: 'table.columns must be an array when provided.'
+      message: 'table.columns must be an array when provided.',
     });
   }
 
@@ -46,7 +55,7 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
         emit({
           code: 'invalid-property-shape',
           path: toJsonPointer(path, 'columns', index),
-          message: 'table.columns entries must be objects.'
+          message: 'table.columns entries must be objects.',
         });
       }
     });
@@ -56,7 +65,7 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
     emit({
       code: 'missing-required-field',
       path: toJsonPointer(path, 'paginationStatePath'),
-      message: 'table.paginationStatePath is required when paginationOwnership is "scope".'
+      message: 'table.paginationStatePath is required when paginationOwnership is "scope".',
     });
   }
 
@@ -64,31 +73,40 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
     emit({
       code: 'missing-required-field',
       path: toJsonPointer(path, 'selectionStatePath'),
-      message: 'table.selectionStatePath is required when selectionOwnership is "scope".'
+      message: 'table.selectionStatePath is required when selectionOwnership is "scope".',
     });
   }
 
-  if (schema.pagination?.pageSizeOptions !== undefined && !validateNumberArray(schema.pagination.pageSizeOptions)) {
+  if (
+    schema.pagination?.pageSizeOptions !== undefined &&
+    !validateNumberArray(schema.pagination.pageSizeOptions)
+  ) {
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'pagination', 'pageSizeOptions'),
-      message: 'table.pagination.pageSizeOptions must be an array of finite numbers.'
+      message: 'table.pagination.pageSizeOptions must be an array of finite numbers.',
     });
   }
 
-  if (schema.rowSelection?.selectedRowKeys !== undefined && !validateStringArray(schema.rowSelection.selectedRowKeys)) {
+  if (
+    schema.rowSelection?.selectedRowKeys !== undefined &&
+    !validateStringArray(schema.rowSelection.selectedRowKeys)
+  ) {
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'rowSelection', 'selectedRowKeys'),
-      message: 'table.rowSelection.selectedRowKeys must be an array of strings.'
+      message: 'table.rowSelection.selectedRowKeys must be an array of strings.',
     });
   }
 
-  if (schema.expandable?.expandedRowKeys !== undefined && !validateStringArray(schema.expandable.expandedRowKeys)) {
+  if (
+    schema.expandable?.expandedRowKeys !== undefined &&
+    !validateStringArray(schema.expandable.expandedRowKeys)
+  ) {
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'expandable', 'expandedRowKeys'),
-      message: 'table.expandable.expandedRowKeys must be an array of strings.'
+      message: 'table.expandable.expandedRowKeys must be an array of strings.',
     });
   }
 }
@@ -105,7 +123,7 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'columns'),
-      message: 'crud.columns must be an array when provided.'
+      message: 'crud.columns must be an array when provided.',
     });
   }
 
@@ -115,7 +133,7 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
         emit({
           code: 'invalid-property-shape',
           path: toJsonPointer(path, 'columns', index),
-          message: 'crud.columns entries must be objects.'
+          message: 'crud.columns entries must be objects.',
         });
       }
     });
@@ -125,7 +143,7 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
     emit({
       code: 'missing-required-field',
       path: toJsonPointer(path, 'paginationStatePath'),
-      message: 'crud.paginationStatePath is required when paginationOwnership is "scope".'
+      message: 'crud.paginationStatePath is required when paginationOwnership is "scope".',
     });
   }
 
@@ -133,7 +151,7 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
     emit({
       code: 'missing-required-field',
       path: toJsonPointer(path, 'selectionStatePath'),
-      message: 'crud.selectionStatePath is required when selectionOwnership is "scope".'
+      message: 'crud.selectionStatePath is required when selectionOwnership is "scope".',
     });
   }
 
@@ -141,7 +159,7 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
     emit({
       code: 'missing-required-field',
       path: toJsonPointer(path, 'sortStatePath'),
-      message: 'crud.sortStatePath is required when sortOwnership is "scope".'
+      message: 'crud.sortStatePath is required when sortOwnership is "scope".',
     });
   }
 
@@ -149,12 +167,14 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
     emit({
       code: 'missing-required-field',
       path: toJsonPointer(path, 'filterStatePath'),
-      message: 'crud.filterStatePath is required when filterOwnership is "scope".'
+      message: 'crud.filterStatePath is required when filterOwnership is "scope".',
     });
   }
 }
 
-export function transformCrudAuthoringSchema(context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<BaseSchema>) {
+export function transformCrudAuthoringSchema(
+  context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<BaseSchema>,
+) {
   if (context.schema.type !== 'crud') {
     return context.schema;
   }
@@ -192,7 +212,7 @@ export function transformCrudAuthoringSchema(context: import('@nop-chaos/flux-co
     context.emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(context.path, 'bulkActions'),
-      message: 'crud.bulkActions cannot be used together with canonical crud.listActions.'
+      message: 'crud.bulkActions cannot be used together with canonical crud.listActions.',
     });
     const { bulkActions, ...rest } = nextSchema;
     void bulkActions;
@@ -203,6 +223,6 @@ export function transformCrudAuthoringSchema(context: import('@nop-chaos/flux-co
 
   return {
     ...rest,
-    listActions: bulkActions as CrudSchema['listActions']
+    listActions: bulkActions as CrudSchema['listActions'],
   } as CrudSchema;
 }

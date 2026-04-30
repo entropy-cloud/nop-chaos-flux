@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition, TemplateNode, CompiledValidationNode } from '@nop-chaos/flux-core';
+import type {
+  RendererDefinition,
+  TemplateNode,
+  CompiledValidationNode,
+} from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index';
@@ -11,8 +15,8 @@ const formRenderer: RendererDefinition = {
   regions: ['body'],
   scopePolicy: 'form',
   validation: {
-    kind: 'container'
-  }
+    kind: 'container',
+  },
 };
 
 const inputRenderer: RendererDefinition = {
@@ -25,8 +29,8 @@ const inputRenderer: RendererDefinition = {
     },
     collectRules() {
       return [];
-    }
-  }
+    },
+  },
 };
 
 const arrayInputRenderer: RendererDefinition = {
@@ -43,8 +47,8 @@ const arrayInputRenderer: RendererDefinition = {
     },
     getChildFieldPathPrefix() {
       return undefined;
-    }
-  }
+    },
+  },
 };
 
 const objectInputRenderer: RendererDefinition = {
@@ -58,8 +62,8 @@ const objectInputRenderer: RendererDefinition = {
     },
     collectRules() {
       return [];
-    }
-  }
+    },
+  },
 };
 
 const blockingInputRenderer: RendererDefinition = {
@@ -75,8 +79,8 @@ const blockingInputRenderer: RendererDefinition = {
     },
     getChildFieldPathPrefix() {
       return false;
-    }
-  }
+    },
+  },
 };
 
 const childPrefixRenderer: RendererDefinition = {
@@ -93,8 +97,8 @@ const childPrefixRenderer: RendererDefinition = {
     },
     getChildFieldPathPrefix() {
       return 'items';
-    }
-  }
+    },
+  },
 };
 
 describe('collectValidationModel', () => {
@@ -109,12 +113,12 @@ describe('collectValidationModel', () => {
   it('builds root form node with default behavior', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
-      body: { type: 'input-text', name: 'email' }
+      body: { type: 'input-text', name: 'email' },
     });
 
     const root = compiled.root as TemplateNode;
@@ -130,7 +134,7 @@ describe('collectValidationModel', () => {
     expect(nodes[''].children).toContain('email');
     expect(root.validationOwnerPlan).toEqual({
       boundary: 'create-owner',
-      childContractMode: 'ignore'
+      childContractMode: 'ignore',
     });
   });
 
@@ -143,21 +147,21 @@ describe('collectValidationModel', () => {
       validation: {
         kind: 'container',
         ownerResolution: 'create-owner',
-        childContractMode: 'summary-gate'
-      }
+        childContractMode: 'summary-gate',
+      },
     };
 
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, detailRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
       body: {
         type: 'detail-view',
-        content: { type: 'input-text', name: 'title', required: true }
-      }
+        content: { type: 'input-text', name: 'title', required: true },
+      },
     });
 
     const root = compiled.root as TemplateNode;
@@ -165,7 +169,7 @@ describe('collectValidationModel', () => {
 
     expect(detailNode.validationOwnerPlan).toEqual({
       boundary: 'create-owner',
-      childContractMode: 'summary-gate'
+      childContractMode: 'summary-gate',
     });
     expect(detailNode.validationPlan).toBeDefined();
   });
@@ -173,30 +177,30 @@ describe('collectValidationModel', () => {
   it('collects validation rules from schema', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
-      body: { type: 'input-text', name: 'email', required: true, minLength: 5 }
+      body: { type: 'input-text', name: 'email', required: true, minLength: 5 },
     });
 
     const root = compiled.root as TemplateNode;
     const nodes = root.validationPlan!.nodes as Record<string, CompiledValidationNode>;
 
     expect(nodes['email'].rules).toHaveLength(2);
-    expect(nodes['email'].rules.map(r => r.rule.kind)).toEqual(['required', 'minLength']);
+    expect(nodes['email'].rules.map((r) => r.rule.kind)).toEqual(['required', 'minLength']);
   });
 
   it('uses array valueKind for array validation nodes', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, arrayInputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
-      body: { type: 'array-input', name: 'items' }
+      body: { type: 'array-input', name: 'items' },
     });
 
     const root = compiled.root as TemplateNode;
@@ -208,12 +212,12 @@ describe('collectValidationModel', () => {
   it('uses object valueKind for object validation nodes', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, objectInputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
-      body: { type: 'object-input', name: 'address' }
+      body: { type: 'object-input', name: 'address' },
     });
 
     const root = compiled.root as TemplateNode;
@@ -225,12 +229,12 @@ describe('collectValidationModel', () => {
   it('extracts label from schema', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
-      body: { type: 'input-text', name: 'email', label: 'Email Address' }
+      body: { type: 'input-text', name: 'email', label: 'Email Address' },
     });
 
     const root = compiled.root as TemplateNode;
@@ -242,12 +246,12 @@ describe('collectValidationModel', () => {
   it('handles form with single field and no rules', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
-      body: { type: 'input-text', name: 'email' }
+      body: { type: 'input-text', name: 'email' },
     });
 
     const root = compiled.root as TemplateNode;
@@ -262,15 +266,15 @@ describe('collectValidationModel', () => {
   it('handles nested field paths with dot notation', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
       body: [
         { type: 'input-text', name: 'address.street' },
-        { type: 'input-text', name: 'address.city' }
-      ]
+        { type: 'input-text', name: 'address.city' },
+      ],
     });
 
     const root = compiled.root as TemplateNode;
@@ -287,15 +291,15 @@ describe('collectValidationModel', () => {
   it('stops traversal when getChildFieldPathPrefix returns false', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, blockingInputRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
       body: [
         { type: 'blocking-input', name: 'blocked' },
-        { type: 'input-text', name: 'visible' }
-      ]
+        { type: 'input-text', name: 'visible' },
+      ],
     });
 
     const root = compiled.root as TemplateNode;
@@ -308,7 +312,7 @@ describe('collectValidationModel', () => {
   it('uses childFieldPathPrefix for nested validation', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, childPrefixRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -316,8 +320,8 @@ describe('collectValidationModel', () => {
       body: {
         type: 'prefix-input',
         name: 'container',
-        body: { type: 'input-text', name: 'field1' }
-      }
+        body: { type: 'input-text', name: 'field1' },
+      },
     });
 
     const root = compiled.root as TemplateNode;
@@ -331,14 +335,14 @@ describe('collectValidationModel', () => {
   it('respects form-level validateOn and showErrorOn', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
       validateOn: ['change'],
       showErrorOn: ['dirty'],
-      body: { type: 'input-text', name: 'email' }
+      body: { type: 'input-text', name: 'email' },
     });
 
     const root = compiled.root as TemplateNode;
@@ -350,13 +354,13 @@ describe('collectValidationModel', () => {
   it('handles form hiddenFieldPolicy', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
       hiddenFieldPolicy: 'validate-and-submit',
-      body: { type: 'input-text', name: 'email' }
+      body: { type: 'input-text', name: 'email' },
     });
 
     const root = compiled.root as TemplateNode;
@@ -366,15 +370,15 @@ describe('collectValidationModel', () => {
   it('handles array of template nodes at root', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
       body: [
         { type: 'input-text', name: 'a' },
-        { type: 'input-text', name: 'b' }
-      ]
+        { type: 'input-text', name: 'b' },
+      ],
     });
 
     const root = compiled.root as TemplateNode;
@@ -389,13 +393,13 @@ describe('collectValidationModel', () => {
   it('uses field-level validateOn overrides', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
       validateOn: ['change'],
-      body: { type: 'input-text', name: 'email', validateOn: ['blur'] }
+      body: { type: 'input-text', name: 'email', validateOn: ['blur'] },
     });
 
     const root = compiled.root as TemplateNode;
@@ -409,21 +413,18 @@ describe('collectValidationModel', () => {
       type: 'display',
       component: () => null,
       validation: {
-        kind: 'container'
-      }
+        kind: 'container',
+      },
     };
 
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, nonFieldRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
-      body: [
-        { type: 'display' },
-        { type: 'input-text', name: 'email' }
-      ]
+      body: [{ type: 'display' }, { type: 'input-text', name: 'email' }],
     });
 
     const root = compiled.root as TemplateNode;
@@ -436,15 +437,15 @@ describe('collectValidationModel', () => {
   it('pools identical behaviors', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'form',
       body: [
         { type: 'input-text', name: 'a' },
-        { type: 'input-text', name: 'b' }
-      ]
+        { type: 'input-text', name: 'b' },
+      ],
     });
 
     const root = compiled.root as TemplateNode;

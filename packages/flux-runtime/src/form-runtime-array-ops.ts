@@ -4,7 +4,7 @@ import {
   insertArrayValue,
   moveArrayValue,
   removeArrayValue,
-  swapArrayValue
+  swapArrayValue,
 } from '@nop-chaos/flux-core';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import { executeArrayMutation } from './form-runtime-array';
@@ -15,7 +15,10 @@ export interface ArrayMutationContext {
   sharedState: ManagedFormRuntimeSharedState;
   scope: ScopeRef;
   getArrayValue: (path: string) => unknown;
-  revalidateDependents: (path: string, reason?: import('@nop-chaos/flux-core').ValidationReason) => Promise<void>;
+  revalidateDependents: (
+    path: string,
+    reason?: import('@nop-chaos/flux-core').ValidationReason,
+  ) => Promise<void>;
 }
 
 export function appendValueOp(ctx: ArrayMutationContext, path: string, value: unknown): void {
@@ -27,7 +30,7 @@ export function appendValueOp(ctx: ArrayMutationContext, path: string, value: un
     arrayOperation: (current) => insertArrayValue(current, Number.MAX_SAFE_INTEGER, value),
     indexTransform: (index) => index,
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
-    revalidateDependents: ctx.revalidateDependents
+    revalidateDependents: ctx.revalidateDependents,
   });
 }
 
@@ -40,11 +43,16 @@ export function prependValueOp(ctx: ArrayMutationContext, path: string, value: u
     arrayOperation: (current) => insertArrayValue(current, 0, value),
     indexTransform: (index) => index + 1,
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
-    revalidateDependents: ctx.revalidateDependents
+    revalidateDependents: ctx.revalidateDependents,
   });
 }
 
-export function insertValueOp(ctx: ArrayMutationContext, path: string, index: number, value: unknown): void {
+export function insertValueOp(
+  ctx: ArrayMutationContext,
+  path: string,
+  index: number,
+  value: unknown,
+): void {
   const currentValue = ctx.getArrayValue(path);
   const safeArray = Array.isArray(currentValue) ? currentValue : [];
   const insertIndex = clampInsertIndex(index, safeArray.length);
@@ -56,7 +64,7 @@ export function insertValueOp(ctx: ArrayMutationContext, path: string, index: nu
     arrayOperation: () => insertArrayValue(safeArray, insertIndex, value),
     indexTransform: (candidate) => (candidate >= insertIndex ? candidate + 1 : candidate),
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
-    revalidateDependents: ctx.revalidateDependents
+    revalidateDependents: ctx.revalidateDependents,
   });
 }
 
@@ -82,11 +90,16 @@ export function removeValueOp(ctx: ArrayMutationContext, path: string, index: nu
       return candidate > removeIndex ? candidate - 1 : candidate;
     },
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
-    revalidateDependents: ctx.revalidateDependents
+    revalidateDependents: ctx.revalidateDependents,
   });
 }
 
-export function moveValueOp(ctx: ArrayMutationContext, path: string, from: number, to: number): void {
+export function moveValueOp(
+  ctx: ArrayMutationContext,
+  path: string,
+  from: number,
+  to: number,
+): void {
   const currentValue = ctx.getArrayValue(path);
 
   if (!Array.isArray(currentValue) || currentValue.length <= 1) {
@@ -122,7 +135,7 @@ export function moveValueOp(ctx: ArrayMutationContext, path: string, from: numbe
       return candidate;
     },
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
-    revalidateDependents: ctx.revalidateDependents
+    revalidateDependents: ctx.revalidateDependents,
   });
 }
 
@@ -158,7 +171,7 @@ export function swapValueOp(ctx: ArrayMutationContext, path: string, a: number, 
       return candidate;
     },
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
-    revalidateDependents: ctx.revalidateDependents
+    revalidateDependents: ctx.revalidateDependents,
   });
 }
 
@@ -172,6 +185,6 @@ export function replaceValueOp(ctx: ArrayMutationContext, path: string, value: u
     arrayOperation: () => nextValue,
     indexTransform: (candidate) => (candidate < nextValue.length ? candidate : undefined),
     cancelValidationDebounce: (targetPath) => cancelValidationDebounce(ctx.sharedState, targetPath),
-    revalidateDependents: ctx.revalidateDependents
+    revalidateDependents: ctx.revalidateDependents,
   });
 }

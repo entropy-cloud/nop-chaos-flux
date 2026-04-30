@@ -1,4 +1,11 @@
-import { Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, useReactFlow } from '@xyflow/react';
+import {
+  Background,
+  Controls,
+  MiniMap,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEffect } from 'react';
 import type { FlowCanvasStore } from './use-flow-canvas-store';
@@ -11,7 +18,12 @@ export interface FlowCanvasProps {
   showGrid?: boolean;
 }
 
-function FlowCanvasInner({ store, showMinimap = true, showControls = true, showGrid = true }: FlowCanvasProps) {
+function FlowCanvasInner({
+  store,
+  showMinimap = true,
+  showControls = true,
+  showGrid = true,
+}: FlowCanvasProps) {
   const { fitView } = useReactFlow();
 
   useEffect(() => {
@@ -50,7 +62,9 @@ function FlowCanvasInner({ store, showMinimap = true, showControls = true, showG
       >
         {showGrid && <Background gap={16} size={1} />}
         {showControls && <Controls showInteractive={false} />}
-        {showMinimap && <MiniMap pannable zoomable style={{ background: 'rgba(255,255,255,0.9)' }} />}
+        {showMinimap && (
+          <MiniMap pannable zoomable style={{ background: 'rgba(255,255,255,0.9)' }} />
+        )}
       </ReactFlow>
     </div>
   );

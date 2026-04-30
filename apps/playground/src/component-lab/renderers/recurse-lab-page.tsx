@@ -16,13 +16,13 @@ const basicRecurse = {
           body: [
             {
               type: 'recurse',
-              items: '${$slot.node.children}'
-            }
-          ]
-        }
-      ]
-    }
-  ]
+              items: '${$slot.node.children}',
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 const richRecurse = {
@@ -42,8 +42,8 @@ const richRecurse = {
           body: [
             { type: 'icon', icon: 'FolderOpen', size: 14 },
             { type: 'text', text: '${$slot.node.label}' },
-            { type: 'badge', text: 'L${$slot.node.depth ?? 0}', variant: 'secondary' }
-          ]
+            { type: 'badge', text: 'L${$slot.node.depth ?? 0}', variant: 'secondary' },
+          ],
         },
         {
           type: 'fragment',
@@ -51,13 +51,13 @@ const richRecurse = {
           body: [
             {
               type: 'recurse',
-              items: '${$slot.node.children}'
-            }
-          ]
-        }
-      ]
-    }
-  ]
+              items: '${$slot.node.children}',
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 const orgTreeData = [
@@ -70,18 +70,16 @@ const orgTreeData = [
         depth: 1,
         children: [
           { label: 'Frontend', depth: 2, children: [] },
-          { label: 'Backend', depth: 2, children: [] }
-        ]
+          { label: 'Backend', depth: 2, children: [] },
+        ],
       },
       {
         label: 'Design',
         depth: 1,
-        children: [
-          { label: 'UX Research', depth: 2, children: [] }
-        ]
-      }
-    ]
-  }
+        children: [{ label: 'UX Research', depth: 2, children: [] }],
+      },
+    ],
+  },
 ];
 
 export function RecurseLabPage() {
@@ -91,7 +89,8 @@ export function RecurseLabPage() {
       scenarios={[
         {
           title: 'Simple recursive label tree',
-          description: 'Each node\'s label is rendered as text. Children are discovered automatically via the children array.',
+          description:
+            "Each node's label is rendered as text. Children are discovered automatically via the children array.",
           schema: basicRecurse,
           data: {
             tree: [
@@ -99,24 +98,23 @@ export function RecurseLabPage() {
                 label: 'Root A',
                 children: [
                   { label: 'Child A1', children: [] },
-                  { label: 'Child A2', children: [] }
-                ]
+                  { label: 'Child A2', children: [] },
+                ],
               },
               {
                 label: 'Root B',
-                children: [
-                  { label: 'Child B1', children: [] }
-                ]
-              }
-            ]
-          }
+                children: [{ label: 'Child B1', children: [] }],
+              },
+            ],
+          },
         },
         {
           title: 'Rich tree with icon, label, and depth badge',
-          description: 'Each node renders as a flex row with a folder icon, the node label, and a badge showing its depth level.',
+          description:
+            'Each node renders as a flex row with a folder icon, the node label, and a badge showing its depth level.',
           schema: richRecurse,
-          data: { orgTree: orgTreeData }
-        }
+          data: { orgTree: orgTreeData },
+        },
       ]}
     />
   );

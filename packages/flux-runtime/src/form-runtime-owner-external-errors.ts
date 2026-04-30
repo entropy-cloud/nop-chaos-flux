@@ -1,9 +1,14 @@
-import type { ApplyExternalErrorsInput, FieldState, FormRuntime, ValidationError } from '@nop-chaos/flux-core';
+import type {
+  ApplyExternalErrorsInput,
+  FieldState,
+  FormRuntime,
+  ValidationError,
+} from '@nop-chaos/flux-core';
 import type { ExternalErrorEntry, ManagedFormRuntimeSharedState } from './form-runtime-types';
 
 export function rebuildStoreErrorsFromExternal(
   sharedState: ManagedFormRuntimeSharedState,
-  fieldStates: Record<string, FieldState>
+  fieldStates: Record<string, FieldState>,
 ): Record<string, ValidationError[]> {
   const next: Record<string, ValidationError[]> = {};
 
@@ -36,22 +41,25 @@ export function clearExternalErrorsForPath(args: {
   let changed = false;
 
   for (const [sourceId, entry] of args.sharedState.externalErrors) {
-    const filtered = entry.errors.filter(
-      (error: ValidationError) => {
-        if (error.path === args.name || error.path.startsWith(`${args.name}.`)) {
-          return false;
-        }
-
-        return !(args.name.startsWith(`${error.path}.`) || error.path === args.getThisForm().rootPath);
+    const filtered = entry.errors.filter((error: ValidationError) => {
+      if (error.path === args.name || error.path.startsWith(`${args.name}.`)) {
+        return false;
       }
-    );
+
+      return !(
+        args.name.startsWith(`${error.path}.`) || error.path === args.getThisForm().rootPath
+      );
+    });
 
     if (filtered.length !== entry.errors.length) {
       changed = true;
       if (filtered.length === 0) {
         args.sharedState.externalErrors.delete(sourceId);
       } else {
-        args.sharedState.externalErrors.set(sourceId, { sourceId, errors: filtered } satisfies ExternalErrorEntry);
+        args.sharedState.externalErrors.set(sourceId, {
+          sourceId,
+          errors: filtered,
+        } satisfies ExternalErrorEntry);
       }
     }
   }
@@ -71,6 +79,9 @@ export function storeOwnedExternalErrors(args: {
   if (replace || !existing) {
     args.sharedState.externalErrors.set(sourceId, { sourceId, errors: ownedErrors });
   } else {
-    args.sharedState.externalErrors.set(sourceId, { sourceId, errors: [...existing.errors, ...ownedErrors] });
+    args.sharedState.externalErrors.set(sourceId, {
+      sourceId,
+      errors: [...existing.errors, ...ownedErrors],
+    });
   }
 }

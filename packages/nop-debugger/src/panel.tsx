@@ -7,7 +7,12 @@ import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } fro
 import { buildOverview } from './diagnostics';
 import { loadPersistedSearchHistory, persistSearchHistory } from './controller-helpers';
 import { formatTraceSummary, groupErrors, mergeNetworkRequests } from './panel/event-groups';
-import { useDebuggerSnapshot, useDraggablePosition, useLauncherDrag, useResizablePanel } from './panel/hooks';
+import {
+  useDebuggerSnapshot,
+  useDraggablePosition,
+  useLauncherDrag,
+  useResizablePanel,
+} from './panel/hooks';
 import { NetworkTab } from './panel/network-tab';
 import { NodeTab } from './panel/node-tab';
 import { OverviewTab } from './panel/overview-tab';
@@ -23,7 +28,7 @@ function getFilterLabels(): Record<NopDebuggerFilterKind, string> {
     compile: t('flux.debugger.latestCompile'),
     notify: t('flux.common.more'),
     error: t('flux.debugger.error'),
-    node: t('flux.debugger.node')
+    node: t('flux.debugger.node'),
   };
 }
 
@@ -51,7 +56,7 @@ function matchesRegex(event: import('./types').NopDebugEvent, regex: RegExp): bo
     event.source,
     event.nodeId,
     event.path,
-    event.requestKey
+    event.requestKey,
   ].some((value) => value != null && regex.test(value));
 }
 
@@ -95,14 +100,25 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const snapshot = useDebuggerSnapshot(props.controller);
   const handlePanelTap = useMemo(
     () => (snapshot.minimized ? () => props.controller.unminimize() : undefined),
-    [props.controller, snapshot.minimized]
+    [props.controller, snapshot.minimized],
   );
-  const { position, bind: dragBind } = useDraggablePosition(props.controller, snapshot.position, handlePanelTap);
+  const { position, bind: dragBind } = useDraggablePosition(
+    props.controller,
+    snapshot.position,
+    handlePanelTap,
+  );
   const { width: panelWidth, bind: resizeBind } = useResizablePanel();
-  const { position: launcherPosition, bind: launcherBind, wasDraggedRef, consumeSuppressedClick } = useLauncherDrag(props.controller, snapshot.position);
+  const {
+    position: launcherPosition,
+    bind: launcherBind,
+    wasDraggedRef,
+    consumeSuppressedClick,
+  } = useLauncherDrag(props.controller, snapshot.position);
   useInjectDebuggerStyles(snapshot.enabled);
 
-  const [searchHistory, setSearchHistory] = useState<string[]>(() => loadPersistedSearchHistory(props.controller.id));
+  const [searchHistory, setSearchHistory] = useState<string[]>(() =>
+    loadPersistedSearchHistory(props.controller.id),
+  );
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
   const deferredSearchText = useDeferredValue(searchText);
@@ -135,14 +151,16 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     if (!evalInput.trim() || !inspectData) return;
     const evaluated = props.controller.evaluateNodeExpression({
       cid: inspectData.cid,
-      expression: evalInput.trim()
+      expression: evalInput.trim(),
     });
-    setEvalResult(evaluated.ok ? JSON.stringify(evaluated.value, null, 2) : `Error: ${evaluated.error}`);
+    setEvalResult(
+      evaluated.ok ? JSON.stringify(evaluated.value, null, 2) : `Error: ${evaluated.error}`,
+    );
   };
 
   const filteredEvents = useMemo(
     () => snapshot.events.filter((event) => snapshot.filters.includes(event.group)),
-    [snapshot.events, snapshot.filters]
+    [snapshot.events, snapshot.filters],
   );
 
   const searchedEvents = useMemo(() => {
@@ -152,7 +170,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
   const networkEvents = useMemo(
     () => filteredEvents.filter((event) => event.group === 'api'),
-    [filteredEvents]
+    [filteredEvents],
   );
 
   const mergedRequests = useMemo(() => mergeNetworkRequests(networkEvents), [networkEvents]);
@@ -164,7 +182,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     void snapshot.events;
     return props.controller.createDiagnosticReport({
       eventLimit: 20,
-      includeLatestInteractionTrace: true
+      includeLatestInteractionTrace: true,
     }).latestInteractionTrace;
   }, [props.controller, snapshot.events]);
   const latestTraceSummary = useMemo(() => formatTraceSummary(latestTrace), [latestTrace]);
@@ -267,11 +285,16 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   }
 
   const activeTimelineEvents = errorsOnly
-    ? searchedEvents.filter((e) => e.group === 'error' || e.level === 'error' || e.level === 'warning')
+    ? searchedEvents.filter(
+        (e) => e.group === 'error' || e.level === 'error' || e.level === 'warning',
+      )
     : searchedEvents;
 
   return (
-    <div className="nop-debugger nop-theme-root" style={{ left: `${position.x}px`, top: `${position.y}px`, width: `${panelWidth}px` }}>
+    <div
+      className="nop-debugger nop-theme-root"
+      style={{ left: `${position.x}px`, top: `${position.y}px`, width: `${panelWidth}px` }}
+    >
       <div className="ndbg-resize-handle" {...resizeBind} />
       <div className="ndbg-header">
         <div className="ndbg-drag-handle" {...dragBind}>
@@ -279,10 +302,26 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           <h2>{t('flux.debugger.console')}</h2>
         </div>
         <div className="ndbg-header-actions">
-          <Button type="button" variant="ghost" size="icon-sm" className="ndbg-icon-button" onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())} data-tooltip={snapshot.paused ? 'Resume' : 'Pause'} aria-label={snapshot.paused ? 'Resume' : 'Pause'}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="ndbg-icon-button"
+            onClick={() => (snapshot.paused ? props.controller.resume() : props.controller.pause())}
+            data-tooltip={snapshot.paused ? 'Resume' : 'Pause'}
+            aria-label={snapshot.paused ? 'Resume' : 'Pause'}
+          >
             {snapshot.paused ? <Play size={14} /> : <Pause size={14} />}
           </Button>
-          <Button type="button" variant="ghost" size="icon-sm" className="ndbg-icon-button" onClick={() => props.controller.clear()} data-tooltip="Clear" aria-label="Clear">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="ndbg-icon-button"
+            onClick={() => props.controller.clear()}
+            data-tooltip="Clear"
+            aria-label="Clear"
+          >
             <Trash2 size={14} />
           </Button>
           <Button
@@ -302,7 +341,16 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
           >
             <Crosshair size={14} />
           </Button>
-          <Button type="button" variant="ghost" size="icon-sm" className="ndbg-icon-button" data-testid="ndbg-minimize" onClick={() => props.controller.minimize()} data-tooltip="Minimize" aria-label="Minimize">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="ndbg-icon-button"
+            data-testid="ndbg-minimize"
+            onClick={() => props.controller.minimize()}
+            data-tooltip="Minimize"
+            aria-label="Minimize"
+          >
             <Minimize2 size={14} />
           </Button>
         </div>
@@ -324,7 +372,14 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         ))}
       </div>
 
-      {snapshot.activeTab === 'overview' ? <OverviewTab overview={overview} paused={snapshot.paused} latestTrace={latestTrace} latestTraceSummary={latestTraceSummary} /> : null}
+      {snapshot.activeTab === 'overview' ? (
+        <OverviewTab
+          overview={overview}
+          paused={snapshot.paused}
+          latestTrace={latestTrace}
+          latestTraceSummary={latestTraceSummary}
+        />
+      ) : null}
 
       {snapshot.activeTab === 'timeline' ? (
         <TimelineTab
@@ -347,7 +402,13 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         />
       ) : null}
 
-      {snapshot.activeTab === 'network' ? <NetworkTab mergedRequests={mergedRequests} networkExpandedKey={networkExpandedKey} setNetworkExpandedKey={setNetworkExpandedKey} /> : null}
+      {snapshot.activeTab === 'network' ? (
+        <NetworkTab
+          mergedRequests={mergedRequests}
+          networkExpandedKey={networkExpandedKey}
+          setNetworkExpandedKey={setNetworkExpandedKey}
+        />
+      ) : null}
 
       {snapshot.activeTab === 'node' ? (
         <NodeTab

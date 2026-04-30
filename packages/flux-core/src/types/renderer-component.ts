@@ -1,8 +1,5 @@
 import type { ActionContext, ActionResult } from './actions';
-import type {
-  InspectResult,
-  NodeInstance,
-} from './node-identity';
+import type { InspectResult, NodeInstance } from './node-identity';
 import type { ResolvedNodeMeta, ResolvedNodeProps } from './renderer-compiler';
 import type { ScopeRef } from './scope';
 
@@ -14,7 +11,11 @@ export interface ComponentTarget {
 
 export interface ComponentCapabilities {
   store?: unknown;
-  invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext): Promise<ActionResult> | ActionResult;
+  invoke(
+    method: string,
+    payload: Record<string, unknown> | undefined,
+    ctx: ActionContext,
+  ): Promise<ActionResult> | ActionResult;
   hasMethod?(method: string): boolean;
   listMethods?(): readonly string[];
   getDebugData?(): Record<string, unknown> | undefined;
@@ -69,7 +70,7 @@ export interface ComponentHandleRegistry {
     handle: ComponentHandle,
     options?: {
       cid?: number;
-    }
+    },
   ): () => void;
   unregister(handle: ComponentHandle): void;
   resolve(target: ComponentTarget): ComponentHandle | undefined;

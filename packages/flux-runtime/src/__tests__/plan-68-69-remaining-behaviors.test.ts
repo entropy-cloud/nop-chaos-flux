@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ChildValidationContractRegistration, ChildValidationMode, CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
+import type {
+  ChildValidationContractRegistration,
+  ChildValidationMode,
+  CompiledFormValidationModel,
+  CompiledValidationNode,
+} from '@nop-chaos/flux-core';
 import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime';
 import { isOwnerCompatible } from '../form-runtime-lifecycle';
@@ -10,15 +15,18 @@ function makeMockChildContract(
   childOwnerId: string,
   mode: ChildValidationMode,
   active: boolean,
-  overrides: Partial<ChildValidationContractRegistration> = {}
+  overrides: Partial<ChildValidationContractRegistration> = {},
 ): ChildValidationContractRegistration {
   return {
     childOwnerId,
     mode,
     active,
     unregister: overrides.unregister ?? (() => {}),
-    getState: overrides.getState ?? (() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
-    triggerValidation: overrides.triggerValidation ?? (() => Promise.resolve({ ok: true, errors: [] }))
+    getState:
+      overrides.getState ??
+      (() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+    triggerValidation:
+      overrides.triggerValidation ?? (() => Promise.resolve({ ok: true, errors: [] })),
   };
 }
 
@@ -29,7 +37,7 @@ function makeNode(
     children?: string[];
     required?: boolean;
     ownRuleId?: string;
-  } = {}
+  } = {},
 ): CompiledValidationNode {
   const ruleId = opts.ownRuleId ?? `${path}#0:required`;
   const rules = opts.required
@@ -43,34 +51,40 @@ function makeNode(
     rules,
     behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
     children: opts.children ?? [],
-    parent: opts.parent ?? ''
+    parent: opts.parent ?? '',
   };
 }
 
 function makeFormModel(
   fields: Record<string, CompiledValidationNode>,
-  opts: { ownerId?: string; rootPath?: string } = {}
+  opts: { ownerId?: string; rootPath?: string } = {},
 ): CompiledFormValidationModel {
   const rootPath = opts.rootPath ?? '';
   const nodes: Record<string, CompiledValidationNode> = {
-    [rootPath]: { path: rootPath, kind: 'form', rules: [], children: Object.keys(fields), parent: undefined },
-    ...fields
+    [rootPath]: {
+      path: rootPath,
+      kind: 'form',
+      rules: [],
+      children: Object.keys(fields),
+      parent: undefined,
+    },
+    ...fields,
   };
 
   return {
     ...buildCompiledFormValidationModel({
       behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
       nodes,
-      rootPath
+      rootPath,
     })!,
     ownerId: opts.ownerId,
-    rootPath
+    rootPath,
   };
 }
 
 function makeRuntime(
   validation: CompiledFormValidationModel | undefined,
-  initialValues: Record<string, any> = {}
+  initialValues: Record<string, any> = {},
 ) {
   const parentStore = createScopeStore(initialValues);
   const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
@@ -81,7 +95,7 @@ function makeRuntime(
     parentScope,
     validation,
     validateRule: realValidateRule,
-    executeValidationRule: vi.fn().mockResolvedValue(undefined)
+    executeValidationRule: vi.fn().mockResolvedValue(undefined),
   });
 
   return { runtime };
@@ -91,31 +105,41 @@ describe('isOwnerCompatible', () => {
   it('returns true when all identity dimensions match', () => {
     const m1 = makeFormModel({}, { ownerId: 'owner-1', rootPath: 'profile' });
     const m2 = makeFormModel({}, { ownerId: 'owner-1', rootPath: 'profile' });
-    expect(isOwnerCompatible(m1, m2, 'create-owner', 'create-owner', 'slot-a', 'slot-a')).toBe(true);
+    expect(isOwnerCompatible(m1, m2, 'create-owner', 'create-owner', 'slot-a', 'slot-a')).toBe(
+      true,
+    );
   });
 
   it('returns false when ownerId differs', () => {
     const m1 = makeFormModel({}, { ownerId: 'owner-1', rootPath: 'profile' });
     const m2 = makeFormModel({}, { ownerId: 'owner-2', rootPath: 'profile' });
-    expect(isOwnerCompatible(m1, m2, 'create-owner', 'create-owner', 'slot-a', 'slot-a')).toBe(false);
+    expect(isOwnerCompatible(m1, m2, 'create-owner', 'create-owner', 'slot-a', 'slot-a')).toBe(
+      false,
+    );
   });
 
   it('returns false when rootPath differs', () => {
     const m1 = makeFormModel({}, { ownerId: 'owner-1', rootPath: 'profile' });
     const m2 = makeFormModel({}, { ownerId: 'owner-1', rootPath: 'contact' });
-    expect(isOwnerCompatible(m1, m2, 'create-owner', 'create-owner', 'slot-a', 'slot-a')).toBe(false);
+    expect(isOwnerCompatible(m1, m2, 'create-owner', 'create-owner', 'slot-a', 'slot-a')).toBe(
+      false,
+    );
   });
 
   it('returns false when boundaryKind differs', () => {
     const m1 = makeFormModel({}, { ownerId: 'owner-1', rootPath: '' });
     const m2 = makeFormModel({}, { ownerId: 'owner-1', rootPath: '' });
-    expect(isOwnerCompatible(m1, m2, 'create-owner', 'inherit-owner', 'slot-a', 'slot-a')).toBe(false);
+    expect(isOwnerCompatible(m1, m2, 'create-owner', 'inherit-owner', 'slot-a', 'slot-a')).toBe(
+      false,
+    );
   });
 
   it('returns false when ownerSlotId differs', () => {
     const m1 = makeFormModel({}, { ownerId: 'owner-1', rootPath: '' });
     const m2 = makeFormModel({}, { ownerId: 'owner-1', rootPath: '' });
-    expect(isOwnerCompatible(m1, m2, 'create-owner', 'create-owner', 'slot-a', 'slot-b')).toBe(false);
+    expect(isOwnerCompatible(m1, m2, 'create-owner', 'create-owner', 'slot-a', 'slot-b')).toBe(
+      false,
+    );
   });
 });
 
@@ -125,7 +149,7 @@ describe('applyExternalErrors - sourceId-scoped clear-on-write', () => {
 
     runtime.applyExternalErrors({
       sourceId: 'server',
-      errors: [{ path: 'email', rule: 'email', message: 'Already taken' }]
+      errors: [{ path: 'email', rule: 'email', message: 'Already taken' }],
     });
 
     expect(runtime.getFieldState('email').errors).toHaveLength(1);
@@ -142,8 +166,8 @@ describe('applyExternalErrors - sourceId-scoped clear-on-write', () => {
       sourceId: 'server',
       errors: [
         { path: 'email', rule: 'email', message: 'Taken' },
-        { path: 'username', rule: 'required', message: 'Required' }
-      ]
+        { path: 'username', rule: 'required', message: 'Required' },
+      ],
     });
 
     runtime.setValue('email', 'new@example.com');
@@ -158,20 +182,22 @@ describe('applyExternalErrors - sourceId-scoped clear-on-write', () => {
 
     runtime.applyExternalErrors({
       sourceId: 'server',
-      errors: [{ path: 'email', rule: 'email', message: 'Taken' }]
+      errors: [{ path: 'email', rule: 'email', message: 'Taken' }],
     });
     runtime.applyExternalErrors({
       sourceId: 'other',
-      errors: [{ path: 'name', rule: 'required', message: 'Required' }]
+      errors: [{ path: 'name', rule: 'required', message: 'Required' }],
     });
 
     runtime.applyExternalErrors({
       sourceId: 'server',
       errors: [{ path: 'username', rule: 'required', message: 'Reserved' }],
-      replace: true
+      replace: true,
     });
 
-    expect(runtime.getFieldState('email').errors.filter((e) => e.sourceKind === 'external')).toHaveLength(0);
+    expect(
+      runtime.getFieldState('email').errors.filter((e) => e.sourceKind === 'external'),
+    ).toHaveLength(0);
     expect(runtime.getFieldState('username').errors).toHaveLength(1);
     expect(runtime.getFieldState('name').errors).toHaveLength(1);
   });
@@ -181,7 +207,7 @@ describe('applyExternalErrors - sourceId-scoped clear-on-write', () => {
 
     runtime.applyExternalErrors({
       sourceId: 'server',
-      errors: [{ path: 'address.street', rule: 'required', message: 'Required' }]
+      errors: [{ path: 'address.street', rule: 'required', message: 'Required' }],
     });
 
     runtime.setValue('address', { street: '123 Main St' });
@@ -194,7 +220,7 @@ describe('applyExternalErrors - sourceId-scoped clear-on-write', () => {
 
     runtime.applyExternalErrors({
       sourceId: 'server',
-      errors: [{ path: 'account', rule: 'required', message: 'Account invalid' }]
+      errors: [{ path: 'account', rule: 'required', message: 'Account invalid' }],
     });
 
     runtime.setValue('account.email', 'next@example.com');
@@ -203,11 +229,13 @@ describe('applyExternalErrors - sourceId-scoped clear-on-write', () => {
   });
 
   it('ignores external errors for paths not owned by the current owner', () => {
-    const { runtime } = makeRuntime(makeFormModel({ email: makeNode('email') }, { rootPath: 'account' }));
+    const { runtime } = makeRuntime(
+      makeFormModel({ email: makeNode('email') }, { rootPath: 'account' }),
+    );
 
     const snapshot = runtime.applyExternalErrors({
       sourceId: 'server',
-      errors: [{ path: 'foreign.path', rule: 'required', message: 'Not owned' }]
+      errors: [{ path: 'foreign.path', rule: 'required', message: 'Not owned' }],
     });
 
     expect(snapshot.hasErrors).toBe(false);
@@ -219,12 +247,22 @@ describe('submit supersession', () => {
   it('submit bumps all validationRuns counters before validating', async () => {
     const model = makeFormModel({
       name: makeNode('name', { required: true }),
-      email: makeNode('email', { required: true })
+      email: makeNode('email', { required: true }),
     });
     const { runtime } = makeRuntime(model);
 
-    runtime.registerField({ path: 'name', getValue() { return ''; } });
-    runtime.registerField({ path: 'email', getValue() { return ''; } });
+    runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
+    runtime.registerField({
+      path: 'email',
+      getValue() {
+        return '';
+      },
+    });
 
     await runtime.validateField('name');
     expect(runtime.getFieldState('name').errors).toHaveLength(1);
@@ -243,8 +281,8 @@ describe('child contract gating - canSubmit', () => {
 
     runtime.registerChildContract(
       makeMockChildContract('child-form', 'summary-gate', true, {
-        getState: () => ({ ready: false, validating: false, valid: true, hasErrors: false })
-      })
+        getState: () => ({ ready: false, validating: false, valid: true, hasErrors: false }),
+      }),
     );
 
     expect(runtime.canSubmit).toBe(false);
@@ -255,8 +293,8 @@ describe('child contract gating - canSubmit', () => {
 
     runtime.registerChildContract(
       makeMockChildContract('child-form', 'summary-gate', true, {
-        getState: () => ({ ready: true, validating: true, valid: true, hasErrors: false })
-      })
+        getState: () => ({ ready: true, validating: true, valid: true, hasErrors: false }),
+      }),
     );
 
     expect(runtime.canSubmit).toBe(false);
@@ -267,8 +305,8 @@ describe('child contract gating - canSubmit', () => {
 
     runtime.registerChildContract(
       makeMockChildContract('child-form', 'summary-gate', true, {
-        getState: () => ({ ready: true, validating: false, valid: false, hasErrors: true })
-      })
+        getState: () => ({ ready: true, validating: false, valid: false, hasErrors: true }),
+      }),
     );
 
     expect(runtime.canSubmit).toBe(false);
@@ -279,8 +317,8 @@ describe('child contract gating - canSubmit', () => {
 
     runtime.registerChildContract(
       makeMockChildContract('child-form', 'summary-gate', true, {
-        getState: () => ({ ready: true, validating: false, valid: true, hasErrors: false })
-      })
+        getState: () => ({ ready: true, validating: false, valid: true, hasErrors: false }),
+      }),
     );
 
     expect(runtime.canSubmit).toBe(true);
@@ -289,9 +327,7 @@ describe('child contract gating - canSubmit', () => {
   it('canSubmit is true when a summary-gate child contract is inactive', () => {
     const { runtime } = makeRuntime(undefined);
 
-    runtime.registerChildContract(
-      makeMockChildContract('child-form', 'summary-gate', false)
-    );
+    runtime.registerChildContract(makeMockChildContract('child-form', 'summary-gate', false));
 
     expect(runtime.canSubmit).toBe(true);
   });
@@ -299,9 +335,7 @@ describe('child contract gating - canSubmit', () => {
   it('canSubmit is not affected by recurse-submit mode contracts', () => {
     const { runtime } = makeRuntime(undefined);
 
-    runtime.registerChildContract(
-      makeMockChildContract('child-form', 'recurse-submit', true)
-    );
+    runtime.registerChildContract(makeMockChildContract('child-form', 'recurse-submit', true));
 
     expect(runtime.canSubmit).toBe(true);
   });
@@ -310,18 +344,23 @@ describe('child contract gating - canSubmit', () => {
 describe('refreshCompiledModel - rule-identity-set retention', () => {
   it('retains errors for paths with unchanged rule identity set', async () => {
     const model1 = makeFormModel({
-      name: makeNode('name', { required: true })
+      name: makeNode('name', { required: true }),
     });
     const { runtime } = makeRuntime(model1);
 
-    runtime.registerField({ path: 'name', getValue() { return ''; } });
+    runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     await runtime.validateField('name');
 
     expect(runtime.getFieldState('name').errors).toHaveLength(1);
 
     const model2 = makeFormModel({
       name: makeNode('name', { required: true }),
-      email: makeNode('email')
+      email: makeNode('email'),
     });
 
     runtime.refreshCompiledModel(model2);
@@ -331,17 +370,22 @@ describe('refreshCompiledModel - rule-identity-set retention', () => {
 
   it('clears errors for paths whose rule identity set changed', async () => {
     const model1 = makeFormModel({
-      name: makeNode('name', { required: true })
+      name: makeNode('name', { required: true }),
     });
     const { runtime } = makeRuntime(model1);
 
-    runtime.registerField({ path: 'name', getValue() { return ''; } });
+    runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     await runtime.validateField('name');
 
     expect(runtime.getFieldState('name').errors).toHaveLength(1);
 
     const model2 = makeFormModel({
-      name: makeNode('name', { required: false, ownRuleId: 'name#new-rule' })
+      name: makeNode('name', { required: false, ownRuleId: 'name#new-rule' }),
     });
 
     runtime.refreshCompiledModel(model2);
@@ -352,12 +396,22 @@ describe('refreshCompiledModel - rule-identity-set retention', () => {
   it('clears errors for paths not present in the new model', async () => {
     const model1 = makeFormModel({
       name: makeNode('name', { required: true }),
-      email: makeNode('email', { required: true })
+      email: makeNode('email', { required: true }),
     });
     const { runtime } = makeRuntime(model1);
 
-    runtime.registerField({ path: 'name', getValue() { return ''; } });
-    runtime.registerField({ path: 'email', getValue() { return ''; } });
+    runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
+    runtime.registerField({
+      path: 'email',
+      getValue() {
+        return '';
+      },
+    });
     await runtime.validateField('name');
     await runtime.validateField('email');
 
@@ -365,7 +419,7 @@ describe('refreshCompiledModel - rule-identity-set retention', () => {
     expect(runtime.getFieldState('email').errors).toHaveLength(1);
 
     const model2 = makeFormModel({
-      name: makeNode('name', { required: true })
+      name: makeNode('name', { required: true }),
     });
 
     runtime.refreshCompiledModel(model2);

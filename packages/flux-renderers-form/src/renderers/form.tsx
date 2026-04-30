@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
-import {
-  FormContext,
-  FormLayoutContext,
-  ScopeContext,
-} from '@nop-chaos/flux-react';
-import {
-  type RendererComponentProps,
-  type ScopeRef
-} from '@nop-chaos/flux-core';
+import { FormContext, FormLayoutContext, ScopeContext } from '@nop-chaos/flux-react';
+import { type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
@@ -15,7 +8,7 @@ import {
   useCurrentComponentRegistry,
   useCurrentPage,
   useRenderScope,
-  useRendererRuntime
+  useRendererRuntime,
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { createFormComponentHandle } from '@nop-chaos/flux-react';
@@ -27,7 +20,7 @@ function createFormLifecycleScope(
   scope: ScopeRef,
   importBindings: Readonly<Record<string, unknown>>,
   _formName: string | undefined,
-  _getFormValues: () => Record<string, unknown>
+  _getFormValues: () => Record<string, unknown>,
 ): ScopeRef {
   const hasImports = Object.keys(importBindings).length > 0;
 
@@ -71,7 +64,10 @@ function createFormLifecycleScope(
     },
     readVisible() {
       const bindings = getDynamicBindings();
-      visibleView = Object.assign(Object.create(scope.readVisible()) as Record<string, unknown>, bindings);
+      visibleView = Object.assign(
+        Object.create(scope.readVisible()) as Record<string, unknown>,
+        bindings,
+      );
 
       return visibleView as Record<string, any>;
     },
@@ -79,7 +75,7 @@ function createFormLifecycleScope(
       const bindings = getDynamicBindings();
       materialized = {
         ...scope.materializeVisible(),
-        ...bindings
+        ...bindings,
       };
 
       return materialized as Record<string, any>;
@@ -92,15 +88,17 @@ function createFormLifecycleScope(
     },
     replace(data) {
       scope.replace?.(data);
-    }
+    },
   };
 }
 
 function resolveLifecycleWriteScope(parentScope: ScopeRef): ScopeRef {
   const visible = parentScope.readVisible();
   const parentVisible = parentScope.parent?.readVisible();
-  const looksLikeSurfaceShell = typeof visible.dialogId === 'string' || typeof visible.drawerId === 'string';
-  const parentLooksLikeSurfaceShell = typeof parentVisible?.dialogId === 'string' || typeof parentVisible?.drawerId === 'string';
+  const looksLikeSurfaceShell =
+    typeof visible.dialogId === 'string' || typeof visible.drawerId === 'string';
+  const parentLooksLikeSurfaceShell =
+    typeof parentVisible?.dialogId === 'string' || typeof parentVisible?.drawerId === 'string';
 
   return looksLikeSurfaceShell && parentScope.parent && !parentLooksLikeSurfaceShell
     ? parentScope.parent
@@ -119,12 +117,13 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const slotProps = props.props as FormSchema;
   const formGap = resolveGap(slotProps.gap as number | string | undefined);
   const importBindings = useMemo(
-    () => runtime.getImportedExpressionBindings({
-      imports: nodeImports,
-      actionScope: currentActionScope,
-      schemaUrl: props.templateNode.schemaUrl ?? props.path
-    }),
-    [runtime, nodeImports, currentActionScope, props.templateNode.schemaUrl, props.path]
+    () =>
+      runtime.getImportedExpressionBindings({
+        imports: nodeImports,
+        actionScope: currentActionScope,
+        schemaUrl: props.templateNode.schemaUrl ?? props.path,
+      }),
+    [runtime, nodeImports, currentActionScope, props.templateNode.schemaUrl, props.path],
   );
   const importsReady = true;
 
@@ -136,25 +135,46 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       : undefined;
 
   const ownedForm = useMemo(
-    () => runtime.createFormRuntime({
-      id: formId,
-      name: formName,
+    () =>
+      runtime.createFormRuntime({
+        id: formId,
+        name: formName,
+        initialValues,
+        parentScope,
+        page: currentPage,
+        validation: props.templateNode.validationPlan,
+      }),
+    [
+      runtime,
+      formId,
+      formName,
       initialValues,
       parentScope,
-      page: currentPage,
-      validation: props.templateNode.validationPlan
-    }),
-    [runtime, formId, formName, initialValues, parentScope, currentPage, props.templateNode.validationPlan]
+      currentPage,
+      props.templateNode.validationPlan,
+    ],
   );
 
   const baseLifecycleScope = ownedForm.scope;
   const lifecycleScope = useMemo(
-    () => createFormLifecycleScope(baseLifecycleScope, importBindings, formName, () => ownedForm.store.getState().values),
-    [baseLifecycleScope, formName, importBindings, ownedForm.store]
+    () =>
+      createFormLifecycleScope(
+        baseLifecycleScope,
+        importBindings,
+        formName,
+        () => ownedForm.store.getState().values,
+      ),
+    [baseLifecycleScope, formName, importBindings, ownedForm.store],
   );
   const lifecycleWriteScope = useMemo(
-    () => createFormLifecycleScope(resolveLifecycleWriteScope(parentScope), importBindings, formName, () => ownedForm.store.getState().values),
-    [parentScope, formName, importBindings, ownedForm.store]
+    () =>
+      createFormLifecycleScope(
+        resolveLifecycleWriteScope(parentScope),
+        importBindings,
+        formName,
+        () => ownedForm.store.getState().values,
+      ),
+    [parentScope, formName, importBindings, ownedForm.store],
   );
   const initAction = props.events['initAction'];
   const submitAction = props.events['submitAction'];
@@ -169,61 +189,73 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   useEffect(() => {
     ownedForm.setLifecycleHandlers({
       submitAction: submitAction
-        ? (options) => submitAction(undefined, {
-            scope: lifecycleScope,
-            form: ownedForm,
-            interactionId: options?.interactionId,
-            signal: options?.signal
-          })
+        ? (options) =>
+            submitAction(undefined, {
+              scope: lifecycleScope,
+              form: ownedForm,
+              interactionId: options?.interactionId,
+              signal: options?.signal,
+            })
         : undefined,
       onSubmitSuccess: submitSuccessAction
-        ? (result, options) => submitSuccessAction(undefined, {
-            scope: lifecycleWriteScope,
-            form: ownedForm,
-            interactionId: options?.interactionId,
-            signal: options?.signal,
-            prevResult: result,
-            evaluationBindings: {
-              result,
-              error: undefined,
-              prevResult: undefined
-            }
-          })
+        ? (result, options) =>
+            submitSuccessAction(undefined, {
+              scope: lifecycleWriteScope,
+              form: ownedForm,
+              interactionId: options?.interactionId,
+              signal: options?.signal,
+              prevResult: result,
+              evaluationBindings: {
+                result,
+                error: undefined,
+                prevResult: undefined,
+              },
+            })
         : undefined,
       onSubmitError: submitErrorAction
-        ? (result, options) => submitErrorAction(undefined, {
-            scope: lifecycleWriteScope,
-            form: ownedForm,
-            interactionId: options?.interactionId,
-            signal: options?.signal,
-            prevResult: result,
-            evaluationBindings: {
-              result,
-              error: result.error,
-              prevResult: undefined
-            }
-          })
+        ? (result, options) =>
+            submitErrorAction(undefined, {
+              scope: lifecycleWriteScope,
+              form: ownedForm,
+              interactionId: options?.interactionId,
+              signal: options?.signal,
+              prevResult: result,
+              evaluationBindings: {
+                result,
+                error: result.error,
+                prevResult: undefined,
+              },
+            })
         : undefined,
       onValidateError: validateErrorAction
-        ? (result, options) => validateErrorAction(undefined, {
-            scope: lifecycleWriteScope,
-            form: ownedForm,
-            interactionId: options?.interactionId,
-            signal: options?.signal,
-            prevResult: result,
-            evaluationBindings: {
-              result,
-              error: result.error,
-              prevResult: undefined
-            }
-          })
-        : undefined
+        ? (result, options) =>
+            validateErrorAction(undefined, {
+              scope: lifecycleWriteScope,
+              form: ownedForm,
+              interactionId: options?.interactionId,
+              signal: options?.signal,
+              prevResult: result,
+              evaluationBindings: {
+                result,
+                error: result.error,
+                prevResult: undefined,
+              },
+            })
+        : undefined,
     });
 
     return () => {
       ownedForm.setLifecycleHandlers(undefined);
     };
-  }, [ownedForm, lifecycleScope, lifecycleWriteScope, submitAction, submitErrorAction, submitSuccessAction, validateErrorAction]);
+  }, [
+    ownedForm,
+    lifecycleScope,
+    lifecycleWriteScope,
+    submitAction,
+    submitErrorAction,
+    submitSuccessAction,
+    validateErrorAction,
+  ]);
 
   useEffect(() => {
     if (!initAction || !importsReady) {
@@ -238,8 +270,14 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     void initAction(undefined, { scope: lifecycleScope, form: ownedForm });
   }, [activationKey, importsReady, initAction, lifecycleScope, ownedForm]);
 
-  const statusPath = typeof (props.props as FormSchema).statusPath === 'string' ? (props.props as FormSchema).statusPath : undefined;
-  const valuesPath = typeof (props.props as FormSchema).valuesPath === 'string' ? (props.props as FormSchema).valuesPath : undefined;
+  const statusPath =
+    typeof (props.props as FormSchema).statusPath === 'string'
+      ? (props.props as FormSchema).statusPath
+      : undefined;
+  const valuesPath =
+    typeof (props.props as FormSchema).valuesPath === 'string'
+      ? (props.props as FormSchema).valuesPath
+      : undefined;
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;
   const formLabelWidth = (props.props as FormSchema).labelWidth;
@@ -261,19 +299,35 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     }
 
     return currentComponentRegistry.register(createFormComponentHandle(ownedForm), {
-      cid: props.meta.cid
+      cid: props.meta.cid,
     });
   }, [currentComponentRegistry, ownedForm, props.meta.cid]);
 
   return (
-      <FormContext.Provider value={ownedForm}>
+    <FormContext.Provider value={ownedForm}>
       <ScopeContext.Provider value={ownedForm.scope}>
-      <FormLayoutContext.Provider value={formLayoutValue}>
-        <section className={cn('nop-form', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-          {hasRendererSlotContent(bodyContent) ? <div data-slot="form-body" className={cn(formGap.className, slotProps.bodyClassName)} style={formGap.style}>{bodyContent}</div> : null}
-          {hasRendererSlotContent(actionsContent) ? <div data-slot="form-actions" className={cn(slotProps.actionsClassName)}>{actionsContent}</div> : null}
-        </section>
-      </FormLayoutContext.Provider>
+        <FormLayoutContext.Provider value={formLayoutValue}>
+          <section
+            className={cn('nop-form', props.meta.className)}
+            data-testid={props.meta.testid || undefined}
+            data-cid={props.meta.cid || undefined}
+          >
+            {hasRendererSlotContent(bodyContent) ? (
+              <div
+                data-slot="form-body"
+                className={cn(formGap.className, slotProps.bodyClassName)}
+                style={formGap.style}
+              >
+                {bodyContent}
+              </div>
+            ) : null}
+            {hasRendererSlotContent(actionsContent) ? (
+              <div data-slot="form-actions" className={cn(slotProps.actionsClassName)}>
+                {actionsContent}
+              </div>
+            ) : null}
+          </section>
+        </FormLayoutContext.Provider>
       </ScopeContext.Provider>
     </FormContext.Provider>
   );

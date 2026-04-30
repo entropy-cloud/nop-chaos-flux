@@ -105,7 +105,8 @@ export const enUS: Resource = {
     sheet: {
       close: 'Close',
       deleteTitle: 'Delete Sheet',
-      deleteDescription: 'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
+      deleteDescription:
+        'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
     },
     carousel: {
       previous: 'Previous slide',

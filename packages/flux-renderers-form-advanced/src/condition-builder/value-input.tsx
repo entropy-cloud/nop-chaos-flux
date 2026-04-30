@@ -24,11 +24,20 @@ export function ValueInput({ field, op, value, onChange, disabled }: ValueInputP
 
   switch (field.type) {
     case 'text':
-      return <TextInput value={value} onChange={onChange} disabled={disabled} placeholder={field.placeholder} />;
+      return (
+        <TextInput
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          placeholder={field.placeholder}
+        />
+      );
     case 'number':
       return <NumberInput value={value} onChange={onChange} disabled={disabled} />;
     case 'select':
-      return <SelectInput field={field} op={op} value={value} onChange={onChange} disabled={disabled} />;
+      return (
+        <SelectInput field={field} op={op} value={value} onChange={onChange} disabled={disabled} />
+      );
     case 'boolean':
       return <BooleanInput field={field} value={value} onChange={onChange} disabled={disabled} />;
     default:
@@ -36,8 +45,16 @@ export function ValueInput({ field, op, value, onChange, disabled }: ValueInputP
   }
 }
 
-function TextInput({ value, onChange, disabled, placeholder }: {
-  value: unknown; onChange: (v: unknown) => void; disabled?: boolean; placeholder?: string;
+function TextInput({
+  value,
+  onChange,
+  disabled,
+  placeholder,
+}: {
+  value: unknown;
+  onChange: (v: unknown) => void;
+  disabled?: boolean;
+  placeholder?: string;
 }) {
   return (
     <Input
@@ -51,32 +68,56 @@ function TextInput({ value, onChange, disabled, placeholder }: {
   );
 }
 
-function NumberInput({ value, onChange, disabled }: {
-  value: unknown; onChange: (v: unknown) => void; disabled?: boolean;
+function NumberInput({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: unknown;
+  onChange: (v: unknown) => void;
+  disabled?: boolean;
 }) {
   return (
-      <Input
-        type="number"
-        value={value == null ? '' : String(value)}
-        placeholder={t('conditionBuilder.numberPlaceholder')}
-        disabled={disabled}
-        className="h-7 text-xs min-w-[80px]"
-        onChange={(e) => {
-          const v = e.target.value;
-          onChange(v === '' ? undefined : Number(v));
+    <Input
+      type="number"
+      value={value == null ? '' : String(value)}
+      placeholder={t('conditionBuilder.numberPlaceholder')}
+      disabled={disabled}
+      className="h-7 text-xs min-w-[80px]"
+      onChange={(e) => {
+        const v = e.target.value;
+        onChange(v === '' ? undefined : Number(v));
       }}
     />
   );
 }
 
-function SelectInput({ field, op, value, onChange, disabled }: {
-  field: ConditionSelectField; op: string; value: unknown; onChange: (v: unknown) => void; disabled?: boolean;
+function SelectInput({
+  field,
+  op,
+  value,
+  onChange,
+  disabled,
+}: {
+  field: ConditionSelectField;
+  op: string;
+  value: unknown;
+  onChange: (v: unknown) => void;
+  disabled?: boolean;
 }) {
   const options = field.options ?? [];
   const isMulti = op === 'select_any_in' || op === 'select_not_any_in' || field.multiple;
 
   if (isMulti) {
-    return <MultiSelectInput options={options} value={value} onChange={onChange} disabled={disabled} placeholder={field.placeholder} />;
+    return (
+      <MultiSelectInput
+        options={options}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        placeholder={field.placeholder}
+      />
+    );
   }
 
   const stringValue = value == null ? '' : String(value);
@@ -96,7 +137,13 @@ function SelectInput({ field, op, value, onChange, disabled }: {
   );
 }
 
-function MultiSelectInput({ options, value, onChange, disabled, placeholder }: {
+function MultiSelectInput({
+  options,
+  value,
+  onChange,
+  disabled,
+  placeholder,
+}: {
   options: Array<{ label: string; value: unknown }>;
   value: unknown;
   onChange: (v: unknown) => void;
@@ -118,13 +165,20 @@ function MultiSelectInput({ options, value, onChange, disabled, placeholder }: {
         selected.map((v) => {
           const opt = options.find((o) => String(o.value) === v);
           return (
-            <Badge key={v} variant="secondary" className="text-[10px] px-1.5 py-0 cursor-pointer" onClick={() => !disabled && toggle(v)}>
+            <Badge
+              key={v}
+              variant="secondary"
+              className="text-[10px] px-1.5 py-0 cursor-pointer"
+              onClick={() => !disabled && toggle(v)}
+            >
               {opt?.label ?? v} ×
             </Badge>
           );
         })
       ) : (
-        <span className="text-xs text-muted-foreground">{placeholder ?? t('conditionBuilder.selectPlaceholder')}</span>
+        <span className="text-xs text-muted-foreground">
+          {placeholder ?? t('conditionBuilder.selectPlaceholder')}
+        </span>
       )}
       <div className="relative">
         <NativeSelect
@@ -135,7 +189,9 @@ function MultiSelectInput({ options, value, onChange, disabled, placeholder }: {
             if (e.target.value) toggle(e.target.value);
           }}
         >
-          <NativeSelectOption value="">{placeholder ?? t('conditionBuilder.addOption')}</NativeSelectOption>
+          <NativeSelectOption value="">
+            {placeholder ?? t('conditionBuilder.addOption')}
+          </NativeSelectOption>
           {options
             .filter((o) => !selected.includes(String(o.value)))
             .map((opt) => (
@@ -152,8 +208,16 @@ function MultiSelectInput({ options, value, onChange, disabled, placeholder }: {
   );
 }
 
-function BooleanInput({ field, value, onChange, disabled }: {
-  value: unknown; onChange: (v: unknown) => void; disabled?: boolean; field: { trueLabel?: string; falseLabel?: string };
+function BooleanInput({
+  field,
+  value,
+  onChange,
+  disabled,
+}: {
+  value: unknown;
+  onChange: (v: unknown) => void;
+  disabled?: boolean;
+  field: { trueLabel?: string; falseLabel?: string };
 }) {
   const stringValue = value == null ? '' : String(value);
   const trueLabel = field.trueLabel ?? t('conditionBuilder.boolTrue');
@@ -172,38 +236,64 @@ function BooleanInput({ field, value, onChange, disabled }: {
   );
 }
 
-function BetweenInput({ field, value, onChange, disabled }: {
-  field: ConditionField; value: unknown; onChange: (v: unknown) => void; disabled?: boolean;
+function BetweenInput({
+  field,
+  value,
+  onChange,
+  disabled,
+}: {
+  field: ConditionField;
+  value: unknown;
+  onChange: (v: unknown) => void;
+  disabled?: boolean;
 }) {
   const arr = Array.isArray(value) ? value : [undefined, undefined];
-  const clean = (v: unknown) => (v === undefined || v === '') ? undefined : v;
+  const clean = (v: unknown) => (v === undefined || v === '' ? undefined : v);
   return (
     <div className="flex items-center gap-1">
-      <BetweenFieldInput field={field} value={arr[0]} disabled={disabled} onChange={(v) => {
-        const left = clean(v);
-        const right = clean(arr[1]);
-        if (left !== undefined && right !== undefined) {
-          onChange([left, right]);
-        } else {
-          onChange(undefined);
-        }
-      }} />
+      <BetweenFieldInput
+        field={field}
+        value={arr[0]}
+        disabled={disabled}
+        onChange={(v) => {
+          const left = clean(v);
+          const right = clean(arr[1]);
+          if (left !== undefined && right !== undefined) {
+            onChange([left, right]);
+          } else {
+            onChange(undefined);
+          }
+        }}
+      />
       <span className="text-muted-foreground text-xs select-none">~</span>
-      <BetweenFieldInput field={field} value={arr[1]} disabled={disabled} onChange={(v) => {
-        const left = clean(arr[0]);
-        const right = clean(v);
-        if (left !== undefined && right !== undefined) {
-          onChange([left, right]);
-        } else {
-          onChange(undefined);
-        }
-      }} />
+      <BetweenFieldInput
+        field={field}
+        value={arr[1]}
+        disabled={disabled}
+        onChange={(v) => {
+          const left = clean(arr[0]);
+          const right = clean(v);
+          if (left !== undefined && right !== undefined) {
+            onChange([left, right]);
+          } else {
+            onChange(undefined);
+          }
+        }}
+      />
     </div>
   );
 }
 
-function BetweenFieldInput({ field, value, onChange, disabled }: {
-  field: ConditionField; value: unknown; onChange: (v: unknown) => void; disabled?: boolean;
+function BetweenFieldInput({
+  field,
+  value,
+  onChange,
+  disabled,
+}: {
+  field: ConditionField;
+  value: unknown;
+  onChange: (v: unknown) => void;
+  disabled?: boolean;
 }) {
   if (field.type === 'number') {
     return (

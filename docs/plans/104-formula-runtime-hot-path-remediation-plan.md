@@ -98,6 +98,7 @@ Targets: `evaluator.ts`, `lexer.ts`, `compile.ts`
 **Phase 3 Results (2026-04-16):**
 
 `evaluator.ts`:
+
 - Merged `hasFrame()` + `lookupFrame()` into single `lookupFrame()` returning `FRAME_NOT_FOUND` sentinel. Single frame-chain traversal instead of two.
 - Hoisted `parseImportedFunctionName` regex to module-level `IMPORTED_FUNCTION_RE`.
 - Optimized arrow-function: single-param case uses computed property `{ [paramName]: args[0] }` instead of `Object.fromEntries(map)`. Multi-param case uses `for` loop instead of `map + fromEntries`.

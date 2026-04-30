@@ -201,7 +201,8 @@ export function createProjectedFormRuntime(
   if (options.supportsArrayMutations) {
     proxy.appendValue = (path, value) => parentForm.appendValue(options.prefixPath(path), value);
     proxy.prependValue = (path, value) => parentForm.prependValue(options.prefixPath(path), value);
-    proxy.insertValue = (path, index, value) => parentForm.insertValue(options.prefixPath(path), index, value);
+    proxy.insertValue = (path, index, value) =>
+      parentForm.insertValue(options.prefixPath(path), index, value);
     proxy.removeValue = (path, index) => parentForm.removeValue(options.prefixPath(path), index);
     proxy.moveValue = (path, from, to) => parentForm.moveValue(options.prefixPath(path), from, to);
     proxy.swapValue = (path, a, b) => parentForm.swapValue(options.prefixPath(path), a, b);

@@ -1,12 +1,12 @@
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
-import { Columns, Copy, Info } from 'lucide-react'
-import type { DatasetStoreApi } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
-import { Button, ScrollArea, cn } from '@nop-chaos/ui'
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { Columns, Copy, Info } from 'lucide-react';
+import type { DatasetStoreApi } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
+import { Button, ScrollArea, cn } from '@nop-chaos/ui';
 
 interface FieldListProps {
-  store: DatasetStoreApi
-  onFieldClick?: (datasetName: string, columnName: string) => void
+  store: DatasetStoreApi;
+  onFieldClick?: (datasetName: string, columnName: string) => void;
 }
 
 export function FieldList({ store, onFieldClick }: FieldListProps) {
@@ -15,40 +15,42 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
     store.getState,
     store.getState,
     (state) => {
-      if (!state.selectedDatasetId) return null
-      return state.datasets.find(ds => ds.id === state.selectedDatasetId) || null
-    }
-  )
+      if (!state.selectedDatasetId) return null;
+      return state.datasets.find((ds) => ds.id === state.selectedDatasetId) || null;
+    },
+  );
 
   const handleFieldClick = (column: { name: string; label: string }) => {
-    if (!selectedDataset || !onFieldClick) return
-    onFieldClick(selectedDataset.name, column.name)
-  }
+    if (!selectedDataset || !onFieldClick) return;
+    onFieldClick(selectedDataset.name, column.name);
+  };
 
   const getTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
       sql: 'SQL',
       api: 'API',
       mongo: 'Mongo',
-      static: 'Static'
-    }
-    return labels[type] || type
-  }
+      static: 'Static',
+    };
+    return labels[type] || type;
+  };
 
   const getTypeColor = (type: string): string => {
     const colors: Record<string, string> = {
       sql: 'bg-primary/10 text-primary border-primary/20',
       api: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
       mongo: 'bg-violet-500/10 text-violet-700 border-violet-500/20',
-      static: 'bg-muted text-muted-foreground border-border'
-    }
-    return colors[type] || 'bg-muted text-muted-foreground border-border'
-  }
+      static: 'bg-muted text-muted-foreground border-border',
+    };
+    return colors[type] || 'bg-muted text-muted-foreground border-border';
+  };
 
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.fields')}</h2>
+        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
+          {t('flux.wordEditor.fields')}
+        </h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3">
@@ -89,7 +91,10 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
                           {column.name}
                         </h3>
                         <span
-                          className={cn('px-1.5 py-0.5 text-[10px] font-medium rounded border', getTypeColor(column.type))}
+                          className={cn(
+                            'px-1.5 py-0.5 text-[10px] font-medium rounded border',
+                            getTypeColor(column.type),
+                          )}
                         >
                           {getTypeLabel(column.type)}
                         </span>
@@ -108,8 +113,8 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
                       variant="ghost"
                       size="icon-xs"
                       onClick={(e) => {
-                        e.stopPropagation()
-                        handleFieldClick(column)
+                        e.stopPropagation();
+                        handleFieldClick(column);
                       }}
                       className="opacity-0 group-hover:opacity-100 transition-all"
                       title="Copy field reference"
@@ -124,5 +129,5 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }

@@ -15,8 +15,8 @@ export function createCompileSymbolTable(frames: readonly SymbolFrame[] = []): C
         {
           id: frame.id ?? `symbol-frame-${frames.length + 1}`,
           kind: frame.kind,
-          symbols: frame.symbols
-        }
+          symbols: frame.symbols,
+        },
       ]);
     },
     resolve(name: string): SymbolInfo | undefined {
@@ -28,7 +28,7 @@ export function createCompileSymbolTable(frames: readonly SymbolFrame[] = []): C
       }
 
       return undefined;
-    }
+    },
   };
 }
 
@@ -40,21 +40,25 @@ export function createBaseCompileSymbolTable(): CompileSymbolTable {
     id: 'root-builtins',
     kind: 'root',
     symbols: {
-      '$Math': {
+      $Math: {
         name: '$Math',
         kind: 'builtin-namespace',
-        members: Object.getOwnPropertyNames(Math).filter((name) => typeof mathRecord[name] !== 'undefined')
+        members: Object.getOwnPropertyNames(Math).filter(
+          (name) => typeof mathRecord[name] !== 'undefined',
+        ),
       },
-      '$JSON': {
+      $JSON: {
         name: '$JSON',
         kind: 'builtin-namespace',
-        members: Object.getOwnPropertyNames(JSON).filter((name) => typeof jsonRecord[name] !== 'undefined')
+        members: Object.getOwnPropertyNames(JSON).filter(
+          (name) => typeof jsonRecord[name] !== 'undefined',
+        ),
       },
-      '$Date': {
+      $Date: {
         name: '$Date',
         kind: 'builtin-namespace',
-        members: ['format', 'now', 'addDays', 'addMonths', 'addYears', 'startOfDay', 'endOfDay']
-      }
-    }
+        members: ['format', 'now', 'addDays', 'addMonths', 'addYears', 'startOfDay', 'endOfDay'],
+      },
+    },
   });
 }

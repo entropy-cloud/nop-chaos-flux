@@ -24,37 +24,37 @@ Based on live repo audit on 2026-04-16:
 
 The following renderers contain inline layout styles that violate the "No Default Layout Styles in Renderers" rule from `docs/architecture/styling-system.md`:
 
-| File | Line | Violation | Documented Rule |
-|------|------|-----------|-----------------|
-| `packages/flux-renderers-form/src/renderers/input.tsx:109` | `<div className="grid gap-2">` | Inline `gap-2` | "renderer injects invisible layout" is prohibited |
-| `packages/flux-renderers-form/src/renderers/input.tsx:167` | `<span className="inline-flex items-center gap-2.5">` | Inline gap | Same |
-| `packages/flux-renderers-form/src/renderers/input.tsx:193` | `<span className="inline-flex items-center gap-3">` | Inline gap | Same |
-| `packages/flux-renderers-form/src/renderers/input.tsx:221` | `<div className="grid gap-2.5">` | Inline gap | Same |
-| `packages/flux-renderers-form/src/renderers/input.tsx:223` | `<span className="inline-flex items-center gap-2 ...">` | Inline gap (loading) | Same |
-| `packages/flux-renderers-form/src/renderers/input.tsx:229` | `<RadioGroup className="grid gap-2.5">` | Inline gap | Same |
-| `packages/flux-renderers-form/src/renderers/input.tsx:238` | `<Label ... className="inline-flex items-center gap-2.5">` | Inline gap | Same |
-| `packages/flux-renderers-form/src/renderers/input.tsx:263` | `<div className="grid gap-2.5">` | Inline gap | Same |
-| `packages/flux-renderers-form/src/renderers/input.tsx:265` | `<span className="inline-flex items-center gap-2 ...">` | Inline gap (loading) | Same |
-| `packages/flux-renderers-form/src/renderers/input.tsx:274` | `<Label ... className="inline-flex items-center gap-2.5">` | Inline gap | Same |
+| File                                                       | Line                                                       | Violation            | Documented Rule                                   |
+| ---------------------------------------------------------- | ---------------------------------------------------------- | -------------------- | ------------------------------------------------- |
+| `packages/flux-renderers-form/src/renderers/input.tsx:109` | `<div className="grid gap-2">`                             | Inline `gap-2`       | "renderer injects invisible layout" is prohibited |
+| `packages/flux-renderers-form/src/renderers/input.tsx:167` | `<span className="inline-flex items-center gap-2.5">`      | Inline gap           | Same                                              |
+| `packages/flux-renderers-form/src/renderers/input.tsx:193` | `<span className="inline-flex items-center gap-3">`        | Inline gap           | Same                                              |
+| `packages/flux-renderers-form/src/renderers/input.tsx:221` | `<div className="grid gap-2.5">`                           | Inline gap           | Same                                              |
+| `packages/flux-renderers-form/src/renderers/input.tsx:223` | `<span className="inline-flex items-center gap-2 ...">`    | Inline gap (loading) | Same                                              |
+| `packages/flux-renderers-form/src/renderers/input.tsx:229` | `<RadioGroup className="grid gap-2.5">`                    | Inline gap           | Same                                              |
+| `packages/flux-renderers-form/src/renderers/input.tsx:238` | `<Label ... className="inline-flex items-center gap-2.5">` | Inline gap           | Same                                              |
+| `packages/flux-renderers-form/src/renderers/input.tsx:263` | `<div className="grid gap-2.5">`                           | Inline gap           | Same                                              |
+| `packages/flux-renderers-form/src/renderers/input.tsx:265` | `<span className="inline-flex items-center gap-2 ...">`    | Inline gap (loading) | Same                                              |
+| `packages/flux-renderers-form/src/renderers/input.tsx:274` | `<Label ... className="inline-flex items-center gap-2.5">` | Inline gap           | Same                                              |
 
 ### Type/Code Boundary Violations
 
-| File | Line | Issue |
-|------|------|-------|
+| File                                                    | Line                               | Issue                                                                                                                                                                                                           |
+| ------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/flux-core/src/types/node-identity.ts:145-151` | `normalizeInstancePath()` function | Runtime function in types directory; violates the convention that `types/` directory should contain only type definitions. The function should be in `utils/` per flux-core's pure utility function convention. |
 
 ### Type Safety Issues
 
-| File | Line | Issue |
-|------|------|-------|
+| File                                                 | Line                                             | Issue                      |
+| ---------------------------------------------------- | ------------------------------------------------ | -------------------------- |
 | `packages/flux-renderers-basic/src/button.tsx:13-14` | `variant={variant as any}`, `size={size as any}` | Unnecessary `as any` casts |
 
 ### File Size Status
 
-| File | Lines | Status |
-|------|-------|--------|
-| `packages/flux-runtime/src/index.ts` | 491 | Near threshold (500), monitor |
-| `packages/flux-react/src/node-renderer.tsx` | 378 | OK |
+| File                                        | Lines | Status                        |
+| ------------------------------------------- | ----- | ----------------------------- |
+| `packages/flux-runtime/src/index.ts`        | 491   | Near threshold (500), monitor |
+| `packages/flux-react/src/node-renderer.tsx` | 378   | OK                            |
 
 ## Goals
 
@@ -98,6 +98,7 @@ Targets: `packages/flux-renderers-form/src/renderers/input.tsx`
 The styling-system.md states: "A container used inside a card needs gap-1, the same container in a form needs gap-4... The renderer cannot predict the correct value."
 
 For form input renderers, the correct approach is:
+
 - Use semantic marker classes (`nop-select-wrapper`, `nop-checkbox-wrapper`, etc.)
 - Layout styles should come from schema `className` or global CSS rules targeting these markers
 - The playground/host can provide default styling via CSS if needed
@@ -105,7 +106,8 @@ For form input renderers, the correct approach is:
 Changes:
 
 Pre-check:
-- Grep flux-renderers-* packages for additional `gap-` patterns to ensure no other violations exist outside input.tsx
+
+- Grep flux-renderers-\* packages for additional `gap-` patterns to ensure no other violations exist outside input.tsx
 
 - SelectRenderer: Remove `className="grid gap-2"` from wrapper div, add marker class `nop-select-wrapper`
 - CheckboxRenderer: Remove `className="inline-flex items-center gap-2.5"` from wrapper span, add marker class `nop-checkbox-wrapper`
@@ -138,6 +140,7 @@ The function IS a pure utility, but it should not be in the `types/` directory. 
 Changes:
 
 Pre-check:
+
 - Identify all files importing `normalizeInstancePath` from flux-core
 - Verify the function is pure (no side effects)
 
@@ -161,6 +164,7 @@ Targets: `packages/flux-renderers-basic/src/button.tsx`
 The `as any` casts may be unnecessary if shadcn/ui Button accepts these variant strings.
 
 Pre-check:
+
 - Verify ButtonSchema `variant` and `size` types
 - Verify shadcn/ui Button's `variant` and `size` prop types
 - Determine if types are compatible or need mapping
@@ -231,6 +235,7 @@ Follow-up:
 ## Risks And Rollback
 
 Low risk plan:
+
 - Phase 1: If visual appearance changes unexpectedly, CSS rules can be adjusted without code changes
 - Phase 2: Pure refactoring, no functional change
 - Phase 3: Type-only change, no runtime behavior change

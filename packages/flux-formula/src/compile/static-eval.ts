@@ -5,15 +5,20 @@ import { toEvalContext } from '../scope';
 import { getFormulaRegistrySnapshot } from '../registry';
 import { buildMemberPath } from './symbol-diagnostics';
 
-function evaluateStaticAst(ast: FormulaAstNode, options?: ExpressionCompileOptions): { static: true; value: unknown } | { static: false } {
+function evaluateStaticAst(
+  ast: FormulaAstNode,
+  options?: ExpressionCompileOptions,
+): { static: true; value: unknown } | { static: false } {
   const symbolTable = options?.symbolTable;
   const staticEnv: RendererEnv = {
     fetcher: async <T>() => ({ ok: true, status: 200, data: undefined as T }),
-    notify: () => undefined
+    notify: () => undefined,
   };
   const staticContext = toEvalContext({});
 
-  function evaluateNode(node: FormulaAstNode): { static: true; value: unknown } | { static: false } {
+  function evaluateNode(
+    node: FormulaAstNode,
+  ): { static: true; value: unknown } | { static: false } {
     switch (node.type) {
       case 'Literal':
         return { static: true, value: node.value };
@@ -35,7 +40,10 @@ function evaluateStaticAst(ast: FormulaAstNode, options?: ExpressionCompileOptio
         if (!argument.static) {
           return argument;
         }
-        return { static: true, value: evaluateAst(node, { env: staticEnv, context: staticContext }) };
+        return {
+          static: true,
+          value: evaluateAst(node, { env: staticEnv, context: staticContext }),
+        };
       }
       case 'BinaryExpression': {
         const left = evaluateNode(node.left);
@@ -92,11 +100,12 @@ function evaluateStaticAst(ast: FormulaAstNode, options?: ExpressionCompileOptio
           if (!value.static) {
             return value;
           }
-          const key = property.key.type === 'Identifier'
-            ? property.key.name
-            : property.key.type === 'Literal'
-              ? String(property.key.value)
-              : undefined;
+          const key =
+            property.key.type === 'Identifier'
+              ? property.key.name
+              : property.key.type === 'Literal'
+                ? String(property.key.value)
+                : undefined;
           if (key === undefined) {
             return { static: false };
           }
@@ -113,7 +122,10 @@ function evaluateStaticAst(ast: FormulaAstNode, options?: ExpressionCompileOptio
         if (!root.static || root.value == null || typeof root.value !== 'object') {
           return { static: false };
         }
-        return { static: true, value: (root.value as Record<string, unknown>)[path[path.length - 1]] };
+        return {
+          static: true,
+          value: (root.value as Record<string, unknown>)[path[path.length - 1]],
+        };
       }
       case 'CallExpression': {
         if (node.callee.type !== 'MemberExpression') {
@@ -131,7 +143,11 @@ function evaluateStaticAst(ast: FormulaAstNode, options?: ExpressionCompileOptio
         }
 
         const objectValue = evaluateNode(node.callee.object);
-        if (!objectValue.static || objectValue.value == null || typeof objectValue.value !== 'object') {
+        if (
+          !objectValue.static ||
+          objectValue.value == null ||
+          typeof objectValue.value !== 'object'
+        ) {
           return { static: false };
         }
 
@@ -149,7 +165,10 @@ function evaluateStaticAst(ast: FormulaAstNode, options?: ExpressionCompileOptio
           args.push(evaluated.value);
         }
 
-        return { static: true, value: (fn as (...args: unknown[]) => unknown).apply(objectValue.value, args) };
+        return {
+          static: true,
+          value: (fn as (...args: unknown[]) => unknown).apply(objectValue.value, args),
+        };
       }
       case 'ArrowFunctionExpression':
         return { static: false };

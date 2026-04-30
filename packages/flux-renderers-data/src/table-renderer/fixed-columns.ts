@@ -31,7 +31,11 @@ function toWidth(value: number | string | undefined, fallback: number) {
   return fallback;
 }
 
-function createStickyStyle(fixed: 'left' | 'right', offset: number, width?: number | string): CSSProperties {
+function createStickyStyle(
+  fixed: 'left' | 'right',
+  offset: number,
+  width?: number | string,
+): CSSProperties {
   return {
     position: 'sticky',
     [fixed]: `${offset}px`,
@@ -41,7 +45,11 @@ function createStickyStyle(fixed: 'left' | 'right', offset: number, width?: numb
   };
 }
 
-export function createFixedColumnLayout(schemaProps: TableSchema, columns: TableColumnSchema[], showExpandColumn = Boolean(schemaProps.expandable)) {
+export function createFixedColumnLayout(
+  schemaProps: TableSchema,
+  columns: TableColumnSchema[],
+  showExpandColumn = Boolean(schemaProps.expandable),
+) {
   const hasLeftFixedDataColumn = columns.some((column) => column.fixed === 'left');
   const entries: FixedColumnEntry[] = [];
 
@@ -99,7 +107,11 @@ export function createFixedColumnLayout(schemaProps: TableSchema, columns: Table
       return {
         fixed: 'right',
         className: 'bg-background',
-        style: createStickyStyle('right', rightOffsets.get(key) ?? 0, width ?? DEFAULT_FIXED_COLUMN_WIDTH),
+        style: createStickyStyle(
+          'right',
+          rightOffsets.get(key) ?? 0,
+          width ?? DEFAULT_FIXED_COLUMN_WIDTH,
+        ),
       };
     }
 
@@ -115,7 +127,10 @@ export function createFixedColumnLayout(schemaProps: TableSchema, columns: Table
       return resolveEntry('__selection__', CONTROL_COLUMN_WIDTH);
     },
     getColumnCellProps(column: TableColumnSchema, index: number) {
-      return resolveEntry(`${column.name ?? 'column'}:${index}`, column.fixed ? column.width ?? DEFAULT_FIXED_COLUMN_WIDTH : column.width);
+      return resolveEntry(
+        `${column.name ?? 'column'}:${index}`,
+        column.fixed ? (column.width ?? DEFAULT_FIXED_COLUMN_WIDTH) : column.width,
+      );
     },
   };
 }

@@ -4,7 +4,7 @@ import type {
   HiddenFieldPolicy,
   TemplateNode,
   ValidationTrigger,
-  ValidationVisibilityTrigger
+  ValidationVisibilityTrigger,
 } from '@nop-chaos/flux-core';
 import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
 import {
@@ -12,13 +12,13 @@ import {
   compileValidationRules,
   mergeValidationRules,
   normalizeValidationTriggers,
-  normalizeValidationVisibilityTriggers
+  normalizeValidationVisibilityTriggers,
 } from '../validation-lowering';
 
 function poolValidationBehavior(
   pool: Map<string, CompiledValidationBehavior>,
   triggers: ValidationTrigger[],
-  showErrorOn: ValidationVisibilityTrigger[]
+  showErrorOn: ValidationVisibilityTrigger[],
 ): CompiledValidationBehavior {
   const key = `${triggers.join('|')}::${showErrorOn.join('|')}`;
   const existing = pool.get(key);
@@ -29,24 +29,19 @@ function poolValidationBehavior(
 
   const behavior: CompiledValidationBehavior = {
     triggers,
-    showErrorOn
+    showErrorOn,
   };
   pool.set(key, behavior);
   return behavior;
 }
 
 export function collectValidationModel(
-  node:
-    | TemplateNode
-    | TemplateNode[]
-    | Array<TemplateNode | TemplateNode[]>
-    | null
-    | undefined,
+  node: TemplateNode | TemplateNode[] | Array<TemplateNode | TemplateNode[]> | null | undefined,
   options: {
     defaultTriggers?: ValidationTrigger[];
     defaultShowErrorOn?: ValidationVisibilityTrigger[];
     defaultHiddenFieldPolicy?: HiddenFieldPolicy;
-  } = {}
+  } = {},
 ): CompiledFormValidationModel | undefined {
   if (!node) {
     return undefined;
@@ -76,16 +71,17 @@ export function collectValidationModel(
       kind: 'form',
       rules: [],
       children: [],
-      parent: undefined
-    }
+      parent: undefined,
+    },
   };
   const behaviorPool = new Map<string, CompiledValidationBehavior>();
   let rootBehavior = poolValidationBehavior(
     behaviorPool,
     options.defaultTriggers ?? (['blur'] as ValidationTrigger[]),
-    options.defaultShowErrorOn ?? (['touched', 'submit'] as ValidationVisibilityTrigger[])
+    options.defaultShowErrorOn ?? (['touched', 'submit'] as ValidationVisibilityTrigger[]),
   );
-  let formDefaultHiddenFieldPolicy: HiddenFieldPolicy | undefined = options.defaultHiddenFieldPolicy;
+  let formDefaultHiddenFieldPolicy: HiddenFieldPolicy | undefined =
+    options.defaultHiddenFieldPolicy;
 
   const visit = (entry: TemplateNode, fieldPathPrefix?: string) => {
     if (!entry.component) {
@@ -96,9 +92,10 @@ export function collectValidationModel(
       rootBehavior = poolValidationBehavior(
         behaviorPool,
         normalizeValidationTriggers(entry.schema.validateOn, ['blur']),
-        normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, ['touched', 'submit'])
+        normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, ['touched', 'submit']),
       );
-      const formHiddenPolicy = (entry.schema as { hiddenFieldPolicy?: HiddenFieldPolicy }).hiddenFieldPolicy;
+      const formHiddenPolicy = (entry.schema as { hiddenFieldPolicy?: HiddenFieldPolicy })
+        .hiddenFieldPolicy;
       if (formHiddenPolicy) {
         formDefaultHiddenFieldPolicy = formHiddenPolicy;
       }
@@ -111,28 +108,41 @@ export function collectValidationModel(
         schema: entry.schema,
         renderer: entry.component,
         path: entry.templatePath,
-        fieldPathPrefix
+        fieldPathPrefix,
       };
       const rawFieldPath = contributor.getFieldPath?.(entry.schema, ctx);
       const fieldPath = rawFieldPath
-        ? (fieldPathPrefix ? `${fieldPathPrefix}.${rawFieldPath}` : rawFieldPath)
+        ? fieldPathPrefix
+          ? `${fieldPathPrefix}.${rawFieldPath}`
+          : rawFieldPath
         : undefined;
 
       if (fieldPath) {
         const compiledRules = compileValidationRules(
           fieldPath,
-          mergeValidationRules(collectSchemaValidationRules(entry.schema), contributor.collectRules?.(entry.schema, ctx))
+          mergeValidationRules(
+            collectSchemaValidationRules(entry.schema),
+            contributor.collectRules?.(entry.schema, ctx),
+          ),
         );
-        const parentPath = fieldPath.includes('.') ? fieldPath.split('.').slice(0, -1).join('.') : '';
-        const nodeKind = contributor.valueKind === 'array' ? 'array' : contributor.valueKind === 'object' ? 'object' : 'field';
+        const parentPath = fieldPath.includes('.')
+          ? fieldPath.split('.').slice(0, -1).join('.')
+          : '';
+        const nodeKind =
+          contributor.valueKind === 'array'
+            ? 'array'
+            : contributor.valueKind === 'object'
+              ? 'object'
+              : 'field';
 
         const behavior = poolValidationBehavior(
           behaviorPool,
           normalizeValidationTriggers(entry.schema.validateOn, rootBehavior.triggers),
-          normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, rootBehavior.showErrorOn)
+          normalizeValidationVisibilityTriggers(entry.schema.showErrorOn, rootBehavior.showErrorOn),
         );
         const label = typeof entry.schema.label === 'string' ? entry.schema.label : undefined;
-        const fieldHiddenPolicy = (entry.schema as { hiddenFieldPolicy?: HiddenFieldPolicy }).hiddenFieldPolicy;
+        const fieldHiddenPolicy = (entry.schema as { hiddenFieldPolicy?: HiddenFieldPolicy })
+          .hiddenFieldPolicy;
 
         validationNodes[fieldPath] = {
           path: fieldPath,
@@ -143,21 +153,26 @@ export function collectValidationModel(
           behavior,
           children: [],
           parent: parentPath,
-          hiddenFieldPolicy: fieldHiddenPolicy
+          hiddenFieldPolicy: fieldHiddenPolicy,
         };
 
         if (validationNodes[parentPath] !== undefined) {
           validationNodes[parentPath].children.push(fieldPath);
         }
 
-        const childPrefix = contributor.getChildFieldPathPrefix?.(entry.schema, { ...ctx, fieldPathPrefix });
+        const childPrefix = contributor.getChildFieldPathPrefix?.(entry.schema, {
+          ...ctx,
+          fieldPathPrefix,
+        });
 
         if (childPrefix === false) {
           return;
         }
 
         const nextChildPrefix = childPrefix
-          ? (fieldPathPrefix ? `${fieldPathPrefix}.${childPrefix}` : childPrefix)
+          ? fieldPathPrefix
+            ? `${fieldPathPrefix}.${childPrefix}`
+            : childPrefix
           : fieldPathPrefix;
 
         for (const region of Object.values(entry.regions)) {
@@ -178,7 +193,7 @@ export function collectValidationModel(
       schema: entry.schema,
       renderer: entry.component,
       path: entry.templatePath,
-      fieldPathPrefix
+      fieldPathPrefix,
     });
 
     if (childPrefix2 === false) {
@@ -186,7 +201,9 @@ export function collectValidationModel(
     }
 
     const nextPrefix = childPrefix2
-      ? (fieldPathPrefix ? `${fieldPathPrefix}.${childPrefix2}` : childPrefix2)
+      ? fieldPathPrefix
+        ? `${fieldPathPrefix}.${childPrefix2}`
+        : childPrefix2
       : fieldPathPrefix;
 
     for (const region of Object.values(entry.regions)) {
@@ -205,6 +222,6 @@ export function collectValidationModel(
     behavior: rootBehavior,
     nodes: validationNodes,
     rootPath: '',
-    defaultHiddenFieldPolicy: formDefaultHiddenFieldPolicy
+    defaultHiddenFieldPolicy: formDefaultHiddenFieldPolicy,
   });
 }

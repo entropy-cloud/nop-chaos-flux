@@ -20,7 +20,11 @@
           "branches": [
             {
               "id": "b1",
-              "data": { "label": "长期请假", "priority": 1, "conditionList": [[{"field": "day", "operator": ">", "value": "7"}]] },
+              "data": {
+                "label": "长期请假",
+                "priority": 1,
+                "conditionList": [[{ "field": "day", "operator": ">", "value": "7" }]]
+              },
               "child": {
                 "id": "k004",
                 "type": "dt-approval",
@@ -94,13 +98,23 @@
         "id": "dt-initiator",
         "label": "发起人",
         "icon": "user",
-        "body": { "type": "flex", "direction": "column", "gap": 4, "className": "nop-dt-node nop-dt-node--initiator", "items": [
-          { "type": "flex", "className": "nop-dt-node__header", "items": [
-            { "type": "icon", "icon": "user", "className": "nop-dt-node__icon" },
-            { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
-          ]},
-          { "type": "text", "body": "所有人", "className": "nop-dt-node__subtitle" }
-        ]},
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "gap": 4,
+          "className": "nop-dt-node nop-dt-node--initiator",
+          "items": [
+            {
+              "type": "flex",
+              "className": "nop-dt-node__header",
+              "items": [
+                { "type": "icon", "icon": "user", "className": "nop-dt-node__icon" },
+                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+              ]
+            },
+            { "type": "text", "body": "所有人", "className": "nop-dt-node__subtitle" }
+          ]
+        },
         "appearance": { "minWidth": 200, "minHeight": 80 },
         "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
       },
@@ -108,13 +122,27 @@
         "id": "dt-approval",
         "label": "审批人",
         "icon": "user-check",
-        "body": { "type": "flex", "direction": "column", "gap": 4, "className": "nop-dt-node nop-dt-node--approval", "items": [
-          { "type": "flex", "className": "nop-dt-node__header", "items": [
-            { "type": "icon", "icon": "user-check", "className": "nop-dt-node__icon" },
-            { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
-          ]},
-          { "type": "text", "body": "${data.examineMode === 1 ? '依次审批' : data.examineMode === 2 ? '会签' : data.examineMode === 3 ? '或签' : '审批'}", "className": "nop-dt-node__subtitle" }
-        ]},
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "gap": 4,
+          "className": "nop-dt-node nop-dt-node--approval",
+          "items": [
+            {
+              "type": "flex",
+              "className": "nop-dt-node__header",
+              "items": [
+                { "type": "icon", "icon": "user-check", "className": "nop-dt-node__icon" },
+                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+              ]
+            },
+            {
+              "type": "text",
+              "body": "${data.examineMode === 1 ? '依次审批' : data.examineMode === 2 ? '会签' : data.examineMode === 3 ? '或签' : '审批'}",
+              "className": "nop-dt-node__subtitle"
+            }
+          ]
+        },
         "appearance": { "minWidth": 220, "minHeight": 80 },
         "inspector": {
           "body": {
@@ -150,13 +178,23 @@
         "id": "dt-cc",
         "label": "抄送人",
         "icon": "mail",
-        "body": { "type": "flex", "direction": "column", "gap": 4, "className": "nop-dt-node nop-dt-node--cc", "items": [
-          { "type": "flex", "className": "nop-dt-node__header", "items": [
-            { "type": "icon", "icon": "mail", "className": "nop-dt-node__icon" },
-            { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
-          ]},
-          { "type": "text", "body": "抄送给相关人员", "className": "nop-dt-node__subtitle" }
-        ]},
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "gap": 4,
+          "className": "nop-dt-node nop-dt-node--cc",
+          "items": [
+            {
+              "type": "flex",
+              "className": "nop-dt-node__header",
+              "items": [
+                { "type": "icon", "icon": "mail", "className": "nop-dt-node__icon" },
+                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+              ]
+            },
+            { "type": "text", "body": "抄送给相关人员", "className": "nop-dt-node__subtitle" }
+          ]
+        },
         "appearance": { "minWidth": 200, "minHeight": 80 },
         "tree": { "allowChild": true, "allowBranches": false, "isTerminal": false }
       },
@@ -164,12 +202,22 @@
         "id": "dt-condition",
         "label": "条件分支",
         "icon": "git-branch",
-        "body": { "type": "flex", "direction": "column", "gap": 4, "className": "nop-dt-node nop-dt-node--condition", "items": [
-          { "type": "flex", "className": "nop-dt-node__header", "items": [
-            { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
-          ]},
-          { "type": "text", "body": "排他分支", "className": "nop-dt-node__description" }
-        ]},
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "gap": 4,
+          "className": "nop-dt-node nop-dt-node--condition",
+          "items": [
+            {
+              "type": "flex",
+              "className": "nop-dt-node__header",
+              "items": [
+                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+              ]
+            },
+            { "type": "text", "body": "排他分支", "className": "nop-dt-node__description" }
+          ]
+        },
         "appearance": { "minWidth": 200, "minHeight": 80 },
         "inspector": {
           "body": {
@@ -188,33 +236,65 @@
             ]
           }
         },
-        "tree": { "allowChild": true, "allowBranches": true, "minBranches": 2, "maxBranches": 10, "isTerminal": false }
+        "tree": {
+          "allowChild": true,
+          "allowBranches": true,
+          "minBranches": 2,
+          "maxBranches": 10,
+          "isTerminal": false
+        }
       },
       {
         "id": "dt-parallel",
         "label": "并行分支",
         "icon": "git-merge",
-        "body": { "type": "flex", "direction": "column", "gap": 4, "className": "nop-dt-node nop-dt-node--parallel", "items": [
-          { "type": "flex", "className": "nop-dt-node__header", "items": [
-            { "type": "icon", "icon": "git-merge", "className": "nop-dt-node__icon" },
-            { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
-          ]},
-          { "type": "text", "body": "同时执行多个分支", "className": "nop-dt-node__subtitle" }
-        ]},
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "gap": 4,
+          "className": "nop-dt-node nop-dt-node--parallel",
+          "items": [
+            {
+              "type": "flex",
+              "className": "nop-dt-node__header",
+              "items": [
+                { "type": "icon", "icon": "git-merge", "className": "nop-dt-node__icon" },
+                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+              ]
+            },
+            { "type": "text", "body": "同时执行多个分支", "className": "nop-dt-node__subtitle" }
+          ]
+        },
         "appearance": { "minWidth": 200, "minHeight": 80 },
-        "tree": { "allowChild": true, "allowBranches": true, "minBranches": 2, "maxBranches": 10, "isTerminal": false }
+        "tree": {
+          "allowChild": true,
+          "allowBranches": true,
+          "minBranches": 2,
+          "maxBranches": 10,
+          "isTerminal": false
+        }
       },
       {
         "id": "dt-subprocess",
         "label": "子流程",
         "icon": "layers",
-        "body": { "type": "flex", "direction": "column", "gap": 4, "className": "nop-dt-node nop-dt-node--subprocess", "items": [
-          { "type": "flex", "className": "nop-dt-node__header", "items": [
-            { "type": "icon", "icon": "layers", "className": "nop-dt-node__icon" },
-            { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
-          ]},
-          { "type": "text", "body": "${data.callProcess}", "className": "nop-dt-node__subtitle" }
-        ]},
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "gap": 4,
+          "className": "nop-dt-node nop-dt-node--subprocess",
+          "items": [
+            {
+              "type": "flex",
+              "className": "nop-dt-node__header",
+              "items": [
+                { "type": "icon", "icon": "layers", "className": "nop-dt-node__icon" },
+                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+              ]
+            },
+            { "type": "text", "body": "${data.callProcess}", "className": "nop-dt-node__subtitle" }
+          ]
+        },
         "appearance": { "minWidth": 200, "minHeight": 80 },
         "inspector": {
           "body": {
@@ -235,17 +315,44 @@
         "id": "dt-end",
         "label": "结束",
         "icon": "square",
-        "body": { "type": "flex", "direction": "column", "justifyContent": "center", "alignItems": "center", "className": "nop-dt-node nop-dt-node--end", "items": [
-          { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
-        ]},
+        "body": {
+          "type": "flex",
+          "direction": "column",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "className": "nop-dt-node nop-dt-node--end",
+          "items": [{ "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }]
+        },
         "appearance": { "minWidth": 120, "minHeight": 40 },
         "tree": { "allowChild": false, "allowBranches": false, "isTerminal": true }
       }
     ],
     "edgeTypes": [
-      { "id": "dt-chain", "label": "流程连线", "appearance": { "stroke": "#94a3b8", "strokeWidth": 2, "markerEnd": "arrow-closed" } },
-      { "id": "dt-branch", "label": "分支连线", "appearance": { "stroke": "#3b82f6", "strokeWidth": 2, "strokeStyle": "dashed", "markerEnd": "arrow-closed" } },
-      { "id": "dt-merge", "label": "汇合连线", "appearance": { "stroke": "#94a3b8", "strokeWidth": 1.5, "strokeStyle": "dotted", "markerEnd": "arrow-closed" } }
+      {
+        "id": "dt-chain",
+        "label": "流程连线",
+        "appearance": { "stroke": "#94a3b8", "strokeWidth": 2, "markerEnd": "arrow-closed" }
+      },
+      {
+        "id": "dt-branch",
+        "label": "分支连线",
+        "appearance": {
+          "stroke": "#3b82f6",
+          "strokeWidth": 2,
+          "strokeStyle": "dashed",
+          "markerEnd": "arrow-closed"
+        }
+      },
+      {
+        "id": "dt-merge",
+        "label": "汇合连线",
+        "appearance": {
+          "stroke": "#94a3b8",
+          "strokeWidth": 1.5,
+          "strokeStyle": "dotted",
+          "markerEnd": "arrow-closed"
+        }
+      }
     ],
     "toolbar": {
       "items": [

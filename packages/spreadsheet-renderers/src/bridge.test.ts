@@ -177,7 +177,9 @@ describe('createSpreadsheetBridge', () => {
 
   it('should subscribe to changes through bridge', async () => {
     let notified = false;
-    bridge.subscribe(() => { notified = true; });
+    bridge.subscribe(() => {
+      notified = true;
+    });
 
     await bridge.dispatch({
       type: 'spreadsheet:setCellValue',

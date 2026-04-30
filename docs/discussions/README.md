@@ -13,6 +13,7 @@
 - 主题用英文短横线分隔（kebab-case），简要概括讨论内容
 
 示例：
+
 - `2026-04-22-user-permission-redesign.md`
 - `2026-04-22-form-validation-strategy.md`
 - `2026-04-25-renderer-plugin-mechanism.md`

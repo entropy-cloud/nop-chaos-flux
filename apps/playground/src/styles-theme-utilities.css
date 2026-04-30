@@ -1,4 +1,4 @@
-@import "./flow-designer-nodes.css";
+@import './flow-designer-nodes.css';
 
 @layer base {
   * {
@@ -22,7 +22,10 @@
     border: 1px solid var(--border-surface);
     box-shadow: var(--shadow-sm);
     backdrop-filter: var(--glass-blur, none);
-    transition: transform var(--transition-base, 0.2s ease), box-shadow var(--transition-base, 0.2s ease), border-color var(--transition-base, 0.2s ease);
+    transition:
+      transform var(--transition-base, 0.2s ease),
+      box-shadow var(--transition-base, 0.2s ease),
+      border-color var(--transition-base, 0.2s ease);
     will-change: transform;
   }
 
@@ -66,22 +69,25 @@
 
   .nop-glass-card-glow {
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 2px color-mix(in hsl, hsl(var(--primary)) 24%, transparent),
-                0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 0 0 2px color-mix(in hsl, hsl(var(--primary)) 24%, transparent),
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1);
   }
 
   .nop-designer-node[data-selected] > :where(.nop-glass-card) {
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 2px color-mix(in hsl, hsl(var(--primary)) 24%, transparent),
-                0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 0 0 2px color-mix(in hsl, hsl(var(--primary)) 24%, transparent),
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1);
   }
 
   .nop-designer-node:not([data-selected]):hover > :where(.nop-glass-card) {
     border-color: color-mix(in srgb, hsl(var(--primary)) 30%, rgba(255, 255, 255, 0.4));
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1);
   }
 
   .dark .nop-glass-card {
@@ -94,16 +100,59 @@
     top: 12px !important;
   }
 
-  .stack { display: flex; flex-direction: column; }
-  .stack-xs { display: flex; flex-direction: column; gap: 0.25rem; }
-  .stack-sm { display: flex; flex-direction: column; gap: 0.5rem; }
-  .stack-md { display: flex; flex-direction: column; gap: 1rem; }
-  .stack-lg { display: flex; flex-direction: column; gap: 1.5rem; }
-  .hstack { display: flex; flex-direction: row; align-items: center; }
-  .hstack-xs { display: flex; flex-direction: row; align-items: center; gap: 0.25rem; }
-  .hstack-sm { display: flex; flex-direction: row; align-items: center; gap: 0.5rem; }
-  .hstack-md { display: flex; flex-direction: row; align-items: center; gap: 0.75rem; }
-  .hstack-lg { display: flex; flex-direction: row; align-items: center; gap: 1rem; }
+  .stack {
+    display: flex;
+    flex-direction: column;
+  }
+  .stack-xs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .stack-sm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .stack-md {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .stack-lg {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .hstack {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .hstack-xs {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .hstack-sm {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .hstack-md {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hstack-lg {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
 }
 
 @supports not (backdrop-filter: blur(1px)) {

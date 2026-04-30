@@ -13,20 +13,20 @@
 
 These items were listed as unresolved but independent verification showed they are either by-design, already handled, or not real gaps:
 
-| Original ID | Item | Reclassification Reason |
-|-------------|------|------------------------|
-| U1 | Anonymous source lifecycle in React effects | **Acceptable design** — controller is framework-agnostic; lifecycle naturally tied to component mount; dim 07 explicitly reclassified as "design reasonable" |
-| U8 | Expression editor not implemented | **By design** — `docs/architecture/report-designer/contracts.md` explicitly states this is a pluggable adapter boundary; consumers provide implementations |
-| U12 | flux-react wiring primitives on root API | **Not a real issue** — `ScopeContext`, `RuntimeContext` etc. are genuinely used by downstream packages (form renderers, detail-view, object-field) for context provider composition |
-| U16 | Flow Designer hardcoded theme literals | **Already handled** — colors are config-driven via `nodeType.appearance.borderColor`; hardcoded values are intentional fallback defaults per styling-system.md |
-| U17 | Playground BEM classes | **Not a real issue** — `apps/playground/` is demo code, not subject to renderer package styling rules |
-| PF1 | Spreadsheet selection double-state | **Accepted tradeoff** — local state provides synchronous canvas feedback during mouse interactions; core model is authoritative; one-way sync |
-| PF2 | Whole-store subscriptions in some hooks | **Accepted tradeoff** — path-scoped subscriptions already used for all field-level hooks (`useCurrentFormFieldState`, `useFieldError`); `useScopeSelector`/`useCurrentFormState` accept arbitrary selectors so cannot be path-scoped by definition |
-| PF6 | Spreadsheet hardcoded colors | **Accepted tradeoff** — fully documented in `docs/architecture/report-designer/spreadsheet-canvas-css.md` and styling-system.md lines 602-648 as a performance-critical canvas exception |
-| PF5 | Implicit styling in renderer components | **By design** — condition-builder, tag-list, key-value, array-editor etc. are complete UI widgets built on shadcn/ui; internal layout classes are part of the visual design, not styling contract violations. Schema `className` is for consumer customization. |
-| PF7 | Playground toast raw HTML | **Not a real gap** — the component is a simple conditional `<div>` message display, not a toast system |
-| PF9 | Test coverage gaps | **Not the gap described** — actual counts are 50 (runtime) and 14 (react including colocated); healthy, not declining |
-| PF10 | Plan 112/113 closure items | **Documentation-only** — closure sections confirm completion; checkboxes just weren't ticked |
+| Original ID | Item                                        | Reclassification Reason                                                                                                                                                                                                                                         |
+| ----------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U1          | Anonymous source lifecycle in React effects | **Acceptable design** — controller is framework-agnostic; lifecycle naturally tied to component mount; dim 07 explicitly reclassified as "design reasonable"                                                                                                    |
+| U8          | Expression editor not implemented           | **By design** — `docs/architecture/report-designer/contracts.md` explicitly states this is a pluggable adapter boundary; consumers provide implementations                                                                                                      |
+| U12         | flux-react wiring primitives on root API    | **Not a real issue** — `ScopeContext`, `RuntimeContext` etc. are genuinely used by downstream packages (form renderers, detail-view, object-field) for context provider composition                                                                             |
+| U16         | Flow Designer hardcoded theme literals      | **Already handled** — colors are config-driven via `nodeType.appearance.borderColor`; hardcoded values are intentional fallback defaults per styling-system.md                                                                                                  |
+| U17         | Playground BEM classes                      | **Not a real issue** — `apps/playground/` is demo code, not subject to renderer package styling rules                                                                                                                                                           |
+| PF1         | Spreadsheet selection double-state          | **Accepted tradeoff** — local state provides synchronous canvas feedback during mouse interactions; core model is authoritative; one-way sync                                                                                                                   |
+| PF2         | Whole-store subscriptions in some hooks     | **Accepted tradeoff** — path-scoped subscriptions already used for all field-level hooks (`useCurrentFormFieldState`, `useFieldError`); `useScopeSelector`/`useCurrentFormState` accept arbitrary selectors so cannot be path-scoped by definition              |
+| PF6         | Spreadsheet hardcoded colors                | **Accepted tradeoff** — fully documented in `docs/architecture/report-designer/spreadsheet-canvas-css.md` and styling-system.md lines 602-648 as a performance-critical canvas exception                                                                        |
+| PF5         | Implicit styling in renderer components     | **By design** — condition-builder, tag-list, key-value, array-editor etc. are complete UI widgets built on shadcn/ui; internal layout classes are part of the visual design, not styling contract violations. Schema `className` is for consumer customization. |
+| PF7         | Playground toast raw HTML                   | **Not a real gap** — the component is a simple conditional `<div>` message display, not a toast system                                                                                                                                                          |
+| PF9         | Test coverage gaps                          | **Not the gap described** — actual counts are 50 (runtime) and 14 (react including colocated); healthy, not declining                                                                                                                                           |
+| PF10        | Plan 112/113 closure items                  | **Documentation-only** — closure sections confirm completion; checkboxes just weren't ticked                                                                                                                                                                    |
 
 ---
 
@@ -92,6 +92,7 @@ These items were listed as unresolved but independent verification showed they a
 
 - **Source**: `docs/analysis/2026-03-31-deep-architecture-analysis.md` (risk #1)
 - **Files**: `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/schema-compiler/regions.ts`
+
 ---
 
 ## New Issues Discovered During Independent Re-verification
@@ -117,11 +118,11 @@ These items were listed as unresolved but independent verification showed they a
 
 These are real but trivially fixable:
 
-| ID | Item | File | Action |
-|----|------|------|--------|
-| U15 | Report designer toolbar helpers on root API | `packages/report-designer-renderers/src/index.ts:37` | `[RESOLVED 2026-04-20]` Removed export line (zero external consumers) |
-| U18 | `writeMetadata` dead code | `packages/report-designer-core/src/runtime/metadata.ts:227-312` | `[RESOLVED 2026-04-20]` Deleted 85-line function (zero callers, superseded by `updateMetadata`) |
-| U13-partial | `resolveCacheKey`/`prepareApiData`/`buildUrlWithParams` on root API | `packages/flux-runtime/src/index.ts` | `[RESOLVED 2026-04-20]` Reduced barrel from 22 to 12 exports; un-exported 10 internal-only helpers |
+| ID          | Item                                                                | File                                                            | Action                                                                                             |
+| ----------- | ------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| U15         | Report designer toolbar helpers on root API                         | `packages/report-designer-renderers/src/index.ts:37`            | `[RESOLVED 2026-04-20]` Removed export line (zero external consumers)                              |
+| U18         | `writeMetadata` dead code                                           | `packages/report-designer-core/src/runtime/metadata.ts:227-312` | `[RESOLVED 2026-04-20]` Deleted 85-line function (zero callers, superseded by `updateMetadata`)    |
+| U13-partial | `resolveCacheKey`/`prepareApiData`/`buildUrlWithParams` on root API | `packages/flux-runtime/src/index.ts`                            | `[RESOLVED 2026-04-20]` Reduced barrel from 22 to 12 exports; un-exported 10 internal-only helpers |
 
 ---
 
@@ -129,33 +130,35 @@ These are real but trivially fixable:
 
 These are explicitly documented design decisions, not gaps:
 
-| ID | Item | Why Acceptable |
-|----|------|---------------|
-| U2 | `RendererDefinition.component` typed as `any` | Inherent to heterogeneous plugin registry; needs TypeScript existential types to fix |
-| U3 | CodeEditorSchema `any` fields | `SchemaValue` index signature constraint; proper types used at resolved-props boundary; inline JSDoc explains tradeoff |
-| U6 | `FormulaFunction = (...args: any[]) => any` | Inherent to dynamic formula evaluation; fully dynamic dispatch |
-| PF4 | Validation owner model Phase 3 | Explicitly documented as future work in `docs/architecture/form-validation.md` lines 1026-1031 |
-| PF8 | variant-field deep-region bypass | Explicitly documented as blocked on Phase 3; technical reason: would break active-branch-only validation |
+| ID  | Item                                          | Why Acceptable                                                                                                         |
+| --- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| U2  | `RendererDefinition.component` typed as `any` | Inherent to heterogeneous plugin registry; needs TypeScript existential types to fix                                   |
+| U3  | CodeEditorSchema `any` fields                 | `SchemaValue` index signature constraint; proper types used at resolved-props boundary; inline JSDoc explains tradeoff |
+| U6  | `FormulaFunction = (...args: any[]) => any`   | Inherent to dynamic formula evaluation; fully dynamic dispatch                                                         |
+| PF4 | Validation owner model Phase 3                | Explicitly documented as future work in `docs/architecture/form-validation.md` lines 1026-1031                         |
+| PF8 | variant-field deep-region bypass              | Explicitly documented as blocked on Phase 3; technical reason: would break active-branch-only validation               |
 
 ---
 
 ## Final Summary
 
-| Category | Count |
-|----------|-------|
-| Truly unresolved (need work) | 2 (U10, U4) |
-| Partially resolved | 1 (U5: any → SchemaValue) |
-| Resolved 2026-04-20 (session 2) | 6 (NEW-2, NEW-3, U18, U15, U13-partial, U4/U5 partial) |
-| Resolved 2026-04-20 (session 1) | 7 (NEW-1, PF3, U14, U11, U9, U7, U9) |
-| Accepted tradeoffs | 5 |
-| Reclassified as not real issues | 11 |
-| Fully resolved (verified earlier) | ~35 |
+| Category                          | Count                                                  |
+| --------------------------------- | ------------------------------------------------------ |
+| Truly unresolved (need work)      | 2 (U10, U4)                                            |
+| Partially resolved                | 1 (U5: any → SchemaValue)                              |
+| Resolved 2026-04-20 (session 2)   | 6 (NEW-2, NEW-3, U18, U15, U13-partial, U4/U5 partial) |
+| Resolved 2026-04-20 (session 1)   | 7 (NEW-1, PF3, U14, U11, U9, U7, U9)                   |
+| Accepted tradeoffs                | 5                                                      |
+| Reclassified as not real issues   | 11                                                     |
+| Fully resolved (verified earlier) | ~35                                                    |
 
 ### Actionable Priority List
 
 **Should fix when convenient:**
+
 1. U4: ConditionBuilder `any` fields (blocked on BaseSchema index signature redesign)
 2. U10: General scope subscription remains whole-store (accepted tradeoff for now)
 
 **Accept as-is:**
+
 - U2, U3, U5(partial), U6, PF4, PF5, PF8, U10

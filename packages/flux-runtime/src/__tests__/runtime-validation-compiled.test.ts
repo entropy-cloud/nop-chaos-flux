@@ -11,7 +11,7 @@ import {
   hasCompiledValidationNodes,
   buildCompiledValidationDependentMap,
   buildCompiledValidationOrder,
-  buildCompiledFormValidationModel
+  buildCompiledFormValidationModel,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRegistry, createRendererRuntime } from '../index';
@@ -30,13 +30,13 @@ describe('createRendererRuntime', () => {
         },
         collectRules() {
           return [];
-        }
-      }
+        },
+      },
     };
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([formRenderer, inputRenderer, arrayRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const _c5 = runtime.compile({
@@ -46,9 +46,9 @@ describe('createRendererRuntime', () => {
           type: 'array-editor',
           name: 'reviewers',
           label: 'Reviewers',
-          minItems: 1
-        }
-      ]
+          minItems: 1,
+        },
+      ],
     });
     const node = (Array.isArray(_c5.root) ? _c5.root[0] : _c5.root) as any;
 
@@ -56,7 +56,7 @@ describe('createRendererRuntime', () => {
     expect(node.validationPlan.nodes[''].children).toContain('reviewers');
     expect(node.validationPlan.nodes.reviewers.rules[0].rule).toMatchObject({
       kind: 'minItems',
-      value: 1
+      value: 1,
     });
   });
 
@@ -64,18 +64,18 @@ describe('createRendererRuntime', () => {
     const validation: CompiledFormValidationModel = {
       behavior: {
         triggers: ['blur'],
-        showErrorOn: ['touched', 'submit']
+        showErrorOn: ['touched', 'submit'],
       },
       order: ['reviewers'],
       dependents: {
-        role: ['adminCode']
+        role: ['adminCode'],
       },
       nodes: {
         '': {
           path: '',
           kind: 'form',
           rules: [],
-          children: ['reviewers']
+          children: ['reviewers'],
         },
         reviewers: {
           path: 'reviewers',
@@ -84,11 +84,13 @@ describe('createRendererRuntime', () => {
           label: 'Reviewers',
           behavior: {
             triggers: ['change'],
-            showErrorOn: ['dirty']
+            showErrorOn: ['dirty'],
           },
-          rules: [compiledRule({ kind: 'minItems', value: 1, message: 'Need one reviewer' }, 'reviewers')],
+          rules: [
+            compiledRule({ kind: 'minItems', value: 1, message: 'Need one reviewer' }, 'reviewers'),
+          ],
           children: [],
-          parent: ''
+          parent: '',
         },
         adminCode: {
           path: 'adminCode',
@@ -97,15 +99,17 @@ describe('createRendererRuntime', () => {
           label: 'Admin Code',
           behavior: {
             triggers: ['blur'],
-            showErrorOn: ['touched', 'submit']
+            showErrorOn: ['touched', 'submit'],
           },
-          rules: [compiledRule({ kind: 'requiredWhen', path: 'role', value: 'admin' }, 'adminCode')],
+          rules: [
+            compiledRule({ kind: 'requiredWhen', path: 'role', value: 'admin' }, 'adminCode'),
+          ],
           children: [],
-          parent: ''
-        }
+          parent: '',
+        },
       },
       validationOrder: ['reviewers'],
-      rootPath: ''
+      rootPath: '',
     };
 
     expect(getCompiledValidationTraversalOrder(validation)).toEqual(['reviewers']);
@@ -118,21 +122,21 @@ describe('createRendererRuntime', () => {
     expect(hasCompiledValidationNodes(validation)).toBe(true);
     expect(hasCompiledValidationNodes(undefined)).toBe(false);
     expect(buildCompiledValidationDependentMap(validation.nodes)).toEqual({
-      role: ['adminCode']
+      role: ['adminCode'],
     });
     expect(buildCompiledValidationOrder(validation.nodes, '')).toEqual(['reviewers', 'adminCode']);
     expect(
       buildCompiledFormValidationModel({
         behavior: validation.behavior,
         nodes: validation.nodes,
-        rootPath: ''
-      })
+        rootPath: '',
+      }),
     ).toMatchObject({
       order: ['reviewers', 'adminCode'],
       validationOrder: ['reviewers', 'adminCode'],
       dependents: {
-        role: ['adminCode']
-      }
+        role: ['adminCode'],
+      },
     });
     expect(getCompiledValidationField(validation, 'reviewers')).toMatchObject({
       path: 'reviewers',
@@ -140,8 +144,8 @@ describe('createRendererRuntime', () => {
       label: 'Reviewers',
       behavior: {
         triggers: ['change'],
-        showErrorOn: ['dirty']
-      }
+        showErrorOn: ['dirty'],
+      },
     });
   });
 });

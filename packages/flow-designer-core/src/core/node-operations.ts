@@ -1,13 +1,6 @@
-import type {
-  GraphDocument,
-  GraphNode,
-  NormalizedDesignerConfig,
-} from '../types';
+import type { GraphDocument, GraphNode, NormalizedDesignerConfig } from '../types';
 
-export function addNodeToDocument(
-  doc: GraphDocument,
-  node: GraphNode,
-): GraphDocument {
+export function addNodeToDocument(doc: GraphDocument, node: GraphNode): GraphDocument {
   return {
     ...doc,
     nodes: [...doc.nodes, node],
@@ -48,10 +41,7 @@ export function replaceNodeInDocument(
   };
 }
 
-export function removeNodeFromDocument(
-  doc: GraphDocument,
-  nodeId: string,
-): GraphDocument {
+export function removeNodeFromDocument(doc: GraphDocument, nodeId: string): GraphDocument {
   return {
     ...doc,
     nodes: doc.nodes.filter((node) => node.id !== nodeId),

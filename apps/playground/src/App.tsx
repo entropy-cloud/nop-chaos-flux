@@ -13,11 +13,21 @@ import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { Spinner } from '@nop-chaos/ui';
 
-const LazyReportDesignerPage = lazy(() => import('./pages/report-designer-page').then((m) => ({ default: m.ReportDesignerPage })));
-const LazyDebuggerLabPage = lazy(() => import('./pages/debugger-lab-page').then((m) => ({ default: m.DebuggerLabPage })));
-const LazyConditionBuilderPage = lazy(() => import('./pages/condition-builder-page').then((m) => ({ default: m.ConditionBuilderPage })));
-const LazyWordEditorPage = lazy(() => import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })));
-const LazyPerformanceTablePage = lazy(() => import('./pages/performance-table-page').then((m) => ({ default: m.PerformanceTablePage })));
+const LazyReportDesignerPage = lazy(() =>
+  import('./pages/report-designer-page').then((m) => ({ default: m.ReportDesignerPage })),
+);
+const LazyDebuggerLabPage = lazy(() =>
+  import('./pages/debugger-lab-page').then((m) => ({ default: m.DebuggerLabPage })),
+);
+const LazyConditionBuilderPage = lazy(() =>
+  import('./pages/condition-builder-page').then((m) => ({ default: m.ConditionBuilderPage })),
+);
+const LazyWordEditorPage = lazy(() =>
+  import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })),
+);
+const LazyPerformanceTablePage = lazy(() =>
+  import('./pages/performance-table-page').then((m) => ({ default: m.PerformanceTablePage })),
+);
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
@@ -51,12 +61,12 @@ if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefin
     defaultOpen: false,
     defaultTab: 'timeline',
     position: { x: 24, y: 24 },
-    dock: 'floating'
+    dock: 'floating',
   };
 }
 
 const debuggerController = createNopDebugger({
-  id: 'playground-main'
+  id: 'playground-main',
 });
 
 function PageFallback() {
@@ -130,9 +140,7 @@ export function App() {
 
   return (
     <div className="nop-theme-root">
-      <Suspense fallback={<PageFallback />}>
-        {renderPage(route, navigate)}
-      </Suspense>
+      <Suspense fallback={<PageFallback />}>{renderPage(route, navigate)}</Suspense>
       <NopDebuggerPanel controller={debuggerController} />
     </div>
   );

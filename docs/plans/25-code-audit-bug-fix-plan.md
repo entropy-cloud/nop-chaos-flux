@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-02
 
-
 > Based on three code audit documents in `docs/articles/` (2026-04-01).
 > Every issue has been verified against the current working tree.
 > This plan consolidates the three documents and resolves their disagreements.
@@ -12,11 +11,11 @@
 
 ## Verification Summary
 
-| Audit Doc | Issues Claimed | Verified | Resolved/Not Found | Disagreements |
-|-----------|---------------|----------|-------------------|---------------|
-| `code-audit-issues-2026-04-01.md` | 11 | 9 confirmed | 1 resolved (B-2 artifacts) | M-1 conclusion wrong |
-| `code-audit-issues-2026-04-01-revised.md` | 22 | 20 confirmed | 1 resolved (B-2 artifacts) | Most accurate |
-| `code-audit-issues-2026-04-01-revised2.md` | 17 | 15 confirmed | 1 resolved (B-2 artifacts) | M-1 conclusion wrong |
+| Audit Doc                                  | Issues Claimed | Verified     | Resolved/Not Found         | Disagreements        |
+| ------------------------------------------ | -------------- | ------------ | -------------------------- | -------------------- |
+| `code-audit-issues-2026-04-01.md`          | 11             | 9 confirmed  | 1 resolved (B-2 artifacts) | M-1 conclusion wrong |
+| `code-audit-issues-2026-04-01-revised.md`  | 22             | 20 confirmed | 1 resolved (B-2 artifacts) | Most accurate        |
+| `code-audit-issues-2026-04-01-revised2.md` | 17             | 15 confirmed | 1 resolved (B-2 artifacts) | M-1 conclusion wrong |
 
 ### Key Disagreement Resolution
 
@@ -47,11 +46,12 @@ However, `revised.md` correctly identified a secondary issue: the range `-_` (45
 
 **Status**: ✅ Confirmed (artifacts already cleaned, guard script missing)  
 **Problem**: `scripts/verify-no-src-artifacts.mjs` does not exist. No CI protection against future leaks.  
-**Fix**: 
+**Fix**:
+
 1. Create `scripts/verify-no-src-artifacts.mjs` that scans all `packages/*/src/` directories for `.d.ts`, `.js`, `.js.map` files.
 2. Add `"check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs"` to root `package.json`.
 3. Wire into `lint` script or CI pipeline.  
-**Verification**: `pnpm check:src-artifacts` passes cleanly.
+   **Verification**: `pnpm check:src-artifacts` passes cleanly.
 
 ---
 
@@ -85,26 +85,29 @@ Default config sets `allowMultiEdge: true` (~line 240), so the flag is **complet
 **Location**: `packages/report-designer-core/src/core.ts:702-708`  
 **Problem**: `report-designer:importTemplate` and `report-designer:exportTemplate` return hard-coded "not implemented" errors.  
 **Fix**:
+
 1. `importTemplate`: Look up codec adapter → call `importDocument` → replace document → reset selection.
 2. `exportTemplate`: Look up codec adapter → call `exportDocument` → return result in `CommandResult.data`.
 3. Codec resolution: `profile.codecId` > `config.codec.provider`.
 4. No codec configured → return structured error (not thrown exception).  
-**Tests**: Cover success path, missing codec error, invalid format error.  
-**Verification**: `pnpm --filter @nop-chaos/report-designer-core test` passes.
+   **Tests**: Cover success path, missing codec error, invalid format error.  
+   **Verification**: `pnpm --filter @nop-chaos/report-designer-core test` passes.
 
 ### FIX-5. DataSourceRenderer reads raw schema, bypasses precompiled pipeline
 
 **Status**: ✅ Confirmed  
 **Location**: `packages/flux-renderers-data/src/data-source-renderer.tsx:19-20, 55`  
-**Problem**: 
+**Problem**:
+
 - Line 20: `const api = schema.api` — reads raw schema, not `props.props.api` (precompiled).
 - Line 55: `runtime.evaluate<ApiObject>(api, ...)` — recompiles on every request including every polling cycle.
 - `runtime.evaluate()` calls `compileValue()` without caching (`flux-runtime/src/index.ts:205-208`).  
-**Fix**:
+  **Fix**:
+
 1. Change line 20 to `const api = props.props.api`.
 2. Remove `runtime.evaluate()` call — `api` is already evaluated.
 3. If scope-dependent API params need re-evaluation on each poll, use `evaluateWithState()` to preserve compilation cache and state reuse.  
-**Verification**: `pnpm --filter @nop-chaos/flux-renderers-data build` passes. Same `ApiObject` under `data-source` and `ajax` paths produces identical behavior.
+   **Verification**: `pnpm --filter @nop-chaos/flux-renderers-data build` passes. Same `ApiObject` under `data-source` and `ajax` paths produces identical behavior.
 
 ### FIX-6. DynamicRenderer double-evaluates already-resolved API
 
@@ -132,11 +135,13 @@ Default config sets `allowMultiEdge: true` (~line 240), so the flag is **complet
 **Location**: `packages/flux-formula/src/evaluate.ts:140`  
 **Problem**: `node.items.map((item, index) => evaluateNode(item, context, env, stateNode.items[index]))` — no bounds check. If schema is reloaded with different array length while `useRef` retains old state, `stateNode.items[index]` is `undefined` → crash on `stateNode.kind` access.  
 **Fix**: Add guard before map:
+
 ```typescript
 if (stateNode.items.length !== node.items.length) {
   stateNode.items = node.items.map((item) => createStateFromNode(item).root);
 }
 ```
+
 Same for `evaluateObject` — missing keys in `stateNode.entries` after schema change.  
 **Verification**: HMR / dynamic schema replacement does not crash.
 
@@ -154,9 +159,11 @@ Same for `evaluateObject` — missing keys in `stateNode.entries` after schema c
 **Location**: `packages/flux-core/src/utils/schema.ts:21`  
 **Problem**: `[^a-zA-Z0-9-_:.]` — the `-_` range (45–95) unintentionally allows `/`, `=`, `?`, `@`, `[`, `\`, `]`, `^`.  
 **Fix**: Replace range with explicit characters:
+
 ```typescript
 return path.replace(/[^a-zA-Z0-9_.\-:]/g, '_');
 ```
+
 **Verification**: `pnpm --filter @nop-chaos/flux-core test` passes.
 
 ### FIX-11. `createFormulaScope` Proxy `get` trap double traversal
@@ -165,6 +172,7 @@ return path.replace(/[^a-zA-Z0-9_.\-:]/g, '_');
 **Location**: `packages/flux-formula/src/scope.ts:70-74`  
 **Problem**: `get` trap calls `context.has(property)` then `context.resolve(property)` — two independent scope-chain traversals per property access.  
 **Fix**: Remove `has` guard. Call `resolve` directly, fallback to `materialize` only on `undefined`:
+
 ```typescript
 get(_target, property) {
   if (typeof property !== 'string' || property === '__proto__') return undefined;
@@ -173,6 +181,7 @@ get(_target, property) {
   return getIn(context.materialize(), property);
 }
 ```
+
 **Caveat**: Conflates "key absent" with "key present, value is `undefined`". Acceptable in current scope model.  
 **Verification**: `pnpm --filter @nop-chaos/flux-formula test` passes.
 
@@ -202,25 +211,27 @@ get(_target, property) {
 **Location**: `packages/flux-formula/src/scope.ts:57`  
 **Problem**: `new Proxy({}, handler)` on every formula evaluation. GC pressure in hot paths.  
 **Fix**: Cache Proxy by `EvalContext` identity using `WeakMap`:
+
 ```typescript
 const formulaScopeCache = new WeakMap<EvalContext, Record<string, any>>();
 ```
+
 **Verification**: `pnpm --filter @nop-chaos/flux-formula test` passes.
 
 ---
 
 ## Phase 5 — Deferred Items (P3, not in scope)
 
-| ID | Issue | Reason for Deferral |
-|----|-------|-------------------|
-| FIX-15 | `evaluateLeaf` in-place mutation of stateNode | Optimization only. `Object.is` guard + `equalityFn` prevent incorrect data. Worst case: unnecessary re-render in concurrent mode. |
-| FIX-16 | `ownKeys` triggers full scope materialization | Double-layer caching (`materialize()` memo + `createScopeReader` snapshot) mitigates impact. Document as known limitation. |
-| FIX-17 | `resolveNodeMeta` pre-allocates before `shallowEqual` | `shallowEqual` returns old reference on match. Low impact. |
-| FIX-18 | `scope.read()` deep chain cost | Snapshot-level memoization exists. Typical depth (3–5) is acceptable. |
-| FIX-19 | Node subscription at scope level (not path-level) | Requires compiled dependency extraction + `subscribePath` API — significant architectural change. |
-| FIX-20 | Form validation parallel execution | Requires dependency topology analysis + concurrency control. Current serial execution is correct, just slower for large forms. |
-| FIX-21 | Flow Core O(N) lookups + `JSON.stringify` dirty check | Requires adding indexes + revision counters. Correct behavior, just slower for large graphs. |
-| FIX-22 | Flow Designer docs drifted from implementation | Requires doc/code cross-reference pass. |
+| ID     | Issue                                                 | Reason for Deferral                                                                                                               |
+| ------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| FIX-15 | `evaluateLeaf` in-place mutation of stateNode         | Optimization only. `Object.is` guard + `equalityFn` prevent incorrect data. Worst case: unnecessary re-render in concurrent mode. |
+| FIX-16 | `ownKeys` triggers full scope materialization         | Double-layer caching (`materialize()` memo + `createScopeReader` snapshot) mitigates impact. Document as known limitation.        |
+| FIX-17 | `resolveNodeMeta` pre-allocates before `shallowEqual` | `shallowEqual` returns old reference on match. Low impact.                                                                        |
+| FIX-18 | `scope.read()` deep chain cost                        | Snapshot-level memoization exists. Typical depth (3–5) is acceptable.                                                             |
+| FIX-19 | Node subscription at scope level (not path-level)     | Requires compiled dependency extraction + `subscribePath` API — significant architectural change.                                 |
+| FIX-20 | Form validation parallel execution                    | Requires dependency topology analysis + concurrency control. Current serial execution is correct, just slower for large forms.    |
+| FIX-21 | Flow Core O(N) lookups + `JSON.stringify` dirty check | Requires adding indexes + revision counters. Correct behavior, just slower for large graphs.                                      |
+| FIX-22 | Flow Designer docs drifted from implementation        | Requires doc/code cross-reference pass.                                                                                           |
 
 ---
 
@@ -273,5 +284,3 @@ Closure note:
 - `docs/articles/code-audit-issues-2026-04-01.md` — Original audit
 - `docs/articles/code-audit-issues-2026-04-01-revised.md` — Revised (most accurate)
 - `docs/articles/code-audit-issues-2026-04-01-revised2.md` — Second revision
-
-

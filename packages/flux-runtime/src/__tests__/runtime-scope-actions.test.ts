@@ -6,7 +6,7 @@ import {
   createComponentHandleRegistry,
   createFormComponentHandle,
   createRendererRegistry,
-  createRendererRuntime
+  createRendererRuntime,
 } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
@@ -16,7 +16,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const page = runtime.createPageRuntime({ message: 'Hello' });
@@ -26,14 +26,14 @@ describe('createRendererRuntime', () => {
         action: 'setValue',
         args: {
           path: 'message',
-          value: 'World'
-        }
+          value: 'World',
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(page.store.getState().data.message).toBe('World');
@@ -48,7 +48,7 @@ describe('createRendererRuntime', () => {
         beforeCompile(schema) {
           order.push('late');
           return schema;
-        }
+        },
       },
       {
         name: 'first-tie',
@@ -56,7 +56,7 @@ describe('createRendererRuntime', () => {
         beforeCompile(schema) {
           order.push('first-tie');
           return schema;
-        }
+        },
       },
       {
         name: 'second-tie',
@@ -64,21 +64,25 @@ describe('createRendererRuntime', () => {
         beforeCompile(schema) {
           order.push('second-tie');
           return schema;
-        }
-      }
+        },
+      },
     ];
 
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
-      plugins
+      plugins,
     });
 
     runtime.compile({ type: 'text', text: 'hello' });
 
     expect(order).toEqual(['first-tie', 'second-tie', 'late']);
-    expect(runtime.plugins.map((plugin) => plugin.name)).toEqual(['first-tie', 'second-tie', 'late']);
+    expect(runtime.plugins.map((plugin) => plugin.name)).toEqual([
+      'first-tie',
+      'second-tie',
+      'late',
+    ]);
   });
 
   it('updates multiple page scope values through setValues action', async () => {
@@ -86,7 +90,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const page = runtime.createPageRuntime({ message: 'Hello', status: 'idle' });
@@ -97,23 +101,23 @@ describe('createRendererRuntime', () => {
         args: {
           values: {
             message: 'World',
-            status: 'done'
-          }
-        }
+            status: 'done',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({
       ok: true,
       data: {
         message: 'World',
-        status: 'done'
-      }
+        status: 'done',
+      },
     });
     expect(page.store.getState().data).toMatchObject({ message: 'World', status: 'done' });
   });
@@ -123,7 +127,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
@@ -132,7 +136,7 @@ describe('createRendererRuntime', () => {
       name: 'userForm',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
     });
 
     const unregister = componentRegistry.register(createFormComponentHandle(form));
@@ -144,15 +148,15 @@ describe('createRendererRuntime', () => {
           componentId: 'user-form',
           args: {
             name: 'username',
-            value: 'Bob'
-          }
+            value: 'Bob',
+          },
         },
         {
           runtime,
           scope: page.scope,
           page,
-          componentRegistry
-        }
+          componentRegistry,
+        },
       );
 
       expect(setValueResult).toMatchObject({ ok: true, data: 'Bob' });
@@ -161,14 +165,14 @@ describe('createRendererRuntime', () => {
       const validateResult = await runtime.dispatch(
         {
           action: 'component:validate',
-          componentName: 'userForm'
+          componentName: 'userForm',
         },
         {
           runtime,
           scope: page.scope,
           page,
-          componentRegistry
-        }
+          componentRegistry,
+        },
       );
 
       expect(validateResult.ok).toBe(true);
@@ -183,7 +187,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
@@ -192,14 +196,14 @@ describe('createRendererRuntime', () => {
       name: 'firstForm',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
     });
     const secondForm = runtime.createFormRuntime({
       id: 'second-form',
       name: 'secondForm',
       initialValues: { username: 'Bob' },
       parentScope: page.scope,
-      page
+      page,
     });
 
     const unregisterFirst = componentRegistry.register(createFormComponentHandle(firstForm));
@@ -210,14 +214,14 @@ describe('createRendererRuntime', () => {
         {
           action: 'component:validate',
           componentId: 'first-form',
-          componentName: 'secondForm'
+          componentName: 'secondForm',
         },
         {
           runtime,
           scope: page.scope,
           page,
-          componentRegistry
-        }
+          componentRegistry,
+        },
       );
 
       expect(result.ok).toBe(false);
@@ -234,7 +238,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
@@ -243,14 +247,14 @@ describe('createRendererRuntime', () => {
       name: 'sharedForm',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
     });
     const secondForm = runtime.createFormRuntime({
       id: 'second-form',
       name: 'sharedForm',
       initialValues: { username: 'Bob' },
       parentScope: page.scope,
-      page
+      page,
     });
 
     const unregisterFirst = componentRegistry.register(createFormComponentHandle(firstForm));
@@ -260,14 +264,14 @@ describe('createRendererRuntime', () => {
       const result = await runtime.dispatch(
         {
           action: 'component:validate',
-          componentName: 'sharedForm'
+          componentName: 'sharedForm',
         },
         {
           runtime,
           scope: page.scope,
           page,
-          componentRegistry
-        }
+          componentRegistry,
+        },
       );
 
       expect(result.ok).toBe(false);
@@ -284,7 +288,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
@@ -293,7 +297,7 @@ describe('createRendererRuntime', () => {
       name: 'compiledCidForm',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
     });
     const handle = createFormComponentHandle(form);
     const unregister = componentRegistry.register(handle, { cid: 42 });
@@ -305,15 +309,15 @@ describe('createRendererRuntime', () => {
           _targetCid: 42,
           args: {
             name: 'username',
-            value: 'Carol'
-          }
+            value: 'Carol',
+          },
         },
         {
           runtime,
           scope: page.scope,
           page,
-          componentRegistry
-        }
+          componentRegistry,
+        },
       );
 
       expect(result).toMatchObject({ ok: true, data: 'Carol' });
@@ -331,10 +335,10 @@ describe('createRendererRuntime', () => {
       env: {
         ...env,
         monitor: {
-          onActionEnd
-        }
+          onActionEnd,
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
@@ -343,7 +347,7 @@ describe('createRendererRuntime', () => {
       name: 'compiledCidForm',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
     });
     const handle = createFormComponentHandle(form);
     const unregister = componentRegistry.register(handle, { cid: 42 });
@@ -355,15 +359,15 @@ describe('createRendererRuntime', () => {
           _targetCid: 42,
           args: {
             name: 'username',
-            value: 'Carol'
-          }
+            value: 'Carol',
+          },
         },
         {
           runtime,
           scope: page.scope,
           page,
-          componentRegistry
-        }
+          componentRegistry,
+        },
       );
 
       expect(onActionEnd).toHaveBeenCalledWith(
@@ -373,8 +377,8 @@ describe('createRendererRuntime', () => {
           componentId: 'compiled-cid-form',
           componentName: 'compiledCidForm',
           componentType: 'form',
-          method: 'setValue'
-        })
+          method: 'setValue',
+        }),
       );
     } finally {
       unregister();
@@ -386,28 +390,26 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
     const result = await runtime.dispatch(
       {
-        action: 'component:validate'
+        action: 'component:validate',
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(false);
     expect((result.error as Error).message).toBe(
-      'component:<method> requires _targetCid, componentId or componentName'
+      'component:<method> requires _targetCid, componentId or componentName',
     );
   });
-
-
 
   it('exposes component registry debug helpers through the public contract', () => {
     const componentRegistry = createComponentHandleRegistry({ id: 'debug-components' });
@@ -416,8 +418,8 @@ describe('createRendererRuntime', () => {
       name: 'debugForm',
       type: 'form',
       capabilities: {
-        invoke: vi.fn()
-      }
+        invoke: vi.fn(),
+      },
     };
 
     const unregister = componentRegistry.register(handle, { cid: 88 });
@@ -430,23 +432,21 @@ describe('createRendererRuntime', () => {
           id: 'debug-form',
           name: 'debugForm',
           type: 'form',
-          mounted: true
-        })
-      ]
+          mounted: true,
+        }),
+      ],
     });
 
     unregister();
     expect(componentRegistry.getHandleByCid?.(88)).toBeUndefined();
   });
 
-
-
   it('resolves namespaced actions through parent action scopes', async () => {
     const registry = createRendererRegistry([textRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const parentActionScope = createActionScope({ id: 'parent-scope' });
@@ -454,36 +454,43 @@ describe('createRendererRuntime', () => {
     const invoke = vi.fn().mockResolvedValue({ ok: true, data: { exported: true } });
     parentActionScope.registerNamespace('designer', {
       kind: 'host',
-      invoke
+      invoke,
     });
 
     const result = await runtime.dispatch(
       {
         action: 'designer:export',
         args: {
-          source: 'toolbar'
-        }
+          source: 'toolbar',
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        actionScope: childActionScope
-      }
+        actionScope: childActionScope,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, data: { exported: true } });
-    expect(invoke).toHaveBeenCalledWith('export', { source: 'toolbar' }, expect.objectContaining({ actionScope: childActionScope }));
+    expect(invoke).toHaveBeenCalledWith(
+      'export',
+      { source: 'toolbar' },
+      expect.objectContaining({ actionScope: childActionScope }),
+    );
   });
 
   it('exposes action scope debug snapshots through the public contract', () => {
     const parentActionScope = createActionScope({ id: 'parent-debug-scope' });
-    const childActionScope = createActionScope({ id: 'child-debug-scope', parent: parentActionScope });
+    const childActionScope = createActionScope({
+      id: 'child-debug-scope',
+      parent: parentActionScope,
+    });
 
     childActionScope.registerNamespace('designer', {
       kind: 'host',
       invoke: vi.fn(),
-      listMethods: () => ['export', 'save']
+      listMethods: () => ['export', 'save'],
     });
 
     expect(childActionScope.getDebugSnapshot?.()).toEqual({
@@ -493,9 +500,9 @@ describe('createRendererRuntime', () => {
         {
           namespace: 'designer',
           providerKind: 'host',
-          methods: ['export', 'save']
-        }
-      ]
+          methods: ['export', 'save'],
+        },
+      ],
     });
   });
 });

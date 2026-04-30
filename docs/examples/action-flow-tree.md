@@ -10,16 +10,16 @@
 
 Action Schema 概念到 Tree DSL 的映射：
 
-| Action Schema | Tree DSL | 承载位置 |
-|---|---|---|
-| 主链顺序 A → B → C | `child` 递归链 | 结构字段 |
-| `parallel: [...]` | `branches` | 结构字段，`data.branchType = "parallel"` |
-| `then` | `branches[0]` | `data.branchType = "then"` |
-| `onError` | `branches[1]` | `data.branchType = "onError"` |
-| `when` | 节点自身 | `data.when` |
-| `retry` / `timeout` | 节点自身 | `data` |
-| `continueOnError` | 节点自身 | `data` |
-| `debounce` | 节点自身 | `data` |
+| Action Schema       | Tree DSL       | 承载位置                                 |
+| ------------------- | -------------- | ---------------------------------------- |
+| 主链顺序 A → B → C  | `child` 递归链 | 结构字段                                 |
+| `parallel: [...]`   | `branches`     | 结构字段，`data.branchType = "parallel"` |
+| `then`              | `branches[0]`  | `data.branchType = "then"`               |
+| `onError`           | `branches[1]`  | `data.branchType = "onError"`            |
+| `when`              | 节点自身       | `data.when`                              |
+| `retry` / `timeout` | 节点自身       | `data`                                   |
+| `continueOnError`   | 节点自身       | `data`                                   |
+| `debounce`          | 节点自身       | `data`                                   |
 
 ### 关键洞察：then / onError 就是条件分支
 
@@ -336,16 +336,16 @@ Action flow：
 
 Tree → `ActionSchema` JSON 的编译规则：
 
-| Tree 结构 | 导出 ActionSchema |
-|---|---|
-| `child` 链上的多个 step | `ActionSchema[]` ordered array（主顺序链） |
-| `branches` + `data.branchType === "then"` | `then` 字段（取 branches[0].child 作为 then 子树） |
-| `branches` + `data.branchType === "onError"` | `onError` 字段 |
-| `branches` + `data.branchType === "parallel"` | `parallel` 数组 |
-| 节点的 `data.when` | `when` 字段 |
-| 节点的 `data.retry` | `retry` 字段 |
-| 节点的 `data.timeout` | `timeout` 字段 |
-| 节点的 `data.continueOnError` | `continueOnError` 字段 |
+| Tree 结构                                     | 导出 ActionSchema                                  |
+| --------------------------------------------- | -------------------------------------------------- |
+| `child` 链上的多个 step                       | `ActionSchema[]` ordered array（主顺序链）         |
+| `branches` + `data.branchType === "then"`     | `then` 字段（取 branches[0].child 作为 then 子树） |
+| `branches` + `data.branchType === "onError"`  | `onError` 字段                                     |
+| `branches` + `data.branchType === "parallel"` | `parallel` 数组                                    |
+| 节点的 `data.when`                            | `when` 字段                                        |
+| 节点的 `data.retry`                           | `retry` 字段                                       |
+| 节点的 `data.timeout`                         | `timeout` 字段                                     |
+| 节点的 `data.continueOnError`                 | `continueOnError` 字段                             |
 
 ### Lowering 示例
 

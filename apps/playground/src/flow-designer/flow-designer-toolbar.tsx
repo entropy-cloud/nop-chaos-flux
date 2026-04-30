@@ -26,7 +26,7 @@ export function FlowDesignerToolbar({
   onSave,
   onRestore,
   onExport,
-  onTabChange
+  onTabChange,
 }: FlowDesignerToolbarProps) {
   return (
     <div data-slot="flow-designer-toolbar">
@@ -52,33 +52,17 @@ export function FlowDesignerToolbar({
           ↷ Redo
         </Button>
         <div data-slot="flow-designer-toolbar-divider" />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClearSelection}
-        >
+        <Button variant="ghost" size="sm" onClick={onClearSelection}>
           Clear Selection
         </Button>
         <div data-slot="flow-designer-toolbar-divider" />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onSave}
-        >
+        <Button variant="ghost" size="sm" onClick={onSave}>
           Save
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onRestore}
-        >
+        <Button variant="ghost" size="sm" onClick={onRestore}>
           Restore
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onExport}
-        >
+        <Button variant="ghost" size="sm" onClick={onExport}>
           Export JSON
         </Button>
       </div>

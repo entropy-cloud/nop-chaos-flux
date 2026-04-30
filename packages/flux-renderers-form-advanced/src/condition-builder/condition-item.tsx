@@ -1,6 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 import { GripVerticalIcon, Trash2Icon } from 'lucide-react';
-import type { ConditionField, ConditionItemValue, ConditionOperatorOverrides, BaseConditionField } from './types';
+import type {
+  ConditionField,
+  ConditionItemValue,
+  ConditionOperatorOverrides,
+  BaseConditionField,
+} from './types';
 import { FieldSelect } from './field-select';
 import { OperatorSelect } from './operator-select';
 import { ValueInput } from './value-input';
@@ -46,10 +51,14 @@ export function ConditionItem({
   draggable,
   dragHandleProps,
 }: ConditionItemProps) {
-  const resolvedField = useMemo(() => findField(fields, value.left.field), [fields, value.left.field]);
+  const resolvedField = useMemo(
+    () => findField(fields, value.left.field),
+    [fields, value.left.field],
+  );
 
   const fieldType = resolvedField?.type === 'group' ? 'text' : (resolvedField?.type ?? 'text');
-  const fieldOperators = resolvedField?.type !== 'group' ? (resolvedField as BaseConditionField).operators : undefined;
+  const fieldOperators =
+    resolvedField?.type !== 'group' ? (resolvedField as BaseConditionField).operators : undefined;
 
   const operators = useMemo(
     () => resolveOperators(fieldType, fieldOperators, operatorsOverride),
@@ -60,7 +69,11 @@ export function ConditionItem({
     (fieldName: string) => {
       const newField = findField(fields, fieldName);
       const newFieldType = newField?.type === 'group' ? 'text' : (newField?.type ?? 'text');
-      const newOp = resolveDefaultOp(newFieldType, (newField as BaseConditionField | undefined)?.defaultOp, operatorsOverride);
+      const newOp = resolveDefaultOp(
+        newFieldType,
+        (newField as BaseConditionField | undefined)?.defaultOp,
+        operatorsOverride,
+      );
       onChange({
         ...value,
         left: { type: 'field', field: fieldName },
@@ -86,7 +99,10 @@ export function ConditionItem({
   );
 
   return (
-    <div data-slot="condition-item" className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 hover:shadow-sm transition-shadow group">
+    <div
+      data-slot="condition-item"
+      className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 hover:shadow-sm transition-shadow group"
+    >
       {draggable && !disabled && (
         <div
           className="cursor-grab p-0.5 text-muted-foreground hover:text-foreground active:cursor-grabbing"

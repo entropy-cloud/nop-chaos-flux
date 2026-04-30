@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-02
 
-
 > **Implementation Status: ✅ COMPLETED**
 > All 6 phases completed: xyflow canvas integration, drag-drop from palette, hover toolbars on nodes/edges, schema-driven inspector panel, productivity features (undo/redo, copy/paste, keyboard shortcuts), and list-shell node type. The flow-designer2 playground has reached practical parity with the legacy FlowEditor.
 >
@@ -76,60 +75,60 @@ This means visual parity alone is not enough, and raw feature parity alone is no
 
 ### Already Implemented in Core (`flow-designer-core`)
 
-| Feature | Status | Location |
-|---------|--------|----------|
-| Undo/redo with 50-entry history | ✅ Complete | `core.ts:undo()`, `redo()`, `canUndo()`, `canRedo()` |
-| Dirty state tracking | ✅ Complete | `core.ts:isDirty()`, `save()`, `restore()` |
-| Export JSON | ✅ Complete | `core.ts:exportDocument()` |
-| Copy/paste methods | ✅ Complete | `core.ts:copySelection()`, `pasteClipboard()` |
-| Node/edge CRUD | ✅ Complete | `core.ts:addNode()`, `deleteNode()`, `updateNode()`, etc. |
-| Viewport management | ✅ Complete | `core.ts` viewport state and events |
-| Reconnection validation | ✅ Complete | `core.ts` reconnect logic |
+| Feature                         | Status      | Location                                                  |
+| ------------------------------- | ----------- | --------------------------------------------------------- |
+| Undo/redo with 50-entry history | ✅ Complete | `core.ts:undo()`, `redo()`, `canUndo()`, `canRedo()`      |
+| Dirty state tracking            | ✅ Complete | `core.ts:isDirty()`, `save()`, `restore()`                |
+| Export JSON                     | ✅ Complete | `core.ts:exportDocument()`                                |
+| Copy/paste methods              | ✅ Complete | `core.ts:copySelection()`, `pasteClipboard()`             |
+| Node/edge CRUD                  | ✅ Complete | `core.ts:addNode()`, `deleteNode()`, `updateNode()`, etc. |
+| Viewport management             | ✅ Complete | `core.ts` viewport state and events                       |
+| Reconnection validation         | ✅ Complete | `core.ts` reconnect logic                                 |
 
 ### Already Implemented in Renderers (`flow-designer-renderers`)
 
-| Feature | Status | Location |
-|---------|--------|----------|
+| Feature                       | Status      | Location                                       |
+| ----------------------------- | ----------- | ---------------------------------------------- |
 | xyflow adapter infrastructure | ✅ Complete | `canvas-bridge.tsx:DesignerXyflowCanvasBridge` |
-| Background grid | ✅ Complete | `<Background />` rendered in ReactFlow |
-| Connection handling | ✅ Complete | `onConnect`, `onReconnect` wired |
-| Viewport sync | ✅ Complete | Controlled viewport with normalization |
-| Card canvas fallback | ✅ Complete | `DesignerCardCanvasBridge` |
+| Background grid               | ✅ Complete | `<Background />` rendered in ReactFlow         |
+| Connection handling           | ✅ Complete | `onConnect`, `onReconnect` wired               |
+| Viewport sync                 | ✅ Complete | Controlled viewport with normalization         |
+| Card canvas fallback          | ✅ Complete | `DesignerCardCanvasBridge`                     |
 
 ### Already Implemented in Playground
 
-| Feature | Status | Location |
-|---------|--------|----------|
-| Palette grouping | ✅ Complete | `FlowDesignerExample.tsx` - basic/logic/execution groups |
-| Basic inspector | ✅ Complete | `FlowDesignerExample.tsx` - label and data fields |
-| Toolbar actions | ✅ Complete | Undo/redo, save/restore/export, clear selection |
-| Toast notifications | ✅ Complete | `FlowDesignerExample.tsx` |
+| Feature             | Status      | Location                                                 |
+| ------------------- | ----------- | -------------------------------------------------------- |
+| Palette grouping    | ✅ Complete | `FlowDesignerExample.tsx` - basic/logic/execution groups |
+| Basic inspector     | ✅ Complete | `FlowDesignerExample.tsx` - label and data fields        |
+| Toolbar actions     | ✅ Complete | Undo/redo, save/restore/export, clear selection          |
+| Toast notifications | ✅ Complete | `FlowDesignerExample.tsx`                                |
 
 ### Partially Implemented (Infrastructure Exists, Not Wired)
 
-| Feature | Status | What's Missing |
-|---------|--------|----------------|
-| MiniMap | ⚠️ Partial | Imported, `showMinimap` prop exists, but **not rendered** |
-| Controls | ⚠️ Partial | Imported, `showControls` prop exists, but **not rendered** |
-| NodeToolbar | ⚠️ Partial | Imported, hover state exists, but **not rendered** |
+| Feature              | Status     | What's Missing                                                                          |
+| -------------------- | ---------- | --------------------------------------------------------------------------------------- |
+| MiniMap              | ⚠️ Partial | Imported, `showMinimap` prop exists, but **not rendered**                               |
+| Controls             | ⚠️ Partial | Imported, `showControls` prop exists, but **not rendered**                              |
+| NodeToolbar          | ⚠️ Partial | Imported, hover state exists, but **not rendered**                                      |
 | Double-click editing | ⚠️ Partial | Props `onNodeDoubleClick`/`onEdgeDoubleClick` exist, but **not connected** to ReactFlow |
-| Keyboard shortcuts | ⚠️ Partial | Config has `features.shortcuts`, core has methods, but **no key event wiring** |
+| Keyboard shortcuts   | ⚠️ Partial | Config has `features.shortcuts`, core has methods, but **no key event wiring**          |
 
 ### Not Implemented (Gap Items)
 
-| Feature | Gap Level | Notes |
-|---------|-----------|-------|
-| Playground uses xyflow | High | Currently uses custom card canvas, not xyflow adapter |
-| Palette drag-drop | High | Click-to-add only, no `draggable`/`onDragStart`/drop |
-| MiniMap rendering | Medium | Just needs `<MiniMap />` in ReactFlow |
-| Controls rendering | Medium | Just needs `<Controls />` in ReactFlow |
-| Hover toolbars UI | High | Need to render NodeToolbar with actions |
-| Double-click edit wiring | Medium | Need to wire `onNodeDoubleClick` to ReactFlow |
-| Leave guard | Medium | No `beforeunload` or navigation guard |
-| Keyboard shortcut wiring | Medium | Need keydown handler calling core methods |
-| Copy/paste UX | Low | Core has methods, need toolbar buttons/hotkeys |
-| Type-specific inspector | High | Only generic inputs, no type-specific editors |
-| Flow list shell | High | No list page at all |
+| Feature                  | Gap Level | Notes                                                 |
+| ------------------------ | --------- | ----------------------------------------------------- |
+| Playground uses xyflow   | High      | Currently uses custom card canvas, not xyflow adapter |
+| Palette drag-drop        | High      | Click-to-add only, no `draggable`/`onDragStart`/drop  |
+| MiniMap rendering        | Medium    | Just needs `<MiniMap />` in ReactFlow                 |
+| Controls rendering       | Medium    | Just needs `<Controls />` in ReactFlow                |
+| Hover toolbars UI        | High      | Need to render NodeToolbar with actions               |
+| Double-click edit wiring | Medium    | Need to wire `onNodeDoubleClick` to ReactFlow         |
+| Leave guard              | Medium    | No `beforeunload` or navigation guard                 |
+| Keyboard shortcut wiring | Medium    | Need keydown handler calling core methods             |
+| Copy/paste UX            | Low       | Core has methods, need toolbar buttons/hotkeys        |
+| Type-specific inspector  | High      | Only generic inputs, no type-specific editors         |
+| Flow list shell          | High      | No list page at all                                   |
 
 ## Target Capability Matrix
 
@@ -381,6 +380,7 @@ It should not be the place where core editor behavior is reimplemented ad hoc.
 ### Phase 6 - Add list-shell parity if the playground is expected to demonstrate the full module [COMPLETED]
 
 Tasks:
+
 - build a sample flow list page with search, filter, pagination, duplicate, delete, enable/disable, and edit-entry behavior
 - keep this shell configuration-driven as much as practical
 
@@ -395,6 +395,7 @@ Exit criteria:
 Add parity-oriented tests in this repository that mirror the legacy e2e checklist conceptually.
 
 Existing tests:
+
 - `packages/flow-designer-core/src/core.test.ts` - 13 tests covering node/edge CRUD, undo/redo, dirty, viewport, reconnection
 - `packages/flow-designer-renderers/src/canvas-bridge.test.tsx` - Bridge callback verification for Card/XyflowPreview/Xyflow adapters
 
@@ -423,5 +424,3 @@ Recommended next slice:
 4. begin package-level hover-toolbar behavior so node/edge quick actions stop depending on selected-state chrome
 
 This slice unlocks the highest-value gap first: the current playground still does not feel like the real `flow-editor` even though several supporting runtime pieces already exist.
-
-

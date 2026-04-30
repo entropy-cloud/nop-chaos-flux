@@ -198,52 +198,52 @@ interface CrudStatusSummary {
 
 ## 8. AMIS 迁移映射
 
-| AMIS 字段 | Flux 正式字段 | 说明 |
-| --- | --- | --- |
-| `api` | `source` | canonical 迁移目标统一收敛到 `source`；当前 live baseline 已证明数组型 `source` 与上游 source-result object（如 `{ items, total }`）工作流，请求 owner 协作仍属后续范围 |
-| `filter` | `queryForm` | 查询表单统一映射 |
-| `autoGenerateFilter` | `autoGenerateQueryForm` | 自动生成查询区 |
-| `headerToolbar` | `toolbar` | 顶部工具栏 region |
-| `footerToolbar` | `footerToolbar` | 底部工具栏 region |
-| `bulkActions` | `listActions` | 批量动作降级为列表级动作中的 selection-aware 普通 action |
-| `primaryField` | `rowKey` | 行唯一键 |
-| `pageField` | `pageField` | 分页页码参数名 |
-| `perPageField` | `pageSizeField` | 每页数量参数名 |
-| `columnsTogglable` / `columns-toggler` | `columnSettings` | 列选择/列排序入口 |
-| `keepItemSelectionOnPageChange` | `selection.keepOnPageChange` | 跨页保留勾选 |
-| `maxItemSelectionLength` | `selection.maxSelectionLength` | 当前页最大勾选数 |
-| `maxKeepItemSelectionLength` | `selection.maxKeepSelectionLength` | 跨页保留时的最大勾选数 |
-| `itemCheckableOn` | `selection.checkableWhen` | 可勾选条件 |
-| `loadDataOnce` | `clientMode.loadDataOnce` | 前端一次性加载 |
-| `loadDataOnceFetchOnFilter` | `clientMode.fetchOnFilter` | 查询后是否重新请求 |
-| `matchFunc` | `clientMode.matchFunc` | 前端匹配函数 |
-| `quickSaveApi` | `quickSaveAction` | 批量 quick edit 保存 |
-| `quickSaveItemApi` | `quickSaveItemAction` | 单条即时保存 |
-| `itemAction` | `onRowClick` 或 operation 列按钮 | 推荐落到显式 row action |
+| AMIS 字段                              | Flux 正式字段                      | 说明                                                                                                                                                                    |
+| -------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api`                                  | `source`                           | canonical 迁移目标统一收敛到 `source`；当前 live baseline 已证明数组型 `source` 与上游 source-result object（如 `{ items, total }`）工作流，请求 owner 协作仍属后续范围 |
+| `filter`                               | `queryForm`                        | 查询表单统一映射                                                                                                                                                        |
+| `autoGenerateFilter`                   | `autoGenerateQueryForm`            | 自动生成查询区                                                                                                                                                          |
+| `headerToolbar`                        | `toolbar`                          | 顶部工具栏 region                                                                                                                                                       |
+| `footerToolbar`                        | `footerToolbar`                    | 底部工具栏 region                                                                                                                                                       |
+| `bulkActions`                          | `listActions`                      | 批量动作降级为列表级动作中的 selection-aware 普通 action                                                                                                                |
+| `primaryField`                         | `rowKey`                           | 行唯一键                                                                                                                                                                |
+| `pageField`                            | `pageField`                        | 分页页码参数名                                                                                                                                                          |
+| `perPageField`                         | `pageSizeField`                    | 每页数量参数名                                                                                                                                                          |
+| `columnsTogglable` / `columns-toggler` | `columnSettings`                   | 列选择/列排序入口                                                                                                                                                       |
+| `keepItemSelectionOnPageChange`        | `selection.keepOnPageChange`       | 跨页保留勾选                                                                                                                                                            |
+| `maxItemSelectionLength`               | `selection.maxSelectionLength`     | 当前页最大勾选数                                                                                                                                                        |
+| `maxKeepItemSelectionLength`           | `selection.maxKeepSelectionLength` | 跨页保留时的最大勾选数                                                                                                                                                  |
+| `itemCheckableOn`                      | `selection.checkableWhen`          | 可勾选条件                                                                                                                                                              |
+| `loadDataOnce`                         | `clientMode.loadDataOnce`          | 前端一次性加载                                                                                                                                                          |
+| `loadDataOnceFetchOnFilter`            | `clientMode.fetchOnFilter`         | 查询后是否重新请求                                                                                                                                                      |
+| `matchFunc`                            | `clientMode.matchFunc`             | 前端匹配函数                                                                                                                                                            |
+| `quickSaveApi`                         | `quickSaveAction`                  | 批量 quick edit 保存                                                                                                                                                    |
+| `quickSaveItemApi`                     | `quickSaveItemAction`              | 单条即时保存                                                                                                                                                            |
+| `itemAction`                           | `onRowClick` 或 operation 列按钮   | 推荐落到显式 row action                                                                                                                                                 |
 
 ## 9. 特性对比列表
 
-| 能力 | AMIS CRUD | Flux 当前运行时 | Flux 本次契约基线 |
-| --- | --- | --- | --- |
-| operation 列按钮 | 已支持 | 已支持 | 已覆盖 |
-| 行点击动作 | 已支持 | 已支持 | 已覆盖 |
-| 查询表单 | 已支持 | 已支持基础版（submit/reset 已接入 CRUD query summary） | 已覆盖 |
-| 自动生成查询区 | 已支持 | 未实现 | 已定义 |
-| 顶部/底部工具栏 | 已支持 | 已支持 header/footer region + 标准 toolbar blocks 基础版 | 已覆盖 |
-| 列表级动作 | 已支持 | 已支持基础版 | 已覆盖 |
-| 批量操作 | 已支持 | 可由 `listActions + $crud selection` 表达 | 已覆盖 |
-| 列排序 | 已支持 | table 已有基础 sort state | 已覆盖 |
-| 列头快速搜索 | 已支持 | 已支持基础版：header search input + active-state trigger + clear action | 已覆盖基础版 |
-| 列头快速过滤 | 已支持 | 已支持基础版：header filter menu/state + active-state trigger + clear action | 已覆盖基础版 |
-| 左/右固定列 | 已支持 | 已支持 table/crud live sticky columns 基础版 | 已覆盖 |
-| 多列时的字段选择 | 已支持 | 已支持基础版（列显隐 + 最小列顺序调整，`overlay: false` inline panel 已落地） | 已覆盖基础版 |
-| 列拖拽排序 | 已支持 | 未实现（当前为非拖拽的最小上下移动；`draggable` 仍属后续） | 已定义 |
-| 响应式更多列展开 | 已支持 | 已支持基础版：`responsive.mode: 'expand'` 会在低于 `breakpoint` 时把次要列移入 expandable detail row | 已覆盖基础版 |
-| 服务端分页 | 已支持 | 未实现完整请求 owner baseline；当前支持消费上游 source-result object（如 `{ items, total }`）并通过 `onRefresh -> refreshSource` 回到上游请求 owner | 已定义 |
-| 前端一次性加载分页/过滤 | 已支持 | 已支持基础版：`loadDataOnce` / `fetchOnFilter` | 已覆盖基础版 |
-| quick edit | 已支持 | 已支持基础版：inline / custom body / local dialog quick-edit + quick save bridge | 已覆盖基础版 |
-| 动态列 | 已支持 | 部分可通过 source 注入 | 已覆盖设计入口 |
-| 地址栏同步查询参数 | 已支持 | 未实现，且当前阶段显式 deferred | 已定义 |
+| 能力                    | AMIS CRUD | Flux 当前运行时                                                                                                                                     | Flux 本次契约基线 |
+| ----------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| operation 列按钮        | 已支持    | 已支持                                                                                                                                              | 已覆盖            |
+| 行点击动作              | 已支持    | 已支持                                                                                                                                              | 已覆盖            |
+| 查询表单                | 已支持    | 已支持基础版（submit/reset 已接入 CRUD query summary）                                                                                              | 已覆盖            |
+| 自动生成查询区          | 已支持    | 未实现                                                                                                                                              | 已定义            |
+| 顶部/底部工具栏         | 已支持    | 已支持 header/footer region + 标准 toolbar blocks 基础版                                                                                            | 已覆盖            |
+| 列表级动作              | 已支持    | 已支持基础版                                                                                                                                        | 已覆盖            |
+| 批量操作                | 已支持    | 可由 `listActions + $crud selection` 表达                                                                                                           | 已覆盖            |
+| 列排序                  | 已支持    | table 已有基础 sort state                                                                                                                           | 已覆盖            |
+| 列头快速搜索            | 已支持    | 已支持基础版：header search input + active-state trigger + clear action                                                                             | 已覆盖基础版      |
+| 列头快速过滤            | 已支持    | 已支持基础版：header filter menu/state + active-state trigger + clear action                                                                        | 已覆盖基础版      |
+| 左/右固定列             | 已支持    | 已支持 table/crud live sticky columns 基础版                                                                                                        | 已覆盖            |
+| 多列时的字段选择        | 已支持    | 已支持基础版（列显隐 + 最小列顺序调整，`overlay: false` inline panel 已落地）                                                                       | 已覆盖基础版      |
+| 列拖拽排序              | 已支持    | 未实现（当前为非拖拽的最小上下移动；`draggable` 仍属后续）                                                                                          | 已定义            |
+| 响应式更多列展开        | 已支持    | 已支持基础版：`responsive.mode: 'expand'` 会在低于 `breakpoint` 时把次要列移入 expandable detail row                                                | 已覆盖基础版      |
+| 服务端分页              | 已支持    | 未实现完整请求 owner baseline；当前支持消费上游 source-result object（如 `{ items, total }`）并通过 `onRefresh -> refreshSource` 回到上游请求 owner | 已定义            |
+| 前端一次性加载分页/过滤 | 已支持    | 已支持基础版：`loadDataOnce` / `fetchOnFilter`                                                                                                      | 已覆盖基础版      |
+| quick edit              | 已支持    | 已支持基础版：inline / custom body / local dialog quick-edit + quick save bridge                                                                    | 已覆盖基础版      |
+| 动态列                  | 已支持    | 部分可通过 source 注入                                                                                                                              | 已覆盖设计入口    |
+| 地址栏同步查询参数      | 已支持    | 未实现，且当前阶段显式 deferred                                                                                                                     | 已定义            |
 
 说明：
 
@@ -276,9 +276,7 @@ interface CrudStatusSummary {
     {
       "type": "operation",
       "label": "操作",
-      "buttons": [
-        { "type": "button", "label": "查看" }
-      ]
+      "buttons": [{ "type": "button", "label": "查看" }]
     }
   ]
 }

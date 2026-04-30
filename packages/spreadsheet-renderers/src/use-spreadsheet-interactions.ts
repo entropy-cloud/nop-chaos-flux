@@ -19,7 +19,12 @@ import {
   useSpreadsheetShell,
 } from './spreadsheet-interactions/index.js';
 
-export type { DragState, ResizeState, FillHandleState, StyleToolType } from './spreadsheet-interactions/index.js';
+export type {
+  DragState,
+  ResizeState,
+  FillHandleState,
+  StyleToolType,
+} from './spreadsheet-interactions/index.js';
 
 export interface SpreadsheetInteractionsConfig {
   bridge: SpreadsheetBridge;
@@ -62,7 +67,10 @@ export interface SpreadsheetInteractionsReturn {
   gridRef: React.RefObject<HTMLDivElement | null>;
   onCanvasMouseDown: (e: React.MouseEvent) => void;
   isInRange: (row: number, col: number) => boolean;
-  getMergeInfo: (row: number, col: number) => { isMerged: boolean; isTopLeft: boolean; rowSpan: number; colSpan: number };
+  getMergeInfo: (
+    row: number,
+    col: number,
+  ) => { isMerged: boolean; isTopLeft: boolean; rowSpan: number; colSpan: number };
   handleCellValueChange: (value: string) => void;
   handleCopy: () => Promise<void>;
   handleCut: () => Promise<void>;
@@ -103,7 +111,13 @@ export interface SpreadsheetInteractionsReturn {
   handleAddComment: () => Promise<void>;
   handleDeleteComment: () => Promise<void>;
   hasComment: boolean;
-  currentCell: ReturnType<SpreadsheetBridge['getSnapshot']>['activeSheet'] extends (infer S | null) ? (S extends { cells?: infer C } ? C extends Record<string, infer Cell> ? Cell : undefined : undefined) : undefined;
+  currentCell: ReturnType<SpreadsheetBridge['getSnapshot']>['activeSheet'] extends infer S | null
+    ? S extends { cells?: infer C }
+      ? C extends Record<string, infer Cell>
+        ? Cell
+        : undefined
+      : undefined
+    : undefined;
   dropTargetCell: { row: number; col: number } | null;
   setDropTargetCell: React.Dispatch<React.SetStateAction<{ row: number; col: number } | null>>;
   dropTargetCellRef: React.RefObject<{ row: number; col: number } | null>;
@@ -113,9 +127,12 @@ export interface SpreadsheetInteractionsReturn {
   handleCellValueSave: () => Promise<void>;
 }
 
-export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig): SpreadsheetInteractionsReturn {
+export function useSpreadsheetInteractions(
+  config: SpreadsheetInteractionsConfig,
+): SpreadsheetInteractionsReturn {
   const { bridge, sheetId, onLog } = config;
-  const { addLog, cellValue, setCellValue, commentText, setCommentText, gridRef } = useSpreadsheetShell(onLog);
+  const { addLog, cellValue, setCellValue, commentText, setCommentText, gridRef } =
+    useSpreadsheetShell(onLog);
 
   const snapshot = useSnapshot(bridge);
 
@@ -144,13 +161,34 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     handleSelectRow,
     handleSelectColumn,
     handleSelectAll,
-  } = useSelection(snapshot, bridge, sheetId, addLog, editingCellRef, editValueRef, setEditingCell, setCommentText, setCellValue);
-
-  const { fillHandleState, fillHandleRef, isFillPreview, handleFillHandleMouseDown, handleFillHandleDoubleClick } = useFillHandle(
-    bridge, snapshot, sheetId, addLog, getSelectedRange
+  } = useSelection(
+    snapshot,
+    bridge,
+    sheetId,
+    addLog,
+    editingCellRef,
+    editValueRef,
+    setEditingCell,
+    setCommentText,
+    setCellValue,
   );
 
-  const { resizeState, columnWidths, rowHeights, handleColumnResizeStart, handleRowResizeStart, endResize } = useResize();
+  const {
+    fillHandleState,
+    fillHandleRef,
+    isFillPreview,
+    handleFillHandleMouseDown,
+    handleFillHandleDoubleClick,
+  } = useFillHandle(bridge, snapshot, sheetId, addLog, getSelectedRange);
+
+  const {
+    resizeState,
+    columnWidths,
+    rowHeights,
+    handleColumnResizeStart,
+    handleRowResizeStart,
+    endResize,
+  } = useResize();
 
   const handleMouseUp = useCallback(() => {
     selectionMouseUp(resizeState.isResizing, endResize, getSelectedRange);
@@ -159,43 +197,80 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
   useMouseUpBinding(handleMouseUp);
 
   const { handleCopy, handleCut, handlePaste, handleClear } = useClipboard(
-    snapshot, bridge, sheetId, selectedCell, getSelectedRange, setCellValue, addLog
+    snapshot,
+    bridge,
+    sheetId,
+    selectedCell,
+    getSelectedRange,
+    setCellValue,
+    addLog,
   );
 
-  const { handleStyleTool } = useStyleCommands(snapshot, bridge, selectedCell, getSelectedRange, addLog);
+  const { handleStyleTool } = useStyleCommands(
+    snapshot,
+    bridge,
+    selectedCell,
+    getSelectedRange,
+    addLog,
+  );
 
   const {
-    handleInsertRow, handleDeleteRow, handleInsertColumn, handleDeleteColumn,
-    handleFillDown, handleFillSeries,
-    handleAddSheet, handleRemoveSheet, handleRenameSheet,
-    handleMerge, handleUnmerge, handleMergeCenter,
-    handleFreeze, handleUnfreeze,
-    handleUndo, handleRedo,
+    handleInsertRow,
+    handleDeleteRow,
+    handleInsertColumn,
+    handleDeleteColumn,
+    handleFillDown,
+    handleFillSeries,
+    handleAddSheet,
+    handleRemoveSheet,
+    handleRenameSheet,
+    handleMerge,
+    handleUnmerge,
+    handleMergeCenter,
+    handleFreeze,
+    handleUnfreeze,
+    handleUndo,
+    handleRedo,
     getMergeInfo,
   } = useSheetCommands(snapshot, bridge, sheetId, selectedCell, getSelectedRange, addLog);
 
   const {
-    showFindReplace, setShowFindReplace,
-    findQuery, setFindQuery,
-    replaceText, setReplaceText,
-    findResults, setFindResults,
-    handleFind, handleReplace, handleReplaceAll,
+    showFindReplace,
+    setShowFindReplace,
+    findQuery,
+    setFindQuery,
+    replaceText,
+    setReplaceText,
+    findResults,
+    setFindResults,
+    handleFind,
+    handleReplace,
+    handleReplaceAll,
   } = useFindReplace(bridge, sheetId, selectedCell, addLog);
 
-  const {
-    showCommentInput, setShowCommentInput,
-    handleAddComment, handleDeleteComment,
-  } = useComments(bridge, sheetId, selectedCell, addLog, commentText, setCommentText);
+  const { showCommentInput, setShowCommentInput, handleAddComment, handleDeleteComment } =
+    useComments(bridge, sheetId, selectedCell, addLog, commentText, setCommentText);
 
   const {
-    dropTargetCell, setDropTargetCell, dropTargetCellRef,
-    handleFieldDrop, handleFieldDragOver, handleFieldDragLeave,
+    dropTargetCell,
+    setDropTargetCell,
+    dropTargetCellRef,
+    handleFieldDrop,
+    handleFieldDragOver,
+    handleFieldDragLeave,
   } = useFieldDrop(selectedCell);
 
   useKeyboard(
-    selectedCell, handleCopy, handleCut, handlePaste,
-    handleUndo, handleRedo, handleStyleTool, handleClear,
-    setShowFindReplace, setShowCommentInput
+    selectedCell,
+    handleCopy,
+    handleCut,
+    handlePaste,
+    handleUndo,
+    handleRedo,
+    handleStyleTool,
+    handleClear,
+    setShowFindReplace,
+    setShowCommentInput,
   );
 
   const onCanvasMouseDown = useCallback(() => {
@@ -208,7 +283,7 @@ export function useSpreadsheetInteractions(config: SpreadsheetInteractionsConfig
     bridge,
     sheetId,
     selectedCell,
-    setCellValue
+    setCellValue,
   });
 
   const currentCell = selectedCell

@@ -4,7 +4,7 @@ import {
   remapInitialFieldState,
   remapArrayFieldState,
   replaceManagedArrayValue,
-  executeArrayMutation
+  executeArrayMutation,
 } from '../form-runtime-array';
 import { createFormStore } from '../form-store';
 import { createScopeRef } from '../scope';
@@ -18,14 +18,14 @@ describe('remapValidationRunState', () => {
       ['items.0.name', 1],
       ['items.1.name', 2],
       ['items.2.name', 3],
-      ['unrelated', 4]
+      ['unrelated', 4],
     ]);
     const pendingDebounces = new Map();
     remapValidationRunState(
       { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
       'items',
       (i) => i - 1,
-      vi.fn()
+      vi.fn(),
     );
     expect(validationRuns.get('items.0.name')).toBe(2);
     expect(validationRuns.get('items.1.name')).toBe(3);
@@ -37,13 +37,13 @@ describe('remapValidationRunState', () => {
     const validationRuns = new Map<string, number>();
     const pendingDebounces = new Map<string, any>([
       ['items.1.field', { timer: 1, resolve: vi.fn(), reject: vi.fn() }],
-      ['items.2.field', { timer: 2, resolve: vi.fn(), reject: vi.fn() }]
+      ['items.2.field', { timer: 2, resolve: vi.fn(), reject: vi.fn() }],
     ]);
     remapValidationRunState(
       { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
       'items',
       (i) => i - 1,
-      vi.fn()
+      vi.fn(),
     );
     expect(pendingDebounces.has('items.0.field')).toBe(true);
     expect(pendingDebounces.has('items.1.field')).toBe(true);
@@ -54,41 +54,37 @@ describe('remapValidationRunState', () => {
     const validationRuns = new Map<string, number>();
     const cancelFn = vi.fn();
     const pendingDebounces = new Map<string, any>([
-      ['items.2.field', { timer: 1, resolve: vi.fn(), reject: vi.fn() }]
+      ['items.2.field', { timer: 1, resolve: vi.fn(), reject: vi.fn() }],
     ]);
     remapValidationRunState(
       { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
       'items',
       () => undefined,
-      cancelFn
+      cancelFn,
     );
     expect(cancelFn).toHaveBeenCalledWith('items.2.field');
   });
 
   it('skips pending debounce when entry is missing', () => {
     const validationRuns = new Map<string, number>();
-    const pendingDebounces = new Map<string, any>([
-      ['items.1.field', undefined as any]
-    ]);
+    const pendingDebounces = new Map<string, any>([['items.1.field', undefined as any]]);
     remapValidationRunState(
       { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
       'items',
       (i) => i - 1,
-      vi.fn()
+      vi.fn(),
     );
     expect(pendingDebounces.has('items.0.field')).toBe(false);
   });
 
   it('leaves unchanged paths untouched', () => {
-    const validationRuns = new Map<string, number>([
-      ['items.0.name', 5]
-    ]);
+    const validationRuns = new Map<string, number>([['items.0.name', 5]]);
     const pendingDebounces = new Map();
     remapValidationRunState(
       { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
       'items',
       (i) => i,
-      vi.fn()
+      vi.fn(),
     );
     expect(validationRuns.get('items.0.name')).toBe(5);
   });
@@ -102,14 +98,14 @@ describe('remapInitialFieldState', () => {
           'items.0.name': 'A',
           'items.1.name': 'B',
           'items.2.name': 'C',
-          'standalone': 42
+          standalone: 42,
         },
         dirty: {
           'items.0.name': false,
           'items.1.name': true,
-          'items.2.name': true
-        }
-      }
+          'items.2.name': true,
+        },
+      },
     };
     remapInitialFieldState(sharedState as any, 'items', (i) => i - 1);
     expect(sharedState.initialFieldState.initialValues['items.0.name']).toBe('B');
@@ -123,8 +119,8 @@ describe('remapInitialFieldState', () => {
     const sharedState = {
       initialFieldState: {
         initialValues: { 'items.0.x': 1, 'items.1.x': 2 },
-        dirty: { 'items.0.x': true, 'items.1.x': false }
-      }
+        dirty: { 'items.0.x': true, 'items.1.x': false },
+      },
     };
     remapInitialFieldState(sharedState as any, 'items', () => undefined);
     expect(Object.keys(sharedState.initialFieldState.initialValues)).toHaveLength(0);
@@ -135,8 +131,8 @@ describe('remapInitialFieldState', () => {
     const sharedState = {
       initialFieldState: {
         initialValues: { 'items.0.x': 1 },
-        dirty: { 'items.0.x': false }
-      }
+        dirty: { 'items.0.x': false },
+      },
     };
     remapInitialFieldState(sharedState as any, 'items', (i) => i);
     expect(sharedState.initialFieldState.dirty['items.0.x']).toBeUndefined();
@@ -148,7 +144,7 @@ describe('remapArrayFieldState', () => {
     const fieldStates: Record<string, FieldState> = {
       'items.1': { touched: true },
       'items.2': { dirty: true },
-      'other': { visited: true }
+      other: { visited: true },
     };
     const result = remapArrayFieldState('items', (i) => i - 1, { fieldStates });
     expect(result.fieldStates['items.0']).toEqual({ touched: true });
@@ -164,7 +160,7 @@ describe('replaceManagedArrayValue', () => {
       nextValue: ['a', 'b'],
       state: { values: {}, fieldStates: {} },
       initialFieldState: { initialValues: { items: ['a'] }, dirty: {} },
-      remappedState: { fieldStates: {} }
+      remappedState: { fieldStates: {} },
     });
     expect(result.values.items).toEqual(['a', 'b']);
     expect(result.fieldStates['items']?.dirty).toBe(true);
@@ -177,7 +173,7 @@ describe('replaceManagedArrayValue', () => {
       nextValue: initial,
       state: { values: {}, fieldStates: {} },
       initialFieldState: { initialValues: { items: initial }, dirty: {} },
-      remappedState: { fieldStates: { items: { dirty: true, touched: true } } }
+      remappedState: { fieldStates: { items: { dirty: true, touched: true } } },
     });
     expect(result.fieldStates['items']).toEqual({ touched: true });
   });
@@ -188,7 +184,14 @@ describe('replaceManagedArrayValue', () => {
       nextValue: ['x'],
       state: { values: {}, fieldStates: {} },
       initialFieldState: { initialValues: { items: [] }, dirty: {} },
-      remappedState: { fieldStates: { items: { validating: true, errors: [{ path: 'items', message: 'err', rule: 'required' }] } } }
+      remappedState: {
+        fieldStates: {
+          items: {
+            validating: true,
+            errors: [{ path: 'items', message: 'err', rule: 'required' }],
+          },
+        },
+      },
     });
     expect(result.fieldStates['items']?.validating).toBeUndefined();
     expect(result.fieldStates['items']?.errors).toBeUndefined();
@@ -202,7 +205,7 @@ describe('replaceManagedArrayValue', () => {
       nextValue: arr,
       state: { values: {}, fieldStates: {} },
       initialFieldState: { initialValues: { items: arr }, dirty: {} },
-      remappedState: { fieldStates: { items: { validating: true } } }
+      remappedState: { fieldStates: { items: { validating: true } } },
     });
     expect(result.fieldStates['items']).toBeUndefined();
   });
@@ -213,7 +216,7 @@ describe('replaceManagedArrayValue', () => {
       nextValue: ['new'],
       state: { values: {}, fieldStates: {} },
       initialFieldState: { initialValues: { items: [] }, dirty: {} },
-      remappedState: { fieldStates: {} }
+      remappedState: { fieldStates: {} },
     });
     expect(result.fieldStates['items']).toEqual({ dirty: true });
   });
@@ -225,7 +228,7 @@ describe('replaceManagedArrayValue', () => {
       nextValue: arr,
       state: { values: {}, fieldStates: {} },
       initialFieldState: { initialValues: { items: arr }, dirty: {} },
-      remappedState: { fieldStates: {} }
+      remappedState: { fieldStates: {} },
     });
     expect(result.fieldStates['items']).toBeUndefined();
   });
@@ -250,7 +253,7 @@ describe('executeArrayMutation', () => {
       lifecycleState: 'active' as const,
       modelGeneration: 1,
       externalErrors: new Map(),
-      childContracts: new Map()
+      childContracts: new Map(),
     } as ManagedFormRuntimeSharedState;
   }
 
@@ -264,9 +267,9 @@ describe('executeArrayMutation', () => {
       getArrayValue: (path) => (shared.store.getState().values as any)[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr.slice(0, 1), ...arr.slice(2)],
-      indexTransform: (i) => i < 1 ? i : i > 1 ? i - 1 : undefined,
+      indexTransform: (i) => (i < 1 ? i : i > 1 ? i - 1 : undefined),
       cancelValidationDebounce: vi.fn(),
-      revalidateDependents: vi.fn()
+      revalidateDependents: vi.fn(),
     });
 
     expect(shared.store.getState().values.items).toEqual(['a', 'c']);
@@ -282,7 +285,7 @@ describe('executeArrayMutation', () => {
       arrayOperation: (arr) => [...arr, 'new'],
       indexTransform: () => 0,
       cancelValidationDebounce: vi.fn(),
-      revalidateDependents: vi.fn()
+      revalidateDependents: vi.fn(),
     });
     expect(shared.store.getState().values.items).toEqual(['new']);
   });
@@ -298,7 +301,7 @@ describe('executeArrayMutation', () => {
       arrayOperation: (arr) => [...arr, 'b'],
       indexTransform: (i) => i,
       cancelValidationDebounce: cancel,
-      revalidateDependents: vi.fn()
+      revalidateDependents: vi.fn(),
     });
     expect(cancel).toHaveBeenCalledWith('items');
   });
@@ -314,7 +317,7 @@ describe('executeArrayMutation', () => {
       arrayOperation: (arr) => [...arr, 'b'],
       indexTransform: (i) => i,
       cancelValidationDebounce: vi.fn(),
-      revalidateDependents: revalidate
+      revalidateDependents: revalidate,
     });
     expect(revalidate).toHaveBeenCalledWith('items', 'change');
   });

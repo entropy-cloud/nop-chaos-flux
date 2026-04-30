@@ -410,7 +410,11 @@ Recommended compiler pipeline:
 Directionally:
 
 ```ts
-function analyzeAndCompileNode(node: unknown, path: string, ctx: SchemaCompileContext): TemplateNode | undefined {
+function analyzeAndCompileNode(
+  node: unknown,
+  path: string,
+  ctx: SchemaCompileContext,
+): TemplateNode | undefined {
   if (!isPlainObject(node)) {
     ctx.error('expected-object', path, 'Schema node must be an object.');
     return undefined;
@@ -629,10 +633,10 @@ const diagnostics = validateSchema({
       hostContractContext: {
         family: 'designer',
         version: '1.0',
-        manifest: FLOW_DESIGNER_MANIFEST_V1
-      }
-    }
-  }
+        manifest: FLOW_DESIGNER_MANIFEST_V1,
+      },
+    },
+  },
 });
 ```
 

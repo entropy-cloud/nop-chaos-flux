@@ -20,7 +20,10 @@ export function cloneFieldSourceSnapshot(source: FieldSourceSnapshot): FieldSour
   };
 }
 
-export function getProfileFieldSourceIds(config: ReportDesignerConfig, profile?: ReportDesignerProfile): string[] {
+export function getProfileFieldSourceIds(
+  config: ReportDesignerConfig,
+  profile?: ReportDesignerProfile,
+): string[] {
   if (profile?.fieldSourceIds?.length) {
     return profile.fieldSourceIds;
   }

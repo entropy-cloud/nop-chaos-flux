@@ -1,10 +1,10 @@
-import { Code2, GitBranch, Repeat, GitMerge, Settings, FileOutput } from 'lucide-react'
-import { BUILTIN_TEMPLATE_TAGS } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
-import { Button, ScrollArea } from '@nop-chaos/ui'
+import { Code2, GitBranch, Repeat, GitMerge, Settings, FileOutput } from 'lucide-react';
+import { BUILTIN_TEMPLATE_TAGS } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
+import { Button, ScrollArea } from '@nop-chaos/ui';
 
 interface TemplateSnippetsProps {
-  onInsertTag: (tagName: string) => void
+  onInsertTag: (tagName: string) => void;
 }
 
 const TAG_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -15,18 +15,20 @@ const TAG_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   'c:when': GitBranch,
   'c:otherwise': GitMerge,
   'c:set': Settings,
-  'c:out': FileOutput
-}
+  'c:out': FileOutput,
+};
 
 export function TemplateSnippets({ onInsertTag }: TemplateSnippetsProps) {
   const filteredTags = BUILTIN_TEMPLATE_TAGS.filter(
-    tag => tag.kind === 'tag-open' || tag.kind === 'tag-selfclose'
-  )
+    (tag) => tag.kind === 'tag-open' || tag.kind === 'tag-selfclose',
+  );
 
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.templateTags')}</h2>
+        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
+          {t('flux.wordEditor.templateTags')}
+        </h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3">
@@ -40,7 +42,7 @@ export function TemplateSnippets({ onInsertTag }: TemplateSnippetsProps) {
           ) : (
             <div className="space-y-1">
               {filteredTags.map((tag) => {
-                const Icon = TAG_ICONS[tag.name] || Code2
+                const Icon = TAG_ICONS[tag.name] || Code2;
                 return (
                   <Button
                     key={`${tag.name}-${tag.kind}`}
@@ -66,12 +68,12 @@ export function TemplateSnippets({ onInsertTag }: TemplateSnippetsProps) {
                       </div>
                     </div>
                   </Button>
-                )
+                );
               })}
             </div>
           )}
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }

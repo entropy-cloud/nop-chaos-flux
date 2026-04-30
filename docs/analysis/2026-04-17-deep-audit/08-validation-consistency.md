@@ -22,6 +22,7 @@
 3. 当前方案简单可靠，渲染器自己管理 draft 生命周期
 
 架构文档已更新：
+
 - `docs/architecture/form-validation.md` 的 "Owner Resolution Algorithm" 和 "Parent And Child Scope Interaction" 部分现在标注为 "Implementation Status: Phase 3 target"
 - "Implementation Phases" 部分明确标注各阶段状态
 
@@ -33,43 +34,43 @@
 
 这些问题描述的是 Phase 3-4 规划功能与 Phase 2 当前实现之间的差距：
 
-| # | 问题 | 评估 | 处理 |
-|---|------|------|------|
-| 1 | 编译器只产出单一 owner 验证模型 | Phase 3 功能 | 文档已标注状态 |
-| 2 | registerField 未校验 owner 边界 | Phase 3 功能 | 文档已标注状态 |
-| 3 | 同一路径仅允许一个注册实例 | Phase 4 可选增强 | 文档已标注状态 |
-| 6 | applyChangesAndRevalidate 不是 owner-local | Phase 3-4 功能 | 文档已标注状态 |
-| 7 | 外部错误不清理祖先链 | Phase 4 可选增强 | 文档已标注状态 |
+| #   | 问题                                       | 评估             | 处理           |
+| --- | ------------------------------------------ | ---------------- | -------------- |
+| 1   | 编译器只产出单一 owner 验证模型            | Phase 3 功能     | 文档已标注状态 |
+| 2   | registerField 未校验 owner 边界            | Phase 3 功能     | 文档已标注状态 |
+| 3   | 同一路径仅允许一个注册实例                 | Phase 4 可选增强 | 文档已标注状态 |
+| 6   | applyChangesAndRevalidate 不是 owner-local | Phase 3-4 功能   | 文档已标注状态 |
+| 7   | 外部错误不清理祖先链                       | Phase 4 可选增强 | 文档已标注状态 |
 
 ### 问题 4: summary-gate 只按 active 阻塞 → **已修复**
 
 - **问题**: `computeCanSubmit()` 对 `summary-gate` 模式只检查 `active` 状态，不检查子 scope 的 `ready/validating/valid`
-- **修复**: 
+- **修复**:
   - 扩展 `ChildValidationContractRegistration` 接口，添加 `getState()` 方法返回 `ChildValidationScopeState`
   - `computeCanSubmit()` 现在检查 `!childState.ready || childState.validating || !childState.valid`
-- **文件**: 
+- **文件**:
   - `packages/flux-core/src/types/validation.ts`
   - `packages/flux-runtime/src/form-runtime.ts`
 
 ### 问题 5: recurse-submit 执行 unregister 而非递归验证 → **已修复**
 
 - **问题**: `recurse-submit` 模式的 child contracts 在提交时只调用 `unregister()` 而不触发子验证
-- **修复**: 
+- **修复**:
   - 扩展 `ChildValidationContractRegistration` 接口，添加 `triggerValidation()` 方法
   - `executeFormSubmit()` 现在并行触发所有 `recurse-submit` 子验证，收集错误后决定是否继续提交
-- **文件**: 
+- **文件**:
   - `packages/flux-core/src/types/validation.ts`
   - `packages/flux-runtime/src/form-runtime-submit-flow.ts`
 
 ### 问题 8: 字段展示依赖 whole-store 订阅 → **已修复**
 
 - **问题**: `FieldFrame` 使用 `useCurrentFormState` 订阅整个 form store，导致任何字段变化都会触发所有 `FieldFrame` 的 selector 执行
-- **修复**: 
+- **修复**:
   - `FieldFrame` 现在使用 `useCurrentFormFieldState`，实现 path-scoped 订阅
   - `useCurrentFormFieldState` 添加了降级处理：当 store 缺少 `subscribeToPath` 方法时自动回退到 `subscribe`
   - 当 path 为空字符串时跳过订阅，直接返回空状态，避免测试 mock 问题
 - **性能提升**: 当字段 A 变化时，字段 B 的 `FieldFrame` 不再被唤醒（O(1) vs O(n)）
-- **文件**: 
+- **文件**:
   - `packages/flux-react/src/field-frame.tsx`
   - `packages/flux-react/src/hooks.ts`
 
@@ -118,11 +119,13 @@
 
 ### 2026-04-17 修复 6: FieldFrame path-scoped 订阅优化
 
-**变更文件**: 
+**变更文件**:
+
 - `packages/flux-react/src/field-frame.tsx`
 - `packages/flux-react/src/hooks.ts`
 
 `FieldFrame` 现在使用 `useCurrentFormFieldState` 代替 `useCurrentFormState`，实现 O(1) 唤醒。`useCurrentFormFieldState` 添加了：
+
 1. 降级处理：当 store 缺少 `subscribeToPath` 时回退到 `subscribe`
 2. 空 path 跳过：当 path 为空字符串时跳过订阅，直接返回空状态
 
@@ -141,9 +144,7 @@
       "type": "detail-field",
       "name": "address",
       "surface": { "mode": "dialog", "title": "Edit Address" },
-      "content": [
-        { "type": "input-text", "name": "street", "required": true }
-      ]
+      "content": [{ "type": "input-text", "name": "street", "required": true }]
     }
   ]
 }
@@ -154,7 +155,7 @@
 1. **打开时**: 创建临时 `FormRuntime` (`detail-field-draft:address:timestamp`)
 2. **编辑时**: 所有验证发生在 draft form，父 form 无感知
 3. **取消时**: 丢弃 draft form，父 form 值不变
-4. **确认时**: 
+4. **确认时**:
    - `draftForm.validateAll('submit')` 验证 draft
    - 验证通过后调用 `parentForm.setValue(name, value)` 回写
    - 关闭 dialog，丢弃 draft form
@@ -170,9 +171,9 @@
 
 ## 总结
 
-| 类别 | 数量 | 处理方式 |
-|------|------|---------|
-| Phase 3-4 规划功能 | 5 | 架构文档标注实现阶段 |
-| 真正的代码缺陷（已修复） | 4 | 问题 4, 5, 8, 9 |
+| 类别                     | 数量 | 处理方式             |
+| ------------------------ | ---- | -------------------- |
+| Phase 3-4 规划功能       | 5    | 架构文档标注实现阶段 |
+| 真正的代码缺陷（已修复） | 4    | 问题 4, 5, 8, 9      |
 
 **结论**: 审计发现的 9 个问题已全部处理。核心 draft 隔离需求已被当前渲染器级实现满足，无需立即实现编译器级 owner 分区。

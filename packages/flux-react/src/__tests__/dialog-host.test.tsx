@@ -12,11 +12,19 @@ const mocks = vi.hoisted(() => {
       }
 
       if (node === 'dialog-close-body') {
-        return <button type="button" data-slot="dialog-close">Close dialog</button>;
+        return (
+          <button type="button" data-slot="dialog-close">
+            Close dialog
+          </button>
+        );
       }
 
       if (node === 'drawer-close-body') {
-        return <button type="button" data-slot="drawer-close">Close drawer</button>;
+        return (
+          <button type="button" data-slot="drawer-close">
+            Close drawer
+          </button>
+        );
       }
 
       return node == null ? null : <span>{String(node)}</span>;
@@ -60,14 +68,22 @@ vi.mock('@nop-chaos/ui', () => ({
   DialogTitle: ({ children }: any) => <div data-testid="dialog-title">{children}</div>,
   Drawer: ({ children, onOpenChange, direction }: any) => (
     <div data-testid="drawer-root" data-direction={direction}>
-      <button type="button" data-testid={`drawer-open-change-${direction}`} onClick={() => onOpenChange(false)}>
+      <button
+        type="button"
+        data-testid={`drawer-open-change-${direction}`}
+        onClick={() => onOpenChange(false)}
+      >
         close drawer
       </button>
       {children}
     </div>
   ),
   DrawerContent: ({ children, onClickCapture, showMask }: any) => (
-    <div data-testid="drawer-content" data-show-mask={String(showMask)} onClickCapture={onClickCapture}>
+    <div
+      data-testid="drawer-content"
+      data-show-mask={String(showMask)}
+      onClickCapture={onClickCapture}
+    >
       {children}
     </div>
   ),
@@ -89,7 +105,7 @@ function makeScope() {
     readVisible: () => ({}),
     materializeVisible: () => ({}),
     update() {},
-    merge() {}
+    merge() {},
   } as any;
 }
 
@@ -98,8 +114,8 @@ function makeSurfaceRuntime(entries: any[]) {
     close: vi.fn(),
     store: {
       subscribe: () => () => undefined,
-      getState: () => ({ entries })
-    }
+      getState: () => ({ entries }),
+    },
   } as any;
 }
 
@@ -137,7 +153,7 @@ describe('DialogHost', () => {
         ownerNodeInstance: undefined,
         title: 'dialog-title',
         body: 'dialog-close-body',
-        surface: { body: 'fallback-dialog-body', showMask: false }
+        surface: { body: 'fallback-dialog-body', showMask: false },
       },
       {
         id: 'dialog-2',
@@ -148,8 +164,8 @@ describe('DialogHost', () => {
         ownerNodeInstance: undefined,
         title: undefined,
         body: undefined,
-        surface: { body: 'fallback-dialog-body', container: 'surface-modal' }
-      }
+        surface: { body: 'fallback-dialog-body', container: 'surface-modal' },
+      },
     ]);
 
     mocks.useCurrentPage.mockReturnValue({ modalContainer: 'page-modal' });
@@ -186,7 +202,7 @@ describe('DialogHost', () => {
         ownerNodeInstance: undefined,
         title: 'drawer-title',
         body: 'drawer-close-body',
-        surface: { body: 'drawer-body', side: 'left', showMask: false }
+        surface: { body: 'drawer-body', side: 'left', showMask: false },
       },
       {
         id: 'drawer-top',
@@ -197,7 +213,7 @@ describe('DialogHost', () => {
         ownerNodeInstance: undefined,
         title: undefined,
         body: 'drawer-body',
-        surface: { body: 'drawer-body', side: 'top' }
+        surface: { body: 'drawer-body', side: 'top' },
       },
       {
         id: 'drawer-bottom',
@@ -208,7 +224,7 @@ describe('DialogHost', () => {
         ownerNodeInstance: undefined,
         title: undefined,
         body: 'drawer-body',
-        surface: { body: 'drawer-body', side: 'bottom' }
+        surface: { body: 'drawer-body', side: 'bottom' },
       },
       {
         id: 'drawer-right',
@@ -219,8 +235,8 @@ describe('DialogHost', () => {
         ownerNodeInstance: undefined,
         title: undefined,
         body: 'drawer-body',
-        surface: { body: 'drawer-body' }
-      }
+        surface: { body: 'drawer-body' },
+      },
     ]);
 
     mocks.useCurrentPage.mockReturnValue({ modalContainer: 'page-modal' });
@@ -229,12 +245,19 @@ describe('DialogHost', () => {
     render(<DialogHost />);
 
     const drawers = screen.getAllByTestId('drawer-root');
-    expect(drawers.map((node) => node.getAttribute('data-direction'))).toEqual(['left', 'top', 'bottom', 'right']);
-    expect(screen.getAllByTestId('drawer-content')[0]?.getAttribute('data-show-mask')).toBe('false');
+    expect(drawers.map((node) => node.getAttribute('data-direction'))).toEqual([
+      'left',
+      'top',
+      'bottom',
+      'right',
+    ]);
+    expect(screen.getAllByTestId('drawer-content')[0]?.getAttribute('data-show-mask')).toBe(
+      'false',
+    );
     expect(screen.getAllByTestId('drawer-content')[1]?.getAttribute('data-show-mask')).toBe('true');
     expect(screen.getAllByTestId('drawer-body')).toHaveLength(4);
     expect(screen.getByTestId('drawer-title').textContent).toBe('drawer-title');
-  
+
     fireEvent.click(screen.getByText('Close drawer'));
     fireEvent.click(screen.getByTestId('drawer-open-change-right'));
 

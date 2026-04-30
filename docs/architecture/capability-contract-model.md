@@ -65,7 +65,12 @@ type FluxValueShape =
   | { kind: 'null'; description?: string }
   | { kind: 'literal'; value: string | number | boolean | null; description?: string }
   | { kind: 'array'; item: FluxValueShape; description?: string }
-  | { kind: 'object'; fields: Record<string, FluxValueShape>; optional?: readonly string[]; description?: string }
+  | {
+      kind: 'object';
+      fields: Record<string, FluxValueShape>;
+      optional?: readonly string[];
+      description?: string;
+    }
   | { kind: 'union'; anyOf: readonly FluxValueShape[]; description?: string }
   | { kind: 'unknown'; description?: string };
 ```

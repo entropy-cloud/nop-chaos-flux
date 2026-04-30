@@ -4,7 +4,7 @@ import type {
   EvalContext,
   ExpressionCompileOptions,
   FormulaCompiler,
-  RendererEnv
+  RendererEnv,
 } from '@nop-chaos/flux-core';
 import { bindAst, type BindingContext } from '../bind-ast';
 import { installBuiltins } from '../builtins';
@@ -24,11 +24,14 @@ function ensureCompileOptions(options?: ExpressionCompileOptions): ExpressionCom
 
   const registry = getFormulaRegistrySnapshot();
   const symbols = Object.fromEntries(
-    Object.keys(registry.namespaces).map((name) => [name, {
+    Object.keys(registry.namespaces).map((name) => [
       name,
-      kind: 'builtin-namespace' as const,
-      members: Object.keys(registry.namespaces[name] as Record<string, unknown>)
-    }])
+      {
+        name,
+        kind: 'builtin-namespace' as const,
+        members: Object.keys(registry.namespaces[name] as Record<string, unknown>),
+      },
+    ]),
   );
 
   return {
@@ -40,8 +43,8 @@ function ensureCompileOptions(options?: ExpressionCompileOptions): ExpressionCom
       },
       resolve(name: string) {
         return symbols[name];
-      }
-    }
+      },
+    },
   };
 }
 
@@ -61,8 +64,8 @@ function createExpressionMonitorReporter(env: RendererEnv, source: string) {
       error,
       details: {
         ...details,
-        source
-      }
+        source,
+      },
     });
   };
 }
@@ -88,7 +91,7 @@ function createFormulaCompiler(): FormulaCompiler {
     return {
       libraryNames,
       namespaceNames,
-      functionNames: new Set(Object.keys(registry.functions))
+      functionNames: new Set(Object.keys(registry.functions)),
     };
   }
 
@@ -96,7 +99,10 @@ function createFormulaCompiler(): FormulaCompiler {
     hasExpression(input: string) {
       return typeof input === 'string' && input.includes('${');
     },
-    compileExpression<T = unknown>(source: string, options?: ExpressionCompileOptions): CompiledExpression<T> {
+    compileExpression<T = unknown>(
+      source: string,
+      options?: ExpressionCompileOptions,
+    ): CompiledExpression<T> {
       const resolvedOptions = ensureCompileOptions(options);
       const normalized = rewriteFilterPipeSyntax(normalizeExpressionSource(source));
       const ast = parseFormula(normalized);
@@ -119,22 +125,25 @@ function createFormulaCompiler(): FormulaCompiler {
             return evaluateAst(ast, {
               env,
               context,
-              reportError: createExpressionMonitorReporter(env, source)
+              reportError: createExpressionMonitorReporter(env, source),
             }) as T;
           } catch {
             return undefined as T;
           }
-        }
+        },
       };
     },
-    compileTemplate<T = unknown>(source: string, options?: ExpressionCompileOptions): CompiledStringTemplate<T> {
+    compileTemplate<T = unknown>(
+      source: string,
+      options?: ExpressionCompileOptions,
+    ): CompiledStringTemplate<T> {
       const resolvedOptions = ensureCompileOptions(options);
       const bindingContext = buildBindingContext(resolvedOptions);
       const segments: CompiledTemplateSegment[] = parseTemplateSegments(source).map((segment) => {
         if (segment.type === 'text') {
           return {
             type: 'text',
-            value: segment.value
+            value: segment.value,
           };
         }
 
@@ -145,7 +154,7 @@ function createFormulaCompiler(): FormulaCompiler {
             bindAst(ast, bindingContext);
             emitSymbolDiagnostics(ast, resolvedOptions);
             return { ast };
-          })()
+          })(),
         };
       });
 
@@ -161,11 +170,11 @@ function createFormulaCompiler(): FormulaCompiler {
 
         return {
           static: true as const,
-          value: evaluated.value == null ? '' : String(evaluated.value)
+          value: evaluated.value == null ? '' : String(evaluated.value),
         };
       });
       const staticTemplate = staticSegments.every((segment) => segment.static)
-        ? staticSegments.map((segment) => segment.value).join('') as T
+        ? (staticSegments.map((segment) => segment.value).join('') as T)
         : undefined;
 
       return {
@@ -188,7 +197,7 @@ function createFormulaCompiler(): FormulaCompiler {
                 const evaluated = evaluateAst(segment.value.ast, {
                   env,
                   context,
-                  reportError: createExpressionMonitorReporter(env, source)
+                  reportError: createExpressionMonitorReporter(env, source),
                 });
 
                 return evaluated == null ? '' : String(evaluated);
@@ -199,9 +208,9 @@ function createFormulaCompiler(): FormulaCompiler {
             .join('');
 
           return result as T;
-        }
+        },
       };
-    }
+    },
   };
 }
 

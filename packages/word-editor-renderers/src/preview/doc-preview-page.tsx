@@ -1,60 +1,58 @@
-import { useRef, useEffect, useState } from 'react'
-import { ArrowLeft, FileText } from 'lucide-react'
-import { CanvasEditorBridge, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core'
-import type { DocumentData, PaperSettings } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
-import { Button } from '@nop-chaos/ui'
+import { useRef, useEffect, useState } from 'react';
+import { ArrowLeft, FileText } from 'lucide-react';
+import { CanvasEditorBridge, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core';
+import type { DocumentData, PaperSettings } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
+import { Button } from '@nop-chaos/ui';
 
 export interface DocPreviewPageProps {
-  documentData: DocumentData | null
-  paperSettings?: PaperSettings
-  onBack: () => void
+  documentData: DocumentData | null;
+  paperSettings?: PaperSettings;
+  onBack: () => void;
 }
 
 export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPreviewPageProps) {
-  const bridge = useRef<CanvasEditorBridge>(new CanvasEditorBridge())
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [wordCount, setWordCount] = useState<number>(0)
+  const bridge = useRef<CanvasEditorBridge>(new CanvasEditorBridge());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [wordCount, setWordCount] = useState<number>(0);
 
   useEffect(() => {
-    const container = containerRef.current
-    if (!container || !documentData) return
-    const controller = new AbortController()
+    const container = containerRef.current;
+    if (!container || !documentData) return;
+    const controller = new AbortController();
 
     const editorData = {
       header: documentData.header ?? [],
       main: documentData.main,
-      footer: documentData.footer ?? []
-    }
+      footer: documentData.footer ?? [],
+    };
 
-    const settings = paperSettings ?? { ...DEFAULT_PAPER_SETTINGS }
+    const settings = paperSettings ?? { ...DEFAULT_PAPER_SETTINGS };
 
-    const instance = bridge.current
+    const instance = bridge.current;
     instance.mount(container, editorData, {
-      onContentChange: () => {
-      },
-      onRangeStyleChange: () => {
-      },
-      onPageSizeChange: () => {
-      },
-      onPageScaleChange: () => {
-      }
-    })
+      onContentChange: () => {},
+      onRangeStyleChange: () => {},
+      onPageSizeChange: () => {},
+      onPageScaleChange: () => {},
+    });
 
-    instance.applyPaperSettings(settings)
+    instance.applyPaperSettings(settings);
 
-    const wordCountPromise = instance.getWordCount()
-    wordCountPromise.then((count) => {
-      if (!controller.signal.aborted) {
-        setWordCount(count)
-      }
-    }).catch(() => {})
+    const wordCountPromise = instance.getWordCount();
+    wordCountPromise
+      .then((count) => {
+        if (!controller.signal.aborted) {
+          setWordCount(count);
+        }
+      })
+      .catch(() => {});
 
     return () => {
-      controller.abort()
-      instance.unmount()
-    }
-  }, [documentData, paperSettings])
+      controller.abort();
+      instance.unmount();
+    };
+  }, [documentData, paperSettings]);
 
   if (!documentData) {
     return (
@@ -71,14 +69,16 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
-            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{t('wordEditor.documentPreview')}</h1>
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">
+              {t('wordEditor.documentPreview')}
+            </h1>
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center text-[var(--nop-body-copy)]">
           {t('wordEditor.noDocumentData')}
         </div>
       </main>
-    )
+    );
   }
 
   return (
@@ -96,10 +96,14 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
           </Button>
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
-            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">{t('wordEditor.documentPreview')}</h1>
+            <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">
+              {t('wordEditor.documentPreview')}
+            </h1>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[var(--nop-body-copy)]">
-            <span className="tabular-nums">{t('wordEditor.words', { count: wordCount.toLocaleString() })}</span>
+            <span className="tabular-nums">
+              {t('wordEditor.words', { count: wordCount.toLocaleString() })}
+            </span>
           </div>
         </div>
       </header>
@@ -108,5 +112,5 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       </section>
     </main>
-  )
+  );
 }

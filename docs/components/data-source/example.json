@@ -3,9 +3,7 @@
   "name": "jobStatus",
   "api": {
     "url": "/api/job/${jobId}/status",
-    "includeScope": [
-      "jobId"
-    ],
+    "includeScope": ["jobId"],
     "params": {
       "verbose": true
     }

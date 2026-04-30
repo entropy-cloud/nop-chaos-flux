@@ -171,7 +171,9 @@ describe('detail-view renderer transform behavior', () => {
     fireEvent.click(screen.getByText('Confirm'));
 
     await waitFor(() => expect(screen.queryByLabelText('Name')).toBeNull());
-    await waitFor(() => expect(screen.getByTestId('viewer-name').textContent).toBe('Edited Draft Final'));
+    await waitFor(() =>
+      expect(screen.getByTestId('viewer-name').textContent).toBe('Edited Draft Final'),
+    );
     await waitFor(() => expect(screen.getByTestId('viewer-status').textContent).toBe('published'));
 
     expect(calls.map((entry) => entry.method)).toEqual(['toDraft', 'validateDraft', 'toUpdates']);

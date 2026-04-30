@@ -2,7 +2,10 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { initFluxI18n, resetFluxI18n, t } from '@nop-chaos/flux-i18n';
-import { resolveTableQuickEditConfig, TableQuickEditCell } from '../table-renderer/table-quick-edit-cell';
+import {
+  resolveTableQuickEditConfig,
+  TableQuickEditCell,
+} from '../table-renderer/table-quick-edit-cell';
 
 function createRowScope(record: Record<string, unknown>) {
   const state = { record: { ...record } };
@@ -24,7 +27,9 @@ function createRowScope(record: Record<string, unknown>) {
 function createHelpers() {
   return {
     dispatch: vi.fn(async () => ({ ok: true })),
-    render: vi.fn((body, _options) => React.createElement('input', { 'aria-label': body.label ?? 'Custom body' })),
+    render: vi.fn((body, _options) =>
+      React.createElement('input', { 'aria-label': body.label ?? 'Custom body' }),
+    ),
   } as any;
 }
 
@@ -50,15 +55,27 @@ function renderCell(overrides: Record<string, unknown> = {}) {
 
 describe('resolveTableQuickEditConfig', () => {
   it('returns expected inline/dialog configs and rejects nameless inline edits without body', () => {
-    expect(resolveTableQuickEditConfig({ name: 'title', quickEdit: true } as any)).toEqual({ mode: 'inline', saveImmediately: false });
+    expect(resolveTableQuickEditConfig({ name: 'title', quickEdit: true } as any)).toEqual({
+      mode: 'inline',
+      saveImmediately: false,
+    });
     expect(resolveTableQuickEditConfig({ quickEdit: true } as any)).toBeUndefined();
-    expect(resolveTableQuickEditConfig({ quickEdit: { saveImmediately: true } } as any)).toBeUndefined();
-    expect(resolveTableQuickEditConfig({ name: 'title', quickEdit: { mode: 'dialog', saveImmediately: true } } as any)).toEqual({
+    expect(
+      resolveTableQuickEditConfig({ quickEdit: { saveImmediately: true } } as any),
+    ).toBeUndefined();
+    expect(
+      resolveTableQuickEditConfig({
+        name: 'title',
+        quickEdit: { mode: 'dialog', saveImmediately: true },
+      } as any),
+    ).toEqual({
       mode: 'dialog',
       saveImmediately: true,
       body: undefined,
     });
-    expect(resolveTableQuickEditConfig({ quickEdit: { body: { type: 'input-text' } } } as any)).toEqual({
+    expect(
+      resolveTableQuickEditConfig({ quickEdit: { body: { type: 'input-text' } } } as any),
+    ).toEqual({
       mode: 'inline',
       saveImmediately: false,
       body: { type: 'input-text' },
@@ -104,7 +121,9 @@ describe('TableQuickEditCell', () => {
   });
 
   it('auto-saves on blur, but ignores focus transitions inside the editor container', async () => {
-    const { helpers } = renderCell({ column: { name: 'name', label: 'Name', quickEdit: { saveImmediately: true } } });
+    const { helpers } = renderCell({
+      column: { name: 'name', label: 'Name', quickEdit: { saveImmediately: true } },
+    });
     const input = screen.getByRole('textbox', { name: 'Name' }) as HTMLInputElement;
     const wrapper = document.querySelector('[data-slot="table-quick-edit"]') as HTMLElement;
     const insideButton = document.createElement('button');

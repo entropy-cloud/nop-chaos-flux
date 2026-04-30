@@ -135,6 +135,7 @@ Exit Criteria:
 Status Note: completed 2026-04-11. All phases landed and verified. `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test` all pass (flux-runtime: 279 tests, flux-renderers-form: 156 tests).
 
 Key implementation notes:
+
 - `HiddenFieldPolicy` lives in `packages/flux-core/src/types/validation.ts`; `resolveHiddenFieldPolicy()` in `packages/flux-core/src/validation-model.ts`
 - `NodeRenderer` calls `notifyFieldHidden` via `useEffect` (covers all field renderers automatically)
 - `useHiddenFieldPolicy()` in `packages/flux-renderers-form/src/field-utils.tsx` available for composite renderers

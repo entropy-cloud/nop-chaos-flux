@@ -63,10 +63,7 @@ If the component expects `ReactNode` values, map them directly from regions:
 ```tsx
 function PanelRenderer(props: RendererComponentProps) {
   return (
-    <Panel
-      header={props.regions.header?.render()}
-      footer={props.regions.footer?.render()}
-    >
+    <Panel header={props.regions.header?.render()} footer={props.regions.footer?.render()}>
       {props.regions.body?.render()}
     </Panel>
   );
@@ -93,11 +90,7 @@ Some component libraries expose slots as callback props such as `renderEmpty={()
 ```tsx
 function ListRenderer(props: RendererComponentProps) {
   return (
-    <List
-      renderEmpty={() => props.regions.empty?.render()}
-    >
-      {props.regions.body?.render()}
-    </List>
+    <List renderEmpty={() => props.regions.empty?.render()}>{props.regions.body?.render()}</List>
   );
 }
 ```
@@ -206,14 +199,14 @@ Schema usage:
 
 `RendererComponentProps` provides everything the runtime has resolved. Use these fields based on what your wrapper needs:
 
-| Field | What it contains | Typical use |
-|---|---|---|
-| `props.props` | Resolved runtime values (all schema fields after expression evaluation) | Primary data input: `label`, `data`, `options`, etc. |
-| `props.meta` | Control meta: `className`, `disabled`, `visible`, `testid`, `cid` | Style, accessibility, and control state |
-| `props.events` | Runtime event handlers keyed by event name | `onClick`, `onChange`, `onSubmit` |
-| `props.regions` | Precompiled child region handles | Slot content via `.render()` |
-| `props.schema` | The raw declared schema for this node | Reading static config not in `props.props` |
-| `props.helpers` | Stable helpers: `render`, `evaluate`, `dispatch`, `createScope` | Ad hoc rendering, expression evaluation |
+| Field           | What it contains                                                        | Typical use                                          |
+| --------------- | ----------------------------------------------------------------------- | ---------------------------------------------------- |
+| `props.props`   | Resolved runtime values (all schema fields after expression evaluation) | Primary data input: `label`, `data`, `options`, etc. |
+| `props.meta`    | Control meta: `className`, `disabled`, `visible`, `testid`, `cid`       | Style, accessibility, and control state              |
+| `props.events`  | Runtime event handlers keyed by event name                              | `onClick`, `onChange`, `onSubmit`                    |
+| `props.regions` | Precompiled child region handles                                        | Slot content via `.render()`                         |
+| `props.schema`  | The raw declared schema for this node                                   | Reading static config not in `props.props`           |
+| `props.helpers` | Stable helpers: `render`, `evaluate`, `dispatch`, `createScope`         | Ad hoc rendering, expression evaluation              |
 
 ### Example: Mapping props and events
 
@@ -280,7 +273,7 @@ function FormDatePickerRenderer(props: RendererComponentProps) {
   const { value, handlers, currentForm } = useFormFieldController(name);
   const presentation = useFieldPresentation(name, currentForm, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required)
+    required: Boolean(props.props.required),
   });
 
   return (
@@ -314,12 +307,16 @@ const definition: RendererDefinition = {
     collectRules: (schema) => {
       const rules = [];
       if (schema.validate?.action) {
-        rules.push({ kind: 'async', action: schema.validate.action, debounce: schema.validate.debounce });
+        rules.push({
+          kind: 'async',
+          action: schema.validate.action,
+          debounce: schema.validate.debounce,
+        });
       }
       return rules;
-    }
+    },
   },
-  wrap: true
+  wrap: true,
 };
 ```
 
@@ -327,12 +324,12 @@ The `wrap: true` flag tells `NodeRenderer` to automatically wrap the component i
 
 ### Key hooks for form integration
 
-| Hook | Package | Purpose |
-|---|---|---|
-| `useFormFieldController(name)` | `flux-renderers-form` | Returns `{ value, handlers, currentForm }` — the primary controller |
+| Hook                                         | Package               | Purpose                                                                                                        |
+| -------------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `useFormFieldController(name)`               | `flux-renderers-form` | Returns `{ value, handlers, currentForm }` — the primary controller                                            |
 | `useFieldPresentation(name, owner, options)` | `flux-renderers-form` | Returns `effectiveDisabled`, `showError`, `interactive`, etc.; the second parameter is `ValidationScopeRuntime | undefined`, not only `FormRuntime` |
-| `useCurrentForm()` | `flux-react` | Direct access to `FormRuntime` for advanced scenarios |
-| `useRenderScope()` | `flux-react` | Direct scope access for non-form scope writes |
+| `useCurrentForm()`                           | `flux-react`          | Direct access to `FormRuntime` for advanced scenarios                                                          |
+| `useRenderScope()`                           | `flux-react`          | Direct scope access for non-form scope writes                                                                  |
 
 ## Level 3: Factory Pattern for Variants
 
@@ -379,10 +376,7 @@ Pass definitions when creating the registry:
 ```ts
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 
-const registry = createRendererRegistry([
-  chartDefinition,
-  datePickerDefinition
-]);
+const registry = createRendererRegistry([chartDefinition, datePickerDefinition]);
 ```
 
 Or register onto an existing registry:
@@ -409,7 +403,7 @@ Follow the existing package convention:
 // src/index.tsx
 export const myRendererDefinitions: RendererDefinition[] = [
   { type: 'chart', component: ChartRenderer },
-  { type: 'form-datepicker', component: FormDatePickerRenderer, wrap: true }
+  { type: 'form-datepicker', component: FormDatePickerRenderer, wrap: true },
 ];
 
 export function registerMyRenderers(registry: RendererRegistry) {
@@ -448,9 +442,7 @@ Renderers should only emit marker classes. Visual styles come from schema `class
 ```tsx
 function MyRenderer(props) {
   return (
-    <div className={cn('nop-my-widget', props.meta.className)}>
-      {props.regions.body?.render()}
-    </div>
+    <div className={cn('nop-my-widget', props.meta.className)}>{props.regions.body?.render()}</div>
   );
 }
 ```
@@ -495,38 +487,38 @@ function MyRenderer(props) {
 
 ## Decision Table
 
-| Your component is... | Use this pattern | Key options |
-|---|---|---|
-| Pure display, no children | Minimum viable renderer | — |
-| Has slot/child content | Region-based renderer | `regions` in definition |
-| Is a form input | Form field renderer | `wrap: true`, `validation`, `fields` |
-| Has multiple variants | Factory pattern | `createXxxRenderer(mode)` |
-| Needs custom scope or action boundary | Scoped renderer | `scopePolicy`, `actionScopePolicy` on definition |
-| Needs component handle (imperative API) | Component registry | `componentRegistryPolicy: 'new'` |
+| Your component is...                    | Use this pattern        | Key options                                      |
+| --------------------------------------- | ----------------------- | ------------------------------------------------ |
+| Pure display, no children               | Minimum viable renderer | —                                                |
+| Has slot/child content                  | Region-based renderer   | `regions` in definition                          |
+| Is a form input                         | Form field renderer     | `wrap: true`, `validation`, `fields`             |
+| Has multiple variants                   | Factory pattern         | `createXxxRenderer(mode)`                        |
+| Needs custom scope or action boundary   | Scoped renderer         | `scopePolicy`, `actionScopePolicy` on definition |
+| Needs component handle (imperative API) | Component registry      | `componentRegistryPolicy: 'new'`                 |
 
 ## RendererDefinition Field Reference
 
-| Field | Required | Default | Purpose |
-|---|---|---|---|
-| `type` | yes | — | Unique string matching `schema.type` |
-| `component` | one of `component` / `reactComponent` | — | The standard Flux renderer component |
-| `reactComponent` | one of `component` / `reactComponent` | — | Plain React component path auto-wrapped by the runtime |
-| `displayName` | no | — | Human-readable name for tooling |
-| `category` | no | — | Grouping for tooling (e.g. `"content"`, `"form"`) |
-| `icon` | no | — | Icon name for tooling |
-| `sourcePackage` | no | — | Package name for tooling |
-| `defaultSchema` | no | — | Default schema values when inserting |
-| `propSchema` | no | — | Renderer-local prop schema metadata |
-| `regions` | no | — | Declared region names |
-| `fields` | no | — | `SchemaFieldRule[]` for compiler field classification |
-| `validation` | no | — | `ValidationContributor` for form validation |
-| `wrap` | no | `false` | Wrap in `<FieldFrame>` (label + error chrome) |
-| `scopePolicy` | no | — | Scope creation policy |
-| `actionScopePolicy` | no | `'inherit'` | `'inherit'` or `'new'` action scope boundary |
-| `componentRegistryPolicy` | no | `'inherit'` | `'inherit'` or `'new'` component registry boundary |
-| `injectedLocals` | no | — | Static injected-local metadata for compile-time symbol resolution |
-| `authoringTransform` | no | — | Optional renderer-local schema transform before compilation |
-| `staticCapable` | no | `false` | Declares whether the renderer is static-rendering capable |
+| Field                     | Required                              | Default     | Purpose                                                           |
+| ------------------------- | ------------------------------------- | ----------- | ----------------------------------------------------------------- |
+| `type`                    | yes                                   | —           | Unique string matching `schema.type`                              |
+| `component`               | one of `component` / `reactComponent` | —           | The standard Flux renderer component                              |
+| `reactComponent`          | one of `component` / `reactComponent` | —           | Plain React component path auto-wrapped by the runtime            |
+| `displayName`             | no                                    | —           | Human-readable name for tooling                                   |
+| `category`                | no                                    | —           | Grouping for tooling (e.g. `"content"`, `"form"`)                 |
+| `icon`                    | no                                    | —           | Icon name for tooling                                             |
+| `sourcePackage`           | no                                    | —           | Package name for tooling                                          |
+| `defaultSchema`           | no                                    | —           | Default schema values when inserting                              |
+| `propSchema`              | no                                    | —           | Renderer-local prop schema metadata                               |
+| `regions`                 | no                                    | —           | Declared region names                                             |
+| `fields`                  | no                                    | —           | `SchemaFieldRule[]` for compiler field classification             |
+| `validation`              | no                                    | —           | `ValidationContributor` for form validation                       |
+| `wrap`                    | no                                    | `false`     | Wrap in `<FieldFrame>` (label + error chrome)                     |
+| `scopePolicy`             | no                                    | —           | Scope creation policy                                             |
+| `actionScopePolicy`       | no                                    | `'inherit'` | `'inherit'` or `'new'` action scope boundary                      |
+| `componentRegistryPolicy` | no                                    | `'inherit'` | `'inherit'` or `'new'` component registry boundary                |
+| `injectedLocals`          | no                                    | —           | Static injected-local metadata for compile-time symbol resolution |
+| `authoringTransform`      | no                                    | —           | Optional renderer-local schema transform before compilation       |
+| `staticCapable`           | no                                    | `false`     | Declares whether the renderer is static-rendering capable         |
 
 ## Related Documents
 

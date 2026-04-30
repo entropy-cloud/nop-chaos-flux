@@ -72,16 +72,19 @@ Objective:
 冻结术语和最新讨论结论，避免后续实现过程中反复回退到旧命名。
 
 Tasks:
+
 - 确认 `ApiSchema` / `ExecutableApiRequest` / `PreparedApiRequest` 命名。
 - 确认 `ActionSchema -> SourceSchema -> DataSourceSchema` 的关系表达。
 - 确认 built-in action 命名规则。
 - 确认事件入口的单根 `ActionSchema` authoring 规则。
 
 Deliverables:
+
 - 文档术语一致性检查表。
 - 需要废弃的旧术语清单：`ApiObject` 作为 authoring contract、`dialog` 旧 payload 形式、`toast` 旧命名、事件根 list 等。
 
 Validation:
+
 - 所有目标架构文档使用同一组术语。
 - 不再新增与已确认术语冲突的新文案。
 
@@ -91,6 +94,7 @@ Objective:
 先改 `flux-core` 类型合同，使运行时和文档有统一目标。
 
 Tasks:
+
 - 将 `ApiObject` 的 authoring 含义迁移为 `ApiSchema`。
 - 新增 `ExecutableApiRequest` 类型。
 - 明确 `PreparedApiRequest` 的内部职责。
@@ -100,10 +104,12 @@ Tasks:
 - 将 `ReactionSchema.actions` 的 authoring contract 收敛到单根 `ActionSchema`。
 
 Deliverables:
+
 - 更新后的 `schema.ts` / `actions.ts` 类型定义。
 - 对外导出整理后的命名集合。
 
 Validation:
+
 - 类型层不存在“一个名字同时指 authoring contract 和 executable request”的歧义。
 - 类型层能够表达内联 `type: 'source'`。
 
@@ -113,6 +119,7 @@ Objective:
 让 request-runtime 真正兑现新命名和 contract split。
 
 Tasks:
+
 - 将 `executeApiObject(...)` 迁移或别名到 `executeApiSchema(...)` 语义。
 - 让请求准备过程显式返回 `PreparedApiRequest`，其 `request` 为 `ExecutableApiRequest`。
 - 移除 transport contract 对 cache/dedup 的耦合依赖。
@@ -120,10 +127,12 @@ Tasks:
 - 梳理 fetcher 接口是否继续接收 `ApiObject` 命名，或切换为 `ExecutableApiRequest`。
 
 Deliverables:
+
 - request runtime 命名与 contract 分层闭环。
 - request monitor 和 debugger 看到的对象与最终 executable request 一致。
 
 Validation:
+
 - `params` canonicalization、`requestAdaptor`、`responseAdaptor` 相关测试全部通过。
 - dedup/cache key 基于 executable request，而不是 declarative schema。
 
@@ -133,6 +142,7 @@ Objective:
 让 action/source 在运行时执行路径上共享更多结构，而不是只在文档层统一。
 
 Tasks:
+
 - 保持 `action: string` 为统一 selector。
 - built-in action 命名切换到 camelCase 动宾式。
 - 规范 built-in / component / namespace 三类分派路径。
@@ -141,11 +151,13 @@ Tasks:
 - 明确 source 的局部状态面：`loading` / `error` / `stale` / `value`。
 
 Deliverables:
+
 - action runtime selector 分类规则。
 - source 执行闭环。
 - built-in action 兼容或迁移映射清单。
 
 Validation:
+
 - source 可以执行 `ajax` 或 `namespace:method` 并产出字段值。
 - 匿名 source 的状态可被消费者使用。
 
@@ -155,6 +167,7 @@ Objective:
 让 `data-source` 真正成为 named + scheduled source，而不是旧式平行设计。
 
 Tasks:
+
 - 在 runtime 中表达 `DataSourceSchema` 继承 `SourceSchema` 的执行能力。
 - 保留并明确 `name` / `dataPath` / `statusPath` / `interval` / `stopWhen` / `mergeStrategy` 等额外能力。
 - 定义 source 与 data-source 的状态差异：
@@ -163,10 +176,12 @@ Tasks:
 - 统一 `refreshSource`、显式 targeting、缓存策略和状态 DTO 设计。
 
 Deliverables:
+
 - 运行时 data-source/source 的共享主链。
 - 调度与发布边界的清晰实现说明。
 
 Validation:
+
 - 命名 data-source 可显式刷新。
 - 匿名 source 不需要命名绑定也能正确重算和显示状态。
 
@@ -176,15 +191,18 @@ Objective:
 让统一的 `xui:imports` 同时服务 action dispatch 和 expression binding。
 
 Tasks:
+
 - 文档和实现明确 `$alias` 表达式绑定规则。
 - 统一 `namespace:method` 与 `$alias.func(...)` 的来源。
 - 校验 import loader、scope visibility、shadowing、错误诊断在这两类投影上的一致性。
 
 Deliverables:
+
 - import dual-projection 规则文档与运行时契约。
 - 导入库在 action/source/expression 三条路径上的示例。
 
 Validation:
+
 - 导入库既可被 action 调用，也可被表达式读取。
 - 子树 import shadowing 规则不冲突。
 
@@ -194,6 +212,7 @@ Objective:
 清理文档、示例和约定中的旧写法。
 
 Tasks:
+
 - 将 `dialog` / `toast` / `dialog:close` 等旧示例迁移到 `openDialog` / `showToast` / `closeDialog`。
 - 将顶层 payload 风格迁移到 `args`。
 - 将事件根 action list 迁移为单根 `ActionSchema`。
@@ -201,10 +220,12 @@ Tasks:
 - 更新 playground schema 和 docs/examples 中的代表性样例。
 
 Deliverables:
+
 - docs/examples 更新。
 - JSON conventions 中的新规范示例。
 
 Validation:
+
 - `docs/` 下不再出现被判定为旧规范的 action 命名和入口形式，除非明确标注为 legacy。
 
 ### Phase 7: Validation And Regression Coverage
@@ -213,6 +234,7 @@ Objective:
 为迁移后的 contract 建立最小充分测试面。
 
 Tasks:
+
 - 为 `ApiSchema` -> `ExecutableApiRequest` 准备链增加测试。
 - 为 source/data-source/action 共用执行路径增加测试。
 - 为 source 局部状态、select options loading、error 展示增加测试。
@@ -220,10 +242,12 @@ Tasks:
 - 为 built-in action 新命名和旧命名兼容策略增加测试（若保留兼容层）。
 
 Deliverables:
+
 - 单测与集成测试更新。
 - 回归清单。
 
 Validation:
+
 - 新 contract 有测试覆盖。
 - 旧 contract 若保留兼容层，有明确退役路径。
 

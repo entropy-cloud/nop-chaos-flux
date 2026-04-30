@@ -8,12 +8,12 @@
 
 ## 2. 包归属
 
-| 能力 | 放置位置 | 理由 |
-|------|---------|------|
-| 纯协议类型 + 无副作用 helper | `@nop-chaos/flux-core/src/workbench/` | 可被 React 侧和非 React 侧共享 |
-| React host wiring helper | `@nop-chaos/flux-react/src/workbench/` | 依赖 React hooks |
-| 视觉壳 `WorkbenchShell` | `@nop-chaos/flux-react/src/workbench/` | 保持 React-level presentational API |
-| 独立 package | 仅当 visual shell API 稳定且明显超出 flux-react 职责时才创建 |
+| 能力                         | 放置位置                                                     | 理由                                |
+| ---------------------------- | ------------------------------------------------------------ | ----------------------------------- |
+| 纯协议类型 + 无副作用 helper | `@nop-chaos/flux-core/src/workbench/`                        | 可被 React 侧和非 React 侧共享      |
+| React host wiring helper     | `@nop-chaos/flux-react/src/workbench/`                       | 依赖 React hooks                    |
+| 视觉壳 `WorkbenchShell`      | `@nop-chaos/flux-react/src/workbench/`                       | 保持 React-level presentational API |
+| 独立 package                 | 仅当 visual shell API 稳定且明显超出 flux-react 职责时才创建 |
 
 ## 3. `DomainBridge<TSnapshot, TCommand, TResult>`
 
@@ -29,12 +29,12 @@ export interface DomainBridge<TSnapshot, TCommand, TResult> {
 
 ### 3.1 已有实现与映射
 
-| Domain | Bridge 类型 | 实现 |
-|--------|-------------|------|
-| Spreadsheet | `SpreadsheetBridge` | 结构兼容 `DomainBridge<SpreadsheetHostSnapshot, SpreadsheetCommand, SpreadsheetCommandResult>`，当前未显式 `extends`，并额外暴露 `getCore()` |
-| Report Designer | `ReportDesignerBridge` | 扩展 `SpreadsheetBridge`，附加 `getDesignerSnapshot()` / `dispatchDesigner()` / `getDesignerCore()` |
-| Flow Designer | 无独立 bridge 类型 | 通过 `DesignerCore` 的 `subscribe` / `getSnapshot` / `dispatch` 可适配为 `DomainBridge`，目前由 `designer-page` 内部处理 |
-| Word Editor | 无 bridge | 通过 `CanvasEditorBridge` + `editorStore`组合；暂无统一 `DomainBridge` 包装 |
+| Domain          | Bridge 类型            | 实现                                                                                                                                         |
+| --------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Spreadsheet     | `SpreadsheetBridge`    | 结构兼容 `DomainBridge<SpreadsheetHostSnapshot, SpreadsheetCommand, SpreadsheetCommandResult>`，当前未显式 `extends`，并额外暴露 `getCore()` |
+| Report Designer | `ReportDesignerBridge` | 扩展 `SpreadsheetBridge`，附加 `getDesignerSnapshot()` / `dispatchDesigner()` / `getDesignerCore()`                                          |
+| Flow Designer   | 无独立 bridge 类型     | 通过 `DesignerCore` 的 `subscribe` / `getSnapshot` / `dispatch` 可适配为 `DomainBridge`，目前由 `designer-page` 内部处理                     |
+| Word Editor     | 无 bridge              | 通过 `CanvasEditorBridge` + `editorStore`组合；暂无统一 `DomainBridge` 包装                                                                  |
 
 ## 4. `WorkbenchSessionState`
 
@@ -90,6 +90,7 @@ export interface ResourceBrowserInteractionPolicy {
 ```
 
 规则：
+
 - 主点击负责选中或插入（不能将 drag-and-drop 作为唯一入口）
 - 编辑/删除/更多操作作为次级动作（悬停或右键）
 - 必须提供键盘等价路径（e.g. click-to-insert / Enter to insert）
@@ -105,6 +106,7 @@ const hostScope = useHostScope(scopeData, props.path, 'designer');
 其中第三个参数只是 host boundary 标签，不是 schema-visible root key。
 
 挂载规则：
+
 - 只读快照投影（`doc`、`selection`、`activeNode`、`activeEdge`、`runtime` 等）放进 host scope
 - 写操作必须通过 namespaced action（`designer:*`、`spreadsheet:*`、`report-designer:*` 等）提交
 - schema 层不得直接持有 core store 引用
@@ -128,6 +130,7 @@ useLayoutEffect(() => {
 ```
 
 Namespace 命名规则：
+
 - Flow Designer：`designer:*`
 - Spreadsheet：`spreadsheet:*`
 - Report Designer：`report-designer:*`

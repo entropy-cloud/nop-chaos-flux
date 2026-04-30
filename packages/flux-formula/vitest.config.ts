@@ -14,13 +14,13 @@ export default createSharedVitestConfig({
       'src/registry.ts',
       'src/builtins.ts',
       'src/template.ts',
-      'src/scope.ts'
+      'src/scope.ts',
     ],
     thresholds: {
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80
-    }
-  }
+      statements: 80,
+    },
+  },
 });

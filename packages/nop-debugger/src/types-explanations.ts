@@ -77,9 +77,18 @@ export interface NopNodeValueExplanationData {
   scopeLabel?: string;
 }
 
-export type NopNodeValueExplanation = NopDebuggerExplanationBase<'value', NopNodeValueExplanationData>;
+export type NopNodeValueExplanation = NopDebuggerExplanationBase<
+  'value',
+  NopNodeValueExplanationData
+>;
 
-export type NopNodeMetaExplanationField = 'visible' | 'hidden' | 'disabled' | 'label' | 'title' | 'className';
+export type NopNodeMetaExplanationField =
+  | 'visible'
+  | 'hidden'
+  | 'disabled'
+  | 'label'
+  | 'title'
+  | 'className';
 
 export interface NopNodeMetaExplanationQuery {
   cid: number;
@@ -114,7 +123,10 @@ export interface NopNodeFailureExplanationData {
   relatedEventIds: number[];
 }
 
-export type NopNodeFailureExplanation = NopDebuggerExplanationBase<'failure', NopNodeFailureExplanationData>;
+export type NopNodeFailureExplanation = NopDebuggerExplanationBase<
+  'failure',
+  NopNodeFailureExplanationData
+>;
 
 export interface NopNodeAsyncExplanationQuery {
   cid?: number;
@@ -139,7 +151,10 @@ export interface NopNodeAsyncExplanationData {
   owners: NopNodeAsyncOwnerSummary[];
 }
 
-export type NopNodeAsyncExplanation = NopDebuggerExplanationBase<'async', NopNodeAsyncExplanationData>;
+export type NopNodeAsyncExplanation = NopDebuggerExplanationBase<
+  'async',
+  NopNodeAsyncExplanationData
+>;
 
 export type NopDebuggerExplanation =
   | NopNodeValueExplanation

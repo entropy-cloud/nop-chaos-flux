@@ -1,7 +1,7 @@
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 
 export function createAutoRendererComponent(
-  ReactComponent: React.ComponentType<Record<string, unknown>>
+  ReactComponent: React.ComponentType<Record<string, unknown>>,
 ): React.ComponentType<RendererComponentProps> {
   return function AutoRenderer(props: RendererComponentProps) {
     const uiProps: Record<string, unknown> = { ...props.props };

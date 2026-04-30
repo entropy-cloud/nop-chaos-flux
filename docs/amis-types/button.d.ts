@@ -14,7 +14,16 @@ export interface ButtonSchema extends BaseSchema {
   /** 图标位置 */
   iconPosition?: 'left' | 'right';
   /** 按钮样式 */
-  level?: 'info' | 'success' | 'warning' | 'danger' | 'link' | 'primary' | 'dark' | 'light' | 'secondary';
+  level?:
+    | 'info'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'link'
+    | 'primary'
+    | 'dark'
+    | 'light'
+    | 'secondary';
   /** 按钮大小 */
   size?: 'xs' | 'sm' | 'md' | 'lg';
   /** 是否为块级按钮 */
@@ -34,7 +43,23 @@ export interface ButtonSchema extends BaseSchema {
   /** 确认文案 */
   confirmText?: string;
   /** 动作类型 */
-  actionType?: 'submit' | 'reset' | 'button' | 'dialog' | 'drawer' | 'ajax' | 'link' | 'url' | 'copy' | 'reload' | 'email' | 'close' | 'print' | 'toast' | 'email' | 'jump';
+  actionType?:
+    | 'submit'
+    | 'reset'
+    | 'button'
+    | 'dialog'
+    | 'drawer'
+    | 'ajax'
+    | 'link'
+    | 'url'
+    | 'copy'
+    | 'reload'
+    | 'email'
+    | 'close'
+    | 'print'
+    | 'toast'
+    | 'email'
+    | 'jump';
   /** 对话框配置 */
   dialog?: unknown;
   /** 抽屉配置 */
@@ -56,7 +81,14 @@ export interface ButtonSchema extends BaseSchema {
   /** 消息文案 */
   toastText?: string;
   /** Toast 位置 */
-  toastPosition?: 'top-right' | 'top-center' | 'top-left' | 'bottom-center' | 'bottom-left' | 'bottom-right' | 'center';
+  toastPosition?:
+    | 'top-right'
+    | 'top-center'
+    | 'top-left'
+    | 'bottom-center'
+    | 'bottom-left'
+    | 'bottom-right'
+    | 'center';
   /** 发送条件 */
   sendOn?: string;
   /** 是否显示加载 */

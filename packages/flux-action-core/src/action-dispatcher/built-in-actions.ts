@@ -3,14 +3,14 @@ import type {
   ActionMonitorPayload,
   ActionResult,
   BuiltInActionInvocation,
-  CompiledActionNode
+  CompiledActionNode,
 } from '@nop-chaos/flux-core';
 import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
 import {
   evaluateActionArgs,
   resolveSetValuePayload,
   resolveSetValuesPayload,
-  type ActionEvaluator
+  type ActionEvaluator,
 } from '../action-core';
 import type { ActionDispatcherContext } from './types';
 import { finishAction } from './action-runners';
@@ -18,7 +18,7 @@ import { finishAction } from './action-runners';
 function evaluateSurfaceArgs(
   action: CompiledActionNode,
   ctx: ActionContext,
-  evaluator: ActionEvaluator
+  evaluator: ActionEvaluator,
 ): Record<string, unknown> | undefined {
   const rawArgs = action.source.args;
 
@@ -44,7 +44,7 @@ export async function runBuiltInAction(
   startedAt: number,
   actionPayload: ActionMonitorPayload,
   signal: AbortSignal | undefined,
-  internals: ActionDispatcherContext
+  internals: ActionDispatcherContext,
 ): Promise<ActionResult | undefined> {
   let invocation: BuiltInActionInvocation | undefined;
 
@@ -56,11 +56,11 @@ export async function runBuiltInAction(
         action: 'setValue',
         args: {
           path: targetPath,
-          value: payload.value
+          value: payload.value,
         },
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
@@ -70,68 +70,62 @@ export async function runBuiltInAction(
         action: 'setValues',
         args: {
           path: action.targeting.targetId,
-          values: payload.values
+          values: payload.values,
         },
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
     case 'ajax': {
       const api = evaluateActionArgs(action, ctx, internals.evaluator);
       if (!api) {
-        return finishAction(
-          internals,
-          { ...actionPayload, dispatchMode: 'built-in' },
-          startedAt,
-          { ok: false, error: new Error('ajax requires args payload') }
-        );
+        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+          ok: false,
+          error: new Error('ajax requires args payload'),
+        });
       }
       invocation = {
         action: 'ajax',
         args: api,
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
     case 'openDialog': {
       const dialog = evaluateSurfaceArgs(action, ctx, internals.evaluator);
       if (!dialog) {
-        return finishAction(
-          internals,
-          { ...actionPayload, dispatchMode: 'built-in' },
-          startedAt,
-          { ok: false, error: new Error('openDialog requires args payload') }
-        );
+        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+          ok: false,
+          error: new Error('openDialog requires args payload'),
+        });
       }
       invocation = {
         action: 'openDialog',
         args: dialog,
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
     case 'openDrawer': {
       const drawer = evaluateSurfaceArgs(action, ctx, internals.evaluator);
       if (!drawer) {
-        return finishAction(
-          internals,
-          { ...actionPayload, dispatchMode: 'built-in' },
-          startedAt,
-          { ok: false, error: new Error('openDrawer requires args payload') }
-        );
+        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+          ok: false,
+          error: new Error('openDrawer requires args payload'),
+        });
       }
       invocation = {
         action: 'openDrawer',
         args: drawer,
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
@@ -145,7 +139,7 @@ export async function runBuiltInAction(
             : undefined,
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
@@ -156,7 +150,7 @@ export async function runBuiltInAction(
         args: payload,
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
@@ -170,7 +164,7 @@ export async function runBuiltInAction(
             : undefined,
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
@@ -184,7 +178,7 @@ export async function runBuiltInAction(
             : undefined,
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
@@ -193,45 +187,41 @@ export async function runBuiltInAction(
         action: 'refreshTable',
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
     case 'refreshSource': {
       const sourceId = action.targeting.targetId;
       if (!sourceId) {
-        return finishAction(
-          internals,
-          { ...actionPayload, dispatchMode: 'built-in' },
-          startedAt,
-          { ok: false, error: new Error('refreshSource requires targetId') }
-        );
+        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+          ok: false,
+          error: new Error('refreshSource requires targetId'),
+        });
       }
       invocation = {
         action: 'refreshSource',
         args: { sourceId: String(sourceId) },
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
     case 'submit':
     case 'submitForm': {
       if (!ctx.form) {
-        return finishAction(
-          internals,
-          { ...actionPayload, dispatchMode: 'built-in' },
-          startedAt,
-          { ok: false, error: new Error('submit requires form runtime') }
-        );
+        return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
+          ok: false,
+          error: new Error('submit requires form runtime'),
+        });
       }
       invocation = {
         action: 'submitForm',
         args: undefined,
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }
@@ -242,11 +232,11 @@ export async function runBuiltInAction(
         args: {
           url: typeof args.url === 'string' ? args.url : undefined,
           back: Boolean(args.back),
-          replace: Boolean(args.replace)
+          replace: Boolean(args.replace),
         },
         targeting: action.targeting,
         actionNode: action,
-        signal
+        signal,
       };
       break;
     }

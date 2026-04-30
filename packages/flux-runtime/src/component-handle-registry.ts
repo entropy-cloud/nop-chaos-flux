@@ -19,7 +19,7 @@ function buildScopeChain(scope: ScopeRef | undefined): readonly ScopeSnapshot[] 
       id: current.id,
       path: current.path,
       label: current.path || current.id,
-      data: current.readOwn()
+      data: current.readOwn(),
     });
     current = current.parent;
   }
@@ -27,10 +27,14 @@ function buildScopeChain(scope: ScopeRef | undefined): readonly ScopeSnapshot[] 
   return chain;
 }
 
-export function createComponentHandleRegistry(input: { id: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry {
-  const nodeEnv = 'process' in globalThis
-    ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
-    : undefined;
+export function createComponentHandleRegistry(input: {
+  id: string;
+  parent?: ComponentHandleRegistry;
+}): ComponentHandleRegistry {
+  const nodeEnv =
+    'process' in globalThis
+      ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
+      : undefined;
   const DEBUG_MODE = nodeEnv !== 'production';
   let debugEnabled = false;
   const handles = new Set<ComponentHandle>();
@@ -41,15 +45,20 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
   const nameIndex = new Map<string, Set<number>>();
   const childRegistries = new Set<ComponentHandleRegistry>();
 
-  type RegistryWithChildren = ComponentHandleRegistry & { __childRegistries?: Set<ComponentHandleRegistry> };
+  type RegistryWithChildren = ComponentHandleRegistry & {
+    __childRegistries?: Set<ComponentHandleRegistry>;
+  };
   type RegistryWithResolveTraversal = ComponentHandleRegistry & {
-    resolve?: (target: ComponentTarget, visited?: Set<ComponentHandleRegistry>) => ComponentHandle | undefined;
+    resolve?: (
+      target: ComponentTarget,
+      visited?: Set<ComponentHandleRegistry>,
+    ) => ComponentHandle | undefined;
   };
 
   function resolveHandleByCid(
     cid: number,
     includeParent = true,
-    visited: Set<ComponentHandleRegistry> = new Set()
+    visited: Set<ComponentHandleRegistry> = new Set(),
   ): ComponentHandle | undefined {
     if (visited.has(registry)) {
       return undefined;
@@ -62,25 +71,39 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     }
 
     for (const child of childRegistries) {
-      const nested = (child as ComponentHandleRegistry & {
-        __resolveHandleByCid?: (cid: number, includeParent?: boolean, visited?: Set<ComponentHandleRegistry>) => ComponentHandle | undefined;
-      }).__resolveHandleByCid?.(cid, false, visited);
+      const nested = (
+        child as ComponentHandleRegistry & {
+          __resolveHandleByCid?: (
+            cid: number,
+            includeParent?: boolean,
+            visited?: Set<ComponentHandleRegistry>,
+          ) => ComponentHandle | undefined;
+        }
+      ).__resolveHandleByCid?.(cid, false, visited);
       if (nested && nested._mounted !== false) {
         return nested;
       }
     }
 
     return includeParent
-      ? (input.parent as ComponentHandleRegistry & {
-          __resolveHandleByCid?: (cid: number, includeParent?: boolean, visited?: Set<ComponentHandleRegistry>) => ComponentHandle | undefined;
-        } | undefined)?.__resolveHandleByCid?.(cid, true, visited)
+      ? (
+          input.parent as
+            | (ComponentHandleRegistry & {
+                __resolveHandleByCid?: (
+                  cid: number,
+                  includeParent?: boolean,
+                  visited?: Set<ComponentHandleRegistry>,
+                ) => ComponentHandle | undefined;
+              })
+            | undefined
+        )?.__resolveHandleByCid?.(cid, true, visited)
       : undefined;
   }
 
   function resolveDebugDataByCid(
     cid: number,
     includeParent = true,
-    visited: Set<ComponentHandleRegistry> = new Set()
+    visited: Set<ComponentHandleRegistry> = new Set(),
   ): ComponentHandleDebugData | undefined {
     if (visited.has(registry)) {
       return undefined;
@@ -93,18 +116,32 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     }
 
     for (const child of childRegistries) {
-      const nested = (child as ComponentHandleRegistry & {
-        __resolveDebugDataByCid?: (cid: number, includeParent?: boolean, visited?: Set<ComponentHandleRegistry>) => ComponentHandleDebugData | undefined;
-      }).__resolveDebugDataByCid?.(cid, false, visited);
+      const nested = (
+        child as ComponentHandleRegistry & {
+          __resolveDebugDataByCid?: (
+            cid: number,
+            includeParent?: boolean,
+            visited?: Set<ComponentHandleRegistry>,
+          ) => ComponentHandleDebugData | undefined;
+        }
+      ).__resolveDebugDataByCid?.(cid, false, visited);
       if (nested) {
         return nested;
       }
     }
 
     return includeParent
-      ? (input.parent as ComponentHandleRegistry & {
-          __resolveDebugDataByCid?: (cid: number, includeParent?: boolean, visited?: Set<ComponentHandleRegistry>) => ComponentHandleDebugData | undefined;
-        } | undefined)?.__resolveDebugDataByCid?.(cid, true, visited)
+      ? (
+          input.parent as
+            | (ComponentHandleRegistry & {
+                __resolveDebugDataByCid?: (
+                  cid: number,
+                  includeParent?: boolean,
+                  visited?: Set<ComponentHandleRegistry>,
+                ) => ComponentHandleDebugData | undefined;
+              })
+            | undefined
+        )?.__resolveDebugDataByCid?.(cid, true, visited)
       : undefined;
   }
 
@@ -116,7 +153,7 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     const existing = nameIndex.get(name);
     if (existing && existing.size > 0) {
       console.warn(
-        `[ComponentRegistry] Duplicate component name "${name}" in scope "${input.id}". Existing cids: [${Array.from(existing).join(', ')}], new cid: ${cid}`
+        `[ComponentRegistry] Duplicate component name "${name}" in scope "${input.id}". Existing cids: [${Array.from(existing).join(', ')}], new cid: ${cid}`,
       );
     }
 
@@ -182,7 +219,10 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     }
   }
 
-  function resolveInScope(target: ComponentTarget, visited: Set<ComponentHandleRegistry> = new Set()): ComponentHandle | undefined {
+  function resolveInScope(
+    target: ComponentTarget,
+    visited: Set<ComponentHandleRegistry> = new Set(),
+  ): ComponentHandle | undefined {
     if (visited.has(registry)) {
       return undefined;
     }
@@ -218,14 +258,18 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
     }
 
     if (target.componentName) {
-      const byName = Array.from(handlesByName.get(target.componentName) ?? []).filter((handle) => handle._mounted !== false);
+      const byName = Array.from(handlesByName.get(target.componentName) ?? []).filter(
+        (handle) => handle._mounted !== false,
+      );
 
       if (byName.length === 1) {
         return byName[0];
       }
 
       if (byName.length > 1) {
-        const err = new Error(`Ambiguous component target: ${target.componentName}`) as Error & { _ambiguous?: boolean };
+        const err = new Error(`Ambiguous component target: ${target.componentName}`) as Error & {
+          _ambiguous?: boolean;
+        };
         err._ambiguous = true;
         throw err;
       }
@@ -298,7 +342,7 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
         return {
           kind: 'notMaterialized',
           cid,
-          instancePath: debugData?.nodeInstance?.instancePath
+          instancePath: debugData?.nodeInstance?.instancePath,
         };
       }
 
@@ -310,8 +354,8 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
           scopeChain: buildScopeChain(debugData?.scope),
           resolvedMeta: debugData?.resolvedMeta,
           resolvedProps: debugData?.resolvedProps,
-          state: debugData?.nodeInstance?.state
-        }
+          state: debugData?.nodeInstance?.state,
+        },
       };
     },
     getHandleByCid(cid) {
@@ -332,22 +376,28 @@ export function createComponentHandleRegistry(input: { id: string; parent?: Comp
       return {
         handles: [
           ...Array.from(handles).map((handle) => ({
-          cid: handle._cid,
-          id: handle.id,
-          name: handle.name,
-          type: handle.type,
-          mounted: handle._mounted !== false,
-          capabilities: handle.capabilities,
+            cid: handle._cid,
+            id: handle.id,
+            name: handle.name,
+            type: handle.type,
+            mounted: handle._mounted !== false,
+            capabilities: handle.capabilities,
           })),
-          ...Array.from(childRegistries).flatMap((child) => child.getDebugSnapshot?.().handles ?? [])
-        ]
+          ...Array.from(childRegistries).flatMap(
+            (child) => child.getDebugSnapshot?.().handles ?? [],
+          ),
+        ],
       };
-    }
+    },
   } satisfies ComponentHandleRegistry;
 
   (registry as RegistryWithChildren).__childRegistries = childRegistries;
-  (registry as ComponentHandleRegistry & { __resolveHandleByCid?: typeof resolveHandleByCid }).__resolveHandleByCid = resolveHandleByCid;
-  (registry as ComponentHandleRegistry & { __resolveDebugDataByCid?: typeof resolveDebugDataByCid }).__resolveDebugDataByCid = resolveDebugDataByCid;
+  (
+    registry as ComponentHandleRegistry & { __resolveHandleByCid?: typeof resolveHandleByCid }
+  ).__resolveHandleByCid = resolveHandleByCid;
+  (
+    registry as ComponentHandleRegistry & { __resolveDebugDataByCid?: typeof resolveDebugDataByCid }
+  ).__resolveDebugDataByCid = resolveDebugDataByCid;
 
   if (input.parent) {
     const parentWithChildren = input.parent as RegistryWithChildren;

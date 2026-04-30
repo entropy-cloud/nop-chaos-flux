@@ -7,35 +7,17 @@ import type {
   MetadataBag,
   FieldSourceSnapshot,
 } from './types.js';
-import {
-  getTargetMeta,
-  getDefaultSelectionTarget,
-} from './types.js';
-import type {
-  ReportDesignerCommand,
-  ReportDesignerCommandResult,
-} from './commands.js';
+import { getTargetMeta, getDefaultSelectionTarget } from './types.js';
+import type { ReportDesignerCommand, ReportDesignerCommandResult } from './commands.js';
 import type {
   ReportDesignerAdapterRegistry,
   FieldDropAdapter,
   ReportDesignerProfile,
 } from './adapters.js';
-import {
-  getProfileFieldDropIds,
-  resolveRegistry,
-} from './runtime/registry.js';
-import {
-  cloneDocument,
-  cloneMetadataBag,
-  updateMetadata,
-} from './runtime/metadata.js';
-import {
-  resolveInspectorSchemaForTarget,
-} from './runtime/inspector-panels.js';
-import {
-  getProfileFieldSourceIds,
-  loadFieldSources,
-} from './runtime/field-sources.js';
+import { getProfileFieldDropIds, resolveRegistry } from './runtime/registry.js';
+import { cloneDocument, cloneMetadataBag, updateMetadata } from './runtime/metadata.js';
+import { resolveInspectorSchemaForTarget } from './runtime/inspector-panels.js';
+import { getProfileFieldSourceIds, loadFieldSources } from './runtime/field-sources.js';
 import {
   type ReportDesignerInternalState,
   type DispatchContext,
@@ -116,7 +98,11 @@ export function createReportDesignerCore(
     inspector: {
       open: false,
       mode: config.inspector?.mode,
-      resolvedSchema: resolveInspectorSchemaForTarget({ config, target: initialSelectionTarget, profile }),
+      resolvedSchema: resolveInspectorSchemaForTarget({
+        config,
+        target: initialSelectionTarget,
+        profile,
+      }),
       loading: false,
     },
     fieldSources: [],
@@ -187,7 +173,9 @@ export function createReportDesignerCore(
     await refreshDerivedState();
   }
 
-  function pushUndoEntry(current: ReportDesignerInternalState): Partial<ReportDesignerInternalState> {
+  function pushUndoEntry(
+    current: ReportDesignerInternalState,
+  ): Partial<ReportDesignerInternalState> {
     const maxDepth = config.maxUndoDepth ?? 50;
     const undoStack = [...current.undoStack, cloneDocument(current.document)];
     if (undoStack.length > maxDepth) undoStack.shift();
@@ -267,7 +255,8 @@ export function createReportDesignerCore(
           ...current,
           document: {
             ...current.document,
-            spreadsheet: cloneDocument({ ...current.document, spreadsheet: nextDocument }).spreadsheet,
+            spreadsheet: cloneDocument({ ...current.document, spreadsheet: nextDocument })
+              .spreadsheet,
           },
         };
       });

@@ -91,15 +91,15 @@ NodeRenderer åœ¨ç¬¬ 200-201 è¡Œè‡ªå·±ä»Ž schema æŽ `_cid`
 
 #### Phase 1ï¼šå¥‘çº¦å±‚ï¼ˆflux-core + flux-runtimeï¼‰
 
-| æ–‡ä»¶ | æ”¹åŠ¨ | è¯´æ˜Ž |
-|------|------|------|
-| `packages/flux-core/src/types/renderer-compiler.ts` | `ResolvedNodeMeta` åŠ  `cid?: number` | æŽ¥å£å˜æ›´ |
-| `packages/flux-runtime/src/node-runtime.ts` | `resolveNodeMeta` åŠ  `cid` è§£æž | ä»Ž schema å– `_cid` å†™å…¥ meta |
+| æ–‡ä»¶                                              | æ”¹åŠ¨                                | è¯´æ˜Ž                           |
+| --------------------------------------------------- | ------------------------------------- | -------------------------------- |
+| `packages/flux-core/src/types/renderer-compiler.ts` | `ResolvedNodeMeta` åŠ  `cid?: number` | æŽ¥å£å˜æ›´                       |
+| `packages/flux-runtime/src/node-runtime.ts`         | `resolveNodeMeta` åŠ  `cid` è§£æž     | ä»Ž schema å– `_cid` å†™å…¥ meta |
 
 #### Phase 2ï¼šæ¸²æŸ“å±‚ï¼ˆflux-reactï¼‰
 
-| æ–‡ä»¶ | æ”¹åŠ¨ | è¯´æ˜Ž |
-|------|------|------|
+| æ–‡ä»¶                                      | æ”¹åŠ¨                                                  | è¯´æ˜Ž       |
+| ------------------------------------------- | ------------------------------------------------------- | ------------ |
 | `packages/flux-react/src/node-renderer.tsx` | åˆ é™¤ wrapper div åˆ†æ”¯ï¼Œ`cid` æ”¹èµ° `resolvedMeta` | æ ¸å¿ƒæ”¹åŠ¨ |
 
 #### Phase 3ï¼šrenderer ç»„ä»¶ï¼ˆæ‰€æœ‰ renderer åŒ…ï¼‰
@@ -108,40 +108,40 @@ NodeRenderer åœ¨ç¬¬ 200-201 è¡Œè‡ªå·±ä»Ž schema æŽ `_cid`
 
 **flux-renderers-basic**ï¼ˆ8 ä¸ª rendererï¼Œå…¨éƒ¨ `wrap=false`ï¼‰ï¼š
 
-| æ–‡ä»¶ | Renderer | æ ¹å…ƒç´  |
-|------|----------|--------|
-| `page.tsx` | PageRenderer | `<section>` |
-| `container.tsx` | ContainerRenderer | `<div>` |
-| `flex.tsx` | FlexRenderer | `<div>` |
-| `text.tsx` | TextRenderer | `<Tag>` |
-| `button.tsx` | ButtonRenderer | `<Button>` |
-| `icon.tsx` | IconRenderer | `<span>` |
-| `badge.tsx` | BadgeRenderer | `<Badge>` |
-| `dynamic-renderer.tsx` | DynamicRenderer | `<div>`ï¼ˆ3 å¤„ returnï¼‰ |
+| æ–‡ä»¶                 | Renderer          | æ ¹å…ƒç´                  |
+| ---------------------- | ----------------- | ------------------------- |
+| `page.tsx`             | PageRenderer      | `<section>`               |
+| `container.tsx`        | ContainerRenderer | `<div>`                   |
+| `flex.tsx`             | FlexRenderer      | `<div>`                   |
+| `text.tsx`             | TextRenderer      | `<Tag>`                   |
+| `button.tsx`           | ButtonRenderer    | `<Button>`                |
+| `icon.tsx`             | IconRenderer      | `<span>`                  |
+| `badge.tsx`            | BadgeRenderer     | `<Badge>`                 |
+| `dynamic-renderer.tsx` | DynamicRenderer   | `<div>`ï¼ˆ3 å¤„ returnï¼‰ |
 
 **flux-renderers-form**ï¼ˆ`wrap=true` çš„ renderer ä¸éœ€è¦æ”¹ï¼Œå®ƒä»¬çš„ `data-cid` ç”± FieldFrame è¾“å‡ºï¼‰ï¼š
 
-| æ–‡ä»¶ | Renderer | wrap | éœ€æ”¹ï¼Ÿ |
-|------|----------|------|--------|
-| `renderers/form.tsx` | FormRenderer | false | âœ… æ ¹å…ƒç´ åŠ  data-cid |
-| `renderers/input.tsx` | input-text/email/password/select/textarea/checkbox/switch/radio-group/checkbox-group | true | âŒ FieldFrame å·²å¤„ç† |
-| `renderers/array-editor.tsx` | ArrayEditorRenderer | true | âŒ FieldFrame å·²å¤„ç† |
-| `renderers/key-value.tsx` | KeyValueRenderer | true | âŒ FieldFrame å·²å¤„ç† |
-| `renderers/tag-list.tsx` | TagListRenderer | true | âŒ FieldFrame å·²å¤„ç† |
-| `renderers/condition-builder/ConditionBuilder.tsx` | ConditionBuilderRenderer | true | âŒ FieldFrame å·²å¤„ç† |
+| æ–‡ä»¶                                             | Renderer                                                                             | wrap  | éœ€æ”¹ï¼Ÿ                 |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------ | ----- | ------------------------- |
+| `renderers/form.tsx`                               | FormRenderer                                                                         | false | âœ… æ ¹å…ƒç´ åŠ  data-cid |
+| `renderers/input.tsx`                              | input-text/email/password/select/textarea/checkbox/switch/radio-group/checkbox-group | true  | âŒ FieldFrame å·²å¤„ç†    |
+| `renderers/array-editor.tsx`                       | ArrayEditorRenderer                                                                  | true  | âŒ FieldFrame å·²å¤„ç†    |
+| `renderers/key-value.tsx`                          | KeyValueRenderer                                                                     | true  | âŒ FieldFrame å·²å¤„ç†    |
+| `renderers/tag-list.tsx`                           | TagListRenderer                                                                      | true  | âŒ FieldFrame å·²å¤„ç†    |
+| `renderers/condition-builder/ConditionBuilder.tsx` | ConditionBuilderRenderer                                                             | true  | âŒ FieldFrame å·²å¤„ç†    |
 
 **flux-renderers-data**ï¼ˆ3 ä¸ª rendererï¼Œå…¨éƒ¨ `wrap=false`ï¼‰ï¼š
 
-| æ–‡ä»¶ | Renderer | æ ¹å…ƒç´  |
-|------|----------|--------|
-| `table-renderer.tsx` | TableRenderer | `<div>` |
+| æ–‡ä»¶                     | Renderer           | æ ¹å…ƒç´           |
+| -------------------------- | ------------------ | ------------------ |
+| `table-renderer.tsx`       | TableRenderer      | `<div>`            |
 | `data-source-renderer.tsx` | DataSourceRenderer | éœ€ç¡®è®¤æ ¹å…ƒç´  |
-| `chart-renderer.tsx` | ChartRenderer | éœ€ç¡®è®¤æ ¹å…ƒç´  |
+| `chart-renderer.tsx`       | ChartRenderer      | éœ€ç¡®è®¤æ ¹å…ƒç´  |
 
 **flux-code-editor**ï¼ˆ1 ä¸ª rendererï¼Œ`wrap=true`ï¼Œç”± FieldFrame å¤„ç†ï¼Œä¸éœ€è¦æ”¹ï¼‰ï¼š
 
-| æ–‡ä»¶ | Renderer | wrap | éœ€æ”¹ï¼Ÿ |
-|------|----------|------|--------|
+| æ–‡ä»¶                     | Renderer           | wrap | éœ€æ”¹ï¼Ÿ              |
+| -------------------------- | ------------------ | ---- | ---------------------- |
 | `code-editor-renderer.tsx` | CodeEditorRenderer | true | âŒ FieldFrame å·²å¤„ç† |
 
 #### Phase 4ï¼šè°ƒè¯•å™¨ï¼ˆnop-debuggerï¼‰
@@ -275,23 +275,23 @@ NodeRenderer åœ¨ç¬¬ 200-201 è¡Œè‡ªå·±ä»Ž schema æŽ `_cid`
 
 #### 4a. `flux-renderers-basic`ï¼ˆ8 ä¸ª rendererï¼‰
 
-| æ–‡ä»¶ | è¡Œå·ï¼ˆreturn è¯­å¥ï¼‰ |
-|------|------|
-| `page.tsx` | 13 â€” `<section>` |
-| `container.tsx` | 25 â€” `<div>` |
-| `flex.tsx` | 29-51 â€” `<div>` |
-| `text.tsx` | 23 â€” `<Tag>` |
-| `button.tsx` | 14-24 â€” `<Button>` |
-| `icon.tsx` | return è¯­å¥ |
-| `badge.tsx` | return è¯­å¥ |
+| æ–‡ä»¶                 | è¡Œå·ï¼ˆreturn è¯­å¥ï¼‰                                                 |
+| ---------------------- | ----------------------------------------------------------------------- |
+| `page.tsx`             | 13 â€” `<section>`                                                      |
+| `container.tsx`        | 25 â€” `<div>`                                                          |
+| `flex.tsx`             | 29-51 â€” `<div>`                                                       |
+| `text.tsx`             | 23 â€” `<Tag>`                                                          |
+| `button.tsx`           | 14-24 â€” `<Button>`                                                    |
+| `icon.tsx`             | return è¯­å¥                                                            |
+| `badge.tsx`            | return è¯­å¥                                                            |
 | `dynamic-renderer.tsx` | 61, 69, 76 â€” 3 å¤„ `<div>`ï¼ˆerror / schema / loading ä¸‰ä¸ªåˆ†æ”¯ï¼‰ |
 
 **éªŒè¯**: `pnpm --filter @nop-chaos/flux-renderers-basic typecheck`
 
 #### 4b. `flux-renderers-form`ï¼ˆ1 ä¸ª rendererï¼šFormRendererï¼‰
 
-| æ–‡ä»¶ | è¯´æ˜Ž |
-|------|------|
+| æ–‡ä»¶               | è¯´æ˜Ž                             |
+| -------------------- | ---------------------------------- |
 | `renderers/form.tsx` | FormRenderer æ ¹å…ƒç´ åŠ  data-cid |
 
 æ³¨æ„ï¼šæ‰€æœ‰ `input-text` ç­‰ `wrap=true` çš„ renderer ä¸éœ€è¦æ”¹â€”â€”å®ƒä»¬çš„ `data-cid` ç”± FieldFrame æ ¹å…ƒç´ è¾“å‡ºã€‚
@@ -300,11 +300,11 @@ NodeRenderer åœ¨ç¬¬ 200-201 è¡Œè‡ªå·±ä»Ž schema æŽ `_cid`
 
 #### 4c. `flux-renderers-data`ï¼ˆ3 ä¸ª rendererï¼‰
 
-| æ–‡ä»¶ | è¯´æ˜Ž |
-|------|------|
-| `table-renderer.tsx` | æ ¹ `<div>` åŠ  data-cid |
+| æ–‡ä»¶                     | è¯´æ˜Ž                        |
+| -------------------------- | ----------------------------- |
+| `table-renderer.tsx`       | æ ¹ `<div>` åŠ  data-cid      |
 | `data-source-renderer.tsx` | ç¡®è®¤æ ¹å…ƒç´ åŽåŠ  data-cid |
-| `chart-renderer.tsx` | ç¡®è®¤æ ¹å…ƒç´ åŽåŠ  data-cid |
+| `chart-renderer.tsx`       | ç¡®è®¤æ ¹å…ƒç´ åŽåŠ  data-cid |
 
 **éªŒè¯**: `pnpm --filter @nop-chaos/flux-renderers-data typecheck`
 
@@ -336,7 +336,7 @@ describe('data-cid on renderer root element', () => {
   it('debugger inspectByCid still works after refactoring', () => {
     // æ³¨å†Œ component handleï¼Œæ¸²æŸ“èŠ‚ç‚¹
     // è°ƒç”¨ inspectByCid(cid)
-    // æ–­è¨€: èƒ½æ‰¾åˆ°å¯¹åº”çš„ DOM å…ƒç´ 
+    // æ–­è¨€: èƒ½æ‰¾åˆ°å¯¹åº”çš„ DOM å…ƒç´
   });
 });
 ```
@@ -358,16 +358,17 @@ pnpm test
 
 ### 4.1 é£Žé™©è¯„ä¼°
 
-| é£Žé™© | ç­‰çº§ | ç¼“è§£ |
-|------|------|------|
-| Renderer é—æ¼ data-cid | ä½Ž | grep æœç´¢æ‰€æœ‰ renderer çš„ return è¯­å¥ï¼Œç¡®è®¤å…¨è¦†ç›– |
-| FieldFrame è·¯å¾„å›žé€€ | æ—  | FieldFrame å·²æ­£ç¡®è¾“å‡º data-cidï¼Œä¸å—å½±å“ |
-| è°ƒè¯•å™¨å¤±æ•ˆ | ä½Ž | è°ƒè¯•å™¨åªä¾èµ– `[data-cid]` å±žæ€§å­˜åœ¨ï¼Œä¸ä¾èµ– DOM å±‚çº§ |
-| ç¬¬ä¸‰æ–¹ renderer æœªé€‚é… | ä¸­ | `cid` å­—æ®µæ˜¯ optionalï¼Œä¸è¾“å‡º data-cid åªæ˜¯è°ƒè¯•å™¨æ‰¾ä¸åˆ°ï¼Œä¸å½±å“åŠŸèƒ½ |
+| é£Žé™©                      | ç­‰çº§ | ç¼“è§£                                                                              |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------- |
+| Renderer é—æ¼ data-cid      | ä½Ž    | grep æœç´¢æ‰€æœ‰ renderer çš„ return è¯­å¥ï¼Œç¡®è®¤å…¨è¦†ç›–                        |
+| FieldFrame è·¯å¾„å›žé€€     | æ—     | FieldFrame å·²æ­£ç¡®è¾“å‡º data-cidï¼Œä¸å—å½±å“                                     |
+| è°ƒè¯•å™¨å¤±æ•ˆ             | ä½Ž    | è°ƒè¯•å™¨åªä¾èµ– `[data-cid]` å±žæ€§å­˜åœ¨ï¼Œä¸ä¾èµ– DOM å±‚çº§                     |
+| ç¬¬ä¸‰æ–¹ renderer æœªé€‚é… | ä¸­    | `cid` å­—æ®µæ˜¯ optionalï¼Œä¸è¾“å‡º data-cid åªæ˜¯è°ƒè¯•å™¨æ‰¾ä¸åˆ°ï¼Œä¸å½±å“åŠŸèƒ½ |
 
 ### 4.2 å›žé€€ç­–ç•¥
 
 å¦‚æžœå‡ºçŽ°é—®é¢˜ï¼Œå›žé€€åªéœ€ï¼š
+
 1. æ¢å¤ `node-renderer.tsx` çš„ wrapper div åˆ†æ”¯
 2. å…¶ä½™æ”¹åŠ¨ï¼ˆmeta åŠ  cidã€renderer åŠ  data-cidï¼‰å¯ä»¥ä¿ç•™â€”â€”æœ‰ wrapper div æ—¶ `data-cid` å‡ºçŽ°ä¸¤æ¬¡ä¸å½±å“åŠŸèƒ½
 
@@ -384,4 +385,3 @@ pnpm test
 - [ ] è°ƒè¯•å™¨ inspect æ¨¡å¼ hover/ç‚¹å‡»æ­£å¸¸å·¥ä½œ
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` å…¨éƒ¨é€šè¿‡
 - [ ] æ— æ–°å¢ž DOM å±‚çº§â€”â€”renderer æ ¹å…ƒç´ å³ä¸º `data-cid` è½½ä½“
-

@@ -78,9 +78,7 @@ interface ArrayFieldSchema extends BaseSchema {
 
 ```ts
 {
-  value: itemValue,
-  index,
-  readOnly
+  value: (itemValue, index, readOnly);
 }
 ```
 
@@ -151,9 +149,7 @@ interface ArrayFieldSchema extends BaseSchema {
 
 ```ts
 {
-  value: itemValue,
-  index,
-  readOnly
+  value: (itemValue, index, readOnly);
 }
 ```
 

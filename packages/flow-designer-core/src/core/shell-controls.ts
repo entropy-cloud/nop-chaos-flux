@@ -1,6 +1,11 @@
 import type { DesignerEvent, GraphDocument } from '../types';
 import { cloneDocument } from './clone';
-import { resetShellViewportFromDocument, setShellClipboard, setShellViewport, type DesignerShellState } from './shell-state';
+import {
+  resetShellViewportFromDocument,
+  setShellClipboard,
+  setShellViewport,
+  type DesignerShellState,
+} from './shell-state';
 
 export function createShellControls(args: {
   getDocument: () => GraphDocument;
@@ -22,15 +27,24 @@ export function createShellControls(args: {
     }
   }
 
-  function pasteClipboard(addNode: (type: string, position: { x: number; y: number }, data?: Record<string, unknown>) => unknown) {
+  function pasteClipboard(
+    addNode: (
+      type: string,
+      position: { x: number; y: number },
+      data?: Record<string, unknown>,
+    ) => unknown,
+  ) {
     if (!args.shellState.clipboard) {
       return;
     }
 
     addNode(
       args.shellState.clipboard.type,
-      { x: args.shellState.clipboard.position.x + 48, y: args.shellState.clipboard.position.y + 48 },
-      args.shellState.clipboard.data
+      {
+        x: args.shellState.clipboard.position.x + 48,
+        y: args.shellState.clipboard.position.y + 48,
+      },
+      args.shellState.clipboard.data,
     );
   }
 

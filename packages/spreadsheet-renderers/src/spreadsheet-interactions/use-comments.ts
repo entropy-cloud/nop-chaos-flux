@@ -8,7 +8,7 @@ export function useComments(
   selectedCell: { row: number; col: number } | null,
   addLog: (msg: string) => void,
   commentText: string,
-  setCommentText: React.Dispatch<React.SetStateAction<string>>
+  setCommentText: React.Dispatch<React.SetStateAction<string>>,
 ) {
   const [showCommentInput, setShowCommentInput] = useState(false);
 

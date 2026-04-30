@@ -2,14 +2,20 @@ import { useEffect, useMemo } from 'react';
 import type { ComponentHandleRegistry } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry } from './hooks';
 
-export function useResolvedContainer(containerId: string | undefined, componentRegistry: ComponentHandleRegistry | undefined): HTMLElement | null {
+export function useResolvedContainer(
+  containerId: string | undefined,
+  componentRegistry: ComponentHandleRegistry | undefined,
+): HTMLElement | null {
   return useMemo(
     () => resolveContainerElement(containerId, componentRegistry),
-    [containerId, componentRegistry]
+    [containerId, componentRegistry],
   );
 }
 
-export function useContainerDomRegistration(containerId: string | undefined, elementRef: React.RefObject<HTMLElement | null>) {
+export function useContainerDomRegistration(
+  containerId: string | undefined,
+  elementRef: React.RefObject<HTMLElement | null>,
+) {
   const componentRegistry = useCurrentComponentRegistry();
 
   useEffect(() => {
@@ -24,13 +30,16 @@ export function useContainerDomRegistration(containerId: string | undefined, ele
       capabilities: {
         invoke() {
           return { ok: true };
-        }
-      }
+        },
+      },
     });
   }, [containerId, componentRegistry, elementRef]);
 }
 
-export function resolveContainerElement(containerId: string | undefined, componentRegistry: ComponentHandleRegistry | undefined): HTMLElement | null {
+export function resolveContainerElement(
+  containerId: string | undefined,
+  componentRegistry: ComponentHandleRegistry | undefined,
+): HTMLElement | null {
   if (!containerId || !componentRegistry) {
     return null;
   }

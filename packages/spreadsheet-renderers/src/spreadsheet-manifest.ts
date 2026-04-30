@@ -289,7 +289,9 @@ const manifestVersions = new Map<string, HostCapabilityProjectionManifest>([
   ['latest', SPREADSHEET_MANIFEST_V1],
 ]);
 
-export function resolveSpreadsheetManifest(versionSelector: string): HostCapabilityProjectionManifest | undefined {
+export function resolveSpreadsheetManifest(
+  versionSelector: string,
+): HostCapabilityProjectionManifest | undefined {
   return manifestVersions.get(versionSelector);
 }
 

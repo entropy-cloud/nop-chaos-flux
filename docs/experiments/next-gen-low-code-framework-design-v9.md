@@ -12,42 +12,46 @@
 
 ### 0.1 核心原则
 
-| 原则 | 含义 |
-|------|------|
-| **编译即优化** | 凡可在编译期确定的信息，绝不推迟到运行时。编译产物是最小执行单元 |
-| **可组合原语** | 所有运行时原语（Scope、Action、Reactor、Component）可组合、可变换，通过明确的接口契约组合 |
-| **渐进式零假设** | 框架对宿主环境、UI 库、状态管理方案零假设。从最简 schema 到最复杂场景，概念集合严格递增 |
-| **效应通道隔离** | 所有副作用（网络、DOM、存储）通过显式效应通道执行，核心逻辑保持可测试 |
-| **增量采纳** | 可以从一个表单、一个表格开始使用，不必一次性采纳全部架构 |
+| 原则             | 含义                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| **编译即优化**   | 凡可在编译期确定的信息，绝不推迟到运行时。编译产物是最小执行单元                          |
+| **可组合原语**   | 所有运行时原语（Scope、Action、Reactor、Component）可组合、可变换，通过明确的接口契约组合 |
+| **渐进式零假设** | 框架对宿主环境、UI 库、状态管理方案零假设。从最简 schema 到最复杂场景，概念集合严格递增   |
+| **效应通道隔离** | 所有副作用（网络、DOM、存储）通过显式效应通道执行，核心逻辑保持可测试                     |
+| **增量采纳**     | 可以从一个表单、一个表格开始使用，不必一次性采纳全部架构                                  |
 
 ### 0.2 分阶段交付目标
 
 **MVP（核心）**:
+
 - Schema → IR → Scope → Signal → React 渲染 → 基础动作
 - 表达式引擎（编译期闭包）
 - 错误边界与恢复
 
 **V2（企业基础）**:
+
 - 校验引擎、数据源管理、集合渲染（表格/列表）
 - 表面管理（对话框/抽屉）
 - 访问控制集成点
 
 **V3（高级）**:
+
 - 热更新、SSR、循环/递归结构
 - 域控嵌入、命名空间
 
 **V4（开发者体验）**:
+
 - 时间旅行调试、编译诊断增强
 - 多目标编译适配器（Vue/Solid/WebComp）
 
 ### 0.3 量化的务实目标
 
-| 目标 | 说明 |
-|------|------|
-| 核心可表达 | 一个声明式 schema 覆盖企业级前端 **80%+** 的常见场景，其余通过受控扩展点接入 |
-| 行级更新粒度 | 表格万行数据，修改一个单元格只触发该单元格的重新渲染 |
-| MVP 核心 < 35KB gzipped | 通过编译期裁剪，仅包含 Signal、Scope、表达式、基础 Action、React 适配器 |
-| 核心 runtime 可在 Node.js 中无 DOM 测试 | 所有非渲染逻辑独立于 DOM |
+| 目标                                    | 说明                                                                         |
+| --------------------------------------- | ---------------------------------------------------------------------------- |
+| 核心可表达                              | 一个声明式 schema 覆盖企业级前端 **80%+** 的常见场景，其余通过受控扩展点接入 |
+| 行级更新粒度                            | 表格万行数据，修改一个单元格只触发该单元格的重新渲染                         |
+| MVP 核心 < 35KB gzipped                 | 通过编译期裁剪，仅包含 Signal、Scope、表达式、基础 Action、React 适配器      |
+| 核心 runtime 可在 Node.js 中无 DOM 测试 | 所有非渲染逻辑独立于 DOM                                                     |
 
 ---
 
@@ -101,15 +105,16 @@
 
 ### 1.1 三阶段分离
 
-| 阶段 | 输入 | 输出 | 职责 | 优化目标 |
-|------|------|------|------|---------|
-| **Schema 编译** | JSON Schema | CompiledIR | 解析、绑定、表达式预编译、静态分析、诊断 | 正确性、最小化 |
-| **IR 实例化** | CompiledIR + HostContext | RuntimeInstance | 创建 Scope 图、注册 Reactor、挂载 Effect Channel | 性能 |
-| **运行时执行** | RuntimeInstance | UI + Side Effects | 响应式求值、动作派发、渲染 | 实时性、精确更新 |
+| 阶段            | 输入                     | 输出              | 职责                                             | 优化目标         |
+| --------------- | ------------------------ | ----------------- | ------------------------------------------------ | ---------------- |
+| **Schema 编译** | JSON Schema              | CompiledIR        | 解析、绑定、表达式预编译、静态分析、诊断         | 正确性、最小化   |
+| **IR 实例化**   | CompiledIR + HostContext | RuntimeInstance   | 创建 Scope 图、注册 Reactor、挂载 Effect Channel | 性能             |
+| **运行时执行**  | RuntimeInstance          | UI + Side Effects | 响应式求值、动作派发、渲染                       | 实时性、精确更新 |
 
 ### 1.2 MVP 范围裁剪原则
 
 MVP 阶段严格只包含：
+
 - Schema 解析与编译（单遍，足以产出可执行 IR）
 - Scope + Signal（核心数据层）
 - Expression Engine（闭包求值器）
@@ -145,12 +150,7 @@ interface RegionDef {
   body: SchemaNode[];
 }
 
-type SchemaValue =
-  | LiteralValue
-  | ExpressionValue
-  | TemplateValue
-  | ComputedValue
-  | DataSourceRef;
+type SchemaValue = LiteralValue | ExpressionValue | TemplateValue | ComputedValue | DataSourceRef;
 ```
 
 ### 2.2 值语义分类
@@ -177,16 +177,16 @@ interface SchemaComposition {
 
 **$merge 合并语义精确定义**：
 
-| 类型 | 合并策略 |
-|------|---------|
-| 对象 | 深度合并，后者覆盖前者同名键 |
-| 数组 | **替换**（后者覆盖前者），不复用 |
-| 基本类型 | 后者覆盖前者 |
-| regions | 按区域名深度合并，区域内 `body` 数组替换 |
-| actions | 按动作名覆盖 |
-| validation | **并集**（两者都保留） |
-| $import | 检测循环引用，最大深度 10，超出报编译错误 |
-| $extends | 单继承，覆写规则同 $merge |
+| 类型       | 合并策略                                  |
+| ---------- | ----------------------------------------- |
+| 对象       | 深度合并，后者覆盖前者同名键              |
+| 数组       | **替换**（后者覆盖前者），不复用          |
+| 基本类型   | 后者覆盖前者                              |
+| regions    | 按区域名深度合并，区域内 `body` 数组替换  |
+| actions    | 按动作名覆盖                              |
+| validation | **并集**（两者都保留）                    |
+| $import    | 检测循环引用，最大深度 10，超出报编译错误 |
+| $extends   | 单继承，覆写规则同 $merge                 |
 
 ### 2.4 Schema 简写约定
 
@@ -242,20 +242,21 @@ interface CompiledIR {
   id: string;
   nodeType: string;
   componentKey: string;
-  props: Map<string, CompiledValue>;     // 编译后的值描述
-  regions: Map<string, CompiledRegion>;  // 编译后的子区域
-  actions: Map<string, CompiledAction>;  // 编译后的动作
-  reactors: CompiledReactor[];           // 需要的响应式计算
-  scopeTemplate: ScopeTemplate;          // Scope 初始化模板
-  dependencies: DependencyEdge[];        // 依赖边列表
-  diagnostics: Diagnostic[];             // 编译诊断
-  isStatic: boolean;                     // 是否纯静态子树
+  props: Map<string, CompiledValue>; // 编译后的值描述
+  regions: Map<string, CompiledRegion>; // 编译后的子区域
+  actions: Map<string, CompiledAction>; // 编译后的动作
+  reactors: CompiledReactor[]; // 需要的响应式计算
+  scopeTemplate: ScopeTemplate; // Scope 初始化模板
+  dependencies: DependencyEdge[]; // 依赖边列表
+  diagnostics: Diagnostic[]; // 编译诊断
+  isStatic: boolean; // 是否纯静态子树
 }
 ```
 
 ### 3.2 编译器是单遍的（MVP）
 
 MVP 阶段编译器是**线性单遍**的：Parse → Bind → Optimize → Emit 依次执行，不回溯。这限制了某些优化（如跨过程死代码消除），但：
+
 - 实现简单，调试容易
 - 编译速度快（< 10ms for typical page）
 - 后续需要时可改为多遍迭代
@@ -263,6 +264,7 @@ MVP 阶段编译器是**线性单遍**的：Parse → Bind → Optimize → Emit
 ### 3.3 编译期类型检查
 
 类型检查基于组件契约的 `propsSchema`（JSON Schema 类型），对每个 prop 进行：
+
 1. 字面量值：直接验证类型
 2. 表达式值：推断返回类型，与期望类型兼容性检查
 3. 模板字符串：始终视为 string 类型
@@ -279,16 +281,16 @@ MVP 阶段编译器是**线性单遍**的：Parse → Bind → Optimize → Emit
 interface Scope {
   // 自有数据（Signal 映射）
   own: Map<string, Signal<unknown>>;
-  
+
   // 父级 Scope（可选）
   parent: Scope | null;
-  
+
   // 隔离模式
   mode: 'inherited' | 'isolated';
-  
+
   // 投影（从父级选择性暴露到隔离子 Scope）
   projections: Map<string, Signal<unknown>>;
-  
+
   // 路径查找
   get(path: string): unknown;
   set(path: string, value: unknown): void;
@@ -296,6 +298,7 @@ interface Scope {
 ```
 
 **路径查找机制**（`get`）：
+
 1. 将路径按 `.` 分割：`user.address.city` → `['user', 'address', 'city']`
 2. 第一段在 `own` 中查找 Signal
 3. 如果 `own` 中没有且 `mode === 'inherited'`，沿 `parent` 递归查找
@@ -304,11 +307,13 @@ interface Scope {
 6. 任一级为 `null`/`undefined` → 返回 `undefined`（空值安全）
 
 **路径写入机制**（`set`）：
+
 1. 路径存在于 `own` → 直接写入该 Signal
 2. 路径不存在于 `own` 但存在于父级 → 写入父级 Signal
 3. 路径完全不存在 → 在 `own` 中创建新 Signal
 
 **可组合性质**（非形式化代数，而是实用的组合规则）：
+
 - **继承**: 子 Scope 读取时，先查 own，再查 parent（递归）
 - **隔离**: 子 Scope 的 own 为空开始，不自动继承 parent
 - **投影**: 隔离 Scope 通过显式 projection 从 parent 获取指定 Signal
@@ -321,11 +326,12 @@ interface Signal<T> {
   get(): T;
   set(value: T): void;
   mutate(fn: (draft: T) => void): void;
-  subscribe(listener: (value: T) => void): () => void;  // 返回 unsubscribe 函数
+  subscribe(listener: (value: T) => void): () => void; // 返回 unsubscribe 函数
 }
 ```
 
 `subscribe` 语义：
+
 - 立即注册，不触发初始回调（只在值变更时触发）
 - 返回 `unsubscribe` 函数，调用后不再接收通知
 - 批量更新期间，listener 在传播完成后调用一次（不是每次 set 都调用）
@@ -346,7 +352,10 @@ function signalGet<T>(signal: InternalSignal<T>): T {
   return signal.value;
 }
 
-function trackedEvaluation<T>(fn: () => T, tracker: DependencyTracker): { value: T; deps: Set<string> } {
+function trackedEvaluation<T>(
+  fn: () => T,
+  tracker: DependencyTracker,
+): { value: T; deps: Set<string> } {
   const prev = activeTracker;
   activeTracker = tracker;
   try {
@@ -361,6 +370,7 @@ function trackedEvaluation<T>(fn: () => T, tracker: DependencyTracker): { value:
 这保证了嵌套计算正确追踪——内层 Computed 只追踪它自己的依赖，不会泄漏到外层。
 
 **关键特性**：
+
 - `get()` 在 Reactor 求值上下文中调用时自动注册依赖（类似 SolidJS 的 `createMemo` 内的读取）
 - `createComputed` 创建惰性求值 + 缓存的派生 Signal
 - 批量更新：同一 microtask 内多次 set 只触发一次传播
@@ -389,6 +399,7 @@ interface ChangeEvent {
 ```
 
 传播保证：
+
 1. **拓扑排序**：按依赖 DAG 的拓扑序传播
 2. **microtask 批量合并**：同一 microtask 内的多次写入合并为一次传播
 3. **自写保护**：数据源写入的变更不触发该数据源自身的重新求值
@@ -414,19 +425,20 @@ interface ScopeTransaction {
 interface ScopeLifecycle {
   // 创建：IR 实例化时
   onCreate(scope: Scope): void;
-  
+
   // 激活：Surface 打开、组件挂载
   onActivate(scope: Scope): void;
-  
+
   // 挂起：Surface 被其他 Surface 遮盖
   onSuspend(scope: Scope): void;
-  
+
   // 销毁：组件卸载、Surface 关闭、表格行滚出虚拟视口
   onDispose(scope: Scope): void;
 }
 ```
 
 **清理规则**：
+
 1. **Signal 订阅清理**：Scope 销毁时，自动取消该 Scope 下所有 Signal 的订阅。Reactor 自动反注册
 2. **行 Scope 与虚拟化**：行 Scope 在滚出虚拟视口时销毁（不是隐藏）。如果 DOM 元素被回收复用，创建新 Scope。数据保留在父 Scope 的 `items` Signal 中
 3. **DataSource 销毁**：Scope 销毁时，该 Scope 注册的所有 DataSource 自动 cancel + dispose
@@ -441,13 +453,13 @@ Scope 的事务系统为 Undo/Redo 提供基础设施：
 interface UndoManager {
   // 记录一个变更到 undo 栈
   push(change: ScopeChange): void;
-  
+
   // 撤销
   undo(): void;
-  
+
   // 重做
   redo(): void;
-  
+
   // 查询
   canUndo: Signal<boolean>;
   canRedo: Signal<boolean>;
@@ -458,11 +470,12 @@ interface ScopeChange {
   path: string;
   oldValue: unknown;
   newValue: unknown;
-  description?: string;     // 用于 UI 显示，如 "修改了用户名"
+  description?: string; // 用于 UI 显示，如 "修改了用户名"
 }
 ```
 
 **集成方式**：
+
 - UndoManager 是可选的，由宿主在需要时创建并绑定到 Scope
 - Scope 的 `set()` 和 `mutate()` 在 UndoManager 存在时自动记录变更
 - 表单场景下，通常绑定到表单级别的 UndoManager
@@ -502,6 +515,7 @@ type ScheduleMode = 'sync' | 'deferred';
 ```
 
 **不使用 5 级优先级调度器**。MVP 只需要：
+
 1. 值求值按依赖拓扑序同步执行
 2. 副作用和校验延迟到当前 microtask 结束后执行
 3. 与 React 的调度器协调通过 `useSyncExternalStore` 的 `getSnapshot` 约束自然实现
@@ -517,7 +531,7 @@ function useSignalValue<T>(signal: Signal<T>): T {
   return useSyncExternalStore(
     useCallback((callback) => signal.subscribe(callback), [signal]),
     getSnapshot,
-    getServerSnapshot
+    getServerSnapshot,
   );
 }
 ```
@@ -535,9 +549,12 @@ function useSignalValue<T>(signal: Signal<T>): T {
 const s1 = createSignal({ name: 'Alice' });
 
 // 自定义相等性（浅比较）
-const s2 = createSignal({ name: 'Alice' }, { 
-  equals: (a, b) => Object.keys(a).every(k => a[k] === b[k]) 
-});
+const s2 = createSignal(
+  { name: 'Alice' },
+  {
+    equals: (a, b) => Object.keys(a).every((k) => a[k] === b[k]),
+  },
+);
 ```
 
 4. **Diamond 依赖**：拓扑排序传播保证 glitch-free——一个 Signal 的更新在所有下游消费者求值前完成传播。没有消费者会看到中间态。
@@ -593,26 +610,26 @@ interface EffectContext {
 interface ActionDef {
   type: string;
   args?: Record<string, SchemaValue>;
-  
-  when?: string;              // 条件守卫表达式
-  then?: ActionDef;           // 成功续接
-  catch?: ActionDef;          // 失败续接
-  finally?: ActionDef;        // 无论成功失败
-  
-  parallel?: ActionDef[];     // 并行执行
-  race?: ActionDef[];         // 竞速
-  
+
+  when?: string; // 条件守卫表达式
+  then?: ActionDef; // 成功续接
+  catch?: ActionDef; // 失败续接
+  finally?: ActionDef; // 无论成功失败
+
+  parallel?: ActionDef[]; // 并行执行
+  race?: ActionDef[]; // 竞速
+
   retry?: { max: number; delay: number; backoff: 'fixed' | 'exponential' };
   timeout?: number;
   debounce?: number;
-  
-  assignTo?: string;          // 将结果写入 scope 路径
+
+  assignTo?: string; // 将结果写入 scope 路径
 }
 
 interface ActionResult {
   status: 'success' | 'failure' | 'skipped' | 'cancelled';
   value?: unknown;
-  error?: FrameworkError;     // 结构化错误（见 Section 7）
+  error?: FrameworkError; // 结构化错误（见 Section 7）
 }
 ```
 
@@ -643,13 +660,13 @@ interface ActionContext {
 
 ```typescript
 interface FrameworkError {
-  code: string;                    // 错误码，如 'EXPR_RUNTIME', 'ACTION_TIMEOUT'
-  message: string;                 // 人类可读消息
+  code: string; // 错误码，如 'EXPR_RUNTIME', 'ACTION_TIMEOUT'
+  message: string; // 人类可读消息
   category: 'expression' | 'action' | 'validation' | 'rendering' | 'network' | 'system';
-  nodeId?: string;                 // 相关 schema 节点
-  path?: string;                   // 相关 scope 路径
-  cause?: Error;                   // 原始错误
-  recoverable: boolean;            // 是否可自动恢复
+  nodeId?: string; // 相关 schema 节点
+  path?: string; // 相关 scope 路径
+  cause?: Error; // 原始错误
+  recoverable: boolean; // 是否可自动恢复
 }
 ```
 
@@ -681,16 +698,16 @@ interface FrameworkError {
 // 框架内部实现（简化）
 class SchemaErrorBoundary extends React.Component {
   state = { error: null };
-  
+
   static getDerivedStateFromError(error) {
     return { error: toFrameworkError(error) };
   }
-  
+
   componentDidCatch(error, info) {
     // 将错误报告给 HostContext.onError
     this.props.onError?.(toFrameworkError(error));
   }
-  
+
   render() {
     if (this.state.error) {
       const Fallback = this.props.errorFallback || DefaultErrorFallback;
@@ -702,11 +719,13 @@ class SchemaErrorBoundary extends React.Component {
 ```
 
 **错误边界层级**：
+
 - 每个 Schema 节点的渲染被 `SchemaErrorBoundary` 包裹
 - 页面级有一个全局 ErrorBoundary（由框架自动创建）
 - 组件级 ErrorBoundary 在编译时根据 `componentContract.category` 决定是否需要
 
 **行为规则**：
+
 1. **表达式错误**：`${user.address.city}` 遇到 null → 返回 `undefined`（空值安全），不触发 ErrorBoundary。只有表达式语法错误或内部异常才触发
 2. **Reactor 错误**：Reactor 进入 error 状态，错误写入 `__errors.{nodeId}` 路径。组件可选择读取并显示。ErrorBoundary 不触发
 3. **组件渲染错误**：React Error Boundary 捕获，显示 ErrorFallback，提供 `onRetry` 回调重试渲染
@@ -718,6 +737,7 @@ class SchemaErrorBoundary extends React.Component {
 ### 7.3 空值安全
 
 表达式引擎默认空值安全：
+
 - `user.address.city` 当 `user` 或 `address` 为 null/undefined 时，返回 `undefined` 而非抛出异常
 - 可选链语法支持：`user?.address?.city`
 - 空值回退：`${user.name ?? 'Anonymous'}`
@@ -759,9 +779,9 @@ value | filter(predicate)     // 过滤
 
 ```typescript
 interface CompiledExpression {
-  dependencies: string[];       // 依赖的数据路径
+  dependencies: string[]; // 依赖的数据路径
   evaluate(ctx: EvalContext): unknown;
-  source: string;               // 原始文本（调试用）
+  source: string; // 原始文本（调试用）
 }
 ```
 
@@ -806,8 +826,8 @@ interface ComponentContract<P = any> {
   regions: Record<string, { parameters?: string[] }>;
   events: Record<string, { args: Record<string, string> }>;
   methods: Record<string, { args: Record<string, string>; returnType: string }>;
-  markerClass?: string;                    // 布局组件的标记类名
-  
+  markerClass?: string; // 布局组件的标记类名
+
   // React 渲染组件（MVP）
   render: React.ComponentType<RendererProps<P>>;
 }
@@ -820,11 +840,11 @@ interface PropSchema {
 }
 
 interface RendererProps<P> {
-  props: P;                       // 解析后的业务属性
-  meta: RenderMeta;               // 控制元数据
-  regions: Record<string, RegionHandle>;  // 子区域渲染句柄
-  events: Record<string, (...args: any[]) => void>;  // 事件处理器
-  helpers: RendererHelpers;       // 运行时辅助
+  props: P; // 解析后的业务属性
+  meta: RenderMeta; // 控制元数据
+  regions: Record<string, RegionHandle>; // 子区域渲染句柄
+  events: Record<string, (...args: any[]) => void>; // 事件处理器
+  helpers: RendererHelpers; // 运行时辅助
 }
 
 interface RenderMeta {
@@ -858,13 +878,13 @@ class ComponentRegistry {
 
 ### 9.3 布局组件 vs 控件组件
 
-| 类别 | 行为 | 示例 |
-|------|------|------|
-| **布局组件** (layout) | 只输出标记类名，无内置样式。所有视觉样式由 schema `className` 驱动 | page, container, flex, panel, grid |
-| **控件组件** (widget) | 完整的、自包含的 UI 控件，内置样式 | input, select, table, button, date-picker |
-| **编辑器组件** (editor) | 域专用编辑器，通过命名空间暴露能力 | code-editor, flow-designer, spreadsheet |
-| **数据组件** (data) | 数据展示和管理 | data-list, data-table, tree |
-| **表单组件** (form) | 表单容器和字段 | form, form-item, field-group |
+| 类别                    | 行为                                                               | 示例                                      |
+| ----------------------- | ------------------------------------------------------------------ | ----------------------------------------- |
+| **布局组件** (layout)   | 只输出标记类名，无内置样式。所有视觉样式由 schema `className` 驱动 | page, container, flex, panel, grid        |
+| **控件组件** (widget)   | 完整的、自包含的 UI 控件，内置样式                                 | input, select, table, button, date-picker |
+| **编辑器组件** (editor) | 域专用编辑器，通过命名空间暴露能力                                 | code-editor, flow-designer, spreadsheet   |
+| **数据组件** (data)     | 数据展示和管理                                                     | data-list, data-table, tree               |
+| **表单组件** (form)     | 表单容器和字段                                                     | form, form-item, field-group              |
 
 ### 9.4 组件实例注册表
 
@@ -903,8 +923,10 @@ registry.register({
 host.capabilities.effectHandlers = [
   {
     canHandle: (e) => e.kind === 'httpRequest' && e.config.url.startsWith('/api/v2'),
-    handle: async (e, ctx) => { /* 自定义请求逻辑 */ }
-  }
+    handle: async (e, ctx) => {
+      /* 自定义请求逻辑 */
+    },
+  },
 ];
 ```
 
@@ -953,14 +975,14 @@ interface FieldError {
 ```typescript
 interface ValidationRule {
   path: string;
-  rule: string;                    // required, minLength, pattern, custom, etc.
+  rule: string; // required, minLength, pattern, custom, etc.
   params?: Record<string, any>;
   message?: string;
-  when?: string;                   // 条件表达式
+  when?: string; // 条件表达式
   severity?: 'error' | 'warning';
   async?: boolean;
   debounce?: number;
-  crossFields?: string[];          // 跨字段依赖声明
+  crossFields?: string[]; // 跨字段依赖声明
 }
 ```
 
@@ -980,20 +1002,24 @@ interface ValidationConfig {
 class ValidationEngine {
   // 编译规则为校验 DAG
   compile(rules: ValidationRule[]): ValidationGraph;
-  
+
   // 全量校验
   validate(graph: ValidationGraph, scope: Scope): Promise<ValidationResult>;
-  
+
   // 增量校验（只校验受影响的字段和其下游）
-  validateAffected(graph: ValidationGraph, scope: Scope, changedPaths: string[]): Promise<ValidationResult>;
-  
+  validateAffected(
+    graph: ValidationGraph,
+    scope: Scope,
+    changedPaths: string[],
+  ): Promise<ValidationResult>;
+
   // 取消
   cancel(): void;
 }
 
 interface ValidationGraph {
-  rules: Map<string, CompiledRule[]>;           // path → 编译后的规则列表
-  dependencies: Map<string, Set<string>>;       // path → 依赖的其他路径
+  rules: Map<string, CompiledRule[]>; // path → 编译后的规则列表
+  dependencies: Map<string, Set<string>>; // path → 依赖的其他路径
 }
 
 interface ValidationResult {
@@ -1007,8 +1033,8 @@ interface ValidationResult {
 
 ```typescript
 interface DraftFormHandle {
-  commit(): void;        // 将草稿变更原子性应用到父表单
-  discard(): void;       // 丢弃草稿变更
+  commit(): void; // 将草稿变更原子性应用到父表单
+  discard(): void; // 丢弃草稿变更
   isDirty(): boolean;
 }
 ```
@@ -1071,11 +1097,12 @@ interface RowScope {
     isLast: Signal<boolean>;
     isSelected: Signal<boolean>;
   };
-  projections: Map<string, Signal<any>>;  // 显式投影
+  projections: Map<string, Signal<any>>; // 显式投影
 }
 ```
 
 **性能保证**：
+
 - 修改一行数据，其他行不触发任何重新渲染
 - 行 Scope 完全隔离，不继承父级
 - 需要父级数据时通过 `projections` 显式传入
@@ -1111,13 +1138,13 @@ interface TreeConfig {
 
 ```typescript
 interface LoopDef {
-  items: string;                    // 表达式，返回集合
-  itemName?: string;                // 默认 'item'
-  indexName?: string;               // 默认 'index'
-  filter?: string;                  // 过滤表达式
-  orderBy?: string;                 // 排序表达式
-  body: SchemaNode;                 // 循环体（编译一次，实例化多次）
-  empty?: SchemaNode;               // 空集合渲染
+  items: string; // 表达式，返回集合
+  itemName?: string; // 默认 'item'
+  indexName?: string; // 默认 'index'
+  filter?: string; // 过滤表达式
+  orderBy?: string; // 排序表达式
+  body: SchemaNode; // 循环体（编译一次，实例化多次）
+  empty?: SchemaNode; // 空集合渲染
 }
 ```
 
@@ -1128,7 +1155,7 @@ interface RecursiveDef {
   self: SchemaNode;
   childrenExpr: string;
   terminateWhen?: string;
-  maxDepth: number;                 // 强制终止（安全阀，默认 100）
+  maxDepth: number; // 强制终止（安全阀，默认 100）
 }
 ```
 
@@ -1145,7 +1172,7 @@ type DataSourceDef =
   | { kind: 'computed'; expression: string }
   | { kind: 'ws'; url: string; protocols?: string[] }
   | { kind: 'sse'; url: string }
-  | { kind: 'custom'; factory: string };   // 注册的自定义工厂名
+  | { kind: 'custom'; factory: string }; // 注册的自定义工厂名
 ```
 
 ### 14.2 数据源生命周期
@@ -1193,14 +1220,14 @@ interface RefreshPolicy {
 
 ```typescript
 interface FetchConfig {
-  url: string;                               // 表达式
+  url: string; // 表达式
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  params?: Record<string, string>;            // 表达式
-  body?: string;                              // 表达式
-  headers?: Record<string, string>;           // 表达式
-  requestAdapter?: string;                    // 请求变换表达式
-  responseAdapter?: string;                   // 响应变换表达式
-  errorAdapter?: string;                      // 错误变换表达式
+  params?: Record<string, string>; // 表达式
+  body?: string; // 表达式
+  headers?: Record<string, string>; // 表达式
+  requestAdapter?: string; // 请求变换表达式
+  responseAdapter?: string; // 响应变换表达式
+  errorAdapter?: string; // 错误变换表达式
   injectScope?: boolean;
 }
 ```
@@ -1217,7 +1244,11 @@ interface FetchConfig {
     "body": {
       "body": [
         { "type": "spinner", "when": "${users.loading}", "props": {} },
-        { "type": "error-display", "when": "${users.error}", "props": { "error": "${users.error}" } },
+        {
+          "type": "error-display",
+          "when": "${users.error}",
+          "props": { "error": "${users.error}" }
+        },
         { "type": "user-table", "when": "!${users.loading}", "props": { "data": "${users.data}" } }
       ]
     }
@@ -1251,7 +1282,7 @@ interface NamespaceMethod {
 ```typescript
 interface DomainControl {
   contract: {
-    projections: Record<string, string>;      // 字段名 → 类型
+    projections: Record<string, string>; // 字段名 → 类型
     methods: Record<string, { args: Record<string, string>; returnType: string }>;
   };
   mount(container: Element, scope: Scope): void;
@@ -1261,6 +1292,7 @@ interface DomainControl {
 ```
 
 域控嵌入三原则：
+
 1. **只读快照投影**：域控将只读状态投影到 Scope 可见的数据环境
 2. **命名空间命令**：通过命名空间暴露能力方法
 3. **私有通道**：域控内部状态不进入 Scope
@@ -1280,7 +1312,7 @@ interface HostContext {
 }
 
 interface HostCapabilities {
-  fetch: (config: FetchConfig) => Promise<Response>;    // 必须
+  fetch: (config: FetchConfig) => Promise<Response>; // 必须
   navigate?: (url: string, options?: { replace?: boolean }) => void;
   notify?: (message: string, level: string) => void;
   storage?: { get(key: string): any; set(key: string, value: any): void };
@@ -1312,12 +1344,12 @@ class LowCodeRuntime {
 class RuntimeInstance {
   mount(container: Element): void;
   unmount(): void;
-  
+
   // 公共 API
   scope: Scope;
   diagnostics: Diagnostic[];
   dispatch(actionName: string, args?: Record<string, any>): Promise<ActionResult>;
-  
+
   // 调试（仅 debug 模式）
   inspect?(nodeId: string): NodeInspection;
 }
@@ -1330,6 +1362,7 @@ class RuntimeInstance {
 ### 17.1 编译期裁剪（推荐）
 
 权限裁剪在 schema 进入运行时之前完成——由宿主系统根据用户角色裁剪 schema 节点：
+
 - 移除无权访问的页面/区域
 - 标记只读字段
 - 移除无权执行的动作
@@ -1407,6 +1440,7 @@ t('dynamic.key', { param: value })
 ### 18.5.2 组件责任
 
 每个组件渲染器负责：
+
 - 正确的 ARIA 角色（`role="button"`, `role="textbox"` 等）
 - 标签关联（`aria-labelledby`, `aria-describedby`）
 - 状态表达（`aria-disabled`, `aria-expanded`, `aria-selected`）
@@ -1456,6 +1490,7 @@ React 渲染（字段A已更新）                字段B渲染时读取到 city
 ```
 
 **关键规则**：
+
 1. **校验先于数据源**：字段校验在数据源刷新前同步完成
 2. **校验失败不阻止数据源刷新**：校验和数据源是独立的 Reactor，不形成依赖链
 3. **请求取消**：如果字段 A 在数据源请求进行中再次变更，前一个请求自动取消（DataSource 内部维护 `AbortController`）
@@ -1467,12 +1502,12 @@ React 渲染（字段A已更新）                字段B渲染时读取到 city
 // DataSource 内部（框架实现）
 class FetchDataSource {
   private abortController: AbortController | null = null;
-  
+
   async refresh() {
     // 取消前一个请求
     this.abortController?.abort();
     this.abortController = new AbortController();
-    
+
     try {
       this.loading.set(true);
       const result = await this.host.fetch({
@@ -1516,23 +1551,23 @@ Surface 关闭时的清理时序：
 
 ### 18.7.2 分层性能策略
 
-| 层级 | 策略 | 适用场景 |
-|------|------|---------|
-| **L1: 编译期求值** | 纯静态表达式在编译时直接求值为字面量 | `${1 + 2}` → `3` |
-| **L2: 闭包缓存** | 表达式编译为闭包，结果缓存直到依赖变更 | `${user.name}` |
-| **L3: 集合委托** | 管道操作委托给宿主提供的高性能实现 | `items \| filter(...)` |
+| 层级               | 策略                                   | 适用场景               |
+| ------------------ | -------------------------------------- | ---------------------- |
+| **L1: 编译期求值** | 纯静态表达式在编译时直接求值为字面量   | `${1 + 2}` → `3`       |
+| **L2: 闭包缓存**   | 表达式编译为闭包，结果缓存直到依赖变更 | `${user.name}`         |
+| **L3: 集合委托**   | 管道操作委托给宿主提供的高性能实现     | `items \| filter(...)` |
 
 **L3 集合委托**：框架内置的 `filter`/`map`/`reduce` 等集合操作直接调用 JavaScript 原生 `Array.prototype` 方法，不走解释器循环。只有自定义函数调用和复杂表达式才走完整解释器。
 
 ### 18.7.3 性能预算分类
 
-| 表达式类型 | 预算 | 说明 |
-|-----------|------|------|
-| 属性访问 `${user.name}` | < 0.01ms | 单次闭包调用 |
-| 简单运算 `${count + 1}` | < 0.01ms | 单次闭包调用 |
-| 条件表达式 `${flag ? 'A' : 'B'}` | < 0.02ms | 包含分支 |
-| 集合管道（1000 元素） | < 2ms | 委托原生 Array 方法 |
-| 复杂计算 | 视具体实现 | 不做硬性承诺 |
+| 表达式类型                       | 预算       | 说明                |
+| -------------------------------- | ---------- | ------------------- |
+| 属性访问 `${user.name}`          | < 0.01ms   | 单次闭包调用        |
+| 简单运算 `${count + 1}`          | < 0.01ms   | 单次闭包调用        |
+| 条件表达式 `${flag ? 'A' : 'B'}` | < 0.02ms   | 包含分支            |
+| 集合管道（1000 元素）            | < 2ms      | 委托原生 Array 方法 |
+| 复杂计算                         | 视具体实现 | 不做硬性承诺        |
 
 ---
 
@@ -1557,6 +1592,7 @@ interface NodeInspection {
 仅开发模式，通过 `RuntimeConfig.debug = true` 启用。
 
 **已知限制**（诚实声明）：
+
 - 仅序列化可序列化的 Scope 数据（排除 DOM 引用、函数、WebSocket 等）
 - 内存线性增长，需要在生产环境禁用
 - `export()/import()` 仅支持 JSON-safe 数据
@@ -1612,34 +1648,34 @@ function createMockHost(overrides?: Partial<HostCapabilities>): HostContext {
 
 ### 21.1 编译期优化
 
-| 优化 | 描述 |
-|------|------|
-| 静态提升 | 不含表达式的子树标记为 `isStatic`，运行时跳过求值 |
-| 表达式预编译 | 表达式编译为闭包，避免运行时解析 |
-| 依赖预计算 | 静态分析依赖图 |
-| 循环体模板化 | Loop/递归体编译为可复用模板 |
+| 优化         | 描述                                              |
+| ------------ | ------------------------------------------------- |
+| 静态提升     | 不含表达式的子树标记为 `isStatic`，运行时跳过求值 |
+| 表达式预编译 | 表达式编译为闭包，避免运行时解析                  |
+| 依赖预计算   | 静态分析依赖图                                    |
+| 循环体模板化 | Loop/递归体编译为可复用模板                       |
 
 ### 21.2 运行时优化
 
-| 优化 | 描述 |
-|------|------|
-| Signal 粒度更新 | 精确到单个 Signal |
-| microtask 批量合并 | 同一 microtask 内多次写入合并 |
-| 惰性求值 | Computed Signal 只在被订阅时求值 |
-| 行级隔离 | 表格行完全隔离 |
-| 引用稳定 | 值未变更时复用上次引用 |
-| 增量校验 | 只校验受影响的字段 |
+| 优化               | 描述                             |
+| ------------------ | -------------------------------- |
+| Signal 粒度更新    | 精确到单个 Signal                |
+| microtask 批量合并 | 同一 microtask 内多次写入合并    |
+| 惰性求值           | Computed Signal 只在被订阅时求值 |
+| 行级隔离           | 表格行完全隔离                   |
+| 引用稳定           | 值未变更时复用上次引用           |
+| 增量校验           | 只校验受影响的字段               |
 
 ### 21.3 性能目标（需原型验证）
 
-| 场景 | 目标 | 条件 |
-|------|------|------|
-| 静态页面首次渲染 | < 16ms/100节点 | 无表达式，纯静态 |
-| 表达式首次求值 | < 0.05ms/expression | 简单到中等复杂度 |
-| Signal 变更传播 | < 1ms/更新波 | 包含级联传播 |
-| 表格单行更新 | 仅该行重渲染 | 隔离 Scope |
-| 表格万行滚动 | > 50fps | 虚拟化 + 简单行模板 |
-| 表单单字段校验 | < 2ms/field | 同步校验规则 |
+| 场景             | 目标                | 条件                |
+| ---------------- | ------------------- | ------------------- |
+| 静态页面首次渲染 | < 16ms/100节点      | 无表达式，纯静态    |
+| 表达式首次求值   | < 0.05ms/expression | 简单到中等复杂度    |
+| Signal 变更传播  | < 1ms/更新波        | 包含级联传播        |
+| 表格单行更新     | 仅该行重渲染        | 隔离 Scope          |
+| 表格万行滚动     | > 50fps             | 虚拟化 + 简单行模板 |
+| 表单单字段校验   | < 2ms/field         | 同步校验规则        |
 
 **注意**：这些目标需要在 MVP 原型完成后用实际基准测试验证和调整。
 
@@ -1691,6 +1727,7 @@ class SchemaHotReloader {
 ### 23.2 Diff 算法
 
 基于节点 `key` 和 `type` 的树 diff：
+
 - 同 key 同 type → 属性差异更新
 - 同 key 不同 type → 销毁重建
 - 无 key → 按位置比较
@@ -1698,6 +1735,7 @@ class SchemaHotReloader {
 ### 23.3 状态保持策略
 
 热更新时保持：
+
 - Scope 数据（不删除仍有对应节点引用的路径）
 - 表单填写状态（保留 dirty/touched 标记）
 - 表面栈状态
@@ -1714,14 +1752,10 @@ class SchemaHotReloader {
 class LowCodeRuntime {
   static async renderToString(
     schema: SchemaNode,
-    host: HostContext
-  ): Promise<{ html: string; state: SerializedState }>;
-  
-  static hydrate(
-    state: SerializedState,
     host: HostContext,
-    container: Element
-  ): RuntimeInstance;
+  ): Promise<{ html: string; state: SerializedState }>;
+
+  static hydrate(state: SerializedState, host: HostContext, container: Element): RuntimeInstance;
 }
 ```
 
@@ -1729,7 +1763,7 @@ class LowCodeRuntime {
 
 ```typescript
 interface SerializedState {
-  scopeData: Record<string, unknown>;   // JSON-safe 数据
+  scopeData: Record<string, unknown>; // JSON-safe 数据
   surfaceStack: SurfaceState[];
   formStates: FormStateSnapshot[];
 }
@@ -1749,45 +1783,45 @@ interface SerializedState {
 
 ### 25.1 vs AMIS
 
-| 维度 | AMIS | v9 |
-|------|------|-----|
-| 架构 | 单体运行时 | 编译期/运行期严格分离 |
-| 响应式 | 粗粒度状态树 diff | Signal 细粒度更新 |
-| 表达式 | 字符串模板 + 运行时解析 | 编译期闭包 + 空值安全 |
-| 副作用 | 隐式嵌入各处 | 显式 Effect Channel，可拦截 |
-| 性能 | 表格行级更新困难 | 行级完全隔离 + 虚拟化 |
-| 可测试性 | 依赖 DOM | 核心 runtime 无 DOM 依赖 |
-| 错误处理 | 薄弱 | 三层错误边界 + 结构化错误 |
-| 调试 | 有限 | 节点检查 + 编译诊断 + DOM 映射 |
+| 维度     | AMIS                    | v9                             |
+| -------- | ----------------------- | ------------------------------ |
+| 架构     | 单体运行时              | 编译期/运行期严格分离          |
+| 响应式   | 粗粒度状态树 diff       | Signal 细粒度更新              |
+| 表达式   | 字符串模板 + 运行时解析 | 编译期闭包 + 空值安全          |
+| 副作用   | 隐式嵌入各处            | 显式 Effect Channel，可拦截    |
+| 性能     | 表格行级更新困难        | 行级完全隔离 + 虚拟化          |
+| 可测试性 | 依赖 DOM                | 核心 runtime 无 DOM 依赖       |
+| 错误处理 | 薄弱                    | 三层错误边界 + 结构化错误      |
+| 调试     | 有限                    | 节点检查 + 编译诊断 + DOM 映射 |
 
 ### 25.2 vs LowCodeEngine (阿里)
 
-| 维度 | LowCodeEngine | v9 |
-|------|---------------|-----|
-| 设计器耦合 | 设计器是核心 | 运行时与设计器完全独立 |
-| 扩展模型 | 插件系统（重） | Effect Handler + Component Contract（轻） |
-| 性能模型 | 无明确性能契约 | 有基准目标和保证机制 |
-| 可测试性 | 依赖浏览器环境 | 核心 runtime 可在 Node.js 测试 |
+| 维度       | LowCodeEngine  | v9                                        |
+| ---------- | -------------- | ----------------------------------------- |
+| 设计器耦合 | 设计器是核心   | 运行时与设计器完全独立                    |
+| 扩展模型   | 插件系统（重） | Effect Handler + Component Contract（轻） |
+| 性能模型   | 无明确性能契约 | 有基准目标和保证机制                      |
+| 可测试性   | 依赖浏览器环境 | 核心 runtime 可在 Node.js 测试            |
 
 ### 25.3 vs Formily
 
-| 维度 | Formily | v9 |
-|------|---------|-----|
-| 范围 | 仅表单 | 完整应用（表单是子集） |
-| 响应式 | 自建 reactive | Signal（业界验证的模式） |
-| 校验 | 校验规则 | 校验 DAG + 增量校验 |
-| 数据环境 | 单层 | 分层 Scope 图 |
-| 集成 | 仅 React | MVP React，V4 多框架适配 |
+| 维度     | Formily       | v9                       |
+| -------- | ------------- | ------------------------ |
+| 范围     | 仅表单        | 完整应用（表单是子集）   |
+| 响应式   | 自建 reactive | Signal（业界验证的模式） |
+| 校验     | 校验规则      | 校验 DAG + 增量校验      |
+| 数据环境 | 单层          | 分层 Scope 图            |
+| 集成     | 仅 React      | MVP React，V4 多框架适配 |
 
 ### 25.4 vs Retool / Appsmith / ToolJet
 
-| 维度 | Retool/Appsmith | v9 |
-|------|----------------|-----|
-| 架构 | 完整平台（含后端） | 纯前端运行时（可嵌入） |
-| 可嵌入性 | 完整平台 | 可作为子组件嵌入任意应用 |
-| 副作用控制 | 隐式 | 显式 Effect Channel |
-| 扩展 | 组件市场 | Component Contract + Effect Handler |
-| 行级更新 | 粗粒度 | Signal 精确更新 |
+| 维度       | Retool/Appsmith    | v9                                  |
+| ---------- | ------------------ | ----------------------------------- |
+| 架构       | 完整平台（含后端） | 纯前端运行时（可嵌入）              |
+| 可嵌入性   | 完整平台           | 可作为子组件嵌入任意应用            |
+| 副作用控制 | 隐式               | 显式 Effect Channel                 |
+| 扩展       | 组件市场           | Component Contract + Effect Handler |
+| 行级更新   | 粗粒度             | Signal 精确更新                     |
 
 ---
 
@@ -1849,6 +1883,7 @@ MVP 需要 **20 个渲染器**才能覆盖基本企业场景：
 ### 26.4 渲染器实现策略
 
 **所有渲染器基于 `@nop-chaos/ui`（shadcn/ui）组件库**：
+
 - 使用 `@nop-chaos/ui` 提供的 `<Input>`, `<Select>`, `<Table>` 等组件
 - 渲染器是薄包装层（~50-100 行/渲染器），负责：
   1. 从 `RendererProps` 解构 props/meta/regions/events
@@ -1870,16 +1905,24 @@ MVP 需要 **20 个渲染器**才能覆盖基本企业场景：
     ],
     "filter": {
       "type": "form",
-      "regions": { "body": { "body": [
-        { "type": "input-text", "props": { "name": "keyword", "placeholder": "Search..." } }
-      ] } }
+      "regions": {
+        "body": {
+          "body": [
+            { "type": "input-text", "props": { "name": "keyword", "placeholder": "Search..." } }
+          ]
+        }
+      }
     },
     "form": {
       "type": "form",
-      "regions": { "body": { "body": [
-        { "type": "input-text", "props": { "name": "name", "label": "Name" } },
-        { "type": "input-text", "props": { "name": "email", "label": "Email" } }
-      ] } }
+      "regions": {
+        "body": {
+          "body": [
+            { "type": "input-text", "props": { "name": "name", "label": "Name" } },
+            { "type": "input-text", "props": { "name": "email", "label": "Email" } }
+          ]
+        }
+      }
     }
   }
 }
@@ -1929,49 +1972,49 @@ function MyPage() {
 
 ### 28.1 核心价值
 
-| # | 价值 | 描述 |
-|---|------|------|
-| 1 | **编译/运行严格分离** | 在编译期最大化能力，运行期最小化负担。在低代码领域的实现深度超越现有框架 |
-| 2 | **Signal 细粒度响应式** | 采用业界验证的 Signal 模式，引用稳定性机制确保 React 集成安全 |
-| 3 | **显式 Effect Channel** | 所有副作用通过可拦截、可测试的通道执行，不是隐式散落在各处 |
-| 4 | **三层错误边界 + React 集成** | 表达式/组件/页面三层隔离，内置 React Error Boundary 实现 |
-| 5 | **行级完全隔离** | 表格行 Scope 完全隔离，投影式数据访问，消除扇出刷新 |
-| 6 | **渐进式采纳** | 可以从一个表单开始使用，不必一次性采纳全部架构 |
-| 7 | **核心无 DOM 依赖** | 可在 Node.js 中完整测试所有非渲染逻辑 |
-| 8 | **校验 DAG** | 校验规则编译为 DAG 结构，支持增量校验和跨字段依赖 |
-| 9 | **结构化错误** | 所有错误携带 code、category、nodeId，便于定位和处理 |
-| 10 | **受控扩展点** | 5% 逃生舱通过 Component/EffectHandler/Namespace 三种机制 |
-| 11 | **DataSource ↔ Form 交互协议** | 级联选择、请求取消、Surface 清理的完整时序规范 |
-| 12 | **Undo/Redo 基础设施** | Scope 事务系统自然支持 UndoManager |
-| 13 | **Scope 内存生命周期** | 明确的创建/挂起/销毁流程，防止长运行 SPA 内存泄漏 |
-| 14 | **渲染器生态计划** | MVP 20 渲染器 + V2 40+ 渲染器 + CRUD 领域抽象 |
+| #   | 价值                           | 描述                                                                     |
+| --- | ------------------------------ | ------------------------------------------------------------------------ |
+| 1   | **编译/运行严格分离**          | 在编译期最大化能力，运行期最小化负担。在低代码领域的实现深度超越现有框架 |
+| 2   | **Signal 细粒度响应式**        | 采用业界验证的 Signal 模式，引用稳定性机制确保 React 集成安全            |
+| 3   | **显式 Effect Channel**        | 所有副作用通过可拦截、可测试的通道执行，不是隐式散落在各处               |
+| 4   | **三层错误边界 + React 集成**  | 表达式/组件/页面三层隔离，内置 React Error Boundary 实现                 |
+| 5   | **行级完全隔离**               | 表格行 Scope 完全隔离，投影式数据访问，消除扇出刷新                      |
+| 6   | **渐进式采纳**                 | 可以从一个表单开始使用，不必一次性采纳全部架构                           |
+| 7   | **核心无 DOM 依赖**            | 可在 Node.js 中完整测试所有非渲染逻辑                                    |
+| 8   | **校验 DAG**                   | 校验规则编译为 DAG 结构，支持增量校验和跨字段依赖                        |
+| 9   | **结构化错误**                 | 所有错误携带 code、category、nodeId，便于定位和处理                      |
+| 10  | **受控扩展点**                 | 5% 逃生舱通过 Component/EffectHandler/Namespace 三种机制                 |
+| 11  | **DataSource ↔ Form 交互协议** | 级联选择、请求取消、Surface 清理的完整时序规范                           |
+| 12  | **Undo/Redo 基础设施**         | Scope 事务系统自然支持 UndoManager                                       |
+| 13  | **Scope 内存生命周期**         | 明确的创建/挂起/销毁流程，防止长运行 SPA 内存泄漏                        |
+| 14  | **渲染器生态计划**             | MVP 20 渲染器 + V2 40+ 渲染器 + CRUD 领域抽象                            |
 
 ### 28.2 诚实的局限性
 
-| 局限 | 说明 |
-|------|------|
-| 无多目标编译 | MVP 只支持 React，V4 才考虑 Vue/Solid |
-| 无协作编辑 | CRDT/OT 不在运行时职责内 |
-| 无内置权限系统 | 权限在 schema 进入运行时前由宿主系统处理 |
-| 无离线支持 | 离线队列、冲突解决由宿主处理 |
-| 无 A/B 测试 | Schema 路由由宿主系统决定 |
-| SSR 需要原型验证 | Signal + React SSR hydration 的兼容性需实际验证 |
-| 表达式性能 | 自定义解释器比 `new Function` 慢 10-100x，通过分层策略缓解 |
-| 无 AI 集成 | 当前不包含 AI 辅助 schema 生成 |
-| 无 Schema 版本迁移 | 长期运行后 schema 格式升级的工具尚未设计 |
-| a11y 合规 | 框架提供通道但不做自动化合规检查 |
+| 局限               | 说明                                                       |
+| ------------------ | ---------------------------------------------------------- |
+| 无多目标编译       | MVP 只支持 React，V4 才考虑 Vue/Solid                      |
+| 无协作编辑         | CRDT/OT 不在运行时职责内                                   |
+| 无内置权限系统     | 权限在 schema 进入运行时前由宿主系统处理                   |
+| 无离线支持         | 离线队列、冲突解决由宿主处理                               |
+| 无 A/B 测试        | Schema 路由由宿主系统决定                                  |
+| SSR 需要原型验证   | Signal + React SSR hydration 的兼容性需实际验证            |
+| 表达式性能         | 自定义解释器比 `new Function` 慢 10-100x，通过分层策略缓解 |
+| 无 AI 集成         | 当前不包含 AI 辅助 schema 生成                             |
+| 无 Schema 版本迁移 | 长期运行后 schema 格式升级的工具尚未设计                   |
+| a11y 合规          | 框架提供通道但不做自动化合规检查                           |
 
 ### 28.3 与业界最先进实践的对比
 
-| 实践 | 业界最先进 | v9 状态 |
-|------|-----------|---------|
+| 实践       | 业界最先进                                         | v9 状态                                  |
+| ---------- | -------------------------------------------------- | ---------------------------------------- |
 | 响应式原语 | SolidJS Signals, Svelte 5 Runes, TC39 Signals 提案 | 采纳同一模式；预留 TC39 Signals 适配接口 |
-| 编译优化 | Svelte compiler, Vue template compiler | 采纳同一理念 |
-| 类型安全 | TypeScript, tRPC, Zod | 有限的编译期类型检查 |
-| 副作用管理 | Effect-TS, Redux middleware | 采用 Command Pipeline（简单但足够） |
-| 多框架 | Mitosis, Stencil | V4 路线图 |
-| 表单 | Formily, Conform, HouseForm | 校验 DAG + 草稿隔离 + Undo/Redo |
-| CRUD 抽象 | AMIS CRUD, Appsmith Query | V2 路线图 |
-| AI 辅助 | Appsmith AI, Retool AI | 未规划 |
-| 组件生态 | AMIS 100+, Retool 80+ | MVP 20, V2 40+（差距显著） |
-| SSR | Next.js, RSC | 传统 SSR + hydrate（非 RSC） |
+| 编译优化   | Svelte compiler, Vue template compiler             | 采纳同一理念                             |
+| 类型安全   | TypeScript, tRPC, Zod                              | 有限的编译期类型检查                     |
+| 副作用管理 | Effect-TS, Redux middleware                        | 采用 Command Pipeline（简单但足够）      |
+| 多框架     | Mitosis, Stencil                                   | V4 路线图                                |
+| 表单       | Formily, Conform, HouseForm                        | 校验 DAG + 草稿隔离 + Undo/Redo          |
+| CRUD 抽象  | AMIS CRUD, Appsmith Query                          | V2 路线图                                |
+| AI 辅助    | Appsmith AI, Retool AI                             | 未规划                                   |
+| 组件生态   | AMIS 100+, Retool 80+                              | MVP 20, V2 40+（差距显著）               |
+| SSR        | Next.js, RSC                                       | 传统 SSR + hydrate（非 RSC）             |

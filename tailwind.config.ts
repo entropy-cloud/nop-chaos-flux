@@ -1,5 +1,5 @@
-import type { Config } from 'tailwindcss'
-import { nopTailwindPreset } from './packages/tailwind-preset/src'
+import type { Config } from 'tailwindcss';
+import { nopTailwindPreset } from './packages/tailwind-preset/src';
 
 const config: Config = {
   presets: [nopTailwindPreset],
@@ -14,8 +14,8 @@ const config: Config = {
     './packages/flow-designer-renderers/src/**/*.{ts,tsx}',
     './packages/report-designer-renderers/src/**/*.{ts,tsx}',
     './packages/spreadsheet-renderers/src/**/*.{ts,tsx}',
-    './tailwind-safelist.txt'
-  ]
-}
+    './tailwind-safelist.txt',
+  ],
+};
 
-export default config
+export default config;

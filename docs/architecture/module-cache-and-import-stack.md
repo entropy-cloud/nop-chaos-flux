@@ -15,18 +15,18 @@ Use it when:
 - integrating Flux into a host application (e.g. nop-chaos-next) that already has its own module federation layer
 - implementing compile-time symbol visibility for imported expression helpers
 
-This document supplements `docs/architecture/action-scope-and-imports.md`, which defines the semantic contract of `xui:imports` (declaration semantics, action dispatch, expression bindings). This document focuses on the *loading, caching, and lexical scoping* mechanics that are not covered there.
+This document supplements `docs/architecture/action-scope-and-imports.md`, which defines the semantic contract of `xui:imports` (declaration semantics, action dispatch, expression bindings). This document focuses on the _loading, caching, and lexical scoping_ mechanics that are not covered there.
 
 ## Current Implementation
 
 The current implementation now has all three landed layers:
 
-| Current Layer | Location | Responsibility |
-|---|---|---|
-| Module loading dedup | `packages/flux-runtime/src/runtime-factory.ts` `createModuleCache()` + `packages/flux-runtime/src/import-stack.ts` | Shared `ModuleCache` dedup keyed by resolved `from+options` |
-| Alias + lexical frame ownership | `packages/flux-runtime/src/import-stack.ts` | Per-runtime `ImportStack` push/pop, nearest-frame shadowing, namespace registration/release |
+| Current Layer                               | Location                                                                                                           | Responsibility                                                                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Module loading dedup                        | `packages/flux-runtime/src/runtime-factory.ts` `createModuleCache()` + `packages/flux-runtime/src/import-stack.ts` | Shared `ModuleCache` dedup keyed by resolved `from+options`                                                                     |
+| Alias + lexical frame ownership             | `packages/flux-runtime/src/import-stack.ts`                                                                        | Per-runtime `ImportStack` push/pop, nearest-frame shadowing, namespace registration/release                                     |
 | Schema preparation + static import metadata | `packages/flux-runtime/src/runtime-factory.ts` `prepareSchema()` + `packages/flux-compiler/src/schema-compiler.ts` | Collects all `xui:imports` before compile, resolves URLs, preloads modules, and feeds prepared import metadata into compilation |
-| Expression bindings | `packages/flux-react/src/node-renderer.tsx` + child scope overlay | compiled node installs current-frame bindings synchronously as ordinary `$alias` scope keys for expression evaluation |
+| Expression bindings                         | `packages/flux-react/src/node-renderer.tsx` + child scope overlay                                                  | compiled node installs current-frame bindings synchronously as ordinary `$alias` scope keys for expression evaluation           |
 
 ### Relationship To ActionScope
 
@@ -114,7 +114,7 @@ function createModuleCache(): ModuleCache;
 
 **Integration with nop-chaos-next**:
 
-nop-chaos-next uses `globalThis.__NOP_SHARED__` for framework-level shared modules (React, UI library, etc.) and SystemJS import maps for plugin-level modules. The `ModuleCache` complements this: it caches *business-level library modules* (e.g. `demo-lib`, `spreadsheet-lib`) that are loaded via `env.importLoader`. The host may choose to back the `ModuleCache` with `__NOP_SHARED__` entries, or keep them separate.
+nop-chaos-next uses `globalThis.__NOP_SHARED__` for framework-level shared modules (React, UI library, etc.) and SystemJS import maps for plugin-level modules. The `ModuleCache` complements this: it caches _business-level library modules_ (e.g. `demo-lib`, `spreadsheet-lib`) that are loaded via `env.importLoader`. The host may choose to back the `ModuleCache` with `__NOP_SHARED__` entries, or keep them separate.
 
 ```typescript
 // Host-side integration example
@@ -213,7 +213,7 @@ interface ImportStackEntry {
 
 interface ImportFrame {
   ownerNodeId: string;
-  entries: Map<string, ImportStackEntry>;  // alias → entry
+  entries: Map<string, ImportStackEntry>; // alias → entry
 }
 
 interface ImportStack {
@@ -327,11 +327,11 @@ Runtime rule:
 
 ## Relationship to Existing Documents
 
-| Document | Relationship |
-|---|---|
-| `action-scope-and-imports.md` | Defines `xui:imports` semantics: declaration model, action dispatch, expression binding conventions. This document defines the *mechanics* of loading and scoping that fulfill those semantics. |
-| `renderer-runtime.md` | Describes `RendererRuntime` construction and lifecycle. This document introduces `ModuleCache` as a new cross-Runtime dependency and `ImportStack` as a new per-Runtime structure. |
-| `flux-formula.md` | Describes the expression compiler. Future work will feed ImportStack alias information into the compile context so that `$demo.formatName()` can be validated at compile time. |
+| Document                      | Relationship                                                                                                                                                                                    |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `action-scope-and-imports.md` | Defines `xui:imports` semantics: declaration model, action dispatch, expression binding conventions. This document defines the _mechanics_ of loading and scoping that fulfill those semantics. |
+| `renderer-runtime.md`         | Describes `RendererRuntime` construction and lifecycle. This document introduces `ModuleCache` as a new cross-Runtime dependency and `ImportStack` as a new per-Runtime structure.              |
+| `flux-formula.md`             | Describes the expression compiler. Future work will feed ImportStack alias information into the compile context so that `$demo.formatName()` can be validated at compile time.                  |
 
 ## Migration Path
 
@@ -387,14 +387,14 @@ This section defines how the expression compiler resolves and validates `$`-pref
 
 Every `$`-prefixed identifier encountered in an expression falls into exactly one of the following categories. The compiler must determine which category applies **before** emitting runtime evaluation code.
 
-| Category | Examples | Source Of Truth | Known At Compile Time? |
-|---|---|---|---|
-| Builtin namespace | `$Math`, `$JSON`, `$Date` | Hard-coded in `packages/flux-formula/src/builtins.ts` | Yes — always available |
-| Imported namespace | `$demo`, `$chart` | `xui:imports` on current node or ancestor, resolved through `ImportStack` | Yes — alias declared in schema |
-| Injected local | `$form`, `$page`, `$surface` | Owner renderer type (form renderer publishes `$form`, page publishes `$page`) | Yes — determinable from scope policy and renderer type |
-| Slot root + params | `$slot.item`, `$slot.index`, `$slot.$parent` | `SchemaFieldRule.params` on the enclosing parameterized region, plus slot nesting depth | Yes — determinable from region metadata and parent region chain |
-| Lambda parameter | `$item` inside `${items.map(($item) => ...)}` | Inline lambda parameter declaration in the expression itself | Yes — parsed from expression AST |
-| Ambient scope | `$`-prefixed names not in any above category | Resolved at runtime from the data scope | No — compiler cannot validate existence |
+| Category           | Examples                                      | Source Of Truth                                                                         | Known At Compile Time?                                          |
+| ------------------ | --------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Builtin namespace  | `$Math`, `$JSON`, `$Date`                     | Hard-coded in `packages/flux-formula/src/builtins.ts`                                   | Yes — always available                                          |
+| Imported namespace | `$demo`, `$chart`                             | `xui:imports` on current node or ancestor, resolved through `ImportStack`               | Yes — alias declared in schema                                  |
+| Injected local     | `$form`, `$page`, `$surface`                  | Owner renderer type (form renderer publishes `$form`, page publishes `$page`)           | Yes — determinable from scope policy and renderer type          |
+| Slot root + params | `$slot.item`, `$slot.index`, `$slot.$parent`  | `SchemaFieldRule.params` on the enclosing parameterized region, plus slot nesting depth | Yes — determinable from region metadata and parent region chain |
+| Lambda parameter   | `$item` inside `${items.map(($item) => ...)}` | Inline lambda parameter declaration in the expression itself                            | Yes — parsed from expression AST                                |
+| Ambient scope      | `$`-prefixed names not in any above category  | Resolved at runtime from the data scope                                                 | No — compiler cannot validate existence                         |
 
 ### Symbol Resolution Stack
 
@@ -403,16 +403,17 @@ The compiler maintains a `CompileSymbolTable` that is built incrementally as the
 ```typescript
 interface SymbolInfo {
   name: string;
-  kind: 'builtin-namespace'
-       | 'import-namespace'
-       | 'injected-local'
-       | 'slot-root'
-       | 'slot-param'
-       | 'lambda-param'
-       | 'ambient-scope';
-  source: string;          // e.g. "builtin", "xui:imports[0]", "form-renderer", "region.params[0]"
-  memberType?: TypeDescriptor;  // for namespaces: what properties/methods are available
-  required?: boolean;      // true if the symbol must be present at runtime
+  kind:
+    | 'builtin-namespace'
+    | 'import-namespace'
+    | 'injected-local'
+    | 'slot-root'
+    | 'slot-param'
+    | 'lambda-param'
+    | 'ambient-scope';
+  source: string; // e.g. "builtin", "xui:imports[0]", "form-renderer", "region.params[0]"
+  memberType?: TypeDescriptor; // for namespaces: what properties/methods are available
+  required?: boolean; // true if the symbol must be present at runtime
 }
 
 interface SymbolFrame {
@@ -433,6 +434,7 @@ interface CompileSymbolTable {
 The `CompileSymbolTable` is constructed in this order during schema compilation:
 
 1. **Root frame** — builtin namespaces
+
    ```
    $Math  → { kind: 'builtin-namespace', source: 'builtin' }
    $JSON  → { kind: 'builtin-namespace', source: 'builtin' }
@@ -467,9 +469,11 @@ The `CompileSymbolTable` is constructed in this order during schema compilation:
    - Popped when leaving that region's content.
 
 5. **Lambda frame** — pushed when the expression compiler encounters a lambda parameter
+
    ```
    $item → { kind: 'lambda-param', source: 'lambda-param' }
    ```
+
    - Popped when leaving the lambda body.
 
 ### Resolution Rules
@@ -490,15 +494,15 @@ When the expression compiler encounters a `$`-prefixed identifier:
 
 The compile-time validation produces the following diagnostic categories:
 
-| Code | Severity | Condition |
-|---|---|---|
-| `unknown-import-alias` | error | A `$alias` name that matches the `import-namespace` naming pattern but the alias is not declared in any `xui:imports` reachable from the current node. |
-| `import-alias-not-ready` | warning | A `$alias` is declared in `xui:imports` but the module failed to load or is still loading at compile time. The expression is emitted but will likely fail at runtime. |
-| `unknown-slot-param` | error | `$slot.xxx` is used where `xxx` is not declared in the enclosing region's `params`. `$slot.$parent.xxx` has the same check against the parent region's params. |
-| `slot-used-outside-region` | error | `$slot.xxx` is used outside any parameterized region. `$slot` is only available inside regions that declare `params`. |
-| `unknown-builtin-member` | error | `$Math.xxx` where `xxx` is not a known member of the builtin namespace. |
-| `unknown-import-member` | warning | `$demo.xxx` where `xxx` is not declared in the imported module's capability manifest. Severity is `warning` because manifests may be incomplete; the member might still exist at runtime. |
-| `ambient-dollar-reference` | info | A `$`-prefixed name is used that does not match any known category. Informational only — not necessarily wrong, but useful for IDE highlighting. |
+| Code                       | Severity | Condition                                                                                                                                                                                 |
+| -------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unknown-import-alias`     | error    | A `$alias` name that matches the `import-namespace` naming pattern but the alias is not declared in any `xui:imports` reachable from the current node.                                    |
+| `import-alias-not-ready`   | warning  | A `$alias` is declared in `xui:imports` but the module failed to load or is still loading at compile time. The expression is emitted but will likely fail at runtime.                     |
+| `unknown-slot-param`       | error    | `$slot.xxx` is used where `xxx` is not declared in the enclosing region's `params`. `$slot.$parent.xxx` has the same check against the parent region's params.                            |
+| `slot-used-outside-region` | error    | `$slot.xxx` is used outside any parameterized region. `$slot` is only available inside regions that declare `params`.                                                                     |
+| `unknown-builtin-member`   | error    | `$Math.xxx` where `xxx` is not a known member of the builtin namespace.                                                                                                                   |
+| `unknown-import-member`    | warning  | `$demo.xxx` where `xxx` is not declared in the imported module's capability manifest. Severity is `warning` because manifests may be incomplete; the member might still exist at runtime. |
+| `ambient-dollar-reference` | info     | A `$`-prefixed name is used that does not match any known category. Informational only — not necessarily wrong, but useful for IDE highlighting.                                          |
 
 ### Interaction With Module Manifests
 
@@ -506,13 +510,16 @@ For `unknown-import-member` and imported callable diagnostics to work, imported 
 
 ```typescript
 interface ImportedLibraryStaticMeta {
-  helpers?: Record<string, {
-    kind?: 'function' | 'value';
-    params?: Array<{
-      name: string;
-      required?: boolean;
-    }>;
-  }>;
+  helpers?: Record<
+    string,
+    {
+      kind?: 'function' | 'value';
+      params?: Array<{
+        name: string;
+        required?: boolean;
+      }>;
+    }
+  >;
   namespaceMethods?: readonly string[];
 }
 ```
@@ -525,14 +532,14 @@ When static meta is available, the compiler validates imported member access and
 
 With a populated `CompileSymbolTable`, the compiler can also perform **static expression folding**:
 
-| Expression | Condition | Result |
-|---|---|---|
-| `${1 + 2}` | All operands are literals | Compile to `static-node` with value `3` |
-| `${'x'}3` | Template parts are all literals or statically resolvable | Compile to `static-node` with value `x3` |
-| `${true ? 'a' : 'b'}` | Condition and branches are all literals | Compile to `static-node` with value `a` |
-| `${$Math.max(1, 2)}` | `$Math` is builtin, `max` is a pure function, all args are literals | Compile to `static-node` with value `2` |
-| `${$form.submitting}` | `$form` is an injected local — not statically resolvable | Compile to `expression-node` |
-| `${$demo.formatName('A', 'B')}` | `$demo` is an import — not statically resolvable (side effects possible) | Compile to `expression-node` |
+| Expression                      | Condition                                                                | Result                                   |
+| ------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------- |
+| `${1 + 2}`                      | All operands are literals                                                | Compile to `static-node` with value `3`  |
+| `${'x'}3`                       | Template parts are all literals or statically resolvable                 | Compile to `static-node` with value `x3` |
+| `${true ? 'a' : 'b'}`           | Condition and branches are all literals                                  | Compile to `static-node` with value `a`  |
+| `${$Math.max(1, 2)}`            | `$Math` is builtin, `max` is a pure function, all args are literals      | Compile to `static-node` with value `2`  |
+| `${$form.submitting}`           | `$form` is an injected local — not statically resolvable                 | Compile to `expression-node`             |
+| `${$demo.formatName('A', 'B')}` | `$demo` is an import — not statically resolvable (side effects possible) | Compile to `expression-node`             |
 
 Rules for folding:
 

@@ -12,7 +12,7 @@ function createScope() {
     readVisible: () => ({}),
     materializeVisible: () => ({}),
     update() {},
-    merge() {}
+    merge() {},
   } as any;
 }
 
@@ -37,9 +37,9 @@ describe('createNodeSourcePropController', () => {
     const controller = createNodeSourcePropController(
       {
         sourcePropKeys: ['value'],
-        sourceStatePropKeys: { value: 'valueState' }
+        sourceStatePropKeys: { value: 'valueState' },
       } as any,
-      { executeSource: vi.fn() } as any
+      { executeSource: vi.fn() } as any,
     );
     const listener = vi.fn();
 
@@ -48,7 +48,7 @@ describe('createNodeSourcePropController', () => {
 
     expect(controller.getSnapshot()).toEqual({
       sourceInputs: ['ready'],
-      value: { value: 'ready' }
+      value: { value: 'ready' },
     });
     expect(listener).toHaveBeenCalledTimes(1);
 
@@ -62,9 +62,9 @@ describe('createNodeSourcePropController', () => {
     const controller = createNodeSourcePropController(
       {
         sourcePropKeys: ['items', 'plain'],
-        sourceStatePropKeys: { items: 'itemsState' }
+        sourceStatePropKeys: { items: 'itemsState' },
       } as any,
-      { executeSource } as any
+      { executeSource } as any,
     );
     const listener = vi.fn();
     const scope = createScope();
@@ -77,8 +77,8 @@ describe('createNodeSourcePropController', () => {
       value: {
         items: { type: 'source', sourceType: 'api' },
         plain: 'keep',
-        itemsState: { loading: true, error: undefined, status: 'loading' }
-      }
+        itemsState: { loading: true, error: undefined, status: 'loading' },
+      },
     });
 
     request.resolve({ ok: true, data: 'resolved' });
@@ -87,15 +87,15 @@ describe('createNodeSourcePropController', () => {
     expect(executeSource).toHaveBeenCalledWith({
       source: { type: 'source', sourceType: 'api' },
       scope,
-      ctx: { signal: expect.any(AbortSignal) }
+      ctx: { signal: expect.any(AbortSignal) },
     });
     expect(controller.getSnapshot()).toEqual({
       sourceInputs: [{ type: 'source', sourceType: 'api' }, 'keep'],
       value: {
         items: 'resolved',
         plain: 'keep',
-        itemsState: { loading: false, error: undefined, status: 'ready' }
-      }
+        itemsState: { loading: false, error: undefined, status: 'ready' },
+      },
     });
     expect(listener).toHaveBeenCalledTimes(2);
   });
@@ -104,11 +104,11 @@ describe('createNodeSourcePropController', () => {
     const actionResultController = createNodeSourcePropController(
       {
         sourcePropKeys: ['items'],
-        sourceStatePropKeys: { items: 'itemsState' }
+        sourceStatePropKeys: { items: 'itemsState' },
       } as any,
       {
-        executeSource: vi.fn().mockResolvedValue({ ok: false, error: new Error('bad-request') })
-      } as any
+        executeSource: vi.fn().mockResolvedValue({ ok: false, error: new Error('bad-request') }),
+      } as any,
     );
 
     actionResultController.run({ items: { type: 'source', sourceType: 'api' } }, createScope());
@@ -125,9 +125,9 @@ describe('createNodeSourcePropController', () => {
     const rejectionController = createNodeSourcePropController(
       {
         sourcePropKeys: ['items'],
-        sourceStatePropKeys: { items: 'itemsState' }
+        sourceStatePropKeys: { items: 'itemsState' },
       } as any,
-      { executeSource: vi.fn().mockImplementation(() => rejected.promise) } as any
+      { executeSource: vi.fn().mockImplementation(() => rejected.promise) } as any,
     );
 
     rejectionController.run({ items: { type: 'source', sourceType: 'api' } }, createScope());
@@ -152,9 +152,9 @@ describe('createNodeSourcePropController', () => {
     const controller = createNodeSourcePropController(
       {
         sourcePropKeys: ['items'],
-        sourceStatePropKeys: { items: 'itemsState' }
+        sourceStatePropKeys: { items: 'itemsState' },
       } as any,
-      { executeSource } as any
+      { executeSource } as any,
     );
     const listener = vi.fn();
     const unsubscribe = controller.subscribe(listener);
@@ -171,7 +171,11 @@ describe('createNodeSourcePropController', () => {
 
     first.resolve({ ok: true, data: 'stale' });
     await flushAsync();
-    expect((controller.getSnapshot().value as Record<string, any>).items).toEqual({ type: 'source', sourceType: 'api', id: 'second' });
+    expect((controller.getSnapshot().value as Record<string, any>).items).toEqual({
+      type: 'source',
+      sourceType: 'api',
+      id: 'second',
+    });
 
     unsubscribe();
     second.resolve({ ok: true, data: 'fresh' });

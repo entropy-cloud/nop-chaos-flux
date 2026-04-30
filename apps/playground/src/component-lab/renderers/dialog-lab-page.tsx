@@ -13,15 +13,13 @@ const basicDialog = {
           title: 'Example Dialog',
           body: [
             { type: 'text', text: 'This is the dialog body content.' },
-            { type: 'text', text: 'Dialogs support body and actions regions.' }
+            { type: 'text', text: 'Dialogs support body and actions regions.' },
           ],
-          actions: [
-            { type: 'button', label: 'Close', onClick: { action: 'closeDialog' } }
-          ]
-        }
-      }
-    }
-  ]
+          actions: [{ type: 'button', label: 'Close', onClick: { action: 'closeDialog' } }],
+        },
+      },
+    },
+  ],
 };
 
 const formDialog = {
@@ -39,27 +37,35 @@ const formDialog = {
               type: 'form',
               onSubmitSuccess: [
                 { action: 'setValue', args: { path: 'submitted', value: true } },
-                { action: 'closeDialog' }
+                { action: 'closeDialog' },
               ],
               body: [
                 { type: 'input-text', name: 'name', label: 'Full Name', required: true },
                 { type: 'input-email', name: 'email', label: 'Email', required: true },
-                { type: 'text', text: '${submitted ? "Submitted name: " + name : "Submitted name: (none)"}' }
+                {
+                  type: 'text',
+                  text: '${submitted ? "Submitted name: " + name : "Submitted name: (none)"}',
+                },
               ],
               actions: [
                 {
                   type: 'button',
                   label: 'Confirm',
-                  onClick: { action: 'submit' }
+                  onClick: { action: 'submit' },
                 },
-                { type: 'button', label: 'Cancel', variant: 'outline', onClick: { action: 'closeDialog' } }
-              ]
-            }
-          ]
-        }
-      }
-    }
-  ]
+                {
+                  type: 'button',
+                  label: 'Cancel',
+                  variant: 'outline',
+                  onClick: { action: 'closeDialog' },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    },
+  ],
 };
 
 export function DialogLabPage() {
@@ -69,14 +75,16 @@ export function DialogLabPage() {
       scenarios={[
         {
           title: 'Informational dialog',
-          description: 'Click "Open Dialog" to see a basic dialog with text body and a close button.',
-          schema: basicDialog
+          description:
+            'Click "Open Dialog" to see a basic dialog with text body and a close button.',
+          schema: basicDialog,
         },
         {
           title: 'Dialog with form fields and writeback',
-          description: 'Click "Edit Contact" to open a dialog with a form. Confirming writes the local form field back to the parent scope.',
-          schema: formDialog
-        }
+          description:
+            'Click "Edit Contact" to open a dialog with a form. Confirming writes the local form field back to the parent scope.',
+          schema: formDialog,
+        },
       ]}
     />
   );

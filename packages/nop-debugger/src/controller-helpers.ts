@@ -1,5 +1,15 @@
-import type { ActionResult, ExecutableApiRequest, ApiResponse, ScopeRef, TemplateNode } from '@nop-chaos/flux-core';
-import type { NopDebugEventNetworkSummary, NopDebuggerWindowConfig, NopScopeChainEntry } from './types';
+import type {
+  ActionResult,
+  ExecutableApiRequest,
+  ApiResponse,
+  ScopeRef,
+  TemplateNode,
+} from '@nop-chaos/flux-core';
+import type {
+  NopDebugEventNetworkSummary,
+  NopDebuggerWindowConfig,
+  NopScopeChainEntry,
+} from './types';
 
 const DEFAULT_POSITION = { x: 24, y: 24 };
 
@@ -10,7 +20,7 @@ export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enable
       defaultOpen: false,
       defaultTab: 'timeline',
       position: DEFAULT_POSITION,
-      dock: 'floating'
+      dock: 'floating',
     };
   }
 
@@ -22,7 +32,7 @@ export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enable
       defaultOpen: true,
       defaultTab: 'timeline',
       position: DEFAULT_POSITION,
-      dock: 'floating'
+      dock: 'floating',
     };
   }
 
@@ -32,7 +42,7 @@ export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enable
       defaultOpen: false,
       defaultTab: 'timeline',
       position: DEFAULT_POSITION,
-      dock: 'floating'
+      dock: 'floating',
     };
   }
 
@@ -41,7 +51,7 @@ export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enable
     defaultOpen: raw.defaultOpen ?? true,
     defaultTab: raw.defaultTab ?? 'timeline',
     position: raw.position ?? DEFAULT_POSITION,
-    dock: raw.dock ?? 'floating'
+    dock: raw.dock ?? 'floating',
   };
 }
 
@@ -93,20 +103,20 @@ export function summarizeValueShape(value: unknown) {
   if (Array.isArray(value)) {
     return {
       responseType: 'array',
-      keys: [] as string[]
+      keys: [] as string[],
     };
   }
 
   if (value && typeof value === 'object') {
     return {
       responseType: 'object',
-      keys: Object.keys(value as Record<string, unknown>).slice(0, 12)
+      keys: Object.keys(value as Record<string, unknown>).slice(0, 12),
     };
   }
 
   return {
     responseType: value == null ? 'nullish' : typeof value,
-    keys: [] as string[]
+    keys: [] as string[],
   };
 }
 
@@ -138,7 +148,7 @@ export function buildScopeChain(scope: ScopeRef | undefined): NopScopeChainEntry
       id: current.id,
       path: current.path,
       label: current.path || current.id,
-      data: current.readOwn() as Record<string, unknown>
+      data: current.readOwn() as Record<string, unknown>,
     });
     current = current.parent;
   }
@@ -162,23 +172,24 @@ export function buildNetworkSummary(input: {
     aborted: input.aborted,
     requestDataKeys: requestShape.keys,
     responseDataKeys: responseShape.keys,
-    responseType: responseShape.responseType
+    responseType: responseShape.responseType,
   };
 }
 
 export function normalizeCompiledRoot(node: TemplateNode | readonly TemplateNode[]) {
   const roots = Array.isArray(node) ? node : [node];
   const first = roots[0];
-  const firstPath = first && typeof first === 'object' && 'templatePath' in first
-    ? first.templatePath
-    : first && typeof first === 'object' && 'path' in (first as Record<string, unknown>)
-      ? (first as { path?: string }).path
-      : undefined;
+  const firstPath =
+    first && typeof first === 'object' && 'templatePath' in first
+      ? first.templatePath
+      : first && typeof first === 'object' && 'path' in (first as Record<string, unknown>)
+        ? (first as { path?: string }).path
+        : undefined;
 
   return {
     rootCount: roots.length,
     firstType: first?.type,
-    firstPath
+    firstPath,
   };
 }
 
@@ -196,7 +207,10 @@ function findPropertyDescriptor(target: object, key: PropertyKey): PropertyDescr
   return undefined;
 }
 
-function resolveStorageFromDescriptor(target: object, descriptor: PropertyDescriptor | undefined): Storage | undefined {
+function resolveStorageFromDescriptor(
+  target: object,
+  descriptor: PropertyDescriptor | undefined,
+): Storage | undefined {
   if (!descriptor) {
     return undefined;
   }
@@ -218,7 +232,11 @@ function resolveStorageFromDescriptor(target: object, descriptor: PropertyDescri
 
 function getBrowserLocalStorage(): Storage | undefined {
   const globalStorageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
-  if (globalStorageDescriptor && 'value' in globalStorageDescriptor && globalStorageDescriptor.value) {
+  if (
+    globalStorageDescriptor &&
+    'value' in globalStorageDescriptor &&
+    globalStorageDescriptor.value
+  ) {
     return globalStorageDescriptor.value as Storage;
   }
 

@@ -86,10 +86,10 @@
 
 1. runtime session
 2. admission/session attach-detect shell
-2. scope/value/dependency
-3. transaction phases
-4. published snapshot
-5. failure taxonomy
+3. scope/value/dependency
+4. transaction phases
+5. published snapshot
+6. failure taxonomy
 
 退出条件：
 

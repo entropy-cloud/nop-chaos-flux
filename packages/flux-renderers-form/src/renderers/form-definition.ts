@@ -1,4 +1,9 @@
-import { parsePath, type BaseSchema, type RendererDefinition, type RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import {
+  parsePath,
+  type BaseSchema,
+  type RendererDefinition,
+  type RendererSchemaValidationContext,
+} from '@nop-chaos/flux-core';
 import { FormRenderer } from './form';
 import type { FormSchema } from '../schemas';
 
@@ -7,7 +12,9 @@ function escapeJsonPointerSegment(segment: string) {
 }
 
 function toJsonPointer(path: string, ...segments: Array<string | number>) {
-  const parts = parsePath(path).filter((segment) => segment !== '$').concat(segments.map((segment) => String(segment)));
+  const parts = parsePath(path)
+    .filter((segment) => segment !== '$')
+    .concat(segments.map((segment) => String(segment)));
 
   if (parts.length === 0) {
     return '';
@@ -28,7 +35,7 @@ function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'body'),
-      message: 'form.body must be an array of schema nodes.'
+      message: 'form.body must be an array of schema nodes.',
     });
   }
 
@@ -36,15 +43,18 @@ function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'actions'),
-      message: 'form.actions must be an array of schema nodes.'
+      message: 'form.actions must be an array of schema nodes.',
     });
   }
 
-  if (schema.data !== undefined && (!schema.data || typeof schema.data !== 'object' || Array.isArray(schema.data))) {
+  if (
+    schema.data !== undefined &&
+    (!schema.data || typeof schema.data !== 'object' || Array.isArray(schema.data))
+  ) {
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'data'),
-      message: 'form.data must be an object when provided.'
+      message: 'form.data must be an object when provided.',
     });
   }
 }
@@ -62,19 +72,19 @@ export const formRendererDefinition: RendererDefinition = {
       shape: { kind: 'object', fields: {} },
       displayName: 'Initial Data',
       description: 'Initial form values at mount time.',
-      editorType: 'object'
+      editorType: 'object',
     },
     statusPath: {
       shape: { kind: 'string' },
       displayName: 'Status Path',
       description: 'Publishes the readonly form status summary to parent scope.',
-      editorType: 'path'
+      editorType: 'path',
     },
     valuesPath: {
       shape: { kind: 'string' },
       displayName: 'Values Path',
       description: 'Publishes the readonly form values snapshot to parent scope.',
-      editorType: 'path'
+      editorType: 'path',
     },
     hiddenFieldPolicy: {
       shape: {
@@ -87,44 +97,44 @@ export const formRendererDefinition: RendererDefinition = {
             fields: {
               validateWhenHidden: { kind: 'boolean' },
               clearValueWhenHidden: { kind: 'boolean' },
-              submitWhenHidden: { kind: 'boolean' }
+              submitWhenHidden: { kind: 'boolean' },
             },
-            optional: ['validateWhenHidden', 'clearValueWhenHidden', 'submitWhenHidden']
-          }
-        ]
+            optional: ['validateWhenHidden', 'clearValueWhenHidden', 'submitWhenHidden'],
+          },
+        ],
       },
       displayName: 'Hidden Field Policy',
       description: 'Controls how hidden fields participate in validation, submit, and clearing.',
-      editorType: 'hidden-field-policy'
-    }
+      editorType: 'hidden-field-policy',
+    },
   },
   eventContracts: {
     initAction: {
       displayName: 'Init',
-      description: 'Runs after the form runtime is created.'
+      description: 'Runs after the form runtime is created.',
     },
     submitAction: {
       displayName: 'Submit',
-      description: 'Primary submit pipeline for the form.'
+      description: 'Primary submit pipeline for the form.',
     },
     onSubmitSuccess: {
       displayName: 'Submit Success',
-      description: 'Runs after submit resolves successfully.'
+      description: 'Runs after submit resolves successfully.',
     },
     onSubmitError: {
       displayName: 'Submit Error',
-      description: 'Runs after submit fails.'
+      description: 'Runs after submit fails.',
     },
     onValidateError: {
       displayName: 'Validate Error',
-      description: 'Runs when validation blocks submission.'
-    }
+      description: 'Runs when validation blocks submission.',
+    },
   },
   componentCapabilityContracts: [
     {
       handle: 'submit',
       displayName: 'Submit',
-      description: 'Submit the current form instance.'
+      description: 'Submit the current form instance.',
     },
     {
       handle: 'validate',
@@ -134,10 +144,10 @@ export const formRendererDefinition: RendererDefinition = {
         kind: 'object',
         fields: {
           ok: { kind: 'boolean' },
-          errors: { kind: 'array', item: { kind: 'unknown' } }
+          errors: { kind: 'array', item: { kind: 'unknown' } },
         },
-        optional: ['errors']
-      }
+        optional: ['errors'],
+      },
     },
     {
       handle: 'reset',
@@ -146,10 +156,10 @@ export const formRendererDefinition: RendererDefinition = {
       args: {
         kind: 'object',
         fields: {
-          values: { kind: 'object', fields: {} }
+          values: { kind: 'object', fields: {} },
         },
-        optional: ['values']
-      }
+        optional: ['values'],
+      },
     },
     {
       handle: 'setValue',
@@ -159,9 +169,9 @@ export const formRendererDefinition: RendererDefinition = {
         kind: 'object',
         fields: {
           name: { kind: 'string' },
-          value: { kind: 'unknown' }
-        }
-      }
+          value: { kind: 'unknown' },
+        },
+      },
     },
     {
       handle: 'setValues',
@@ -170,9 +180,9 @@ export const formRendererDefinition: RendererDefinition = {
       args: {
         kind: 'object',
         fields: {
-          values: { kind: 'object', fields: {} }
-        }
-      }
+          values: { kind: 'object', fields: {} },
+        },
+      },
     },
     {
       handle: 'getValues',
@@ -180,12 +190,12 @@ export const formRendererDefinition: RendererDefinition = {
       description: 'Read the current form values snapshot.',
       result: {
         kind: 'object',
-        fields: {}
-      }
-    }
+        fields: {},
+      },
+    },
   ],
   scopeExportContracts: {
-    '$form': {
+    $form: {
       kind: 'object',
       fields: {
         id: { kind: 'string' },
@@ -198,15 +208,15 @@ export const formRendererDefinition: RendererDefinition = {
         valid: { kind: 'boolean' },
         invalid: { kind: 'boolean' },
         hasErrors: { kind: 'boolean' },
-        errorCount: { kind: 'number' }
+        errorCount: { kind: 'number' },
       },
-      optional: ['id', 'name']
-    }
+      optional: ['id', 'name'],
+    },
   },
   injectedLocals: {
-    '$form': {
-      kind: 'injected-local'
-    }
+    $form: {
+      kind: 'injected-local',
+    },
   },
   component: FormRenderer,
   regions: ['body', 'actions'],
@@ -220,9 +230,9 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'valuesPath', kind: 'prop' },
     { key: 'mode', kind: 'prop' },
     { key: 'labelAlign', kind: 'prop' },
-    { key: 'labelWidth', kind: 'prop' }
+    { key: 'labelWidth', kind: 'prop' },
   ],
   scopePolicy: 'form',
   componentRegistryPolicy: 'new',
-  schemaValidator: validateFormSchema
+  schemaValidator: validateFormSchema,
 };

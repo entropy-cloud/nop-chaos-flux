@@ -3,7 +3,7 @@
 ## Problem
 
 - on the playground performance-table page, most table cell renderers displayed empty or incorrect content
-- badge column was empty, status column showed raw expression text like `${$slot.record.active ? `ACTIVE` : `PAUSED`}`, checkbox/switch/select/textarea/tag-list/radio-group all showed blank or default values
+- badge column was empty, status column showed raw expression text like `${$slot.record.active ? `ACTIVE`:`PAUSED`}`, checkbox/switch/select/textarea/tag-list/radio-group all showed blank or default values
 - pagination bar and row data were correct (the table sliced the right rows), only the cell-level rendering was broken
 - the problem existed from page creation; it was not a regression
 

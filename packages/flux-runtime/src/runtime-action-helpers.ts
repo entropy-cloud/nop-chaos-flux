@@ -11,9 +11,13 @@ import type {
   ScopeRef,
   ValidationError,
   ValidationRule,
-  ActionSchema
+  ActionSchema,
 } from '@nop-chaos/flux-core';
-import { createCancelledResult, isAbortError, resolveRequestControl } from '@nop-chaos/flux-action-core';
+import {
+  createCancelledResult,
+  isAbortError,
+  resolveRequestControl,
+} from '@nop-chaos/flux-action-core';
 import { executeApiSchema } from './async-data/request-runtime';
 import { createValidationError } from './validation';
 import type { ApiRequestExecutor } from './async-data/request-runtime';
@@ -27,12 +31,12 @@ export async function executeRuntimeValidationRule(
   signal: AbortSignal | undefined,
   ctx: {
     dispatch: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
-  }
+  },
 ): Promise<ValidationError | undefined> {
   try {
     const result = await ctx.dispatch(rule.action, {
       scope,
-      signal
+      signal,
     });
 
     if (result.cancelled) {
@@ -48,7 +52,9 @@ export async function executeRuntimeValidationRule(
         return createValidationError(
           field,
           compiledRule,
-          candidate.message ?? rule.message ?? `${field.label ?? field.path} failed async validation`
+          candidate.message ??
+            rule.message ??
+            `${field.label ?? field.path} failed async validation`,
         );
       }
 
@@ -77,31 +83,38 @@ export async function executeRuntimeAjaxAction(
     expressionCompiler: ExpressionCompiler;
     evaluate: RuntimeEvalHelpers['evaluate'];
     executeApiRequest: ApiRequestExecutor;
-  }
+  },
 ): Promise<ActionResult> {
   try {
     let monitoredApi: ExecutableApiRequest | undefined;
     const requestControl = resolveRequestControl(action);
-    const response = await executeApiSchema(api, ctx.scope, helpers.getEnv(), helpers.expressionCompiler, {
-      signal,
-      evaluate: helpers.evaluate,
-      onPreparedRequest: (preparedApi) => {
-        monitoredApi = preparedApi;
-      },
-      executor: (adaptedApi) => helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
+    const response = await executeApiSchema(
+      api,
+      ctx.scope,
+      helpers.getEnv(),
+      helpers.expressionCompiler,
+      {
         signal,
-        interactionId: ctx.interactionId,
-        control: requestControl
-      }),
-      control: requestControl
-    });
+        evaluate: helpers.evaluate,
+        onPreparedRequest: (preparedApi) => {
+          monitoredApi = preparedApi;
+        },
+        executor: (adaptedApi) =>
+          helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
+            signal,
+            interactionId: ctx.interactionId,
+            control: requestControl,
+          }),
+        control: requestControl,
+      },
+    );
 
     if (monitoredApi) {
       helpers.getEnv().monitor?.onApiRequest?.({
         api: monitoredApi,
         nodeId: ctx.nodeInstance?.templateNode.id,
         path: ctx.nodeInstance?.templateNode.templatePath,
-        interactionId: ctx.interactionId
+        interactionId: ctx.interactionId,
       });
     }
 
@@ -110,7 +123,7 @@ export async function executeRuntimeAjaxAction(
       data: response.data,
       attempts: response.attempts,
       failureCount: response.failureCount,
-      error: undefined
+      error: undefined,
     };
   } catch (error) {
     if (isAbortError(error)) {

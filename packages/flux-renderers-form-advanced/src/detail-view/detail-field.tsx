@@ -1,9 +1,5 @@
 import React from 'react';
-import type {
-  BaseSchema,
-  RendererComponentProps,
-  RendererDefinition
-} from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
@@ -11,23 +7,25 @@ import {
   useRendererRuntime,
   useRenderScope,
   useScopeSelector,
-  useCurrentFormState
+  useCurrentFormState,
 } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
 import type { DetailFieldSchema } from '../composite-field/composite-schemas';
-import {
-  formLabelFieldRule,
-  useFieldPresentation
-} from '@nop-chaos/flux-renderers-form';
+import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { t } from '@nop-chaos/flux-i18n';
-import { publishValidateResultErrors, runTransformIn, runTransformOut, runValidate } from './value-adaptation-helper';
+import {
+  publishValidateResultErrors,
+  runTransformIn,
+  runTransformOut,
+  runValidate,
+} from './value-adaptation-helper';
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
 import {
   buildDetailDraftInitialValues,
   readDetailDraftValues,
   useDetailAdaptationAction,
   useDetailChildValidationContract,
-  useDetailDraftControllerState
+  useDetailDraftControllerState,
 } from './detail-draft-controller';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
@@ -47,17 +45,17 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
   const presentation = useFieldPresentation(name, parentForm, {
     disabled: props.meta.disabled,
-    readOnly
+    readOnly,
   });
 
   const currentValue = useCurrentFormState(
     (state) => (name ? (state.values as Record<string, unknown>)[name] : undefined),
     Object.is,
-    { path: name || undefined }
+    { path: name || undefined },
   );
   const scopeValue = useScopeSelector(
     (data) => (name ? getIn(data as Record<string, unknown>, name) : undefined),
-    Object.is
+    Object.is,
   );
   const fieldValue = parentForm ? currentValue : scopeValue;
 
@@ -71,12 +69,12 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     closeDraft,
     beginConfirm,
     finishConfirm,
-    setDraftErrorSafe
+    setDraftErrorSafe,
   } = useDetailDraftControllerState();
 
   const childOwnerId = React.useMemo(
     () => `detail-field:${props.id}:${name || 'value'}`,
-    [props.id, name]
+    [props.id, name],
   );
 
   useDetailChildValidationContract({
@@ -84,14 +82,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     draftForm,
     childOwnerId,
     mode: props.templateNode.validationOwnerPlan?.childContractMode,
-    active: open
+    active: open,
   });
 
   const runAdaptationAction = useDetailAdaptationAction({
     helpers: props.helpers,
     parentScope,
     parentForm,
-    node: props.node
+    node: props.node,
   });
 
   async function handleOpen() {
@@ -102,9 +100,9 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       {
         rawValue: fieldValue,
         name,
-        readOnly
+        readOnly,
       },
-      runAdaptationAction
+      runAdaptationAction,
     );
 
     if (!mountedRef.current) return;
@@ -115,7 +113,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       id: `detail-field-draft:${name}:${Date.now()}`,
       initialValues,
       parentScope,
-      validation: props.templateNode.validationPlan
+      validation: props.templateNode.validationPlan,
     });
 
     openDraft(newDraftForm);
@@ -142,9 +140,9 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         {
           workingValue,
           originalValue: fieldValue,
-          name
+          name,
         },
-        runAdaptationAction
+        runAdaptationAction,
       );
 
       if (!mountedRef.current) return;
@@ -162,9 +160,9 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
           workingValue,
           originalValue: fieldValue,
           name,
-          readOnly
+          readOnly,
         },
-        runAdaptationAction
+        runAdaptationAction,
       );
 
       if (!mountedRef.current) return;
@@ -190,15 +188,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     <>
       <div data-slot="field-control">
         <div data-slot="detail-field-viewer">
-          {viewerContent ?? <span>{fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '—'}</span>}
+          {viewerContent ?? (
+            <span>
+              {fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '—'}
+            </span>
+          )}
         </div>
         {!presentation.effectiveDisabled && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => void handleOpen()}
-          >
+          <Button type="button" variant="outline" size="sm" onClick={() => void handleOpen()}>
             {triggerLabel}
           </Button>
         )}
@@ -210,7 +207,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         bodySlot="detail-field-surface-body"
         readOnly={readOnly}
         onClose={handleCancel}
-        footer={(
+        footer={
           <DetailDraftFooter
             error={draftError}
             errorSlot="detail-field-draft-error"
@@ -218,7 +215,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
             onCancel={handleCancel}
             onConfirm={() => void handleConfirm()}
           />
-        )}
+        }
       >
         <DetailDraftBody form={draftForm} bodySlot="detail-field-draft-body">
           {editContent}
@@ -240,7 +237,7 @@ export const detailFieldRendererDefinition: RendererDefinition = {
     { key: 'surface', kind: 'ignored' },
     { key: 'transformInAction', kind: 'ignored' },
     { key: 'validateValueAction', kind: 'ignored' },
-    { key: 'transformOutAction', kind: 'ignored' }
+    { key: 'transformOutAction', kind: 'ignored' },
   ],
   scopePolicy: 'form',
   validation: {
@@ -253,6 +250,6 @@ export const detailFieldRendererDefinition: RendererDefinition = {
     },
     collectRules() {
       return [];
-    }
-  }
+    },
+  },
 };

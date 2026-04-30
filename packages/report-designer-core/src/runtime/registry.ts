@@ -1,7 +1,13 @@
-import { createEmptyAdapterRegistry, type ReportDesignerAdapterRegistry, type ReportDesignerProfile } from '../adapters.js';
+import {
+  createEmptyAdapterRegistry,
+  type ReportDesignerAdapterRegistry,
+  type ReportDesignerProfile,
+} from '../adapters.js';
 import type { ReportDesignerConfig } from '../types.js';
 
-export function createAdapterRegistrySnapshot(input?: Partial<ReportDesignerAdapterRegistry>): ReportDesignerAdapterRegistry {
+export function createAdapterRegistrySnapshot(
+  input?: Partial<ReportDesignerAdapterRegistry>,
+): ReportDesignerAdapterRegistry {
   return {
     fieldSources: new Map(input?.fieldSources ?? []),
     fieldDrops: new Map(input?.fieldDrops ?? []),
@@ -23,7 +29,10 @@ export function getProfileFieldDropIds(profile?: ReportDesignerProfile): Set<str
   return new Set(profile.fieldDropIds);
 }
 
-export function getPreviewProviderId(config: ReportDesignerConfig, profile?: ReportDesignerProfile): string | undefined {
+export function getPreviewProviderId(
+  config: ReportDesignerConfig,
+  profile?: ReportDesignerProfile,
+): string | undefined {
   return profile?.previewId ?? config.preview?.provider;
 }
 

@@ -46,7 +46,10 @@ export function copyRangeToClipboard(
   for (let rowOffset = 0; rowOffset < rowCount; rowOffset++) {
     const row: ClipboardCell[] = [];
     for (let colOffset = 0; colOffset < colCount; colOffset++) {
-      const sourceCell = sheet.cells?.[cellAddress(normalized.startRow + rowOffset, normalized.startCol + colOffset)];
+      const sourceCell =
+        sheet.cells?.[
+          cellAddress(normalized.startRow + rowOffset, normalized.startCol + colOffset)
+        ];
       row.push({
         value: sourceCell?.value,
         formula: sourceCell?.formula,
@@ -79,17 +82,17 @@ export function applyPasteCells(
         row: targetRow,
         col: targetCol,
         cell: {
-        ...(existing ?? { address: key, row: targetRow, col: targetCol }),
-        value: sourceCell.value,
-        formula: sourceCell.formula,
-        style: sourceCell.style,
-        comment: sourceCell.comment,
-        linkUrl: sourceCell.linkUrl,
-        numberFormat: sourceCell.numberFormat,
-        address: key,
-        row: targetRow,
-        col: targetCol,
-        }
+          ...(existing ?? { address: key, row: targetRow, col: targetCol }),
+          value: sourceCell.value,
+          formula: sourceCell.formula,
+          style: sourceCell.style,
+          comment: sourceCell.comment,
+          linkUrl: sourceCell.linkUrl,
+          numberFormat: sourceCell.numberFormat,
+          address: key,
+          row: targetRow,
+          col: targetCol,
+        },
       });
     }
   }
@@ -122,17 +125,27 @@ export function applyPasteCells(
           }
         }
         const clearedSheet = deleteCells(sourceSheet, keysToDelete);
-        const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-          sheetDoc.id === sourceSheetId ? clearedSheet : sheetDoc.id === target.sheetId ? newSheet : sheetDoc,
-        ) };
+        const workbook = {
+          ...updated.workbook,
+          sheets: updated.workbook.sheets.map((sheetDoc) =>
+            sheetDoc.id === sourceSheetId
+              ? clearedSheet
+              : sheetDoc.id === target.sheetId
+                ? newSheet
+                : sheetDoc,
+          ),
+        };
         return { ...updated, workbook };
       }
     }
   }
 
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === target.sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === target.sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -169,9 +182,12 @@ export function applyClearCells(
         newSheet = setCell(newSheet, row, col, cleared);
       }
     }
-    const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
-    ) };
+    const workbook = {
+      ...updated.workbook,
+      sheets: updated.workbook.sheets.map((sheetDoc) =>
+        sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
+      ),
+    };
     return { ...updated, workbook };
   }
 
@@ -195,8 +211,11 @@ export function applyClearCells(
     cleared.comment = existing.comment;
   }
   const newSheet = setCell(sheet, cell.row, cell.col, cleared);
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }

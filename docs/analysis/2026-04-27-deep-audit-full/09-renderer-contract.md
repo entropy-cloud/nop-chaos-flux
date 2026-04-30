@@ -2,7 +2,7 @@
 
 ## 审核范围
 
-检查所有 flux-renderers-* 包中的渲染器组件是否遵循 RendererComponentProps 模式、数据来源、样式契约、data-testid/data-cid 传递。
+检查所有 flux-renderers-\* 包中的渲染器组件是否遵循 RendererComponentProps 模式、数据来源、样式契约、data-testid/data-cid 传递。
 
 ## 发现清单
 

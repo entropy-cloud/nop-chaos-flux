@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createRendererRegistry,
   type RendererDefinition,
-  type TemplateNode
+  type TemplateNode,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index';
@@ -10,33 +10,33 @@ import { createSchemaCompiler } from './index';
 const textRenderer: RendererDefinition = {
   type: 'text',
   component: () => null,
-  staticCapable: true
+  staticCapable: true,
 };
 
 const containerRenderer: RendererDefinition = {
   type: 'container',
   component: () => null,
   regions: ['body'],
-  staticCapable: true
+  staticCapable: true,
 };
 
 const iconRenderer: RendererDefinition = {
   type: 'icon',
   component: () => null,
-  staticCapable: true
+  staticCapable: true,
 };
 
 const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }],
-  staticCapable: false
+  staticCapable: false,
 };
 
 const inputRenderer: RendererDefinition = {
   type: 'input-text',
   component: () => null,
-  staticCapable: false
+  staticCapable: false,
 };
 
 const formRenderer: RendererDefinition = {
@@ -44,14 +44,14 @@ const formRenderer: RendererDefinition = {
   component: () => null,
   regions: ['body'],
   scopePolicy: 'form',
-  staticCapable: false
+  staticCapable: false,
 };
 
 function createTestCompiler(renderers: RendererDefinition[]) {
   const registry = createRendererRegistry(renderers);
   return createSchemaCompiler({
     registry,
-    expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
   });
 }
 
@@ -102,8 +102,8 @@ describe('static analysis', () => {
         type: 'container',
         body: [
           { type: 'text', text: 'Hello' },
-          { type: 'icon', icon: 'star' }
-        ]
+          { type: 'icon', icon: 'star' },
+        ],
       });
       const root = compiled.root as TemplateNode;
 
@@ -117,8 +117,8 @@ describe('static analysis', () => {
         type: 'container',
         body: [
           { type: 'text', text: 'Static content' },
-          { type: 'input-text', placeholder: 'Interactive' }
-        ]
+          { type: 'input-text', placeholder: 'Interactive' },
+        ],
       });
       const root = compiled.root as TemplateNode;
 
@@ -130,9 +130,7 @@ describe('static analysis', () => {
       const compiler = createTestCompiler([containerRenderer, textRenderer]);
       const compiled = compiler.compile({
         type: 'container',
-        body: [
-          { type: 'text', text: '${dynamicText}' }
-        ]
+        body: [{ type: 'text', text: '${dynamicText}' }],
       });
       const root = compiled.root as TemplateNode;
 
@@ -144,7 +142,7 @@ describe('static analysis', () => {
       const compiler = createTestCompiler([containerRenderer]);
       const compiled = compiler.compile({
         type: 'container',
-        body: []
+        body: [],
       });
       const root = compiled.root as TemplateNode;
 
@@ -170,7 +168,7 @@ describe('static analysis', () => {
       const compiled = compiler.compile({
         type: 'button',
         label: 'Click me',
-        onClick: { type: 'alert', message: 'clicked' }
+        onClick: { type: 'alert', message: 'clicked' },
       });
       const root = compiled.root as TemplateNode;
 
@@ -184,7 +182,7 @@ describe('static analysis', () => {
       const compiler = createTestCompiler([formRenderer, textRenderer]);
       const compiled = compiler.compile({
         type: 'form',
-        body: [{ type: 'text', text: 'Static text inside form' }]
+        body: [{ type: 'text', text: 'Static text inside form' }],
       });
       const root = compiled.root as TemplateNode;
 
@@ -198,13 +196,17 @@ describe('static analysis', () => {
       const compiler = createTestCompiler([containerRenderer, textRenderer]);
       const compiled = compiler.compile({
         type: 'container',
-        body: [{
-          type: 'container',
-          body: [{
+        body: [
+          {
             type: 'container',
-            body: [{ type: 'text', text: 'Deep static text' }]
-          }]
-        }]
+            body: [
+              {
+                type: 'container',
+                body: [{ type: 'text', text: 'Deep static text' }],
+              },
+            ],
+          },
+        ],
       });
       const root = compiled.root as TemplateNode;
 
@@ -215,13 +217,17 @@ describe('static analysis', () => {
       const compiler = createTestCompiler([containerRenderer, textRenderer]);
       const compiled = compiler.compile({
         type: 'container',
-        body: [{
-          type: 'container',
-          body: [{
+        body: [
+          {
             type: 'container',
-            body: [{ type: 'text', text: '${dynamic}' }]
-          }]
-        }]
+            body: [
+              {
+                type: 'container',
+                body: [{ type: 'text', text: '${dynamic}' }],
+              },
+            ],
+          },
+        ],
       });
       const root = compiled.root as TemplateNode;
 
@@ -235,7 +241,7 @@ describe('static analysis', () => {
       const compiled = compiler.compile({
         type: 'text',
         text: 'Conditionally visible',
-        visible: '${showText}'
+        visible: '${showText}',
       });
       const root = compiled.root as TemplateNode;
 
@@ -247,7 +253,7 @@ describe('static analysis', () => {
       const compiled = compiler.compile({
         type: 'text',
         text: 'Hello',
-        disabled: '${isDisabled}'
+        disabled: '${isDisabled}',
       });
       const root = compiled.root as TemplateNode;
 
@@ -259,7 +265,7 @@ describe('static analysis', () => {
       const compiled = compiler.compile({
         type: 'text',
         text: 'Always visible',
-        visible: true
+        visible: true,
       });
       const root = compiled.root as TemplateNode;
 
@@ -270,10 +276,7 @@ describe('static analysis', () => {
   describe('array root compilation', () => {
     it('computes static analysis for each node in array root', () => {
       const compiler = createTestCompiler([textRenderer, inputRenderer]);
-      const compiled = compiler.compile([
-        { type: 'text', text: 'Static' },
-        { type: 'input-text' }
-      ]);
+      const compiled = compiler.compile([{ type: 'text', text: 'Static' }, { type: 'input-text' }]);
       const roots = compiled.root as TemplateNode[];
 
       expect(Array.isArray(roots)).toBe(true);

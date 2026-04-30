@@ -12,12 +12,12 @@
 
 All items were verified against the current codebase. Summary:
 
-| Status | Items |
-|--------|-------|
-| **Confirmed — proceed with fix** | P0-1, P0-2, P0-3, P0-4, P0-5, P0-7, P0-8, P1-1 through P1-14, P1-16, P1-17, P2-3, P2-4, P2-6, P2-7, P2-8, P2-9, P2-10 |
-| **Already fixed — skip** | P0-6 (debounce already has `try/catch` + `reject`) |
-| **Not a real issue — remove** | P2-5 (generic `S` IS properly used in `hooks.ts:49`: `selector: (scopeData: S) => T`) |
-| **Fix needs refinement** | P0-5 (cancellation signal needs type changes to `ValidationResult`), P0-7 (existing code at `form-runtime.ts:192-203` partially addresses stale errors but has a logic flaw — fix must clean `mergedErrors` before `setErrors()`) |
+| Status                           | Items                                                                                                                                                                                                                             |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Confirmed — proceed with fix** | P0-1, P0-2, P0-3, P0-4, P0-5, P0-7, P0-8, P1-1 through P1-14, P1-16, P1-17, P2-3, P2-4, P2-6, P2-7, P2-8, P2-9, P2-10                                                                                                             |
+| **Already fixed — skip**         | P0-6 (debounce already has `try/catch` + `reject`)                                                                                                                                                                                |
+| **Not a real issue — remove**    | P2-5 (generic `S` IS properly used in `hooks.ts:49`: `selector: (scopeData: S) => T`)                                                                                                                                             |
+| **Fix needs refinement**         | P0-5 (cancellation signal needs type changes to `ValidationResult`), P0-7 (existing code at `form-runtime.ts:192-203` partially addresses stale errors but has a logic flaw — fix must clean `mergedErrors` before `setErrors()`) |
 
 ---
 
@@ -62,12 +62,12 @@ Provide an execution-ready, independently-verifiable remediation plan for every 
 
 ## Priority Definitions
 
-| Priority | Meaning |
-|----------|---------|
-| P0 | Correctness/stability/security — must fix before next release |
-| P1 | Major performance or reliability — fix within current sprint |
-| P2 | Quality/maintainability — schedule for near-term backlog |
-| P3 | Low-risk technical debt — fix opportunistically |
+| Priority | Meaning                                                       |
+| -------- | ------------------------------------------------------------- |
+| P0       | Correctness/stability/security — must fix before next release |
+| P1       | Major performance or reliability — fix within current sprint  |
+| P2       | Quality/maintainability — schedule for near-term backlog      |
+| P3       | Low-risk technical debt — fix opportunistically               |
 
 ---
 
@@ -138,18 +138,26 @@ The `useEffect` at line 197 has **no dependency array**, so it runs after **ever
      const payload = {
        nodeId: props.node.id,
        path: props.node.path,
-       type: props.node.type
+       type: props.node.type,
      };
      runtime.env.monitor?.onRenderStart?.(payload);
      runtime.env.monitor?.onRenderEnd?.({
        ...payload,
-       durationMs: Math.max(0, Date.now() - renderStartedAtRef.current)
+       durationMs: Math.max(0, Date.now() - renderStartedAtRef.current),
      });
-   }, [runtime.env.monitor, props.node.id, props.node.path, props.node.type, resolvedMeta.visible, resolvedMeta.hidden]);
+   }, [
+     runtime.env.monitor,
+     props.node.id,
+     props.node.path,
+     props.node.type,
+     resolvedMeta.visible,
+     resolvedMeta.hidden,
+   ]);
    ```
 2. Run `pnpm typecheck && pnpm test` in `flux-react`.
 
 **Acceptance:**
+
 - `useEffect` has an explicit dependency array.
 - Monitor callbacks only fire when visibility or node identity changes.
 
@@ -174,6 +182,7 @@ The `useEffect` at line 197 has **no dependency array**, so it runs after **ever
 **Fix plan:**
 
 1. Inline the JSX directly into the return statement, replacing `{renderComponent()}` with the conditional JSX tree:
+
    ```typescript
    const Comp = props.node.component.component;
    const cidFromSchema = (props.node.schema as unknown as { _cid?: unknown })._cid;
@@ -203,9 +212,11 @@ The `useEffect` at line 197 has **no dependency array**, so it runs after **ever
      </NodeMetaContext.Provider>
    );
    ```
+
 2. Run `pnpm typecheck && pnpm test` in `flux-react`.
 
 **Acceptance:**
+
 - No `renderComponent` function declaration inside the component body.
 - Same rendering behavior, fewer allocations per render.
 
@@ -241,6 +252,7 @@ The `useEffect` at line 197 has **no dependency array**, so it runs after **ever
 3. Run `pnpm typecheck && pnpm test` in `flux-react`.
 
 **Acceptance:**
+
 - No store mutation in the render phase.
 - Data sync still occurs when `pageData` changes.
 
@@ -299,6 +311,7 @@ The caller (`validatePath`) receives an empty result and may clear errors premat
 5. Add a test for rapid successive validations confirming that only the latest run's result is applied.
 
 **Acceptance:**
+
 - Superseded async validations do not clear errors or leave stale `validating` flags.
 - Test covers rapid successive validation scenario.
 
@@ -315,6 +328,7 @@ The caller (`validatePath`) receives an empty result and may clear errors premat
 **Problem:**
 
 Already resolved. The current implementation at `debounce.ts:29-36` includes:
+
 - `PendingEntry<T>` with both `resolve` and `reject` callbacks
 - `try/catch` wrapping `factory()` execution
 - Proper `reject(error)` on failure
@@ -344,7 +358,7 @@ Already satisfied.
 
 `validateForm()` merges `store.getState().errors` with newly computed `fieldErrors` (spreading existing errors first). If a field was previously invalid but is now valid, its old error remains in the store because `mergedErrors` preserves stale entries.
 
-Note: Lines 192-203 attempt to handle this by iterating `mergedErrors` and re-adding entries to `fieldErrors`, but the logic is flawed — it re-adds stale errors to the result instead of removing them. The fix must clean errors *before* calling `store.setErrors()`.
+Note: Lines 192-203 attempt to handle this by iterating `mergedErrors` and re-adding entries to `fieldErrors`, but the logic is flawed — it re-adds stale errors to the result instead of removing them. The fix must clean errors _before_ calling `store.setErrors()`.
 
 **How to verify:**
 
@@ -360,6 +374,7 @@ Note: Lines 192-203 attempt to handle this by iterating `mergedErrors` and re-ad
 **Fix plan:**
 
 1. Replace lines 185-203 with a clean approach that removes stale errors before setting:
+
    ```typescript
    // Collect all paths that were validated (from compiled schema + registrations)
    const allValidatedPaths = new Set<string>();
@@ -380,10 +395,12 @@ Note: Lines 192-203 attempt to handle this by iterating `mergedErrors` and re-ad
 
    store.setErrors({ ...cleanedErrors, ...fieldErrors });
    ```
+
 2. Remove the flawed loop at lines 192-203.
 3. Add a test: field transitions from invalid → valid, error is cleared.
 
 **Acceptance:**
+
 - `validateForm()` clears errors for fields that pass validation.
 - No stale errors remain after a full form validation.
 
@@ -413,6 +430,7 @@ The `if (typeof source.action === 'string' ...)` block appears to be indented on
 3. Add a regression test.
 
 **Acceptance:**
+
 - Indentation matches intended control flow.
 - Test confirms all action targets are rewritten correctly.
 
@@ -456,6 +474,7 @@ const needsRebuild =
 2. Run `pnpm typecheck && pnpm test` in `flux-formula`.
 
 **Acceptance:**
+
 - Key comparison is O(n) instead of O(n²).
 - All existing tests pass.
 
@@ -481,19 +500,24 @@ The `formulaScopeCache` uses `EvalContext` as a WeakMap key. But `EvalContext` o
 **Fix plan:**
 
 Option A — Remove the cache (simplest):
+
 ```typescript
 function createFormulaScope(context: EvalContext): Record<string, any> {
-  const proxy = new Proxy({ /* ... */ });
+  const proxy = new Proxy({
+    /* ... */
+  });
   return proxy;
 }
 ```
 
 Option B — Cache at the `ScopeRef` level (if `ScopeRef` has stable identity):
+
 ```typescript
 const formulaScopeCache = new WeakMap<ScopeRef, Record<string, any>>();
 ```
 
 **Acceptance:**
+
 - No dead cache code, or cache actually provides benefit.
 - Performance unchanged or improved.
 
@@ -537,6 +561,7 @@ If a property exists but has value `undefined`, `has()` returns `false`. This di
 2. Add a test for `undefined` value existence.
 
 **Acceptance:**
+
 - `has('foo')` returns `true` when `foo` is explicitly set to `undefined`.
 - All existing tests pass.
 
@@ -570,6 +595,7 @@ When comparing arrays, `shallowEqual` uses `Object.keys(left)` and `Object.keys(
 2. Add tests for: equal arrays, different length, sparse arrays.
 
 **Acceptance:**
+
 - No unnecessary array allocation in `shallowEqual`.
 - All existing tests pass.
 
@@ -597,13 +623,14 @@ The default parameter `createBuiltInValidationRegistry()` constructs a new Map a
    ```typescript
    let _builtInRegistry: ValidationRegistry | undefined;
    function getBuiltInRegistry(): ValidationRegistry {
-     return _builtInRegistry ??= createBuiltInValidationRegistry();
+     return (_builtInRegistry ??= createBuiltInValidationRegistry());
    }
    ```
 2. Change the default parameter: `registry: ValidationRegistry = getBuiltInRegistry()`.
 3. Run `pnpm typecheck && pnpm test` in `flux-runtime`.
 
 **Acceptance:**
+
 - Built-in registry is created once and reused.
 - All tests pass.
 
@@ -638,6 +665,7 @@ The `revalidateDependents` function (declared at line 78) references `thisForm.v
 2. Call it after `thisForm` is assigned with the correct arguments.
 
 **Acceptance:**
+
 - No temporal dependency on `thisForm` assignment order.
 - All tests pass.
 
@@ -672,6 +700,7 @@ Every array mutation triggers `remapArrayFieldState`, which iterates **all** key
 2. Run `pnpm typecheck && pnpm test`.
 
 **Acceptance:**
+
 - Only array-related keys are iterated during remap.
 - All tests pass.
 
@@ -700,12 +729,13 @@ Every array mutation triggers `remapArrayFieldState`, which iterates **all** key
      if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
      if (Array.isArray(obj)) return `[${obj.map(stableStringify).join(',')}]`;
      const keys = Object.keys(obj as Record<string, unknown>).sort();
-     return `{${keys.map(k => `${JSON.stringify(k)}:${stableStringify((obj as Record<string, unknown>)[k])}`).join(',')}}`;
+     return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify((obj as Record<string, unknown>)[k])}`).join(',')}}`;
    }
    ```
 2. Replace `JSON.stringify` calls with `stableStringify`.
 
 **Acceptance:**
+
 - Semantically identical API objects produce the same cache key regardless of key order.
 
 ---
@@ -727,9 +757,10 @@ The heuristic `relatedPath.includes('.')` to decide whether a related path is al
 1. Open `packages/flux-runtime/src/form-path-state.ts` lines 82-92.
 2. Observe:
    ```typescript
-   const fullRelatedPath = relatedPath.includes('.') || !path.startsWith(arrayPath)
-     ? relatedPath
-     : `${arrayPath}.${relatedPath}`;
+   const fullRelatedPath =
+     relatedPath.includes('.') || !path.startsWith(arrayPath)
+       ? relatedPath
+       : `${arrayPath}.${relatedPath}`;
    ```
 3. Write a test: array item with `relatedPaths: ['email']` where `email` is a top-level field — the code incorrectly prepends the array path.
 
@@ -739,6 +770,7 @@ The heuristic `relatedPath.includes('.')` to decide whether a related path is al
 2. If that's not feasible, improve the heuristic by checking if the related path exists as a compiled validation node at the array level vs the top level.
 
 **Acceptance:**
+
 - `relatedPaths` resolve to correct absolute paths for both nested and top-level references.
 
 ---
@@ -773,6 +805,7 @@ Every input renderer calls `createFieldHandlers(...)` inline during render, prod
 2. Or better: create a `useFormFieldHandlers` hook that encapsulates the memoization.
 
 **Acceptance:**
+
 - Handler object identity is stable across renders when inputs haven't changed.
 
 ---
@@ -799,13 +832,15 @@ Every input renderer calls `createFieldHandlers(...)` inline during render, prod
    const selectedRange = getSelectedRange();
    for (let r = 0; r < rows; r++) {
      for (let c = 0; c < cols; c++) {
-       const isFillHandleCell = selectedRange && r === selectedRange.endRow && c === selectedRange.endCol;
+       const isFillHandleCell =
+         selectedRange && r === selectedRange.endRow && c === selectedRange.endCol;
        // ...
      }
    }
    ```
 
 **Acceptance:**
+
 - `getSelectedRange()` called exactly once per render.
 
 ---
@@ -819,7 +854,9 @@ Every input renderer calls `createFieldHandlers(...)` inline during render, prod
 **Problem:**
 
 ```typescript
-{String.fromCharCode(65 + c)}
+{
+  String.fromCharCode(65 + c);
+}
 ```
 
 Only works for columns A-Z (0-25). Column 26 produces `[` instead of `AA`.
@@ -833,11 +870,14 @@ Only works for columns A-Z (0-25). Column 26 produces `[` instead of `AA`.
 
 1. Use the existing `cellAddress(r, c)` utility from `@nop-chaos/spreadsheet-core` which already handles proper column letter generation:
    ```typescript
-   {cellAddress(0, c).replace(/[0-9]/g, '')}
+   {
+     cellAddress(0, c).replace(/[0-9]/g, '');
+   }
    ```
    Or extract just the column letter logic into a shared helper.
 
 **Acceptance:**
+
 - Column headers display correctly for AA, AB, ..., ZZ, AAA, etc.
 
 ---
@@ -874,6 +914,7 @@ Namespace import setup failures are caught and ignored. This can leave actions p
    ```
 
 **Acceptance:**
+
 - Import failures are observable and traceable.
 - Rendering does not hard-crash on import failure.
 
@@ -884,6 +925,7 @@ Namespace import setup failures are caught and ignored. This can leave actions p
 **Severity:** Medium
 **Category:** Architecture Conformance
 **Files:**
+
 - `packages/flux-renderers-basic/src/page.tsx:13-25`
 - `packages/flux-renderers-basic/src/container.tsx:26,46`
 - `packages/flux-renderers-data/src/table-renderer.tsx:237-567`
@@ -911,6 +953,7 @@ Historical note (2026-04-09): this remediation item described a real gap when th
 3. Run `pnpm typecheck && pnpm lint && pnpm test`.
 
 **Acceptance:**
+
 - Zero `__` (BEM modifier) class names in renderer source files.
 - Visual appearance unchanged.
 
@@ -921,6 +964,7 @@ Historical note (2026-04-09): this remediation item described a real gap when th
 **Severity:** Medium
 **Category:** Test Gap
 **Files:**
+
 - `packages/flux-core/src/validation-model.ts` (172 lines, 9 exports, zero tests)
 - `packages/flux-core/src/utils/path.ts` (zero tests)
 - `packages/flux-core/src/utils/object.ts` (zero tests)
@@ -957,6 +1001,7 @@ For each file, add a dedicated test file covering:
 - **`form-runtime-registration.test.ts`**: direct registration, child-path resolution, field synchronization.
 
 **Acceptance:**
+
 - Each utility file has a corresponding test file with meaningful coverage.
 - `pnpm test` passes for all new tests.
 
@@ -993,6 +1038,7 @@ The table renderer mixes sorting, filtering, pagination, row selection, row expa
 3. Run `pnpm typecheck && pnpm test`.
 
 **Acceptance:**
+
 - No single file exceeds ~200 lines in the table renderer module.
 - All existing tests pass.
 
@@ -1009,6 +1055,7 @@ The table renderer mixes sorting, filtering, pagination, row selection, row expa
 **Problem:**
 
 Every input renderer repeats the same pattern:
+
 ```typescript
 const scope = useRenderScope();
 const currentForm = useCurrentForm();
@@ -1044,6 +1091,7 @@ This is copy-pasted 7 times with minor variations.
 2. Replace the repeated pattern in each renderer with a single call to this hook.
 
 **Acceptance:**
+
 - No duplicated handler boilerplate across input renderers.
 - All tests pass.
 
@@ -1086,6 +1134,7 @@ This single file defines 30+ interfaces spanning multiple concern areas (API, co
 3. Run `pnpm typecheck`.
 
 **Acceptance:**
+
 - No type definition file exceeds ~150 lines.
 - All downstream packages compile without changes.
 
@@ -1114,6 +1163,7 @@ The `createManagedFormRuntime` function is a single 524-line function containing
 5. Run `pnpm typecheck && pnpm test`.
 
 **Acceptance:**
+
 - No single runtime file exceeds ~200 lines.
 - All tests pass.
 
@@ -1147,6 +1197,7 @@ This module-level mutable state is shared across all `SchemaRenderer` instances.
 3. Update any code that calls `getSchemaRendererRegistry()`.
 
 **Acceptance:**
+
 - No module-level mutable state in `schema-renderer.tsx`.
 - External registry access still works through the new API.
 
@@ -1182,6 +1233,7 @@ This counter increments forever across the lifetime of the process. In a long-ru
    ```
 
 **Acceptance:**
+
 - Dialog IDs are scoped to the page runtime instance.
 - No cross-instance ID collision risk.
 
@@ -1198,9 +1250,11 @@ This counter increments forever across the lifetime of the process. In a long-ru
 **Problem:**
 
 Already correct. The actual signature is:
+
 ```typescript
 useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn: (a: T, b: T) => boolean = Object.is): T
 ```
+
 The generic `S` is properly used as the input type for the selector parameter.
 
 **How to verify:**
@@ -1241,6 +1295,7 @@ Lines 138-140 have mismatched brace indentation. The closing `}` at line 138 is 
 2. Run `pnpm lint` to confirm.
 
 **Acceptance:**
+
 - Consistent indentation throughout the file.
 
 ---
@@ -1265,6 +1320,7 @@ Lines 138-140 have mismatched brace indentation. The closing `}` at line 138 is 
 1. Either remove this subscription entirely (if the dialog content uses `RenderNodes` which handles its own subscriptions) or use a more specific selector that only reads the data the dialog actually needs.
 
 **Acceptance:**
+
 - `DialogView` does not re-render on unrelated scope changes.
 
 ---
@@ -1296,6 +1352,7 @@ When `name` is `undefined`, `useOwnedFieldState('')` and `useAggregateError('')`
    (Requires extracting the hook calls to top level with a stable empty-name variant, or restructuring.)
 
 **Acceptance:**
+
 - No subscription to empty string path when `name` is undefined.
 
 ---
@@ -1327,6 +1384,7 @@ SelectRenderer, TextareaRenderer, CheckboxRenderer, SwitchRenderer, RadioGroupRe
 2. Reference by name in the definitions array.
 
 **Acceptance:**
+
 - All renderer components have names visible in React DevTools.
 - Each renderer can be imported and tested independently.
 
@@ -1365,6 +1423,7 @@ Blindly casts `result.data` to `BaseSchema` without validation. If the API retur
    ```
 
 **Acceptance:**
+
 - Malformed API responses produce an error state instead of crashing downstream.
 
 ---
@@ -1372,6 +1431,7 @@ Blindly casts `result.data` to `BaseSchema` without validation. If the API retur
 ## Execution Order
 
 ### Phase A — Immediate (P0 items, 1-2 days)
+
 1. ~~P0-1: Clean build artifacts~~ — **SKIP, already fixed**
 2. P0-2: Fix useEffect dependency array
 3. P0-3: Inline renderComponent
@@ -1382,6 +1442,7 @@ Blindly casts `result.data` to `BaseSchema` without validation. If the API retur
 8. P0-8: Fix schema-compiler indentation
 
 ### Phase B — Near-term (P1 items, 1-2 weeks)
+
 9. P1-1: O(n²) key comparison → Set
 10. P1-2: Remove or fix formulaScopeCache
 11. P1-3: Fix has() for undefined values
@@ -1401,6 +1462,7 @@ Blindly casts `result.data` to `BaseSchema` without validation. If the API retur
 25. P1-17: Extract useFormFieldController hook
 
 ### Phase C — Backlog (P2 items, ongoing)
+
 26. P2-1, P2-2, ~~P2-5 (skip — not an issue)~~, P2-3, P2-4, P2-6, P2-7, P2-8, P2-9, P2-10 as capacity allows
 
 ---

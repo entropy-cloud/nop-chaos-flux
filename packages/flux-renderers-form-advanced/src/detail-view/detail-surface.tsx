@@ -89,7 +89,12 @@ export function DetailSurface(props: DetailSurfaceProps) {
 
   if (mode === 'drawer') {
     return (
-      <Drawer open={props.open} onOpenChange={(next) => { if (!next) props.onClose(); }}>
+      <Drawer
+        open={props.open}
+        onOpenChange={(next) => {
+          if (!next) props.onClose();
+        }}
+      >
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>{props.title}</DrawerTitle>
@@ -104,16 +109,21 @@ export function DetailSurface(props: DetailSurfaceProps) {
   }
 
   return (
-      <Dialog open={props.open} onOpenChange={(next) => { if (!next) props.onClose(); }}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{props.title}</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div data-slot={props.bodySlot}>{props.children}</div>
-          </DialogBody>
-          <DialogFooter>{footer}</DialogFooter>
-        </DialogContent>
-      </Dialog>
+    <Dialog
+      open={props.open}
+      onOpenChange={(next) => {
+        if (!next) props.onClose();
+      }}
+    >
+      <DialogContent showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>{props.title}</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <div data-slot={props.bodySlot}>{props.children}</div>
+        </DialogBody>
+        <DialogFooter>{footer}</DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

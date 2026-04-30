@@ -1,5 +1,9 @@
 import { useEffect } from 'react';
-import type { CompiledDataSource, DataSourceSchema, RendererComponentProps } from '@nop-chaos/flux-core';
+import type {
+  CompiledDataSource,
+  DataSourceSchema,
+  RendererComponentProps,
+} from '@nop-chaos/flux-core';
 import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 
 export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchema>) {
@@ -9,13 +13,15 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
 
   useEffect(() => {
     if (!compiledSource) {
-      throw new Error(`DataSourceRenderer requires compiledSource for node ${props.id}. Ensure the schema is compiled before rendering.`);
+      throw new Error(
+        `DataSourceRenderer requires compiledSource for node ${props.id}. Ensure the schema is compiled before rendering.`,
+      );
     }
 
     const registration = runtime.registerDataSource({
       id: props.id,
       scope,
-      compiledSource
+      compiledSource,
     });
 
     return () => {

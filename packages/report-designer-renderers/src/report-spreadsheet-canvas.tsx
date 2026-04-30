@@ -1,8 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  cellAddress,
-  type SpreadsheetRuntimeSnapshot,
-} from '@nop-chaos/spreadsheet-core';
+import { cellAddress, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 import {
   SheetTabBar,
   SpreadsheetGrid,
@@ -25,15 +22,26 @@ export interface ReportSpreadsheetCanvasProps {
   spreadsheetSnapshot: SpreadsheetRuntimeSnapshot;
 }
 
-export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spreadsheetSnapshot }: ReportSpreadsheetCanvasProps) {
+export function ReportSpreadsheetCanvas({
+  core,
+  snapshot,
+  spreadsheetBridge,
+  spreadsheetSnapshot,
+}: ReportSpreadsheetCanvasProps) {
   const designerBridge = useMemo(
     () => createReportDesignerBridge(spreadsheetBridge, core),
     [spreadsheetBridge, core],
   );
 
-  const sheetId = spreadsheetSnapshot.activeSheetId || snapshot.document.spreadsheet.workbook.sheets[0]?.id || '';
+  const sheetId =
+    spreadsheetSnapshot.activeSheetId || snapshot.document.spreadsheet.workbook.sheets[0]?.id || '';
 
-  const interactions = useSpreadsheetInteractions({ bridge: spreadsheetBridge, sheetId, rows: ROWS, cols: COLS });
+  const interactions = useSpreadsheetInteractions({
+    bridge: spreadsheetBridge,
+    sheetId,
+    rows: ROWS,
+    cols: COLS,
+  });
 
   const {
     snapshot: ssSnapshot,
@@ -68,49 +76,63 @@ export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spr
   } = interactions;
 
   const prevSelectedCell = useRef<{ row: number; col: number } | null>(null);
+  const hasMirroredSpreadsheetSelection = useRef(false);
 
   useEffect(() => {
     const selection = ssSnapshot.selection;
+    const selectedCellTarget =
+      selection.kind === 'cell' && selection.anchor
+        ? { row: selection.anchor.row, col: selection.anchor.col }
+        : null;
     if (selection.kind === 'column' && selection.columns?.length) {
       prevSelectedCell.current = null;
+      hasMirroredSpreadsheetSelection.current = true;
       void core.setSelectionTarget({ kind: 'column', sheetId, col: selection.columns[0]! });
       return;
     }
     if (selection.kind === 'row' && selection.rows?.length) {
       prevSelectedCell.current = null;
+      hasMirroredSpreadsheetSelection.current = true;
       void core.setSelectionTarget({ kind: 'row', sheetId, row: selection.rows[0]! });
       return;
     }
     if (selection.kind === 'sheet') {
       prevSelectedCell.current = null;
+      hasMirroredSpreadsheetSelection.current = true;
       void core.setSelectionTarget({ kind: 'sheet', sheetId });
       return;
     }
     if (selection.kind === 'range' && selection.range) {
       prevSelectedCell.current = null;
+      hasMirroredSpreadsheetSelection.current = true;
       void core.setSelectionTarget({ kind: 'range', range: selection.range });
       return;
     }
 
     const prev = prevSelectedCell.current;
-    if (!selectedCell) {
+    if (!selectedCellTarget) {
       prevSelectedCell.current = null;
+      if (selection.kind === 'none' && hasMirroredSpreadsheetSelection.current) {
+        hasMirroredSpreadsheetSelection.current = false;
+        void core.setSelectionTarget(undefined);
+      }
       return;
     }
-    if (prev && prev.row === selectedCell.row && prev.col === selectedCell.col) {
+    if (prev && prev.row === selectedCellTarget.row && prev.col === selectedCellTarget.col) {
       return;
     }
-    prevSelectedCell.current = selectedCell;
+    prevSelectedCell.current = selectedCellTarget;
+    hasMirroredSpreadsheetSelection.current = true;
     void core.setSelectionTarget({
       kind: 'cell',
       cell: {
         sheetId,
-        address: cellAddress(selectedCell.row, selectedCell.col),
-        row: selectedCell.row,
-        col: selectedCell.col,
+        address: cellAddress(selectedCellTarget.row, selectedCellTarget.col),
+        row: selectedCellTarget.row,
+        col: selectedCellTarget.col,
       },
     });
-  }, [selectedCell, core, sheetId, ssSnapshot.selection]);
+  }, [core, sheetId, ssSnapshot.selection]);
 
   const getCellMetadata = useCallback(
     (row: number, col: number) =>
@@ -194,7 +216,9 @@ export function ReportSpreadsheetCanvas({ core, snapshot, spreadsheetBridge, spr
       <SheetTabBar
         sheets={ssSnapshot.workbook.sheets}
         activeSheetId={ssSnapshot.activeSheet?.id ?? ''}
-        onSwitchSheet={(id) => spreadsheetBridge.dispatch({ type: 'spreadsheet:setActiveSheet', sheetId: id })}
+        onSwitchSheet={(id) =>
+          spreadsheetBridge.dispatch({ type: 'spreadsheet:setActiveSheet', sheetId: id })
+        }
         onAddSheet={handleAddSheet}
         onRemoveSheet={handleRemoveSheet}
         onRenameSheet={handleRenameSheet}

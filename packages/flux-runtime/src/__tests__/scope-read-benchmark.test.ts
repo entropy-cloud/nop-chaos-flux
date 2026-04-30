@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { createScopeRef, createScopeStore } from '../scope';
 
 const performanceApi = globalThis.performance;
-const processEnv = (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } }).process?.env;
+const processEnv = (
+  globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } }
+).process?.env;
 const runBenchmarks = processEnv?.NOP_RUN_SCOPE_BENCH === '1';
 const benchDescribe = runBenchmarks ? describe : describe.skip;
 
@@ -74,7 +76,12 @@ function percentile(sorted: number[], ratio: number) {
   return sorted[index];
 }
 
-function runBenchmark(name: string, iterations: number, samples: number, fn: (iteration: number) => number): BenchStats {
+function runBenchmark(
+  name: string,
+  iterations: number,
+  samples: number,
+  fn: (iteration: number) => number,
+): BenchStats {
   let sink = 0;
 
   for (let warmup = 0; warmup < 5; warmup += 1) {
@@ -123,108 +130,178 @@ function formatStats(stats: BenchStats) {
 }
 
 benchDescribe('Scope read benchmark', () => {
-  it('measures steady-state access and cold materialization against a prototype-chain view', { timeout: 20_000 }, () => {
-    const parentSnapshot = createParentSnapshot(64);
-    const childSnapshotA = createChildSnapshot(12);
-    const childSnapshotB = { ...createChildSnapshot(12) };
+  it(
+    'measures steady-state access and cold materialization against a prototype-chain view',
+    { timeout: 20_000 },
+    () => {
+      const parentSnapshot = createParentSnapshot(64);
+      const childSnapshotA = createChildSnapshot(12);
+      const childSnapshotB = { ...createChildSnapshot(12) };
 
-    const parentScope = createScopeRef({
-      id: 'bench-parent',
-      path: 'bench-parent',
-      initialData: parentSnapshot,
-    });
-    const childStore = createScopeStore(childSnapshotA);
-    const childScope = createScopeRef({
-      id: 'bench-child',
-      path: 'bench-child',
-      store: childStore,
-      parent: parentScope,
-    });
-
-    const prototypeView = createPrototypeView(parentSnapshot, childSnapshotA);
-    const sharedKey = 'shared32';
-    const localKey = 'local6';
-    const deepPath = 'deep.score';
-
-    expect(childScope.readVisible()[sharedKey]).toBe(prototypeView[sharedKey]);
-    expect(childScope.readVisible()[localKey]).toBe(prototypeView[localKey]);
-    expect((childScope.readVisible().deep as Record<string, unknown>).score).toBe((prototypeView.deep as Record<string, unknown>).score);
-    expect(childScope.get(deepPath)).toBe(getByPath(prototypeView, deepPath));
-
-    const hotScopeRead = runBenchmark('scope.readVisible() cached + root access', 250_000, 12, () => {
-      const value = childScope.readVisible();
-      return Number(value[sharedKey]) + Number(value[localKey]) + Number((value.deep as Record<string, unknown>).score);
-    });
-
-    const hotPrototypeRead = runBenchmark('prototype view + root access', 250_000, 12, () => {
-      return Number(prototypeView[sharedKey]) + Number(prototypeView[localKey]) + Number((prototypeView.deep as Record<string, unknown>).score);
-    });
-
-    const hotScopeGet = runBenchmark('scope.get(path)', 250_000, 12, () => {
-      return Number(childScope.get(sharedKey)) + Number(childScope.get(localKey)) + Number(childScope.get(deepPath));
-    });
-
-    const hotPrototypeGet = runBenchmark('prototype view getByPath(path)', 250_000, 12, () => {
-      return Number(getByPath(prototypeView, sharedKey)) + Number(getByPath(prototypeView, localKey)) + Number(getByPath(prototypeView, deepPath));
-    });
-
-    let toggle = false;
-    const coldScopeRead = runBenchmark('scope.readVisible() rematerialize + root access', 35_000, 10, () => {
-      toggle = !toggle;
-      childStore.setSnapshot(toggle ? childSnapshotA : childSnapshotB, {
-        paths: ['local6', 'deep'],
-        kind: 'replace',
-        sourceScopeId: 'bench-child',
+      const parentScope = createScopeRef({
+        id: 'bench-parent',
+        path: 'bench-parent',
+        initialData: parentSnapshot,
       });
-      const value = childScope.readVisible();
-      return Number(value[sharedKey]) + Number(value[localKey]) + Number((value.deep as Record<string, unknown>).score);
-    });
+      const childStore = createScopeStore(childSnapshotA);
+      const childScope = createScopeRef({
+        id: 'bench-child',
+        path: 'bench-child',
+        store: childStore,
+        parent: parentScope,
+      });
 
-    toggle = false;
-    const coldPrototypeRead = runBenchmark('prototype create + root access', 35_000, 10, () => {
-      toggle = !toggle;
-      const view = createPrototypeView(parentSnapshot, toggle ? childSnapshotA : childSnapshotB);
-      return Number(view[sharedKey]) + Number(view[localKey]) + Number((view.deep as Record<string, unknown>).score);
-    });
+      const prototypeView = createPrototypeView(parentSnapshot, childSnapshotA);
+      const sharedKey = 'shared32';
+      const localKey = 'local6';
+      const deepPath = 'deep.score';
 
-    const hotScopeKeys = runBenchmark('Object.keys(scope.materializeVisible())', 120_000, 10, () => Object.keys(childScope.materializeVisible()).length);
+      expect(childScope.readVisible()[sharedKey]).toBe(prototypeView[sharedKey]);
+      expect(childScope.readVisible()[localKey]).toBe(prototypeView[localKey]);
+      expect((childScope.readVisible().deep as Record<string, unknown>).score).toBe(
+        (prototypeView.deep as Record<string, unknown>).score,
+      );
+      expect(childScope.get(deepPath)).toBe(getByPath(prototypeView, deepPath));
 
-    const hotPrototypeKeys = runBenchmark('Object.keys(prototype view)', 120_000, 10, () => Object.keys(prototypeView).length);
+      const hotScopeRead = runBenchmark(
+        'scope.readVisible() cached + root access',
+        250_000,
+        12,
+        () => {
+          const value = childScope.readVisible();
+          return (
+            Number(value[sharedKey]) +
+            Number(value[localKey]) +
+            Number((value.deep as Record<string, unknown>).score)
+          );
+        },
+      );
 
-    const hotScopeStringify = runBenchmark('JSON.stringify(scope.materializeVisible())', 10_000, 8, () => JSON.stringify(childScope.materializeVisible()).length);
+      const hotPrototypeRead = runBenchmark('prototype view + root access', 250_000, 12, () => {
+        return (
+          Number(prototypeView[sharedKey]) +
+          Number(prototypeView[localKey]) +
+          Number((prototypeView.deep as Record<string, unknown>).score)
+        );
+      });
 
-    const hotPrototypeStringify = runBenchmark('JSON.stringify(prototype view)', 10_000, 8, () => JSON.stringify(prototypeView).length);
+      const hotScopeGet = runBenchmark('scope.get(path)', 250_000, 12, () => {
+        return (
+          Number(childScope.get(sharedKey)) +
+          Number(childScope.get(localKey)) +
+          Number(childScope.get(deepPath))
+        );
+      });
 
-    const hotScopeSpread = runBenchmark('spread clone from scope.materializeVisible()', 40_000, 10, () => Object.keys({ ...childScope.materializeVisible() }).length);
+      const hotPrototypeGet = runBenchmark('prototype view getByPath(path)', 250_000, 12, () => {
+        return (
+          Number(getByPath(prototypeView, sharedKey)) +
+          Number(getByPath(prototypeView, localKey)) +
+          Number(getByPath(prototypeView, deepPath))
+        );
+      });
 
-    const hotPrototypeSpread = runBenchmark('spread clone from prototype view', 40_000, 10, () => Object.keys({ ...prototypeView }).length);
+      let toggle = false;
+      const coldScopeRead = runBenchmark(
+        'scope.readVisible() rematerialize + root access',
+        35_000,
+        10,
+        () => {
+          toggle = !toggle;
+          childStore.setSnapshot(toggle ? childSnapshotA : childSnapshotB, {
+            paths: ['local6', 'deep'],
+            kind: 'replace',
+            sourceScopeId: 'bench-child',
+          });
+          const value = childScope.readVisible();
+          return (
+            Number(value[sharedKey]) +
+            Number(value[localKey]) +
+            Number((value.deep as Record<string, unknown>).score)
+          );
+        },
+      );
 
-    console.table([
-      formatStats(hotScopeRead),
-      formatStats(hotPrototypeRead),
-      formatStats(hotScopeGet),
-      formatStats(hotPrototypeGet),
-      formatStats(coldScopeRead),
-      formatStats(coldPrototypeRead),
-      formatStats(hotScopeKeys),
-      formatStats(hotPrototypeKeys),
-      formatStats(hotScopeStringify),
-      formatStats(hotPrototypeStringify),
-      formatStats(hotScopeSpread),
-      formatStats(hotPrototypeSpread),
-    ]);
+      toggle = false;
+      const coldPrototypeRead = runBenchmark('prototype create + root access', 35_000, 10, () => {
+        toggle = !toggle;
+        const view = createPrototypeView(parentSnapshot, toggle ? childSnapshotA : childSnapshotB);
+        return (
+          Number(view[sharedKey]) +
+          Number(view[localKey]) +
+          Number((view.deep as Record<string, unknown>).score)
+        );
+      });
 
-    expect(hotScopeRead.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotPrototypeRead.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotScopeGet.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotPrototypeGet.medianNsPerOp).toBeGreaterThan(0);
-    expect(coldScopeRead.medianNsPerOp).toBeGreaterThan(0);
-    expect(coldPrototypeRead.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotScopeKeys.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotPrototypeKeys.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotScopeStringify.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotPrototypeStringify.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotScopeSpread.medianNsPerOp).toBeGreaterThan(0);
-    expect(hotPrototypeSpread.medianNsPerOp).toBeGreaterThan(0);
-  });
+      const hotScopeKeys = runBenchmark(
+        'Object.keys(scope.materializeVisible())',
+        120_000,
+        10,
+        () => Object.keys(childScope.materializeVisible()).length,
+      );
+
+      const hotPrototypeKeys = runBenchmark(
+        'Object.keys(prototype view)',
+        120_000,
+        10,
+        () => Object.keys(prototypeView).length,
+      );
+
+      const hotScopeStringify = runBenchmark(
+        'JSON.stringify(scope.materializeVisible())',
+        10_000,
+        8,
+        () => JSON.stringify(childScope.materializeVisible()).length,
+      );
+
+      const hotPrototypeStringify = runBenchmark(
+        'JSON.stringify(prototype view)',
+        10_000,
+        8,
+        () => JSON.stringify(prototypeView).length,
+      );
+
+      const hotScopeSpread = runBenchmark(
+        'spread clone from scope.materializeVisible()',
+        40_000,
+        10,
+        () => Object.keys({ ...childScope.materializeVisible() }).length,
+      );
+
+      const hotPrototypeSpread = runBenchmark(
+        'spread clone from prototype view',
+        40_000,
+        10,
+        () => Object.keys({ ...prototypeView }).length,
+      );
+
+      console.table([
+        formatStats(hotScopeRead),
+        formatStats(hotPrototypeRead),
+        formatStats(hotScopeGet),
+        formatStats(hotPrototypeGet),
+        formatStats(coldScopeRead),
+        formatStats(coldPrototypeRead),
+        formatStats(hotScopeKeys),
+        formatStats(hotPrototypeKeys),
+        formatStats(hotScopeStringify),
+        formatStats(hotPrototypeStringify),
+        formatStats(hotScopeSpread),
+        formatStats(hotPrototypeSpread),
+      ]);
+
+      expect(hotScopeRead.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotPrototypeRead.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotScopeGet.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotPrototypeGet.medianNsPerOp).toBeGreaterThan(0);
+      expect(coldScopeRead.medianNsPerOp).toBeGreaterThan(0);
+      expect(coldPrototypeRead.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotScopeKeys.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotPrototypeKeys.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotScopeStringify.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotPrototypeStringify.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotScopeSpread.medianNsPerOp).toBeGreaterThan(0);
+      expect(hotPrototypeSpread.medianNsPerOp).toBeGreaterThan(0);
+    },
+  );
 });

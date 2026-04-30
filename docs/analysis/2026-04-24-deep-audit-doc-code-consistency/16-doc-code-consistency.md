@@ -7,15 +7,15 @@
 
 ## 复核统计
 
-| 指标 | 数值 |
-|------|------|
-| 初审发现总数 | 16 |
-| 已独立复核条目数 | 16 |
-| 维度级复核完成数 | 3 |
-| 子项逐条复核数 | 4（P1 项） |
-| 保留 | 16 |
-| 降级 | 0 |
-| 驳回 | 0 |
+| 指标             | 数值       |
+| ---------------- | ---------- |
+| 初审发现总数     | 16         |
+| 已独立复核条目数 | 16         |
+| 维度级复核完成数 | 3          |
+| 子项逐条复核数   | 4（P1 项） |
+| 保留             | 16         |
+| 降级             | 0          |
+| 驳回             | 0          |
 
 ---
 
@@ -63,7 +63,7 @@
 - **代码路径**: 多个 `packages/*/package.json`
 - **漂移类型**: 行为不一致
 - **文档描述**: 依赖链为 `flux-core -> flux-formula -> flux-i18n -> flux-runtime`
-- **代码现状**: 
+- **代码现状**:
   - `flux-i18n` 不依赖 `flux-formula`（仅依赖 `flux-core`）
   - `flux-runtime` 不依赖 `flux-i18n`（依赖 `flux-action-core`, `flux-compiler`）
   - `ui` 不依赖 `tailwind-preset` 和 `theme-tokens`
@@ -180,14 +180,14 @@
 
 ## 确认无偏差项
 
-| 文档 | 检查内容 | 结论 |
-|------|---------|------|
-| `styling-system.md` | classAliases 递归展开、scope 继承 | 完全一致 |
-| `styling-system.md` | marker class 规则（零样式纯标记） | 完全一致 |
-| `styling-system.md` | stack-*/hstack-* 别名值 | 完全一致 |
-| `AGENTS.md` | 路由表路径有效性 | 全部 20 个路径有效 |
-| `scope-ownership-and-isolation.md` | scope 隔离契约 | 完全一致 |
-| Bug #01-33 | 历史注意事项有效性 | 除 #19 外全部有效 |
+| 文档                               | 检查内容                          | 结论               |
+| ---------------------------------- | --------------------------------- | ------------------ |
+| `styling-system.md`                | classAliases 递归展开、scope 继承 | 完全一致           |
+| `styling-system.md`                | marker class 规则（零样式纯标记） | 完全一致           |
+| `styling-system.md`                | stack-_/hstack-_ 别名值           | 完全一致           |
+| `AGENTS.md`                        | 路由表路径有效性                  | 全部 20 个路径有效 |
+| `scope-ownership-and-isolation.md` | scope 隔离契约                    | 完全一致           |
+| Bug #01-33                         | 历史注意事项有效性                | 除 #19 外全部有效  |
 
 ---
 

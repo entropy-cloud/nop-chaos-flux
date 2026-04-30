@@ -9,7 +9,14 @@ describe('condition-builder config integration action behavior', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
-        children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
+        children: [
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+        ],
       };
       const { container } = renderGroup({ draggable: false }, value);
       expect(container.querySelector('.cursor-grab')).toBeNull();
@@ -19,7 +26,14 @@ describe('condition-builder config integration action behavior', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
-        children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
+        children: [
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+        ],
       };
       const { container } = renderGroup({ draggable: true }, value);
       expect(container.querySelector('.cursor-grab')).not.toBeNull();
@@ -57,7 +71,14 @@ describe('condition-builder config integration action behavior', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
-        children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
+        children: [
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+        ],
       };
       const { container } = renderGroup({}, value, onChange);
       const deleteBtn = container.querySelector('.hover\\:text-destructive');
@@ -106,7 +127,14 @@ describe('condition-builder config integration action behavior', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
-        children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
+        children: [
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+        ],
       };
       const { container } = renderGroup({ draggable: true }, value);
       const handle = container.querySelector('[data-dnd-listeners="true"]');
@@ -117,7 +145,14 @@ describe('condition-builder config integration action behavior', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
-        children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
+        children: [
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+        ],
       };
       const { container } = renderGroup({ draggable: false }, value);
       const handle = container.querySelector('[data-dnd-listeners="true"]');
@@ -128,7 +163,14 @@ describe('condition-builder config integration action behavior', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
-        children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
+        children: [
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+        ],
       };
       const { container } = renderGroup({ draggable: true }, value, vi.fn(), { disabled: true });
       expect(container.querySelector('[data-dnd-listeners="true"]')).toBeNull();

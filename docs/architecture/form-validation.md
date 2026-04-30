@@ -135,13 +135,13 @@ The validation runtime model has three core abstractions:
 
 ### Key Types Summary
 
-| Type | Purpose |
-|------|---------|
-| `ValidationError` | Single validation error with path, rule, message, and sourceKind |
-| `ValidationResult` | Current exported result for single-path validation |
-| `FormValidationResult` | Current exported result for subtree/scope validation |
-| `ActionResult` | Current exported result for `FormRuntime.submit()` |
-| `ScopeValidationStateSnapshot` | Scope-wide validation state summary |
+| Type                           | Purpose                                                          |
+| ------------------------------ | ---------------------------------------------------------------- |
+| `ValidationError`              | Single validation error with path, rule, message, and sourceKind |
+| `ValidationResult`             | Current exported result for single-path validation               |
+| `FormValidationResult`         | Current exported result for subtree/scope validation             |
+| `ActionResult`                 | Current exported result for `FormRuntime.submit()`               |
+| `ScopeValidationStateSnapshot` | Scope-wide validation state summary                              |
 
 ### ValidationScopeRuntime
 
@@ -153,6 +153,7 @@ The core runtime abstraction exists for any scope that has validation semantics:
 4. row-local editors when they own local validation
 
 Key APIs:
+
 - `validateAt(path, reason)` — validate single path
 - `validateSubtree(path, reason)` — validate path and descendants
 - `validateAll(reason)` — validate entire scope
@@ -385,6 +386,7 @@ Validation uses three separate kinds of state:
 ### Compiled Validation Model
 
 Immutable runtime input produced by the compiler, containing:
+
 - `rootPath` and `ownerId` for scope identity
 - optional `nodes` map of compiled validation nodes keyed by path
 - `validationOrder` for deterministic traversal
@@ -397,11 +399,13 @@ Repeated-template expansion and richer node-shape vocabulary remain part of the 
 ### Field Registration State
 
 Runtime participation state tracking:
+
 - `registrationId` — stable for one mounted field instance
 - `path`, `mounted`, `visible`, `disabled`
 - `touched`, `dirty`, `visited` — maintained by FormRuntime
 
 Registration updates are generation-aware. Key rules:
+
 1. Owner runtime binds each accepted registration to the current `modelGeneration`
 2. Late callbacks from older generations must not mutate newer generation state
 3. Registration requests during `disposed` state must be rejected
@@ -409,6 +413,7 @@ Registration updates are generation-aware. Key rules:
 ### Field Validation State
 
 Runtime validation result state per field:
+
 - `ownerId`, `path`
 - `errors: ValidationError[]`
 - `validating: boolean`
@@ -416,6 +421,7 @@ Runtime validation result state per field:
 ### Form Store State Structure
 
 Form state uses a normalized flat structure:
+
 - Single `fieldStates` map instead of five separate maps (touched, dirty, visited, validating, errors)
 - `true | undefined` pattern for boolean flags (memory efficiency)
 - Empty entries automatically cleaned up
@@ -424,6 +430,7 @@ Form state uses a normalized flat structure:
 ### Per-Path Subscription API
 
 `FormStoreApi` exposes fine-grained subscription methods:
+
 - `subscribeToPath(path, listener)` — fires only for that path's changes
 - `subscribeToSubmitting(listener)` — fires only for submitting flag
 - `getPathState(path)` — snapshot for useSyncExternalStore
@@ -434,6 +441,7 @@ This per-path subscription model ensures O(1) hook wake-up cost per field change
 ### Canonical Identity
 
 Canonical bookkeeping identity is the pair `{ ownerId, path }`:
+
 - `ownerId` — distinguishes parent-owned committed state from child-owned draft state
 - `path` — absolute path inside the owning scope's address space
 

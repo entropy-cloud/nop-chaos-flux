@@ -4,6 +4,6 @@ declare module 'use-sync-external-store/shim/with-selector' {
     getSnapshot: () => TSnapshot,
     getServerSnapshot: () => TSnapshot,
     selector: (snapshot: TSnapshot) => TSelection,
-    isEqual?: (a: TSelection, b: TSelection) => boolean
+    isEqual?: (a: TSelection, b: TSelection) => boolean,
   ): TSelection;
 }

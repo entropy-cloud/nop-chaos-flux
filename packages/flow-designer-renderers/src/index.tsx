@@ -1,13 +1,25 @@
 import './designer-theme.css';
-import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
-import { DesignerPageRenderer, DesignerCanvasRenderer, DesignerPaletteRenderer } from './designer-page';
+import {
+  registerRendererDefinitions,
+  type RendererDefinition,
+  type RendererRegistry,
+} from '@nop-chaos/flux-core';
+import {
+  DesignerPageRenderer,
+  DesignerCanvasRenderer,
+  DesignerPaletteRenderer,
+} from './designer-page';
 import { DesignerFieldRenderer } from './designer-field';
 import { designerHostContract } from './designer-manifest';
 
 export * from './schemas';
 export * from './designer-context';
 export { createDesignerActionProvider } from './designer-action-provider';
-export { DesignerPageRenderer, DesignerCanvasRenderer, DesignerPaletteRenderer } from './designer-page';
+export {
+  DesignerPageRenderer,
+  DesignerCanvasRenderer,
+  DesignerPaletteRenderer,
+} from './designer-page';
 export { DesignerPaletteContent } from './designer-palette';
 export { DesignerCanvasContent } from './designer-canvas';
 export { DefaultInspector } from './designer-inspector';
@@ -15,7 +27,7 @@ export { DesignerFieldRenderer } from './designer-field';
 export {
   DesignerXyflowCanvasBridge,
   renderDesignerCanvasBridge,
-  type DesignerCanvasBridgeProps
+  type DesignerCanvasBridgeProps,
 } from './canvas-bridge';
 export {
   DesignerXyflowCanvas,
@@ -26,13 +38,13 @@ export {
   useEdgeTypeConfig,
   useNormalizedConfig,
   type DesignerXyflowCanvasProps,
-  DESIGNER_PALETTE_NODE_MIME
+  DESIGNER_PALETTE_NODE_MIME,
 } from './designer-xyflow-canvas';
 export {
   FLOW_DESIGNER_MANIFEST_V1,
   resolveDesignerManifest,
   designerHostContract,
-  DESIGNER_CAPABILITY_PUBLICATION
+  DESIGNER_CAPABILITY_PUBLICATION,
 } from './designer-manifest';
 
 export const flowDesignerRendererDefinitions: RendererDefinition[] = [
@@ -48,24 +60,30 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
         shape: { kind: 'string' },
         displayName: 'Status Path',
         description: 'Publishes designer host summary outside the host boundary.',
-        editorType: 'path'
+        editorType: 'path',
       },
       document: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Document',
         description: 'Initial designer graph document.',
-        editorType: 'object'
+        editorType: 'object',
+      },
+      treeDocument: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Tree Document',
+        description: 'Initial designer tree document for tree mode.',
+        editorType: 'object',
       },
       config: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Config',
         description: 'Designer host configuration.',
         editorType: 'designer-config',
-        required: true
-      }
+        required: true,
+      },
     },
     scopeExportContracts: {
-      '$designer': {
+      $designer: {
         kind: 'object',
         fields: {
           kind: { kind: 'literal', value: 'designer' },
@@ -78,29 +96,29 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
             anyOf: [
               { kind: 'literal', value: 'node' },
               { kind: 'literal', value: 'edge' },
-              { kind: 'literal', value: 'none' }
-            ]
+              { kind: 'literal', value: 'none' },
+            ],
           },
-          selectionCount: { kind: 'number' }
-        }
-      }
+          selectionCount: { kind: 'number' },
+        },
+      },
     },
     regions: ['toolbar', 'inspector', 'dialogs'],
     actionScopePolicy: 'new',
-    hostContract: designerHostContract
+    hostContract: designerHostContract,
   },
   {
     type: 'designer-field',
-    component: DesignerFieldRenderer
+    component: DesignerFieldRenderer,
   },
   {
     type: 'designer-canvas',
-    component: DesignerCanvasRenderer
+    component: DesignerCanvasRenderer,
   },
   {
     type: 'designer-palette',
-    component: DesignerPaletteRenderer
-  }
+    component: DesignerPaletteRenderer,
+  },
 ];
 
 export function registerFlowDesignerRenderers(registry: RendererRegistry) {

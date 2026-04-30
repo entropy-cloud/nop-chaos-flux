@@ -237,7 +237,9 @@ export function resolveTables(config: SQLEditorConfig | undefined): TableSchema[
   return config.tables;
 }
 
-export function resolveFormatConfig(config: SQLEditorConfig | undefined): SQLFormatConfig | undefined {
+export function resolveFormatConfig(
+  config: SQLEditorConfig | undefined,
+): SQLFormatConfig | undefined {
   if (!config?.format) return undefined;
   if (config.format === true) return { enabled: true };
   return config.format;
@@ -253,7 +255,5 @@ export function renderInsertTemplate(
   template: string,
   variable: { value: string; label: string },
 ): string {
-  return template
-    .replace(/\$\{value\}/g, variable.value)
-    .replace(/\$\{label\}/g, variable.label);
+  return template.replace(/\$\{value\}/g, variable.value).replace(/\$\{label\}/g, variable.label);
 }

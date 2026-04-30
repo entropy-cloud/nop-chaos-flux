@@ -12,14 +12,14 @@
 
 本设计由六条不可协商的原则驱动，它们在后续每一层设计中反复出现、彼此约束：
 
-| # | 原则 | 核心断言 |
-|---|------|---------|
-| P1 | DSL 优先 | Schema 是平台一级制品，拥有独立于运行时的结构操作空间 |
-| P2 | 编写-执行分离 | 编写态与执行态由预编译边界分隔，两侧优化目标不同 |
-| P3 | 响应式数据驱动 | 运行时以动态求值、依赖追踪、定点失效为核心节拍 |
-| P4 | 渐进式演化 | 复杂度从简单形式自然生长，不膨胀原语集 |
-| P5 | 词法所有权 | 数据、能力、资源、反应跟随词法/子树边界归属 |
-| P6 | 领域隔离 | 核心提供小而稳的执行内核，领域复杂度留在核心之外 |
+| #   | 原则           | 核心断言                                              |
+| --- | -------------- | ----------------------------------------------------- |
+| P1  | DSL 优先       | Schema 是平台一级制品，拥有独立于运行时的结构操作空间 |
+| P2  | 编写-执行分离  | 编写态与执行态由预编译边界分隔，两侧优化目标不同      |
+| P3  | 响应式数据驱动 | 运行时以动态求值、依赖追踪、定点失效为核心节拍        |
+| P4  | 渐进式演化     | 复杂度从简单形式自然生长，不膨胀原语集                |
+| P5  | 词法所有权     | 数据、能力、资源、反应跟随词法/子树边界归属           |
+| P6  | 领域隔离       | 核心提供小而稳的执行内核，领域复杂度留在核心之外      |
 
 这些原则不是装饰——当两个设计选项冲突时，由原则裁决。
 
@@ -53,6 +53,7 @@
 ```
 
 **关键决策**:
+
 - 渲染宿主是可替换的——Runtime API Surface 是唯一的耦合点
 - Reactive Kernel 不依赖任何 UI 框架——可以在 Node.js 中测试
 - Expression Engine 是纯函数式的——编译一次，执行多次，无副作用
@@ -165,13 +166,13 @@ type ValueIR =
 
 #### 2.2.3 渐进式值语义
 
-| 层级 | 声明形式 | 编译产物 | 运行时行为 |
-|------|---------|---------|-----------|
-| L0 | `"Hello"` | `StaticValue("Hello")` | 直接返回，零开销 |
-| L1 | `"${user.name}"` | `DynamicValue(expr#42, deps=["user.name"])` | 首次求值，缓存，依赖变更时重求值 |
-| L2 | `"Hello ${user.name}"` | `DynamicValue(expr#43, deps=["user.name"])` | 同 L1，模板编译为拼接表达式 |
-| L3 | `{ action: "ajax", url: "..." }` | `DynamicValue(expr#44, deps=[])` | 异步求值，发布结果 |
-| L4 | `{ name: "ds", action: "ajax", ... }` | `ResourceValue(res#1, strategy=manual)` | 带生命周期管理的持续值发布 |
+| 层级 | 声明形式                              | 编译产物                                    | 运行时行为                       |
+| ---- | ------------------------------------- | ------------------------------------------- | -------------------------------- |
+| L0   | `"Hello"`                             | `StaticValue("Hello")`                      | 直接返回，零开销                 |
+| L1   | `"${user.name}"`                      | `DynamicValue(expr#42, deps=["user.name"])` | 首次求值，缓存，依赖变更时重求值 |
+| L2   | `"Hello ${user.name}"`                | `DynamicValue(expr#43, deps=["user.name"])` | 同 L1，模板编译为拼接表达式      |
+| L3   | `{ action: "ajax", url: "..." }`      | `DynamicValue(expr#44, deps=[])`            | 异步求值，发布结果               |
+| L4   | `{ name: "ds", action: "ajax", ... }` | `ResourceValue(res#1, strategy=manual)`     | 带生命周期管理的持续值发布       |
 
 消费者端的读值方式在 L0-L4 之间完全一致——都是通过 ScopeRef 的 `resolve(path)` 接口。这是渐进式演化的核心体现：复杂度增长不改变消费模式。
 
@@ -207,6 +208,7 @@ interface TemplateIR {
 **参数化区域**：区域的参数在求值时注入到子数据环境中。例如表格列区域声明 `params: ["record", "index"]`，渲染时每行创建独立 Scope，将 `record` 和 `index` 绑定进去。在表达式中，参数通过区域声明的参数名直接访问（如 `${record.name}`）。也可通过 `$slot` 前缀访问（如 `${$slot.record.name}`），`$slot` 是所有区域参数的统一命名空间——在嵌套区域场景中可消除歧义。
 
 **隔离默认值规则**：
+
 - 表格行区域 (`columns`)：`isolated` 默认为 `true`
 - 其他区域：`isolated` 默认为 `false`
 - `defaultIsolated` 记录默认值，以便 Schema 可以显式覆盖
@@ -238,14 +240,14 @@ function parse(input: string | JsonObject): SchemaNodeTree {
 
 此阶段处理所有 DSL 层面的结构操作，不影响运行时行为：
 
-| 变换 | 说明 | 何时执行 |
-|------|------|---------|
-| 继承合并 | `x:extends` 式继承与覆写，定义明确的合并语义（数组覆盖、对象深度合并、`x:override` 强制替换） | 装配时 |
-| 片段组合 | `$ref` 引用并内联外部片段 | 装配时 |
-| i18n 替换 | 匹配 `i18n:flux.xxx` 模式，替换为 `messages[prefix + key]`，fallback 到默认 locale | 装配时 |
-| 权限裁剪 | 删除当前用户无权访问的节点 | 装配时 |
-| Feature Flag | 删除被 flag 关闭的分支 | 装配时 |
-| 默认展开 | 填充未声明的默认值 | 编译时 |
+| 变换         | 说明                                                                                          | 何时执行 |
+| ------------ | --------------------------------------------------------------------------------------------- | -------- |
+| 继承合并     | `x:extends` 式继承与覆写，定义明确的合并语义（数组覆盖、对象深度合并、`x:override` 强制替换） | 装配时   |
+| 片段组合     | `$ref` 引用并内联外部片段                                                                     | 装配时   |
+| i18n 替换    | 匹配 `i18n:flux.xxx` 模式，替换为 `messages[prefix + key]`，fallback 到默认 locale            | 装配时   |
+| 权限裁剪     | 删除当前用户无权访问的节点                                                                    | 装配时   |
+| Feature Flag | 删除被 flag 关闭的分支                                                                        | 装配时   |
+| 默认展开     | 填充未声明的默认值                                                                            | 编译时   |
 
 **关键约束**: 变换阶段不引入任何运行时概念——它只操作 SchemaNode 结构。
 
@@ -296,11 +298,11 @@ interface ExecutionNode {
 
 ### 3.2 编译不变量
 
-| 不变量 | 含义 |
-|--------|------|
-| 幂等性 | 相同输入 → 相同输出，无隐藏状态 |
-| 单调性 | 编译只产出结构，不丢失信息（诊断独立产出） |
-| 边界纯净 | Stage 2 结束后不再有编写态概念 |
+| 不变量   | 含义                                             |
+| -------- | ------------------------------------------------ |
+| 幂等性   | 相同输入 → 相同输出，无隐藏状态                  |
+| 单调性   | 编译只产出结构，不丢失信息（诊断独立产出）       |
+| 边界纯净 | Stage 2 结束后不再有编写态概念                   |
 | 引用完整 | 所有 ValueIR 引用的 exprId/resourceId 在表中存在 |
 
 ### 3.3 全局表设计
@@ -363,16 +365,16 @@ ${items | filter:{active: true} | map:'name'}
 
 #### 内置函数
 
-| 类别 | 函数 |
-|------|------|
-| 数学 | `abs`, `ceil`, `floor`, `round`, `max`, `min` |
-| 字符串 | `len`, `upper`, `lower`, `trim`, `split`, `join`, `startsWith`, `endsWith`, `includes` |
-| 集合 | `count`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `sort`, `slice`, `includes`, `pick`, `groupBy` |
-| 类型 | `typeof`, `isArray`, `isObject`, `isNil`, `isEmpty` |
-| 路径 | `get(obj, path)`, `has(obj, path)`, `pick`, `omit` |
-| 日期 | `now`, `formatDate`, `parseDate` |
-| 逻辑 | `if(cond, then, else)`, `switch(val, ...cases)` |
-| 过滤器 | `trim`, `lower`, `upper`, `date`, `number`, `json`, `raw`, `default` |
+| 类别   | 函数                                                                                                        |
+| ------ | ----------------------------------------------------------------------------------------------------------- |
+| 数学   | `abs`, `ceil`, `floor`, `round`, `max`, `min`                                                               |
+| 字符串 | `len`, `upper`, `lower`, `trim`, `split`, `join`, `startsWith`, `endsWith`, `includes`                      |
+| 集合   | `count`, `filter`, `map`, `reduce`, `find`, `some`, `every`, `sort`, `slice`, `includes`, `pick`, `groupBy` |
+| 类型   | `typeof`, `isArray`, `isObject`, `isNil`, `isEmpty`                                                         |
+| 路径   | `get(obj, path)`, `has(obj, path)`, `pick`, `omit`                                                          |
+| 日期   | `now`, `formatDate`, `parseDate`                                                                            |
+| 逻辑   | `if(cond, then, else)`, `switch(val, ...cases)`                                                             |
+| 过滤器 | `trim`, `lower`, `upper`, `date`, `number`, `json`, `raw`, `default`                                        |
 
 #### 自定义函数注册
 
@@ -390,7 +392,7 @@ interface ExpressionFunction {
 interface FunctionOptions {
   namespace?: string;
   pure: boolean;
-  lazy?: boolean;  // true = 不预先求值参数，函数自行决定何时求值（用于短路逻辑函数如 &&）
+  lazy?: boolean; // true = 不预先求值参数，函数自行决定何时求值（用于短路逻辑函数如 &&）
 }
 ```
 
@@ -419,22 +421,20 @@ interface EvalContext {
 ```typescript
 function evaluate(ast: ExprAST, ctx: EvalContext, tracker: DependencyTracker): unknown {
   switch (ast.type) {
-    case 'Literal': return ast.value;
-    case 'Path': return ctx.resolve(ast.path, tracker);
+    case 'Literal':
+      return ast.value;
+    case 'Path':
+      return ctx.resolve(ast.path, tracker);
     case 'BinaryOp':
-      return applyOp(
-        evaluate(ast.left, ctx, tracker),
-        ast.op,
-        evaluate(ast.right, ctx, tracker)
-      );
+      return applyOp(evaluate(ast.left, ctx, tracker), ast.op, evaluate(ast.right, ctx, tracker));
     case 'FunctionCall': {
       const fn = resolveFunction(ast.name);
-      const args = ast.args.map(a => evaluate(a, ctx, tracker));
+      const args = ast.args.map((a) => evaluate(a, ctx, tracker));
       return fn(args, ctx);
     }
     case 'Filter': {
       const value = evaluate(ast.input, ctx, tracker);
-      const filterArgs = ast.args.map(a => evaluate(a, ctx, tracker));
+      const filterArgs = ast.args.map((a) => evaluate(a, ctx, tracker));
       return resolveFilter(ast.name)([value, ...filterArgs], ctx);
     }
   }
@@ -447,9 +447,15 @@ function evaluate(ast: ExprAST, ctx: EvalContext, tracker: DependencyTracker): u
 class DependencyTracker {
   private currentFrame: Set<string>;
 
-  beginEvaluation(): void { this.currentFrame = new Set(); }
-  recordRead(path: string): void { this.currentFrame.add(path); }
-  endEvaluation(): ReadonlySet<string> { return this.currentFrame; }
+  beginEvaluation(): void {
+    this.currentFrame = new Set();
+  }
+  recordRead(path: string): void {
+    this.currentFrame.add(path);
+  }
+  endEvaluation(): ReadonlySet<string> {
+    return this.currentFrame;
+  }
 }
 ```
 
@@ -557,7 +563,10 @@ interface ActionExecutionContext {
   host: HostIntegration;
 }
 
-type CapabilityHandler = (args: Record<string, unknown>, ctx: ActionExecutionContext) => Promise<ActionResult>;
+type CapabilityHandler = (
+  args: Record<string, unknown>,
+  ctx: ActionExecutionContext,
+) => Promise<ActionResult>;
 ```
 
 内置动作（如 `setValue`、`ajax`）和注册的命名空间方法都通过此接口访问写能力。外部消费者（如渲染器）永远无法直接获取 `ScopeWriteAccess`。
@@ -577,15 +586,16 @@ resolve(scope, "user.name", tracker):
 
 ### 5.3 词法所有权规则
 
-| 实体 | 归属规则 |
-|------|---------|
-| ScopeRef | 跟随创建它的节点 |
-| Resource | 绑定目标按词法所有权确定 ScopeRef |
-| Reaction | 跟随声明它的节点所属的 ScopeRef |
-| ComponentHandle | 跟随渲染它的节点所属的 ScopeRef |
+| 实体              | 归属规则                          |
+| ----------------- | --------------------------------- |
+| ScopeRef          | 跟随创建它的节点                  |
+| Resource          | 绑定目标按词法所有权确定 ScopeRef |
+| Reaction          | 跟随声明它的节点所属的 ScopeRef   |
+| ComponentHandle   | 跟随渲染它的节点所属的 ScopeRef   |
 | NamespaceRegistry | 跟随声明命名空间的节点的 ScopeRef |
 
 **关键约束**：
+
 - 同一拥有 Scope 内，同一 binding target 不应被两个同时活跃的发布型生产者占有
 - Resource 写入的数据变更**不触发**该 Resource 自身的刷新（自写保护）
 - 子 Scope 通过词法遮蔽覆盖父级发布，而非全局覆盖
@@ -616,6 +626,7 @@ interface ScopeAwareDepIndex {
 ```
 
 当父 Scope 的路径变更时：
+
 1. 本地消费者通过 `localDeps` 查找并标记失效
 2. 依赖该路径的子 Scope 通过 `childDeps` 查找，并向子 Scope 传播变更
 
@@ -643,6 +654,7 @@ interface ScopeRef {
 ```
 
 **dispose 语义**：
+
 1. 从父 Scope 的 `childDeps` 中移除自身
 2. 取消所有在父 Scope 上的订阅
 3. 停止所有拥有 Scope 内的 Resource（取消进行中的请求）
@@ -652,6 +664,7 @@ interface ScopeRef {
 7. 递归 dispose 所有子 Scope
 
 **触发时机**：
+
 - `when` 条件变为 false → 节点卸载 → 其 Scope 被 dispose
 - 表格翻页 → 旧行 Scope 通过 `ScopePool` 回收
 - Runtime unmount → 根 Scope dispose → 级联清理
@@ -674,12 +687,13 @@ interface ScopePool {
 for (const [index, record] of records.entries()) {
   const rowScope = parentScope.createChild(
     { record, index },
-    { isolated: true, projections: { totalCount: totalExpr } }
+    { isolated: true, projections: { totalCount: totalExpr } },
   );
 }
 ```
 
 隔离的含义：
+
 - **不继承父级** — 行内表达式不读取页面级数据（除非显式投影）
 - **行间隔离** — 修改一行的数据不影响其他行的依赖
 - **显式投影** — 隔离环境若需要外部数据，必须通过 `projections` 显式声明
@@ -691,11 +705,11 @@ for (const [index, record] of records.entries()) {
 
 ### 6.1 三类消费者
 
-| 消费者 | 依赖变更后果 | 触发方式 |
-|--------|-------------|---------|
-| **Value** | 重新计算该值（lazy, pull-based） | 下次读取时 |
-| **Resource** | 按策略刷新（重新请求/重新计算） | settle 后异步刷新 |
-| **Reaction** | 评估条件，可能触发 Capability 派发 | settle 末尾执行 |
+| 消费者       | 依赖变更后果                       | 触发方式          |
+| ------------ | ---------------------------------- | ----------------- |
+| **Value**    | 重新计算该值（lazy, pull-based）   | 下次读取时        |
+| **Resource** | 按策略刷新（重新请求/重新计算）    | settle 后异步刷新 |
+| **Reaction** | 评估条件，可能触发 Capability 派发 | settle 末尾执行   |
 
 ### 6.2 Value 求值生命周期
 
@@ -772,6 +786,7 @@ interface ReactionDeclaration {
 ```
 
 执行语义：
+
 1. 每次 settle 末尾检查被观察值的依赖是否变更
 2. 如果变更，求值 `when` 条件
 3. 如果条件为 truthy，将动作加入**下一轮** Settled Update Turn（deferred，不在当前 Turn 内同步执行）
@@ -924,14 +939,15 @@ interface ActionContext {
 
 **并行执行错误语义**：
 
-| Strategy | 分支失败时 | 结果类型 |
-|----------|-----------|---------|
-| `all` + cancelOnError | 取消其余分支，立即返回 error | `AggregateActionResult(status: 'error')` |
-| `all` + !cancelOnError | 等待所有分支完成，收集所有结果 | `AggregateActionResult(status: 'partial'/'error')` |
-| `race` | 第一个完成的分支胜出（无论成功失败） | 单个 `ActionResult` |
-| `allSettled` | 等待所有分支完成，收集所有结果 | `AggregateActionResult(status: 'partial'/'success'/'error')` |
+| Strategy               | 分支失败时                           | 结果类型                                                     |
+| ---------------------- | ------------------------------------ | ------------------------------------------------------------ |
+| `all` + cancelOnError  | 取消其余分支，立即返回 error         | `AggregateActionResult(status: 'error')`                     |
+| `all` + !cancelOnError | 等待所有分支完成，收集所有结果       | `AggregateActionResult(status: 'partial'/'error')`           |
+| `race`                 | 第一个完成的分支胜出（无论成功失败） | 单个 `ActionResult`                                          |
+| `allSettled`           | 等待所有分支完成，收集所有结果       | `AggregateActionResult(status: 'partial'/'success'/'error')` |
 
 **Sequential 中的控制流分支**：`SequentialAction` 的步骤根据前一步的 `ActionResult.status` 决定是否继续：
+
 - `success` → 继续下一步，`ActionContext.result` = 当前步骤的 value
 - `error` → 跳过后续步骤，整个 Sequential 返回 error 结果（除非某步骤是 `ConditionalAction` 的 else 分支处理错误）
 - `skipped` → 继续下一步，`ActionContext.result` = 前一步非 skipped 步骤的结果
@@ -946,23 +962,23 @@ interface ActionContext {
 
 #### 7.3.1 平台内置动作
 
-| 动作 | 说明 | 参数 |
-|------|------|------|
-| `setValue` | 设置 Scope 中的值 | `path`, `value` |
-| `applyPatch` | 结构化补丁写入 | `patch: PatchOperation[]` |
-| `ajax` | 发起 HTTP 请求 | `url`, `method`, `params`, `body`, `headers`, `scopeInjection`, `adaptor`, `requestAdaptor` |
-| `dialog` | 打开对话框 | `schema`, `data` |
-| `closeDialog` | 关闭对话框 | `result` |
-| `drawer` | 打开抽屉 | `schema`, `data` |
-| `closeDrawer` | 关闭抽屉 | `result` |
-| `submitForm` | 提交表单 | `validate: boolean` |
-| `resetForm` | 重置表单 | — |
-| `navigate` | 导航 | `url`, `target` |
-| `confirm` | 确认对话框 | `message` |
-| `toast` | 通知消息 | `message`, `level` |
-| `refresh` | 刷新命名数据源 | `name` |
-| `preventDefault` | 阻止默认行为 | — |
-| `stopPropagation` | 阻止事件冒泡 | — |
+| 动作              | 说明              | 参数                                                                                        |
+| ----------------- | ----------------- | ------------------------------------------------------------------------------------------- |
+| `setValue`        | 设置 Scope 中的值 | `path`, `value`                                                                             |
+| `applyPatch`      | 结构化补丁写入    | `patch: PatchOperation[]`                                                                   |
+| `ajax`            | 发起 HTTP 请求    | `url`, `method`, `params`, `body`, `headers`, `scopeInjection`, `adaptor`, `requestAdaptor` |
+| `dialog`          | 打开对话框        | `schema`, `data`                                                                            |
+| `closeDialog`     | 关闭对话框        | `result`                                                                                    |
+| `drawer`          | 打开抽屉          | `schema`, `data`                                                                            |
+| `closeDrawer`     | 关闭抽屉          | `result`                                                                                    |
+| `submitForm`      | 提交表单          | `validate: boolean`                                                                         |
+| `resetForm`       | 重置表单          | —                                                                                           |
+| `navigate`        | 导航              | `url`, `target`                                                                             |
+| `confirm`         | 确认对话框        | `message`                                                                                   |
+| `toast`           | 通知消息          | `message`, `level`                                                                          |
+| `refresh`         | 刷新命名数据源    | `name`                                                                                      |
+| `preventDefault`  | 阻止默认行为      | —                                                                                           |
+| `stopPropagation` | 阻止事件冒泡      | —                                                                                           |
 
 #### 7.3.2 AJAX 作用域注入与适配器
 
@@ -1125,10 +1141,10 @@ interface HostAdapter {
 
 ### 8.3 容器与叶子分离
 
-| 类别 | 例子 | 样式策略 | 标记类名 |
-|------|------|---------|---------|
-| **布局容器** | page, container, flex, panel, grid | 仅输出标记类名，零内置样式 | `nop-page`, `nop-container`, `nop-flex` |
-| **控件组件** | input, select, table, code-editor | 完整自包含 UI 控件，内置视觉样式 | `nop-input`, `nop-table` |
+| 类别         | 例子                               | 样式策略                         | 标记类名                                |
+| ------------ | ---------------------------------- | -------------------------------- | --------------------------------------- |
+| **布局容器** | page, container, flex, panel, grid | 仅输出标记类名，零内置样式       | `nop-page`, `nop-container`, `nop-flex` |
+| **控件组件** | input, select, table, code-editor  | 完整自包含 UI 控件，内置视觉样式 | `nop-input`, `nop-table`                |
 
 布局容器不包含任何隐式样式。所有视觉样式由 Schema 的 `className` 驱动，运行时仅透传。
 
@@ -1147,14 +1163,14 @@ interface FragmentOptions {
 
 ### 8.5 条件激活 (when) vs 可见性 (visible)
 
-| 维度 | visible | when |
-|------|---------|------|
-| 渲染 | display: none | 不渲染 |
-| Scope | 仍存在于 Scope 树 | Scope 被 dispose |
-| Resource | 继续运行 | 停止并 dispose |
-| Validation | 继续参与校验 | 不参与校验 |
-| Reaction | 继续监听 | 停止监听 |
-| Component | 保持挂载 | 卸载，unregister handles |
+| 维度       | visible           | when                     |
+| ---------- | ----------------- | ------------------------ |
+| 渲染       | display: none     | 不渲染                   |
+| Scope      | 仍存在于 Scope 树 | Scope 被 dispose         |
+| Resource   | 继续运行          | 停止并 dispose           |
+| Validation | 继续参与校验      | 不参与校验               |
+| Reaction   | 继续监听          | 停止监听                 |
+| Component  | 保持挂载          | 卸载，unregister handles |
 
 ### 8.6 复合组件模式
 
@@ -1206,6 +1222,7 @@ Wizard 由 DraftScope + 步骤控制 + 条件渲染组成：
 ```
 
 Wizard 的运行时通过以下机制实现：
+
 - 整体 Wizard 创建一个根 DraftScope
 - 每个步骤是 DraftScope 的子区域
 - 步骤切换时验证当前步骤的草稿
@@ -1399,7 +1416,7 @@ interface SurfaceHandle {
 const handle = surfaceManager.open({
   type: 'dialog',
   schema: dialogSchema,
-  data: { editItem: item }
+  data: { editItem: item },
 });
 
 const result = await handle.getResult();
@@ -1494,6 +1511,7 @@ type ErrorAction =
 ```
 
 **错误处理回调语义**：
+
 - 表达式求值错误 → 调用 `onError`，默认 `suppress`（返回 undefined）
 - Resource 生产者错误 → 发布到 `errorStatePath`，同时调用 `onError`
 - Renderer 错误 → 调用 `onError`，默认 `suppress`（渲染 error boundary）
@@ -1526,6 +1544,7 @@ interface RuntimeHandle {
 ### 12.4 多实例隔离
 
 多个 Runtime 实例在同一页面中完全隔离：
+
 - 每个实例有独立的 Scope Graph、ChangePropagator、SurfaceManager
 - 不共享全局状态，不污染全局命名空间
 - 组件注册表和命名空间注册表按实例隔离
@@ -1555,12 +1574,12 @@ interface DomainBridge {
 
 ### 13.2 交互方向
 
-| 方向 | 机制 |
-|------|------|
-| 核心 → 领域 (读) | Host Projection |
-| 领域 → 核心 (写) | Capability |
-| 实例定位 | ComponentHandleRegistry |
-| 领域私有 | DomainBridge |
+| 方向             | 机制                    |
+| ---------------- | ----------------------- |
+| 核心 → 领域 (读) | Host Projection         |
+| 领域 → 核心 (写) | Capability              |
+| 实例定位         | ComponentHandleRegistry |
+| 领域私有         | DomainBridge            |
 
 ---
 
@@ -1583,7 +1602,7 @@ function resolveProp(prop: ValueIR, scope: ScopeRef, tracker: DependencyTracker)
 function createScopeSelector<T>(
   scopeRef: ScopeRef,
   selector: (resolve: (path: string) => unknown) => T,
-  isEqual?: (prev: T, next: T) => boolean
+  isEqual?: (prev: T, next: T) => boolean,
 ): () => T;
 ```
 
@@ -1615,7 +1634,7 @@ class EvalCache {
   getOrEvaluate(exprId: number, ctx: EvalContext, tracker: DependencyTracker): unknown {
     const cached = this.cache.get(exprId);
     if (cached && !this.isInvalidated(exprId, cached.deps)) {
-      return cached.value;  // 引用稳定
+      return cached.value; // 引用稳定
     }
     const value = evaluate(exprId, ctx, tracker);
     const newDeps = tracker.endEvaluation();
@@ -1639,13 +1658,13 @@ class EvalCache {
 
 典型页面（500 节点，~20 Scope，~200 表达式，~50 Resource）：
 
-| 结构 | 估算大小 |
-|------|---------|
-| Scope 节点 | ~40 KB |
-| 表达式缓存 | ~40 KB |
-| 反向依赖索引 | ~10 KB |
-| Resource 状态 | ~25 KB |
-| **总计** | **~115 KB** |
+| 结构          | 估算大小    |
+| ------------- | ----------- |
+| Scope 节点    | ~40 KB      |
+| 表达式缓存    | ~40 KB      |
+| 反向依赖索引  | ~10 KB      |
+| Resource 状态 | ~25 KB      |
+| **总计**      | **~115 KB** |
 
 大规模表格（1000 行 × 5 表达式）：~500 KB。可接受。行 Scope 滚出后释放，内存可控。
 
@@ -1653,12 +1672,12 @@ class EvalCache {
 
 ## 15. 安全模型
 
-| 约束 | 实现机制 |
-|------|---------|
-| 禁止动态代码生成 | AST/字节码求值器 |
-| 权限编译前裁剪 | Stage 2 Transform |
-| 表达式执行受控 | 只通过 EvalContext.resolve 访问数据 |
-| 命名空间边界显式 | 词法作用域解析 |
+| 约束             | 实现机制                                        |
+| ---------------- | ----------------------------------------------- |
+| 禁止动态代码生成 | AST/字节码求值器                                |
+| 权限编译前裁剪   | Stage 2 Transform                               |
+| 表达式执行受控   | 只通过 EvalContext.resolve 访问数据             |
+| 命名空间边界显式 | 词法作用域解析                                  |
 | adaptor 安全执行 | adaptor 使用同一表达式引擎，不使用 new Function |
 
 ---
@@ -1720,6 +1739,7 @@ interface I18nConfig {
 ```
 
 在 Stage 2 Transform 中：
+
 1. 匹配 `i18n:flux.xxx` 模式
 2. 解析为 `prefix + "flux.xxx"` → 查找 `messages`
 3. 未找到 → 尝试 fallback locale → 仍未找到 → 保留原始 key 并产出 warning 诊断
@@ -1731,15 +1751,15 @@ interface I18nConfig {
 
 ### 18.1 分层测试
 
-| 层级 | 测试对象 | 环境 |
-|------|---------|------|
-| L1 | Expression Engine | Node.js |
-| L2 | Scope Graph + Dependency Tracker | Node.js |
-| L3 | Compiler Pipeline | Node.js |
-| L4 | Reactive Kernel (settle/batch/cascade) | Node.js |
-| L5 | Action System | Node.js (mock Capability) |
-| L6 | Form Validation | Node.js |
-| L7 | Renderer Host Integration | JSDOM / 浏览器 |
+| 层级 | 测试对象                               | 环境                      |
+| ---- | -------------------------------------- | ------------------------- |
+| L1   | Expression Engine                      | Node.js                   |
+| L2   | Scope Graph + Dependency Tracker       | Node.js                   |
+| L3   | Compiler Pipeline                      | Node.js                   |
+| L4   | Reactive Kernel (settle/batch/cascade) | Node.js                   |
+| L5   | Action System                          | Node.js (mock Capability) |
+| L6   | Form Validation                        | Node.js                   |
+| L7   | Renderer Host Integration              | JSDOM / 浏览器            |
 
 L1-L6 完全不依赖 DOM。
 
@@ -1787,20 +1807,20 @@ type TypeRef =
 
 > **注**：本表力求准确反映各框架的实际能力，而非营销式对比。
 
-| 维度 | AMIS | Formily 2.x | Retool | Lowdefy | 本设计 (v8) |
-|------|------|-------------|--------|---------|-------------|
-| Schema 角色 | 运行时输入 + $ref 组合 | 运行时输入 | 运行时输入 | 编译时校验 + 运行时输入 | 一级制品，独立结构操作空间 |
-| 编译边界 | JIT 表达式编译缓存 | 有限编译 | 无 | Schema 校验 | 完整 4 阶段 AOT 编译管线 |
-| 静态零开销 | 否 | 否 | 否 | 否 | StaticValue 直接内联 |
-| 依赖追踪 | MobX 组件/字段级，Scope 链隐式宽依赖 | 字段级 reactive，粒度好 | 全量重算 | 无 | 路径级前缀匹配 + 自动收集 + Scope 隔离 |
-| 动作编排 | 字符串表达式 + adaptor(new Function) | 函数式链式 | JavaScript 代码 | 声明式 actions + JS | 编译时 DAG，三种并行策略 |
-| 域控件嵌入 | 组件嵌套 | 组件嵌套 | iframe | 有限 | 窄契约四方向 |
-| 表格行隔离 | 无 | 无 | 无 | 无 | Scope 隔离 + 显式投影 + ScopePool |
-| 宿主耦合 | 中（env.fetcher 可注入但 adaptor 用 new Function） | 中 | 高（内置请求） | 中 | 低（全委托 + scopeInjection） |
-| 安全性 | 混合（amis-formula 安全 + adaptor 用 new Function） | JS 表达式 | JS 代码 | 受限 JS | 全程受控表达式引擎 |
-| 可测试性 | 需要 DOM | 需要 React | 需要浏览器 | 有限 | 核心 100% Node.js |
-| 表达式丰富度 | 高（过滤器管道、数据映射、三元） | 中 | 完整 JS | 有限 | 中（管道过滤器 + 可扩展函数注册） |
-| 复合模式 | 极丰富（CRUD/Wizard/Service 等 300+ 组件） | 中（ArrayCards/Tabs） | 中 | 有限 | 基元组合模式（不内置复合组件） |
+| 维度         | AMIS                                                | Formily 2.x             | Retool          | Lowdefy                 | 本设计 (v8)                            |
+| ------------ | --------------------------------------------------- | ----------------------- | --------------- | ----------------------- | -------------------------------------- |
+| Schema 角色  | 运行时输入 + $ref 组合                              | 运行时输入              | 运行时输入      | 编译时校验 + 运行时输入 | 一级制品，独立结构操作空间             |
+| 编译边界     | JIT 表达式编译缓存                                  | 有限编译                | 无              | Schema 校验             | 完整 4 阶段 AOT 编译管线               |
+| 静态零开销   | 否                                                  | 否                      | 否              | 否                      | StaticValue 直接内联                   |
+| 依赖追踪     | MobX 组件/字段级，Scope 链隐式宽依赖                | 字段级 reactive，粒度好 | 全量重算        | 无                      | 路径级前缀匹配 + 自动收集 + Scope 隔离 |
+| 动作编排     | 字符串表达式 + adaptor(new Function)                | 函数式链式              | JavaScript 代码 | 声明式 actions + JS     | 编译时 DAG，三种并行策略               |
+| 域控件嵌入   | 组件嵌套                                            | 组件嵌套                | iframe          | 有限                    | 窄契约四方向                           |
+| 表格行隔离   | 无                                                  | 无                      | 无              | 无                      | Scope 隔离 + 显式投影 + ScopePool      |
+| 宿主耦合     | 中（env.fetcher 可注入但 adaptor 用 new Function）  | 中                      | 高（内置请求）  | 中                      | 低（全委托 + scopeInjection）          |
+| 安全性       | 混合（amis-formula 安全 + adaptor 用 new Function） | JS 表达式               | JS 代码         | 受限 JS                 | 全程受控表达式引擎                     |
+| 可测试性     | 需要 DOM                                            | 需要 React              | 需要浏览器      | 有限                    | 核心 100% Node.js                      |
+| 表达式丰富度 | 高（过滤器管道、数据映射、三元）                    | 中                      | 完整 JS         | 有限                    | 中（管道过滤器 + 可扩展函数注册）      |
+| 复合模式     | 极丰富（CRUD/Wizard/Service 等 300+ 组件）          | 中（ArrayCards/Tabs）   | 中              | 有限                    | 基元组合模式（不内置复合组件）         |
 
 **v8 的核心优势**：编译时优化、精确依赖追踪、Scope 隔离、安全表达式引擎、宿主无关性。
 
@@ -1812,14 +1832,14 @@ type TypeRef =
 
 ### 21.1 错误分级
 
-| 错误来源 | 默认行为 | 可配置 |
-|----------|---------|--------|
-| 表达式求值 | suppress（返回 undefined） | onError 回调可配置为 fallback value |
+| 错误来源        | 默认行为                             | 可配置                                     |
+| --------------- | ------------------------------------ | ------------------------------------------ |
+| 表达式求值      | suppress（返回 undefined）           | onError 回调可配置为 fallback value        |
 | Resource 生产者 | 发布到 errorStatePath + onError 回调 | 不可 suppress（Resource 必须知道自身状态） |
-| Renderer 渲染 | error boundary 包裹，显示降级 UI | onError 回调可配置 |
-| Action 执行 | 作为 ActionResult.error 返回 | 由 Action DAG 的 onError 分支处理 |
-| 编译错误 | 产出 Diagnostic，不阻断编译 | 严重错误（引用缺失）阻断编译 |
-| Settle 级联溢出 | 抛出 CascadeOverflowError | maxTurnDepth 可配置 |
+| Renderer 渲染   | error boundary 包裹，显示降级 UI     | onError 回调可配置                         |
+| Action 执行     | 作为 ActionResult.error 返回         | 由 Action DAG 的 onError 分支处理          |
+| 编译错误        | 产出 Diagnostic，不阻断编译          | 严重错误（引用缺失）阻断编译               |
+| Settle 级联溢出 | 抛出 CascadeOverflowError            | maxTurnDepth 可配置                        |
 
 ### 21.2 运行时错误追踪
 
@@ -1843,47 +1863,47 @@ interface ErrorContext {
 
 ```typescript
 // Schema 层
-SchemaNode, SchemaValue, ValueIR (Static/Dynamic/Resource/Slot)
-RegionIR, TemplateIR
+(SchemaNode, SchemaValue, ValueIR(Static / Dynamic / Resource / Slot));
+(RegionIR, TemplateIR);
 
 // 编译层
-ExecutionPackage, ExecutionNode, CompiledExpression
-ActionDAG, ActionNode, ActionResult, AggregateActionResult
-ValidationGraph, ValidationRule
+(ExecutionPackage, ExecutionNode, CompiledExpression);
+(ActionDAG, ActionNode, ActionResult, AggregateActionResult);
+(ValidationGraph, ValidationRule);
 
 // 运行时层
-ScopeRef, ScopeWriteAccess, ScopeOptions, ScopePool
-ScopeChange, ChangePropagator, SettleController, SettlementResult
-DependencyTracker, EvalCache, EvalContext
-ResourceDeclaration, RefreshStrategy, ReactionDeclaration
-FormRuntime, DraftScope, ValidationExecutor
-SurfaceManager, Surface, SurfaceHandle
-RuntimeHandle, RuntimeLifecycle, HostIntegration
-ComponentHandleRegistry, NamespaceRegistry, CapabilityDispatcher
-RendererRegistry, RendererComponent, RenderSnapshot, HostAdapter
-ExpressionFunctionRegistry
-RuntimeInspector, Diagnostic, ErrorContext
+(ScopeRef, ScopeWriteAccess, ScopeOptions, ScopePool);
+(ScopeChange, ChangePropagator, SettleController, SettlementResult);
+(DependencyTracker, EvalCache, EvalContext);
+(ResourceDeclaration, RefreshStrategy, ReactionDeclaration);
+(FormRuntime, DraftScope, ValidationExecutor);
+(SurfaceManager, Surface, SurfaceHandle);
+(RuntimeHandle, RuntimeLifecycle, HostIntegration);
+(ComponentHandleRegistry, NamespaceRegistry, CapabilityDispatcher);
+(RendererRegistry, RendererComponent, RenderSnapshot, HostAdapter);
+ExpressionFunctionRegistry;
+(RuntimeInspector, Diagnostic, ErrorContext);
 ```
 
 ---
 
 ## 附录 B: 设计决策记录
 
-| 决策 | 选项 | 选择 | 理由 |
-|------|------|------|------|
-| 值表示 | 多种类型 vs 统一 IR | 统一 ValueIR | P4：消费者不感知生产者类型 |
-| 依赖收集 | 显式声明 vs 隐式自动 | 隐式自动 | P3：降低 DSL 复杂度 |
-| 失效策略 | Push 立即重算 vs Pull 标记重算 | Pull | 避免瀑布式重计算 |
-| 失效匹配 | 精确匹配 vs 前缀匹配 | 前缀匹配 | 正确性保证（写入 `user` 使 `user.name` 失效） |
-| Scope 继承 | 默认继承 vs 默认隔离 | 默认继承 | 符合直觉，表格行显式隔离 |
-| Reaction 执行 | settle 内同步 vs deferred | deferred | 避免 re-entrancy |
-| settle 调度 | 每次 write vs microtask batch | microtask batch | 合并多次写入，减少 Turn 数 |
-| 动作编译 | 运行时解析 vs 编译时 DAG | 编译时 DAG | 零运行时图发现开销 |
-| 表达式引擎 | eval vs AST/字节码 | AST/字节码 | 安全约束 |
-| 表面管理 | 扁平 vs 栈式 | 栈式 | 多层叠加自然语义 |
-| i18n | 运行时 vs 编译时 | 编译时 | 零运行时开销 |
-| 主题 | ThemeProvider vs CSS 变量 | CSS 变量 | 无运行时耦合 |
-| 渲染宿主 | 绑定 React vs 抽象协议 | 抽象协议 | 可替换宿主，核心可测试 |
-| Scope 写接口 | 公共接口 vs 分离内部接口 | 分离 ScopeWriteAccess | 读写分离原则 |
-| adaptor | new Function vs 表达式引擎 | 表达式引擎 | 安全性 |
-| 复合组件 | 内置 vs 基元组合 | 基元组合 | P4/P6：复杂度从简单形式生长 |
+| 决策          | 选项                           | 选择                  | 理由                                          |
+| ------------- | ------------------------------ | --------------------- | --------------------------------------------- |
+| 值表示        | 多种类型 vs 统一 IR            | 统一 ValueIR          | P4：消费者不感知生产者类型                    |
+| 依赖收集      | 显式声明 vs 隐式自动           | 隐式自动              | P3：降低 DSL 复杂度                           |
+| 失效策略      | Push 立即重算 vs Pull 标记重算 | Pull                  | 避免瀑布式重计算                              |
+| 失效匹配      | 精确匹配 vs 前缀匹配           | 前缀匹配              | 正确性保证（写入 `user` 使 `user.name` 失效） |
+| Scope 继承    | 默认继承 vs 默认隔离           | 默认继承              | 符合直觉，表格行显式隔离                      |
+| Reaction 执行 | settle 内同步 vs deferred      | deferred              | 避免 re-entrancy                              |
+| settle 调度   | 每次 write vs microtask batch  | microtask batch       | 合并多次写入，减少 Turn 数                    |
+| 动作编译      | 运行时解析 vs 编译时 DAG       | 编译时 DAG            | 零运行时图发现开销                            |
+| 表达式引擎    | eval vs AST/字节码             | AST/字节码            | 安全约束                                      |
+| 表面管理      | 扁平 vs 栈式                   | 栈式                  | 多层叠加自然语义                              |
+| i18n          | 运行时 vs 编译时               | 编译时                | 零运行时开销                                  |
+| 主题          | ThemeProvider vs CSS 变量      | CSS 变量              | 无运行时耦合                                  |
+| 渲染宿主      | 绑定 React vs 抽象协议         | 抽象协议              | 可替换宿主，核心可测试                        |
+| Scope 写接口  | 公共接口 vs 分离内部接口       | 分离 ScopeWriteAccess | 读写分离原则                                  |
+| adaptor       | new Function vs 表达式引擎     | 表达式引擎            | 安全性                                        |
+| 复合组件      | 内置 vs 基元组合               | 基元组合              | P4/P6：复杂度从简单形式生长                   |

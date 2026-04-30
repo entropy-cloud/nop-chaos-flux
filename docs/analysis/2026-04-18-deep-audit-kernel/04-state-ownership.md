@@ -7,12 +7,12 @@
 
 ## 复核结论
 
-| 发现 | 维度复核 | 子项复核 | 最终严重程度 |
-|------|---------|---------|------------|
-| 发现1: statusPath 双写入 | **驳回**（命令式/声明式互斥） | — | — |
-| 发现2: lastChange 过时上下文 | 保留（降级P3） | **成立** P3 | P3 |
-| 发现3: useResolvedContainer 渲染阶段写 ref | 降级P4 | — | P4（不跟踪） |
-| 发现4: useStatusPathPublication 无清理 | 保留 | **成立** P3 | P3 |
+| 发现                                       | 维度复核                      | 子项复核    | 最终严重程度 |
+| ------------------------------------------ | ----------------------------- | ----------- | ------------ |
+| 发现1: statusPath 双写入                   | **驳回**（命令式/声明式互斥） | —           | —            |
+| 发现2: lastChange 过时上下文               | 保留（降级P3）                | **成立** P3 | P3           |
+| 发现3: useResolvedContainer 渲染阶段写 ref | 降级P4                        | —           | P4（不跟踪） |
+| 发现4: useStatusPathPublication 无清理     | 保留                          | **成立** P3 | P3           |
 
 ---
 
@@ -25,8 +25,8 @@
 - **现状**: Dialog/Drawer 的 `statusPath` 存在两个发布者：
   1. **Runtime 层**（`surface-runtime.ts:77`）：在 `open()` 被调用时同步写入 `{id, kind, open: true, active: true, ...}`；在 `close()` 时同步写入 `{open: false, active: false, ...}`
   2. **React 层**（`useStatusPathPublication` 被 `dialog.tsx:22`、`drawer.tsx:22` 调用）：在 useEffect 中异步写入由 `props.props.open ?? props.props.defaultOpen ?? true` 计算出的 summary
-  两者写入同一个 scope 的同一个 `statusPath`，但 `open` 字段的取值来源不同。
-- **风险**: 
+     两者写入同一个 scope 的同一个 `statusPath`，但 `open` 字段的取值来源不同。
+- **风险**:
   - 打开阶段：runtime 先写 `open: true`，React effect 后写 `open: false`（如果 props 推导结果为 false），statusPath 消费者会看到值从 `true` 翻转为 `false`，造成状态闪烁
 - **建议**: 统一 statusPath 的唯一写入者。runtime 层保留 open/close 生命周期写入，React 层退化为补充字段。
 - **双状态详情**: `scope[statusPath]` 由 runtime（同步、生命周期驱动）和 React effect（异步、props 驱动）两条路径写入
@@ -66,16 +66,16 @@
 
 ## 确认安全的模式
 
-| 文件 | 模式 | 判定 |
-|------|------|------|
-| `schema-renderer.tsx:95-96` | `importsReady` + `rootImportBindings` useState | 合法异步加载状态 |
-| `useNodeImports.ts:55` | `asyncState` useState | 合法异步加载状态 |
-| `useSourceValue.ts:26` | `state` useState | 合法异步加载状态 |
-| `use-node-source-props.ts:21` | `controller` useState | 惰性初始化 |
-| `workbench/hooks.ts:58` | `store` useState | 惰性初始化 |
-| `interaction-owner.ts:27` | `localValue` useState | 互斥所有权模型 |
-| `dynamic-renderer.tsx:23` | `state` useState | 合法异步加载状态 |
-| `form-runtime.ts:69` | `isSubmittingInternal` vs `store.submitting` | 设计意图不同，非双状态 |
-| `form-runtime.ts:82-93` | scope store bridge | 必要的 React-Zustand 桥接 |
-| `render-nodes.tsx:257-275` | fragment bindings useEffect 同步 | 必要的 props-to-store 同步 |
-| `hooks.ts` 全文 | 所有 selector hooks | 全部使用 useSyncExternalStoreWithSelector |
+| 文件                          | 模式                                           | 判定                                      |
+| ----------------------------- | ---------------------------------------------- | ----------------------------------------- |
+| `schema-renderer.tsx:95-96`   | `importsReady` + `rootImportBindings` useState | 合法异步加载状态                          |
+| `useNodeImports.ts:55`        | `asyncState` useState                          | 合法异步加载状态                          |
+| `useSourceValue.ts:26`        | `state` useState                               | 合法异步加载状态                          |
+| `use-node-source-props.ts:21` | `controller` useState                          | 惰性初始化                                |
+| `workbench/hooks.ts:58`       | `store` useState                               | 惰性初始化                                |
+| `interaction-owner.ts:27`     | `localValue` useState                          | 互斥所有权模型                            |
+| `dynamic-renderer.tsx:23`     | `state` useState                               | 合法异步加载状态                          |
+| `form-runtime.ts:69`          | `isSubmittingInternal` vs `store.submitting`   | 设计意图不同，非双状态                    |
+| `form-runtime.ts:82-93`       | scope store bridge                             | 必要的 React-Zustand 桥接                 |
+| `render-nodes.tsx:257-275`    | fragment bindings useEffect 同步               | 必要的 props-to-store 同步                |
+| `hooks.ts` 全文               | 所有 selector hooks                            | 全部使用 useSyncExternalStoreWithSelector |

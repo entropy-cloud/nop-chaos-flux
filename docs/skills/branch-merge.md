@@ -98,9 +98,9 @@ User wants to integrate a feature/fix branch into master **without any branch tr
 
 During rebase, the meaning of "ours" and "theirs" is **reversed** compared to merge:
 
-| Context | `--ours` means | `--theirs` means |
-|---|---|---|
-| `git merge` | Current branch (target) | Incoming branch (source) |
+| Context      | `--ours` means              | `--theirs` means                       |
+| ------------ | --------------------------- | -------------------------------------- |
+| `git merge`  | Current branch (target)     | Incoming branch (source)               |
 | `git rebase` | Base branch (target/master) | Commit being replayed (source/feature) |
 
 This is a common gotcha. If you want the feature branch's version during a rebase conflict, use `git checkout --theirs <file>` — NOT `--ours`.
@@ -127,7 +127,7 @@ git checkout master
 git merge <source-branch> --ff-only  # fast-forward master to rebased tip
 ```
 
-   OR **checkout master and rebase onto source branch** (alternative):
+OR **checkout master and rebase onto source branch** (alternative):
 
 ```bash
 git checkout master
@@ -178,7 +178,7 @@ When master has **refactored a monolithic file into multiple modules** (e.g., `i
 
 1. **Identify the refactoring intent**: check what master did — `git diff <merge-base>..master -- <file>`
 2. **Locate where each logical change belongs** in the new module structure.
-3. **Apply the source branch's *functional changes* to the correct new module**, not the old file. For example, if source added try-catch resilience to `compileNode()` and master moved `compileNode()` to `compile.ts`, apply the try-catch to `compile.ts` — don't try to resurrect the old `index.ts` structure.
+3. **Apply the source branch's _functional changes_ to the correct new module**, not the old file. For example, if source added try-catch resilience to `compileNode()` and master moved `compileNode()` to `compile.ts`, apply the try-catch to `compile.ts` — don't try to resurrect the old `index.ts` structure.
 4. **Restore master's version** of the file that should remain a thin re-export barrel, then apply the source branch's actual logic changes to the appropriate extracted module.
 
 This pattern applies to any language where refactoring extracts functions/types/classes from one file into multiple files.
@@ -207,11 +207,11 @@ git commit -m "fix: correct rebase conflict resolution in <module>"
 
 ### Why `rebase` Instead of `merge --squash`
 
-| Approach | Commit granularity | Original messages | Branch traces |
-|---|---|---|---|
-| `git rebase <source>` | Preserved | Preserved | None |
-| `git merge --squash <source>` | Single blob | Lost | None |
-| `git merge --no-ff <source>` | Preserved | Preserved | Merge bubble visible |
+| Approach                      | Commit granularity | Original messages | Branch traces        |
+| ----------------------------- | ------------------ | ----------------- | -------------------- |
+| `git rebase <source>`         | Preserved          | Preserved         | None                 |
+| `git merge --squash <source>` | Single blob        | Lost              | None                 |
+| `git merge --no-ff <source>`  | Preserved          | Preserved         | Merge bubble visible |
 
 `rebase` is preferred because it keeps the original commit structure (useful for `git bisect`, `git log -S`, blame) while still producing a clean linear history on master.
 
@@ -232,6 +232,7 @@ These patterns recur across **all** projects and languages. When you encounter a
 **Signature**: Both branches add entries to the same array, union type, switch statement, export list, or key-value map.
 
 **Examples**:
+
 - TypeScript union type: `'home' | 'page-a'` vs `'home' | 'page-b'` → `'home' | 'page-a' | 'page-b'`
 - Route switch: `{page === 'a' && <A/>}` vs `{page === 'b' && <B/>}` → keep both cases
 - Barrel export: `export { A } from './a'` vs `export { B } from './b'` → keep both lines
@@ -247,6 +248,7 @@ These patterns recur across **all** projects and languages. When you encounter a
 **Signature**: Both branches append entries under the same date heading, version, or changelog section.
 
 **Examples**:
+
 - Dev logs: both branches add `### 2026-03-31` entries with different content
 - CHANGELOG.md: both add entries under `## [Unreleased]`
 - Release notes: same version, different feature lists
@@ -260,6 +262,7 @@ These patterns recur across **all** projects and languages. When you encounter a
 **Signature**: Both branches modify the same dependency version in `package.json`, `pom.xml`, `Cargo.toml`, etc.
 
 **Resolution**:
+
 1. If one branch **bumps** and the other **didn't touch it** → take the bump
 2. If both **bump to different versions** → take the higher version, unless one is a major breaking change that the other branch doesn't support
 3. If one **adds** and the other **removes** → understand intent (was it replaced? removed?)
@@ -270,15 +273,17 @@ These patterns recur across **all** projects and languages. When you encounter a
 **Signature**: One branch reorganizes code (file splits, renames, module extraction) while the other adds features to the original locations.
 
 **Examples**:
+
 - Master splits `index.ts` into `compile.ts` + `evaluate.ts` + `scope.ts`, feature branch adds error handling to `index.ts`
 - Master moves a class from `service.ts` to `service/` directory, feature branch adds a method to that class
 - Master renames `utils.ts` to `helpers.ts`, feature branch adds a function to `utils.ts`
 
 **Resolution**:
+
 1. Identify where each logical change **belongs** in the new structure
 2. Apply the feature branch's **functional intent** to the new location — not the old file
 3. Do NOT try to resurrect the old file structure
-4. The key insight: you're porting *semantics*, not *text*
+4. The key insight: you're porting _semantics_, not _text_
 
 This is the hardest pattern. See "Module Extraction Conflicts" above for detailed strategy.
 
@@ -289,6 +294,7 @@ This is the hardest pattern. See "Module Extraction Conflicts" above for detaile
 **Examples**: `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `go.sum`, `Cargo.lock`, `*.min.js`, `dist/`, docs generated from source comments
 
 **Resolution**: Never merge textually. Pick one side's version, then regenerate:
+
 - Lock files → pick one side, run `pnpm install` / `npm install` / `cargo build`
 - Build output → pick one side, run build command
 - Generated code → pick one side, regenerate from source
@@ -300,6 +306,7 @@ This is the hardest pattern. See "Module Extraction Conflicts" above for detaile
 **Signature**: Both branches add non-overlapping sections/fields to a config file (JSON, YAML, TOML, XML).
 
 **Examples**:
+
 - Both add new entries to `tsconfig.json` paths
 - Both add new `<dependency>` blocks in `pom.xml`
 - Both add new `scripts` entries in `package.json`
@@ -309,14 +316,14 @@ This is the hardest pattern. See "Module Extraction Conflicts" above for detaile
 
 ### Quick-Reference Decision Table
 
-| Pattern | Signal | Strategy | Difficulty |
-|---------|--------|----------|------------|
-| Parallel registry addition | Two union types / switch cases / exports | Union both | Easy |
-| Chronological log | Same date heading, different entries | Keep all entries | Easy (repetitive) |
-| Dependency version | Same dep, different versions | Higher version, regenerate lock | Easy |
-| Refactoring vs feature | File moved/split, changes to old location | Port semantics to new location | Hard |
-| Auto-generated | Lock files, dist, generated code | Pick + regenerate | Trivial |
-| Config drift | Non-overlapping sections added | Union both | Easy |
+| Pattern                    | Signal                                    | Strategy                        | Difficulty        |
+| -------------------------- | ----------------------------------------- | ------------------------------- | ----------------- |
+| Parallel registry addition | Two union types / switch cases / exports  | Union both                      | Easy              |
+| Chronological log          | Same date heading, different entries      | Keep all entries                | Easy (repetitive) |
+| Dependency version         | Same dep, different versions              | Higher version, regenerate lock | Easy              |
+| Refactoring vs feature     | File moved/split, changes to old location | Port semantics to new location  | Hard              |
+| Auto-generated             | Lock files, dist, generated code          | Pick + regenerate               | Trivial           |
+| Config drift               | Non-overlapping sections added            | Union both                      | Easy              |
 
 ### Heuristic: Estimate Difficulty Before Starting
 
@@ -340,13 +347,13 @@ Run through before starting any merge or rebase:
 
 ### Choosing Merge Direction
 
-| Scenario | Best approach |
-|----------|---------------|
-| Small feature → large master | Rebase feature onto master, then ff merge |
-| Large feature → small master | Rebase master onto feature, or merge --no-ff |
-| Both branches large | Rebase the one with fewer commits since merge-base |
-| Branch in worktree | Rebase in worktree, don't remove/re-add |
-| Hotfix needs to go in fast | merge --no-ff (skip rebase) |
+| Scenario                     | Best approach                                      |
+| ---------------------------- | -------------------------------------------------- |
+| Small feature → large master | Rebase feature onto master, then ff merge          |
+| Large feature → small master | Rebase master onto feature, or merge --no-ff       |
+| Both branches large          | Rebase the one with fewer commits since merge-base |
+| Branch in worktree           | Rebase in worktree, don't remove/re-add            |
+| Hotfix needs to go in fast   | merge --no-ff (skip rebase)                        |
 
 ---
 

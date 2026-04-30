@@ -17,12 +17,12 @@ const rowWithJustify = {
           gap: 2,
           body: [
             { type: 'badge', label: 'Admin', variant: 'default' },
-            { type: 'badge', label: 'Active', variant: 'secondary' }
-          ]
-        }
-      ]
-    }
-  ]
+            { type: 'badge', label: 'Active', variant: 'secondary' },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 const columnGap = {
@@ -39,8 +39,8 @@ const columnGap = {
           gap: 2,
           body: [
             { type: 'badge', label: 'Step 1: Fill form' },
-            { type: 'text', text: 'Enter your details' }
-          ]
+            { type: 'text', text: 'Enter your details' },
+          ],
         },
         {
           type: 'flex',
@@ -48,8 +48,8 @@ const columnGap = {
           gap: 2,
           body: [
             { type: 'badge', label: 'Step 2: Review' },
-            { type: 'text', text: 'Confirm before submitting' }
-          ]
+            { type: 'text', text: 'Confirm before submitting' },
+          ],
         },
         {
           type: 'flex',
@@ -57,12 +57,12 @@ const columnGap = {
           gap: 2,
           body: [
             { type: 'badge', label: 'Step 3: Submit', variant: 'secondary' },
-            { type: 'text', text: 'Send to the server' }
-          ]
-        }
-      ]
-    }
-  ]
+            { type: 'text', text: 'Send to the server' },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 const wrapVariants = {
@@ -81,10 +81,10 @@ const wrapVariants = {
         { type: 'badge', label: 'Vite' },
         { type: 'badge', label: 'Vitest' },
         { type: 'badge', label: 'Recharts', variant: 'secondary' },
-        { type: 'badge', label: 'Lucide', variant: 'secondary' }
-      ]
-    }
-  ]
+        { type: 'badge', label: 'Lucide', variant: 'secondary' },
+      ],
+    },
+  ],
 };
 
 export function FlexLabPage() {
@@ -94,19 +94,22 @@ export function FlexLabPage() {
       scenarios={[
         {
           title: 'Row with space-between justify',
-          description: 'Items are distributed with space between them. Useful for header bars with title on the left and actions on the right.',
-          schema: rowWithJustify
+          description:
+            'Items are distributed with space between them. Useful for header bars with title on the left and actions on the right.',
+          schema: rowWithJustify,
         },
         {
           title: 'Column direction with gap',
-          description: 'Stacks items vertically with a consistent gap. Useful for step lists, form sections, or card stacks.',
-          schema: columnGap
+          description:
+            'Stacks items vertically with a consistent gap. Useful for step lists, form sections, or card stacks.',
+          schema: columnGap,
         },
         {
           title: 'Wrapped row for tag clouds',
-          description: 'With wrap: true, items overflow into multiple rows. Useful for tag collections or badge lists.',
-          schema: wrapVariants
-        }
+          description:
+            'With wrap: true, items overflow into multiple rows. Useful for tag collections or badge lists.',
+          schema: wrapVariants,
+        },
       ]}
     />
   );

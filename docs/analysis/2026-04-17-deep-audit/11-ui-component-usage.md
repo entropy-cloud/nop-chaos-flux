@@ -19,29 +19,35 @@
 ## 已修复整改项（2026-04-17）
 
 ### [已修复] Flow Designer Inspector — Button/Input/Textarea/Label/Select 约束
+
 - **文件**: `apps/playground/src/flow-designer/FlowDesignerInspector.tsx`
 - **修复**: `<label>` → `<Label>`, `<input>` → `<Input>`, `<textarea>` → `<Textarea>`, `<select>`/`<option>` → `<NativeSelect>`/`<NativeSelectOption>`, `<button>` → `<Button variant="destructive">`
 - **原严重程度**: P1
 
 ### [已修复] FlowListPage — Input/Select/Button/Table 组件规范
+
 - **文件**: `apps/playground/src/flow-designer/FlowListPage.tsx`
 - **修复**: `<input>` → `<Input>`, `<select>`/`<option>` → `<NativeSelect>`/`<NativeSelectOption>`, `<button>` → `<Button>`, `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>` → `<Table>`/`<TableHeader>`/`<TableBody>`/`<TableRow>`/`<TableHead>`/`<TableCell>`
 - **原严重程度**: P1
 
 ### [已修复] `@nop-chaos/ui` 导入未统一走根入口
+
 - **文件**: `packages/word-editor-renderers/src/dialogs/ChartDialog.tsx`
 - **修复**: `@nop-chaos/ui` 根 `index.ts` 新增 `export * from './components/ui/chart'`；`ChartDialog.tsx` 已合并为单一根入口导入
 - **原严重程度**: P2
 
 ### [已修复] Playground 页面返回按钮与 HomePage 卡片入口
+
 - **文件**: `CodeEditorPage.tsx`, `ConditionBuilderPage.tsx`, `FluxBasicPage.tsx`, `HomePage.tsx`, `ReportDesignerPage.tsx`, `DebuggerLabPage.tsx`, `ComponentLabPage.tsx`
 - **修复**: 所有 `<button>` → `<Button>`, `<input>` → `<Input>`
 
 ### [已修复] Flow Designer Toolbar / Canvas / HoverToolbar / Palette / Example
+
 - **文件**: `FlowDesignerToolbar.tsx`, `FlowDesignerCanvas.tsx`, `FlowDesignerHoverToolbar.tsx`, `FlowDesignerPalette.tsx`, `FlowDesignerExample.tsx`
 - **修复**: `<button>` → `<Button>`, `<input>` → `<Input>`, `<label>` → `<Label>`
 
 ### [已修复] 测试支撑文件
+
 - **文件**: `flux-react/src/test-support-core.tsx`, `flux-react/src/test-support-runtime.tsx`, `flux-renderers-data/src/test-support.tsx`, `flux-renderers-form-advanced/src/test-support.tsx`
 - **修复**: `<button>` → `<Button>`, `<input>` → `<Input>`, `<label>` → `<Label>`
 

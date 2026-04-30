@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createSpreadsheetCore,
-  createEmptyDocument,
-  type SpreadsheetCore,
-} from '../index.js';
+import { createSpreadsheetCore, createEmptyDocument, type SpreadsheetCore } from '../index.js';
 
 describe('clipboard operations', () => {
   let core: SpreadsheetCore;
@@ -13,10 +9,26 @@ describe('clipboard operations', () => {
     const doc = createEmptyDocument();
     sheetId = doc.workbook.sheets[0].id;
     core = createSpreadsheetCore({ document: doc });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'A' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'B' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'C' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B2', row: 1, col: 1 }, value: 'D' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'A',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'B',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'C',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B2', row: 1, col: 1 },
+      value: 'D',
+    });
   });
 
   it('should copy cells', async () => {
@@ -128,9 +140,21 @@ describe('insert/delete row/column', () => {
     const doc = createEmptyDocument();
     sheetId = doc.workbook.sheets[0].id;
     core = createSpreadsheetCore({ document: doc });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'A1' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'A2' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'B1' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'A1',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'A2',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'B1',
+    });
   });
 
   it('should insert row', async () => {
@@ -351,7 +375,11 @@ describe('fill commands', () => {
     const doc = createEmptyDocument();
     sheetId = doc.workbook.sheets[0].id;
     core = createSpreadsheetCore({ document: doc });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'Header' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Header',
+    });
   });
 
   it('should fill down', async () => {

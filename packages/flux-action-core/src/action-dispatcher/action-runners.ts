@@ -4,18 +4,15 @@ import type {
   ActionResult,
   ComponentActionInvocation,
   CompiledActionNode,
-  NamespacedActionInvocation
+  NamespacedActionInvocation,
 } from '@nop-chaos/flux-core';
-import {
-  evaluateActionArgs,
-  normalizeActionResult
-} from '../action-core';
+import { evaluateActionArgs, normalizeActionResult } from '../action-core';
 import type { ActionDispatcherContext } from './types';
 import {
   isComponentAction,
   extractComponentMethod,
   isNamespacedAction,
-  parseNamespacedAction
+  parseNamespacedAction,
 } from './action-parsing';
 
 const XUI_ACTIONS_NAMESPACE = '__xui_actions__';
@@ -24,7 +21,7 @@ export function finishAction(
   ctx: ActionDispatcherContext,
   actionPayload: ActionMonitorPayload,
   startedAt: number,
-  result: ActionResult
+  result: ActionResult,
 ): ActionResult {
   const enrichedPayload: ActionMonitorPayload = {
     ...actionPayload,
@@ -33,12 +30,12 @@ export function finishAction(
     ...(result.componentType !== undefined && { componentType: result.componentType }),
     ...(result.namespace !== undefined && { namespace: result.namespace }),
     ...(result.sourceScopeId !== undefined && { sourceScopeId: result.sourceScopeId }),
-    ...(result.providerKind !== undefined && { providerKind: result.providerKind })
+    ...(result.providerKind !== undefined && { providerKind: result.providerKind }),
   };
   ctx.getEnv().monitor?.onActionEnd?.({
     ...enrichedPayload,
     durationMs: Date.now() - startedAt,
-    result
+    result,
   });
   return result;
 }
@@ -48,7 +45,7 @@ export async function runComponentAction(
   ctx: ActionContext,
   startedAt: number,
   actionPayload: ActionMonitorPayload,
-  internals: ActionDispatcherContext
+  internals: ActionDispatcherContext,
 ): Promise<ActionResult | undefined> {
   if (!isComponentAction(action.action)) {
     return undefined;
@@ -58,35 +55,41 @@ export async function runComponentAction(
   if (!method) {
     return finishAction(internals, { ...actionPayload, dispatchMode: 'component' }, startedAt, {
       ok: false,
-      error: new Error('component:<method> requires a method name after the colon')
+      error: new Error('component:<method> requires a method name after the colon'),
     });
   }
 
   const target = {
-    _targetCid: typeof action.targeting._targetCid === 'number' ? action.targeting._targetCid : undefined,
+    _targetCid:
+      typeof action.targeting._targetCid === 'number' ? action.targeting._targetCid : undefined,
     componentId: action.targeting.componentId,
-    componentName: action.targeting.componentName
+    componentName: action.targeting.componentName,
   };
 
   if (!target.componentId && !target.componentName && target._targetCid === undefined) {
-    return finishAction(internals, { ...actionPayload, dispatchMode: 'component', method }, startedAt, {
-      ok: false,
-      error: new Error('component:<method> requires _targetCid, componentId or componentName')
-    });
+    return finishAction(
+      internals,
+      { ...actionPayload, dispatchMode: 'component', method },
+      startedAt,
+      {
+        ok: false,
+        error: new Error('component:<method> requires _targetCid, componentId or componentName'),
+      },
+    );
   }
 
   const payload = evaluateActionArgs(action, ctx, internals.evaluator);
   const invocation: ComponentActionInvocation = {
     method,
     target,
-    payload
+    payload,
   };
   const result = await internals.adapter.invokeComponentAction(invocation, ctx);
   return finishAction(
     internals,
     { ...actionPayload, dispatchMode: 'component', method },
     startedAt,
-    result
+    result,
   );
 }
 
@@ -95,7 +98,7 @@ export async function runNamespacedAction(
   ctx: ActionContext,
   startedAt: number,
   actionPayload: ActionMonitorPayload,
-  internals: ActionDispatcherContext
+  internals: ActionDispatcherContext,
 ): Promise<ActionResult | undefined> {
   if (!isNamespacedAction(action.action)) {
     return undefined;
@@ -105,7 +108,7 @@ export async function runNamespacedAction(
   if (!parsed) {
     return finishAction(internals, { ...actionPayload, dispatchMode: 'namespace' }, startedAt, {
       ok: false,
-      error: new Error(`Invalid namespaced action: ${action.action}`)
+      error: new Error(`Invalid namespaced action: ${action.action}`),
     });
   }
 
@@ -117,18 +120,25 @@ export async function runNamespacedAction(
     actionName: action.action,
     namespace: parsed.namespace,
     method: parsed.method,
-    payload
+    payload,
   };
-  const result = normalizeActionResult(await internals.adapter.invokeNamespacedAction(invocation, ctx));
+  const result = normalizeActionResult(
+    await internals.adapter.invokeNamespacedAction(invocation, ctx),
+  );
   return finishAction(
     internals,
-    { ...actionPayload, dispatchMode: 'namespace', namespace: parsed.namespace, method: parsed.method },
+    {
+      ...actionPayload,
+      dispatchMode: 'namespace',
+      namespace: parsed.namespace,
+      method: parsed.method,
+    },
     startedAt,
     {
       ...result,
       sourceScopeId,
-      providerKind
-    }
+      providerKind,
+    },
   );
 }
 
@@ -137,7 +147,7 @@ export async function runNamedAction(
   ctx: ActionContext,
   startedAt: number,
   actionPayload: ActionMonitorPayload,
-  internals: ActionDispatcherContext
+  internals: ActionDispatcherContext,
 ): Promise<ActionResult | undefined> {
   if (action.action.indexOf(':') >= 0) {
     return undefined;
@@ -156,17 +166,24 @@ export async function runNamedAction(
     actionName: namespacedName,
     namespace: XUI_ACTIONS_NAMESPACE,
     method: action.action,
-    payload
+    payload,
   };
-  const result = normalizeActionResult(await internals.adapter.invokeNamespacedAction(invocation, ctx));
+  const result = normalizeActionResult(
+    await internals.adapter.invokeNamespacedAction(invocation, ctx),
+  );
   return finishAction(
     internals,
-    { ...actionPayload, dispatchMode: 'namespace', namespace: XUI_ACTIONS_NAMESPACE, method: action.action },
+    {
+      ...actionPayload,
+      dispatchMode: 'namespace',
+      namespace: XUI_ACTIONS_NAMESPACE,
+      method: action.action,
+    },
     startedAt,
     {
       ...result,
       sourceScopeId,
-      providerKind
-    }
+      providerKind,
+    },
   );
 }

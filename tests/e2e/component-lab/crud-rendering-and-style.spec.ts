@@ -39,7 +39,9 @@ test.describe('crud renderer rendering and style', () => {
     expect(tableHtml).toContain('Alpha');
   });
 
-  test('renders query workflow shell with fixed left and right columns plus inline column settings', async ({ page }) => {
+  test('renders query workflow shell with fixed left and right columns plus inline column settings', async ({
+    page,
+  }) => {
     const lab = await openCrudLab(page);
     const stage = crudStage(lab, 'CRUD workflow with query, toolbars, and fixed columns');
 

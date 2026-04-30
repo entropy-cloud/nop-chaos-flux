@@ -2,7 +2,11 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ActionScopeContext, ComponentRegistryContext, ScopeContext } from '../contexts';
-import { SurfaceScopeProviders, renderSurfaceNode, useSurfaceScopeSnapshot } from '../dialog-host-surface';
+import {
+  SurfaceScopeProviders,
+  renderSurfaceNode,
+  useSurfaceScopeSnapshot,
+} from '../dialog-host-surface';
 
 function makeScope(overrides: Record<string, unknown> = {}) {
   const data = { value: 'test' };
@@ -118,16 +122,24 @@ describe('SurfaceScopeProviders', () => {
       return (
         <>
           <span data-testid="scope-id">{React.useContext(ScopeContext)?.id ?? 'none'}</span>
-          <span data-testid="action-scope-id">{React.useContext(ActionScopeContext)?.id ?? 'none'}</span>
-          <span data-testid="registry-id">{React.useContext(ComponentRegistryContext)?.id ?? 'none'}</span>
+          <span data-testid="action-scope-id">
+            {React.useContext(ActionScopeContext)?.id ?? 'none'}
+          </span>
+          <span data-testid="registry-id">
+            {React.useContext(ComponentRegistryContext)?.id ?? 'none'}
+          </span>
         </>
       );
     }
 
     render(
-      <SurfaceScopeProviders scope={scope as any} actionScope={actionScope} componentRegistry={componentRegistry}>
+      <SurfaceScopeProviders
+        scope={scope as any}
+        actionScope={actionScope}
+        componentRegistry={componentRegistry}
+      >
         <Probe />
-      </SurfaceScopeProviders>
+      </SurfaceScopeProviders>,
     );
 
     expect(screen.getByTestId('scope-id').textContent).toBe('scope-1');
@@ -139,7 +151,7 @@ describe('SurfaceScopeProviders', () => {
     render(
       <SurfaceScopeProviders scope={makeScope() as any}>
         <span data-testid="child">Hello</span>
-      </SurfaceScopeProviders>
+      </SurfaceScopeProviders>,
     );
     expect(screen.getByTestId('child').textContent).toBe('Hello');
   });
@@ -156,7 +168,7 @@ describe('useSurfaceScopeSnapshot', () => {
     render(
       <ScopeContext.Provider value={scope as any}>
         <Probe />
-      </ScopeContext.Provider>
+      </ScopeContext.Provider>,
     );
     expect(screen.getByTestId('probe').textContent).toBe('ok');
   });

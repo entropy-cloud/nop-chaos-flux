@@ -9,7 +9,7 @@ import type {
   RuntimeValueStateNode,
   ScopeRef,
   TemplateValueNode,
-  ValueEvaluationResult
+  ValueEvaluationResult,
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { createScopeDependencyCollector } from './scope';
@@ -30,7 +30,7 @@ function createEvalContext(scope: ScopeRef): EvalContext {
       }
 
       return materialized;
-    }
+    },
   };
 }
 
@@ -38,8 +38,8 @@ function createLeafState<T = unknown>(): RuntimeValueState<T> {
   return {
     root: {
       kind: 'leaf-state',
-      initialized: false
-    }
+      initialized: false,
+    },
   };
 }
 
@@ -54,8 +54,8 @@ function createStateFromNode<T = unknown>(node: CompiledValueNode<T>): RuntimeVa
         root: {
           kind: 'array-state',
           initialized: false,
-          items: node.items.map((item) => createStateFromNode(item).root)
-        }
+          items: node.items.map((item) => createStateFromNode(item).root),
+        },
       };
     case 'object-node': {
       const entries: Record<string, RuntimeValueStateNode> = {};
@@ -67,8 +67,8 @@ function createStateFromNode<T = unknown>(node: CompiledValueNode<T>): RuntimeVa
         root: {
           kind: 'object-state',
           initialized: false,
-          entries
-        }
+          entries,
+        },
       };
     }
   }
@@ -78,14 +78,14 @@ function evaluateNode<T>(
   node: CompiledValueNode<T>,
   context: EvalContext,
   env: RendererEnv,
-  stateNode: RuntimeValueStateNode
+  stateNode: RuntimeValueStateNode,
 ): ValueEvaluationResult<T> {
   switch (node.kind) {
     case 'static-node':
       return {
         value: node.value,
         changed: false,
-        reusedReference: true
+        reusedReference: true,
       };
     case 'expression-node':
       return evaluateLeaf(node, context, env, stateNode);
@@ -102,7 +102,7 @@ function evaluateLeaf<T>(
   node: ExpressionValueNode<T> | TemplateValueNode<T>,
   context: EvalContext,
   env: RendererEnv,
-  stateNode: RuntimeValueStateNode
+  stateNode: RuntimeValueStateNode,
 ): ValueEvaluationResult<T> {
   if (stateNode.kind !== 'leaf-state') {
     throw new Error(`Invalid runtime state for ${node.kind}`);
@@ -120,7 +120,7 @@ function evaluateLeaf<T>(
     return {
       value: stateNode.lastValue as T,
       changed: false,
-      reusedReference: true
+      reusedReference: true,
     };
   }
 
@@ -131,7 +131,7 @@ function evaluateLeaf<T>(
   return {
     value,
     changed: true,
-    reusedReference: false
+    reusedReference: false,
   };
 }
 
@@ -139,7 +139,7 @@ function evaluateArray(
   node: ArrayValueNode,
   context: EvalContext,
   env: RendererEnv,
-  stateNode: RuntimeValueStateNode
+  stateNode: RuntimeValueStateNode,
 ): ValueEvaluationResult<any[]> {
   if (stateNode.kind !== 'array-state') {
     throw new Error('Invalid runtime state for array-node');
@@ -161,15 +161,19 @@ function evaluateArray(
     return {
       value: stateNode.lastValue,
       changed: false,
-      reusedReference: true
+      reusedReference: true,
     };
   }
 
-  if (stateNode.initialized && stateNode.lastValue && shallowEqual(stateNode.lastValue, nextValue)) {
+  if (
+    stateNode.initialized &&
+    stateNode.lastValue &&
+    shallowEqual(stateNode.lastValue, nextValue)
+  ) {
     return {
       value: stateNode.lastValue,
       changed: false,
-      reusedReference: true
+      reusedReference: true,
     };
   }
 
@@ -179,7 +183,7 @@ function evaluateArray(
   return {
     value: nextValue,
     changed: true,
-    reusedReference: false
+    reusedReference: false,
   };
 }
 
@@ -187,7 +191,7 @@ function evaluateObject(
   node: ObjectValueNode,
   context: EvalContext,
   env: RendererEnv,
-  stateNode: RuntimeValueStateNode
+  stateNode: RuntimeValueStateNode,
 ): ValueEvaluationResult<Record<string, unknown>> {
   if (stateNode.kind !== 'object-state') {
     throw new Error('Invalid runtime state for object-node');
@@ -201,9 +205,10 @@ function evaluateObject(
   if (needsRebuild) {
     const entries: Record<string, RuntimeValueStateNode> = {};
     for (const key of node.keys) {
-      entries[key] = key in stateNode.entries
-        ? stateNode.entries[key]
-        : createStateFromNode(node.entries[key]).root;
+      entries[key] =
+        key in stateNode.entries
+          ? stateNode.entries[key]
+          : createStateFromNode(node.entries[key]).root;
     }
     stateNode.entries = entries;
     stateNode.initialized = false;
@@ -221,15 +226,19 @@ function evaluateObject(
     return {
       value: stateNode.lastValue,
       changed: false,
-      reusedReference: true
+      reusedReference: true,
     };
   }
 
-  if (stateNode.initialized && stateNode.lastValue && shallowEqual(stateNode.lastValue, nextValue)) {
+  if (
+    stateNode.initialized &&
+    stateNode.lastValue &&
+    shallowEqual(stateNode.lastValue, nextValue)
+  ) {
     return {
       value: stateNode.lastValue,
       changed: false,
-      reusedReference: true
+      reusedReference: true,
     };
   }
 
@@ -239,7 +248,7 @@ function evaluateObject(
   return {
     value: nextValue,
     changed: true,
-    reusedReference: false
+    reusedReference: false,
   };
 }
 

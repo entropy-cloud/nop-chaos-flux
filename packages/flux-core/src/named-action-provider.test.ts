@@ -3,10 +3,20 @@ import { createNamedActionProvider } from './named-action-provider';
 import type { ActionContext, ActionResult, ActionScope, CompiledActionProgram } from './types';
 
 function createMockProgram(): CompiledActionProgram {
-  return { nodes: [{ action: 'noop', payload: {}, targeting: {}, control: {}, source: { action: 'noop' } }], isFullyStatic: true };
+  return {
+    nodes: [
+      { action: 'noop', payload: {}, targeting: {}, control: {}, source: { action: 'noop' } },
+    ],
+    isFullyStatic: true,
+  };
 }
 
-function createMockActionScope(resolveResult?: { namespace: string; method: string; provider: any; sourceScopeId: string }): ActionScope {
+function createMockActionScope(resolveResult?: {
+  namespace: string;
+  method: string;
+  provider: any;
+  sourceScopeId: string;
+}): ActionScope {
   return {
     id: 'mock-scope',
     resolve: vi.fn((name: string) => {
@@ -24,7 +34,7 @@ function createMockActionScope(resolveResult?: { namespace: string; method: stri
 describe('createNamedActionProvider', () => {
   it('invokes a known plan via executeProgram', async () => {
     const program = createMockProgram();
-    const executeProgram = vi.fn(async () => ({ ok: true, data: 'result' } as ActionResult));
+    const executeProgram = vi.fn(async () => ({ ok: true, data: 'result' }) as ActionResult);
     const provider = createNamedActionProvider({ myAction: program }, undefined, executeProgram);
 
     const result = await provider.invoke('myAction', {}, {} as ActionContext);
@@ -46,20 +56,24 @@ describe('createNamedActionProvider', () => {
 
   it('falls back to parent scope for unknown method', async () => {
     const program = createMockProgram();
-    const parentInvoke = vi.fn(async () => ({ ok: true, data: 'parent-result' } as ActionResult));
+    const parentInvoke = vi.fn(async () => ({ ok: true, data: 'parent-result' }) as ActionResult);
     const parentProvider = {
       kind: 'import' as const,
       invoke: parentInvoke,
-      listMethods: () => ['parentAction']
+      listMethods: () => ['parentAction'],
     };
     const parentScope = createMockActionScope({
       namespace: '__xui_actions__',
       method: 'parentAction',
       provider: parentProvider,
-      sourceScopeId: 'parent-scope'
+      sourceScopeId: 'parent-scope',
     });
     const executeProgram = vi.fn();
-    const provider = createNamedActionProvider({ localAction: program }, parentScope, executeProgram);
+    const provider = createNamedActionProvider(
+      { localAction: program },
+      parentScope,
+      executeProgram,
+    );
 
     const result = await provider.invoke('parentAction', {}, {} as ActionContext);
 
@@ -73,15 +87,15 @@ describe('createNamedActionProvider', () => {
     const parentInvoke = vi.fn();
     const parentProvider = {
       kind: 'import' as const,
-      invoke: parentInvoke
+      invoke: parentInvoke,
     };
     const parentScope = createMockActionScope({
       namespace: '__xui_actions__',
       method: 'shared',
       provider: parentProvider,
-      sourceScopeId: 'parent-scope'
+      sourceScopeId: 'parent-scope',
     });
-    const executeProgram = vi.fn(async () => ({ ok: true, data: 'local' } as ActionResult));
+    const executeProgram = vi.fn(async () => ({ ok: true, data: 'local' }) as ActionResult);
     const provider = createNamedActionProvider({ shared: program }, parentScope, executeProgram);
 
     const result = await provider.invoke('shared', {}, {} as ActionContext);
@@ -95,18 +109,18 @@ describe('createNamedActionProvider', () => {
     const parentProvider = {
       kind: 'import' as const,
       invoke: vi.fn(),
-      listMethods: vi.fn(() => ['parentAction'])
+      listMethods: vi.fn(() => ['parentAction']),
     };
     const parentScope = createMockActionScope({
       namespace: '__xui_actions__',
       method: '__list_methods__',
       provider: parentProvider,
-      sourceScopeId: 'parent-scope'
+      sourceScopeId: 'parent-scope',
     });
     const provider = createNamedActionProvider(
       { localAction: createMockProgram() },
       parentScope,
-      vi.fn()
+      vi.fn(),
     );
 
     const methods = provider.listMethods!();

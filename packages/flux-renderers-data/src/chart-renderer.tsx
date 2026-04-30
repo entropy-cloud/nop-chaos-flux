@@ -43,19 +43,25 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const chartType = (props.props.chartType as ChartType) ?? 'bar';
   const title = props.props.title as string | undefined;
   const source = useMemo(
-    () => (Array.isArray(props.props.source) ? props.props.source as Array<Record<string, unknown>> : []),
-    [props.props.source]
+    () =>
+      Array.isArray(props.props.source)
+        ? (props.props.source as Array<Record<string, unknown>>)
+        : [],
+    [props.props.source],
   );
   const series = useMemo<ChartSeriesSchema[]>(
-    () => (Array.isArray(props.props.series) ? props.props.series as ChartSeriesSchema[] : []),
-    [props.props.series]
+    () => (Array.isArray(props.props.series) ? (props.props.series as ChartSeriesSchema[]) : []),
+    [props.props.series],
   );
-  const componentId = typeof props.props.componentId === 'string' ? props.props.componentId : props.id;
+  const componentId =
+    typeof props.props.componentId === 'string' ? props.props.componentId : props.id;
   const xAxis = props.props.xAxis as { dataKey?: string; label?: string } | undefined;
   const yAxis = props.props.yAxis as { label?: string } | undefined;
   const height = props.props.height ?? 400;
   const loading = props.props.loading as boolean | undefined;
-  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: t('flux.common.noData') });
+  const emptyContent = resolveRendererSlotContent(props, 'empty', {
+    fallback: t('flux.common.noData'),
+  });
 
   const isEmpty = source.length === 0 && series.every((s) => !s.data || s.data.length === 0);
 
@@ -70,7 +76,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       }
     });
     if (Object.keys(config).length === 0) {
-        config.value = { label: title ?? 'Value', color: COLORS[0] };
+      config.value = { label: title ?? 'Value', color: COLORS[0] };
     }
     return config;
   }, [series, title]);
@@ -108,60 +114,56 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     return [];
   }, [source, series]);
 
-  const chartHeight = typeof height === 'number' ? `${height}px` : (height || '400px');
+  const chartHeight = typeof height === 'number' ? `${height}px` : height || '400px';
 
   const handleResize = useCallback(() => {
     void chartRef.current;
   }, []);
 
-  const chartHandle = useMemo<ComponentHandle>(() => ({
-    id: componentId,
-    type: 'chart',
-    get ref() {
-      return chartRef.current;
-    },
-    capabilities: {
-      invoke(method, _payload) {
-        switch (method) {
-          case 'resize':
-            handleResize();
-            return { ok: true };
-          default:
-            return { ok: false, error: new Error(`Unsupported chart handle method: ${method}`) };
-        }
+  const chartHandle = useMemo<ComponentHandle>(
+    () => ({
+      id: componentId,
+      type: 'chart',
+      get ref() {
+        return chartRef.current;
       },
-      hasMethod(method) {
-        return method === 'resize';
+      capabilities: {
+        invoke(method, _payload) {
+          switch (method) {
+            case 'resize':
+              handleResize();
+              return { ok: true };
+            default:
+              return { ok: false, error: new Error(`Unsupported chart handle method: ${method}`) };
+          }
+        },
+        hasMethod(method) {
+          return method === 'resize';
+        },
+        listMethods() {
+          return ['resize'];
+        },
       },
-      listMethods() {
-        return ['resize'];
-      }
-    }
-  }), [componentId, handleResize]);
+    }),
+    [componentId, handleResize],
+  );
 
   useEffect(() => {
     if (!componentRegistry) return;
     return componentRegistry.register(chartHandle, { cid: props.meta.cid });
   }, [chartHandle, componentRegistry, props.meta.cid]);
 
-  const resolvedChartType = (series.length > 0 ? (series[0].type ?? chartType) : chartType) as ChartType;
+  const resolvedChartType = (
+    series.length > 0 ? (series[0].type ?? chartType) : chartType
+  ) as ChartType;
 
   const renderChart = () => {
     if (resolvedChartType === 'pie') {
       return (
         <PieChart>
           <ChartTooltip content={<ChartTooltipContent />} />
-          {hasMultipleSeries && (
-            <ChartLegend content={<ChartLegendContent />} />
-          )}
-          <Pie
-            data={pieData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius="80%"
-          >
+          {hasMultipleSeries && <ChartLegend content={<ChartLegendContent />} />}
+          <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
             {pieData.map((item, i) => (
               <Cell key={item.name || `cell-${item.value}-${i}`} fill={COLORS[i % COLORS.length]} />
             ))}
@@ -177,19 +179,23 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          {hasMultipleSeries && (
-            <ChartLegend content={<ChartLegendContent />} />
-          )}
-          {series.length > 0 ? series.map((s, i) => (
-            <Scatter
-              key={s.name ?? `series-${i}`}
-              name={s.name}
-              data={s.dataRegionKey ? cartesianData.map((item: Record<string, unknown>) => ({
-                x: item[xKey ?? 'name'],
-                y: item[s.dataRegionKey!],
-              })) : cartesianData}
-            />
-          )) : (
+          {hasMultipleSeries && <ChartLegend content={<ChartLegendContent />} />}
+          {series.length > 0 ? (
+            series.map((s, i) => (
+              <Scatter
+                key={s.name ?? `series-${i}`}
+                name={s.name}
+                data={
+                  s.dataRegionKey
+                    ? cartesianData.map((item: Record<string, unknown>) => ({
+                        x: item[xKey ?? 'name'],
+                        y: item[s.dataRegionKey!],
+                      }))
+                    : cartesianData
+                }
+              />
+            ))
+          ) : (
             <Scatter data={cartesianData} />
           )}
         </ScatterChart>
@@ -203,20 +209,20 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
           <YAxis name={yAxis?.label} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          {hasMultipleSeries && (
-            <ChartLegend content={<ChartLegendContent />} />
-          )}
-          {series.length > 0 ? series.map((s, i) => (
-            <Line
-              key={s.name ?? `series-${i}`}
-              type="monotone"
-              dataKey={s.dataRegionKey ?? s.name ?? 'value'}
-              name={s.name}
-              stroke={COLORS[i % COLORS.length]}
-              strokeWidth={2}
-              dot={false}
-            />
-          )) : (
+          {hasMultipleSeries && <ChartLegend content={<ChartLegendContent />} />}
+          {series.length > 0 ? (
+            series.map((s, i) => (
+              <Line
+                key={s.name ?? `series-${i}`}
+                type="monotone"
+                dataKey={s.dataRegionKey ?? s.name ?? 'value'}
+                name={s.name}
+                stroke={COLORS[i % COLORS.length]}
+                strokeWidth={2}
+                dot={false}
+              />
+            ))
+          ) : (
             <Line type="monotone" dataKey="value" stroke={COLORS[0]} strokeWidth={2} dot={false} />
           )}
         </LineChart>
@@ -229,17 +235,17 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
         <YAxis name={yAxis?.label} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        {hasMultipleSeries && (
-          <ChartLegend content={<ChartLegendContent />} />
-        )}
-        {series.length > 0 ? series.map((s, i) => (
-          <Bar
-            key={s.name ?? `series-${i}`}
-            dataKey={s.dataRegionKey ?? s.name ?? 'value'}
-            name={s.name}
-            fill={COLORS[i % COLORS.length]}
-          />
-        )) : (
+        {hasMultipleSeries && <ChartLegend content={<ChartLegendContent />} />}
+        {series.length > 0 ? (
+          series.map((s, i) => (
+            <Bar
+              key={s.name ?? `series-${i}`}
+              dataKey={s.dataRegionKey ?? s.name ?? 'value'}
+              name={s.name}
+              fill={COLORS[i % COLORS.length]}
+            />
+          ))
+        ) : (
           <Bar dataKey="value" fill={COLORS[0]} />
         )}
       </BarChart>
@@ -264,7 +270,14 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           onMouseEnter={(event) => void props.events.onHover?.(event, {})}
         >
           {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+              }}
+            >
               {t('flux.common.loading')}
             </div>
           ) : (

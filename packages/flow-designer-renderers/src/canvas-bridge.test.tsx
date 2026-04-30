@@ -35,10 +35,10 @@ vi.mock('@xyflow/react', () => ({
     getNodes: () => [],
     getEdges: () => [],
     setNodes: vi.fn(),
-    setEdges: vi.fn()
+    setEdges: vi.fn(),
   }),
   useOnSelectionChange: () => {},
-  useOnConnect: () => {}
+  useOnConnect: () => {},
 }));
 
 class ResizeObserverMock {
@@ -51,33 +51,31 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   Object.defineProperty(globalThis, 'ResizeObserver', {
     value: ResizeObserverMock,
     writable: true,
-    configurable: true
+    configurable: true,
   });
 }
 
 vi.mock('@nop-chaos/flux-react', () => ({
   ClassAliasesContext: {
-    Provider: ({ children }: { children: React.ReactNode }) => children
+    Provider: ({ children }: { children: React.ReactNode }) => children,
   },
   RenderNodes: ({ input }: { input: any }) => {
-    return input ? (
-      <div data-testid="rendered-body">{String(input?.type ?? 'unknown')}</div>
-    ) : null;
+    return input ? <div data-testid="rendered-body">{String(input?.type ?? 'unknown')}</div> : null;
   },
   useRendererRuntime: () => ({
     createChildScope: (parent: any, data: any) => ({
       store: { setSnapshot: vi.fn() },
-      data
-    })
+      data,
+    }),
   }),
-  useRenderScope: () => ({})
+  useRenderScope: () => ({}),
 }));
 
 vi.mock('./designer-context', () => ({
   useDesignerContext: () => ({
     config: { classAliases: undefined },
     dispatch: vi.fn(),
-    core: { getConfig: vi.fn() }
+    core: { getConfig: vi.fn() },
   }),
   useNodeTypeConfig: (typeId: string) => {
     if (typeId === 'task') {
@@ -86,13 +84,18 @@ vi.mock('./designer-context', () => ({
         label: 'Task Node',
         body: { type: 'flex', items: [] },
         ports: [
-          { id: 'in', direction: 'input', position: 'left', appearance: { className: 'task-port-in' } },
-          { id: 'out', direction: 'output', position: 'right' }
+          {
+            id: 'in',
+            direction: 'input',
+            position: 'left',
+            appearance: { className: 'task-port-in' },
+          },
+          { id: 'out', direction: 'output', position: 'right' },
         ],
         appearance: {
           className: 'task-node',
-          borderRadius: 8
-        }
+          borderRadius: 8,
+        },
       };
     }
     if (typeId === 'start') {
@@ -100,7 +103,7 @@ vi.mock('./designer-context', () => ({
         id: 'start',
         label: 'Start Node',
         body: { type: 'text', body: 'Start' },
-        ports: [{ id: 'out', direction: 'output', position: 'right' }]
+        ports: [{ id: 'out', direction: 'output', position: 'right' }],
       };
     }
     if (typeId === 'end') {
@@ -108,7 +111,7 @@ vi.mock('./designer-context', () => ({
         id: 'end',
         label: 'End Node',
         body: { type: 'text', body: 'End' },
-        ports: [{ id: 'in', direction: 'input', position: 'left' }]
+        ports: [{ id: 'in', direction: 'input', position: 'left' }],
       };
     }
     return undefined;
@@ -120,8 +123,8 @@ vi.mock('./designer-context', () => ({
         label: 'Default Edge',
         appearance: {
           stroke: '#666',
-          strokeWidth: 2
-        }
+          strokeWidth: 2,
+        },
       };
     }
     return undefined;
@@ -130,10 +133,10 @@ vi.mock('./designer-context', () => ({
     nodeTypes: new Map([
       ['task', { id: 'task', label: 'Task', body: { type: 'text' } }],
       ['start', { id: 'start', label: 'Start', body: { type: 'text' } }],
-      ['end', { id: 'end', label: 'End', body: { type: 'text' } }]
+      ['end', { id: 'end', label: 'End', body: { type: 'text' } }],
     ]),
-    edgeTypes: new Map([['default', { id: 'default', label: 'Default' }]])
-  })
+    edgeTypes: new Map([['default', { id: 'default', label: 'Default' }]]),
+  }),
 }));
 
 beforeEach(() => {
@@ -152,14 +155,14 @@ function createSnapshot(): DesignerSnapshot {
           id: 'node-1',
           type: 'task',
           position: { x: 20, y: 40 },
-          data: { label: 'Task 1', description: 'Primary task' }
+          data: { label: 'Task 1', description: 'Primary task' },
         },
         {
           id: 'node-2',
           type: 'end',
           position: { x: 220, y: 40 },
-          data: { label: 'End Node' }
-        }
+          data: { label: 'End Node' },
+        },
       ],
       edges: [
         {
@@ -167,30 +170,30 @@ function createSnapshot(): DesignerSnapshot {
           type: 'default',
           source: 'node-1',
           target: 'node-2',
-          data: { label: 'Edge 1' }
-        }
+          data: { label: 'Edge 1' },
+        },
       ],
-      viewport: { x: 0, y: 0, zoom: 1 }
+      viewport: { x: 0, y: 0, zoom: 1 },
     },
     selection: {
       selectedNodeIds: ['node-1'],
       selectedEdgeIds: ['edge-1'],
       activeNodeId: 'node-1',
       activeEdgeId: 'edge-1',
-      activeBranchId: null
+      activeBranchId: null,
     },
     activeNode: {
       id: 'node-1',
       type: 'task',
       position: { x: 20, y: 40 },
-      data: { label: 'Task 1', description: 'Primary task' }
+      data: { label: 'Task 1', description: 'Primary task' },
     },
     activeEdge: {
       id: 'edge-1',
       type: 'default',
       source: 'node-1',
       target: 'node-2',
-      data: { label: 'Edge 1' }
+      data: { label: 'Edge 1' },
     },
     activeBranch: null,
     canUndo: false,
@@ -199,7 +202,7 @@ function createSnapshot(): DesignerSnapshot {
     gridEnabled: true,
     paletteCollapsed: false,
     inspectorCollapsed: false,
-    viewport: { x: 0, y: 0, zoom: 1 }
+    viewport: { x: 0, y: 0, zoom: 1 },
   };
 }
 
@@ -224,7 +227,7 @@ describe('DesignerXyflowCanvasBridge', () => {
         onDeleteEdge={vi.fn()}
         onMoveNode={vi.fn()}
         onViewportChange={vi.fn()}
-      />
+      />,
     );
     expect(screen.getByTestId('react-flow')).toBeTruthy();
     expect(latestReactFlowProps).toBeTruthy();
@@ -241,7 +244,7 @@ describe('DesignerXyflowCanvasBridge', () => {
         isConnectable={true}
         type="task"
       />,
-      { container: view.container }
+      { container: view.container },
     );
 
     expect(screen.getByTestId('handle-in').className).toContain('task-port-in');
@@ -279,7 +282,7 @@ describe('DesignerXyflowCanvasBridge', () => {
         onDeleteEdge={vi.fn()}
         onMoveNode={onMoveNode}
         onViewportChange={onViewportChange}
-      />
+      />,
     );
 
     expect(latestReactFlowProps.onConnect).toBeTruthy();
@@ -299,7 +302,9 @@ describe('DesignerXyflowCanvasBridge', () => {
     expect(onStartReconnect).toHaveBeenCalledWith('edge-1', undefined);
     expect(onCompleteReconnect).toHaveBeenCalledWith('edge-1', 'node-1', 'node-2', undefined);
 
-    const mockNodeChanges = [{ id: 'node-1', type: 'position', position: { x: 50, y: 50 }, dragging: false }];
+    const mockNodeChanges = [
+      { id: 'node-1', type: 'position', position: { x: 50, y: 50 }, dragging: false },
+    ];
     expect(() => latestReactFlowProps.onNodesChange(mockNodeChanges)).not.toThrow();
     expect(onMoveNode).toHaveBeenCalledWith('node-1', undefined, { x: 50, y: 50 });
   });
@@ -325,7 +330,7 @@ describe('DesignerXyflowCanvasBridge', () => {
         onMoveNode={vi.fn()}
         onViewportChange={vi.fn()}
         documentMode="tree"
-      />
+      />,
     );
 
     expect(latestReactFlowProps.nodesConnectable).toBe(false);
@@ -354,7 +359,7 @@ describe('renderDesignerCanvasBridge', () => {
       onDeleteNode: vi.fn(),
       onDeleteEdge: vi.fn(),
       onMoveNode: vi.fn(),
-      onViewportChange: vi.fn()
+      onViewportChange: vi.fn(),
     });
     expect(result).toBeTruthy();
   });

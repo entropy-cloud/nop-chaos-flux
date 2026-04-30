@@ -1,4 +1,8 @@
-import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
+import {
+  registerRendererDefinitions,
+  type RendererDefinition,
+  type RendererRegistry,
+} from '@nop-chaos/flux-core';
 import { PageRenderer } from './page';
 import { ContainerRenderer } from './container';
 import { FlexRenderer } from './flex';
@@ -43,12 +47,16 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'page', body: [] },
     component: PageRenderer,
     injectedLocals: {
-      '$page': {
-        kind: 'injected-local'
-      }
+      $page: {
+        kind: 'injected-local',
+      },
     },
     regions: ['body', 'header', 'footer'],
-    fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'modalContainer', kind: 'prop' }, { key: 'statusPath', kind: 'prop' }]
+    fields: [
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'modalContainer', kind: 'prop' },
+      { key: 'statusPath', kind: 'prop' },
+    ],
   },
   {
     type: 'container',
@@ -58,7 +66,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
     regions: ['body', 'header', 'footer'],
-    staticCapable: true
+    staticCapable: true,
   },
   {
     type: 'fragment',
@@ -70,9 +78,9 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     regions: ['body'],
     fields: [
       { key: 'data', kind: 'prop' },
-      { key: 'isolate', kind: 'prop' }
+      { key: 'isolate', kind: 'prop' },
     ],
-    staticCapable: true
+    staticCapable: true,
   },
   {
     type: 'loop',
@@ -89,8 +97,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'keyName', kind: 'prop' },
       { key: 'itemData', kind: 'prop' },
       { key: 'keyBy', kind: 'prop' },
-      { key: 'body', kind: 'region', params: ['item', 'index'] }
-    ]
+      { key: 'body', kind: 'region', params: ['item', 'index'] },
+    ],
   },
   {
     type: 'recurse',
@@ -105,8 +113,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'keyName', kind: 'prop' },
       { key: 'itemData', kind: 'prop' },
       { key: 'keyBy', kind: 'prop' },
-      { key: 'maxDepth', kind: 'prop' }
-    ]
+      { key: 'maxDepth', kind: 'prop' },
+    ],
   },
   {
     type: 'flex',
@@ -116,7 +124,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     defaultSchema: { type: 'flex', body: [] },
     component: FlexRenderer,
     regions: ['body', 'items'],
-    staticCapable: true
+    staticCapable: true,
   },
   {
     type: 'text',
@@ -127,9 +135,9 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     component: TextRenderer,
     fields: [
       { key: 'text', kind: 'prop', allowSource: true },
-      { key: 'body', kind: 'prop' }
+      { key: 'body', kind: 'prop' },
     ],
-    staticCapable: true
+    staticCapable: true,
   },
   {
     type: 'button',
@@ -145,7 +153,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
         displayName: 'Label',
         description: 'Button text content.',
         editorType: 'text',
-        defaultValue: 'Button'
+        defaultValue: 'Button',
       },
       variant: {
         shape: {
@@ -156,12 +164,12 @@ export const basicRendererDefinitions: RendererDefinition[] = [
             { kind: 'literal', value: 'outline' },
             { kind: 'literal', value: 'secondary' },
             { kind: 'literal', value: 'ghost' },
-            { kind: 'literal', value: 'link' }
-          ]
+            { kind: 'literal', value: 'link' },
+          ],
         },
         displayName: 'Variant',
         editorType: 'select',
-        defaultValue: 'default'
+        defaultValue: 'default',
       },
       size: {
         shape: {
@@ -174,19 +182,19 @@ export const basicRendererDefinitions: RendererDefinition[] = [
             { kind: 'literal', value: 'icon' },
             { kind: 'literal', value: 'icon-xs' },
             { kind: 'literal', value: 'icon-sm' },
-            { kind: 'literal', value: 'icon-lg' }
-          ]
+            { kind: 'literal', value: 'icon-lg' },
+          ],
         },
         displayName: 'Size',
         editorType: 'select',
-        defaultValue: 'default'
+        defaultValue: 'default',
       },
       disabled: {
         shape: { kind: 'boolean' },
         displayName: 'Disabled',
         description: 'Disables user interaction when true.',
-        editorType: 'switch'
-      }
+        editorType: 'switch',
+      },
     },
     eventContracts: {
       onClick: {
@@ -198,14 +206,14 @@ export const basicRendererDefinitions: RendererDefinition[] = [
             type: { kind: 'string' },
             nativeEvent: { kind: 'unknown' },
             currentTarget: { kind: 'unknown' },
-            target: { kind: 'unknown' }
+            target: { kind: 'unknown' },
           },
-          optional: ['nativeEvent', 'currentTarget', 'target']
-        }
-      }
+          optional: ['nativeEvent', 'currentTarget', 'target'],
+        },
+      },
     },
     component: ButtonRenderer,
-    fields: [{ key: 'onClick', kind: 'event' }]
+    fields: [{ key: 'onClick', kind: 'event' }],
   },
   {
     type: 'icon',
@@ -213,7 +221,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'content',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: IconRenderer,
-    staticCapable: true
+    staticCapable: true,
   },
   {
     type: 'badge',
@@ -221,7 +229,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'content',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: BadgeRenderer,
-    staticCapable: true
+    staticCapable: true,
   },
   {
     type: 'scope-debug',
@@ -232,8 +240,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     component: ScopeDebugRenderer,
     fields: [
       { key: 'title', kind: 'prop' },
-      { key: 'defaultExpand', kind: 'prop' }
-    ]
+      { key: 'defaultExpand', kind: 'prop' },
+    ],
   },
   {
     type: 'dynamic-renderer',
@@ -241,7 +249,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'advanced',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: DynamicRenderer,
-    regions: ['body']
+    regions: ['body'],
   },
   {
     type: 'reaction',
@@ -255,8 +263,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'immediate', kind: 'prop' },
       { key: 'debounce', kind: 'prop' },
       { key: 'once', kind: 'prop' },
-      { key: 'actions', kind: 'prop' }
-    ]
+      { key: 'actions', kind: 'prop' },
+    ],
   },
   {
     type: 'dialog',
@@ -270,8 +278,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'onOpen', kind: 'event' },
       { key: 'onClose', kind: 'event' },
       { key: 'container', kind: 'prop' },
-      { key: 'showMask', kind: 'prop' }
-    ]
+      { key: 'showMask', kind: 'prop' },
+    ],
   },
   {
     type: 'drawer',
@@ -285,8 +293,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'onOpen', kind: 'event' },
       { key: 'onClose', kind: 'event' },
       { key: 'container', kind: 'prop' },
-      { key: 'showMask', kind: 'prop' }
-    ]
+      { key: 'showMask', kind: 'prop' },
+    ],
   },
   {
     type: 'tabs',
@@ -297,9 +305,9 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     regions: ['toolbar'],
     fields: [
       { key: 'onChange', kind: 'event' },
-      { key: 'items', kind: 'prop' }
-    ]
-  }
+      { key: 'items', kind: 'prop' },
+    ],
+  },
 ];
 
 export function registerBasicRenderers(registry: RendererRegistry) {

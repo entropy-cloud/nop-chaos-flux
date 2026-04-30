@@ -29,9 +29,7 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
     }
   }, [collapsible]);
 
-  const bodyStyle = collapsed
-    ? { display: 'none', ...fieldsetGap.style }
-    : fieldsetGap.style;
+  const bodyStyle = collapsed ? { display: 'none', ...fieldsetGap.style } : fieldsetGap.style;
 
   return (
     <fieldset
@@ -39,14 +37,23 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-collapsible={collapsible || undefined}
-      data-collapsed={collapsible && collapsed || undefined}
+      data-collapsed={(collapsible && collapsed) || undefined}
     >
       {title ? (
-        <legend data-slot="fieldset-title" className={cn(slotProps.titleClassName)} onClick={toggle} style={collapsible ? { cursor: 'pointer' } : undefined}>
+        <legend
+          data-slot="fieldset-title"
+          className={cn(slotProps.titleClassName)}
+          onClick={toggle}
+          style={collapsible ? { cursor: 'pointer' } : undefined}
+        >
           {title}
         </legend>
       ) : null}
-      <div data-slot="fieldset-body" className={cn(fieldsetGap.className, slotProps.bodyClassName)} style={bodyStyle}>
+      <div
+        data-slot="fieldset-body"
+        className={cn(fieldsetGap.className, slotProps.bodyClassName)}
+        style={bodyStyle}
+      >
         {hasRendererSlotContent(bodyContent) ? bodyContent : null}
       </div>
     </fieldset>
@@ -63,5 +70,5 @@ export const fieldsetRendererDefinition: RendererDefinition = {
   defaultSchema: { type: 'fieldset', body: [] },
   component: FieldsetRenderer,
   regions: ['body'],
-  fields: []
+  fields: [],
 };

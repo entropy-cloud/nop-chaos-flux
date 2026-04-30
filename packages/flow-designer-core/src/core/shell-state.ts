@@ -16,11 +16,14 @@ export function createDesignerShellState(doc: GraphDocument): DesignerShellState
     gridEnabled: true,
     paletteCollapsed: false,
     inspectorCollapsed: false,
-    viewport: normalizeViewport(doc.viewport)
+    viewport: normalizeViewport(doc.viewport),
   };
 }
 
-export function setShellViewport(shell: DesignerShellState, viewport: { x: number; y: number; zoom: number }) {
+export function setShellViewport(
+  shell: DesignerShellState,
+  viewport: { x: number; y: number; zoom: number },
+) {
   const normalizedViewport = normalizeViewportInput(viewport);
 
   if (viewportsEqual(shell.viewport, normalizedViewport)) {

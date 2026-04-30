@@ -17,7 +17,15 @@ import { createFriendlyNameDecoration } from './expression/decoration';
 import { createTemplateModeExtension } from './expression/template-mode';
 import { sqlCompletionSource } from './sql/completion';
 import { createExpressionLinter } from './expression/linter';
-import type { EditorLanguage, EditorMode, SQLDialect as SQLDialectType, ExpressionLintConfig, VariableItem, FuncGroup, TableSchema } from '../types';
+import type {
+  EditorLanguage,
+  EditorMode,
+  SQLDialect as SQLDialectType,
+  ExpressionLintConfig,
+  VariableItem,
+  FuncGroup,
+  TableSchema,
+} from '../types';
 
 const defaultLightTheme = EditorView.theme({
   '&': {
@@ -95,10 +103,7 @@ export interface CompletionConfig {
 }
 
 export function createBaseExtensions(options: CreateBaseExtensionsOptions): Extension[] {
-  const extensions: Extension[] = [
-    keymap.of([indentWithTab]),
-    history(),
-  ];
+  const extensions: Extension[] = [keymap.of([indentWithTab]), history()];
 
   if (options.lineNumbers) {
     extensions.push(lineNumbers());
@@ -120,14 +125,22 @@ export function createBaseExtensions(options: CreateBaseExtensionsOptions): Exte
 
   if (options.language === 'sql' && options.sqlDialect) {
     extensions.push(createSQLDialectExtension(options.sqlDialect));
-  } else if (options.language === 'expression' && options.mode === 'template' && options.completionConfig) {
+  } else if (
+    options.language === 'expression' &&
+    options.mode === 'template' &&
+    options.completionConfig
+  ) {
     const { variables = [], functions = [] } = options.completionConfig;
     extensions.push(createTemplateModeExtension(variables, functions));
   } else {
     extensions.push(createLanguageExtension(options.language));
   }
 
-  if (options.language === 'expression' && options.mode !== 'template' && options.completionConfig) {
+  if (
+    options.language === 'expression' &&
+    options.mode !== 'template' &&
+    options.completionConfig
+  ) {
     const { variables = [], functions = [] } = options.completionConfig;
     extensions.push(
       autocompletion({

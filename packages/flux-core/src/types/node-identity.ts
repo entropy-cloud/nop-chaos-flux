@@ -1,4 +1,9 @@
-import type { CompiledRuntimeValue, RuntimeValueState, CompiledDataSource, CompiledReaction } from './compilation';
+import type {
+  CompiledRuntimeValue,
+  RuntimeValueState,
+  CompiledDataSource,
+  CompiledReaction,
+} from './compilation';
 import type { CompiledActionProgram } from './actions';
 import type { BaseSchema, SchemaPath } from './schema';
 import type { ScopeDependencySet, ScopeRef } from './scope';

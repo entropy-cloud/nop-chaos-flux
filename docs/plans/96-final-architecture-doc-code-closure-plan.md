@@ -75,6 +75,7 @@ Targets: successor plans, touched owner docs, `docs/analysis/2026-04-16-architec
 **Phase 2 Results (2026-04-16):**
 
 All three successor plans completed reverse updates:
+
 - Plan 100: `docs/architecture/flux-core.md` updated with CompiledSchemaNode boundary classification table
 - Plan 98: Verified `docs/architecture/api-data-source.md` and `docs/architecture/dependency-tracking.md` already correct
 - Plan 99: `docs/architecture/action-scope-and-imports.md` updated to clarify owner-internal behavior
@@ -97,12 +98,12 @@ Targets: `docs/architecture/flux-core.md`, `docs/architecture/dependency-trackin
 
 Cross-doc audit completed. All four owner docs are consistent with live code:
 
-| Doc | Status | Evidence |
-|-----|--------|----------|
-| `flux-core.md` | Consistent | CompiledSchemaNode boundary table at lines 315-349 |
-| `api-data-source.md` | Consistent | name-first publication documented (lines 449-455) |
-| `dependency-tracking.md` | Consistent | dependsOn precedence documented |
-| `action-scope-and-imports.md` | Consistent | Flow Designer boundary clarified (lines 57, 975) |
+| Doc                           | Status     | Evidence                                           |
+| ----------------------------- | ---------- | -------------------------------------------------- |
+| `flux-core.md`                | Consistent | CompiledSchemaNode boundary table at lines 315-349 |
+| `api-data-source.md`          | Consistent | name-first publication documented (lines 449-455)  |
+| `dependency-tracking.md`      | Consistent | dependsOn precedence documented                    |
+| `action-scope-and-imports.md` | Consistent | Flow Designer boundary clarified (lines 57, 975)   |
 
 Exit Criteria:
 

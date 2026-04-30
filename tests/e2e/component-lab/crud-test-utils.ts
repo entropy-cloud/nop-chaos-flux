@@ -42,7 +42,7 @@ export async function readInnerHtml(locator: Locator): Promise<string> {
 
 export async function readComputedStyle(
   locator: Locator,
-  properties: string[]
+  properties: string[],
 ): Promise<Record<string, string>> {
   return locator.evaluate((node, props) => {
     const style = getComputedStyle(node as Element);

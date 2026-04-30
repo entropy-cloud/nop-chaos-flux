@@ -1,29 +1,44 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createSavedDocumentData, saveDocument, loadDocument, clearDocument, saveDatasets, loadDatasets } from '../document-io.js'
-import type { DataSet } from '../dataset-model.js'
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import {
+  createSavedDocumentData,
+  saveDocument,
+  loadDocument,
+  clearDocument,
+  saveDatasets,
+  loadDatasets,
+} from '../document-io.js';
+import type { DataSet } from '../dataset-model.js';
 
-const STORAGE_KEY = 'nop-word-editor-document'
-const DATASET_STORAGE_KEY = 'nop-word-editor-datasets'
+const STORAGE_KEY = 'nop-word-editor-document';
+const DATASET_STORAGE_KEY = 'nop-word-editor-datasets';
 
 function createLocalStorageMock() {
-  let store: Record<string, string> = {}
+  let store: Record<string, string> = {};
   return {
     getItem: vi.fn((key: string) => store[key] ?? null),
-    setItem: vi.fn((key: string, value: string) => { store[key] = value }),
-    removeItem: vi.fn((key: string) => { delete store[key] }),
-    clear: vi.fn(() => { store = {} }),
-    get length() { return Object.keys(store).length },
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    get length() {
+      return Object.keys(store).length;
+    },
     key: vi.fn(() => null),
-    _store: store
-  }
+    _store: store,
+  };
 }
 
-let localStorageMock: ReturnType<typeof createLocalStorageMock>
+let localStorageMock: ReturnType<typeof createLocalStorageMock>;
 
 beforeEach(() => {
-  localStorageMock = createLocalStorageMock()
-  vi.stubGlobal('localStorage', localStorageMock)
-})
+  localStorageMock = createLocalStorageMock();
+  vi.stubGlobal('localStorage', localStorageMock);
+});
 
 describe('saveDocument', () => {
   it('returns true and stores data when bridge has value', () => {
@@ -31,138 +46,176 @@ describe('saveDocument', () => {
       data: {
         header: [{ value: 'header' }],
         main: [{ value: 'main' }],
-        footer: [{ value: 'footer' }]
-      }
-    }
+        footer: [{ value: 'footer' }],
+      },
+    };
     const mockBridge = {
       getValue: vi.fn(() => mockData),
-      getPaperSettings: vi.fn(() => ({ width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] }))
-    } as any
+      getPaperSettings: vi.fn(() => ({
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [100, 120, 100, 120],
+      })),
+    } as any;
 
     const result = saveDocument(mockBridge, {
-      charts: [{ id: 'chart_1', chartName: 'Revenue', chartType: 'bar', showChartName: true, datasetId: 'ds', categoryField: 'month', valueField: ['value'] }],
-      codes: [{ id: 'code_1', codeName: 'QR', codeType: 'qrcode', datasetId: 'ds', valueField: 'id' }]
-    })
+      charts: [
+        {
+          id: 'chart_1',
+          chartName: 'Revenue',
+          chartType: 'bar',
+          showChartName: true,
+          datasetId: 'ds',
+          categoryField: 'month',
+          valueField: ['value'],
+        },
+      ],
+      codes: [
+        { id: 'code_1', codeName: 'QR', codeType: 'qrcode', datasetId: 'ds', valueField: 'id' },
+      ],
+    });
 
-    expect(result).toBe(true)
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String))
-    const saved = JSON.parse(localStorageMock.setItem.mock.calls[0][1]) as any
-    expect(saved.data.main).toEqual([{ value: 'main' }])
-    expect(saved.data.header).toEqual([{ value: 'header' }])
-    expect(saved.data.footer).toEqual([{ value: 'footer' }])
-    expect(saved.data.charts).toHaveLength(1)
-    expect(saved.data.codes).toHaveLength(1)
-    expect(saved.paperSettings.width).toBe(595)
-    expect(saved.savedAt).toBeDefined()
-  })
+    expect(result).toBe(true);
+    expect(localStorageMock.setItem).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String));
+    const saved = JSON.parse(localStorageMock.setItem.mock.calls[0][1]) as any;
+    expect(saved.data.main).toEqual([{ value: 'main' }]);
+    expect(saved.data.header).toEqual([{ value: 'header' }]);
+    expect(saved.data.footer).toEqual([{ value: 'footer' }]);
+    expect(saved.data.charts).toHaveLength(1);
+    expect(saved.data.codes).toHaveLength(1);
+    expect(saved.paperSettings.width).toBe(595);
+    expect(saved.savedAt).toBeDefined();
+  });
 
   it('returns false when bridge.getValue() returns null', () => {
     const mockBridge = {
       getValue: vi.fn(() => null),
-      getPaperSettings: vi.fn()
-    } as any
+      getPaperSettings: vi.fn(),
+    } as any;
 
-    expect(saveDocument(mockBridge)).toBe(false)
-    expect(localStorageMock.setItem).not.toHaveBeenCalled()
-  })
+    expect(saveDocument(mockBridge)).toBe(false);
+    expect(localStorageMock.setItem).not.toHaveBeenCalled();
+  });
 
   it('handles missing header/footer with defaults', () => {
-    const mockData = { data: { main: [{ value: 'content' }] } }
+    const mockData = { data: { main: [{ value: 'content' }] } };
     const mockBridge = {
       getValue: vi.fn(() => mockData),
-      getPaperSettings: vi.fn(() => null)
-    } as any
+      getPaperSettings: vi.fn(() => null),
+    } as any;
 
-    const result = saveDocument(mockBridge)
-    expect(result).toBe(true)
-    const saved = JSON.parse(localStorageMock.setItem.mock.calls[0][1]) as any
-    expect(saved.data.header).toEqual([])
-    expect(saved.data.footer).toEqual([])
-    expect(saved.data.charts).toEqual([])
-    expect(saved.data.codes).toEqual([])
-    expect(saved.paperSettings).toEqual({ width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] })
-  })
+    const result = saveDocument(mockBridge);
+    expect(result).toBe(true);
+    const saved = JSON.parse(localStorageMock.setItem.mock.calls[0][1]) as any;
+    expect(saved.data.header).toEqual([]);
+    expect(saved.data.footer).toEqual([]);
+    expect(saved.data.charts).toEqual([]);
+    expect(saved.data.codes).toEqual([]);
+    expect(saved.paperSettings).toEqual({
+      width: 595,
+      height: 842,
+      direction: 'vertical',
+      margins: [100, 120, 100, 120],
+    });
+  });
 
   it('normalizes saved document data with defaults', () => {
     const saved = createSavedDocumentData({
       data: {
         header: [],
         main: [{ value: 'hello' }],
-        footer: []
+        footer: [],
       },
       paperSettings: null,
-      savedAt: '2026-01-01T00:00:00.000Z'
-    })
+      savedAt: '2026-01-01T00:00:00.000Z',
+    });
 
-    expect(saved.data.charts).toEqual([])
-    expect(saved.data.codes).toEqual([])
-    expect(saved.paperSettings.width).toBe(595)
-  })
-})
+    expect(saved.data.charts).toEqual([]);
+    expect(saved.data.codes).toEqual([]);
+    expect(saved.paperSettings.width).toBe(595);
+  });
+});
 
 describe('loadDocument', () => {
   it('returns null when no data saved', () => {
-    expect(loadDocument()).toBeNull()
-  })
+    expect(loadDocument()).toBeNull();
+  });
 
   it('returns saved data correctly', () => {
     const saved = {
       data: { header: [], main: [{ value: 'hello' }], footer: [], charts: [], codes: [] },
-      paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
-      savedAt: '2025-01-01T00:00:00.000Z'
-    }
-    localStorageMock._store[STORAGE_KEY] = JSON.stringify(saved)
+      paperSettings: {
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [100, 120, 100, 120],
+      },
+      savedAt: '2025-01-01T00:00:00.000Z',
+    };
+    localStorageMock._store[STORAGE_KEY] = JSON.stringify(saved);
 
-    const result = loadDocument()
-    expect(result).toEqual(saved)
-  })
+    const result = loadDocument();
+    expect(result).toEqual(saved);
+  });
 
   it('upgrades legacy saved documents without chart/code arrays', () => {
     const saved = {
       data: { header: [], main: [{ value: 'legacy' }], footer: [] },
-      paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
-      savedAt: '2025-01-01T00:00:00.000Z'
-    }
-    localStorageMock._store[STORAGE_KEY] = JSON.stringify(saved)
+      paperSettings: {
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [100, 120, 100, 120],
+      },
+      savedAt: '2025-01-01T00:00:00.000Z',
+    };
+    localStorageMock._store[STORAGE_KEY] = JSON.stringify(saved);
 
-    const result = loadDocument()
-    expect(result?.data.charts).toEqual([])
-    expect(result?.data.codes).toEqual([])
-  })
-})
+    const result = loadDocument();
+    expect(result?.data.charts).toEqual([]);
+    expect(result?.data.codes).toEqual([]);
+  });
+});
 
 describe('clearDocument', () => {
   it('removes stored data', () => {
-    localStorageMock._store[STORAGE_KEY] = '{"data":{}}'
-    clearDocument()
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith(STORAGE_KEY)
-  })
-})
+    localStorageMock._store[STORAGE_KEY] = '{"data":{}}';
+    clearDocument();
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith(STORAGE_KEY);
+  });
+});
 
 describe('saveDatasets', () => {
   it('saves and loads datasets round-trip', () => {
     const datasets: DataSet[] = [
-      { id: 'ds_1', name: 'Users', description: 'User data', type: 'sql', columns: [{ name: 'email', label: 'Email', type: 'sql' }] },
-      { id: 'ds_2', name: 'Orders', description: 'Order data', type: 'api', columns: [] }
-    ]
+      {
+        id: 'ds_1',
+        name: 'Users',
+        description: 'User data',
+        type: 'sql',
+        columns: [{ name: 'email', label: 'Email', type: 'sql' }],
+      },
+      { id: 'ds_2', name: 'Orders', description: 'Order data', type: 'api', columns: [] },
+    ];
 
-    saveDatasets(datasets)
-    const loaded = loadDatasets()
+    saveDatasets(datasets);
+    const loaded = loadDatasets();
 
-    expect(loaded).toEqual(datasets)
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(DATASET_STORAGE_KEY, expect.any(String))
-  })
+    expect(loaded).toEqual(datasets);
+    expect(localStorageMock.setItem).toHaveBeenCalledWith(DATASET_STORAGE_KEY, expect.any(String));
+  });
 
   it('handles empty array', () => {
-    saveDatasets([])
-    const loaded = loadDatasets()
+    saveDatasets([]);
+    const loaded = loadDatasets();
 
-    expect(loaded).toEqual([])
-  })
-})
+    expect(loaded).toEqual([]);
+  });
+});
 
 describe('loadDatasets', () => {
   it('returns empty array when nothing saved', () => {
-    expect(loadDatasets()).toEqual([])
-  })
-})
+    expect(loadDatasets()).toEqual([]);
+  });
+});

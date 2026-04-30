@@ -1,4 +1,9 @@
-import type { CellDocument, SpreadsheetDocument, SpreadsheetRange, SpreadsheetSortDirection } from '../types.js';
+import type {
+  CellDocument,
+  SpreadsheetDocument,
+  SpreadsheetRange,
+  SpreadsheetSortDirection,
+} from '../types.js';
 import { cellAddress, normalizeRange } from '../types.js';
 
 function compareValues(left: unknown, right: unknown) {
@@ -16,7 +21,10 @@ function compareValues(left: unknown, right: unknown) {
     return left - right;
   }
 
-  return String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: 'base' });
+  return String(left).localeCompare(String(right), undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
 }
 
 export function applySortRange(
@@ -59,10 +67,10 @@ export function applySortRange(
   const preservedCells: Record<string, CellDocument> = {};
   for (const [address, cell] of Object.entries(sheet.cells)) {
     if (
-      cell.row < normalized.startRow
-      || cell.row > normalized.endRow
-      || cell.col < normalized.startCol
-      || cell.col > normalized.endCol
+      cell.row < normalized.startRow ||
+      cell.row > normalized.endRow ||
+      cell.col < normalized.startCol ||
+      cell.col > normalized.endCol
     ) {
       preservedCells[address] = cell;
     }

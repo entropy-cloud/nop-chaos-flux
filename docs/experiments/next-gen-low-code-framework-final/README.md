@@ -51,28 +51,28 @@
 
 各文件职责：
 
-| File | Owns |
-| --- | --- |
-| `01-architecture-overview.md` | 总体目标、分层、原语闭包、顶层不变量 |
-| `02-execution-package-and-admission.md` | package IR、版本协商、compiler determinism、session/admission/recovery |
-| `03-kernel-transaction-and-async.md` | scope/value/dependency、transaction phases、commit 语义、async governance、failure taxonomy |
-| `04-owner-validation-and-data-model.md` | owner substrate、validation、composite value、table/collection、structural sharing |
-| `05-renderer-and-host-protocol.md` | renderer contract、React host、domain bridge、host projection、command/handle 协议 |
-| `06-persistence-journal-collaboration.md` | persistence、snapshot/journal、undo/redo、协作编辑、SSR/worker 恢复边界 |
-| `07-diagnostics-security-performance-conformance.md` | debugger、diagnostics、安全、性能、合规测试矩阵 |
-| `08-end-to-end-lowering-example.md` | authoring -> package -> runtime 的端到端示例 |
-| `09-repo-and-package-blueprint.md` | 从零实现的仓库布局、package 结构、目录职责 |
-| `10-runtime-module-map.md` | 关键模块、核心接口、代码落点、模块间依赖图 |
-| `11-implementation-sequence-and-milestones.md` | 从零实施顺序、阶段里程碑、阶段退出条件、风险控制 |
-| `12-conformance-case-catalog.md` | 合规用例目录、case ID 体系、phase gate 对应关系 |
-| `13-field-json-design-examples.md` | `object-field`、`variant-field`、`array-field` 等具体 JSON 设计示例 |
-| `14-concrete-technical-solution.md` | 具体实现技术方案、数据结构、调度模型、第三方技术选择 |
-| `15-performance-and-extensibility-strategy.md` | 高性能与高扩展性工程策略、热点优化与扩展边界 |
-| `16-current-implementation-comparison.md` | 与当前实现的逐项对比、保留点、替换点、迁移启示 |
-| `17-execution-package-ir-spec.md` | `ExecutionPackage` IR 字段级规范、canonicalization、不变量、host/owner/field 相关 IR |
-| `18-mvp-kernel-pseudocode.md` | MVP 内核伪代码、transaction/async/owner/resource/reaction/recovery 的执行步骤 |
-| `19-composite-field-lowering-and-identity.md` | `array-field` identity lowering、`rowEditor` commit target、variant project revalidation 的 bridge 规范 |
-| `20-mvp-implementation-task-matrix.md` | MVP 可执行任务矩阵、物理 owner、前置依赖、完成证据 |
+| File                                                 | Owns                                                                                                    |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `01-architecture-overview.md`                        | 总体目标、分层、原语闭包、顶层不变量                                                                    |
+| `02-execution-package-and-admission.md`              | package IR、版本协商、compiler determinism、session/admission/recovery                                  |
+| `03-kernel-transaction-and-async.md`                 | scope/value/dependency、transaction phases、commit 语义、async governance、failure taxonomy             |
+| `04-owner-validation-and-data-model.md`              | owner substrate、validation、composite value、table/collection、structural sharing                      |
+| `05-renderer-and-host-protocol.md`                   | renderer contract、React host、domain bridge、host projection、command/handle 协议                      |
+| `06-persistence-journal-collaboration.md`            | persistence、snapshot/journal、undo/redo、协作编辑、SSR/worker 恢复边界                                 |
+| `07-diagnostics-security-performance-conformance.md` | debugger、diagnostics、安全、性能、合规测试矩阵                                                         |
+| `08-end-to-end-lowering-example.md`                  | authoring -> package -> runtime 的端到端示例                                                            |
+| `09-repo-and-package-blueprint.md`                   | 从零实现的仓库布局、package 结构、目录职责                                                              |
+| `10-runtime-module-map.md`                           | 关键模块、核心接口、代码落点、模块间依赖图                                                              |
+| `11-implementation-sequence-and-milestones.md`       | 从零实施顺序、阶段里程碑、阶段退出条件、风险控制                                                        |
+| `12-conformance-case-catalog.md`                     | 合规用例目录、case ID 体系、phase gate 对应关系                                                         |
+| `13-field-json-design-examples.md`                   | `object-field`、`variant-field`、`array-field` 等具体 JSON 设计示例                                     |
+| `14-concrete-technical-solution.md`                  | 具体实现技术方案、数据结构、调度模型、第三方技术选择                                                    |
+| `15-performance-and-extensibility-strategy.md`       | 高性能与高扩展性工程策略、热点优化与扩展边界                                                            |
+| `16-current-implementation-comparison.md`            | 与当前实现的逐项对比、保留点、替换点、迁移启示                                                          |
+| `17-execution-package-ir-spec.md`                    | `ExecutionPackage` IR 字段级规范、canonicalization、不变量、host/owner/field 相关 IR                    |
+| `18-mvp-kernel-pseudocode.md`                        | MVP 内核伪代码、transaction/async/owner/resource/reaction/recovery 的执行步骤                           |
+| `19-composite-field-lowering-and-identity.md`        | `array-field` identity lowering、`rowEditor` commit target、variant project revalidation 的 bridge 规范 |
+| `20-mvp-implementation-task-matrix.md`               | MVP 可执行任务矩阵、物理 owner、前置依赖、完成证据                                                      |
 
 ## 3. 共识边界
 
@@ -91,7 +91,7 @@
 3. `04-owner-validation-and-data-model.md` 是唯一 owner lifecycle、validation edge case、collection field-state migration owner。
 4. `05-renderer-and-host-protocol.md` 只定义 host/renderer/bridge/command envelope，不再发明第二套 failure taxonomy。
 5. `06-persistence-journal-collaboration.md` 是 persistence/recovery/journal/collaboration 的高层协议 owner；`17-execution-package-ir-spec.md` 只在需要时给出 shared DTO 细化，不改变 `06` 的生命周期语义。
-6. `07-diagnostics-security-performance-conformance.md` 只定义 diagnostics、安全与 conformance，不再重复运行时协议。 
+6. `07-diagnostics-security-performance-conformance.md` 只定义 diagnostics、安全与 conformance，不再重复运行时协议。
 
 ## 4. 与旧总稿关系
 

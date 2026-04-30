@@ -24,13 +24,23 @@
               "type": "group",
               "label": "用户信息",
               "children": [
-                { "name": "username", "label": "用户名", "type": "text", "placeholder": "输入用户名" },
+                {
+                  "name": "username",
+                  "label": "用户名",
+                  "type": "text",
+                  "placeholder": "输入用户名"
+                },
                 { "name": "age", "label": "年龄", "type": "number" },
-                { "name": "role", "label": "角色", "type": "select", "options": [
-                  { "label": "管理员", "value": "admin" },
-                  { "label": "编辑者", "value": "editor" },
-                  { "label": "查看者", "value": "viewer" }
-                ]}
+                {
+                  "name": "role",
+                  "label": "角色",
+                  "type": "select",
+                  "options": [
+                    { "label": "管理员", "value": "admin" },
+                    { "label": "编辑者", "value": "editor" },
+                    { "label": "查看者", "value": "viewer" }
+                  ]
+                }
               ]
             },
             {
@@ -41,7 +51,13 @@
                 { "name": "updated_at", "label": "更新时间", "type": "text" }
               ]
             },
-            { "name": "active", "label": "是否激活", "type": "boolean", "trueLabel": "是", "falseLabel": "否" }
+            {
+              "name": "active",
+              "label": "是否激活",
+              "type": "boolean",
+              "trueLabel": "是",
+              "falseLabel": "否"
+            }
           ]
         },
         {
@@ -57,11 +73,16 @@
           "addConditionLabel": "添加筛选",
           "fields": [
             { "name": "name", "label": "名称", "type": "text" },
-            { "name": "status", "label": "状态", "type": "select", "options": [
-              { "label": "进行中", "value": "running" },
-              { "label": "已完成", "value": "done" },
-              { "label": "已取消", "value": "cancelled" }
-            ]},
+            {
+              "name": "status",
+              "label": "状态",
+              "type": "select",
+              "options": [
+                { "label": "进行中", "value": "running" },
+                { "label": "已完成", "value": "done" },
+                { "label": "已取消", "value": "cancelled" }
+              ]
+            },
             { "name": "priority", "label": "优先级", "type": "number" },
             { "name": "enabled", "label": "启用", "type": "boolean" }
           ]
@@ -83,12 +104,17 @@
           "fields": [
             { "name": "title", "label": "标题", "type": "text" },
             { "name": "score", "label": "分数", "type": "number" },
-            { "name": "category", "label": "分类", "type": "select", "options": [
-              { "label": "技术", "value": "tech" },
-              { "label": "设计", "value": "design" },
-              { "label": "产品", "value": "product" },
-              { "label": "运营", "value": "operations" }
-            ]},
+            {
+              "name": "category",
+              "label": "分类",
+              "type": "select",
+              "options": [
+                { "label": "技术", "value": "tech" },
+                { "label": "设计", "value": "design" },
+                { "label": "产品", "value": "product" },
+                { "label": "运营", "value": "operations" }
+              ]
+            },
             { "name": "visible", "label": "可见", "type": "boolean" }
           ]
         },

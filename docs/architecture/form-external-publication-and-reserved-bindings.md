@@ -345,13 +345,13 @@ Flux 的正式设计更强调：
 
 ## Quick Contract Table
 
-| Mechanism | Scope | Meaning |
-| --- | --- | --- |
-| `form.name` | owner identity | identify the form owner |
-| direct field-name reads (`${username}`) | form subtree | preferred in-form values read |
-| `$form` | form subtree / lifecycle | owner-local readonly status summary |
-| `statusPath` | external scope | explicit readonly external status publication |
-| `valuesPath` | external scope | explicit readonly external values snapshot publication |
+| Mechanism                               | Scope                    | Meaning                                                |
+| --------------------------------------- | ------------------------ | ------------------------------------------------------ |
+| `form.name`                             | owner identity           | identify the form owner                                |
+| direct field-name reads (`${username}`) | form subtree             | preferred in-form values read                          |
+| `$form`                                 | form subtree / lifecycle | owner-local readonly status summary                    |
+| `statusPath`                            | external scope           | explicit readonly external status publication          |
+| `valuesPath`                            | external scope           | explicit readonly external values snapshot publication |
 
 ## Current Recommendation
 

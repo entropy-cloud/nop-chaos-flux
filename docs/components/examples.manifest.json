@@ -95,8 +95,5 @@
     "video",
     "wizard"
   ],
-  "declaredButUnregistered": [
-    "designer-node-card",
-    "designer-edge-row"
-  ]
+  "declaredButUnregistered": ["designer-node-card", "designer-edge-row"]
 }

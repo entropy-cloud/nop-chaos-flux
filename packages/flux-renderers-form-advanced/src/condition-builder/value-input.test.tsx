@@ -32,14 +32,18 @@ describe('ValueInput', () => {
   });
 
   it('renders text input for text field', () => {
-    const { container } = render(<ValueInput field={textField} op="equal" value="hello" onChange={() => {}} />);
+    const { container } = render(
+      <ValueInput field={textField} op="equal" value="hello" onChange={() => {}} />,
+    );
     const input = container.querySelector('input[type="text"]') as HTMLInputElement;
     expect(input).toBeTruthy();
     expect(input.value).toBe('hello');
   });
 
   it('renders number input for number field', () => {
-    const { container } = render(<ValueInput field={numberField} op="equal" value={42} onChange={() => {}} />);
+    const { container } = render(
+      <ValueInput field={numberField} op="equal" value={42} onChange={() => {}} />,
+    );
     const input = container.querySelector('input[type="number"]') as HTMLInputElement;
     expect(input).toBeTruthy();
     expect(input.value).toBe('42');
@@ -47,7 +51,9 @@ describe('ValueInput', () => {
 
   it('calls onChange with undefined when number input is cleared', () => {
     const onChange = vi.fn();
-    const { container } = render(<ValueInput field={numberField} op="equal" value={10} onChange={onChange} />);
+    const { container } = render(
+      <ValueInput field={numberField} op="equal" value={10} onChange={onChange} />,
+    );
     const input = container.querySelector('input[type="number"]')!;
     fireEvent.change(input, { target: { value: '' } });
     expect(onChange).toHaveBeenCalledWith(undefined);
@@ -55,7 +61,9 @@ describe('ValueInput', () => {
 
   it('calls onChange with number when number input receives input', () => {
     const onChange = vi.fn();
-    const { container } = render(<ValueInput field={numberField} op="equal" value={undefined} onChange={onChange} />);
+    const { container } = render(
+      <ValueInput field={numberField} op="equal" value={undefined} onChange={onChange} />,
+    );
     const input = container.querySelector('input[type="number"]')!;
     fireEvent.change(input, { target: { value: '25' } });
     expect(onChange).toHaveBeenCalledWith(25);
@@ -91,7 +99,9 @@ describe('ValueInput', () => {
 
   it('calls onChange with string value for text input', () => {
     const onChange = vi.fn();
-    const { container } = render(<ValueInput field={textField} op="equal" value="" onChange={onChange} />);
+    const { container } = render(
+      <ValueInput field={textField} op="equal" value="" onChange={onChange} />,
+    );
     const input = container.querySelector('input[type="text"]')!;
     fireEvent.change(input, { target: { value: 'hello' } });
     expect(onChange).toHaveBeenCalledWith('hello');
@@ -99,7 +109,9 @@ describe('ValueInput', () => {
 
   it('renders text input as fallback for custom field type', () => {
     const customField = { name: 'x', label: 'X', type: 'custom' } as ConditionField;
-    const { container } = render(<ValueInput field={customField} op="equal" value="test" onChange={() => {}} />);
+    const { container } = render(
+      <ValueInput field={customField} op="equal" value="test" onChange={() => {}} />,
+    );
     const input = container.querySelector('input') as HTMLInputElement;
     expect(input.type).toBe('text');
     expect(input.value).toBe('test');
@@ -152,9 +164,7 @@ describe('ValueInput', () => {
     fireEvent.change(select as HTMLSelectElement, { target: { value: 'open' } });
     expect(onChange).toHaveBeenCalledWith(['open']);
 
-    rerender(
-      <ValueInput field={field} op="equal" value={['open']} onChange={onChange} />,
-    );
+    rerender(<ValueInput field={field} op="equal" value={['open']} onChange={onChange} />);
 
     fireEvent.click(screen.getByText('Open ×'));
     expect(onChange).toHaveBeenLastCalledWith(undefined);
@@ -165,7 +175,9 @@ describe('ValueInput', () => {
     initFluxI18n();
     await changeLanguage('en-US');
 
-    const { container } = render(<ValueInput field={numberField} op="equal" value={undefined} onChange={() => {}} />);
+    const { container } = render(
+      <ValueInput field={numberField} op="equal" value={undefined} onChange={() => {}} />,
+    );
     const input = container.querySelector('input[type="number"]') as HTMLInputElement;
 
     expect(input.placeholder).toBe('Number');

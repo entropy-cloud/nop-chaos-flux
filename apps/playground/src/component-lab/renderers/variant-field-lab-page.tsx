@@ -8,15 +8,22 @@ const stringOrListVariant = {
       id: 'variant-field-string-or-list',
       onSubmitSuccess: [
         { action: 'setValue', args: { path: 'submittedVariantValue', value: '${filterValue}' } },
-        { action: 'setValue', args: { path: 'submittedVariantText', value: '${Array.isArray(filterValue) ? "LIST => " + ((filterValue ?? []).join(", ") || "(empty)") : "TEXT => " + (filterValue ?? "")}' } }
+        {
+          action: 'setValue',
+          args: {
+            path: 'submittedVariantText',
+            value:
+              '${Array.isArray(filterValue) ? "LIST => " + ((filterValue ?? []).join(", ") || "(empty)") : "TEXT => " + (filterValue ?? "")}',
+          },
+        },
       ],
       data: {
-        filterValue: 'status = active'
+        filterValue: 'status = active',
       },
       body: [
         {
           type: 'text',
-          text: 'Current runtime value: ${Array.isArray(filterValue) ? "List editor active" : "String editor active"}'
+          text: 'Current runtime value: ${Array.isArray(filterValue) ? "List editor active" : "String editor active"}',
         },
         {
           type: 'variant-field',
@@ -31,9 +38,18 @@ const stringOrListVariant = {
               match: { kind: 'typeof', value: 'string' },
               initialValue: 'status = active',
               content: [
-                { type: 'input-text', name: '', label: 'Expression', required: true, placeholder: 'status = active' },
-                { type: 'text', text: 'Editing one string value. Submit result should be plain text.' }
-              ]
+                {
+                  type: 'input-text',
+                  name: '',
+                  label: 'Expression',
+                  required: true,
+                  placeholder: 'status = active',
+                },
+                {
+                  type: 'text',
+                  text: 'Editing one string value. Submit result should be plain text.',
+                },
+              ],
             },
             {
               key: 'list',
@@ -46,23 +62,32 @@ const stringOrListVariant = {
                   name: '',
                   label: 'Expressions',
                   itemKind: 'scalar',
-                  item: [{ type: 'input-text', name: 'value', label: 'Expression', required: true }]
+                  item: [
+                    { type: 'input-text', name: 'value', label: 'Expression', required: true },
+                  ],
                 },
-                { type: 'text', text: 'Editing a string array. Add/remove rows to verify list output.' }
-              ]
-            }
-          ]
-        }
+                {
+                  type: 'text',
+                  text: 'Editing a string array. Add/remove rows to verify list output.',
+                },
+              ],
+            },
+          ],
+        },
       ],
       actions: [
-        { type: 'button', label: 'Submit Filter Value', onClick: { action: 'component:submit', componentId: 'variant-field-string-or-list' } }
-      ]
+        {
+          type: 'button',
+          label: 'Submit Filter Value',
+          onClick: { action: 'component:submit', componentId: 'variant-field-string-or-list' },
+        },
+      ],
     },
     {
       type: 'text',
-      text: '${submittedVariantText ?? "Switch type, edit, and submit to verify output shape."}'
-    }
-  ]
+      text: '${submittedVariantText ?? "Switch type, edit, and submit to verify output shape."}',
+    },
+  ],
 };
 
 export function VariantFieldLabPage() {
@@ -72,9 +97,10 @@ export function VariantFieldLabPage() {
       scenarios={[
         {
           title: 'String vs list editor with scope-state switching',
-          description: 'The selected tab should be visibly active. Switch between a single string input and a list editor, edit both forms, and verify the active editor plus bound scope state change with the selected variant.',
-          schema: stringOrListVariant
-        }
+          description:
+            'The selected tab should be visibly active. Switch between a single string input and a list editor, edit both forms, and verify the active editor plus bound scope state change with the selected variant.',
+          schema: stringOrListVariant,
+        },
       ]}
     />
   );

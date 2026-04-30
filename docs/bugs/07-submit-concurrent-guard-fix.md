@@ -38,4 +38,3 @@
 - if a queuing or retry behavior is needed later, replace the early-return with a queue/debounce pattern rather than removing the guard
 - duplicate submit prevention should use the same `cancelled` semantics as other intentionally skipped actions; do not report it as a normal business failure unless product behavior explicitly requires that contract
 - the `submitting` flag must remain consistent with actual request state â€” never set it without a corresponding API call
-

@@ -11,10 +11,7 @@ export interface DesignerHistoryState {
   historyIndex: number;
 }
 
-export function createHistoryState(
-  doc: GraphDocument,
-  revision: number,
-): DesignerHistoryState {
+export function createHistoryState(doc: GraphDocument, revision: number): DesignerHistoryState {
   return {
     history: [{ doc: cloneDocument(doc), revision }],
     historyIndex: 0,

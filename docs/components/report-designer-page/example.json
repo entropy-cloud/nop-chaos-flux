@@ -75,10 +75,7 @@
           "id": "cell-style",
           "label": "单元格样式",
           "match": {
-            "kinds": [
-              "cell",
-              "range"
-            ]
+            "kinds": ["cell", "range"]
           },
           "body": {
             "type": "form",

@@ -31,12 +31,8 @@ test.describe('Dataset Sidebar Panel', () => {
   test('Datasets and Fields tabs are visible', async ({ page }) => {
     await openWordEditor(page);
 
-    await expect(
-      page.getByRole('tab', { name: '数据集' })
-    ).toBeVisible({ timeout: 15000 });
-    await expect(
-      page.getByRole('tab', { name: '字段' })
-    ).toBeVisible();
+    await expect(page.getByRole('tab', { name: '数据集' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('tab', { name: '字段' })).toBeVisible();
   });
 
   test('clicking Add Dataset opens DatasetDialog in create mode', async ({ page }) => {

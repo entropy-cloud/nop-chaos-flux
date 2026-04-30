@@ -1,8 +1,19 @@
-import type { ActionNamespaceProvider, ActionScope, RendererComponentProps, SchemaInput, ScopeRef } from '@nop-chaos/flux-core';
+import type {
+  ActionNamespaceProvider,
+  ActionScope,
+  RendererComponentProps,
+  SchemaInput,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import type { DesignerCommandResult } from './designer-command-types';
 import type { DesignerPageSchema } from './schemas';
 import type { DesignerContextValue } from './designer-context';
-import type { DesignerConfig, GraphDocument, NormalizedDesignerConfig, TreeDocument } from '@nop-chaos/flow-designer-core';
+import type {
+  DesignerConfig,
+  GraphDocument,
+  NormalizedDesignerConfig,
+  TreeDocument,
+} from '@nop-chaos/flow-designer-core';
 import { projectTree, simpleTreeLayout } from '@nop-chaos/flow-designer-core';
 
 export function normalizeTreeModeConfig(config: DesignerConfig): NormalizedDesignerConfig {
@@ -62,7 +73,11 @@ export function normalizeTreeModeConfig(config: DesignerConfig): NormalizedDesig
 }
 
 export function normalizeShortcut(input: string): string[] {
-  return input.toLowerCase().split('+').map((part) => part.trim()).filter(Boolean);
+  return input
+    .toLowerCase()
+    .split('+')
+    .map((part) => part.trim())
+    .filter(Boolean);
 }
 
 export function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | undefined): boolean {
@@ -77,7 +92,9 @@ export function matchesShortcut(event: KeyboardEvent, shortcuts: string[] | unde
     const wantsMeta = keys.includes('cmd') || keys.includes('meta');
     const wantsShift = keys.includes('shift');
     const wantsAlt = keys.includes('alt') || keys.includes('option');
-    const key = keys.find((part) => !['ctrl', 'cmd', 'meta', 'shift', 'alt', 'option'].includes(part));
+    const key = keys.find(
+      (part) => !['ctrl', 'cmd', 'meta', 'shift', 'alt', 'option'].includes(part),
+    );
     if (!key) {
       return false;
     }
@@ -119,7 +136,7 @@ export function createMergedDesignerProvider(args: {
     },
     dispose() {
       designerProvider.dispose?.();
-    }
+    },
   };
 }
 
@@ -141,7 +158,10 @@ export function createDesignerContextValue(args: {
   };
 }
 
-export function computeTreeModeDocument(treeDocument: TreeDocument, config: DesignerConfig): GraphDocument {
+export function computeTreeModeDocument(
+  treeDocument: TreeDocument,
+  config: DesignerConfig,
+): GraphDocument {
   const normalizedConfig = normalizeTreeModeConfig(config);
   const projected = projectTree(treeDocument, normalizedConfig);
   const treeConfig = normalizedConfig.treeConfig;
@@ -201,7 +221,7 @@ export async function confirmCreateDialog(args: {
       nodeType: args.pendingCreateDialog.nodeType.id,
       position: args.pendingCreateDialog.position,
       data: nextData,
-    })
+    }),
   };
 }
 
@@ -211,5 +231,8 @@ export function renderDesignerSchema(args: {
   designerScope: ScopeRef;
   actionScope: ActionScope | undefined;
 }) {
-  return args.helpers.render(args.schema as any, { scope: args.designerScope, actionScope: args.actionScope });
+  return args.helpers.render(args.schema as any, {
+    scope: args.designerScope,
+    actionScope: args.actionScope,
+  });
 }

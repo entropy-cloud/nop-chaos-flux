@@ -261,16 +261,16 @@
 用户明确给出以下方向选择，并说明当前无需考虑历史兼容性，因为项目仍处于初始版本阶段。
 
 1. 同意第 1 轮提出的基础关系图：
-    - `ApiObject` 负责 transport + adaptor
-    - `ActionSchema` 负责 dispatch + control flow
-    - `DataSourceSchema` 负责 producer lifecycle
-    - `ReactionSchema` 负责 watch -> dispatch
+   - `ApiObject` 负责 transport + adaptor
+   - `ActionSchema` 负责 dispatch + control flow
+   - `DataSourceSchema` 负责 producer lifecycle
+   - `ReactionSchema` 负责 watch -> dispatch
 
 2. `cacheTTL` / `cacheKey` / `dedupStrategy` 等内容应从 `ApiObject` 中移出。
 
 3. `requestAdaptor` / `responseAdaptor` 采用分层设计：
-    - transport adaptor 留在 api 层
-    - action 层可以再提供更上层的 result mapping / branch context 机制
+   - transport adaptor 留在 api 层
+   - action 层可以再提供更上层的 result mapping / branch context 机制
 
 4. imported lib 应允许进入表达式环境，并与 action import 复用同一导入机制，不再额外引入另一套 import 体系。
 
@@ -338,15 +338,15 @@
 可以先把两层清楚地区分为：
 
 1. api transport adaptor
-    - `requestAdaptor`
-    - `responseAdaptor`
-    - 作用于 transport pipeline
-    - 输入上下文是 `api` / `scope` / `data` / `headers` / `payload` 这一类 request-response 语义对象
+   - `requestAdaptor`
+   - `responseAdaptor`
+   - 作用于 transport pipeline
+   - 输入上下文是 `api` / `scope` / `data` / `headers` / `payload` 这一类 request-response 语义对象
 
 2. action result layer
-    - 不负责改写 HTTP request / response 本身
-    - 负责 `then` / `onError` / `result` / `error` / `prevResult` 这一层 control-flow branching
-    - 如有 result mapping，也应视为 action result semantic，而不是 transport adaptor
+   - 不负责改写 HTTP request / response 本身
+   - 负责 `then` / `onError` / `result` / `error` / `prevResult` 这一层 control-flow branching
+   - 如有 result mapping，也应视为 action result semantic，而不是 transport adaptor
 
 这两层拆开后，一个重要收益是：
 
@@ -366,12 +366,12 @@
 
 ```json
 {
-   "xui:imports": [
-      {
-         "from": "demo-lib",
-         "as": "demo"
-      }
-   ]
+  "xui:imports": [
+    {
+      "from": "demo-lib",
+      "as": "demo"
+    }
+  ]
 }
 ```
 
@@ -379,12 +379,12 @@
 
 ```json
 {
-   "onClick": {
-      "action": "demo:open",
-      "args": {
-         "id": "${row.id}"
-      }
-   }
+  "onClick": {
+    "action": "demo:open",
+    "args": {
+      "id": "${row.id}"
+    }
+  }
 }
 ```
 
@@ -392,7 +392,7 @@
 
 ```json
 {
-   "label": "${$demo.formatName(user.firstName, user.lastName)}"
+  "label": "${$demo.formatName(user.firstName, user.lastName)}"
 }
 ```
 
@@ -459,65 +459,65 @@
 
 ```json
 {
-   "action": "ajax",
-   "args": {
-      "target": "saveUser"
-   },
-   "api": {
-      "url": "/api/users/save",
-      "method": "post",
-      "data": {
-         "id": "${form.id}",
-         "name": "${form.name}"
-      },
-      "requestAdaptor": "${$demo.withTenant(data, session.tenantId)}"
-   },
-   "control": {
-      "timeout": 5000,
-      "retry": {
-         "times": 2,
-         "delay": 200
-      },
-      "dedup": "cancel-previous",
-      "cacheTTL": 60000
-   },
-   "when": "${form.valid}",
-   "then": {
-      "action": "toast",
-      "args": {
-         "level": "success",
-         "message": "保存成功"
-      }
-   },
-   "onError": {
-      "action": "toast",
-      "args": {
-         "level": "error",
-         "message": "${error.message}"
-      }
-   }
+  "action": "ajax",
+  "args": {
+    "target": "saveUser"
+  },
+  "api": {
+    "url": "/api/users/save",
+    "method": "post",
+    "data": {
+      "id": "${form.id}",
+      "name": "${form.name}"
+    },
+    "requestAdaptor": "${$demo.withTenant(data, session.tenantId)}"
+  },
+  "control": {
+    "timeout": 5000,
+    "retry": {
+      "times": 2,
+      "delay": 200
+    },
+    "dedup": "cancel-previous",
+    "cacheTTL": 60000
+  },
+  "when": "${form.valid}",
+  "then": {
+    "action": "toast",
+    "args": {
+      "level": "success",
+      "message": "保存成功"
+    }
+  },
+  "onError": {
+    "action": "toast",
+    "args": {
+      "level": "error",
+      "message": "${error.message}"
+    }
+  }
 }
 ```
 
 之所以这比完全展平更适合 AI，有四个原因：
 
 1. 语义分组更稳定。
-    - AI 在生成 schema 时，最怕的是“同一层同时混放 payload、control、control-flow、transport”。
-    - 一旦字段都展平，模型很容易把 `timeout`、`nodeType`、`message`、`dataPath`、`then` 混写到一个层级里。
+   - AI 在生成 schema 时，最怕的是“同一层同时混放 payload、control、control-flow、transport”。
+   - 一旦字段都展平，模型很容易把 `timeout`、`nodeType`、`message`、`dataPath`、`then` 混写到一个层级里。
 
 2. 更容易做结构化校验。
-    - `control` 可以单独做 schema 校验与补全。
-    - `args` 可以单独按 action contract 做校验。
-    - `api` 可以单独按 `ApiObject` 做校验。
+   - `control` 可以单独做 schema 校验与补全。
+   - `args` 可以单独按 action contract 做校验。
+   - `api` 可以单独按 `ApiObject` 做校验。
 
 3. 更利于工具和 AI 做字段归属判断。
-    - 顶层看到 `when` / `then` / `onError` 就知道是控制流。
-    - 看到 `control` 就知道是执行协调。
-    - 看到 `api` 就知道是 transport。
-    - 看到 `args` 就知道是 action payload。
+   - 顶层看到 `when` / `then` / `onError` 就知道是控制流。
+   - 看到 `control` 就知道是执行协调。
+   - 看到 `api` 就知道是 transport。
+   - 看到 `args` 就知道是 action payload。
 
 4. 更适合未来扩展。
-    - 以后增加 tracing、circuit breaker、concurrency key、cancel scope 等字段，不会污染顶层命名空间。
+   - 以后增加 tracing、circuit breaker、concurrency key、cancel scope 等字段，不会污染顶层命名空间。
 
 相反，如果全部展平，短期看起来写起来省一点，但中长期问题会明显出现：
 
@@ -540,24 +540,24 @@
 
 ```ts
 interface ActionSchema {
-   action: string;
-   args?: Record<string, SchemaValue>;
-   api?: ApiObject;
-   control?: ActionControl;
-   when?: string;
-   then?: ActionSchema | ActionSchema[];
-   onError?: ActionSchema | ActionSchema[];
-   parallel?: ActionSchema[];
+  action: string;
+  args?: Record<string, SchemaValue>;
+  api?: ApiObject;
+  control?: ActionControl;
+  when?: string;
+  then?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
+  parallel?: ActionSchema[];
 }
 
 interface ActionControl {
-   timeout?: number;
-   retry?: { times: number; delay?: number };
-   debounce?: number;
-   throttle?: number;
-   dedup?: 'cancel-previous' | 'parallel' | 'ignore-new';
-   cacheTTL?: number;
-   cacheKey?: string;
+  timeout?: number;
+  retry?: { times: number; delay?: number };
+  debounce?: number;
+  throttle?: number;
+  dedup?: 'cancel-previous' | 'parallel' | 'ignore-new';
+  cacheTTL?: number;
+  cacheKey?: string;
 }
 ```
 
@@ -568,13 +568,13 @@ interface ActionControl {
 1. 如果按上面的方向推进，你是否同意 action 的目标 shape 采用“半结构化”方案：顶层保留 `action` / `when` / `then` / `onError` / `parallel`，其余分别进入 `args` / `api` / `control`？
 
 2. 对 import 统一机制，是否同意把同一个导入别名同时投影为：
-    - action 调用面的 `libName:method`
-    - expression 调用面的 `$libName.func(...)`
+   - action 调用面的 `libName:method`
+   - expression 调用面的 `$libName.func(...)`
 
 3. 对 data-source 而言，是否也采用同样的 `api + control` 分层，也就是：
-    - `api` 中只保留 transport + adaptor
-    - `control` 中承载 cache / dedup / retry / timeout
-    - `interval` / `stopWhen` / `mergeStrategy` / publication policy 仍保留在 data-source 自己这一层
+   - `api` 中只保留 transport + adaptor
+   - `control` 中承载 cache / dedup / retry / timeout
+   - `interval` / `stopWhen` / `mergeStrategy` / publication policy 仍保留在 data-source 自己这一层
 
 ---
 
@@ -1051,25 +1051,25 @@ AMIS 那种 `dialog` 对象直接嵌在 action 参数里的做法，本质上是
 
 ```json
 {
-   "action": "dialog.open",
-   "args": {
-      "title": "编辑用户",
-      "size": "lg",
-      "data": {
-         "userId": "${row.id}"
-      },
-      "body": {
-         "type": "form",
-         "name": "editUserForm",
-         "submitAction": {
-            "action": "ajax",
-            "api": {
-               "url": "/api/users/save",
-               "method": "post"
-            }
-         }
+  "action": "dialog.open",
+  "args": {
+    "title": "编辑用户",
+    "size": "lg",
+    "data": {
+      "userId": "${row.id}"
+    },
+    "body": {
+      "type": "form",
+      "name": "editUserForm",
+      "submitAction": {
+        "action": "ajax",
+        "api": {
+          "url": "/api/users/save",
+          "method": "post"
+        }
       }
-   }
+    }
+  }
 }
 ```
 
@@ -1077,15 +1077,15 @@ AMIS 那种 `dialog` 对象直接嵌在 action 参数里的做法，本质上是
 
 ```json
 {
-   "action": "drawer.open",
-   "args": {
-      "title": "筛选条件",
-      "placement": "right",
-      "body": {
-         "type": "form",
-         "name": "filterForm"
-      }
-   }
+  "action": "drawer.open",
+  "args": {
+    "title": "筛选条件",
+    "placement": "right",
+    "body": {
+      "type": "form",
+      "name": "filterForm"
+    }
+  }
 }
 ```
 
@@ -1093,11 +1093,11 @@ AMIS 那种 `dialog` 对象直接嵌在 action 参数里的做法，本质上是
 
 ```json
 {
-   "action": "toast.show",
-   "args": {
-      "level": "success",
-      "message": "保存成功"
-   }
+  "action": "toast.show",
+  "args": {
+    "level": "success",
+    "message": "保存成功"
+  }
 }
 ```
 
@@ -1115,33 +1115,33 @@ AMIS 那种 `dialog` 对象直接嵌在 action 参数里的做法，本质上是
 更好，原因有四个：
 
 1. action selector 更清楚。
-    - `dialog.open`
-    - `drawer.open`
-    - `toast.show`
+   - `dialog.open`
+   - `drawer.open`
+   - `toast.show`
 
 2. payload 边界更清楚。
-    - overlay 配置进入 `args`
-    - 不污染 action 顶层保留字段
+   - overlay 配置进入 `args`
+   - 不污染 action 顶层保留字段
 
 3. AI 更容易生成。
-    - AI 能明确知道：顶层是 action graph，`args` 里才是具体 UI 负载
+   - AI 能明确知道：顶层是 action graph，`args` 里才是具体 UI 负载
 
 4. 更容易做 typed validation。
-    - `dialog.open` 的 `args` 可以单独有一套 payload schema
-    - `toast.show` 也可以有自己的 payload schema
+   - `dialog.open` 的 `args` 可以单独有一套 payload schema
+   - `toast.show` 也可以有自己的 payload schema
 
 #### 三、但要区分两种 dialog 语义：动作打开，与语义生命周期拥有
 
 这里还要再分清一个边界：
 
 1. action 驱动的 overlay open
-    - 例如按钮点击后打开一个 dialog
-    - 这适合建模为 built-in UI action：`dialog.open`
+   - 例如按钮点击后打开一个 dialog
+   - 这适合建模为 built-in UI action：`dialog.open`
 
 2. dialog 节点自身拥有的生命周期动作
-    - 例如 dialog 的 `openAction`
-    - dialog 的 `confirmAction`
-    - dialog 的 `closeAction`
+   - 例如 dialog 的 `openAction`
+   - dialog 的 `confirmAction`
+   - dialog 的 `closeAction`
 
 后者其实是前面 programming-model 已经在强调的 `Semantic Lifecycle Entry`。
 
@@ -1193,10 +1193,10 @@ AMIS 那种 `dialog` 对象直接嵌在 action 参数里的做法，本质上是
 
 ```json
 {
-   "action": "toast.show",
-   "args": {
-      "message": "Hello"
-   }
+  "action": "toast.show",
+  "args": {
+    "message": "Hello"
+  }
 }
 ```
 
@@ -1305,20 +1305,20 @@ schema authoring 我建议只接受单个 `ActionSchema`。
 
 1. `toast`、`dialog`、`drawer` 应该作为 framework-level built-in UI capability。
 2. `dialog` / `drawer` 不应继续用松散顶层嵌套对象，应该改为：
-    - 明确的 action selector，例如 `dialog.open` / `drawer.open` / `toast.show`
-    - typed payload 放在 `args` 中
+   - 明确的 action selector，例如 `dialog.open` / `drawer.open` / `toast.show`
+   - typed payload 放在 `args` 中
 3. dialog 的业务流仍应与 `Semantic Lifecycle Entry` 配合，也就是：
-    - action 负责打开 overlay
-    - dialog 节点自己负责 `openAction` / `confirmAction` / `closeAction`
+   - action 负责打开 overlay
+   - dialog 节点自己负责 `openAction` / `confirmAction` / `closeAction`
 4. schema authoring 层的事件入口最好只接受单个 `ActionSchema` 根节点，不直接接受 list。
 5. runtime/internal helper API 可以继续允许 `ActionSchema[]` 作为便利接口，但不应把它当成正式 DSL。
 
 ### 待澄清问题
 
 1. 是否确认 `toast` / `dialog` / `drawer` 采用 built-in selector + `args` payload 的方向，例如：
-    - `toast.show`
-    - `dialog.open`
-    - `drawer.open`
+   - `toast.show`
+   - `dialog.open`
+   - `drawer.open`
 
 2. 是否确认 schema authoring 层的 `onClick` / `onChange` / `submitAction` 等事件入口只接受单个 `ActionSchema` 根节点，而不直接接受数组？
 
@@ -1361,11 +1361,11 @@ schema authoring 我建议只接受单个 `ActionSchema`。
 
 ```json
 {
-   "type": "select",
-   "options": {
-      "type": "data-source",
-      "api": { "url": "/api/countries" }
-   }
+  "type": "select",
+  "options": {
+    "type": "data-source",
+    "api": { "url": "/api/countries" }
+  }
 }
 ```
 
@@ -1435,21 +1435,21 @@ schema authoring 我建议只接受单个 `ActionSchema`。
 
 ```ts
 type ValueSourceSchema =
-   | {
-         sourceType: 'formula';
-         formula: SchemaValue;
-      }
-   | {
-         sourceType: 'api';
-         api: ApiSchema;
-         control?: OperationControl;
-      }
-   | {
-         sourceType: 'invoke';
-         invoke: string;
-         args?: Record<string, SchemaValue>;
-         control?: OperationControl;
-      };
+  | {
+      sourceType: 'formula';
+      formula: SchemaValue;
+    }
+  | {
+      sourceType: 'api';
+      api: ApiSchema;
+      control?: OperationControl;
+    }
+  | {
+      sourceType: 'invoke';
+      invoke: string;
+      args?: Record<string, SchemaValue>;
+      control?: OperationControl;
+    };
 ```
 
 这里的关键点是：
@@ -1469,22 +1469,22 @@ type ValueSourceSchema =
 
 ```json
 {
-   "type": "select",
-   "name": "country",
-   "optionsSource": {
-      "sourceType": "api",
-      "api": {
-         "url": "/api/countries",
-         "params": {
-            "region": "${form.region}"
-         },
-         "responseAdaptor": "${payload.items}"
+  "type": "select",
+  "name": "country",
+  "optionsSource": {
+    "sourceType": "api",
+    "api": {
+      "url": "/api/countries",
+      "params": {
+        "region": "${form.region}"
       },
-      "control": {
-         "dedup": "cancel-previous",
-         "cacheTTL": 60000
-      }
-   }
+      "responseAdaptor": "${payload.items}"
+    },
+    "control": {
+      "dedup": "cancel-previous",
+      "cacheTTL": 60000
+    }
+  }
 }
 ```
 
@@ -1506,7 +1506,7 @@ type ValueSourceSchema =
 
 ```json
 {
-   "options": "${$dict.buildCountryOptions(form.region)}"
+  "options": "${$dict.buildCountryOptions(form.region)}"
 }
 ```
 
@@ -1533,17 +1533,17 @@ type ValueSourceSchema =
 
 ```json
 {
-   "type": "select",
-   "optionsSource": {
-      "sourceType": "invoke",
-      "invoke": "dict:getCountryOptions",
-      "args": {
-         "region": "${form.region}"
-      },
-      "control": {
-         "dedup": "cancel-previous"
-      }
-   }
+  "type": "select",
+  "optionsSource": {
+    "sourceType": "invoke",
+    "invoke": "dict:getCountryOptions",
+    "args": {
+      "region": "${form.region}"
+    },
+    "control": {
+      "dedup": "cancel-previous"
+    }
+  }
 }
 ```
 
@@ -1580,10 +1580,10 @@ type ValueSourceSchema =
 
 ```json
 {
-   "optionsSource": {
-      "sourceType": "api",
-      "api": { "url": "/api/countries" }
-   }
+  "optionsSource": {
+    "sourceType": "api",
+    "api": { "url": "/api/countries" }
+  }
 }
 ```
 
@@ -1591,9 +1591,9 @@ type ValueSourceSchema =
 
 ```json
 {
-   "type": "data-source",
-   "name": "lookups.countries",
-   "api": { "url": "/api/countries" }
+  "type": "data-source",
+  "name": "lookups.countries",
+  "api": { "url": "/api/countries" }
 }
 ```
 
@@ -1623,12 +1623,12 @@ type ValueSourceSchema =
 
 ```json
 {
-   "options": {
-      "$source": {
-         "sourceType": "api",
-         "api": { "url": "/api/countries" }
-      }
-   }
+  "options": {
+    "$source": {
+      "sourceType": "api",
+      "api": { "url": "/api/countries" }
+    }
+  }
 }
 ```
 
@@ -1657,14 +1657,14 @@ type ValueSourceSchema =
 1. 是否确认新增一个字段级的 `ValueSourceSchema`，而不是把 `data-source` 直接匿名嵌入字段？
 
 2. 对这个新 carrier，你更倾向哪种 authoring 形态？
-    - A. 统一内嵌 carrier，例如 `options: { "$source": {...} }`
-    - B. 组件配套字段，例如 `optionsSource: {...}`
+   - A. 统一内嵌 carrier，例如 `options: { "$source": {...} }`
+   - B. 组件配套字段，例如 `optionsSource: {...}`
 
 3. 对异步导入库值提供，是否确认采用类似：
-    - `sourceType: 'invoke'`
-    - `invoke: 'libName:method'`
-    - `args` + `control`
-    的方向，而不是把异步调用直接塞进普通 expression？
+   - `sourceType: 'invoke'`
+   - `invoke: 'libName:method'`
+   - `args` + `control`
+     的方向，而不是把异步调用直接塞进普通 expression？
 
 ---
 
@@ -1681,9 +1681,9 @@ type ValueSourceSchema =
 
 ```json
 {
-   "options": {
-      "type": "source"
-   }
+  "options": {
+    "type": "source"
+  }
 }
 ```
 
@@ -1716,15 +1716,15 @@ type ValueSourceSchema =
 我认为可以统一到下面两层：
 
 1. 共享子结构
-    - `api`
-    - `control`
-    - `args`
-    - `invoke`
+   - `api`
+   - `control`
+   - `args`
+   - `invoke`
 
 2. 共享判别风格
-    - `type: 'data-source'`
-    - `type: 'source'`
-    - `action: 'xxx'`
+   - `type: 'data-source'`
+   - `type: 'source'`
+   - `action: 'xxx'`
 
 但不应该统一成“所有东西都通过 `action` 表示”。
 
@@ -1749,9 +1749,9 @@ type ValueSourceSchema =
 
 ```json
 {
-   "options": {
-      "type": "source"
-   }
+  "options": {
+    "type": "source"
+  }
 }
 ```
 
@@ -1782,29 +1782,29 @@ type ValueSourceSchema =
 
 ```ts
 interface SourceValueSchema {
-   type: 'source';
-   source: 'formula' | 'api' | 'invoke';
-   formula?: SchemaValue;
-   api?: ApiSchema;
-   invoke?: string;
-   args?: Record<string, SchemaValue>;
-   control?: OperationControl;
+  type: 'source';
+  source: 'formula' | 'api' | 'invoke';
+  formula?: SchemaValue;
+  api?: ApiSchema;
+  invoke?: string;
+  args?: Record<string, SchemaValue>;
+  control?: OperationControl;
 }
 
 interface DataSourceSchema {
-   type: 'data-source';
-   name?: string;
-   dataPath?: string;
-   statusPath?: string;
-   source: 'formula' | 'api' | 'invoke';
-   formula?: SchemaValue;
-   api?: ApiSchema;
-   invoke?: string;
-   args?: Record<string, SchemaValue>;
-   control?: OperationControl;
-   interval?: number;
-   stopWhen?: string;
-   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  type: 'data-source';
+  name?: string;
+  dataPath?: string;
+  statusPath?: string;
+  source: 'formula' | 'api' | 'invoke';
+  formula?: SchemaValue;
+  api?: ApiSchema;
+  invoke?: string;
+  args?: Record<string, SchemaValue>;
+  control?: OperationControl;
+  interval?: number;
+  stopWhen?: string;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
 }
 ```
 
@@ -1830,23 +1830,23 @@ interface DataSourceSchema {
 
 ```json
 {
-   "options": {
-      "type": "source",
-      "action": "dict:getOptions",
-      "args": {
-         "region": "${form.region}"
-      }
-   }
+  "options": {
+    "type": "source",
+    "action": "dict:getOptions",
+    "args": {
+      "region": "${form.region}"
+    }
+  }
 }
 ```
 
 它表面上很统一，但会造成两个问题：
 
 1. `action` 这个词在整个 DSL 中已经非常明确地绑定到 effect dispatch。
-    - `then`
-    - `onError`
-    - `ActionResult`
-    - capability resolution
+   - `then`
+   - `onError`
+   - `ActionResult`
+   - capability resolution
 
 2. source produce value 时，最自然的语义不是“执行动作”，而是“采用某种 producer 生产值”。
 
@@ -1890,16 +1890,16 @@ interface DataSourceSchema {
 到这里，三者可以比较清楚地统一成：
 
 1. `ActionSchema`
-    - effect dispatch
-    - `action` + `args` + `control`
+   - effect dispatch
+   - `action` + `args` + `control`
 
 2. `SourceValueSchema`
-    - anonymous value producer
-    - `type: 'source'` + `source` + `api|formula|invoke` + `args` + `control`
+   - anonymous value producer
+   - `type: 'source'` + `source` + `api|formula|invoke` + `args` + `control`
 
 3. `DataSourceSchema`
-    - named value producer
-    - `type: 'data-source'` + publish/source policy + `source` + `api|formula|invoke` + `args` + `control`
+   - named value producer
+   - `type: 'data-source'` + publish/source policy + `source` + `api|formula|invoke` + `args` + `control`
 
 这三者不是完全相同，但已经共享了：
 
@@ -1924,23 +1924,23 @@ interface DataSourceSchema {
 
 ```json
 {
-   "options": {
-      "type": "source",
-      "source": "api",
-      "api": {
-         "url": "/api/countries"
-      }
-   }
+  "options": {
+    "type": "source",
+    "source": "api",
+    "api": {
+      "url": "/api/countries"
+    }
+  }
 }
 ```
 
 2. 是否确认 `type: 'source'` 与 `type: 'data-source'` 共享同一套 producer body 字段：
-    - `source`
-    - `formula`
-    - `api`
-    - `invoke`
-    - `args`
-    - `control`
+   - `source`
+   - `formula`
+   - `api`
+   - `invoke`
+   - `args`
+   - `control`
 
 3. 是否确认 source producer 不使用 `action` 字段，而继续用 `source` / `invoke` 这类命名，以保持和 `ActionSchema` 的语义边界？
 
@@ -2123,13 +2123,13 @@ interface DataSourceSchema {
 也就是说，字段值的统一语义可以明确提升为：
 
 1. `staticValue`
-    - 字面量对象、数组、字符串、数字
+   - 字面量对象、数组、字符串、数字
 
 2. `exprValue`
-    - `${...}`
+   - `${...}`
 
 3. `sourceValue`
-    - `type: 'source'`
+   - `type: 'source'`
 
 这是一个很强的统一思路，而且比 `optionsSource`、`visibleOn` 那种平行字段方案更干净。
 
@@ -2145,33 +2145,31 @@ FieldValue := StaticValue | ExprValue | SourceValue
 
 ```json
 {
-   "options": [
-      { "label": "A", "value": 1 }
-   ]
+  "options": [{ "label": "A", "value": 1 }]
 }
 ```
 
 ```json
 {
-   "options": "${lookups.countries}"
+  "options": "${lookups.countries}"
 }
 ```
 
 ```json
 {
-   "options": {
-      "type": "source",
-      "source": "api",
-      "api": {
-         "url": "/api/countries",
-         "params": {
-            "region": "${form.region}"
-         }
-      },
-      "control": {
-         "dedup": "cancel-previous"
+  "options": {
+    "type": "source",
+    "source": "api",
+    "api": {
+      "url": "/api/countries",
+      "params": {
+        "region": "${form.region}"
       }
-   }
+    },
+    "control": {
+      "dedup": "cancel-previous"
+    }
+  }
 }
 ```
 
@@ -2196,26 +2194,26 @@ FieldValue := StaticValue | ExprValue | SourceValue
 
 ```ts
 interface ProducerBody {
-   source: 'formula' | 'api' | 'invoke';
-   formula?: SchemaValue;
-   api?: ApiSchema;
-   invoke?: string;
-   args?: Record<string, SchemaValue>;
-   control?: OperationControl;
+  source: 'formula' | 'api' | 'invoke';
+  formula?: SchemaValue;
+  api?: ApiSchema;
+  invoke?: string;
+  args?: Record<string, SchemaValue>;
+  control?: OperationControl;
 }
 
 interface SourceValueSchema extends ProducerBody {
-   type: 'source';
+  type: 'source';
 }
 
 interface DataSourceSchema extends ProducerBody {
-   type: 'data-source';
-   name?: string;
-   dataPath?: string;
-   statusPath?: string;
-   interval?: number;
-   stopWhen?: string;
-   mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  type: 'data-source';
+  name?: string;
+  dataPath?: string;
+  statusPath?: string;
+  interval?: number;
+  stopWhen?: string;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
 }
 ```
 
@@ -2223,8 +2221,8 @@ interface DataSourceSchema extends ProducerBody {
 
 - 匿名 sourceValue 与命名 data-source 的 body 100% 共享
 - 两者差别只在：
-   - 一个是字段级值 carrier
-   - 一个是命名发布节点
+  - 一个是字段级值 carrier
+  - 一个是命名发布节点
 
 这已经是非常高程度的统一。
 
@@ -2234,14 +2232,14 @@ interface DataSourceSchema extends ProducerBody {
 
 ```ts
 interface SourceLifecycleHooks {
-   before?: ActionSchema;
-   success?: ActionSchema;
-   error?: ActionSchema;
+  before?: ActionSchema;
+  success?: ActionSchema;
+  error?: ActionSchema;
 }
 
 interface SourceValueSchema extends ProducerBody {
-   type: 'source';
-   hooks?: SourceLifecycleHooks;
+  type: 'source';
+  hooks?: SourceLifecycleHooks;
 }
 ```
 
@@ -2250,8 +2248,8 @@ interface SourceValueSchema extends ProducerBody {
 - hook 继续复用 `ActionSchema`
 - source 本体仍然不是 action
 - 语义上也更清楚：
-   - source produce value
-   - hooks dispatch effects
+  - source produce value
+  - hooks dispatch effects
 
 换句话说，action 应该是 source 的 hook language，而不是 source 的本体 language。
 
@@ -2262,16 +2260,16 @@ interface SourceValueSchema extends ProducerBody {
 1. 不建议把 source 完全统一成 `ActionSchema`。
 2. 但完全同意把 `sourceValue` 提升为与静态值、表达式值并列的一级值约定。
 3. 更好的统一方式是：
-    - `FieldValue = staticValue | exprValue | sourceValue`
-    - `DataSourceSchema` 与 `SourceValueSchema` 共享同一套 producer body
+   - `FieldValue = staticValue | exprValue | sourceValue`
+   - `DataSourceSchema` 与 `SourceValueSchema` 共享同一套 producer body
 4. 调试/埋点问题应优先通过 runtime operation monitor 解决；若 schema 侧确实需要，再给 source 补独立 hook，而不是把 source 改造成 action。
 
 ### 待澄清问题
 
 1. 是否确认将字段值的统一模型正式收敛为：
-    - `staticValue`
-    - `exprValue`
-    - `sourceValue`
+   - `staticValue`
+   - `exprValue`
+   - `sourceValue`
 
 2. 是否确认 `sourceValue` 采用：
 
@@ -2286,9 +2284,9 @@ interface SourceValueSchema extends ProducerBody {
 并且与 `data-source` 共享同一套 producer body？
 
 3. 对你提到的“执行前/执行后调试动作”，你更倾向先采用哪一层来解决？
-    - A. runtime 统一 operation monitor
-    - B. source 自带 `hooks.before/success/error`
-    - C. 仍然坚持把 source 本体统一成 `ActionSchema`
+   - A. runtime 统一 operation monitor
+   - B. source 自带 `hooks.before/success/error`
+   - C. 仍然坚持把 source 本体统一成 `ActionSchema`
 
 ---
 
@@ -2302,7 +2300,7 @@ interface SourceValueSchema extends ProducerBody {
 2. `action` 本来就是一种动作，因此所有执行动作的地方都可以统一为 action。
 3. `data-source` 比 `source` 多出来的只是状态跟踪、动态调度、命名绑定等额外控制能力。
 4. `source` 是匿名执行动作并消费其返回值，但它的状态跟踪同样有用。
-    - 例如 `select` 的 `options` 还没有加载完成时，控件可能需要显示 loading 图标。
+   - 例如 `select` 的 `options` 还没有加载完成时，控件可能需要显示 loading 图标。
 
 ### AI 整理
 
@@ -2321,16 +2319,16 @@ interface SourceValueSchema extends ProducerBody {
 按你这个方向，可以把整体模型改写成：
 
 1. `ActionSchema`
-    - 表达一个可执行动作
-    - 可以是 built-in、component、namespace、request、invoke 等
+   - 表达一个可执行动作
+   - 可以是 built-in、component、namespace、request、invoke 等
 
 2. `SourceSchema`
-    - 在结构上复用 `ActionSchema`
-    - 但语义上不是 effect-only action，而是“执行一个 action 并把结果作为值使用”
+   - 在结构上复用 `ActionSchema`
+   - 但语义上不是 effect-only action，而是“执行一个 action 并把结果作为值使用”
 
 3. `DataSourceSchema`
-    - 是带命名、状态、调度、刷新能力的 source node
-    - 可以看作 named + managed source
+   - 是带命名、状态、调度、刷新能力的 source node
+   - 可以看作 named + managed source
 
 也就是说，你提出的是一种三层关系：
 
@@ -2394,21 +2392,21 @@ ActionSchema
 更准确的分法应该变成：
 
 1. `ActionSchema`
-    - 关注执行本身
-    - 返回 `ActionResult`
+   - 关注执行本身
+   - 返回 `ActionResult`
 
 2. `SourceSchema`
-    - 复用 action 的执行描述
-    - 但它的消费结果不是 `ActionResult` 本身，而是“值 + 状态”
-    - 状态主要服务当前字段/当前消费者
+   - 复用 action 的执行描述
+   - 但它的消费结果不是 `ActionResult` 本身，而是“值 + 状态”
+   - 状态主要服务当前字段/当前消费者
 
 3. `DataSourceSchema`
-    - 在 `SourceSchema` 基础上再增加：
-       - 命名发布
-       - scope binding
-       - 显式 refresh/targeting
-       - interval / stopWhen / mergeStrategy
-       - 更稳定的可复用状态面
+   - 在 `SourceSchema` 基础上再增加：
+     - 命名发布
+     - scope binding
+     - 显式 refresh/targeting
+     - interval / stopWhen / mergeStrategy
+     - 更稳定的可复用状态面
 
 也就是说：
 
@@ -2424,21 +2422,21 @@ ActionSchema
 
 ```json
 {
-   "options": {
-      "type": "source",
-      "action": "ajax",
-      "api": {
-         "url": "/api/countries",
-         "params": {
-            "region": "${form.region}"
-         },
-         "responseAdaptor": "${payload.items}"
+  "options": {
+    "type": "source",
+    "action": "ajax",
+    "api": {
+      "url": "/api/countries",
+      "params": {
+        "region": "${form.region}"
       },
-      "control": {
-         "dedup": "cancel-previous",
-         "cacheTTL": 60000
-      }
-   }
+      "responseAdaptor": "${payload.items}"
+    },
+    "control": {
+      "dedup": "cancel-previous",
+      "cacheTTL": 60000
+    }
+  }
 }
 ```
 
@@ -2446,16 +2444,16 @@ ActionSchema
 
 ```json
 {
-   "options": {
-      "type": "source",
-      "action": "dict:getCountryOptions",
-      "args": {
-         "region": "${form.region}"
-      },
-      "control": {
-         "dedup": "cancel-previous"
-      }
-   }
+  "options": {
+    "type": "source",
+    "action": "dict:getCountryOptions",
+    "args": {
+      "region": "${form.region}"
+    },
+    "control": {
+      "dedup": "cancel-previous"
+    }
+  }
 }
 ```
 
@@ -2565,13 +2563,13 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 ```
 
 2. 是否确认字段值层只保留三种一级约定：
-    - 静态值
-    - `${expr}`
-    - `type: 'source'`
+   - 静态值
+   - `${expr}`
+   - `type: 'source'`
 
 3. 对 source 复用 action 语义，你更倾向：
-    - A. 只复用 `action` / `args` / `api` / `control` / `onError`
-    - B. 全量复用 `then` / `onError` / `parallel` 等完整 action graph
+   - A. 只复用 `action` / `args` / `api` / `control` / `onError`
+   - B. 全量复用 `then` / `onError` / `parallel` 等完整 action graph
 
 ---
 
@@ -2582,21 +2580,21 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 用户确认：
 
 1. 接受新的统一方向：
-    - `ActionSchema` = 基础执行动作
-    - `SourceSchema` = `ActionSchema` 的值消费扩展
-    - `DataSourceSchema` = `SourceSchema` 的命名/调度扩展
+   - `ActionSchema` = 基础执行动作
+   - `SourceSchema` = `ActionSchema` 的值消费扩展
+   - `DataSourceSchema` = `SourceSchema` 的命名/调度扩展
 2. 接受字段值只保留三种一级约定：
-    - 静态值
-    - `${expr}`
-    - `type: 'source'`
+   - 静态值
+   - `${expr}`
+   - `type: 'source'`
 3. `source` 复用 action 语义时，接受全量复用 action graph。
 
 在此基础上，用户继续追问：
 
 - 内置 action 的命名到底采用哪种形式更好：
-   - `dialog.open`
-   - `openDialog`
-   - `open-dialog`
+  - `dialog.open`
+  - `openDialog`
+  - `open-dialog`
 - 内置 action 是否需要改成对象调用形式？
 
 ### AI 整理
@@ -2607,11 +2605,11 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 
 1. 内置 action 继续使用字符串 selector，不改成对象调用形式。
 2. 内置 action 采用 camelCase 动宾式命名，例如：
-    - `openDialog`
-    - `closeDialog`
-    - `openDrawer`
-    - `closeDrawer`
-    - `showToast`
+   - `openDialog`
+   - `closeDialog`
+   - `openDrawer`
+   - `closeDrawer`
+   - `showToast`
 3. `namespace:method` 这种带 `:` 的形式保留给组件实例动作和导入/宿主命名空间动作。
 4. 不建议内置 action 使用 `dialog.open` 这种点号形式。
 5. 也不建议使用 `open-dialog` 这种 kebab-case 形式。
@@ -2622,10 +2620,10 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 
 ```json
 {
-   "action": {
-      "builtin": "dialog",
-      "method": "open"
-   }
+  "action": {
+    "builtin": "dialog",
+    "method": "open"
+  }
 }
 ```
 
@@ -2633,9 +2631,9 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 
 ```json
 {
-   "kind": "builtin",
-   "namespace": "dialog",
-   "method": "open"
+  "kind": "builtin",
+  "namespace": "dialog",
+  "method": "open"
 }
 ```
 
@@ -2799,13 +2797,13 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 
 ```json
 {
-   "options": {
-      "type": "source",
-      "action": "ajax",
-      "api": {
-         "url": "/api/countries"
-      }
-   }
+  "options": {
+    "type": "source",
+    "action": "ajax",
+    "api": {
+      "url": "/api/countries"
+    }
+  }
 }
 ```
 
@@ -2813,13 +2811,13 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 
 ```json
 {
-   "options": {
-      "type": "source",
-      "action": "dict:getCountryOptions",
-      "args": {
-         "region": "${form.region}"
-      }
-   }
+  "options": {
+    "type": "source",
+    "action": "dict:getCountryOptions",
+    "args": {
+      "region": "${form.region}"
+    }
+  }
 }
 ```
 
@@ -2827,15 +2825,15 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 
 ```json
 {
-   "onClick": {
-      "action": "openDialog",
-      "args": {
-         "title": "编辑用户",
-         "body": {
-            "type": "form"
-         }
+  "onClick": {
+    "action": "openDialog",
+    "args": {
+      "title": "编辑用户",
+      "body": {
+        "type": "form"
       }
-   }
+    }
+  }
 }
 ```
 
@@ -2849,17 +2847,17 @@ DataSourceSchema = SourceSchema 的命名/调度扩展
 2. 内置 action 使用 camelCase 动宾式命名。
 3. `namespace:method` 保留给导入/宿主/组件命名空间动作，不与 built-in 混用。
 4. 因此 `dialog.open` / `drawer.open` / `toast.show` 这类例子应收敛改写为：
-    - `openDialog`
-    - `openDrawer`
-    - `showToast`
+   - `openDialog`
+   - `openDrawer`
+   - `showToast`
 
 ### 待澄清问题
 
 1. 是否确认 built-in action 的最终命名规则为 camelCase 动宾式，例如：
-    - `openDialog`
-    - `closeDialog`
-    - `openDrawer`
-    - `showToast`
+   - `openDialog`
+   - `closeDialog`
+   - `openDrawer`
+   - `showToast`
 
 2. 是否确认不采用对象调用形式，继续保留 `action: string` 作为唯一 selector 入口？
 

@@ -3,7 +3,6 @@
 > Plan Status: superseded
 > Last Reviewed: 2026-04-02
 
-
 > **Implementation Status: SUPERSEDED — Replaced by `docs/plans/02-development-plan.md`.**
 > All phases P0–P6 described in this plan have been completed. See Plan 02 for the current status of P7 (convergence/hardening).
 >
@@ -188,16 +187,16 @@ packages/
 
 整个开发拆成 8 个阶段，按依赖顺序推进。
 
-| Phase | 目标 | 核心产物 |
-| --- | --- | --- |
-| P0 | 工程初始化 | workspace、脚本、基础包、playground |
-| P1 | 表达式核心 | `amis-formula` 适配层、ExpressionCompiler |
-| P2 | Schema 编译核心 | SchemaCompiler、node model、region 提取 |
-| P3 | Runtime 与 React 集成 | runtime、scope、hooks、SchemaRenderer |
-| P4 | 基础 renderer 集 | page/container/text/button 等 |
-| P5 | 表单与动作系统 | form runtime、input、submit、ajax、dialog |
-| P6 | 数据型 renderer | service、table、pagination、row scope |
-| P7 | 完善阶段 | 插件、监控、调试、性能、文档、发布 |
+| Phase | 目标                  | 核心产物                                  |
+| ----- | --------------------- | ----------------------------------------- |
+| P0    | 工程初始化            | workspace、脚本、基础包、playground       |
+| P1    | 表达式核心            | `amis-formula` 适配层、ExpressionCompiler |
+| P2    | Schema 编译核心       | SchemaCompiler、node model、region 提取   |
+| P3    | Runtime 与 React 集成 | runtime、scope、hooks、SchemaRenderer     |
+| P4    | 基础 renderer 集      | page/container/text/button 等             |
+| P5    | 表单与动作系统        | form runtime、input、submit、ajax、dialog |
+| P6    | 数据型 renderer       | service、table、pagination、row scope     |
+| P7    | 完善阶段              | 插件、监控、调试、性能、文档、发布        |
 
 ## 6. Detailed Phase Plan
 
@@ -669,6 +668,3 @@ playground 中至少长期保留以下 demo：
 - 最后高级场景
 
 只要严格按阶段推进，并始终以 `docs/architecture/renderer-runtime.md` 和 `docs/references/renderer-interfaces.md` 作为核心约束，框架会更稳，也更容易在后期扩展到 designer、plugin、schema market 等能力。
-
-
-

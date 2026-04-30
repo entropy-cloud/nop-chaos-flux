@@ -27,11 +27,20 @@ export function formatTraceSummary(trace: NopInteractionTrace | undefined) {
     };
   }
 
-  const anchor = trace.anchorEvent?.summary ?? trace.latestError?.summary ?? trace.latestApi?.summary ?? trace.latestAction?.summary ?? 'Recent interaction';
+  const anchor =
+    trace.anchorEvent?.summary ??
+    trace.latestError?.summary ??
+    trace.latestApi?.summary ??
+    trace.latestAction?.summary ??
+    'Recent interaction';
   const relatedBits = [
     trace.resolvedQuery.nodeId ? `node ${trace.resolvedQuery.nodeId}` : undefined,
     trace.resolvedQuery.actionType ? `action ${trace.resolvedQuery.actionType}` : undefined,
-    trace.resolvedQuery.requestInstanceId ? `request ${trace.resolvedQuery.requestInstanceId}` : trace.resolvedQuery.requestKey ? 'request linked' : undefined,
+    trace.resolvedQuery.requestInstanceId
+      ? `request ${trace.resolvedQuery.requestInstanceId}`
+      : trace.resolvedQuery.requestKey
+        ? 'request linked'
+        : undefined,
   ].filter(Boolean);
 
   return {
@@ -62,7 +71,13 @@ export function mergeNetworkRequests(events: NopDebugEvent[]): MergedRequest[] {
         map.set(instanceKey, { ...existing, startEvent: event, summary: event.summary });
       }
     } else if (event.kind === 'api:end') {
-      const base = existing ?? { key: instanceKey, requestKey: key, requestInstanceId: event.requestInstanceId, status: 'pending' as const, summary: event.summary };
+      const base = existing ?? {
+        key: instanceKey,
+        requestKey: key,
+        requestInstanceId: event.requestInstanceId,
+        status: 'pending' as const,
+        summary: event.summary,
+      };
       const ok = event.level === 'success' || event.level === 'info';
       map.set(instanceKey, {
         ...base,
@@ -72,7 +87,13 @@ export function mergeNetworkRequests(events: NopDebugEvent[]): MergedRequest[] {
         summary: base.summary ?? event.summary,
       });
     } else if (event.kind === 'api:abort') {
-      const base = existing ?? { key: instanceKey, requestKey: key, requestInstanceId: event.requestInstanceId, status: 'pending' as const, summary: event.summary };
+      const base = existing ?? {
+        key: instanceKey,
+        requestKey: key,
+        requestInstanceId: event.requestInstanceId,
+        status: 'pending' as const,
+        summary: event.summary,
+      };
       map.set(instanceKey, {
         ...base,
         abortEvent: event,
@@ -120,5 +141,7 @@ export function groupErrors(events: NopDebugEvent[]): ErrorGroup[] {
     }
   }
 
-  return Array.from(groups.values()).sort((left, right) => right.latestTimestamp - left.latestTimestamp);
+  return Array.from(groups.values()).sort(
+    (left, right) => right.latestTimestamp - left.latestTimestamp,
+  );
 }

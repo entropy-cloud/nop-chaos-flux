@@ -5,12 +5,14 @@ import { createScopeRef } from '../scope';
 import { disposeOwnerState, refreshCompiledModelState } from '../form-runtime-owner-lifecycle';
 import type { ManagedFormRuntimeSharedState } from '../form-runtime-types';
 
-function createSharedState(overrides: Partial<ManagedFormRuntimeSharedState> = {}): ManagedFormRuntimeSharedState {
+function createSharedState(
+  overrides: Partial<ManagedFormRuntimeSharedState> = {},
+): ManagedFormRuntimeSharedState {
   return {
     inputValue: {
       executeValidationRule: async () => undefined,
       validateRule: () => undefined,
-      validation: undefined
+      validation: undefined,
     } as any,
     store: createFormStore({ name: 'Alice' }),
     scope: createScopeRef({ id: 'form-scope', path: '$form', initialData: { name: 'Alice' } }),
@@ -37,11 +39,11 @@ describe('refreshCompiledModelState', () => {
 
     refreshCompiledModelState({
       sharedState,
-      getCurrentValidation: () => ({ nodes: {} } as any),
+      getCurrentValidation: () => ({ nodes: {} }) as any,
       setCurrentValidation,
       newModel: { nodes: {} } as any,
       formId: 'form-1',
-      setLastChange: vi.fn()
+      setLastChange: vi.fn(),
     });
 
     expect(setCurrentValidation).not.toHaveBeenCalled();
@@ -57,42 +59,52 @@ describe('refreshCompiledModelState', () => {
       ownerKind: 'validation',
       ownerId: 'validation:form-scope:name',
       scopeId: 'form-scope',
-      cause: 'change'
+      cause: 'change',
     });
     sharedState.validationAsyncGovernance.beginRun({
       ownerKind: 'validation',
       ownerId: 'validation:form-scope:email',
       scopeId: 'form-scope',
-      cause: 'change'
+      cause: 'change',
     });
 
     sharedState.validationRuns.set('name', 1);
     sharedState.pendingValidationDebounces.set('name', {
       timer: setTimeout(() => undefined, 10_000),
       resolve: resolved,
-      reject: vi.fn()
+      reject: vi.fn(),
     });
     sharedState.validationAbortControllers.set('email', abortController);
-    sharedState.runtimeFieldRegistrations.set('reg-1', { registrationId: 'reg-1', registration: { path: 'name' } as any, modelGeneration: 1 });
+    sharedState.runtimeFieldRegistrations.set('reg-1', {
+      registrationId: 'reg-1',
+      registration: { path: 'name' } as any,
+      modelGeneration: 1,
+    });
     sharedState.pathToRegistrationId.set('name', 'reg-1');
     sharedState.store.batchUpdate({
       fieldStates: {
-        name: { errors: [{ path: 'name', message: 'keep', rule: 'required' } as any], touched: true },
-        email: { errors: [{ path: 'email', message: 'drop', rule: 'required' } as any], visited: true }
-      }
+        name: {
+          errors: [{ path: 'name', message: 'keep', rule: 'required' } as any],
+          touched: true,
+        },
+        email: {
+          errors: [{ path: 'email', message: 'drop', rule: 'required' } as any],
+          visited: true,
+        },
+      },
     });
 
     const oldModel = {
       nodes: {
         name: { rules: [{ id: 'r1', rule: { kind: 'required' } }] },
-        email: { rules: [{ id: 'r2', rule: { kind: 'required' } }] }
-      }
+        email: { rules: [{ id: 'r2', rule: { kind: 'required' } }] },
+      },
     } as any;
     const newModel = {
       nodes: {
         name: { rules: [{ id: 'r1', rule: { kind: 'required' } }] },
-        email: { rules: [{ id: 'r3', rule: { kind: 'required' } }] }
-      }
+        email: { rules: [{ id: 'r3', rule: { kind: 'required' } }] },
+      },
     } as any;
     const setLastChange = vi.fn();
     const setCurrentValidation = vi.fn();
@@ -103,7 +115,7 @@ describe('refreshCompiledModelState', () => {
       setCurrentValidation,
       newModel,
       formId: 'form-1',
-      setLastChange
+      setLastChange,
     });
 
     expect(setCurrentValidation).toHaveBeenCalledWith(newModel);
@@ -114,15 +126,23 @@ describe('refreshCompiledModelState', () => {
     expect(sharedState.validationAbortControllers.size).toBe(0);
     expect(resolved).toHaveBeenCalledWith(false);
     expect(abortController.signal.aborted).toBe(false);
-    expect(sharedState.validationAsyncGovernance.getOwnerState('validation:form-scope:name')).toBeUndefined();
-    expect(sharedState.validationAsyncGovernance.getOwnerState('validation:form-scope:email')).toBeUndefined();
+    expect(
+      sharedState.validationAsyncGovernance.getOwnerState('validation:form-scope:name'),
+    ).toBeUndefined();
+    expect(
+      sharedState.validationAsyncGovernance.getOwnerState('validation:form-scope:email'),
+    ).toBeUndefined();
     expect(sharedState.runtimeFieldRegistrations.size).toBe(0);
     expect(sharedState.pathToRegistrationId.size).toBe(0);
     expect(sharedState.store.getState().fieldStates).toEqual({
       name: { errors: [{ path: 'name', message: 'keep', rule: 'required' }], touched: true },
-      email: { visited: true }
+      email: { visited: true },
     });
-    expect(setLastChange).toHaveBeenCalledWith({ paths: [], sourceScopeId: 'form-1', kind: 'update' });
+    expect(setLastChange).toHaveBeenCalledWith({
+      paths: [],
+      sourceScopeId: 'form-1',
+      kind: 'update',
+    });
     expect(sharedState.lifecycleState).toBe('active');
   });
 
@@ -130,9 +150,12 @@ describe('refreshCompiledModelState', () => {
     const sharedState = createSharedState();
     sharedState.store.batchUpdate({
       fieldStates: {
-        name: { errors: [{ path: 'name', message: 'drop', rule: 'required' } as any], touched: true },
-        email: { visited: true }
-      }
+        name: {
+          errors: [{ path: 'name', message: 'drop', rule: 'required' } as any],
+          touched: true,
+        },
+        email: { visited: true },
+      },
     });
 
     refreshCompiledModelState({
@@ -141,12 +164,12 @@ describe('refreshCompiledModelState', () => {
       setCurrentValidation: vi.fn(),
       newModel: { nodes: {} } as any,
       formId: 'form-1',
-      setLastChange: vi.fn()
+      setLastChange: vi.fn(),
     });
 
     expect(sharedState.store.getState().fieldStates).toEqual({
       name: { touched: true },
-      email: { visited: true }
+      email: { visited: true },
     });
   });
 });
@@ -161,11 +184,15 @@ describe('disposeOwnerState', () => {
     sharedState.pendingValidationDebounces.set('name', {
       timer: setTimeout(() => undefined, 10_000),
       resolve: resolved,
-      reject: vi.fn()
+      reject: vi.fn(),
     });
     sharedState.validationRuns.set('name', 1);
     sharedState.validationAbortControllers.set('name', abortController);
-    sharedState.runtimeFieldRegistrations.set('reg-1', { registrationId: 'reg-1', registration: { path: 'name' } as any, modelGeneration: 1 });
+    sharedState.runtimeFieldRegistrations.set('reg-1', {
+      registrationId: 'reg-1',
+      registration: { path: 'name' } as any,
+      modelGeneration: 1,
+    });
     sharedState.pathToRegistrationId.set('name', 'reg-1');
     sharedState.childContracts.set('child', {} as any);
     sharedState.externalErrors.set('external', { sourceId: 'external', errors: [] });

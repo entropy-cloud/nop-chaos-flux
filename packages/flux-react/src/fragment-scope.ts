@@ -2,7 +2,7 @@ import type { ScopeChange } from '@nop-chaos/flux-core';
 
 export function createFragmentScopeChange(
   previous: Record<string, unknown>,
-  next: Record<string, unknown>
+  next: Record<string, unknown>,
 ): ScopeChange | undefined {
   const changedRoots = new Set<string>();
 
@@ -13,7 +13,10 @@ export function createFragmentScopeChange(
   }
 
   for (const key of Object.keys(next)) {
-    if (!Object.prototype.hasOwnProperty.call(previous, key) || !Object.is(previous[key], next[key])) {
+    if (
+      !Object.prototype.hasOwnProperty.call(previous, key) ||
+      !Object.is(previous[key], next[key])
+    ) {
       changedRoots.add(key);
     }
   }
@@ -24,6 +27,6 @@ export function createFragmentScopeChange(
 
   return {
     paths: Array.from(changedRoots).sort(),
-    kind: 'replace'
+    kind: 'replace',
   };
 }

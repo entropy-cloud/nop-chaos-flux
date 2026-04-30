@@ -1,4 +1,11 @@
-import { Decoration, ViewPlugin, type PluginValue, type ViewUpdate, WidgetType, EditorView } from '@codemirror/view';
+import {
+  Decoration,
+  ViewPlugin,
+  type PluginValue,
+  type ViewUpdate,
+  WidgetType,
+  EditorView,
+} from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
 import { RangeSetBuilder } from '@codemirror/state';
 import type { VariableItem } from '../../types';
@@ -84,10 +91,17 @@ function createFriendlyNamePlugin(variables: VariableItem[]): Extension {
             if (idx === -1) break;
 
             const overlaps = matches.some(
-              m => (idx >= m.from && idx < m.to) || (idx + path.length > m.from && idx + path.length <= m.to),
+              (m) =>
+                (idx >= m.from && idx < m.to) ||
+                (idx + path.length > m.from && idx + path.length <= m.to),
             );
             if (!overlaps) {
-              matches.push({ from: idx, to: idx + path.length, label: item.label, value: item.value });
+              matches.push({
+                from: idx,
+                to: idx + path.length,
+                label: item.label,
+                value: item.value,
+              });
             }
             searchFrom = idx + 1;
           }

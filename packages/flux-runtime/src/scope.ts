@@ -7,7 +7,7 @@ function createDefaultChange(scopeId?: string): ScopeChange {
     paths: ['*'],
     sourceScopeId: scopeId,
     kind: 'replace',
-    revision: 0
+    revision: 0,
   };
 }
 
@@ -15,11 +15,13 @@ function normalizeScopeChange(change: ScopeChange | undefined, scopeId?: string)
   return {
     paths: change?.paths?.length ? change.paths : ['*'],
     sourceScopeId: change?.sourceScopeId ?? scopeId,
-    kind: change?.kind ?? 'replace'
+    kind: change?.kind ?? 'replace',
   };
 }
 
-export function createScopeStore(initialData: Record<string, any>): ScopeStore<Record<string, any>> {
+export function createScopeStore(
+  initialData: Record<string, any>,
+): ScopeStore<Record<string, any>> {
   let scopeId: string | undefined;
   let revision = 0;
   const store = createStore<{
@@ -27,7 +29,7 @@ export function createScopeStore(initialData: Record<string, any>): ScopeStore<R
     lastChange: ScopeChange;
   }>(() => ({
     snapshot: initialData,
-    lastChange: createDefaultChange()
+    lastChange: createDefaultChange(),
   }));
 
   const scopeStore: ScopeStore<Record<string, any>> & { __scopeId__?: string } = {
@@ -43,19 +45,22 @@ export function createScopeStore(initialData: Record<string, any>): ScopeStore<R
         snapshot: next,
         lastChange: {
           ...normalizeScopeChange(change, scopeId),
-          revision
-        }
+          revision,
+        },
       });
     },
     subscribe(listener) {
       return store.subscribe((state, previousState) => {
-        if (state.snapshot === previousState.snapshot && state.lastChange === previousState.lastChange) {
+        if (
+          state.snapshot === previousState.snapshot &&
+          state.lastChange === previousState.lastChange
+        ) {
           return;
         }
 
         listener(state.lastChange);
       });
-    }
+    },
   };
 
   Object.defineProperty(scopeStore, '__scopeId__', {
@@ -68,12 +73,12 @@ export function createScopeStore(initialData: Record<string, any>): ScopeStore<R
       if (!current.lastChange.sourceScopeId) {
         store.setState({
           snapshot: current.snapshot,
-          lastChange: normalizeScopeChange(current.lastChange, scopeId)
+          lastChange: normalizeScopeChange(current.lastChange, scopeId),
         });
       }
     },
     enumerable: false,
-    configurable: true
+    configurable: true,
   });
 
   return scopeStore;
@@ -85,7 +90,11 @@ function safeCreate(parent: Record<string, any>): Record<string, any> {
   return Object.create(parent) as Record<string, any>;
 }
 
-function createVisibleViewHelpers(parent: ScopeRef | undefined, store: ScopeStore<Record<string, any>>, isolate?: boolean) {
+function createVisibleViewHelpers(
+  parent: ScopeRef | undefined,
+  store: ScopeStore<Record<string, any>>,
+  isolate?: boolean,
+) {
   let lastOwnSnapshotForView: Record<string, any> | undefined;
   let lastParentSnapshotForView: Record<string, any> | undefined;
   let lastVisibleView: Record<string, any> | undefined;
@@ -103,7 +112,11 @@ function createVisibleViewHelpers(parent: ScopeRef | undefined, store: ScopeStor
 
     const parentVisible = parent.readVisible();
 
-    if (lastVisibleView && lastOwnSnapshotForView === ownSnapshot && lastParentSnapshotForView === parentVisible) {
+    if (
+      lastVisibleView &&
+      lastOwnSnapshotForView === ownSnapshot &&
+      lastParentSnapshotForView === parentVisible
+    ) {
       return lastVisibleView;
     }
 
@@ -123,7 +136,11 @@ function createVisibleViewHelpers(parent: ScopeRef | undefined, store: ScopeStor
 
     const parentMat = parent.materializeVisible();
 
-    if (lastMaterialized && lastOwnSnapshotForMat === ownSnapshot && lastParentSnapshotForMat === parentMat) {
+    if (
+      lastMaterialized &&
+      lastOwnSnapshotForMat === ownSnapshot &&
+      lastParentSnapshotForMat === parentMat
+    ) {
       return lastMaterialized;
     }
 
@@ -153,7 +170,7 @@ function createCompositeScopeStore(
   ownStore: ScopeStore<Record<string, any>>,
   parent: ScopeRef,
   readVisible: () => Record<string, any>,
-  scopeId: string
+  scopeId: string,
 ): ScopeStore<Record<string, any>> {
   let lastChange = createDefaultChange(scopeId);
   let lastVisibleForParent: Record<string, any> | undefined;
@@ -172,21 +189,22 @@ function createCompositeScopeStore(
         lastVisibleForParent = readVisible();
         listener(change);
       });
-      const unsubParent = parent.store?.subscribe((change) => {
-        const nextVisible = readVisible();
-        if (nextVisible === lastVisibleForParent) {
-          return;
-        }
-        lastVisibleForParent = nextVisible;
-        lastChange = change;
-        listener(change);
-      }) ?? (() => {});
+      const unsubParent =
+        parent.store?.subscribe((change) => {
+          const nextVisible = readVisible();
+          if (nextVisible === lastVisibleForParent) {
+            return;
+          }
+          lastVisibleForParent = nextVisible;
+          lastChange = change;
+          listener(change);
+        }) ?? (() => {});
 
       return () => {
         unsubOwn();
         unsubParent();
       };
-    }
+    },
   };
 }
 
@@ -279,11 +297,16 @@ export function createScopeRef(input: {
 }): ScopeRef {
   const ownStore = input.store ?? createScopeStore(input.initialData ?? {});
   (ownStore as ScopeStore<Record<string, any>> & { __scopeId__?: string }).__scopeId__ = input.id;
-  const { readVisible, materializeVisible } = createVisibleViewHelpers(input.parent, ownStore, input.isolate);
+  const { readVisible, materializeVisible } = createVisibleViewHelpers(
+    input.parent,
+    ownStore,
+    input.isolate,
+  );
 
-  const exposedStore = (input.parent && !input.isolate)
-    ? createCompositeScopeStore(ownStore, input.parent, readVisible, input.id)
-    : ownStore;
+  const exposedStore =
+    input.parent && !input.isolate
+      ? createCompositeScopeStore(ownStore, input.parent, readVisible, input.id)
+      : ownStore;
 
   const scope: ScopeRef = {
     id: input.id,
@@ -314,7 +337,7 @@ export function createScopeRef(input: {
       ownStore.setSnapshot(setIn(snapshot, path, value), {
         paths: [path || '*'],
         sourceScopeId: input.id,
-        kind: 'update'
+        kind: 'update',
       });
     },
     merge(data) {
@@ -338,11 +361,14 @@ export function createScopeRef(input: {
         return;
       }
 
-      ownStore.setSnapshot({ ...current, ...data }, {
-        paths: keys,
-        sourceScopeId: input.id,
-        kind: 'merge'
-      });
+      ownStore.setSnapshot(
+        { ...current, ...data },
+        {
+          paths: keys,
+          sourceScopeId: input.id,
+          kind: 'merge',
+        },
+      );
     },
     replace(data) {
       const next = toRecord(data);
@@ -355,13 +381,19 @@ export function createScopeRef(input: {
       const changedPaths = new Set<string>();
 
       for (const key of Object.keys(current)) {
-        if (!Object.prototype.hasOwnProperty.call(next, key) || !Object.is(current[key], next[key])) {
+        if (
+          !Object.prototype.hasOwnProperty.call(next, key) ||
+          !Object.is(current[key], next[key])
+        ) {
           changedPaths.add(key);
         }
       }
 
       for (const key of Object.keys(next)) {
-        if (!Object.prototype.hasOwnProperty.call(current, key) || !Object.is(current[key], next[key])) {
+        if (
+          !Object.prototype.hasOwnProperty.call(current, key) ||
+          !Object.is(current[key], next[key])
+        ) {
           changedPaths.add(key);
         }
       }
@@ -373,9 +405,9 @@ export function createScopeRef(input: {
       ownStore.setSnapshot(next, {
         paths: Array.from(changedPaths).sort(),
         sourceScopeId: input.id,
-        kind: 'replace'
+        kind: 'replace',
       });
-    }
+    },
   };
 
   return scope;

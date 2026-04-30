@@ -51,7 +51,7 @@ export function createRow(index: number): PerfRow {
   const region = index % 3 === 0 ? 'apac' : index % 3 === 1 ? 'emea' : 'amer';
   const tags = [`tag-${index % 5}`, `grp-${index % 7}`, role];
   const score = 50 + (index % 50);
-      const scoreBand: PerfRow['scoreBand'] = score < 60 ? 'low' : score < 85 ? 'mid' : 'high';
+  const scoreBand: PerfRow['scoreBand'] = score < 60 ? 'low' : score < 85 ? 'mid' : 'high';
   const permissions = index % 2 === 0 ? ['read', 'write'] : ['read'];
 
   return {
@@ -83,25 +83,28 @@ export function createRows(count: number): PerfRow[] {
 }
 
 export function createBatchTransform() {
-  return (currentRows: PerfRow[]): PerfRow[] => currentRows.map((row, idx) => {
-    if (idx % 3 === 0) {
-      const nextTags = [...row.tags, `batch-${idx % 5}`];
-      const score = ((row.score + idx + 9) % 100) + 1;
-      const scoreBand = (score < 60 ? 'low' : score < 85 ? 'mid' : 'high') as PerfRow['scoreBand'];
-      return {
-        ...row,
-        active: !row.active,
-        verified: !row.verified,
-        score,
-        scoreBand,
-        progress: ((row.progress + idx + 11) % 100),
-        tags: nextTags,
-        tagsText: nextTags.join(', '),
-        notes: `${row.notes} *`
-      };
-    }
-    return row;
-  });
+  return (currentRows: PerfRow[]): PerfRow[] =>
+    currentRows.map((row, idx) => {
+      if (idx % 3 === 0) {
+        const nextTags = [...row.tags, `batch-${idx % 5}`];
+        const score = ((row.score + idx + 9) % 100) + 1;
+        const scoreBand = (
+          score < 60 ? 'low' : score < 85 ? 'mid' : 'high'
+        ) as PerfRow['scoreBand'];
+        return {
+          ...row,
+          active: !row.active,
+          verified: !row.verified,
+          score,
+          scoreBand,
+          progress: (row.progress + idx + 11) % 100,
+          tags: nextTags,
+          tagsText: nextTags.join(', '),
+          notes: `${row.notes} *`,
+        };
+      }
+      return row;
+    });
 }
 
 export function getModeDescription(mode: PerformanceMode): string {

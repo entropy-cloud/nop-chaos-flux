@@ -1,8 +1,4 @@
-import {
-  getCompiledValidationTraversalOrder,
-  getIn,
-  type FieldState
-} from '@nop-chaos/flux-core';
+import { getCompiledValidationTraversalOrder, getIn, type FieldState } from '@nop-chaos/flux-core';
 import type { FormRuntime } from '@nop-chaos/flux-core';
 import type { ArrayMutationContext } from './form-runtime-array-ops';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
@@ -63,6 +59,6 @@ export function buildArrayMutationContext(args: {
     getArrayValue(path) {
       return getIn(args.store.getState().values, path);
     },
-    revalidateDependents: args.revalidateDependents
+    revalidateDependents: args.revalidateDependents,
   };
 }

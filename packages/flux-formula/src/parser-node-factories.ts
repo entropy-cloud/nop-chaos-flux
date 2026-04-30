@@ -5,12 +5,17 @@ export function createSourceLocation(start: number, end: number): SourceLocation
   return { start, end };
 }
 
-export function createLiteralNode(value: unknown, raw: string, start: number, end: number): LiteralNode {
+export function createLiteralNode(
+  value: unknown,
+  raw: string,
+  start: number,
+  end: number,
+): LiteralNode {
   return {
     type: 'Literal',
     value,
     raw,
-    loc: createSourceLocation(start, end)
+    loc: createSourceLocation(start, end),
   };
 }
 
@@ -18,7 +23,7 @@ export function createIdentifierNode(token: FormulaToken): IdentifierNode {
   return {
     type: 'Identifier',
     name: token.value,
-    loc: createSourceLocation(token.start, token.end)
+    loc: createSourceLocation(token.start, token.end),
   };
 }
 
@@ -35,6 +40,6 @@ export function createMemberExpressionNode(args: {
     property: args.property,
     computed: args.computed,
     optional: args.optional,
-    loc: createSourceLocation(args.object.loc.start, args.end)
+    loc: createSourceLocation(args.object.loc.start, args.end),
   };
 }

@@ -17,8 +17,8 @@ export function createSharedVitestConfig(options: SharedVitestConfigOptions) {
       ? {}
       : {
           resolve: {
-            alias: workspacePackageAliases
-          }
+            alias: workspacePackageAliases,
+          },
         }),
     test: {
       environment: options.environment,
@@ -26,7 +26,7 @@ export function createSharedVitestConfig(options: SharedVitestConfigOptions) {
       maxWorkers: isJSDOM ? 2 : 4,
       include: ['**/*.{test,spec}.ts', '**/*.{test,spec}.tsx'],
       exclude: ['**/node_modules/**', '**/.git/**', '**/dist/**'],
-      ...(options.coverage ? { coverage: options.coverage } : {})
-    }
+      ...(options.coverage ? { coverage: options.coverage } : {}),
+    },
   });
 }

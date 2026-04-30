@@ -34,25 +34,25 @@
 ### 2.1 七层职责
 
 1. Authoring Input Layer
-负责接收原始 schema、国际化资源、组件元信息、动作元信息、宿主环境声明。
+   负责接收原始 schema、国际化资源、组件元信息、动作元信息、宿主环境声明。
 
 2. Compiler Layer
-把原始 schema 编译成不可变模板，做节点规整、值分类、表达式编译、区域提取、诊断生成、静态引用绑定。
+   把原始 schema 编译成不可变模板，做节点规整、值分类、表达式编译、区域提取、诊断生成、静态引用绑定。
 
 3. Immutable Template Layer
-保存可复用、可缓存、可多次实例化的执行模板。模板只描述结构和静态计划，不持有实例态数据。
+   保存可复用、可缓存、可多次实例化的执行模板。模板只描述结构和静态计划，不持有实例态数据。
 
 4. Instance Graph Layer
-把模板实例化为运行时图，包括节点实例、作用域实例、表单实例、表面实例、数据源实例、reaction 实例。
+   把模板实例化为运行时图，包括节点实例、作用域实例、表单实例、表面实例、数据源实例、reaction 实例。
 
 5. Reactive Kernel Layer
-统一处理路径读取、依赖收集、精确失效、增量重算、引用复用、自写保护、订阅调度。
+   统一处理路径读取、依赖收集、精确失效、增量重算、引用复用、自写保护、订阅调度。
 
 6. Effect and Capability Layer
-统一处理所有副作用能力，包括动作派发、网络委托、通知委托、导航委托、组件实例动作、命名空间动作。
+   统一处理所有副作用能力，包括动作派发、网络委托、通知委托、导航委托、组件实例动作、命名空间动作。
 
 7. Renderer Adapter Layer
-把节点实例解析为渲染器可消费的 `props/meta/regions/events`，适配 React、Vue、纯 DOM 或其他渲染宿主。
+   把节点实例解析为渲染器可消费的 `props/meta/regions/events`，适配 React、Vue、纯 DOM 或其他渲染宿主。
 
 ## 3. 两阶段模型
 
@@ -336,13 +336,13 @@ export type ScopeVisibility =
 ### 6.3 三种可见性模型
 
 1. `inherit`
-子作用域向上解析未命中的路径。
+   子作用域向上解析未命中的路径。
 
 2. `isolated`
-子作用域完全不继承父级数据。
+   子作用域完全不继承父级数据。
 
 3. `projected`
-子作用域默认隔离，但显式投影少量父数据进入本地只读视图。这是行级环境、循环项环境、高频子树环境的标准模型。
+   子作用域默认隔离，但显式投影少量父数据进入本地只读视图。这是行级环境、循环项环境、高频子树环境的标准模型。
 
 ### 6.4 写入模型
 
@@ -473,13 +473,7 @@ export interface EqualityPolicy {
 
 ```ts
 export interface WriteCause {
-  readonly source:
-    | 'user-input'
-    | 'action'
-    | 'datasource'
-    | 'validator'
-    | 'reaction'
-    | 'host';
+  readonly source: 'user-input' | 'action' | 'datasource' | 'validator' | 'reaction' | 'host';
   readonly producerId?: string;
   readonly causationId: string;
 }
@@ -868,7 +862,11 @@ export type DraftCommitOutcome =
   | { readonly kind: 'committed'; readonly patch: PatchResult }
   | { readonly kind: 'conflicted'; readonly baseRevision: number; readonly currentRevision: number }
   | { readonly kind: 'rejected'; readonly reason: string }
-  | { readonly kind: 'replay-required'; readonly fromRevision: number; readonly toRevision: number };
+  | {
+      readonly kind: 'replay-required';
+      readonly fromRevision: number;
+      readonly toRevision: number;
+    };
 ```
 
 草稿提交必须先校验，再检查与父作用域的 revision 冲突，再决定合并、拒绝或重放，不能假定永远同步成功。草稿创建时记录 `parentScope.revision` 到 `baseRevision`。
@@ -969,7 +967,11 @@ export interface RendererEnv {
   readonly functions?: Record<string, (...args: any[]) => any>;
   readonly filters?: Record<string, (input: any, ...args: any[]) => any>;
   readonly importLoader?: ImportedLibraryLoader;
-  readonly resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
+  readonly resolveImportUrl?: (
+    schemaUrl: string,
+    from: string,
+    options?: Record<string, unknown>,
+  ) => string;
   readonly monitor?: RendererMonitor;
 }
 ```
@@ -1149,46 +1151,46 @@ export interface RuntimeInspector {
 ## 19. 与需求逐项对齐的设计结论
 
 1. Schema 解析与编译
-通过 `RuntimeTemplate + NodePlan + ValuePlan` 满足。
+   通过 `RuntimeTemplate + NodePlan + ValuePlan` 满足。
 
 2. 表达式引擎
-通过 `CompiledExpression + EvaluationContext` 满足，且无动态代码生成。
+   通过 `CompiledExpression + EvaluationContext` 满足，且无动态代码生成。
 
 3. 词法数据环境
-通过 `ScopeFrame` 图、`inherit/isolated/projected` 三模式和显式写入矩阵满足。
+   通过 `ScopeFrame` 图、`inherit/isolated/projected` 三模式和显式写入矩阵满足。
 
 4. 依赖追踪与响应式更新
-通过统一 `ReactiveConsumer` 模型、结构依赖选择器、调度相位和循环治理满足。
+   通过统一 `ReactiveConsumer` 模型、结构依赖选择器、调度相位和循环治理满足。
 
 5. 渲染与组件系统
-通过 `RendererRegistry + RendererInput + RegionHandle + $slot` 语义满足。
+   通过 `RendererRegistry + RendererInput + RegionHandle + $slot` 语义满足。
 
 6. 动作系统与控制流
-通过 `CompiledActionProgram + ActionFlowNode + ActionExecutor` 满足。
+   通过 `CompiledActionProgram + ActionFlowNode + ActionExecutor` 满足。
 
 7. 三层动作解析
-通过固定 `ActionResolver` 顺序满足。
+   通过固定 `ActionResolver` 顺序满足。
 
 8. 表单与校验
-通过 `FormRuntime + ValidatorGraph + ValidationExecution + DraftSession` 满足。
+   通过 `FormRuntime + ValidatorGraph + ValidationExecution + DraftSession` 满足。
 
 9. API 与数据源
-通过 `CompiledRequestPlan + RendererEnv + DataSourceRuntime + ReactionRuntime` 满足。
+   通过 `CompiledRequestPlan + RendererEnv + DataSourceRuntime + ReactionRuntime` 满足。
 
 10. 表面对话系统
-通过 `SurfaceManager + SurfaceRuntime` 满足。
+    通过 `SurfaceManager + SurfaceRuntime` 满足。
 
 11. 表格与集合
-通过 `isolated + projection` 的行级作用域满足。
+    通过 `isolated + projection` 的行级作用域满足。
 
 12. 循环与递归
-通过“一次编译，多次实例化”的实例图模型满足。
+    通过“一次编译，多次实例化”的实例图模型满足。
 
 13. 宿主集成
-通过静态 `RendererEnv`、命名空间能力注册和静态命名空间契约满足。
+    通过静态 `RendererEnv`、命名空间能力注册和静态命名空间契约满足。
 
 14. 安全、性能、可测试性
-通过无动态代码、静态模板、路径级失效、结构依赖、相位调度、UI 框架无关内核满足。
+    通过无动态代码、静态模板、路径级失效、结构依赖、相位调度、UI 框架无关内核满足。
 
 ## 20. 最终判断
 

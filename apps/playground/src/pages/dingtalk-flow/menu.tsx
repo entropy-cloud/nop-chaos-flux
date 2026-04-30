@@ -12,9 +12,14 @@ export function AddNodeMenu({ popover, onSelect, onClose }: AddNodeMenuProps) {
   const items: { type: AddType; color: string; icon: React.ReactNode; label: string }[] = [
     { type: 'approver', color: COLORS.approval, icon: <UserCheck size={20} />, label: 'Approver' },
     { type: 'cc', color: COLORS.cc, icon: <Send size={20} />, label: 'CC' },
-    { type: 'condition', color: COLORS.condition, icon: <span className="text-xs font-bold">Cond</span>, label: 'Condition' },
+    {
+      type: 'condition',
+      color: COLORS.condition,
+      icon: <span className="text-xs font-bold">Cond</span>,
+      label: 'Condition',
+    },
   ];
-  
+
   return (
     <>
       <div className="fixed inset-0 z-[100]" onClick={onClose} />
@@ -28,7 +33,10 @@ export function AddNodeMenu({ popover, onSelect, onClose }: AddNodeMenuProps) {
             type="button"
             variant="ghost"
             className="h-auto flex-col gap-1 px-0 py-0"
-            onClick={(e) => { e.stopPropagation(); onSelect(item.type); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(item.type);
+            }}
           >
             <div
               className="flex items-center justify-center rounded-full text-white"

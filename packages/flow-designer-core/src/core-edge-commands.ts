@@ -1,9 +1,4 @@
-import type {
-  GraphDocument,
-  GraphEdge,
-  NormalizedDesignerConfig,
-  DesignerEvent
-} from './types';
+import type { GraphDocument, GraphEdge, NormalizedDesignerConfig, DesignerEvent } from './types';
 import { generateId } from './core/clone';
 import {
   countIncomingEdges,
@@ -42,7 +37,7 @@ export function addEdgeCommand(
   ctx: EdgeCommandContext,
   source: string,
   target: string,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
 ): GraphEdge | null {
   const sourceNode = ctx.doc.nodes.find((n) => n.id === source);
   const targetNode = ctx.doc.nodes.find((n) => n.id === target);
@@ -110,7 +105,7 @@ export function reconnectEdgeCommand(
   ctx: EdgeCommandContext,
   edgeId: string,
   source: string,
-  target: string
+  target: string,
 ): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string } {
   const edgeIndex = ctx.doc.edges.findIndex((edge) => edge.id === edgeId);
   if (edgeIndex === -1) {
@@ -118,7 +113,13 @@ export function reconnectEdgeCommand(
   }
 
   const currentEdge = ctx.doc.edges[edgeIndex];
-  const validationError = validateEdgeConnection(ctx.doc, ctx.normalizedConfig, source, target, edgeId);
+  const validationError = validateEdgeConnection(
+    ctx.doc,
+    ctx.normalizedConfig,
+    source,
+    target,
+    edgeId,
+  );
   if (validationError) {
     return {
       ok: false,
@@ -127,8 +128,8 @@ export function reconnectEdgeCommand(
         validationError === EDGE_MISSING_NODE_ERROR
           ? 'missing-node'
           : validationError === EDGE_SELF_LOOP_ERROR
-          ? 'self-loop'
-          : 'duplicate-edge'
+            ? 'self-loop'
+            : 'duplicate-edge',
     };
   }
 
@@ -142,7 +143,7 @@ export function reconnectEdgeCommand(
   const updatedEdge = {
     ...currentEdge,
     source,
-    target
+    target,
   };
   ctx.setDocument(replaceEdgeInDocument(ctx.doc, edgeId, updatedEdge));
 
@@ -158,7 +159,7 @@ export function reconnectEdgeCommand(
 export function updateEdgeCommand(
   ctx: EdgeCommandContext,
   edgeId: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): void {
   const updatedEdge = updateEdgeDataInDocument(ctx.doc, edgeId, data);
   if (!updatedEdge) {
@@ -173,10 +174,7 @@ export function updateEdgeCommand(
   ctx.updateDirtyState();
 }
 
-export function deleteEdgeCommand(
-  ctx: EdgeCommandContext,
-  edgeId: string
-): void {
+export function deleteEdgeCommand(ctx: EdgeCommandContext, edgeId: string): void {
   if (ctx.normalizedConfig.hooks?.beforeDelete) {
     try {
       const result = ctx.normalizedConfig.hooks.beforeDelete({ type: 'edge', id: edgeId });

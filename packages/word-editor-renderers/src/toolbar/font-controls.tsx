@@ -1,24 +1,48 @@
-import { Bold, Italic, Underline, Strikethrough, Superscript, Subscript, Undo2, Redo2, Paintbrush } from 'lucide-react'
-import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
-import type { EditorSelectionState } from '@nop-chaos/word-editor-core'
-import { NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui'
-import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js'
+import {
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Superscript,
+  Subscript,
+  Undo2,
+  Redo2,
+  Paintbrush,
+} from 'lucide-react';
+import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
+import type { EditorSelectionState } from '@nop-chaos/word-editor-core';
+import { NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
+import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js';
 
 interface FontControlsProps {
-  bridge: CanvasEditorBridge | null
-  selection: EditorSelectionState
+  bridge: CanvasEditorBridge | null;
+  selection: EditorSelectionState;
 }
 
-const FONTS = ['Microsoft YaHei', 'SimSun', 'SimHei', 'Arial', 'Times New Roman', 'Courier New']
-const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
+const FONTS = ['Microsoft YaHei', 'SimSun', 'SimHei', 'Arial', 'Times New Roman', 'Courier New'];
+const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 
 export function FontControls({ bridge, selection }: FontControlsProps) {
   return (
     <ToolbarGroup>
-      <ToolbarButton icon={Undo2} onClick={() => bridge?.command?.executeUndo()} disabled={!selection.undo} title="Undo" />
-      <ToolbarButton icon={Redo2} onClick={() => bridge?.command?.executeRedo()} disabled={!selection.redo} title="Redo" />
+      <ToolbarButton
+        icon={Undo2}
+        onClick={() => bridge?.command?.executeUndo()}
+        disabled={!selection.undo}
+        title="Undo"
+      />
+      <ToolbarButton
+        icon={Redo2}
+        onClick={() => bridge?.command?.executeRedo()}
+        disabled={!selection.redo}
+        title="Redo"
+      />
       <ToolbarSeparator />
-      <ToolbarButton icon={Paintbrush} onClick={() => bridge?.command?.executePainter({ isDblclick: false })} title="Format Painter" />
+      <ToolbarButton
+        icon={Paintbrush}
+        onClick={() => bridge?.command?.executePainter({ isDblclick: false })}
+        title="Format Painter"
+      />
       <ToolbarSeparator />
       <NativeSelect
         value={selection.font || 'Microsoft YaHei'}
@@ -98,5 +122,5 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         title="Highlight Color"
       />
     </ToolbarGroup>
-  )
+  );
 }

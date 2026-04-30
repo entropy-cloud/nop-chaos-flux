@@ -2,7 +2,12 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { allRenderers, baseEnv, formulaCompiler, makeCapturingFetcher } from './composite-form-support';
+import {
+  allRenderers,
+  baseEnv,
+  formulaCompiler,
+  makeCapturingFetcher,
+} from './composite-form-support';
 
 describe('composite form - six-component integration', () => {
   it('renders all six components together and submits when valid', async () => {
@@ -22,7 +27,7 @@ describe('composite form - six-component integration', () => {
             contactMethod: { type: 'email', email: 'jane@example.com' },
             address: { street: '1 Main St', city: 'Townsville' },
             config: { theme: 'dark' },
-            recentItems: ['alpha', 'beta']
+            recentItems: ['alpha', 'beta'],
           },
           body: [
             {
@@ -31,15 +36,15 @@ describe('composite form - six-component integration', () => {
               label: 'Profile',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name', required: true },
-                { type: 'input-text', name: 'lastName', label: 'Last Name', required: true }
-              ]
+                { type: 'input-text', name: 'lastName', label: 'Last Name', required: true },
+              ],
             },
             {
               type: 'array-field',
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }],
             },
             {
               type: 'variant-field',
@@ -51,15 +56,15 @@ describe('composite form - six-component integration', () => {
                   key: 'email',
                   label: 'Email',
                   initialValue: { type: 'email', email: '' },
-                  content: [{ type: 'input-text', name: 'email', label: 'Email Address' }]
+                  content: [{ type: 'input-text', name: 'email', label: 'Email Address' }],
                 },
                 {
                   key: 'phone',
                   label: 'Phone',
                   initialValue: { type: 'phone', phone: '' },
-                  content: [{ type: 'input-text', name: 'phone', label: 'Phone Number' }]
-                }
-              ]
+                  content: [{ type: 'input-text', name: 'phone', label: 'Phone Number' }],
+                },
+              ],
             },
             {
               type: 'detail-field',
@@ -69,39 +74,37 @@ describe('composite form - six-component integration', () => {
               surface: { mode: 'dialog', title: 'Edit Address' },
               content: [
                 { type: 'input-text', name: 'street', label: 'Street' },
-                { type: 'input-text', name: 'city', label: 'City' }
-              ]
+                { type: 'input-text', name: 'city', label: 'City' },
+              ],
             },
             {
               type: 'detail-view',
               scopePath: 'config',
               triggerLabel: 'Edit Config',
               surface: { mode: 'dialog', title: 'Edit Config' },
-              content: [
-                { type: 'input-text', name: 'theme', label: 'Theme' }
-              ]
+              content: [{ type: 'input-text', name: 'theme', label: 'Theme' }],
             },
             {
               type: 'loop',
               items: '${recentItems}',
-              body: [{ type: 'text', text: '${$slot.item}' }]
-            }
+              body: [{ type: 'text', text: '${$slot.item}' }],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'six-form' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'six-form' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -117,7 +120,7 @@ describe('composite form - six-component integration', () => {
 
     const result = submitValues[0] as Record<string, unknown>;
     expect(result).toMatchObject({
-      profile: { firstName: 'Jane', lastName: 'Doe' }
+      profile: { firstName: 'Jane', lastName: 'Doe' },
     });
     expect(Array.isArray(result.tags)).toBe(true);
   });
@@ -134,16 +137,14 @@ describe('composite form - six-component integration', () => {
           id: 'six-block',
           data: {
             profile: { name: 'Jane' },
-            address: { street: '', city: '' }
+            address: { street: '', city: '' },
           },
           body: [
             {
               type: 'object-field',
               name: 'profile',
               label: 'Profile',
-              body: [
-                { type: 'input-text', name: 'name', label: 'Profile Name', required: true }
-              ]
+              body: [{ type: 'input-text', name: 'name', label: 'Profile Name', required: true }],
             },
             {
               type: 'detail-field',
@@ -153,15 +154,15 @@ describe('composite form - six-component integration', () => {
               surface: { mode: 'dialog', title: 'Edit Address' },
               content: [
                 { type: 'input-text', name: 'street', label: 'Street', required: true },
-                { type: 'input-text', name: 'city', label: 'City', required: true }
-              ]
-            }
+                { type: 'input-text', name: 'city', label: 'City', required: true },
+              ],
+            },
           ],
-          actions: []
+          actions: [],
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
@@ -196,24 +197,22 @@ describe('composite form - submit supersedes debounced validation', () => {
             type: 'form',
             id: 'debounce-form',
             data: { title: '' },
-            body: [
-              { type: 'input-text', name: 'title', label: 'Title', required: true }
-            ],
+            body: [{ type: 'input-text', name: 'title', label: 'Title', required: true }],
             submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
             actions: [
               {
                 type: 'button',
                 label: 'Submit',
-                onClick: { action: 'component:submit', componentId: 'debounce-form' }
-              }
-            ]
+                onClick: { action: 'component:submit', componentId: 'debounce-form' },
+              },
+            ],
           }}
           env={{
             ...baseEnv,
-            fetcher: makeCapturingFetcher(submitValues)
+            fetcher: makeCapturingFetcher(submitValues),
           }}
           formulaCompiler={formulaCompiler}
-        />
+        />,
       );
 
       await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
@@ -227,7 +226,9 @@ describe('composite form - submit supersedes debounced validation', () => {
 
       expect(submitValues.length).toBe(0);
 
-      fireEvent.change(screen.getByLabelText('Title', { exact: false }), { target: { value: 'My Title' } });
+      fireEvent.change(screen.getByLabelText('Title', { exact: false }), {
+        target: { value: 'My Title' },
+      });
 
       fireEvent.click(screen.getByText('Submit'));
 

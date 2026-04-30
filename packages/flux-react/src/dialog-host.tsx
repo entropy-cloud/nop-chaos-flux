@@ -1,10 +1,11 @@
 import React from 'react';
-import type {
-  SurfaceEntry,
-  SurfaceRuntime
-} from '@nop-chaos/flux-core';
+import type { SurfaceEntry, SurfaceRuntime } from '@nop-chaos/flux-core';
 import { useCurrentPage, useCurrentSurfaceRuntime } from './hooks';
-import { renderSurfaceNode, SurfaceScopeProviders, useSurfaceScopeSnapshot } from './dialog-host-surface';
+import {
+  renderSurfaceNode,
+  SurfaceScopeProviders,
+  useSurfaceScopeSnapshot,
+} from './dialog-host-surface';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
 import { Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';
@@ -32,7 +33,7 @@ export function DialogHost() {
     () => surfaceRuntime?.store.getState().entries ?? [],
     () => surfaceRuntime?.store.getState().entries ?? [],
     (state: SurfaceEntry[]) => state,
-    sameSurfaces
+    sameSurfaces,
   );
 
   if (!page || !surfaceRuntime || surfaces.length === 0) {
@@ -41,11 +42,23 @@ export function DialogHost() {
 
   return (
     <>
-      {surfaces.map((surface: SurfaceEntry) => (
-        surface.kind === 'dialog'
-          ? <DialogView key={surface.id} surface={surface} surfaceRuntime={surfaceRuntime} modalContainer={modalContainer} />
-          : <DrawerView key={surface.id} surface={surface} surfaceRuntime={surfaceRuntime} modalContainer={modalContainer} />
-      ))}
+      {surfaces.map((surface: SurfaceEntry) =>
+        surface.kind === 'dialog' ? (
+          <DialogView
+            key={surface.id}
+            surface={surface}
+            surfaceRuntime={surfaceRuntime}
+            modalContainer={modalContainer}
+          />
+        ) : (
+          <DrawerView
+            key={surface.id}
+            surface={surface}
+            surfaceRuntime={surfaceRuntime}
+            modalContainer={modalContainer}
+          />
+        ),
+      )}
     </>
   );
 }
@@ -66,34 +79,49 @@ function DialogView(props: {
     scope: surface.scope,
     actionScope: surface.actionScope,
     componentRegistry: surface.componentRegistry,
-    ownerNodeInstance: surface.ownerNodeInstance
+    ownerNodeInstance: surface.ownerNodeInstance,
   };
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
-  const containerId = typeof surface.surface.container === 'string' ? surface.surface.container : props.modalContainer;
+  const containerId =
+    typeof surface.surface.container === 'string'
+      ? surface.surface.container
+      : props.modalContainer;
   const containerElement = resolveContainerElement(containerId, surface.componentRegistry);
   const showMask = surface.surface.showMask !== false;
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }} containerElement={containerElement} noOverlay={!showMask}>
-      <DialogContent data-slot="dialog-surface" onClickCapture={(event) => {
-        const target = event.target;
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+      containerElement={containerElement}
+      noOverlay={!showMask}
+    >
+      <DialogContent
+        data-slot="dialog-surface"
+        onClickCapture={(event) => {
+          const target = event.target;
 
-        if (!(target instanceof Element)) {
-          return;
-        }
+          if (!(target instanceof Element)) {
+            return;
+          }
 
-        if (target.closest('[data-slot="dialog-close"]')) {
-          handleClose();
-        }
-      }}>
+          if (target.closest('[data-slot="dialog-close"]')) {
+            handleClose();
+          }
+        }}
+      >
         <SurfaceScopeProviders {...surfaceContext}>
-              {titleNode && (
-                <DialogHeader>
-                  <DialogTitle>{titleNode}</DialogTitle>
-                </DialogHeader>
-              )}
-              <DialogBody>{renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}</DialogBody>
+          {titleNode && (
+            <DialogHeader>
+              <DialogTitle>{titleNode}</DialogTitle>
+            </DialogHeader>
+          )}
+          <DialogBody>
+            {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+          </DialogBody>
         </SurfaceScopeProviders>
       </DialogContent>
     </Dialog>
@@ -116,34 +144,58 @@ function DrawerView(props: {
     scope: surface.scope,
     actionScope: surface.actionScope,
     componentRegistry: surface.componentRegistry,
-    ownerNodeInstance: surface.ownerNodeInstance
+    ownerNodeInstance: surface.ownerNodeInstance,
   };
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
-  const containerId = typeof surface.surface.container === 'string' ? surface.surface.container : props.modalContainer;
+  const containerId =
+    typeof surface.surface.container === 'string'
+      ? surface.surface.container
+      : props.modalContainer;
   const containerElement = resolveContainerElement(containerId, surface.componentRegistry);
   const showMask = surface.surface.showMask !== false;
 
   return (
-    <Drawer open onOpenChange={(open) => { if (!open) handleClose(); }} direction={surface.surface.side === 'left' ? 'left' : surface.surface.side === 'top' ? 'top' : surface.surface.side === 'bottom' ? 'bottom' : 'right'} containerElement={containerElement}>
-      <DrawerContent data-slot="drawer-surface" showMask={showMask} onClickCapture={(event) => {
-        const target = event.target;
+    <Drawer
+      open
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+      direction={
+        surface.surface.side === 'left'
+          ? 'left'
+          : surface.surface.side === 'top'
+            ? 'top'
+            : surface.surface.side === 'bottom'
+              ? 'bottom'
+              : 'right'
+      }
+      containerElement={containerElement}
+    >
+      <DrawerContent
+        data-slot="drawer-surface"
+        showMask={showMask}
+        onClickCapture={(event) => {
+          const target = event.target;
 
-        if (!(target instanceof Element)) {
-          return;
-        }
+          if (!(target instanceof Element)) {
+            return;
+          }
 
-        if (target.closest('[data-slot="drawer-close"]')) {
-          handleClose();
-        }
-      }}>
+          if (target.closest('[data-slot="drawer-close"]')) {
+            handleClose();
+          }
+        }}
+      >
         <SurfaceScopeProviders {...surfaceContext}>
-              {titleNode && (
-                <DrawerHeader>
-                  <DrawerTitle>{titleNode}</DrawerTitle>
-                </DrawerHeader>
-              )}
-              <DrawerBody>{renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}</DrawerBody>
+          {titleNode && (
+            <DrawerHeader>
+              <DrawerTitle>{titleNode}</DrawerTitle>
+            </DrawerHeader>
+          )}
+          <DrawerBody>
+            {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+          </DrawerBody>
         </SurfaceScopeProviders>
       </DrawerContent>
     </Drawer>

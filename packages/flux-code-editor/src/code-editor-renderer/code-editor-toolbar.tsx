@@ -33,7 +33,7 @@ export function CodeEditorToolbar({
   onInsertSnippet,
   onToggleVariables,
   onExecuteSQL,
-  onEnterFullscreen
+  onEnterFullscreen,
 }: CodeEditorToolbarProps) {
   return (
     <div data-slot="code-editor-toolbar">
@@ -49,13 +49,19 @@ export function CodeEditorToolbar({
               {t('flux.codeEditor.format')}
             </ToolbarButton>
           )}
-          {snippets?.length ? <SnippetPanel snippets={snippets} onInsert={onInsertSnippet} /> : null}
+          {snippets?.length ? (
+            <SnippetPanel snippets={snippets} onInsert={onInsertSnippet} />
+          ) : null}
           {hasVariablePanel && (
             <ToolbarButton
               size="xs"
               data-slot="code-editor-toolbar-var-toggle"
               onClick={onToggleVariables}
-              title={variablePanelCollapsed ? t('flux.codeEditor.showVariables') : t('flux.codeEditor.hideVariables')}
+              title={
+                variablePanelCollapsed
+                  ? t('flux.codeEditor.showVariables')
+                  : t('flux.codeEditor.hideVariables')
+              }
             >
               {variablePanelCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
               {t('flux.codeEditor.vars')}

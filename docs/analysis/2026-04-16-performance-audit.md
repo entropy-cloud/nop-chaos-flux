@@ -123,7 +123,7 @@ The audited package manifests do not declare `sideEffects`. That does not create
 
 **Diagnosis**
 
-`chunkSizeWarningLimit: 6000` means large sub-6 MB chunks will not trigger warnings. This does not hide *all* warnings; it simply makes warning-based bundle review less sensitive than the default.
+`chunkSizeWarningLimit: 6000` means large sub-6 MB chunks will not trigger warnings. This does not hide _all_ warnings; it simply makes warning-based bundle review less sensitive than the default.
 
 **Recommended action**
 
@@ -690,6 +690,7 @@ The original draft overstated this as a total cache rebuild. The more accurate i
 ### 6.4 HIGH - Table, loop, and tree renderers still render all visible items without virtualization
 
 **Files**:
+
 - `packages/flux-renderers-data/src/table-renderer.tsx`
 - `packages/flux-renderers-basic/src/loop.tsx`
 - `packages/flux-renderers-basic/src/structural-loop.tsx`
@@ -982,32 +983,32 @@ The following original claims were removed or materially reframed during re-audi
 
 ### Immediate
 
-| # | Issue | Why first |
-|---|-------|-----------|
-| 4.1 | Virtualize spreadsheet grid | Dominant scalability ceiling in a visible product surface |
-| 2.1 | Remove duplicate `resolveNodeProps()` work | Core renderer hot path with confirmed redundant work |
-| 3.1 | Cache formula registry snapshot | Repeated allocation on expression-heavy paths |
-| 1.1 | Lazy-load heavyweight playground routes | Clean architectural win with likely bundle payoff |
-| 4.2 | Batch spreadsheet cell-map updates | Clear algorithmic improvement for range operations |
+| #   | Issue                                      | Why first                                                 |
+| --- | ------------------------------------------ | --------------------------------------------------------- |
+| 4.1 | Virtualize spreadsheet grid                | Dominant scalability ceiling in a visible product surface |
+| 2.1 | Remove duplicate `resolveNodeProps()` work | Core renderer hot path with confirmed redundant work      |
+| 3.1 | Cache formula registry snapshot            | Repeated allocation on expression-heavy paths             |
+| 1.1 | Lazy-load heavyweight playground routes    | Clean architectural win with likely bundle payoff         |
+| 4.2 | Batch spreadsheet cell-map updates         | Clear algorithmic improvement for range operations        |
 
 ### Short-term
 
-| # | Issue | Why next |
-|---|-------|----------|
-| 2.3 | Decouple lifecycle actions from `helpers` identity | Can affect correctness, not just speed |
-| 4.3 | Batch replace-all document updates | Large-operation cost multiplier |
-| 5.2 | Reduce visible-scope cascade invalidation | Broad runtime fan-out source |
-| 5.3 | Coalesce form-store batch notifications | Common form hot path |
-| 6.4 | Add virtualization to table body | Large dataset rendering ceiling |
-| 7.3 | Replace node-sync `find()` loop with indexed lookup | Simple, low-risk quadratic-path fix |
+| #   | Issue                                               | Why next                               |
+| --- | --------------------------------------------------- | -------------------------------------- |
+| 2.3 | Decouple lifecycle actions from `helpers` identity  | Can affect correctness, not just speed |
+| 4.3 | Batch replace-all document updates                  | Large-operation cost multiplier        |
+| 5.2 | Reduce visible-scope cascade invalidation           | Broad runtime fan-out source           |
+| 5.3 | Coalesce form-store batch notifications             | Common form hot path                   |
+| 6.4 | Add virtualization to table body                    | Large dataset rendering ceiling        |
+| 7.3 | Replace node-sync `find()` loop with indexed lookup | Simple, low-risk quadratic-path fix    |
 
 ### Measure Before Changing
 
-| # | Issue | Why measure first |
-|---|-------|-------------------|
-| 2.5 | Memoizing `RenderNodes` | Outcome depends on real parent/input stability |
-| 3.8 | Moving `try/catch` out of exec path | Engine-level benefit is not guaranteed |
-| 6.1 | Adding `React.memo` broadly to renderers | React Compiler and scope-driven props may already cover some cases |
-| 6.5 | Replacing inline handlers broadly | Benefit is localized and readability tradeoffs are real |
-| 6.7 | Debouncing chart resize | Should be driven by measured resize pressure |
-| 10.3 | Page-scoped spreadsheet CSS loading | Not currently a verified problem |
+| #    | Issue                                    | Why measure first                                                  |
+| ---- | ---------------------------------------- | ------------------------------------------------------------------ |
+| 2.5  | Memoizing `RenderNodes`                  | Outcome depends on real parent/input stability                     |
+| 3.8  | Moving `try/catch` out of exec path      | Engine-level benefit is not guaranteed                             |
+| 6.1  | Adding `React.memo` broadly to renderers | React Compiler and scope-driven props may already cover some cases |
+| 6.5  | Replacing inline handlers broadly        | Benefit is localized and readability tradeoffs are real            |
+| 6.7  | Debouncing chart resize                  | Should be driven by measured resize pressure                       |
+| 10.3 | Page-scoped spreadsheet CSS loading      | Not currently a verified problem                                   |

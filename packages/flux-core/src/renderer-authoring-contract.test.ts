@@ -11,14 +11,14 @@ describe('resolveRendererAuthoringContract', () => {
       propContracts: {
         label: {
           shape: { kind: 'string' },
-          displayName: 'Label'
-        }
+          displayName: 'Label',
+        },
       },
       eventContracts: {
         onClick: {
-          displayName: 'Click'
-        }
-      }
+          displayName: 'Click',
+        },
+      },
     };
 
     const contract = resolveRendererAuthoringContract(buttonRenderer);
@@ -51,9 +51,12 @@ describe('resolveRendererAuthoringContract', () => {
             projection: {
               fields: {
                 activeNode: {
-                  schema: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'object', fields: {} }] }
-                }
-              }
+                  schema: {
+                    kind: 'union',
+                    anyOf: [{ kind: 'null' }, { kind: 'object', fields: {} }],
+                  },
+                },
+              },
             },
             capabilities: {
               namespace: 'designer',
@@ -62,22 +65,22 @@ describe('resolveRendererAuthoringContract', () => {
                   args: {
                     kind: 'object',
                     fields: {
-                      nodeType: { kind: 'string' }
-                    }
+                      nodeType: { kind: 'string' },
+                    },
                   },
                   result: {
                     kind: 'object',
                     fields: {
-                      nodeId: { kind: 'string' }
-                    }
+                      nodeId: { kind: 'string' },
+                    },
                   },
-                  description: 'Add a node'
-                }
-              }
-            }
+                  description: 'Add a node',
+                },
+              },
+            },
           };
-        }
-      }
+        },
+      },
     };
 
     const contract = resolveRendererAuthoringContract(designerRenderer);
@@ -103,12 +106,12 @@ describe('resolveRendererAuthoringContract', () => {
               family: 'designer',
               version: '2.0',
               projection: { fields: {} },
-              capabilities: { namespace: 'designer', methods: {} }
+              capabilities: { namespace: 'designer', methods: {} },
             };
           }
           return undefined;
-        }
-      }
+        },
+      },
     };
 
     const contract = resolveRendererAuthoringContract(designerRenderer, '2.0');
@@ -121,7 +124,7 @@ describe('resolveHostContractManifest', () => {
   it('returns undefined when renderer has no hostContract', () => {
     const renderer: RendererDefinition = {
       type: 'button',
-      component: () => null
+      component: () => null,
     };
 
     expect(resolveHostContractManifest(renderer)).toBeUndefined();
@@ -140,12 +143,12 @@ describe('resolveHostContractManifest', () => {
               family: 'designer',
               version: '1.0',
               projection: { fields: {} },
-              capabilities: { namespace: 'designer', methods: {} }
+              capabilities: { namespace: 'designer', methods: {} },
             };
           }
           return undefined;
-        }
-      }
+        },
+      },
     };
 
     const manifest = resolveHostContractManifest(renderer);
@@ -161,10 +164,15 @@ describe('resolveHostContractManifest', () => {
         defaultVersion: '1.0',
         resolveManifest(versionSelector) {
           return versionSelector === '2.0'
-            ? { family: 'designer', version: '2.0', projection: { fields: {} }, capabilities: { namespace: 'designer', methods: {} } }
+            ? {
+                family: 'designer',
+                version: '2.0',
+                projection: { fields: {} },
+                capabilities: { namespace: 'designer', methods: {} },
+              }
             : undefined;
-        }
-      }
+        },
+      },
     };
 
     const manifest = resolveHostContractManifest(renderer, '2.0');
@@ -180,8 +188,8 @@ describe('resolveHostContractManifest', () => {
         defaultVersion: '1.0',
         resolveManifest() {
           return undefined;
-        }
-      }
+        },
+      },
     };
 
     expect(resolveHostContractManifest(renderer, '9.0')).toBeUndefined();

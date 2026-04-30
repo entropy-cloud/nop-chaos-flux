@@ -11,7 +11,7 @@ describe('data renderer static contracts', () => {
     expect(crud?.componentCapabilityContracts?.map((item) => item.handle)).toEqual([
       'refresh',
       'getSelection',
-      'clearSelection'
+      'clearSelection',
     ]);
     expect(crud?.eventContracts?.onSelectionChange?.payload?.kind).toBe('object');
   });

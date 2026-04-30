@@ -20,13 +20,22 @@ export function CodeEditorBody({
   sqlVariables,
   insertTemplate,
   onInsertVariable,
-  onToggleVariablePanel
+  onToggleVariablePanel,
 }: CodeEditorBodyProps) {
   return (
-    <div data-slot={hasVariablePanel ? 'code-editor-body' : undefined} style={hasVariablePanel ? { display: 'flex', flex: 1, minHeight: 0 } : undefined}>
+    <div
+      data-slot={hasVariablePanel ? 'code-editor-body' : undefined}
+      style={hasVariablePanel ? { display: 'flex', flex: 1, minHeight: 0 } : undefined}
+    >
       <div
         ref={editorRef}
-        style={isFullscreen ? { flex: 1, overflow: 'auto' } : hasVariablePanel ? { flex: 1, minHeight: 0 } : undefined}
+        style={
+          isFullscreen
+            ? { flex: 1, overflow: 'auto' }
+            : hasVariablePanel
+              ? { flex: 1, minHeight: 0 }
+              : undefined
+        }
       />
       {hasVariablePanel && (
         <VariablePanel

@@ -3,7 +3,10 @@ import { executeSetValues } from '../form-runtime-values';
 import { createFormStore } from '../form-store';
 import { createScopeRef } from '../scope';
 import { createAsyncGovernanceStore } from '../async-data/async-governance';
-import type { ManagedFormRuntimeSharedState, CreateManagedFormRuntimeInput } from '../form-runtime-types';
+import type {
+  ManagedFormRuntimeSharedState,
+  CreateManagedFormRuntimeInput,
+} from '../form-runtime-types';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 
 function createStubScope(): ScopeRef {
@@ -15,7 +18,7 @@ function createStubScope(): ScopeRef {
       getSnapshot: () => ({}),
       getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
-      subscribe: () => () => {}
+      subscribe: () => () => {},
     },
     value: {},
     update: () => {},
@@ -24,7 +27,7 @@ function createStubScope(): ScopeRef {
     readOwn: () => ({}),
     readVisible: () => ({}),
     materializeVisible: () => ({}),
-    merge: () => {}
+    merge: () => {},
   };
 }
 
@@ -36,17 +39,25 @@ function createSharedState(initialValues: Record<string, any> = {}) {
     parent: createStubScope(),
     store: {
       getSnapshot: () => store.getState().values,
-      getLastChange: () => ({ paths: ['*'], sourceScopeId: 'test-form', kind: 'replace' as const, revision: 0 }),
+      getLastChange: () => ({
+        paths: ['*'],
+        sourceScopeId: 'test-form',
+        kind: 'replace' as const,
+        revision: 0,
+      }),
       setSnapshot: (next) => store.setValues(next),
-      subscribe: (listener) => store.subscribe(() => listener({ paths: ['*'], sourceScopeId: 'test-form', kind: 'replace' }))
+      subscribe: (listener) =>
+        store.subscribe(() =>
+          listener({ paths: ['*'], sourceScopeId: 'test-form', kind: 'replace' }),
+        ),
     },
-    update: (path, value) => store.setValue(path, value)
+    update: (path, value) => store.setValue(path, value),
   });
 
   const sharedState: ManagedFormRuntimeSharedState = {
     inputValue: {
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     } as CreateManagedFormRuntimeInput,
     store,
     scope,
@@ -61,7 +72,7 @@ function createSharedState(initialValues: Record<string, any> = {}) {
     lifecycleState: 'active',
     modelGeneration: 1,
     externalErrors: new Map(),
-    childContracts: new Map()
+    childContracts: new Map(),
   };
 
   return sharedState;
@@ -76,12 +87,14 @@ describe('executeSetValues', () => {
       {
         sharedState,
         formId: 'f1',
-        setLastChange: (c) => { lastChange = c; },
+        setLastChange: (c) => {
+          lastChange = c;
+        },
         clearExternalErrorsForPath: () => false,
         rebuildStoreErrorsFromExternal: () => ({}),
-        revalidateDependents: vi.fn()
+        revalidateDependents: vi.fn(),
       },
-      { x: 2 }
+      { x: 2 },
     );
     expect(sharedState.store.getState().values.x).toBe(1);
     expect(lastChange).toBeNull();
@@ -94,12 +107,14 @@ describe('executeSetValues', () => {
       {
         sharedState,
         formId: 'f1',
-        setLastChange: (c) => { lastChange = c; },
+        setLastChange: (c) => {
+          lastChange = c;
+        },
         clearExternalErrorsForPath: () => false,
         rebuildStoreErrorsFromExternal: () => ({}),
-        revalidateDependents: vi.fn()
+        revalidateDependents: vi.fn(),
       },
-      {}
+      {},
     );
     expect(sharedState.store.getState().values.x).toBe(1);
     expect(lastChange).toBeNull();
@@ -112,12 +127,14 @@ describe('executeSetValues', () => {
       {
         sharedState,
         formId: 'f1',
-        setLastChange: (c) => { lastChange = c; },
+        setLastChange: (c) => {
+          lastChange = c;
+        },
         clearExternalErrorsForPath: () => false,
         rebuildStoreErrorsFromExternal: () => ({}),
-        revalidateDependents: vi.fn()
+        revalidateDependents: vi.fn(),
       },
-      { a: 10, b: 20 }
+      { a: 10, b: 20 },
     );
     expect(sharedState.store.getState().values.a).toBe(10);
     expect(sharedState.store.getState().values.b).toBe(20);
@@ -134,9 +151,9 @@ describe('executeSetValues', () => {
         setLastChange: () => {},
         clearExternalErrorsForPath: () => false,
         rebuildStoreErrorsFromExternal: () => ({}),
-        revalidateDependents: vi.fn()
+        revalidateDependents: vi.fn(),
       },
-      { x: 10, y: 20 }
+      { x: 10, y: 20 },
     );
     expect(sharedState.validationRuns.get('x')).toBe(1);
     expect(sharedState.validationRuns.get('y')).toBe(1);
@@ -152,9 +169,9 @@ describe('executeSetValues', () => {
         setLastChange: () => {},
         clearExternalErrorsForPath: () => false,
         rebuildStoreErrorsFromExternal: () => ({}),
-        revalidateDependents: revalidate
+        revalidateDependents: revalidate,
       },
-      { a: 10 }
+      { a: 10 },
     );
     expect(revalidate).toHaveBeenCalledWith('a', 'change');
   });
@@ -163,12 +180,12 @@ describe('executeSetValues', () => {
     const sharedState = createSharedState({ x: 1 });
     sharedState.externalErrors.set('ext1', {
       sourceId: 'ext1',
-errors: [{ path: 'x', message: 'ext err', rule: 'required' }]
+      errors: [{ path: 'x', message: 'ext err', rule: 'required' }],
     });
     sharedState.store.batchUpdate({
       fieldStates: {
-        x: { errors: [{ path: 'x', message: 'ext err', rule: 'required' }] }
-      }
+        x: { errors: [{ path: 'x', message: 'ext err', rule: 'required' }] },
+      },
     });
 
     let externalCleared = false;
@@ -185,9 +202,9 @@ errors: [{ path: 'x', message: 'ext err', rule: 'required' }]
           return false;
         },
         rebuildStoreErrorsFromExternal: () => ({}),
-        revalidateDependents: vi.fn()
+        revalidateDependents: vi.fn(),
       },
-      { x: 2 }
+      { x: 2 },
     );
     expect(externalCleared).toBe(true);
     const state = sharedState.store.getState();
@@ -199,8 +216,10 @@ errors: [{ path: 'x', message: 'ext err', rule: 'required' }]
     let resolved = false;
     sharedState.pendingValidationDebounces.set('x', {
       timer: setTimeout(() => {}, 10000),
-      resolve: () => { resolved = true; },
-      reject: () => {}
+      resolve: () => {
+        resolved = true;
+      },
+      reject: () => {},
     });
     executeSetValues(
       {
@@ -209,9 +228,9 @@ errors: [{ path: 'x', message: 'ext err', rule: 'required' }]
         setLastChange: () => {},
         clearExternalErrorsForPath: () => false,
         rebuildStoreErrorsFromExternal: () => ({}),
-        revalidateDependents: vi.fn()
+        revalidateDependents: vi.fn(),
       },
-      { x: 2 }
+      { x: 2 },
     );
     expect(resolved).toBe(true);
     expect(sharedState.pendingValidationDebounces.has('x')).toBe(false);

@@ -9,7 +9,7 @@ export interface BindingContext {
 function walkAndBind(
   node: FormulaAstNode,
   context: BindingContext,
-  lambdaParams: Set<string>
+  lambdaParams: Set<string>,
 ): void {
   switch (node.type) {
     case 'Literal':
@@ -74,7 +74,7 @@ function walkAndBind(
 function bindIdentifier(
   node: IdentifierNode,
   context: BindingContext,
-  lambdaParams: Set<string>
+  lambdaParams: Set<string>,
 ): void {
   if (lambdaParams.has(node.name)) {
     return;

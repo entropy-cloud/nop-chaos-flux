@@ -16,15 +16,13 @@ const basicRadioGroup = {
           options: [
             { label: 'Free', value: 'free' },
             { label: 'Pro ($9/mo)', value: 'pro' },
-            { label: 'Enterprise', value: 'enterprise' }
-          ]
-        }
+            { label: 'Enterprise', value: 'enterprise' },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Select Plan', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Select Plan', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const inlineRadioGroup = {
@@ -43,16 +41,14 @@ const inlineRadioGroup = {
             { label: 'Low', value: 'low' },
             { label: 'Medium', value: 'medium' },
             { label: 'High', value: 'high' },
-            { label: 'Critical', value: 'critical' }
-          ]
+            { label: 'Critical', value: 'critical' },
+          ],
         },
-        { type: 'text', text: 'Selected priority: ${priority ?? "(none)"}' }
+        { type: 'text', text: 'Selected priority: ${priority ?? "(none)"}' },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 export function RadioGroupLabPage() {
@@ -62,14 +58,16 @@ export function RadioGroupLabPage() {
       scenarios={[
         {
           title: 'Vertical radio group with initial value',
-          description: 'A required plan selector with the Pro option pre-selected. Submitting without a selection shows a validation error.',
-          schema: basicRadioGroup
+          description:
+            'A required plan selector with the Pro option pre-selected. Submitting without a selection shows a validation error.',
+          schema: basicRadioGroup,
         },
         {
           title: 'Horizontal inline layout with in-form live summary',
-          description: 'With layout: horizontal, options are shown in a row. The selected value is rendered by a text node inside the same form scope.',
-          schema: inlineRadioGroup
-        }
+          description:
+            'With layout: horizontal, options are shown in a row. The selected value is rendered by a text node inside the same form scope.',
+          schema: inlineRadioGroup,
+        },
       ]}
     />
   );

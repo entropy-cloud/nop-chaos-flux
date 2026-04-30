@@ -10,10 +10,26 @@ import type { CodeEditorRendererProps } from './code-editor-renderer/shared';
 import { useCodeEditorBinding } from './code-editor-renderer/use-code-editor-binding';
 import { useSQLEditorState } from './code-editor-renderer/use-sql-editor-state';
 import { createBaseExtensions } from './extensions/base';
-import { useResolvedFunctions, useResolvedSQLVariables, useResolvedTables, useResolvedVariables } from './source-resolvers';
+import {
+  useResolvedFunctions,
+  useResolvedSQLVariables,
+  useResolvedTables,
+  useResolvedVariables,
+} from './source-resolvers';
 import { SQLResultPanel } from './sql-result-panel';
-import type { CodeEditorSchema, EditorLanguage, EditorMode, ExpressionEditorConfig, SQLEditorConfig } from './types';
-import { getDefaultAutoHeight, getDefaultHeight, getDefaultLineNumbers, resolveFormatConfig } from './types';
+import type {
+  CodeEditorSchema,
+  EditorLanguage,
+  EditorMode,
+  ExpressionEditorConfig,
+  SQLEditorConfig,
+} from './types';
+import {
+  getDefaultAutoHeight,
+  getDefaultHeight,
+  getDefaultLineNumbers,
+  resolveFormatConfig,
+} from './types';
 import { useCodeMirror } from './use-code-mirror';
 
 export const codeEditorFieldRules: SchemaFieldRule[] = [
@@ -45,9 +61,11 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   const readOnly = Boolean(props.props.readOnly ?? props.meta.disabled);
   const placeholder = props.props.placeholder as string | undefined;
   const editorTheme = (props.props.editorTheme as 'light' | 'dark') ?? 'light';
-  const lineNumbers = (props.props.lineNumbers as boolean | undefined) ?? getDefaultLineNumbers(language);
+  const lineNumbers =
+    (props.props.lineNumbers as boolean | undefined) ?? getDefaultLineNumbers(language);
   const folding = (props.props.folding as boolean | undefined) ?? false;
-  const autoHeight = (props.props.autoHeight as boolean | undefined) ?? getDefaultAutoHeight(language);
+  const autoHeight =
+    (props.props.autoHeight as boolean | undefined) ?? getDefaultAutoHeight(language);
   const allowFullscreen = (props.props.allowFullscreen as boolean | undefined) ?? false;
   const expressionConfig = props.props.expressionConfig as ExpressionEditorConfig | undefined;
   const sqlConfig = props.props.sqlConfig as SQLEditorConfig | undefined;
@@ -89,9 +107,21 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
         sqlDialect: sqlConfig?.dialect,
         completionConfig,
         lintConfig: language === 'expression' ? expressionConfig?.lint : undefined,
-        showFriendlyNames: language === 'expression' ? expressionConfig?.showFriendlyNames : undefined,
+        showFriendlyNames:
+          language === 'expression' ? expressionConfig?.showFriendlyNames : undefined,
       }),
-    [language, mode, lineNumbers, folding, autoHeight, editorTheme, sqlConfig?.dialect, completionConfig, expressionConfig?.lint, expressionConfig?.showFriendlyNames],
+    [
+      language,
+      mode,
+      lineNumbers,
+      folding,
+      autoHeight,
+      editorTheme,
+      sqlConfig?.dialect,
+      completionConfig,
+      expressionConfig?.lint,
+      expressionConfig?.showFriendlyNames,
+    ],
   );
 
   const height = (props.props.height as number | string | undefined) ?? getDefaultHeight(language);
@@ -140,11 +170,13 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
 
   const sqlVariables = useResolvedSQLVariables(sqlConfig, scope, props.helpers.dispatch);
   const formatConfig = resolveFormatConfig(sqlConfig);
-  const hasSQLToolbar = language === 'sql' && (Boolean(formatConfig) || hasSnippets || hasVariablePanel || hasExecution);
+  const hasSQLToolbar =
+    language === 'sql' &&
+    (Boolean(formatConfig) || hasSnippets || hasVariablePanel || hasExecution);
   const showToolbar = (allowFullscreen && !isFullscreen) || hasSQLToolbar;
 
   return (
-      <div
+    <div
       className={cn('nop-code-editor', props.meta.className)}
       data-cid={props.node.cid}
       data-testid={props.meta.testid}
@@ -195,7 +227,9 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
         onToggleVariablePanel={() => setVariablePanelCollapsed((value) => !value)}
       />
 
-      {hasExecution && sqlConfig?.execution?.showPreview !== false && sqlResult.status !== 'idle' ? (
+      {hasExecution &&
+      sqlConfig?.execution?.showPreview !== false &&
+      sqlResult.status !== 'idle' ? (
         <div data-slot="code-editor-result-container">
           <SQLResultPanel result={sqlResult} onClose={handleClearResult} />
         </div>

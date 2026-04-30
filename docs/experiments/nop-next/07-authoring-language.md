@@ -233,11 +233,11 @@ slot 允许声明：
 
 ```ts
 interface FactPatch {
-  targetCell: string
-  key: string
-  op: 'upsert' | 'delete' | 'merge'
-  value?: unknown
-  expectedTargetVersion: number
+  targetCell: string;
+  key: string;
+  op: 'upsert' | 'delete' | 'merge';
+  value?: unknown;
+  expectedTargetVersion: number;
 }
 ```
 

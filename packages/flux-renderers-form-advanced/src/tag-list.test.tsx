@@ -32,7 +32,7 @@ describe('tag-list renderer', () => {
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const redTag = await screen.findByText('red');
@@ -79,7 +79,7 @@ describe('tag-list renderer', () => {
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const redTag = await screen.findByText('red');

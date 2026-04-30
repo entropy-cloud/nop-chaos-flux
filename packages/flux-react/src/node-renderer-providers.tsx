@@ -5,7 +5,7 @@ import type {
   ImportFrame,
   NodeInstance,
   ScopeRef,
-  TemplateNode
+  TemplateNode,
 } from '@nop-chaos/flux-core';
 import {
   ActionScopeContext,
@@ -13,7 +13,7 @@ import {
   ComponentRegistryContext,
   ImportFrameContext,
   NodeMetaContext,
-  ScopeContext
+  ScopeContext,
 } from './contexts';
 
 type TemplateNodeWithProviderPlan = TemplateNode & {
@@ -25,56 +25,85 @@ type TemplateNodeWithProviderPlan = TemplateNode & {
   providerWrap?: (
     wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,
     values: Record<string, unknown>,
-    children: unknown
+    children: unknown,
   ) => unknown;
 };
 
-export function NodeRendererProviders(props: React.PropsWithChildren<{
-  templateNode: TemplateNode;
-  nodeInstance: NodeInstance;
-  actionScope?: ActionScope;
-  provideActionScope?: boolean;
-  componentRegistry?: ComponentHandleRegistry;
-  importFrame?: ImportFrame;
-  scope: ScopeRef;
-  classAliases?: Record<string, string>;
-}>) {
+export function NodeRendererProviders(
+  props: React.PropsWithChildren<{
+    templateNode: TemplateNode;
+    nodeInstance: NodeInstance;
+    actionScope?: ActionScope;
+    provideActionScope?: boolean;
+    componentRegistry?: ComponentHandleRegistry;
+    importFrame?: ImportFrame;
+    scope: ScopeRef;
+    classAliases?: Record<string, string>;
+  }>,
+) {
   const providerWrap = (props.templateNode as TemplateNodeWithProviderPlan).providerWrap;
   const wrappedChildren = providerWrap
-    ? providerWrap((kind, value, nestedChildren) => {
-      if (kind === 'actionScope') {
-        return <ActionScopeContext.Provider value={value as ActionScope | undefined}>{nestedChildren as React.ReactNode}</ActionScopeContext.Provider>;
-      }
+    ? providerWrap(
+        (kind, value, nestedChildren) => {
+          if (kind === 'actionScope') {
+            return (
+              <ActionScopeContext.Provider value={value as ActionScope | undefined}>
+                {nestedChildren as React.ReactNode}
+              </ActionScopeContext.Provider>
+            );
+          }
 
-      if (kind === 'componentRegistry') {
-        return <ComponentRegistryContext.Provider value={value as ComponentHandleRegistry | undefined}>{nestedChildren as React.ReactNode}</ComponentRegistryContext.Provider>;
-      }
+          if (kind === 'componentRegistry') {
+            return (
+              <ComponentRegistryContext.Provider
+                value={value as ComponentHandleRegistry | undefined}
+              >
+                {nestedChildren as React.ReactNode}
+              </ComponentRegistryContext.Provider>
+            );
+          }
 
-      if (kind === 'classAliases') {
-        return <ClassAliasesContext.Provider value={value as Record<string, string> | undefined}>{nestedChildren as React.ReactNode}</ClassAliasesContext.Provider>;
-      }
+          if (kind === 'classAliases') {
+            return (
+              <ClassAliasesContext.Provider value={value as Record<string, string> | undefined}>
+                {nestedChildren as React.ReactNode}
+              </ClassAliasesContext.Provider>
+            );
+          }
 
-      return nestedChildren;
-    }, {
-      actionScope: props.actionScope,
-      componentRegistry: props.componentRegistry,
-      classAliases: props.classAliases
-    }, props.children)
+          return nestedChildren;
+        },
+        {
+          actionScope: props.actionScope,
+          componentRegistry: props.componentRegistry,
+          classAliases: props.classAliases,
+        },
+        props.children,
+      )
     : props.children;
 
-  const children = props.provideActionScope
-    ? <ActionScopeContext.Provider value={props.actionScope}>{wrappedChildren as React.ReactNode}</ActionScopeContext.Provider>
-    : wrappedChildren;
+  const children = props.provideActionScope ? (
+    <ActionScopeContext.Provider value={props.actionScope}>
+      {wrappedChildren as React.ReactNode}
+    </ActionScopeContext.Provider>
+  ) : (
+    wrappedChildren
+  );
 
   return (
-    <NodeMetaContext.Provider value={useMemo(() => ({
-      id: props.templateNode.id,
-      path: props.templateNode.templatePath,
-      type: props.templateNode.rendererType,
-      cid: props.nodeInstance.cid,
-      templateNode: props.templateNode,
-      node: props.nodeInstance
-    }), [props.templateNode, props.nodeInstance])}>
+    <NodeMetaContext.Provider
+      value={useMemo(
+        () => ({
+          id: props.templateNode.id,
+          path: props.templateNode.templatePath,
+          type: props.templateNode.rendererType,
+          cid: props.nodeInstance.cid,
+          templateNode: props.templateNode,
+          node: props.nodeInstance,
+        }),
+        [props.templateNode, props.nodeInstance],
+      )}
+    >
       <ImportFrameContext.Provider value={props.importFrame}>
         <ScopeContext.Provider value={props.scope}>
           {children as React.ReactNode}

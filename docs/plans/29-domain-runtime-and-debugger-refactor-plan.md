@@ -263,17 +263,17 @@ packages/nop-debugger/src/
 
 ## 变动文件清单
 
-| File | Change | Lines affected |
-|------|--------|---------------|
-| `packages/spreadsheet-core/src/core.ts` | 缩减为 orchestrator，移除纯函数和简单 mutation 模板重复 | ~1200-1400 |
-| `packages/spreadsheet-core/src/core/*.ts` | 新增 cell/sheet/search/clipboard/snapshot 辅助模块 | ~1200 |
-| `packages/flow-designer-core/src/core.ts` | 缩减为 graph runtime orchestrator | ~650-800 |
-| `packages/flow-designer-core/src/core/*.ts` | 新增 clone/config/constraints/selection/history/transactions 辅助模块 | ~500-800 |
-| `packages/report-designer-core/src/core.ts` | 缩减为 public runtime orchestrator | ~500-650 |
-| `packages/report-designer-core/src/runtime/*.ts` | 新增 metadata、adapter-context、field-sources、inspector、preview/codec helper 模块 | ~450-650 |
-| `packages/nop-debugger/src/panel.tsx` | 缩减为壳组件和状态组装层 | ~1200-1500 |
-| `packages/nop-debugger/src/panel/*.ts(x)` | 新增 styles、viewer、hooks、tab 子模块 | ~1200-1500 |
-| `docs/logs/2026/04-03.md` | 记录本计划的评估结论 | ~6 |
+| File                                             | Change                                                                              | Lines affected |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------- | -------------- |
+| `packages/spreadsheet-core/src/core.ts`          | 缩减为 orchestrator，移除纯函数和简单 mutation 模板重复                             | ~1200-1400     |
+| `packages/spreadsheet-core/src/core/*.ts`        | 新增 cell/sheet/search/clipboard/snapshot 辅助模块                                  | ~1200          |
+| `packages/flow-designer-core/src/core.ts`        | 缩减为 graph runtime orchestrator                                                   | ~650-800       |
+| `packages/flow-designer-core/src/core/*.ts`      | 新增 clone/config/constraints/selection/history/transactions 辅助模块               | ~500-800       |
+| `packages/report-designer-core/src/core.ts`      | 缩减为 public runtime orchestrator                                                  | ~500-650       |
+| `packages/report-designer-core/src/runtime/*.ts` | 新增 metadata、adapter-context、field-sources、inspector、preview/codec helper 模块 | ~450-650       |
+| `packages/nop-debugger/src/panel.tsx`            | 缩减为壳组件和状态组装层                                                            | ~1200-1500     |
+| `packages/nop-debugger/src/panel/*.ts(x)`        | 新增 styles、viewer、hooks、tab 子模块                                              | ~1200-1500     |
+| `docs/logs/2026/04-03.md`                        | 记录本计划的评估结论                                                                | ~6             |
 
 ## 风险与回退
 

@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ChildValidationContractRegistration, ChildValidationMode, CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
+import type {
+  ChildValidationContractRegistration,
+  ChildValidationMode,
+  CompiledFormValidationModel,
+  CompiledValidationNode,
+} from '@nop-chaos/flux-core';
 import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime';
 import { createScopeRef, createScopeStore } from '../scope';
@@ -9,15 +14,18 @@ function makeMockChildContract(
   childOwnerId: string,
   mode: ChildValidationMode,
   active: boolean,
-  overrides: Partial<ChildValidationContractRegistration> = {}
+  overrides: Partial<ChildValidationContractRegistration> = {},
 ): ChildValidationContractRegistration {
   return {
     childOwnerId,
     mode,
     active,
     unregister: overrides.unregister ?? (() => {}),
-    getState: overrides.getState ?? (() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
-    triggerValidation: overrides.triggerValidation ?? (() => Promise.resolve({ ok: true, errors: [] }))
+    getState:
+      overrides.getState ??
+      (() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
+    triggerValidation:
+      overrides.triggerValidation ?? (() => Promise.resolve({ ok: true, errors: [] })),
   };
 }
 
@@ -27,7 +35,7 @@ function makeNode(
     parent?: string;
     children?: string[];
     required?: boolean;
-  } = {}
+  } = {},
 ): CompiledValidationNode {
   const rules = opts.required
     ? [{ id: `${path}#0:required`, rule: { kind: 'required' as const }, dependencyPaths: [] }]
@@ -40,30 +48,36 @@ function makeNode(
     rules,
     behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
     children: opts.children ?? [],
-    parent: opts.parent ?? ''
+    parent: opts.parent ?? '',
   };
 }
 
 function makeFormModel(
   fields: Record<string, CompiledValidationNode>,
-  opts: { rootPath?: string } = {}
+  opts: { rootPath?: string } = {},
 ): CompiledFormValidationModel {
   const rootPath = opts.rootPath ?? '';
   const nodes: Record<string, CompiledValidationNode> = {
-    [rootPath]: { path: rootPath, kind: 'form', rules: [], children: Object.keys(fields), parent: undefined },
-    ...fields
+    [rootPath]: {
+      path: rootPath,
+      kind: 'form',
+      rules: [],
+      children: Object.keys(fields),
+      parent: undefined,
+    },
+    ...fields,
   };
 
   return buildCompiledFormValidationModel({
     behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
     nodes,
-    rootPath
+    rootPath,
   })!;
 }
 
 function makeRuntime(
   validation: CompiledFormValidationModel | undefined,
-  initialValues: Record<string, any> = {}
+  initialValues: Record<string, any> = {},
 ) {
   const parentStore = createScopeStore(initialValues);
   const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
@@ -77,7 +91,7 @@ function makeRuntime(
     parentScope,
     validation,
     validateRule,
-    executeValidationRule
+    executeValidationRule,
   });
 
   return { runtime, validateRule, executeValidationRule };
@@ -85,7 +99,7 @@ function makeRuntime(
 
 function makeRuntimeReal(
   validation: CompiledFormValidationModel | undefined,
-  initialValues: Record<string, any> = {}
+  initialValues: Record<string, any> = {},
 ) {
   const parentStore = createScopeStore(initialValues);
   const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
@@ -98,7 +112,7 @@ function makeRuntimeReal(
     parentScope,
     validation,
     validateRule: realValidateRule,
-    executeValidationRule
+    executeValidationRule,
   });
 
   return { runtime, executeValidationRule };
@@ -109,7 +123,9 @@ describe('FieldRegistrationHandle - registrationId identity', () => {
     const { runtime } = makeRuntime(undefined);
     const handle = runtime.registerField({
       path: 'name',
-      getValue() { return ''; }
+      getValue() {
+        return '';
+      },
     });
 
     expect(handle.accepted).toBe(true);
@@ -118,20 +134,26 @@ describe('FieldRegistrationHandle - registrationId identity', () => {
   });
 
   it('unregister removes the field from the form', async () => {
-    const validateRule = vi.fn().mockReturnValue({ path: 'name', rule: 'required', message: 'Required' });
+    const validateRule = vi
+      .fn()
+      .mockReturnValue({ path: 'name', rule: 'required', message: 'Required' });
     const parentStore = createScopeStore({});
     const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
     const runtime = createManagedFormRuntime({
       id: 'test-form',
       parentScope,
       validateRule,
-      executeValidationRule: vi.fn().mockResolvedValue(undefined)
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
     });
 
     const handle = runtime.registerField({
       path: 'name',
-      getValue() { return ''; },
-      validate() { return [{ path: 'name', rule: 'required', message: 'Required' }]; }
+      getValue() {
+        return '';
+      },
+      validate() {
+        return [{ path: 'name', rule: 'required', message: 'Required' }];
+      },
     });
 
     expect(handle.accepted).toBe(true);
@@ -145,8 +167,18 @@ describe('FieldRegistrationHandle - registrationId identity', () => {
   it('duplicate-path registration returns accepted:false', () => {
     const { runtime } = makeRuntime(undefined);
 
-    const h1 = runtime.registerField({ path: 'name', getValue() { return ''; } });
-    const h2 = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const h1 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
+    const h2 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
 
     expect(h1.accepted).toBe(true);
     expect(h2.accepted).toBe(false);
@@ -156,24 +188,49 @@ describe('FieldRegistrationHandle - registrationId identity', () => {
   it('duplicate-path after unregister is allowed', () => {
     const { runtime } = makeRuntime(undefined);
 
-    const h1 = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const h1 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     h1.unregister();
 
-    const h2 = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const h2 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     expect(h2.accepted).toBe(true);
   });
 
   it('stale unregister does not affect a newer registration', () => {
     const { runtime } = makeRuntime(undefined);
 
-    const h1 = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const h1 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     h1.unregister();
 
-    const h2 = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const h2 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     expect(h2.accepted).toBe(true);
 
     h1.unregister();
-    const h3 = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const h3 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     expect(h3.accepted).toBe(false);
   });
 });
@@ -185,7 +242,9 @@ describe('updateFieldRegistration', () => {
     const h = runtime.registerField({
       path: 'items',
       childPaths: ['items.0'],
-      getValue() { return []; }
+      getValue() {
+        return [];
+      },
     });
 
     expect(h.accepted).toBe(true);
@@ -259,7 +318,7 @@ describe('applyExternalErrors', () => {
     const { runtime } = makeRuntime(undefined);
     const snapshot = runtime.applyExternalErrors({
       sourceId: 'server',
-      errors: [{ path: 'email', rule: 'email', message: 'Email already taken' }]
+      errors: [{ path: 'email', rule: 'email', message: 'Email already taken' }],
     });
 
     expect(snapshot.hasErrors).toBe(true);
@@ -274,13 +333,13 @@ describe('applyExternalErrors', () => {
 
     runtime.applyExternalErrors({
       sourceId: 'server',
-      errors: [{ path: 'email', rule: 'email', message: 'Email already taken' }]
+      errors: [{ path: 'email', rule: 'email', message: 'Email already taken' }],
     });
 
     runtime.applyExternalErrors({
       sourceId: 'server',
       errors: [{ path: 'username', rule: 'required', message: 'Username reserved' }],
-      replace: true
+      replace: true,
     });
 
     const emailState = runtime.getFieldState('email');
@@ -294,7 +353,7 @@ describe('applyExternalErrors', () => {
 
     runtime.applyExternalErrors({
       sourceId: 'server',
-      errors: [{ path: 'email', rule: 'email', message: 'Already taken' }]
+      errors: [{ path: 'email', rule: 'email', message: 'Already taken' }],
     });
 
     expect(runtime.getFieldState('email').errors).toHaveLength(1);
@@ -346,8 +405,8 @@ describe('child contract registration', () => {
       makeMockChildContract('child-form-1', 'summary-gate', true, {
         unregister() {
           unregistered = true;
-        }
-      })
+        },
+      }),
     );
 
     runtime.unregisterChildContract('child-form-1');
@@ -375,7 +434,12 @@ describe('lifecycleState transitions', () => {
   it('disposed runtime rejects new registrations', () => {
     const { runtime } = makeRuntime(undefined);
     runtime.dispose();
-    const handle = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const handle = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     expect(handle.accepted).toBe(false);
   });
 
@@ -406,21 +470,35 @@ describe('refreshCompiledModel', () => {
     const model1 = makeFormModel({ name: makeNode('name') });
     const { runtime } = makeRuntime(model1);
 
-    const h1 = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const h1 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     expect(h1.accepted).toBe(true);
 
     const model2 = makeFormModel({ name: makeNode('name'), email: makeNode('email') });
     runtime.refreshCompiledModel(model2);
 
-    const h2 = runtime.registerField({ path: 'name', getValue() { return ''; } });
+    const h2 = runtime.registerField({
+      path: 'name',
+      getValue() {
+        return '';
+      },
+    });
     expect(h2.accepted).toBe(true);
   });
 
   it('stale async run from old generation cannot publish after refresh', async () => {
-    let resolveAsync: (value: { path: string; rule: string; message: string } | undefined) => void = () => {};
-    const asyncRule = new Promise<{ path: string; rule: string; message: string } | undefined>((resolve) => {
-      resolveAsync = resolve;
-    });
+    let resolveAsync: (
+      value: { path: string; rule: string; message: string } | undefined,
+    ) => void = () => {};
+    const asyncRule = new Promise<{ path: string; rule: string; message: string } | undefined>(
+      (resolve) => {
+        resolveAsync = resolve;
+      },
+    );
 
     const parentStore = createScopeStore({});
     const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
@@ -432,11 +510,17 @@ describe('refreshCompiledModel', () => {
         path: 'email',
         kind: 'field',
         controlType: 'input-text',
-        rules: [{ id: 'email#async', rule: { kind: 'async', action: { action: 'ajax', args: { url: '/check' } } }, dependencyPaths: [] }],
+        rules: [
+          {
+            id: 'email#async',
+            rule: { kind: 'async', action: { action: 'ajax', args: { url: '/check' } } },
+            dependencyPaths: [],
+          },
+        ],
         behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
         children: [],
-        parent: ''
-      }
+        parent: '',
+      },
     });
 
     const runtime = createManagedFormRuntime({
@@ -444,7 +528,7 @@ describe('refreshCompiledModel', () => {
       parentScope,
       validation: asyncModel,
       validateRule,
-      executeValidationRule
+      executeValidationRule,
     });
 
     const validatePromise = runtime.validateField('email');
@@ -476,7 +560,7 @@ describe('applyChangesAndRevalidate', () => {
     const result = await runtime.applyChangesAndRevalidate({
       writes: { name: '' },
       changedPaths: ['name'],
-      reason: 'system'
+      reason: 'system',
     });
 
     expect(result).toBeDefined();
@@ -494,44 +578,47 @@ describe('applyChangesAndRevalidate', () => {
           {
             id: 'detail#0:requiredWhen',
             rule: { kind: 'requiredWhen', path: 'flag', equals: true },
-            dependencyPaths: ['flag']
-          }
+            dependencyPaths: ['flag'],
+          },
         ],
         behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
         children: [],
-        parent: ''
-      }
+        parent: '',
+      },
     });
     const { runtime } = makeRuntimeReal(model, { flag: false, detail: '' });
 
     await runtime.applyChangesAndRevalidate({
       writes: { flag: true },
       changedPaths: ['flag'],
-      reason: 'system'
+      reason: 'system',
     });
 
     expect(runtime.getFieldState('detail').errors).toMatchObject([
-      expect.objectContaining({ path: 'detail', rule: 'requiredWhen' })
+      expect.objectContaining({ path: 'detail', rule: 'requiredWhen' }),
     ]);
     expect(runtime.canSubmit).toBe(false);
   });
 
   it('rejects writes for paths not owned by the form', async () => {
-    const model = makeFormModel({ 'profile.name': makeNode('profile.name') }, { rootPath: 'profile' });
+    const model = makeFormModel(
+      { 'profile.name': makeNode('profile.name') },
+      { rootPath: 'profile' },
+    );
     const { runtime } = makeRuntime(model, { profile: { name: 'ok' }, external: 'keep' });
 
     const result = await runtime.applyChangesAndRevalidate({
       writes: { external: 'changed' },
       changedPaths: ['external'],
-      reason: 'system'
+      reason: 'system',
     });
 
     expect(result.ok).toBe(false);
     expect(result.fieldErrors.external).toMatchObject([
       expect.objectContaining({
         path: 'external',
-        sourceKind: 'form'
-      })
+        sourceKind: 'form',
+      }),
     ]);
     expect(runtime.scope.get('external')).toBe('keep');
     expect(runtime.scope.get('profile.name')).toBe('ok');
@@ -548,25 +635,28 @@ describe('applyChangesAndRevalidate', () => {
           {
             id: 'detail#0:requiredWhen',
             rule: { kind: 'requiredWhen', path: 'flag', equals: true },
-            dependencyPaths: ['flag']
-          }
+            dependencyPaths: ['flag'],
+          },
         ],
         behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
         children: [],
-        parent: ''
-      }
+        parent: '',
+      },
     });
     const { runtime } = makeRuntimeReal(model, { flag: false, detail: '' });
     runtime.touchField('detail');
 
     const originalValidateField = runtime.validateField.bind(runtime);
-    const validateFieldSpy = vi.fn((path: string, reason?: Parameters<typeof originalValidateField>[1]) => originalValidateField(path, reason));
+    const validateFieldSpy = vi.fn(
+      (path: string, reason?: Parameters<typeof originalValidateField>[1]) =>
+        originalValidateField(path, reason),
+    );
     runtime.validateField = validateFieldSpy;
 
     await runtime.applyChangesAndRevalidate({
       writes: { flag: true },
       changedPaths: ['flag'],
-      reason: 'commit'
+      reason: 'commit',
     });
 
     expect(validateFieldSpy).toHaveBeenCalledWith('detail', 'commit');

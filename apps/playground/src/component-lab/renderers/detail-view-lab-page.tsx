@@ -7,7 +7,7 @@ const reportSummary = {
       type: 'form',
       name: 'detailViewForm',
       data: {
-        summary: { title: 'Annual Report 2025', author: 'Finance Team', pages: 48 }
+        summary: { title: 'Annual Report 2025', author: 'Finance Team', pages: 48 },
       },
       body: [
         {
@@ -17,20 +17,18 @@ const reportSummary = {
           viewer: [
             { type: 'text', text: 'Title: ${summary.title}' },
             { type: 'text', text: 'Author: ${summary.author}' },
-            { type: 'text', text: 'Pages: ${summary.pages}' }
+            { type: 'text', text: 'Pages: ${summary.pages}' },
           ],
           content: [
             { type: 'input-text', name: 'title', label: 'Title', required: true },
             { type: 'input-text', name: 'author', label: 'Author' },
-            { type: 'input-text', name: 'pages', label: 'Pages' }
-          ]
-        }
+            { type: 'input-text', name: 'pages', label: 'Pages' },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const userDetailView = {
@@ -40,7 +38,12 @@ const userDetailView = {
       type: 'form',
       name: 'userDetailForm',
       data: {
-        user: { name: 'Alice Johnson', role: 'Administrator', email: 'alice@example.com', department: 'Engineering' }
+        user: {
+          name: 'Alice Johnson',
+          role: 'Administrator',
+          email: 'alice@example.com',
+          department: 'Engineering',
+        },
       },
       body: [
         {
@@ -56,29 +59,32 @@ const userDetailView = {
               body: [
                 { type: 'icon', icon: 'User', size: 16 },
                 { type: 'text', text: '${user.name}' },
-                { type: 'badge', label: '${user.role}', variant: 'secondary' }
-              ]
+                { type: 'badge', label: '${user.role}', variant: 'secondary' },
+              ],
             },
             { type: 'text', text: 'Email: ${user.email}' },
-            { type: 'text', text: 'Department: ${user.department}' }
+            { type: 'text', text: 'Department: ${user.department}' },
           ],
           content: [
             { type: 'input-text', name: 'name', label: 'Full Name', required: true },
-            { type: 'select', name: 'role', label: 'Role', options: [
-              { label: 'Administrator', value: 'Administrator' },
-              { label: 'Editor', value: 'Editor' },
-              { label: 'Viewer', value: 'Viewer' }
-            ]},
+            {
+              type: 'select',
+              name: 'role',
+              label: 'Role',
+              options: [
+                { label: 'Administrator', value: 'Administrator' },
+                { label: 'Editor', value: 'Editor' },
+                { label: 'Viewer', value: 'Viewer' },
+              ],
+            },
             { type: 'input-email', name: 'email', label: 'Email', required: true },
-            { type: 'input-text', name: 'department', label: 'Department' }
-          ]
-        }
+            { type: 'input-text', name: 'department', label: 'Department' },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 export function DetailViewLabPage() {
@@ -88,14 +94,16 @@ export function DetailViewLabPage() {
       scenarios={[
         {
           title: 'Report summary — text display with edit dialog',
-          description: 'The viewer slot shows title, author, and page count. Click the expand button to open the edit dialog.',
-          schema: reportSummary
+          description:
+            'The viewer slot shows title, author, and page count. Click the expand button to open the edit dialog.',
+          schema: reportSummary,
         },
         {
           title: 'User account — rich display with icon, badge, and edit dialog',
-          description: 'The viewer slot shows name, role badge, email, and department. The edit dialog has a role select alongside text fields.',
-          schema: userDetailView
-        }
+          description:
+            'The viewer slot shows name, role badge, email, and department. The edit dialog has a role select alongside text fields.',
+          schema: userDetailView,
+        },
       ]}
     />
   );

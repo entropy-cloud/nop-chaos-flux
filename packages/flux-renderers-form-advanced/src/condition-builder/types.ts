@@ -1,6 +1,14 @@
 import type { BaseSchema } from '@nop-chaos/flux-core';
 
-export type ConditionFieldType = 'text' | 'number' | 'date' | 'time' | 'datetime' | 'select' | 'boolean' | 'custom';
+export type ConditionFieldType =
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'time'
+  | 'datetime'
+  | 'select'
+  | 'boolean'
+  | 'custom';
 
 export type ConditionConjunction = 'and' | 'or';
 

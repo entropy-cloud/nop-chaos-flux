@@ -343,13 +343,13 @@ Layout container renderers (page, container, form, fieldset, tabs) support per-s
 - `props.meta.className` targets the root element (`.nop-page`, `.nop-container`, `.nop-form`, `.nop-fieldset`, `.nop-tabs`)
 - Per-slot props like `bodyClassName`, `headerClassName`, etc. target the corresponding inner `data-slot` wrapper
 
-| Renderer | Slot Prop | Target |
-|----------|-----------|--------|
-| Page | `bodyClassName`, `headerClassName`, `footerClassName`, `toolbarClassName` | `page-body`, `page-header`, `page-footer`, `page-toolbar` |
-| Container | `bodyClassName`, `headerClassName`, `footerClassName` | `container-body`, `container-header`, `container-footer` |
-| Form | `bodyClassName`, `actionsClassName` | `form-body`, `form-actions` |
-| Fieldset | `bodyClassName`, `titleClassName` | `fieldset-body`, `fieldset-title` |
-| Tabs | `contentClassName`, `toolbarClassName` | `tabs-content`, `tabs-toolbar` |
+| Renderer  | Slot Prop                                                                 | Target                                                    |
+| --------- | ------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Page      | `bodyClassName`, `headerClassName`, `footerClassName`, `toolbarClassName` | `page-body`, `page-header`, `page-footer`, `page-toolbar` |
+| Container | `bodyClassName`, `headerClassName`, `footerClassName`                     | `container-body`, `container-header`, `container-footer`  |
+| Form      | `bodyClassName`, `actionsClassName`                                       | `form-body`, `form-actions`                               |
+| Fieldset  | `bodyClassName`, `titleClassName`                                         | `fieldset-body`, `fieldset-title`                         |
+| Tabs      | `contentClassName`, `toolbarClassName`                                    | `tabs-content`, `tabs-toolbar`                            |
 
 All slot className props are optional. When omitted, no class is emitted. See `docs/architecture/container-spacing-design.md` for the full per-slot className reference.
 
@@ -503,14 +503,25 @@ function useRenderScope(): ScopeRef;
 function useRenderInstancePath(): readonly InstanceFrame[] | undefined;
 function useCurrentActionScope(): ActionScope | undefined;
 function useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
-function useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean, options?: { enabled?: boolean; fallback?: T }): T;
-function useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean): T;
+function useScopeSelector<T, S = Record<string, unknown>>(
+  selector: (scopeData: S) => T,
+  equalityFn?: (a: T, b: T) => boolean,
+  options?: { enabled?: boolean; fallback?: T },
+): T;
+function useOwnScopeSelector<T, S = Record<string, unknown>>(
+  selector: (scopeData: S) => T,
+  equalityFn?: (a: T, b: T) => boolean,
+): T;
 function useRendererEnv(): RendererEnv;
 function useActionDispatcher(): RendererRuntime['dispatch'];
 function useCurrentForm(): FormRuntime | undefined;
 function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[];
 function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined;
-function useCurrentFormState<T>(selector: (state: FormStoreState) => T, equalityFn?: (a: T, b: T) => boolean, options?: { enabled?: boolean; path?: string }): T;
+function useCurrentFormState<T>(
+  selector: (state: FormStoreState) => T,
+  equalityFn?: (a: T, b: T) => boolean,
+  options?: { enabled?: boolean; path?: string },
+): T;
 function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
 function useValidationNodeState(path: string): FormFieldStateSnapshot;
 function useFieldError(path: string): ValidationError | undefined;
@@ -532,7 +543,10 @@ function useStructuralLoopContext(): StructuralLoopRenderContext | undefined;
 function useRenderFragment(): RendererHelpers['render'];
 function useCurrentFormModelGeneration(): number;
 function useCurrentValidationScope(): ValidationScopeRuntime | undefined;
-function useDataSourceStatus(path: string, options?: { enabled?: boolean }): DataSourceStatusSummary | undefined;
+function useDataSourceStatus(
+  path: string,
+  options?: { enabled?: boolean },
+): DataSourceStatusSummary | undefined;
 ```
 
 Current scope-hook semantics are:
@@ -637,7 +651,12 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
         <div key={String((item as { id?: string }).id ?? index)}>
           {props.regions.item?.render({
             bindings: { item, index },
-            instancePath: [{ repeatedTemplateId: 'list.item', instanceKey: String((item as { id?: string }).id ?? index) }]
+            instancePath: [
+              {
+                repeatedTemplateId: 'list.item',
+                instanceKey: String((item as { id?: string }).id ?? index),
+              },
+            ],
           })}
         </div>
       ))}
@@ -659,7 +678,7 @@ function EmptyStateWrapper(props: RendererComponentProps<EmptyWrapperSchema>) {
 
   if (isEmpty) {
     return render(props.schema.emptyBody, {
-      data: { reason: 'empty' }
+      data: { reason: 'empty' },
     });
   }
 
@@ -686,18 +705,18 @@ The detailed semantics for `value-or-region`, event fields, and nested region ex
 
 Not every boundary in the render tree has the same creator. The table below is the normative classification used to decide where each boundary is created and published.
 
-| Boundary | Owner | Creation Site | Notes |
-|---|---|---|------|
-| `classAliases` publication | Node-local (compile-time closure) | `NodeRenderer` executes compiled closure | Compiled into `renderPlan.wrapProviders` |
-| `xui:imports`-driven import boundary | Import-owned node boundary | `NodeRenderer` creates import-owned `ActionScope` and executes import wiring | Introduces import-owned lexical boundary. `xui:imports` always creates a child `ActionScope` for imported namespace providers; `ImportStack` separately owns alias frames and expression bindings |
-| Fragment child data scope | Fragment render path (`RenderNodes`) | Created inside `RenderNodes` when `options.data` is passed | Not `NodeRenderer`'s responsibility |
-| Page data scope + `PageRuntime` | Page owner/renderer | Created by page renderer/host at mount | Published via `PageContext` |
-| Form data scope + `FormRuntime` | Form owner/renderer | Created by form renderer at mount | Published via `FormContext`; form scope is the active child scope for form children |
-| Dialog surface scope + `SurfaceRuntime` | Dialog host/renderer | Created per opened dialog entry | `SurfaceRuntime`/`SurfaceStore` shared with drawer; `page` store is NOT reused |
-| Drawer surface scope + `SurfaceRuntime` | Drawer host/renderer | Created per opened drawer entry | Same `SurfaceRuntime`/`SurfaceStore` model as dialog, `kind: 'drawer'` |
-| `ActionScope` (host-level) | Host owner (e.g. `designer-page`) | Created at host lifecycle | Capability lexical scope for namespaced actions; not equivalent to host projection |
-| `ComponentHandleRegistry` | Form renderer (or other explicit boundary owner) | Created by form renderer at mount | Instance-target lookup boundary for mounted component handles; not equivalent to `ActionScope` |
-| `ImportFrame` / `ImportStack` | Runtime import boundary | Pushed/popped during import-owned node lifecycle | Alias visibility and import lifetime only; not a replacement for `ActionScope` or `ScopeRef` |
+| Boundary                                | Owner                                            | Creation Site                                                                | Notes                                                                                                                                                                                             |
+| --------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `classAliases` publication              | Node-local (compile-time closure)                | `NodeRenderer` executes compiled closure                                     | Compiled into `renderPlan.wrapProviders`                                                                                                                                                          |
+| `xui:imports`-driven import boundary    | Import-owned node boundary                       | `NodeRenderer` creates import-owned `ActionScope` and executes import wiring | Introduces import-owned lexical boundary. `xui:imports` always creates a child `ActionScope` for imported namespace providers; `ImportStack` separately owns alias frames and expression bindings |
+| Fragment child data scope               | Fragment render path (`RenderNodes`)             | Created inside `RenderNodes` when `options.data` is passed                   | Not `NodeRenderer`'s responsibility                                                                                                                                                               |
+| Page data scope + `PageRuntime`         | Page owner/renderer                              | Created by page renderer/host at mount                                       | Published via `PageContext`                                                                                                                                                                       |
+| Form data scope + `FormRuntime`         | Form owner/renderer                              | Created by form renderer at mount                                            | Published via `FormContext`; form scope is the active child scope for form children                                                                                                               |
+| Dialog surface scope + `SurfaceRuntime` | Dialog host/renderer                             | Created per opened dialog entry                                              | `SurfaceRuntime`/`SurfaceStore` shared with drawer; `page` store is NOT reused                                                                                                                    |
+| Drawer surface scope + `SurfaceRuntime` | Drawer host/renderer                             | Created per opened drawer entry                                              | Same `SurfaceRuntime`/`SurfaceStore` model as dialog, `kind: 'drawer'`                                                                                                                            |
+| `ActionScope` (host-level)              | Host owner (e.g. `designer-page`)                | Created at host lifecycle                                                    | Capability lexical scope for namespaced actions; not equivalent to host projection                                                                                                                |
+| `ComponentHandleRegistry`               | Form renderer (or other explicit boundary owner) | Created by form renderer at mount                                            | Instance-target lookup boundary for mounted component handles; not equivalent to `ActionScope`                                                                                                    |
+| `ImportFrame` / `ImportStack`           | Runtime import boundary                          | Pushed/popped during import-owned node lifecycle                             | Alias visibility and import lifetime only; not a replacement for `ActionScope` or `ScopeRef`                                                                                                      |
 
 Rules derived from this table:
 

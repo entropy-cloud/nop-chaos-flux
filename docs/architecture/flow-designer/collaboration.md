@@ -96,12 +96,12 @@ Flow Designer 复用这层，而不是重新做一套页面状态机。
 
 ## 职责边界
 
-| 层 | 持有状态 | 可写 graph | 关心 schema | 典型入口 |
-| --- | --- | --- | --- | --- |
-| `flux-runtime` / `flux-react` | page, form, scope, dialog, action scope | 否 | 是 | `createRendererRuntime()`, `RenderNodes` |
-| `flow-designer-core` | document, selection, history, viewport, grid | 是 | 否 | `createDesignerCore()` |
-| `flow-designer-renderers` | bridge host local intent | 间接 | 是 | `DesignerPageRenderer` |
-| React Flow canvas integration | UI library local transient state | 否 | 否 | `renderDesignerCanvasBridge()` |
+| 层                            | 持有状态                                     | 可写 graph | 关心 schema | 典型入口                                 |
+| ----------------------------- | -------------------------------------------- | ---------- | ----------- | ---------------------------------------- |
+| `flux-runtime` / `flux-react` | page, form, scope, dialog, action scope      | 否         | 是          | `createRendererRuntime()`, `RenderNodes` |
+| `flow-designer-core`          | document, selection, history, viewport, grid | 是         | 否          | `createDesignerCore()`                   |
+| `flow-designer-renderers`     | bridge host local intent                     | 间接       | 是          | `DesignerPageRenderer`                   |
+| React Flow canvas integration | UI library local transient state             | 否         | 否          | `renderDesignerCanvasBridge()`           |
 
 当前有一个很重要的规则:
 

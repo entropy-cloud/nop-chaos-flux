@@ -22,7 +22,12 @@ export const handleInsertRow: CommandHandler<InsertRowCommand> = (store, command
 
 export const handleInsertColumn: CommandHandler<InsertColumnCommand> = (store, command) => {
   const state = store.getState();
-  const nextDoc = applyInsertColumn(state.document, command.sheetId, command.col, command.count ?? 1);
+  const nextDoc = applyInsertColumn(
+    state.document,
+    command.sheetId,
+    command.col,
+    command.count ?? 1,
+  );
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
@@ -36,7 +41,12 @@ export const handleDeleteRow: CommandHandler<DeleteRowCommand> = (store, command
 
 export const handleDeleteColumn: CommandHandler<DeleteColumnCommand> = (store, command) => {
   const state = store.getState();
-  const nextDoc = applyDeleteColumn(state.document, command.sheetId, command.col, command.count ?? 1);
+  const nextDoc = applyDeleteColumn(
+    state.document,
+    command.sheetId,
+    command.col,
+    command.count ?? 1,
+  );
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };

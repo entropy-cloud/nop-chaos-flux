@@ -121,10 +121,18 @@ Canonical result contract:
 
 ```ts
 type ResolutionResult =
-  | { kind: 'resolved'; cid: number; instancePath?: readonly InstanceFrame[]; handle?: ComponentHandle }
+  | {
+      kind: 'resolved';
+      cid: number;
+      instancePath?: readonly InstanceFrame[];
+      handle?: ComponentHandle;
+    }
   | { kind: 'notMaterialized'; instancePath?: readonly InstanceFrame[] }
   | { kind: 'notFound' }
-  | { kind: 'ambiguous'; matches: ReadonlyArray<{ cid?: number; instancePath?: readonly InstanceFrame[] }> };
+  | {
+      kind: 'ambiguous';
+      matches: ReadonlyArray<{ cid?: number; instancePath?: readonly InstanceFrame[] }>;
+    };
 ```
 
 Structural target resolution is runtime-owned. The component registry may contribute live-handle lookup and selector lookup, but it is not the canonical source of structural/template truth.
@@ -140,20 +148,29 @@ function resolveTarget(target: ActionTarget, ctx: ResolutionContext): Resolution
   }
 
   if (target.repeatedPlan) {
-    return runtime.resolveRepeatedTarget(target.repeatedPlan, ctx.instancePathFor(target.repeatedPlan.repeatedTemplateId));
+    return runtime.resolveRepeatedTarget(
+      target.repeatedPlan,
+      ctx.instancePathFor(target.repeatedPlan.repeatedTemplateId),
+    );
   }
 
   if (target.repeatedSelector) {
     return runtime.resolveRepeatedSelector(
       target.repeatedSelector,
-      ctx.instancePathForExplicit(target.repeatedSelector.repeatedTemplateId, target.repeatedSelector.instanceKey)
+      ctx.instancePathForExplicit(
+        target.repeatedSelector.repeatedTemplateId,
+        target.repeatedSelector.instanceKey,
+      ),
     );
   }
 
-  return registry.resolveSelector({
-    id: target.componentId,
-    name: target.componentName
-  }, ctx);
+  return registry.resolveSelector(
+    {
+      id: target.componentId,
+      name: target.componentName,
+    },
+    ctx,
+  );
 }
 ```
 

@@ -7,23 +7,26 @@ export function useEditing(
   bridge: SpreadsheetBridge,
   sheetId: string,
   selectedCell: { row: number; col: number } | null,
-  cellValue: string
+  cellValue: string,
 ) {
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
   const [editValue, setEditValue] = useState('');
   const editingCellRef = useRef<{ row: number; col: number } | null>(null);
   const editValueRef = useRef('');
 
-  const handleCellDoubleClick = useCallback((row: number, col: number) => {
-    const addr = cellAddress(row, col);
-    const cell = snapshot.activeSheet?.cells?.[addr];
-    const editCell = { row, col };
-    const val = cell?.value != null ? String(cell.value) : '';
-    setEditingCell(editCell);
-    editingCellRef.current = editCell;
-    setEditValue(val);
-    editValueRef.current = val;
-  }, [snapshot]);
+  const handleCellDoubleClick = useCallback(
+    (row: number, col: number) => {
+      const addr = cellAddress(row, col);
+      const cell = snapshot.activeSheet?.cells?.[addr];
+      const editCell = { row, col };
+      const val = cell?.value != null ? String(cell.value) : '';
+      setEditingCell(editCell);
+      editingCellRef.current = editCell;
+      setEditValue(val);
+      editValueRef.current = val;
+    },
+    [snapshot],
+  );
 
   const handleEditSave = useCallback(async () => {
     const currentEditCell = editingCellRef.current;

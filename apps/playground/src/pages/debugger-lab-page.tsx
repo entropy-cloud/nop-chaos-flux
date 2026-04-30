@@ -12,19 +12,31 @@ const TABS: NopDebuggerTab[] = ['overview', 'timeline', 'network', 'node'];
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="p-[18px] rounded-[18px] bg-gradient-to-b from-slate-900/94 to-slate-950/98 border border-amber-200/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <p className="mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-amber-300">{title}</p>
+      <p className="mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-amber-300">
+        {title}
+      </p>
       {children}
     </div>
   );
 }
 
-function ActionButton({ label, onClick, variant }: { label: string; onClick: () => void; variant?: 'primary' | 'danger' }) {
-  const base = 'px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-150 border';
-  const styles = variant === 'danger'
-    ? `${base} bg-red-900/40 border-red-500/30 text-red-200 hover:bg-red-900/60`
-    : variant === 'primary'
-      ? `${base} bg-amber-900/40 border-amber-500/30 text-amber-200 hover:bg-amber-900/60`
-      : `${base} bg-white/5 border-white/10 text-white/80 hover:bg-white/10`;
+function ActionButton({
+  label,
+  onClick,
+  variant,
+}: {
+  label: string;
+  onClick: () => void;
+  variant?: 'primary' | 'danger';
+}) {
+  const base =
+    'px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-150 border';
+  const styles =
+    variant === 'danger'
+      ? `${base} bg-red-900/40 border-red-500/30 text-red-200 hover:bg-red-900/60`
+      : variant === 'primary'
+        ? `${base} bg-amber-900/40 border-amber-500/30 text-amber-200 hover:bg-amber-900/60`
+        : `${base} bg-white/5 border-white/10 text-white/80 hover:bg-white/10`;
 
   return (
     <Button variant="ghost" size="sm" className={styles} onClick={onClick}>
@@ -48,11 +60,12 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
   const [cidInput, setCidInput] = useState('');
 
   const env = useMemo(
-    () => debuggerController.decorateEnv({
-      fetcher: async <T = unknown>() => ({ ok: true, status: 200, data: null as unknown as T }),
-      notify: () => {}
-    }),
-    [debuggerController]
+    () =>
+      debuggerController.decorateEnv({
+        fetcher: async <T = unknown,>() => ({ ok: true, status: 200, data: null as unknown as T }),
+        notify: () => {},
+      }),
+    [debuggerController],
   );
 
   const api = typeof window !== 'undefined' ? window.__NOP_DEBUGGER_API__ : undefined;
@@ -82,13 +95,19 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
   }, [env]);
 
   const fireApiEvent = useCallback(() => {
-    const payload = { api: { url: '/api/lab-test', method: 'GET' }, nodeId: 'lab-node', path: 'lab.path' };
+    const payload = {
+      api: { url: '/api/lab-test', method: 'GET' },
+      nodeId: 'lab-node',
+      path: 'lab.path',
+    };
     env.monitor?.onApiRequest?.(payload);
     setOutput('[API Event] Fired api:start for /api/lab-test');
   }, [env]);
 
   const fireErrorEvent = useCallback(() => {
-    debuggerController.onActionError(new Error('Lab test error'), { action: { type: 'lab:test' } } as never);
+    debuggerController.onActionError(new Error('Lab test error'), {
+      action: { type: 'lab:test' },
+    } as never);
     setOutput('[Error Event] Fired error via onActionError');
   }, [debuggerController]);
 
@@ -122,12 +141,14 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
         >
           Back to Home
         </Button>
-        <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">DevTools</p>
+        <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">
+          DevTools
+        </p>
         <h1 className="m-0 mb-4">Debugger Lab</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
-          Interactive testing page for the nop-debugger API. Use the controls below to exercise panel
-          operations, inject events, query diagnostics, and test the automation API. The floating debugger
-          panel updates in real time.
+          Interactive testing page for the nop-debugger API. Use the controls below to exercise
+          panel operations, inject events, query diagnostics, and test the automation API. The
+          floating debugger panel updates in real time.
         </p>
 
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
@@ -137,13 +158,27 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                 <ActionButton label="Show" onClick={() => debuggerController.show()} />
                 <ActionButton label="Hide" onClick={() => debuggerController.hide()} />
                 <ActionButton label="Toggle" onClick={() => debuggerController.toggle()} />
-                <ActionButton label="Clear" onClick={() => debuggerController.clear()} variant="danger" />
-                <ActionButton label={paused ? 'Resume' : 'Pause'} onClick={togglePause} variant={paused ? 'primary' : undefined} />
+                <ActionButton
+                  label="Clear"
+                  onClick={() => debuggerController.clear()}
+                  variant="danger"
+                />
+                <ActionButton
+                  label={paused ? 'Resume' : 'Pause'}
+                  onClick={togglePause}
+                  variant={paused ? 'primary' : undefined}
+                />
               </div>
-              <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-white/40 font-bold">Active Tab</p>
+              <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-white/40 font-bold">
+                Active Tab
+              </p>
               <div className="flex flex-wrap gap-2 mt-1.5">
                 {TABS.map((tab) => (
-                  <ActionButton key={tab} label={tab} onClick={() => debuggerController.setActiveTab(tab)} />
+                  <ActionButton
+                    key={tab}
+                    label={tab}
+                    onClick={() => debuggerController.setActiveTab(tab)}
+                  />
                 ))}
               </div>
             </SectionCard>
@@ -154,20 +189,75 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                 <ActionButton label="Fire Action" onClick={fireActionEvent} variant="primary" />
                 <ActionButton label="Fire API" onClick={fireApiEvent} variant="primary" />
                 <ActionButton label="Fire Error" onClick={fireErrorEvent} variant="danger" />
-                <ActionButton label="Wait For API" onClick={() => handleShowOutput('WaitForEvent', async () => api?.waitForEvent({ kind: 'api:start', text: '/api/lab-test', timeoutMs: 1000 }))} />
-                <ActionButton label="Latest Failed Request" onClick={() => handleShowOutput('LatestFailedRequest', () => api?.getLatestFailedRequest())} />
-                <ActionButton label="Recent Failures" onClick={() => handleShowOutput('RecentFailures', () => api?.getRecentFailures({ limit: 5 }))} />
+                <ActionButton
+                  label="Wait For API"
+                  onClick={() =>
+                    handleShowOutput('WaitForEvent', async () =>
+                      api?.waitForEvent({
+                        kind: 'api:start',
+                        text: '/api/lab-test',
+                        timeoutMs: 1000,
+                      }),
+                    )
+                  }
+                />
+                <ActionButton
+                  label="Latest Failed Request"
+                  onClick={() =>
+                    handleShowOutput('LatestFailedRequest', () => api?.getLatestFailedRequest())
+                  }
+                />
+                <ActionButton
+                  label="Recent Failures"
+                  onClick={() =>
+                    handleShowOutput('RecentFailures', () => api?.getRecentFailures({ limit: 5 }))
+                  }
+                />
               </div>
             </SectionCard>
 
             <SectionCard title="Snapshot & Diagnostics">
               <div className="flex flex-wrap gap-2">
-                <ActionButton label="Get Snapshot" onClick={() => handleShowOutput('Snapshot', () => debuggerController.getSnapshot())} />
-                <ActionButton label="Get Overview" onClick={() => handleShowOutput('Overview', () => debuggerController.getOverview())} />
-                <ActionButton label="Export Session" onClick={() => handleShowOutput('Export', () => debuggerController.exportSession())} />
-                <ActionButton label="Diagnostic Report" onClick={() => handleShowOutput('Report', () => debuggerController.createDiagnosticReport({ includeLatestInteractionTrace: true }))} />
-                <ActionButton label="Latest Error" onClick={() => handleShowOutput('LatestError', () => debuggerController.getLatestError())} />
-                <ActionButton label="Pinned Errors" onClick={() => handleShowOutput('PinnedErrors', () => debuggerController.getPinnedErrors())} />
+                <ActionButton
+                  label="Get Snapshot"
+                  onClick={() =>
+                    handleShowOutput('Snapshot', () => debuggerController.getSnapshot())
+                  }
+                />
+                <ActionButton
+                  label="Get Overview"
+                  onClick={() =>
+                    handleShowOutput('Overview', () => debuggerController.getOverview())
+                  }
+                />
+                <ActionButton
+                  label="Export Session"
+                  onClick={() =>
+                    handleShowOutput('Export', () => debuggerController.exportSession())
+                  }
+                />
+                <ActionButton
+                  label="Diagnostic Report"
+                  onClick={() =>
+                    handleShowOutput('Report', () =>
+                      debuggerController.createDiagnosticReport({
+                        includeLatestInteractionTrace: true,
+                      }),
+                    )
+                  }
+                />
+                <ActionButton
+                  label="Latest Error"
+                  onClick={() =>
+                    handleShowOutput('LatestError', () => debuggerController.getLatestError())
+                  }
+                />
+                <ActionButton
+                  label="Pinned Errors"
+                  onClick={() =>
+                    handleShowOutput('PinnedErrors', () => debuggerController.getPinnedErrors())
+                  }
+                />
               </div>
             </SectionCard>
           </div>
@@ -175,16 +265,48 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
           <div className="flex flex-col gap-5">
             <SectionCard title="Automation API (window global)">
               <div className="p-3 rounded-[12px] bg-black/30 text-[12px] font-mono text-white/70 space-y-1">
-                <p>__NOP_DEBUGGER_API__: <span className={api ? 'text-green-400' : 'text-red-400'}>{api ? 'available' : 'not found'}</span></p>
-                <p>__NOP_DEBUGGER_HUB__: <span className={hub ? 'text-green-400' : 'text-red-400'}>{hub ? 'available' : 'not found'}</span></p>
-                <p>controller: <span className="text-sky-300">{debuggerController.id}</span></p>
-                <p>sessionId: <span className="text-sky-300">{debuggerController.sessionId}</span></p>
+                <p>
+                  __NOP_DEBUGGER_API__:{' '}
+                  <span className={api ? 'text-green-400' : 'text-red-400'}>
+                    {api ? 'available' : 'not found'}
+                  </span>
+                </p>
+                <p>
+                  __NOP_DEBUGGER_HUB__:{' '}
+                  <span className={hub ? 'text-green-400' : 'text-red-400'}>
+                    {hub ? 'available' : 'not found'}
+                  </span>
+                </p>
+                <p>
+                  controller: <span className="text-sky-300">{debuggerController.id}</span>
+                </p>
+                <p>
+                  sessionId: <span className="text-sky-300">{debuggerController.sessionId}</span>
+                </p>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
-                <ActionButton label="Get Latest Error" onClick={() => handleShowOutput('LatestError (API)', () => api?.getLatestError())} />
-                <ActionButton label="Get Pinned Errors" onClick={() => handleShowOutput('PinnedErrors (API)', () => api?.getPinnedErrors())} />
-                <ActionButton label="Get Overview" onClick={() => handleShowOutput('Overview (API)', () => api?.getOverview())} />
-                <ActionButton label="Get Trace" onClick={() => handleShowOutput('InteractionTrace (API)', () => api?.getInteractionTrace({ inferFromLatest: true }))} />
+                <ActionButton
+                  label="Get Latest Error"
+                  onClick={() => handleShowOutput('LatestError (API)', () => api?.getLatestError())}
+                />
+                <ActionButton
+                  label="Get Pinned Errors"
+                  onClick={() =>
+                    handleShowOutput('PinnedErrors (API)', () => api?.getPinnedErrors())
+                  }
+                />
+                <ActionButton
+                  label="Get Overview"
+                  onClick={() => handleShowOutput('Overview (API)', () => api?.getOverview())}
+                />
+                <ActionButton
+                  label="Get Trace"
+                  onClick={() =>
+                    handleShowOutput('InteractionTrace (API)', () =>
+                      api?.getInteractionTrace({ inferFromLatest: true }),
+                    )
+                  }
+                />
               </div>
             </SectionCard>
 
@@ -200,7 +322,8 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                 <ActionButton label="Inspect" onClick={inspectByCid} variant="primary" />
               </div>
               <p className="mt-2 text-[11px] text-white/40">
-                Calls controller.inspectByCid(cid). Requires components with data-cid attributes rendered via flux-react.
+                Calls controller.inspectByCid(cid). Requires components with data-cid attributes
+                rendered via flux-react.
               </p>
             </SectionCard>
 

@@ -158,6 +158,7 @@ Exit Criteria:
 ## Closure
 
 Status Note: Plan 112 has completed all 5 phases. The capability projection manifest contract is now implemented with:
+
 - Shared contract types in `flux-core/src/schema-diagnostics/manifest.ts`
 - Capability publication attribution model supporting whole-owner and region-scoped modes
 - Compiler host action validation in `flux-runtime/src/schema-compiler/host-action-validation.ts`
@@ -165,6 +166,7 @@ Status Note: Plan 112 has completed all 5 phases. The capability projection mani
 - Standalone validation wiring through `hostContractContext` option
 
 Pre-existing issues not addressed by this plan:
+
 - `flux-runtime` typecheck/build errors related to `DataSourceState` type changes
 - `flux-runtime` test failures in `runtime-sources.test.ts` related to same
 - `flux-renderers-data` lint errors related to React compiler/hooks violations

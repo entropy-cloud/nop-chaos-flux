@@ -12,7 +12,7 @@ vi.mock('@nop-chaos/ui', () => {
       </button>
     ),
     ScrollArea: ({ children }: any) => <div data-testid="scroll-area">{children}</div>,
-    cn: (...args: any[]) => args.filter(Boolean).join(' ')
+    cn: (...args: any[]) => args.filter(Boolean).join(' '),
   };
 });
 
@@ -59,7 +59,9 @@ describe('TemplateSnippets', () => {
 
   it('displays tag descriptions', () => {
     render(<TemplateSnippets onInsertTag={vi.fn()} />);
-    expect(screen.getByText('Conditional block — renders content if test is true')).toBeInTheDocument();
+    expect(
+      screen.getByText('Conditional block — renders content if test is true'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Output an expression value (self-closing)')).toBeInTheDocument();
   });
 
@@ -68,7 +70,7 @@ describe('TemplateSnippets', () => {
     render(<TemplateSnippets onInsertTag={onInsertTag} />);
 
     const buttons = screen.getAllByTestId('button');
-    const ifButton = buttons.find(btn => btn.textContent?.includes('If Condition'));
+    const ifButton = buttons.find((btn) => btn.textContent?.includes('If Condition'));
     if (ifButton) {
       await userEvent.click(ifButton);
       expect(onInsertTag).toHaveBeenCalledWith('c:if');

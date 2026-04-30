@@ -1,4 +1,10 @@
-import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  ActionSchema,
+  BaseSchema,
+  SchemaInput,
+  SchemaObject,
+  SchemaValue,
+} from '@nop-chaos/flux-core';
 
 export interface CrudQueryFormConfig extends SchemaObject {
   data?: SchemaValue;
@@ -9,10 +15,12 @@ export interface CrudQueryFormConfig extends SchemaObject {
   mode?: 'manual' | 'auto';
   syncLocation?: boolean;
   defaultParams?: Record<string, SchemaValue>;
-  parsePrimitiveQuery?: boolean | {
-    enable?: boolean;
-    types?: Array<'boolean' | 'number'>;
-  };
+  parsePrimitiveQuery?:
+    | boolean
+    | {
+        enable?: boolean;
+        types?: Array<'boolean' | 'number'>;
+      };
 }
 
 export interface CrudColumnFilterOption extends SchemaObject {
@@ -137,10 +145,12 @@ export interface CrudSchema extends BaseSchema {
   syncLocation?: boolean;
   columnSettings?: CrudColumnSettingsConfig;
   responsive?: CrudResponsiveConfig;
-  autoGenerateQueryForm?: boolean | {
-    columnsCount?: number;
-    showFieldPicker?: boolean;
-  };
+  autoGenerateQueryForm?:
+    | boolean
+    | {
+        columnsCount?: number;
+        showFieldPicker?: boolean;
+      };
   clientMode?: CrudClientModeConfig;
   quickSaveAction?: ActionSchema;
   quickSaveItemAction?: ActionSchema;

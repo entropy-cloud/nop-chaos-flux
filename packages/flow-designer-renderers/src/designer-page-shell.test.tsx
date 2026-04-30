@@ -18,39 +18,59 @@ describe('designer-page status publication', () => {
   it('publishes designer host status through statusPath', async () => {
     function StatusProbe() {
       const status = useScopeSelector((data: any) => data.designerStatus);
-      return <span data-testid="designer-status">{status ? `${status.kind}:${status.selectionKind}:${status.selectionCount}` : ''}</span>;
+      return (
+        <span data-testid="designer-status">
+          {status ? `${status.kind}:${status.selectionKind}:${status.selectionCount}` : ''}
+        </span>
+      );
     }
 
     const statusProbeRenderer = {
       type: 'designer-status-probe',
-      component: StatusProbe
+      component: StatusProbe,
     } as any;
-    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions, statusProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+      statusProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
         schemaUrl="test://flow/index-status"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'designer-page',
-              document: { id: 'doc-1', kind: 'flow', name: 'Example', version: '1.0.0', nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
-              config: createTestConfig(),
-              statusPath: 'designerStatus'
-            },
-            {
-              type: 'designer-status-probe'
-            }
-          ]
-        } as any}
+        schema={
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'designer-page',
+                document: {
+                  id: 'doc-1',
+                  kind: 'flow',
+                  name: 'Example',
+                  version: '1.0.0',
+                  nodes: [],
+                  edges: [],
+                  viewport: { x: 0, y: 0, zoom: 1 },
+                },
+                config: createTestConfig(),
+                statusPath: 'designerStatus',
+              },
+              {
+                type: 'designer-status-probe',
+              },
+            ],
+          } as any
+        }
         env={createRendererEnv() as any}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
-      expect(document.querySelector('[data-testid="designer-status"]')?.textContent).toBe('designer:none:0');
+      expect(document.querySelector('[data-testid="designer-status"]')?.textContent).toBe(
+        'designer:none:0',
+      );
     });
   });
 
@@ -67,11 +87,11 @@ describe('designer-page status publication', () => {
 
     function RegionProbe() {
       const summary = useScopeSelector((data: any) => {
-        const selection = data.selection
-        const runtime = data.runtime
-        return `${selection?.kind ?? 'missing'}:${runtime?.isDirty ?? 'missing'}`
-      })
-      return <span data-testid="designer-region-probe">{String(summary)}</span>
+        const selection = data.selection;
+        const runtime = data.runtime;
+        return `${selection?.kind ?? 'missing'}:${runtime?.isDirty ?? 'missing'}`;
+      });
+      return <span data-testid="designer-region-probe">{String(summary)}</span>;
     }
 
     const regionProbeRenderer = {
@@ -88,83 +108,136 @@ describe('designer-page status publication', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flow/index-region-scope"
-        schema={{
-          type: 'designer-page',
-          document: {
-            id: 'doc-1',
-            kind: 'flow',
-            name: 'Example',
-            version: '1.0.0',
-            nodes: [
-              { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } },
-              { id: 'node-2', type: 'end', position: { x: 220, y: 40 }, data: { label: 'Task 2' } },
-            ],
-            edges: [{ id: 'edge-1', type: 'default', source: 'node-1', target: 'node-2', data: { label: 'Edge 1' } }],
-            viewport: { x: 0, y: 0, zoom: 1 },
-          },
-          config: createTestConfig(),
-          toolbar: [
-            { type: 'designer-region-probe' },
-            {
-              type: 'action-button',
-              label: 'Select edge',
-              onClick: {
-                action: 'designer:selectEdge',
-                args: { edgeId: 'edge-1' },
-              },
+        schema={
+          {
+            type: 'designer-page',
+            document: {
+              id: 'doc-1',
+              kind: 'flow',
+              name: 'Example',
+              version: '1.0.0',
+              nodes: [
+                {
+                  id: 'node-1',
+                  type: 'task',
+                  position: { x: 20, y: 40 },
+                  data: { label: 'Task 1' },
+                },
+                {
+                  id: 'node-2',
+                  type: 'end',
+                  position: { x: 220, y: 40 },
+                  data: { label: 'Task 2' },
+                },
+              ],
+              edges: [
+                {
+                  id: 'edge-1',
+                  type: 'default',
+                  source: 'node-1',
+                  target: 'node-2',
+                  data: { label: 'Edge 1' },
+                },
+              ],
+              viewport: { x: 0, y: 0, zoom: 1 },
             },
-          ],
-          inspector: { type: 'designer-region-probe' },
-          dialogs: { type: 'designer-region-probe' },
-        } as any}
+            config: createTestConfig(),
+            toolbar: [
+              { type: 'designer-region-probe' },
+              {
+                type: 'action-button',
+                label: 'Select edge',
+                onClick: {
+                  action: 'designer:selectEdge',
+                  args: { edgeId: 'edge-1' },
+                },
+              },
+            ],
+            inspector: { type: 'designer-region-probe' },
+            dialogs: { type: 'designer-region-probe' },
+          } as any
+        }
         env={createRendererEnv() as any}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
       expect(screen.getAllByTestId('designer-region-probe')).toHaveLength(3);
-      expect(screen.getAllByTestId('designer-region-probe').every((node) => node.textContent?.startsWith('none:'))).toBe(true);
+      expect(
+        screen
+          .getAllByTestId('designer-region-probe')
+          .every((node) => node.textContent?.startsWith('none:')),
+      ).toBe(true);
     });
 
-    window.dispatchEvent(new CustomEvent('nop-designer:test-connect', {
-      detail: { source: 'node-1', target: 'node-2' },
-    }));
+    window.dispatchEvent(
+      new CustomEvent('nop-designer:test-connect', {
+        detail: { source: 'node-1', target: 'node-2' },
+      }),
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Select edge' }));
 
     await waitFor(() => {
-      expect(screen.getAllByTestId('designer-region-probe').some((node) => node.textContent?.startsWith('edge:'))).toBe(true);
+      expect(
+        screen
+          .getAllByTestId('designer-region-probe')
+          .some((node) => node.textContent?.startsWith('edge:')),
+      ).toBe(true);
     });
   });
 });
 
 describe('DesignerPageRenderer basic rendering', () => {
   it('renders the designer page with xyflow canvas', () => {
-    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
 
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/index-rendering"
-        schema={{
-          type: 'designer-page',
-          document: {
-            id: 'doc-1',
-            kind: 'flow',
-            name: 'Example',
-            version: '1.0.0',
-            nodes: [
-              { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } },
-              { id: 'node-2', type: 'end', position: { x: 220, y: 40 }, data: { label: 'Task 2' } }
-            ],
-            edges: [{ id: 'edge-1', type: 'default', source: 'node-1', target: 'node-2', data: { label: 'Edge 1' } }],
-            viewport: { x: 0, y: 0, zoom: 1 }
-          },
-          config: createTestConfig()
-        } as any}
+        schema={
+          {
+            type: 'designer-page',
+            document: {
+              id: 'doc-1',
+              kind: 'flow',
+              name: 'Example',
+              version: '1.0.0',
+              nodes: [
+                {
+                  id: 'node-1',
+                  type: 'task',
+                  position: { x: 20, y: 40 },
+                  data: { label: 'Task 1' },
+                },
+                {
+                  id: 'node-2',
+                  type: 'end',
+                  position: { x: 220, y: 40 },
+                  data: { label: 'Task 2' },
+                },
+              ],
+              edges: [
+                {
+                  id: 'edge-1',
+                  type: 'default',
+                  source: 'node-1',
+                  target: 'node-2',
+                  data: { label: 'Edge 1' },
+                },
+              ],
+              viewport: { x: 0, y: 0, zoom: 1 },
+            },
+            config: createTestConfig(),
+          } as any
+        }
         env={createRendererEnv()}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const canvas = within(view.container);
@@ -173,7 +246,10 @@ describe('DesignerPageRenderer basic rendering', () => {
   });
 
   it('renders a fallback when document or config is missing', () => {
-    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
 
     const view = render(
       <SchemaRenderer
@@ -181,51 +257,63 @@ describe('DesignerPageRenderer basic rendering', () => {
         schema={{ type: 'designer-page' } as any}
         env={createRendererEnv()}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(view.getByText('Designer requires config prop')).toBeTruthy();
   });
 
   it('uses data-slot for the node quick toolbar instead of internal toolbar marker classes', async () => {
-    const SchemaRenderer = createSchemaRenderer([...basicTestRendererDefinitions, ...flowDesignerRendererDefinitions]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
 
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/index-toolbar"
-        schema={{
-          type: 'designer-page',
-          document: {
-            id: 'doc-1',
-            kind: 'flow',
-            name: 'Example',
-            version: '1.0.0',
-            nodes: [{ id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } }],
-            edges: [],
-            viewport: { x: 0, y: 0, zoom: 1 }
-          },
-          config: {
-            ...createTestConfig(),
-            nodeTypes: [
-              {
-                id: 'task',
-                label: 'Task',
-                body: { type: 'text', text: 'Task' },
-                defaults: { label: 'Task' },
-                quickActions: { type: 'text', text: 'Quick actions' }
-              },
-              {
-                id: 'end',
-                label: 'End',
-                body: { type: 'text', text: 'End' },
-                defaults: { label: 'End' }
-              }
-            ]
-          }
-        } as any}
+        schema={
+          {
+            type: 'designer-page',
+            document: {
+              id: 'doc-1',
+              kind: 'flow',
+              name: 'Example',
+              version: '1.0.0',
+              nodes: [
+                {
+                  id: 'node-1',
+                  type: 'task',
+                  position: { x: 20, y: 40 },
+                  data: { label: 'Task 1' },
+                },
+              ],
+              edges: [],
+              viewport: { x: 0, y: 0, zoom: 1 },
+            },
+            config: {
+              ...createTestConfig(),
+              nodeTypes: [
+                {
+                  id: 'task',
+                  label: 'Task',
+                  body: { type: 'text', text: 'Task' },
+                  defaults: { label: 'Task' },
+                  quickActions: { type: 'text', text: 'Quick actions' },
+                },
+                {
+                  id: 'end',
+                  label: 'End',
+                  body: { type: 'text', text: 'End' },
+                  defaults: { label: 'End' },
+                },
+              ],
+            },
+          } as any
+        }
         env={createRendererEnv()}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const node = view.container.querySelector('.nop-designer-node') as HTMLElement;

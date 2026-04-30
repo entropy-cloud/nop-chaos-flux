@@ -145,4 +145,3 @@ When this document changes or related constraints change, review:
 - `docs/index.md`
 - `docs/references/maintenance-checklist.md`
 - architecture docs for impacted packages/modules
-

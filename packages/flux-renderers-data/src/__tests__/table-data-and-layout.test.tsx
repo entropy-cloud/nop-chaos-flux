@@ -74,7 +74,9 @@ describe('table-data helpers', () => {
     expect(createTableRowRepeatedTemplateId(undefined)).toBe('table-row:unknown');
     expect(createRowScopeId('orders', 'r1')).toBe('table:orders:row:r1');
     expect(createRowScopePath('$page.table', 'r1')).toBe('$page.table.rowsByKey.r1');
-    expect(serializeInstancePath([{ repeatedTemplateId: 'table-row:1', instanceKey: 'x' }])).toBe('[{"repeatedTemplateId":"table-row:1","instanceKey":"x"}]');
+    expect(serializeInstancePath([{ repeatedTemplateId: 'table-row:1', instanceKey: 'x' }])).toBe(
+      '[{"repeatedTemplateId":"table-row:1","instanceKey":"x"}]',
+    );
     expect(serializeInstancePath(undefined)).toBe('root');
   });
 
@@ -96,28 +98,37 @@ describe('table-data helpers', () => {
   it('processes sorting, filtering, keyword search, null ordering, and pagination', () => {
     const result = processTableData(
       [
-      { id: 1, name: 'Bob', role: 'user' },
-      { id: 2, name: null, role: 'admin' },
-      { id: 3, name: 'Alice', role: 'admin' },
-      { id: 4, name: 'Carol', role: 'guest' },
-    ],
-    undefined,
-    { column: 'name', direction: 'asc' },
-    {
-      role: { values: new Set(['admin']) },
-      name: { values: new Set(), keyword: 'ali' },
-    },
-    true,
-    1,
-    2,
-  );
+        { id: 1, name: 'Bob', role: 'user' },
+        { id: 2, name: null, role: 'admin' },
+        { id: 3, name: 'Alice', role: 'admin' },
+        { id: 4, name: 'Carol', role: 'guest' },
+      ],
+      undefined,
+      { column: 'name', direction: 'asc' },
+      {
+        role: { values: new Set(['admin']) },
+        name: { values: new Set(), keyword: 'ali' },
+      },
+      true,
+      1,
+      2,
+    );
 
-  expect(result).toEqual([
-    { rowKey: '3', sourceIndex: 2, viewIndex: 0, record: { id: 3, name: 'Alice', role: 'admin' } },
-  ]);
+    expect(result).toEqual([
+      {
+        rowKey: '3',
+        sourceIndex: 2,
+        viewIndex: 0,
+        record: { id: 3, name: 'Alice', role: 'admin' },
+      },
+    ]);
 
     const desc = processTableData(
-      [{ id: 1, score: 1 }, { id: 2, score: 3 }, { id: 3, score: 2 }],
+      [
+        { id: 1, score: 1 },
+        { id: 2, score: 3 },
+        { id: 3, score: 2 },
+      ],
       undefined,
       { column: 'score', direction: 'desc' },
       {},
@@ -145,11 +156,15 @@ describe('fixed column layout', () => {
     expect(layout.hasStickyColumns).toBe(true);
     expect(layout.getExpandCellProps()).toMatchObject({ fixed: 'left' });
     expect(layout.getSelectionCellProps()).toMatchObject({ fixed: 'left' });
-    expect(layout.getColumnCellProps({ name: 'name', fixed: 'left', width: 120 } as any, 0)).toMatchObject({
+    expect(
+      layout.getColumnCellProps({ name: 'name', fixed: 'left', width: 120 } as any, 0),
+    ).toMatchObject({
       fixed: 'left',
       style: expect.objectContaining({ left: '80px', width: 120 }),
     });
-    expect(layout.getColumnCellProps({ name: 'email', fixed: 'right', width: '180px' } as any, 1)).toMatchObject({
+    expect(
+      layout.getColumnCellProps({ name: 'email', fixed: 'right', width: '180px' } as any, 1),
+    ).toMatchObject({
       fixed: 'right',
       style: expect.objectContaining({ right: '0px', width: '180px' }),
     });
@@ -179,7 +194,13 @@ describe('table row rendering helpers', () => {
     );
 
     expect(flattened).toHaveLength(2);
-    expect(flattened[0]).toMatchObject({ kind: 'data', rowKey: 'r1', isExpanded: true, isSelected: true, isEven: true });
+    expect(flattened[0]).toMatchObject({
+      kind: 'data',
+      rowKey: 'r1',
+      isExpanded: true,
+      isSelected: true,
+      isEven: true,
+    });
     expect((flattened[0] as any).rowInstancePath).toEqual([
       { repeatedTemplateId: 'page', instanceKey: 'root' },
       { repeatedTemplateId: 'table-row:unit', instanceKey: 'r1' },
@@ -192,7 +213,9 @@ describe('table row rendering helpers', () => {
       props: { expandable: {}, rowSelection: { type: 'checkbox' } },
       events: { onRowClick: vi.fn() },
       helpers: {
-        render: vi.fn((node, options) => <span data-testid={`render-${options?.pathSuffix}`}>{String(node.type ?? 'node')}</span>),
+        render: vi.fn((node, options) => (
+          <span data-testid={`render-${options?.pathSuffix}`}>{String(node.type ?? 'node')}</span>
+        )),
       },
       regions: {
         actions: { render: vi.fn(() => <span data-testid="button-region">Actions</span>) },
@@ -223,7 +246,11 @@ describe('table row rendering helpers', () => {
             ] as any,
             parentProps.helpers,
             parentProps,
-            { getExpandCellProps: () => ({ className: 'expand-cell', style: {} }), getSelectionCellProps: () => ({ className: 'select-cell', style: {} }), getColumnCellProps: () => ({ className: 'data-cell', style: {}, fixed: undefined }) } as any,
+            {
+              getExpandCellProps: () => ({ className: 'expand-cell', style: {} }),
+              getSelectionCellProps: () => ({ className: 'select-cell', style: {} }),
+              getColumnCellProps: () => ({ className: 'data-cell', style: {}, fixed: undefined }),
+            } as any,
             true,
             false,
             onToggleExpand,
@@ -245,7 +272,9 @@ describe('table row rendering helpers', () => {
   });
 
   it('renders helper cells, radio selection, row click expansion, and expanded row fallbacks', () => {
-    const helperRender = vi.fn((_node, options) => <span data-testid={`helper-${options?.pathSuffix}`}>Helper</span>);
+    const helperRender = vi.fn((_node, options) => (
+      <span data-testid={`helper-${options?.pathSuffix}`}>Helper</span>
+    ));
     const parentProps = makeParentProps({
       props: { expandable: { expandedRowRegionKey: 'expanded' }, rowSelection: { type: 'radio' } },
       helpers: { render: helperRender },
@@ -264,7 +293,11 @@ describe('table row rendering helpers', () => {
           {renderDataRow(
             {
               kind: 'data',
-              entry: { rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice', email: 'alice@example.com' } },
+              entry: {
+                rowKey: 'r1',
+                sourceIndex: 0,
+                record: { name: 'Alice', email: 'alice@example.com' },
+              },
               rowScope,
               rowKey: 'r1',
               rowInstancePath: [{ repeatedTemplateId: 'table-row:unit', instanceKey: 'r1' }],
@@ -276,7 +309,11 @@ describe('table row rendering helpers', () => {
             [{ label: 'Name', name: 'name', cellRegionKey: 'cell' }] as any,
             parentProps.helpers,
             parentProps,
-            { getExpandCellProps: () => ({ className: '', style: {} }), getSelectionCellProps: () => ({ className: '', style: {} }), getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }) } as any,
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any,
             false,
             true,
             onToggleExpand,
@@ -303,14 +340,16 @@ describe('table row rendering helpers', () => {
     expect(screen.getByText('alice@example.com')).toBeTruthy();
     expect(screen.getByTestId('helper-expanded.r1')).toBeTruthy();
 
-    expect(renderExpandedRow(
-      { kind: 'expanded', rowKey: 'missing', columnCount: 1 },
-      {} as any,
-      parentProps.helpers,
-      parentProps,
-      rowScopeCache,
-      'table-row:unit',
-      [] as any,
-    )).toBeNull();
+    expect(
+      renderExpandedRow(
+        { kind: 'expanded', rowKey: 'missing', columnCount: 1 },
+        {} as any,
+        parentProps.helpers,
+        parentProps,
+        rowScopeCache,
+        'table-row:unit',
+        [] as any,
+      ),
+    ).toBeNull();
   });
 });

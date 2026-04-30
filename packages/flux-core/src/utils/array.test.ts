@@ -5,7 +5,7 @@ import {
   insertArrayValue,
   moveArrayValue,
   removeArrayValue,
-  swapArrayValue
+  swapArrayValue,
 } from './array';
 
 describe('array utils', () => {

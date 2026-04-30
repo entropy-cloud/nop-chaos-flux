@@ -354,7 +354,7 @@ export const zhCN: Resource = {
       type: '类型',
       columns: '列',
       addColumn: '添加列',
-      noColumnsHint: '无列。点击\'添加列\'添加一列。',
+      noColumnsHint: "无列。点击'添加列'添加一列。",
       label: '标签',
       chartBar: '柱状图',
       chartLine: '折线图',

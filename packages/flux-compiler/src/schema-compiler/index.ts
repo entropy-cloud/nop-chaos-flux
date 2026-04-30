@@ -9,7 +9,7 @@ export {
   buildMetaProgram,
   buildCompiledMeta,
   DEFAULT_FIELD_RULES,
-  isCompiledStatic
+  isCompiledStatic,
 } from './fields';
 
 export { collectValidationModel } from './validation-collection';

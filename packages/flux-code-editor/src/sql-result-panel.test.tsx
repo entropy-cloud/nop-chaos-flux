@@ -20,7 +20,9 @@ describe('SQLResultPanel', () => {
     render(<SQLResultPanel result={result} />);
     const text = screen.getByText('执行中...');
     expect(text).toBeDefined();
-    expect(text.closest('[data-slot="code-editor-result-panel"]')?.getAttribute('data-state')).toBe('loading');
+    expect(text.closest('[data-slot="code-editor-result-panel"]')?.getAttribute('data-state')).toBe(
+      'loading',
+    );
   });
 
   it('renders table with correct headers and rows for success state', () => {
@@ -28,9 +30,9 @@ describe('SQLResultPanel', () => {
       status: 'success',
       data: [
         { id: 1, name: 'Alice', age: 30 },
-        { id: 2, name: 'Bob', age: 25 }
+        { id: 2, name: 'Bob', age: 25 },
       ],
-      columns: ['id', 'name', 'age']
+      columns: ['id', 'name', 'age'],
     };
     render(<SQLResultPanel result={result} />);
 
@@ -52,8 +54,8 @@ describe('SQLResultPanel', () => {
       status: 'success',
       data: [
         { id: 1, name: 'Alice' },
-        { id: 2, name: 'Bob' }
-      ]
+        { id: 2, name: 'Bob' },
+      ],
     };
     render(<SQLResultPanel result={result} />);
 
@@ -66,9 +68,9 @@ describe('SQLResultPanel', () => {
       status: 'success',
       data: [
         { id: 1, name: 'Alice', age: 30, extra: 'ignore' },
-        { id: 2, name: 'Bob', age: 25, extra: 'ignore' }
+        { id: 2, name: 'Bob', age: 25, extra: 'ignore' },
       ],
-      columns: ['id', 'name']
+      columns: ['id', 'name'],
     };
     render(<SQLResultPanel result={result} />);
 
@@ -83,20 +85,25 @@ describe('SQLResultPanel', () => {
   it('shows error message for error state', () => {
     const result: SQLResultState = {
       status: 'error',
-      message: 'Syntax error near SELECT'
+      message: 'Syntax error near SELECT',
     };
     render(<SQLResultPanel result={result} />);
 
     expect(screen.getByText('错误')).toBeDefined();
     expect(screen.getByText('Syntax error near SELECT')).toBeDefined();
-    expect(screen.getByText('错误').closest('[data-slot="code-editor-result-panel"]')?.getAttribute('data-state')).toBe('error');
+    expect(
+      screen
+        .getByText('错误')
+        .closest('[data-slot="code-editor-result-panel"]')
+        ?.getAttribute('data-state'),
+    ).toBe('error');
   });
 
   it('close button calls onClose callback', () => {
     const onClose = vi.fn();
     const result: SQLResultState = {
       status: 'error',
-      message: 'Test error'
+      message: 'Test error',
     };
     render(<SQLResultPanel result={result} onClose={onClose} />);
 
@@ -108,11 +115,7 @@ describe('SQLResultPanel', () => {
   it('shows row count in header for success state', () => {
     const result: SQLResultState = {
       status: 'success',
-      data: [
-        { id: 1 },
-        { id: 2 },
-        { id: 3 }
-      ]
+      data: [{ id: 1 }, { id: 2 }, { id: 3 }],
     };
     render(<SQLResultPanel result={result} />);
 
@@ -122,7 +125,7 @@ describe('SQLResultPanel', () => {
   it('renders empty table when data is empty', () => {
     const result: SQLResultState = {
       status: 'success',
-      data: []
+      data: [],
     };
     render(<SQLResultPanel result={result} />);
 

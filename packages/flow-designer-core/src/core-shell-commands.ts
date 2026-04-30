@@ -1,9 +1,5 @@
 import type { GraphDocument, DesignerEvent } from './types';
-import {
-  setShellClipboard,
-  setShellViewport,
-  type DesignerShellState,
-} from './core/shell-state';
+import { setShellClipboard, setShellViewport, type DesignerShellState } from './core/shell-state';
 import type { DesignerTransaction } from './core/transactions';
 
 export interface ShellCommandContext {
@@ -15,7 +11,11 @@ export interface ShellCommandContext {
   pushHistory(): void;
   updateDirtyState(): void;
   getDoc(): GraphDocument;
-  addNodeFn(type: string, position: { x: number; y: number }, data?: Record<string, unknown>): unknown;
+  addNodeFn(
+    type: string,
+    position: { x: number; y: number },
+    data?: Record<string, unknown>,
+  ): unknown;
   getSelectedNodeId(): string | null;
 }
 
@@ -37,7 +37,11 @@ export function pasteClipboardCommand(ctx: ShellCommandContext): void {
   }
 
   const { clipboard } = ctx.shellState;
-  ctx.addNodeFn(clipboard.type, { x: clipboard.position.x + 48, y: clipboard.position.y + 48 }, clipboard.data);
+  ctx.addNodeFn(
+    clipboard.type,
+    { x: clipboard.position.x + 48, y: clipboard.position.y + 48 },
+    clipboard.data,
+  );
 }
 
 export function toggleGridCommand(ctx: ShellCommandContext): void {
@@ -82,7 +86,10 @@ export function setInspectorCollapsedCommand(ctx: ShellCommandContext, collapsed
   ctx.emit({ type: 'inspectorCollapseChanged', collapsed: ctx.shellState.inspectorCollapsed });
 }
 
-export function setViewportCommand(ctx: ShellCommandContext, newViewport: { x: number; y: number; zoom: number }): void {
+export function setViewportCommand(
+  ctx: ShellCommandContext,
+  newViewport: { x: number; y: number; zoom: number },
+): void {
   if (!setShellViewport(ctx.shellState, newViewport)) {
     return;
   }

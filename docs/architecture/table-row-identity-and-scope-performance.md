@@ -276,9 +276,9 @@ For table rows the row frame appended to the absolute `instancePath` should be:
 [
   {
     repeatedTemplateId: '<compiled-table-row-boundary-id>',
-    instanceKey: rowKey
-  }
-]
+    instanceKey: rowKey,
+  },
+];
 ```
 
 Rules:

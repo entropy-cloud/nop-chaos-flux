@@ -14,7 +14,10 @@ export interface RetryResult<T> {
   lastFailureReason?: unknown;
 }
 
-function withRetryMetadata(error: unknown, metadata: { attempts: number; failureCount: number; lastFailureReason?: unknown }): unknown {
+function withRetryMetadata(
+  error: unknown,
+  metadata: { attempts: number; failureCount: number; lastFailureReason?: unknown },
+): unknown {
   if (error && typeof error === 'object') {
     return Object.assign(error as Record<string, unknown>, metadata);
   }
@@ -27,14 +30,14 @@ export function createAbortScope(): { signal: AbortSignal; cancel(): void } {
 
   return {
     signal: controller.signal,
-    cancel: () => controller.abort()
+    cancel: () => controller.abort(),
   };
 }
 
 export function withTimeout<T>(
   fn: (signal: AbortSignal) => Promise<T>,
   ms: number,
-  onTimeout: () => T
+  onTimeout: () => T,
 ): Promise<T> {
   const controller = new AbortController();
 
@@ -76,7 +79,7 @@ export function withTimeout<T>(
 export async function withRetry<T>(
   fn: () => Promise<T>,
   options: RetryOptions,
-  shouldStop: (result: T) => boolean
+  shouldStop: (result: T) => boolean,
 ): Promise<RetryResult<T>> {
   const retryTimes = Math.max(0, options.times);
   const retryDelay = Math.max(0, options.delay ?? 0);
@@ -96,14 +99,14 @@ export async function withRetry<T>(
       return retryDelay;
     }
 
-    return Math.min(retryDelay * (2 ** Math.max(0, nextFailureCount - 1)), maxDelay);
+    return Math.min(retryDelay * 2 ** Math.max(0, nextFailureCount - 1), maxDelay);
   }
 
   function abortError() {
     return withRetryMetadata(new DOMException('The operation was aborted', 'AbortError'), {
       attempts,
       failureCount,
-      lastFailureReason
+      lastFailureReason,
     });
   }
 
@@ -148,7 +151,7 @@ export async function withRetry<T>(
         throw withRetryMetadata(error, {
           attempts,
           failureCount,
-          lastFailureReason: error
+          lastFailureReason: error,
         });
       }
 

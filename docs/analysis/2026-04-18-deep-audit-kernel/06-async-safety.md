@@ -62,24 +62,24 @@
 
 ## 确认安全的模式
 
-| 模式 | 文件 | 验证结果 |
-|------|------|----------|
-| 提交并发保护 | form-runtime-submit-flow.ts:58-64 | isSubmittingInternal 同步守卫 + 回归测试 |
-| 请求去重/取消 | request-runtime.ts:323-381 | 三策略（cancel-previous/ignore-new/parallel） |
-| 轮询 cleanup | data-source-runtime.ts:637-660 | setTimeout 链 + abort |
-| 验证防过时 | form-runtime-validation.ts:107-112 | validationRuns 递增计数器 |
-| Reaction dispose | reaction-runtime.ts:189-228 | disposed 双重检查 + 专项测试 |
-| DataSource abort | data-source-runtime.ts:463-465 | 每个 runRequest 新建 AbortController |
-| React 层 abort | useNodeImports.ts, useSourceValue.ts, node-source-prop-controller.ts | 三处均用 AbortController 守卫 |
+| 模式             | 文件                                                                 | 验证结果                                      |
+| ---------------- | -------------------------------------------------------------------- | --------------------------------------------- |
+| 提交并发保护     | form-runtime-submit-flow.ts:58-64                                    | isSubmittingInternal 同步守卫 + 回归测试      |
+| 请求去重/取消    | request-runtime.ts:323-381                                           | 三策略（cancel-previous/ignore-new/parallel） |
+| 轮询 cleanup     | data-source-runtime.ts:637-660                                       | setTimeout 链 + abort                         |
+| 验证防过时       | form-runtime-validation.ts:107-112                                   | validationRuns 递增计数器                     |
+| Reaction dispose | reaction-runtime.ts:189-228                                          | disposed 双重检查 + 专项测试                  |
+| DataSource abort | data-source-runtime.ts:463-465                                       | 每个 runRequest 新建 AbortController          |
+| React 层 abort   | useNodeImports.ts, useSourceValue.ts, node-source-prop-controller.ts | 三处均用 AbortController 守卫                 |
 
 ---
 
 ## 复核结论
 
-| 发现 | 维度复核 | 子项复核 | 最终严重程度 |
-|------|---------|---------|------------|
-| 06-01: submitApi绕过onSubmitError | 保留P2 | **成立P2** | P2 |
-| 06-02: 异步验证缺少AbortSignal | 保留P2 | **成立P2** | P2 |
-| 06-03: Reaction未处理rejection | 降级P3 | **成立P3** | P3 |
-| 06-04: executeSource缺少signal | 保留P3 | **降级为可改进项**（signal可通过ctx传递） | Info |
-| 06-05: Import加载不支持取消 | 保留P3 | **成立P3** | P3 |
+| 发现                              | 维度复核 | 子项复核                                  | 最终严重程度 |
+| --------------------------------- | -------- | ----------------------------------------- | ------------ |
+| 06-01: submitApi绕过onSubmitError | 保留P2   | **成立P2**                                | P2           |
+| 06-02: 异步验证缺少AbortSignal    | 保留P2   | **成立P2**                                | P2           |
+| 06-03: Reaction未处理rejection    | 降级P3   | **成立P3**                                | P3           |
+| 06-04: executeSource缺少signal    | 保留P3   | **降级为可改进项**（signal可通过ctx传递） | Info         |
+| 06-05: Import加载不支持取消       | 保留P3   | **成立P3**                                | P3           |

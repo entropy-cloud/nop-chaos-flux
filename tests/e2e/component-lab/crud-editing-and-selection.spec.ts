@@ -47,7 +47,9 @@ test.describe('crud renderer editing and selection flows', () => {
     await reopenedDialog.getByRole('button', { name: /关闭|close/i }).click();
   });
 
-  test('updates selection-driven list actions and clears selection on refresh', async ({ page }) => {
+  test('updates selection-driven list actions and clears selection on refresh', async ({
+    page,
+  }) => {
     const lab = await openCrudLab(page);
     const stage = crudStage(lab, 'CRUD selection refresh baseline');
 

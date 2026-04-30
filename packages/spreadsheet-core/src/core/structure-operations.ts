@@ -2,7 +2,12 @@ import type { SpreadsheetDocument, CellDocument } from '../types.js';
 import { cellAddress } from '../types.js';
 import { ensureSheetCells } from './document-access.js';
 
-export function applyInsertRow(doc: SpreadsheetDocument, sheetId: string, row: number, count: number): SpreadsheetDocument {
+export function applyInsertRow(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  row: number,
+  count: number,
+): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, sheetId);
   const cells = { ...sheet.cells };
   const rows = { ...sheet.rows };
@@ -18,7 +23,7 @@ export function applyInsertRow(doc: SpreadsheetDocument, sheetId: string, row: n
     }
   }
 
-  const newRows: Record<string, typeof rows[string]> = {};
+  const newRows: Record<string, (typeof rows)[string]> = {};
   for (const [key, rowDoc] of Object.entries(rows)) {
     if (rowDoc.index >= row) {
       newRows[String(rowDoc.index + count)] = { ...rowDoc, index: rowDoc.index + count };
@@ -34,13 +39,21 @@ export function applyInsertRow(doc: SpreadsheetDocument, sheetId: string, row: n
   }));
 
   const newSheet = { ...sheet, cells: newCells, rows: newRows, merges: newMerges };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyInsertColumn(doc: SpreadsheetDocument, sheetId: string, col: number, count: number): SpreadsheetDocument {
+export function applyInsertColumn(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  col: number,
+  count: number,
+): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, sheetId);
   const cells = { ...sheet.cells };
   const columns = { ...sheet.columns };
@@ -56,10 +69,13 @@ export function applyInsertColumn(doc: SpreadsheetDocument, sheetId: string, col
     }
   }
 
-  const newColumns: Record<string, typeof columns[string]> = {};
+  const newColumns: Record<string, (typeof columns)[string]> = {};
   for (const [key, columnDoc] of Object.entries(columns)) {
     if (columnDoc.index >= col) {
-      newColumns[String(columnDoc.index + count)] = { ...columnDoc, index: columnDoc.index + count };
+      newColumns[String(columnDoc.index + count)] = {
+        ...columnDoc,
+        index: columnDoc.index + count,
+      };
     } else {
       newColumns[key] = columnDoc;
     }
@@ -72,13 +88,21 @@ export function applyInsertColumn(doc: SpreadsheetDocument, sheetId: string, col
   }));
 
   const newSheet = { ...sheet, cells: newCells, columns: newColumns, merges: newMerges };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyDeleteRow(doc: SpreadsheetDocument, sheetId: string, row: number, count: number): SpreadsheetDocument {
+export function applyDeleteRow(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  row: number,
+  count: number,
+): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, sheetId);
   const cells = { ...sheet.cells };
   const rows = { ...sheet.rows };
@@ -94,7 +118,7 @@ export function applyDeleteRow(doc: SpreadsheetDocument, sheetId: string, row: n
     }
   }
 
-  const newRows: Record<string, typeof rows[string]> = {};
+  const newRows: Record<string, (typeof rows)[string]> = {};
   for (const [key, rowDoc] of Object.entries(rows)) {
     if (rowDoc.index < row) {
       newRows[key] = rowDoc;
@@ -112,13 +136,21 @@ export function applyDeleteRow(doc: SpreadsheetDocument, sheetId: string, row: n
     }));
 
   const newSheet = { ...sheet, cells: newCells, rows: newRows, merges: newMerges };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyDeleteColumn(doc: SpreadsheetDocument, sheetId: string, col: number, count: number): SpreadsheetDocument {
+export function applyDeleteColumn(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  col: number,
+  count: number,
+): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, sheetId);
   const cells = { ...sheet.cells };
   const columns = { ...sheet.columns };
@@ -134,12 +166,15 @@ export function applyDeleteColumn(doc: SpreadsheetDocument, sheetId: string, col
     }
   }
 
-  const newColumns: Record<string, typeof columns[string]> = {};
+  const newColumns: Record<string, (typeof columns)[string]> = {};
   for (const [key, columnDoc] of Object.entries(columns)) {
     if (columnDoc.index < col) {
       newColumns[key] = columnDoc;
     } else if (columnDoc.index >= col + count) {
-      newColumns[String(columnDoc.index - count)] = { ...columnDoc, index: columnDoc.index - count };
+      newColumns[String(columnDoc.index - count)] = {
+        ...columnDoc,
+        index: columnDoc.index - count,
+      };
     }
   }
 
@@ -152,8 +187,11 @@ export function applyDeleteColumn(doc: SpreadsheetDocument, sheetId: string, col
     }));
 
   const newSheet = { ...sheet, cells: newCells, columns: newColumns, merges: newMerges };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }

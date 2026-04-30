@@ -1,11 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ScopeRef, ApiSchema, ActionSchema, ActionResult } from '@nop-chaos/flux-core';
 import type { RendererHelpers } from '@nop-chaos/flux-core';
-import {
-  isVariableSourceRef,
-  isFuncSourceRef,
-  isSQLSchemaSourceRef,
-} from './types';
+import { isVariableSourceRef, isFuncSourceRef, isSQLSchemaSourceRef } from './types';
 import type {
   ExpressionEditorConfig,
   SQLEditorConfig,
@@ -34,7 +30,7 @@ interface AsyncResolverState<T> {
 /**
  * Shared async resolver helper for API-backed source resolution.
  * Handles abort, error reporting, and data extraction in one place.
- * 
+ *
  * Note: Loading state is set via a microtask (queueMicrotask) to comply
  * with React 19's strict rule against synchronous setState in effects.
  */
@@ -59,7 +55,7 @@ function useAsyncApiResolver<T>(
     if (!config) {
       // Reset state when config becomes null - use microtask to avoid synchronous setState
       queueMicrotask(() => {
-        setState(prev => {
+        setState((prev) => {
           if (prev.loading || prev.items.length > 0 || prev.error) {
             return { items: [], error: null, loading: false };
           }
@@ -76,7 +72,7 @@ function useAsyncApiResolver<T>(
     // Use microtask to set loading state - complies with React 19 effect rules
     queueMicrotask(() => {
       if (signal.aborted) return;
-      setState(prev => ({ ...prev, loading: true, error: null }));
+      setState((prev) => ({ ...prev, loading: true, error: null }));
     });
 
     const action = { action: 'ajax', args: currentApi } as ActionSchema;
@@ -91,11 +87,12 @@ function useAsyncApiResolver<T>(
             loading: false,
           });
         } else if (!result.ok) {
-          const errorMessage = result.error instanceof Error
-            ? result.error.message
-            : typeof result.error === 'string'
-              ? result.error
-              : 'API request failed';
+          const errorMessage =
+            result.error instanceof Error
+              ? result.error.message
+              : typeof result.error === 'string'
+                ? result.error
+                : 'API request failed';
           setState({
             items: [],
             error: new Error(errorMessage),

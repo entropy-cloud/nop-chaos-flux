@@ -72,12 +72,12 @@ This satisfies the stable-URL requirement without introducing a router dependenc
 
 Route spec types (`RouteSpec` in `apps/playground/src/route-model.ts`):
 
-| Hash | Route Kind | Description |
-|------|-----------|-------------|
-| `#/` | `home` | Playground home navigation hall |
-| `#/lab` | `lab` | Component Lab shell (no renderer selected) |
-| `#/lab/<id>` | `lab-renderer` | Component Lab with a specific renderer selected |
-| `#/<domain-id>` | `domain` | Existing domain host pages (flow-designer, report-designer, etc.) |
+| Hash            | Route Kind     | Description                                                       |
+| --------------- | -------------- | ----------------------------------------------------------------- |
+| `#/`            | `home`         | Playground home navigation hall                                   |
+| `#/lab`         | `lab`          | Component Lab shell (no renderer selected)                        |
+| `#/lab/<id>`    | `lab-renderer` | Component Lab with a specific renderer selected                   |
+| `#/<domain-id>` | `domain`       | Existing domain host pages (flow-designer, report-designer, etc.) |
 
 The `useRoute` hook in `apps/playground/src/useRoute.ts` reads and writes the hash and exposes a stable `navigate(spec)` callback.
 

@@ -10,7 +10,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ message: 'Hello' });
     const surfaceRuntime = runtime.createSurfaceRuntime();
@@ -20,15 +20,15 @@ describe('createRendererRuntime', () => {
         action: 'openDialog',
         args: {
           title: 'Runtime dialog',
-      body: [{ type: 'text', text: '${message}' }]
-        }
+          body: [{ type: 'text', text: '${message}' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     expect(openResult.ok, String(openResult.error)).toBe(true);
@@ -40,15 +40,15 @@ describe('createRendererRuntime', () => {
 
     const closeResult = await runtime.dispatch(
       {
-        action: 'closeDialog'
+        action: 'closeDialog',
       },
       {
         runtime,
         scope: dialogState.scope,
         page,
         surfaceRuntime,
-        dialogId: dialogState.id
-      }
+        dialogId: dialogState.id,
+      },
     );
 
     expect(closeResult.ok).toBe(true);
@@ -60,7 +60,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const surfaceRuntime = runtime.createSurfaceRuntime();
@@ -70,29 +70,29 @@ describe('createRendererRuntime', () => {
         action: 'openDialog',
         args: {
           title: 'Runtime dialog',
-          body: [{ type: 'text', text: 'Body' }]
-        }
+          body: [{ type: 'text', text: 'Body' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     const entry = surfaceRuntime.store.getState().entries[0];
     const closeResult = await runtime.dispatch(
       {
-        action: 'closeSurface'
+        action: 'closeSurface',
       },
       {
         runtime,
         scope: entry.scope,
         page,
         surfaceRuntime,
-        dialogId: entry.id
-      }
+        dialogId: entry.id,
+      },
     );
 
     expect(closeResult.ok).toBe(true);
@@ -104,7 +104,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const surfaceRuntime = runtime.createSurfaceRuntime();
@@ -114,15 +114,15 @@ describe('createRendererRuntime', () => {
         action: 'openDialog',
         args: {
           title: 'First',
-          body: [{ type: 'text', text: 'First body' }]
-        }
+          body: [{ type: 'text', text: 'First body' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     await runtime.dispatch(
@@ -130,15 +130,15 @@ describe('createRendererRuntime', () => {
         action: 'openDrawer',
         args: {
           title: 'Second',
-          body: [{ type: 'text', text: 'Second body' }]
-        }
+          body: [{ type: 'text', text: 'Second body' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     const entries = surfaceRuntime.store.getState().entries;
@@ -147,15 +147,15 @@ describe('createRendererRuntime', () => {
     const closeResult = await runtime.dispatch(
       {
         action: 'closeSurface',
-        surfaceId: firstId
+        surfaceId: firstId,
       },
       {
         runtime,
         scope: entries[1].scope,
         page,
         surfaceRuntime,
-        dialogId: entries[1].id
-      }
+        dialogId: entries[1].id,
+      },
     );
 
     expect(closeResult.ok).toBe(true);
@@ -168,7 +168,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const surfaceRuntime = runtime.createSurfaceRuntime();
@@ -178,15 +178,15 @@ describe('createRendererRuntime', () => {
         action: 'openDialog',
         args: {
           title: { type: 'text', text: 'Compiled title' },
-          body: [{ type: 'text', text: 'Compiled body' }]
-        }
+          body: [{ type: 'text', text: 'Compiled body' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     const dialogState = surfaceRuntime.store.getState().entries[0] as any;
@@ -200,7 +200,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ dialogTitle: 'Args dialog' });
     const surfaceRuntime = runtime.createSurfaceRuntime();
@@ -210,15 +210,15 @@ describe('createRendererRuntime', () => {
         action: 'openDialog',
         args: {
           title: '${dialogTitle}',
-          body: [{ type: 'text', text: 'Body from args' }]
-        }
+          body: [{ type: 'text', text: 'Body from args' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     expect(result.ok).toBe(true);
@@ -231,37 +231,39 @@ describe('createRendererRuntime', () => {
   it('stores ownerNodeInstance in dialog state when opened from a trigger node', async () => {
     const buttonRenderer: RendererDefinition = {
       type: 'button',
-      component: () => null
+      component: () => null,
     };
     const registry = createRendererRegistry([pageRenderer, textRenderer, buttonRenderer]);
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const pageCompiled = runtime.compile({
       type: 'page',
       body: [
         {
           type: 'button',
-          label: 'Open dialog'
-        }
-      ]
+          label: 'Open dialog',
+        },
+      ],
     });
     const page = runtime.createPageRuntime({});
     const surfaceRuntime = runtime.createSurfaceRuntime();
     const pageRoot = Array.isArray(pageCompiled.root) ? pageCompiled.root[0] : pageCompiled.root;
     const bodyRegion = pageRoot.regions['body'];
     const triggerTemplateNode = bodyRegion
-      ? (Array.isArray(bodyRegion.node) ? bodyRegion.node[0] : bodyRegion.node)
+      ? Array.isArray(bodyRegion.node)
+        ? bodyRegion.node[0]
+        : bodyRegion.node
       : undefined;
     const triggerNodeInstance = triggerTemplateNode
-      ? {
+      ? ({
           cid: triggerTemplateNode.templateNodeId,
           templateNode: triggerTemplateNode,
           scope: page.scope,
-          state: { metaState: {}, mounted: true }
-        } as any
+          state: { metaState: {}, mounted: true },
+        } as any)
       : undefined;
 
     await runtime.dispatch(
@@ -269,16 +271,16 @@ describe('createRendererRuntime', () => {
         action: 'openDialog',
         args: {
           title: { type: 'text', text: 'Compiled title' },
-          body: [{ type: 'text', text: 'Compiled body' }]
-        }
+          body: [{ type: 'text', text: 'Compiled body' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
         surfaceRuntime,
-        nodeInstance: triggerNodeInstance
-      }
+        nodeInstance: triggerNodeInstance,
+      },
     );
 
     const dialogState = surfaceRuntime.store.getState().entries[0] as any;
@@ -291,7 +293,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const surfaceRuntime = runtime.createSurfaceRuntime();
@@ -308,26 +310,26 @@ describe('createRendererRuntime', () => {
         metaProgram: {},
         eventPlans: {},
         regions: {},
-        scopePlan: { kind: 'inherit' }
+        scopePlan: { kind: 'inherit' },
       },
       scope: page.scope,
       state: {
         metaState: {},
-        mounted: true
-      }
+        mounted: true,
+      },
     } as any;
 
     surfaceRuntime.open({
       kind: 'dialog',
       surface: {
         title: { type: 'text', text: 'Compiled title' },
-        body: [{ type: 'text', text: 'Compiled body' }]
+        body: [{ type: 'text', text: 'Compiled body' }],
       },
       scope: page.scope,
       runtime,
       options: {
-        ownerNodeInstance
-      }
+        ownerNodeInstance,
+      },
     });
 
     const dialogState = surfaceRuntime.store.getState().entries[0] as any;
@@ -341,12 +343,12 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ pageValue: 'root' });
     const rowScope = runtime.createChildScope(page.scope, {
       record: { name: 'Bob' },
-      index: 1
+      index: 1,
     });
 
     expect(runtime.evaluate('User: ${record.name}', rowScope)).toBe('User: Bob');
@@ -356,7 +358,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ rootValue: 'page' });
     const child = runtime.createChildScope(page.scope, { record: { name: 'Alice' } });
@@ -371,13 +373,13 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const compiled = runtime.compile({
       type: 'text',
       text: 'Status',
       visible: '${canView}',
-      disabled: '${isLocked}'
+      disabled: '${isLocked}',
     });
     const page = runtime.createPageRuntime({ canView: true, isLocked: true });
     const templateNode = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
@@ -394,7 +396,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const surfaceRuntime = runtime.createSurfaceRuntime();
@@ -404,15 +406,15 @@ describe('createRendererRuntime', () => {
         action: 'openDialog',
         args: {
           title: 'First',
-          body: [{ type: 'text', text: 'First body' }]
-        }
+          body: [{ type: 'text', text: 'First body' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     await runtime.dispatch(
@@ -420,15 +422,15 @@ describe('createRendererRuntime', () => {
         action: 'openDialog',
         args: {
           title: 'Second',
-          body: [{ type: 'text', text: 'Second body' }]
-        }
+          body: [{ type: 'text', text: 'Second body' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     const entries = surfaceRuntime.store.getState().entries;
@@ -436,15 +438,15 @@ describe('createRendererRuntime', () => {
 
     const closeResult = await runtime.dispatch(
       {
-        action: 'closeDialog'
+        action: 'closeDialog',
       },
       {
         runtime,
         scope: entries[1].scope,
         page,
         surfaceRuntime,
-        dialogId: entries[1].id
-      }
+        dialogId: entries[1].id,
+      },
     );
 
     expect(closeResult.ok).toBe(true);
@@ -457,7 +459,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     runtime.compile({ type: 'text', text: 'trigger' });
     const page = runtime.createPageRuntime({});
@@ -469,15 +471,15 @@ describe('createRendererRuntime', () => {
         args: {
           title: 'Runtime drawer',
           body: [{ type: 'text', text: 'Drawer body' }],
-          statusPath: 'drawerStatus'
-        }
+          statusPath: 'drawerStatus',
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     expect(openResult.ok).toBe(true);
@@ -494,15 +496,15 @@ describe('createRendererRuntime', () => {
 
     const closeResult = await runtime.dispatch(
       {
-        action: 'closeDrawer'
+        action: 'closeDrawer',
       },
       {
         runtime,
         scope: surfaceRuntime.store.getState().entries[0].scope,
         page,
         surfaceRuntime,
-        dialogId: surfaceRuntime.store.getState().entries[0].id
-      }
+        dialogId: surfaceRuntime.store.getState().entries[0].id,
+      },
     );
 
     expect(closeResult.ok).toBe(true);
@@ -522,7 +524,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ drawerTitle: 'Args drawer' });
     const surfaceRuntime = runtime.createSurfaceRuntime();
@@ -532,15 +534,15 @@ describe('createRendererRuntime', () => {
         action: 'openDrawer',
         args: {
           title: '${drawerTitle}',
-          body: [{ type: 'text', text: 'Drawer from args' }]
-        }
+          body: [{ type: 'text', text: 'Drawer from args' }],
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        surfaceRuntime
-      }
+        surfaceRuntime,
+      },
     );
 
     expect(result.ok).toBe(true);

@@ -322,9 +322,7 @@ It should not come directly from raw JSON.
 Example:
 
 ```tsx
-const titleRender = props.regions.title
-  ? () => props.regions.title.render()
-  : undefined;
+const titleRender = props.regions.title ? () => props.regions.title.render() : undefined;
 ```
 
 For repeated fragment rendering with local data, use region handles with local render options.
@@ -334,7 +332,7 @@ Example:
 ```tsx
 const itemRender = (item: unknown, index: number) =>
   props.regions.item?.render({
-    bindings: { item, index }
+    bindings: { item, index },
   });
 ```
 
@@ -486,9 +484,7 @@ If the component needs a function prop:
 
 ```tsx
 function CardRenderer(props: RendererComponentProps) {
-  const titleRender = props.regions.title
-    ? () => props.regions.title.render()
-    : undefined;
+  const titleRender = props.regions.title ? () => props.regions.title.render() : undefined;
 
   return <ThirdPartyCard title={props.props.title} titleRender={titleRender} />;
 }

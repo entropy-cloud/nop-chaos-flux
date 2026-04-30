@@ -18,12 +18,12 @@ describe('createRendererRuntime', () => {
             status: 200,
             data: {
               items: [{ id: 1, name: 'Alice' }],
-              total: 1
-            } as T
+              total: 1,
+            } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ token: 'secure-token' });
 
@@ -33,15 +33,16 @@ describe('createRendererRuntime', () => {
         args: {
           url: '/api/users',
           method: 'get',
-          requestAdaptor: "return {headers: {Authorization: scope.token}, data: {query: scope.token}};",
-          responseAdaptor: 'return {rows: payload.items, count: payload.total};'
-        }
+          requestAdaptor:
+            'return {headers: {Authorization: scope.token}, data: {query: scope.token}};',
+          responseAdaptor: 'return {rows: payload.items, count: payload.total};',
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(fetchCalls).toHaveLength(1);
@@ -49,18 +50,18 @@ describe('createRendererRuntime', () => {
       url: '/api/users',
       method: 'get',
       headers: {
-        Authorization: 'secure-token'
+        Authorization: 'secure-token',
       },
       data: {
-        query: 'secure-token'
-      }
+        query: 'secure-token',
+      },
     });
     expect(result).toMatchObject({
       ok: true,
       data: {
         rows: [{ id: 1, name: 'Alice' }],
-        count: 1
-      }
+        count: 1,
+      },
     });
   });
 
@@ -75,11 +76,11 @@ describe('createRendererRuntime', () => {
           return {
             ok: true,
             status: 200,
-            data: { ok: true } as T
+            data: { ok: true } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ userId: 7, token: 'page-token' });
 
@@ -91,18 +92,18 @@ describe('createRendererRuntime', () => {
           method: 'post',
           includeScope: ['token'],
           params: {
-            mode: '${token}'
+            mode: '${token}',
           },
           data: {
-            userId: '${userId}'
-          }
-        }
+            userId: '${userId}',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(true);
@@ -112,8 +113,8 @@ describe('createRendererRuntime', () => {
       method: 'post',
       data: {
         token: 'page-token',
-        userId: 7
-      }
+        userId: 7,
+      },
     });
     expect(fetchCalls[0].params).toBeUndefined();
   });
@@ -129,11 +130,11 @@ describe('createRendererRuntime', () => {
           return {
             ok: true,
             status: 200,
-            data: { ok: true } as T
+            data: { ok: true } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ token: 'page-token' });
     const childScope = runtime.createChildScope(page.scope, { username: 'Alice' });
@@ -144,24 +145,25 @@ describe('createRendererRuntime', () => {
         args: {
           url: '/api/adaptor-check',
           method: 'post',
-          requestAdaptor: 'return {headers: {Authorization: scope.token}, data: {username: scope.username}};'
-        }
+          requestAdaptor:
+            'return {headers: {Authorization: scope.token}, data: {username: scope.username}};',
+        },
       },
       {
         runtime,
         scope: childScope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(true);
     expect(fetchCalls[0]).toMatchObject({
       headers: {
-        Authorization: 'page-token'
+        Authorization: 'page-token',
       },
       data: {
-        username: 'Alice'
-      }
+        username: 'Alice',
+      },
     });
   });
 });

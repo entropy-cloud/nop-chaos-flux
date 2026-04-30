@@ -11,16 +11,16 @@ const localScopeDebugSchema = {
         action: 'setValue',
         args: {
           path: 'count',
-          value: '${count + 1}'
-        }
-      }
+          value: '${count + 1}',
+        },
+      },
     },
     {
       type: 'scope-debug',
       title: 'Local Page Scope',
-      defaultExpand: true
-    }
-  ]
+      defaultExpand: true,
+    },
+  ],
 };
 
 const nestedScopeDebugSchema = {
@@ -32,19 +32,19 @@ const nestedScopeDebugSchema = {
         user: {
           name: '${user.name}',
           role: '${user.role}',
-          debugMode: true
-        }
+          debugMode: true,
+        },
       },
       body: [
         { type: 'text', text: 'Nested fragment scope with injected debugMode flag.' },
         {
           type: 'scope-debug',
           title: 'Fragment Scope',
-          defaultExpand: true
-        }
-      ]
-    }
-  ]
+          defaultExpand: true,
+        },
+      ],
+    },
+  ],
 };
 
 export function ScopeDebugLabPage() {
@@ -54,21 +54,23 @@ export function ScopeDebugLabPage() {
       scenarios={[
         {
           title: 'Live root scope probe',
-          description: 'Insert `scope-debug` next to interactive controls to watch local writes land in real time.',
+          description:
+            'Insert `scope-debug` next to interactive controls to watch local writes land in real time.',
           schema: localScopeDebugSchema,
-          data: { count: 0, status: 'idle' }
+          data: { count: 0, status: 'idle' },
         },
         {
           title: 'Nested fragment scope probe',
-          description: 'Place the renderer inside a fragment or owner boundary to inspect the exact local scope visible there.',
+          description:
+            'Place the renderer inside a fragment or owner boundary to inspect the exact local scope visible there.',
           schema: nestedScopeDebugSchema,
           data: {
             user: {
               name: 'Alice',
-              role: 'admin'
-            }
-          }
-        }
+              role: 'admin',
+            },
+          },
+        },
       ]}
     />
   );

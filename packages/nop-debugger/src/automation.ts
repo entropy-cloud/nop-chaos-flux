@@ -30,7 +30,7 @@ import type {
   NopNodeValueExplanation,
   NopNodeValueExplanationQuery,
   NopWaitForEventOptions,
-  InstallNopDebuggerWindowFlagOptions
+  InstallNopDebuggerWindowFlagOptions,
 } from './types';
 
 export function createAutomationApi(input: {
@@ -49,7 +49,10 @@ export function createAutomationApi(input: {
   getLatestFailedRequest(): NopDebuggerFailureSummary | undefined;
   getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
   getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
-  getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
+  getRecentFailures(options?: {
+    sinceTimestamp?: number;
+    limit?: number;
+  }): NopDebuggerFailureSummary[];
   getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
@@ -112,7 +115,7 @@ export function createAutomationApi(input: {
     explainNodeValue: input.explainNodeValue,
     explainNodeMeta: input.explainNodeMeta,
     explainNodeFailure: input.explainNodeFailure,
-    explainNodeAsync: input.explainNodeAsync
+    explainNodeAsync: input.explainNodeAsync,
   };
 }
 
@@ -131,7 +134,7 @@ export function registerAutomationApi(controllerId: string, automation: NopDebug
     getController(targetControllerId?: string) {
       const resolvedId = targetControllerId ?? this.activeControllerId;
       return resolvedId ? this.controllers[resolvedId] : undefined;
-    }
+    },
   };
 
   hub.controllers[controllerId] = automation;
@@ -141,7 +144,9 @@ export function registerAutomationApi(controllerId: string, automation: NopDebug
   window.__NOP_DEBUGGER_API__ = automation;
 }
 
-export function getNopDebuggerAutomationApi(controllerId?: string): NopDebuggerAutomationApi | undefined {
+export function getNopDebuggerAutomationApi(
+  controllerId?: string,
+): NopDebuggerAutomationApi | undefined {
   if (typeof window === 'undefined') {
     return undefined;
   }
@@ -153,8 +158,11 @@ export function getNopDebuggerAutomationApi(controllerId?: string): NopDebuggerA
   return window.__NOP_DEBUGGER_HUB__?.getController(controllerId);
 }
 
-export function installNopDebuggerWindowFlag(input: boolean | NopDebuggerWindowConfig | InstallNopDebuggerWindowFlagOptions) {
+export function installNopDebuggerWindowFlag(
+  input: boolean | NopDebuggerWindowConfig | InstallNopDebuggerWindowFlagOptions,
+) {
   if (typeof window !== 'undefined') {
-    window.__NOP_DEBUGGER__ = typeof input === 'object' && input !== null && 'config' in input ? input.config : input;
+    window.__NOP_DEBUGGER__ =
+      typeof input === 'object' && input !== null && 'config' in input ? input.config : input;
   }
 }

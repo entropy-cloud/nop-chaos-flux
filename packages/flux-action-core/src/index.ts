@@ -21,7 +21,7 @@ export {
   shouldRunActionWhen,
   isAbortError,
   type ActionResultClass,
-  type ActionEvaluator
+  type ActionEvaluator,
 } from './action-core';
 
 export {
@@ -29,15 +29,9 @@ export {
   withTimeout,
   withRetry,
   type RetryOptions,
-  type RetryResult
+  type RetryResult,
 } from './operation-control';
 
-export {
-  createActionDispatcher,
-  type ActionDispatcherConfig
-} from './action-dispatcher';
+export { createActionDispatcher, type ActionDispatcherConfig } from './action-dispatcher';
 
-export {
-  cancelPendingDebounce,
-  scheduleDebounce
-} from '@nop-chaos/flux-core';
+export { cancelPendingDebounce, scheduleDebounce } from '@nop-chaos/flux-core';

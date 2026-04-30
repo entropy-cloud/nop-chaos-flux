@@ -19,9 +19,15 @@ describe('dateHelper', () => {
   });
 
   it('supports date arithmetic and invalid-input fallbacks', () => {
-    expect(dateHelper.addDays('2026-04-13T00:00:00Z', 2)?.toISOString()).toBe('2026-04-15T00:00:00.000Z');
-    expect(dateHelper.addMonths('2026-04-13T00:00:00Z', 2)?.toISOString()).toBe('2026-06-13T00:00:00.000Z');
-    expect(dateHelper.addYears('2026-04-13T00:00:00Z', 1)?.toISOString()).toBe('2027-04-13T00:00:00.000Z');
+    expect(dateHelper.addDays('2026-04-13T00:00:00Z', 2)?.toISOString()).toBe(
+      '2026-04-15T00:00:00.000Z',
+    );
+    expect(dateHelper.addMonths('2026-04-13T00:00:00Z', 2)?.toISOString()).toBe(
+      '2026-06-13T00:00:00.000Z',
+    );
+    expect(dateHelper.addYears('2026-04-13T00:00:00Z', 1)?.toISOString()).toBe(
+      '2027-04-13T00:00:00.000Z',
+    );
     expect(dateHelper.diff('2026-04-13T00:00:00Z', '2026-04-10T00:00:00Z', 'day')).toBe(3);
     expect(dateHelper.diff('2026-06-13T00:00:00Z', '2026-04-13T00:00:00Z', 'month')).toBe(2);
     expect(dateHelper.diff('2028-04-13T00:00:00Z', '2026-04-13T00:00:00Z', 'year')).toBe(2);

@@ -4,7 +4,9 @@ import type { NopDebugEvent, NopDebuggerSnapshot, NopDebuggerTab } from './types
 export interface NopDebuggerStore {
   getSnapshot(): NopDebuggerSnapshot;
   subscribe(listener: () => void): () => void;
-  append(event: Omit<NopDebugEvent, 'id' | 'sessionId' | 'timestamp'> & { timestamp?: number }): void;
+  append(
+    event: Omit<NopDebugEvent, 'id' | 'sessionId' | 'timestamp'> & { timestamp?: number },
+  ): void;
   clear(): void;
   show(): void;
   hide(): void;
@@ -41,7 +43,7 @@ export function createDebuggerStore(input: {
     position: input.position,
     events: [],
     filters: [...DEFAULT_FILTERS],
-    pinnedErrors: { earliest: [], latest: [] }
+    pinnedErrors: { earliest: [], latest: [] },
   };
 
   let nextId = 1;
@@ -70,7 +72,7 @@ export function createDebuggerStore(input: {
 
   const updatePinnedErrors = (
     pinned: { earliest: NopDebugEvent[]; latest: NopDebugEvent[] },
-    event: NopDebugEvent
+    event: NopDebugEvent,
   ) => {
     const keepEarliest = input.errorBufferKeepEarliest;
     const keepLatest = input.errorBufferKeepLatest;
@@ -130,7 +132,7 @@ export function createDebuggerStore(input: {
         ...event,
         id: nextId++,
         sessionId: input.sessionId,
-        timestamp
+        timestamp,
       };
 
       if (event.kind === 'render:start' && event.nodeId) {
@@ -150,12 +152,16 @@ export function createDebuggerStore(input: {
         return {
           ...current,
           events: newEvents,
-          pinnedErrors: newPinnedErrors
+          pinnedErrors: newPinnedErrors,
         };
       });
     },
     clear() {
-      setSnapshot((current) => ({ ...current, events: [], pinnedErrors: { earliest: [], latest: [] } }));
+      setSnapshot((current) => ({
+        ...current,
+        events: [],
+        pinnedErrors: { earliest: [], latest: [] },
+      }));
     },
     show() {
       setSnapshot((current) => ({ ...current, panelOpen: true }));
@@ -195,15 +201,15 @@ export function createDebuggerStore(input: {
 
           return {
             ...current,
-            filters: current.filters.filter((item) => item !== filter)
+            filters: current.filters.filter((item) => item !== filter),
           };
         }
 
         return {
           ...current,
-          filters: [...current.filters, filter]
+          filters: [...current.filters, filter],
         };
       });
-    }
+    },
   };
 }

@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  parseTableAliases,
-  SQL_KEYWORDS,
-} from './completion';
+import { parseTableAliases, SQL_KEYWORDS } from './completion';
 import type { TableSchema } from '../../types';
 
 describe('parseTableAliases', () => {
@@ -38,7 +35,10 @@ describe('parseTableAliases', () => {
   });
 
   it('extracts aliases from FROM clause', () => {
-    const map = parseTableAliases('SELECT * FROM users u JOIN orders o ON u.id = o.user_id', tables);
+    const map = parseTableAliases(
+      'SELECT * FROM users u JOIN orders o ON u.id = o.user_id',
+      tables,
+    );
     expect(map.get('u')).toBeTruthy();
     expect(map.get('u')!.name).toBe('users');
     expect(map.get('o')).toBeTruthy();

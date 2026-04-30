@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createSpreadsheetCore,
-  createEmptyDocument,
-  type SpreadsheetCore,
-} from './index.js';
+import { createSpreadsheetCore, createEmptyDocument, type SpreadsheetCore } from './index.js';
 
 describe('P1/P2 sheet operations', () => {
   let core: SpreadsheetCore;
@@ -16,7 +12,11 @@ describe('P1/P2 sheet operations', () => {
   });
 
   it('should copy sheet', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'Original' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Original',
+    });
     const result = await core.dispatch({ type: 'spreadsheet:copySheet', sheetId, name: 'Copy' });
     expect(result.ok).toBe(true);
 
@@ -36,13 +36,17 @@ describe('P1/P2 sheet operations', () => {
     await core.dispatch({ type: 'spreadsheet:addSheet', name: 'Hidden' });
     const hiddenId = core.getSnapshot().document.workbook.sheets[1].id;
     await core.dispatch({ type: 'spreadsheet:hideSheet', sheetId: hiddenId, hidden: true });
-    
+
     const snap = core.getSnapshot();
     expect(snap.document.workbook.sheets[1].hidden).toBe(true);
   });
 
   it('should protect sheet', async () => {
-    await core.dispatch({ type: 'spreadsheet:protectSheet', sheetId, options: { selectLockedCells: false } });
+    await core.dispatch({
+      type: 'spreadsheet:protectSheet',
+      sheetId,
+      options: { selectLockedCells: false },
+    });
     const snap = core.getSnapshot();
     expect(snap.document.workbook.sheets[0].protected).toBe(true);
     expect(snap.document.workbook.sheets[0].protectionOptions?.selectLockedCells).toBe(false);
@@ -62,7 +66,11 @@ describe('P1/P2 sheet operations', () => {
   });
 
   it('should merge cells center', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'Center' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Center',
+    });
     await core.dispatch({
       type: 'spreadsheet:mergeCellsCenter',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 1 },
@@ -81,7 +89,11 @@ describe('fill series', () => {
     const doc = createEmptyDocument();
     sheetId = doc.workbook.sheets[0].id;
     core = createSpreadsheetCore({ document: doc });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 1 });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 1,
+    });
   });
 
   it('should fill series down (linear)', async () => {
@@ -114,7 +126,11 @@ describe('fill series', () => {
   });
 
   it('should copy non-number values', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'Header' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Header',
+    });
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 2, endCol: 0 },
@@ -128,16 +144,24 @@ describe('fill series', () => {
 
   it('should fill series with multiple cells in source', async () => {
     // Set up source: A1=1, A2=2
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 1 });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 2 });
-    
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 1,
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 2,
+    });
+
     // Fill from A1:A2 to A5
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 4, endCol: 0 },
       direction: 'down',
     });
-    
+
     const cells = core.getSnapshot().document.workbook.sheets[0].cells;
     expect(cells?.['A1']?.value).toBe(1);
     expect(cells?.['A2']?.value).toBe(2);
@@ -149,15 +173,23 @@ describe('fill series', () => {
   it('should fill series with custom step (2, 4, 6...)', async () => {
     // Note: Current implementation uses simple increment (1, 2, 3...)
     // not detecting step from source cells. This is a known limitation.
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 1 });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 2 });
-    
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 1,
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 2,
+    });
+
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 4, endCol: 0 },
       direction: 'down',
     });
-    
+
     const cells = core.getSnapshot().document.workbook.sheets[0].cells;
     // Current implementation doesn't detect step, just uses row index
     expect(cells?.['A1']?.value).toBe(1);
@@ -168,7 +200,11 @@ describe('fill series', () => {
   });
 
   it('should fill series with trailing-digit string down (abc12 → abc13, abc14...)', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'abc12' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'abc12',
+    });
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 3, endCol: 0 },
@@ -182,7 +218,11 @@ describe('fill series', () => {
   });
 
   it('should fill series with trailing-digit string right (item01 → item02, item03...)', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'item01' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'item01',
+    });
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 3 },
@@ -196,7 +236,11 @@ describe('fill series', () => {
   });
 
   it('should preserve zero-padding in trailing-digit series (code001 → code002...)', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'code001' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'code001',
+    });
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 4, endCol: 0 },
@@ -211,7 +255,11 @@ describe('fill series', () => {
   });
 
   it('should fill series with pure number string down ("33" → 34, 35...)', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: '33' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: '33',
+    });
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 3, endCol: 0 },
@@ -225,7 +273,11 @@ describe('fill series', () => {
   });
 
   it('should fill series with trailing-digit no-alpha prefix ("12abc99" → 12abc100...)', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: '12abc99' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: '12abc99',
+    });
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 2, endCol: 0 },
@@ -238,7 +290,11 @@ describe('fill series', () => {
   });
 
   it('should copy non-incrementable strings as-is', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'noDigitsHere' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'noDigitsHere',
+    });
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 2, endCol: 0 },
@@ -259,9 +315,21 @@ describe('find/replace', () => {
     const doc = createEmptyDocument();
     sheetId = doc.workbook.sheets[0].id;
     core = createSpreadsheetCore({ document: doc });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'Hello World' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'hello world' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'Test' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Hello World',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'hello world',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'Test',
+    });
   });
 
   it('should find text (case insensitive)', async () => {
@@ -306,7 +374,9 @@ describe('find/replace', () => {
       options: { query: 'World' },
       replacement: 'Universe',
     });
-    expect(core.getSnapshot().document.workbook.sheets[0].cells?.['A1']?.value).toBe('Hello Universe');
+    expect(core.getSnapshot().document.workbook.sheets[0].cells?.['A1']?.value).toBe(
+      'Hello Universe',
+    );
   });
 
   it('should replace all', async () => {
@@ -351,7 +421,11 @@ describe('undo/redo for P1/P2 features', () => {
   });
 
   it('should undo fill series', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 10 });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 10,
+    });
     await core.dispatch({
       type: 'spreadsheet:fillSeries',
       range: { sheetId, startRow: 0, startCol: 0, endRow: 2, endCol: 0 },

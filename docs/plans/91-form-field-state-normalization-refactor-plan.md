@@ -17,11 +17,11 @@
 // packages/flux-core/src/types/runtime.ts:24-32
 interface FormStoreState {
   values: Record<string, any>;
-  errors: Record<string, ValidationError[]>;  // 扁平 map
-  validating: Record<string, boolean>;        // 扁平 map
-  touched: Record<string, boolean>;           // 扁平 map
-  dirty: Record<string, boolean>;             // 扁平 map
-  visited: Record<string, boolean>;           // 扁平 map
+  errors: Record<string, ValidationError[]>; // 扁平 map
+  validating: Record<string, boolean>; // 扁平 map
+  touched: Record<string, boolean>; // 扁平 map
+  dirty: Record<string, boolean>; // 扁平 map
+  visited: Record<string, boolean>; // 扁平 map
   submitting: boolean;
 }
 ```
@@ -73,7 +73,7 @@ interface FormStoreState {
 - `packages/flux-renderers-form/src/renderers/object-field.tsx` - 子表单投影
 - `packages/flux-renderers-form/src/renderers/array-field.tsx` - 数组项投影
 - `packages/flux-renderers-form/src/renderers/form.tsx` - 状态发布
-- 所有使用 data-field-* 属性的渲染器文件
+- 所有使用 data-field-\* 属性的渲染器文件
 - `docs/architecture/form-validation.md` - 架构文档更新
 - `docs/architecture/performance-design-requirements.md` - 性能文档更新
 
@@ -93,7 +93,7 @@ Targets: `packages/flux-core/src/types/runtime.ts`, `packages/flux-core/src/type
 - [x] 定义新的 `FieldState` 接口
   ```typescript
   export interface FieldState {
-    touched?: true;      // 只存 true，false/undefined 时不存
+    touched?: true; // 只存 true，false/undefined 时不存
     dirty?: true;
     visited?: true;
     validating?: true;
@@ -128,17 +128,18 @@ Targets: `packages/flux-runtime/src/form-store.ts`
 
 - [x] 重写 `createFormStore` 使用新的 `fieldStates` 结构
 - [x] 简化 `setBooleanState` 为统一的 `updateFieldState`
+
   ```typescript
   function updateFieldState(path: string, patch: Partial<FieldState>) {
     const current = store.getState().fieldStates;
     const existing = current[path];
     const next = { ...existing, ...patch };
-    
+
     // 清理 undefined/false 值
     if (!next.touched) delete next.touched;
     if (!next.dirty) delete next.dirty;
     // ...
-    
+
     // 如果对象为空则删除整个条目
     if (Object.keys(next).length === 0) {
       const { [path]: _, ...rest } = current;
@@ -149,6 +150,7 @@ Targets: `packages/flux-runtime/src/form-store.ts`
     notifyPath(path);
   }
   ```
+
 - [x] 重写 `setPathErrors` 为 `updateFieldState` 的特化
 - [x] 简化批量更新方法 `setTouchedState`/`setDirtyState` 等
 - [x] 统一 diff/notify 逻辑为单一函数
@@ -171,13 +173,13 @@ Targets: `packages/flux-runtime/src/form-runtime-array.ts`, `packages/flux-runti
   export function remapFieldStates(
     fieldStates: Record<string, FieldState>,
     arrayPath: string,
-    transformIndex: (index: number) => number | undefined
+    transformIndex: (index: number) => number | undefined,
   ): Record<string, FieldState> {
     const result: Record<string, FieldState> = {};
     for (const [path, state] of Object.entries(fieldStates)) {
       const newPath = transformArrayIndexedPath(path, arrayPath, transformIndex);
       if (newPath) {
-        result[newPath] = state;  // 直接移动对象引用
+        result[newPath] = state; // 直接移动对象引用
       }
     }
     return result;
@@ -252,7 +254,7 @@ Note: The data-attribute pattern is already working via `useCompositeFieldFrame`
   - [ ] `array-editor.tsx`
   - [ ] `variant-field.tsx`
   - [ ] `detail-field.tsx`
-  - [ ] 其他使用 data-field-* 的渲染器
+  - [ ] 其他使用 data-field-\* 的渲染器
 - [ ] 确保 `form.tsx` 使用 `buildFormStatusSummary` 而非重复逻辑
 
 Exit Criteria:

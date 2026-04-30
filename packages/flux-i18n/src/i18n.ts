@@ -93,7 +93,11 @@ export function t(key: string, options?: Record<string, unknown>): string {
   return instance.t(normalizeTranslationKey(key), options);
 }
 
-export function addResources(lng: SupportedLanguage, ns: string, resources: Record<string, unknown>): void {
+export function addResources(
+  lng: SupportedLanguage,
+  ns: string,
+  resources: Record<string, unknown>,
+): void {
   const instance = getFluxI18n();
   instance.addResourceBundle(lng, ns, resources, true, true);
 }

@@ -1,7 +1,14 @@
 import React, { useMemo, useSyncExternalStore } from 'react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import { useHostScope } from '@nop-chaos/flux-react';
-import type { DesignerCore, DesignerSnapshot, DesignerConfig, NodeTypeConfig, EdgeTypeConfig, NormalizedDesignerConfig } from '@nop-chaos/flow-designer-core';
+import type {
+  DesignerCore,
+  DesignerSnapshot,
+  DesignerConfig,
+  NodeTypeConfig,
+  EdgeTypeConfig,
+  NormalizedDesignerConfig,
+} from '@nop-chaos/flow-designer-core';
 import type { DesignerCommandAdapter } from './designer-command-adapter';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 
@@ -12,10 +19,17 @@ import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/w
 export interface DesignerContextValue {
   core: DesignerCore;
   commandAdapter: DesignerCommandAdapter;
-  dispatch: (command: import('./designer-command-adapter').DesignerCommand) => import('./designer-command-adapter').DesignerCommandResult;
+  dispatch: (
+    command: import('./designer-command-adapter').DesignerCommand,
+  ) => import('./designer-command-adapter').DesignerCommandResult;
   config: DesignerConfig;
   openCreateDialog?: (nodeType: NodeTypeConfig, position: { x: number; y: number }) => void;
-  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => void;
+  onPlusButtonClick?: (
+    sourceId: string,
+    clientX: number,
+    clientY: number,
+    sourceKind?: 'node' | 'branch-group' | 'merge',
+  ) => void;
 }
 
 export const DesignerContext = React.createContext<DesignerContextValue | null>(null);
@@ -51,7 +65,7 @@ export function useDesignerFullSnapshot(): DesignerSnapshot {
  */
 export function useDesignerSnapshotSelector<T>(
   selector: (snapshot: DesignerSnapshot) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
+  isEqual: (a: T, b: T) => boolean = Object.is,
 ): T {
   const { core } = useDesignerContext();
   return useSyncExternalStoreWithSelector(
@@ -59,7 +73,7 @@ export function useDesignerSnapshotSelector<T>(
     core.getSnapshot,
     core.getSnapshot,
     selector,
-    isEqual
+    isEqual,
   );
 }
 
@@ -68,17 +82,13 @@ export function useDesignerSnapshotSelector<T>(
  * Used internally by DesignerPageBody before context is established.
  */
 export function useDesignerSnapshot(core: DesignerCore): DesignerSnapshot {
-  return useSyncExternalStore(
-    core.subscribe,
-    core.getSnapshot,
-    core.getSnapshot,
-  );
+  return useSyncExternalStore(core.subscribe, core.getSnapshot, core.getSnapshot);
 }
 
 export function notifyCommandFailure(
   notify: import('@nop-chaos/flux-core').RendererEnv['notify'] | undefined,
   error: string | undefined,
-  reason?: string
+  reason?: string,
 ) {
   if (!error || reason === 'unchanged') {
     return;
@@ -91,7 +101,7 @@ export function toActionResult(result: import('./designer-command-adapter').Desi
   return {
     ok: result.ok,
     data: result.exported ?? result.data,
-    error: result.error ? new Error(result.error) : undefined
+    error: result.error ? new Error(result.error) : undefined,
   };
 }
 
@@ -101,7 +111,13 @@ export function buildDesignerScopeData(input: {
   core: DesignerCore;
 }) {
   const { snapshot } = input;
-  const selectionKind = snapshot.activeBranch ? 'branch' : snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none';
+  const selectionKind = snapshot.activeBranch
+    ? 'branch'
+    : snapshot.activeNode
+      ? 'node'
+      : snapshot.activeEdge
+        ? 'edge'
+        : 'none';
   const nodeIds = snapshot.selection.selectedNodeIds;
   const edgeIds = snapshot.selection.selectedEdgeIds;
 
@@ -116,7 +132,7 @@ export function buildDesignerScopeData(input: {
       selectedEdgeIds: edgeIds,
       activeNodeId: snapshot.selection.activeNodeId,
       activeEdgeId: snapshot.selection.activeEdgeId,
-      activeBranchId: snapshot.selection.activeBranchId
+      activeBranchId: snapshot.selection.activeBranchId,
     },
     activeNode: snapshot.activeNode,
     activeEdge: snapshot.activeEdge,
@@ -128,8 +144,8 @@ export function buildDesignerScopeData(input: {
       isDirty: snapshot.isDirty,
       gridEnabled: snapshot.gridEnabled,
       zoom: snapshot.viewport.zoom,
-      viewport: snapshot.viewport
-    }
+      viewport: snapshot.viewport,
+    },
   };
 }
 

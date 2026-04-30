@@ -3,7 +3,9 @@ import type { ActionResult, ScopeRef, SourceSchema } from '@nop-chaos/flux-core'
 import { useRenderScope, useRendererRuntime } from './hooks';
 
 export function isSourceSchema(value: unknown): value is SourceSchema {
-  return Boolean(value) && typeof value === 'object' && (value as { type?: unknown }).type === 'source';
+  return (
+    Boolean(value) && typeof value === 'object' && (value as { type?: unknown }).type === 'source'
+  );
 }
 
 export interface SourceValueState<T> {
@@ -18,7 +20,10 @@ interface ResolvedSourceState<T> {
   error: unknown;
 }
 
-export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }): SourceValueState<T> {
+export function useSourceValue<T>(
+  input: unknown,
+  options?: { scope?: ScopeRef },
+): SourceValueState<T> {
   const runtime = useRendererRuntime();
   const activeScope = useRenderScope();
   const scope = options?.scope ?? activeScope;
@@ -26,7 +31,7 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
   const [state, setState] = useState<ResolvedSourceState<T>>({
     source: undefined,
     value: source ? undefined : (input as T | undefined),
-    error: undefined
+    error: undefined,
   });
 
   useEffect(() => {
@@ -37,7 +42,8 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
     const controller = new AbortController();
     const { signal } = controller;
 
-    void runtime.executeSource({ source, scope, ctx: { signal } })
+    void runtime
+      .executeSource({ source, scope, ctx: { signal } })
       .then((result: ActionResult) => {
         if (signal.aborted) {
           return;
@@ -46,7 +52,7 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
         setState({
           source,
           value: result.data as T | undefined,
-          error: result.ok ? undefined : result.error
+          error: result.ok ? undefined : result.error,
         });
       })
       .catch((error) => {
@@ -66,7 +72,7 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
     return {
       loading: false,
       value: input as T | undefined,
-      error: undefined
+      error: undefined,
     };
   }
 
@@ -74,13 +80,13 @@ export function useSourceValue<T>(input: unknown, options?: { scope?: ScopeRef }
     return {
       loading: true,
       value: undefined,
-      error: undefined
+      error: undefined,
     };
   }
 
   return {
     loading: false,
     value: state.value,
-    error: state.error
+    error: state.error,
   };
 }

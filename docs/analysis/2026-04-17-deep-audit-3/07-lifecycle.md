@@ -35,14 +35,17 @@
 ## P3 级发现
 
 ### [维度07-03] useSourceValue 在 effect 中执行 source 请求
+
 - **文件**: `packages/flux-react/src/useSourceValue.ts:32-63`
 - **说明**: 边界案例，实际请求逻辑已在 runtime 层
 
 ### [维度07-04] useNodeImports 在 effect 中加载 import namespace
+
 - **文件**: `packages/flux-react/src/useNodeImports.ts:62-135`
 - **说明**: effect 触发，runtime 管理，设计合理
 
 ### [维度07-05] CrudRenderer 在 effect 中同步 $crud 状态
+
 - **文件**: `packages/flux-renderers-data/src/crud-renderer.tsx:141-145`
 - **说明**: 低优先级优化
 
@@ -51,16 +54,19 @@
 ## 合规的 effect 模式
 
 ### 订阅管理 (正确归属 React 层)
+
 - `node-renderer.tsx:259-269` — 字段隐藏通知 form runtime
 - `schema-renderer.tsx:91-98` — 组件注册表变更回调
 - `useNodeDebugData.ts:18-37` — 调试数据同步到注册表
 
 ### DOM 操作 / 外部系统同步 (正确归属 React 层)
+
 - `chart-renderer.tsx:52-99` — ECharts 实例初始化
 - `use-code-mirror.ts:59-126` — CodeMirror 实例同步
 - `designer-page.tsx:348-402` — 全局键盘快捷键监听
 
 ### 生命周期 action 触发 (正确归属 React 层)
+
 - `node-renderer-effects.ts:65-79` — onMount/onUnmount lifecycle dispatch
 - `form.tsx:239-250` — initAction 触发
 
@@ -69,6 +75,7 @@
 ## 已修复的历史问题
 
 ### Bug 15 — RenderNodes render 阶段写 store
+
 - **状态**: 已修复
 - `render-nodes.tsx:257-275` 将 `setSnapshot` 移入 effect
 
@@ -77,10 +84,10 @@
 ## 总结
 
 | 严重程度 | 数量 |
-|---------|------|
-| P0 | 0 |
-| P1 | 0 |
-| P2 | 3 |
-| P3 | 3 |
+| -------- | ---- |
+| P0       | 0    |
+| P1       | 0    |
+| P2       | 3    |
+| P3       | 3    |
 
 **整体评价**: useEffect 使用总体符合架构规范，主要改进方向是统一数据获取模式。

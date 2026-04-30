@@ -2,7 +2,7 @@ import type {
   TemplateRegion,
   TemplateNode,
   CompileSchemaOptions,
-  SchemaInput
+  SchemaInput,
 } from '@nop-chaos/flux-core';
 import { isSchemaInput } from '@nop-chaos/flux-core';
 
@@ -23,14 +23,12 @@ export function validateRegionParams(params: readonly string[], regionPath: stri
     if (RESERVED_SLOT_PARAM_NAMES.has(name)) {
       throw new Error(
         `Region ${regionPath} declares reserved param name "${name}". ` +
-        'Names starting with "$" are reserved for slot-frame metadata.'
+          'Names starting with "$" are reserved for slot-frame metadata.',
       );
     }
 
     if (seen.has(name)) {
-      throw new Error(
-        `Region ${regionPath} has duplicate param name "${name}".`
-      );
+      throw new Error(`Region ${regionPath} has duplicate param name "${name}".`);
     }
 
     seen.add(name);
@@ -41,8 +39,11 @@ export function createTemplateRegion(
   key: string,
   value: unknown,
   path: string,
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[],
-  regionMeta?: { params?: readonly string[]; isolate?: boolean }
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+  ) => TemplateNode | TemplateNode[],
+  regionMeta?: { params?: readonly string[]; isolate?: boolean },
 ): TemplateRegion {
   if (regionMeta?.params) {
     validateRegionParams(regionMeta.params, path);
@@ -54,7 +55,7 @@ export function createTemplateRegion(
       path,
       node: null,
       ...(regionMeta?.params !== undefined ? { params: regionMeta.params } : {}),
-      ...(regionMeta?.isolate !== undefined ? { isolate: regionMeta.isolate } : {})
+      ...(regionMeta?.isolate !== undefined ? { isolate: regionMeta.isolate } : {}),
     };
   }
 
@@ -67,7 +68,7 @@ export function createTemplateRegion(
     path,
     node: compileSchema(value, { basePath: path, parentPath: path }),
     ...(regionMeta?.params !== undefined ? { params: regionMeta.params } : {}),
-    ...(regionMeta?.isolate !== undefined ? { isolate: regionMeta.isolate } : {})
+    ...(regionMeta?.isolate !== undefined ? { isolate: regionMeta.isolate } : {}),
   };
 }
 
@@ -77,7 +78,10 @@ export function extractNestedSchemaRegions(input: {
   itemRegionKeyPrefix: string;
   rules: readonly NestedRegionFieldRule[];
   regions: Record<string, TemplateRegion>;
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[];
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+  ) => TemplateNode | TemplateNode[];
 }) {
   const nextValue: Record<string, unknown> = { ...input.candidate };
   let changed = false;
@@ -96,7 +100,7 @@ export function extractNestedSchemaRegions(input: {
       fieldValue,
       regionPath,
       input.compileSchema,
-      { params: rule.params, isolate: rule.isolate }
+      { params: rule.params, isolate: rule.isolate },
     );
     delete nextValue[rule.key];
     nextValue[rule.compiledKey] = regionKey;
@@ -105,6 +109,6 @@ export function extractNestedSchemaRegions(input: {
 
   return {
     value: changed ? nextValue : input.candidate,
-    changed
+    changed,
   };
 }

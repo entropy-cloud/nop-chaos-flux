@@ -37,12 +37,12 @@ This is a comparison between a **theoretical design** (FK10) and a **working imp
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Compilation stages | 1 pass | 4 passes | FK10 (more optimization opportunity) |
-| Dependency analysis | Runtime-collected | Compile-time static | FK10 (theoretically more precise) |
-| Static value handling | `isStatic: true` flag, zero-cost path | Static subtree React.memo wrapping | Current (simpler, equally effective) |
-| Compile output | `CompiledTemplate` (single IR) | `ExecutionPackage` (multi-table IR) | Equivalent (different granularity) |
+| Aspect                | Current                               | FK10                                | Winner                               |
+| --------------------- | ------------------------------------- | ----------------------------------- | ------------------------------------ |
+| Compilation stages    | 1 pass                                | 4 passes                            | FK10 (more optimization opportunity) |
+| Dependency analysis   | Runtime-collected                     | Compile-time static                 | FK10 (theoretically more precise)    |
+| Static value handling | `isStatic: true` flag, zero-cost path | Static subtree React.memo wrapping  | Current (simpler, equally effective) |
+| Compile output        | `CompiledTemplate` (single IR)        | `ExecutionPackage` (multi-table IR) | Equivalent (different granularity)   |
 
 **Honest assessment**: The multi-stage compilation gives FK10 more optimization opportunity, but the current single-pass approach is simpler and already achieves the key invariant (static parts have zero runtime cost). The FK10 advantage is **incremental**, not **paradigmatic**. Whether the additional compilation stages justify their complexity depends on whether the optimizer finds significant optimization opportunities in real-world schemas. This is unproven.
 
@@ -69,15 +69,15 @@ This is a comparison between a **theoretical design** (FK10) and a **working imp
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Scope inheritance | Lexical parent chain | Lexical parent chain + projections | Roughly equivalent (current has `projected-scope-store.ts`) |
-| Isolation mechanism | Row scopes isolated by default + projected-scope-store | `isolated: true` + explicit `projections` | Roughly equivalent (both support explicit projection) |
-| Invalidation | Path-based change reporting | DepPattern-based (exact/prefix/computed) | Current (simpler), FK10 (more nuanced) |
-| Transaction model | Implicit (synchronous mutations) | Explicit (begin/set/commit/rollback) | FK10 (safer, supports rollback) |
-| Prototype optimization | Yes (zero-allocation reads) | No (standard object access) | Current (real performance win) |
-| Subscription model | Per-hook `useScopeSelector` | Single-store subscription batching | FK10 (fewer subscriptions) |
-| Separation of data/behavior | Three separate registries | Combined scope + action dispatch | Current (cleaner separation) |
+| Aspect                      | Current                                                | FK10                                      | Winner                                                      |
+| --------------------------- | ------------------------------------------------------ | ----------------------------------------- | ----------------------------------------------------------- |
+| Scope inheritance           | Lexical parent chain                                   | Lexical parent chain + projections        | Roughly equivalent (current has `projected-scope-store.ts`) |
+| Isolation mechanism         | Row scopes isolated by default + projected-scope-store | `isolated: true` + explicit `projections` | Roughly equivalent (both support explicit projection)       |
+| Invalidation                | Path-based change reporting                            | DepPattern-based (exact/prefix/computed)  | Current (simpler), FK10 (more nuanced)                      |
+| Transaction model           | Implicit (synchronous mutations)                       | Explicit (begin/set/commit/rollback)      | FK10 (safer, supports rollback)                             |
+| Prototype optimization      | Yes (zero-allocation reads)                            | No (standard object access)               | Current (real performance win)                              |
+| Subscription model          | Per-hook `useScopeSelector`                            | Single-store subscription batching        | FK10 (fewer subscriptions)                                  |
+| Separation of data/behavior | Three separate registries                              | Combined scope + action dispatch          | Current (cleaner separation)                                |
 
 **Honest assessment**: Both systems are competent scope chain implementations. FK10's **projections** are a genuine improvement for table row isolation — the current project's row scopes are "isolated by default" but lack an explicit mechanism for importing specific parent values. FK10 makes this explicit and typed.
 
@@ -106,14 +106,14 @@ The **three-registry separation** in the current project (data, actions, compone
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Parsing | Expression parser → AST | Lexer → Parser → AST | Equivalent |
-| Evaluation | AST walker | AST walker (Phase 1) | Equivalent |
-| Dependency tracking | Runtime collection during evaluation | Compile-time analysis + runtime collection | Roughly equivalent (FK10 slightly ahead for static schemas) |
-| Security | No eval/new Function/with | Same guarantees | Equivalent |
-| Template strings | FormulaCompiler handles templates | TemplateExpr AST node | Equivalent |
-| Built-in functions | Comprehensive function/filter registry | Comprehensive function/filter registry | Equivalent |
+| Aspect              | Current                                | FK10                                       | Winner                                                      |
+| ------------------- | -------------------------------------- | ------------------------------------------ | ----------------------------------------------------------- |
+| Parsing             | Expression parser → AST                | Lexer → Parser → AST                       | Equivalent                                                  |
+| Evaluation          | AST walker                             | AST walker (Phase 1)                       | Equivalent                                                  |
+| Dependency tracking | Runtime collection during evaluation   | Compile-time analysis + runtime collection | Roughly equivalent (FK10 slightly ahead for static schemas) |
+| Security            | No eval/new Function/with              | Same guarantees                            | Equivalent                                                  |
+| Template strings    | FormulaCompiler handles templates      | TemplateExpr AST node                      | Equivalent                                                  |
+| Built-in functions  | Comprehensive function/filter registry | Comprehensive function/filter registry     | Equivalent                                                  |
 
 **Honest assessment**: The expression engines are functionally equivalent. FK10's compile-time dependency analysis gives it a marginal edge for statically-analyzable schemas, but the current project's runtime collection achieves the same result and handles dynamic cases (computed property access) equally well.
 
@@ -143,15 +143,15 @@ The FK10 bytecode VM (Phase 2) would be a performance differentiator, but it's u
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Renderer categories | 3 (instance, flux-owner, domain-host) | 2 (layout, widget) | Current (more nuanced ownership) |
-| Props resolution | NodeRenderer orchestrates | Pre-compiled selectors | FK10 (less runtime work) |
-| Region params | Bindings in $slot frame | Params in $slot | Equivalent |
-| Error boundaries | Not specified per renderer | Per-renderer with fallback | FK10 |
-| React 19 features | useSyncExternalStore (standard) | useSyncExternalStore + useOptimistic + use() | FK10 (more React 19 integration) |
-| Lifecycle actions | Explicit lifecycle action dispatch | Not addressed in detail | Current |
-| Domain host integration | `domain-host-renderer` with hostContract | `DomainControlRegistration` | Current (more mature pattern) |
+| Aspect                  | Current                                  | FK10                                         | Winner                           |
+| ----------------------- | ---------------------------------------- | -------------------------------------------- | -------------------------------- |
+| Renderer categories     | 3 (instance, flux-owner, domain-host)    | 2 (layout, widget)                           | Current (more nuanced ownership) |
+| Props resolution        | NodeRenderer orchestrates                | Pre-compiled selectors                       | FK10 (less runtime work)         |
+| Region params           | Bindings in $slot frame                  | Params in $slot                              | Equivalent                       |
+| Error boundaries        | Not specified per renderer               | Per-renderer with fallback                   | FK10                             |
+| React 19 features       | useSyncExternalStore (standard)          | useSyncExternalStore + useOptimistic + use() | FK10 (more React 19 integration) |
+| Lifecycle actions       | Explicit lifecycle action dispatch       | Not addressed in detail                      | Current                          |
+| Domain host integration | `domain-host-renderer` with hostContract | `DomainControlRegistration`                  | Current (more mature pattern)    |
 
 **Honest assessment**: The current project's **three-category renderer model** is more mature than FK10's two-category model. The distinction between `instance-renderer` (simple widget), `flux-owner-renderer` (scope-owning container like form/table), and `domain-host-renderer` (complex embedded control like designer) captures real architectural differences that FK10's layout/widget split doesn't.
 
@@ -182,16 +182,16 @@ FK10's **per-renderer error boundary** is a good idea not present in the current
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Action composition | Rich (all operators) | Rich (same operators) | Equivalent |
-| Structured concurrency | No formal model | AbortSignal propagation | FK10 |
-| Action ergonomics | Nested then chains | Flat steps + nested chains | FK10 (flat steps is more readable) |
-| Plugin system | Yes (action plugins) | Not mentioned | Current |
-| Import system | `xui:imports` (declarative) | Not addressed | Current |
-| Separation of dispatch/effects | action-core vs runtime adapter | Combined ActionOrchestrator | Current (cleaner separation) |
-| Cancellation | Pervasive AbortSignal (68 instances) + per-path validation abort | Full AbortSignal chain propagation | FK10 (chain-level propagation from dialog scope) |
-| Action chain debugging | monitor hooks | Time-travel inspector | FK10 |
+| Aspect                         | Current                                                          | FK10                               | Winner                                           |
+| ------------------------------ | ---------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------ |
+| Action composition             | Rich (all operators)                                             | Rich (same operators)              | Equivalent                                       |
+| Structured concurrency         | No formal model                                                  | AbortSignal propagation            | FK10                                             |
+| Action ergonomics              | Nested then chains                                               | Flat steps + nested chains         | FK10 (flat steps is more readable)               |
+| Plugin system                  | Yes (action plugins)                                             | Not mentioned                      | Current                                          |
+| Import system                  | `xui:imports` (declarative)                                      | Not addressed                      | Current                                          |
+| Separation of dispatch/effects | action-core vs runtime adapter                                   | Combined ActionOrchestrator        | Current (cleaner separation)                     |
+| Cancellation                   | Pervasive AbortSignal (68 instances) + per-path validation abort | Full AbortSignal chain propagation | FK10 (chain-level propagation from dialog scope) |
+| Action chain debugging         | monitor hooks                                                    | Time-travel inspector              | FK10                                             |
 
 **Honest assessment**: The action systems are architecturally similar. FK10's **structured concurrency** (AbortSignal propagation) is the main differentiator — the current project has request-level cancellation but not full chain cancellation. This matters for dialog scenarios where closing a dialog should cancel all in-flight actions.
 
@@ -223,16 +223,16 @@ The current project's **separation of action dispatch (`action-core`) from effec
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Validation model maturity | Very mature (compiled graph, participation, owner resolution) | Solid design, unimplemented | Current (working, battle-tested design) |
-| Owner resolution | Explicit `inherit/create/no-owner` per boundary | Not explicitly addressed | Current |
-| Error model | Rich (sourceKind, OwnerQualifiedPath) | Simple (path + message + ruleId) | Current (more diagnostic info) |
-| Per-path subscriptions | Yes (O(1) wake-up) | Version-counter approach | Current (more precise) |
-| Draft isolation | Phase 2 (partially implemented) | Explicit DraftScope API | FK10 (cleaner API) |
-| Array fields | First-class: append/prepend/insert/remove/move/swap/replace with index remapping | First-class ArrayFieldOperations | Equivalent (current has more operations) |
-| Undo/redo | Not mentioned | UndoRedoManager per form | FK10 |
-| Async validation | Centralized, cancellable, stale-run detection | AsyncRule with debounce | Current (more robust) |
+| Aspect                    | Current                                                                          | FK10                             | Winner                                   |
+| ------------------------- | -------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------- |
+| Validation model maturity | Very mature (compiled graph, participation, owner resolution)                    | Solid design, unimplemented      | Current (working, battle-tested design)  |
+| Owner resolution          | Explicit `inherit/create/no-owner` per boundary                                  | Not explicitly addressed         | Current                                  |
+| Error model               | Rich (sourceKind, OwnerQualifiedPath)                                            | Simple (path + message + ruleId) | Current (more diagnostic info)           |
+| Per-path subscriptions    | Yes (O(1) wake-up)                                                               | Version-counter approach         | Current (more precise)                   |
+| Draft isolation           | Phase 2 (partially implemented)                                                  | Explicit DraftScope API          | FK10 (cleaner API)                       |
+| Array fields              | First-class: append/prepend/insert/remove/move/swap/replace with index remapping | First-class ArrayFieldOperations | Equivalent (current has more operations) |
+| Undo/redo                 | Not mentioned                                                                    | UndoRedoManager per form         | FK10                                     |
+| Async validation          | Centralized, cancellable, stale-run detection                                    | AsyncRule with debounce          | Current (more robust)                    |
 
 **Honest assessment**: The current project's validation system is **architecturally more mature**. The compiled validation graph, owner resolution system, per-path subscriptions, and rich error model represent significant design investment that FK10's validation engine doesn't match in depth.
 
@@ -263,16 +263,16 @@ The current project's **owner resolution** pattern (following data ownership rat
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Package structure | Well-separated modules | Single `@flux/data-source` package | Current (better separation) |
-| Lifecycle states | Explicit: idle/pending/success/error + derived flags (stale, isRefreshing, etc.) | Rich state machine (Loading/Ready/Stale/Refreshing/Error) | Equivalent (same coverage, different names) |
-| WebSocket | Not mentioned | Built-in with reconnect | FK10 |
-| Offline support | Not mentioned | OfflinePolicy with persistence | FK10 |
-| Shared async governance | Centralized | Per-data-source | Current (cleaner coordination) |
-| Polling | Supported | Supported with deduplication | FK10 (more efficient) |
-| Suspense integration | Not mentioned | `useDataSource` + Suspense | FK10 |
-| Cache | ApiCacheStore | CachePolicy with TTL and key expression | Equivalent |
+| Aspect                  | Current                                                                          | FK10                                                      | Winner                                      |
+| ----------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------- |
+| Package structure       | Well-separated modules                                                           | Single `@flux/data-source` package                        | Current (better separation)                 |
+| Lifecycle states        | Explicit: idle/pending/success/error + derived flags (stale, isRefreshing, etc.) | Rich state machine (Loading/Ready/Stale/Refreshing/Error) | Equivalent (same coverage, different names) |
+| WebSocket               | Not mentioned                                                                    | Built-in with reconnect                                   | FK10                                        |
+| Offline support         | Not mentioned                                                                    | OfflinePolicy with persistence                            | FK10                                        |
+| Shared async governance | Centralized                                                                      | Per-data-source                                           | Current (cleaner coordination)              |
+| Polling                 | Supported                                                                        | Supported with deduplication                              | FK10 (more efficient)                       |
+| Suspense integration    | Not mentioned                                                                    | `useDataSource` + Suspense                                | FK10                                        |
+| Cache                   | ApiCacheStore                                                                    | CachePolicy with TTL and key expression                   | Equivalent                                  |
 
 **Honest assessment**: FK10 has a richer data source model with **WebSocket**, **offline persistence**, and explicit **lifecycle states**. The current project's `async-data/` module structure is well-organized but doesn't address WebSocket or offline scenarios.
 
@@ -302,13 +302,13 @@ However, the current project's **shared async governance** is an important archi
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Static optimization | `isStatic` flag, zero-cost | React.memo boundary | Current (simpler, equally effective) |
-| Dynamic optimization | Runtime dependency collection + identity reuse | Pre-compiled selectors + version counters | FK10 (theoretically more precise) |
-| Scope read performance | Prototype-backed (zero alloc) | Standard object access | Current (real performance win) |
-| Subscription efficiency | Per-hook subscription | Single-store batching | FK10 (fewer subscriptions) |
-| Performance monitoring | Not built-in | Telemetry events | FK10 |
+| Aspect                  | Current                                        | FK10                                      | Winner                               |
+| ----------------------- | ---------------------------------------------- | ----------------------------------------- | ------------------------------------ |
+| Static optimization     | `isStatic` flag, zero-cost                     | React.memo boundary                       | Current (simpler, equally effective) |
+| Dynamic optimization    | Runtime dependency collection + identity reuse | Pre-compiled selectors + version counters | FK10 (theoretically more precise)    |
+| Scope read performance  | Prototype-backed (zero alloc)                  | Standard object access                    | Current (real performance win)       |
+| Subscription efficiency | Per-hook subscription                          | Single-store batching                     | FK10 (fewer subscriptions)           |
+| Performance monitoring  | Not built-in                                   | Telemetry events                          | FK10                                 |
 
 **Honest assessment**: The performance models are **roughly equivalent in practice**. The current project has a real performance win with prototype-backed scope reads that FK10 doesn't address. FK10's theoretical advantages (pre-compiled selectors, subscription batching) may or may not translate to measurable improvements.
 
@@ -336,14 +336,14 @@ The key question: does FK10's compile-time analysis find optimization opportunit
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Layout/widget separation | Same principle | Same principle | Equivalent |
-| classAliases | Recursive expansion with cycle detection | Not addressed | Current (more sophisticated) |
-| Semantic props | Tailwind sugar conversion | Not addressed | Current |
-| Theme contract | Implicit (CSS variables) | Explicit (ThemeContract) | FK10 (more discoverable) |
-| Accessibility | shadcn/ui provides a11y | A11yContract + WCAG 2.1 AA | FK10 (more explicit) |
-| Dark mode | Host-managed | Host-managed + prefers-reduced-motion | FK10 (more complete) |
+| Aspect                   | Current                                  | FK10                                  | Winner                       |
+| ------------------------ | ---------------------------------------- | ------------------------------------- | ---------------------------- |
+| Layout/widget separation | Same principle                           | Same principle                        | Equivalent                   |
+| classAliases             | Recursive expansion with cycle detection | Not addressed                         | Current (more sophisticated) |
+| Semantic props           | Tailwind sugar conversion                | Not addressed                         | Current                      |
+| Theme contract           | Implicit (CSS variables)                 | Explicit (ThemeContract)              | FK10 (more discoverable)     |
+| Accessibility            | shadcn/ui provides a11y                  | A11yContract + WCAG 2.1 AA            | FK10 (more explicit)         |
+| Dark mode                | Host-managed                             | Host-managed + prefers-reduced-motion | FK10 (more complete)         |
 
 **Honest assessment**: The current project has a **more sophisticated styling system**. The `classAliases` mechanism, semantic props sugar, and the three-layer model (including canvas-level optimization) are more complete than FK10's two-layer model.
 
@@ -380,16 +380,16 @@ FK10 adds the **explicit ThemeContract** and **A11yContract**, which are documen
 
 ### Comparison
 
-| Aspect | Current | FK10 | Winner |
-|--------|---------|------|--------|
-| Event timeline | Yes (compile/render/action/api) | Yes (state change/action/expr eval/render) | Equivalent |
-| Component inspector | Yes (by CID, by DOM) | Schema-source mapping to DOM | Current (more practical) |
-| Time-travel (state) | No (event log only, no state jump) | Yes (jump to any historical state) | FK10 |
-| Session export | Yes | Not mentioned | Current |
-| Automation API | Yes (window.__NOP_DEBUGGER_API__) | Not mentioned | Current |
-| Diagnostics | Compiler warnings/errors | Structured diagnostics with suggestions | FK10 (more helpful) |
-| HMR | Not addressed | Hot schema swap with state migration | FK10 |
-| Plugin architecture | Debugger is a renderer plugin | Not addressed | Current |
+| Aspect              | Current                            | FK10                                       | Winner                   |
+| ------------------- | ---------------------------------- | ------------------------------------------ | ------------------------ |
+| Event timeline      | Yes (compile/render/action/api)    | Yes (state change/action/expr eval/render) | Equivalent               |
+| Component inspector | Yes (by CID, by DOM)               | Schema-source mapping to DOM               | Current (more practical) |
+| Time-travel (state) | No (event log only, no state jump) | Yes (jump to any historical state)         | FK10                     |
+| Session export      | Yes                                | Not mentioned                              | Current                  |
+| Automation API      | Yes (window.**NOP_DEBUGGER_API**)  | Not mentioned                              | Current                  |
+| Diagnostics         | Compiler warnings/errors           | Structured diagnostics with suggestions    | FK10 (more helpful)      |
+| HMR                 | Not addressed                      | Hot schema swap with state migration       | FK10                     |
+| Plugin architecture | Debugger is a renderer plugin      | Not addressed                              | Current                  |
 
 **Honest assessment**: The current project's debugger is **far more capable than FK10's design gives credit for**. It has an event timeline, interaction tracing, component inspector, session export, and an automation API. The one thing it lacks is FK10's **time-travel state jumping** (rewinding to a historical state). This is a real feature gap, but the overall debugging story is much closer than "⭐⭐½ vs ⭐⭐⭐⭐" would suggest.
 
@@ -397,20 +397,20 @@ FK10 adds the **explicit ThemeContract** and **A11yContract**, which are documen
 
 ## 11. Overall Scorecard
 
-| Dimension | Current (nop-chaos-flux) | FK10 (v10) | Notes |
-|-----------|-------------------------|------------|-------|
-| Schema compilation | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Current: simpler, proven. FK10: more stages, unproven optimization |
-| Scope / state management | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Both have projections, transactions. Current: prototype optimization, 3-registry separation |
-| Expression engine | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Functionally equivalent. FK10 has compile-time analysis edge (unproven) |
-| Component model | ⭐⭐⭐⭐½ | ⭐⭐⭐ | Current: 3-category ownership model is more mature. FK10: error boundaries |
-| Action system | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Current: plugins, imports, dispatch/effects separation. FK10: chain-level AbortSignal |
-| Form / validation | ⭐⭐⭐⭐½ | ⭐⭐⭐ | Current: compiled graph, owner resolution, per-path subscriptions, 7 array ops. FK10: undo/redo |
-| Data source system | ⭐⭐⭐⭐ | ⭐⭐⭐½ | Current: explicit lifecycle states, shared async governance. FK10: WebSocket, offline (unimplemented) |
-| Performance | ⭐⭐⭐⭐ | ⭐⭐⭐½ | Current: prototype reads, proven optimizations. FK10: theoretical optimizations |
-| Styling | ⭐⭐⭐⭐ | ⭐⭐⭐½ | Current: classAliases, semantic props. FK10: explicit contracts |
-| Debugging / DX | ⭐⭐⭐½ | ⭐⭐⭐⭐ | Current: full debugger with timeline, inspector, export. FK10: time-travel state jump |
-| Host integration | ⭐⭐⭐⭐ | ⭐⭐⭐½ | Current: imports, domain-host pattern, capability projection manifest. FK10: simpler |
-| **Implementation maturity** | **Working system with 40+ test files** | **Zero lines of code** | Current wins by default |
+| Dimension                   | Current (nop-chaos-flux)               | FK10 (v10)             | Notes                                                                                                 |
+| --------------------------- | -------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| Schema compilation          | ⭐⭐⭐⭐                               | ⭐⭐⭐⭐               | Current: simpler, proven. FK10: more stages, unproven optimization                                    |
+| Scope / state management    | ⭐⭐⭐⭐                               | ⭐⭐⭐⭐               | Both have projections, transactions. Current: prototype optimization, 3-registry separation           |
+| Expression engine           | ⭐⭐⭐⭐                               | ⭐⭐⭐⭐               | Functionally equivalent. FK10 has compile-time analysis edge (unproven)                               |
+| Component model             | ⭐⭐⭐⭐½                              | ⭐⭐⭐                 | Current: 3-category ownership model is more mature. FK10: error boundaries                            |
+| Action system               | ⭐⭐⭐⭐                               | ⭐⭐⭐⭐               | Current: plugins, imports, dispatch/effects separation. FK10: chain-level AbortSignal                 |
+| Form / validation           | ⭐⭐⭐⭐½                              | ⭐⭐⭐                 | Current: compiled graph, owner resolution, per-path subscriptions, 7 array ops. FK10: undo/redo       |
+| Data source system          | ⭐⭐⭐⭐                               | ⭐⭐⭐½                | Current: explicit lifecycle states, shared async governance. FK10: WebSocket, offline (unimplemented) |
+| Performance                 | ⭐⭐⭐⭐                               | ⭐⭐⭐½                | Current: prototype reads, proven optimizations. FK10: theoretical optimizations                       |
+| Styling                     | ⭐⭐⭐⭐                               | ⭐⭐⭐½                | Current: classAliases, semantic props. FK10: explicit contracts                                       |
+| Debugging / DX              | ⭐⭐⭐½                                | ⭐⭐⭐⭐               | Current: full debugger with timeline, inspector, export. FK10: time-travel state jump                 |
+| Host integration            | ⭐⭐⭐⭐                               | ⭐⭐⭐½                | Current: imports, domain-host pattern, capability projection manifest. FK10: simpler                  |
+| **Implementation maturity** | **Working system with 40+ test files** | **Zero lines of code** | Current wins by default                                                                               |
 
 ---
 
@@ -478,18 +478,18 @@ FK10 adds the **explicit ThemeContract** and **A11yContract**, which are documen
 
 Rather than replacing the current architecture with FK10, the most pragmatic approach is to **selectively adopt FK10's genuine innovations** into the current project:
 
-| FK10 Innovation | Adoption Strategy | Effort | Note |
-|----------------|-------------------|--------|------|
-| Scope chain projections | **Already exists** (`projected-scope-store.ts`) | None | Audit and document existing mechanism |
-| Structured concurrency (dialog AbortSignal) | Add dialog-scope AbortSignal propagation for chain-level cancellation | Low | 68 AbortSignal instances already exist; gap is dialog→chain propagation |
-| Transaction model | Evaluate if rollback support is needed for draft isolation | Low–Medium | Current synchronous model is simpler and works; add only if specific use case exists |
-| Time-travel state jump | Add state history recording to existing debugger | Medium | Debugger has event timeline; add state snapshot recording for jump capability |
-| Per-renderer error boundaries | Add `ErrorBoundary` wrapper in `NodeRenderer` | Low | |
-| Undo/redo | Build on scope transactions for form scopes | Medium | |
-| Flat action steps | Add `steps` desugaring in `SchemaCompiler` | Low | |
-| WebSocket data sources | Add `WebSocketDataSource` to `async-data/` module | Medium | Product-dependent |
-| Offline persistence | Add `OfflinePolicy` to data source runtime | High | Product-dependent — only if offline is a requirement |
-| Explicit ThemeContract | Document required CSS variables | Low | |
-| DepPattern for invalidation | Evaluate if more precise invalidation patterns help complex schemas | Medium | Research first — may not improve real-world performance |
+| FK10 Innovation                             | Adoption Strategy                                                     | Effort     | Note                                                                                 |
+| ------------------------------------------- | --------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------ |
+| Scope chain projections                     | **Already exists** (`projected-scope-store.ts`)                       | None       | Audit and document existing mechanism                                                |
+| Structured concurrency (dialog AbortSignal) | Add dialog-scope AbortSignal propagation for chain-level cancellation | Low        | 68 AbortSignal instances already exist; gap is dialog→chain propagation              |
+| Transaction model                           | Evaluate if rollback support is needed for draft isolation            | Low–Medium | Current synchronous model is simpler and works; add only if specific use case exists |
+| Time-travel state jump                      | Add state history recording to existing debugger                      | Medium     | Debugger has event timeline; add state snapshot recording for jump capability        |
+| Per-renderer error boundaries               | Add `ErrorBoundary` wrapper in `NodeRenderer`                         | Low        |                                                                                      |
+| Undo/redo                                   | Build on scope transactions for form scopes                           | Medium     |                                                                                      |
+| Flat action steps                           | Add `steps` desugaring in `SchemaCompiler`                            | Low        |                                                                                      |
+| WebSocket data sources                      | Add `WebSocketDataSource` to `async-data/` module                     | Medium     | Product-dependent                                                                    |
+| Offline persistence                         | Add `OfflinePolicy` to data source runtime                            | High       | Product-dependent — only if offline is a requirement                                 |
+| Explicit ThemeContract                      | Document required CSS variables                                       | Low        |                                                                                      |
+| DepPattern for invalidation                 | Evaluate if more precise invalidation patterns help complex schemas   | Medium     | Research first — may not improve real-world performance                              |
 
 This selective approach captures FK10's genuine innovations at minimal cost, while preserving the current project's architectural strengths that FK10 doesn't match.

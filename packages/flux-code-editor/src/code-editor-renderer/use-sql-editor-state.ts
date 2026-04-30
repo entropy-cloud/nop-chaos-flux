@@ -10,7 +10,13 @@ function isSchemaValue(value: unknown): value is SchemaValue {
   if (value == null) {
     return true;
   }
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint' || typeof value === 'symbol') {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'bigint' ||
+    typeof value === 'symbol'
+  ) {
     return true;
   }
   if (Array.isArray(value)) {
@@ -53,23 +59,31 @@ function readScopePath(props: CodeEditorRendererProps, path: string): SchemaValu
   return isSchemaValue(resolved) ? resolved : undefined;
 }
 
-function buildExecutionParams(props: CodeEditorRendererProps, mappings: Record<string, string> | undefined): Record<string, SchemaValue> | undefined {
+function buildExecutionParams(
+  props: CodeEditorRendererProps,
+  mappings: Record<string, string> | undefined,
+): Record<string, SchemaValue> | undefined {
   if (!mappings) {
     return undefined;
   }
 
   const entries = Object.entries(mappings)
-      .map(([key, path]) => [key, typeof path === 'string' ? readScopePath(props, path) : undefined] as const)
+    .map(
+      ([key, path]) =>
+        [key, typeof path === 'string' ? readScopePath(props, path) : undefined] as const,
+    )
     .filter(([, value]) => typeof value !== 'undefined');
 
-  return entries.length > 0 ? Object.fromEntries(entries) as Record<string, SchemaValue> : undefined;
+  return entries.length > 0
+    ? (Object.fromEntries(entries) as Record<string, SchemaValue>)
+    : undefined;
 }
 
 function mapExecutionResult(result: ActionResult, resultPath: string | undefined): SQLResultState {
   if (!result.ok || result.data == null) {
     return {
       status: 'error',
-      message: result.error ? String(result.error) : 'Execution returned no data'
+      message: result.error ? String(result.error) : 'Execution returned no data',
     };
   }
 
@@ -93,11 +107,15 @@ function mapExecutionResult(result: ActionResult, resultPath: string | undefined
   return {
     status: 'success',
     data: [{ result: String(data) }],
-    columns: ['result']
+    columns: ['result'],
   };
 }
 
-export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQLEditorConfig | undefined, view: EditorView | null) {
+export function useSQLEditorState(
+  props: CodeEditorRendererProps,
+  sqlConfig: SQLEditorConfig | undefined,
+  view: EditorView | null,
+) {
   const [variablePanelCollapsed, setVariablePanelCollapsed] = useState(false);
   const [sqlResult, setSqlResult] = useState<SQLResultState>({ status: 'idle' });
 
@@ -105,14 +123,17 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
   const hasVariablePanel = Boolean(sqlConfig?.variablePanel?.enabled);
   const hasExecution = Boolean(sqlConfig?.execution?.enabled);
 
-  const insertAtCursor = useCallback((text: string) => {
-    if (!view) return;
-    const pos = view.state.selection.main.head;
-    view.dispatch({
-      changes: { from: pos, to: pos, insert: text },
-    });
-    view.focus();
-  }, [view]);
+  const insertAtCursor = useCallback(
+    (text: string) => {
+      if (!view) return;
+      const pos = view.state.selection.main.head;
+      view.dispatch({
+        changes: { from: pos, to: pos, insert: text },
+      });
+      view.focus();
+    },
+    [view],
+  );
 
   const handleFormatSQL = useCallback(() => {
     if (!view || !sqlConfig?.format) return;
@@ -152,7 +173,8 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
           args: {
             ...(onExecute as ApiSchema),
             params: {
-              ...(((onExecute as ApiSchema).params as Record<string, SchemaValue> | undefined) ?? {}),
+              ...(((onExecute as ApiSchema).params as Record<string, SchemaValue> | undefined) ??
+                {}),
               ...(executionParams ?? {}),
             },
             data: {
@@ -196,6 +218,6 @@ export function useSQLEditorState(props: CodeEditorRendererProps, sqlConfig: SQL
     insertAtCursor,
     handleFormatSQL,
     handleExecuteSQL,
-    handleClearResult
+    handleClearResult,
   };
 }

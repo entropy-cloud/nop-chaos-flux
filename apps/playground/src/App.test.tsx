@@ -5,23 +5,23 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 const rendererSnapshots: Array<{ env: unknown; data: Record<string, unknown> | undefined }> = [];
 
 vi.mock('@nop-chaos/flux-formula', () => ({
-  createFormulaCompiler: () => ({})
+  createFormulaCompiler: () => ({}),
 }));
 
 vi.mock('@nop-chaos/flux-renderers-basic', () => ({
-  registerBasicRenderers: () => undefined
+  registerBasicRenderers: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-renderers-form', () => ({
-  registerFormRenderers: () => undefined
+  registerFormRenderers: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-renderers-form-advanced', () => ({
-  registerFormAdvancedRenderers: () => undefined
+  registerFormAdvancedRenderers: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-renderers-data', () => ({
-  registerDataRenderers: () => undefined
+  registerDataRenderers: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
@@ -32,8 +32,12 @@ vi.mock('@nop-chaos/flux-react', () => ({
 
       return (
         <div>
-          <output data-testid="user-count">{String(((props.data?.users as unknown[]) ?? []).length)}</output>
-          <output data-testid="search-count">{String(((props.data?.searchResults as unknown[]) ?? []).length)}</output>
+          <output data-testid="user-count">
+            {String(((props.data?.users as unknown[]) ?? []).length)}
+          </output>
+          <output data-testid="search-count">
+            {String(((props.data?.searchResults as unknown[]) ?? []).length)}
+          </output>
           <button
             type="button"
             onClick={() =>
@@ -41,14 +45,14 @@ vi.mock('@nop-chaos/flux-react', () => ({
                 {
                   method: 'post',
                   url: '/api/search',
-                  data: { query: 'bob' }
+                  data: { query: 'bob' },
                 },
                 {
                   env: props.env,
                   scope: {
-                    readOwn: () => ({})
-                  }
-                }
+                    readOwn: () => ({}),
+                  },
+                },
               )
             }
           >
@@ -60,7 +64,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
               void props.env.fetcher(
                 {
                   method: 'post',
-                  url: '/api/users'
+                  url: '/api/users',
                 },
                 {
                   env: props.env,
@@ -68,10 +72,10 @@ vi.mock('@nop-chaos/flux-react', () => ({
                     readOwn: () => ({
                       username: 'zoe',
                       email: 'zoe@example.com',
-                      role: 'viewer'
-                    })
-                  }
-                }
+                      role: 'viewer',
+                    }),
+                  },
+                },
               )
             }
           >
@@ -80,23 +84,31 @@ vi.mock('@nop-chaos/flux-react', () => ({
         </div>
       );
     };
-  }
+  },
 }));
 
 vi.mock('@nop-chaos/nop-debugger', () => ({
   NopDebuggerPanel: () => null,
   createNopDebugger: () => ({
     id: 'test',
-    getSnapshot: () => ({ enabled: true, panelOpen: false, paused: false, events: [], filters: [], activeTab: 'timeline', position: { x: 24, y: 24 } }),
+    getSnapshot: () => ({
+      enabled: true,
+      panelOpen: false,
+      paused: false,
+      events: [],
+      filters: [],
+      activeTab: 'timeline',
+      position: { x: 24, y: 24 },
+    }),
     subscribe: () => () => undefined,
     decorateEnv: (env: unknown) => env,
     plugin: {},
-    onActionError: () => undefined
-  })
+    onActionError: () => undefined,
+  }),
 }));
 
 vi.mock('@nop-chaos/flow-designer-renderers', () => ({
-  registerFlowDesignerRenderers: () => undefined
+  registerFlowDesignerRenderers: () => undefined,
 }));
 
 import { FluxBasicPage } from './pages/flux-basic-page';
@@ -113,33 +125,48 @@ describe('FluxBasicPage', () => {
   it('keeps env stable across search and directory updates', async () => {
     const mockDebuggerController = {
       id: 'test',
-      getSnapshot: () => ({ enabled: true, panelOpen: false, paused: false, events: [], filters: [], activeTab: 'timeline' as const, position: { x: 24, y: 24 } }),
+      getSnapshot: () => ({
+        enabled: true,
+        panelOpen: false,
+        paused: false,
+        events: [],
+        filters: [],
+        activeTab: 'timeline' as const,
+        position: { x: 24, y: 24 },
+      }),
       subscribe: () => () => undefined,
       decorateEnv: (env: unknown) => env,
       plugin: {},
-      onActionError: () => undefined
+      onActionError: () => undefined,
     };
 
-    render(<FluxBasicPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />);
+    render(
+      <FluxBasicPage debuggerController={mockDebuggerController as any} onBack={() => undefined} />,
+    );
 
     const initialSnapshot = rendererSnapshots.at(-1);
     expect(initialSnapshot).toBeTruthy();
 
     fireEvent.click(screen.getByText('Trigger search'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('search-count').textContent).toBe('1');
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('search-count').textContent).toBe('1');
+      },
+      { timeout: 3000 },
+    );
 
     expect(rendererSnapshots.at(-1)?.env).toBe(initialSnapshot?.env);
 
     fireEvent.click(screen.getByText('Trigger create user'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('user-count').textContent).toBe('4');
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('user-count').textContent).toBe('4');
+      },
+      { timeout: 3000 },
+    );
 
     expect(rendererSnapshots.at(-1)?.env).toBe(initialSnapshot?.env);
   }, 10000);
 });
-

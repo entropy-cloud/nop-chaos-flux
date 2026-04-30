@@ -12,18 +12,22 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3 });
 
     const registration = runtime.registerDataSource({
       id: 'scoped-total',
       scope: page.scope,
-      compiledSource: compileDataSource('scoped-total', {
-        type: 'data-source',
-        name: 'total',
-        formula: '${(price || 0) * (qty || 0)}'
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'scoped-total',
+        {
+          type: 'data-source',
+          name: 'total',
+          formula: '${(price || 0) * (qty || 0)}',
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -32,7 +36,9 @@ describe('createRendererRuntime', () => {
 
     page.scope.update('qty', 5);
 
-    await expect(runtime.refreshDataSource({ id: 'scoped-total', scope: page.scope })).resolves.toBe(true);
+    await expect(
+      runtime.refreshDataSource({ id: 'scoped-total', scope: page.scope }),
+    ).resolves.toBe(true);
     expect(page.scope.get('total')).toBe(10);
 
     registration.dispose();
@@ -42,18 +48,22 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3, note: 'ignore' });
 
     const registration = runtime.registerDataSource({
       id: 'auto-total',
       scope: page.scope,
-      compiledSource: compileDataSource('auto-total', {
-        type: 'data-source',
-        name: 'total',
-        formula: '${(price || 0) * (qty || 0)}'
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'auto-total',
+        {
+          type: 'data-source',
+          name: 'total',
+          formula: '${(price || 0) * (qty || 0)}',
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -77,27 +87,32 @@ describe('createRendererRuntime', () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: { url: string }) => ({
       ok: true,
       status: 200,
-      data: { url: api.url } as T
+      data: { url: api.url } as T,
     });
     const fetcher = vi.fn(fetcherImpl);
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ userId: 1, note: 'ignore' });
 
     const registration = runtime.registerDataSource({
       id: 'user-api-source',
       scope: page.scope,
-      compiledSource: compileDataSource('user-api-source', {
-        type: 'data-source',
-        action: 'ajax', args: { url: '/api/users/${userId}' },
-        name: 'payload'
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'user-api-source',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/users/${userId}' },
+          name: 'payload',
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -126,9 +141,13 @@ describe('createRendererRuntime', () => {
 
       if (callCount === 1) {
         return new Promise((_, reject) => {
-          ctx.signal?.addEventListener('abort', () => {
-            reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
-          }, { once: true });
+          ctx.signal?.addEventListener(
+            'abort',
+            () => {
+              reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+            },
+            { once: true },
+          );
         }) as Promise<{ ok: true; status: number; data: T }>;
       }
 
@@ -139,27 +158,32 @@ describe('createRendererRuntime', () => {
       return {
         ok: true,
         status: 200,
-        data: { url: api.url } as T
+        data: { url: api.url } as T,
       };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: fetcher as RendererEnv['fetcher']
+        fetcher: fetcher as RendererEnv['fetcher'],
       },
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ userId: 1 });
 
     const registration = runtime.registerDataSource({
       id: 'latest-user-api-source',
       scope: page.scope,
-      compiledSource: compileDataSource('latest-user-api-source', {
-        type: 'data-source',
-        action: 'ajax', args: { url: '/api/users/${userId}' },
-        name: 'payload'
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'latest-user-api-source',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/users/${userId}' },
+          name: 'payload',
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -198,30 +222,35 @@ describe('createRendererRuntime', () => {
       return {
         ok: true,
         status: 200,
-        data: { url: api.url } as T
+        data: { url: api.url } as T,
       };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ userId: 1 });
 
     const registration = runtime.registerDataSource({
       id: 'stable-user-api-source',
       scope: page.scope,
-      compiledSource: compileDataSource('stable-user-api-source', {
-        type: 'data-source',
-        action: 'ajax', args: { url: '/api/users/${userId}' },
-        name: 'payload',
-        control: {
-          dedup: 'ignore-new'
-        }
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'stable-user-api-source',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/users/${userId}' },
+          name: 'payload',
+          control: {
+            dedup: 'ignore-new',
+          },
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -266,30 +295,35 @@ describe('createRendererRuntime', () => {
       return {
         ok: true,
         status: 200,
-        data: { url: api.url } as T
+        data: { url: api.url } as T,
       };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ userId: 1 });
 
     const registration = runtime.registerDataSource({
       id: 'parallel-user-api-source',
       scope: page.scope,
-      compiledSource: compileDataSource('parallel-user-api-source', {
-        type: 'data-source',
-        action: 'ajax', args: { url: '/api/users/${userId}' },
-        name: 'payload',
-        control: {
-          dedup: 'parallel'
-        }
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'parallel-user-api-source',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/users/${userId}' },
+          name: 'payload',
+          control: {
+            dedup: 'parallel',
+          },
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -309,7 +343,7 @@ describe('createRendererRuntime', () => {
       isRefreshing: false,
       inFlightCount: 2,
       hasData: false,
-      hasError: false
+      hasError: false,
     });
 
     releaseFirst?.();
@@ -324,7 +358,7 @@ describe('createRendererRuntime', () => {
       isRefreshing: true,
       inFlightCount: 1,
       hasData: true,
-      hasError: false
+      hasError: false,
     });
 
     releaseSecond?.();
@@ -356,30 +390,35 @@ describe('createRendererRuntime', () => {
       return {
         ok: true,
         status: 200,
-        data: { url: api.url } as T
+        data: { url: api.url } as T,
       };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ userId: 1 });
 
     const registration = runtime.registerDataSource({
       id: 'parallel-latest-authoritative',
       scope: page.scope,
-      compiledSource: compileDataSource('parallel-latest-authoritative', {
-        type: 'data-source',
-        action: 'ajax', args: { url: '/api/users/${userId}' },
-        name: 'payload',
-        control: {
-          dedup: 'parallel'
-        }
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'parallel-latest-authoritative',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/users/${userId}' },
+          name: 'payload',
+          control: {
+            dedup: 'parallel',
+          },
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -406,9 +445,13 @@ describe('createRendererRuntime', () => {
 
     await vi.waitFor(() => {
       const debugSnapshot = runtime.getSourceDebugSnapshot?.();
-      const debugEntry = debugSnapshot?.sources.find((entry) => entry.id === 'parallel-latest-authoritative');
+      const debugEntry = debugSnapshot?.sources.find(
+        (entry) => entry.id === 'parallel-latest-authoritative',
+      );
 
-      expect(debugEntry?.async?.recentRuns.some((run) => run.outcome === 'stale-dropped')).toBe(true);
+      expect(debugEntry?.async?.recentRuns.some((run) => run.outcome === 'stale-dropped')).toBe(
+        true,
+      );
       expect(debugEntry?.async?.recentRuns.some((run) => run.outcome === 'succeeded')).toBe(true);
     });
 
@@ -419,29 +462,45 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({});
-    const firstScope = runtime.createChildScope(page.scope, { value: 1 }, { pathSuffix: 'first-source-scope' });
-    const secondScope = runtime.createChildScope(page.scope, { value: 10 }, { pathSuffix: 'second-source-scope' });
+    const firstScope = runtime.createChildScope(
+      page.scope,
+      { value: 1 },
+      { pathSuffix: 'first-source-scope' },
+    );
+    const secondScope = runtime.createChildScope(
+      page.scope,
+      { value: 10 },
+      { pathSuffix: 'second-source-scope' },
+    );
 
     const first = runtime.registerDataSource({
       id: 'shared-source',
       scope: firstScope,
-      compiledSource: compileDataSource('shared-source', {
-        type: 'data-source',
-        name: 'derived',
-        formula: '${value}'
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'shared-source',
+        {
+          type: 'data-source',
+          name: 'derived',
+          formula: '${value}',
+        },
+        expressionCompiler,
+      ),
     });
     const second = runtime.registerDataSource({
       id: 'shared-source',
       scope: secondScope,
-      compiledSource: compileDataSource('shared-source', {
-        type: 'data-source',
-        name: 'derived',
-        formula: '${value}'
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'shared-source',
+        {
+          type: 'data-source',
+          name: 'derived',
+          formula: '${value}',
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -451,7 +510,9 @@ describe('createRendererRuntime', () => {
 
     secondScope.update('value', 11);
 
-    await expect(runtime.refreshDataSource({ id: 'shared-source', scope: secondScope })).resolves.toBe(true);
+    await expect(
+      runtime.refreshDataSource({ id: 'shared-source', scope: secondScope }),
+    ).resolves.toBe(true);
 
     expect(firstScope.get('derived')).toBe(1);
     expect(secondScope.get('derived')).toBe(11);
@@ -464,10 +525,12 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({});
 
-    await expect(runtime.refreshDataSource({ id: 'missing-source', scope: page.scope })).resolves.toBe(false);
+    await expect(
+      runtime.refreshDataSource({ id: 'missing-source', scope: page.scope }),
+    ).resolves.toBe(false);
   });
 });

@@ -2,7 +2,7 @@ import type { ScopeRef, ScopeStore } from '@nop-chaos/flux-core';
 
 export function createProjectedScopeStore(
   scope: ScopeRef,
-  projectSnapshot: () => Record<string, any>
+  projectSnapshot: () => Record<string, any>,
 ): {
   store?: ScopeStore<Record<string, any>>;
   readSnapshot: () => Record<string, any>;
@@ -38,7 +38,7 @@ export function createProjectedScopeStore(
       },
       subscribe(listener) {
         return scope.store?.subscribe(listener) ?? (() => undefined);
-      }
-    }
+      },
+    },
   };
 }

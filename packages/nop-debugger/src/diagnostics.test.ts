@@ -10,7 +10,7 @@ import {
   getLatestFailedRequest,
   getNodeAnomalies,
   getRecentFailures,
-  matchesEventQuery
+  matchesEventQuery,
 } from './diagnostics';
 import { normalizeRedactionOptions } from './redaction';
 import type { NopDebugEvent, NopDebuggerSnapshot } from './types';
@@ -25,7 +25,7 @@ function createEvent(overrides: Partial<NopDebugEvent>): NopDebugEvent {
     level: 'info',
     source: 'test',
     summary: 'event',
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -39,7 +39,7 @@ function createSnapshot(events: NopDebugEvent[]): NopDebuggerSnapshot {
     position: { x: 1, y: 2 },
     events,
     filters: ['render', 'action', 'api', 'compile', 'notify', 'error'],
-    pinnedErrors: { earliest: [], latest: [] }
+    pinnedErrors: { earliest: [], latest: [] },
   };
 }
 
@@ -60,7 +60,7 @@ describe('diagnostics helpers', () => {
       actionType: 'submitForm',
       requestKey: 'POST /api/users | node-1 | body.0',
       requestInstanceId: 'req-1',
-      interactionId: 'interaction-1'
+      interactionId: 'interaction-1',
     });
     const errorEvent = createEvent({
       id: 3,
@@ -72,7 +72,7 @@ describe('diagnostics helpers', () => {
       summary: 'submit failed',
       detail: 'Validation exploded',
       nodeId: 'node-1',
-      path: 'body.0'
+      path: 'body.0',
     });
     const otherEvent = createEvent({
       id: 4,
@@ -84,32 +84,36 @@ describe('diagnostics helpers', () => {
       summary: 'table rendered',
       nodeId: 'node-2',
       path: 'body.3',
-      rendererType: 'table'
+      rendererType: 'table',
     });
     const events = [otherEvent, errorEvent, apiEvent];
 
-    expect(matchesEventQuery(apiEvent, {
-      kind: ['api:start', 'api:end'],
-      group: 'api',
-      level: 'success',
-      source: 'fetcher',
-      nodeId: 'node-1',
-      path: 'body.0',
-      rendererType: 'form',
-      actionType: 'submitForm',
-      requestKey: 'POST /api/users | node-1 | body.0',
-      text: '/API/USERS',
-      sinceTimestamp: 200,
-      untilTimestamp: 240
-    })).toBe(true);
+    expect(
+      matchesEventQuery(apiEvent, {
+        kind: ['api:start', 'api:end'],
+        group: 'api',
+        level: 'success',
+        source: 'fetcher',
+        nodeId: 'node-1',
+        path: 'body.0',
+        rendererType: 'form',
+        actionType: 'submitForm',
+        requestKey: 'POST /api/users | node-1 | body.0',
+        text: '/API/USERS',
+        sinceTimestamp: 200,
+        untilTimestamp: 240,
+      }),
+    ).toBe(true);
     expect(matchesEventQuery(apiEvent, { text: 'missing' })).toBe(false);
     expect(matchesEventQuery(apiEvent, { sinceTimestamp: 221 })).toBe(false);
 
-    expect(applyEventQuery(events, {
-      nodeId: 'node-1',
-      text: 'submit',
-      limit: 1
-    })).toEqual([errorEvent]);
+    expect(
+      applyEventQuery(events, {
+        nodeId: 'node-1',
+        text: 'submit',
+        limit: 1,
+      }),
+    ).toEqual([errorEvent]);
     expect(applyEventQuery(events, { group: ['api', 'error'] })).toEqual([errorEvent, apiEvent]);
   });
 
@@ -124,7 +128,7 @@ describe('diagnostics helpers', () => {
         source: 'root.onActionError',
         summary: 'submit failed',
         nodeId: 'node-1',
-        path: 'body.0'
+        path: 'body.0',
       }),
       createEvent({
         id: 9,
@@ -134,12 +138,12 @@ describe('diagnostics helpers', () => {
         level: 'warning',
         source: 'fetcher',
         summary: 'POST /api/users aborted',
-       requestKey: 'POST /api/users | node-1 | body.0',
-       requestInstanceId: 'req-1',
-       interactionId: 'interaction-1',
-       nodeId: 'node-1',
-       path: 'body.0',
-       actionType: 'submitForm'
+        requestKey: 'POST /api/users | node-1 | body.0',
+        requestInstanceId: 'req-1',
+        interactionId: 'interaction-1',
+        nodeId: 'node-1',
+        path: 'body.0',
+        actionType: 'submitForm',
       }),
       createEvent({
         id: 8,
@@ -152,7 +156,7 @@ describe('diagnostics helpers', () => {
         actionType: 'submitForm',
         interactionId: 'interaction-1',
         nodeId: 'node-1',
-        path: 'body.0'
+        path: 'body.0',
       }),
       createEvent({
         id: 7,
@@ -164,7 +168,7 @@ describe('diagnostics helpers', () => {
         summary: 'form rendered',
         rendererType: 'form',
         nodeId: 'node-1',
-        path: 'body.0'
+        path: 'body.0',
       }),
       createEvent({
         id: 6,
@@ -175,7 +179,7 @@ describe('diagnostics helpers', () => {
         source: 'plugin.afterCompile',
         summary: 'compile ready',
         rendererType: 'page',
-        path: 'root'
+        path: 'root',
       }),
       createEvent({
         id: 5,
@@ -184,8 +188,8 @@ describe('diagnostics helpers', () => {
         group: 'notify',
         level: 'warning',
         source: 'env.notify',
-        summary: 'warning: duplicate username'
-      })
+        summary: 'warning: duplicate username',
+      }),
     ];
     const snapshot = createSnapshot(events);
     const overview = buildOverview(events);
@@ -196,7 +200,7 @@ describe('diagnostics helpers', () => {
       latestApi: { kind: 'api:abort' },
       latestError: { kind: 'error' },
       errorCount: 1,
-      totalEvents: 6
+      totalEvents: 6,
     });
     expect(overview.countsByGroup).toEqual({
       render: 1,
@@ -205,13 +209,13 @@ describe('diagnostics helpers', () => {
       compile: 1,
       notify: 1,
       error: 1,
-      node: 0
+      node: 0,
     });
 
     const report = createDiagnosticReport('controller-a', snapshot, {
       query: { nodeId: 'node-1' },
       eventLimit: 2,
-      includeLatestInteractionTrace: true
+      includeLatestInteractionTrace: true,
     });
     expect(report.controllerId).toBe('controller-a');
     expect(report.sessionId).toBe('session-1');
@@ -228,14 +232,14 @@ describe('diagnostics helpers', () => {
       latestRender: { kind: 'render:end' },
       latestAction: { kind: 'action:end' },
       latestApi: { kind: 'api:abort' },
-      latestError: { kind: 'error' }
+      latestError: { kind: 'error' },
     });
     expect(nodeDiagnostics.rendererTypes).toEqual(['form']);
     expect(nodeDiagnostics.recentEvents).toHaveLength(3);
 
     const trace = buildInteractionTrace(events, {
       nodeId: 'node-1',
-      path: 'body.0'
+      path: 'body.0',
     });
     expect(trace.totalEvents).toBe(4);
     expect(trace.relatedErrors).toHaveLength(1);
@@ -251,19 +255,19 @@ describe('diagnostics helpers', () => {
 
     const inferredTrace = buildInteractionTrace(events, {
       inferFromLatest: true,
-      limit: 10
+      limit: 10,
     });
     expect(inferredTrace.anchorEvent?.kind).toBe('error');
     expect(inferredTrace.resolvedQuery).toMatchObject({
       nodeId: 'node-1',
       path: 'body.0',
-      mode: 'related'
+      mode: 'related',
     });
     expect(inferredTrace.totalEvents).toBe(4);
 
     const eventAnchoredTrace = buildInteractionTrace(events, {
       eventId: 9,
-      mode: 'exact'
+      mode: 'exact',
     });
     expect(eventAnchoredTrace.anchorEvent?.id).toBe(9);
     expect(eventAnchoredTrace.resolvedQuery).toMatchObject({
@@ -274,7 +278,7 @@ describe('diagnostics helpers', () => {
       actionType: 'submitForm',
       nodeId: 'node-1',
       path: 'body.0',
-      mode: 'exact'
+      mode: 'exact',
     });
     expect(eventAnchoredTrace.totalEvents).toBe(1);
     expect(eventAnchoredTrace.matchedEvents[0].id).toBe(9);
@@ -293,10 +297,10 @@ describe('diagnostics helpers', () => {
       exportedData: {
         token: 'super-secret',
         nested: {
-          password: '123456'
+          password: '123456',
         },
-        safe: 'visible'
-      }
+        safe: 'visible',
+      },
     });
     const notifyEvent = createEvent({
       id: 19,
@@ -305,17 +309,17 @@ describe('diagnostics helpers', () => {
       group: 'notify',
       level: 'info',
       source: 'env.notify',
-      summary: 'info: hi'
+      summary: 'info: hi',
     });
     const snapshot = createSnapshot([apiEndEvent, notifyEvent]);
     const redaction = normalizeRedactionOptions({
       redactKeys: ['token', 'password'],
-      mask: '[MASKED]'
+      mask: '[MASKED]',
     });
 
     const exported = buildSessionExport('controller-a', 'session-export', snapshot, redaction, {
       query: { kind: 'api:end' },
-      eventLimit: 1
+      eventLimit: 1,
     });
     expect(exported.controllerId).toBe('controller-a');
     expect(exported.sessionId).toBe('session-export');
@@ -323,16 +327,16 @@ describe('diagnostics helpers', () => {
     expect(exported.events[0].exportedData).toEqual({
       token: '[MASKED]',
       nested: {
-        password: '[MASKED]'
+        password: '[MASKED]',
       },
-      safe: 'visible'
+      safe: 'visible',
     });
     expect(exported.snapshot.events[0].exportedData).toEqual({
       token: '[MASKED]',
       nested: {
-        password: '[MASKED]'
+        password: '[MASKED]',
       },
-      safe: 'visible'
+      safe: 'visible',
     });
 
     const emptyReport = createDiagnosticReport('controller-empty', createSnapshot([]));
@@ -353,7 +357,7 @@ describe('diagnostics helpers', () => {
         nodeId: 'user-form',
         path: 'body.1',
         actionType: 'submitForm',
-        interactionId: 'interaction-2'
+        interactionId: 'interaction-2',
       }),
       createEvent({
         id: 2,
@@ -367,7 +371,7 @@ describe('diagnostics helpers', () => {
         requestInstanceId: 'req-9',
         interactionId: 'interaction-2',
         nodeId: 'user-form',
-        path: 'body.1'
+        path: 'body.1',
       }),
       createEvent({
         id: 1,
@@ -378,22 +382,22 @@ describe('diagnostics helpers', () => {
         source: 'monitor.onRenderStart',
         summary: 'form render start',
         nodeId: 'user-form',
-        path: 'body.1'
-      })
+        path: 'body.1',
+      }),
     ];
 
     expect(getLatestFailedRequest(events)).toMatchObject({
       requestInstanceId: 'req-9',
       interactionId: 'interaction-2',
-      hints: ['request failed']
+      hints: ['request failed'],
     });
 
     expect(getLatestFailedAction(events)).toMatchObject({
-      interactionId: 'interaction-2'
+      interactionId: 'interaction-2',
     });
 
     expect(getNodeAnomalies(events, { nodeId: 'user-form' })).toMatchObject({
-      nodeId: 'user-form'
+      nodeId: 'user-form',
     });
 
     expect(getRecentFailures(events, { limit: 2 })).toHaveLength(2);

@@ -12,7 +12,10 @@ export function DingFlowMergeOverlay({ onClick }: DingFlowMergeOverlayProps) {
     <div
       className={DINGFLOW_PLUS_BUTTON_CLASSNAME}
       style={{ width: BTN_DIAMETER, height: BTN_DIAMETER }}
-      onClick={(e) => { e.stopPropagation(); onClick(e); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(e);
+      }}
     >
       <Plus size={16} />
     </div>

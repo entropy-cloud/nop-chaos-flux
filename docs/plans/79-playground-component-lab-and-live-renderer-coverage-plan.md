@@ -86,6 +86,7 @@ Exit Criteria:
 - [x] The inventory source of truth is code-backed and no longer implicit in `HomePage` cards or ad hoc conditionals.
 
 Implementation notes:
+
 - Hash-based route model in `apps/playground/src/route-model.ts` — `#/`, `#/lab`, `#/lab/<id>`, `#/<domain-id>`.
 - `useRoute` hook in `apps/playground/src/useRoute.ts` reads/writes hash and fires `hashchange` events.
 - `App.tsx` now uses `useRoute` instead of `useState('home')`.
@@ -108,6 +109,7 @@ Exit Criteria:
 - [x] The selected renderer page is driven by shared metadata rather than hardcoded one-off JSX branches.
 
 Implementation notes:
+
 - `ComponentLabPage.tsx` in `apps/playground/src/component-lab/` provides the left-nav + preview shell.
 - Left navigation groups by category (layout, content, actions, logic, advanced, form, data).
 - `SchemaLabPage.tsx` provides the shared schema-renderer wrapper for individual renderer scenarios.
@@ -132,6 +134,7 @@ Exit Criteria:
 - [x] Composite controls have focused scenario coverage beyond a pure smoke render.
 
 Implementation notes:
+
 - 40 renderer lab page files in `apps/playground/src/component-lab/renderers/` — one per live shared renderer.
 - Composite controls (`object-field`, `array-field`, `variant-field`, `detail-field`, `detail-view`) have scenarios that exercise their nesting, dialog-open, and field binding behaviors.
 - `dialog`, `drawer` scenarios include interactive triggers (open/close) not just static render.
@@ -155,6 +158,7 @@ Exit Criteria:
 - [x] Route inventory clearly distinguishes shared renderer pages from host-backed domain scenarios.
 
 Implementation notes:
+
 - `DOMAIN_RENDERER_ROUTES` in `route-model.ts` enumerates all 6 domain host pages with id, title, eyebrow, description.
 - All 6 existing domain pages (`flow-designer`, `report-designer`, `debugger-lab`, `condition-builder`, `code-editor`, `word-editor`) are now registered in the route inventory and addressed via `#/<id>` hash routes.
 - `App.tsx` dispatches domain routes through the same `useRoute` switch as shared renderer routes.
@@ -178,6 +182,7 @@ Exit Criteria:
 - [x] Closure audit confirms there are no live renderers missing a route-backed playground scenario.
 
 Implementation notes:
+
 - `apps/playground/src/route-matrix.test.ts` — tests covering: route parse/build round-trips, live registry coverage (basic/form/data), composite form renderer presence, registry vs route inventory alignment, domain route coverage.
 - The test file cross-checks `RENDERER_LAB_REGISTRY` against `ALL_SHARED_RENDERER_ROUTES` so adding a renderer to the registry without adding a lab page will be caught automatically.
 - All tests pass; `pnpm typecheck` ✓, `pnpm build` ✓, `pnpm lint` ✓, `pnpm test` (playground) ✓.

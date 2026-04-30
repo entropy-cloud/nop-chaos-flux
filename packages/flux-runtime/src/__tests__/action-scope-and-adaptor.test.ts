@@ -19,7 +19,11 @@ describe('action scope helpers', () => {
   it('registers, replaces, resolves, and unregisters namespace providers', () => {
     const parentProvider = { kind: 'parent', listMethods: () => ['run'], dispose: vi.fn() } as any;
     const childProvider = { kind: 'child', listMethods: () => ['open'], dispose: vi.fn() } as any;
-    const replacementProvider = { kind: 'replacement', listMethods: () => ['close'], dispose: vi.fn() } as any;
+    const replacementProvider = {
+      kind: 'replacement',
+      listMethods: () => ['close'],
+      dispose: vi.fn(),
+    } as any;
     const parent = createActionScope({ id: 'parent-scope' });
     parent.registerNamespace('dialog', parentProvider);
 
@@ -73,7 +77,7 @@ describe('request runtime adaptor helpers', () => {
         }
 
         return source;
-      })
+      }),
     }));
 
     return {
@@ -93,8 +97,17 @@ describe('request runtime adaptor helpers', () => {
   });
 
   it('creates a scope proxy view with parent keys and safe descriptors', () => {
-    const parent = createScopeRef({ id: 'parent', path: '$parent', initialData: { shared: 'parent' } });
-    const scope = createScopeRef({ id: 'child', path: '$child', parent, initialData: { token: 'abc', local: 1 } });
+    const parent = createScopeRef({
+      id: 'parent',
+      path: '$parent',
+      initialData: { shared: 'parent' },
+    });
+    const scope = createScopeRef({
+      id: 'child',
+      path: '$child',
+      parent,
+      initialData: { token: 'abc', local: 1 },
+    });
     const view = createAdaptorScopeView(scope) as Record<string | symbol, unknown>;
     const keys = Reflect.ownKeys(view);
 
@@ -105,7 +118,11 @@ describe('request runtime adaptor helpers', () => {
     expect('missing' in view).toBe(false);
     expect(keys).toContain('token');
     expect(keys).toContain('shared');
-    expect(Object.getOwnPropertyDescriptor(view, 'token')).toMatchObject({ enumerable: true, value: 'abc', writable: false });
+    expect(Object.getOwnPropertyDescriptor(view, 'token')).toMatchObject({
+      enumerable: true,
+      value: 'abc',
+      writable: false,
+    });
     expect(Object.getOwnPropertyDescriptor(view, 'missing')).toBeUndefined();
     expect(Object.getOwnPropertyDescriptor(view, Symbol('x'))).toBeUndefined();
   });
@@ -115,12 +132,31 @@ describe('request runtime adaptor helpers', () => {
     const scope = createScopeRef({ id: 'scope', path: '$scope', initialData: { token: 'secret' } });
     const env = {} as any;
 
-    const untouched = applyRequestAdaptor(expressionCompiler, { url: '/api/demo' } as any, scope, env);
-    const adapted = applyRequestAdaptor(expressionCompiler, { url: '/api/demo', headers: {}, requestAdaptor: 'return api;' } as any, scope, env);
-    const primitive = applyRequestAdaptor(expressionCompiler, { url: '/api/demo', requestAdaptor: 'primitive' } as any, scope, env);
+    const untouched = applyRequestAdaptor(
+      expressionCompiler,
+      { url: '/api/demo' } as any,
+      scope,
+      env,
+    );
+    const adapted = applyRequestAdaptor(
+      expressionCompiler,
+      { url: '/api/demo', headers: {}, requestAdaptor: 'return api;' } as any,
+      scope,
+      env,
+    );
+    const primitive = applyRequestAdaptor(
+      expressionCompiler,
+      { url: '/api/demo', requestAdaptor: 'primitive' } as any,
+      scope,
+      env,
+    );
 
     expect(untouched).toEqual({ url: '/api/demo' });
-    expect(adapted).toEqual({ url: '/api/demo', headers: { token: 'secret' }, requestAdaptor: 'return api;' });
+    expect(adapted).toEqual({
+      url: '/api/demo',
+      headers: { token: 'secret' },
+      requestAdaptor: 'return api;',
+    });
     expect(primitive).toEqual({ url: '/api/demo', requestAdaptor: 'primitive' });
   });
 
@@ -129,7 +165,14 @@ describe('request runtime adaptor helpers', () => {
     const scope = createScopeRef({ id: 'scope', path: '$scope', initialData: { token: 'secret' } });
     const env = {} as any;
 
-    const untouched = applyResponseAdaptor(expressionCompiler, { url: '/api/demo' } as any, { url: '/api/demo' } as any, { ok: true }, scope, env);
+    const untouched = applyResponseAdaptor(
+      expressionCompiler,
+      { url: '/api/demo' } as any,
+      { url: '/api/demo' } as any,
+      { ok: true },
+      scope,
+      env,
+    );
     const adapted = applyResponseAdaptor(
       expressionCompiler,
       { url: '/api/demo' } as any,

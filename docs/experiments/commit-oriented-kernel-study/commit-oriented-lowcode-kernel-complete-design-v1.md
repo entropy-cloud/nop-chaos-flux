@@ -64,7 +64,7 @@
 9. `Projection`
    从状态与日志派生出的 UI、报表、消息、接口输出。
 10. `Ephemeral Intent Lane`
-   不进入业务日志的瞬时交互通道，用于输入中间态、拖拽预览、光标广播等。
+    不进入业务日志的瞬时交互通道，用于输入中间态、拖拽预览、光标广播等。
 
 ### 3.2 二等术语
 
@@ -615,9 +615,7 @@ AI 在系统里只应扮演三类角色：
     { "constraintId": "actor-has-role", "args": { "role": "manager" } },
     { "constraintId": "order-total-under-limit", "args": { "limit": 50000 } }
   ],
-  "capabilities": [
-    { "name": "notify.order-service" }
-  ],
+  "capabilities": [{ "name": "notify.order-service" }],
   "effects": [
     {
       "type": "notify",
@@ -633,12 +631,7 @@ AI 在系统里只应扮演三类角色：
 {
   "type": "page-projection",
   "id": "order-detail-page",
-  "reads": [
-    "order.id",
-    "order.status",
-    "order.total",
-    "order.items"
-  ],
+  "reads": ["order.id", "order.status", "order.total", "order.items"],
   "draft": {
     "enabled": true,
     "namespace": "approval-note"

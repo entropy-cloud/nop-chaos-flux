@@ -1,4 +1,9 @@
-import { actionAdapter, type ActionResult, type ActionSchema, type FormRuntime } from '@nop-chaos/flux-core';
+import {
+  actionAdapter,
+  type ActionResult,
+  type ActionSchema,
+  type FormRuntime,
+} from '@nop-chaos/flux-core';
 
 interface TransformInInput {
   rawValue: unknown;
@@ -34,46 +39,51 @@ function createDetailAdapter(
   transformInAction: ValueAdaptationAction | undefined,
   transformOutAction: ValueAdaptationAction | undefined,
   validateAction: ValueAdaptationAction | undefined,
-  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>
+  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>,
 ) {
-  return actionAdapter(transformInAction, transformOutAction, validateAction, async (actionSchema) => runner(actionSchema as ValueAdaptationAction));
+  return actionAdapter(
+    transformInAction,
+    transformOutAction,
+    validateAction,
+    async (actionSchema) => runner(actionSchema as ValueAdaptationAction),
+  );
 }
 
 export async function runTransformIn(
   actionSchema: ValueAdaptationAction | undefined,
   input: TransformInInput,
-  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>
+  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>,
 ): Promise<unknown> {
   const adapter = createDetailAdapter(actionSchema, undefined, undefined, runner);
   return adapter.in(input.rawValue, {
     name: input.name,
-    readOnly: input.readOnly ?? false
+    readOnly: input.readOnly ?? false,
   });
 }
 
 export async function runTransformOut(
   actionSchema: ValueAdaptationAction | undefined,
   input: TransformOutInput,
-  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>
+  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>,
 ): Promise<unknown> {
   const adapter = createDetailAdapter(undefined, actionSchema, undefined, runner);
   return adapter.out(input.workingValue, {
     name: input.name,
     readOnly: input.readOnly ?? false,
-    originalValue: input.originalValue
+    originalValue: input.originalValue,
   });
 }
 
 export async function runValidate(
   actionSchema: ValueAdaptationAction | undefined,
   input: ValidateValueInput,
-  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>
+  runner: (actionSchema: ValueAdaptationAction) => Promise<ActionResult>,
 ): Promise<ValidateValueResult> {
   const adapter = createDetailAdapter(undefined, undefined, actionSchema, runner);
   const result = await adapter.validate?.(input.workingValue, {
     name: input.name,
     readOnly: false,
-    originalValue: input.originalValue
+    originalValue: input.originalValue,
   });
 
   return result ?? { valid: true };
@@ -82,7 +92,7 @@ export async function runValidate(
 export function publishValidateResultErrors(
   result: ValidateValueResult,
   fieldPath: string,
-  form: FormRuntime
+  form: FormRuntime,
 ): void {
   if (result.valid) {
     form.clearErrors(fieldPath);
@@ -97,8 +107,8 @@ export function publishValidateResultErrors(
       path: issue.path ?? fieldPath,
       message: issue.message,
       rule: 'custom' as any,
-      sourceKind: 'runtime-overlay' as const
+      sourceKind: 'runtime-overlay' as const,
     })),
-    replace: true
+    replace: true,
   });
 }

@@ -18,7 +18,7 @@ export function createCompiledCidState(nextCid = 0): CompiledCidState {
     nextTemplateNodeId: 0,
     byId: new Map<string, number>(),
     idPaths: new Map<string, string[]>(),
-    duplicateIds: new Set<string>()
+    duplicateIds: new Set<string>(),
   };
 }
 
@@ -33,11 +33,13 @@ export function attachCompiledCidState(target: object, state: CompiledCidState):
     value: state,
     enumerable: false,
     configurable: true,
-    writable: false
+    writable: false,
   });
 }
 
-export function getCompiledCidState(target: object | null | undefined): CompiledCidState | undefined {
+export function getCompiledCidState(
+  target: object | null | undefined,
+): CompiledCidState | undefined {
   if (!target) {
     return undefined;
   }

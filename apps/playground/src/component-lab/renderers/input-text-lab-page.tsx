@@ -7,14 +7,18 @@ const basicInputs = {
       type: 'form',
       name: 'inputForm',
       body: [
-        { type: 'input-text', name: 'name', label: 'Full Name', placeholder: 'Enter your name', required: true },
-        { type: 'input-text', name: 'city', label: 'City', placeholder: 'Optional city' }
+        {
+          type: 'input-text',
+          name: 'name',
+          label: 'Full Name',
+          placeholder: 'Enter your name',
+          required: true,
+        },
+        { type: 'input-text', name: 'city', label: 'City', placeholder: 'Optional city' },
       ],
-      actions: [
-        { type: 'button', label: 'Submit', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const constrainedInputs = {
@@ -28,21 +32,19 @@ const constrainedInputs = {
           type: 'input-text',
           name: 'search',
           label: 'Search',
-          placeholder: 'Search users...'
+          placeholder: 'Search users...',
         },
         {
           type: 'input-text',
           name: 'bio',
           label: 'Bio (max 100 chars)',
           placeholder: 'Short bio',
-          maxLength: 100
-        }
+          maxLength: 100,
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 export function InputTextLabPage() {
@@ -52,14 +54,16 @@ export function InputTextLabPage() {
       scenarios={[
         {
           title: 'Basic required and optional fields',
-          description: 'The Full Name field is required — submitting empty shows a validation error.',
-          schema: basicInputs
+          description:
+            'The Full Name field is required — submitting empty shows a validation error.',
+          schema: basicInputs,
         },
         {
           title: 'Placeholder and maxLength constraints',
-          description: 'The Search field demonstrates placeholder usage. The Bio field applies a 100 character limit.',
-          schema: constrainedInputs
-        }
+          description:
+            'The Search field demonstrates placeholder usage. The Bio field applies a 100 character limit.',
+          schema: constrainedInputs,
+        },
       ]}
     />
   );

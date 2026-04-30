@@ -196,4 +196,3 @@ Use this template for new entries:
 - use `docs/architecture/` for current design truth
 - use `docs/references/` for stable lookup material
 - use `docs/bugs/` to remember important failures and why the fix exists
-

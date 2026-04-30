@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-02
 
-
 > **Implementation Status: ✅ COMPLETED**
 > The codebase and later docs indicate the migration goal is already met: framework-owned business CSS was removed, designer styling now relies on Tailwind utilities, `classAliases`, and the documented theme/token contract. The earlier `themeStyles` escape hatch discussed in this plan was explored during migration but was not retained as the final styling direction, so it should not remain as an open requirement.
 >
@@ -32,37 +31,37 @@ Final re-check performed on 2026-04-04:
 
 #### A. 框架骨架样式（应保留）— 约1200行
 
-| 类别 | 选择器 | 说明 |
-|------|--------|------|
-| CSS 变量 | `.nop-theme-root`, `--fd-*` | 主题 token |
-| 页面布局 | `.fd-page`, `.fd-page__content` | 三栏 grid 布局 |
-| 调色板 | `.fd-palette__*` | 分组、搜索、拖拽项 |
-| 画布 | `.fd-xyflow-live__surface`, `.fd-xyflow-node` | xyflow 画布外壳 |
-| 边 | `.fd-edge__label-wrapper` | 边标签容器 |
-| 工具栏 | `.fd-toolbar__*` | 工具栏按钮、分隔符 |
-| Inspector | `.fd-inspector__*` | 面板、表单字段 |
-| Minimap/Controls | `.react-flow__controls`, `.react-flow__minimap` | xyflow 控件覆盖 |
+| 类别             | 选择器                                          | 说明               |
+| ---------------- | ----------------------------------------------- | ------------------ |
+| CSS 变量         | `.nop-theme-root`, `--fd-*`                     | 主题 token         |
+| 页面布局         | `.fd-page`, `.fd-page__content`                 | 三栏 grid 布局     |
+| 调色板           | `.fd-palette__*`                                | 分组、搜索、拖拽项 |
+| 画布             | `.fd-xyflow-live__surface`, `.fd-xyflow-node`   | xyflow 画布外壳    |
+| 边               | `.fd-edge__label-wrapper`                       | 边标签容器         |
+| 工具栏           | `.fd-toolbar__*`                                | 工具栏按钮、分隔符 |
+| Inspector        | `.fd-inspector__*`                              | 面板、表单字段     |
+| Minimap/Controls | `.react-flow__controls`, `.react-flow__minimap` | xyflow 控件覆盖    |
 
 #### B. 独立示例样式（应移出框架包）— 约400行
 
-| 类别 | 行范围 | 选择器 |
-|------|--------|--------|
-| 独立示例布局 | 612-677, 1275-1322 | `.flow-designer-example__*` |
-| 独立示例画布 | 624-652 | `.flow-designer-example__canvas*` |
-| 独立示例 toast | 654-677 | `.flow-designer-example__toast` |
-| 独立流程组件 | 1078-1272 | `.flow-canvas`, `.flow-node`, `.flow-edge`, `.flow-toolbar`, `.flow-palette`, `.flow-inspector`, `.flow-list-*` |
+| 类别           | 行范围             | 选择器                                                                                                          |
+| -------------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| 独立示例布局   | 612-677, 1275-1322 | `.flow-designer-example__*`                                                                                     |
+| 独立示例画布   | 624-652            | `.flow-designer-example__canvas*`                                                                               |
+| 独立示例 toast | 654-677            | `.flow-designer-example__toast`                                                                                 |
+| 独立流程组件   | 1078-1272          | `.flow-canvas`, `.flow-node`, `.flow-edge`, `.flow-toolbar`, `.flow-palette`, `.flow-inspector`, `.flow-list-*` |
 
 #### C. workflow 示例特定样式（核心迁移目标）— 约460行
 
-| 类别 | 行范围 | 选择器 |
-|------|--------|--------|
-| Tailwind 布局 polyfill | 1616-1705 | `.fd-page .flex`, `.fd-page .gap-2`, `.fd-page .px-3` 等 |
-| 节点边框颜色 | 1679-1689 | `.fd-page .border-green-500`, `.border-red-500`, `.border-yellow-400` |
-| 图标颜色+渐变 | 1721-1767 | `.fd-page .text-green-600`, `.fd-page .react-flow__node .nop-flex > .nop-icon.w-5.h-5.text-green-600` |
-| 文字颜色 | 1783-1791, 1803, 2029-2063 | `.fd-page .text-gray-*`, `.text-sky-700`, `.text-emerald-700` 等 |
-| 背景颜色 | 1650-1656, 1795-1801, 2025-2063 | `.fd-page .bg-white`, `.bg-sky-100`, `.bg-emerald-100` 等 |
-| xyflow 节点内覆盖 | 1827-1877, 1860-1872 | `.fd-xyflow-live__surface .react-flow__node .fd-xyflow-node .nop-flex.bg-white` 等 |
-| 调色板图标渐变 | 220-237 | `.fd-palette__item-icon--start`, `--end`, `--task` 等 |
+| 类别                   | 行范围                          | 选择器                                                                                                |
+| ---------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Tailwind 布局 polyfill | 1616-1705                       | `.fd-page .flex`, `.fd-page .gap-2`, `.fd-page .px-3` 等                                              |
+| 节点边框颜色           | 1679-1689                       | `.fd-page .border-green-500`, `.border-red-500`, `.border-yellow-400`                                 |
+| 图标颜色+渐变          | 1721-1767                       | `.fd-page .text-green-600`, `.fd-page .react-flow__node .nop-flex > .nop-icon.w-5.h-5.text-green-600` |
+| 文字颜色               | 1783-1791, 1803, 2029-2063      | `.fd-page .text-gray-*`, `.text-sky-700`, `.text-emerald-700` 等                                      |
+| 背景颜色               | 1650-1656, 1795-1801, 2025-2063 | `.fd-page .bg-white`, `.bg-sky-100`, `.bg-emerald-100` 等                                             |
+| xyflow 节点内覆盖      | 1827-1877, 1860-1872            | `.fd-xyflow-live__surface .react-flow__node .fd-xyflow-node .nop-flex.bg-white` 等                    |
+| 调色板图标渐变         | 220-237                         | `.fd-palette__item-icon--start`, `--end`, `--task` 等                                                 |
 
 ### 核心矛盾
 
@@ -74,13 +73,13 @@ JSON schema 中使用 Tailwind 类名（如 `border-green-500`），但这些类
 
 ### 已有基础设施
 
-| 机制 | 位置 | 能力 |
-|------|------|------|
-| `classAliases` | `flux-core/src/class-aliases.ts` | 支持别名展开、嵌套、继承 |
-| `ClassAliasesContext` | `flux-react/src/contexts.ts` | React 层的别名上下文传递 |
-| `BaseSchema.classAliases` | `flux-core/src/types.ts:25` | 每个 schema 节点可定义别名 |
-| `NodeRenderer` | `flux-react/src/node-renderer.tsx:74-76` | 自动合并父级+节点级别名并解析 className |
-| TailwindCSS | `postcss.config.cjs` + `tailwind.config.ts` | 项目已配置 Tailwind v4 |
+| 机制                      | 位置                                        | 能力                                    |
+| ------------------------- | ------------------------------------------- | --------------------------------------- |
+| `classAliases`            | `flux-core/src/class-aliases.ts`            | 支持别名展开、嵌套、继承                |
+| `ClassAliasesContext`     | `flux-react/src/contexts.ts`                | React 层的别名上下文传递                |
+| `BaseSchema.classAliases` | `flux-core/src/types.ts:25`                 | 每个 schema 节点可定义别名              |
+| `NodeRenderer`            | `flux-react/src/node-renderer.tsx:74-76`    | 自动合并父级+节点级别名并解析 className |
+| TailwindCSS               | `postcss.config.cjs` + `tailwind.config.ts` | 项目已配置 Tailwind v4                  |
 
 ---
 
@@ -183,6 +182,7 @@ export interface DesignerConfig {
 #### Step 4: 清理 styles.css — 移除 workflow 特定颜色 polyfill（2025-2063行）
 
 删除：
+
 ```
 .fd-page .bg-emerald-100 / .text-emerald-700
 .fd-page .bg-rose-100 / .text-rose-700
@@ -227,7 +227,7 @@ export interface DesignerConfig {
 ```typescript
 export interface DesignerConfig {
   // ...
-  themeStyles?: string;  // 原始 CSS 字符串，注入到 designer 作用域
+  themeStyles?: string; // 原始 CSS 字符串，注入到 designer 作用域
 }
 ```
 
@@ -254,6 +254,7 @@ export interface DesignerConfig {
 #### Step 6: 将调色板图标渐变迁移到 themeStyles
 
 **当前 CSS**（220-237行）:
+
 ```css
 .fd-palette__item-icon--start { background: linear-gradient(135deg, #34d399, #10b981); }
 .fd-palette__item-icon--end { background: linear-gradient(135deg, #fb7185, #f43f5e); }
@@ -286,10 +287,12 @@ export interface DesignerConfig {
 ```
 
 **分析**:
+
 - `.fd-xyflow-node` 的 `border: 0; background: transparent` 是让 xyflow 节点 wrapper 变成透明的壳，样式完全由内部 schema body 承担 — 这是**框架骨架行为**，应保留
 - `.bg-white` 选择器引用是 workflow 示例特有的 — 迁移后不再需要（因为节点 body 自带样式）
 
 **迁移方案**:
+
 1. 保留 `.fd-xyflow-node { border: 0; background: transparent; }` — 这是骨架
 2. 删除所有引用 `.bg-white`、`.shadow-sm` 等 Tailwind 类名的选择器
 3. 选中状态样式改为通用规则：
@@ -305,6 +308,7 @@ export interface DesignerConfig {
 **文件**: `packages/flow-designer-renderers/src/styles.css`
 
 删除以下所有样式（约200行）：
+
 - `.flow-designer-example__*`（612-677, 1275-1322行）
 - `.flow-canvas__*`（239-1077行中 `.flow-canvas` 相关）
 - `.flow-node__*`（1078-1107行）
@@ -321,17 +325,19 @@ export interface DesignerConfig {
 **文件**: `tailwind.config.ts`
 
 确认 `content` 数组包含：
+
 ```typescript
 content: [
   // 已有
   './apps/playground/src/**/*.{ts,tsx}',
   './packages/flow-designer-renderers/src/**/*.{ts,tsx}',
   // 需确认
-  './apps/playground/src/schemas/**/*.json',  // JSON schema 中的 Tailwind 类名
-]
+  './apps/playground/src/schemas/**/*.json', // JSON schema 中的 Tailwind 类名
+];
 ```
 
 **注意**: Tailwind v4 的 `@tailwindcss/postcss` 使用 content detection，但 JSON 文件中的类名可能不会被自动扫描。需要：
+
 - 要么在 `tailwind.config.ts` 的 `content` 中加入 JSON 文件路径
 - 要么确保 JSON 中使用的所有 Tailwind 类名也出现在某个 `.ts/.tsx` 文件中（作为注释或代码引用）
 
@@ -351,7 +357,7 @@ content: [
       "node-header": "flex items-start gap-2",
       "node-footer": "flex items-center justify-between w-full text-xs text-gray-500"
     },
-    "themeStyles": "...",
+    "themeStyles": "..."
     // ...existing config
   }
 }
@@ -393,18 +399,18 @@ export function DesignerPageRenderer(props) {
 
 ## 执行顺序
 
-| 阶段 | 步骤 | 文件 | 风险 |
-|------|------|------|------|
-| 1. 基础设施 | Step 1 | `flow-designer-core/src/types.ts` | 低 — 新增可选字段 |
-| 2. 基础设施 | Step 9 | `tailwind.config.ts` + safelist | 低 — 配置变更 |
-| 3. 传递机制 | Step 2 | `DesignerXyflowNode.tsx`, `DesignerXyflowEdge.tsx`, `designer-page.tsx` | 中 — 需确认 RenderNodes 支持 |
-| 4. 注入机制 | Step 11 | `designer-page.tsx` | 低 — 新增 `<style>` 标签 |
-| 5. JSON 迁移 | Step 10 | `workflow-designer-schema.json` | 低 — 纯 JSON 变更 |
-| 6. 调色板 | Step 6 | `designer-palette.tsx` | 低 — 选择器变更 |
-| 7. CSS 清理 | Step 3-4 | `styles.css` | **高** — 可能影响视觉 |
-| 8. 节点覆盖 | Step 7 | `styles.css` | **高** — 选中状态样式 |
-| 9. 示例迁移 | Step 8 | `styles.css` → `playground/styles.css` | 中 — 文件移动 |
-| 10. 验证 | - | 全部 | 运行所有测试 |
+| 阶段         | 步骤     | 文件                                                                    | 风险                         |
+| ------------ | -------- | ----------------------------------------------------------------------- | ---------------------------- |
+| 1. 基础设施  | Step 1   | `flow-designer-core/src/types.ts`                                       | 低 — 新增可选字段            |
+| 2. 基础设施  | Step 9   | `tailwind.config.ts` + safelist                                         | 低 — 配置变更                |
+| 3. 传递机制  | Step 2   | `DesignerXyflowNode.tsx`, `DesignerXyflowEdge.tsx`, `designer-page.tsx` | 中 — 需确认 RenderNodes 支持 |
+| 4. 注入机制  | Step 11  | `designer-page.tsx`                                                     | 低 — 新增 `<style>` 标签     |
+| 5. JSON 迁移 | Step 10  | `workflow-designer-schema.json`                                         | 低 — 纯 JSON 变更            |
+| 6. 调色板    | Step 6   | `designer-palette.tsx`                                                  | 低 — 选择器变更              |
+| 7. CSS 清理  | Step 3-4 | `styles.css`                                                            | **高** — 可能影响视觉        |
+| 8. 节点覆盖  | Step 7   | `styles.css`                                                            | **高** — 选中状态样式        |
+| 9. 示例迁移  | Step 8   | `styles.css` → `playground/styles.css`                                  | 中 — 文件移动                |
+| 10. 验证     | -        | 全部                                                                    | 运行所有测试                 |
 
 ---
 
@@ -463,5 +469,3 @@ styles.css (约1200行，纯骨架)
 2. **xyflow 选中状态样式丢失**: 保留通用的 `:first-child` 选择器规则
 3. **图标渐变无法用 Tailwind 表达**: 使用 `themeStyles` escape hatch
 4. **视觉回归**: 每个 Step 完成后运行 `pnpm dev` 目视验证，可随时回退
-
-

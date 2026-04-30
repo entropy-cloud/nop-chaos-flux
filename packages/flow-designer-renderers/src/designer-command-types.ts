@@ -12,12 +12,23 @@ export type DesignerCommandReason =
 
 export type DesignerCommand =
   | { type: 'addEdge'; source: string; target: string; data?: Record<string, unknown> }
-  | { type: 'addNode'; nodeType: string; position?: { x: number; y: number }; data?: Record<string, unknown> }
+  | {
+      type: 'addNode';
+      nodeType: string;
+      position?: { x: number; y: number };
+      data?: Record<string, unknown>;
+    }
   | { type: 'clearSelection' }
   | { type: 'deleteEdge'; edgeId: string }
   | { type: 'deleteNode'; nodeId: string }
   | { type: 'duplicateNode'; nodeId: string }
-  | { type: 'addBranch'; nodeId: string; branchData?: Record<string, unknown>; childType?: string; childData?: Record<string, unknown> }
+  | {
+      type: 'addBranch';
+      nodeId: string;
+      branchData?: Record<string, unknown>;
+      childType?: string;
+      childData?: Record<string, unknown>;
+    }
   | { type: 'deleteBranch'; nodeId: string; branchId: string }
   | { type: 'moveBranch'; nodeId: string; branchId: string; direction: 'left' | 'right' }
   | { type: 'copySelection' }
@@ -41,8 +52,18 @@ export type DesignerCommand =
   | { type: 'updateNodeData'; nodeId: string; data: Record<string, unknown> }
   | { type: 'updateBranchData'; nodeId: string; branchId: string; data: Record<string, unknown> }
   | { type: 'insertChainNode'; sourceId: string; nodeType: string; data?: Record<string, unknown> }
-  | { type: 'insertChainNodeAtMerge'; targetId: string; nodeType: string; data?: Record<string, unknown> }
-  | { type: 'insertBranchPair'; sourceId: string; condNodeType: string; condData?: Record<string, unknown> };
+  | {
+      type: 'insertChainNodeAtMerge';
+      targetId: string;
+      nodeType: string;
+      data?: Record<string, unknown>;
+    }
+  | {
+      type: 'insertBranchPair';
+      sourceId: string;
+      condNodeType: string;
+      condData?: Record<string, unknown>;
+    };
 
 export interface DesignerCommandResult {
   ok: boolean;

@@ -17,37 +17,55 @@ import type {
   TemplateNode,
   TemplateRegion,
   PreparedImportSpec,
-  XuiImportSpec
+  XuiImportSpec,
 } from '@nop-chaos/flux-core';
-import {
-  createNodeId,
-  isSchemaInput,
-} from '@nop-chaos/flux-core';
+import { createNodeId, isSchemaInput } from '@nop-chaos/flux-core';
 import {
   createCompilerPluginAppliers,
   MAX_COMPILE_DEPTH,
   prepareSchemaImports,
-  prepareSchemaRoot
+  prepareSchemaRoot,
 } from './schema-compiler-helpers';
 import { canonicalizeSchemaInput } from './schema-compiler/authoring-transform';
 import { createTemplateRegion } from './schema-compiler/regions';
 import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables';
 import { classifyField, buildMetaProgram } from './schema-compiler/fields';
 import { collectValidationModel } from './schema-compiler/validation-collection';
-import { analyzeSchemaInput, applyWrapComponentPlugins, inspectSchemaNodeFields, isNamespacedSchemaKey } from './schema-compiler/shape-validation';
-import { enrichTemplateNodeIds, extractLifecycleActions } from './schema-compiler/target-enrichment';
+import {
+  analyzeSchemaInput,
+  applyWrapComponentPlugins,
+  inspectSchemaNodeFields,
+  isNamespacedSchemaKey,
+} from './schema-compiler/shape-validation';
+import {
+  enrichTemplateNodeIds,
+  extractLifecycleActions,
+} from './schema-compiler/target-enrichment';
 import {
   createSchemaCompilerDiagnosticsContext,
   schemaPathToJsonPointer,
-  type SchemaCompilerDiagnosticsContext
+  type SchemaCompilerDiagnosticsContext,
 } from './schema-compiler/diagnostics';
-import { normalizeImportSpecKey, pushImportSymbols, pushPreparedImportSymbols, pushInjectedLocalSymbols, pushRegionParamSymbols, pushNamedActionSymbols } from './schema-compiler/symbol-helpers';
-import { buildWrapProvidersClosure, computeStaticAnalysis } from './schema-compiler/static-analysis';
+import {
+  normalizeImportSpecKey,
+  pushImportSymbols,
+  pushPreparedImportSymbols,
+  pushInjectedLocalSymbols,
+  pushRegionParamSymbols,
+  pushNamedActionSymbols,
+} from './schema-compiler/symbol-helpers';
+import {
+  buildWrapProvidersClosure,
+  computeStaticAnalysis,
+} from './schema-compiler/static-analysis';
 import { compileActions } from './action-compiler';
 import { compileDataSource } from './source-compiler';
 import { compileReaction } from './reaction-compiler';
 import { createBaseCompileSymbolTable } from './compile-symbol-table';
-import { normalizeValidationTriggers, normalizeValidationVisibilityTriggers } from './validation-lowering';
+import {
+  normalizeValidationTriggers,
+  normalizeValidationVisibilityTriggers,
+} from './validation-lowering';
 
 export function createSchemaCompiler(input: {
   registry: RendererRegistry;
@@ -55,13 +73,22 @@ export function createSchemaCompiler(input: {
   plugins?: RendererPlugin[];
   defaultCidState?: import('@nop-chaos/flux-core').CompiledCidState;
 }): SchemaCompiler {
-  const expressionCompiler = input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
+  const expressionCompiler =
+    input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
   const noopDiagnostics = createSchemaCompilerDiagnosticsContext(undefined, 'compile');
-  const { applyBeforeCompilePlugins, applyAfterCompilePlugins } = createCompilerPluginAppliers(input.plugins);
+  const { applyBeforeCompilePlugins, applyAfterCompilePlugins } = createCompilerPluginAppliers(
+    input.plugins,
+  );
 
-  function compileSchemaToTemplateNodes(schema: SchemaInput, options: CompileSchemaOptions = {}, depth = 0): TemplateNode | TemplateNode[] {
+  function compileSchemaToTemplateNodes(
+    schema: SchemaInput,
+    options: CompileSchemaOptions = {},
+    depth = 0,
+  ): TemplateNode | TemplateNode[] {
     if (depth > MAX_COMPILE_DEPTH) {
-      throw new Error(`Schema compilation exceeded maximum nesting depth (${MAX_COMPILE_DEPTH}). Check for circular region references or overly deep nesting at path: ${options.basePath ?? '$'}`);
+      throw new Error(
+        `Schema compilation exceeded maximum nesting depth (${MAX_COMPILE_DEPTH}). Check for circular region references or overly deep nesting at path: ${options.basePath ?? '$'}`,
+      );
     }
 
     const prepared = applyBeforeCompilePlugins(schema);
@@ -70,14 +97,20 @@ export function createSchemaCompiler(input: {
       schema: prepared,
       options: {
         ...options,
-        cidState: options.cidState ?? input.defaultCidState
+        cidState: options.cidState ?? input.defaultCidState,
       },
       registry: input.registry,
-      plugins: input.plugins
+      plugins: input.plugins,
     });
 
     if (diagnostics.enabled) {
-      analyzeSchemaInput(canonicalPrepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
+      analyzeSchemaInput(
+        canonicalPrepared,
+        options.basePath ?? '$',
+        input.registry,
+        input.plugins,
+        diagnostics,
+      );
     }
 
     if (Array.isArray(canonicalPrepared)) {
@@ -91,19 +124,29 @@ export function createSchemaCompiler(input: {
 
         const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
 
-        return compileSingleNode(item, {
-          path,
-          parentPath: options.parentPath,
-          schemaUrl: options.schemaUrl,
-          symbolTable,
-          preparedImports: options.preparedImports,
-          renderer: wrappedRenderer
-        }, diagnostics, depth);
+        return compileSingleNode(
+          item,
+          {
+            path,
+            parentPath: options.parentPath,
+            schemaUrl: options.schemaUrl,
+            symbolTable,
+            preparedImports: options.preparedImports,
+            renderer: wrappedRenderer,
+          },
+          diagnostics,
+          depth,
+        );
       });
 
       const nodes = enrichTemplateNodeIds(compiled, cidState);
-      const template: CompiledTemplate = applyAfterCompilePlugins({ root: nodes, repeatedTemplates: new Map() });
-      return Array.isArray(template.root) ? template.root as TemplateNode[] : [template.root] as TemplateNode[];
+      const template: CompiledTemplate = applyAfterCompilePlugins({
+        root: nodes,
+        repeatedTemplates: new Map(),
+      });
+      return Array.isArray(template.root)
+        ? (template.root as TemplateNode[])
+        : ([template.root] as TemplateNode[]);
     }
 
     const path = options.basePath ?? '$';
@@ -116,18 +159,26 @@ export function createSchemaCompiler(input: {
     const wrappedRenderer = applyWrapComponentPlugins(renderer, input.plugins);
 
     const node = enrichTemplateNodeIds(
-      compileSingleNode(canonicalPrepared, {
-        path,
-        parentPath: options.parentPath,
-        schemaUrl: options.schemaUrl,
-        symbolTable,
-        preparedImports: options.preparedImports,
-        renderer: wrappedRenderer
-      }, diagnostics, depth),
-      cidState
+      compileSingleNode(
+        canonicalPrepared,
+        {
+          path,
+          parentPath: options.parentPath,
+          schemaUrl: options.schemaUrl,
+          symbolTable,
+          preparedImports: options.preparedImports,
+          renderer: wrappedRenderer,
+        },
+        diagnostics,
+        depth,
+      ),
+      cidState,
     );
 
-    const template: CompiledTemplate = applyAfterCompilePlugins({ root: node, repeatedTemplates: new Map() });
+    const template: CompiledTemplate = applyAfterCompilePlugins({
+      root: node,
+      repeatedTemplates: new Map(),
+    });
     return template.root as TemplateNode | TemplateNode[];
   }
 
@@ -135,7 +186,7 @@ export function createSchemaCompiler(input: {
     schema: BaseSchema,
     options: CompileNodeOptions,
     diagnostics: SchemaCompilerDiagnosticsContext = noopDiagnostics,
-    depth = 0
+    depth = 0,
   ): TemplateNode {
     const renderer = options.renderer;
     const path = options.path;
@@ -150,23 +201,30 @@ export function createSchemaCompiler(input: {
     const deepNormalizers = DEEP_FIELD_NORMALIZERS[renderer.type] ?? {};
 
     const nodeImports = Array.isArray(fieldInspection.extensions?.['xui:imports'])
-      ? fieldInspection.extensions?.['xui:imports'] as XuiImportSpec[]
+      ? (fieldInspection.extensions?.['xui:imports'] as XuiImportSpec[])
       : undefined;
 
     let symbolTable = pushInjectedLocalSymbols(
       options.symbolTable ?? createBaseCompileSymbolTable(),
       renderer,
-      `${path}:owner-symbols`
+      `${path}:owner-symbols`,
     );
     symbolTable = options.schemaUrl
-      ? pushPreparedImportSymbols(symbolTable, nodeImports, options.preparedImports, options.schemaUrl, `${path}:imports`)
+      ? pushPreparedImportSymbols(
+          symbolTable,
+          nodeImports,
+          options.preparedImports,
+          options.schemaUrl,
+          `${path}:imports`,
+        )
       : pushImportSymbols(symbolTable, nodeImports, `${path}:imports`);
 
-    const rawXuiActions = typeof schema['xui:actions'] === 'object'
-      && schema['xui:actions'] !== null
-      && !Array.isArray(schema['xui:actions'])
-      ? schema['xui:actions'] as Record<string, ActionSchema>
-      : undefined;
+    const rawXuiActions =
+      typeof schema['xui:actions'] === 'object' &&
+      schema['xui:actions'] !== null &&
+      !Array.isArray(schema['xui:actions'])
+        ? (schema['xui:actions'] as Record<string, ActionSchema>)
+        : undefined;
     const xuiActionNames = rawXuiActions ? Object.keys(rawXuiActions) : [];
     if (xuiActionNames.length > 0) {
       symbolTable = pushNamedActionSymbols(symbolTable, xuiActionNames, `${path}:xui-actions`);
@@ -190,21 +248,28 @@ export function createSchemaCompiler(input: {
       }
 
       if (rule.kind === 'region' || (rule.kind === 'value-or-region' && isSchemaInput(value))) {
-        const regionMeta = rule.kind === 'region' || isSchemaInput(value)
-          ? { params: rule.params, isolate: rule.isolate }
-          : undefined;
-        const compileAtNextDepth: typeof compileSchemaToTemplateNodes = (s, o) => compileSchemaToTemplateNodes(s, o, depth + 1);
+        const regionMeta =
+          rule.kind === 'region' || isSchemaInput(value)
+            ? { params: rule.params, isolate: rule.isolate }
+            : undefined;
+        const compileAtNextDepth: typeof compileSchemaToTemplateNodes = (s, o) =>
+          compileSchemaToTemplateNodes(s, o, depth + 1);
         regions[rule.regionKey ?? key] = createTemplateRegion(
           rule.regionKey ?? key,
           value,
           `${path}.${rule.regionKey ?? key}`,
-          (inputValue, regionOptions) => compileAtNextDepth(inputValue, {
-            ...regionOptions,
-            schemaUrl: regionOptions?.schemaUrl ?? options.schemaUrl,
-            preparedImports: options.preparedImports,
-            symbolTable: pushRegionParamSymbols(symbolTable, rule.params, `${path}.${rule.regionKey ?? key}:slot`)
-          }),
-          regionMeta
+          (inputValue, regionOptions) =>
+            compileAtNextDepth(inputValue, {
+              ...regionOptions,
+              schemaUrl: regionOptions?.schemaUrl ?? options.schemaUrl,
+              preparedImports: options.preparedImports,
+              symbolTable: pushRegionParamSymbols(
+                symbolTable,
+                rule.params,
+                `${path}.${rule.regionKey ?? key}:slot`,
+              ),
+            }),
+          regionMeta,
         );
         continue;
       }
@@ -214,11 +279,16 @@ export function createSchemaCompiler(input: {
             value,
             path,
             regions,
-            compileSchema: (s: SchemaInput, o?: CompileSchemaOptions) => compileSchemaToTemplateNodes(s, {
-              ...o,
-              schemaUrl: o?.schemaUrl ?? options.schemaUrl,
-              preparedImports: o?.preparedImports ?? options.preparedImports
-            }, depth + 1)
+            compileSchema: (s: SchemaInput, o?: CompileSchemaOptions) =>
+              compileSchemaToTemplateNodes(
+                s,
+                {
+                  ...o,
+                  schemaUrl: o?.schemaUrl ?? options.schemaUrl,
+                  preparedImports: o?.preparedImports ?? options.preparedImports,
+                },
+                depth + 1,
+              ),
           })
         : value;
 
@@ -234,12 +304,18 @@ export function createSchemaCompiler(input: {
     const propsProgram = expressionCompiler.compileValue(propSource, {
       symbolTable,
       sourcePath: path,
-      reportDiagnostic: (issue) => diagnostics.emit(issue)
+      reportDiagnostic: (issue) => diagnostics.emit(issue),
     });
     const compileOptions = {
       symbolTable,
       sourcePath: path,
-      reportDiagnostic: (issue: { code: import('@nop-chaos/flux-core').SchemaDiagnosticCode; message: string; path: string; severity?: import('@nop-chaos/flux-core').SchemaDiagnosticSeverity; source?: import('@nop-chaos/flux-core').SchemaDiagnosticSource; }) => diagnostics.emit(issue)
+      reportDiagnostic: (issue: {
+        code: import('@nop-chaos/flux-core').SchemaDiagnosticCode;
+        message: string;
+        path: string;
+        severity?: import('@nop-chaos/flux-core').SchemaDiagnosticSeverity;
+        source?: import('@nop-chaos/flux-core').SchemaDiagnosticSource;
+      }) => diagnostics.emit(issue),
     };
 
     const eventPlans: Record<string, CompiledActionProgram> = {};
@@ -250,22 +326,32 @@ export function createSchemaCompiler(input: {
       });
     }
 
-    const lifecycleActions: {
-      onMount?: CompiledActionProgram;
-      onUnmount?: CompiledActionProgram;
-    } | undefined = rawLifecycleActions
+    const lifecycleActions:
+      | {
+          onMount?: CompiledActionProgram;
+          onUnmount?: CompiledActionProgram;
+        }
+      | undefined = rawLifecycleActions
       ? {
           onMount: rawLifecycleActions.onMount
-            ? compileActions(rawLifecycleActions.onMount as ActionSchema | ActionSchema[], expressionCompiler, {
-                ...compileOptions,
-                basePath: `${path}.onMount`,
-              })
+            ? compileActions(
+                rawLifecycleActions.onMount as ActionSchema | ActionSchema[],
+                expressionCompiler,
+                {
+                  ...compileOptions,
+                  basePath: `${path}.onMount`,
+                },
+              )
             : undefined,
           onUnmount: rawLifecycleActions.onUnmount
-            ? compileActions(rawLifecycleActions.onUnmount as ActionSchema | ActionSchema[], expressionCompiler, {
-                ...compileOptions,
-                basePath: `${path}.onUnmount`,
-              })
+            ? compileActions(
+                rawLifecycleActions.onUnmount as ActionSchema | ActionSchema[],
+                expressionCompiler,
+                {
+                  ...compileOptions,
+                  basePath: `${path}.onUnmount`,
+                },
+              )
             : undefined,
         }
       : undefined;
@@ -277,50 +363,60 @@ export function createSchemaCompiler(input: {
           ? { kind: 'child' }
           : { kind: 'inherit' };
 
-    const classAliasesPlan = schema.classAliases && Object.keys(schema.classAliases as Record<string, unknown>).length > 0
-      ? {
-          aliases: schema.classAliases as Record<string, string>
-        }
-      : undefined;
+    const classAliasesPlan =
+      schema.classAliases && Object.keys(schema.classAliases as Record<string, unknown>).length > 0
+        ? {
+            aliases: schema.classAliases as Record<string, string>,
+          }
+        : undefined;
 
-    const preparedNodeImports = options.schemaUrl && nodeImports?.length
-      ? nodeImports
-          .map((spec) => options.preparedImports?.get(normalizeImportSpecKey(options.schemaUrl!, spec)))
-          .filter((entry): entry is PreparedImportSpec => Boolean(entry))
-      : [];
+    const preparedNodeImports =
+      options.schemaUrl && nodeImports?.length
+        ? nodeImports
+            .map((spec) =>
+              options.preparedImports?.get(normalizeImportSpecKey(options.schemaUrl!, spec)),
+            )
+            .filter((entry): entry is PreparedImportSpec => Boolean(entry))
+        : [];
 
     const importsPlan = nodeImports?.length
       ? {
           imports: nodeImports,
-          resolvedImports: preparedNodeImports.length > 0
-            ? preparedNodeImports.map((entry) => entry.resolvedSpec)
-            : nodeImports,
+          resolvedImports:
+            preparedNodeImports.length > 0
+              ? preparedNodeImports.map((entry) => entry.resolvedSpec)
+              : nodeImports,
           preparedImports: preparedNodeImports,
-          staticMeta: preparedNodeImports.length > 0
-            ? Object.fromEntries(preparedNodeImports.map((entry) => [entry.spec.as, entry.staticMeta ?? {}]))
-            : undefined
+          staticMeta:
+            preparedNodeImports.length > 0
+              ? Object.fromEntries(
+                  preparedNodeImports.map((entry) => [entry.spec.as, entry.staticMeta ?? {}]),
+                )
+              : undefined,
         }
       : undefined;
 
     const providerPlan = {
       actionScope: renderer.actionScopePolicy === 'new',
       componentRegistry: renderer.componentRegistryPolicy === 'new',
-      classAliases: Boolean(classAliasesPlan)
+      classAliases: Boolean(classAliasesPlan),
     };
 
     const providerWrap = buildWrapProvidersClosure(providerPlan);
-    const validationOwnerPlan = renderer.scopePolicy === 'form'
-      ? {
-          boundary: 'create-owner' as const,
-          childContractMode: renderer.validation?.childContractMode
-            ?? (schema.type === 'form' ? 'ignore' : 'summary-gate')
-        }
-      : renderer.validation?.ownerResolution
+    const validationOwnerPlan =
+      renderer.scopePolicy === 'form'
         ? {
-            boundary: renderer.validation.ownerResolution,
-            childContractMode: renderer.validation.childContractMode
+            boundary: 'create-owner' as const,
+            childContractMode:
+              renderer.validation?.childContractMode ??
+              (schema.type === 'form' ? 'ignore' : 'summary-gate'),
           }
-        : undefined;
+        : renderer.validation?.ownerResolution
+          ? {
+              boundary: renderer.validation.ownerResolution,
+              childContractMode: renderer.validation.childContractMode,
+            }
+          : undefined;
 
     const namedActionPlans: Record<string, CompiledActionProgram> | undefined = rawXuiActions
       ? Object.fromEntries(
@@ -330,7 +426,7 @@ export function createSchemaCompiler(input: {
                 code: 'invalid-namespace-property' as import('@nop-chaos/flux-core').SchemaDiagnosticCode,
                 path: `${path}.xui:actions.${name}`,
                 message: `xui:actions entry "${name}" must be an ActionSchema object.`,
-                severity: 'error'
+                severity: 'error',
               });
               return [name, compileActions({ action: 'noop' }, expressionCompiler, compileOptions)];
             }
@@ -339,9 +435,9 @@ export function createSchemaCompiler(input: {
               compileActions(actionSchema, expressionCompiler, {
                 ...compileOptions,
                 basePath: `${path}.xui:actions.${name}`,
-              })
+              }),
             ];
-          })
+          }),
         )
       : undefined;
 
@@ -370,17 +466,25 @@ export function createSchemaCompiler(input: {
           ? collectValidationModel(
               Object.values(regions)
                 .map((region) => region.node)
-                .filter((candidate): candidate is TemplateNode | TemplateNode[] => candidate != null),
+                .filter(
+                  (candidate): candidate is TemplateNode | TemplateNode[] => candidate != null,
+                ),
               {
                 defaultTriggers: normalizeValidationTriggers(schema.validateOn, ['blur']),
-                defaultShowErrorOn: normalizeValidationVisibilityTriggers(schema.showErrorOn, ['touched', 'submit']),
-                defaultHiddenFieldPolicy: (schema as { hiddenFieldPolicy?: unknown }).hiddenFieldPolicy as import('@nop-chaos/flux-core').HiddenFieldPolicy | undefined
-              }
+                defaultShowErrorOn: normalizeValidationVisibilityTriggers(schema.showErrorOn, [
+                  'touched',
+                  'submit',
+                ]),
+                defaultHiddenFieldPolicy: (schema as { hiddenFieldPolicy?: unknown })
+                  .hiddenFieldPolicy as
+                  | import('@nop-chaos/flux-core').HiddenFieldPolicy
+                  | undefined,
+              },
             )
           : undefined,
       sourcePropKeys: Array.from(sourcePropKeys).sort(),
       sourceStatePropKeys,
-      ...(namedActionPlans && Object.keys(namedActionPlans).length > 0 ? { namedActionPlans } : {})
+      ...(namedActionPlans && Object.keys(namedActionPlans).length > 0 ? { namedActionPlans } : {}),
     };
 
     node.staticAnalysis = computeStaticAnalysis(node, schema);
@@ -390,7 +494,7 @@ export function createSchemaCompiler(input: {
         compileDataSource(node.id, schema as DataSourceSchema, expressionCompiler, {
           ...compileOptions,
           basePath: path,
-        })
+        }),
       ];
     }
 
@@ -399,7 +503,7 @@ export function createSchemaCompiler(input: {
         compileReaction(node.id, schema as ReactionSchema, expressionCompiler, {
           ...compileOptions,
           basePath: path,
-        })
+        }),
       ];
     }
 
@@ -407,7 +511,11 @@ export function createSchemaCompiler(input: {
   }
 
   function validateSchemaInput(schema: SchemaInput, options: CompileSchemaOptions = {}) {
-    const diagnostics = createSchemaCompilerDiagnosticsContext(options, 'validate', options.schemaUrl);
+    const diagnostics = createSchemaCompilerDiagnosticsContext(
+      options,
+      'validate',
+      options.schemaUrl,
+    );
     const prepared = applyBeforeCompilePlugins(schema);
     const schemaUrl = options.schemaUrl ?? '$';
 
@@ -415,18 +523,22 @@ export function createSchemaCompiler(input: {
       diagnostics.emit({
         code: 'invalid-root',
         path: schemaPathToJsonPointer(options.basePath ?? '$'),
-        message: 'Schema root must be an object or an array of schema objects.'
+        message: 'Schema root must be an object or an array of schema objects.',
       });
       return diagnostics.diagnostics;
     }
 
-    const canonicalPrepared = canonicalizeSchemaInput(prepared, {
-      basePath: options.basePath ?? '$',
-      schemaUrl,
-      registry: input.registry,
-      plugins: input.plugins,
-      maxDepth: MAX_COMPILE_DEPTH
-    }, diagnostics);
+    const canonicalPrepared = canonicalizeSchemaInput(
+      prepared,
+      {
+        basePath: options.basePath ?? '$',
+        schemaUrl,
+        registry: input.registry,
+        plugins: input.plugins,
+        maxDepth: MAX_COMPILE_DEPTH,
+      },
+      diagnostics,
+    );
 
     try {
       compileSchemaToTemplateNodes(canonicalPrepared, {
@@ -436,8 +548,8 @@ export function createSchemaCompiler(input: {
           ...(options.diagnostics ?? {}),
           enabled: true,
           continueOnError: true,
-          reporter: (issue) => diagnostics.emit(issue)
-        }
+          reporter: (issue) => diagnostics.emit(issue),
+        },
       });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
@@ -446,11 +558,17 @@ export function createSchemaCompiler(input: {
         path: schemaPathToJsonPointer(options.basePath ?? '$'),
         message,
         severity: 'error',
-        source: 'core'
+        source: 'core',
       });
     }
 
-    analyzeSchemaInput(canonicalPrepared, options.basePath ?? '$', input.registry, input.plugins, diagnostics);
+    analyzeSchemaInput(
+      canonicalPrepared,
+      options.basePath ?? '$',
+      input.registry,
+      input.plugins,
+      diagnostics,
+    );
     return diagnostics.diagnostics;
   }
 
@@ -463,29 +581,37 @@ export function createSchemaCompiler(input: {
       const nodes = compileSchemaToTemplateNodes(schema, options);
       return {
         root: nodes,
-        repeatedTemplates: new Map()
+        repeatedTemplates: new Map(),
       };
     },
     async prepare(schema, options) {
       return prepareSchemaInput(schema, options);
     },
     compileNode(schema, options) {
-      const diagnostics = createSchemaCompilerDiagnosticsContext({
-        schemaUrl: options.schemaUrl,
-        diagnostics: { enabled: false }
-      }, 'compile', options.schemaUrl);
-      const canonicalSchema = canonicalizeSchemaInput(schema, {
-        basePath: options.path,
-        schemaUrl: options.schemaUrl,
-        registry: input.registry,
-        plugins: input.plugins,
-        maxDepth: MAX_COMPILE_DEPTH
-      }, diagnostics) as BaseSchema;
+      const diagnostics = createSchemaCompilerDiagnosticsContext(
+        {
+          schemaUrl: options.schemaUrl,
+          diagnostics: { enabled: false },
+        },
+        'compile',
+        options.schemaUrl,
+      );
+      const canonicalSchema = canonicalizeSchemaInput(
+        schema,
+        {
+          basePath: options.path,
+          schemaUrl: options.schemaUrl,
+          registry: input.registry,
+          plugins: input.plugins,
+          maxDepth: MAX_COMPILE_DEPTH,
+        },
+        diagnostics,
+      ) as BaseSchema;
       return compileSingleNode(canonicalSchema, options);
     },
     validate(schema, options) {
       return validateSchemaInput(schema, options);
-    }
+    },
   };
 }
 
@@ -499,7 +625,7 @@ export function validateSchema(input: {
   const compiler = createSchemaCompiler({
     registry: input.registry,
     expressionCompiler: input.expressionCompiler,
-    plugins: input.plugins
+    plugins: input.plugins,
   });
 
   return compiler.validate?.(input.schema, input.options) ?? [];

@@ -1,21 +1,30 @@
-import type {
-  NopDebuggerRedactionMatchContext,
-  NopDebuggerRedactionOptions
-} from './types';
+import type { NopDebuggerRedactionMatchContext, NopDebuggerRedactionOptions } from './types';
 
-const DEFAULT_REDACT_KEYS = ['token', 'authorization', 'cookie', 'password', 'secret', 'accessKey', 'refreshToken'];
+const DEFAULT_REDACT_KEYS = [
+  'token',
+  'authorization',
+  'cookie',
+  'password',
+  'secret',
+  'accessKey',
+  'refreshToken',
+];
 
-export type NormalizedRedactionOptions = Required<Pick<NopDebuggerRedactionOptions, 'enabled' | 'redactKeys' | 'mask' | 'maxDepth'>> &
+export type NormalizedRedactionOptions = Required<
+  Pick<NopDebuggerRedactionOptions, 'enabled' | 'redactKeys' | 'mask' | 'maxDepth'>
+> &
   Pick<NopDebuggerRedactionOptions, 'redactValue' | 'allowValue'>;
 
-export function normalizeRedactionOptions(options: NopDebuggerRedactionOptions | undefined): NormalizedRedactionOptions {
+export function normalizeRedactionOptions(
+  options: NopDebuggerRedactionOptions | undefined,
+): NormalizedRedactionOptions {
   return {
     enabled: options?.enabled ?? true,
     redactKeys: options?.redactKeys ?? DEFAULT_REDACT_KEYS,
     mask: options?.mask ?? '[REDACTED]',
     maxDepth: options?.maxDepth ?? 5,
     redactValue: options?.redactValue,
-    allowValue: options?.allowValue
+    allowValue: options?.allowValue,
   };
 }
 
@@ -24,7 +33,12 @@ function shouldRedactKey(key: string, redaction: NormalizedRedactionOptions) {
   return redaction.redactKeys.some((candidate) => normalizedKey.includes(candidate.toLowerCase()));
 }
 
-export function redactData(value: unknown, redaction: NormalizedRedactionOptions, path: string[] = [], depth = 0): unknown {
+export function redactData(
+  value: unknown,
+  redaction: NormalizedRedactionOptions,
+  path: string[] = [],
+  depth = 0,
+): unknown {
   if (!redaction.enabled) {
     return value;
   }
@@ -34,7 +48,9 @@ export function redactData(value: unknown, redaction: NormalizedRedactionOptions
   }
 
   if (Array.isArray(value)) {
-    return value.map((entry, index) => redactData(entry, redaction, [...path, String(index)], depth + 1));
+    return value.map((entry, index) =>
+      redactData(entry, redaction, [...path, String(index)], depth + 1),
+    );
   }
 
   if (!value || typeof value !== 'object') {
@@ -46,7 +62,7 @@ export function redactData(value: unknown, redaction: NormalizedRedactionOptions
       const context: NopDebuggerRedactionMatchContext = {
         key,
         path: [...path, key],
-        value: currentValue
+        value: currentValue,
       };
 
       if (redaction.allowValue?.(context)) {
@@ -58,6 +74,6 @@ export function redactData(value: unknown, redaction: NormalizedRedactionOptions
       }
 
       return [key, redactData(currentValue, redaction, [...path, key], depth + 1)];
-    })
+    }),
   );
 }

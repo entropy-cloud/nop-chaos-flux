@@ -6,22 +6,33 @@ function isDevRuntime() {
   return importMeta.env?.DEV === true;
 }
 
-export function normalizeRowKey(record: Record<string, any>, sourceIndex: number, rowKeyField?: string): string {
+export function normalizeRowKey(
+  record: Record<string, any>,
+  sourceIndex: number,
+  rowKeyField?: string,
+): string {
   const explicitValue = rowKeyField ? getIn(record, rowKeyField) : undefined;
   const compatibilityValue = explicitValue ?? record.__rowKey ?? record.id;
 
-  if (compatibilityValue === null || compatibilityValue === undefined || compatibilityValue === '') {
+  if (
+    compatibilityValue === null ||
+    compatibilityValue === undefined ||
+    compatibilityValue === ''
+  ) {
     return `legacy-index:${sourceIndex}`;
   }
 
   return String(compatibilityValue);
 }
 
-export function buildTableRowEntries(source: Array<Record<string, any>>, rowKeyField?: string): TableRowEntry[] {
+export function buildTableRowEntries(
+  source: Array<Record<string, any>>,
+  rowKeyField?: string,
+): TableRowEntry[] {
   return source.map((record, sourceIndex) => ({
     rowKey: normalizeRowKey(record, sourceIndex, rowKeyField),
     sourceIndex,
-    record
+    record,
   }));
 }
 
@@ -40,7 +51,9 @@ export function warnOnDuplicateRowKeys(entries: TableRowEntry[]): void {
   }
 
   if (duplicates.size > 0) {
-    console.warn(`[TableRenderer] Duplicate rowKey values detected: ${Array.from(duplicates).join(', ')}`);
+    console.warn(
+      `[TableRenderer] Duplicate rowKey values detected: ${Array.from(duplicates).join(', ')}`,
+    );
   }
 }
 
@@ -51,7 +64,7 @@ export function processTableData(
   filterState: FilterState,
   paginationEnabled: boolean,
   currentPage: number,
-  pageSize: number
+  pageSize: number,
 ): TableRowEntry[] {
   let data = buildTableRowEntries(source, rowKeyField);
   warnOnDuplicateRowKeys(data);
@@ -75,7 +88,11 @@ export function processTableData(
 
     if (values.keyword && values.keyword.trim().length > 0) {
       const needle = values.keyword.trim().toLowerCase();
-      data = data.filter((row) => String(row.record[columnName] ?? '').toLowerCase().includes(needle));
+      data = data.filter((row) =>
+        String(row.record[columnName] ?? '')
+          .toLowerCase()
+          .includes(needle),
+      );
     }
   });
 
@@ -89,7 +106,9 @@ export function processTableData(
 
 export { toPositiveNumber, toStringArray };
 
-export function toSelectionPayload(payload: Record<string, unknown> | string[] | undefined): Set<string> {
+export function toSelectionPayload(
+  payload: Record<string, unknown> | string[] | undefined,
+): Set<string> {
   if (Array.isArray(payload)) {
     return new Set(toStringArray(payload));
   }
@@ -98,7 +117,7 @@ export function toSelectionPayload(payload: Record<string, unknown> | string[] |
 }
 
 export function serializeInstancePath(
-  instancePath: readonly { repeatedTemplateId: string; instanceKey: string }[] | undefined
+  instancePath: readonly { repeatedTemplateId: string; instanceKey: string }[] | undefined,
 ): string {
   return instancePath?.length ? JSON.stringify(instancePath) : 'root';
 }

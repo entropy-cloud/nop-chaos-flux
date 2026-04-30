@@ -4,7 +4,7 @@ import type { FormRuntimeRegistrationState, RegisteredFieldEntry } from './form-
 
 export function findRuntimeRegistration(
   sharedState: FormRuntimeRegistrationState,
-  path: string
+  path: string,
 ): { entry: RegisteredFieldEntry | undefined; childPath: string | undefined } {
   const registrationId = sharedState.pathToRegistrationId.get(path);
 
@@ -57,13 +57,18 @@ export function syncRegisteredFieldValue(sharedState: FormRuntimeRegistrationSta
     delete nextFieldState.dirty;
   }
 
-  const nextFieldStates = Object.keys(nextFieldState).length > 0
-    ? { ...fieldStates, [path]: nextFieldState }
-    : (() => { const next = { ...fieldStates }; delete next[path]; return next; })();
+  const nextFieldStates =
+    Object.keys(nextFieldState).length > 0
+      ? { ...fieldStates, [path]: nextFieldState }
+      : (() => {
+          const next = { ...fieldStates };
+          delete next[path];
+          return next;
+        })();
 
   sharedState.store.batchUpdate({
     fieldStates: nextFieldStates,
-    values: setIn(state.values, path, nextValue)
+    values: setIn(state.values, path, nextValue),
   });
 
   return nextValue;

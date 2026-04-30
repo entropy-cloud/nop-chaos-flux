@@ -36,9 +36,30 @@ export interface GraphEdge {
 }
 
 export interface DesignerLifecycleHooks {
-  beforeCreateNode?(input: { type: string; position: { x: number; y: number }; data?: Record<string, unknown> }): { type: string; position: { x: number; y: number }; data?: Record<string, unknown> } | false;
-  beforeConnect?(input: { source: string; target: string; sourcePort?: string; targetPort?: string; data?: Record<string, unknown> }): { source: string; target: string; sourcePort?: string; targetPort?: string; data?: Record<string, unknown> } | false;
-  beforeDelete?(target: { type: 'node' | 'edge'; id: string }): { type: 'node' | 'edge'; id: string } | false;
+  beforeCreateNode?(input: {
+    type: string;
+    position: { x: number; y: number };
+    data?: Record<string, unknown>;
+  }): { type: string; position: { x: number; y: number }; data?: Record<string, unknown> } | false;
+  beforeConnect?(input: {
+    source: string;
+    target: string;
+    sourcePort?: string;
+    targetPort?: string;
+    data?: Record<string, unknown>;
+  }):
+    | {
+        source: string;
+        target: string;
+        sourcePort?: string;
+        targetPort?: string;
+        data?: Record<string, unknown>;
+      }
+    | false;
+  beforeDelete?(target: {
+    type: 'node' | 'edge';
+    id: string;
+  }): { type: 'node' | 'edge'; id: string } | false;
   afterCommand?(event: DesignerEvent): void;
 }
 
@@ -205,7 +226,15 @@ export type ToolbarItem =
   | { type: 'text'; text: string }
   | { type: 'divider' }
   | { type: 'spacer' }
-  | { type: 'button'; action: string; icon?: string; label?: string; disabled?: string; active?: string; variant?: 'default' | 'primary' | 'danger' };
+  | {
+      type: 'button';
+      action: string;
+      icon?: string;
+      label?: string;
+      disabled?: string;
+      active?: string;
+      variant?: 'default' | 'primary' | 'danger';
+    };
 
 export interface ToolbarConfig {
   items: ToolbarItem[];

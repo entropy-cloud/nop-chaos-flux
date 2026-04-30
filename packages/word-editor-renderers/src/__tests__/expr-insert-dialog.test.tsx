@@ -12,31 +12,49 @@ vi.mock('@nop-chaos/ui', () => {
       </button>
     ),
     Input: ({ value, onChange, placeholder, ...props }: any) => (
-      <input data-testid="input" value={value} onChange={onChange} placeholder={placeholder} {...props} />
+      <input
+        data-testid="input"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        {...props}
+      />
     ),
     Textarea: ({ value, onChange, placeholder, ...props }: any) => (
-      <textarea data-testid="textarea" value={value} onChange={onChange} placeholder={placeholder} {...props} />
+      <textarea
+        data-testid="textarea"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        {...props}
+      />
     ),
-    Dialog: ({ children, open }: any) => open ? <div data-testid="dialog">{children}</div> : null,
+    Dialog: ({ children, open }: any) => (open ? <div data-testid="dialog">{children}</div> : null),
     DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
     DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
     DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
     DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
     DialogTitle: ({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>,
     NativeSelect: ({ value, onChange, children: ch, ...props }: any) => (
-      <select data-testid="native-select" value={value} onChange={onChange} {...props}>{ch}</select>
+      <select data-testid="native-select" value={value} onChange={onChange} {...props}>
+        {ch}
+      </select>
     ),
-    NativeSelectOption: ({ value, children }: any) => (
-      <option value={value}>{children}</option>
-    ),
+    NativeSelectOption: ({ value, children }: any) => <option value={value}>{children}</option>,
     Tabs: ({ children }: any) => <div data-testid="tabs">{children}</div>,
     TabsList: ({ children }: any) => <div data-testid="tabs-list">{children}</div>,
     TabsTrigger: ({ children, onClick, ...props }: any) => (
-      <button type="button" data-testid="tabs-trigger" onClick={onClick} {...props}>{children}</button>
+      <button type="button" data-testid="tabs-trigger" onClick={onClick} {...props}>
+        {children}
+      </button>
     ),
     TabsContent: ({ children }: any) => <div data-testid="tabs-content">{children}</div>,
-    Label: ({ children, ...props }: any) => <label data-testid="label" {...props}>{children}</label>,
-    cn: (...args: any[]) => args.filter(Boolean).join(' ')
+    Label: ({ children, ...props }: any) => (
+      <label data-testid="label" {...props}>
+        {children}
+      </label>
+    ),
+    cn: (...args: any[]) => args.filter(Boolean).join(' '),
   };
 });
 
@@ -81,7 +99,7 @@ describe('ExprInsertDialog', () => {
     render(<ExprInsertDialog open={true} onClose={vi.fn()} onInsert={vi.fn()} />);
 
     const triggers = screen.getAllByTestId('tabs-trigger');
-    const xplTrigger = triggers.find(t => t.textContent?.includes('XPL Tag'));
+    const xplTrigger = triggers.find((t) => t.textContent?.includes('XPL Tag'));
     if (xplTrigger) {
       await userEvent.click(xplTrigger);
       expect(screen.getByTestId('native-select')).toBeInTheDocument();

@@ -20,7 +20,7 @@ const localStorageStub: Storage = {
   },
   get length() {
     return store.size;
-  }
+  },
 };
 
 beforeEach(() => {

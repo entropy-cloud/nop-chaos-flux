@@ -32,7 +32,8 @@ describe('CRUD renderer request-owned baseline', () => {
               type: 'data-source',
               id: 'crud-users-source',
               name: 'pagedUsers',
-              action: 'ajax', args: { url: '/api/crud-users', cacheTTL: 0 },
+              action: 'ajax',
+              args: { url: '/api/crud-users', cacheTTL: 0 },
             },
             {
               type: 'crud',
@@ -42,9 +43,7 @@ describe('CRUD renderer request-owned baseline', () => {
                 action: 'refreshSource',
                 targetId: 'crud-users-source',
               },
-              footerToolbar: [
-                { type: 'text', text: 'Rows: ${$crud.itemCount}/${$crud.total}' },
-              ],
+              footerToolbar: [{ type: 'text', text: 'Rows: ${$crud.itemCount}/${$crud.total}' }],
               columns: [{ name: 'name', label: 'Name' }],
             },
             {
@@ -59,7 +58,7 @@ describe('CRUD renderer request-owned baseline', () => {
         }}
         env={{ ...env, fetcher }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -104,7 +103,8 @@ describe('CRUD renderer request-owned baseline', () => {
               type: 'data-source',
               id: 'crud-users-source',
               name: 'pagedUsers',
-              action: 'ajax', args: { url: '/api/crud-users', cacheTTL: 0 },
+              action: 'ajax',
+              args: { url: '/api/crud-users', cacheTTL: 0 },
             },
             {
               type: 'crud',
@@ -124,7 +124,7 @@ describe('CRUD renderer request-owned baseline', () => {
         }}
         env={{ ...env, fetcher }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -171,7 +171,8 @@ describe('CRUD renderer request-owned baseline', () => {
               type: 'data-source',
               id: 'crud-users-source',
               name: 'pagedUsers',
-              action: 'ajax', args: { url: '/api/crud-users', cacheTTL: 0 },
+              action: 'ajax',
+              args: { url: '/api/crud-users', cacheTTL: 0 },
             },
             {
               type: 'crud',
@@ -186,7 +187,10 @@ describe('CRUD renderer request-owned baseline', () => {
                 targetId: 'crud-users-source',
               },
               footerToolbar: [
-                { type: 'text', text: 'Rows: ${$crud.itemCount}/${$crud.total}; Query: ${$crud.query.keyword || "none"}' },
+                {
+                  type: 'text',
+                  text: 'Rows: ${$crud.itemCount}/${$crud.total}; Query: ${$crud.query.keyword || "none"}',
+                },
               ],
               columns: [{ name: 'name', label: 'Name' }],
             },
@@ -194,7 +198,7 @@ describe('CRUD renderer request-owned baseline', () => {
         }}
         env={{ ...env, fetcher }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {

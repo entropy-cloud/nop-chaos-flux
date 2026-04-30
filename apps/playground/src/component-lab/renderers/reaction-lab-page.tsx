@@ -7,17 +7,15 @@ const counterDoubled = {
     {
       type: 'button',
       label: 'Increment',
-      onClick: { action: 'setValue', args: { path: 'counter', value: '${(counter ?? 0) + 1}' } }
+      onClick: { action: 'setValue', args: { path: 'counter', value: '${(counter ?? 0) + 1}' } },
     },
     {
       type: 'reaction',
       watch: ['counter'],
-      actions: [
-        { action: 'setValue', args: { path: 'doubled', value: '${(counter ?? 0) * 2}' } }
-      ]
+      actions: [{ action: 'setValue', args: { path: 'doubled', value: '${(counter ?? 0) * 2}' } }],
     },
-    { type: 'text', text: 'doubled: ${doubled}' }
-  ]
+    { type: 'text', text: 'doubled: ${doubled}' },
+  ],
 };
 
 const charCountWatcher = {
@@ -36,15 +34,15 @@ const charCountWatcher = {
               action: 'setValue',
               args: {
                 path: 'charCount',
-                value: '${(message ?? "").length}'
-              }
-            }
-          ]
+                value: '${(message ?? "").length}',
+              },
+            },
+          ],
         },
-        { type: 'text', text: 'Character count: ${charCount ?? 0}' }
-      ]
-    }
-  ]
+        { type: 'text', text: 'Character count: ${charCount ?? 0}' },
+      ],
+    },
+  ],
 };
 
 export function ReactionLabPage() {
@@ -54,15 +52,17 @@ export function ReactionLabPage() {
       scenarios={[
         {
           title: 'Counter with derived doubled value',
-          description: 'Click "Increment" to increase the counter. The reaction automatically computes doubled = counter × 2 on every change.',
+          description:
+            'Click "Increment" to increase the counter. The reaction automatically computes doubled = counter × 2 on every change.',
           schema: counterDoubled,
-          data: { counter: 0, doubled: 0 }
+          data: { counter: 0, doubled: 0 },
         },
         {
           title: 'Field-watch for character count',
-          description: 'Type in the message field. Inside the form scope, the reaction watches the local field value and updates a charCount display in real time.',
-          schema: charCountWatcher
-        }
+          description:
+            'Type in the message field. Inside the form scope, the reaction watches the local field value and updates a charCount display in real time.',
+          schema: charCountWatcher,
+        },
       ]}
     />
   );

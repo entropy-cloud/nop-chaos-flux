@@ -126,8 +126,15 @@ export interface ObjectFieldRuntime {
   objectScopeId: ScopeId;
 
   getObjectValue(): Record<string, unknown> | undefined;
-  setObjectValue(value: Record<string, unknown>, options?: ObjectFieldWriteOptions): Promise<CommitResult>;
-  setChildValue(relativePath: ValuePath, value: unknown, options?: ObjectFieldWriteOptions): Promise<CommitResult>;
+  setObjectValue(
+    value: Record<string, unknown>,
+    options?: ObjectFieldWriteOptions,
+  ): Promise<CommitResult>;
+  setChildValue(
+    relativePath: ValuePath,
+    value: unknown,
+    options?: ObjectFieldWriteOptions,
+  ): Promise<CommitResult>;
   validate(request?: ValidationRequest): Promise<ValidationResult>;
   commitDraft?(): Promise<CommitResult>;
   discardDraft?(): Promise<void>;
@@ -537,13 +544,9 @@ export interface FlowDesignerManifest extends HostCapabilityManifest {
     CapabilityProjectionSpec,
     CapabilityProjectionSpec,
     CapabilityProjectionSpec,
-    ...CapabilityProjectionSpec[]
+    ...CapabilityProjectionSpec[],
   ];
-  commands: [
-    CapabilityCommandSpec,
-    CapabilityCommandSpec,
-    ...CapabilityCommandSpec[]
-  ];
+  commands: [CapabilityCommandSpec, CapabilityCommandSpec, ...CapabilityCommandSpec[]];
 }
 ```
 

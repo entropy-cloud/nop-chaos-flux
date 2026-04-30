@@ -4,7 +4,7 @@ import type {
   DesignerFlowEdgeData,
   DesignerFlowNodeData,
   DesignerXyflowControlledViewport,
-  XyflowViewportChange
+  XyflowViewportChange,
 } from './types';
 
 const VIEWPORT_EPSILON = 0.001;
@@ -19,7 +19,7 @@ function toFiniteNumber(value: unknown): number | undefined {
 
 function resolveNodeSize(
   node: DesignerSnapshot['doc']['nodes'][number],
-  nodeTypeSize: { minWidth?: number; minHeight?: number } | undefined
+  nodeTypeSize: { minWidth?: number; minHeight?: number } | undefined,
 ) {
   const data = (node.data ?? {}) as Record<string, unknown>;
   const size = (data.size ?? {}) as Record<string, unknown>;
@@ -43,7 +43,7 @@ function resolveNodeSize(
 
 export function createXyflowNodes(
   snapshot: DesignerSnapshot,
-  nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>
+  nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>,
 ): Node[] {
   const branchFocusedNodeId = snapshot.activeBranch?.childId;
   return snapshot.doc.nodes.map((node) => ({
@@ -52,7 +52,7 @@ export function createXyflowNodes(
       return {
         width: resolved.width,
         height: resolved.height,
-        measured: { width: resolved.width, height: resolved.height }
+        measured: { width: resolved.width, height: resolved.height },
       };
     })(),
     id: node.id,
@@ -64,12 +64,15 @@ export function createXyflowNodes(
       label: String(node.data.label ?? node.id),
       typeLabel: node.type,
       typeId: node.type,
-      __fdBranchFocused: branchFocusedNodeId === node.id
-    } satisfies DesignerFlowNodeData
+      __fdBranchFocused: branchFocusedNodeId === node.id,
+    } satisfies DesignerFlowNodeData,
   }));
 }
 
-export function createXyflowEdges(snapshot: DesignerSnapshot, documentMode?: 'graph' | 'tree'): Edge[] {
+export function createXyflowEdges(
+  snapshot: DesignerSnapshot,
+  documentMode?: 'graph' | 'tree',
+): Edge[] {
   const edgeType = documentMode === 'tree' ? 'dingflowEdge' : 'designerEdge';
   const branchFocusedNodeId = snapshot.activeBranch?.childId;
   return snapshot.doc.edges.map((edge) => ({
@@ -82,21 +85,30 @@ export function createXyflowEdges(snapshot: DesignerSnapshot, documentMode?: 'gr
       ...(edge.data ?? {}),
       label: String(edge.data.label ?? edge.id),
       typeId: edge.type,
-      __fdBranchFocused: branchFocusedNodeId != null && (edge.source === branchFocusedNodeId || edge.target === branchFocusedNodeId)
+      __fdBranchFocused:
+        branchFocusedNodeId != null &&
+        (edge.source === branchFocusedNodeId || edge.target === branchFocusedNodeId),
     } satisfies DesignerFlowEdgeData,
-    selected: snapshot.selection.activeEdgeId === edge.id
+    selected: snapshot.selection.activeEdgeId === edge.id,
   }));
 }
 
-export function normalizeControlledViewport(viewport: { x: number; y: number; zoom: number }): DesignerXyflowControlledViewport {
+export function normalizeControlledViewport(viewport: {
+  x: number;
+  y: number;
+  zoom: number;
+}): DesignerXyflowControlledViewport {
   return {
     x: Number(viewport.x.toFixed(2)),
     y: Number(viewport.y.toFixed(2)),
-    zoom: Number(viewport.zoom.toFixed(3))
+    zoom: Number(viewport.zoom.toFixed(3)),
   };
 }
 
-export function viewportsEqual(left: DesignerXyflowControlledViewport, right: DesignerXyflowControlledViewport) {
+export function viewportsEqual(
+  left: DesignerXyflowControlledViewport,
+  right: DesignerXyflowControlledViewport,
+) {
   return (
     Math.abs(left.x - right.x) < VIEWPORT_EPSILON &&
     Math.abs(left.y - right.y) < VIEWPORT_EPSILON &&
@@ -104,8 +116,15 @@ export function viewportsEqual(left: DesignerXyflowControlledViewport, right: De
   );
 }
 
-export function normalizeViewportChange(value: XyflowViewportChange | null | undefined): DesignerXyflowControlledViewport | null {
-  if (!value || typeof value.x !== 'number' || typeof value.y !== 'number' || typeof value.zoom !== 'number') {
+export function normalizeViewportChange(
+  value: XyflowViewportChange | null | undefined,
+): DesignerXyflowControlledViewport | null {
+  if (
+    !value ||
+    typeof value.x !== 'number' ||
+    typeof value.y !== 'number' ||
+    typeof value.zoom !== 'number'
+  ) {
     return null;
   }
 

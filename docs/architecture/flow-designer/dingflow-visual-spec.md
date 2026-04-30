@@ -7,27 +7,27 @@
 
 ## 1. Node Types
 
-| Type | Visual | Title Color | Icon |
-|------|--------|------------|------|
-| Promoter (发起人) | Card with colored title bar | `#576a95` | UserFilled |
-| Approver (审批人) | Card with colored title bar | `#ff943e` | UserFilled |
-| CC / Send (抄送人) | Card with colored title bar | `#3296fa` | Promotion/Send |
-| Condition (条件) | Card without title bar, green title text | Title: `#15bc83` | — |
-| End (流程结束) | Small gray circle + label | — | — |
+| Type               | Visual                                   | Title Color      | Icon           |
+| ------------------ | ---------------------------------------- | ---------------- | -------------- |
+| Promoter (发起人)  | Card with colored title bar              | `#576a95`        | UserFilled     |
+| Approver (审批人)  | Card with colored title bar              | `#ff943e`        | UserFilled     |
+| CC / Send (抄送人) | Card with colored title bar              | `#3296fa`        | Promotion/Send |
+| Condition (条件)   | Card without title bar, green title text | Title: `#15bc83` | —              |
+| End (流程结束)     | Small gray circle + label                | —                | —              |
 
 ### Card Dimensions
 
-| Property | Value |
-|----------|-------|
-| Width | 220px |
-| Min height | 72px |
-| Border radius | 4px |
-| Shadow | `0 2px 5px 0 rgba(0,0,0,0.1)` |
-| Title bar height | 24px |
-| Title bar text | White, 12px, bold, left-aligned with icon |
-| Content area padding | 15px |
-| Content text | 13px, `#666` |
-| Background | White |
+| Property             | Value                                     |
+| -------------------- | ----------------------------------------- |
+| Width                | 220px                                     |
+| Min height           | 72px                                      |
+| Border radius        | 4px                                       |
+| Shadow               | `0 2px 5px 0 rgba(0,0,0,0.1)`             |
+| Title bar height     | 24px                                      |
+| Title bar text       | White, 12px, bold, left-aligned with icon |
+| Content area padding | 15px                                      |
+| Content text         | 13px, `#666`                              |
+| Background           | White                                     |
 
 ### Condition Card Differences
 
@@ -78,6 +78,7 @@ midY = round((sourceCardBottom + conditionCardTop) / 2)
 ```
 
 Path for each branch edge:
+
 ```
 M sx,sy L sx,midY L tx,midY L tx,ty
 ```
@@ -93,6 +94,7 @@ When multiple branch paths converge to a single downstream node:
 3. Long vertical line from merge horizontal line down to merge target card top
 
 Path for each merge edge:
+
 ```
 M sx,sy L sx,midY L tx,midY L tx,ty
 ```
@@ -102,6 +104,7 @@ Where `midY = sourceY + SHORT_LEG` (horizontal line is close to the source, shor
 ### SHORT_LEG constant
 
 Both branch and merge edges use a short-leg pattern, but with different leg lengths:
+
 - Branch: `BRANCH_SHORT_LEG = 32px` — horizontal line is close to the target (condition cards)
 - Merge: `MERGE_SHORT_LEG = 84px` — horizontal line is close to the source (branch children), nearly symmetric with the long leg
 
@@ -121,16 +124,16 @@ Every node has a "+" button below it, including nodes inside branch columns. Add
 
 ### Card-Attached + Button
 
-| Property | Value |
-|----------|-------|
-| Shape | Circle |
-| Diameter | 28px (in flow coordinates) |
-| Color | `#3296fa` background, white icon |
-| Shadow | `0 2px 4px rgba(50,150,250,0.4)` |
-| Icon | Plus, 16px |
-| Position | Centered below card, **absolute positioned** (not in document flow) |
-| Distance from card bottom | 36px (center of button to card bottom edge) |
-| Z-index | Above connection lines (z-index: 2) |
+| Property                  | Value                                                               |
+| ------------------------- | ------------------------------------------------------------------- |
+| Shape                     | Circle                                                              |
+| Diameter                  | 28px (in flow coordinates)                                          |
+| Color                     | `#3296fa` background, white icon                                    |
+| Shadow                    | `0 2px 4px rgba(50,150,250,0.4)`                                    |
+| Icon                      | Plus, 16px                                                          |
+| Position                  | Centered below card, **absolute positioned** (not in document flow) |
+| Distance from card bottom | 36px (center of button to card bottom edge)                         |
+| Z-index                   | Above connection lines (z-index: 2)                                 |
 
 **Critical**: The + button must be `position: absolute` so it does NOT affect the node's measured height. The Handle (connection point) must remain at the card bottom edge, not at the button.
 
@@ -146,15 +149,15 @@ Both the branch child's card-attached + button and the merge-point + button must
 
 This button appears only when a branch group exists. It is NOT a flow node.
 
-| Property | Value |
-|----------|-------|
-| Shape | Rounded pill |
-| Border | `1px solid #b3e19d` |
-| Background | White |
-| Text | "添加条件", `#67c23a`, 12px |
-| Padding | `4px 14px` |
-| Border radius | 20px |
-| Position | At the center of the branch horizontal line, centered at `(centerX, branchLineY)` |
+| Property      | Value                                                                             |
+| ------------- | --------------------------------------------------------------------------------- |
+| Shape         | Rounded pill                                                                      |
+| Border        | `1px solid #b3e19d`                                                               |
+| Background    | White                                                                             |
+| Text          | "添加条件", `#67c23a`, 12px                                                       |
+| Padding       | `4px 14px`                                                                        |
+| Border radius | 20px                                                                              |
+| Position      | At the center of the branch horizontal line, centered at `(centerX, branchLineY)` |
 
 **Rendered via ViewportPortal** (HTML overlay following canvas pan/zoom), not as a React Flow node. No edges connect to it.
 
@@ -166,11 +169,11 @@ Spacing is derived from the reference CSS layout where each inter-card gap is on
 
 ### Row-to-Row Distances (flow coordinates)
 
-| Context | Distance | Derivation |
-|---------|----------|------------|
+| Context                            | Distance  | Derivation                |
+| ---------------------------------- | --------- | ------------------------- |
 | Card top to next card top (linear) | **156px** | CARD_H(72) + add-node(84) |
-| Branch source → condition cards | **203px** | 156 + BRANCH_EXTRA(47) |
-| Branch children → merge target | **242px** | 156 + MERGE_EXTRA(86) |
+| Branch source → condition cards    | **203px** | 156 + BRANCH_EXTRA(47)    |
+| Branch children → merge target     | **242px** | 156 + MERGE_EXTRA(86)     |
 
 The branch extra (47px) comes from: branch-box margin-top(15) + border(2) + condition padding-top(30) = 47px.
 
@@ -178,14 +181,14 @@ The merge extra (86px) comes from: the merge row has TWO add-node-btn-boxes stac
 
 ### Key Distances (flow coordinates)
 
-| Measurement | Value |
-|-------------|-------|
-| Card height | 72px |
-| + button center below card bottom | 36px |
-| Normal inter-card gap (card bottom to next card top) | 84px |
-| Branch inter-card gap | 131px (84 + 47) |
-| Merge inter-card gap | 170px (84 + 86) |
-| Branch column horizontal spacing | 260px center-to-center |
+| Measurement                                          | Value                  |
+| ---------------------------------------------------- | ---------------------- |
+| Card height                                          | 72px                   |
+| + button center below card bottom                    | 36px                   |
+| Normal inter-card gap (card bottom to next card top) | 84px                   |
+| Branch inter-card gap                                | 131px (84 + 47)        |
+| Merge inter-card gap                                 | 170px (84 + 86)        |
+| Branch column horizontal spacing                     | 260px center-to-center |
 
 ### Non-Overlap Guarantees
 
@@ -223,16 +226,16 @@ The merge extra (86px) comes from: the merge row has TWO add-node-btn-boxes stac
 
 ### Edge List
 
-| Source | Target | Type | Path |
-|--------|--------|------|------|
-| 发起人 | 主管审批 | straight | `M sx,sy L tx,ty` |
-| 主管审批 | 条件-长期 | branch | `M sx,sy L sx,midY L tx,midY L tx,ty` |
-| 主管审批 | 条件-短期 | branch | `M sx,sy L sx,midY L tx,midY L tx,ty` |
-| 条件-长期 | 领导审批 | straight | same X → `M sx,sy L tx,ty` |
-| 条件-短期 | 直接主管审批 | straight | same X → `M sx,sy L tx,ty` |
-| 领导审批 | 抄送人 | merge | `M sx,sy L sx,midY L tx,midY L tx,ty` |
-| 直接主管审批 | 抄送人 | merge | `M sx,sy L sx,midY L tx,midY L tx,ty` |
-| 抄送人 | 流程结束 | straight | `M sx,sy L tx,ty` |
+| Source       | Target       | Type     | Path                                  |
+| ------------ | ------------ | -------- | ------------------------------------- |
+| 发起人       | 主管审批     | straight | `M sx,sy L tx,ty`                     |
+| 主管审批     | 条件-长期    | branch   | `M sx,sy L sx,midY L tx,midY L tx,ty` |
+| 主管审批     | 条件-短期    | branch   | `M sx,sy L sx,midY L tx,midY L tx,ty` |
+| 条件-长期    | 领导审批     | straight | same X → `M sx,sy L tx,ty`            |
+| 条件-短期    | 直接主管审批 | straight | same X → `M sx,sy L tx,ty`            |
+| 领导审批     | 抄送人       | merge    | `M sx,sy L sx,midY L tx,midY L tx,ty` |
+| 直接主管审批 | 抄送人       | merge    | `M sx,sy L sx,midY L tx,midY L tx,ty` |
+| 抄送人       | 流程结束     | straight | `M sx,sy L tx,ty`                     |
 
 **Each edge must have a unique ID.** Duplicate IDs cause React Flow to silently drop edges.
 
@@ -251,6 +254,7 @@ The merge extra (86px) comes from: the merge row has TWO add-node-btn-boxes stac
 ### Edge Component
 
 Custom `DingTalkEdge`:
+
 - Receives `sourceX, sourceY, targetX, targetY` from React Flow
 - Same X → vertical straight line
 - Different X → Manhattan with single bend at `midY = round((sy + ty) / 2)`
@@ -277,22 +281,22 @@ Clicking any + button (card-attached or merge-point) opens a fixed-position popo
 
 ### AddNodeMenu Popover
 
-| Property | Value |
-|----------|-------|
-| Position | Fixed, above the clicked + button (`screenX - 100`, `screenY - 110`) |
-| Layout | Horizontal row of 3 circular options |
-| Background | White, rounded, shadow-lg |
-| Z-index | 101 (above backdrop at 100) |
-| Backdrop | Full-viewport transparent overlay to detect click-outside |
+| Property   | Value                                                                |
+| ---------- | -------------------------------------------------------------------- |
+| Position   | Fixed, above the clicked + button (`screenX - 100`, `screenY - 110`) |
+| Layout     | Horizontal row of 3 circular options                                 |
+| Background | White, rounded, shadow-lg                                            |
+| Z-index    | 101 (above backdrop at 100)                                          |
+| Backdrop   | Full-viewport transparent overlay to detect click-outside            |
 
 ### Options
 
 Each option is a circular button (50px diameter) with a text label below:
 
-| Type | Color | Icon/Content | Label |
-|------|-------|-------------|-------|
-| Approver | `#ff943e` | UserCheck, 20px | "Approver" |
-| CC | `#3296fa` | Send, 20px | "CC" |
+| Type      | Color     | Icon/Content     | Label       |
+| --------- | --------- | ---------------- | ----------- |
+| Approver  | `#ff943e` | UserCheck, 20px  | "Approver"  |
+| CC        | `#3296fa` | Send, 20px       | "CC"        |
 | Condition | `#15bc83` | Bold text "Cond" | "Condition" |
 
 Label text: 12px, `#666`.
@@ -310,6 +314,7 @@ When clicking + on a card node (non-merge), selecting Approver or CC:
 5. Add edges: `source → newNode`, `newNode → downstream`
 
 New node data:
+
 - Approver: `{ label: 'Approver', desc: 'Please set', color: '#ff943e', icon: 'usercheck' }`
 - CC: `{ label: 'CC', desc: 'Please set', color: '#3296fa', icon: 'send' }`
 
@@ -347,6 +352,7 @@ New condition data: `{ title: 'Condition', desc: 'Please set', priority: N }`
 ### Overlay Recomputation
 
 After any insertion, overlays are recalculated by:
+
 1. Grouping edges by source → nodes with 2+ outgoing edges get an "Add Condition" overlay
 2. Grouping edges by target → nodes with 2+ incoming edges get a "merge +" overlay
 3. Overlay positions derived from current node positions
@@ -355,17 +361,17 @@ After any insertion, overlays are recalculated by:
 
 ## 9. Color Reference
 
-| Token | Hex |
-|-------|-----|
-| Promoter title | `#576a95` |
-| Approver title | `#ff943e` |
-| CC title | `#3296fa` |
-| Condition title text | `#15bc83` |
-| Connection line | `#cacaca` |
-| + button | `#3296fa` |
-| 添加条件 border | `#b3e19d` |
-| 添加条件 text | `#67c23a` |
-| End circle | `#ccc` |
-| End text | `rgba(25,31,37,0.4)` |
-| Card shadow | `rgba(0,0,0,0.1)` |
-| Canvas background | `#f5f5f5` |
+| Token                | Hex                  |
+| -------------------- | -------------------- |
+| Promoter title       | `#576a95`            |
+| Approver title       | `#ff943e`            |
+| CC title             | `#3296fa`            |
+| Condition title text | `#15bc83`            |
+| Connection line      | `#cacaca`            |
+| + button             | `#3296fa`            |
+| 添加条件 border      | `#b3e19d`            |
+| 添加条件 text        | `#67c23a`            |
+| End circle           | `#ccc`               |
+| End text             | `rgba(25,31,37,0.4)` |
+| Card shadow          | `rgba(0,0,0,0.1)`    |
+| Canvas background    | `#f5f5f5`            |

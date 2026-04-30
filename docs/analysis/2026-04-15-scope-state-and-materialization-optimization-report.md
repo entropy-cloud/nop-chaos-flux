@@ -49,8 +49,8 @@
 ```ts
 lastMaterialized = {
   ...parentSnapshot,
-  ...ownSnapshot
-}
+  ...ownSnapshot,
+};
 ```
 
 所以当前并不是“每个 scope 永远存两份真实状态”，而是：
@@ -76,20 +76,20 @@ lastMaterialized = {
 
 基于 `packages/flux-runtime/src/__tests__/scope-read-benchmark.test.ts` 的 opt-in microbenchmark（2026-04-15 实测），得到以下数据：
 
-| Case | Median ns/op |
-| --- | ---: |
-| `scope.read() cached + root access` | 38.0 |
-| `prototype view + root access` | 4.3 |
-| `scope.get(path)` | 593.4 |
-| `prototype view getByPath(path)` | 224.6 |
-| `scope.read() rematerialize + root access` | 3577.8 |
-| `prototype create + root access` | 375.3 |
-| `Object.keys(scope.read())` | 180.7 |
-| `Object.keys(prototype view)` | 51.2 |
-| `JSON.stringify(scope.read())` | 1467.1 |
-| `JSON.stringify(prototype view)` | 1102.2 |
-| `spread clone from scope.read()` | 351.5 |
-| `spread clone from prototype view` | 240.4 |
+| Case                                       | Median ns/op |
+| ------------------------------------------ | -----------: |
+| `scope.read() cached + root access`        |         38.0 |
+| `prototype view + root access`             |          4.3 |
+| `scope.get(path)`                          |        593.4 |
+| `prototype view getByPath(path)`           |        224.6 |
+| `scope.read() rematerialize + root access` |       3577.8 |
+| `prototype create + root access`           |        375.3 |
+| `Object.keys(scope.read())`                |        180.7 |
+| `Object.keys(prototype view)`              |         51.2 |
+| `JSON.stringify(scope.read())`             |       1467.1 |
+| `JSON.stringify(prototype view)`           |       1102.2 |
+| `spread clone from scope.read()`           |        351.5 |
+| `spread clone from prototype view`         |        240.4 |
 
 结论：
 
@@ -217,7 +217,7 @@ interface ScopeRef {
 建议 `readVisible()` 不再返回 `{ ...parent, ...own }`，而是返回类似：
 
 ```ts
-const view = Object.assign(Object.create(parentVisibleView), ownSnapshot)
+const view = Object.assign(Object.create(parentVisibleView), ownSnapshot);
 ```
 
 或等价的 prototype-backed实现。
@@ -332,7 +332,7 @@ formula evaluate 本质上是 token/AST 驱动执行：
 当前 `packages/flux-formula/src/scope.ts` 的 `get(...)` trap 在 `context.resolve(property)` miss 后会 fallback 到：
 
 ```ts
-getIn(context.materialize(), property)
+getIn(context.materialize(), property);
 ```
 
 这不是最优路径。
@@ -400,7 +400,7 @@ getIn(context.materialize(), property)
 例如：
 
 ```ts
-const overlay = Object.assign(Object.create(baseVisibleView), bindings)
+const overlay = Object.assign(Object.create(baseVisibleView), bindings);
 ```
 
 这样可以：

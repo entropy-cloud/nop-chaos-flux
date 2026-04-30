@@ -2,10 +2,14 @@ import type {
   CompileSymbolTable,
   PreparedImportSpec,
   SchemaInput,
-  XuiImportSpec
+  XuiImportSpec,
 } from '@nop-chaos/flux-core';
 
-export function pushImportSymbols(symbolTable: CompileSymbolTable, imports: unknown, id: string): CompileSymbolTable {
+export function pushImportSymbols(
+  symbolTable: CompileSymbolTable,
+  imports: unknown,
+  id: string,
+): CompileSymbolTable {
   if (!Array.isArray(imports) || imports.length === 0) {
     return symbolTable;
   }
@@ -16,7 +20,7 @@ export function pushImportSymbols(symbolTable: CompileSymbolTable, imports: unkn
     if (spec.as) {
       symbols[`$${spec.as}`] = {
         name: `$${spec.as}`,
-        kind: 'import-alias'
+        kind: 'import-alias',
       };
     }
   }
@@ -26,7 +30,7 @@ export function pushImportSymbols(symbolTable: CompileSymbolTable, imports: unkn
     : symbolTable.push({
         id,
         kind: 'imports',
-        symbols
+        symbols,
       });
 }
 
@@ -35,7 +39,7 @@ export function normalizeImportSpecKey(schemaUrl: string, spec: XuiImportSpec): 
     schemaUrl,
     from: spec.from,
     as: spec.as,
-    options: spec.options ?? null
+    options: spec.options ?? null,
   });
 }
 
@@ -78,10 +82,10 @@ export function collectSchemaImportSpecs(input: SchemaInput, schemaUrl: string):
   return Array.from(collected.values());
 }
 
-function buildImportMetaMembers(meta: PreparedImportSpec | undefined): readonly string[] | undefined {
-  return meta?.staticMeta?.helpers
-    ? Object.keys(meta.staticMeta.helpers)
-    : undefined;
+function buildImportMetaMembers(
+  meta: PreparedImportSpec | undefined,
+): readonly string[] | undefined {
+  return meta?.staticMeta?.helpers ? Object.keys(meta.staticMeta.helpers) : undefined;
 }
 
 export function pushPreparedImportSymbols(
@@ -89,7 +93,7 @@ export function pushPreparedImportSymbols(
   imports: readonly XuiImportSpec[] | undefined,
   preparedImports: ReadonlyMap<string, PreparedImportSpec> | undefined,
   schemaUrl: string | undefined,
-  id: string
+  id: string,
 ): CompileSymbolTable {
   if (!imports?.length || !schemaUrl) {
     return symbolTable;
@@ -107,7 +111,7 @@ export function pushPreparedImportSymbols(
       name: `$${spec.as}`,
       kind: 'import-alias',
       members: buildImportMetaMembers(prepared),
-      memberDefinitions: prepared?.staticMeta?.helpers
+      memberDefinitions: prepared?.staticMeta?.helpers,
     };
   }
 
@@ -116,19 +120,23 @@ export function pushPreparedImportSymbols(
     : symbolTable.push({
         id,
         kind: 'imports',
-        symbols
+        symbols,
       });
 }
 
-export function pushInjectedLocalSymbols(symbolTable: CompileSymbolTable, renderer: import('@nop-chaos/flux-core').RendererDefinition, id: string): CompileSymbolTable {
+export function pushInjectedLocalSymbols(
+  symbolTable: CompileSymbolTable,
+  renderer: import('@nop-chaos/flux-core').RendererDefinition,
+  id: string,
+): CompileSymbolTable {
   const symbols = Object.fromEntries(
     Object.entries(renderer.injectedLocals ?? {}).map(([name, info]) => [
       name,
       {
         name,
-        ...info
-      }
-    ])
+        ...info,
+      },
+    ]),
   ) as Record<string, import('@nop-chaos/flux-core').SymbolInfo>;
 
   return Object.keys(symbols).length === 0
@@ -136,11 +144,15 @@ export function pushInjectedLocalSymbols(symbolTable: CompileSymbolTable, render
     : symbolTable.push({
         id,
         kind: 'owner',
-        symbols
+        symbols,
       });
 }
 
-export function pushRegionParamSymbols(symbolTable: CompileSymbolTable, params: readonly string[] | undefined, id: string): CompileSymbolTable {
+export function pushRegionParamSymbols(
+  symbolTable: CompileSymbolTable,
+  params: readonly string[] | undefined,
+  id: string,
+): CompileSymbolTable {
   if (!params?.length) {
     return symbolTable;
   }
@@ -150,16 +162,20 @@ export function pushRegionParamSymbols(symbolTable: CompileSymbolTable, params: 
     id,
     kind: 'region',
     symbols: {
-      '$slot': {
+      $slot: {
         name: '$slot',
         kind: 'slot-root',
-        members
-      }
-    }
+        members,
+      },
+    },
   });
 }
 
-export function pushNamedActionSymbols(symbolTable: CompileSymbolTable, names: readonly string[], id: string): CompileSymbolTable {
+export function pushNamedActionSymbols(
+  symbolTable: CompileSymbolTable,
+  names: readonly string[],
+  id: string,
+): CompileSymbolTable {
   if (names.length === 0) {
     return symbolTable;
   }
@@ -168,7 +184,7 @@ export function pushNamedActionSymbols(symbolTable: CompileSymbolTable, names: r
     id,
     kind: 'xui-actions',
     symbols: Object.fromEntries(
-      names.map(name => [name, { name, kind: 'xui-action-definition' as const }])
-    )
+      names.map((name) => [name, { name, kind: 'xui-action-definition' as const }]),
+    ),
   });
 }

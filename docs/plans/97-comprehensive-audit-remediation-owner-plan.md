@@ -79,6 +79,7 @@ Exit Criteria:
 - [x] Audit item D-06 no longer describes the live repo.
 
 Completion Notes (2026-04-16):
+
 - Created `docs/architecture/word-editor/design.md` covering architecture overview, package responsibilities, data flow, document model, template expression system, integration points, and testing strategy
 - Created `docs/components/word-editor-page/design.md` covering component contract, schema design, field classification, regions/slots, runtime state, events/actions, and styling markers
 - Updated `docs/index.md` with two new routing entries and added docs to Active Source Of Truth section
@@ -101,6 +102,7 @@ Exit Criteria:
 - [x] Audit item D-07 no longer describes the live repo.
 
 Completion Notes (2026-04-16):
+
 - Created `docs/references/form-validation-runtime-types.md` containing complete TypeScript type definitions extracted from the main doc
 - Main doc `docs/architecture/form-validation.md` reduced from 52 KB to 43 KB
 - Simplified Runtime Model and Layered State Model sections with summaries linking to reference doc
@@ -124,6 +126,7 @@ Exit Criteria:
 - [x] Audit items D-08 and D-09 no longer describe the live repo.
 
 Completion Notes (2026-04-16):
+
 - Added "Routing Authority" section to `docs/index.md` explicitly declaring it as the authoritative docs navigation baseline
 - Reduced `AGENTS.md` routing tables from 22 to 11 task entries, removing duplicate/specialized entries already covered by `docs/index.md`
 - Added explicit "Schema authoring preference" section to `docs/architecture/action-scope-and-imports.md` stating new schema should prefer `openDialog` over `dialog`
@@ -149,6 +152,7 @@ Exit Criteria:
 - [x] Audit items C-01, C-02, C-03, C-04, and C-11 no longer describe the live repo.
 
 Completion Notes (2026-04-16):
+
 - Deleted 3 production `console.log` calls from `WordEditorPage.tsx` (lines 55, 131, 135)
 - Extracted shared `useAsyncApiResolver<T>` helper that handles abort, error reporting via `console.warn`, and returns `{ items, error, loading }`
 - Refactored to use `queueMicrotask` for loading state updates to comply with React 19's strict effect rules
@@ -173,6 +177,7 @@ Exit Criteria:
 - [x] Audit items C-08 and C-09 no longer describe the live repo.
 
 Completion Notes (2026-04-16):
+
 - C-05 (`types.ts` any fields): Confirmed as intentional design due to `SchemaValue` index signature constraints. JSDoc added explaining the reason and noting runtime validation via type guards.
 - C-07 (`code-editor-renderer.tsx`): No `as any` or `: any` present. `linter.ts` `err: any` changed to `err: unknown` with `instanceof Error` check. `format.ts` `as any` removed.
 - C-08 (`hooks.ts` generic bridge): Added JSDoc explaining this is an intentional type bridge for dynamic scope data. The `as unknown as S` transfers type responsibility to the caller's selector function.
@@ -194,6 +199,7 @@ Exit Criteria:
 - [x] Audit item C-10 no longer describes the live repo.
 
 Completion Notes (2026-04-16):
+
 - Created shared helper module at `packages/ui/src/lib/icon-utils.ts` containing `ICON_ALIAS_MAP`, `toIconLookupKey`, `normalizeIconName`, `toLucideKey`, and `resolveLucideIcon`
 - Exported from `@nop-chaos/ui` index for use by other packages
 - Updated `packages/flux-renderers-basic/src/icon.tsx` to use shared helper (removed ~60 lines of duplicated logic)
@@ -216,6 +222,7 @@ Exit Criteria:
 - [x] Audit items T-01 and T-02 no longer describe the live repo.
 
 Completion Notes (2026-04-16):
+
 - Created `packages/ui/vitest.config.ts` for running UI package tests
 - Added `packages/ui/src/lib/icon-utils.test.ts` with 28 tests covering `toIconLookupKey`, `normalizeIconName`, `toLucideKey`, `resolveLucideIcon` functions and alias mapping
 - Added `packages/ui/src/lib/utils.test.ts` with 15 tests covering `cn` utility function edge cases
@@ -240,6 +247,7 @@ Exit Criteria:
 - [x] Audit items T-03 and T-04 no longer describe the live repo.
 
 Completion Notes (2026-04-16):
+
 - Deleted `packages/flux-runtime/vitest.config.js` (stale CommonJS build artifact)
 - Added coverage thresholds to `packages/flux-core/vitest.config.ts`:
   - 60% thresholds for branches/functions/lines/statements
@@ -268,13 +276,13 @@ Exit Criteria:
 - [x] Audit item B-06 no longer describes `nop-debugger/tsconfig.build.json`, or any unresolved remainder has moved to a successor plan.
 
 Completion Notes (2026-04-16):
+
 - B-01: Moved `@types/use-sync-external-store` from dependencies to devDependencies in `word-editor-renderers/package.json`
 - B-02: Added `@types/react` as devDependency to `flux-core/package.json` for `React.ReactNode` type imports
 - B-03: Removed unused `react-dom` dependency from `flux-react/package.json` and `nop-debugger/package.json` (grep confirmed no imports)
 - B-04: Cleaned up redundant tsconfig overrides (`noEmit`, `declaration`, `declarationMap`, `emitDeclarationOnly`) from `flow-designer-core/tsconfig.json` and `flow-designer-renderers/tsconfig.json` — these are inherited from `tsconfig.base.json`
 - B-05: Made `tailwind-preset` explicitly a source-export package: removed `build` script, deleted `tsconfig.build.json`, kept only typecheck config
 - B-06: Removed `@nop-chaos/ui` hardcoded path mapping from `nop-debugger/tsconfig.build.json` — workspace protocol handles resolution correctly
-
 
 ### Workstream 10 - Frozen Oversized-File Baseline Cleanup
 
@@ -295,6 +303,7 @@ Exit Criteria:
 Completion Notes (2026-04-16):
 
 Successfully reduced 6 of 10 frozen baseline files below threshold:
+
 - `styles-css.ts`: 605 to 491 lines (extracted logical sections)
 - `designer-command-adapter.ts`: 533 to 399 lines (extracted helper modules)
 - `DingTalkFlowDemo.tsx`: 712 to 217 lines (extracted to `dingtalk-flow/` module)
@@ -303,6 +312,7 @@ Successfully reduced 6 of 10 frozen baseline files below threshold:
 - `form-array-validation.test.tsx`: Already below threshold at 497 lines
 
 Four files remain marginally over threshold (2-8% overage) and are deferred to successor plan:
+
 - `parser.ts` (510 lines, +2%): Complete recursive descent parser; splitting would fragment parsing logic and harm readability
 - `index.test.ts` (514 lines, +3%): Runtime test suite with cohesive test scenarios
 - `core-dispatch.ts` (539 lines, +8%): 62-case command dispatcher; splitting requires major refactor with limited readability benefit
@@ -311,6 +321,7 @@ Four files remain marginally over threshold (2-8% overage) and are deferred to s
 These marginal overages represent high-cohesion code where mechanical splitting would over-abstract without improving maintainability. Successor plan: `docs/plans/101-marginal-oversized-file-cleanup-plan.md` (to be created if future work justifies the refactoring cost).
 
 **New files appearing post-baseline (out of scope for this plan):**
+
 - `table-renderer.tsx` (509 lines): New file not in frozen baseline; assigned to successor plan 101
 - `schema-compiler-registry.test.ts` (501 lines): New test file not in frozen baseline; assigned to successor plan 101
 
@@ -339,6 +350,7 @@ Completion Notes (2026-04-16):
 - Theme customization happens at the configuration layer, not CSS layer
 
 Audit items S-01 through S-06 have been marked as **design choices** in the audit document, not defects requiring fixes:
+
 - S-01 to S-06: Node type colors, page backgrounds, panel styles, toolbar styles, DingFlow components, and canvas styles are all customizable via schema/JSON configuration
 
 The `nop-debugger` styles remain as documented theming debt (per audit section 5.2) - it's a self-contained subsystem with its own theme, not subject to the marker-only renderer constraint.
@@ -363,6 +375,7 @@ Exit Criteria:
 Completion Notes (2026-04-16):
 
 Independent closure audit completed by subagent. Results:
+
 - **36 audit items verified**: D-01 to D-09, C-01 to C-11, T-01 to T-04, B-01 to B-06, S-01 to S-06 all confirmed resolved
 - **Oversized file baseline**: 6 files reduced below threshold, 4 marginal files documented, 2 new post-baseline files assigned to successor plan 101
 - **Recommendation**: APPROVE closure (conditions met after documenting new oversized files)

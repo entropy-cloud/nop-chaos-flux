@@ -15,7 +15,7 @@ function makeEvalContext(data: Record<string, any>): EvalContext {
     },
     materialize() {
       return data;
-    }
+    },
   };
 }
 
@@ -43,7 +43,7 @@ describe('createFormulaScope', () => {
     const tracked = createScopeDependencyCollector();
     const ctx: EvalContext = {
       ...makeEvalContext({ user: { name: 'Bob' } }),
-      collector: tracked.collector
+      collector: tracked.collector,
     };
 
     const scope = createFormulaScope(ctx);
@@ -53,7 +53,7 @@ describe('createFormulaScope', () => {
     expect(tracked.finalize()).toEqual({
       paths: ['user'],
       wildcard: false,
-      broadAccess: false
+      broadAccess: false,
     });
   });
 
@@ -61,7 +61,7 @@ describe('createFormulaScope', () => {
     const tracked = createScopeDependencyCollector();
     const ctx: EvalContext = {
       ...makeEvalContext({ user: { name: 'Bob', role: 'admin' }, note: 'ignore' }),
-      collector: tracked.collector
+      collector: tracked.collector,
     };
 
     const scope = createFormulaScope(ctx);
@@ -70,7 +70,7 @@ describe('createFormulaScope', () => {
     expect(tracked.finalize()).toEqual({
       paths: ['user'],
       wildcard: false,
-      broadAccess: false
+      broadAccess: false,
     });
   });
 
@@ -78,7 +78,7 @@ describe('createFormulaScope', () => {
     const tracked = createScopeDependencyCollector();
     const ctx: EvalContext = {
       ...makeEvalContext({ user: { name: 'Bob' } }),
-      collector: tracked.collector
+      collector: tracked.collector,
     };
 
     Reflect.ownKeys(createFormulaScope(ctx));
@@ -86,7 +86,7 @@ describe('createFormulaScope', () => {
     expect(tracked.finalize()).toEqual({
       paths: ['*'],
       wildcard: true,
-      broadAccess: true
+      broadAccess: true,
     });
   });
 
@@ -98,7 +98,7 @@ describe('createFormulaScope', () => {
     expect(tracked.finalize()).toEqual({
       paths: ['users'],
       wildcard: false,
-      broadAccess: false
+      broadAccess: false,
     });
 
     const wildcardTracked = createScopeDependencyCollector();
@@ -108,7 +108,7 @@ describe('createFormulaScope', () => {
     expect(wildcardTracked.finalize()).toEqual({
       paths: ['*'],
       wildcard: true,
-      broadAccess: true
+      broadAccess: true,
     });
   });
 
@@ -136,7 +136,7 @@ describe('createFormulaScope', () => {
         return { count: 2 };
       },
       update() {},
-      merge() {}
+      merge() {},
     };
     const scopeContext = toEvalContext(scopeRef);
     expect(scopeContext.resolve('count')).toBe(2);
@@ -156,7 +156,7 @@ describe('createFormulaScope', () => {
     const symbolKey = Symbol('test');
     const ctx: EvalContext = {
       ...makeEvalContext({ user: { name: 'Bob' }, nil: undefined }),
-      collector: tracked.collector
+      collector: tracked.collector,
     };
 
     const scope = createFormulaScope(ctx) as Record<string | symbol, unknown>;
@@ -170,7 +170,7 @@ describe('createFormulaScope', () => {
       configurable: true,
       enumerable: true,
       value: { name: 'Bob' },
-      writable: false
+      writable: false,
     });
     expect(Object.getOwnPropertyDescriptor(scope, 'missing')).toBeUndefined();
     expect(Object.getOwnPropertyDescriptor(scope, symbolKey)).toBeUndefined();
@@ -178,7 +178,7 @@ describe('createFormulaScope', () => {
     expect(tracked.finalize()).toEqual({
       paths: ['*'],
       wildcard: true,
-      broadAccess: true
+      broadAccess: true,
     });
   });
 
@@ -186,7 +186,7 @@ describe('createFormulaScope', () => {
     const tracked = createScopeDependencyCollector();
     const ctx: EvalContext = {
       ...makeEvalContext({ user: { name: 'Bob', nested: { role: 'admin' } } }),
-      collector: tracked.collector
+      collector: tracked.collector,
     };
 
     const scope = createFormulaScope(ctx);
@@ -201,7 +201,7 @@ describe('createFormulaScope', () => {
     expect(tracked.finalize()).toEqual({
       paths: ['user'],
       wildcard: false,
-      broadAccess: false
+      broadAccess: false,
     });
   });
 });

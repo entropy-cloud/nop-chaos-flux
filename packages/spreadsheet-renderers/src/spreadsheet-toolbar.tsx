@@ -145,76 +145,397 @@ export function SpreadsheetToolbar({
 
   return (
     <>
-        <div className="rd-toolbar">
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onUndo}><Undo2 /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.undoShortcut')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onRedo}><Redo2 /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.redoShortcut')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onCopy} disabled={!hasSelection}><Copy /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.copyShortcut')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onCut} disabled={!hasSelection}><Scissors /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.cutShortcut')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onPaste} disabled={!hasSelection}><ClipboardPaste /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.pasteShortcut')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onClear} disabled={!hasSelection}><Trash2 /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.clearShortcut')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant={isBold ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('bold')} disabled={!hasSelection} data-toolbar-active={isBold || undefined}><Bold /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.boldShortcut')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant={isItalic ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('italic')} disabled={!hasSelection} data-toolbar-active={isItalic || undefined}><Italic /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.italicShortcut')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant={isUnderline ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('underline')} disabled={!hasSelection} data-toolbar-active={isUnderline || undefined}><Underline /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.underlineShortcut')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant={textAlign === 'left' ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('align-left')} disabled={!hasSelection} data-toolbar-active={textAlign === 'left' || undefined}><AlignLeft /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.alignLeft')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant={textAlign === 'center' ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('align-center')} disabled={!hasSelection} data-toolbar-active={textAlign === 'center' || undefined}><AlignCenter /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.alignCenter')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant={textAlign === 'right' ? 'outline' : 'ghost'} size="icon-sm" onClick={() => onStyleTool('align-right')} disabled={!hasSelection} data-toolbar-active={textAlign === 'right' || undefined}><AlignRight /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.alignRight')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="bg-btn bg-yellow" onClick={() => onStyleTool('bg-yellow')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.bgYellow')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="bg-btn bg-green" onClick={() => onStyleTool('bg-green')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.bgGreen')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="bg-btn bg-blue" onClick={() => onStyleTool('bg-blue')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.bgBlue')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="bg-btn bg-none" onClick={() => onStyleTool('bg-none')} disabled={!hasSelection}></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.bgNone')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="color-btn color-red" onClick={() => onStyleTool('font-color-red')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.fontRed')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="color-btn color-blue" onClick={() => onStyleTool('font-color-blue')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.fontBlue')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" className="color-btn color-black" onClick={() => onStyleTool('font-color-black')} disabled={!hasSelection}><Type /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.fontBlack')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onMerge} disabled={!hasSelection}><TableCellsMerge /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.mergeCells')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onUnmerge} disabled={!hasSelection}><TableCellsSplit /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.unmergeCells')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onMergeCenter} disabled={!hasSelection}><Merge /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.mergeCenter')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onFillDown} disabled={!hasSelection}><ArrowDown /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.fillDown')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={() => onFillSeries('right')} disabled={!hasSelection}><ArrowRight /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.fillSeriesRight')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onInsertRow} disabled={!hasSelection}><Plus /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.insertRow')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onDeleteRow} disabled={!hasSelection}><Minus /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.deleteRow')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onInsertColumn} disabled={!hasSelection}><Plus /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.insertColumn')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onDeleteColumn} disabled={!hasSelection}><Minus /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.deleteColumn')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onToggleCommentInput} disabled={!hasSelection}><MessageSquare /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.comment')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onToggleFindReplace}><Search /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.findReplaceShortcut')}</TooltipContent></Tooltip>
-          </div>
-          <span className="rd-toolbar-separator" />
-          <div className="rd-toolbar-group">
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onFreeze} disabled={!hasSelection}><Snowflake /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.freezePanes')}</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger ><Button variant="ghost" size="icon-sm" onClick={onUnfreeze}><Sun /></Button></TooltipTrigger><TooltipContent>{t('flux.spreadsheet.unfreezePanes')}</TooltipContent></Tooltip>
-          </div>
-          <div className="rd-toolbar-status">
-            <span className="rd-toolbar-cell-addr">{selectedCell ? cellAddress : ''}</span>
-            {frozen && <span className="rd-toolbar-frozen-badge">{t('flux.spreadsheet.frozen')}</span>}
-          </div>
+      <div className="rd-toolbar">
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onUndo}>
+                <Undo2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.undoShortcut')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onRedo}>
+                <Redo2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.redoShortcut')}</TooltipContent>
+          </Tooltip>
         </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onCopy} disabled={!hasSelection}>
+                <Copy />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.copyShortcut')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onCut} disabled={!hasSelection}>
+                <Scissors />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.cutShortcut')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onPaste} disabled={!hasSelection}>
+                <ClipboardPaste />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.pasteShortcut')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onClear} disabled={!hasSelection}>
+                <Trash2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.clearShortcut')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant={isBold ? 'outline' : 'ghost'}
+                size="icon-sm"
+                onClick={() => onStyleTool('bold')}
+                disabled={!hasSelection}
+                data-toolbar-active={isBold || undefined}
+              >
+                <Bold />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.boldShortcut')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant={isItalic ? 'outline' : 'ghost'}
+                size="icon-sm"
+                onClick={() => onStyleTool('italic')}
+                disabled={!hasSelection}
+                data-toolbar-active={isItalic || undefined}
+              >
+                <Italic />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.italicShortcut')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant={isUnderline ? 'outline' : 'ghost'}
+                size="icon-sm"
+                onClick={() => onStyleTool('underline')}
+                disabled={!hasSelection}
+                data-toolbar-active={isUnderline || undefined}
+              >
+                <Underline />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.underlineShortcut')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant={textAlign === 'left' ? 'outline' : 'ghost'}
+                size="icon-sm"
+                onClick={() => onStyleTool('align-left')}
+                disabled={!hasSelection}
+                data-toolbar-active={textAlign === 'left' || undefined}
+              >
+                <AlignLeft />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.alignLeft')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant={textAlign === 'center' ? 'outline' : 'ghost'}
+                size="icon-sm"
+                onClick={() => onStyleTool('align-center')}
+                disabled={!hasSelection}
+                data-toolbar-active={textAlign === 'center' || undefined}
+              >
+                <AlignCenter />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.alignCenter')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant={textAlign === 'right' ? 'outline' : 'ghost'}
+                size="icon-sm"
+                onClick={() => onStyleTool('align-right')}
+                disabled={!hasSelection}
+                data-toolbar-active={textAlign === 'right' || undefined}
+              >
+                <AlignRight />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.alignRight')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="bg-btn bg-yellow"
+                onClick={() => onStyleTool('bg-yellow')}
+                disabled={!hasSelection}
+              ></Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.bgYellow')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="bg-btn bg-green"
+                onClick={() => onStyleTool('bg-green')}
+                disabled={!hasSelection}
+              ></Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.bgGreen')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="bg-btn bg-blue"
+                onClick={() => onStyleTool('bg-blue')}
+                disabled={!hasSelection}
+              ></Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.bgBlue')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="bg-btn bg-none"
+                onClick={() => onStyleTool('bg-none')}
+                disabled={!hasSelection}
+              ></Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.bgNone')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="color-btn color-red"
+                onClick={() => onStyleTool('font-color-red')}
+                disabled={!hasSelection}
+              >
+                <Type />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.fontRed')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="color-btn color-blue"
+                onClick={() => onStyleTool('font-color-blue')}
+                disabled={!hasSelection}
+              >
+                <Type />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.fontBlue')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="color-btn color-black"
+                onClick={() => onStyleTool('font-color-black')}
+                disabled={!hasSelection}
+              >
+                <Type />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.fontBlack')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onMerge} disabled={!hasSelection}>
+                <TableCellsMerge />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.mergeCells')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onUnmerge} disabled={!hasSelection}>
+                <TableCellsSplit />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.unmergeCells')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onMergeCenter}
+                disabled={!hasSelection}
+              >
+                <Merge />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.mergeCenter')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onFillDown} disabled={!hasSelection}>
+                <ArrowDown />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.fillDown')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => onFillSeries('right')}
+                disabled={!hasSelection}
+              >
+                <ArrowRight />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.fillSeriesRight')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onInsertRow} disabled={!hasSelection}>
+                <Plus />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.insertRow')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onDeleteRow} disabled={!hasSelection}>
+                <Minus />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.deleteRow')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onInsertColumn}
+                disabled={!hasSelection}
+              >
+                <Plus />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.insertColumn')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onDeleteColumn}
+                disabled={!hasSelection}
+              >
+                <Minus />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.deleteColumn')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onToggleCommentInput}
+                disabled={!hasSelection}
+              >
+                <MessageSquare />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.comment')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onToggleFindReplace}>
+                <Search />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.findReplaceShortcut')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <span className="rd-toolbar-separator" />
+        <div className="rd-toolbar-group">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onFreeze} disabled={!hasSelection}>
+                <Snowflake />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.freezePanes')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onUnfreeze}>
+                <Sun />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('flux.spreadsheet.unfreezePanes')}</TooltipContent>
+          </Tooltip>
+        </div>
+        <div className="rd-toolbar-status">
+          <span className="rd-toolbar-cell-addr">{selectedCell ? cellAddress : ''}</span>
+          {frozen && (
+            <span className="rd-toolbar-frozen-badge">{t('flux.spreadsheet.frozen')}</span>
+          )}
+        </div>
+      </div>
 
       {showFindReplace && (
         <div className="find-replace-panel">
@@ -227,7 +548,9 @@ export function SpreadsheetToolbar({
               placeholder="Search text..."
               autoFocus
             />
-            <Button variant="ghost" size="xs" onClick={onFind}>{t('flux.spreadsheet.findNext')}</Button>
+            <Button variant="ghost" size="xs" onClick={onFind}>
+              {t('flux.spreadsheet.findNext')}
+            </Button>
           </div>
           <div className="find-row">
             <Label>{t('flux.spreadsheet.replace')}</Label>
@@ -237,8 +560,12 @@ export function SpreadsheetToolbar({
               onChange={(e) => onReplaceTextChange(e.target.value)}
               placeholder="Replace with..."
             />
-            <Button variant="ghost" size="xs" onClick={onReplace} disabled={!hasSelection}>{t('flux.spreadsheet.replaceBtn')}</Button>
-            <Button variant="ghost" size="xs" onClick={onReplaceAll}>{t('flux.spreadsheet.replaceAll')}</Button>
+            <Button variant="ghost" size="xs" onClick={onReplace} disabled={!hasSelection}>
+              {t('flux.spreadsheet.replaceBtn')}
+            </Button>
+            <Button variant="ghost" size="xs" onClick={onReplaceAll}>
+              {t('flux.spreadsheet.replaceAll')}
+            </Button>
           </div>
           {findResults && <div className="find-results">{findResults}</div>}
         </div>
@@ -263,9 +590,13 @@ export function SpreadsheetToolbar({
                 onChange={(e) => onCommentTextChange(e.target.value)}
                 placeholder="Add comment..."
               />
-              <Button variant="ghost" size="xs" onClick={onAddComment}>{t('flux.spreadsheet.add')}</Button>
+              <Button variant="ghost" size="xs" onClick={onAddComment}>
+                {t('flux.spreadsheet.add')}
+              </Button>
               {hasComment && (
-                <Button variant="ghost" size="xs" onClick={onDeleteComment}>{t('flux.common.delete')}</Button>
+                <Button variant="ghost" size="xs" onClick={onDeleteComment}>
+                  {t('flux.common.delete')}
+                </Button>
               )}
             </div>
           )}

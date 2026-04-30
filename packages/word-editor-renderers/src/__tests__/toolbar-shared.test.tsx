@@ -30,7 +30,7 @@ vi.mock('@nop-chaos/ui', () => {
     Separator: ({ orientation, className }: any) => (
       <div data-testid="separator" data-orientation={orientation} className={className} />
     ),
-    cn: (...args: any[]) => args.filter(Boolean).join(' ')
+    cn: (...args: any[]) => args.filter(Boolean).join(' '),
   };
 });
 
@@ -95,7 +95,7 @@ describe('ToolbarGroup', () => {
       <ToolbarGroup>
         <span>Child 1</span>
         <span>Child 2</span>
-      </ToolbarGroup>
+      </ToolbarGroup>,
     );
     expect(screen.getByText('Child 1')).toBeInTheDocument();
     expect(screen.getByText('Child 2')).toBeInTheDocument();

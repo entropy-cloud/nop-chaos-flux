@@ -7,7 +7,10 @@ import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index';
 import { env } from './form-test-support';
 
-const FormSchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+const FormSchemaRenderer = createSchemaRenderer([
+  ...basicRendererDefinitions,
+  ...formRendererDefinitions,
+]);
 const formulaCompiler = createFormulaCompiler();
 
 describe('per-slot className props for form renderers', () => {
@@ -20,11 +23,11 @@ describe('per-slot className props for form renderers', () => {
         schema={{
           type: 'form',
           bodyClassName: 'grid grid-cols-2',
-          body: [{ type: 'input-text', name: 'a' }]
+          body: [{ type: 'input-text', name: 'a' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const body = container.querySelector('[data-slot="form-body"]');
     expect(body?.className).toContain('grid');
@@ -39,11 +42,11 @@ describe('per-slot className props for form renderers', () => {
           type: 'form',
           actionsClassName: 'flex justify-end',
           body: [{ type: 'input-text', name: 'a' }],
-          actions: [{ type: 'button', label: 'Submit' }]
+          actions: [{ type: 'button', label: 'Submit' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const actions = container.querySelector('[data-slot="form-actions"]');
     expect(actions?.className).toContain('flex');
@@ -57,11 +60,11 @@ describe('per-slot className props for form renderers', () => {
         schema={{
           type: 'fieldset',
           bodyClassName: 'space-y-2',
-          body: [{ type: 'input-text', name: 'a' }]
+          body: [{ type: 'input-text', name: 'a' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const body = container.querySelector('[data-slot="fieldset-body"]');
     expect(body?.className).toContain('space-y-2');
@@ -75,11 +78,11 @@ describe('per-slot className props for form renderers', () => {
           type: 'fieldset',
           title: 'Personal Info',
           titleClassName: 'text-lg font-bold',
-          body: [{ type: 'input-text', name: 'a' }]
+          body: [{ type: 'input-text', name: 'a' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const title = container.querySelector('[data-slot="fieldset-title"]');
     expect(title?.className).toContain('text-lg');
@@ -92,11 +95,11 @@ describe('per-slot className props for form renderers', () => {
         schemaUrl="test://slot-className/form"
         schema={{
           type: 'form',
-          body: [{ type: 'input-text', name: 'a' }]
+          body: [{ type: 'input-text', name: 'a' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const body = container.querySelector('[data-slot="form-body"]');
     expect(body?.getAttribute('class') ?? '').toBe('');

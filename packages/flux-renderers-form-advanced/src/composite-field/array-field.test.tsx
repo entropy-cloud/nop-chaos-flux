@@ -20,7 +20,10 @@ if (!Element.prototype.scrollIntoView) {
 
 if (typeof PointerEvent === 'undefined') {
   class PointerEvent extends MouseEvent {
-    constructor(type: string, props: MouseEventInit & { pointerId?: number; pressure?: number } = {}) {
+    constructor(
+      type: string,
+      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
+    ) {
       super(type, props);
     }
   }
@@ -31,11 +34,14 @@ const env: RendererEnv = {
   fetcher: async function <T>() {
     return { ok: true, status: 200, data: null as T };
   },
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
-  return async function <T>(_api: unknown, ctx: ApiRequestContext): Promise<{ ok: true; status: number; data: T }> {
+  return async function <T>(
+    _api: unknown,
+    ctx: ApiRequestContext,
+  ): Promise<{ ok: true; status: number; data: T }> {
     submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
     return { ok: true, status: 200, data: null as unknown as T };
   };
@@ -50,20 +56,24 @@ const buttonRenderer: RendererDefinition = {
       {String(props.props.label ?? 'Button')}
     </button>
   ),
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 let nextArrayItemProbeMountId = 1;
 
 const arrayItemInstanceProbeRenderer: RendererDefinition = {
   type: 'array-item-instance-probe',
-  component: (props) => <ArrayItemInstanceProbeWithInstancePath instancePath={props.node.instancePath} />
+  component: (props) => (
+    <ArrayItemInstanceProbeWithInstancePath instancePath={props.node.instancePath} />
+  ),
 };
 
 function ArrayItemInstanceProbeWithInstancePath(props: { instancePath: unknown }) {
   const scope = useRenderScope();
   const mountIdRef = React.useRef(nextArrayItemProbeMountId++);
-  const itemName = String((scope.get('value') as { name?: unknown } | undefined)?.name ?? scope.get('name') ?? 'unknown');
+  const itemName = String(
+    (scope.get('value') as { name?: unknown } | undefined)?.name ?? scope.get('name') ?? 'unknown',
+  );
 
   return (
     <span data-testid={`array-item-probe-${itemName}`}>
@@ -83,7 +93,7 @@ describe('array-field renderer (scalar)', () => {
         schema={{
           type: 'form',
           data: {
-            tags: ['alpha', 'beta', 'gamma']
+            tags: ['alpha', 'beta', 'gamma'],
           },
           body: [
             {
@@ -91,13 +101,13 @@ describe('array-field renderer (scalar)', () => {
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
-            }
-          ]
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Tags')).toBeTruthy());
@@ -128,7 +138,7 @@ describe('array-field renderer (scalar)', () => {
           type: 'form',
           id: 'arr-scalar-form',
           data: {
-            tags: ['alpha']
+            tags: ['alpha'],
           },
           body: [
             {
@@ -136,27 +146,27 @@ describe('array-field renderer (scalar)', () => {
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
-            }
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }],
+            },
           ],
           submitAction: {
             action: 'ajax',
-            args: { url: '/api/test', method: 'post' }
+            args: { url: '/api/test', method: 'post' },
           },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'arr-scalar-form' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'arr-scalar-form' },
+            },
+          ],
         }}
         env={{
           ...env,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Add item')).toBeTruthy());
@@ -191,7 +201,7 @@ describe('array-field renderer (scalar)', () => {
         schema={{
           type: 'form',
           data: {
-            tags: ['alpha']
+            tags: ['alpha'],
           },
           body: [
             {
@@ -200,17 +210,23 @@ describe('array-field renderer (scalar)', () => {
               itemKind: 'scalar',
               readOnly: true,
               item: [
-                { type: 'text', text: 'Tag ${value} / ${index} / ${readOnly}', testid: 'scalar-scope' }
-              ]
-            }
-          ]
+                {
+                  type: 'text',
+                  text: 'Tag ${value} / ${index} / ${readOnly}',
+                  testid: 'scalar-scope',
+                },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
-    await waitFor(() => expect(screen.getByTestId('scalar-scope').textContent).toBe('Tag alpha / 0 / true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('scalar-scope').textContent).toBe('Tag alpha / 0 / true'),
+    );
   });
 });
 
@@ -227,8 +243,8 @@ describe('array-field renderer (object itemKind)', () => {
           data: {
             contacts: [
               { name: 'Alice', email: 'alice@example.com' },
-              { name: 'Bob', email: 'bob@example.com' }
-            ]
+              { name: 'Bob', email: 'bob@example.com' },
+            ],
           },
           body: [
             {
@@ -238,14 +254,14 @@ describe('array-field renderer (object itemKind)', () => {
               label: 'Contacts',
               item: [
                 { type: 'input-text', name: 'name', label: 'Name' },
-                { type: 'input-text', name: 'email', label: 'Email' }
-              ]
-            }
-          ]
+                { type: 'input-text', name: 'email', label: 'Email' },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Contacts')).toBeTruthy());
@@ -266,7 +282,7 @@ describe('array-field renderer (object itemKind)', () => {
         schema={{
           type: 'form',
           data: {
-            contacts: [{ name: 'Alice', email: 'alice@example.com' }]
+            contacts: [{ name: 'Alice', email: 'alice@example.com' }],
           },
           body: [
             {
@@ -275,18 +291,24 @@ describe('array-field renderer (object itemKind)', () => {
               itemKind: 'object',
               readOnly: true,
               item: [
-                { type: 'text', text: 'Contact ${value.name} / ${index} / ${readOnly}', testid: 'object-item-scope' },
-                { type: 'input-text', name: 'name', label: 'Name' }
-              ]
-            }
-          ]
+                {
+                  type: 'text',
+                  text: 'Contact ${value.name} / ${index} / ${readOnly}',
+                  testid: 'object-item-scope',
+                },
+                { type: 'input-text', name: 'name', label: 'Name' },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
-    await waitFor(() => expect(screen.getByTestId('object-item-scope').textContent).toBe('Contact Alice / 0 / true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('object-item-scope').textContent).toBe('Contact Alice / 0 / true'),
+    );
     expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('Alice');
   });
 
@@ -302,7 +324,7 @@ describe('array-field renderer (object itemKind)', () => {
           type: 'form',
           id: 'arr-obj-form',
           data: {
-            contacts: [{ name: 'Alice', email: 'alice@example.com' }]
+            contacts: [{ name: 'Alice', email: 'alice@example.com' }],
           },
           body: [
             {
@@ -312,28 +334,28 @@ describe('array-field renderer (object itemKind)', () => {
               label: 'Contacts',
               item: [
                 { type: 'input-text', name: 'name', label: 'Name' },
-                { type: 'input-text', name: 'email', label: 'Email' }
-              ]
-            }
+                { type: 'input-text', name: 'email', label: 'Email' },
+              ],
+            },
           ],
           submitAction: {
             action: 'ajax',
-            args: { url: '/api/test', method: 'post' }
+            args: { url: '/api/test', method: 'post' },
           },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'arr-obj-form' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'arr-obj-form' },
+            },
+          ],
         }}
         env={{
           ...env,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByLabelText('Name')).toBeTruthy());
@@ -345,7 +367,7 @@ describe('array-field renderer (object itemKind)', () => {
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
 
     expect(submitValues[0]).toMatchObject({
-      contacts: [{ name: 'Alice Updated', email: 'alice@example.com' }]
+      contacts: [{ name: 'Alice Updated', email: 'alice@example.com' }],
     });
   });
 
@@ -361,8 +383,8 @@ describe('array-field renderer (object itemKind)', () => {
           data: {
             contacts: [
               { name: 'Alice', email: '' },
-              { name: 'Bob', email: 'bob@example.com' }
-            ]
+              { name: 'Bob', email: 'bob@example.com' },
+            ],
           },
           body: [
             {
@@ -372,14 +394,14 @@ describe('array-field renderer (object itemKind)', () => {
               label: 'Contacts',
               item: [
                 { type: 'input-text', name: 'name', label: 'Name' },
-                { type: 'input-text', name: 'email', label: 'Email', required: true }
-              ]
-            }
-          ]
+                { type: 'input-text', name: 'email', label: 'Email', required: true },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getAllByLabelText('Name').length).toBe(2));
@@ -405,19 +427,30 @@ describe('array-field renderer (object itemKind)', () => {
           type: 'form',
           id: 'arr-second-edit-form',
           data: { contacts: [{ name: 'Alice', email: 'alice@example.com' }] },
-          body: [{
-            type: 'array-field', name: 'contacts', itemKind: 'object', label: 'Contacts',
-            item: [
-              { type: 'input-text', name: 'name', label: 'Name' },
-              { type: 'input-text', name: 'email', label: 'Email' }
-            ]
-          }],
+          body: [
+            {
+              type: 'array-field',
+              name: 'contacts',
+              itemKind: 'object',
+              label: 'Contacts',
+              item: [
+                { type: 'input-text', name: 'name', label: 'Name' },
+                { type: 'input-text', name: 'email', label: 'Email' },
+              ],
+            },
+          ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
-          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'arr-second-edit-form' } }]
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'arr-second-edit-form' },
+            },
+          ],
         }}
         env={{ ...env, fetcher: makeCapturingFetcher(submitValues) }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByLabelText('Name')).toBeTruthy());
@@ -428,7 +461,7 @@ describe('array-field renderer (object itemKind)', () => {
     fireEvent.click(screen.getByText('Submit'));
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
     expect(submitValues[0]).toMatchObject({
-      contacts: [{ name: 'Charlie', email: 'alice@example.com' }]
+      contacts: [{ name: 'Charlie', email: 'alice@example.com' }],
     });
   });
 
@@ -437,7 +470,7 @@ describe('array-field renderer (object itemKind)', () => {
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
       ...allFormDefs,
-      arrayItemInstanceProbeRenderer
+      arrayItemInstanceProbeRenderer,
     ]);
     const schema = {
       type: 'page',
@@ -447,9 +480,9 @@ describe('array-field renderer (object itemKind)', () => {
           name: 'contacts',
           itemKind: 'object',
           itemKey: 'meta.key',
-          item: [{ type: 'array-item-instance-probe' }]
-        }
-      ]
+          item: [{ type: 'array-item-instance-probe' }],
+        },
+      ],
     } as const;
     const { rerender } = render(
       <SchemaRenderer
@@ -458,12 +491,12 @@ describe('array-field renderer (object itemKind)', () => {
         data={{
           contacts: [
             { meta: { key: 'contact-a' }, name: 'Alice' },
-            { meta: { key: 'contact-b' }, name: 'Bob' }
-          ]
+            { meta: { key: 'contact-b' }, name: 'Bob' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const initialAliceIdentity = await screen.findByTestId('array-item-probe-Alice');
@@ -481,12 +514,12 @@ describe('array-field renderer (object itemKind)', () => {
         data={{
           contacts: [
             { meta: { key: 'contact-b' }, name: 'Bob' },
-            { meta: { key: 'contact-a' }, name: 'Alice' }
-          ]
+            { meta: { key: 'contact-a' }, name: 'Alice' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -499,5 +532,4 @@ describe('array-field renderer (object itemKind)', () => {
       expect(nextBobText).toContain('contact-b');
     });
   });
-
 });

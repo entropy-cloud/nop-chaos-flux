@@ -260,11 +260,21 @@ describe('createVariantFormProxy', () => {
       scope: {} as ScopeRef,
       scopeId: 'form-scope',
       rootPath: '',
-      get validation() { return undefined as any; },
-      get lifecycleState() { return 'active' as const; },
-      get modelGeneration() { return 0; },
-      get canSubmit() { return true; },
-      get allTouched() { return false; },
+      get validation() {
+        return undefined as any;
+      },
+      get lifecycleState() {
+        return 'active' as const;
+      },
+      get modelGeneration() {
+        return 0;
+      },
+      get canSubmit() {
+        return true;
+      },
+      get allTouched() {
+        return false;
+      },
       setLifecycleHandlers: vi.fn(),
       getScopeState: vi.fn(),
       getAsyncOwnerDebugSnapshot: vi.fn(),
@@ -369,7 +379,9 @@ describe('createVariantFormProxy', () => {
     const form = createMinimalFormRuntime(store);
     const proxy = createVariantFormProxy(form, 'payload');
     proxy.registerField({ path: 'name', getValue: () => 'value', childPaths: [] });
-    expect(form.registerField).toHaveBeenCalledWith(expect.objectContaining({ path: 'payload.name' }));
+    expect(form.registerField).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'payload.name' }),
+    );
   });
 
   it('delegates touchField with prefixed path', () => {

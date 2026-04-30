@@ -7,6 +7,7 @@
 **Tech Stack**: React 19, Zustand, TypeScript 6.0, Vite 8, Vitest, pnpm workspace.
 
 **Workspace Packages**:
+
 - `@nop-chaos/flux-core` - Foundation contracts and shared utilities. Contains type definitions, constants, and side-effect-free pure utility functions shared across all packages.
 - `@nop-chaos/flux-formula` - Expression compiler/evaluator.
 - `@nop-chaos/flux-compiler` - Schema compiler (compilation, validation model lowering, diagnostics).
@@ -34,6 +35,7 @@
 - `@nop-chaos/flux-playground` - Dev playground app.
 
 **Dependency Flow**:
+
 ```
 flux-core -> flux-formula -> flux-compiler -> flux-action-core -> flux-runtime -> flux-react -> flux-renderers-* (includes flux-renderers-form-advanced)
                                                                                              -> flux-code-editor
@@ -87,27 +89,31 @@ Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run t
 
 1. **Initial diagnosis**: Run the full test suite once to identify all failures
 2. **Targeted fixes**: For each failing test, run only that specific test:
+
    ```bash
    # Run single test file
    npx playwright test "tests/e2e/specific.spec.ts" --reporter=list
-   
+
    # Run test by line number
    npx playwright test "tests/e2e/specific.spec.ts:42" --reporter=list
-   
+
    # Run test by name pattern
    npx playwright test --grep "test name pattern" --reporter=list
-   
+
    # Run single vitest test
    pnpm --filter @nop-chaos/flux-runtime test -- --grep "test name"
    ```
+
 3. **Final verification**: Only run the full suite after all individual fixes pass
 
 **For debugging test failures:**
+
 - Use `page.evaluate(() => element.innerHTML)` to inspect DOM structure
 - Add `data-testid` attributes for reliable element selection
 - Avoid relying on screenshots for diagnosis — use programmatic inspection
 
 **Timeout settings:**
+
 - `playwright.config.ts` has `reuseExistingServer: !process.env.CI` to speed up local development
 - For CI, a fresh server is always started to ensure clean state
 
@@ -121,12 +127,13 @@ Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run t
 
 After completing any significant **CODE CHANGE**, you MUST:
 
- 1. **Update the daily dev log** at `docs/logs/{year}/{month}-{day}.md` with a dated entry containing:
-   - What was added/changed
-   - Key decisions made
-   - Brief context useful for future work
-   - New entries are appended at the top of the file (reverse chronological)
-   - See `docs/logs/index.md` for writing conventions
+1.  **Update the daily dev log** at `docs/logs/{year}/{month}-{day}.md` with a dated entry containing:
+
+- What was added/changed
+- Key decisions made
+- Brief context useful for future work
+- New entries are appended at the top of the file (reverse chronological)
+- See `docs/logs/index.md` for writing conventions
 
 2. **Update relevant architecture docs** when changing:
    - Package boundaries or ownership Ã¢â€ â€™ `docs/architecture/flux-runtime-module-boundaries.md`
@@ -134,7 +141,6 @@ After completing any significant **CODE CHANGE**, you MUST:
    - Renderer props/hooks/React integration Ã¢â€ â€™ `docs/architecture/renderer-runtime.md`
    - Slot/field metadata patterns Ã¢â€ â€™ `docs/architecture/field-metadata-slot-modeling.md`
    - General architecture Ã¢â€ â€™ `docs/architecture/flux-core.md`
-
 
 ### Development Log Format
 
@@ -162,16 +168,16 @@ Follow these rules:
 
 ### Directory Roles
 
-| Directory | Purpose |
-|-----------|---------|
-| `docs/architecture/` | Current normative design docs (source of truth) |
-| `docs/references/` | Stable lookup material (terminology, interfaces, maintenance) |
-| `docs/analysis/` | Investigatory/comparison reports |
-| `docs/examples/` | Representative schemas and usage notes |
-| `docs/plans/` | Implementation plans and execution checklists (execution docs, not normative design docs; after closure they become historical records) |
-| `docs/bugs/` | Numbered defect histories and fix notes |
-| `docs/archive/` | Preserved legacy drafts |
-| `docs/logs/` | Daily dev logs â€” `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/index.md` for writing guide and index |
+| Directory            | Purpose                                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/` | Current normative design docs (source of truth)                                                                                         |
+| `docs/references/`   | Stable lookup material (terminology, interfaces, maintenance)                                                                           |
+| `docs/analysis/`     | Investigatory/comparison reports                                                                                                        |
+| `docs/examples/`     | Representative schemas and usage notes                                                                                                  |
+| `docs/plans/`        | Implementation plans and execution checklists (execution docs, not normative design docs; after closure they become historical records) |
+| `docs/bugs/`         | Numbered defect histories and fix notes                                                                                                 |
+| `docs/archive/`      | Preserved legacy drafts                                                                                                                 |
+| `docs/logs/`         | Daily dev logs â€” `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/index.md` for writing guide and index                            |
 
 ### Entry Point
 
@@ -187,42 +193,42 @@ For the complete "Read This First" routing table, see `docs/index.md`. The table
 
 ### By Task
 
-| Task | Read first | Then read | Why |
-|------|-----------|-----------|-----|
-| Modify any renderer component (JSX, props, hooks) | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` | Renderer contracts, hooks, fragment rendering |
-| Add or change a renderer's styling, className, or layout | `docs/architecture/styling-system.md` | `docs/architecture/theme-compatibility.md` | Renderer styling contract, classAliases, spacing conventions, marker class rules |
-| Change CSS, Tailwind utilities, or design tokens | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section | `docs/architecture/renderer-markers-and-selectors.md` | No implicit layout in renderers; use marker classes + schema-driven styles |
-| Work on Flow Designer canvas, nodes, edges, or interactions | `docs/architecture/flow-designer/design.md` | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md` | Layered architecture, host-bridge adapter contract |
-| Work on Report Designer or Spreadsheet Editor | `docs/architecture/report-designer/design.md` | `docs/architecture/report-designer/contracts.md` | Layered architecture, package boundaries, interface contracts |
-| Draft, execute, or audit a plan under `docs/plans/` | `docs/plans/00-plan-authoring-and-execution-guide.md` | `docs/logs/index.md` | Plan scope, status, exit criteria, and closure discipline |
-| Change form validation, error display, or field participation | `docs/architecture/form-validation.md` | `docs/architecture/flux-runtime-module-boundaries.md` | Validation rules, timing, renderer participation |
-| Add new actions, event handlers, or `xui:import` usage | `docs/architecture/action-scope-and-imports.md` | `docs/architecture/renderer-runtime.md` | Namespaced actions, import semantics, scope boundaries |
-| Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md` | `docs/architecture/frontend-baseline.md` | Module ownership, file placement rules |
-| Change core architecture (compilation, scope, expressions) | `docs/architecture/flux-core.md` | `docs/references/terminology.md` | Unified value semantics, scope model, key terms |
-| Debug a CSS class not being generated in a monorepo package | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md` | `apps/playground/src/styles.css` (check `@source` directive) | Tailwind v4 content scanning fix, monorepo setup |
+| Task                                                          | Read first                                                                  | Then read                                                                                                | Why                                                                              |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Modify any renderer component (JSX, props, hooks)             | `docs/architecture/renderer-runtime.md`                                     | `docs/references/renderer-interfaces.md`                                                                 | Renderer contracts, hooks, fragment rendering                                    |
+| Add or change a renderer's styling, className, or layout      | `docs/architecture/styling-system.md`                                       | `docs/architecture/theme-compatibility.md`                                                               | Renderer styling contract, classAliases, spacing conventions, marker class rules |
+| Change CSS, Tailwind utilities, or design tokens              | `docs/architecture/styling-system.md` → "Renderer Styling Contract" section | `docs/architecture/renderer-markers-and-selectors.md`                                                    | No implicit layout in renderers; use marker classes + schema-driven styles       |
+| Work on Flow Designer canvas, nodes, edges, or interactions   | `docs/architecture/flow-designer/design.md`                                 | `docs/architecture/flow-designer/collaboration.md`, `docs/architecture/flow-designer/canvas-adapters.md` | Layered architecture, host-bridge adapter contract                               |
+| Work on Report Designer or Spreadsheet Editor                 | `docs/architecture/report-designer/design.md`                               | `docs/architecture/report-designer/contracts.md`                                                         | Layered architecture, package boundaries, interface contracts                    |
+| Draft, execute, or audit a plan under `docs/plans/`           | `docs/plans/00-plan-authoring-and-execution-guide.md`                       | `docs/logs/index.md`                                                                                     | Plan scope, status, exit criteria, and closure discipline                        |
+| Change form validation, error display, or field participation | `docs/architecture/form-validation.md`                                      | `docs/architecture/flux-runtime-module-boundaries.md`                                                    | Validation rules, timing, renderer participation                                 |
+| Add new actions, event handlers, or `xui:import` usage        | `docs/architecture/action-scope-and-imports.md`                             | `docs/architecture/renderer-runtime.md`                                                                  | Namespaced actions, import semantics, scope boundaries                           |
+| Change package boundaries, create a new package, or move code | `docs/architecture/flux-runtime-module-boundaries.md`                       | `docs/architecture/frontend-baseline.md`                                                                 | Module ownership, file placement rules                                           |
+| Change core architecture (compilation, scope, expressions)    | `docs/architecture/flux-core.md`                                            | `docs/references/terminology.md`                                                                         | Unified value semantics, scope model, key terms                                  |
+| Debug a CSS class not being generated in a monorepo package   | `docs/bugs/14-tailwind-v4-monorepo-content-scan-canvas-invisible-fix.md`    | `apps/playground/src/styles.css` (check `@source` directive)                                             | Tailwind v4 content scanning fix, monorepo setup                                 |
 
 ### By Code Location
 
-| When touching this code | Read this |
-|------------------------|-----------|
-| `packages/flux-core/src/` | `docs/architecture/flux-core.md`, `docs/references/terminology.md` |
-| `packages/flux-runtime/src/` | `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/form-validation.md` |
-| `packages/flux-react/src/` | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` |
-| `packages/flux-renderers-*/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-runtime.md` |
-| `packages/ui/src/` | `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md` |
-| `packages/flow-designer-*/src/` | `docs/architecture/flow-designer/` (start with `design.md`) |
-| `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`) |
-| `apps/playground/src/` | `docs/architecture/playground-experience.md` |
+| When touching this code                                            | Read this                                                                                     |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `packages/flux-core/src/`                                          | `docs/architecture/flux-core.md`, `docs/references/terminology.md`                            |
+| `packages/flux-runtime/src/`                                       | `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/form-validation.md` |
+| `packages/flux-react/src/`                                         | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md`  |
+| `packages/flux-renderers-*/src/`                                   | `docs/architecture/styling-system.md`, `docs/architecture/renderer-runtime.md`                |
+| `packages/ui/src/`                                                 | `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`  |
+| `packages/flow-designer-*/src/`                                    | `docs/architecture/flow-designer/` (start with `design.md`)                                   |
+| `packages/spreadsheet-*/src/` or `packages/report-designer-*/src/` | `docs/architecture/report-designer/` (start with `design.md`)                                 |
+| `apps/playground/src/`                                             | `docs/architecture/playground-experience.md`                                                  |
 
 ### Quick Reference: Key Principles
 
-| Principle | Summary | Doc |
-|-----------|---------|-----|
-| Renderer Styling Contract | Layout renderers (container, flex, page) emit marker classes only. Widget renderers (table, condition-builder, etc.) are self-styled UI controls. | `docs/architecture/styling-system.md` |
-| Spacing Conventions | Context-based spacing via `stack-*`/`hstack-*` aliases, always explicit at usage site. | `docs/architecture/styling-system.md` |
-| No BEM | Use shadcn `data-slot`, flux semantic markers, and Tailwind visual classes. | `docs/architecture/renderer-markers-and-selectors.md` |
-| Theme Independence | No React ThemeProvider; CSS variables and stable class names for host integration. | `docs/architecture/theme-compatibility.md` |
-| Tailwind v4 monorepo | `@source "../../../packages"` in `styles.css` to scan workspace packages. | `docs/bugs/14-*.md` |
+| Principle                 | Summary                                                                                                                                           | Doc                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Renderer Styling Contract | Layout renderers (container, flex, page) emit marker classes only. Widget renderers (table, condition-builder, etc.) are self-styled UI controls. | `docs/architecture/styling-system.md`                 |
+| Spacing Conventions       | Context-based spacing via `stack-*`/`hstack-*` aliases, always explicit at usage site.                                                            | `docs/architecture/styling-system.md`                 |
+| No BEM                    | Use shadcn `data-slot`, flux semantic markers, and Tailwind visual classes.                                                                       | `docs/architecture/renderer-markers-and-selectors.md` |
+| Theme Independence        | No React ThemeProvider; CSS variables and stable class names for host integration.                                                                | `docs/architecture/theme-compatibility.md`            |
+| Tailwind v4 monorepo      | `@source "../../../packages"` in `styles.css` to scan workspace packages.                                                                         | `docs/bugs/14-*.md`                                   |
 
 ---
 
@@ -249,39 +255,40 @@ Screenshots (`test-results/`, `*.png`, `*.jpg`) are unreliable for automated ana
 
 Before writing any JSX, check `packages/ui/src/index.ts` for available components. If a needed component is missing, add it following shadcn/ui conventions (see `docs/architecture/styling-system.md` â†’ "How to add a new shadcn/ui component").
 
-| Raw HTML | Must use from `@nop-chaos/ui` |
-|----------|-------------------------------|
-| `<button>` | `<Button>` |
-| `<input>` | `<Input>` |
-| `<textarea>` | `<Textarea>` |
-| `<select>` / `<option>` | `<Select>` (rich) or `<NativeSelect>` (simple) |
-| `<label>` | `<Label>` |
-| checkbox | `<Checkbox>` |
-| radio | `<RadioGroup>` + `<RadioGroupItem>` |
-| toggle/switch | `<Switch>` |
-| dialog/modal | `<Dialog>`, `<Sheet>`, or `<Drawer>` |
-| tabs | `<Tabs>`, `<TabsList>`, `<TabsTrigger>`, `<TabsContent>` |
-| tooltip | `<Tooltip>`, `<TooltipTrigger>`, `<TooltipContent>` |
-| popover | `<Popover>`, `<PopoverTrigger>`, `<PopoverContent>` |
-| dropdown menu | `<DropdownMenu>` and sub-components |
-| table | `<Table>`, `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableHead>`, `<TableCell>` |
-| card | `<Card>`, `<CardHeader>`, `<CardContent>`, `<CardFooter>` |
-| badge/tag | `<Badge>` |
-| loading indicator | `<Spinner>`, `<Skeleton>`, `<Progress>` |
-| scroll container | `<ScrollArea>` |
-| divider | `<Separator>` |
-| toast/notification | `<Toaster>` + `toast()` from sonner |
-| slider/range | `<Slider>` |
-| keyboard shortcut | `<Kbd>` |
-| field wrapper | `<Field>` |
-| button group | `<ButtonGroup>` |
-| combo box | `<Combobox>` |
-| sidebar layout | `<Sidebar>` and related |
-| resizable panels | `<ResizablePanelGroup>`, `<ResizablePanel>`, `<ResizableHandle>` |
-| icon button | `<Button variant="ghost" size="icon">` |
-| empty state | `<Empty>` |
+| Raw HTML                | Must use from `@nop-chaos/ui`                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| `<button>`              | `<Button>`                                                                            |
+| `<input>`               | `<Input>`                                                                             |
+| `<textarea>`            | `<Textarea>`                                                                          |
+| `<select>` / `<option>` | `<Select>` (rich) or `<NativeSelect>` (simple)                                        |
+| `<label>`               | `<Label>`                                                                             |
+| checkbox                | `<Checkbox>`                                                                          |
+| radio                   | `<RadioGroup>` + `<RadioGroupItem>`                                                   |
+| toggle/switch           | `<Switch>`                                                                            |
+| dialog/modal            | `<Dialog>`, `<Sheet>`, or `<Drawer>`                                                  |
+| tabs                    | `<Tabs>`, `<TabsList>`, `<TabsTrigger>`, `<TabsContent>`                              |
+| tooltip                 | `<Tooltip>`, `<TooltipTrigger>`, `<TooltipContent>`                                   |
+| popover                 | `<Popover>`, `<PopoverTrigger>`, `<PopoverContent>`                                   |
+| dropdown menu           | `<DropdownMenu>` and sub-components                                                   |
+| table                   | `<Table>`, `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableHead>`, `<TableCell>` |
+| card                    | `<Card>`, `<CardHeader>`, `<CardContent>`, `<CardFooter>`                             |
+| badge/tag               | `<Badge>`                                                                             |
+| loading indicator       | `<Spinner>`, `<Skeleton>`, `<Progress>`                                               |
+| scroll container        | `<ScrollArea>`                                                                        |
+| divider                 | `<Separator>`                                                                         |
+| toast/notification      | `<Toaster>` + `toast()` from sonner                                                   |
+| slider/range            | `<Slider>`                                                                            |
+| keyboard shortcut       | `<Kbd>`                                                                               |
+| field wrapper           | `<Field>`                                                                             |
+| button group            | `<ButtonGroup>`                                                                       |
+| combo box               | `<Combobox>`                                                                          |
+| sidebar layout          | `<Sidebar>` and related                                                               |
+| resizable panels        | `<ResizablePanelGroup>`, `<ResizablePanel>`, `<ResizableHandle>`                      |
+| icon button             | `<Button variant="ghost" size="icon">`                                                |
+| empty state             | `<Empty>`                                                                             |
 
 Import pattern:
+
 ```tsx
 import { Button, Input, Dialog, cn } from '@nop-chaos/ui';
 ```
@@ -312,26 +319,26 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 
 **Where to read data from:**
 
-| Source | What it provides | When to use |
-|--------|-----------------|-------------|
-| `props.props` | Resolved runtime values (label, variant, placeholder...) | Reading schema-driven values |
-| `props.meta` | Resolved meta (disabled, visible, className, testid) | Checking control state |
-| `props.regions` | Precompiled child render handles | Rendering child fragments via `.render()` |
-| `props.events` | Runtime event handlers from schema | Attaching click/change/submit handlers |
-| `props.helpers` | Stable runtime helpers | render, evaluate, dispatch |
+| Source          | What it provides                                         | When to use                               |
+| --------------- | -------------------------------------------------------- | ----------------------------------------- |
+| `props.props`   | Resolved runtime values (label, variant, placeholder...) | Reading schema-driven values              |
+| `props.meta`    | Resolved meta (disabled, visible, className, testid)     | Checking control state                    |
+| `props.regions` | Precompiled child render handles                         | Rendering child fragments via `.render()` |
+| `props.events`  | Runtime event handlers from schema                       | Attaching click/change/submit handlers    |
+| `props.helpers` | Stable runtime helpers                                   | render, evaluate, dispatch                |
 
 **NEVER** access stores directly in renderers. Use the standard hooks:
 
-| Need | Hook | Package |
-|------|------|---------|
-| Runtime instance | `useRendererRuntime()` | `@nop-chaos/flux-react` |
-| Current scope ref | `useRenderScope()` | `@nop-chaos/flux-react` |
-| Reactive scope data | `useScopeSelector(selector)` | `@nop-chaos/flux-react` |
-| Action dispatch | `useActionDispatcher()` | `@nop-chaos/flux-react` |
-| Current form | `useCurrentForm()` | `@nop-chaos/flux-react` |
-| Current page | `useCurrentPage()` | `@nop-chaos/flux-react` |
-| Render ad-hoc fragment | `useRenderFragment()` | `@nop-chaos/flux-react` |
-| Current node meta | `useCurrentNodeMeta()` | `@nop-chaos/flux-react` |
+| Need                   | Hook                         | Package                 |
+| ---------------------- | ---------------------------- | ----------------------- |
+| Runtime instance       | `useRendererRuntime()`       | `@nop-chaos/flux-react` |
+| Current scope ref      | `useRenderScope()`           | `@nop-chaos/flux-react` |
+| Reactive scope data    | `useScopeSelector(selector)` | `@nop-chaos/flux-react` |
+| Action dispatch        | `useActionDispatcher()`      | `@nop-chaos/flux-react` |
+| Current form           | `useCurrentForm()`           | `@nop-chaos/flux-react` |
+| Current page           | `useCurrentPage()`           | `@nop-chaos/flux-react` |
+| Render ad-hoc fragment | `useRenderFragment()`        | `@nop-chaos/flux-react` |
+| Current node meta      | `useCurrentNodeMeta()`       | `@nop-chaos/flux-react` |
 
 **NEVER** create ad-hoc React contexts or prop-drilling chains for data these hooks already provide.
 
@@ -358,12 +365,13 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 - Each package's `tsconfig.json` must use `noEmit: true` (for typecheck) or specify `outDir` explicitly (for build).
 - Build output goes to `packages/<name>/dist/` only.
 - Temporary files (coverage, cache, etc.) belong in the package root or `node_modules/.cache/`, never in `src/`.
-- `.gitignore` already excludes `packages/*/src/**/*.js`, `packages/*/src/**/*.d.ts`, `packages/*/src/**/*.js.map` 
+- `.gitignore` already excludes `packages/*/src/**/*.js`, `packages/*/src/**/*.d.ts`, `packages/*/src/**/*.js.map`
 - If stray build artifacts appear in `src/`, delete them and investigate the `tsconfig` that caused the leak.
 
 ### Package Structure
 
 Each package follows:
+
 ```
 packages/<name>/
   src/
@@ -420,6 +428,7 @@ src/
 4. **Reusability**: Extract utilities that could be used elsewhere
 
 **Example structure:**
+
 ```
 src/
 â”œâ”€â”€ api-cache.ts           # Cache store (ApiCacheStore interface + impl)
@@ -437,34 +446,41 @@ src/
 When refactoring large files into smaller modules, follow this safe approach:
 
 ### Step 1: Analyze First
+
 - Read the entire file to understand its structure and responsibilities
 - Identify logical boundaries (UI components, utilities, state management)
 - Plan the split before writing any code
 
 ### Step 2: Create New Files First
+
 - Create new files in a subdirectory (e.g., `src/flow-designer/`)
 - Each new file should have a single, clear responsibility
 - Export all public APIs through an `index.ts` barrel file
 
 ### Step 3: Do NOT Modify the Original File
+
 - Keep the original file intact during the split
 - This allows easy rollback if something goes wrong
 
 ### Step 4: Verify New Files
+
 - Run `typecheck` and `test` on new files
 - Ensure no import errors or missing dependencies
 
 ### Step 5: Replace Original File
+
 - Rename original to `.bak` (e.g., `Component.tsx` Ã¢â€ â€™ `Component.tsx.bak`)
 - Create new orchestrator file that imports and uses the split components
 - Keep the orchestrator thin - only state management and composition
 
 ### Step 6: Final Verification
+
 - Run full verification: `pnpm typecheck && pnpm build && pnpm lint && pnpm test`
 - Compare behavior with `.bak` file if needed
 - Delete `.bak` file after confidence is established
 
 ### Example Structure
+
 ```
 # Before
 src/
@@ -484,6 +500,7 @@ src/
 ```
 
 ### Why This Approach Works
+
 - **Safety**: Original file always available for rollback
 - **Incremental**: Can verify each piece independently
 - **Reference**: `.bak` file serves as documentation during rewrite
@@ -494,6 +511,7 @@ src/
 ## Adding New Packages
 
 1. Create `packages/<name>/` with `package.json`:
+
    ```json
    {
      "name": "@nop-chaos/<name>",
@@ -511,7 +529,9 @@ src/
        "test": "vitest run --passWithNoTests",
        "lint": "eslint src --ext .ts,.tsx"
      },
-     "dependencies": { /* ... */ }
+     "dependencies": {
+       /* ... */
+     }
    }
    ```
 
@@ -521,7 +541,7 @@ src/
 
 4. Add to `tsconfig.json` project references.
 
- 5. Update the daily dev log in `docs/logs/`.
+5. Update the daily dev log in `docs/logs/`.
 
 ---
 

@@ -1,7 +1,4 @@
-import type {
-  SpreadsheetBridge,
-  SpreadsheetHostSnapshot,
-} from '@nop-chaos/spreadsheet-renderers';
+import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '@nop-chaos/spreadsheet-renderers';
 import type {
   ReportDesignerCore,
   ReportDesignerRuntimeSnapshot,
@@ -37,9 +34,15 @@ export interface ReportDesignerBridge extends SpreadsheetBridge {
 export type ReportDesignerEvent =
   | { type: 'report-designer:fieldDragStart'; payload: FieldDragState }
   | { type: 'report-designer:fieldDragEnd'; payload: FieldDragState }
-  | { type: 'report-designer:selectionTargetChanged'; payload: import('@nop-chaos/report-designer-core').ReportSelectionTarget | undefined }
+  | {
+      type: 'report-designer:selectionTargetChanged';
+      payload: import('@nop-chaos/report-designer-core').ReportSelectionTarget | undefined;
+    }
   | { type: 'report-designer:previewStarted'; payload: { mode?: string } }
-  | { type: 'report-designer:previewFinished'; payload: import('@nop-chaos/report-designer-core').PreviewResult };
+  | {
+      type: 'report-designer:previewFinished';
+      payload: import('@nop-chaos/report-designer-core').PreviewResult;
+    };
 
 export interface ReportDesignerEventEmitter {
   emit(event: ReportDesignerEvent): void;
@@ -57,7 +60,9 @@ export function createEventEmitter(): ReportDesignerEventEmitter {
     },
     on(handler: (event: ReportDesignerEvent) => void) {
       handlers.add(handler);
-      return () => { handlers.delete(handler); };
+      return () => {
+        handlers.delete(handler);
+      };
     },
   };
 }

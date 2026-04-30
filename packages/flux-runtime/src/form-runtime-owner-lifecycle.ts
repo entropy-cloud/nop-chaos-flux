@@ -67,7 +67,7 @@ export function refreshCompiledModelState(args: {
     args.setLastChange({
       paths: [],
       sourceScopeId: args.formId,
-      kind: 'update'
+      kind: 'update',
     });
     args.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
   } else {
@@ -86,7 +86,7 @@ export function refreshCompiledModelState(args: {
     args.setLastChange({
       paths: [],
       sourceScopeId: args.formId,
-      kind: 'update'
+      kind: 'update',
     });
     args.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
   }
@@ -115,7 +115,7 @@ export function disposeOwnerState(args: {
   args.setLastChange({
     paths: [],
     sourceScopeId: args.formId,
-    kind: 'update'
+    kind: 'update',
   });
   args.sharedState.store.batchUpdate({ fieldStates: {} });
 }

@@ -11,7 +11,11 @@ export const handleSetActiveSheet: CommandHandler<SetActiveSheetCommand> = (stor
   const state = store.getState();
   const sheet = state.document.workbook.sheets.find((s) => s.id === command.sheetId);
   if (!sheet) return { ok: false, changed: false, error: `Sheet not found: ${command.sheetId}` };
-  store.setState({ activeSheetId: command.sheetId, selection: { kind: 'none' }, editing: undefined });
+  store.setState({
+    activeSheetId: command.sheetId,
+    selection: { kind: 'none' },
+    editing: undefined,
+  });
   return { ok: true, changed: true };
 };
 
@@ -33,7 +37,12 @@ export const handleSelectAll: CommandHandler<SelectAllCommand> = (store, command
 export const handleSelectRow: CommandHandler<SelectRowCommand> = (store, command) => {
   const state = store.getState();
   const current = state.selection;
-  if (command.extend && current.kind === 'row' && current.sheetId === command.sheetId && current.rows) {
+  if (
+    command.extend &&
+    current.kind === 'row' &&
+    current.sheetId === command.sheetId &&
+    current.rows
+  ) {
     const rows = [...new Set([...current.rows, command.row])].sort((a, b) => a - b);
     store.setState({ selection: { kind: 'row', sheetId: command.sheetId, rows } });
   } else {
@@ -45,11 +54,18 @@ export const handleSelectRow: CommandHandler<SelectRowCommand> = (store, command
 export const handleSelectColumn: CommandHandler<SelectColumnCommand> = (store, command) => {
   const state = store.getState();
   const current = state.selection;
-  if (command.extend && current.kind === 'column' && current.sheetId === command.sheetId && current.columns) {
+  if (
+    command.extend &&
+    current.kind === 'column' &&
+    current.sheetId === command.sheetId &&
+    current.columns
+  ) {
     const columns = [...new Set([...current.columns, command.col])].sort((a, b) => a - b);
     store.setState({ selection: { kind: 'column', sheetId: command.sheetId, columns } });
   } else {
-    store.setState({ selection: { kind: 'column', sheetId: command.sheetId, columns: [command.col] } });
+    store.setState({
+      selection: { kind: 'column', sheetId: command.sheetId, columns: [command.col] },
+    });
   }
   return { ok: true, changed: true };
 };

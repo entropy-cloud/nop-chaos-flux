@@ -5,7 +5,7 @@ import type {
   DesignerConfig,
   NormalizedDesignerConfig,
   DesignerSnapshot,
-  DesignerEvent
+  DesignerEvent,
 } from './types';
 import type { DesignerCore } from './designer-core-types';
 import { cloneDocument } from './core/clone';
@@ -20,10 +20,7 @@ import {
   undoHistory,
   type DesignerHistoryState,
 } from './core/history';
-import {
-  createSelectionState,
-  type DesignerSelectionState,
-} from './core/selection';
+import { createSelectionState, type DesignerSelectionState } from './core/selection';
 import { createSelectionController } from './core/selection-controller';
 import {
   beginTransactionState,
@@ -31,10 +28,7 @@ import {
   rollbackTransactionState,
   type DesignerTransaction,
 } from './core/transactions';
-import {
-  createDesignerShellState,
-  resetShellViewportFromDocument,
-} from './core/shell-state';
+import { createDesignerShellState, resetShellViewportFromDocument } from './core/shell-state';
 import { createShellControls } from './core/shell-controls';
 import { createDesignerSnapshotCache, getDesignerSnapshot } from './core/snapshot';
 import { layoutNodesInDocument } from './core/node-operations';
@@ -54,7 +48,10 @@ import {
   deleteEdgeCommand,
   type EdgeCommandContext,
 } from './core-edge-commands';
-export function createDesignerCore(initialDoc: GraphDocument, config: DesignerConfig): DesignerCore {
+export function createDesignerCore(
+  initialDoc: GraphDocument,
+  config: DesignerConfig,
+): DesignerCore {
   let doc = cloneDocument(initialDoc);
   const normalizedConfig = normalizeConfig(config);
   const listeners = new Set<(event: DesignerEvent) => void>();
@@ -82,7 +79,7 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       selectionState = next;
     },
     getAllNodeIds: () => doc.nodes.map((node) => node.id),
-    emit
+    emit,
   });
 
   const maxHistorySize = 50;
@@ -154,32 +151,48 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
 
   function buildNodeCtx(): NodeCommandContext {
     return {
-      get doc() { return doc; },
+      get doc() {
+        return doc;
+      },
       normalizedConfig,
-      get selectionState() { return selectionState; },
-      get transactionStack() { return transactionStack; },
+      get selectionState() {
+        return selectionState;
+      },
+      get transactionStack() {
+        return transactionStack;
+      },
       setDocument,
       pushHistory,
       emitMutation,
       emit,
       updateDirtyState,
-      setSelectionState: (s) => { selectionState = s; },
-      addNodeFn: addNode
+      setSelectionState: (s) => {
+        selectionState = s;
+      },
+      addNodeFn: addNode,
     };
   }
 
   function buildEdgeCtx(): EdgeCommandContext {
     return {
-      get doc() { return doc; },
+      get doc() {
+        return doc;
+      },
       normalizedConfig,
-      get selectionState() { return selectionState; },
-      get transactionStack() { return transactionStack; },
+      get selectionState() {
+        return selectionState;
+      },
+      get transactionStack() {
+        return transactionStack;
+      },
       setDocument,
       pushHistory,
       emitMutation,
       emit,
       updateDirtyState,
-      setSelectionState: (s) => { selectionState = s; }
+      setSelectionState: (s) => {
+        selectionState = s;
+      },
     };
   }
 
@@ -190,10 +203,14 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     emit,
     updateDirtyState,
     shellState,
-    getTransactionDepth: () => transactionStack.length
+    getTransactionDepth: () => transactionStack.length,
   });
 
-  function addNode(type: string, position: { x: number; y: number }, data?: Record<string, unknown>): GraphNode | null {
+  function addNode(
+    type: string,
+    position: { x: number; y: number },
+    data?: Record<string, unknown>,
+  ): GraphNode | null {
     return addNodeCommand(buildNodeCtx(), type, position, data);
   }
 
@@ -217,7 +234,11 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
       return null;
     }
 
-    return addNode(source.type, { x: source.position.x + 48, y: source.position.y + 48 }, source.data);
+    return addNode(
+      source.type,
+      { x: source.position.x + 48, y: source.position.y + 48 },
+      source.data,
+    );
   }
 
   function checkMaxInstancesLocal(type: string): boolean {
@@ -232,11 +253,19 @@ export function createDesignerCore(initialDoc: GraphDocument, config: DesignerCo
     deleteNodeCommand(buildNodeCtx(), nodeId);
   }
 
-  function addEdge(source: string, target: string, data?: Record<string, unknown>): GraphEdge | null {
+  function addEdge(
+    source: string,
+    target: string,
+    data?: Record<string, unknown>,
+  ): GraphEdge | null {
     return addEdgeCommand(buildEdgeCtx(), source, target, data);
   }
 
-  function reconnectEdge(edgeId: string, source: string, target: string): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string } {
+  function reconnectEdge(
+    edgeId: string,
+    source: string,
+    target: string,
+  ): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string } {
     return reconnectEdgeCommand(buildEdgeCtx(), edgeId, source, target);
   }
 

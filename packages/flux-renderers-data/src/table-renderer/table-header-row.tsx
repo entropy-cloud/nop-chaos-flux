@@ -1,5 +1,17 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { Button, Checkbox, cn, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuTrigger, Input, TableHead, TableRow } from '@nop-chaos/ui';
+import {
+  Button,
+  Checkbox,
+  cn,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Input,
+  TableHead,
+  TableRow,
+} from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ArrowUpDownIcon, ChevronDownIcon } from 'lucide-react';
 import type { TableColumnSchema, TableSchema } from '../schemas';
@@ -37,20 +49,28 @@ export function TableHeaderRow({
   onFilter,
   onSearch,
   onClearFilters,
-  onSelectAll
+  onSelectAll,
 }: TableHeaderRowProps) {
   const schemaProps = props.props as TableSchema;
 
   return (
     <TableRow>
       {showExpandColumn ? (
-        <TableHead data-slot="table-expand-column" className={fixedColumnLayout.getExpandCellProps().className} style={{ width: '40px', ...fixedColumnLayout.getExpandCellProps().style }}>
+        <TableHead
+          data-slot="table-expand-column"
+          className={fixedColumnLayout.getExpandCellProps().className}
+          style={{ width: '40px', ...fixedColumnLayout.getExpandCellProps().style }}
+        >
           <span className="sr-only">{t('flux.table.expand')}</span>
         </TableHead>
       ) : null}
 
       {schemaProps.rowSelection ? (
-        <TableHead data-slot="table-select-column" className={fixedColumnLayout.getSelectionCellProps().className} style={{ width: '40px', ...fixedColumnLayout.getSelectionCellProps().style }}>
+        <TableHead
+          data-slot="table-select-column"
+          className={fixedColumnLayout.getSelectionCellProps().className}
+          style={{ width: '40px', ...fixedColumnLayout.getSelectionCellProps().style }}
+        >
           {schemaProps.rowSelection.type === 'checkbox' && (
             <Checkbox
               checked={allSelected && selectedRowCount === sourceLength && sourceLength > 0}
@@ -61,24 +81,43 @@ export function TableHeaderRow({
       ) : null}
 
       {columns.map((column, index) => {
-        const labelRegion = typeof column.labelRegionKey === 'string' ? props.regions[column.labelRegionKey] : undefined;
+        const labelRegion =
+          typeof column.labelRegionKey === 'string'
+            ? props.regions[column.labelRegionKey]
+            : undefined;
         const labelContent = labelRegion?.render() ?? column.label ?? column.name;
         const isSortable = column.sortable === true;
-        const filterConfig = typeof column.filterable === 'object' && column.filterable ? column.filterable : undefined;
-        const filterOptions = Array.isArray(column.filterOptions) ? column.filterOptions : filterConfig?.options;
-        const isFilterable = (column.filterable === true || Boolean(filterConfig)) && Array.isArray(filterOptions) && filterOptions.length > 0;
+        const filterConfig =
+          typeof column.filterable === 'object' && column.filterable
+            ? column.filterable
+            : undefined;
+        const filterOptions = Array.isArray(column.filterOptions)
+          ? column.filterOptions
+          : filterConfig?.options;
+        const isFilterable =
+          (column.filterable === true || Boolean(filterConfig)) &&
+          Array.isArray(filterOptions) &&
+          filterOptions.length > 0;
         const isSearchable = column.searchable === true || Boolean(filterConfig?.searchable);
         const currentSort = sortState.column === column.name ? sortState.direction : null;
-        const activeFilters = column.name ? (filterState[column.name]?.values ?? new Set<string>()) : new Set<string>();
+        const activeFilters = column.name
+          ? (filterState[column.name]?.values ?? new Set<string>())
+          : new Set<string>();
         const currentKeyword = column.name ? (filterState[column.name]?.keyword ?? '') : '';
         const hasActiveFilterState = activeFilters.size > 0 || currentKeyword.length > 0;
-        const columnKey = column.name ?? (typeof column.label === 'string' ? column.label : undefined) ?? `column-${index}`;
+        const columnKey =
+          column.name ??
+          (typeof column.label === 'string' ? column.label : undefined) ??
+          `column-${index}`;
 
         return (
           <TableHead
             key={columnKey}
             className={fixedColumnLayout.getColumnCellProps(column, index).className}
-            style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, index).style }}
+            style={{
+              ...(column.width ? { width: column.width } : undefined),
+              ...fixedColumnLayout.getColumnCellProps(column, index).style,
+            }}
             data-slot="table-head"
             data-fixed={fixedColumnLayout.getColumnCellProps(column, index).fixed || undefined}
             data-interactive={isSortable || isFilterable || undefined}
@@ -94,7 +133,7 @@ export function TableHeaderRow({
                     <ArrowUpDownIcon
                       className={cn(
                         'inline ml-1 size-3',
-                        currentSort ? 'text-primary' : 'text-muted-foreground'
+                        currentSort ? 'text-primary' : 'text-muted-foreground',
                       )}
                     />
                   )}
@@ -110,9 +149,13 @@ export function TableHeaderRow({
                           size="icon-xs"
                           className={cn(
                             'h-6 w-6 rounded hover:bg-accent',
-                            hasActiveFilterState ? 'text-primary' : 'text-muted-foreground'
+                            hasActiveFilterState ? 'text-primary' : 'text-muted-foreground',
                           )}
-                          aria-label={hasActiveFilterState ? t('flux.table.filterActive') : t('flux.table.filter')}
+                          aria-label={
+                            hasActiveFilterState
+                              ? t('flux.table.filterActive')
+                              : t('flux.table.filter')
+                          }
                         >
                           <span className="sr-only">{t('flux.table.filter')}</span>
                           <ChevronDownIcon className="size-3" />
@@ -124,20 +167,31 @@ export function TableHeaderRow({
                         <div className="p-2">
                           <Input
                             value={currentKeyword}
-                            placeholder={typeof column.searchable === 'object' && column.searchable ? String((column.searchable as { placeholder?: string }).placeholder ?? 'Search') : 'Search'}
+                            placeholder={
+                              typeof column.searchable === 'object' && column.searchable
+                                ? String(
+                                    (column.searchable as { placeholder?: string }).placeholder ??
+                                      'Search',
+                                  )
+                                : 'Search'
+                            }
                             onChange={(event) => onSearch(column.name!, event.target.value)}
                           />
                         </div>
                       ) : null}
-                      {isFilterable ? filterOptions!.map((option) => (
-                        <DropdownMenuCheckboxItem
-                          key={option.value}
-                          checked={activeFilters.has(option.value)}
-                          onCheckedChange={(checked) => column.name && onFilter(column.name, option.value, checked)}
-                        >
-                          {option.label}
-                        </DropdownMenuCheckboxItem>
-                      )) : null}
+                      {isFilterable
+                        ? filterOptions!.map((option) => (
+                            <DropdownMenuCheckboxItem
+                              key={option.value}
+                              checked={activeFilters.has(option.value)}
+                              onCheckedChange={(checked) =>
+                                column.name && onFilter(column.name, option.value, checked)
+                              }
+                            >
+                              {option.label}
+                            </DropdownMenuCheckboxItem>
+                          ))
+                        : null}
                       {column.name && hasActiveFilterState ? (
                         <>
                           <DropdownMenuSeparator />

@@ -31,12 +31,12 @@ interface FieldsetSchema extends BaseSchema {
 }
 ```
 
-| 字段 | 类型 | 默认值 | 说明 | 对应 AMIS |
-|------|------|--------|------|----------|
-| `title` | `string?` | — | 分组标题，渲染为 `<legend>` | `FieldSet.title` |
-| `collapsible` | `boolean?` | `false` | 是否可折叠 | `FieldSet.collapsable` |
-| `collapsed` | `boolean?` | `false` | 初始折叠状态 | `FieldSet.collapsed` |
-| `body` | `SchemaCollection` | — | 子字段区域 | `FieldSet.body` |
+| 字段          | 类型               | 默认值  | 说明                        | 对应 AMIS              |
+| ------------- | ------------------ | ------- | --------------------------- | ---------------------- |
+| `title`       | `string?`          | —       | 分组标题，渲染为 `<legend>` | `FieldSet.title`       |
+| `collapsible` | `boolean?`         | `false` | 是否可折叠                  | `FieldSet.collapsable` |
+| `collapsed`   | `boolean?`         | `false` | 初始折叠状态                | `FieldSet.collapsed`   |
+| `body`        | `SchemaCollection` | —       | 子字段区域                  | `FieldSet.body`        |
 
 fieldset 不传播 mode/labelAlign/labelWidth。AMIS 的 `subFormMode` / `subFormHorizontal` 在 Flux 中不需要，因为布局配置只有两级（form 全局 + 字段 FieldFrame 覆盖），fieldset 作为中间容器只需透传 context。
 
@@ -84,12 +84,12 @@ fieldset 不涉及布局配置。`mode`/`labelAlign`/`labelWidth` 通过 React c
 
 ## 11. 与其他组件的关系
 
-| 组件 | 职责 | 与 fieldset 的区别 |
-|------|------|-------------------|
-| `FieldFrame` | 单字段 chrome（label/error/hint/description） | fieldset 不负责单字段包装 |
-| `flex` | 多字段行布局 | fieldset 不负责行布局，但 body 内可以嵌套 flex |
-| `collapse` | 通用折叠容器 | fieldset 专注表单分组，固定 `<fieldset>/<legend>` 结构，可传播 form mode |
-| `container` | 通用视觉容器 | container 不传播 form mode，不使用 `<fieldset>` 语义 |
+| 组件         | 职责                                          | 与 fieldset 的区别                                                       |
+| ------------ | --------------------------------------------- | ------------------------------------------------------------------------ |
+| `FieldFrame` | 单字段 chrome（label/error/hint/description） | fieldset 不负责单字段包装                                                |
+| `flex`       | 多字段行布局                                  | fieldset 不负责行布局，但 body 内可以嵌套 flex                           |
+| `collapse`   | 通用折叠容器                                  | fieldset 专注表单分组，固定 `<fieldset>/<legend>` 结构，可传播 form mode |
+| `container`  | 通用视觉容器                                  | container 不传播 form mode，不使用 `<fieldset>` 语义                     |
 
 ## 12. 风险、取舍与后续阶段
 

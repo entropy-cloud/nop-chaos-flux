@@ -14,7 +14,17 @@ export interface TabsSchema extends BaseSchema {
   /** 激活的标签页 */
   activeKey?: number | string;
   /** 标签页模式 */
-  mode?: '' | 'line' | 'card' | 'radio' | 'vertical' | 'chrome' | 'simple' | 'strong' | 'tiled' | 'sidebar';
+  mode?:
+    | ''
+    | 'line'
+    | 'card'
+    | 'radio'
+    | 'vertical'
+    | 'chrome'
+    | 'simple'
+    | 'strong'
+    | 'tiled'
+    | 'sidebar';
   /** 是否显示增减按钮 */
   showTip?: boolean;
   /** 增加按钮文案 */
@@ -261,5 +271,3 @@ export interface WizardStepSchema {
   /** 表单模式 */
   mode?: 'normal' | 'horizontal' | 'inline';
 }
-
-

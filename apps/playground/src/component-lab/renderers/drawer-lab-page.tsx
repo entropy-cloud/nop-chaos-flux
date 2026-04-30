@@ -16,26 +16,40 @@ const rightDrawer = {
               type: 'form',
               onSubmitSuccess: [
                 { action: 'setValue', args: { path: 'submitted', value: true } },
-                { action: 'closeDrawer' }
+                { action: 'closeDrawer' },
               ],
               body: [
-                { type: 'textarea', name: 'note', label: 'Note', placeholder: 'Write something...', required: true },
-                { type: 'text', text: '${submitted ? "Submitted message: " + note : "Submitted message: (none)"}' }
+                {
+                  type: 'textarea',
+                  name: 'note',
+                  label: 'Note',
+                  placeholder: 'Write something...',
+                  required: true,
+                },
+                {
+                  type: 'text',
+                  text: '${submitted ? "Submitted message: " + note : "Submitted message: (none)"}',
+                },
               ],
               actions: [
                 {
                   type: 'button',
                   label: 'Save',
-                  onClick: { action: 'submit' }
+                  onClick: { action: 'submit' },
                 },
-                { type: 'button', label: 'Cancel', variant: 'outline', onClick: { action: 'closeDrawer' } }
-              ]
-            }
-          ]
-        }
-      }
-    }
-  ]
+                {
+                  type: 'button',
+                  label: 'Cancel',
+                  variant: 'outline',
+                  onClick: { action: 'closeDrawer' },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    },
+  ],
 };
 
 const leftDrawer = {
@@ -53,15 +67,20 @@ const leftDrawer = {
           body: [
             { type: 'text', text: 'Dashboard' },
             { type: 'text', text: 'Reports' },
-            { type: 'text', text: 'Settings' }
+            { type: 'text', text: 'Settings' },
           ],
           actions: [
-            { type: 'button', label: 'Close', variant: 'outline', onClick: { action: 'closeDrawer' } }
-          ]
-        }
-      }
-    }
-  ]
+            {
+              type: 'button',
+              label: 'Close',
+              variant: 'outline',
+              onClick: { action: 'closeDrawer' },
+            },
+          ],
+        },
+      },
+    },
+  ],
 };
 
 export function DrawerLabPage() {
@@ -71,14 +90,16 @@ export function DrawerLabPage() {
       scenarios={[
         {
           title: 'Right drawer with form and writeback',
-          description: 'Click "Open Right Drawer" to slide in a panel from the right with a form. Saving writes the local note field back to the parent scope.',
-          schema: rightDrawer
+          description:
+            'Click "Open Right Drawer" to slide in a panel from the right with a form. Saving writes the local note field back to the parent scope.',
+          schema: rightDrawer,
         },
         {
           title: 'Left drawer as a navigation panel',
-          description: 'Click "Open Left Drawer" to slide in a panel from the left. Use side: left for nav menus or context panels.',
-          schema: leftDrawer
-        }
+          description:
+            'Click "Open Left Drawer" to slide in a panel from the left. Use side: left for nav menus or context panels.',
+          schema: leftDrawer,
+        },
       ]}
     />
   );

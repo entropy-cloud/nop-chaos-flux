@@ -54,14 +54,27 @@ export function useCrudVisibleColumnNames(args: {
 }) {
   const { schema, defaultColumnNames, toggledColumnsStatePath, orderedColumnsStatePath } = args;
 
-  const state = useScopeSelector((scopeData) => {
-    const toggledColumns = toggledColumnsStatePath ? getIn(scopeData, toggledColumnsStatePath) : undefined;
-    const orderedColumns = orderedColumnsStatePath ? getIn(scopeData, orderedColumnsStatePath) : undefined;
-    return {
-      toggledColumns: Array.isArray(toggledColumns) ? toggledColumns.filter((value): value is string => typeof value === 'string') : undefined,
-      orderedColumns: Array.isArray(orderedColumns) ? orderedColumns.filter((value): value is string => typeof value === 'string') : undefined,
-    };
-  }, (a, b) => areStringArraysEqual(a?.toggledColumns, b?.toggledColumns) && areStringArraysEqual(a?.orderedColumns, b?.orderedColumns));
+  const state = useScopeSelector(
+    (scopeData) => {
+      const toggledColumns = toggledColumnsStatePath
+        ? getIn(scopeData, toggledColumnsStatePath)
+        : undefined;
+      const orderedColumns = orderedColumnsStatePath
+        ? getIn(scopeData, orderedColumnsStatePath)
+        : undefined;
+      return {
+        toggledColumns: Array.isArray(toggledColumns)
+          ? toggledColumns.filter((value): value is string => typeof value === 'string')
+          : undefined,
+        orderedColumns: Array.isArray(orderedColumns)
+          ? orderedColumns.filter((value): value is string => typeof value === 'string')
+          : undefined,
+      };
+    },
+    (a, b) =>
+      areStringArraysEqual(a?.toggledColumns, b?.toggledColumns) &&
+      areStringArraysEqual(a?.orderedColumns, b?.orderedColumns),
+  );
 
   return useMemo(() => {
     const enabled = schema.columnSettings?.enabled === true;
@@ -73,7 +86,12 @@ export function useCrudVisibleColumnNames(args: {
     const orderedColumns = state.orderedColumns?.length ? state.orderedColumns : defaultColumnNames;
     const visibleSet = new Set(visibleColumns);
     return orderedColumns.filter((name) => visibleSet.has(name));
-  }, [defaultColumnNames, schema.columnSettings?.enabled, state.orderedColumns, state.toggledColumns]);
+  }, [
+    defaultColumnNames,
+    schema.columnSettings?.enabled,
+    state.orderedColumns,
+    state.toggledColumns,
+  ]);
 }
 
 export function useCrudQueryBridge(args: {
@@ -103,26 +121,31 @@ export function useCrudQueryBridge(args: {
     onQueryReset,
   } = args;
 
-  const submitQueryValues = useCallback((nextValues: Record<string, unknown>) => {
-    if (scope) {
-      scope.update(queryStatePath, {
-        values: nextValues,
-        refreshCount: queryState.refreshCount + 1,
-      });
-    }
+  const submitQueryValues = useCallback(
+    (nextValues: Record<string, unknown>) => {
+      if (scope) {
+        scope.update(queryStatePath, {
+          values: nextValues,
+          refreshCount: queryState.refreshCount + 1,
+        });
+      }
 
-    if (shouldFetchOnQueryChange) {
-      onQuerySubmit?.(undefined, {
-        scope,
-        evaluationBindings: { query: nextValues },
-      });
-    }
-  }, [onQuerySubmit, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
+      if (shouldFetchOnQueryChange) {
+        onQuerySubmit?.(undefined, {
+          scope,
+          evaluationBindings: { query: nextValues },
+        });
+      }
+    },
+    [onQuerySubmit, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange],
+  );
 
   const resetQueryValues = useCallback(() => {
     const handle = componentRegistry?.resolve({ componentId: queryFormId });
     if (handle?.capabilities?.hasMethod?.('reset')) {
-      void Promise.resolve(handle.capabilities.invoke('reset', { values: defaultQuery }, {} as never));
+      void Promise.resolve(
+        handle.capabilities.invoke('reset', { values: defaultQuery }, {} as never),
+      );
     }
 
     if (!scope) {
@@ -130,7 +153,10 @@ export function useCrudQueryBridge(args: {
     }
 
     startTransition(() => {
-      scope.update(queryStatePath, { values: defaultQuery, refreshCount: queryState.refreshCount + 1 });
+      scope.update(queryStatePath, {
+        values: defaultQuery,
+        refreshCount: queryState.refreshCount + 1,
+      });
       scope.update(paginationStatePath, { currentPage: 1, pageSize: paginationState.pageSize });
     });
 
@@ -140,19 +166,34 @@ export function useCrudQueryBridge(args: {
         evaluationBindings: { query: defaultQuery },
       });
     }
-  }, [componentRegistry, defaultQuery, onQueryReset, paginationState.pageSize, paginationStatePath, queryFormId, queryState.refreshCount, queryStatePath, scope, shouldFetchOnQueryChange]);
+  }, [
+    componentRegistry,
+    defaultQuery,
+    onQueryReset,
+    paginationState.pageSize,
+    paginationStatePath,
+    queryFormId,
+    queryState.refreshCount,
+    queryStatePath,
+    scope,
+    shouldFetchOnQueryChange,
+  ]);
 
   const handleQuerySubmit = useCallback(async () => {
     const handle = componentRegistry?.resolve({ componentId: queryFormId });
     if (handle?.capabilities?.hasMethod?.('getValues')) {
       if (handle.capabilities.hasMethod?.('validate')) {
-        const validateResult = await Promise.resolve(handle.capabilities.invoke('validate', undefined, {} as never)) as { ok?: boolean };
+        const validateResult = (await Promise.resolve(
+          handle.capabilities.invoke('validate', undefined, {} as never),
+        )) as { ok?: boolean };
         if (!validateResult?.ok) {
           return;
         }
       }
 
-      const valuesResult = await Promise.resolve(handle.capabilities.invoke('getValues', undefined, {} as never)) as { ok?: boolean; data?: unknown };
+      const valuesResult = (await Promise.resolve(
+        handle.capabilities.invoke('getValues', undefined, {} as never),
+      )) as { ok?: boolean; data?: unknown };
       if (valuesResult.ok && valuesResult.data && typeof valuesResult.data === 'object') {
         submitQueryValues(toRecord(valuesResult.data));
         return;

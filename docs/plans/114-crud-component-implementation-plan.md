@@ -228,6 +228,7 @@ Targets: `packages/flux-renderers-data/src/{schemas.ts,index.tsx,crud-schema.ts}
 - [x] 保证内部子树继续复用 `table` row scope、`dialog` surface、`form` submitAction、`data-source` refreshSource 语义
 
 Design Change Note:
+
 - **Removed whole-node compiler lowering**: Based on AMIS design research, the original design of auto-lowering `rowActions` to operation column and `createDialog`/`editDialog`/`detailDialog` to standard subtrees has been removed.
 - **New approach**: Users define operation columns directly in `columns` with `type: 'operation'` and `buttons` array. Dialogs are controlled by buttons via `action: 'dialog'`.
 - This aligns with AMIS patterns where buttons carry complete dialog definitions and CRUD only coordinates refresh.
@@ -267,6 +268,7 @@ Targets: `packages/flux-renderers-data/src/__tests__/data-crud.test.tsx`, `packa
 - [x] 为 `docs/components/crud/example.json` 同步一份与测试语义一致的 authoring 示例
 
 Design Change Note:
+
 - **Removed `rowActions` lowering requirement**: Based on AMIS design research, CRUD no longer auto-lowers `rowActions` to operation column. Users define `type: 'operation'` column directly in `columns` with `buttons` array.
 - **Removed `createDialog`/`editDialog`/`detailDialog` top-level fields**: Dialogs are now controlled by buttons themselves via `action: 'dialog'` and `dialog: {...}` configuration.
 - This simplifies the CRUD implementation to a thin shell renderer while maintaining AMIS-compatible authoring patterns.

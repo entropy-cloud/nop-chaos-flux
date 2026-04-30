@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import type { DocChart, ChartType } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
+import { useState } from 'react';
+import type { DocChart, ChartType } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   ChartContainer,
@@ -19,15 +19,15 @@ import {
   Label,
   NativeSelect,
   NativeSelectOption,
-  ScrollArea
-} from '@nop-chaos/ui'
-import * as RechartsPrimitive from 'recharts'
+  ScrollArea,
+} from '@nop-chaos/ui';
+import * as RechartsPrimitive from 'recharts';
 
 interface ChartDialogProps {
-  open: boolean
-  onClose: () => void
-  onSave: (chart: DocChart) => void
-  initialData?: DocChart | null
+  open: boolean;
+  onClose: () => void;
+  onSave: (chart: DocChart) => void;
+  initialData?: DocChart | null;
 }
 
 const mockData = [
@@ -35,28 +35,28 @@ const mockData = [
   { name: 'Feb', value: 200 },
   { name: 'Mar', value: 150 },
   { name: 'Apr', value: 180 },
-  { name: 'May', value: 120 }
-]
+  { name: 'May', value: 120 },
+];
 
 const chartConfig = {
   value: {
     label: 'Value',
-    color: 'hsl(var(--primary))'
-  }
-} as const
+    color: 'hsl(var(--primary))',
+  },
+} as const;
 
 export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogProps) {
-  const [chartName, setChartName] = useState(() => initialData?.chartName ?? '')
-  const [chartType, setChartType] = useState<ChartType>(() => initialData?.chartType ?? 'bar')
-  const [datasetId, setDatasetId] = useState(() => initialData?.datasetId ?? '')
-  const [categoryField, setCategoryField] = useState(() => initialData?.categoryField ?? '')
-  const [valueField, setValueField] = useState(() => initialData?.valueField?.join(', ') ?? '')
-  const [seriesField, setSeriesField] = useState(() => initialData?.seriesField?.join(', ') ?? '')
-  const [showChartName, setShowChartName] = useState(() => initialData?.showChartName ?? true)
+  const [chartName, setChartName] = useState(() => initialData?.chartName ?? '');
+  const [chartType, setChartType] = useState<ChartType>(() => initialData?.chartType ?? 'bar');
+  const [datasetId, setDatasetId] = useState(() => initialData?.datasetId ?? '');
+  const [categoryField, setCategoryField] = useState(() => initialData?.categoryField ?? '');
+  const [valueField, setValueField] = useState(() => initialData?.valueField?.join(', ') ?? '');
+  const [seriesField, setSeriesField] = useState(() => initialData?.seriesField?.join(', ') ?? '');
+  const [showChartName, setShowChartName] = useState(() => initialData?.showChartName ?? true);
 
   const handleSave = () => {
     if (!chartName.trim()) {
-      return
+      return;
     }
 
     onSave({
@@ -66,17 +66,24 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
       showChartName,
       datasetId: datasetId.trim() || '',
       categoryField: categoryField.trim() || '',
-      valueField: valueField.split(',').map(v => v.trim()).filter(v => v),
-      seriesField: seriesField.split(',').map(v => v.trim()).filter(v => v) || undefined
-    })
-    onClose()
-  }
+      valueField: valueField
+        .split(',')
+        .map((v) => v.trim())
+        .filter((v) => v),
+      seriesField:
+        seriesField
+          .split(',')
+          .map((v) => v.trim())
+          .filter((v) => v) || undefined,
+    });
+    onClose();
+  };
 
   const renderChartPreview = () => {
     const commonProps = {
       data: mockData,
-      margin: { top: 10, right: 10, left: 10, bottom: 10 }
-    }
+      margin: { top: 10, right: 10, left: 10, bottom: 10 },
+    };
 
     switch (chartType) {
       case 'bar':
@@ -89,7 +96,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
             <ChartLegend content={<ChartLegendContent />} />
             <RechartsPrimitive.Bar dataKey="value" fill="var(--color-value)" />
           </RechartsPrimitive.BarChart>
-        )
+        );
       case 'line':
         return (
           <RechartsPrimitive.LineChart {...commonProps}>
@@ -100,15 +107,20 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
             <ChartLegend content={<ChartLegendContent />} />
             <RechartsPrimitive.Line dataKey="value" stroke="var(--color-value)" />
           </RechartsPrimitive.LineChart>
-        )
+        );
       case 'pie':
         return (
           <RechartsPrimitive.PieChart {...commonProps}>
             <ChartTooltip content={<ChartTooltipContent />} />
             <ChartLegend content={<ChartLegendContent />} />
-            <RechartsPrimitive.Pie data={mockData} dataKey="value" nameKey="name" fill="var(--color-value)" />
+            <RechartsPrimitive.Pie
+              data={mockData}
+              dataKey="value"
+              nameKey="name"
+              fill="var(--color-value)"
+            />
           </RechartsPrimitive.PieChart>
-        )
+        );
       case 'area':
         return (
           <RechartsPrimitive.AreaChart {...commonProps}>
@@ -119,7 +131,7 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
             <ChartLegend content={<ChartLegendContent />} />
             <RechartsPrimitive.Area dataKey="value" fill="var(--color-value)" />
           </RechartsPrimitive.AreaChart>
-        )
+        );
       case 'scatter':
         return (
           <RechartsPrimitive.ScatterChart {...commonProps}>
@@ -130,14 +142,19 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
             <ChartLegend content={<ChartLegendContent />} />
             <RechartsPrimitive.Scatter data={mockData} fill="var(--color-value)" />
           </RechartsPrimitive.ScatterChart>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
       <DialogContent size="lg" className="flex flex-col max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Edit Chart' : 'Create Chart'}</DialogTitle>
@@ -147,7 +164,9 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
           <ScrollArea className="flex-1">
             <div className="p-1 space-y-4">
               <div>
-                <Label>{t('flux.wordEditor.chartName')} <span className="text-destructive">*</span></Label>
+                <Label>
+                  {t('flux.wordEditor.chartName')} <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   value={chartName}
                   onChange={(e) => setChartName(e.target.value)}
@@ -163,11 +182,21 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
                   onChange={(e) => setChartType(e.target.value as ChartType)}
                   className="w-full"
                 >
-                  <NativeSelectOption value="bar">{t('flux.wordEditor.chartBar')}</NativeSelectOption>
-                  <NativeSelectOption value="line">{t('flux.wordEditor.chartLine')}</NativeSelectOption>
-                  <NativeSelectOption value="pie">{t('flux.wordEditor.chartPie')}</NativeSelectOption>
-                  <NativeSelectOption value="scatter">{t('flux.wordEditor.chartScatter')}</NativeSelectOption>
-                  <NativeSelectOption value="area">{t('flux.wordEditor.chartArea')}</NativeSelectOption>
+                  <NativeSelectOption value="bar">
+                    {t('flux.wordEditor.chartBar')}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="line">
+                    {t('flux.wordEditor.chartLine')}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="pie">
+                    {t('flux.wordEditor.chartPie')}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="scatter">
+                    {t('flux.wordEditor.chartScatter')}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="area">
+                    {t('flux.wordEditor.chartArea')}
+                  </NativeSelectOption>
                 </NativeSelect>
               </div>
 
@@ -217,7 +246,9 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
                   checked={showChartName}
                   onCheckedChange={(checked) => setShowChartName(checked === true)}
                 />
-                <Label htmlFor="showChartName" className="cursor-pointer">{t('flux.wordEditor.showChartName')}</Label>
+                <Label htmlFor="showChartName" className="cursor-pointer">
+                  {t('flux.wordEditor.showChartName')}
+                </Label>
               </div>
 
               <div>
@@ -235,10 +266,14 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
         </DialogBody>
 
         <DialogFooter className="bg-transparent">
-          <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
-          <Button size="sm" onClick={handleSave} disabled={!chartName.trim()}>{t('flux.common.save')}</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            {t('flux.common.cancel')}
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={!chartName.trim()}>
+            {t('flux.common.save')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

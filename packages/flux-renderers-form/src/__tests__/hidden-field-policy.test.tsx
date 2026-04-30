@@ -1,7 +1,13 @@
 import React from 'react';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { cleanup, render, act } from '@testing-library/react';
-import type { ApiSchema, ApiRequestContext, RendererDefinition, RendererEnv, FormRuntime } from '@nop-chaos/flux-core';
+import type {
+  ApiSchema,
+  ApiRequestContext,
+  RendererDefinition,
+  RendererEnv,
+  FormRuntime,
+} from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index';
@@ -12,7 +18,10 @@ if (!Element.prototype.scrollIntoView) {
 
 if (typeof PointerEvent === 'undefined') {
   class PointerEvent extends MouseEvent {
-    constructor(type: string, props: MouseEventInit & { pointerId?: number; pressure?: number } = {}) {
+    constructor(
+      type: string,
+      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
+    ) {
       super(type, props);
     }
   }
@@ -26,10 +35,10 @@ const env: RendererEnv = {
     return {
       ok: true,
       status: 200,
-      data: ctx.scope.readOwn() as T
+      data: ctx.scope.readOwn() as T,
     };
   },
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 let capturedForm: FormRuntime | undefined;
@@ -44,7 +53,7 @@ function FormProbe() {
 
 const formProbeRenderer: RendererDefinition = {
   type: 'form-probe',
-  component: FormProbe
+  component: FormProbe,
 };
 
 const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formProbeRenderer]);
@@ -64,12 +73,9 @@ describe('hidden field policy - renderer integration', () => {
           env={env}
           schema={{
             type: 'form',
-            body: [
-              { type: 'input-text', name: 'email' },
-              { type: 'form-probe' }
-            ]
+            body: [{ type: 'input-text', name: 'email' }, { type: 'form-probe' }],
           }}
-        />
+        />,
       );
     });
 
@@ -86,12 +92,9 @@ describe('hidden field policy - renderer integration', () => {
           env={env}
           schema={{
             type: 'form',
-            body: [
-              { type: 'input-text', name: 'email', required: true },
-              { type: 'form-probe' }
-            ]
+            body: [{ type: 'input-text', name: 'email', required: true }, { type: 'form-probe' }],
           }}
-        />
+        />,
       );
     });
 
@@ -115,12 +118,9 @@ describe('hidden field policy - renderer integration', () => {
           env={env}
           schema={{
             type: 'form',
-            body: [
-              { type: 'input-text', name: 'email', required: true },
-              { type: 'form-probe' }
-            ]
+            body: [{ type: 'input-text', name: 'email', required: true }, { type: 'form-probe' }],
           }}
-        />
+        />,
       );
     });
 
@@ -149,12 +149,9 @@ describe('hidden field policy - renderer integration', () => {
           schema={{
             type: 'form',
             hiddenFieldPolicy: { validateWhenHidden: true },
-            body: [
-              { type: 'input-text', name: 'email', required: true },
-              { type: 'form-probe' }
-            ]
+            body: [{ type: 'input-text', name: 'email', required: true }, { type: 'form-probe' }],
           }}
-        />
+        />,
       );
     });
 
@@ -183,12 +180,12 @@ describe('hidden field policy - renderer integration', () => {
               {
                 type: 'input-text',
                 name: 'email',
-                hiddenFieldPolicy: { clearValueWhenHidden: true }
+                hiddenFieldPolicy: { clearValueWhenHidden: true },
               },
-              { type: 'form-probe' }
-            ]
+              { type: 'form-probe' },
+            ],
           }}
-        />
+        />,
       );
     });
 
@@ -212,12 +209,9 @@ describe('hidden field policy - renderer integration', () => {
           schema={{
             type: 'form',
             data: { notes: 'preserved note' },
-            body: [
-              { type: 'input-text', name: 'notes' },
-              { type: 'form-probe' }
-            ]
+            body: [{ type: 'input-text', name: 'notes' }, { type: 'form-probe' }],
           }}
-        />
+        />,
       );
     });
 

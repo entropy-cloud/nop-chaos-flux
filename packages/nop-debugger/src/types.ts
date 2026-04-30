@@ -7,7 +7,7 @@ import type {
   ResolvedAuthoringContract,
   RendererEnv,
   RendererPlugin,
-  RendererRuntime
+  RendererRuntime,
 } from '@nop-chaos/flux-core';
 import type {
   NopExpressionEvaluationResult,
@@ -18,7 +18,7 @@ import type {
   NopNodeMetaExplanation,
   NopNodeMetaExplanationQuery,
   NopNodeValueExplanation,
-  NopNodeValueExplanationQuery
+  NopNodeValueExplanationQuery,
 } from './types-explanations';
 
 export type {
@@ -33,7 +33,7 @@ export type {
   NopNodeMetaExplanationField,
   NopNodeMetaExplanationQuery,
   NopNodeValueExplanation,
-  NopNodeValueExplanationQuery
+  NopNodeValueExplanationQuery,
 } from './types-explanations';
 
 export type NopDebuggerTab = 'overview' | 'timeline' | 'network' | 'node';
@@ -54,7 +54,14 @@ export type NopDebugEventKind =
 
 export type NopDebugEventLevel = 'info' | 'success' | 'warning' | 'error';
 
-export type NopDebuggerFilterKind = 'render' | 'action' | 'api' | 'compile' | 'notify' | 'error' | 'node';
+export type NopDebuggerFilterKind =
+  | 'render'
+  | 'action'
+  | 'api'
+  | 'compile'
+  | 'notify'
+  | 'error'
+  | 'node';
 
 export type DebuggerWindowDock = 'floating';
 
@@ -330,7 +337,6 @@ export interface NopNodeAnomalySummary {
   hints: string[];
 }
 
-
 export interface NopDebuggerAutomationApi {
   readonly controllerId: string;
   readonly sessionId: string;
@@ -348,7 +354,10 @@ export interface NopDebuggerAutomationApi {
   getLatestFailedRequest(): NopDebuggerFailureSummary | undefined;
   getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
   getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
-  getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
+  getRecentFailures(options?: {
+    sinceTimestamp?: number;
+    limit?: number;
+  }): NopDebuggerFailureSummary[];
   getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
@@ -428,7 +437,10 @@ export interface NopDebuggerController {
   getLatestFailedRequest(): NopDebuggerFailureSummary | undefined;
   getLatestFailedAction(): NopDebuggerFailureSummary | undefined;
   getNodeAnomalies(options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined;
-  getRecentFailures(options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[];
+  getRecentFailures(options?: {
+    sinceTimestamp?: number;
+    limit?: number;
+  }): NopDebuggerFailureSummary[];
   getAsyncOwnerDebugSnapshot(): AsyncOwnerDebugSnapshot;
   getOverview(): NopDebuggerOverview;
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;

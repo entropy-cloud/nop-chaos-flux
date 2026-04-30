@@ -5,9 +5,5 @@ export interface FlowDesignerToastProps {
 }
 
 export function FlowDesignerToast({ message }: FlowDesignerToastProps) {
-  return (
-    <div data-slot="flow-designer-example-toast">
-      {message}
-    </div>
-  );
+  return <div data-slot="flow-designer-example-toast">{message}</div>;
 }

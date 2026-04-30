@@ -29,7 +29,7 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
 
 function parseTransform(transform: string) {
   const match = transform.match(
-    /translate\(\s*([-\d.]+)\s*(?:px)?\s*,\s*([-\d.]+)\s*(?:px)?\s*\)\s*scale\(\s*([-\d.]+)\s*\)/
+    /translate\(\s*([-\d.]+)\s*(?:px)?\s*,\s*([-\d.]+)\s*(?:px)?\s*\)\s*scale\(\s*([-\d.]+)\s*\)/,
   );
   if (!match) return null;
   return { x: parseFloat(match[1]), y: parseFloat(match[2]), zoom: parseFloat(match[3]) };
@@ -42,8 +42,7 @@ test('dragging on minimap moves canvas viewport significantly', async ({ page })
   await expect(minimap).toBeVisible();
 
   const viewportEl = page.locator('.react-flow__viewport').first();
-  const getViewport = () =>
-    viewportEl.evaluate((el) => (el as HTMLElement).style.transform || '');
+  const getViewport = () => viewportEl.evaluate((el) => (el as HTMLElement).style.transform || '');
 
   const initialTransform = await getViewport();
   const initial = parseTransform(initialTransform);
@@ -75,8 +74,7 @@ test('clicking on minimap moves canvas viewport to that position', async ({ page
   await expect(minimap).toBeVisible();
 
   const viewportEl = page.locator('.react-flow__viewport').first();
-  const getViewport = () =>
-    viewportEl.evaluate((el) => (el as HTMLElement).style.transform || '');
+  const getViewport = () => viewportEl.evaluate((el) => (el as HTMLElement).style.transform || '');
 
   const initialTransform = await getViewport();
   const initial = parseTransform(initialTransform);
@@ -96,7 +94,7 @@ test('clicking on minimap moves canvas viewport to that position', async ({ page
   const dy = Math.abs(after!.y - initial!.y);
   expect(
     dx > 1 || dy > 1,
-    `Expected viewport to move after minimap click, but dx=${dx.toFixed(2)} dy=${dy.toFixed(2)}`
+    `Expected viewport to move after minimap click, but dx=${dx.toFixed(2)} dy=${dy.toFixed(2)}`,
   ).toBeTruthy();
 });
 
@@ -107,8 +105,7 @@ test('scrolling on minimap changes canvas zoom', async ({ page }) => {
   await expect(minimap).toBeVisible();
 
   const viewportEl = page.locator('.react-flow__viewport').first();
-  const getViewport = () =>
-    viewportEl.evaluate((el) => (el as HTMLElement).style.transform || '');
+  const getViewport = () => viewportEl.evaluate((el) => (el as HTMLElement).style.transform || '');
 
   const initialTransform = await getViewport();
   const initial = parseTransform(initialTransform);

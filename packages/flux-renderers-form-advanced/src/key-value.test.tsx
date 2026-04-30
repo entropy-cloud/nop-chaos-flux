@@ -16,7 +16,9 @@ type KeyValueValidation = {
 };
 
 function FormValueProbeRenderer(props: { name: string; testid: string }) {
-  const value = useCurrentFormState((state) => state.values[props.name], Object.is, { path: props.name });
+  const value = useCurrentFormState((state) => state.values[props.name], Object.is, {
+    path: props.name,
+  });
   return <span data-testid={props.testid}>{JSON.stringify(value)}</span>;
 }
 
@@ -55,7 +57,7 @@ describe('key-value renderer', () => {
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Add pair'));
@@ -107,7 +109,7 @@ describe('key-value renderer', () => {
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const keyInputs = await screen.findAllByPlaceholderText('Key');
@@ -136,7 +138,9 @@ describe('key-value renderer', () => {
     expect(validation.collectRules({ name: 'settings', label: 'Settings' })).toEqual([
       { kind: 'minItems', value: 1, message: 'Settings requires at least one entry' },
     ]);
-    expect(validation.collectRules({ name: 'settings', label: 'Settings', uniqueKeys: true })).toEqual([
+    expect(
+      validation.collectRules({ name: 'settings', label: 'Settings', uniqueKeys: true }),
+    ).toEqual([
       { kind: 'minItems', value: 1, message: 'Settings requires at least one entry' },
       { kind: 'uniqueBy', itemPath: 'key', message: 'Settings keys must be unique' },
     ]);
@@ -144,7 +148,7 @@ describe('key-value renderer', () => {
       validation.collectRules({
         name: 'settings',
         uniqueKeys: { message: 'Custom unique key message' },
-      })
+      }),
     ).toEqual([
       { kind: 'minItems', value: 1, message: 'settings requires at least one entry' },
       { kind: 'uniqueBy', itemPath: 'key', message: 'Custom unique key message' },

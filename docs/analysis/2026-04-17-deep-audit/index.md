@@ -39,38 +39,38 @@
 > **2026-04-19 recheck**: Status annotations added based on current code verification.
 > **2026-04-20 fixes**: PF3 (U11 depth limit, U14 doc fix) resolved.
 
-| Dimension | Theme | Key files | 2026-04-19 Status |
-| --- | --- | --- | --- |
-| 03 | Public API leaks test support and inconsistent renderer registration | `packages/flux-renderers-form/src/index.tsx`, `packages/word-editor-renderers/src/index.ts` | **RESOLVED** — clean barrels, consistent registration pattern |
-| 04 | Complex field values and spreadsheet selection still have double-state ownership | `packages/flux-renderers-form-advanced/src/array-editor.tsx`, `packages/spreadsheet-renderers/src/use-selection.ts` | **PARTIALLY FIXED** — array-editor fixed; spreadsheet `useSelection` still has React local + core state duplication |
-| 05 | Field/error subscriptions still wake on whole-form or whole-context changes | `packages/flux-react/src/field-frame.tsx`, `packages/flow-designer-renderers/src/designer-page.tsx` | **PARTIALLY FIXED** — field/error hooks now try `subscribeToPath` first; `useCurrentFormState`, `useScopeSelector`, `useCurrentFormModelGeneration` still whole-store |
-| 06 | Request refresh/drop and submit cancellation guarantees are incomplete | `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts` | **PARTIALLY FIXED** — submit cancellation solid; refresh/abort well-handled; missing `drop()`/`reset()` method |
-| 07 | Anonymous source lifecycle is still owned by React effects | `packages/flux-react/src/use-node-source-props.ts`, `packages/flux-react/src/useSourceValue.ts` | **UNRESOLVED** — source execution still in React effects |
-| 08 | Validation owner model and submit propagation do not match the architecture doc | `packages/flux-runtime/src/schema-compiler/validation-collection.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts` | **PARTIALLY FIXED** — Phase 2 complete and doc-aligned; Phase 3 owner resolution documented as future |
-| 09 | Multiple renderers break contract rules around state ownership, slots, or implicit styling | `packages/flux-renderers-data/src/table-renderer.tsx`, `packages/flux-renderers-form-advanced/src/*.tsx` | **PARTIALLY FIXED** — state ownership resolved; marker classes partially done; implicit styling (hardcoded gap/flex/grid) still widespread |
-| 10 | Styling contract drift: internal `nop-*` styling, hardcoded colors, spreadsheet CSS mismatch | `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flow-designer-renderers/src/*`, `packages/spreadsheet-renderers/src/*` | **PARTIALLY FIXED** — input.tsx clean; flow-designer mostly fixed; spreadsheet `canvas-styles.css` (704 lines) still uses extensive hardcoded colors |
-| 11 | Playground and utility surfaces still have actionable raw HTML usage | `apps/playground/src/flow-designer/*`, `packages/word-editor-renderers/src/dialogs/ChartDialog.tsx` | **PARTIALLY FIXED** — ChartDialog uses ui components; playground mostly fixed; `flow-designer-toast.tsx` should use sonner |
-| 12 | Advanced field renderers still bypass `FieldFrame` or misuse field slots | `packages/flux-renderers-form-advanced/src/*`, `packages/flux-code-editor/src/types.ts` | **RESOLVED** — all renderers properly use `wrap: true` or explicit `FieldFrame`; no bypass |
-| 13 | `any` still escapes through public renderer/env/action contracts | `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-core/src/types/renderer-api.ts` | **UNRESOLVED** — `any` persists in `RendererDefinition.component`, `RendererEnv.functions/filters`, `ActionSchema.dialog/drawer`, runtime creation data params |
-| 14 | Core runtime/react/formula coverage gaps and weak E2E assertions | `packages/flux-runtime/src/*`, `packages/flux-react/src/*`, `tests/e2e/component-lab/*` | **PARTIALLY FIXED** — runtime has 39 test files (strong); formula has 10; react has 6 (thin but proportional); e2e assertions are reasonable |
-| 15 | Whole-store error subscriptions and mutable report document updates hit performance redlines | `packages/flux-react/src/hooks.ts`, `packages/report-designer-core/src/core-dispatch.ts` | **PARTIALLY FIXED** — critical hooks use path-scoped subs; mutable `writeMetadata` is dead code; some hooks still whole-store |
-| 17 | `name` vs `dataPath` terminology still coexists in DataSource authoring | `packages/flux-core/src/types/schema.ts`, `packages/flux-runtime/src/source-registry.ts` | **UNRESOLVED (low severity)** — terms serve different purposes but naming could be clearer |
+| Dimension | Theme                                                                                        | Key files                                                                                                                                | 2026-04-19 Status                                                                                                                                                     |
+| --------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 03        | Public API leaks test support and inconsistent renderer registration                         | `packages/flux-renderers-form/src/index.tsx`, `packages/word-editor-renderers/src/index.ts`                                              | **RESOLVED** — clean barrels, consistent registration pattern                                                                                                         |
+| 04        | Complex field values and spreadsheet selection still have double-state ownership             | `packages/flux-renderers-form-advanced/src/array-editor.tsx`, `packages/spreadsheet-renderers/src/use-selection.ts`                      | **PARTIALLY FIXED** — array-editor fixed; spreadsheet `useSelection` still has React local + core state duplication                                                   |
+| 05        | Field/error subscriptions still wake on whole-form or whole-context changes                  | `packages/flux-react/src/field-frame.tsx`, `packages/flow-designer-renderers/src/designer-page.tsx`                                      | **PARTIALLY FIXED** — field/error hooks now try `subscribeToPath` first; `useCurrentFormState`, `useScopeSelector`, `useCurrentFormModelGeneration` still whole-store |
+| 06        | Request refresh/drop and submit cancellation guarantees are incomplete                       | `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts`                              | **PARTIALLY FIXED** — submit cancellation solid; refresh/abort well-handled; missing `drop()`/`reset()` method                                                        |
+| 07        | Anonymous source lifecycle is still owned by React effects                                   | `packages/flux-react/src/use-node-source-props.ts`, `packages/flux-react/src/useSourceValue.ts`                                          | **UNRESOLVED** — source execution still in React effects                                                                                                              |
+| 08        | Validation owner model and submit propagation do not match the architecture doc              | `packages/flux-runtime/src/schema-compiler/validation-collection.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts`            | **PARTIALLY FIXED** — Phase 2 complete and doc-aligned; Phase 3 owner resolution documented as future                                                                 |
+| 09        | Multiple renderers break contract rules around state ownership, slots, or implicit styling   | `packages/flux-renderers-data/src/table-renderer.tsx`, `packages/flux-renderers-form-advanced/src/*.tsx`                                 | **PARTIALLY FIXED** — state ownership resolved; marker classes partially done; implicit styling (hardcoded gap/flex/grid) still widespread                            |
+| 10        | Styling contract drift: internal `nop-*` styling, hardcoded colors, spreadsheet CSS mismatch | `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flow-designer-renderers/src/*`, `packages/spreadsheet-renderers/src/*` | **PARTIALLY FIXED** — input.tsx clean; flow-designer mostly fixed; spreadsheet `canvas-styles.css` (704 lines) still uses extensive hardcoded colors                  |
+| 11        | Playground and utility surfaces still have actionable raw HTML usage                         | `apps/playground/src/flow-designer/*`, `packages/word-editor-renderers/src/dialogs/ChartDialog.tsx`                                      | **PARTIALLY FIXED** — ChartDialog uses ui components; playground mostly fixed; `flow-designer-toast.tsx` should use sonner                                            |
+| 12        | Advanced field renderers still bypass `FieldFrame` or misuse field slots                     | `packages/flux-renderers-form-advanced/src/*`, `packages/flux-code-editor/src/types.ts`                                                  | **RESOLVED** — all renderers properly use `wrap: true` or explicit `FieldFrame`; no bypass                                                                            |
+| 13        | `any` still escapes through public renderer/env/action contracts                             | `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-core/src/types/renderer-api.ts`                                          | **UNRESOLVED** — `any` persists in `RendererDefinition.component`, `RendererEnv.functions/filters`, `ActionSchema.dialog/drawer`, runtime creation data params        |
+| 14        | Core runtime/react/formula coverage gaps and weak E2E assertions                             | `packages/flux-runtime/src/*`, `packages/flux-react/src/*`, `tests/e2e/component-lab/*`                                                  | **PARTIALLY FIXED** — runtime has 39 test files (strong); formula has 10; react has 6 (thin but proportional); e2e assertions are reasonable                          |
+| 15        | Whole-store error subscriptions and mutable report document updates hit performance redlines | `packages/flux-react/src/hooks.ts`, `packages/report-designer-core/src/core-dispatch.ts`                                                 | **PARTIALLY FIXED** — critical hooks use path-scoped subs; mutable `writeMetadata` is dead code; some hooks still whole-store                                         |
+| 17        | `name` vs `dataPath` terminology still coexists in DataSource authoring                      | `packages/flux-core/src/types/schema.ts`, `packages/flux-runtime/src/source-registry.ts`                                                 | **UNRESOLVED (low severity)** — terms serve different purposes but naming could be clearer                                                                            |
 
 ## Frequent Problem Files
 
-| File | Dimensions |
-| --- | --- |
-| `packages/flux-runtime/src/runtime-factory.ts` | 02, 06 |
-| `packages/flux-runtime/src/source-registry.ts` | 02, 06, 17 |
-| `packages/flux-runtime/src/form-runtime-submit-flow.ts` | 06, 08 |
-| `packages/flux-react/src/hooks.ts` | 08, 15 |
-| `packages/flux-react/src/field-frame.tsx` | 05, 08 |
-| `packages/flow-designer-renderers/src/designer-page.tsx` | 05, 10 |
-| `packages/flux-renderers-data/src/table-renderer.tsx` | 09 |
-| `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx` | 10 |
-| `packages/flux-renderers-form-advanced/src/array-editor.tsx` | 04, 09, 12 |
-| `packages/flux-renderers-form-advanced/src/key-value.tsx` | 04, 09, 12 |
-| `packages/flux-renderers-form-advanced/src/condition-builder/ConditionBuilder.tsx` | 09, 12 |
+| File                                                                               | Dimensions |
+| ---------------------------------------------------------------------------------- | ---------- |
+| `packages/flux-runtime/src/runtime-factory.ts`                                     | 02, 06     |
+| `packages/flux-runtime/src/source-registry.ts`                                     | 02, 06, 17 |
+| `packages/flux-runtime/src/form-runtime-submit-flow.ts`                            | 06, 08     |
+| `packages/flux-react/src/hooks.ts`                                                 | 08, 15     |
+| `packages/flux-react/src/field-frame.tsx`                                          | 05, 08     |
+| `packages/flow-designer-renderers/src/designer-page.tsx`                           | 05, 10     |
+| `packages/flux-renderers-data/src/table-renderer.tsx`                              | 09         |
+| `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`                          | 10         |
+| `packages/flux-renderers-form-advanced/src/array-editor.tsx`                       | 04, 09, 12 |
+| `packages/flux-renderers-form-advanced/src/key-value.tsx`                          | 04, 09, 12 |
+| `packages/flux-renderers-form-advanced/src/condition-builder/ConditionBuilder.tsx` | 09, 12     |
 
 ## Cross-Dimension Patterns
 
@@ -115,23 +115,23 @@
 
 ## Provenance
 
-| Dimension | Task ID |
-| --- | --- |
-| 01 | `ses_2690a309fffeSqRo7YpWUWrvpS` |
-| 02 | `ses_268e2cd03ffevRLou0TmAA8N1k` |
-| 03 | `ses_268cac7c9ffeGURGzSgzg1uNv3` |
-| 04 | `ses_2690a2fc6ffeSj1DuzAB1kSLVd` |
-| 05 | `ses_268f5badfffe5d3tQ59Yf96wBo` |
-| 06 | `ses_268f5b160ffeZYrngIp1lQ4jbe` |
-| 07 | `ses_268e2c9c0ffeW43hKgWoNyNLQI` |
-| 08 | `ses_268e2c51cffeheY8h43KKSHNBF` |
-| 09 | `ses_268f5ada6ffeRRI3Twt0r9zM7a` |
-| 10 | `ses_268cac48affe9LucoGdwsnD938` |
-| 11 | `ses_268b251b3ffe1enEyagM0LSTYx` |
-| 12 | `ses_268b25019ffe0h9fiZL3cMdylq` |
-| 13 | `ses_268cac141ffeYNzPyFPpuY790y` |
-| 14 | `ses_268e2be72ffeZkORV4FIongYPl` |
-| 15 | `ses_2690a2ef2ffe08deH13Df3wUC4` |
-| 16 | `ses_268b24f47ffeFeJB5eU3XtrqFQ` |
-| 17 | `ses_268b24db9ffeQduL4y0KA5NG2F` |
-| 18 | `ses_268b24ce3ffewHKs4kxVhQ5fYu` |
+| Dimension | Task ID                          |
+| --------- | -------------------------------- |
+| 01        | `ses_2690a309fffeSqRo7YpWUWrvpS` |
+| 02        | `ses_268e2cd03ffevRLou0TmAA8N1k` |
+| 03        | `ses_268cac7c9ffeGURGzSgzg1uNv3` |
+| 04        | `ses_2690a2fc6ffeSj1DuzAB1kSLVd` |
+| 05        | `ses_268f5badfffe5d3tQ59Yf96wBo` |
+| 06        | `ses_268f5b160ffeZYrngIp1lQ4jbe` |
+| 07        | `ses_268e2c9c0ffeW43hKgWoNyNLQI` |
+| 08        | `ses_268e2c51cffeheY8h43KKSHNBF` |
+| 09        | `ses_268f5ada6ffeRRI3Twt0r9zM7a` |
+| 10        | `ses_268cac48affe9LucoGdwsnD938` |
+| 11        | `ses_268b251b3ffe1enEyagM0LSTYx` |
+| 12        | `ses_268b25019ffe0h9fiZL3cMdylq` |
+| 13        | `ses_268cac141ffeYNzPyFPpuY790y` |
+| 14        | `ses_268e2be72ffeZkORV4FIongYPl` |
+| 15        | `ses_2690a2ef2ffe08deH13Df3wUC4` |
+| 16        | `ses_268b24f47ffeFeJB5eU3XtrqFQ` |
+| 17        | `ses_268b24db9ffeQduL4y0KA5NG2F` |
+| 18        | `ses_268b24ce3ffewHKs4kxVhQ5fYu` |

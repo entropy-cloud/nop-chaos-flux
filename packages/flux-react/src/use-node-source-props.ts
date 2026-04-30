@@ -9,13 +9,13 @@ export type { SourceTransientState } from './node-source-prop-controller';
 export function useNodeSourceProps(
   node: TemplateNode,
   propsValue: Readonly<Record<string, unknown>>,
-  scope: ScopeRef
+  scope: ScopeRef,
 ): Readonly<Record<string, unknown>> {
   const runtime = useRendererRuntime();
   const sourcePropKeys = node.sourcePropKeys;
   const hasSourceProps = useMemo(
     () => sourcePropKeys.some((key) => isSourceSchema(propsValue[key])),
-    [propsValue, sourcePropKeys]
+    [propsValue, sourcePropKeys],
   );
 
   const [controller] = useState(() => createNodeSourcePropController(node, runtime));
@@ -33,13 +33,13 @@ export function useNodeSourceProps(
 
   const sourceInputs = useMemo(
     () => sourcePropKeys.map((key) => propsValue[key]),
-    [propsValue, sourcePropKeys]
+    [propsValue, sourcePropKeys],
   );
 
   const snapshot = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot,
-    controller.getSnapshot
+    controller.getSnapshot,
   );
 
   useEffect(() => {

@@ -1,14 +1,13 @@
-import { defineConfig } from 'vitest/config';
-import { workspacePackageAliases } from '../../vite.workspace-alias';
+import { mergeConfig } from 'vitest/config';
+import { createSharedVitestConfig } from '../../vitest.shared';
 
-export default defineConfig({
-  resolve: {
-    alias: workspacePackageAliases
-  },
-  test: {
+export default mergeConfig(
+  createSharedVitestConfig({
     environment: 'jsdom',
-    include: ['**/*.{test,spec}.ts', '**/*.{test,spec}.tsx'],
-    exclude: ['**/node_modules/**', '**/.git/**', '**/dist/**'],
-    setupFiles: ['./src/__tests__/setup.ts']
-  }
-});
+  }),
+  {
+    test: {
+      setupFiles: ['./src/__tests__/setup.ts'],
+    },
+  },
+);

@@ -5,15 +5,20 @@ import { Button } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   resolveFieldLabelText,
-  useFormFieldController
+  useFormFieldController,
 } from '@nop-chaos/flux-renderers-form';
 import type { TagListSchema } from '@nop-chaos/flux-renderers-form';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const name = String(props.props.name ?? '');
-  const { currentForm, scope, value: boundValue, presentation } = useFormFieldController(name, {
+  const {
+    currentForm,
+    scope,
+    value: boundValue,
+    presentation,
+  } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required)
+    required: Boolean(props.props.required),
   });
   const value = Array.isArray(boundValue) ? boundValue.map((item) => String(item)) : [];
   const labelText = resolveFieldLabelText(props, name);
@@ -43,20 +48,22 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
       },
       validate() {
         const currentValue = currentForm.scope.get(name);
-        const currentTags = Array.isArray(currentValue) ? currentValue.map((item) => String(item)) : [];
+        const currentTags = Array.isArray(currentValue)
+          ? currentValue.map((item) => String(item))
+          : [];
 
         if (currentTags.length === 0) {
           return [
             {
               path: name,
               rule: 'required',
-              message: `${labelText} requires at least one tag`
-            }
+              message: `${labelText} requires at least one tag`,
+            },
           ];
         }
 
         return [];
-      }
+      },
     }).unregister;
   }, [currentForm, labelText, modelGeneration, name]);
 
@@ -103,5 +110,5 @@ export const tagListRendererDefinition: RendererDefinition = {
   type: 'tag-list',
   component: TagListRenderer,
   wrap: true,
-  fields: [formLabelFieldRule]
+  fields: [formLabelFieldRule],
 };

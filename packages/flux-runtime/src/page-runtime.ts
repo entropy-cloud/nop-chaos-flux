@@ -3,18 +3,20 @@ import type {
   PageStoreApi,
   ScopeChange,
   ScopeRef,
-  ValidationScopeRuntime
+  ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
 import { createPageStore } from './form-store';
 import { createScopeRef } from './scope';
 
-export function createManagedPageRuntime(input: {
-  data?: Record<string, any>;
-  pageStore?: PageStoreApi;
-  modalContainer?: string;
-  validationOwner?: ValidationScopeRuntime;
-  scope?: ScopeRef;
-} = {}): PageRuntime {
+export function createManagedPageRuntime(
+  input: {
+    data?: Record<string, any>;
+    pageStore?: PageStoreApi;
+    modalContainer?: string;
+    validationOwner?: ValidationScopeRuntime;
+    scope?: ScopeRef;
+  } = {},
+): PageRuntime {
   const data = input.data ?? {};
   const store = input.pageStore ?? createPageStore(data);
   store.setData(data);
@@ -23,56 +25,60 @@ export function createManagedPageRuntime(input: {
     paths: ['*'],
     sourceScopeId: 'page',
     kind: 'replace',
-    revision: nextRevision
+    revision: nextRevision,
   };
 
   function setLastChange(change: ScopeChange) {
     nextRevision += 1;
     lastChange = {
       ...change,
-      revision: change.revision ?? nextRevision
+      revision: change.revision ?? nextRevision,
     };
   }
 
-  const scope = input.scope ?? createScopeRef({
-    id: 'page',
-    path: '$page',
-    initialData: store.getState().data,
-    store: {
-      getSnapshot: () => store.getState().data,
-      getLastChange: () => lastChange,
-      setSnapshot: (next, change) => {
-        setLastChange(change ?? {
-          paths: ['*'],
-          sourceScopeId: 'page',
-          kind: 'replace'
-        });
-        store.setData(next);
+  const scope =
+    input.scope ??
+    createScopeRef({
+      id: 'page',
+      path: '$page',
+      initialData: store.getState().data,
+      store: {
+        getSnapshot: () => store.getState().data,
+        getLastChange: () => lastChange,
+        setSnapshot: (next, change) => {
+          setLastChange(
+            change ?? {
+              paths: ['*'],
+              sourceScopeId: 'page',
+              kind: 'replace',
+            },
+          );
+          store.setData(next);
+        },
+        subscribe: (listener) => {
+          let previousData = store.getState().data;
+
+          return store.subscribe(() => {
+            const nextData = store.getState().data;
+
+            if (nextData === previousData) {
+              return;
+            }
+
+            previousData = nextData;
+            listener(lastChange);
+          });
+        },
       },
-      subscribe: (listener) => {
-        let previousData = store.getState().data;
-
-        return store.subscribe(() => {
-          const nextData = store.getState().data;
-
-          if (nextData === previousData) {
-            return;
-          }
-
-          previousData = nextData;
-          listener(lastChange);
+      update: (path, value) => {
+        setLastChange({
+          paths: [path || '*'],
+          sourceScopeId: 'page',
+          kind: 'update',
         });
-      }
-    },
-    update: (path, value) => {
-      setLastChange({
-        paths: [path || '*'],
-        sourceScopeId: 'page',
-        kind: 'update'
-      });
-      store.updateData(path, value);
-    }
-  });
+        store.updateData(path, value);
+      },
+    });
   return {
     store,
     scope,
@@ -80,6 +86,6 @@ export function createManagedPageRuntime(input: {
     modalContainer: input.modalContainer,
     refresh() {
       store.refresh();
-    }
+    },
   };
 }

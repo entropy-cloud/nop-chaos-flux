@@ -8,11 +8,9 @@ const userLoop = {
       items: '${items}',
       itemName: 'item',
       indexName: 'idx',
-      body: [
-        { type: 'text', text: '${$slot.idx + 1}. ${$slot.item.name} — ${$slot.item.role}' }
-      ]
-    }
-  ]
+      body: [{ type: 'text', text: '${$slot.idx + 1}. ${$slot.item.name} — ${$slot.item.role}' }],
+    },
+  ],
 };
 
 const productLoop = {
@@ -35,26 +33,26 @@ const productLoop = {
               type: 'flex',
               direction: 'row',
               align: 'center',
-               gap: 2,
-               body: [
-                 { type: 'icon', icon: 'Package', size: 16 },
-                 { type: 'text', text: '${$slot.product.name}' }
-               ]
-             },
-             {
-               type: 'flex',
-               direction: 'row',
-               gap: 2,
-               body: [
-                 { type: 'badge', text: '${$slot.product.category}', variant: 'secondary' },
-                 { type: 'text', text: '$${$slot.product.price}' }
-               ]
-             }
-           ]
-         }
-      ]
-    }
-  ]
+              gap: 2,
+              body: [
+                { type: 'icon', icon: 'Package', size: 16 },
+                { type: 'text', text: '${$slot.product.name}' },
+              ],
+            },
+            {
+              type: 'flex',
+              direction: 'row',
+              gap: 2,
+              body: [
+                { type: 'badge', text: '${$slot.product.category}', variant: 'secondary' },
+                { type: 'text', text: '$${$slot.product.price}' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 export function LoopLabPage() {
@@ -70,23 +68,24 @@ export function LoopLabPage() {
             items: [
               { name: 'Alice', role: 'Admin' },
               { name: 'Bob', role: 'Editor' },
-              { name: 'Carol', role: 'Viewer' }
-            ]
-          }
+              { name: 'Carol', role: 'Viewer' },
+            ],
+          },
         },
         {
           title: 'Loop over products — card row with icon, badge, and price',
-          description: 'Each product renders as a flex row with an icon, name, category badge, and price. Demonstrates rich per-item templates.',
+          description:
+            'Each product renders as a flex row with an icon, name, category badge, and price. Demonstrates rich per-item templates.',
           schema: productLoop,
           data: {
             products: [
               { name: 'Wireless Headphones', category: 'Electronics', price: 89.99 },
-              { name: 'Ergonomic Chair', category: 'Furniture', price: 349.00 },
-              { name: 'Mechanical Keyboard', category: 'Electronics', price: 129.50 },
-              { name: 'Standing Desk', category: 'Furniture', price: 499.00 }
-            ]
-          }
-        }
+              { name: 'Ergonomic Chair', category: 'Furniture', price: 349.0 },
+              { name: 'Mechanical Keyboard', category: 'Electronics', price: 129.5 },
+              { name: 'Standing Desk', category: 'Furniture', price: 499.0 },
+            ],
+          },
+        },
       ]}
     />
   );

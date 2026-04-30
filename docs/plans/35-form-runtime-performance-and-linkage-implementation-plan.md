@@ -348,4 +348,3 @@ pnpm test
 - è‹¥ Phase 4-5 è½åœ°ï¼Œæ›´æ–° `docs/architecture/form-validation.md` ä¸Ž `docs/architecture/flux-runtime-module-boundaries.md`ï¼Œè®°å½•å†™å›žæ”¶æ•›ä¸Ž action chain æ”¶æ•›çš„æ¨¡å—å½’å±žã€‚
 - è‹¥ Phase 7 è½åœ°ï¼Œæ›´æ–° `docs/architecture/form-validation.md`ã€`docs/architecture/renderer-runtime.md` å’Œç›¸å…³ schema çº¦å®šæ–‡æ¡£ï¼Œæ˜Žç¡®å£°æ˜Žå¼è”åŠ¨æ¨¡åž‹è¾¹ç•Œä¸Žç¦æ­¢èƒ½åŠ›ã€‚
 - è‹¥ Phase 8 è½åœ°ï¼Œæ›´æ–° `docs/architecture/field-metadata-slot-modeling.md` æˆ–ç›¸å…³å­—æ®µå±•ç¤ºæ–‡æ¡£ï¼Œè®°å½• presentation æ´¾ç”Ÿå¿«ç…§çš„ä½ç½®ä¸Žæ¶ˆè´¹æ–¹å¼ã€‚
-

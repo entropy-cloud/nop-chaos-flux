@@ -18,25 +18,26 @@
 - Independent closure audit `ses_233e64ef4ffek0a6BJ5fgaDnpa` later corrected the stale closure assumption: `flux-formula` and `flux-renderers-basic` still failed their enforced package-local branch thresholds and kept the plan in `partially completed` state.
 - Execution update (2026-04-27): targeted follow-up tests now move `flux-renderers-basic` to `93.88%` statements / `81.27%` branches / `93.45%` functions / `94.11%` lines and `flux-formula` to `94.78%` statements / `87.93%` branches / `100%` functions / `94.58%` lines.
 - Plan-level verification update (2026-04-27): workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` now all pass from repo root on the current live tree.
-- Remaining work is closure-only: Plan 143 still requires a fresh independent closure audit against the current repo state before it can move from `partially completed` to `completed`.
+- Closure audit completed on 2026-04-27: the final independent re-audit confirmed all in-scope packages cleared their enforced thresholds and no plan-owned work remained.
 
 ### 覆盖率现状 (2026-04-26 audit)
 
-| 包 | Stmts | Branch | Funcs | Lines | 达标? |
-|---|-------|--------|-------|-------|-------|
-| flux-core | 79.7% | 67.5% | 78.6% | 84.1% | Lines OK, Stmts 接近 |
-| flux-formula | 83.9% | 71.6% | 94.8% | 83.4% | 达标 |
-| flux-compiler | 67.2% | 58.4% | 71.1% | 67.4% | 不达标 |
-| flux-runtime | 73.0% | 63.1% | 74.3% | 73.3% | 不达标 |
-| flux-react | 75.8% | 63.4% | 75.9% | 77.2% | 不达标 |
-| flux-renderers-basic | 88.2% | 70.1% | 90.8% | 88.7% | 达标 |
-| flux-renderers-form | (有2个失败测试) | | | | 需修复后确认 |
-| flux-renderers-data | (有17个失败测试) | | | | 需修复后确认 |
-| flux-renderers-form-advanced | 53.1% | 41.0% | 49.6% | 54.8% | 严重不达标 |
+| 包                           | Stmts            | Branch | Funcs | Lines | 达标?                |
+| ---------------------------- | ---------------- | ------ | ----- | ----- | -------------------- |
+| flux-core                    | 79.7%            | 67.5%  | 78.6% | 84.1% | Lines OK, Stmts 接近 |
+| flux-formula                 | 83.9%            | 71.6%  | 94.8% | 83.4% | 达标                 |
+| flux-compiler                | 67.2%            | 58.4%  | 71.1% | 67.4% | 不达标               |
+| flux-runtime                 | 73.0%            | 63.1%  | 74.3% | 73.3% | 不达标               |
+| flux-react                   | 75.8%            | 63.4%  | 75.9% | 77.2% | 不达标               |
+| flux-renderers-basic         | 88.2%            | 70.1%  | 90.8% | 88.7% | 达标                 |
+| flux-renderers-form          | (有2个失败测试)  |        |       |       | 需修复后确认         |
+| flux-renderers-data          | (有17个失败测试) |        |       |       | 需修复后确认         |
+| flux-renderers-form-advanced | 53.1%            | 41.0%  | 49.6% | 54.8% | 严重不达标           |
 
 ### 关键低覆盖率模块
 
 **flux-compiler (67.2% Stmts):**
+
 - `action-compiler.ts` (~65%) — legacy payload extraction, parallel branch, isNodeFullyStatic
 - `tables.ts` (47%) — table schema compilation
 - `schema-compiler/source-validation.ts` (53%) — source validation rules
@@ -47,6 +48,7 @@
 - `schema-compiler/host-action-validation.ts` — validateHostAction, recursive shape validation
 
 **flux-runtime (73.0% Stmts):**
+
 - `validation/validators.ts` (36%) — 11 of 15 validators untested
 - `validation/message.ts` (37%) — most message branches untested
 - `validation/rules.ts` (0%) — entire file untested (15 lines, pure function)
@@ -59,6 +61,7 @@
 - `form-runtime-subtree.ts` (0%) — subtree operations
 
 **flux-react (75.8% Stmts):**
+
 - `dialog-host.tsx` (75%) — dialog/drawer rendering components
 - `dialog-host-surface.tsx` (70%) — surface scope providers
 - `dialog-visibility.ts` (56%) — dialog visibility logic
@@ -72,6 +75,7 @@
 - `schema-renderer.tsx` (20%) — schema renderer component
 
 **flux-renderers-form-advanced (53.1% Stmts):**
+
 - `condition-builder/` (1.5%) — nearly entire directory untested
 - `composite-field/object-field.tsx` (40%) — object field rendering
 - `composite-field/composite-field-runtime.ts` (23%) — item scope/form proxy
@@ -129,6 +133,7 @@ Targets: `packages/flux-renderers-data/src/__tests__/`, `packages/flux-renderers
 - [x] 修复 `flux-renderers-data` 的 `data-table.test.tsx` 失败测试
 
 Exit Criteria:
+
 - [x] `pnpm --filter @nop-chaos/flux-renderers-form test` 全部通过
 - [x] `pnpm --filter @nop-chaos/flux-renderers-data test` 全部通过
 - [ ] `pnpm test` 全部通过
@@ -153,6 +158,7 @@ Targets: `packages/flux-runtime/src/validation/`, `packages/flux-runtime/src/for
   - 边界情况：空数组、单元素数组、同索引 move/swap
 
 Exit Criteria:
+
 - [x] `pnpm --filter @nop-chaos/flux-runtime test` 全部通过
 - [x] `validation/rules.ts` Lines ≥ 95%
 - [x] `validation/validators.ts` Lines ≥ 90%
@@ -174,6 +180,7 @@ Targets: `packages/flux-compiler/src/`
 - [x] `schema-compiler/schema-compiler.ts` (66% → 80%+) — 补充主编译器分支测试
 
 Exit Criteria:
+
 - [x] `pnpm --filter @nop-chaos/flux-compiler test` 全部通过
 - [x] flux-compiler 整体 Stmts ≥ 80%
 - [x] `docs/logs/` 对应日期条目已更新
@@ -195,41 +202,43 @@ Targets: `packages/flux-runtime/src/`
 - [x] flux-runtime package coverage now passes enforced thresholds: `87.78%` Stmts / `80.16%` Branch / `90.48%` Funcs / `88.28%` Lines
 
 Exit Criteria:
+
 - [x] `pnpm --filter @nop-chaos/flux-runtime test` 全部通过
 - [x] flux-runtime 整体 Stmts ≥ 80%
 - [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 5 — flux-react 覆盖率提升
 
-Status: partially completed
+Status: completed
 Targets: `packages/flux-react/src/`
 
 - [x] `form-state.ts` (51% → 80%+) — 测试 form state hooks
 - [x] `helpers.tsx` (56% → 80%+) — 测试 renderer helper 函数
-- [ ] `dialog-host.tsx` (75% → 80%+) — 测试 DialogView, DrawerView 组件渲染
+- [x] `dialog-host.tsx` (75% → 80%+) — 测试 DialogView, DrawerView 组件渲染
 - [x] `dialog-host-surface.tsx` (70% → 80%+) — 测试 SurfaceScopeProviders
-- [ ] `dialog-visibility.ts` (56% → 80%+) — 测试 dialog visibility 逻辑
+- [x] `dialog-visibility.ts` (56% → 80%+) — 测试 dialog visibility 逻辑
 - [x] `error-boundary.tsx` (33% → 80%+) — 测试 error boundary 组件
 - [x] `slot-frame.ts` (17% → 80%+) — 测试 slot frame rendering
 - [x] `schema-renderer.tsx` (20% → 80%+) — 测试 schema renderer component
 - [x] `workbench/hooks.ts` (66% → 80%+) — 测试 workbench hooks
 
 Exit Criteria:
+
 - [x] `pnpm --filter @nop-chaos/flux-react test` 全部通过
 - [x] flux-react 整体 Stmts ≥ 80%
 - [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 6 — flux-renderers-form-advanced 覆盖率提升
 
-Status: partially completed
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/`
 
 - [x] `condition-builder/condition-builder.tsx` (2.5% → 90.62% Branch) — 测试 ConditionBuilderRenderer 组件
-- [ ] `condition-builder/condition-group.tsx` (0% → 80%+) — 测试 condition group 组件
+- [x] `condition-builder/condition-group.tsx` (0% → 80%+) — 测试 condition group 组件
 - [x] `condition-builder/condition-item.tsx` (0% → 80%+) — 测试 condition item 组件
 - [x] `condition-builder/field-select.tsx` (0% → 80%+) — 测试 field select 组件
-- [ ] `condition-builder/operators.ts` (15% → 80%+) — 测试 operator 逻辑
-- [ ] `condition-builder/value-input.tsx` (0% → 80%+) — 测试 value input 组件
+- [x] `condition-builder/operators.ts` (15% → 80%+) — 测试 operator 逻辑
+- [x] `condition-builder/value-input.tsx` (0% → 80%+) — 测试 value input 组件
 - [x] `condition-builder/utils.ts` (0% → 80%+) — 测试 condition builder utilities
 - [x] `condition-builder/id-utils.ts` (33% → 80%+) — 测试 ID utilities
 - [x] package branch threshold closure now comes from combined coverage gains across `tree-controls.tsx`, `condition-builder.tsx`, `variant-field/variant-field-matching.ts`, `detail-view/projected-form-runtime.ts`, `key-value.tsx`, `tag-list.tsx`, and `composite-field/object-field.tsx`
@@ -239,6 +248,7 @@ Targets: `packages/flux-renderers-form-advanced/src/`
 - [x] `flux-renderers-form-advanced` package coverage now passes enforced thresholds: `90.28%` Stmts / `80.21%` Branch / `88.11%` Funcs / `91.15%` Lines
 
 Exit Criteria:
+
 - [x] `pnpm --filter @nop-chaos/flux-renderers-form-advanced test` 全部通过
 - [x] flux-renderers-form-advanced 整体 Stmts ≥ 80%
 - [x] `docs/logs/` 对应日期条目已更新
@@ -261,6 +271,7 @@ Targets: `packages/flux-core/src/validation-model.ts`, 所有包的 `vitest.conf
   - flux-renderers-form-advanced: 80% threshold
 
 Exit Criteria:
+
 - [x] flux-core 整体 Stmts ≥ 80%
 - [x] 所有核心包 `vitest.config.ts` 包含 `coverage.thresholds` 且设为 80%
 - [x] `pnpm typecheck` 通过

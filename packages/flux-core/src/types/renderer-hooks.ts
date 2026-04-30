@@ -6,7 +6,16 @@ import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { RendererHelpers, RendererRegistry, RendererRuntime } from './renderer-core';
 import type { RendererPlugin } from './renderer-plugin';
-import type { DataSourceStatusSummary, FormErrorQuery, FormFieldStateSnapshot, FormRuntime, PageRuntime, PageStoreApi, SurfaceRuntime, ValidationScopeRuntime } from './runtime';
+import type {
+  DataSourceStatusSummary,
+  FormErrorQuery,
+  FormFieldStateSnapshot,
+  FormRuntime,
+  PageRuntime,
+  PageStoreApi,
+  SurfaceRuntime,
+  ValidationScopeRuntime,
+} from './runtime';
 import type { SchemaInput, SchemaPath } from './schema';
 import type { ScopeRef } from './scope';
 import type { ValidationError } from './validation';
@@ -40,7 +49,10 @@ export interface StructuralLoopRenderContext {
   keyBy?: unknown;
   instancePath?: readonly InstanceFrame[];
   depth: number;
-  renderBody(slotBindings: Record<string, unknown>, instancePath: readonly InstanceFrame[]): ReactNode;
+  renderBody(
+    slotBindings: Record<string, unknown>,
+    instancePath: readonly InstanceFrame[],
+  ): ReactNode;
 }
 
 export interface RenderRegionHandle {
@@ -72,7 +84,13 @@ export interface RenderRegionHandle {
   }): ReactNode;
 }
 
-export type RenderNodeInput = SchemaInput | TemplateNode | readonly TemplateNode[] | CompiledTemplate | null | undefined;
+export type RenderNodeInput =
+  | SchemaInput
+  | TemplateNode
+  | readonly TemplateNode[]
+  | CompiledTemplate
+  | null
+  | undefined;
 
 /**
  * The reserved $slot frame published into child scopes for parameterized regions.
@@ -98,8 +116,14 @@ export interface RendererHookApi {
   useRenderInstancePath(): readonly InstanceFrame[] | undefined;
   useCurrentActionScope(): ActionScope | undefined;
   useCurrentComponentRegistry(): ComponentHandleRegistry | undefined;
-  useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean): T;
-  useOwnScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, equalityFn?: (a: T, b: T) => boolean): T;
+  useScopeSelector<T, S = Record<string, unknown>>(
+    selector: (scopeData: S) => T,
+    equalityFn?: (a: T, b: T) => boolean,
+  ): T;
+  useOwnScopeSelector<T, S = Record<string, unknown>>(
+    selector: (scopeData: S) => T,
+    equalityFn?: (a: T, b: T) => boolean,
+  ): T;
   useRendererEnv(): RendererEnv;
   useActionDispatcher(): RendererRuntime['dispatch'];
   useCurrentForm(): FormRuntime | undefined;
@@ -109,7 +133,10 @@ export interface RendererHookApi {
   useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
   useValidationNodeState(path: string): FormFieldStateSnapshot;
   useFieldError(path: string): ValidationError | undefined;
-  useDataSourceStatus(path: string, options?: { enabled?: boolean }): DataSourceStatusSummary | undefined;
+  useDataSourceStatus(
+    path: string,
+    options?: { enabled?: boolean },
+  ): DataSourceStatusSummary | undefined;
   useOwnedFieldState(path: string): FormFieldStateSnapshot;
   useChildFieldState(path: string): FormFieldStateSnapshot;
   useAggregateError(path: string): ValidationError | undefined;

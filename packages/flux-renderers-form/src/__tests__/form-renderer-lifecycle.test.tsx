@@ -21,8 +21,10 @@ vi.mock('@nop-chaos/flux-react', async () => {
     FormContext: ReactModule.createContext(undefined),
     FormLayoutContext: ReactModule.createContext(undefined),
     ScopeContext: ReactModule.createContext(null),
-    hasRendererSlotContent: (content: unknown) => content !== null && content !== undefined && content !== false,
-    resolveRendererSlotContent: (props: { regions?: Record<string, unknown> }, slot: string) => props.regions?.[slot],
+    hasRendererSlotContent: (content: unknown) =>
+      content !== null && content !== undefined && content !== false,
+    resolveRendererSlotContent: (props: { regions?: Record<string, unknown> }, slot: string) =>
+      props.regions?.[slot],
     useCurrentActionScope: mocks.useCurrentActionScope,
     useCurrentComponentRegistry: mocks.useCurrentComponentRegistry,
     useCurrentPage: mocks.useCurrentPage,
@@ -133,7 +135,11 @@ function getCallOptions(call: unknown, label: string): Record<string, any> {
 describe('FormRenderer lifecycle wiring', () => {
   it('wraps lifecycle scopes with imported bindings, writes through the business parent, and re-inits only on activation changes', async () => {
     const businessScope = makeScope({ id: 'business', visible: { businessValue: 'root' } });
-    const shellScope = makeScope({ id: 'shell', visible: { dialogId: 'dialog-1' }, parent: businessScope });
+    const shellScope = makeScope({
+      id: 'shell',
+      visible: { dialogId: 'dialog-1' },
+      parent: businessScope,
+    });
     const ownedScope = makeScope({ id: 'owned', visible: { localValue: 'owned' } });
     const lifecycleHandlers: Array<any> = [];
     const initAction = vi.fn(async () => undefined);
@@ -179,14 +185,28 @@ describe('FormRenderer lifecycle wiring', () => {
       page: { id: 'page-1' },
       validation: { kind: 'validation-plan' },
     });
-    expect(mocks.usePublishedFormStatus).toHaveBeenCalledWith({ statusPath: 'ui.status', parentScope: shellScope, ownedForm });
-    expect(mocks.usePublishedFormValues).toHaveBeenCalledWith({ valuesPath: 'ui.values', parentScope: shellScope, ownedForm });
+    expect(mocks.usePublishedFormStatus).toHaveBeenCalledWith({
+      statusPath: 'ui.status',
+      parentScope: shellScope,
+      ownedForm,
+    });
+    expect(mocks.usePublishedFormValues).toHaveBeenCalledWith({
+      valuesPath: 'ui.values',
+      parentScope: shellScope,
+      ownedForm,
+    });
     expect(register).toHaveBeenCalledWith({ form: ownedForm }, { cid: 'cid-1' });
     expect(screen.getByTestId('form-test').className).toContain('nop-form');
     expect(screen.getByTestId('form-test').className).toContain('form-extra');
-    expect(screen.getByText('Body content').closest('[data-slot="form-body"]')?.className).toContain('gap-class');
-    expect(screen.getByText('Body content').closest('[data-slot="form-body"]')?.className).toContain('body-extra');
-    expect(screen.getByText('Action content').closest('[data-slot="form-actions"]')?.className).toContain('actions-extra');
+    expect(
+      screen.getByText('Body content').closest('[data-slot="form-body"]')?.className,
+    ).toContain('gap-class');
+    expect(
+      screen.getByText('Body content').closest('[data-slot="form-body"]')?.className,
+    ).toContain('body-extra');
+    expect(
+      screen.getByText('Action content').closest('[data-slot="form-actions"]')?.className,
+    ).toContain('actions-extra');
 
     const handlers = lifecycleHandlers.at(-1);
     expect(handlers).toBeTruthy();
@@ -208,10 +228,17 @@ describe('FormRenderer lifecycle wiring', () => {
     expect(submitScope.get('localValue')).toBe('owned');
     expect(submitScope.readVisible().importedFlag).toBe('yes');
     expect(submitScope.materializeVisible()).toEqual({ localValue: 'owned', importedFlag: 'yes' });
-    expect(submitOptions).toMatchObject({ form: ownedForm, interactionId: 'submit-1', signal: 'signal-1' });
+    expect(submitOptions).toMatchObject({
+      form: ownedForm,
+      interactionId: 'submit-1',
+      signal: 'signal-1',
+    });
 
     const successResult = { ok: true, data: { username: 'Alice' } };
-    await handlers.onSubmitSuccess(successResult, { interactionId: 'submit-2', signal: 'signal-2' });
+    await handlers.onSubmitSuccess(successResult, {
+      interactionId: 'submit-2',
+      signal: 'signal-2',
+    });
     const successCall = onSubmitSuccess.mock.calls[0];
     expect(successCall).toBeTruthy();
     if (!successCall) {
@@ -240,7 +267,10 @@ describe('FormRenderer lifecycle wiring', () => {
     expect(errorOptions.evaluationBindings.error).toBe(errorResult.error);
 
     const validateResult = { ok: false, error: [{ message: 'invalid' }] };
-    await handlers.onValidateError(validateResult, { interactionId: 'submit-4', signal: 'signal-4' });
+    await handlers.onValidateError(validateResult, {
+      interactionId: 'submit-4',
+      signal: 'signal-4',
+    });
     const validateCall = onValidateError.mock.calls[0];
     expect(validateCall).toBeTruthy();
     if (!validateCall) {
@@ -261,7 +291,7 @@ describe('FormRenderer lifecycle wiring', () => {
           events: { initAction, submitAction, onSubmitSuccess, onSubmitError, onValidateError },
           node: { instancePath: [{ repeatedTemplateId: 'repeat', instanceKey: 'second' }] },
         })}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -307,7 +337,7 @@ describe('FormRenderer lifecycle wiring', () => {
           templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
           node: { instancePath: [] },
         })}
-      />
+      />,
     );
 
     const handlers = lifecycleHandlers.at(-1);

@@ -5,7 +5,7 @@ import type {
   NodeInstance,
   ResolvedNodeMeta,
   ResolvedNodeProps,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 
 function readMetaRule(schema: Record<string, unknown>, key: 'visible' | 'hidden' | 'disabled') {
@@ -20,7 +20,7 @@ export function useNodeDebugData(
   activeScope: ScopeRef,
   resolvedMeta: ResolvedNodeMeta,
   resolvedPropsValue: ResolvedNodeProps['value'],
-  currentForm?: FormRuntime
+  currentForm?: FormRuntime,
 ): void {
   useEffect(() => {
     if (!activeComponentRegistry || typeof cid !== 'number') {
@@ -28,11 +28,12 @@ export function useNodeDebugData(
     }
 
     const schema = nodeInstance.templateNode.schema as Record<string, unknown>;
-    const fieldName = typeof resolvedPropsValue.name === 'string'
-      ? resolvedPropsValue.name
-      : typeof schema.name === 'string'
-        ? schema.name
-        : undefined;
+    const fieldName =
+      typeof resolvedPropsValue.name === 'string'
+        ? resolvedPropsValue.name
+        : typeof schema.name === 'string'
+          ? schema.name
+          : undefined;
 
     activeComponentRegistry.setHandleDebugData?.(cid, {
       nodeId: nodeInstance.templateNode.id,
@@ -49,14 +50,22 @@ export function useNodeDebugData(
         metaRules: {
           visible: readMetaRule(schema, 'visible'),
           hidden: readMetaRule(schema, 'hidden'),
-          disabled: readMetaRule(schema, 'disabled')
-        }
+          disabled: readMetaRule(schema, 'disabled'),
+        },
       },
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     });
 
     return () => {
       activeComponentRegistry.setHandleDebugData?.(cid, undefined);
     };
-  }, [activeComponentRegistry, cid, nodeInstance, activeScope, resolvedMeta, resolvedPropsValue, currentForm]);
+  }, [
+    activeComponentRegistry,
+    cid,
+    nodeInstance,
+    activeScope,
+    resolvedMeta,
+    resolvedPropsValue,
+    currentForm,
+  ]);
 }

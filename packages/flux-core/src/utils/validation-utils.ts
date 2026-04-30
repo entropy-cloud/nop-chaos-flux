@@ -2,7 +2,7 @@ import type { ValidationError } from '../types/validation';
 
 export function validationErrorsEqual(
   left: ValidationError[] | undefined,
-  right: ValidationError[] | undefined
+  right: ValidationError[] | undefined,
 ): boolean {
   if (left === right) {
     return true;

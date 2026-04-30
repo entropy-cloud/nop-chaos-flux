@@ -1,4 +1,9 @@
-import { reportRuntimeHostIssue, type ActionSchema, type CompiledRuntimeValue, type ScopeRef } from '@nop-chaos/flux-core';
+import {
+  reportRuntimeHostIssue,
+  type ActionSchema,
+  type CompiledRuntimeValue,
+  type ScopeRef,
+} from '@nop-chaos/flux-core';
 import type {
   AsyncGovernanceStore,
   AsyncRunHandle,
@@ -6,16 +11,20 @@ import type {
   ReactionRegistryDebugSnapshot,
   RendererRuntime,
   RuntimeValueState,
-  ScopeDependencySet
+  ScopeDependencySet,
 } from '@nop-chaos/flux-core';
 import { collectRuntimeDependencies } from '../node-runtime';
 import { createRootDependencySet } from '../scope-change';
 
 export const MAX_REACTION_FIRE_COUNT = 10;
 
-export function createReactionLimitError(input: { id: string; scope: ScopeRef; fireCount: number }) {
+export function createReactionLimitError(input: {
+  id: string;
+  scope: ScopeRef;
+  fireCount: number;
+}) {
   return new Error(
-    `Reaction "${input.id}" in scope "${input.scope.id}" exceeded MAX_REACTION_FIRE_COUNT (${MAX_REACTION_FIRE_COUNT}) and was disposed`
+    `Reaction "${input.id}" in scope "${input.scope.id}" exceeded MAX_REACTION_FIRE_COUNT (${MAX_REACTION_FIRE_COUNT}) and was disposed`,
   );
 }
 
@@ -37,7 +46,7 @@ export function createRunHandle(args: {
     ownerKind: 'reaction',
     ownerId: createReactionOwnerId(args.scope.id, args.id),
     scopeId: args.scope.id,
-    cause: args.force ? 'immediate' : 'dependency-change'
+    cause: args.force ? 'immediate' : 'dependency-change',
   });
 }
 
@@ -51,13 +60,18 @@ export function evaluateReactionWatchValue(args: {
   dependencies: ScopeDependencySet | undefined;
 }) {
   const value = args.dynamicWatch
-    ? args.runtime.expressionCompiler.evaluateWithState(args.dynamicWatch, args.scope, args.runtime.env, args.watchState!).value
+    ? args.runtime.expressionCompiler.evaluateWithState(
+        args.dynamicWatch,
+        args.scope,
+        args.runtime.env,
+        args.watchState!,
+      ).value
     : args.compiledWatch.value;
 
   const nextDependencies = args.explicitDependencies ?? collectRuntimeDependencies(args.watchState);
   return {
     value,
-    dependencies: nextDependencies
+    dependencies: nextDependencies,
   };
 }
 
@@ -74,7 +88,7 @@ export function reportReactionFireLimit(args: {
   const error = createReactionLimitError({
     id: args.id,
     scope: args.scope,
-    fireCount: args.fireCount
+    fireCount: args.fireCount,
   });
   reportRuntimeHostIssue({
     env: args.runtime.env,
@@ -87,8 +101,8 @@ export function reportReactionFireLimit(args: {
       reactionId: args.id,
       scopeId: args.scope.id,
       fireCount: args.fireCount,
-      maxFireCount: MAX_REACTION_FIRE_COUNT
-    }
+      maxFireCount: MAX_REACTION_FIRE_COUNT,
+    },
   });
   return error;
 }

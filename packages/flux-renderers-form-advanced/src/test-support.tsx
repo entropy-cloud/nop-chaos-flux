@@ -14,7 +14,10 @@ if (!Element.prototype.scrollIntoView) {
 
 if (typeof PointerEvent === 'undefined') {
   class PointerEvent extends MouseEvent {
-    constructor(type: string, props: MouseEventInit & { pointerId?: number; pressure?: number } = {}) {
+    constructor(
+      type: string,
+      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
+    ) {
       super(type, props);
     }
   }
@@ -35,7 +38,10 @@ export const baseEnv: RendererEnv = {
 export const formulaCompiler = createFormulaCompiler();
 
 export function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
-  return async function <T>(_api: unknown, ctx: ApiRequestContext): Promise<{ ok: true; status: number; data: T }> {
+  return async function <T>(
+    _api: unknown,
+    ctx: ApiRequestContext,
+  ): Promise<{ ok: true; status: number; data: T }> {
     submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
     return { ok: true, status: 200, data: null as unknown as T };
   };

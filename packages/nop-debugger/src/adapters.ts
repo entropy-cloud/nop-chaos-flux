@@ -9,9 +9,17 @@ import {
   type RendererMonitor,
   type RendererPlugin,
   type SchemaInput,
-  type CompiledTemplate
+  type CompiledTemplate,
 } from '@nop-chaos/flux-core';
-import { buildNetworkSummary, createRequestKey, formatActionResult, formatErrorDetail, normalizeCompiledRoot, summarizeApi, summarizeValueShape } from './controller-helpers';
+import {
+  buildNetworkSummary,
+  createRequestKey,
+  formatActionResult,
+  formatErrorDetail,
+  normalizeCompiledRoot,
+  summarizeApi,
+  summarizeValueShape,
+} from './controller-helpers';
 import { redactData, type NormalizedRedactionOptions } from './redaction';
 import type { NopDebuggerStore } from './store';
 
@@ -34,7 +42,7 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
         group: 'compile',
         level: 'info',
         source: 'plugin.beforeCompile',
-        summary: `compile start${rootType ? ` (${rootType})` : ''}`
+        summary: `compile start${rootType ? ` (${rootType})` : ''}`,
       });
       return schema;
     },
@@ -48,7 +56,7 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
         summary: `compile ready (${normalized.rootCount} root${normalized.rootCount === 1 ? '' : 's'})`,
         detail: `type=${normalized.firstType ?? 'n/a'} | path=${normalized.firstPath ?? 'n/a'}`,
         rendererType: normalized.firstType,
-        path: normalized.firstPath
+        path: normalized.firstPath,
       });
       return template;
     },
@@ -64,7 +72,7 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
         instancePath: ctx.instancePath,
         nodeId: ctx.nodeInstance?.templateNode.id,
         path: ctx.nodeInstance?.templateNode.templatePath,
-        rendererType: ctx.nodeInstance?.templateNode.rendererType
+        rendererType: ctx.nodeInstance?.templateNode.rendererType,
       });
       return action;
     },
@@ -77,9 +85,9 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
         summary: `${payload.phase} error`,
         detail: formatErrorDetail(error),
         nodeId: payload.nodeId,
-        path: payload.path
+        path: payload.path,
       });
-    }
+    },
   };
 }
 
@@ -88,7 +96,16 @@ export function decorateDebuggerEnv(input: {
   env: RendererEnv;
   store: NopDebuggerStore;
   redaction: NormalizedRedactionOptions;
-  requestState: Map<string, { startedAt: number; requestInstanceId: string; interactionId?: string; nodeId?: string; path?: string }>;
+  requestState: Map<
+    string,
+    {
+      startedAt: number;
+      requestInstanceId: string;
+      interactionId?: string;
+      nodeId?: string;
+      path?: string;
+    }
+  >;
   nextRequestInstanceId: () => string;
 }): RendererEnv {
   if (!input.enabled) {
@@ -108,7 +125,7 @@ export function decorateDebuggerEnv(input: {
         detail: `nodeId=${payload.nodeId} | path=${payload.path}`,
         nodeId: payload.nodeId,
         path: payload.path,
-        rendererType: payload.type
+        rendererType: payload.type,
       });
       baseMonitor?.onRenderStart?.(payload);
     },
@@ -123,7 +140,7 @@ export function decorateDebuggerEnv(input: {
         nodeId: payload.nodeId,
         path: payload.path,
         rendererType: payload.type,
-        durationMs: payload.durationMs
+        durationMs: payload.durationMs,
       });
       baseMonitor?.onRenderEnd?.(payload);
     },
@@ -139,7 +156,7 @@ export function decorateDebuggerEnv(input: {
         interactionId: payload.interactionId,
         instancePath: payload.instancePath,
         nodeId: payload.nodeId,
-        path: payload.path
+        path: payload.path,
       });
       baseMonitor?.onActionStart?.(payload);
     },
@@ -156,7 +173,7 @@ export function decorateDebuggerEnv(input: {
         instancePath: payload.instancePath,
         nodeId: payload.nodeId,
         path: payload.path,
-        durationMs: payload.durationMs
+        durationMs: payload.durationMs,
       });
       baseMonitor?.onActionEnd?.(payload);
     },
@@ -169,7 +186,7 @@ export function decorateDebuggerEnv(input: {
           requestInstanceId,
           interactionId: payload.interactionId,
           nodeId: payload.nodeId,
-          path: payload.path
+          path: payload.path,
         });
         input.store.append({
           kind: 'api:start',
@@ -184,7 +201,7 @@ export function decorateDebuggerEnv(input: {
           requestInstanceId,
           interactionId: payload.interactionId,
           exportedData: redactData(payload.api.data, input.redaction),
-          network: buildNetworkSummary({ api: payload.api })
+          network: buildNetworkSummary({ api: payload.api }),
         });
       }
       baseMonitor?.onApiRequest?.(payload);
@@ -198,13 +215,17 @@ export function decorateDebuggerEnv(input: {
         summary: `${payload.phase} error`,
         detail: formatErrorDetail(payload.error),
         nodeId: payload.nodeId,
-        path: payload.path
+        path: payload.path,
       });
       baseMonitor?.onError?.(payload);
-    }
+    },
   };
 
-  const decoratedFetcher = async <T,>(next: ApiFetcher, api: ExecutableApiRequest, ctx: ApiRequestContext): Promise<ApiResponse<T>> => {
+  const decoratedFetcher = async <T>(
+    next: ApiFetcher,
+    api: ExecutableApiRequest,
+    ctx: ApiRequestContext,
+  ): Promise<ApiResponse<T>> => {
     const requestKey = createRequestKey(api);
     const startedAt = Date.now();
     const requestInstanceId = ctx.requestInstanceId ?? input.nextRequestInstanceId();
@@ -214,7 +235,7 @@ export function decorateDebuggerEnv(input: {
       requestInstanceId,
       interactionId: ctx.interactionId ?? existingRequest?.interactionId,
       nodeId: existingRequest?.nodeId,
-      path: existingRequest?.path
+      path: existingRequest?.path,
     });
 
     if (!ctx.env.monitor?.onApiRequest) {
@@ -229,7 +250,7 @@ export function decorateDebuggerEnv(input: {
         requestInstanceId,
         interactionId: ctx.interactionId,
         exportedData: redactData(api.data, input.redaction),
-        network: buildNetworkSummary({ api })
+        network: buildNetworkSummary({ api }),
       });
     }
 
@@ -242,7 +263,10 @@ export function decorateDebuggerEnv(input: {
         level: response.ok ? 'success' : 'error',
         source: 'fetcher',
         summary: `${summarizeApi(api)} -> ${response.status}`,
-        detail: response.data == null ? 'no response data' : `response ${responseShape.responseType}${responseShape.keys.length ? ` | keys=${responseShape.keys.join(',')}` : ''}`,
+        detail:
+          response.data == null
+            ? 'no response data'
+            : `response ${responseShape.responseType}${responseShape.keys.length ? ` | keys=${responseShape.keys.join(',')}` : ''}`,
         requestKey,
         requestInstanceId,
         interactionId: ctx.interactionId ?? existingRequest?.interactionId,
@@ -250,8 +274,8 @@ export function decorateDebuggerEnv(input: {
         exportedData: redactData(response.data, input.redaction),
         network: buildNetworkSummary({
           api,
-          response: response as ApiResponse<unknown>
-        })
+          response: response as ApiResponse<unknown>,
+        }),
       });
       input.requestState.delete(requestInstanceId);
       return response;
@@ -270,33 +294,40 @@ export function decorateDebuggerEnv(input: {
         durationMs: Math.max(0, Date.now() - startedAt),
         network: buildNetworkSummary({
           api,
-          aborted
-        })
+          aborted,
+        }),
       });
       input.requestState.delete(requestInstanceId);
       throw error;
     }
   };
 
-  return decorateRendererEnv({
-    ...input.env,
-    monitor: decoratedMonitor
-  }, {
-    fetcher: decoratedFetcher,
-    notify(next, level, message) {
-      input.store.append({
-        kind: 'notify',
-        group: 'notify',
-        level,
-        source: 'env.notify',
-        summary: `${level}: ${message}`
-      });
-      next(level, message);
-    }
-  });
+  return decorateRendererEnv(
+    {
+      ...input.env,
+      monitor: decoratedMonitor,
+    },
+    {
+      fetcher: decoratedFetcher,
+      notify(next, level, message) {
+        input.store.append({
+          kind: 'notify',
+          group: 'notify',
+          level,
+          source: 'env.notify',
+          summary: `${level}: ${message}`,
+        });
+        next(level, message);
+      },
+    },
+  );
 }
 
-export function appendActionErrorEvent(store: NopDebuggerStore, error: unknown, ctx: ActionContext) {
+export function appendActionErrorEvent(
+  store: NopDebuggerStore,
+  error: unknown,
+  ctx: ActionContext,
+) {
   store.append({
     kind: 'error',
     group: 'error',
@@ -307,6 +338,6 @@ export function appendActionErrorEvent(store: NopDebuggerStore, error: unknown, 
     instancePath: ctx.instancePath,
     nodeId: ctx.nodeInstance?.templateNode.id,
     path: ctx.nodeInstance?.templateNode.templatePath,
-    rendererType: ctx.nodeInstance?.templateNode.rendererType
+    rendererType: ctx.nodeInstance?.templateNode.rendererType,
   });
 }

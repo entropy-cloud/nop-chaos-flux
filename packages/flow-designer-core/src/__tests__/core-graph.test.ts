@@ -11,35 +11,35 @@ function createTestDesignerConfig(): DesignerConfig {
         id: 'start',
         label: 'Start',
         defaults: { label: 'Start', description: '', config: '{}' },
-        constraints: { maxInstances: 1 }
+        constraints: { maxInstances: 1 },
       },
       {
         id: 'task',
         label: 'Task',
-        defaults: { label: 'Task', description: '', config: '{}' }
+        defaults: { label: 'Task', description: '', config: '{}' },
       },
       {
         id: 'end',
         label: 'End',
-        defaults: { label: 'End', description: '', config: '{}' }
-      }
+        defaults: { label: 'End', description: '', config: '{}' },
+      },
     ],
     edgeTypes: [
       {
         id: 'default',
         label: 'Flow',
-        defaults: { label: 'Flow', condition: '', lineStyle: 'solid' }
-      }
+        defaults: { label: 'Flow', condition: '', lineStyle: 'solid' },
+      },
     ],
     palette: {
       groups: [
         {
           id: 'basic',
           label: 'Basic',
-          nodeTypes: ['start', 'task', 'end']
-        }
-      ]
-    }
+          nodeTypes: ['start', 'task', 'end'],
+        },
+      ],
+    },
   };
 }
 
@@ -47,8 +47,8 @@ function createTestDesignerConfigNoMultiEdge(): DesignerConfig {
   return {
     ...createTestDesignerConfig(),
     rules: {
-      allowMultiEdge: false
-    }
+      allowMultiEdge: false,
+    },
   };
 }
 
@@ -63,17 +63,17 @@ function createBasicDocument(): GraphDocument {
         id: 'start-1',
         type: 'start',
         position: { x: 10, y: 20 },
-        data: { label: 'Start', description: 'Entry', config: '{}' }
+        data: { label: 'Start', description: 'Entry', config: '{}' },
       },
       {
         id: 'task-1',
         type: 'task',
         position: { x: 120, y: 60 },
-        data: { label: 'Task', description: 'Do work', config: '{}' }
-      }
+        data: { label: 'Task', description: 'Do work', config: '{}' },
+      },
     ],
     edges: [],
-    viewport: { x: 0, y: 0, zoom: 1 }
+    viewport: { x: 0, y: 0, zoom: 1 },
   };
 }
 
@@ -86,8 +86,8 @@ function createDocumentWithEdgeChain(): GraphDocument {
         id: 'end-1',
         type: 'end',
         position: { x: 240, y: 120 },
-        data: { label: 'End', description: 'Exit', config: '{}' }
-      }
+        data: { label: 'End', description: 'Exit', config: '{}' },
+      },
     ],
     edges: [
       {
@@ -95,16 +95,16 @@ function createDocumentWithEdgeChain(): GraphDocument {
         type: 'default',
         source: 'start-1',
         target: 'task-1',
-        data: { label: 'Flow A', condition: '', lineStyle: 'solid' }
+        data: { label: 'Flow A', condition: '', lineStyle: 'solid' },
       },
       {
         id: 'edge-2',
         type: 'default',
         source: 'task-1',
         target: 'end-1',
-        data: { label: 'Flow B', condition: '', lineStyle: 'solid' }
-      }
-    ]
+        data: { label: 'Flow B', condition: '', lineStyle: 'solid' },
+      },
+    ],
   };
 }
 
@@ -117,7 +117,9 @@ describe('createDesignerCore - graph operations', () => {
     expect(core.getSnapshot().doc.nodes).toHaveLength(3);
 
     core.updateNode('task-1', { label: 'Task Updated' });
-    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task Updated');
+    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe(
+      'Task Updated',
+    );
 
     expect(added?.id).toBeTruthy();
     core.deleteNode(added!.id);
@@ -161,7 +163,9 @@ describe('createDesignerCore - graph operations', () => {
 
     core.restore();
     expect(core.getSnapshot().isDirty).toBe(false);
-    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task');
+    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe(
+      'Task',
+    );
 
     const exported = core.exportDocument();
     expect(exported).toContain('"name": "Example"');
@@ -181,11 +185,11 @@ describe('createDesignerCore - graph operations', () => {
           id: 'end-1',
           type: 'end',
           position: { x: 240, y: 120 },
-          data: { label: 'End', description: 'Exit', config: '{}' }
-        }
+          data: { label: 'End', description: 'Exit', config: '{}' },
+        },
       ],
       edges: [],
-      viewport: { x: 4.2, y: 5.5, zoom: 1.25 }
+      viewport: { x: 4.2, y: 5.5, zoom: 1.25 },
     });
 
     expect(core.getSnapshot().doc.name).toBe('Replaced');
@@ -195,7 +199,10 @@ describe('createDesignerCore - graph operations', () => {
   });
 
   it('rejects duplicate edges when allowMultiEdge is false', () => {
-    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfigNoMultiEdge());
+    const core = createDesignerCore(
+      createDocumentWithEdgeChain(),
+      createTestDesignerConfigNoMultiEdge(),
+    );
 
     const duplicateEdge = core.addEdge('start-1', 'task-1');
     expect(duplicateEdge).toBeNull();
@@ -227,7 +234,10 @@ describe('createDesignerCore - graph operations', () => {
   });
 
   it('supports reconnecting an edge through shared history and selection semantics', () => {
-    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig()) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+    const core = createDesignerCore(
+      createDocumentWithEdgeChain(),
+      createTestDesignerConfig(),
+    ) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
 
     core.selectEdge('edge-1');
     expect(typeof (core as any).reconnectEdge).toBe('function');
@@ -236,25 +246,28 @@ describe('createDesignerCore - graph operations', () => {
     expect(reconnected).toMatchObject({ ok: true });
     expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
       source: 'start-1',
-      target: 'end-1'
+      target: 'end-1',
     });
     expect(core.getSnapshot().selection.activeEdgeId).toBe('edge-1');
 
     core.undo();
     expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
       source: 'start-1',
-      target: 'task-1'
+      target: 'task-1',
     });
 
     core.redo();
     expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
       source: 'start-1',
-      target: 'end-1'
+      target: 'end-1',
     });
   });
 
   it('treats unchanged reconnect as a no-op that preserves the selected edge', () => {
-    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig()) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+    const core = createDesignerCore(
+      createDocumentWithEdgeChain(),
+      createTestDesignerConfig(),
+    ) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
 
     core.selectEdge('edge-1');
     const before = core.getSnapshot();
@@ -264,13 +277,16 @@ describe('createDesignerCore - graph operations', () => {
     expect(core.getSnapshot().selection.activeEdgeId).toBe('edge-1');
     expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
       source: 'start-1',
-      target: 'task-1'
+      target: 'task-1',
     });
     expect(core.getSnapshot().canUndo).toBe(before.canUndo);
   });
 
   it('rejects invalid reconnect attempts without mutating edges', () => {
-    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfigNoMultiEdge()) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+    const core = createDesignerCore(
+      createDocumentWithEdgeChain(),
+      createTestDesignerConfigNoMultiEdge(),
+    ) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
 
     const unknown = (core as any).reconnectEdge('missing-edge', 'task-1', 'end-1');
     expect(unknown).toMatchObject({ ok: false });
@@ -286,37 +302,52 @@ describe('createDesignerCore - graph operations', () => {
 
     expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-2')).toMatchObject({
       source: 'task-1',
-      target: 'end-1'
+      target: 'end-1',
     });
     expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
       source: 'start-1',
-      target: 'task-1'
+      target: 'task-1',
     });
   });
 
   it('tracks branch selection alongside the owning active node', () => {
-    const core = createDesignerCore({
-      id: 'doc-branches',
-      kind: 'flow',
-      name: 'Branches',
-      version: '1.0.0',
-      nodes: [
-        {
-          id: 'gateway-1',
-          type: 'task',
-          position: { x: 0, y: 0 },
-          data: {
-            label: 'Gateway',
-            branches: [
-              { id: 'b1', data: { label: 'Branch 1' }, childId: 'child-1', childType: 'task', childLabel: 'Child 1' },
-              { id: 'b2', data: { label: 'Branch 2' }, childId: 'child-2', childType: 'task', childLabel: 'Child 2' }
-            ]
-          }
-        }
-      ],
-      edges: [],
-      viewport: { x: 0, y: 0, zoom: 1 }
-    }, createTestDesignerConfig());
+    const core = createDesignerCore(
+      {
+        id: 'doc-branches',
+        kind: 'flow',
+        name: 'Branches',
+        version: '1.0.0',
+        nodes: [
+          {
+            id: 'gateway-1',
+            type: 'task',
+            position: { x: 0, y: 0 },
+            data: {
+              label: 'Gateway',
+              branches: [
+                {
+                  id: 'b1',
+                  data: { label: 'Branch 1' },
+                  childId: 'child-1',
+                  childType: 'task',
+                  childLabel: 'Child 1',
+                },
+                {
+                  id: 'b2',
+                  data: { label: 'Branch 2' },
+                  childId: 'child-2',
+                  childType: 'task',
+                  childLabel: 'Child 2',
+                },
+              ],
+            },
+          },
+        ],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      },
+      createTestDesignerConfig(),
+    );
 
     core.selectBranch('gateway-1', 'b2');
 

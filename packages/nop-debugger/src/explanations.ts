@@ -9,7 +9,7 @@ import type {
   NopNodeMetaExplanationQuery,
   NopNodeValueExplanation,
   NopNodeValueExplanationQuery,
-  NopScopeChainEntry
+  NopScopeChainEntry,
 } from './types';
 
 const MAX_EVIDENCE = 6;
@@ -25,11 +25,13 @@ function redactFieldValue(field: string, value: unknown, redaction: NormalizedRe
     return redactData(value, redaction);
   }
 
-  return redaction.redactValue?.({
-    key: field,
-    path: [field],
-    value
-  }) ?? redaction.mask;
+  return (
+    redaction.redactValue?.({
+      key: field,
+      path: [field],
+      value,
+    }) ?? redaction.mask
+  );
 }
 
 function summarizeValue(value: unknown) {
@@ -92,7 +94,7 @@ function getDependencyPaths(dependencyPaths: unknown, wildcard: unknown) {
   if (paths.length === 0 && !wildcard) {
     return {
       paths: [] as string[],
-      truncated: false
+      truncated: false,
     };
   }
 
@@ -100,7 +102,7 @@ function getDependencyPaths(dependencyPaths: unknown, wildcard: unknown) {
   const rawPaths = [...paths, ...extra];
   return {
     paths: rawPaths.slice(0, MAX_DEPENDENCY_PATHS),
-    truncated: rawPaths.length > MAX_DEPENDENCY_PATHS
+    truncated: rawPaths.length > MAX_DEPENDENCY_PATHS,
   };
 }
 
@@ -117,7 +119,7 @@ function getNodeSubject(inspect: NopComponentInspectResult | undefined) {
   return {
     cid: inspect?.cid,
     nodeId: inspect?.nodeId,
-    path: inspect?.path
+    path: inspect?.path,
   };
 }
 
@@ -125,11 +127,13 @@ function getNodeRelated(inspect: NopComponentInspectResult | undefined) {
   return {
     cid: inspect?.cid,
     nodeId: inspect?.nodeId,
-    path: inspect?.path
+    path: inspect?.path,
   };
 }
 
-function buildMissingInspectValueExplanation(query: NopNodeValueExplanationQuery): NopNodeValueExplanation {
+function buildMissingInspectValueExplanation(
+  query: NopNodeValueExplanationQuery,
+): NopNodeValueExplanation {
   return {
     kind: 'value',
     subject: { cid: query.cid, field: query.field ?? 'value' },
@@ -141,8 +145,8 @@ function buildMissingInspectValueExplanation(query: NopNodeValueExplanationQuery
     truncated: false,
     data: {
       field: query.field ?? 'value',
-      valueSource: 'unknown'
-    }
+      valueSource: 'unknown',
+    },
   };
 }
 
@@ -173,10 +177,11 @@ export function explainNodeValue(args: {
       summary: `form state contains ${field}`,
       cid: inspect.cid,
       nodeId: inspect.nodeId,
-      path: inspect.path
+      path: inspect.path,
     });
   } else {
-    const directScopeHit = inspect.scopeData && Object.prototype.hasOwnProperty.call(inspect.scopeData, field);
+    const directScopeHit =
+      inspect.scopeData && Object.prototype.hasOwnProperty.call(inspect.scopeData, field);
     if (directScopeHit) {
       value = inspect.scopeData?.[field];
       valueSource = 'current-scope';
@@ -186,7 +191,7 @@ export function explainNodeValue(args: {
         summary: `${field} resolved from current scope snapshot`,
         cid: inspect.cid,
         nodeId: inspect.nodeId,
-        path: inspect.path
+        path: inspect.path,
       });
     } else if (sourceHints?.fieldName === field && sourceHints.formValue !== undefined) {
       value = sourceHints.formValue;
@@ -196,7 +201,7 @@ export function explainNodeValue(args: {
         summary: `${field} resolved from source hint form value`,
         cid: inspect.cid,
         nodeId: inspect.nodeId,
-        path: inspect.path
+        path: inspect.path,
       });
     } else if (sourceHints?.fieldName === field && sourceHints.scopeValue !== undefined) {
       value = sourceHints.scopeValue;
@@ -206,22 +211,30 @@ export function explainNodeValue(args: {
         summary: `${field} resolved from source hint scope value`,
         cid: inspect.cid,
         nodeId: inspect.nodeId,
-        path: inspect.path
+        path: inspect.path,
       });
     } else {
-      const scopeIndex = inspect.scopeChain?.findIndex((entry) => Object.prototype.hasOwnProperty.call(entry.data, field)) ?? -1;
+      const scopeIndex =
+        inspect.scopeChain?.findIndex((entry) =>
+          Object.prototype.hasOwnProperty.call(entry.data, field),
+        ) ?? -1;
       if (scopeIndex >= 0) {
         value = inspect.scopeChain?.[scopeIndex]?.data?.[field];
-        scopeLabel = inspect.scopeChain?.[scopeIndex] ? summarizeScopeEntry(inspect.scopeChain[scopeIndex]) : undefined;
+        scopeLabel = inspect.scopeChain?.[scopeIndex]
+          ? summarizeScopeEntry(inspect.scopeChain[scopeIndex])
+          : undefined;
         valueSource = scopeIndex === 0 ? 'current-scope' : 'ancestor-scope';
         truncated ||= pushEvidence(evidenceRefs, {
           kind: 'scope',
           summary: `${field} resolved from ${scopeLabel ?? 'scope chain'}`,
           cid: inspect.cid,
           nodeId: inspect.nodeId,
-          path: inspect.path
+          path: inspect.path,
         });
-      } else if (inspect.propsSummary && Object.prototype.hasOwnProperty.call(inspect.propsSummary, field)) {
+      } else if (
+        inspect.propsSummary &&
+        Object.prototype.hasOwnProperty.call(inspect.propsSummary, field)
+      ) {
         value = inspect.propsSummary[field];
         valueSource = 'resolved-props';
         truncated ||= pushEvidence(evidenceRefs, {
@@ -229,9 +242,12 @@ export function explainNodeValue(args: {
           summary: `${field} exists in resolved props snapshot`,
           cid: inspect.cid,
           nodeId: inspect.nodeId,
-          path: inspect.path
+          path: inspect.path,
         });
-      } else if (inspect.metaSummary && Object.prototype.hasOwnProperty.call(inspect.metaSummary, field)) {
+      } else if (
+        inspect.metaSummary &&
+        Object.prototype.hasOwnProperty.call(inspect.metaSummary, field)
+      ) {
         value = inspect.metaSummary[field];
         valueSource = 'resolved-meta';
         truncated ||= pushEvidence(evidenceRefs, {
@@ -239,28 +255,36 @@ export function explainNodeValue(args: {
           summary: `${field} exists in resolved meta snapshot`,
           cid: inspect.cid,
           nodeId: inspect.nodeId,
-          path: inspect.path
+          path: inspect.path,
         });
       } else {
         valueSource = 'unknown';
-        limitations.push(`The debugger snapshot does not expose a reliable current source for ${field}.`);
+        limitations.push(
+          `The debugger snapshot does not expose a reliable current source for ${field}.`,
+        );
       }
     }
   }
 
   const redactedValue = redactFieldValue(field, value, redaction);
-  const answer = valueSource === 'unknown'
-    ? `${field} is not reliably explainable from the current debugger snapshot.`
-    : `${field} currently comes from ${valueSource} and resolves to ${summarizeValue(redactedValue)}.`;
+  const answer =
+    valueSource === 'unknown'
+      ? `${field} is not reliably explainable from the current debugger snapshot.`
+      : `${field} currently comes from ${valueSource} and resolves to ${summarizeValue(redactedValue)}.`;
 
   return {
     kind: 'value',
     subject: {
       ...getNodeSubject(inspect),
-      field
+      field,
     },
     answer,
-    confidence: valueSource === 'unknown' ? 'low' : valueSource === 'ancestor-scope' || valueSource === 'resolved-props' ? 'medium' : 'high',
+    confidence:
+      valueSource === 'unknown'
+        ? 'low'
+        : valueSource === 'ancestor-scope' || valueSource === 'resolved-props'
+          ? 'medium'
+          : 'high',
     limitations,
     evidenceRefs,
     related: getNodeRelated(inspect),
@@ -269,8 +293,8 @@ export function explainNodeValue(args: {
       field,
       valueSource,
       value: redactedValue,
-      scopeLabel
-    }
+      scopeLabel,
+    },
   };
 }
 
@@ -278,20 +302,20 @@ function readMetaField(inspect: NopComponentInspectResult, field: NopNodeMetaExp
   if (field in (inspect.metaSummary ?? {})) {
     return {
       source: 'resolved-meta' as const,
-      value: inspect.metaSummary?.[field]
+      value: inspect.metaSummary?.[field],
     };
   }
 
   if (field in (inspect.propsSummary ?? {})) {
     return {
       source: 'resolved-props' as const,
-      value: inspect.propsSummary?.[field]
+      value: inspect.propsSummary?.[field],
     };
   }
 
   return {
     source: 'unknown' as const,
-    value: undefined
+    value: undefined,
   };
 }
 
@@ -308,15 +332,17 @@ export function explainNodeMeta(args: {
       subject: { cid: query.cid, field: query.field },
       answer: 'Node inspect data is unavailable, so meta causality cannot be explained yet.',
       confidence: 'low',
-      limitations: ['The node is not currently inspectable through the debugger component registry.'],
+      limitations: [
+        'The node is not currently inspectable through the debugger component registry.',
+      ],
       evidenceRefs: [],
       related: { cid: query.cid },
       truncated: false,
       data: {
         field: query.field,
         source: 'unknown',
-        dependencyPaths: []
-      }
+        dependencyPaths: [],
+      },
     };
   }
 
@@ -327,7 +353,7 @@ export function explainNodeMeta(args: {
   const sourceHints = getSourceHints(inspect);
   const dependencyInfo = getDependencyPaths(
     nodeStateDebug?.metaDependencyPaths,
-    nodeStateDebug?.metaDependencyWildcard
+    nodeStateDebug?.metaDependencyWildcard,
   );
   let truncated = dependencyInfo.truncated;
 
@@ -337,15 +363,18 @@ export function explainNodeMeta(args: {
       summary: `${query.field} is present in ${resolved.source}`,
       cid: inspect.cid,
       nodeId: inspect.nodeId,
-      path: inspect.path
+      path: inspect.path,
     });
   } else {
-    limitations.push(`The debugger snapshot does not expose ${query.field} in resolved meta or resolved props.`);
+    limitations.push(
+      `The debugger snapshot does not expose ${query.field} in resolved meta or resolved props.`,
+    );
   }
 
-  const metaRule = (query.field === 'visible' || query.field === 'hidden' || query.field === 'disabled')
-    ? sourceHints?.metaRules?.[query.field]
-    : undefined;
+  const metaRule =
+    query.field === 'visible' || query.field === 'hidden' || query.field === 'disabled'
+      ? sourceHints?.metaRules?.[query.field]
+      : undefined;
 
   if (metaRule) {
     truncated ||= pushEvidence(evidenceRefs, {
@@ -353,7 +382,7 @@ export function explainNodeMeta(args: {
       summary: `${query.field} rule: ${metaRule}`,
       cid: inspect.cid,
       nodeId: inspect.nodeId,
-      path: inspect.path
+      path: inspect.path,
     });
   }
 
@@ -363,10 +392,12 @@ export function explainNodeMeta(args: {
       summary: `meta dependencies include ${dependencyInfo.paths.join(', ')}`,
       cid: inspect.cid,
       nodeId: inspect.nodeId,
-      path: inspect.path
+      path: inspect.path,
     });
   } else {
-    limitations.push('Meta dependency paths are unavailable, so causality is based on current resolved snapshots only.');
+    limitations.push(
+      'Meta dependency paths are unavailable, so causality is based on current resolved snapshots only.',
+    );
   }
 
   const redactedValue = redactData(resolved.value, redaction);
@@ -375,12 +406,14 @@ export function explainNodeMeta(args: {
     kind: 'meta',
     subject: {
       ...getNodeSubject(inspect),
-      field: query.field
+      field: query.field,
     },
-    answer: resolved.source === 'unknown'
-      ? `${query.field} cannot be reliably attributed from the current debugger snapshot.`
-      : `${query.field} currently resolves from ${resolved.source} as ${summarizeValue(redactedValue)}.${metaRule ? ` Rule: ${metaRule}` : ''}` ,
-    confidence: resolved.source === 'unknown' ? 'low' : dependencyInfo.paths.length > 0 ? 'high' : 'medium',
+    answer:
+      resolved.source === 'unknown'
+        ? `${query.field} cannot be reliably attributed from the current debugger snapshot.`
+        : `${query.field} currently resolves from ${resolved.source} as ${summarizeValue(redactedValue)}.${metaRule ? ` Rule: ${metaRule}` : ''}`,
+    confidence:
+      resolved.source === 'unknown' ? 'low' : dependencyInfo.paths.length > 0 ? 'high' : 'medium',
     limitations,
     evidenceRefs,
     related: getNodeRelated(inspect),
@@ -389,7 +422,7 @@ export function explainNodeMeta(args: {
       field: query.field,
       source: resolved.source,
       value: redactedValue,
-      dependencyPaths: dependencyInfo.paths
-    }
+      dependencyPaths: dependencyInfo.paths,
+    },
   };
 }

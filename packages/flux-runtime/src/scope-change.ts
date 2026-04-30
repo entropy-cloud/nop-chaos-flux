@@ -29,7 +29,9 @@ function pathsOverlap(a: string, b: string): boolean {
   return false;
 }
 
-export function createRootDependencySet(paths: readonly string[] | undefined): ScopeDependencySet | undefined {
+export function createRootDependencySet(
+  paths: readonly string[] | undefined,
+): ScopeDependencySet | undefined {
   if (!paths || paths.length === 0) {
     return undefined;
   }
@@ -45,21 +47,24 @@ export function createRootDependencySet(paths: readonly string[] | undefined): S
   return {
     paths: wildcard ? ['*'] : normalizedPaths,
     wildcard,
-    broadAccess: wildcard
+    broadAccess: wildcard,
   };
 }
 
 export function filterScopeChangeByIgnoredRoots(
   change: ScopeChange | undefined,
-  ignoredPaths: readonly string[] | Set<string>
+  ignoredPaths: readonly string[] | Set<string>,
 ): ScopeChange | undefined {
   if (!change) {
     return change;
   }
 
-  const ignoredRoots = ignoredPaths instanceof Set
-    ? ignoredPaths
-    : (ignoredPaths.length === 0 ? undefined : new Set(normalizeRootPaths(ignoredPaths)));
+  const ignoredRoots =
+    ignoredPaths instanceof Set
+      ? ignoredPaths
+      : ignoredPaths.length === 0
+        ? undefined
+        : new Set(normalizeRootPaths(ignoredPaths));
 
   if (!ignoredRoots || ignoredRoots.size === 0) {
     return change;
@@ -84,13 +89,13 @@ export function filterScopeChangeByIgnoredRoots(
 
   return {
     ...change,
-    paths: filteredPaths
+    paths: filteredPaths,
   };
 }
 
 export function scopeChangeHitsDependencies(
   change: ScopeChange | undefined,
-  dependencies: ScopeDependencySet | undefined
+  dependencies: ScopeDependencySet | undefined,
 ): boolean {
   if (!change || !dependencies) {
     return false;

@@ -2,7 +2,7 @@ import type { TemplateNode, XuiImportSpec } from '@nop-chaos/flux-core';
 
 export function resolveFrameWrapMode(
   definitionWrap: boolean | undefined,
-  schemaFrameWrap: boolean | 'label' | 'group' | 'none' | undefined
+  schemaFrameWrap: boolean | 'label' | 'group' | 'none' | undefined,
 ): 'label' | 'group' | 'none' {
   if (!definitionWrap) {
     return 'none';
@@ -45,7 +45,7 @@ export function collectSchemaImports(input: unknown): readonly XuiImportSpec[] {
         const key = JSON.stringify({
           from: normalized.from ?? '',
           as: normalized.as ?? '',
-          options: normalized.options ?? null
+          options: normalized.options ?? null,
         });
         if (!seen.has(key)) {
           seen.set(key, normalized);
@@ -62,13 +62,16 @@ export function collectSchemaImports(input: unknown): readonly XuiImportSpec[] {
   return Array.from(seen.values());
 }
 
-export function getNodeSchemaFrameWrap(node: TemplateNode): boolean | 'label' | 'group' | 'none' | undefined {
+export function getNodeSchemaFrameWrap(
+  node: TemplateNode,
+): boolean | 'label' | 'group' | 'none' | undefined {
   return (node.schema as { frameWrap?: boolean | 'label' | 'group' | 'none' }).frameWrap;
 }
 
 export function shouldWarnOnImportFailure(): boolean {
-  const nodeEnv = 'process' in globalThis
-    ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
-    : undefined;
+  const nodeEnv =
+    'process' in globalThis
+      ? (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV
+      : undefined;
   return nodeEnv !== 'production';
 }

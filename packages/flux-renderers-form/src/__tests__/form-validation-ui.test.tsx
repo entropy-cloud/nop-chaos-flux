@@ -31,36 +31,36 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
         schema={{
           type: 'form',
           data: {
-            email: ''
+            email: '',
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/email',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'input-email',
               name: 'email',
               label: 'Email',
-              required: true
-            }
+              required: true,
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit email',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit email'));
@@ -72,7 +72,13 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
   it('validates fields on blur and renders async validating feedback', async () => {
     submitCalls.length = 0;
     cleanup();
-    let resolveValidation: ((value: { ok: boolean; status: number; data: { valid: boolean; message?: string } }) => void) | undefined;
+    let resolveValidation:
+      | ((value: {
+          ok: boolean;
+          status: number;
+          data: { valid: boolean; message?: string };
+        }) => void)
+      | undefined;
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
     render(
@@ -81,7 +87,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
         schema={{
           type: 'form',
           data: {
-            username: 'alice'
+            username: 'alice',
           },
           body: [
             {
@@ -93,13 +99,13 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
                   action: 'ajax',
                   args: {
                     url: '/api/validate-username',
-                    method: 'post'
-                  }
+                    method: 'post',
+                  },
                 },
-                message: 'Username already exists'
-              }
-            }
-          ]
+                message: 'Username already exists',
+              },
+            },
+          ],
         }}
         env={{
           ...env,
@@ -114,12 +120,12 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
             return {
               ok: true,
               status: 200,
-              data: ctx.scope.readOwn() as T
+              data: ctx.scope.readOwn() as T,
             };
-          }
+          },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const usernameInput = screen.getByDisplayValue('alice');
@@ -132,8 +138,8 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
       status: 200,
       data: {
         valid: false,
-        message: 'Username already exists'
-      }
+        message: 'Username already exists',
+      },
     });
 
     await waitFor(() => {
@@ -151,20 +157,20 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
         schema={{
           type: 'form',
           data: {
-            email: ''
+            email: '',
           },
           body: [
             {
               type: 'input-email',
               name: 'email',
               label: 'Email',
-              required: true
-            }
-          ]
+              required: true,
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const input = screen.getByLabelText(/Email/);
@@ -197,11 +203,11 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
         schema={{
           type: 'form',
           body: [{ type: 'input-text', name: 'email', label: 'Email' }],
-          actions: [{ type: 'button', label: 'Submit' }]
+          actions: [{ type: 'button', label: 'Submit' }],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const form = container.querySelector('section.nop-form');
@@ -220,11 +226,11 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
         schemaUrl="test://form/validation-ui"
         schema={{
           type: 'form',
-          body: [{ type: 'input-text', name: 'email', label: 'Email' }]
+          body: [{ type: 'input-text', name: 'email', label: 'Email' }],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const form = container.querySelector('section.nop-form');
@@ -245,36 +251,36 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
           validateOn: 'submit',
           showErrorOn: 'visited',
           data: {
-            email: ''
+            email: '',
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/email',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'input-email',
               name: 'email',
               label: 'Email',
-              required: true
-            }
+              required: true,
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit email',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(screen.queryByText('Email is required')).toBeNull();
@@ -300,7 +306,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
           validateOn: ['blur', 'change', 'submit'],
           showErrorOn: 'submit',
           data: {
-            email: ''
+            email: '',
           },
           body: [
             {
@@ -308,13 +314,13 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
               name: 'email',
               label: 'Email',
               minLength: 5,
-              showErrorOn: 'dirty'
-            }
-          ]
+              showErrorOn: 'dirty',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const input = screen.getByLabelText(/Email/);
@@ -338,36 +344,36 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
           type: 'form',
           validateOn: 'submit',
           data: {
-            email: ''
+            email: '',
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/email',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'input-email',
               name: 'email',
               label: 'Email',
-              required: true
-            }
+              required: true,
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit email',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const input = screen.getByLabelText(/Email/);
@@ -398,7 +404,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
           type: 'form',
           validateOn: 'submit',
           data: {
-            email: ''
+            email: '',
           },
           body: [
             {
@@ -406,13 +412,13 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
               name: 'email',
               label: 'Email',
               required: true,
-              validateOn: ['change', 'submit']
-            }
-          ]
+              validateOn: ['change', 'submit'],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const input = screen.getByLabelText(/Email/);
@@ -428,7 +434,10 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
   it('validates page-owned root fields outside form on blur', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+    ]);
 
     render(
       <SchemaRenderer
@@ -440,13 +449,13 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
               type: 'input-email',
               name: 'email',
               label: 'Email',
-              required: true
-            }
-          ]
+              required: true,
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const input = screen.getByLabelText(/Email/);

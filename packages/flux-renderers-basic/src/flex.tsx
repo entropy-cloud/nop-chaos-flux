@@ -43,7 +43,7 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
         justify === 'between' && 'justify-between',
         justify === 'around' && 'justify-around',
         props.meta.className,
-        gap.className
+        gap.className,
       )}
       style={gap.style}
       data-testid={props.meta.testid || undefined}

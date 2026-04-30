@@ -80,8 +80,12 @@ describe('createNormalizedActionEvent', () => {
       nativeEvent,
       currentTarget: target,
       target,
-      preventDefault() { nativeEvent.preventDefault(); },
-      stopPropagation() { nativeEvent.stopPropagation(); },
+      preventDefault() {
+        nativeEvent.preventDefault();
+      },
+      stopPropagation() {
+        nativeEvent.stopPropagation();
+      },
     };
 
     const result = createNormalizedActionEvent(synthetic);
@@ -230,7 +234,7 @@ describe('createHelpers', () => {
     helpers.dispatch({ action: 'test' });
     expect(base.runtime.dispatch).toHaveBeenCalledWith(
       { action: 'test' },
-      expect.objectContaining({ runtime: base.runtime, scope: base.scope })
+      expect.objectContaining({ runtime: base.runtime, scope: base.scope }),
     );
   });
 
@@ -240,7 +244,7 @@ describe('createHelpers', () => {
     helpers.dispatch({ action: 'test' }, { dialogId: 'd1' });
     expect(base.runtime.dispatch).toHaveBeenCalledWith(
       { action: 'test' },
-      expect.objectContaining({ dialogId: 'd1' })
+      expect.objectContaining({ dialogId: 'd1' }),
     );
   });
 
@@ -269,7 +273,11 @@ describe('createHelpers', () => {
     const base = makeBase();
     const helpers = createHelpers(base);
     helpers.createScope({ key: 'value' });
-    expect(base.runtime.createChildScope).toHaveBeenCalledWith(base.scope, { key: 'value' }, undefined);
+    expect(base.runtime.createChildScope).toHaveBeenCalledWith(
+      base.scope,
+      { key: 'value' },
+      undefined,
+    );
   });
 
   it('executeSource calls runtime.executeSource', () => {
@@ -278,7 +286,7 @@ describe('createHelpers', () => {
     const source = { type: 'data-source', action: 'ajax' } as any;
     helpers.executeSource(source);
     expect(base.runtime.executeSource).toHaveBeenCalledWith(
-      expect.objectContaining({ source, scope: base.scope })
+      expect.objectContaining({ source, scope: base.scope }),
     );
   });
 
@@ -289,7 +297,7 @@ describe('createHelpers', () => {
     const source = { type: 'data-source', action: 'ajax' } as any;
     helpers.executeSource(source, { scope: customScope });
     expect(base.runtime.executeSource).toHaveBeenCalledWith(
-      expect.objectContaining({ source, scope: customScope })
+      expect.objectContaining({ source, scope: customScope }),
     );
   });
 

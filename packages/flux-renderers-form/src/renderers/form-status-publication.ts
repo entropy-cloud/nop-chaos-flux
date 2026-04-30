@@ -61,7 +61,7 @@ export function usePublishedFormStatus(args: {
         hasErrors,
         errorCount,
         valid: !hasErrors,
-        invalid: hasErrors
+        invalid: hasErrors,
       };
 
       lastSummary = summary;

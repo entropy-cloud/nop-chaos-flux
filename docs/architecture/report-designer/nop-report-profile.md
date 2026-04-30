@@ -64,7 +64,7 @@ const nopReportProfile: ReportDesignerProfile = {
   fieldDropIds: ['nop-report-cell-binding'],
   previewId: 'nop-report-preview',
   codecId: 'nop-report-xpt-codec',
-  expressionEditorId: 'nop-report-expression-editor'
+  expressionEditorId: 'nop-report-expression-editor',
 };
 ```
 

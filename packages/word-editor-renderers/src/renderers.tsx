@@ -1,4 +1,8 @@
-import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
+import {
+  registerRendererDefinitions,
+  type RendererDefinition,
+  type RendererRegistry,
+} from '@nop-chaos/flux-core';
 import { WordEditorPage } from './word-editor-page.js';
 import { wordEditorHostContract } from './word-editor-manifest.js';
 export { defineWordEditorPageSchema } from './types.js';

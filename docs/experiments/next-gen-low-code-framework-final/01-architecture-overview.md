@@ -23,13 +23,13 @@
 
 ## 3. 分层
 
-| Layer | Owns | Output |
-| --- | --- | --- |
-| Authoring | round-trip DSL、编辑器元数据、继承、组合、profile | Authoring Document |
-| Assembly | 静态裁剪、i18n、默认展开、引用解析、manifest 装配 | Assembled Program |
-| Compiler | template/value/action/validation/resource/reaction/manifest 编译 | Execution Package |
-| Execution Kernel | session、scope、dependency、transaction、async governance、owner substrate | Runtime Session |
-| Host / Domain | React host、designer/report/word/spreadsheet domain、bridge、shell | Concrete App |
+| Layer            | Owns                                                                       | Output             |
+| ---------------- | -------------------------------------------------------------------------- | ------------------ |
+| Authoring        | round-trip DSL、编辑器元数据、继承、组合、profile                          | Authoring Document |
+| Assembly         | 静态裁剪、i18n、默认展开、引用解析、manifest 装配                          | Assembled Program  |
+| Compiler         | template/value/action/validation/resource/reaction/manifest 编译           | Execution Package  |
+| Execution Kernel | session、scope、dependency、transaction、async governance、owner substrate | Runtime Session    |
+| Host / Domain    | React host、designer/report/word/spreadsheet domain、bridge、shell         | Concrete App       |
 
 顶层规则：
 
@@ -39,15 +39,15 @@
 
 ## 4. 顶层公开语义原语
 
-| Primitive | 问题 | Owns |
-| --- | --- | --- |
-| `Template` | 结构是什么 | 结构树、region、生命周期锚点、renderer 选择 |
-| `Scope` | 这里能看到什么数据 | 词法可见性、shadowing、own writes |
-| `Value` | 这里怎么读值/派生值 | literal、expr、template、array、object、anonymous source |
-| `Resource` | runtime 是否拥有一个值的生产和发布 | lifecycle、publish、refresh、status |
-| `Reaction` | watched change 是否触发后果 | watch、when、debounce、once、dispatch |
-| `Capability` | 谁能执行副作用 | built-in、namespaced、instance-targeted、host-targeted |
-| `Host Projection` | 哪些 host-owned 只读快照可见 | readonly snapshot admission |
+| Primitive         | 问题                               | Owns                                                     |
+| ----------------- | ---------------------------------- | -------------------------------------------------------- |
+| `Template`        | 结构是什么                         | 结构树、region、生命周期锚点、renderer 选择              |
+| `Scope`           | 这里能看到什么数据                 | 词法可见性、shadowing、own writes                        |
+| `Value`           | 这里怎么读值/派生值                | literal、expr、template、array、object、anonymous source |
+| `Resource`        | runtime 是否拥有一个值的生产和发布 | lifecycle、publish、refresh、status                      |
+| `Reaction`        | watched change 是否触发后果        | watch、when、debounce、once、dispatch                    |
+| `Capability`      | 谁能执行副作用                     | built-in、namespaced、instance-targeted、host-targeted   |
+| `Host Projection` | 哪些 host-owned 只读快照可见       | readonly snapshot admission                              |
 
 ## 5. 为什么 `Owner` 不是 primitive
 

@@ -5,6 +5,7 @@ A self-referential development loop plugin for OpenCode that continues until ver
 ## Overview
 
 This plugin implements a ULTRAWORK-style loop that automatically continues working on a task until:
+
 1. The task emits a completion promise (default: `<promise>DONE</promise>`)
 2. For ULTRAWORK mode: Oracle verification confirms the task is complete
 
@@ -13,6 +14,7 @@ This plugin implements a ULTRAWORK-style loop that automatically continues worki
 ### Method 1: Local Plugin (Recommended)
 
 1. Build the plugin:
+
    ```bash
    cd .opencode/plugins/nop-ralph-loop-plugin
    bun install
@@ -22,9 +24,7 @@ This plugin implements a ULTRAWORK-style loop that automatically continues worki
 2. Add to your OpenCode config (`opencode.json` or `opencode.toml`):
    ```json
    {
-     "plugin": [
-       "file://./.opencode/plugins/nop-ralph-loop-plugin"
-     ]
+     "plugin": ["file://./.opencode/plugins/nop-ralph-loop-plugin"]
    }
    ```
 
@@ -46,6 +46,7 @@ Starts a loop that continues until you emit the completion promise.
 ```
 
 **Options:**
+
 - `--completion-promise=TEXT` - Promise tag to emit when done (default: `DONE`)
 - `--max-iterations=N` - Maximum loop iterations (default: 100)
 - `--strategy=reset|continue` - `reset`: new session per iteration, `continue`: same session (default: `continue`)
@@ -59,6 +60,7 @@ Starts an unbounded loop that requires Oracle verification before completion.
 ```
 
 **Key Differences from Standard Loop:**
+
 - **No iteration limit** - continues until verified
 - **Oracle verification required** - after you emit `<promise>DONE</promise>`, the system will require Oracle to verify
 - **Loop only ends when Oracle emits `<promise>VERIFIED</promise>`**
@@ -76,7 +78,7 @@ Cancels the currently active NOP Ralph Loop.
 1. **Start**: User invokes `/nop-ralph-loop` or `/nop-ulw-loop` with task description
 2. **Work**: Agent works on the task
 3. **Idle Detection**: When session becomes idle, plugin checks for completion
-4. **Completion Check**: 
+4. **Completion Check**:
    - First checks transcript file (fast)
    - Falls back to session messages API
 5. **Continue or Complete**:
@@ -96,11 +98,13 @@ Cancels the currently active NOP Ralph Loop.
 ## State Persistence
 
 Loop state is persisted in:
+
 ```
 .nop/ralph-loop.local.md
 ```
 
 State includes:
+
 - Active status
 - Current iteration
 - Completion promise
@@ -111,16 +115,19 @@ State includes:
 ## Example Usage
 
 ### Standard Loop (max 50 iterations)
+
 ```
 /nop-ralph-loop "Implement user authentication with JWT" --max-iterations=50
 ```
 
 ### ULTRAWORK Loop (verified completion)
+
 ```
 /nop-ulw-loop "Refactor the payment processing module to handle edge cases"
 ```
 
 ### Custom completion promise
+
 ```
 /nop-ralph-loop "Write tests for UserService" --completion-promise=TESTS_DONE
 ```
@@ -128,6 +135,7 @@ State includes:
 ## Integration with Other Skills
 
 Works well with:
+
 - `nop-git-master` - For atomic commits during iterations
 - `nop-task-planner` - For breaking down complex tasks
 - `nop-orm-modeler` - For database-related work
@@ -140,13 +148,14 @@ The plugin uses these defaults:
 const DEFAULT_CONFIG: RalphLoopConfig = {
   enabled: true,
   default_max_iterations: 100,
-  default_strategy: "continue",
-}
+  default_strategy: 'continue',
+};
 ```
 
 ## Debugging
 
 Logs are written to:
+
 ```
 /tmp/nop-ralph-loop.log
 ```

@@ -1,7 +1,13 @@
 import React from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ApiSchema, ApiRequestContext, RendererDefinition, RendererEnv, FormRuntime } from '@nop-chaos/flux-core';
+import type {
+  ApiSchema,
+  ApiRequestContext,
+  RendererDefinition,
+  RendererEnv,
+  FormRuntime,
+} from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -17,10 +23,10 @@ const env: RendererEnv = {
     return {
       ok: true,
       status: 200,
-      data: ctx.scope.readOwn() as T
+      data: ctx.scope.readOwn() as T,
     };
   },
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 let capturedForm: FormRuntime | undefined;
@@ -35,7 +41,7 @@ function FormHandleProbe() {
 
 const formHandleProbeRenderer: RendererDefinition = {
   type: 'form-handle-probe',
-  component: FormHandleProbe
+  component: FormHandleProbe,
 };
 
 const PlainScopeSchemaRenderer = createSchemaRenderer(allFormDefs);
@@ -43,14 +49,11 @@ const PlainScopeSchemaRenderer = createSchemaRenderer(allFormDefs);
 const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: (props) => (
-    <button
-      type="button"
-      onClick={() => void props.events.onClick?.()}
-    >
+    <button type="button" onClick={() => void props.events.onClick?.()}>
       {String(props.props.label ?? 'Button')}
     </button>
   ),
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 function PlainScopeArrayHost() {
@@ -66,7 +69,7 @@ function PlainScopeArrayHost() {
         schema={{
           type: 'array-editor',
           name: 'items',
-          label: 'Items'
+          label: 'Items',
         }}
         data={data}
         env={env}
@@ -77,7 +80,9 @@ function PlainScopeArrayHost() {
 }
 
 function PlainScopeKeyValueHost() {
-  const [data, setData] = React.useState({ metadata: [{ id: 'pair-0', key: 'env', value: 'prod' }] });
+  const [data, setData] = React.useState({
+    metadata: [{ id: 'pair-0', key: 'env', value: 'prod' }],
+  });
 
   return (
     <div>
@@ -92,7 +97,7 @@ function PlainScopeKeyValueHost() {
         schema={{
           type: 'key-value',
           name: 'metadata',
-          label: 'Metadata'
+          label: 'Metadata',
         }}
         data={data}
         env={env}
@@ -110,7 +115,11 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
   });
 
   it('array-editor UI should reflect values after form.reset()', async () => {
-    const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer, formHandleProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...allFormDefs,
+      buttonRenderer,
+      formHandleProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -118,23 +127,23 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
         schema={{
           type: 'form',
           data: {
-            items: [{ value: 'alice' }]
+            items: [{ value: 'alice' }],
           },
           body: [
             {
               type: 'array-editor',
               name: 'items',
-              label: 'Items'
+              label: 'Items',
             },
             {
               type: 'form-handle-probe',
-              name: '_probe'
-            }
-          ]
+              name: '_probe',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const input = screen.getByPlaceholderText('Item 1') as HTMLInputElement;
@@ -152,7 +161,11 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
   });
 
   it('array-editor UI should reflect values after form.setValue()', async () => {
-    const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer, formHandleProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...allFormDefs,
+      buttonRenderer,
+      formHandleProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -160,23 +173,23 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
         schema={{
           type: 'form',
           data: {
-            items: [{ value: 'alice' }]
+            items: [{ value: 'alice' }],
           },
           body: [
             {
               type: 'array-editor',
               name: 'items',
-              label: 'Items'
+              label: 'Items',
             },
             {
               type: 'form-handle-probe',
-              name: '_probe'
-            }
-          ]
+              name: '_probe',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const input = screen.getByPlaceholderText('Item 1') as HTMLInputElement;
@@ -194,7 +207,11 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
   });
 
   it('key-value UI should reflect values after form.reset()', async () => {
-    const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer, formHandleProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...allFormDefs,
+      buttonRenderer,
+      formHandleProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -202,23 +219,23 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
         schema={{
           type: 'form',
           data: {
-            metadata: [{ key: 'env', value: 'prod' }]
+            metadata: [{ key: 'env', value: 'prod' }],
           },
           body: [
             {
               type: 'key-value',
               name: 'metadata',
-              label: 'Metadata'
+              label: 'Metadata',
             },
             {
               type: 'form-handle-probe',
-              name: '_probe'
-            }
-          ]
+              name: '_probe',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const keyInput = screen.getByPlaceholderText('Key') as HTMLInputElement;
@@ -243,7 +260,11 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
   });
 
   it('key-value UI should reflect values after form.setValue()', async () => {
-    const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer, formHandleProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...allFormDefs,
+      buttonRenderer,
+      formHandleProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -251,23 +272,23 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
         schema={{
           type: 'form',
           data: {
-            metadata: [{ key: 'env', value: 'prod' }]
+            metadata: [{ key: 'env', value: 'prod' }],
           },
           body: [
             {
               type: 'key-value',
               name: 'metadata',
-              label: 'Metadata'
+              label: 'Metadata',
             },
             {
               type: 'form-handle-probe',
-              name: '_probe'
-            }
-          ]
+              name: '_probe',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const keyInput = screen.getByPlaceholderText('Key') as HTMLInputElement;

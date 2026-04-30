@@ -16,9 +16,7 @@ export function formatSQL(
 ): string {
   if (!config) return sql;
 
-  const resolved: SQLFormatConfig = config === true
-    ? { enabled: true }
-    : config;
+  const resolved: SQLFormatConfig = config === true ? { enabled: true } : config;
 
   return sqlFormat(sql, {
     language: resolved.language ?? DIALECT_MAP[dialect ?? 'standard'] ?? 'sql',

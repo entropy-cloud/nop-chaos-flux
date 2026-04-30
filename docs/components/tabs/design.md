@@ -159,27 +159,27 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 建议字段分类：
 
-| 字段 | 语义 | 说明 |
-| --- | --- | --- |
-| `value` | value | 当前激活项，对齐 UI primitive 的 value 语义 |
-| `defaultValue` | value | 初始化默认值，对齐 UI primitive 的 defaultValue |
-| `items` | ignored 或 renderer-owned deep field | renderer 自身按 item 子结构协议解释；如需表达式或 source 输入，需要显式定义该字段的解析策略 |
-| `toolbar` | region | 顶部工具栏区域 |
-| `addTrigger` | region | 自定义新增入口区域 |
-| `onChange` | event | tab 切换动作 |
-| `onRemove` | event | tab 移除动作 |
-| `onAdd` | event | 新增动作 |
-| `onReorder` | event | 重排动作 |
+| 字段           | 语义                                 | 说明                                                                                        |
+| -------------- | ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `value`        | value                                | 当前激活项，对齐 UI primitive 的 value 语义                                                 |
+| `defaultValue` | value                                | 初始化默认值，对齐 UI primitive 的 defaultValue                                             |
+| `items`        | ignored 或 renderer-owned deep field | renderer 自身按 item 子结构协议解释；如需表达式或 source 输入，需要显式定义该字段的解析策略 |
+| `toolbar`      | region                               | 顶部工具栏区域                                                                              |
+| `addTrigger`   | region                               | 自定义新增入口区域                                                                          |
+| `onChange`     | event                                | tab 切换动作                                                                                |
+| `onRemove`     | event                                | tab 移除动作                                                                                |
+| `onAdd`        | event                                | 新增动作                                                                                    |
+| `onReorder`    | event                                | 重排动作                                                                                    |
 
 单个 `TabItemSchema` 的关键字段：
 
-| 字段 | 语义 | 说明 |
-| --- | --- | --- |
-| `title` | value-or-region | 文本标题或 schema 标题 |
-| `body` | region | 面板内容 |
-| `toolbar` | region | tab 级附加操作 |
-| `disabled` | value | 可为表达式 |
-| `closable` | value | item 优先级高于组件级 |
+| 字段       | 语义            | 说明                   |
+| ---------- | --------------- | ---------------------- |
+| `title`    | value-or-region | 文本标题或 schema 标题 |
+| `body`     | region          | 面板内容               |
+| `toolbar`  | region          | tab 级附加操作         |
+| `disabled` | value           | 可为表达式             |
+| `closable` | value           | item 优先级高于组件级  |
 
 `items` 数组本身不适合简单作为普通 `prop`。推荐为 `items` 增加专门的 renderer-level 解析流程：
 
@@ -300,12 +300,12 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 建议最小事件集：
 
-| 事件 | 参数 | 说明 |
-| --- | --- | --- |
-| `change` | `value`, `index`, `item` | 激活项变化 |
-| `remove` | `key`, `index`, `item` | 移除 tab |
-| `add` | `index?` | 请求新增 tab |
-| `reorder` | `fromIndex`, `toIndex`, `item` | 重排 tab |
+| 事件      | 参数                           | 说明         |
+| --------- | ------------------------------ | ------------ |
+| `change`  | `value`, `index`, `item`       | 激活项变化   |
+| `remove`  | `key`, `index`, `item`         | 移除 tab     |
+| `add`     | `index?`                       | 请求新增 tab |
+| `reorder` | `fromIndex`, `toIndex`, `item` | 重排 tab     |
 
 建议事件字段命名：
 
@@ -461,24 +461,24 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 下表仅用于迁移和参考，不代表 Flux 正式契约保留这些旧字段。
 
-| AMIS 字段 | Flux 建议字段 | 说明 |
-| --- | --- | --- |
-| `tabs` | `items` | 集合统一命名 |
-| `source` | 不作为首选正式字段 | 优先让 `items` 直接承载最终数组值；如需动态来源，走 `${expr}` 或 field-enabled `type: 'source'` |
-| `activeKey` | `value` | 与底层 tabs primitive 对齐 |
-| `defaultKey` | `defaultValue` | 与底层 tabs primitive 对齐 |
-| `tabsMode` | `variant` + `orientation` + `overflowMode` | 视觉与布局语义拆开 |
-| `sidePosition` | 暂不作为基础契约 | 首版不提前固化右侧标签栏 |
-| `addable` | `addable` | 保留 renderer 扩展能力语义名 |
-| `closable` | `closable` | 组件级与 item 级都沿用同词根 |
-| `draggable` | `draggable` | 保留现有交互能力语义 |
-| `showTip` | `showTooltip` | 避免缩写风格扩散 |
-| `collapseOnExceed` | `overflowCollapseLimit` | 归入 overflow 语义组 |
-| `collapseBtnLabel` | `overflowTriggerLabel` | 归入 overflow 语义组 |
-| `hash` | `routeFragment` | 避免 URL 原始实现细节直接进入主契约 |
-| `tab` | `body` | 统一内容字段 |
-| `changeActiveKey` | `component:setValue` | 与底层 value 语义对齐 |
-| `deleteTab` | `component:removeItem` | 集合项操作统一语言 |
+| AMIS 字段          | Flux 建议字段                              | 说明                                                                                            |
+| ------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `tabs`             | `items`                                    | 集合统一命名                                                                                    |
+| `source`           | 不作为首选正式字段                         | 优先让 `items` 直接承载最终数组值；如需动态来源，走 `${expr}` 或 field-enabled `type: 'source'` |
+| `activeKey`        | `value`                                    | 与底层 tabs primitive 对齐                                                                      |
+| `defaultKey`       | `defaultValue`                             | 与底层 tabs primitive 对齐                                                                      |
+| `tabsMode`         | `variant` + `orientation` + `overflowMode` | 视觉与布局语义拆开                                                                              |
+| `sidePosition`     | 暂不作为基础契约                           | 首版不提前固化右侧标签栏                                                                        |
+| `addable`          | `addable`                                  | 保留 renderer 扩展能力语义名                                                                    |
+| `closable`         | `closable`                                 | 组件级与 item 级都沿用同词根                                                                    |
+| `draggable`        | `draggable`                                | 保留现有交互能力语义                                                                            |
+| `showTip`          | `showTooltip`                              | 避免缩写风格扩散                                                                                |
+| `collapseOnExceed` | `overflowCollapseLimit`                    | 归入 overflow 语义组                                                                            |
+| `collapseBtnLabel` | `overflowTriggerLabel`                     | 归入 overflow 语义组                                                                            |
+| `hash`             | `routeFragment`                            | 避免 URL 原始实现细节直接进入主契约                                                             |
+| `tab`              | `body`                                     | 统一内容字段                                                                                    |
+| `changeActiveKey`  | `component:setValue`                       | 与底层 value 语义对齐                                                                           |
+| `deleteTab`        | `component:removeItem`                     | 集合项操作统一语言                                                                              |
 
 ## 19. 与架构文档的关系
 

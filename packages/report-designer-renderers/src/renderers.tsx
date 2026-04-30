@@ -1,7 +1,4 @@
-import type {
-  RendererDefinition,
-  RendererRegistry,
-} from '@nop-chaos/flux-core';
+import type { RendererDefinition, RendererRegistry } from '@nop-chaos/flux-core';
 import { registerRendererDefinitions } from '@nop-chaos/flux-core';
 import { ReportFieldPanelRenderer } from './field-panel-renderer.js';
 import { ReportInspectorShellRenderer } from './inspector-shell-renderer.js';
@@ -9,16 +6,10 @@ import { ReportDesignerPageRenderer } from './page-renderer.js';
 import { ReportInspectorRenderer } from './report-designer-inspector.js';
 import { ReportToolbarRenderer } from './report-designer-toolbar.js';
 import { reportDesignerHostContract } from './report-designer-manifest.js';
-import type {
-  ReportDesignerPageSchemaInput,
-  ReportDesignerPageSchema,
-} from './types.js';
+import type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema } from './types.js';
 export { defineReportDesignerPageSchema } from './types.js';
 
-export type {
-  ReportDesignerPageSchemaInput,
-  ReportDesignerPageSchema,
-};
+export type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema };
 
 export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   {

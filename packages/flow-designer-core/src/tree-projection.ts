@@ -1,4 +1,11 @@
-import type { TreeDocument, TreeNode, NormalizedDesignerConfig, GraphNode, GraphEdge, TreeNodeTypeConfig } from './types';
+import type {
+  TreeDocument,
+  TreeNode,
+  NormalizedDesignerConfig,
+  GraphNode,
+  GraphEdge,
+  TreeNodeTypeConfig,
+} from './types';
 
 let edgeCounter = 0;
 
@@ -13,7 +20,7 @@ export function resetProjectionState(): void {
 function resolveEdgeType(
   parentNodeType: string | undefined,
   connectionKind: 'chain' | 'branch' | 'merge',
-  config: NormalizedDesignerConfig
+  config: NormalizedDesignerConfig,
 ): string {
   if (parentNodeType) {
     const nt = config.nodeTypes.get(parentNodeType);
@@ -47,7 +54,7 @@ export interface ProjectionResult {
 
 export function projectTree(
   tree: TreeDocument,
-  config: NormalizedDesignerConfig
+  config: NormalizedDesignerConfig,
 ): ProjectionResult {
   resetProjectionState();
 
@@ -55,18 +62,19 @@ export function projectTree(
   const edges: GraphEdge[] = [];
 
   function visit(node: TreeNode, parentIds: string[], parentType?: string): string[] {
-    const nodeData = node.branches && node.branches.length > 0
-      ? {
-          ...node.data,
-          branches: node.branches.map((branch) => ({
-            id: branch.id,
-            data: branch.data,
-            childId: branch.child?.id,
-            childType: branch.child?.type,
-            childLabel: branch.child?.data?.label,
-          }))
-        }
-      : node.data;
+    const nodeData =
+      node.branches && node.branches.length > 0
+        ? {
+            ...node.data,
+            branches: node.branches.map((branch) => ({
+              id: branch.id,
+              data: branch.data,
+              childId: branch.child?.id,
+              childType: branch.child?.type,
+              childLabel: branch.child?.data?.label,
+            })),
+          }
+        : node.data;
 
     nodes.push({
       id: node.id,

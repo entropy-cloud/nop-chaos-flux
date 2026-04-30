@@ -12,7 +12,10 @@ export function DingFlowPlusButton({ onClick }: DingFlowPlusButtonProps) {
     <div
       className={`absolute left-1/2 z-[2] -translate-x-1/2 cursor-pointer ${DINGFLOW_PLUS_BUTTON_CLASSNAME}`}
       style={{ width: BTN_DIAMETER, height: BTN_DIAMETER, bottom: -BTN_DIST }}
-      onClick={(e) => { e.stopPropagation(); onClick(e); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(e);
+      }}
     >
       <Plus size={16} />
     </div>

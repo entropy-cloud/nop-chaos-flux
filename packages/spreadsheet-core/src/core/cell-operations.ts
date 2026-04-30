@@ -26,9 +26,12 @@ export function applySetCellValue(
     col: cell.col,
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -55,9 +58,12 @@ export function applySetCellFormula(
     };
   }
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -83,9 +89,12 @@ export function applySetCellStyle(
         });
       }
     }
-    const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
-    ) };
+    const workbook = {
+      ...updated.workbook,
+      sheets: updated.workbook.sheets.map((sheetDoc) =>
+        sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
+      ),
+    };
     return { ...updated, workbook };
   }
 
@@ -101,9 +110,12 @@ export function applySetCellStyle(
     col: cell.col,
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -121,22 +133,31 @@ export function applyCellStyleChange(
         newSheet = updateCellStyle(newSheet, row, col, stylePatch);
       }
     }
-    const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
-    ) };
+    const workbook = {
+      ...updated.workbook,
+      sheets: updated.workbook.sheets.map((sheetDoc) =>
+        sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
+      ),
+    };
     return { ...updated, workbook };
   }
 
   const cell = target as SpreadsheetCellRef;
   const { doc: updated, sheet } = ensureSheetCells(doc, cell.sheetId);
   const newSheet = updateCellStyle(sheet, cell.row, cell.col, stylePatch);
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyMergeRange(doc: SpreadsheetDocument, range: SpreadsheetRange): SpreadsheetDocument {
+export function applyMergeRange(
+  doc: SpreadsheetDocument,
+  range: SpreadsheetRange,
+): SpreadsheetDocument {
   const normalized = normalizeRange(range);
   const { doc: updated, sheet } = ensureSheetCells(doc, normalized.sheetId);
   const merges = [...(sheet.merges ?? [])];
@@ -150,30 +171,43 @@ export function applyMergeRange(doc: SpreadsheetDocument, range: SpreadsheetRang
   if (!exists) {
     merges.push(normalized);
   }
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === normalized.sheetId ? { ...sheetDoc, merges } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === normalized.sheetId ? { ...sheetDoc, merges } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyUnmergeRange(doc: SpreadsheetDocument, range: SpreadsheetRange): SpreadsheetDocument {
+export function applyUnmergeRange(
+  doc: SpreadsheetDocument,
+  range: SpreadsheetRange,
+): SpreadsheetDocument {
   const normalized = normalizeRange(range);
   const { doc: updated, sheet } = ensureSheetCells(doc, normalized.sheetId);
   const merges = (sheet.merges ?? []).filter(
-    (merge) => !(
-      merge.startRow === normalized.startRow &&
-      merge.startCol === normalized.startCol &&
-      merge.endRow === normalized.endRow &&
-      merge.endCol === normalized.endCol
-    ),
+    (merge) =>
+      !(
+        merge.startRow === normalized.startRow &&
+        merge.startCol === normalized.startCol &&
+        merge.endRow === normalized.endRow &&
+        merge.endCol === normalized.endCol
+      ),
   );
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === normalized.sheetId ? { ...sheetDoc, merges } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === normalized.sheetId ? { ...sheetDoc, merges } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyMergeCellsCenter(doc: SpreadsheetDocument, range: SpreadsheetRange): SpreadsheetDocument {
+export function applyMergeCellsCenter(
+  doc: SpreadsheetDocument,
+  range: SpreadsheetRange,
+): SpreadsheetDocument {
   let result = applyMergeRange(doc, range);
   result = applyCellStyleChange(result, range, { textAlign: 'center', verticalAlign: 'middle' });
   return result;
@@ -254,13 +288,19 @@ export function applyFillSeries(
     }
   }
 
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyFillDown(doc: SpreadsheetDocument, range: SpreadsheetRange): SpreadsheetDocument {
+export function applyFillDown(
+  doc: SpreadsheetDocument,
+  range: SpreadsheetRange,
+): SpreadsheetDocument {
   const normalized = normalizeRange(range);
   const { doc: updated, sheet } = ensureSheetCells(doc, normalized.sheetId);
   let newSheet = sheet;
@@ -278,13 +318,19 @@ export function applyFillDown(doc: SpreadsheetDocument, range: SpreadsheetRange)
       });
     }
   }
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyFillRight(doc: SpreadsheetDocument, range: SpreadsheetRange): SpreadsheetDocument {
+export function applyFillRight(
+  doc: SpreadsheetDocument,
+  range: SpreadsheetRange,
+): SpreadsheetDocument {
   const normalized = normalizeRange(range);
   const { doc: updated, sheet } = ensureSheetCells(doc, normalized.sheetId);
   let newSheet = sheet;
@@ -302,13 +348,21 @@ export function applyFillRight(doc: SpreadsheetDocument, range: SpreadsheetRange
       });
     }
   }
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === normalized.sheetId ? newSheet : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyAddComment(doc: SpreadsheetDocument, cell: SpreadsheetCellRef, text: string, author?: string): SpreadsheetDocument {
+export function applyAddComment(
+  doc: SpreadsheetDocument,
+  cell: SpreadsheetCellRef,
+  text: string,
+  author?: string,
+): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, cell.sheetId);
   const key = cellAddress(cell.row, cell.col);
   const existing = sheet.cells?.[key];
@@ -320,34 +374,46 @@ export function applyAddComment(doc: SpreadsheetDocument, cell: SpreadsheetCellR
     col: cell.col,
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyEditComment(doc: SpreadsheetDocument, cell: SpreadsheetCellRef, text: string): SpreadsheetDocument {
+export function applyEditComment(
+  doc: SpreadsheetDocument,
+  cell: SpreadsheetCellRef,
+  text: string,
+): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, cell.sheetId);
   const key = cellAddress(cell.row, cell.col);
   const existing = sheet.cells?.[key];
   if (!existing?.comment) {
     return doc;
   }
-  const existingComment = typeof existing.comment === 'string'
-    ? { text: existing.comment }
-    : existing.comment;
+  const existingComment =
+    typeof existing.comment === 'string' ? { text: existing.comment } : existing.comment;
   const newCell: CellDocument = {
     ...existing,
     comment: { ...existingComment, text },
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
-export function applyDeleteComment(doc: SpreadsheetDocument, cell: SpreadsheetCellRef): SpreadsheetDocument {
+export function applyDeleteComment(
+  doc: SpreadsheetDocument,
+  cell: SpreadsheetCellRef,
+): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, cell.sheetId);
   const key = cellAddress(cell.row, cell.col);
   const existing = sheet.cells?.[key];
@@ -357,8 +423,11 @@ export function applyDeleteComment(doc: SpreadsheetDocument, cell: SpreadsheetCe
   const newCell: CellDocument = { ...existing };
   delete newCell.comment;
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }

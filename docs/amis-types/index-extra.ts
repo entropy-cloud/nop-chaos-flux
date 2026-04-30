@@ -1,7 +1,7 @@
 /**
  * AMIS JSON Schema TypeScript 类型定义 (补充)
  * 基于 amis@6.13.0
- * 
+ *
  * 这是补充类型定义文件，包含之前缺失的组件类型
  */
 
@@ -36,11 +36,46 @@ export * from './misc';
 // ============================================================================
 
 import type { GridSchema, HBoxSchema, VBoxSchema } from './layout-extra';
-import type { PickerControlSchema, NestedSelectControlSchema, ChainedSelectControlSchema, MatrixControlSchema, LocationControlSchema, IconPickerControlSchema, InputCityControlSchema, InputColorControlSchema, InputSignatureSchema, UUIDControlSchema, TableControlSchema, RatingControlSchema, RangeControlSchema, DiffControlSchema, FormulaControlSchema } from './form-controls-extra';
-import type { MonthControlSchema, MonthRangeControlSchema, QuarterControlSchema, QuarterRangeControlSchema, YearControlSchema } from './form-date-extra';
+import type {
+  PickerControlSchema,
+  NestedSelectControlSchema,
+  ChainedSelectControlSchema,
+  MatrixControlSchema,
+  LocationControlSchema,
+  IconPickerControlSchema,
+  InputCityControlSchema,
+  InputColorControlSchema,
+  InputSignatureSchema,
+  UUIDControlSchema,
+  TableControlSchema,
+  RatingControlSchema,
+  RangeControlSchema,
+  DiffControlSchema,
+  FormulaControlSchema,
+} from './form-controls-extra';
+import type {
+  MonthControlSchema,
+  MonthRangeControlSchema,
+  QuarterControlSchema,
+  QuarterRangeControlSchema,
+  YearControlSchema,
+} from './form-date-extra';
 import type { MappingSchema, CalendarSchema } from './display-extra';
 import type { CRUD2Schema } from './data-extra';
-import type { TasksSchema, WordsSchema, ExpandableSchema, MultilineTextSchema, SubFormControlSchema, FieldSetControlSchema, GroupControlSchema, InputGroupControlSchema, SwitchContainerSchema, PasswordSchema, JsonSchemaEditorControlSchema, ListControlSchema } from './misc';
+import type {
+  TasksSchema,
+  WordsSchema,
+  ExpandableSchema as _ExpandableSchema,
+  MultilineTextSchema,
+  SubFormControlSchema,
+  FieldSetControlSchema,
+  GroupControlSchema,
+  InputGroupControlSchema,
+  SwitchContainerSchema,
+  PasswordSchema,
+  JsonSchemaEditorControlSchema,
+  ListControlSchema,
+} from './misc';
 
 /** 补充组件 Schema 的联合类型 */
 export type AmisSchemaExtra =
@@ -90,10 +125,10 @@ export type AmisSchemaExtra =
 
 /** 补充组件类型映射 */
 export type AmisSchemaExtraByType = {
-  'grid': GridSchema;
-  'hbox': HBoxSchema;
-  'vbox': VBoxSchema;
-  'picker': PickerControlSchema;
+  grid: GridSchema;
+  hbox: HBoxSchema;
+  vbox: VBoxSchema;
+  picker: PickerControlSchema;
   'nested-select': NestedSelectControlSchema;
   'chained-select': ChainedSelectControlSchema;
   'matrix-checkboxes': MatrixControlSchema;
@@ -102,30 +137,30 @@ export type AmisSchemaExtraByType = {
   'input-city': InputCityControlSchema;
   'input-color': InputColorControlSchema;
   'input-signature': InputSignatureSchema;
-  'uuid': UUIDControlSchema;
+  uuid: UUIDControlSchema;
   'input-table': TableControlSchema;
-  'rating': RatingControlSchema;
+  rating: RatingControlSchema;
   'input-range': RangeControlSchema;
-  'diff': DiffControlSchema;
-  'formula': FormulaControlSchema;
+  diff: DiffControlSchema;
+  formula: FormulaControlSchema;
   'input-month': MonthControlSchema;
   'input-month-range': MonthRangeControlSchema;
   'input-quarter': QuarterControlSchema;
   'input-quarter-range': QuarterRangeControlSchema;
   'input-year': YearControlSchema;
-  'mapping': MappingSchema;
-  'map': MappingSchema;
-  'calendar': CalendarSchema;
-  'crud2': CRUD2Schema;
-  'tasks': TasksSchema;
-  'words': WordsSchema;
+  mapping: MappingSchema;
+  map: MappingSchema;
+  calendar: CalendarSchema;
+  crud2: CRUD2Schema;
+  tasks: TasksSchema;
+  words: WordsSchema;
   'multiline-text': MultilineTextSchema;
-  'subform': SubFormControlSchema;
-  'fieldset': FieldSetControlSchema;
-  'group': GroupControlSchema;
+  subform: SubFormControlSchema;
+  fieldset: FieldSetControlSchema;
+  group: GroupControlSchema;
   'input-group': InputGroupControlSchema;
   'switch-container': SwitchContainerSchema;
-  'password': PasswordSchema;
+  password: PasswordSchema;
   'json-schema-editor': JsonSchemaEditorControlSchema;
-  'list': ListControlSchema;
+  list: ListControlSchema;
 };

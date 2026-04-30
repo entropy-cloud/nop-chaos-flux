@@ -5,7 +5,12 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
-import { buttonRenderer, env, formStateProbeRenderer, submitCalls } from '../../../flux-renderers-form/src/test-support';
+import {
+  buttonRenderer,
+  env,
+  formStateProbeRenderer,
+  submitCalls,
+} from '../../../flux-renderers-form/src/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 
@@ -21,7 +26,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           type: 'form',
           showErrorOn: ['touched', 'submit'],
           data: {
-            reviewers: []
+            reviewers: [],
           },
           body: [
             {
@@ -29,22 +34,22 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               name: 'reviewers',
               label: 'Reviewers',
               itemLabel: 'Reviewer',
-              minItems: 1
-            }
+              minItems: 1,
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit reviewers',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit reviewers'));
@@ -69,7 +74,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           type: 'form',
           showErrorOn: ['touched', 'submit'],
           data: {
-            reviewers: [{ value: 'alice' }, { value: 'bob' }]
+            reviewers: [{ value: 'alice' }, { value: 'bob' }],
           },
           body: [
             {
@@ -77,22 +82,22 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               name: 'reviewers',
               label: 'Reviewers',
               itemLabel: 'Reviewer',
-              maxItems: 1
-            }
+              maxItems: 1,
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit limited reviewers',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit limited reviewers'));
@@ -108,7 +113,11 @@ describe('formRendererDefinitions - array and key-value validation', () => {
   it('preserves remaining array-editor values after removing a middle item', async () => {
     submitCalls.length = 0;
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer, formStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...allFormDefs,
+      buttonRenderer,
+      formStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -117,50 +126,48 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           type: 'form',
           showErrorOn: ['touched', 'submit'],
           data: {
-            reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }]
+            reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }],
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/reviewers/reordered',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'array-editor',
               name: 'reviewers',
               label: 'Reviewers',
-              itemLabel: 'Reviewer'
+              itemLabel: 'Reviewer',
             },
             {
               type: 'form-state-probe',
-              name: 'reviewers'
-            }
+              name: 'reviewers',
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit reordered reviewers',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getAllByText('Remove')[1]);
 
     await waitFor(() => {
-      expect(JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null')).toMatchObject([
-        { value: 'alice' },
-        { value: 'bob' },
-        { value: 'carol' }
-      ]);
+      expect(
+        JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null'),
+      ).toMatchObject([{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }]);
     });
 
     fireEvent.click(screen.getByText('Submit reordered reviewers'));
@@ -172,7 +179,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
     expect(screen.queryByText('Reviewers requires at least one item')).toBeNull();
     expect(submitCalls[0].reviewers).toHaveLength(3);
     expect(submitCalls[0]).toMatchObject({
-      reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }]
+      reviewers: [{ value: 'alice' }, { value: 'bob' }, { value: 'carol' }],
     });
   });
 
@@ -187,7 +194,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           type: 'form',
           showErrorOn: ['touched', 'submit'],
           data: {
-            reviewers: [{ value: '' }, { value: '' }]
+            reviewers: [{ value: '' }, { value: '' }],
           },
           body: [
             {
@@ -197,23 +204,23 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               itemLabel: 'Reviewer',
               atLeastOneFilled: {
                 itemPath: 'value',
-                message: 'Add at least one reviewer value'
-              }
-            }
+                message: 'Add at least one reviewer value',
+              },
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit aggregate reviewers',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit aggregate reviewers'));
@@ -237,7 +244,7 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           type: 'form',
           showErrorOn: ['touched', 'submit'],
           data: {
-            metadata: [{ key: 'env', value: '' }]
+            metadata: [{ key: 'env', value: '' }],
           },
           body: [
             {
@@ -246,32 +253,36 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               label: 'Metadata',
               allOrNone: {
                 itemPaths: ['key', 'value'],
-                message: 'Metadata entries must fill both key and value or leave both empty'
-              }
-            }
+                message: 'Metadata entries must fill both key and value or leave both empty',
+              },
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit aggregate metadata',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit aggregate metadata'));
-    expect(await screen.findByText('Metadata entries must fill both key and value or leave both empty')).toBeTruthy();
+    expect(
+      await screen.findByText('Metadata entries must fill both key and value or leave both empty'),
+    ).toBeTruthy();
 
     fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: 'prod' } });
 
     await waitFor(() => {
-      expect(screen.queryByText('Metadata entries must fill both key and value or leave both empty')).toBeNull();
+      expect(
+        screen.queryByText('Metadata entries must fill both key and value or leave both empty'),
+      ).toBeNull();
     });
   });
 
@@ -286,20 +297,20 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           type: 'form',
           showErrorOn: ['touched', 'submit'],
           data: {
-            reviewers: [{ value: 'alice' }, { value: '' }]
+            reviewers: [{ value: 'alice' }, { value: '' }],
           },
           body: [
             {
               type: 'array-editor',
               name: 'reviewers',
               label: 'Reviewers',
-              itemLabel: 'Reviewer'
-            }
-          ]
+              itemLabel: 'Reviewer',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.focus(screen.getByPlaceholderText('Reviewer 2'));
@@ -328,8 +339,8 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           data: {
             metadata: [
               { key: 'env', value: 'prod' },
-              { key: 'env', value: 'stage' }
-            ]
+              { key: 'env', value: 'stage' },
+            ],
           },
           body: [
             {
@@ -338,23 +349,23 @@ describe('formRendererDefinitions - array and key-value validation', () => {
               label: 'Metadata',
               uniqueBy: {
                 itemPath: 'key',
-                message: 'Metadata keys must be unique'
-              }
-            }
+                message: 'Metadata keys must be unique',
+              },
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit unique metadata',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit unique metadata'));
@@ -370,7 +381,11 @@ describe('formRendererDefinitions - array and key-value validation', () => {
   it('preserves remaining key-value entries after removing a middle row', async () => {
     submitCalls.length = 0;
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer, formStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...allFormDefs,
+      buttonRenderer,
+      formStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -382,50 +397,52 @@ describe('formRendererDefinitions - array and key-value validation', () => {
             metadata: [
               { key: 'env', value: 'prod' },
               { key: 'tier', value: 'gold' },
-              { key: 'region', value: 'us-east' }
-            ]
+              { key: 'region', value: 'us-east' },
+            ],
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/metadata/reordered',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'key-value',
               name: 'metadata',
               label: 'Metadata',
-              addLabel: 'Add metadata entry'
+              addLabel: 'Add metadata entry',
             },
             {
               type: 'form-state-probe',
-              name: 'metadata'
-            }
+              name: 'metadata',
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit reordered metadata',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getAllByText('Remove')[1]);
 
     await waitFor(() => {
-      expect(JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null')).toMatchObject([
+      expect(
+        JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null'),
+      ).toMatchObject([
         { key: 'env', value: 'prod' },
         { key: 'tier', value: 'gold' },
-        { key: 'region', value: 'us-east' }
+        { key: 'region', value: 'us-east' },
       ]);
     });
 
@@ -441,8 +458,8 @@ describe('formRendererDefinitions - array and key-value validation', () => {
       metadata: [
         { key: 'env', value: 'prod' },
         { key: 'tier', value: 'gold' },
-        { key: 'region', value: 'us-east' }
-      ]
+        { key: 'region', value: 'us-east' },
+      ],
     });
   });
 
@@ -459,30 +476,30 @@ describe('formRendererDefinitions - array and key-value validation', () => {
           data: {
             metadata: [
               { key: 'env', value: 'prod' },
-              { key: 'env', value: 'stage' }
-            ]
+              { key: 'env', value: 'stage' },
+            ],
           },
           body: [
             {
               type: 'key-value',
               name: 'metadata',
               label: 'Metadata',
-              uniqueKeys: true
-            }
+              uniqueKeys: true,
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit shorthand metadata',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit shorthand metadata'));
@@ -494,5 +511,4 @@ describe('formRendererDefinitions - array and key-value validation', () => {
       expect(screen.queryByText('Metadata keys must be unique')).toBeNull();
     });
   });
-
 });

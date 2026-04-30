@@ -9,6 +9,7 @@
 ## 发现列表
 
 ### [维度01] flux-code-editor 的生产源码使用 flux-formula，但 package.json 仅将其列为 devDependency
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\package.json:15-43`; `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\src\extensions\expression\linter.ts:1-7`
 - **严重程度**: P1
 - **现状**: `src/extensions/expression/linter.ts` 在生产源码中 `import { createFormulaCompiler } from '@nop-chaos/flux-formula'`，但 `package.json` 仅在 `devDependencies` 中声明 `@nop-chaos/flux-formula`。
@@ -17,6 +18,7 @@
 - **参考文档**: `C:\can\nop\nop-chaos-flux\AGENTS.md`（Dependency Flow）；`C:\can\nop\nop-chaos-flux\docs\architecture\flux-runtime-module-boundaries.md`
 
 ### [维度01] tailwind-preset 未遵循统一包导出/构建约定，且缺少 build 基础设施
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\tailwind-preset\package.json:7-17`; `C:\can\nop\nop-chaos-flux\packages\tailwind-preset\tsconfig.build.json`（缺失）
 - **严重程度**: P2
 - **现状**: `@nop-chaos/tailwind-preset` 的 `main/types/exports` 直接指向 `src/index.ts`，没有 `build` 脚本，也没有 `tsconfig.build.json`，与工作区其余包的 `dist + types/default` 双条件导出模式不一致。
@@ -25,6 +27,7 @@
 - **参考文档**: `C:\can\nop\nop-chaos-flux\AGENTS.md`；`C:\can\nop\nop-chaos-flux\docs\architecture\flux-runtime-module-boundaries.md`
 
 ### [维度01] theme-tokens 的 exports 仅暴露 CSS 子路径，未与统一根导出模式保持一致
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\theme-tokens\package.json:7-15`; `C:\can\nop\nop-chaos-flux\packages\theme-tokens\src\index.ts:1`
 - **严重程度**: P3
 - **现状**: `@nop-chaos/theme-tokens` 只导出 `./styles.css`，没有根入口 `.` 的 `types + default` 双条件导出；同时仓库内仍存在空的 `src/index.ts`。
@@ -62,11 +65,11 @@
 
 ## 2. 问题清单
 
-| 包 | 问题类型 | 说明 |
-|---|---|---|
-| `@nop-chaos/flux-code-editor` | 依赖声明不一致 | 生产源码使用 `flux-formula`，但仅声明为 `devDependency` |
-| `@nop-chaos/tailwind-preset` | 规则 7/8 | exports 与统一模式不一致，且缺少 `build` 脚本和 `tsconfig.build.json` |
-| `@nop-chaos/theme-tokens` | 规则 7 | 仅暴露 CSS 子路径，未采用统一根导出模式 |
+| 包                            | 问题类型       | 说明                                                                  |
+| ----------------------------- | -------------- | --------------------------------------------------------------------- |
+| `@nop-chaos/flux-code-editor` | 依赖声明不一致 | 生产源码使用 `flux-formula`，但仅声明为 `devDependency`               |
+| `@nop-chaos/tailwind-preset`  | 规则 7/8       | exports 与统一模式不一致，且缺少 `build` 脚本和 `tsconfig.build.json` |
+| `@nop-chaos/theme-tokens`     | 规则 7         | 仅暴露 CSS 子路径，未采用统一根导出模式                               |
 
 ## 3. 非问题但需要说明的依赖
 

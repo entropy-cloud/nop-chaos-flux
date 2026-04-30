@@ -7,7 +7,7 @@ import {
   collectSchemaImportSpecs,
   pushPreparedImportSymbols,
   pushInjectedLocalSymbols,
-  pushRegionParamSymbols
+  pushRegionParamSymbols,
 } from './schema-compiler/symbol-helpers';
 
 describe('symbol-helpers', () => {
@@ -32,10 +32,14 @@ describe('symbol-helpers', () => {
 
     it('pushes import symbols for specs with "as"', () => {
       const table = createCompileSymbolTable();
-      const result = pushImportSymbols(table, [
-        { from: 'lib1', as: 'lib' },
-        { from: 'lib2', as: 'util' }
-      ], 'test-imports');
+      const result = pushImportSymbols(
+        table,
+        [
+          { from: 'lib1', as: 'lib' },
+          { from: 'lib2', as: 'util' },
+        ],
+        'test-imports',
+      );
 
       expect(result.resolve('$lib')).toEqual({ name: '$lib', kind: 'import-alias' });
       expect(result.resolve('$util')).toEqual({ name: '$util', kind: 'import-alias' });
@@ -43,10 +47,11 @@ describe('symbol-helpers', () => {
 
     it('skips specs without "as" in mixed array', () => {
       const table = createCompileSymbolTable();
-      const result = pushImportSymbols(table, [
-        { from: 'lib1', as: 'lib' },
-        { from: 'lib2' } as XuiImportSpec
-      ], 'test');
+      const result = pushImportSymbols(
+        table,
+        [{ from: 'lib1', as: 'lib' }, { from: 'lib2' } as XuiImportSpec],
+        'test',
+      );
 
       expect(result.resolve('$lib')).toBeDefined();
     });
@@ -57,12 +62,14 @@ describe('symbol-helpers', () => {
       const spec: XuiImportSpec = { from: 'demo-lib', as: 'demo' };
       const key = normalizeImportSpecKey('test://schema.json', spec);
 
-      expect(key).toBe(JSON.stringify({
-        schemaUrl: 'test://schema.json',
-        from: 'demo-lib',
-        as: 'demo',
-        options: null
-      }));
+      expect(key).toBe(
+        JSON.stringify({
+          schemaUrl: 'test://schema.json',
+          from: 'demo-lib',
+          as: 'demo',
+          options: null,
+        }),
+      );
     });
 
     it('includes options in key when present', () => {
@@ -90,90 +97,104 @@ describe('symbol-helpers', () => {
     });
 
     it('collects valid import specs', () => {
-      const result = collectSchemaImportSpecs({
-        type: 'page',
-        'xui:imports': [
-          { from: 'demo-lib', as: 'demo' },
-          { from: 'util-lib', as: 'util' }
-        ]
-      } as unknown as SchemaInput, 'test://schema.json');
+      const result = collectSchemaImportSpecs(
+        {
+          type: 'page',
+          'xui:imports': [
+            { from: 'demo-lib', as: 'demo' },
+            { from: 'util-lib', as: 'util' },
+          ],
+        } as unknown as SchemaInput,
+        'test://schema.json',
+      );
 
       expect(result).toHaveLength(2);
-      expect(result.map(s => s.as)).toEqual(['demo', 'util']);
+      expect(result.map((s) => s.as)).toEqual(['demo', 'util']);
     });
 
     it('skips invalid import specs', () => {
-      const result = collectSchemaImportSpecs({
-        type: 'page',
-        'xui:imports': [
-          null as unknown as XuiImportSpec,
-          'string-entry' as unknown as XuiImportSpec,
-          { from: 'lib' } as XuiImportSpec,
-          { as: 'demo' } as XuiImportSpec,
-          { from: 'valid-lib', as: 'valid' }
-        ]
-      } as unknown as SchemaInput, 'url');
+      const result = collectSchemaImportSpecs(
+        {
+          type: 'page',
+          'xui:imports': [
+            null as unknown as XuiImportSpec,
+            'string-entry' as unknown as XuiImportSpec,
+            { from: 'lib' } as XuiImportSpec,
+            { as: 'demo' } as XuiImportSpec,
+            { from: 'valid-lib', as: 'valid' },
+          ],
+        } as unknown as SchemaInput,
+        'url',
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0].as).toBe('valid');
     });
 
     it('deduplicates specs with same key', () => {
-      const result = collectSchemaImportSpecs({
-        type: 'page',
-        body: {
-          type: 'container',
-          'xui:imports': [
-            { from: 'demo-lib', as: 'demo' }
-          ]
-        },
-        'xui:imports': [
-          { from: 'demo-lib', as: 'demo' }
-        ]
-      } as unknown as SchemaInput, 'url');
+      const result = collectSchemaImportSpecs(
+        {
+          type: 'page',
+          body: {
+            type: 'container',
+            'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+          },
+          'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+        } as unknown as SchemaInput,
+        'url',
+      );
 
       expect(result).toHaveLength(1);
     });
 
     it('traverses array children', () => {
-      const result = collectSchemaImportSpecs({
-        type: 'page',
-        body: [
-          {
-            type: 'container',
-            'xui:imports': [{ from: 'lib-a', as: 'a' }]
-          },
-          {
-            type: 'container',
-            'xui:imports': [{ from: 'lib-b', as: 'b' }]
-          }
-        ]
-      } as unknown as SchemaInput, 'url');
+      const result = collectSchemaImportSpecs(
+        {
+          type: 'page',
+          body: [
+            {
+              type: 'container',
+              'xui:imports': [{ from: 'lib-a', as: 'a' }],
+            },
+            {
+              type: 'container',
+              'xui:imports': [{ from: 'lib-b', as: 'b' }],
+            },
+          ],
+        } as unknown as SchemaInput,
+        'url',
+      );
 
       expect(result).toHaveLength(2);
     });
 
     it('traverses deeply nested objects', () => {
-      const result = collectSchemaImportSpecs({
-        type: 'page',
-        body: {
-          type: 'container',
+      const result = collectSchemaImportSpecs(
+        {
+          type: 'page',
           body: {
-            type: 'panel',
-            'xui:imports': [{ from: 'deep-lib', as: 'deep' }]
-          }
-        }
-      } as unknown as SchemaInput, 'url');
+            type: 'container',
+            body: {
+              type: 'panel',
+              'xui:imports': [{ from: 'deep-lib', as: 'deep' }],
+            },
+          },
+        } as unknown as SchemaInput,
+        'url',
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0].as).toBe('deep');
     });
 
     it('skips non-array xui:imports', () => {
-      const result = collectSchemaImportSpecs({
-        type: 'page',
-        'xui:imports': 'not-an-array'
-      } as unknown as SchemaInput, 'url');
+      const result = collectSchemaImportSpecs(
+        {
+          type: 'page',
+          'xui:imports': 'not-an-array',
+        } as unknown as SchemaInput,
+        'url',
+      );
 
       expect(result).toEqual([]);
     });
@@ -193,7 +214,7 @@ describe('symbol-helpers', () => {
         [{ from: 'lib', as: 'demo' }],
         undefined,
         undefined,
-        'id'
+        'id',
       );
       expect(result).toBe(table);
     });
@@ -207,21 +228,13 @@ describe('symbol-helpers', () => {
         resolvedSpec: spec,
         staticMeta: {
           helpers: {
-            formatName: { kind: 'function', params: [{ name: 'first' }] }
-          }
-        }
+            formatName: { kind: 'function', params: [{ name: 'first' }] },
+          },
+        },
       };
-      const preparedImports = new Map([
-        [normalizeImportSpecKey('url', spec), prepared]
-      ]);
+      const preparedImports = new Map([[normalizeImportSpecKey('url', spec), prepared]]);
 
-      const result = pushPreparedImportSymbols(
-        table,
-        [spec],
-        preparedImports,
-        'url',
-        'test-id'
-      );
+      const result = pushPreparedImportSymbols(table, [spec], preparedImports, 'url', 'test-id');
 
       const symbol = result.resolve('$demo');
       expect(symbol).toBeDefined();
@@ -235,19 +248,11 @@ describe('symbol-helpers', () => {
       const prepared: PreparedImportSpec = {
         schemaUrl: 'url',
         spec,
-        resolvedSpec: spec
+        resolvedSpec: spec,
       };
-      const preparedImports = new Map([
-        [normalizeImportSpecKey('url', spec), prepared]
-      ]);
+      const preparedImports = new Map([[normalizeImportSpecKey('url', spec), prepared]]);
 
-      const result = pushPreparedImportSymbols(
-        table,
-        [spec],
-        preparedImports,
-        'url',
-        'id'
-      );
+      const result = pushPreparedImportSymbols(table, [spec], preparedImports, 'url', 'id');
 
       const symbol = result.resolve('$demo');
       expect(symbol).toBeDefined();
@@ -258,34 +263,46 @@ describe('symbol-helpers', () => {
   describe('pushInjectedLocalSymbols', () => {
     it('returns unchanged table when renderer has no injectedLocals', () => {
       const table = createCompileSymbolTable();
-      const result = pushInjectedLocalSymbols(table, {
-        type: 'text',
-        component: () => null
-      }, 'id');
+      const result = pushInjectedLocalSymbols(
+        table,
+        {
+          type: 'text',
+          component: () => null,
+        },
+        'id',
+      );
 
       expect(result).toBe(table);
     });
 
     it('returns unchanged table when injectedLocals is empty', () => {
       const table = createCompileSymbolTable();
-      const result = pushInjectedLocalSymbols(table, {
-        type: 'text',
-        component: () => null,
-        injectedLocals: {}
-      }, 'id');
+      const result = pushInjectedLocalSymbols(
+        table,
+        {
+          type: 'text',
+          component: () => null,
+          injectedLocals: {},
+        },
+        'id',
+      );
 
       expect(result).toBe(table);
     });
 
     it('pushes injected locals as symbols', () => {
       const table = createCompileSymbolTable();
-      const result = pushInjectedLocalSymbols(table, {
-        type: 'text',
-        component: () => null,
-        injectedLocals: {
-          $record: { kind: 'import-alias' as const }
-        }
-      }, 'owner-symbols');
+      const result = pushInjectedLocalSymbols(
+        table,
+        {
+          type: 'text',
+          component: () => null,
+          injectedLocals: {
+            $record: { kind: 'import-alias' as const },
+          },
+        },
+        'owner-symbols',
+      );
 
       expect(result.resolve('$record')).toBeDefined();
       expect(result.resolve('$record')?.kind).toBe('import-alias');

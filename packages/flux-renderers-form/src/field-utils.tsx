@@ -9,7 +9,7 @@ import {
   type RendererComponentProps,
   type SchemaFieldRule,
   type ValidationScopeRuntime,
-  type ValueAdapter
+  type ValueAdapter,
 } from '@nop-chaos/flux-core';
 import {
   shouldShowFieldError,
@@ -21,21 +21,24 @@ import {
   useChildFieldState,
   useOwnedFieldState,
   useRenderScope,
-  useScopeSelector
+  useScopeSelector,
 } from '@nop-chaos/flux-react';
 
 export const formLabelFieldRule: SchemaFieldRule = {
   key: 'label',
   kind: 'value-or-region',
-  regionKey: 'label'
+  regionKey: 'label',
 };
 
 export const defaultValidationBehavior: CompiledValidationBehavior = {
   triggers: ['blur'],
-  showErrorOn: ['touched', 'submit']
+  showErrorOn: ['touched', 'submit'],
 };
 
-export function getFieldValidationBehavior(name: string, currentForm: FormRuntime | undefined): CompiledValidationBehavior {
+export function getFieldValidationBehavior(
+  name: string,
+  currentForm: FormRuntime | undefined,
+): CompiledValidationBehavior {
   if (!currentForm || !name) {
     return defaultValidationBehavior;
   }
@@ -44,7 +47,10 @@ export function getFieldValidationBehavior(name: string, currentForm: FormRuntim
   return field?.behavior ?? currentForm.validation?.behavior ?? defaultValidationBehavior;
 }
 
-export function getValidationBehaviorForOwner(name: string, owner: ValidationScopeRuntime | undefined): CompiledValidationBehavior {
+export function getValidationBehaviorForOwner(
+  name: string,
+  owner: ValidationScopeRuntime | undefined,
+): CompiledValidationBehavior {
   if (!owner || !name) {
     return defaultValidationBehavior;
   }
@@ -53,36 +59,51 @@ export function getValidationBehaviorForOwner(name: string, owner: ValidationSco
   return field?.behavior ?? owner.validation?.behavior ?? defaultValidationBehavior;
 }
 
-export function shouldValidateOn(name: string, currentForm: FormRuntime | undefined, trigger: 'change' | 'blur' | 'submit') {
+export function shouldValidateOn(
+  name: string,
+  currentForm: FormRuntime | undefined,
+  trigger: 'change' | 'blur' | 'submit',
+) {
   return getFieldValidationBehavior(name, currentForm).triggers.includes(trigger);
 }
 
-export function shouldValidateOnOwner(name: string, owner: ValidationScopeRuntime | undefined, trigger: 'change' | 'blur' | 'submit') {
+export function shouldValidateOnOwner(
+  name: string,
+  owner: ValidationScopeRuntime | undefined,
+  trigger: 'change' | 'blur' | 'submit',
+) {
   return getValidationBehaviorForOwner(name, owner).triggers.includes(trigger);
 }
 
 export function readFieldValue(scope: ReturnType<typeof useRenderScope>, name: string): unknown {
-  return name ? scope.get(name) ?? '' : scope.readOwn();
+  return name ? (scope.get(name) ?? '') : scope.readOwn();
 }
 
-export function readCheckboxGroupValue(scope: ReturnType<typeof useRenderScope>, name: string): string[] {
+export function readCheckboxGroupValue(
+  scope: ReturnType<typeof useRenderScope>,
+  name: string,
+): string[] {
   const value = readFieldValue(scope, name);
   return Array.isArray(value) ? value.map((item) => String(item)) : [];
 }
 
 const UNUSED_VALUE: unique symbol = Symbol('unused');
 
-export function useBoundFieldValue(name: string, currentForm: FormRuntime | undefined, areValuesEqual?: (a: unknown, b: unknown) => boolean): unknown {
+export function useBoundFieldValue(
+  name: string,
+  currentForm: FormRuntime | undefined,
+  areValuesEqual?: (a: unknown, b: unknown) => boolean,
+): unknown {
   const eq = areValuesEqual ?? Object.is;
   const formValue = useCurrentFormState(
     currentForm ? (state) => (name ? getIn(state.values, name) : state.values) : () => UNUSED_VALUE,
     eq,
-    { enabled: Boolean(currentForm), path: name || undefined }
+    { enabled: Boolean(currentForm), path: name || undefined },
   );
   const scopeValue = useScopeSelector(
     (scopeData) => (name ? getIn(scopeData, name) : scopeData),
     eq,
-    { enabled: !currentForm, fallback: UNUSED_VALUE }
+    { enabled: !currentForm, fallback: UNUSED_VALUE },
   );
 
   return currentForm ? formValue : scopeValue;
@@ -162,7 +183,7 @@ export function createFieldHandlers(args: {
           void currentValidationScope.validateAt(name, 'blur');
         }
       }
-    }
+    },
   };
 }
 
@@ -186,47 +207,50 @@ export function useFieldHandlers(args: {
   const currentValidationScope = useCurrentValidationScope();
 
   return useMemo(
-    () => createFieldHandlers({
-      name,
-      currentForm,
-      currentValidationScope,
-      setValue(nextValue) {
-        const convertedValue = adapter
-          ? adapter.out(nextValue, adapterContext ?? { name, readOnly: false })
-          : toFormValue(nextValue);
+    () =>
+      createFieldHandlers({
+        name,
+        currentForm,
+        currentValidationScope,
+        setValue(nextValue) {
+          const convertedValue = adapter
+            ? adapter.out(nextValue, adapterContext ?? { name, readOnly: false })
+            : toFormValue(nextValue);
 
-        if (isPromiseLike(convertedValue)) {
-          return convertedValue.then((resolvedValue) => {
-            if (currentForm) {
-              currentForm.setValue(name, resolvedValue);
-              return;
-            }
+          if (isPromiseLike(convertedValue)) {
+            return convertedValue.then((resolvedValue) => {
+              if (currentForm) {
+                currentForm.setValue(name, resolvedValue);
+                return;
+              }
 
-            scope.update(name, resolvedValue);
-          });
-        }
+              scope.update(name, resolvedValue);
+            });
+          }
 
-        if (currentForm) {
-          currentForm.setValue(name, convertedValue);
-          return;
-        }
+          if (currentForm) {
+            currentForm.setValue(name, convertedValue);
+            return;
+          }
 
-        scope.update(name, convertedValue);
-      }
-    }),
-    [name, currentForm, currentValidationScope, scope, toFormValue, adapter, adapterContext]
+          scope.update(name, convertedValue);
+        },
+      }),
+    [name, currentForm, currentValidationScope, scope, toFormValue, adapter, adapterContext],
   );
 }
 
 function useAdaptedFieldValue(
   value: unknown,
   adapter: ValueAdapter<unknown, unknown> | undefined,
-  context: AdapterContext
+  context: AdapterContext,
 ) {
   const syncAdapter = adapter as { __syncIn?: true } | undefined;
   const canResolveSynchronously = !adapter || syncAdapter?.__syncIn;
   const synchronousValue = canResolveSynchronously
-    ? (adapter ? adapter.in(value, context) : value)
+    ? adapter
+      ? adapter.in(value, context)
+      : value
     : value;
   const [adaptedValue, setAdaptedValue] = useState(value);
 
@@ -253,15 +277,17 @@ function useAdaptedFieldValue(
       };
     }
 
-    void result.then((nextValue) => {
-      if (!ac.signal.aborted) {
-        setAdaptedValue(nextValue);
-      }
-    }).catch((error: unknown) => {
-      if (!ac.signal.aborted) {
-        console.warn('[field-utils] adapter.in failed', error);
-      }
-    });
+    void result
+      .then((nextValue) => {
+        if (!ac.signal.aborted) {
+          setAdaptedValue(nextValue);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!ac.signal.aborted) {
+          console.warn('[field-utils] adapter.in failed', error);
+        }
+      });
 
     return () => {
       ac.abort();
@@ -280,7 +306,7 @@ export function useFormFieldController(
     required?: boolean;
     readOnly?: boolean;
     areValuesEqual?: (a: unknown, b: unknown) => boolean;
-  }
+  },
 ) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
@@ -289,15 +315,15 @@ export function useFormFieldController(
   const adapterContext = useMemo(
     () => ({
       name,
-      readOnly: Boolean(options?.readOnly)
+      readOnly: Boolean(options?.readOnly),
     }),
-    [name, options?.readOnly]
+    [name, options?.readOnly],
   );
   const value = useAdaptedFieldValue(rawValue, options?.adapter, adapterContext);
   const presentation = useFieldPresentation(name, currentValidationScope, {
     disabled: options?.disabled,
     required: options?.required,
-    readOnly: options?.readOnly
+    readOnly: options?.readOnly,
   });
   const handlers = useFieldHandlers({
     name,
@@ -305,7 +331,7 @@ export function useFormFieldController(
     scope,
     toFormValue: options?.toFormValue,
     adapter: options?.adapter,
-    adapterContext
+    adapterContext,
   });
 
   return {
@@ -313,7 +339,7 @@ export function useFormFieldController(
     scope,
     value,
     presentation,
-    handlers
+    handlers,
   };
 }
 
@@ -321,11 +347,16 @@ function useFormFieldState(name: string) {
   return useOwnedFieldState(name);
 }
 
-export function resolveFieldLabelContent(props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>) {
+export function resolveFieldLabelContent(
+  props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>,
+) {
   return resolveRendererSlotContent(props, 'label');
 }
 
-export function resolveFieldLabelText(props: Pick<RendererComponentProps, 'props' | 'meta'>, fallback?: string) {
+export function resolveFieldLabelText(
+  props: Pick<RendererComponentProps, 'props' | 'meta'>,
+  fallback?: string,
+) {
   if (typeof props.props.label === 'string' && props.props.label) {
     return props.props.label;
   }
@@ -343,13 +374,13 @@ export function getChildFieldUiState(input: {
   const visited = input.fieldState.visited;
   const showError = Boolean(
     error &&
-      shouldShowFieldError(input.behavior, {
-        touched,
-        dirty,
-        visited,
-        submitting: input.fieldState.submitting,
-        submitAttempted: input.fieldState.submitAttempted
-      })
+    shouldShowFieldError(input.behavior, {
+      touched,
+      dirty,
+      visited,
+      submitting: input.fieldState.submitting,
+      submitAttempted: input.fieldState.submitAttempted,
+    }),
   );
 
   return {
@@ -373,20 +404,21 @@ export function useFieldPresentation(
     disabled?: boolean;
     readOnly?: boolean;
     required?: boolean;
-  }
+  },
 ) {
   const fieldState = useFormFieldState(name);
   const currentForm = useCurrentForm();
   const behavior = getValidationBehaviorForOwner(name, currentValidationScope);
   const currentPresentation = useCurrentFormState(
-    (state) => selectCurrentFormFieldPresentation(state, {
-      path: name,
-      validation: currentValidationScope?.validation,
-      disabled: options?.disabled,
-      readOnly: options?.readOnly,
-      required: options?.required,
-      query: { path: name, ownerPath: name }
-    }),
+    (state) =>
+      selectCurrentFormFieldPresentation(state, {
+        path: name,
+        validation: currentValidationScope?.validation,
+        disabled: options?.disabled,
+        readOnly: options?.readOnly,
+        required: options?.required,
+        query: { path: name, ownerPath: name },
+      }),
     (left, right) =>
       left.error === right.error &&
       left.validating === right.validating &&
@@ -399,7 +431,7 @@ export function useFieldPresentation(
       left.effectiveRequired === right.effectiveRequired &&
       left.showError === right.showError &&
       left.interactive === right.interactive &&
-      left.readOnly === right.readOnly
+      left.readOnly === right.readOnly,
   );
   const presentation = currentForm
     ? currentPresentation
@@ -409,22 +441,22 @@ export function useFieldPresentation(
         effectiveRequired: Boolean(options?.required),
         showError: Boolean(
           fieldState.error &&
-            shouldShowFieldError(behavior, {
-              touched: fieldState.touched,
-              dirty: fieldState.dirty,
-              visited: fieldState.visited,
-              submitting: fieldState.submitting,
-              submitAttempted: fieldState.submitAttempted
-            })
+          shouldShowFieldError(behavior, {
+            touched: fieldState.touched,
+            dirty: fieldState.dirty,
+            visited: fieldState.visited,
+            submitting: fieldState.submitting,
+            submitAttempted: fieldState.submitAttempted,
+          }),
         ),
         interactive: !options?.disabled && !options?.readOnly,
-        readOnly: Boolean(options?.readOnly)
+        readOnly: Boolean(options?.readOnly),
       };
 
   return {
     fieldState: {
       ...presentation,
-      error: presentation.error
+      error: presentation.error,
     },
     effectiveDisabled: presentation.effectiveDisabled,
     effectiveRequired: presentation.effectiveRequired,

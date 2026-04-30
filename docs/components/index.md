@@ -104,48 +104,48 @@ docs/components/
 
 ### 1. 基础标识
 
-| 概念 | 标准名称 | 说明 |
-| --- | --- | --- |
-| 组件类型 | `type` | renderer 类型名 |
-| 实例 ID | `id` | 组件定向调用与调试锚点 |
-| 逻辑名 | `name` | 逻辑命名或表单参与名 |
-| 测试锚点 | `testid` | 输出为 `data-testid` |
-| 样式类 | `className` | 自定义类名 |
+| 概念       | 标准名称       | 说明                       |
+| ---------- | -------------- | -------------------------- |
+| 组件类型   | `type`         | renderer 类型名            |
+| 实例 ID    | `id`           | 组件定向调用与调试锚点     |
+| 逻辑名     | `name`         | 逻辑命名或表单参与名       |
+| 测试锚点   | `testid`       | 输出为 `data-testid`       |
+| 样式类     | `className`    | 自定义类名                 |
 | 类别名映射 | `classAliases` | 短名到 Tailwind class 展开 |
 
 ### 2. 常用内容与 region 名称
 
 优先使用自然业务名，不要机械发明 `xxxRegion`、`renderXxx` 一类命名。
 
-| 概念 | 优先名称 |
-| --- | --- |
-| 主内容 | `body` |
-| 标题 | `title` |
-| 头部 | `header` |
-| 尾部 | `footer` |
-| 工具区 | `toolbar` |
-| 空态 | `empty` |
-| 动作区 | `actions` |
-| 单项内容 | `item` |
-| 列表项集合 | `items` |
+| 概念       | 优先名称  |
+| ---------- | --------- |
+| 主内容     | `body`    |
+| 标题       | `title`   |
+| 头部       | `header`  |
+| 尾部       | `footer`  |
+| 工具区     | `toolbar` |
+| 空态       | `empty`   |
+| 动作区     | `actions` |
+| 单项内容   | `item`    |
+| 列表项集合 | `items`   |
 
 ### 2.1 Structural Renderer Baseline
 
 Current live runtime baseline now includes three no-UI structural renderers in `@nop-chaos/flux-renderers-basic`:
 
-| Type | Purpose | Key runtime rule |
-| --- | --- | --- |
+| Type       | Purpose                                             | Key runtime rule                                                                     |
+| ---------- | --------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `fragment` | group multiple child nodes without a visual wrapper | renders `body` through region handles and can add `data` / `isolate` scope overrides |
-| `loop` | repeat one body template over `items` | creates inherited item scopes and appends repeated `instancePath` frames |
-| `recurse` | lexical recursion inside `loop.body` | re-instantiates the nearest enclosing `loop.body` with a new item collection |
+| `loop`     | repeat one body template over `items`               | creates inherited item scopes and appends repeated `instancePath` frames             |
+| `recurse`  | lexical recursion inside `loop.body`                | re-instantiates the nearest enclosing `loop.body` with a new item collection         |
 
 The live runtime baseline also now includes the first tree family split promised by the design docs:
 
-| Type | Layer | Key boundary |
-| --- | --- | --- |
-| `tree` | data renderer | visual hierarchical UI with node-template scope bindings |
-| `input-tree` | form renderer | embedded tree field with value/validation semantics |
-| `tree-select` | form renderer | popup tree field that stays distinct from flat `select` |
+| Type          | Layer         | Key boundary                                             |
+| ------------- | ------------- | -------------------------------------------------------- |
+| `tree`        | data renderer | visual hierarchical UI with node-template scope bindings |
+| `input-tree`  | form renderer | embedded tree field with value/validation semantics      |
+| `tree-select` | form renderer | popup tree field that stays distinct from flat `select`  |
 
 These types are now registered runtime components rather than target-contract-only design notes.
 
@@ -153,16 +153,16 @@ These types are now registered runtime components rather than target-contract-on
 
 事件入口统一使用 `onXxx`。
 
-| 概念 | 优先名称 |
-| --- | --- |
-| 点击 | `onClick` |
-| 值变化 | `onChange` |
-| 提交 | `onSubmit` |
-| 新增 | `onAdd` |
-| 删除/移除 | `onRemove` |
-| 重排 | `onReorder` |
-| 关闭 | `onClose` |
-| 打开 | `onOpen` |
+| 概念      | 优先名称    |
+| --------- | ----------- |
+| 点击      | `onClick`   |
+| 值变化    | `onChange`  |
+| 提交      | `onSubmit`  |
+| 新增      | `onAdd`     |
+| 删除/移除 | `onRemove`  |
+| 重排      | `onReorder` |
+| 关闭      | `onClose`   |
+| 打开      | `onOpen`    |
 
 说明：
 
@@ -171,11 +171,11 @@ These types are now registered runtime components rather than target-contract-on
 
 ### 4. 动作选择器名称
 
-| 场景 | 标准形式 | 示例 |
-| --- | --- | --- |
-| 内置动作 | camelCase | `setValue`、`openDialog` |
-| 组件实例能力 | `component:<method>` | `component:submit`、`component:setValue` |
-| 宿主/导入能力 | `namespace:method` | `designer:addNode` |
+| 场景          | 标准形式             | 示例                                     |
+| ------------- | -------------------- | ---------------------------------------- |
+| 内置动作      | camelCase            | `setValue`、`openDialog`                 |
+| 组件实例能力  | `component:<method>` | `component:submit`、`component:setValue` |
+| 宿主/导入能力 | `namespace:method`   | `designer:addNode`                       |
 
 组件实例 method 推荐使用动词短语：
 
@@ -194,14 +194,14 @@ These types are now registered runtime components rather than target-contract-on
 
 组件如果有明确交互状态，应优先复用 `<axis>Ownership` / `<axis>StatePath` 命名模式。
 
-| 概念 | 标准名称模式 | 示例 |
-| --- | --- | --- |
-| 状态归属 | `<axis>Ownership` | `valueOwnership`、`selectionOwnership` |
-| scope 持久化路径 | `<axis>StatePath` | `valueStatePath` |
-| 只读状态摘要发布 | `statusPath` | `userListStatus`、`searchFormStatus` |
-| ownership 值 | `local` / `controlled` / `scope` | `valueOwnership: 'scope'` |
-| 当前值 | 语义化当前值字段 | `value`、`selectedKeys` |
-| 初始化默认值 | `defaultXxx` | `defaultValue`、`defaultOpen` |
+| 概念             | 标准名称模式                     | 示例                                   |
+| ---------------- | -------------------------------- | -------------------------------------- |
+| 状态归属         | `<axis>Ownership`                | `valueOwnership`、`selectionOwnership` |
+| scope 持久化路径 | `<axis>StatePath`                | `valueStatePath`                       |
+| 只读状态摘要发布 | `statusPath`                     | `userListStatus`、`searchFormStatus`   |
+| ownership 值     | `local` / `controlled` / `scope` | `valueOwnership: 'scope'`              |
+| 当前值           | 语义化当前值字段                 | `value`、`selectedKeys`                |
+| 初始化默认值     | `defaultXxx`                     | `defaultValue`、`defaultOpen`          |
 
 不要混用：
 
@@ -229,15 +229,15 @@ These types are now registered runtime components rather than target-contract-on
 
 遵守当前 styling system 与 UI 组件约定，优先使用：
 
-| 概念 | 标准名称 |
-| --- | --- |
-| 视觉变体 | `variant` |
-| 尺寸 | `size` |
-| 语义级别 | `level` |
-| 方向 | `orientation` |
-| 是否禁用 | `disabled` |
-| 是否可见 | `visible` |
-| 只读 | `readOnly` |
+| 概念     | 标准名称      |
+| -------- | ------------- |
+| 视觉变体 | `variant`     |
+| 尺寸     | `size`        |
+| 语义级别 | `level`       |
+| 方向     | `orientation` |
+| 是否禁用 | `disabled`    |
+| 是否可见 | `visible`     |
+| 只读     | `readOnly`    |
 
 不要优先使用上游私有写法如：
 
@@ -257,13 +257,13 @@ UI primitive 对齐补充规则：
 
 对于“组件内部维护一组项”的组件，优先采用统一集合语言：
 
-| 概念 | 标准名称 |
-| --- | --- |
-| 集合字段 | `items` |
-| 新增开关 | 复用现有领域名或组件原生名 |
-| 移除开关 | 复用现有领域名或组件原生名 |
-| 重排开关 | 复用现有领域名或组件原生名 |
-| 新增入口 region | `addTrigger` |
+| 概念            | 标准名称                   |
+| --------------- | -------------------------- |
+| 集合字段        | `items`                    |
+| 新增开关        | 复用现有领域名或组件原生名 |
+| 移除开关        | 复用现有领域名或组件原生名 |
+| 重排开关        | 复用现有领域名或组件原生名 |
+| 新增入口 region | `addTrigger`               |
 
 集合字段补充规则：
 

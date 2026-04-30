@@ -149,7 +149,10 @@ interface AdapterContext {
 interface ValueAdapter<TExternal = unknown, TInternal = unknown> {
   in(value: TExternal, ctx: AdapterContext): TInternal | Promise<TInternal>;
   out(value: TInternal, ctx: AdapterContext): TExternal | Promise<TExternal>;
-  validate?(value: TInternal, ctx: AdapterContext): AdapterValidationResult | Promise<AdapterValidationResult>;
+  validate?(
+    value: TInternal,
+    ctx: AdapterContext,
+  ): AdapterValidationResult | Promise<AdapterValidationResult>;
 }
 ```
 
@@ -263,9 +266,7 @@ This replace rule is part of the shared value-adaptation contract and should sta
 
 ```ts
 {
-  value: rawValue,
-  name,
-  readOnly
+  value: (rawValue, name, readOnly);
 }
 ```
 
@@ -275,8 +276,7 @@ This replace rule is part of the shared value-adaptation contract and should sta
 
 ```ts
 {
-  value: projectedScopeObject,
-  readOnly
+  value: (projectedScopeObject, readOnly);
 }
 ```
 
@@ -583,8 +583,7 @@ Current live implementation note:
 
 ```ts
 {
-  value: currentValue,
-  readOnly
+  value: (currentValue, readOnly);
 }
 ```
 
@@ -617,9 +616,7 @@ Current live implementation note:
 {
   "type": "detail-field",
   "name": "submitAction",
-  "xui:imports": [
-    { "from": "@tenant/acme-action-graph", "as": "actionGraph" }
-  ],
+  "xui:imports": [{ "from": "@tenant/acme-action-graph", "as": "actionGraph" }],
   "viewer": {
     "type": "tpl",
     "tpl": "${value?.action || '未设置'}"

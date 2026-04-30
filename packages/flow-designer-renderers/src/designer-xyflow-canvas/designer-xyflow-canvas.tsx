@@ -8,7 +8,7 @@ import {
   ReactFlowProvider,
   ViewportPortal,
   useNodesState,
-  useEdgesState
+  useEdgesState,
 } from '@xyflow/react';
 import type {
   Connection,
@@ -17,14 +17,25 @@ import type {
   NodeChange,
   ReactFlowInstance,
   OnReconnect,
-  OnSelectionChangeParams
+  OnSelectionChangeParams,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { DesignerXyflowNode } from './designer-xyflow-node';
 import { DesignerXyflowEdge } from './designer-xyflow-edge';
 import { DingFlowEdge } from '../dingflow';
-import { computeDingFlowOverlays, DingFlowAddBranchOverlay, DingFlowMergeOverlay } from '../dingflow';
-import { createXyflowNodes, createXyflowEdges, normalizeControlledViewport, viewportsEqual, normalizeViewportChange, normalizePositionSignature } from './xyflow-utils';
+import {
+  computeDingFlowOverlays,
+  DingFlowAddBranchOverlay,
+  DingFlowMergeOverlay,
+} from '../dingflow';
+import {
+  createXyflowNodes,
+  createXyflowEdges,
+  normalizeControlledViewport,
+  viewportsEqual,
+  normalizeViewportChange,
+  normalizePositionSignature,
+} from './xyflow-utils';
 import type { XyflowViewportChange } from './types';
 import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 
@@ -46,28 +57,54 @@ export interface DesignerXyflowCanvasProps {
   onCompleteConnection(nodeId: string, event?: React.MouseEvent): void;
   onStartReconnect(edgeId: string, event?: React.MouseEvent): void;
   onCancelReconnect(edgeId: string, event?: React.MouseEvent): void;
-  onCompleteReconnect(edgeId: string, sourceId: string, targetId: string, event?: React.MouseEvent): void;
+  onCompleteReconnect(
+    edgeId: string,
+    sourceId: string,
+    targetId: string,
+    event?: React.MouseEvent,
+  ): void;
   onDuplicateNode(nodeId: string, event?: React.MouseEvent): void;
   onDeleteNode(nodeId: string, event?: React.MouseEvent): void;
   onDeleteEdge(edgeId: string, event?: React.MouseEvent): void;
   onMoveNode(nodeId: string, event?: React.MouseEvent, position?: { x: number; y: number }): void;
-  onViewportChange(viewport: { x: number; y: number; zoom: number }, event?: React.MouseEvent): void;
+  onViewportChange(
+    viewport: { x: number; y: number; zoom: number },
+    event?: React.MouseEvent,
+  ): void;
   onNodeDoubleClick?(nodeId: string, event?: React.MouseEvent): void;
   onEdgeDoubleClick?(edgeId: string, event?: React.MouseEvent): void;
   onNodeHover?(nodeId: string | null, event?: React.MouseEvent): void;
   onEdgeHover?(edgeId: string | null, event?: React.MouseEvent): void;
   onDrop?(nodeTypeId: string, position: { x: number; y: number }): void;
   documentMode?: 'graph' | 'tree';
-  onPlusButtonClick?: (sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => void;
+  onPlusButtonClick?: (
+    sourceId: string,
+    clientX: number,
+    clientY: number,
+    sourceKind?: 'node' | 'branch-group' | 'merge',
+  ) => void;
 }
 
-function TreeModeOverlays({ nodes, edges, nodeTypeSizeMap, onPlusButtonClick }: {
+function TreeModeOverlays({
+  nodes,
+  edges,
+  nodeTypeSizeMap,
+  onPlusButtonClick,
+}: {
   nodes: import('@nop-chaos/flow-designer-core').GraphNode[];
   edges: import('@nop-chaos/flow-designer-core').GraphEdge[];
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>;
-  onPlusButtonClick: (sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => void;
+  onPlusButtonClick: (
+    sourceId: string,
+    clientX: number,
+    clientY: number,
+    sourceKind?: 'node' | 'branch-group' | 'merge',
+  ) => void;
 }) {
-  const overlays = useMemo(() => computeDingFlowOverlays(nodes, edges, nodeTypeSizeMap), [nodes, edges, nodeTypeSizeMap]);
+  const overlays = useMemo(
+    () => computeDingFlowOverlays(nodes, edges, nodeTypeSizeMap),
+    [nodes, edges, nodeTypeSizeMap],
+  );
 
   return (
     <ViewportPortal>
@@ -79,15 +116,17 @@ function TreeModeOverlays({ nodes, edges, nodeTypeSizeMap, onPlusButtonClick }: 
             transform: `translate(${overlay.x}px, ${overlay.y}px) translate(-50%, -50%)`,
           }}
         >
-            {overlay.kind === 'addCondition' ? (
-              <DingFlowAddBranchOverlay
-                onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY, 'branch-group')}
-              />
-            ) : (
-              <DingFlowMergeOverlay
-                onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY, 'merge')}
-              />
-            )}
+          {overlay.kind === 'addCondition' ? (
+            <DingFlowAddBranchOverlay
+              onClick={(e) =>
+                onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY, 'branch-group')
+              }
+            />
+          ) : (
+            <DingFlowMergeOverlay
+              onClick={(e) => onPlusButtonClick(overlay.sourceId, e.clientX, e.clientY, 'merge')}
+            />
+          )}
         </div>
       ))}
     </ViewportPortal>
@@ -95,22 +134,31 @@ function TreeModeOverlays({ nodes, edges, nodeTypeSizeMap, onPlusButtonClick }: 
 }
 
 export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
-  const xyflowNodeTypes = useMemo(() => ({
-    designerNode: DesignerXyflowNode
-  }), []);
-  const xyflowEdgeTypes = useMemo(() => ({
-    designerEdge: DesignerXyflowEdge,
-    dingflowEdge: DingFlowEdge
-  }), []);
+  const xyflowNodeTypes = useMemo(
+    () => ({
+      designerNode: DesignerXyflowNode,
+    }),
+    [],
+  );
+  const xyflowEdgeTypes = useMemo(
+    () => ({
+      designerEdge: DesignerXyflowEdge,
+      dingflowEdge: DingFlowEdge,
+    }),
+    [],
+  );
 
   const snapshotNodes = useMemo(
     () => createXyflowNodes(props.snapshot, props.nodeTypeSizeMap),
-    [props.snapshot, props.nodeTypeSizeMap]
+    [props.snapshot, props.nodeTypeSizeMap],
   );
-  const snapshotEdges = useMemo(() => createXyflowEdges(props.snapshot, props.documentMode), [props.snapshot, props.documentMode]);
+  const snapshotEdges = useMemo(
+    () => createXyflowEdges(props.snapshot, props.documentMode),
+    [props.snapshot, props.documentMode],
+  );
   const viewport = useMemo(
     () => normalizeControlledViewport(props.snapshot.doc.viewport ?? props.snapshot.viewport),
-    [props.snapshot.doc.viewport, props.snapshot.viewport]
+    [props.snapshot.doc.viewport, props.snapshot.viewport],
   );
 
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
@@ -142,11 +190,12 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
   const zoomable = props.canvasConfig?.zoomable !== false;
   const snapToGrid = props.canvasConfig?.snapToGrid === true;
   const backgroundType = props.canvasConfig?.background ?? 'lines';
-  const backgroundVariant = backgroundType === 'dots'
-    ? BackgroundVariant.Dots
-    : backgroundType === 'cross'
-      ? BackgroundVariant.Cross
-      : BackgroundVariant.Lines;
+  const backgroundVariant =
+    backgroundType === 'dots'
+      ? BackgroundVariant.Dots
+      : backgroundType === 'cross'
+        ? BackgroundVariant.Cross
+        : BackgroundVariant.Lines;
   const showBackground = props.snapshot.gridEnabled && backgroundType !== 'none';
   const onViewportChange = props.onViewportChange;
 
@@ -196,11 +245,14 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
       const cw = surfaceRef.current?.clientWidth ?? 0;
       const ch = surfaceRef.current?.clientHeight ?? 0;
       const z = viewportRef.current.zoom;
-      onViewportChange({
-        x: cw / 2 - flowX * z,
-        y: ch / 2 - flowY * z,
-        zoom: z,
-      }, undefined);
+      onViewportChange(
+        {
+          x: cw / 2 - flowX * z,
+          y: ch / 2 - flowY * z,
+          zoom: z,
+        },
+        undefined,
+      );
     };
 
     svgEl.addEventListener('mousedown', onMouseDown as EventListener);
@@ -214,7 +266,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
   useEffect(() => {
     const snapshotPositionMap = new Map(
-      snapshotNodes.map((node) => [node.id, normalizePositionSignature(node.position)])
+      snapshotNodes.map((node) => [node.id, normalizePositionSignature(node.position)]),
     );
 
     setLocalNodes((currentNodes) => {
@@ -224,7 +276,8 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
       const snapshotIdSet = new Set(snapshotNodes.map((n) => n.id));
       const localIdSet = new Set(currentNodes.map((n) => n.id));
-      const structureChanged = snapshotIdSet.size !== localIdSet.size ||
+      const structureChanged =
+        snapshotIdSet.size !== localIdSet.size ||
         [...snapshotIdSet].some((id) => !localIdSet.has(id));
 
       if (structureChanged) {
@@ -260,49 +313,57 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     setLocalEdges(snapshotEdges);
   }, [snapshotEdges, setLocalEdges]);
 
-  const renderedEdges = useMemo<Edge[]>(() => (
-    localEdges.map((edge) => ({
-      ...edge,
-      data: {
-        ...((edge.data as Record<string, unknown> | undefined) ?? {}),
-        __fdHovered: edge.id === hoveredEdgeId
-      }
-    }))
-  ), [localEdges, hoveredEdgeId]);
+  const renderedEdges = useMemo<Edge[]>(
+    () =>
+      localEdges.map((edge) => ({
+        ...edge,
+        data: {
+          ...((edge.data as Record<string, unknown> | undefined) ?? {}),
+          __fdHovered: edge.id === hoveredEdgeId,
+        },
+      })),
+    [localEdges, hoveredEdgeId],
+  );
 
   const { onDeleteNode, onMoveNode, onDeleteEdge, onStartReconnect, onCompleteReconnect } = props;
 
-  const handleNodesChange = useCallback((changes: NodeChange[]) => {
-    onNodesChangeInternal(changes);
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      onNodesChangeInternal(changes);
 
-    for (const change of changes) {
-      if (change.type === 'remove') {
-        onDeleteNode(change.id, undefined);
-        lastCommittedPositionsRef.current.delete(change.id);
-        continue;
+      for (const change of changes) {
+        if (change.type === 'remove') {
+          onDeleteNode(change.id, undefined);
+          lastCommittedPositionsRef.current.delete(change.id);
+          continue;
+        }
+
+        if (change.type === 'position' && change.dragging === false && change.position) {
+          const position = {
+            x: Math.round(change.position.x),
+            y: Math.round(change.position.y),
+          };
+          const signature = normalizePositionSignature(position);
+          lastCommittedPositionsRef.current.set(change.id, signature);
+          onMoveNode(change.id, undefined, position);
+        }
       }
+    },
+    [onNodesChangeInternal, onDeleteNode, onMoveNode],
+  );
 
-      if (change.type === 'position' && change.dragging === false && change.position) {
-        const position = {
-          x: Math.round(change.position.x),
-          y: Math.round(change.position.y)
-        };
-        const signature = normalizePositionSignature(position);
-        lastCommittedPositionsRef.current.set(change.id, signature);
-        onMoveNode(change.id, undefined, position);
+  const handleEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      onEdgesChangeInternal(changes);
+
+      for (const change of changes) {
+        if (change.type === 'remove') {
+          onDeleteEdge(change.id, undefined);
+        }
       }
-    }
-  }, [onNodesChangeInternal, onDeleteNode, onMoveNode]);
-
-  const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
-    onEdgesChangeInternal(changes);
-
-    for (const change of changes) {
-      if (change.type === 'remove') {
-        onDeleteEdge(change.id, undefined);
-      }
-    }
-  }, [onEdgesChangeInternal, onDeleteEdge]);
+    },
+    [onEdgesChangeInternal, onDeleteEdge],
+  );
 
   function handleViewportChange(nextViewport: XyflowViewportChange) {
     const normalized = normalizeViewportChange(nextViewport);
@@ -326,19 +387,24 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
   const handleReconnect = useCallback<NonNullable<OnReconnect>>(
     (oldEdge, newConnection) => {
-      if (!oldEdge.id || !newConnection.source || !newConnection.target || newConnection.source === newConnection.target) {
+      if (
+        !oldEdge.id ||
+        !newConnection.source ||
+        !newConnection.target ||
+        newConnection.source === newConnection.target
+      ) {
         return;
       }
 
       onStartReconnect(oldEdge.id, undefined);
       onCompleteReconnect(oldEdge.id, newConnection.source, newConnection.target, undefined);
     },
-    [onStartReconnect, onCompleteReconnect]
+    [onStartReconnect, onCompleteReconnect],
   );
 
   const lastSelectionRef = useRef<{ nodeId: string | null; edgeId: string | null }>({
     nodeId: null,
-    edgeId: null
+    edgeId: null,
   });
 
   function handleSelectionChange(selection: OnSelectionChangeParams) {
@@ -373,108 +439,117 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
         ref={surfaceRef}
       >
         <ReactFlow
-            nodes={localNodes}
-            edges={renderedEdges}
-            nodeTypes={xyflowNodeTypes}
-            edgeTypes={xyflowEdgeTypes}
-            onInit={(instance) => setReactFlowInstance(instance)}
-            viewport={viewport}
-            fitView
-            nodesConnectable={!isTreeMode}
-            elementsSelectable
-            nodesDraggable={!isTreeMode}
-            panOnDrag={pannable}
-            panOnScroll={pannable}
-            zoomOnScroll={zoomable}
-            zoomOnPinch={zoomable}
-            zoomOnDoubleClick={zoomable}
-            minZoom={minZoom}
-            maxZoom={maxZoom}
-            snapToGrid={snapToGrid}
-            snapGrid={[gridSize, gridSize]}
-            onMove={(_event, nextViewport) => handleViewportChange(nextViewport as XyflowViewportChange)}
-            onMoveEnd={(_event, nextViewport) => handleViewportChange(nextViewport as XyflowViewportChange)}
-            onPaneClick={() => {
-              props.onPaneClick();
-            }}
-            onConnect={isTreeMode ? undefined : handleConnect}
-            onReconnect={isTreeMode ? undefined : handleReconnect}
-            onNodesChange={handleNodesChange}
-            onEdgesChange={handleEdgesChange}
-            onSelectionChange={handleSelectionChange}
-            onNodeClick={(_event, node) => props.onNodeSelect(node.id, undefined)}
-            onEdgeClick={(_event, edge) => props.onEdgeSelect(edge.id, undefined)}
-            proOptions={{ hideAttribution: true }}
-            onNodeMouseEnter={(_e, node) => {
-              if (hoverTimeoutRef.current) {
-                clearTimeout(hoverTimeoutRef.current);
-              }
-              props.onNodeHover?.(node.id, undefined);
-            }}
-            onNodeMouseLeave={() => {
-              hoverTimeoutRef.current = setTimeout(() => {
-                props.onNodeHover?.(null, undefined);
-              }, 160);
-            }}
-            onEdgeMouseEnter={(_e, edge) => {
-              if (hoverTimeoutRef.current) {
-                clearTimeout(hoverTimeoutRef.current);
-              }
-              setHoveredEdgeId(edge.id);
-              props.onEdgeHover?.(edge.id, undefined);
-            }}
-            onEdgeMouseLeave={() => {
-              hoverTimeoutRef.current = setTimeout(() => {
-                setHoveredEdgeId(null);
-                props.onEdgeHover?.(null, undefined);
-              }, 160);
-            }}
-            onNodeDoubleClick={(_event, node) => {
-              props.onNodeDoubleClick?.(node.id, undefined);
-            }}
-            onEdgeDoubleClick={(_event, edge) => {
-              props.onEdgeDoubleClick?.(edge.id, undefined);
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-              const nodeTypeId = event.dataTransfer.getData(DESIGNER_PALETTE_NODE_MIME);
-              if (!nodeTypeId || !props.onDrop) return;
-              const position = reactFlowInstance
-                ? reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
-                : { x: event.clientX, y: event.clientY };
+          nodes={localNodes}
+          edges={renderedEdges}
+          nodeTypes={xyflowNodeTypes}
+          edgeTypes={xyflowEdgeTypes}
+          onInit={(instance) => setReactFlowInstance(instance)}
+          viewport={viewport}
+          fitView
+          nodesConnectable={!isTreeMode}
+          elementsSelectable
+          nodesDraggable={!isTreeMode}
+          panOnDrag={pannable}
+          panOnScroll={pannable}
+          zoomOnScroll={zoomable}
+          zoomOnPinch={zoomable}
+          zoomOnDoubleClick={zoomable}
+          minZoom={minZoom}
+          maxZoom={maxZoom}
+          snapToGrid={snapToGrid}
+          snapGrid={[gridSize, gridSize]}
+          onMove={(_event, nextViewport) =>
+            handleViewportChange(nextViewport as XyflowViewportChange)
+          }
+          onMoveEnd={(_event, nextViewport) =>
+            handleViewportChange(nextViewport as XyflowViewportChange)
+          }
+          onPaneClick={() => {
+            props.onPaneClick();
+          }}
+          onConnect={isTreeMode ? undefined : handleConnect}
+          onReconnect={isTreeMode ? undefined : handleReconnect}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={handleEdgesChange}
+          onSelectionChange={handleSelectionChange}
+          onNodeClick={(_event, node) => props.onNodeSelect(node.id, undefined)}
+          onEdgeClick={(_event, edge) => props.onEdgeSelect(edge.id, undefined)}
+          proOptions={{ hideAttribution: true }}
+          onNodeMouseEnter={(_e, node) => {
+            if (hoverTimeoutRef.current) {
+              clearTimeout(hoverTimeoutRef.current);
+            }
+            props.onNodeHover?.(node.id, undefined);
+          }}
+          onNodeMouseLeave={() => {
+            hoverTimeoutRef.current = setTimeout(() => {
+              props.onNodeHover?.(null, undefined);
+            }, 160);
+          }}
+          onEdgeMouseEnter={(_e, edge) => {
+            if (hoverTimeoutRef.current) {
+              clearTimeout(hoverTimeoutRef.current);
+            }
+            setHoveredEdgeId(edge.id);
+            props.onEdgeHover?.(edge.id, undefined);
+          }}
+          onEdgeMouseLeave={() => {
+            hoverTimeoutRef.current = setTimeout(() => {
+              setHoveredEdgeId(null);
+              props.onEdgeHover?.(null, undefined);
+            }, 160);
+          }}
+          onNodeDoubleClick={(_event, node) => {
+            props.onNodeDoubleClick?.(node.id, undefined);
+          }}
+          onEdgeDoubleClick={(_event, edge) => {
+            props.onEdgeDoubleClick?.(edge.id, undefined);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            const nodeTypeId = event.dataTransfer.getData(DESIGNER_PALETTE_NODE_MIME);
+            if (!nodeTypeId || !props.onDrop) return;
+            const position = reactFlowInstance
+              ? reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
+              : { x: event.clientX, y: event.clientY };
 
-              props.onDrop(nodeTypeId, position);
-            }}
-            onDragOver={(event) => {
-              event.preventDefault();
-              event.dataTransfer.dropEffect = 'move';
-            }}
-          >
-            {showBackground && (
-               <Background gap={gridSize} size={1} variant={backgroundVariant} color="var(--fd-grid-color)" />
-             )}
-             {showMinimap && (
-               <MiniMap
-                 className="fd-xyflow-minimap !rounded-2xl !border !border-border"
-                 pannable
-                 zoomable
-                 bgColor="var(--fd-minimap-bg)"
-                 offsetScale={0}
-                 nodeColor={() => 'var(--fd-minimap-node)'}
-                 nodeStrokeColor={() => 'var(--fd-edge-stroke)'}
-                 nodeBorderRadius={4}
-                 maskColor="var(--fd-minimap-mask)"
-               />
-             )}
-            {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
-            {props.documentMode === 'tree' && props.onPlusButtonClick && (
-              <TreeModeOverlays
-                nodes={props.snapshot.doc.nodes}
-                edges={props.snapshot.doc.edges}
-                nodeTypeSizeMap={props.nodeTypeSizeMap}
-                onPlusButtonClick={props.onPlusButtonClick}
-              />
-            )}
+            props.onDrop(nodeTypeId, position);
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+          }}
+        >
+          {showBackground && (
+            <Background
+              gap={gridSize}
+              size={1}
+              variant={backgroundVariant}
+              color="var(--fd-grid-color)"
+            />
+          )}
+          {showMinimap && (
+            <MiniMap
+              className="fd-xyflow-minimap !rounded-2xl !border !border-border"
+              pannable
+              zoomable
+              bgColor="var(--fd-minimap-bg)"
+              offsetScale={0}
+              nodeColor={() => 'var(--fd-minimap-node)'}
+              nodeStrokeColor={() => 'var(--fd-edge-stroke)'}
+              nodeBorderRadius={4}
+              maskColor="var(--fd-minimap-mask)"
+            />
+          )}
+          {showControls && <Controls className="fd-xyflow-controls" showInteractive={false} />}
+          {props.documentMode === 'tree' && props.onPlusButtonClick && (
+            <TreeModeOverlays
+              nodes={props.snapshot.doc.nodes}
+              edges={props.snapshot.doc.edges}
+              nodeTypeSizeMap={props.nodeTypeSizeMap}
+              onPlusButtonClick={props.onPlusButtonClick}
+            />
+          )}
         </ReactFlow>
       </div>
     </ReactFlowProvider>

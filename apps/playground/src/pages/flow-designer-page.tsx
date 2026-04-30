@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
-import { createSchemaRenderer, createDefaultRegistry, createDefaultEnv } from '@nop-chaos/flux-react';
+import {
+  createSchemaRenderer,
+  createDefaultRegistry,
+  createDefaultEnv,
+} from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createActionScope } from '@nop-chaos/flux-runtime';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -26,8 +30,8 @@ const formulaCompiler = createFormulaCompiler();
 type ExampleKey = 'workflow' | 'dingtalk' | 'action-flow';
 
 const EXAMPLES: Record<ExampleKey, { label: string; schema: unknown }> = {
-  'workflow': { label: '工作流', schema: workflowDesignerSchema },
-  'dingtalk': { label: '钉钉审批流', schema: dingtalkWorkflowTreeSchema },
+  workflow: { label: '工作流', schema: workflowDesignerSchema },
+  dingtalk: { label: '钉钉审批流', schema: dingtalkWorkflowTreeSchema },
   'action-flow': { label: 'Action 编排', schema: actionFlowTreeSchema },
 };
 
@@ -51,7 +55,7 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
           return { ok: true };
         }
         return { ok: false, error: new Error(`Unknown designer method: ${method}`) };
-      }
+      },
     });
     return scope;
   }, [onBack]);
@@ -63,11 +67,13 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
       <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
         <Tabs value={activeExample} onValueChange={(v) => setActiveExample(v as ExampleKey)}>
           <TabsList className="h-8 bg-background/80 backdrop-blur-sm shadow-sm">
-            {(Object.entries(EXAMPLES) as [ExampleKey, { label: string }][]).map(([key, { label }]) => (
-              <TabsTrigger key={key} value={key} className="text-xs px-3 h-6">
-                {label}
-              </TabsTrigger>
-            ))}
+            {(Object.entries(EXAMPLES) as [ExampleKey, { label: string }][]).map(
+              ([key, { label }]) => (
+                <TabsTrigger key={key} value={key} className="text-xs px-3 h-6">
+                  {label}
+                </TabsTrigger>
+              ),
+            )}
           </TabsList>
         </Tabs>
       </div>

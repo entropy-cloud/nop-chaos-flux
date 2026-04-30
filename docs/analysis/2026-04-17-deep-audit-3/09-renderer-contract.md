@@ -2,12 +2,12 @@
 
 ## 总体评估
 
-| 评分 | 渲染器数量 |
-|------|-----------|
-| A (完全合规) | 25 |
-| B (轻微问题) | 9 |
-| C (需要修复) | 0 |
-| D (严重违规) | 0 |
+| 评分         | 渲染器数量 |
+| ------------ | ---------- |
+| A (完全合规) | 25         |
+| B (轻微问题) | 9          |
+| C (需要修复) | 0          |
+| D (严重违规) | 0          |
 
 ---
 
@@ -49,18 +49,22 @@
 ## B 级渲染器（轻微问题）
 
 ### ConditionBuilderRenderer
+
 - **问题**: className 未与 meta.className 合并
 - **文件**: `packages/flux-renderers-form-advanced/src/condition-builder/ConditionBuilder.tsx:126,158`
 
 ### KeyValueRenderer / ArrayEditorRenderer / TagListRenderer
+
 - **问题**: 内部布局类硬编码（`grid`/`flex`/`gap-*`）
 - **说明**: 组件内部 UI 结构需求，可考虑通过 schema 使间距可配置
 
 ### TreeRenderer
+
 - **问题**: 内部布局样式
 - **说明**: 交互组件的 UI 壳层需要
 
 ### CrudRenderer
+
 - **问题**: 使用 `className="nop-crud-*"` 而非 `data-slot`
 - **说明**: 不影响功能，但与其他渲染器不一致
 
@@ -68,12 +72,12 @@
 
 ## 注册模式合规性
 
-| 包 | 导出 RendererDefinition[] | 注册函数 | 合规 |
-|-----|---------------------------|----------|------|
-| flux-renderers-basic | `basicRendererDefinitions` | `registerBasicRenderers` | ✅ |
-| flux-renderers-form | `formRendererDefinitions` | `registerFormRenderers` | ✅ |
-| flux-renderers-form-advanced | `formAdvancedRendererDefinitions` | `registerFormAdvancedRenderers` | ✅ |
-| flux-renderers-data | `dataRendererDefinitions` | `registerDataRenderers` | ✅ |
+| 包                           | 导出 RendererDefinition[]         | 注册函数                        | 合规 |
+| ---------------------------- | --------------------------------- | ------------------------------- | ---- |
+| flux-renderers-basic         | `basicRendererDefinitions`        | `registerBasicRenderers`        | ✅   |
+| flux-renderers-form          | `formRendererDefinitions`         | `registerFormRenderers`         | ✅   |
+| flux-renderers-form-advanced | `formAdvancedRendererDefinitions` | `registerFormAdvancedRenderers` | ✅   |
+| flux-renderers-data          | `dataRendererDefinitions`         | `registerDataRenderers`         | ✅   |
 
 ---
 
@@ -90,6 +94,7 @@
 ### 优先级 P2
 
 **ConditionBuilderRenderer className 合并**
+
 ```tsx
 // 从
 <div className="nop-condition-builder">

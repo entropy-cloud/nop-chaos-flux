@@ -9,25 +9,30 @@ export function useClipboard(
   selectedCell: { row: number; col: number } | null,
   getSelectedRange: () => SpreadsheetRange | null,
   setCellValue: (value: string) => void,
-  addLog: (msg: string) => void
+  addLog: (msg: string) => void,
 ) {
   const handleCopy = useCallback(async () => {
     const range = getSelectedRange();
     if (!range) return;
     await bridge.dispatch({ type: 'spreadsheet:copyCells', range });
-    addLog(`Copied ${cellAddress(range.startRow, range.startCol)}:${cellAddress(range.endRow, range.endCol)}`);
+    addLog(
+      `Copied ${cellAddress(range.startRow, range.startCol)}:${cellAddress(range.endRow, range.endCol)}`,
+    );
   }, [getSelectedRange, bridge, addLog]);
 
   const handleCut = useCallback(async () => {
     const range = getSelectedRange();
     if (!range) return;
     await bridge.dispatch({ type: 'spreadsheet:cutCells', range });
-    addLog(`Cut ${cellAddress(range.startRow, range.startCol)}:${cellAddress(range.endRow, range.endCol)}`);
+    addLog(
+      `Cut ${cellAddress(range.startRow, range.startCol)}:${cellAddress(range.endRow, range.endCol)}`,
+    );
   }, [getSelectedRange, bridge, addLog]);
 
   const handlePaste = useCallback(async () => {
     const range = getSelectedRange();
-    const targetCell = selectedCell ?? (range ? { row: range.startRow, col: range.startCol } : null);
+    const targetCell =
+      selectedCell ?? (range ? { row: range.startRow, col: range.startCol } : null);
     if (!targetCell) return;
     const result = await bridge.dispatch({
       type: 'spreadsheet:pasteCells',

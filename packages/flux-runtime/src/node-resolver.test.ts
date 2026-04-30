@@ -1,16 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createComponentHandleRegistry, createRendererRegistry, createRendererRuntime } from './index';
+import {
+  createComponentHandleRegistry,
+  createRendererRegistry,
+  createRendererRuntime,
+} from './index';
 
 const textRenderer: RendererDefinition = {
   type: 'text',
-  component: () => null
+  component: () => null,
 };
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 describe('node identity contracts', () => {
@@ -18,11 +22,14 @@ describe('node identity contracts', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
 
-    const result = runtime.resolveTarget({ _targetCid: 42 }, { runtimeId: runtime.runtimeId, componentRegistry });
+    const result = runtime.resolveTarget(
+      { _targetCid: 42 },
+      { runtimeId: runtime.runtimeId, componentRegistry },
+    );
 
     expect(result).toBeUndefined();
   });
@@ -31,11 +38,14 @@ describe('node identity contracts', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
 
-    const result = runtime.resolveTarget({ componentId: 'nonexistent' }, { runtimeId: runtime.runtimeId, componentRegistry });
+    const result = runtime.resolveTarget(
+      { componentId: 'nonexistent' },
+      { runtimeId: runtime.runtimeId, componentRegistry },
+    );
 
     expect(result).toBeUndefined();
   });
@@ -44,11 +54,14 @@ describe('node identity contracts', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
 
-    const result = runtime.resolveTarget({ componentName: 'nonexistent' }, { runtimeId: runtime.runtimeId, componentRegistry });
+    const result = runtime.resolveTarget(
+      { componentName: 'nonexistent' },
+      { runtimeId: runtime.runtimeId, componentRegistry },
+    );
 
     expect(result).toBeUndefined();
   });
@@ -62,8 +75,8 @@ describe('node identity contracts', () => {
       capabilities: {
         invoke() {
           return { ok: true };
-        }
-      }
+        },
+      },
     };
 
     const unregister = componentRegistry.register(handle, { cid: 101 });
@@ -87,8 +100,8 @@ describe('node identity contracts', () => {
       capabilities: {
         invoke() {
           return { ok: true };
-        }
-      }
+        },
+      },
     };
 
     const unregister = componentRegistry.register(handle, { cid: 55 });
@@ -100,15 +113,15 @@ describe('node identity contracts', () => {
           id: 'debug-form',
           name: 'debugForm',
           type: 'form',
-          mounted: true
-        })
-      ]
+          mounted: true,
+        }),
+      ],
     });
 
     unregister();
 
     expect(componentRegistry.getDebugSnapshot?.()).toEqual({
-      handles: []
+      handles: [],
     });
   });
 
@@ -135,7 +148,10 @@ describe('node identity contracts', () => {
   it('parent registry can inspect child registry debug data by cid', () => {
     const parentRegistry = createComponentHandleRegistry({ id: 'parent-components' });
     parentRegistry.setDebugEnabled?.(true);
-    const childRegistry = createComponentHandleRegistry({ id: 'child-components', parent: parentRegistry });
+    const childRegistry = createComponentHandleRegistry({
+      id: 'child-components',
+      parent: parentRegistry,
+    });
     childRegistry.setDebugEnabled?.(true);
 
     childRegistry.setHandleDebugData?.(9, {
@@ -155,18 +171,18 @@ describe('node identity contracts', () => {
       } as any,
       resolvedMeta: { visible: true, hidden: false, disabled: false, changed: true, cid: 9 } as any,
       resolvedProps: { name: 'username', label: 'Username' },
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     });
 
     expect(parentRegistry.getHandleDebugData?.(9)).toMatchObject({
       nodeId: 'username-field',
-      resolvedProps: { name: 'username' }
+      resolvedProps: { name: 'username' },
     });
     expect(parentRegistry.inspectCid?.(9)).toMatchObject({
       kind: 'resolved',
       payload: {
-        resolvedProps: { name: 'username', label: 'Username' }
-      }
+        resolvedProps: { name: 'username', label: 'Username' },
+      },
     });
   });
 
@@ -174,7 +190,7 @@ describe('node identity contracts', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
     componentRegistry.setDebugEnabled?.(true);
@@ -184,8 +200,8 @@ describe('node identity contracts', () => {
       capabilities: {
         invoke() {
           return { ok: true };
-        }
-      }
+        },
+      },
     };
     const nodeInstance = {
       cid: 42,
@@ -203,10 +219,19 @@ describe('node identity contracts', () => {
         regions: {},
         scopePlan: { kind: 'inherit' },
         sourcePropKeys: [],
-        sourceStatePropKeys: {}
+        sourceStatePropKeys: {},
       },
-      scope: { id: 'page', path: '$page', get: () => undefined, has: () => false, readOwn: () => ({}), read: () => ({}), update: () => undefined, merge: () => undefined },
-      state: { metaState: {}, mounted: true }
+      scope: {
+        id: 'page',
+        path: '$page',
+        get: () => undefined,
+        has: () => false,
+        readOwn: () => ({}),
+        read: () => ({}),
+        update: () => undefined,
+        merge: () => undefined,
+      },
+      state: { metaState: {}, mounted: true },
     } as any;
 
     const unregister = componentRegistry.register(handle, { cid: 42 });
@@ -220,10 +245,13 @@ describe('node identity contracts', () => {
         scope: nodeInstance.scope,
         resolvedMeta: {} as any,
         resolvedProps: {},
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       });
 
-      const result = runtime.resolveTarget({ _targetCid: 42 }, { runtimeId: runtime.runtimeId, componentRegistry });
+      const result = runtime.resolveTarget(
+        { _targetCid: 42 },
+        { runtimeId: runtime.runtimeId, componentRegistry },
+      );
 
       expect(result).toBe(nodeInstance);
     } finally {
@@ -235,7 +263,7 @@ describe('node identity contracts', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
     componentRegistry.setDebugEnabled?.(true);
@@ -245,8 +273,8 @@ describe('node identity contracts', () => {
       capabilities: {
         invoke() {
           return { ok: true };
-        }
-      }
+        },
+      },
     };
     const nodeInstance = {
       cid: undefined,
@@ -264,10 +292,19 @@ describe('node identity contracts', () => {
         regions: {},
         scopePlan: { kind: 'inherit' },
         sourcePropKeys: [],
-        sourceStatePropKeys: {}
+        sourceStatePropKeys: {},
       },
-      scope: { id: 'page', path: '$page', get: () => undefined, has: () => false, readOwn: () => ({}), read: () => ({}), update: () => undefined, merge: () => undefined },
-      state: { metaState: {}, mounted: true }
+      scope: {
+        id: 'page',
+        path: '$page',
+        get: () => undefined,
+        has: () => false,
+        readOwn: () => ({}),
+        read: () => ({}),
+        update: () => undefined,
+        merge: () => undefined,
+      },
+      state: { metaState: {}, mounted: true },
     } as any;
 
     const unregister = componentRegistry.register(handle, { cid: 42 });
@@ -281,10 +318,13 @@ describe('node identity contracts', () => {
         scope: nodeInstance.scope,
         resolvedMeta: {} as any,
         resolvedProps: {},
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       });
 
-      const result = runtime.resolveTarget({ _targetCid: 42 }, { runtimeId: runtime.runtimeId, componentRegistry });
+      const result = runtime.resolveTarget(
+        { _targetCid: 42 },
+        { runtimeId: runtime.runtimeId, componentRegistry },
+      );
 
       expect(result).toMatchObject({ cid: 42, templateNode: nodeInstance.templateNode });
       expect(result).not.toBe(nodeInstance);
@@ -298,7 +338,7 @@ describe('node identity contracts', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const componentRegistry = createComponentHandleRegistry({ id: 'root-components' });
     componentRegistry.setDebugEnabled?.(true);
@@ -308,8 +348,8 @@ describe('node identity contracts', () => {
       capabilities: {
         invoke() {
           return { ok: true };
-        }
-      }
+        },
+      },
     };
     const nodeInstance = {
       cid: undefined,
@@ -328,10 +368,19 @@ describe('node identity contracts', () => {
         regions: {},
         scopePlan: { kind: 'inherit' },
         sourcePropKeys: [],
-        sourceStatePropKeys: {}
+        sourceStatePropKeys: {},
       },
-      scope: { id: 'page', path: '$page', get: () => undefined, has: () => false, readOwn: () => ({}), read: () => ({}), update: () => undefined, merge: () => undefined },
-      state: { metaState: {}, mounted: true }
+      scope: {
+        id: 'page',
+        path: '$page',
+        get: () => undefined,
+        has: () => false,
+        readOwn: () => ({}),
+        read: () => ({}),
+        update: () => undefined,
+        merge: () => undefined,
+      },
+      state: { metaState: {}, mounted: true },
     } as any;
 
     const unregister = componentRegistry.register(handle, { cid: 77 });
@@ -345,15 +394,18 @@ describe('node identity contracts', () => {
         scope: nodeInstance.scope,
         resolvedMeta: {} as any,
         resolvedProps: {},
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       });
 
-      const result = runtime.resolveTarget({ _targetCid: 77 }, { runtimeId: runtime.runtimeId, componentRegistry });
+      const result = runtime.resolveTarget(
+        { _targetCid: 77 },
+        { runtimeId: runtime.runtimeId, componentRegistry },
+      );
 
       expect(result).toMatchObject({
         cid: 77,
         instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-2' }],
-        templateNode: nodeInstance.templateNode
+        templateNode: nodeInstance.templateNode,
       });
       expect(result).not.toBe(nodeInstance);
       expect(nodeInstance.cid).toBeUndefined();
@@ -366,7 +418,7 @@ describe('node identity contracts', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = runtime.compile({ type: 'text', text: 'hello' });

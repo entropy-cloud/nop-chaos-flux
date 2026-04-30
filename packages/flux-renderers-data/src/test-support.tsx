@@ -1,9 +1,18 @@
 import React, { useEffect } from 'react';
 import { Button } from '@nop-chaos/ui';
-import type { ActionContext, RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type {
+  ActionContext,
+  RendererComponentProps,
+  RendererDefinition,
+  RendererEnv,
+} from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
-import { createSchemaRenderer, useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
+import {
+  createSchemaRenderer,
+  useCurrentComponentRegistry,
+  useRenderScope,
+} from '@nop-chaos/flux-react';
 import { dataRendererDefinitions } from './index';
 
 export const env: RendererEnv = {
@@ -26,12 +35,16 @@ export const textRenderer: RendererDefinition = {
 
 export const iconRenderer: RendererDefinition = {
   type: 'icon',
-  component: (props) => <span data-testid={props.meta.testid ?? undefined}>{String(props.props.icon ?? '')}</span>,
+  component: (props) => (
+    <span data-testid={props.meta.testid ?? undefined}>{String(props.props.icon ?? '')}</span>
+  ),
 };
 
 export const nodeInstanceProbeRenderer: RendererDefinition = {
   type: 'node-instance-probe',
-  component: (props) => <span data-testid="node-instance-probe">{JSON.stringify(props.node.instancePath ?? null)}</span>,
+  component: (props) => (
+    <span data-testid="node-instance-probe">{JSON.stringify(props.node.instancePath ?? null)}</span>
+  ),
 };
 
 function RowScopeIdProbeRenderer() {
@@ -46,7 +59,12 @@ export const rowScopeIdProbeRenderer: RendererDefinition = {
 
 function DispatchProbeRenderer(props: RendererComponentProps) {
   return (
-    <Button variant="ghost" size="sm" data-testid="dispatch-probe" onClick={() => void props.helpers.dispatch({ action: 'probe:recordLocator' } as never)}>
+    <Button
+      variant="ghost"
+      size="sm"
+      data-testid="dispatch-probe"
+      onClick={() => void props.helpers.dispatch({ action: 'probe:recordLocator' } as never)}
+    >
       Dispatch probe
     </Button>
   );
@@ -79,7 +97,12 @@ function TestButtonRenderer(props: RendererComponentProps) {
   }, [componentRegistry, props.meta.cid]);
 
   return (
-    <Button variant="ghost" size="sm" data-cid={props.meta.cid} onClick={() => void props.events.onClick?.()}>
+    <Button
+      variant="ghost"
+      size="sm"
+      data-cid={props.meta.cid}
+      onClick={() => void props.events.onClick?.()}
+    >
       {String(props.props.label ?? 'Button')}
     </Button>
   );
@@ -92,7 +115,13 @@ export const buttonRenderer: RendererDefinition = {
 };
 
 export function createDataSchemaRenderer(extra: RendererDefinition[] = []) {
-  return createSchemaRenderer([pageRenderer, textRenderer, ...formRendererDefinitions, ...extra, ...dataRendererDefinitions]);
+  return createSchemaRenderer([
+    pageRenderer,
+    textRenderer,
+    ...formRendererDefinitions,
+    ...extra,
+    ...dataRendererDefinitions,
+  ]);
 }
 
 export const formulaCompiler = createFormulaCompiler();

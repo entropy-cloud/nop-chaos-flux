@@ -163,7 +163,9 @@ describe('detail-field renderer basic behavior', () => {
     });
 
     expect(screen.getByLabelText('Name', { exact: false })).toBeTruthy();
-    expect(document.querySelector('[data-slot="detail-field-draft-error"]')?.textContent).toContain('Please fix validation errors before confirming.');
+    expect(document.querySelector('[data-slot="detail-field-draft-error"]')?.textContent).toContain(
+      'Please fix validation errors before confirming.',
+    );
   });
 
   it('does not render trigger button when disabled', async () => {

@@ -10,6 +10,6 @@ test.skip('captures README flux basic screenshot', async ({ page }) => {
   await expect(page.getByLabel('Username')).toBeVisible({ timeout: 20000 });
 
   await page.locator('.nop-page').first().screenshot({
-    path: 'docs/images/readme-flux-basic.png'
+    path: 'docs/images/readme-flux-basic.png',
   });
 });

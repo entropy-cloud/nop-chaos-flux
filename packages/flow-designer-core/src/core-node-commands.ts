@@ -1,14 +1,6 @@
-import type {
-  GraphDocument,
-  GraphNode,
-  NormalizedDesignerConfig,
-  DesignerEvent
-} from './types';
+import type { GraphDocument, GraphNode, NormalizedDesignerConfig, DesignerEvent } from './types';
 import { generateId } from './core/clone';
-import {
-  checkMaxInstances,
-  checkMinInstances,
-} from './core/constraints';
+import { checkMaxInstances, checkMinInstances } from './core/constraints';
 import {
   addNodeToDocument,
   moveNodesInDocument,
@@ -34,14 +26,18 @@ export interface NodeCommandContext {
   emit: (event: DesignerEvent) => void;
   updateDirtyState: () => void;
   setSelectionState: (state: DesignerSelectionState) => void;
-  addNodeFn: (type: string, position: { x: number; y: number }, data?: Record<string, unknown>) => GraphNode | null;
+  addNodeFn: (
+    type: string,
+    position: { x: number; y: number },
+    data?: Record<string, unknown>,
+  ) => GraphNode | null;
 }
 
 export function addNodeCommand(
   ctx: NodeCommandContext,
   type: string,
   position: { x: number; y: number },
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
 ): GraphNode | null {
   if (ctx.normalizedConfig.hooks?.beforeCreateNode) {
     try {
@@ -86,7 +82,7 @@ export function addNodeCommand(
 export function updateNodeCommand(
   ctx: NodeCommandContext,
   nodeId: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): void {
   const updatedNode = updateNodeDataInDocument(ctx.doc, nodeId, data);
   if (!updatedNode) {
@@ -104,7 +100,7 @@ export function updateNodeCommand(
 export function moveNodeCommand(
   ctx: NodeCommandContext,
   nodeId: string,
-  position: { x: number; y: number }
+  position: { x: number; y: number },
 ): void {
   const nodeIndex = ctx.doc.nodes.findIndex((n) => n.id === nodeId);
   if (nodeIndex === -1) {
@@ -126,10 +122,7 @@ export function moveNodeCommand(
   ctx.updateDirtyState();
 }
 
-export function deleteNodeCommand(
-  ctx: NodeCommandContext,
-  nodeId: string
-): void {
+export function deleteNodeCommand(ctx: NodeCommandContext, nodeId: string): void {
   const nodeIndex = ctx.doc.nodes.findIndex((n) => n.id === nodeId);
   if (nodeIndex === -1) {
     return;
@@ -167,7 +160,7 @@ export function deleteNodeCommand(
 
 export function moveNodesCommand(
   ctx: NodeCommandContext,
-  deltas: Record<string, { dx: number; dy: number }>
+  deltas: Record<string, { dx: number; dy: number }>,
 ): void {
   const nextDoc = moveNodesInDocument(ctx.doc, deltas, ctx.normalizedConfig);
   if (!nextDoc) {
@@ -183,7 +176,7 @@ export function moveNodesCommand(
 
 export function updateMultipleNodesCommand(
   ctx: NodeCommandContext,
-  updates: Array<{ nodeId: string; data: Partial<GraphNode> }>
+  updates: Array<{ nodeId: string; data: Partial<GraphNode> }>,
 ): void {
   const nextDoc = updateMultipleNodesInDocument(ctx.doc, updates);
   if (!nextDoc) {

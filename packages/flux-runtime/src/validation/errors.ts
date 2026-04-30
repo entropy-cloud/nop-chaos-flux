@@ -1,8 +1,14 @@
-import type { CompiledFormValidationField, CompiledValidationRule, RuntimeFieldRegistration, ValidationError, ValidationRule } from '@nop-chaos/flux-core';
+import type {
+  CompiledFormValidationField,
+  CompiledValidationRule,
+  RuntimeFieldRegistration,
+  ValidationError,
+  ValidationRule,
+} from '@nop-chaos/flux-core';
 
 function resolveValidationErrorSourceKind(
   field: CompiledFormValidationField,
-  rule: ValidationRule
+  rule: ValidationRule,
 ): ValidationError['sourceKind'] {
   switch (rule.kind) {
     case 'minItems':
@@ -30,7 +36,7 @@ export function createValidationError(
   field: CompiledFormValidationField,
   compiledRule: CompiledValidationRule,
   message: string,
-  overrides?: Partial<ValidationError>
+  overrides?: Partial<ValidationError>,
 ): ValidationError {
   const rule = compiledRule.rule;
 
@@ -41,7 +47,7 @@ export function createValidationError(
     ruleId: compiledRule.id,
     ownerPath: field.path,
     sourceKind: resolveValidationErrorSourceKind(field, rule),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -49,7 +55,7 @@ function normalizeRuntimeValidationError(
   error: ValidationError,
   registration: RuntimeFieldRegistration,
   path: string,
-  childPath?: string
+  childPath?: string,
 ): ValidationError {
   const ownerPath = error.ownerPath ?? registration.path;
   const normalizedPath = childPath ?? error.path ?? path;
@@ -58,7 +64,7 @@ function normalizeRuntimeValidationError(
     ...error,
     path: normalizedPath,
     ownerPath,
-    sourceKind: error.sourceKind ?? 'runtime-registration'
+    sourceKind: error.sourceKind ?? 'runtime-registration',
   };
 }
 
@@ -66,8 +72,9 @@ export function normalizeRuntimeValidationErrors(
   errors: ValidationError[] | undefined,
   registration: RuntimeFieldRegistration,
   path: string,
-  childPath?: string
+  childPath?: string,
 ): ValidationError[] {
-  return (errors ?? []).map((error) => normalizeRuntimeValidationError(error, registration, path, childPath));
+  return (errors ?? []).map((error) =>
+    normalizeRuntimeValidationError(error, registration, path, childPath),
+  );
 }
-

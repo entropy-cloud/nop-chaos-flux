@@ -19,7 +19,7 @@ export function ensureResizeObserverMock() {
     Object.defineProperty(globalThis, 'ResizeObserver', {
       value: ResizeObserverMock,
       writable: true,
-      configurable: true
+      configurable: true,
     });
   }
 }
@@ -33,19 +33,19 @@ export function createTestConfig(): DesignerConfig {
         id: 'task',
         label: 'Task',
         body: { type: 'text', text: 'Task' },
-        defaults: { label: 'Task' }
+        defaults: { label: 'Task' },
       },
       {
         id: 'end',
         label: 'End',
         body: { type: 'text', text: 'End' },
-        defaults: { label: 'End' }
-      }
+        defaults: { label: 'End' },
+      },
     ],
     edgeTypes: [{ id: 'default', label: 'Flow', defaults: {} }],
     palette: {
-      groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task', 'end'] }]
-    }
+      groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task', 'end'] }],
+    },
   };
 }
 
@@ -54,6 +54,6 @@ export function createRendererEnv(notify: TestNotify = vi.fn() as TestNotify): R
     fetcher: async function <T>() {
       return { ok: true, status: 200, data: null as T };
     },
-    notify
+    notify,
   };
 }

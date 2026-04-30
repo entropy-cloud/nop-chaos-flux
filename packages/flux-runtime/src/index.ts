@@ -7,6 +7,4 @@ export { scopeChangeHitsDependencies } from './scope-change';
 export { publishOwnerStatus } from './status-owner';
 export { createReadonlyScopeBinding } from './status-owner';
 export { createProjectedScopeStore } from './projected-scope-store';
-export {
-  executeApiObject,
-} from './async-data/request-runtime';
+export { executeApiObject } from './async-data/request-runtime';

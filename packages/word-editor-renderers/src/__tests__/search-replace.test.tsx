@@ -7,27 +7,46 @@ import { SearchReplace } from '../toolbar/search-replace.js';
 vi.mock('@nop-chaos/ui', () => {
   return {
     Button: ({ children, onClick, disabled, title, ...props }: any) => (
-      <button type="button" data-testid="button" onClick={onClick} disabled={disabled} title={title} {...props}>
+      <button
+        type="button"
+        data-testid="button"
+        onClick={onClick}
+        disabled={disabled}
+        title={title}
+        {...props}
+      >
         {children}
       </button>
     ),
     Input: ({ value, onChange, placeholder, ...props }: any) => (
-      <input data-testid="input" value={value} onChange={onChange} placeholder={placeholder} {...props} />
+      <input
+        data-testid="input"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        {...props}
+      />
     ),
     Separator: ({ orientation, className }: any) => (
       <div data-testid="separator" data-orientation={orientation} className={className} />
     ),
-    cn: (...args: any[]) => args.filter(Boolean).join(' ')
+    cn: (...args: any[]) => args.filter(Boolean).join(' '),
   };
 });
 
 vi.mock('../toolbar/shared.js', () => ({
   ToolbarButton: ({ icon: Icon, onClick, disabled, title }: any) => (
-    <button type="button" data-testid="toolbar-button" onClick={onClick} disabled={disabled} title={title}>
+    <button
+      type="button"
+      data-testid="toolbar-button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+    >
       {Icon && <Icon />}
     </button>
   ),
-  ToolbarSeparator: () => <div data-testid="toolbar-separator" />
+  ToolbarSeparator: () => <div data-testid="toolbar-separator" />,
 }));
 
 beforeEach(async () => {
@@ -76,7 +95,7 @@ describe('SearchReplace', () => {
     render(<SearchReplace bridge={null} visible={true} onClose={onClose} />);
 
     const closeButtons = screen.getAllByTestId('toolbar-button');
-    const closeButton = closeButtons.find(b => b.title === 'Close');
+    const closeButton = closeButtons.find((b) => b.title === 'Close');
     if (closeButton) {
       await userEvent.click(closeButton);
       expect(onClose).toHaveBeenCalledTimes(1);

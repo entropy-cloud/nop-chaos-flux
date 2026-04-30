@@ -21,7 +21,7 @@ describe('NodeErrorBoundary', () => {
     render(
       <NodeErrorBoundary nodeId="test-node">
         <NormalComponent />
-      </NodeErrorBoundary>
+      </NodeErrorBoundary>,
     );
     expect(screen.getByTestId('normal')).toBeTruthy();
   });
@@ -31,7 +31,7 @@ describe('NodeErrorBoundary', () => {
     render(
       <NodeErrorBoundary>
         <ThrowingComponent />
-      </NodeErrorBoundary>
+      </NodeErrorBoundary>,
     );
     const alert = document.querySelector('[data-slot="node-error"]');
     expect(alert).toBeTruthy();
@@ -46,7 +46,7 @@ describe('NodeErrorBoundary', () => {
     render(
       <NodeErrorBoundary nodeId="my-node">
         <ThrowingComponent />
-      </NodeErrorBoundary>
+      </NodeErrorBoundary>,
     );
     const alert = document.querySelector('[data-slot="node-error"]');
     expect(alert?.textContent).toContain('my-node');
@@ -58,7 +58,7 @@ describe('NodeErrorBoundary', () => {
     render(
       <NodeErrorBoundary nodeId="string-error">
         <ThrowingComponent error="String error message" />
-      </NodeErrorBoundary>
+      </NodeErrorBoundary>,
     );
     const alert = document.querySelector('[data-slot="node-error"]');
     expect(alert?.textContent).toContain('String error message');
@@ -73,7 +73,7 @@ describe('NodeErrorBoundary', () => {
     render(
       <NodeErrorBoundary nodeId="null-error">
         <ThrowNull />
-      </NodeErrorBoundary>
+      </NodeErrorBoundary>,
     );
     const alert = document.querySelector('[data-slot="node-error"]');
     expect(alert?.textContent).toContain('Render error');
@@ -95,7 +95,7 @@ describe('NodeErrorBoundary', () => {
     const { container } = render(
       <NodeErrorBoundary nodeId="retry-node">
         <ConditionalThrower />
-      </NodeErrorBoundary>
+      </NodeErrorBoundary>,
     );
 
     const alert = container.querySelector('[data-slot="node-error"]');
@@ -119,7 +119,7 @@ describe('NodeErrorBoundary', () => {
     render(
       <NodeErrorBoundary nodeId="slot-test">
         <ThrowingComponent />
-      </NodeErrorBoundary>
+      </NodeErrorBoundary>,
     );
     const alert = document.querySelector('[data-slot="node-error"]');
     expect(alert).toBeTruthy();

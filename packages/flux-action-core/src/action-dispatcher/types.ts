@@ -5,7 +5,7 @@ import type {
   CompiledActionProgram,
   RendererEnv,
   RendererPlugin,
-  RendererRuntime
+  RendererRuntime,
 } from '@nop-chaos/flux-core';
 import type { ActionEvaluator } from '../action-core';
 

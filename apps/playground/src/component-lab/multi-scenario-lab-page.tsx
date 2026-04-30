@@ -1,6 +1,10 @@
 import React, { useMemo } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, createDefaultRegistry, createDefaultEnv } from '@nop-chaos/flux-react';
+import {
+  createSchemaRenderer,
+  createDefaultRegistry,
+  createDefaultEnv,
+} from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
@@ -29,20 +33,36 @@ export interface ScenarioBlockProps {
 function ScenarioBlock({ title, description, schema, data, env: envOverride }: ScenarioBlockProps) {
   const env = useMemo(
     () => (envOverride ? createDefaultEnv({ ...defaultEnv, ...envOverride }) : defaultEnv),
-    [envOverride]
+    [envOverride],
   );
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const schemaWithDebug = useMemo(() => attachScopeDebugToSchema(schema, `${title} Scope`), [schema, title]);
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  const schemaWithDebug = useMemo(
+    () => attachScopeDebugToSchema(schema, `${title} Scope`),
+    [schema, title],
+  );
 
   return (
     <div className="flex flex-col gap-2" data-testid={`scenario-${slug}`}>
       <div>
-        <p className="text-sm font-semibold text-[var(--nop-text-strong)]" data-testid={`scenario-title-${slug}`}>{title}</p>
+        <p
+          className="text-sm font-semibold text-[var(--nop-text-strong)]"
+          data-testid={`scenario-title-${slug}`}
+        >
+          {title}
+        </p>
         {description ? (
-          <p className="text-xs leading-relaxed text-[var(--nop-body-copy)] opacity-75 mt-0.5">{description}</p>
+          <p className="text-xs leading-relaxed text-[var(--nop-body-copy)] opacity-75 mt-0.5">
+            {description}
+          </p>
         ) : null}
       </div>
-      <div className="p-5 rounded-[16px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]" data-testid={`scenario-stage-${slug}`}>
+      <div
+        className="p-5 rounded-[16px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]"
+        data-testid={`scenario-stage-${slug}`}
+      >
         <SchemaRenderer
           schemaUrl={`playground://component-lab/${slug}`}
           schema={schemaWithDebug}

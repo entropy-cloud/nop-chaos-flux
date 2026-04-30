@@ -3,7 +3,7 @@ import type {
   RendererDefinition,
   RendererPlugin,
   RendererRegistry,
-  SchemaInput
+  SchemaInput,
 } from '@nop-chaos/flux-core';
 import { isSchemaInput } from '@nop-chaos/flux-core';
 import { schemaPathToJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics';
@@ -15,7 +15,7 @@ export function applyRendererAuthoringTransform(
   renderer: RendererDefinition,
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
-  schemaUrl?: string
+  schemaUrl?: string,
 ): BaseSchema {
   if (!renderer.authoringTransform) {
     return schema;
@@ -29,9 +29,9 @@ export function applyRendererAuthoringTransform(
       diagnostics.emit({
         ...issue,
         path: issue.path ?? schemaPathToJsonPointer(path),
-        source: issue.source ?? 'renderer'
+        source: issue.source ?? 'renderer',
       });
-    }
+    },
   });
 }
 
@@ -45,17 +45,25 @@ export function canonicalizeSchemaInput(
     maxDepth: number;
   },
   diagnostics: SchemaCompilerDiagnosticsContext,
-  depth = 0
+  depth = 0,
 ): SchemaInput {
   if (depth > options.maxDepth) {
     return schema;
   }
 
   if (Array.isArray(schema)) {
-    return schema.map((item, index) => canonicalizeSchemaInput(item, {
-      ...options,
-      basePath: `${options.basePath}[${index}]`
-    }, diagnostics, depth + 1) as BaseSchema);
+    return schema.map(
+      (item, index) =>
+        canonicalizeSchemaInput(
+          item,
+          {
+            ...options,
+            basePath: `${options.basePath}[${index}]`,
+          },
+          diagnostics,
+          depth + 1,
+        ) as BaseSchema,
+    );
   }
 
   const renderer = options.registry.get(schema.type);
@@ -65,7 +73,13 @@ export function canonicalizeSchemaInput(
   }
 
   const wrappedRenderer = applyWrapComponentPlugins(renderer, options.plugins);
-  const canonicalNode = applyRendererAuthoringTransform(schema, wrappedRenderer, options.basePath, diagnostics, options.schemaUrl);
+  const canonicalNode = applyRendererAuthoringTransform(
+    schema,
+    wrappedRenderer,
+    options.basePath,
+    diagnostics,
+    options.schemaUrl,
+  );
   const nextNode: Record<string, unknown> = { ...canonicalNode };
 
   for (const key of Object.keys(canonicalNode)) {
@@ -74,10 +88,15 @@ export function canonicalizeSchemaInput(
 
     if (rule.kind === 'region' || (rule.kind === 'value-or-region' && isSchemaInput(value))) {
       if (isSchemaInput(value)) {
-        nextNode[key] = canonicalizeSchemaInput(value, {
-          ...options,
-          basePath: `${options.basePath}.${rule.regionKey ?? key}`
-        }, diagnostics, depth + 1);
+        nextNode[key] = canonicalizeSchemaInput(
+          value,
+          {
+            ...options,
+            basePath: `${options.basePath}.${rule.regionKey ?? key}`,
+          },
+          diagnostics,
+          depth + 1,
+        );
       }
     }
   }

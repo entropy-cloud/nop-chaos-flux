@@ -3,14 +3,14 @@ import type {
   ChildValidationMode,
   FormRuntime,
   RendererComponentProps,
-  ValidationScopeRuntime
+  ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
 
 type BaseNodeInstance = RendererComponentProps<any>['node'];
 
 export function buildDetailDraftInitialValues(
   adaptedValue: unknown,
-  fallback: Record<string, unknown> = {}
+  fallback: Record<string, unknown> = {},
 ): Record<string, unknown> {
   if (typeof adaptedValue === 'object' && adaptedValue !== null) {
     return { ...(adaptedValue as Record<string, unknown>) };
@@ -30,7 +30,7 @@ export function readDetailDraftValues(draftForm: FormRuntime) {
 
   return {
     draftValues,
-    workingValue: draftValues.__value !== undefined ? draftValues.__value : draftValues
+    workingValue: draftValues.__value !== undefined ? draftValues.__value : draftValues,
   };
 }
 
@@ -43,13 +43,14 @@ export function useDetailAdaptationAction(input: {
   const { helpers, parentScope, parentForm, node } = input;
 
   return React.useCallback(
-    (actionSchema: unknown) => helpers.dispatch(actionSchema as any, {
-      scope: parentScope,
-      form: parentForm ?? undefined,
-      page: undefined,
-      nodeInstance: node as BaseNodeInstance
-    }),
-    [helpers, node, parentForm, parentScope]
+    (actionSchema: unknown) =>
+      helpers.dispatch(actionSchema as any, {
+        scope: parentScope,
+        form: parentForm ?? undefined,
+        page: undefined,
+        nodeInstance: node as BaseNodeInstance,
+      }),
+    [helpers, node, parentForm, parentScope],
   );
 }
 
@@ -76,16 +77,19 @@ export function useDetailDraftControllerState() {
     setDraftForm(nextDraftForm);
   }, []);
 
-  const openDraft = React.useCallback((nextDraftForm: FormRuntime) => {
-    if (!mountedRef.current) {
-      nextDraftForm.dispose();
-      return;
-    }
+  const openDraft = React.useCallback(
+    (nextDraftForm: FormRuntime) => {
+      if (!mountedRef.current) {
+        nextDraftForm.dispose();
+        return;
+      }
 
-    assignDraftForm(nextDraftForm);
-    setDraftError(undefined);
-    setOpen(true);
-  }, [assignDraftForm]);
+      assignDraftForm(nextDraftForm);
+      setDraftError(undefined);
+      setOpen(true);
+    },
+    [assignDraftForm],
+  );
 
   const closeDraft = React.useCallback(() => {
     if (!mountedRef.current) {
@@ -129,7 +133,7 @@ export function useDetailDraftControllerState() {
     closeDraft,
     beginConfirm,
     finishConfirm,
-    setDraftErrorSafe
+    setDraftErrorSafe,
   };
 }
 
@@ -160,16 +164,16 @@ export function useDetailChildValidationContract(input: {
           ready: state.ready,
           validating: state.validating,
           valid: state.valid,
-          hasErrors: state.hasErrors
+          hasErrors: state.hasErrors,
         };
       },
       async triggerValidation() {
         const result = await draftForm.validateAll('submit');
         return {
           ok: result.ok,
-          errors: result.errors
+          errors: result.errors,
         };
-      }
+      },
     });
 
     return () => {

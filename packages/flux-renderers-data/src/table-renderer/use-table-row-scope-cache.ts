@@ -30,7 +30,7 @@ function getRowScopeCacheState(cacheKey: string): RowScopeCacheState {
 function syncRowScope(
   scope: ScopeRef,
   payload: RowScopePayload,
-  previous: RowScopePayload | undefined
+  previous: RowScopePayload | undefined,
 ): void {
   if (!previous || previous.record !== payload.record) {
     scope.merge({ record: payload.record });
@@ -44,7 +44,7 @@ export function useTableRowScopeCache(
   processedData: TableRowEntry[],
   ownerKey: string,
   helpers: RendererComponentProps<TableSchema>['helpers'],
-  path: RendererComponentProps<TableSchema>['path']
+  path: RendererComponentProps<TableSchema>['path'],
 ) {
   const cacheState = getRowScopeCacheState(`${ownerKey}::${path}`);
   const rowScopeCache = cacheState.scopes;
@@ -62,7 +62,7 @@ export function useTableRowScopeCache(
         scopeKey: createRowScopeId(ownerKey, entry.rowKey),
         pathSuffix: createRowScopePath(path, entry.rowKey),
         isolate: true,
-        source: 'row'
+        source: 'row',
       });
       rowScopeCache.set(entry.rowKey, createdScope);
       rowScopeSnapshots.set(entry.rowKey, payload);

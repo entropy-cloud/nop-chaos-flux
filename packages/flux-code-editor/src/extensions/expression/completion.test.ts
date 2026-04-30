@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  resolveVariablePath,
-  lastSegment,
-  flattenVariables,
-  flattenFunctions,
-} from './completion';
+import { resolveVariablePath, lastSegment, flattenVariables, flattenFunctions } from './completion';
 import type { VariableItem, FuncGroup } from '../../types';
 
 describe('lastSegment', () => {
@@ -79,9 +74,7 @@ describe('flattenVariables', () => {
           {
             label: 'Items',
             value: 'data.order.items',
-            children: [
-              { label: 'Name', value: 'data.order.items.name' },
-            ],
+            children: [{ label: 'Name', value: 'data.order.items.name' }],
           },
         ],
       },
@@ -110,9 +103,7 @@ describe('flattenFunctions', () => {
       },
       {
         groupName: 'Text',
-        items: [
-          { name: 'CONCAT', description: 'Concatenate' },
-        ],
+        items: [{ name: 'CONCAT', description: 'Concatenate' }],
       },
     ];
 

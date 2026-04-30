@@ -378,14 +378,14 @@
 
 ## 风险清单
 
-| 风险 | 影响 | 应对 |
-| --- | --- | --- |
-| `mobx-react@6.3.1` 与 React 19 正式不兼容 | 安装或运行直接不成立 | 把 MobX 体系兼容性列为 Phase 1 Gate |
-| `mobx-react@9` 反向要求 `mobx@6` | 迁移范围扩大到 MobX 主版本升级 | 明确 React + MobX 联动 gate，不隐含处理 |
-| `findDomCompat` 依赖 React internals | 大量弹层/选择器/定位异常 | 先删 fallback，再做热点 smoke，再决定是否专项重构 |
-| `react-test-renderer` 已废弃 | 测试产生 warning 或部分脆弱 | 首轮只对齐版本并局部修 API，不全量改写 |
-| editor 体系继续大量依赖旧 API | 根级 workspaces 验证被 editor 拖死 | 首轮完成标准改成 runtime-only 验证序列 |
-| `office-viewer` 被 runtime 某些 schema 间接拉起 | 构建或 smoke 出现附加问题 | 只有在 runtime 主线被明确阻塞时再纳入首轮 |
+| 风险                                            | 影响                               | 应对                                              |
+| ----------------------------------------------- | ---------------------------------- | ------------------------------------------------- |
+| `mobx-react@6.3.1` 与 React 19 正式不兼容       | 安装或运行直接不成立               | 把 MobX 体系兼容性列为 Phase 1 Gate               |
+| `mobx-react@9` 反向要求 `mobx@6`                | 迁移范围扩大到 MobX 主版本升级     | 明确 React + MobX 联动 gate，不隐含处理           |
+| `findDomCompat` 依赖 React internals            | 大量弹层/选择器/定位异常           | 先删 fallback，再做热点 smoke，再决定是否专项重构 |
+| `react-test-renderer` 已废弃                    | 测试产生 warning 或部分脆弱        | 首轮只对齐版本并局部修 API，不全量改写            |
+| editor 体系继续大量依赖旧 API                   | 根级 workspaces 验证被 editor 拖死 | 首轮完成标准改成 runtime-only 验证序列            |
+| `office-viewer` 被 runtime 某些 schema 间接拉起 | 构建或 smoke 出现附加问题          | 只有在 runtime 主线被明确阻塞时再纳入首轮         |
 
 ## Go / No-Go 标准
 

@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 
 async function openReportDesignerDemo(page: import('@playwright/test').Page) {
   await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: 'Report Designer Playground', level: 1 })).toBeVisible({ timeout: 15000 });
+  await expect(
+    page.getByRole('heading', { name: 'Report Designer Playground', level: 1 }),
+  ).toBeVisible({ timeout: 15000 });
   await expect(page.locator('.report-designer-demo')).toBeVisible({ timeout: 15000 });
 }
 

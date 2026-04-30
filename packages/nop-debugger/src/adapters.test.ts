@@ -15,7 +15,7 @@ function createStore() {
     defaultTab: 'timeline',
     position: { x: 0, y: 0 },
     errorBufferKeepEarliest: 3,
-    errorBufferKeepLatest: 5
+    errorBufferKeepLatest: 5,
   });
 }
 
@@ -25,24 +25,35 @@ describe('debugger adapters', () => {
     const plugin = createDebuggerPlugin(store);
 
     plugin.beforeCompile?.({ type: 'page' });
-    plugin.afterCompile?.({ root: { type: 'page', templatePath: 'root' } as never, repeatedTemplates: new Map() });
-    plugin.beforeAction?.({ action: 'submitForm' } as never, {
-      nodeInstance: {
-        templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' }
-      }
-    } as never);
+    plugin.afterCompile?.({
+      root: { type: 'page', templatePath: 'root' } as never,
+      repeatedTemplates: new Map(),
+    });
+    plugin.beforeAction?.(
+      { action: 'submitForm' } as never,
+      {
+        nodeInstance: {
+          templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' },
+        },
+      } as never,
+    );
     plugin.onError?.(new Error('plugin failed'), {
       phase: 'render',
       error: new Error('plugin failed'),
       nodeId: 'node-1',
-      path: 'body.0'
+      path: 'body.0',
     });
 
     const events = store.getSnapshot().events;
-    expect(events.map((event: NopDebugEvent) => event.kind)).toEqual(['error', 'action:start', 'compile:end', 'compile:start']);
+    expect(events.map((event: NopDebugEvent) => event.kind)).toEqual([
+      'error',
+      'action:start',
+      'compile:end',
+      'compile:start',
+    ]);
     expect(events[1]).toMatchObject({
       actionType: 'submitForm',
-      rendererType: 'form'
+      rendererType: 'form',
     });
   });
 
@@ -54,7 +65,7 @@ describe('debugger adapters', () => {
       onActionStart: vi.fn(),
       onActionEnd: vi.fn(),
       onApiRequest: vi.fn(),
-      onError: vi.fn()
+      onError: vi.fn(),
     };
     const env: RendererEnv = {
       monitor: baseMonitor,
@@ -64,11 +75,11 @@ describe('debugger adapters', () => {
           status: 200,
           data: {
             echoedUrl: api.url,
-            token: 'server-secret'
-          } as T
+            token: 'server-secret',
+          } as T,
         };
       },
-      notify: vi.fn()
+      notify: vi.fn(),
     };
     const decoratedEnv = decorateDebuggerEnv({
       enabled: true,
@@ -76,16 +87,21 @@ describe('debugger adapters', () => {
       store,
       redaction: normalizeRedactionOptions({ redactKeys: ['token'], mask: '[MASKED]' }),
       requestState: new Map(),
-      nextRequestInstanceId: createRequestInstanceIdFactory()
+      nextRequestInstanceId: createRequestInstanceIdFactory(),
     });
 
     decoratedEnv.monitor?.onRenderStart?.({ nodeId: 'node-1', path: 'body.0', type: 'text' });
-    decoratedEnv.monitor?.onRenderEnd?.({ nodeId: 'node-1', path: 'body.0', type: 'text', durationMs: 5 });
+    decoratedEnv.monitor?.onRenderEnd?.({
+      nodeId: 'node-1',
+      path: 'body.0',
+      type: 'text',
+      durationMs: 5,
+    });
     decoratedEnv.monitor?.onActionStart?.({
       actionType: 'reload',
       instancePath: [],
       nodeId: 'node-1',
-      path: 'body.0'
+      path: 'body.0',
     });
     decoratedEnv.monitor?.onActionEnd?.({
       actionType: 'reload',
@@ -93,51 +109,71 @@ describe('debugger adapters', () => {
       nodeId: 'node-1',
       path: 'body.0',
       durationMs: 7,
-      result: { ok: true }
+      result: { ok: true },
     });
     decoratedEnv.monitor?.onApiRequest?.({
       api: {
         url: '/api/demo',
         method: 'post',
-        data: { token: 'client-secret', keep: 'visible' }
+        data: { token: 'client-secret', keep: 'visible' },
       },
       nodeId: 'node-1',
-      path: 'body.0'
+      path: 'body.0',
     });
     decoratedEnv.monitor?.onApiRequest?.({
       api: {
         url: '/api/demo',
         method: 'post',
-        data: { token: 'client-secret', keep: 'visible' }
+        data: { token: 'client-secret', keep: 'visible' },
       },
       nodeId: 'node-1',
-      path: 'body.0'
+      path: 'body.0',
     });
-    decoratedEnv.monitor?.onError?.({ phase: 'action', error: new Error('monitor failed'), nodeId: 'node-1', path: 'body.0' });
+    decoratedEnv.monitor?.onError?.({
+      phase: 'action',
+      error: new Error('monitor failed'),
+      nodeId: 'node-1',
+      path: 'body.0',
+    });
     decoratedEnv.notify('warning', 'watch out');
-    await decoratedEnv.fetcher({
-      url: '/api/demo',
-      method: 'post',
-      data: { token: 'client-secret', keep: 'visible' }
-    }, {
-      env: decoratedEnv,
-      scope: { readOwn() { return {}; } } as never,
-      signal: undefined
-    });
+    await decoratedEnv.fetcher(
+      {
+        url: '/api/demo',
+        method: 'post',
+        data: { token: 'client-secret', keep: 'visible' },
+      },
+      {
+        env: decoratedEnv,
+        scope: {
+          readOwn() {
+            return {};
+          },
+        } as never,
+        signal: undefined,
+      },
+    );
 
     const snapshot = store.getSnapshot();
-    const apiStartEvents = snapshot.events.filter((event: NopDebugEvent) => event.kind === 'api:start');
+    const apiStartEvents = snapshot.events.filter(
+      (event: NopDebugEvent) => event.kind === 'api:start',
+    );
     const apiEndEvent = snapshot.events.find((event: NopDebugEvent) => event.kind === 'api:end');
     const notifyEvent = snapshot.events.find((event: NopDebugEvent) => event.kind === 'notify');
 
     expect(baseMonitor.onRenderStart).toHaveBeenCalled();
     expect(baseMonitor.onApiRequest).toHaveBeenCalledTimes(2);
-    expect(snapshot.events.find((event: NopDebugEvent) => event.kind === 'action:start')?.actionType).toBe('reload');
+    expect(
+      snapshot.events.find((event: NopDebugEvent) => event.kind === 'action:start')?.actionType,
+    ).toBe('reload');
     expect(apiStartEvents).toHaveLength(2);
     expect(apiStartEvents[0].exportedData).toMatchObject({ token: '[MASKED]', keep: 'visible' });
     expect(apiStartEvents[0].requestInstanceId).toBeTruthy();
     expect(apiEndEvent?.exportedData).toMatchObject({ echoedUrl: '/api/demo', token: '[MASKED]' });
-    expect(apiEndEvent?.network).toMatchObject({ method: 'POST', status: 200, responseType: 'object' });
+    expect(apiEndEvent?.network).toMatchObject({
+      method: 'POST',
+      status: 200,
+      responseType: 'object',
+    });
     expect(notifyEvent).toMatchObject({ summary: 'warning: watch out' });
   });
 
@@ -149,7 +185,7 @@ describe('debugger adapters', () => {
       },
       notify() {
         return undefined;
-      }
+      },
     };
 
     const sameEnv = decorateDebuggerEnv({
@@ -158,21 +194,21 @@ describe('debugger adapters', () => {
       store,
       redaction: normalizeRedactionOptions(undefined),
       requestState: new Map(),
-      nextRequestInstanceId: createRequestInstanceIdFactory()
+      nextRequestInstanceId: createRequestInstanceIdFactory(),
     });
     appendActionErrorEvent(store, new Error('root failed'), {
       runtime: {} as never,
       scope: {} as never,
       nodeInstance: {
-        templateNode: { id: 'node-root', templatePath: 'body.9', rendererType: 'form' }
-      } as never
+        templateNode: { id: 'node-root', templatePath: 'body.9', rendererType: 'form' },
+      } as never,
     });
 
     expect(sameEnv).toBe(env);
     expect(store.getSnapshot().events[0]).toMatchObject({
       kind: 'error',
       nodeId: 'node-root',
-      rendererType: 'form'
+      rendererType: 'form',
     });
   });
 
@@ -184,7 +220,7 @@ describe('debugger adapters', () => {
       },
       notify() {
         return undefined;
-      }
+      },
     };
 
     const decoratedEnv = decorateDebuggerEnv({
@@ -193,22 +229,29 @@ describe('debugger adapters', () => {
       store,
       redaction: normalizeRedactionOptions(undefined),
       requestState: new Map(),
-      nextRequestInstanceId: createRequestInstanceIdFactory()
+      nextRequestInstanceId: createRequestInstanceIdFactory(),
     });
 
     await expect(
-      decoratedEnv.fetcher({ url: '/api/abort', method: 'get' }, {
-        env: decoratedEnv,
-        scope: { readOwn() { return {}; } } as never,
-        signal: undefined
-      })
+      decoratedEnv.fetcher(
+        { url: '/api/abort', method: 'get' },
+        {
+          env: decoratedEnv,
+          scope: {
+            readOwn() {
+              return {};
+            },
+          } as never,
+          signal: undefined,
+        },
+      ),
     ).rejects.toEqual({ code: 'ABORT_ERR' });
 
     expect(store.getSnapshot().events[0]).toMatchObject({
       kind: 'api:abort',
       group: 'api',
       level: 'warning',
-      summary: 'GET /api/abort aborted'
+      summary: 'GET /api/abort aborted',
     });
   });
 });

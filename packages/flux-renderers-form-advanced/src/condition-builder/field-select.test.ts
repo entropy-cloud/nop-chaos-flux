@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { ConditionField } from './types';
 
-function flattenFields(fields: ConditionField[]): Array<{ name: string; label: string; group?: string }> {
+function flattenFields(
+  fields: ConditionField[],
+): Array<{ name: string; label: string; group?: string }> {
   const result: Array<{ name: string; label: string; group?: string }> = [];
   for (const f of fields) {
     if (f.type === 'group') {

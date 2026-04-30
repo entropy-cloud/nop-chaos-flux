@@ -74,21 +74,21 @@ Targets: `packages/flux-compiler/src/schema-compiler-prop-coverage.test.ts`
 
 Phase 1 基线运行发现 40 个未覆盖属性，分布在 13 个 renderer 中：
 
-| Renderer | 未覆盖属性 | 数量 |
-|----------|-----------|------|
-| crud | defaultParams, onQueryReset, onRowClick, onSelectionChange, selection, shape | 6 |
-| dialog | actions, container, onClose, onOpen, showMask | 5 |
-| drawer | actions, container, onClose, onOpen, showMask | 5 |
-| recurse | indexName, itemData, itemName, keyBy, keyName | 5 |
-| form | labelWidth, shape, statusPath, submitWhenHidden | 4 |
-| table | loadingSlot, onFilterChange, onSelectionChange, onSortChange | 4 |
-| tree | childrenKey, keyField, labelField | 3 |
-| chart | onClick, onHover | 2 |
-| variant-field | transformOutAction, validateValueAction | 2 |
-| button | size | 1 |
-| detail-field | viewer | 1 |
-| loop | itemData | 1 |
-| tabs | onChange | 1 |
+| Renderer      | 未覆盖属性                                                                   | 数量 |
+| ------------- | ---------------------------------------------------------------------------- | ---- |
+| crud          | defaultParams, onQueryReset, onRowClick, onSelectionChange, selection, shape | 6    |
+| dialog        | actions, container, onClose, onOpen, showMask                                | 5    |
+| drawer        | actions, container, onClose, onOpen, showMask                                | 5    |
+| recurse       | indexName, itemData, itemName, keyBy, keyName                                | 5    |
+| form          | labelWidth, shape, statusPath, submitWhenHidden                              | 4    |
+| table         | loadingSlot, onFilterChange, onSelectionChange, onSortChange                 | 4    |
+| tree          | childrenKey, keyField, labelField                                            | 3    |
+| chart         | onClick, onHover                                                             | 2    |
+| variant-field | transformOutAction, validateValueAction                                      | 2    |
+| button        | size                                                                         | 1    |
+| detail-field  | viewer                                                                       | 1    |
+| loop          | itemData                                                                     | 1    |
+| tabs          | onChange                                                                     | 1    |
 
 - [x] 为所有 40 个未覆盖属性编写编译器层测试
 - [x] 使用正确的字段分类（`ignored` 字段用"不抛错"断言，`event` 字段检查 `eventPlans`，`prop` 字段检查 `propsProgram.value`）
@@ -112,6 +112,7 @@ Status: completed
 **结论：不需要。**
 
 理由：
+
 1. **ROI 低** — 大量代码是防御性分支（错误处理、边界检查、类型守卫），强行覆盖意味着写大量低断言价值的测试
 2. **维护负担** — 90% 行覆盖率门槛驱动开发者写"凑覆盖率"的测试，反而污染测试套件
 3. **真正的覆盖目标** — JSON 属性 100% 覆盖是面向用户契约的覆盖：确保每个用户可配置的属性至少有一个测试验证它工作。这比追求行覆盖率数字更有价值

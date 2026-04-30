@@ -48,7 +48,10 @@ export interface ApiResponse<T = unknown> {
   raw?: unknown;
 }
 
-export type ApiFetcher = <T = unknown>(api: ApiObject, ctx: ApiRequestContext) => Promise<ApiResponse<T>>;
+export type ApiFetcher = <T = unknown>(
+  api: ApiObject,
+  ctx: ApiRequestContext,
+) => Promise<ApiResponse<T>>;
 
 export interface RendererMonitor {
   onRenderStart?(payload: RenderMonitorPayload): void;
@@ -238,13 +241,13 @@ export interface ExpressionCompiler {
     input: CompiledRuntimeValue<T>,
     scope: ScopeRef,
     env: RendererEnv,
-    state?: RuntimeValueState<T>
+    state?: RuntimeValueState<T>,
   ): T;
   evaluateWithState<T = unknown>(
     input: DynamicRuntimeValue<T>,
     scope: ScopeRef,
     env: RendererEnv,
-    state: RuntimeValueState<T>
+    state: RuntimeValueState<T>,
   ): ValueEvaluationResult<T>;
 }
 
@@ -351,7 +354,10 @@ export interface CompiledSchemaNode<S extends BaseSchema = BaseSchema> {
 }
 
 export interface SchemaCompiler {
-  compile(schema: SchemaInput, options?: CompileSchemaOptions): CompiledSchemaNode | CompiledSchemaNode[];
+  compile(
+    schema: SchemaInput,
+    options?: CompileSchemaOptions,
+  ): CompiledSchemaNode | CompiledSchemaNode[];
   compileNode(schema: BaseSchema, options: CompileNodeOptions): CompiledSchemaNode;
 }
 
@@ -456,7 +462,10 @@ export interface RendererHelpers {
   render: (input: RenderNodeInput, options?: RenderFragmentOptions) => ReactNode;
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
-  dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+  dispatch: (
+    action: ActionSchema | ActionSchema[],
+    ctx?: Partial<ActionContext>,
+  ) => Promise<ActionResult>;
 }
 
 export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
@@ -473,10 +482,10 @@ export interface RendererPlugin {
   name: string;
   priority?: number;
   beforeCompile?(schema: SchemaInput): SchemaInput;
-  afterCompile?(node: CompiledSchemaNode | CompiledSchemaNode[]): CompiledSchemaNode | CompiledSchemaNode[];
-  wrapComponent?<S extends BaseSchema>(
-    definition: RendererDefinition<S>
-  ): RendererDefinition<S>;
+  afterCompile?(
+    node: CompiledSchemaNode | CompiledSchemaNode[],
+  ): CompiledSchemaNode | CompiledSchemaNode[];
+  wrapComponent?<S extends BaseSchema>(definition: RendererDefinition<S>): RendererDefinition<S>;
   beforeAction?(action: ActionSchema, ctx: ActionContext): ActionSchema | Promise<ActionSchema>;
   onError?(error: unknown, payload: ErrorMonitorPayload): void;
 }
@@ -489,8 +498,16 @@ export interface RendererRuntime {
   plugins: readonly RendererPlugin[];
   compile(schema: SchemaInput): CompiledSchemaNode | CompiledSchemaNode[];
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
-  resolveNodeMeta(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeMeta;
-  resolveNodeProps(node: CompiledSchemaNode, scope: ScopeRef, state?: CompiledNodeRuntimeState): ResolvedNodeProps;
+  resolveNodeMeta(
+    node: CompiledSchemaNode,
+    scope: ScopeRef,
+    state?: CompiledNodeRuntimeState,
+  ): ResolvedNodeMeta;
+  resolveNodeProps(
+    node: CompiledSchemaNode,
+    scope: ScopeRef,
+    state?: CompiledNodeRuntimeState,
+  ): ResolvedNodeProps;
   renderNode(node: RenderNodeInput, options?: RenderFragmentOptions): ReactNode;
   renderRegion(region: RenderRegionHandle, options?: RenderFragmentOptions): ReactNode;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;

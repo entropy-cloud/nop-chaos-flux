@@ -3,7 +3,7 @@ import type {
   CompiledValidationRule,
   ScopeRef,
   ValidationError,
-  ValidationRule
+  ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { createValidationError } from './errors';
@@ -21,7 +21,9 @@ export interface SyncValidationContext<R extends SyncValidationRule = SyncValida
   rule: R;
 }
 
-export type SyncValidator<R extends SyncValidationRule = SyncValidationRule> = (input: SyncValidationContext<R>) => ValidationError | undefined;
+export type SyncValidator<R extends SyncValidationRule = SyncValidationRule> = (
+  input: SyncValidationContext<R>,
+) => ValidationError | undefined;
 
 export function isEmptyValue(value: unknown): boolean {
   return value == null || value === '' || (Array.isArray(value) && value.length === 0);
@@ -92,9 +94,14 @@ function lacksAtLeastOneOf(value: unknown, paths: string[]): boolean {
 
 function createBuiltInError(
   input: SyncValidationContext,
-  overrides?: Partial<ValidationError>
+  overrides?: Partial<ValidationError>,
 ): ValidationError {
-  return createValidationError(input.field, input.compiledRule, buildValidationMessage(input.rule, input.field), overrides);
+  return createValidationError(
+    input.field,
+    input.compiledRule,
+    buildValidationMessage(input.rule, input.field),
+    overrides,
+  );
 }
 
 export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any>> = {
@@ -102,42 +109,50 @@ export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any
     return isEmptyValue(input.value) ? createBuiltInError(input) : undefined;
   },
   minLength(input) {
-    return typeof input.value === 'string' && input.value.length < input.rule.value ? createBuiltInError(input) : undefined;
+    return typeof input.value === 'string' && input.value.length < input.rule.value
+      ? createBuiltInError(input)
+      : undefined;
   },
   maxLength(input) {
-    return typeof input.value === 'string' && input.value.length > input.rule.value ? createBuiltInError(input) : undefined;
+    return typeof input.value === 'string' && input.value.length > input.rule.value
+      ? createBuiltInError(input)
+      : undefined;
   },
   minItems(input) {
-    return Array.isArray(input.value) && input.value.length < input.rule.value ? createBuiltInError(input) : undefined;
+    return Array.isArray(input.value) && input.value.length < input.rule.value
+      ? createBuiltInError(input)
+      : undefined;
   },
   maxItems(input) {
-    return Array.isArray(input.value) && input.value.length > input.rule.value ? createBuiltInError(input) : undefined;
+    return Array.isArray(input.value) && input.value.length > input.rule.value
+      ? createBuiltInError(input)
+      : undefined;
   },
   atLeastOneFilled(input) {
     return !hasFilledArrayItem(input.value, input.rule.itemPath)
       ? createBuiltInError(input, {
-          relatedPaths: input.rule.itemPath ? [input.rule.itemPath] : undefined
+          relatedPaths: input.rule.itemPath ? [input.rule.itemPath] : undefined,
         })
       : undefined;
   },
   allOrNone(input) {
     return violatesAllOrNone(input.value, input.rule.itemPaths)
       ? createBuiltInError(input, {
-          relatedPaths: input.rule.itemPaths
+          relatedPaths: input.rule.itemPaths,
         })
       : undefined;
   },
   uniqueBy(input) {
     return violatesUniqueBy(input.value, input.rule.itemPath)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.itemPath]
+          relatedPaths: [input.rule.itemPath],
         })
       : undefined;
   },
   atLeastOneOf(input) {
     return lacksAtLeastOneOf(input.value, input.rule.paths)
       ? createBuiltInError(input, {
-          relatedPaths: input.rule.paths
+          relatedPaths: input.rule.paths,
         })
       : undefined;
   },
@@ -162,7 +177,7 @@ export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any
 
     return !Object.is(input.value, peerValue)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.path]
+          relatedPaths: [input.rule.path],
         })
       : undefined;
   },
@@ -175,7 +190,7 @@ export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any
 
     return Object.is(input.value, peerValue)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.path]
+          relatedPaths: [input.rule.path],
         })
       : undefined;
   },
@@ -185,7 +200,7 @@ export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any
 
     return shouldRequire && isEmptyValue(input.value)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.path]
+          relatedPaths: [input.rule.path],
         })
       : undefined;
   },
@@ -195,9 +210,8 @@ export const builtInValidators: Record<SyncValidationRuleKind, SyncValidator<any
 
     return shouldRequire && isEmptyValue(input.value)
       ? createBuiltInError(input, {
-          relatedPaths: [input.rule.path]
+          relatedPaths: [input.rule.path],
         })
       : undefined;
-  }
+  },
 };
-

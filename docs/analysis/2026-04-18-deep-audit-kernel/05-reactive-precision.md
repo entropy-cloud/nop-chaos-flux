@@ -71,11 +71,11 @@
 
 ## 复核结论
 
-| 发现 | 维度复核 | 子项复核 | 最终严重程度 |
-|------|---------|---------|------------|
-| 05-1: useSurfaceScopeSnapshot | 保留降级P3 | **降级P4**（readVisible缓存+Object.is有效防止多余重渲染） | P4 |
-| 05-2: DialogHost 内联引用 | **驳回** | — | — |
-| 05-3: getSnapshot 未memo | 降级P4 | — | P4（与Dim15-4合并） |
-| 05-4: NodeRenderer selector内联 | **驳回** | — | — |
-| 05-5: renderSurfaceNode options | 降级P4 | — | P4（从属于05-1） |
-| 05-6: useScopeSelector 无路径过滤 | 保留P2 | **成立P2** | P2 |
+| 发现                              | 维度复核   | 子项复核                                                  | 最终严重程度        |
+| --------------------------------- | ---------- | --------------------------------------------------------- | ------------------- |
+| 05-1: useSurfaceScopeSnapshot     | 保留降级P3 | **降级P4**（readVisible缓存+Object.is有效防止多余重渲染） | P4                  |
+| 05-2: DialogHost 内联引用         | **驳回**   | —                                                         | —                   |
+| 05-3: getSnapshot 未memo          | 降级P4     | —                                                         | P4（与Dim15-4合并） |
+| 05-4: NodeRenderer selector内联   | **驳回**   | —                                                         | —                   |
+| 05-5: renderSurfaceNode options   | 降级P4     | —                                                         | P4（从属于05-1）    |
+| 05-6: useScopeSelector 无路径过滤 | 保留P2     | **成立P2**                                                | P2                  |

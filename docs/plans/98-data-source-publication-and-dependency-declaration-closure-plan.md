@@ -60,18 +60,19 @@ Targets: runtime files plus focused tests
 
 **Audit Results (2026-04-16):**
 
-| Behavior | Status | Code Location | Test Coverage |
-|----------|--------|---------------|---------------|
-| `name` as primary publication path | **NORMATIVE** | `source-registry.ts:55-57` | `runtime-sources.test.ts:243-266` |
-| `dataPath` as fallback publication | **COMPATIBILITY** | `source-registry.ts:59-61` | `runtime-sources.test.ts:25-57` |
-| `mergeToScope` shallow object merge | **COMPATIBILITY** | `data-source-runtime.ts:135-137` | `runtime-sources.test.ts:294-320` |
-| Unnamed API sources don't publish | **NORMATIVE** | `source-registry.ts:63-65` | `runtime-sources.test.ts:268-292` |
-| Anonymous formula fallback to `id` | **COMPATIBILITY** | `source-registry.ts:67` | `runtime-sources-refresh.test.ts:16-36` |
-| `dependsOn` is authoritative | **NORMATIVE** | `source-registry.ts:238-262` | `source-reaction-dependencies.test.ts:21-107` |
-| Runtime dependency fallback | **COMPATIBILITY** | `source-registry.ts:258-279` | `runtime-sources-refresh.test.ts:38-116` |
-| Self-publication loop guard | **NORMATIVE** | `source-registry.ts:282-299` | `source-reaction-dependencies.test.ts:109-138` |
+| Behavior                            | Status            | Code Location                    | Test Coverage                                  |
+| ----------------------------------- | ----------------- | -------------------------------- | ---------------------------------------------- |
+| `name` as primary publication path  | **NORMATIVE**     | `source-registry.ts:55-57`       | `runtime-sources.test.ts:243-266`              |
+| `dataPath` as fallback publication  | **COMPATIBILITY** | `source-registry.ts:59-61`       | `runtime-sources.test.ts:25-57`                |
+| `mergeToScope` shallow object merge | **COMPATIBILITY** | `data-source-runtime.ts:135-137` | `runtime-sources.test.ts:294-320`              |
+| Unnamed API sources don't publish   | **NORMATIVE**     | `source-registry.ts:63-65`       | `runtime-sources.test.ts:268-292`              |
+| Anonymous formula fallback to `id`  | **COMPATIBILITY** | `source-registry.ts:67`          | `runtime-sources-refresh.test.ts:16-36`        |
+| `dependsOn` is authoritative        | **NORMATIVE**     | `source-registry.ts:238-262`     | `source-reaction-dependencies.test.ts:21-107`  |
+| Runtime dependency fallback         | **COMPATIBILITY** | `source-registry.ts:258-279`     | `runtime-sources-refresh.test.ts:38-116`       |
+| Self-publication loop guard         | **NORMATIVE**     | `source-registry.ts:282-299`     | `source-reaction-dependencies.test.ts:109-138` |
 
 **Publication Priority Order:**
+
 1. `name` (if present and non-empty) → uses `name` as target
 2. `dataPath` (if present and non-empty) → uses `dataPath` as target (compatibility)
 3. API-backed with no name/dataPath → returns `undefined` (no implicit publication)
@@ -96,6 +97,7 @@ Targets: schema/runtime files plus focused tests
 **Phase 2 Results (2026-04-16):**
 
 No code changes required. The Phase 1 audit found:
+
 - Code already implements `name`-first publication priority
 - `dataPath` is already a fallback compatibility lane (checked only when `name` is absent)
 - `mergeToScope` is already explicitly narrowed (shallow merge, only for object values)
@@ -119,6 +121,7 @@ Targets: runtime files plus focused tests
 **Phase 3 Results (2026-04-16):**
 
 No code changes required. The Phase 1 audit found:
+
 - `dependsOn` is already authoritative when present (explicit check in `source-registry.ts:238-262`)
 - Runtime fallback only activates when `dependsOn` is absent
 - Self-publication loop guard already exists (`source-registry.ts:282-299`)
@@ -142,6 +145,7 @@ Targets: `docs/architecture/api-data-source.md`, `docs/architecture/dependency-t
 **Phase 4 Results (2026-04-16):**
 
 Documentation verification completed:
+
 - `docs/architecture/api-data-source.md` already correctly documents:
   - `name` as normative publication path (lines 449-455)
   - `dataPath` as compatibility-only override (line 443)

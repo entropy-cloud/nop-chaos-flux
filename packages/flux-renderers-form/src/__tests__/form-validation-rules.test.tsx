@@ -21,19 +21,19 @@ describe('formRendererDefinitions - relational and conditional field validation'
             password: 'alpha',
             confirmPassword: 'alpha',
             role: 'viewer',
-            adminCode: ''
+            adminCode: '',
           },
           body: [
             {
               type: 'input-password',
               name: 'password',
-              label: 'Password'
+              label: 'Password',
             },
             {
               type: 'input-password',
               name: 'confirmPassword',
               label: 'Confirm Password',
-              equalsField: 'password'
+              equalsField: 'password',
             },
             {
               type: 'select',
@@ -41,8 +41,8 @@ describe('formRendererDefinitions - relational and conditional field validation'
               label: 'Role',
               options: [
                 { label: 'Viewer', value: 'viewer' },
-                { label: 'Admin', value: 'admin' }
-              ]
+                { label: 'Admin', value: 'admin' },
+              ],
             },
             {
               type: 'input-text',
@@ -51,14 +51,14 @@ describe('formRendererDefinitions - relational and conditional field validation'
               requiredWhen: {
                 path: 'role',
                 equals: 'admin',
-                message: 'Admin code is required for admins'
-              }
-            }
-          ]
+                message: 'Admin code is required for admins',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const confirmInput = screen.getByLabelText('Confirm Password');
@@ -102,19 +102,19 @@ describe('formRendererDefinitions - relational and conditional field validation'
             username: 'alice',
             backupUsername: 'bob',
             status: 'draft',
-            publishReason: ''
+            publishReason: '',
           },
           body: [
             {
               type: 'input-text',
               name: 'username',
-              label: 'Username'
+              label: 'Username',
             },
             {
               type: 'input-text',
               name: 'backupUsername',
               label: 'Backup Username',
-              notEqualsField: 'username'
+              notEqualsField: 'username',
             },
             {
               type: 'select',
@@ -123,8 +123,8 @@ describe('formRendererDefinitions - relational and conditional field validation'
               options: [
                 { label: 'Draft', value: 'draft' },
                 { label: 'Review', value: 'review' },
-                { label: 'Published', value: 'published' }
-              ]
+                { label: 'Published', value: 'published' },
+              ],
             },
             {
               type: 'input-text',
@@ -133,14 +133,14 @@ describe('formRendererDefinitions - relational and conditional field validation'
               requiredUnless: {
                 path: 'status',
                 equals: 'published',
-                message: 'Publish reason is required before publishing'
-              }
-            }
-          ]
+                message: 'Publish reason is required before publishing',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const usernameInput = screen.getByLabelText('Username');
@@ -184,7 +184,7 @@ describe('formRendererDefinitions - relational and conditional field validation'
           data: {
             role: 'viewer',
             adminCode: '',
-            isAdmin: false
+            isAdmin: false,
           },
           body: [
             {
@@ -193,27 +193,27 @@ describe('formRendererDefinitions - relational and conditional field validation'
               label: 'Role',
               options: [
                 { label: 'Viewer', value: 'viewer' },
-                { label: 'Admin', value: 'admin' }
-              ]
+                { label: 'Admin', value: 'admin' },
+              ],
             },
             {
               type: 'input-text',
               name: 'adminCode',
               label: 'Admin Code',
-              disabled: '${role !== "admin"}'
+              disabled: '${role !== "admin"}',
             },
             {
               type: 'input-text',
               name: 'adminCodeRequired',
               label: 'Admin Code Required',
               visible: '${role === "admin"}',
-              required: true
-            }
-          ]
+              required: true,
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const adminCodeInput = screen.getByLabelText('Admin Code') as HTMLInputElement;
@@ -227,7 +227,9 @@ describe('formRendererDefinitions - relational and conditional field validation'
     });
 
     expect(await screen.findByText('Admin Code Required')).toBeTruthy();
-    const requiredLabel = screen.getByText('Admin Code Required').closest('[data-slot="field-label"]');
+    const requiredLabel = screen
+      .getByText('Admin Code Required')
+      .closest('[data-slot="field-label"]');
     expect(requiredLabel?.querySelector('[data-slot="field-required"]')).toBeTruthy();
   });
 
@@ -245,11 +247,9 @@ describe('formRendererDefinitions - relational and conditional field validation'
             permission: 'read',
             adminOptions: [
               { label: 'Manage users', value: 'manage-users' },
-              { label: 'Publish content', value: 'publish-content' }
+              { label: 'Publish content', value: 'publish-content' },
             ],
-            viewerOptions: [
-              { label: 'Read only', value: 'read' }
-            ]
+            viewerOptions: [{ label: 'Read only', value: 'read' }],
           },
           body: [
             {
@@ -258,21 +258,21 @@ describe('formRendererDefinitions - relational and conditional field validation'
               label: 'Role',
               options: [
                 { label: 'Viewer', value: 'viewer' },
-                { label: 'Admin', value: 'admin' }
-              ]
+                { label: 'Admin', value: 'admin' },
+              ],
             },
             {
               type: 'radio-group',
               name: 'permission',
               label: 'Permission',
               visible: '${role === "admin"}',
-              options: '${role === "admin" ? adminOptions : viewerOptions}'
-            }
-          ]
+              options: '${role === "admin" ? adminOptions : viewerOptions}',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(screen.queryByLabelText('Manage users')).toBeNull();

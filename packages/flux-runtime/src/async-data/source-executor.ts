@@ -3,14 +3,18 @@ import {
   type ActionResult,
   type ActionSchema,
   type RendererRuntime,
-  type ScopeRef
+  type ScopeRef,
 } from '@nop-chaos/flux-core';
 
 export function createSourceExecutor(input: {
   runtime: RendererRuntime;
   executeAction: (action: ActionSchema, ctx: ActionContext) => Promise<ActionResult>;
 }) {
-  return async function executeSource(source: import('@nop-chaos/flux-core').SourceSchema, scope: ScopeRef, ctx?: Partial<ActionContext>) {
+  return async function executeSource(
+    source: import('@nop-chaos/flux-core').SourceSchema,
+    scope: ScopeRef,
+    ctx?: Partial<ActionContext>,
+  ) {
     if (source.formula !== undefined) {
       const value = input.runtime.evaluate(source.formula, scope);
       return { ok: true, data: value };
@@ -25,7 +29,7 @@ export function createSourceExecutor(input: {
     const result = await input.executeAction(actionInput, {
       runtime: input.runtime,
       scope,
-      ...ctx
+      ...ctx,
     });
 
     return result;

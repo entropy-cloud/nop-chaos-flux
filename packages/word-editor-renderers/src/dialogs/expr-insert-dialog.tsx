@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { findTagDefinition } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
+import { useState } from 'react';
+import { findTagDefinition } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   Dialog,
@@ -17,54 +17,70 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-  Textarea
-} from '@nop-chaos/ui'
+  Textarea,
+} from '@nop-chaos/ui';
 
 interface ExprInsertDialogProps {
-  open: boolean
-  onClose: () => void
-  onInsert: (expr: string) => void
+  open: boolean;
+  onClose: () => void;
+  onInsert: (expr: string) => void;
 }
 
-type ExprType = 'el' | 'xpl'
+type ExprType = 'el' | 'xpl';
 
 export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogProps) {
-  const [exprType, setExprType] = useState<ExprType>('el')
-  const [expression, setExpression] = useState('')
-  const [selectedTag, setSelectedTag] = useState('c:if')
-  const [tagAttrs, setTagAttrs] = useState<Record<string, string>>({})
+  const [exprType, setExprType] = useState<ExprType>('el');
+  const [expression, setExpression] = useState('');
+  const [selectedTag, setSelectedTag] = useState('c:if');
+  const [tagAttrs, setTagAttrs] = useState<Record<string, string>>({});
 
   const handleInsert = () => {
     if (exprType === 'el') {
-      if (!expression.trim()) return
-      onInsert(`\${${expression.trim()}}`)
+      if (!expression.trim()) return;
+      onInsert(`\${${expression.trim()}}`);
     } else {
-      const tagDef = findTagDefinition(selectedTag, 'tag-open')
-      if (!tagDef) return
+      const tagDef = findTagDefinition(selectedTag, 'tag-open');
+      if (!tagDef) return;
 
-      const attrs = tagDef.defaultAttrs || {}
+      const attrs = tagDef.defaultAttrs || {};
       const attrPairs = Object.entries({
         ...attrs,
-        ...tagAttrs
+        ...tagAttrs,
       })
         .filter(([, value]) => value.trim())
         .map(([key, value]) => `${key}="${value.trim()}"`)
-        .join(' ')
+        .join(' ');
 
       if (tagDef.kind === 'tag-selfclose') {
-        onInsert(`<${selectedTag}${attrPairs ? ' ' + attrPairs : ''} />`)
+        onInsert(`<${selectedTag}${attrPairs ? ' ' + attrPairs : ''} />`);
       } else {
-        onInsert(`<${selectedTag}${attrPairs ? ' ' + attrPairs : ''}>${selectedTag}</${selectedTag}>`)
+        onInsert(
+          `<${selectedTag}${attrPairs ? ' ' + attrPairs : ''}>${selectedTag}</${selectedTag}>`,
+        );
       }
     }
-    onClose()
-  }
+    onClose();
+  };
 
-  const availableTags = ['c:if', 'c:for', 'c:forEach', 'c:choose', 'c:when', 'c:otherwise', 'c:set', 'c:out']
-  const currentTagDef = findTagDefinition(selectedTag, 'tag-open')
+  const availableTags = [
+    'c:if',
+    'c:for',
+    'c:forEach',
+    'c:choose',
+    'c:when',
+    'c:otherwise',
+    'c:set',
+    'c:out',
+  ];
+  const currentTagDef = findTagDefinition(selectedTag, 'tag-open');
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
       <DialogContent size="default">
         <DialogHeader>
           <DialogTitle>{t('flux.wordEditor.insertTemplateExpr')}</DialogTitle>
@@ -104,8 +120,8 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
                     <NativeSelect
                       value={selectedTag}
                       onChange={(e) => {
-                        setSelectedTag(e.target.value)
-                        setTagAttrs({})
+                        setSelectedTag(e.target.value);
+                        setTagAttrs({});
                       }}
                       className="w-full"
                     >
@@ -124,7 +140,9 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
                           <Label>{attrName}</Label>
                           <Input
                             value={tagAttrs[attrName] || ''}
-                            onChange={(e) => setTagAttrs(prev => ({ ...prev, [attrName]: e.target.value }))}
+                            onChange={(e) =>
+                              setTagAttrs((prev) => ({ ...prev, [attrName]: e.target.value }))
+                            }
                             placeholder={currentTagDef.defaultAttrs?.[attrName] || ''}
                             size="sm"
                           />
@@ -139,10 +157,14 @@ export function ExprInsertDialog({ open, onClose, onInsert }: ExprInsertDialogPr
         </DialogBody>
 
         <DialogFooter className="bg-transparent">
-          <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
-          <Button size="sm" onClick={handleInsert}>{t('flux.common.confirm')}</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            {t('flux.common.cancel')}
+          </Button>
+          <Button size="sm" onClick={handleInsert}>
+            {t('flux.common.confirm')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

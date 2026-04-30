@@ -14,14 +14,24 @@ import { applySimpleDocumentMutation, pushUndo } from '../core/internal-state.js
 
 export const handleCopyCells: CommandHandler<CopyCellsCommand> = (store, command) => {
   const state = store.getState();
-  const clipboard = copyRangeToClipboard(state.document, command.range.sheetId, command.range, 'copy');
+  const clipboard = copyRangeToClipboard(
+    state.document,
+    command.range.sheetId,
+    command.range,
+    'copy',
+  );
   store.setState({ clipboard });
   return { ok: true, changed: false, data: clipboard };
 };
 
 export const handleCutCells: CommandHandler<CutCellsCommand> = (store, command) => {
   const state = store.getState();
-  const clipboard = copyRangeToClipboard(state.document, command.range.sheetId, command.range, 'cut');
+  const clipboard = copyRangeToClipboard(
+    state.document,
+    command.range.sheetId,
+    command.range,
+    'cut',
+  );
   store.setState({ clipboard });
   return { ok: true, changed: false, data: clipboard };
 };

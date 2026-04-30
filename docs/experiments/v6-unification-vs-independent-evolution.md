@@ -75,20 +75,20 @@
 
 ## 4. 决策表
 
-| 能力 | 是否应统一到底层 | 原因 |
-| --- | --- | --- |
-| 表达式求值 | 应统一 | 所有动态值都会用到，重复实现代价高 |
-| 基础依赖追踪 | 应统一 | `value/resource/reaction` 至少应共享最小失效模型 |
-| 写入发布 | 应统一 | 不统一会出现不同系统各自写、各自通知 |
-| action 结果代数 | 应统一 | `success/failure/skipped` 应全局一致 |
-| async governance | 应统一 | timeout/cancel/retry 是典型横切机制 |
-| source/resource substrate | 部分统一 | 刷新、取消、去重可统一，发布语义可保持独立 |
-| reaction substrate | 部分统一 | 依赖命中与调度可统一，reaction 自身语义不必与别的系统强并 |
-| validation runtime | 不应强统一 | 它有自己完整的 owner、path、aggregate、async 语义 |
-| surface runtime | 不应强统一 | dialog/drawer 更像独立 owner family |
-| table/row runtime | 不应强统一 | 高频优化高度依赖集合与 UI 场景 |
-| domain runtime | 不应强统一 | 复杂域不应反灌核心 |
-| renderer adapter | 不应强统一 | 这是宿主适配层，不是执行核心 |
+| 能力                      | 是否应统一到底层 | 原因                                                      |
+| ------------------------- | ---------------- | --------------------------------------------------------- |
+| 表达式求值                | 应统一           | 所有动态值都会用到，重复实现代价高                        |
+| 基础依赖追踪              | 应统一           | `value/resource/reaction` 至少应共享最小失效模型          |
+| 写入发布                  | 应统一           | 不统一会出现不同系统各自写、各自通知                      |
+| action 结果代数           | 应统一           | `success/failure/skipped` 应全局一致                      |
+| async governance          | 应统一           | timeout/cancel/retry 是典型横切机制                       |
+| source/resource substrate | 部分统一         | 刷新、取消、去重可统一，发布语义可保持独立                |
+| reaction substrate        | 部分统一         | 依赖命中与调度可统一，reaction 自身语义不必与别的系统强并 |
+| validation runtime        | 不应强统一       | 它有自己完整的 owner、path、aggregate、async 语义         |
+| surface runtime           | 不应强统一       | dialog/drawer 更像独立 owner family                       |
+| table/row runtime         | 不应强统一       | 高频优化高度依赖集合与 UI 场景                            |
+| domain runtime            | 不应强统一       | 复杂域不应反灌核心                                        |
+| renderer adapter          | 不应强统一       | 这是宿主适配层，不是执行核心                              |
 
 ## 5. 为什么“大一统 graph kernel”容易出问题
 

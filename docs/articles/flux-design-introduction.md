@@ -36,7 +36,7 @@ type CompiledValueNode<T> =
   | { kind: 'expression-node'; source: string; compiled: CompiledExpression<T> }
   | { kind: 'template-node'; source: string; compiled: CompiledStringTemplate<T> }
   | { kind: 'array-node'; items: CompiledValueNode[] }
-  | { kind: 'object-node'; keys: string[]; entries: Record<string, CompiledValueNode> }
+  | { kind: 'object-node'; keys: string[]; entries: Record<string, CompiledValueNode> };
 ```
 
 编译器会在编译阶段分析每个字段的值，判断它是哪种节点，然后生成对应的编译结果。运行时只需要执行这个编译结果，不需要再做任何判断。表达式编译时还会进行自动优化：如果发现表达式的值是固定的（如 `"${1 + 2}"` 会被优化为静态值 `3`），则直接返回静态值，不会产生额外的运行时开销。因此即使写的是表达式形式，只要结果是固定的，编译器会自动消除动态求值成本。如果需要在模板字符串中输出字面量 `$` 符号，可以使用 `${'$'}` 进行转义。
@@ -88,7 +88,13 @@ type CompiledValueNode<T> =
 ```typescript
 type CompiledRuntimeValue<T> =
   | { kind: 'static'; isStatic: true; node: StaticValueNode<T>; value: T }
-  | { kind: 'dynamic'; isStatic: false; node: DynamicValueNode<T>; createState(): RuntimeValueState<T>; exec(context, env, state): ValueEvaluationResult<T> }
+  | {
+      kind: 'dynamic';
+      isStatic: false;
+      node: DynamicValueNode<T>;
+      createState(): RuntimeValueState<T>;
+      exec(context, env, state): ValueEvaluationResult<T>;
+    };
 ```
 
 `RuntimeValueState` 为每个节点维护上一次的计算值，`ValueEvaluationResult` 中的 `reusedReference` 标志告知调用方是否复用了旧引用。这个机制对 schema 定义的对象结构（`object-node`）效果最稳定：每个字段的表达式单独追踪，只要字段值的引用不变，外层对象引用就不会变。
@@ -169,9 +175,7 @@ Flux 借鉴了 ES 模块导入的设计，引入了 `xui:imports` 声明：
 ```json
 {
   "type": "container",
-  "xui:imports": [
-    { "from": "demo-lib", "as": "demo" }
-  ],
+  "xui:imports": [{ "from": "demo-lib", "as": "demo" }],
   "body": [
     {
       "type": "button",
@@ -411,8 +415,8 @@ body:
       label: 'Test'
       actionType: dialog
       dialog:
-        "x:extends": test.page.yaml
-        "title": "Test Dialog"
+        'x:extends': test.page.yaml
+        'title': 'Test Dialog'
 ```
 
 以上示例表示：首先根据 `NopAuthDept.view.xml` 的配置动态生成一个 CRUD 页面，然后再在批量操作按钮区增加一个 Test 按钮，点击按钮弹出的对话框复用已有的 `test.page.yaml` 文件，`title` 属性会覆盖 `x:extends` 继承的内容，将对话框标题设置为 `Test Dialog`。
@@ -499,7 +503,7 @@ Nop 平台中的 XPL 模板语言为动态生成 XML 提供了诸多简化帮助
 - **Menu**：roving tabindex、aria-expanded 状态管理
 - **Form 控件**：label 与 input 的自动关联、错误提示的 aria-describedby
 
-Flux 渲染器的职责是**不破坏**这些已有的无障碍能力——透传 aria-* 属性、不用 div 替代语义元素、不吞掉键盘事件。这是"不做错事"而非"主动做事"。
+Flux 渲染器的职责是**不破坏**这些已有的无障碍能力——透传 aria-\* 属性、不用 div 替代语义元素、不吞掉键盘事件。这是"不做错事"而非"主动做事"。
 
 ### 10.6 GraphQL 简化
 

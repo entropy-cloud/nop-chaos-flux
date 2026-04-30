@@ -14,16 +14,16 @@ per-field reactivity model used by `@formily/reactive`.
 
 ## Current Baseline
 
-- `FormStoreApi.subscribe` is a raw Zustand store subscription.  Any write to any
+- `FormStoreApi.subscribe` is a raw Zustand store subscription. Any write to any
   field (errors, touched, validating, dirty, visited) triggers `subscribe` callbacks
   for every subscriber in the store.
 - `useCurrentFormFieldState` (and `useFieldError`) use
   `useSyncExternalStoreWithSelector` with a per-path selector, but the subscribe
-  argument is still the **full-store broadcast**.  In a 1 000-field form, one
+  argument is still the **full-store broadcast**. In a 1 000-field form, one
   keystroke wakes 1 000 hooks; 999 selector calls return the same value and are
   discarded.
 - `FormStoreState` holds five flat `Record<string, V>` maps: `errors`, `validating`,
-  `touched`, `dirty`, `visited`.  Projected stores (`createPrefixedStore`,
+  `touched`, `dirty`, `visited`. Projected stores (`createPrefixedStore`,
   `createItemStore`, `createVariantStore`) each re-subscribe to the parent broadcast
   and filter by prefix on every update.
 - `FormStoreApi` interface lives in `packages/flux-core/src/types/runtime.ts`.
@@ -68,7 +68,7 @@ per-field reactivity model used by `@formily/reactive`.
 - `packages/flux-core/src/types/runtime.ts` — extend `FormStoreApi` with three new
   members: `subscribeToPath`, `subscribeToSubmitting`, `getPathState`.
 - `packages/flux-runtime/src/form-store.ts` — add `pathListeners: Map<string,
-  Set<() => void>>` and `submittingListeners: Set<() => void>` internally; implement
+Set<() => void>>` and `submittingListeners: Set<() => void>` internally; implement
   `notifyPath(path)`, `notifySubmitting()`; wire into `setBooleanState`,
   `setPathErrors`, `setSubmitting`; implement `batchUpdate` diffing.
 - `packages/flux-runtime/src/form-runtime-array.ts` and any other caller of
@@ -140,20 +140,20 @@ Targets: `packages/flux-renderers-form/src/renderers/object-field.tsx`, `package
 
 - [x] Locate `createPrefixedStore`, `createItemStore`, `createVariantStore`.
 - [x] For each: implement `subscribeToPath(relativePath, listener)` by translating to
-  absolute path and delegating to parent `subscribeToPath`.
+      absolute path and delegating to parent `subscribeToPath`.
   - Path translation uses `PathBindingService` from `@nop-chaos/flux-core` (shared rebasing helper).
 - [x] For each: implement `subscribeToSubmitting(listener)` by delegating to parent.
 - [x] For each: implement `getPathState(relativePath)` by translating to absolute path
-  and delegating to parent (same rebasing helper).
+      and delegating to parent (same rebasing helper).
 - [x] Fixed `ownerPath` projection bug: when `ownerPath` is not in projected range, set it to the projected `path`.
 
 Exit Criteria:
 
 - [x] `pnpm --filter @nop-chaos/flux-runtime typecheck` passes.
 - [x] Unit test: projected store subscribed to relative path "email" receives
-  notification when parent store path "row.0.email" changes (given prefix "row.0").
+      notification when parent store path "row.0.email" changes (given prefix "row.0").
 - [x] Path translation in projected stores uses `PathBindingService`, not inline
-  string concatenation repeated per store type.
+      string concatenation repeated per store type.
 
 ### Phase 4 - Rewrite Field-State Hooks
 

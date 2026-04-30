@@ -111,12 +111,14 @@ export interface TableColumn {
   /** 是否可筛选 */
   filterable?: unknown;
   /** 是否可复制 */
-  copyable?: boolean | {
-    content?: string;
-    copy?: string;
-    successText?: string;
-    failedText?: string;
-  };
+  copyable?:
+    | boolean
+    | {
+        content?: string;
+        copy?: string;
+        successText?: string;
+        failedText?: string;
+      };
   /** 格式化 */
   format?: string;
   /** 前缀 */

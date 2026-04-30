@@ -1,7 +1,16 @@
 import { useMemo, useRef } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input } from '@nop-chaos/ui';
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from '@nop-chaos/ui';
 import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas';
 import { useTableQuickEditController } from './table-quick-edit-controller';
 
@@ -11,7 +20,9 @@ interface ResolvedTableQuickEditConfig {
   body?: TableColumnQuickEditConfig['body'];
 }
 
-export function resolveTableQuickEditConfig(column: TableColumnSchema): ResolvedTableQuickEditConfig | undefined {
+export function resolveTableQuickEditConfig(
+  column: TableColumnSchema,
+): ResolvedTableQuickEditConfig | undefined {
   if (!column.quickEdit) {
     return undefined;
   }
@@ -64,17 +75,19 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
     openDialog,
     handleInlineValueChange,
     handleDialogOpenChange,
-    runSave
+    runSave,
   } = useTableQuickEditController({
     field,
     record,
     rowScope,
     helpers,
     saveAction,
-    hasCustomBody
+    hasCustomBody,
   });
 
-  const editorNode = hasCustomBody ? helpers.render(config.body!, { scope: rowScope, pathSuffix: `quickEdit.${field ?? 'custom'}` }) : (
+  const editorNode = hasCustomBody ? (
+    helpers.render(config.body!, { scope: rowScope, pathSuffix: `quickEdit.${field ?? 'custom'}` })
+  ) : (
     <Input
       name={`quick-edit-${field}`}
       value={draftValue}
@@ -92,12 +105,11 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
           </Button>
           <DialogContent data-slot="table-quick-edit-dialog" showCloseButton={false}>
             <DialogHeader>
-              <DialogTitle>{typeof column.label === 'string' ? column.label : field ?? t('flux.common.save')}</DialogTitle>
+              <DialogTitle>
+                {typeof column.label === 'string' ? column.label : (field ?? t('flux.common.save'))}
+              </DialogTitle>
             </DialogHeader>
-            <DialogBody
-              data-slot="table-quick-edit-dialog-body"
-              onChangeCapture={markBodyDirty}
-            >
+            <DialogBody data-slot="table-quick-edit-dialog-body" onChangeCapture={markBodyDirty}>
               {editorNode}
             </DialogBody>
             <DialogFooter showCloseButton={false}>
@@ -138,7 +150,13 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
     >
       {editorNode}
       {!config?.saveImmediately && saveAction ? (
-        <Button type="button" variant="outline" size="sm" disabled={!dirty || saving} onClick={() => void runSave()}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!dirty || saving}
+          onClick={() => void runSave()}
+        >
           {t('flux.common.save')}
         </Button>
       ) : null}

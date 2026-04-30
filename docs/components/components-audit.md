@@ -10,14 +10,14 @@
 
 本次复核后，原审计文档中的大部分基础结论成立，但有几处统计口径和问题定性需要修正。
 
-| 维度 | 复核结果 |
-|------|----------|
-| 目录结构合规 | **52/52** - 每个组件目录均包含 `design.md` 和 `example.json` |
-| 12 节覆盖 | **52/52** - 全部 `design.md` 都包含 `## 1.` 到 `## 12.` 的建议章节 |
-| example.json 有效性 | **52/52** - 全部 `example.json` 语法合法 |
-| manifest 分类统计 | **已修正** - `runtime` 实际为 **36**，`targetContract` 为 **14**，`declaredButUnregistered` 为 **2** |
-| 已完成修复 | **7 项** - 已完成 `showAndOr` / `readOnly` 重命名、`chart` 示例收敛、`report-toolbar` 说明补充、以及 6 个缺失事件示例补齐 |
-| 仍属说明类事项 | **2 个** - `report-designer-page` region 写法可再统一、AMIS 映射章节若继续扩写需拆分"语义承接"和"type 保留"口径 |
+| 维度                | 复核结果                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 目录结构合规        | **52/52** - 每个组件目录均包含 `design.md` 和 `example.json`                                                              |
+| 12 节覆盖           | **52/52** - 全部 `design.md` 都包含 `## 1.` 到 `## 12.` 的建议章节                                                        |
+| example.json 有效性 | **52/52** - 全部 `example.json` 语法合法                                                                                  |
+| manifest 分类统计   | **已修正** - `runtime` 实际为 **36**，`targetContract` 为 **14**，`declaredButUnregistered` 为 **2**                      |
+| 已完成修复          | **7 项** - 已完成 `showAndOr` / `readOnly` 重命名、`chart` 示例收敛、`report-toolbar` 说明补充、以及 6 个缺失事件示例补齐 |
+| 仍属说明类事项      | **2 个** - `report-designer-page` region 写法可再统一、AMIS 映射章节若继续扩写需拆分"语义承接"和"type 保留"口径           |
 
 复核方法说明：
 
@@ -48,11 +48,11 @@
 
 `docs/components/examples.manifest.json` 的实际数量为：
 
-| manifest 分类 | 实际数量 | 复核结论 |
-|--------------|----------|----------|
-| `runtime` | **36** | 原文写成 35，统计错误 |
-| `targetContract` | 14 | 正确 |
-| `declaredButUnregistered` | 2 | 正确 |
+| manifest 分类             | 实际数量 | 复核结论              |
+| ------------------------- | -------- | --------------------- |
+| `runtime`                 | **36**   | 原文写成 35，统计错误 |
+| `targetContract`          | 14       | 正确                  |
+| `declaredButUnregistered` | 2        | 正确                  |
 
 对应关系说明：
 
@@ -142,12 +142,12 @@
 
 原文分组标题中的数量与表格实际行数不一致：
 
-| 分组 | 原文标题 | 实际数量 |
-|------|----------|----------|
-| 通用基础与内容组件 | 21 个 | **22** 个 |
-| 表单组件 | 14 个 | 14 个 |
-| 数据与逻辑组件 | 4 个 | 4 个 |
-| 领域宿主与设计器组件 | 13 个 | **12** 个 |
+| 分组                 | 原文标题 | 实际数量  |
+| -------------------- | -------- | --------- |
+| 通用基础与内容组件   | 21 个    | **22** 个 |
+| 表单组件             | 14 个    | 14 个     |
+| 数据与逻辑组件       | 4 个     | 4 个      |
+| 领域宿主与设计器组件 | 13 个    | **12** 个 |
 
 说明：
 
@@ -177,14 +177,14 @@
 
 已复核的示例：
 
-| 组件 | design.md 声明事件 | example.json 是否展示 |
-|------|--------------------|-----------------------|
-| `button` | `onClick` | 是 |
-| `dialog` | `onOpen`, `onClose` | 是 |
-| `drawer` | `onOpen`, `onClose` | 是 |
-| `table` | `onRowClick`, `onSortChange`, `onFilterChange`, `onPageChange`, `onSelectionChange`, `onRefresh` | 已补最小 `onRowClick` 示例 |
-| `image` | `onClick`, `onLoadError` | 已补最小 `onClick` 示例 |
-| `link` | `onClick` | 是 |
+| 组件     | design.md 声明事件                                                                               | example.json 是否展示      |
+| -------- | ------------------------------------------------------------------------------------------------ | -------------------------- |
+| `button` | `onClick`                                                                                        | 是                         |
+| `dialog` | `onOpen`, `onClose`                                                                              | 是                         |
+| `drawer` | `onOpen`, `onClose`                                                                              | 是                         |
+| `table`  | `onRowClick`, `onSortChange`, `onFilterChange`, `onPageChange`, `onSelectionChange`, `onRefresh` | 已补最小 `onRowClick` 示例 |
+| `image`  | `onClick`, `onLoadError`                                                                         | 已补最小 `onClick` 示例    |
+| `link`   | `onClick`                                                                                        | 是                         |
 
 本轮已补齐最小事件示例。后续如果这些组件继续扩展事件面，再按组件重要性补更多代表性事件即可。
 
@@ -192,11 +192,11 @@
 
 原文这部分也基本成立：
 
-| 组件 | 字段 | 复核结论 |
-|------|------|----------|
-| `tag-list` | `tags` | design.md 已明确标注为过渡态 |
-| `flex` | `body` / `items` | 示例与设计中确实存在双入口待收敛 |
-| `text` | `text` / `body` | 示例与设计中确实存在双入口待收敛 |
+| 组件       | 字段             | 复核结论                         |
+| ---------- | ---------------- | -------------------------------- |
+| `tag-list` | `tags`           | design.md 已明确标注为过渡态     |
+| `flex`     | `body` / `items` | 示例与设计中确实存在双入口待收敛 |
+| `text`     | `text` / `body`  | 示例与设计中确实存在双入口待收敛 |
 
 建议继续保留，并把后续动作写得更明确：
 
@@ -237,9 +237,9 @@
 
 更合理的写法应拆成两层：
 
-| 口径 | 应如何表述 |
-|------|------------|
-| 语义承接 | "AMIS 的某类能力在 Flux 中主要由哪个组件承接" |
+| 口径          | 应如何表述                                            |
+| ------------- | ----------------------------------------------------- |
+| 语义承接      | "AMIS 的某类能力在 Flux 中主要由哪个组件承接"         |
 | type 保留策略 | "Flux 是否保留 AMIS 原 type 名作为正式 renderer type" |
 
 也就是说：
@@ -275,12 +275,12 @@
 
 如果继续维护这份审计文档，建议后续按以下口径写，避免再次混淆：
 
-| 类别 | 应包含内容 |
-|------|------------|
+| 类别       | 应包含内容                                             |
+| ---------- | ------------------------------------------------------ |
 | 已验证事实 | 目录数、文件完整性、章节覆盖、JSON 语法、manifest 计数 |
-| 已确认问题 | 可以直接从当前仓库基线推导出的违规或不一致 |
-| 需补充说明 | 现有设计可成立，但解释不足、示例风格不统一 |
-| 改进建议 | 事件示例、迁移说明、术语收敛、文档可读性优化 |
+| 已确认问题 | 可以直接从当前仓库基线推导出的违规或不一致             |
+| 需补充说明 | 现有设计可成立，但解释不足、示例风格不统一             |
+| 改进建议   | 事件示例、迁移说明、术语收敛、文档可读性优化           |
 
 按这个口径，文档既能保留"审计"价值，也能避免把设计选择误写成错误。
 
@@ -309,34 +309,34 @@
 
 **目前无对应 renderer 文档、但属于合理 renderer 候选的 UI primitive**（按优先级排序）：
 
-| UI primitive | 候选 renderer type | 优先级建议 |
-|---|---|---|
-| `pagination` | `pagination` | P1 — 表格/列表分页配套，高频需求 |
-| `skeleton` | `skeleton` | P1 — loading placeholder，场景明确 |
-| `combobox` | `combobox` | P1 — 可搜索选择器，扩展 `select` 能力 |
-| `alert` | `alert` | P2 — 内联提示 banner |
-| `slider` | `input-slider` | P2 — 数值/范围输入 form field |
-| `avatar` | `avatar` | P2 — 用户头像展示 |
-| `breadcrumb` | `breadcrumb` | P2 — 导航路径 |
-| `accordion` | `accordion` | P2 — 可折叠内容组 |
-| `toggle` / `toggle-group` | `toggle` / `toggle-group` | P2 — 单选/多选按钮组 form field |
-| `sheet` | `sheet` 或作 `drawer` 别名 | P3 — 当前 `drawer` 已覆盖主要场景 |
-| `carousel` | `carousel` | P3 — 图片/内容轮播 |
-| `navigation-menu` | `navigation-menu` | P3 — 导航菜单 |
-| `input-otp` | `input-otp` | P3 — 验证码输入 form field |
-| `tooltip` | N/A | N/A — 作为 renderer 元属性注入更合适，不需要独立 type |
+| UI primitive              | 候选 renderer type         | 优先级建议                                            |
+| ------------------------- | -------------------------- | ----------------------------------------------------- |
+| `pagination`              | `pagination`               | P1 — 表格/列表分页配套，高频需求                      |
+| `skeleton`                | `skeleton`                 | P1 — loading placeholder，场景明确                    |
+| `combobox`                | `combobox`                 | P1 — 可搜索选择器，扩展 `select` 能力                 |
+| `alert`                   | `alert`                    | P2 — 内联提示 banner                                  |
+| `slider`                  | `input-slider`             | P2 — 数值/范围输入 form field                         |
+| `avatar`                  | `avatar`                   | P2 — 用户头像展示                                     |
+| `breadcrumb`              | `breadcrumb`               | P2 — 导航路径                                         |
+| `accordion`               | `accordion`                | P2 — 可折叠内容组                                     |
+| `toggle` / `toggle-group` | `toggle` / `toggle-group`  | P2 — 单选/多选按钮组 form field                       |
+| `sheet`                   | `sheet` 或作 `drawer` 别名 | P3 — 当前 `drawer` 已覆盖主要场景                     |
+| `carousel`                | `carousel`                 | P3 — 图片/内容轮播                                    |
+| `navigation-menu`         | `navigation-menu`          | P3 — 导航菜单                                         |
+| `input-otp`               | `input-otp`                | P3 — 验证码输入 form field                            |
+| `tooltip`                 | N/A                        | N/A — 作为 renderer 元属性注入更合适，不需要独立 type |
 
 这些候选项均可在 UI primitive 已就绪的情况下直接创建 `docs/components/<type>/design.md`，实现不受 UI 库制约。
 
 ### 9.4 结论
 
-| 维度 | 结果 |
-|---|---|
-| 文件完整性 | 无遗漏，前次误报已消除 |
-| `index.md` 清单准确性 | 已修复 1 处过期条目（`fragment`/`loop`/`recurse` 已移出"未实现"清单） |
-| manifest 与目录一致性 | 一致，无需修改 |
-| UI primitive 覆盖缺口 | 3 个 P1 候选（`pagination`、`skeleton`、`combobox`）尚无 docs，可优先补充 |
-| 仍存在的设计质量问题 | 同 §7：region 示例写法混用（P1）；`tag-list.tags`/`flex.body/items`/`text.text/body` 过渡态字段收敛（P2） |
+| 维度                  | 结果                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| 文件完整性            | 无遗漏，前次误报已消除                                                                                    |
+| `index.md` 清单准确性 | 已修复 1 处过期条目（`fragment`/`loop`/`recurse` 已移出"未实现"清单）                                     |
+| manifest 与目录一致性 | 一致，无需修改                                                                                            |
+| UI primitive 覆盖缺口 | 3 个 P1 候选（`pagination`、`skeleton`、`combobox`）尚无 docs，可优先补充                                 |
+| 仍存在的设计质量问题  | 同 §7：region 示例写法混用（P1）；`tag-list.tags`/`flex.body/items`/`text.text/body` 过渡态字段收敛（P2） |
 
 ### 9.5 AMIS 基线差集补充
 
@@ -362,38 +362,38 @@
 
 以下类型不能简单视为“缺文档”，因为 Flux 已明确采用合并/改名策略：
 
-| AMIS type | Flux 承接方式 | 说明 |
-|------|----------------|------|
-| `action` / `submit` / `reset` | `button` | `docs/components/index.md` 已明确统一收敛到 `button` |
-| `tpl` / `plain` | `text` / `html` / `markdown` | 文本展示能力已拆分，不保留原 type |
-| `divider` | `separator` | 命名按 Flux/UI primitive 收敛 |
-| `each` | `loop` | 结构节点改用 Flux 术语 |
-| `checkboxes` | `checkbox-group` | 统一 group 命名 |
-| `radios` | `radio-group` | 统一 group 命名 |
-| `input-array` | `array-editor` | 以 Flux 当前对象/数组字段体系承接 |
+| AMIS type                     | Flux 承接方式                | 说明                                                 |
+| ----------------------------- | ---------------------------- | ---------------------------------------------------- |
+| `action` / `submit` / `reset` | `button`                     | `docs/components/index.md` 已明确统一收敛到 `button` |
+| `tpl` / `plain`               | `text` / `html` / `markdown` | 文本展示能力已拆分，不保留原 type                    |
+| `divider`                     | `separator`                  | 命名按 Flux/UI primitive 收敛                        |
+| `each`                        | `loop`                       | 结构节点改用 Flux 术语                               |
+| `checkboxes`                  | `checkbox-group`             | 统一 group 命名                                      |
+| `radios`                      | `radio-group`                | 统一 group 命名                                      |
+| `input-array`                 | `array-editor`               | 以 Flux 当前对象/数组字段体系承接                    |
 
 #### 9.5.3 当前已明确缺失、且优先级不低的 AMIS 能力
 
 按 `docs/amis-types/` 与当前 `docs/components/` 目录差集复核，以下组件族目前仍没有对应组件 owner 文档，且其中不少属于高频或企业场景常用能力：
 
-| AMIS type / 能力族 | 当前状态 | 备注 |
-|------|----------|------|
-| `crud` | **已补文档** | 2026-04-12 新增 `docs/components/crud/` |
-| `cards` | 缺失 | `crud` 的 cards mode、独立卡片集合场景都需要 |
-| `pagination` / `pagination-wrapper` | 缺失 | 高频基础数据能力；此前只在 UI primitive 审计里被提到 |
-| `service` | 缺失 | AMIS 中重要的数据装配/局部请求容器，需判断与 `data-source` / `page` / `fragment` 的边界 |
-| `alert` | 缺失 | 高频反馈组件 |
-| `input-number` | 缺失 | 基础表单控件，不应长期缺位 |
-| 日期时间族 | 缺失 | `input-date`、`input-datetime`、`input-time`、range、month/quarter/year 系列 |
-| `input-file` / `input-image` | 缺失 | 企业表单高频能力 |
-| `editor` / `input-rich-text` | 缺失 | 与现有 `code-editor` 不同，属于富文本内容编辑 |
-| `button-group` / `dropdown-button` | 缺失 | 常见动作编排组件 |
-| `collapse` / `collapse-group` | 缺失 | 常用容器交互组件 |
-| `grid` | 缺失 | 经典布局能力，需判断与 `flex` / `container` 的边界 |
-| `audio` / `video` / `carousel` / `qrcode` | 缺失 | 内容展示族缺口 |
-| `mapping` / `status` | 缺失 | AMIS 中常用的业务展示小组件 |
-| `search-box` | 缺失 | 可由 `form + input-text` 承接，但目前无正式 owner 结论 |
-| `combo` / `picker` / `transfer` / `input-table` | 缺失 | 复杂表单能力族，后续需结合 Flux 组合字段体系重新建模 |
+| AMIS type / 能力族                              | 当前状态     | 备注                                                                                    |
+| ----------------------------------------------- | ------------ | --------------------------------------------------------------------------------------- |
+| `crud`                                          | **已补文档** | 2026-04-12 新增 `docs/components/crud/`                                                 |
+| `cards`                                         | 缺失         | `crud` 的 cards mode、独立卡片集合场景都需要                                            |
+| `pagination` / `pagination-wrapper`             | 缺失         | 高频基础数据能力；此前只在 UI primitive 审计里被提到                                    |
+| `service`                                       | 缺失         | AMIS 中重要的数据装配/局部请求容器，需判断与 `data-source` / `page` / `fragment` 的边界 |
+| `alert`                                         | 缺失         | 高频反馈组件                                                                            |
+| `input-number`                                  | 缺失         | 基础表单控件，不应长期缺位                                                              |
+| 日期时间族                                      | 缺失         | `input-date`、`input-datetime`、`input-time`、range、month/quarter/year 系列            |
+| `input-file` / `input-image`                    | 缺失         | 企业表单高频能力                                                                        |
+| `editor` / `input-rich-text`                    | 缺失         | 与现有 `code-editor` 不同，属于富文本内容编辑                                           |
+| `button-group` / `dropdown-button`              | 缺失         | 常见动作编排组件                                                                        |
+| `collapse` / `collapse-group`                   | 缺失         | 常用容器交互组件                                                                        |
+| `grid`                                          | 缺失         | 经典布局能力，需判断与 `flex` / `container` 的边界                                      |
+| `audio` / `video` / `carousel` / `qrcode`       | 缺失         | 内容展示族缺口                                                                          |
+| `mapping` / `status`                            | 缺失         | AMIS 中常用的业务展示小组件                                                             |
+| `search-box`                                    | 缺失         | 可由 `form + input-text` 承接，但目前无正式 owner 结论                                  |
+| `combo` / `picker` / `transfer` / `input-table` | 缺失         | 复杂表单能力族，后续需结合 Flux 组合字段体系重新建模                                    |
 
 #### 9.5.4 根因分析
 
@@ -437,11 +437,11 @@
 
 同步后 `docs/components/examples.manifest.json` 现按当前 owner-doc 基线分为：
 
-| manifest 分类 | 数量 | 说明 |
-| --- | --- | --- |
-| `runtime` | 46 | 已注册实现且有 owner doc 的组件 |
-| `targetContract` | 44 | owner doc 已落地、当前尚未注册实现的 retained canonical 组件 |
-| `declaredButUnregistered` | 2 | `designer-node-card`、`designer-edge-row` |
+| manifest 分类             | 数量 | 说明                                                         |
+| ------------------------- | ---- | ------------------------------------------------------------ |
+| `runtime`                 | 46   | 已注册实现且有 owner doc 的组件                              |
+| `targetContract`          | 44   | owner doc 已落地、当前尚未注册实现的 retained canonical 组件 |
+| `declaredButUnregistered` | 2    | `designer-node-card`、`designer-edge-row`                    |
 
 说明：
 

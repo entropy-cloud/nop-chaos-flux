@@ -8,7 +8,7 @@ import type {
   PageStoreApi,
   ScopeRef,
   SurfaceRuntime,
-  ValidationScopeRuntime
+  ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
 import type { ValidationRegistry } from './validation';
 import { createManagedFormRuntime } from './form-runtime';
@@ -29,7 +29,10 @@ export function createRuntimeOwnedFactories(input: {
     validation?: CompiledFormValidationModel;
     initialValues?: Record<string, any>;
   }) => ValidationScopeRuntime;
-  dispatchAction: (action: import('@nop-chaos/flux-core').ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+  dispatchAction: (
+    action: import('@nop-chaos/flux-core').ActionSchema,
+    ctx?: Partial<ActionContext>,
+  ) => Promise<ActionResult>;
   validationRegistry: ValidationRegistry;
   disposeScopeTree: (scopeId: string) => void;
 }) {
@@ -39,7 +42,7 @@ export function createRuntimeOwnedFactories(input: {
     const pageValidation = input.createValidationScopeRuntime({
       id: 'page-root-validation',
       scopePath: '$page',
-      initialValues: initialData
+      initialValues: initialData,
     });
     const validationStore = pageValidation.store as import('@nop-chaos/flux-core').FormStoreApi;
     let refreshTick = 0;
@@ -48,7 +51,7 @@ export function createRuntimeOwnedFactories(input: {
       getState() {
         return {
           data: validationStore.getState().values,
-          refreshTick
+          refreshTick,
         };
       },
       subscribe(listener) {
@@ -70,7 +73,7 @@ export function createRuntimeOwnedFactories(input: {
         for (const listener of refreshListeners) {
           listener();
         }
-      }
+      },
     };
 
     let syncingFromValidation = false;
@@ -126,7 +129,7 @@ export function createRuntimeOwnedFactories(input: {
       data: initialData,
       pageStore,
       validationOwner: pageValidation,
-      scope: pageValidation.scope
+      scope: pageValidation.scope,
     });
 
     input.ownedPages.add(page);
@@ -152,16 +155,18 @@ export function createRuntimeOwnedFactories(input: {
       scopeBinding: 'none',
       executeValidationRule: (compiledRule, rule, field, validationScope, signal) =>
         executeRuntimeValidationRule(compiledRule, rule, field, validationScope, signal, {
-          dispatch: (action, ctx) => input.dispatchAction(action, ctx)
+          dispatch: (action, ctx) => input.dispatchAction(action, ctx),
         }),
       validateRule: (compiledRule, value, field, validationScope) =>
-        validateRule(compiledRule, value, field, validationScope, input.validationRegistry)
+        validateRule(compiledRule, value, field, validationScope, input.validationRegistry),
     });
   }
 
-  function createSurfaceRuntime(inputValue: { disposeScope?: (scopeId: string) => void } = {}): SurfaceRuntime {
+  function createSurfaceRuntime(
+    inputValue: { disposeScope?: (scopeId: string) => void } = {},
+  ): SurfaceRuntime {
     const surfaceRuntime = createManagedSurfaceRuntime({
-      disposeScope: inputValue.disposeScope ?? input.disposeScopeTree
+      disposeScope: inputValue.disposeScope ?? input.disposeScopeTree,
     });
 
     input.ownedSurfaceRuntimes.add(surfaceRuntime);
@@ -181,9 +186,10 @@ export function createRuntimeOwnedFactories(input: {
       ...inputValue,
       executeValidationRule: (compiledRule, rule, field, scope, signal) =>
         executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, {
-          dispatch: (action, ctx) => input.dispatchAction(action, ctx)
+          dispatch: (action, ctx) => input.dispatchAction(action, ctx),
         }),
-      validateRule: (compiledRule, value, field, scope) => validateRule(compiledRule, value, field, scope, input.validationRegistry)
+      validateRule: (compiledRule, value, field, scope) =>
+        validateRule(compiledRule, value, field, scope, input.validationRegistry),
     });
   }
 
@@ -191,6 +197,6 @@ export function createRuntimeOwnedFactories(input: {
     createPageRuntime,
     createValidationScopeRuntime,
     createSurfaceRuntime,
-    createFormRuntime
+    createFormRuntime,
   };
 }

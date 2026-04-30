@@ -53,6 +53,7 @@ Targets: docs listed above
 - [x] freeze rejection of `publishScope` as a separate field name
 
 Verified in:
+
 - `docs/architecture/action-interaction-state.md`: `Domain Host Owner` row in taxonomy table, `Host Projection` vs `statusPath` split documented, `publishScope` not listed
 - `docs/architecture/complex-control-host-protocol.md`: explicit `publishScope` rejection (line 112)
 - `docs/discussions/2026-04-09-cross-store-data-driven-design.md` Round 3 header: `publishScope` replaced by `statusPath`
@@ -71,6 +72,7 @@ Targets: successor design docs or component docs
 - [x] keep summary DTOs readonly and host-private-object-free
 
 Verified in:
+
 - `docs/components/designer-page/design.md` §4: `statusPath` for external summary, no host store exposure
 - `docs/components/spreadsheet-page/design.md` §4, §7: same pattern
 - `docs/components/report-designer-page/design.md` §4, §7: same pattern

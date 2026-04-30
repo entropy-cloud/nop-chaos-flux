@@ -1,5 +1,10 @@
 import { simpleTreeLayout } from '@nop-chaos/flow-designer-core';
-import type { DesignerCore, GraphDocument, GraphNode, TreeDocument } from '@nop-chaos/flow-designer-core';
+import type {
+  DesignerCore,
+  GraphDocument,
+  GraphNode,
+  TreeDocument,
+} from '@nop-chaos/flow-designer-core';
 import type { DesignerCommandReason, DesignerCommandResult } from './designer-command-types';
 
 export interface TreeCommandOwner {
@@ -12,11 +17,14 @@ const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playgroun
 const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
 const EDGE_DUPLICATE_ERROR = 'Duplicate edges are not supported in the playground example.';
 
-export function createSuccess(core: DesignerCore, extra?: Omit<DesignerCommandResult, 'ok' | 'snapshot'>): DesignerCommandResult {
+export function createSuccess(
+  core: DesignerCore,
+  extra?: Omit<DesignerCommandResult, 'ok' | 'snapshot'>,
+): DesignerCommandResult {
   return {
     ok: true,
     snapshot: core.getSnapshot(),
-    ...extra
+    ...extra,
   };
 }
 
@@ -24,14 +32,14 @@ export function createFailure(
   core: DesignerCore,
   error: string,
   reason?: DesignerCommandReason,
-  extra?: Omit<DesignerCommandResult, 'ok' | 'snapshot' | 'error' | 'reason'>
+  extra?: Omit<DesignerCommandResult, 'ok' | 'snapshot' | 'error' | 'reason'>,
 ): DesignerCommandResult {
   return {
     ok: false,
     snapshot: core.getSnapshot(),
     error,
     reason,
-    ...extra
+    ...extra,
   };
 }
 
@@ -47,13 +55,20 @@ export function hasEdge(doc: GraphDocument, edgeId: string): boolean {
   return doc.edges.some((edge) => edge.id === edgeId);
 }
 
-export function hasEdgeConnection(doc: GraphDocument, source: string, target: string, ignoreEdgeId?: string): boolean {
-  return doc.edges.some((edge) => edge.id !== ignoreEdgeId && edge.source === source && edge.target === target);
+export function hasEdgeConnection(
+  doc: GraphDocument,
+  source: string,
+  target: string,
+  ignoreEdgeId?: string,
+): boolean {
+  return doc.edges.some(
+    (edge) => edge.id !== ignoreEdgeId && edge.source === source && edge.target === target,
+  );
 }
 
 export function viewportsEqual(
   left: { x: number; y: number; zoom: number },
-  right: { x: number; y: number; zoom: number }
+  right: { x: number; y: number; zoom: number },
 ): boolean {
   return left.x === right.x && left.y === right.y && left.zoom === right.zoom;
 }
@@ -62,7 +77,7 @@ export function validateEdgeMutation(
   core: DesignerCore,
   source: string,
   target: string,
-  ignoreEdgeId?: string
+  ignoreEdgeId?: string,
 ): { error?: string; reason?: DesignerCommandReason } {
   const doc = core.getDocument();
   const config = core.getConfig();
@@ -82,17 +97,20 @@ export function validateEdgeMutation(
   return {};
 }
 
-export function inferAddNodeFailure(core: DesignerCore, nodeType: string): { error: string; reason: DesignerCommandReason } {
+export function inferAddNodeFailure(
+  core: DesignerCore,
+  nodeType: string,
+): { error: string; reason: DesignerCommandReason } {
   if (!core.getConfig().nodeTypes.has(nodeType)) {
     return {
       error: `Unknown node type: ${nodeType}`,
-      reason: 'unknown-node-type'
+      reason: 'unknown-node-type',
     };
   }
 
   return {
     error: `Unable to add node: ${nodeType}`,
-    reason: 'constraint'
+    reason: 'constraint',
   };
 }
 

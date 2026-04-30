@@ -35,7 +35,10 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   const shotsDir = join(testInfo.outputDir, 'screenshots');
   await mkdir(shotsDir, { recursive: true });
   await page.screenshot({ path: join(shotsDir, 'flow-designer-page.png'), fullPage: true });
-  await page.locator('[data-testid="canvas"]').first().screenshot({ path: join(shotsDir, 'canvas.png') });
+  await page
+    .locator('[data-testid="canvas"]')
+    .first()
+    .screenshot({ path: join(shotsDir, 'canvas.png') });
 
   const node = page.locator('[data-testid="rf__node-task-1"]').first();
   await expect(node).toBeVisible();
@@ -54,10 +57,10 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
     const inner = outer.querySelector('.nop-glass-card') as HTMLElement | null;
     const icon = outer.querySelector('[data-icon="workflow"]') as HTMLElement | null;
     const tag = Array.from(outer.querySelectorAll('.nop-text')).find(
-      (candidate) => candidate.textContent?.trim() === '任务节点'
+      (candidate) => candidate.textContent?.trim() === '任务节点',
     ) as HTMLElement | undefined;
     const title = Array.from(outer.querySelectorAll('.nop-text')).find(
-      (candidate) => candidate.textContent?.trim() === '发送欢迎邮件'
+      (candidate) => candidate.textContent?.trim() === '发送欢迎邮件',
     ) as HTMLElement | undefined;
 
     const outerStyle = window.getComputedStyle(outer);
@@ -81,7 +84,7 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
       iconCenterY: iconRect ? iconRect.top + iconRect.height / 2 : 0,
       titleLeft: titleRect?.left ?? 0,
       titleTop: titleRect?.top ?? 0,
-      titleCenterY: titleRect ? titleRect.top + titleRect.height / 2 : 0
+      titleCenterY: titleRect ? titleRect.top + titleRect.height / 2 : 0,
     };
   });
 
@@ -96,16 +99,20 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   expect(Math.abs(nodeMetrics.iconCenterY - nodeMetrics.titleCenterY)).toBeLessThan(22);
   expect(nodeMetrics.tagTop).toBeGreaterThan(nodeMetrics.titleTop + 14);
 
-  const iconContainer = nodeCard.locator('[data-icon="workflow"]').first().evaluate((el) => {
-    const container = (el as HTMLElement).closest('.nop-container') ?? (el as HTMLElement).parentElement;
-    const containerStyle = container ? window.getComputedStyle(container as HTMLElement) : null;
-    return {
-      containerRadius: containerStyle?.borderRadius ?? '',
-      containerWidth: containerStyle?.width ?? '',
-      containerHeight: containerStyle?.height ?? '',
-      containerPadding: containerStyle?.paddingTop ?? '',
-    };
-  });
+  const iconContainer = nodeCard
+    .locator('[data-icon="workflow"]')
+    .first()
+    .evaluate((el) => {
+      const container =
+        (el as HTMLElement).closest('.nop-container') ?? (el as HTMLElement).parentElement;
+      const containerStyle = container ? window.getComputedStyle(container as HTMLElement) : null;
+      return {
+        containerRadius: containerStyle?.borderRadius ?? '',
+        containerWidth: containerStyle?.width ?? '',
+        containerHeight: containerStyle?.height ?? '',
+        containerPadding: containerStyle?.paddingTop ?? '',
+      };
+    });
 
   expect((await iconContainer).containerRadius).toBe('16px');
   expect((await iconContainer).containerWidth).toBe('40px');
@@ -119,9 +126,13 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   await expect(toolbar.locator('[data-icon="trash-2"]')).toHaveCount(1);
 
   const nodeQuickActionButton = toolbar.locator('button').first();
-  const nodeQuickActionBgBefore = await nodeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
+  const nodeQuickActionBgBefore = await nodeQuickActionButton.evaluate(
+    (el) => window.getComputedStyle(el as HTMLElement).backgroundColor,
+  );
   await nodeQuickActionButton.hover();
-  const nodeQuickActionBgAfter = await nodeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
+  const nodeQuickActionBgAfter = await nodeQuickActionButton.evaluate(
+    (el) => window.getComputedStyle(el as HTMLElement).backgroundColor,
+  );
   expect(nodeQuickActionBgBefore).toBe('rgba(0, 0, 0, 0)');
   expect(nodeQuickActionBgAfter).not.toBe('rgba(0, 0, 0, 0)');
 
@@ -136,9 +147,13 @@ test('captures node and hover toolbar html', async ({ page }, testInfo) => {
   await expect(edgeQuickActions.locator('[data-icon="trash-2"]')).toHaveCount(1);
 
   const edgeQuickActionButton = edgeQuickActions.locator('button').first();
-  const edgeQuickActionBgBefore = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
+  const edgeQuickActionBgBefore = await edgeQuickActionButton.evaluate(
+    (el) => window.getComputedStyle(el as HTMLElement).backgroundColor,
+  );
   await edgeQuickActionButton.hover();
-  const edgeQuickActionBgAfter = await edgeQuickActionButton.evaluate((el) => window.getComputedStyle(el as HTMLElement).backgroundColor);
+  const edgeQuickActionBgAfter = await edgeQuickActionButton.evaluate(
+    (el) => window.getComputedStyle(el as HTMLElement).backgroundColor,
+  );
   expect(edgeQuickActionBgBefore).toBe('rgba(0, 0, 0, 0)');
   expect(edgeQuickActionBgAfter).not.toBe('rgba(0, 0, 0, 0)');
 
@@ -161,9 +176,15 @@ test('verifies palette and top toolbar visual structure', async ({ page }) => {
   const palette = page.locator('[data-testid="left-panel-expanded"] .nop-palette').first();
   await expect(palette).toBeVisible();
   await expect(palette).toContainText('节点库');
-  await expect(palette.locator('[data-slot="designer-palette-item"] button:has-text("开始节点") [data-icon="play"]')).toHaveCount(1);
+  await expect(
+    palette.locator(
+      '[data-slot="designer-palette-item"] button:has-text("开始节点") [data-icon="play"]',
+    ),
+  ).toHaveCount(1);
 
-  const topToolbar = page.locator('[data-slot="workbench-header"] [data-testid="designer-toolbar"]').first();
+  const topToolbar = page
+    .locator('[data-slot="workbench-header"] [data-testid="designer-toolbar"]')
+    .first();
   await expect(topToolbar).toBeVisible();
   await expect(topToolbar.locator('button')).toHaveCount(7);
   await expect(page.locator('.react-flow__minimap')).toBeVisible();
@@ -177,7 +198,11 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
   const nodeCount = page.locator('.react-flow__node');
   await expect(nodeCount).toHaveCount(6);
 
-  const addTaskButton = page.locator('[data-slot="designer-palette-item"]').filter({ hasText: '任务节点' }).locator('button').nth(1);
+  const addTaskButton = page
+    .locator('[data-slot="designer-palette-item"]')
+    .filter({ hasText: '任务节点' })
+    .locator('button')
+    .nth(1);
   await addTaskButton.click();
   await expect(nodeCount).toHaveCount(7);
 
@@ -192,7 +217,9 @@ test('verifies flow-designer button behaviors for toolbar and quick actions', as
 test('toggles JSON preview dialog from toolbar JSON button', async ({ page }) => {
   await openFlowDesigner(page);
 
-  const topToolbar = page.locator('[data-slot="workbench-header"] [data-testid="designer-toolbar"]').first();
+  const topToolbar = page
+    .locator('[data-slot="workbench-header"] [data-testid="designer-toolbar"]')
+    .first();
   await topToolbar.getByText('JSON').click();
 
   const jsonDialog = page.getByRole('dialog', { name: '流程 JSON' });

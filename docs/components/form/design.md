@@ -79,9 +79,9 @@
 
 Form 通过 `mode` 控制全局标签位置，所有字段默认继承：
 
-| `mode` | 标签位置 | 布局方式 | 对应 AMIS |
-|--------|---------|---------|----------|
-| `"normal"` | 输入框上方 | 纵向排列 | AMIS `mode: "normal"` |
+| `mode`         | 标签位置   | 布局方式         | 对应 AMIS                 |
+| -------------- | ---------- | ---------------- | ------------------------- |
+| `"normal"`     | 输入框上方 | 纵向排列         | AMIS `mode: "normal"`     |
 | `"horizontal"` | 输入框左侧 | flex/grid 行布局 | AMIS `mode: "horizontal"` |
 
 默认值为 `"normal"`。
@@ -96,11 +96,11 @@ interface FormSchema extends BaseSchema {
 }
 ```
 
-| 字段 | 类型 | 说明 | 对应 AMIS |
-|------|------|------|----------|
-| `mode` | `'normal' \| 'horizontal'` | 表单布局模式 | `Form.mode` |
-| `labelAlign` | `'top' \| 'left' \| 'right'` | 标签文本对齐方向，默认 `"top"` | `Form.labelAlign` |
-| `labelWidth` | `string \| number` | 标签列宽度（如 `"120px"`、`2` 表示 grid 比例），仅 `horizontal` 模式生效 | `Form.horizontal.leftFixed` / `Form.horizontal.left` |
+| 字段         | 类型                         | 说明                                                                     | 对应 AMIS                                            |
+| ------------ | ---------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `mode`       | `'normal' \| 'horizontal'`   | 表单布局模式                                                             | `Form.mode`                                          |
+| `labelAlign` | `'top' \| 'left' \| 'right'` | 标签文本对齐方向，默认 `"top"`                                           | `Form.labelAlign`                                    |
+| `labelWidth` | `string \| number`           | 标签列宽度（如 `"120px"`、`2` 表示 grid 比例），仅 `horizontal` 模式生效 | `Form.horizontal.leftFixed` / `Form.horizontal.left` |
 
 ### 12.3 传播机制
 
@@ -143,11 +143,11 @@ interface BoundFieldSchemaBase extends BaseSchema {
 
 AMIS 的表单分组依赖三个独立的 renderer，Flux 同样保持三层分离：
 
-| 层次 | AMIS renderer | 职责 | Flux 对应 |
-|------|-------------|------|----------|
+| 层次           | AMIS renderer               | 职责                                                     | Flux 对应                                          |
+| -------------- | --------------------------- | -------------------------------------------------------- | -------------------------------------------------- |
 | **单字段包装** | `FormItem` / `FormItemWrap` | 为单个字段渲染 label、required、error、hint、description | `FieldFrame`（`docs/architecture/field-frame.md`） |
-| **行布局** | `Group` | 将多个字段排列在同一行/列 | `flex`（已有 `docs/components/flex/design.md`） |
-| **分组容器** | `FieldSet` | 用 `<fieldset>/<legend>` 包裹多字段，支持标题和折叠 | `fieldset`（独立组件，见下文） |
+| **行布局**     | `Group`                     | 将多个字段排列在同一行/列                                | `flex`（已有 `docs/components/flex/design.md`）    |
+| **分组容器**   | `FieldSet`                  | 用 `<fieldset>/<legend>` 包裹多字段，支持标题和折叠      | `fieldset`（独立组件，见下文）                     |
 
 FieldFrame 只负责单个字段的 chrome，不负责分组。`fieldset` 和 `flex` 是独立于 FieldFrame 的容器组件。
 
@@ -175,12 +175,12 @@ interface FieldsetSchema extends BaseSchema {
 }
 ```
 
-| 字段 | 类型 | 说明 | 对应 AMIS |
-|------|------|------|----------|
-| `title` | `string?` | 分组标题，渲染为 `<legend>` | `FieldSet.title` |
-| `collapsible` | `boolean?` | 是否可折叠，默认 `false` | `FieldSet.collapsable` |
-| `collapsed` | `boolean?` | 初始折叠状态，默认 `false` | `FieldSet.collapsed` |
-| `body` | `SchemaCollection` | 子字段区域 | `FieldSet.body` |
+| 字段          | 类型               | 说明                        | 对应 AMIS              |
+| ------------- | ------------------ | --------------------------- | ---------------------- |
+| `title`       | `string?`          | 分组标题，渲染为 `<legend>` | `FieldSet.title`       |
+| `collapsible` | `boolean?`         | 是否可折叠，默认 `false`    | `FieldSet.collapsable` |
+| `collapsed`   | `boolean?`         | 初始折叠状态，默认 `false`  | `FieldSet.collapsed`   |
+| `body`        | `SchemaCollection` | 子字段区域                  | `FieldSet.body`        |
 
 fieldset 不感知 mode/labelAlign/labelWidth。这些通过 React context 从 form 直接传到 FieldFrame，fieldset 作为中间层无需参与。
 
@@ -284,6 +284,7 @@ fieldset + flex 组合实现复杂的表单分组：
 3. **Description**（最低）— 始终可见的说明文字
 
 此外还有两种独立于优先级系统的提示：
+
 - **Remark** — 控件旁的图标气泡提示（始终可见，不与 error/hint 竞争）
 - **LabelRemark** — 标签旁的图标气泡提示（始终可见，不与 error/hint 竞争）
 
@@ -305,13 +306,13 @@ interface FieldRemarkSchema {
 }
 ```
 
-| 字段 | 类型 | 渲染位置 | 显示条件 | 对应 AMIS |
-|------|------|---------|---------|----------|
-| `description` | `string` | 控件下方 `data-slot="field-description"` | 无 error 且无 hint 时始终显示 | `FormItem.description` / `desc` |
-| `hint` | `string` | 控件下方 `data-slot="field-hint"` | 无 error 且控件聚焦时显示 | `FormItem.hint` |
-| `remark` | `FieldRemarkSchema` | 控件右侧 `data-slot="field-remark"` | 始终可见（图标+tooltip） | `FormItem.remark` |
-| `labelRemark` | `FieldRemarkSchema` | 标签右侧 `data-slot="field-label-remark"` | 始终可见（图标+tooltip） | `FormItem.labelRemark` |
-| error | 自动 | 控件下方 `data-slot="field-error"` | 验证失败且满足 showErrorOn 条件 | `FormItem.errors` (自动) |
+| 字段          | 类型                | 渲染位置                                  | 显示条件                        | 对应 AMIS                       |
+| ------------- | ------------------- | ----------------------------------------- | ------------------------------- | ------------------------------- |
+| `description` | `string`            | 控件下方 `data-slot="field-description"`  | 无 error 且无 hint 时始终显示   | `FormItem.description` / `desc` |
+| `hint`        | `string`            | 控件下方 `data-slot="field-hint"`         | 无 error 且控件聚焦时显示       | `FormItem.hint`                 |
+| `remark`      | `FieldRemarkSchema` | 控件右侧 `data-slot="field-remark"`       | 始终可见（图标+tooltip）        | `FormItem.remark`               |
+| `labelRemark` | `FieldRemarkSchema` | 标签右侧 `data-slot="field-label-remark"` | 始终可见（图标+tooltip）        | `FormItem.labelRemark`          |
+| error         | 自动                | 控件下方 `data-slot="field-error"`        | 验证失败且满足 showErrorOn 条件 | `FormItem.errors` (自动)        |
 
 ### 14.3 字段分类
 
@@ -338,6 +339,7 @@ remark 和 labelRemark 是独立渲染的图标气泡，不参与 error/hint/des
 ### 14.5 remark 渲染细节
 
 remark 和 labelRemark 默认渲染为：
+
 - 一个小图标（默认 `circle-help`，可配置）
 - hover/focus/click 时显示 tooltip
 - tooltip 内容为 `content` 字段
@@ -345,14 +347,14 @@ remark 和 labelRemark 默认渲染为：
 
 ### 14.6 AMIS 对比
 
-| AMIS 字段 | Flux 字段 | 差异说明 |
-|-----------|----------|---------|
-| `description` / `desc` | `description` | `desc` 别名不保留，统一用 `description` |
-| `hint` | `hint` | 行为一致：聚焦时显示 |
-| `remark` | `remark` | 从 AMIS 的 renderer type 改为字段属性对象 |
-| `labelRemark` | `labelRemark` | 同上 |
-| `caption` | 不保留 | 使用 `description` 替代；如需 inline 文字可用 `hint` |
-| `validationErrors` | 通过 `validation` 规则配置 | 见 `docs/architecture/form-validation.md` |
+| AMIS 字段              | Flux 字段                  | 差异说明                                             |
+| ---------------------- | -------------------------- | ---------------------------------------------------- |
+| `description` / `desc` | `description`              | `desc` 别名不保留，统一用 `description`              |
+| `hint`                 | `hint`                     | 行为一致：聚焦时显示                                 |
+| `remark`               | `remark`                   | 从 AMIS 的 renderer type 改为字段属性对象            |
+| `labelRemark`          | `labelRemark`              | 同上                                                 |
+| `caption`              | 不保留                     | 使用 `description` 替代；如需 inline 文字可用 `hint` |
+| `validationErrors`     | 通过 `validation` 规则配置 | 见 `docs/architecture/form-validation.md`            |
 
 ## 15. 风险、取舍与后续阶段
 

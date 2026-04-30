@@ -1,9 +1,4 @@
-import type {
-  SpreadsheetDocument,
-  WorksheetDocument,
-  CellDocument,
-  CellStyle,
-} from '../types.js';
+import type { SpreadsheetDocument, WorksheetDocument, CellDocument, CellStyle } from '../types.js';
 import { cellAddress } from '../types.js';
 
 export function ensureSheetCells(
@@ -33,11 +28,20 @@ export function ensureSheetCells(
   return { doc: { ...doc, workbook }, sheet, sheetIdx: idx };
 }
 
-export function getCell(sheet: WorksheetDocument, row: number, col: number): CellDocument | undefined {
+export function getCell(
+  sheet: WorksheetDocument,
+  row: number,
+  col: number,
+): CellDocument | undefined {
   return sheet.cells?.[cellAddress(row, col)];
 }
 
-export function setCell(sheet: WorksheetDocument, row: number, col: number, cell: CellDocument): WorksheetDocument {
+export function setCell(
+  sheet: WorksheetDocument,
+  row: number,
+  col: number,
+  cell: CellDocument,
+): WorksheetDocument {
   const cells = { ...sheet.cells, [cellAddress(row, col)]: cell };
   return { ...sheet, cells };
 }

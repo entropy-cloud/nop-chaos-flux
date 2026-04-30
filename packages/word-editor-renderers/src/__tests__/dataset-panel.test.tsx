@@ -13,7 +13,7 @@ vi.mock('@nop-chaos/ui', () => {
       </button>
     ),
     ScrollArea: ({ children }: any) => <div data-testid="scroll-area">{children}</div>,
-    cn: (...args: any[]) => args.filter(Boolean).join(' ')
+    cn: (...args: any[]) => args.filter(Boolean).join(' '),
   };
 });
 
@@ -26,7 +26,7 @@ function createMockStore(datasets: DataSet[] = [], selectedDatasetId: string | n
     subscribe: (listener: () => void) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
-    }
+    },
   };
 }
 
@@ -62,7 +62,9 @@ describe('DatasetPanel', () => {
   it('shows add dataset button in empty state', () => {
     const onAddDataset = vi.fn();
     const store = createMockStore();
-    render(<DatasetPanel store={store as any} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />);
+    render(
+      <DatasetPanel store={store as any} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />,
+    );
 
     const addButton = screen.getByText('Add Dataset');
     expect(addButton).toBeInTheDocument();
@@ -71,7 +73,7 @@ describe('DatasetPanel', () => {
   it('renders datasets when present', () => {
     const datasets: DataSet[] = [
       { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
-      { id: 'ds2', name: 'Products', description: 'Product table', type: 'api', columns: [] }
+      { id: 'ds2', name: 'Products', description: 'Product table', type: 'api', columns: [] },
     ];
     const store = createMockStore(datasets);
     render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
@@ -82,7 +84,7 @@ describe('DatasetPanel', () => {
 
   it('shows type badges for datasets', () => {
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] }
+      { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);
     render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
@@ -91,10 +93,16 @@ describe('DatasetPanel', () => {
 
   it('shows column count', () => {
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [
-        { name: 'col1', label: 'Col 1', type: 'sql' },
-        { name: 'col2', label: 'Col 2', type: 'sql' }
-      ]}
+      {
+        id: 'ds1',
+        name: 'Users',
+        description: 'User table',
+        type: 'sql',
+        columns: [
+          { name: 'col1', label: 'Col 1', type: 'sql' },
+          { name: 'col2', label: 'Col 2', type: 'sql' },
+        ],
+      },
     ];
     const store = createMockStore(datasets);
     render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
@@ -103,9 +111,13 @@ describe('DatasetPanel', () => {
 
   it('shows singular "column" for single column', () => {
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [
-        { name: 'col1', label: 'Col 1', type: 'sql' }
-      ]}
+      {
+        id: 'ds1',
+        name: 'Users',
+        description: 'User table',
+        type: 'sql',
+        columns: [{ name: 'col1', label: 'Col 1', type: 'sql' }],
+      },
     ];
     const store = createMockStore(datasets);
     render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
@@ -115,7 +127,9 @@ describe('DatasetPanel', () => {
   it('calls onAddDataset when add button is clicked', async () => {
     const onAddDataset = vi.fn();
     const store = createMockStore();
-    render(<DatasetPanel store={store as any} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />);
+    render(
+      <DatasetPanel store={store as any} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />,
+    );
 
     await userEvent.click(screen.getByTitle('Add Dataset'));
     expect(onAddDataset).toHaveBeenCalledTimes(1);
@@ -124,10 +138,12 @@ describe('DatasetPanel', () => {
   it('calls onEditDataset when a dataset item is clicked', async () => {
     const onEditDataset = vi.fn();
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] }
+      { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={onEditDataset} />);
+    render(
+      <DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={onEditDataset} />,
+    );
 
     const datasetEl = screen.getByText('Users').closest('[class*="cursor-pointer"]');
     if (datasetEl) {
@@ -138,7 +154,7 @@ describe('DatasetPanel', () => {
 
   it('shows "No description" when dataset has no description', () => {
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'Users', description: '', type: 'sql', columns: [] }
+      { id: 'ds1', name: 'Users', description: '', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);
     render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);

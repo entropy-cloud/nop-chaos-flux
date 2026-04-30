@@ -496,7 +496,9 @@ export type ValueProviderKind =
 export interface ValueProvider<T = unknown> {
   id: string;
   kind: ValueProviderKind;
-  evaluate(input: ValueEvaluationInput): ValueEvaluationResult<T> | Promise<ValueEvaluationResult<T>>;
+  evaluate(
+    input: ValueEvaluationInput,
+  ): ValueEvaluationResult<T> | Promise<ValueEvaluationResult<T>>;
 }
 ```
 

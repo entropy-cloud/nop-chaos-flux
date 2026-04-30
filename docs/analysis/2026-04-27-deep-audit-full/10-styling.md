@@ -31,7 +31,7 @@
 - **文件**: `packages/flux-renderers-basic/src/tabs.tsx:131-132`
 - **证据片段**:
   ```tsx
-  `nop-tabs--${tabsMode}`
+  `nop-tabs--${tabsMode}`;
   ```
 - **严重程度**: P2
 - **违规类别**: BEM
@@ -43,7 +43,7 @@
 - **参考文档**: `docs/architecture/styling-system.md`
 - **复核状态**: 维度复核通过
 
-### [维度10] crud-renderer nop-crud-* 类名模式（降级为 P3）
+### [维度10] crud-renderer nop-crud-\* 类名模式（降级为 P3）
 
 - **文件**: `packages/flux-renderers-data/src/`
 - **严重程度**: P3
@@ -57,7 +57,7 @@
 - BEM `__` 分隔符已清理 ✓
 - marker class 为零样式纯标识 ✓（layout 渲染器）
 - classAliases 机制正确实现 ✓
-- 间距使用 stack-*/hstack-* 别名 ✓
+- 间距使用 stack-_/hstack-_ 别名 ✓
 - 无 React ThemeProvider 依赖 ✓
 - Tailwind @source 覆盖所有包 ✓
 

@@ -11,7 +11,7 @@ function createStubScope(): ScopeRef {
       getSnapshot: () => ({}),
       getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
-      subscribe: () => () => {}
+      subscribe: () => () => {},
     },
     value: {},
     update: () => {},
@@ -20,7 +20,7 @@ function createStubScope(): ScopeRef {
     readOwn: () => ({}),
     readVisible: () => ({}),
     materializeVisible: () => ({}),
-    merge: () => {}
+    merge: () => {},
   };
 }
 
@@ -30,7 +30,7 @@ function createForm(initialValues: Record<string, any> = {}) {
     initialValues,
     parentScope: createStubScope(),
     executeValidationRule: async () => undefined,
-    validateRule: () => undefined
+    validateRule: () => undefined,
   });
 }
 
@@ -153,7 +153,7 @@ describe('form-runtime array-ops: remove', () => {
 
   it('removes and remaps field states for remaining elements', () => {
     const form = createForm({
-      items: [{ name: 'A' }, { name: 'B' }, { name: 'C' }]
+      items: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
     });
     form.store.setTouched('items.1.name', true);
     form.store.setDirty('items.1.name', true);
@@ -219,7 +219,7 @@ describe('form-runtime array-ops: move', () => {
 
   it('moves and remaps field states', () => {
     const form = createForm({
-      items: [{ v: 1 }, { v: 2 }, { v: 3 }]
+      items: [{ v: 1 }, { v: 2 }, { v: 3 }],
     });
     form.store.setTouched('items.0.v', true);
     form.store.setTouched('items.2.v', true);
@@ -277,10 +277,12 @@ describe('form-runtime array-ops: swap', () => {
 
   it('swaps and remaps field states', () => {
     const form = createForm({
-      items: [{ v: 1 }, { v: 2 }]
+      items: [{ v: 1 }, { v: 2 }],
     });
     form.store.setTouched('items.0.v', true);
-    form.store.setPathErrors('items.0.v', [{ path: 'items.0.v', message: 'err', rule: 'required' }]);
+    form.store.setPathErrors('items.0.v', [
+      { path: 'items.0.v', message: 'err', rule: 'required' },
+    ]);
 
     form.swapValue('items', 0, 1);
 
@@ -324,10 +326,12 @@ describe('form-runtime array-ops: replace', () => {
 
   it('removes field states for truncated indices', () => {
     const form = createForm({
-      items: [{ v: 1 }, { v: 2 }, { v: 3 }]
+      items: [{ v: 1 }, { v: 2 }, { v: 3 }],
     });
     form.store.setTouched('items.2.v', true);
-    form.store.setPathErrors('items.2.v', [{ path: 'items.2.v', message: 'err', rule: 'required' }]);
+    form.store.setPathErrors('items.2.v', [
+      { path: 'items.2.v', message: 'err', rule: 'required' },
+    ]);
 
     form.replaceValue('items', [{ v: 10 }]);
 

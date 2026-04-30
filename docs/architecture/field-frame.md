@@ -51,6 +51,7 @@ Schema instances can then refine that default with `frameWrap` on `BaseSchema`:
 ### Layered hints
 
 Multiple hint types with priority:
+
 1. **Error** - validation failure (highest priority, shown when `showError` is true)
 2. **Hint** - focus-time guidance (shown when control is focused and no error)
 3. **Description** - always-visible helper text (shown when no error and no hint)
@@ -114,23 +115,23 @@ interface FieldFrameProps {
 
 Key props:
 
-| Prop | Type | Purpose |
-|------|------|---------|
-| `name` | `string?` | Field name used to select current form state, aggregate errors, and compiled validation behavior. |
-| `label` | `ReactNode?` | Resolved field label content. In the common path this already comes from normalized `props.label` / `regions.label` via `NodeFrameWrapper`. |
-| `required` | `boolean?` | Explicit required override. The final required marker may also come from compiled validation rules such as `requiredWhen` / `requiredUnless`. |
-| `hint` | `ReactNode?` | Hint text shown when no error is present and the control is focused. |
-| `description` | `ReactNode?` | Description text shown when no error and no hint are present. |
-| `remark` | `FieldRemarkProps?` | Icon tooltip rendered next to the control. Always visible, independent of error/hint/description priority. |
-| `labelRemark` | `FieldRemarkProps?` | Icon tooltip rendered next to the label. Always visible, independent of error/hint/description priority. |
-| `layout` | `'default' \| 'checkbox' \| 'radio'?` | Layout mode. `checkbox`/`radio` render a `<fieldset>` + `<legend>` wrapper; `default` renders `<label>` + `<span>`. |
-| `labelAlign` | `'top' \| 'left' \| 'right'?` | Override label alignment for this field. Falls back to form-level `labelAlign`. |
-| `labelWidth` | `string \| number?` | Override label column width for this field in horizontal mode. Falls back to form-level `labelWidth`. |
-| `validationBehavior` | `CompiledValidationBehavior?` | Override the per-field validation behavior (controls when errors become visible). Falls back to form-level behavior. |
-| `className` | `string?` | Additional CSS classes on the semantic root marker. |
-| `testid` | `string?` | Test anchoring attribute, rendered as `data-testid`. |
-| `cid` | `number?` | Mounted node id published as `data-cid` for debugger/inspection tooling. |
-| `children` | `ReactNode` | The actual form control. |
+| Prop                 | Type                                  | Purpose                                                                                                                                       |
+| -------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`               | `string?`                             | Field name used to select current form state, aggregate errors, and compiled validation behavior.                                             |
+| `label`              | `ReactNode?`                          | Resolved field label content. In the common path this already comes from normalized `props.label` / `regions.label` via `NodeFrameWrapper`.   |
+| `required`           | `boolean?`                            | Explicit required override. The final required marker may also come from compiled validation rules such as `requiredWhen` / `requiredUnless`. |
+| `hint`               | `ReactNode?`                          | Hint text shown when no error is present and the control is focused.                                                                          |
+| `description`        | `ReactNode?`                          | Description text shown when no error and no hint are present.                                                                                 |
+| `remark`             | `FieldRemarkProps?`                   | Icon tooltip rendered next to the control. Always visible, independent of error/hint/description priority.                                    |
+| `labelRemark`        | `FieldRemarkProps?`                   | Icon tooltip rendered next to the label. Always visible, independent of error/hint/description priority.                                      |
+| `layout`             | `'default' \| 'checkbox' \| 'radio'?` | Layout mode. `checkbox`/`radio` render a `<fieldset>` + `<legend>` wrapper; `default` renders `<label>` + `<span>`.                           |
+| `labelAlign`         | `'top' \| 'left' \| 'right'?`         | Override label alignment for this field. Falls back to form-level `labelAlign`.                                                               |
+| `labelWidth`         | `string \| number?`                   | Override label column width for this field in horizontal mode. Falls back to form-level `labelWidth`.                                         |
+| `validationBehavior` | `CompiledValidationBehavior?`         | Override the per-field validation behavior (controls when errors become visible). Falls back to form-level behavior.                          |
+| `className`          | `string?`                             | Additional CSS classes on the semantic root marker.                                                                                           |
+| `testid`             | `string?`                             | Test anchoring attribute, rendered as `data-testid`.                                                                                          |
+| `cid`                | `number?`                             | Mounted node id published as `data-cid` for debugger/inspection tooling.                                                                      |
+| `children`           | `ReactNode`                           | The actual form control.                                                                                                                      |
 
 Related schema contract:
 
@@ -165,19 +166,22 @@ export function FieldFrame(props: FieldFrameProps) {
     className,
     testid,
     cid,
-    children
+    children,
   } = props;
 
   const currentForm = useCurrentForm();
   const fieldState = useCurrentFormState(
-    (state) => name ? selectCurrentFormFieldState(state, { path: name, ownerPath: name }) : EMPTY_FORM_FIELD_STATE,
+    (state) =>
+      name
+        ? selectCurrentFormFieldState(state, { path: name, ownerPath: name })
+        : EMPTY_FORM_FIELD_STATE,
     (left, right) =>
       left.error === right.error &&
       left.validating === right.validating &&
       left.touched === right.touched &&
       left.dirty === right.dirty &&
       left.visited === right.visited &&
-      left.submitting === right.submitting
+      left.submitting === right.submitting,
   );
   const aggregateError = useCurrentFormState(
     (state) =>
@@ -185,41 +189,44 @@ export function FieldFrame(props: FieldFrameProps) {
         ? selectCurrentFormErrors(state, {
             path: name,
             ownerPath: name,
-            sourceKinds: ['array', 'object', 'form', 'runtime-registration']
+            sourceKinds: ['array', 'object', 'form', 'runtime-registration'],
           })[0]
         : undefined,
-    Object.is
+    Object.is,
   );
-  const validationField = name ? getCompiledValidationField(currentForm?.validation, name) : undefined;
+  const validationField = name
+    ? getCompiledValidationField(currentForm?.validation, name)
+    : undefined;
   const fieldBehavior = validationField?.behavior;
   const hasDynamicRequiredRule = Boolean(
-    validationField?.rules.some(({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless')
+    validationField?.rules.some(
+      ({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless',
+    ),
   );
-  const values = useCurrentFormState((state) =>
-    hasDynamicRequiredRule
-      ? state.values
-      : undefined,
-    Object.is
+  const values = useCurrentFormState(
+    (state) => (hasDynamicRequiredRule ? state.values : undefined),
+    Object.is,
   );
-  const behavior = validationBehavior
-    ?? fieldBehavior
-    ?? currentForm?.validation?.behavior
-    ?? defaultBehavior;
+  const behavior =
+    validationBehavior ?? fieldBehavior ?? currentForm?.validation?.behavior ?? defaultBehavior;
 
   const error = aggregateError ?? fieldState.error;
   const showError = Boolean(
-    error && shouldShowFieldError(behavior, {
+    error &&
+    shouldShowFieldError(behavior, {
       touched: fieldState.touched,
       dirty: fieldState.dirty,
       visited: fieldState.visited,
-      submitting: fieldState.submitting
-    })
+      submitting: fieldState.submitting,
+    }),
   );
 
   const isGroup = layout === 'checkbox' || layout === 'radio';
   const Tag = isGroup ? 'fieldset' : 'label';
   const LabelTag = isGroup ? 'legend' : 'span';
-  const effectiveRequired = Boolean(required) || Boolean(name && isFieldEffectivelyRequired(currentForm?.validation, name, values ?? {}));
+  const effectiveRequired =
+    Boolean(required) ||
+    Boolean(name && isFieldEffectivelyRequired(currentForm?.validation, name, values ?? {}));
 
   return (
     <Tag
@@ -234,13 +241,15 @@ export function FieldFrame(props: FieldFrameProps) {
       {label ? (
         <LabelTag data-slot="field-label">
           {label}
-          {effectiveRequired ? <span data-slot="field-required" aria-hidden="true">*</span> : null}
+          {effectiveRequired ? (
+            <span data-slot="field-required" aria-hidden="true">
+              *
+            </span>
+          ) : null}
         </LabelTag>
       ) : null}
 
-      <div data-slot="field-control">
-        {children}
-      </div>
+      <div data-slot="field-control">{children}</div>
 
       {error && showError ? (
         <span data-slot="field-error">{error.message}</span>
@@ -265,7 +274,7 @@ const inputTextDefinition: RendererDefinition = {
   type: 'input-text',
   component: InputRenderer,
   wrap: true,
-  fields: [formLabelFieldRule]
+  fields: [formLabelFieldRule],
 };
 ```
 
@@ -282,7 +291,9 @@ function InputRenderer(props: RendererComponentProps<InputSchema>) {
     <Input
       value={value == null ? '' : String(value)}
       disabled={props.meta.disabled}
-      placeholder={typeof props.props.placeholder === 'string' ? props.props.placeholder : undefined}
+      placeholder={
+        typeof props.props.placeholder === 'string' ? props.props.placeholder : undefined
+      }
       onFocus={handlers.onFocus}
       onChange={(event) => handlers.onChange(event.target.value)}
       onBlur={handlers.onBlur}
@@ -343,23 +354,23 @@ This keeps the radio-group renderer focused on rendering the control body while 
 
 ### Structural Classes
 
-| Class | Purpose |
-|-------|---------|
-| `nop-field` | Root semantic field marker |
-| `data-slot="field-label"` | Label text |
-| `data-slot="field-required"` | Required asterisk |
-| `data-slot="field-control"` | Control wrapper |
-| `data-slot="field-error"` | Error message |
-| `data-slot="field-hint"` | Hint/focus message or "Validating..." indicator |
-| `data-slot="field-description"` | Description text |
+| Class                           | Purpose                                         |
+| ------------------------------- | ----------------------------------------------- |
+| `nop-field`                     | Root semantic field marker                      |
+| `data-slot="field-label"`       | Label text                                      |
+| `data-slot="field-required"`    | Required asterisk                               |
+| `data-slot="field-control"`     | Control wrapper                                 |
+| `data-slot="field-error"`       | Error message                                   |
+| `data-slot="field-hint"`        | Hint/focus message or "Validating..." indicator |
+| `data-slot="field-description"` | Description text                                |
 
 ### Data Attributes (State)
 
-| Attribute | Purpose |
-|-----------|---------|
-| `data-field-visited` | Set when field has been visited |
-| `data-field-touched` | Set when field has been focused and blurred |
-| `data-field-dirty` | Set when field value has changed |
+| Attribute            | Purpose                                       |
+| -------------------- | --------------------------------------------- |
+| `data-field-visited` | Set when field has been visited               |
+| `data-field-touched` | Set when field has been focused and blurred   |
+| `data-field-dirty`   | Set when field value has changed              |
 | `data-field-invalid` | Set when field has a visible validation error |
 
 These data attributes follow the convention documented in `docs/architecture/renderer-markers-and-selectors.md` — state is communicated via data attributes rather than BEM modifier classes.
@@ -368,23 +379,24 @@ These data attributes follow the convention documented in `docs/architecture/ren
 
 FieldFrame corresponds to AMIS's `FormItem` / `FormItemWrap` — the per-field chrome wrapper. It does **not** correspond to `Group` (row layout) or `FieldSet` (multi-field grouping), which are independent container components in both AMIS and Flux.
 
-| Feature | AMIS FormItem | FieldFrame |
-|---------|---------------|------------|
-| Scope | Single field chrome | Single field chrome |
-| Label | Yes | Yes |
-| Required indicator | Yes | Yes |
-| Error message | Yes | Yes |
-| Hint (focus) | Yes | Yes |
-| Description | Yes | Yes |
-| Remark (icon tooltip) | Yes | Yes |
-| LabelRemark (label tooltip) | Yes | Yes |
-| Layout modes | 5 modes (in FormItem) | CSS-based; form-level `mode`/`labelAlign`/`labelWidth` propagated via context |
-| wrap: false | Yes | Definition-level `wrap: false` or instance-level `frameWrap: false` |
-| Internal validation state | External | Yes (via `name` prop) |
-| Per-field validation behavior | No | Yes (`validationBehavior` prop) |
-| Multi-field grouping | **No** (handled by `Group`/`FieldSet`) | **No** (handled by `fieldset`/`flex` components) |
+| Feature                       | AMIS FormItem                          | FieldFrame                                                                    |
+| ----------------------------- | -------------------------------------- | ----------------------------------------------------------------------------- |
+| Scope                         | Single field chrome                    | Single field chrome                                                           |
+| Label                         | Yes                                    | Yes                                                                           |
+| Required indicator            | Yes                                    | Yes                                                                           |
+| Error message                 | Yes                                    | Yes                                                                           |
+| Hint (focus)                  | Yes                                    | Yes                                                                           |
+| Description                   | Yes                                    | Yes                                                                           |
+| Remark (icon tooltip)         | Yes                                    | Yes                                                                           |
+| LabelRemark (label tooltip)   | Yes                                    | Yes                                                                           |
+| Layout modes                  | 5 modes (in FormItem)                  | CSS-based; form-level `mode`/`labelAlign`/`labelWidth` propagated via context |
+| wrap: false                   | Yes                                    | Definition-level `wrap: false` or instance-level `frameWrap: false`           |
+| Internal validation state     | External                               | Yes (via `name` prop)                                                         |
+| Per-field validation behavior | No                                     | Yes (`validationBehavior` prop)                                               |
+| Multi-field grouping          | **No** (handled by `Group`/`FieldSet`) | **No** (handled by `fieldset`/`flex` components)                              |
 
 For multi-field grouping, see:
+
 - `docs/components/form/design.md` §13 — `fieldset` (grouping container) and `flex` (row layout)
 - AMIS `FieldSet` → Flux `fieldset` (independent renderer)
 - AMIS `Group` → Flux `flex` (existing renderer)

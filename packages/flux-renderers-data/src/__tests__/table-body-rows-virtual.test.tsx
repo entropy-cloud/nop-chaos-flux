@@ -13,7 +13,13 @@ function makeTableProps(overrides: Record<string, unknown> = {}) {
   return {
     props: { expandable: { expandedRowRegionKey: 'expanded' }, rowSelection: undefined },
     helpers: {
-      render: vi.fn((_node, options) => React.createElement('span', { 'data-testid': 'expanded-region' }, JSON.stringify(options?.instancePath ?? []))),
+      render: vi.fn((_node, options) =>
+        React.createElement(
+          'span',
+          { 'data-testid': 'expanded-region' },
+          JSON.stringify(options?.instancePath ?? []),
+        ),
+      ),
     },
     regions: {
       expanded: { templateNode: { type: 'text' } },
@@ -58,7 +64,9 @@ describe('TableBodyRows virtual body', () => {
       ],
     });
 
-    const rowScopeCache = new Map<string, any>([['1', makeRowScope({ name: 'Alice', email: 'alice@example.com' }, 0)]]);
+    const rowScopeCache = new Map<string, any>([
+      ['1', makeRowScope({ name: 'Alice', email: 'alice@example.com' }, 0)],
+    ]);
 
     render(
       <table>
@@ -66,14 +74,28 @@ describe('TableBodyRows virtual body', () => {
           props={makeTableProps()}
           columns={[{ label: 'Name', name: 'name' } as any]}
           responsiveHiddenColumns={[{ label: 'Email', name: 'email' } as any]}
-          processedData={[{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice', email: 'alice@example.com' } }] as any}
+          processedData={
+            [
+              {
+                rowKey: '1',
+                sourceIndex: 0,
+                record: { name: 'Alice', email: 'alice@example.com' },
+              },
+            ] as any
+          }
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="table-row:test"
           expandedRowKeys={new Set(['1'])}
           selectedRowKeys={new Set()}
           columnCount={1}
           isStriped={false}
-          fixedColumnLayout={{ getExpandCellProps: () => ({ className: '', style: {} }), getSelectionCellProps: () => ({ className: '', style: {} }), getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }) } as any}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
           emptyContent={<span>Unused</span>}
           showExpandColumn={false}
           expandRowByClick={false}
@@ -113,7 +135,13 @@ describe('TableBodyRows virtual body', () => {
           selectedRowKeys={new Set()}
           columnCount={1}
           isStriped={false}
-          fixedColumnLayout={{ getExpandCellProps: () => ({ className: '', style: {} }), getSelectionCellProps: () => ({ className: '', style: {} }), getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }) } as any}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
           emptyContent={<span>Unused</span>}
           showExpandColumn={false}
           expandRowByClick={false}
@@ -155,7 +183,13 @@ describe('TableBodyRows virtual body', () => {
           selectedRowKeys={new Set()}
           columnCount={2}
           isStriped={false}
-          fixedColumnLayout={{ getExpandCellProps: () => ({ className: '', style: {} }), getSelectionCellProps: () => ({ className: '', style: {} }), getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }) } as any}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
           emptyContent={<span>Ignored</span>}
           showExpandColumn={false}
           expandRowByClick={false}

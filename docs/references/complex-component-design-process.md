@@ -19,6 +19,7 @@
 ### 1.2 充分利用 Flux Runtime / SchemaRenderer
 
 复杂组件不是独立再造一套渲染引擎，而是：
+
 - 复用 SchemaRenderer 渲染 UI 片段
 - 复用 FormulaCompiler 处理表达式
 - 复用 ActionScope 分发动作
@@ -57,11 +58,13 @@
 **目标**：理解领域概念和组合规律
 
 **产出**：
+
 - 领域词汇表
 - 核心概念关系图
 - 用户操作场景
 
 **问题清单**：
+
 - 领域中有哪些核心实体？
 - 实体之间如何组合？
 - 用户需要哪些操作？
@@ -72,18 +75,21 @@
 **目标**：定义 Flux schema contract
 
 **产出**：
+
 - 页面级 Schema 定义（如 `designer-page`）
 - 配置 Schema 定义（如 `DesignerConfig`）
 - 实例数据 Schema 定义（如 `GraphDocument`）
 - 示例 JSON
 
 **设计要点**：
+
 - **Config 与 Document 分离**：类型配置与实例数据分开
 - **复用现有 Renderer**：用 `type: container`、`type: flex` 等组合
 - **Schema 片段嵌入**：`inspector.body`、`createDialog.body` 直接用标准 schema
 - **表达式复用**：权限、规则等用现有表达式语法
 
 **审查清单**：
+
 - [ ] Schema 是否反映了领域组合规律？
 - [ ] 是否充分复用了现有 Flux / SchemaRenderer 能力？
 - [ ] Config 和 Document 是否清晰分离？
@@ -95,11 +101,13 @@
 **目标**：定义从 JSON 到运行时的中间格式
 
 **产出**：
+
 - Compiled Config 类型定义
 - 编译器实现
 - 预计算索引结构
 
 **设计要点**：
+
 - `Map<string, Config>` 替代数组查找
 - 预编译表达式为可执行函数
 - 预计算连接规则、匹配规则
@@ -110,12 +118,14 @@
 **目标**：实现底层引擎
 
 **产出**：
+
 - 专用引擎集成（如 xyflow）
 - React 组件
 - 状态管理（Zustand）
 - Action 注册
 
 **设计要点**：
+
 - 运行时不解析 JSON，只消费 Compiled Config
 - 内置操作标准化（undo/redo/select...）
 - 事件和生命周期钩子
@@ -126,17 +136,19 @@
 **目标**：独立样式，对接主题
 
 **产出**：
+
 - 独立 CSS 文件（如 `styles.css`）
 - CSS 变量定义（如 `--fd-*`）
 - 主题 token 映射（如 `--nop-*` → `--fd-*`）
 
 **设计要点**：
+
 ```css
 /* 主题 token 定义 */
 .theme-root {
   --nop-primary: #3b82f6;
   --nop-surface: #ffffff;
-  --nop-border: rgba(0,0,0,0.1);
+  --nop-border: rgba(0, 0, 0, 0.1);
 }
 
 /* 组件变量引用主题 token */
@@ -187,11 +199,11 @@
 
 ## 4. 已应用组件
 
-| 组件 | 状态 | 文档位置 |
-|------|------|----------|
-| Flow Designer | 已落地并持续演进 | `docs/architecture/flow-designer/` |
-| Report Designer | 已落地并持续演进 | `docs/architecture/report-designer/` |
-| Word Editor | 已落地并持续演进 | `docs/architecture/word-editor/design.md` |
+| 组件            | 状态             | 文档位置                                  |
+| --------------- | ---------------- | ----------------------------------------- |
+| Flow Designer   | 已落地并持续演进 | `docs/architecture/flow-designer/`        |
+| Report Designer | 已落地并持续演进 | `docs/architecture/report-designer/`      |
+| Word Editor     | 已落地并持续演进 | `docs/architecture/word-editor/design.md` |
 
 ## 5. 反模式
 

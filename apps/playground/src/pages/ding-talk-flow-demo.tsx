@@ -70,9 +70,9 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
 
     for (const [sourceId, outs] of sourceGroups) {
       if (outs.length < 2) continue;
-      const sourceNode = nodes.find(n => n.id === sourceId);
+      const sourceNode = nodes.find((n) => n.id === sourceId);
       if (!sourceNode) continue;
-      const firstTarget = nodes.find(n => n.id === outs[0].target);
+      const firstTarget = nodes.find((n) => n.id === outs[0].target);
       if (!firstTarget) continue;
       const branchLineY = firstTarget.position.y - BRANCH_SHORT_LEG;
       const cx = sourceNode.position.x + W / 2;
@@ -81,13 +81,18 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
 
     for (const [targetId, ins] of targetGroups) {
       if (ins.length < 2) continue;
-      const targetNode = nodes.find(n => n.id === targetId);
+      const targetNode = nodes.find((n) => n.id === targetId);
       if (!targetNode) continue;
-      const firstSource = nodes.find(n => n.id === ins[0].source);
+      const firstSource = nodes.find((n) => n.id === ins[0].source);
       if (!firstSource) continue;
       const mergeLineY = firstSource.position.y + CARD_H + MERGE_SHORT_LEG;
       const cx = targetNode.position.x + W / 2;
-      result.push({ x: cx, y: mergeLineY + BTN_DIAMETER + 8, type: 'mergeAdd', sourceId: `merge:${targetId}` });
+      result.push({
+        x: cx,
+        y: mergeLineY + BTN_DIAMETER + 8,
+        type: 'mergeAdd',
+        sourceId: `merge:${targetId}`,
+      });
     }
 
     return result;
@@ -106,23 +111,26 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
     };
   }, [handlePlusClick]);
 
-  const handleSelect = useCallback((type: AddType) => {
-    if (!popover) return;
-    const { sourceId } = popover;
-    const isMerge = sourceId.startsWith('merge:');
-    const effectiveId = isMerge ? sourceId.slice('merge:'.length) : sourceId;
-    setPopover(null);
+  const handleSelect = useCallback(
+    (type: AddType) => {
+      if (!popover) return;
+      const { sourceId } = popover;
+      const isMerge = sourceId.startsWith('merge:');
+      const effectiveId = isMerge ? sourceId.slice('merge:'.length) : sourceId;
+      setPopover(null);
 
-    if (type === 'condition') {
-      const result = insertBranch(effectiveId, nodes, edges, idCounter.current);
-      setNodes(result.nodes);
-      setEdges(result.edges);
-    } else {
-      const result = insertNode(effectiveId, type, nodes, edges, idCounter.current, isMerge);
-      setNodes(result.nodes);
-      setEdges(result.edges);
-    }
-  }, [popover, nodes, edges]);
+      if (type === 'condition') {
+        const result = insertBranch(effectiveId, nodes, edges, idCounter.current);
+        setNodes(result.nodes);
+        setEdges(result.edges);
+      } else {
+        const result = insertNode(effectiveId, type, nodes, edges, idCounter.current, isMerge);
+        setNodes(result.nodes);
+        setEdges(result.edges);
+      }
+    },
+    [popover, nodes, edges],
+  );
 
   const onInit = useCallback(() => {
     setTimeout(() => fitView({ padding: 0.2 }), 100);
@@ -174,7 +182,10 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
                       'bg-white border border-[#b3e19d]',
                       'text-[#67c23a] text-xs cursor-pointer whitespace-nowrap',
                     )}
-                    onClick={(e) => { e.stopPropagation(); onPlusClick?.(o.sourceId, e.clientX, e.clientY); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPlusClick?.(o.sourceId, e.clientX, e.clientY);
+                    }}
                   >
                     Add Condition
                   </div>
@@ -182,7 +193,10 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
                   <div
                     className="flex items-center justify-center cursor-pointer rounded-full bg-[#3296fa] text-white shadow-[0_2px_4px_rgba(50,150,250,0.4)]"
                     style={{ width: BTN_DIAMETER, height: BTN_DIAMETER }}
-                    onClick={(e) => { e.stopPropagation(); onPlusClick?.(o.sourceId, e.clientX, e.clientY); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPlusClick?.(o.sourceId, e.clientX, e.clientY);
+                    }}
                   >
                     <Plus size={16} />
                   </div>
@@ -194,11 +208,7 @@ function DingTalkFlowCanvas({ onBack }: { onBack: () => void }) {
       </ReactFlow>
 
       {popover && (
-        <AddNodeMenu
-          popover={popover}
-          onSelect={handleSelect}
-          onClose={() => setPopover(null)}
-        />
+        <AddNodeMenu popover={popover} onSelect={handleSelect} onClose={() => setPopover(null)} />
       )}
     </div>
   );

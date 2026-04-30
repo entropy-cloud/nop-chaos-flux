@@ -10,6 +10,7 @@
 ## 性能违规
 
 ### [维度15] 表单错误 hooks 仍使用全量 store 广播订阅
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\hooks.ts:165-202`
 - **严重程度**: P1
 - **类别**: 性能
@@ -20,6 +21,7 @@
 - **参考文档**: `docs/architecture/performance-design-requirements.md`
 
 ### [维度15] Report Designer 共享 document 在 store 内被原位修改
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\report-designer-core\src\core-dispatch.ts:83-145`, `C:\can\nop\nop-chaos-flux\packages\report-designer-core\src\runtime\metadata.ts:44-145`, `C:\can\nop\nop-chaos-flux\packages\report-designer-core\src\runtime\metadata.ts:152-185`
 - **严重程度**: P2
 - **类别**: 性能

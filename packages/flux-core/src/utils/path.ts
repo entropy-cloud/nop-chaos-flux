@@ -33,10 +33,12 @@ export function parsePath(path: string): string[] {
   }
 
   const normalized = path.replace(/\[(\d+)\]/g, '.$1');
-  const result = Object.freeze(normalized
-    .split('.')
-    .map((segment) => segment.trim())
-    .filter(Boolean));
+  const result = Object.freeze(
+    normalized
+      .split('.')
+      .map((segment) => segment.trim())
+      .filter(Boolean),
+  );
 
   rememberParsedPath(path, result);
 
@@ -93,7 +95,11 @@ export function getIn(input: unknown, path: string): unknown {
   }, input);
 }
 
-export function setIn(input: Record<string, any>, path: string, value: unknown): Record<string, any> {
+export function setIn(
+  input: Record<string, any>,
+  path: string,
+  value: unknown,
+): Record<string, any> {
   if (!path) {
     return isPlainObject(value) ? value : input;
   }

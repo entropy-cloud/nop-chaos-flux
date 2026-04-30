@@ -20,7 +20,7 @@ async function scanForArtifacts(dir, relativePath = '') {
       const subArtifacts = await scanForArtifacts(fullPath, entryRelativePath);
       artifacts.push(...subArtifacts);
     } else if (entry.isFile()) {
-      const ext = ARTIFACT_EXTENSIONS.find(e => entry.name.endsWith(e));
+      const ext = ARTIFACT_EXTENSIONS.find((e) => entry.name.endsWith(e));
       if (ext) {
         artifacts.push(entryRelativePath);
       }
@@ -57,7 +57,7 @@ async function main() {
 
   if (allArtifacts.length > 0) {
     console.error('❌ Found build artifacts in src/ directories:');
-    allArtifacts.forEach(artifact => console.error(`  - ${artifact}`));
+    allArtifacts.forEach((artifact) => console.error(`  - ${artifact}`));
     process.exit(1);
   } else {
     console.log('✓ No src artifacts found');
@@ -65,7 +65,7 @@ async function main() {
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error('Error:', error);
   process.exit(1);
 });

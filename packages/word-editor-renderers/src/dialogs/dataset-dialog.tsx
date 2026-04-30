@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
-import type { DataSetSourceType, DataColumnInput } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
+import { useRef, useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import type { DataSetSourceType, DataColumnInput } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   Dialog,
@@ -15,71 +15,86 @@ import {
   NativeSelect,
   NativeSelectOption,
   ScrollArea,
-  Textarea
-} from '@nop-chaos/ui'
+  Textarea,
+} from '@nop-chaos/ui';
 
 interface DatasetDialogProps {
-  open: boolean
-  onClose: () => void
-  onSave: (data: { name: string; description: string; type: DataSetSourceType; columns: DataColumnInput[] }) => void
-  initialData?: { name: string; description: string; type: DataSetSourceType; columns: DataColumnInput[] } | null
+  open: boolean;
+  onClose: () => void;
+  onSave: (data: {
+    name: string;
+    description: string;
+    type: DataSetSourceType;
+    columns: DataColumnInput[];
+  }) => void;
+  initialData?: {
+    name: string;
+    description: string;
+    type: DataSetSourceType;
+    columns: DataColumnInput[];
+  } | null;
 }
 
 export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDialogProps) {
-  const nextColumnKeyRef = useRef((initialData?.columns?.length ?? 0))
-  const [name, setName] = useState(() => initialData?.name ?? '')
-  const [description, setDescription] = useState(() => initialData?.description ?? '')
-  const [type, setType] = useState<DataSetSourceType>(() => initialData?.type ?? 'static')
-  const [columns, setColumns] = useState<DataColumnInput[]>(() => initialData?.columns ?? [])
+  const nextColumnKeyRef = useRef(initialData?.columns?.length ?? 0);
+  const [name, setName] = useState(() => initialData?.name ?? '');
+  const [description, setDescription] = useState(() => initialData?.description ?? '');
+  const [type, setType] = useState<DataSetSourceType>(() => initialData?.type ?? 'static');
+  const [columns, setColumns] = useState<DataColumnInput[]>(() => initialData?.columns ?? []);
   const [columnKeys, setColumnKeys] = useState<string[]>(() =>
-    (initialData?.columns ?? []).map((_, index) => `column-${index}`)
-  )
+    (initialData?.columns ?? []).map((_, index) => `column-${index}`),
+  );
 
   const handleAddColumn = () => {
-    setColumns([...columns, { name: '', label: '', type: 'static' }])
-    const nextKey = `column-${nextColumnKeyRef.current++}`
-    setColumnKeys((current) => [...current, nextKey])
-  }
+    setColumns([...columns, { name: '', label: '', type: 'static' }]);
+    const nextKey = `column-${nextColumnKeyRef.current++}`;
+    setColumnKeys((current) => [...current, nextKey]);
+  };
 
   const handleRemoveColumn = (index: number) => {
-    setColumns(columns.filter((_, i) => i !== index))
-    setColumnKeys((current) => current.filter((_, currentIndex) => currentIndex !== index))
-  }
+    setColumns(columns.filter((_, i) => i !== index));
+    setColumnKeys((current) => current.filter((_, currentIndex) => currentIndex !== index));
+  };
 
   const handleColumnChange = (index: number, field: keyof DataColumnInput, value: string) => {
-    const newColumns = [...columns]
-    newColumns[index] = { ...newColumns[index], [field]: value }
-    setColumns(newColumns)
-  }
+    const newColumns = [...columns];
+    newColumns[index] = { ...newColumns[index], [field]: value };
+    setColumns(newColumns);
+  };
 
   const handleSave = () => {
     if (!name.trim()) {
-      return
+      return;
     }
 
-    const validColumns = columns.filter(col => col.name?.trim())
+    const validColumns = columns.filter((col) => col.name?.trim());
     if (validColumns.length !== columns.length) {
-      return
+      return;
     }
 
     onSave({
       name: name.trim(),
       description: description.trim(),
       type,
-      columns: columns.map(col => ({
+      columns: columns.map((col) => ({
         name: col.name?.trim() || '',
         label: col.label?.trim() || '',
         description: col.description?.trim(),
-        type: (col.type as DataSetSourceType) || 'static'
-      }))
-    })
-    onClose()
-  }
+        type: (col.type as DataSetSourceType) || 'static',
+      })),
+    });
+    onClose();
+  };
 
-  const isEditMode = !!initialData
+  const isEditMode = !!initialData;
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
       <DialogContent size="lg" className="flex flex-col max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Edit Dataset' : 'Create Dataset'}</DialogTitle>
@@ -120,19 +135,19 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                 >
                   <NativeSelectOption value="sql">SQL</NativeSelectOption>
                   <NativeSelectOption value="api">API</NativeSelectOption>
-                  <NativeSelectOption value="mongo">{t('flux.wordEditor.mongo')}</NativeSelectOption>
-                  <NativeSelectOption value="static">{t('flux.wordEditor.static')}</NativeSelectOption>
+                  <NativeSelectOption value="mongo">
+                    {t('flux.wordEditor.mongo')}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="static">
+                    {t('flux.wordEditor.static')}
+                  </NativeSelectOption>
                 </NativeSelect>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <Label>{t('flux.wordEditor.columns')}</Label>
-                  <Button
-                    type="button"
-                    size="xs"
-                    onClick={handleAddColumn}
-                  >
+                  <Button type="button" size="xs" onClick={handleAddColumn}>
                     <Plus className="w-3 h-3" />
                     {t('flux.wordEditor.addColumn')}
                   </Button>
@@ -147,14 +162,18 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                 ) : (
                   <div className="space-y-2">
                     {columns.map((column, index) => {
-                      const columnKey = columnKeys[index]
+                      const columnKey = columnKeys[index];
 
                       return (
-                        <div key={columnKey} className="flex items-start gap-2 p-3 border rounded-lg">
+                        <div
+                          key={columnKey}
+                          className="flex items-start gap-2 p-3 border rounded-lg"
+                        >
                           <div className="flex-1 grid grid-cols-2 gap-2">
                             <div>
                               <Label className="text-[10px]">
-                                {t('flux.wordEditor.name')} <span className="text-destructive">*</span>
+                                {t('flux.wordEditor.name')}{' '}
+                                <span className="text-destructive">*</span>
                               </Label>
                               <Input
                                 value={column.name || ''}
@@ -182,15 +201,23 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                               >
                                 <NativeSelectOption value="sql">SQL</NativeSelectOption>
                                 <NativeSelectOption value="api">API</NativeSelectOption>
-                                <NativeSelectOption value="mongo">{t('flux.wordEditor.mongo')}</NativeSelectOption>
-                                <NativeSelectOption value="static">{t('flux.wordEditor.static')}</NativeSelectOption>
+                                <NativeSelectOption value="mongo">
+                                  {t('flux.wordEditor.mongo')}
+                                </NativeSelectOption>
+                                <NativeSelectOption value="static">
+                                  {t('flux.wordEditor.static')}
+                                </NativeSelectOption>
                               </NativeSelect>
                             </div>
                             <div>
-                              <Label className="text-[10px]">{t('flux.wordEditor.description')}</Label>
+                              <Label className="text-[10px]">
+                                {t('flux.wordEditor.description')}
+                              </Label>
                               <Input
                                 value={column.description || ''}
-                                onChange={(e) => handleColumnChange(index, 'description', e.target.value)}
+                                onChange={(e) =>
+                                  handleColumnChange(index, 'description', e.target.value)
+                                }
                                 placeholder="Column description"
                                 size="sm"
                               />
@@ -207,7 +234,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 )}
@@ -217,10 +244,14 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
         </DialogBody>
 
         <DialogFooter className="bg-transparent">
-          <Button variant="ghost" size="sm" onClick={onClose}>{t('flux.common.cancel')}</Button>
-          <Button size="sm" onClick={handleSave} disabled={!name.trim()}>{t('flux.common.save')}</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            {t('flux.common.cancel')}
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={!name.trim()}>
+            {t('flux.common.save')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

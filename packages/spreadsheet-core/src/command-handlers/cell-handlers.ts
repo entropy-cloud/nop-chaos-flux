@@ -90,7 +90,7 @@ export const handleMergeCellsCenter: CommandHandler<MergeCellsCenterCommand> = (
 function applyStyleHandler<T extends { target: Parameters<typeof applyCellStyleChange>[1] }>(
   store: SpreadsheetDispatchStore,
   command: T,
-  stylePatch: Partial<CellStyle>
+  stylePatch: Partial<CellStyle>,
 ) {
   const state = store.getState();
   const nextDoc = applyCellStyleChange(state.document, command.target, stylePatch);
@@ -110,14 +110,18 @@ export const handleSetCellFontWeight: CommandHandler<SetCellFontWeightCommand> =
 export const handleSetCellFontStyle: CommandHandler<SetCellFontStyleCommand> = (store, command) =>
   applyStyleHandler(store, command, { fontStyle: command.fontStyle });
 
-export const handleSetCellTextDecoration: CommandHandler<SetCellTextDecorationCommand> = (store, command) =>
-  applyStyleHandler(store, command, { textDecoration: command.textDecoration });
+export const handleSetCellTextDecoration: CommandHandler<SetCellTextDecorationCommand> = (
+  store,
+  command,
+) => applyStyleHandler(store, command, { textDecoration: command.textDecoration });
 
 export const handleSetCellFontColor: CommandHandler<SetCellFontColorCommand> = (store, command) =>
   applyStyleHandler(store, command, { fontColor: command.color });
 
-export const handleSetCellBackgroundColor: CommandHandler<SetCellBackgroundColorCommand> = (store, command) =>
-  applyStyleHandler(store, command, { backgroundColor: command.color });
+export const handleSetCellBackgroundColor: CommandHandler<SetCellBackgroundColorCommand> = (
+  store,
+  command,
+) => applyStyleHandler(store, command, { backgroundColor: command.color });
 
 export const handleSetCellBorder: CommandHandler<SetCellBorderCommand> = (store, command) => {
   const borderPatch: Partial<CellStyle> = { borderStyle: command.border };
@@ -129,14 +133,18 @@ export const handleSetCellBorder: CommandHandler<SetCellBorderCommand> = (store,
 export const handleSetCellTextAlign: CommandHandler<SetCellTextAlignCommand> = (store, command) =>
   applyStyleHandler(store, command, { textAlign: command.textAlign });
 
-export const handleSetCellVerticalAlign: CommandHandler<SetCellVerticalAlignCommand> = (store, command) =>
-  applyStyleHandler(store, command, { verticalAlign: command.verticalAlign });
+export const handleSetCellVerticalAlign: CommandHandler<SetCellVerticalAlignCommand> = (
+  store,
+  command,
+) => applyStyleHandler(store, command, { verticalAlign: command.verticalAlign });
 
 export const handleSetCellWrapText: CommandHandler<SetCellWrapTextCommand> = (store, command) =>
   applyStyleHandler(store, command, { wrapText: command.wrapText });
 
-export const handleSetCellNumberFormat: CommandHandler<SetCellNumberFormatCommand> = (store, command) =>
-  applyStyleHandler(store, command, {});
+export const handleSetCellNumberFormat: CommandHandler<SetCellNumberFormatCommand> = (
+  store,
+  command,
+) => applyStyleHandler(store, command, {});
 
 export const handleFillDown: CommandHandler<FillDownCommand> = (store, command) => {
   const state = store.getState();
@@ -182,7 +190,13 @@ export const handleDeleteComment: CommandHandler<DeleteCommentCommand> = (store,
 
 export const handleSortRange: CommandHandler<SortRangeCommand> = (store, command) => {
   const state = store.getState();
-  const nextDoc = applySortRangeOperation(state.document, command.range, command.keyCol, command.direction, command.hasHeader);
+  const nextDoc = applySortRangeOperation(
+    state.document,
+    command.range,
+    command.keyCol,
+    command.direction,
+    command.hasHeader,
+  );
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
@@ -200,7 +214,10 @@ export function registerCellHandlers(registry: Map<string, CommandHandler>) {
   registry.set('spreadsheet:setCellFontStyle', handleSetCellFontStyle as CommandHandler);
   registry.set('spreadsheet:setCellTextDecoration', handleSetCellTextDecoration as CommandHandler);
   registry.set('spreadsheet:setCellFontColor', handleSetCellFontColor as CommandHandler);
-  registry.set('spreadsheet:setCellBackgroundColor', handleSetCellBackgroundColor as CommandHandler);
+  registry.set(
+    'spreadsheet:setCellBackgroundColor',
+    handleSetCellBackgroundColor as CommandHandler,
+  );
   registry.set('spreadsheet:setCellBorder', handleSetCellBorder as CommandHandler);
   registry.set('spreadsheet:setCellTextAlign', handleSetCellTextAlign as CommandHandler);
   registry.set('spreadsheet:setCellVerticalAlign', handleSetCellVerticalAlign as CommandHandler);

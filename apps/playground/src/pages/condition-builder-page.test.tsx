@@ -19,7 +19,9 @@ describe('ConditionBuilderPage schema', () => {
   const SchemaRenderer = createSchemaRenderer();
 
   const env = {
-    async fetcher() { return { ok: true, status: 200, data: null }; },
+    async fetcher() {
+      return { ok: true, status: 200, data: null };
+    },
     notify() {},
   };
 
@@ -40,7 +42,7 @@ describe('ConditionBuilderPage schema', () => {
           env={env as any}
           registry={registry}
           formulaCompiler={formulaCompiler}
-        />
+        />,
       );
     }).not.toThrow();
   });

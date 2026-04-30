@@ -174,7 +174,11 @@
 
 ```ts
 interface ActionRuntimeAdapter {
-  executeEffect(action: CompiledActionNode, ctx: ActionContext, signal?: AbortSignal): Promise<ActionResult>;
+  executeEffect(
+    action: CompiledActionNode,
+    ctx: ActionContext,
+    signal?: AbortSignal,
+  ): Promise<ActionResult>;
 }
 ```
 
@@ -209,19 +213,19 @@ interface ActionRuntimeAdapter {
 
 本计划要求明确 built-in action 的 owner 形态，避免 extraction 时一边搬代码一边临时猜语义。
 
-| Built-in action | `flux-action-core` owns | runtime adapter owns |
-| --- | --- | --- |
-| `ajax` | selector recognition, payload evaluation trigger, result normalization shell | actual request execution |
-| `submitForm` | selector recognition, payload evaluation trigger, result normalization shell | actual form submit lifecycle |
-| `refreshSource` | selector recognition, result normalization shell | source lookup + refresh execution |
-| `openDialog` / `openDrawer` | selector recognition, payload evaluation trigger, result normalization shell | surface creation/open |
-| `closeDialog` / `closeDrawer` | selector recognition, result normalization shell | actual surface close |
-| `showToast` | selector recognition, payload evaluation trigger, result normalization shell | concrete notify/toast behavior |
-| `navigate` | selector recognition, payload evaluation trigger, result normalization shell | concrete host navigation |
-| `component:<method>` | dispatch-mode classification, method extraction, result normalization shell | component handle resolve + invoke |
-| `namespace:method` | dispatch-mode classification, namespace/method split, result normalization shell | action-scope resolution + provider invoke |
-| `setValue` / `setValues` | selector recognition, payload evaluation trigger, result normalization shell | actual scope/form write path |
-| `refreshTable` | selector recognition, result normalization shell | page/table runtime refresh path |
+| Built-in action               | `flux-action-core` owns                                                          | runtime adapter owns                      |
+| ----------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------- |
+| `ajax`                        | selector recognition, payload evaluation trigger, result normalization shell     | actual request execution                  |
+| `submitForm`                  | selector recognition, payload evaluation trigger, result normalization shell     | actual form submit lifecycle              |
+| `refreshSource`               | selector recognition, result normalization shell                                 | source lookup + refresh execution         |
+| `openDialog` / `openDrawer`   | selector recognition, payload evaluation trigger, result normalization shell     | surface creation/open                     |
+| `closeDialog` / `closeDrawer` | selector recognition, result normalization shell                                 | actual surface close                      |
+| `showToast`                   | selector recognition, payload evaluation trigger, result normalization shell     | concrete notify/toast behavior            |
+| `navigate`                    | selector recognition, payload evaluation trigger, result normalization shell     | concrete host navigation                  |
+| `component:<method>`          | dispatch-mode classification, method extraction, result normalization shell      | component handle resolve + invoke         |
+| `namespace:method`            | dispatch-mode classification, namespace/method split, result normalization shell | action-scope resolution + provider invoke |
+| `setValue` / `setValues`      | selector recognition, payload evaluation trigger, result normalization shell     | actual scope/form write path              |
+| `refreshTable`                | selector recognition, result normalization shell                                 | page/table runtime refresh path           |
 
 规则：
 

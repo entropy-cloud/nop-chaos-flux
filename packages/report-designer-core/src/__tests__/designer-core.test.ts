@@ -236,7 +236,9 @@ describe('createReportDesignerCore', () => {
 
   it('should notify listeners on state change', async () => {
     let notified = false;
-    core.subscribe(() => { notified = true; });
+    core.subscribe(() => {
+      notified = true;
+    });
 
     await core.dispatch({
       type: 'report-designer:updateMeta',

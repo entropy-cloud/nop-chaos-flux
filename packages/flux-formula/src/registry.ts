@@ -29,7 +29,7 @@ export function setBuiltinsInstalled(value: boolean): void {
 export function registerFunction(
   name: string,
   fn: FormulaFunction,
-  options: { invoke?: FormulaInvokeMode } = {}
+  options: { invoke?: FormulaInvokeMode } = {},
 ): void {
   defaultFunctions.set(name, fn);
   defaultFunctionMeta.set(name, { invoke: options.invoke ?? 'eager' });
@@ -49,7 +49,7 @@ export function getFormulaRegistrySnapshot(): FormulaRegistrySnapshot {
   cachedSnapshot = {
     functions: Object.freeze(Object.fromEntries(defaultFunctions.entries())),
     functionMeta: Object.freeze(Object.fromEntries(defaultFunctionMeta.entries())),
-    namespaces: Object.freeze(Object.fromEntries(defaultNamespaces.entries()))
+    namespaces: Object.freeze(Object.fromEntries(defaultNamespaces.entries())),
   };
   return cachedSnapshot;
 }

@@ -7,6 +7,7 @@
 ---
 
 ### [维度05] 字段展示状态仍通过全表广播订阅
+
 - **文件**: `packages/flux-react/src/field-frame.tsx:61-84`; `packages/flux-renderers-form/src/field-utils.tsx:242-265`
 - **严重程度**: P1
 - **状态**: **无需修复** (经检查已优化)
@@ -24,6 +25,7 @@
 ---
 
 ### [维度05] Host projection scope 在 snapshot 变化时重建 ScopeRef
+
 - **文件**: `packages/flux-react/src/workbench/hooks.ts:16-37`
 - **严重程度**: P1
 - **状态**: **已修复**
@@ -38,6 +40,7 @@
 ---
 
 ### [维度05] DesignerContext 把 snapshot 混入单一 context，导致消费者过宽重渲染
+
 - **文件**: `packages/flow-designer-renderers/src/designer-page.tsx:303-314,408-465`
 - **严重程度**: P1
 - **状态**: **已修复**
@@ -56,6 +59,7 @@
 ---
 
 ### [维度05] useOwnedAxisValue 订阅了整份 scope
+
 - **文件**: `packages/flux-renderers-basic/src/interaction-owner.ts:12-18`
 - **严重程度**: P2
 - **状态**: **已修复**

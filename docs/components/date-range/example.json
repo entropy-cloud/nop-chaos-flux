@@ -6,8 +6,5 @@
   "valueFormat": "YYYY-MM-DD",
   "displayFormat": "YYYY-MM-DD",
   "delimiter": " to ",
-  "shortcuts": [
-    "today",
-    "last7days"
-  ]
+  "shortcuts": ["today", "last7days"]
 }

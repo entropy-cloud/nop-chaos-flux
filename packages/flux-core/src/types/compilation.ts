@@ -1,4 +1,9 @@
-import type { ActionNamespaceProvider, ActionScope, CompiledActionProgram, ImportedLibraryModule } from './actions';
+import type {
+  ActionNamespaceProvider,
+  ActionScope,
+  CompiledActionProgram,
+  ImportedLibraryModule,
+} from './actions';
 import type { EvalContext, ScopeDependencySet, ScopeRef } from './scope';
 import type { RendererEnv } from './renderer';
 import type { RequestDedupStrategy } from './schema';
@@ -138,8 +143,14 @@ export interface ExpressionCompileOptions {
 
 export interface FormulaCompiler {
   hasExpression(input: string): boolean;
-  compileExpression<T = unknown>(source: string, options?: ExpressionCompileOptions): CompiledExpression<T>;
-  compileTemplate<T = unknown>(source: string, options?: ExpressionCompileOptions): CompiledStringTemplate<T>;
+  compileExpression<T = unknown>(
+    source: string,
+    options?: ExpressionCompileOptions,
+  ): CompiledExpression<T>;
+  compileTemplate<T = unknown>(
+    source: string,
+    options?: ExpressionCompileOptions,
+  ): CompiledStringTemplate<T>;
 }
 
 export interface StaticValueNode<T = unknown> {
@@ -231,7 +242,11 @@ export interface DynamicRuntimeValue<T = unknown> {
   isStatic: false;
   node: DynamicValueNode<T>;
   createState(): RuntimeValueState<T>;
-  exec(context: EvalContext, env: RendererEnv, state?: RuntimeValueState<T>): ValueEvaluationResult<T>;
+  exec(
+    context: EvalContext,
+    env: RendererEnv,
+    state?: RuntimeValueState<T>,
+  ): ValueEvaluationResult<T>;
 }
 
 export type CompiledRuntimeValue<T = unknown> = StaticRuntimeValue<T> | DynamicRuntimeValue<T>;
@@ -245,13 +260,13 @@ export interface ExpressionCompiler {
     input: CompiledRuntimeValue<T>,
     scope: ScopeRef,
     env: RendererEnv,
-    state?: RuntimeValueState<T>
+    state?: RuntimeValueState<T>,
   ): T;
   evaluateWithState<T = unknown>(
     input: DynamicRuntimeValue<T>,
     scope: ScopeRef,
     env: RendererEnv,
-    state: RuntimeValueState<T>
+    state: RuntimeValueState<T>,
   ): ValueEvaluationResult<T>;
 }
 

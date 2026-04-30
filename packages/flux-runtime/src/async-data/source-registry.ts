@@ -5,12 +5,19 @@ import type {
   DataSourceRegistration,
   RendererRuntime,
   ScopeDependencySet,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { normalizeRootPaths } from '@nop-chaos/flux-core';
 import type { ApiCacheStore } from './api-cache';
-import { createDataSourceController, createFormulaDataSourceController } from './data-source-runtime';
-import { createRootDependencySet, filterScopeChangeByIgnoredRoots, scopeChangeHitsDependencies } from '../scope-change';
+import {
+  createDataSourceController,
+  createFormulaDataSourceController,
+} from './data-source-runtime';
+import {
+  createRootDependencySet,
+  filterScopeChangeByIgnoredRoots,
+  scopeChangeHitsDependencies,
+} from '../scope-change';
 
 interface RuntimeSourceEntry {
   id: string;
@@ -24,7 +31,9 @@ interface RuntimeSourceEntry {
   dispose(): void;
 }
 
-function extractExpressionSource(compiled: import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown> | undefined): string | undefined {
+function extractExpressionSource(
+  compiled: import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown> | undefined,
+): string | undefined {
   if (!compiled || compiled.isStatic) return undefined;
   const node = compiled.node;
   if (node.kind === 'expression-node' || node.kind === 'template-node') {
@@ -33,7 +42,9 @@ function extractExpressionSource(compiled: import('@nop-chaos/flux-core').Compil
   return undefined;
 }
 
-function extractFormulaValue(compiled: import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown> | undefined): unknown {
+function extractFormulaValue(
+  compiled: import('@nop-chaos/flux-core').CompiledRuntimeValue<unknown> | undefined,
+): unknown {
   if (!compiled) return undefined;
   if (compiled.isStatic) return compiled.value;
   const source = extractExpressionSource(compiled);
@@ -46,10 +57,7 @@ export interface RuntimeSourceRegistry {
     scope: ScopeRef;
     compiledSource: CompiledDataSource;
   }): DataSourceRegistration;
-  refreshDataSource(input: {
-    id: string;
-    scope?: ScopeRef;
-  }): Promise<boolean>;
+  refreshDataSource(input: { id: string; scope?: ScopeRef }): Promise<boolean>;
   disposeScope(scopeId: string): void;
   disposeScopeTree(scopeId: string): void;
   getDebugSnapshot(): import('@nop-chaos/flux-core').SourceRegistryDebugSnapshot;
@@ -59,7 +67,15 @@ export function createRuntimeSourceRegistry(input: {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;
   asyncGovernance?: AsyncGovernanceStore;
-  executeApiRequest: <T>(actionType: string, api: import('@nop-chaos/flux-core').ExecutableApiRequest, scope: ScopeRef, options?: { signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) => Promise<{ ok: boolean; status: number; data: T }>;
+  executeApiRequest: <T>(
+    actionType: string,
+    api: import('@nop-chaos/flux-core').ExecutableApiRequest,
+    scope: ScopeRef,
+    options?: {
+      signal?: AbortSignal;
+      control?: import('@nop-chaos/flux-core').OperationControlConfig;
+    },
+  ) => Promise<{ ok: boolean; status: number; data: T }>;
 }): RuntimeSourceRegistry {
   const scopeEntries = new Map<string, Map<string, RuntimeSourceEntry>>();
   const nameIndex = new Map<string, RuntimeSourceEntry>();
@@ -80,7 +96,9 @@ export function createRuntimeSourceRegistry(input: {
 
     const compiled = args.compiledSource;
 
-    const evaluateCompiledValue = <T>(value: import('@nop-chaos/flux-core').CompiledRuntimeValue<T> | undefined): T | undefined => {
+    const evaluateCompiledValue = <T>(
+      value: import('@nop-chaos/flux-core').CompiledRuntimeValue<T> | undefined,
+    ): T | undefined => {
       if (!value) return undefined;
       if (value.isStatic) return value.value;
       return input.runtime.expressionCompiler.evaluateValue(value, args.scope, input.runtime.env);
@@ -119,14 +137,14 @@ export function createRuntimeSourceRegistry(input: {
                 dedup: compiled.control.dedup,
                 throttle: compiled.control.throttle,
                 cacheTTL: compiled.control.cacheTTL,
-                cacheKey: compiled.control.cacheKey
+                cacheKey: compiled.control.cacheKey,
               }
             : undefined,
           onDependenciesChange(nextDependencies: ScopeDependencySet | undefined) {
             if (!explicitDependencies) {
               dependencies = nextDependencies;
             }
-          }
+          },
         })
       : createFormulaDataSourceController({
           runtime: input.runtime,
@@ -145,11 +163,14 @@ export function createRuntimeSourceRegistry(input: {
             if (!explicitDependencies) {
               dependencies = nextDependencies;
             }
-          }
+          },
         });
 
-    const ignoredRootPaths = [targetPath, statusPath].filter((value): value is string => Boolean(value));
-    const ignoredRootsSet: Set<string> | undefined = ignoredRootPaths.length > 0 ? new Set(normalizeRootPaths(ignoredRootPaths)) : undefined;
+    const ignoredRootPaths = [targetPath, statusPath].filter((value): value is string =>
+      Boolean(value),
+    );
+    const ignoredRootsSet: Set<string> | undefined =
+      ignoredRootPaths.length > 0 ? new Set(normalizeRootPaths(ignoredRootPaths)) : undefined;
 
     const abortController = new AbortController();
 
@@ -206,7 +227,7 @@ export function createRuntimeSourceRegistry(input: {
         if (currentBucket.size === 0) {
           scopeEntries.delete(ownerScopeId);
         }
-      }
+      },
     };
 
     bucket.set(args.id, entry);
@@ -218,7 +239,7 @@ export function createRuntimeSourceRegistry(input: {
     return {
       id: args.id,
       controller,
-      dispose: () => entry.dispose()
+      dispose: () => entry.dispose(),
     };
   }
 
@@ -242,13 +263,12 @@ export function createRuntimeSourceRegistry(input: {
     }
   }
 
-  async function refreshDataSource(args: {
-    id: string;
-    scope?: ScopeRef;
-  }): Promise<boolean> {
+  async function refreshDataSource(args: { id: string; scope?: ScopeRef }): Promise<boolean> {
     if (args.scope) {
       const bucket = scopeEntries.get(args.scope.id);
-      const entry = bucket?.get(args.id) ?? Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.id);
+      const entry =
+        bucket?.get(args.id) ??
+        Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.id);
 
       if (!entry) {
         return false;
@@ -306,12 +326,20 @@ export function createRuntimeSourceRegistry(input: {
               isRefreshing: state.isRefreshing,
               inFlightCount: state.inFlightCount,
               hasValue: typeof state.data !== 'undefined',
-              error: state.error instanceof Error ? state.error.message : typeof state.error === 'string' ? state.error : undefined,
-              async: state.async
+              error:
+                state.error instanceof Error
+                  ? state.error.message
+                  : typeof state.error === 'string'
+                    ? state.error
+                    : undefined,
+              async: state.async,
             };
           })
-          .sort((left, right) => left.scopeId.localeCompare(right.scopeId) || left.id.localeCompare(right.id))
+          .sort(
+            (left, right) =>
+              left.scopeId.localeCompare(right.scopeId) || left.id.localeCompare(right.id),
+          ),
       };
-    }
+    },
   };
 }

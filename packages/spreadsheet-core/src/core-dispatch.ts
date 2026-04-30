@@ -11,7 +11,7 @@ const commandHandlers = createCommandHandlerRegistry();
 
 export async function dispatchSpreadsheetCommand(
   store: SpreadsheetDispatchStore,
-  command: SpreadsheetCommand
+  command: SpreadsheetCommand,
 ): Promise<SpreadsheetCommandResult> {
   const state = store.getState();
 

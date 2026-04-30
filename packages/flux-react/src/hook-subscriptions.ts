@@ -1,9 +1,14 @@
-import type { FormFieldStateSnapshot, FormStoreApi, FormStoreState, ScopeRef } from '@nop-chaos/flux-core';
+import type {
+  FormFieldStateSnapshot,
+  FormStoreApi,
+  FormStoreState,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { EMPTY_FORM_STORE_STATE } from './form-state';
 
 export function shallowEqualFormFieldState(
   a: FormFieldStateSnapshot,
-  b: FormFieldStateSnapshot
+  b: FormFieldStateSnapshot,
 ): boolean {
   return (
     a.error === b.error &&
@@ -29,7 +34,10 @@ export function emptyUnsubscribe() {
   return undefined;
 }
 
-export function createFormErrorSubscribe(store: FormStoreApi | undefined, path: string | undefined) {
+export function createFormErrorSubscribe(
+  store: FormStoreApi | undefined,
+  path: string | undefined,
+) {
   return (listener: () => void) => {
     if (!store) {
       return emptyUnsubscribe;
@@ -37,9 +45,10 @@ export function createFormErrorSubscribe(store: FormStoreApi | undefined, path: 
 
     if (path && typeof store.subscribeToPath === 'function') {
       const unsubPath = store.subscribeToPath(path, listener);
-      const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
-        ? store.subscribeToSubmitting(listener)
-        : () => undefined;
+      const unsubSubmitting =
+        typeof store.subscribeToSubmitting === 'function'
+          ? store.subscribeToSubmitting(listener)
+          : () => undefined;
       return () => {
         unsubPath();
         unsubSubmitting();
@@ -47,9 +56,10 @@ export function createFormErrorSubscribe(store: FormStoreApi | undefined, path: 
     }
 
     const unsubStore = store.subscribe(listener);
-    const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
-      ? store.subscribeToSubmitting(listener)
-      : () => undefined;
+    const unsubSubmitting =
+      typeof store.subscribeToSubmitting === 'function'
+        ? store.subscribeToSubmitting(listener)
+        : () => undefined;
     return () => {
       unsubStore();
       unsubSubmitting();
@@ -59,7 +69,7 @@ export function createFormErrorSubscribe(store: FormStoreApi | undefined, path: 
 
 export function createFormStoreSubscribe(
   store: FormStoreApi | undefined,
-  options?: { enabled?: boolean; path?: string }
+  options?: { enabled?: boolean; path?: string },
 ) {
   const enabled = options?.enabled !== false;
   const path = options?.path;
@@ -79,7 +89,7 @@ export function createFormStoreSubscribe(
 
 export function createFormStoreSnapshot(
   store: FormStoreApi | undefined,
-  enabled = true
+  enabled = true,
 ): () => FormStoreState {
   return enabled && store ? () => store.getState() : () => EMPTY_FORM_STORE_STATE;
 }
@@ -87,19 +97,21 @@ export function createFormStoreSnapshot(
 export function createFormFieldStateSubscribe(
   store: FormStoreApi | undefined,
   path: string,
-  skipSubscription = false
+  skipSubscription = false,
 ) {
   return (listener: () => void) => {
     if (!store || skipSubscription) {
       return emptyUnsubscribe;
     }
 
-    const unsubPath = typeof store.subscribeToPath === 'function'
-      ? store.subscribeToPath(path, listener)
-      : store.subscribe(listener);
-    const unsubSubmitting = typeof store.subscribeToSubmitting === 'function'
-      ? store.subscribeToSubmitting(listener)
-      : emptyUnsubscribe;
+    const unsubPath =
+      typeof store.subscribeToPath === 'function'
+        ? store.subscribeToPath(path, listener)
+        : store.subscribe(listener);
+    const unsubSubmitting =
+      typeof store.subscribeToSubmitting === 'function'
+        ? store.subscribeToSubmitting(listener)
+        : emptyUnsubscribe;
     return () => {
       unsubPath();
       unsubSubmitting();

@@ -11,7 +11,7 @@ describe('Tabs', () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">Body</TabsContent>
-      </Tabs>
+      </Tabs>,
     );
 
     expect(markup).toContain('data-orientation="vertical"');

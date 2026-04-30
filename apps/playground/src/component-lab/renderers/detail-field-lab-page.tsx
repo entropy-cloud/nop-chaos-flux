@@ -7,7 +7,7 @@ const profileDetailField = {
       type: 'form',
       name: 'detailFieldForm',
       data: {
-        profile: { firstName: 'Ada', lastName: 'Lovelace', bio: 'Mathematician and writer' }
+        profile: { firstName: 'Ada', lastName: 'Lovelace', bio: 'Mathematician and writer' },
       },
       body: [
         {
@@ -21,22 +21,20 @@ const profileDetailField = {
               gap: 1,
               body: [
                 { type: 'text', text: '${profile.firstName} ${profile.lastName}' },
-                { type: 'text', text: '${profile.bio}' }
-              ]
-            }
+                { type: 'text', text: '${profile.bio}' },
+              ],
+            },
           ],
           content: [
             { type: 'input-text', name: 'firstName', label: 'First Name', required: true },
             { type: 'input-text', name: 'lastName', label: 'Last Name', required: true },
-            { type: 'textarea', name: 'bio', label: 'Bio' }
-          ]
-        }
+            { type: 'textarea', name: 'bio', label: 'Bio' },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const addressDetailField = {
@@ -46,7 +44,12 @@ const addressDetailField = {
       type: 'form',
       name: 'addressDetailForm',
       data: {
-        shipping: { street: '1600 Pennsylvania Ave', city: 'Washington', state: 'DC', zip: '20500' }
+        shipping: {
+          street: '1600 Pennsylvania Ave',
+          city: 'Washington',
+          state: 'DC',
+          zip: '20500',
+        },
       },
       body: [
         {
@@ -60,23 +63,21 @@ const addressDetailField = {
               gap: 1,
               body: [
                 { type: 'text', text: '${shipping.street}' },
-                { type: 'text', text: '${shipping.city}, ${shipping.state} ${shipping.zip}' }
-              ]
-            }
+                { type: 'text', text: '${shipping.city}, ${shipping.state} ${shipping.zip}' },
+              ],
+            },
           ],
           content: [
             { type: 'input-text', name: 'street', label: 'Street', required: true },
             { type: 'input-text', name: 'city', label: 'City', required: true },
             { type: 'input-text', name: 'state', label: 'State' },
-            { type: 'input-text', name: 'zip', label: 'ZIP Code' }
-          ]
-        }
+            { type: 'input-text', name: 'zip', label: 'ZIP Code' },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save Order', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save Order', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 export function DetailFieldLabPage() {
@@ -86,14 +87,16 @@ export function DetailFieldLabPage() {
       scenarios={[
         {
           title: 'User profile editing via dialog',
-          description: 'The viewer slot shows name and bio inline. Click "Edit" to open the dialog, edit the fields, and confirm to write changes back.',
-          schema: profileDetailField
+          description:
+            'The viewer slot shows name and bio inline. Click "Edit" to open the dialog, edit the fields, and confirm to write changes back.',
+          schema: profileDetailField,
         },
         {
           title: 'Shipping address editing via dialog',
-          description: 'The viewer slot shows the address on two lines. Click "Edit" to open the dialog with street, city, state, and ZIP fields.',
-          schema: addressDetailField
-        }
+          description:
+            'The viewer slot shows the address on two lines. Click "Edit" to open the dialog with street, city, state, and ZIP fields.',
+          schema: addressDetailField,
+        },
       ]}
     />
   );

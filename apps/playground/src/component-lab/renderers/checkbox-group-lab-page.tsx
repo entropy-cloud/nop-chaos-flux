@@ -15,15 +15,13 @@ const basicCheckboxGroup = {
             { label: 'TypeScript', value: 'ts' },
             { label: 'React', value: 'react' },
             { label: 'Rust', value: 'rust' },
-            { label: 'Go', value: 'go' }
-          ]
-        }
+            { label: 'Go', value: 'go' },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const withMinMaxValidation = {
@@ -44,16 +42,14 @@ const withMinMaxValidation = {
             { label: 'React', value: 'react' },
             { label: 'Node.js', value: 'node' },
             { label: 'PostgreSQL', value: 'postgres' },
-            { label: 'Docker', value: 'docker' }
-          ]
-        }
+            { label: 'Docker', value: 'docker' },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Submit', onClick: { action: 'submit' } }
-      ]
+      actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submit' } }],
     },
-    { type: 'text', text: 'Selected: ${(skillsForm.skills ?? []).join(", ") || "(none)"}' }
-  ]
+    { type: 'text', text: 'Selected: ${(skillsForm.skills ?? []).join(", ") || "(none)"}' },
+  ],
 };
 
 export function CheckboxGroupLabPage() {
@@ -63,14 +59,16 @@ export function CheckboxGroupLabPage() {
       scenarios={[
         {
           title: 'Basic multi-select checkbox group',
-          description: 'Check any combination of interests. The array value is submitted to the form.',
-          schema: basicCheckboxGroup
+          description:
+            'Check any combination of interests. The array value is submitted to the form.',
+          schema: basicCheckboxGroup,
         },
         {
           title: 'Checkbox group with min/max selection validation',
-          description: 'Select between 2 and 4 skills. The checkbox states update correctly and the group still exercises min/max validation authoring; the text line below currently remains a static summary prefix in the live lab surface.',
-          schema: withMinMaxValidation
-        }
+          description:
+            'Select between 2 and 4 skills. The checkbox states update correctly and the group still exercises min/max validation authoring; the text line below currently remains a static summary prefix in the live lab surface.',
+          schema: withMinMaxValidation,
+        },
       ]}
     />
   );

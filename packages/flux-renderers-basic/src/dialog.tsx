@@ -1,6 +1,14 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle, cn } from '@nop-chaos/ui';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  cn,
+} from '@nop-chaos/ui';
 import type { DialogSchema } from './schemas';
 import { useSurfaceRenderer } from './use-surface-renderer';
 
@@ -12,8 +20,18 @@ export function DialogRenderer(props: RendererComponentProps<DialogSchema>) {
   const { summary, containerElement, handleOpenChange } = useSurfaceRenderer(props, 'dialog');
 
   return (
-    <Dialog open={summary.open} onOpenChange={handleOpenChange} closeOnOutsideClick={props.props.closeOnOutsideClick !== false} containerElement={containerElement} noOverlay={!showMask}>
-      <DialogContent className={cn('nop-dialog', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+    <Dialog
+      open={summary.open}
+      onOpenChange={handleOpenChange}
+      closeOnOutsideClick={props.props.closeOnOutsideClick !== false}
+      containerElement={containerElement}
+      noOverlay={!showMask}
+    >
+      <DialogContent
+        className={cn('nop-dialog', props.meta.className)}
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid || undefined}
+      >
         {titleContent ? (
           <DialogHeader>
             <DialogTitle>{titleContent}</DialogTitle>

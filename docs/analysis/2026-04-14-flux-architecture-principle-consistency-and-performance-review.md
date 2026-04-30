@@ -13,12 +13,12 @@
 
 总体判断如下：
 
-| 维度 | 结论 |
-| --- | --- |
-| 文档整体一致性 | 核心 owner-doc 冲突已在同日收口；剩余问题主要是过渡张力、兼容面和最优性问题 |
-| 是否符合 Flux 设计原则 | 主干上符合，局部边界被少数文档重新放宽 |
-| 是否已经达到最优设计 | 没有。核心模型很强，但仍混有兼容语义、双重契约和边界泄漏 |
-| 性能选择是否最优 | 热点路径有多个接近最优的决策，但全局还不能称为“最优” |
+| 维度                   | 结论                                                                        |
+| ---------------------- | --------------------------------------------------------------------------- |
+| 文档整体一致性         | 核心 owner-doc 冲突已在同日收口；剩余问题主要是过渡张力、兼容面和最优性问题 |
+| 是否符合 Flux 设计原则 | 主干上符合，局部边界被少数文档重新放宽                                      |
+| 是否已经达到最优设计   | 没有。核心模型很强，但仍混有兼容语义、双重契约和边界泄漏                    |
+| 性能选择是否最优       | 热点路径有多个接近最优的决策，但全局还不能称为“最优”                        |
 
 换句话说，`docs/architecture` 已经具备一套高质量的核心架构基线：`Final Execution Schema`、七原语闭包、词法所有权、Capability-only effect path、compile once/execute many、row-local invalidation、spreadsheet perf-first subtree。这些主轴是成立的。
 
@@ -185,14 +185,14 @@
 
 按原则逐项判断如下。
 
-| 原则 | 判断 | 说明 |
-| --- | --- | --- |
-| DSL 优先 | 基本满足 | 大部分文档都坚持 loader/runtime 分层，少数扩展文档仍把兼容逻辑带回 runtime |
-| 编写-执行分离 | 基本满足 | 主线成立，但部分文档仍会混入 current/future 双时态，需要持续收紧表述 |
-| 响应式数据驱动 | 满足主干 | root-based invalidation、narrow subscription、row-local invalidation 方向正确 |
-| 渐进式演化 | 基本满足 | 值、动作、结构的渐进升级路径清楚；imports helper/capability 边界还应写得更明确 |
-| 词法所有权 | 基本满足 | `ScopeRef` / `ActionScope` / `ComponentHandleRegistry` 的三分法强；当前 owner docs 已基本对齐，但仍需防止后续扩展文档重新放宽边界 |
-| 领域隔离与抽象 | 基本满足 | Flow/Report/Spreadsheet 主体上保持为 host/domain family；少数 API 仍暗示全局注册式扩展 |
+| 原则           | 判断     | 说明                                                                                                                              |
+| -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| DSL 优先       | 基本满足 | 大部分文档都坚持 loader/runtime 分层，少数扩展文档仍把兼容逻辑带回 runtime                                                        |
+| 编写-执行分离  | 基本满足 | 主线成立，但部分文档仍会混入 current/future 双时态，需要持续收紧表述                                                              |
+| 响应式数据驱动 | 满足主干 | root-based invalidation、narrow subscription、row-local invalidation 方向正确                                                     |
+| 渐进式演化     | 基本满足 | 值、动作、结构的渐进升级路径清楚；imports helper/capability 边界还应写得更明确                                                    |
+| 词法所有权     | 基本满足 | `ScopeRef` / `ActionScope` / `ComponentHandleRegistry` 的三分法强；当前 owner docs 已基本对齐，但仍需防止后续扩展文档重新放宽边界 |
+| 领域隔离与抽象 | 基本满足 | Flow/Report/Spreadsheet 主体上保持为 host/domain family；少数 API 仍暗示全局注册式扩展                                            |
 
 结论不是“原则不成立”，而是“原则成立，但还没有被每一份 architecture doc 严格执行到底”。
 

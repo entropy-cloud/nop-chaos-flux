@@ -8,7 +8,9 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
   const scopeData = useOwnScopeSelector((data: Record<string, unknown>) => data);
   const hasSelection = scopeData.selectionTarget != null;
   const inspector = scopeData.inspector as { resolvedSchema?: SchemaInput } | undefined;
-  const body = (props.props.body ?? scopeData.inspectorBody ?? inspector?.resolvedSchema) as SchemaInput | undefined;
+  const body = (props.props.body ?? scopeData.inspectorBody ?? inspector?.resolvedSchema) as
+    | SchemaInput
+    | undefined;
   const emptyLabel = String(props.props.emptyLabel ?? 'No inspector panels available.');
   const noSelectionLabel = String(props.props.noSelectionLabel ?? 'Select a target to inspect.');
 

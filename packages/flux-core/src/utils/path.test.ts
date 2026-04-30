@@ -29,9 +29,9 @@ describe('path utils', () => {
     expect(setIn({}, 'user.profile.name', 'Alice')).toEqual({
       user: {
         profile: {
-          name: 'Alice'
-        }
-      }
+          name: 'Alice',
+        },
+      },
     });
   });
 });

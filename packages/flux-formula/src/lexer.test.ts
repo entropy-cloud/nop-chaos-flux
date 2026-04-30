@@ -15,13 +15,20 @@ describe('tokenizeFormula', () => {
       ['number', '.5e+2'],
       ['operator', '!=='],
       ['string', '"x"'],
-      ['eof', '']
+      ['eof', ''],
     ]);
   });
 
   it('tokenizes arrows and bitshift operators', () => {
     const tokens = tokenizeFormula('value => value >>> 1');
-    expect(tokens.map((token) => token.type)).toEqual(['identifier', 'arrow', 'identifier', 'operator', 'number', 'eof']);
+    expect(tokens.map((token) => token.type)).toEqual([
+      'identifier',
+      'arrow',
+      'identifier',
+      'operator',
+      'number',
+      'eof',
+    ]);
   });
 
   it('throws on unterminated strings and unexpected tokens', () => {

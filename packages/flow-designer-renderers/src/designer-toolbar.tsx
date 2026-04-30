@@ -41,7 +41,8 @@ function evalBooleanExpr(value: boolean | string | undefined, snapshot: Designer
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return false;
   const trimmed = value.trim();
-  const expr = trimmed.startsWith('${') && trimmed.endsWith('}') ? trimmed.slice(2, -1).trim() : trimmed;
+  const expr =
+    trimmed.startsWith('${') && trimmed.endsWith('}') ? trimmed.slice(2, -1).trim() : trimmed;
   if (expr.startsWith('!')) {
     return !readState(expr.slice(1).trim(), snapshot);
   }
@@ -76,7 +77,9 @@ function evalTextTemplate(template: string | undefined, snapshot: DesignerSnapsh
   });
 }
 
-function toCommand(action: string | undefined): import('./designer-command-adapter').DesignerCommand | null {
+function toCommand(
+  action: string | undefined,
+): import('./designer-command-adapter').DesignerCommand | null {
   switch (action) {
     case 'designer:undo':
       return { type: 'undo' };
@@ -111,22 +114,25 @@ export function DesignerToolbarContent(props: {
   const runtime = useRendererRuntime();
   const scope = useRenderScope();
 
-  const invokeAction = useCallback(async (action: string) => {
-    const resolved = actionScope?.resolve(action);
-    if (!resolved) {
-      return;
-    }
-    await resolved.provider.invoke(resolved.method, undefined, {
-      runtime,
-      scope,
-      actionScope
-    });
-  }, [actionScope, runtime, scope]);
+  const invokeAction = useCallback(
+    async (action: string) => {
+      const resolved = actionScope?.resolve(action);
+      if (!resolved) {
+        return;
+      }
+      await resolved.provider.invoke(resolved.method, undefined, {
+        runtime,
+        scope,
+        actionScope,
+      });
+    },
+    [actionScope, runtime, scope],
+  );
 
   const items = useMemo(() => {
     return ((config.toolbar?.items ?? []) as unknown as ToolbarItemLike[]).map((item, index) => ({
       key: `${item.type ?? 'item'}:${index}`,
-      item
+      item,
     }));
   }, [config.toolbar?.items]);
 
@@ -135,7 +141,12 @@ export function DesignerToolbarContent(props: {
   }
 
   return (
-    <div className={cn('nop-designer-toolbar min-h-[52px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-xl shadow-sm')} data-testid="designer-toolbar">
+    <div
+      className={cn(
+        'nop-designer-toolbar min-h-[52px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-xl shadow-sm',
+      )}
+      data-testid="designer-toolbar"
+    >
       {items.map(({ key, item }) => {
         if (item.type === 'divider') {
           return <span key={key} className="w-px h-[18px] bg-border" aria-hidden="true" />;
@@ -149,7 +160,9 @@ export function DesignerToolbarContent(props: {
           return (
             <div key={key} className="mr-auto flex items-center gap-2 min-w-0">
               <div>
-                <div className="text-sm font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{evalTextTemplate(item.body ?? item.text, snapshot)}</div>
+                <div className="text-sm font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+                  {evalTextTemplate(item.body ?? item.text, snapshot)}
+                </div>
               </div>
             </div>
           );
@@ -158,7 +171,12 @@ export function DesignerToolbarContent(props: {
         if (item.type === 'badge') {
           const level = evalTextTemplate(item.level, snapshot);
           return (
-            <Badge key={key} variant={level === 'success' ? 'success' : level === 'warning' ? 'warning' : 'secondary'}>
+            <Badge
+              key={key}
+              variant={
+                level === 'success' ? 'success' : level === 'warning' ? 'warning' : 'secondary'
+              }
+            >
               {evalTextTemplate(item.text ?? item.body, snapshot)}
             </Badge>
           );
@@ -166,7 +184,9 @@ export function DesignerToolbarContent(props: {
 
         if (item.type === 'text') {
           return (
-            <span key={key} className="text-sm text-muted-foreground whitespace-nowrap">{evalTextTemplate(item.body ?? item.text, snapshot)}</span>
+            <span key={key} className="text-sm text-muted-foreground whitespace-nowrap">
+              {evalTextTemplate(item.body ?? item.text, snapshot)}
+            </span>
           );
         }
 
@@ -190,8 +210,12 @@ export function DesignerToolbarContent(props: {
 
         if (item.type === 'button') {
           const command = toCommand(item.action);
-          const disabled = evalBooleanExpr(item.disabled, snapshot) || (item.action === 'designer:autoLayout' && props.autoLayoutBusy === true);
-          const active = evalBooleanExpr(item.active, snapshot) || (item.action === 'designer:export' && props.exportActive === true);
+          const disabled =
+            evalBooleanExpr(item.disabled, snapshot) ||
+            (item.action === 'designer:autoLayout' && props.autoLayoutBusy === true);
+          const active =
+            evalBooleanExpr(item.active, snapshot) ||
+            (item.action === 'designer:export' && props.exportActive === true);
           const isPrimary = item.variant === 'primary';
           const variant = active || isPrimary ? 'default' : 'outline';
           return (
@@ -226,8 +250,15 @@ export function DesignerToolbarContent(props: {
           const disabled = evalBooleanExpr(item.disabled, snapshot);
           const checked = evalBooleanExpr(item.active, snapshot);
           return (
-            <Label key={key} className="inline-flex items-center gap-1.5 cursor-pointer select-none">
-              {item.label ? <span className="text-sm text-muted-foreground whitespace-nowrap">{item.label}</span> : null}
+            <Label
+              key={key}
+              className="inline-flex items-center gap-1.5 cursor-pointer select-none"
+            >
+              {item.label ? (
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {item.label}
+                </span>
+              ) : null}
               <Switch
                 data-size="sm"
                 checked={checked}

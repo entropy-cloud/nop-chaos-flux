@@ -71,54 +71,56 @@ Status: completed ✅
 Targets: `packages/flow-designer-core/src/`
 
 - 在 `types.ts` 中新增类型：
+
   ```ts
   interface TreeDocument {
-    id: string
-    kind: string
-    name: string
-    version: string
-    meta?: Record<string, unknown>
-    root: TreeNode
+    id: string;
+    kind: string;
+    name: string;
+    version: string;
+    meta?: Record<string, unknown>;
+    root: TreeNode;
   }
 
   interface TreeNode {
-    id: string
-    type: string
-    data: Record<string, unknown>
-    child?: TreeNode
-    branches?: TreeNodeBranch[]
+    id: string;
+    type: string;
+    data: Record<string, unknown>;
+    child?: TreeNode;
+    branches?: TreeNodeBranch[];
   }
 
   interface TreeNodeBranch {
-    id: string
-    data: Record<string, unknown>
-    child?: TreeNode
+    id: string;
+    data: Record<string, unknown>;
+    child?: TreeNode;
   }
 
   interface TreeNodeTypeConfig extends NodeTypeConfig {
     tree?: {
-      allowBranches?: boolean
-      maxBranches?: number
-      minBranches?: number
-      allowChild?: boolean
-      isTerminal?: boolean
-    }
+      allowBranches?: boolean;
+      maxBranches?: number;
+      minBranches?: number;
+      allowChild?: boolean;
+      isTerminal?: boolean;
+    };
   }
 
   interface TreeConfig {
     layout: {
-      direction: 'TB' | 'LR'
-      nodeSpacing: number
-      layerSpacing: number
-    }
-    showGatewayNodes: boolean
-    showMergeNodes: boolean
-    autoLayout: boolean
-    chainEdgeType?: string
-    branchEdgeType?: string
-    mergeEdgeType?: string
+      direction: 'TB' | 'LR';
+      nodeSpacing: number;
+      layerSpacing: number;
+    };
+    showGatewayNodes: boolean;
+    showMergeNodes: boolean;
+    autoLayout: boolean;
+    chainEdgeType?: string;
+    branchEdgeType?: string;
+    mergeEdgeType?: string;
   }
   ```
+
 - `DesignerConfig` 新增 `documentMode?: 'graph' | 'tree'` 和 `treeConfig?: TreeConfig`
 - `NormalizedDesignerConfig` 新增对应字段
 - `config.ts` 中 `normalizeConfig` 处理 `treeConfig` 和 `documentMode`
@@ -220,8 +222,8 @@ Exit Criteria:
 Status: completed ✅
 Targets: `apps/playground/src/`
 
-- 新建 `apps/playground/src/schemas/dingtalk-workflow-tree-schema.json`：包含钉钉审批流的完整 `designer-page` schema（`documentMode: "tree"`, `treeDocument`, `config` 含 dt-* 节点类型）
-- 新建 `apps/playground/src/schemas/action-flow-tree-schema.json`：包含 action flow 的完整 `designer-page` schema（`documentMode: "tree"`, `treeDocument`, `config` 含 action-* 节点类型）
+- 新建 `apps/playground/src/schemas/dingtalk-workflow-tree-schema.json`：包含钉钉审批流的完整 `designer-page` schema（`documentMode: "tree"`, `treeDocument`, `config` 含 dt-\* 节点类型）
+- 新建 `apps/playground/src/schemas/action-flow-tree-schema.json`：包含 action flow 的完整 `designer-page` schema（`documentMode: "tree"`, `treeDocument`, `config` 含 action-\* 节点类型）
 - 修改 `FlowDesignerPage.tsx`：
   - 添加示例选择状态：`type ExampleKey = 'workflow' | 'dingtalk' | 'action-flow'`
   - 默认选中 `'workflow'`
@@ -251,11 +253,11 @@ Targets: `packages/flow-designer-core/src/`
 - 定义 domain adapter 接口：
   ```ts
   interface TreeDomainAdapter {
-    kind: string
+    kind: string;
     // 将外部领域 JSON 转为 TreeDocument
-    importToTree(external: Record<string, unknown>): TreeDocument
+    importToTree(external: Record<string, unknown>): TreeDocument;
     // 将 TreeDocument 转为外部领域 JSON
-    exportFromTree(tree: TreeDocument): Record<string, unknown>
+    exportFromTree(tree: TreeDocument): Record<string, unknown>;
   }
   ```
 - 在 types.ts 中导出 `TreeDomainAdapter`

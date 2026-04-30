@@ -58,13 +58,13 @@ export function createPathBinding(ctx: PathBindingContext): PathBindingService {
   return {
     toAbsolute,
     toRelative,
-    owns
+    owns,
   };
 }
 
 export function projectBooleanMap(
   map: Record<string, boolean>,
-  binding: PathBindingService
+  binding: PathBindingService,
 ): Record<string, boolean> {
   const result: Record<string, boolean> = {};
 
@@ -81,22 +81,24 @@ export function projectBooleanMap(
 
 function projectValidationErrors(
   errors: ValidationError[],
-  binding: PathBindingService
+  binding: PathBindingService,
 ): ValidationError[] {
   return errors.map((e) => {
-    const projectedPath = typeof e.path === 'string' ? binding.toRelative(e.path) ?? e.path : e.path;
-    const projectedOwnerPath = typeof e.ownerPath === 'string' ? binding.toRelative(e.ownerPath) : undefined;
+    const projectedPath =
+      typeof e.path === 'string' ? (binding.toRelative(e.path) ?? e.path) : e.path;
+    const projectedOwnerPath =
+      typeof e.ownerPath === 'string' ? binding.toRelative(e.ownerPath) : undefined;
     return {
       ...e,
       path: projectedPath,
-      ownerPath: projectedOwnerPath ?? projectedPath
+      ownerPath: projectedOwnerPath ?? projectedPath,
     };
   });
 }
 
 export function projectFieldStates(
   fieldStates: Record<string, FieldState>,
-  binding: PathBindingService
+  binding: PathBindingService,
 ): Record<string, FieldState> {
   const result: Record<string, FieldState> = {};
 

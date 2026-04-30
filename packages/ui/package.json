@@ -2,7 +2,9 @@
   "name": "@nop-chaos/ui",
   "version": "0.1.0",
   "private": true,
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -51,6 +53,6 @@
     "build": "tsc -p tsconfig.build.json && node -e \"const fs=require('fs');fs.rmSync('dist/styles',{recursive:true,force:true});fs.cpSync('src/styles','dist/styles',{recursive:true});\"",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "lint": "eslint \"src/**/*.{ts,tsx}\" --ignore-pattern \"**/*.d.ts\""
+    "lint": "eslint \"src/**/*.{ts,tsx}\" --ignore-pattern \"**/*.d.ts\" --cache --cache-location node_modules/.cache/eslint"
   }
 }

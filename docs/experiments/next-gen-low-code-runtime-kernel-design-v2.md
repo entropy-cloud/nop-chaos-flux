@@ -103,15 +103,15 @@ interface CompiledNode {
   readonly meta: MetaSlot;
   readonly regions: ReadonlyMap<string, CompiledRegion>;
   readonly scopeBinding?: ScopeBinding; // how this node creates/binds scopes
-  readonly instanceKey: string;         // for component instance registry
+  readonly instanceKey: string; // for component instance registry
 }
 
 type PropSlot =
-  | { kind: 'static'; value: unknown }           // zero runtime cost
-  | { kind: 'dynamic'; exprId: ExprId }          // re-evaluate on dependency change
-  | { kind: 'region'; regionId: string }         // pre-compiled child handle
-  | { kind: 'action'; actionId: ActionId }       // event handler
-  | { kind: 'i18n'; key: string; fallback?: string };  // resolved at runtime to current locale
+  | { kind: 'static'; value: unknown } // zero runtime cost
+  | { kind: 'dynamic'; exprId: ExprId } // re-evaluate on dependency change
+  | { kind: 'region'; regionId: string } // pre-compiled child handle
+  | { kind: 'action'; actionId: ActionId } // event handler
+  | { kind: 'i18n'; key: string; fallback?: string }; // resolved at runtime to current locale
 
 // ── i18n Design Note ──
 // Requirement 5.3 states "国际化字符串替换在编译阶段完成". However, compile-time
@@ -129,10 +129,10 @@ type PropSlot =
 
 interface CompiledRegion {
   readonly name: string;
-  readonly params: ReadonlyArray<string>;        // ["item", "index"]
-  readonly template: CompiledNode[];             // compiled once, instantiated N times
-  readonly isolated: boolean;                    // e.g., table rows are isolated
-  readonly projections?: ExprId[];               // explicit parent→child data projection
+  readonly params: ReadonlyArray<string>; // ["item", "index"]
+  readonly template: CompiledNode[]; // compiled once, instantiated N times
+  readonly isolated: boolean; // e.g., table rows are isolated
+  readonly projections?: ExprId[]; // explicit parent→child data projection
 }
 ```
 
@@ -188,8 +188,8 @@ interface SchemaCompiler {
 }
 
 interface CompileContext {
-  readonly rendererIndex: StaticRendererIndex;      // compile-time: known types and their prop schemas
-  readonly actionContracts: StaticActionContracts;   // compile-time: known action names and signatures
+  readonly rendererIndex: StaticRendererIndex; // compile-time: known types and their prop schemas
+  readonly actionContracts: StaticActionContracts; // compile-time: known action names and signatures
   readonly namespaceContracts: ReadonlyMap<string, NamespaceContract>;
   readonly i18nResolver: I18nResolver;
   readonly validatorProvider?: ValidatorProvider;
@@ -238,7 +238,7 @@ interface Diagnostic {
   readonly nodeId?: NodeId;
   readonly path?: string;
   readonly message: string;
-  readonly source: string;    // e.g., "type-checker", "expression-compiler"
+  readonly source: string; // e.g., "type-checker", "expression-compiler"
 }
 ```
 
@@ -262,8 +262,8 @@ Instead of the common approach of AST-walking or string interpolation, expressio
 
 interface CompiledExpr {
   readonly id: ExprId;
-  readonly bytecode: Uint32Array;      // register-based bytecode
-  readonly constantPool: unknown[];    // literals, function references
+  readonly bytecode: Uint32Array; // register-based bytecode
+  readonly constantPool: unknown[]; // literals, function references
   readonly depRoots: ReadonlyArray<string>; // normalized dependency roots (conservative)
   readonly returnType: ExprType;
 }
@@ -294,17 +294,17 @@ interface ExpressionVM {
 
 ### 3.3 Bytecode Instruction Set (Conceptual)
 
-| Opcode | Operands | Semantics |
-|--------|----------|-----------|
-| `LOAD_CONST` | `dest`, `poolIdx` | Load constant from pool |
-| `LOAD_VAR` | `dest`, `pathIdx` | Read from scope (with optional log) |
-| `LOAD_HAS` | `dest`, `pathIdx` | Test scope path existence |
-| `BINARY_OP` | `dest`, `op`, `src1`, `src2` | Arithmetic/comparison/logic |
-| `UNARY_OP` | `dest`, `op`, `src` | Negation, not |
-| `CALL_FUNC` | `dest`, `funcIdx`, `argc`, `args...` | Built-in function call |
-| `TERNARY` | `dest`, `cond`, `trueIdx`, `falseIdx` | Conditional |
-| `INTERPOLATE` | `dest`, `partCount`, `parts...` | Template string assembly |
-| `RETURN` | `src` | Return value |
+| Opcode        | Operands                              | Semantics                           |
+| ------------- | ------------------------------------- | ----------------------------------- |
+| `LOAD_CONST`  | `dest`, `poolIdx`                     | Load constant from pool             |
+| `LOAD_VAR`    | `dest`, `pathIdx`                     | Read from scope (with optional log) |
+| `LOAD_HAS`    | `dest`, `pathIdx`                     | Test scope path existence           |
+| `BINARY_OP`   | `dest`, `op`, `src1`, `src2`          | Arithmetic/comparison/logic         |
+| `UNARY_OP`    | `dest`, `op`, `src`                   | Negation, not                       |
+| `CALL_FUNC`   | `dest`, `funcIdx`, `argc`, `args...`  | Built-in function call              |
+| `TERNARY`     | `dest`, `cond`, `trueIdx`, `falseIdx` | Conditional                         |
+| `INTERPOLATE` | `dest`, `partCount`, `parts...`       | Template string assembly            |
+| `RETURN`      | `src`                                 | Return value                        |
 
 ### 3.4 Expression Compiler
 
@@ -382,7 +382,7 @@ interface ChangeCallback {
 }
 
 interface RootChange {
-  readonly root: string;                       // normalized root, e.g., "items"
+  readonly root: string; // normalized root, e.g., "items"
   readonly affectedPaths: ReadonlyArray<string>; // concrete paths that changed
   readonly op: 'set' | 'merge' | 'delete' | 'push' | 'splice';
 }
@@ -401,7 +401,7 @@ interface ScopeTree {
   readonly root: Scope;
 
   createChild(parent: Scope, options: ScopeCreateOptions): Scope;
-  dispose(scope: Scope): void;  // cleanup subscriptions, data sources, reactions
+  dispose(scope: Scope): void; // cleanup subscriptions, data sources, reactions
 }
 
 interface ScopeCreateOptions {
@@ -417,8 +417,8 @@ interface ScopeCreateOptions {
 interface SignalNode<T = unknown> {
   readonly id: SignalId;
   readonly kind: SignalKind;
-  get(): T;                     // for derived: re-evaluate if stale; return cached value if clean
-  invalidate(): void;           // mark stale
+  get(): T; // for derived: re-evaluate if stale; return cached value if clean
+  invalidate(): void; // mark stale
   subscribe(callback: () => void): Unsubscribe;
 }
 
@@ -431,9 +431,9 @@ interface SignalNode<T = unknown> {
 // a previousValue cache and uses structural comparison.
 
 type SignalKind =
-  | 'source'      // data path in scope
-  | 'derived'     // expression evaluation
-  | 'effect'      // side-effect trigger
+  | 'source' // data path in scope
+  | 'derived' // expression evaluation
+  | 'effect' // side-effect trigger
   | 'datasource'; // named data source
 ```
 
@@ -456,7 +456,12 @@ interface DependencyRuntime {
   wireReaction(reactionId: ReactionId, watchRoots: ReadonlyArray<string>): SignalNode;
 
   // Wire a projection binding: parent root → child root (for isolated scopes)
-  wireProjection(parentScope: Scope, parentRoot: string, childScope: Scope, childRoot: string): SignalNode;
+  wireProjection(
+    parentScope: Scope,
+    parentRoot: string,
+    childScope: Scope,
+    childRoot: string,
+  ): SignalNode;
 
   // Propagate changes. Evaluation order: topological (dependents evaluated after their dependencies).
   propagate(changes: ReadonlyArray<RootChange>): ReadonlyArray<SignalId>;
@@ -501,13 +506,17 @@ interface CompiledDataSource {
   readonly id: SourceId;
   readonly refreshStrategy: 'manual' | 'polling' | 'onDependency';
   readonly pollIntervalMs?: number;
-  readonly triggerRoots: ReadonlyArray<string>;  // for onDependency strategy
+  readonly triggerRoots: ReadonlyArray<string>; // for onDependency strategy
   readonly paramMapping?: ReadonlyMap<string, string>; // scopePath → paramName
   readonly ajaxConfig: AjaxConfig;
 }
 
 interface DataSourceManager {
-  create(compiled: CompiledDataSource, scope: ReadableScope, dispatcher: EffectDispatcher): DataSourceInstance;
+  create(
+    compiled: CompiledDataSource,
+    scope: ReadableScope,
+    dispatcher: EffectDispatcher,
+  ): DataSourceInstance;
   dispose(sourceId: SourceId): void;
 }
 ```
@@ -523,13 +532,17 @@ interface ReactionInstance {
 
 interface CompiledReaction {
   readonly id: ReactionId;
-  readonly watchExpr: CompiledExpr;      // expressions to watch
-  readonly conditionExpr?: CompiledExpr;  // when condition
-  readonly action: CompiledAction;        // action to dispatch
+  readonly watchExpr: CompiledExpr; // expressions to watch
+  readonly conditionExpr?: CompiledExpr; // when condition
+  readonly action: CompiledAction; // action to dispatch
 }
 
 interface ReactionManager {
-  activate(compiled: ReadonlyArray<CompiledReaction>, scope: Scope, dispatcher: EffectDispatcher): void;
+  activate(
+    compiled: ReadonlyArray<CompiledReaction>,
+    scope: Scope,
+    dispatcher: EffectDispatcher,
+  ): void;
   deactivate(scopeId: ScopeId): void;
 }
 ```
@@ -555,14 +568,20 @@ type CompiledAction =
   | { kind: 'retry'; inner: CompiledAction; strategy: RetryStrategy }
   | { kind: 'debounce'; inner: CompiledAction; waitMs: number; key: string }
   | { kind: 'timeout'; inner: CompiledAction; ms: number }
-  | { kind: 'chain'; first: CompiledAction; then: ChainContinuation; onError?: ChainContinuation; finally?: CompiledAction }
+  | {
+      kind: 'chain';
+      first: CompiledAction;
+      then: ChainContinuation;
+      onError?: ChainContinuation;
+      finally?: CompiledAction;
+    }
   | { kind: 'noop' };
 
 type ActionArgs = Readonly<Record<string, unknown>>;
 
 interface ChainContinuation {
   readonly action: CompiledAction;
-  readonly resultBinding?: string;  // bind prev result to scope path
+  readonly resultBinding?: string; // bind prev result to scope path
 }
 
 // ── Action Result ──
@@ -575,11 +594,11 @@ type ActionResult =
 // ── Action Execution Context ──
 
 interface ActionContext {
-  readonly scope: ReadableScope;  // read-only — writes must go through dispatcher
-  readonly result: unknown;       // previous step result
-  readonly error: unknown;        // previous step error
-  readonly prevResult: unknown;   // result from two steps ago
-  readonly nodeId: NodeId;        // which node dispatched this action
+  readonly scope: ReadableScope; // read-only — writes must go through dispatcher
+  readonly result: unknown; // previous step result
+  readonly error: unknown; // previous step error
+  readonly prevResult: unknown; // result from two steps ago
+  readonly nodeId: NodeId; // which node dispatched this action
   readonly dispatcher: EffectDispatcher;
 }
 
@@ -594,9 +613,9 @@ interface EffectDispatcher {
 
 interface EffectScope {
   dispatch(effect: Effect): EffectHandle;
-  commit(): Promise<ReadonlyArray<ActionResult>>;   // wait for all dispatched effects
-  rollback(): void;                                  // discard uncommitted effects
-  dispose(): void;                                   // cleanup on scope disposal
+  commit(): Promise<ReadonlyArray<ActionResult>>; // wait for all dispatched effects
+  rollback(): void; // discard uncommitted effects
+  dispose(): void; // cleanup on scope disposal
 }
 
 // ── Effect Lifecycle ──
@@ -640,16 +659,16 @@ interface ActionExecutor {
 
 The executor is a recursive interpreter over the `CompiledAction` ADT. Each combinator maps to a concrete execution strategy:
 
-| Action Kind | Execution Strategy |
-|-------------|-------------------|
-| `dispatch` | Look up handler in `ActionRegistry`, invoke, return result |
-| `sequence` | Execute steps in order, short-circuit on error |
-| `parallel` | `Promise.allSettled`, merge results |
-| `guarded` | Evaluate condition; if falsy, return `skipped` |
-| `chain` | Execute `first`, then route to `then` or `onError` based on result kind |
-| `retry` | Exponential backoff loop with `RetryStrategy` parameters |
-| `debounce` | `setTimeout`-based debounce with cancellation |
-| `timeout` | `Promise.race` with timeout signal |
+| Action Kind | Execution Strategy                                                      |
+| ----------- | ----------------------------------------------------------------------- |
+| `dispatch`  | Look up handler in `ActionRegistry`, invoke, return result              |
+| `sequence`  | Execute steps in order, short-circuit on error                          |
+| `parallel`  | `Promise.allSettled`, merge results                                     |
+| `guarded`   | Evaluate condition; if falsy, return `skipped`                          |
+| `chain`     | Execute `first`, then route to `then` or `onError` based on result kind |
+| `retry`     | Exponential backoff loop with `RetryStrategy` parameters                |
+| `debounce`  | `setTimeout`-based debounce with cancellation                           |
+| `timeout`   | `Promise.race` with timeout signal                                      |
 
 ### 5.4 Effect Handler (Internal Glue)
 
@@ -696,7 +715,7 @@ type ActionHandler = (args: ActionArgs, context: ActionContext) => Promise<Actio
 interface NamespaceContract {
   readonly namespace: string;
   readonly methods: ReadonlyMap<string, MethodSignature>;
-  readonly projections: ReadonlyMap<string, ExprType>;  // read-only snapshot fields
+  readonly projections: ReadonlyMap<string, ExprType>; // read-only snapshot fields
 }
 
 interface MethodSignature {
@@ -712,7 +731,7 @@ interface MethodSignature {
 
 ### 6.1 Design: Framework-Portable Renderer Protocol
 
-The renderer layer is an **adapter**, not the core. The kernel defines a rendering protocol that any UI framework can implement. The protocol is deliberately minimal — it describes *what to render*, not *how to render*.
+The renderer layer is an **adapter**, not the core. The kernel defines a rendering protocol that any UI framework can implement. The protocol is deliberately minimal — it describes _what to render_, not _how to render_.
 
 ### 6.2 Core Types
 
@@ -724,7 +743,7 @@ interface RendererRegistry {
   resolve(key: RendererKey): RendererFactory | null;
 }
 
-type RendererKey = string;  // e.g., "page", "form", "input-text", "table"
+type RendererKey = string; // e.g., "page", "form", "input-text", "table"
 
 interface RendererFactory {
   (host: RendererHost): RendererInstance;
@@ -754,8 +773,8 @@ interface RendererProps {
   readonly type: string;
 
   // Resolved values
-  readonly props: Readonly<Record<string, unknown>>;     // business attributes
-  readonly meta: Readonly<RendererMeta>;                  // control metadata
+  readonly props: Readonly<Record<string, unknown>>; // business attributes
+  readonly meta: Readonly<RendererMeta>; // control metadata
   readonly events: Readonly<Record<string, EventHandler>>;
   readonly regions: Readonly<Record<string, RegionHandle>>;
 
@@ -778,7 +797,7 @@ interface RendererMeta {
 
 interface RegionHandle {
   readonly name: string;
-  readonly params: ReadonlyArray<string>;  // ["item", "index"]
+  readonly params: ReadonlyArray<string>; // ["item", "index"]
 
   // Render with local data binding
   render(bindings?: Readonly<Record<string, unknown>>): RenderResult;
@@ -788,7 +807,7 @@ interface RegionHandle {
   getChildren(): ReadonlyArray<NodeId>;
 }
 
-type RenderResult = unknown;  // framework-specific (React elements, DOM nodes, etc.)
+type RenderResult = unknown; // framework-specific (React elements, DOM nodes, etc.)
 
 // ── Event Handler ──
 
@@ -821,7 +840,7 @@ interface RendererHost {
   wrapErrorBoundary(
     renderFn: () => RenderResult,
     fallback: (error: unknown, nodeId: NodeId) => RenderResult,
-    nodeId: NodeId
+    nodeId: NodeId,
   ): RenderResult;
 }
 ```
@@ -973,12 +992,12 @@ interface ValidationGraph {
 
 interface CompiledValidationRule {
   readonly path: string;
-  readonly ruleType: string;  // "required", "minLength", "pattern", etc.
+  readonly ruleType: string; // "required", "minLength", "pattern", etc.
   readonly params: unknown;
-  readonly condition?: ExprId;  // conditional activation
+  readonly condition?: ExprId; // conditional activation
   readonly timing: ValidationTiming;
   readonly async?: boolean;
-  readonly validatorRef: string;  // reference to ValidatorProvider registry, NOT a closure
+  readonly validatorRef: string; // reference to ValidatorProvider registry, NOT a closure
 }
 
 type ValidationTiming = 'submit' | 'change' | 'blur';
@@ -995,9 +1014,9 @@ interface ValidationContext {
 
 interface DraftScope {
   readonly scope: Scope;
-  readonly validation: FormRuntime;  // independent validation state
-  commit(): void;                    // merge into parent form
-  discard(): void;                   // throw away changes
+  readonly validation: FormRuntime; // independent validation state
+  commit(): void; // merge into parent form
+  discard(): void; // throw away changes
 }
 ```
 
@@ -1014,13 +1033,13 @@ interface LoopRuntime {
     template: CompiledRegion,
     items: unknown[],
     parentScope: Scope,
-    projections?: ExprId[]
+    projections?: ExprId[],
   ): LoopInstance[];
 }
 
 interface LoopInstance {
   readonly index: number;
-  readonly scope: Scope;        // isolated, with { item, index } bound
+  readonly scope: Scope; // isolated, with { item, index } bound
   readonly region: RegionHandle; // pre-wired child rendering
   dispose(): void;
 }
@@ -1164,12 +1183,12 @@ Kernel:
 
 ### 12.1 Why a Bytecode VM for Expressions?
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| AST-walking | Simple implementation | O(n) per evaluation, repeated traversal overhead |
-| `new Function` | Fast execution | **Banned by requirements** (security), no dependency tracking |
-| String templating | Simple for basic cases | Cannot handle complex expressions, no type checking |
-| **Bytecode VM** | O(1) dispatch, natural dependency logging, no eval, type-checkable | More complex initial implementation |
+| Approach          | Pros                                                               | Cons                                                          |
+| ----------------- | ------------------------------------------------------------------ | ------------------------------------------------------------- |
+| AST-walking       | Simple implementation                                              | O(n) per evaluation, repeated traversal overhead              |
+| `new Function`    | Fast execution                                                     | **Banned by requirements** (security), no dependency tracking |
+| String templating | Simple for basic cases                                             | Cannot handle complex expressions, no type checking           |
+| **Bytecode VM**   | O(1) dispatch, natural dependency logging, no eval, type-checkable | More complex initial implementation                           |
 
 The bytecode VM is the only approach that satisfies all constraints: no dynamic code generation, compile-once-execute-many, natural dependency tracking, and type safety.
 
@@ -1218,10 +1237,10 @@ The requirements explicitly state:
 
 This forces a strict phase separation:
 
-| Phase | Responsibilities | Output |
-|-------|-----------------|--------|
+| Phase       | Responsibilities                                                                                                         | Output                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
 | **Compile** | Parse, classify, compile expressions, build validation graph, compile actions, type-check, i18n key extraction, optimize | `CompiledSchema` (immutable artifact) |
-| **Runtime** | Instantiate scopes, wire signals, execute actions, render | Dynamic behavior |
+| **Runtime** | Instantiate scopes, wire signals, execute actions, render                                                                | Dynamic behavior                      |
 
 The compiled artifact is a **pure data structure** — it carries no closures, no references to runtime state. This means:
 
@@ -1233,11 +1252,11 @@ The compiled artifact is a **pure data structure** — it carries no closures, n
 
 The requirements specify three distinct action sources with different scoping rules:
 
-| Layer | Scope | Lifetime | Example |
-|-------|-------|----------|---------|
-| Built-in | Global | Kernel lifetime | `setValue`, `ajax`, `dialog` |
-| Component | Per-instance | Component mount/unmount | `table:reload`, `form:submit` |
-| Namespace | Per-scope | Scope lifecycle | `designer:export`, `spreadsheet:calc` |
+| Layer     | Scope        | Lifetime                | Example                               |
+| --------- | ------------ | ----------------------- | ------------------------------------- |
+| Built-in  | Global       | Kernel lifetime         | `setValue`, `ajax`, `dialog`          |
+| Component | Per-instance | Component mount/unmount | `table:reload`, `form:submit`         |
+| Namespace | Per-scope    | Scope lifecycle         | `designer:export`, `spreadsheet:calc` |
 
 The resolution order (built-in → component → namespace) ensures that platform capabilities are always available, component methods are scoped to instances, and namespace commands are scoped to their lexical boundary.
 
@@ -1247,23 +1266,23 @@ The resolution order (built-in → component → namespace) ensures that platfor
 
 ### 13.1 Cost Budget per Interaction Cycle
 
-| Phase | Target | Mechanism |
-|-------|--------|-----------|
-| Scope mutation | O(changed paths) | Persistent data structure with structural sharing |
-| Dependency invalidation | O(changed paths × dependents) | Pre-computed dependency graph |
-| Expression re-evaluation | O(1) per expression | Bytecode VM, register-based |
-| Renderer reconciliation | O(invalidated renderers) | Only re-render nodes with invalidated props |
-| Full static subtree | **Zero** | Static props never enter reactivity graph |
+| Phase                    | Target                        | Mechanism                                         |
+| ------------------------ | ----------------------------- | ------------------------------------------------- |
+| Scope mutation           | O(changed paths)              | Persistent data structure with structural sharing |
+| Dependency invalidation  | O(changed paths × dependents) | Pre-computed dependency graph                     |
+| Expression re-evaluation | O(1) per expression           | Bytecode VM, register-based                       |
+| Renderer reconciliation  | O(invalidated renderers)      | Only re-render nodes with invalidated props       |
+| Full static subtree      | **Zero**                      | Static props never enter reactivity graph         |
 
 ### 13.2 Memory Model
 
-| Object | Lifetime | Sharing |
-|--------|----------|---------|
-| `CompiledSchema` | Kernel lifetime | Shared across all instances |
-| `CompiledExpr` (bytecode) | Kernel lifetime | Shared, never copied |
-| `Scope` | Scope lifecycle | Own data: owned; parent data: referenced |
-| `SignalNode` | Scope lifecycle | Lightweight, GC'd with scope |
-| `RendererInstance` | Component lifecycle | Owned by RenderTree |
+| Object                    | Lifetime            | Sharing                                  |
+| ------------------------- | ------------------- | ---------------------------------------- |
+| `CompiledSchema`          | Kernel lifetime     | Shared across all instances              |
+| `CompiledExpr` (bytecode) | Kernel lifetime     | Shared, never copied                     |
+| `Scope`                   | Scope lifecycle     | Own data: owned; parent data: referenced |
+| `SignalNode`              | Scope lifecycle     | Lightweight, GC'd with scope             |
+| `RendererInstance`        | Component lifecycle | Owned by RenderTree                      |
 
 ### 13.3 High-Frequency Isolation (Table Rows)
 
@@ -1281,14 +1300,14 @@ For table/collection rendering:
 
 ### 14.1 Layer Isolation Testing
 
-| Layer | Test Environment | What to Test |
-|-------|-----------------|-------------|
-| Schema Compiler | Node.js / no DOM | Compilation correctness, diagnostics, type checking |
-| Expression VM | Node.js / no DOM | Expression evaluation, dependency logging, edge cases |
-| Scope & Signal Graph | Node.js / no DOM | Path resolution, change propagation, isolation, self-write protection |
-| Action Executor | Node.js / mock effects | Control flow (chain, parallel, retry, debounce), cancellation |
-| Renderer Adapter | jsdom / test renderer | Props resolution, region rendering, event dispatch |
-| Form & Validation | Node.js / no DOM | Validation rules, timing, draft isolation, async validation |
+| Layer                | Test Environment       | What to Test                                                          |
+| -------------------- | ---------------------- | --------------------------------------------------------------------- |
+| Schema Compiler      | Node.js / no DOM       | Compilation correctness, diagnostics, type checking                   |
+| Expression VM        | Node.js / no DOM       | Expression evaluation, dependency logging, edge cases                 |
+| Scope & Signal Graph | Node.js / no DOM       | Path resolution, change propagation, isolation, self-write protection |
+| Action Executor      | Node.js / mock effects | Control flow (chain, parallel, retry, debounce), cancellation         |
+| Renderer Adapter     | jsdom / test renderer  | Props resolution, region rendering, event dispatch                    |
+| Form & Validation    | Node.js / no DOM       | Validation rules, timing, draft isolation, async validation           |
 
 ### 14.2 Integration Testing
 
@@ -1322,14 +1341,14 @@ expect(result).toEqual({ kind: 'success', value: 'OK' });
 
 The kernel is designed for extension without modification:
 
-| Extension Point | Mechanism | Example |
-|----------------|-----------|---------|
-| New renderer | `RendererRegistry.register()` | Custom chart renderer |
-| New built-in action | `ActionRegistry.registerBuiltIn()` | WebSocket send action |
-| New namespace | `ActionRegistry.registerNamespace()` | Spreadsheet calculation namespace |
-| New expression function | Extend expression compiler constant pool | Custom date formatter |
-| New data source strategy | Implement `DataSourceInstance` | WebSocket-based real-time source |
-| New validation rule | Register `ValidatorFn` in `ValidatorProvider` | Custom business rule |
+| Extension Point          | Mechanism                                     | Example                           |
+| ------------------------ | --------------------------------------------- | --------------------------------- |
+| New renderer             | `RendererRegistry.register()`                 | Custom chart renderer             |
+| New built-in action      | `ActionRegistry.registerBuiltIn()`            | WebSocket send action             |
+| New namespace            | `ActionRegistry.registerNamespace()`          | Spreadsheet calculation namespace |
+| New expression function  | Extend expression compiler constant pool      | Custom date formatter             |
+| New data source strategy | Implement `DataSourceInstance`                | WebSocket-based real-time source  |
+| New validation rule      | Register `ValidatorFn` in `ValidatorProvider` | Custom business rule              |
 
 ---
 
@@ -1343,14 +1362,15 @@ The kernel is designed for extension without modification:
 
 4. **Root-normalized signal graph** — Dependencies tracked at normalized root granularity, not per-path. Enables glitch-free topological propagation, simple array mutation handling, and natural isolation for table rows without a complex wildcard matching engine.
 
-5. **Framework-portable renderer protocol** — The kernel defines *what to render*, not *how*. React, Vue, Solid, or Web Components can all implement the `RendererHost` interface.
+5. **Framework-portable renderer protocol** — The kernel defines _what to render_, not _how_. React, Vue, Solid, or Web Components can all implement the `RendererHost` interface.
 
 6. **Structural host integration** — The host provides capabilities through typed interfaces, not global singletons. The kernel never directly touches `fetch`, `window.location`, or `document`.
 
 7. **Type-safe namespace contracts** — Domain controls declare their capabilities with full type information, enabling compile-time validation of action references.
 
 8. **Zero-cost static parts** — Static props bypass the reactivity graph entirely. A pure-static page has the same performance characteristics as hand-written HTML.
-```
+
+````
 
 ---
 
@@ -1410,7 +1430,7 @@ type SurfaceId = string & { __brand: 'SurfaceId' };
 type ActionExecutionId = string & { __brand: 'ActionExecutionId' };
 type RendererKey = string;
 type Unsubscribe = () => void;
-```
+````
 
 ### Expression Types
 
@@ -1458,16 +1478,16 @@ interface RetryStrategy {
 
 ```typescript
 interface LoopSchema {
-  readonly sourceExpr: string;    // expression producing the collection
-  readonly itemName: string;      // default: "item"
-  readonly indexName: string;     // default: "index"
-  readonly isolated: boolean;     // default: true
+  readonly sourceExpr: string; // expression producing the collection
+  readonly itemName: string; // default: "item"
+  readonly indexName: string; // default: "index"
+  readonly isolated: boolean; // default: true
   readonly projections?: ReadonlyMap<string, string>;
 }
 
 interface NodeMetaSchema {
-  readonly visible?: string;      // expression or boolean
-  readonly disabled?: string;     // expression or boolean
+  readonly visible?: string; // expression or boolean
+  readonly disabled?: string; // expression or boolean
   readonly className?: string;
   readonly testid?: string;
 }
@@ -1475,7 +1495,7 @@ interface NodeMetaSchema {
 interface ScopeBinding {
   readonly createsScope: boolean;
   readonly isolated: boolean;
-  readonly initialValues?: Readonly<Record<string, string>>;  // expr sources
+  readonly initialValues?: Readonly<Record<string, string>>; // expr sources
   readonly projections?: ReadonlyMap<string, string>;
 }
 
@@ -1578,11 +1598,16 @@ interface PerformanceMonitor {
 
 ```typescript
 type SurfaceCommand =
-  | { action: 'open'; type: 'dialog' | 'drawer'; schema: CompiledNode; data?: Record<string, unknown> }
+  | {
+      action: 'open';
+      type: 'dialog' | 'drawer';
+      schema: CompiledNode;
+      data?: Record<string, unknown>;
+    }
   | { action: 'close'; surfaceId: SurfaceId };
 
 interface SurfaceContainer {
-  readonly element: unknown;  // framework-specific container element
+  readonly element: unknown; // framework-specific container element
   dispose(): void;
 }
 

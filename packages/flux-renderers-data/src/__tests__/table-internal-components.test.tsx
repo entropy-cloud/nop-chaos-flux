@@ -19,7 +19,7 @@ function makeTableProps(overrides: Record<string, unknown> = {}) {
     events: {},
     node: { instancePath: [] },
     meta: {},
-    ...overrides
+    ...overrides,
   } as any;
 }
 
@@ -38,7 +38,7 @@ function makeRowScope(record: Record<string, unknown>, index: number) {
     readVisible: () => ({ record, index }),
     materializeVisible: () => ({ record, index }),
     update() {},
-    merge() {}
+    merge() {},
   } as any;
 }
 
@@ -66,14 +66,16 @@ describe('table internal components', () => {
         pageSizeOptions={[10, 20]}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('1'));
     fireEvent.click(screen.getByText('3'));
     fireEvent.click(document.querySelector('[aria-label="Go to next page"]')!);
     fireEvent.click(document.querySelector('[aria-label="Go to previous page"]')!);
-    fireEvent.change(document.querySelector('[data-slot="native-select"]')!, { target: { value: '20' } });
+    fireEvent.change(document.querySelector('[data-slot="native-select"]')!, {
+      target: { value: '20' },
+    });
 
     expect(onPageChange).toHaveBeenCalledWith(1);
     expect(onPageChange).toHaveBeenCalledWith(3);
@@ -91,7 +93,7 @@ describe('table internal components', () => {
         totalRows={100}
         onPageChange={onPageChange}
         onPageSizeChange={() => {}}
-      />
+      />,
     );
 
     expect(document.querySelector('[aria-label="Go to previous page"]')).toBeTruthy();
@@ -112,7 +114,13 @@ describe('table internal components', () => {
           selectedRowKeys={new Set()}
           columnCount={2}
           isStriped={false}
-          fixedColumnLayout={{ getExpandCellProps: () => ({ className: '', style: {} }), getSelectionCellProps: () => ({ className: '', style: {} }), getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }) } as any}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
           emptyContent={<span>No data</span>}
           showExpandColumn={false}
           expandRowByClick={false}
@@ -120,7 +128,7 @@ describe('table internal components', () => {
           onSelectRow={() => {}}
           virtualEnabled={false}
         />
-      </table>
+      </table>,
     );
 
     expect(screen.getByText('No data')).toBeTruthy();
@@ -145,7 +153,13 @@ describe('table internal components', () => {
           selectedRowKeys={new Set()}
           columnCount={1}
           isStriped={true}
-          fixedColumnLayout={{ getExpandCellProps: () => ({ className: '', style: {} }), getSelectionCellProps: () => ({ className: '', style: {} }), getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }) } as any}
+          fixedColumnLayout={
+            {
+              getExpandCellProps: () => ({ className: '', style: {} }),
+              getSelectionCellProps: () => ({ className: '', style: {} }),
+              getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
+            } as any
+          }
           emptyContent={null}
           showExpandColumn={true}
           expandRowByClick={true}
@@ -153,7 +167,7 @@ describe('table internal components', () => {
           onSelectRow={() => {}}
           virtualEnabled={false}
         />
-      </table>
+      </table>,
     );
 
     expect(screen.getByText('Alice')).toBeTruthy();

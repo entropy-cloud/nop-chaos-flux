@@ -7,7 +7,7 @@ interface PendingEntry<T> {
 export function cancelPendingDebounce<K, T>(
   pendingMap: Map<K, PendingEntry<T>>,
   key: K,
-  resolveWith?: T
+  resolveWith?: T,
 ): boolean {
   const previous = pendingMap.get(key);
   if (!previous) return false;
@@ -21,7 +21,7 @@ export function scheduleDebounce<K, T>(
   pendingMap: Map<K, PendingEntry<T>>,
   key: K,
   timeoutMs: number,
-  factory: () => T | Promise<T>
+  factory: () => T | Promise<T>,
 ): Promise<T> {
   cancelPendingDebounce(pendingMap, key);
 

@@ -36,11 +36,13 @@ function toItemsArray(items: unknown): unknown[] {
   return Array.isArray(items) ? items : [];
 }
 
-export function resolveLoopBindings(input: Pick<LoopSchema | RecurseSchema, 'itemName' | 'indexName' | 'keyName'>): StructuralLoopBindings {
+export function resolveLoopBindings(
+  input: Pick<LoopSchema | RecurseSchema, 'itemName' | 'indexName' | 'keyName'>,
+): StructuralLoopBindings {
   return {
     itemName: input.itemName?.trim() || DEFAULT_ITEM_NAME,
     indexName: input.indexName?.trim() || DEFAULT_INDEX_NAME,
-    keyName: input.keyName?.trim() || undefined
+    keyName: input.keyName?.trim() || undefined,
   };
 }
 
@@ -58,7 +60,10 @@ function resolveItemKey(input: { item: unknown; index: number; keyBy?: unknown }
       }
     }
 
-    if (path === 'item' && (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean')) {
+    if (
+      path === 'item' &&
+      (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean')
+    ) {
       return String(item);
     }
   }
@@ -83,7 +88,7 @@ export function buildSlotBindings(input: {
 }): Record<string, unknown> {
   const slotBindings: Record<string, unknown> = {
     [input.bindings.itemName]: input.item,
-    [input.bindings.indexName]: input.index
+    [input.bindings.indexName]: input.index,
   };
 
   if (input.bindings.keyName) {
@@ -110,7 +115,7 @@ export function renderStructuralLoop(options: StructuralLoopRenderOptions): Reac
   }
 
   if (items.length === 0) {
-    return options.hasEmpty ? options.renderEmpty?.() ?? null : null;
+    return options.hasEmpty ? (options.renderEmpty?.() ?? null) : null;
   }
 
   if (!options.hasBody) {
@@ -124,11 +129,11 @@ export function renderStructuralLoop(options: StructuralLoopRenderOptions): Reac
       index,
       itemKey,
       bindings: options.bindings,
-      itemData: options.itemData
+      itemData: options.itemData,
     });
     const instancePath = [
       ...(options.parentInstancePath ?? []),
-      { repeatedTemplateId: options.repeatedTemplateId, instanceKey: itemKey }
+      { repeatedTemplateId: options.repeatedTemplateId, instanceKey: itemKey },
     ] as const;
 
     return options.renderItem({
@@ -137,7 +142,7 @@ export function renderStructuralLoop(options: StructuralLoopRenderOptions): Reac
       itemKey,
       slotBindings,
       instancePath,
-      depth: depth + 1
+      depth: depth + 1,
     });
   });
 }

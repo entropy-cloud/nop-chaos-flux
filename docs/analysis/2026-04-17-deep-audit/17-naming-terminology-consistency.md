@@ -10,6 +10,7 @@ All issues were re-verified against the live repo. Results below.
 ## 命名冲突清单
 
 ### [维度17] DataSource 发布标识仍存在 `name` vs `dataPath` 双字段 — ✅ CONFIRMED, FIXED
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-core\src\types\schema.ts:125-136`
 - **严重程度**: P1
 - **冲突名称**: `name` vs `dataPath`
@@ -28,6 +29,7 @@ All issues were re-verified against the live repo. Results below.
   - 注意：`ActionSchema.dataPath`（ajax 结果写入页面数据）和 `flux-code-editor` 的 `dataPath`（数据提取路径）不受影响
 
 ### [维度17] 渲染器实现文件名在裸名与 `*-renderer.tsx` 之间混用 — ✅ CONFIRMED, NOT FIXED (P3 style-only)
+
 - **文件**: `packages/flux-renderers-basic/src/button.tsx:1-9`
 - **严重程度**: P3
 - **冲突名称**: 裸文件名（如 `button.tsx` / `designer-page.tsx`）vs 后缀文件名（如 `table-renderer.tsx` / `code-editor-renderer.tsx` / `page-renderer.tsx`）

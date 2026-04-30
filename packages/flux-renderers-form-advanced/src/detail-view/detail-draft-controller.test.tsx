@@ -5,7 +5,7 @@ import {
   buildDetailDraftInitialValues,
   readDetailDraftValues,
   useDetailChildValidationContract,
-  useDetailDraftControllerState
+  useDetailDraftControllerState,
 } from './detail-draft-controller';
 
 describe('detail draft controller helpers', () => {
@@ -20,13 +20,13 @@ describe('detail draft controller helpers', () => {
       scope: {
         readOwn() {
           return { $form: { id: 'x' }, __value: 'Ada' };
-        }
-      }
+        },
+      },
     } as any;
 
     expect(readDetailDraftValues(draftForm)).toEqual({
       draftValues: { __value: 'Ada' },
-      workingValue: 'Ada'
+      workingValue: 'Ada',
     });
   });
 });
@@ -38,14 +38,15 @@ function DraftControllerHarness() {
     <div>
       <span data-testid="open">{String(controller.open)}</span>
       <span data-testid="error">{controller.draftError ?? ''}</span>
-      <button
-        type="button"
-        onClick={() => controller.openDraft({ dispose: vi.fn() } as any)}
-      >
+      <button type="button" onClick={() => controller.openDraft({ dispose: vi.fn() } as any)}>
         open
       </button>
-      <button type="button" onClick={() => controller.setDraftErrorSafe('boom')}>set-error</button>
-      <button type="button" onClick={controller.closeDraft}>close</button>
+      <button type="button" onClick={() => controller.setDraftErrorSafe('boom')}>
+        set-error
+      </button>
+      <button type="button" onClick={controller.closeDraft}>
+        close
+      </button>
     </div>
   );
 }
@@ -82,7 +83,7 @@ function ChildContractHarness(props: {
     draftForm: props.draftForm,
     childOwnerId: 'detail-child',
     mode: 'summary-gate',
-    active: props.active
+    active: props.active,
   });
 
   return null;
@@ -92,11 +93,16 @@ describe('useDetailChildValidationContract', () => {
   it('registers and unregisters an active child contract', () => {
     const parentValidationOwner = {
       registerChildContract: vi.fn(),
-      unregisterChildContract: vi.fn()
+      unregisterChildContract: vi.fn(),
     };
     const draftForm = {
-      getScopeState: vi.fn(() => ({ ready: true, validating: false, valid: true, hasErrors: false })),
-      validateAll: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} }))
+      getScopeState: vi.fn(() => ({
+        ready: true,
+        validating: false,
+        valid: true,
+        hasErrors: false,
+      })),
+      validateAll: vi.fn(async () => ({ ok: true, errors: [], fieldErrors: {} })),
     };
 
     const { unmount } = render(
@@ -104,7 +110,7 @@ describe('useDetailChildValidationContract', () => {
         parentValidationOwner={parentValidationOwner}
         draftForm={draftForm}
         active={true}
-      />
+      />,
     );
 
     expect(parentValidationOwner.registerChildContract).toHaveBeenCalledTimes(1);
@@ -112,7 +118,7 @@ describe('useDetailChildValidationContract', () => {
     expect(registration).toMatchObject({
       childOwnerId: 'detail-child',
       mode: 'summary-gate',
-      active: true
+      active: true,
     });
 
     unmount();

@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createSpreadsheetCore,
-  createEmptyDocument,
-  type SpreadsheetCore,
-} from '../index.js';
+import { createSpreadsheetCore, createEmptyDocument, type SpreadsheetCore } from '../index.js';
 
 describe('undo/redo', () => {
   let core: SpreadsheetCore;
@@ -201,7 +197,9 @@ describe('subscribe', () => {
     const core = createSpreadsheetCore({ document: doc });
 
     let notified = false;
-    core.subscribe(() => { notified = true; });
+    core.subscribe(() => {
+      notified = true;
+    });
 
     await core.dispatch({
       type: 'spreadsheet:setCellValue',
@@ -218,7 +216,9 @@ describe('subscribe', () => {
     const core = createSpreadsheetCore({ document: doc });
 
     let count = 0;
-    const unsub = core.subscribe(() => { count++; });
+    const unsub = core.subscribe(() => {
+      count++;
+    });
     unsub();
 
     await core.dispatch({

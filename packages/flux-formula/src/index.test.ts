@@ -1,10 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSchemaDiagnosticCollector, type RendererEnv, type ScopeRef } from '@nop-chaos/flux-core';
-import { createExpressionCompiler, createFormulaCompiler, registerFunction, resetFormulaRegistry } from './index';
+import {
+  createSchemaDiagnosticCollector,
+  type RendererEnv,
+  type ScopeRef,
+} from '@nop-chaos/flux-core';
+import {
+  createExpressionCompiler,
+  createFormulaCompiler,
+  registerFunction,
+  resetFormulaRegistry,
+} from './index';
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 afterEach(() => {
@@ -32,7 +41,7 @@ function createScope(data: Record<string, any>): ScopeRef {
     materializeVisible: () => data,
     value: data,
     update: () => undefined,
-    merge: () => {}
+    merge: () => {},
   };
 }
 
@@ -75,14 +84,16 @@ describe('createFormulaCompiler', () => {
 
   it('supports imported alias expression calls', () => {
     const compiler = createFormulaCompiler();
-    const expression = compiler.compileExpression('${$demo.formatName(user.firstName, user.lastName)}');
+    const expression = compiler.compileExpression(
+      '${$demo.formatName(user.firstName, user.lastName)}',
+    );
     const scope = createScope({
       user: { firstName: 'Ada', lastName: 'Lovelace' },
       $demo: {
         formatName(first: string, last: string) {
           return `${last}, ${first}`;
-        }
-      }
+        },
+      },
     });
 
     expect(expression.exec(scope, env)).toBe('Lovelace, Ada');
@@ -90,7 +101,10 @@ describe('createFormulaCompiler', () => {
 
   it('rewrites filter-pipe compatibility syntax to function calls', () => {
     resetFormulaRegistry();
-    registerFunction('wrap', (value: unknown, left: string, right: string) => `${left}${String(value)}${right}`);
+    registerFunction(
+      'wrap',
+      (value: unknown, left: string, right: string) => `${left}${String(value)}${right}`,
+    );
     const compiler = createFormulaCompiler();
     const expression = compiler.compileExpression('${name | wrap:"[":"]"}');
 
@@ -104,17 +118,19 @@ describe('createFormulaCompiler', () => {
 
     const result = expression.exec(createScope({ user: null }), {
       ...env,
-      monitor: { onError }
+      monitor: { onError },
     });
 
     expect(result).toBeUndefined();
     expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-      phase: 'expression',
-      details: expect.objectContaining({
-        source: '${user.name.first}'
-      })
-    }));
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 'expression',
+        details: expect.objectContaining({
+          source: '${user.name.first}',
+        }),
+      }),
+    );
   });
 
   it('keeps IF lazy and does not evaluate the untaken branch', () => {
@@ -126,7 +142,9 @@ describe('createFormulaCompiler', () => {
 
   it('keeps SWITCH lazy and does not evaluate unmatched branches', () => {
     const compiler = createFormulaCompiler();
-    const expression = compiler.compileExpression('${SWITCH(kind, "a", title, "b", missing.deep.path, "fallback")}');
+    const expression = compiler.compileExpression(
+      '${SWITCH(kind, "a", title, "b", missing.deep.path, "fallback")}',
+    );
 
     expect(expression.exec(createScope({ kind: 'a', title: 'picked' }), env)).toBe('picked');
   });
@@ -134,9 +152,21 @@ describe('createFormulaCompiler', () => {
   it('supports manual migration paths for and/or operators and $Date namespace helpers', () => {
     const compiler = createFormulaCompiler();
 
-    expect(compiler.compileExpression('${flag and alt}').exec(createScope({ flag: true, alt: 'ok' }), env)).toBe('ok');
-    expect(compiler.compileExpression('${primary or backup}').exec(createScope({ primary: '', backup: 'fallback' }), env)).toBe('fallback');
-    expect(compiler.compileExpression('${$Date.format("2026-04-13T12:34:56Z", "iso-date")}').exec(createScope({}), env)).toBe('2026-04-13');
+    expect(
+      compiler
+        .compileExpression('${flag and alt}')
+        .exec(createScope({ flag: true, alt: 'ok' }), env),
+    ).toBe('ok');
+    expect(
+      compiler
+        .compileExpression('${primary or backup}')
+        .exec(createScope({ primary: '', backup: 'fallback' }), env),
+    ).toBe('fallback');
+    expect(
+      compiler
+        .compileExpression('${$Date.format("2026-04-13T12:34:56Z", "iso-date")}')
+        .exec(createScope({}), env),
+    ).toBe('2026-04-13');
   });
 
   it('rejects unsupported migration syntax like AND/ABS/window/cookie access', () => {
@@ -144,9 +174,17 @@ describe('createFormulaCompiler', () => {
 
     expect(() => compiler.compileExpression('${window:token}')).toThrow();
     expect(() => compiler.compileExpression('${cookie:key}')).toThrow();
-    expect(compiler.compileExpression('${$$}').exec(createScope({ '$$': 'plain-value' }), env)).toBe('plain-value');
-    expect(compiler.compileExpression('${$varName}').exec(createScope({ '$varName': 'scoped' }), env)).toBe('scoped');
-    expect(compiler.compileExpression('${AND(flag, other)}').exec(createScope({ flag: true, other: true }), env)).toBeUndefined();
+    expect(compiler.compileExpression('${$$}').exec(createScope({ $$: 'plain-value' }), env)).toBe(
+      'plain-value',
+    );
+    expect(
+      compiler.compileExpression('${$varName}').exec(createScope({ $varName: 'scoped' }), env),
+    ).toBe('scoped');
+    expect(
+      compiler
+        .compileExpression('${AND(flag, other)}')
+        .exec(createScope({ flag: true, other: true }), env),
+    ).toBeUndefined();
     expect(compiler.compileExpression('${ABS(-3)}').exec(createScope({}), env)).toBeUndefined();
   });
 
@@ -156,13 +194,14 @@ describe('createFormulaCompiler', () => {
 
     compiler.compileExpression('${$slot.missing}', {
       sourcePath: '$.body[0].text',
-      reportDiagnostic: (issue) => collector.add({
-        code: issue.code,
-        path: issue.path,
-        message: issue.message,
-        severity: issue.severity ?? 'error',
-        source: issue.source ?? 'core'
-      }),
+      reportDiagnostic: (issue) =>
+        collector.add({
+          code: issue.code,
+          path: issue.path,
+          message: issue.message,
+          severity: issue.severity ?? 'error',
+          source: issue.source ?? 'core',
+        }),
       symbolTable: {
         frames: [],
         push(_frame) {
@@ -170,12 +209,12 @@ describe('createFormulaCompiler', () => {
         },
         resolve() {
           return undefined;
-        }
-      }
+        },
+      },
     });
 
     expect(diagnostics).toEqual([
-      expect.objectContaining({ code: 'slot-used-outside-region', path: '$.body[0].text' })
+      expect.objectContaining({ code: 'slot-used-outside-region', path: '$.body[0].text' }),
     ]);
   });
 
@@ -217,7 +256,7 @@ describe('createExpressionCompiler', () => {
     const compiler = createExpressionCompiler();
     const compiled = compiler.compileValue({
       title: '${user.name}',
-      summary: 'Role: ${user.role}'
+      summary: 'Role: ${user.role}',
     });
 
     if (compiled.kind !== 'dynamic') {
@@ -227,7 +266,12 @@ describe('createExpressionCompiler', () => {
     const state = compiler.createState(compiled);
     const scopeA = createScope({ user: { name: 'Alice', role: 'admin' } });
     const first = compiler.evaluateWithState(compiled, scopeA, env, state);
-    const second = compiler.evaluateWithState(compiled, createScope({ user: { name: 'Alice', role: 'admin' } }), env, state);
+    const second = compiler.evaluateWithState(
+      compiled,
+      createScope({ user: { name: 'Alice', role: 'admin' } }),
+      env,
+      state,
+    );
 
     expect(first.value).toEqual({ title: 'Alice', summary: 'Role: admin' });
     expect(second.value).toBe(first.value);

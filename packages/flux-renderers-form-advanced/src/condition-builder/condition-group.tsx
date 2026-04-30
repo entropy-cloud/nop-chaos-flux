@@ -142,16 +142,13 @@ export function ConditionGroup({
 
   const atMaxItems = maxItemsPerGroup != null && value.children.length >= maxItemsPerGroup;
 
-  const conjunctionLabel = value.conjunction === 'and' ? t('conditionBuilder.and') : t('conditionBuilder.or');
+  const conjunctionLabel =
+    value.conjunction === 'and' ? t('conditionBuilder.and') : t('conditionBuilder.or');
 
   const childIds = useMemo(() => value.children.map((c) => c.id), [value.children]);
 
   const childrenList = draggable ? (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={childIds} strategy={verticalListSortingStrategy}>
         {value.children.length === 0 && (
           <div className="text-xs text-muted-foreground py-4 text-center">
@@ -185,7 +182,9 @@ export function ConditionGroup({
                   onRemove={() => handleChildRemove(index)}
                   disabled={disabled}
                   searchable={searchable}
-                  usedFields={uniqueFields ? computeUsedFields(value.children, child.id) : undefined}
+                  usedFields={
+                    uniqueFields ? computeUsedFields(value.children, child.id) : undefined
+                  }
                   uniqueFields={uniqueFields}
                   draggable={draggable}
                   dragHandleProps={dragHandleProps}
@@ -293,9 +292,7 @@ export function ConditionGroup({
                 </Button>
               </div>
             ) : (
-              <span className="text-xs font-medium text-muted-foreground">
-                {conjunctionLabel}
-              </span>
+              <span className="text-xs font-medium text-muted-foreground">{conjunctionLabel}</span>
             )}
 
             {showNot && (
@@ -318,9 +315,7 @@ export function ConditionGroup({
           </div>
         )}
 
-        <div className="flex flex-col gap-1.5 p-3">
-          {childrenList}
-        </div>
+        <div className="flex flex-col gap-1.5 p-3">{childrenList}</div>
 
         {(!atMaxItems || canNest) && (
           <div className="flex items-center gap-1.5 px-3 pb-3">
@@ -337,9 +332,7 @@ export function ConditionGroup({
                 {addConditionLabel}
               </Button>
             )}
-            {canNest && !atMaxItems && (
-              <span className="text-muted-foreground/40 text-xs">|</span>
-            )}
+            {canNest && !atMaxItems && <span className="text-muted-foreground/40 text-xs">|</span>}
             {canNest && (
               <Button
                 type="button"
@@ -360,15 +353,16 @@ export function ConditionGroup({
   );
 }
 
-function SortableItem({ id, children }: { id: string; children: (dragHandleProps: React.HTMLAttributes<HTMLElement>) => React.ReactNode }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
+function SortableItem({
+  id,
+  children,
+}: {
+  id: string;
+  children: (dragHandleProps: React.HTMLAttributes<HTMLElement>) => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),

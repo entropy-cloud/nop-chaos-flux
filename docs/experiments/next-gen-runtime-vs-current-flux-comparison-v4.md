@@ -10,13 +10,13 @@
 这里必须明确区分三个层面：
 
 1. 当前项目的目标设计
-来源主要是 `docs/architecture/*.md`
+   来源主要是 `docs/architecture/*.md`
 
 2. 当前项目的已实现状态
-来源主要是 `packages/flux-core/src/types/*`、`packages/flux-runtime/src/*`、`packages/flux-react/src/*`
+   来源主要是 `packages/flux-core/src/types/*`、`packages/flux-runtime/src/*`、`packages/flux-react/src/*`
 
 3. 实验性 v4 设计
-这是一份经过收敛后的 v4 设计：它最初由 `docs/low-code-dsl-runtime-requirements.md` 驱动，但当前版本还必须满足 `docs/experiments/requirements.md`，即符合 Flux 设计原则、Flux DSL VM 定位，以及嵌入式 React 宿主和静态 `RendererEnv` 约束。
+   这是一份经过收敛后的 v4 设计：它最初由 `docs/low-code-dsl-runtime-requirements.md` 驱动，但当前版本还必须满足 `docs/experiments/requirements.md`，即符合 Flux 设计原则、Flux DSL VM 定位，以及嵌入式 React 宿主和静态 `RendererEnv` 约束。
 
 因此本文不是简单比较“两个文档”，而是比较：
 

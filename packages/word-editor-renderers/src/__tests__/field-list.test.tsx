@@ -13,7 +13,7 @@ vi.mock('@nop-chaos/ui', () => {
       </button>
     ),
     ScrollArea: ({ children }: any) => <div data-testid="scroll-area">{children}</div>,
-    cn: (...args: any[]) => args.filter(Boolean).join(' ')
+    cn: (...args: any[]) => args.filter(Boolean).join(' '),
   };
 });
 
@@ -29,8 +29,8 @@ function createMockStore(selectedDatasetId: string | null = null, datasets: Data
     },
     _setState: (newState: Partial<typeof state>) => {
       state = { ...state, ...newState };
-      listeners.forEach(l => l());
-    }
+      listeners.forEach((l) => l());
+    },
   };
 }
 
@@ -59,7 +59,7 @@ describe('FieldList', () => {
 
   it('shows empty state for dataset with no columns', () => {
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'TestDS', description: '', type: 'static', columns: [] }
+      { id: 'ds1', name: 'TestDS', description: '', type: 'static', columns: [] },
     ];
     const store = createMockStore('ds1', datasets);
     render(<FieldList store={store as any} />);
@@ -69,10 +69,10 @@ describe('FieldList', () => {
   it('renders columns when dataset has columns', () => {
     const columns: DataColumn[] = [
       { name: 'col1', label: 'Column 1', type: 'sql' },
-      { name: 'col2', label: 'Column 2', type: 'api', description: 'An API column' }
+      { name: 'col2', label: 'Column 2', type: 'api', description: 'An API column' },
     ];
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'TestDS', description: 'Test', type: 'sql', columns }
+      { id: 'ds1', name: 'TestDS', description: 'Test', type: 'sql', columns },
     ];
     const store = createMockStore('ds1', datasets);
     render(<FieldList store={store as any} />);
@@ -84,11 +84,9 @@ describe('FieldList', () => {
   });
 
   it('shows type badges for columns', () => {
-    const columns: DataColumn[] = [
-      { name: 'col1', label: 'Column 1', type: 'sql' }
-    ];
+    const columns: DataColumn[] = [{ name: 'col1', label: 'Column 1', type: 'sql' }];
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns }
+      { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns },
     ];
     const store = createMockStore('ds1', datasets);
     render(<FieldList store={store as any} />);
@@ -97,11 +95,9 @@ describe('FieldList', () => {
 
   it('calls onFieldClick when a column is clicked', async () => {
     const onFieldClick = vi.fn();
-    const columns: DataColumn[] = [
-      { name: 'col1', label: 'Column 1', type: 'sql' }
-    ];
+    const columns: DataColumn[] = [{ name: 'col1', label: 'Column 1', type: 'sql' }];
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns }
+      { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns },
     ];
     const store = createMockStore('ds1', datasets);
     render(<FieldList store={store as any} onFieldClick={onFieldClick} />);
@@ -113,10 +109,10 @@ describe('FieldList', () => {
 
   it('displays column description when present', () => {
     const columns: DataColumn[] = [
-      { name: 'col1', label: 'Column 1', type: 'sql', description: 'A description' }
+      { name: 'col1', label: 'Column 1', type: 'sql', description: 'A description' },
     ];
     const datasets: DataSet[] = [
-      { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns }
+      { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns },
     ];
     const store = createMockStore('ds1', datasets);
     render(<FieldList store={store as any} />);

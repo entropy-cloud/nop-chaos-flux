@@ -7,11 +7,23 @@ import {
 } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Checkbox, cn, Input, Label, RadioGroup, RadioGroupItem, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Spinner, Switch, Textarea } from '@nop-chaos/ui';
 import {
-  formLabelFieldRule,
-  useFormFieldController
-} from '../field-utils';
+  Checkbox,
+  cn,
+  Input,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Spinner,
+  Switch,
+  Textarea,
+} from '@nop-chaos/ui';
+import { formLabelFieldRule, useFormFieldController } from '../field-utils';
 import type {
   CheckboxGroupSchema,
   CheckboxSchema,
@@ -19,7 +31,7 @@ import type {
   RadioGroupSchema,
   SelectSchema,
   SwitchSchema,
-  TextareaSchema
+  TextareaSchema,
 } from '../schemas';
 
 export function createInputRenderer(inputType: string) {
@@ -29,7 +41,7 @@ export function createInputRenderer(inputType: string) {
       adapter: stringAdapter(),
       disabled: props.meta.disabled,
       required: Boolean(props.props.required),
-      readOnly: Boolean(props.props.readOnly)
+      readOnly: Boolean(props.props.readOnly),
     });
     const inputValue = value as string;
 
@@ -52,16 +64,17 @@ export function createInputRenderer(inputType: string) {
 
 const stringValueAdapter = stringAdapter();
 const booleanValueAdapter = booleanStringAdapter();
-const checkboxGroupAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true; __syncOut: true } = {
-  __syncIn: true,
-  __syncOut: true,
-  in(value) {
-    return Array.isArray(value) ? value : [];
-  },
-  out(value) {
-    return Array.isArray(value) ? value : [];
-  }
-};
+const checkboxGroupAdapter: ValueAdapter<unknown, unknown[]> & { __syncIn: true; __syncOut: true } =
+  {
+    __syncIn: true,
+    __syncOut: true,
+    in(value) {
+      return Array.isArray(value) ? value : [];
+    },
+    out(value) {
+      return Array.isArray(value) ? value : [];
+    },
+  };
 
 function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
   if (sourceState?.status !== 'error') {
@@ -84,7 +97,10 @@ function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
   return 'Failed to load options.';
 }
 
-export function createFieldValidation(nameResolver?: (schema: InputSchema) => string | undefined, email?: boolean) {
+export function createFieldValidation(
+  nameResolver?: (schema: InputSchema) => string | undefined,
+  email?: boolean,
+) {
   return {
     kind: 'field' as const,
     valueKind: 'scalar' as const,
@@ -92,21 +108,27 @@ export function createFieldValidation(nameResolver?: (schema: InputSchema) => st
       return nameResolver ? nameResolver(schema) : schema.name;
     },
     collectRules(schema: InputSchema) {
-      const rules: Array<{ kind: 'email' } | { kind: 'async'; action: import('@nop-chaos/flux-core').ActionSchema; debounce?: number; message?: string }> = email
-        ? [{ kind: 'email' }]
-        : [];
+      const rules: Array<
+        | { kind: 'email' }
+        | {
+            kind: 'async';
+            action: import('@nop-chaos/flux-core').ActionSchema;
+            debounce?: number;
+            message?: string;
+          }
+      > = email ? [{ kind: 'email' }] : [];
 
       if (schema.validate?.action) {
         rules.push({
           kind: 'async',
           action: schema.validate.action,
           debounce: schema.validate.debounce,
-          message: schema.validate.message
+          message: schema.validate.message,
         });
       }
 
       return rules;
-    }
+    },
   };
 }
 
@@ -116,7 +138,7 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     adapter: stringValueAdapter,
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly)
+    readOnly: Boolean(props.props.readOnly),
   });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -129,7 +151,11 @@ function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
 
   return (
     <div className={cn('nop-select-wrapper', props.meta.className)} data-slot="select-wrapper">
-      <Select value={selectedValue} onValueChange={(nextValue) => handlers.onChange(nextValue)} disabled={loading || presentation.effectiveDisabled}>
+      <Select
+        value={selectedValue}
+        onValueChange={(nextValue) => handlers.onChange(nextValue)}
+        disabled={loading || presentation.effectiveDisabled}
+      >
         <SelectTrigger
           data-slot="select-trigger"
           aria-label={ariaLabel}
@@ -159,7 +185,7 @@ function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) {
     adapter: stringValueAdapter,
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly)
+    readOnly: Boolean(props.props.readOnly),
   });
   const textareaValue = value as string;
 
@@ -185,7 +211,7 @@ function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) {
     adapter: booleanValueAdapter,
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly)
+    readOnly: Boolean(props.props.readOnly),
   });
   const option = props.props.option as CheckboxSchema['option'] | undefined;
   const optionLabel = option?.label;
@@ -213,7 +239,7 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
     adapter: booleanValueAdapter,
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly)
+    readOnly: Boolean(props.props.readOnly),
   });
   const option = props.props.option as SwitchSchema['option'] | undefined;
   const checked = value as boolean;
@@ -229,7 +255,9 @@ function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
         onCheckedChange={(nextChecked) => handlers.onChange(Boolean(nextChecked))}
         onBlur={handlers.onBlur}
       />
-      <span data-slot="switch-label">{checked ? option?.onLabel ?? 'On' : option?.offLabel ?? 'Off'}</span>
+      <span data-slot="switch-label">
+        {checked ? (option?.onLabel ?? 'On') : (option?.offLabel ?? 'Off')}
+      </span>
     </span>
   );
 }
@@ -240,7 +268,7 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
     adapter: stringValueAdapter,
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly)
+    readOnly: Boolean(props.props.readOnly),
   });
   const options = Array.isArray(props.props.options) ? props.props.options : [];
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -249,7 +277,10 @@ function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchema>) {
   const selectedValue = value as string;
 
   return (
-    <div className={cn('nop-radio-group-wrapper', props.meta.className)} data-slot="radio-group-wrapper">
+    <div
+      className={cn('nop-radio-group-wrapper', props.meta.className)}
+      data-slot="radio-group-wrapper"
+    >
       {loading ? (
         <span data-slot="radio-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
@@ -283,7 +314,7 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
     adapter: checkboxGroupAdapter,
     disabled: props.meta.disabled,
     required: Boolean(props.props.required),
-    readOnly: Boolean(props.props.readOnly)
+    readOnly: Boolean(props.props.readOnly),
   });
   const selectedValues = value as unknown[];
   const options = Array.isArray(props.props.options) ? props.props.options : [];
@@ -292,7 +323,10 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
   const errorMessage = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div className={cn('nop-checkbox-group-wrapper', props.meta.className)} data-slot="checkbox-group-wrapper">
+    <div
+      className={cn('nop-checkbox-group-wrapper', props.meta.className)}
+      data-slot="checkbox-group-wrapper"
+    >
       {loading ? (
         <span data-slot="checkbox-group-loading">
           <Spinner className="size-4" aria-hidden="true" />
@@ -300,7 +334,9 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
         </span>
       ) : null}
       {options?.map((option) => {
-        const checked = selectedValues.some((candidate: unknown) => Object.is(candidate, option.value));
+        const checked = selectedValues.some((candidate: unknown) =>
+          Object.is(candidate, option.value),
+        );
 
         return (
           <Label key={option.value} data-slot="checkbox-group-item">
@@ -314,7 +350,9 @@ function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema
                 const checkedValue = Boolean(nextChecked);
                 const nextValue = checkedValue
                   ? [...selectedValues, option.value]
-                  : selectedValues.filter((candidate: unknown) => !Object.is(candidate, option.value));
+                  : selectedValues.filter(
+                      (candidate: unknown) => !Object.is(candidate, option.value),
+                    );
                 handlers.onChange(nextValue);
               }}
               onBlur={handlers.onBlur}
@@ -334,62 +372,71 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     component: createInputRenderer('text'),
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
-    wrap: true
+    wrap: true,
   },
   {
     type: 'input-email',
     component: createInputRenderer('email'),
     fields: [formLabelFieldRule],
     validation: createFieldValidation(undefined, true),
-    wrap: true
+    wrap: true,
   },
   {
     type: 'input-password',
     component: createInputRenderer('password'),
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
-    wrap: true
+    wrap: true,
   },
   {
     type: 'select',
-    fields: [formLabelFieldRule, { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' }],
+    fields: [
+      formLabelFieldRule,
+      { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+    ],
     validation: createFieldValidation(),
     wrap: true,
-    component: SelectRenderer
+    component: SelectRenderer,
   },
   {
     type: 'textarea',
     fields: [formLabelFieldRule],
     component: TextareaRenderer,
     validation: createFieldValidation(),
-    wrap: true
+    wrap: true,
   },
   {
     type: 'checkbox',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
     wrap: true,
-    component: CheckboxRenderer
+    component: CheckboxRenderer,
   },
   {
     type: 'switch',
     fields: [formLabelFieldRule],
     validation: createFieldValidation(),
     wrap: true,
-    component: SwitchRenderer
+    component: SwitchRenderer,
   },
   {
     type: 'radio-group',
-    fields: [formLabelFieldRule, { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' }],
+    fields: [
+      formLabelFieldRule,
+      { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+    ],
     validation: createFieldValidation(),
     wrap: true,
-    component: RadioGroupRenderer
+    component: RadioGroupRenderer,
   },
   {
     type: 'checkbox-group',
-    fields: [formLabelFieldRule, { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' }],
+    fields: [
+      formLabelFieldRule,
+      { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+    ],
     validation: createFieldValidation(),
     wrap: true,
-    component: CheckboxGroupRenderer
-  }
+    component: CheckboxGroupRenderer,
+  },
 ];

@@ -63,6 +63,8 @@ describe('spreadsheet page model helpers', () => {
     });
 
     const host = deriveHostSnapshot(core.getSnapshot());
-    expect(buildSpreadsheetStatusLabel(host)).toBe(`Active sheet: ${host.activeSheet?.name ?? 'Unknown'} | Selection: cell`);
+    expect(buildSpreadsheetStatusLabel(host)).toBe(
+      `Active sheet: ${host.activeSheet?.name ?? 'Unknown'} | Selection: cell`,
+    );
   });
 });

@@ -2,7 +2,7 @@ import type {
   FormStatusSummary,
   FormStoreState,
   ScopeChange,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { validationErrorsEqual } from '@nop-chaos/flux-core';
 import { createReadonlyScopeBinding } from './status-owner';
@@ -12,7 +12,7 @@ export { validationErrorsEqual };
 export function buildFormStatusSummary(
   state: FormStoreState,
   id: string | undefined,
-  name: string | undefined
+  name: string | undefined,
 ): FormStatusSummary {
   let errorCount = 0;
   let validating = false;
@@ -43,7 +43,7 @@ export function buildFormStatusSummary(
     hasErrors,
     errorCount,
     valid: !hasErrors,
-    invalid: hasErrors
+    invalid: hasErrors,
   };
 }
 
@@ -53,10 +53,8 @@ export function createFormScopeWithBinding(input: {
   formName: string | undefined;
   getStoreState: () => FormStoreState;
 }) {
-  const formScopeWithBinding = createReadonlyScopeBinding(
-    input.scope,
-    '$form',
-    () => buildFormStatusSummary(input.getStoreState(), input.formId, input.formName)
+  const formScopeWithBinding = createReadonlyScopeBinding(input.scope, '$form', () =>
+    buildFormStatusSummary(input.getStoreState(), input.formId, input.formName),
   );
 
   Object.defineProperty(formScopeWithBinding, 'value', {
@@ -64,7 +62,7 @@ export function createFormScopeWithBinding(input: {
       return this.readVisible();
     },
     configurable: true,
-    enumerable: false
+    enumerable: false,
   });
 
   return formScopeWithBinding;
@@ -75,6 +73,6 @@ export function createInitialFormScopeChange(formId: string): ScopeChange {
     paths: ['*'],
     sourceScopeId: formId,
     kind: 'replace',
-    revision: 0
+    revision: 0,
   } as const;
 }

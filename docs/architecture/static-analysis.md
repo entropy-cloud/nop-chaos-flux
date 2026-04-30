@@ -17,8 +17,8 @@ Static analysis is a compiler-computed optimization that identifies which parts 
 
 ```typescript
 interface StaticAnalysisResult {
-  isStaticContent: boolean;  // True if this node and all descendants are static
-  dependencies: readonly string[];  // Dependency paths (empty if static)
+  isStaticContent: boolean; // True if this node and all descendants are static
+  dependencies: readonly string[]; // Dependency paths (empty if static)
 }
 ```
 
@@ -26,15 +26,15 @@ interface StaticAnalysisResult {
 
 A node is considered **static** when ALL of the following are true:
 
-| Condition | Why |
-|-----------|-----|
-| `renderer.staticCapable === true` | Renderer must support static rendering |
-| `propsProgram.isStatic === true` | Props must have no expressions |
-| `metaProgram` fields all static | visible/disabled/etc. must have no expressions |
-| `schema.name === undefined` | No data binding |
-| `eventPlans` is empty | No event handlers |
-| `scopePlan.kind === 'inherit'` | Doesn't create new scope |
-| All children static | Recursive, but computed bottom-up |
+| Condition                         | Why                                            |
+| --------------------------------- | ---------------------------------------------- |
+| `renderer.staticCapable === true` | Renderer must support static rendering         |
+| `propsProgram.isStatic === true`  | Props must have no expressions                 |
+| `metaProgram` fields all static   | visible/disabled/etc. must have no expressions |
+| `schema.name === undefined`       | No data binding                                |
+| `eventPlans` is empty             | No event handlers                              |
+| `scopePlan.kind === 'inherit'`    | Doesn't create new scope                       |
+| All children static               | Recursive, but computed bottom-up              |
 
 ## Renderer staticCapable Declaration
 
@@ -44,21 +44,23 @@ Renderers must declare their static capability:
 const textRenderer: RendererDefinition = {
   type: 'text',
   component: TextRenderer,
-  staticCapable: true  // Display-only, no interaction
+  staticCapable: true, // Display-only, no interaction
 };
 
 const inputRenderer: RendererDefinition = {
   type: 'input-text',
   component: InputRenderer,
-  staticCapable: false  // Interactive, always needs hydration
+  staticCapable: false, // Interactive, always needs hydration
 };
 ```
 
 **Display-only renderers** (`staticCapable: true`):
+
 - `text`, `icon`, `badge`, `image`, `divider`
 - `container`, `flex`, `fragment`, `panel`, `card`
 
 **Interactive renderers** (`staticCapable: false` or default):
+
 - All form inputs (`input-*`, `select`, `checkbox`, etc.)
 - `button`, `tabs`, `table`, `tree`
 - `form`, `dialog`, `drawer`

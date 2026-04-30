@@ -6,14 +6,14 @@ function createEnv(): RendererEnv {
   const fetcher: ApiFetcher = async <T>(api: unknown) => ({
     ok: true,
     status: 200,
-    data: api as T
+    data: api as T,
   });
 
   return {
     fetcher: vi.fn(fetcher) as unknown as ApiFetcher,
     notify: vi.fn(),
     navigate: vi.fn(),
-    monitor: {}
+    monitor: {},
   };
 }
 
@@ -29,10 +29,13 @@ describe('decorateRendererEnv', () => {
     const fetchHook = vi.fn(async (next, api, ctx) => next({ ...api, tagged: true }, ctx));
     const decorated = decorateRendererEnv(env, { fetcher: fetchHook });
 
-    const result = await decorated.fetcher<{ tagged: boolean }>({ url: '/api/test' }, {
-      env: decorated,
-      scope: {} as never
-    });
+    const result = await decorated.fetcher<{ tagged: boolean }>(
+      { url: '/api/test' },
+      {
+        env: decorated,
+        scope: {} as never,
+      },
+    );
 
     expect(fetchHook).toHaveBeenCalledTimes(1);
     expect(env.fetcher).toHaveBeenCalledTimes(1);
@@ -52,7 +55,7 @@ describe('decorateRendererEnv', () => {
       navigate(next, to, options) {
         calls.push(`navigate:${String(to)}`);
         next(to, options);
-      }
+      },
     });
 
     decorated.notify('warning', 'watch out');

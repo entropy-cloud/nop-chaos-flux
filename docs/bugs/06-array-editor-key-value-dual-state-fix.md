@@ -36,4 +36,3 @@
 - complex field renderers must not maintain local state that mirrors store state without a sync mechanism
 - when adding store or scope subscriptions, use deep equality only across the fields the renderer actually consumes; if row objects grow new UI-relevant fields, update the comparator too
 - if a new renderer follows the same `useState` + `syncItems` pattern, it will have the same bug
-

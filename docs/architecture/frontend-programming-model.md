@@ -31,14 +31,14 @@ If a narrower document conflicts with this document about primitive identity, co
 
 This document uses these canonical terms:
 
-| Term | Meaning |
-| --- | --- |
-| `Final Execution Schema` | the already-assembled schema consumed by `Flux` at runtime after static structure decisions, default expansion, and static trimming are complete |
-| `Authoring Model` | the editable, round-trip-preserving source model |
-| `Execution Model` | the `Final Execution Schema` plus runtime-owned state and sidecars |
-| `Lexical Ownership` | ownership that follows scope or subtree boundaries |
-| `Logical Value` | one authoritative published binding target |
-| `Semantic Lifecycle Entry` | a node-owned semantic entry point such as form submit, page enter, dialog open, or host-specific semantic activation |
+| Term                       | Meaning                                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Final Execution Schema`   | the already-assembled schema consumed by `Flux` at runtime after static structure decisions, default expansion, and static trimming are complete |
+| `Authoring Model`          | the editable, round-trip-preserving source model                                                                                                 |
+| `Execution Model`          | the `Final Execution Schema` plus runtime-owned state and sidecars                                                                               |
+| `Lexical Ownership`        | ownership that follows scope or subtree boundaries                                                                                               |
+| `Logical Value`            | one authoritative published binding target                                                                                                       |
+| `Semantic Lifecycle Entry` | a node-owned semantic entry point such as form submit, page enter, dialog open, or host-specific semantic activation                             |
 
 For broader terminology, use `docs/references/terminology.md`.
 
@@ -79,11 +79,11 @@ The current programming model includes these stable design rules:
 5. Judge future adjustments first by `DSL` continuity rather than runtime elegance alone.
 6. Preserve progressive authoring surfaces:
 
-| Concern | Progressive path |
-| --- | --- |
-| value production | plain value -> `${expr}` -> `type: 'source'` -> `type: 'data-source'` |
-| effect orchestration | single-step dispatch -> `when` -> `then` / `onError` -> `parallel` |
-| structure | `visible` -> `when` -> `loop` -> `dynamic-renderer` |
+| Concern              | Progressive path                                                      |
+| -------------------- | --------------------------------------------------------------------- |
+| value production     | plain value -> `${expr}` -> `type: 'source'` -> `type: 'data-source'` |
+| effect orchestration | single-step dispatch -> `when` -> `then` / `onError` -> `parallel`    |
+| structure            | `visible` -> `when` -> `loop` -> `dynamic-renderer`                   |
 
 7. Keep `Capability` focused on authority lookup and targeting; keep `Action Algebra` as derived control flow layered above it.
 8. `ApiSchema` is the internal transport descriptor used by the `ajax` action; it is not an independent execution path. Authoring-level `api` fields compile to standard `ajax` actions. `Operation Control` remains the shared execution-control layer.
@@ -95,12 +95,12 @@ The current programming model includes these stable design rules:
 
 A platform built on `Flux` should be understood as four layers:
 
-| Layer | Owns |
-| --- | --- |
-| `Authoring Model` | source locations, aliases, editor metadata, round-trip fidelity, editing structure |
-| loader / assembly | inheritance expansion, policy trimming, `i18n`, static defaults, final schema assembly |
+| Layer                    | Owns                                                                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `Authoring Model`        | source locations, aliases, editor metadata, round-trip fidelity, editing structure                                                       |
+| loader / assembly        | inheritance expansion, policy trimming, `i18n`, static defaults, final schema assembly                                                   |
 | `Flux` `Execution Model` | value evaluation, dependency tracking, `Resource` lifecycle, `Reaction` scheduling, `Capability` resolution, host projection consumption |
-| host and domain runtimes | domain cores, bridges, collaboration engines, session models, workbench shells, special host protocols |
+| host and domain runtimes | domain cores, bridges, collaboration engines, session models, workbench shells, special host protocols                                   |
 
 `Flux` is the execution core of the platform, not the whole platform.
 
@@ -110,26 +110,26 @@ The four platform layers describe end-to-end ownership only. They must not be co
 
 Inside the `Flux` `Execution Model`, concepts fall into three categories:
 
-| Category | Meaning |
-| --- | --- |
-| `Core Primitive` | an irreducible semantic category in the closed primitive set |
+| Category                  | Meaning                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `Core Primitive`          | an irreducible semantic category in the closed primitive set                                                 |
 | `Primitive-Owned Surface` | an author-visible or evaluator-visible surface that expresses one primitive without becoming a new primitive |
-| `Derived Runtime System` | a stable runtime system composed from the primitive set |
+| `Derived Runtime System`  | a stable runtime system composed from the primitive set                                                      |
 
 This taxonomy is internal to the `Flux` `Execution Model`. It is not a second platform-layer stack.
 
 Examples:
 
-| Concept | Platform layer | Execution-model category |
-| --- | --- | --- |
-| JSON/XML authoring schema | `Authoring Model` | not part of execution-model taxonomy |
-| `Final Execution Schema` | boundary into `Flux` `Execution Model` | assembled execution contract, not a primitive |
-| expression and template interpolation | `Flux` `Execution Model` | `Primitive-Owned Surface` of `Value` |
-| `Action Algebra` | `Flux` `Execution Model` | `Derived Runtime System` above `Capability` |
-| `ApiSchema` | `Flux` `Execution Model` | internal transport descriptor for the `ajax` action |
-| `Operation Control` | `Flux` `Execution Model` | `Derived Runtime System` |
-| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | `Flux` `Execution Model` | `Derived Runtime System` |
-| CRDT / OT / domain bridge / graph engine | host and domain runtimes | outside `Flux` core |
+| Concept                                          | Platform layer                         | Execution-model category                            |
+| ------------------------------------------------ | -------------------------------------- | --------------------------------------------------- |
+| JSON/XML authoring schema                        | `Authoring Model`                      | not part of execution-model taxonomy                |
+| `Final Execution Schema`                         | boundary into `Flux` `Execution Model` | assembled execution contract, not a primitive       |
+| expression and template interpolation            | `Flux` `Execution Model`               | `Primitive-Owned Surface` of `Value`                |
+| `Action Algebra`                                 | `Flux` `Execution Model`               | `Derived Runtime System` above `Capability`         |
+| `ApiSchema`                                      | `Flux` `Execution Model`               | internal transport descriptor for the `ajax` action |
+| `Operation Control`                              | `Flux` `Execution Model`               | `Derived Runtime System`                            |
+| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | `Flux` `Execution Model`               | `Derived Runtime System`                            |
+| CRDT / OT / domain bridge / graph engine         | host and domain runtimes               | outside `Flux` core                                 |
 
 Two clarifications are required:
 
@@ -207,15 +207,15 @@ Allowed runtime structural multiplication is narrow and derivative only:
 
 `Flux` core has exactly seven primitives.
 
-| Primitive | Question it answers | Owns |
-| --- | --- | --- |
-| `Template` | What is the compiled program structure? | immutable structural template, `Region` composition, lifecycle anchoring, renderer selection |
-| `ScopeRef` | Which data is visible here? | lexical lookup, own-scope writes, shadowing, scope-local ownership |
-| `Value` | How is a value read or derived here? | literal, expression, template, array, and object evaluation against `ScopeRef` |
-| `Resource` | Does runtime own production and publication of a value here? | lifecycle-owned value production, publication of one `Logical Value`, status/refresh/invalidation semantics |
-| `Reaction` | Does a watched change trigger a consequence? | watch/effect behavior over `Value` results |
-| `Capability` | Who has the authority to perform an effect? | built-in, explicit instance-targeted, and lexical namespaced effect dispatch |
-| `Host Projection` | Which readonly host snapshot is visible here? | admission of host-owned readonly snapshot data into schema-visible scope |
+| Primitive         | Question it answers                                          | Owns                                                                                                        |
+| ----------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `Template`        | What is the compiled program structure?                      | immutable structural template, `Region` composition, lifecycle anchoring, renderer selection                |
+| `ScopeRef`        | Which data is visible here?                                  | lexical lookup, own-scope writes, shadowing, scope-local ownership                                          |
+| `Value`           | How is a value read or derived here?                         | literal, expression, template, array, and object evaluation against `ScopeRef`                              |
+| `Resource`        | Does runtime own production and publication of a value here? | lifecycle-owned value production, publication of one `Logical Value`, status/refresh/invalidation semantics |
+| `Reaction`        | Does a watched change trigger a consequence?                 | watch/effect behavior over `Value` results                                                                  |
+| `Capability`      | Who has the authority to perform an effect?                  | built-in, explicit instance-targeted, and lexical namespaced effect dispatch                                |
+| `Host Projection` | Which readonly host snapshot is visible here?                | admission of host-owned readonly snapshot data into schema-visible scope                                    |
 
 ### Primitive Notes
 
@@ -245,10 +245,10 @@ The seven primitives are not independent features. They form one execution model
 
 `Value`, `Resource`, and `Reaction` share one dependency model, but a dependency hit has different consequences:
 
-| Primitive | Dependency consequence |
-| --- | --- |
-| `Value` | recompute the read result |
-| `Resource` | invalidate, recompute, or refresh according to resource policy |
+| Primitive  | Dependency consequence                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------- |
+| `Value`    | recompute the read result                                                                   |
+| `Resource` | invalidate, recompute, or refresh according to resource policy                              |
 | `Reaction` | re-evaluate the watched value and only then decide whether to dispatch through `Capability` |
 
 Dependency change alone does not directly dispatch arbitrary actions. Crossing from dataflow into effects still requires `Reaction` or a `Semantic Lifecycle Entry`.
@@ -308,13 +308,13 @@ A concept may become a new primitive only if all of the following are true:
 
 The following systems are important, but they are derived from the primitive set rather than promoted into it:
 
-| System | Role | Primary doc |
-| --- | --- | --- |
-| `Action Algebra` | composes, branches, aggregates, and classifies `Capability` dispatch | `docs/architecture/action-algebra-formal-spec.md` |
-| `Operation Control` | shared timeout/cancel/retry/dedup substrate above transport and below consumer policy | `docs/architecture/api-data-source.md` |
-| `Semantic Lifecycle Entry` | node-owned business entry such as form submit, page enter, or dialog confirm | `docs/architecture/form-validation.md` |
-| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | domain-shaped execution surfaces built on the primitive set | `docs/architecture/flux-core.md` |
-| debugger runtime and complex host wiring | inspection, tooling, and host protocol layers | `docs/architecture/debugger-runtime.md`, `docs/architecture/complex-control-host-protocol.md` |
+| System                                           | Role                                                                                  | Primary doc                                                                                   |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `Action Algebra`                                 | composes, branches, aggregates, and classifies `Capability` dispatch                  | `docs/architecture/action-algebra-formal-spec.md`                                             |
+| `Operation Control`                              | shared timeout/cancel/retry/dedup substrate above transport and below consumer policy | `docs/architecture/api-data-source.md`                                                        |
+| `Semantic Lifecycle Entry`                       | node-owned business entry such as form submit, page enter, or dialog confirm          | `docs/architecture/form-validation.md`                                                        |
+| `FormRuntime` / `PageRuntime` / `SurfaceRuntime` | domain-shaped execution surfaces built on the primitive set                           | `docs/architecture/flux-core.md`                                                              |
+| debugger runtime and complex host wiring         | inspection, tooling, and host protocol layers                                         | `docs/architecture/debugger-runtime.md`, `docs/architecture/complex-control-host-protocol.md` |
 
 These systems may evolve without increasing the primitive count.
 
@@ -369,13 +369,13 @@ They may appear to `Flux` only through narrow boundaries such as:
 
 Use the narrowest document that owns the detail you need:
 
-| Need | Document |
-| --- | --- |
-| design rationale and principles | `docs/architecture/flux-design-principles.md` |
-| current code-level architecture baseline | `docs/architecture/flux-core.md` |
-| dependency tracking details | `docs/architecture/dependency-tracking.md` |
-| action composition, `then`, `onError`, `parallel`, result classes | `docs/architecture/action-algebra-formal-spec.md` |
-| capability lookup, `ActionScope`, `xui:imports`, component targeting | `docs/architecture/action-scope-and-imports.md` |
-| `source`, `data-source`, `Resource`, and `Reaction` schema details | `docs/architecture/api-data-source.md` |
-| host snapshot and editable-host protocol details | `docs/architecture/complex-control-host-protocol.md` |
-| form-owned lifecycle and validation behavior | `docs/architecture/form-validation.md` |
+| Need                                                                 | Document                                             |
+| -------------------------------------------------------------------- | ---------------------------------------------------- |
+| design rationale and principles                                      | `docs/architecture/flux-design-principles.md`        |
+| current code-level architecture baseline                             | `docs/architecture/flux-core.md`                     |
+| dependency tracking details                                          | `docs/architecture/dependency-tracking.md`           |
+| action composition, `then`, `onError`, `parallel`, result classes    | `docs/architecture/action-algebra-formal-spec.md`    |
+| capability lookup, `ActionScope`, `xui:imports`, component targeting | `docs/architecture/action-scope-and-imports.md`      |
+| `source`, `data-source`, `Resource`, and `Reaction` schema details   | `docs/architecture/api-data-source.md`               |
+| host snapshot and editable-host protocol details                     | `docs/architecture/complex-control-host-protocol.md` |
+| form-owned lifecycle and validation behavior                         | `docs/architecture/form-validation.md`               |

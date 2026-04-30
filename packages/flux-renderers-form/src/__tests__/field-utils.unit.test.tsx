@@ -15,7 +15,7 @@ import {
   shouldValidateOn,
   shouldValidateOnOwner,
   useFormFieldController,
-  useHiddenFieldPolicy
+  useHiddenFieldPolicy,
 } from '../field-utils';
 
 function makeScope(overrides: Partial<ScopeRef> = {}): ScopeRef {
@@ -41,7 +41,7 @@ function makeScope(overrides: Partial<ScopeRef> = {}): ScopeRef {
     },
     update: vi.fn(),
     merge: vi.fn(),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -62,19 +62,19 @@ describe('field-utils unit helpers', () => {
             controlType: 'input-text',
             behavior: { triggers: ['blur'], showErrorOn: ['touched'] },
             rules: [],
-            children: []
-          }
-        }
-      }
+            children: [],
+          },
+        },
+      },
     } as any;
 
     expect(getFieldValidationBehavior('name', currentForm)).toEqual({
       triggers: ['blur'],
-      showErrorOn: ['touched']
+      showErrorOn: ['touched'],
     });
     expect(getFieldValidationBehavior('other', currentForm)).toEqual({
       triggers: ['change'],
-      showErrorOn: ['dirty']
+      showErrorOn: ['dirty'],
     });
   });
 
@@ -89,10 +89,10 @@ describe('field-utils unit helpers', () => {
             controlType: 'input-number',
             behavior: { triggers: ['change'], showErrorOn: ['dirty'] },
             rules: [],
-            children: []
-          }
-        }
-      }
+            children: [],
+          },
+        },
+      },
     } as any;
 
     expect(shouldValidateOnOwner('age', owner, 'change')).toBe(true);
@@ -117,11 +117,11 @@ describe('field-utils unit helpers', () => {
       visited: true,
       validating: false,
       submitting: false,
-      submitAttempted: false
+      submitAttempted: false,
     };
     const uiState = getChildFieldUiState({
       behavior: { triggers: ['blur'], showErrorOn: ['touched'] },
-      fieldState
+      fieldState,
     });
 
     expect(uiState.error).toBe(error);
@@ -132,8 +132,12 @@ describe('field-utils unit helpers', () => {
   });
 
   it('resolves label text from props or fallback', () => {
-    expect(resolveFieldLabelText({ props: { label: 'Username' }, meta: {} } as any)).toBe('Username');
-    expect(resolveFieldLabelText({ props: { label: '' }, meta: {} } as any, 'Fallback')).toBe('Fallback');
+    expect(resolveFieldLabelText({ props: { label: 'Username' }, meta: {} } as any)).toBe(
+      'Username',
+    );
+    expect(resolveFieldLabelText({ props: { label: '' }, meta: {} } as any, 'Fallback')).toBe(
+      'Fallback',
+    );
   });
 });
 
@@ -147,15 +151,15 @@ describe('createFieldHandlers', () => {
       validateField: vi.fn(async () => undefined),
       validation: {
         behavior: { triggers: ['change', 'blur'], showErrorOn: ['touched'] },
-        nodes: {}
-      }
+        nodes: {},
+      },
     } as any;
 
     const handlers = createFieldHandlers({
       name: 'name',
       currentForm,
       currentValidationScope: undefined,
-      setValue
+      setValue,
     });
 
     handlers.onFocus();
@@ -178,15 +182,15 @@ describe('createFieldHandlers', () => {
       touchField: vi.fn(),
       validation: {
         behavior: { triggers: ['change', 'blur'], showErrorOn: ['touched'] },
-        nodes: {}
-      }
+        nodes: {},
+      },
     } as any;
 
     const handlers = createFieldHandlers({
       name: 'status',
       currentForm: undefined,
       currentValidationScope,
-      setValue
+      setValue,
     });
 
     handlers.onFocus();
@@ -208,7 +212,7 @@ describe('createFieldHandlers', () => {
       name: 'value',
       currentForm: undefined,
       currentValidationScope: undefined,
-      setValue
+      setValue,
     });
 
     handlers.onChange(123);
@@ -236,7 +240,7 @@ describe('useHiddenFieldPolicy', () => {
             <Probe hidden={true} />
           </ScopeContext.Provider>
         </ValidationContext.Provider>
-      </FormContext.Provider>
+      </FormContext.Provider>,
     );
 
     expect(notifyFieldHidden).toHaveBeenCalledWith('name', true);
@@ -248,7 +252,7 @@ describe('useHiddenFieldPolicy', () => {
             <Probe hidden={false} />
           </ScopeContext.Provider>
         </ValidationContext.Provider>
-      </FormContext.Provider>
+      </FormContext.Provider>,
     );
 
     expect(notifyFieldHidden).toHaveBeenCalledWith('name', false);
@@ -263,11 +267,21 @@ function makeAdapterScope(data: Record<string, unknown>): ScopeRef {
     id: 'scope-adapter',
     path: '$',
     value: data,
-    get(path: string) { return data[path]; },
-    has(path: string) { return Object.prototype.hasOwnProperty.call(data, path); },
-    readOwn() { return data; },
-    readVisible() { return data; },
-    materializeVisible() { return { ...data }; },
+    get(path: string) {
+      return data[path];
+    },
+    has(path: string) {
+      return Object.prototype.hasOwnProperty.call(data, path);
+    },
+    readOwn() {
+      return data;
+    },
+    readVisible() {
+      return data;
+    },
+    materializeVisible() {
+      return { ...data };
+    },
     update: vi.fn(),
     merge: vi.fn(),
   };
@@ -277,9 +291,7 @@ function wrapInContexts(scope: ScopeRef, children: React.ReactNode) {
   return (
     <FormContext.Provider value={undefined}>
       <ValidationContext.Provider value={undefined}>
-        <ScopeContext.Provider value={scope}>
-          {children}
-        </ScopeContext.Provider>
+        <ScopeContext.Provider value={scope}>{children}</ScopeContext.Provider>
       </ValidationContext.Provider>
     </FormContext.Provider>
   );
@@ -343,7 +355,12 @@ describe('useFormFieldController adapter behavior', () => {
     cleanup();
     let resolveAdapter!: (value: unknown) => void;
     const adapter = {
-      in: vi.fn((_value: unknown) => new Promise((resolve) => { resolveAdapter = resolve; })),
+      in: vi.fn(
+        (_value: unknown) =>
+          new Promise((resolve) => {
+            resolveAdapter = resolve;
+          }),
+      ),
       out: vi.fn((_value: unknown) => _value),
     };
     const scope = makeAdapterScope({ status: 'active' });
@@ -419,10 +436,7 @@ describe('useFormFieldController adapter behavior', () => {
     render(wrapInContexts(scope, <Probe />));
 
     await waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(
-        '[field-utils] adapter.in failed',
-        expect.any(Error)
-      );
+      expect(warnSpy).toHaveBeenCalledWith('[field-utils] adapter.in failed', expect.any(Error));
     });
 
     warnSpy.mockRestore();

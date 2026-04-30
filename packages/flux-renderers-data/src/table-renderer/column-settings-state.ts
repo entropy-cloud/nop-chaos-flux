@@ -5,7 +5,10 @@ export function areStringArraysEqual(a?: string[], b?: string[]) {
   return a.every((value, index) => value === b[index]);
 }
 
-export function normalizeOrderedColumns(rawOrderedColumns: string[], defaultOrderedColumns: string[]) {
+export function normalizeOrderedColumns(
+  rawOrderedColumns: string[],
+  defaultOrderedColumns: string[],
+) {
   const knownColumns = new Set(defaultOrderedColumns);
   const normalized = rawOrderedColumns.filter((key) => knownColumns.has(key));
   for (const key of defaultOrderedColumns) {

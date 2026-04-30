@@ -8,11 +8,13 @@ import { ConditionItem } from './condition-item';
 vi.mock('@nop-chaos/ui', () => {
   const forwardRef = React.forwardRef;
 
-  const MockButton = forwardRef(({ children, onClick, disabled, type: _type, ...props }: any, ref: any) => (
-    <button ref={ref} type="button" onClick={onClick} disabled={disabled} {...props}>
-      {children}
-    </button>
-  ));
+  const MockButton = forwardRef(
+    ({ children, onClick, disabled, type: _type, ...props }: any, ref: any) => (
+      <button ref={ref} type="button" onClick={onClick} disabled={disabled} {...props}>
+        {children}
+      </button>
+    ),
+  );
   (MockButton as any).displayName = 'Button';
 
   const MockInput = forwardRef(({ onChange, value, ...props }: any, ref: any) => (
@@ -21,17 +23,23 @@ vi.mock('@nop-chaos/ui', () => {
   (MockInput as any).displayName = 'Input';
 
   const MockSelectTrigger = forwardRef(({ children, ...props }: any, ref: any) => (
-    <div ref={ref} data-testid="select-trigger" {...props}>{children}</div>
+    <div ref={ref} data-testid="select-trigger" {...props}>
+      {children}
+    </div>
   ));
   (MockSelectTrigger as any).displayName = 'SelectTrigger';
 
   const MockSelectContent = forwardRef(({ children, ...props }: any, ref: any) => (
-    <div ref={ref} data-testid="select-content" {...props}>{children}</div>
+    <div ref={ref} data-testid="select-content" {...props}>
+      {children}
+    </div>
   ));
   (MockSelectContent as any).displayName = 'SelectContent';
 
   const MockSelectItem = forwardRef(({ children, value, ...props }: any, ref: any) => (
-    <div ref={ref} data-testid={`select-item-${value}`} data-value={value} {...props}>{children}</div>
+    <div ref={ref} data-testid={`select-item-${value}`} data-value={value} {...props}>
+      {children}
+    </div>
   ));
   (MockSelectItem as any).displayName = 'SelectItem';
 
@@ -40,7 +48,11 @@ vi.mock('@nop-chaos/ui', () => {
   function MockSelect({ children, value, onValueChange, disabled }: any) {
     return (
       <div data-testid="mock-select" data-value={value} data-disabled={disabled ?? false}>
-        <button type="button" data-testid="mock-select-trigger" onClick={() => onValueChange?.('__test_value__')}>
+        <button
+          type="button"
+          data-testid="mock-select-trigger"
+          onClick={() => onValueChange?.('__test_value__')}
+        >
           {value || 'select'}
         </button>
         <div data-testid="mock-select-content">{children}</div>
@@ -65,19 +77,29 @@ vi.mock('@nop-chaos/ui', () => {
     return <div data-testid="mock-combobox-empty">{children}</div>;
   }
   function MockComboboxList({ children }: any) {
-    return <div data-testid="mock-combobox-list">{typeof children === 'function' ? null : children}</div>;
+    return (
+      <div data-testid="mock-combobox-list">{typeof children === 'function' ? null : children}</div>
+    );
   }
   function MockComboboxItem({ children, value, disabled }: any) {
-    return <div data-testid={`combobox-item-${value?.name ?? value}`} data-disabled={disabled ?? false}>{children}</div>;
+    return (
+      <div data-testid={`combobox-item-${value?.name ?? value}`} data-disabled={disabled ?? false}>
+        {children}
+      </div>
+    );
   }
 
   const MockBadge = forwardRef(({ children, ...props }: any, ref: any) => (
-    <span ref={ref} {...props}>{children}</span>
+    <span ref={ref} {...props}>
+      {children}
+    </span>
   ));
   (MockBadge as any).displayName = 'Badge';
 
   const MockNativeSelect = forwardRef(({ onChange, value, children, ...props }: any, ref: any) => (
-    <select ref={ref} value={value} onChange={onChange} data-slot="native-select" {...props}>{children}</select>
+    <select ref={ref} value={value} onChange={onChange} data-slot="native-select" {...props}>
+      {children}
+    </select>
   ));
   (MockNativeSelect as any).displayName = 'NativeSelect';
 
@@ -314,9 +336,7 @@ describe('ConditionItem', () => {
       {
         type: 'group',
         label: 'Personal',
-        children: [
-          { name: 'name', label: 'Name', type: 'text' },
-        ],
+        children: [{ name: 'name', label: 'Name', type: 'text' }],
       } as any,
     ];
     const { container } = render(

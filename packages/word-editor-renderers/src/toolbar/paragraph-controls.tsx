@@ -1,12 +1,12 @@
-import { AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered } from 'lucide-react'
-import type { CanvasEditorBridge, EditorSelectionState } from '@nop-chaos/word-editor-core'
-import { RowFlex, TitleLevel, ListType } from '@nop-chaos/word-editor-core'
-import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui'
-import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js'
+import { AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered } from 'lucide-react';
+import type { CanvasEditorBridge, EditorSelectionState } from '@nop-chaos/word-editor-core';
+import { RowFlex, TitleLevel, ListType } from '@nop-chaos/word-editor-core';
+import { NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
+import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js';
 
 interface ParagraphControlsProps {
-  bridge: CanvasEditorBridge | null
-  selection: EditorSelectionState
+  bridge: CanvasEditorBridge | null;
+  selection: EditorSelectionState;
 }
 
 const HEADING_LEVELS: { label: string; value: string }[] = [
@@ -16,10 +16,10 @@ const HEADING_LEVELS: { label: string; value: string }[] = [
   { label: 'H3', value: 'third' },
   { label: 'H4', value: 'fourth' },
   { label: 'H5', value: 'fifth' },
-  { label: 'H6', value: 'sixth' }
-]
+  { label: 'H6', value: 'sixth' },
+];
 
-const LINE_SPACINGS = [1, 1.15, 1.5, 2, 2.5, 3]
+const LINE_SPACINGS = [1, 1.15, 1.5, 2, 2.5, 3];
 
 export function ParagraphControls({ bridge, selection }: ParagraphControlsProps) {
   return (
@@ -52,8 +52,8 @@ export function ParagraphControls({ bridge, selection }: ParagraphControlsProps)
       <NativeSelect
         value={selection.level ?? 'normal'}
         onChange={(e) => {
-          const value = e.target.value
-          bridge?.command?.executeTitle(value === 'normal' ? null : (value as TitleLevel))
+          const value = e.target.value;
+          bridge?.command?.executeTitle(value === 'normal' ? null : (value as TitleLevel));
         }}
         title="Heading Level"
         size="xs"
@@ -93,5 +93,5 @@ export function ParagraphControls({ bridge, selection }: ParagraphControlsProps)
         ))}
       </NativeSelect>
     </ToolbarGroup>
-  )
+  );
 }

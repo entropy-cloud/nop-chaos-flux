@@ -9,7 +9,7 @@ describe('NativeSelect', () => {
       <NativeSelect aria-label="Region" defaultValue="apac">
         <NativeSelectOption value="apac">APAC</NativeSelectOption>
         <NativeSelectOption value="emea">EMEA</NativeSelectOption>
-      </NativeSelect>
+      </NativeSelect>,
     );
 
     const select = screen.getByRole('combobox', { name: 'Region' });
@@ -24,7 +24,7 @@ describe('NativeSelect', () => {
       <NativeSelect aria-label="Status" disabled onChange={onChange}>
         <NativeSelectOption value="online">Online</NativeSelectOption>
         <NativeSelectOption value="offline">Offline</NativeSelectOption>
-      </NativeSelect>
+      </NativeSelect>,
     );
 
     const select = screen.getByRole('combobox', { name: 'Status' });

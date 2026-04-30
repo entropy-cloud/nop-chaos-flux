@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { CompiledFormValidationField, CompiledValidationRule, ScopeRef } from '@nop-chaos/flux-core';
+import type {
+  CompiledFormValidationField,
+  CompiledValidationRule,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { createScopeRef, createScopeStore } from '../scope';
 import { createBuiltInValidationRegistry } from './registry';
 import type { SyncValidationRule } from './validators';
@@ -11,13 +15,13 @@ function createField(path: string, controlType = 'input-text'): CompiledFormVali
     label: path,
     behavior: {
       triggers: ['blur'],
-      showErrorOn: ['touched', 'submit']
+      showErrorOn: ['touched', 'submit'],
     },
     rules: [],
     hiddenFieldPolicy: {
       validateWhenHidden: false,
-      clearValueWhenHidden: false
-    }
+      clearValueWhenHidden: false,
+    },
   };
 }
 
@@ -31,7 +35,7 @@ function createRule(path: string, rule: SyncValidationRule): CompiledValidationR
       rule.kind === 'requiredWhen' ||
       rule.kind === 'requiredUnless'
         ? [rule.path]
-        : []
+        : [],
   };
 }
 
@@ -39,7 +43,7 @@ function createScope(initialData: Record<string, any> = {}): ScopeRef {
   return createScopeRef({
     id: 'validation-scope',
     path: '$.validation',
-    store: createScopeStore(initialData)
+    store: createScopeStore(initialData),
   });
 }
 
@@ -51,12 +55,18 @@ describe('builtInValidators', () => {
     const field = createField('username');
     const rule = createRule('username', { kind: 'required' });
 
-    const error = validator?.({ compiledRule: rule, rule: rule.rule as SyncValidationRule, value: '', field, scope: createScope() });
+    const error = validator?.({
+      compiledRule: rule,
+      rule: rule.rule as SyncValidationRule,
+      value: '',
+      field,
+      scope: createScope(),
+    });
 
     expect(error).toMatchObject({
       path: 'username',
       rule: 'required',
-      sourceKind: 'field'
+      sourceKind: 'field',
     });
     expect(error?.message).toBeTruthy();
   });
@@ -67,7 +77,7 @@ describe('builtInValidators', () => {
     const rule = createRule('confirmPassword', {
       kind: 'equalsField',
       path: 'password',
-      message: 'Passwords must match'
+      message: 'Passwords must match',
     });
 
     const error = validator?.({
@@ -75,14 +85,14 @@ describe('builtInValidators', () => {
       rule: rule.rule as SyncValidationRule,
       value: 'beta',
       field,
-      scope: createScope({ password: 'alpha' })
+      scope: createScope({ password: 'alpha' }),
     });
 
     expect(error).toMatchObject({
       path: 'confirmPassword',
       rule: 'equalsField',
       message: 'Passwords must match',
-      relatedPaths: ['password']
+      relatedPaths: ['password'],
     });
   });
 
@@ -92,7 +102,7 @@ describe('builtInValidators', () => {
     const rule = createRule('metadata', {
       kind: 'uniqueBy',
       itemPath: 'key',
-      message: 'Metadata keys must be unique'
+      message: 'Metadata keys must be unique',
     });
 
     const error = validator?.({
@@ -100,10 +110,10 @@ describe('builtInValidators', () => {
       rule: rule.rule as SyncValidationRule,
       value: [
         { key: 'env', value: 'prod' },
-        { key: 'env', value: 'stage' }
+        { key: 'env', value: 'stage' },
       ],
       field,
-      scope: createScope()
+      scope: createScope(),
     });
 
     expect(error).toMatchObject({
@@ -111,7 +121,7 @@ describe('builtInValidators', () => {
       rule: 'uniqueBy',
       message: 'Metadata keys must be unique',
       sourceKind: 'array',
-      relatedPaths: ['key']
+      relatedPaths: ['key'],
     });
   });
 
@@ -121,7 +131,7 @@ describe('builtInValidators', () => {
     const rule = createRule('contact', {
       kind: 'atLeastOneOf',
       paths: ['email', 'phone'],
-      message: 'Provide at least one contact method'
+      message: 'Provide at least one contact method',
     });
 
     const error = validator?.({
@@ -129,13 +139,12 @@ describe('builtInValidators', () => {
       rule: rule.rule as SyncValidationRule,
       value: {
         email: 'a@example.com',
-        phone: ''
+        phone: '',
       },
       field,
-      scope: createScope()
+      scope: createScope(),
     });
 
     expect(error).toBeUndefined();
   });
 });
-

@@ -10,7 +10,7 @@ import type {
   RuntimeValueState,
   ScopeRef,
   StaticRuntimeValue,
-  ValueEvaluationResult
+  ValueEvaluationResult,
 } from '@nop-chaos/flux-core';
 import { compileNode, createFormulaCompiler } from './compile';
 import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate';
@@ -18,17 +18,27 @@ import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate
 export { createFormulaCompiler } from './compile';
 export { parseFormula } from './parser';
 export { evaluateAst } from './evaluator';
-export { registerFunction, registerNamespace, getFormulaRegistrySnapshot, resetFormulaRegistry } from './registry';
+export {
+  registerFunction,
+  registerNamespace,
+  getFormulaRegistrySnapshot,
+  resetFormulaRegistry,
+} from './registry';
 export { dateHelper } from './date-helper';
 export { bindAst, type BindingContext } from './bind-ast';
 
-export function createExpressionCompiler(formulaCompiler: FormulaCompiler = createFormulaCompiler()): ExpressionCompiler {
+export function createExpressionCompiler(
+  formulaCompiler: FormulaCompiler = createFormulaCompiler(),
+): ExpressionCompiler {
   return {
     formulaCompiler,
     compileNode<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledValueNode<T> {
       return compileNode(input, formulaCompiler, options);
     },
-    compileValue<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledRuntimeValue<T> {
+    compileValue<T = unknown>(
+      input: T,
+      options?: ExpressionCompileOptions,
+    ): CompiledRuntimeValue<T> {
       const node = compileNode(input, formulaCompiler, options);
 
       if (node.kind === 'static-node') {
@@ -36,7 +46,7 @@ export function createExpressionCompiler(formulaCompiler: FormulaCompiler = crea
           kind: 'static',
           isStatic: true,
           node,
-          value: node.value
+          value: node.value,
         } as StaticRuntimeValue<T>;
       }
 
@@ -50,7 +60,7 @@ export function createExpressionCompiler(formulaCompiler: FormulaCompiler = crea
         exec(context: EvalContext, env: RendererEnv, state?: RuntimeValueState<T>) {
           const resolvedState = state ?? createStateFromNode(node);
           return evaluateNode(node, context, env, resolvedState.root);
-        }
+        },
       } as DynamicRuntimeValue<T>;
     },
     createState<T = unknown>(input: DynamicRuntimeValue<T>): RuntimeValueState<T> {
@@ -60,7 +70,7 @@ export function createExpressionCompiler(formulaCompiler: FormulaCompiler = crea
       input: CompiledRuntimeValue<T>,
       scope: ScopeRef,
       env: RendererEnv,
-      state?: RuntimeValueState<T>
+      state?: RuntimeValueState<T>,
     ): T {
       if (input.kind === 'static') {
         return input.value;
@@ -72,9 +82,9 @@ export function createExpressionCompiler(formulaCompiler: FormulaCompiler = crea
       input: DynamicRuntimeValue<T>,
       scope: ScopeRef,
       env: RendererEnv,
-      state: RuntimeValueState<T>
+      state: RuntimeValueState<T>,
     ): ValueEvaluationResult<T> {
       return input.exec(createEvalContext(scope), env, state);
-    }
+    },
   };
 }

@@ -1,5 +1,15 @@
 import { createStore } from 'zustand/vanilla';
-import type { FieldState, FormPathState, FormStoreApi, FormStoreState, PageStoreApi, PageStoreState, SurfaceEntry, SurfaceStoreApi, SurfaceStoreState } from '@nop-chaos/flux-core';
+import type {
+  FieldState,
+  FormPathState,
+  FormStoreApi,
+  FormStoreState,
+  PageStoreApi,
+  PageStoreState,
+  SurfaceEntry,
+  SurfaceStoreApi,
+  SurfaceStoreState,
+} from '@nop-chaos/flux-core';
 import { getIn, setIn, validationErrorsEqual } from '@nop-chaos/flux-core';
 
 function fieldStateEqual(left: FieldState | undefined, right: FieldState | undefined): boolean {
@@ -20,7 +30,10 @@ function fieldStateEqual(left: FieldState | undefined, right: FieldState | undef
   );
 }
 
-function mergeFieldState(existing: FieldState | undefined, patch: Partial<FieldState>): FieldState | undefined {
+function mergeFieldState(
+  existing: FieldState | undefined,
+  patch: Partial<FieldState>,
+): FieldState | undefined {
   const merged: FieldState = { ...existing };
 
   if ('touched' in patch) {
@@ -56,7 +69,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     values: initialValues,
     fieldStates: {},
     submitting: false,
-    submitAttempted: false
+    submitAttempted: false,
   }));
 
   const pathListeners = new Map<string, Set<() => void>>();
@@ -88,7 +101,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
   function diffAndNotifyFieldStates(
     before: Record<string, FieldState>,
     after: Record<string, FieldState>,
-    changed: Set<string>
+    changed: Set<string>,
   ) {
     for (const key of Object.keys(before)) {
       if (!(key in after)) {
@@ -154,7 +167,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
         validating: fieldState?.validating === true,
         touched: fieldState?.touched === true,
         dirty: fieldState?.dirty === true,
-        visited: fieldState?.visited === true
+        visited: fieldState?.visited === true,
       };
     },
     getFieldState(path) {
@@ -221,19 +234,19 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       }
 
       if (
-        (updates.submitting !== undefined && before.submitting !== after.submitting)
-        || (updates.submitAttempted !== undefined && before.submitAttempted !== after.submitAttempted)
+        (updates.submitting !== undefined && before.submitting !== after.submitting) ||
+        (updates.submitAttempted !== undefined && before.submitAttempted !== after.submitAttempted)
       ) {
         notifySubmitting();
       }
-    }
+    },
   };
 }
 
 export function createPageStore(initialData: Record<string, any>): PageStoreApi {
   const store = createStore<PageStoreState>(() => ({
     data: initialData,
-    refreshTick: 0
+    refreshTick: 0,
   }));
 
   return {
@@ -253,13 +266,13 @@ export function createPageStore(initialData: Record<string, any>): PageStoreApi 
     refresh() {
       const state = store.getState();
       store.setState({ refreshTick: state.refreshTick + 1 });
-    }
+    },
   };
 }
 
 export function createSurfaceStore(): SurfaceStoreApi {
   const store = createStore<SurfaceStoreState>(() => ({
-    entries: []
+    entries: [],
   }));
 
   return {
@@ -295,6 +308,6 @@ export function createSurfaceStore(): SurfaceStoreApi {
 
       store.setState({ entries: state.entries.filter((entry) => entry.id !== surfaceId) });
       return target;
-    }
+    },
   };
 }

@@ -19,7 +19,10 @@ export function toStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.map((entry) => String(entry)) : [];
 }
 
-export function shallowEqualRecords(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+export function shallowEqualRecords(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): boolean {
   const aKeys = Object.keys(a);
   const bKeys = Object.keys(b);
   if (aKeys.length !== bKeys.length) return false;
@@ -54,5 +57,7 @@ export function shallowEqual(left: unknown, right: unknown): boolean {
     return false;
   }
 
-  return leftKeys.every((key) => Object.is((left as Record<string, unknown>)[key], (right as Record<string, unknown>)[key]));
+  return leftKeys.every((key) =>
+    Object.is((left as Record<string, unknown>)[key], (right as Record<string, unknown>)[key]),
+  );
 }

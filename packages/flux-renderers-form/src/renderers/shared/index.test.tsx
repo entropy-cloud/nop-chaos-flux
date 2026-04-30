@@ -20,7 +20,7 @@ describe('shared form renderer primitives', () => {
       <>
         <FieldLabel content="Profile" />
         <FieldLabel content="Settings" as="legend" />
-      </>
+      </>,
     );
 
     expect(screen.getByText('Profile').tagName).toBe('SPAN');

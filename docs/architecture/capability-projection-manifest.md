@@ -943,11 +943,52 @@ const designerManifest: HostCapabilityProjectionManifest = {
   version: '1.0.0',
   projection: {
     fields: {
-      doc: { schema: { kind: 'object', fields: { id: { kind: 'string' }, nodes: { kind: 'array', item: { kind: 'unknown' } }, edges: { kind: 'array', item: { kind: 'unknown' } } } } },
-      selection: { schema: { kind: 'object', fields: { selectedNodeIds: { kind: 'array', item: { kind: 'string' } }, selectedEdgeIds: { kind: 'array', item: { kind: 'string' } } } } },
-      activeNode: { schema: { kind: 'union', anyOf: [{ kind: 'null' }, { kind: 'object', fields: { id: { kind: 'string' }, type: { kind: 'string' }, data: { kind: 'unknown' } } }] } },
-      runtime: { schema: { kind: 'object', fields: { canUndo: { kind: 'boolean' }, canRedo: { kind: 'boolean' }, dirty: { kind: 'boolean' } } } }
-    }
+      doc: {
+        schema: {
+          kind: 'object',
+          fields: {
+            id: { kind: 'string' },
+            nodes: { kind: 'array', item: { kind: 'unknown' } },
+            edges: { kind: 'array', item: { kind: 'unknown' } },
+          },
+        },
+      },
+      selection: {
+        schema: {
+          kind: 'object',
+          fields: {
+            selectedNodeIds: { kind: 'array', item: { kind: 'string' } },
+            selectedEdgeIds: { kind: 'array', item: { kind: 'string' } },
+          },
+        },
+      },
+      activeNode: {
+        schema: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'null' },
+            {
+              kind: 'object',
+              fields: {
+                id: { kind: 'string' },
+                type: { kind: 'string' },
+                data: { kind: 'unknown' },
+              },
+            },
+          ],
+        },
+      },
+      runtime: {
+        schema: {
+          kind: 'object',
+          fields: {
+            canUndo: { kind: 'boolean' },
+            canRedo: { kind: 'boolean' },
+            dirty: { kind: 'boolean' },
+          },
+        },
+      },
+    },
   },
   capabilities: {
     namespace: 'designer',
@@ -961,31 +1002,31 @@ const designerManifest: HostCapabilityProjectionManifest = {
               kind: 'object',
               fields: {
                 x: { kind: 'number' },
-                y: { kind: 'number' }
-              }
+                y: { kind: 'number' },
+              },
             },
-            data: { kind: 'unknown' }
+            data: { kind: 'unknown' },
           },
-          optional: ['data']
+          optional: ['data'],
         },
         result: {
           kind: 'object',
           fields: {
-            nodeId: { kind: 'string' }
-          }
-        }
+            nodeId: { kind: 'string' },
+          },
+        },
       },
       updateNodeData: {
         args: {
           kind: 'object',
           fields: {
             nodeId: { kind: 'string' },
-            data: { kind: 'object', fields: {} }
-          }
-        }
-      }
-    }
-  }
+            data: { kind: 'object', fields: {} },
+          },
+        },
+      },
+    },
+  },
 };
 ```
 
@@ -1076,6 +1117,7 @@ All tools (editor, debugger, docs export) should consume host manifests through 
 This path is codified in `resolveHostContractManifest(definition, versionSelector?)` from `packages/flux-core/src/types/renderer-authoring-contract.ts`.
 
 The full tooling adapter `resolveRendererAuthoringContract(definition, versionSelector?)` resolves the manifest and assembles a `ResolvedAuthoringContract` containing:
+
 - `hostProjection` — the projection contract fields
 - `hostActions` — capability methods adapted to `CapabilityMethodContract` shape
 - `hostManifest` — the full resolved manifest for tools that need family, version, or compatibility metadata

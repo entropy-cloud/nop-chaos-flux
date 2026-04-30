@@ -295,13 +295,13 @@ interface ScopeStore {
 
 ### 6.1.1 Collection shape 命中定义
 
-| 读取模式 | 订阅类型 | 命中的 change |
-| --- | --- | --- |
-| `items` | root | replace / merge / broad wildcard |
-| `items.length` | collection-shape | insert / remove / replace |
-| `items[*]` | collection-shape | insert / remove / reorder / replace |
+| 读取模式       | 订阅类型                                 | 命中的 change                                    |
+| -------------- | ---------------------------------------- | ------------------------------------------------ |
+| `items`        | root                                     | replace / merge / broad wildcard                 |
+| `items.length` | collection-shape                         | insert / remove / replace                        |
+| `items[*]`     | collection-shape                         | insert / remove / reorder / replace              |
 | `items[*].qty` | collection-shape + exact leaf projection | insert / remove / reorder / matching leaf update |
-| `items.3.qty` | exact path | exact leaf update / ancestor replace |
+| `items.3.qty`  | exact path                               | exact leaf update / ancestor replace             |
 
 规则：
 
@@ -413,13 +413,13 @@ kernel-core/transaction/
 
 ```ts
 const WRITE_PRIORITY = {
-  'submit': 600,
-  'commit': 600,
+  submit: 600,
+  commit: 600,
   'user-input': 500,
   'host-command': 400,
-  'resource': 300,
-  'reaction': 200,
-  'system': 100
+  resource: 300,
+  reaction: 200,
+  system: 100,
 } as const;
 ```
 

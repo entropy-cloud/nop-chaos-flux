@@ -29,7 +29,12 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         if (!treeConfig) {
           return;
         }
-        const layoutedNodes = await layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes);
+        const layoutedNodes = await layoutTreeWithElk(
+          doc.nodes,
+          doc.edges,
+          treeConfig,
+          normalizedCfg.nodeTypes,
+        );
         if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
           return;
         }

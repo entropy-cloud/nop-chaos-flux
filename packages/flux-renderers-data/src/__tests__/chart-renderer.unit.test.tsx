@@ -8,7 +8,12 @@ import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 let currentRegistry: { register: ReturnType<typeof vi.fn> } | undefined;
 
 function simplifyValue(value: unknown, seen = new WeakSet<object>()): unknown {
-  if (value == null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+  if (
+    value == null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
     return value;
   }
 
@@ -38,7 +43,7 @@ function simplifyValue(value: unknown, seen = new WeakSet<object>()): unknown {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
         .filter(([key]) => key !== 'children')
-        .map(([key, entry]) => [key, simplifyValue(entry, seen)])
+        .map(([key, entry]) => [key, simplifyValue(entry, seen)]),
     );
   }
 
@@ -64,7 +69,8 @@ function createMockComponent(name: string) {
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentComponentRegistry: () => currentRegistry,
-  resolveRendererSlotContent: (props: any, key: string, options: { fallback: string }) => props.props[key] ?? options.fallback,
+  resolveRendererSlotContent: (props: any, key: string, options: { fallback: string }) =>
+    props.props[key] ?? options.fallback,
 }));
 
 vi.mock('@nop-chaos/ui', () => ({
@@ -189,7 +195,10 @@ describe('ChartRenderer', () => {
             chartType: 'pie',
             title: 'Sales',
             xAxis: { dataKey: 'label' },
-            source: [{ label: 'Jan', value: 12 }, { label: 'Feb', value: 8 }],
+            source: [
+              { label: 'Jan', value: 12 },
+              { label: 'Feb', value: 8 },
+            ],
             series: [
               { name: 'Revenue', dataRegionKey: 'value' },
               { name: 'Costs', dataRegionKey: 'value' },
@@ -215,7 +224,10 @@ describe('ChartRenderer', () => {
             xAxis: { dataKey: 'label', label: 'Month' },
             yAxis: { label: 'Value' },
             source: [{ label: 'Jan', value: 9 }],
-            series: [{ name: 'Revenue', dataRegionKey: 'value' }, { name: 'Costs', dataRegionKey: 'value' }],
+            series: [
+              { name: 'Revenue', dataRegionKey: 'value' },
+              { name: 'Costs', dataRegionKey: 'value' },
+            ],
           },
         })}
       />,

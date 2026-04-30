@@ -9,10 +9,8 @@ const simpleFilter = {
       data: {
         filter: {
           combinator: 'and',
-          rules: [
-            { field: 'status', operator: 'eq', value: 'active' }
-          ]
-        }
+          rules: [{ field: 'status', operator: 'eq', value: 'active' }],
+        },
       },
       body: [
         {
@@ -22,15 +20,13 @@ const simpleFilter = {
           fields: [
             { name: 'status', label: 'Status', operators: ['eq', 'neq'] },
             { name: 'role', label: 'Role', operators: ['eq', 'neq', 'in'] },
-            { name: 'email', label: 'Email', operators: ['contains', 'startsWith'] }
-          ]
-        }
+            { name: 'email', label: 'Email', operators: ['contains', 'startsWith'] },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Apply Filter', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Apply Filter', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const complexFilter = {
@@ -49,11 +45,11 @@ const complexFilter = {
               combinator: 'or',
               rules: [
                 { field: 'role', operator: 'eq', value: 'admin' },
-                { field: 'role', operator: 'eq', value: 'editor' }
-              ]
-            }
-          ]
-        }
+                { field: 'role', operator: 'eq', value: 'editor' },
+              ],
+            },
+          ],
+        },
       },
       body: [
         {
@@ -61,24 +57,37 @@ const complexFilter = {
           name: 'query',
           label: 'Query Filter',
           fields: [
-            { name: 'age', label: 'Age', type: 'number', operators: ['eq', 'gt', 'lt', 'gte', 'lte'] },
-            { name: 'status', label: 'Status', operators: ['eq', 'neq'], options: [
-              { label: 'Active', value: 'active' },
-              { label: 'Inactive', value: 'inactive' }
-            ]},
-            { name: 'role', label: 'Role', operators: ['eq', 'neq', 'in'], options: [
-              { label: 'Admin', value: 'admin' },
-              { label: 'Editor', value: 'editor' },
-              { label: 'Viewer', value: 'viewer' }
-            ]}
-          ]
-        }
+            {
+              name: 'age',
+              label: 'Age',
+              type: 'number',
+              operators: ['eq', 'gt', 'lt', 'gte', 'lte'],
+            },
+            {
+              name: 'status',
+              label: 'Status',
+              operators: ['eq', 'neq'],
+              options: [
+                { label: 'Active', value: 'active' },
+                { label: 'Inactive', value: 'inactive' },
+              ],
+            },
+            {
+              name: 'role',
+              label: 'Role',
+              operators: ['eq', 'neq', 'in'],
+              options: [
+                { label: 'Admin', value: 'admin' },
+                { label: 'Editor', value: 'editor' },
+                { label: 'Viewer', value: 'viewer' },
+              ],
+            },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Run Query', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Run Query', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 export function ConditionBuilderLabPage() {
@@ -88,14 +97,16 @@ export function ConditionBuilderLabPage() {
       scenarios={[
         {
           title: 'Simple single-rule AND group',
-          description: 'Pre-populated with one rule: status equals active. Add more rules or change the combinator to OR.',
-          schema: simpleFilter
+          description:
+            'Pre-populated with one rule: status equals active. Add more rules or change the combinator to OR.',
+          schema: simpleFilter,
         },
         {
           title: 'Complex filter with nested OR group',
-          description: 'An AND group containing two simple rules and a nested OR sub-group that matches either admin or editor roles.',
-          schema: complexFilter
-        }
+          description:
+            'An AND group containing two simple rules and a nested OR sub-group that matches either admin or editor roles.',
+          schema: complexFilter,
+        },
       ]}
     />
   );

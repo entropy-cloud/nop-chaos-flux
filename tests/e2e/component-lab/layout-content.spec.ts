@@ -22,7 +22,9 @@ test.describe('page renderer', () => {
     // use .first() to avoid strict mode violation
     await expect(stage.getByText('Team Dashboard').first()).toBeVisible();
     await expect(stage.getByText('Acme Corp')).toBeVisible();
-    await expect(stage.getByText('Welcome to the team dashboard. Select a section to get started.')).toBeVisible();
+    await expect(
+      stage.getByText('Welcome to the team dashboard. Select a section to get started.'),
+    ).toBeVisible();
     await expect(stage.getByText('Last updated: 2026-04-12')).toBeVisible();
   });
 
@@ -83,7 +85,9 @@ test.describe('fragment renderer', () => {
     await expect(stage.getByText(/Parent var visible: "parent-value"/)).toBeVisible();
   });
 
-  test('read: scope isolation — parent variable hidden inside isolated fragment', async ({ page }) => {
+  test('read: scope isolation — parent variable hidden inside isolated fragment', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('fragment');
 
@@ -164,7 +168,9 @@ test.describe('dialog renderer', () => {
 
     await stage.getByRole('button', { name: 'Edit Contact' }).click();
     // 'Edit Contact' appears in the trigger button, dialog heading, and scenario title — use dialog role
-    await expect(page.getByRole('dialog').getByText('Edit Contact')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('dialog').getByText('Edit Contact')).toBeVisible({
+      timeout: 5_000,
+    });
 
     await page.getByLabel('Full Name').fill('Jane Doe');
     await page.getByLabel('Email').fill('jane@example.com');
@@ -223,7 +229,9 @@ test.describe('drawer renderer', () => {
 // tabs
 // ---------------------------------------------------------------------------
 test.describe('tabs renderer', () => {
-  test('write: switch to Team tab updates the active tab and reveals the team panel only', async ({ page }) => {
+  test('write: switch to Team tab updates the active tab and reveals the team panel only', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('tabs');
 
@@ -262,7 +270,9 @@ test.describe('tabs renderer', () => {
 // loop
 // ---------------------------------------------------------------------------
 test.describe('loop renderer', () => {
-  test('read: loop scenarios render repeated index and item bindings for every row', async ({ page }) => {
+  test('read: loop scenarios render repeated index and item bindings for every row', async ({
+    page,
+  }) => {
     test.setTimeout(60_000);
 
     const lab = new ComponentLabHelper(page);
@@ -289,7 +299,9 @@ test.describe('loop renderer', () => {
 // recurse
 // ---------------------------------------------------------------------------
 test.describe('recurse renderer', () => {
-  test('read: recurse scenarios render nested descendants and per-depth badges', async ({ page }) => {
+  test('read: recurse scenarios render nested descendants and per-depth badges', async ({
+    page,
+  }) => {
     test.setTimeout(60_000);
 
     const lab = new ComponentLabHelper(page);

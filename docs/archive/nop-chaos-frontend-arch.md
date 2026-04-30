@@ -28,23 +28,23 @@ Workspace declaration is driven by `pnpm-workspace.yaml`, with `apps/*` and `pac
 
 ## 3. Core Technology Stack
 
-| Area | Current Choice | Notes |
-| --- | --- | --- |
-| Monorepo | `pnpm` workspaces | Unified dependency and package management |
-| Language | TypeScript | Used across apps and packages |
-| App framework | React 19 | Main UI runtime |
-| Bundler | Vite 7 | Local dev and production build |
-| Routing | React Router 7 | Shell routes and page rendering |
-| Server state | TanStack React Query | Query client configured at app bootstrap |
-| Client state | Zustand | Local state stores with persistence where needed |
-| UI system | `@nop-chaos/ui` + Tailwind CSS | Shared component exports and theme tokens |
-| Charts | Recharts | Dashboard and analytics rendering |
-| Flow canvas | `@xyflow/react` | Flow editor canvas, nodes, edges, minimap |
-| Notifications | Sonner | Global toast feedback |
-| I18n | i18next + react-i18next | Runtime translation support |
-| Plugin runtime | SystemJS | Remote plugin loading |
-| Unit tests | Vitest | Local page or utility tests |
-| E2E tests | Playwright | Browser-level workflow verification |
+| Area           | Current Choice                 | Notes                                            |
+| -------------- | ------------------------------ | ------------------------------------------------ |
+| Monorepo       | `pnpm` workspaces              | Unified dependency and package management        |
+| Language       | TypeScript                     | Used across apps and packages                    |
+| App framework  | React 19                       | Main UI runtime                                  |
+| Bundler        | Vite 7                         | Local dev and production build                   |
+| Routing        | React Router 7                 | Shell routes and page rendering                  |
+| Server state   | TanStack React Query           | Query client configured at app bootstrap         |
+| Client state   | Zustand                        | Local state stores with persistence where needed |
+| UI system      | `@nop-chaos/ui` + Tailwind CSS | Shared component exports and theme tokens        |
+| Charts         | Recharts                       | Dashboard and analytics rendering                |
+| Flow canvas    | `@xyflow/react`                | Flow editor canvas, nodes, edges, minimap        |
+| Notifications  | Sonner                         | Global toast feedback                            |
+| I18n           | i18next + react-i18next        | Runtime translation support                      |
+| Plugin runtime | SystemJS                       | Remote plugin loading                            |
+| Unit tests     | Vitest                         | Local page or utility tests                      |
+| E2E tests      | Playwright                     | Browser-level workflow verification              |
 
 ## 4. Application Runtime Architecture
 

@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import type { CompiledFormValidationField, CompiledValidationRule, ScopeRef, ValidationRule } from '@nop-chaos/flux-core';
+import type {
+  CompiledFormValidationField,
+  CompiledValidationRule,
+  ScopeRef,
+  ValidationRule,
+} from '@nop-chaos/flux-core';
 import { builtInValidators, isEmptyValue } from '../validation/validators';
-import type { SyncValidationContext, SyncValidationRule, SyncValidationRuleKind } from '../validation/validators';
+import type {
+  SyncValidationContext,
+  SyncValidationRule,
+  SyncValidationRuleKind,
+} from '../validation/validators';
 
 function makeField(overrides?: Partial<CompiledFormValidationField>): CompiledFormValidationField {
   return {
@@ -11,7 +20,7 @@ function makeField(overrides?: Partial<CompiledFormValidationField>): CompiledFo
     rules: [],
     behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
     hiddenFieldPolicy: {},
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -20,9 +29,12 @@ function makeCompiledRule(rule: ValidationRule, index = 0): CompiledValidationRu
     id: `field#${index}:${rule.kind}`,
     rule,
     dependencyPaths:
-      rule.kind === 'equalsField' || rule.kind === 'notEqualsField' || rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless'
+      rule.kind === 'equalsField' ||
+      rule.kind === 'notEqualsField' ||
+      rule.kind === 'requiredWhen' ||
+      rule.kind === 'requiredUnless'
         ? [(rule as any).path]
-        : []
+        : [],
   };
 }
 
@@ -53,17 +65,22 @@ function makeScope(data: Record<string, unknown> = {}): ScopeRef {
       return { ...data };
     },
     update() {},
-    merge() {}
+    merge() {},
   } as ScopeRef;
 }
 
-function invoke<R extends SyncValidationRule>(kind: R['kind'], rule: R, value: unknown, scopeData?: Record<string, unknown>) {
+function invoke<R extends SyncValidationRule>(
+  kind: R['kind'],
+  rule: R,
+  value: unknown,
+  scopeData?: Record<string, unknown>,
+) {
   const ctx: SyncValidationContext<R> = {
     compiledRule: makeCompiledRule(rule),
     value,
     field: makeField(),
     scope: makeScope(scopeData),
-    rule: rule as any
+    rule: rule as any,
   };
   return builtInValidators[kind as SyncValidationRuleKind](ctx as any);
 }
@@ -188,7 +205,9 @@ describe('maxItems', () => {
 
 describe('atLeastOneFilled', () => {
   it('passes when array has at least one non-empty item (no itemPath)', () => {
-    expect(invoke('atLeastOneFilled', { kind: 'atLeastOneFilled' }, [null, 'value', ''])).toBeUndefined();
+    expect(
+      invoke('atLeastOneFilled', { kind: 'atLeastOneFilled' }, [null, 'value', '']),
+    ).toBeUndefined();
   });
 
   it('fails when all array items are empty (no itemPath)', () => {
@@ -207,12 +226,18 @@ describe('atLeastOneFilled', () => {
 
   it('passes with itemPath when at least one item has filled sub-field', () => {
     expect(
-      invoke('atLeastOneFilled', { kind: 'atLeastOneFilled', itemPath: 'name' }, [{ name: '' }, { name: 'filled' }])
+      invoke('atLeastOneFilled', { kind: 'atLeastOneFilled', itemPath: 'name' }, [
+        { name: '' },
+        { name: 'filled' },
+      ]),
     ).toBeUndefined();
   });
 
   it('fails with itemPath when no item has filled sub-field', () => {
-    const err = invoke('atLeastOneFilled', { kind: 'atLeastOneFilled', itemPath: 'name' }, [{ name: '' }, { name: null }]);
+    const err = invoke('atLeastOneFilled', { kind: 'atLeastOneFilled', itemPath: 'name' }, [
+      { name: '' },
+      { name: null },
+    ]);
     expect(err).toBeDefined();
     expect(err!.relatedPaths).toEqual(['name']);
   });
@@ -226,18 +251,22 @@ describe('atLeastOneFilled', () => {
 describe('allOrNone', () => {
   it('passes when all itemPaths are filled on object', () => {
     expect(
-      invoke('allOrNone', { kind: 'allOrNone', itemPaths: ['a', 'b'] }, { a: 'x', b: 'y' })
+      invoke('allOrNone', { kind: 'allOrNone', itemPaths: ['a', 'b'] }, { a: 'x', b: 'y' }),
     ).toBeUndefined();
   });
 
   it('passes when no itemPaths are filled on object', () => {
     expect(
-      invoke('allOrNone', { kind: 'allOrNone', itemPaths: ['a', 'b'] }, { a: '', b: null })
+      invoke('allOrNone', { kind: 'allOrNone', itemPaths: ['a', 'b'] }, { a: '', b: null }),
     ).toBeUndefined();
   });
 
   it('fails when some itemPaths are filled on object', () => {
-    const err = invoke('allOrNone', { kind: 'allOrNone', itemPaths: ['a', 'b'] }, { a: 'x', b: '' });
+    const err = invoke(
+      'allOrNone',
+      { kind: 'allOrNone', itemPaths: ['a', 'b'] },
+      { a: 'x', b: '' },
+    );
     expect(err).toBeDefined();
     expect(err!.rule).toBe('allOrNone');
     expect(err!.relatedPaths).toEqual(['a', 'b']);
@@ -252,17 +281,19 @@ describe('allOrNone', () => {
   });
 
   it('works with arrays: fails when some items partially fill paths', () => {
-    const err = invoke(
-      'allOrNone',
-      { kind: 'allOrNone', itemPaths: ['x', 'y'] },
-      [{ x: 'a', y: 'b' }, { x: 'a', y: '' }]
-    );
+    const err = invoke('allOrNone', { kind: 'allOrNone', itemPaths: ['x', 'y'] }, [
+      { x: 'a', y: 'b' },
+      { x: 'a', y: '' },
+    ]);
     expect(err).toBeDefined();
   });
 
   it('works with arrays: passes when all items have all paths filled or all empty', () => {
     expect(
-      invoke('allOrNone', { kind: 'allOrNone', itemPaths: ['x', 'y'] }, [{ x: 'a', y: 'b' }, { x: 'c', y: 'd' }])
+      invoke('allOrNone', { kind: 'allOrNone', itemPaths: ['x', 'y'] }, [
+        { x: 'a', y: 'b' },
+        { x: 'c', y: 'd' },
+      ]),
     ).toBeUndefined();
   });
 });
@@ -294,14 +325,14 @@ describe('pattern', () => {
       id: 'field#0:pattern',
       rule: { kind: 'pattern', value: 'should-not-be-used' },
       dependencyPaths: [],
-      precompiled: { regex: /^[A-Z]+$/ }
+      precompiled: { regex: /^[A-Z]+$/ },
     };
     const ctx: SyncValidationContext = {
       compiledRule,
       value: 'HELLO',
       field: makeField(),
       scope: makeScope(),
-      rule: compiledRule.rule as any
+      rule: compiledRule.rule as any,
     };
     expect(builtInValidators.pattern(ctx as any)).toBeUndefined();
 
@@ -313,16 +344,22 @@ describe('pattern', () => {
 describe('email', () => {
   const rule = { kind: 'email' as const };
 
-  it.each(['user@example.com', 'a@b.co', 'test+tag@domain.org'])('passes for valid email %s', (val) => {
-    expect(invoke('email', rule, val)).toBeUndefined();
-  });
-
-  it.each(['no-at-sign', '@missing-local.com', 'missing@domain', 'spaces in@email.com', 'missing@.com'])(
-    'fails for invalid email %s',
+  it.each(['user@example.com', 'a@b.co', 'test+tag@domain.org'])(
+    'passes for valid email %s',
     (val) => {
-      expect(invoke('email', rule, val)).toBeDefined();
-    }
+      expect(invoke('email', rule, val)).toBeUndefined();
+    },
   );
+
+  it.each([
+    'no-at-sign',
+    '@missing-local.com',
+    'missing@domain',
+    'spaces in@email.com',
+    'missing@.com',
+  ])('fails for invalid email %s', (val) => {
+    expect(invoke('email', rule, val)).toBeDefined();
+  });
 
   it('passes for empty string (not enforced)', () => {
     expect(invoke('email', rule, '')).toBeUndefined();

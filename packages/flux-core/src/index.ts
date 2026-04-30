@@ -12,16 +12,28 @@ export {
   insertArrayValue,
   moveArrayValue,
   removeArrayValue,
-  swapArrayValue
+  swapArrayValue,
 } from './utils/array';
 
 export { resolveClassAliases, mergeClassAliases } from './class-aliases';
 
-export { isPlainObject, isRecord, toRecord, toPositiveNumber, toStringArray, shallowEqualRecords, shallowEqual } from './utils/object';
+export {
+  isPlainObject,
+  isRecord,
+  toRecord,
+  toPositiveNumber,
+  toStringArray,
+  shallowEqualRecords,
+  shallowEqual,
+} from './utils/object';
 export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn } from './utils/path';
 export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema';
 export { decorateRendererEnv } from './utils/renderer-env';
-export { isReportedImportError, markImportErrorReported, reportImportFailure } from './utils/import-failure';
+export {
+  isReportedImportError,
+  markImportErrorReported,
+  reportImportFailure,
+} from './utils/import-failure';
 export { reportRuntimeHostIssue } from './utils/runtime-host-reporting';
 
 export { createNamedActionProvider } from './named-action-provider';

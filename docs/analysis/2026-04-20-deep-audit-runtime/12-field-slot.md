@@ -15,17 +15,17 @@
 
 同类问题扫描从 2 处扩展到 **14 处**：
 
-| 渲染器 | slot/区域 | 文件位置 | 说明 |
-|--------|----------|---------|------|
-| page | header, footer | `flux-renderers-basic/src/index.tsx:46` | 已记录 |
-| container | header, footer | `flux-renderers-basic/src/index.tsx:56` | 已记录 |
-| tabs | toolbar | `flux-renderers-basic/src/index.tsx` | 新增 |
-| form | body, actions | `flux-renderers-form/src/renderers/form.tsx` | 新增 |
-| crud | toolbar, bulkActions | `flux-renderers-data/src/index.tsx` | 新增 |
-| detail-view | viewer, content | `flux-renderers-form-advanced/src/detail-view/detail-view.tsx` | 新增 |
-| detail-field | viewer, content | `flux-renderers-form-advanced/src/detail-view/detail-field.tsx` | 新增 |
-| object-field | body | `flux-renderers-form-advanced/src/object-field.tsx` | 新增 |
-| table | header, footer | `flux-renderers-data/src/` | **死代码** — 声明了但 renderer 未调用 resolveRendererSlotContent |
+| 渲染器       | slot/区域            | 文件位置                                                        | 说明                                                             |
+| ------------ | -------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------- |
+| page         | header, footer       | `flux-renderers-basic/src/index.tsx:46`                         | 已记录                                                           |
+| container    | header, footer       | `flux-renderers-basic/src/index.tsx:56`                         | 已记录                                                           |
+| tabs         | toolbar              | `flux-renderers-basic/src/index.tsx`                            | 新增                                                             |
+| form         | body, actions        | `flux-renderers-form/src/renderers/form.tsx`                    | 新增                                                             |
+| crud         | toolbar, bulkActions | `flux-renderers-data/src/index.tsx`                             | 新增                                                             |
+| detail-view  | viewer, content      | `flux-renderers-form-advanced/src/detail-view/detail-view.tsx`  | 新增                                                             |
+| detail-field | viewer, content      | `flux-renderers-form-advanced/src/detail-view/detail-field.tsx` | 新增                                                             |
+| object-field | body                 | `flux-renderers-form-advanced/src/object-field.tsx`             | 新增                                                             |
+| table        | header, footer       | `flux-renderers-data/src/`                                      | **死代码** — 声明了但 renderer 未调用 resolveRendererSlotContent |
 
 - **现状**: 这些 slot 使用 `resolveRendererSlotContent` 做 regions→props fallback，但声明为纯 region。table 的 header/footer 是死代码（声明了但未使用 resolveRendererSlotContent）。
 - **建议**: 逐一审查，对实际使用 resolveRendererSlotContent 的 slot 改为 value-or-region 声明。移除 table header/footer 死代码声明。
@@ -53,14 +53,15 @@
 
 ## 驳回项
 
-| 原始发现 | 排除理由 |
-|---------|---------|
+| 原始发现                            | 排除理由                                                                                                   |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | variant-field action 字段应为 event | `ignored` 是正确的：renderer 需要原始 action schema 注入自定义 args，event 类型会包装成 handler 丢失此能力 |
-| page modalContainer 声明未使用 | 实际被 SchemaRenderer 层面读取使用（传给 page runtime/DialogHost） |
+| page modalContainer 声明未使用      | 实际被 SchemaRenderer 层面读取使用（传给 page runtime/DialogHost）                                         |
 
 ## 正面评估
 
 核心架构合规性约 90%：
+
 - classifyField 五种来源精确分类（显式 fields > META_FIELDS > regions > 生命周期 > onXxx 正则）
 - formLabelFieldRule 被 20+ 表单控件共享，label value-or-region 正确
 - event 字段通过 eventPlans 通道传递并合成为 RendererEventHandler

@@ -11,7 +11,7 @@ function createStubScope() {
       getSnapshot: () => ({}),
       getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
-      subscribe: () => () => {}
+      subscribe: () => () => {},
     },
     value: {},
     update: () => {},
@@ -20,7 +20,7 @@ function createStubScope() {
     readOwn: () => ({}),
     readVisible: () => ({}),
     materializeVisible: () => ({}),
-    merge: () => {}
+    merge: () => {},
   };
 }
 
@@ -28,10 +28,7 @@ function createUniqueByForm() {
   return createManagedFormRuntime({
     id: 'test-form',
     initialValues: {
-      contacts: [
-        { email: 'a@example.com' },
-        { email: 'a@example.com' }
-      ]
+      contacts: [{ email: 'a@example.com' }, { email: 'a@example.com' }],
     },
     parentScope: createStubScope(),
     validation: {
@@ -40,7 +37,7 @@ function createUniqueByForm() {
           path: '',
           kind: 'form',
           rules: [],
-          children: ['contacts']
+          children: ['contacts'],
         },
         contacts: {
           path: 'contacts',
@@ -52,19 +49,19 @@ function createUniqueByForm() {
             {
               id: 'contacts#0:uniqueBy',
               rule: { kind: 'uniqueBy', itemPath: 'email', message: 'Emails must be unique' },
-              dependencyPaths: []
-            }
+              dependencyPaths: [],
+            },
           ],
           children: [],
-          parent: ''
-        }
+          parent: '',
+        },
       },
       order: ['contacts'],
       behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
-      dependents: {}
+      dependents: {},
     },
     executeValidationRule: async () => undefined,
-    validateRule: realValidateRule
+    validateRule: realValidateRule,
   });
 }
 
@@ -80,7 +77,7 @@ describe('applyChangesAndRevalidate deferred-aggregate policy', () => {
     await form.applyChangesAndRevalidate({
       writes: { 'contacts.0.email': 'b@example.com' },
       changedPaths: ['contacts.0.email'],
-      reason: 'change'
+      reason: 'change',
     });
 
     unsubscribe();
@@ -95,7 +92,7 @@ describe('applyChangesAndRevalidate deferred-aggregate policy', () => {
     const result = await form.applyChangesAndRevalidate({
       writes: { 'contacts.0.email': 'a@example.com' },
       changedPaths: ['contacts.0.email'],
-      reason: 'blur'
+      reason: 'blur',
     });
 
     expect(result.ok).toBe(false);
@@ -118,7 +115,7 @@ describe('applyChangesAndRevalidate deferred-aggregate policy', () => {
       await form.applyChangesAndRevalidate({
         writes: { 'contacts.0.email': `change${i}@example.com` },
         changedPaths: ['contacts.0.email'],
-        reason: 'change'
+        reason: 'change',
       });
     }
 
@@ -128,7 +125,7 @@ describe('applyChangesAndRevalidate deferred-aggregate policy', () => {
     const blurResult = await form.applyChangesAndRevalidate({
       writes: { 'contacts.0.email': 'a@example.com' },
       changedPaths: ['contacts.0.email'],
-      reason: 'blur'
+      reason: 'blur',
     });
 
     expect(validateFormCalls).toBe(1);

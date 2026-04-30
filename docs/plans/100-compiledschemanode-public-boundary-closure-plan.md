@@ -55,14 +55,15 @@ Targets: `packages/flux-core/src/types/renderer-compiler.ts`, `packages/flux-run
 
 **Audit Results (2026-04-16):**
 
-| Classification | Count | Description | Decision |
-|----------------|-------|-------------|----------|
-| Compiler-internal | 28 | Schema compiler implementation (`flux-runtime/src/schema-compiler*`) | RETAIN as-is |
-| Compiler plugin contract | 2 | `RendererPlugin.afterCompile` hook | RETAIN as intentional compile-time API |
-| Tooling residue | 4 | Debugger helpers via plugin contract | RETAIN, add `@internal` annotation |
-| Removable leakage | 0 | No runtime/renderer-facing usage found | N/A |
+| Classification           | Count | Description                                                          | Decision                               |
+| ------------------------ | ----- | -------------------------------------------------------------------- | -------------------------------------- |
+| Compiler-internal        | 28    | Schema compiler implementation (`flux-runtime/src/schema-compiler*`) | RETAIN as-is                           |
+| Compiler plugin contract | 2     | `RendererPlugin.afterCompile` hook                                   | RETAIN as intentional compile-time API |
+| Tooling residue          | 4     | Debugger helpers via plugin contract                                 | RETAIN, add `@internal` annotation     |
+| Removable leakage        | 0     | No runtime/renderer-facing usage found                               | N/A                                    |
 
 **Key Findings:**
+
 - Main render path already uses `CompiledTemplate -> TemplateNode -> NodeInstance`
 - `CompiledSchemaNode` has `@internal` annotation on interface definition
 - Debugger receives compiled nodes via plugin contract, not render path
@@ -85,6 +86,7 @@ Targets: same as Phase 1 plus focused tests
 **Phase 2 Results (2026-04-16):**
 
 No code changes required. The Phase 1 audit found:
+
 - **Zero removable leakage** - all 34 usages are either compiler-internal (28), intentional plugin contract (2), or legitimate tooling via plugin (4)
 - The existing `@internal` annotation on `CompiledSchemaNode` interface already marks it as non-public
 - The plugin contract `afterCompile(node)` is intentional and correctly documented as compile-time extension point
@@ -109,6 +111,7 @@ Targets: `docs/architecture/flux-core.md`, `docs/logs/`
 **Phase 3 Results (2026-04-16):**
 
 Documentation updated:
+
 - `docs/architecture/flux-core.md` - Updated `CompiledSchemaNode` section to explicitly mark it as `@internal` compiler artifact with boundary classification table
 - Removed "remaining gaps" item about `CompiledSchemaNode` public exposure since boundary is now correctly documented
 - Added explicit notes that `afterCompile` is compile-time hook, not runtime-facing API

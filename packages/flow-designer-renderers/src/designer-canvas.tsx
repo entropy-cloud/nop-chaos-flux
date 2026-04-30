@@ -4,9 +4,23 @@ import { useDesignerContext, useDesignerFullSnapshot } from './designer-context'
 import { DingFlowAddNodeMenu, type DingFlowMenuItem } from './dingflow';
 import { createDingFlowMenuCommand } from './dingflow/dingflow-command-dispatch';
 import { DesignerIcon } from './designer-icon';
-import { compareTreeMenuNodeTypes, resolveNodeTypeAccent, resolveNodeTypeMeta, shouldIncludeInTreeAddMenu } from './designer-node-appearance';
+import {
+  compareTreeMenuNodeTypes,
+  resolveNodeTypeAccent,
+  resolveNodeTypeMeta,
+  shouldIncludeInTreeAddMenu,
+} from './designer-node-appearance';
 
-const plusButtonHandlerHolder: { current: ((sourceId: string, clientX: number, clientY: number, sourceKind?: 'node' | 'branch-group' | 'merge') => void) | null } = { current: null };
+const plusButtonHandlerHolder: {
+  current:
+    | ((
+        sourceId: string,
+        clientX: number,
+        clientY: number,
+        sourceKind?: 'node' | 'branch-group' | 'merge',
+      ) => void)
+    | null;
+} = { current: null };
 
 export { plusButtonHandlerHolder };
 
@@ -31,44 +45,65 @@ export function DesignerCanvasContent() {
     dispatch({ type: 'clearSelection' });
   }, [dispatch]);
 
-  const handlePlusButtonClick = useCallback((sourceId: string, clientX: number, clientY: number, sourceKind: 'node' | 'branch-group' | 'merge' = 'node') => {
-    setPopover({ sourceId, screenX: clientX, screenY: clientY, sourceKind });
-  }, []);
+  const handlePlusButtonClick = useCallback(
+    (
+      sourceId: string,
+      clientX: number,
+      clientY: number,
+      sourceKind: 'node' | 'branch-group' | 'merge' = 'node',
+    ) => {
+      setPopover({ sourceId, screenX: clientX, screenY: clientY, sourceKind });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (config.documentMode === 'tree') {
       plusButtonHandlerHolder.current = handlePlusButtonClick;
-      return () => { plusButtonHandlerHolder.current = null; };
+      return () => {
+        plusButtonHandlerHolder.current = null;
+      };
     }
   }, [config.documentMode, handlePlusButtonClick]);
 
-  const menuItems = useMemo<DingFlowMenuItem[]>(() => config.nodeTypes
-    .filter(shouldIncludeInTreeAddMenu)
-    .sort(compareTreeMenuNodeTypes)
-    .map((nodeType) => {
-      const meta = resolveNodeTypeMeta(nodeType.id, nodeType);
-      return {
-        type: nodeType.id,
-        label: meta.label,
-        icon: meta.icon ? <DesignerIcon icon={meta.icon} size={20} /> : <span className="text-xs font-bold">+</span>,
-        color: resolveNodeTypeAccent(nodeType.id, nodeType) ?? 'var(--fd-primary, #3296fa)',
-      };
-    }), [config.nodeTypes]);
+  const menuItems = useMemo<DingFlowMenuItem[]>(
+    () =>
+      config.nodeTypes
+        .filter(shouldIncludeInTreeAddMenu)
+        .sort(compareTreeMenuNodeTypes)
+        .map((nodeType) => {
+          const meta = resolveNodeTypeMeta(nodeType.id, nodeType);
+          return {
+            type: nodeType.id,
+            label: meta.label,
+            icon: meta.icon ? (
+              <DesignerIcon icon={meta.icon} size={20} />
+            ) : (
+              <span className="text-xs font-bold">+</span>
+            ),
+            color: resolveNodeTypeAccent(nodeType.id, nodeType) ?? 'var(--fd-primary, #3296fa)',
+          };
+        }),
+    [config.nodeTypes],
+  );
 
-  const handleMenuSelect = useCallback((type: string) => {
-    if (!popover) return;
-    const { sourceId, sourceKind } = popover;
-    setPopover(null);
+  const handleMenuSelect = useCallback(
+    (type: string) => {
+      if (!popover) return;
+      const { sourceId, sourceKind } = popover;
+      setPopover(null);
 
-    dispatch(createDingFlowMenuCommand(sourceId, type, sourceKind));
-  }, [popover, dispatch]);
+      dispatch(createDingFlowMenuCommand(sourceId, type, sourceKind));
+    },
+    [popover, dispatch],
+  );
 
   const handleNodeClick = useCallback(
     (nodeId: string, e?: React.MouseEvent) => {
       e?.stopPropagation();
       dispatch({ type: 'selectNode', nodeId });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleEdgeClick = useCallback(
@@ -76,28 +111,28 @@ export function DesignerCanvasContent() {
       e?.stopPropagation();
       dispatch({ type: 'selectEdge', edgeId });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
       dispatch({ type: 'deleteNode', nodeId });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleDuplicateNode = useCallback(
     (nodeId: string) => {
       dispatch({ type: 'duplicateNode', nodeId });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleDeleteEdge = useCallback(
     (edgeId: string) => {
       dispatch({ type: 'deleteEdge', edgeId });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const nodeTypeSizeMap = useMemo(() => {
@@ -105,7 +140,7 @@ export function DesignerCanvasContent() {
     for (const nodeType of config.nodeTypes) {
       map.set(nodeType.id, {
         minWidth: nodeType.appearance?.minWidth,
-        minHeight: nodeType.appearance?.minHeight
+        minHeight: nodeType.appearance?.minHeight,
       });
     }
     return map;
@@ -143,7 +178,11 @@ export function DesignerCanvasContent() {
         return;
       }
 
-      const result = dispatch({ type: 'addEdge', source: pendingConnectionSourceId, target: nodeId });
+      const result = dispatch({
+        type: 'addEdge',
+        source: pendingConnectionSourceId,
+        target: nodeId,
+      });
       if (result.ok) {
         setPendingConnectionSourceId(null);
       }
@@ -162,7 +201,12 @@ export function DesignerCanvasContent() {
         setReconnectingEdgeId(null);
       }
     },
-    onCompleteReconnect: (edgeId: string, sourceId: string, nodeId: string, event?: React.MouseEvent) => {
+    onCompleteReconnect: (
+      edgeId: string,
+      sourceId: string,
+      nodeId: string,
+      event?: React.MouseEvent,
+    ) => {
       if (config.documentMode === 'tree') {
         return;
       }
@@ -201,10 +245,13 @@ export function DesignerCanvasContent() {
       dispatch({
         type: 'moveNode',
         nodeId,
-        position: position ?? { x: node.position.x + 24, y: node.position.y + 24 }
+        position: position ?? { x: node.position.x + 24, y: node.position.y + 24 },
       });
     },
-    onViewportChange: (viewport: { x: number; y: number; zoom: number }, event?: React.MouseEvent) => {
+    onViewportChange: (
+      viewport: { x: number; y: number; zoom: number },
+      event?: React.MouseEvent,
+    ) => {
       event?.stopPropagation();
       dispatch({ type: 'setViewport', viewport });
     },

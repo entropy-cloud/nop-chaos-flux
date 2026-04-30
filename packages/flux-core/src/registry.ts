@@ -3,12 +3,14 @@ import type { RendererDefinition, RendererRegistry } from './types';
 function validateDefinition(definition: RendererDefinition): void {
   if (!definition.component && !definition.reactComponent) {
     throw new Error(
-      `Renderer definition for type "${definition.type}" must specify either "component" or "reactComponent".`
+      `Renderer definition for type "${definition.type}" must specify either "component" or "reactComponent".`,
     );
   }
 }
 
-export function createRendererRegistry(initialDefinitions: RendererDefinition[] = []): RendererRegistry {
+export function createRendererRegistry(
+  initialDefinitions: RendererDefinition[] = [],
+): RendererRegistry {
   const map = new Map<string, RendererDefinition>();
 
   for (const definition of initialDefinitions) {
@@ -30,7 +32,9 @@ export function createRendererRegistry(initialDefinitions: RendererDefinition[] 
       }
 
       if (existing && existing !== definition && options?.override) {
-        console.warn(`[RendererRegistry] Overriding renderer definition for type "${definition.type}"`);
+        console.warn(
+          `[RendererRegistry] Overriding renderer definition for type "${definition.type}"`,
+        );
       }
 
       map.set(definition.type, definition);
@@ -43,13 +47,13 @@ export function createRendererRegistry(initialDefinitions: RendererDefinition[] 
     },
     list() {
       return Array.from(map.values());
-    }
+    },
   };
 }
 
 export function registerRendererDefinitions(
   registry: RendererRegistry,
-  definitions: ReadonlyArray<RendererDefinition>
+  definitions: ReadonlyArray<RendererDefinition>,
 ): RendererRegistry {
   for (const definition of definitions) {
     registry.register(definition);

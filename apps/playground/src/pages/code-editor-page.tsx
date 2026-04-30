@@ -42,14 +42,29 @@ const schema = {
               {
                 groupName: 'Logic',
                 items: [
-                  { name: 'IF', description: 'Conditional', example: 'IF(cond, t, f)', returnType: 'any' },
+                  {
+                    name: 'IF',
+                    description: 'Conditional',
+                    example: 'IF(cond, t, f)',
+                    returnType: 'any',
+                  },
                 ],
               },
               {
                 groupName: 'Text',
                 items: [
-                  { name: 'CONCAT', description: 'Concat strings', example: 'CONCAT(a, b)', returnType: 'string' },
-                  { name: 'UPPER', description: 'Uppercase', example: 'UPPER(str)', returnType: 'string' },
+                  {
+                    name: 'CONCAT',
+                    description: 'Concat strings',
+                    example: 'CONCAT(a, b)',
+                    returnType: 'string',
+                  },
+                  {
+                    name: 'UPPER',
+                    description: 'Uppercase',
+                    example: 'UPPER(str)',
+                    returnType: 'string',
+                  },
                 ],
               },
             ],
@@ -74,7 +89,12 @@ const schema = {
               {
                 groupName: 'Text',
                 items: [
-                  { name: 'UPPER', description: 'Uppercase', example: 'UPPER(str)', returnType: 'string' },
+                  {
+                    name: 'UPPER',
+                    description: 'Uppercase',
+                    example: 'UPPER(str)',
+                    returnType: 'string',
+                  },
                 ],
               },
             ],
@@ -160,7 +180,8 @@ const schema = {
               },
               {
                 name: 'FOREACH 循环',
-                template: '<foreach collection="${list}" item="${item}" open="(" separator="," close=")">\n  #{${item}}\n</foreach>',
+                template:
+                  '<foreach collection="${list}" item="${item}" open="(" separator="," close=")">\n  #{${item}}\n</foreach>',
                 description: 'MyBatis 循环',
               },
               {
@@ -286,11 +307,10 @@ export function CodeEditorPage({ onBack }: CodeEditorPageProps) {
         </p>
         <h1 className="m-0 mb-4">Code Editor Playground</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
-          Test the CodeMirror 6 based code-editor renderer across different
-          languages: expression, SQL, JSON, JavaScript, CSS, HTML, and plain
-          text. Each editor supports syntax highlighting, auto-completion, and
-          configurable features like line numbers, folding, themes, and
-          read-only mode.
+          Test the CodeMirror 6 based code-editor renderer across different languages: expression,
+          SQL, JSON, JavaScript, CSS, HTML, and plain text. Each editor supports syntax
+          highlighting, auto-completion, and configurable features like line numbers, folding,
+          themes, and read-only mode.
         </p>
         <div className="mt-8">
           <SchemaRenderer

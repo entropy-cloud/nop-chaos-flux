@@ -657,8 +657,8 @@ Interpretation:
       "type": "container",
       "name": "step1",
       "body": [
-        {"type": "input-text", "name": "firstName", "required": true},
-        {"type": "input-text", "name": "lastName", "required": true}
+        { "type": "input-text", "name": "firstName", "required": true },
+        { "type": "input-text", "name": "lastName", "required": true }
       ]
     },
     {

@@ -16,12 +16,24 @@ describe('form runtime status helpers', () => {
       {
         submitting: true,
         fieldStates: {
-          name: { errors: [{ message: 'required' }], validating: false, dirty: true, touched: true, visited: false },
-          email: { errors: [{ message: 'invalid' }, { message: 'domain' }], validating: true, dirty: false, touched: false, visited: true },
+          name: {
+            errors: [{ message: 'required' }],
+            validating: false,
+            dirty: true,
+            touched: true,
+            visited: false,
+          },
+          email: {
+            errors: [{ message: 'invalid' }, { message: 'domain' }],
+            validating: true,
+            dirty: false,
+            touched: false,
+            visited: true,
+          },
         },
       } as any,
       'form-1',
-      'profile'
+      'profile',
     );
 
     expect(summary).toEqual({
@@ -40,7 +52,11 @@ describe('form runtime status helpers', () => {
   });
 
   it('creates a $form-bound scope overlay and initial form scope changes', () => {
-    const scope = createScopeRef({ id: 'form-scope', path: '$form-scope', initialData: { title: 'Draft' } });
+    const scope = createScopeRef({
+      id: 'form-scope',
+      path: '$form-scope',
+      initialData: { title: 'Draft' },
+    });
     const storeState = {
       submitting: false,
       fieldStates: {
@@ -57,7 +73,9 @@ describe('form runtime status helpers', () => {
     expect(boundScope.get('$form.valid')).toBe(true);
     expect(boundScope.get('$form.dirty')).toBe(true);
     expect(boundScope.get('title')).toBe('Draft');
-    expect(boundScope.readVisible().$form).toEqual(expect.objectContaining({ id: 'form-1', name: 'profile' }));
+    expect(boundScope.readVisible().$form).toEqual(
+      expect.objectContaining({ id: 'form-1', name: 'profile' }),
+    );
     expect(boundScope.value.$form.valid).toBe(true);
     expect(createInitialFormScopeChange('form-1')).toEqual({
       paths: ['*'],
@@ -78,10 +96,18 @@ describe('validation runtime helper', () => {
       get: vi.fn((kind: string) => (kind === 'required' ? validator : undefined)),
     } as any;
 
-    expect(validateRule({ rule: { kind: 'async' } } as any, '', field, scope, registry)).toBeUndefined();
-    expect(validateRule({ rule: { kind: 'missing' } } as any, '', field, scope, registry)).toBeUndefined();
-    expect(validateRule({ rule: { kind: 'required' } } as any, '', field, scope, registry)).toEqual({ path: 'email', message: 'invalid' });
-    expect(validator).toHaveBeenCalledWith(expect.objectContaining({ field, scope, value: '', rule: { kind: 'required' } }));
+    expect(
+      validateRule({ rule: { kind: 'async' } } as any, '', field, scope, registry),
+    ).toBeUndefined();
+    expect(
+      validateRule({ rule: { kind: 'missing' } } as any, '', field, scope, registry),
+    ).toBeUndefined();
+    expect(validateRule({ rule: { kind: 'required' } } as any, '', field, scope, registry)).toEqual(
+      { path: 'email', message: 'invalid' },
+    );
+    expect(validator).toHaveBeenCalledWith(
+      expect.objectContaining({ field, scope, value: '', rule: { kind: 'required' } }),
+    );
   });
 });
 
@@ -94,7 +120,9 @@ describe('import manager', () => {
   }
 
   it('ref-counts prepared import frames, exposes bindings, and cleans up on release/dispose', async () => {
-    const installPrepared = vi.fn().mockImplementation(({ imports }) => ({ id: `frame:${imports[0].resolvedSpec.as}` }));
+    const installPrepared = vi
+      .fn()
+      .mockImplementation(({ imports }) => ({ id: `frame:${imports[0].resolvedSpec.as}` }));
     const currentBindings = vi.fn().mockReturnValue({ demo: { version: 1 } });
     const pop = vi.fn();
     const dispose = vi.fn();
@@ -111,21 +139,48 @@ describe('import manager', () => {
     });
     const imports = [createPreparedImport('demo-lib', 'demo')];
 
-    await manager.ensureImportedNamespaces({ imports, actionScope, componentRegistry, scope, schemaUrl: '/schema.json', nodeInstance: { templateNode: { id: 'node-1' } } as any });
-    await manager.ensureImportedNamespaces({ imports, actionScope, componentRegistry, scope, schemaUrl: '/schema.json' });
+    await manager.ensureImportedNamespaces({
+      imports,
+      actionScope,
+      componentRegistry,
+      scope,
+      schemaUrl: '/schema.json',
+      nodeInstance: { templateNode: { id: 'node-1' } } as any,
+    });
+    await manager.ensureImportedNamespaces({
+      imports,
+      actionScope,
+      componentRegistry,
+      scope,
+      schemaUrl: '/schema.json',
+    });
 
     expect(installPrepared).toHaveBeenCalledTimes(1);
-    expect(manager.getImportedExpressionBindings({ imports, actionScope, schemaUrl: '/schema.json' })).toEqual({ demo: { version: 1 } });
+    expect(
+      manager.getImportedExpressionBindings({ imports, actionScope, schemaUrl: '/schema.json' }),
+    ).toEqual({ demo: { version: 1 } });
 
     manager.releaseImportedNamespaces({ imports, actionScope, schemaUrl: '/schema.json' });
     expect(pop).not.toHaveBeenCalled();
     manager.releaseImportedNamespaces({ imports, actionScope, schemaUrl: '/schema.json' });
     expect(pop).toHaveBeenCalledWith('frame:demo');
-    expect(manager.getImportedExpressionBindings({ imports, actionScope, schemaUrl: '/schema.json' })).toEqual({});
+    expect(
+      manager.getImportedExpressionBindings({ imports, actionScope, schemaUrl: '/schema.json' }),
+    ).toEqual({});
 
     manager.releaseImportedNamespaces({ imports, actionScope, schemaUrl: '/schema.json' });
-    await manager.ensureImportedNamespaces({ imports: [], actionScope, scope, schemaUrl: '/schema.json' });
-    await manager.ensureImportedNamespaces({ imports, actionScope: undefined, scope, schemaUrl: '/schema.json' });
+    await manager.ensureImportedNamespaces({
+      imports: [],
+      actionScope,
+      scope,
+      schemaUrl: '/schema.json',
+    });
+    await manager.ensureImportedNamespaces({
+      imports,
+      actionScope: undefined,
+      scope,
+      schemaUrl: '/schema.json',
+    });
     expect(installPrepared).toHaveBeenCalledTimes(1);
 
     manager.dispose({ actionScopes: [actionScope] });
@@ -148,7 +203,18 @@ describe('import manager', () => {
     const scope = createScopeRef({ id: 'page', path: '$page', initialData: {} });
     const actionScope = createActionScope({ id: 'scope-1' });
 
-    await manager.ensureImportedNamespaces({ imports: [createPreparedImport('demo-lib', 'demo')], actionScope, scope, schemaUrl: '/schema.json' });
-    expect(manager.getImportedExpressionBindings({ imports: [createPreparedImport('demo-lib', 'demo')], actionScope, schemaUrl: '/schema.json' })).toEqual({});
+    await manager.ensureImportedNamespaces({
+      imports: [createPreparedImport('demo-lib', 'demo')],
+      actionScope,
+      scope,
+      schemaUrl: '/schema.json',
+    });
+    expect(
+      manager.getImportedExpressionBindings({
+        imports: [createPreparedImport('demo-lib', 'demo')],
+        actionScope,
+        schemaUrl: '/schema.json',
+      }),
+    ).toEqual({});
   });
 });

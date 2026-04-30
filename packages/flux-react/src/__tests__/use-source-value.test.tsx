@@ -15,7 +15,7 @@ function makeScope() {
     readVisible: () => ({}),
     materializeVisible: () => ({}),
     update() {},
-    merge() {}
+    merge() {},
   } as any;
 }
 
@@ -29,7 +29,9 @@ describe('useSourceValue', () => {
   it('returns plain values without loading', () => {
     function Probe() {
       const state = useSourceValue<string>('ready');
-      return <span data-testid="value">{`${state.loading}:${state.value}:${String(state.error)}`}</span>;
+      return (
+        <span data-testid="value">{`${state.loading}:${state.value}:${String(state.error)}`}</span>
+      );
     }
 
     render(
@@ -37,7 +39,7 @@ describe('useSourceValue', () => {
         <ScopeContext.Provider value={makeScope()}>
           <Probe />
         </ScopeContext.Provider>
-      </RuntimeContext.Provider>
+      </RuntimeContext.Provider>,
     );
 
     expect(screen.getByTestId('value').textContent).toBe('false:ready:undefined');
@@ -52,7 +54,9 @@ describe('useSourceValue', () => {
 
     function Probe({ source }: { source: unknown }) {
       const state = useSourceValue<string>(source);
-      return <span data-testid="value">{`${state.loading}:${state.value ?? 'none'}:${state.error instanceof Error ? state.error.message : 'none'}`}</span>;
+      return (
+        <span data-testid="value">{`${state.loading}:${state.value ?? 'none'}:${state.error instanceof Error ? state.error.message : 'none'}`}</span>
+      );
     }
 
     const { rerender } = render(
@@ -60,7 +64,7 @@ describe('useSourceValue', () => {
         <ScopeContext.Provider value={makeScope()}>
           <Probe source={{ type: 'source', sourceType: 'api' }} />
         </ScopeContext.Provider>
-      </RuntimeContext.Provider>
+      </RuntimeContext.Provider>,
     );
 
     expect(screen.getByTestId('value').textContent).toBe('true:none:none');
@@ -73,7 +77,7 @@ describe('useSourceValue', () => {
         <ScopeContext.Provider value={makeScope()}>
           <Probe source={{ type: 'source', sourceType: 'api', id: 'b' }} />
         </ScopeContext.Provider>
-      </RuntimeContext.Provider>
+      </RuntimeContext.Provider>,
     );
 
     await waitFor(() => {

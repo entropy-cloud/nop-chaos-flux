@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { NopComponentInspectResult, NopComponentTreeItem, NopDebuggerController } from '../types';
+import type {
+  NopComponentInspectResult,
+  NopComponentTreeItem,
+  NopDebuggerController,
+} from '../types';
 
 function findMountedElement(cid: number) {
   if (typeof document === 'undefined') {
@@ -9,7 +13,11 @@ function findMountedElement(cid: number) {
   return document.querySelector(`[data-cid="${cid}"]`) as HTMLElement | null;
 }
 
-function useInspectOverlays(inspectMode: boolean, hoveredElement: HTMLElement | null, selectedElement: HTMLElement | null) {
+function useInspectOverlays(
+  inspectMode: boolean,
+  hoveredElement: HTMLElement | null,
+  selectedElement: HTMLElement | null,
+) {
   const hoverOverlayRef = useRef<HTMLDivElement | null>(null);
   const activeOverlayRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,34 +92,41 @@ export function useInspectMode(args: {
 
   useInspectOverlays(inspectMode, hoveredElement, selectedElement);
 
-  const inspectElement = useCallback((element: HTMLElement) => {
-    const cid = element.getAttribute('data-cid') || '0';
-    setSelectedElement(element);
-    setInspectMode(false);
-    args.controller.setActiveTab('node');
-    args.setNodeIdInput(cid);
+  const inspectElement = useCallback(
+    (element: HTMLElement) => {
+      const cid = element.getAttribute('data-cid') || '0';
+      setSelectedElement(element);
+      setInspectMode(false);
+      args.controller.setActiveTab('node');
+      args.setNodeIdInput(cid);
 
-    const inspectResult = args.controller.inspectByElement(element);
-    setInspectData(inspectResult ?? null);
-    args.setFormTab('values');
-    args.setEvalResult(null);
-  }, [args]);
+      const inspectResult = args.controller.inspectByElement(element);
+      setInspectData(inspectResult ?? null);
+      args.setFormTab('values');
+      args.setEvalResult(null);
+    },
+    [args],
+  );
 
-  const inspectTreeItem = useCallback((item: NopComponentTreeItem) => {
-    const element = findMountedElement(item.cid);
+  const inspectTreeItem = useCallback(
+    (item: NopComponentTreeItem) => {
+      const element = findMountedElement(item.cid);
 
-    setSelectedElement(element);
-    setInspectMode(false);
-    args.controller.setActiveTab('node');
-    args.setNodeIdInput(String(item.cid));
+      setSelectedElement(element);
+      setInspectMode(false);
+      args.controller.setActiveTab('node');
+      args.setNodeIdInput(String(item.cid));
 
-    const inspectResult = args.controller.inspectByCid(item.cid)
-      ?? (element ? args.controller.inspectByElement(element) : undefined);
+      const inspectResult =
+        args.controller.inspectByCid(item.cid) ??
+        (element ? args.controller.inspectByElement(element) : undefined);
 
-    setInspectData(inspectResult ?? null);
-    args.setFormTab('values');
-    args.setEvalResult(null);
-  }, [args]);
+      setInspectData(inspectResult ?? null);
+      args.setFormTab('values');
+      args.setEvalResult(null);
+    },
+    [args],
+  );
 
   useEffect(() => {
     if (!inspectMode) {
@@ -125,7 +140,10 @@ export function useInspectMode(args: {
 
     const handleClick = (event: MouseEvent) => {
       const target = (event.target as HTMLElement).closest('[data-cid]');
-      if (!target || (event.target as HTMLElement).closest('.nop-debugger, .nop-debugger-launcher')) {
+      if (
+        !target ||
+        (event.target as HTMLElement).closest('.nop-debugger, .nop-debugger-launcher')
+      ) {
         return;
       }
       event.preventDefault();

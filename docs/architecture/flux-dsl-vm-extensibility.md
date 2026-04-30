@@ -174,19 +174,19 @@ Flux 的运行时工程视角应理解为 `Template + semantic overlays`。
 
 为避免职责漂移，推荐用下表判断一个能力该放在哪一层：
 
-| 能力 | Loader/装配期 | Flux 运行期 |
-| --- | --- | --- |
-| `x:extends` / 结构继承 | 必须 | 不应出现 |
-| schema 覆盖/删除 | 必须 | 不应出现 |
-| feature flag 静态裁剪 | 必须 | 不应出现 |
-| 权限静态裁剪 | 优先 | 不承担权限语义；只消费宿主已投影的结果 |
-| 默认值展开 | 必须 | 不应依赖 renderer 二次补齐 |
-| 设计器 shell 结构生成 | 优先 | 只负责渲染 |
-| 表达式执行 | 不负责 | 必须 |
-| action 调度 | 不负责 | 必须 |
-| form/page/dialog 状态 | 不负责 | 必须 |
-| 动态 import 的能力接入 | 不负责 | 可以 |
-| 用户交互反馈 | 不负责 | 必须 |
+| 能力                   | Loader/装配期 | Flux 运行期                            |
+| ---------------------- | ------------- | -------------------------------------- |
+| `x:extends` / 结构继承 | 必须          | 不应出现                               |
+| schema 覆盖/删除       | 必须          | 不应出现                               |
+| feature flag 静态裁剪  | 必须          | 不应出现                               |
+| 权限静态裁剪           | 优先          | 不承担权限语义；只消费宿主已投影的结果 |
+| 默认值展开             | 必须          | 不应依赖 renderer 二次补齐             |
+| 设计器 shell 结构生成  | 优先          | 只负责渲染                             |
+| 表达式执行             | 不负责        | 必须                                   |
+| action 调度            | 不负责        | 必须                                   |
+| form/page/dialog 状态  | 不负责        | 必须                                   |
+| 动态 import 的能力接入 | 不负责        | 可以                                   |
+| 用户交互反馈           | 不负责        | 必须                                   |
 
 判断规则：
 
@@ -443,7 +443,7 @@ interface ScopeRef {
 type ActionResolutionOrder = [
   'built-in actions',
   'component:<method> through ComponentHandleRegistry',
-  'namespaced actions through ActionScope'
+  'namespaced actions through ActionScope',
 ];
 ```
 
@@ -530,13 +530,13 @@ interface ComplexControlSchema extends BaseSchema {
 
 推荐再补一个更贴近旧三棵树工程映射、但不等同于最终 primitive taxonomy 的理解：
 
-| 字段 | 主要归属 | 说明 |
-| --- | --- | --- |
-| `type` | ComponentTree | 决定 renderer |
-| `body/toolbar/inspector/dialogs` | ComponentTree | 决定结构片段 |
-| `model` | StateTree | 描述静态/初始数据模型 |
-| `behavior` | ActionTree | 描述静态/初始行为模型 |
-| `shell` | ComponentTree | 描述特殊壳层组织方式 |
+| 字段                             | 主要归属      | 说明                  |
+| -------------------------------- | ------------- | --------------------- |
+| `type`                           | ComponentTree | 决定 renderer         |
+| `body/toolbar/inspector/dialogs` | ComponentTree | 决定结构片段          |
+| `model`                          | StateTree     | 描述静态/初始数据模型 |
+| `behavior`                       | ActionTree    | 描述静态/初始行为模型 |
+| `shell`                          | ComponentTree | 描述特殊壳层组织方式  |
 
 这里的“归属”是主归属，不代表运行时实现上必须形成单一对象。
 

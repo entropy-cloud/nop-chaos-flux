@@ -226,14 +226,14 @@ Re-audit note (2026-04-23): the live repo no longer contains `packages/flux-reac
 
 ## 变动文件清单
 
-| File | Change | Lines affected |
-|------|--------|---------------|
-| `packages/flux-react/src/node-renderer.tsx` | 移出主要副作用逻辑，保留编排主线 | ~60-100 |
-| `packages/flux-react/src/node-renderer-utils.ts` | 新增本地 accessor 与纯工具函数 | ~30-60 |
-| `packages/flux-react/src/useNodeImports.ts` | 新增 import 生命周期 hook | ~40-70 |
-| `packages/flux-react/src/useFormComponentHandleRegistration.ts` | 新增 form handle 注册 hook | ~15-30 |
-| `packages/flux-react/src/useNodeDebugData.ts` | 新增 debug data hook | ~20-40 |
-| `packages/flux-react/src/node-frame-wrapper.tsx` | 可选：提取 FieldFrame 包裹逻辑 | ~25-40 |
+| File                                                            | Change                           | Lines affected |
+| --------------------------------------------------------------- | -------------------------------- | -------------- |
+| `packages/flux-react/src/node-renderer.tsx`                     | 移出主要副作用逻辑，保留编排主线 | ~60-100        |
+| `packages/flux-react/src/node-renderer-utils.ts`                | 新增本地 accessor 与纯工具函数   | ~30-60         |
+| `packages/flux-react/src/useNodeImports.ts`                     | 新增 import 生命周期 hook        | ~40-70         |
+| `packages/flux-react/src/useFormComponentHandleRegistration.ts` | 新增 form handle 注册 hook       | ~15-30         |
+| `packages/flux-react/src/useNodeDebugData.ts`                   | 新增 debug data hook             | ~20-40         |
+| `packages/flux-react/src/node-frame-wrapper.tsx`                | 可选：提取 FieldFrame 包裹逻辑   | ~25-40         |
 
 ## Risks And Rollback
 

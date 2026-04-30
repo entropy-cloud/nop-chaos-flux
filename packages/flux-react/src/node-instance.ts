@@ -4,7 +4,7 @@ import type {
   NodeInstance,
   NodeState,
   ScopeRef,
-  TemplateNode
+  TemplateNode,
 } from '@nop-chaos/flux-core';
 
 function toNodeState(state: NodeRuntimeState, mounted: boolean): NodeState {
@@ -15,7 +15,7 @@ function toNodeState(state: NodeRuntimeState, mounted: boolean): NodeState {
     propsDependencies: state.propsDependencies,
     resolvedMeta: state.resolvedMeta,
     resolvedProps: state.resolvedProps,
-    mounted
+    mounted,
   };
 }
 
@@ -51,6 +51,6 @@ export function createNodeInstance<S extends import('@nop-chaos/flux-core').Base
     instancePath: input.instancePath,
     templateNode: input.templateNode,
     scope: input.scope,
-    state: toNodeState(input.state, input.mounted)
+    state: toNodeState(input.state, input.mounted),
   };
 }

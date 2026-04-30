@@ -83,7 +83,7 @@
 理想模型不是：
 
 ```ts
-OneRuntimeForEverything
+OneRuntimeForEverything;
 ```
 
 而是：
@@ -152,23 +152,27 @@ React 风格的不可变更新并不要求对整棵值树做 deep clone。
 最小伪代码：
 
 ```ts
-function writeWithStructuralSharing(root: unknown, path: string[], nextLeafValue: unknown): unknown {
+function writeWithStructuralSharing(
+  root: unknown,
+  path: string[],
+  nextLeafValue: unknown,
+): unknown {
   if (path.length === 0) {
-    return nextLeafValue
+    return nextLeafValue;
   }
 
-  const [head, ...rest] = path
-  const current = isContainer(root) ? root : createContainerForKey(head)
-  const currentChild = current[head]
-  const nextChild = writeWithStructuralSharing(currentChild, rest, nextLeafValue)
+  const [head, ...rest] = path;
+  const current = isContainer(root) ? root : createContainerForKey(head);
+  const currentChild = current[head];
+  const nextChild = writeWithStructuralSharing(currentChild, rest, nextLeafValue);
 
   if (Object.is(nextChild, currentChild)) {
-    return current
+    return current;
   }
 
-  const nextContainer = Array.isArray(current) ? current.slice() : { ...current }
-  nextContainer[head] = nextChild
-  return nextContainer
+  const nextContainer = Array.isArray(current) ? current.slice() : { ...current };
+  nextContainer[head] = nextChild;
+  return nextContainer;
 }
 ```
 
@@ -176,9 +180,9 @@ function writeWithStructuralSharing(root: unknown, path: string[], nextLeafValue
 
 ```ts
 function badWrite(root: unknown, path: string[], nextLeafValue: unknown): unknown {
-  const cloned = deepClone(root)
-  setIn(cloned, path, nextLeafValue)
-  return cloned
+  const cloned = deepClone(root);
+  setIn(cloned, path, nextLeafValue);
+  return cloned;
 }
 ```
 
@@ -202,7 +206,7 @@ interface DraftOverlayScope {
 }
 
 function writeDraftPatch(scope: DraftOverlayScope, path: string, nextValue: unknown) {
-  scope.patch = writeWithStructuralSharing(scope.patch, splitPath(path), nextValue)
+  scope.patch = writeWithStructuralSharing(scope.patch, splitPath(path), nextValue);
 }
 ```
 
@@ -220,12 +224,18 @@ function writeDraftPatch(scope: DraftOverlayScope, path: string, nextValue: unkn
 推荐：
 
 ```ts
-function updateArrayObjectField(root: unknown, arrayPath: string, sourceIndex: number, childPath: string, nextValue: unknown) {
-  return writeWithStructuralSharing(root, [
-    ...splitPath(arrayPath),
-    String(sourceIndex),
-    ...splitPath(childPath)
-  ], nextValue)
+function updateArrayObjectField(
+  root: unknown,
+  arrayPath: string,
+  sourceIndex: number,
+  childPath: string,
+  nextValue: unknown,
+) {
+  return writeWithStructuralSharing(
+    root,
+    [...splitPath(arrayPath), String(sourceIndex), ...splitPath(childPath)],
+    nextValue,
+  );
 }
 ```
 
@@ -336,7 +346,7 @@ compile(schema) -> CompiledTemplate {
 
 ```ts
 function readBoundValue(owner: ValueOwner): unknown {
-  return substrate.valueScopes.read(owner.scopeId, owner.valuePath)
+  return substrate.valueScopes.read(owner.scopeId, owner.valuePath);
 }
 ```
 
@@ -349,18 +359,22 @@ function readBoundValue(owner: ValueOwner): unknown {
 
 ```ts
 function writeBoundValue(owner: ValueOwner, nextValue: unknown): void {
-  substrate.valueScopes.write(owner.scopeId, owner.valuePath, nextValue)
+  substrate.valueScopes.write(owner.scopeId, owner.valuePath, nextValue);
 }
 ```
 
 ### Validate A Bound Path
 
 ```ts
-async function validateOwnedPath(owner: ValueOwner, relativePath: string, reason: ValidationReason) {
-  const absolutePath = joinPath(owner.rootPath, relativePath)
+async function validateOwnedPath(
+  owner: ValueOwner,
+  relativePath: string,
+  reason: ValidationReason,
+) {
+  const absolutePath = joinPath(owner.rootPath, relativePath);
   return substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateAt(absolutePath, reason)
+    ?.validateAt(absolutePath, reason);
 }
 ```
 
@@ -370,8 +384,8 @@ async function validateOwnedPath(owner: ValueOwner, relativePath: string, reason
 function submitInlineOwner(owner: InlineValueOwner): InlineSubmitResult {
   return {
     mode: 'no-op',
-    reason: 'value already lives in parent owner'
-  }
+    reason: 'value already lives in parent owner',
+  };
 }
 ```
 
@@ -386,20 +400,20 @@ function submitInlineOwner(owner: InlineValueOwner): InlineSubmitResult {
 async function confirmStagedOwner(owner: StagedValueOwner): Promise<ConfirmResult> {
   const validation = await substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateAll('commit')
+    ?.validateAll('commit');
 
   if (!validation || !validation.ok) {
-    return { ok: false, reason: 'validation-failed' }
+    return { ok: false, reason: 'validation-failed' };
   }
 
-  const draftValue = substrate.valueScopes.read(owner.draftScopeId, '')
-  const outboundValue = await runTransformOutIfNeeded(owner, draftValue)
+  const draftValue = substrate.valueScopes.read(owner.draftScopeId, '');
+  const outboundValue = await runTransformOutIfNeeded(owner, draftValue);
 
-  substrate.valueScopes.write(owner.parentScopeId, owner.parentPath, outboundValue)
-  substrate.surfaceRuntime.close(owner.surfaceId)
-  disposeOwnerSession(owner)
+  substrate.valueScopes.write(owner.parentScopeId, owner.parentPath, outboundValue);
+  substrate.surfaceRuntime.close(owner.surfaceId);
+  disposeOwnerSession(owner);
 
-  return { ok: true }
+  return { ok: true };
 }
 ```
 
@@ -460,23 +474,27 @@ interface LeafFieldBinding {
 ### Get Value
 
 ```ts
-function createFormRuntime(parentScope: ScopeRef, initialValues: object, model: CompiledValidationModel): FormRuntime {
-  const scopeId = substrate.valueScopes.createChildScope(parentScope.id, initialValues)
+function createFormRuntime(
+  parentScope: ScopeRef,
+  initialValues: object,
+  model: CompiledValidationModel,
+): FormRuntime {
+  const scopeId = substrate.valueScopes.createChildScope(parentScope.id, initialValues);
   const validationRuntime = substrate.validationRuntimes.create({
     scopeId,
     rootPath: '',
-    model
-  })
+    model,
+  });
 
   return assembleFormRuntime({
     scopeId,
     validationRuntime,
-    submitPolicy: 'form'
-  })
+    submitPolicy: 'form',
+  });
 }
 
 function readFormValues(form: FormRuntime): Record<string, unknown> {
-  return asObject(substrate.valueScopes.read(form.scope.id, ''))
+  return asObject(substrate.valueScopes.read(form.scope.id, ''));
 }
 ```
 
@@ -484,7 +502,7 @@ function readFormValues(form: FormRuntime): Record<string, unknown> {
 
 ```ts
 async function validateForm(form: FormRuntime, reason: ValidationReason = 'submit') {
-  return form.validateAll(reason)
+  return form.validateAll(reason);
 }
 ```
 
@@ -492,13 +510,13 @@ async function validateForm(form: FormRuntime, reason: ValidationReason = 'submi
 
 ```ts
 async function submitForm(form: FormRuntime): Promise<FormSubmitResult> {
-  const result = await form.validateAll('submit')
+  const result = await form.validateAll('submit');
   if (!result.ok) {
-    return { ok: false, errors: result.errors }
+    return { ok: false, errors: result.errors };
   }
 
-  const payload = readFormValues(form)
-  return dispatchFormSubmit(form, payload)
+  const payload = readFormValues(form);
+  return dispatchFormSubmit(form, payload);
 }
 ```
 
@@ -530,8 +548,8 @@ function openReadOnlySurface(parentScope: ScopeRef, kind: 'dialog' | 'drawer') {
     kind,
     surface: {},
     scope: parentScope,
-    runtime: currentRendererRuntime
-  })
+    runtime: currentRendererRuntime,
+  });
 }
 ```
 
@@ -539,15 +557,15 @@ function openReadOnlySurface(parentScope: ScopeRef, kind: 'dialog' | 'drawer') {
 
 ```ts
 function openStagedSurface(parentScopeId: string, parentPath: string, kind: 'dialog' | 'drawer') {
-  const baseValue = substrate.valueScopes.read(parentScopeId, parentPath)
-  const draftScopeId = createDraftOverlayScope(baseValue)
+  const baseValue = substrate.valueScopes.read(parentScopeId, parentPath);
+  const draftScopeId = createDraftOverlayScope(baseValue);
 
   return substrate.surfaceRuntime.open({
     kind,
     surface: { parentPath, draftScopeId },
     scope: createSurfaceDraftScope(draftScopeId),
-    runtime: currentRendererRuntime
-  })
+    runtime: currentRendererRuntime,
+  });
 }
 ```
 
@@ -555,8 +573,8 @@ function openStagedSurface(parentScopeId: string, parentPath: string, kind: 'dia
 
 ```ts
 async function validateSurfaceContent(surfaceId: string): Promise<ScopeValidationResult> {
-  const validationRuntime = resolveSurfaceValidationRuntime(surfaceId)
-  return validationRuntime?.validateAll('commit') ?? { ok: true, errors: [], fieldErrors: {} }
+  const validationRuntime = resolveSurfaceValidationRuntime(surfaceId);
+  return validationRuntime?.validateAll('commit') ?? { ok: true, errors: [], fieldErrors: {} };
 }
 ```
 
@@ -564,13 +582,13 @@ async function validateSurfaceContent(surfaceId: string): Promise<ScopeValidatio
 
 ```ts
 async function confirmSurface(surfaceId: string): Promise<ConfirmResult> {
-  const stagedRuntime = resolveStagedRuntime(surfaceId)
+  const stagedRuntime = resolveStagedRuntime(surfaceId);
   if (!stagedRuntime) {
-    substrate.surfaceRuntime.close(surfaceId)
-    return { ok: true }
+    substrate.surfaceRuntime.close(surfaceId);
+    return { ok: true };
   }
 
-  return confirmStagedOwner(stagedRuntime)
+  return confirmStagedOwner(stagedRuntime);
 }
 ```
 
@@ -600,27 +618,30 @@ interface TabsRuntimePolicy {
 }
 
 function getActiveTab(ownerId: string, defaultKey: string): string {
-  return substrate.uiState.get(ownerId, 'activeTab') as string ?? defaultKey
+  return (substrate.uiState.get(ownerId, 'activeTab') as string) ?? defaultKey;
 }
 
 function setActiveTab(ownerId: string, nextKey: string) {
-  substrate.uiState.set(ownerId, 'activeTab', nextKey)
+  substrate.uiState.set(ownerId, 'activeTab', nextKey);
 }
 ```
 
 ### Validate
 
 ```ts
-async function validateTabs(ownerId: string, policy: TabsRuntimePolicy): Promise<ScopeValidationResult> {
+async function validateTabs(
+  ownerId: string,
+  policy: TabsRuntimePolicy,
+): Promise<ScopeValidationResult> {
   if (policy.validationPolicy === 'active-only') {
-    return validateActiveTabSubtree(ownerId)
+    return validateActiveTabSubtree(ownerId);
   }
 
   if (policy.validationPolicy === 'mounted-only') {
-    return validateMountedTabSubtrees(ownerId)
+    return validateMountedTabSubtrees(ownerId);
   }
 
-  return validateAllOwnedTabSubtrees(ownerId)
+  return validateAllOwnedTabSubtrees(ownerId);
 }
 ```
 
@@ -628,7 +649,10 @@ async function validateTabs(ownerId: string, policy: TabsRuntimePolicy): Promise
 
 ```ts
 function submitTabs() {
-  return { mode: 'no-op', reason: 'tabs only route visibility; nearest form/detail runtime submits' }
+  return {
+    mode: 'no-op',
+    reason: 'tabs only route visibility; nearest form/detail runtime submits',
+  };
 }
 ```
 
@@ -660,7 +684,7 @@ interface WizardRuntime {
 }
 
 function getCurrentStep(ownerId: string, steps: string[]): string {
-  return substrate.uiState.get(ownerId, 'currentStep') as string ?? steps[0]
+  return (substrate.uiState.get(ownerId, 'currentStep') as string) ?? steps[0];
 }
 ```
 
@@ -668,18 +692,18 @@ function getCurrentStep(ownerId: string, steps: string[]): string {
 
 ```ts
 async function validateCurrentStep(wizard: WizardRuntime): Promise<ScopeValidationResult> {
-  const stepPath = resolveStepValidationPath(wizard.currentStep)
-  return wizard.form.validateSubtree(stepPath, 'submit')
+  const stepPath = resolveStepValidationPath(wizard.currentStep);
+  return wizard.form.validateSubtree(stepPath, 'submit');
 }
 
 async function goToNextStep(wizard: WizardRuntime): Promise<boolean> {
-  const result = await validateCurrentStep(wizard)
+  const result = await validateCurrentStep(wizard);
   if (!result.ok) {
-    return false
+    return false;
   }
 
-  substrate.uiState.set(getWizardUiOwnerId(wizard), 'currentStep', getNextStepKey(wizard))
-  return true
+  substrate.uiState.set(getWizardUiOwnerId(wizard), 'currentStep', getNextStepKey(wizard));
+  return true;
 }
 ```
 
@@ -687,12 +711,12 @@ async function goToNextStep(wizard: WizardRuntime): Promise<boolean> {
 
 ```ts
 async function submitWizard(wizard: WizardRuntime): Promise<FormSubmitResult> {
-  const result = await wizard.form.validateAll('submit')
+  const result = await wizard.form.validateAll('submit');
   if (!result.ok) {
-    return { ok: false, errors: result.errors }
+    return { ok: false, errors: result.errors };
   }
 
-  return dispatchFormSubmit(wizard.form, readFormValues(wizard.form))
+  return dispatchFormSubmit(wizard.form, readFormValues(wizard.form));
 }
 ```
 
@@ -722,12 +746,12 @@ function bindInputText(currentForm: FormRuntime, name: string): LeafFieldBinding
     scopeId: currentForm.scope.id,
     valuePath: name,
     validationRuntimeId: currentForm.scopeId,
-    validationPath: name
-  }
+    validationPath: name,
+  };
 }
 
 function readInputText(binding: LeafFieldBinding): string {
-  return String(substrate.valueScopes.read(binding.scopeId, binding.valuePath) ?? '')
+  return String(substrate.valueScopes.read(binding.scopeId, binding.valuePath) ?? '');
 }
 ```
 
@@ -735,17 +759,17 @@ function readInputText(binding: LeafFieldBinding): string {
 
 ```ts
 async function onInputTextChange(binding: LeafFieldBinding, nextValue: string) {
-  substrate.valueScopes.write(binding.scopeId, binding.valuePath, nextValue)
+  substrate.valueScopes.write(binding.scopeId, binding.valuePath, nextValue);
   await substrate.validationRuntimes
     .get(binding.validationRuntimeId)
-    ?.validateAt(binding.validationPath, 'change')
+    ?.validateAt(binding.validationPath, 'change');
 }
 
 async function onInputTextBlur(binding: LeafFieldBinding) {
-  markTouched(binding.validationRuntimeId, binding.validationPath)
+  markTouched(binding.validationRuntimeId, binding.validationPath);
   await substrate.validationRuntimes
     .get(binding.validationRuntimeId)
-    ?.validateAt(binding.validationPath, 'blur')
+    ?.validateAt(binding.validationPath, 'blur');
 }
 ```
 
@@ -753,7 +777,7 @@ async function onInputTextBlur(binding: LeafFieldBinding) {
 
 ```ts
 function submitInputText() {
-  return { mode: 'no-op', reason: 'leaf field delegates submit to nearest form or staged runtime' }
+  return { mode: 'no-op', reason: 'leaf field delegates submit to nearest form or staged runtime' };
 }
 ```
 
@@ -779,18 +803,21 @@ interface ObjectFieldSchema {
 ### Get Value
 
 ```ts
-function createObjectFieldOwner(parent: InlineValueOwner, schema: ObjectFieldSchema): InlineValueOwner {
+function createObjectFieldOwner(
+  parent: InlineValueOwner,
+  schema: ObjectFieldSchema,
+): InlineValueOwner {
   return {
     kind: 'inline',
     scopeId: parent.scopeId,
     validationOwnerId: parent.validationOwnerId,
     valuePath: joinPath(parent.valuePathRoot ?? '', schema.name),
-    rootPath: joinPath(parent.rootPath, schema.name)
-  }
+    rootPath: joinPath(parent.rootPath, schema.name),
+  };
 }
 
 function readObjectFieldValue(owner: InlineValueOwner): Record<string, unknown> {
-  return asObject(substrate.valueScopes.read(owner.scopeId, owner.valuePath))
+  return asObject(substrate.valueScopes.read(owner.scopeId, owner.valuePath));
 }
 ```
 
@@ -798,7 +825,7 @@ function readObjectFieldValue(owner: InlineValueOwner): Record<string, unknown> 
 
 ```ts
 function readObjectChild(owner: InlineValueOwner, childName: string): unknown {
-  return substrate.valueScopes.read(owner.scopeId, joinPath(owner.valuePath, childName))
+  return substrate.valueScopes.read(owner.scopeId, joinPath(owner.valuePath, childName));
 }
 ```
 
@@ -806,16 +833,16 @@ function readObjectChild(owner: InlineValueOwner, childName: string): unknown {
 
 ```ts
 async function onObjectChildChange(owner: InlineValueOwner, childName: string, nextValue: unknown) {
-  substrate.valueScopes.write(owner.scopeId, joinPath(owner.valuePath, childName), nextValue)
+  substrate.valueScopes.write(owner.scopeId, joinPath(owner.valuePath, childName), nextValue);
   await substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateAt(joinPath(owner.rootPath, childName), 'change')
+    ?.validateAt(joinPath(owner.rootPath, childName), 'change');
 }
 
 async function validateObjectField(owner: InlineValueOwner) {
   return substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateSubtree(owner.rootPath, 'manual')
+    ?.validateSubtree(owner.rootPath, 'manual');
 }
 ```
 
@@ -823,7 +850,7 @@ async function validateObjectField(owner: InlineValueOwner) {
 
 ```ts
 function submitObjectField(owner: InlineValueOwner) {
-  return submitInlineOwner(owner)
+  return submitInlineOwner(owner);
 }
 ```
 
@@ -850,20 +877,23 @@ interface VariantFieldSchema {
 
 ```ts
 function readVariantRawValue(owner: InlineValueOwner): unknown {
-  return substrate.valueScopes.read(owner.scopeId, owner.valuePath)
+  return substrate.valueScopes.read(owner.scopeId, owner.valuePath);
 }
 
 function detectVariant(schema: VariantFieldSchema, rawValue: unknown): string {
-  return detectByDiscriminator(rawValue)
-    ?? detectByMatch(schema.variants, rawValue)
-    ?? detectByActionIfNeeded(schema, rawValue)
-    ?? schema.defaultVariant
-    ?? schema.variants[0].key
+  return (
+    detectByDiscriminator(rawValue) ??
+    detectByMatch(schema.variants, rawValue) ??
+    detectByActionIfNeeded(schema, rawValue) ??
+    schema.defaultVariant ??
+    schema.variants[0].key
+  );
 }
 
 function getActiveVariant(ownerId: string, schema: VariantFieldSchema, rawValue: unknown): string {
-  return substrate.uiState.get(ownerId, 'activeVariant') as string
-    ?? detectVariant(schema, rawValue)
+  return (
+    (substrate.uiState.get(ownerId, 'activeVariant') as string) ?? detectVariant(schema, rawValue)
+  );
 }
 ```
 
@@ -871,12 +901,12 @@ variant editor 看到的统一 payload：
 
 ```ts
 function buildVariantScopePayload(ownerId: string, rawValue: unknown, readOnly: boolean) {
-  const variant = substrate.uiState.get(ownerId, 'activeVariant')
+  const variant = substrate.uiState.get(ownerId, 'activeVariant');
   return {
     value: rawValue,
     variant,
-    readOnly
-  }
+    readOnly,
+  };
 }
 ```
 
@@ -884,22 +914,22 @@ function buildVariantScopePayload(ownerId: string, rawValue: unknown, readOnly: 
 
 ```ts
 async function onVariantValueChange(owner: InlineValueOwner, nextValue: unknown) {
-  substrate.valueScopes.write(owner.scopeId, owner.valuePath, nextValue)
+  substrate.valueScopes.write(owner.scopeId, owner.valuePath, nextValue);
   await substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateSubtree(owner.rootPath, 'change')
+    ?.validateSubtree(owner.rootPath, 'change');
 }
 
 async function switchVariant(ownerId: string, owner: InlineValueOwner, nextVariant: string) {
-  const currentValue = readVariantRawValue(owner)
-  const nextValue = await buildNextVariantValue(nextVariant, currentValue)
+  const currentValue = readVariantRawValue(owner);
+  const nextValue = await buildNextVariantValue(nextVariant, currentValue);
 
-  substrate.uiState.set(ownerId, 'activeVariant', nextVariant)
-  substrate.valueScopes.write(owner.scopeId, owner.valuePath, nextValue)
+  substrate.uiState.set(ownerId, 'activeVariant', nextVariant);
+  substrate.valueScopes.write(owner.scopeId, owner.valuePath, nextValue);
 
   await substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateSubtree(owner.rootPath, 'change')
+    ?.validateSubtree(owner.rootPath, 'change');
 }
 ```
 
@@ -907,7 +937,7 @@ async function switchVariant(ownerId: string, owner: InlineValueOwner, nextVaria
 
 ```ts
 function submitVariantField(owner: InlineValueOwner) {
-  return submitInlineOwner(owner)
+  return submitInlineOwner(owner);
 }
 ```
 
@@ -934,7 +964,7 @@ interface ArrayFieldSchema {
 
 ```ts
 function readArrayValue(owner: InlineValueOwner): unknown[] {
-  return asArray(substrate.valueScopes.read(owner.scopeId, owner.valuePath))
+  return asArray(substrate.valueScopes.read(owner.scopeId, owner.valuePath));
 }
 
 interface ArrayItemEntry {
@@ -944,33 +974,33 @@ interface ArrayItemEntry {
 
 function resolveArrayItemKey(item: unknown, sourceIndex: number, itemKeyField?: string): string {
   if (isRecord(item) && itemKeyField) {
-    const explicit = getIn(item, itemKeyField)
+    const explicit = getIn(item, itemKeyField);
     if (explicit != null && explicit !== '') {
-      return String(explicit)
+      return String(explicit);
     }
   }
 
   if (isRecord(item) && item.__rowKey != null && item.__rowKey !== '') {
-    return String(item.__rowKey)
+    return String(item.__rowKey);
   }
 
   if (isRecord(item) && item.id != null && item.id !== '') {
-    return String(item.id)
+    return String(item.id);
   }
 
-  return `legacy-index:${sourceIndex}`
+  return `legacy-index:${sourceIndex}`;
 }
 
 function materializeArrayEntries(owner: InlineValueOwner): ArrayItemEntry[] {
-  const arrayValue = readArrayValue(owner)
+  const arrayValue = readArrayValue(owner);
   return arrayValue.map((item, sourceIndex) => ({
     itemKey: resolveArrayItemKey(item, sourceIndex, owner.itemKeyField),
-    sourceIndex
-  }))
+    sourceIndex,
+  }));
 }
 
 function readArrayItem(owner: InlineValueOwner, index: number): unknown {
-  return substrate.valueScopes.read(owner.scopeId, joinPath(owner.valuePath, String(index)))
+  return substrate.valueScopes.read(owner.scopeId, joinPath(owner.valuePath, String(index)));
 }
 ```
 
@@ -978,21 +1008,26 @@ function readArrayItem(owner: InlineValueOwner, index: number): unknown {
 
 ```ts
 async function appendArrayItem(owner: InlineValueOwner, initialItem: unknown) {
-  const items = readArrayValue(owner)
-  substrate.valueScopes.write(owner.scopeId, owner.valuePath, [...items, initialItem])
+  const items = readArrayValue(owner);
+  substrate.valueScopes.write(owner.scopeId, owner.valuePath, [...items, initialItem]);
   await substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateSubtree(owner.rootPath, 'change')
+    ?.validateSubtree(owner.rootPath, 'change');
 }
 
-async function updateArrayItemField(owner: InlineValueOwner, index: number, relativePath: string, nextValue: unknown) {
-  const absoluteValuePath = joinPath(owner.valuePath, String(index), relativePath)
-  const absoluteValidationPath = joinPath(owner.rootPath, String(index), relativePath)
+async function updateArrayItemField(
+  owner: InlineValueOwner,
+  index: number,
+  relativePath: string,
+  nextValue: unknown,
+) {
+  const absoluteValuePath = joinPath(owner.valuePath, String(index), relativePath);
+  const absoluteValidationPath = joinPath(owner.rootPath, String(index), relativePath);
 
-  substrate.valueScopes.write(owner.scopeId, absoluteValuePath, nextValue)
+  substrate.valueScopes.write(owner.scopeId, absoluteValuePath, nextValue);
   await substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateAt(absoluteValidationPath, 'change')
+    ?.validateAt(absoluteValidationPath, 'change');
 }
 ```
 
@@ -1000,7 +1035,7 @@ async function updateArrayItemField(owner: InlineValueOwner, index: number, rela
 
 ```ts
 function submitArrayField(owner: InlineValueOwner) {
-  return submitInlineOwner(owner)
+  return submitInlineOwner(owner);
 }
 ```
 
@@ -1041,16 +1076,21 @@ interface ArrayFieldSchema {
 最小伪代码：
 
 ```ts
-function writeObjectArrayField(owner: InlineValueOwner, entry: ArrayItemEntry, childPath: string, nextValue: unknown) {
+function writeObjectArrayField(
+  owner: InlineValueOwner,
+  entry: ArrayItemEntry,
+  childPath: string,
+  nextValue: unknown,
+) {
   substrate.valueScopes.write(
     owner.scopeId,
     joinPath(owner.valuePath, String(entry.sourceIndex), childPath),
-    nextValue
-  )
+    nextValue,
+  );
 }
 
 function getObjectArrayItemRuntimeKey(entry: ArrayItemEntry): string {
-  return entry.itemKey
+  return entry.itemKey;
 }
 ```
 
@@ -1079,20 +1119,24 @@ interface DetailViewSchema {
 打开时创建 staged session：
 
 ```ts
-function openDetailView(parentScopeId: string, parentPath: string, schema: DetailViewSchema): StagedValueOwner {
-  const sourceValue = substrate.valueScopes.read(parentScopeId, parentPath)
-  const draftScopeId = createDraftOverlayScope(sourceValue)
+function openDetailView(
+  parentScopeId: string,
+  parentPath: string,
+  schema: DetailViewSchema,
+): StagedValueOwner {
+  const sourceValue = substrate.valueScopes.read(parentScopeId, parentPath);
+  const draftScopeId = createDraftOverlayScope(sourceValue);
   const validationRuntime = substrate.validationRuntimes.create({
     scopeId: draftScopeId,
     rootPath: '',
-    model: compileDetailValidation(schema)
-  })
+    model: compileDetailValidation(schema),
+  });
   const surfaceId = substrate.surfaceRuntime.open({
     kind: schema.surface,
     surface: {},
     scope: createSurfaceDraftScope(draftScopeId),
-    runtime: currentRendererRuntime
-  })
+    runtime: currentRendererRuntime,
+  });
 
   return {
     kind: 'staged',
@@ -1101,8 +1145,8 @@ function openDetailView(parentScopeId: string, parentPath: string, schema: Detai
     draftScopeId,
     validationRuntimeId: validationRuntime.scopeId,
     surfaceId,
-    uiOwnerId: createUiOwnerId(surfaceId)
-  }
+    uiOwnerId: createUiOwnerId(surfaceId),
+  };
 }
 ```
 
@@ -1115,7 +1159,7 @@ interface DraftOverlayScope {
 }
 
 function readDraft(scope: DraftOverlayScope, path: string): unknown {
-  return readOverlay(scope.baseValue, scope.patch, path)
+  return readOverlay(scope.baseValue, scope.patch, path);
 }
 ```
 
@@ -1123,9 +1167,7 @@ function readDraft(scope: DraftOverlayScope, path: string): unknown {
 
 ```ts
 async function validateDetailView(owner: StagedValueOwner) {
-  return substrate.validationRuntimes
-    .get(owner.validationRuntimeId)
-    ?.validateAll('commit')
+  return substrate.validationRuntimes.get(owner.validationRuntimeId)?.validateAll('commit');
 }
 ```
 
@@ -1133,12 +1175,12 @@ async function validateDetailView(owner: StagedValueOwner) {
 
 ```ts
 async function submitDetailView(owner: StagedValueOwner): Promise<ConfirmResult> {
-  return confirmStagedOwner(owner)
+  return confirmStagedOwner(owner);
 }
 
 function cancelDetailView(owner: StagedValueOwner): void {
-  substrate.surfaceRuntime.close(owner.surfaceId)
-  disposeOwnerSession(owner)
+  substrate.surfaceRuntime.close(owner.surfaceId);
+  disposeOwnerSession(owner);
 }
 ```
 
@@ -1178,27 +1220,27 @@ function buildRowEntries(source: unknown[], rowKeyField: string): TableRowEntry[
   return source.map((record, sourceIndex) => ({
     rowKey: resolveStableRowKey(record, rowKeyField, sourceIndex),
     sourceIndex,
-    record: asObject(record)
-  }))
+    record: asObject(record),
+  }));
 }
 
 function resolveStableRowKey(record: unknown, sourceIndex: number, rowKeyField?: string): string {
   if (isRecord(record) && rowKeyField) {
-    const explicit = getIn(record, rowKeyField)
+    const explicit = getIn(record, rowKeyField);
     if (explicit != null && explicit !== '') {
-      return String(explicit)
+      return String(explicit);
     }
   }
 
   if (isRecord(record) && record.__rowKey != null && record.__rowKey !== '') {
-    return String(record.__rowKey)
+    return String(record.__rowKey);
   }
 
   if (isRecord(record) && record.id != null && record.id !== '') {
-    return String(record.id)
+    return String(record.id);
   }
 
-  return `legacy-index:${sourceIndex}`
+  return `legacy-index:${sourceIndex}`;
 }
 ```
 
@@ -1214,16 +1256,22 @@ table 采用与对象数组相同的 identity split：
 最小伪代码：
 
 ```ts
-function writeEditableCell(scopeId: string, tablePath: string, row: TableRowEntry, column: TableColumn, nextValue: unknown) {
+function writeEditableCell(
+  scopeId: string,
+  tablePath: string,
+  row: TableRowEntry,
+  column: TableColumn,
+  nextValue: unknown,
+) {
   substrate.valueScopes.write(
     scopeId,
     joinPath(tablePath, String(row.sourceIndex), column.name),
-    nextValue
-  )
+    nextValue,
+  );
 }
 
 function getTableRowRuntimeKey(row: TableRowEntry): string {
-  return row.rowKey
+  return row.rowKey;
 }
 ```
 
@@ -1231,11 +1279,19 @@ cell 读取规则：
 
 ```ts
 function readDisplayCell(row: TableRowEntry, column: TableColumn): unknown {
-  return getIn(row.record, column.name)
+  return getIn(row.record, column.name);
 }
 
-function readEditableCell(scopeId: string, tablePath: string, row: TableRowEntry, column: TableColumn): unknown {
-  return substrate.valueScopes.read(scopeId, joinPath(tablePath, String(row.sourceIndex), column.name))
+function readEditableCell(
+  scopeId: string,
+  tablePath: string,
+  row: TableRowEntry,
+  column: TableColumn,
+): unknown {
+  return substrate.valueScopes.read(
+    scopeId,
+    joinPath(tablePath, String(row.sourceIndex), column.name),
+  );
 }
 ```
 
@@ -1245,23 +1301,27 @@ display / interactive mode：
 
 ```ts
 function validateDisplayTable(): ScopeValidationResult {
-  return { ok: true, errors: [], fieldErrors: {} }
+  return { ok: true, errors: [], fieldErrors: {} };
 }
 ```
 
 editable mode：
 
 ```ts
-async function validateEditableCell(owner: InlineValueOwner, row: TableRowEntry, column: TableColumn) {
+async function validateEditableCell(
+  owner: InlineValueOwner,
+  row: TableRowEntry,
+  column: TableColumn,
+) {
   return substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateAt(joinPath(owner.rootPath, String(row.sourceIndex), column.name), 'change')
+    ?.validateAt(joinPath(owner.rootPath, String(row.sourceIndex), column.name), 'change');
 }
 
 async function validateEditableTable(owner: InlineValueOwner) {
   return substrate.validationRuntimes
     .get(owner.validationRuntimeId)
-    ?.validateSubtree(owner.rootPath, 'manual')
+    ?.validateSubtree(owner.rootPath, 'manual');
 }
 ```
 
@@ -1269,11 +1329,11 @@ async function validateEditableTable(owner: InlineValueOwner) {
 
 ```ts
 function submitDisplayTable() {
-  return { mode: 'no-op', reason: 'table is view-only' }
+  return { mode: 'no-op', reason: 'table is view-only' };
 }
 
 function submitEditableTable(owner: InlineValueOwner) {
-  return submitInlineOwner(owner)
+  return submitInlineOwner(owner);
 }
 ```
 
@@ -1288,13 +1348,13 @@ function submitEditableTable(owner: InlineValueOwner) {
 ## Page -> Form -> `input-text`
 
 ```ts
-pageScope = createPageScope(pageData)
-form = createFormRuntime(pageScope, initialValues, validationModel)
-binding = bindInputText(form, 'profile.name')
+pageScope = createPageScope(pageData);
+form = createFormRuntime(pageScope, initialValues, validationModel);
+binding = bindInputText(form, 'profile.name');
 
-readInputText(binding)
-onInputTextChange(binding, 'Alice')
-submitForm(form)
+readInputText(binding);
+onInputTextChange(binding, 'Alice');
+submitForm(form);
 ```
 
 规则：
@@ -1307,10 +1367,10 @@ submitForm(form)
 ## Page -> `tabs` -> Form
 
 ```ts
-tabs.active = getActiveTab(tabsOwnerId, 'basic')
+tabs.active = getActiveTab(tabsOwnerId, 'basic');
 
-if (tabs.active === 'basic') renderBasicFormRegion()
-if (tabs.active === 'advanced') renderAdvancedFormRegion()
+if (tabs.active === 'basic') renderBasicFormRegion();
+if (tabs.active === 'advanced') renderAdvancedFormRegion();
 ```
 
 规则：
@@ -1322,10 +1382,10 @@ if (tabs.active === 'advanced') renderAdvancedFormRegion()
 ## Page -> Button -> Dialog -> Form
 
 ```ts
-surfaceId = openReadOnlySurface(pageScope, 'dialog')
-dialogForm = createFormRuntime(dialogScope, dialogInitialValues, dialogValidation)
+surfaceId = openReadOnlySurface(pageScope, 'dialog');
+dialogForm = createFormRuntime(dialogScope, dialogInitialValues, dialogValidation);
 
-submitForm(dialogForm)
+submitForm(dialogForm);
 ```
 
 规则：
@@ -1337,9 +1397,9 @@ submitForm(dialogForm)
 ## Form -> Button -> `detail-view` -> Confirm
 
 ```ts
-detail = openDetailView(form.scope.id, 'address', detailSchema)
-writeDraft(detail.draftScopeId, 'street', 'Main')
-submitDetailView(detail)
+detail = openDetailView(form.scope.id, 'address', detailSchema);
+writeDraft(detail.draftScopeId, 'street', 'Main');
+submitDetailView(detail);
 ```
 
 规则：
@@ -1351,10 +1411,10 @@ submitDetailView(detail)
 ## Form -> `array-field(object)` -> `table(editable)`
 
 ```ts
-rows = buildRowEntries(readArrayValue(arrayOwner), 'id')
-cell = readEditableCell(form.scope.id, 'lineItems', rows[3], qtyColumn)
-validateEditableCell(arrayOwner, rows[3], qtyColumn)
-submitForm(form)
+rows = buildRowEntries(readArrayValue(arrayOwner), 'id');
+cell = readEditableCell(form.scope.id, 'lineItems', rows[3], qtyColumn);
+validateEditableCell(arrayOwner, rows[3], qtyColumn);
+submitForm(form);
 ```
 
 规则：
@@ -1369,11 +1429,15 @@ submitForm(form)
 
 ```ts
 function startInlineRowEdit(rowKey: string) {
-  substrate.uiState.set(tableOwnerId, `row:${rowKey}:editing`, true)
+  substrate.uiState.set(tableOwnerId, `row:${rowKey}:editing`, true);
 }
 
 function commitInlineCell(row: TableRowEntry, column: TableColumn, nextValue: unknown) {
-  substrate.valueScopes.write(form.scope.id, `lineItems.${row.sourceIndex}.${column.name}`, nextValue)
+  substrate.valueScopes.write(
+    form.scope.id,
+    `lineItems.${row.sourceIndex}.${column.name}`,
+    nextValue,
+  );
 }
 ```
 
@@ -1387,15 +1451,15 @@ function commitInlineCell(row: TableRowEntry, column: TableColumn, nextValue: un
 
 ```ts
 function openRowDraft(row: TableRowEntry) {
-  const record = substrate.valueScopes.read(form.scope.id, `lineItems.${row.sourceIndex}`)
-  const draftScopeId = createDraftOverlayScope(record)
+  const record = substrate.valueScopes.read(form.scope.id, `lineItems.${row.sourceIndex}`);
+  const draftScopeId = createDraftOverlayScope(record);
   const validationRuntime = substrate.validationRuntimes.create({
     scopeId: draftScopeId,
     rootPath: '',
-    model: rowValidationModel
-  })
+    model: rowValidationModel,
+  });
 
-  return { rowKey: row.rowKey, draftScopeId, validationRuntimeId: validationRuntime.scopeId }
+  return { rowKey: row.rowKey, draftScopeId, validationRuntimeId: validationRuntime.scopeId };
 }
 ```
 
@@ -1409,9 +1473,9 @@ function openRowDraft(row: TableRowEntry) {
 
 ```ts
 if (currentStep === 'advanced') {
-  detail = openDetailView(form.scope.id, 'advancedConfig', detailSchema)
-  await submitDetailView(detail)
-  await goToNextStep(wizard)
+  detail = openDetailView(form.scope.id, 'advancedConfig', detailSchema);
+  await submitDetailView(detail);
+  await goToNextStep(wizard);
 }
 ```
 

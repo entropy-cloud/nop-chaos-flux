@@ -37,7 +37,9 @@ describe('FieldsetRenderer', () => {
       <FieldsetRenderer
         id="fieldset-1"
         path="$.body[0]"
-        props={{ title: 'Advanced', collapsible: true, collapsed: true, bodyClassName: 'body-x' } as any}
+        props={
+          { title: 'Advanced', collapsible: true, collapsed: true, bodyClassName: 'body-x' } as any
+        }
         schema={{ type: 'fieldset' } as any}
         meta={{ className: 'outer-x', cid: '1' } as any}
         events={{} as any}
@@ -45,7 +47,7 @@ describe('FieldsetRenderer', () => {
         regions={{}}
         templateNode={{} as any}
         node={{} as any}
-      />
+      />,
     );
 
     const fieldset = document.querySelector('.nop-fieldset') as HTMLElement;
@@ -74,7 +76,7 @@ describe('FieldsetRenderer', () => {
         regions={{ body: null as any }}
         templateNode={{} as any}
         node={{} as any}
-      />
+      />,
     );
 
     const fieldset = document.querySelector('fieldset') as HTMLElement;

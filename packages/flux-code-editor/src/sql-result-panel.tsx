@@ -1,4 +1,12 @@
-import { Spinner, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@nop-chaos/ui';
+import {
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { XIcon } from 'lucide-react';
 import { ToolbarButton } from './code-editor-renderer/toolbar-button';
@@ -32,7 +40,11 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
         <div data-slot="code-editor-result-header">
           <span>{t('flux.codeEditor.error')}</span>
           {onClose && (
-            <ToolbarButton data-slot="code-editor-result-close" onClick={onClose} aria-label="Close">
+            <ToolbarButton
+              data-slot="code-editor-result-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
               <XIcon />
             </ToolbarButton>
           )}
@@ -58,18 +70,22 @@ export function SQLResultPanel({ result, onClose }: SQLResultPanelProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              {columns.map(col => <TableHead key={col}>{col}</TableHead>)}
+              {columns.map((col) => (
+                <TableHead key={col}>{col}</TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {result.data.map((row, index) => {
-              const rowKey = row.id ?? row.key ?? `row-${index}`
+              const rowKey = row.id ?? row.key ?? `row-${index}`;
 
               return (
                 <TableRow key={String(rowKey)}>
-                  {columns.map(col => <TableCell key={col}>{String(row[col] ?? '')}</TableCell>)}
+                  {columns.map((col) => (
+                    <TableCell key={col}>{String(row[col] ?? '')}</TableCell>
+                  ))}
                 </TableRow>
-              )
+              );
             })}
           </TableBody>
         </Table>

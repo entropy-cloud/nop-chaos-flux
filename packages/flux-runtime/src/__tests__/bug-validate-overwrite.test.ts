@@ -11,7 +11,7 @@ function createStubScope(): ScopeRef {
       getSnapshot: () => ({}),
       getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
-      subscribe: () => () => {}
+      subscribe: () => () => {},
     },
     value: {},
     update: () => {},
@@ -20,11 +20,15 @@ function createStubScope(): ScopeRef {
     readOwn: () => ({}),
     readVisible: () => ({}),
     materializeVisible: () => ({}),
-    merge: () => {}
+    merge: () => {},
   };
 }
 
-function err(path: string, message: string, rule: ValidationError['rule'] = 'required'): ValidationError {
+function err(
+  path: string,
+  message: string,
+  rule: ValidationError['rule'] = 'required',
+): ValidationError {
   return { path, message, rule };
 }
 
@@ -44,17 +48,17 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
               {
                 id: 'name#0:required',
                 rule: { kind: 'required', message: 'Name is required' },
-                dependencyPaths: []
-              }
+                dependencyPaths: [],
+              },
             ],
             behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['name'],
         behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
-        dependents: {}
+        dependents: {},
       },
       executeValidationRule: async () => undefined,
       validateRule: (_compiledRule, value) => {
@@ -62,7 +66,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
           return err('name', 'Name is required');
         }
         return undefined;
-      }
+      },
     });
 
     // Pre-set errors for paths outside the validation traversal
@@ -70,7 +74,10 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     form.store.setPathErrors('field.b', [err('field.b', 'Error B')]);
 
     const fieldStates = form.store.getState().fieldStates;
-    expect(Object.keys(fieldStates).filter(k => fieldStates[k]?.errors)).toEqual(['field.a', 'field.b']);
+    expect(Object.keys(fieldStates).filter((k) => fieldStates[k]?.errors)).toEqual([
+      'field.a',
+      'field.b',
+    ]);
 
     // Run validateForm â€” merge should preserve field.a and field.b
     await form.validateForm();
@@ -98,17 +105,17 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
               {
                 id: 'name#0:required',
                 rule: { kind: 'required', message: 'Name is required' },
-                dependencyPaths: []
-              }
+                dependencyPaths: [],
+              },
             ],
             behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['name'],
         behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
-        dependents: {}
+        dependents: {},
       },
       executeValidationRule: async () => undefined,
       validateRule: (_compiledRule, value) => {
@@ -116,7 +123,7 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
           return err('name', 'Name is required');
         }
         return undefined;
-      }
+      },
     });
 
     const result = await form.validateForm();
@@ -125,7 +132,9 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
     expect(result.fieldErrors['name']).toEqual([err('name', 'Name is required')]);
 
     // Store errors should match the returned result
-    expect(form.store.getState().fieldStates['name']?.errors).toEqual([err('name', 'Name is required')]);
+    expect(form.store.getState().fieldStates['name']?.errors).toEqual([
+      err('name', 'Name is required'),
+    ]);
   });
 
   it('should collect errors for registered fields validated during the loop', async () => {
@@ -143,17 +152,17 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
               {
                 id: 'name#0:required',
                 rule: { kind: 'required', message: 'Name is required' },
-                dependencyPaths: []
-              }
+                dependencyPaths: [],
+              },
             ],
             behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['name'],
         behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
-        dependents: {}
+        dependents: {},
       },
       executeValidationRule: async () => undefined,
       validateRule: (_compiledRule, value) => {
@@ -161,13 +170,13 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
           return err('name', 'Name is required');
         }
         return undefined;
-      }
+      },
     });
 
     form.registerField({
       path: 'email',
       getValue: () => '',
-      validate: async () => [err('email', 'Email is invalid')]
+      validate: async () => [err('email', 'Email is invalid')],
     });
 
     const result = await form.validateForm();
@@ -197,15 +206,15 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
             rules: [],
             behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['name'],
         behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
-        dependents: {}
+        dependents: {},
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     // Override the compiled field's validateRule to make it pass (return no error)
@@ -220,19 +229,23 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
         form.store.setPathErrors('name.confirm', [err('name.confirm', 'Confirm does not match')]);
         sideEffectDone = true;
         return [];
-      }
+      },
     });
 
     const result = await form.validateForm();
 
     expect(sideEffectDone).toBe(true);
     expect(result.ok).toBe(false);
-    expect(result.fieldErrors['name.confirm']).toEqual([err('name.confirm', 'Confirm does not match')]);
+    expect(result.fieldErrors['name.confirm']).toEqual([
+      err('name.confirm', 'Confirm does not match'),
+    ]);
     expect(result.errors).toContainEqual(err('name.confirm', 'Confirm does not match'));
 
     // FIXED: merge preserves the side-effect error
     const finalFieldStates = form.store.getState().fieldStates;
-    expect(finalFieldStates['name.confirm']?.errors).toEqual([err('name.confirm', 'Confirm does not match')]);
+    expect(finalFieldStates['name.confirm']?.errors).toEqual([
+      err('name.confirm', 'Confirm does not match'),
+    ]);
   });
 
   it('should block submit when validateForm keeps side-effect errors in the store', async () => {
@@ -249,15 +262,15 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
             rules: [],
             behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['name'],
         behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
-        dependents: {}
+        dependents: {},
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     form.registerField({
@@ -266,13 +279,15 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
       validate: async () => {
         form.store.setPathErrors('name.confirm', [err('name.confirm', 'Confirm does not match')]);
         return [];
-      }
+      },
     });
 
     const result = await form.submit();
 
     expect(result.ok).toBe(false);
-    expect(form.store.getState().fieldStates['name.confirm']?.errors).toEqual([err('name.confirm', 'Confirm does not match')]);
+    expect(form.store.getState().fieldStates['name.confirm']?.errors).toEqual([
+      err('name.confirm', 'Confirm does not match'),
+    ]);
   });
 
   it('sequential await prevents race condition WITHIN the loop (no parallel setPathErrors)', async () => {
@@ -292,12 +307,12 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
               {
                 id: 'a#0:required',
                 rule: { kind: 'required', message: 'A required' },
-                dependencyPaths: []
-              }
+                dependencyPaths: [],
+              },
             ],
             behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
+            parent: '',
           },
           b: {
             path: 'b',
@@ -307,23 +322,23 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
               {
                 id: 'b#0:required',
                 rule: { kind: 'required', message: 'B required' },
-                dependencyPaths: []
-              }
+                dependencyPaths: [],
+              },
             ],
             behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['a', 'b'],
         behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
-        dependents: {}
+        dependents: {},
       },
       executeValidationRule: async () => undefined,
       validateRule: (_compiledRule, value, field) => {
         callOrder.push(`validate:${field.path}`);
         return value === '' ? err(field.path, `${field.path} required`) : undefined;
-      }
+      },
     });
 
     await form.validateForm();
@@ -352,17 +367,17 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
               {
                 id: 'name#0:required',
                 rule: { kind: 'required', message: 'Name is required' },
-                dependencyPaths: []
-              }
+                dependencyPaths: [],
+              },
             ],
             behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['name'],
         behavior: { triggers: ['submit'], showErrorOn: ['submit'] },
-        dependents: {}
+        dependents: {},
       },
       executeValidationRule: async () => undefined,
       validateRule: (_compiledRule, value) => {
@@ -371,11 +386,13 @@ describe('Bug: validateForm() setErrors overwrites errors set by setPathErrors',
         }
 
         return undefined;
-      }
+      },
     });
 
     await form.validateForm();
-    expect(form.store.getState().fieldStates['name']?.errors).toEqual([err('name', 'Name is required')]);
+    expect(form.store.getState().fieldStates['name']?.errors).toEqual([
+      err('name', 'Name is required'),
+    ]);
 
     form.setValue('name', 'Alice');
     const result = await form.validateForm();

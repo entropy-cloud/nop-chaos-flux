@@ -39,7 +39,9 @@ describe('designer-core profile and adapters', () => {
               id: 'g1',
               label: 'Group 1',
               expanded: true,
-              fields: [{ id: 'amount', label: 'Amount', path: 'orders.amount', fieldType: 'number' }],
+              fields: [
+                { id: 'amount', label: 'Amount', path: 'orders.amount', fieldType: 'number' },
+              ],
             },
           ],
         },
@@ -108,7 +110,10 @@ describe('designer-core profile and adapters', () => {
 
     await profileCore.setSelectionTarget({ kind: 'sheet', sheetId: profileSheetId });
 
-    expect(profileCore.getSnapshot().inspector.resolvedSchema).toEqual({ type: 'text', text: 'profile' });
+    expect(profileCore.getSnapshot().inspector.resolvedSchema).toEqual({
+      type: 'text',
+      text: 'profile',
+    });
   });
 
   it('falls back from byTarget to body and leaves explicit empty state when no schema exists', async () => {
@@ -126,10 +131,16 @@ describe('designer-core profile and adapters', () => {
     });
 
     await fallbackCore.setSelectionTarget({ kind: 'workbook' });
-    expect(fallbackCore.getSnapshot().inspector.resolvedSchema).toEqual({ type: 'text', text: 'workbook target' });
+    expect(fallbackCore.getSnapshot().inspector.resolvedSchema).toEqual({
+      type: 'text',
+      text: 'workbook target',
+    });
 
     await fallbackCore.setSelectionTarget({ kind: 'sheet', sheetId });
-    expect(fallbackCore.getSnapshot().inspector.resolvedSchema).toEqual({ type: 'text', text: 'body fallback' });
+    expect(fallbackCore.getSnapshot().inspector.resolvedSchema).toEqual({
+      type: 'text',
+      text: 'body fallback',
+    });
 
     const emptyCore = createReportDesignerCore({
       document: doc,
@@ -156,16 +167,22 @@ describe('designer-core profile and adapters', () => {
       profile,
       adapters: {
         fieldDrops: new Map([
-          ['blocked-drop', {
-            id: 'blocked-drop',
-            canHandle: () => true,
-            mapDropToMetaPatch: () => ({ blocked: true }),
-          }],
-          ['allowed-drop', {
-            id: 'allowed-drop',
-            canHandle: () => true,
-            mapDropToMetaPatch: () => ({ allowed: true }),
-          }],
+          [
+            'blocked-drop',
+            {
+              id: 'blocked-drop',
+              canHandle: () => true,
+              mapDropToMetaPatch: () => ({ blocked: true }),
+            },
+          ],
+          [
+            'allowed-drop',
+            {
+              id: 'allowed-drop',
+              canHandle: () => true,
+              mapDropToMetaPatch: () => ({ allowed: true }),
+            },
+          ],
         ]),
       },
     });
@@ -214,19 +231,25 @@ describe('designer-core profile and adapters', () => {
       profile,
       adapters: {
         previews: new Map([
-          ['config-preview', {
-            id: 'config-preview',
-            async preview() {
-              configPreviewCalled = true;
-              return { ok: true, data: { source: 'config' } };
+          [
+            'config-preview',
+            {
+              id: 'config-preview',
+              async preview() {
+                configPreviewCalled = true;
+                return { ok: true, data: { source: 'config' } };
+              },
             },
-          }],
-          ['profile-preview', {
-            id: 'profile-preview',
-            async preview() {
-              return { ok: true, data: { source: 'profile' } };
+          ],
+          [
+            'profile-preview',
+            {
+              id: 'profile-preview',
+              async preview() {
+                return { ok: true, data: { source: 'profile' } };
+              },
             },
-          }],
+          ],
         ]),
       },
     });

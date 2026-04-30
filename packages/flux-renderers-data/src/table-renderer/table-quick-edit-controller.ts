@@ -71,12 +71,15 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     setDialogOpen(false);
   }, [restoreSavedValue]);
 
-  const handleInlineValueChange = useCallback((nextValue: string) => {
-    setDraftValue(nextValue);
-    if (field) {
-      rowScope.update(`record.${field}`, nextValue);
-    }
-  }, [field, rowScope]);
+  const handleInlineValueChange = useCallback(
+    (nextValue: string) => {
+      setDraftValue(nextValue);
+      if (field) {
+        rowScope.update(`record.${field}`, nextValue);
+      }
+    },
+    [field, rowScope],
+  );
 
   const runSave = useCallback(async () => {
     if (!saveAction || !dirty || saving) {
@@ -86,7 +89,9 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     setSaving(true);
     try {
       await helpers.dispatch(saveAction, { scope: rowScope });
-      const nextSavedValue = field ? toOptionalDraftValue(rowScope.get('record') as Record<string, unknown> ?? record, field) : draftValue;
+      const nextSavedValue = field
+        ? toOptionalDraftValue((rowScope.get('record') as Record<string, unknown>) ?? record, field)
+        : draftValue;
       setSavedValue(nextSavedValue);
       setDraftValue(nextSavedValue);
       setBodyDirty(false);
@@ -96,22 +101,25 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     }
   }, [dirty, draftValue, field, helpers, record, rowScope, saveAction, saving]);
 
-  const handleDialogOpenChange = useCallback((open: boolean) => {
-    if (!open && dialogOpen && saving) {
-      return;
-    }
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && dialogOpen && saving) {
+        return;
+      }
 
-    if (!open && dialogOpen && dirty) {
-      restoreSavedValue();
-    }
+      if (!open && dialogOpen && dirty) {
+        restoreSavedValue();
+      }
 
-    if (open) {
-      openDialog();
-      return;
-    }
+      if (open) {
+        openDialog();
+        return;
+      }
 
-    setDialogOpen(false);
-  }, [dialogOpen, dirty, openDialog, restoreSavedValue, saving]);
+      setDialogOpen(false);
+    },
+    [dialogOpen, dirty, openDialog, restoreSavedValue, saving],
+  );
 
   return {
     draftValue,
@@ -126,6 +134,6 @@ export function useTableQuickEditController(input: UseTableQuickEditControllerIn
     closeDialog,
     handleInlineValueChange,
     handleDialogOpenChange,
-    runSave
+    runSave,
   };
 }

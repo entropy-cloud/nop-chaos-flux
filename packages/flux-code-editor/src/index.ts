@@ -1,5 +1,9 @@
 import type { RendererRegistry } from '@nop-chaos/flux-core';
-import { CodeEditorRenderer, codeEditorRendererDefinition, codeEditorFieldRules } from './code-editor-renderer';
+import {
+  CodeEditorRenderer,
+  codeEditorRendererDefinition,
+  codeEditorFieldRules,
+} from './code-editor-renderer';
 
 export type {
   CodeEditorSchema,
@@ -57,7 +61,11 @@ export function registerCodeEditorRenderers(registry: RendererRegistry) {
   return registry;
 }
 
-export { createBaseExtensions, createLanguageExtension, createSQLDialectExtension } from './extensions/base';
+export {
+  createBaseExtensions,
+  createLanguageExtension,
+  createSQLDialectExtension,
+} from './extensions/base';
 export type { CompletionConfig, CreateBaseExtensionsOptions } from './extensions/base';
 
 export { createExpressionLinter } from './extensions/expression/linter';

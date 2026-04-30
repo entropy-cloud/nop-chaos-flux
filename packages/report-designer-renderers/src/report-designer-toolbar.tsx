@@ -4,12 +4,20 @@ import { useOwnScopeSelector } from '@nop-chaos/flux-react';
 import { Badge, Button, Switch, cn } from '@nop-chaos/ui';
 import type { ReportToolbarSchema } from './schemas.js';
 import { DEFAULT_TOOLBAR_ITEMS } from './report-designer-toolbar-defaults.js';
-import { evalBooleanExpr, evalTextTemplate, mergeToolbarItems, toCommand } from './report-designer-toolbar-helpers.js';
+import {
+  evalBooleanExpr,
+  evalTextTemplate,
+  mergeToolbarItems,
+  toCommand,
+} from './report-designer-toolbar-helpers.js';
 import type { ToolbarItem } from './report-designer-toolbar-helpers.js';
 
 export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolbarSchema>) {
   const itemsOverride = props.props.itemsOverride as ToolbarItem[] | undefined;
-  const snapshot = useOwnScopeSelector((data: Record<string, unknown>) => data) as Record<string, unknown>;
+  const snapshot = useOwnScopeSelector((data: Record<string, unknown>) => data) as Record<
+    string,
+    unknown
+  >;
   const items = useMemo(
     () => mergeToolbarItems(DEFAULT_TOOLBAR_ITEMS, itemsOverride),
     [itemsOverride],
@@ -26,7 +34,9 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
 
   return (
     <div
-      className={cn('nop-report-toolbar min-h-[44px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-lg bg-background shadow-sm')}
+      className={cn(
+        'nop-report-toolbar min-h-[44px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-lg bg-background shadow-sm',
+      )}
       data-testid="report-toolbar"
     >
       {items.map((item, index) => {
@@ -37,19 +47,30 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
             return <span key={item.id ?? `spacer-${index}`} className="flex-1" />;
           case 'title': {
             const text = evalTextTemplate(item.text ?? item.body, snapshot);
-            return <div key={item.id ?? `title-${index}`} className="font-semibold">{text}</div>;
+            return (
+              <div key={item.id ?? `title-${index}`} className="font-semibold">
+                {text}
+              </div>
+            );
           }
           case 'badge': {
             const text = evalTextTemplate(item.text ?? item.body, snapshot);
             return (
-              <Badge key={item.id ?? `badge-${index}`} variant={item.level === 'secondary' ? 'secondary' : 'default'}>
+              <Badge
+                key={item.id ?? `badge-${index}`}
+                variant={item.level === 'secondary' ? 'secondary' : 'default'}
+              >
                 {text}
               </Badge>
             );
           }
           case 'text': {
             const text = evalTextTemplate(item.text ?? item.body, snapshot);
-            return <span key={item.id ?? `text-${index}`} className="text-muted-foreground">{text}</span>;
+            return (
+              <span key={item.id ?? `text-${index}`} className="text-muted-foreground">
+                {text}
+              </span>
+            );
           }
           case 'button': {
             const disabled = evalBooleanExpr(item.disabled, snapshot);
@@ -58,7 +79,13 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
               <Button
                 key={item.id ?? `button-${index}`}
                 type="button"
-                variant={item.variant === 'primary' ? 'default' : item.variant === 'danger' ? 'destructive' : 'outline'}
+                variant={
+                  item.variant === 'primary'
+                    ? 'default'
+                    : item.variant === 'danger'
+                      ? 'destructive'
+                      : 'outline'
+                }
                 size="sm"
                 disabled={disabled}
                 data-active={active || undefined}
@@ -73,8 +100,14 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
             const disabled = evalBooleanExpr(item.disabled, snapshot);
             return (
               <span key={item.id ?? `switch-${index}`} className="flex items-center gap-1.5">
-                {item.label ? <span className="text-sm text-muted-foreground">{item.label}</span> : null}
-                <Switch checked={checked} disabled={disabled} onCheckedChange={() => handleButtonClick(item)} />
+                {item.label ? (
+                  <span className="text-sm text-muted-foreground">{item.label}</span>
+                ) : null}
+                <Switch
+                  checked={checked}
+                  disabled={disabled}
+                  onCheckedChange={() => handleButtonClick(item)}
+                />
               </span>
             );
           }

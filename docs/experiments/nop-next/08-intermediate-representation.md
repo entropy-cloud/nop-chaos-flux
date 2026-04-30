@@ -16,20 +16,20 @@ IR 是作者语言与运行时之间的稳定接口。
 
 ```ts
 interface AuthorityCellIR {
-  id: string
-  valueType: string
-  keyType: string
-  retention: 'memory' | 'persisted'
-  conflictPolicy: 'reject-stale' | 'reload-and-rerun' | 'domain-merge'
+  id: string;
+  valueType: string;
+  keyType: string;
+  retention: 'memory' | 'persisted';
+  conflictPolicy: 'reject-stale' | 'reload-and-rerun' | 'domain-merge';
 }
 
 interface ReplicaCellIR {
-  id: string
-  authorityId: string
-  valueType: string
-  keyType: string
-  syncMode: 'draft' | 'cache' | 'mirror' | 'fork'
-  reconcilePolicy: string
+  id: string;
+  authorityId: string;
+  valueType: string;
+  keyType: string;
+  syncMode: 'draft' | 'cache' | 'mirror' | 'fork';
+  reconcilePolicy: string;
 }
 ```
 
@@ -37,19 +37,19 @@ interface ReplicaCellIR {
 
 ```ts
 interface ReadSelectorIR {
-  cellId: string
+  cellId: string;
   selector: {
-    kind: 'key' | 'path' | 'collection'
-    expr: string
-  }
-  cardinality: 'one' | 'many'
+    kind: 'key' | 'path' | 'collection';
+    expr: string;
+  };
+  cardinality: 'one' | 'many';
 }
 
 interface ProjectionIR {
-  id: string
-  params: Array<{ name: string; type: string }>
-  reads: ReadSelectorIR[]
-  renderer: string
+  id: string;
+  params: Array<{ name: string; type: string }>;
+  reads: ReadSelectorIR[];
+  renderer: string;
 }
 ```
 
@@ -57,32 +57,32 @@ interface ProjectionIR {
 
 ```ts
 interface IntentIR {
-  id: string
-  payloadType: string
+  id: string;
+  payloadType: string;
 }
 
 interface BinderIR {
-  intentId: string
-  goalId: string
-  guard?: string
-  payloadMapping: string
+  intentId: string;
+  goalId: string;
+  guard?: string;
+  payloadMapping: string;
 }
 
 interface GoalIR {
-  id: string
-  payloadType: string
-  portability: Array<'pure' | 'durable' | 'interactive' | 'navigational' | 'local-only'>
-  requiredPortability: string[]
-  optionalPortability: string[]
-  outcomes: string[]
-  requiredEffects: string[]
-  optionalEffects: string[]
-  requiredProofs: string[]
-  optionalProofs: string[]
-  satisfactionPredicate: string
-  satisfactionSurface: ReadSelectorIR[]
-  versionSurface: ReadSelectorIR[]
-  recipeId: string
+  id: string;
+  payloadType: string;
+  portability: Array<'pure' | 'durable' | 'interactive' | 'navigational' | 'local-only'>;
+  requiredPortability: string[];
+  optionalPortability: string[];
+  outcomes: string[];
+  requiredEffects: string[];
+  optionalEffects: string[];
+  requiredProofs: string[];
+  optionalProofs: string[];
+  satisfactionPredicate: string;
+  satisfactionSurface: ReadSelectorIR[];
+  versionSurface: ReadSelectorIR[];
+  recipeId: string;
 }
 ```
 
@@ -90,26 +90,26 @@ interface GoalIR {
 
 ```ts
 interface EffectSlotIR {
-  id: string
-  when?: string
-  portabilityClass: string
-  effectClass: string
-  proofClass?: string
-  requiredScope?: string
-  payloadBuilder: string
-  receiptReducer: string
-  patchTargets: string[]
-  dependsOn: string[]
-  onRejected: 'rejected' | 'deferred' | 'partially-satisfied'
+  id: string;
+  when?: string;
+  portabilityClass: string;
+  effectClass: string;
+  proofClass?: string;
+  requiredScope?: string;
+  payloadBuilder: string;
+  receiptReducer: string;
+  patchTargets: string[];
+  dependsOn: string[];
+  onRejected: 'rejected' | 'deferred' | 'partially-satisfied';
 }
 
 interface GoalRecipeIR {
-  id: string
-  goalId: string
-  slots: EffectSlotIR[]
-  maxEffectCount: number
-  maxBusinessEffectCount: number
-  maxProofEffectCount: number
+  id: string;
+  goalId: string;
+  slots: EffectSlotIR[];
+  maxEffectCount: number;
+  maxBusinessEffectCount: number;
+  maxProofEffectCount: number;
 }
 ```
 
@@ -117,24 +117,24 @@ interface GoalRecipeIR {
 
 ```ts
 interface ProofPolicyIR {
-  proofClass: string
-  source: 'derived' | 'requested'
-  verifier?: string
-  issuer?: string
-  requestEffectClass?: string
-  requestPayloadBuilder?: string
-  proofReceiptSchema?: string
-  revocationChannel: string
-  scopeTemplate: string
+  proofClass: string;
+  source: 'derived' | 'requested';
+  verifier?: string;
+  issuer?: string;
+  requestEffectClass?: string;
+  requestPayloadBuilder?: string;
+  proofReceiptSchema?: string;
+  revocationChannel: string;
+  scopeTemplate: string;
 }
 
 interface BootstrapAttestationIR {
-  issuer: string
-  proofClasses: string[]
-  principalTemplate: string
-  tenantTemplate: string
-  resourceScopeTemplate: string
-  freshnessWindowSec: number
+  issuer: string;
+  proofClasses: string[];
+  principalTemplate: string;
+  tenantTemplate: string;
+  resourceScopeTemplate: string;
+  freshnessWindowSec: number;
 }
 ```
 
@@ -142,11 +142,11 @@ interface BootstrapAttestationIR {
 
 ```ts
 interface EffectManifestIR {
-  effectClass: string
-  adapter: string
-  receiptSchema: string
-  portability: string[]
-  support: 'available' | 'unavailable'
+  effectClass: string;
+  adapter: string;
+  receiptSchema: string;
+  portability: string[];
+  support: 'available' | 'unavailable';
 }
 ```
 
@@ -154,32 +154,35 @@ interface EffectManifestIR {
 
 ```ts
 interface GoalInstanceIR {
-  instanceId: string
-  goalId: string
-  payload: unknown
-  epochId: string
-  recipeId: string
-  outcome: 'pending' | 'satisfied' | 'partially-satisfied' | 'deferred' | 'rejected'
-  outcomeByClass: Record<string, 'pending' | 'satisfied' | 'partially-satisfied' | 'deferred' | 'rejected'>
+  instanceId: string;
+  goalId: string;
+  payload: unknown;
+  epochId: string;
+  recipeId: string;
+  outcome: 'pending' | 'satisfied' | 'partially-satisfied' | 'deferred' | 'rejected';
+  outcomeByClass: Record<
+    string,
+    'pending' | 'satisfied' | 'partially-satisfied' | 'deferred' | 'rejected'
+  >;
 }
 
 interface EffectRequestRecordIR {
-  id: string
-  goalInstanceId: string
-  slotId: string
-  effectClass: string
-  payload: unknown
-  proofRefs: string[]
-  idempotencyKey: string
-  status: 'pending' | 'sent' | 'completed' | 'rejected'
+  id: string;
+  goalInstanceId: string;
+  slotId: string;
+  effectClass: string;
+  payload: unknown;
+  proofRefs: string[];
+  idempotencyKey: string;
+  status: 'pending' | 'sent' | 'completed' | 'rejected';
 }
 
 interface FactPatchIR {
-  targetCell: string
-  key: string
-  op: 'upsert' | 'delete' | 'merge'
-  value?: unknown
-  expectedTargetVersion: number
+  targetCell: string;
+  key: string;
+  op: 'upsert' | 'delete' | 'merge';
+  value?: unknown;
+  expectedTargetVersion: number;
 }
 ```
 

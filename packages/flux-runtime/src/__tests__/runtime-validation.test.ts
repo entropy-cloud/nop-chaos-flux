@@ -20,31 +20,31 @@ describe('createRendererRuntime', () => {
               status: 200,
               data: {
                 valid: false,
-                message: 'Username already exists'
-              } as T
+                message: 'Username already exists',
+              } as T,
             };
           }
 
           return {
             ok: true,
             status: 200,
-            data: { ok: true } as T
+            data: { ok: true } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
       id: 'user-form',
       initialValues: {
-        username: 'alice'
+        username: 'alice',
       },
       parentScope: page.scope,
       validation: {
         behavior: {
           triggers: ['blur'],
-          showErrorOn: ['touched', 'submit']
+          showErrorOn: ['touched', 'submit'],
         },
         nodes: {
           username: {
@@ -54,29 +54,32 @@ describe('createRendererRuntime', () => {
             label: 'Username',
             behavior: {
               triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
+              showErrorOn: ['touched', 'submit'],
             },
             rules: [
-              compiledRule({
-                kind: 'async',
-                action: {
-                  action: 'ajax',
-                  args: {
-                    method: 'post',
-                    url: '/api/validate-username',
-                    requestAdaptor: 'return {data: {username: scope.username}};'
-                  }
+              compiledRule(
+                {
+                  kind: 'async',
+                  action: {
+                    action: 'ajax',
+                    args: {
+                      method: 'post',
+                      url: '/api/validate-username',
+                      requestAdaptor: 'return {data: {username: scope.username}};',
+                    },
+                  },
+                  message: 'Username already exists',
                 },
-                message: 'Username already exists'
-              }, 'username')
+                'username',
+              ),
             ],
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['username'],
-        dependents: {}
-      }
+        dependents: {},
+      },
     });
 
     const result = await form.submit();
@@ -96,21 +99,21 @@ describe('createRendererRuntime', () => {
         fetcher: async () =>
           await new Promise((resolve) => {
             resolveValidation = resolve;
-          })
+          }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
       id: 'user-form',
       initialValues: {
-        username: 'alice'
+        username: 'alice',
       },
       parentScope: page.scope,
       validation: {
         behavior: {
           triggers: ['blur'],
-          showErrorOn: ['touched', 'submit']
+          showErrorOn: ['touched', 'submit'],
         },
         nodes: {
           username: {
@@ -120,27 +123,30 @@ describe('createRendererRuntime', () => {
             label: 'Username',
             behavior: {
               triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
+              showErrorOn: ['touched', 'submit'],
             },
             rules: [
-              compiledRule({
-                kind: 'async',
-                action: {
-                  action: 'ajax',
-                  args: {
-                    method: 'post',
-                    url: '/api/validate-username'
-                  }
-                }
-              }, 'username')
+              compiledRule(
+                {
+                  kind: 'async',
+                  action: {
+                    action: 'ajax',
+                    args: {
+                      method: 'post',
+                      url: '/api/validate-username',
+                    },
+                  },
+                },
+                'username',
+              ),
             ],
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['username'],
-        dependents: {}
-      }
+        dependents: {},
+      },
     });
 
     const validationPromise = form.validateField('username');
@@ -154,7 +160,7 @@ describe('createRendererRuntime', () => {
     resolveValidation?.({
       ok: true,
       status: 200,
-      data: { valid: true }
+      data: { valid: true },
     });
 
     await expect(validationPromise).resolves.toMatchObject({ ok: true, errors: [] });
@@ -170,21 +176,21 @@ describe('createRendererRuntime', () => {
         fetcher: async () =>
           await new Promise((resolve) => {
             resolveFirst = resolve;
-          })
+          }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
       id: 'user-form',
       initialValues: {
-        username: 'alice'
+        username: 'alice',
       },
       parentScope: page.scope,
       validation: {
         behavior: {
           triggers: ['blur'],
-          showErrorOn: ['touched', 'submit']
+          showErrorOn: ['touched', 'submit'],
         },
         nodes: {
           username: {
@@ -194,28 +200,31 @@ describe('createRendererRuntime', () => {
             label: 'Username',
             behavior: {
               triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
+              showErrorOn: ['touched', 'submit'],
             },
             rules: [
-              compiledRule({
-                kind: 'async',
-                action: {
-                  action: 'ajax',
-                  args: {
-                    method: 'post',
-                    url: '/api/validate-username'
-                  }
+              compiledRule(
+                {
+                  kind: 'async',
+                  action: {
+                    action: 'ajax',
+                    args: {
+                      method: 'post',
+                      url: '/api/validate-username',
+                    },
+                  },
+                  message: 'Username already exists',
                 },
-                message: 'Username already exists'
-              }, 'username')
+                'username',
+              ),
             ],
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['username'],
-        dependents: {}
-      }
+        dependents: {},
+      },
     });
 
     const firstValidation = form.validateField('username');
@@ -231,8 +240,8 @@ describe('createRendererRuntime', () => {
       status: 200,
       data: {
         valid: false,
-        message: 'Username already exists'
-      }
+        message: 'Username already exists',
+      },
     });
 
     await expect(firstValidation).resolves.toMatchObject({ ok: true, errors: [] });
@@ -244,10 +253,10 @@ describe('createRendererRuntime', () => {
           ownerKind: 'validation',
           ownerId: `validation:${form.scope.id}:username`,
           recentRuns: expect.arrayContaining([
-            expect.objectContaining({ outcome: 'stale-dropped' })
-          ])
-        })
-      ]
+            expect.objectContaining({ outcome: 'stale-dropped' }),
+          ]),
+        }),
+      ],
     });
   });
 
@@ -258,27 +267,27 @@ describe('createRendererRuntime', () => {
       const fetcherMock = vi.fn(async () => ({
         ok: true,
         status: 200,
-        data: { valid: true }
+        data: { valid: true },
       }));
       const runtime = createRendererRuntime({
         registry: createRendererRegistry([textRenderer]),
         env: {
           ...env,
-          fetcher: fetcherMock as RendererEnv['fetcher']
+          fetcher: fetcherMock as RendererEnv['fetcher'],
         },
-        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       });
       const page = runtime.createPageRuntime({});
       const form = runtime.createFormRuntime({
         id: 'user-form',
         initialValues: {
-          username: 'alice'
+          username: 'alice',
         },
         parentScope: page.scope,
         validation: {
           behavior: {
             triggers: ['blur'],
-            showErrorOn: ['touched', 'submit']
+            showErrorOn: ['touched', 'submit'],
           },
           nodes: {
             username: {
@@ -288,28 +297,31 @@ describe('createRendererRuntime', () => {
               label: 'Username',
               behavior: {
                 triggers: ['blur'],
-                showErrorOn: ['touched', 'submit']
+                showErrorOn: ['touched', 'submit'],
               },
               rules: [
-                compiledRule({
-                  kind: 'async',
-                  debounce: 50,
-                  action: {
-                    action: 'ajax',
-                    args: {
-                      method: 'post',
-                      url: '/api/validate-username'
-                    }
-                  }
-                }, 'username')
+                compiledRule(
+                  {
+                    kind: 'async',
+                    debounce: 50,
+                    action: {
+                      action: 'ajax',
+                      args: {
+                        method: 'post',
+                        url: '/api/validate-username',
+                      },
+                    },
+                  },
+                  'username',
+                ),
               ],
               children: [],
-              parent: ''
-            }
+              parent: '',
+            },
           },
           order: ['username'],
-          dependents: {}
-        }
+          dependents: {},
+        },
       });
 
       const firstValidation = form.validateField('username');
@@ -338,15 +350,15 @@ describe('createRendererRuntime', () => {
         fetcher: async () =>
           await new Promise((resolve) => {
             resolveValidation = resolve;
-          })
+          }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const validationModel: CompiledFormValidationModel = {
       behavior: {
         triggers: ['blur'],
-        showErrorOn: ['touched', 'submit']
+        showErrorOn: ['touched', 'submit'],
       },
       nodes: {
         username: {
@@ -356,34 +368,37 @@ describe('createRendererRuntime', () => {
           label: 'Username',
           behavior: {
             triggers: ['blur'],
-            showErrorOn: ['touched', 'submit']
+            showErrorOn: ['touched', 'submit'],
           },
           rules: [
-            compiledRule({
-              kind: 'async',
-              action: {
-                action: 'ajax',
-                args: {
-                  method: 'post',
-                  url: '/api/validate-username'
-                }
-              }
-            }, 'username')
+            compiledRule(
+              {
+                kind: 'async',
+                action: {
+                  action: 'ajax',
+                  args: {
+                    method: 'post',
+                    url: '/api/validate-username',
+                  },
+                },
+              },
+              'username',
+            ),
           ],
           children: [],
-          parent: ''
-        }
+          parent: '',
+        },
       },
       order: ['username'],
-      dependents: {}
+      dependents: {},
     };
     const form = runtime.createFormRuntime({
       id: 'user-form',
       initialValues: {
-        username: 'alice'
+        username: 'alice',
       },
       parentScope: page.scope,
-      validation: validationModel
+      validation: validationModel,
     });
 
     const pendingValidation = form.validateField('username');
@@ -395,9 +410,9 @@ describe('createRendererRuntime', () => {
     expect(form.getAsyncOwnerDebugSnapshot?.()).toMatchObject({
       owners: [
         expect.objectContaining({
-          ownerId: `validation:${form.scope.id}:username`
-        })
-      ]
+          ownerId: `validation:${form.scope.id}:username`,
+        }),
+      ],
     });
 
     form.refreshCompiledModel(validationModel);
@@ -407,7 +422,7 @@ describe('createRendererRuntime', () => {
     resolveValidation?.({
       ok: true,
       status: 200,
-      data: { valid: true }
+      data: { valid: true },
     });
     await expect(pendingValidation).resolves.toMatchObject({ ok: true, errors: [] });
 
@@ -416,8 +431,8 @@ describe('createRendererRuntime', () => {
       fetcher: async <T>() => ({
         ok: true,
         status: 200,
-        data: { valid: true } as T
-      })
+        data: { valid: true } as T,
+      }),
     });
 
     await form.validateField('username');
@@ -432,19 +447,19 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
       id: 'profile-form',
       initialValues: {
-        username: 'alice'
+        username: 'alice',
       },
       parentScope: page.scope,
       validation: {
         behavior: {
           triggers: ['blur'],
-          showErrorOn: ['touched', 'submit']
+          showErrorOn: ['touched', 'submit'],
         },
         nodes: {
           username: {
@@ -454,16 +469,16 @@ describe('createRendererRuntime', () => {
             label: 'Username',
             behavior: {
               triggers: ['blur'],
-              showErrorOn: ['touched', 'submit']
+              showErrorOn: ['touched', 'submit'],
             },
             rules: [],
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['username'],
-        dependents: {}
-      }
+        dependents: {},
+      },
     });
 
     expect(form.isVisited('username')).toBe(false);

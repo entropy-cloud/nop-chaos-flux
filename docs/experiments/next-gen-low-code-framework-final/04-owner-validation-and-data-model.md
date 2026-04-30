@@ -22,12 +22,7 @@ interface OwnerRuntime {
   summary: OwnerSummaryState;
 }
 
-type OwnerLifecycleState =
-  | 'bootstrapping'
-  | 'active'
-  | 'refreshing'
-  | 'suspended'
-  | 'disposed';
+type OwnerLifecycleState = 'bootstrapping' | 'active' | 'refreshing' | 'suspended' | 'disposed';
 ```
 
 ## 2. Owner family
@@ -49,14 +44,14 @@ type OwnerLifecycleState =
 
 ## 3. Participation Matrix
 
-| 状态 | value read | value write | validation | resource | reaction | summary gate |
-| --- | --- | --- | --- | --- | --- | --- |
-| active | yes | yes | participate | participate | participate | yes |
-| hidden | yes | policy-based | skip by default | owner-policy based | semantic-owner based | summary only |
-| disabled | yes | no user write | skip submit gating by default | unchanged | unchanged | summary only |
-| readonly | yes | no direct user write | may validate existing value | unchanged | unchanged | yes |
-| suspended | cached read only | no direct write | no active validation run | no polling by default | no firing by default | last summary |
-| disposed | no | no | disposed | disposed | disposed | no |
+| 状态      | value read       | value write          | validation                    | resource              | reaction             | summary gate |
+| --------- | ---------------- | -------------------- | ----------------------------- | --------------------- | -------------------- | ------------ |
+| active    | yes              | yes                  | participate                   | participate           | participate          | yes          |
+| hidden    | yes              | policy-based         | skip by default               | owner-policy based    | semantic-owner based | summary only |
+| disabled  | yes              | no user write        | skip submit gating by default | unchanged             | unchanged            | summary only |
+| readonly  | yes              | no direct user write | may validate existing value   | unchanged             | unchanged            | yes          |
+| suspended | cached read only | no direct write      | no active validation run      | no polling by default | no firing by default | last summary |
+| disposed  | no               | no                   | disposed                      | disposed              | disposed             | no           |
 
 规则：
 
@@ -81,7 +76,14 @@ interface ValidationModelDefinition {
 
 interface ValidationNodeDefinition {
   path: string;
-  kind: 'scope-root' | 'field' | 'object' | 'array' | 'variant-root' | 'variant-branch' | 'repeated-template';
+  kind:
+    | 'scope-root'
+    | 'field'
+    | 'object'
+    | 'array'
+    | 'variant-root'
+    | 'variant-branch'
+    | 'repeated-template';
   rules: ValidationRuleTemplate[];
   ownerResolution: 'inherit-owner' | 'create-owner' | 'no-owner';
 }

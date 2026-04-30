@@ -8,7 +8,7 @@ import {
   type RendererHelpers,
   type RendererRuntime,
   type ScopeDependencySet,
-  type ScopeRef
+  type ScopeRef,
 } from '@nop-chaos/flux-core';
 import { isAbortError } from '../error-utils';
 import { createRootDependencySet, scopeChangeHitsDependencies } from '../scope-change';
@@ -19,7 +19,7 @@ import {
   MAX_REACTION_FIRE_COUNT,
   normalizeActionArray,
   reportReactionFireLimit,
-  type OwnedReactionRegistration
+  type OwnedReactionRegistration,
 } from './reaction-runtime-helpers';
 
 export interface ReactionRegistration {
@@ -69,7 +69,9 @@ export function registerReaction(input: {
   const onceSource = compiled.once;
   const actionsSource = compiled.action;
 
-  const dynamicWatch = compiledWatch.isStatic ? undefined : compiledWatch as DynamicRuntimeValue<unknown>;
+  const dynamicWatch = compiledWatch.isStatic
+    ? undefined
+    : (compiledWatch as DynamicRuntimeValue<unknown>);
   const watchState = dynamicWatch?.createState();
   const explicitDependencies = createRootDependencySet(dependsOnSource);
 
@@ -92,7 +94,7 @@ export function registerReaction(input: {
       running,
       fireCount,
       dependencies: dependencies?.paths,
-      async: input.asyncGovernance?.getOwnerState(createReactionOwnerId(input.scope.id, input.id))
+      async: input.asyncGovernance?.getOwnerState(createReactionOwnerId(input.scope.id, input.id)),
     });
   }
 
@@ -104,14 +106,22 @@ export function registerReaction(input: {
       scope: input.scope,
       watchState,
       explicitDependencies,
-      dependencies
+      dependencies,
     });
     dependencies = result.dependencies;
     return result.value;
   }
 
-  async function runReaction(changePaths: readonly string[], force = false, run: AsyncRunHandle | undefined = createRunHandle({ asyncGovernance: input.asyncGovernance, scope: input.scope, id: input.id, force })) {
-
+  async function runReaction(
+    changePaths: readonly string[],
+    force = false,
+    run: AsyncRunHandle | undefined = createRunHandle({
+      asyncGovernance: input.asyncGovernance,
+      scope: input.scope,
+      id: input.id,
+      force,
+    }),
+  ) {
     try {
       if (abortController.signal.aborted) {
         if (run && input.asyncGovernance) {
@@ -139,13 +149,16 @@ export function registerReaction(input: {
 
       // Execute pre-compiled when expression with special bindings
       const whenAllowed = compiledWhen
-        ? compiledWhen.exec({
-            scope: input.scope.readVisible(),
-            value: nextValue,
-            prev,
-            changed,
-            changedPaths: changePaths
-          }, input.runtime.env)
+        ? compiledWhen.exec(
+            {
+              scope: input.scope.readVisible(),
+              value: nextValue,
+              prev,
+              changed,
+              changedPaths: changePaths,
+            },
+            input.runtime.env,
+          )
         : true;
 
       if (!whenAllowed) {
@@ -162,14 +175,14 @@ export function registerReaction(input: {
           value: nextValue,
           prev,
           changed,
-          changedPaths: changePaths
+          changedPaths: changePaths,
         },
         evaluationBindings: {
           value: nextValue,
           prev,
           changed,
-          changedPaths: changePaths
-        }
+          changedPaths: changePaths,
+        },
       });
 
       if (dispatchResult.cancelled) {
@@ -177,7 +190,7 @@ export function registerReaction(input: {
           input.asyncGovernance.settleRun(run, {
             outcome: 'cancelled',
             cancelled: true,
-            error: dispatchResult.error
+            error: dispatchResult.error,
           });
         }
         return;
@@ -195,7 +208,12 @@ export function registerReaction(input: {
       }
 
       if (fireCount >= MAX_REACTION_FIRE_COUNT) {
-        const error = reportReactionFireLimit({ runtime: input.runtime, id: input.id, scope: input.scope, fireCount });
+        const error = reportReactionFireLimit({
+          runtime: input.runtime,
+          id: input.id,
+          scope: input.scope,
+          fireCount,
+        });
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
         }
@@ -214,7 +232,7 @@ export function registerReaction(input: {
           input.asyncGovernance.settleRun(run, {
             outcome: 'cancelled',
             cancelled: true,
-            error
+            error,
           });
         }
         return;
@@ -227,8 +245,8 @@ export function registerReaction(input: {
           reason: 'reaction-run-failed',
           reactionId: input.id,
           scopeId: input.scope.id,
-          changedPaths: changePaths
-        }
+          changedPaths: changePaths,
+        },
       });
       if (run && input.asyncGovernance) {
         input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
@@ -258,7 +276,12 @@ export function registerReaction(input: {
       pendingForce = pendingForce || force;
       if (!abortController.signal.aborted) {
         triggerQueued = true;
-        pendingRun ??= createRunHandle({ asyncGovernance: input.asyncGovernance, scope: input.scope, id: input.id, force });
+        pendingRun ??= createRunHandle({
+          asyncGovernance: input.asyncGovernance,
+          scope: input.scope,
+          id: input.id,
+          force,
+        });
         emitDebug();
       }
       return;
@@ -339,7 +362,7 @@ export function registerReaction(input: {
 
   return {
     id: input.id,
-    dispose
+    dispose,
   };
 }
 
@@ -387,7 +410,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
       },
       onDispose: () => {
         ownedRegistrationRef.current?.dispose();
-      }
+      },
     });
     const ownedRegistration: OwnedReactionRegistration = {
       id: input.id,
@@ -430,9 +453,9 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
           running,
           fireCount,
           dependencies: latestDependencies,
-          async: asyncState
+          async: asyncState,
         };
-      }
+      },
     };
 
     ownedRegistrationRef.current = ownedRegistration;
@@ -465,7 +488,10 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     return {
       reactions: Array.from(scopeEntries.values())
         .flatMap((bucket) => Array.from(bucket.values()).map((entry) => entry.getDebugEntry()))
-        .sort((left, right) => left.scopeId.localeCompare(right.scopeId) || left.id.localeCompare(right.id))
+        .sort(
+          (left, right) =>
+            left.scopeId.localeCompare(right.scopeId) || left.id.localeCompare(right.id),
+        ),
     };
   }
 
@@ -473,6 +499,6 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     registerReaction: register,
     disposeScope,
     disposeScopeTree,
-    getDebugSnapshot
+    getDebugSnapshot,
   };
 }

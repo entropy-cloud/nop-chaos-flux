@@ -42,7 +42,7 @@ export function compileReaction(
   id: string,
   schema: ReactionSchema,
   compiler: ExpressionCompiler,
-  options?: ReactionCompilerOptions
+  options?: ReactionCompilerOptions,
 ): CompiledReaction {
   const basePath = options?.basePath ?? '$';
 

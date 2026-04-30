@@ -1,8 +1,17 @@
 import React, { useMemo } from 'react';
-import type { InstanceFrame, RendererComponentProps, StructuralLoopBindings, StructuralLoopRenderContext } from '@nop-chaos/flux-core';
+import type {
+  InstanceFrame,
+  RendererComponentProps,
+  StructuralLoopBindings,
+  StructuralLoopRenderContext,
+} from '@nop-chaos/flux-core';
 import { StructuralLoopContext, useRenderInstancePath } from '@nop-chaos/flux-react';
 import type { LoopSchema } from './schemas';
-import { createStructuralRepeatedTemplateId, renderStructuralLoop, resolveLoopBindings } from './structural-loop';
+import {
+  createStructuralRepeatedTemplateId,
+  renderStructuralLoop,
+  resolveLoopBindings,
+} from './structural-loop';
 
 interface LoopProviderProps {
   bindings: StructuralLoopBindings;
@@ -10,7 +19,10 @@ interface LoopProviderProps {
   keyBy: unknown;
   instancePath: readonly InstanceFrame[];
   depth: number;
-  renderBody: (childSlotBindings: Record<string, unknown>, childInstancePath: readonly InstanceFrame[]) => React.ReactNode;
+  renderBody: (
+    childSlotBindings: Record<string, unknown>,
+    childInstancePath: readonly InstanceFrame[],
+  ) => React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -22,12 +34,23 @@ function LoopProvider(props: LoopProviderProps) {
       keyBy: props.keyBy,
       instancePath: props.instancePath,
       depth: props.depth,
-      renderBody: props.renderBody
+      renderBody: props.renderBody,
     }),
-    [props.bindings, props.itemData, props.keyBy, props.instancePath, props.depth, props.renderBody]
+    [
+      props.bindings,
+      props.itemData,
+      props.keyBy,
+      props.instancePath,
+      props.depth,
+      props.renderBody,
+    ],
   );
 
-  return <StructuralLoopContext.Provider value={contextValue}>{props.children}</StructuralLoopContext.Provider>;
+  return (
+    <StructuralLoopContext.Provider value={contextValue}>
+      {props.children}
+    </StructuralLoopContext.Provider>
+  );
 }
 
 export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
@@ -40,7 +63,7 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
   const keyName = schemaProps.keyName;
   const bindings = useMemo(
     () => resolveLoopBindings({ itemName, indexName, keyName }),
-    [itemName, indexName, keyName]
+    [itemName, indexName, keyName],
   );
   const repeatedTemplateId = createStructuralRepeatedTemplateId(props.id);
 
@@ -68,16 +91,16 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
             renderBody={(childSlotBindings, childInstancePath) =>
               props.regions.body?.render({
                 bindings: childSlotBindings,
-                instancePath: childInstancePath
+                instancePath: childInstancePath,
               }) ?? null
             }
           >
             {props.regions.body?.render({
               bindings: slotBindings,
-              instancePath
+              instancePath,
             }) ?? null}
           </LoopProvider>
-        )
+        ),
       })}
     </>
   );

@@ -40,12 +40,12 @@ type ValueProgram =
 
 依赖模型采用分层粒度：
 
-| Granularity | 用途 |
-| --- | --- |
-| lexical root | 普通 value/resource/reaction invalidation |
-| exact path | validation、draft patch、write diagnostics |
+| Granularity      | 用途                                                   |
+| ---------------- | ------------------------------------------------------ |
+| lexical root     | 普通 value/resource/reaction invalidation              |
+| exact path       | validation、draft patch、write diagnostics             |
 | collection-shape | row materialization、virtualization、structural change |
-| wildcard | whole-scope enumeration |
+| wildcard         | whole-scope enumeration                                |
 
 ```ts
 interface DependencySet {
@@ -228,15 +228,15 @@ interface RuntimeFailureEnvelope {
 
 ### 9.1 Failure 映射表
 
-| Source | Mapped kind |
-| --- | --- |
+| Source                         | Mapped kind         |
+| ------------------------------ | ------------------- |
 | host contract version mismatch | `contract-mismatch` |
-| denied capability / namespace | `permission-denied` |
-| async validation 被新输入淘汰 | `stale-dropped` |
-| host command timeout | `timeout` |
-| user-cancelled command | `cancelled` |
-| domain semantic reject | `business-error` |
-| fetch/bridge crash | `infra-error` |
+| denied capability / namespace  | `permission-denied` |
+| async validation 被新输入淘汰  | `stale-dropped`     |
+| host command timeout           | `timeout`           |
+| user-cancelled command         | `cancelled`         |
+| domain semantic reject         | `business-error`    |
+| fetch/bridge crash             | `infra-error`       |
 
 ### 9.2 Failure 与 Publish 的关系
 

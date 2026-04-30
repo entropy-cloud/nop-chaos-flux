@@ -19,6 +19,7 @@
 - [已修复] `DocPreviewPage` 的字数统计 Promise 增加 stale guard，旧文档结果不会再覆盖新文档预览头部。
 
 ### [维度06] DataSource 在请求进行中会丢弃后续刷新，旧响应可覆盖新输入
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\data-source-runtime.ts:307-323,378-390`; `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\source-registry.ts:320-338`
 - **严重程度**: P1
 - **异步操作**: 依赖 scope 变化自动刷新的 DataSource API 请求
@@ -29,6 +30,7 @@
 - **复核状态**: 已确认，已按 `pendingRefresh + abort` 方案修复。
 
 ### [维度06] submitForm 的超时/取消信号在表单提交链路中丢失
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\index.ts:177-185,429-433`; `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\form-runtime-submit-flow.ts:24,146-155`; `C:\can\nop\nop-chaos-flux\packages\flux-core\src\types\runtime.ts:157-162,306`
 - **严重程度**: P1
 - **异步操作**: `submitForm` 内建 action 的表单提交 / 提交 API 调用
@@ -39,6 +41,7 @@
 - **复核状态**: 已确认，已修复并补充 timeout abort 回归测试。
 
 ### [维度06] Schema 根级 import 预加载仍用 cancelled 布尔标记，且 cleanup 不释放/不中止旧加载
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\schema-renderer.tsx:108-167`; `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\imports.ts:177-206,317-322`
 - **严重程度**: P2
 - **异步操作**: `SchemaRenderer` 启动时的 imported namespace 预加载
@@ -49,6 +52,7 @@
 - **复核状态**: 已确认，已修复；同时校正了先前文档中把 `releaseImportedNamespaces()` 写成 no-op 的错误基线。
 
 ### [维度06] Flow Designer 自动布局没有并发门闩，旧布局结果可乱序覆盖新文档
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flow-designer-renderers\src\designer-page.tsx:175-191`; `C:\can\nop\nop-chaos-flux\packages\flow-designer-core\src\elk-layout.ts:12-64`; `C:\can\nop\nop-chaos-flux\packages\flow-designer-core\src\tree-layout.ts:100-119`
 - **严重程度**: P2
 - **异步操作**: Designer 的 ELK auto-layout
@@ -59,6 +63,7 @@
 - **复核状态**: 已确认，已通过 request token + 文档身份校验 + busy 状态修复。
 
 ### [维度06] 文档预览页的字数统计 Promise 没有 stale guard
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\word-editor-renderers\src\preview\DocPreviewPage.tsx:18-52`
 - **严重程度**: P3
 - **异步操作**: `CanvasEditorBridge.getWordCount()` 预览统计

@@ -71,7 +71,9 @@ test.describe('reaction renderer', () => {
     await expect(stage.getByText('doubled: 2')).toBeVisible({ timeout: 5_000 });
   });
 
-  test('write: typing in the watched field updates the visible character count', async ({ page }) => {
+  test('write: typing in the watched field updates the visible character count', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('reaction');
 
@@ -119,10 +121,14 @@ test.describe('dynamic-renderer renderer', () => {
 
     await stage.getByRole('button', { name: 'Show Text' }).click();
     await expect(stage.getByText('Currently rendering: text')).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByText('Dynamically rendered text content.')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Dynamically rendered text content.')).toBeVisible({
+      timeout: 5_000,
+    });
 
     await stage.getByRole('button', { name: 'Show Button' }).click();
     await expect(stage.getByText('Currently rendering: button')).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByRole('button', { name: 'A button from dynamic schema' })).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByRole('button', { name: 'A button from dynamic schema' })).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });

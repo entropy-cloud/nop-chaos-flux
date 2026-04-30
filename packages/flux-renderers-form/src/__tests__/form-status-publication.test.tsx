@@ -2,7 +2,10 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 import type { FormStoreState, ScopeRef } from '@nop-chaos/flux-core';
-import { usePublishedFormStatus, usePublishedFormValues } from '../renderers/form-status-publication';
+import {
+  usePublishedFormStatus,
+  usePublishedFormValues,
+} from '../renderers/form-status-publication';
 
 function createFormStore(initial: FormStoreState) {
   let state = initial;
@@ -20,7 +23,7 @@ function createFormStore(initial: FormStoreState) {
       for (const listener of listeners) {
         listener();
       }
-    }
+    },
   };
 }
 
@@ -35,7 +38,7 @@ function makeScope(): ScopeRef {
     readVisible: () => ({}),
     materializeVisible: () => ({}),
     update: vi.fn(),
-    merge: vi.fn()
+    merge: vi.fn(),
   } as ScopeRef;
 }
 
@@ -45,10 +48,13 @@ describe('form-status-publication hooks', () => {
     const store = createFormStore({
       values: {},
       fieldStates: {
-        name: { touched: true, errors: [{ path: 'name', rule: 'required', message: 'Required' } as any] }
+        name: {
+          touched: true,
+          errors: [{ path: 'name', rule: 'required', message: 'Required' } as any],
+        },
       },
       submitting: false,
-      submitAttempted: false
+      submitAttempted: false,
     });
     const ownedForm = { id: 'form-1', name: 'demo', store } as any;
 
@@ -60,48 +66,57 @@ describe('form-status-publication hooks', () => {
     render(<Probe />);
 
     await waitFor(() => {
-      expect(parentScope.update).toHaveBeenCalledWith('ui.status', expect.objectContaining({
-        id: 'form-1',
-        name: 'demo',
-        touched: true,
-        hasErrors: true,
-        errorCount: 1,
-        valid: false,
-        invalid: true
-      }));
+      expect(parentScope.update).toHaveBeenCalledWith(
+        'ui.status',
+        expect.objectContaining({
+          id: 'form-1',
+          name: 'demo',
+          touched: true,
+          hasErrors: true,
+          errorCount: 1,
+          valid: false,
+          invalid: true,
+        }),
+      );
     });
 
     const before = (parentScope.update as any).mock.calls.length;
     store.setState({
       values: {},
       fieldStates: {
-        name: { touched: true, errors: [{ path: 'name', rule: 'required', message: 'Required' } as any] }
+        name: {
+          touched: true,
+          errors: [{ path: 'name', rule: 'required', message: 'Required' } as any],
+        },
       },
       submitting: false,
-      submitAttempted: false
+      submitAttempted: false,
     });
     expect((parentScope.update as any).mock.calls.length).toBe(before);
 
     store.setState({
       values: {},
       fieldStates: {
-        name: { touched: true, dirty: true, validating: true }
+        name: { touched: true, dirty: true, validating: true },
       },
       submitting: true,
-      submitAttempted: true
+      submitAttempted: true,
     });
 
     await waitFor(() => {
-      expect(parentScope.update).toHaveBeenLastCalledWith('ui.status', expect.objectContaining({
-        submitting: true,
-        validating: true,
-        dirty: true,
-        touched: true,
-        hasErrors: false,
-        errorCount: 0,
-        valid: true,
-        invalid: false
-      }));
+      expect(parentScope.update).toHaveBeenLastCalledWith(
+        'ui.status',
+        expect.objectContaining({
+          submitting: true,
+          validating: true,
+          dirty: true,
+          touched: true,
+          hasErrors: false,
+          errorCount: 0,
+          valid: true,
+          invalid: false,
+        }),
+      );
     });
   });
 
@@ -112,7 +127,7 @@ describe('form-status-publication hooks', () => {
       values: initialValues,
       fieldStates: {},
       submitting: false,
-      submitAttempted: false
+      submitAttempted: false,
     });
     const ownedForm = { id: 'form-1', name: 'demo', store } as any;
 
@@ -132,7 +147,7 @@ describe('form-status-publication hooks', () => {
       values: initialValues,
       fieldStates: { name: { touched: true } },
       submitting: false,
-      submitAttempted: false
+      submitAttempted: false,
     });
     expect((parentScope.update as any).mock.calls.length).toBe(before);
 
@@ -141,7 +156,7 @@ describe('form-status-publication hooks', () => {
       values: nextValues,
       fieldStates: {},
       submitting: false,
-      submitAttempted: false
+      submitAttempted: false,
     });
 
     await waitFor(() => {
@@ -155,7 +170,7 @@ describe('form-status-publication hooks', () => {
       values: {},
       fieldStates: {},
       submitting: false,
-      submitAttempted: false
+      submitAttempted: false,
     });
     const ownedForm = { id: 'form-1', name: 'demo', store } as any;
 

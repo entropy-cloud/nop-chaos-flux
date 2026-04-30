@@ -66,7 +66,7 @@ const companyLookupResource: ResourceDefinition = {
   ownerScopePath: '',
   driver: {
     kind: 'refresh-capability',
-    requestProgramId: 'capreq.companyLookup.refresh'
+    requestProgramId: 'capreq.companyLookup.refresh',
   },
   dependsOn: ['companyId'],
   publish: {
@@ -74,10 +74,10 @@ const companyLookupResource: ResourceDefinition = {
     mode: 'shallow-merge',
     mapping: {
       companyName: 'value.payload.name',
-      taxCode: 'value.payload.taxCode'
-    }
+      taxCode: 'value.payload.taxCode',
+    },
   },
-  statusPath: 'companyLookupStatus'
+  statusPath: 'companyLookupStatus',
 };
 ```
 
@@ -93,7 +93,7 @@ const companyIdReaction: ReactionDefinition = {
   reactionId: 'reaction.resetNotesOnCompanyChange',
   watchProgramId: 'value.watch.companyId',
   whenProgramId: 'value.when.companyChanged',
-  actionsProgramId: 'action.resetNotes'
+  actionsProgramId: 'action.resetNotes',
 };
 ```
 
@@ -115,8 +115,8 @@ const companyIdReaction: ReactionDefinition = {
 ```ts
 [
   { scopeId: 'formScope', path: 'companyName', op: 'set', value: 'Acme' },
-  { scopeId: 'formScope', path: 'taxCode', op: 'set', value: 'T-001' }
-]
+  { scopeId: 'formScope', path: 'taxCode', op: 'set', value: 'T-001' },
+];
 ```
 
 4. status summary 同轮 publish 到 `companyLookupStatus`
@@ -190,9 +190,9 @@ const productsField: ArrayFieldBindingDefinition = {
     rowEditor: {
       surfaceKind: 'drawer',
       useItemSchema: true,
-      transformOut: { transformId: 'transform.products.rowEditor' }
-    }
-  }
+      transformOut: { transformId: 'transform.products.rowEditor' },
+    },
+  },
 };
 ```
 
@@ -207,7 +207,7 @@ const commitTarget: RowDraftCommitTarget = {
   collectionPath: 'products',
   identityMode: 'keyed',
   rowKey: 'id=p-100',
-  sourceIndexAtOpen: 0
+  sourceIndexAtOpen: 0,
 };
 ```
 
@@ -224,8 +224,8 @@ const commitTarget: RowDraftCommitTarget = {
 [
   { scopeId: 'formScope', path: 'products.1.name', op: 'set', value: 'Updated Name' },
   { scopeId: 'formScope', path: 'products.1.price', op: 'set', value: 99 },
-  { scopeId: 'formScope', path: 'products.1.summary', op: 'set', value: 'Updated Name / 99' }
-]
+  { scopeId: 'formScope', path: 'products.1.summary', op: 'set', value: 'Updated Name / 99' },
+];
 ```
 
 #### index mode 对照

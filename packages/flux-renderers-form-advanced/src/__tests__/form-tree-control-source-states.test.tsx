@@ -8,7 +8,11 @@ import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
 import { env, formStateProbeRenderer } from '../../../flux-renderers-form/src/test-support';
 
-const allFormDefs = [...basicRendererDefinitions, ...formRendererDefinitions, ...formAdvancedRendererDefinitions];
+const allFormDefs = [
+  ...basicRendererDefinitions,
+  ...formRendererDefinitions,
+  ...formAdvancedRendererDefinitions,
+];
 
 describe('tree controls source state and picker branches', () => {
   it('shows loading state and disables input-tree controls while options are loading', async () => {
@@ -18,26 +22,30 @@ describe('tree controls source state and picker branches', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-control-source-states.test.tsx#1"
-        schema={{
-          type: 'form',
-          body: [
-            {
-              type: 'input-tree',
-              name: 'categoryIds',
-              label: 'Categories',
-              searchable: true,
-              options: [{ label: 'Runtime', value: 'runtime' }],
-              optionsSourceState: { loading: true }
-            }
-          ]
-        } as any}
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'input-tree',
+                name: 'categoryIds',
+                label: 'Categories',
+                searchable: true,
+                options: [{ label: 'Runtime', value: 'runtime' }],
+                optionsSourceState: { loading: true },
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Loading...')).toBeTruthy();
-    expect((screen.getByPlaceholderText('Search tree options') as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByPlaceholderText('Search tree options') as HTMLInputElement).disabled).toBe(
+      true,
+    );
     expect(screen.getByRole('treeitem', { name: 'Runtime' }).tabIndex).toBe(-1);
   });
 
@@ -48,28 +56,30 @@ describe('tree controls source state and picker branches', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-control-source-states.test.tsx#2"
-        schema={{
-          type: 'form',
-          body: [
-            {
-              type: 'input-tree',
-              name: 'categoryIds',
-              label: 'Categories',
-              options: [{ label: 'Runtime', value: 'runtime' }],
-              optionsSourceState: { status: 'error', error: { message: 'Input tree failed' } }
-            },
-            {
-              type: 'tree-select',
-              name: 'departmentId',
-              label: 'Department',
-              options: [{ label: 'Platform', value: 'platform' }],
-              optionsSourceState: { status: 'error', error: { code: 500 } }
-            }
-          ]
-        } as any}
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'input-tree',
+                name: 'categoryIds',
+                label: 'Categories',
+                options: [{ label: 'Runtime', value: 'runtime' }],
+                optionsSourceState: { status: 'error', error: { message: 'Input tree failed' } },
+              },
+              {
+                type: 'tree-select',
+                name: 'departmentId',
+                label: 'Department',
+                options: [{ label: 'Platform', value: 'platform' }],
+                optionsSourceState: { status: 'error', error: { code: 500 } },
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Input tree failed')).toBeTruthy();
@@ -83,32 +93,34 @@ describe('tree controls source state and picker branches', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-control-source-states.test.tsx#3"
-        schema={{
-          type: 'form',
-          body: [
-            {
-              type: 'tree-select',
-              name: 'departmentId',
-              label: 'Department',
-              searchable: true,
-              showPathLabel: true,
-              options: [
-                {
-                  label: 'Engineering',
-                  value: 'eng',
-                  children: [{ label: 'Platform', value: 'platform' }]
-                },
-                {
-                  label: 'Design',
-                  value: 'design'
-                }
-              ]
-            }
-          ]
-        } as any}
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'tree-select',
+                name: 'departmentId',
+                label: 'Department',
+                searchable: true,
+                showPathLabel: true,
+                options: [
+                  {
+                    label: 'Engineering',
+                    value: 'eng',
+                    children: [{ label: 'Platform', value: 'platform' }],
+                  },
+                  {
+                    label: 'Design',
+                    value: 'design',
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Department/ }));
@@ -129,30 +141,32 @@ describe('tree controls source state and picker branches', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-control-source-states.test.tsx#4"
-        schema={{
-          type: 'form',
-          data: { departmentIds: [] },
-          body: [
-            {
-              type: 'tree-select',
-              name: 'departmentIds',
-              label: 'Departments',
-              treeMode: 'checkbox',
-              clearable: true,
-              options: [
-                { label: 'Platform', value: 'platform' },
-                { label: 'Design', value: 'design' }
-              ]
-            },
-            {
-              type: 'form-state-probe',
-              name: 'departmentIds'
-            }
-          ]
-        } as any}
+        schema={
+          {
+            type: 'form',
+            data: { departmentIds: [] },
+            body: [
+              {
+                type: 'tree-select',
+                name: 'departmentIds',
+                label: 'Departments',
+                treeMode: 'checkbox',
+                clearable: true,
+                options: [
+                  { label: 'Platform', value: 'platform' },
+                  { label: 'Design', value: 'design' },
+                ],
+              },
+              {
+                type: 'form-state-probe',
+                name: 'departmentIds',
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Departments/ }));
@@ -161,13 +175,17 @@ describe('tree controls source state and picker branches', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Platform, Design')).toBeTruthy();
-      expect(JSON.parse(screen.getByTestId('form-state:departmentIds').textContent ?? 'null')).toEqual(['platform', 'design']);
+      expect(
+        JSON.parse(screen.getByTestId('form-state:departmentIds').textContent ?? 'null'),
+      ).toEqual(['platform', 'design']);
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear tree selection' }));
 
     await waitFor(() => {
-      expect(JSON.parse(screen.getByTestId('form-state:departmentIds').textContent ?? 'null')).toEqual([]);
+      expect(
+        JSON.parse(screen.getByTestId('form-state:departmentIds').textContent ?? 'null'),
+      ).toEqual([]);
     });
   });
 
@@ -178,21 +196,23 @@ describe('tree controls source state and picker branches', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/__tests__/form-tree-control-source-states.test.tsx#5"
-        schema={{
-          type: 'form',
-          body: [
-            {
-              type: 'tree-select',
-              name: 'departmentId',
-              label: 'Department',
-              placeholder: 'Choose department',
-              options: [{ label: 'Platform', value: 'platform' }]
-            }
-          ]
-        } as any}
+        schema={
+          {
+            type: 'form',
+            body: [
+              {
+                type: 'tree-select',
+                name: 'departmentId',
+                label: 'Department',
+                placeholder: 'Choose department',
+                options: [{ label: 'Platform', value: 'platform' }],
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Choose department')).toBeTruthy();

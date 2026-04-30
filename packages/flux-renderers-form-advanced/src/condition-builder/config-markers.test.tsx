@@ -22,7 +22,15 @@ describe('condition-builder markers', () => {
           embed: true,
           fields: [{ name: 'status', label: 'Status', type: 'text' }],
         }}
-        data={{ filters: { id: 'root', conjunction: 'and', children: [{ id: 'item-1', left: { type: 'field', field: 'status' }, op: 'eq', right: 'active' }] } }}
+        data={{
+          filters: {
+            id: 'root',
+            conjunction: 'and',
+            children: [
+              { id: 'item-1', left: { type: 'field', field: 'status' }, op: 'eq', right: 'active' },
+            ],
+          },
+        }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
       />,

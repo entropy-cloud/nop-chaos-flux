@@ -10,17 +10,13 @@ const httpHeaders = {
         headers: [
           { key: 'Content-Type', value: 'application/json' },
           { key: 'Authorization', value: 'Bearer <token>' },
-          { key: 'Accept', value: 'application/json' }
-        ]
+          { key: 'Accept', value: 'application/json' },
+        ],
       },
-      body: [
-        { type: 'key-value', name: 'headers', label: 'HTTP Headers' }
-      ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      body: [{ type: 'key-value', name: 'headers', label: 'HTTP Headers' }],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const envVars = {
@@ -32,8 +28,8 @@ const envVars = {
       data: {
         env: [
           { key: 'NODE_ENV', value: 'production' },
-          { key: 'PORT', value: '3000' }
-        ]
+          { key: 'PORT', value: '3000' },
+        ],
       },
       body: [
         {
@@ -41,14 +37,12 @@ const envVars = {
           name: 'env',
           label: 'Environment Variables',
           keyPlaceholder: 'VARIABLE_NAME',
-          valuePlaceholder: 'value'
-        }
+          valuePlaceholder: 'value',
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Apply', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Apply', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 export function KeyValueLabPage() {
@@ -58,14 +52,16 @@ export function KeyValueLabPage() {
       scenarios={[
         {
           title: 'HTTP header editing',
-          description: 'Pre-populated with three HTTP headers. Add rows with the + button, edit inline, or remove with the trash icon.',
-          schema: httpHeaders
+          description:
+            'Pre-populated with three HTTP headers. Add rows with the + button, edit inline, or remove with the trash icon.',
+          schema: httpHeaders,
         },
         {
           title: 'Environment variable editing',
-          description: 'Same structure used for environment variable maps with descriptive placeholders for key and value columns.',
-          schema: envVars
-        }
+          description:
+            'Same structure used for environment variable maps with descriptive placeholders for key and value columns.',
+          schema: envVars,
+        },
       ]}
     />
   );

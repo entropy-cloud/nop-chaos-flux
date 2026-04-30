@@ -7,7 +7,7 @@
 ## 保留
 
 1. [维度复核通过] `report-designer-renderers` 中多个组件直接 `useOwnScopeSelector((data) => data)` 订阅整份 own scope，实际只需要少量字段。
-文件：`report-designer-inspector.tsx`、`field-panel-renderer.tsx`、`inspector-shell-renderer.tsx`、`report-designer-toolbar.tsx`
+   文件：`report-designer-inspector.tsx`、`field-panel-renderer.tsx`、`inspector-shell-renderer.tsx`、`report-designer-toolbar.tsx`
 
 2. [维度复核通过] `flow-designer-renderers` 中 `DesignerToolbarContent`、`DefaultInspector` 直接订阅整份 `DesignerSnapshot`。
 

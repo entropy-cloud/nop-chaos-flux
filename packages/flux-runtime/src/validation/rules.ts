@@ -1,6 +1,4 @@
-import type {
-  ValidationRule
-} from '@nop-chaos/flux-core';
+import type { ValidationRule } from '@nop-chaos/flux-core';
 
 export function collectValidationDependencyPaths(rule: ValidationRule): string[] {
   switch (rule.kind) {

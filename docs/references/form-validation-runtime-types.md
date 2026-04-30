@@ -21,11 +21,7 @@ type ValidationTrigger = 'change' | 'blur' | 'submit';
 
 type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
 
-type ValidationOwnerLifecycleState =
-  | 'bootstrapping'
-  | 'active'
-  | 'refreshing'
-  | 'disposed';
+type ValidationOwnerLifecycleState = 'bootstrapping' | 'active' | 'refreshing' | 'disposed';
 
 type ValidationReason = 'change' | 'blur' | 'submit' | 'commit' | 'system' | 'manual';
 ```

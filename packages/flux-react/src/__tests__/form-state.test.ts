@@ -9,7 +9,9 @@ import {
   isFieldEffectivelyRequired,
 } from '../form-state';
 
-function makeError(overrides: Partial<import('@nop-chaos/flux-core').ValidationError> = {}): import('@nop-chaos/flux-core').ValidationError {
+function makeError(
+  overrides: Partial<import('@nop-chaos/flux-core').ValidationError> = {},
+): import('@nop-chaos/flux-core').ValidationError {
   return {
     path: 'name',
     rule: 'required',
@@ -258,7 +260,9 @@ describe('isFieldEffectivelyRequired', () => {
           path: 'name',
           kind: 'field',
           controlType: 'text',
-          rules: [{ id: 'r1', rule: { kind: 'required', message: 'Required' }, dependencyPaths: [] }],
+          rules: [
+            { id: 'r1', rule: { kind: 'required', message: 'Required' }, dependencyPaths: [] },
+          ],
           behavior: { showErrorOn: ['touched'] },
           children: [],
         },
@@ -277,7 +281,18 @@ describe('isFieldEffectivelyRequired', () => {
           path: 'email',
           kind: 'field',
           controlType: 'text',
-          rules: [{ id: 'r1', rule: { kind: 'requiredWhen', path: 'contactMethod', equals: 'email', message: 'Required' }, dependencyPaths: ['contactMethod'] }],
+          rules: [
+            {
+              id: 'r1',
+              rule: {
+                kind: 'requiredWhen',
+                path: 'contactMethod',
+                equals: 'email',
+                message: 'Required',
+              },
+              dependencyPaths: ['contactMethod'],
+            },
+          ],
           behavior: { showErrorOn: ['touched'] },
           children: [],
         },
@@ -296,7 +311,18 @@ describe('isFieldEffectivelyRequired', () => {
           path: 'email',
           kind: 'field',
           controlType: 'text',
-          rules: [{ id: 'r1', rule: { kind: 'requiredWhen', path: 'contactMethod', equals: 'email', message: 'Required' }, dependencyPaths: ['contactMethod'] }],
+          rules: [
+            {
+              id: 'r1',
+              rule: {
+                kind: 'requiredWhen',
+                path: 'contactMethod',
+                equals: 'email',
+                message: 'Required',
+              },
+              dependencyPaths: ['contactMethod'],
+            },
+          ],
           behavior: { showErrorOn: ['touched'] },
           children: [],
         },
@@ -315,7 +341,13 @@ describe('isFieldEffectivelyRequired', () => {
           path: 'phone',
           kind: 'field',
           controlType: 'text',
-          rules: [{ id: 'r1', rule: { kind: 'requiredUnless', path: 'hasEmail', equals: true, message: 'Required' }, dependencyPaths: ['hasEmail'] }],
+          rules: [
+            {
+              id: 'r1',
+              rule: { kind: 'requiredUnless', path: 'hasEmail', equals: true, message: 'Required' },
+              dependencyPaths: ['hasEmail'],
+            },
+          ],
           behavior: { showErrorOn: ['touched'] },
           children: [],
         },
@@ -334,7 +366,13 @@ describe('isFieldEffectivelyRequired', () => {
           path: 'phone',
           kind: 'field',
           controlType: 'text',
-          rules: [{ id: 'r1', rule: { kind: 'requiredUnless', path: 'hasEmail', equals: true, message: 'Required' }, dependencyPaths: ['hasEmail'] }],
+          rules: [
+            {
+              id: 'r1',
+              rule: { kind: 'requiredUnless', path: 'hasEmail', equals: true, message: 'Required' },
+              dependencyPaths: ['hasEmail'],
+            },
+          ],
           behavior: { showErrorOn: ['touched'] },
           children: [],
         },
@@ -353,7 +391,13 @@ describe('isFieldEffectivelyRequired', () => {
           path: 'name',
           kind: 'field',
           controlType: 'text',
-          rules: [{ id: 'r1', rule: { kind: 'pattern', pattern: '.*', message: 'Invalid' }, dependencyPaths: [] }],
+          rules: [
+            {
+              id: 'r1',
+              rule: { kind: 'pattern', pattern: '.*', message: 'Invalid' },
+              dependencyPaths: [],
+            },
+          ],
           behavior: { showErrorOn: ['touched'] },
           children: [],
         },
@@ -460,7 +504,9 @@ describe('selectCurrentFormFieldPresentation', () => {
           path: 'name',
           kind: 'field',
           controlType: 'text',
-          rules: [{ id: 'r1', rule: { kind: 'required', message: 'Required' }, dependencyPaths: [] }],
+          rules: [
+            { id: 'r1', rule: { kind: 'required', message: 'Required' }, dependencyPaths: [] },
+          ],
           behavior: { showErrorOn: ['touched'] },
           children: [],
         },

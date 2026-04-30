@@ -1,10 +1,5 @@
 import { execSync } from 'child_process';
-import {
-  readFile,
-  rename,
-  readdir,
-  writeFile,
-} from 'fs/promises';
+import { readFile, rename, readdir, writeFile } from 'fs/promises';
 import { basename, dirname, extname, join, posix, sep } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -67,17 +62,24 @@ async function collectFiles(dir) {
 
 function grepWorkingTree(searchRoot, pattern) {
   try {
-    const out = execSync(`rg -l -F --glob "*.{ts,tsx,js,jsx,mjs,cjs}" "${pattern}" "${searchRoot}"`, {
-      encoding: 'utf-8',
-      maxBuffer: 50 * 1024 * 1024,
-      cwd: rootDir,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      shell: true,
-    });
-    return out.trim().split('\n').filter(Boolean).map(p => {
-      // rg returns paths relative to cwd, normalize to absolute
-      return p.includes(':') ? p : join(rootDir, p);
-    });
+    const out = execSync(
+      `rg -l -F --glob "*.{ts,tsx,js,jsx,mjs,cjs}" "${pattern}" "${searchRoot}"`,
+      {
+        encoding: 'utf-8',
+        maxBuffer: 50 * 1024 * 1024,
+        cwd: rootDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        shell: true,
+      },
+    );
+    return out
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((p) => {
+        // rg returns paths relative to cwd, normalize to absolute
+        return p.includes(':') ? p : join(rootDir, p);
+      });
   } catch {
     return [];
   }
@@ -103,7 +105,7 @@ async function updateFileImports(absPath, renameEntries) {
       const escaped = old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = new RegExp(
         `((?:from|import\\s+[^;\\n]*?from|import)\\s*['"\`][^'"\`]*?)${escaped}((?:[^'"\`]*?['"\`]))`,
-        'g'
+        'g',
       );
       const updated = content.replace(re, `$1${newV}$2`);
       if (updated !== content) {
@@ -178,7 +180,7 @@ async function main() {
   }
 
   console.log(
-    `\nDone. ${renameEntries.length} files renamed, ${updatedCount} files had imports updated.`
+    `\nDone. ${renameEntries.length} files renamed, ${updatedCount} files had imports updated.`,
   );
   if (DRY_RUN) {
     console.log('(dry-run: no files were actually modified)');

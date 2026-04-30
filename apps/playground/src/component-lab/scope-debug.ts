@@ -7,7 +7,7 @@ export function createScopeDebugNode(title: string): BaseSchema {
     type: COMPONENT_LAB_SCOPE_DEBUG_RENDERER_ID,
     title,
     defaultExpand: false,
-    testid: `scope-debug-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+    testid: `scope-debug-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
   } as BaseSchema;
 }
 
@@ -19,7 +19,7 @@ export function attachScopeDebugToSchema(schema: BaseSchema, title: string): Bas
 
     return {
       ...schema,
-      body: [...formBody, createScopeDebugNode(title)]
+      body: [...formBody, createScopeDebugNode(title)],
     } as BaseSchema;
   }
 
@@ -35,12 +35,12 @@ export function attachScopeDebugToSchema(schema: BaseSchema, title: string): Bas
 
     pageBody[firstFormIndex] = {
       ...targetForm,
-      body: [...targetFormBody, createScopeDebugNode(title)]
+      body: [...targetFormBody, createScopeDebugNode(title)],
     };
 
     return {
       ...schema,
-      body: pageBody
+      body: pageBody,
     } as BaseSchema;
   }
 
@@ -50,6 +50,6 @@ export function attachScopeDebugToSchema(schema: BaseSchema, title: string): Bas
 
   return {
     ...schema,
-    body: [...body, createScopeDebugNode(title)]
+    body: [...body, createScopeDebugNode(title)],
   } as BaseSchema;
 }

@@ -6,9 +6,7 @@
     "action": "ajax",
     "api": {
       "url": "/api/profile/${userId}",
-      "includeScope": [
-        "userId"
-      ]
+      "includeScope": ["userId"]
     }
   },
   "body": [

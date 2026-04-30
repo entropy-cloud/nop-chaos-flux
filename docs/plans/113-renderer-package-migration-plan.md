@@ -15,11 +15,11 @@
 
 ### 代码现状（2026-04-16 live repo）
 
-| 包 | 源码行数 | 注册 renderer 数 | 关键子系统 |
-|----|----------|-----------------|-----------|
-| `flux-renderers-basic` | 1,791 | 16（含 scope-debug） | 结构循环 |
-| `flux-renderers-form` | 15,847 | 21 | condition-builder, variant-field, detail-view, array-field, object-field, composite-field, projected-form |
-| `flux-renderers-data` | 2,380 | 4 | table, chart |
+| 包                     | 源码行数 | 注册 renderer 数     | 关键子系统                                                                                                |
+| ---------------------- | -------- | -------------------- | --------------------------------------------------------------------------------------------------------- |
+| `flux-renderers-basic` | 1,791    | 16（含 scope-debug） | 结构循环                                                                                                  |
+| `flux-renderers-form`  | 15,847   | 21                   | condition-builder, variant-field, detail-view, array-field, object-field, composite-field, projected-form |
+| `flux-renderers-data`  | 2,380    | 4                    | table, chart                                                                                              |
 
 ### 当前依赖
 
@@ -34,6 +34,7 @@ flux-renderers-form 依赖:
 ### Playground 装配
 
 `apps/playground/src/App.tsx` 通过以下方式注册所有 renderer：
+
 ```ts
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
@@ -44,65 +45,65 @@ registerDataRenderers(registry);
 
 以下模块需要从 `flux-renderers-form/src/` 迁到 `flux-renderers-form-advanced/src/`：
 
-| 源路径 | 目标路径 | 行数 | 类型 |
-|--------|----------|------|------|
-| `renderers/condition-builder/` | `src/condition-builder/` | ~2,590 | 子系统 |
-| `renderers/variant-field*.ts(x)` (7 文件) | `src/variant-field/` | ~1,400 | 子系统 |
-| `renderers/detail-view.tsx` + tests | `src/detail-view/` | ~770 | 子系统 |
-| `renderers/detail-field.tsx` + tests | `src/detail-view/` | ~750 | 子系统 |
-| `renderers/detail-surface.tsx` | `src/detail-view/` | ~100 | 子系统 |
-| `renderers/projected-form-runtime.ts` | `src/detail-view/` | ~200 | 子系统 |
-| `renderers/projected-scope.ts` | `src/detail-view/` | ~1 | 子系统 |
-| `renderers/value-adaptation-helper.ts` | `src/detail-view/` | ~173 | 子系统 |
-| `renderers/object-field.tsx` + tests | `src/composite-field/` | ~500 | 子系统 |
-| `renderers/array-field.tsx` + tests + runtime | `src/composite-field/` | ~1,000 | 子系统 |
-| `renderers/composite-item-id.ts` | `src/composite-field/` | ~22 | 工具 |
-| `renderers/composite-schemas.ts` | `src/composite-field/` | ~100 | 工具 |
-| `renderers/array-editor.tsx` | `src/array-editor.tsx` | ~320 | 组件 |
-| `renderers/tag-list.tsx` | `src/tag-list.tsx` | ~120 | 组件 |
-| `renderers/key-value.tsx` | `src/key-value.tsx` | ~430 | 组件 |
-| `renderers/tree-controls.tsx` | `src/tree-controls.tsx` | ~255 | 组件（含 input-tree 和 tree-select renderer 定义） |
-| `tree-options.ts` | `src/tree-options.ts` | ~134 | 工具 |
-| `renderers/test-support.tsx` | `src/test-support.tsx` | ~58 | 工具 |
+| 源路径                                        | 目标路径                 | 行数   | 类型                                               |
+| --------------------------------------------- | ------------------------ | ------ | -------------------------------------------------- |
+| `renderers/condition-builder/`                | `src/condition-builder/` | ~2,590 | 子系统                                             |
+| `renderers/variant-field*.ts(x)` (7 文件)     | `src/variant-field/`     | ~1,400 | 子系统                                             |
+| `renderers/detail-view.tsx` + tests           | `src/detail-view/`       | ~770   | 子系统                                             |
+| `renderers/detail-field.tsx` + tests          | `src/detail-view/`       | ~750   | 子系统                                             |
+| `renderers/detail-surface.tsx`                | `src/detail-view/`       | ~100   | 子系统                                             |
+| `renderers/projected-form-runtime.ts`         | `src/detail-view/`       | ~200   | 子系统                                             |
+| `renderers/projected-scope.ts`                | `src/detail-view/`       | ~1     | 子系统                                             |
+| `renderers/value-adaptation-helper.ts`        | `src/detail-view/`       | ~173   | 子系统                                             |
+| `renderers/object-field.tsx` + tests          | `src/composite-field/`   | ~500   | 子系统                                             |
+| `renderers/array-field.tsx` + tests + runtime | `src/composite-field/`   | ~1,000 | 子系统                                             |
+| `renderers/composite-item-id.ts`              | `src/composite-field/`   | ~22    | 工具                                               |
+| `renderers/composite-schemas.ts`              | `src/composite-field/`   | ~100   | 工具                                               |
+| `renderers/array-editor.tsx`                  | `src/array-editor.tsx`   | ~320   | 组件                                               |
+| `renderers/tag-list.tsx`                      | `src/tag-list.tsx`       | ~120   | 组件                                               |
+| `renderers/key-value.tsx`                     | `src/key-value.tsx`      | ~430   | 组件                                               |
+| `renderers/tree-controls.tsx`                 | `src/tree-controls.tsx`  | ~255   | 组件（含 input-tree 和 tree-select renderer 定义） |
+| `tree-options.ts`                             | `src/tree-options.ts`    | ~134   | 工具                                               |
+| `renderers/test-support.tsx`                  | `src/test-support.tsx`   | ~58    | 工具                                               |
 
 ### 留在 form 的模块
 
 以下模块 **不迁移**，留在 `flux-renderers-form`：
 
-| 模块 | 原因 |
-|------|------|
-| `renderers/form.tsx` | form owner |
-| `renderers/input.tsx` | 原子字段基类 |
-| `renderers/shared/` (label, error, help-text, field-hint) | 基础字段依赖，迁出会造成反向依赖 |
-| `field-utils.tsx` | form 公开 export，供 form-advanced 引用 |
-| `schemas.ts` | form 核心 schema |
-| 各类 form 核心测试 | form owner 和原子字段相关 |
+| 模块                                                      | 原因                                    |
+| --------------------------------------------------------- | --------------------------------------- |
+| `renderers/form.tsx`                                      | form owner                              |
+| `renderers/input.tsx`                                     | 原子字段基类                            |
+| `renderers/shared/` (label, error, help-text, field-hint) | 基础字段依赖，迁出会造成反向依赖        |
+| `field-utils.tsx`                                         | form 公开 export，供 form-advanced 引用 |
+| `schemas.ts`                                              | form 核心 schema                        |
+| 各类 form 核心测试                                        | form owner 和原子字段相关               |
 
 ### 需要迁移的测试文件
 
-| 源路径 | 说明 |
-|--------|------|
-| `__tests__/composite-form-detail-and-loop.test.tsx` | composite + detail 集成 |
-| `__tests__/composite-form-integration.test.tsx` | composite 集成 |
-| `__tests__/composite-form-object-array.test.tsx` | object/array 字段 |
-| `__tests__/composite-form-support.tsx` | 测试辅助 |
-| `__tests__/composite-form.test.tsx` | composite 入口 |
-| `__tests__/composite-item-id.test.tsx` | composite-item-id |
-| `__tests__/form-array-validation.test.tsx` | 数组验证 |
-| `__tests__/form-double-edit-regression.test.tsx` | 双编辑回归 |
-| `__tests__/form-source-options.test.tsx` | source options |
-| `__tests__/form-tree-checkbox-fields.test.tsx` | tree 字段 |
-| `__tests__/bug-dual-state.test.tsx` | 双状态 bug |
-| `renderers/condition-builder/*.test.*` | condition-builder 测试 |
+| 源路径                                                | 说明                                                             |
+| ----------------------------------------------------- | ---------------------------------------------------------------- |
+| `__tests__/composite-form-detail-and-loop.test.tsx`   | composite + detail 集成                                          |
+| `__tests__/composite-form-integration.test.tsx`       | composite 集成                                                   |
+| `__tests__/composite-form-object-array.test.tsx`      | object/array 字段                                                |
+| `__tests__/composite-form-support.tsx`                | 测试辅助                                                         |
+| `__tests__/composite-form.test.tsx`                   | composite 入口                                                   |
+| `__tests__/composite-item-id.test.tsx`                | composite-item-id                                                |
+| `__tests__/form-array-validation.test.tsx`            | 数组验证                                                         |
+| `__tests__/form-double-edit-regression.test.tsx`      | 双编辑回归                                                       |
+| `__tests__/form-source-options.test.tsx`              | source options                                                   |
+| `__tests__/form-tree-checkbox-fields.test.tsx`        | tree 字段                                                        |
+| `__tests__/bug-dual-state.test.tsx`                   | 双状态 bug                                                       |
+| `renderers/condition-builder/*.test.*`                | condition-builder 测试                                           |
 | `renderers/condition-builder/config-test-support.tsx` | condition-builder 测试基础设施（非 `*.test.*` glob，需显式列出） |
-| `renderers/variant-field*.test.*` | variant-field 测试 |
-| `renderers/detail-field*.test.*` | detail-field 测试 |
-| `renderers/detail-view*.test.*` | detail-view 测试 |
-| `renderers/object-field.test.tsx` | object-field 测试 |
-| `renderers/array-field.test.tsx` | array-field 测试 |
-| `renderers/variant-field-detection.test.tsx` | variant-field detection |
-| `renderers/variant-field-selector.test.tsx` | variant-field selector |
-| `renderers/variant-field-transform.test.tsx` | variant-field transform |
+| `renderers/variant-field*.test.*`                     | variant-field 测试                                               |
+| `renderers/detail-field*.test.*`                      | detail-field 测试                                                |
+| `renderers/detail-view*.test.*`                       | detail-view 测试                                                 |
+| `renderers/object-field.test.tsx`                     | object-field 测试                                                |
+| `renderers/array-field.test.tsx`                      | array-field 测试                                                 |
+| `renderers/variant-field-detection.test.tsx`          | variant-field detection                                          |
+| `renderers/variant-field-selector.test.tsx`           | variant-field selector                                           |
+| `renderers/variant-field-transform.test.tsx`          | variant-field transform                                          |
 
 ### 跨包依赖策略
 
@@ -177,11 +178,11 @@ const allDefinitions = [...formRendererDefinitions, ...formAdvancedRendererDefin
 
 ## Risks And Rollback
 
-| 风险 | 缓解 |
-|------|------|
-| Import 路径遗漏导致编译失败 | Phase 2 完成后立即 typecheck，逐文件确认 |
-| 测试文件 import 路径错误 | Phase 2 专门处理测试迁移和验证 |
-| Playground 功能退化 | Phase 4 全量 test + 手动检查关键页面 |
+| 风险                                                  | 缓解                                           |
+| ----------------------------------------------------- | ---------------------------------------------- |
+| Import 路径遗漏导致编译失败                           | Phase 2 完成后立即 typecheck，逐文件确认       |
+| 测试文件 import 路径错误                              | Phase 2 专门处理测试迁移和验证                 |
+| Playground 功能退化                                   | Phase 4 全量 test + 手动检查关键页面           |
 | form-advanced 引用 form 的 shared/ 但 form 未公开导出 | Phase 1 先确保 form 的 shared/ 作为公开 export |
 
 **Rollback**：如果在 Phase 3（删除原文件）后发现严重问题，可以从 git 恢复。Phase 1 和 Phase 2 不修改原文件，零风险。
@@ -250,7 +251,7 @@ Targets: `packages/flux-renderers-form-advanced/src/`, `packages/flux-renderers-
   - 对 `@nop-chaos/flux-core`/`flux-react`/`flux-runtime` 的引用保持不变
   - 对 `@nop-chaos/ui` 组件的引用保持不变
   - 特别注意：condition-builder 内部各文件的相对引用路径
-  - 特别注意：variant-field*.ts(x) 文件之间的相对引用
+  - 特别注意：variant-field\*.ts(x) 文件之间的相对引用
   - 特别注意：detail-view 子系统对 projected-form-runtime、value-adaptation-helper 的引用
 - **修复测试文件中的 definitions 引用**：
   - 迁移的测试中 import `formRendererDefinitions` 的地方改为合并引用：

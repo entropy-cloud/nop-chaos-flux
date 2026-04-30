@@ -80,16 +80,16 @@ apps/playground | nop-debugger
 
 ### 3.1 对比框架选择
 
-| 类别 | 代表框架 | 定位 |
-|------|---------|------|
-| 同源框架 | 百度 AMIS | JSON 驱动 UI 渲染的先驱 |
-| 表单框架 | React JSON Schema Form (RJSF) | JSON Schema 驱动表单 |
-| 表单框架 | JSONForms | 工业标准 JSON Schema 表单 |
-| 表单框架 | SurveyJS | 复杂调查问卷场景 |
-| 表单框架 | Uniforms | GraphQL 生态表单 |
-| 低代码平台 | Plasmic | 视觉低代码 IDE |
-| 低代码平台 | Form.io | 企业级表单/工作流 |
-| 新兴框架 | Vercel JSRender (2026) | AI 驱动的生成式 UI |
+| 类别       | 代表框架                      | 定位                      |
+| ---------- | ----------------------------- | ------------------------- |
+| 同源框架   | 百度 AMIS                     | JSON 驱动 UI 渲染的先驱   |
+| 表单框架   | React JSON Schema Form (RJSF) | JSON Schema 驱动表单      |
+| 表单框架   | JSONForms                     | 工业标准 JSON Schema 表单 |
+| 表单框架   | SurveyJS                      | 复杂调查问卷场景          |
+| 表单框架   | Uniforms                      | GraphQL 生态表单          |
+| 低代码平台 | Plasmic                       | 视觉低代码 IDE            |
+| 低代码平台 | Form.io                       | 企业级表单/工作流         |
+| 新兴框架   | Vercel JSRender (2026)        | AI 驱动的生成式 UI        |
 
 ---
 
@@ -97,47 +97,50 @@ apps/playground | nop-debugger
 
 #### 3.2.1 编译策略对比
 
-| 框架 | 编译时机 | 编译粒度 | 静态优化 |
-|------|---------|---------|---------|
-| **nop-chaos-flux** | Schema 加载时 | 整个值树 | 静态子树零成本 |
-| AMIS (原始) | 运行时即时编译 | 字段级 | 无 |
-| RJSF | 渲染时 | Schema 级别 | 有限 |
-| JSONForms | 渲染时 | 字段级别 | 有限 |
-| SurveyJS | 加载时 | Survey 定义 | 部分 |
+| 框架               | 编译时机       | 编译粒度    | 静态优化       |
+| ------------------ | -------------- | ----------- | -------------- |
+| **nop-chaos-flux** | Schema 加载时  | 整个值树    | 静态子树零成本 |
+| AMIS (原始)        | 运行时即时编译 | 字段级      | 无             |
+| RJSF               | 渲染时         | Schema 级别 | 有限           |
+| JSONForms          | 渲染时         | 字段级别    | 有限           |
+| SurveyJS           | 加载时         | Survey 定义 | 部分           |
 
 **nop-chaos-flux 优势**：
+
 - 编译一次，执行多次
 - 静态值直接返回，无求值开销
 - 动态值保留身份复用
 
 #### 3.2.2 状态管理对比
 
-| 框架 | 状态管理方案 | 响应式模型 | 表单状态 |
-|------|-------------|-----------|---------|
-| **nop-chaos-flux** | Zustand (vanilla) | 订阅+选择器 | FormStoreApi |
-| AMIS | 类 MobX + 内部状态 | 响应式 | 内置 |
-| RJSF | React Hook Form | 订阅 | 内部 |
-| JSONForms | 内部状态 | 响应式 | 内置 |
-| Uniforms | SimpleSchema 驱动 | 响应式 | 内置 |
-| SurveyJS | 自研引擎 | 响应式 | 内置 |
+| 框架               | 状态管理方案       | 响应式模型  | 表单状态     |
+| ------------------ | ------------------ | ----------- | ------------ |
+| **nop-chaos-flux** | Zustand (vanilla)  | 订阅+选择器 | FormStoreApi |
+| AMIS               | 类 MobX + 内部状态 | 响应式      | 内置         |
+| RJSF               | React Hook Form    | 订阅        | 内部         |
+| JSONForms          | 内部状态           | 响应式      | 内置         |
+| Uniforms           | SimpleSchema 驱动  | 响应式      | 内置         |
+| SurveyJS           | 自研引擎           | 响应式      | 内置         |
 
 **nop-chaos-flux 特点**：
+
 - Vanilla Zustand stores 脱离 React 依赖
 - 通过 `use-sync-external-store` 连接 React
 - 写入合并 (write coalescing) 优化热路径
 
 #### 3.2.3 验证模型对比
 
-| 框架 | 验证方式 | 验证时机 | 依赖追踪 |
-|------|---------|---------|---------|
-| **nop-chaos-flux** | 编译时构建验证模型 | 实时/提交 | 依赖图 |
-| AMIS | 运行时规则 | 实时 | 部分 |
-| RJSF | JSON Schema | 提交时 | 无 |
-| JSONForms | JSON Schema | 实时 | 部分 |
-| SurveyJS | 内置验证器 | 实时 | 部分 |
-| Form.io | 服务端+客户端 | 提交时 | 无 |
+| 框架               | 验证方式           | 验证时机  | 依赖追踪 |
+| ------------------ | ------------------ | --------- | -------- |
+| **nop-chaos-flux** | 编译时构建验证模型 | 实时/提交 | 依赖图   |
+| AMIS               | 运行时规则         | 实时      | 部分     |
+| RJSF               | JSON Schema        | 提交时    | 无       |
+| JSONForms          | JSON Schema        | 实时      | 部分     |
+| SurveyJS           | 内置验证器         | 实时      | 部分     |
+| Form.io            | 服务端+客户端      | 提交时    | 无       |
 
 **nop-chaos-flux 创新**：
+
 - 编译时构建 `CompiledFormValidationModel`
 - 验证顺序预计算
 - 依赖图支持精确重验证
@@ -148,32 +151,34 @@ apps/playground | nop-debugger
 
 #### 3.3.1 表达式能力对比
 
-| 框架 | 表达式语法 | 模板语法 | 自定义函数 |
-|------|-----------|---------|-----------|
-| **nop-chaos-flux** | `${...}` | `${...}` + 插值 | 支持 |
-| AMIS | `${...}` + 函数 | 类似 | 支持 |
-| RJSF | 无 | 无 | 有限 |
-| JSONForms | 无 | 无 | 有限 |
-| SurveyJS | `${...}` | 有限 | 支持 |
-| Form.io | `${...}` | 支持 | 支持 |
+| 框架               | 表达式语法      | 模板语法        | 自定义函数 |
+| ------------------ | --------------- | --------------- | ---------- |
+| **nop-chaos-flux** | `${...}`        | `${...}` + 插值 | 支持       |
+| AMIS               | `${...}` + 函数 | 类似            | 支持       |
+| RJSF               | 无              | 无              | 有限       |
+| JSONForms          | 无              | 无              | 有限       |
+| SurveyJS           | `${...}`        | 有限            | 支持       |
+| Form.io            | `${...}`        | 支持            | 支持       |
 
 **nop-chaos-flux 设计**：
+
 - 使用 `amis-formula` 引擎
 - 表达式编译/模板编译分离
 - 作用域 `resolve(path)` 查找，避免 `with(scope)`
 
 #### 3.3.2 渲染器扩展对比
 
-| 框架 | 扩展方式 | 注册机制 | 类型安全 |
-|------|---------|---------|---------|
+| 框架               | 扩展方式           | 注册机制   | 类型安全   |
+| ------------------ | ------------------ | ---------- | ---------- |
 | **nop-chaos-flux** | RendererDefinition | 类型元数据 | TypeScript |
-| AMIS | 组件注册 | 类型映射 | 有限 |
-| RJSF | Field Template | 覆盖机制 | 有限 |
-| JSONForms | 自定义渲染器 | 注册表 | 有限 |
-| SurveyJS | 自定义元素 | 注册表 | 有限 |
-| Form.io | 组件定义 | 动态加载 | 无 |
+| AMIS               | 组件注册           | 类型映射   | 有限       |
+| RJSF               | Field Template     | 覆盖机制   | 有限       |
+| JSONForms          | 自定义渲染器       | 注册表     | 有限       |
+| SurveyJS           | 自定义元素         | 注册表     | 有限       |
+| Form.io            | 组件定义           | 动态加载   | 无         |
 
 **nop-chaos-flux 创新**：
+
 - `SchemaFieldRule` 声明字段语义
 - `value-or-region` 模式支持同名字段混合值/片段
 - 编译时类型检查
@@ -292,6 +297,7 @@ apps/playground | nop-debugger
 ```
 
 **价值**：
+
 - 一致的字段处理
 - 类型安全
 - 可扩展
@@ -313,6 +319,7 @@ apps/playground | nop-debugger
 ```
 
 **价值**：
+
 - DSL 简洁
 - 无需并行字段族
 - 保持语义统一
@@ -326,6 +333,7 @@ apps/playground | nop-debugger
 - **ComponentHandleRegistry**: 实例能力
 
 **价值**：
+
 - 概念清晰
 - 支持复杂场景
 - 避免耦合
@@ -341,6 +349,7 @@ apps/playground | nop-debugger
 - CSS 变量支持主题
 
 **价值**：
+
 - 渲染器无隐式样式
 - 主题无关
 - 可组合
@@ -354,6 +363,7 @@ apps/playground | nop-debugger
 - 可复用至其他框架
 
 **价值**：
+
 - 框架独立
 - 更好的性能控制
 - 测试友好
@@ -365,11 +375,12 @@ apps/playground | nop-debugger
 **创新点**：验证规则在编译时构建。
 
 ```typescript
-buildCompiledFormValidationModel(schema, fields)
+buildCompiledFormValidationModel(schema, fields);
 // 输出：验证顺序、依赖图、验证节点
 ```
 
 **价值**：
+
 - 精确重验证
 - 优化执行路径
 - 类型安全
@@ -388,6 +399,7 @@ action: {
 ```
 
 **价值**：
+
 - 统一处理
 - 可观测性
 - 扩展性

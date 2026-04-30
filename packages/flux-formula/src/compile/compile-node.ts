@@ -1,4 +1,9 @@
-import type { CompiledValueNode, ExpressionCompileOptions, FormulaCompiler, StaticValueNode } from '@nop-chaos/flux-core';
+import type {
+  CompiledValueNode,
+  ExpressionCompileOptions,
+  FormulaCompiler,
+  StaticValueNode,
+} from '@nop-chaos/flux-core';
 import { isPlainObject } from '@nop-chaos/flux-core';
 import { isPureExpression } from '../template';
 
@@ -6,7 +11,10 @@ function hasStaticValue<T>(value: { staticValue?: T }): value is { staticValue: 
   return Object.prototype.hasOwnProperty.call(value, 'staticValue');
 }
 
-function withSourcePath(options: ExpressionCompileOptions | undefined, segment: string): ExpressionCompileOptions | undefined {
+function withSourcePath(
+  options: ExpressionCompileOptions | undefined,
+  segment: string,
+): ExpressionCompileOptions | undefined {
   if (!options?.sourcePath) {
     return options;
   }
@@ -15,16 +23,20 @@ function withSourcePath(options: ExpressionCompileOptions | undefined, segment: 
     ...options,
     sourcePath: segment.startsWith('[')
       ? `${options.sourcePath}${segment}`
-      : `${options.sourcePath}.${segment}`
+      : `${options.sourcePath}.${segment}`,
   };
 }
 
-function compileNode<T>(input: T, formulaCompiler: FormulaCompiler, options?: ExpressionCompileOptions): CompiledValueNode<T> {
+function compileNode<T>(
+  input: T,
+  formulaCompiler: FormulaCompiler,
+  options?: ExpressionCompileOptions,
+): CompiledValueNode<T> {
   if (typeof input === 'string') {
     if (!formulaCompiler.hasExpression(input)) {
       return {
         kind: 'static-node',
-        value: input
+        value: input,
       } as StaticValueNode<T>;
     }
 
@@ -35,19 +47,19 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler, options?: Ex
         if (hasStaticValue(compiled)) {
           return {
             kind: 'static-node',
-            value: compiled.staticValue
+            value: compiled.staticValue,
           } as StaticValueNode<T>;
-          }
+        }
 
         return {
           kind: 'expression-node',
           source: input,
-          compiled
+          compiled,
         };
       } catch {
         return {
           kind: 'static-node',
-          value: input
+          value: input,
         } as StaticValueNode<T>;
       }
     }
@@ -57,36 +69,38 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler, options?: Ex
       if (hasStaticValue(compiled)) {
         return {
           kind: 'static-node',
-          value: compiled.staticValue
+          value: compiled.staticValue,
         } as StaticValueNode<T>;
       }
 
       return {
         kind: 'template-node',
         source: input,
-        compiled
+        compiled,
       };
     } catch {
       return {
         kind: 'static-node',
-        value: input
+        value: input,
       } as StaticValueNode<T>;
     }
   }
 
   if (Array.isArray(input)) {
-    const items = input.map((item: unknown, index) => compileNode(item, formulaCompiler, withSourcePath(options, `[${index}]`)));
+    const items = input.map((item: unknown, index) =>
+      compileNode(item, formulaCompiler, withSourcePath(options, `[${index}]`)),
+    );
 
     if (items.every((item) => item.kind === 'static-node')) {
       return {
         kind: 'static-node',
-        value: input
+        value: input,
       } as StaticValueNode<T>;
     }
 
     return {
       kind: 'array-node',
-      items
+      items,
     } as CompiledValueNode<T>;
   }
 
@@ -94,27 +108,30 @@ function compileNode<T>(input: T, formulaCompiler: FormulaCompiler, options?: Ex
     const objectInput = input as Record<string, unknown>;
     const keys = Object.keys(objectInput);
     const entries = Object.fromEntries(
-      keys.map((key) => [key, compileNode(objectInput[key], formulaCompiler, withSourcePath(options, key))])
+      keys.map((key) => [
+        key,
+        compileNode(objectInput[key], formulaCompiler, withSourcePath(options, key)),
+      ]),
     );
     const hasDynamic = keys.some((key) => entries[key].kind !== 'static-node');
 
     if (!hasDynamic) {
       return {
         kind: 'static-node',
-        value: input
+        value: input,
       } as StaticValueNode<T>;
     }
 
     return {
       kind: 'object-node',
       keys,
-      entries
+      entries,
     } as CompiledValueNode<T>;
   }
 
   return {
     kind: 'static-node',
-    value: input
+    value: input,
   } as StaticValueNode<T>;
 }
 

@@ -9,21 +9,29 @@ import {
 describe('variant-field matching utilities', () => {
   it('matches built-in kinds and rejects unsupported values', () => {
     expect(matchesVariant({ key: 'missing' } as any, 'value')).toBe(false);
-    expect(matchesVariant({ key: 'string', match: { kind: 'typeof', value: 'string' } } as any, 'value')).toBe(true);
+    expect(
+      matchesVariant({ key: 'string', match: { kind: 'typeof', value: 'string' } } as any, 'value'),
+    ).toBe(true);
     expect(matchesVariant({ key: 'array', match: { kind: 'array' } } as any, ['a'])).toBe(true);
-    expect(matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as any, { name: 'Alice' })).toBe(true);
-    expect(matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as any, ['name'])).toBe(false);
+    expect(
+      matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as any, {
+        name: 'Alice',
+      }),
+    ).toBe(true);
+    expect(
+      matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as any, ['name']),
+    ).toBe(false);
     expect(
       matchesVariant(
         { key: 'shape', match: { kind: 'shape', requiredKeys: ['name', 'role'] } } as any,
-        { name: 'Alice', role: 'admin' }
-      )
+        { name: 'Alice', role: 'admin' },
+      ),
     ).toBe(true);
     expect(
       matchesVariant(
         { key: 'shape', match: { kind: 'shape', requiredKeys: ['name'] } } as any,
-        null
-      )
+        null,
+      ),
     ).toBe(false);
   });
 
@@ -36,42 +44,54 @@ describe('variant-field matching utilities', () => {
 
     expect(
       matchesVariant(
-        { key: 'expression', match: { kind: 'expression', when: '${value.enabled === true}' } } as any,
+        {
+          key: 'expression',
+          match: { kind: 'expression', when: '${value.enabled === true}' },
+        } as any,
         { enabled: true },
         evaluate as any,
         undefined,
-        createScope as any
-      )
+        createScope as any,
+      ),
     ).toBe(true);
     expect(evaluate).toHaveBeenCalledTimes(1);
     expect(createScope).toHaveBeenCalledWith({ value: { enabled: true } });
 
     expect(
       matchesVariant(
-        { key: 'missing-evaluate', match: { kind: 'expression', when: '${value.enabled === true}' } } as any,
+        {
+          key: 'missing-evaluate',
+          match: { kind: 'expression', when: '${value.enabled === true}' },
+        } as any,
         { enabled: true },
         undefined,
         undefined,
-        createScope as any
-      )
+        createScope as any,
+      ),
     ).toBe(false);
     expect(
       matchesVariant(
-        { key: 'missing-scope', match: { kind: 'expression', when: '${value.enabled === true}' } } as any,
+        {
+          key: 'missing-scope',
+          match: { kind: 'expression', when: '${value.enabled === true}' },
+        } as any,
         { enabled: true },
         evaluate as any,
         undefined,
-        undefined
-      )
+        undefined,
+      ),
     ).toBe(false);
     expect(
       matchesVariant(
-        { key: 'null-value', match: { kind: 'expression', when: '${value.enabled === true}' } } as any,
+        {
+          key: 'null-value',
+          match: { kind: 'expression', when: '${value.enabled === true}' },
+        } as any,
         null,
         evaluate as any,
         undefined,
-        createScope as any
-      )
+        createScope as any,
+      ),
     ).toBe(false);
   });
 

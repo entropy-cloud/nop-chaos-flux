@@ -2,7 +2,12 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '../index';
-import { buildSlotBindings, createStructuralRepeatedTemplateId, renderStructuralLoop, resolveLoopBindings } from '../structural-loop';
+import {
+  buildSlotBindings,
+  createStructuralRepeatedTemplateId,
+  renderStructuralLoop,
+  resolveLoopBindings,
+} from '../structural-loop';
 import { classNames, resolveDirection, resolveGap } from '../utils';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support';
 
@@ -29,13 +34,19 @@ describe('basic renderer coverage gaps', () => {
             { type: 'badge', text: 'Info' },
             { type: 'badge', text: 'Success', level: 'success' },
             { type: 'badge', text: 'Warning', level: 'warning' },
-            { type: 'badge', text: 'Danger', level: 'danger', testid: 'danger-badge', cid: 'danger-cid' },
-            { type: 'badge', text: undefined, testid: 'empty-badge' }
-          ]
+            {
+              type: 'badge',
+              text: 'Danger',
+              level: 'danger',
+              testid: 'danger-badge',
+              cid: 'danger-cid',
+            },
+            { type: 'badge', text: undefined, testid: 'empty-badge' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText('Info').className).toContain('bg-secondary');
@@ -56,12 +67,12 @@ describe('basic renderer coverage gaps', () => {
           type: 'page',
           body: [
             { type: 'badge', text: 'Correct', level: 'success', testid: 'badge-correct' },
-            { type: 'badge', label: 'WrongProps', variant: 'default', testid: 'badge-wrong' }
-          ]
+            { type: 'badge', label: 'WrongProps', variant: 'default', testid: 'badge-wrong' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const correctBadge = screen.getByTestId('badge-correct');
@@ -83,7 +94,7 @@ describe('basic renderer coverage gaps', () => {
         schema={{ type: 'fragment' }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(container.textContent).toBe('');
@@ -105,11 +116,11 @@ describe('basic renderer coverage gaps', () => {
           className: 'custom-flex',
           testid: 'flex-root',
           cid: 'flex-cid',
-          body: [{ type: 'text', text: 'Body content' }]
+          body: [{ type: 'text', text: 'Body content' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     let flexRoot = screen.getByTestId('flex-root');
@@ -128,11 +139,11 @@ describe('basic renderer coverage gaps', () => {
           align: 'start',
           justify: 'start',
           items: [{ type: 'text', text: 'Items fallback' }],
-          testid: 'flex-root'
+          testid: 'flex-root',
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     flexRoot = screen.getByTestId('flex-root');
@@ -150,11 +161,11 @@ describe('basic renderer coverage gaps', () => {
           justify: 'end',
           gap: 10,
           testid: 'flex-root',
-          body: [{ type: 'text', text: 'Numeric gap' }]
+          body: [{ type: 'text', text: 'Numeric gap' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     flexRoot = screen.getByTestId('flex-root');
@@ -171,11 +182,11 @@ describe('basic renderer coverage gaps', () => {
           justify: 'around',
           gap: '1rem',
           testid: 'flex-root',
-          body: [{ type: 'text', text: 'Css gap' }]
+          body: [{ type: 'text', text: 'Css gap' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     flexRoot = screen.getByTestId('flex-root');
@@ -192,11 +203,11 @@ describe('basic renderer coverage gaps', () => {
           align: 'baseline' as 'start',
           justify: 'evenly' as 'start',
           testid: 'flex-root',
-          items: [{ type: 'text', text: 'Invalid values fallback' }]
+          items: [{ type: 'text', text: 'Invalid values fallback' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     flexRoot = screen.getByTestId('flex-root');
@@ -212,7 +223,7 @@ describe('basic renderer coverage gaps', () => {
       missing: undefined,
       fn: () => 'value',
       count: 12n,
-      problem: new Error('boom')
+      problem: new Error('boom'),
     };
     circular.self = circular;
 
@@ -223,7 +234,7 @@ describe('basic renderer coverage gaps', () => {
         data={circular}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText('Scope Debug')).toBeTruthy();
@@ -237,72 +248,89 @@ describe('basic renderer coverage gaps', () => {
   });
 
   it('covers structural loop helpers for empty, capped, and keyed loop states', () => {
-    expect(resolveLoopBindings({ itemName: ' user ', indexName: ' idx ', keyName: ' key ' })).toEqual({
+    expect(
+      resolveLoopBindings({ itemName: ' user ', indexName: ' idx ', keyName: ' key ' }),
+    ).toEqual({
       itemName: 'user',
       indexName: 'idx',
-      keyName: 'key'
+      keyName: 'key',
     });
     expect(resolveLoopBindings({ itemName: ' ', indexName: '', keyName: ' ' })).toEqual({
       itemName: 'item',
       indexName: 'index',
-      keyName: undefined
+      keyName: undefined,
     });
-    expect(buildSlotBindings({
-      item: { id: 'u1' },
-      index: 2,
-      itemKey: 'item-key',
-      bindings: { itemName: 'row', indexName: 'rowIndex', keyName: 'rowKey' },
-      itemData: { extra: 'value' }
-    })).toEqual({
+    expect(
+      buildSlotBindings({
+        item: { id: 'u1' },
+        index: 2,
+        itemKey: 'item-key',
+        bindings: { itemName: 'row', indexName: 'rowIndex', keyName: 'rowKey' },
+        itemData: { extra: 'value' },
+      }),
+    ).toEqual({
       row: { id: 'u1' },
       rowIndex: 2,
       rowKey: 'item-key',
-      extra: 'value'
+      extra: 'value',
     });
     expect(createStructuralRepeatedTemplateId('owner')).toBe('loop:owner');
 
-    expect(renderStructuralLoop({
-      items: [{ id: 'u1' }],
-      hasBody: true,
-      bindings: { itemName: 'item', indexName: 'index' },
-      ownerId: 'owner',
-      repeatedTemplateId: 'loop:owner',
-      maxDepth: 1,
-      currentDepth: 1,
-      renderItem: () => 'unreachable'
-    })).toBeNull();
+    expect(
+      renderStructuralLoop({
+        items: [{ id: 'u1' }],
+        hasBody: true,
+        bindings: { itemName: 'item', indexName: 'index' },
+        ownerId: 'owner',
+        repeatedTemplateId: 'loop:owner',
+        maxDepth: 1,
+        currentDepth: 1,
+        renderItem: () => 'unreachable',
+      }),
+    ).toBeNull();
 
-    expect(renderStructuralLoop({
-      items: [],
-      hasBody: true,
-      hasEmpty: false,
-      bindings: { itemName: 'item', indexName: 'index' },
-      ownerId: 'owner',
-      repeatedTemplateId: 'loop:owner',
-      renderItem: () => 'unreachable'
-    })).toBeNull();
+    expect(
+      renderStructuralLoop({
+        items: [],
+        hasBody: true,
+        hasEmpty: false,
+        bindings: { itemName: 'item', indexName: 'index' },
+        ownerId: 'owner',
+        repeatedTemplateId: 'loop:owner',
+        renderItem: () => 'unreachable',
+      }),
+    ).toBeNull();
 
-    expect(renderStructuralLoop({
-      items: [],
-      hasBody: true,
-      hasEmpty: true,
-      bindings: { itemName: 'item', indexName: 'index' },
-      ownerId: 'owner',
-      repeatedTemplateId: 'loop:owner',
-      renderItem: () => 'unreachable',
-      renderEmpty: () => 'empty-state'
-    })).toBe('empty-state');
+    expect(
+      renderStructuralLoop({
+        items: [],
+        hasBody: true,
+        hasEmpty: true,
+        bindings: { itemName: 'item', indexName: 'index' },
+        ownerId: 'owner',
+        repeatedTemplateId: 'loop:owner',
+        renderItem: () => 'unreachable',
+        renderEmpty: () => 'empty-state',
+      }),
+    ).toBe('empty-state');
 
-    expect(renderStructuralLoop({
-      items: [{ id: 'u1' }],
-      hasBody: false,
-      bindings: { itemName: 'item', indexName: 'index' },
-      ownerId: 'owner',
-      repeatedTemplateId: 'loop:owner',
-      renderItem: () => 'unreachable'
-    })).toBeNull();
+    expect(
+      renderStructuralLoop({
+        items: [{ id: 'u1' }],
+        hasBody: false,
+        bindings: { itemName: 'item', indexName: 'index' },
+        ownerId: 'owner',
+        repeatedTemplateId: 'loop:owner',
+        renderItem: () => 'unreachable',
+      }),
+    ).toBeNull();
 
-    const keyedResults: Array<{ itemKey: string; depth: number; instanceKey: string; slotBindings: Record<string, unknown> }> = [];
+    const keyedResults: Array<{
+      itemKey: string;
+      depth: number;
+      instanceKey: string;
+      slotBindings: Record<string, unknown>;
+    }> = [];
     renderStructuralLoop({
       items: [
         { slug: 'from-path' },
@@ -310,7 +338,7 @@ describe('basic renderer coverage gaps', () => {
         { id: 'record-id' },
         { key: 'record-key' },
         { name: 'record-name' },
-        { other: true }
+        { other: true },
       ],
       hasBody: true,
       bindings: { itemName: 'item', indexName: 'index', keyName: 'loopKey' },
@@ -324,10 +352,10 @@ describe('basic renderer coverage gaps', () => {
           itemKey,
           depth,
           instanceKey: instancePath[instancePath.length - 1]?.instanceKey ?? '',
-          slotBindings
+          slotBindings,
         });
         return null;
-      }
+      },
     });
 
     expect(keyedResults.map((entry) => entry.itemKey)).toEqual([
@@ -336,7 +364,7 @@ describe('basic renderer coverage gaps', () => {
       'record-id',
       'record-key',
       'record-name',
-      '5'
+      '5',
     ]);
     expect(keyedResults.every((entry) => entry.depth === 1)).toBe(true);
     expect(keyedResults.map((entry) => entry.instanceKey)).toEqual([
@@ -345,13 +373,13 @@ describe('basic renderer coverage gaps', () => {
       'record-id',
       'record-key',
       'record-name',
-      '5'
+      '5',
     ]);
     expect(keyedResults[0]?.slotBindings).toMatchObject({
       item: { slug: 'from-path' },
       index: 0,
       loopKey: 'from-path',
-      injected: 'value'
+      injected: 'value',
     });
 
     const primitiveResults: string[] = [];
@@ -365,7 +393,7 @@ describe('basic renderer coverage gaps', () => {
       renderItem: ({ itemKey }) => {
         primitiveResults.push(itemKey);
         return null;
-      }
+      },
     });
     expect(primitiveResults).toEqual(['plain', '3', 'true']);
   });
@@ -376,7 +404,7 @@ describe('basic renderer coverage gaps', () => {
       register(definition: RendererDefinition) {
         registered.push({ type: definition.type });
         return () => undefined;
-      }
+      },
     } as never);
 
     expect(registered.some((entry) => entry.type === 'page')).toBe(true);
@@ -391,7 +419,7 @@ describe('basic renderer coverage gaps', () => {
         schema={{ type: 'page', body: [{ type: 'icon', testid: 'empty-icon' }] }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const icon = screen.getByTestId('empty-icon');

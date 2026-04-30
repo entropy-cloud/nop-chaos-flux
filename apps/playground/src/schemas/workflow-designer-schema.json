@@ -157,9 +157,7 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--start",
-                  "body": [
-                    { "type": "icon", "icon": "play" }
-                  ]
+                  "body": [{ "type": "icon", "icon": "play" }]
                 },
                 {
                   "type": "container",
@@ -207,9 +205,7 @@
           "description": "流程入口",
           "config": { "trigger": "manual" }
         },
-        "ports": [
-          { "id": "out", "direction": "output", "position": "right" }
-        ],
+        "ports": [{ "id": "out", "direction": "output", "position": "right" }],
         "constraints": {
           "maxInstances": 1,
           "allowIncoming": false
@@ -250,9 +246,7 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--end",
-                  "body": [
-                    { "type": "icon", "icon": "flag" }
-                  ]
+                  "body": [{ "type": "icon", "icon": "flag" }]
                 },
                 {
                   "type": "container",
@@ -300,9 +294,7 @@
           "description": "流程出口",
           "config": { "result": "done" }
         },
-        "ports": [
-          { "id": "in", "direction": "input", "position": "left" }
-        ],
+        "ports": [{ "id": "in", "direction": "input", "position": "left" }],
         "constraints": {
           "allowOutgoing": false
         },
@@ -341,9 +333,7 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--task",
-                  "body": [
-                    { "type": "icon", "icon": "workflow" }
-                  ]
+                  "body": [{ "type": "icon", "icon": "workflow" }]
                 },
                 {
                   "type": "container",
@@ -432,9 +422,7 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--condition",
-                  "body": [
-                    { "type": "icon", "icon": "git-branch" }
-                  ]
+                  "body": [{ "type": "icon", "icon": "git-branch" }]
                 },
                 {
                   "type": "container",
@@ -512,9 +500,7 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--parallel",
-                  "body": [
-                    { "type": "icon", "icon": "git-merge" }
-                  ]
+                  "body": [{ "type": "icon", "icon": "git-merge" }]
                 },
                 {
                   "type": "container",
@@ -591,9 +577,7 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--loop",
-                  "body": [
-                    { "type": "icon", "icon": "repeat" }
-                  ]
+                  "body": [{ "type": "icon", "icon": "repeat" }]
                 },
                 {
                   "type": "container",
@@ -721,18 +705,58 @@
       "items": [
         { "type": "back", "label": "返回", "action": "designer:navigate-back" },
         { "type": "title", "body": "${doc.name}" },
-        { "type": "badge", "level": "${isDirty ? 'warning' : 'success'}", "text": "${isDirty ? '未保存' : '已保存'}" },
+        {
+          "type": "badge",
+          "level": "${isDirty ? 'warning' : 'success'}",
+          "text": "${isDirty ? '未保存' : '已保存'}"
+        },
         { "type": "divider" },
         { "type": "text", "body": "${doc.nodes.length} 节点 · ${doc.edges.length} 边" },
         { "type": "divider" },
-        { "type": "switch", "action": "designer:toggle-grid", "icon": "grid-3x3", "label": "网格", "active": "${gridEnabled}" },
-        { "type": "button", "action": "designer:autoLayout", "icon": "git-branch", "label": "自动布局" },
-        { "type": "button", "action": "designer:undo", "icon": "rotate-ccw", "label": "撤销", "disabled": "${!canUndo}" },
-        { "type": "button", "action": "designer:redo", "icon": "rotate-cw", "label": "重做", "disabled": "${!canRedo}" },
-        { "type": "button", "action": "designer:restore", "icon": "download", "label": "恢复", "disabled": "${!isDirty}" },
+        {
+          "type": "switch",
+          "action": "designer:toggle-grid",
+          "icon": "grid-3x3",
+          "label": "网格",
+          "active": "${gridEnabled}"
+        },
+        {
+          "type": "button",
+          "action": "designer:autoLayout",
+          "icon": "git-branch",
+          "label": "自动布局"
+        },
+        {
+          "type": "button",
+          "action": "designer:undo",
+          "icon": "rotate-ccw",
+          "label": "撤销",
+          "disabled": "${!canUndo}"
+        },
+        {
+          "type": "button",
+          "action": "designer:redo",
+          "icon": "rotate-cw",
+          "label": "重做",
+          "disabled": "${!canRedo}"
+        },
+        {
+          "type": "button",
+          "action": "designer:restore",
+          "icon": "download",
+          "label": "恢复",
+          "disabled": "${!isDirty}"
+        },
         { "type": "button", "action": "designer:export", "icon": "file-json", "label": "JSON" },
         { "type": "spacer" },
-        { "type": "button", "action": "designer:save", "icon": "save", "label": "保存", "variant": "default", "disabled": "${!isDirty}" }
+        {
+          "type": "button",
+          "action": "designer:save",
+          "icon": "save",
+          "label": "保存",
+          "variant": "default",
+          "disabled": "${!isDirty}"
+        }
       ]
     },
     "shortcuts": {

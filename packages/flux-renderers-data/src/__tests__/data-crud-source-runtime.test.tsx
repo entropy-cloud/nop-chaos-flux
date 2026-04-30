@@ -21,7 +21,12 @@ describe('CRUD renderer source-owned baseline', () => {
               queryForm: {
                 body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
               },
-              footerToolbar: [{ type: 'text', text: 'Rows: ${$crud.itemCount}/${$crud.total}; Query: ${$crud.query.keyword || "none"}' }],
+              footerToolbar: [
+                {
+                  type: 'text',
+                  text: 'Rows: ${$crud.itemCount}/${$crud.total}; Query: ${$crud.query.keyword || "none"}',
+                },
+              ],
               columns: [{ name: 'name', label: 'Name' }],
             },
           ],
@@ -37,7 +42,7 @@ describe('CRUD renderer source-owned baseline', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText('Alice')).toBeTruthy();
@@ -45,7 +50,9 @@ describe('CRUD renderer source-owned baseline', () => {
     expect(screen.getByText('Rows: 2/42; Query: none')).toBeTruthy();
 
     const input = screen.getByLabelText('Keyword') as HTMLInputElement;
-    const queryControls = document.querySelector('[data-slot="crud-query-controls"]') as HTMLElement | null;
+    const queryControls = document.querySelector(
+      '[data-slot="crud-query-controls"]',
+    ) as HTMLElement | null;
     expect(queryControls).toBeTruthy();
 
     fireEvent.change(input, { target: { value: 'Ali' } });

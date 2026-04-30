@@ -46,7 +46,7 @@ export function createProjectedOwnerScope(options: CreateProjectedOwnerScopeOpti
   const buildPayload = () => ({
     value: getValue(),
     readOnly,
-    ...(getExtraPayload?.() ?? {})
+    ...(getExtraPayload?.() ?? {}),
   });
   const { readSnapshot, store } = createProjectedScopeHelpers(parentScope, buildPayload);
 
@@ -99,7 +99,9 @@ export function createProjectedOwnerScope(options: CreateProjectedOwnerScopeOpti
           return hasNestedValue(nestedPath);
         }
 
-        const nestedValue = getNestedValue ? getNestedValue(nestedPath) : getIn(getValue(), nestedPath);
+        const nestedValue = getNestedValue
+          ? getNestedValue(nestedPath)
+          : getIn(getValue(), nestedPath);
         return nestedValue !== undefined;
       }
 

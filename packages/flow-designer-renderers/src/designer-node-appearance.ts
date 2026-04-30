@@ -47,7 +47,10 @@ const DEFAULT_TREE_MENU_PRIORITY: Record<string, number> = {
   'action-step': 10,
 };
 
-export function resolveNodeTypeAccent(typeId: string, nodeType?: NodeTypeConfig): string | undefined {
+export function resolveNodeTypeAccent(
+  typeId: string,
+  nodeType?: NodeTypeConfig,
+): string | undefined {
   return nodeType?.appearance?.borderColor ?? DEFAULT_NODE_TYPE_COLORS[typeId];
 }
 
@@ -71,7 +74,9 @@ export function shouldIncludeInTreeAddMenu(nodeType: NodeTypeConfig): boolean {
   if (nodeType.id === 'dt-initiator' || nodeType.id === 'action-entry' || nodeType.id === 'start') {
     return false;
   }
-  return Boolean(tree?.allowChild || tree?.allowBranches || DEFAULT_TREE_MENU_PRIORITY[nodeType.id] != null);
+  return Boolean(
+    tree?.allowChild || tree?.allowBranches || DEFAULT_TREE_MENU_PRIORITY[nodeType.id] != null,
+  );
 }
 
 export function compareTreeMenuNodeTypes(a: NodeTypeConfig, b: NodeTypeConfig): number {

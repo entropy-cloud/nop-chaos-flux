@@ -1,7 +1,4 @@
-import type {
-  ReportDesignerAdapterContext,
-  ReportDesignerProfile,
-} from '../adapters.js';
+import type { ReportDesignerAdapterContext, ReportDesignerProfile } from '../adapters.js';
 import type {
   MetadataBag,
   ReportDesignerConfig,
@@ -33,7 +30,10 @@ export function createAdapterContext(input: {
       fieldDrag: input.designer.fieldDrag.payload
         ? {
             ...input.designer.fieldDrag,
-            payload: { ...input.designer.fieldDrag.payload, data: { ...input.designer.fieldDrag.payload.data } },
+            payload: {
+              ...input.designer.fieldDrag.payload,
+              data: { ...input.designer.fieldDrag.payload.data },
+            },
           }
         : { ...input.designer.fieldDrag },
     },

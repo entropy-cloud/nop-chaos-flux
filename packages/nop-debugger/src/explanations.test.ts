@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { explainNodeAsync, explainNodeFailure, explainNodeMeta, explainNodeValue } from './explanations';
+import {
+  explainNodeAsync,
+  explainNodeFailure,
+  explainNodeMeta,
+  explainNodeValue,
+} from './explanations';
 import { normalizeRedactionOptions } from './redaction';
 import type { NopComponentInspectResult, NopDebugEvent } from './types';
 
-function createInspectResult(overrides: Partial<NopComponentInspectResult> = {}): NopComponentInspectResult {
+function createInspectResult(
+  overrides: Partial<NopComponentInspectResult> = {},
+): NopComponentInspectResult {
   return {
     cid: 1,
     mounted: true,
     nodeId: 'node-1',
     path: 'body.0',
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -23,7 +30,7 @@ function createEvent(overrides: Partial<NopDebugEvent>): NopDebugEvent {
     level: 'info',
     source: 'test',
     summary: 'event',
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -38,10 +45,10 @@ describe('explanation helpers', () => {
           touched: {},
           dirty: {},
           visited: {},
-          submitting: false
-        }
+          submitting: false,
+        },
       }),
-      redaction: normalizeRedactionOptions({ redactKeys: ['password'], mask: '[MASKED]' })
+      redaction: normalizeRedactionOptions({ redactKeys: ['password'], mask: '[MASKED]' }),
     });
 
     expect(result).toMatchObject({
@@ -50,8 +57,8 @@ describe('explanation helpers', () => {
       data: {
         field: 'password',
         valueSource: 'form-state',
-        value: '[MASKED]'
-      }
+        value: '[MASKED]',
+      },
     });
   });
 
@@ -63,11 +70,11 @@ describe('explanation helpers', () => {
         debugData: {
           nodeState: {
             metaDependencyPaths: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
-            metaDependencyWildcard: false
-          }
-        }
+            metaDependencyWildcard: false,
+          },
+        },
       }),
-      redaction: normalizeRedactionOptions(undefined)
+      redaction: normalizeRedactionOptions(undefined),
     });
 
     expect(result.kind).toBe('meta');
@@ -83,11 +90,11 @@ describe('explanation helpers', () => {
         debugData: {
           sourceHints: {
             fieldName: 'username',
-            formValue: 'alice'
-          }
-        }
+            formValue: 'alice',
+          },
+        },
       }),
-      redaction: normalizeRedactionOptions(undefined)
+      redaction: normalizeRedactionOptions(undefined),
     });
 
     expect(result).toMatchObject({
@@ -95,8 +102,8 @@ describe('explanation helpers', () => {
       data: {
         field: 'username',
         valueSource: 'form-state',
-        value: 'alice'
-      }
+        value: 'alice',
+      },
     });
     expect(result.evidenceRefs[0]?.summary).toContain('source hint form value');
   });
@@ -109,16 +116,16 @@ describe('explanation helpers', () => {
         debugData: {
           sourceHints: {
             metaRules: {
-              visible: '${role === "admin"}'
-            }
+              visible: '${role === "admin"}',
+            },
           },
           nodeState: {
             metaDependencyPaths: ['role'],
-            metaDependencyWildcard: false
-          }
-        }
+            metaDependencyWildcard: false,
+          },
+        },
       }),
-      redaction: normalizeRedactionOptions(undefined)
+      redaction: normalizeRedactionOptions(undefined),
     });
 
     expect(result.kind).toBe('meta');
@@ -137,26 +144,28 @@ describe('explanation helpers', () => {
         summary: 'submit failed',
         nodeId: 'node-1',
         path: 'body.0',
-        interactionId: 'interaction-1'
-      }),
-      ...Array.from({ length: 8 }, (_, index) => createEvent({
-        id: 9 - index,
-        timestamp: 990 - index,
-        kind: index % 2 === 0 ? 'api:end' : 'action:end',
-        group: index % 2 === 0 ? 'api' : 'action',
-        level: index % 2 === 0 ? 'error' : 'success',
-        summary: `related-${index}`,
-        nodeId: 'node-1',
-        path: 'body.0',
         interactionId: 'interaction-1',
-        requestInstanceId: index % 2 === 0 ? `req-${index}` : undefined
-      }))
+      }),
+      ...Array.from({ length: 8 }, (_, index) =>
+        createEvent({
+          id: 9 - index,
+          timestamp: 990 - index,
+          kind: index % 2 === 0 ? 'api:end' : 'action:end',
+          group: index % 2 === 0 ? 'api' : 'action',
+          level: index % 2 === 0 ? 'error' : 'success',
+          summary: `related-${index}`,
+          nodeId: 'node-1',
+          path: 'body.0',
+          interactionId: 'interaction-1',
+          requestInstanceId: index % 2 === 0 ? `req-${index}` : undefined,
+        }),
+      ),
     ];
 
     const result = explainNodeFailure({
       query: { cid: 1 },
       inspectByCid: () => createInspectResult(),
-      events
+      events,
     });
 
     expect(result.kind).toBe('failure');
@@ -168,11 +177,10 @@ describe('explanation helpers', () => {
   it('bounds async owners and reports truncation', () => {
     const result = explainNodeAsync({
       query: { cid: 1 },
-      inspectByCid: () => createInspectResult({
-        scopeChain: [
-          { id: 'form-scope', path: '$form', label: '$form', data: {} }
-        ]
-      }),
+      inspectByCid: () =>
+        createInspectResult({
+          scopeChain: [{ id: 'form-scope', path: '$form', label: '$form', data: {} }],
+        }),
       asyncSnapshot: {
         owners: Array.from({ length: 6 }, (_, index) => ({
           ownerKind: 'validation' as const,
@@ -186,11 +194,11 @@ describe('explanation helpers', () => {
               runId: index + 1,
               cause: 'blur',
               startedAt: index + 1,
-              outcome: 'failed' as const
-            }
-          ]
-        }))
-      }
+              outcome: 'failed' as const,
+            },
+          ],
+        })),
+      },
     });
 
     expect(result.kind).toBe('async');

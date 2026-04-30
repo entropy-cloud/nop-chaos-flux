@@ -136,23 +136,27 @@ AI 的输出必须严格包含以下 13 个部分，缺一不可：
    - 明确指出：哪些所谓“创新”其实主要属于 host、application、backend，而不应直接算作 runtime core 创新
 
 10. **现有系统对应关系审计**
-   - 对每个候选核心概念，列出当前系统中的：强对应、弱对应、无直接对应
-   - 明确判断：它是新增能力、重命名收束，还是跨层偷换
+
+- 对每个候选核心概念，列出当前系统中的：强对应、弱对应、无直接对应
+- 明确判断：它是新增能力、重命名收束，还是跨层偷换
 
 11. **作者面审计**
-   - 这个候选如果成立，作者最小 authoring surface 应该长什么样
-   - 它如何处理 `event -> action + args`、`name / id / ref`、局域定位与全域定位
-   - 如果它没有自然 authoring surface，只存在 IR/协议对象，必须明确指出
+
+- 这个候选如果成立，作者最小 authoring surface 应该长什么样
+- 它如何处理 `event -> action + args`、`name / id / ref`、局域定位与全域定位
+- 如果它没有自然 authoring surface，只存在 IR/协议对象，必须明确指出
 
 12. **编译期 / 运行期现实检查**
-   - 哪些语义是真正 compile-time 固化的
-   - 哪些语义仍然依赖 runtime binding
-   - 该候选是否只是“文档里强调分离”，还是“实现上真的分离”
+
+- 哪些语义是真正 compile-time 固化的
+- 哪些语义仍然依赖 runtime binding
+- 该候选是否只是“文档里强调分离”，还是“实现上真的分离”
 
 13. **兼容与迁移审计**
-   - 这个候选与当前 authoring surface、JSON 结构、`event -> action + args`、`name / id / ref`、组件契约之间是什么关系
-   - 它要求全量推翻、局部 lowering、还是可渐进迁移
-   - 如果迁移成本主要来自作者面断裂而不是核心收益，必须明确指出
+
+- 这个候选与当前 authoring surface、JSON 结构、`event -> action + args`、`name / id / ref`、组件契约之间是什么关系
+- 它要求全量推翻、局部 lowering、还是可渐进迁移
+- 如果迁移成本主要来自作者面断裂而不是核心收益，必须明确指出
 
 ---
 

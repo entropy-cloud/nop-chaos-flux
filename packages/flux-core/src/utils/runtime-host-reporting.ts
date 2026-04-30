@@ -15,7 +15,11 @@ export interface RuntimeHostIssueInput {
 
 export function reportRuntimeHostIssue(input: RuntimeHostIssueInput): void {
   const level = input.level ?? 'error';
-  const message = input.message ?? (input.error instanceof Error ? input.error.message : String(input.error ?? 'Runtime host issue'));
+  const message =
+    input.message ??
+    (input.error instanceof Error
+      ? input.error.message
+      : String(input.error ?? 'Runtime host issue'));
 
   if (input.notify !== false) {
     input.env.notify(level, message);
@@ -27,7 +31,7 @@ export function reportRuntimeHostIssue(input: RuntimeHostIssueInput): void {
       error: input.error,
       nodeId: input.nodeId,
       path: input.path,
-      details: input.details
+      details: input.details,
     });
   }
 }

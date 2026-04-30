@@ -1,7 +1,4 @@
-import type {
-  FormRuntime,
-  ScopeRef
-} from '@nop-chaos/flux-core';
+import type { FormRuntime, ScopeRef } from '@nop-chaos/flux-core';
 import { getIn, toRecord } from '@nop-chaos/flux-core';
 import { createProjectedInlineForm } from './projected-inline-form';
 import { createProjectedOwnerScope } from '../projected-owner-scope';
@@ -12,7 +9,7 @@ export function createItemScope(
   index: number,
   itemKind: 'scalar' | 'object',
   readOnly: boolean,
-  itemIdentity: string
+  itemIdentity: string,
 ): ScopeRef {
   const itemPrefix = `${arrayPath}.${index}`;
   const itemScopePath = arrayPath
@@ -40,7 +37,7 @@ export function createItemScope(
     },
     replace(data) {
       parentScope.replace?.(data as Record<string, unknown>);
-    }
+    },
   });
 }
 
@@ -48,7 +45,7 @@ export function createItemFormProxy(
   parentForm: FormRuntime,
   arrayPath: string,
   index: number,
-  itemKind: 'scalar' | 'object'
+  itemKind: 'scalar' | 'object',
 ): FormRuntime {
   const itemFullPrefix = `${arrayPath}.${index}`;
 

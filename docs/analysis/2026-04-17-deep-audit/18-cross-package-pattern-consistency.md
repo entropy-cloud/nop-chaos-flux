@@ -13,6 +13,7 @@ All issues were re-verified against the live repo. Results below.
 ## 保留的问题
 
 ### [维度18] word-editor-renderers 未兑现文档里的 Flux renderer 契约 — ❌ NOT CONFIRMED (audit incorrect)
+
 - **涉及包**: `spreadsheet-renderers` / `report-designer-renderers` / `flow-designer-renderers` vs `word-editor-renderers`
 - **文件**: `packages/word-editor-renderers/src/index.ts:1-18` 和 `packages/word-editor-renderers/src/renderers.tsx:1-29`
 - **严重程度**: P2
@@ -21,6 +22,7 @@ All issues were re-verified against the live repo. Results below.
 - **验证结果**: **审计有误。** `word-editor-renderers/src/renderers.tsx` 已导出 `wordEditorRendererDefinitions: RendererDefinition[]`（包含 `word-editor-page` 定义）和 `registerWordEditorRenderers(registry)` 注册函数。`src/index.ts` 也公开导出了这些。该包的 Flux renderer 契约履行完整，与其他 renderer 包模式一致。此条应从问题清单中移除。
 
 ### [维度18] value-or-region 的 `regionKey` 声明仍有不一致，属于真实契约噪音 — ✅ CONFIRMED, FIXED
+
 - **涉及包**: `flux-renderers-basic` vs `flux-renderers-data`
 - **文件**: `packages/flux-renderers-data/src/index.tsx:114-121,137-141,149-158`
 - **严重程度**: P2

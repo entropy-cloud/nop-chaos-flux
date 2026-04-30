@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  createActionScope,
-  createRendererRegistry,
-  createRendererRuntime
-} from '../index';
+import { createActionScope, createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
@@ -13,14 +9,14 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ baseX: 160 });
     const actionScope = createActionScope({ id: 'designer-scope' });
     const invoke = vi.fn().mockResolvedValue({ ok: true, data: { id: 'node-1' } });
     actionScope.registerNamespace('designer', {
       kind: 'host',
-      invoke
+      invoke,
     });
 
     const result = await runtime.dispatch(
@@ -30,16 +26,16 @@ describe('createRendererRuntime', () => {
           nodeType: 'task',
           position: {
             x: '${baseX}',
-            y: 120
-          }
-        }
+            y: 120,
+          },
+        },
       } as any,
       {
         runtime,
         scope: page.scope,
         page,
-        actionScope
-      }
+        actionScope,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, data: { id: 'node-1' } });
@@ -49,10 +45,10 @@ describe('createRendererRuntime', () => {
         nodeType: 'task',
         position: {
           x: 160,
-          y: 120
-        }
+          y: 120,
+        },
       },
-      expect.objectContaining({ actionScope })
+      expect.objectContaining({ actionScope }),
     );
   });
 });

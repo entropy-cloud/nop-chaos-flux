@@ -12,8 +12,8 @@ describe('createRuntimeSourceRegistry', () => {
         subscribe(listener: (change: { paths: string[] }) => void) {
           listener({ paths: ['query'] });
           return () => undefined;
-        }
-      }
+        },
+      },
     } as any;
 
     const registry = createRuntimeSourceRegistry({
@@ -21,17 +21,17 @@ describe('createRuntimeSourceRegistry', () => {
         env: {},
         expressionCompiler: {
           evaluateValue: (value: { value?: unknown }) => value.value,
-          compileValue: (value: unknown) => ({ isStatic: true, value })
-        }
+          compileValue: (value: unknown) => ({ isStatic: true, value }),
+        },
       } as any,
       apiCache: {
         get: vi.fn(),
         set: vi.fn(),
         delete: vi.fn(),
-        clear: vi.fn()
+        clear: vi.fn(),
       } as any,
       asyncGovernance: undefined,
-      executeApiRequest: vi.fn()
+      executeApiRequest: vi.fn(),
     });
 
     const registration = registry.registerDataSource({
@@ -40,8 +40,8 @@ describe('createRuntimeSourceRegistry', () => {
       compiledSource: {
         kind: 'formula',
         formula: { isStatic: true, value: 1 },
-        targetPath: { isStatic: true, value: 'query' }
-      } as any
+        targetPath: { isStatic: true, value: 'query' },
+      } as any,
     });
 
     expect(registration.id).toBe('source-1');

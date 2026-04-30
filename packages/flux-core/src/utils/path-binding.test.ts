@@ -26,25 +26,48 @@ describe('projection helpers', () => {
   it('projects only owned boolean-map keys', () => {
     const binding = createPathBinding({ ownerRootPath: 'profile' });
 
-    expect(projectBooleanMap({ 'profile.name': true, external: true }, binding)).toEqual({ name: true });
+    expect(projectBooleanMap({ 'profile.name': true, external: true }, binding)).toEqual({
+      name: true,
+    });
   });
 
   it('projects field states and rewrites validation paths', () => {
     const binding = createPathBinding({ ownerRootPath: 'profile' });
 
-    expect(projectFieldStates({
-      'profile.name': {
-        touched: true,
-        errors: [{ path: 'profile.name', ownerPath: 'profile.name', rule: 'required', message: 'Required', sourceKind: 'field' }]
-      },
-      external: {
-        dirty: true
-      }
-    }, binding)).toEqual({
+    expect(
+      projectFieldStates(
+        {
+          'profile.name': {
+            touched: true,
+            errors: [
+              {
+                path: 'profile.name',
+                ownerPath: 'profile.name',
+                rule: 'required',
+                message: 'Required',
+                sourceKind: 'field',
+              },
+            ],
+          },
+          external: {
+            dirty: true,
+          },
+        },
+        binding,
+      ),
+    ).toEqual({
       name: {
         touched: true,
-        errors: [{ path: 'name', ownerPath: 'name', rule: 'required', message: 'Required', sourceKind: 'field' }]
-      }
+        errors: [
+          {
+            path: 'name',
+            ownerPath: 'name',
+            rule: 'required',
+            message: 'Required',
+            sourceKind: 'field',
+          },
+        ],
+      },
     });
   });
 });

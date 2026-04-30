@@ -152,8 +152,9 @@ test('checks specific CSS properties on canvas slot and children', async ({ page
   await openFlowDesigner(page);
 
   const props = await page.evaluate(() => {
-    const canvasSlot = document.querySelector('[data-slot="workbench-canvas"]') as HTMLElement | null
-      ?? document.querySelector('.react-flow')?.closest('.relative') as HTMLElement | null;
+    const canvasSlot =
+      (document.querySelector('[data-slot="workbench-canvas"]') as HTMLElement | null) ??
+      (document.querySelector('.react-flow')?.closest('.relative') as HTMLElement | null);
     if (!canvasSlot) {
       return { error: 'canvas slot not found' };
     }
@@ -170,37 +171,42 @@ test('checks specific CSS properties on canvas slot and children', async ({ page
       rectH: canvasSlot.getBoundingClientRect().height,
     };
 
-    const rfSurface = canvasSlot.querySelector('.fd-xyflow-surface') as HTMLElement | null
-      ?? canvasSlot.querySelector('.nop-designer-node') as HTMLElement | null
-      ?? canvasSlot.firstElementChild as HTMLElement | null;
-    const surfaceInfo = rfSurface ? (() => {
-      const scs = window.getComputedStyle(rfSurface);
-      return {
-        className: rfSurface.className,
-        position: scs.position,
-        width: scs.width,
-        height: scs.height,
-        top: scs.top,
-        left: scs.left,
-        right: scs.right,
-        bottom: scs.bottom,
-        rectW: rfSurface.getBoundingClientRect().width,
-        rectH: rfSurface.getBoundingClientRect().height,
-      };
-    })() : { error: 'no surface child' };
+    const rfSurface =
+      (canvasSlot.querySelector('.fd-xyflow-surface') as HTMLElement | null) ??
+      (canvasSlot.querySelector('.nop-designer-node') as HTMLElement | null) ??
+      (canvasSlot.firstElementChild as HTMLElement | null);
+    const surfaceInfo = rfSurface
+      ? (() => {
+          const scs = window.getComputedStyle(rfSurface);
+          return {
+            className: rfSurface.className,
+            position: scs.position,
+            width: scs.width,
+            height: scs.height,
+            top: scs.top,
+            left: scs.left,
+            right: scs.right,
+            bottom: scs.bottom,
+            rectW: rfSurface.getBoundingClientRect().width,
+            rectH: rfSurface.getBoundingClientRect().height,
+          };
+        })()
+      : { error: 'no surface child' };
 
     const rfWrapper = document.querySelector('[data-testid="rf__wrapper"]') as HTMLElement | null;
-    const rfInfo = rfWrapper ? (() => {
-      const rcs = window.getComputedStyle(rfWrapper);
-      return {
-        className: rfWrapper.className?.substring(0, 80),
-        position: rcs.position,
-        width: rcs.width,
-        height: rcs.height,
-        rectW: rfWrapper.getBoundingClientRect().width,
-        rectH: rfWrapper.getBoundingClientRect().height,
-      };
-    })() : { error: 'rf__wrapper not found' };
+    const rfInfo = rfWrapper
+      ? (() => {
+          const rcs = window.getComputedStyle(rfWrapper);
+          return {
+            className: rfWrapper.className?.substring(0, 80),
+            position: rcs.position,
+            width: rcs.width,
+            height: rcs.height,
+            rectW: rfWrapper.getBoundingClientRect().width,
+            rectH: rfWrapper.getBoundingClientRect().height,
+          };
+        })()
+      : { error: 'rf__wrapper not found' };
 
     return { slotInfo, surfaceInfo, rfInfo };
   });
@@ -226,7 +232,11 @@ test('checks specific CSS properties on canvas slot and children', async ({ page
 test('dumps console warnings for React Flow error 004', async ({ page }) => {
   const warnings: string[] = [];
   page.on('console', (msg) => {
-    if (msg.text().includes('React Flow') || msg.text().includes('004') || msg.text().includes('width and a height')) {
+    if (
+      msg.text().includes('React Flow') ||
+      msg.text().includes('004') ||
+      msg.text().includes('width and a height')
+    ) {
       warnings.push(msg.text());
     }
   });
@@ -290,12 +300,12 @@ test('dumps full DOM hierarchy from body to ReactFlow for debugging', async ({ p
       const rect = el.getBoundingClientRect();
       chain.push(
         `<${el.tagName.toLowerCase()}` +
-        ` class="${(el.className || '').toString().substring(0, 120)}"` +
-        ` position="${cs.position}"` +
-        ` w="${cs.width}" h="${cs.height}"` +
-        ` rectW="${rect.width.toFixed(1)}" rectH="${rect.height.toFixed(1)}"` +
-        ` display="${cs.display}"` +
-        ` overflow="${cs.overflow}">`
+          ` class="${(el.className || '').toString().substring(0, 120)}"` +
+          ` position="${cs.position}"` +
+          ` w="${cs.width}" h="${cs.height}"` +
+          ` rectW="${rect.width.toFixed(1)}" rectH="${rect.height.toFixed(1)}"` +
+          ` display="${cs.display}"` +
+          ` overflow="${cs.overflow}">`,
       );
       el = el.parentElement;
     }

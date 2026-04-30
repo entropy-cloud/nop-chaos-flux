@@ -15,7 +15,10 @@ export function cloneMetadataBag(input: MetadataBag | undefined): MetadataBag | 
   return input ? { ...input } : undefined;
 }
 
-export function shallowEqualMetadata(left: MetadataBag | undefined, right: MetadataBag | undefined): boolean {
+export function shallowEqualMetadata(
+  left: MetadataBag | undefined,
+  right: MetadataBag | undefined,
+): boolean {
   if (left === right) {
     return true;
   }
@@ -154,14 +157,16 @@ function buildNextSemanticWithRangeMeta(
 
   let nextRanges: RangeMetaDocument[];
   if (!normalized) {
-    nextRanges = index >= 0
-      ? [...currentRanges.slice(0, index), ...currentRanges.slice(index + 1)]
-      : currentRanges;
+    nextRanges =
+      index >= 0
+        ? [...currentRanges.slice(0, index), ...currentRanges.slice(index + 1)]
+        : currentRanges;
   } else {
     const nextEntry: RangeMetaDocument = { id: rangeId, range: { ...range }, meta: normalized };
-    nextRanges = index >= 0
-      ? [...currentRanges.slice(0, index), nextEntry, ...currentRanges.slice(index + 1)]
-      : [...currentRanges, nextEntry];
+    nextRanges =
+      index >= 0
+        ? [...currentRanges.slice(0, index), nextEntry, ...currentRanges.slice(index + 1)]
+        : [...currentRanges, nextEntry];
   }
 
   return {
@@ -187,7 +192,10 @@ export function updateMetadata(
       return {
         changed,
         document: changed
-          ? { ...document, semantic: buildNextSemanticWithWorkbookMeta(document.semantic, normalized) }
+          ? {
+              ...document,
+              semantic: buildNextSemanticWithWorkbookMeta(document.semantic, normalized),
+            }
           : document,
       };
     }
@@ -197,7 +205,14 @@ export function updateMetadata(
       return {
         changed,
         document: changed
-          ? { ...document, semantic: buildNextSemanticWithSheetMeta(document.semantic, target.sheetId, normalized) }
+          ? {
+              ...document,
+              semantic: buildNextSemanticWithSheetMeta(
+                document.semantic,
+                target.sheetId,
+                normalized,
+              ),
+            }
           : document,
       };
     }
@@ -208,7 +223,16 @@ export function updateMetadata(
       return {
         changed,
         document: changed
-          ? { ...document, semantic: buildNextSemanticWithAxisMeta(document.semantic, 'rowMeta', target.sheetId, key, normalized) }
+          ? {
+              ...document,
+              semantic: buildNextSemanticWithAxisMeta(
+                document.semantic,
+                'rowMeta',
+                target.sheetId,
+                key,
+                normalized,
+              ),
+            }
           : document,
       };
     }
@@ -219,7 +243,16 @@ export function updateMetadata(
       return {
         changed,
         document: changed
-          ? { ...document, semantic: buildNextSemanticWithAxisMeta(document.semantic, 'columnMeta', target.sheetId, key, normalized) }
+          ? {
+              ...document,
+              semantic: buildNextSemanticWithAxisMeta(
+                document.semantic,
+                'columnMeta',
+                target.sheetId,
+                key,
+                normalized,
+              ),
+            }
           : document,
       };
     }
@@ -230,7 +263,16 @@ export function updateMetadata(
       return {
         changed,
         document: changed
-          ? { ...document, semantic: buildNextSemanticWithAxisMeta(document.semantic, 'cellMeta', target.cell.sheetId, key, normalized) }
+          ? {
+              ...document,
+              semantic: buildNextSemanticWithAxisMeta(
+                document.semantic,
+                'cellMeta',
+                target.cell.sheetId,
+                key,
+                normalized,
+              ),
+            }
           : document,
       };
     }
@@ -243,13 +285,21 @@ export function updateMetadata(
       return {
         changed,
         document: changed
-          ? { ...document, semantic: buildNextSemanticWithRangeMeta(document.semantic, range.sheetId, id, range, normalized) }
+          ? {
+              ...document,
+              semantic: buildNextSemanticWithRangeMeta(
+                document.semantic,
+                range.sheetId,
+                id,
+                range,
+                normalized,
+              ),
+            }
           : document,
       };
     }
   }
 }
-
 
 export function mergeMetadata(base: MetadataBag | undefined, patch: MetadataBag): MetadataBag {
   return { ...(base ?? {}), ...patch };
@@ -269,7 +319,11 @@ export function applyFieldDrop(
   };
 
   if (target.kind === 'cell') {
-    return updateMetadata(document, target, mergeMetadata(getTargetMeta(document.semantic, target), patch));
+    return updateMetadata(
+      document,
+      target,
+      mergeMetadata(getTargetMeta(document.semantic, target), patch),
+    );
   }
 
   const range = target.range;

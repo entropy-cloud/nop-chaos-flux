@@ -11,14 +11,21 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { ComponentLabHelper, openLabHome, COMPONENT_LAB_COVERAGE_MANIFEST, COVERED_RENDERER_IDS } from './helpers';
+import {
+  ComponentLabHelper,
+  openLabHome,
+  COMPONENT_LAB_COVERAGE_MANIFEST,
+  COVERED_RENDERER_IDS,
+} from './helpers';
 
 test('coverage manifest is non-empty and covers all shared renderer routes', async () => {
   expect(COMPONENT_LAB_COVERAGE_MANIFEST.length).toBeGreaterThanOrEqual(43);
   expect(COVERED_RENDERER_IDS.size).toBeGreaterThanOrEqual(43);
 });
 
-test('direct route open: #/lab/button renders ComponentLab with Button active', async ({ page }) => {
+test('direct route open: #/lab/button renders ComponentLab with Button active', async ({
+  page,
+}) => {
   const lab = new ComponentLabHelper(page);
   await lab.openRenderer('button');
 
@@ -75,7 +82,9 @@ test('sidebar shows all category groups', async ({ page }) => {
   await expect(nav.getByText('Data', { exact: true }).first()).toBeVisible();
 });
 
-test('direct navigation to each tier of routes: read, write, edit all resolve', async ({ page }) => {
+test('direct navigation to each tier of routes: read, write, edit all resolve', async ({
+  page,
+}) => {
   const samples = {
     read: 'page',
     write: 'button',
@@ -84,6 +93,8 @@ test('direct navigation to each tier of routes: read, write, edit all resolve', 
 
   for (const [, rendererId] of Object.entries(samples)) {
     await page.goto(`/#/lab/${rendererId}`);
-    await expect(page.getByTestId(`component-lab-renderer-${rendererId}`)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId(`component-lab-renderer-${rendererId}`)).toBeVisible({
+      timeout: 15_000,
+    });
   }
 });

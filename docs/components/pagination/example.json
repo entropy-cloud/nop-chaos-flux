@@ -3,11 +3,7 @@
   "currentPage": 2,
   "pageSize": 20,
   "total": 240,
-  "pageSizeOptions": [
-    10,
-    20,
-    50
-  ],
+  "pageSizeOptions": [10, 20, 50],
   "pageOwnership": "scope",
   "pageStatePath": "usersPage",
   "onChange": {

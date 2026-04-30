@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   attachCompiledCidState,
   createCompiledCidState,
-  getCompiledCidState
+  getCompiledCidState,
 } from './compiled-cid';
 
 describe('createCompiledCidState', () => {

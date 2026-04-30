@@ -4,7 +4,6 @@
 > Last Reviewed: 2026-04-04
 > Completed: 2026-04-04
 
-
 ## 背景与目标
 
 ### 当前问题
@@ -16,6 +15,7 @@
 3. **控制条（Toolbar）**：当前为 hardcoded 布局，与 Excel 工具条外观一致的需求未通过 schema 表达。
 
 而 `flow-designer-renderers` 已验证了完整的 schema-driven 方案：
+
 - `DesignerPageSchema` 定义页面级结构（toolbar/inspector/palette 通过 config 注入 items）
 - `DesignerPaletteSchema` + `palette.groups` + `nodeTypes` 定义左侧节点库
 - `DesignerFieldSchema` / `DesignerInspectorSchema` 按类型消费 schema 数据
@@ -24,13 +24,14 @@
 
 将 report-designer 改造为 JSON Schema 驱动，**使以下内容的结构与数据来源均由外部 schema 控制**：
 
-| 区域 | 改造前 | 改造后 |
-|------|--------|--------|
-| 左侧字段面板 | `renderFallbackFieldPanel(FieldSourceSnapshot[])` | `ReportFieldPanelSchema` + fieldSources 由外部注入 |
-| 右侧属性面板 | `renderFallbackInspector(MetadataBag)` | `ReportInspectorSchema` + inspectorPanels 由外部注入 |
-| 控制条 | hardcoded | `ReportToolbarSchema` 定义 items，布局/样式内部固定但可扩展 |
+| 区域         | 改造前                                            | 改造后                                                      |
+| ------------ | ------------------------------------------------- | ----------------------------------------------------------- |
+| 左侧字段面板 | `renderFallbackFieldPanel(FieldSourceSnapshot[])` | `ReportFieldPanelSchema` + fieldSources 由外部注入          |
+| 右侧属性面板 | `renderFallbackInspector(MetadataBag)`            | `ReportInspectorSchema` + inspectorPanels 由外部注入        |
+| 控制条       | hardcoded                                         | `ReportToolbarSchema` 定义 items，布局/样式内部固定但可扩展 |
 
 **与 flow-designer 的核心区别**：
+
 - flow-designer toolbar items 完全由 config 数组驱动（外部控制）
 - report-designer toolbar **布局和 Excel 一致性样式内部固定**，仅 items 数组由外部注入，支持按 id 合并定制
 
@@ -74,7 +75,7 @@ export interface ReportDesignerPageSchema extends BaseSchema {
 
 export interface ReportToolbarSchema extends BaseSchema {
   type: 'report-toolbar';
-  itemsOverride?: ToolbarItem[];  // 与默认 items 按 id 合并，visible:false 删除
+  itemsOverride?: ToolbarItem[]; // 与默认 items 按 id 合并，visible:false 删除
 }
 
 export interface ReportFieldPanelSchema extends BaseSchema {
@@ -113,6 +114,7 @@ export interface ToolbarItem {
 `report-designer-toolbar-defaults.ts` 导出 `DEFAULT_TOOLBAR_ITEMS`，所有 item 带有唯一 `id`，供 `itemsOverride` 按 id 合并。每个 item 包含 label（Excel 一致）、icon、action、状态表达式（`${!canUndo}` 等）。
 
 **合并规则**：
+
 - override item 的 `id` 匹配默认 item 的 `id` → 覆盖该 item
 - override item 的 `id` 在默认 items 中不存在 → 追加
 - 默认 item 的 `id` 在 override 中不存在 → 保留
@@ -144,15 +146,15 @@ export interface ToolbarItem {
 
 ### 6. 与 flow-designer 的对比
 
-| 特性 | flow-designer | report-designer（改造后） |
-|------|--------------|--------------------------|
-| Toolbar 布局来源 | 100% 由 config.items 驱动 | **内部固定**，itemsOverride **按 id 合并**，visible:false 删除 |
-| Toolbar 样式 | Tailwind class 外部指定 | **内部固定为 Excel 一致样式**，无需外部指定 |
-| FieldPanel 数据来源 | config.nodeTypes + palette.groups | schema.fieldSources 注入 |
-| Inspector 数据来源 | config + snapshot.activeNode | schema.inspectorPanels 注入 + activeMeta |
-| schema 文件 | `schemas.ts` | `schemas.ts`（新增） |
-| toolbar items 文件 | 内联在 `designer-toolbar.tsx` | `report-designer-toolbar-defaults.ts`（独立） |
-| page-renderer 模式 | RendererComponentProps + slot | RendererComponentProps + schema 驱动 |
+| 特性                | flow-designer                     | report-designer（改造后）                                      |
+| ------------------- | --------------------------------- | -------------------------------------------------------------- |
+| Toolbar 布局来源    | 100% 由 config.items 驱动         | **内部固定**，itemsOverride **按 id 合并**，visible:false 删除 |
+| Toolbar 样式        | Tailwind class 外部指定           | **内部固定为 Excel 一致样式**，无需外部指定                    |
+| FieldPanel 数据来源 | config.nodeTypes + palette.groups | schema.fieldSources 注入                                       |
+| Inspector 数据来源  | config + snapshot.activeNode      | schema.inspectorPanels 注入 + activeMeta                       |
+| schema 文件         | `schemas.ts`                      | `schemas.ts`（新增）                                           |
+| toolbar items 文件  | 内联在 `designer-toolbar.tsx`     | `report-designer-toolbar-defaults.ts`（独立）                  |
+| page-renderer 模式  | RendererComponentProps + slot     | RendererComponentProps + schema 驱动                           |
 
 ## 执行计划
 
@@ -197,19 +199,19 @@ export interface ToolbarItem {
 
 ## 文件变更清单
 
-| 文件 | 操作 |
-|------|------|
-| `packages/report-designer-renderers/src/schemas.ts` | 新建：所有 schema 类型 |
-| `packages/report-designer-renderers/src/types.ts` | 修改：重导出 schema 类型 |
-| `packages/report-designer-renderers/src/report-designer-toolbar-helpers.ts` | 新建：toolbar 辅助函数 |
+| 文件                                                                         | 操作                               |
+| ---------------------------------------------------------------------------- | ---------------------------------- |
+| `packages/report-designer-renderers/src/schemas.ts`                          | 新建：所有 schema 类型             |
+| `packages/report-designer-renderers/src/types.ts`                            | 修改：重导出 schema 类型           |
+| `packages/report-designer-renderers/src/report-designer-toolbar-helpers.ts`  | 新建：toolbar 辅助函数             |
 | `packages/report-designer-renderers/src/report-designer-toolbar-defaults.ts` | 新建：`DEFAULT_TOOLBAR_ITEMS` 常量 |
-| `packages/report-designer-renderers/src/report-designer-toolbar.tsx` | 新建：Toolbar 渲染（合并逻辑） |
-| `packages/report-designer-renderers/src/report-designer-field-panel.tsx` | 新建：FieldPanel Renderer |
-| `packages/report-designer-renderers/src/report-designer-inspector.tsx` | 新建：Inspector Renderer |
-| `packages/report-designer-renderers/src/page-renderer.tsx` | 修改：schema 驱动各区域 |
-| `packages/report-designer-renderers/src/renderers.tsx` | 修改：注册新 renderer |
-| `apps/playground/src/pages/ReportDesignerDemo.tsx` | 修改：使用新 schema |
-| `apps/playground/src/pages/ReportDesignerPage.tsx` | 修改：schema 适配 |
+| `packages/report-designer-renderers/src/report-designer-toolbar.tsx`         | 新建：Toolbar 渲染（合并逻辑）     |
+| `packages/report-designer-renderers/src/report-designer-field-panel.tsx`     | 新建：FieldPanel Renderer          |
+| `packages/report-designer-renderers/src/report-designer-inspector.tsx`       | 新建：Inspector Renderer           |
+| `packages/report-designer-renderers/src/page-renderer.tsx`                   | 修改：schema 驱动各区域            |
+| `packages/report-designer-renderers/src/renderers.tsx`                       | 修改：注册新 renderer              |
+| `apps/playground/src/pages/ReportDesignerDemo.tsx`                           | 修改：使用新 schema                |
+| `apps/playground/src/pages/ReportDesignerPage.tsx`                           | 修改：schema 适配                  |
 
 ## 风险与决策
 

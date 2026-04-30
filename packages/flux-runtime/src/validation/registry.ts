@@ -27,12 +27,14 @@ export function createValidationRegistry(): ValidationRegistry {
     },
     list() {
       return Array.from(validators.keys());
-    }
+    },
   };
 }
 
 export function registerBuiltInValidators(registry: ValidationRegistry): ValidationRegistry {
-  for (const [ruleKind, validator] of Object.entries(builtInValidators) as Array<[SyncValidationRuleKind, SyncValidator]>) {
+  for (const [ruleKind, validator] of Object.entries(builtInValidators) as Array<
+    [SyncValidationRuleKind, SyncValidator]
+  >) {
     registry.register(ruleKind, validator);
   }
 

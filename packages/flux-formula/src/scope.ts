@@ -1,4 +1,9 @@
-import type { EvalContext, ScopeDependencyCollector, ScopeDependencySet, ScopeRef } from '@nop-chaos/flux-core';
+import type {
+  EvalContext,
+  ScopeDependencyCollector,
+  ScopeDependencySet,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { getIn, normalizeRootPath, parsePath } from '@nop-chaos/flux-core';
 import { createEvalContext } from './evaluate';
 
@@ -29,15 +34,15 @@ export function createScopeDependencyCollector(): {
         wildcard = true;
         broadAccess = true;
         paths.clear();
-      }
+      },
     },
     finalize() {
       return {
         paths: wildcard ? ['*'] : Array.from(paths).sort(),
         wildcard,
-        broadAccess
+        broadAccess,
       };
-    }
+    },
   };
 }
 
@@ -77,7 +82,7 @@ function createObjectEvalContext(data: object): EvalContext {
     },
     materialize() {
       return record;
-    }
+    },
   };
 }
 
@@ -143,7 +148,7 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
         }
 
         return Reflect.getOwnPropertyDescriptor(target, property);
-      }
+      },
     });
   }
 
@@ -193,13 +198,13 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
             configurable: true,
             enumerable: true,
             value: materialized[property],
-            writable: false
+            writable: false,
           };
         }
 
         return undefined;
-      }
-    }
+      },
+    },
   );
 }
 

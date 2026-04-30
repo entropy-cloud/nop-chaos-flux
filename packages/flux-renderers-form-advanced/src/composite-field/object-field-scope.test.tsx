@@ -8,13 +8,17 @@ import {
   env,
   formulaCompiler,
   scopeSelectorProbeRenderer,
-  objectScopeMutationRenderer
+  objectScopeMutationRenderer,
 } from './__tests__/object-field-test-support';
 
 describe('object-field scope and state', () => {
   it('publishes object-field scope as value and readOnly while keeping relative child names', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...allFormDefs, scopeSelectorProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...allFormDefs,
+      scopeSelectorProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -22,7 +26,7 @@ describe('object-field scope and state', () => {
         schema={{
           type: 'form',
           data: {
-            profile: { firstName: 'Alice', lastName: 'Smith' }
+            profile: { firstName: 'Alice', lastName: 'Smith' },
           },
           body: [
             {
@@ -30,29 +34,41 @@ describe('object-field scope and state', () => {
               name: 'profile',
               readOnly: true,
               body: [
-                { type: 'text', text: 'Profile ${value.firstName} / ${readOnly}', testid: 'profile-scope' },
+                {
+                  type: 'text',
+                  text: 'Profile ${value.firstName} / ${readOnly}',
+                  testid: 'profile-scope',
+                },
                 { type: 'scope-selector-probe' },
-                { type: 'input-text', name: 'firstName', label: 'First Name' }
-              ]
-            }
-          ]
+                { type: 'input-text', name: 'firstName', label: 'First Name' },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
-    await waitFor(() => expect(screen.getByTestId('profile-scope').textContent).toBe('Profile Alice / true'));
-    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
-      value: { firstName: 'Alice', lastName: 'Smith' },
-      readOnly: true
-    }));
+    await waitFor(() =>
+      expect(screen.getByTestId('profile-scope').textContent).toBe('Profile Alice / true'),
+    );
+    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(
+      JSON.stringify({
+        value: { firstName: 'Alice', lastName: 'Smith' },
+        readOnly: true,
+      }),
+    );
     expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice');
   });
 
   it('reflects parent-owned object replacement through the projected view when no transform actions are declared', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...allFormDefs, scopeSelectorProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...allFormDefs,
+      scopeSelectorProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -62,8 +78,8 @@ describe('object-field scope and state', () => {
           data: {
             profile: {
               firstName: 'Alice',
-              lastName: 'Smith'
-            }
+              lastName: 'Smith',
+            },
           },
           body: [
             {
@@ -71,8 +87,8 @@ describe('object-field scope and state', () => {
               name: 'profile',
               body: [
                 { type: 'scope-selector-probe' },
-                { type: 'input-text', name: 'firstName', label: 'First Name' }
-              ]
+                { type: 'input-text', name: 'firstName', label: 'First Name' },
+              ],
             },
             {
               type: 'button',
@@ -81,30 +97,38 @@ describe('object-field scope and state', () => {
                 action: 'setValue',
                 args: {
                   path: 'profile',
-                  value: { firstName: 'Dana', lastName: 'Jones' }
-                }
-              }
-            }
-          ]
+                  value: { firstName: 'Dana', lastName: 'Jones' },
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice'));
-    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
-      value: { firstName: 'Alice', lastName: 'Smith' },
-      readOnly: false
-    }));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice'),
+    );
+    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(
+      JSON.stringify({
+        value: { firstName: 'Alice', lastName: 'Smith' },
+        readOnly: false,
+      }),
+    );
 
     fireEvent.click(screen.getByText('Replace Profile'));
 
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Dana'));
-    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
-      value: { firstName: 'Dana', lastName: 'Jones' },
-      readOnly: false
-    }));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Dana'),
+    );
+    expect(screen.getByTestId('scope-selector-probe').textContent).toBe(
+      JSON.stringify({
+        value: { firstName: 'Dana', lastName: 'Jones' },
+        readOnly: false,
+      }),
+    );
   });
 
   it('supports projected child scope merge replace and nested updates in a form owner', async () => {
@@ -112,7 +136,7 @@ describe('object-field scope and state', () => {
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
       ...allFormDefs,
-      objectScopeMutationRenderer
+      objectScopeMutationRenderer,
     ]);
 
     render(
@@ -123,8 +147,8 @@ describe('object-field scope and state', () => {
           data: {
             profile: {
               firstName: 'Alice',
-              lastName: 'Smith'
-            }
+              lastName: 'Smith',
+            },
           },
           body: [
             {
@@ -133,36 +157,48 @@ describe('object-field scope and state', () => {
               body: [
                 { type: 'object-scope-mutation-probe' },
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
-                { type: 'input-text', name: 'lastName', label: 'Last Name' }
-              ]
-            }
-          ]
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Alice'),
+    );
     expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Smith');
 
     fireEvent.click(screen.getByText('Set First Name'));
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Bob'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Bob'),
+    );
     expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Smith');
 
     fireEvent.click(screen.getByText('Merge Object'));
-    await waitFor(() => expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Jones'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Jones'),
+    );
 
     fireEvent.click(screen.getByText('Merge Value Wrapper'));
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Merged'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Merged'),
+    );
     expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Value');
 
     fireEvent.click(screen.getByText('Replace Object'));
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Dana'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Dana'),
+    );
     expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Lane');
 
     fireEvent.click(screen.getByText('Replace Value Wrapper'));
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Fay'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Fay'),
+    );
     expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Mills');
   });
 });

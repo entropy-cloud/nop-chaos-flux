@@ -50,38 +50,63 @@ function normalizeLogicalName(name: string): string {
 
 function applyBinaryOperator(op: string, left: unknown, right: unknown): unknown {
   switch (op) {
-    case '+': return (left as any) + (right as any);
-    case '-': return Number(left) - Number(right);
-    case '*': return Number(left) * Number(right);
-    case '/': return Number(left) / Number(right);
-    case '%': return Number(left) % Number(right);
-    case '**': return Number(left) ** Number(right);
-    case '<': return (left as any) < (right as any);
-    case '<=': return (left as any) <= (right as any);
-    case '>': return (left as any) > (right as any);
-    case '>=': return (left as any) >= (right as any);
-    case '|': return Number(left) | Number(right);
-    case '^': return Number(left) ^ Number(right);
-    case '&': return Number(left) & Number(right);
-    case '<<': return Number(left) << Number(right);
-    case '>>': return Number(left) >> Number(right);
-    case '>>>': return Number(left) >>> Number(right);
-    case 'instanceof': return typeof right === 'function' ? left instanceof (right as any) : false;
+    case '+':
+      return (left as any) + (right as any);
+    case '-':
+      return Number(left) - Number(right);
+    case '*':
+      return Number(left) * Number(right);
+    case '/':
+      return Number(left) / Number(right);
+    case '%':
+      return Number(left) % Number(right);
+    case '**':
+      return Number(left) ** Number(right);
+    case '<':
+      return (left as any) < (right as any);
+    case '<=':
+      return (left as any) <= (right as any);
+    case '>':
+      return (left as any) > (right as any);
+    case '>=':
+      return (left as any) >= (right as any);
+    case '|':
+      return Number(left) | Number(right);
+    case '^':
+      return Number(left) ^ Number(right);
+    case '&':
+      return Number(left) & Number(right);
+    case '<<':
+      return Number(left) << Number(right);
+    case '>>':
+      return Number(left) >> Number(right);
+    case '>>>':
+      return Number(left) >>> Number(right);
+    case 'instanceof':
+      return typeof right === 'function' ? left instanceof (right as any) : false;
     case '==':
-    case '===': return customEquals(left, right);
+    case '===':
+      return customEquals(left, right);
     case '!=':
-    case '!==': return !customEquals(left, right);
-    default: throw createExpressionError(`Unsupported binary operator ${op}`);
+    case '!==':
+      return !customEquals(left, right);
+    default:
+      throw createExpressionError(`Unsupported binary operator ${op}`);
   }
 }
 
 function applyUnaryOperator(op: string, value: unknown): unknown {
   switch (op) {
-    case '!': return !value;
-    case '~': return ~Number(value);
-    case '-': return -Number(value);
-    case '+': return Number(value);
-    default: throw createExpressionError(`Unsupported unary operator ${op}`);
+    case '!':
+      return !value;
+    case '~':
+      return ~Number(value);
+    case '-':
+      return -Number(value);
+    case '+':
+      return Number(value);
+    default:
+      throw createExpressionError(`Unsupported unary operator ${op}`);
   }
 }
 
@@ -97,18 +122,30 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
       case 'UnaryExpression':
         return applyUnaryOperator(node.op, evaluateNode(node.argument, frame));
       case 'BinaryExpression':
-        return applyBinaryOperator(node.op, evaluateNode(node.left, frame), evaluateNode(node.right, frame));
+        return applyBinaryOperator(
+          node.op,
+          evaluateNode(node.left, frame),
+          evaluateNode(node.right, frame),
+        );
       case 'LogicalExpression': {
         const left = evaluateNode(node.left, frame);
         const op = normalizeLogicalName(node.op);
-        return op === '&&' ? (left ? evaluateNode(node.right, frame) : left) : (left ? left : evaluateNode(node.right, frame));
+        return op === '&&'
+          ? left
+            ? evaluateNode(node.right, frame)
+            : left
+          : left
+            ? left
+            : evaluateNode(node.right, frame);
       }
       case 'NullCoalesceExpression': {
         const left = evaluateNode(node.left, frame);
         return left ?? evaluateNode(node.right, frame);
       }
       case 'ConditionalExpression':
-        return evaluateNode(node.test, frame) ? evaluateNode(node.consequent, frame) : evaluateNode(node.alternate, frame);
+        return evaluateNode(node.test, frame)
+          ? evaluateNode(node.consequent, frame)
+          : evaluateNode(node.alternate, frame);
       case 'ArrayExpression':
         return node.elements.map((element) => evaluateNode(element, frame));
       case 'ObjectExpression': {
@@ -201,7 +238,7 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
     return {
       value: (objectValue as any)[key],
       receiver: objectValue,
-      name: typeof propertyValue === 'string' ? propertyValue : undefined
+      name: typeof propertyValue === 'string' ? propertyValue : undefined,
     };
   };
 
@@ -218,7 +255,7 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
       return {
         receiver: resolved.receiver,
         fn: resolved.value as (...args: any[]) => any,
-        name: resolved.name
+        name: resolved.name,
       };
     }
 
@@ -230,16 +267,22 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
     return {
       receiver: undefined,
       fn: fn as (...args: any[]) => any,
-      name: node.type === 'Identifier' ? node.name : undefined
+      name: node.type === 'Identifier' ? node.name : undefined,
     };
   };
 
-  const evaluateCall = (node: Extract<FormulaAstNode, { type: 'CallExpression' }>, frame?: LambdaFrame): unknown => {
+  const evaluateCall = (
+    node: Extract<FormulaAstNode, { type: 'CallExpression' }>,
+    frame?: LambdaFrame,
+  ): unknown => {
     const callable = resolveCallable(node.callee, frame);
-    const invokeMode = callable.name ? registry.functionMeta[callable.name]?.invoke ?? 'eager' : 'eager';
-    const args = invokeMode === 'lazy'
-      ? node.arguments.map((arg) => () => evaluateNode(arg, frame))
-      : node.arguments.map((arg) => evaluateNode(arg, frame));
+    const invokeMode = callable.name
+      ? (registry.functionMeta[callable.name]?.invoke ?? 'eager')
+      : 'eager';
+    const args =
+      invokeMode === 'lazy'
+        ? node.arguments.map((arg) => () => evaluateNode(arg, frame))
+        : node.arguments.map((arg) => evaluateNode(arg, frame));
 
     return callable.fn.apply(callable.receiver, args);
   };

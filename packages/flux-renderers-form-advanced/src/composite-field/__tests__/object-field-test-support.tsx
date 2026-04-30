@@ -13,7 +13,10 @@ if (!Element.prototype.scrollIntoView) {
 
 if (typeof PointerEvent === 'undefined') {
   class PointerEvent extends MouseEvent {
-    constructor(type: string, props: MouseEventInit & { pointerId?: number; pressure?: number } = {}) {
+    constructor(
+      type: string,
+      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
+    ) {
       super(type, props);
     }
   }
@@ -24,11 +27,14 @@ export const env: RendererEnv = {
   fetcher: async function <T>() {
     return { ok: true, status: 200, data: null as T };
   },
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 export function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
-  return async function <T>(_api: unknown, ctx: ApiRequestContext): Promise<{ ok: true; status: number; data: T }> {
+  return async function <T>(
+    _api: unknown,
+    ctx: ApiRequestContext,
+  ): Promise<{ ok: true; status: number; data: T }> {
     submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
     return { ok: true, status: 200, data: null as unknown as T };
   };
@@ -39,9 +45,7 @@ export const formulaCompiler = createFormulaCompiler();
 function FieldValueProbeRenderer(props: { name: string; 'data-testid': string }) {
   const scope = useRenderScope();
   const form = useCurrentForm();
-  const value = form
-    ? (form.scope.get(props.name) ?? '')
-    : (scope.get(props.name) ?? '');
+  const value = form ? (form.scope.get(props.name) ?? '') : (scope.get(props.name) ?? '');
   return <span data-testid={props['data-testid']}>{JSON.stringify(value)}</span>;
 }
 
@@ -52,20 +56,23 @@ export const fieldValueProbeRenderer: RendererDefinition = {
       name={String((p.props as Record<string, unknown>).name ?? '')}
       data-testid={String((p.props as Record<string, unknown>).testid ?? 'field-value')}
     />
-  )
+  ),
 };
 
 function ScopeSelectorProbeRenderer() {
-  const snapshot = useScopeSelector((scope) => ({
-    value: scope.value,
-    readOnly: scope.readOnly
-  }), Object.is) as Record<string, unknown>;
+  const snapshot = useScopeSelector(
+    (scope) => ({
+      value: scope.value,
+      readOnly: scope.readOnly,
+    }),
+    Object.is,
+  ) as Record<string, unknown>;
   return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
 }
 
 export const scopeSelectorProbeRenderer: RendererDefinition = {
   type: 'scope-selector-probe',
-  component: () => <ScopeSelectorProbeRenderer />
+  component: () => <ScopeSelectorProbeRenderer />,
 };
 
 function ObjectScopeMutationRenderer() {
@@ -76,12 +83,20 @@ function ObjectScopeMutationRenderer() {
       <button type="button" onClick={() => scope.update('firstName', 'Bob')}>
         Set First Name
       </button>
-      <button type="button" onClick={() => scope.merge({ lastName: 'Jones' } as Record<string, unknown>)}>
+      <button
+        type="button"
+        onClick={() => scope.merge({ lastName: 'Jones' } as Record<string, unknown>)}
+      >
         Merge Object
       </button>
       <button
         type="button"
-        onClick={() => scope.merge({ value: { firstName: 'Merged', lastName: 'Value' } } as Record<string, unknown>)}
+        onClick={() =>
+          scope.merge({ value: { firstName: 'Merged', lastName: 'Value' } } as Record<
+            string,
+            unknown
+          >)
+        }
       >
         Merge Value Wrapper
       </button>
@@ -96,7 +111,10 @@ function ObjectScopeMutationRenderer() {
       <button
         type="button"
         onClick={() => {
-          scope.replace?.({ value: { firstName: 'Fay', lastName: 'Mills' } } as Record<string, unknown>);
+          scope.replace?.({ value: { firstName: 'Fay', lastName: 'Mills' } } as Record<
+            string,
+            unknown
+          >);
         }}
       >
         Replace Value Wrapper
@@ -107,7 +125,7 @@ function ObjectScopeMutationRenderer() {
 
 export const objectScopeMutationRenderer: RendererDefinition = {
   type: 'object-scope-mutation-probe',
-  component: () => <ObjectScopeMutationRenderer />
+  component: () => <ObjectScopeMutationRenderer />,
 };
 
 export const submitButtonRenderer: RendererDefinition = {
@@ -117,5 +135,5 @@ export const submitButtonRenderer: RendererDefinition = {
       {String(props.props.label ?? 'Button')}
     </button>
   ),
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };

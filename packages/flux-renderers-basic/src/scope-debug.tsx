@@ -24,7 +24,7 @@ function stringifyDebugValue(value: unknown) {
       return {
         name: currentValue.name,
         message: currentValue.message,
-        stack: currentValue.stack
+        stack: currentValue.stack,
       };
     }
 
@@ -47,9 +47,10 @@ function stringifyDebugValue(value: unknown) {
 }
 
 export function ScopeDebugRenderer(props: RendererComponentProps<ScopeDebugSchema>) {
-  const title = typeof props.props.title === 'string' && props.props.title.length > 0
-    ? props.props.title
-    : 'Scope Debug';
+  const title =
+    typeof props.props.title === 'string' && props.props.title.length > 0
+      ? props.props.title
+      : 'Scope Debug';
   const scopeText = useScopeSelector((scopeData) => stringifyDebugValue(scopeData));
 
   return (

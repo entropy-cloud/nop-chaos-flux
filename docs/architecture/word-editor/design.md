@@ -16,33 +16,33 @@ The Word Editor is a document template designer built on `@hufe921/canvas-editor
 
 Pure TypeScript package with no React dependencies. Contains:
 
-| Module | Responsibility |
-|--------|---------------|
-| `editor-store.ts` | Zustand store for editor state (mode, selection, dirty tracking) |
-| `dataset-store.ts` | Zustand store for dataset management (data sources, fields) |
-| `canvas-editor-bridge.ts` | Bridge to `@hufe921/canvas-editor` instance commands |
-| `document-io.ts` | Document serialization/deserialization |
-| `template-expr.ts` | Template expression parsing (`${expr}` syntax) |
-| `template-tags.ts` | Template tag definitions (`<c:for>`, `<c:if>`, etc.) |
-| `template-model.ts` | Template document model types |
-| `chart-model.ts` | Chart placeholder model |
-| `code-model.ts` | Code block model |
-| `dataset-model.ts` | Dataset and field definitions |
-| `paper-settings.ts` | Paper size and margin configuration |
+| Module                    | Responsibility                                                   |
+| ------------------------- | ---------------------------------------------------------------- |
+| `editor-store.ts`         | Zustand store for editor state (mode, selection, dirty tracking) |
+| `dataset-store.ts`        | Zustand store for dataset management (data sources, fields)      |
+| `canvas-editor-bridge.ts` | Bridge to `@hufe921/canvas-editor` instance commands             |
+| `document-io.ts`          | Document serialization/deserialization                           |
+| `template-expr.ts`        | Template expression parsing (`${expr}` syntax)                   |
+| `template-tags.ts`        | Template tag definitions (`<c:for>`, `<c:if>`, etc.)             |
+| `template-model.ts`       | Template document model types                                    |
+| `chart-model.ts`          | Chart placeholder model                                          |
+| `code-model.ts`           | Code block model                                                 |
+| `dataset-model.ts`        | Dataset and field definitions                                    |
+| `paper-settings.ts`       | Paper size and margin configuration                              |
 
 ### word-editor-renderers
 
 React 19 rendering layer. Contains:
 
-| Module | Responsibility |
-|--------|---------------|
+| Module               | Responsibility                               |
+| -------------------- | -------------------------------------------- |
 | `WordEditorPage.tsx` | Main page component orchestrating all panels |
-| `EditorCanvas.tsx` | Canvas-editor wrapper with React lifecycle |
-| `toolbar/` | Ribbon-style toolbar components |
-| `panels/` | Side panels (dataset, properties) |
-| `dialogs/` | Modal dialogs (chart config, code config) |
-| `preview/` | Document preview components |
-| `hooks/` | React hooks for editor integration |
+| `EditorCanvas.tsx`   | Canvas-editor wrapper with React lifecycle   |
+| `toolbar/`           | Ribbon-style toolbar components              |
+| `panels/`            | Side panels (dataset, properties)            |
+| `dialogs/`           | Modal dialogs (chart config, code config)    |
+| `preview/`           | Document preview components                  |
+| `hooks/`             | React hooks for editor integration           |
 
 ## Data Flow
 
@@ -103,12 +103,12 @@ Notes:
 
 The Word Editor uses NOP platform's XLang expression syntax:
 
-| Syntax | Purpose | Example |
-|--------|---------|---------|
-| `${expr}` | Text expression | `${order.customerName}` |
-| `<c:for>` | Loop block | `<c:for items="${orders}">...</c:for>` |
-| `<c:if>` | Conditional | `<c:if test="${total > 100}">...</c:if>` |
-| `expr:` | Hyperlink annotation | `expr:${imageResource}` |
+| Syntax    | Purpose              | Example                                  |
+| --------- | -------------------- | ---------------------------------------- |
+| `${expr}` | Text expression      | `${order.customerName}`                  |
+| `<c:for>` | Loop block           | `<c:for items="${orders}">...</c:for>`   |
+| `<c:if>`  | Conditional          | `<c:if test="${total > 100}">...</c:if>` |
+| `expr:`   | Hyperlink annotation | `expr:${imageResource}`                  |
 
 This differs from SpringReport's `{{field}}` syntax but aligns with nop-entropy's WordTemplate model.
 
@@ -143,6 +143,7 @@ The host scope projects four read-only fields (`document`, `datasets`, `runtime`
 ### With nop-entropy Backend
 
 Template compilation flow:
+
 1. Frontend saves document JSON
 2. Backend receives and stores document
 3. On render request, WordTemplate compiles to XPL

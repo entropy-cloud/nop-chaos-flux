@@ -3,12 +3,15 @@ import type {
   ComponentHandleRegistry,
   NodeInstance,
   ResolutionContext,
-  RendererRuntime
+  RendererRuntime,
 } from '@nop-chaos/flux-core';
 
 export function createRuntimeNodeResolver(_runtime: RendererRuntime) {
   return {
-    resolveTarget(target: ComponentTarget, ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry }): NodeInstance | undefined {
+    resolveTarget(
+      target: ComponentTarget,
+      ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry },
+    ): NodeInstance | undefined {
       const registry = ctx.componentRegistry;
 
       if (!registry) {
@@ -37,8 +40,8 @@ export function createRuntimeNodeResolver(_runtime: RendererRuntime) {
         ? nodeInstance
         : {
             ...nodeInstance,
-            cid
+            cid,
           };
-    }
+    },
   };
 }

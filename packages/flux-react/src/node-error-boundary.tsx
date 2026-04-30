@@ -36,7 +36,9 @@ export class NodeErrorBoundary extends Component<NodeErrorBoundaryProps, NodeErr
     if (this.state.hasError) {
       const nodeId = this.props.nodeId ?? 'unknown';
       const message =
-        this.state.error instanceof Error ? this.state.error.message : String(this.state.error ?? '');
+        this.state.error instanceof Error
+          ? this.state.error.message
+          : String(this.state.error ?? '');
 
       return (
         <div
@@ -56,7 +58,15 @@ export class NodeErrorBoundary extends Component<NodeErrorBoundaryProps, NodeErr
           }}
         >
           <AlertCircleIcon style={{ width: '0.875rem', height: '0.875rem', flexShrink: 0 }} />
-          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span
+            style={{
+              flex: 1,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {nodeId}: {message || 'Render error'}
           </span>
           <Button

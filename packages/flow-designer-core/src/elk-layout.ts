@@ -13,7 +13,7 @@ export async function layoutWithElk(
   nodes: GraphNode[],
   edges: GraphEdge[],
   nodeTypes?: Map<string, NodeTypeConfig>,
-  options?: ElkLayoutOptions
+  options?: ElkLayoutOptions,
 ): Promise<Map<string, { x: number; y: number }>> {
   const direction = options?.direction ?? 'RIGHT';
   const nodeSpacing = options?.nodeSpacing ?? 60;

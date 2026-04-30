@@ -15,11 +15,11 @@ describe('createDataSourceController', () => {
           return {
             ok: true,
             status: 200,
-            data: { status: callCount >= 2 ? 'done' : 'running' }
+            data: { status: callCount >= 2 ? 'done' : 'running' },
           };
         }),
-        notify: vi.fn()
-      } as RendererEnv
+        notify: vi.fn(),
+      } as RendererEnv,
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
@@ -27,7 +27,7 @@ describe('createDataSourceController', () => {
       scope: page.scope,
       targetPath: 'job',
       interval: 10,
-      stopWhen: '${job.status === "done"}'
+      stopWhen: '${job.status === "done"}',
     });
 
     controller.start();
@@ -54,11 +54,11 @@ describe('createDataSourceController', () => {
           return {
             ok: true,
             status: 200,
-            data: { status: 'running' }
+            data: { status: 'running' },
           };
         }),
-        notify
-      } as RendererEnv
+        notify,
+      } as RendererEnv,
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
@@ -66,7 +66,7 @@ describe('createDataSourceController', () => {
       scope: page.scope,
       targetPath: 'job',
       interval: 10,
-      stopWhen: '${job.status === "running"}'
+      stopWhen: '${job.status === "running"}',
     });
 
     vi.spyOn(runtime, 'evaluate').mockImplementation(() => {
@@ -104,14 +104,14 @@ describe('createDataSourceController', () => {
       registry: createRendererRegistry([]),
       env: {
         fetcher,
-        notify: vi.fn()
-      } as RendererEnv
+        notify: vi.fn(),
+      } as RendererEnv,
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
       compiledApi: compileApiConfig({ url: '/api/slow' }, runtime.expressionCompiler),
       scope: page.scope,
-      targetPath: 'payload'
+      targetPath: 'payload',
     });
 
     controller.start();
@@ -128,21 +128,21 @@ describe('createDataSourceController', () => {
     const fetcher = vi.fn(async () => ({
       ok: true,
       status: 200,
-      data: { value: 'cached' }
+      data: { value: 'cached' },
     }));
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([]),
       env: {
         fetcher,
-        notify: vi.fn()
-      } as RendererEnv
+        notify: vi.fn(),
+      } as RendererEnv,
     });
     const page = runtime.createPageRuntime({});
     const controller = runtime.createDataSourceController({
       compiledApi: compileApiConfig({ url: '/api/cache' }, runtime.expressionCompiler),
       scope: page.scope,
       targetPath: 'payload',
-      control: { cacheTTL: 60_000, cacheKey: 'shared-cache' }
+      control: { cacheTTL: 60_000, cacheKey: 'shared-cache' },
     } as any);
 
     controller.start();
@@ -165,27 +165,30 @@ describe('createDataSourceController', () => {
     const fetcher = vi.fn(async () => ({
       ok: true,
       status: 200,
-      data: { value: 'cached' }
+      data: { value: 'cached' },
     }));
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([]),
       env: {
         fetcher,
-        notify: vi.fn()
-      } as RendererEnv
+        notify: vi.fn(),
+      } as RendererEnv,
     });
     const page = runtime.createPageRuntime({ page: 1 });
     const first = runtime.createDataSourceController({
       compiledApi: compileApiConfig({ url: '/api/cache?page=1' }, runtime.expressionCompiler),
       scope: page.scope,
       targetPath: 'payload',
-      control: { cacheTTL: 60_000 }
+      control: { cacheTTL: 60_000 },
     } as any);
     const second = runtime.createDataSourceController({
-      compiledApi: compileApiConfig({ url: '/api/cache', params: { page: 1 } }, runtime.expressionCompiler),
+      compiledApi: compileApiConfig(
+        { url: '/api/cache', params: { page: 1 } },
+        runtime.expressionCompiler,
+      ),
       scope: page.scope,
       targetPath: 'payload2',
-      control: { cacheTTL: 60_000 }
+      control: { cacheTTL: 60_000 },
     } as any);
 
     first.start();

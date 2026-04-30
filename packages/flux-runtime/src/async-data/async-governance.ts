@@ -14,12 +14,12 @@ function summarizeError(error: unknown): AsyncErrorSummary | undefined {
   if (error instanceof Error) {
     return {
       name: error.name,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    message: String(error)
+    message: String(error),
   };
 }
 
@@ -33,7 +33,11 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
   const owners = new Map<string, AsyncGovernanceOwnerRecord>();
   const retention = Math.max(1, options?.retention ?? DEFAULT_RETENTION);
 
-  function getOrCreateOwner(input: { ownerKind: AsyncOwnerKind; ownerId: string; scopeId: string }): AsyncGovernanceOwnerRecord {
+  function getOrCreateOwner(input: {
+    ownerKind: AsyncOwnerKind;
+    ownerId: string;
+    scopeId: string;
+  }): AsyncGovernanceOwnerRecord {
     const existing = owners.get(input.ownerId);
 
     if (existing) {
@@ -47,7 +51,7 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
       ownerId: input.ownerId,
       scopeId: input.scopeId,
       recentRuns: [],
-      nextRunId: 1
+      nextRunId: 1,
     };
     owners.set(input.ownerId, created);
     return created;
@@ -70,7 +74,7 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
         runId,
         cause: input.cause,
         startedAt: Date.now(),
-        outcome: 'running'
+        outcome: 'running',
       };
 
       if (previousCurrent?.outcome === 'running') {
@@ -85,7 +89,7 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
         ownerId: input.ownerId,
         scopeId: input.scopeId,
         cause: input.cause,
-        startedAt: currentRun.startedAt
+        startedAt: currentRun.startedAt,
       };
     },
 
@@ -132,7 +136,7 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
         supersededBy: stale ? owner.currentRun?.runId : owner.currentRun?.supersededBy,
         cancelled: input.cancelled,
         timedOut: input.timedOut,
-        error: summarizeError(input.error)
+        error: summarizeError(input.error),
       };
 
       appendRecentRun(owner, settled);
@@ -155,7 +159,7 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
         ownerId: owner.ownerId,
         scopeId: owner.scopeId,
         currentRun: owner.currentRun,
-        recentRuns: owner.recentRuns
+        recentRuns: owner.recentRuns,
       };
     },
 
@@ -167,14 +171,18 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
             ownerId: owner.ownerId,
             scopeId: owner.scopeId,
             currentRun: owner.currentRun,
-            recentRuns: owner.recentRuns
+            recentRuns: owner.recentRuns,
           }))
-          .sort((left, right) => left.scopeId.localeCompare(right.scopeId) || left.ownerId.localeCompare(right.ownerId))
+          .sort(
+            (left, right) =>
+              left.scopeId.localeCompare(right.scopeId) ||
+              left.ownerId.localeCompare(right.ownerId),
+          ),
       };
     },
 
     clearOwner(ownerId: string) {
       owners.delete(ownerId);
-    }
+    },
   } satisfies AsyncGovernanceStore;
 }

@@ -41,14 +41,14 @@
 
 ### In Scope
 
-| Phase | 主题 | 影响包 | 问题等级 |
-|-------|------|--------|----------|
-| 1 | 异步取消模式迁移 | flux-runtime | P1 |
-| 2 | 双状态/双数据源修复 | flux-renderers-form, flux-renderers-form-advanced, flux-renderers-data, flow-designer-renderers | P1/P2 |
-| 3 | 包边界修复（158 未覆盖） | flux-renderers-data, flux-renderers-form, flux-compiler | P1/P2 |
-| 4 | ~~目录结构归组~~ (cancelled) | ~~flux-runtime, flux-react, report-designer-renderers~~ | ~~P1/P2~~ |
-| 5 | i18n 修复 | flow-designer-renderers | P1 |
-| 6 | 兼容层收敛与清理 | flux-compiler, report-designer-renderers | P2 |
+| Phase | 主题                         | 影响包                                                                                          | 问题等级  |
+| ----- | ---------------------------- | ----------------------------------------------------------------------------------------------- | --------- |
+| 1     | 异步取消模式迁移             | flux-runtime                                                                                    | P1        |
+| 2     | 双状态/双数据源修复          | flux-renderers-form, flux-renderers-form-advanced, flux-renderers-data, flow-designer-renderers | P1/P2     |
+| 3     | 包边界修复（158 未覆盖）     | flux-renderers-data, flux-renderers-form, flux-compiler                                         | P1/P2     |
+| 4     | ~~目录结构归组~~ (cancelled) | ~~flux-runtime, flux-react, report-designer-renderers~~                                         | ~~P1/P2~~ |
+| 5     | i18n 修复                    | flow-designer-renderers                                                                         | P1        |
+| 6     | 兼容层收敛与清理             | flux-compiler, report-designer-renderers                                                        | P2        |
 
 ## Execution Plan
 
@@ -82,7 +82,7 @@ Targets: `packages/flux-renderers-form/src/field-utils.tsx`, `packages/flux-rend
 - [x] **P2.2** `object-field.tsx` `resolvedValue`：no-op 场景用 `usesWorkingValue` 跳过 useState；有 transformIn 时用 `AbortController`
 - [x] **P2.3** `table-quick-edit-controller.ts` scope 订阅：**descoped**。`useSyncExternalStore` 直接订阅会导致反馈循环（内部 `rowScope.update` 触发 snapshot 变化 → useEffect 重置 savedValue → dirty 始终 false）。`record` prop 已通过父组件 re-render 传播外部变更，对当前 per-cell controller 足够。
 - [x] **P2.4** `designer-page.tsx` prop-state 双写：已添加 `prevInputRef` 浅比较（lines 38-46）
-- [x] **P2.5** adapter focused test：6 个测试覆盖 sync (__syncIn)、sync-via-microtask、async resolve、stale cancellation、error warning（`field-utils.unit.test.tsx`）
+- [x] **P2.5** adapter focused test：6 个测试覆盖 sync (\_\_syncIn)、sync-via-microtask、async resolve、stale cancellation、error warning（`field-utils.unit.test.tsx`）
 
 Exit Criteria:
 

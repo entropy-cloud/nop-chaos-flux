@@ -61,6 +61,8 @@ apps/
 packages/
   flux-core/
   flux-formula/
+  flux-compiler/
+  flux-action-core/
   flux-i18n/
   flux-runtime/
   flux-react/

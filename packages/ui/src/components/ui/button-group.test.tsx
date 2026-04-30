@@ -10,7 +10,7 @@ describe('ButtonGroup', () => {
       <ButtonGroup orientation="vertical">
         <Button type="button">First</Button>
         <Button type="button">Second</Button>
-      </ButtonGroup>
+      </ButtonGroup>,
     );
 
     const group = screen.getByRole('group');
@@ -24,10 +24,14 @@ describe('ButtonGroup', () => {
         <Button type="button">Prev</Button>
         <ButtonGroupSeparator />
         <ButtonGroupText>Page 1</ButtonGroupText>
-      </ButtonGroup>
+      </ButtonGroup>,
     );
 
     expect(screen.getByText('Page 1').getAttribute('data-slot')).toBe('button-group-text');
-    expect(screen.getByText('Page 1').parentElement?.querySelector('[data-slot="button-group-separator"]')).toBeTruthy();
+    expect(
+      screen
+        .getByText('Page 1')
+        .parentElement?.querySelector('[data-slot="button-group-separator"]'),
+    ).toBeTruthy();
   });
 });

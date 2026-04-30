@@ -190,7 +190,7 @@ Exit Criteria:
 - Plan review round 1: `ses_223110346ffe7uNm2dP8vAICkP` - found soft `submitForm` ownership, over-broad owner-doc wording, contradictory validation wording, and incomplete source provenance; resolved in the revised plan before execution.
 - Plan review round 2: `ses_2230ece1effeDYxfvvbShRU8Go` - found mutable-scope leakage, still-too-broad goals wording, and closure-audit gaps; resolved before execution.
 - Post-update audit round 1: ses_222aad6f3ffeYZt1qLDbvynFd1 — PASS WITH MINOR ISSUES. All Phase 1-4 exit criteria MET. All validation checklist items SATISFIED. Two minor issues: (1) audit evidence log not yet updated, (2) 04-30.md log entry does not enumerate verified exit criteria. No blockers for closure.
-- Post-update audit round 2: ses_222a615a4ffe1rcZU7u6A35485 — PASS WITH MINOR ISSUES. All 7 verification items VERIFIED. New finding: `architecture-doc-status-matrix.md` missing family sub-documents (flow-designer/*, report-designer/*) — pre-existing gap outside plan scope. No blockers for closure.
+- Post-update audit round 2: ses*222a615a4ffe1rcZU7u6A35485 — PASS WITH MINOR ISSUES. All 7 verification items VERIFIED. New finding: `architecture-doc-status-matrix.md` missing family sub-documents (flow-designer/*, report-designer/\_) — pre-existing gap outside plan scope. No blockers for closure.
 
 ## Closure
 
@@ -205,5 +205,5 @@ Follow-up:
 
 - If `submitForm -> args` requires a real runtime landing rather than a doc/log downgrade, move that work to a narrow successor implementation plan instead of silently widening this plan.
 - If additional reference-doc drift is discovered outside this plan's scoped files, record it in a successor plan or follow-up analysis instead of expanding this plan without review.
-- `architecture-doc-status-matrix.md` is missing family sub-document entries (flow-designer/*, report-designer/*). This is a pre-existing gap outside plan 156's scope. A follow-up should add these entries.
+- `architecture-doc-status-matrix.md` is missing family sub-document entries (flow-designer/_, report-designer/_). This is a pre-existing gap outside plan 156's scope. A follow-up should add these entries.
 - `docs/architecture/form-validation.md` live-vs-target split is labeled as a narrow existing exception under cleanup. Future work should continue tightening this until the exception is either removed or the target state is landed.

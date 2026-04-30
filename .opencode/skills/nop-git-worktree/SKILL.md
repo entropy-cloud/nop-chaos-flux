@@ -8,35 +8,37 @@ description: 涉及git worktree的操作优先使用这个skill。管理 Git bar
 ### ⚠️ 必须遵守的操作规则
 
 1. **所有 `git worktree` 相关命令必须在 `.bare` 目录中执行**
-    - ✅ 正确：`git -C .bare worktree add ../feature-xxx -b feature-xxx`
-    - ❌ 错误：`git -C .bare worktree add feature-xxx -b feature-xxx`
+   - ✅ 正确：`git -C .bare worktree add ../feature-xxx -b feature-xxx`
+   - ❌ 错误：`git -C .bare worktree add feature-xxx -b feature-xxx`
 
 2. **创建 worktree 时使用相对路径**
-    - ✅ 正确：使用相对路径 `../`
-    - ❌ 错误：使用绝对路径
+   - ✅ 正确：使用相对路径 `../`
+   - ❌ 错误：使用绝对路径
 
 3. **遇到错误时，按顺序清理**
-    ```bash
-    cd ~/app/nop-entropy-wt
-    git -C .bare worktree remove ../nop-entropy-feature-xxx 2>/dev/null || true
-    rm -rf nop-entropy-feature-xxx 2>/dev/null || true
-    git -C .bare worktree prune
-    git -C .bare branch -D feature-xxx
-    ```
+
+   ```bash
+   cd ~/app/nop-entropy-wt
+   git -C .bare worktree remove ../nop-entropy-feature-xxx 2>/dev/null || true
+   rm -rf nop-entropy-feature-xxx 2>/dev/null || true
+   git -C .bare worktree prune
+   git -C .bare branch -D feature-xxx
+   ```
 
 4. **操作目录**
-    | 操作类型 | 执行目录 |
-    |---------|---------|
-    | 创建/删除 worktree | `cd ~/app/nop-entropy-wt && git -C .bare worktree ...` |
-    | 查看 worktree 列表 | `cd ~/app/nop-entropy-wt && git -C .bare worktree list` |
-    | 查看/操作分支 | `cd ~/app/nop-entropy-wt && git -C .bare branch ...` |
-    | 在 worktree 中开发 | `cd ~/app/nop-entropy-wt/nop-entropy-feature-xxx` |
+   | 操作类型 | 执行目录 |
+   |---------|---------|
+   | 创建/删除 worktree | `cd ~/app/nop-entropy-wt && git -C .bare worktree ...` |
+   | 查看 worktree 列表 | `cd ~/app/nop-entropy-wt && git -C .bare worktree list` |
+   | 查看/操作分支 | `cd ~/app/nop-entropy-wt && git -C .bare branch ...` |
+   | 在 worktree 中开发 | `cd ~/app/nop-entropy-wt/nop-entropy-feature-xxx` |
 
 ## 功能
 
 ### 操作类型 1: 初始化 bare + worktree 项目结构
 
 创建适合 worktree 开发的项目结构：
+
 - 创建 `.bare` 目录作为 Git bare 仓库（中心）
 - 支持从远程仓库 clone 或从本地现有仓库迁移
 - 自动创建 main/master 分支的 worktree 目录
@@ -44,6 +46,7 @@ description: 涉及git worktree的操作优先使用这个skill。管理 Git bar
 ### 操作类型 2: 创建新的 feature worktree
 
 在已初始化的项目下创建新 worktree：
+
 - 根据需求描述智能生成分支名
 - 自动创建对应的 worktree 目录
 - 确保分支名唯一且符合 Git 命名规范
@@ -51,11 +54,13 @@ description: 涉及git worktree的操作优先使用这个skill。管理 Git bar
 ## 使用时机
 
 **初始化项目结构**：
+
 - "初始化 bare + worktree 开发环境"
 - "从远程仓库创建 bare 仓库和多个 worktree"
 - "把现有 git 仓库转换成 bare + worktree 结构"
 
 **创建新 worktree**：
+
 - "创建一个新分支用于 [需求描述]"
 - "添加一个新的 worktree 来开发 [功能]"
 
@@ -82,6 +87,7 @@ project-root/                          # 项目根目录（如 ~/app/nop-entropy
 ```
 
 **关键说明**：
+
 - `.bare/` 目录：这是 Git bare 仓库，所有 `git worktree` 命令必须在此目录或通过 `git -C .bare` 执行
 - **worktree 目录命名**：`<PROJECT_NAME>-<BRANCH_NAME>` 格式，便于在 IDE 中区分不同项目的 worktree
 - `nop-entropy-master/`, `nop-entropy-feat-auth/` 等目录：这些是实际的工作目录，开发时在这些目录中进行 git 操作（如 `git commit`, `git status`）
@@ -91,11 +97,13 @@ project-root/                          # 项目根目录（如 ~/app/nop-entropy
 ### 初始化 bare + worktree 项目结构
 
 **参数**：
+
 - **项目根目录** (必填): 如 `~/app/nop-entropy-wt`
 - **远程仓库 URL** (可选): 如 `https://gitee.com/user/repo.git`
 - **本地仓库路径** (可选): 现有 git 仓库的路径
 
 **步骤**：
+
 ```bash
 cd ~/app/nop-entropy-wt
 
@@ -130,6 +138,7 @@ git -C .bare worktree list
 ### 创建新的 feature worktree
 
 **参数**：
+
 - **需求描述** (必填): 自然语言描述的功能需求
 - **项目根目录** (必填): 如 `~/app/nop-entropy-wt`
 
@@ -145,6 +154,7 @@ git -C .bare worktree list
 | 测试/杂项 | `test-`, `chore-` | `test-auth`, `chore-deps` |
 
 **步骤**：
+
 ```bash
 cd ~/app/nop-entropy-wt
 
@@ -212,10 +222,10 @@ git branch
 
 在更新分支时，必须明确区分以下两种情况：
 
-| 模式 | 场景 | 操作 | 是否需要确认 |
-|------|------|------|-------------|
-| **普通更新** | 特性分支同步主分支最新内容，保留自己的修改 | `git rebase origin/master` | 否（默认行为） |
-| **强制重置** | 丢弃本地所有修改，完全同步主分支 | `git reset --hard origin/master` | **是（必须确认）** |
+| 模式         | 场景                                       | 操作                             | 是否需要确认       |
+| ------------ | ------------------------------------------ | -------------------------------- | ------------------ |
+| **普通更新** | 特性分支同步主分支最新内容，保留自己的修改 | `git rebase origin/master`       | 否（默认行为）     |
+| **强制重置** | 丢弃本地所有修改，完全同步主分支           | `git reset --hard origin/master` | **是（必须确认）** |
 
 ### ⚠️ 关键：正确更新远程跟踪分支
 
@@ -352,6 +362,7 @@ done
 | **Feature 分支** | **配置** `.mvn/maven.config` | 使用独立局部仓库（`.nop/repository`），避免依赖冲突 |
 
 **Feature 分支 Maven 配置文件格式**：
+
 ```bash
 # 示例：创建时自动计算绝对路径
 WORKTREE_ABS_PATH="$(cd "nop-entropy-feat-auth" && pwd)"
@@ -362,25 +373,28 @@ EOF
 ```
 
 **实际生成的配置文件内容示例**：
+
 ```bash
 -Dmaven.repo.local.head=/Users/abc/app/nop-entropy-wt/nop-entropy-feat-auth/.nop/repository
 -Dmaven.repo.local.tail.ignoreAvailability=true
 ```
 
 **参数说明**：
+
 - `maven.repo.local.head`: 优先使用当前 worktree 的 `.nop/repository` 目录
 - `maven.repo.local.tail.ignoreAvailability=true`: 忽略尾部仓库可用性检查，提高启动速度
-
 
 ## Worktree 提交流程
 
 **流程假设**：
+
 - 项目根目录：`~/app/nop-entropy-wt`
 - 项目名称：`nop-entropy`
 - feature worktree：`~/app/nop-entropy-wt/nop-entropy-feat-stream-processing`
 - 主分支 worktree：`~/app/nop-entropy-wt/nop-entropy-master`
 
 **步骤**：
+
 ```bash
 # 获取项目名称
 PROJECT_NAME="nop-entropy"
@@ -433,21 +447,22 @@ git rebase master
 
 ### 常见错误
 
-| 错误信息 | 原因 | 解决方案 |
-|---------|------|---------|
-| `fatal: a branch named 'xxx' already exists` | 分支已存在 | `git -C .bare branch -D xxx` |
-| `fatal: '../xxx' already exists` | worktree 目录已存在 | `rm -rf xxx` |
-| `Preparing worktree (new branch 'xxx') failed` | 路径格式错误或无效引用 | 参考[清理步骤](#清理步骤) |
-| `worktree list` 显示奇怪路径 | 在错误目录执行命令 | 参考[清理步骤](#清理步骤) |
-| `Filename too long` | Windows 路径超过 260 字符限制 | 启用长路径支持：`git -C .bare config core.longpaths true` |
-| `error: unable to create file: Filename too long` | Windows 路径超过 260 字符限制 | 启用长路径支持：`git -C .bare config core.longpaths true` |
-| 分支显示已同步但实际落后远程 | `git fetch` 未更新远程跟踪分支 | 使用强制 fetch：`git fetch origin +refs/heads/master:refs/remotes/origin/master` |
+| 错误信息                                          | 原因                           | 解决方案                                                                         |
+| ------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------- |
+| `fatal: a branch named 'xxx' already exists`      | 分支已存在                     | `git -C .bare branch -D xxx`                                                     |
+| `fatal: '../xxx' already exists`                  | worktree 目录已存在            | `rm -rf xxx`                                                                     |
+| `Preparing worktree (new branch 'xxx') failed`    | 路径格式错误或无效引用         | 参考[清理步骤](#清理步骤)                                                        |
+| `worktree list` 显示奇怪路径                      | 在错误目录执行命令             | 参考[清理步骤](#清理步骤)                                                        |
+| `Filename too long`                               | Windows 路径超过 260 字符限制  | 启用长路径支持：`git -C .bare config core.longpaths true`                        |
+| `error: unable to create file: Filename too long` | Windows 路径超过 260 字符限制  | 启用长路径支持：`git -C .bare config core.longpaths true`                        |
+| 分支显示已同步但实际落后远程                      | `git fetch` 未更新远程跟踪分支 | 使用强制 fetch：`git fetch origin +refs/heads/master:refs/remotes/origin/master` |
 
 ### 远程同步问题诊断
 
 **症状**：`git status` 显示与 origin/master 同步，但实际远程有新提交。
 
 **诊断步骤**：
+
 ```bash
 # 1. 检查远程实际最新提交
 git ls-remote origin refs/heads/master
@@ -461,6 +476,7 @@ git rev-parse origin/master
 ```
 
 **解决方案**：
+
 ```bash
 # 强制更新远程跟踪分支
 git fetch origin +refs/heads/master:refs/remotes/origin/master
@@ -478,12 +494,14 @@ Windows 默认路径限制为 260 字符（MAX_PATH），某些项目（如 Nop 
 **解决方案**：
 
 1. **启用 Git 长路径支持**（推荐）：
+
 ```bash
 cd ~/app/nop-entropy-wt
 git -C .bare config core.longpaths true
 ```
 
 2. **系统级别启用长路径**（可选，需要管理员权限）：
+
 ```powershell
 # 以管理员身份运行 PowerShell
 New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
@@ -491,13 +509,16 @@ New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
 ```
 
 **配置写入位置**：
+
 - Git 长路径配置写入 `.bare/config` 文件：
+
 ```ini
 [core]
     longpaths = true
 ```
 
 **适用场景**：
+
 - 创建 worktree 时遇到路径过长错误
 - checkout 时遇到 `Filename too long` 错误
 - 包含深层嵌套目录的项目
@@ -505,6 +526,7 @@ New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
 ### 清理步骤
 
 遇到路径混乱或无效引用时：
+
 ```bash
 cd ~/app/nop-entropy-wt
 

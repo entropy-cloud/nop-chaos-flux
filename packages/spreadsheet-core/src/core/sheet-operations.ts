@@ -17,9 +17,12 @@ export function applyResizeRow(
   const rows = { ...sheet.rows };
   const key = String(row);
   rows[key] = { ...(rows[key] ?? { index: row }), index: row, height };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === sheetId ? { ...sheetDoc, rows } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === sheetId ? { ...sheetDoc, rows } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -33,9 +36,12 @@ export function applyResizeColumn(
   const columns = { ...sheet.columns };
   const key = String(col);
   columns[key] = { ...(columns[key] ?? { index: col }), index: col, width };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === sheetId ? { ...sheetDoc, columns } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === sheetId ? { ...sheetDoc, columns } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -49,9 +55,12 @@ export function applyHideRow(
   const rows = { ...sheet.rows };
   const key = String(row);
   rows[key] = { ...(rows[key] ?? { index: row }), index: row, hidden };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === sheetId ? { ...sheetDoc, rows } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === sheetId ? { ...sheetDoc, rows } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -65,9 +74,12 @@ export function applyHideColumn(
   const columns = { ...sheet.columns };
   const key = String(col);
   columns[key] = { ...(columns[key] ?? { index: col }), index: col, hidden };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === sheetId ? { ...sheetDoc, columns } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === sheetId ? { ...sheetDoc, columns } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -106,14 +118,22 @@ export function applyRemoveSheet(doc: SpreadsheetDocument, sheetId: string): Spr
   return { ...doc, workbook: { ...doc.workbook, sheets } };
 }
 
-export function applyRenameSheet(doc: SpreadsheetDocument, sheetId: string, name: string): SpreadsheetDocument {
+export function applyRenameSheet(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  name: string,
+): SpreadsheetDocument {
   const sheets = doc.workbook.sheets.map((sheet) =>
     sheet.id === sheetId ? { ...sheet, name } : sheet,
   );
   return { ...doc, workbook: { ...doc.workbook, sheets } };
 }
 
-export function applyMoveSheet(doc: SpreadsheetDocument, sheetId: string, targetIndex: number): SpreadsheetDocument {
+export function applyMoveSheet(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  targetIndex: number,
+): SpreadsheetDocument {
   const sheets = [...doc.workbook.sheets];
   const fromIndex = sheets.findIndex((sheet) => sheet.id === sheetId);
   if (fromIndex === -1) {
@@ -128,7 +148,11 @@ export function applyMoveSheet(doc: SpreadsheetDocument, sheetId: string, target
   return { ...doc, workbook: { ...doc.workbook, sheets } };
 }
 
-export function applyCopySheet(doc: SpreadsheetDocument, sheetId: string, name?: string): SpreadsheetDocument {
+export function applyCopySheet(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  name?: string,
+): SpreadsheetDocument {
   const sourceSheet = doc.workbook.sheets.find((sheet) => sheet.id === sheetId);
   if (!sourceSheet) {
     throw new Error(`Sheet not found: ${sheetId}`);
@@ -143,14 +167,22 @@ export function applyCopySheet(doc: SpreadsheetDocument, sheetId: string, name?:
   return { ...doc, workbook: { ...doc.workbook, sheets } };
 }
 
-export function applySetSheetTabColor(doc: SpreadsheetDocument, sheetId: string, color: string): SpreadsheetDocument {
+export function applySetSheetTabColor(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  color: string,
+): SpreadsheetDocument {
   const sheets = doc.workbook.sheets.map((sheet) =>
     sheet.id === sheetId ? { ...sheet, tabColor: color } : sheet,
   );
   return { ...doc, workbook: { ...doc.workbook, sheets } };
 }
 
-export function applyHideSheet(doc: SpreadsheetDocument, sheetId: string, hidden: boolean): SpreadsheetDocument {
+export function applyHideSheet(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  hidden: boolean,
+): SpreadsheetDocument {
   const sheets = doc.workbook.sheets.map((sheet) =>
     sheet.id === sheetId ? { ...sheet, hidden } : sheet,
   );
@@ -170,7 +202,12 @@ export function applyProtectSheet(
   return { ...doc, workbook: { ...doc.workbook, sheets } };
 }
 
-export function applyFreezePanes(doc: SpreadsheetDocument, sheetId: string, row?: number, col?: number): SpreadsheetDocument {
+export function applyFreezePanes(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  row?: number,
+  col?: number,
+): SpreadsheetDocument {
   const sheets = doc.workbook.sheets.map((sheet) =>
     sheet.id === sheetId ? { ...sheet, frozen: { row: row ?? 0, col: col ?? 0 } } : sheet,
   );
@@ -184,7 +221,10 @@ export function applyUnfreezePanes(doc: SpreadsheetDocument, sheetId: string): S
   return { ...doc, workbook: { ...doc.workbook, sheets } };
 }
 
-export function applyMergeCellsCenter(doc: SpreadsheetDocument, range: SpreadsheetRange): SpreadsheetDocument {
+export function applyMergeCellsCenter(
+  doc: SpreadsheetDocument,
+  range: SpreadsheetRange,
+): SpreadsheetDocument {
   let result = applyMergeRange(doc, range);
   result = applyCellStyleChange(result, range, { textAlign: 'center', verticalAlign: 'middle' });
   return result;

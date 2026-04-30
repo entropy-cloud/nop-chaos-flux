@@ -6,6 +6,7 @@
 # 样式系统合规性审计（维度 10）
 
 ## `@nop-chaos/flux-renderers-basic`
+
 未发现需要报告的问题。
 
 ## `@nop-chaos/flux-renderers-form`
@@ -17,14 +18,17 @@
 - **参考文档**: `docs/architecture/styling-system.md`, `docs/architecture/theme-compatibility.md`
 
 ## `@nop-chaos/flux-renderers-data`
+
 未发现需要报告的问题。
 
 ## `@nop-chaos/flux-code-editor`
+
 未发现需要报告的问题。
 
 ## `@nop-chaos/flow-designer-renderers`
 
 ### [维度10] Flow Designer 主题收敛已有进展，但仍有残余字面量颜色
+
 - **文件**: 已收敛部分：`packages/flow-designer-renderers/src/{index.tsx,designer-page.tsx,designer-toolbar.tsx,designer-inspector.tsx,designer-palette.tsx,designer-xyflow-canvas/DesignerXyflowCanvas.tsx,designer-xyflow-canvas/DesignerXyflowEdge.tsx,designer-theme.css}`；残余热点：`designer-inspector.tsx:6-23`, `designer-canvas.tsx`, `dingflow/*`
 - **严重程度**: P2
 - **违规类别**: 主题
@@ -33,6 +37,7 @@
 - **参考文档**: `docs/architecture/theme-compatibility.md`, `docs/architecture/styling-system.md`
 
 ### [维度10] Flow Designer playground 节点样式仍保留 BEM 区域类
+
 - **文件**: `C:\can\nop\nop-chaos-flux\apps\playground\src\flow-designer-nodes.css:1-215`; `C:\can\nop\nop-chaos-flux\apps\playground\src\schemas\dingtalk-workflow-tree-schema.json:92-176`; `C:\can\nop\nop-chaos-flux\apps\playground\src\schemas\action-flow-tree-schema.json:105-162`
 - **严重程度**: P2
 - **违规类别**: BEM
@@ -41,11 +46,13 @@
 - **参考文档**: `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`
 
 ## `@nop-chaos/report-designer-renderers`
+
 未发现需要报告的问题。
 
 ## `@nop-chaos/spreadsheet-renderers`
 
 ### [维度10] Spreadsheet grid 审计项已部分修正，原结论存在机械化过度
+
 - **文件**: `packages/spreadsheet-renderers/src/{spreadsheet-grid.tsx,cell-style-map.ts,canvas-styles.css}`
 - **严重程度**: 已处理/例外说明
 - **违规类别**: spreadsheet
@@ -54,12 +61,14 @@
 - **参考文档**: `docs/architecture/report-designer/spreadsheet-canvas-css.md`, `docs/architecture/styling-system.md`
 
 ### [维度10] Spreadsheet toolbar 的包级视觉仍依赖 playground CSS
+
 - **状态**: 已修复
 - **修复**: `packages/spreadsheet-renderers/src/{index.ts,styles.d.ts,canvas-styles.css}`
 - **结论**: `rd-toolbar`、`bg-btn`、`color-btn`、`find-replace-panel`、`cell-editor` 等样式已迁入 `@nop-chaos/spreadsheet-renderers` 包入口，playground 不再承担这些 renderer 视觉样式。
 - **参考文档**: `docs/architecture/theme-compatibility.md`, `docs/architecture/report-designer/spreadsheet-canvas-css.md`
 
 ## `@nop-chaos/word-editor-renderers`
+
 未发现需要报告的问题。
 
 ## 跨项复核（本轮未发现需要报告的问题）

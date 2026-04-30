@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createSpreadsheetCore,
-  createEmptyDocument,
-  type SpreadsheetCore,
-} from '../index.js';
+import { createSpreadsheetCore, createEmptyDocument, type SpreadsheetCore } from '../index.js';
 
 describe('undo/redo with new operations', () => {
   let core: SpreadsheetCore;
@@ -16,9 +12,19 @@ describe('undo/redo with new operations', () => {
   });
 
   it('should undo paste', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'X' });
-    await core.dispatch({ type: 'spreadsheet:copyCells', range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 0 } });
-    await core.dispatch({ type: 'spreadsheet:pasteCells', target: { sheetId, address: 'B1', row: 0, col: 1 } });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'X',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:copyCells',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 0 },
+    });
+    await core.dispatch({
+      type: 'spreadsheet:pasteCells',
+      target: { sheetId, address: 'B1', row: 0, col: 1 },
+    });
     expect(core.getSnapshot().document.workbook.sheets[0].cells?.['B1']?.value).toBe('X');
 
     await core.dispatch({ type: 'spreadsheet:undo' });
@@ -26,8 +32,16 @@ describe('undo/redo with new operations', () => {
   });
 
   it('should undo insert row', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'A1' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'A2' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'A1',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'A2',
+    });
     await core.dispatch({ type: 'spreadsheet:insertRow', sheetId, row: 1 });
     expect(core.getSnapshot().document.workbook.sheets[0].cells?.['A3']?.value).toBe('A2');
 
@@ -41,16 +55,30 @@ describe('undo/redo with new operations', () => {
       target: { sheetId, address: 'A1', row: 0, col: 0 },
       color: '#ff0000',
     });
-    expect(core.getSnapshot().document.workbook.sheets[0].cells?.['A1']?.style?.backgroundColor).toBe('#ff0000');
+    expect(
+      core.getSnapshot().document.workbook.sheets[0].cells?.['A1']?.style?.backgroundColor,
+    ).toBe('#ff0000');
 
     await core.dispatch({ type: 'spreadsheet:undo' });
-    expect(core.getSnapshot().document.workbook.sheets[0].cells?.['A1']?.style?.backgroundColor).toBeUndefined();
+    expect(
+      core.getSnapshot().document.workbook.sheets[0].cells?.['A1']?.style?.backgroundColor,
+    ).toBeUndefined();
   });
 
   it('should redo paste after undo', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'R' });
-    await core.dispatch({ type: 'spreadsheet:copyCells', range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 0 } });
-    await core.dispatch({ type: 'spreadsheet:pasteCells', target: { sheetId, address: 'B1', row: 0, col: 1 } });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'R',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:copyCells',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 0 },
+    });
+    await core.dispatch({
+      type: 'spreadsheet:pasteCells',
+      target: { sheetId, address: 'B1', row: 0, col: 1 },
+    });
     await core.dispatch({ type: 'spreadsheet:undo' });
     await core.dispatch({ type: 'spreadsheet:redo' });
 
@@ -58,8 +86,16 @@ describe('undo/redo with new operations', () => {
   });
 
   it('should undo delete row', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'A1' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'A2' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'A1',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'A2',
+    });
     await core.dispatch({ type: 'spreadsheet:deleteRow', sheetId, row: 0 });
 
     expect(core.getSnapshot().document.workbook.sheets[0].cells?.['A1']?.value).toBe('A2');
@@ -95,8 +131,14 @@ describe('edge cases', () => {
       fontWeight: 'bold',
     });
 
-    await core.dispatch({ type: 'spreadsheet:copyCells', range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 0 } });
-    await core.dispatch({ type: 'spreadsheet:pasteCells', target: { sheetId, address: 'B1', row: 0, col: 1 } });
+    await core.dispatch({
+      type: 'spreadsheet:copyCells',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 0 },
+    });
+    await core.dispatch({
+      type: 'spreadsheet:pasteCells',
+      target: { sheetId, address: 'B1', row: 0, col: 1 },
+    });
 
     const cell = core.getSnapshot().document.workbook.sheets[0].cells?.['B1'];
     expect(cell?.value).toBe('Styled');
@@ -105,11 +147,26 @@ describe('edge cases', () => {
   });
 
   it('should fill down with style', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'Header' });
-    await core.dispatch({ type: 'spreadsheet:setCellFontWeight', target: { sheetId, address: 'A1', row: 0, col: 0 }, fontWeight: 'bold' });
-    await core.dispatch({ type: 'spreadsheet:setCellBackgroundColor', target: { sheetId, address: 'A1', row: 0, col: 0 }, color: '#ccc' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Header',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellFontWeight',
+      target: { sheetId, address: 'A1', row: 0, col: 0 },
+      fontWeight: 'bold',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellBackgroundColor',
+      target: { sheetId, address: 'A1', row: 0, col: 0 },
+      color: '#ccc',
+    });
 
-    await core.dispatch({ type: 'spreadsheet:fillDown', range: { sheetId, startRow: 0, startCol: 0, endRow: 2, endCol: 0 } });
+    await core.dispatch({
+      type: 'spreadsheet:fillDown',
+      range: { sheetId, startRow: 0, startCol: 0, endRow: 2, endCol: 0 },
+    });
 
     const cells = core.getSnapshot().document.workbook.sheets[0].cells;
     expect(cells?.['A2']?.value).toBe('Header');
@@ -124,10 +181,26 @@ describe('edge cases', () => {
   });
 
   it('should handle multiple style changes on same cell', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellFontFamily', target: { sheetId, address: 'A1', row: 0, col: 0 }, fontFamily: 'Arial' });
-    await core.dispatch({ type: 'spreadsheet:setCellFontSize', target: { sheetId, address: 'A1', row: 0, col: 0 }, fontSize: 14 });
-    await core.dispatch({ type: 'spreadsheet:setCellFontWeight', target: { sheetId, address: 'A1', row: 0, col: 0 }, fontWeight: 'bold' });
-    await core.dispatch({ type: 'spreadsheet:setCellFontColor', target: { sheetId, address: 'A1', row: 0, col: 0 }, color: '#ff0000' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellFontFamily',
+      target: { sheetId, address: 'A1', row: 0, col: 0 },
+      fontFamily: 'Arial',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellFontSize',
+      target: { sheetId, address: 'A1', row: 0, col: 0 },
+      fontSize: 14,
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellFontWeight',
+      target: { sheetId, address: 'A1', row: 0, col: 0 },
+      fontWeight: 'bold',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellFontColor',
+      target: { sheetId, address: 'A1', row: 0, col: 0 },
+      color: '#ff0000',
+    });
 
     const cell = core.getSnapshot().document.workbook.sheets[0].cells?.['A1'];
     expect(cell?.style?.fontFamily).toBe('Arial');
@@ -137,8 +210,16 @@ describe('edge cases', () => {
   });
 
   it('should preserve value when clearing only formats', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'Keep' });
-    await core.dispatch({ type: 'spreadsheet:setCellBackgroundColor', target: { sheetId, address: 'A1', row: 0, col: 0 }, color: '#f00' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Keep',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellBackgroundColor',
+      target: { sheetId, address: 'A1', row: 0, col: 0 },
+      color: '#f00',
+    });
 
     await core.dispatch({
       type: 'spreadsheet:clearCells',
@@ -153,8 +234,16 @@ describe('edge cases', () => {
   });
 
   it('should preserve comment when clearing values', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'Delete' });
-    await core.dispatch({ type: 'spreadsheet:addComment', cell: { sheetId, address: 'A1', row: 0, col: 0 }, text: 'Note' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'Delete',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:addComment',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      text: 'Note',
+    });
 
     await core.dispatch({
       type: 'spreadsheet:clearCells',

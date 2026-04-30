@@ -49,14 +49,14 @@
 
 ### In Scope
 
-| WS | 维度 | 文件 | 问题 |
-|----|------|------|------|
-| 1 | 12 | `variant-field.tsx` | P1: FieldFrame 缺少 7 个 BoundFieldSchemaBase 属性 |
-| 2 | 10 | `field-frame.tsx`, `default-spacing.css`, `field-frame-layout.test.tsx`, `tabs.tsx` | BEM `--` 修饰符残留（含 label-left + sidebar-right） |
-| 3 | 15 | `schema-compiler.ts`, `schema-diagnostics.ts`（flux-core） | 编译异常吞噬 + 扩展 SchemaDiagnosticCode |
-| 4 | 16 | `flux-runtime-module-boundaries.md` | 文档路径失效 |
-| 5 | 18 | `variant-field.tsx`, `detail-field.tsx` | 异步操作卸载保护（stale-check 模式） |
-| 6 | 02/14 | `object-field.test.tsx`, `controller-inspect.test.ts` | 测试文件超 700 行 |
+| WS  | 维度  | 文件                                                                                | 问题                                                 |
+| --- | ----- | ----------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1   | 12    | `variant-field.tsx`                                                                 | P1: FieldFrame 缺少 7 个 BoundFieldSchemaBase 属性   |
+| 2   | 10    | `field-frame.tsx`, `default-spacing.css`, `field-frame-layout.test.tsx`, `tabs.tsx` | BEM `--` 修饰符残留（含 label-left + sidebar-right） |
+| 3   | 15    | `schema-compiler.ts`, `schema-diagnostics.ts`（flux-core）                          | 编译异常吞噬 + 扩展 SchemaDiagnosticCode             |
+| 4   | 16    | `flux-runtime-module-boundaries.md`                                                 | 文档路径失效                                         |
+| 5   | 18    | `variant-field.tsx`, `detail-field.tsx`                                             | 异步操作卸载保护（stale-check 模式）                 |
+| 6   | 02/14 | `object-field.test.tsx`, `controller-inspect.test.ts`                               | 测试文件超 700 行                                    |
 
 ### Out Of Scope
 
@@ -67,6 +67,7 @@
 6 个 Workstream。WS1 和 WS5 共同修改 `variant-field.tsx`，**必须串行**（WS1 完成后再执行 WS5）。其余 Workstream 互相独立，可并行。
 
 依赖关系：
+
 ```
 WS1 (variant-field FieldFrame) → WS5 (variant-field 异步保护)  [串行]
 WS2, WS3, WS4, WS6 各自独立 [并行]
@@ -79,15 +80,15 @@ Targets: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.
 
 **取值来源**（参考 `node-frame-wrapper.tsx:24-51`）：
 
-| 属性 | 取值方式 |
-|------|----------|
-| `required` | `schemaProps.required`（运行时解析后的值） |
-| `hint` | `schema.hint` |
-| `description` | `schema.description` |
-| `remark` | `schema.remark`，需经 `toFieldRemarkProps()` 转换 |
+| 属性          | 取值方式                                               |
+| ------------- | ------------------------------------------------------ |
+| `required`    | `schemaProps.required`（运行时解析后的值）             |
+| `hint`        | `schema.hint`                                          |
+| `description` | `schema.description`                                   |
+| `remark`      | `schema.remark`，需经 `toFieldRemarkProps()` 转换      |
 | `labelRemark` | `schema.labelRemark`，需经 `toFieldRemarkProps()` 转换 |
-| `labelAlign` | `schema.labelAlign`，`'inherit'` 映射为 `undefined` |
-| `labelWidth` | `schema.labelWidth` |
+| `labelAlign`  | `schema.labelAlign`，`'inherit'` 映射为 `undefined`    |
+| `labelWidth`  | `schema.labelWidth`                                    |
 
 **前置条件**：`toFieldRemarkProps()` 当前是 `node-frame-wrapper.tsx` 的私有函数（非公开导出）。需要先将其提取为公共工具函数或 inline 等价转换逻辑。
 
@@ -114,12 +115,12 @@ Targets: `packages/flux-react/src/field-frame.tsx`, `packages/flux-react/src/def
 
 **完整替换清单**：
 
-| 旧类名 | 出现位置 | 新方案 |
-|--------|----------|--------|
-| `nop-field--label-top` | field-frame.tsx:116, default-spacing.css, field-frame-layout.test.tsx | `data-label-align="top"` 属性 |
-| `nop-field--label-left` | field-frame.tsx:116, default-spacing.css, field-frame-layout.test.tsx | `data-label-align="left"` 属性 |
-| `nop-tabs--${tabsMode}` | tabs.tsx:131 | `data-tabs-mode="${tabsMode}"` 属性 |
-| `nop-tabs--sidebar-right` | tabs.tsx:132 | 独立布尔属性 `data-tabs-sidebar-right`（与 data-tabs-mode 分开，避免属性冲突） |
+| 旧类名                    | 出现位置                                                              | 新方案                                                                         |
+| ------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `nop-field--label-top`    | field-frame.tsx:116, default-spacing.css, field-frame-layout.test.tsx | `data-label-align="top"` 属性                                                  |
+| `nop-field--label-left`   | field-frame.tsx:116, default-spacing.css, field-frame-layout.test.tsx | `data-label-align="left"` 属性                                                 |
+| `nop-tabs--${tabsMode}`   | tabs.tsx:131                                                          | `data-tabs-mode="${tabsMode}"` 属性                                            |
+| `nop-tabs--sidebar-right` | tabs.tsx:132                                                          | 独立布尔属性 `data-tabs-sidebar-right`（与 data-tabs-mode 分开，避免属性冲突） |
 
 - [x] field-frame.tsx: 将 `isLabelTop ? 'nop-field--label-top' : 'nop-field--label-left'` 替换为 `data-label-align` 属性
 - [x] default-spacing.css: 将 `.nop-field--label-top` 和 `.nop-field--label-left` CSS 选择器迁移为 `.nop-field[data-label-align="top"]` 和 `.nop-field[data-label-align="left"]`
@@ -144,6 +145,7 @@ Status: completed
 Targets: `packages/flux-compiler/src/schema-compiler.ts`, `packages/flux-core/src/schema-diagnostics/index.ts`
 
 **技术背景**：
+
 - catch 块位于 `validateSchemaInput()` 函数（非主编译路径 `compile()`）
 - `SchemaCompilerDiagnosticsContext` 已存在，可直接复用其 `emit()` 方法
 - `SchemaDiagnosticCode` 联合类型当前缺少通用内部错误码，需扩展
@@ -185,6 +187,7 @@ Targets: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.
 **前置条件**：WS1 完成后再执行（共改 variant-field.tsx）
 
 **技术约束**：
+
 - `dispatch()` 不接受 AbortSignal 参数，无法真正取消底层异步操作
 - detail-field.tsx 没有 useEffect，异步操作由事件处理器触发
 - 正确方案是使用 **stale-check 模式**（ref 标记组件是否仍然 mounted），防止卸载后的 state 更新
@@ -253,6 +256,7 @@ Closure Audit Evidence:
 Follow-up:
 
 以下 P2 项未纳入本计划，需在后续 successor plan 中处理：
+
 1. reaction-runtime/source-registry per-path subscribe
 2. useSurfaceScopeSnapshot 订阅收窄
 3. detail-view FieldLabel → FieldFrame

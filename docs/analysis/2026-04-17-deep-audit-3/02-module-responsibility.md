@@ -5,6 +5,7 @@
 ### P0 - 必须拆分
 
 #### [维度02] data-source-runtime.ts 超过700行限制
+
 - **文件**: `packages/flux-runtime/src/data-source-runtime.ts`
 - **行数**: 681 行
 - **严重程度**: P0
@@ -26,6 +27,7 @@
 ### P1 - 需评估拆分
 
 #### [维度02] shape-validation.ts 超过500行
+
 - **文件**: `packages/flux-runtime/src/schema-compiler/shape-validation.ts`
 - **行数**: 596 行
 - **严重程度**: P1
@@ -33,6 +35,7 @@
 - **建议**: 按验证类型拆分为子模块
 
 #### [维度02] designer-page.tsx 超过500行
+
 - **文件**: `packages/flow-designer-renderers/src/designer-page.tsx`
 - **行数**: 520 行
 - **严重程度**: P1
@@ -44,6 +47,7 @@
 ### P2 - 已评估保持现状
 
 #### [维度02] parser.ts - 解析器的合理例外
+
 - **文件**: `packages/flux-formula/src/parser.ts`
 - **行数**: 510 行
 - **严重程度**: P2
@@ -64,6 +68,7 @@
 ## 入口文件问题清单
 
 ### [维度02] flux-renderers-basic/index.tsx 包含渲染器定义常量
+
 - **文件**: `packages/flux-renderers-basic/src/index.tsx`
 - **行数**: 226 行
 - **严重程度**: P2
@@ -71,6 +76,7 @@
 - **建议**: 将定义提取到 `definitions.ts`
 
 ### [维度02] flux-renderers-data/index.tsx 包含验证逻辑实现
+
 - **文件**: `packages/flux-renderers-data/src/index.tsx`
 - **行数**: 183 行
 - **严重程度**: P2

@@ -16,12 +16,12 @@ describe('template helpers', () => {
     expect(parseTemplateSegments('A ${fn({ value: "}" })} B')).toEqual([
       { type: 'text', value: 'A ' },
       { type: 'expr', value: 'fn({ value: "}" })' },
-      { type: 'text', value: ' B' }
+      { type: 'text', value: ' B' },
     ]);
 
     expect(parseTemplateSegments('prefix ${unterminated')).toEqual([
       { type: 'text', value: 'prefix ' },
-      { type: 'text', value: '${unterminated' }
+      { type: 'text', value: '${unterminated' },
     ]);
   });
 });

@@ -1,8 +1,5 @@
 import type { ReportDesignerProfile } from '../adapters.js';
-import type {
-  ReportDesignerConfig,
-  ReportSelectionTarget,
-} from '../types.js';
+import type { ReportDesignerConfig, ReportSelectionTarget } from '../types.js';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 
 export function resolveInspectorSchemaForTarget(args: {

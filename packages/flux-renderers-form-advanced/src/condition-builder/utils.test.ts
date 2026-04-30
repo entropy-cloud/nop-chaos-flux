@@ -63,9 +63,7 @@ describe('computeUsedFields', () => {
           {
             id: 'g2',
             conjunction: 'or',
-            children: [
-              { id: 'i1', left: { type: 'field', field: 'deep' }, op: 'equal' },
-            ],
+            children: [{ id: 'i1', left: { type: 'field', field: 'deep' }, op: 'equal' }],
           },
         ],
       },
@@ -146,7 +144,12 @@ describe('groupValuesEqual', () => {
   });
 
   it('returns false for function comparisons', () => {
-    expect(groupValuesEqual(() => {}, () => {})).toBe(false);
+    expect(
+      groupValuesEqual(
+        () => {},
+        () => {},
+      ),
+    ).toBe(false);
   });
 
   it('Date objects are compared as plain objects (no enumerable keys)', () => {

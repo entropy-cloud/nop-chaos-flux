@@ -1,7 +1,18 @@
 import React from 'react';
-import type { BaseSchema, CompiledValidationBehavior, FormRuntime, RendererComponentProps, RendererDefinition, RuntimeFieldRegistration } from '@nop-chaos/flux-core';
+import type {
+  BaseSchema,
+  CompiledValidationBehavior,
+  FormRuntime,
+  RendererComponentProps,
+  RendererDefinition,
+  RuntimeFieldRegistration,
+} from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  useCurrentFormState,
+  useCurrentFormModelGeneration,
+  useScopeSelector,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
 import {
@@ -10,7 +21,7 @@ import {
   getFieldValidationBehavior,
   shouldValidateOn,
   useCompositeChildFieldState,
-  useFormFieldController
+  useFormFieldController,
 } from '@nop-chaos/flux-renderers-form';
 import type { ArrayEditorItem, ArrayEditorSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint } from '@nop-chaos/flux-renderers-form';
@@ -29,12 +40,13 @@ function ArrayEditorRow(props: {
   itemLabel?: string;
   disabled?: boolean;
 }) {
-  const { item, index, name, currentForm, childBehavior, onSync, items, itemLabel, disabled } = props;
+  const { item, index, name, currentForm, childBehavior, onSync, items, itemLabel, disabled } =
+    props;
   const itemPath = `${name}.${index}.value`;
   const itemFieldState = useCompositeChildFieldState(itemPath);
   const itemUi = getChildFieldUiState({
     behavior: childBehavior,
-    fieldState: itemFieldState
+    fieldState: itemFieldState,
   });
 
   return (
@@ -60,7 +72,7 @@ function ArrayEditorRow(props: {
           }}
           onChange={(event) => {
             const nextItems = items.map((candidate, candidateIndex) =>
-              candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
+              candidateIndex === index ? { ...candidate, value: event.target.value } : candidate,
             );
             onSync(nextItems);
 
@@ -83,10 +95,7 @@ function ArrayEditorRow(props: {
             }
           }}
         />
-        <FieldHint
-          errorMessage={itemUi.error?.message}
-          showError={itemUi.showError}
-        />
+        <FieldHint errorMessage={itemUi.error?.message} showError={itemUi.showError} />
       </div>
       <Button
         type="button"
@@ -121,7 +130,12 @@ function toArrayEditorItems(value: unknown): ArrayEditorItem[] {
 
     return {
       id: typeof candidate.id === 'string' ? candidate.id : `item-${index}`,
-      value: typeof candidate.value === 'string' ? candidate.value : typeof item === 'string' ? item : ''
+      value:
+        typeof candidate.value === 'string'
+          ? candidate.value
+          : typeof item === 'string'
+            ? item
+            : '',
     };
   });
 }
@@ -136,7 +150,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   const name = String(props.props.name ?? '');
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required)
+    required: Boolean(props.props.required),
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const itemsRef = React.useRef<ArrayEditorItem[]>([]);
@@ -150,7 +164,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
     },
-    { path: name || undefined }
+    { path: name || undefined },
   );
   const scopeExternalValue = useScopeSelector(
     (scopeData) => (currentForm || !name ? undefined : toArrayEditorItems(getIn(scopeData, name))),
@@ -158,11 +172,14 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
       return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
-    }
+    },
   );
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
   const items = externalValue ?? EMPTY_ARRAY_EDITOR_ITEMS;
-  const childPaths = React.useMemo(() => items.map((_, index) => `${name}.${index}.value`), [items, name]);
+  const childPaths = React.useMemo(
+    () => items.map((_, index) => `${name}.${index}.value`),
+    [items, name],
+  );
 
   React.useEffect(() => {
     if (!arrayItemsEqual(itemsRef.current, items)) {
@@ -192,7 +209,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       currentForm.setValue(name, nextItems);
       void currentForm.validateField(name);
     },
-    [currentForm, name, scope]
+    [currentForm, name, scope],
   );
 
   React.useEffect(() => {
@@ -227,15 +244,15 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           {
             path,
             rule: 'required',
-            message: `${props.props.itemLabel ?? 'Item'} ${Number(match[1]) + 1} is required`
-          }
+            message: `${props.props.itemLabel ?? 'Item'} ${Number(match[1]) + 1} is required`,
+          },
         ];
-      }
+      },
     };
 
     registrationRef.current = registration;
     return currentForm.registerField(registration).unregister;
-    }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
+  }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
 
   return (
     <div className="grid gap-3" data-slot="field-control">
@@ -292,7 +309,13 @@ export const arrayEditorRendererDefinition: RendererDefinition = {
       return typeof schema.name === 'string' ? schema.name : undefined;
     },
     collectRules(schema: BaseSchema) {
-      return [{ kind: 'minItems', value: 1, message: `${schema.label ?? schema.name ?? 'Field'} requires at least one item` }];
-    }
-  }
+      return [
+        {
+          kind: 'minItems',
+          value: 1,
+          message: `${schema.label ?? schema.name ?? 'Field'} requires at least one item`,
+        },
+      ];
+    },
+  },
 };

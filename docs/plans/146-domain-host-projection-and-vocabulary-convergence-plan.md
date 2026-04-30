@@ -95,12 +95,12 @@ Source: `packages/word-editor-renderers/src/word-editor-page.tsx` (lines 118-129
 
 Current `useHostScope()` fields projected into host scope:
 
-| Host Field | Source | Timing | Category | Notes |
-|-----------|--------|--------|----------|-------|
-| `document` | `savedDocument?.data ?? { header, main, footer, charts, codes }` | **Debounced (500ms)** — set via `EditorCanvas.onAutosave` callback | Canonical | This is a persisted/autosave snapshot, NOT the real-time editing state. The `document` field lags behind what the user sees on screen by up to 500ms. The manifest declares it as "Current word document and persisted placeholders." |
-| `datasets` | `datasetStore.getState().datasets` via `useSyncExternalStoreWithSelector` | Real-time | Canonical | Reactive to dataset store mutations. Test in `word-editor-page.test.tsx:148-193` verifies reactivity. |
-| `runtime` | `runtimeHostSummary` computed from `runtimeSnapshot` + `datasets.length` + `charts.length` + `codes.length` | Real-time (editor store driven) | Canonical | Contains: `ready`, `dirty`, `wordCount`, `canUndo`, `canRedo`, `currentPage`, `totalPages`, `scale`, `datasetCount`, `chartCount`, `codeCount`. |
-| `selection` | `editorStore.getState().selection` via `useSyncExternalStoreWithSelector` | Real-time | Canonical | Contains formatting state: `bold`, `italic`, `underline`, `strikeout`, `font`, `size`, `color`, `highlight`, `rowFlex`, `level`, `listType`, `listStyle`, `rowMargin`, `undo`, `redo`. |
+| Host Field  | Source                                                                                                      | Timing                                                             | Category  | Notes                                                                                                                                                                                                                                 |
+| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `document`  | `savedDocument?.data ?? { header, main, footer, charts, codes }`                                            | **Debounced (500ms)** — set via `EditorCanvas.onAutosave` callback | Canonical | This is a persisted/autosave snapshot, NOT the real-time editing state. The `document` field lags behind what the user sees on screen by up to 500ms. The manifest declares it as "Current word document and persisted placeholders." |
+| `datasets`  | `datasetStore.getState().datasets` via `useSyncExternalStoreWithSelector`                                   | Real-time                                                          | Canonical | Reactive to dataset store mutations. Test in `word-editor-page.test.tsx:148-193` verifies reactivity.                                                                                                                                 |
+| `runtime`   | `runtimeHostSummary` computed from `runtimeSnapshot` + `datasets.length` + `charts.length` + `codes.length` | Real-time (editor store driven)                                    | Canonical | Contains: `ready`, `dirty`, `wordCount`, `canUndo`, `canRedo`, `currentPage`, `totalPages`, `scale`, `datasetCount`, `chartCount`, `codeCount`.                                                                                       |
+| `selection` | `editorStore.getState().selection` via `useSyncExternalStoreWithSelector`                                   | Real-time                                                          | Canonical | Contains formatting state: `bold`, `italic`, `underline`, `strikeout`, `font`, `size`, `color`, `highlight`, `rowFlex`, `level`, `listType`, `listStyle`, `rowMargin`, `undo`, `redo`.                                                |
 
 **Identified issues:**
 
@@ -113,6 +113,7 @@ Current `useHostScope()` fields projected into host scope:
 **statusPath publication** (lines 233-252): Publishes a `WordEditorHostStatusSummary` to the parent scope. Fields: `kind`, `dirty`, `busy`, `canUndo`, `canRedo`, `wordCount`, `datasetCount`, `chartCount`, `codeCount`. This is a separate narrow read surface from the host projection.
 
 **Focused verification entry points:**
+
 - `packages/word-editor-renderers/src/__tests__/word-editor-page.test.tsx`: Tests host scope dataset projection reactivity (lines 148-193) and page shell marker (lines 195-223).
 - No existing tests verify `document` timing semantics or `runtimeSnapshot` cross-store aggregation.
 
@@ -122,29 +123,29 @@ Source: `packages/report-designer-renderers/src/host-data.ts` (function `buildRe
 
 Current host projection fields:
 
-| Host Field | Source | Category | Notes |
-|-----------|--------|----------|-------|
-| `designer` | Computed from `ReportDesignerCore` snapshot | Canonical | Contains: `kind`, `documentId`, `documentName`, `selectionTarget`, `selectionKind`, `inspector`, `inspectorPanels`, `fieldDrag`, `preview`, `activeMeta`, `fieldSources`, `fieldSourceCount`, `fieldCount`. |
-| `runtime` | Merged from report-designer + spreadsheet snapshots | Canonical | Contains: `canUndo`, `canRedo`, `previewRunning`, `previewMode`, `dirty`. |
-| `spreadsheet` | From `SpreadsheetRuntimeSnapshot` if available | Canonical | Contains: `workbook`, `activeSheet`, `selection`, `activeCell`, `activeRange`, `runtime`. |
-| `fieldSources` | `snapshot.fieldSources` | Canonical duplicate | Also available as `designer.fieldSources`. |
-| `fieldDrag` | `snapshot.fieldDrag` | Canonical duplicate | Also available as `designer.fieldDrag`. |
-| `inspector` | `snapshot.inspector` | Canonical duplicate | Also available as `designer.inspector`. |
-| `meta` | `snapshot.activeMeta` | Canonical duplicate | Also available as `designer.activeMeta`. |
-| `preview` | `snapshot.preview` | Canonical duplicate | Also available as `designer.preview`. |
-| `inspectorPanels` | `core.getInspectorPanels()` | Canonical duplicate | Also available as `designer.inspectorPanels`. |
-| `selection` | `snapshot.selectionTarget` | **Compatibility alias** | Same value as `target` and `selectionTarget`. |
-| `target` | `snapshot.selectionTarget` | **Compatibility alias** | Same value as `selection` and `selectionTarget`. |
-| `selectionTarget` | `snapshot.selectionTarget` | Canonical | The canonical field name. Also inside `designer.selectionTarget`. |
-| `reportDocument` | Merged report + spreadsheet document | Canonical | Active document snapshot. |
-| `workbook` | From spreadsheet or report snapshot | Canonical duplicate | Derivable from `spreadsheet.workbook` or `reportDocument.spreadsheet.workbook`. |
-| `activeSheet` | Resolved from spreadsheet or report | Canonical duplicate | Derivable from `spreadsheet.activeSheet`. |
-| `activeCell` | From spreadsheet snapshot | Canonical duplicate | Derivable from `spreadsheet.activeCell`. |
-| `activeRange` | From spreadsheet snapshot | Canonical duplicate | Derivable from `spreadsheet.activeRange`. |
-| `canUndo` | Merged report + spreadsheet | Canonical duplicate | Same as `runtime.canUndo`. |
-| `canRedo` | Merged report + spreadsheet | Canonical duplicate | Same as `runtime.canRedo`. |
-| `documentName` | `snapshot.document.name` | Canonical duplicate | Same as `designer.documentName`. |
-| `fieldCount` | Computed via `getFieldCount()` | Canonical duplicate | Same as `designer.fieldCount`. |
+| Host Field        | Source                                              | Category                | Notes                                                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `designer`        | Computed from `ReportDesignerCore` snapshot         | Canonical               | Contains: `kind`, `documentId`, `documentName`, `selectionTarget`, `selectionKind`, `inspector`, `inspectorPanels`, `fieldDrag`, `preview`, `activeMeta`, `fieldSources`, `fieldSourceCount`, `fieldCount`. |
+| `runtime`         | Merged from report-designer + spreadsheet snapshots | Canonical               | Contains: `canUndo`, `canRedo`, `previewRunning`, `previewMode`, `dirty`.                                                                                                                                   |
+| `spreadsheet`     | From `SpreadsheetRuntimeSnapshot` if available      | Canonical               | Contains: `workbook`, `activeSheet`, `selection`, `activeCell`, `activeRange`, `runtime`.                                                                                                                   |
+| `fieldSources`    | `snapshot.fieldSources`                             | Canonical duplicate     | Also available as `designer.fieldSources`.                                                                                                                                                                  |
+| `fieldDrag`       | `snapshot.fieldDrag`                                | Canonical duplicate     | Also available as `designer.fieldDrag`.                                                                                                                                                                     |
+| `inspector`       | `snapshot.inspector`                                | Canonical duplicate     | Also available as `designer.inspector`.                                                                                                                                                                     |
+| `meta`            | `snapshot.activeMeta`                               | Canonical duplicate     | Also available as `designer.activeMeta`.                                                                                                                                                                    |
+| `preview`         | `snapshot.preview`                                  | Canonical duplicate     | Also available as `designer.preview`.                                                                                                                                                                       |
+| `inspectorPanels` | `core.getInspectorPanels()`                         | Canonical duplicate     | Also available as `designer.inspectorPanels`.                                                                                                                                                               |
+| `selection`       | `snapshot.selectionTarget`                          | **Compatibility alias** | Same value as `target` and `selectionTarget`.                                                                                                                                                               |
+| `target`          | `snapshot.selectionTarget`                          | **Compatibility alias** | Same value as `selection` and `selectionTarget`.                                                                                                                                                            |
+| `selectionTarget` | `snapshot.selectionTarget`                          | Canonical               | The canonical field name. Also inside `designer.selectionTarget`.                                                                                                                                           |
+| `reportDocument`  | Merged report + spreadsheet document                | Canonical               | Active document snapshot.                                                                                                                                                                                   |
+| `workbook`        | From spreadsheet or report snapshot                 | Canonical duplicate     | Derivable from `spreadsheet.workbook` or `reportDocument.spreadsheet.workbook`.                                                                                                                             |
+| `activeSheet`     | Resolved from spreadsheet or report                 | Canonical duplicate     | Derivable from `spreadsheet.activeSheet`.                                                                                                                                                                   |
+| `activeCell`      | From spreadsheet snapshot                           | Canonical duplicate     | Derivable from `spreadsheet.activeCell`.                                                                                                                                                                    |
+| `activeRange`     | From spreadsheet snapshot                           | Canonical duplicate     | Derivable from `spreadsheet.activeRange`.                                                                                                                                                                   |
+| `canUndo`         | Merged report + spreadsheet                         | Canonical duplicate     | Same as `runtime.canUndo`.                                                                                                                                                                                  |
+| `canRedo`         | Merged report + spreadsheet                         | Canonical duplicate     | Same as `runtime.canRedo`.                                                                                                                                                                                  |
+| `documentName`    | `snapshot.document.name`                            | Canonical duplicate     | Same as `designer.documentName`.                                                                                                                                                                            |
+| `fieldCount`      | Computed via `getFieldCount()`                      | Canonical duplicate     | Same as `designer.fieldCount`.                                                                                                                                                                              |
 
 **Identified issues:**
 
@@ -157,6 +158,7 @@ Current host projection fields:
 **statusPath publication** (`page-renderer.tsx` lines 186-202): Publishes `ReportDesignerHostStatusSummary` with: `kind`, `dirty`, `busy`, `canUndo`, `canRedo`, `previewRunning`, `selectionKind`, `fieldSourceCount`.
 
 **Focused verification entry points:**
+
 - `packages/report-designer-renderers/src/renderers.integration.test.tsx`:
   - Line 389-417: Tests `target` and `selection` aliases reactivity via `ReportTargetKindProbe`
   - Line 358-387: Tests `runtime.dirty` projection
@@ -168,47 +170,49 @@ Current host projection fields:
 
 **Word Editor:**
 
-| Field | Status | Action |
-|-------|--------|--------|
-| `document` | Canonical, but **semantically confused** (autosave vs real-time) | Phase 2 will clarify timing without renaming. The field stays canonical. |
-| `datasets` | Canonical | No change. |
-| `runtime` | Canonical | No change. Phase 2 will fix cross-store selector allocation. |
-| `selection` | Canonical | No change. |
+| Field       | Status                                                           | Action                                                                   |
+| ----------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `document`  | Canonical, but **semantically confused** (autosave vs real-time) | Phase 2 will clarify timing without renaming. The field stays canonical. |
+| `datasets`  | Canonical                                                        | No change.                                                               |
+| `runtime`   | Canonical                                                        | No change. Phase 2 will fix cross-store selector allocation.             |
+| `selection` | Canonical                                                        | No change.                                                               |
 
 No word-editor compatibility aliases needed. The contract is already narrow (4 fields).
 
 **Report Designer:**
 
-| Field | Status | Action |
-|-------|--------|--------|
-| `designer` | Canonical | No change. |
-| `runtime` | Canonical | No change. |
-| `spreadsheet` | Canonical | No change. |
-| `selectionTarget` | Canonical | Promote as the canonical selection field. |
-| `selection` | **Compatibility alias** for `selectionTarget` | Keep for now. Phase 3 will limit to compat layer. |
-| `target` | **Compatibility alias** for `selectionTarget` | Keep for now. Phase 3 will limit to compat layer. |
-| `reportDocument` | Canonical | No change. |
-| `fieldSources`, `fieldDrag`, `inspector`, `meta`, `preview`, `inspectorPanels` | **Convenience mirrors** of `designer.*` | Phase 3 will evaluate which to keep as convenience vs deprecate. |
-| `workbook`, `activeSheet`, `activeCell`, `activeRange` | **Convenience mirrors** of `spreadsheet.*` | Phase 3 will evaluate. |
-| `canUndo`, `canRedo`, `documentName`, `fieldCount` | **Convenience mirrors** of `runtime.*`/`designer.*` | Phase 3 will evaluate. |
+| Field                                                                          | Status                                              | Action                                                           |
+| ------------------------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------- |
+| `designer`                                                                     | Canonical                                           | No change.                                                       |
+| `runtime`                                                                      | Canonical                                           | No change.                                                       |
+| `spreadsheet`                                                                  | Canonical                                           | No change.                                                       |
+| `selectionTarget`                                                              | Canonical                                           | Promote as the canonical selection field.                        |
+| `selection`                                                                    | **Compatibility alias** for `selectionTarget`       | Keep for now. Phase 3 will limit to compat layer.                |
+| `target`                                                                       | **Compatibility alias** for `selectionTarget`       | Keep for now. Phase 3 will limit to compat layer.                |
+| `reportDocument`                                                               | Canonical                                           | No change.                                                       |
+| `fieldSources`, `fieldDrag`, `inspector`, `meta`, `preview`, `inspectorPanels` | **Convenience mirrors** of `designer.*`             | Phase 3 will evaluate which to keep as convenience vs deprecate. |
+| `workbook`, `activeSheet`, `activeCell`, `activeRange`                         | **Convenience mirrors** of `spreadsheet.*`          | Phase 3 will evaluate.                                           |
+| `canUndo`, `canRedo`, `documentName`, `fieldCount`                             | **Convenience mirrors** of `runtime.*`/`designer.*` | Phase 3 will evaluate.                                           |
 
 #### Phase 1 Docs Owner Mapping
 
-| Doc | Current State | Owner | Action Needed |
-|-----|---------------|-------|---------------|
-| `docs/components/word-editor-page/design.md` | Section 7 lists `document`, `datasets`, `runtime`, `selection` but doesn't clarify timing | Phase 2 | Update `document` description to clarify it's an autosave snapshot, not real-time editor content. Fix section 6 "left panel default" wording to match live code (left=datasets/fields, right=OutlinePanel). |
-| `docs/components/report-designer-page/design.md` | Section 7 mentions host projection but lacks vocabulary definition | Phase 3 | Add canonical vocabulary section, document compat aliases. |
-| `docs/architecture/word-editor/design.md` | Mentions host projection scope but doesn't clarify `document` timing | Phase 2 | Add host projection timing semantics. |
-| `docs/architecture/report-designer/design.md` | Section 11 defines host scope fields but doesn't distinguish canonical from aliases | Phase 3 | Update section 11 to match canonical/alias policy. |
+| Doc                                              | Current State                                                                             | Owner   | Action Needed                                                                                                                                                                                               |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/components/word-editor-page/design.md`     | Section 7 lists `document`, `datasets`, `runtime`, `selection` but doesn't clarify timing | Phase 2 | Update `document` description to clarify it's an autosave snapshot, not real-time editor content. Fix section 6 "left panel default" wording to match live code (left=datasets/fields, right=OutlinePanel). |
+| `docs/components/report-designer-page/design.md` | Section 7 mentions host projection but lacks vocabulary definition                        | Phase 3 | Add canonical vocabulary section, document compat aliases.                                                                                                                                                  |
+| `docs/architecture/word-editor/design.md`        | Mentions host projection scope but doesn't clarify `document` timing                      | Phase 2 | Add host projection timing semantics.                                                                                                                                                                       |
+| `docs/architecture/report-designer/design.md`    | Section 11 defines host scope fields but doesn't distinguish canonical from aliases       | Phase 3 | Update section 11 to match canonical/alias policy.                                                                                                                                                          |
 
 #### Phase 1 Focused Verification Map
 
 **Word Editor tests that depend on host projection:**
+
 - `word-editor-page.test.tsx:148-193`: Verifies `datasets` host scope reactivity — no alias dependency, canonical field only.
 - `word-editor-page.test.tsx:195-223`: Verifies page shell marker — no host projection dependency.
 - **No tests verify `document` timing or `runtime` cross-store aggregation.** Phase 2 will need to add these.
 
 **Report Designer tests that depend on host projection aliases:**
+
 - `renderers.integration.test.tsx:80`: `ReportTargetKindProbe` reads `data.target?.kind ?? data.selection?.kind` — **depends on both aliases**.
 - `renderers.integration.test.tsx:90`: `ReportSpreadsheetA1Probe` reads `data.spreadsheet?.activeSheet?.cells?.A1?.value ?? data.activeSheet?.cells?.A1?.value` — **depends on top-level convenience mirror**.
 - `renderers.integration.test.tsx:70-71`: `ReportRuntimeDirtyProbe` reads `data.runtime?.dirty` — canonical field, no alias.

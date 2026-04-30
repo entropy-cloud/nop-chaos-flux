@@ -97,9 +97,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions): UseCodeMirrorResul
     if (!editorView) return;
 
     editorView.dispatch({
-      effects: readOnlyCompartment.reconfigure(
-        EditorState.readOnly.of(options.readOnly ?? false),
-      ),
+      effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(options.readOnly ?? false)),
     });
   }, [options.readOnly]);
 

@@ -55,13 +55,14 @@ Targets: `packages/flow-designer-renderers/src/`, focused tests
 
 **Audit Results (2026-04-16):**
 
-| Category | Count | Status |
-|----------|-------|--------|
-| Already using `designer:*` | 10 | Correctly routed |
-| Should migrate to `designer:*` | 31 | Need migration |
-| Should remain direct | ~12 | Accepted remainder |
+| Category                       | Count | Status             |
+| ------------------------------ | ----- | ------------------ |
+| Already using `designer:*`     | 10    | Correctly routed   |
+| Should migrate to `designer:*` | 31    | Need migration     |
+| Should remain direct           | ~12   | Accepted remainder |
 
 **Already Correctly Using `designer:*`:**
+
 - `designer-toolbar.tsx` - `toCommand()` mapping for undo, redo, toggle-grid, toggle-palette, toggle-inspector, restore, save, export
 - `designer-page.tsx` - `designer:navigate-back` via `actionScope?.resolve()`
 - `designer-action-provider.ts` - Full namespace provider implementation
@@ -73,6 +74,7 @@ Targets: `packages/flow-designer-renderers/src/`, focused tests
 The purpose of `designer:*` namespace is to expose capabilities to **external schemas** that want to invoke Flow Designer operations via action strings. Internal components using direct dispatch is legitimate owner-internal behavior.
 
 **Revised classification:**
+
 - Inspector, Palette, Node/Edge overlays, WorkbenchShell: **Owner-internal** (not schema-rendered)
 - Toolbar buttons: Already use `designer:*` action strings via `toCommand()`, then dispatch — this is correct because toolbar config comes from schema
 - Keyboard shortcuts: Could be exposed via `designer:*` for schema override, but current direct dispatch is acceptable owner-internal behavior
@@ -80,6 +82,7 @@ The purpose of `designer:*` namespace is to expose capabilities to **external sc
 **Conclusion:** The current implementation is architecturally correct. The `designer:*` namespace provider exists and is complete. Internal components using direct dispatch is the intended design for owner-internal UI.
 
 **Accepted Owner-Internal Remainder (~12 interactions):**
+
 - Canvas selection: `clearSelection`/`selectNode`/`selectEdge` on canvas click events
 - Canvas connection: `addEdge`/`reconnectEdge` from xyflow connect callbacks
 - Node position: `moveNode` from xyflow drag-end callback
@@ -139,10 +142,12 @@ Targets: `docs/architecture/action-scope-and-imports.md`, `docs/architecture/flo
 **Phase 3 Results (2026-04-16):**
 
 Documentation updated:
+
 - `docs/architecture/action-scope-and-imports.md:57` - Updated to clarify that internal components using direct dispatch is correct owner-internal behavior, not "mixed boundary" or "pressure point"
 - `docs/architecture/action-scope-and-imports.md:975` - Updated "implementation debt" wording to "correct owner-internal behavior"
 
 The boundary is now explicitly documented:
+
 - **Schema-facing**: External schema → `designer:*` action strings → ActionScope resolution
 - **Owner-internal**: Inspector, Palette, Canvas → direct `dispatch(command)` → core execution
 

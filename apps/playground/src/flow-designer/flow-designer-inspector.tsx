@@ -17,7 +17,7 @@ function NodeTypeBadge({ type }: { type: string }) {
     task: '⚙',
     condition: '◇',
     parallel: '⫼',
-    loop: '↻'
+    loop: '↻',
   };
   return (
     <span data-slot="flow-designer-type-badge" data-type={type}>
@@ -29,7 +29,7 @@ function NodeTypeBadge({ type }: { type: string }) {
 function NodeSpecificFields({
   nodeType,
   data,
-  onUpdate
+  onUpdate,
 }: {
   nodeType: string;
   data: Record<string, unknown>;
@@ -108,7 +108,7 @@ export function FlowDesignerInspector({
   onUpdateNode,
   onDeleteNode,
   onUpdateEdge,
-  onDeleteEdge
+  onDeleteEdge,
 }: FlowDesignerInspectorProps) {
   const node = snapshot.activeNode;
   const edge = snapshot.activeEdge;
@@ -151,11 +151,7 @@ export function FlowDesignerInspector({
               placeholder="Enter description"
             />
           </div>
-          <NodeSpecificFields
-            nodeType={node.type}
-            data={node.data}
-            onUpdate={handleNodeUpdate}
-          />
+          <NodeSpecificFields nodeType={node.type} data={node.data} onUpdate={handleNodeUpdate} />
           <div data-slot="flow-designer-inspector-actions">
             <Button
               variant="destructive"
@@ -212,7 +208,9 @@ export function FlowDesignerInspector({
         </div>
       ) : (
         <div data-slot="flow-designer-inspector" data-empty="">
-          <p data-slot="flow-designer-inspector-empty-text">Select a node or edge to edit its properties</p>
+          <p data-slot="flow-designer-inspector-empty-text">
+            Select a node or edge to edit its properties
+          </p>
         </div>
       )}
     </div>

@@ -39,7 +39,7 @@ describe('createManagedPageRuntime', () => {
     const customScope = createScopeRef({
       id: 'custom-page',
       path: '$custom',
-      initialData: { z: 99 }
+      initialData: { z: 99 },
     });
     const rt = createManagedPageRuntime({ scope: customScope });
     expect(rt.scope.id).toBe('custom-page');
@@ -82,7 +82,7 @@ describe('createManagedPageRuntime', () => {
         paths: ['*'],
         sourceScopeId: 'page',
         kind: 'replace',
-        revision: expect.any(Number)
+        revision: expect.any(Number),
       });
     });
 
@@ -114,11 +114,14 @@ describe('createManagedPageRuntime', () => {
 
     it('setSnapshot records provided change', () => {
       const rt = createManagedPageRuntime({ data: { x: 0 } });
-      rt.scope.store?.setSnapshot({ x: 10 }, {
-        paths: ['x'],
-        sourceScopeId: 'external',
-        kind: 'merge'
-      });
+      rt.scope.store?.setSnapshot(
+        { x: 10 },
+        {
+          paths: ['x'],
+          sourceScopeId: 'external',
+          kind: 'merge',
+        },
+      );
       const change = rt.scope.store?.getLastChange();
       expect(change?.paths).toEqual(['x']);
       expect(change?.sourceScopeId).toBe('external');

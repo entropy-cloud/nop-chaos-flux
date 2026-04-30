@@ -8,10 +8,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { useCurrentFormModelGeneration, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import {
-  formLabelFieldRule,
-  useFormFieldController,
-} from '@nop-chaos/flux-renderers-form';
+import { formLabelFieldRule, useFormFieldController } from '@nop-chaos/flux-renderers-form';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import type {
@@ -155,7 +152,7 @@ function PickerModeContent({
               <span className={hasConditions ? '' : 'text-muted-foreground'}>
                 {hasConditions
                   ? getConditionCountLabel(value.children.length)
-                  : schema.placeholder ?? t('conditionBuilder.pickerPlaceholder')}
+                  : (schema.placeholder ?? t('conditionBuilder.pickerPlaceholder'))}
               </span>
               <ChevronDownIcon className="size-4 text-muted-foreground" />
             </Button>
@@ -194,7 +191,9 @@ export const conditionBuilderRendererDefinition: RendererDefinition = {
       if (schema.required) {
         rules.push({
           kind: 'required',
-          message: getRequiredMessage(String(schema.label ?? schema.name ?? t('conditionBuilder.conditionLabel'))),
+          message: getRequiredMessage(
+            String(schema.label ?? schema.name ?? t('conditionBuilder.conditionLabel')),
+          ),
         });
       }
       return rules;

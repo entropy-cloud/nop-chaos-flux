@@ -7,8 +7,8 @@ vi.mock('@nop-chaos/flux-formula', () => ({
     hasExpression: () => false,
     compileExpression: (src: string) => ({ kind: 'expression', source: src, exec: () => src }),
     compileTemplate: (src: string) => ({ kind: 'template', source: src, exec: () => src }),
-    compileValue: (val: unknown) => ({ kind: 'static', value: val })
-  })
+    compileValue: (val: unknown) => ({ kind: 'static', value: val }),
+  }),
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
@@ -16,31 +16,35 @@ vi.mock('@nop-chaos/flux-react', () => ({
     return function MockSchemaRenderer({ schema }: { schema: Record<string, unknown> }) {
       const config = schema.config as Record<string, unknown> | undefined;
       const mode = config?.documentMode ?? 'graph';
-      return <div data-testid="designer-page-mock" data-mode={mode as string}>Designer Page Rendered</div>;
+      return (
+        <div data-testid="designer-page-mock" data-mode={mode as string}>
+          Designer Page Rendered
+        </div>
+      );
     };
   },
   createDefaultRegistry: () => ({ register: () => undefined }),
-  createDefaultEnv: () => ({ fetcher: async () => ({ ok: true }), notify: () => undefined })
+  createDefaultEnv: () => ({ fetcher: async () => ({ ok: true }), notify: () => undefined }),
 }));
 
 vi.mock('@nop-chaos/flux-renderers-basic', () => ({
-  registerBasicRenderers: () => undefined
+  registerBasicRenderers: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-renderers-form', () => ({
-  registerFormRenderers: () => undefined
+  registerFormRenderers: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-renderers-form-advanced', () => ({
-  registerFormAdvancedRenderers: () => undefined
+  registerFormAdvancedRenderers: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-renderers-data', () => ({
-  registerDataRenderers: () => undefined
+  registerDataRenderers: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flow-designer-renderers', () => ({
-  registerFlowDesignerRenderers: () => undefined
+  registerFlowDesignerRenderers: () => undefined,
 }));
 
 describe('FlowDesignerPage', () => {

@@ -81,7 +81,7 @@ describe('computeRefreshErrorRetention', () => {
         kept: [{ message: 'keep' } as any],
         changed: [{ message: 'drop' } as any],
         removed: [{ message: 'gone' } as any],
-      })
+      }),
     ).toEqual({
       kept: [{ message: 'keep' }],
     });
@@ -93,7 +93,10 @@ describe('executeFormSubmit', () => {
     const active = createSubmitInput();
     active.submittingState.set(true);
 
-    await expect(executeFormSubmit(active.input)).resolves.toMatchObject({ ok: false, cancelled: true });
+    await expect(executeFormSubmit(active.input)).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+    });
 
     const disposed = createSubmitInput({
       sharedState: {
@@ -101,26 +104,33 @@ describe('executeFormSubmit', () => {
         lifecycleState: 'disposed',
         runtimeFieldRegistrations: new Map(),
         childContracts: new Map(),
-      }
+      },
     });
-    await expect(executeFormSubmit(disposed.input)).resolves.toMatchObject({ ok: false, cancelled: true });
+    await expect(executeFormSubmit(disposed.input)).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+    });
 
     const controller = new AbortController();
     controller.abort();
     const aborted = createSubmitInput();
-    await expect(executeFormSubmit(aborted.input, { signal: controller.signal })).resolves.toMatchObject({ ok: false, cancelled: true });
+    await expect(
+      executeFormSubmit(aborted.input, { signal: controller.signal }),
+    ).resolves.toMatchObject({ ok: false, cancelled: true });
   });
 
   it('returns validation failure or validate-error lifecycle results', async () => {
     const lifecycleResult = { ok: false, data: { via: 'lifecycle' } };
     const submitSetup = createSubmitInput({
       sharedState: {
-        runtimeFieldRegistrations: new Map([
-          ['name', { registration: { path: 'name' } }],
-        ]),
+        runtimeFieldRegistrations: new Map([['name', { registration: { path: 'name' } }]]),
       },
       input: {
-        validateForm: vi.fn().mockResolvedValue({ ok: false, errors: [{ message: 'required' }], fieldErrors: { name: 'required' } }),
+        validateForm: vi.fn().mockResolvedValue({
+          ok: false,
+          errors: [{ message: 'required' }],
+          fieldErrors: { name: 'required' },
+        }),
         getLifecycleHandlers: () => ({
           onValidateError: vi.fn().mockResolvedValue(lifecycleResult),
         }),
@@ -133,12 +143,14 @@ describe('executeFormSubmit', () => {
 
     const bareFailure = createSubmitInput({
       sharedState: {
-        runtimeFieldRegistrations: new Map([
-          ['name', { registration: { path: 'name' } }],
-        ]),
+        runtimeFieldRegistrations: new Map([['name', { registration: { path: 'name' } }]]),
       },
       input: {
-        validateForm: vi.fn().mockResolvedValue({ ok: false, errors: [{ message: 'required' }], fieldErrors: { name: 'required' } }),
+        validateForm: vi.fn().mockResolvedValue({
+          ok: false,
+          errors: [{ message: 'required' }],
+          fieldErrors: { name: 'required' },
+        }),
       },
     });
 
@@ -150,7 +162,9 @@ describe('executeFormSubmit', () => {
   });
 
   it('handles child validation failures before submitAction runs', async () => {
-    const childValidation = vi.fn().mockResolvedValue({ ok: false, errors: [{ message: 'child-error' }] });
+    const childValidation = vi
+      .fn()
+      .mockResolvedValue({ ok: false, errors: [{ message: 'child-error' }] });
     const submitAction = vi.fn();
     const setup = createSubmitInput({
       sharedState: {
@@ -190,24 +204,48 @@ describe('executeFormSubmit', () => {
     };
 
     lifecycleHandlers.submitAction.mockResolvedValueOnce(successResult);
-    const successSetup = createSubmitInput({ input: { getLifecycleHandlers: () => lifecycleHandlers } });
-    await expect(executeFormSubmit(successSetup.input, { interactionId: 'submit-1' })).resolves.toEqual({ ok: true, data: { wrapped: 'success' } });
+    const successSetup = createSubmitInput({
+      input: { getLifecycleHandlers: () => lifecycleHandlers },
+    });
+    await expect(
+      executeFormSubmit(successSetup.input, { interactionId: 'submit-1' }),
+    ).resolves.toEqual({ ok: true, data: { wrapped: 'success' } });
 
     lifecycleHandlers.submitAction.mockResolvedValueOnce({ ok: false, error: new Error('failed') });
-    const failureSetup = createSubmitInput({ input: { getLifecycleHandlers: () => lifecycleHandlers } });
-    await expect(executeFormSubmit(failureSetup.input)).resolves.toEqual({ ok: false, data: { wrapped: 'failure' } });
+    const failureSetup = createSubmitInput({
+      input: { getLifecycleHandlers: () => lifecycleHandlers },
+    });
+    await expect(executeFormSubmit(failureSetup.input)).resolves.toEqual({
+      ok: false,
+      data: { wrapped: 'failure' },
+    });
 
     lifecycleHandlers.submitAction.mockResolvedValueOnce({ ok: true, skipped: true });
-    const neutralSetup = createSubmitInput({ input: { getLifecycleHandlers: () => lifecycleHandlers } });
-    await expect(executeFormSubmit(neutralSetup.input)).resolves.toEqual({ ok: true, skipped: true });
+    const neutralSetup = createSubmitInput({
+      input: { getLifecycleHandlers: () => lifecycleHandlers },
+    });
+    await expect(executeFormSubmit(neutralSetup.input)).resolves.toEqual({
+      ok: true,
+      skipped: true,
+    });
 
     lifecycleHandlers.submitAction.mockRejectedValueOnce(new Error('boom'));
-    const thrownSetup = createSubmitInput({ input: { getLifecycleHandlers: () => lifecycleHandlers } });
-    await expect(executeFormSubmit(thrownSetup.input)).resolves.toEqual({ ok: false, data: { wrapped: 'failure' } });
+    const thrownSetup = createSubmitInput({
+      input: { getLifecycleHandlers: () => lifecycleHandlers },
+    });
+    await expect(executeFormSubmit(thrownSetup.input)).resolves.toEqual({
+      ok: false,
+      data: { wrapped: 'failure' },
+    });
 
     lifecycleHandlers.submitAction.mockRejectedValueOnce({ name: 'AbortError' });
-    const abortedSetup = createSubmitInput({ input: { getLifecycleHandlers: () => lifecycleHandlers } });
-    await expect(executeFormSubmit(abortedSetup.input)).resolves.toMatchObject({ ok: false, cancelled: true });
+    const abortedSetup = createSubmitInput({
+      input: { getLifecycleHandlers: () => lifecycleHandlers },
+    });
+    await expect(executeFormSubmit(abortedSetup.input)).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+    });
 
     const signalController = new AbortController();
     const signalSetup = createSubmitInput({
@@ -218,9 +256,11 @@ describe('executeFormSubmit', () => {
             return successResult;
           }),
           onSubmitSuccess: successHandler,
-        })
-      }
+        }),
+      },
     });
-    await expect(executeFormSubmit(signalSetup.input, { signal: signalController.signal })).resolves.toMatchObject({ ok: false, cancelled: true });
+    await expect(
+      executeFormSubmit(signalSetup.input, { signal: signalController.signal }),
+    ).resolves.toMatchObject({ ok: false, cancelled: true });
   });
 });

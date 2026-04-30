@@ -9,8 +9,8 @@ const dynamicRendererEnv = {
         data: {
           type: 'badge',
           text: 'Rendered from schemaApi',
-          level: 'info'
-        } as T
+          level: 'info',
+        } as T,
       };
     }
 
@@ -21,8 +21,8 @@ const dynamicRendererEnv = {
         data: {
           type: 'badge',
           text: 'Dynamically rendered badge',
-          level: 'success'
-        } as T
+          level: 'success',
+        } as T,
       };
     }
 
@@ -30,7 +30,7 @@ const dynamicRendererEnv = {
       return {
         ok: true,
         status: 200,
-        data: { type: 'text', text: 'Dynamically rendered text content.' } as T
+        data: { type: 'text', text: 'Dynamically rendered text content.' } as T,
       };
     }
 
@@ -38,16 +38,16 @@ const dynamicRendererEnv = {
       return {
         ok: true,
         status: 200,
-        data: { type: 'button', label: 'A button from dynamic schema', variant: 'secondary' } as T
+        data: { type: 'button', label: 'A button from dynamic schema', variant: 'secondary' } as T,
       };
     }
 
     return {
       ok: true,
       status: 200,
-      data: null as T
+      data: null as T,
     };
-  }
+  },
 };
 
 const staticFromApi = {
@@ -57,14 +57,14 @@ const staticFromApi = {
     {
       type: 'dynamic-renderer',
       schemaApi: {
-        url: '/api/component-lab/dynamic-renderer/static-schema'
+        url: '/api/component-lab/dynamic-renderer/static-schema',
       },
       body: {
         type: 'text',
-        text: 'Loading dynamic schema...'
-      }
-    }
-  ]
+        text: 'Loading dynamic schema...',
+      },
+    },
+  ],
 };
 
 const schemaSwitcher = {
@@ -81,8 +81,8 @@ const schemaSwitcher = {
           variant: 'outline',
           onClick: {
             action: 'setValue',
-            args: { path: 'schemaType', value: 'badge' }
-          }
+            args: { path: 'schemaType', value: 'badge' },
+          },
         },
         {
           type: 'button',
@@ -90,8 +90,8 @@ const schemaSwitcher = {
           variant: 'outline',
           onClick: {
             action: 'setValue',
-            args: { path: 'schemaType', value: 'text' }
-          }
+            args: { path: 'schemaType', value: 'text' },
+          },
         },
         {
           type: 'button',
@@ -99,23 +99,23 @@ const schemaSwitcher = {
           variant: 'outline',
           onClick: {
             action: 'setValue',
-            args: { path: 'schemaType', value: 'button' }
-          }
-        }
-      ]
+            args: { path: 'schemaType', value: 'button' },
+          },
+        },
+      ],
     },
     { type: 'text', text: 'Currently rendering: ${schemaType ?? "(none)"}' },
     {
       type: 'dynamic-renderer',
       schemaApi: {
-        url: '${schemaType === "text" ? "/api/component-lab/dynamic-renderer/by-type/text" : schemaType === "button" ? "/api/component-lab/dynamic-renderer/by-type/button" : "/api/component-lab/dynamic-renderer/by-type"}'
+        url: '${schemaType === "text" ? "/api/component-lab/dynamic-renderer/by-type/text" : schemaType === "button" ? "/api/component-lab/dynamic-renderer/by-type/button" : "/api/component-lab/dynamic-renderer/by-type"}',
       },
       body: {
         type: 'text',
-        text: 'Loading switched schema...'
-      }
-    }
-  ]
+        text: 'Loading switched schema...',
+      },
+    },
+  ],
 };
 
 export function DynamicRendererLabPage() {
@@ -125,19 +125,21 @@ export function DynamicRendererLabPage() {
       scenarios={[
         {
           title: 'Static schema loaded through schemaApi',
-          description: 'The renderer shows a loading placeholder first, then replaces it with the schema returned by schemaApi.',
+          description:
+            'The renderer shows a loading placeholder first, then replaces it with the schema returned by schemaApi.',
           schema: staticFromApi,
-          env: dynamicRendererEnv
+          env: dynamicRendererEnv,
         },
         {
           title: 'Runtime schema switching via buttons',
-          description: 'Click a button to update schemaType in scope. schemaApi re-runs and the dynamic-renderer swaps to the returned schema fragment.',
+          description:
+            'Click a button to update schemaType in scope. schemaApi re-runs and the dynamic-renderer swaps to the returned schema fragment.',
           schema: schemaSwitcher,
           data: {
-            schemaType: 'badge'
+            schemaType: 'badge',
           },
-          env: dynamicRendererEnv
-        }
+          env: dynamicRendererEnv,
+        },
       ]}
     />
   );

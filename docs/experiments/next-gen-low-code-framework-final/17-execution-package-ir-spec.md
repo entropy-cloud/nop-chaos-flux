@@ -394,7 +394,14 @@ interface ValidationModelDefinition {
 
 interface ValidationNodeDefinition {
   path: string;
-  kind: 'scope-root' | 'field' | 'object' | 'array' | 'variant-root' | 'variant-branch' | 'repeated-template';
+  kind:
+    | 'scope-root'
+    | 'field'
+    | 'object'
+    | 'array'
+    | 'variant-root'
+    | 'variant-branch'
+    | 'repeated-template';
   rules: ValidationRuleTemplate[];
   ownerResolution: 'inherit-owner' | 'create-owner' | 'no-owner';
 }
@@ -538,22 +545,23 @@ interface RetryPolicyDefinition {
 
 所有 `*Id` / `*ProgramId` 的权威指向固定如下：
 
-| Field | Must reference |
-| --- | --- |
-| `propsProgramId` | `values[valueId]` |
-| `metaProgramId` | `values[valueId]` |
-| `argsProgramId` | `values[valueId]` |
-| `mappingProgramId` | `values[valueId]` |
-| `valueProgramId` | `values[valueId]` |
-| `exprId` | `expressions[exprId]` |
-| `requestProgramId` | `requests[requestProgramId]` |
-| `watchProgramId` | `values[valueId]` |
-| `whenProgramId` | `values[valueId]` |
-| `actionProgramId` / `actionsProgramId` | `actions[actionId]` |
-| `validationModelId` | `validations[modelId]` |
-| `rendererBindingId` | `renderers[rendererBindingId]` |
-| `transformId` | `transforms[transformId]` |
-```
+| Field                                  | Must reference                 |
+| -------------------------------------- | ------------------------------ |
+| `propsProgramId`                       | `values[valueId]`              |
+| `metaProgramId`                        | `values[valueId]`              |
+| `argsProgramId`                        | `values[valueId]`              |
+| `mappingProgramId`                     | `values[valueId]`              |
+| `valueProgramId`                       | `values[valueId]`              |
+| `exprId`                               | `expressions[exprId]`          |
+| `requestProgramId`                     | `requests[requestProgramId]`   |
+| `watchProgramId`                       | `values[valueId]`              |
+| `whenProgramId`                        | `values[valueId]`              |
+| `actionProgramId` / `actionsProgramId` | `actions[actionId]`            |
+| `validationModelId`                    | `validations[modelId]`         |
+| `rendererBindingId`                    | `renderers[rendererBindingId]` |
+| `transformId`                          | `transforms[transformId]`      |
+
+````
 
 ## 20. Admission IR
 
@@ -572,7 +580,7 @@ interface PackageAdmissionResult {
   disabledFeatures?: string[];
   diagnostics: PackageDiagnosticsBundle;
 }
-```
+````
 
 ## 21. Recovery / Journal IR
 

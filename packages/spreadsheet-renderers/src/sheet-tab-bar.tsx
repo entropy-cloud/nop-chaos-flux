@@ -105,53 +105,53 @@ export function SheetTabBar({
       <div className="ss-sheet-bar">
         <div className="ss-sheet-bar-tabs">
           {visibleSheets.map((sheet) => {
-          const isActive = sheet.id === activeSheetId;
-          const isRenaming = renamingSheetId === sheet.id;
+            const isActive = sheet.id === activeSheetId;
+            const isRenaming = renamingSheetId === sheet.id;
 
-          return (
-            <Button
-              key={sheet.id}
-              variant="ghost"
-              size="xs"
-              className="ss-sheet-tab"
-              data-active={isActive || undefined}
-              onClick={() => handleTabClick(sheet.id)}
-              onDoubleClick={() => handleTabDoubleClick(sheet.id, sheet.name)}
-            >
-              {isRenaming ? (
-                <Input
-                  ref={renameInputRef}
-                  className="ss-sheet-tab-rename"
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onBlur={handleRenameSubmit}
-                  onKeyDown={handleRenameKeyDown}
-                  autoFocus
-                  size="sm"
-                />
-              ) : (
-                <>
-                  {sheet.name}
-                  {sheet.tabColor && (
-                    <span
-                      className="ss-sheet-tab-color"
-                      style={{ backgroundColor: sheet.tabColor }}
-                    />
-                  )}
-                  {onRemoveSheet && canRemoveSheet && (
-                    <span
-                      className="ss-sheet-tab-close"
-                      onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
-                      aria-label="Remove sheet"
-                    >
-                      ×
-                    </span>
-                  )}
-                </>
-              )}
-            </Button>
-          );
-        })}
+            return (
+              <Button
+                key={sheet.id}
+                variant="ghost"
+                size="xs"
+                className="ss-sheet-tab"
+                data-active={isActive || undefined}
+                onClick={() => handleTabClick(sheet.id)}
+                onDoubleClick={() => handleTabDoubleClick(sheet.id, sheet.name)}
+              >
+                {isRenaming ? (
+                  <Input
+                    ref={renameInputRef}
+                    className="ss-sheet-tab-rename"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onBlur={handleRenameSubmit}
+                    onKeyDown={handleRenameKeyDown}
+                    autoFocus
+                    size="sm"
+                  />
+                ) : (
+                  <>
+                    {sheet.name}
+                    {sheet.tabColor && (
+                      <span
+                        className="ss-sheet-tab-color"
+                        style={{ backgroundColor: sheet.tabColor }}
+                      />
+                    )}
+                    {onRemoveSheet && canRemoveSheet && (
+                      <span
+                        className="ss-sheet-tab-close"
+                        onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
+                        aria-label="Remove sheet"
+                      >
+                        ×
+                      </span>
+                    )}
+                  </>
+                )}
+              </Button>
+            );
+          })}
         </div>
         <Button
           variant="ghost"
@@ -173,8 +173,12 @@ export function SheetTabBar({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>{t('flux.common.cancel')}</DialogClose>
-            <Button variant="destructive" onClick={handleConfirmDelete}>{t('flux.common.delete')}</Button>
+            <DialogClose render={<Button variant="outline" />}>
+              {t('flux.common.cancel')}
+            </DialogClose>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              {t('flux.common.delete')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

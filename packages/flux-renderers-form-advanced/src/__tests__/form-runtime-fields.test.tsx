@@ -26,36 +26,36 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
           type: 'form',
           showErrorOn: 'submit',
           data: {
-            tags: []
+            tags: [],
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/tags',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'tag-list',
               name: 'tags',
               label: 'Tag List',
-              tags: ['alpha', 'beta']
-            }
+              tags: ['alpha', 'beta'],
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit tags',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit tags'));
@@ -94,36 +94,36 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
           type: 'form',
           showErrorOn: 'submit',
           data: {
-            metadata: []
+            metadata: [],
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/metadata',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'key-value',
               name: 'metadata',
               label: 'Metadata',
-              addLabel: 'Add metadata entry'
-            }
+              addLabel: 'Add metadata entry',
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit metadata',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit metadata'));
@@ -149,7 +149,7 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
     });
 
     expect(submitCalls[0]).toMatchObject({
-      metadata: [{ key: 'env', value: 'prod' }]
+      metadata: [{ key: 'env', value: 'prod' }],
     });
   });
 
@@ -165,19 +165,19 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
           type: 'form',
           showErrorOn: ['touched', 'dirty', 'submit'],
           data: {
-            metadata: [{ key: '', value: '' }]
+            metadata: [{ key: '', value: '' }],
           },
           body: [
             {
               type: 'key-value',
               name: 'metadata',
-              label: 'Metadata'
-            }
-          ]
+              label: 'Metadata',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const keyInput = screen.getByPlaceholderText('Key');
@@ -219,36 +219,36 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
           type: 'form',
           showErrorOn: 'submit',
           data: {
-            reviewers: []
+            reviewers: [],
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/reviewers',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'array-editor',
               name: 'reviewers',
               label: 'Reviewers',
-              itemLabel: 'Reviewer'
-            }
+              itemLabel: 'Reviewer',
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit reviewers',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit reviewers'));
@@ -283,20 +283,20 @@ describe('formRendererDefinitions - runtime-registered composite fields', () => 
           type: 'form',
           showErrorOn: ['touched', 'submit'],
           data: {
-            reviewers: [{ value: '' }]
+            reviewers: [{ value: '' }],
           },
           body: [
             {
               type: 'array-editor',
               name: 'reviewers',
               label: 'Reviewers',
-              itemLabel: 'Reviewer'
-            }
-          ]
+              itemLabel: 'Reviewer',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.focus(screen.getByPlaceholderText('Reviewer 1'));

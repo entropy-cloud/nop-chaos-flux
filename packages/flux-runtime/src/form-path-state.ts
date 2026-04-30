@@ -7,7 +7,7 @@ function isNumericPathSegment(segment: string | undefined): boolean {
 export function transformArrayIndexedPath(
   path: string,
   arrayPath: string,
-  transformIndex: (index: number) => number | undefined
+  transformIndex: (index: number) => number | undefined,
 ): string | undefined {
   if (path === arrayPath) {
     return path;
@@ -38,7 +38,7 @@ export function transformArrayIndexedPath(
 function transformValidationError(
   error: ValidationError,
   arrayPath: string,
-  transformIndex: (index: number) => number | undefined
+  transformIndex: (index: number) => number | undefined,
 ): ValidationError | undefined {
   const mappedPath = transformArrayIndexedPath(error.path, arrayPath, transformIndex);
 
@@ -47,7 +47,7 @@ function transformValidationError(
   }
 
   const mappedOwnerPath = error.ownerPath
-    ? transformArrayIndexedPath(error.ownerPath, arrayPath, transformIndex) ?? error.ownerPath
+    ? (transformArrayIndexedPath(error.ownerPath, arrayPath, transformIndex) ?? error.ownerPath)
     : error.ownerPath;
 
   const mappedRelatedPaths = error.relatedPaths?.map((relatedPath) => {
@@ -55,7 +55,11 @@ function transformValidationError(
     return mappedRelatedPath ?? relatedPath;
   });
 
-  if (mappedPath === error.path && mappedOwnerPath === error.ownerPath && !mappedRelatedPaths?.some((p, i) => p !== error.relatedPaths?.[i])) {
+  if (
+    mappedPath === error.path &&
+    mappedOwnerPath === error.ownerPath &&
+    !mappedRelatedPaths?.some((p, i) => p !== error.relatedPaths?.[i])
+  ) {
     return error;
   }
 
@@ -63,14 +67,14 @@ function transformValidationError(
     ...error,
     path: mappedPath,
     ownerPath: mappedOwnerPath,
-    relatedPaths: mappedRelatedPaths
+    relatedPaths: mappedRelatedPaths,
   };
 }
 
 function transformFieldStateErrors(
   errors: ValidationError[] | undefined,
   arrayPath: string,
-  transformIndex: (index: number) => number | undefined
+  transformIndex: (index: number) => number | undefined,
 ): ValidationError[] | undefined {
   if (!errors || errors.length === 0) {
     return undefined;
@@ -91,7 +95,7 @@ function transformFieldStateErrors(
 export function remapFieldStates(
   fieldStates: Record<string, FieldState>,
   arrayPath: string,
-  transformIndex: (index: number) => number | undefined
+  transformIndex: (index: number) => number | undefined,
 ): Record<string, FieldState> {
   const result: Record<string, FieldState> = {};
 
@@ -127,7 +131,7 @@ export function remapFieldStates(
 export function remapBooleanState(
   input: Record<string, boolean>,
   arrayPath: string,
-  transformIndex: (index: number) => number | undefined
+  transformIndex: (index: number) => number | undefined,
 ): Record<string, boolean> {
   const next: Record<string, boolean> = {};
 
@@ -145,7 +149,7 @@ export function remapBooleanState(
 export function remapErrorState(
   input: Record<string, ValidationError[]>,
   arrayPath: string,
-  transformIndex: (index: number) => number | undefined
+  transformIndex: (index: number) => number | undefined,
 ): Record<string, ValidationError[]> {
   const next: Record<string, ValidationError[]> = {};
 

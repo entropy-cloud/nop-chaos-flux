@@ -28,14 +28,14 @@ describe('input renderer source state branches', () => {
               optionsSourceState: {
                 loading: false,
                 status: 'error',
-                error: 'Options failed'
-              }
-            }
-          ]
+                error: 'Options failed',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(screen.getByText('Options failed')).toBeTruthy();
@@ -58,14 +58,14 @@ describe('input renderer source state branches', () => {
               optionsSourceState: {
                 loading: false,
                 status: 'error',
-                error: { message: 'Remote options unavailable' }
-              }
-            }
-          ]
+                error: { message: 'Remote options unavailable' },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(screen.getByText('Remote options unavailable')).toBeTruthy();
@@ -88,21 +88,24 @@ describe('input renderer source state branches', () => {
               optionsSourceState: {
                 loading: false,
                 status: 'error',
-                error: { code: 'bad-gateway' }
-              }
-            }
-          ]
+                error: { code: 'bad-gateway' },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(screen.getByText('Failed to load options.')).toBeTruthy();
   });
 
   it('removes checkbox-group values when an already-selected option is unchecked', async () => {
-    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...formRendererDefinitions,
+      formStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -110,7 +113,7 @@ describe('input renderer source state branches', () => {
         schema={{
           type: 'form',
           data: {
-            tags: ['stable']
+            tags: ['stable'],
           },
           body: [
             {
@@ -119,18 +122,18 @@ describe('input renderer source state branches', () => {
               label: 'Tags',
               options: [
                 { label: 'Stable', value: 'stable' },
-                { label: 'Beta', value: 'beta' }
-              ]
+                { label: 'Beta', value: 'beta' },
+              ],
             },
             {
               type: 'form-state-probe',
-              name: 'tags'
-            }
-          ]
+              name: 'tags',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Stable/ }));

@@ -7,7 +7,7 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux
 function createCompiler(...definitions: RendererDefinition[]) {
   return createSchemaCompiler({
     registry: createRendererRegistry(definitions),
-    expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
   });
 }
 
@@ -22,8 +22,8 @@ const dialogRenderer: RendererDefinition = {
     { key: 'onOpen', kind: 'event' },
     { key: 'onClose', kind: 'event' },
     { key: 'container', kind: 'prop' },
-    { key: 'showMask', kind: 'prop' }
-  ]
+    { key: 'showMask', kind: 'prop' },
+  ],
 };
 
 const drawerRenderer: RendererDefinition = {
@@ -35,8 +35,8 @@ const drawerRenderer: RendererDefinition = {
     { key: 'onOpen', kind: 'event' },
     { key: 'onClose', kind: 'event' },
     { key: 'container', kind: 'prop' },
-    { key: 'showMask', kind: 'prop' }
-  ]
+    { key: 'showMask', kind: 'prop' },
+  ],
 };
 
 const buttonRenderer: RendererDefinition = {
@@ -44,11 +44,17 @@ const buttonRenderer: RendererDefinition = {
   component: noop,
   propContracts: {
     label: { shape: { kind: 'string' }, displayName: 'Label' },
-    variant: { shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'default' }] }, displayName: 'Variant' },
-    size: { shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'default' }] }, displayName: 'Size' },
-    disabled: { shape: { kind: 'boolean' }, displayName: 'Disabled' }
+    variant: {
+      shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'default' }] },
+      displayName: 'Variant',
+    },
+    size: {
+      shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'default' }] },
+      displayName: 'Size',
+    },
+    disabled: { shape: { kind: 'boolean' }, displayName: 'Disabled' },
   },
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 const loopRenderer: RendererDefinition = {
@@ -63,8 +69,8 @@ const loopRenderer: RendererDefinition = {
     { key: 'keyName', kind: 'prop' },
     { key: 'itemData', kind: 'prop' },
     { key: 'keyBy', kind: 'prop' },
-    { key: 'body', kind: 'region', params: ['item', 'index'] }
-  ]
+    { key: 'body', kind: 'region', params: ['item', 'index'] },
+  ],
 };
 
 const recurseRenderer: RendererDefinition = {
@@ -77,8 +83,8 @@ const recurseRenderer: RendererDefinition = {
     { key: 'keyName', kind: 'prop' },
     { key: 'itemData', kind: 'prop' },
     { key: 'keyBy', kind: 'prop' },
-    { key: 'maxDepth', kind: 'prop' }
-  ]
+    { key: 'maxDepth', kind: 'prop' },
+  ],
 };
 
 const tabsRenderer: RendererDefinition = {
@@ -87,8 +93,8 @@ const tabsRenderer: RendererDefinition = {
   regions: ['toolbar'],
   fields: [
     { key: 'onChange', kind: 'event' },
-    { key: 'items', kind: 'prop' }
-  ]
+    { key: 'items', kind: 'prop' },
+  ],
 };
 
 const formRenderer: RendererDefinition = {
@@ -111,14 +117,14 @@ const formRenderer: RendererDefinition = {
             fields: {
               validateWhenHidden: { kind: 'boolean' },
               clearValueWhenHidden: { kind: 'boolean' },
-              submitWhenHidden: { kind: 'boolean' }
+              submitWhenHidden: { kind: 'boolean' },
             },
-            optional: ['validateWhenHidden', 'clearValueWhenHidden', 'submitWhenHidden']
-          }
-        ]
+            optional: ['validateWhenHidden', 'clearValueWhenHidden', 'submitWhenHidden'],
+          },
+        ],
       },
-      displayName: 'Hidden Field Policy'
-    }
+      displayName: 'Hidden Field Policy',
+    },
   },
   fields: [
     { key: 'initAction', kind: 'event' },
@@ -130,8 +136,8 @@ const formRenderer: RendererDefinition = {
     { key: 'valuesPath', kind: 'prop' },
     { key: 'mode', kind: 'prop' },
     { key: 'labelAlign', kind: 'prop' },
-    { key: 'labelWidth', kind: 'prop' }
-  ]
+    { key: 'labelWidth', kind: 'prop' },
+  ],
 };
 
 const tableRenderer: RendererDefinition = {
@@ -145,8 +151,8 @@ const tableRenderer: RendererDefinition = {
     { key: 'onSelectionChange', kind: 'event' },
     { key: 'onRefresh', kind: 'event' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-    { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' }
-  ]
+    { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' },
+  ],
 };
 
 const treeRenderer: RendererDefinition = {
@@ -161,8 +167,13 @@ const treeRenderer: RendererDefinition = {
     { key: 'initiallyExpanded', kind: 'prop' },
     { key: 'expandOnClickNode', kind: 'prop' },
     { key: 'statusPath', kind: 'prop' },
-    { key: 'node', kind: 'region', params: ['node', 'index', 'depth', 'key', 'parentNode'], isolate: false }
-  ]
+    {
+      key: 'node',
+      kind: 'region',
+      params: ['node', 'index', 'depth', 'key', 'parentNode'],
+      isolate: false,
+    },
+  ],
 };
 
 const chartRenderer: RendererDefinition = {
@@ -172,8 +183,8 @@ const chartRenderer: RendererDefinition = {
     { key: 'onClick', kind: 'event' },
     { key: 'onHover', kind: 'event' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-    { key: 'componentId', kind: 'prop' }
-  ]
+    { key: 'componentId', kind: 'prop' },
+  ],
 };
 
 const crudRenderer: RendererDefinition = {
@@ -183,7 +194,10 @@ const crudRenderer: RendererDefinition = {
     statusPath: { shape: { kind: 'string' }, displayName: 'Status Path' },
     source: { shape: { kind: 'union', anyOf: [] }, displayName: 'Source' },
     queryForm: { shape: { kind: 'object', fields: {} }, displayName: 'Query Form' },
-    columns: { shape: { kind: 'array', item: { kind: 'object', fields: {} } }, displayName: 'Columns' },
+    columns: {
+      shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+      displayName: 'Columns',
+    },
     rowKey: { shape: { kind: 'string' }, displayName: 'Row Key' },
     pageField: { shape: { kind: 'string' }, displayName: 'Page Field' },
     pageSizeField: { shape: { kind: 'string' }, displayName: 'Page Size Field' },
@@ -201,7 +215,7 @@ const crudRenderer: RendererDefinition = {
     sortStatePath: { shape: { kind: 'string' }, displayName: 'Sort Path' },
     filterOwnership: { shape: { kind: 'string' }, displayName: 'Filter Ownership' },
     filterStatePath: { shape: { kind: 'string' }, displayName: 'Filter Path' },
-    columnSettings: { shape: { kind: 'object', fields: {} }, displayName: 'Column Settings' }
+    columnSettings: { shape: { kind: 'object', fields: {} }, displayName: 'Column Settings' },
   },
   fields: [
     { key: 'name', kind: 'prop' },
@@ -214,8 +228,8 @@ const crudRenderer: RendererDefinition = {
     { key: 'onQueryReset', kind: 'event' },
     { key: 'onRowClick', kind: 'event' },
     { key: 'onSelectionChange', kind: 'event' },
-    { key: 'onRefresh', kind: 'event' }
-  ]
+    { key: 'onRefresh', kind: 'event' },
+  ],
 };
 
 const variantFieldRenderer: RendererDefinition = {
@@ -231,8 +245,8 @@ const variantFieldRenderer: RendererDefinition = {
     { key: 'detectVariantAction', kind: 'ignored' },
     { key: 'transformInAction', kind: 'ignored' },
     { key: 'transformOutAction', kind: 'ignored' },
-    { key: 'validateValueAction', kind: 'ignored' }
-  ]
+    { key: 'validateValueAction', kind: 'ignored' },
+  ],
 };
 
 const detailFieldRenderer: RendererDefinition = {
@@ -247,11 +261,14 @@ const detailFieldRenderer: RendererDefinition = {
     { key: 'surface', kind: 'ignored' },
     { key: 'transformInAction', kind: 'ignored' },
     { key: 'validateValueAction', kind: 'ignored' },
-    { key: 'transformOutAction', kind: 'ignored' }
-  ]
+    { key: 'transformOutAction', kind: 'ignored' },
+  ],
 };
 
-function compileNode(compiler: ReturnType<typeof createSchemaCompiler>, schema: Record<string, unknown>) {
+function compileNode(
+  compiler: ReturnType<typeof createSchemaCompiler>,
+  schema: Record<string, unknown>,
+) {
   const compiled = compiler.compile(schema as any);
   return Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 }
@@ -260,7 +277,7 @@ describe('schema property coverage — dialog', () => {
   const textRenderer: RendererDefinition = {
     type: 'text',
     component: noop,
-    fields: [{ key: 'text', kind: 'prop' }]
+    fields: [{ key: 'text', kind: 'prop' }],
   };
   const compiler = createCompiler(dialogRenderer, textRenderer);
 
@@ -268,7 +285,7 @@ describe('schema property coverage — dialog', () => {
     const root = compileNode(compiler, {
       type: 'dialog',
       title: 'My Dialog',
-      actions: [{ type: 'text', text: 'OK' }]
+      actions: [{ type: 'text', text: 'OK' }],
     });
     expect(root.regions.actions).toBeDefined();
   });
@@ -277,7 +294,7 @@ describe('schema property coverage — dialog', () => {
     const root = compileNode(compiler, {
       type: 'dialog',
       title: 'Dialog',
-      container: 'body'
+      container: 'body',
     });
     expect(root.propsProgram.value.container).toBe('body');
   });
@@ -286,7 +303,7 @@ describe('schema property coverage — dialog', () => {
     const root = compileNode(compiler, {
       type: 'dialog',
       title: 'Dialog',
-      onClose: { action: 'closeDialog' }
+      onClose: { action: 'closeDialog' },
     });
     expect(root.eventPlans.onClose).toBeDefined();
   });
@@ -295,7 +312,7 @@ describe('schema property coverage — dialog', () => {
     const root = compileNode(compiler, {
       type: 'dialog',
       title: 'Dialog',
-      onOpen: { action: 'showToast', args: { message: 'opened' } }
+      onOpen: { action: 'showToast', args: { message: 'opened' } },
     });
     expect(root.eventPlans.onOpen).toBeDefined();
   });
@@ -304,7 +321,7 @@ describe('schema property coverage — dialog', () => {
     const root = compileNode(compiler, {
       type: 'dialog',
       title: 'Dialog',
-      showMask: false
+      showMask: false,
     });
     expect(root.propsProgram.value.showMask).toBe(false);
   });
@@ -314,7 +331,7 @@ describe('schema property coverage — drawer', () => {
   const textRenderer: RendererDefinition = {
     type: 'text',
     component: noop,
-    fields: [{ key: 'text', kind: 'prop' }]
+    fields: [{ key: 'text', kind: 'prop' }],
   };
   const compiler = createCompiler(drawerRenderer, textRenderer);
 
@@ -322,7 +339,7 @@ describe('schema property coverage — drawer', () => {
     const root = compileNode(compiler, {
       type: 'drawer',
       title: 'Drawer',
-      actions: [{ type: 'text', text: 'Close' }]
+      actions: [{ type: 'text', text: 'Close' }],
     });
     expect(root.regions.actions).toBeDefined();
   });
@@ -331,7 +348,7 @@ describe('schema property coverage — drawer', () => {
     const root = compileNode(compiler, {
       type: 'drawer',
       title: 'Drawer',
-      container: 'body'
+      container: 'body',
     });
     expect(root.propsProgram.value.container).toBe('body');
   });
@@ -340,7 +357,7 @@ describe('schema property coverage — drawer', () => {
     const root = compileNode(compiler, {
       type: 'drawer',
       title: 'Drawer',
-      onClose: { action: 'closeDrawer' }
+      onClose: { action: 'closeDrawer' },
     });
     expect(root.eventPlans.onClose).toBeDefined();
   });
@@ -349,7 +366,7 @@ describe('schema property coverage — drawer', () => {
     const root = compileNode(compiler, {
       type: 'drawer',
       title: 'Drawer',
-      onOpen: { action: 'showToast', args: { message: 'opened' } }
+      onOpen: { action: 'showToast', args: { message: 'opened' } },
     });
     expect(root.eventPlans.onOpen).toBeDefined();
   });
@@ -358,7 +375,7 @@ describe('schema property coverage — drawer', () => {
     const root = compileNode(compiler, {
       type: 'drawer',
       title: 'Drawer',
-      showMask: true
+      showMask: true,
     });
     expect(root.propsProgram.value.showMask).toBe(true);
   });
@@ -372,7 +389,7 @@ describe('schema property coverage — recurse', () => {
       type: 'recurse',
       items: [],
       itemName: 'child',
-      maxDepth: 3
+      maxDepth: 3,
     });
     expect(root.propsProgram.value.itemName).toBe('child');
   });
@@ -382,7 +399,7 @@ describe('schema property coverage — recurse', () => {
       type: 'recurse',
       items: [],
       indexName: 'idx',
-      maxDepth: 3
+      maxDepth: 3,
     });
     expect(root.propsProgram.value.indexName).toBe('idx');
   });
@@ -392,7 +409,7 @@ describe('schema property coverage — recurse', () => {
       type: 'recurse',
       items: [],
       itemData: { extra: true },
-      maxDepth: 3
+      maxDepth: 3,
     });
     expect(root.propsProgram.value.itemData).toEqual({ extra: true });
   });
@@ -402,7 +419,7 @@ describe('schema property coverage — recurse', () => {
       type: 'recurse',
       items: [],
       keyBy: 'item.id',
-      maxDepth: 3
+      maxDepth: 3,
     });
     expect(root.propsProgram.value.keyBy).toBe('item.id');
   });
@@ -412,7 +429,7 @@ describe('schema property coverage — recurse', () => {
       type: 'recurse',
       items: [],
       keyName: 'nodeId',
-      maxDepth: 3
+      maxDepth: 3,
     });
     expect(root.propsProgram.value.keyName).toBe('nodeId');
   });
@@ -425,7 +442,7 @@ describe('schema property coverage — form', () => {
     const root = compileNode(compiler, {
       type: 'form',
       body: [],
-      labelWidth: 120
+      labelWidth: 120,
     });
     expect(root.propsProgram.value.labelWidth).toBe(120);
   });
@@ -435,7 +452,7 @@ describe('schema property coverage — form', () => {
       type: 'form',
       body: [],
       mode: 'horizontal',
-      labelAlign: 'left'
+      labelAlign: 'left',
     });
     expect(root.propsProgram.value.mode).toBe('horizontal');
     expect(root.propsProgram.value.labelAlign).toBe('left');
@@ -445,7 +462,7 @@ describe('schema property coverage — form', () => {
     const root = compileNode(compiler, {
       type: 'form',
       body: [],
-      statusPath: 'formStatus'
+      statusPath: 'formStatus',
     });
     expect(root.propsProgram.value.statusPath).toBe('formStatus');
   });
@@ -457,8 +474,8 @@ describe('schema property coverage — form', () => {
       hiddenFieldPolicy: {
         validateWhenHidden: false,
         clearValueWhenHidden: true,
-        submitWhenHidden: true
-      }
+        submitWhenHidden: true,
+      },
     });
     expect(root.propsProgram.value.hiddenFieldPolicy.submitWhenHidden).toBe(true);
   });
@@ -470,7 +487,7 @@ describe('schema property coverage — table', () => {
   it('compiles table with loadingSlot', () => {
     const root = compileNode(compiler, {
       type: 'table',
-      loadingSlot: 'Loading...'
+      loadingSlot: 'Loading...',
     });
     expect(root.propsProgram.value.loadingSlot).toBe('Loading...');
   });
@@ -478,7 +495,7 @@ describe('schema property coverage — table', () => {
   it('compiles table with onFilterChange event', () => {
     const root = compileNode(compiler, {
       type: 'table',
-      onFilterChange: { action: 'ajax', args: { url: '/filter' } }
+      onFilterChange: { action: 'ajax', args: { url: '/filter' } },
     });
     expect(root.eventPlans.onFilterChange).toBeDefined();
   });
@@ -486,7 +503,10 @@ describe('schema property coverage — table', () => {
   it('compiles table with onSelectionChange event', () => {
     const root = compileNode(compiler, {
       type: 'table',
-      onSelectionChange: { action: 'setValue', args: { path: 'selected', value: '${selectedKeys}' } }
+      onSelectionChange: {
+        action: 'setValue',
+        args: { path: 'selected', value: '${selectedKeys}' },
+      },
     });
     expect(root.eventPlans.onSelectionChange).toBeDefined();
   });
@@ -494,7 +514,7 @@ describe('schema property coverage — table', () => {
   it('compiles table with onSortChange event', () => {
     const root = compileNode(compiler, {
       type: 'table',
-      onSortChange: { action: 'ajax', args: { url: '/sort' } }
+      onSortChange: { action: 'ajax', args: { url: '/sort' } },
     });
     expect(root.eventPlans.onSortChange).toBeDefined();
   });
@@ -506,7 +526,7 @@ describe('schema property coverage — crud', () => {
   it('compiles crud with defaultParams', () => {
     const root = compileNode(compiler, {
       type: 'crud',
-      defaultParams: { pageSize: 20, status: 'active' }
+      defaultParams: { pageSize: 20, status: 'active' },
     });
     expect(root.propsProgram.value.defaultParams).toEqual({ pageSize: 20, status: 'active' });
   });
@@ -514,7 +534,7 @@ describe('schema property coverage — crud', () => {
   it('compiles crud with onQueryReset event', () => {
     const root = compileNode(compiler, {
       type: 'crud',
-      onQueryReset: { action: 'setValue', args: { path: 'query', value: {} } }
+      onQueryReset: { action: 'setValue', args: { path: 'query', value: {} } },
     });
     expect(root.eventPlans.onQueryReset).toBeDefined();
   });
@@ -522,7 +542,7 @@ describe('schema property coverage — crud', () => {
   it('compiles crud with onRowClick event', () => {
     const root = compileNode(compiler, {
       type: 'crud',
-      onRowClick: { action: 'navigate', args: { url: '/detail/${row.id}' } }
+      onRowClick: { action: 'navigate', args: { url: '/detail/${row.id}' } },
     });
     expect(root.eventPlans.onRowClick).toBeDefined();
   });
@@ -530,7 +550,10 @@ describe('schema property coverage — crud', () => {
   it('compiles crud with onSelectionChange event', () => {
     const root = compileNode(compiler, {
       type: 'crud',
-      onSelectionChange: { action: 'setValue', args: { path: 'selected', value: '${selectedKeys}' } }
+      onSelectionChange: {
+        action: 'setValue',
+        args: { path: 'selected', value: '${selectedKeys}' },
+      },
     });
     expect(root.eventPlans.onSelectionChange).toBeDefined();
   });
@@ -538,7 +561,7 @@ describe('schema property coverage — crud', () => {
   it('compiles crud with selection config', () => {
     const root = compileNode(compiler, {
       type: 'crud',
-      selection: { mode: 'multiple', rowKey: 'id' }
+      selection: { mode: 'multiple', rowKey: 'id' },
     });
     expect(root.propsProgram.value.selection.mode).toBe('multiple');
   });
@@ -548,7 +571,7 @@ describe('schema property coverage — crud', () => {
       type: 'crud',
       source: { formula: '[]' },
       columns: [{ label: 'Name', name: 'name' }],
-      rowKey: 'id'
+      rowKey: 'id',
     });
     expect(root.propsProgram.value.columns).toHaveLength(1);
     expect(root.propsProgram.value.rowKey).toBe('id');
@@ -562,7 +585,7 @@ describe('schema property coverage — tree', () => {
     const root = compileNode(compiler, {
       type: 'tree',
       data: [],
-      childrenKey: 'items'
+      childrenKey: 'items',
     });
     expect(root.propsProgram.value.childrenKey).toBe('items');
   });
@@ -571,7 +594,7 @@ describe('schema property coverage — tree', () => {
     const root = compileNode(compiler, {
       type: 'tree',
       data: [],
-      keyField: 'uid'
+      keyField: 'uid',
     });
     expect(root.propsProgram.value.keyField).toBe('uid');
   });
@@ -580,7 +603,7 @@ describe('schema property coverage — tree', () => {
     const root = compileNode(compiler, {
       type: 'tree',
       data: [],
-      labelField: 'text'
+      labelField: 'text',
     });
     expect(root.propsProgram.value.labelField).toBe('text');
   });
@@ -592,7 +615,7 @@ describe('schema property coverage — chart', () => {
   it('compiles chart with onClick event', () => {
     const root = compileNode(compiler, {
       type: 'chart',
-      onClick: { action: 'showToast', args: { message: 'clicked' } }
+      onClick: { action: 'showToast', args: { message: 'clicked' } },
     });
     expect(root.eventPlans.onClick).toBeDefined();
   });
@@ -600,7 +623,7 @@ describe('schema property coverage — chart', () => {
   it('compiles chart with onHover event', () => {
     const root = compileNode(compiler, {
       type: 'chart',
-      onHover: { action: 'setValue', args: { path: 'hovered', value: true } }
+      onHover: { action: 'setValue', args: { path: 'hovered', value: true } },
     });
     expect(root.eventPlans.onHover).toBeDefined();
   });
@@ -610,19 +633,23 @@ describe('schema property coverage — variant-field', () => {
   const compiler = createCompiler(variantFieldRenderer);
 
   it('accepts transformOutAction as ignored field (no error)', () => {
-    expect(() => compileNode(compiler, {
-      type: 'variant-field',
-      name: 'type',
-      transformOutAction: { action: 'ajax', args: { url: '/transform' } }
-    })).not.toThrow();
+    expect(() =>
+      compileNode(compiler, {
+        type: 'variant-field',
+        name: 'type',
+        transformOutAction: { action: 'ajax', args: { url: '/transform' } },
+      }),
+    ).not.toThrow();
   });
 
   it('accepts validateValueAction as ignored field (no error)', () => {
-    expect(() => compileNode(compiler, {
-      type: 'variant-field',
-      name: 'type',
-      validateValueAction: { action: 'ajax', args: { url: '/validate' } }
-    })).not.toThrow();
+    expect(() =>
+      compileNode(compiler, {
+        type: 'variant-field',
+        name: 'type',
+        validateValueAction: { action: 'ajax', args: { url: '/validate' } },
+      }),
+    ).not.toThrow();
   });
 });
 
@@ -633,7 +660,7 @@ describe('schema property coverage — button', () => {
     const root = compileNode(compiler, {
       type: 'button',
       label: 'Click',
-      size: 'sm'
+      size: 'sm',
     });
     expect(root.propsProgram.value.size).toBe('sm');
   });
@@ -643,7 +670,7 @@ describe('schema property coverage — detail-field', () => {
   const textRenderer: RendererDefinition = {
     type: 'text',
     component: noop,
-    fields: [{ key: 'text', kind: 'prop' }]
+    fields: [{ key: 'text', kind: 'prop' }],
   };
   const compiler = createCompiler(detailFieldRenderer, textRenderer);
 
@@ -651,7 +678,7 @@ describe('schema property coverage — detail-field', () => {
     const root = compileNode(compiler, {
       type: 'detail-field',
       name: 'detail',
-      viewer: { type: 'text', text: 'viewer content' }
+      viewer: { type: 'text', text: 'viewer content' },
     });
     expect(root.regions.viewer).toBeDefined();
   });
@@ -665,7 +692,7 @@ describe('schema property coverage — loop', () => {
       type: 'loop',
       items: [1, 2, 3],
       itemData: { extra: true },
-      body: []
+      body: [],
     });
     expect(root.propsProgram.value.itemData).toEqual({ extra: true });
   });
@@ -678,7 +705,7 @@ describe('schema property coverage — tabs', () => {
     const root = compileNode(compiler, {
       type: 'tabs',
       items: [{ key: 'a', title: 'A', body: [] }],
-      onChange: { action: 'setValue', args: { path: 'tab', value: '${key}' } }
+      onChange: { action: 'setValue', args: { path: 'tab', value: '${key}' } },
     });
     expect(root.eventPlans.onChange).toBeDefined();
   });

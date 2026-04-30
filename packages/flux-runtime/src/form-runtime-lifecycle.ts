@@ -8,7 +8,7 @@ export function isOwnerCompatible(
   oldBoundaryKind: OwnerBoundaryKind,
   newBoundaryKind: OwnerBoundaryKind,
   oldOwnerSlotId: string,
-  newOwnerSlotId: string
+  newOwnerSlotId: string,
 ): boolean {
   return (
     oldBoundaryKind === newBoundaryKind &&
@@ -18,7 +18,10 @@ export function isOwnerCompatible(
   );
 }
 
-export function buildRuleIdentitySet(model: CompiledFormValidationModel, path: string): Set<string> {
+export function buildRuleIdentitySet(
+  model: CompiledFormValidationModel,
+  path: string,
+): Set<string> {
   const node = model.nodes?.[path];
   if (!node) return new Set();
   const set = new Set<string>();
@@ -39,7 +42,7 @@ function setsEqual(a: Set<string>, b: Set<string>): boolean {
 export function computeRefreshErrorRetention(
   oldModel: CompiledFormValidationModel,
   newModel: CompiledFormValidationModel,
-  currentErrors: Record<string, import('@nop-chaos/flux-core').ValidationError[]>
+  currentErrors: Record<string, import('@nop-chaos/flux-core').ValidationError[]>,
 ): Record<string, import('@nop-chaos/flux-core').ValidationError[]> {
   const newNodePaths = new Set(Object.keys(newModel.nodes ?? {}));
   const nextErrors: Record<string, import('@nop-chaos/flux-core').ValidationError[]> = {};

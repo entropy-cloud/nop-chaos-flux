@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-02
 
-
 > **Implementation Status: ✅ COMPLETED**
 > All items implemented: `canvas-bridge.tsx` split into 7 focused files under `designer-xyflow-canvas/`; `DesignerCardCanvasBridge` and `PreviewBridge` removed; schema-driven node body rendering via `RenderNodes`; schema-driven port rendering from `NodeTypeConfig`; edge rendering from `EdgeTypeConfig`. No hardcoded rendering logic remains.
 >
@@ -14,6 +13,7 @@
 Refactor `canvas-bridge.tsx` and related rendering code to be fully driven by `NodeTypeConfig` and `EdgeTypeConfig` JSON schemas, rather than hardcoded rendering logic.
 
 The xyflow canvas renderer should act as a **generic framework** that:
+
 - Reads node/edge type configurations from `DesignerConfig`
 - Delegates visual rendering to flux renderer based on `body` schema
 - Supports configurable icons, ports, toolbars, and appearance
@@ -26,11 +26,11 @@ Before schema-driven refactoring, simplify the current implementation by removin
 
 Current `canvas-bridge.tsx` contains 3 implementations:
 
-| Implementation | Purpose | Status |
-|----------------|---------|--------|
-| `DesignerCardCanvasBridge` | Simple HTML/CSS rendering | ❌ Remove - development artifact |
-| `DesignerXyflowPreviewBridge` | Button-based testing UI | ❌ Remove - development artifact |
-| `DesignerXyflowCanvasBridge` | Real xyflow integration | ✅ Keep - production implementation |
+| Implementation                | Purpose                   | Status                              |
+| ----------------------------- | ------------------------- | ----------------------------------- |
+| `DesignerCardCanvasBridge`    | Simple HTML/CSS rendering | ❌ Remove - development artifact    |
+| `DesignerXyflowPreviewBridge` | Button-based testing UI   | ❌ Remove - development artifact    |
+| `DesignerXyflowCanvasBridge`  | Real xyflow integration   | ✅ Keep - production implementation |
 
 The "bridge" naming suggests an adapter pattern with multiple backends, but we only need xyflow.
 
@@ -53,11 +53,7 @@ The "bridge" naming suggests an adapter pattern with multiple backends, but we o
 4. **Read-only mode via props:**
    If read-only preview is needed, configure xyflow directly:
    ```tsx
-   <ReactFlow
-     nodesDraggable={false}
-     nodesConnectable={false}
-     elementsSelectable={false}
-   />
+   <ReactFlow nodesDraggable={false} nodesConnectable={false} elementsSelectable={false} />
    ```
    No separate preview component required.
 
@@ -74,12 +70,12 @@ The "bridge" naming suggests an adapter pattern with multiple backends, but we o
 
 ### File Changes
 
-| File | Action |
-|------|--------|
-| `canvas-bridge.tsx` | Rename to `designer-xyflow-canvas.tsx`, delete 2 bridge functions |
-| `canvas-bridge.test.tsx` | Rename and update tests |
-| `designer-canvas.tsx` | Simplify, remove adapter selection |
-| `index.tsx` | Update exports |
+| File                     | Action                                                            |
+| ------------------------ | ----------------------------------------------------------------- |
+| `canvas-bridge.tsx`      | Rename to `designer-xyflow-canvas.tsx`, delete 2 bridge functions |
+| `canvas-bridge.test.tsx` | Rename and update tests                                           |
+| `designer-canvas.tsx`    | Simplify, remove adapter selection                                |
+| `index.tsx`              | Update exports                                                    |
 
 ## Pre-requisite Check
 
@@ -128,8 +124,8 @@ function DesignerXyflowNode(props: NodeProps) {
   return (
     <div className="fd-xyflow-node">
       <Handle type="target" position={Position.Top} />
-      <strong>{data.label}</strong>      // Hardcoded
-      <small>{data.typeLabel}</small>    // Hardcoded
+      <strong>{data.label}</strong> // Hardcoded
+      <small>{data.typeLabel}</small> // Hardcoded
       <Handle type="source" position={Position.Bottom} />
     </div>
   );
@@ -140,14 +136,14 @@ function DesignerXyflowNode(props: NodeProps) {
 
 `NodeTypeConfig` already defines rich configuration that is **completely ignored**:
 
-| Field | Type | Current Usage |
-|-------|------|---------------|
-| `icon` | `string` | ❌ Not used |
-| `body` | `SchemaInput` | ❌ Not used |
-| `ports` | `PortConfig[]` | ❌ Not used |
-| `quickActions` | `SchemaInput` | ❌ Not used |
-| `description` | `string` | ❌ Not used |
-| `appearance` | (missing) | ❌ Not defined |
+| Field          | Type           | Current Usage  |
+| -------------- | -------------- | -------------- |
+| `icon`         | `string`       | ❌ Not used    |
+| `body`         | `SchemaInput`  | ❌ Not used    |
+| `ports`        | `PortConfig[]` | ❌ Not used    |
+| `quickActions` | `SchemaInput`  | ❌ Not used    |
+| `description`  | `string`       | ❌ Not used    |
+| `appearance`   | (missing)      | ❌ Not defined |
 
 ## Target Architecture
 
@@ -227,8 +223,9 @@ DesignerConfig
 ### Icon ID Format
 
 Use Lucide icon names directly (without prefix):
+
 - `play` → Play icon
-- `flag` → Flag icon  
+- `flag` → Flag icon
 - `workflow` → Workflow icon
 - `git-branch` → GitBranch icon
 - `repeat` → Repeat icon
@@ -309,16 +306,16 @@ packages/flow-designer-renderers/src/
 
 ### Module Responsibilities
 
-| Module | Responsibility | Size Target |
-|--------|----------------|-------------|
-| `DesignerXyflowCanvas.tsx` | Orchestrator: state management, event handlers, ReactFlow setup | ~150 lines |
-| `DesignerXyflowNode.tsx` | Node rendering: body, ports, toolbar | ~100 lines |
-| `DesignerXyflowEdge.tsx` | Edge rendering: path, label, appearance | ~80 lines |
-| `render-ports.tsx` | Port-to-Handle mapping and rendering | ~50 lines |
-| `use-node-type-config.ts` | Hook to get NodeTypeConfig from context | ~20 lines |
-| `use-edge-type-config.ts` | Hook to get EdgeTypeConfig from context | ~20 lines |
-| `xyflow-utils.ts` | Position map, viewport normalization, node/edge transforms | ~100 lines |
-| `types.ts` | Local type definitions | ~30 lines |
+| Module                     | Responsibility                                                  | Size Target |
+| -------------------------- | --------------------------------------------------------------- | ----------- |
+| `DesignerXyflowCanvas.tsx` | Orchestrator: state management, event handlers, ReactFlow setup | ~150 lines  |
+| `DesignerXyflowNode.tsx`   | Node rendering: body, ports, toolbar                            | ~100 lines  |
+| `DesignerXyflowEdge.tsx`   | Edge rendering: path, label, appearance                         | ~80 lines   |
+| `render-ports.tsx`         | Port-to-Handle mapping and rendering                            | ~50 lines   |
+| `use-node-type-config.ts`  | Hook to get NodeTypeConfig from context                         | ~20 lines   |
+| `use-edge-type-config.ts`  | Hook to get EdgeTypeConfig from context                         | ~20 lines   |
+| `xyflow-utils.ts`          | Position map, viewport normalization, node/edge transforms      | ~100 lines  |
+| `types.ts`                 | Local type definitions                                          | ~30 lines   |
 
 ### Splitting Strategy
 
@@ -342,35 +339,41 @@ Follow AGENTS.md "File Refactoring Methodology":
 ### Phase 1: Schema Extension and Types
 
 **Files to modify:**
+
 - `packages/flow-designer-core/src/types.ts`
 
 **Tasks:**
+
 1. Add `NodeTypeAppearance` interface
 2. Add `appearance` field to `NodeTypeConfig`
 3. Add `appearance` to `PortConfig` (enhance existing)
 4. Export new types
 
 **Validation:**
+
 - `pnpm typecheck` passes
 - No breaking changes to existing `NodeTypeConfig`
 
 ### Phase 2: DesignerContext Extension for Config Access
 
 **Files to modify:**
+
 - `packages/flow-designer-renderers/src/designer-context.ts`
 
 **Tasks:**
+
 1. Add `NormalizedDesignerConfig` to DesignerContext
 2. Create `useNodeTypeConfig(typeId)` hook
 3. Create `useEdgeTypeConfig(typeId)` hook
 4. Provide designer runtime for flux rendering
 
 **API:**
+
 ```tsx
 interface DesignerContextValue {
   // ... existing
   config: NormalizedDesignerConfig;
-  runtime: RendererRuntime;  // flux runtime
+  runtime: RendererRuntime; // flux runtime
 }
 
 function useNodeTypeConfig(typeId: string): NodeTypeConfig | undefined {
@@ -385,15 +388,18 @@ function useEdgeTypeConfig(typeId: string): EdgeTypeConfig | undefined {
 ```
 
 **Validation:**
+
 - Hooks return correct config for known type IDs
 - Returns undefined for unknown type IDs
 
 ### Phase 3: Schema-Driven Node Body Rendering
 
 **Files to modify:**
+
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 
 **Tasks:**
+
 1. Use `useNodeTypeConfig()` to get config in `DesignerXyflowNode`
 2. Replace hardcoded `<strong>{label}</strong>` with flux renderer
 3. Render `nodeType.body` schema inside node
@@ -401,6 +407,7 @@ function useEdgeTypeConfig(typeId: string): EdgeTypeConfig | undefined {
 5. Memoize scope creation for performance
 
 **Before:**
+
 ```tsx
 function DesignerXyflowNode(props: NodeProps) {
   return (
@@ -413,17 +420,18 @@ function DesignerXyflowNode(props: NodeProps) {
 ```
 
 **After:**
+
 ```tsx
 function DesignerXyflowNode(props: NodeProps) {
   const nodeType = useNodeTypeConfig(props.type);
   const { runtime, parentScope } = useDesignerContext();
-  
+
   // Memoize scope to avoid re-creation
   const nodeScope = useMemo(
     () => runtime.createChildScope(parentScope, props.data),
-    [runtime, parentScope, props.data]
+    [runtime, parentScope, props.data],
   );
-  
+
   if (!nodeType?.body) {
     // Fallback for missing body schema
     return (
@@ -432,7 +440,7 @@ function DesignerXyflowNode(props: NodeProps) {
       </div>
     );
   }
-  
+
   return (
     <div className={classNames('fd-xyflow-node', nodeType.appearance?.className)}>
       <ScopeContext.Provider value={nodeScope}>
@@ -444,12 +452,14 @@ function DesignerXyflowNode(props: NodeProps) {
 ```
 
 **Performance Considerations:**
+
 - Memoize `useNodeTypeConfig` result
 - Memoize child scope creation
 - Consider `React.memo` for `DesignerXyflowNode`
 - Use `useMemo` for compiled schema
 
 **Validation:**
+
 - Nodes render content from `body` schema
 - Existing tests pass
 - Visual parity with prototype possible through schema
@@ -457,25 +467,30 @@ function DesignerXyflowNode(props: NodeProps) {
 ### Phase 4: Schema-Driven Port Rendering
 
 **Files to modify:**
+
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 
 **Tasks:**
+
 1. Remove `getNodePorts()` hardcoded function
 2. Read ports from `nodeType.ports`
 3. Map `position` string to xyflow `Position` enum
 4. Apply `appearance.className` to handles
 
 **Before:**
+
 ```tsx
 function getNodePorts(type: string): Port[] {
   switch (type) {
-    case 'start': return [{ id: 'out', direction: 'output', position: 'right' }];
+    case 'start':
+      return [{ id: 'out', direction: 'output', position: 'right' }];
     // ...
   }
 }
 ```
 
 **After:**
+
 ```tsx
 function renderPorts(ports: PortConfig[] | undefined) {
   return (ports ?? []).map((port) => (
@@ -493,11 +508,12 @@ const POSITION_MAP = {
   top: Position.Top,
   right: Position.Right,
   bottom: Position.Bottom,
-  left: Position.Left
+  left: Position.Left,
 };
 ```
 
 **Validation:**
+
 - Ports render from schema configuration
 - Handle positions configurable per node type
 - Connection validation respects port constraints
@@ -505,19 +521,23 @@ const POSITION_MAP = {
 ### Phase 5: Schema-Driven Hover Toolbar
 
 **Files to modify:**
+
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 
 **Tasks:**
+
 1. Add `NodeToolbar` from `@xyflow/react`
 2. Render `nodeType.quickActions` schema inside toolbar
 3. Wire toolbar visibility to hover state
 4. Pass action handlers to schema scope
 
 **Behavior:**
+
 - If `quickActions` is not defined, **no toolbar is shown** (keep node clean)
 - If defined, render via flux `RenderNodes`
 
 **Implementation:**
+
 ```tsx
 import { NodeToolbar } from '@xyflow/react';
 
@@ -525,32 +545,29 @@ function DesignerXyflowNode(props: NodeProps) {
   const nodeType = useNodeTypeConfig(props.type);
   const [showToolbar, setShowToolbar] = useState(false);
   const { dispatch } = useDesignerContext();
-  
+
   // Only show toolbar if quickActions is defined
   const hasQuickActions = nodeType?.quickActions && isSchema(nodeType.quickActions);
-  
+
   // Create action scope with handlers
-  const actionScope = useMemo(() => ({
-    onEdit: () => dispatch({ type: 'openNodeEditor', nodeId: props.id }),
-    onDuplicate: () => dispatch({ type: 'duplicateNode', nodeId: props.id }),
-    onDelete: () => dispatch({ type: 'deleteNode', nodeId: props.id }),
-  }), [dispatch, props.id]);
-  
+  const actionScope = useMemo(
+    () => ({
+      onEdit: () => dispatch({ type: 'openNodeEditor', nodeId: props.id }),
+      onDuplicate: () => dispatch({ type: 'duplicateNode', nodeId: props.id }),
+      onDelete: () => dispatch({ type: 'deleteNode', nodeId: props.id }),
+    }),
+    [dispatch, props.id],
+  );
+
   return (
     <>
-      <div
-        onMouseEnter={() => setShowToolbar(true)}
-        onMouseLeave={() => setShowToolbar(false)}
-      >
+      <div onMouseEnter={() => setShowToolbar(true)} onMouseLeave={() => setShowToolbar(false)}>
         {/* Node content rendered via body schema */}
       </div>
-      
+
       {hasQuickActions && (
         <NodeToolbar isVisible={showToolbar} position={Position.Top}>
-          <RenderNodes 
-            input={nodeType.quickActions} 
-            options={{ data: actionScope }}
-          />
+          <RenderNodes input={nodeType.quickActions} options={{ data: actionScope }} />
         </NodeToolbar>
       )}
     </>
@@ -559,6 +576,7 @@ function DesignerXyflowNode(props: NodeProps) {
 ```
 
 **Validation:**
+
 - Toolbar appears on hover only if `quickActions` defined
 - Actions configured via schema
 - No toolbar shown when `quickActions` undefined
@@ -566,20 +584,23 @@ function DesignerXyflowNode(props: NodeProps) {
 ### Phase 6: Edge Appearance from Schema
 
 **Files to modify:**
+
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 
 **Tasks:**
+
 1. Read `edgeType.appearance` from config
 2. Apply stroke color, width, style to edge path
 3. Support `animated` flag
 4. Support `markerEnd` configuration
 
 **Implementation:**
+
 ```tsx
 function DesignerXyflowEdge(props: EdgeProps) {
   const edgeType = useEdgeTypeConfig(props.type);
   const appearance = edgeType?.appearance;
-  
+
   return (
     <path
       className={classNames('fd-edge__path', appearance?.animated && 'fd-edge--animated')}
@@ -595,6 +616,7 @@ function DesignerXyflowEdge(props: EdgeProps) {
 ```
 
 **Validation:**
+
 - Edge styles configurable via schema
 - Animated edges work
 - Arrow markers configurable
@@ -602,38 +624,41 @@ function DesignerXyflowEdge(props: EdgeProps) {
 ### Phase 6.5: Edge Body Rendering (Edge Labels)
 
 **Files to modify:**
+
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 
 **Tasks:**
+
 1. Render `edgeType.body` schema inside `EdgeLabelRenderer`
 2. Pass edge data as scope
 3. Support clickable labels for edge selection
 
 **Implementation:**
+
 ```tsx
 import { EdgeLabelRenderer, getSmoothStepPath } from '@xyflow/react';
 
 function DesignerXyflowEdge(props: EdgeProps) {
   const edgeType = useEdgeTypeConfig(props.type);
   const { dispatch } = useDesignerContext();
-  
+
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX: props.sourceX,
     sourceY: props.sourceY,
     targetX: props.targetX,
     targetY: props.targetY,
   });
-  
+
   const handleLabelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     dispatch({ type: 'selectEdge', edgeId: props.id });
   };
-  
+
   return (
     <>
       {/* Edge path with appearance */}
       <BaseEdge path={edgePath} {...getAppearanceStyle(edgeType?.appearance)} />
-      
+
       {/* Edge label from body schema */}
       {edgeType?.body && (
         <EdgeLabelRenderer>
@@ -646,10 +671,7 @@ function DesignerXyflowEdge(props: EdgeProps) {
             }}
             onClick={handleLabelClick}
           >
-            <RenderNodes 
-              input={edgeType.body}
-              options={{ data: props.data }}
-            />
+            <RenderNodes input={edgeType.body} options={{ data: props.data }} />
           </div>
         </EdgeLabelRenderer>
       )}
@@ -659,6 +681,7 @@ function DesignerXyflowEdge(props: EdgeProps) {
 ```
 
 **Validation:**
+
 - Edge labels render from `body` schema
 - Labels are clickable
 - Label position follows edge midpoint
@@ -666,15 +689,18 @@ function DesignerXyflowEdge(props: EdgeProps) {
 ### Phase 7: Cleanup and Remove Fallbacks
 
 **Files to modify:**
+
 - `packages/flow-designer-renderers/src/canvas-bridge.tsx`
 
 **Tasks:**
+
 1. Remove `getNodeIcon()` function
-2. Remove `getNodePorts()` function  
+2. Remove `getNodePorts()` function
 3. Remove legacy fallback rendering
 4. Remove unused hardcoded styles
 
 **Validation:**
+
 - All rendering is schema-driven
 - No switch/case for node types
 - `pnpm typecheck && pnpm build && pnpm test` all pass
@@ -682,15 +708,18 @@ function DesignerXyflowEdge(props: EdgeProps) {
 ### Phase 8: Playground Config Migration
 
 **Files to modify:**
+
 - `apps/playground/src/schemas/workflow-designer-schema.json`
 
 **Tasks:**
+
 1. Update `nodeTypes[].body` with complete schemas
 2. Add `quickActions` schemas where needed
 3. Add `appearance` settings
 4. Verify ports are defined
 
 **Example config:**
+
 ```json
 {
   "id": "task",
@@ -739,6 +768,7 @@ function DesignerXyflowEdge(props: EdgeProps) {
 ```
 
 **Validation:**
+
 - Playground renders nodes from config
 - Visual parity with prototype achievable
 - No hardcoded rendering in canvas-bridge
@@ -747,29 +777,29 @@ function DesignerXyflowEdge(props: EdgeProps) {
 
 ### Phase 0: Simplification
 
-| File | Change Type | Description |
-|------|-------------|-------------|
-| `canvas-bridge.tsx` | Rename + Delete | → `designer-xyflow-canvas.tsx`, remove card/preview bridges |
-| `canvas-bridge.test.tsx` | Rename | → `designer-xyflow-canvas.test.tsx` |
-| `designer-canvas.tsx` | Modify | Simplify, remove adapter selection |
-| `index.tsx` | Modify | Update exports |
+| File                     | Change Type     | Description                                                 |
+| ------------------------ | --------------- | ----------------------------------------------------------- |
+| `canvas-bridge.tsx`      | Rename + Delete | → `designer-xyflow-canvas.tsx`, remove card/preview bridges |
+| `canvas-bridge.test.tsx` | Rename          | → `designer-xyflow-canvas.test.tsx`                         |
+| `designer-canvas.tsx`    | Modify          | Simplify, remove adapter selection                          |
+| `index.tsx`              | Modify          | Update exports                                              |
 
 ### Phase 1-8: Schema-Driven + File Split
 
-| File | Change Type | Description |
-|------|-------------|-------------|
-| `flow-designer-core/src/types.ts` | Modify | Add `NodeTypeAppearance`, extend types |
-| `flow-designer-renderers/src/designer-context.ts` | Modify | Add config hooks, provide runtime |
-| `flow-designer-renderers/src/designer-xyflow-canvas/index.ts` | Create | Public exports |
-| `flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx` | Create | Main orchestrator |
-| `flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowNode.tsx` | Create | Schema-driven node rendering |
-| `flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx` | Create | Schema-driven edge rendering |
-| `flow-designer-renderers/src/designer-xyflow-canvas/render-ports.tsx` | Create | Port rendering utilities |
-| `flow-designer-renderers/src/designer-xyflow-canvas/use-node-type-config.ts` | Create | NodeTypeConfig hook |
-| `flow-designer-renderers/src/designer-xyflow-canvas/use-edge-type-config.ts` | Create | EdgeTypeConfig hook |
-| `flow-designer-renderers/src/designer-xyflow-canvas/xyflow-utils.ts` | Create | Position map, viewport utils |
-| `flow-designer-renderers/src/designer-xyflow-canvas/types.ts` | Create | Local types |
-| `apps/playground/src/schemas/workflow-designer-schema.json` | Modify | Complete body/quickActions schemas |
+| File                                                                          | Change Type | Description                            |
+| ----------------------------------------------------------------------------- | ----------- | -------------------------------------- |
+| `flow-designer-core/src/types.ts`                                             | Modify      | Add `NodeTypeAppearance`, extend types |
+| `flow-designer-renderers/src/designer-context.ts`                             | Modify      | Add config hooks, provide runtime      |
+| `flow-designer-renderers/src/designer-xyflow-canvas/index.ts`                 | Create      | Public exports                         |
+| `flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx` | Create      | Main orchestrator                      |
+| `flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowNode.tsx`   | Create      | Schema-driven node rendering           |
+| `flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowEdge.tsx`   | Create      | Schema-driven edge rendering           |
+| `flow-designer-renderers/src/designer-xyflow-canvas/render-ports.tsx`         | Create      | Port rendering utilities               |
+| `flow-designer-renderers/src/designer-xyflow-canvas/use-node-type-config.ts`  | Create      | NodeTypeConfig hook                    |
+| `flow-designer-renderers/src/designer-xyflow-canvas/use-edge-type-config.ts`  | Create      | EdgeTypeConfig hook                    |
+| `flow-designer-renderers/src/designer-xyflow-canvas/xyflow-utils.ts`          | Create      | Position map, viewport utils           |
+| `flow-designer-renderers/src/designer-xyflow-canvas/types.ts`                 | Create      | Local types                            |
+| `apps/playground/src/schemas/workflow-designer-schema.json`                   | Modify      | Complete body/quickActions schemas     |
 
 ## Backward Compatibility
 
@@ -782,20 +812,21 @@ function DesignerXyflowEdge(props: EdgeProps) {
 ### Fallback Behavior
 
 During transition, if `nodeType.body` is not defined:
+
 - Fall back to simple label rendering
 - Log deprecation warning in dev mode
 
 ```tsx
 function DesignerXyflowNode(props) {
   const nodeType = useNodeTypeConfig(props.type);
-  
+
   if (!nodeType?.body) {
     if (process.env.NODE_ENV === 'development') {
       console.warn(`NodeTypeConfig.body is required for node type: ${props.type}`);
     }
     return <LegacyNodeRenderer {...props} />;
   }
-  
+
   return <RenderNodes input={nodeType.body} />;
 }
 ```
@@ -848,29 +879,27 @@ function DesignerXyflowNode(props) {
 
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Breaking existing playground | Keep fallback path until Phase 7 |
-| Performance with schema rendering | Memoize nodes, scopes, and compiled schemas |
-| Flux runtime context in xyflow nodes | Use DesignerContext to provide runtime |
-| Schema complexity for users | Provide preset nodeType templates |
-| Icon renderer missing | Add to flux-renderers-basic if needed |
-| File split introduces import cycles | Use barrel file (index.ts) carefully |
+| Risk                                 | Mitigation                                  |
+| ------------------------------------ | ------------------------------------------- |
+| Breaking existing playground         | Keep fallback path until Phase 7            |
+| Performance with schema rendering    | Memoize nodes, scopes, and compiled schemas |
+| Flux runtime context in xyflow nodes | Use DesignerContext to provide runtime      |
+| Schema complexity for users          | Provide preset nodeType templates           |
+| Icon renderer missing                | Add to flux-renderers-basic if needed       |
+| File split introduces import cycles  | Use barrel file (index.ts) carefully        |
 
 ## Estimated Effort
 
-| Phase | Effort | Priority |
-|-------|--------|----------|
-| Phase 0: Simplify Design | 0.5 day | High |
-| Phase 1: Schema Extension | 0.5 day | High |
-| Phase 2: DesignerContext Extension | 1 day | High |
-| Phase 3: Node Body Rendering | 1.5 days | High |
-| Phase 4: Port Rendering | 0.5 day | High |
-| Phase 5: Hover Toolbar | 1 day | Medium |
-| Phase 6: Edge Appearance | 0.5 day | Medium |
-| Phase 6.5: Edge Body Rendering | 0.5 day | Medium |
-| Phase 7: Cleanup and File Split | 1 day | High |
-| Phase 8: Playground Config | 1 day | High |
-| **Total** | **8 days** | |
-
-
+| Phase                              | Effort     | Priority |
+| ---------------------------------- | ---------- | -------- |
+| Phase 0: Simplify Design           | 0.5 day    | High     |
+| Phase 1: Schema Extension          | 0.5 day    | High     |
+| Phase 2: DesignerContext Extension | 1 day      | High     |
+| Phase 3: Node Body Rendering       | 1.5 days   | High     |
+| Phase 4: Port Rendering            | 0.5 day    | High     |
+| Phase 5: Hover Toolbar             | 1 day      | Medium   |
+| Phase 6: Edge Appearance           | 0.5 day    | Medium   |
+| Phase 6.5: Edge Body Rendering     | 0.5 day    | Medium   |
+| Phase 7: Cleanup and File Split    | 1 day      | High     |
+| Phase 8: Playground Config         | 1 day      | High     |
+| **Total**                          | **8 days** |          |

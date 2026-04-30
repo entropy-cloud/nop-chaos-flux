@@ -6,7 +6,7 @@ import type {
   SchemaDiagnosticCode,
   SchemaDiagnosticSeverity,
   SchemaDiagnosticSourceLocation,
-  SchemaNamespaceValidator
+  SchemaNamespaceValidator,
 } from '@nop-chaos/flux-core';
 import { BUILT_IN_ACTION_NAMES, parsePath } from '@nop-chaos/flux-core';
 
@@ -64,7 +64,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
             context.add({
               code: 'invalid-namespace-property',
               message: 'xui:imports must be an array of import specs.',
-              source: 'namespace'
+              source: 'namespace',
             });
             return;
           }
@@ -77,7 +77,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
                 code: 'invalid-namespace-property',
                 message: 'Each xui:imports entry must be an object.',
                 path: itemPath,
-                source: 'namespace'
+                source: 'namespace',
               });
               return;
             }
@@ -89,7 +89,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
                 code: 'invalid-namespace-property',
                 message: 'xui:imports entries require a non-empty from field.',
                 path: appendJsonPointer(itemPath, 'from'),
-                source: 'namespace'
+                source: 'namespace',
               });
             }
 
@@ -98,19 +98,21 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
                 code: 'invalid-namespace-property',
                 message: 'xui:imports entries require a non-empty as field.',
                 path: appendJsonPointer(itemPath, 'as'),
-                source: 'namespace'
+                source: 'namespace',
               });
             }
 
             if (
               record.options !== undefined &&
-              (!record.options || typeof record.options !== 'object' || Array.isArray(record.options))
+              (!record.options ||
+                typeof record.options !== 'object' ||
+                Array.isArray(record.options))
             ) {
               context.add({
                 code: 'invalid-namespace-property',
                 message: 'xui:imports options must be an object when provided.',
                 path: appendJsonPointer(itemPath, 'options'),
-                source: 'namespace'
+                source: 'namespace',
               });
             }
           });
@@ -118,11 +120,15 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
         }
 
         if (context.key === 'xui:actions') {
-          if (typeof context.value !== 'object' || context.value === null || Array.isArray(context.value)) {
+          if (
+            typeof context.value !== 'object' ||
+            context.value === null ||
+            Array.isArray(context.value)
+          ) {
             context.add({
               code: 'invalid-namespace-property',
               message: 'xui:actions must be a non-null object mapping names to ActionSchema.',
-              source: 'namespace'
+              source: 'namespace',
             });
             return;
           }
@@ -137,7 +143,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
                 message: `xui:actions name "${name}" must not contain a colon (:).`,
                 path: entryPath,
                 severity: 'error',
-                source: 'namespace'
+                source: 'namespace',
               });
             }
 
@@ -147,7 +153,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
                 message: `xui:actions name "${name}" conflicts with a built-in action name.`,
                 path: entryPath,
                 severity: 'warning',
-                source: 'namespace'
+                source: 'namespace',
               });
             }
 
@@ -156,7 +162,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
                 code: 'invalid-namespace-property',
                 message: `xui:actions entry "${name}" must be an ActionSchema object.`,
                 path: entryPath,
-                source: 'namespace'
+                source: 'namespace',
               });
             } else {
               const record = val as Record<string, unknown>;
@@ -166,7 +172,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
                   message: `xui:actions entry "${name}" directly references itself, which would cause infinite recursion at runtime.`,
                   path: entryPath,
                   severity: 'warning',
-                  source: 'namespace'
+                  source: 'namespace',
                 });
               }
             }
@@ -179,7 +185,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
             context.add({
               code: 'invalid-namespace-property',
               message: 'xui:version must be a string version selector.',
-              source: 'namespace'
+              source: 'namespace',
             });
             return;
           }
@@ -188,7 +194,7 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
             context.add({
               code: 'invalid-namespace-property',
               message: 'xui:version must be a non-empty version selector string.',
-              source: 'namespace'
+              source: 'namespace',
             });
           }
           return;
@@ -197,15 +203,15 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
         context.add({
           code: 'invalid-namespace-property',
           message: `Unknown built-in namespace property "${context.key}".`,
-          source: 'namespace'
+          source: 'namespace',
         });
-      }
-    }
+      },
+    },
   ];
 }
 
 function mergeNamespaceValidators(
-  validators: readonly SchemaNamespaceValidator[] | undefined
+  validators: readonly SchemaNamespaceValidator[] | undefined,
 ): readonly SchemaNamespaceValidator[] {
   const merged = new Map<string, SchemaNamespaceValidator>();
 
@@ -220,42 +226,55 @@ function mergeNamespaceValidators(
   return Array.from(merged.values());
 }
 
-type ResolvedValidationOptions = Omit<Required<SchemaCompileValidationOptions>, 'hostContractContext'> & {
+type ResolvedValidationOptions = Omit<
+  Required<SchemaCompileValidationOptions>,
+  'hostContractContext'
+> & {
   hostContractContext?: HostContractContext;
 };
 
 function resolveValidationOptions(
   options: CompileSchemaOptions | undefined,
-  mode: SchemaCompilerDiagnosticsMode
+  mode: SchemaCompilerDiagnosticsMode,
 ): ResolvedValidationOptions {
   const defaults = {
-    unknownBarePropertyPolicy: (mode === 'validate' ? 'error' : 'warn') as 'error' | 'warn' | 'ignore',
+    unknownBarePropertyPolicy: (mode === 'validate' ? 'error' : 'warn') as
+      | 'error'
+      | 'warn'
+      | 'ignore',
     namespacedPropertyPolicy: 'delegate-or-ignore' as const,
     extensionPassthroughPolicy: 'namespaced-only' as const,
     namespaceValidators: [] as readonly SchemaNamespaceValidator[],
-    hostContractContext: undefined as HostContractContext | undefined
+    hostContractContext: undefined as HostContractContext | undefined,
   };
 
   const validation = options?.validation;
 
   return {
-    unknownBarePropertyPolicy: validation?.unknownBarePropertyPolicy ?? defaults.unknownBarePropertyPolicy,
-    namespacedPropertyPolicy: validation?.namespacedPropertyPolicy ?? defaults.namespacedPropertyPolicy,
-    extensionPassthroughPolicy: validation?.extensionPassthroughPolicy ?? defaults.extensionPassthroughPolicy,
+    unknownBarePropertyPolicy:
+      validation?.unknownBarePropertyPolicy ?? defaults.unknownBarePropertyPolicy,
+    namespacedPropertyPolicy:
+      validation?.namespacedPropertyPolicy ?? defaults.namespacedPropertyPolicy,
+    extensionPassthroughPolicy:
+      validation?.extensionPassthroughPolicy ?? defaults.extensionPassthroughPolicy,
     namespaceValidators: mergeNamespaceValidators(validation?.namespaceValidators),
-    hostContractContext: validation?.hostContractContext ?? defaults.hostContractContext
+    hostContractContext: validation?.hostContractContext ?? defaults.hostContractContext,
   };
 }
 
 export function createSchemaCompilerDiagnosticsContext(
   options: CompileSchemaOptions | undefined,
   mode: SchemaCompilerDiagnosticsMode,
-  schemaUrl?: string
+  schemaUrl?: string,
 ): SchemaCompilerDiagnosticsContext {
   const diagnostics: SchemaDiagnostic[] = [];
   const diagnosticsOptions = options?.diagnostics;
-  const enabled = mode === 'validate' || diagnosticsOptions?.enabled === true || options?.validation !== undefined;
-  const continueOnError = mode === 'validate' ? true : diagnosticsOptions?.continueOnError ?? false;
+  const enabled =
+    mode === 'validate' ||
+    diagnosticsOptions?.enabled === true ||
+    options?.validation !== undefined;
+  const continueOnError =
+    mode === 'validate' ? true : (diagnosticsOptions?.continueOnError ?? false);
   const maxIssues = diagnosticsOptions?.maxIssues;
   const validation = resolveValidationOptions(options, mode);
   const seen = new Set<string>();
@@ -284,7 +303,7 @@ export function createSchemaCompilerDiagnosticsContext(
       path: issue.path,
       severity: issue.severity ?? 'error',
       source: issue.source ?? 'core',
-      ...(sourceLocation ? { sourceLocation } : {})
+      ...(sourceLocation ? { sourceLocation } : {}),
     };
 
     const key = `${diagnostic.source}:${diagnostic.code}:${diagnostic.path}:${diagnostic.message}`;
@@ -306,6 +325,6 @@ export function createSchemaCompilerDiagnosticsContext(
     diagnostics,
     schemaUrl,
     emit,
-    hasReachedLimit
+    hasReachedLimit,
   };
 }

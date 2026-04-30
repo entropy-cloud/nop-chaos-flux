@@ -227,44 +227,44 @@ Targets: `packages/flux-core/src/types/actions.ts`, `packages/flux-core/src/type
 interface ActionTrace {
   /** Unique trace ID */
   traceId: string;
-  
+
   /** Parent trace ID (for nested actions) */
   parentTraceId?: string;
-  
+
   /** Interaction ID (groups related actions from same user interaction) */
   interactionId: string;
-  
+
   /** Action identifier */
   action: string;
-  
+
   /** Resolved args (evaluated values, not raw expressions) */
   resolvedArgs?: Record<string, unknown>;
-  
+
   /** Dispatch mode */
   dispatchMode: 'built-in' | 'component' | 'namespace';
-  
+
   /** Namespace and method (for namespaced actions) */
   namespace?: string;
   method?: string;
-  
+
   /** Targeting info */
   targetId?: string;
   componentId?: string;
-  
+
   /** Timing */
   startTime: number;
   endTime?: number;
   durationMs?: number;
-  
+
   /** Result */
   result?: ActionResult;
-  
+
   /** Branch type (how this action was reached) */
   branchType?: 'root' | 'then' | 'onError' | 'onSettled' | 'parallel';
-  
+
   /** Child traces (for then/parallel/onError branches) */
   children: ActionTrace[];
-  
+
   /** Source location for debugging */
   nodeId?: string;
   templatePath?: string;
@@ -278,23 +278,26 @@ interface ActionTrace {
 ```typescript
 interface ActionTraceCollector {
   /** Start a new trace, returns trace context */
-  startTrace(payload: ActionMonitorPayload, resolvedArgs?: Record<string, unknown>): ActionTraceContext;
-  
+  startTrace(
+    payload: ActionMonitorPayload,
+    resolvedArgs?: Record<string, unknown>,
+  ): ActionTraceContext;
+
   /** End a trace with result */
   endTrace(ctx: ActionTraceContext, result: ActionResult): void;
-  
+
   /** Get all traces for an interaction */
   getInteractionTraces(interactionId: string): ActionTrace[];
-  
+
   /** Get trace tree (root traces with children) */
   getTraceTree(interactionId: string): ActionTrace[];
-  
+
   /** Clear traces older than given timestamp */
   clearBefore(timestamp: number): void;
-  
+
   /** Export traces for debugging/replay */
   exportTraces(filter?: TraceFilter): ActionTrace[];
-  
+
   /** Subscribe to trace events */
   subscribe(listener: TraceListener): () => void;
 }
@@ -328,11 +331,11 @@ interface RendererMonitor {
   // Existing
   onActionStart?(payload: ActionMonitorPayload): void;
   onActionEnd?(payload: ActionMonitorPayload & { durationMs: number; result?: ActionResult }): void;
-  
+
   // Enhanced: receives resolved args and trace context
   onActionTraceStart?(trace: ActionTrace): void;
   onActionTraceEnd?(trace: ActionTrace): void;
-  
+
   // Enhanced: receives complete interaction trace tree
   onInteractionComplete?(traces: ActionTrace[]): void;
 }

@@ -118,12 +118,12 @@ Targets: `packages/flux-renderers-form/src/index.test.tsx`
 
 改写规则（保持语义等价）：
 
-| 原 linkage 效果 | 改写为 |
-|---|---|
-| `visible: true/false` in fulfill/otherwise | `visible: '${expr}'` 直接在 schema 上 |
-| `disabled: true/false` in fulfill/otherwise | `disabled: '${expr}'` 直接在 schema 上 |
+| 原 linkage 效果                             | 改写为                                                                                                     |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `visible: true/false` in fulfill/otherwise  | `visible: '${expr}'` 直接在 schema 上                                                                      |
+| `disabled: true/false` in fulfill/otherwise | `disabled: '${expr}'` 直接在 schema 上                                                                     |
 | `required: true/false` in fulfill/otherwise | `requiredWhen`/`requiredUnless` 验证规则；如果只测 UI 星号则改为 `required: true` + schema-level condition |
-| `options: [...]` in fulfill/otherwise | `options: '${expr}'`（ternary 表达式）直接在 schema 上 |
+| `options: [...]` in fulfill/otherwise       | `options: '${expr}'`（ternary 表达式）直接在 schema 上                                                     |
 
 - [x] 测试 "supports xui:linkage for disabled and required field presentation"（line 2149）：改用 `disabled: '${role !== "admin"}'` 直接表达式 + 用 `visible: '${role === "admin"}'` + `required: true` 的独立字段覆盖 required 星号测试行为
 - [x] 测试 "supports xui:linkage for visible and options branches"（line 2209）：改用 `visible: '${role === "admin"}'` + `options: '${role === "admin" ? adminOptions : viewerOptions}'`（options 数组定义在 form data 中）
@@ -185,12 +185,10 @@ Follow-up:
     "role": "viewer",
     "permission": "read",
     "adminOptions": [
-      { "label": "Manage users",    "value": "manage-users" },
+      { "label": "Manage users", "value": "manage-users" },
       { "label": "Publish content", "value": "publish-content" }
     ],
-    "viewerOptions": [
-      { "label": "Read only", "value": "read" }
-    ]
+    "viewerOptions": [{ "label": "Read only", "value": "read" }]
   }
 }
 ```

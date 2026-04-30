@@ -14,11 +14,9 @@ const SLOT_KEY = '$slot';
  */
 export function buildSlotFrame(
   bindings: Record<string, unknown>,
-  outerSlotFrame: SlotFrame | undefined
+  outerSlotFrame: SlotFrame | undefined,
 ): SlotFrame {
-  return outerSlotFrame !== undefined
-    ? { ...bindings, $parent: outerSlotFrame }
-    : { ...bindings };
+  return outerSlotFrame !== undefined ? { ...bindings, $parent: outerSlotFrame } : { ...bindings };
 }
 
 /**

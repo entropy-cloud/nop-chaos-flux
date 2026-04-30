@@ -20,8 +20,8 @@ describe('compileDataSource', () => {
         action: 'ajax',
         args: {
           url: '/api/users',
-          method: 'GET'
-        }
+          method: 'GET',
+        },
       };
 
       const compiled = compileDataSource('ds-1', schema, expressionCompiler);
@@ -43,8 +43,8 @@ describe('compileDataSource', () => {
         type: 'data-source',
         action: 'ajax',
         args: {
-          url: '${"/api/users/" + userId}'
-        }
+          url: '${"/api/users/" + userId}',
+        },
       };
 
       const compiled = compileDataSource('ds-2', schema, expressionCompiler);
@@ -57,10 +57,10 @@ describe('compileDataSource', () => {
         type: 'data-source',
         action: 'ajax',
         args: {
-          url: '/api/status'
+          url: '/api/status',
         },
         interval: 5000,
-        stopWhen: '${status === "complete"}'
+        stopWhen: '${status === "complete"}',
       };
 
       const compiled = compileDataSource('ds-3', schema, expressionCompiler);
@@ -78,7 +78,7 @@ describe('compileDataSource', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
         name: 'computed',
-        formula: 42
+        formula: 42,
       };
 
       const compiled = compileDataSource('ds-4', schema, expressionCompiler);
@@ -94,7 +94,7 @@ describe('compileDataSource', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
         name: 'computed',
-        formula: '${items.filter(i => i.active).length}'
+        formula: '${items.filter(i => i.active).length}',
       };
 
       const compiled = compileDataSource('ds-5', schema, expressionCompiler);
@@ -109,10 +109,10 @@ describe('compileDataSource', () => {
         type: 'data-source',
         action: 'ajax',
         args: {
-          url: '/api/items'
+          url: '/api/items',
         },
         mergeStrategy: 'upsert',
-        mergeKey: 'id'
+        mergeKey: 'id',
       };
 
       const compiled = compileDataSource('ds-6', schema, expressionCompiler);
@@ -128,12 +128,12 @@ describe('compileDataSource', () => {
         type: 'data-source',
         action: 'ajax',
         args: {
-          url: '/api/data'
+          url: '/api/data',
         },
         resultMapping: {
           items: 'data.rows',
-          total: 'data.total'
-        }
+          total: 'data.total',
+        },
       };
 
       const compiled = compileDataSource('ds-7', schema, expressionCompiler);
@@ -149,9 +149,9 @@ describe('compileDataSource', () => {
         type: 'data-source',
         action: 'ajax',
         args: {
-          url: '/api/details'
+          url: '/api/details',
         },
-        dependsOn: ['users', 'config']
+        dependsOn: ['users', 'config'],
       };
 
       const compiled = compileDataSource('ds-8', schema, expressionCompiler);
@@ -165,7 +165,7 @@ describe('compileDataSource', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
         name: 'static',
-        formula: 'hello'
+        formula: 'hello',
       };
 
       const compiled = compileDataSource('ds-9', schema, expressionCompiler);
@@ -177,7 +177,7 @@ describe('compileDataSource', () => {
       const schema: DataSourceSchema = {
         type: 'data-source',
         name: 'dynamic',
-        formula: '${name}'
+        formula: '${name}',
       };
 
       const compiled = compileDataSource('ds-10', schema, expressionCompiler);
@@ -190,8 +190,8 @@ describe('compileDataSource', () => {
         type: 'data-source',
         action: 'ajax',
         args: {
-          url: '${baseUrl + "/users"}'
-        }
+          url: '${baseUrl + "/users"}',
+        },
       };
 
       const compiled = compileDataSource('ds-11', schema, expressionCompiler);

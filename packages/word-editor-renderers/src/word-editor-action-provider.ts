@@ -1,5 +1,11 @@
 import type { ActionContext, ActionNamespaceProvider, ActionResult } from '@nop-chaos/flux-core';
-import type { CanvasEditorBridge, DatasetStoreApi, DocChart, DocCode, EditorStoreApi } from '@nop-chaos/word-editor-core';
+import type {
+  CanvasEditorBridge,
+  DatasetStoreApi,
+  DocChart,
+  DocCode,
+  EditorStoreApi,
+} from '@nop-chaos/word-editor-core';
 import { saveDatasets, saveDocument } from '@nop-chaos/word-editor-core';
 
 function ok(data?: unknown): ActionResult {
@@ -18,7 +24,9 @@ export function createWordEditorActionProvider(input: {
   setCharts(next: DocChart[]): void;
   getCodes(): DocCode[];
   setCodes(next: DocCode[]): void;
-  saveEvent?: ((event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>) | undefined;
+  saveEvent?:
+    | ((event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>)
+    | undefined;
 }): ActionNamespaceProvider {
   return {
     kind: 'host',

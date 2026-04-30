@@ -63,5 +63,5 @@ export {
   normalizeIconName,
   toLucideKey,
   resolveLucideIcon,
-  type LucideIconComponent
+  type LucideIconComponent,
 } from './lib/icon-utils';

@@ -53,7 +53,13 @@ export const handleRemoveSheet: CommandHandler<RemoveSheetCommand> = (store, com
   if (activeSheetId === command.sheetId) {
     activeSheetId = nextDoc.workbook.sheets[0]?.id ?? '';
   }
-  store.setState({ ...updated, document: nextDoc, activeSheetId, selection: { kind: 'none' }, dirty: true });
+  store.setState({
+    ...updated,
+    document: nextDoc,
+    activeSheetId,
+    selection: { kind: 'none' },
+    dirty: true,
+  });
   return { ok: true, changed: true };
 };
 
@@ -94,7 +100,12 @@ export const handleHideSheet: CommandHandler<HideSheetCommand> = (store, command
 
 export const handleProtectSheet: CommandHandler<ProtectSheetCommand> = (store, command) => {
   const state = store.getState();
-  const nextDoc = applyProtectSheet(state.document, command.sheetId, command.password, command.options);
+  const nextDoc = applyProtectSheet(
+    state.document,
+    command.sheetId,
+    command.password,
+    command.options,
+  );
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
@@ -141,9 +152,18 @@ export const handleUnfreezePanes: CommandHandler<UnfreezePanesCommand> = (store,
   return { ok: true, changed: true };
 };
 
-export const handleFilterRowsByCellValue: CommandHandler<FilterRowsByCellValueCommand> = (store, command) => {
+export const handleFilterRowsByCellValue: CommandHandler<FilterRowsByCellValueCommand> = (
+  store,
+  command,
+) => {
   const state = store.getState();
-  const nextDoc = applyFilterRowsByCellValue(state.document, command.sheetId, command.col, command.value, command.hasHeader);
+  const nextDoc = applyFilterRowsByCellValue(
+    state.document,
+    command.sheetId,
+    command.col,
+    command.value,
+    command.hasHeader,
+  );
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
@@ -156,11 +176,19 @@ export const handleClearRowFilters: CommandHandler<ClearRowFiltersCommand> = (st
 };
 
 export const handleAutoFitRow: CommandHandler<AutoFitRowCommand> = () => {
-  return { ok: false, changed: false, error: new Error('autoFitRow requires host measurement support') };
+  return {
+    ok: false,
+    changed: false,
+    error: new Error('autoFitRow requires host measurement support'),
+  };
 };
 
 export const handleAutoFitColumn: CommandHandler<AutoFitColumnCommand> = () => {
-  return { ok: false, changed: false, error: new Error('autoFitColumn requires host measurement support') };
+  return {
+    ok: false,
+    changed: false,
+    error: new Error('autoFitColumn requires host measurement support'),
+  };
 };
 
 export function registerSheetHandlers(registry: Map<string, CommandHandler>) {

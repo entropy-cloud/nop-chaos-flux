@@ -123,17 +123,17 @@ Because several `flux-runtime` tests currently import moved files by relative pa
 
 The execution baseline for tests is:
 
-| Test file | Handling in this plan | Reason |
-| --- | --- | --- |
-| `packages/flux-runtime/src/api-cache.test.ts` | move with implementation to `packages/flux-runtime/src/async-data/api-cache.test.ts` | colocated direct unit for moved module |
-| `packages/flux-runtime/src/__tests__/request-runtime.test.ts` | stay in `src/__tests__/`, rewrite relative imports to new request-runtime path | direct request-runtime unit coverage, still runtime-owned |
-| `packages/flux-runtime/src/__tests__/request-runtime-polling.test.ts` | stay in `src/__tests__/`, no movement expected unless helper imports change | runtime integration via public runtime entry |
-| `packages/flux-runtime/src/__tests__/reaction-runtime.test.ts` | stay in `src/__tests__/`, rewrite imports only if needed | runtime reaction integration coverage |
-| `packages/flux-runtime/src/__tests__/runtime-reactions.test.ts` | stay in `src/__tests__/` | runtime integration coverage |
-| `packages/flux-runtime/src/__tests__/runtime-sources.test.ts` | stay in `src/__tests__/` | runtime integration coverage |
-| `packages/flux-runtime/src/__tests__/runtime-sources-refresh.test.ts` | stay in `src/__tests__/` | runtime integration coverage |
-| `packages/flux-runtime/src/__tests__/runtime-sources-merge.test.ts` | stay in `src/__tests__/` | runtime integration coverage |
-| `packages/flux-runtime/src/__tests__/runtime-validation.test.ts` | stay in `src/__tests__/` | protects plan 120 async-governance behavior from structural drift |
+| Test file                                                             | Handling in this plan                                                                | Reason                                                            |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `packages/flux-runtime/src/api-cache.test.ts`                         | move with implementation to `packages/flux-runtime/src/async-data/api-cache.test.ts` | colocated direct unit for moved module                            |
+| `packages/flux-runtime/src/__tests__/request-runtime.test.ts`         | stay in `src/__tests__/`, rewrite relative imports to new request-runtime path       | direct request-runtime unit coverage, still runtime-owned         |
+| `packages/flux-runtime/src/__tests__/request-runtime-polling.test.ts` | stay in `src/__tests__/`, no movement expected unless helper imports change          | runtime integration via public runtime entry                      |
+| `packages/flux-runtime/src/__tests__/reaction-runtime.test.ts`        | stay in `src/__tests__/`, rewrite imports only if needed                             | runtime reaction integration coverage                             |
+| `packages/flux-runtime/src/__tests__/runtime-reactions.test.ts`       | stay in `src/__tests__/`                                                             | runtime integration coverage                                      |
+| `packages/flux-runtime/src/__tests__/runtime-sources.test.ts`         | stay in `src/__tests__/`                                                             | runtime integration coverage                                      |
+| `packages/flux-runtime/src/__tests__/runtime-sources-refresh.test.ts` | stay in `src/__tests__/`                                                             | runtime integration coverage                                      |
+| `packages/flux-runtime/src/__tests__/runtime-sources-merge.test.ts`   | stay in `src/__tests__/`                                                             | runtime integration coverage                                      |
+| `packages/flux-runtime/src/__tests__/runtime-validation.test.ts`      | stay in `src/__tests__/`                                                             | protects plan 120 async-governance behavior from structural drift |
 
 No test may move out of `@nop-chaos/flux-runtime` as part of this plan.
 

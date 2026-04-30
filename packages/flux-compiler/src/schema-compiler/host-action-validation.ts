@@ -2,16 +2,13 @@ import type {
   CapabilityPublicationAttribution,
   HostCapabilityProjectionManifest,
   HostContractContext,
-  FluxValueShape
+  FluxValueShape,
 } from '@nop-chaos/flux-core';
 import type { SchemaCompilerDiagnosticsContext } from './diagnostics';
 import { appendJsonPointer, createSchemaCompilerDiagnosticsContext } from './diagnostics';
 
 function createSilentDiagnosticsContext(): SchemaCompilerDiagnosticsContext {
-  return createSchemaCompilerDiagnosticsContext(
-    { diagnostics: { enabled: false } },
-    'validate'
-  );
+  return createSchemaCompilerDiagnosticsContext({ diagnostics: { enabled: false } }, 'validate');
 }
 
 export interface HostActionValidationContext {
@@ -21,20 +18,20 @@ export interface HostActionValidationContext {
 }
 
 export function createHostActionValidationContext(
-  hostContractContext: HostContractContext
+  hostContractContext: HostContractContext,
 ): HostActionValidationContext {
   return {
     manifest: hostContractContext.manifest,
     capabilityPublication: hostContractContext.capabilityPublication ?? {
       mode: 'whole-owner',
-      transitiveInheritance: true
-    }
+      transitiveInheritance: true,
+    },
   };
 }
 
 export function isInsideCapableRegion(
   ctx: HostActionValidationContext | undefined,
-  regionKey?: string
+  regionKey?: string,
 ): boolean {
   if (!ctx) {
     return false;
@@ -61,7 +58,9 @@ export function isInsideCapableRegion(
   return false;
 }
 
-export function parseNamespacedAction(action: string): { namespace: string; method: string } | undefined {
+export function parseNamespacedAction(
+  action: string,
+): { namespace: string; method: string } | undefined {
   const colonIndex = action.indexOf(':');
   if (colonIndex <= 0 || colonIndex === action.length - 1) {
     return undefined;
@@ -82,7 +81,7 @@ export function validateHostAction(
   args: unknown,
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
-  hostContext: HostActionValidationContext | undefined
+  hostContext: HostActionValidationContext | undefined,
 ): boolean {
   if (!hostContext) {
     return true;
@@ -109,14 +108,20 @@ export function validateHostAction(
       code: 'unknown-host-capability-method',
       path: appendJsonPointer(path, 'action'),
       message: `Unknown ${manifest.family} capability method "${parsed.method}". Available methods: ${Object.keys(manifest.capabilities.methods).join(', ') || 'none'}.`,
-      source: 'host-contract'
+      source: 'host-contract',
     });
     return false;
   }
 
   if (method.args && args !== undefined) {
     const argsPath = appendJsonPointer(path, 'args');
-    const validationResult = validateArgsShape(args, method.args, argsPath, diagnostics, manifest.family);
+    const validationResult = validateArgsShape(
+      args,
+      method.args,
+      argsPath,
+      diagnostics,
+      manifest.family,
+    );
     if (!validationResult) {
       return false;
     }
@@ -128,7 +133,7 @@ export function validateHostAction(
       path: appendJsonPointer(path, 'action'),
       message: `${manifest.family} capability method "${parsed.method}" is deprecated.`,
       severity: 'warning',
-      source: 'host-contract'
+      source: 'host-contract',
     });
   }
 
@@ -140,7 +145,7 @@ function validateArgsShape(
   shape: FluxValueShape,
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
-  family: string
+  family: string,
 ): boolean {
   switch (shape.kind) {
     case 'string':
@@ -149,7 +154,7 @@ function validateArgsShape(
           code: 'invalid-host-capability-args',
           path,
           message: `${family} capability args: expected string.`,
-          source: 'host-contract'
+          source: 'host-contract',
         });
         return false;
       }
@@ -161,7 +166,7 @@ function validateArgsShape(
           code: 'invalid-host-capability-args',
           path,
           message: `${family} capability args: expected number.`,
-          source: 'host-contract'
+          source: 'host-contract',
         });
         return false;
       }
@@ -173,7 +178,7 @@ function validateArgsShape(
           code: 'invalid-host-capability-args',
           path,
           message: `${family} capability args: expected boolean.`,
-          source: 'host-contract'
+          source: 'host-contract',
         });
         return false;
       }
@@ -185,7 +190,7 @@ function validateArgsShape(
           code: 'invalid-host-capability-args',
           path,
           message: `${family} capability args: expected null.`,
-          source: 'host-contract'
+          source: 'host-contract',
         });
         return false;
       }
@@ -197,7 +202,7 @@ function validateArgsShape(
           code: 'invalid-host-capability-args',
           path,
           message: `${family} capability args: expected object.`,
-          source: 'host-contract'
+          source: 'host-contract',
         });
         return false;
       }
@@ -215,7 +220,7 @@ function validateArgsShape(
               code: 'invalid-host-capability-args',
               path: fieldPath,
               message: `${family} capability args: missing required field "${fieldName}".`,
-              source: 'host-contract'
+              source: 'host-contract',
             });
             valid = false;
           }
@@ -233,14 +238,16 @@ function validateArgsShape(
           code: 'invalid-host-capability-args',
           path,
           message: `${family} capability args: expected array.`,
-          source: 'host-contract'
+          source: 'host-contract',
         });
         return false;
       }
 
       let valid = true;
       value.forEach((item, index) => {
-        if (!validateArgsShape(item, shape.item, appendJsonPointer(path, index), diagnostics, family)) {
+        if (
+          !validateArgsShape(item, shape.item, appendJsonPointer(path, index), diagnostics, family)
+        ) {
           valid = false;
         }
       });
@@ -259,7 +266,7 @@ function validateArgsShape(
         code: 'invalid-host-capability-args',
         path,
         message: `${family} capability args: value does not match any expected type in union.`,
-        source: 'host-contract'
+        source: 'host-contract',
       });
       return false;
     }
@@ -270,7 +277,7 @@ function validateArgsShape(
           code: 'invalid-host-capability-args',
           path,
           message: `${family} capability args: expected literal ${JSON.stringify(shape.value)}.`,
-          source: 'host-contract'
+          source: 'host-contract',
         });
         return false;
       }

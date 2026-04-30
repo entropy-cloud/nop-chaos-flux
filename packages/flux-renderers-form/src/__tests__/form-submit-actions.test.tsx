@@ -5,7 +5,14 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index';
-import { buttonRenderer, env, notifyCalls, scopeStateProbeRenderer, selectOption, submitCalls } from './form-test-support';
+import {
+  buttonRenderer,
+  env,
+  notifyCalls,
+  scopeStateProbeRenderer,
+  selectOption,
+  submitCalls,
+} from './form-test-support';
 
 describe('formRendererDefinitions - submit and init actions', () => {
   it('runs form-owned submitAction and follow-up branches through component:submit', async () => {
@@ -21,21 +28,21 @@ describe('formRendererDefinitions - submit and init actions', () => {
           type: 'form',
           id: 'profile-form',
           data: {
-            username: 'Alice'
+            username: 'Alice',
           },
           submitAction: {
             action: 'ajax',
-            api: {
+            args: {
               url: '/api/semantic-submit',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           onSubmitSuccess: {
             action: 'showToast',
             args: {
               level: 'success',
-              message: '${result.data.username}'
-            }
+              message: '${result.data.username}',
+            },
           },
           actions: [
             {
@@ -43,14 +50,14 @@ describe('formRendererDefinitions - submit and init actions', () => {
               label: 'Submit semantic form',
               onClick: {
                 action: 'component:submit',
-                componentId: 'profile-form'
-              }
-            }
-          ]
+                componentId: 'profile-form',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit semantic form'));
@@ -76,21 +83,21 @@ describe('formRendererDefinitions - submit and init actions', () => {
           type: 'form',
           id: 'failing-form',
           data: {
-            username: 'Alice'
+            username: 'Alice',
           },
           submitAction: {
             action: 'ajax',
-            api: {
+            args: {
               url: '/api/semantic-submit-failure',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           onSubmitError: {
             action: 'showToast',
             args: {
               level: 'error',
-              message: '${error.message}'
-            }
+              message: '${error.message}',
+            },
           },
           actions: [
             {
@@ -98,19 +105,19 @@ describe('formRendererDefinitions - submit and init actions', () => {
               label: 'Submit failing semantic form',
               onClick: {
                 action: 'component:submit',
-                componentId: 'failing-form'
-              }
-            }
-          ]
+                componentId: 'failing-form',
+              },
+            },
+          ],
         }}
         env={{
           ...env,
           fetcher: async () => {
             throw new Error('semantic failure');
-          }
+          },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit failing semantic form'));
@@ -135,29 +142,29 @@ describe('formRendererDefinitions - submit and init actions', () => {
           type: 'form',
           id: 'validated-form',
           data: {
-            username: ''
+            username: '',
           },
           body: [
             {
               type: 'input-text',
               name: 'username',
               label: 'Username',
-              required: true
-            }
+              required: true,
+            },
           ],
           submitAction: {
             action: 'ajax',
-            api: {
+            args: {
               url: '/api/validated-submit',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           onValidateError: {
             action: 'showToast',
             args: {
               level: 'error',
-              message: '${error[0].message}'
-            }
+              message: '${error[0].message}',
+            },
           },
           actions: [
             {
@@ -165,14 +172,14 @@ describe('formRendererDefinitions - submit and init actions', () => {
               label: 'Submit validated form',
               onClick: {
                 action: 'component:submit',
-                componentId: 'validated-form'
-              }
-            }
-          ]
+                componentId: 'validated-form',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit validated form'));
@@ -189,7 +196,11 @@ describe('formRendererDefinitions - submit and init actions', () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      scopeStateProbeRenderer,
+    ]);
 
     const { rerender } = render(
       <SchemaRenderer
@@ -201,19 +212,19 @@ describe('formRendererDefinitions - submit and init actions', () => {
             action: 'showToast',
             args: {
               level: 'info',
-              message: 'init-ready'
-            }
+              message: 'init-ready',
+            },
           },
           body: [
             {
               type: 'scope-state-probe',
-              name: 'status'
-            }
-          ]
+              name: 'status',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -230,19 +241,19 @@ describe('formRendererDefinitions - submit and init actions', () => {
             action: 'showToast',
             args: {
               level: 'info',
-              message: 'init-ready'
-            }
+              message: 'init-ready',
+            },
           },
           body: [
             {
               type: 'scope-state-probe',
-              name: 'status'
-            }
-          ]
+              name: 'status',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -254,7 +265,11 @@ describe('formRendererDefinitions - submit and init actions', () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      scopeStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -268,22 +283,24 @@ describe('formRendererDefinitions - submit and init actions', () => {
               valuesPath: 'ui.formValues',
               data: {
                 username: 'Alice',
-                role: 'admin'
-              }
+                role: 'admin',
+              },
             },
             {
               type: 'scope-state-probe',
-              name: 'ui.formValues'
-            }
-          ]
+              name: 'ui.formValues',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('scope-state:ui.formValues').textContent).toBe('{"username":"Alice","role":"admin"}');
+      expect(screen.getByTestId('scope-state:ui.formValues').textContent).toBe(
+        '{"username":"Alice","role":"admin"}',
+      );
     });
   });
 
@@ -291,7 +308,11 @@ describe('formRendererDefinitions - submit and init actions', () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      scopeStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -304,31 +325,33 @@ describe('formRendererDefinitions - submit and init actions', () => {
               id: 'values-path-live-form',
               valuesPath: 'ui.formValues',
               data: {
-                username: 'Alice'
+                username: 'Alice',
               },
               body: [
                 {
                   type: 'input-text',
                   name: 'username',
-                  label: 'Username'
-                }
-              ]
+                  label: 'Username',
+                },
+              ],
             },
             {
               type: 'scope-state-probe',
-              name: 'ui.formValues'
-            }
-          ]
+              name: 'ui.formValues',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'Bob' } });
 
     await waitFor(() => {
-      expect(screen.getByTestId('scope-state:ui.formValues').textContent).toBe('{"username":"Bob"}');
+      expect(screen.getByTestId('scope-state:ui.formValues').textContent).toBe(
+        '{"username":"Bob"}',
+      );
     });
   });
 
@@ -344,20 +367,20 @@ describe('formRendererDefinitions - submit and init actions', () => {
           type: 'form',
           data: {
             username: 'Alice',
-            role: 'admin'
+            role: 'admin',
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/profile',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'input-text',
               name: 'username',
-              label: 'Username'
+              label: 'Username',
             },
             {
               type: 'select',
@@ -365,23 +388,23 @@ describe('formRendererDefinitions - submit and init actions', () => {
               label: 'Role',
               options: [
                 { label: 'Admin', value: 'admin' },
-                { label: 'Editor', value: 'editor' }
-              ]
-            }
+                { label: 'Editor', value: 'editor' },
+              ],
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit profile',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const usernameInput = screen.getByDisplayValue('Alice');
@@ -399,7 +422,7 @@ describe('formRendererDefinitions - submit and init actions', () => {
 
     expect(submitCalls[0]).toMatchObject({
       username: 'Bob',
-      role: 'editor'
+      role: 'editor',
     });
   });
 
@@ -407,7 +430,11 @@ describe('formRendererDefinitions - submit and init actions', () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      scopeStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -415,25 +442,23 @@ describe('formRendererDefinitions - submit and init actions', () => {
         schema={{
           type: 'page',
           body: [
-             {
-               type: 'form',
-               id: 'feedback-form',
-              onSubmitSuccess: [
-                 { action: 'setValue', args: { path: 'submitted', value: true } }
-               ],
-               data: {
-                 username: ''
+            {
+              type: 'form',
+              id: 'feedback-form',
+              onSubmitSuccess: [{ action: 'setValue', args: { path: 'submitted', value: true } }],
+              data: {
+                username: '',
               },
               body: [
                 {
                   type: 'input-text',
                   name: 'username',
-                  label: 'Username'
+                  label: 'Username',
                 },
                 {
                   type: 'text',
-                  text: '${username ?? ""}'
-                }
+                  text: '${username ?? ""}',
+                },
               ],
               actions: [
                 {
@@ -441,24 +466,24 @@ describe('formRendererDefinitions - submit and init actions', () => {
                   label: 'Submit feedback form',
                   onClick: {
                     action: 'component:submit',
-                    componentId: 'feedback-form'
-                  }
-                }
-              ]
+                    componentId: 'feedback-form',
+                  },
+                },
+              ],
             },
             {
               type: 'scope-state-probe',
-              name: 'submittedUsername'
+              name: 'submittedUsername',
             },
             {
               type: 'scope-state-probe',
-              name: 'submitted'
-            }
-          ]
+              name: 'submitted',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const usernameInput = screen.getByLabelText('Username');
@@ -479,7 +504,11 @@ describe('formRendererDefinitions - submit and init actions', () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      scopeStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -490,17 +519,17 @@ describe('formRendererDefinitions - submit and init actions', () => {
             {
               type: 'fragment',
               data: {
-                dialogId: 'dialog-1'
+                dialogId: 'dialog-1',
               },
               body: [
                 {
                   type: 'form',
                   id: 'surface-form',
                   onSubmitSuccess: [
-                    { action: 'setValue', args: { path: 'savedName', value: 'Dana' } }
+                    { action: 'setValue', args: { path: 'savedName', value: 'Dana' } },
                   ],
                   data: {
-                    name: 'Dana'
+                    name: 'Dana',
                   },
                   actions: [
                     {
@@ -508,22 +537,22 @@ describe('formRendererDefinitions - submit and init actions', () => {
                       label: 'Submit surface form',
                       onClick: {
                         action: 'component:submit',
-                        componentId: 'surface-form'
-                      }
-                    }
-                  ]
-                }
-              ]
+                        componentId: 'surface-form',
+                      },
+                    },
+                  ],
+                },
+              ],
             },
             {
               type: 'scope-state-probe',
-              name: 'savedName'
-            }
-          ]
+              name: 'savedName',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit surface form'));
@@ -537,7 +566,11 @@ describe('formRendererDefinitions - submit and init actions', () => {
     submitCalls.length = 0;
     notifyCalls.length = 0;
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, scopeStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      scopeStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -548,45 +581,45 @@ describe('formRendererDefinitions - submit and init actions', () => {
             {
               type: 'fragment',
               data: {
-                dialogId: 'dialog-1'
+                dialogId: 'dialog-1',
               },
               body: [
                 {
                   type: 'form',
                   onSubmitSuccess: [
-                    { action: 'setValue', args: { path: 'submitted', value: true } }
+                    { action: 'setValue', args: { path: 'submitted', value: true } },
                   ],
                   body: [
                     {
                       type: 'input-text',
                       name: 'name',
-                      label: 'Name'
-                    }
+                      label: 'Name',
+                    },
                   ],
                   actions: [
                     {
                       type: 'button',
                       label: 'Submit via built-in submit',
-                      onClick: { action: 'submit' }
-                    }
-                  ]
-                }
-              ]
+                      onClick: { action: 'submit' },
+                    },
+                  ],
+                },
+              ],
             },
             {
               type: 'scope-state-probe',
-              name: 'savedName'
+              name: 'savedName',
             },
             {
               type: 'scope-state-probe',
-              name: 'submitted'
-            }
-          ]
+              name: 'submitted',
+            },
+          ],
         }}
         data={{}}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Erin' } });

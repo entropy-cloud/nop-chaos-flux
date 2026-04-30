@@ -1,10 +1,6 @@
 import type { GraphNode, GraphEdge } from '@nop-chaos/flow-designer-core';
 
-import {
-  BRANCH_SHORT_LEG,
-  MERGE_SHORT_LEG,
-  BTN_DIST,
-} from './dingflow-constants';
+import { BRANCH_SHORT_LEG, MERGE_SHORT_LEG, BTN_DIST } from './dingflow-constants';
 import type { DingFlowOverlay } from './dingflow-constants';
 
 const DW = 220;
@@ -51,9 +47,7 @@ export function computeDingFlowOverlays(
     const firstTarget = nodeMap.get(outs[0].target);
     if (!firstTarget) continue;
     const cx = Math.round(sourceNode.position.x + getWidth(sourceNode) / 2);
-    const branchLineY = Math.round(
-      firstTarget.position.y - BRANCH_SHORT_LEG,
-    );
+    const branchLineY = Math.round(firstTarget.position.y - BRANCH_SHORT_LEG);
     result.push({
       id: `overlay-addcond-${sourceId}`,
       x: cx,

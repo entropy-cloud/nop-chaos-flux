@@ -4,7 +4,7 @@
 
 **Schema that executes, not just renders.**
 
-*A schema-driven runtime for low-code systems, built around seven primitives.*
+_A schema-driven runtime for low-code systems, built around seven primitives._
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
@@ -42,18 +42,19 @@ If you need exact contracts or implementation details, continue into `docs/`.
 
 ## Relationship with NOP Chaos Next
 
-| Dimension | NOP Chaos Flux | NOP Chaos Next |
-|-----------|----------------|----------------|
-| **Positioning** | Low-code runtime and rendering framework | Frontend application framework and scaffold |
-| **Core Capability** | Runtime built on seven primitives | Extension system + Plugin system |
-| **Rendering Layer** | Custom renderer architecture | Based on AMIS (React 19 migrated) |
-| **Use Case** | Platform teams build low-code infrastructure | Business teams build enterprise applications |
-| **Designers** | Built-in Flow/Report/Spreadsheet designers | Integrates third-party designers |
-| **State Management** | Framework-agnostic Zustand stores | Hybrid Zustand + React Query |
-| **Dependencies** | Independent runtime, no AMIS dependency | Depends on AMIS as core rendering layer |
-| **Plugin Loading** | Not provided | SystemJS remote plugin loading |
+| Dimension            | NOP Chaos Flux                               | NOP Chaos Next                               |
+| -------------------- | -------------------------------------------- | -------------------------------------------- |
+| **Positioning**      | Low-code runtime and rendering framework     | Frontend application framework and scaffold  |
+| **Core Capability**  | Runtime built on seven primitives            | Extension system + Plugin system             |
+| **Rendering Layer**  | Custom renderer architecture                 | Based on AMIS (React 19 migrated)            |
+| **Use Case**         | Platform teams build low-code infrastructure | Business teams build enterprise applications |
+| **Designers**        | Built-in Flow/Report/Spreadsheet designers   | Integrates third-party designers             |
+| **State Management** | Framework-agnostic Zustand stores            | Hybrid Zustand + React Query                 |
+| **Dependencies**     | Independent runtime, no AMIS dependency      | Depends on AMIS as core rendering layer      |
+| **Plugin Loading**   | Not provided                                 | SystemJS remote plugin loading               |
 
 In short:
+
 - **Flux** = "How to generate UI from JSON" (foundational runtime)
 - **Next** = "How to build extensible business applications" (application framework)
 
@@ -85,38 +86,38 @@ The two projects can collaborate: Next can integrate Flux's designer and runtime
   "title": "Profile",
   "data": {
     "fullName": "Alice",
-    "email": "alice@example.com"
+    "email": "alice@example.com",
   },
   "body": [
     {
       "type": "input-text",
       "name": "fullName",
       "label": "Full Name",
-      "required": true
+      "required": true,
     },
     {
       "type": "input-email",
       "name": "email",
       "label": "Email",
-      "required": true
-    }
+      "required": true,
+    },
   ],
   "submitAction": {
     "action": "ajax",
     "args": {
       "method": "post",
-      "url": "/api/profile"
-    }
+      "url": "/api/profile",
+    },
   },
   "actions": [
     {
       "type": "button",
       "label": "Submit",
       "onClick": {
-        "action": "submitForm"
-      }
+        "action": "submitForm",
+      },
     },
-  ]
+  ],
 }
 ```
 
@@ -156,14 +157,14 @@ One of the main integrated surfaces is the Flow Designer workspace, which combin
 
 Flux keeps its conceptual core small, coherent, and enforceable in implementation.
 
-| Goal | What Flux enforces |
-|---|---|
-| Unified value semantics | A field keeps one name while its value can still be literal, expression, template, array, or object |
-| Compile-once execution | Values and metadata are classified before runtime hot paths so static work stays cheap |
-| Lexical scope | `ScopeRef` resolves data through predictable lexical lookup |
+| Goal                          | What Flux enforces                                                                                                            |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Unified value semantics       | A field keeps one name while its value can still be literal, expression, template, array, or object                           |
+| Compile-once execution        | Values and metadata are classified before runtime hot paths so static work stays cheap                                        |
+| Lexical scope                 | `ScopeRef` resolves data through predictable lexical lookup                                                                   |
 | Explicit authority boundaries | Data access, actions, and component targeting stay separated through `ScopeRef`, `ActionScope`, and `ComponentHandleRegistry` |
-| Host-safe integration | Renderers expose stable markers and host boundaries stay visible through contracts |
-| Design-to-code discipline | Package layering, renderer interfaces, and runtime boundaries are treated as implementation constraints |
+| Host-safe integration         | Renderers expose stable markers and host boundaries stay visible through contracts                                            |
+| Design-to-code discipline     | Package layering, renderer interfaces, and runtime boundaries are treated as implementation constraints                       |
 
 For the deeper rationale, start with `docs/articles/flux-design-introduction.md`.
 
@@ -171,15 +172,15 @@ For the deeper rationale, start with `docs/articles/flux-design-introduction.md`
 
 Flux keeps its core vocabulary deliberately small. These seven primitives are the conceptual base that forms, tables, dialogs, designers, and tooling all build on:
 
-| Primitive | Responsibility |
-|---|---|
-| `Template` | Compiled program structure, region composition, and lifecycle anchoring |
-| `ScopeRef` | Lexical data environment |
-| `Value` | Literal, expression, template, array, and object execution model |
-| `Resource` | Runtime-owned value producer such as data loading |
-| `Reaction` | Declarative watch/effect primitive |
-| `Capability` | The only authority channel for side effects |
-| `Host Projection` | Read-only host state projected into schema-visible scope |
+| Primitive         | Responsibility                                                          |
+| ----------------- | ----------------------------------------------------------------------- |
+| `Template`        | Compiled program structure, region composition, and lifecycle anchoring |
+| `ScopeRef`        | Lexical data environment                                                |
+| `Value`           | Literal, expression, template, array, and object execution model        |
+| `Resource`        | Runtime-owned value producer such as data loading                       |
+| `Reaction`        | Declarative watch/effect primitive                                      |
+| `Capability`      | The only authority channel for side effects                             |
+| `Host Projection` | Read-only host state projected into schema-visible scope                |
 
 Forms, tables, dialogs, designer runtimes, and validation are derived systems on top of these primitives. That keeps the runtime small enough for advanced features to share one coherent execution model.
 
@@ -209,23 +210,23 @@ flowchart LR
 
 ### Workspace Backbone
 
-| Layer | Packages | Role |
-|---|---|---|
-| Core contracts | `@nop-chaos/flux-core` | Primitive contracts, shared types, and pure utilities |
-| Formula layer | `@nop-chaos/flux-formula` | Expression and template compilation |
-| Compiler layer | `@nop-chaos/flux-compiler` | Schema compilation, normalization, and diagnostics |
-| Action core | `@nop-chaos/flux-action-core` | Action lowering, selector classification, and control-flow execution |
-| Runtime layer | `@nop-chaos/flux-runtime` | Scope, actions, validation, page and form runtime |
-| React bridge | `@nop-chaos/flux-react` | Hooks, render handles, and renderer integration |
+| Layer          | Packages                      | Role                                                                 |
+| -------------- | ----------------------------- | -------------------------------------------------------------------- |
+| Core contracts | `@nop-chaos/flux-core`        | Primitive contracts, shared types, and pure utilities                |
+| Formula layer  | `@nop-chaos/flux-formula`     | Expression and template compilation                                  |
+| Compiler layer | `@nop-chaos/flux-compiler`    | Schema compilation, normalization, and diagnostics                   |
+| Action core    | `@nop-chaos/flux-action-core` | Action lowering, selector classification, and control-flow execution |
+| Runtime layer  | `@nop-chaos/flux-runtime`     | Scope, actions, validation, page and form runtime                    |
+| React bridge   | `@nop-chaos/flux-react`       | Hooks, render handles, and renderer integration                      |
 
 ### Feature Families
 
-| Family | Packages | Role |
-|---|---|---|
-| General renderers | `flux-renderers-basic`, `flux-renderers-form`, `flux-renderers-data` | Pages, layouts, forms, and data-oriented renderers |
-| Designers and editors | `flow-designer-*`, `report-designer-*`, `spreadsheet-*`, `word-editor-*`, `flux-code-editor` | Domain-specific tooling and editing surfaces |
-| Shared UI and styling | `ui`, `tailwind-preset` | Visual baseline, primitives, and styling conventions |
-| Diagnostics and app surface | `nop-debugger`, `apps/playground` | Debugger tooling and integrated playground scenarios |
+| Family                      | Packages                                                                                     | Role                                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| General renderers           | `flux-renderers-basic`, `flux-renderers-form`, `flux-renderers-data`                         | Pages, layouts, forms, and data-oriented renderers   |
+| Designers and editors       | `flow-designer-*`, `report-designer-*`, `spreadsheet-*`, `word-editor-*`, `flux-code-editor` | Domain-specific tooling and editing surfaces         |
+| Shared UI and styling       | `ui`, `tailwind-preset`                                                                      | Visual baseline, primitives, and styling conventions |
+| Diagnostics and app surface | `nop-debugger`, `apps/playground`                                                            | Debugger tooling and integrated playground scenarios |
 
 The reusable execution backbone is `flux-core -> flux-formula -> flux-compiler -> flux-action-core -> flux-runtime -> flux-react`. Many larger feature areas then split into `*-core` packages for framework-independent logic and `*-renderers` packages for Flux/React integration.
 

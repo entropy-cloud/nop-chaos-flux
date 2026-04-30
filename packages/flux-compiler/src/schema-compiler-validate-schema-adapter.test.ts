@@ -6,7 +6,7 @@ const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: () => null,
   propSchema: { label: { type: 'string' } },
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 describe('validateSchema host contract adapter', () => {
@@ -18,11 +18,11 @@ describe('validateSchema host contract adapter', () => {
       namespace: 'designer',
       methods: {
         selectNode: {
-          args: { kind: 'object', fields: { nodeId: { kind: 'string' } } }
+          args: { kind: 'object', fields: { nodeId: { kind: 'string' } } },
         },
-        undo: {}
-      }
-    }
+        undo: {},
+      },
+    },
   };
 
   it('validates host actions in event handlers when hostContractContext is provided', () => {
@@ -30,7 +30,7 @@ describe('validateSchema host contract adapter', () => {
       schema: {
         type: 'button',
         label: 'Test',
-        onClick: { action: 'designer:unknownMethod' }
+        onClick: { action: 'designer:unknownMethod' },
       },
       registry: createRendererRegistry([buttonRenderer]),
       options: {
@@ -38,13 +38,13 @@ describe('validateSchema host contract adapter', () => {
           hostContractContext: {
             family: 'designer',
             version: '1.0',
-            manifest: testManifest
-          }
-        }
-      }
+            manifest: testManifest,
+          },
+        },
+      },
     });
 
-    const hostDiagnostics = diagnostics.filter(d => d.source === 'host-contract');
+    const hostDiagnostics = diagnostics.filter((d) => d.source === 'host-contract');
     expect(hostDiagnostics).toHaveLength(1);
     expect(hostDiagnostics[0].code).toBe('unknown-host-capability-method');
     expect(hostDiagnostics[0].message).toContain('unknownMethod');
@@ -55,7 +55,7 @@ describe('validateSchema host contract adapter', () => {
       schema: {
         type: 'button',
         label: 'Test',
-        onClick: { action: 'designer:selectNode', args: { nodeId: 123 } }
+        onClick: { action: 'designer:selectNode', args: { nodeId: 123 } },
       },
       registry: createRendererRegistry([buttonRenderer]),
       options: {
@@ -63,13 +63,13 @@ describe('validateSchema host contract adapter', () => {
           hostContractContext: {
             family: 'designer',
             version: '1.0',
-            manifest: testManifest
-          }
-        }
-      }
+            manifest: testManifest,
+          },
+        },
+      },
     });
 
-    const hostDiagnostics = diagnostics.filter(d => d.source === 'host-contract');
+    const hostDiagnostics = diagnostics.filter((d) => d.source === 'host-contract');
     expect(hostDiagnostics).toHaveLength(1);
     expect(hostDiagnostics[0].code).toBe('invalid-host-capability-args');
   });
@@ -79,7 +79,7 @@ describe('validateSchema host contract adapter', () => {
       schema: {
         type: 'button',
         label: 'Test',
-        onClick: { action: 'designer:selectNode', args: { nodeId: 'node-1' } }
+        onClick: { action: 'designer:selectNode', args: { nodeId: 'node-1' } },
       },
       registry: createRendererRegistry([buttonRenderer]),
       options: {
@@ -87,13 +87,13 @@ describe('validateSchema host contract adapter', () => {
           hostContractContext: {
             family: 'designer',
             version: '1.0',
-            manifest: testManifest
-          }
-        }
-      }
+            manifest: testManifest,
+          },
+        },
+      },
     });
 
-    const hostDiagnostics = diagnostics.filter(d => d.source === 'host-contract');
+    const hostDiagnostics = diagnostics.filter((d) => d.source === 'host-contract');
     expect(hostDiagnostics).toHaveLength(0);
   });
 
@@ -102,12 +102,12 @@ describe('validateSchema host contract adapter', () => {
       schema: {
         type: 'button',
         label: 'Test',
-        onClick: { action: 'designer:unknownMethod' }
+        onClick: { action: 'designer:unknownMethod' },
       },
-      registry: createRendererRegistry([buttonRenderer])
+      registry: createRendererRegistry([buttonRenderer]),
     });
 
-    const hostDiagnostics = diagnostics.filter(d => d.source === 'host-contract');
+    const hostDiagnostics = diagnostics.filter((d) => d.source === 'host-contract');
     expect(hostDiagnostics).toHaveLength(0);
   });
 });

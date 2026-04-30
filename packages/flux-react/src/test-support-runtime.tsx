@@ -7,7 +7,7 @@ import type {
   RendererComponentProps,
   RendererDefinition,
   RendererHelpers,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -32,7 +32,7 @@ import {
   useOwnedFieldState,
   useRenderScope,
   useRendererRuntime,
-  useValidationNodeState
+  useValidationNodeState,
 } from './hooks';
 import { RenderNodes } from './helpers';
 import { fragmentScopedProbeFormSchema } from './test-support-core';
@@ -47,16 +47,16 @@ function CompositeErrorProbe() {
   const rootError = useCurrentFormError({
     path: 'metadata',
     ownerPath: 'metadata',
-    sourceKinds: ['runtime-registration']
+    sourceKinds: ['runtime-registration'],
   });
   const childError = useCurrentFormError({
     path: 'metadata.0.value',
     ownerPath: 'metadata',
-    sourceKinds: ['runtime-registration']
+    sourceKinds: ['runtime-registration'],
   });
   const ownedErrors = useCurrentFormErrors({
     ownerPath: 'metadata',
-    sourceKinds: ['runtime-registration']
+    sourceKinds: ['runtime-registration'],
   });
   const aggregateError = useAggregateError('metadata');
   const fieldError = useFieldError('metadata.0.value');
@@ -73,11 +73,13 @@ function CompositeErrorProbe() {
         return [];
       },
       validate() {
-        return [{ path: 'metadata', rule: 'required', message: 'Metadata requires at least one entry' }];
+        return [
+          { path: 'metadata', rule: 'required', message: 'Metadata requires at least one entry' },
+        ];
       },
       validateChild(path) {
         return [{ path, rule: 'required', message: 'Entry 1 value is required' }];
-      }
+      },
     }).unregister;
   }, [form]);
 
@@ -86,7 +88,11 @@ function CompositeErrorProbe() {
       <Button variant="ghost" size="sm" onClick={() => void form?.validateField('metadata')}>
         Validate root
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => void form?.validateField('metadata.0.value')}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => void form?.validateField('metadata.0.value')}
+      >
         Validate child
       </Button>
       <span data-testid="root-error">{rootError?.message ?? ''}</span>
@@ -103,21 +109,17 @@ function CompositeErrorProbe() {
 
 export const compositeProbeRenderer: RendererDefinition = {
   type: 'composite-probe',
-  component: CompositeErrorProbe
+  component: CompositeErrorProbe,
 };
 
 export const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: (props) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => void props.events.onClick?.()}
-    >
+    <Button variant="ghost" size="sm" onClick={() => void props.events.onClick?.()}>
       {String(props.props.label ?? 'Button')}
     </Button>
   ),
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 function PollingSource(props: RendererComponentProps<DataSourceSchema>) {
@@ -128,7 +130,7 @@ function PollingSource(props: RendererComponentProps<DataSourceSchema>) {
     const registration = runtime.registerDataSource({
       id: props.id,
       scope,
-      compiledSource: compileDataSource(props.id, props.schema, expressionCompiler)
+      compiledSource: compileDataSource(props.id, props.schema, expressionCompiler),
     });
 
     return () => {
@@ -141,7 +143,7 @@ function PollingSource(props: RendererComponentProps<DataSourceSchema>) {
 
 export const pollingSourceRenderer: RendererDefinition = {
   type: 'polling-source',
-  component: PollingSource
+  component: PollingSource,
 };
 
 export const cidProbeRenderer: RendererDefinition = {
@@ -150,7 +152,7 @@ export const cidProbeRenderer: RendererDefinition = {
     <span data-testid="cid-root" data-cid={props.meta.cid || undefined}>
       {String(props.props.text ?? 'cid probe')}
     </span>
-  )
+  ),
 };
 
 export const wrapProbeRenderer: RendererDefinition = {
@@ -162,7 +164,7 @@ export const wrapProbeRenderer: RendererDefinition = {
       data-testid="wrap-probe-input"
       defaultValue={String(props.props.value ?? '')}
     />
-  )
+  ),
 };
 
 function FragmentRenderHost(props: RendererComponentProps) {
@@ -176,10 +178,10 @@ function FragmentRenderHost(props: RendererComponentProps) {
       {props.helpers.render(fragmentScopedProbeFormSchema, {
         bindings: {
           currentUser: {
-            role: 'architect'
-          }
+            role: 'architect',
+          },
         },
-        pathSuffix: 'fragment'
+        pathSuffix: 'fragment',
       })}
     </div>
   );
@@ -196,9 +198,9 @@ function FragmentScopeProbeHost(props: RendererComponentProps) {
       </Button>
       {props.helpers.render(props.regions.body?.templateNode as any, {
         bindings: {
-          child: childValue
+          child: childValue,
         },
-        pathSuffix: 'fragment'
+        pathSuffix: 'fragment',
       })}
     </div>
   );
@@ -206,13 +208,13 @@ function FragmentScopeProbeHost(props: RendererComponentProps) {
 
 export const fragmentRenderHostRenderer: RendererDefinition = {
   type: 'fragment-render-host',
-  component: FragmentRenderHost
+  component: FragmentRenderHost,
 };
 
 export const fragmentScopeProbeHostRenderer: RendererDefinition = {
   type: 'fragment-scope-probe-host',
   component: FragmentScopeProbeHost,
-  regions: ['body']
+  regions: ['body'],
 };
 
 export const scopedHostRenderer: RendererDefinition = {
@@ -220,7 +222,7 @@ export const scopedHostRenderer: RendererDefinition = {
   component: (props) => <section>{props.regions.body?.render()}</section>,
   regions: ['body'],
   actionScopePolicy: 'new',
-  componentRegistryPolicy: 'new'
+  componentRegistryPolicy: 'new',
 };
 
 function NamespaceProvider(props: RendererComponentProps) {
@@ -238,9 +240,9 @@ function NamespaceProvider(props: RendererComponentProps) {
       invoke(method, payload) {
         return {
           ok: true,
-          data: `${label}:${method}:${String(payload?.value ?? '')}`
+          data: `${label}:${method}:${String(payload?.value ?? '')}`,
         };
-      }
+      },
     });
   }, [actionScope, namespace, label]);
 
@@ -249,7 +251,7 @@ function NamespaceProvider(props: RendererComponentProps) {
 
 export const namespaceProviderRenderer: RendererDefinition = {
   type: 'namespace-provider',
-  component: NamespaceProvider
+  component: NamespaceProvider,
 };
 
 function ComponentHandleProvider(props: RendererComponentProps) {
@@ -272,19 +274,21 @@ function ComponentHandleProvider(props: RendererComponentProps) {
         invoke(method, payload) {
           return {
             ok: true,
-            data: `${label}:${method}:${String(payload?.value ?? '')}`
+            data: `${label}:${method}:${String(payload?.value ?? '')}`,
           };
-        }
-      }
+        },
+      },
     });
   }, [componentRegistry, componentName, label]);
 
-  return <span data-testid={`component-registry-scope-${label}`}>{componentRegistry?.id ?? ''}</span>;
+  return (
+    <span data-testid={`component-registry-scope-${label}`}>{componentRegistry?.id ?? ''}</span>
+  );
 }
 
 export const componentHandleProviderRenderer: RendererDefinition = {
   type: 'component-handle-provider',
-  component: ComponentHandleProvider
+  component: ComponentHandleProvider,
 };
 
 function DispatchProbe(props: RendererComponentProps) {
@@ -309,7 +313,7 @@ function DispatchProbe(props: RendererComponentProps) {
 
 export const dispatchProbeRenderer: RendererDefinition = {
   type: 'dispatch-probe',
-  component: DispatchProbe
+  component: DispatchProbe,
 };
 
 function ToggleHost(props: RendererComponentProps) {
@@ -328,10 +332,12 @@ function ToggleHost(props: RendererComponentProps) {
 export const toggleHostRenderer: RendererDefinition = {
   type: 'toggle-host',
   component: ToggleHost,
-  regions: ['body']
+  regions: ['body'],
 };
 
-export function createDispatchCaptureRenderer(onCapture: (dispatch: RendererHelpers['dispatch']) => void): RendererDefinition {
+export function createDispatchCaptureRenderer(
+  onCapture: (dispatch: RendererHelpers['dispatch']) => void,
+): RendererDefinition {
   function DispatchCapture(props: RendererComponentProps) {
     React.useEffect(() => {
       onCapture(props.helpers.dispatch);
@@ -342,7 +348,7 @@ export function createDispatchCaptureRenderer(onCapture: (dispatch: RendererHelp
 
   return {
     type: 'dispatch-capture',
-    component: DispatchCapture
+    component: DispatchCapture,
   };
 }
 
@@ -367,7 +373,7 @@ export function createScope(data: Record<string, any>): ScopeRef {
     materializeVisible: () => data,
     value: data,
     update: () => undefined,
-    merge: () => {}
+    merge: () => {},
   };
 }
 
@@ -378,7 +384,9 @@ export function renderWithRuntimeProviders(input: {
   schema: Record<string, unknown>;
 }): RenderResult {
   const actionScope = input.runtime.createActionScope({ id: 'test-action-scope' });
-  const componentRegistry = input.runtime.createComponentHandleRegistry({ id: 'test-component-registry' });
+  const componentRegistry = input.runtime.createComponentHandleRegistry({
+    id: 'test-component-registry',
+  });
   const surfaceRuntime = input.surfaceRuntime ?? input.runtime.createSurfaceRuntime();
 
   return render(
@@ -388,12 +396,15 @@ export function renderWithRuntimeProviders(input: {
           <ScopeContext.Provider value={input.page.scope}>
             <PageContext.Provider value={input.page}>
               <SurfaceContext.Provider value={surfaceRuntime}>
-                <RenderNodes input={input.schema as any} options={{ actionScope, componentRegistry }} />
+                <RenderNodes
+                  input={input.schema as any}
+                  options={{ actionScope, componentRegistry }}
+                />
               </SurfaceContext.Provider>
             </PageContext.Provider>
           </ScopeContext.Provider>
         </ComponentRegistryContext.Provider>
       </ActionScopeContext.Provider>
-    </RuntimeContext.Provider>
+    </RuntimeContext.Provider>,
   );
 }

@@ -7,38 +7,46 @@ import { formRendererDefinition } from './form';
 describe('form schemaValidator', () => {
   const compiler = createSchemaCompiler({
     registry: createRendererRegistry([formRendererDefinition]),
-    expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+    expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
   });
 
   it('reports invalid body and data shapes', () => {
-    expect(compiler.validate?.({
-      type: 'form',
-      body: { type: 'input-text', name: 'keyword' },
-      data: []
-    } as any)).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        code: 'invalid-property-shape',
-        path: '/body',
-        source: 'renderer'
-      }),
-      expect.objectContaining({
-        code: 'invalid-property-shape',
-        path: '/data',
-        source: 'renderer'
-      })
-    ]));
+    expect(
+      compiler.validate?.({
+        type: 'form',
+        body: { type: 'input-text', name: 'keyword' },
+        data: [],
+      } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-shape',
+          path: '/body',
+          source: 'renderer',
+        }),
+        expect.objectContaining({
+          code: 'invalid-property-shape',
+          path: '/data',
+          source: 'renderer',
+        }),
+      ]),
+    );
   });
 
   it('reports invalid actions shape', () => {
-    expect(compiler.validate?.({
-      type: 'form',
-      actions: { type: 'button', label: 'Submit' }
-    } as any)).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        code: 'invalid-property-shape',
-        path: '/actions',
-        source: 'renderer'
-      })
-    ]));
+    expect(
+      compiler.validate?.({
+        type: 'form',
+        actions: { type: 'button', label: 'Submit' },
+      } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-shape',
+          path: '/actions',
+          source: 'renderer',
+        }),
+      ]),
+    );
   });
 });

@@ -51,14 +51,14 @@
 
 以下异步基础设施已正确实现 AbortController + 取消机制：
 
-| 模块 | 操作 | 取消机制 |
-|------|------|---------|
-| request-runtime | API 请求 | AbortController + 去重（cancel-previous/ignore-new/parallel） |
-| form-runtime-submit | 表单提交 | isSubmitting 守卫 + signal 中止 + destroy 检查 |
-| form-runtime-validation | 字段验证 | per-path AbortController + runId + modelGeneration |
-| data-source-runtime | 数据源轮询 | AbortController + stale check + pendingRefresh |
-| action-runtime | action dispatch | signal 贯穿 timeout + retry + debounce |
-| imports | 模块导入 | per-entry AbortController + 缓存去重 |
+| 模块                    | 操作            | 取消机制                                                      |
+| ----------------------- | --------------- | ------------------------------------------------------------- |
+| request-runtime         | API 请求        | AbortController + 去重（cancel-previous/ignore-new/parallel） |
+| form-runtime-submit     | 表单提交        | isSubmitting 守卫 + signal 中止 + destroy 检查                |
+| form-runtime-validation | 字段验证        | per-path AbortController + runId + modelGeneration            |
+| data-source-runtime     | 数据源轮询      | AbortController + stale check + pendingRefresh                |
+| action-runtime          | action dispatch | signal 贯穿 timeout + retry + debounce                        |
+| imports                 | 模块导入        | per-entry AbortController + 缓存去重                          |
 
 ## 同类问题扫描备注
 
@@ -66,15 +66,15 @@
 
 对 report-designer-core 全包的异步扫描发现 **12 个函数中有 6 个涉及真正异步 I/O**：
 
-| 函数 | 文件 | 异步类型 | 取消机制 | 风险 |
-|------|------|---------|---------|------|
-| `preview` | `core-dispatch.ts:183` | 网络 I/O（后端渲染） | 无 | 高 |
-| `importTemplate` | `core-dispatch.ts:~220` | 文件 I/O（解析） | 无 | 高 |
-| `exportTemplate` | `core-dispatch.ts:~260` | 网络 I/O（序列化+上传） | 无 | 高 |
-| `refreshDerivedState` | `core.ts:142` | loadFieldSources + resolveInspectorPanels | 无（P3 stale guard） | 中 |
-| `loadFieldSources` | core.ts | 网络 I/O | 无 | 中 |
-| `resolveInspectorPanelsForTarget` | core.ts | 可能异步 | 无 | 低 |
-| 其他 6 个函数 | — | 纯同步 | N/A | 无 |
+| 函数                              | 文件                    | 异步类型                                  | 取消机制             | 风险 |
+| --------------------------------- | ----------------------- | ----------------------------------------- | -------------------- | ---- |
+| `preview`                         | `core-dispatch.ts:183`  | 网络 I/O（后端渲染）                      | 无                   | 高   |
+| `importTemplate`                  | `core-dispatch.ts:~220` | 文件 I/O（解析）                          | 无                   | 高   |
+| `exportTemplate`                  | `core-dispatch.ts:~260` | 网络 I/O（序列化+上传）                   | 无                   | 高   |
+| `refreshDerivedState`             | `core.ts:142`           | loadFieldSources + resolveInspectorPanels | 无（P3 stale guard） | 中   |
+| `loadFieldSources`                | core.ts                 | 网络 I/O                                  | 无                   | 中   |
+| `resolveInspectorPanelsForTarget` | core.ts                 | 可能异步                                  | 无                   | 低   |
+| 其他 6 个函数                     | —                       | 纯同步                                    | N/A                  | 无   |
 
 - **spreadsheet-core**: 纯同步计算，无异步风险。
 - **flow-designer-core**: ELK 布局为本地同步计算（P3 已记录）。
@@ -83,6 +83,6 @@
 ## 统计
 
 | 严重程度 | 数量 |
-|---------|------|
-| P2 | 3 |
-| P3 | 2 |
+| -------- | ---- |
+| P2       | 3    |
+| P3       | 2    |

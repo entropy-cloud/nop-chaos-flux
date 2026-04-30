@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { CapabilityMethodContract, HostCapabilityProjectionManifest, HostManifestResolver } from './manifest';
+import type {
+  CapabilityMethodContract,
+  HostCapabilityProjectionManifest,
+  HostManifestResolver,
+} from './manifest';
 
 describe('host manifest contracts', () => {
   it('supports resolved and unsupported-version resolver results', () => {
@@ -8,18 +12,18 @@ describe('host manifest contracts', () => {
       version: '1.0',
       projection: {
         fields: {
-          userId: { schema: { kind: 'string' } }
-        }
+          userId: { schema: { kind: 'string' } },
+        },
       },
       capabilities: {
         namespace: 'designer',
         methods: {
           export: {
             args: { kind: 'object', fields: {}, optional: [] },
-            result: { kind: 'boolean' }
-          }
-        }
-      }
+            result: { kind: 'boolean' },
+          },
+        },
+      },
     };
 
     const resolver: HostManifestResolver = {
@@ -28,11 +32,17 @@ describe('host manifest contracts', () => {
           return { kind: 'resolved', manifest };
         }
         return { kind: 'unsupported-version', availableVersions: ['1.0'] };
-      }
+      },
     };
 
-    expect(resolver.resolve({ family: 'designer', versionSelector: '1.0' })).toEqual({ kind: 'resolved', manifest });
-    expect(resolver.resolve({ family: 'designer', versionSelector: '2.0' })).toEqual({ kind: 'unsupported-version', availableVersions: ['1.0'] });
+    expect(resolver.resolve({ family: 'designer', versionSelector: '1.0' })).toEqual({
+      kind: 'resolved',
+      manifest,
+    });
+    expect(resolver.resolve({ family: 'designer', versionSelector: '2.0' })).toEqual({
+      kind: 'unsupported-version',
+      availableVersions: ['1.0'],
+    });
   });
 
   it('allows region-scoped capability attribution declarations', () => {
@@ -43,8 +53,8 @@ describe('host manifest contracts', () => {
       capabilities: { namespace: 'designer', methods: {} },
       compatibility: {
         deprecatedMethods: ['designer:legacyExport'],
-        replacedBy: { 'designer:legacyExport': 'designer:export' }
-      }
+        replacedBy: { 'designer:legacyExport': 'designer:export' },
+      },
     };
 
     expect(manifest.compatibility?.replacedBy?.['designer:legacyExport']).toBe('designer:export');
@@ -55,11 +65,11 @@ describe('host manifest contracts', () => {
       args: {
         kind: 'object',
         fields: {
-          value: { kind: 'string' }
-        }
+          value: { kind: 'string' },
+        },
       },
       result: { kind: 'boolean' },
-      description: 'Shared method shape'
+      description: 'Shared method shape',
     };
 
     expect(method.args?.kind).toBe('object');

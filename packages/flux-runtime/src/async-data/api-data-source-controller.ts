@@ -8,21 +8,21 @@ import {
   type OperationControlConfig,
   type RendererRuntime,
   type ScopeDependencySet,
-  type ScopeRef
+  type ScopeRef,
 } from '@nop-chaos/flux-core';
 import { resolveCacheKey, type ApiCacheStore } from './api-cache';
 import {
   createInitialDataSourceState,
   deriveDataSourceState,
   structuralShareData,
-  writeStatusToScope
+  writeStatusToScope,
 } from './data-source-state';
 import {
   applyResultMapping,
   createApiConfigRuntimeState,
   evaluateCompiledApiConfig,
   writeDataToScope,
-  type ApiConfigRuntimeState
+  type ApiConfigRuntimeState,
 } from './data-source-runtime-utils';
 import {
   abortActiveControllers,
@@ -30,7 +30,7 @@ import {
   toErrorDataSourceState,
   toIdleFetchState,
   toStopConditionErrorState,
-  toSuccessDataSourceState
+  toSuccessDataSourceState,
 } from './api-data-source-controller-helpers';
 import { isAbortError } from '../error-utils';
 import { executeApiSchema, prepareApiRequestForExecution } from './request-runtime';
@@ -38,7 +38,15 @@ import { executeApiSchema, prepareApiRequestForExecution } from './request-runti
 export function createDataSourceController(input: {
   runtime: RendererRuntime;
   apiCache: ApiCacheStore;
-  executeApiRequest: <T>(actionType: string, api: import('@nop-chaos/flux-core').ExecutableApiRequest, scope: ScopeRef, options?: { signal?: AbortSignal; control?: import('@nop-chaos/flux-core').OperationControlConfig }) => Promise<{ ok: boolean; status: number; data: T }>;
+  executeApiRequest: <T>(
+    actionType: string,
+    api: import('@nop-chaos/flux-core').ExecutableApiRequest,
+    scope: ScopeRef,
+    options?: {
+      signal?: AbortSignal;
+      control?: import('@nop-chaos/flux-core').OperationControlConfig;
+    },
+  ) => Promise<{ ok: boolean; status: number; data: T }>;
   compiledApi: CompiledApiConfig;
   scope: ScopeRef;
   ownerId?: string;
@@ -72,7 +80,7 @@ export function createDataSourceController(input: {
     stopWhen,
     silent,
     initialData,
-    control
+    control,
   } = input;
 
   let started = false;
@@ -96,7 +104,7 @@ export function createDataSourceController(input: {
 
     return {
       ...nextState,
-      async: input.asyncGovernance.getOwnerState(asyncOwnerId)
+      async: input.asyncGovernance.getOwnerState(asyncOwnerId),
     };
   }
 
@@ -107,7 +115,7 @@ export function createDataSourceController(input: {
   function settleRunIfNeeded(
     run: import('@nop-chaos/flux-core').AsyncRunHandle | undefined,
     requestSequence: number,
-    settled: import('@nop-chaos/flux-core').SettleAsyncRunInput
+    settled: import('@nop-chaos/flux-core').SettleAsyncRunInput,
   ) {
     if (!run || !input.asyncGovernance) {
       return undefined;
@@ -142,7 +150,14 @@ export function createDataSourceController(input: {
         return;
       }
 
-      writeDataToScope({ scope, targetPath, mergeToScope, mergeStrategy, mergeKey, data: effectiveData });
+      writeDataToScope({
+        scope,
+        targetPath,
+        mergeToScope,
+        mergeStrategy,
+        mergeKey,
+        data: effectiveData,
+      });
       return;
     }
 
@@ -162,7 +177,7 @@ export function createDataSourceController(input: {
         reportRuntimeHostIssue({
           env: runtime.env,
           error,
-          phase: 'api'
+          phase: 'api',
         });
       }
       stop();
@@ -191,14 +206,15 @@ export function createDataSourceController(input: {
 
     pendingRefresh = false;
 
-    const run = asyncOwnerId && input.asyncGovernance
-      ? input.asyncGovernance.beginRun({
-          ownerKind: 'data-source',
-          ownerId: asyncOwnerId,
-          scopeId: scope.id,
-          cause: started ? 'refresh' : 'start'
-        })
-      : undefined;
+    const run =
+      asyncOwnerId && input.asyncGovernance
+        ? input.asyncGovernance.beginRun({
+            ownerKind: 'data-source',
+            ownerId: asyncOwnerId,
+            scopeId: scope.id,
+            cause: started ? 'refresh' : 'start',
+          })
+        : undefined;
 
     updateState((current) => ({
       ...current,
@@ -206,7 +222,7 @@ export function createDataSourceController(input: {
       fetchStatus: 'fetching',
       status: typeof current.data === 'undefined' ? 'pending' : current.status,
       stale: typeof current.data !== 'undefined',
-      error: undefined
+      error: undefined,
     }));
 
     if (refreshDedup === 'cancel-previous') {
@@ -219,81 +235,97 @@ export function createDataSourceController(input: {
     activeRequestCount += 1;
 
     try {
-      const requestScope = runtime.createChildScope(scope, {}, { source: 'custom', pathSuffix: 'data-source-request' });
+      const requestScope = runtime.createChildScope(
+        scope,
+        {},
+        { source: 'custom', pathSuffix: 'data-source-request' },
+      );
       const trackedApi = evaluateCompiledApiConfig({
         compiledApi,
         scope,
         runtime,
-        state: apiConfigState
+        state: apiConfigState,
       });
       input.onDependenciesChange?.(trackedApi.dependencies);
-      const preparedRequest = prepareApiRequestForExecution(trackedApi.resolvedApi, requestScope, runtime.env, runtime.expressionCompiler);
+      const preparedRequest = prepareApiRequestForExecution(
+        trackedApi.resolvedApi,
+        requestScope,
+        runtime.env,
+        runtime.expressionCompiler,
+      );
       const cacheKey = resolveCacheKey(preparedRequest.request, control);
 
-        if (cacheKey) {
-          const cached = apiCache.get<unknown>(cacheKey);
+      if (cacheKey) {
+        const cached = apiCache.get<unknown>(cacheKey);
 
-          if (cached) {
-            await Promise.resolve();
+        if (cached) {
+          await Promise.resolve();
 
-            if (stopped || controller.signal.aborted) {
-              if (run && input.asyncGovernance) {
-                input.asyncGovernance.settleRun(run, {
-                  outcome: 'cancelled',
-                  cancelled: true
-                });
-              }
-              if (!stopped && pendingRefresh) {
-                updateState((current) => toIdleFetchState(current));
-              }
-              updateState((current) => current);
-              return;
+          if (stopped || controller.signal.aborted) {
+            if (run && input.asyncGovernance) {
+              input.asyncGovernance.settleRun(run, {
+                outcome: 'cancelled',
+                cancelled: true,
+              });
             }
-
-            const settledRun = settleRunIfNeeded(run, requestSequence, { outcome: 'succeeded' });
-
-            if (settledRun?.outcome === 'stale-dropped') {
-              updateState((current) => current);
-              return;
+            if (!stopped && pendingRefresh) {
+              updateState((current) => toIdleFetchState(current));
             }
+            updateState((current) => current);
+            return;
+          }
 
-            const mappedValue = applyResultMapping({
+          const settledRun = settleRunIfNeeded(run, requestSequence, { outcome: 'succeeded' });
+
+          if (settledRun?.outcome === 'stale-dropped') {
+            updateState((current) => current);
+            return;
+          }
+
+          const mappedValue = applyResultMapping({
             runtime,
             scope,
             compiledResultMapping,
-            payload: cached.data
+            payload: cached.data,
           });
 
-            publishData(mappedValue);
-            latestSettledRequestSequence = Math.max(latestSettledRequestSequence, requestSequence);
-            updateState((current) => toSuccessDataSourceState(current, mappedValue));
+          publishData(mappedValue);
+          latestSettledRequestSequence = Math.max(latestSettledRequestSequence, requestSequence);
+          updateState((current) => toSuccessDataSourceState(current, mappedValue));
 
-            if (checkStopCondition()) {
-              stop();
-            }
-
-            updateState((current) => current);
-
-            return;
+          if (checkStopCondition()) {
+            stop();
           }
+
+          updateState((current) => current);
+
+          return;
+        }
       }
 
-      const response = await executeApiSchema(trackedApi.resolvedApi, requestScope, runtime.env, runtime.expressionCompiler, {
-        signal: controller.signal,
-        evaluate: runtime.evaluate,
-        preparedRequest,
-        executor: (adaptedApi) => executeApiRequest('data-source', adaptedApi, requestScope, {
+      const response = await executeApiSchema(
+        trackedApi.resolvedApi,
+        requestScope,
+        runtime.env,
+        runtime.expressionCompiler,
+        {
           signal: controller.signal,
-          control
-        }),
-        control
-      });
+          evaluate: runtime.evaluate,
+          preparedRequest,
+          executor: (adaptedApi) =>
+            executeApiRequest('data-source', adaptedApi, requestScope, {
+              signal: controller.signal,
+              control,
+            }),
+          control,
+        },
+      );
 
       if (stopped || controller.signal.aborted) {
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, {
             outcome: 'cancelled',
-            cancelled: true
+            cancelled: true,
           });
         }
         if (!stopped && pendingRefresh) {
@@ -320,7 +352,7 @@ export function createDataSourceController(input: {
         runtime,
         scope,
         compiledResultMapping,
-        payload: response.data
+        payload: response.data,
       });
 
       publishData(mappedValue);
@@ -337,7 +369,7 @@ export function createDataSourceController(input: {
           input.asyncGovernance.settleRun(run, {
             outcome: 'cancelled',
             cancelled: true,
-            error: caughtError
+            error: caughtError,
           });
         }
         if (!stopped && pendingRefresh) {
@@ -349,7 +381,7 @@ export function createDataSourceController(input: {
 
       const settledRun = settleRunIfNeeded(run, requestSequence, {
         outcome: 'failed',
-        error: caughtError
+        error: caughtError,
       });
 
       if (settledRun?.outcome === 'stale-dropped') {
@@ -360,7 +392,13 @@ export function createDataSourceController(input: {
       // Ignore failures only for truly stale older requests that were already superseded
       // by a later settled request. If the same request sequence already marked success and
       // then mapping/publish failed, we still need to surface that failure state and telemetry.
-      if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run) && !settledRun && requestSequence < latestSettledRequestSequence) {
+      if (
+        run &&
+        input.asyncGovernance &&
+        !input.asyncGovernance.isCurrentRun(run) &&
+        !settledRun &&
+        requestSequence < latestSettledRequestSequence
+      ) {
         updateState((current) => current);
         return;
       }
@@ -371,7 +409,7 @@ export function createDataSourceController(input: {
         reportRuntimeHostIssue({
           env: runtime.env,
           error: caughtError,
-          phase: 'api'
+          phase: 'api',
         });
       }
 
@@ -380,7 +418,12 @@ export function createDataSourceController(input: {
       activeControllers.delete(controller);
       activeRequestCount = Math.max(0, activeRequestCount - 1);
 
-      if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run) && requestSequence < latestSettledRequestSequence) {
+      if (
+        run &&
+        input.asyncGovernance &&
+        !input.asyncGovernance.isCurrentRun(run) &&
+        requestSequence < latestSettledRequestSequence
+      ) {
         input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
         updateState((current) => current);
       }
@@ -389,7 +432,11 @@ export function createDataSourceController(input: {
         abortController = undefined;
       }
 
-      if (!stopped && (state.inFlightCount !== activeRequestCount || state.fetchStatus !== (activeRequestCount > 0 ? 'fetching' : 'idle'))) {
+      if (
+        !stopped &&
+        (state.inFlightCount !== activeRequestCount ||
+          state.fetchStatus !== (activeRequestCount > 0 ? 'fetching' : 'idle'))
+      ) {
         updateState((current) => toActiveRequestState(current, activeRequestCount));
       }
 
@@ -414,7 +461,7 @@ export function createDataSourceController(input: {
     updateState((current) => ({
       ...current,
       started,
-      status: typeof current.data === 'undefined' ? 'idle' : current.status
+      status: typeof current.data === 'undefined' ? 'idle' : current.status,
     }));
 
     void runRequest();
@@ -447,7 +494,7 @@ export function createDataSourceController(input: {
     updateState((current) => ({
       ...current,
       inFlightCount: 0,
-      fetchStatus: 'idle'
+      fetchStatus: 'idle',
     }));
   }
 
@@ -478,6 +525,6 @@ export function createDataSourceController(input: {
 
       const initialState = createInitialDataSourceState(undefined);
       updateState(() => initialState);
-    }
+    },
   };
 }

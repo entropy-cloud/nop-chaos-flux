@@ -8,10 +8,15 @@ import type {
   RendererComponentProps,
   RendererRuntime,
   ScopeRef,
-  TemplateNode
+  TemplateNode,
 } from '@nop-chaos/flux-core';
 import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope, useCurrentActionScope, useCurrentComponentRegistry } from './hooks';
+import {
+  useRendererRuntime,
+  useRenderScope,
+  useCurrentActionScope,
+  useCurrentComponentRegistry,
+} from './hooks';
 import { NodeMetaContext, RenderInstancePathContext } from './contexts';
 import { createFragmentScopeChange } from './fragment-scope';
 import { NodeRenderer } from './node-renderer';
@@ -32,7 +37,9 @@ import { NodeRenderer } from './node-renderer';
  * }
  * ```
  */
-export function useSchemaProps<S extends BaseSchema>(props: RendererComponentProps<S>): Readonly<S> {
+export function useSchemaProps<S extends BaseSchema>(
+  props: RendererComponentProps<S>,
+): Readonly<S> {
   return props.props as unknown as Readonly<S>;
 }
 
@@ -82,7 +89,10 @@ type FragmentScopeCacheEntry = {
   scopeKey: string | undefined;
 };
 
-const fragmentScopeCacheByRuntime = new WeakMap<RendererRuntime, Map<string, FragmentScopeCacheEntry>>();
+const fragmentScopeCacheByRuntime = new WeakMap<
+  RendererRuntime,
+  Map<string, FragmentScopeCacheEntry>
+>();
 
 function getFragmentScopeCache(runtime: RendererRuntime): Map<string, FragmentScopeCacheEntry> {
   let cache = fragmentScopeCacheByRuntime.get(runtime);
@@ -98,7 +108,7 @@ function getFragmentScopeCache(runtime: RendererRuntime): Map<string, FragmentSc
 export function normalizeNodeInput(
   runtime: RendererRuntime,
   input: RenderNodeInput,
-  compileOptions?: CompileSchemaOptions
+  compileOptions?: CompileSchemaOptions,
 ): TemplateNode | readonly TemplateNode[] | null {
   if (!input) {
     return null;
@@ -143,7 +153,7 @@ export function resolveRendererSlotContent(
   options?: {
     metaKey?: string;
     fallback?: React.ReactNode;
-  }
+  },
 ) {
   const regionContent = props.regions[slotKey]?.render();
 
@@ -151,14 +161,18 @@ export function resolveRendererSlotContent(
     return regionContent;
   }
 
-  const propValue = (props.props as Record<string, unknown>)[slotKey] as React.ReactNode | undefined;
+  const propValue = (props.props as Record<string, unknown>)[slotKey] as
+    | React.ReactNode
+    | undefined;
 
   if (propValue !== undefined && propValue !== null) {
     return propValue;
   }
 
   if (options?.metaKey) {
-    const metaValue = (props.meta as unknown as Record<string, unknown>)[options.metaKey] as React.ReactNode | undefined;
+    const metaValue = (props.meta as unknown as Record<string, unknown>)[options.metaKey] as
+      | React.ReactNode
+      | undefined;
 
     if (metaValue !== undefined && metaValue !== null) {
       return metaValue;
@@ -206,10 +220,13 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
 
     return {
       basePath,
-      parentPath: ownerTemplatePath
+      parentPath: ownerTemplatePath,
     };
   }, [ownerNodeInstance, pathSuffix]);
-  const compiled = useMemo(() => normalizeNodeInput(runtime, props.input, compileOptions), [runtime, props.input, compileOptions]);
+  const compiled = useMemo(
+    () => normalizeNodeInput(runtime, props.input, compileOptions),
+    [runtime, props.input, compileOptions],
+  );
   const shouldUseFragmentScope = !explicitScope && !!fragmentBindings;
   const fragmentScope = useMemo(() => {
     if (!shouldUseFragmentScope || !fragmentBindings) {
@@ -233,7 +250,7 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       isolate,
       pathSuffix,
       scopeKey,
-      source: 'fragment'
+      source: 'fragment',
     });
 
     fragmentScopeCache.set(fragmentScopeCacheKey, {
@@ -242,11 +259,20 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
       runtime,
       isolate,
       pathSuffix,
-      scopeKey
+      scopeKey,
     });
 
     return scope;
-  }, [currentScope, fragmentBindings, fragmentScopeCacheKey, isolate, pathSuffix, runtime, scopeKey, shouldUseFragmentScope]);
+  }, [
+    currentScope,
+    fragmentBindings,
+    fragmentScopeCacheKey,
+    isolate,
+    pathSuffix,
+    runtime,
+    scopeKey,
+    shouldUseFragmentScope,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -277,7 +303,8 @@ export function RenderNodes(props: { input: RenderNodeInput; options?: RenderFra
   const actionScope = options?.actionScope ?? currentActionScope;
   const componentRegistry = options?.componentRegistry ?? currentComponentRegistry;
   const scope = explicitScope ?? fragmentScope ?? currentScope;
-  const instancePath = options?.instancePath ?? ownerNodeInstance?.instancePath ?? currentInstancePath;
+  const instancePath =
+    options?.instancePath ?? ownerNodeInstance?.instancePath ?? currentInstancePath;
 
   if (!compiled) {
     return null;

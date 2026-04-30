@@ -123,9 +123,6 @@ export type {
 
 export { isSpreadsheetCommand } from './commands.js';
 
-export type {
-  SpreadsheetCore,
-  CreateSpreadsheetCoreOptions,
-} from './core.js';
+export type { SpreadsheetCore, CreateSpreadsheetCoreOptions } from './core.js';
 
 export { createSpreadsheetCore } from './core.js';

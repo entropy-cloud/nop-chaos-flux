@@ -1,13 +1,31 @@
 import React, { useEffect, useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
-import type { ActionNamespaceProvider, ActionResult, RendererComponentProps } from '@nop-chaos/flux-core';
+import type {
+  ActionNamespaceProvider,
+  ActionResult,
+  RendererComponentProps,
+} from '@nop-chaos/flux-core';
 import type { SpreadsheetHostStatusSummary } from '@nop-chaos/spreadsheet-core';
-import { hasRendererSlotContent, resolveRendererSlotContent, useCurrentActionScope, useHostScope } from '@nop-chaos/flux-react';
+import {
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
+  useCurrentActionScope,
+  useHostScope,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
-import { createSpreadsheetCore, type SpreadsheetConfig, type SpreadsheetDocument, type SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
+import {
+  createSpreadsheetCore,
+  type SpreadsheetConfig,
+  type SpreadsheetDocument,
+  type SpreadsheetRuntimeSnapshot,
+} from '@nop-chaos/spreadsheet-core';
 import { cn } from '@nop-chaos/ui';
 import { deriveHostSnapshot } from './bridge.js';
-import { buildSpreadsheetStatusLabel, getRuntimeActiveSheetCellCount, getRuntimeActiveSheetName } from './page-model.js';
+import {
+  buildSpreadsheetStatusLabel,
+  getRuntimeActiveSheetCellCount,
+  getRuntimeActiveSheetName,
+} from './page-model.js';
 import type { SpreadsheetPageSchema } from './types.js';
 
 function toActionResult(response: unknown): ActionResult {
@@ -33,9 +51,10 @@ function createSpreadsheetActionProvider(
       return [];
     },
     async invoke(method, payload) {
-      const args = payload && typeof payload === 'object' && !Array.isArray(payload)
-        ? (payload as Record<string, unknown>)
-        : {};
+      const args =
+        payload && typeof payload === 'object' && !Array.isArray(payload)
+          ? (payload as Record<string, unknown>)
+          : {};
       const result = await dispatch({
         type: `spreadsheet:${method}`,
         ...args,
@@ -94,26 +113,40 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   );
 
   const spreadsheet = useMemo(() => deriveHostSnapshot(snapshot), [snapshot]);
-  const spreadsheetScope = useHostScope({
-    spreadsheet,
-    workbook: spreadsheet.workbook,
-    activeSheet: spreadsheet.activeSheet,
-    selection: spreadsheet.selection,
-    activeCell: spreadsheet.activeCell,
-    activeRange: spreadsheet.activeRange,
-    runtime: spreadsheet.runtime,
-  }, props.path, 'spreadsheet');
+  const spreadsheetScope = useHostScope(
+    {
+      spreadsheet,
+      workbook: spreadsheet.workbook,
+      activeSheet: spreadsheet.activeSheet,
+      selection: spreadsheet.selection,
+      activeCell: spreadsheet.activeCell,
+      activeRange: spreadsheet.activeRange,
+      runtime: spreadsheet.runtime,
+    },
+    props.path,
+    'spreadsheet',
+  );
 
   const toolbarContent = props.regions.toolbar
-    ? props.helpers.render(props.regions.toolbar.templateNode, { scope: spreadsheetScope, actionScope })
+    ? props.helpers.render(props.regions.toolbar.templateNode, {
+        scope: spreadsheetScope,
+        actionScope,
+      })
     : undefined;
   const bodyContent = props.regions.body
-    ? props.helpers.render(props.regions.body.templateNode, { scope: spreadsheetScope, actionScope })
+    ? props.helpers.render(props.regions.body.templateNode, {
+        scope: spreadsheetScope,
+        actionScope,
+      })
     : undefined;
   const dialogsContent = props.regions.dialogs
-    ? props.helpers.render(props.regions.dialogs.templateNode, { scope: spreadsheetScope, actionScope })
+    ? props.helpers.render(props.regions.dialogs.templateNode, {
+        scope: spreadsheetScope,
+        actionScope,
+      })
     : undefined;
-  const statusPath = typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+  const statusPath =
+    typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
 
   useEffect(() => {
     if (!statusPath) {
@@ -136,17 +169,23 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   return (
     <section className={cn('nop-spreadsheet-page')}>
       <header data-slot="spreadsheet-page-header">
-        <h2>{hasRendererSlotContent(titleContent) ? titleContent : t('flux.spreadsheet.designer')}</h2>
+        <h2>
+          {hasRendererSlotContent(titleContent) ? titleContent : t('flux.spreadsheet.designer')}
+        </h2>
         <p>{buildSpreadsheetStatusLabel(spreadsheet)}</p>
       </header>
 
-      {hasRendererSlotContent(toolbarContent) ? <div data-slot="spreadsheet-page-toolbar">{toolbarContent}</div> : null}
+      {hasRendererSlotContent(toolbarContent) ? (
+        <div data-slot="spreadsheet-page-toolbar">{toolbarContent}</div>
+      ) : null}
 
       <main data-slot="spreadsheet-page-body">
         {hasRendererSlotContent(bodyContent) ? bodyContent : renderFallbackBody(snapshot)}
       </main>
 
-      {hasRendererSlotContent(dialogsContent) ? <div data-slot="spreadsheet-page-dialogs">{dialogsContent}</div> : null}
+      {hasRendererSlotContent(dialogsContent) ? (
+        <div data-slot="spreadsheet-page-dialogs">{dialogsContent}</div>
+      ) : null}
     </section>
   );
 }

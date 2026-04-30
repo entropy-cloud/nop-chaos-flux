@@ -65,14 +65,14 @@ Do not jump directly from `this file feels busy` to `we need a headless architec
 
 Use this table as the fast path before refactoring a renderer.
 
-| If the complexity mainly comes from... | Preferred split | Why | Typical examples |
-| --- | --- | --- | --- |
-| Straight schema-to-UI mapping with little state | Keep one file | More abstraction would add noise faster than clarity | Small field renderers, simple visual renderers |
-| Pure data shaping or normalization | Pure helper module | The logic is easier to test and reuse without React lifecycle | option normalization, flattening, layout calculation, key resolution |
-| One control mixing local UI state, derived display state, interaction flow, and JSX | Local controller hook | The problem is renderer-local behavior, not shared platform state | `tree-select`, `input-tree`, quick-edit cells, detail draft flows |
-| A renderer shell coordinating several already-separated behaviors | Thin orchestration renderer + shared hooks/helpers | The renderer should compose capabilities, not become another monolithic controller | `table` shell over pagination/filter/sort/selection hooks |
-| Repeated lifecycle/state rules across a component family | Shared family helper or runtime module | The behavior is larger than one renderer and should stay stable across shells | `dialog` / `drawer` surface lifecycle helpers |
-| Stable domain behavior reused across renderers or shells | Domain core / runtime layer | The logic is no longer a renderer implementation detail | `flow-designer-core`, report/spreadsheet/word editor cores |
+| If the complexity mainly comes from...                                              | Preferred split                                    | Why                                                                                | Typical examples                                                     |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Straight schema-to-UI mapping with little state                                     | Keep one file                                      | More abstraction would add noise faster than clarity                               | Small field renderers, simple visual renderers                       |
+| Pure data shaping or normalization                                                  | Pure helper module                                 | The logic is easier to test and reuse without React lifecycle                      | option normalization, flattening, layout calculation, key resolution |
+| One control mixing local UI state, derived display state, interaction flow, and JSX | Local controller hook                              | The problem is renderer-local behavior, not shared platform state                  | `tree-select`, `input-tree`, quick-edit cells, detail draft flows    |
+| A renderer shell coordinating several already-separated behaviors                   | Thin orchestration renderer + shared hooks/helpers | The renderer should compose capabilities, not become another monolithic controller | `table` shell over pagination/filter/sort/selection hooks            |
+| Repeated lifecycle/state rules across a component family                            | Shared family helper or runtime module             | The behavior is larger than one renderer and should stay stable across shells      | `dialog` / `drawer` surface lifecycle helpers                        |
+| Stable domain behavior reused across renderers or shells                            | Domain core / runtime layer                        | The logic is no longer a renderer implementation detail                            | `flow-designer-core`, report/spreadsheet/word editor cores           |
 
 Quick rule:
 

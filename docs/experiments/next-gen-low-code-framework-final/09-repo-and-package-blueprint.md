@@ -407,17 +407,17 @@ react-host -> conformance-kit
 
 ## 9. 与实验规范的映射
 
-| Spec | Implementation owner |
-| --- | --- |
-| 01 | package-compiler + kernel-core 共同落地 |
-| 02 | package-compiler |
-| 03 | kernel-core + kernel-actions |
-| 04 | kernel-owners + kernel-validation |
-| 05 | host-protocol + renderer-contracts + react-host |
-| 06 | kernel-core + host-protocol + conformance-kit |
-| 07 | debugger-sdk + conformance-kit |
-| 08 | examples + conformance-kit |
-| 19 | package-compiler + kernel-owners + kernel-core + conformance-kit |
+| Spec | Implementation owner                                             |
+| ---- | ---------------------------------------------------------------- |
+| 01   | package-compiler + kernel-core 共同落地                          |
+| 02   | package-compiler                                                 |
+| 03   | kernel-core + kernel-actions                                     |
+| 04   | kernel-owners + kernel-validation                                |
+| 05   | host-protocol + renderer-contracts + react-host                  |
+| 06   | kernel-core + host-protocol + conformance-kit                    |
+| 07   | debugger-sdk + conformance-kit                                   |
+| 08   | examples + conformance-kit                                       |
+| 19   | package-compiler + kernel-owners + kernel-core + conformance-kit |
 
 ## 10. 与当前仓库的映射提示
 

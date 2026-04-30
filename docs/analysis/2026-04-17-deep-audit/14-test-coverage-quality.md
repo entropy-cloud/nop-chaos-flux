@@ -7,29 +7,29 @@
 
 # 1. 测试覆盖统计（按包）
 
-| 包 | 测试文件数 | 测试代码行数 |
-|---|---:|---:|
-| `@nop-chaos/flow-designer-core` | 8 | 1945 |
-| `@nop-chaos/flow-designer-renderers` | 6 | 1816 |
-| `@nop-chaos/flux-code-editor` | 5 | 717 |
-| `@nop-chaos/flux-core` | 8 | 422 |
-| `@nop-chaos/flux-formula` | 10 | 914 |
-| `@nop-chaos/flux-react` | 11 | 1334 |
-| `@nop-chaos/flux-renderers-basic` | 5 | 347 |
-| `@nop-chaos/flux-renderers-data` | 5 | 507 |
-| `@nop-chaos/flux-renderers-form` | 9 | 1635 |
-| `@nop-chaos/flux-renderers-form-advanced` | 33 | 7421 |
-| `@nop-chaos/flux-runtime` | 44 | 12103 |
-| `@nop-chaos/nop-debugger` | 11 | 3159 |
-| `@nop-chaos/report-designer-core` | 5 | 1260 |
-| `@nop-chaos/report-designer-renderers` | 8 | 1680 |
-| `@nop-chaos/spreadsheet-core` | 8 | 1811 |
-| `@nop-chaos/spreadsheet-renderers` | 4 | 721 |
-| `@nop-chaos/tailwind-preset` | 0 | 0 |
-| `@nop-chaos/theme-tokens` | 0 | 0 |
-| `@nop-chaos/ui` | 2 | 200 |
-| `@nop-chaos/word-editor-core` | 11 | 2151 |
-| `@nop-chaos/word-editor-renderers` | 8 | 772 |
+| 包                                        | 测试文件数 | 测试代码行数 |
+| ----------------------------------------- | ---------: | -----------: |
+| `@nop-chaos/flow-designer-core`           |          8 |         1945 |
+| `@nop-chaos/flow-designer-renderers`      |          6 |         1816 |
+| `@nop-chaos/flux-code-editor`             |          5 |          717 |
+| `@nop-chaos/flux-core`                    |          8 |          422 |
+| `@nop-chaos/flux-formula`                 |         10 |          914 |
+| `@nop-chaos/flux-react`                   |         11 |         1334 |
+| `@nop-chaos/flux-renderers-basic`         |          5 |          347 |
+| `@nop-chaos/flux-renderers-data`          |          5 |          507 |
+| `@nop-chaos/flux-renderers-form`          |          9 |         1635 |
+| `@nop-chaos/flux-renderers-form-advanced` |         33 |         7421 |
+| `@nop-chaos/flux-runtime`                 |         44 |        12103 |
+| `@nop-chaos/nop-debugger`                 |         11 |         3159 |
+| `@nop-chaos/report-designer-core`         |          5 |         1260 |
+| `@nop-chaos/report-designer-renderers`    |          8 |         1680 |
+| `@nop-chaos/spreadsheet-core`             |          8 |         1811 |
+| `@nop-chaos/spreadsheet-renderers`        |          4 |          721 |
+| `@nop-chaos/tailwind-preset`              |          0 |            0 |
+| `@nop-chaos/theme-tokens`                 |          0 |            0 |
+| `@nop-chaos/ui`                           |          2 |          200 |
+| `@nop-chaos/word-editor-core`             |         11 |         2151 |
+| `@nop-chaos/word-editor-renderers`        |          8 |          772 |
 
 **测试文件数量为 0 的包**
 
@@ -39,6 +39,7 @@
 ## 主要覆盖缺口
 
 ### [维度14] flux-runtime 核心运行时存在大面积无对应测试模块
+
 - **文件**: `packages/flux-runtime/src/action-runtime.ts`, `packages/flux-runtime/src/action-runtime-core.ts`, `packages/flux-runtime/src/action-runtime-handlers.ts`, `packages/flux-runtime/src/action-scope.ts`, `packages/flux-runtime/src/scope.ts`, `packages/flux-runtime/src/schema-compiler.ts`, `packages/flux-runtime/src/validation-runtime.ts`, `packages/flux-runtime/src/validation/rules.ts`, `packages/flux-runtime/src/form-runtime.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, `packages/flux-runtime/src/data-source-runtime.ts`, `packages/flux-runtime/src/imports.ts`, `packages/flux-runtime/src/page-runtime.ts`, `packages/flux-runtime/src/projected-scope-store.ts`, `packages/flux-runtime/src/request-runtime-adaptor.ts`
 - **严重程度**: P1
 - **类别**: 覆盖缺口
@@ -47,6 +48,7 @@
 - **参考文档**: `docs/architecture/flux-runtime-module-boundaries.md`, `docs/architecture/form-validation.md`
 
 ### [维度14] flux-formula 的编译器与 AST 定义缺少对应测试文件
+
 - **文件**: `packages/flux-formula/src/compile.ts`, `packages/flux-formula/src/ast.ts`
 - **严重程度**: P1
 - **类别**: 覆盖缺口
@@ -55,6 +57,7 @@
 - **参考文档**: `docs/architecture/flux-core.md`
 
 ### [维度14] flux-react 关键渲染装配层缺少对应测试文件
+
 - **文件**: `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/schema-renderer.tsx`, `packages/flux-react/src/useNodeScopes.ts`, `packages/flux-react/src/useNodeImports.ts`, `packages/flux-react/src/useSourceValue.ts`, `packages/flux-react/src/node-renderer-effects.ts`, `packages/flux-react/src/node-renderer-providers.tsx`
 - **严重程度**: P1
 - **类别**: 覆盖缺口
@@ -63,6 +66,7 @@
 - **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度14] flux-renderers-form 基础表单渲染实现缺少对应测试文件
+
 - **文件**: `packages/flux-renderers-form/src/renderers/form.tsx`, `packages/flux-renderers-form/src/renderers/input.tsx`, `packages/flux-renderers-form/src/field-utils.tsx`
 - **严重程度**: P1
 - **类别**: 覆盖缺口
@@ -71,6 +75,7 @@
 - **参考文档**: `docs/architecture/form-validation.md`, `docs/architecture/renderer-runtime.md`
 
 ### [维度14] flux-renderers-form-advanced 高复杂度模块仍有直测缺口
+
 - **文件**: `packages/flux-renderers-form-advanced/src/array-editor.tsx`, `packages/flux-renderers-form-advanced/src/condition-builder/ConditionBuilder.tsx`, `packages/flux-renderers-form-advanced/src/detail-view/projected-form-runtime.ts`, `packages/flux-renderers-form-advanced/src/variant-field/variant-field-runtime.ts`
 - **严重程度**: P1
 - **类别**: 覆盖缺口
@@ -79,6 +84,7 @@
 - **参考文档**: `docs/architecture/form-validation.md`, `docs/architecture/renderer-runtime.md`
 
 ### [维度14] E2E 中多处关键场景已退化为“页面稳定/元素可见”而非行为断言
+
 - **文件**: `tests/e2e/component-lab/action-logic.spec.ts`, `tests/e2e/component-lab/layout-content.spec.ts`, `tests/e2e/component-lab/data-renderers.spec.ts`, `tests/e2e/component-lab/complex-form.spec.ts`
 - **严重程度**: P1
 - **类别**: 覆盖缺口
@@ -89,6 +95,7 @@
 ## 测试质量问题
 
 ### [维度14] flux-runtime 的入口测试文件同时承担 registry/compiler/runtime-host-scope 多类职责
+
 - **文件**: `packages/flux-runtime/src/index.test.ts:71-514`
 - **严重程度**: P2
 - **类别**: 跨域
@@ -97,6 +104,7 @@
 - **参考文档**: `docs/architecture/flux-runtime-module-boundaries.md`
 
 ### [维度14] schema-compiler-diagnostics 大文件混合诊断、host action validation 与 standalone adapter
+
 - **文件**: `packages/flux-runtime/src/schema-compiler-diagnostics.test.ts:36-552`
 - **严重程度**: P2
 - **类别**: 跨域
@@ -105,6 +113,7 @@
 - **参考文档**: `docs/architecture/action-scope-and-imports.md`, `docs/architecture/flux-runtime-module-boundaries.md`
 
 ### [维度14] flux-code-editor 没有接入共享 Vitest workspace 配置，测试执行路径不一致
+
 - **文件**: `vitest.workspace.ts:3-5`, `packages/flux-code-editor/package.json:47`
 - **严重程度**: P2
 - **类别**: 一致性

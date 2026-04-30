@@ -21,13 +21,23 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
   const footerContent = resolveRendererSlotContent(props, 'footer');
   const bodyContent = props.regions.body?.render();
 
-  const useFlexChild = wrap || align !== undefined || (gap.className || gap.style) || direction !== 'row';
-  const flexChildGapStyle = (useFlexChild && !gap.className && !gap.style)
-    ? { gap: 'var(--space-form-item-gap)' }
-    : gap.style;
+  const useFlexChild =
+    wrap || align !== undefined || gap.className || gap.style || direction !== 'row';
+  const flexChildGapStyle =
+    useFlexChild && !gap.className && !gap.style
+      ? { gap: 'var(--space-form-item-gap)' }
+      : gap.style;
   return (
-    <div className={cn('nop-container', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-      {hasRendererSlotContent(headerContent) ? <div data-slot="container-header" className={cn(slotProps.headerClassName)}>{headerContent}</div> : null}
+    <div
+      className={cn('nop-container', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
+    >
+      {hasRendererSlotContent(headerContent) ? (
+        <div data-slot="container-header" className={cn(slotProps.headerClassName)}>
+          {headerContent}
+        </div>
+      ) : null}
       {useFlexChild ? (
         <div
           data-slot="container-body"
@@ -41,16 +51,22 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
             align === 'end' && 'items-end justify-end',
             align === 'stretch' && 'items-stretch',
             gap.className,
-            slotProps.bodyClassName
+            slotProps.bodyClassName,
           )}
           style={flexChildGapStyle}
         >
           {bodyContent}
         </div>
       ) : (
-        <div data-slot="container-body" className={cn(slotProps.bodyClassName)}>{bodyContent}</div>
+        <div data-slot="container-body" className={cn(slotProps.bodyClassName)}>
+          {bodyContent}
+        </div>
       )}
-      {hasRendererSlotContent(footerContent) ? <div data-slot="container-footer" className={cn(slotProps.footerClassName)}>{footerContent}</div> : null}
+      {hasRendererSlotContent(footerContent) ? (
+        <div data-slot="container-footer" className={cn(slotProps.footerClassName)}>
+          {footerContent}
+        </div>
+      ) : null}
     </div>
   );
 }

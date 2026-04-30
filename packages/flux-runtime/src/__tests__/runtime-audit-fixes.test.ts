@@ -17,7 +17,7 @@ function createStubScope(): ScopeRef {
       getSnapshot: () => ({}),
       getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
-      subscribe: () => () => {}
+      subscribe: () => () => {},
     },
     value: {},
     update: () => {},
@@ -26,7 +26,7 @@ function createStubScope(): ScopeRef {
     readOwn: () => ({}),
     readVisible: () => ({}),
     materializeVisible: () => ({}),
-    merge: () => {}
+    merge: () => {},
   };
 }
 
@@ -41,10 +41,10 @@ describe('audit-backed runtime fixes', () => {
         onSubmitError,
         submitAction: async () => {
           throw new Error('server exploded');
-        }
+        },
       },
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     const result = await form.submit();
@@ -52,7 +52,7 @@ describe('audit-backed runtime fixes', () => {
     expect(onSubmitError).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({
       ok: false,
-      error: expect.any(Error)
+      error: expect.any(Error),
     });
   });
 
@@ -67,9 +67,13 @@ describe('audit-backed runtime fixes', () => {
         firstSignal = ctx.signal;
         await new Promise<void>((resolve, reject) => {
           resolveFirst = resolve;
-          ctx.signal?.addEventListener('abort', () => {
-            reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
-          }, { once: true });
+          ctx.signal?.addEventListener(
+            'abort',
+            () => {
+              reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+            },
+            { once: true },
+          );
         });
       } else {
         secondSignal = ctx.signal;
@@ -81,7 +85,7 @@ describe('audit-backed runtime fixes', () => {
       return {
         ok: true,
         status: 200,
-        data: { valid: true } as T
+        data: { valid: true } as T,
       };
     });
 
@@ -89,9 +93,9 @@ describe('audit-backed runtime fixes', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
@@ -102,7 +106,7 @@ describe('audit-backed runtime fixes', () => {
       validation: {
         behavior: {
           triggers: ['blur'],
-          showErrorOn: ['submit']
+          showErrorOn: ['submit'],
         },
         nodes: {
           email: {
@@ -112,21 +116,24 @@ describe('audit-backed runtime fixes', () => {
             rules: [
               {
                 id: 'email#0:async',
-                rule: { kind: 'async', action: { action: 'ajax', args: { url: '/api/validate-email', method: 'post' } } },
-                dependencyPaths: []
-              }
+                rule: {
+                  kind: 'async',
+                  action: { action: 'ajax', args: { url: '/api/validate-email', method: 'post' } },
+                },
+                dependencyPaths: [],
+              },
             ],
             behavior: {
               triggers: ['blur'],
-              showErrorOn: ['submit']
+              showErrorOn: ['submit'],
             },
             children: [],
-            parent: ''
-          }
+            parent: '',
+          },
         },
         order: ['email'],
-        dependents: {}
-      }
+        dependents: {},
+      },
     });
 
     const firstValidation = form.validateField('email', 'change');
@@ -155,42 +162,48 @@ describe('audit-backed runtime fixes', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        monitor: { onError }
+        monitor: { onError },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ count: 0 });
 
     const registration = runtime.registerReaction({
       id: 'failing-reaction',
       scope: page.scope,
-      compiledReaction: compileReaction('failing-reaction', {
-        type: 'reaction',
-        watch: '${count}',
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'message',
-            value: 'count:${count}'
-          }
-        }
-      }, expressionCompiler),
+      compiledReaction: compileReaction(
+        'failing-reaction',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'message',
+              value: 'count:${count}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
       dispatch: async () => {
         throw new Error('reaction exploded');
-      }
+      },
     });
 
     try {
       page.scope.update('count', 1);
 
       await vi.waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-          phase: 'action',
-          details: expect.objectContaining({
-            reason: 'reaction-run-failed',
-            reactionId: 'failing-reaction'
-          })
-        }));
+        expect(onError).toHaveBeenCalledWith(
+          expect.objectContaining({
+            phase: 'action',
+            details: expect.objectContaining({
+              reason: 'reaction-run-failed',
+              reactionId: 'failing-reaction',
+            }),
+          }),
+        );
       });
     } finally {
       registration.dispose();

@@ -14,15 +14,15 @@ import type {
   HostProjectionContract,
   FluxValueShape,
   RendererHostContract,
-  CapabilityPublicationAttribution
+  CapabilityPublicationAttribution,
 } from '@nop-chaos/flux-core';
 
 const positionShape: FluxValueShape = {
   kind: 'object',
   fields: {
     x: { kind: 'number' },
-    y: { kind: 'number' }
-  }
+    y: { kind: 'number' },
+  },
 };
 
 const viewportShape: FluxValueShape = {
@@ -30,30 +30,30 @@ const viewportShape: FluxValueShape = {
   fields: {
     x: { kind: 'number' },
     y: { kind: 'number' },
-    zoom: { kind: 'number' }
-  }
+    zoom: { kind: 'number' },
+  },
 };
 
 const nodeDataShape: FluxValueShape = {
   kind: 'object',
   fields: {},
-  description: 'Arbitrary node data'
+  description: 'Arbitrary node data',
 };
 
 const edgeDataShape: FluxValueShape = {
   kind: 'object',
   fields: {},
-  description: 'Arbitrary edge data'
+  description: 'Arbitrary edge data',
 };
 
 const nodeIdArrayShape: FluxValueShape = {
   kind: 'array',
-  item: { kind: 'string' }
+  item: { kind: 'string' },
 };
 
 const edgeIdArrayShape: FluxValueShape = {
   kind: 'array',
-  item: { kind: 'string' }
+  item: { kind: 'string' },
 };
 
 const designerProjection: HostProjectionContract = {
@@ -67,20 +67,20 @@ const designerProjection: HostProjectionContract = {
           name: { kind: 'string' },
           version: { kind: 'string' },
           nodes: { kind: 'array', item: { kind: 'object', fields: {} } },
-          edges: { kind: 'array', item: { kind: 'object', fields: {} } }
-        }
+          edges: { kind: 'array', item: { kind: 'object', fields: {} } },
+        },
       },
-      description: 'Current graph document'
+      description: 'Current graph document',
     },
     selection: {
       schema: {
         kind: 'object',
         fields: {
           selectedNodeIds: nodeIdArrayShape,
-          selectedEdgeIds: edgeIdArrayShape
-        }
+          selectedEdgeIds: edgeIdArrayShape,
+        },
       },
-      description: 'Current selection state'
+      description: 'Current selection state',
     },
     activeNode: {
       schema: {
@@ -93,12 +93,12 @@ const designerProjection: HostProjectionContract = {
               id: { kind: 'string' },
               type: { kind: 'string' },
               position: positionShape,
-              data: nodeDataShape
-            }
-          }
-        ]
+              data: nodeDataShape,
+            },
+          },
+        ],
       },
-      description: 'Currently active node (single selection)'
+      description: 'Currently active node (single selection)',
     },
     activeEdge: {
       schema: {
@@ -112,12 +112,12 @@ const designerProjection: HostProjectionContract = {
               type: { kind: 'string' },
               source: { kind: 'string' },
               target: { kind: 'string' },
-              data: edgeDataShape
-            }
-          }
-        ]
+              data: edgeDataShape,
+            },
+          },
+        ],
       },
-      description: 'Currently active edge (single selection)'
+      description: 'Currently active edge (single selection)',
     },
     runtime: {
       schema: {
@@ -128,12 +128,12 @@ const designerProjection: HostProjectionContract = {
           canRedo: { kind: 'boolean' },
           gridVisible: { kind: 'boolean' },
           paletteCollapsed: { kind: 'boolean' },
-          inspectorCollapsed: { kind: 'boolean' }
-        }
+          inspectorCollapsed: { kind: 'boolean' },
+        },
       },
-      description: 'Readonly runtime state summary'
-    }
-  }
+      description: 'Readonly runtime state summary',
+    },
+  },
 };
 
 const designerCapabilities: HostCapabilityContract = {
@@ -145,12 +145,12 @@ const designerCapabilities: HostCapabilityContract = {
         fields: {
           nodeType: { kind: 'string' },
           position: positionShape,
-          data: nodeDataShape
+          data: nodeDataShape,
         },
-        optional: ['position', 'data']
+        optional: ['position', 'data'],
       },
       result: { kind: 'object', fields: { nodeId: { kind: 'string' } } },
-      description: 'Add a new node to the graph'
+      description: 'Add a new node to the graph',
     },
     addBranch: {
       args: {
@@ -159,11 +159,11 @@ const designerCapabilities: HostCapabilityContract = {
           nodeId: { kind: 'string' },
           branchData: nodeDataShape,
           childType: { kind: 'string' },
-          childData: nodeDataShape
+          childData: nodeDataShape,
         },
-        optional: ['branchData', 'childType', 'childData']
+        optional: ['branchData', 'childType', 'childData'],
       },
-      description: 'Add a branch to a tree-mode branch group'
+      description: 'Add a branch to a tree-mode branch group',
     },
     addEdge: {
       args: {
@@ -171,92 +171,92 @@ const designerCapabilities: HostCapabilityContract = {
         fields: {
           source: { kind: 'string' },
           target: { kind: 'string' },
-          data: edgeDataShape
+          data: edgeDataShape,
         },
-        optional: ['data']
+        optional: ['data'],
       },
       result: { kind: 'object', fields: { edgeId: { kind: 'string' } } },
-      description: 'Add a new edge between nodes'
+      description: 'Add a new edge between nodes',
     },
     clearSelection: {
       description: 'Clear current selection',
-      idempotent: true
+      idempotent: true,
     },
     selectNode: {
       args: {
         kind: 'object',
         fields: {
-          nodeId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] }
-        }
+          nodeId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
+        },
       },
-      description: 'Select a single node'
+      description: 'Select a single node',
     },
     selectBranch: {
       args: {
         kind: 'object',
         fields: {
           nodeId: { kind: 'string' },
-          branchId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] }
-        }
+          branchId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
+        },
       },
-      description: 'Select a single branch within a tree-mode branch group'
+      description: 'Select a single branch within a tree-mode branch group',
     },
     selectEdge: {
       args: {
         kind: 'object',
         fields: {
-          edgeId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] }
-        }
+          edgeId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
+        },
       },
-      description: 'Select a single edge'
+      description: 'Select a single edge',
     },
     deleteNode: {
       args: {
         kind: 'object',
         fields: {
-          nodeId: { kind: 'string' }
-        }
+          nodeId: { kind: 'string' },
+        },
       },
-      description: 'Delete a node from the graph'
+      description: 'Delete a node from the graph',
     },
     deleteBranch: {
       args: {
         kind: 'object',
         fields: {
           nodeId: { kind: 'string' },
-          branchId: { kind: 'string' }
-        }
+          branchId: { kind: 'string' },
+        },
       },
-      description: 'Delete a branch from a tree-mode branch group'
+      description: 'Delete a branch from a tree-mode branch group',
     },
     deleteEdge: {
       args: {
         kind: 'object',
         fields: {
-          edgeId: { kind: 'string' }
-        }
+          edgeId: { kind: 'string' },
+        },
       },
-      description: 'Delete an edge from the graph'
+      description: 'Delete an edge from the graph',
     },
     duplicateNode: {
       args: {
         kind: 'object',
         fields: {
-          nodeId: { kind: 'string' }
-        }
+          nodeId: { kind: 'string' },
+        },
       },
       result: { kind: 'object', fields: { nodeId: { kind: 'string' } } },
-      description: 'Duplicate a node'
+      description: 'Duplicate a node',
     },
     moveNode: {
       args: {
         kind: 'object',
         fields: {
           nodeId: { kind: 'string' },
-          position: positionShape
-        }
+          position: positionShape,
+        },
       },
-      description: 'Move a node to a new position'
+      description: 'Move a node to a new position',
     },
     moveBranch: {
       args: {
@@ -264,10 +264,10 @@ const designerCapabilities: HostCapabilityContract = {
         fields: {
           nodeId: { kind: 'string' },
           branchId: { kind: 'string' },
-          direction: { kind: 'string', description: 'left or right' }
-        }
+          direction: { kind: 'string', description: 'left or right' },
+        },
       },
-      description: 'Move a branch left or right within a tree-mode branch group'
+      description: 'Move a branch left or right within a tree-mode branch group',
     },
     updateBranchData: {
       args: {
@@ -275,10 +275,10 @@ const designerCapabilities: HostCapabilityContract = {
         fields: {
           nodeId: { kind: 'string' },
           branchId: { kind: 'string' },
-          data: nodeDataShape
-        }
+          data: nodeDataShape,
+        },
       },
-      description: 'Update branch header data in a tree-mode branch group'
+      description: 'Update branch header data in a tree-mode branch group',
     },
     reconnectEdge: {
       args: {
@@ -286,130 +286,130 @@ const designerCapabilities: HostCapabilityContract = {
         fields: {
           edgeId: { kind: 'string' },
           source: { kind: 'string' },
-          target: { kind: 'string' }
-        }
+          target: { kind: 'string' },
+        },
       },
-      description: 'Reconnect an edge to new source/target'
+      description: 'Reconnect an edge to new source/target',
     },
     updateNodeData: {
       args: {
         kind: 'object',
         fields: {
           nodeId: { kind: 'string' },
-          data: nodeDataShape
-        }
+          data: nodeDataShape,
+        },
       },
-      description: 'Update node data (partial merge)'
+      description: 'Update node data (partial merge)',
     },
     updateEdgeData: {
       args: {
         kind: 'object',
         fields: {
           edgeId: { kind: 'string' },
-          data: edgeDataShape
-        }
+          data: edgeDataShape,
+        },
       },
-      description: 'Update edge data (partial merge)'
+      description: 'Update edge data (partial merge)',
     },
     export: {
       result: { kind: 'string' },
       description: 'Export document as JSON string',
-      idempotent: true
+      idempotent: true,
     },
     undo: {
-      description: 'Undo last operation'
+      description: 'Undo last operation',
     },
     redo: {
-      description: 'Redo last undone operation'
+      description: 'Redo last undone operation',
     },
     toggleGrid: {
-      description: 'Toggle grid visibility'
+      description: 'Toggle grid visibility',
     },
     togglePalette: {
-      description: 'Toggle palette panel visibility'
+      description: 'Toggle palette panel visibility',
     },
     toggleInspector: {
-      description: 'Toggle inspector panel visibility'
+      description: 'Toggle inspector panel visibility',
     },
     setViewport: {
       args: {
         kind: 'object',
         fields: {
-          viewport: viewportShape
-        }
+          viewport: viewportShape,
+        },
       },
-      description: 'Set canvas viewport'
+      description: 'Set canvas viewport',
     },
     save: {
-      description: 'Save current document state'
+      description: 'Save current document state',
     },
     restore: {
-      description: 'Restore last saved document state'
+      description: 'Restore last saved document state',
     },
     beginTransaction: {
       args: {
         kind: 'object',
         fields: {
           label: { kind: 'string' },
-          transactionId: { kind: 'string' }
+          transactionId: { kind: 'string' },
         },
-        optional: ['label', 'transactionId']
+        optional: ['label', 'transactionId'],
       },
       result: { kind: 'string', description: 'Transaction ID' },
-      description: 'Begin a batched transaction'
+      description: 'Begin a batched transaction',
     },
     commitTransaction: {
       args: {
         kind: 'object',
         fields: {
-          transactionId: { kind: 'string' }
+          transactionId: { kind: 'string' },
         },
-        optional: ['transactionId']
+        optional: ['transactionId'],
       },
-      description: 'Commit current transaction'
+      description: 'Commit current transaction',
     },
     rollbackTransaction: {
       args: {
         kind: 'object',
         fields: {
-          transactionId: { kind: 'string' }
+          transactionId: { kind: 'string' },
         },
-        optional: ['transactionId']
+        optional: ['transactionId'],
       },
-      description: 'Rollback current transaction'
+      description: 'Rollback current transaction',
     },
     toggleNodeSelection: {
       args: {
         kind: 'object',
         fields: {
-          nodeId: { kind: 'string' }
-        }
+          nodeId: { kind: 'string' },
+        },
       },
-      description: 'Toggle node selection state'
+      description: 'Toggle node selection state',
     },
     toggleEdgeSelection: {
       args: {
         kind: 'object',
         fields: {
-          edgeId: { kind: 'string' }
-        }
+          edgeId: { kind: 'string' },
+        },
       },
-      description: 'Toggle edge selection state'
+      description: 'Toggle edge selection state',
     },
     selectAllNodes: {
       description: 'Select all nodes',
-      idempotent: true
+      idempotent: true,
     },
     setSelection: {
       args: {
         kind: 'object',
         fields: {
           nodeIds: nodeIdArrayShape,
-          edgeIds: edgeIdArrayShape
+          edgeIds: edgeIdArrayShape,
         },
-        optional: ['nodeIds', 'edgeIds']
+        optional: ['nodeIds', 'edgeIds'],
       },
-      description: 'Set selection to specific nodes and edges'
+      description: 'Set selection to specific nodes and edges',
     },
     moveNodes: {
       args: {
@@ -418,11 +418,11 @@ const designerCapabilities: HostCapabilityContract = {
           deltas: {
             kind: 'object',
             fields: {},
-            description: 'Map of nodeId to {dx, dy} deltas'
-          }
-        }
+            description: 'Map of nodeId to {dx, dy} deltas',
+          },
+        },
       },
-      description: 'Move multiple nodes by deltas'
+      description: 'Move multiple nodes by deltas',
     },
     updateMultipleNodes: {
       args: {
@@ -434,15 +434,15 @@ const designerCapabilities: HostCapabilityContract = {
               kind: 'object',
               fields: {
                 nodeId: { kind: 'string' },
-                data: nodeDataShape
-              }
-            }
-          }
-        }
+                data: nodeDataShape,
+              },
+            },
+          },
+        },
       },
-      description: 'Update multiple nodes in batch'
-    }
-  }
+      description: 'Update multiple nodes in batch',
+    },
+  },
 };
 
 export const FLOW_DESIGNER_MANIFEST_V1: HostCapabilityProjectionManifest = {
@@ -453,18 +453,18 @@ export const FLOW_DESIGNER_MANIFEST_V1: HostCapabilityProjectionManifest = {
   metadata: {
     title: 'Flow Designer',
     description: 'Graph-based flow designer host family',
-    docsPath: 'docs/architecture/flow-designer/design.md'
-  }
+    docsPath: 'docs/architecture/flow-designer/design.md',
+  },
 };
 
 const manifestVersions: ReadonlyMap<string, HostCapabilityProjectionManifest> = new Map([
   ['1.0', FLOW_DESIGNER_MANIFEST_V1],
   ['1', FLOW_DESIGNER_MANIFEST_V1],
-  ['latest', FLOW_DESIGNER_MANIFEST_V1]
+  ['latest', FLOW_DESIGNER_MANIFEST_V1],
 ]);
 
 export function resolveDesignerManifest(
-  versionSelector: string
+  versionSelector: string,
 ): HostCapabilityProjectionManifest | undefined {
   return manifestVersions.get(versionSelector);
 }
@@ -472,12 +472,12 @@ export function resolveDesignerManifest(
 export const DESIGNER_CAPABILITY_PUBLICATION: CapabilityPublicationAttribution = {
   mode: 'region-scoped',
   capableRegions: ['toolbar', 'inspector', 'dialogs'],
-  transitiveInheritance: true
+  transitiveInheritance: true,
 };
 
 export const designerHostContract: RendererHostContract = {
   family: 'designer',
   defaultVersion: '1.0',
   resolveManifest: resolveDesignerManifest,
-  capabilityPublication: DESIGNER_CAPABILITY_PUBLICATION
+  capabilityPublication: DESIGNER_CAPABILITY_PUBLICATION,
 };

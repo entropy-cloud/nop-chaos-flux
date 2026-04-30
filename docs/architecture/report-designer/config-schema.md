@@ -11,32 +11,32 @@
 
 ```ts
 interface SpreadsheetPageSchema {
-  type: 'spreadsheet-page'
-  id?: string
-  title?: string
-  document: SpreadsheetDocumentInput
-  config?: SpreadsheetConfig
-  readOnly?: boolean
-  statusPath?: string
-  toolbar?: SchemaInput
-  body?: SchemaInput
-  dialogs?: SchemaInput
+  type: 'spreadsheet-page';
+  id?: string;
+  title?: string;
+  document: SpreadsheetDocumentInput;
+  config?: SpreadsheetConfig;
+  readOnly?: boolean;
+  statusPath?: string;
+  toolbar?: SchemaInput;
+  body?: SchemaInput;
+  dialogs?: SchemaInput;
 }
 
 interface ReportDesignerPageSchema {
-  type: 'report-designer-page'
-  id?: string
-  title?: string
-  document: ReportTemplateDocumentInput
-  designer: ReportDesignerConfig
-  profile?: ReportDesignerProfile
-  adapters?: ReportDesignerAdapterConfig
-  statusPath?: string
-  toolbar?: SchemaInput
-  fieldPanel?: SchemaInput
-  inspector?: SchemaInput
-  dialogs?: SchemaInput
-  body?: SchemaInput
+  type: 'report-designer-page';
+  id?: string;
+  title?: string;
+  document: ReportTemplateDocumentInput;
+  designer: ReportDesignerConfig;
+  profile?: ReportDesignerProfile;
+  adapters?: ReportDesignerAdapterConfig;
+  statusPath?: string;
+  toolbar?: SchemaInput;
+  fieldPanel?: SchemaInput;
+  inspector?: SchemaInput;
+  dialogs?: SchemaInput;
+  body?: SchemaInput;
 }
 ```
 
@@ -53,71 +53,71 @@ interface ReportDesignerPageSchema {
 
 ```ts
 interface SpreadsheetDocument {
-  id: string
-  kind: string
-  name: string
-  version: string
-  meta?: Record<string, unknown>
+  id: string;
+  kind: string;
+  name: string;
+  version: string;
+  meta?: Record<string, unknown>;
   viewport?: {
-    scrollX: number
-    scrollY: number
-    zoom: number
-  }
-  workbook: WorkbookDocument
+    scrollX: number;
+    scrollY: number;
+    zoom: number;
+  };
+  workbook: WorkbookDocument;
 }
 
 interface WorkbookDocument {
-  id?: string
-  name?: string
-  props?: Record<string, unknown>
-  styles?: StyleDefinition[]
-  sheets: WorksheetDocument[]
+  id?: string;
+  name?: string;
+  props?: Record<string, unknown>;
+  styles?: StyleDefinition[];
+  sheets: WorksheetDocument[];
 }
 
 interface WorksheetDocument {
-  id: string
-  name: string
-  order: number
-  props?: Record<string, unknown>
-  rows?: Record<string, RowDocument>
-  columns?: Record<string, ColumnDocument>
-  cells?: Record<string, CellDocument>
-  merges?: MergeRange[]
+  id: string;
+  name: string;
+  order: number;
+  props?: Record<string, unknown>;
+  rows?: Record<string, RowDocument>;
+  columns?: Record<string, ColumnDocument>;
+  cells?: Record<string, CellDocument>;
+  merges?: MergeRange[];
 }
 
 interface RowDocument {
-  index: number
-  height?: number
-  hidden?: boolean
-  styleId?: string
+  index: number;
+  height?: number;
+  hidden?: boolean;
+  styleId?: string;
 }
 
 interface ColumnDocument {
-  index: number
-  width?: number
-  hidden?: boolean
-  styleId?: string
+  index: number;
+  width?: number;
+  hidden?: boolean;
+  styleId?: string;
 }
 
 interface CellDocument {
-  address: string
-  row: number
-  col: number
-  value?: unknown
-  formula?: string
-  type?: string
-  styleId?: string
-  comment?: string
-  linkUrl?: string
-  protected?: boolean
-  richText?: unknown
+  address: string;
+  row: number;
+  col: number;
+  value?: unknown;
+  formula?: string;
+  type?: string;
+  styleId?: string;
+  comment?: string;
+  linkUrl?: string;
+  protected?: boolean;
+  richText?: unknown;
 }
 
 interface MergeRange {
-  startRow: number
-  startCol: number
-  endRow: number
-  endCol: number
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
 }
 ```
 
@@ -131,11 +131,11 @@ interface MergeRange {
 
 ```ts
 interface SpreadsheetConfig {
-  version?: string
-  features?: SpreadsheetFeatures
-  canvas?: SpreadsheetCanvasConfig
-  editors?: SpreadsheetEditorConfig[]
-  shortcuts?: SpreadsheetShortcutConfig[]
+  version?: string;
+  features?: SpreadsheetFeatures;
+  canvas?: SpreadsheetCanvasConfig;
+  editors?: SpreadsheetEditorConfig[];
+  shortcuts?: SpreadsheetShortcutConfig[];
 }
 ```
 
@@ -143,18 +143,18 @@ interface SpreadsheetConfig {
 
 ```ts
 interface SpreadsheetFeatures {
-  multiSheet?: boolean
-  editCell?: boolean
-  resizeRow?: boolean
-  resizeColumn?: boolean
-  merge?: boolean
-  hiddenRowColumn?: boolean
-  styleEditing?: boolean
-  clipboard?: boolean
-  undo?: boolean
-  redo?: boolean
-  formulas?: boolean
-  frozenPane?: boolean
+  multiSheet?: boolean;
+  editCell?: boolean;
+  resizeRow?: boolean;
+  resizeColumn?: boolean;
+  merge?: boolean;
+  hiddenRowColumn?: boolean;
+  styleEditing?: boolean;
+  clipboard?: boolean;
+  undo?: boolean;
+  redo?: boolean;
+  formulas?: boolean;
+  frozenPane?: boolean;
 }
 ```
 
@@ -162,15 +162,15 @@ interface SpreadsheetFeatures {
 
 ```ts
 interface SpreadsheetCanvasConfig {
-  minZoom?: number
-  maxZoom?: number
-  defaultZoom?: number
-  showGridLines?: boolean
-  showRowHeaders?: boolean
-  showColumnHeaders?: boolean
-  showSheetTabs?: boolean
-  overscanRows?: number
-  overscanCols?: number
+  minZoom?: number;
+  maxZoom?: number;
+  defaultZoom?: number;
+  showGridLines?: boolean;
+  showRowHeaders?: boolean;
+  showColumnHeaders?: boolean;
+  showSheetTabs?: boolean;
+  overscanRows?: number;
+  overscanCols?: number;
 }
 ```
 
@@ -178,13 +178,13 @@ interface SpreadsheetCanvasConfig {
 
 ```ts
 interface SpreadsheetEditorConfig {
-  id: string
+  id: string;
   match: {
-    valueType?: string[]
-    cellType?: string[]
-  }
-  kind: 'input' | 'textarea' | 'custom'
-  customRenderer?: string
+    valueType?: string[];
+    cellType?: string[];
+  };
+  kind: 'input' | 'textarea' | 'custom';
+  customRenderer?: string;
 }
 ```
 
@@ -194,32 +194,32 @@ interface SpreadsheetEditorConfig {
 
 ```ts
 interface ReportTemplateDocument {
-  id: string
-  kind: string
-  name: string
-  version: string
-  spreadsheet: SpreadsheetDocument
-  semantic?: ReportSemanticDocument
+  id: string;
+  kind: string;
+  name: string;
+  version: string;
+  spreadsheet: SpreadsheetDocument;
+  semantic?: ReportSemanticDocument;
 }
 
 interface ReportSemanticDocument {
-  workbookMeta?: Record<string, unknown>
-  sheetMeta?: Record<string, Record<string, unknown>>
-  rowMeta?: Record<string, Record<string, Record<string, unknown>>>
-  columnMeta?: Record<string, Record<string, Record<string, unknown>>>
-  cellMeta?: Record<string, Record<string, Record<string, unknown>>>
-  rangeMeta?: Record<string, RangeMetaDocument[]>
+  workbookMeta?: Record<string, unknown>;
+  sheetMeta?: Record<string, Record<string, unknown>>;
+  rowMeta?: Record<string, Record<string, Record<string, unknown>>>;
+  columnMeta?: Record<string, Record<string, Record<string, unknown>>>;
+  cellMeta?: Record<string, Record<string, Record<string, unknown>>>;
+  rangeMeta?: Record<string, RangeMetaDocument[]>;
 }
 
 interface RangeMetaDocument {
-  id: string
+  id: string;
   range: {
-    startRow: number
-    startCol: number
-    endRow: number
-    endCol: number
-  }
-  meta: Record<string, unknown>
+    startRow: number;
+    startCol: number;
+    endRow: number;
+    endCol: number;
+  };
+  meta: Record<string, unknown>;
 }
 ```
 
@@ -233,15 +233,15 @@ interface RangeMetaDocument {
 
 ```ts
 interface ReportDesignerConfig {
-  $schema?: string
-  version: string
-  kind: string
-  fieldSources?: FieldSourceConfig[]
-  inspector?: ReportInspectorConfig
-  preview?: ReportPreviewConfig
-  expressions?: ExpressionEditorBindingConfig
-  adapters?: ReportDesignerAdapterConfig
-  features?: ReportDesignerFeatures
+  $schema?: string;
+  version: string;
+  kind: string;
+  fieldSources?: FieldSourceConfig[];
+  inspector?: ReportInspectorConfig;
+  preview?: ReportPreviewConfig;
+  expressions?: ExpressionEditorBindingConfig;
+  adapters?: ReportDesignerAdapterConfig;
+  features?: ReportDesignerFeatures;
 }
 ```
 
@@ -257,32 +257,32 @@ interface ReportDesignerConfig {
 
 ```ts
 interface FieldSourceConfig {
-  id: string
-  label: string
-  description?: string
-  mode?: 'tree' | 'list'
-  provider?: string
-  groups?: FieldGroupConfig[]
-  itemTemplate?: SchemaInput
+  id: string;
+  label: string;
+  description?: string;
+  mode?: 'tree' | 'list';
+  provider?: string;
+  groups?: FieldGroupConfig[];
+  itemTemplate?: SchemaInput;
   dragPayload?: {
-    type: string
-    include?: string[]
-  }
+    type: string;
+    include?: string[];
+  };
 }
 
 interface FieldGroupConfig {
-  id: string
-  label: string
-  fields: FieldItemConfig[]
-  expanded?: boolean
+  id: string;
+  label: string;
+  fields: FieldItemConfig[];
+  expanded?: boolean;
 }
 
 interface FieldItemConfig {
-  id: string
-  label: string
-  path?: string
-  fieldType?: string
-  meta?: Record<string, unknown>
+  id: string;
+  label: string;
+  path?: string;
+  fieldType?: string;
+  meta?: Record<string, unknown>;
 }
 ```
 
@@ -298,10 +298,15 @@ interface FieldItemConfig {
 
 ```ts
 interface ReportInspectorConfig {
-  mode?: 'panel' | 'drawer'
-  body?: SchemaInput
-  byTarget?: Partial<Record<'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range', SchemaInput>>
-  byProfile?: Record<string, Partial<Record<'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range', SchemaInput>>>
+  mode?: 'panel' | 'drawer';
+  body?: SchemaInput;
+  byTarget?: Partial<
+    Record<'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range', SchemaInput>
+  >;
+  byProfile?: Record<
+    string,
+    Partial<Record<'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range', SchemaInput>>
+  >;
 }
 ```
 
@@ -320,9 +325,9 @@ interface ReportInspectorConfig {
 
 ```ts
 interface ReportPreviewConfig {
-  provider?: string
-  action?: Record<string, unknown>
-  modes?: Array<'inline' | 'dialog' | 'replace-page' | 'download'>
+  provider?: string;
+  action?: Record<string, unknown>;
+  modes?: Array<'inline' | 'dialog' | 'replace-page' | 'download'>;
 }
 ```
 
@@ -337,8 +342,8 @@ interface ReportPreviewConfig {
 
 ```ts
 interface ExpressionEditorBindingConfig {
-  adapter: string
-  fieldKinds?: string[]
+  adapter: string;
+  fieldKinds?: string[];
 }
 ```
 
@@ -348,24 +353,24 @@ interface ExpressionEditorBindingConfig {
 
 ```ts
 interface ExpressionEditorAdapter {
-  id: string
-  render(props: ExpressionEditorProps): unknown
+  id: string;
+  render(props: ExpressionEditorProps): unknown;
 }
 
 interface ExpressionEditorProps {
-  value: string
-  readonly?: boolean
-  disabled?: boolean
-  placeholder?: string
-  context?: ExpressionEditorContext
-  onChange(nextValue: string): void
-  onBlur?(): void
+  value: string;
+  readonly?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  context?: ExpressionEditorContext;
+  onChange(nextValue: string): void;
+  onBlur?(): void;
 }
 
 interface ExpressionEditorContext {
-  targetKind: 'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range'
-  scopeData?: Record<string, unknown>
-  metadata?: Record<string, unknown>
+  targetKind: 'workbook' | 'sheet' | 'row' | 'column' | 'cell' | 'range';
+  scopeData?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 ```
 
@@ -382,13 +387,13 @@ interface ExpressionEditorContext {
 
 ```ts
 interface ReportDesignerFeatures {
-  fieldPanel?: boolean
-  inspector?: boolean
-  preview?: boolean
-  expressionEditor?: boolean
-  dragFieldToCell?: boolean
-  dragFieldToRange?: boolean
-  customPropertyPanels?: boolean
+  fieldPanel?: boolean;
+  inspector?: boolean;
+  preview?: boolean;
+  expressionEditor?: boolean;
+  dragFieldToCell?: boolean;
+  dragFieldToRange?: boolean;
+  customPropertyPanels?: boolean;
 }
 ```
 

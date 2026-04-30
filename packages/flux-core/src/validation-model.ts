@@ -4,17 +4,17 @@ import type {
   CompiledValidationBehavior,
   CompiledValidationNode,
   CompiledValidationNodeKind,
-  HiddenFieldPolicy
+  HiddenFieldPolicy,
 } from './types';
 
 const DEFAULT_HIDDEN_FIELD_POLICY: HiddenFieldPolicy = {
   validateWhenHidden: false,
-  clearValueWhenHidden: false
+  clearValueWhenHidden: false,
 };
 
 export function resolveHiddenFieldPolicy(
   fieldPolicy: HiddenFieldPolicy | undefined,
-  formPolicy: HiddenFieldPolicy | undefined
+  formPolicy: HiddenFieldPolicy | undefined,
 ): HiddenFieldPolicy {
   if (!fieldPolicy && !formPolicy) {
     return DEFAULT_HIDDEN_FIELD_POLICY;
@@ -28,7 +28,7 @@ export function resolveHiddenFieldPolicy(
 }
 
 export function isCompiledValidationFieldNode(
-  node: CompiledValidationNode | undefined
+  node: CompiledValidationNode | undefined,
 ): node is CompiledValidationNode & {
   kind: Exclude<CompiledValidationNodeKind, 'form'>;
   controlType: string;
@@ -39,7 +39,7 @@ export function isCompiledValidationFieldNode(
 
 export function getCompiledValidationField(
   model: CompiledFormValidationModel | undefined,
-  path: string
+  path: string,
 ): CompiledFormValidationField | undefined {
   if (!model) {
     return undefined;
@@ -57,12 +57,15 @@ export function getCompiledValidationField(
     label: node.label,
     rules: node.rules,
     behavior: node.behavior,
-    hiddenFieldPolicy: resolveHiddenFieldPolicy(node.hiddenFieldPolicy, model.defaultHiddenFieldPolicy)
+    hiddenFieldPolicy: resolveHiddenFieldPolicy(
+      node.hiddenFieldPolicy,
+      model.defaultHiddenFieldPolicy,
+    ),
   };
 }
 
 export function buildCompiledValidationDependentMap(
-  nodes: Record<string, CompiledValidationNode> | undefined
+  nodes: Record<string, CompiledValidationNode> | undefined,
 ): Record<string, string[]> {
   if (!nodes) {
     return {};
@@ -80,12 +83,14 @@ export function buildCompiledValidationDependentMap(
     }
   }
 
-  return Object.fromEntries(Array.from(dependents.entries()).map(([path, targets]) => [path, Array.from(targets)]));
+  return Object.fromEntries(
+    Array.from(dependents.entries()).map(([path, targets]) => [path, Array.from(targets)]),
+  );
 }
 
 export function buildCompiledValidationOrder(
   nodes: Record<string, CompiledValidationNode> | undefined,
-  rootPath: string | undefined
+  rootPath: string | undefined,
 ): string[] {
   if (!nodes) {
     return [];
@@ -146,11 +151,13 @@ export function buildCompiledFormValidationModel(input: {
     nodes,
     validationOrder,
     rootPath,
-    defaultHiddenFieldPolicy: input.defaultHiddenFieldPolicy
+    defaultHiddenFieldPolicy: input.defaultHiddenFieldPolicy,
   };
 }
 
-export function getCompiledValidationTraversalOrder(model: CompiledFormValidationModel | undefined): string[] {
+export function getCompiledValidationTraversalOrder(
+  model: CompiledFormValidationModel | undefined,
+): string[] {
   if (!model) {
     return [];
   }
@@ -160,7 +167,7 @@ export function getCompiledValidationTraversalOrder(model: CompiledFormValidatio
 
 export function getCompiledValidationDependents(
   model: CompiledFormValidationModel | undefined,
-  path: string
+  path: string,
 ): string[] {
   if (!model) {
     return [];
@@ -171,7 +178,7 @@ export function getCompiledValidationDependents(
 
 export function getCompiledValidationNode(
   model: CompiledFormValidationModel | undefined,
-  path: string
+  path: string,
 ): CompiledValidationNode | undefined {
   if (!model) {
     return undefined;
@@ -181,16 +188,20 @@ export function getCompiledValidationNode(
 }
 
 export function getCompiledValidationNodeMap(
-  model: CompiledFormValidationModel | undefined
+  model: CompiledFormValidationModel | undefined,
 ): Record<string, CompiledValidationNode> | undefined {
   return model?.nodes;
 }
 
-export function getCompiledValidationRootPath(model: CompiledFormValidationModel | undefined): string | undefined {
+export function getCompiledValidationRootPath(
+  model: CompiledFormValidationModel | undefined,
+): string | undefined {
   return model?.rootPath;
 }
 
-export function hasCompiledValidationNodes(model: CompiledFormValidationModel | undefined): boolean {
+export function hasCompiledValidationNodes(
+  model: CompiledFormValidationModel | undefined,
+): boolean {
   const nodes = model?.nodes;
   return !!nodes && Object.keys(nodes).length > 0;
 }

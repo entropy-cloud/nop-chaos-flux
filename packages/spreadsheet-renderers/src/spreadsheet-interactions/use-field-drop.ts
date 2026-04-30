@@ -4,14 +4,17 @@ export function useFieldDrop(selectedCell: { row: number; col: number } | null) 
   const [dropTargetCell, setDropTargetCell] = useState<{ row: number; col: number } | null>(null);
   const dropTargetCellRef = useRef<{ row: number; col: number } | null>(null);
 
-  const handleFieldDrop = useCallback((cb: (target: { row: number; col: number }) => void) => {
-    const targetCell = dropTargetCellRef.current || dropTargetCell || selectedCell;
-    if (targetCell) {
-      cb(targetCell);
-    }
-    setDropTargetCell(null);
-    dropTargetCellRef.current = null;
-  }, [dropTargetCell, selectedCell]);
+  const handleFieldDrop = useCallback(
+    (cb: (target: { row: number; col: number }) => void) => {
+      const targetCell = dropTargetCellRef.current || dropTargetCell || selectedCell;
+      if (targetCell) {
+        cb(targetCell);
+      }
+      setDropTargetCell(null);
+      dropTargetCellRef.current = null;
+    },
+    [dropTargetCell, selectedCell],
+  );
 
   const handleFieldDragOver = useCallback((row: number, col: number) => {
     const t = { row, col };

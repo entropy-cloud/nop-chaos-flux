@@ -69,7 +69,7 @@
 在 `apps/playground/src/styles.css` 中添加：
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 @source "../../../packages";
 ```
 
@@ -78,7 +78,7 @@
 ### 次修复：导入 tailwind-preset 的 base.css
 
 ```css
-@import "../../../packages/tailwind-preset/src/styles/base.css";
+@import '../../../packages/tailwind-preset/src/styles/base.css';
 ```
 
 这使 `nop-gradient-*`、`nop-glass-card` 等静态 CSS 类可用。
@@ -89,21 +89,21 @@
 
 之前的 `fd-` 前缀类名（如 `fd-page__canvas`、`fd-palette__item`）在调整过程中被删除，但没有替换为 `nop-` 前缀的语义标记。按照 `docs/architecture/renderer-markers-and-selectors.md` 的规范补全：
 
-| 标记 | 组件 | 含义 |
-|---|---|---|
-| `nop-designer` | designer-page.tsx | 设计器根 |
-| `nop-designer__header` | designer-page.tsx | 工具栏区域 |
-| `nop-designer__palette` | designer-page.tsx | 面板列 |
-| `nop-designer__canvas` | designer-page.tsx | 画布列 |
-| `nop-designer__inspector` | designer-page.tsx | 检查器列 |
-| `nop-designer-toolbar` | designer-toolbar.tsx | 工具栏 |
-| `nop-palette` | designer-palette.tsx | 面板根 |
-| `nop-palette__group-header` | designer-palette.tsx | 分组标题 |
-| `nop-palette__item` | designer-palette.tsx | 节点项 |
-| `nop-inspector` | designer-inspector.tsx | 检查器根 |
-| `nop-designer-node` | DesignerXyflowNode.tsx | 节点包装器 |
-| `nop-designer-node-toolbar` | DesignerXyflowNode.tsx | 节点工具栏 |
-| `nop-designer-edge__label` | DesignerXyflowEdge.tsx | 边标签 |
+| 标记                         | 组件                   | 含义       |
+| ---------------------------- | ---------------------- | ---------- |
+| `nop-designer`               | designer-page.tsx      | 设计器根   |
+| `nop-designer__header`       | designer-page.tsx      | 工具栏区域 |
+| `nop-designer__palette`      | designer-page.tsx      | 面板列     |
+| `nop-designer__canvas`       | designer-page.tsx      | 画布列     |
+| `nop-designer__inspector`    | designer-page.tsx      | 检查器列   |
+| `nop-designer-toolbar`       | designer-toolbar.tsx   | 工具栏     |
+| `nop-palette`                | designer-palette.tsx   | 面板根     |
+| `nop-palette__group-header`  | designer-palette.tsx   | 分组标题   |
+| `nop-palette__item`          | designer-palette.tsx   | 节点项     |
+| `nop-inspector`              | designer-inspector.tsx | 检查器根   |
+| `nop-designer-node`          | DesignerXyflowNode.tsx | 节点包装器 |
+| `nop-designer-node-toolbar`  | DesignerXyflowNode.tsx | 节点工具栏 |
+| `nop-designer-edge__label`   | DesignerXyflowEdge.tsx | 边标签     |
 | `nop-designer-edge__actions` | DesignerXyflowEdge.tsx | 边快捷操作 |
 
 ## Tests

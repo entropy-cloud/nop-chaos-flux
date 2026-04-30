@@ -61,19 +61,20 @@ Implementation note:
 
 ```ts
 interface DesignerPageSchema {
-  type: 'designer-page'
-  id?: string
-  title?: string
-  document: GraphDocumentInput
-  config: DesignerConfig
-  statusPath?: string
-  toolbar?: SchemaInput
-  inspector?: SchemaInput
-  dialogs?: SchemaInput
+  type: 'designer-page';
+  id?: string;
+  title?: string;
+  document: GraphDocumentInput;
+  config: DesignerConfig;
+  statusPath?: string;
+  toolbar?: SchemaInput;
+  inspector?: SchemaInput;
+  dialogs?: SchemaInput;
 }
 ```
 
 说明：
+
 - `config` 包含 `toolbar?: ToolbarConfig` 和 `shortcuts?: ShortcutsConfig`，详见 `config-schema.md`
 - `statusPath` 用于向宿主外部发布 `DesignerHostStatusSummary`
 - `config.toolbar` 只配置 built-in default toolbar 的 item 集合，不是完整 schema 容器
@@ -100,10 +101,10 @@ Current implementation note:
 
 ```ts
 interface DesignerBridge {
-  getSnapshot(): DesignerHostSnapshot
-  subscribe(listener: () => void): () => void
-  dispatch(command: DesignerCommand): DesignerCommandResult
-  emit(event: DesignerEvent): void
+  getSnapshot(): DesignerHostSnapshot;
+  subscribe(listener: () => void): () => void;
+  dispatch(command: DesignerCommand): DesignerCommandResult;
+  emit(event: DesignerEvent): void;
 }
 ```
 
@@ -225,7 +226,7 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 
 ```ts
 {
-  action: 'designer:deleteSelection'
+  action: 'designer:deleteSelection';
 }
 ```
 
@@ -337,10 +338,10 @@ Design note:
 
 ```ts
 interface DesignerLifecycleHooks {
-  beforeCreateNode?(input: CreateNodeInput): CreateNodeInput | false
-  beforeConnect?(input: ConnectInput): ConnectInput | false
-  beforeDelete?(target: DeleteTarget): DeleteTarget | false
-  afterCommand?(event: DesignerEvent): void
+  beforeCreateNode?(input: CreateNodeInput): CreateNodeInput | false;
+  beforeConnect?(input: ConnectInput): ConnectInput | false;
+  beforeDelete?(target: DeleteTarget): DeleteTarget | false;
+  afterCommand?(event: DesignerEvent): void;
 }
 ```
 

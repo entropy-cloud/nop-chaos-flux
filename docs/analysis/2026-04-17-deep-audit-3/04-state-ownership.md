@@ -18,26 +18,31 @@
 ## 误报排除清单
 
 ### VariantField 使用 useState 维护变体状态
+
 - **文件**: packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx:87-88
 - **结论**: **不构成违规**
 - **原因**: `userSelectedKey`/`detectedKey` 是辅助推断 activeKey 的临时信号，不是表单值的镜像
 
 ### DesignerXyflowCanvas 的 localNodes/localEdges
+
 - **文件**: packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx:129-130
 - **结论**: **不构成违规**
 - **原因**: react-flow 需要控制拖拽过程中的即时位置更新，有明确的同步机制
 
 ### SpreadsheetGrid 的滚动位置 useState
+
 - **文件**: packages/spreadsheet-renderers/src/spreadsheet-grid.tsx:108-111
 - **结论**: **不构成违规**
 - **原因**: 纯 UI 渲染状态（虚拟滚动计算），不影响业务数据
 
 ### DetailField 的 draftForm
+
 - **文件**: packages/flux-renderers-form-advanced/src/detail-view/detail-field.tsx:50-53
 - **结论**: **不构成违规**
 - **原因**: 符合 docs/architecture/form-validation.md 中的 Phase 2 草稿隔离模式
 
 ### KeyValueRenderer/ArrayEditorRenderer 的 pairsRef/itemsRef
+
 - **文件**: packages/flux-renderers-form-advanced/src/key-value.tsx:208
 - **结论**: **不构成违规**
 - **原因**: 为满足同步回调访问需求的标准模式
@@ -47,12 +52,14 @@
 ## 观察点（P2 级别）
 
 ### WordEditorPage 的 charts/codes 状态
+
 - **文件**: packages/word-editor-renderers/src/WordEditorPage.tsx:32-45
 - **现状**: 大量 useState 用于管理编辑器状态
 - **风险**: 如果项目规模扩大，可能需要考虑将 charts/codes 也纳入 store 管理
 - **建议**: 持续关注但非紧急
 
 ### DatasetDialog 从 initialData 初始化
+
 - **文件**: packages/word-editor-renderers/src/dialogs/DatasetDialog.tsx:28-34
 - **现状**: 对话框编辑的标准模式
 - **风险**: 如果 initialData 在对话框打开期间变化，本地状态不会自动更新

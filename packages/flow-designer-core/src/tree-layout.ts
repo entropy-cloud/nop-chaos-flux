@@ -5,7 +5,7 @@ export function simpleTreeLayout(
   nodes: GraphNode[],
   edges: GraphEdge[],
   treeConfig: TreeConfig,
-  nodeTypes?: Map<string, NodeTypeConfig>
+  nodeTypes?: Map<string, NodeTypeConfig>,
 ): GraphNode[] {
   if (nodes.length === 0) return nodes;
 
@@ -13,14 +13,18 @@ export function simpleTreeLayout(
   const layerSpacing = treeConfig.layout.layerSpacing ?? 120;
   const isVertical = treeConfig.layout.direction !== 'LR';
 
-  const nodeWidths = new Map(nodes.map((n) => {
-    const nt = nodeTypes?.get(n.type);
-    return [n.id, nt?.appearance?.minWidth ?? 220];
-  }));
-  const nodeHeights = new Map(nodes.map((n) => {
-    const nt = nodeTypes?.get(n.type);
-    return [n.id, nt?.appearance?.minHeight ?? 80];
-  }));
+  const nodeWidths = new Map(
+    nodes.map((n) => {
+      const nt = nodeTypes?.get(n.type);
+      return [n.id, nt?.appearance?.minWidth ?? 220];
+    }),
+  );
+  const nodeHeights = new Map(
+    nodes.map((n) => {
+      const nt = nodeTypes?.get(n.type);
+      return [n.id, nt?.appearance?.minHeight ?? 80];
+    }),
+  );
 
   const childrenOf = new Map<string, string[]>();
   const parentOf = new Map<string, string>();
@@ -74,7 +78,10 @@ export function simpleTreeLayout(
   if (isVertical) {
     for (let li = 0; li < layers.length; li++) {
       const layer = layers[li];
-      const totalSpan = layer.reduce((sum, id) => sum + (nodeWidths.get(id) ?? DW) + nodeSpacing, -nodeSpacing);
+      const totalSpan = layer.reduce(
+        (sum, id) => sum + (nodeWidths.get(id) ?? DW) + nodeSpacing,
+        -nodeSpacing,
+      );
       let cursor = 0;
       for (const id of layer) {
         const w = nodeWidths.get(id) ?? DW;
@@ -87,7 +94,10 @@ export function simpleTreeLayout(
   } else {
     for (let li = 0; li < layers.length; li++) {
       const layer = layers[li];
-      const totalSpan = layer.reduce((sum, id) => sum + (nodeHeights.get(id) ?? DH) + nodeSpacing, -nodeSpacing);
+      const totalSpan = layer.reduce(
+        (sum, id) => sum + (nodeHeights.get(id) ?? DH) + nodeSpacing,
+        -nodeSpacing,
+      );
       let cursor = 0;
       for (const id of layer) {
         const h = nodeHeights.get(id) ?? DH;
@@ -113,8 +123,8 @@ export function simpleTreeLayout(
       ...node,
       position: {
         x: Math.round(pos.x - width / 2),
-        y: Math.round(pos.y - height / 2)
-      }
+        y: Math.round(pos.y - height / 2),
+      },
     };
   });
 }
@@ -123,7 +133,7 @@ export async function layoutTreeWithElk(
   nodes: GraphNode[],
   edges: GraphEdge[],
   treeConfig: TreeConfig,
-  nodeTypes?: Map<string, NodeTypeConfig>
+  nodeTypes?: Map<string, NodeTypeConfig>,
 ): Promise<GraphNode[]> {
   if (nodes.length === 0) return nodes;
 

@@ -12,9 +12,9 @@ describe('createSchemaRenderer import basics', () => {
       load: vi.fn(async () => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true })
-        })
-      }))
+          invoke: async () => ({ ok: true }),
+        }),
+      })),
     };
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
 
@@ -24,7 +24,7 @@ describe('createSchemaRenderer import basics', () => {
         schemaUrl="https://app.local/schema/no-imports.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     expect(await screen.findByText('No imports')).toBeTruthy();
@@ -38,10 +38,10 @@ describe('createSchemaRenderer import basics', () => {
           kind: 'import' as const,
           invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
             ok: true,
-            data: `${method}:${String(payload?.id ?? '')}`
-          })
-        })
-      }))
+            data: `${method}:${String(payload?.id ?? '')}`,
+          }),
+        }),
+      })),
     };
     const SchemaRenderer = createSchemaRenderer([buttonRenderer]);
 
@@ -51,12 +51,12 @@ describe('createSchemaRenderer import basics', () => {
           type: 'button',
           label: 'Run import action',
           'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
-          onClick: { action: 'demo:open', args: { id: 'record-1' } }
+          onClick: { action: 'demo:open', args: { id: 'record-1' } },
         }}
         schemaUrl="https://app.local/schema/button.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     await screen.findByText('Run import action');
@@ -72,29 +72,31 @@ describe('createSchemaRenderer import basics', () => {
       load: vi.fn(async () => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true })
+          invoke: async () => ({ ok: true }),
         }),
         createExpressionHelpers: () => ({
           formatName(first: string, last: string) {
             return `${first} ${last}`;
-          }
-        })
-      }))
+          },
+        }),
+      })),
     };
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
 
     render(
       <SchemaRenderer
-        schema={{
-          type: 'text',
-          'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
-          text: 'Imported ${$demo.formatName(user.firstName, user.lastName)}'
-        } as any}
+        schema={
+          {
+            type: 'text',
+            'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+            text: 'Imported ${$demo.formatName(user.firstName, user.lastName)}',
+          } as any
+        }
         schemaUrl="https://app.local/schema/text.json"
         data={{ user: { firstName: 'Ada', lastName: 'Lovelace' } }}
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     expect(await screen.findByText('Imported Ada Lovelace')).toBeTruthy();
@@ -107,27 +109,53 @@ describe('createSchemaRenderer import basics', () => {
           kind: 'import' as const,
           invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
             ok: true,
-            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
-          })
-        })
-      }))
+            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`,
+          }),
+        }),
+      })),
     };
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, scopedHostRenderer, dispatchProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      scopedHostRenderer,
+      dispatchProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
         schema={{
           type: 'page',
           body: [
-            { type: 'dispatch-probe', label: 'Run local import', resultKey: 'local-import-result', 'xui:imports': [{ from: 'demo-lib', as: 'demo' }], runAction: { action: 'demo:ping', args: { value: 'local' } } },
-            { type: 'scoped-host', 'xui:imports': [{ from: 'demo-lib', as: 'demo' }], body: [{ type: 'dispatch-probe', label: 'Run child import', resultKey: 'child-import-result', runAction: { action: 'demo:ping', args: { value: 'child' } } }] },
-            { type: 'dispatch-probe', label: 'Run sibling import', resultKey: 'sibling-import-result', runAction: { action: 'demo:ping', args: { value: 'sibling' } } }
-          ]
+            {
+              type: 'dispatch-probe',
+              label: 'Run local import',
+              resultKey: 'local-import-result',
+              'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+              runAction: { action: 'demo:ping', args: { value: 'local' } },
+            },
+            {
+              type: 'scoped-host',
+              'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+              body: [
+                {
+                  type: 'dispatch-probe',
+                  label: 'Run child import',
+                  resultKey: 'child-import-result',
+                  runAction: { action: 'demo:ping', args: { value: 'child' } },
+                },
+              ],
+            },
+            {
+              type: 'dispatch-probe',
+              label: 'Run sibling import',
+              resultKey: 'sibling-import-result',
+              runAction: { action: 'demo:ping', args: { value: 'sibling' } },
+            },
+          ],
         }}
         schemaUrl="https://app.local/schema/page.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -143,7 +171,9 @@ describe('createSchemaRenderer import basics', () => {
     await waitFor(() => {
       expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
       expect(screen.getByTestId('child-import-result').textContent).toBe('demo-lib:ping:child');
-      expect(screen.getByTestId('sibling-import-result').textContent).toBe('Error: Unsupported action: demo:ping');
+      expect(screen.getByTestId('sibling-import-result').textContent).toBe(
+        'Error: Unsupported action: demo:ping',
+      );
     });
   });
 
@@ -154,10 +184,10 @@ describe('createSchemaRenderer import basics', () => {
           kind: 'import' as const,
           invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
             ok: true,
-            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`
-          })
-        })
-      }))
+            data: `${spec.from}:${method}:${String(payload?.value ?? '')}`,
+          }),
+        }),
+      })),
     };
     const SchemaRenderer = createSchemaRenderer([pageRenderer, dispatchProbeRenderer]);
 
@@ -171,20 +201,20 @@ describe('createSchemaRenderer import basics', () => {
               label: 'Run local import',
               resultKey: 'local-import-result',
               'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
-              runAction: { action: 'demo:ping', args: { value: 'local' } }
+              runAction: { action: 'demo:ping', args: { value: 'local' } },
             },
             {
               type: 'dispatch-probe',
               label: 'Run sibling import',
               resultKey: 'sibling-import-result',
-              runAction: { action: 'demo:ping', args: { value: 'sibling' } }
-            }
-          ]
+              runAction: { action: 'demo:ping', args: { value: 'sibling' } },
+            },
+          ],
         }}
         schemaUrl="https://app.local/schema/page.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     await screen.findByText('Run local import');
@@ -193,7 +223,9 @@ describe('createSchemaRenderer import basics', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('local-import-result').textContent).toBe('demo-lib:ping:local');
-      expect(screen.getByTestId('sibling-import-result').textContent).toBe('Error: Unsupported action: demo:ping');
+      expect(screen.getByTestId('sibling-import-result').textContent).toBe(
+        'Error: Unsupported action: demo:ping',
+      );
     });
   });
 
@@ -202,41 +234,59 @@ describe('createSchemaRenderer import basics', () => {
       load: vi.fn(async () => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true })
+          invoke: async () => ({ ok: true }),
         }),
         createExpressionHelpers: () => ({
           formatName(first: string, last: string) {
             return `${first} ${last}`;
-          }
-        })
-      }))
+          },
+        }),
+      })),
     };
-    const resolveImportUrl = vi.fn((schemaUrl: string, from: string) => new URL(from, schemaUrl).toString());
+    const resolveImportUrl = vi.fn((schemaUrl: string, from: string) =>
+      new URL(from, schemaUrl).toString(),
+    );
     const moduleCache = createModuleCache();
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
 
     render(
       <div>
         <SchemaRenderer
-          schema={{ type: 'text', 'xui:imports': [{ from: './shared-lib.js', as: 'demo' }], text: '${$demo.formatName("Ada", "Lovelace")}' } as any}
+          schema={
+            {
+              type: 'text',
+              'xui:imports': [{ from: './shared-lib.js', as: 'demo' }],
+              text: '${$demo.formatName("Ada", "Lovelace")}',
+            } as any
+          }
           schemaUrl="https://app.local/routes/a/page.json"
           moduleCache={moduleCache}
           env={{ ...env, importLoader, resolveImportUrl }}
           formulaCompiler={sharedFormulaCompiler}
         />
         <SchemaRenderer
-          schema={{ type: 'text', 'xui:imports': [{ from: '../a/shared-lib.js', as: 'demo' }], text: '${$demo.formatName("Grace", "Hopper")}' } as any}
+          schema={
+            {
+              type: 'text',
+              'xui:imports': [{ from: '../a/shared-lib.js', as: 'demo' }],
+              text: '${$demo.formatName("Grace", "Hopper")}',
+            } as any
+          }
           schemaUrl="https://app.local/routes/b/page.json"
           moduleCache={moduleCache}
           env={{ ...env, importLoader, resolveImportUrl }}
           formulaCompiler={sharedFormulaCompiler}
         />
-      </div>
+      </div>,
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length).toBeGreaterThan(0);
-      expect(screen.getAllByText((_, element) => element?.textContent === 'Grace Hopper').length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length,
+      ).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText((_, element) => element?.textContent === 'Grace Hopper').length,
+      ).toBeGreaterThan(0);
     });
     expect(importLoader.load).toHaveBeenCalledTimes(1);
   });
@@ -246,32 +296,49 @@ describe('createSchemaRenderer import basics', () => {
       load: vi.fn(async () => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true })
+          invoke: async () => ({ ok: true }),
         }),
         createExpressionHelpers: () => ({
           formatName(first: string, last: string) {
             return `${first} ${last}`;
-          }
-        })
-      }))
+          },
+        }),
+      })),
     };
-    const resolveImportUrl = vi.fn((schemaUrl: string, from: string) => `resolved:${schemaUrl}:${from}`);
+    const resolveImportUrl = vi.fn(
+      (schemaUrl: string, from: string) => `resolved:${schemaUrl}:${from}`,
+    );
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
 
     render(
       <SchemaRenderer
-        schema={{ type: 'text', 'xui:imports': [{ from: './demo-lib.js', as: 'demo' }], text: '${$demo.formatName("Ada", "Lovelace")}' } as any}
+        schema={
+          {
+            type: 'text',
+            'xui:imports': [{ from: './demo-lib.js', as: 'demo' }],
+            text: '${$demo.formatName("Ada", "Lovelace")}',
+          } as any
+        }
         schemaUrl="https://app.local/schema/page.json"
         env={{ ...env, importLoader, resolveImportUrl }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText((_, element) => element?.textContent === 'Ada Lovelace').length,
+      ).toBeGreaterThan(0);
     });
-    expect(resolveImportUrl).toHaveBeenCalledWith('https://app.local/schema/page.json', './demo-lib.js', undefined);
-    expect(importLoader.load).toHaveBeenCalledWith({ from: 'resolved:https://app.local/schema/page.json:./demo-lib.js', as: 'demo' });
+    expect(resolveImportUrl).toHaveBeenCalledWith(
+      'https://app.local/schema/page.json',
+      './demo-lib.js',
+      undefined,
+    );
+    expect(importLoader.load).toHaveBeenCalledWith({
+      from: 'resolved:https://app.local/schema/page.json:./demo-lib.js',
+      as: 'demo',
+    });
   });
 
   it('keeps nested imported helpers shadowed by the nearest import frame', async () => {
@@ -279,40 +346,42 @@ describe('createSchemaRenderer import basics', () => {
       load: vi.fn(async (spec: { from: string; as: string }) => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true })
+          invoke: async () => ({ ok: true }),
         }),
         createExpressionHelpers: () => ({
           label() {
             return spec.from;
-          }
-        })
-      }))
+          },
+        }),
+      })),
     };
     const SchemaRenderer = createSchemaRenderer([pageRenderer, scopedHostRenderer, textRenderer]);
 
     render(
       <SchemaRenderer
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'scoped-host',
-              'xui:imports': [{ from: 'outer-lib', as: 'demo' }],
-              body: [
-                { type: 'text', text: 'Outer ${$demo.label()}' },
-                {
-                  type: 'scoped-host',
-                  'xui:imports': [{ from: 'inner-lib', as: 'demo' }],
-                  body: [{ type: 'text', text: 'Inner ${$demo.label()}' }]
-                }
-              ]
-            }
-          ]
-        } as any}
+        schema={
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'scoped-host',
+                'xui:imports': [{ from: 'outer-lib', as: 'demo' }],
+                body: [
+                  { type: 'text', text: 'Outer ${$demo.label()}' },
+                  {
+                    type: 'scoped-host',
+                    'xui:imports': [{ from: 'inner-lib', as: 'demo' }],
+                    body: [{ type: 'text', text: 'Inner ${$demo.label()}' }],
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
         schemaUrl="https://app.local/schema/page.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {

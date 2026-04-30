@@ -6,7 +6,12 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
-import { buttonRenderer, env, selectOption, submitCalls } from '../../../flux-renderers-form/src/test-support';
+import {
+  buttonRenderer,
+  env,
+  selectOption,
+  submitCalls,
+} from '../../../flux-renderers-form/src/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 
@@ -22,14 +27,14 @@ describe('formRendererDefinitions - source-backed options', () => {
         schema={{
           type: 'form',
           data: {
-            role: 'admin'
+            role: 'admin',
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/dynamic-role',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
@@ -40,24 +45,24 @@ describe('formRendererDefinitions - source-backed options', () => {
                 type: 'source',
                 formula: [
                   { label: 'Admin', value: 'admin' },
-                  { label: 'Editor', value: 'editor' }
-                ]
-              }
-            }
+                  { label: 'Editor', value: 'editor' },
+                ],
+              },
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit dynamic role',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -77,7 +82,13 @@ describe('formRendererDefinitions - source-backed options', () => {
   it('shows loading state while source-backed select options are resolving', async () => {
     submitCalls.length = 0;
     cleanup();
-    let resolveOptions: ((value: { ok: true; status: number; data: Array<{ label: string; value: string }> }) => void) | undefined;
+    let resolveOptions:
+      | ((value: {
+          ok: true;
+          status: number;
+          data: Array<{ label: string; value: string }>;
+        }) => void)
+      | undefined;
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
     render(
@@ -86,7 +97,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         schema={{
           type: 'form',
           data: {
-            role: 'admin'
+            role: 'admin',
           },
           body: [
             {
@@ -96,12 +107,12 @@ describe('formRendererDefinitions - source-backed options', () => {
               options: {
                 type: 'source',
                 action: 'ajax',
-                api: {
-                  url: '/api/roles'
-                }
-              }
-            }
-          ]
+                args: {
+                  url: '/api/roles',
+                },
+              },
+            },
+          ],
         }}
         env={{
           ...env,
@@ -116,12 +127,12 @@ describe('formRendererDefinitions - source-backed options', () => {
             return {
               ok: true,
               status: 200,
-              data: ctx.scope.readOwn() as T
+              data: ctx.scope.readOwn() as T,
             };
-          }
+          },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -134,8 +145,8 @@ describe('formRendererDefinitions - source-backed options', () => {
       status: 200,
       data: [
         { label: 'Admin', value: 'admin' },
-        { label: 'Editor', value: 'editor' }
-      ]
+        { label: 'Editor', value: 'editor' },
+      ],
     });
 
     await waitFor(() => {
@@ -146,7 +157,13 @@ describe('formRendererDefinitions - source-backed options', () => {
   it('shows loading state while source-backed radio-group options are resolving', async () => {
     submitCalls.length = 0;
     cleanup();
-    let resolveOptions: ((value: { ok: true; status: number; data: Array<{ label: string; value: string }> }) => void) | undefined;
+    let resolveOptions:
+      | ((value: {
+          ok: true;
+          status: number;
+          data: Array<{ label: string; value: string }>;
+        }) => void)
+      | undefined;
     const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
 
     render(
@@ -155,7 +172,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         schema={{
           type: 'form',
           data: {
-            status: 'draft'
+            status: 'draft',
           },
           body: [
             {
@@ -165,12 +182,12 @@ describe('formRendererDefinitions - source-backed options', () => {
               options: {
                 type: 'source',
                 action: 'ajax',
-                api: {
-                  url: '/api/status-options'
-                }
-              }
-            }
-          ]
+                args: {
+                  url: '/api/status-options',
+                },
+              },
+            },
+          ],
         }}
         env={{
           ...env,
@@ -184,12 +201,12 @@ describe('formRendererDefinitions - source-backed options', () => {
             return {
               ok: true,
               status: 200,
-              data: {} as T
+              data: {} as T,
             };
-          }
+          },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -202,8 +219,8 @@ describe('formRendererDefinitions - source-backed options', () => {
       status: 200,
       data: [
         { label: 'Draft', value: 'draft' },
-        { label: 'Published', value: 'published' }
-      ]
+        { label: 'Published', value: 'published' },
+      ],
     });
 
     expect(await screen.findByRole('radio', { name: /Published/ })).toBeTruthy();
@@ -212,7 +229,13 @@ describe('formRendererDefinitions - source-backed options', () => {
   it('shows loading state while source-backed checkbox-group options are resolving', async () => {
     submitCalls.length = 0;
     cleanup();
-    let resolveOptions: ((value: { ok: true; status: number; data: Array<{ label: string; value: string }> }) => void) | undefined;
+    let resolveOptions:
+      | ((value: {
+          ok: true;
+          status: number;
+          data: Array<{ label: string; value: string }>;
+        }) => void)
+      | undefined;
     const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
 
     render(
@@ -221,7 +244,7 @@ describe('formRendererDefinitions - source-backed options', () => {
         schema={{
           type: 'form',
           data: {
-            tags: ['stable']
+            tags: ['stable'],
           },
           body: [
             {
@@ -231,12 +254,12 @@ describe('formRendererDefinitions - source-backed options', () => {
               options: {
                 type: 'source',
                 action: 'ajax',
-                api: {
-                  url: '/api/tag-options'
-                }
-              }
-            }
-          ]
+                args: {
+                  url: '/api/tag-options',
+                },
+              },
+            },
+          ],
         }}
         env={{
           ...env,
@@ -250,12 +273,12 @@ describe('formRendererDefinitions - source-backed options', () => {
             return {
               ok: true,
               status: 200,
-              data: {} as T
+              data: {} as T,
             };
-          }
+          },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -268,8 +291,8 @@ describe('formRendererDefinitions - source-backed options', () => {
       status: 200,
       data: [
         { label: 'Stable', value: 'stable' },
-        { label: 'Beta', value: 'beta' }
-      ]
+        { label: 'Beta', value: 'beta' },
+      ],
     });
 
     expect(await screen.findByRole('checkbox', { name: /Beta/ })).toBeTruthy();
@@ -292,12 +315,12 @@ describe('formRendererDefinitions - source-backed options', () => {
               options: {
                 type: 'source',
                 action: 'ajax',
-                api: {
-                  url: '/api/select-error'
-                }
-              }
-            }
-          ]
+                args: {
+                  url: '/api/select-error',
+                },
+              },
+            },
+          ],
         }}
         env={{
           ...env,
@@ -309,12 +332,12 @@ describe('formRendererDefinitions - source-backed options', () => {
             return {
               ok: true,
               status: 200,
-              data: {} as T
+              data: {} as T,
             };
-          }
+          },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Select options failed')).toBeTruthy();
@@ -337,12 +360,12 @@ describe('formRendererDefinitions - source-backed options', () => {
               options: {
                 type: 'source',
                 action: 'ajax',
-                api: {
-                  url: '/api/radio-error'
-                }
-              }
-            }
-          ]
+                args: {
+                  url: '/api/radio-error',
+                },
+              },
+            },
+          ],
         }}
         env={{
           ...env,
@@ -354,12 +377,12 @@ describe('formRendererDefinitions - source-backed options', () => {
             return {
               ok: true,
               status: 200,
-              data: {} as T
+              data: {} as T,
             };
-          }
+          },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Radio options failed')).toBeTruthy();
@@ -382,12 +405,12 @@ describe('formRendererDefinitions - source-backed options', () => {
               options: {
                 type: 'source',
                 action: 'ajax',
-                api: {
-                  url: '/api/checkbox-error'
-                }
-              }
-            }
-          ]
+                args: {
+                  url: '/api/checkbox-error',
+                },
+              },
+            },
+          ],
         }}
         env={{
           ...env,
@@ -399,12 +422,12 @@ describe('formRendererDefinitions - source-backed options', () => {
             return {
               ok: true,
               status: 200,
-              data: {} as T
+              data: {} as T,
             };
-          }
+          },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Checkbox options failed')).toBeTruthy();

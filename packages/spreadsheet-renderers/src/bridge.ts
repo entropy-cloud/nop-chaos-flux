@@ -33,9 +33,7 @@ export interface SpreadsheetBridge {
 }
 
 export function deriveHostSnapshot(runtime: SpreadsheetRuntimeSnapshot): SpreadsheetHostSnapshot {
-  const activeSheet = runtime.document.workbook.sheets.find(
-    (s) => s.id === runtime.activeSheetId,
-  );
+  const activeSheet = runtime.document.workbook.sheets.find((s) => s.id === runtime.activeSheetId);
 
   let activeCell: SpreadsheetCellRef | undefined;
   let activeRange: SpreadsheetRange | undefined;

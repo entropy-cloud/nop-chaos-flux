@@ -110,8 +110,18 @@ describe('condition-builder config integration display behavior', () => {
         id: 'g1',
         conjunction: 'and' as const,
         children: [
-          { id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined },
-          { id: 'i2', left: { type: 'field' as const, field: 'age' }, op: 'equal' as const, right: undefined },
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+          {
+            id: 'i2',
+            left: { type: 'field' as const, field: 'age' },
+            op: 'equal' as const,
+            right: undefined,
+          },
         ],
       };
       renderGroup({ maxItemsPerGroup: 2, builderMode: 'full' }, value);
@@ -124,8 +134,18 @@ describe('condition-builder config integration display behavior', () => {
         id: 'g1',
         conjunction: 'and' as const,
         children: [
-          { id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined },
-          { id: 'i2', left: { type: 'field' as const, field: 'age' }, op: 'equal' as const, right: undefined },
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+          {
+            id: 'i2',
+            left: { type: 'field' as const, field: 'age' },
+            op: 'equal' as const,
+            right: undefined,
+          },
         ],
       };
       renderGroup({ maxItemsPerGroup: 2, builderMode: 'simple' }, value);
@@ -137,7 +157,14 @@ describe('condition-builder config integration display behavior', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
-        children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
+        children: [
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+        ],
       };
       renderGroup({ maxItemsPerGroup: 2 }, value);
       expect(screen.queryAllByText('Add condition').length).toBeGreaterThanOrEqual(1);
@@ -161,7 +188,9 @@ describe('condition-builder config integration display behavior', () => {
   describe('placeholder', () => {
     it('renders default empty text when no conditions', () => {
       renderGroup({});
-      expect(screen.queryAllByText('No conditions yet. Use the buttons below to add one.').length).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.queryAllByText('No conditions yet. Use the buttons below to add one.').length,
+      ).toBeGreaterThanOrEqual(1);
     });
 
     it('renders custom placeholder when set', () => {
@@ -175,7 +204,14 @@ describe('condition-builder config integration display behavior', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
-        children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined }],
+        children: [
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+        ],
       };
       const operatorsOverride = {
         labels: { equal: '等于(自定义)' },
@@ -191,8 +227,18 @@ describe('condition-builder config integration display behavior', () => {
         id: 'g1',
         conjunction: 'or' as const,
         children: [
-          { id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: 'test' },
-          { id: 'i2', left: { type: 'field' as const, field: 'age' }, op: 'greater' as const, right: 18 },
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: 'test',
+          },
+          {
+            id: 'i2',
+            left: { type: 'field' as const, field: 'age' },
+            op: 'greater' as const,
+            right: 18,
+          },
         ],
       };
       renderGroup({ showAndOr: true, builderMode: 'full' }, value);
@@ -208,7 +254,14 @@ describe('condition-builder config integration display behavior', () => {
           {
             id: 'g2',
             conjunction: 'or' as const,
-            children: [{ id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: 'test' }],
+            children: [
+              {
+                id: 'i1',
+                left: { type: 'field' as const, field: 'name' },
+                op: 'equal' as const,
+                right: 'test',
+              },
+            ],
           },
         ],
       };
@@ -223,8 +276,18 @@ describe('condition-builder config integration display behavior', () => {
         id: 'g1',
         conjunction: 'and' as const,
         children: [
-          { id: 'i1', left: { type: 'field' as const, field: 'name' }, op: 'equal' as const, right: undefined },
-          { id: 'i2', left: { type: 'field' as const, field: 'age' }, op: 'equal' as const, right: undefined },
+          {
+            id: 'i1',
+            left: { type: 'field' as const, field: 'name' },
+            op: 'equal' as const,
+            right: undefined,
+          },
+          {
+            id: 'i2',
+            left: { type: 'field' as const, field: 'age' },
+            op: 'equal' as const,
+            right: undefined,
+          },
         ],
       };
       renderGroup({ uniqueFields: true }, value);

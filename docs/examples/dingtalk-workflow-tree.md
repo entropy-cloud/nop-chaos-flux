@@ -10,16 +10,16 @@
 
 FlowLong 的树形结构到通用 Tree DSL 的映射：
 
-| FlowLong 概念 | Tree DSL | 说明 |
-|--------------|----------|------|
-| `nodeConfig` | `root` | 根节点 |
-| `childNode` | `child` | 链式序列 |
-| `conditionNodes` / `parallelNodes` / `inclusiveNodes` / `routeNodes` | `branches` | 统一为扇出分支 |
-| `type` (0,1,2,4,8,9...) | `type` + `data.type` | `type` 指向 TreeNodeTypeConfig，原始 type 值放 `data` |
-| `conditionList` | `branch.data.conditionList` | 条件表达式放在分支的 data 里 |
-| `nodeAssigneeList` | `data.nodeAssigneeList` | 审批人配置放 data |
-| `examineMode` | `data.examineMode` | 审批方式放 data |
-| `setType` | `data.setType` | 审批人选择方式放 data |
+| FlowLong 概念                                                        | Tree DSL                    | 说明                                                  |
+| -------------------------------------------------------------------- | --------------------------- | ----------------------------------------------------- |
+| `nodeConfig`                                                         | `root`                      | 根节点                                                |
+| `childNode`                                                          | `child`                     | 链式序列                                              |
+| `conditionNodes` / `parallelNodes` / `inclusiveNodes` / `routeNodes` | `branches`                  | 统一为扇出分支                                        |
+| `type` (0,1,2,4,8,9...)                                              | `type` + `data.type`        | `type` 指向 TreeNodeTypeConfig，原始 type 值放 `data` |
+| `conditionList`                                                      | `branch.data.conditionList` | 条件表达式放在分支的 data 里                          |
+| `nodeAssigneeList`                                                   | `data.nodeAssigneeList`     | 审批人配置放 data                                     |
+| `examineMode`                                                        | `data.examineMode`          | 审批方式放 data                                       |
+| `setType`                                                            | `data.setType`              | 审批人选择方式放 data                                 |
 
 **关键点**：FlowLong 用不同的字段名（`conditionNodes` / `parallelNodes` / `inclusiveNodes`）区分网关类型。Tree DSL 统一用 `branches`，网关类型放在节点的 `data` 里。
 
@@ -102,9 +102,7 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
                 "type": 1,
                 "setType": 1,
                 "examineMode": 2,
-                "nodeAssigneeList": [
-                  { "id": "ceo001", "name": "张总" }
-                ],
+                "nodeAssigneeList": [{ "id": "ceo001", "name": "张总" }],
                 "rejectStrategy": 1,
                 "allowTransfer": true,
                 "allowAppendNode": true,
@@ -145,9 +143,7 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
             "label": "抄送HR",
             "type": 2,
             "allowSelection": true,
-            "nodeAssigneeList": [
-              { "id": "hr001", "name": "HR部门" }
-            ]
+            "nodeAssigneeList": [{ "id": "hr001", "name": "HR部门" }]
           },
           "child": {
             "id": "k006",
@@ -172,9 +168,7 @@ FlowLong 的树形结构到通用 Tree DSL 的映射：
                     "type": 1,
                     "setType": 1,
                     "examineMode": 1,
-                    "nodeAssigneeList": [
-                      { "id": "hr002", "name": "李人事" }
-                    ],
+                    "nodeAssigneeList": [{ "id": "hr002", "name": "李人事" }],
                     "rejectStrategy": 2,
                     "termAuto": false
                   }

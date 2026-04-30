@@ -23,4 +23,9 @@ export { FlowCanvas } from './flow-canvas';
 export type { FlowCanvasProps } from './flow-canvas';
 
 export { useFlowCanvasStore } from './use-flow-canvas-store';
-export type { FlowCanvasStore, FlowCanvasDocument, FlowCanvasNode, FlowCanvasEdge } from './use-flow-canvas-store';
+export type {
+  FlowCanvasStore,
+  FlowCanvasDocument,
+  FlowCanvasNode,
+  FlowCanvasEdge,
+} from './use-flow-canvas-store';

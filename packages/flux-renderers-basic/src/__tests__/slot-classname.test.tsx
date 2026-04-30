@@ -13,11 +13,11 @@ describe('per-slot className props', () => {
         schema={{
           type: 'container',
           bodyClassName: 'grid grid-cols-2',
-          body: [{ type: 'text', text: 'A' }]
+          body: [{ type: 'text', text: 'A' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body?.className).toContain('grid');
@@ -33,11 +33,11 @@ describe('per-slot className props', () => {
           type: 'container',
           headerClassName: 'bg-blue-100',
           header: [{ type: 'text', text: 'Header' }],
-          body: [{ type: 'text', text: 'Body' }]
+          body: [{ type: 'text', text: 'Body' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const header = container.querySelector('[data-slot="container-header"]');
     expect(header?.className).toContain('bg-blue-100');
@@ -52,11 +52,11 @@ describe('per-slot className props', () => {
           type: 'container',
           footerClassName: 'bg-gray-100',
           footer: [{ type: 'text', text: 'Footer' }],
-          body: [{ type: 'text', text: 'Body' }]
+          body: [{ type: 'text', text: 'Body' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const footer = container.querySelector('[data-slot="container-footer"]');
     expect(footer?.className).toContain('bg-gray-100');
@@ -71,11 +71,14 @@ describe('per-slot className props', () => {
           type: 'container',
           direction: 'column',
           bodyClassName: 'gap-4',
-          body: [{ type: 'text', text: 'A' }, { type: 'text', text: 'B' }]
+          body: [
+            { type: 'text', text: 'A' },
+            { type: 'text', text: 'B' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body?.className).toContain('flex');
@@ -90,11 +93,11 @@ describe('per-slot className props', () => {
         schema={{
           type: 'container',
           bodyClassName: 'grid grid-cols-3',
-          body: [{ type: 'text', text: 'A' }]
+          body: [{ type: 'text', text: 'A' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body?.className).toContain('grid');
@@ -114,11 +117,11 @@ describe('per-slot className props', () => {
           footerClassName: 'ftr',
           header: [{ type: 'text', text: 'H' }],
           body: [{ type: 'text', text: 'B' }],
-          footer: [{ type: 'text', text: 'F' }]
+          footer: [{ type: 'text', text: 'F' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     expect(container.querySelector('[data-slot="container-header"]')?.className).toContain('hdr');
     expect(container.querySelector('[data-slot="container-body"]')?.className).toContain('bdy');
@@ -133,11 +136,11 @@ describe('per-slot className props', () => {
         schema={{
           type: 'page',
           bodyClassName: 'space-y-4',
-          body: [{ type: 'text', text: 'A' }]
+          body: [{ type: 'text', text: 'A' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const body = container.querySelector('[data-slot="page-body"]');
     expect(body?.className).toContain('space-y-4');
@@ -152,11 +155,11 @@ describe('per-slot className props', () => {
           type: 'page',
           title: 'Test',
           headerClassName: 'border-b',
-          body: []
+          body: [],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const header = container.querySelector('[data-slot="page-header"]');
     expect(header?.className).toContain('border-b');
@@ -171,11 +174,11 @@ describe('per-slot className props', () => {
           type: 'page',
           footerClassName: 'border-t',
           footer: [{ type: 'text', text: 'Footer' }],
-          body: []
+          body: [],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const footer = container.querySelector('[data-slot="page-footer"]');
     expect(footer?.className).toContain('border-t');
@@ -188,11 +191,11 @@ describe('per-slot className props', () => {
         schemaUrl="test://slot-className"
         schema={{
           type: 'container',
-          body: [{ type: 'text', text: 'A' }]
+          body: [{ type: 'text', text: 'A' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const body = container.querySelector('[data-slot="container-body"]');
     expect(body?.getAttribute('class')).toBe('');
@@ -207,11 +210,11 @@ describe('per-slot className props', () => {
           type: 'container',
           className: 'p-4',
           bodyClassName: 'grid grid-cols-2',
-          body: [{ type: 'text', text: 'A' }]
+          body: [{ type: 'text', text: 'A' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const root = container.querySelector('.nop-container');
     const body = container.querySelector('[data-slot="container-body"]');
@@ -228,11 +231,11 @@ describe('per-slot className props', () => {
         schema={{
           type: 'tabs',
           contentClassName: 'p-6',
-          items: [{ key: 'a', title: 'A', body: [{ type: 'text', text: 'Tab A' }] }]
+          items: [{ key: 'a', title: 'A', body: [{ type: 'text', text: 'Tab A' }] }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const content = container.querySelector('[data-slot="tabs-content"]');
     expect(content?.className).toContain('p-6');
@@ -245,16 +248,18 @@ describe('per-slot className props', () => {
         schemaUrl="test://slot-className"
         schema={{
           type: 'page',
-          body: [{
-            type: 'tabs',
-            toolbarClassName: 'mb-2',
-            toolbar: [{ type: 'text', text: 'Toolbar' }],
-            items: [{ key: 'a', title: 'A', body: [{ type: 'text', text: 'Tab A' }] }]
-          }]
+          body: [
+            {
+              type: 'tabs',
+              toolbarClassName: 'mb-2',
+              toolbar: [{ type: 'text', text: 'Toolbar' }],
+              items: [{ key: 'a', title: 'A', body: [{ type: 'text', text: 'Tab A' }] }],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
     const toolbar = container.querySelector('[data-slot="tabs-toolbar"]');
     expect(toolbar?.className).toContain('mb-2');

@@ -1,63 +1,63 @@
-import { useState, useEffect, useRef } from 'react'
-import { Search, ArrowLeft, ArrowRight, X, ReplaceAll } from 'lucide-react'
-import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
-import { Button, Input } from '@nop-chaos/ui'
-import { ToolbarButton, ToolbarSeparator } from './shared.js'
+import { useState, useEffect, useRef } from 'react';
+import { Search, ArrowLeft, ArrowRight, X, ReplaceAll } from 'lucide-react';
+import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
+import { Button, Input } from '@nop-chaos/ui';
+import { ToolbarButton, ToolbarSeparator } from './shared.js';
 
 interface SearchReplaceProps {
-  bridge: CanvasEditorBridge | null
-  visible: boolean
-  onClose: () => void
+  bridge: CanvasEditorBridge | null;
+  visible: boolean;
+  onClose: () => void;
 }
 
 export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) {
-  const [searchText, setSearchText] = useState('')
-  const [replaceText, setReplaceText] = useState('')
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const resultCount = searchText ? 1 : 0
+  const [searchText, setSearchText] = useState('');
+  const [replaceText, setReplaceText] = useState('');
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resultCount = searchText ? 1 : 0;
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
+      clearTimeout(searchTimeoutRef.current);
     }
 
     if (!searchText) {
-      bridge?.command?.executeSearch(null)
-      return
+      bridge?.command?.executeSearch(null);
+      return;
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      bridge?.command?.executeSearch(searchText)
-    }, 300)
+      bridge?.command?.executeSearch(searchText);
+    }, 300);
 
     return () => {
       if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
+        clearTimeout(searchTimeoutRef.current);
       }
-    }
-  }, [searchText, bridge])
+    };
+  }, [searchText, bridge]);
 
   const handlePrev = () => {
-    bridge?.command?.executeSearchNavigatePre()
-  }
+    bridge?.command?.executeSearchNavigatePre();
+  };
 
   const handleNext = () => {
-    bridge?.command?.executeSearchNavigateNext()
-  }
+    bridge?.command?.executeSearchNavigateNext();
+  };
 
   const handleReplace = () => {
-    bridge?.command?.executeReplace(replaceText)
-  }
+    bridge?.command?.executeReplace(replaceText);
+  };
 
   const handleClose = () => {
-    setSearchText('')
-    setReplaceText('')
-    bridge?.command?.executeSearch(null)
-    onClose()
-  }
+    setSearchText('');
+    setReplaceText('');
+    bridge?.command?.executeSearch(null);
+    onClose();
+  };
 
-  if (!visible) return null
+  if (!visible) return null;
 
   return (
     <div className="flex items-center gap-1 border-l bg-muted/40 p-2">
@@ -72,7 +72,12 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
             className="pl-7 w-32"
           />
         </div>
-        <ToolbarButton icon={ArrowLeft} onClick={handlePrev} disabled={!searchText} title="Previous" />
+        <ToolbarButton
+          icon={ArrowLeft}
+          onClick={handlePrev}
+          disabled={!searchText}
+          title="Previous"
+        />
         <ToolbarButton icon={ArrowRight} onClick={handleNext} disabled={!searchText} title="Next" />
         {resultCount > 0 && <span className="text-xs text-muted-foreground">{resultCount}</span>}
       </div>
@@ -101,5 +106,5 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
       <ToolbarSeparator />
       <ToolbarButton icon={X} onClick={handleClose} title="Close" />
     </div>
-  )
+  );
 }

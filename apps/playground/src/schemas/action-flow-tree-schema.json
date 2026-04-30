@@ -28,7 +28,11 @@
                   "child": {
                     "id": "save-form",
                     "type": "action-step",
-                    "data": { "label": "保存表单", "action": "component:submit", "componentId": "userForm" },
+                    "data": {
+                      "label": "保存表单",
+                      "action": "component:submit",
+                      "componentId": "userForm"
+                    },
                     "branches": [
                       {
                         "id": "then-save",
@@ -36,7 +40,11 @@
                         "child": {
                           "id": "refresh-list",
                           "type": "action-step",
-                          "data": { "label": "刷新列表", "action": "component:refresh", "componentName": "userTable" }
+                          "data": {
+                            "label": "刷新列表",
+                            "action": "component:refresh",
+                            "componentName": "userTable"
+                          }
                         }
                       },
                       {
@@ -45,7 +53,11 @@
                         "child": {
                           "id": "show-save-error",
                           "type": "action-step",
-                          "data": { "label": "显示错误", "action": "showToast", "args": { "message": "保存失败", "variant": "destructive" } }
+                          "data": {
+                            "label": "显示错误",
+                            "action": "showToast",
+                            "args": { "message": "保存失败", "variant": "destructive" }
+                          }
                         }
                       }
                     ]
@@ -57,7 +69,11 @@
                   "child": {
                     "id": "retry-fetch",
                     "type": "action-step",
-                    "data": { "label": "重试加载", "action": "ajax", "retry": { "times": 2, "delay": 1000 } }
+                    "data": {
+                      "label": "重试加载",
+                      "action": "ajax",
+                      "retry": { "times": 2, "delay": 1000 }
+                    }
                   }
                 }
               ]
@@ -69,7 +85,11 @@
             "child": {
               "id": "show-precheck-error",
               "type": "action-step",
-              "data": { "label": "提示选择用户", "action": "showToast", "args": { "message": "请先选择用户" } }
+              "data": {
+                "label": "提示选择用户",
+                "action": "showToast",
+                "args": { "message": "请先选择用户" }
+              }
             }
           }
         ],
@@ -199,17 +219,28 @@
         "body": {
           "type": "flex",
           "className": "nop-af-node nop-af-node--end",
-          "items": [
-            { "type": "text", "body": "${data.label}", "className": "nop-af-node__title" }
-          ]
+          "items": [{ "type": "text", "body": "${data.label}", "className": "nop-af-node__title" }]
         },
         "appearance": { "minWidth": 80, "minHeight": 60 },
         "tree": { "allowChild": false, "allowBranches": false, "isTerminal": true }
       }
     ],
     "edgeTypes": [
-      { "id": "action-chain", "label": "主链", "appearance": { "stroke": "#64748b", "strokeWidth": 2, "markerEnd": "arrow-closed" } },
-      { "id": "action-branch", "label": "分支", "appearance": { "stroke": "#3b82f6", "strokeWidth": 1.5, "strokeStyle": "dashed", "markerEnd": "arrow-closed" } }
+      {
+        "id": "action-chain",
+        "label": "主链",
+        "appearance": { "stroke": "#64748b", "strokeWidth": 2, "markerEnd": "arrow-closed" }
+      },
+      {
+        "id": "action-branch",
+        "label": "分支",
+        "appearance": {
+          "stroke": "#3b82f6",
+          "strokeWidth": 1.5,
+          "strokeStyle": "dashed",
+          "markerEnd": "arrow-closed"
+        }
+      }
     ],
     "toolbar": {
       "items": [

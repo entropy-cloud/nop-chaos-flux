@@ -7,7 +7,9 @@ describe('detail-field unmount protection', () => {
   it('does not update state after unmount when handleOpen async operation is in flight', async () => {
     cleanup();
     let resolveInvoke: (value: any) => void;
-    const invokePromise = new Promise((resolve) => { resolveInvoke = resolve; });
+    const invokePromise = new Promise((resolve) => {
+      resolveInvoke = resolve;
+    });
     const importLoader = {
       load: vi.fn(async () => ({
         createNamespace: () => ({
@@ -61,7 +63,9 @@ describe('detail-field unmount protection', () => {
     const reactUpdateWarnings = consoleErrorSpy.mock.calls.filter(
       (call) =>
         typeof call[0] === 'string' &&
-        (call[0].includes('unmounted') || call[0].includes('unmount') || call[0].includes('perform a React state update'))
+        (call[0].includes('unmounted') ||
+          call[0].includes('unmount') ||
+          call[0].includes('perform a React state update')),
     );
     expect(reactUpdateWarnings).toHaveLength(0);
 
@@ -71,7 +75,9 @@ describe('detail-field unmount protection', () => {
   it('does not update state after unmount when handleConfirm async operation is in flight', async () => {
     cleanup();
     let resolveInvoke: (value: any) => void;
-    const invokePromise = new Promise((resolve) => { resolveInvoke = resolve; });
+    const invokePromise = new Promise((resolve) => {
+      resolveInvoke = resolve;
+    });
     const importLoader = {
       load: vi.fn(async () => ({
         createNamespace: () => ({
@@ -129,7 +135,9 @@ describe('detail-field unmount protection', () => {
     const reactUpdateWarnings = consoleErrorSpy.mock.calls.filter(
       (call) =>
         typeof call[0] === 'string' &&
-        (call[0].includes('unmounted') || call[0].includes('unmount') || call[0].includes('perform a React state update'))
+        (call[0].includes('unmounted') ||
+          call[0].includes('unmount') ||
+          call[0].includes('perform a React state update')),
     );
     expect(reactUpdateWarnings).toHaveLength(0);
 

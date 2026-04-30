@@ -81,18 +81,18 @@
 
 ## 变动文件清单
 
-| File | Change | Lines affected |
-|------|--------|---------------|
-| `apps/playground/vite.config.ts` | 接入 React Compiler / 调整构建验证策略 | ~10-30 |
-| `package.json` | 增加编译器依赖或审计命令 | ~5-20 |
-| `eslint.config.js` | 增加 compiler-friendly 护栏 | ~10-40 |
-| `packages/flux-react/src/useSourceValue.ts` | 统一异步取消模式 | ~20-50 |
-| `packages/flux-react/src/useNodeImports.ts` | 统一异步取消模式 | ~20-60 |
-| `packages/flux-code-editor/src/source-resolvers.ts` | 统一异步取消模式 | ~20-80 |
-| `packages/flux-renderers-data/src/table-renderer.tsx` | 拆分大型渲染器、收口手工 memo、引入 transition | ~150-350 |
-| `packages/spreadsheet-renderers/src/use-spreadsheet-interactions.ts` | 拆分大型交互 hook、引入 transition | ~200-450 |
-| `docs/architecture/performance-design-requirements.md` | 补充 React 19/Compiler 热点交互约束 | ~20-50 |
-| `docs/logs/2026/04-09.md` | 记录实施结果 | ~10-20 |
+| File                                                                 | Change                                         | Lines affected |
+| -------------------------------------------------------------------- | ---------------------------------------------- | -------------- |
+| `apps/playground/vite.config.ts`                                     | 接入 React Compiler / 调整构建验证策略         | ~10-30         |
+| `package.json`                                                       | 增加编译器依赖或审计命令                       | ~5-20          |
+| `eslint.config.js`                                                   | 增加 compiler-friendly 护栏                    | ~10-40         |
+| `packages/flux-react/src/useSourceValue.ts`                          | 统一异步取消模式                               | ~20-50         |
+| `packages/flux-react/src/useNodeImports.ts`                          | 统一异步取消模式                               | ~20-60         |
+| `packages/flux-code-editor/src/source-resolvers.ts`                  | 统一异步取消模式                               | ~20-80         |
+| `packages/flux-renderers-data/src/table-renderer.tsx`                | 拆分大型渲染器、收口手工 memo、引入 transition | ~150-350       |
+| `packages/spreadsheet-renderers/src/use-spreadsheet-interactions.ts` | 拆分大型交互 hook、引入 transition             | ~200-450       |
+| `docs/architecture/performance-design-requirements.md`               | 补充 React 19/Compiler 热点交互约束            | ~20-50         |
+| `docs/logs/2026/04-09.md`                                            | 记录实施结果                                   | ~10-20         |
 
 ## Risks And Rollback
 

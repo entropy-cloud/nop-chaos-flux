@@ -7,24 +7,28 @@ import type {
   ScopeChange,
   ScopeValidationStateSnapshot,
   ValidationError,
-  ValidationReason
+  ValidationReason,
 } from '@nop-chaos/flux-core';
 import {
   getCompiledValidationDependents,
   getCompiledValidationField,
   getCompiledValidationTraversalOrder,
   setIn,
-  validationErrorsEqual
+  validationErrorsEqual,
 } from '@nop-chaos/flux-core';
 import {
   clearExternalErrorsForPath,
   rebuildStoreErrorsFromExternal,
-  storeOwnedExternalErrors
+  storeOwnedExternalErrors,
 } from './form-runtime-owner-external-errors';
 import { mergeFieldStateErrors } from './form-runtime-owner-field-states';
 import { disposeOwnerState, refreshCompiledModelState } from './form-runtime-owner-lifecycle';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree';
-import { cancelValidationDebounce, validatePath, validateSubtreeByNode } from './form-runtime-validation';
+import {
+  cancelValidationDebounce,
+  validatePath,
+  validateSubtreeByNode,
+} from './form-runtime-validation';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 
 export function buildFormOwnerRuntime(input: {
@@ -64,7 +68,7 @@ export function buildFormOwnerRuntime(input: {
       validating: isValidating,
       lifecycleState: input.sharedState.lifecycleState,
       ready: valid && !isValidating,
-      modelGeneration: input.sharedState.modelGeneration
+      modelGeneration: input.sharedState.modelGeneration,
     };
     return cachedScopeState;
   }
@@ -77,7 +81,10 @@ export function buildFormOwnerRuntime(input: {
         continue;
       }
 
-      input.sharedState.validationRuns.set(dependentPath, (input.sharedState.validationRuns.get(dependentPath) ?? 0) + 1);
+      input.sharedState.validationRuns.set(
+        dependentPath,
+        (input.sharedState.validationRuns.get(dependentPath) ?? 0) + 1,
+      );
       cancelValidationDebounce(input.sharedState, dependentPath);
 
       const currentDependentValue = input.sharedState.scope.get(dependentPath);
@@ -95,23 +102,24 @@ export function buildFormOwnerRuntime(input: {
         delete nextFieldState.dirty;
       }
 
-      const nextFieldStates = Object.keys(nextFieldState).length > 0
-        ? { ...fieldStates, [dependentPath]: nextFieldState }
-        : (() => { const next = { ...fieldStates }; delete next[dependentPath]; return next; })();
+      const nextFieldStates =
+        Object.keys(nextFieldState).length > 0
+          ? { ...fieldStates, [dependentPath]: nextFieldState }
+          : (() => {
+              const next = { ...fieldStates };
+              delete next[dependentPath];
+              return next;
+            })();
 
       input.setLastChange({
         paths: [],
         sourceScopeId: input.formId,
-        kind: 'update'
+        kind: 'update',
       });
       input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
 
       const currentFieldState = input.sharedState.store.getState().fieldStates[dependentPath];
-      if (
-        currentFieldState?.touched
-        || currentFieldState?.visited
-        || input.getIsSubmitting()
-      ) {
+      if (currentFieldState?.touched || currentFieldState?.visited || input.getIsSubmitting()) {
         await input.getThisForm().validateField(dependentPath, reason);
       } else {
         await input.getThisForm().validateField(dependentPath, 'system');
@@ -123,7 +131,7 @@ export function buildFormOwnerRuntime(input: {
     storeOwnedExternalErrors({
       inputValue,
       sharedState: input.sharedState,
-      isPathOwned: (path) => input.getThisForm().isPathOwned(path)
+      isPathOwned: (path) => input.getThisForm().isPathOwned(path),
     });
 
     const fieldStates = input.sharedState.store.getState().fieldStates;
@@ -133,7 +141,7 @@ export function buildFormOwnerRuntime(input: {
     input.setLastChange({
       paths: [],
       sourceScopeId: input.formId,
-      kind: 'update'
+      kind: 'update',
     });
     input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
 
@@ -143,21 +151,28 @@ export function buildFormOwnerRuntime(input: {
   function supersedeLowerPriorityWork(): void {
     const allPaths = Array.from(input.sharedState.validationRuns.keys());
     for (const path of allPaths) {
-      input.sharedState.validationRuns.set(path, (input.sharedState.validationRuns.get(path) ?? 0) + 1);
+      input.sharedState.validationRuns.set(
+        path,
+        (input.sharedState.validationRuns.get(path) ?? 0) + 1,
+      );
       cancelValidationDebounce(input.sharedState, path);
     }
   }
 
-  async function applyChangesAndRevalidate(inputValue: ApplyScopeChangesInput): Promise<FormValidationResult> {
+  async function applyChangesAndRevalidate(
+    inputValue: ApplyScopeChangesInput,
+  ): Promise<FormValidationResult> {
     if (input.sharedState.lifecycleState === 'disposed') {
       return { ok: true, errors: [], fieldErrors: {} };
     }
 
     const { writes, changedPaths, reason } = inputValue;
-    const invalidPaths = Array.from(new Set([
-      ...Object.keys(writes).filter((path) => !input.getThisForm().isPathOwned(path)),
-      ...changedPaths.filter((path) => !input.getThisForm().isPathOwned(path))
-    ]));
+    const invalidPaths = Array.from(
+      new Set([
+        ...Object.keys(writes).filter((path) => !input.getThisForm().isPathOwned(path)),
+        ...changedPaths.filter((path) => !input.getThisForm().isPathOwned(path)),
+      ]),
+    );
 
     if (invalidPaths.length > 0) {
       const errors = invalidPaths.map((path) => ({
@@ -165,7 +180,7 @@ export function buildFormOwnerRuntime(input: {
         ownerPath: path,
         rule: 'required' as const,
         message: `Path "${path}" is not owned by form "${input.formId}".`,
-        sourceKind: 'form' as const
+        sourceKind: 'form' as const,
       }));
 
       const fieldErrors = Object.fromEntries(errors.map((error) => [error.path, [error]]));
@@ -177,14 +192,17 @@ export function buildFormOwnerRuntime(input: {
 
     for (const [path, value] of Object.entries(writes)) {
       nextValues = setIn(nextValues, path, value);
-      input.sharedState.validationRuns.set(path, (input.sharedState.validationRuns.get(path) ?? 0) + 1);
+      input.sharedState.validationRuns.set(
+        path,
+        (input.sharedState.validationRuns.get(path) ?? 0) + 1,
+      );
       cancelValidationDebounce(input.sharedState, path);
     }
 
     input.setLastChange({
       paths: changedPaths.length > 0 ? changedPaths : ['*'],
       sourceScopeId: input.formId,
-      kind: 'update'
+      kind: 'update',
     });
     input.sharedState.store.batchUpdate({ values: nextValues });
 
@@ -217,7 +235,7 @@ export function buildFormOwnerRuntime(input: {
       return {
         ok: true,
         errors: [],
-        fieldErrors: {}
+        fieldErrors: {},
       } as FormValidationResult;
     }
 
@@ -232,7 +250,7 @@ export function buildFormOwnerRuntime(input: {
       validationPaths.map(async (path) => {
         validatedPaths.add(path);
         return { path, result: await input.getThisForm().validateField(path, reason) };
-      })
+      }),
     );
 
     for (const { path, result } of pathResults) {
@@ -242,7 +260,9 @@ export function buildFormOwnerRuntime(input: {
       }
     }
 
-    async function validateRegisteredChildren(registration: import('@nop-chaos/flux-core').RuntimeFieldRegistration) {
+    async function validateRegisteredChildren(
+      registration: import('@nop-chaos/flux-core').RuntimeFieldRegistration,
+    ) {
       if (!registration.validateChild || !registration.childPaths?.length) return;
       for (const childPath of registration.childPaths) {
         validatedPaths.add(childPath);
@@ -299,7 +319,7 @@ export function buildFormOwnerRuntime(input: {
 
     const mergedErrors = {
       ...preservedErrors,
-      ...fieldErrors
+      ...fieldErrors,
     };
 
     const nextFieldStates = { ...currentFieldStates };
@@ -323,7 +343,7 @@ export function buildFormOwnerRuntime(input: {
       input.setLastChange({
         paths: [],
         sourceScopeId: input.formId,
-        kind: 'update'
+        kind: 'update',
       });
       input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     }
@@ -347,7 +367,7 @@ export function buildFormOwnerRuntime(input: {
     return {
       ok: errors.length === 0,
       errors,
-      fieldErrors
+      fieldErrors,
     } as FormValidationResult;
   }
 
@@ -358,7 +378,7 @@ export function buildFormOwnerRuntime(input: {
       return {
         ok: true,
         errors: [],
-        fieldErrors: {}
+        fieldErrors: {},
       } as FormValidationResult;
     }
 
@@ -384,7 +404,7 @@ export function buildFormOwnerRuntime(input: {
     return {
       ok: errors.length === 0,
       errors,
-      fieldErrors
+      fieldErrors,
     } as FormValidationResult;
   }
 
@@ -395,7 +415,7 @@ export function buildFormOwnerRuntime(input: {
       setCurrentValidation: input.setCurrentValidation,
       newModel,
       formId: input.formId,
-      setLastChange: input.setLastChange
+      setLastChange: input.setLastChange,
     });
   }
 
@@ -403,21 +423,27 @@ export function buildFormOwnerRuntime(input: {
     disposeOwnerState({
       sharedState: input.sharedState,
       formId: input.formId,
-      setLastChange: input.setLastChange
+      setLastChange: input.setLastChange,
     });
   }
 
   return {
     computeScopeState,
     revalidateDependents,
-    rebuildStoreErrorsFromExternal: (fieldStates: Record<string, FieldState>) => rebuildStoreErrorsFromExternal(input.sharedState, fieldStates),
-    clearExternalErrorsForPath: (name: string) => clearExternalErrorsForPath({ name, sharedState: input.sharedState, getThisForm: input.getThisForm }),
+    rebuildStoreErrorsFromExternal: (fieldStates: Record<string, FieldState>) =>
+      rebuildStoreErrorsFromExternal(input.sharedState, fieldStates),
+    clearExternalErrorsForPath: (name: string) =>
+      clearExternalErrorsForPath({
+        name,
+        sharedState: input.sharedState,
+        getThisForm: input.getThisForm,
+      }),
     applyExternalErrors,
     supersedeLowerPriorityWork,
     applyChangesAndRevalidate,
     validateForm,
     validateSubtree,
     refreshCompiledModel,
-    dispose
+    dispose,
   };
 }

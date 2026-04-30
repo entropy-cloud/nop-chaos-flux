@@ -1,16 +1,24 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { EvalContext, RendererEnv, ScopeDependencyCollector } from '@nop-chaos/flux-core';
-import { createFormulaCompiler, registerFunction, registerNamespace, resetFormulaRegistry } from './index';
+import {
+  createFormulaCompiler,
+  registerFunction,
+  registerNamespace,
+  resetFormulaRegistry,
+} from './index';
 import { evaluateAst } from './evaluator';
 import { parseFormula } from './parser';
 import type { FormulaAstNode, IdentifierNode, ObjectExpressionNode, PropertyNode } from './ast';
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
-  notify: () => undefined
+  notify: () => undefined,
 };
 
-function createContext(data: Record<string, unknown>, collector?: ScopeDependencyCollector): EvalContext {
+function createContext(
+  data: Record<string, unknown>,
+  collector?: ScopeDependencyCollector,
+): EvalContext {
   return {
     resolve(path: string) {
       return path.split('.').reduce<unknown>((current, segment) => {
@@ -27,7 +35,7 @@ function createContext(data: Record<string, unknown>, collector?: ScopeDependenc
     materialize() {
       return data;
     },
-    collector
+    collector,
   };
 }
 
@@ -49,14 +57,18 @@ function binary(op: string, left: FormulaAstNode, right: FormulaAstNode): Formul
   return { type: 'BinaryExpression', op, left, right, loc } as FormulaAstNode;
 }
 
-function member(object: FormulaAstNode, property: FormulaAstNode, input: { computed?: boolean; optional?: boolean } = {}): FormulaAstNode {
+function member(
+  object: FormulaAstNode,
+  property: FormulaAstNode,
+  input: { computed?: boolean; optional?: boolean } = {},
+): FormulaAstNode {
   return {
     type: 'MemberExpression',
     object,
     property,
     computed: input.computed ?? false,
     optional: input.optional ?? false,
-    loc
+    loc,
   } as FormulaAstNode;
 }
 
@@ -67,7 +79,7 @@ function property(key: FormulaAstNode, value: FormulaAstNode, computed = false):
     value,
     computed,
     shorthand: false,
-    loc
+    loc,
   } as PropertyNode;
 }
 
@@ -84,7 +96,7 @@ function arrow(params: string[], body: FormulaAstNode): FormulaAstNode {
     type: 'ArrowFunctionExpression',
     params: params.map((name) => ({ type: 'Identifier', name, loc })),
     body,
-    loc
+    loc,
   } as FormulaAstNode;
 }
 
@@ -99,46 +111,58 @@ describe('evaluateAst', () => {
       base: 2,
       add(this: { base: number }, value: number) {
         return this.base + value;
-      }
+      },
     });
 
-    expect(evaluateAst(parseFormula('$calc.add(3)'), {
-      env,
-      context: createContext({})
-    })).toBe(5);
+    expect(
+      evaluateAst(parseFormula('$calc.add(3)'), {
+        env,
+        context: createContext({}),
+      }),
+    ).toBe(5);
 
-    expect(evaluateAst(parseFormula('$demo.value'), {
-      env,
-      context: createContext({
-        $demo: { value: 'imported' }
-      })
-    })).toBe('imported');
+    expect(
+      evaluateAst(parseFormula('$demo.value'), {
+        env,
+        context: createContext({
+          $demo: { value: 'imported' },
+        }),
+      }),
+    ).toBe('imported');
   });
 
   it('supports lambda shadowing, optional members, instanceof, and dependency collection', () => {
     createFormulaCompiler();
     const collector = {
       recordPath: vi.fn(),
-      recordWildcard: vi.fn()
+      recordWildcard: vi.fn(),
     };
 
-    expect(evaluateAst(parseFormula('ARRAYMAP(items, x => x + tax)[1]'), {
-      env,
-      context: createContext({ items: [1, 2], tax: 10, x: 100 }, collector)
-    })).toBe(12);
-    expect(evaluateAst(parseFormula('user?.name'), {
-      env,
-      context: createContext({ user: null })
-    })).toBeUndefined();
-    expect(evaluateAst(parseFormula('created instanceof $Ctor'), {
-      env,
-      context: createContext({ created: new Date(), $Ctor: Date })
-    })).toBe(true);
+    expect(
+      evaluateAst(parseFormula('ARRAYMAP(items, x => x + tax)[1]'), {
+        env,
+        context: createContext({ items: [1, 2], tax: 10, x: 100 }, collector),
+      }),
+    ).toBe(12);
+    expect(
+      evaluateAst(parseFormula('user?.name'), {
+        env,
+        context: createContext({ user: null }),
+      }),
+    ).toBeUndefined();
+    expect(
+      evaluateAst(parseFormula('created instanceof $Ctor'), {
+        env,
+        context: createContext({ created: new Date(), $Ctor: Date }),
+      }),
+    ).toBe(true);
 
-    expect(evaluateAst(parseFormula('missing'), {
-      env,
-      context: createContext({}, collector)
-    })).toBeUndefined();
+    expect(
+      evaluateAst(parseFormula('missing'), {
+        env,
+        context: createContext({}, collector),
+      }),
+    ).toBeUndefined();
     expect(collector.recordPath).toHaveBeenCalledWith('items');
     expect(collector.recordPath).toHaveBeenCalledWith('tax');
     expect(collector.recordPath).toHaveBeenCalledWith('missing');
@@ -148,45 +172,55 @@ describe('evaluateAst', () => {
     createFormulaCompiler();
     const reportError = vi.fn();
 
-    expect(() => evaluateAst(parseFormula('value()'), {
-      env,
-      context: createContext({ value: 1 }),
-      reportError
-    })).toThrow(/Call target is not a function/);
+    expect(() =>
+      evaluateAst(parseFormula('value()'), {
+        env,
+        context: createContext({ value: 1 }),
+        reportError,
+      }),
+    ).toThrow(/Call target is not a function/);
 
-    expect(reportError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({
-      source: 'formula-evaluator'
-    }));
+    expect(reportError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        source: 'formula-evaluator',
+      }),
+    );
   });
 
   it('covers identifier bindings, logical aliases, members, object keys, and callable resolution', () => {
     createFormulaCompiler();
     registerNamespace('TOOLS', { value: 4, label: 'namespace' });
-    registerFunction('LAZY_CAPTURE', (...args: Array<() => unknown>) => args.map((arg) => arg()), { invoke: 'lazy' });
+    registerFunction('LAZY_CAPTURE', (...args: Array<() => unknown>) => args.map((arg) => arg()), {
+      invoke: 'lazy',
+    });
     registerFunction('APPLY2', (fn: (left: number, right: number) => number) => fn(2, 3));
 
     const collector = {
       recordPath: vi.fn(),
-      recordWildcard: vi.fn()
+      recordWildcard: vi.fn(),
     };
-    const context = createContext({
-      plainValue: 'plain',
-      libValue: 'library',
-      scopeBag: { value: 5 },
-      obj: {
-        prefix: 'ctx',
-        method(this: { prefix: string }, suffix: string) {
-          return `${this.prefix}:${suffix}`;
+    const context = createContext(
+      {
+        plainValue: 'plain',
+        libValue: 'library',
+        scopeBag: { value: 5 },
+        obj: {
+          prefix: 'ctx',
+          method(this: { prefix: string }, suffix: string) {
+            return `${this.prefix}:${suffix}`;
+          },
+          value: 99,
+          dyn: 'dynamic-value',
         },
-        value: 99,
-        dyn: 'dynamic-value'
+        propName: 'dyn',
       },
-      propName: 'dyn'
-    }, collector);
+      collector,
+    );
 
     expect(evaluateAst(identifier('TOOLS', 'namespace'), { env, context })).toEqual({
       value: 4,
-      label: 'namespace'
+      label: 'namespace',
     });
     expect(typeof evaluateAst(identifier('SUM'), { env, context })).toBe('function');
     expect(evaluateAst(identifier('plainValue'), { env, context })).toBe('plain');
@@ -195,25 +229,63 @@ describe('evaluateAst', () => {
     expect(evaluateAst(parseFormula('0 and missing.value'), { env, context })).toBe(0);
     expect(evaluateAst(parseFormula('1 or missing.value'), { env, context })).toBe(1);
 
-    expect(evaluateAst(objectExpression([
-      property(identifier('plainKey'), literal(1)),
-      property(literal('fixed'), literal(2)),
-      property(identifier('propName'), literal(3), true)
-    ]), { env, context })).toEqual({
+    expect(
+      evaluateAst(
+        objectExpression([
+          property(identifier('plainKey'), literal(1)),
+          property(literal('fixed'), literal(2)),
+          property(identifier('propName'), literal(3), true),
+        ]),
+        { env, context },
+      ),
+    ).toEqual({
       plainKey: 1,
       fixed: 2,
-      dyn: 3
+      dyn: 3,
     });
 
-    expect(evaluateAst(member(identifier('scopeBag', 'scope'), identifier('value')), { env, context })).toBe(5);
-    expect(evaluateAst(member(identifier('obj'), identifier('propName'), { computed: true }), { env, context })).toBe('dynamic-value');
-    expect(evaluateAst(member(identifier('missingObj'), identifier('value'), { optional: true }), { env, context })).toBeUndefined();
-    expect(() => evaluateAst(member(identifier('missingObj'), identifier('value')), { env, context })).toThrow(/Cannot access member/);
+    expect(
+      evaluateAst(member(identifier('scopeBag', 'scope'), identifier('value')), { env, context }),
+    ).toBe(5);
+    expect(
+      evaluateAst(member(identifier('obj'), identifier('propName'), { computed: true }), {
+        env,
+        context,
+      }),
+    ).toBe('dynamic-value');
+    expect(
+      evaluateAst(member(identifier('missingObj'), identifier('value'), { optional: true }), {
+        env,
+        context,
+      }),
+    ).toBeUndefined();
+    expect(() =>
+      evaluateAst(member(identifier('missingObj'), identifier('value')), { env, context }),
+    ).toThrow(/Cannot access member/);
 
-    expect(evaluateAst(call(member(identifier('obj'), identifier('method')), [literal('suffix')]), { env, context })).toBe('ctx:suffix');
-    expect(() => evaluateAst(call(member(identifier('obj'), identifier('value')), []), { env, context })).toThrow(/Call target is not a function/);
-    expect(evaluateAst(call(identifier('LAZY_CAPTURE'), [binary('+', literal(1), literal(2)), literal(7)]), { env, context })).toEqual([3, 7]);
-    expect(evaluateAst(call(identifier('APPLY2'), [arrow(['left', 'right'], binary('+', identifier('left'), identifier('right')))]), { env, context })).toBe(5);
+    expect(
+      evaluateAst(call(member(identifier('obj'), identifier('method')), [literal('suffix')]), {
+        env,
+        context,
+      }),
+    ).toBe('ctx:suffix');
+    expect(() =>
+      evaluateAst(call(member(identifier('obj'), identifier('value')), []), { env, context }),
+    ).toThrow(/Call target is not a function/);
+    expect(
+      evaluateAst(
+        call(identifier('LAZY_CAPTURE'), [binary('+', literal(1), literal(2)), literal(7)]),
+        { env, context },
+      ),
+    ).toEqual([3, 7]);
+    expect(
+      evaluateAst(
+        call(identifier('APPLY2'), [
+          arrow(['left', 'right'], binary('+', identifier('left'), identifier('right'))),
+        ]),
+        { env, context },
+      ),
+    ).toBe(5);
 
     expect(collector.recordPath).toHaveBeenCalledWith('plainValue');
     expect(collector.recordPath).toHaveBeenCalledWith('scopeBag.value');
@@ -224,17 +296,21 @@ describe('evaluateAst', () => {
     createFormulaCompiler();
     const reportError = vi.fn();
 
-    expect(() => evaluateAst(binary('//', literal(6), literal(3)), {
-      env,
-      context: createContext({}),
-      reportError
-    })).toThrow(/Unsupported binary operator/);
+    expect(() =>
+      evaluateAst(binary('//', literal(6), literal(3)), {
+        env,
+        context: createContext({}),
+        reportError,
+      }),
+    ).toThrow(/Unsupported binary operator/);
 
-    expect(() => evaluateAst(unary('typeof', literal(1)), {
-      env,
-      context: createContext({}),
-      reportError
-    })).toThrow(/Unsupported unary operator/);
+    expect(() =>
+      evaluateAst(unary('typeof', literal(1)), {
+        env,
+        context: createContext({}),
+        reportError,
+      }),
+    ).toThrow(/Unsupported unary operator/);
 
     expect(reportError).toHaveBeenCalledTimes(2);
   });

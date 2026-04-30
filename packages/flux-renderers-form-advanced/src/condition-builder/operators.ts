@@ -36,23 +36,76 @@ export function getBuiltInOperatorLabel(op: string): string | undefined {
 export const OPERATORS_BY_TYPE: Record<string, { defaultOp: string; operators: string[] }> = {
   text: {
     defaultOp: 'equal',
-    operators: ['equal', 'not_equal', 'is_empty', 'is_not_empty', 'like', 'not_like', 'starts_with', 'ends_with'],
+    operators: [
+      'equal',
+      'not_equal',
+      'is_empty',
+      'is_not_empty',
+      'like',
+      'not_like',
+      'starts_with',
+      'ends_with',
+    ],
   },
   number: {
     defaultOp: 'equal',
-    operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'between', 'not_between', 'is_empty', 'is_not_empty'],
+    operators: [
+      'equal',
+      'not_equal',
+      'less',
+      'less_or_equal',
+      'greater',
+      'greater_or_equal',
+      'between',
+      'not_between',
+      'is_empty',
+      'is_not_empty',
+    ],
   },
   date: {
     defaultOp: 'equal',
-    operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'between', 'not_between', 'is_empty', 'is_not_empty'],
+    operators: [
+      'equal',
+      'not_equal',
+      'less',
+      'less_or_equal',
+      'greater',
+      'greater_or_equal',
+      'between',
+      'not_between',
+      'is_empty',
+      'is_not_empty',
+    ],
   },
   time: {
     defaultOp: 'equal',
-    operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'between', 'not_between', 'is_empty', 'is_not_empty'],
+    operators: [
+      'equal',
+      'not_equal',
+      'less',
+      'less_or_equal',
+      'greater',
+      'greater_or_equal',
+      'between',
+      'not_between',
+      'is_empty',
+      'is_not_empty',
+    ],
   },
   datetime: {
     defaultOp: 'equal',
-    operators: ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'between', 'not_between', 'is_empty', 'is_not_empty'],
+    operators: [
+      'equal',
+      'not_equal',
+      'less',
+      'less_or_equal',
+      'greater',
+      'greater_or_equal',
+      'between',
+      'not_between',
+      'is_empty',
+      'is_not_empty',
+    ],
   },
   select: {
     defaultOp: 'select_equals',
@@ -95,7 +148,8 @@ export function resolveDefaultOp(
   schemaOverride: ConditionOperatorOverrides | undefined,
 ): string {
   if (fieldDefaultOp) return fieldDefaultOp;
-  if (schemaOverride?.defaultOpByType?.[fieldType]) return schemaOverride.defaultOpByType[fieldType];
+  if (schemaOverride?.defaultOpByType?.[fieldType])
+    return schemaOverride.defaultOpByType[fieldType];
   return OPERATORS_BY_TYPE[fieldType]?.defaultOp ?? 'equal';
 }
 

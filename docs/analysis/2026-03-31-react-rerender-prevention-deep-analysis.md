@@ -16,6 +16,7 @@ React 重渲染问题在低代码场景中被极度放大：
 ```
 
 三大根因：
+
 1. **父组件重渲染 → 所有子组件重渲染**（React 默认行为）
 2. **Context value 变化 → 所有 Consumer 重渲染**（即使只消费部分值）
 3. **新对象引用 → React.memo / useMemo 失效**（浅比较判定为变化）
@@ -37,6 +38,7 @@ const { meta, resolvedProps } = isStatic
 ```
 
 **分析**:
+
 - ✅ 静态节点（无表达式/模板）完全不建立外部订阅
 - ✅ 静态节点渲染结果确定（props 值不变）
 - ⚠️ 静态节点仍会被父组件重渲染波及（React 默认传播）
@@ -50,20 +52,25 @@ const { meta, resolvedProps } = isStatic
 
 ```tsx
 useSyncExternalStoreWithSelector(
-  subscribe,                              // Zustand store.subscribe
-  () => props.scope.readOwn(),            // getSnapshot
-  () => props.scope.readOwn(),            // getServerSnapshot
-  () => ({                                // selector
+  subscribe, // Zustand store.subscribe
+  () => props.scope.readOwn(), // getSnapshot
+  () => props.scope.readOwn(), // getServerSnapshot
+  () => ({
+    // selector
     meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
-    resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
+    resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState),
   }),
-  (prev, next) =>                         // equalityFn
-    prev.meta === next.meta &&            // ← 引用相等
-    prev.resolvedProps === next.resolvedProps
+  (
+    prev,
+    next, // equalityFn
+  ) =>
+    prev.meta === next.meta && // ← 引用相等
+    prev.resolvedProps === next.resolvedProps,
 );
 ```
 
 **工作流程**:
+
 ```
 1. Zustand store 变化 → 通知所有 subscriber
 2. React 调用 getSnapshot() → 获取 scope.readOwn() 快照
@@ -103,6 +110,7 @@ function resolveNodeMeta(node, scope, state): ResolvedNodeMeta {
 ```
 
 **分析**:
+
 - ✅ 每次计算后缓存到 `state.resolvedMeta`
 - ✅ 下次计算后用 `shallowEqual` 比较
 - ✅ 如果所有字段值相同，返回缓存的引用
@@ -129,13 +137,16 @@ function resolveNodeProps(node, scope, state): ResolvedNodeProps {
 
   // 动态节点: 使用状态追踪
   const execution = input.expressionCompiler.evaluateWithState(
-    node.props, scope, input.env, state?.props ?? node.props.createState()
+    node.props,
+    scope,
+    input.env,
+    state?.props ?? node.props.createState(),
   );
 
   if (state) {
     state.resolvedProps = execution.value;
   }
-  return execution;  // { value, changed, reusedReference }
+  return execution; // { value, changed, reusedReference }
 }
 ```
 
@@ -152,6 +163,7 @@ CompiledRuntimeValue.exec(context, env, state)
 ```
 
 **分析**:
+
 - ✅ 静态 props 完全缓存（零成本）
 - ✅ 动态 props 通过 `RuntimeValueState` 追踪上次结果
 - ✅ 值树级别的引用复用（不仅仅是顶层）
@@ -166,16 +178,17 @@ CompiledRuntimeValue.exec(context, env, state)
 **源码**: `contexts.ts`
 
 ```typescript
-export const RuntimeContext = createContext<RendererRuntime | null>(null);     // 稳定
-export const ScopeContext = createContext<ScopeRef | null>(null);             // 每节点
-export const ActionScopeContext = createContext<ActionScope | undefined>();   // 中等
+export const RuntimeContext = createContext<RendererRuntime | null>(null); // 稳定
+export const ScopeContext = createContext<ScopeRef | null>(null); // 每节点
+export const ActionScopeContext = createContext<ActionScope | undefined>(); // 中等
 export const ComponentRegistryContext = createContext<ComponentHandleRegistry | undefined>();
-export const FormContext = createContext<FormRuntime | undefined>();           // 表单级
-export const PageContext = createContext<PageRuntime | undefined>();           // 页面级
-export const NodeMetaContext = createContext<RenderNodeMeta | null>(null);    // 每节点
+export const FormContext = createContext<FormRuntime | undefined>(); // 表单级
+export const PageContext = createContext<PageRuntime | undefined>(); // 页面级
+export const NodeMetaContext = createContext<RenderNodeMeta | null>(null); // 每节点
 ```
 
 **分析**:
+
 - ✅ 7 个独立 Context，按变化频率拆分
 - ✅ `RuntimeContext` 几乎不变 → 不会触发重渲染
 - ✅ `FormContext` 只在表单创建/销毁时变化 → 不影响非表单组件
@@ -194,6 +207,7 @@ const regions = useMemo(() => Object.fromEntries(...), [props.node.regions]);
 ```
 
 **分析**:
+
 - ✅ `helpers` 依赖项大部分引用稳定（runtime 是单例，scope 由 useRef 管理）
 - ✅ `events` 依赖 `eventKeys`（readonly 数组，编译后不变）
 - ✅ `regions` 依赖 `props.node.regions`（编译后不变）
@@ -241,14 +255,15 @@ Step 7: 对于修改的字段 (username):
 
 ### 3.3 性能开销分析
 
-| 组件 | selector 执行 | 重渲染 | DOM 更新 |
-|------|-------------|--------|---------|
+| 组件               | selector 执行            | 重渲染      | DOM 更新  |
+| ------------------ | ------------------------ | ----------- | --------- |
 | 未修改字段 (49 个) | ✅ 执行 (浅比较缓存命中) | ❌ 不重渲染 | ❌ 不更新 |
-| 修改字段 (1 个) | ✅ 执行 | ✅ 重渲染 | ✅ 更新 |
+| 修改字段 (1 个)    | ✅ 执行                  | ✅ 重渲染   | ✅ 更新   |
 
 **关键结论**: 50 个组件都执行了 selector 函数，但只有 1 个组件重渲染。
 
 **selector 执行的成本**:
+
 - `resolveNodeMeta`: 创建新对象 + shallowEqual 比较 (~10 个字段)
 - `resolveNodeProps`: 遍历值树 + 引用比较
 - 总成本: 微秒级别，远低于 React 组件渲染（毫秒级别）
@@ -261,14 +276,14 @@ Step 7: 对于修改的字段 (username):
 
 ```typescript
 export function setIn(input, path, value) {
-  const segments = parsePath(path);       // ['username']
-  const clone = { ...input };             // 浅克隆顶层
+  const segments = parsePath(path); // ['username']
+  const clone = { ...input }; // 浅克隆顶层
   let cursor = clone;
 
   for (let index = 0; index < segments.length; index++) {
     const segment = segments[index];
     // ... 逐层克隆路径上的对象
-    cursor[segment] = value;              // 设置新值
+    cursor[segment] = value; // 设置新值
   }
   return clone;
 }
@@ -287,6 +302,7 @@ export function setIn(input, path, value) {
 ```
 
 **对 selector 的影响**:
+
 - `scope.readOwn()` 返回新对象引用 → 触发 selector 执行
 - 但对象内部未修改的字段引用不变 → `resolveNodeMeta` 中 `evaluateCompiledValue` 对静态 meta 字段直接返回原始值
 - `shallowEqual` 比较时，未变化的字段值相同 → 返回缓存引用
@@ -299,28 +315,28 @@ export function setIn(input, path, value) {
 
 ### 5.1 低风险（设计正确）
 
-| 风险点 | 实际评估 | 原因 |
-|--------|---------|------|
-| Context 变化传播 | ✅ 低风险 | 7 个 Context 按变化频率拆分，稳定引用 |
-| helpers 重建 | ✅ 低风险 | 依赖项引用稳定，useMemo 缓存有效 |
-| events/regions 重建 | ✅ 低风险 | 依赖编译后不变的数据 |
-| 静态 props 缓存 | ✅ 无风险 | 直接返回缓存引用 |
+| 风险点              | 实际评估  | 原因                                  |
+| ------------------- | --------- | ------------------------------------- |
+| Context 变化传播    | ✅ 低风险 | 7 个 Context 按变化频率拆分，稳定引用 |
+| helpers 重建        | ✅ 低风险 | 依赖项引用稳定，useMemo 缓存有效      |
+| events/regions 重建 | ✅ 低风险 | 依赖编译后不变的数据                  |
+| 静态 props 缓存     | ✅ 无风险 | 直接返回缓存引用                      |
 
 ### 5.2 中风险（有优化空间）
 
-| 风险点 | 实际评估 | 原因 |
-|--------|---------|------|
-| selector 全量执行 | ⚠️ 中风险 | 所有 subscriber 都执行 selector，即使只关心部分字段 |
-| resolveNodeMeta 对象创建 | ⚠️ 中风险 | 每次调用都创建新对象，shallowEqual 才能命中缓存 |
-| 深层嵌套 scope | ⚠️ 中风险 | 嵌套作用域链查找成本随深度增加 |
+| 风险点                   | 实际评估  | 原因                                                |
+| ------------------------ | --------- | --------------------------------------------------- |
+| selector 全量执行        | ⚠️ 中风险 | 所有 subscriber 都执行 selector，即使只关心部分字段 |
+| resolveNodeMeta 对象创建 | ⚠️ 中风险 | 每次调用都创建新对象，shallowEqual 才能命中缓存     |
+| 深层嵌套 scope           | ⚠️ 中风险 | 嵌套作用域链查找成本随深度增加                      |
 
 ### 5.3 高风险（需要关注）
 
-| 风险点 | 实际评估 | 原因 |
-|--------|---------|------|
-| 大表单 selector 总开销 | 🔴 需关注 | 100 字段 × 每次修改都执行 100 次 selector |
-| 表达式复杂度 | 🔴 需关注 | 复杂表达式求值成本高，每次 selector 都执行 |
-| 列表/表格渲染 | 🔴 需关注 | 1000 行 × 每行一个 NodeRenderer = 1000 次 selector |
+| 风险点                 | 实际评估  | 原因                                               |
+| ---------------------- | --------- | -------------------------------------------------- |
+| 大表单 selector 总开销 | 🔴 需关注 | 100 字段 × 每次修改都执行 100 次 selector          |
+| 表达式复杂度           | 🔴 需关注 | 复杂表达式求值成本高，每次 selector 都执行         |
+| 列表/表格渲染          | 🔴 需关注 | 1000 行 × 每行一个 NodeRenderer = 1000 次 selector |
 
 ---
 
@@ -328,12 +344,12 @@ export function setIn(input, path, value) {
 
 ### 6.1 当前方案 vs React 19 新特性
 
-| 特性 | 当前实现 | React 19 替代方案 | 评估 |
-|------|---------|------------------|------|
-| 外部状态订阅 | useSyncExternalStoreWithSelector | use (hook) | 当前方案更适合 Zustand |
-| 表单乐观更新 | 无 | useOptimistic | 可提升 UX |
-| 提交状态管理 | FormRuntime.submitting | useActionState | 可简化代码 |
-| 更新优先级 | 同步 | useTransition | 可优化大表单体验 |
+| 特性         | 当前实现                         | React 19 替代方案 | 评估                   |
+| ------------ | -------------------------------- | ----------------- | ---------------------- |
+| 外部状态订阅 | useSyncExternalStoreWithSelector | use (hook)        | 当前方案更适合 Zustand |
+| 表单乐观更新 | 无                               | useOptimistic     | 可提升 UX              |
+| 提交状态管理 | FormRuntime.submitting           | useActionState    | 可简化代码             |
+| 更新优先级   | 同步                             | useTransition     | 可优化大表单体验       |
 
 ### 6.2 为什么当前方案适合 Flux
 
@@ -353,13 +369,13 @@ export function setIn(input, path, value) {
 
 **答案: 基本能解决，但有边界条件。**
 
-| 场景 | 能否解决 | 说明 |
-|------|---------|------|
-| 小表单 (10-20 字段) | ✅ 完全解决 | selector 开销可忽略，只有修改的字段重渲染 |
-| 中表单 (20-50 字段) | ✅ 基本解决 | selector 总开销 < 1ms，用户体验无感知 |
+| 场景                 | 能否解决    | 说明                                        |
+| -------------------- | ----------- | ------------------------------------------- |
+| 小表单 (10-20 字段)  | ✅ 完全解决 | selector 开销可忽略，只有修改的字段重渲染   |
+| 中表单 (20-50 字段)  | ✅ 基本解决 | selector 总开销 < 1ms，用户体验无感知       |
 | 大表单 (50-100 字段) | ⚠️ 部分解决 | selector 总开销 1-5ms，快速连续输入可能感知 |
-| 超大表单 (100+ 字段) | 🔴 需要优化 | selector 总开销 5-20ms，需要字段级订阅 |
-| 表格 (1000 行) | 🔴 需要优化 | 1000 次 selector 执行 + 需要虚拟滚动 |
+| 超大表单 (100+ 字段) | 🔴 需要优化 | selector 总开销 5-20ms，需要字段级订阅      |
+| 表格 (1000 行)       | 🔴 需要优化 | 1000 次 selector 执行 + 需要虚拟滚动        |
 
 ### 7.2 设计亮点
 
@@ -371,13 +387,13 @@ export function setIn(input, path, value) {
 
 ### 7.3 优化建议（按优先级）
 
-| 优先级 | 优化项 | 预期收益 | 工作量 |
-|--------|--------|---------|--------|
-| P0 | 虚拟滚动 (table/list) | 解决 1000+ 行渲染 | 3-5 天 |
-| P1 | 字段级订阅 (useScopeFieldSelector) | 大表单 selector 开销降低 90% | 2-3 天 |
-| P1 | resolveNodeMeta 对象池 | 避免每次创建新对象 | 1-2 天 |
-| P2 | 表达式求值缓存 | 复杂表达式减少重复计算 | 1-2 天 |
-| P2 | React 19 useTransition | 大表单输入流畅度提升 | 0.5 天 |
+| 优先级 | 优化项                             | 预期收益                     | 工作量 |
+| ------ | ---------------------------------- | ---------------------------- | ------ |
+| P0     | 虚拟滚动 (table/list)              | 解决 1000+ 行渲染            | 3-5 天 |
+| P1     | 字段级订阅 (useScopeFieldSelector) | 大表单 selector 开销降低 90% | 2-3 天 |
+| P1     | resolveNodeMeta 对象池             | 避免每次创建新对象           | 1-2 天 |
+| P2     | 表达式求值缓存                     | 复杂表达式减少重复计算       | 1-2 天 |
+| P2     | React 19 useTransition             | 大表单输入流畅度提升         | 0.5 天 |
 
 ### 7.4 字段级订阅方案（P1 优化）
 
@@ -385,19 +401,20 @@ export function setIn(input, path, value) {
 
 ```typescript
 // 当前: 订阅整个 scope
-useScopeSelector(scope => scope.readOwn())  // 任何字段变化都触发
+useScopeSelector((scope) => scope.readOwn()); // 任何字段变化都触发
 
 // 优化: 订阅特定字段
-useScopeFieldSelector('username')  // 只有 username 变化才触发
-useScopeFieldSelector('profile.email')  // 只有嵌套字段变化才触发
+useScopeFieldSelector('username'); // 只有 username 变化才触发
+useScopeFieldSelector('profile.email'); // 只有嵌套字段变化才触发
 ```
 
 **实现思路**:
+
 ```typescript
 function useScopeFieldSelector<T>(
   path: string,
   selector: (value: unknown) => T,
-  equalityFn: (a: T, b: T) => boolean = Object.is
+  equalityFn: (a: T, b: T) => boolean = Object.is,
 ): T {
   const scope = useRenderScope();
   const subscribe = useCallback(
@@ -412,7 +429,7 @@ function useScopeFieldSelector<T>(
         }
       });
     },
-    [scope, path, selector, equalityFn]
+    [scope, path, selector, equalityFn],
   );
   // ... useSyncExternalStoreWithSelector
 }
@@ -424,12 +441,12 @@ function useScopeFieldSelector<T>(
 
 ## 八、总结评分
 
-| 维度 | 评分 (1-5) | 说明 |
-|------|-----------|------|
-| 防重渲染设计 | ⭐⭐⭐⭐ | useSyncExternalStoreWithSelector + 引用复用 + Context 拆分，设计正确 |
-| 实际效果 (小表单) | ⭐⭐⭐⭐⭐ | 只有修改的字段重渲染，selector 开销可忽略 |
-| 实际效果 (大表单) | ⭐⭐⭐ | selector 全量执行成为瓶颈，需要字段级订阅优化 |
-| 实际效果 (表格) | ⭐⭐ | 缺少虚拟滚动，1000 行场景需要优化 |
-| 与 React 19 兼容 | ⭐⭐⭐⭐ | 当前方案正确，可渐进引入 useOptimistic/useTransition |
+| 维度              | 评分 (1-5) | 说明                                                                 |
+| ----------------- | ---------- | -------------------------------------------------------------------- |
+| 防重渲染设计      | ⭐⭐⭐⭐   | useSyncExternalStoreWithSelector + 引用复用 + Context 拆分，设计正确 |
+| 实际效果 (小表单) | ⭐⭐⭐⭐⭐ | 只有修改的字段重渲染，selector 开销可忽略                            |
+| 实际效果 (大表单) | ⭐⭐⭐     | selector 全量执行成为瓶颈，需要字段级订阅优化                        |
+| 实际效果 (表格)   | ⭐⭐       | 缺少虚拟滚动，1000 行场景需要优化                                    |
+| 与 React 19 兼容  | ⭐⭐⭐⭐   | 当前方案正确，可渐进引入 useOptimistic/useTransition                 |
 
 **总评**: 当前设计在小到中等规模场景下能有效防止不必要的重渲染。核心机制（selector + equalityFn + 引用复用）是正确的 React 性能优化模式。主要瓶颈在于 selector 全量执行，这在大表单和大数据量场景下会成为问题。建议优先引入虚拟滚动和字段级订阅。

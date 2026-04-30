@@ -9,7 +9,7 @@ import {
   type SchemaValue,
   type ScopeDependencySet,
   type ScopeRef,
-  type StaticRuntimeValue
+  type StaticRuntimeValue,
 } from '@nop-chaos/flux-core';
 import { collectRuntimeDependencies } from '../node-runtime';
 
@@ -102,9 +102,9 @@ export function applyResultMapping(input: {
     {
       payload: input.payload,
       result: input.payload,
-      response: input.payload
+      response: input.payload,
     },
-    { source: 'custom', pathSuffix: 'data-source-result-mapping' }
+    { source: 'custom', pathSuffix: 'data-source-result-mapping' },
   );
 
   if (input.compiledResultMapping.isStatic) {
@@ -114,7 +114,7 @@ export function applyResultMapping(input: {
   return input.runtime.expressionCompiler.evaluateValue(
     input.compiledResultMapping,
     mappingScope,
-    input.runtime.env
+    input.runtime.env,
   );
 }
 
@@ -135,8 +135,8 @@ export function writeDataToScope(input: {
         currentValue,
         nextValue: data,
         mergeStrategy,
-        mergeKey
-      })
+        mergeKey,
+      }),
     );
   }
 
@@ -159,17 +159,22 @@ export function trackApiRequestDependencies(input: {
   if (compiled.isStatic) {
     return {
       resolvedApi: (compiled as StaticRuntimeValue<ApiSchema>).value,
-      dependencies: undefined
+      dependencies: undefined,
     };
   }
 
   const dynamicCompiled = compiled as DynamicRuntimeValue<ApiSchema>;
   const runtimeState = input.state ?? dynamicCompiled.createState();
-  const result = input.runtime.expressionCompiler.evaluateWithState(dynamicCompiled, input.scope, input.runtime.env, runtimeState);
+  const result = input.runtime.expressionCompiler.evaluateWithState(
+    dynamicCompiled,
+    input.scope,
+    input.runtime.env,
+    runtimeState,
+  );
 
   return {
     resolvedApi: result.value,
-    dependencies: collectRuntimeDependencies(runtimeState)
+    dependencies: collectRuntimeDependencies(runtimeState),
   };
 }
 
@@ -183,7 +188,7 @@ export interface ApiConfigRuntimeState {
 
 export function createApiConfigRuntimeState(
   compiledApi: CompiledApiConfig,
-  _runtime: RendererRuntime
+  _runtime: RendererRuntime,
 ): ApiConfigRuntimeState {
   const state: ApiConfigRuntimeState = {};
 
@@ -200,7 +205,9 @@ export function createApiConfigRuntimeState(
     state.params = (compiledApi.params as DynamicRuntimeValue<unknown>).createState();
   }
   if (compiledApi.headers && !compiledApi.headers.isStatic) {
-    state.headers = (compiledApi.headers as DynamicRuntimeValue<Record<string, string>>).createState();
+    state.headers = (
+      compiledApi.headers as DynamicRuntimeValue<Record<string, string>>
+    ).createState();
   }
 
   return state;
@@ -210,7 +217,7 @@ function evaluateCompiledValue<T>(
   compiled: CompiledRuntimeValue<T> | undefined,
   scope: ScopeRef,
   runtime: RendererRuntime,
-  state?: RuntimeValueState<T>
+  state?: RuntimeValueState<T>,
 ): T | undefined {
   if (!compiled) return undefined;
   if (compiled.isStatic) return compiled.value;
@@ -220,7 +227,7 @@ function evaluateCompiledValue<T>(
       compiled as DynamicRuntimeValue<T>,
       scope,
       runtime.env,
-      state
+      state,
     ).value;
   }
 
@@ -241,8 +248,12 @@ export function evaluateCompiledApiConfig(input: {
   const resolvedApi: ApiSchema = {
     url: evaluateCompiledValue(compiledApi.url, scope, runtime, state?.url) ?? '',
     method: evaluateCompiledValue(compiledApi.method, scope, runtime, state?.method),
-    data: evaluateCompiledValue(compiledApi.data, scope, runtime, state?.data) as SchemaValue | undefined,
-    params: evaluateCompiledValue(compiledApi.params, scope, runtime, state?.params) as SchemaValue | undefined,
+    data: evaluateCompiledValue(compiledApi.data, scope, runtime, state?.data) as
+      | SchemaValue
+      | undefined,
+    params: evaluateCompiledValue(compiledApi.params, scope, runtime, state?.params) as
+      | SchemaValue
+      | undefined,
     headers: evaluateCompiledValue(compiledApi.headers, scope, runtime, state?.headers),
     includeScope: compiledApi.includeScope as '*' | string[] | undefined,
     responseAdaptor: compiledApi.responseAdaptor,
@@ -253,8 +264,12 @@ export function evaluateCompiledApiConfig(input: {
     return { resolvedApi, dependencies: undefined };
   }
 
-  const allStates = [state.url, state.method, state.data, state.params, state.headers].filter(Boolean) as RuntimeValueState<unknown>[];
-  const allDependencies = allStates.map(s => collectRuntimeDependencies(s)).filter(Boolean) as ScopeDependencySet[];
+  const allStates = [state.url, state.method, state.data, state.params, state.headers].filter(
+    Boolean,
+  ) as RuntimeValueState<unknown>[];
+  const allDependencies = allStates
+    .map((s) => collectRuntimeDependencies(s))
+    .filter(Boolean) as ScopeDependencySet[];
 
   if (allDependencies.length === 0) {
     return { resolvedApi, dependencies: undefined };
@@ -278,8 +293,9 @@ export function evaluateCompiledApiConfig(input: {
 
   return {
     resolvedApi,
-    dependencies: mergedPaths.length > 0 || hasWildcard || hasBroadAccess
-      ? { paths: mergedPaths, wildcard: hasWildcard, broadAccess: hasBroadAccess }
-      : undefined
+    dependencies:
+      mergedPaths.length > 0 || hasWildcard || hasBroadAccess
+        ? { paths: mergedPaths, wildcard: hasWildcard, broadAccess: hasBroadAccess }
+        : undefined,
   };
 }

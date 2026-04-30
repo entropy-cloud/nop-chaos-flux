@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AsyncOwnerDebugSnapshot } from '@nop-chaos/flux-core';
-import { createAutomationApi, getNopDebuggerAutomationApi, installNopDebuggerWindowFlag, registerAutomationApi } from './automation';
+import {
+  createAutomationApi,
+  getNopDebuggerAutomationApi,
+  installNopDebuggerWindowFlag,
+  registerAutomationApi,
+} from './automation';
 import type {
   NopDebugEvent,
   NopDebuggerFilterKind,
@@ -13,7 +18,7 @@ import type {
   NopDebuggerSessionExport,
   NopInteractionTrace,
   NopNodeDiagnostics,
-  NopNodeValueExplanation
+  NopNodeValueExplanation,
 } from './types';
 
 const windowStub = {} as Window & typeof globalThis;
@@ -28,7 +33,7 @@ function createValueExplanation(): NopNodeValueExplanation {
     evidenceRefs: [],
     related: { cid: 1 },
     truncated: false,
-    data: { field: 'value', valueSource: 'unknown' }
+    data: { field: 'value', valueSource: 'unknown' },
   };
 }
 
@@ -42,7 +47,7 @@ function createMetaExplanation(): NopNodeMetaExplanation {
     evidenceRefs: [],
     related: { cid: 1 },
     truncated: false,
-    data: { field: 'visible', source: 'unknown', dependencyPaths: [] }
+    data: { field: 'visible', source: 'unknown', dependencyPaths: [] },
   };
 }
 
@@ -56,7 +61,7 @@ function createFailureExplanation(): NopNodeFailureExplanation {
     evidenceRefs: [],
     related: { cid: 1 },
     truncated: false,
-    data: { failureType: 'unknown', hints: [], relatedEventIds: [] }
+    data: { failureType: 'unknown', hints: [], relatedEventIds: [] },
   };
 }
 
@@ -70,13 +75,13 @@ function createAsyncExplanation(): NopNodeAsyncExplanation {
     evidenceRefs: [],
     related: { cid: 1, ownerIds: [] },
     truncated: false,
-    data: { ownerCount: 0, owners: [] }
+    data: { ownerCount: 0, owners: [] },
   };
 }
 
 Object.defineProperty(globalThis, 'window', {
   value: windowStub,
-  configurable: true
+  configurable: true,
 });
 
 describe('debugger automation helpers', () => {
@@ -97,7 +102,7 @@ describe('debugger automation helpers', () => {
       position: { x: 1, y: 2 },
       events: [],
       filters,
-      pinnedErrors: { earliest: [], latest: [] }
+      pinnedErrors: { earliest: [], latest: [] },
     };
     const overview: NopDebuggerOverview = {
       errorCount: 0,
@@ -108,20 +113,21 @@ describe('debugger automation helpers', () => {
         api: 0,
         compile: 0,
         notify: 0,
-        error: 0, node: 0
-      }
+        error: 0,
+        node: 0,
+      },
     };
     const diagnostics: NopNodeDiagnostics = {
       rendererTypes: [],
       totalEvents: 0,
       countsByGroup: {},
       countsByKind: {},
-      recentEvents: []
+      recentEvents: [],
     };
     const trace: NopInteractionTrace = {
       query: {},
       resolvedQuery: {
-        mode: 'exact'
+        mode: 'exact',
       },
       totalEvents: 0,
       matchedEvents: [],
@@ -131,7 +137,7 @@ describe('debugger automation helpers', () => {
       interactionIds: [],
       actionTypes: [],
       nodeIds: [],
-      paths: []
+      paths: [],
     };
     const report: NopDiagnosticReport = {
       controllerId: 'controller-a',
@@ -142,11 +148,11 @@ describe('debugger automation helpers', () => {
         panelOpen: true,
         paused: false,
         activeTab: 'timeline',
-        filters
+        filters,
       },
       overview,
       recentEvents: [],
-      pinnedErrors: { earliest: [], latest: [] }
+      pinnedErrors: { earliest: [], latest: [] },
     };
     const exportPayload: NopDebuggerSessionExport = {
       controllerId: 'controller-a',
@@ -155,7 +161,7 @@ describe('debugger automation helpers', () => {
       snapshot,
       overview,
       events: [],
-      pinnedErrors: { earliest: [], latest: [] }
+      pinnedErrors: { earliest: [], latest: [] },
     };
     const waitedEvent: NopDebugEvent = {
       id: 1,
@@ -165,7 +171,7 @@ describe('debugger automation helpers', () => {
       group: 'notify',
       level: 'info',
       source: 'test',
-      summary: 'done'
+      summary: 'done',
     };
 
     const getSnapshot = vi.fn(() => snapshot);
@@ -242,7 +248,7 @@ describe('debugger automation helpers', () => {
       explainNodeValue,
       explainNodeMeta,
       explainNodeFailure,
-      explainNodeAsync
+      explainNodeAsync,
     });
 
     expect(automation.controllerId).toBe('controller-a');
@@ -250,7 +256,9 @@ describe('debugger automation helpers', () => {
     expect(automation.getSnapshot()).toMatchObject({ enabled: true });
     expect(automation.getAsyncOwnerDebugSnapshot()).toBe(asyncOwnerSnapshot);
     expect(automation.explainNodeValue({ cid: 1 })).toMatchObject({ kind: 'value' });
-    expect(automation.explainNodeMeta({ cid: 1, field: 'visible' })).toMatchObject({ kind: 'meta' });
+    expect(automation.explainNodeMeta({ cid: 1, field: 'visible' })).toMatchObject({
+      kind: 'meta',
+    });
     expect(automation.explainNodeFailure()).toMatchObject({ kind: 'failure' });
     expect(automation.explainNodeAsync()).toMatchObject({ kind: 'async' });
     automation.clear();
@@ -284,24 +292,24 @@ describe('debugger automation helpers', () => {
       position: { x: 0, y: 0 },
       events: [],
       filters,
-      pinnedErrors: { earliest: [], latest: [] }
+      pinnedErrors: { earliest: [], latest: [] },
     };
     const overview: NopDebuggerOverview = {
       errorCount: 0,
       totalEvents: 0,
-      countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 }
+      countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 },
     };
     const diagnostics: NopNodeDiagnostics = {
       rendererTypes: [],
       totalEvents: 0,
       countsByGroup: {},
       countsByKind: {},
-      recentEvents: []
+      recentEvents: [],
     };
     const trace: NopInteractionTrace = {
       query: {},
       resolvedQuery: {
-        mode: 'exact'
+        mode: 'exact',
       },
       totalEvents: 0,
       matchedEvents: [],
@@ -311,7 +319,7 @@ describe('debugger automation helpers', () => {
       interactionIds: [],
       actionTypes: [],
       nodeIds: [],
-      paths: []
+      paths: [],
     };
     const report: NopDiagnosticReport = {
       controllerId: 'a',
@@ -320,7 +328,7 @@ describe('debugger automation helpers', () => {
       snapshot: { enabled: true, panelOpen: false, paused: false, activeTab: 'timeline', filters },
       overview,
       recentEvents: [],
-      pinnedErrors: { earliest: [], latest: [] }
+      pinnedErrors: { earliest: [], latest: [] },
     };
     const exportPayload: NopDebuggerSessionExport = {
       controllerId: 'a',
@@ -329,7 +337,7 @@ describe('debugger automation helpers', () => {
       snapshot,
       overview,
       events: [],
-      pinnedErrors: { earliest: [], latest: [] }
+      pinnedErrors: { earliest: [], latest: [] },
     };
     const waitedEvent: NopDebugEvent = {
       id: 1,
@@ -339,7 +347,7 @@ describe('debugger automation helpers', () => {
       group: 'notify',
       level: 'info',
       source: 'test',
-      summary: 'x'
+      summary: 'x',
     };
 
     const automationA = createAutomationApi({
@@ -380,18 +388,26 @@ describe('debugger automation helpers', () => {
       explainNodeValue: vi.fn(() => createValueExplanation()),
       explainNodeMeta: vi.fn(() => createMetaExplanation()),
       explainNodeFailure: vi.fn(() => createFailureExplanation()),
-      explainNodeAsync: vi.fn(() => createAsyncExplanation())
+      explainNodeAsync: vi.fn(() => createAsyncExplanation()),
     });
     const automationB = { ...automationA, controllerId: 'b', sessionId: 's-b' };
 
     registerAutomationApi('a', automationA);
     registerAutomationApi('b', automationB);
-    installNopDebuggerWindowFlag({ config: { enabled: true, defaultOpen: true, defaultTab: 'network' } });
+    installNopDebuggerWindowFlag({
+      config: { enabled: true, defaultOpen: true, defaultTab: 'network' },
+    });
 
-    expect(window.__NOP_DEBUGGER__).toMatchObject({ enabled: true, defaultOpen: true, defaultTab: 'network' });
+    expect(window.__NOP_DEBUGGER__).toMatchObject({
+      enabled: true,
+      defaultOpen: true,
+      defaultTab: 'network',
+    });
     expect(getNopDebuggerAutomationApi()).toBe(automationB);
     expect(getNopDebuggerAutomationApi('a')).toBe(automationA);
-    expect(window.__NOP_DEBUGGER_HUB__?.listControllers()).toEqual(expect.arrayContaining(['a', 'b']));
+    expect(window.__NOP_DEBUGGER_HUB__?.listControllers()).toEqual(
+      expect.arrayContaining(['a', 'b']),
+    );
     expect(window.__NOP_DEBUGGER_HUB__?.activeControllerId).toBe('b');
   });
 });

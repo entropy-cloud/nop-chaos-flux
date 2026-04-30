@@ -2,25 +2,27 @@ import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Checkbox, Input, Label, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
-import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-react';
 import {
-  formLabelFieldRule,
-  useFormFieldController
-} from '@nop-chaos/flux-renderers-form';
+  Button,
+  Checkbox,
+  Input,
+  Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  cn,
+} from '@nop-chaos/ui';
+import { ChevronRightIcon, ChevronsUpDownIcon, SearchIcon, XIcon } from 'lucide-react';
+import { formLabelFieldRule, useFormFieldController } from '@nop-chaos/flux-renderers-form';
 import { createFieldValidation } from '@nop-chaos/flux-renderers-form';
 import type { InputTreeSchema, TreeSelectSchema } from '@nop-chaos/flux-renderers-form';
-import {
-  buildTreeOptionMetaList,
-  getTreeOptionConfig,
-  type TreeOptionMeta
-} from './tree-options';
+import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options';
 import {
   getSourceErrorMessage,
   isMultipleMode,
   useTreeOptionListController,
   useTreeOptionNodeController,
-  useTreeSelectController
+  useTreeSelectController,
 } from './tree-control-controllers';
 
 function TreeOptionNode(props: {
@@ -31,14 +33,8 @@ function TreeOptionNode(props: {
   disabled: boolean;
   onChange: (value: unknown) => void;
 }) {
-  const {
-    expanded,
-    checked,
-    hasChildren,
-    handleSelect,
-    handleKeyDown,
-    handleChevronClick
-  } = useTreeOptionNodeController(props);
+  const { expanded, checked, hasChildren, handleSelect, handleKeyDown, handleChevronClick } =
+    useTreeOptionNodeController(props);
 
   return (
     <div data-slot="tree-option-node" data-depth={props.option.depth}>
@@ -46,7 +42,7 @@ function TreeOptionNode(props: {
         className={cn(
           'flex w-full items-center rounded-md py-1.5 pr-2 text-sm',
           props.disabled ? 'opacity-50' : 'cursor-pointer',
-          checked ? 'bg-muted' : 'hover:bg-muted'
+          checked ? 'bg-muted' : 'hover:bg-muted',
         )}
         style={{ paddingInlineStart: `${props.option.depth * 16 + 8}px` }}
         role="treeitem"
@@ -59,14 +55,16 @@ function TreeOptionNode(props: {
           className={cn(
             'inline-flex size-5 shrink-0 items-center justify-center rounded-sm',
             hasChildren ? 'cursor-pointer hover:bg-accent' : '',
-            !hasChildren ? 'invisible' : ''
+            !hasChildren ? 'invisible' : '',
           )}
           aria-label={hasChildren ? (expanded ? 'Collapse node' : 'Expand node') : undefined}
           role={hasChildren ? 'button' : undefined}
           tabIndex={hasChildren ? 0 : undefined}
           onClick={handleChevronClick}
         >
-          <ChevronRightIcon className={cn('size-3.5 transition-transform', expanded ? 'rotate-90' : '')} />
+          <ChevronRightIcon
+            className={cn('size-3.5 transition-transform', expanded ? 'rotate-90' : '')}
+          />
         </span>
         {props.multiple ? (
           <Checkbox
@@ -75,7 +73,9 @@ function TreeOptionNode(props: {
             className="pointer-events-none ml-1.5 mr-1.5 shrink-0"
           />
         ) : null}
-        <span className="min-w-0 truncate pl-1">{props.showPathLabel ? props.option.pathLabel : props.option.label}</span>
+        <span className="min-w-0 truncate pl-1">
+          {props.showPathLabel ? props.option.pathLabel : props.option.label}
+        </span>
       </div>
       {hasChildren && expanded
         ? props.option.children.map((child) => (
@@ -105,7 +105,7 @@ function TreeOptionList(props: {
 }) {
   const { query, setQuery, filteredOptions } = useTreeOptionListController({
     options: props.options,
-    searchable: props.searchable
+    searchable: props.searchable,
   });
 
   return (
@@ -142,11 +142,14 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required)
+    required: Boolean(props.props.required),
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
-  const options = buildTreeOptionMetaList(props.props.options, getTreeOptionConfig(props.props as InputTreeSchema));
+  const options = buildTreeOptionMetaList(
+    props.props.options,
+    getTreeOptionConfig(props.props as InputTreeSchema),
+  );
   const sourceError = getSourceErrorMessage(optionsSourceState);
 
   return (
@@ -175,7 +178,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const name = String(props.props.name ?? '');
   const { value, handlers, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required)
+    required: Boolean(props.props.required),
   });
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
@@ -186,7 +189,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     treeConfig,
     value,
     multiple,
-    placeholder: props.props.placeholder
+    placeholder: props.props.placeholder,
   });
   const sourceError = getSourceErrorMessage(optionsSourceState);
 
@@ -202,7 +205,10 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
                 aria-label={String(props.props.label ?? name)}
                 disabled={presentation.effectiveDisabled || optionsSourceState?.loading === true}
               >
-                <span data-slot="tree-select-value" className={cn(triggerText ? undefined : 'text-muted-foreground')}>
+                <span
+                  data-slot="tree-select-value"
+                  className={cn(triggerText ? undefined : 'text-muted-foreground')}
+                >
                   {triggerText || triggerLabel}
                 </span>
                 <span data-slot="tree-select-icons">
@@ -252,16 +258,22 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
 export const treeControlRendererDefinitions: RendererDefinition[] = [
   {
     type: 'input-tree',
-    fields: [formLabelFieldRule, { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' }],
+    fields: [
+      formLabelFieldRule,
+      { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+    ],
     validation: createFieldValidation(),
     wrap: true,
-    component: InputTreeRenderer
+    component: InputTreeRenderer,
   },
   {
     type: 'tree-select',
-    fields: [formLabelFieldRule, { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' }],
+    fields: [
+      formLabelFieldRule,
+      { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+    ],
     validation: createFieldValidation(),
     wrap: true,
-    component: TreeSelectRenderer
-  }
+    component: TreeSelectRenderer,
+  },
 ];

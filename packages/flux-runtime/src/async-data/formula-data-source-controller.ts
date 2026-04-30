@@ -8,18 +8,18 @@ import {
   type RuntimeValueState,
   type ScopeDependencySet,
   type ScopeRef,
-  type StaticRuntimeValue
+  type StaticRuntimeValue,
 } from '@nop-chaos/flux-core';
 import {
   createInitialDataSourceState,
   deriveDataSourceState,
   toNextDataSourceState,
-  writeStatusToScope
+  writeStatusToScope,
 } from './data-source-state';
 import {
   applyResultMapping,
   collectRuntimeDependencies,
-  writeDataToScope
+  writeDataToScope,
 } from './data-source-runtime-utils';
 
 export function createFormulaDataSourceController(input: {
@@ -38,8 +38,10 @@ export function createFormulaDataSourceController(input: {
   onDependenciesChange?: (dependencies: ScopeDependencySet | undefined) => void;
 }): DataSourceController {
   const compiled = input.runtime.expressionCompiler.compileValue(input.formula);
-  const staticCompiled = compiled.isStatic ? compiled as StaticRuntimeValue<unknown> : undefined;
-  const dynamicCompiled = compiled.isStatic ? undefined : compiled as DynamicRuntimeValue<unknown>;
+  const staticCompiled = compiled.isStatic ? (compiled as StaticRuntimeValue<unknown>) : undefined;
+  const dynamicCompiled = compiled.isStatic
+    ? undefined
+    : (compiled as DynamicRuntimeValue<unknown>);
   const runtimeState: RuntimeValueState<unknown> | undefined = dynamicCompiled?.createState();
 
   let started = false;
@@ -54,7 +56,7 @@ export function createFormulaDataSourceController(input: {
 
     state = {
       ...state,
-      async: input.asyncGovernance.getOwnerState(asyncOwnerId)
+      async: input.asyncGovernance.getOwnerState(asyncOwnerId),
     };
   }
 
@@ -70,32 +72,38 @@ export function createFormulaDataSourceController(input: {
       return;
     }
 
-    const run = asyncOwnerId && input.asyncGovernance
-      ? input.asyncGovernance.beginRun({
-          ownerKind: 'data-source',
-          ownerId: asyncOwnerId,
-          scopeId: input.scope.id,
-          cause: started ? 'refresh' : 'start'
-        })
-      : undefined;
+    const run =
+      asyncOwnerId && input.asyncGovernance
+        ? input.asyncGovernance.beginRun({
+            ownerKind: 'data-source',
+            ownerId: asyncOwnerId,
+            scopeId: input.scope.id,
+            cause: started ? 'refresh' : 'start',
+          })
+        : undefined;
 
     updateState((current) => ({
       ...toNextDataSourceState(current, {
         fetchStatus: 'fetching',
         status: typeof current.data === 'undefined' ? 'pending' : current.status,
         stale: typeof current.data !== 'undefined',
-        error: undefined
-      })
+        error: undefined,
+      }),
     }));
 
     const rawValue = dynamicCompiled
-      ? input.runtime.expressionCompiler.evaluateWithState(dynamicCompiled, input.scope, input.runtime.env, runtimeState!).value
+      ? input.runtime.expressionCompiler.evaluateWithState(
+          dynamicCompiled,
+          input.scope,
+          input.runtime.env,
+          runtimeState!,
+        ).value
       : staticCompiled?.value;
     const nextValue = applyResultMapping({
       runtime: input.runtime,
       scope: input.scope,
       compiledResultMapping: input.compiledResultMapping,
-      payload: rawValue
+      payload: rawValue,
     });
 
     input.onDependenciesChange?.(collectRuntimeDependencies(runtimeState));
@@ -112,7 +120,7 @@ export function createFormulaDataSourceController(input: {
       mergeToScope: input.mergeToScope,
       mergeStrategy: input.mergeStrategy,
       mergeKey: input.mergeKey,
-      data: nextValue
+      data: nextValue,
     });
 
     updateState((current) => ({
@@ -124,7 +132,7 @@ export function createFormulaDataSourceController(input: {
       error: undefined,
       dataUpdatedAt: Date.now(),
       failureCount: 0,
-      failureReason: undefined
+      failureReason: undefined,
     }));
 
     if (run && input.asyncGovernance) {
@@ -152,33 +160,35 @@ export function createFormulaDataSourceController(input: {
           mergeToScope: input.mergeToScope,
           mergeStrategy: input.mergeStrategy,
           mergeKey: input.mergeKey,
-          data: input.initialData
+          data: input.initialData,
         });
       }
 
       updateState((current) => ({
         ...current,
-        started: true
+        started: true,
       }));
 
-      void Promise.resolve().then(() => {
-        publish();
-      }).catch((error: unknown) => {
-        updateState((current) => ({
-          ...current,
-          status: 'error',
-          fetchStatus: 'idle',
-          error,
-          failureCount: current.failureCount + 1,
-          failureReason: error instanceof Error ? error : new Error(String(error))
-        }));
-      });
+      void Promise.resolve()
+        .then(() => {
+          publish();
+        })
+        .catch((error: unknown) => {
+          updateState((current) => ({
+            ...current,
+            status: 'error',
+            fetchStatus: 'idle',
+            error,
+            failureCount: current.failureCount + 1,
+            failureReason: error instanceof Error ? error : new Error(String(error)),
+          }));
+        });
     },
     stop() {
       stopped = true;
       updateState((current) => ({
         ...current,
-        fetchStatus: 'idle'
+        fetchStatus: 'idle',
       }));
     },
     async refresh() {
@@ -191,6 +201,6 @@ export function createFormulaDataSourceController(input: {
       }
       const initialState = createInitialDataSourceState(undefined);
       updateState(() => initialState);
-    }
+    },
   };
 }

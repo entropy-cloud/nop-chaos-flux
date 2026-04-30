@@ -74,7 +74,7 @@
 原先有问题的写法：
 
 ```ts
-args: Record<string, CompiledRuntimeValue<unknown> | unknown>
+args: Record<string, CompiledRuntimeValue<unknown> | unknown>;
 ```
 
 这个类型在 TypeScript 语义上退化得太厉害，无法清楚表达“这是已经编译过的 runtime value”。
@@ -82,7 +82,7 @@ args: Record<string, CompiledRuntimeValue<unknown> | unknown>
 修正后的写法是：
 
 ```ts
-args: Record<string, CompiledRuntimeValue<unknown>>
+args: Record<string, CompiledRuntimeValue<unknown>>;
 ```
 
 静态值本来就可以通过 `CompiledRuntimeValue` 的 static 分支表达，不需要再加 `| unknown`。
@@ -599,12 +599,12 @@ AMIS 的跨组件协作普遍是通过：
 
 正确分层应是：
 
-| 状态 | `system` 后是否应立即更新 | 是否受 `showErrorOn` 控制 |
-| --- | --- | --- |
-| `effectiveRequired` | 是 | 否 |
-| `validating` | 是 | 否 |
-| owner `valid` / `ready` | 是 | 否 |
-| 用户可见错误消息 | 视策略 | 是 |
+| 状态                    | `system` 后是否应立即更新 | 是否受 `showErrorOn` 控制 |
+| ----------------------- | ------------------------- | ------------------------- |
+| `effectiveRequired`     | 是                        | 否                        |
+| `validating`            | 是                        | 否                        |
+| owner `valid` / `ready` | 是                        | 否                        |
+| 用户可见错误消息        | 视策略                    | 是                        |
 
 ### 例外
 

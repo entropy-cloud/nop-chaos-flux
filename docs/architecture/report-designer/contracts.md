@@ -579,7 +579,9 @@ export interface InspectorRuntimeState {
 ```ts
 export interface FieldSourceProvider {
   id: string;
-  load(context: ReportDesignerAdapterContext): Promise<FieldSourceSnapshot[]> | FieldSourceSnapshot[];
+  load(
+    context: ReportDesignerAdapterContext,
+  ): Promise<FieldSourceSnapshot[]> | FieldSourceSnapshot[];
 }
 ```
 
@@ -603,7 +605,10 @@ export interface ReportSelectionTarget {
 ```ts
 export interface FieldDropAdapter {
   id: string;
-  canHandle(field: FieldDragPayload, target: Extract<ReportSelectionTarget, { kind: 'cell' | 'range' }>): boolean;
+  canHandle(
+    field: FieldDragPayload,
+    target: Extract<ReportSelectionTarget, { kind: 'cell' | 'range' }>,
+  ): boolean;
   mapDropToMetaPatch(args: {
     field: FieldDragPayload;
     target: Extract<ReportSelectionTarget, { kind: 'cell' | 'range' }>;
@@ -639,8 +644,15 @@ export interface PreviewResult {
 ```ts
 export interface TemplateCodecAdapter {
   id: string;
-  importDocument(payload: unknown, context: ReportDesignerAdapterContext): Promise<ReportTemplateDocument> | ReportTemplateDocument;
-  exportDocument(document: ReportTemplateDocument, format: string | undefined, context: ReportDesignerAdapterContext): Promise<unknown> | unknown;
+  importDocument(
+    payload: unknown,
+    context: ReportDesignerAdapterContext,
+  ): Promise<ReportTemplateDocument> | ReportTemplateDocument;
+  exportDocument(
+    document: ReportTemplateDocument,
+    format: string | undefined,
+    context: ReportDesignerAdapterContext,
+  ): Promise<unknown> | unknown;
 }
 ```
 

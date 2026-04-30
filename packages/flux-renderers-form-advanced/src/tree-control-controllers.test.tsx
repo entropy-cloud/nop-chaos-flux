@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getSourceErrorMessage,
   useTreeOptionListController,
-  useTreeSelectController
+  useTreeSelectController,
 } from './tree-control-controllers';
 import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options';
 
@@ -13,11 +13,7 @@ function FilterHarness(props: { options: TreeOptionMeta[]; searchable: boolean }
 
   return (
     <div>
-      <input
-        aria-label="query"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-      />
+      <input aria-label="query" value={query} onChange={(event) => setQuery(event.target.value)} />
       <div data-testid="labels">
         {filteredOptions.map((option) => (
           <span key={option.valueKey}>{option.pathLabel}</span>
@@ -43,7 +39,7 @@ function TriggerHarness(props: {
     treeConfig: getTreeOptionConfig({ showPathLabel: true }),
     value: props.value,
     multiple: props.multiple,
-    placeholder: props.placeholder
+    placeholder: props.placeholder,
   });
 
   return (
@@ -57,8 +53,12 @@ function TriggerHarness(props: {
 
 describe('tree control controllers', () => {
   it('returns object message and fallback source errors', () => {
-    expect(getSourceErrorMessage({ status: 'error', error: { message: 'Boom' } } as any)).toBe('Boom');
-    expect(getSourceErrorMessage({ status: 'error', error: { code: 500 } } as any)).toBe('Failed to load tree options.');
+    expect(getSourceErrorMessage({ status: 'error', error: { message: 'Boom' } } as any)).toBe(
+      'Boom',
+    );
+    expect(getSourceErrorMessage({ status: 'error', error: { code: 500 } } as any)).toBe(
+      'Failed to load tree options.',
+    );
     expect(getSourceErrorMessage({ loading: true } as any)).toBeUndefined();
   });
 
@@ -68,12 +68,12 @@ describe('tree control controllers', () => {
       {
         label: 'Engineering',
         value: 'eng',
-        children: [{ label: 'Platform', value: 'platform' }]
+        children: [{ label: 'Platform', value: 'platform' }],
       },
       {
         label: 'Design',
-        value: 'design'
-      }
+        value: 'design',
+      },
     ]);
 
     render(<FilterHarness options={options} searchable />);
@@ -89,18 +89,28 @@ describe('tree control controllers', () => {
     cleanup();
     const options = buildTreeOptionMetaList([
       { label: 'Platform', value: 'platform' },
-      { label: 'Design', value: 'design' }
+      { label: 'Design', value: 'design' },
     ]);
 
     const { rerender } = render(
-      <TriggerHarness options={options} value={['platform', 'design']} multiple placeholder="Choose department" />
+      <TriggerHarness
+        options={options}
+        value={['platform', 'design']}
+        multiple
+        placeholder="Choose department"
+      />,
     );
 
     expect(screen.getByTestId('trigger-text').textContent).toBe('Platform, Design');
     expect(screen.getByTestId('has-selection').textContent).toBe('true');
 
     rerender(
-      <TriggerHarness options={options} value={''} multiple={false} placeholder="Choose department" />
+      <TriggerHarness
+        options={options}
+        value={''}
+        multiple={false}
+        placeholder="Choose department"
+      />,
     );
 
     expect(screen.getByTestId('trigger-text').textContent).toBe('');

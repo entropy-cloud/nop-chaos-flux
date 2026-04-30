@@ -6,12 +6,24 @@ export function JsonViewer(props: { data: unknown; maxDepth?: number; defaultExp
   const defaultExpanded = props.defaultExpanded ?? 1;
   return (
     <div className="ndbg-entry-expanded">
-      <JsonNode data={props.data} path="$" depth={0} maxDepth={maxDepth} defaultExpanded={defaultExpanded} />
+      <JsonNode
+        data={props.data}
+        path="$"
+        depth={0}
+        maxDepth={maxDepth}
+        defaultExpanded={defaultExpanded}
+      />
     </div>
   );
 }
 
-function JsonNode(props: { data: unknown; path: string; depth: number; maxDepth: number; defaultExpanded: number }) {
+function JsonNode(props: {
+  data: unknown;
+  path: string;
+  depth: number;
+  maxDepth: number;
+  defaultExpanded: number;
+}) {
   const { data, depth, maxDepth, defaultExpanded } = props;
   const [collapsed, setCollapsed] = useState(depth >= defaultExpanded);
 
@@ -19,7 +31,11 @@ function JsonNode(props: { data: unknown; path: string; depth: number; maxDepth:
     return <span className="ndbg-json-null">{String(data)}</span>;
   }
   if (typeof data === 'string') {
-    return <span className="ndbg-json-string">&quot;{data.length > 500 ? data.slice(0, 500) + '…' : data}&quot;</span>;
+    return (
+      <span className="ndbg-json-string">
+        &quot;{data.length > 500 ? data.slice(0, 500) + '…' : data}&quot;
+      </span>
+    );
   }
   if (typeof data === 'number') {
     return <span className="ndbg-json-number">{String(data)}</span>;
@@ -45,16 +61,26 @@ function JsonNode(props: { data: unknown; path: string; depth: number; maxDepth:
         {!collapsed && (
           <div style={{ paddingLeft: 12 }}>
             {displayItems.map((item, index) => {
-              const itemPath = `${props.path}[${index}]`
+              const itemPath = `${props.path}[${index}]`;
 
               return (
                 <div key={itemPath}>
                   <span className="ndbg-json-key">{index}: </span>
-                  <JsonNode data={item} path={itemPath} depth={depth + 1} maxDepth={maxDepth} defaultExpanded={defaultExpanded} />
+                  <JsonNode
+                    data={item}
+                    path={itemPath}
+                    depth={depth + 1}
+                    maxDepth={maxDepth}
+                    defaultExpanded={defaultExpanded}
+                  />
                 </div>
-              )
+              );
             })}
-            {hasMore && <span className="ndbg-json-null">{t('flux.debugger.moreItems', { count: data.length - 10 })}</span>}
+            {hasMore && (
+              <span className="ndbg-json-null">
+                {t('flux.debugger.moreItems', { count: data.length - 10 })}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -76,7 +102,13 @@ function JsonNode(props: { data: unknown; path: string; depth: number; maxDepth:
             {entries.map(([key, value]) => (
               <div key={key}>
                 <span className="ndbg-json-key">{key}: </span>
-                <JsonNode data={value} path={`${props.path}.${key}`} depth={depth + 1} maxDepth={maxDepth} defaultExpanded={defaultExpanded} />
+                <JsonNode
+                  data={value}
+                  path={`${props.path}.${key}`}
+                  depth={depth + 1}
+                  maxDepth={maxDepth}
+                  defaultExpanded={defaultExpanded}
+                />
               </div>
             ))}
           </div>

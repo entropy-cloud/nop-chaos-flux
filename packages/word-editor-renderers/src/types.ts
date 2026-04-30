@@ -25,6 +25,8 @@ export interface WordEditorPageSchemaInput {
 
 export type WordEditorPageSchema = BaseSchema & WordEditorPageSchemaInput;
 
-export function defineWordEditorPageSchema<T extends WordEditorPageSchemaInput>(schema: T): WordEditorPageSchema {
+export function defineWordEditorPageSchema<T extends WordEditorPageSchemaInput>(
+  schema: T,
+): WordEditorPageSchema {
   return schema as unknown as WordEditorPageSchema;
 }

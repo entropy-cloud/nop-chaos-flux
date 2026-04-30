@@ -1,9 +1,6 @@
 import type { ReactNode } from 'react';
 
-export function FieldLabel(props: {
-  content?: ReactNode;
-  as?: 'span' | 'legend';
-}) {
+export function FieldLabel(props: { content?: ReactNode; as?: 'span' | 'legend' }) {
   if (!props.content) {
     return null;
   }

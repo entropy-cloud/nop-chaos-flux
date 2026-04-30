@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createEmptyDocument,
-} from '@nop-chaos/spreadsheet-core';
+import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportTemplateDocument,
   createDefaultSemantic,
@@ -222,13 +220,17 @@ describe('getTargetMeta', () => {
   it('should get row meta', () => {
     let semantic = createDefaultSemantic();
     semantic = setRowMeta(semantic, 's1', 0, { label: 'Header' });
-    expect(getTargetMeta(semantic, { kind: 'row', sheetId: 's1', row: 0 })).toEqual({ label: 'Header' });
+    expect(getTargetMeta(semantic, { kind: 'row', sheetId: 's1', row: 0 })).toEqual({
+      label: 'Header',
+    });
   });
 
   it('should get column meta', () => {
     let semantic = createDefaultSemantic();
     semantic = setColumnMeta(semantic, 's1', 0, { width: 100 });
-    expect(getTargetMeta(semantic, { kind: 'column', sheetId: 's1', col: 0 })).toEqual({ width: 100 });
+    expect(getTargetMeta(semantic, { kind: 'column', sheetId: 's1', col: 0 })).toEqual({
+      width: 100,
+    });
   });
 
   it('should get cell meta', () => {
@@ -243,9 +245,7 @@ describe('getTargetMeta', () => {
   });
 
   it('should return undefined for unknown target', () => {
-    expect(
-      getTargetMeta(undefined, { kind: 'row', sheetId: 's1', row: 0 }),
-    ).toBeUndefined();
+    expect(getTargetMeta(undefined, { kind: 'row', sheetId: 's1', row: 0 })).toBeUndefined();
   });
 });
 
@@ -255,36 +255,30 @@ describe('isSameTarget', () => {
   });
 
   it('should match sheet targets', () => {
-    expect(
-      isSameTarget({ kind: 'sheet', sheetId: 's1' }, { kind: 'sheet', sheetId: 's1' }),
-    ).toBe(true);
+    expect(isSameTarget({ kind: 'sheet', sheetId: 's1' }, { kind: 'sheet', sheetId: 's1' })).toBe(
+      true,
+    );
   });
 
   it('should not match different sheets', () => {
-    expect(
-      isSameTarget({ kind: 'sheet', sheetId: 's1' }, { kind: 'sheet', sheetId: 's2' }),
-    ).toBe(false);
+    expect(isSameTarget({ kind: 'sheet', sheetId: 's1' }, { kind: 'sheet', sheetId: 's2' })).toBe(
+      false,
+    );
   });
 
   it('should match cell targets', () => {
     const cell = { sheetId: 's1', address: 'A1', row: 0, col: 0 };
-    expect(
-      isSameTarget({ kind: 'cell', cell }, { kind: 'cell', cell }),
-    ).toBe(true);
+    expect(isSameTarget({ kind: 'cell', cell }, { kind: 'cell', cell })).toBe(true);
   });
 
   it('should not match different cell positions', () => {
     const a = { sheetId: 's1', address: 'A1', row: 0, col: 0 };
     const b = { sheetId: 's1', address: 'B1', row: 0, col: 1 };
-    expect(
-      isSameTarget({ kind: 'cell', cell: a }, { kind: 'cell', cell: b }),
-    ).toBe(false);
+    expect(isSameTarget({ kind: 'cell', cell: a }, { kind: 'cell', cell: b })).toBe(false);
   });
 
   it('should not match different kinds', () => {
-    expect(
-      isSameTarget({ kind: 'workbook' }, { kind: 'sheet', sheetId: 's1' }),
-    ).toBe(false);
+    expect(isSameTarget({ kind: 'workbook' }, { kind: 'sheet', sheetId: 's1' })).toBe(false);
   });
 
   it('should match row targets', () => {
@@ -295,7 +289,10 @@ describe('isSameTarget', () => {
 
   it('should match column targets', () => {
     expect(
-      isSameTarget({ kind: 'column', sheetId: 's1', col: 0 }, { kind: 'column', sheetId: 's1', col: 0 }),
+      isSameTarget(
+        { kind: 'column', sheetId: 's1', col: 0 },
+        { kind: 'column', sheetId: 's1', col: 0 },
+      ),
     ).toBe(true);
   });
 });

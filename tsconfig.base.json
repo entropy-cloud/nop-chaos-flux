@@ -29,7 +29,9 @@
       "@nop-chaos/flux-react": ["packages/flux-react/src/index.tsx"],
       "@nop-chaos/flux-renderers-basic": ["packages/flux-renderers-basic/src/index.tsx"],
       "@nop-chaos/flux-renderers-form": ["packages/flux-renderers-form/src/index.tsx"],
-      "@nop-chaos/flux-renderers-form/test-support": ["packages/flux-renderers-form/src/test-support.tsx"],
+      "@nop-chaos/flux-renderers-form/test-support": [
+        "packages/flux-renderers-form/src/test-support.tsx"
+      ],
       "@nop-chaos/flux-renderers-data": ["packages/flux-renderers-data/src/index.tsx"],
       "@nop-chaos/theme-tokens": ["packages/theme-tokens/src/index.ts"],
       "@nop-chaos/ui/chart": ["packages/ui/src/components/ui/chart.tsx"],

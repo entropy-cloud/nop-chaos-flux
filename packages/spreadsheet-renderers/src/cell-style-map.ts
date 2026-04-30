@@ -75,7 +75,8 @@ export function mapCellStyle(style: CellStyle | undefined): CellStyleResult {
   }
 
   if (style.fontSize != null) {
-    inlineStyle.fontSize = typeof style.fontSize === 'number' ? `${style.fontSize}px` : style.fontSize;
+    inlineStyle.fontSize =
+      typeof style.fontSize === 'number' ? `${style.fontSize}px` : style.fontSize;
   }
 
   if (style.fontFamily) {
@@ -91,7 +92,8 @@ export function mapCellStyle(style: CellStyle | undefined): CellStyleResult {
   }
 
   if (style.textIndent != null) {
-    inlineStyle.textIndent = typeof style.textIndent === 'number' ? `${style.textIndent}px` : style.textIndent;
+    inlineStyle.textIndent =
+      typeof style.textIndent === 'number' ? `${style.textIndent}px` : style.textIndent;
   }
 
   appendBorderStyle(inlineStyle, 'borderTop', style.borderTop);
@@ -107,7 +109,8 @@ export function mapCellStyle(style: CellStyle | undefined): CellStyleResult {
 
   if (style.borderWidth != null) {
     if (!style.borderTop && !style.borderRight && !style.borderBottom && !style.borderLeft) {
-      inlineStyle.borderWidth = typeof style.borderWidth === 'number' ? `${style.borderWidth}px` : style.borderWidth;
+      inlineStyle.borderWidth =
+        typeof style.borderWidth === 'number' ? `${style.borderWidth}px` : style.borderWidth;
     }
   }
 

@@ -11,35 +11,35 @@ function createTestDesignerConfig(): DesignerConfig {
         id: 'start',
         label: 'Start',
         defaults: { label: 'Start', description: '', config: '{}' },
-        constraints: { maxInstances: 1 }
+        constraints: { maxInstances: 1 },
       },
       {
         id: 'task',
         label: 'Task',
-        defaults: { label: 'Task', description: '', config: '{}' }
+        defaults: { label: 'Task', description: '', config: '{}' },
       },
       {
         id: 'end',
         label: 'End',
-        defaults: { label: 'End', description: '', config: '{}' }
-      }
+        defaults: { label: 'End', description: '', config: '{}' },
+      },
     ],
     edgeTypes: [
       {
         id: 'default',
         label: 'Flow',
-        defaults: { label: 'Flow', condition: '', lineStyle: 'solid' }
-      }
+        defaults: { label: 'Flow', condition: '', lineStyle: 'solid' },
+      },
     ],
     palette: {
       groups: [
         {
           id: 'basic',
           label: 'Basic',
-          nodeTypes: ['start', 'task', 'end']
-        }
-      ]
-    }
+          nodeTypes: ['start', 'task', 'end'],
+        },
+      ],
+    },
   };
 }
 
@@ -54,17 +54,17 @@ function createBasicDocument(): GraphDocument {
         id: 'start-1',
         type: 'start',
         position: { x: 10, y: 20 },
-        data: { label: 'Start', description: 'Entry', config: '{}' }
+        data: { label: 'Start', description: 'Entry', config: '{}' },
       },
       {
         id: 'task-1',
         type: 'task',
         position: { x: 120, y: 60 },
-        data: { label: 'Task', description: 'Do work', config: '{}' }
-      }
+        data: { label: 'Task', description: 'Do work', config: '{}' },
+      },
     ],
     edges: [],
-    viewport: { x: 0, y: 0, zoom: 1 }
+    viewport: { x: 0, y: 0, zoom: 1 },
   };
 }
 
@@ -77,8 +77,8 @@ function createDocumentWithEdgeChain(): GraphDocument {
         id: 'end-1',
         type: 'end',
         position: { x: 240, y: 120 },
-        data: { label: 'End', description: 'Exit', config: '{}' }
-      }
+        data: { label: 'End', description: 'Exit', config: '{}' },
+      },
     ],
     edges: [
       {
@@ -86,16 +86,16 @@ function createDocumentWithEdgeChain(): GraphDocument {
         type: 'default',
         source: 'start-1',
         target: 'task-1',
-        data: { label: 'Flow A', condition: '', lineStyle: 'solid' }
+        data: { label: 'Flow A', condition: '', lineStyle: 'solid' },
       },
       {
         id: 'edge-2',
         type: 'default',
         source: 'task-1',
         target: 'end-1',
-        data: { label: 'Flow B', condition: '', lineStyle: 'solid' }
-      }
-    ]
+        data: { label: 'Flow B', condition: '', lineStyle: 'solid' },
+      },
+    ],
   };
 }
 
@@ -148,12 +148,17 @@ describe('createDesignerCore - viewport and UI state', () => {
 
     core.updateMultipleNodes([
       { nodeId: 'start-1', data: { position: { x: 25, y: 35 } } },
-      { nodeId: 'task-1', data: { data: { label: 'Task Updated' } } }
+      { nodeId: 'task-1', data: { data: { label: 'Task Updated' } } },
     ]);
 
     const snapshot = core.getSnapshot();
-    expect(snapshot.doc.nodes.find((node) => node.id === 'start-1')?.position).toEqual({ x: 25, y: 35 });
-    expect(snapshot.doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe('Task Updated');
+    expect(snapshot.doc.nodes.find((node) => node.id === 'start-1')?.position).toEqual({
+      x: 25,
+      y: 35,
+    });
+    expect(snapshot.doc.nodes.find((node) => node.id === 'task-1')?.data.label).toBe(
+      'Task Updated',
+    );
     expect(snapshot.isDirty).toBe(true);
   });
 
@@ -165,29 +170,35 @@ describe('createDesignerCore - viewport and UI state', () => {
           id: 'start',
           label: 'Start',
           defaults: { label: 'Start', description: '', config: '{}' },
-          constraints: { allowMove: false }
+          constraints: { allowMove: false },
         },
         {
           id: 'task',
           label: 'Task',
-          defaults: { label: 'Task', description: '', config: '{}' }
+          defaults: { label: 'Task', description: '', config: '{}' },
         },
         {
           id: 'end',
           label: 'End',
-          defaults: { label: 'End', description: '', config: '{}' }
-        }
-      ]
+          defaults: { label: 'End', description: '', config: '{}' },
+        },
+      ],
     });
 
     core.moveNodes({
       'start-1': { dx: 10, dy: 10 },
-      'task-1': { dx: 15, dy: 20 }
+      'task-1': { dx: 15, dy: 20 },
     });
 
     const snapshot = core.getSnapshot();
-    expect(snapshot.doc.nodes.find((node) => node.id === 'start-1')?.position).toEqual({ x: 10, y: 20 });
-    expect(snapshot.doc.nodes.find((node) => node.id === 'task-1')?.position).toEqual({ x: 135, y: 80 });
+    expect(snapshot.doc.nodes.find((node) => node.id === 'start-1')?.position).toEqual({
+      x: 10,
+      y: 20,
+    });
+    expect(snapshot.doc.nodes.find((node) => node.id === 'task-1')?.position).toEqual({
+      x: 135,
+      y: 80,
+    });
   });
 
   it('toggles palette collapsed state', () => {

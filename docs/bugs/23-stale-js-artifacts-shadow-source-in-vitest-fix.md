@@ -39,7 +39,7 @@ Two independent issues:
 ### Stale artifacts cleanup
 
 - Deleted all `.js`/`.d.ts`/`.js.map` files from `packages/*/src/`
-- This is the same issue described in AGENTS.md: "NEVER emit .js, .d.ts, or .js.map files into packages/*/src/ directories"
+- This is the same issue described in AGENTS.md: "NEVER emit .js, .d.ts, or .js.map files into packages/\*/src/ directories"
 
 ## Tests
 

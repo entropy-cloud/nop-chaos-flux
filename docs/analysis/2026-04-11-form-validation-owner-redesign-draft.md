@@ -437,7 +437,14 @@ interface CompiledFieldTreeNode {
 
 ```ts
 interface ValidationCompileContribution<S extends BaseSchema = BaseSchema> {
-  kind: 'field' | 'object' | 'array' | 'variant-root' | 'variant-branch' | 'repeated-template' | 'none';
+  kind:
+    | 'field'
+    | 'object'
+    | 'array'
+    | 'variant-root'
+    | 'variant-branch'
+    | 'repeated-template'
+    | 'none';
 
   getNodePath?(schema: S, ctx: ValidationCompileContext<S>): string | undefined;
   collectNode?(schema: S, ctx: ValidationCompileContext<S>): CompiledFieldTreeNodeInput | undefined;
@@ -558,8 +565,10 @@ collector è¯­ä¹‰ï¼š
 
 1. æŸ¥ renderer definition
 2. å¦‚æžœå­˜åœ¨ validation compile contributionï¼š
+
 - è°ƒç”¨ `collectNode(...)`
 - å°† node æ”¾å…¥ field tree
+
 3. è°ƒç”¨ `collectRules(...)`
 4. è°ƒç”¨ `collectDependencies(...)`
 5. è°ƒç”¨ `collectChildren(...)`
@@ -725,13 +734,13 @@ Draft owner for `profile`:
 
 - `rootPath = 'profile'`
 - local `firstName` -> absolute `profile.firstName`
-- local aggregate root `` -> absolute `profile`
+- local aggregate root ``-> absolute`profile`
 
 Draft owner for `items.3`:
 
 - `rootPath = 'items.3'`
 - local `name` -> absolute `items.3.name`
-- local aggregate root `` -> absolute `items.3`
+- local aggregate root ``-> absolute`items.3`
 
 ### Projection Editing Boundary
 
@@ -1240,7 +1249,7 @@ variant switch æ—¶ï¼Œå¿…é¡»æ‰§è¡Œï¼š
 ä¾‹å¦‚ï¼š
 
 ```ts
-validateAt('contacts.0.email', 'change')
+validateAt('contacts.0.email', 'change');
 ```
 
 owner åº”è‡ªåŠ¨æ‰©å±•åˆ°ï¼š
@@ -1355,12 +1364,15 @@ interface ValidationExecutionContext {
 
 1. è¯»å–å½“å‰ owner value
 2. é‡æ–°åˆ¤æ–­ï¼š
+
 - `if` branch activation
 - `variant-field` active branch
 - repeated item instance materialization
 - draft owner subtree existence
+
 3. å¾—åˆ°æ–°çš„ `activePaths`
 4. æ¸…ç†å·²å¤±æ´» path çš„ï¼š
+
 - error state
 - validating state
 - async runs
@@ -1379,7 +1391,7 @@ function computeImpactedClosure(input: {
   dependents: Record<string, string[]>;
   aggregateAncestors: (path: string) => string[];
   overlayDependents: (path: string) => string[];
-}): Set<string>
+}): Set<string>;
 ```
 
 closure è‡³å°‘åŒ…å«ï¼š
@@ -1398,9 +1410,11 @@ hidden/path participation ä¸èƒ½åœ¨ rule æ‰§è¡ŒåŽå†è¡
 
 1. åŸºäºŽæœ€æ–° values é‡æ–°åˆ¤æ–­éšè—çŠ¶æ€
 2. å¯¹ newly hidden pathï¼š
+
 - å¦‚ policy è¦æ±‚ï¼Œç«‹å³ clear value
 - clear stale errors
 - cancel async runs
+
 3. å°† hidden transition äº§ç”Ÿçš„ path è¿½åŠ è¿› `changedPaths`
 4. é‡æ–°è®¡ç®— impacted closure
 
@@ -1420,7 +1434,10 @@ hidden/path participation ä¸èƒ½åœ¨ rule æ‰§è¡ŒåŽå†è¡
 æŽ¨èä¼ªä»£ç ï¼š
 
 ```ts
-function materializeRulesForPath(path: string, ctx: ValidationExecutionContext): EffectiveValidationRule[] {
+function materializeRulesForPath(
+  path: string,
+  ctx: ValidationExecutionContext,
+): EffectiveValidationRule[] {
   const templates = getCompiledTemplates(path);
   const overlays = getDynamicOverlays(path);
   const combined = mergeTemplatesAndOverlays(templates, overlays);
@@ -1430,12 +1447,14 @@ function materializeRulesForPath(path: string, ctx: ValidationExecutionContext):
       return [];
     }
 
-    return [{
-      id: template.id,
-      kind: template.kind,
-      args: evaluateArgs(template.args, ctx),
-      message: evaluateMessage(template.message, ctx)
-    } satisfies EffectiveValidationRule];
+    return [
+      {
+        id: template.id,
+        kind: template.kind,
+        args: evaluateArgs(template.args, ctx),
+        message: evaluateMessage(template.message, ctx),
+      } satisfies EffectiveValidationRule,
+    ];
   });
 }
 ```
@@ -1476,9 +1495,11 @@ interface AsyncValidationRun {
 3. æ³¨å†Œ validating state
 4. ç­‰å¾…ç»“æžœ
 5. è¿”å›žæ—¶æ£€æŸ¥ï¼š
+
 - run æ˜¯å¦ä»æ˜¯ latest
 - path æ˜¯å¦ä» active
 - owner epoch æ˜¯å¦ä»æœ‰æ•ˆ
+
 6. åªæœ‰æ»¡è¶³æ¡ä»¶æ‰å†™å›žé”™è¯¯å’Œ validating=false
 
 ### Phase 1 Structural Edit Rule
@@ -1533,7 +1554,7 @@ function prepareExecution(seedChangedPaths: string[], reason: ValidationReason):
     const participation = reconcileParticipation({
       activePaths: active,
       changedPaths: [...changed],
-      reason
+      reason,
     });
 
     const extraChanged = participation.extraChangedPaths.filter((path) => !changed.has(path));
@@ -1544,7 +1565,7 @@ function prepareExecution(seedChangedPaths: string[], reason: ValidationReason):
       return {
         changedPaths: [...changed],
         activePaths: participation.activePaths,
-        hiddenPaths: participation.hiddenPaths
+        hiddenPaths: participation.hiddenPaths,
       };
     }
 
@@ -1574,7 +1595,7 @@ function computeImpactedClosure(input: {
   dependents: Record<string, string[]>;
   aggregateAncestors: (path: string) => string[];
   overlayDependents: (path: string) => string[];
-}): Set<string>
+}): Set<string>;
 ```
 
 closure è‡³å°‘åŒ…å«ï¼š
@@ -1596,7 +1617,7 @@ function expandValidationTargets(input: {
   closureRoots: Set<string>;
   reason: ValidationReason;
   activePaths: Set<string>;
-}): Set<string>
+}): Set<string>;
 ```
 
 è§„åˆ™ï¼š
@@ -1628,11 +1649,14 @@ async function validateAt(path: string, reason: ValidationReason): Promise<Valid
   const targetPaths = expandValidationTargets({
     closureRoots: closure,
     reason,
-    activePaths: prepared.activePaths
+    activePaths: prepared.activePaths,
   });
 
   for (const targetPath of targetPaths) {
-    const effectiveRules = materializeRulesForPath(targetPath, buildExecutionContext(reason, prepared.changedPaths));
+    const effectiveRules = materializeRulesForPath(
+      targetPath,
+      buildExecutionContext(reason, prepared.changedPaths),
+    );
     const syncErrors = runSyncRules(targetPath, effectiveRules);
     publishSyncErrors(targetPath, syncErrors);
     startAsyncRules(targetPath, effectiveRules, reason);
@@ -1653,7 +1677,10 @@ async function validateAt(path: string, reason: ValidationReason): Promise<Valid
 æŽ¨èä¼ªä»£ç ï¼š
 
 ```ts
-async function validateSubtree(path: string, reason: ValidationReason): Promise<FormValidationResult> {
+async function validateSubtree(
+  path: string,
+  reason: ValidationReason,
+): Promise<FormValidationResult> {
   const prepared = prepareExecution([path], reason);
   const subtreePaths = getActiveSubtreePaths(path, prepared.activePaths);
   const impacted = expandSubtreeWithDependents(subtreePaths);
@@ -1711,7 +1738,9 @@ async function validateAll(reason: 'submit'): Promise<FormValidationResult> {
 æŽ¨èä¼ªä»£ç ï¼š
 
 ```ts
-async function applyChangesAndRevalidate(input: ApplyOwnerChangesInput): Promise<FormValidationResult> {
+async function applyChangesAndRevalidate(
+  input: ApplyOwnerChangesInput,
+): Promise<FormValidationResult> {
   applyWritesAtomically(input.writes);
 
   const prepared = prepareExecution(input.changedPaths, input.reason);
@@ -1719,7 +1748,7 @@ async function applyChangesAndRevalidate(input: ApplyOwnerChangesInput): Promise
   const targets = expandValidationTargets({
     closureRoots: closure,
     reason: input.reason,
-    activePaths: prepared.activePaths
+    activePaths: prepared.activePaths,
   });
   const ordered = orderForValidation(targets);
 
@@ -1804,7 +1833,13 @@ interface DynamicValidationRule {
   message?: string | CompiledRuntimeValue<string>;
   dependencyPaths?: string[];
   ownedChildPaths?: string[];
-  validate?: (input: ValidationExecutionInput) => Promise<ValidationError | ValidationError[] | undefined> | ValidationError | ValidationError[] | undefined;
+  validate?: (
+    input: ValidationExecutionInput,
+  ) =>
+    | Promise<ValidationError | ValidationError[] | undefined>
+    | ValidationError
+    | ValidationError[]
+    | undefined;
 }
 ```
 
@@ -2051,12 +2086,12 @@ surface ä¸æ˜¯ validation ownerï¼Œä½† surface content éœ€è¦
 
 æŽ¨èçŸ©é˜µï¼š
 
-| Surface content mode | Validation owner | Notes |
-| --- | --- | --- |
-| direct-binding content | inherit parent owner | requires parent owner context propagation |
-| draft editor content | child draft owner | local errors/validating isolated until confirm |
-| nested `form` content | inner form owner | fully independent owner |
-| read-only content | none | no validation owner needed |
+| Surface content mode   | Validation owner     | Notes                                          |
+| ---------------------- | -------------------- | ---------------------------------------------- |
+| direct-binding content | inherit parent owner | requires parent owner context propagation      |
+| draft editor content   | child draft owner    | local errors/validating isolated until confirm |
+| nested `form` content  | inner form owner     | fully independent owner                        |
+| read-only content      | none                 | no validation owner needed                     |
 
 ### Provider Requirement
 
@@ -2309,7 +2344,12 @@ Expected behavior:
             "itemKind": "object",
             "item": [
               { "type": "input-text", "name": "label", "required": true },
-              { "type": "input-text", "name": "email", "required": true, "validate": { "api": "/api/contacts/check-email" } }
+              {
+                "type": "input-text",
+                "name": "email",
+                "required": true,
+                "validate": { "api": "/api/contacts/check-email" }
+              }
             ]
           },
           {
@@ -2428,8 +2468,10 @@ Expected behavior:
 
 1. array owner append row
 2. runtime å®žä¾‹åŒ–æ–°è·¯å¾„ï¼š
+
 - `profile.contact.value.headers.0.key`
 - `profile.contact.value.headers.0.value`
+
 3. remap array-related state if needed
 4. `revalidateAffected({ changedPaths: ['profile.contact.value.headers'] })`
 
@@ -2478,10 +2520,12 @@ owner è‡ªåŠ¨æ‰©å±• closure åˆ°ï¼š
 1. `setValue('profile.contacts.0.email', next)`
 2. `validateAt('profile.contacts.0.email', 'blur')`
 3. owner æ‰©å±• closure åˆ°ï¼š
+
 - leaf `profile.contacts.0.email`
 - row root `profile.contacts.0`
 - array root `profile.contacts`
 - expression / overlay dependents
+
 4. async email-check rule å¯åŠ¨
 
 å¦‚æžœç”¨æˆ·éšåŽåˆ é™¤ç¬¬ 0 è¡Œï¼š
@@ -2560,4 +2604,3 @@ owner è‡ªåŠ¨æ‰©å±• closure åˆ°ï¼š
 - `docs/architecture/value-adaptation-and-detail-field.md`
 - `docs/architecture/surface-owner.md`
 - `docs/analysis/2026-03-19-form-validation-comparison.md`
-

@@ -112,12 +112,12 @@
 
 ## 4. 主流盆地回流检测
 
-| 方案 | 是否回流 | 回流到哪个盆地 | 为什么 |
-|------|---------|--------------|--------|
-| **A: 强化 Schema Tree** | **是，但有限** | Flux 当前路线 + Formily 编译层 | 本质是 Formily/AMIS 的编译强化版；没有改变"作者写 action 步骤"的核心假设 |
-| **B: Execution Package** | **部分** | React Server Components 的"编译产物不可变"路径 + Formily 的 compiled form | 将编译提前到运行时之前是对的，但 Execution Package 本身不改变 schema 的语义表达力 |
-| **C: COLK** | **有风险** | Event Sourcing / CQRS 盆地 | Commit Unit + Journal + Projection 是经典事件溯源模式的前端移植；如果执行不当，会回流到 Redux action → reducer 的老路 |
-| **D: Goal-Proved Effect Fabric** | **最远离** | 如果成功：新盆地；如果失败：回落到 B+权限框架 | 6 个概念中 Goal 和 Proof 是真正新的；但如果 Goal Binder 退化为 hardcoded step map，就回流到 B；如果 Proof 退化为角色检查，就回流到 AMIS 的 `xui:roles` |
+| 方案                             | 是否回流       | 回流到哪个盆地                                                            | 为什么                                                                                                                                                 |
+| -------------------------------- | -------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **A: 强化 Schema Tree**          | **是，但有限** | Flux 当前路线 + Formily 编译层                                            | 本质是 Formily/AMIS 的编译强化版；没有改变"作者写 action 步骤"的核心假设                                                                               |
+| **B: Execution Package**         | **部分**       | React Server Components 的"编译产物不可变"路径 + Formily 的 compiled form | 将编译提前到运行时之前是对的，但 Execution Package 本身不改变 schema 的语义表达力                                                                      |
+| **C: COLK**                      | **有风险**     | Event Sourcing / CQRS 盆地                                                | Commit Unit + Journal + Projection 是经典事件溯源模式的前端移植；如果执行不当，会回流到 Redux action → reducer 的老路                                  |
+| **D: Goal-Proved Effect Fabric** | **最远离**     | 如果成功：新盆地；如果失败：回落到 B+权限框架                             | 6 个概念中 Goal 和 Proof 是真正新的；但如果 Goal Binder 退化为 hardcoded step map，就回流到 B；如果 Proof 退化为角色检查，就回流到 AMIS 的 `xui:roles` |
 
 ---
 
@@ -232,10 +232,10 @@
 给每个写操作加 source 标记：
 
 ```typescript
-scope.setValue("name", "张三", { origin: "user-edit", path: "form.name" });
-scope.setValue("name", "张三", { origin: "resource:users/123", path: "form.name" });
+scope.setValue('name', '张三', { origin: 'user-edit', path: 'form.name' });
+scope.setValue('name', '张三', { origin: 'resource:users/123', path: 'form.name' });
 
-scope.getOrigin("name") // → { origin: "resource:users/123", timestamp: ..., seq: 42 }
+scope.getOrigin('name'); // → { origin: "resource:users/123", timestamp: ..., seq: 42 }
 ```
 
 不是新概念，是现有 `setValue` 的参数扩展。让调试器能回答"谁改了这个值"。
@@ -253,6 +253,7 @@ scope.getOrigin("name") // → { origin: "resource:users/123", timestamp: ..., s
 ```
 
 运行时行为：
+
 1. resource 加载数据到 base scope
 2. 创建 draft scope（fork from base）
 3. 用户编辑写入 draft scope
@@ -261,10 +262,10 @@ scope.getOrigin("name") // → { origin: "resource:users/123", timestamp: ..., s
 6. cancel → `draft.discard()`
 
 ```typescript
-owner.forkDraft();       // 创建草稿
-owner.commitDraft();     // 提交草稿
-owner.discardDraft();    // 丢弃草稿
-owner.getConflict();     // 检查 base 是否在编辑期间被外部更新
+owner.forkDraft(); // 创建草稿
+owner.commitDraft(); // 提交草稿
+owner.discardDraft(); // 丢弃草稿
+owner.getConflict(); // 检查 base 是否在编辑期间被外部更新
 ```
 
 JSON 配置中只需要 `"draft": true`，其余是运行时内部行为。
@@ -339,11 +340,11 @@ action 执行的结构化记录：
 
 不做全盘推翻，不做 COLK/Goal-Proved 的激进重构。不需要 intent 间接层。在当前 Flux 7 原语 + Final Execution Schema + Owner 组织基底的架构基础上，通过三项加固突破主流盆地的天花板：
 
-| 加固点 | 其他框架状态 | Flux 做完后 |
-|--------|------------|------------|
-| 写操作可追溯（WriteOrigin） | 没人做 | 每个 scope 字段能查到"谁写的" |
-| 草稿/提交生命周期（Draft Fork） | 没人做 | `draft: true` 一行配置开启 fork |
-| Action 执行可解释（Action Trace） | 没人做 | `trace: true` 产出结构化因果记录 |
+| 加固点                            | 其他框架状态 | Flux 做完后                      |
+| --------------------------------- | ------------ | -------------------------------- |
+| 写操作可追溯（WriteOrigin）       | 没人做       | 每个 scope 字段能查到"谁写的"    |
+| 草稿/提交生命周期（Draft Fork）   | 没人做       | `draft: true` 一行配置开启 fork  |
+| Action 执行可解释（Action Trace） | 没人做       | `trace: true` 产出结构化因果记录 |
 
 三项都是现有机制的参数/配置扩展，不需要新原语、不需要新术语、不需要改变作者的心智模型。合在一起让 Flux 成为**唯一一个能回答"这个状态为什么变成这样"的低代码框架**。
 

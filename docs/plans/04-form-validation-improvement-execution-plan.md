@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-02
 
-
 > **Implementation Status: ✅ COMPLETED**
 > All 8 execution steps implemented: aggregate errors, array field operations, subscription-based validation, node traversal utilities, normalization helpers, custom validators, debug export, and issue export. See `packages/flux-runtime/src/validation/` and `packages/flux-runtime/src/form-runtime-array.ts`.
 >
@@ -169,13 +168,13 @@ Without first-class operations, remove/reorder/insert semantics stay fragile.
 Extend `FormRuntime` in `packages/flux-core/src/index.ts` and implementation in `packages/flux-runtime/src/index.ts` with:
 
 ```ts
-appendValue(path, value)
-prependValue(path, value)
-insertValue(path, index, value)
-removeValue(path, index)
-moveValue(path, from, to)
-swapValue(path, a, b)
-replaceValue(path, value)
+appendValue(path, value);
+prependValue(path, value);
+insertValue(path, index, value);
+removeValue(path, index);
+moveValue(path, from, to);
+swapValue(path, a, b);
+replaceValue(path, value);
 ```
 
 ### State changes
@@ -237,10 +236,10 @@ This is where the RHF review is most relevant.
 Add hooks or helpers in `packages/flux-react/src/index.tsx` such as:
 
 ```ts
-useValidationNodeState(path)
-useFieldError(path)
-useAggregateError(path)
-useChildFieldState(path)
+useValidationNodeState(path);
+useFieldError(path);
+useAggregateError(path);
+useChildFieldState(path);
 ```
 
 ### Selector behavior
@@ -548,6 +547,3 @@ That is the best place to resume coding because:
 - `docs/plans/03-form-validation-completion-plan.md`
 - `docs/references/react-hook-form-template-notes.md`
 - `docs/references/yup-template-notes.md`
-
-
-

@@ -115,12 +115,14 @@ Targets: `packages/ui/src/index.ts`, `packages/flux-renderers-data/src/index.tsx
 **Phase 4 Results (2026-04-16):**
 
 `@nop-chaos/ui`:
+
 - Removed `export * from './components/ui/chart'` from root barrel `index.ts`
 - Added `./chart` subpath export in `package.json` pointing to `dist/components/ui/chart.{js,d.ts}`
 - Added `@nop-chaos/ui/chart` path alias in `tsconfig.base.json` and `vite.workspace-alias.ts`
 - Updated sole consumer (`word-editor-renderers/src/dialogs/ChartDialog.tsx`) to import from `@nop-chaos/ui/chart`
 
 `@nop-chaos/flux-renderers-data`:
+
 - `ChartRenderer` remains in root barrel because it is part of the `dataRendererDefinitions` array used by `registerDataRenderers()`. However, since the entire `flux-renderers-data` package is now only pulled in via the lazy page chunks that use it, the chart renderer (and its echarts dependency) no longer pollutes the initial eager bundle. The root barrel export is retained as an accepted package-level baseline - narrowing it would require splitting the registration function, which is out of scope.
 
 Exit Criteria:
@@ -157,6 +159,7 @@ Targets: all workspace package manifests under `packages/*/package.json`, docs/l
 **Phase 6 Results (2026-04-16):**
 
 All 20 workspace packages audited:
+
 - 17 packages marked `"sideEffects": false` (pure JS/TS, no CSS in src)
 - 3 packages marked `"sideEffects": ["*.css"]` (`ui`, `theme-tokens`, `spreadsheet-renderers`)
 - Zero packages left without explicit declaration

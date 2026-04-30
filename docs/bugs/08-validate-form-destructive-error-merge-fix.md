@@ -42,4 +42,3 @@
 - merge alone is not sufficient; callers must also reconcile returned `errors`/`fieldErrors` with any side-effect writes that become part of the final store state during validation
 - if `validateForm` is refactored to run validations in parallel, re-check store/result consistency explicitly instead of assuming the same end-of-pass merge is enough
 - any future bulk store update that replaces a map (errors, touched, dirty) should consider whether partial knowledge requires merge semantics
-

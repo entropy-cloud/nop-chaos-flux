@@ -2,7 +2,8 @@
 
 **Version**: 1.1.0  
 **Status**: Final Design (Revised)  
-**Sources**: 
+**Sources**:
+
 - v11-design.md (Independent Design)
 - v11-lowcode-design.md (Low-Code Specific)
 - flux-core architecture (Project Implementation)
@@ -36,46 +37,46 @@ This revision removes the original V11 design's execution strategy controls, whi
 
 ### 1.1 What V11 Got Right (Keep)
 
-| V11 Innovation | Value | Integration |
-|----------------|-------|-------------|
-| **Static Analysis at Compile Time** | Extract dependencies without runtime cost | Enhance flux-core's Proxy tracking |
-| **Closure Compilation for Hot Paths** | Optimized expression evaluation | Adopt for table cells, repeated items |
-| **Query/Effect primitives** | Server state + lifecycle effects | Map to flux-core Resource/Reaction |
-| **Formal Schema Algebra** | Provable composition | Adopt Monoid/Functor laws |
-| **Security Sandbox** | Blocked properties, execution limits | Essential for production |
+| V11 Innovation                        | Value                                     | Integration                           |
+| ------------------------------------- | ----------------------------------------- | ------------------------------------- |
+| **Static Analysis at Compile Time**   | Extract dependencies without runtime cost | Enhance flux-core's Proxy tracking    |
+| **Closure Compilation for Hot Paths** | Optimized expression evaluation           | Adopt for table cells, repeated items |
+| **Query/Effect primitives**           | Server state + lifecycle effects          | Map to flux-core Resource/Reaction    |
+| **Formal Schema Algebra**             | Provable composition                      | Adopt Monoid/Functor laws             |
+| **Security Sandbox**                  | Blocked properties, execution limits      | Essential for production              |
 
 ### 1.1.1 What V11 Got Wrong (Removed)
 
-| V11 Concept | Why Removed |
-|-------------|-------------|
-| **Resumability** | Framework-layer concern (Qwik's model, not implementable on React) |
-| **Islands Architecture** | Framework-layer concern (requires framework-level hydration control) |
-| **ExecutionStrategy per node** | DSL cannot override framework execution model |
-| **QRL lazy event loading** | Qwik-specific, not portable to React/Vue |
+| V11 Concept                    | Why Removed                                                          |
+| ------------------------------ | -------------------------------------------------------------------- |
+| **Resumability**               | Framework-layer concern (Qwik's model, not implementable on React)   |
+| **Islands Architecture**       | Framework-layer concern (requires framework-level hydration control) |
+| **ExecutionStrategy per node** | DSL cannot override framework execution model                        |
+| **QRL lazy event loading**     | Qwik-specific, not portable to React/Vue                             |
 
 **Lesson**: DSL should declare intent, not execution implementation details.
 
 ### 1.2 What flux-core Got Right (Keep)
 
-| flux-core Pattern | Value | Integration |
-|-------------------|-------|-------------|
-| **Seven Primitives (closed set)** | Prevents concept sprawl | Adopt as foundation |
-| **Template/Instance separation** | Compile once, instantiate many | Core architecture |
-| **ScopeRef + ActionScope separation** | Data vs Capability lookup | Essential pattern |
-| **Validation Owner Model** | Validation beyond forms | Proven in production |
-| **Proxy-based dependency tracking** | Precise, runtime-efficient | Adopt with static analysis enhancement |
-| **ComponentHandleRegistry** | Type-safe component targeting | Proven pattern |
+| flux-core Pattern                     | Value                          | Integration                            |
+| ------------------------------------- | ------------------------------ | -------------------------------------- |
+| **Seven Primitives (closed set)**     | Prevents concept sprawl        | Adopt as foundation                    |
+| **Template/Instance separation**      | Compile once, instantiate many | Core architecture                      |
+| **ScopeRef + ActionScope separation** | Data vs Capability lookup      | Essential pattern                      |
+| **Validation Owner Model**            | Validation beyond forms        | Proven in production                   |
+| **Proxy-based dependency tracking**   | Precise, runtime-efficient     | Adopt with static analysis enhancement |
+| **ComponentHandleRegistry**           | Type-safe component targeting  | Proven pattern                         |
 
 ### 1.3 Synthesis Decisions
 
-| Area | V11 Approach | flux-core Approach | Final Decision |
-|------|--------------|-------------------|----------------|
-| Core Primitives | 7 (V/C/L/N/A/E/Q) | 7 (T/S/V/R/Re/C/HP) | **Unified 7**: Template, Scope, Value, Resource, Reaction, Capability, HostProjection |
-| Dependency Tracking | Static analysis only | Proxy-based runtime | **Hybrid**: Static analysis + runtime tracking + cache |
-| Expression Evaluation | AST interpreter | AST interpreter | **Enhanced**: Add closure compilation for hot paths |
-| Execution Strategy | DSL-controlled | Framework-controlled | **Framework-controlled** (DSL declares intent only) |
-| Validation | Part of Form | Validation Owner Model | **flux-core's Owner Model** (more flexible) |
-| Action Resolution | Three-layer | Three-layer | **Identical** (proven pattern) |
+| Area                  | V11 Approach         | flux-core Approach     | Final Decision                                                                        |
+| --------------------- | -------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| Core Primitives       | 7 (V/C/L/N/A/E/Q)    | 7 (T/S/V/R/Re/C/HP)    | **Unified 7**: Template, Scope, Value, Resource, Reaction, Capability, HostProjection |
+| Dependency Tracking   | Static analysis only | Proxy-based runtime    | **Hybrid**: Static analysis + runtime tracking + cache                                |
+| Expression Evaluation | AST interpreter      | AST interpreter        | **Enhanced**: Add closure compilation for hot paths                                   |
+| Execution Strategy    | DSL-controlled       | Framework-controlled   | **Framework-controlled** (DSL declares intent only)                                   |
+| Validation            | Part of Form         | Validation Owner Model | **flux-core's Owner Model** (more flexible)                                           |
+| Action Resolution     | Three-layer          | Three-layer            | **Identical** (proven pattern)                                                        |
 
 ---
 
@@ -85,15 +86,15 @@ This revision removes the original V11 design's execution strategy controls, whi
 
 The final design uses **exactly seven primitives** - a closed set that should not be extended without extraordinary justification:
 
-| # | Primitive | V11 Origin | flux-core Origin | Final Role |
-|---|-----------|------------|------------------|------------|
-| 1 | **Template** | Node/Blueprint | Template | Immutable compiled structure |
-| 2 | **Scope** | Scope | ScopeRef | Lexical data environment |
-| 3 | **Value** | Value | Value | Polymorphic data container |
-| 4 | **Resource** | Query | Resource | Lifecycle-owned data production |
-| 5 | **Reaction** | Effect | Reaction | Watch/effect behavior |
-| 6 | **Capability** | Action | Capability | Effect dispatch |
-| 7 | **HostProjection** | - | HostProjection | Read-only host state visibility |
+| #   | Primitive          | V11 Origin     | flux-core Origin | Final Role                      |
+| --- | ------------------ | -------------- | ---------------- | ------------------------------- |
+| 1   | **Template**       | Node/Blueprint | Template         | Immutable compiled structure    |
+| 2   | **Scope**          | Scope          | ScopeRef         | Lexical data environment        |
+| 3   | **Value**          | Value          | Value            | Polymorphic data container      |
+| 4   | **Resource**       | Query          | Resource         | Lifecycle-owned data production |
+| 5   | **Reaction**       | Effect         | Reaction         | Watch/effect behavior           |
+| 6   | **Capability**     | Action         | Capability       | Effect dispatch                 |
+| 7   | **HostProjection** | -              | HostProjection   | Read-only host state visibility |
 
 ### 2.2 Primitive Definitions
 
@@ -105,16 +106,16 @@ interface TemplateNode {
   templateNodeId: TemplateNodeId;
   id: string;
   type: string;
-  
+
   // Compiled programs (immutable)
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
   metaProgram: NodeMetaProgram;
   eventPlans: Readonly<Record<string, CompiledAction>>;
   regions: Readonly<Record<string, TemplateRegion>>;
-  
+
   // Scope plan
   scopePlan: ScopePlan;
-  
+
   // Static analysis results (compiler-computed bottom-up)
   staticAnalysis: StaticAnalysisResult;
 }
@@ -122,7 +123,7 @@ interface TemplateNode {
 interface StaticAnalysisResult {
   // This node and all descendants are fully static
   isStaticContent: boolean;
-  
+
   // Extracted dependencies (empty if static)
   dependencies: string[];
 }
@@ -135,28 +136,28 @@ Renderers declare whether they **inherently support** being static:
 ```typescript
 interface RendererDefinition {
   type: string;
-  
+
   // Does this renderer support static rendering?
   // true:  text, image, container, flex, heading (display-only)
   // false: input, button, select, checkbox (inherently interactive)
   staticCapable: boolean;
-  
+
   // ... other fields
 }
 
 // Examples
 const rendererRegistry = {
-  'text':      { staticCapable: true },   // Display only
-  'image':     { staticCapable: true },   // Display only
-  'container': { staticCapable: true },   // Layout only
-  'flex':      { staticCapable: true },   // Layout only
-  'heading':   { staticCapable: true },   // Display only
-  
-  'input':     { staticCapable: false },  // Needs interaction
-  'button':    { staticCapable: false },  // Needs click handler
-  'select':    { staticCapable: false },  // Needs interaction
-  'checkbox':  { staticCapable: false },  // Needs interaction
-  'form':      { staticCapable: false },  // Manages state
+  text: { staticCapable: true }, // Display only
+  image: { staticCapable: true }, // Display only
+  container: { staticCapable: true }, // Layout only
+  flex: { staticCapable: true }, // Layout only
+  heading: { staticCapable: true }, // Display only
+
+  input: { staticCapable: false }, // Needs interaction
+  button: { staticCapable: false }, // Needs click handler
+  select: { staticCapable: false }, // Needs interaction
+  checkbox: { staticCapable: false }, // Needs interaction
+  form: { staticCapable: false }, // Manages state
 };
 ```
 
@@ -168,47 +169,47 @@ Compile in **post-order traversal** (children first, then parent):
 // Called during compilation, bottom-up
 function computeStaticAnalysis(
   node: TemplateNode,
-  rendererRegistry: RendererRegistry
+  rendererRegistry: RendererRegistry,
 ): StaticAnalysisResult {
   const renderer = rendererRegistry.get(node.type);
-  
+
   // 1. Renderer itself doesn't support static → not static
   if (!renderer?.staticCapable) {
-    return { 
-      isStaticContent: false, 
-      dependencies: collectDependencies(node) 
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node),
     };
   }
-  
+
   // 2. Has expressions in props → not static
   if (!node.propsProgram.isStatic) {
-    return { 
-      isStaticContent: false, 
-      dependencies: collectDependencies(node) 
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node),
     };
   }
-  
+
   // 3. Has event handlers → not static
   if (Object.keys(node.eventPlans).length > 0) {
-    return { 
-      isStaticContent: false, 
-      dependencies: collectDependencies(node) 
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node),
     };
   }
-  
+
   // 4. Check all regions - children already computed (bottom-up)
   for (const region of Object.values(node.regions)) {
     for (const child of region.children) {
       // Child's staticAnalysis was computed before this node
       if (!child.staticAnalysis.isStaticContent) {
-        return { 
-          isStaticContent: false, 
-          dependencies: collectDependencies(node) 
+        return {
+          isStaticContent: false,
+          dependencies: collectDependencies(node),
         };
       }
     }
   }
-  
+
   // All conditions met → fully static
   return { isStaticContent: true, dependencies: [] };
 }
@@ -216,25 +217,25 @@ function computeStaticAnalysis(
 // Compilation order: post-order traversal ensures bottom-up
 function compileTemplate(schema: SchemaAST): TemplateNode {
   // 1. Compile all children first (recursively)
-  const regions = compileRegions(schema.regions);  // Children computed first
-  
+  const regions = compileRegions(schema.regions); // Children computed first
+
   // 2. Then compute this node's static analysis
   const node = buildTemplateNode(schema, regions);
   node.staticAnalysis = computeStaticAnalysis(node, rendererRegistry);
-  
+
   return node;
 }
 ```
 
 ### 2.2.1.3 Static Analysis Rules Summary
 
-| Condition | Result |
-|-----------|--------|
-| Renderer `staticCapable: false` | Not static |
-| Props contain expressions | Not static |
-| Has event handlers | Not static |
+| Condition                             | Result     |
+| ------------------------------------- | ---------- |
+| Renderer `staticCapable: false`       | Not static |
+| Props contain expressions             | Not static |
+| Has event handlers                    | Not static |
 | Any child in any region is not static | Not static |
-| All above pass | **Static** |
+| All above pass                        | **Static** |
 
 Framework adapters can use `staticAnalysis.isStaticContent` for optimization.
 
@@ -247,19 +248,19 @@ interface ScopeRef {
   parent?: ScopeRef;
   store?: ScopeStore;
   isolated: boolean;  // flux-core's isolation
-  
+
   // Data access (flux-core pattern)
   get(path: string): unknown;
   has(path: string): boolean;
   readOwn(): Record<string, any>;
   readVisible(): Record<string, any>;  // Prototype chain for lexical scope
-  
+
   // Data mutation
   update(path: string, value: unknown): void;
-  
+
   // Subscriptions with path-level granularity
   subscribe(listener: (change: ScopeChange) => void): Unsubscribe;
-  
+
   // State persistence (for localStorage, session restore, etc.)
   serialize(): SerializedScope;
   static restore(data: SerializedScope, parent?: ScopeRef): ScopeRef;
@@ -282,12 +283,22 @@ type CompiledValueNode<T = unknown> =
   | { kind: 'expression-node'; source: string; compiled: CompiledExpression<T> }
   | { kind: 'template-node'; source: string; compiled: CompiledTemplate<T> }
   | { kind: 'array-node'; items: ReadonlyArray<CompiledValueNode<unknown>> }
-  | { kind: 'object-node'; keys: readonly string[]; entries: Readonly<Record<string, CompiledValueNode<unknown>>> };
+  | {
+      kind: 'object-node';
+      keys: readonly string[];
+      entries: Readonly<Record<string, CompiledValueNode<unknown>>>;
+    };
 
 // Runtime value (with V11's static optimization)
 type CompiledRuntimeValue<T = unknown> =
   | { kind: 'static'; isStatic: true; value: T }
-  | { kind: 'dynamic'; isStatic: false; deps: string[]; exec: (scope: ScopeRef) => T; cached?: MemoizedResult<T> };
+  | {
+      kind: 'dynamic';
+      isStatic: false;
+      deps: string[];
+      exec: (scope: ScopeRef) => T;
+      cached?: MemoizedResult<T>;
+    };
 
 // V11 addition: memoization
 interface MemoizedResult<T> {
@@ -303,7 +314,7 @@ interface MemoizedResult<T> {
 // flux-core's Resource with V11 Query enhancements
 interface ResourceDefinition {
   id: string;
-  
+
   // Data source (V11's Query model)
   query?: {
     key: string | CompiledRuntimeValue<(string | number)[]>;
@@ -312,18 +323,18 @@ interface ResourceDefinition {
     cacheTime?: number;
     retry?: number;
   };
-  
+
   // Output configuration
   outputPath: string;
   loadingPath?: string;
   errorPath?: string;
-  
+
   // Refresh strategy
   refresh: 'manual' | 'onMount' | 'onDepsChange' | { interval: number };
-  
+
   // Dependencies
-  dependsOn?: string[];  // Explicit root dependencies
-  
+  dependsOn?: string[]; // Explicit root dependencies
+
   // Self-write protection (flux-core pattern)
   selfWritePaths: Set<string>;
 }
@@ -335,19 +346,19 @@ interface ResourceDefinition {
 // flux-core's Reaction with V11's AbortSignal
 interface ReactionDefinition {
   id: string;
-  
+
   // What to watch
-  watch: string[];  // Paths to observe
-  
+  watch: string[]; // Paths to observe
+
   // Condition
   when?: CompiledRuntimeValue<boolean>;
-  
+
   // Effect to run
   effect: CompiledAction;
-  
+
   // V11 additions
   debounceMs?: number;
-  signal?: AbortSignal;  // For cancellation
+  signal?: AbortSignal; // For cancellation
 }
 ```
 
@@ -358,10 +369,10 @@ interface ReactionDefinition {
 interface CapabilityResolution {
   // Layer 1: Built-in platform actions
   builtin: Map<string, BuiltinActionHandler>;
-  
+
   // Layer 2: Component instance targeting
   componentRegistry: ComponentHandleRegistry;
-  
+
   // Layer 3: Namespace actions (lexical lookup)
   actionScope: ActionScope;
 }
@@ -370,7 +381,7 @@ interface CapabilityResolution {
 interface ActionScope {
   id: string;
   parent?: ActionScope;
-  
+
   resolve(actionName: string): ResolvedActionHandler | undefined;
   registerNamespace(namespace: string, provider: ActionNamespaceProvider): () => void;
   unregisterNamespace(namespace: string): void;
@@ -383,14 +394,14 @@ interface ActionScope {
 // flux-core's pattern for domain control integration
 interface HostProjection {
   namespace: string;
-  
+
   // Read-only state visible in expressions
   projection: {
     fields: Record<string, TypeDescriptor>;
     get(): Record<string, unknown>;
     subscribe(listener: () => void): Unsubscribe;
   };
-  
+
   // Commands (exposed through Capability)
   commands: {
     [method: string]: {
@@ -413,14 +424,14 @@ Combining V11's static analysis with flux-core's Proxy-based runtime tracking:
 ```typescript
 interface DependencyTrackingStrategy {
   // Phase 1: Static analysis at compile time
-  staticDeps: string[];  // Extracted from AST
-  
+  staticDeps: string[]; // Extracted from AST
+
   // Phase 2: Runtime tracking on first evaluation (flux-core's Proxy)
   runtimeDeps: string[] | null;
-  
+
   // Phase 3: Cached final deps (union of static + runtime)
   finalDeps: string[];
-  
+
   // Strategy selection
   trackingMode: 'static-only' | 'runtime-only' | 'hybrid';
 }
@@ -444,13 +455,13 @@ For hot paths (table cells, repeated items), compile expressions to closures:
 interface ClosureCompiledExpr<T> {
   // Original AST
   ast: ExprAST;
-  
+
   // Static dependencies
   deps: string[];
-  
+
   // Pre-compiled closure (for hot paths)
   closure: (scope: ScopeRef) => T;
-  
+
   // Fallback AST interpreter
   interpret: (scope: ScopeRef) => T;
 }
@@ -472,15 +483,18 @@ function compileToClosuer(ast: ExprAST): (scope: ScopeRef) => any {
 ```typescript
 // Blocked properties (V11's security model)
 const BLOCKED_PROPERTIES = new Set([
-  '__proto__', 'constructor', 'prototype',
-  '__defineGetter__', '__defineSetter__',
+  '__proto__',
+  'constructor',
+  'prototype',
+  '__defineGetter__',
+  '__defineSetter__',
 ]);
 
 // Execution limits (V11's DoS protection)
 interface ExecutionLimits {
-  maxEvaluationTimeMs: number;  // 100ms
-  maxRecursionDepth: number;    // 100
-  maxLoopIterations: number;    // 10000
+  maxEvaluationTimeMs: number; // 100ms
+  maxRecursionDepth: number; // 100
+  maxLoopIterations: number; // 10000
 }
 ```
 
@@ -504,16 +518,16 @@ V11's validation was form-centric. flux-core's **Validation Owner Model** is sup
 interface ValidationScopeRuntime {
   // Validate specific path
   validateAt(path: string, reason: ValidationReason): Promise<ValidationResult>;
-  
+
   // Validate subtree
   validateSubtree(path: string, reason: ValidationReason): Promise<ScopeValidationResult>;
-  
+
   // Validate all
   validateAll(reason: ValidationReason): Promise<ScopeValidationResult>;
-  
+
   // Field state access
   getFieldState(path: string): FieldValidationStateSnapshot;
-  
+
   // Per-path subscription (O(1) cost)
   subscribeToPath(path: string, listener: PathStateListener): Unsubscribe;
 }
@@ -523,10 +537,10 @@ interface FormRuntime extends ValidationScopeRuntime {
   // Form-specific state
   touched: Record<string, boolean>;
   dirty: Record<string, boolean>;
-  
+
   // Submit with validation
   submit(): Promise<SubmitResult>;
-  
+
   // Draft mode (flux-core's proven pattern)
   enterDraftMode(): void;
   commitDraft(): void;
@@ -541,19 +555,19 @@ interface FormRuntime extends ValidationScopeRuntime {
 interface CompiledFormValidationModel {
   rootPath: string;
   ownerId: string;
-  
+
   // Tree structure
   nodes: Map<string, CompiledFieldTreeNode>;
-  
+
   // Execution order
   validationOrder: string[];
-  
+
   // Cross-field dependencies
   dependents: Map<string, string[]>;
 }
 
 // Node kinds in validation tree
-type FieldTreeNodeKind = 
+type FieldTreeNodeKind =
   | 'scope-root'
   | 'form-root'
   | 'field'
@@ -605,7 +619,7 @@ Static analysis is computed **once at compile time** using post-order traversal:
 
 ```
 Compile order (post-order):
-  
+
        page           ← computed last
       /    \
    hero    form       ← computed second
@@ -614,6 +628,7 @@ Compile order (post-order):
 ```
 
 Each node's `staticAnalysis.isStaticContent` depends on:
+
 1. Its renderer's `staticCapable` declaration
 2. Whether its props are all static
 3. Whether it has no events
@@ -623,20 +638,21 @@ Each node's `staticAnalysis.isStaticContent` depends on:
 # Schema
 type: page
 body:
-  - type: container        # staticCapable: true
+  - type: container # staticCapable: true
     body:
-      - type: text         # staticCapable: true, no expressions, no events
+      - type: text # staticCapable: true, no expressions, no events
         props:
-          content: "Hello" # Static literal
-      - type: image        # staticCapable: true
+          content: 'Hello' # Static literal
+      - type: image # staticCapable: true
         props:
-          src: "/logo.png" # Static literal
-  - type: form             # staticCapable: false (inherently interactive)
+          src: '/logo.png' # Static literal
+  - type: form # staticCapable: false (inherently interactive)
     body:
-      - type: input        # staticCapable: false
+      - type: input # staticCapable: false
 ```
 
 Result after compilation:
+
 ```
 text    → isStaticContent: true
 image   → isStaticContent: true
@@ -655,10 +671,10 @@ Some optimization information **cannot** be computed - these would be true hints
 interface OptimizationHints {
   // Compiler cannot know viewport position
   belowFold?: boolean;
-  
+
   // Compiler cannot know business priority
   lowPriority?: boolean;
-  
+
   // Compiler cannot know if content is LCP candidate
   lcpCandidate?: boolean;
 }
@@ -673,16 +689,17 @@ However, **we choose NOT to add these hints** because:
 
 ### 5.3 What DSL Cannot Control (Framework Responsibility)
 
-| Concern | Why DSL Cannot Control |
-|---------|----------------------|
-| Hydration strategy | React's `hydrateRoot()` is all-or-nothing per root |
-| Server/client split | Requires framework support (RSC, Qwik's resumability) |
-| Selective hydration | React Suspense boundaries are framework-controlled |
-| Event handler loading | Qwik's QRL is Qwik-specific, not portable |
+| Concern               | Why DSL Cannot Control                                |
+| --------------------- | ----------------------------------------------------- |
+| Hydration strategy    | React's `hydrateRoot()` is all-or-nothing per root    |
+| Server/client split   | Requires framework support (RSC, Qwik's resumability) |
+| Selective hydration   | React Suspense boundaries are framework-controlled    |
+| Event handler loading | Qwik's QRL is Qwik-specific, not portable             |
 
 ### 5.4 Framework Adapter Examples
 
 **React Adapter** (current flux-react):
+
 ```typescript
 // Uses staticAnalysis computed by compiler
 function ReactAdapter({ templateNode, scope }) {
@@ -691,13 +708,14 @@ function ReactAdapter({ templateNode, scope }) {
     // Could potentially memoize or skip re-renders
     return <MemoizedStatic>{renderChildren()}</MemoizedStatic>;
   }
-  
+
   // Dynamic content - normal rendering
   return <DynamicRenderer {...resolvedProps} />;
 }
 ```
 
 **Hypothetical Qwik Adapter**:
+
 ```typescript
 // Qwik could leverage staticAnalysis more aggressively
 // But this requires building a Qwik adapter, not changing the DSL
@@ -706,6 +724,7 @@ function ReactAdapter({ templateNode, scope }) {
 ### 5.5 Why Original V11 Design Was Wrong
 
 The original V11 design declared:
+
 ```yaml
 execution:
   location: server
@@ -733,22 +752,22 @@ interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   // Identity
   id: string;
   path: string;
-  
+
   // Compiled structure
   schema: S;
   templateNode: TemplateNode<S>;
   node: NodeInstance<S>;
-  
+
   // Resolved values
   props: Readonly<Record<string, unknown>>;
   meta: ResolvedNodeMeta;
-  
+
   // Child regions
   regions: Readonly<Record<string, RenderRegionHandle>>;
-  
+
   // Event handlers
   events: Readonly<Record<string, RendererEventHandler | undefined>>;
-  
+
   // Helpers
   helpers: RendererHelpers;
 }
@@ -759,16 +778,16 @@ interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
 ```typescript
 // Layout components (flux-core pattern): marker classes only
 const layoutRenderers = {
-  'page': { category: 'layout', markerClass: 'nop-page' },
-  'container': { category: 'layout', markerClass: 'nop-container' },
-  'flex': { category: 'layout', markerClass: 'nop-flex' },
+  page: { category: 'layout', markerClass: 'nop-page' },
+  container: { category: 'layout', markerClass: 'nop-container' },
+  flex: { category: 'layout', markerClass: 'nop-flex' },
 };
 
 // Control components: self-styled UI controls
 const controlRenderers = {
   'input-text': { category: 'control' },
-  'select': { category: 'control' },
-  'table': { category: 'control' },
+  select: { category: 'control' },
+  table: { category: 'control' },
 };
 ```
 
@@ -779,10 +798,10 @@ interface RenderRegionHandle {
   key: string;
   templateNode: TemplateNode | TemplateNode[] | null;
   params?: readonly string[];
-  
+
   render(options?: {
     scope?: ScopeRef;
-    bindings?: Record<string, unknown>;  // $slot parameters
+    bindings?: Record<string, unknown>; // $slot parameters
     isolate?: boolean;
   }): React.ReactNode;
 }
@@ -794,23 +813,23 @@ interface RenderRegionHandle {
 
 ### 7.1 DSL-Layer Innovations
 
-| Area | Existing Low-Code Limitation | This Design's Solution |
-|------|------------------------------|----------------------|
-| **Dependency tracking** | Runtime-only or static-only | Hybrid: static + runtime + cache |
-| **Expression hot paths** | AST interpretation overhead | Closure compilation for repeated items |
-| **Validation model** | Form-centric only | Validation Owner Model (any scope) |
-| **Schema composition** | Ad-hoc, no guarantees | Algebraic laws (Monoid/Functor) |
-| **Security** | Often missing | Sandbox + execution limits |
-| **Action resolution** | Global registry | Three-layer lexical resolution |
+| Area                     | Existing Low-Code Limitation | This Design's Solution                 |
+| ------------------------ | ---------------------------- | -------------------------------------- |
+| **Dependency tracking**  | Runtime-only or static-only  | Hybrid: static + runtime + cache       |
+| **Expression hot paths** | AST interpretation overhead  | Closure compilation for repeated items |
+| **Validation model**     | Form-centric only            | Validation Owner Model (any scope)     |
+| **Schema composition**   | Ad-hoc, no guarantees        | Algebraic laws (Monoid/Functor)        |
+| **Security**             | Often missing                | Sandbox + execution limits             |
+| **Action resolution**    | Global registry              | Three-layer lexical resolution         |
 
 ### 7.2 What This Design Does NOT Claim
 
-| Claim | Reality |
-|-------|---------|
-| ~~"Better than React's execution model"~~ | DSL doesn't control execution - React does |
-| ~~"Resumability support"~~ | Requires Qwik, not achievable on React |
-| ~~"Islands architecture"~~ | Requires framework support, not DSL feature |
-| ~~"Zero hydration"~~ | Framework-controlled, not DSL-controlled |
+| Claim                                     | Reality                                     |
+| ----------------------------------------- | ------------------------------------------- |
+| ~~"Better than React's execution model"~~ | DSL doesn't control execution - React does  |
+| ~~"Resumability support"~~                | Requires Qwik, not achievable on React      |
+| ~~"Islands architecture"~~                | Requires framework support, not DSL feature |
+| ~~"Zero hydration"~~                      | Framework-controlled, not DSL-controlled    |
 
 ### 7.3 Honest Design Superiority
 
@@ -825,19 +844,19 @@ This design is superior to other low-code DSLs in areas **within DSL scope**:
 
 ### 7.4 Requirements Coverage
 
-| Requirement Category | Coverage | Evidence |
-|---------------------|----------|----------|
-| Schema Compilation | 100% | Part II Template |
-| Expression Engine | 100% | Part III |
-| Lexical Scope | 100% | Part II Scope |
-| Dependency Tracking | 100% | Part III.1 Hybrid |
-| Rendering | 100% | Part VI |
-| Action System | 100% | Part II Capability |
-| Form & Validation | 100% | Part IV |
-| API & Resources | 100% | Part II Resource |
-| Surfaces | 100% | flux-core SurfaceManager |
-| Host Integration | 100% | Part II HostProjection |
-| Security | 100% | Part III.3 |
+| Requirement Category | Coverage | Evidence                 |
+| -------------------- | -------- | ------------------------ |
+| Schema Compilation   | 100%     | Part II Template         |
+| Expression Engine    | 100%     | Part III                 |
+| Lexical Scope        | 100%     | Part II Scope            |
+| Dependency Tracking  | 100%     | Part III.1 Hybrid        |
+| Rendering            | 100%     | Part VI                  |
+| Action System        | 100%     | Part II Capability       |
+| Form & Validation    | 100%     | Part IV                  |
+| API & Resources      | 100%     | Part II Resource         |
+| Surfaces             | 100%     | flux-core SurfaceManager |
+| Host Integration     | 100%     | Part II HostProjection   |
+| Security             | 100%     | Part III.3               |
 
 Note: "Performance" requirements related to hydration/Islands are framework-layer concerns, not DSL requirements.
 
@@ -846,29 +865,34 @@ Note: "Performance" requirements related to hydration/Islands are framework-laye
 ## Part VIII: Implementation Roadmap
 
 ### Phase 1: Core Primitives (8 weeks)
+
 - [ ] Unified Scope with state persistence
 - [ ] Hybrid dependency tracking
 - [ ] Expression engine with closure compilation
 - [ ] Security sandbox
 
 ### Phase 2: Template System (6 weeks)
+
 - [ ] Schema compiler
 - [ ] Template/Instance separation
 - [ ] Region compilation
 - [ ] Static analysis for optimization hints
 
 ### Phase 3: Validation & Forms (6 weeks)
+
 - [ ] Validation Owner Model
 - [ ] Compiled validation graph
 - [ ] Draft mode
 - [ ] Per-path subscriptions
 
 ### Phase 4: Framework Adapters (4 weeks)
+
 - [ ] React adapter (primary)
 - [ ] Hint interpretation layer
 - [ ] Code splitting integration (React.lazy)
 
 ### Phase 5: Polish (4 weeks)
+
 - [ ] DevTools
 - [ ] Performance profiling
 - [ ] Documentation
@@ -876,6 +900,7 @@ Note: "Performance" requirements related to hydration/Islands are framework-laye
 **Total: ~28 weeks (7 months)**
 
 Note: Advanced execution strategies (Resumability, Islands) would require:
+
 - Switching to Qwik or building a custom framework
 - This is outside the scope of DSL design
 
@@ -883,17 +908,17 @@ Note: Advanced execution strategies (Resumability, Islands) would require:
 
 ## Appendix A: Comparison Table
 
-| Aspect | V11 Original | flux-core | V11-Final (Revised) |
-|--------|--------------|-----------|---------------------|
-| Primitives | 7 (V/C/L/N/A/E/Q) | 7 (T/S/V/R/Re/C/HP) | 7 (unified) |
-| Dependency Tracking | Static only | Proxy runtime | **Hybrid** |
-| Validation | Form-centric | Owner Model | **Owner Model** |
-| Execution Control | ~~DSL-controlled~~ | Framework-controlled | **Framework-controlled** |
-| Security | Yes (sandbox) | Partial | **Full** |
-| ~~Islands~~ | ~~Yes~~ | No | **N/A (framework concern)** |
-| ~~Resumability~~ | ~~Yes~~ | No | **N/A (framework concern)** |
-| Formal Algebra | Yes | No | **Yes** |
-| Production-proven | No | Yes | **Yes** |
+| Aspect              | V11 Original       | flux-core            | V11-Final (Revised)         |
+| ------------------- | ------------------ | -------------------- | --------------------------- |
+| Primitives          | 7 (V/C/L/N/A/E/Q)  | 7 (T/S/V/R/Re/C/HP)  | 7 (unified)                 |
+| Dependency Tracking | Static only        | Proxy runtime        | **Hybrid**                  |
+| Validation          | Form-centric       | Owner Model          | **Owner Model**             |
+| Execution Control   | ~~DSL-controlled~~ | Framework-controlled | **Framework-controlled**    |
+| Security            | Yes (sandbox)      | Partial              | **Full**                    |
+| ~~Islands~~         | ~~Yes~~            | No                   | **N/A (framework concern)** |
+| ~~Resumability~~    | ~~Yes~~            | No                   | **N/A (framework concern)** |
+| Formal Algebra      | Yes                | No                   | **Yes**                     |
+| Production-proven   | No                 | Yes                  | **Yes**                     |
 
 ---
 
@@ -927,6 +952,6 @@ The DSL should be **framework-agnostic** in its core design, with framework-spec
 
 ---
 
-*End of V11 Final Design Document (Revised)*
+_End of V11 Final Design Document (Revised)_
 
 **Revision Note**: Version 1.1.0 removes execution strategy controls (Resumability, Islands, Hydration) that incorrectly assumed DSL-layer control over framework-level concerns. The design now correctly respects the boundary between DSL and execution framework.

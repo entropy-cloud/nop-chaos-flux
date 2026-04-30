@@ -58,15 +58,28 @@ function TreeNodeRenderer(props: {
   expandOnClickNode: boolean;
   initiallyExpanded?: boolean | number;
 }) {
-  const { owner, node, index, depth, parentNode, childrenKey, labelField, keyField, expandOnClickNode, initiallyExpanded } = props;
+  const {
+    owner,
+    node,
+    index,
+    depth,
+    parentNode,
+    childrenKey,
+    labelField,
+    keyField,
+    expandOnClickNode,
+    initiallyExpanded,
+  } = props;
   const nodeKey = toNodeKey(node, keyField, index);
   const childNodes = toTreeNodes(getIn(node, childrenKey));
   const hasChildren = childNodes.length > 0;
-  const [open, setOpen] = useState(() => hasChildren && shouldExpandInitially(initiallyExpanded, depth));
+  const [open, setOpen] = useState(
+    () => hasChildren && shouldExpandInitially(initiallyExpanded, depth),
+  );
   const label = getIn(node, labelField);
   const nodeContent = owner.regions.node
     ? owner.regions.node.render({
-        bindings: { node, index, depth, key: nodeKey, parentNode }
+        bindings: { node, index, depth, key: nodeKey, parentNode },
       })
     : null;
 
@@ -83,12 +96,17 @@ function TreeNodeRenderer(props: {
                   aria-label={open ? 'Collapse node' : 'Expand node'}
                   className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-accent"
                 >
-                  <ChevronRightIcon className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')} />
+                  <ChevronRightIcon
+                    className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')}
+                  />
                 </span>
               }
             />
           ) : (
-            <span className="inline-flex size-6 items-center justify-center text-muted-foreground" aria-hidden="true">
+            <span
+              className="inline-flex size-6 items-center justify-center text-muted-foreground"
+              aria-hidden="true"
+            >
               <DotIcon className="size-3.5" />
             </span>
           )}
@@ -101,7 +119,11 @@ function TreeNodeRenderer(props: {
               }
             }}
           >
-            {hasRendererSlotContent(nodeContent) ? nodeContent : <span>{String(label ?? nodeKey)}</span>}
+            {hasRendererSlotContent(nodeContent) ? (
+              nodeContent
+            ) : (
+              <span>{String(label ?? nodeKey)}</span>
+            )}
           </div>
         </div>
 
@@ -134,12 +156,24 @@ function TreeNodeRenderer(props: {
 export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const schemaProps = props.props as TreeSchema;
   const data = toTreeNodes(schemaProps.data);
-  const childrenKey = typeof schemaProps.childrenKey === 'string' && schemaProps.childrenKey ? schemaProps.childrenKey : DEFAULT_CHILDREN_KEY;
-  const labelField = typeof schemaProps.labelField === 'string' && schemaProps.labelField ? schemaProps.labelField : DEFAULT_LABEL_FIELD;
-  const keyField = typeof schemaProps.keyField === 'string' && schemaProps.keyField ? schemaProps.keyField : DEFAULT_KEY_FIELD;
+  const childrenKey =
+    typeof schemaProps.childrenKey === 'string' && schemaProps.childrenKey
+      ? schemaProps.childrenKey
+      : DEFAULT_CHILDREN_KEY;
+  const labelField =
+    typeof schemaProps.labelField === 'string' && schemaProps.labelField
+      ? schemaProps.labelField
+      : DEFAULT_LABEL_FIELD;
+  const keyField =
+    typeof schemaProps.keyField === 'string' && schemaProps.keyField
+      ? schemaProps.keyField
+      : DEFAULT_KEY_FIELD;
   const expandOnClickNode = schemaProps.expandOnClickNode === true;
-  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: t('flux.common.noData') });
-  const statusPath = typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
+  const emptyContent = resolveRendererSlotContent(props, 'empty', {
+    fallback: t('flux.common.noData'),
+  });
+  const statusPath =
+    typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
 
   useEffect(() => {
     if (!statusPath) {
@@ -151,20 +185,30 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       nodeCount: data.length,
       childrenKey,
       keyField,
-      labelField
+      labelField,
     });
   }, [props.node.scope, statusPath, data.length, childrenKey, keyField, labelField]);
 
   if (data.length === 0) {
     return (
-      <div className={cn('nop-tree', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-        {hasRendererSlotContent(emptyContent) ? <div data-slot="tree-empty">{emptyContent}</div> : null}
+      <div
+        className={cn('nop-tree', props.meta.className)}
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid || undefined}
+      >
+        {hasRendererSlotContent(emptyContent) ? (
+          <div data-slot="tree-empty">{emptyContent}</div>
+        ) : null}
       </div>
     );
   }
 
   return (
-    <div className={cn('nop-tree', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+    <div
+      className={cn('nop-tree', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
+    >
       {data.map((node, index) => (
         <TreeNodeRenderer
           key={toNodeKey(node, keyField, index)}

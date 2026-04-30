@@ -12,8 +12,22 @@ describe('createDesignerActionProvider', () => {
   it('maps designer namespace methods to core commands', async () => {
     const core = {
       getSnapshot: () => ({
-        doc: { id: 'doc-1', kind: 'flow', name: 'Example', version: '1.0.0', nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
-        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null, activeBranchId: null },
+        doc: {
+          id: 'doc-1',
+          kind: 'flow',
+          name: 'Example',
+          version: '1.0.0',
+          nodes: [],
+          edges: [],
+          viewport: { x: 0, y: 0, zoom: 1 },
+        },
+        selection: {
+          selectedNodeIds: [],
+          selectedEdgeIds: [],
+          activeNodeId: null,
+          activeEdgeId: null,
+          activeBranchId: null,
+        },
         activeNode: null,
         activeEdge: null,
         activeBranch: null,
@@ -21,17 +35,29 @@ describe('createDesignerActionProvider', () => {
         canRedo: false,
         isDirty: false,
         gridEnabled: true,
-        viewport: { x: 0, y: 0, zoom: 1 }
+        viewport: { x: 0, y: 0, zoom: 1 },
       }),
-      getDocument: () => ({ id: 'doc-1', kind: 'flow', name: 'Example', version: '1.0.0', nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }),
+      getDocument: () => ({
+        id: 'doc-1',
+        kind: 'flow',
+        name: 'Example',
+        version: '1.0.0',
+        nodes: [],
+        edges: [],
+        viewport: { x: 0, y: 0, zoom: 1 },
+      }),
       getConfig: () => ({
         nodeTypes: new Map([['task', { id: 'task', label: 'Task' }]]),
         rules: { allowSelfLoop: false, allowMultiEdge: true },
         edgeTypes: new Map(),
         features: {},
-        canvas: {}
+        canvas: {},
       }),
-      addNode: (type: string, position: { x: number; y: number }, data?: Record<string, unknown>) => ({ id: 'n1', type, position, data }),
+      addNode: (
+        type: string,
+        position: { x: number; y: number },
+        data?: Record<string, unknown>,
+      ) => ({ id: 'n1', type, position, data }),
       clearSelection: () => undefined,
       selectNode: () => undefined,
       selectBranch: () => undefined,
@@ -46,13 +72,21 @@ describe('createDesignerActionProvider', () => {
       redo: () => undefined,
       toggleGrid: () => undefined,
       save: () => undefined,
-      restore: () => undefined
+      restore: () => undefined,
     } as any;
 
     const provider = createDesignerActionProvider(core);
-    const addResult = await provider.invoke('addNode', { nodeType: 'task', position: { x: 1, y: 2 } }, {} as any);
+    const addResult = await provider.invoke(
+      'addNode',
+      { nodeType: 'task', position: { x: 1, y: 2 } },
+      {} as any,
+    );
     const exportResult = await provider.invoke('export', undefined, {} as any);
-    const branchResult = await provider.invoke('selectBranch', { nodeId: 'gateway-1', branchId: 'b2' }, {} as any);
+    const branchResult = await provider.invoke(
+      'selectBranch',
+      { nodeId: 'gateway-1', branchId: 'b2' },
+      {} as any,
+    );
 
     expect(addResult).toMatchObject({ ok: true, data: expect.objectContaining({ type: 'task' }) });
     expect(exportResult).toMatchObject({ ok: true, data: '{"ok":true}' });
@@ -70,9 +104,15 @@ describe('createDesignerActionProvider', () => {
           version: '1.0.0',
           nodes: [{ id: 'node-1', type: 'task', position: { x: 0, y: 0 }, data: {} }],
           edges: [],
-          viewport: { x: 0, y: 0, zoom: 1 }
+          viewport: { x: 0, y: 0, zoom: 1 },
         },
-        selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null, activeBranchId: null },
+        selection: {
+          selectedNodeIds: [],
+          selectedEdgeIds: [],
+          activeNodeId: null,
+          activeEdgeId: null,
+          activeBranchId: null,
+        },
         activeNode: null,
         activeEdge: null,
         activeBranch: null,
@@ -80,7 +120,7 @@ describe('createDesignerActionProvider', () => {
         canRedo: false,
         isDirty: false,
         gridEnabled: true,
-        viewport: { x: 0, y: 0, zoom: 1 }
+        viewport: { x: 0, y: 0, zoom: 1 },
       }),
       getDocument: () => ({
         id: 'doc-1',
@@ -89,24 +129,22 @@ describe('createDesignerActionProvider', () => {
         version: '1.0.0',
         nodes: [{ id: 'node-1', type: 'task', position: { x: 0, y: 0 }, data: {} }],
         edges: [],
-        viewport: { x: 0, y: 0, zoom: 1 }
+        viewport: { x: 0, y: 0, zoom: 1 },
       }),
       getConfig: () => ({
         nodeTypes: new Map([['task', { id: 'task', label: 'Task' }]]),
         rules: { allowSelfLoop: false, allowMultiEdge: true },
         edgeTypes: new Map(),
         features: {},
-        canvas: {}
+        canvas: {},
       }),
-      addEdge: () => null
+      addEdge: () => null,
     } as any;
 
     const provider = createDesignerActionProvider(core);
-    const result = await provider.invoke(
-      'addEdge',
-      { source: 'node-1', target: 'missing-node' },
-      { runtime: { env: { notify } } } as any
-    );
+    const result = await provider.invoke('addEdge', { source: 'node-1', target: 'missing-node' }, {
+      runtime: { env: { notify } },
+    } as any);
 
     expect(result.ok).toBe(false);
     expect(result.error).toBeInstanceOf(Error);
@@ -146,11 +184,15 @@ describe('flowDesignerRendererDefinitions', () => {
   });
 
   it('designer-page renderer includes hostContract metadata', () => {
-    const designerPageDef = flowDesignerRendererDefinitions.find((definition) => definition.type === 'designer-page');
+    const designerPageDef = flowDesignerRendererDefinitions.find(
+      (definition) => definition.type === 'designer-page',
+    );
     expect(designerPageDef).toBeTruthy();
     expect(designerPageDef?.hostContract).toBeTruthy();
     expect(designerPageDef?.rendererClass).toBe('domain-host-renderer');
-    expect(designerPageDef?.rendererTraits).toEqual(expect.arrayContaining(['workbench-shell', 'builder-facing']));
+    expect(designerPageDef?.rendererTraits).toEqual(
+      expect.arrayContaining(['workbench-shell', 'builder-facing']),
+    );
     expect(designerPageDef?.propContracts?.config?.required).toBe(true);
     expect(designerPageDef?.scopeExportContracts?.$designer?.kind).toBe('object');
     expect(designerPageDef?.hostContract?.family).toBe('designer');
@@ -158,7 +200,7 @@ describe('flowDesignerRendererDefinitions', () => {
     expect(designerPageDef?.hostContract?.capabilityPublication).toMatchObject({
       mode: 'region-scoped',
       capableRegions: ['toolbar', 'inspector', 'dialogs'],
-      transitiveInheritance: true
+      transitiveInheritance: true,
     });
   });
 });

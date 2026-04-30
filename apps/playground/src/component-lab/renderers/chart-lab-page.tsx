@@ -11,10 +11,10 @@ const barChart = {
       yAxis: { label: 'Amount ($)' },
       series: [
         { dataRegionKey: 'revenue', name: 'Revenue' },
-        { dataRegionKey: 'expenses', name: 'Expenses' }
-      ]
-    }
-  ]
+        { dataRegionKey: 'expenses', name: 'Expenses' },
+      ],
+    },
+  ],
 };
 
 const lineChart = {
@@ -28,10 +28,10 @@ const lineChart = {
       yAxis: { label: 'Amount ($)' },
       series: [
         { dataRegionKey: 'revenue', name: 'Revenue' },
-        { dataRegionKey: 'expenses', name: 'Expenses' }
-      ]
-    }
-  ]
+        { dataRegionKey: 'expenses', name: 'Expenses' },
+      ],
+    },
+  ],
 };
 
 const chartData = [
@@ -40,7 +40,7 @@ const chartData = [
   { month: 'Mar', revenue: 4800, expenses: 2600 },
   { month: 'Apr', revenue: 6200, expenses: 3400 },
   { month: 'May', revenue: 5700, expenses: 3000 },
-  { month: 'Jun', revenue: 6800, expenses: 3700 }
+  { month: 'Jun', revenue: 6800, expenses: 3700 },
 ];
 
 export function ChartLabPage() {
@@ -50,16 +50,18 @@ export function ChartLabPage() {
       scenarios={[
         {
           title: 'Bar chart with configured axes and series',
-          description: 'Monthly revenue vs expenses rendered as a grouped bar chart using source, xAxis, yAxis, and named series.',
+          description:
+            'Monthly revenue vs expenses rendered as a grouped bar chart using source, xAxis, yAxis, and named series.',
           schema: barChart,
-          data: { chartData }
+          data: { chartData },
         },
         {
           title: 'Line chart — same data, different type',
-          description: 'The same revenue/expenses data rendered as a line chart. Only chartType changes.',
+          description:
+            'The same revenue/expenses data rendered as a line chart. Only chartType changes.',
           schema: lineChart,
-          data: { chartData }
-        }
+          data: { chartData },
+        },
       ]}
     />
   );

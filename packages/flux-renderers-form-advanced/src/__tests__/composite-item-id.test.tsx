@@ -22,35 +22,37 @@ describe('composite editor hidden ids', () => {
           data: {
             reviewers: [
               { id: 'item-1', value: 'alice' },
-              { id: 'item-3', value: 'carol' }
-            ]
+              { id: 'item-3', value: 'carol' },
+            ],
           },
           body: [
             {
               type: 'array-editor',
               name: 'reviewers',
               label: 'Reviewers',
-              itemLabel: 'Reviewer'
+              itemLabel: 'Reviewer',
             },
             {
               type: 'form-state-probe',
-              name: 'reviewers'
-            }
-          ]
+              name: 'reviewers',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getAllByText('Remove')[0]);
     fireEvent.click(screen.getByText('Add item'));
 
     await waitFor(() => {
-      expect(JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null')).toMatchObject([
+      expect(
+        JSON.parse(screen.getByTestId('form-state:reviewers').textContent ?? 'null'),
+      ).toMatchObject([
         { id: 'item-1', value: 'alice' },
         { id: 'item-3', value: 'carol' },
-        { id: 'item-4', value: '' }
+        { id: 'item-4', value: '' },
       ]);
     });
   });
@@ -67,35 +69,37 @@ describe('composite editor hidden ids', () => {
           data: {
             metadata: [
               { id: 'pair-1', key: 'env', value: 'prod' },
-              { id: 'pair-3', key: 'region', value: 'us-east' }
-            ]
+              { id: 'pair-3', key: 'region', value: 'us-east' },
+            ],
           },
           body: [
             {
               type: 'key-value',
               name: 'metadata',
               label: 'Metadata',
-              addLabel: 'Add metadata entry'
+              addLabel: 'Add metadata entry',
             },
             {
               type: 'form-state-probe',
-              name: 'metadata'
-            }
-          ]
+              name: 'metadata',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getAllByText('Remove')[0]);
     fireEvent.click(screen.getByText('Add metadata entry'));
 
     await waitFor(() => {
-      expect(JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null')).toMatchObject([
+      expect(
+        JSON.parse(screen.getByTestId('form-state:metadata').textContent ?? 'null'),
+      ).toMatchObject([
         { id: 'pair-1', key: 'env', value: 'prod' },
         { id: 'pair-3', key: 'region', value: 'us-east' },
-        { id: 'pair-4', key: '', value: '' }
+        { id: 'pair-4', key: '', value: '' },
       ]);
     });
   });

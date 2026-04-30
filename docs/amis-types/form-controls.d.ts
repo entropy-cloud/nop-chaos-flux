@@ -6,7 +6,14 @@ import { FormBaseControl, FormOptionsSchema, SchemaApi, SchemaClassName } from '
  */
 export interface TextControlSchema extends FormOptionsSchema {
   /** 指定为 input-text 渲染器 */
-  type: 'input-text' | 'input-email' | 'input-url' | 'input-password' | 'native-date' | 'native-time' | 'native-number';
+  type:
+    | 'input-text'
+    | 'input-email'
+    | 'input-url'
+    | 'input-password'
+    | 'native-date'
+    | 'native-time'
+    | 'native-number';
   /** 附带的操作按钮 */
   addOn?: {
     type?: string;
@@ -328,4 +335,3 @@ export interface HiddenControlSchema extends FormBaseControl {
   /** 指定为 hidden 渲染器 */
   type: 'hidden';
 }
-

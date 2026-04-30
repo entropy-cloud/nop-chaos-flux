@@ -14,7 +14,8 @@ export const env: RendererEnv = {
 function ScopeProbeRenderer(props: RendererComponentProps) {
   return (
     <div data-testid={props.meta.testid ?? 'scope-probe'}>
-      {JSON.stringify(props.node.instancePath ?? null)}|{String(props.helpers.evaluate((props.props as { value?: unknown }).value))}
+      {JSON.stringify(props.node.instancePath ?? null)}|
+      {String(props.helpers.evaluate((props.props as { value?: unknown }).value))}
     </div>
   );
 }

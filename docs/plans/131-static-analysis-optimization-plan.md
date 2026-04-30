@@ -25,15 +25,15 @@
 
 ### Existing Infrastructure
 
-| Component | Status |
-|-----------|--------|
-| `CompiledRuntimeValue.isStatic` | Exists - individual value static detection |
-| `TemplateNode.propsProgram` | Exists - can check `isStatic` |
-| `TemplateNode.eventPlans` | Exists - can check if empty |
-| `TemplateNode.regions` | Exists - can iterate children |
-| `RendererDefinition.staticCapable` | **Missing** |
-| `TemplateNode.staticAnalysis` | **Missing** |
-| Bottom-up computation in compiler | **Missing** |
+| Component                          | Status                                     |
+| ---------------------------------- | ------------------------------------------ |
+| `CompiledRuntimeValue.isStatic`    | Exists - individual value static detection |
+| `TemplateNode.propsProgram`        | Exists - can check `isStatic`              |
+| `TemplateNode.eventPlans`          | Exists - can check if empty                |
+| `TemplateNode.regions`             | Exists - can iterate children              |
+| `RendererDefinition.staticCapable` | **Missing**                                |
+| `TemplateNode.staticAnalysis`      | **Missing**                                |
+| Bottom-up computation in compiler  | **Missing**                                |
 
 ### What Makes a Node Static
 
@@ -59,7 +59,7 @@ File: `packages/flux-core/src/types/renderer-core.ts`
 ```typescript
 export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   // ... existing fields
-  
+
   /**
    * Whether this renderer supports static rendering (no client interaction needed).
    * - true: text, image, container, flex, heading (display-only)
@@ -91,7 +91,7 @@ export interface StaticAnalysisResult {
    * - All children are static
    */
   isStaticContent: boolean;
-  
+
   /**
    * Extracted dependency paths from expressions.
    * Empty array if node is fully static.
@@ -107,7 +107,7 @@ File: `packages/flux-core/src/types/node-identity.ts`
 ```typescript
 export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   // ... existing fields
-  
+
   /**
    * Compiler-computed static analysis results.
    * Used by framework adapters for optimization decisions.
@@ -135,6 +135,7 @@ Status: completed
 Update all renderer definitions across packages:
 
 **Display-only renderers (staticCapable: true)**:
+
 - `text`
 - `tpl` (if no events)
 - `image`
@@ -149,6 +150,7 @@ Update all renderer definitions across packages:
 - `page` (if no events)
 
 **Interactive renderers (staticCapable: false or undefined)**:
+
 - `input-text`
 - `input-number`
 - `textarea`
@@ -184,64 +186,61 @@ Status: completed
 File: `packages/flux-compiler/src/schema-compiler.ts` (or appropriate location)
 
 ```typescript
-function computeStaticAnalysis(
-  node: TemplateNode,
-  schema: BaseSchema
-): StaticAnalysisResult {
+function computeStaticAnalysis(node: TemplateNode, schema: BaseSchema): StaticAnalysisResult {
   const renderer = node.component;
-  
+
   // 1. Renderer not staticCapable → not static
   if (!renderer.staticCapable) {
-    return { 
-      isStaticContent: false, 
-      dependencies: collectDependencies(node) 
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node),
     };
   }
-  
+
   // 2. Props have expressions → not static
   if (!node.propsProgram.isStatic) {
-    return { 
-      isStaticContent: false, 
-      dependencies: collectDependencies(node) 
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node),
     };
   }
-  
+
   // 3. Has name binding → not static (data read/write)
   if (schema.name) {
-    return { 
-      isStaticContent: false, 
-      dependencies: collectDependencies(node) 
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node),
     };
   }
-  
+
   // 4. Has event handlers → not static
   if (Object.keys(node.eventPlans).length > 0) {
-    return { 
-      isStaticContent: false, 
-      dependencies: collectDependencies(node) 
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node),
     };
   }
-  
+
   // 5. Creates scope → not static (has data/sources)
   if (node.scopePlan?.createsScope) {
-    return { 
-      isStaticContent: false, 
-      dependencies: collectDependencies(node) 
+    return {
+      isStaticContent: false,
+      dependencies: collectDependencies(node),
     };
   }
-  
+
   // 6. Check all children (already computed in bottom-up order)
   for (const region of Object.values(node.regions)) {
     for (const child of getRegionChildren(region)) {
       if (!child.staticAnalysis.isStaticContent) {
-        return { 
-          isStaticContent: false, 
-          dependencies: collectDependencies(node) 
+        return {
+          isStaticContent: false,
+          dependencies: collectDependencies(node),
         };
       }
     }
   }
-  
+
   // All conditions met → fully static
   return { isStaticContent: true, dependencies: [] };
 }
@@ -255,13 +254,13 @@ Ensure compilation uses post-order traversal:
 function compileNode(schema: SchemaAST): TemplateNode {
   // 1. Compile all children first (recursively)
   const regions = compileRegions(schema);
-  
+
   // 2. Build node with compiled children
   const node = buildTemplateNode(schema, regions);
-  
+
   // 3. Compute static analysis (children already have their results)
   node.staticAnalysis = computeStaticAnalysis(node, schema);
-  
+
   return node;
 }
 ```
@@ -289,39 +288,36 @@ describe('static analysis', () => {
     const compiled = compiler.compile(schema);
     expect(compiled.root.staticAnalysis.isStaticContent).toBe(true);
   });
-  
+
   it('marks text with expression as not static', () => {
     const schema = { type: 'text', props: { content: '${name}' } };
     const compiled = compiler.compile(schema);
     expect(compiled.root.staticAnalysis.isStaticContent).toBe(false);
     expect(compiled.root.staticAnalysis.dependencies).toContain('name');
   });
-  
+
   it('marks input as not static (interactive renderer)', () => {
     const schema = { type: 'input-text', props: { placeholder: 'Enter' } };
     const compiled = compiler.compile(schema);
     expect(compiled.root.staticAnalysis.isStaticContent).toBe(false);
   });
-  
+
   it('marks container as not static if child is not static', () => {
     const schema = {
       type: 'container',
-      body: [
-        { type: 'text', props: { content: 'Static' } },
-        { type: 'input-text' }
-      ]
+      body: [{ type: 'text', props: { content: 'Static' } }, { type: 'input-text' }],
     };
     const compiled = compiler.compile(schema);
     expect(compiled.root.staticAnalysis.isStaticContent).toBe(false);
   });
-  
+
   it('marks container as static if all children are static', () => {
     const schema = {
       type: 'container',
       body: [
         { type: 'text', props: { content: 'Hello' } },
-        { type: 'image', props: { src: '/logo.png' } }
-      ]
+        { type: 'image', props: { src: '/logo.png' } },
+      ],
     };
     const compiled = compiler.compile(schema);
     expect(compiled.root.staticAnalysis.isStaticContent).toBe(true);

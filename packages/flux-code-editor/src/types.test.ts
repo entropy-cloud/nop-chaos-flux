@@ -10,7 +10,13 @@ import {
   getDefaultAutoHeight,
   getDefaultHeight,
 } from './types';
-import type { VariableItem, FuncGroup, TableSchema, ExpressionEditorConfig, SQLEditorConfig } from './types';
+import type {
+  VariableItem,
+  FuncGroup,
+  TableSchema,
+  ExpressionEditorConfig,
+  SQLEditorConfig,
+} from './types';
 
 describe('type guards', () => {
   it('isVariableSourceRef returns true for source refs', () => {
@@ -78,9 +84,7 @@ describe('resolveFunctions', () => {
 });
 
 describe('resolveTables', () => {
-  const tables: TableSchema[] = [
-    { name: 'users', columns: [{ name: 'id', type: 'BIGINT' }] },
-  ];
+  const tables: TableSchema[] = [{ name: 'users', columns: [{ name: 'id', type: 'BIGINT' }] }];
 
   it('returns tables from inline config', () => {
     const config: SQLEditorConfig = { tables };

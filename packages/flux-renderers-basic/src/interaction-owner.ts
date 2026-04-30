@@ -21,28 +21,34 @@ export function useOwnedAxisValue<TValue extends string | number>(input: {
     ownership === 'scope' && statePath
       ? (scopeData) => getIn(scopeData, statePath) as TValue | undefined
       : () => UNUSED as unknown as TValue | undefined,
-    Object.is
+    Object.is,
   );
 
-  const [localValue, setLocalValue] = useState<TValue>(input.defaultValue ?? input.value ?? input.fallbackValue);
+  const [localValue, setLocalValue] = useState<TValue>(
+    input.defaultValue ?? input.value ?? input.fallbackValue,
+  );
 
   const effectiveScopeValue = scopeValue === (UNUSED as unknown) ? undefined : scopeValue;
 
-  const value = ownership === 'controlled'
-    ? (input.value ?? input.fallbackValue)
-    : ownership === 'scope'
-      ? (effectiveScopeValue ?? input.value ?? input.defaultValue ?? input.fallbackValue)
-      : localValue;
+  const value =
+    ownership === 'controlled'
+      ? (input.value ?? input.fallbackValue)
+      : ownership === 'scope'
+        ? (effectiveScopeValue ?? input.value ?? input.defaultValue ?? input.fallbackValue)
+        : localValue;
 
-  const setValue = useCallback((nextValue: TValue) => {
-    startTransition(() => {
-      if (ownership === 'local') {
-        setLocalValue(nextValue);
-      } else if (ownership === 'scope' && statePath) {
-        renderScope.update(statePath, nextValue);
-      }
-    });
-  }, [ownership, statePath, renderScope]);
+  const setValue = useCallback(
+    (nextValue: TValue) => {
+      startTransition(() => {
+        if (ownership === 'local') {
+          setLocalValue(nextValue);
+        } else if (ownership === 'scope' && statePath) {
+          renderScope.update(statePath, nextValue);
+        }
+      });
+    },
+    [ownership, statePath, renderScope],
+  );
 
   return useMemo(() => ({ ownership, value, setValue }), [ownership, value, setValue]);
 }

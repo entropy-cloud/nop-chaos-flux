@@ -211,57 +211,57 @@ Receipt 不是一个薄状态码，而必须携带：
 ## 最小接口草案
 
 ```ts
-type CellId = string
-type IntentId = string
-type GoalId = string
-type ProofId = string
-type EffectRequestId = string
+type CellId = string;
+type IntentId = string;
+type GoalId = string;
+type ProofId = string;
+type EffectRequestId = string;
 
 interface Intent<I = unknown> {
-  id: IntentId
-  payload: I
+  id: IntentId;
+  payload: I;
 }
 
 interface Goal {
-  id: GoalId
-  outcomes: Array<'satisfied' | 'partially-satisfied' | 'deferred' | 'rejected'>
-  satisfaction: string
-  requiredEffectClasses: string[]
-  requiredProofClasses: string[]
-  maxEffectCount: number
+  id: GoalId;
+  outcomes: Array<'satisfied' | 'partially-satisfied' | 'deferred' | 'rejected'>;
+  satisfaction: string;
+  requiredEffectClasses: string[];
+  requiredProofClasses: string[];
+  maxEffectCount: number;
 }
 
 interface Proof {
-  id: ProofId
-  issuer: string
-  principal: string
-  tenant: string
-  resourceScope: string
-  effectClass: string
-  boundary: string
-  revocationEpoch: number
-  validFrom: number
-  validTo: number
-  signature: string
+  id: ProofId;
+  issuer: string;
+  principal: string;
+  tenant: string;
+  resourceScope: string;
+  effectClass: string;
+  boundary: string;
+  revocationEpoch: number;
+  validFrom: number;
+  validTo: number;
+  signature: string;
 }
 
 interface EffectRequest {
-  id: EffectRequestId
-  goalId: GoalId
-  effectClass: string
-  payload: unknown
-  proofIds: ProofId[]
-  idempotencyKey: string
+  id: EffectRequestId;
+  goalId: GoalId;
+  effectClass: string;
+  payload: unknown;
+  proofIds: ProofId[];
+  idempotencyKey: string;
 }
 
 interface EffectReceipt {
-  requestId: EffectRequestId
-  status: 'accepted' | 'completed' | 'rejected'
-  effectClass: string
-  outcomeHint?: 'satisfied' | 'partially-satisfied' | 'deferred' | 'rejected'
-  result?: unknown
-  authorityImpact?: string[]
-  externalRef?: string
+  requestId: EffectRequestId;
+  status: 'accepted' | 'completed' | 'rejected';
+  effectClass: string;
+  outcomeHint?: 'satisfied' | 'partially-satisfied' | 'deferred' | 'rejected';
+  result?: unknown;
+  authorityImpact?: string[];
+  externalRef?: string;
 }
 ```
 

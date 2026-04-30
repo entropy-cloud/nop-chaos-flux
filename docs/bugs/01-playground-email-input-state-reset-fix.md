@@ -38,4 +38,3 @@
 - controlled form fields must subscribe to the actual live value source, not just a convenient scope snapshot
 - changes to form runtime lifecycle should be reviewed for accidental state recreation on parent rerender
 - if an input bug looks like validation, check value subscription and controlled-state flow before changing validation rules
-

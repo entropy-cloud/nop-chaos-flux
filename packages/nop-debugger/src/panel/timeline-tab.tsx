@@ -17,7 +17,7 @@ function escapeRegex(value: string) {
 
 function isPlainHighlightQuery(query: string) {
   const trimmed = query.trim();
-  return Boolean(trimmed) && !trimmed.startsWith('path:') && !(/^\/(.*)\/([a-z]*)$/.test(trimmed));
+  return Boolean(trimmed) && !trimmed.startsWith('path:') && !/^\/(.*)\/([a-z]*)$/.test(trimmed);
 }
 
 function renderHighlightedText(text: string, query: string) {
@@ -35,9 +35,13 @@ function renderHighlightedText(text: string, query: string) {
     searchFrom = start >= 0 ? start + part.length : searchFrom;
     const partKey = `${trimmed}:${start}:${part.length}`;
 
-    return part.toLowerCase() === trimmed.toLowerCase()
-      ? <mark key={partKey} className="ndbg-highlight">{part}</mark>
-      : <span key={partKey}>{part}</span>
+    return part.toLowerCase() === trimmed.toLowerCase() ? (
+      <mark key={partKey} className="ndbg-highlight">
+        {part}
+      </mark>
+    ) : (
+      <span key={partKey}>{part}</span>
+    );
   });
 }
 
@@ -67,11 +71,29 @@ export function TimelineTab(props: {
   expandedId: number | null;
   setExpandedId(value: number | null): void;
 }) {
-  const { snapshot, searchText, setSearchText, submitSearch, searchHistory, applySearchHistory, errorsOnly, toggleErrorsOnly, filterLabels, toggleFilter, errorGroups, errorGroupExpanded, setErrorGroupExpanded, activeTimelineEvents, expandedId, setExpandedId } = props;
+  const {
+    snapshot,
+    searchText,
+    setSearchText,
+    submitSearch,
+    searchHistory,
+    applySearchHistory,
+    errorsOnly,
+    toggleErrorsOnly,
+    filterLabels,
+    toggleFilter,
+    errorGroups,
+    errorGroupExpanded,
+    setErrorGroupExpanded,
+    activeTimelineEvents,
+    expandedId,
+    setExpandedId,
+  } = props;
   const virtualListRef = useRef<HTMLDivElement | null>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(360);
-  const virtualizationEnabled = !errorsOnly && expandedId == null && activeTimelineEvents.length > VIRTUALIZE_AFTER;
+  const virtualizationEnabled =
+    !errorsOnly && expandedId == null && activeTimelineEvents.length > VIRTUALIZE_AFTER;
 
   useEffect(() => {
     if (!virtualizationEnabled) {
@@ -119,21 +141,50 @@ export function TimelineTab(props: {
   }, [activeTimelineEvents, scrollTop, viewportHeight, virtualizationEnabled]);
 
   const renderEventEntry = (event: NopDebugEvent) => {
-    const isSlowRender = event.kind === 'render:end' && event.durationMs != null && event.durationMs > 16;
+    const isSlowRender =
+      event.kind === 'render:end' && event.durationMs != null && event.durationMs > 16;
     return (
-      <article key={event.id} className="ndbg-entry" onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}>
+      <article
+        key={event.id}
+        className="ndbg-entry"
+        onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}
+      >
         <div className="ndbg-entry-topline">
-          <span className="ndbg-badge" data-group={event.group} data-slow={isSlowRender ? '' : undefined}>{event.group}</span>
+          <span
+            className="ndbg-badge"
+            data-group={event.group}
+            data-slow={isSlowRender ? '' : undefined}
+          >
+            {event.group}
+          </span>
           <time>{formatClock(event.timestamp)}</time>
         </div>
-        <strong className="ndbg-entry-summary">{renderHighlightedText(event.summary, searchText)}{isSlowRender ? ' ⚠️ ' : ''}</strong>
+        <strong className="ndbg-entry-summary">
+          {renderHighlightedText(event.summary, searchText)}
+          {isSlowRender ? ' ⚠️ ' : ''}
+        </strong>
         <span className="ndbg-entry-meta">{event.source}</span>
         {expandedId === event.id ? (
-          <div className="ndbg-entry-expanded" onClick={(clickEvent) => clickEvent.stopPropagation()}>
+          <div
+            className="ndbg-entry-expanded"
+            onClick={(clickEvent) => clickEvent.stopPropagation()}
+          >
             {event.detail ? <code className="ndbg-entry-detail">{event.detail}</code> : null}
-            {event.network ? <div><span className="ndbg-json-key">{t('flux.debugger.network')}</span><JsonViewer data={event.network} defaultExpanded={2} /></div> : null}
-            {event.exportedData != null ? <div><span className="ndbg-json-key">{t('flux.debugger.data')}</span><JsonViewer data={event.exportedData} defaultExpanded={2} /></div> : null}
-            {!event.detail && !event.network && event.exportedData == null ? <span className="ndbg-empty">{t('flux.debugger.noDetailedData')}</span> : null}
+            {event.network ? (
+              <div>
+                <span className="ndbg-json-key">{t('flux.debugger.network')}</span>
+                <JsonViewer data={event.network} defaultExpanded={2} />
+              </div>
+            ) : null}
+            {event.exportedData != null ? (
+              <div>
+                <span className="ndbg-json-key">{t('flux.debugger.data')}</span>
+                <JsonViewer data={event.exportedData} defaultExpanded={2} />
+              </div>
+            ) : null}
+            {!event.detail && !event.network && event.exportedData == null ? (
+              <span className="ndbg-empty">{t('flux.debugger.noDetailedData')}</span>
+            ) : null}
           </div>
         ) : null}
       </article>
@@ -158,7 +209,14 @@ export function TimelineTab(props: {
       {searchHistory.length > 0 ? (
         <div className="ndbg-search-history">
           {searchHistory.map((query) => (
-            <Button key={query} type="button" variant="ghost" size="sm" className="ndbg-filter" onClick={() => applySearchHistory(query)}>
+            <Button
+              key={query}
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="ndbg-filter"
+              onClick={() => applySearchHistory(query)}
+            >
               {query}
             </Button>
           ))}
@@ -169,31 +227,51 @@ export function TimelineTab(props: {
           type="button"
           variant="ghost"
           size="sm"
-          className={['ndbg-filter', errorsOnly ? 'ndbg-errors-only-toggle' : null].filter(Boolean).join(' ')}
+          className={['ndbg-filter', errorsOnly ? 'ndbg-errors-only-toggle' : null]
+            .filter(Boolean)
+            .join(' ')}
           data-active={errorsOnly ? '' : undefined}
           onClick={toggleErrorsOnly}
         >
           {t('flux.debugger.errorsOnly')}
         </Button>
-        {!errorsOnly && DEFAULT_FILTERS.map((filter) => {
-          const active = snapshot.filters.includes(filter);
-          return (
-            <Button key={filter} type="button" variant="ghost" size="sm" className="ndbg-filter" data-active={active ? '' : undefined} onClick={() => toggleFilter(filter)}>
-              {filterLabels[filter]}
-            </Button>
-          );
-        })}
+        {!errorsOnly &&
+          DEFAULT_FILTERS.map((filter) => {
+            const active = snapshot.filters.includes(filter);
+            return (
+              <Button
+                key={filter}
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="ndbg-filter"
+                data-active={active ? '' : undefined}
+                onClick={() => toggleFilter(filter)}
+              >
+                {filterLabels[filter]}
+              </Button>
+            );
+          })}
       </div>
       {errorsOnly ? (
         <div className="ndbg-list">
-          {errorGroups.length === 0 ? <p className="ndbg-empty">{t('flux.debugger.noErrors')}</p> : null}
+          {errorGroups.length === 0 ? (
+            <p className="ndbg-empty">{t('flux.debugger.noErrors')}</p>
+          ) : null}
           {errorGroups.map((group) => (
             <article key={group.source} className="ndbg-entry">
               <div className="ndbg-entry-topline">
-                <span className="ndbg-badge" data-group="error">{t('flux.debugger.error')}</span>
+                <span className="ndbg-badge" data-group="error">
+                  {t('flux.debugger.error')}
+                </span>
                 <time>{formatClock(group.latestTimestamp)}</time>
               </div>
-              <strong className="ndbg-entry-summary" onClick={() => setErrorGroupExpanded(errorGroupExpanded === group.source ? null : group.source)}>
+              <strong
+                className="ndbg-entry-summary"
+                onClick={() =>
+                  setErrorGroupExpanded(errorGroupExpanded === group.source ? null : group.source)
+                }
+              >
                 {group.source} ({group.count})
               </strong>
               {errorGroupExpanded === group.source ? (
@@ -202,8 +280,12 @@ export function TimelineTab(props: {
                     <div key={event.id}>
                       <span className="ndbg-entry-meta">{formatClock(event.timestamp)}</span>
                       <strong>{event.summary}</strong>
-                      {event.detail ? <code className="ndbg-entry-detail">{event.detail}</code> : null}
-                      {event.exportedData != null ? <JsonViewer data={event.exportedData} defaultExpanded={2} /> : null}
+                      {event.detail ? (
+                        <code className="ndbg-entry-detail">{event.detail}</code>
+                      ) : null}
+                      {event.exportedData != null ? (
+                        <JsonViewer data={event.exportedData} defaultExpanded={2} />
+                      ) : null}
                     </div>
                   ))}
                 </div>
@@ -211,27 +293,32 @@ export function TimelineTab(props: {
             </article>
           ))}
         </div>
-      ) : (
-        virtualizationEnabled && virtualWindow ? (
-          <div
-            ref={virtualListRef}
-            className="ndbg-list ndbg-list--virtual"
-            data-testid="ndbg-timeline-list"
-            onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
-          >
-            {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">{t('flux.debugger.noEventsMatch')}</p> : null}
-            <div className="ndbg-virtual-spacer" style={{ height: `${virtualWindow.totalHeight}px` }}>
-              <div className="ndbg-virtual-window" style={{ transform: `translateY(${virtualWindow.offsetTop}px)` }}>
-                {virtualWindow.events.map(renderEventEntry)}
-              </div>
+      ) : virtualizationEnabled && virtualWindow ? (
+        <div
+          ref={virtualListRef}
+          className="ndbg-list ndbg-list--virtual"
+          data-testid="ndbg-timeline-list"
+          onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+        >
+          {activeTimelineEvents.length === 0 ? (
+            <p className="ndbg-empty">{t('flux.debugger.noEventsMatch')}</p>
+          ) : null}
+          <div className="ndbg-virtual-spacer" style={{ height: `${virtualWindow.totalHeight}px` }}>
+            <div
+              className="ndbg-virtual-window"
+              style={{ transform: `translateY(${virtualWindow.offsetTop}px)` }}
+            >
+              {virtualWindow.events.map(renderEventEntry)}
             </div>
           </div>
-        ) : (
-          <div className="ndbg-list" data-testid="ndbg-timeline-list">
-            {activeTimelineEvents.length === 0 ? <p className="ndbg-empty">{t('flux.debugger.noEventsMatch')}</p> : null}
-            {activeTimelineEvents.map(renderEventEntry)}
-          </div>
-        )
+        </div>
+      ) : (
+        <div className="ndbg-list" data-testid="ndbg-timeline-list">
+          {activeTimelineEvents.length === 0 ? (
+            <p className="ndbg-empty">{t('flux.debugger.noEventsMatch')}</p>
+          ) : null}
+          {activeTimelineEvents.map(renderEventEntry)}
+        </div>
       )}
     </>
   );

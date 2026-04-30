@@ -1,7 +1,5 @@
 import { beforeEach } from 'vitest';
-import {
-  createEmptyDocument,
-} from '@nop-chaos/spreadsheet-core';
+import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportDesignerCore,
   createReportTemplateDocument,

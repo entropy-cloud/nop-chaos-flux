@@ -15,14 +15,14 @@ import {
   persistPosition,
   readWindowConfig,
   summarizeApi,
-  summarizeValueShape
+  summarizeValueShape,
 } from './controller-helpers';
 
 const windowStub = {} as Window & typeof globalThis;
 
 Object.defineProperty(globalThis, 'window', {
   value: windowStub,
-  configurable: true
+  configurable: true,
 });
 
 describe('controller helpers', () => {
@@ -36,14 +36,14 @@ describe('controller helpers', () => {
       defaultOpen: false,
       defaultTab: 'timeline',
       position: { x: 24, y: 24 },
-      dock: 'floating'
+      dock: 'floating',
     });
 
     window.__NOP_DEBUGGER__ = true;
     expect(readWindowConfig()).toMatchObject({
       enabled: true,
       defaultOpen: true,
-      defaultTab: 'timeline'
+      defaultTab: 'timeline',
     });
 
     window.__NOP_DEBUGGER__ = {
@@ -51,13 +51,13 @@ describe('controller helpers', () => {
       defaultOpen: false,
       defaultTab: 'network',
       position: { x: 99, y: 77 },
-      dock: 'floating'
+      dock: 'floating',
     };
     expect(readWindowConfig()).toMatchObject({
       enabled: true,
       defaultOpen: false,
       defaultTab: 'network',
-      position: { x: 99, y: 77 }
+      position: { x: 99, y: 77 },
     });
   });
 
@@ -81,85 +81,93 @@ describe('controller helpers', () => {
     expect(formatActionResult({ ok: true })).toBe('ok');
     expect(formatActionResult({ ok: false })).toBe('failed');
     expect(summarizeApi({ url: '/api/demo', method: 'post' })).toBe('POST /api/demo');
-    expect(createRequestKey({ url: '/api/demo', method: 'post' }, 'node-1', 'body.0')).toBe('POST /api/demo | node-1 | body.0');
+    expect(createRequestKey({ url: '/api/demo', method: 'post' }, 'node-1', 'body.0')).toBe(
+      'POST /api/demo | node-1 | body.0',
+    );
     expect(createRequestInstanceIdFactory()()).toMatch(/^req-\d+$/);
   });
 
   it('summarizes value shapes, network metadata, and compiled roots', () => {
     expect(summarizeValueShape(['a', 'b'])).toEqual({
       responseType: 'array',
-      keys: []
+      keys: [],
     });
     expect(summarizeValueShape({ a: 1, b: 2 })).toEqual({
       responseType: 'object',
-      keys: ['a', 'b']
+      keys: ['a', 'b'],
     });
     expect(summarizeValueShape(null)).toEqual({
       responseType: 'nullish',
-      keys: []
+      keys: [],
     });
 
-    expect(buildNetworkSummary({
-      api: {
-        url: '/api/users',
-        method: 'post',
-        data: { username: 'alice', token: 'secret' }
-      },
-      response: {
-        ok: true,
-        status: 200,
-        data: { items: [], total: 1 }
-      }
-    })).toMatchObject({
+    expect(
+      buildNetworkSummary({
+        api: {
+          url: '/api/users',
+          method: 'post',
+          data: { username: 'alice', token: 'secret' },
+        },
+        response: {
+          ok: true,
+          status: 200,
+          data: { items: [], total: 1 },
+        },
+      }),
+    ).toMatchObject({
       method: 'POST',
       url: '/api/users',
       status: 200,
       ok: true,
       requestDataKeys: ['username', 'token'],
       responseDataKeys: ['items', 'total'],
-      responseType: 'object'
+      responseType: 'object',
     });
 
     expect(normalizeCompiledRoot({ type: 'page', path: 'root' } as never)).toEqual({
       rootCount: 1,
       firstType: 'page',
-      firstPath: 'root'
+      firstPath: 'root',
     });
-    expect(normalizeCompiledRoot([
-      { type: 'page', path: 'root' },
-      { type: 'form', path: 'body.0' }
-    ] as never)).toEqual({
+    expect(
+      normalizeCompiledRoot([
+        { type: 'page', path: 'root' },
+        { type: 'form', path: 'body.0' },
+      ] as never),
+    ).toEqual({
       rootCount: 2,
       firstType: 'page',
-      firstPath: 'root'
+      firstPath: 'root',
     });
 
-    expect(buildScopeChain({
-      id: 'child',
-      path: '$page.form',
-      readOwn() {
-        return { username: 'alice' };
-      },
-      parent: {
-        id: 'page',
-        path: '$page',
+    expect(
+      buildScopeChain({
+        id: 'child',
+        path: '$page.form',
         readOwn() {
-          return { currentUser: 'architect' };
-        }
-      }
-    } as never)).toEqual([
+          return { username: 'alice' };
+        },
+        parent: {
+          id: 'page',
+          path: '$page',
+          readOwn() {
+            return { currentUser: 'architect' };
+          },
+        },
+      } as never),
+    ).toEqual([
       {
         id: 'child',
         path: '$page.form',
         label: '$page.form',
-        data: { username: 'alice' }
+        data: { username: 'alice' },
       },
       {
         id: 'page',
         path: '$page',
         label: '$page',
-        data: { currentUser: 'architect' }
-      }
+        data: { currentUser: 'architect' },
+      },
     ]);
   });
 
@@ -170,10 +178,18 @@ describe('controller helpers', () => {
       store = new Map();
       vi.stubGlobal('localStorage', {
         getItem: (key: string) => store.get(key) ?? null,
-        setItem: (key: string, value: string) => { store.set(key, value); },
-        removeItem: (key: string) => { store.delete(key); },
-        clear: () => { store.clear(); },
-        get length() { return store.size; }
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+        clear: () => {
+          store.clear();
+        },
+        get length() {
+          return store.size;
+        },
       });
     });
 
@@ -204,10 +220,18 @@ describe('controller helpers', () => {
       store = new Map();
       vi.stubGlobal('localStorage', {
         getItem: (key: string) => store.get(key) ?? null,
-        setItem: (key: string, value: string) => { store.set(key, value); },
-        removeItem: (key: string) => { store.delete(key); },
-        clear: () => { store.clear(); },
-        get length() { return store.size; }
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+        clear: () => {
+          store.clear();
+        },
+        get length() {
+          return store.size;
+        },
       });
     });
 

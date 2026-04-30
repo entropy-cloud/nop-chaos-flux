@@ -76,7 +76,7 @@ function extractRules(formNode: NormalizedNode): Map<string, FieldRuleConfig> {
 
   const walk = (node: NormalizedNode): void => {
     const props = node.props as GenericRecord;
-    const name = typeof props.name === "string" ? props.name : undefined;
+    const name = typeof props.name === 'string' ? props.name : undefined;
     const validate = props.validate;
 
     if (name && isPlainObject(validate)) {
@@ -123,15 +123,14 @@ function normalizeActionObject(rawAction, params, event, fieldPath) {
   const { nodeId, path, actions, dialogs, walkNode } = params;
   const actionType = rawAction.action;
 
-  if (actionType === "dialog") {
+  if (actionType === 'dialog') {
     const dialogField = rawAction.dialog;
-    if (dialogField && typeof dialogField === "object" && !Array.isArray(dialogField)) {
+    if (dialogField && typeof dialogField === 'object' && !Array.isArray(dialogField)) {
       const dialogPath = `${path}.${fieldPath}.dialog`;
       const dialogId = makeDialogIdFromPath(dialogPath);
-      const dialogNode = typeof rawDialog.type === "string"
-        ? rawDialog
-        : { ...rawDialog, type: "dialog" };
-      
+      const dialogNode =
+        typeof rawDialog.type === 'string' ? rawDialog : { ...rawDialog, type: 'dialog' };
+
       dialogs[dialogId] = walkNode(dialogNode, dialogPath);
       delete config.dialog;
       config.dialogId = dialogId;
@@ -169,13 +168,13 @@ interface CompiledPageNode extends CompiledSchemaNode {
 ```ts
 // src/stores/pageStore.ts
 function setByPath(target: any, path: string, value: any): void {
-  const segments = path.split(".").filter(Boolean);
+  const segments = path.split('.').filter(Boolean);
   if (segments.length === 0) return;
 
   let cur = target;
   for (let i = 0; i < segments.length - 1; i++) {
     const key = segments[i];
-    if (cur[key] == null || typeof cur[key] !== "object") {
+    if (cur[key] == null || typeof cur[key] !== 'object') {
       cur[key] = {};
     }
     cur = cur[key];
@@ -186,12 +185,12 @@ function setByPath(target: any, path: string, value: any): void {
 
 ### 与 nop-amis setIn 的对比
 
-| 特性 | setByPath (原型) | setIn (flux) |
-|------|-----------------|------------------|
-| 返回值 | 无（原地修改） | 返回新对象 |
-| 不可变性 | 可变 | 不可变 |
-| 性能 | 更高（无拷贝） | 较低（需要拷贝） |
-| 适用场景 | Store 内部使用 | 需要不可变更新的场景 |
+| 特性     | setByPath (原型) | setIn (flux)         |
+| -------- | ---------------- | -------------------- |
+| 返回值   | 无（原地修改）   | 返回新对象           |
+| 不可变性 | 可变             | 不可变               |
+| 性能     | 更高（无拷贝）   | 较低（需要拷贝）     |
+| 适用场景 | Store 内部使用   | 需要不可变更新的场景 |
 
 ### 应用建议
 
@@ -210,7 +209,7 @@ async function runThen(
   runtime: RuntimeContext,
   parentAction: ActionDef,
   context: Scope,
-  prevResult: unknown
+  prevResult: unknown,
 ): Promise<void> {
   const thenConfig = parentAction.config.then;
   if (!thenConfig) return;
@@ -225,7 +224,13 @@ async function runThen(
     const childScope = createChildScope(context, {
       prevResult: nextPrev,
     });
-    nextPrev = await executeActionConfig(runtime, item, parentAction.nodeId, parentAction.event, childScope);
+    nextPrev = await executeActionConfig(
+      runtime,
+      item,
+      parentAction.nodeId,
+      parentAction.event,
+      childScope,
+    );
   }
 }
 ```
@@ -261,7 +266,7 @@ async function runAsyncValidator(
   apiConfig: ApiObject,
   scope: Scope,
   runtime: RuntimeContext,
-  cacheKey: string
+  cacheKey: string,
 ): Promise<string | null> {
   // 取消之前的相同请求
   const previous = runtime.abortControllers.get(cacheKey);
@@ -316,14 +321,14 @@ async function executeApiRequest(actionType, api, scope, form) {
 
 ## 总结：可直接采用 vs 需要适配
 
-| 模式 | 可直接采用 | 需要适配 |
-|------|-----------|---------|
-| FormStore submit handler | ✓ | - |
-| 编译时提取验证规则 | ✓ | 需要适配 CompiledSchemaNode 结构 |
-| 内联 Dialog 提取 | ✓ | 已有类似实现 |
-| setByPath 原地修改 | - | 仅适用于 store 内部 |
-| prevResult 注入 | ✓ | 已有实现 |
-| 异步校验请求取消 | ✓ | 已有类似实现 |
+| 模式                     | 可直接采用 | 需要适配                         |
+| ------------------------ | ---------- | -------------------------------- |
+| FormStore submit handler | ✓          | -                                |
+| 编译时提取验证规则       | ✓          | 需要适配 CompiledSchemaNode 结构 |
+| 内联 Dialog 提取         | ✓          | 已有类似实现                     |
+| setByPath 原地修改       | -          | 仅适用于 store 内部              |
+| prevResult 注入          | ✓          | 已有实现                         |
+| 异步校验请求取消         | ✓          | 已有类似实现                     |
 
 ## 来源
 
@@ -333,4 +338,3 @@ async function executeApiRequest(actionType, api, scope, form) {
   - `src/stores/pageStore.ts`
   - `src/runtime/runtime.ts`
   - `src/runtime/compileSchema.ts`
-

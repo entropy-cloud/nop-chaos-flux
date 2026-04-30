@@ -9,7 +9,7 @@ import type {
   NamespacedActionInvocation,
   RendererEnv,
   RendererRuntime,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 import type { ApiRequestExecutor } from './async-data/request-runtime';
 import { executeRuntimeAjaxAction } from './runtime-action-helpers';
@@ -32,9 +32,16 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
     async invokeBuiltInAction(invocation: BuiltInActionInvocation, ctx) {
       switch (invocation.action) {
         case 'setValue': {
-          const path = typeof invocation.args?.path === 'string' ? invocation.args.path : invocation.targeting.componentId ?? '';
+          const path =
+            typeof invocation.args?.path === 'string'
+              ? invocation.args.path
+              : (invocation.targeting.componentId ?? '');
           const value = invocation.args?.value;
-          if (ctx.form && invocation.targeting.formId && ctx.form.id === invocation.targeting.formId) {
+          if (
+            ctx.form &&
+            invocation.targeting.formId &&
+            ctx.form.id === invocation.targeting.formId
+          ) {
             ctx.form.setValue(path, value);
           } else {
             ctx.scope.update(path, value);
@@ -48,14 +55,19 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: true, data: values };
           }
 
-          const basePath = typeof invocation.args?.path === 'string'
-            ? invocation.args.path
-            : invocation.targeting.targetId;
+          const basePath =
+            typeof invocation.args?.path === 'string'
+              ? invocation.args.path
+              : invocation.targeting.targetId;
 
-          if (ctx.form && invocation.targeting.formId && ctx.form.id === invocation.targeting.formId) {
+          if (
+            ctx.form &&
+            invocation.targeting.formId &&
+            ctx.form.id === invocation.targeting.formId
+          ) {
             if (basePath) {
               const nextValues = Object.fromEntries(
-                Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val])
+                Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val]),
               );
               ctx.form.setValues(nextValues);
               return { ok: true, data: nextValues };
@@ -72,8 +84,8 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return {
               ok: true,
               data: Object.fromEntries(
-                Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val])
-              )
+                Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val]),
+              ),
             };
           }
 
@@ -82,12 +94,18 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
 
         case 'ajax': {
           const apiSchema = invocation.args as ApiSchema;
-          return executeRuntimeAjaxAction(apiSchema, invocation.actionNode, ctx, invocation.signal, {
-            getEnv,
-            expressionCompiler,
-            evaluate,
-            executeApiRequest
-          });
+          return executeRuntimeAjaxAction(
+            apiSchema,
+            invocation.actionNode,
+            ctx,
+            invocation.signal,
+            {
+              getEnv,
+              expressionCompiler,
+              evaluate,
+              executeApiRequest,
+            },
+          );
         }
 
         case 'submitForm': {
@@ -97,7 +115,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
 
           return ctx.form.submit({
             interactionId: ctx.interactionId,
-            signal: invocation.signal
+            signal: invocation.signal,
           });
         }
 
@@ -115,8 +133,8 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             options: {
               actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
-              ownerNodeInstance: ctx.nodeInstance
-            }
+              ownerNodeInstance: ctx.nodeInstance,
+            },
           });
           dialogScope.update('dialogId', dialogId);
           return { ok: true, data: { dialogId } };
@@ -125,13 +143,14 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         case 'closeDialog':
         case 'closeDrawer':
         case 'closeSurface': {
-          const surfaceId = typeof invocation.args?.surfaceId === 'string'
-            ? invocation.args.surfaceId
-            : typeof invocation.args?.dialogId === 'string'
-              ? invocation.args.dialogId
-              : typeof invocation.args?.drawerId === 'string'
-                ? invocation.args.drawerId
-                : undefined;
+          const surfaceId =
+            typeof invocation.args?.surfaceId === 'string'
+              ? invocation.args.surfaceId
+              : typeof invocation.args?.dialogId === 'string'
+                ? invocation.args.dialogId
+                : typeof invocation.args?.drawerId === 'string'
+                  ? invocation.args.drawerId
+                  : undefined;
           if (ctx.surfaceRuntime) {
             if (surfaceId) {
               ctx.surfaceRuntime.close(surfaceId);
@@ -147,13 +166,17 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: false, error: new Error('openDrawer requires surface runtime') };
           }
 
-          const drawerScope = runtime.createChildScope(ctx.scope, {
-            dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
-            drawerId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`
-          }, {
-            scopeKey: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:drawer-scope`,
-            pathSuffix: 'drawer'
-          });
+          const drawerScope = runtime.createChildScope(
+            ctx.scope,
+            {
+              dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
+              drawerId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
+            },
+            {
+              scopeKey: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:drawer-scope`,
+              pathSuffix: 'drawer',
+            },
+          );
 
           const drawerId = ctx.surfaceRuntime.open({
             kind: 'drawer',
@@ -163,8 +186,8 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             options: {
               actionScope: ctx.actionScope,
               componentRegistry: ctx.componentRegistry,
-              ownerNodeInstance: ctx.nodeInstance
-            }
+              ownerNodeInstance: ctx.nodeInstance,
+            },
           });
 
           drawerScope.update('dialogId', drawerId);
@@ -172,12 +195,16 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           return { ok: true, data: { drawerId } };
         }
 
-
         case 'showToast': {
-          const level = typeof invocation.args?.level === 'string' && ['info', 'success', 'warning', 'error'].includes(invocation.args.level)
-            ? invocation.args.level as 'info' | 'success' | 'warning' | 'error'
-            : 'info';
-          const message = typeof invocation.args?.message === 'string' ? invocation.args.message : 'Action completed';
+          const level =
+            typeof invocation.args?.level === 'string' &&
+            ['info', 'success', 'warning', 'error'].includes(invocation.args.level)
+              ? (invocation.args.level as 'info' | 'success' | 'warning' | 'error')
+              : 'info';
+          const message =
+            typeof invocation.args?.message === 'string'
+              ? invocation.args.message
+              : 'Action completed';
           ctx.runtime.env.notify(level, message);
           return { ok: true, data: invocation.args };
         }
@@ -186,7 +213,10 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           const args = invocation.args ?? {};
           const env = getEnv();
           if (!env.navigate) {
-            return { ok: false, error: new Error('navigate action requires env.navigate to be configured') };
+            return {
+              ok: false,
+              error: new Error('navigate action requires env.navigate to be configured'),
+            };
           }
 
           if (args.back) {
@@ -194,7 +224,10 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           } else if (typeof args.url === 'string') {
             env.navigate(args.url, args.replace ? { replace: true } : undefined);
           } else {
-            return { ok: false, error: new Error('navigate action requires args.url or args.back') };
+            return {
+              ok: false,
+              error: new Error('navigate action requires args.url or args.back'),
+            };
           }
 
           return { ok: true };
@@ -204,30 +237,34 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           ctx.page?.refresh();
           return {
             ok: true,
-            data: ctx.page?.store.getState().refreshTick
+            data: ctx.page?.store.getState().refreshTick,
           };
         }
 
         case 'refreshSource': {
-          const sourceId = typeof invocation.args?.sourceId === 'string' ? invocation.args.sourceId : undefined;
+          const sourceId =
+            typeof invocation.args?.sourceId === 'string' ? invocation.args.sourceId : undefined;
           if (!sourceId) {
             return { ok: false, error: new Error('refreshSource requires sourceId') };
           }
 
           const refreshed = await runtime.refreshDataSource({
             id: sourceId,
-            scope: ctx.scope
+            scope: ctx.scope,
           });
 
           return {
             ok: refreshed,
             data: refreshed,
-            error: refreshed ? undefined : new Error(`Source not found: ${sourceId}`)
+            error: refreshed ? undefined : new Error(`Source not found: ${sourceId}`),
           };
         }
 
         default:
-          return { ok: false, error: new Error(`Unsupported built-in action: ${invocation.action}`) };
+          return {
+            ok: false,
+            error: new Error(`Unsupported built-in action: ${invocation.action}`),
+          };
       }
     },
 
@@ -250,7 +287,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           ok: false,
           error: resolveError ?? new Error('Component handle not found'),
           componentId: invocation.target.componentId,
-          componentName: invocation.target.componentName
+          componentName: invocation.target.componentName,
         };
       }
 
@@ -262,20 +299,21 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             error: new Error(`Unsupported component method: ${invocation.method}`),
             componentId: handle.id,
             componentName: handle.name,
-            componentType: handle.type
+            componentType: handle.type,
           };
         }
       }
 
       const result = await handle.capabilities.invoke(invocation.method, invocation.payload, ctx);
-      const baseResult = result && typeof result === 'object' && 'ok' in (result as object)
-        ? result as ActionResult
-        : { ok: true, data: result };
+      const baseResult =
+        result && typeof result === 'object' && 'ok' in (result as object)
+          ? (result as ActionResult)
+          : { ok: true, data: result };
       return {
         ...baseResult,
         componentId: handle.id,
         componentName: handle.name,
-        componentType: handle.type
+        componentType: handle.type,
       };
     },
 
@@ -287,10 +325,17 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
       const resolved = ctx.actionScope.resolve(invocation.actionName);
 
       if (!resolved) {
-        return Promise.resolve({ ok: false, error: new Error(`Unsupported action: ${invocation.actionName}`) });
+        return Promise.resolve({
+          ok: false,
+          error: new Error(`Unsupported action: ${invocation.actionName}`),
+        });
       }
 
-      return resolved.provider.invoke(resolved.method, invocation.payload, ctx) as Promise<ActionResult>;
-    }
+      return resolved.provider.invoke(
+        resolved.method,
+        invocation.payload,
+        ctx,
+      ) as Promise<ActionResult>;
+    },
   };
 }

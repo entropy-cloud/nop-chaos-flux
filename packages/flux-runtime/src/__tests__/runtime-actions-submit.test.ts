@@ -1,26 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiSchema, RendererEnv, RendererPlugin } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  createRendererRegistry,
-  createRendererRuntime
-} from '../index';
+import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
   it('uses the latest env fetcher without recreating runtime state', async () => {
-    const firstFetcher = vi.fn(async <T,>(api: ApiSchema) => ({
+    const firstFetcher = vi.fn(async <T>(api: ApiSchema) => ({
       ok: true,
       status: 200,
-      data: { tick: api.headers?.['x-tick'], source: 'first' } as T
+      data: { tick: api.headers?.['x-tick'], source: 'first' } as T,
     }));
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: firstFetcher as RendererEnv['fetcher']
+        fetcher: firstFetcher as RendererEnv['fetcher'],
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
@@ -31,27 +28,27 @@ describe('createRendererRuntime', () => {
           url: '/api/env',
           method: 'get',
           headers: {
-            'x-tick': '0'
-          }
-        }
+            'x-tick': '0',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(firstResult).toMatchObject({ ok: true, data: { tick: '0', source: 'first' } });
 
-    const secondFetcher = vi.fn(async <T,>(api: ApiSchema) => ({
+    const secondFetcher = vi.fn(async <T>(api: ApiSchema) => ({
       ok: true,
       status: 200,
-      data: { tick: api.headers?.['x-tick'], source: 'second' } as T
+      data: { tick: api.headers?.['x-tick'], source: 'second' } as T,
     }));
     Object.assign(runtime.env, {
       ...runtime.env,
-      fetcher: secondFetcher as RendererEnv['fetcher']
+      fetcher: secondFetcher as RendererEnv['fetcher'],
     });
 
     const secondResult = await runtime.dispatch(
@@ -61,15 +58,15 @@ describe('createRendererRuntime', () => {
           url: '/api/env',
           method: 'get',
           headers: {
-            'x-tick': '1'
-          }
-        }
+            'x-tick': '1',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(secondResult).toMatchObject({ ok: true, data: { tick: '1', source: 'second' } });
@@ -92,11 +89,11 @@ describe('createRendererRuntime', () => {
           return {
             ok: true,
             status: 200,
-            data: { saved: true } as T
+            data: { saved: true } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
@@ -108,19 +105,19 @@ describe('createRendererRuntime', () => {
         submitAction: async (options) =>
           runtime.dispatch(
             { action: 'ajax', args: { url: '/api/profile', method: 'post' } },
-            { runtime, scope: form.scope, page, signal: options?.signal }
-          )
-      }
+            { runtime, scope: form.scope, page, signal: options?.signal },
+          ),
+      },
     });
 
     const firstPromise = runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     const secondResult = await runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     expect(apiCallCount).toBe(1);
@@ -141,7 +138,7 @@ describe('createRendererRuntime', () => {
       env: {
         ...env,
         monitor: {
-          onActionEnd
+          onActionEnd,
         },
         fetcher: async <T>() => {
           await new Promise<void>((resolve) => {
@@ -150,11 +147,11 @@ describe('createRendererRuntime', () => {
           return {
             ok: true,
             status: 200,
-            data: { saved: true } as T
+            data: { saved: true } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
@@ -166,27 +163,27 @@ describe('createRendererRuntime', () => {
         submitAction: async (options) =>
           runtime.dispatch(
             { action: 'ajax', args: { url: '/api/profile', method: 'post' } },
-            { runtime, scope: form.scope, page, signal: options?.signal }
-          )
-      }
+            { runtime, scope: form.scope, page, signal: options?.signal },
+          ),
+      },
     });
 
     const firstPromise = runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     const secondResult = await runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     expect(secondResult).toMatchObject({ cancelled: true });
     expect(onActionEnd).toHaveBeenCalledWith(
       expect.objectContaining({
         actionType: 'submitForm',
-        result: expect.objectContaining({ cancelled: true })
-      })
+        result: expect.objectContaining({ cancelled: true }),
+      }),
     );
 
     resolveApi?.();
@@ -207,13 +204,13 @@ describe('createRendererRuntime', () => {
             data: {
               payload: {
                 saved: true,
-                username: 'Alice'
-              }
-            } as T
+                username: 'Alice',
+              },
+            } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ token: 'page-token' });
     const form = runtime.createFormRuntime({
@@ -229,35 +226,36 @@ describe('createRendererRuntime', () => {
               args: {
                 url: '/api/profile',
                 method: 'post',
-                requestAdaptor: 'return {headers: {Authorization: scope.token}, data: {formUser: scope.username}};',
-                responseAdaptor: 'return payload.payload;'
-              }
+                requestAdaptor:
+                  'return {headers: {Authorization: scope.token}, data: {formUser: scope.username}};',
+                responseAdaptor: 'return payload.payload;',
+              },
             },
-            { runtime, scope: form.scope, page }
-          )
-      }
+            { runtime, scope: form.scope, page },
+          ),
+      },
     });
 
     const result = await runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     expect(fetchCalls).toHaveLength(1);
     expect(fetchCalls[0]).toMatchObject({
       headers: {
-        Authorization: 'page-token'
+        Authorization: 'page-token',
       },
       data: {
-        formUser: 'Alice'
-      }
+        formUser: 'Alice',
+      },
     });
     expect(result).toMatchObject({
       ok: true,
       data: {
         saved: true,
-        username: 'Alice'
-      }
+        username: 'Alice',
+      },
     });
   });
 
@@ -272,11 +270,11 @@ describe('createRendererRuntime', () => {
           return {
             ok: true,
             status: 200,
-            data: { saved: true } as T
+            data: { saved: true } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ apiPath: '/api/profile' });
     const form = runtime.createFormRuntime({
@@ -288,21 +286,21 @@ describe('createRendererRuntime', () => {
         submitAction: async () =>
           runtime.dispatch(
             { action: 'ajax', args: { url: '${apiPath}', method: 'post' } },
-            { runtime, scope: form.scope, page }
-          )
-      }
+            { runtime, scope: form.scope, page },
+          ),
+      },
     });
 
     const result = await runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     expect(result).toMatchObject({ ok: true, data: { saved: true } });
     expect(fetchCalls).toHaveLength(1);
     expect(fetchCalls[0]).toMatchObject({
       url: '/api/profile',
-      method: 'post'
+      method: 'post',
     });
   });
 
@@ -322,11 +320,11 @@ describe('createRendererRuntime', () => {
           return {
             ok: true,
             status: 200,
-            data: { saved: true } as T
+            data: { saved: true } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
@@ -337,15 +335,19 @@ describe('createRendererRuntime', () => {
       lifecycle: {
         submitAction: async () =>
           runtime.dispatch(
-            { action: 'ajax', args: { url: '/api/profile', method: 'post' }, retry: { times: 2, delay: 0 } },
-            { runtime, scope: form.scope, page }
-          )
-      }
+            {
+              action: 'ajax',
+              args: { url: '/api/profile', method: 'post' },
+              retry: { times: 2, delay: 0 },
+            },
+            { runtime, scope: form.scope, page },
+          ),
+      },
     });
 
     const result = await runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     expect(result).toMatchObject({ ok: true, data: { saved: true }, attempts: 3, failureCount: 2 });
@@ -362,13 +364,17 @@ describe('createRendererRuntime', () => {
           capturedSignal = ctx.signal;
 
           return new Promise((_, reject) => {
-            ctx.signal?.addEventListener('abort', () => {
-              reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
-            }, { once: true });
+            ctx.signal?.addEventListener(
+              'abort',
+              () => {
+                reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+              },
+              { once: true },
+            );
           }) as Promise<{ ok: true; status: number; data: T }>;
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
@@ -380,14 +386,14 @@ describe('createRendererRuntime', () => {
         submitAction: async () =>
           runtime.dispatch(
             { action: 'ajax', args: { url: '/api/profile', method: 'post' }, timeout: 5 },
-            { runtime, scope: form.scope, page }
-          )
-      }
+            { runtime, scope: form.scope, page },
+          ),
+      },
     });
 
     const resultPromise = runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -395,7 +401,7 @@ describe('createRendererRuntime', () => {
     await expect(resultPromise).resolves.toMatchObject({
       ok: false,
       cancelled: true,
-      timedOut: true
+      timedOut: true,
     });
     expect(capturedSignal?.aborted).toBe(true);
   });
@@ -410,7 +416,7 @@ describe('createRendererRuntime', () => {
 
         return {
           ...schema,
-          text: 'Prepared text'
+          text: 'Prepared text',
         };
       },
       afterCompile(template) {
@@ -426,22 +432,22 @@ describe('createRendererRuntime', () => {
             ...root,
             propsProgram: createExpressionCompiler(createFormulaCompiler()).compileValue({
               ...root.schema,
-              text: 'Prepared text + compiled'
-            })
-          }
+              text: 'Prepared text + compiled',
+            }),
+          },
         };
-      }
+      },
     };
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
       plugins: [plugin],
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = runtime.compile({
       type: 'text',
-      text: 'Original text'
+      text: 'Original text',
     });
     const page = runtime.createPageRuntime({});
     const templateNode = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;

@@ -11,7 +11,7 @@ vi.mock('@nop-chaos/ui', () => {
       </button>
     ),
     ScrollArea: ({ children }: any) => <div data-testid="scroll-area">{children}</div>,
-    cn: (...args: any[]) => args.filter(Boolean).join(' ')
+    cn: (...args: any[]) => args.filter(Boolean).join(' '),
   };
 });
 
@@ -20,12 +20,12 @@ function createMockBridge(headings: any[] = []) {
     command: {
       getValue: () => ({
         data: {
-          main: headings
-        }
+          main: headings,
+        },
       }),
-      executeLocationCatalog: vi.fn()
+      executeLocationCatalog: vi.fn(),
     },
-    subscribeContentChange: () => () => {}
+    subscribeContentChange: () => () => {},
   };
 }
 
@@ -58,8 +58,18 @@ describe('OutlinePanel', () => {
 
   it('renders headings from bridge', () => {
     const bridge = createMockBridge([
-      { id: 'h1', value: 'Introduction', level: 'first', valueList: [{ value: 'Introduction', level: 'first' }] },
-      { id: 'h2', value: 'Methods', level: 'second', valueList: [{ value: 'Methods', level: 'second' }] }
+      {
+        id: 'h1',
+        value: 'Introduction',
+        level: 'first',
+        valueList: [{ value: 'Introduction', level: 'first' }],
+      },
+      {
+        id: 'h2',
+        value: 'Methods',
+        level: 'second',
+        valueList: [{ value: 'Methods', level: 'second' }],
+      },
     ]);
     render(<OutlinePanel bridge={bridge as any} />);
 
@@ -71,7 +81,7 @@ describe('OutlinePanel', () => {
     const bridge = createMockBridge([
       { id: 'h1', value: 'Chapter 1', level: 'first', titleId: 'h1' },
       { id: 'h2', value: 'Section 1.1', level: 'second', titleId: 'h2' },
-      { id: 'h3', value: 'Section 1.1.1', level: 'third', titleId: 'h3' }
+      { id: 'h3', value: 'Section 1.1.1', level: 'third', titleId: 'h3' },
     ]);
     render(<OutlinePanel bridge={bridge as any} />);
 
@@ -82,7 +92,7 @@ describe('OutlinePanel', () => {
 
   it('handles bridge without command gracefully', () => {
     const bridge = {
-      subscribeContentChange: () => () => {}
+      subscribeContentChange: () => () => {},
     };
     render(<OutlinePanel bridge={bridge as any} />);
     expect(screen.getByText('No headings found')).toBeInTheDocument();
@@ -91,7 +101,7 @@ describe('OutlinePanel', () => {
   it('handles bridge with command but no getValue', () => {
     const bridge = {
       command: {},
-      subscribeContentChange: () => () => {}
+      subscribeContentChange: () => () => {},
     };
     render(<OutlinePanel bridge={bridge as any} />);
     expect(screen.getByText('No headings found')).toBeInTheDocument();

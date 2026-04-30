@@ -5,11 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type { TableSchema } from '../schemas';
 import type { FixedColumnLayout } from './fixed-columns';
 import type { TableRowEntry } from './types';
-import {
-  buildFlattenedItems,
-  renderDataRow,
-  renderExpandedRow
-} from './table-body-row-rendering';
+import { buildFlattenedItems, renderDataRow, renderExpandedRow } from './table-body-row-rendering';
 
 const DEFAULT_ROW_ESTIMATE = 44;
 const OVERSCAN = 5;
@@ -35,7 +31,6 @@ interface TableBodyRowsProps {
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-
 export function TableBodyRows({
   props,
   columns,
@@ -58,12 +53,12 @@ export function TableBodyRows({
 }: TableBodyRowsProps) {
   if (!virtualEnabled || processedData.length === 0) {
     return (
-        <NonVirtualBody
-          props={props}
-          columns={columns}
-          responsiveHiddenColumns={responsiveHiddenColumns}
-          processedData={processedData}
-          rowScopeCache={rowScopeCache}
+      <NonVirtualBody
+        props={props}
+        columns={columns}
+        responsiveHiddenColumns={responsiveHiddenColumns}
+        processedData={processedData}
+        rowScopeCache={rowScopeCache}
         rowRepeatedTemplateId={rowRepeatedTemplateId}
         expandedRowKeys={expandedRowKeys}
         selectedRowKeys={selectedRowKeys}
@@ -147,19 +142,47 @@ function NonVirtualBody({
 
           return (
             <React.Fragment key={rowKey}>
-                  {renderDataRow(
-                    { kind: 'data', entry, rowScope, rowKey, rowInstancePath, isExpanded, isSelected, isEven },
-                    schemaProps, columns, helpers, props, fixedColumnLayout, showExpandColumn, expandRowByClick, onToggleExpand, onSelectRow, isStriped
-                  )}
+              {renderDataRow(
+                {
+                  kind: 'data',
+                  entry,
+                  rowScope,
+                  rowKey,
+                  rowInstancePath,
+                  isExpanded,
+                  isSelected,
+                  isEven,
+                },
+                schemaProps,
+                columns,
+                helpers,
+                props,
+                fixedColumnLayout,
+                showExpandColumn,
+                expandRowByClick,
+                onToggleExpand,
+                onSelectRow,
+                isStriped,
+              )}
               {isExpanded && schemaProps.expandable?.expandedRowRegionKey
                 ? renderExpandedRow(
                     { kind: 'expanded', rowKey, columnCount },
-                    schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId, responsiveHiddenColumns
+                    schemaProps,
+                    helpers,
+                    props,
+                    rowScopeCache,
+                    rowRepeatedTemplateId,
+                    responsiveHiddenColumns,
                   )
                 : isExpanded && responsiveHiddenColumns.length > 0
                   ? renderExpandedRow(
                       { kind: 'expanded', rowKey, columnCount },
-                      schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId, responsiveHiddenColumns
+                      schemaProps,
+                      helpers,
+                      props,
+                      rowScopeCache,
+                      rowRepeatedTemplateId,
+                      responsiveHiddenColumns,
                     )
                   : null}
             </React.Fragment>
@@ -167,7 +190,8 @@ function NonVirtualBody({
         })
       )}
     </TableBody>
-  );}
+  );
+}
 
 /* eslint-disable react-hooks/incompatible-library */
 function VirtualBody({
@@ -193,8 +217,25 @@ function VirtualBody({
   const helpers = props.helpers;
 
   const flattenedItems = React.useMemo(
-    () => buildFlattenedItems(processedData, rowScopeCache, expandedRowKeys, selectedRowKeys, columnCount, props, rowRepeatedTemplateId),
-    [processedData, rowScopeCache, expandedRowKeys, selectedRowKeys, columnCount, props, rowRepeatedTemplateId]
+    () =>
+      buildFlattenedItems(
+        processedData,
+        rowScopeCache,
+        expandedRowKeys,
+        selectedRowKeys,
+        columnCount,
+        props,
+        rowRepeatedTemplateId,
+      ),
+    [
+      processedData,
+      rowScopeCache,
+      expandedRowKeys,
+      selectedRowKeys,
+      columnCount,
+      props,
+      rowRepeatedTemplateId,
+    ],
   );
 
   const rowVirtualizer = useVirtualizer({
@@ -218,17 +259,27 @@ function VirtualBody({
       {flattenedItems.length === 0 ? (
         <TableRow data-slot="table-empty-row">
           <TableCell colSpan={columnCount} data-slot="table-empty-cell">
-            <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div
+              style={{
+                height: 200,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               {''}
             </div>
           </TableCell>
         </TableRow>
       ) : (
         <>
-          {rowVirtualizer.getTotalSize() > 0 && (() => {
-            const items = rowVirtualizer.getVirtualItems();
-            return items.length > 0 ? <tr aria-hidden style={{ height: items[0].start }} /> : null;
-          })()}
+          {rowVirtualizer.getTotalSize() > 0 &&
+            (() => {
+              const items = rowVirtualizer.getVirtualItems();
+              return items.length > 0 ? (
+                <tr aria-hidden style={{ height: items[0].start }} />
+              ) : null;
+            })()}
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const item = flattenedItems[virtualRow.index];
             if (!item) return null;
@@ -237,7 +288,17 @@ function VirtualBody({
               return (
                 <React.Fragment key={virtualRow.key}>
                   {renderDataRow(
-                    item, schemaProps, columns, helpers, props, fixedColumnLayout, showExpandColumn, expandRowByClick, onToggleExpand, onSelectRow, isStriped
+                    item,
+                    schemaProps,
+                    columns,
+                    helpers,
+                    props,
+                    fixedColumnLayout,
+                    showExpandColumn,
+                    expandRowByClick,
+                    onToggleExpand,
+                    onSelectRow,
+                    isStriped,
                   )}
                 </React.Fragment>
               );
@@ -246,18 +307,25 @@ function VirtualBody({
             return (
               <React.Fragment key={virtualRow.key}>
                 {renderExpandedRow(
-                  item, schemaProps, helpers, props, rowScopeCache, rowRepeatedTemplateId, responsiveHiddenColumns
+                  item,
+                  schemaProps,
+                  helpers,
+                  props,
+                  rowScopeCache,
+                  rowRepeatedTemplateId,
+                  responsiveHiddenColumns,
                 )}
               </React.Fragment>
             );
           })}
-          {rowVirtualizer.getTotalSize() > 0 && (() => {
-            const items = rowVirtualizer.getVirtualItems();
-            if (items.length === 0) return null;
-            const lastItem = items[items.length - 1];
-            const bottomPad = rowVirtualizer.getTotalSize() - lastItem.end;
-            return bottomPad > 0 ? <tr aria-hidden style={{ height: bottomPad }} /> : null;
-          })()}
+          {rowVirtualizer.getTotalSize() > 0 &&
+            (() => {
+              const items = rowVirtualizer.getVirtualItems();
+              if (items.length === 0) return null;
+              const lastItem = items[items.length - 1];
+              const bottomPad = rowVirtualizer.getTotalSize() - lastItem.end;
+              return bottomPad > 0 ? <tr aria-hidden style={{ height: bottomPad }} /> : null;
+            })()}
         </>
       )}
     </TableBody>

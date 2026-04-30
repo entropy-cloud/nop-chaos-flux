@@ -1,4 +1,8 @@
-import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
+import {
+  registerRendererDefinitions,
+  type RendererDefinition,
+  type RendererRegistry,
+} from '@nop-chaos/flux-core';
 import { SpreadsheetPageRenderer } from './page-renderer.js';
 import { spreadsheetHostContract } from './spreadsheet-manifest.js';
 

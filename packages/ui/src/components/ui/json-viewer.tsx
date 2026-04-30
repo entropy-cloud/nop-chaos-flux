@@ -1,55 +1,55 @@
-import * as React from "react"
-import { JsonView, allExpanded, defaultStyles } from "react-json-view-lite"
-import { stringify } from "yaml"
-import { Tabs, TabsList, TabsTrigger } from "./tabs"
-import { cn } from "../../lib/utils"
+import * as React from 'react';
+import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
+import { stringify } from 'yaml';
+import { Tabs, TabsList, TabsTrigger } from './tabs';
+import { cn } from '../../lib/utils';
 
 type JsonViewerProps = {
-  data: Record<string, unknown> | unknown[]
-  defaultExpand?: boolean
-  className?: string
-}
+  data: Record<string, unknown> | unknown[];
+  defaultExpand?: boolean;
+  className?: string;
+};
 
 function JsonViewer({ data, defaultExpand = true, className }: JsonViewerProps) {
   return (
-    <div className={cn("json-viewer", className)}>
+    <div className={cn('json-viewer', className)}>
       <JsonView
         data={data}
         shouldExpandNode={defaultExpand ? allExpanded : undefined}
         style={defaultStyles}
       />
     </div>
-  )
+  );
 }
 
 type DataViewerProps = {
-  data: Record<string, unknown> | unknown[]
-  defaultExpand?: boolean
-  className?: string
-}
+  data: Record<string, unknown> | unknown[];
+  defaultExpand?: boolean;
+  className?: string;
+};
 
 function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) {
-  const [format, setFormat] = React.useState<"json" | "yaml">("json")
+  const [format, setFormat] = React.useState<'json' | 'yaml'>('json');
 
   const yamlText = React.useMemo(() => {
     try {
-      return stringify(data, { lineWidth: 0 })
+      return stringify(data, { lineWidth: 0 });
     } catch {
-      return ""
+      return '';
     }
-  }, [data])
+  }, [data]);
 
   return (
-    <div className={cn("flex flex-col", className)}>
+    <div className={cn('flex flex-col', className)}>
       <div className="flex flex-col space-y-2">
-        <Tabs value={format} onValueChange={(value) => setFormat(value as "json" | "yaml")}>
+        <Tabs value={format} onValueChange={(value) => setFormat(value as 'json' | 'yaml')}>
           <TabsList className="grid w-full grid-cols-2 gap-2">
             <TabsTrigger value="json">JSON</TabsTrigger>
             <TabsTrigger value="yaml">YAML</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="overflow-auto min-h-[300px] max-h-[calc(100vh-200px)]">
-          {format === "json" ? (
+          {format === 'json' ? (
             <JsonViewer data={data} defaultExpand={defaultExpand} />
           ) : (
             <pre className="font-mono text-xs leading-relaxed whitespace-pre">{yamlText}</pre>
@@ -57,8 +57,8 @@ function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) 
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export { JsonViewer, DataViewer }
-export type { JsonViewerProps, DataViewerProps }
+export { JsonViewer, DataViewer };
+export type { JsonViewerProps, DataViewerProps };

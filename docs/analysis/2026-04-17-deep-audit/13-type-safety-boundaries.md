@@ -9,30 +9,30 @@
 
 ## any 使用统计（按包分组）
 
-| 包 | 合理 | 可疑 | 危险 |
-|---|---:|---:|---:|
-| flow-designer-core | 22 | 0 | 0 |
-| flow-designer-renderers | 38 | 2 | 0 |
-| flux-code-editor | 3 | 0 | 3 |
-| flux-core | 0 | 18 | 5 |
-| flux-formula | 4 | 15 | 1 |
-| flux-react | 23 | 14 | 0 |
-| flux-renderers-basic | 1 | 2 | 0 |
-| flux-renderers-data | 3 | 11 | 2 |
-| flux-renderers-form | 5 | 2 | 0 |
-| flux-renderers-form-advanced | 45 | 9 | 2 |
-| flux-runtime | 106 | 54 | 0 |
-| report-designer-core | 7 | 1 | 0 |
-| report-designer-renderers | 18 | 4 | 0 |
-| spreadsheet-core | 4 | 0 | 0 |
-| spreadsheet-renderers | 6 | 2 | 0 |
-| word-editor-core | 11 | 0 | 0 |
-| word-editor-renderers | 59 | 0 | 0 |
-| ui | 0 | 0 | 0 |
-| tailwind-preset | 0 | 0 | 0 |
-| theme-tokens | 0 | 0 | 0 |
-| nop-debugger | 0 | 0 | 0 |
-| packages/types | 0 | 0 | 0 |
+| 包                           | 合理 | 可疑 | 危险 |
+| ---------------------------- | ---: | ---: | ---: |
+| flow-designer-core           |   22 |    0 |    0 |
+| flow-designer-renderers      |   38 |    2 |    0 |
+| flux-code-editor             |    3 |    0 |    3 |
+| flux-core                    |    0 |   18 |    5 |
+| flux-formula                 |    4 |   15 |    1 |
+| flux-react                   |   23 |   14 |    0 |
+| flux-renderers-basic         |    1 |    2 |    0 |
+| flux-renderers-data          |    3 |   11 |    2 |
+| flux-renderers-form          |    5 |    2 |    0 |
+| flux-renderers-form-advanced |   45 |    9 |    2 |
+| flux-runtime                 |  106 |   54 |    0 |
+| report-designer-core         |    7 |    1 |    0 |
+| report-designer-renderers    |   18 |    4 |    0 |
+| spreadsheet-core             |    4 |    0 |    0 |
+| spreadsheet-renderers        |    6 |    2 |    0 |
+| word-editor-core             |   11 |    0 |    0 |
+| word-editor-renderers        |   59 |    0 |    0 |
+| ui                           |    0 |    0 |    0 |
+| tailwind-preset              |    0 |    0 |    0 |
+| theme-tokens                 |    0 |    0 |    0 |
+| nop-debugger                 |    0 |    0 |    0 |
+| packages/types               |    0 |    0 |    0 |
 
 补充检查结论：
 
@@ -42,6 +42,7 @@
 - `Record<string, unknown>`：大多数落在 schema/runtime payload 边界，未见需要单独上报的普遍误用。
 
 ### [维度13] RendererDefinition 对外类型把 schema 泛型擦成 `any`
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-core\src\types\renderer-core.ts:97-100`
 - **严重程度**: P1
 - **分类**: 危险
@@ -51,6 +52,7 @@
 - **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/architecture/flux-core.md`
 
 ### [维度13] RendererEnv 的 functions/filters 在公开 API 上直接暴露 `any`
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-core\src\types\renderer-api.ts:54-60`
 - **严重程度**: P1
 - **分类**: 危险
@@ -60,6 +62,7 @@
 - **参考文档**: `docs/architecture/flux-core.md`
 
 ### [维度13] CodeEditorSchema 的公开 schema 字段使用 `any`
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\src\types.ts:27-44`
 - **严重程度**: P1
 - **分类**: 危险
@@ -69,6 +72,7 @@
 - **参考文档**: `docs/architecture/renderer-runtime.md`
 
 ### [维度13] Condition Builder 公开 schema 仍以 `any[]` / `any` 暴露核心配置
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form-advanced\src\condition-builder\types.ts:133-149`
 - **严重程度**: P1
 - **分类**: 危险
@@ -78,6 +82,7 @@
 - **参考文档**: `docs/architecture/form-validation.md`, `docs/architecture/renderer-runtime.md`
 
 ### [维度13] ChartSchema 的公开数据入口仍是 `any`
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-data\src\chart-schemas.ts:12-18`
 - **严重程度**: P2
 - **分类**: 危险
@@ -87,6 +92,7 @@
 - **参考文档**: `docs/architecture/renderer-runtime.md`
 
 ### [维度13] 编译后的 action 在 React 层被存成 `unknown`，再用 `as any` 送入 dispatch
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-core\src\types\node-identity.ts:76-90`, `C:\can\nop\nop-chaos-flux\packages\flux-react\src\helpers.tsx:103-115`, `C:\can\nop\nop-chaos-flux\packages\flux-react\src\node-renderer.tsx:159-175`, `C:\can\nop\nop-chaos-flux\packages\flux-react\src\node-renderer-effects.ts:65-79`
 - **严重程度**: P1
 - **分类**: 可疑
@@ -96,6 +102,7 @@
 - **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/architecture/action-scope-and-imports.md`
 
 ### [维度13] Node runtime 在核心求值路径上把状态参数降成 `any`
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\node-runtime.ts:49-60`
 - **严重程度**: P2
 - **分类**: 可疑
@@ -105,6 +112,7 @@
 - **参考文档**: `docs/architecture/flux-runtime-module-boundaries.md`
 
 ### [维度13] 内建校验器注册表用 `SyncValidator<any>` 擦除了 rule-kind 对应关系
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\validation\validators.ts:16-24`, `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\validation\validators.ts:100-202`
 - **严重程度**: P2
 - **分类**: 可疑
@@ -114,6 +122,7 @@
 - **参考文档**: `docs/architecture/form-validation.md`
 
 ### [维度13] Formula 注册函数的公开签名仍是 `(...args: any[]) => any`
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-formula\src\registry.ts:1-4`
 - **严重程度**: P2
 - **分类**: 危险

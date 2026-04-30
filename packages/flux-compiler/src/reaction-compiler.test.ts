@@ -13,8 +13,8 @@ describe('compileReaction', () => {
         watch: '${selectedId}',
         actions: {
           action: 'reload',
-          targetId: 'details-panel'
-        }
+          targetId: 'details-panel',
+        },
       };
 
       const compiled = compileReaction('rx-1', schema, expressionCompiler);
@@ -32,8 +32,8 @@ describe('compileReaction', () => {
         type: 'reaction',
         watch: 'staticValue',
         actions: {
-          action: 'reload'
-        }
+          action: 'reload',
+        },
       };
 
       const compiled = compileReaction('rx-2', schema, expressionCompiler);
@@ -50,8 +50,8 @@ describe('compileReaction', () => {
         type: 'reaction',
         watch: ['${userId}', '${filters}', '${page}'],
         actions: {
-          action: 'reload'
-        }
+          action: 'reload',
+        },
       };
 
       const compiled = compileReaction('rx-3', schema, expressionCompiler);
@@ -65,8 +65,8 @@ describe('compileReaction', () => {
         type: 'reaction',
         watch: ['counter'],
         actions: {
-          action: 'reload'
-        }
+          action: 'reload',
+        },
       };
 
       const compiled = compileReaction('rx-3b', schema, expressionCompiler);
@@ -81,8 +81,8 @@ describe('compileReaction', () => {
         // when is a raw expression (not a template)
         when: 'formData.status === "ready"',
         actions: {
-          action: 'submit'
-        }
+          action: 'submit',
+        },
       };
 
       const compiled = compileReaction('rx-4', schema, expressionCompiler);
@@ -100,8 +100,8 @@ describe('compileReaction', () => {
         watch: '${config}',
         immediate: true,
         actions: {
-          action: 'initialize'
-        }
+          action: 'initialize',
+        },
       };
 
       const compiled = compileReaction('rx-5', schema, expressionCompiler);
@@ -115,8 +115,8 @@ describe('compileReaction', () => {
         watch: '${searchQuery}',
         debounce: 300,
         actions: {
-          action: 'search'
-        }
+          action: 'search',
+        },
       };
 
       const compiled = compileReaction('rx-6', schema, expressionCompiler);
@@ -130,8 +130,8 @@ describe('compileReaction', () => {
         watch: '${initialized}',
         once: true,
         actions: {
-          action: 'setup'
-        }
+          action: 'setup',
+        },
       };
 
       const compiled = compileReaction('rx-7', schema, expressionCompiler);
@@ -147,8 +147,8 @@ describe('compileReaction', () => {
         watch: '${data}',
         dependsOn: ['source-1', 'source-2'],
         actions: {
-          action: 'process'
-        }
+          action: 'process',
+        },
       };
 
       const compiled = compileReaction('rx-8', schema, expressionCompiler);
@@ -165,8 +165,8 @@ describe('compileReaction', () => {
         actions: [
           { action: 'validate' },
           { action: 'save' },
-          { action: 'notify', args: { message: 'Saved!' } }
-        ] as unknown as import('@nop-chaos/flux-core').ActionSchema
+          { action: 'notify', args: { message: 'Saved!' } },
+        ] as unknown as import('@nop-chaos/flux-core').ActionSchema,
       };
 
       const compiled = compileReaction('rx-9', schema, expressionCompiler);
@@ -182,9 +182,9 @@ describe('compileReaction', () => {
           action: 'setValue',
           args: {
             path: 'computed',
-            value: '${value * 2}'
-          }
-        }
+            value: '${value * 2}',
+          },
+        },
       };
 
       const compiled = compileReaction('rx-10', schema, expressionCompiler);
@@ -200,8 +200,8 @@ describe('compileReaction', () => {
         watch: 'trigger',
         actions: {
           action: 'doSomething',
-          args: { key: 'value' }
-        }
+          args: { key: 'value' },
+        },
       };
 
       const compiled = compileReaction('rx-11', schema, expressionCompiler);
@@ -214,8 +214,8 @@ describe('compileReaction', () => {
         type: 'reaction',
         watch: '${data}',
         actions: {
-          action: 'process'
-        }
+          action: 'process',
+        },
       };
 
       const compiled = compileReaction('rx-12', schema, expressionCompiler);
@@ -229,8 +229,8 @@ describe('compileReaction', () => {
         watch: 'data',
         when: 'data.ready',
         actions: {
-          action: 'process'
-        }
+          action: 'process',
+        },
       };
 
       const compiled = compileReaction('rx-13', schema, expressionCompiler);
@@ -246,9 +246,9 @@ describe('compileReaction', () => {
         actions: {
           action: 'transform',
           args: {
-            result: '${input.toUpperCase()}'
-          }
-        }
+            result: '${input.toUpperCase()}',
+          },
+        },
       };
 
       const compiled = compileReaction('rx-14', schema, expressionCompiler);

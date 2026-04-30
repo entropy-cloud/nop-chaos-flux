@@ -221,14 +221,14 @@ Reasoning:
 If a region declares:
 
 ```ts
-params: ['item', 'index']
+params: ['item', 'index'];
 ```
 
 and the renderer calls:
 
 ```tsx
 props.regions.item?.render({
-  bindings: { item, index }
+  bindings: { item, index },
 });
 ```
 
@@ -304,8 +304,8 @@ Illustrative runtime shape:
 region.render({
   bindings: {
     item,
-    index
-  }
+    index,
+  },
 });
 ```
 
@@ -460,7 +460,7 @@ Renderer:
 const itemRender = (item: Row, index: number) =>
   props.regions.item?.render({
     bindings: { item, index },
-    instancePath: [{ repeatedTemplateId: 'item', instanceKey: String(item.id ?? index) }]
+    instancePath: [{ repeatedTemplateId: 'item', instanceKey: String(item.id ?? index) }],
   });
 ```
 

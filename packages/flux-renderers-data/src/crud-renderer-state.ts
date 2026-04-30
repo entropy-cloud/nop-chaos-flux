@@ -35,7 +35,13 @@ export interface CrudResolvedSource {
   total?: number;
 }
 
-import { isRecord, toRecord, toPositiveNumber, toStringArray, shallowEqualRecords } from '@nop-chaos/flux-core';
+import {
+  isRecord,
+  toRecord,
+  toPositiveNumber,
+  toStringArray,
+  shallowEqualRecords,
+} from '@nop-chaos/flux-core';
 
 export function normalizePagination(value: unknown, fallbackPageSize: number): CrudPaginationState {
   const record = toRecord(value);
@@ -81,9 +87,15 @@ export function applyQueryToRows(rows: unknown[], query: Record<string, unknown>
           return true;
         }
         if (field.toLowerCase().includes('keyword')) {
-          return Object.values(row).some((part) => String(part ?? '').toLowerCase().includes(needle));
+          return Object.values(row).some((part) =>
+            String(part ?? '')
+              .toLowerCase()
+              .includes(needle),
+          );
         }
-        return String(cell ?? '').toLowerCase().includes(needle);
+        return String(cell ?? '')
+          .toLowerCase()
+          .includes(needle);
       }
       return cell === value;
     });
@@ -109,11 +121,12 @@ export function normalizeCrudSourceValue(value: unknown): CrudResolvedSource {
           ? record.list
           : EMPTY_ROWS;
 
-  const total = typeof record.total === 'number' && Number.isFinite(record.total)
-    ? record.total
-    : typeof record.count === 'number' && Number.isFinite(record.count)
-      ? record.count
-      : rows.length;
+  const total =
+    typeof record.total === 'number' && Number.isFinite(record.total)
+      ? record.total
+      : typeof record.count === 'number' && Number.isFinite(record.count)
+        ? record.count
+        : rows.length;
 
   return {
     rows,
@@ -124,7 +137,7 @@ export function normalizeCrudSourceValue(value: unknown): CrudResolvedSource {
 export function useCrudStatusPublisher(
   scope: ScopeRef | undefined,
   statusPath: string | undefined,
-  summary: CrudStatusSummary
+  summary: CrudStatusSummary,
 ) {
   const prevSummaryRef = useRef<CrudStatusSummary | undefined>(undefined);
 
@@ -148,7 +161,7 @@ export function useCrudStatusPublisher(
 export function useCrudHandle(
   props: RendererComponentProps<CrudSchema>,
   internalTableRef: React.RefObject<InternalTableHandle>,
-  handleRefresh: () => void
+  handleRefresh: () => void,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
   const cid = props.meta.cid;
@@ -188,7 +201,7 @@ export function useCrudHandle(
           },
         },
       },
-      { cid }
+      { cid },
     );
   }, [componentRegistry, cid, handleRefresh, id, internalTableRef, name]);
 }
@@ -228,11 +241,12 @@ export function useCrudRuntimeState(args: {
 
       return {
         queryState: {
-          values: isRecord(query) && isRecord(query.values)
-            ? toRecord(query.values)
-            : isRecord(ownerQuery.values)
-              ? toRecord(ownerQuery.values)
-              : defaultQuery,
+          values:
+            isRecord(query) && isRecord(query.values)
+              ? toRecord(query.values)
+              : isRecord(ownerQuery.values)
+                ? toRecord(ownerQuery.values)
+                : defaultQuery,
           refreshCount: isRecord(query)
             ? toPositiveNumber(query.refreshCount, 0)
             : toPositiveNumber(ownerQuery.refreshCount, 0),
@@ -244,15 +258,15 @@ export function useCrudRuntimeState(args: {
       };
     },
     (a, b) =>
-      a.queryState.refreshCount === b.queryState.refreshCount
-      && shallowEqualRecords(a.queryState.values, b.queryState.values)
-      && a.paginationState.currentPage === b.paginationState.currentPage
-      && a.paginationState.pageSize === b.paginationState.pageSize
-      && a.sortState.field === b.sortState.field
-      && a.sortState.order === b.sortState.order
-      && shallowEqualRecords(a.filterState, b.filterState)
-      && a.selectedRowKeys.length === b.selectedRowKeys.length
-      && a.selectedRowKeys.every((value, index) => value === b.selectedRowKeys[index])
+      a.queryState.refreshCount === b.queryState.refreshCount &&
+      shallowEqualRecords(a.queryState.values, b.queryState.values) &&
+      a.paginationState.currentPage === b.paginationState.currentPage &&
+      a.paginationState.pageSize === b.paginationState.pageSize &&
+      a.sortState.field === b.sortState.field &&
+      a.sortState.order === b.sortState.order &&
+      shallowEqualRecords(a.filterState, b.filterState) &&
+      a.selectedRowKeys.length === b.selectedRowKeys.length &&
+      a.selectedRowKeys.every((value, index) => value === b.selectedRowKeys[index]),
   );
 
   useEffect(() => {
@@ -277,7 +291,16 @@ export function useCrudRuntimeState(args: {
     if (!Array.isArray(getIn(snapshot, selectionStatePath))) {
       scope.update(selectionStatePath, []);
     }
-  }, [defaultQuery, fallbackPageSize, filterStatePath, paginationStatePath, queryStatePath, scope, selectionStatePath, sortStatePath]);
+  }, [
+    defaultQuery,
+    fallbackPageSize,
+    filterStatePath,
+    paginationStatePath,
+    queryStatePath,
+    scope,
+    selectionStatePath,
+    sortStatePath,
+  ]);
 
   return useMemo(() => state, [state]);
 }

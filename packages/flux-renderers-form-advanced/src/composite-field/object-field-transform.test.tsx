@@ -8,7 +8,7 @@ import {
   env,
   formulaCompiler,
   submitButtonRenderer,
-  makeCapturingFetcher
+  makeCapturingFetcher,
 } from './__tests__/object-field-test-support';
 
 describe('object-field transform actions', () => {
@@ -25,12 +25,12 @@ describe('object-field transform actions', () => {
               ok: true,
               data: {
                 firstName: 'Adapted',
-                lastName: 'User'
-              }
+                lastName: 'User',
+              },
             };
-          }
-        })
-      }))
+          },
+        }),
+      })),
     };
     const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
 
@@ -42,8 +42,8 @@ describe('object-field transform actions', () => {
           data: {
             profile: {
               firstName: 'Alice',
-              lastName: 'Smith'
-            }
+              lastName: 'Smith',
+            },
           },
           body: [
             {
@@ -54,19 +54,25 @@ describe('object-field transform actions', () => {
               transformInAction: { action: 'objectLib:toDraft' },
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
-                { type: 'input-text', name: 'lastName', label: 'Last Name' }
-              ]
-            }
-          ]
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
+          ],
         }}
         env={{ ...env, importLoader }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Adapted'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Adapted'),
+    );
     expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('User');
-    expect(calls[0]).toEqual({ value: { firstName: 'Alice', lastName: 'Smith' }, name: 'profile', readOnly: false });
+    expect(calls[0]).toEqual({
+      value: { firstName: 'Alice', lastName: 'Smith' },
+      name: 'profile',
+      readOnly: false,
+    });
   });
 
   it('runs transformOutAction before writing child edits back to the parent form', async () => {
@@ -85,15 +91,15 @@ describe('object-field transform actions', () => {
                 ok: true,
                 data: {
                   firstName: String(value?.firstName ?? '').toUpperCase(),
-                  lastName: value?.lastName ?? ''
-                }
+                  lastName: value?.lastName ?? '',
+                },
               };
             }
 
             return { ok: true };
-          }
-        })
-      }))
+          },
+        }),
+      })),
     };
 
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, submitButtonRenderer]);
@@ -107,8 +113,8 @@ describe('object-field transform actions', () => {
           data: {
             profile: {
               firstName: 'Alice',
-              lastName: 'Smith'
-            }
+              lastName: 'Smith',
+            },
           },
           body: [
             {
@@ -119,22 +125,26 @@ describe('object-field transform actions', () => {
               transformOutAction: { action: 'objectLib:toPersisted' },
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
-                { type: 'input-text', name: 'lastName', label: 'Last Name' }
-              ]
-            }
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
-            { type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'obj-transform-out-form' } }
-          ]
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'obj-transform-out-form' },
+            },
+          ],
         }}
         env={{
           ...env,
           importLoader,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());
@@ -143,13 +153,13 @@ describe('object-field transform actions', () => {
 
     await waitFor(() => expect(submitValues.length).toBe(1));
     expect(submitValues[0]).toMatchObject({
-      profile: { firstName: 'BOB', lastName: 'Smith' }
+      profile: { firstName: 'BOB', lastName: 'Smith' },
     });
     expect(calls[0]).toEqual({
       value: { firstName: 'Bob', lastName: 'Smith' },
       originalValue: { firstName: 'Alice', lastName: 'Smith' },
       name: 'profile',
-      readOnly: false
+      readOnly: false,
     });
   });
 
@@ -161,17 +171,22 @@ describe('object-field transform actions', () => {
       load: vi.fn(async () => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: (method: string, _payload: Record<string, unknown> | undefined): Promise<ActionResult> => {
+          invoke: (
+            method: string,
+            _payload: Record<string, unknown> | undefined,
+          ): Promise<ActionResult> => {
             if (method !== 'toPersisted') {
               return Promise.resolve({ ok: true });
             }
 
             return new Promise((resolve) => {
-              resolvers.push(resolve as (value: { ok: boolean; data: Record<string, unknown> }) => void);
+              resolvers.push(
+                resolve as (value: { ok: boolean; data: Record<string, unknown> }) => void,
+              );
             });
-          }
-        })
-      }))
+          },
+        }),
+      })),
     };
 
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, submitButtonRenderer]);
@@ -185,8 +200,8 @@ describe('object-field transform actions', () => {
           data: {
             profile: {
               firstName: 'Alice',
-              lastName: 'Smith'
-            }
+              lastName: 'Smith',
+            },
           },
           body: [
             {
@@ -197,22 +212,26 @@ describe('object-field transform actions', () => {
               transformOutAction: { action: 'objectLib:toPersisted' },
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
-                { type: 'input-text', name: 'lastName', label: 'Last Name' }
-              ]
-            }
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
-            { type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'obj-transform-out-race-form' } }
-          ]
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'obj-transform-out-race-form' },
+            },
+          ],
         }}
         env={{
           ...env,
           importLoader,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const input = await screen.findByLabelText('First Name');
@@ -229,7 +248,7 @@ describe('object-field transform actions', () => {
 
     await waitFor(() => expect(submitValues.length).toBe(1));
     expect(submitValues[0]).toMatchObject({
-      profile: { firstName: 'CAROL', lastName: 'Smith' }
+      profile: { firstName: 'CAROL', lastName: 'Smith' },
     });
   });
 });

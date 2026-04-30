@@ -4,16 +4,18 @@ import { remapFieldStates, transformArrayIndexedPath } from './form-path-state';
 import type {
   FormRuntimeInitialStateSlice,
   FormRuntimeStoreScopeState,
-  FormRuntimeValidationRunState
+  FormRuntimeValidationRunState,
 } from './form-runtime-types';
 
-type ArrayMutationState = FormRuntimeStoreScopeState & FormRuntimeInitialStateSlice & FormRuntimeValidationRunState;
+type ArrayMutationState = FormRuntimeStoreScopeState &
+  FormRuntimeInitialStateSlice &
+  FormRuntimeValidationRunState;
 
 export function remapValidationRunState(
   sharedState: FormRuntimeValidationRunState,
   arrayPath: string,
   transformIndex: (index: number) => number | undefined,
-  cancelValidationDebounce: (path: string) => void
+  cancelValidationDebounce: (path: string) => void,
 ) {
   const prefix = `${arrayPath}.`;
 
@@ -67,7 +69,7 @@ export function remapValidationRunState(
 export function remapInitialFieldState(
   sharedState: FormRuntimeInitialStateSlice,
   arrayPath: string,
-  transformIndex: (index: number) => number | undefined
+  transformIndex: (index: number) => number | undefined,
 ) {
   const nextInitialValues: Record<string, unknown> = {};
   const nextDirty: Record<string, boolean> = {};
@@ -95,10 +97,10 @@ export function remapInitialFieldState(
 export function remapArrayFieldState(
   arrayPath: string,
   transformIndex: (index: number) => number | undefined,
-  state: { fieldStates: Record<string, FieldState> }
+  state: { fieldStates: Record<string, FieldState> },
 ): { fieldStates: Record<string, FieldState> } {
   return {
-    fieldStates: remapFieldStates(state.fieldStates, arrayPath, transformIndex)
+    fieldStates: remapFieldStates(state.fieldStates, arrayPath, transformIndex),
   };
 }
 
@@ -137,7 +139,7 @@ export function replaceManagedArrayValue(input: {
 
   return {
     values: setIn(input.state.values, input.arrayPath, input.nextValue),
-    fieldStates: nextFieldStates
+    fieldStates: nextFieldStates,
   };
 }
 
@@ -149,7 +151,10 @@ export function executeArrayMutation(ctx: {
   arrayOperation: (current: unknown[]) => unknown[];
   indexTransform: (candidateIndex: number) => number | undefined;
   cancelValidationDebounce: (path: string) => void;
-  revalidateDependents: (path: string, reason?: import('@nop-chaos/flux-core').ValidationReason) => Promise<void>;
+  revalidateDependents: (
+    path: string,
+    reason?: import('@nop-chaos/flux-core').ValidationReason,
+  ) => Promise<void>;
 }): void {
   const currentValue = ctx.getArrayValue(ctx.arrayPath);
   const currentArray = Array.isArray(currentValue) ? currentValue : [];
@@ -157,7 +162,7 @@ export function executeArrayMutation(ctx: {
 
   ctx.sharedState.validationRuns.set(
     ctx.arrayPath,
-    (ctx.sharedState.validationRuns.get(ctx.arrayPath) ?? 0) + 1
+    (ctx.sharedState.validationRuns.get(ctx.arrayPath) ?? 0) + 1,
   );
   ctx.cancelValidationDebounce(ctx.arrayPath);
 
@@ -168,11 +173,16 @@ export function executeArrayMutation(ctx: {
     nextValue,
     state,
     initialFieldState: ctx.sharedState.initialFieldState,
-    remappedState
+    remappedState,
   });
 
   ctx.sharedState.store.batchUpdate(nextStoreState);
-  remapValidationRunState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform, ctx.cancelValidationDebounce);
+  remapValidationRunState(
+    ctx.sharedState,
+    ctx.arrayPath,
+    ctx.indexTransform,
+    ctx.cancelValidationDebounce,
+  );
   remapInitialFieldState(ctx.sharedState, ctx.arrayPath, ctx.indexTransform);
   void ctx.revalidateDependents(ctx.arrayPath, 'change');
 }

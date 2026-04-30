@@ -55,24 +55,32 @@ describe('builtins', () => {
     let touched = false;
 
     expect(snapshot.functionMeta.IF.invoke).toBe('lazy');
-    expect(snapshot.functions.IF(() => true, () => 'ok', () => {
-      touched = true;
-      return 'bad';
-    })).toBe('ok');
+    expect(
+      snapshot.functions.IF(
+        () => true,
+        () => 'ok',
+        () => {
+          touched = true;
+          return 'bad';
+        },
+      ),
+    ).toBe('ok');
     expect(touched).toBe(false);
 
     expect(snapshot.functionMeta.SWITCH.invoke).toBe('lazy');
-    expect(snapshot.functions.SWITCH(
-      () => 'match',
-      () => 'match',
-      () => 'picked',
-      () => 'other',
-      () => {
-        touched = true;
-        return 'bad';
-      },
-      () => 'fallback'
-    )).toBe('picked');
+    expect(
+      snapshot.functions.SWITCH(
+        () => 'match',
+        () => 'match',
+        () => 'picked',
+        () => 'other',
+        () => {
+          touched = true;
+          return 'bad';
+        },
+        () => 'fallback',
+      ),
+    ).toBe('picked');
     expect(touched).toBe(false);
   });
 
@@ -80,18 +88,27 @@ describe('builtins', () => {
     createFormulaCompiler();
     const snapshot = getFormulaRegistrySnapshot();
 
-    expect(snapshot.functions.IF(() => false, () => 'yes')).toBeNull();
-    expect(snapshot.functions.SWITCH(
-      () => 'miss',
-      () => 'match',
-      () => 'picked',
-      () => 'fallback'
-    )).toBe('fallback');
-    expect(snapshot.functions.SWITCH(
-      () => 'miss',
-      () => 'match',
-      () => 'picked'
-    )).toBeNull();
+    expect(
+      snapshot.functions.IF(
+        () => false,
+        () => 'yes',
+      ),
+    ).toBeNull();
+    expect(
+      snapshot.functions.SWITCH(
+        () => 'miss',
+        () => 'match',
+        () => 'picked',
+        () => 'fallback',
+      ),
+    ).toBe('fallback');
+    expect(
+      snapshot.functions.SWITCH(
+        () => 'miss',
+        () => 'match',
+        () => 'picked',
+      ),
+    ).toBeNull();
 
     expect(snapshot.functions.COUNT(null)).toBe(0);
     expect(snapshot.functions.ARRAYMAP(null, (value: unknown) => value)).toEqual([]);

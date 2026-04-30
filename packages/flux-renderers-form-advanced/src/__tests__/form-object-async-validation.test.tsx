@@ -7,14 +7,22 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
-import { buttonRenderer, contactGroupRenderer, env } from '../../../flux-renderers-form/src/test-support';
+import {
+  buttonRenderer,
+  contactGroupRenderer,
+  env,
+} from '../../../flux-renderers-form/src/test-support';
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 
 describe('formRendererDefinitions - object validation, async validation, and field metadata', () => {
   it('supports object-level atLeastOneOf validation in the UI', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...allFormDefs, contactGroupRenderer, buttonRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...allFormDefs,
+      contactGroupRenderer,
+      buttonRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -25,8 +33,8 @@ describe('formRendererDefinitions - object validation, async validation, and fie
           data: {
             contact: {
               email: '',
-              phone: ''
-            }
+              phone: '',
+            },
           },
           body: [
             {
@@ -35,23 +43,23 @@ describe('formRendererDefinitions - object validation, async validation, and fie
               label: 'Contact',
               atLeastOneOf: {
                 paths: ['email', 'phone'],
-                message: 'Provide at least an email or phone number'
-              }
-            }
+                message: 'Provide at least an email or phone number',
+              },
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit contact',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit contact'));
@@ -59,7 +67,9 @@ describe('formRendererDefinitions - object validation, async validation, and fie
       expect(screen.getByText('Provide at least an email or phone number')).toBeTruthy();
     });
 
-    fireEvent.change(screen.getByLabelText('Contact Email'), { target: { value: 'a@example.com' } });
+    fireEvent.change(screen.getByLabelText('Contact Email'), {
+      target: { value: 'a@example.com' },
+    });
 
     await waitFor(() => {
       expect(screen.queryByText('Provide at least an email or phone number')).toBeNull();
@@ -68,7 +78,11 @@ describe('formRendererDefinitions - object validation, async validation, and fie
 
   it('supports object-level allOrNone validation in the UI', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...allFormDefs, contactGroupRenderer, buttonRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...allFormDefs,
+      contactGroupRenderer,
+      buttonRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -79,8 +93,8 @@ describe('formRendererDefinitions - object validation, async validation, and fie
           data: {
             contact: {
               email: 'alice@example.com',
-              phone: ''
-            }
+              phone: '',
+            },
           },
           body: [
             {
@@ -89,23 +103,23 @@ describe('formRendererDefinitions - object validation, async validation, and fie
               label: 'Contact',
               allOrNone: {
                 itemPaths: ['email', 'phone'],
-                message: 'Provide both contact methods or leave both empty'
-              }
-            }
+                message: 'Provide both contact methods or leave both empty',
+              },
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit contact pair',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Submit contact pair'));
@@ -128,8 +142,8 @@ describe('formRendererDefinitions - object validation, async validation, and fie
       status: 200,
       data: {
         valid: true,
-        message: 'Username is available'
-      }
+        message: 'Username is available',
+      },
     }));
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -139,7 +153,7 @@ describe('formRendererDefinitions - object validation, async validation, and fie
         schema={{
           type: 'form',
           data: {
-            username: 'alice'
+            username: 'alice',
           },
           body: [
             {
@@ -152,20 +166,20 @@ describe('formRendererDefinitions - object validation, async validation, and fie
                   action: 'ajax',
                   args: {
                     url: '/api/validate-username',
-                    method: 'post'
-                  }
+                    method: 'post',
+                  },
                 },
-                message: 'Username is already taken'
-              }
-            }
-          ]
+                message: 'Username is already taken',
+              },
+            },
+          ],
         }}
         env={{
           ...env,
-          fetcher: fetcherMock as RendererEnv['fetcher']
+          fetcher: fetcherMock as RendererEnv['fetcher'],
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.blur(screen.getByDisplayValue('alice'));
@@ -189,20 +203,20 @@ describe('formRendererDefinitions - object validation, async validation, and fie
         schema={{
           type: 'form',
           data: {
-            username: 'Alice'
+            username: 'Alice',
           },
           body: [
             {
               type: 'input-text',
               name: 'username',
-              label: { type: 'text', text: 'User ${user.name}' }
-            }
-          ]
+              label: { type: 'text', text: 'User ${user.name}' },
+            },
+          ],
         }}
         data={{ user: { name: 'Label' } }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('User Label')).toBeTruthy();
@@ -219,20 +233,20 @@ describe('formRendererDefinitions - object validation, async validation, and fie
         schema={{
           type: 'form',
           data: {
-            metadata: []
+            metadata: [],
           },
           body: [
             {
               type: 'key-value',
               name: 'metadata',
-              label: { type: 'text', text: 'Meta ${user.name}' }
-            }
-          ]
+              label: { type: 'text', text: 'Meta ${user.name}' },
+            },
+          ],
         }}
         data={{ user: { name: 'Fields' } }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Meta Fields')).toBeTruthy();
@@ -250,19 +264,19 @@ describe('formRendererDefinitions - object validation, async validation, and fie
           body: [
             {
               type: 'text',
-              text: 'Form body content'
-            }
+              text: 'Form body content',
+            },
           ],
           actions: [
             {
               type: 'button',
-              label: 'Form action button'
-            }
-          ]
+              label: 'Form action button',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(screen.getByText('Form body content')).toBeTruthy();

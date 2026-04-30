@@ -9,17 +9,20 @@ import { formAdvancedRendererDefinitions } from '../index';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support';
 
 function ScopeSelectorProbeRenderer() {
-  const snapshot = useScopeSelector((scope) => ({
-    value: scope.value,
-    variant: scope.variant,
-    readOnly: scope.readOnly
-  }), Object.is) as Record<string, unknown>;
+  const snapshot = useScopeSelector(
+    (scope) => ({
+      value: scope.value,
+      variant: scope.variant,
+      readOnly: scope.readOnly,
+    }),
+    Object.is,
+  ) as Record<string, unknown>;
   return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
 }
 
 const scopeSelectorProbeRenderer: RendererDefinition = {
   type: 'scope-selector-probe',
-  component: () => <ScopeSelectorProbeRenderer />
+  component: () => <ScopeSelectorProbeRenderer />,
 };
 
 const variantSchema = {
@@ -91,7 +94,14 @@ describe('variant-field renderer selector behavior', () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();
 
-    render(<SchemaRenderer schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#2" schema={variantSchema} env={baseEnv} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-selector.test.tsx#2"
+        schema={variantSchema}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
 
     await waitFor(() => expect(screen.getByText('Number')).toBeTruthy());
 
@@ -170,7 +180,9 @@ describe('variant-field renderer selector behavior', () => {
                 {
                   key: 'text',
                   label: 'Text',
-                  content: [{ type: 'input-text', name: 'value', label: 'Text Value', required: true }],
+                  content: [
+                    { type: 'input-text', name: 'value', label: 'Text Value', required: true },
+                  ],
                   initialValue: { value: '' },
                 },
                 {
@@ -236,7 +248,9 @@ describe('variant-field renderer selector behavior', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByTestId('variant-viewer').textContent).toBe('Viewer: alpha'));
+    await waitFor(() =>
+      expect(screen.getByTestId('variant-viewer').textContent).toBe('Viewer: alpha'),
+    );
     expect(screen.queryByLabelText('Text Value')).toBeNull();
     const container = document.querySelector('[data-active-variant]');
     expect(container?.querySelector('[data-slot="variant-field-readonly-body"]')).toBeTruthy();
@@ -245,7 +259,12 @@ describe('variant-field renderer selector behavior', () => {
 
   it('publishes projected variant scope through useScopeSelector', async () => {
     cleanup();
-    const SchemaRenderer = createSchemaRenderer([...basicRendererDefinitions, ...formRendererDefinitions, ...formAdvancedRendererDefinitions, scopeSelectorProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+      scopeSelectorProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -277,11 +296,13 @@ describe('variant-field renderer selector behavior', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
-        value: 'alpha',
-        variant: 'text',
-        readOnly: false,
-      }));
+      expect(screen.getByTestId('scope-selector-probe').textContent).toBe(
+        JSON.stringify({
+          value: 'alpha',
+          variant: 'text',
+          readOnly: false,
+        }),
+      );
     });
   });
 });

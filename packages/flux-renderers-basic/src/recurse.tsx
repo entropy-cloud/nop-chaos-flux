@@ -1,10 +1,23 @@
 import React, { useMemo } from 'react';
-import type { InstanceFrame, RendererComponentProps, StructuralLoopBindings, StructuralLoopRenderContext } from '@nop-chaos/flux-core';
+import type {
+  InstanceFrame,
+  RendererComponentProps,
+  StructuralLoopBindings,
+  StructuralLoopRenderContext,
+} from '@nop-chaos/flux-core';
 import { StructuralLoopContext, useStructuralLoopContext } from '@nop-chaos/flux-react';
 import type { RecurseSchema } from './schemas';
-import { createStructuralRepeatedTemplateId, renderStructuralLoop, resolveLoopBindings } from './structural-loop';
+import {
+  createStructuralRepeatedTemplateId,
+  renderStructuralLoop,
+  resolveLoopBindings,
+} from './structural-loop';
 
-const DEFAULT_RECURSE_BINDINGS = { itemName: 'item', indexName: 'index', keyName: undefined } as const;
+const DEFAULT_RECURSE_BINDINGS = {
+  itemName: 'item',
+  indexName: 'index',
+  keyName: undefined,
+} as const;
 
 interface RecurseProviderProps {
   loopContext: StructuralLoopRenderContext;
@@ -24,12 +37,23 @@ function RecurseProvider(props: RecurseProviderProps) {
       itemData: props.itemData,
       keyBy: props.keyBy,
       instancePath: props.instancePath,
-      depth: props.depth
+      depth: props.depth,
     }),
-    [props.loopContext, props.bindings, props.itemData, props.keyBy, props.instancePath, props.depth]
+    [
+      props.loopContext,
+      props.bindings,
+      props.itemData,
+      props.keyBy,
+      props.instancePath,
+      props.depth,
+    ],
   );
 
-  return <StructuralLoopContext.Provider value={contextValue}>{props.children}</StructuralLoopContext.Provider>;
+  return (
+    <StructuralLoopContext.Provider value={contextValue}>
+      {props.children}
+    </StructuralLoopContext.Provider>
+  );
 }
 
 export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
@@ -40,19 +64,21 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
   const indexName = props.props.indexName as string | undefined;
   const keyName = props.props.keyName as string | undefined;
   const bindings = useMemo(
-    () => resolveLoopBindings({
-      itemName: itemName?.trim() || inheritedBindings.itemName,
-      indexName: indexName?.trim() || inheritedBindings.indexName,
-      keyName: keyName?.trim() || inheritedBindings.keyName
-    }),
-    [inheritedBindings, itemName, indexName, keyName]
+    () =>
+      resolveLoopBindings({
+        itemName: itemName?.trim() || inheritedBindings.itemName,
+        indexName: indexName?.trim() || inheritedBindings.indexName,
+        keyName: keyName?.trim() || inheritedBindings.keyName,
+      }),
+    [inheritedBindings, itemName, indexName, keyName],
   );
 
   if (!loopContext) {
     return null;
   }
 
-  const itemData = (props.props.itemData as Record<string, unknown> | undefined) ?? loopContext.itemData;
+  const itemData =
+    (props.props.itemData as Record<string, unknown> | undefined) ?? loopContext.itemData;
   const keyBy = props.props.keyBy ?? loopContext.keyBy;
   const maxDepth = typeof props.props.maxDepth === 'number' ? props.props.maxDepth : undefined;
 
@@ -81,7 +107,7 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
           >
             {loopContext.renderBody(slotBindings, instancePath)}
           </RecurseProvider>
-        )
+        ),
       })}
     </>
   );

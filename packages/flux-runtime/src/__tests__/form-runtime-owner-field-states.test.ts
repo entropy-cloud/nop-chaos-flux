@@ -5,7 +5,10 @@ describe('mergeFieldStateErrors', () => {
   it('preserves non-error field state while replacing error payloads', () => {
     const next = mergeFieldStateErrors({
       currentFieldStates: {
-        name: { touched: true, errors: [{ path: 'name', ownerPath: 'name', rule: 'required', message: 'Required' }] },
+        name: {
+          touched: true,
+          errors: [{ path: 'name', ownerPath: 'name', rule: 'required', message: 'Required' }],
+        },
       },
       nextErrors: {
         name: [{ path: 'name', ownerPath: 'name', rule: 'minLength', message: 'Too short' }],
@@ -21,7 +24,9 @@ describe('mergeFieldStateErrors', () => {
   it('removes entries that only contained errors when nextErrors omits the path', () => {
     const next = mergeFieldStateErrors({
       currentFieldStates: {
-        name: { errors: [{ path: 'name', ownerPath: 'name', rule: 'required', message: 'Required' }] },
+        name: {
+          errors: [{ path: 'name', ownerPath: 'name', rule: 'required', message: 'Required' }],
+        },
       },
       nextErrors: {},
     });
@@ -32,7 +37,11 @@ describe('mergeFieldStateErrors', () => {
   it('keeps non-error metadata when clearing obsolete errors', () => {
     const next = mergeFieldStateErrors({
       currentFieldStates: {
-        name: { touched: true, dirty: true, errors: [{ path: 'name', ownerPath: 'name', rule: 'required', message: 'Required' }] },
+        name: {
+          touched: true,
+          dirty: true,
+          errors: [{ path: 'name', ownerPath: 'name', rule: 'required', message: 'Required' }],
+        },
       },
       nextErrors: {},
     });

@@ -39,7 +39,10 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
+      if (
+        (e.target as HTMLElement).tagName === 'INPUT' ||
+        (e.target as HTMLElement).tagName === 'TEXTAREA'
+      ) {
         return;
       }
 
@@ -102,20 +105,10 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
           {store.dirty && <span data-slot="flow-designer-example-toolbar-dirty">*</span>}
           <div data-slot="flow-designer-example-toolbar-spacer" />
           <div data-slot="flow-designer-example-toolbar-actions">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={store.undo}
-              disabled={!store.canUndo}
-            >
+            <Button variant="ghost" size="sm" onClick={store.undo} disabled={!store.canUndo}>
               Undo
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={store.redo}
-              disabled={!store.canRedo}
-            >
+            <Button variant="ghost" size="sm" onClick={store.redo} disabled={!store.canRedo}>
               Redo
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSave}>
@@ -143,7 +136,10 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      const position = { x: 180 + Math.random() * 400, y: 120 + Math.random() * 300 };
+                      const position = {
+                        x: 180 + Math.random() * 400,
+                        y: 120 + Math.random() * 300,
+                      };
                       store.addNode(type, position, { label: type });
                       showToast(`Node added: ${type}`);
                     }}
@@ -170,11 +166,7 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
                     <Label>ID:</Label>
                     <span>{store.selectedNodeId}</span>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={store.deleteSelected}
-                  >
+                  <Button variant="destructive" size="sm" onClick={store.deleteSelected}>
                     Delete
                   </Button>
                 </div>
@@ -188,11 +180,7 @@ export function FlowDesignerExample({ document: initialDoc, onSave }: FlowDesign
                     <Label>ID:</Label>
                     <span>{store.selectedEdgeId}</span>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={store.deleteSelected}
-                  >
+                  <Button variant="destructive" size="sm" onClick={store.deleteSelected}>
                     Delete
                   </Button>
                 </div>

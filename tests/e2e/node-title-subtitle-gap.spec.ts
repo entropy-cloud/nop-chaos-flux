@@ -25,7 +25,9 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
-test('diagnoses title-subtitle gap by inspecting actual DOM and computed styles', async ({ page }) => {
+test('diagnoses title-subtitle gap by inspecting actual DOM and computed styles', async ({
+  page,
+}) => {
   await openFlowDesigner(page);
 
   const diag = await page.evaluate(() => {
@@ -33,13 +35,17 @@ test('diagnoses title-subtitle gap by inspecting actual DOM and computed styles'
     if (!taskNode) return { error: 'task node not found' };
 
     const allTexts = Array.from(taskNode.querySelectorAll('.nop-text'));
-    const titleEl = allTexts.find(t => t.textContent?.trim() === '发送欢迎邮件');
-    const subtitleEl = allTexts.find(t => t.textContent?.trim() === '邮件通知');
+    const titleEl = allTexts.find((t) => t.textContent?.trim() === '发送欢迎邮件');
+    const subtitleEl = allTexts.find((t) => t.textContent?.trim() === '邮件通知');
 
     if (!titleEl || !subtitleEl) {
       return {
         error: 'title or subtitle element not found',
-        allTexts: allTexts.map(t => ({ text: t.textContent?.trim(), tag: t.tagName, className: t.className })),
+        allTexts: allTexts.map((t) => ({
+          text: t.textContent?.trim(),
+          tag: t.tagName,
+          className: t.className,
+        })),
       };
     }
 
@@ -91,20 +97,22 @@ test('diagnoses title-subtitle gap by inspecting actual DOM and computed styles'
         webkitBoxOrient: subtitleCs.webkitBoxOrient,
       },
       gap: gapBetweenTitleBottomAndSubtitleTop,
-      infoContainer: infoCs ? {
-        tag: infoContainer!.tagName.toLowerCase(),
-        className: infoContainer!.className,
-        display: infoCs.display,
-        flexDirection: infoCs.flexDirection,
-        gap: infoCs.gap,
-        marginTop: infoCs.marginTop,
-        marginBottom: infoCs.marginBottom,
-        paddingTop: infoCs.paddingTop,
-        paddingBottom: infoCs.paddingBottom,
-        rectTop: infoRect!.top,
-        rectBottom: infoRect!.bottom,
-        rectHeight: infoRect!.height,
-      } : null,
+      infoContainer: infoCs
+        ? {
+            tag: infoContainer!.tagName.toLowerCase(),
+            className: infoContainer!.className,
+            display: infoCs.display,
+            flexDirection: infoCs.flexDirection,
+            gap: infoCs.gap,
+            marginTop: infoCs.marginTop,
+            marginBottom: infoCs.marginBottom,
+            paddingTop: infoCs.paddingTop,
+            paddingBottom: infoCs.paddingBottom,
+            rectTop: infoRect!.top,
+            rectBottom: infoRect!.bottom,
+            rectHeight: infoRect!.height,
+          }
+        : null,
       parentChain: [] as string[],
     };
 
@@ -113,9 +121,9 @@ test('diagnoses title-subtitle gap by inspecting actual DOM and computed styles'
       const wcs = window.getComputedStyle(walkUp);
       result.parentChain.push(
         `<${walkUp.tagName.toLowerCase()} class="${walkUp.className.substring(0, 80)}" ` +
-        `display="${wcs.display}" flex-dir="${wcs.flexDirection}" gap="${wcs.gap}" ` +
-        `padding="${wcs.paddingTop} ${wcs.paddingRight} ${wcs.paddingBottom} ${wcs.paddingLeft}" ` +
-        `margin="${wcs.marginTop} ${wcs.marginRight} ${wcs.marginBottom} ${wcs.marginLeft}">`
+          `display="${wcs.display}" flex-dir="${wcs.flexDirection}" gap="${wcs.gap}" ` +
+          `padding="${wcs.paddingTop} ${wcs.paddingRight} ${wcs.paddingBottom} ${wcs.paddingLeft}" ` +
+          `margin="${wcs.marginTop} ${wcs.marginRight} ${wcs.marginBottom} ${wcs.marginLeft}">`,
       );
       walkUp = walkUp.parentElement;
     }
@@ -146,7 +154,9 @@ test('diagnoses title-subtitle gap by inspecting actual DOM and computed styles'
 
   if (!gapOk) {
     console.log(`\n!!! GAP MISMATCH: expected ~${REFERENCE_GAP}px, got ${d.gap}px`);
-    console.log(`!!! Title line-height contributes extra space: title.height=${d.title.rectHeight}px`);
+    console.log(
+      `!!! Title line-height contributes extra space: title.height=${d.title.rectHeight}px`,
+    );
     console.log(`!!! Subtitle marginTop computed as: ${d.subtitle.marginTop}`);
 
     if (d.title.display === 'inline' || d.title.display === 'inline') {

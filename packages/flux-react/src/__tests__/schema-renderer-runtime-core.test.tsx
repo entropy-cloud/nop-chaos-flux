@@ -7,7 +7,12 @@ import * as fluxCore from '@nop-chaos/flux-core';
 import { NodeMetaContext, RuntimeContext, ScopeContext } from '../contexts';
 import { createSchemaRenderer } from '../schema-renderer';
 import { RenderNodes } from '../helpers';
-import { useDataSourceStatus, useRenderScope, useRendererRuntime, useScopeSelector } from '../hooks';
+import {
+  useDataSourceStatus,
+  useRenderScope,
+  useRendererRuntime,
+  useScopeSelector,
+} from '../hooks';
 import { NodeRenderer } from '../node-renderer';
 import {
   cidProbeRenderer,
@@ -32,18 +37,36 @@ const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
 describe('createSchemaRenderer runtime core behavior', () => {
   it('compiles runtime boundary flags for form, scope, provider, and class alias changes', () => {
-    const runtime = createRendererRuntime({ registry: createRendererRegistry([formRenderer, scopedHostRenderer, textRenderer]), env, expressionCompiler: createExpressionCompiler(sharedFormulaCompiler) });
-    const compiled = runtime.compile({ type: 'form', classAliases: { local: 'stack-2' }, 'xui:imports': [{ from: 'demo-lib', as: 'demo' }], body: [{ type: 'scoped-host', body: [{ type: 'text', text: 'child' }] }] } as any);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([formRenderer, scopedHostRenderer, textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(sharedFormulaCompiler),
+    });
+    const compiled = runtime.compile({
+      type: 'form',
+      classAliases: { local: 'stack-2' },
+      'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+      body: [{ type: 'scoped-host', body: [{ type: 'text', text: 'child' }] }],
+    } as any);
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
     expect(root.scopePlan.kind).toBe('form');
-    const scopedHost = Array.isArray(root.regions.body.node) ? root.regions.body.node[0] : root.regions.body.node;
+    const scopedHost = Array.isArray(root.regions.body.node)
+      ? root.regions.body.node[0]
+      : root.regions.body.node;
     expect(scopedHost!.component.actionScopePolicy).toBe('new');
     expect(root.providerPlan?.actionScope).toBe(false);
   });
 
   it('renders compiled schema in React', () => {
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'text', text: 'Hello renderer' }} env={env} formulaCompiler={createFormulaCompiler()} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'Hello renderer' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     expect(screen.getByText('Hello renderer')).toBeTruthy();
   });
 
@@ -51,7 +74,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const compiled = runtime.compile({ type: 'text', text: 'No imports' });
@@ -65,7 +88,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
         <ScopeContext.Provider value={page.scope}>
           <NodeRenderer node={root as any} scope={page.scope} />
         </ScopeContext.Provider>
-      </RuntimeContext.Provider>
+      </RuntimeContext.Provider>,
     );
 
     expect(screen.getByText('No imports')).toBeTruthy();
@@ -78,7 +101,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const compiled = runtime.compile({ type: 'text', text: 'No aliases' });
@@ -91,7 +114,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
         <ScopeContext.Provider value={page.scope}>
           <NodeRenderer node={root as any} scope={page.scope} />
         </ScopeContext.Provider>
-      </RuntimeContext.Provider>
+      </RuntimeContext.Provider>,
     );
 
     expect(screen.getByText('No aliases')).toBeTruthy();
@@ -108,17 +131,21 @@ describe('createSchemaRenderer runtime core behavior', () => {
         createNamespace: () => ({
           kind: 'import' as const,
           dispose,
-          invoke: async () => ({ ok: true })
-        })
-      }))
+          invoke: async () => ({ ok: true }),
+        }),
+      })),
     };
 
     const { rerender } = render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'text', text: 'A', 'xui:imports': [{ from: 'demo-lib', as: 'demo' }] } as any}
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={
+          { type: 'text', text: 'A', 'xui:imports': [{ from: 'demo-lib', as: 'demo' }] } as any
+        }
         env={{ ...env, importLoader }}
         formulaCompiler={createFormulaCompiler()}
         actionScope={actionScope}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -126,11 +153,13 @@ describe('createSchemaRenderer runtime core behavior', () => {
     });
 
     rerender(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'text', text: 'B' } as any}
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'B' } as any}
         env={{ ...env, importLoader }}
         formulaCompiler={createFormulaCompiler()}
         actionScope={actionScope}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -148,18 +177,21 @@ describe('createSchemaRenderer runtime core behavior', () => {
       RenderNodes(props: Parameters<typeof actualHelpers.RenderNodes>[0]) {
         capturedInputs.push(props.input);
         return actualHelpers.RenderNodes(props);
-      }
+      },
     }));
 
     try {
-      const { createSchemaRenderer: createSchemaRendererWithMock } = await import('../schema-renderer');
+      const { createSchemaRenderer: createSchemaRendererWithMock } =
+        await import('../schema-renderer');
       const SchemaRenderer = createSchemaRendererWithMock([textRenderer]);
 
       render(
-        <SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'text', text: 'Compiled at boundary' }}
+        <SchemaRenderer
+          schemaUrl="test://schema.json"
+          schema={{ type: 'text', text: 'Compiled at boundary' }}
           env={env}
           formulaCompiler={createFormulaCompiler()}
-        />
+        />,
       );
 
       expect(screen.getByText('Compiled at boundary')).toBeTruthy();
@@ -168,8 +200,8 @@ describe('createSchemaRenderer runtime core behavior', () => {
         root: expect.objectContaining({
           type: 'text',
           rendererType: 'text',
-          schema: { type: 'text', text: 'Compiled at boundary' }
-        })
+          schema: { type: 'text', text: 'Compiled at boundary' },
+        }),
       });
     } finally {
       vi.doUnmock('../helpers');
@@ -179,42 +211,150 @@ describe('createSchemaRenderer runtime core behavior', () => {
 
   it('renders precompiled nodes passed through helpers.render', () => {
     const registry = createRendererRegistry([textRenderer]);
-    const runtime = createRendererRuntime({ registry, env, expressionCompiler: createExpressionCompiler(createFormulaCompiler()) });
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
     const compiledNode = runtime.compile({ type: 'text', text: 'Compiled hello' });
-    const hostRenderer = { type: 'host', component: (props: any) => <section>{props.helpers.render(compiledNode as any)}</section> };
+    const hostRenderer = {
+      type: 'host',
+      component: (props: any) => <section>{props.helpers.render(compiledNode as any)}</section>,
+    };
     const SchemaRenderer = createSchemaRenderer([hostRenderer, textRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'host' }} env={env} formulaCompiler={createFormulaCompiler()} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'host' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     expect(screen.getByText('Compiled hello')).toBeTruthy();
   });
 
   it('derives inline fragment paths from the current node instance when no compiled owner context exists', () => {
-    const pathProbeRenderer = { type: 'path-probe', component: (props: any) => <span data-testid="path-probe">{props.path}</span> };
-    const runtime = createRendererRuntime({ registry: createRendererRegistry([pathProbeRenderer]), env, expressionCompiler: createExpressionCompiler(createFormulaCompiler()) });
+    const pathProbeRenderer = {
+      type: 'path-probe',
+      component: (props: any) => <span data-testid="path-probe">{props.path}</span>,
+    };
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([pathProbeRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
     const page = runtime.createPageRuntime({});
-    const ownerNodeInstance = { cid: 1, instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-1' }], templateNode: { templateNodeId: 1, id: 'inline-owner', type: 'host', schema: { type: 'host' }, templatePath: 'host.root', rendererType: 'host', propsProgram: { kind: 'static', value: {} }, metaProgram: {}, eventPlans: {}, regions: {}, scopePlan: { kind: 'inherit' }, sourcePropKeys: [], sourceStatePropKeys: {} }, scope: page.scope, state: { metaState: {}, mounted: true } } as any;
-    render(<RuntimeContext.Provider value={runtime}><ScopeContext.Provider value={page.scope}><NodeMetaContext.Provider value={{ id: ownerNodeInstance.templateNode.id, path: ownerNodeInstance.templateNode.templatePath, type: ownerNodeInstance.templateNode.rendererType, cid: ownerNodeInstance.cid, templateNode: ownerNodeInstance.templateNode, node: ownerNodeInstance }}><RenderNodes input={{ type: 'path-probe' }} options={{ pathSuffix: 'inline' }} /></NodeMetaContext.Provider></ScopeContext.Provider></RuntimeContext.Provider>);
+    const ownerNodeInstance = {
+      cid: 1,
+      instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-1' }],
+      templateNode: {
+        templateNodeId: 1,
+        id: 'inline-owner',
+        type: 'host',
+        schema: { type: 'host' },
+        templatePath: 'host.root',
+        rendererType: 'host',
+        propsProgram: { kind: 'static', value: {} },
+        metaProgram: {},
+        eventPlans: {},
+        regions: {},
+        scopePlan: { kind: 'inherit' },
+        sourcePropKeys: [],
+        sourceStatePropKeys: {},
+      },
+      scope: page.scope,
+      state: { metaState: {}, mounted: true },
+    } as any;
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <NodeMetaContext.Provider
+            value={{
+              id: ownerNodeInstance.templateNode.id,
+              path: ownerNodeInstance.templateNode.templatePath,
+              type: ownerNodeInstance.templateNode.rendererType,
+              cid: ownerNodeInstance.cid,
+              templateNode: ownerNodeInstance.templateNode,
+              node: ownerNodeInstance,
+            }}
+          >
+            <RenderNodes input={{ type: 'path-probe' }} options={{ pathSuffix: 'inline' }} />
+          </NodeMetaContext.Provider>
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
     expect(screen.getByTestId('path-probe').textContent).toBe('host.root.inline');
   });
 
   it('exposes template nodes through renderer props and current-node meta hooks', () => {
     const SchemaRenderer = createSchemaRenderer([nodeIdentityProbeRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'node-identity-probe', id: 'identity-node' }} env={env} formulaCompiler={createFormulaCompiler()} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'node-identity-probe', id: 'identity-node' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     expect(screen.getByTestId('props-template-path').textContent).toBe('$');
   });
 
   it('supports useScopeSelector with parent scopes that do not expose a store', () => {
     const SchemaRenderer = createSchemaRenderer([selectorRenderer]);
-    const { rerender } = render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'selector-text' }} env={env} formulaCompiler={createFormulaCompiler()} parentScope={{ id: 'root', path: '$', get: (path: string) => (path === 'message' ? 'Scoped hello' : undefined), has: (path: string) => path === 'message', readOwn: () => ({ message: 'Scoped hello' }), readVisible: () => ({ message: 'Scoped hello' }), materializeVisible: () => ({ message: 'Scoped hello' }), value: { message: 'Scoped hello' }, update: () => undefined, merge: () => {} }} />);
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'selector-text' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        parentScope={{
+          id: 'root',
+          path: '$',
+          get: (path: string) => (path === 'message' ? 'Scoped hello' : undefined),
+          has: (path: string) => path === 'message',
+          readOwn: () => ({ message: 'Scoped hello' }),
+          readVisible: () => ({ message: 'Scoped hello' }),
+          materializeVisible: () => ({ message: 'Scoped hello' }),
+          value: { message: 'Scoped hello' },
+          update: () => undefined,
+          merge: () => {},
+        }}
+      />,
+    );
     expect(screen.getByText('Scoped hello')).toBeTruthy();
-    rerender(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'selector-text' }} env={env} formulaCompiler={createFormulaCompiler()} parentScope={{ id: 'root', path: '$', get: (path: string) => (path === 'message' ? 'Scoped update' : undefined), has: (path: string) => path === 'message', readOwn: () => ({ message: 'Scoped update' }), readVisible: () => ({ message: 'Scoped update' }), materializeVisible: () => ({ message: 'Scoped update' }), value: { message: 'Scoped update' }, update: () => undefined, merge: () => {} }} />);
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'selector-text' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        parentScope={{
+          id: 'root',
+          path: '$',
+          get: (path: string) => (path === 'message' ? 'Scoped update' : undefined),
+          has: (path: string) => path === 'message',
+          readOwn: () => ({ message: 'Scoped update' }),
+          readVisible: () => ({ message: 'Scoped update' }),
+          materializeVisible: () => ({ message: 'Scoped update' }),
+          value: { message: 'Scoped update' },
+          update: () => undefined,
+          merge: () => {},
+        }}
+      />,
+    );
     expect(screen.getByText('Scoped update')).toBeTruthy();
   });
 
   it('reads published data-source status summaries through useDataSourceStatus', async () => {
-    let releaseRequest: ((value: { ok: boolean; status: number; data: { name: string } }) => void) | undefined;
-    const fetcher = vi.fn(async () => new Promise((resolve) => {
-      releaseRequest = resolve as typeof releaseRequest;
-    }));
+    let releaseRequest:
+      | ((value: { ok: boolean; status: number; data: { name: string } }) => void)
+      | undefined;
+    const fetcher = vi.fn(
+      async () =>
+        new Promise((resolve) => {
+          releaseRequest = resolve as typeof releaseRequest;
+        }),
+    );
     const capturedStatuses: Array<Record<string, unknown> | undefined> = [];
     const statusProbeRenderer = {
       type: 'status-probe',
@@ -223,8 +363,12 @@ describe('createSchemaRenderer runtime core behavior', () => {
         React.useEffect(() => {
           capturedStatuses.push(status as Record<string, unknown> | undefined);
         }, [status]);
-        return <span data-testid="status-probe">{status?.loading ? 'loading' : status?.ready ? 'ready' : 'idle'}</span>;
-      }
+        return (
+          <span data-testid="status-probe">
+            {status?.loading ? 'loading' : status?.ready ? 'ready' : 'idle'}
+          </span>
+        );
+      },
     };
     const apiSourceRenderer = {
       type: 'api-source-probe',
@@ -236,13 +380,17 @@ describe('createSchemaRenderer runtime core behavior', () => {
           const registration = runtime.registerDataSource({
             id: props.id,
             scope,
-            compiledSource: compileDataSource(props.id, {
-              type: 'data-source',
-              action: 'ajax',
-              args: { url: '/api/user/1' },
-              name: 'user',
-              statusPath: 'userStatus'
-            }, expressionCompiler)
+            compiledSource: compileDataSource(
+              props.id,
+              {
+                type: 'data-source',
+                action: 'ajax',
+                args: { url: '/api/user/1' },
+                name: 'user',
+                statusPath: 'userStatus',
+              },
+              expressionCompiler,
+            ),
           });
 
           return () => {
@@ -251,21 +399,25 @@ describe('createSchemaRenderer runtime core behavior', () => {
         }, [props.id, runtime, scope]);
 
         return null;
-      }
+      },
     };
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, statusProbeRenderer, apiSourceRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      statusProbeRenderer,
+      apiSourceRenderer,
+    ]);
 
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
-          body: [
-            { type: 'api-source-probe', id: 'probe-source' },
-            { type: 'status-probe' }
-          ]
+          body: [{ type: 'api-source-probe', id: 'probe-source' }, { type: 'status-probe' }],
         }}
         env={{ ...env, fetcher: fetcher as any }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -279,7 +431,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
       hasError: false,
       isInitialLoading: true,
       isRefreshing: false,
-      inFlightCount: 1
+      inFlightCount: 1,
     });
 
     releaseRequest?.({ ok: true, status: 200, data: { name: 'Alice' } });
@@ -295,7 +447,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
       hasError: false,
       isInitialLoading: false,
       isRefreshing: false,
-      inFlightCount: 0
+      inFlightCount: 0,
     });
   });
 
@@ -303,7 +455,20 @@ describe('createSchemaRenderer runtime core behavior', () => {
     const SchemaRenderer = createSchemaRenderer([formRenderer, probeInputRenderer]);
     function Host() {
       const [tick, setTick] = React.useState(0);
-      return <div><button type="button" onClick={() => setTick((current) => current + 1)}>Rerender host {tick}</button><SchemaRenderer schemaUrl="test://schema.json" schema={probeFormSchema} data={{ currentUser: { name: 'Architect' } }} env={env} formulaCompiler={sharedFormulaCompiler} /></div>;
+      return (
+        <div>
+          <button type="button" onClick={() => setTick((current) => current + 1)}>
+            Rerender host {tick}
+          </button>
+          <SchemaRenderer
+            schemaUrl="test://schema.json"
+            schema={probeFormSchema}
+            data={{ currentUser: { name: 'Architect' } }}
+            env={env}
+            formulaCompiler={sharedFormulaCompiler}
+          />
+        </div>
+      );
     }
     const view = render(<Host />);
     const canvas = within(view.container);
@@ -325,21 +490,24 @@ describe('createSchemaRenderer runtime core behavior', () => {
         }, [scope]);
 
         return null;
-      }
+      },
     };
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, asyncPublisherRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      asyncPublisherRenderer,
+    ]);
 
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
-          body: [
-            { type: 'async-scope-publisher' },
-            { type: 'text', text: 'Hello, ${user?.name}' }
-          ]
+          body: [{ type: 'async-scope-publisher' }, { type: 'text', text: 'Hello, ${user?.name}' }],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -361,21 +529,27 @@ describe('createSchemaRenderer runtime core behavior', () => {
         }, [props.helpers, scope]);
 
         return null;
-      }
+      },
     };
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, asyncPublisherRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      asyncPublisherRenderer,
+    ]);
 
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             { type: 'async-scope-publisher-with-refresh' },
-            { type: 'text', text: 'Hello, ${user?.name}' }
-          ]
+            { type: 'text', text: 'Hello, ${user?.name}' },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -390,9 +564,11 @@ describe('createSchemaRenderer runtime core behavior', () => {
     const userProbeRenderer = {
       type: 'user-probe',
       component: function UserProbe() {
-        const userName = useScopeSelector((scope: { user?: { name?: string } }) => scope.user?.name ?? '');
+        const userName = useScopeSelector(
+          (scope: { user?: { name?: string } }) => scope.user?.name ?? '',
+        );
         return <span data-testid="user-probe">{userName}</span>;
-      }
+      },
     };
     const apiSourceRenderer = {
       type: 'api-source-probe',
@@ -407,12 +583,16 @@ describe('createSchemaRenderer runtime core behavior', () => {
           const registration = runtime.registerDataSource({
             id: props.id,
             scope,
-            compiledSource: compileDataSource(props.id, {
-              type: 'data-source',
-              action: 'ajax',
-              args: { url: '/api/user/1' },
-              name: 'user'
-            }, expressionCompiler)
+            compiledSource: compileDataSource(
+              props.id,
+              {
+                type: 'data-source',
+                action: 'ajax',
+                args: { url: '/api/user/1' },
+                name: 'user',
+              },
+              expressionCompiler,
+            ),
           });
 
           return () => {
@@ -421,22 +601,29 @@ describe('createSchemaRenderer runtime core behavior', () => {
         }, [props.id, runtime, scope]);
 
         return null;
-      }
+      },
     };
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, userProbeRenderer, apiSourceRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      userProbeRenderer,
+      apiSourceRenderer,
+    ]);
 
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             { type: 'api-source-probe', id: 'probe-source' },
             { type: 'user-probe' },
-            { type: 'text', text: 'Hello, ${user?.name}' }
-          ]
+            { type: 'text', text: 'Hello, ${user?.name}' },
+          ],
         }}
         env={{ ...env, fetcher: fetcher as any }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -446,7 +633,7 @@ describe('createSchemaRenderer runtime core behavior', () => {
     await expect(fetcher.mock.results[0]?.value).resolves.toMatchObject({
       ok: true,
       status: 200,
-      data: { name: 'Alice' }
+      data: { name: 'Alice' },
     });
 
     await waitFor(() => {
@@ -456,9 +643,9 @@ describe('createSchemaRenderer runtime core behavior', () => {
             id: 'probe-source',
             status: 'success',
             hasValue: true,
-            fetchStatus: 'idle'
-          })
-        ]
+            fetchStatus: 'idle',
+          }),
+        ],
       });
     });
 
@@ -475,26 +662,78 @@ describe('createSchemaRenderer runtime core behavior', () => {
 
   it('skips FieldFrame when frameWrap is false', () => {
     const SchemaRenderer = createSchemaRenderer([wrapProbeRenderer]);
-    const { container } = render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'wrap-probe', label: 'Standalone editor', frameWrap: false }} env={env} formulaCompiler={createFormulaCompiler()} />);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'wrap-probe', label: 'Standalone editor', frameWrap: false }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     expect(container.querySelector('label.nop-field')).toBeNull();
   });
 
   it('uses group layout when frameWrap is group', () => {
     const SchemaRenderer = createSchemaRenderer([wrapProbeRenderer]);
-    const { container } = render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'wrap-probe', label: 'Grouped editor', frameWrap: 'group' }} env={env} formulaCompiler={createFormulaCompiler()} />);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'wrap-probe', label: 'Grouped editor', frameWrap: 'group' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     expect(container.querySelector('fieldset.nop-field')).toBeTruthy();
   });
 
   it('does not fabricate a cid for createNodeInstance when none is provided', async () => {
     const { createNodeInstance } = await import('../node-instance');
-    const templateNode = { templateNodeId: 99, id: 'probe', type: 'text', schema: { type: 'text' }, templatePath: '$', rendererType: 'text', component: {} as any, propsProgram: { kind: 'static', value: {} }, metaProgram: {}, eventPlans: {}, regions: {}, scopePlan: { kind: 'inherit' }, sourcePropKeys: [], sourceStatePropKeys: {} } as any;
-    const nodeInstance = createNodeInstance({ templateNode, scope: { id: 'scope', path: '$', readOwn: () => ({}), readVisible: () => ({}), materializeVisible: () => ({}), get: () => undefined, has: () => false, update: () => undefined, merge: () => undefined } as any, state: { meta: {}, props: undefined }, cid: undefined, mounted: false });
+    const templateNode = {
+      templateNodeId: 99,
+      id: 'probe',
+      type: 'text',
+      schema: { type: 'text' },
+      templatePath: '$',
+      rendererType: 'text',
+      component: {} as any,
+      propsProgram: { kind: 'static', value: {} },
+      metaProgram: {},
+      eventPlans: {},
+      regions: {},
+      scopePlan: { kind: 'inherit' },
+      sourcePropKeys: [],
+      sourceStatePropKeys: {},
+    } as any;
+    const nodeInstance = createNodeInstance({
+      templateNode,
+      scope: {
+        id: 'scope',
+        path: '$',
+        readOwn: () => ({}),
+        readVisible: () => ({}),
+        materializeVisible: () => ({}),
+        get: () => undefined,
+        has: () => false,
+        update: () => undefined,
+        merge: () => undefined,
+      } as any,
+      state: { meta: {}, props: undefined },
+      cid: undefined,
+      mounted: false,
+    });
     expect(nodeInstance.cid).toBeUndefined();
   });
 
   it('does not insert an extra wrapper for non-wrap nodes with cid', () => {
     const SchemaRenderer = createSchemaRenderer([cidProbeRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'cid-probe', text: 'CID probe' }} env={env} formulaCompiler={createFormulaCompiler()} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'cid-probe', text: 'CID probe' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     const root = screen.getByTestId('cid-root');
     const cid = root.getAttribute('data-cid');
     expect(document.querySelectorAll(`[data-cid="${cid}"]`)).toHaveLength(1);

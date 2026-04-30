@@ -22,7 +22,7 @@ import { buildFormOwnerRuntime } from './form-runtime-owner';
 import {
   buildArrayMutationContext,
   computeCanSubmitState,
-  createAllTouchedComputer
+  createAllTouchedComputer,
 } from './form-runtime-derived-state';
 import { buildInitialFieldState } from './form-runtime-state';
 import { createInitialFormScopeChange, createFormScopeWithBinding } from './form-runtime-status';
@@ -30,14 +30,17 @@ import { mergeFieldStateErrors } from './form-runtime-owner-field-states';
 import {
   cancelAllValidationDebounces,
   cancelValidationDebounce,
-  validatePath
+  validatePath,
 } from './form-runtime-validation';
-import type { CreateManagedFormRuntimeInput, ManagedFormRuntimeSharedState } from './form-runtime-types';
+import type {
+  CreateManagedFormRuntimeInput,
+  ManagedFormRuntimeSharedState,
+} from './form-runtime-types';
 import {
   applyFieldValuePatch,
   notifyFieldHidden,
   registerField,
-  updateFieldRegistration
+  updateFieldRegistration,
 } from './form-runtime-field-ops';
 import { executeFormSubmit } from './form-runtime-submit-flow';
 import { executeSetValues } from './form-runtime-values';
@@ -49,7 +52,7 @@ import {
   moveValueOp,
   swapValueOp,
   replaceValueOp,
-  type ArrayMutationContext
+  type ArrayMutationContext,
 } from './form-runtime-array-ops';
 import { createScopeRef, toRecord } from './scope';
 
@@ -58,15 +61,24 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   const formId = inputValue.id ?? `${inputValue.parentScope?.id ?? 'scope'}-form`;
   const formName = inputValue.name;
   const validationRuns = new Map<string, number>();
-  const pendingValidationDebounces = new Map<string, {
-    timer: ReturnType<typeof setTimeout>;
-    resolve: (run: boolean) => void;
-    reject: (error: unknown) => void;
-  }>();
-  const runtimeFieldRegistrations = new Map<string, import('./form-runtime-types').RegisteredFieldEntry>();
+  const pendingValidationDebounces = new Map<
+    string,
+    {
+      timer: ReturnType<typeof setTimeout>;
+      resolve: (run: boolean) => void;
+      reject: (error: unknown) => void;
+    }
+  >();
+  const runtimeFieldRegistrations = new Map<
+    string,
+    import('./form-runtime-types').RegisteredFieldEntry
+  >();
   const pathToRegistrationId = new Map<string, string>();
   const validationAsyncGovernance = createAsyncGovernanceStore();
-  const initialFieldState = buildInitialFieldState(inputValue.initialValues ?? {}, inputValue.validation);
+  const initialFieldState = buildInitialFieldState(
+    inputValue.initialValues ?? {},
+    inputValue.validation,
+  );
   const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
   const submittingDelay = inputValue.submittingDelay ?? 0;
   let lifecycleHandlers: FormLifecycleHandlers | undefined = inputValue.lifecycle;
@@ -80,45 +92,50 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     nextChangeRevision += 1;
     lastChange = {
       ...change,
-      revision: change.revision ?? nextChangeRevision
+      revision: change.revision ?? nextChangeRevision,
     };
   }
 
-  const scope = inputValue.existingScope ?? createScopeRef({
-    id: formId,
-    path: inputValue.scopePath ?? `${inputValue.parentScope?.path ?? '$root'}.form`,
-    parent: inputValue.parentScope,
-    store: {
-      getSnapshot: () => store.getState().values,
-      getLastChange: () => lastChange,
-      setSnapshot: (next, change) => {
-        setLastChange(change ?? {
-          paths: ['*'],
-          sourceScopeId: formId,
-          kind: 'replace'
-        });
-        store.setValues(next);
+  const scope =
+    inputValue.existingScope ??
+    createScopeRef({
+      id: formId,
+      path: inputValue.scopePath ?? `${inputValue.parentScope?.path ?? '$root'}.form`,
+      parent: inputValue.parentScope,
+      store: {
+        getSnapshot: () => store.getState().values,
+        getLastChange: () => lastChange,
+        setSnapshot: (next, change) => {
+          setLastChange(
+            change ?? {
+              paths: ['*'],
+              sourceScopeId: formId,
+              kind: 'replace',
+            },
+          );
+          store.setValues(next);
+        },
+        subscribe: (listener) => store.subscribe(() => listener(lastChange)),
       },
-      subscribe: (listener) => store.subscribe(() => listener(lastChange))
-    },
-    update: (path, value) => {
-      setLastChange({
-        paths: [path || '*'],
-        sourceScopeId: formId,
-        kind: 'update'
-      });
-      store.setValue(path, value);
-    }
-  });
+      update: (path, value) => {
+        setLastChange({
+          paths: [path || '*'],
+          sourceScopeId: formId,
+          kind: 'update',
+        });
+        store.setValue(path, value);
+      },
+    });
 
-  const runtimeScope = inputValue.scopeBinding === 'none'
-    ? scope
-    : createFormScopeWithBinding({
-        scope,
-        formId,
-        formName,
-        getStoreState: () => store.getState()
-      });
+  const runtimeScope =
+    inputValue.scopeBinding === 'none'
+      ? scope
+      : createFormScopeWithBinding({
+          scope,
+          formId,
+          formName,
+          getStoreState: () => store.getState(),
+        });
 
   const sharedState: ManagedFormRuntimeSharedState = {
     inputValue,
@@ -135,7 +152,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     lifecycleState: 'active',
     modelGeneration: 1,
     externalErrors: new Map(),
-    childContracts: new Map()
+    childContracts: new Map(),
   };
 
   const formRuntimeRef: { current?: FormRuntime } = {};
@@ -148,11 +165,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
     getIsSubmitting: () => isSubmittingInternal,
     getThisForm: () => formRuntimeRef.current as FormRuntime,
-    setLastChange
+    setLastChange,
   });
   const computeAllTouched = createAllTouchedComputer({
     store,
-    getCurrentValidation: () => currentValidation
+    getCurrentValidation: () => currentValidation,
   });
 
   function buildArrayCtx(): ArrayMutationContext {
@@ -160,7 +177,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       sharedState,
       scope,
       store,
-      revalidateDependents: ownerRuntime.revalidateDependents
+      revalidateDependents: ownerRuntime.revalidateDependents,
     });
   }
 
@@ -210,7 +227,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       const rootPath = currentValidation?.rootPath ?? '';
       const state = store.getState();
       const rootErrors = state.fieldStates[rootPath]?.errors ?? [];
-      return rootErrors.filter((e: import('@nop-chaos/flux-core').ValidationError) => e.sourceKind === 'scope-root');
+      return rootErrors.filter(
+        (e: import('@nop-chaos/flux-core').ValidationError) => e.sourceKind === 'scope-root',
+      );
     },
 
     isPathOwned(path: string): boolean {
@@ -225,7 +244,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         ownerId: formId,
         path,
         errors: fs?.errors ?? [],
-        validating: fs?.validating === true
+        validating: fs?.validating === true,
       };
     },
 
@@ -274,7 +293,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     notifyFieldHidden(path, hidden) {
-      notifyFieldHidden(sharedState, path, hidden, currentValidation, (p, v) => thisForm.setValue(p, v));
+      notifyFieldHidden(sharedState, path, hidden, currentValidation, (p, v) =>
+        thisForm.setValue(p, v),
+      );
     },
 
     async validateField(path, reason?) {
@@ -346,12 +367,17 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           defaultValidationTriggers,
           submittingDelay,
           getIsSubmitting: () => isSubmittingInternal,
-          setIsSubmitting: (v) => { isSubmittingInternal = v; },
+          setIsSubmitting: (v) => {
+            isSubmittingInternal = v;
+          },
           getLifecycleHandlers: () => lifecycleHandlers,
           getCurrentValidation: () => currentValidation,
-          validateForm: (reason) => thisForm.validateForm(reason as import('@nop-chaos/flux-core').ValidationReason | undefined)
+          validateForm: (reason) =>
+            thisForm.validateForm(
+              reason as import('@nop-chaos/flux-core').ValidationReason | undefined,
+            ),
         },
-        options
+        options,
       );
     },
 
@@ -365,7 +391,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         values: nextValues,
         fieldStates: {},
         submitting: false,
-        submitAttempted: false
+        submitAttempted: false,
       });
     },
 
@@ -377,17 +403,23 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       const state = store.getState();
       const baseline = initialFieldState.initialValues[name];
-      const patch = applyFieldValuePatch(sharedState, state, name, value, !Object.is(baseline, value));
+      const patch = applyFieldValuePatch(
+        sharedState,
+        state,
+        name,
+        value,
+        !Object.is(baseline, value),
+      );
 
       setLastChange({
         paths: [name || '*'],
         sourceScopeId: formId,
-        kind: 'update'
+        kind: 'update',
       });
 
       store.batchUpdate({
         values: patch.nextValues,
-        fieldStates: patch.nextFieldStates
+        fieldStates: patch.nextFieldStates,
       });
 
       if (ownerRuntime.clearExternalErrorsForPath(name)) {
@@ -409,9 +441,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           setLastChange,
           clearExternalErrorsForPath: ownerRuntime.clearExternalErrorsForPath,
           rebuildStoreErrorsFromExternal: ownerRuntime.rebuildStoreErrorsFromExternal,
-          revalidateDependents: ownerRuntime.revalidateDependents
+          revalidateDependents: ownerRuntime.revalidateDependents,
         },
-        values
+        values,
       );
     },
 
@@ -459,7 +491,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     getChildren(path) {
       const node = getCompiledValidationNode(currentValidation, path);
       return node?.children ?? [];
-    }
+    },
   };
 
   formRuntimeRef.current = thisForm;

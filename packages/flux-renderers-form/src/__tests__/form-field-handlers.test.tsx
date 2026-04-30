@@ -10,7 +10,7 @@ import {
   handlerIdentityProbeRenderer,
   handlerIdentitySnapshots,
   sharedFormulaCompiler,
-  submitCalls
+  submitCalls,
 } from './form-test-support';
 
 describe('formRendererDefinitions - input types and field handlers', () => {
@@ -24,19 +24,19 @@ describe('formRendererDefinitions - input types and field handlers', () => {
         schema={{
           type: 'form',
           data: {
-            email: ''
+            email: '',
           },
           body: [
             {
               type: 'input-email',
               name: 'email',
-              label: 'Email'
-            }
-          ]
+              label: 'Email',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const input = screen.getByLabelText(/Email/) as HTMLInputElement;
@@ -54,19 +54,22 @@ describe('formRendererDefinitions - input types and field handlers', () => {
   it('keeps field handler object identity stable across host rerenders when inputs are unchanged', () => {
     cleanup();
     handlerIdentitySnapshots.length = 0;
-    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, handlerIdentityProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...formRendererDefinitions,
+      handlerIdentityProbeRenderer,
+    ]);
 
     const schema = {
       type: 'form',
       data: {
-        username: 'alice'
+        username: 'alice',
       },
       body: [
         {
           type: 'handler-identity-probe',
-          name: 'username'
-        }
-      ]
+          name: 'username',
+        },
+      ],
     } as const;
 
     const { rerender } = render(
@@ -75,7 +78,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
         schema={schema}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     expect(handlerIdentitySnapshots).toHaveLength(1);
@@ -86,7 +89,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
         schema={schema}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     expect(handlerIdentitySnapshots).toHaveLength(1);
@@ -103,14 +106,14 @@ describe('formRendererDefinitions - input types and field handlers', () => {
         schema={{
           type: 'form',
           data: {
-            approved: false
+            approved: false,
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/approval',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
@@ -118,23 +121,23 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               name: 'approved',
               label: 'Approval',
               option: {
-                label: 'Approved'
-              }
-            }
+                label: 'Approved',
+              },
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit approval',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('checkbox'));
@@ -159,21 +162,21 @@ describe('formRendererDefinitions - input types and field handlers', () => {
           type: 'form',
           data: {
             notes: 'Initial note',
-            status: 'draft'
+            status: 'draft',
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/article',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
               type: 'textarea',
               name: 'notes',
               label: 'Notes',
-              rows: 5
+              rows: 5,
             },
             {
               type: 'radio-group',
@@ -181,23 +184,23 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               label: 'Status',
               options: [
                 { label: 'Draft', value: 'draft' },
-                { label: 'Published', value: 'published' }
-              ]
-            }
+                { label: 'Published', value: 'published' },
+              ],
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit article',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.change(screen.getByLabelText('Notes'), { target: { value: 'Updated note' } });
@@ -210,7 +213,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
     expect(submitCalls[0]).toMatchObject({
       notes: 'Updated note',
-      status: 'published'
+      status: 'published',
     });
   });
 
@@ -226,14 +229,14 @@ describe('formRendererDefinitions - input types and field handlers', () => {
           type: 'form',
           data: {
             featured: false,
-            tags: ['stable']
+            tags: ['stable'],
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/release',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
@@ -242,8 +245,8 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               label: 'Featured',
               option: {
                 onLabel: 'Live',
-                offLabel: 'Hidden'
-              }
+                offLabel: 'Hidden',
+              },
             },
             {
               type: 'checkbox-group',
@@ -251,23 +254,23 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               label: 'Tags',
               options: [
                 { label: 'Stable', value: 'stable' },
-                { label: 'Beta', value: 'beta' }
-              ]
-            }
+                { label: 'Beta', value: 'beta' },
+              ],
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit release',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('switch', { name: /Featured/ }));
@@ -280,7 +283,7 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
     expect(submitCalls[0]).toMatchObject({
       featured: true,
-      tags: ['stable', 'beta']
+      tags: ['stable', 'beta'],
     });
   });
 
@@ -294,19 +297,19 @@ describe('formRendererDefinitions - input types and field handlers', () => {
         schema={{
           type: 'form',
           data: {
-            title: null
+            title: null,
           },
           body: [
             {
               type: 'input-text',
               name: 'title',
-              label: 'Title'
-            }
-          ]
+              label: 'Title',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('');
@@ -323,14 +326,14 @@ describe('formRendererDefinitions - input types and field handlers', () => {
         schema={{
           type: 'form',
           data: {
-            approved: true
+            approved: true,
           },
           submitAction: {
             action: 'ajax',
             args: {
               url: '/api/approval',
-              method: 'post'
-            }
+              method: 'post',
+            },
           },
           body: [
             {
@@ -338,23 +341,23 @@ describe('formRendererDefinitions - input types and field handlers', () => {
               name: 'approved',
               label: 'Approval',
               option: {
-                label: 'Approved'
-              }
-            }
+                label: 'Approved',
+              },
+            },
           ],
           actions: [
             {
               type: 'button',
               label: 'Submit approval',
               onClick: {
-                action: 'submitForm'
-              }
-            }
-          ]
+                action: 'submitForm',
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('checkbox'));

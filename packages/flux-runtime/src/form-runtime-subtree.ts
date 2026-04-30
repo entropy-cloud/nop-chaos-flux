@@ -4,11 +4,15 @@ import {
   getCompiledValidationNodeMap,
   getCompiledValidationRootPath,
   getCompiledValidationTraversalOrder,
-  hasCompiledValidationNodes
+  hasCompiledValidationNodes,
 } from '@nop-chaos/flux-core';
-import type { FormRuntimeRegistrationState, FormRuntimeValidationState } from './form-runtime-types';
+import type {
+  FormRuntimeRegistrationState,
+  FormRuntimeValidationState,
+} from './form-runtime-types';
 
-type SubtreeCollectionState = FormRuntimeRegistrationState & Pick<FormRuntimeValidationState, 'inputValue'>;
+type SubtreeCollectionState = FormRuntimeRegistrationState &
+  Pick<FormRuntimeValidationState, 'inputValue'>;
 
 export function collectSubtreePaths(sharedState: SubtreeCollectionState, path: string): string[] {
   const paths = new Set<string>();
@@ -23,12 +27,20 @@ export function collectSubtreePaths(sharedState: SubtreeCollectionState, path: s
   for (const entry of sharedState.runtimeFieldRegistrations.values()) {
     const registrationPath = entry.registration.path;
 
-    if (registrationPath === path || registrationPath.startsWith(`${path}.`) || path.startsWith(`${registrationPath}.`)) {
+    if (
+      registrationPath === path ||
+      registrationPath.startsWith(`${path}.`) ||
+      path.startsWith(`${registrationPath}.`)
+    ) {
       paths.add(registrationPath);
     }
 
     for (const childPath of entry.registration.childPaths ?? []) {
-      if (childPath === path || childPath.startsWith(`${path}.`) || path.startsWith(`${childPath}.`)) {
+      if (
+        childPath === path ||
+        childPath.startsWith(`${path}.`) ||
+        path.startsWith(`${childPath}.`)
+      ) {
         paths.add(childPath);
       }
     }
@@ -37,7 +49,10 @@ export function collectSubtreePaths(sharedState: SubtreeCollectionState, path: s
   return Array.from(paths);
 }
 
-export function collectSubtreeNodePaths(sharedState: SubtreeCollectionState, path: string): string[] {
+export function collectSubtreeNodePaths(
+  sharedState: SubtreeCollectionState,
+  path: string,
+): string[] {
   const validation = sharedState.inputValue.validation;
   const nodes = getCompiledValidationNodeMap(validation);
 
@@ -48,7 +63,9 @@ export function collectSubtreeNodePaths(sharedState: SubtreeCollectionState, pat
   const nodeMap = nodes;
   const traversalOrder = getCompiledValidationTraversalOrder(validation);
   const fallbackTraversalOrder =
-    traversalOrder.length > 0 ? traversalOrder : buildCompiledValidationOrder(nodeMap, getCompiledValidationRootPath(validation));
+    traversalOrder.length > 0
+      ? traversalOrder
+      : buildCompiledValidationOrder(nodeMap, getCompiledValidationRootPath(validation));
   const seen = new Set<string>();
   const ordered: string[] = [];
 
@@ -80,7 +97,10 @@ export function collectSubtreeNodePaths(sharedState: SubtreeCollectionState, pat
   return ordered;
 }
 
-export function collectSubtreeValidationTargets(sharedState: SubtreeCollectionState, path: string): string[] {
+export function collectSubtreeValidationTargets(
+  sharedState: SubtreeCollectionState,
+  path: string,
+): string[] {
   const ordered = collectSubtreeNodePaths(sharedState, path);
   const targets = new Set<string>(ordered);
 

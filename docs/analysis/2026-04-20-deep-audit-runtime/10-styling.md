@@ -8,21 +8,21 @@
 
 同类问题扫描从 5 个扩展到 **15 个**：
 
-| 渲染器 | 文件 | 当前根元素 |
-|--------|------|-----------|
-| tag-list | `flux-renderers-form-advanced/src/tag-list.tsx:64` | `<div className="flex flex-wrap gap-2.5">` |
-| key-value | `flux-renderers-form-advanced/src/key-value.tsx:334` | `<div className="grid gap-3">` |
-| array-editor | `flux-renderers-form-advanced/src/array-editor.tsx:240` | `<div className="grid gap-3">` |
-| input-tree | `flux-renderers-form-advanced/src/tree-controls.tsx:137` | `<div data-slot="input-tree-control">` |
-| tree-select | `flux-renderers-form-advanced/src/tree-controls.tsx:181` | `<div data-slot="tree-select-control">` |
-| button | `flux-renderers-basic/src/button-renderer.tsx` | 无 marker class |
-| badge | `flux-renderers-basic/src/badge-renderer.tsx` | 无 marker class |
-| input-text/email/password | `flux-renderers-form/src/renderers/input.tsx` | 无 marker class |
-| textarea | `flux-renderers-form/src/renderers/input.tsx` | 无 marker class |
-| object-field | `flux-renderers-form-advanced/src/object-field.tsx` | 无 marker class |
-| array-field | `flux-renderers-form-advanced/src/array-field.tsx` | 无 marker class |
-| variant-field | `flux-renderers-form-advanced/src/variant-field/variant-field.tsx` | 无 marker class |
-| detail-field | `flux-renderers-form-advanced/src/detail-view/detail-field.tsx` | 无 marker class |
+| 渲染器                    | 文件                                                               | 当前根元素                                 |
+| ------------------------- | ------------------------------------------------------------------ | ------------------------------------------ |
+| tag-list                  | `flux-renderers-form-advanced/src/tag-list.tsx:64`                 | `<div className="flex flex-wrap gap-2.5">` |
+| key-value                 | `flux-renderers-form-advanced/src/key-value.tsx:334`               | `<div className="grid gap-3">`             |
+| array-editor              | `flux-renderers-form-advanced/src/array-editor.tsx:240`            | `<div className="grid gap-3">`             |
+| input-tree                | `flux-renderers-form-advanced/src/tree-controls.tsx:137`           | `<div data-slot="input-tree-control">`     |
+| tree-select               | `flux-renderers-form-advanced/src/tree-controls.tsx:181`           | `<div data-slot="tree-select-control">`    |
+| button                    | `flux-renderers-basic/src/button-renderer.tsx`                     | 无 marker class                            |
+| badge                     | `flux-renderers-basic/src/badge-renderer.tsx`                      | 无 marker class                            |
+| input-text/email/password | `flux-renderers-form/src/renderers/input.tsx`                      | 无 marker class                            |
+| textarea                  | `flux-renderers-form/src/renderers/input.tsx`                      | 无 marker class                            |
+| object-field              | `flux-renderers-form-advanced/src/object-field.tsx`                | 无 marker class                            |
+| array-field               | `flux-renderers-form-advanced/src/array-field.tsx`                 | 无 marker class                            |
+| variant-field             | `flux-renderers-form-advanced/src/variant-field/variant-field.tsx` | 无 marker class                            |
+| detail-field              | `flux-renderers-form-advanced/src/detail-view/detail-field.tsx`    | 无 marker class                            |
 
 - **现状**: Widget renderer 按 styling-system.md 应有 root marker class（如 `nop-tag-list`），用于 CSS 定位和宿主集成。当前缺少。
 - **建议**: 在根元素 className 中添加对应的 `nop-*` marker。
@@ -71,5 +71,5 @@
 - cn() 统一使用，零 classnames 导入
 - 无 React ThemeProvider 依赖
 - Spreadsheet canvas hybrid 策略合规
-- stack-*/hstack-* 别名完备
+- stack-_/hstack-_ 别名完备
 - Tailwind @source 覆盖完整

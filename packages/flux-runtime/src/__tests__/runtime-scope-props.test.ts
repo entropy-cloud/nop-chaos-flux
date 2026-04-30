@@ -4,7 +4,9 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux
 import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
-function createRuntimeStateFromTemplateNode(node: import('@nop-chaos/flux-core').TemplateNode): NodeRuntimeState {
+function createRuntimeStateFromTemplateNode(
+  node: import('@nop-chaos/flux-core').TemplateNode,
+): NodeRuntimeState {
   const metaEntries: Record<string, RuntimeValueState<unknown>> = {};
   const meta = node.metaProgram;
   for (const key of Object.keys(meta) as Array<keyof typeof meta>) {
@@ -32,20 +34,23 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = runtime.compile({
       type: 'text',
-      text: '${message}'
+      text: '${message}',
     });
     const node = compiled.root as any;
 
     const page = runtime.createPageRuntime({ message: 'Hello' });
-    const state = runtime.schemaCompiler.compileNode({ type: 'text', text: '${message}' }, {
-      path: '$',
-      renderer: registry.get('text')!
-    });
+    const state = runtime.schemaCompiler.compileNode(
+      { type: 'text', text: '${message}' },
+      {
+        path: '$',
+        renderer: registry.get('text')!,
+      },
+    );
     const runtimeState = createRuntimeStateFromTemplateNode(state);
     const first = runtime.resolveNodeProps(node, page.scope, runtimeState);
     const second = runtime.resolveNodeProps(node, page.scope, runtimeState);
@@ -59,21 +64,24 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry,
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = runtime.compile({
       type: 'text',
       text: '${user.name}',
-      visible: '${showText}'
+      visible: '${showText}',
     });
     const node = compiled.root as any;
 
     const page = runtime.createPageRuntime({ user: { name: 'Alice' }, showText: true });
-    const state = runtime.schemaCompiler.compileNode({ type: 'text', text: '${user.name}', visible: '${showText}' }, {
-      path: '$',
-      renderer: registry.get('text')!
-    });
+    const state = runtime.schemaCompiler.compileNode(
+      { type: 'text', text: '${user.name}', visible: '${showText}' },
+      {
+        path: '$',
+        renderer: registry.get('text')!,
+      },
+    );
     const runtimeState = createRuntimeStateFromTemplateNode(state);
 
     runtime.resolveNodeMeta(node, page.scope, runtimeState);
@@ -82,12 +90,12 @@ describe('createRendererRuntime', () => {
     expect(runtimeState.metaDependencies).toEqual({
       paths: ['showText'],
       wildcard: false,
-      broadAccess: false
+      broadAccess: false,
     });
     expect(runtimeState.propsDependencies).toEqual({
       paths: ['user'],
       wildcard: false,
-      broadAccess: false
+      broadAccess: false,
     });
   });
 });

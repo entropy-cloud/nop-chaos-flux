@@ -24,16 +24,17 @@ Per `docs/architecture/field-binding-and-renderer-contract.md`:
 
 Live repo audit (2026-04-16) found **26 remaining transitional fallbacks** across 6 files:
 
-| File | `name` Fallbacks | `required` Fallbacks |
-|------|------------------|---------------------|
-| `input.tsx` | 7 | 7 |
-| `tree-controls.tsx` | 2 | 2 |
-| `ConditionBuilder.tsx` | 1 | 1 |
-| `tag-list.tsx` | 1 | 1 |
-| `key-value.tsx` | 1 | 1 |
-| `array-editor.tsx` | 1 | 1 |
+| File                   | `name` Fallbacks | `required` Fallbacks |
+| ---------------------- | ---------------- | -------------------- |
+| `input.tsx`            | 7                | 7                    |
+| `tree-controls.tsx`    | 2                | 2                    |
+| `ConditionBuilder.tsx` | 1                | 1                    |
+| `tag-list.tsx`         | 1                | 1                    |
+| `key-value.tsx`        | 1                | 1                    |
+| `array-editor.tsx`     | 1                | 1                    |
 
 Additionally, 4 files already use the correct pattern (`props.props.name` only):
+
 - `variant-field.tsx`
 - `object-field.tsx`
 - `array-field.tsx`
@@ -84,6 +85,7 @@ Targets: `input.tsx`, `tree-controls.tsx`
 - [x] Run `pnpm typecheck` to verify no type errors
 
 Exit Criteria:
+
 - [x] No `props.schema.name` or `props.schema.required` references remain in these files
 - [x] Typecheck passes
 
@@ -98,6 +100,7 @@ Targets: `ConditionBuilder.tsx`, `tag-list.tsx`, `key-value.tsx`, `array-editor.
 - [x] Remove `?? props.schema.name` and `?? props.schema.required` fallbacks from `array-editor.tsx`
 
 Exit Criteria:
+
 - [x] No `props.schema.name` or `props.schema.required` references remain in these files
 
 ### Phase 3 - Verification And Closure
@@ -113,6 +116,7 @@ Targets: all touched files, `docs/logs/2026/04-16.md`
 - [x] Grep verify: no `props.schema.(name|required)` references remain in `packages/flux-renderers-form/src/renderers/`
 
 Exit Criteria:
+
 - [x] Full workspace verification green
 - [x] Zero `props.schema.name` and `props.schema.required` references in form renderers
 - [x] Daily log updated
@@ -141,14 +145,16 @@ Exit Criteria:
 Status Note: All phases completed. Eliminated 26 transitional fallbacks (13 `props.schema.name`, 13 `props.schema.required`) from 6 form renderer files. All form renderers now use normalized channels exclusively per the Frozen Contract Matrix in `docs/architecture/field-binding-and-renderer-contract.md`.
 
 Closure Audit Evidence:
+
 - Reviewer / Agent: Claude claude-opus-4.5 2026-04-16
-- Evidence: 
+- Evidence:
   - Grep verify: `grep -r "props\.schema\.(name|required)" packages/flux-renderers-form/src/renderers/` returns no matches
   - `pnpm typecheck` passes
-  - `pnpm build` passes  
+  - `pnpm build` passes
   - `pnpm lint` passes
   - `pnpm --filter @nop-chaos/flux-renderers-form test` passes (409 tests)
 
 Follow-up:
+
 - None; this completes the Plan 72 follow-up chain
 - Form renderers now fully comply with the normalized renderer contract

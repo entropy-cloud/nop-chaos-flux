@@ -8,10 +8,13 @@ import {
   inferAddNodeFailure,
   relayoutAfterTreeMutation,
   validateEdgeMutation,
-  viewportsEqual
+  viewportsEqual,
 } from './designer-command-adapter-helpers';
 
-export function executeGraphOnlyCommand(core: DesignerCore, command: DesignerCommand): DesignerCommandResult | undefined {
+export function executeGraphOnlyCommand(
+  core: DesignerCore,
+  command: DesignerCommand,
+): DesignerCommandResult | undefined {
   switch (command.type) {
     case 'addEdge': {
       const validation = validateEdgeMutation(core, command.source, command.target);
@@ -27,7 +30,11 @@ export function executeGraphOnlyCommand(core: DesignerCore, command: DesignerCom
       return createSuccess(core, { data: edge });
     }
     case 'addNode': {
-      const node = core.addNode(command.nodeType, command.position ?? { x: 200, y: 120 }, command.data);
+      const node = core.addNode(
+        command.nodeType,
+        command.position ?? { x: 200, y: 120 },
+        command.data,
+      );
       if (!node) {
         const failure = inferAddNodeFailure(core, command.nodeType);
         return createFailure(core, failure.error, failure.reason);
@@ -62,7 +69,9 @@ export function executeGraphOnlyCommand(core: DesignerCore, command: DesignerCom
       }
 
       core.moveNode(command.nodeId, command.position);
-      return createSuccess(core, { data: core.getDocument().nodes.find((nextNode) => nextNode.id === command.nodeId) });
+      return createSuccess(core, {
+        data: core.getDocument().nodes.find((nextNode) => nextNode.id === command.nodeId),
+      });
     }
     case 'reconnectEdge': {
       if (!hasEdge(core.getDocument(), command.edgeId)) {
@@ -76,12 +85,19 @@ export function executeGraphOnlyCommand(core: DesignerCore, command: DesignerCom
 
       const result = core.reconnectEdge(command.edgeId, command.source, command.target);
       if (!result.ok) {
-        return createFailure(core, result.error ?? 'Unable to reconnect edge.', (result.reason as import('./designer-command-types').DesignerCommandReason | undefined) ?? 'missing-edge');
+        return createFailure(
+          core,
+          result.error ?? 'Unable to reconnect edge.',
+          (result.reason as import('./designer-command-types').DesignerCommandReason | undefined) ??
+            'missing-edge',
+        );
       }
 
       return createSuccess(core, {
         data: result.edge,
-        reason: result.reason as import('./designer-command-types').DesignerCommandReason | undefined
+        reason: result.reason as
+          | import('./designer-command-types').DesignerCommandReason
+          | undefined,
       });
     }
     case 'setViewport': {
@@ -92,14 +108,14 @@ export function executeGraphOnlyCommand(core: DesignerCore, command: DesignerCom
         return {
           ok: true,
           snapshot: nextSnapshot,
-          reason: 'unchanged'
+          reason: 'unchanged',
         };
       }
 
       return {
         ok: true,
         snapshot: nextSnapshot,
-        data: nextSnapshot.viewport
+        data: nextSnapshot.viewport,
       };
     }
     case 'updateEdgeData':

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { cellAddress, type SpreadsheetRange, type SpreadsheetFrozenPane } from '@nop-chaos/spreadsheet-core';
+import {
+  cellAddress,
+  type SpreadsheetRange,
+  type SpreadsheetFrozenPane,
+} from '@nop-chaos/spreadsheet-core';
 import { ContextMenu, ContextMenuTrigger } from '@nop-chaos/ui';
 import type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
 import { mapCellStyle } from './cell-style-map.js';
@@ -31,11 +35,22 @@ export interface SpreadsheetGridProps {
   selection: SpreadsheetHostSnapshot['selection'];
   editingCell: { row: number; col: number } | null;
   editValue: string;
-  fillHandleState: { isFilling: boolean; startRow: number; startCol: number; endRow: number; endCol: number; currentRow: number; currentCol: number };
+  fillHandleState: {
+    isFilling: boolean;
+    startRow: number;
+    startCol: number;
+    endRow: number;
+    endCol: number;
+    currentRow: number;
+    currentCol: number;
+  };
   isInRange: (row: number, col: number) => boolean;
   isFillPreview: (row: number, col: number) => boolean;
   getSelectedRange: () => SpreadsheetRange | null;
-  getMergeInfo: (row: number, col: number) => { isMerged: boolean; isTopLeft: boolean; rowSpan: number; colSpan: number };
+  getMergeInfo: (
+    row: number,
+    col: number,
+  ) => { isMerged: boolean; isTopLeft: boolean; rowSpan: number; colSpan: number };
   onCellClick: (row: number, col: number) => void;
   onCellDoubleClick: (row: number, col: number) => void;
   onCellMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
@@ -99,16 +114,26 @@ export function SpreadsheetGrid({
   const selectionAnchorCell = useMemo(() => getAnchorCellFromSelection(selection), [selection]);
   const selectedRowInfo = useMemo(() => getSelectedAxisInfo(selection, 'row'), [selection]);
   const selectedColumnInfo = useMemo(() => getSelectedAxisInfo(selection, 'column'), [selection]);
-  const canUseRowStructureActions = selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'row';
-  const canUseColumnStructureActions = selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'column';
+  const canUseRowStructureActions =
+    selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'row';
+  const canUseColumnStructureActions =
+    selection.kind === 'cell' || selection.kind === 'range' || selection.kind === 'column';
   const canSort = !!selectedRange && canUseColumnStructureActions;
   const canFilter = !!selectionAnchorCell && !!activeSheetId && selection.kind === 'cell';
   const sortRange = useMemo(
-    () => (selectedRange ? expandSortRangeToUsedColumns(selectedRange, snapshot.activeSheet?.cells) : null),
+    () =>
+      selectedRange
+        ? expandSortRangeToUsedColumns(selectedRange, snapshot.activeSheet?.cells)
+        : null,
     [selectedRange, snapshot.activeSheet?.cells],
   );
-  const canMerge = !!selectedRange && (selectedRange.startRow !== selectedRange.endRow || selectedRange.startCol !== selectedRange.endCol);
-  const canUnmerge = !!selectedRange && (snapshot.activeSheet?.merges ?? []).some((merge) => rangesEqual(selectedRange, merge));
+  const canMerge =
+    !!selectedRange &&
+    (selectedRange.startRow !== selectedRange.endRow ||
+      selectedRange.startCol !== selectedRange.endCol);
+  const canUnmerge =
+    !!selectedRange &&
+    (snapshot.activeSheet?.merges ?? []).some((merge) => rangesEqual(selectedRange, merge));
   const canFreeze = !!selectionAnchorCell && !!activeSheetId && selection.kind !== 'sheet';
   const hasActiveRowFilters = (snapshot.activeSheet?.filters?.columns?.length ?? 0) > 0;
   const filteredColumnSet = useMemo(
@@ -156,14 +181,29 @@ export function SpreadsheetGrid({
   const effectiveScrollTop = scrollTop;
   const effectiveScrollLeft = scrollLeft;
 
-  const visStartRow = Math.max(frozenRows, findFirstVisible(rowOffsets, effectiveScrollTop + frozenRowHeight) - OVERSCAN);
-  const visEndRow = Math.min(rows - 1, findFirstVisible(rowOffsets, effectiveScrollTop + frozenRowHeight + viewportHeight) + OVERSCAN);
-  const visStartCol = Math.max(frozenCols, findFirstVisible(colOffsets, effectiveScrollLeft + frozenColWidth) - OVERSCAN);
-  const visEndCol = Math.min(cols - 1, findFirstVisible(colOffsets, effectiveScrollLeft + frozenColWidth + viewportWidth) + OVERSCAN);
+  const visStartRow = Math.max(
+    frozenRows,
+    findFirstVisible(rowOffsets, effectiveScrollTop + frozenRowHeight) - OVERSCAN,
+  );
+  const visEndRow = Math.min(
+    rows - 1,
+    findFirstVisible(rowOffsets, effectiveScrollTop + frozenRowHeight + viewportHeight) + OVERSCAN,
+  );
+  const visStartCol = Math.max(
+    frozenCols,
+    findFirstVisible(colOffsets, effectiveScrollLeft + frozenColWidth) - OVERSCAN,
+  );
+  const visEndCol = Math.min(
+    cols - 1,
+    findFirstVisible(colOffsets, effectiveScrollLeft + frozenColWidth + viewportWidth) + OVERSCAN,
+  );
 
-  const topSpacerHeight = frozenRows < visStartRow ? rowOffsets[visStartRow] - rowOffsets[frozenRows] : 0;
-  const bottomSpacerHeight = visEndRow < rows - 1 ? rowOffsets[rows] - rowOffsets[visEndRow + 1] : 0;
-  const leftSpacerWidth = frozenCols < visStartCol ? colOffsets[visStartCol] - colOffsets[frozenCols] : 0;
+  const topSpacerHeight =
+    frozenRows < visStartRow ? rowOffsets[visStartRow] - rowOffsets[frozenRows] : 0;
+  const bottomSpacerHeight =
+    visEndRow < rows - 1 ? rowOffsets[rows] - rowOffsets[visEndRow + 1] : 0;
+  const leftSpacerWidth =
+    frozenCols < visStartCol ? colOffsets[visStartCol] - colOffsets[frozenCols] : 0;
   const rightSpacerWidth = visEndCol < cols - 1 ? colOffsets[cols] - colOffsets[visEndCol + 1] : 0;
 
   const visibleColIndices: number[] = [];
@@ -190,10 +230,8 @@ export function SpreadsheetGrid({
     const isEditing = editingCell?.row === r && editingCell?.col === c;
     const isDropTarget = dropTargetCell?.row === r && dropTargetCell?.col === c && !!draggingField;
 
-    const isFillHandleCell = selectedRange &&
-      r === selectedRange.endRow &&
-      c === selectedRange.endCol &&
-      !isEditing;
+    const isFillHandleCell =
+      selectedRange && r === selectedRange.endRow && c === selectedRange.endCol && !isEditing;
 
     if (mergeInfo.isMerged && !mergeInfo.isTopLeft) {
       return null;
@@ -236,7 +274,10 @@ export function SpreadsheetGrid({
           }
         }}
         onMouseEnter={() => onCellMouseEnter(r, c)}
-        onDragOver={(e) => { e.preventDefault(); onFieldDragOver?.(r, c); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          onFieldDragOver?.(r, c);
+        }}
         onDragLeave={() => onFieldDragLeave?.()}
       >
         {isEditing ? (
@@ -321,85 +362,115 @@ export function SpreadsheetGrid({
           }
         }}
       >
-        <div style={{ width: totalWidth + ROW_HEADER_WIDTH, height: totalHeight, position: 'relative' }}>
+        <div
+          style={{
+            width: totalWidth + ROW_HEADER_WIDTH,
+            height: totalHeight,
+            position: 'relative',
+          }}
+        >
           <table>
-          <thead>
-            <tr>
-              <th
-                className="row-header header-corner"
-                style={{ width: ROW_HEADER_WIDTH }}
-                onClick={onSelectAll}
-                onContextMenu={() => {
-                  if (selection.kind !== 'sheet') {
-                    onSelectAll();
-                  }
-                }}
-              ></th>
-              {leftSpacerWidth > 0 && <th style={{ width: leftSpacerWidth, padding: 0 }} />}
-              {visibleColIndices.map((c) => (
+            <thead>
+              <tr>
                 <th
-                  key={c}
-                  style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
-                  className="col-header"
-                  data-col-header-active={selection.kind === 'column' && selection.columns?.includes(c) ? true : undefined}
-                  data-col-filtered={filteredColumnSet.has(c) || undefined}
-                  onClick={(event) => onSelectColumn(c, event.shiftKey)}
+                  className="row-header header-corner"
+                  style={{ width: ROW_HEADER_WIDTH }}
+                  onClick={onSelectAll}
                   onContextMenu={() => {
-                    if (selection.kind !== 'column' || !selection.columns?.includes(c)) {
-                      onSelectColumn(c);
+                    if (selection.kind !== 'sheet') {
+                      onSelectAll();
                     }
                   }}
-                >
-                  {cellAddress(0, c).replace(/[0-9]/g, '')}
-                  <div
-                    className="col-resize-handle"
-                    onMouseDown={(e) => onColumnResizeStart(c, e)}
+                ></th>
+                {leftSpacerWidth > 0 && <th style={{ width: leftSpacerWidth, padding: 0 }} />}
+                {visibleColIndices.map((c) => (
+                  <th
+                    key={c}
+                    style={{ width: columnWidths[c] ?? DEFAULT_COL_WIDTH }}
+                    className="col-header"
+                    data-col-header-active={
+                      selection.kind === 'column' && selection.columns?.includes(c)
+                        ? true
+                        : undefined
+                    }
+                    data-col-filtered={filteredColumnSet.has(c) || undefined}
+                    onClick={(event) => onSelectColumn(c, event.shiftKey)}
+                    onContextMenu={() => {
+                      if (selection.kind !== 'column' || !selection.columns?.includes(c)) {
+                        onSelectColumn(c);
+                      }
+                    }}
+                  >
+                    {cellAddress(0, c).replace(/[0-9]/g, '')}
+                    <div
+                      className="col-resize-handle"
+                      onMouseDown={(e) => onColumnResizeStart(c, e)}
+                    />
+                  </th>
+                ))}
+                {rightSpacerWidth > 0 && <th style={{ width: rightSpacerWidth, padding: 0 }} />}
+              </tr>
+            </thead>
+            <tbody>
+              {topSpacerHeight > 0 && (
+                <tr style={{ height: topSpacerHeight }}>
+                  <td
+                    colSpan={
+                      visibleColIndices.length +
+                      1 +
+                      (leftSpacerWidth > 0 ? 1 : 0) +
+                      (rightSpacerWidth > 0 ? 1 : 0)
+                    }
                   />
-                </th>
+                </tr>
+              )}
+              {visibleRowIndices.map((r) => (
+                <tr
+                  key={r}
+                  style={{ height: rowHeights[r] ?? DEFAULT_ROW_HEIGHT }}
+                  className={frozen && r < (frozen.row ?? 0) ? 'frozen-row' : ''}
+                >
+                  <td
+                    className="row-header"
+                    data-row-header-active={
+                      selection.kind === 'row' && selection.rows?.includes(r) ? true : undefined
+                    }
+                    onContextMenu={() => {
+                      if (selection.kind !== 'row' || !selection.rows?.includes(r)) {
+                        onSelectRow(r);
+                      }
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="ss-row-header-button"
+                      onClick={(event) => onSelectRow(r, event.shiftKey)}
+                    >
+                      {r + 1}
+                    </button>
+                    <div
+                      className="row-resize-handle"
+                      onMouseDown={(e) => onRowResizeStart(r, e)}
+                    />
+                  </td>
+                  {leftSpacerWidth > 0 && <td style={{ width: leftSpacerWidth, padding: 0 }} />}
+                  {visibleColIndices.map((c) => renderCell(r, c))}
+                  {rightSpacerWidth > 0 && <td style={{ width: rightSpacerWidth, padding: 0 }} />}
+                </tr>
               ))}
-              {rightSpacerWidth > 0 && <th style={{ width: rightSpacerWidth, padding: 0 }} />}
-            </tr>
-          </thead>
-          <tbody>
-            {topSpacerHeight > 0 && (
-              <tr style={{ height: topSpacerHeight }}>
-                <td colSpan={visibleColIndices.length + 1 + (leftSpacerWidth > 0 ? 1 : 0) + (rightSpacerWidth > 0 ? 1 : 0)} />
-              </tr>
-            )}
-            {visibleRowIndices.map((r) => (
-              <tr
-                key={r}
-                style={{ height: rowHeights[r] ?? DEFAULT_ROW_HEIGHT }}
-                className={frozen && r < (frozen.row ?? 0) ? 'frozen-row' : ''}
-              >
-                <td
-                  className="row-header"
-                  data-row-header-active={selection.kind === 'row' && selection.rows?.includes(r) ? true : undefined}
-                  onContextMenu={() => {
-                    if (selection.kind !== 'row' || !selection.rows?.includes(r)) {
-                      onSelectRow(r);
+              {bottomSpacerHeight > 0 && (
+                <tr style={{ height: bottomSpacerHeight }}>
+                  <td
+                    colSpan={
+                      visibleColIndices.length +
+                      1 +
+                      (leftSpacerWidth > 0 ? 1 : 0) +
+                      (rightSpacerWidth > 0 ? 1 : 0)
                     }
-                  }}
-                >
-                  <button type="button" className="ss-row-header-button" onClick={(event) => onSelectRow(r, event.shiftKey)}>
-                    {r + 1}
-                  </button>
-                  <div
-                    className="row-resize-handle"
-                    onMouseDown={(e) => onRowResizeStart(r, e)}
                   />
-                </td>
-                {leftSpacerWidth > 0 && <td style={{ width: leftSpacerWidth, padding: 0 }} />}
-                {visibleColIndices.map((c) => renderCell(r, c))}
-                {rightSpacerWidth > 0 && <td style={{ width: rightSpacerWidth, padding: 0 }} />}
-              </tr>
-            ))}
-            {bottomSpacerHeight > 0 && (
-              <tr style={{ height: bottomSpacerHeight }}>
-                <td colSpan={visibleColIndices.length + 1 + (leftSpacerWidth > 0 ? 1 : 0) + (rightSpacerWidth > 0 ? 1 : 0)} />
-              </tr>
-            )}
-          </tbody>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
       </ContextMenuTrigger>

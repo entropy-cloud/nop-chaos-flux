@@ -1,11 +1,4 @@
-export const META_FIELDS = new Set([
-  'id',
-  'className',
-  'visible',
-  'hidden',
-  'disabled',
-  'testid'
-]);
+export const META_FIELDS = new Set(['id', 'className', 'visible', 'hidden', 'disabled', 'testid']);
 
 export const BUILT_IN_ACTION_NAMES = new Set([
   'setValue',
@@ -21,7 +14,7 @@ export const BUILT_IN_ACTION_NAMES = new Set([
   'refreshSource',
   'submit',
   'submitForm',
-  'navigate'
+  'navigate',
 ]);
 
 export const XUI_ACTIONS_NAMESPACE = '__xui_actions__';

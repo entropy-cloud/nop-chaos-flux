@@ -4,20 +4,28 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { useScopeSelector } from '@nop-chaos/flux-react';
-import { allRenderers, baseEnv, formulaCompiler, makeCapturingFetcher } from './composite-form-support';
+import {
+  allRenderers,
+  baseEnv,
+  formulaCompiler,
+  makeCapturingFetcher,
+} from './composite-form-support';
 
 function ScopeSelectorProbeRenderer() {
-  const snapshot = useScopeSelector((scope) => ({
-    value: scope.value,
-    index: scope.index,
-    readOnly: scope.readOnly
-  }), Object.is) as Record<string, unknown>;
+  const snapshot = useScopeSelector(
+    (scope) => ({
+      value: scope.value,
+      index: scope.index,
+      readOnly: scope.readOnly,
+    }),
+    Object.is,
+  ) as Record<string, unknown>;
   return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
 }
 
 const scopeSelectorProbeRenderer: RendererDefinition = {
   type: 'scope-selector-probe',
-  component: () => <ScopeSelectorProbeRenderer />
+  component: () => <ScopeSelectorProbeRenderer />,
 };
 
 describe('composite form - object-field validation', () => {
@@ -40,25 +48,25 @@ describe('composite form - object-field validation', () => {
               label: 'Profile',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name', required: true },
-                { type: 'input-text', name: 'lastName', label: 'Last Name', required: true }
-              ]
-            }
+                { type: 'input-text', name: 'lastName', label: 'Last Name', required: true },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'obj-form-block' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'obj-form-block' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
@@ -92,25 +100,25 @@ describe('composite form - object-field validation', () => {
               label: 'Profile',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name', required: true },
-                { type: 'input-text', name: 'lastName', label: 'Last Name', required: true }
-              ]
-            }
+                { type: 'input-text', name: 'lastName', label: 'Last Name', required: true },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'obj-form-pass' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'obj-form-pass' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
@@ -120,7 +128,7 @@ describe('composite form - object-field validation', () => {
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
 
     expect(submitValues[0]).toMatchObject({
-      profile: { firstName: 'Jane', lastName: 'Doe' }
+      profile: { firstName: 'Jane', lastName: 'Doe' },
     });
   });
 
@@ -143,25 +151,25 @@ describe('composite form - object-field validation', () => {
               label: 'Profile',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
-                { type: 'input-text', name: 'lastName', label: 'Last Name' }
-              ]
-            }
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'obj-form-edit' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'obj-form-edit' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());
@@ -173,7 +181,7 @@ describe('composite form - object-field validation', () => {
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
 
     expect(submitValues[0]).toMatchObject({
-      profile: { firstName: 'Alice', lastName: 'Doe' }
+      profile: { firstName: 'Alice', lastName: 'Doe' },
     });
   });
 });
@@ -195,13 +203,13 @@ describe('composite form - array-field add/remove', () => {
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
-            }
-          ]
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }],
+            },
+          ],
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Tags')).toBeTruthy());
@@ -234,24 +242,24 @@ describe('composite form - array-field add/remove', () => {
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'input-text', name: 'value', label: 'Tag', required: true }]
-            }
+              item: [{ type: 'input-text', name: 'value', label: 'Tag', required: true }],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'arr-form-req' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'arr-form-req' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
@@ -284,24 +292,24 @@ describe('composite form - array-field add/remove', () => {
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'input-text', name: 'value', label: 'Tag' }]
-            }
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'arr-form-pass' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'arr-form-pass' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
@@ -330,21 +338,23 @@ describe('composite form - array-field add/remove', () => {
               name: 'tags',
               itemKind: 'scalar',
               label: 'Tags',
-              item: [{ type: 'scope-selector-probe' }]
-            }
-          ]
+              item: [{ type: 'scope-selector-probe' }],
+            },
+          ],
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('scope-selector-probe').textContent).toBe(JSON.stringify({
-        value: 'alpha',
-        index: 0,
-        readOnly: false
-      }));
+      expect(screen.getByTestId('scope-selector-probe').textContent).toBe(
+        JSON.stringify({
+          value: 'alpha',
+          index: 0,
+          readOnly: false,
+        }),
+      );
     });
   });
 });

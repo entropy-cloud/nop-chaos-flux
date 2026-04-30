@@ -1,7 +1,10 @@
 import type { DataSourceState } from '@nop-chaos/flux-core';
 import { nextFailureCount, structuralShareData, toNextDataSourceState } from './data-source-state';
 
-export function toSuccessDataSourceState(current: DataSourceState, mappedValue: unknown): DataSourceState {
+export function toSuccessDataSourceState(
+  current: DataSourceState,
+  mappedValue: unknown,
+): DataSourceState {
   const sharedData = structuralShareData(current.data, mappedValue);
   return {
     ...current,
@@ -14,7 +17,7 @@ export function toSuccessDataSourceState(current: DataSourceState, mappedValue: 
     dataUpdatedAt: Object.is(sharedData, current.data) ? current.dataUpdatedAt : Date.now(),
     errorUpdatedAt: current.errorUpdatedAt,
     failureCount: 0,
-    failureReason: undefined
+    failureReason: undefined,
   };
 }
 
@@ -28,11 +31,14 @@ export function toErrorDataSourceState(current: DataSourceState, error: unknown)
     error,
     errorUpdatedAt: Date.now(),
     failureCount: nextFailureCount(current.failureCount),
-    failureReason: error
+    failureReason: error,
   };
 }
 
-export function toStopConditionErrorState(current: DataSourceState, error: unknown): DataSourceState {
+export function toStopConditionErrorState(
+  current: DataSourceState,
+  error: unknown,
+): DataSourceState {
   return {
     ...current,
     status: typeof current.data === 'undefined' ? 'error' : current.status,
@@ -41,21 +47,24 @@ export function toStopConditionErrorState(current: DataSourceState, error: unkno
     error,
     errorUpdatedAt: Date.now(),
     failureCount: nextFailureCount(current.failureCount),
-    failureReason: error
+    failureReason: error,
   };
 }
 
 export function toIdleFetchState(current: DataSourceState): DataSourceState {
   return {
     ...current,
-    fetchStatus: 'idle'
+    fetchStatus: 'idle',
   };
 }
 
-export function toActiveRequestState(current: DataSourceState, activeRequestCount: number): DataSourceState {
+export function toActiveRequestState(
+  current: DataSourceState,
+  activeRequestCount: number,
+): DataSourceState {
   return toNextDataSourceState(current, {
     inFlightCount: activeRequestCount,
-    fetchStatus: activeRequestCount > 0 ? 'fetching' : 'idle'
+    fetchStatus: activeRequestCount > 0 ? 'fetching' : 'idle',
   });
 }
 

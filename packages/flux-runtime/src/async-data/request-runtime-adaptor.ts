@@ -7,7 +7,10 @@ import type {
 } from '@nop-chaos/flux-core';
 import { isPlainObject } from '@nop-chaos/flux-core';
 
-const adaptorExpressionCache = new WeakMap<ExpressionCompiler, Map<string, CompiledExpression<unknown>>>();
+const adaptorExpressionCache = new WeakMap<
+  ExpressionCompiler,
+  Map<string, CompiledExpression<unknown>>
+>();
 
 function normalizeAdaptorSource(source: string): string {
   const trimmed = source.trim();
@@ -19,7 +22,10 @@ function normalizeAdaptorSource(source: string): string {
   return trimmed.replace(/;\s*$/, '').trim();
 }
 
-export function getCachedAdaptorExpression<T = unknown>(expressionCompiler: ExpressionCompiler, source: string): CompiledExpression<T> {
+export function getCachedAdaptorExpression<T = unknown>(
+  expressionCompiler: ExpressionCompiler,
+  source: string,
+): CompiledExpression<T> {
   let compilerCache = adaptorExpressionCache.get(expressionCompiler);
 
   if (!compilerCache) {
@@ -86,10 +92,10 @@ export function createAdaptorScopeView(scope: ScopeRef): object {
           configurable: true,
           enumerable: true,
           value: scope.get(property),
-          writable: false
+          writable: false,
         };
-      }
-    }
+      },
+    },
   );
 }
 
@@ -97,7 +103,7 @@ export function applyRequestAdaptor(
   expressionCompiler: ExpressionCompiler,
   api: ApiSchema,
   scope: ScopeRef,
-  env: RendererEnv
+  env: RendererEnv,
 ): ApiSchema {
   if (!api.requestAdaptor) {
     return api;
@@ -109,12 +115,14 @@ export function applyRequestAdaptor(
       api,
       scope: createAdaptorScopeView(scope),
       data: api.data,
-      headers: api.headers ?? {}
+      headers: api.headers ?? {},
     },
-    env
+    env,
   );
 
-  return isPlainObject(adapted) ? ({ ...api, ...(adapted as Record<string, unknown>) } as ApiSchema) : api;
+  return isPlainObject(adapted)
+    ? ({ ...api, ...(adapted as Record<string, unknown>) } as ApiSchema)
+    : api;
 }
 
 export function applyResponseAdaptor(
@@ -123,7 +131,7 @@ export function applyResponseAdaptor(
   sourceApi: ApiSchema,
   responseData: unknown,
   scope: ScopeRef,
-  env: RendererEnv
+  env: RendererEnv,
 ): unknown {
   if (!sourceApi.responseAdaptor) {
     return responseData;
@@ -136,8 +144,8 @@ export function applyResponseAdaptor(
       payload: responseData,
       response: responseData,
       api,
-      scope: createAdaptorScopeView(scope)
+      scope: createAdaptorScopeView(scope),
     },
-    env
+    env,
   );
 }

@@ -1,21 +1,25 @@
 import { useMemo } from 'react';
-import type {
-  ActionScope,
-  ComponentHandleRegistry,
-  RendererRuntime
-} from '@nop-chaos/flux-core';
+import type { ActionScope, ComponentHandleRegistry, RendererRuntime } from '@nop-chaos/flux-core';
 
-function createNodeOwnedActionScope(runtime: RendererRuntime, parent: ActionScope | undefined, nodeId: string) {
+function createNodeOwnedActionScope(
+  runtime: RendererRuntime,
+  parent: ActionScope | undefined,
+  nodeId: string,
+) {
   return runtime.createActionScope({
     id: `${nodeId}:action-scope`,
-    parent
+    parent,
   });
 }
 
-function createNodeOwnedComponentRegistry(runtime: RendererRuntime, parent: ComponentHandleRegistry | undefined, nodeId: string) {
+function createNodeOwnedComponentRegistry(
+  runtime: RendererRuntime,
+  parent: ComponentHandleRegistry | undefined,
+  nodeId: string,
+) {
   return runtime.createComponentHandleRegistry({
     id: `${nodeId}:component-registry`,
-    parent
+    parent,
   });
 }
 
@@ -27,7 +31,7 @@ export function useNodeScopes(
     componentRegistryPolicy: 'inherit' | 'new' | undefined;
   },
   actionScope: ActionScope | undefined,
-  componentRegistry: ComponentHandleRegistry | undefined
+  componentRegistry: ComponentHandleRegistry | undefined,
 ): {
   activeActionScope: ActionScope | undefined;
   activeComponentRegistry: ComponentHandleRegistry | undefined;
@@ -48,12 +52,9 @@ export function useNodeScopes(
     return createNodeOwnedComponentRegistry(runtime, componentRegistry, input.nodeId);
   }, [runtime, componentRegistry, input.componentRegistryPolicy, input.nodeId]);
 
-  const activeActionScope = input.actionScopePolicy === 'new'
-    ? nodeActionScope
-    : actionScope;
-  const activeComponentRegistry = input.componentRegistryPolicy === 'new'
-    ? nodeComponentRegistry
-    : componentRegistry;
+  const activeActionScope = input.actionScopePolicy === 'new' ? nodeActionScope : actionScope;
+  const activeComponentRegistry =
+    input.componentRegistryPolicy === 'new' ? nodeComponentRegistry : componentRegistry;
 
   return { activeActionScope, activeComponentRegistry };
 }

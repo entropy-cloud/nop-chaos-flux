@@ -10,36 +10,39 @@ export function compiledRule(rule: any, path: string, index = 0) {
       rule.kind === 'requiredWhen' ||
       rule.kind === 'requiredUnless'
         ? [rule.path]
-        : []
+        : [],
   };
 }
 
 export const textRenderer: RendererDefinition = {
   type: 'text',
-  component: () => null
+  component: () => null,
 };
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: () => null,
-  regions: ['body']
+  regions: ['body'],
 };
 
 export const cardRenderer: RendererDefinition = {
   type: 'card',
   component: () => null,
-  fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'body', kind: 'region', regionKey: 'body' }]
+  fields: [
+    { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+    { key: 'body', kind: 'region', regionKey: 'body' },
+  ],
 };
 
 export const actionButtonRenderer: RendererDefinition = {
   type: 'action-button',
   component: () => null,
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 export const importHostRenderer: RendererDefinition = {
   type: 'import-host',
-  component: () => null
+  component: () => null,
 };
 
 export const formRenderer: RendererDefinition = {
@@ -48,8 +51,8 @@ export const formRenderer: RendererDefinition = {
   regions: ['body', 'actions'],
   scopePolicy: 'form',
   validation: {
-    kind: 'container'
-  }
+    kind: 'container',
+  },
 };
 
 export const inputRenderer: RendererDefinition = {
@@ -62,11 +65,11 @@ export const inputRenderer: RendererDefinition = {
     },
     collectRules() {
       return [];
-    }
-  }
+    },
+  },
 };
 
 export const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
-  notify: () => undefined
+  notify: () => undefined,
 };

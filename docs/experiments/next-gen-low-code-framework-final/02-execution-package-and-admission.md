@@ -94,22 +94,22 @@ interface PackageMigrationManifest {
 
 ## 5. Authoring 到 Package 的 Lowering
 
-| Authoring construct | Lowering target | 运行时责任 |
-| --- | --- | --- |
-| renderer node | `TemplateDefinition` / `TemplateNode` | instantiate / render boundary |
-| 普通值字段 | `ValueProgram` | 求值、依赖收集、identity reuse |
-| `visible` | meta program | visual presence only |
-| `when` | activation guard / boundary plan | lifecycle participation |
-| `loop` | repeated binding plan | repeated instantiate、instancePath |
-| `dynamic-renderer` | admitted package fragment placeholder | lazy admission |
-| 事件字段 | `EventDefinition` + `ActionProgram` | payload normalize + dispatch |
-| `data-source` | `ResourceDefinition` | lifecycle、status、publish、refresh |
-| `reaction` | `ReactionDefinition` | watch、post-publish dispatch |
-| validation | `ValidationModelDefinition` | owner-local materialization |
-| slot params | `RegionDefinition.params` | publish to `$slot` frame |
-| host projection | `HostContractManifest.projections` | readonly snapshot admit |
-| host command | `CapabilityContract` + host manifest | command validation / dispatch |
-| semantic owner | `OwnerBoundaryDefinition` | create/inherit/no-owner |
+| Authoring construct | Lowering target                       | 运行时责任                          |
+| ------------------- | ------------------------------------- | ----------------------------------- |
+| renderer node       | `TemplateDefinition` / `TemplateNode` | instantiate / render boundary       |
+| 普通值字段          | `ValueProgram`                        | 求值、依赖收集、identity reuse      |
+| `visible`           | meta program                          | visual presence only                |
+| `when`              | activation guard / boundary plan      | lifecycle participation             |
+| `loop`              | repeated binding plan                 | repeated instantiate、instancePath  |
+| `dynamic-renderer`  | admitted package fragment placeholder | lazy admission                      |
+| 事件字段            | `EventDefinition` + `ActionProgram`   | payload normalize + dispatch        |
+| `data-source`       | `ResourceDefinition`                  | lifecycle、status、publish、refresh |
+| `reaction`          | `ReactionDefinition`                  | watch、post-publish dispatch        |
+| validation          | `ValidationModelDefinition`           | owner-local materialization         |
+| slot params         | `RegionDefinition.params`             | publish to `$slot` frame            |
+| host projection     | `HostContractManifest.projections`    | readonly snapshot admit             |
+| host command        | `CapabilityContract` + host manifest  | command validation / dispatch       |
+| semantic owner      | `OwnerBoundaryDefinition`             | create/inherit/no-owner             |
 
 规则：
 

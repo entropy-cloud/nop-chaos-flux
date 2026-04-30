@@ -1,107 +1,107 @@
-import { useEffect, type RefObject } from 'react'
-import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
-import { RowFlex } from '@nop-chaos/word-editor-core'
+import { useEffect, type RefObject } from 'react';
+import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
+import { RowFlex } from '@nop-chaos/word-editor-core';
 
 interface UseWordEditorShortcutsOptions {
-  bridge: CanvasEditorBridge | null
-  onSave?: () => void
-  scopeRef?: RefObject<HTMLElement | null>
+  bridge: CanvasEditorBridge | null;
+  onSave?: () => void;
+  scopeRef?: RefObject<HTMLElement | null>;
 }
 
 export function useWordEditorShortcuts(options: UseWordEditorShortcutsOptions): void {
-  const { bridge, onSave, scopeRef } = options
+  const { bridge, onSave, scopeRef } = options;
 
   useEffect(() => {
     function isEditableTarget(target: EventTarget | null): boolean {
       if (!(target instanceof HTMLElement)) {
-        return false
+        return false;
       }
 
-      const tag = target.tagName.toLowerCase()
-      return target.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select'
+      const tag = target.tagName.toLowerCase();
+      return target.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select';
     }
 
     function isInsideScope(target: EventTarget | null): boolean {
       if (!(target instanceof Node)) {
-        return false
+        return false;
       }
 
-      return scopeRef?.current?.contains(target) ?? false
+      return scopeRef?.current?.contains(target) ?? false;
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (isEditableTarget(event.target) || !isInsideScope(event.target)) {
-        return
+        return;
       }
 
-      const mod = event.metaKey || event.ctrlKey
-      if (!mod) return
+      const mod = event.metaKey || event.ctrlKey;
+      if (!mod) return;
 
-      const key = event.key.toLowerCase()
+      const key = event.key.toLowerCase();
 
       switch (key) {
         case 'b':
-          event.preventDefault()
-          bridge?.command?.executeBold()
-          break
+          event.preventDefault();
+          bridge?.command?.executeBold();
+          break;
         case 'i':
-          event.preventDefault()
-          bridge?.command?.executeItalic()
-          break
+          event.preventDefault();
+          bridge?.command?.executeItalic();
+          break;
         case 'u':
-          event.preventDefault()
-          bridge?.command?.executeUnderline()
-          break
+          event.preventDefault();
+          bridge?.command?.executeUnderline();
+          break;
         case 'z': {
-          event.preventDefault()
+          event.preventDefault();
           if (event.shiftKey) {
-            bridge?.command?.executeRedo()
+            bridge?.command?.executeRedo();
           } else {
-            bridge?.command?.executeUndo()
+            bridge?.command?.executeUndo();
           }
-          break
+          break;
         }
         case 'y':
-          event.preventDefault()
-          bridge?.command?.executeRedo()
-          break
+          event.preventDefault();
+          bridge?.command?.executeRedo();
+          break;
         case 's':
-          event.preventDefault()
-          onSave?.()
-          break
+          event.preventDefault();
+          onSave?.();
+          break;
         case 'f':
-          event.preventDefault()
-          break
+          event.preventDefault();
+          break;
         case 'p':
-          event.preventDefault()
-          bridge?.command?.executePrint()
-          break
+          event.preventDefault();
+          bridge?.command?.executePrint();
+          break;
         case 'l':
-          event.preventDefault()
-          bridge?.command?.executeRowFlex(RowFlex.LEFT)
-          break
+          event.preventDefault();
+          bridge?.command?.executeRowFlex(RowFlex.LEFT);
+          break;
         case 'e':
-          event.preventDefault()
-          bridge?.command?.executeRowFlex(RowFlex.CENTER)
-          break
+          event.preventDefault();
+          bridge?.command?.executeRowFlex(RowFlex.CENTER);
+          break;
         case 'r':
-          event.preventDefault()
-          bridge?.command?.executeRowFlex(RowFlex.RIGHT)
-          break
+          event.preventDefault();
+          bridge?.command?.executeRowFlex(RowFlex.RIGHT);
+          break;
         case '[':
-          event.preventDefault()
-          bridge?.command?.executeSizeMinus()
-          break
+          event.preventDefault();
+          bridge?.command?.executeSizeMinus();
+          break;
         case ']':
-          event.preventDefault()
-          bridge?.command?.executeSizeAdd()
-          break
+          event.preventDefault();
+          bridge?.command?.executeSizeAdd();
+          break;
         default:
-          break
+          break;
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [bridge, onSave, scopeRef])
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [bridge, onSave, scopeRef]);
 }

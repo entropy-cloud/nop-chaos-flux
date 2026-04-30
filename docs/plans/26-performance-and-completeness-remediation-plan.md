@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-04
 
-
 > Source: repository-wide design and implementation audit completed on 2026-04-02.
 > Focus: performance risks, incomplete implementations, stability defects, engineering consistency issues, and architecture-conformance gaps.
 
@@ -573,5 +572,3 @@ Open follow-up items retained from this plan:
 3. Fix PR set for P2 items with contract clarifications.
 4. Architecture-conformance closure note referencing `docs/articles/flux-design-introduction.md`.
 5. Audit closure report mapping each remediation item to commit/PR and test evidence.
-
-

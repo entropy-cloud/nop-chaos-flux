@@ -19,18 +19,18 @@
 
 ## P0 清单（必须修复）
 
-| 维度 | 文件 | 问题 | 说明 |
-|------|------|------|------|
-| 02 | `packages/flux-runtime/src/data-source-runtime.ts` | 超过 700 行限制 (681行) | 混合 6 个独立职责，必须拆分 |
+| 维度 | 文件                                               | 问题                    | 说明                        |
+| ---- | -------------------------------------------------- | ----------------------- | --------------------------- |
+| 02   | `packages/flux-runtime/src/data-source-runtime.ts` | 超过 700 行限制 (681行) | 混合 6 个独立职责，必须拆分 |
 
 ---
 
 ## P1 清单（应尽快修复）
 
-| 维度 | 文件 | 问题 | 说明 |
-|------|------|------|------|
-| 02 | `packages/flux-runtime/src/schema-compiler/shape-validation.ts` | 超过 500 行 (596行) | 需评估拆分 |
-| 02 | `packages/flow-designer-renderers/src/designer-page.tsx` | 超过 500 行 (520行) | 需评估拆分 |
+| 维度 | 文件                                                            | 问题                | 说明       |
+| ---- | --------------------------------------------------------------- | ------------------- | ---------- |
+| 02   | `packages/flux-runtime/src/schema-compiler/shape-validation.ts` | 超过 500 行 (596行) | 需评估拆分 |
+| 02   | `packages/flow-designer-renderers/src/designer-page.tsx`        | 超过 500 行 (520行) | 需评估拆分 |
 
 ---
 
@@ -38,55 +38,55 @@
 
 ### 架构与模块边界
 
-| 维度 | 文件 | 问题 |
-|------|------|------|
-| 01 | `packages/ui/package.json:30` | ui 包在 dependencies 中声明了 flux-i18n，违反独立 UI 层设计 |
-| 02 | `packages/flux-renderers-basic/src/index.tsx` | 入口文件包含 180+ 行渲染器定义，应提取到 definitions.ts |
-| 02 | `packages/flux-renderers-data/src/index.tsx` | 入口文件包含验证逻辑实现，应提取 |
-| 03 | `packages/word-editor-core/src/index.ts` | 直接 re-export 第三方库类型，泄露实现细节 |
-| 03 | `packages/flux-renderers-form/package.json` | test-support 导出到生产 API |
-| 03 | `packages/flux-react/src/index.tsx` | 导出内部 Context 对象 |
+| 维度 | 文件                                          | 问题                                                        |
+| ---- | --------------------------------------------- | ----------------------------------------------------------- |
+| 01   | `packages/ui/package.json:30`                 | ui 包在 dependencies 中声明了 flux-i18n，违反独立 UI 层设计 |
+| 02   | `packages/flux-renderers-basic/src/index.tsx` | 入口文件包含 180+ 行渲染器定义，应提取到 definitions.ts     |
+| 02   | `packages/flux-renderers-data/src/index.tsx`  | 入口文件包含验证逻辑实现，应提取                            |
+| 03   | `packages/word-editor-core/src/index.ts`      | 直接 re-export 第三方库类型，泄露实现细节                   |
+| 03   | `packages/flux-renderers-form/package.json`   | test-support 导出到生产 API                                 |
+| 03   | `packages/flux-react/src/index.tsx`           | 导出内部 Context 对象                                       |
 
 ### 运行时与状态
 
-| 维度 | 文件 | 问题 |
-|------|------|------|
-| 05 | `packages/word-editor-renderers/src/WordEditorPage.tsx:70-87` | runtimeSnapshot 选择器每次返回新对象，缺少 equalityFn |
-| 05 | `packages/flux-renderers-basic/src/loop.tsx:18-28` | renderBody 函数引用不稳定 |
-| 06 | `packages/report-designer-core/src/core.ts:142-201` | refreshDerivedState 缺乏取消机制，存在竞态风险 |
-| 07 | `packages/flux-renderers-basic/src/dynamic-renderer.tsx:31-58` | API 获取逻辑在 effect 中，应移至 runtime 层 |
-| 07 | `packages/flux-code-editor/src/source-resolvers.ts:58-120` | 同上 |
-| 07 | `packages/flux-react/src/use-node-source-props.ts:26-28` | effect 缺少依赖数组 |
+| 维度 | 文件                                                           | 问题                                                  |
+| ---- | -------------------------------------------------------------- | ----------------------------------------------------- |
+| 05   | `packages/word-editor-renderers/src/WordEditorPage.tsx:70-87`  | runtimeSnapshot 选择器每次返回新对象，缺少 equalityFn |
+| 05   | `packages/flux-renderers-basic/src/loop.tsx:18-28`             | renderBody 函数引用不稳定                             |
+| 06   | `packages/report-designer-core/src/core.ts:142-201`            | refreshDerivedState 缺乏取消机制，存在竞态风险        |
+| 07   | `packages/flux-renderers-basic/src/dynamic-renderer.tsx:31-58` | API 获取逻辑在 effect 中，应移至 runtime 层           |
+| 07   | `packages/flux-code-editor/src/source-resolvers.ts:58-120`     | 同上                                                  |
+| 07   | `packages/flux-react/src/use-node-source-props.ts:26-28`       | effect 缺少依赖数组                                   |
 
 ### 性能
 
-| 维度 | 文件 | 问题 |
-|------|------|------|
-| 15 | `packages/report-designer-core/src/runtime/metadata.ts:10-12` | cloneDocument 使用 JSON.stringify/parse 深拷贝 |
+| 维度 | 文件                                                          | 问题                                           |
+| ---- | ------------------------------------------------------------- | ---------------------------------------------- |
+| 15   | `packages/report-designer-core/src/runtime/metadata.ts:10-12` | cloneDocument 使用 JSON.stringify/parse 深拷贝 |
 
 ### 样式系统
 
-| 维度 | 文件 | 问题 |
-|------|------|------|
-| 10 | `packages/flow-designer-renderers/src/designer-inspector.tsx:8-23` | 硬编码颜色值 |
-| 10 | `packages/flow-designer-renderers/src/dingflow/*.tsx` | 多处硬编码颜色值 |
+| 维度 | 文件                                                               | 问题             |
+| ---- | ------------------------------------------------------------------ | ---------------- |
+| 10   | `packages/flow-designer-renderers/src/designer-inspector.tsx:8-23` | 硬编码颜色值     |
+| 10   | `packages/flow-designer-renderers/src/dingflow/*.tsx`              | 多处硬编码颜色值 |
 
 ### 测试覆盖
 
-| 维度 | 包 | 问题 |
-|------|------|------|
-| 14 | `flux-core` | 测试覆盖率仅 14.3% |
-| 14 | `ui` | 测试覆盖率仅 2.7% |
-| 14 | `flux-formula/compile.ts` | 无直接单元测试 |
-| 14 | `flux-runtime/schema-compiler/` | 子模块测试薄弱 |
+| 维度 | 包                              | 问题               |
+| ---- | ------------------------------- | ------------------ |
+| 14   | `flux-core`                     | 测试覆盖率仅 14.3% |
+| 14   | `ui`                            | 测试覆盖率仅 2.7%  |
+| 14   | `flux-formula/compile.ts`       | 无直接单元测试     |
+| 14   | `flux-runtime/schema-compiler/` | 子模块测试薄弱     |
 
 ### 文档与命名
 
-| 维度 | 文件 | 问题 |
-|------|------|------|
-| 16 | `AGENTS.md:34-51` | 依赖流描述与实际代码不一致 |
-| 17 | `packages/flux-core/src/types/runtime.ts:320` | FormRuntime.setValue 参数名 `name` 应改为 `path` |
-| 17 | `.d.ts files` | CompiledSchemaNode 类型别名残留 |
+| 维度 | 文件                                          | 问题                                             |
+| ---- | --------------------------------------------- | ------------------------------------------------ |
+| 16   | `AGENTS.md:34-51`                             | 依赖流描述与实际代码不一致                       |
+| 17   | `packages/flux-core/src/types/runtime.ts:320` | FormRuntime.setValue 参数名 `name` 应改为 `path` |
+| 17   | `.d.ts files`                                 | CompiledSchemaNode 类型别名残留                  |
 
 ---
 
@@ -94,12 +94,12 @@
 
 以下文件在多个维度中被报告：
 
-| 文件 | 涉及维度 | 问题类型 |
-|------|---------|----------|
-| `packages/flux-runtime/src/data-source-runtime.ts` | 02 | 超大文件 |
-| `packages/word-editor-renderers/src/WordEditorPage.tsx` | 05 | 订阅精度 |
-| `packages/report-designer-core/src/core.ts` | 06, 15 | 竞态、性能 |
-| `packages/flow-designer-renderers/src/dingflow/*` | 10 | 样式硬编码 |
+| 文件                                                    | 涉及维度 | 问题类型   |
+| ------------------------------------------------------- | -------- | ---------- |
+| `packages/flux-runtime/src/data-source-runtime.ts`      | 02       | 超大文件   |
+| `packages/word-editor-renderers/src/WordEditorPage.tsx` | 05       | 订阅精度   |
+| `packages/report-designer-core/src/core.ts`             | 06, 15   | 竞态、性能 |
+| `packages/flow-designer-renderers/src/dingflow/*`       | 10       | 样式硬编码 |
 
 ---
 
@@ -149,11 +149,11 @@
 
 以下问题有真实风险但当前 ROI 不高：
 
-| 维度 | 问题 | 原因 |
-|------|------|------|
-| 15 | TableRenderer/TreeRenderer 缺少虚拟化 | 当前数据规模有限，分页机制缓解 |
-| 15 | 缺少 performance.mark/measure | 增强型需求，非阻塞 |
-| 14 | flux-i18n 无测试 | 封装 i18next，逻辑简单 |
+| 维度 | 问题                                  | 原因                           |
+| ---- | ------------------------------------- | ------------------------------ |
+| 15   | TableRenderer/TreeRenderer 缺少虚拟化 | 当前数据规模有限，分页机制缓解 |
+| 15   | 缺少 performance.mark/measure         | 增强型需求，非阻塞             |
+| 14   | flux-i18n 无测试                      | 封装 i18next，逻辑简单         |
 
 ---
 
@@ -161,14 +161,14 @@
 
 以下初审发现经复核后确认为设计合理，不建议修改：
 
-| 维度 | 发现 | 排除原因 |
-|------|------|----------|
-| 04 | VariantField 使用 useState 维护变体状态 | 符合"局部 UI 状态不构成违规"规则 |
-| 04 | DesignerXyflowCanvas 的 localNodes/localEdges | react-flow 集成的标准模式 |
-| 04 | SpreadsheetGrid 的滚动位置 useState | 纯 UI 渲染状态 |
-| 04 | DetailField 的 draftForm | 符合 Phase 2 草稿隔离模式 |
-| 09 | 渲染器内部布局样式 | 交互组件的 UI 壳层需要 |
-| 10 | parser.ts 510 行 | 递归下降解析器的内聚单元，拆分会破坏可读性 |
+| 维度 | 发现                                          | 排除原因                                   |
+| ---- | --------------------------------------------- | ------------------------------------------ |
+| 04   | VariantField 使用 useState 维护变体状态       | 符合"局部 UI 状态不构成违规"规则           |
+| 04   | DesignerXyflowCanvas 的 localNodes/localEdges | react-flow 集成的标准模式                  |
+| 04   | SpreadsheetGrid 的滚动位置 useState           | 纯 UI 渲染状态                             |
+| 04   | DetailField 的 draftForm                      | 符合 Phase 2 草稿隔离模式                  |
+| 09   | 渲染器内部布局样式                            | 交互组件的 UI 壳层需要                     |
+| 10   | parser.ts 510 行                              | 递归下降解析器的内聚单元，拆分会破坏可读性 |
 
 ---
 
@@ -176,13 +176,13 @@
 
 ### 健康度评分
 
-| 维度类别 | 评分 | 说明 |
-|----------|------|------|
-| 架构与模块边界 | B+ | 21/22 包依赖合规，有 1 处入口文件问题 |
-| 运行时与状态 | A- | 状态管理良好，少量订阅精度和竞态问题 |
-| 渲染器与 UI | A | 契约合规性优秀，仅样式硬编码需改进 |
-| 工程质量 | B | 核心包测试良好，边缘包覆盖不足 |
-| 文档与一致性 | B+ | 文档基本与代码同步，少量术语不一致 |
+| 维度类别       | 评分 | 说明                                  |
+| -------------- | ---- | ------------------------------------- |
+| 架构与模块边界 | B+   | 21/22 包依赖合规，有 1 处入口文件问题 |
+| 运行时与状态   | A-   | 状态管理良好，少量订阅精度和竞态问题  |
+| 渲染器与 UI    | A    | 契约合规性优秀，仅样式硬编码需改进    |
+| 工程质量       | B    | 核心包测试良好，边缘包覆盖不足        |
+| 文档与一致性   | B+   | 文档基本与代码同步，少量术语不一致    |
 
 ### 首要修复建议
 
@@ -193,4 +193,4 @@
 
 ---
 
-*报告生成时间: 2026-04-17*
+_报告生成时间: 2026-04-17_

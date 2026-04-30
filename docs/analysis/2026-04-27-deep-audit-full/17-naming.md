@@ -37,9 +37,9 @@
 - RendererRuntime / runtime / env 用法一致 ✓
 - CompiledSchemaNode / TemplateNode 区分清晰 ✓
 - FormStoreApi / FormRuntime 用法一致 ✓
-- 工厂函数统一 create* 前缀 ✓
-- 注册函数统一 register* 前缀 ✓
-- use* 前缀仅用于 React hooks ✓
+- 工厂函数统一 create\* 前缀 ✓
+- 注册函数统一 register\* 前缀 ✓
+- use\* 前缀仅用于 React hooks ✓
 - 测试文件统一 .test.ts / .test.tsx 后缀 ✓
 - 文件命名模式一致 ✓
 

@@ -8,7 +8,7 @@ import type {
   PreparedApiRequest,
   RendererEnv,
   ScopeRef,
-  SchemaValue
+  SchemaValue,
 } from '@nop-chaos/flux-core';
 import { isPlainObject } from '@nop-chaos/flux-core';
 import { withRetry, type RetryResult } from '@nop-chaos/flux-action-core';
@@ -23,7 +23,7 @@ export interface ApiRequestExecutor {
     api: ApiSchema | ExecutableApiRequest,
     scope: ScopeRef,
     form?: FormRuntime,
-    options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig }
+    options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig },
   ): Promise<ApiResponse<T>>;
   dispose(): void;
 }
@@ -49,18 +49,23 @@ export async function executeRequestWithControl<T>(input: {
       strategy: retry?.strategy ?? 'fixed',
       maxDelay: retry?.maxDelay,
       onFailedAttempt: input.onFailedAttempt,
-      signal: input.signal
+      signal: input.signal,
     },
-    input.shouldStop ?? ((response) => Boolean(response.ok))
+    input.shouldStop ?? ((response) => Boolean(response.ok)),
   );
 
   return {
     response: retryResult.result,
-    retry: retryResult
+    retry: retryResult,
   };
 }
 
-function createRequestKey(actionType: string, api: ExecutableApiRequest, scope: ScopeRef, form?: FormRuntime): string {
+function createRequestKey(
+  actionType: string,
+  api: ExecutableApiRequest,
+  scope: ScopeRef,
+  form?: FormRuntime,
+): string {
   const owner = form?.id ?? scope.id;
   return [
     owner,
@@ -68,21 +73,22 @@ function createRequestKey(actionType: string, api: ExecutableApiRequest, scope: 
     api.method ?? 'get',
     api.url,
     stableStringify(api.data),
-    stableStringify(api.headers)
+    stableStringify(api.headers),
   ].join(':');
 }
 
 function normalizeParams(params: SchemaValue | undefined): Record<string, unknown> | undefined {
-  return isPlainObject(params)
-    ? (params as Record<string, unknown>)
-    : undefined;
+  return isPlainObject(params) ? (params as Record<string, unknown>) : undefined;
 }
 
 function resolveRequestDedup(control?: OperationControlConfig) {
   return control?.dedup ?? 'cancel-previous';
 }
 
-export function extractScopeData(scope: ScopeRef, includeScope: '*' | string[] | undefined): Record<string, unknown> {
+export function extractScopeData(
+  scope: ScopeRef,
+  includeScope: '*' | string[] | undefined,
+): Record<string, unknown> {
   if (!includeScope) {
     return {};
   }
@@ -100,7 +106,10 @@ export function extractScopeData(scope: ScopeRef, includeScope: '*' | string[] |
   return result;
 }
 
-export function buildUrlWithParams(url: string, params: Record<string, unknown> | undefined): string {
+export function buildUrlWithParams(
+  url: string,
+  params: Record<string, unknown> | undefined,
+): string {
   if (!params || Object.keys(params).length === 0) {
     return url;
   }
@@ -121,7 +130,10 @@ export function buildUrlWithParams(url: string, params: Record<string, unknown> 
   return `${url}${separator}${queryString}`;
 }
 
-function canonicalizeUrlWithParams(url: string, params: Record<string, unknown> | undefined): string {
+function canonicalizeUrlWithParams(
+  url: string,
+  params: Record<string, unknown> | undefined,
+): string {
   if (!params || Object.keys(params).length === 0) {
     return url;
   }
@@ -143,7 +155,7 @@ function canonicalizeUrlWithParams(url: string, params: Record<string, unknown> 
 
 export function prepareApiData(
   api: ApiSchema,
-  scope: ScopeRef
+  scope: ScopeRef,
 ): { data: SchemaValue | undefined; params: Record<string, unknown> | undefined } {
   const extractedData = extractScopeData(scope, api.includeScope);
 
@@ -170,18 +182,18 @@ export function finalizeApiRequest(api: ApiSchema): PreparedApiRequest {
     url: api.url,
     method: api.method,
     data: api.data,
-    headers: api.headers
+    headers: api.headers,
   };
 
   return {
     request: {
       ...rest,
       url: finalUrl,
-      data: api.data
+      data: api.data,
     },
     data: api.data,
     params,
-    finalUrl
+    finalUrl,
   };
 }
 
@@ -191,25 +203,25 @@ export function materializeApiRequest(api: ApiSchema, scope: ScopeRef): Prepared
   const rest = {
     url: api.url,
     method: api.method,
-    headers: api.headers
+    headers: api.headers,
   };
 
   return {
     request: {
       ...rest,
       url: finalUrl,
-      data: prepared.data
+      data: prepared.data,
     },
     data: prepared.data,
     params: prepared.params,
-    finalUrl
+    finalUrl,
   };
 }
 
 export function finalizeMaterializedApiRequest(api: ApiSchema): PreparedApiRequest {
   return finalizeApiRequest({
     ...api,
-    params: api.params as SchemaValue | undefined
+    params: api.params as SchemaValue | undefined,
   });
 }
 
@@ -217,15 +229,20 @@ export function prepareApiRequestForExecution(
   api: ApiSchema,
   scope: ScopeRef,
   env: RendererEnv,
-  expressionCompiler: ExpressionCompiler
+  expressionCompiler: ExpressionCompiler,
 ): PreparedApiRequest {
   const materializedRequest = materializeApiRequest(api, scope);
-  const adaptedApi = applyRequestAdaptor(expressionCompiler, {
-    ...api,
-    url: materializedRequest.request.url,
-    data: materializedRequest.data,
-    params: materializedRequest.params as SchemaValue | undefined
-  }, scope, env);
+  const adaptedApi = applyRequestAdaptor(
+    expressionCompiler,
+    {
+      ...api,
+      url: materializedRequest.request.url,
+      data: materializedRequest.data,
+      params: materializedRequest.params as SchemaValue | undefined,
+    },
+    scope,
+    env,
+  );
   return finalizeMaterializedApiRequest(adaptedApi);
 }
 
@@ -241,18 +258,28 @@ export async function executeApiSchema(
     onPreparedRequest?: (api: ExecutableApiRequest) => void;
     executor?: <T>(adaptedApi: ExecutableApiRequest) => Promise<ApiResponse<T>>;
     control?: OperationControlConfig;
-  }
-): Promise<{ data: unknown; ok: boolean; status?: number; attempts: number; failureCount: number; lastFailureReason?: unknown }> {
+  },
+): Promise<{
+  data: unknown;
+  ok: boolean;
+  status?: number;
+  attempts: number;
+  failureCount: number;
+  lastFailureReason?: unknown;
+}> {
   const resolvedApi = options?.evaluate ? options.evaluate<ApiSchema>(api, scope) : api;
-  const preparedRequest = options?.preparedRequest ?? prepareApiRequestForExecution(resolvedApi, scope, env, expressionCompiler);
+  const preparedRequest =
+    options?.preparedRequest ??
+    prepareApiRequestForExecution(resolvedApi, scope, env, expressionCompiler);
   const executableApi = preparedRequest.request;
   options?.onPreparedRequest?.(executableApi);
   const execution = await executeRequestWithControl({
-    execute: () => options?.executor
-      ? options.executor(executableApi)
-      : env.fetcher(executableApi, { scope, env, signal: options?.signal }),
+    execute: () =>
+      options?.executor
+        ? options.executor(executableApi)
+        : env.fetcher(executableApi, { scope, env, signal: options?.signal }),
     control: options?.control,
-    signal: options?.signal
+    signal: options?.signal,
   });
   const response = execution.response;
 
@@ -271,14 +298,21 @@ export async function executeApiSchema(
     throw new Error(`Request failed with status ${response.status}`);
   }
 
-  const adaptedData = applyResponseAdaptor(expressionCompiler, executableApi, resolvedApi, response.data, scope, env);
+  const adaptedData = applyResponseAdaptor(
+    expressionCompiler,
+    executableApi,
+    resolvedApi,
+    response.data,
+    scope,
+    env,
+  );
   return {
     data: adaptedData,
     ok: response.ok,
     status: response.status,
     attempts: execution.retry.attempts,
     failureCount: execution.retry.failureCount,
-    lastFailureReason: execution.retry.lastFailureReason
+    lastFailureReason: execution.retry.lastFailureReason,
   };
 }
 
@@ -293,7 +327,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
     api: ApiSchema | ExecutableApiRequest,
     scope: ScopeRef,
     form?: FormRuntime,
-    options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig }
+    options?: { signal?: AbortSignal; interactionId?: string; control?: OperationControlConfig },
   ) {
     const executableApi = finalizeApiRequest(api as ApiSchema).request;
     const requestKey = createRequestKey(actionType, executableApi, scope, form);
@@ -325,7 +359,7 @@ export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestE
       scope,
       env,
       signal: controller.signal,
-      interactionId: options?.interactionId
+      interactionId: options?.interactionId,
     });
 
     if (dedupStrategy !== 'parallel') {

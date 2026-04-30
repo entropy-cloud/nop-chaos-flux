@@ -1,10 +1,18 @@
-import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
+import {
+  registerRendererDefinitions,
+  type RendererDefinition,
+  type RendererRegistry,
+} from '@nop-chaos/flux-core';
 import { TableRenderer } from './table-renderer';
 import { DataSourceRenderer } from './data-source-renderer';
 import { ChartRenderer } from './chart-renderer';
 import { TreeRenderer } from './tree-renderer';
 import { CrudRenderer } from './crud-renderer';
-import { validateTableSchema, validateCrudSchema, transformCrudAuthoringSchema } from './data-schema-validation';
+import {
+  validateTableSchema,
+  validateCrudSchema,
+  transformCrudAuthoringSchema,
+} from './data-schema-validation';
 
 export * from './schemas';
 export * from './crud-schema';
@@ -30,15 +38,15 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'onSelectionChange', kind: 'event' },
       { key: 'onRefresh', kind: 'event' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-      { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' }
-    ]
+      { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' },
+    ],
   },
   {
     type: 'data-source',
     displayName: 'Data Source',
     category: 'logic',
     sourcePackage: '@nop-chaos/flux-renderers-data',
-    component: DataSourceRenderer
+    component: DataSourceRenderer,
   },
   {
     type: 'chart',
@@ -50,8 +58,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'onClick', kind: 'event' },
       { key: 'onHover', kind: 'event' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-      { key: 'componentId', kind: 'prop' }
-    ]
+      { key: 'componentId', kind: 'prop' },
+    ],
   },
   {
     type: 'tree',
@@ -68,8 +76,13 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'initiallyExpanded', kind: 'prop' },
       { key: 'expandOnClickNode', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },
-      { key: 'node', kind: 'region', params: ['node', 'index', 'depth', 'key', 'parentNode'], isolate: false }
-    ]
+      {
+        key: 'node',
+        kind: 'region',
+        params: ['node', 'index', 'depth', 'key', 'parentNode'],
+        isolate: false,
+      },
+    ],
   },
   {
     type: 'crud',
@@ -85,153 +98,158 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         shape: { kind: 'string' },
         displayName: 'Status Path',
         description: 'Publishes the readonly CRUD summary to scope.',
-        editorType: 'path'
+        editorType: 'path',
       },
       source: {
         shape: {
           kind: 'union',
           anyOf: [
             { kind: 'array', item: { kind: 'unknown' } },
-            { kind: 'unknown', description: 'Data source expression or source schema.' }
-          ]
+            { kind: 'unknown', description: 'Data source expression or source schema.' },
+          ],
         },
         displayName: 'Source',
         description: 'Rows rendered by the CRUD table.',
-        editorType: 'source'
+        editorType: 'source',
       },
       queryForm: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Query Form',
         description: 'Optional embedded query form configuration or migrated AMIS filter form.',
-        editorType: 'object'
+        editorType: 'object',
       },
       columns: {
         shape: { kind: 'array', item: { kind: 'object', fields: {} } },
         displayName: 'Columns',
-        description: 'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
-        editorType: 'crud-columns'
+        description:
+          'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
+        editorType: 'crud-columns',
       },
       rowKey: {
         shape: { kind: 'string' },
         displayName: 'Row Key',
         description: 'Stable record key field used by CRUD/table selection and row identity.',
-        editorType: 'text'
+        editorType: 'text',
       },
       pageField: {
         shape: { kind: 'string' },
         displayName: 'Page Field',
         description: 'Request/query field name used for the current page parameter.',
-        editorType: 'text'
+        editorType: 'text',
       },
       pageSizeField: {
         shape: { kind: 'string' },
         displayName: 'Page Size Field',
         description: 'Request/query field name used for the page size parameter.',
-        editorType: 'text'
+        editorType: 'text',
       },
       defaultParams: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Default Params',
         description: 'Default query/refresh parameters merged into the CRUD workflow input.',
-        editorType: 'object'
+        editorType: 'object',
       },
       toolbar: {
         shape: { kind: 'unknown' },
         displayName: 'Toolbar',
         description: 'Top toolbar region or migrated headerToolbar content.',
-        editorType: 'region'
+        editorType: 'region',
       },
       listActions: {
         shape: { kind: 'unknown' },
         displayName: 'List Actions',
-        description: 'List-level actions such as create, refresh, export, or selection-driven batch actions.',
-        editorType: 'region'
+        description:
+          'List-level actions such as create, refresh, export, or selection-driven batch actions.',
+        editorType: 'region',
       },
       footerToolbar: {
         shape: { kind: 'unknown' },
         displayName: 'Footer Toolbar',
         description: 'Bottom toolbar region or migrated footerToolbar content.',
-        editorType: 'region'
+        editorType: 'region',
       },
       toolbarLayout: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Toolbar Layout',
-        description: 'Structured toolbar blocks such as pagination, statistics, and columns toggler.',
-        editorType: 'object'
+        description:
+          'Structured toolbar blocks such as pagination, statistics, and columns toggler.',
+        editorType: 'object',
       },
       selection: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Selection',
-        description: 'CRUD selection configuration such as checkbox/radio mode and selection limits.',
-        editorType: 'object'
+        description:
+          'CRUD selection configuration such as checkbox/radio mode and selection limits.',
+        editorType: 'object',
       },
       selectionStatePath: {
         shape: { kind: 'string' },
         displayName: 'Selection Path',
         description: 'Scope path used when selection ownership is scope-based.',
-        editorType: 'path'
+        editorType: 'path',
       },
       selectionOwnership: {
         shape: { kind: 'string' },
         displayName: 'Selection Ownership',
         description: 'Controls whether selection state is local, controlled, or scope-owned.',
-        editorType: 'select'
+        editorType: 'select',
       },
       paginationOwnership: {
         shape: { kind: 'string' },
         displayName: 'Pagination Ownership',
         description: 'Controls whether pagination state is local, controlled, or scope-owned.',
-        editorType: 'select'
+        editorType: 'select',
       },
       paginationStatePath: {
         shape: { kind: 'string' },
         displayName: 'Pagination Path',
         description: 'Scope path used when pagination ownership is scope-based.',
-        editorType: 'path'
+        editorType: 'path',
       },
       sortOwnership: {
         shape: { kind: 'string' },
         displayName: 'Sort Ownership',
         description: 'Controls whether sort state is local, controlled, or scope-owned.',
-        editorType: 'select'
+        editorType: 'select',
       },
       sortStatePath: {
         shape: { kind: 'string' },
         displayName: 'Sort Path',
         description: 'Scope path used when sort ownership is scope-based.',
-        editorType: 'path'
+        editorType: 'path',
       },
       filterOwnership: {
         shape: { kind: 'string' },
         displayName: 'Filter Ownership',
         description: 'Controls whether filter state is local, controlled, or scope-owned.',
-        editorType: 'select'
+        editorType: 'select',
       },
       filterStatePath: {
         shape: { kind: 'string' },
         displayName: 'Filter Path',
         description: 'Scope path used when filter ownership is scope-based.',
-        editorType: 'path'
+        editorType: 'path',
       },
       columnSettings: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Column Settings',
-        description: 'Column visibility and order management, including overlay and inline entry modes; drag reorder is still deferred.',
-        editorType: 'object'
-      }
+        description:
+          'Column visibility and order management, including overlay and inline entry modes; drag reorder is still deferred.',
+        editorType: 'object',
+      },
     },
     eventContracts: {
       onQuerySubmit: {
         displayName: 'Query Submit',
-        description: 'Runs when the CRUD query form submits.'
+        description: 'Runs when the CRUD query form submits.',
       },
       onQueryReset: {
         displayName: 'Query Reset',
-        description: 'Runs when the CRUD query form resets.'
+        description: 'Runs when the CRUD query form resets.',
       },
       onRowClick: {
         displayName: 'Row Click',
-        description: 'Runs when the user activates a row.'
+        description: 'Runs when the user activates a row.',
       },
       onSelectionChange: {
         displayName: 'Selection Change',
@@ -239,35 +257,35 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         payload: {
           kind: 'object',
           fields: {
-            selectedRowKeys: { kind: 'array', item: { kind: 'string' } }
-          }
-        }
+            selectedRowKeys: { kind: 'array', item: { kind: 'string' } },
+          },
+        },
       },
       onRefresh: {
         displayName: 'Refresh',
-        description: 'Runs when the CRUD refresh action executes.'
-      }
+        description: 'Runs when the CRUD refresh action executes.',
+      },
     },
     componentCapabilityContracts: [
       {
         handle: 'refresh',
         displayName: 'Refresh',
-        description: 'Refresh the CRUD table source.'
+        description: 'Refresh the CRUD table source.',
       },
       {
         handle: 'getSelection',
         displayName: 'Get Selection',
         description: 'Return selected row keys.',
-        result: { kind: 'array', item: { kind: 'string' } }
+        result: { kind: 'array', item: { kind: 'string' } },
       },
       {
         handle: 'clearSelection',
         displayName: 'Clear Selection',
-        description: 'Clear the current selection.'
-      }
+        description: 'Clear the current selection.',
+      },
     ],
     scopeExportContracts: {
-      '$crud': {
+      $crud: {
         kind: 'object',
         fields: {
           loading: { kind: 'boolean' },
@@ -281,10 +299,10 @@ export const dataRendererDefinitions: RendererDefinition[] = [
           pagination: { kind: 'object', fields: {} },
           sort: { kind: 'object', fields: {} },
           filters: { kind: 'object', fields: {} },
-          visibleColumnNames: { kind: 'array', item: { kind: 'string' } }
+          visibleColumnNames: { kind: 'array', item: { kind: 'string' } },
         },
-        optional: ['total', 'query', 'pagination', 'sort', 'filters', 'visibleColumnNames']
-      }
+        optional: ['total', 'query', 'pagination', 'sort', 'filters', 'visibleColumnNames'],
+      },
     },
     component: CrudRenderer,
     fields: [
@@ -298,9 +316,9 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'onQueryReset', kind: 'event' },
       { key: 'onRowClick', kind: 'event' },
       { key: 'onSelectionChange', kind: 'event' },
-      { key: 'onRefresh', kind: 'event' }
-    ]
-  }
+      { key: 'onRefresh', kind: 'event' },
+    ],
+  },
 ];
 
 export function registerDataRenderers(registry: RendererRegistry) {

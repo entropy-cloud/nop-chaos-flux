@@ -76,9 +76,6 @@ export {
   createUnsupportedTemplateCodecAdapter,
 } from './adapters.js';
 
-export type {
-  ReportDesignerCore,
-  CreateReportDesignerCoreOptions,
-} from './core.js';
+export type { ReportDesignerCore, CreateReportDesignerCoreOptions } from './core.js';
 
 export { createReportDesignerCore } from './core.js';

@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toRecord } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, useCurrentComponentRegistry, useRenderScope, useSchemaProps, createReadonlyScopeBinding } from '@nop-chaos/flux-react';
+import {
+  hasRendererSlotContent,
+  useCurrentComponentRegistry,
+  useRenderScope,
+  useSchemaProps,
+  createReadonlyScopeBinding,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema';
@@ -18,32 +24,51 @@ import {
   type InternalTableHandle,
 } from './crud-renderer-state';
 import { CrudToolbarBlocks, normalizeToolbarBlocks } from './crud-renderer-toolbar';
-import { createCrudOwnerPaths, useCrudQueryBridge, useCrudVisibleColumnNames } from './crud-renderer-ownership';
+import {
+  createCrudOwnerPaths,
+  useCrudQueryBridge,
+  useCrudVisibleColumnNames,
+} from './crud-renderer-ownership';
 
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const defaultEmptyLabel = t('flux.common.noData');
   const schemaProps = useSchemaProps(props);
-  const normalizedSchema = useMemo(() => normalizeCrudSchema(schemaProps as CrudSchema), [schemaProps]);
+  const normalizedSchema = useMemo(
+    () => normalizeCrudSchema(schemaProps as CrudSchema),
+    [schemaProps],
+  );
   const scope = useRenderScope();
   const componentRegistry = useCurrentComponentRegistry();
 
-  const ownerPaths = useMemo(() => createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema }), [normalizedSchema, props.id, props.meta.cid]);
+  const ownerPaths = useMemo(
+    () => createCrudOwnerPaths({ id: props.id, cid: props.meta.cid, schema: normalizedSchema }),
+    [normalizedSchema, props.id, props.meta.cid],
+  );
   const defaultQuery = useMemo(
-    () => ({ ...toRecord(normalizedSchema.defaultParams), ...toRecord(normalizedSchema.queryForm?.defaultParams), ...toRecord(normalizedSchema.queryForm?.data) }),
-    [normalizedSchema.defaultParams, normalizedSchema.queryForm?.data, normalizedSchema.queryForm?.defaultParams]
+    () => ({
+      ...toRecord(normalizedSchema.defaultParams),
+      ...toRecord(normalizedSchema.queryForm?.defaultParams),
+      ...toRecord(normalizedSchema.queryForm?.data),
+    }),
+    [
+      normalizedSchema.defaultParams,
+      normalizedSchema.queryForm?.data,
+      normalizedSchema.queryForm?.defaultParams,
+    ],
   );
 
-  const { queryState, paginationState, sortState, filterState, selectedRowKeys } = useCrudRuntimeState({
-    scope,
-    ownerStatePath: ownerPaths.ownerStatePath,
-    queryStatePath: ownerPaths.queryStatePath,
-    paginationStatePath: ownerPaths.paginationStatePath,
-    sortStatePath: ownerPaths.sortStatePath,
-    filterStatePath: ownerPaths.filterStatePath,
-    selectionStatePath: ownerPaths.selectionStatePath,
-    defaultQuery,
-    fallbackPageSize: DEFAULT_PAGE_SIZE,
-  });
+  const { queryState, paginationState, sortState, filterState, selectedRowKeys } =
+    useCrudRuntimeState({
+      scope,
+      ownerStatePath: ownerPaths.ownerStatePath,
+      queryStatePath: ownerPaths.queryStatePath,
+      paginationStatePath: ownerPaths.paginationStatePath,
+      sortStatePath: ownerPaths.sortStatePath,
+      filterStatePath: ownerPaths.filterStatePath,
+      selectionStatePath: ownerPaths.selectionStatePath,
+      defaultQuery,
+      fallbackPageSize: DEFAULT_PAGE_SIZE,
+    });
 
   useEffect(() => {
     if (!scope) {
@@ -57,24 +82,42 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       filters: filterState,
       selection: selectedRowKeys,
     });
-  }, [filterState, ownerPaths.ownerStatePath, paginationState, queryState, scope, selectedRowKeys, sortState]);
+  }, [
+    filterState,
+    ownerPaths.ownerStatePath,
+    paginationState,
+    queryState,
+    scope,
+    selectedRowKeys,
+    sortState,
+  ]);
 
-  const resolvedSource = useMemo(() => normalizeCrudSourceValue(schemaProps.source), [schemaProps.source]);
+  const resolvedSource = useMemo(
+    () => normalizeCrudSourceValue(schemaProps.source),
+    [schemaProps.source],
+  );
   const source = resolvedSource.rows.length > 0 ? resolvedSource.rows : EMPTY_ROWS;
   const effectiveQuery = queryState.refreshCount > 0 ? queryState.values : defaultQuery;
-  const filteredRows = useMemo(() => applyQueryToRows(source, effectiveQuery), [effectiveQuery, source]);
+  const filteredRows = useMemo(
+    () => applyQueryToRows(source, effectiveQuery),
+    [effectiveQuery, source],
+  );
   const internalTableRef = useRef<InternalTableHandle>({});
   const queryStatePath = ownerPaths.queryStatePath;
   const paginationStatePath = ownerPaths.paginationStatePath;
   const sortStatePath = ownerPaths.sortStatePath;
   const filterStatePath = ownerPaths.filterStatePath;
   const selectionStatePath = ownerPaths.selectionStatePath;
-  const shouldFetchOnQueryChange = normalizedSchema.clientMode?.loadDataOnce === true
-    ? normalizedSchema.clientMode.fetchOnFilter === true
-    : true;
+  const shouldFetchOnQueryChange =
+    normalizedSchema.clientMode?.loadDataOnce === true
+      ? normalizedSchema.clientMode.fetchOnFilter === true
+      : true;
   const defaultColumnNames = useMemo(
-    () => (normalizedSchema.columns ?? []).filter((column) => column.hidden !== true).map((column, index) => column.name ?? `column-${index}`),
-    [normalizedSchema.columns]
+    () =>
+      (normalizedSchema.columns ?? [])
+        .filter((column) => column.hidden !== true)
+        .map((column, index) => column.name ?? `column-${index}`),
+    [normalizedSchema.columns],
   );
   const visibleColumnNames = useCrudVisibleColumnNames({
     schema: normalizedSchema,
@@ -83,21 +126,36 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     orderedColumnsStatePath: ownerPaths.orderedColumnsStatePath,
   });
 
-  const summary = useMemo<CrudStatusSummary>(() => ({
-    loading: false,
-    refreshing: false,
-    itemCount: filteredRows.length,
-    total: resolvedSource.total,
-    hasSelection: selectedRowKeys.length > 0,
-    selectionCount: selectedRowKeys.length,
-    selectedRowKeys,
-    query: effectiveQuery,
-    pagination: paginationState,
-    sort: sortState,
-    filters: filterState,
-    visibleColumnNames,
-  }), [effectiveQuery, filterState, filteredRows.length, paginationState, resolvedSource.total, selectedRowKeys, sortState, visibleColumnNames]);
-  const crudScope = useMemo(() => createReadonlyScopeBinding(scope, '$crud', () => summary), [scope, summary]);
+  const summary = useMemo<CrudStatusSummary>(
+    () => ({
+      loading: false,
+      refreshing: false,
+      itemCount: filteredRows.length,
+      total: resolvedSource.total,
+      hasSelection: selectedRowKeys.length > 0,
+      selectionCount: selectedRowKeys.length,
+      selectedRowKeys,
+      query: effectiveQuery,
+      pagination: paginationState,
+      sort: sortState,
+      filters: filterState,
+      visibleColumnNames,
+    }),
+    [
+      effectiveQuery,
+      filterState,
+      filteredRows.length,
+      paginationState,
+      resolvedSource.total,
+      selectedRowKeys,
+      sortState,
+      visibleColumnNames,
+    ],
+  );
+  const crudScope = useMemo(
+    () => createReadonlyScopeBinding(scope, '$crud', () => summary),
+    [scope, summary],
+  );
 
   const handleRefresh = useCallback(() => {
     internalTableRef.current?.refreshSource?.();
@@ -114,7 +172,16 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     props.events.onRefresh?.(undefined, {
       scope: crudScope,
     });
-  }, [crudScope, normalizedSchema.autoClearSelectionOnRefresh, props.events, queryState.refreshCount, queryState.values, queryStatePath, scope, selectionStatePath]);
+  }, [
+    crudScope,
+    normalizedSchema.autoClearSelectionOnRefresh,
+    props.events,
+    queryState.refreshCount,
+    queryState.values,
+    queryStatePath,
+    scope,
+    selectionStatePath,
+  ]);
 
   const queryFormId = `${props.id}-query-form`;
   const { handleQuerySubmit, handleQueryReset } = useCrudQueryBridge({
@@ -134,19 +201,26 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   useCrudHandle(props, internalTableRef, handleRefresh);
   useCrudStatusPublisher(scope, normalizedSchema.statusPath, summary);
 
-  function resolveCrudSlotContent(slotKey: string, options?: { metaKey?: string; fallback?: React.ReactNode }) {
+  function resolveCrudSlotContent(
+    slotKey: string,
+    options?: { metaKey?: string; fallback?: React.ReactNode },
+  ) {
     const regionContent = props.regions[slotKey]?.render({ scope: crudScope });
     if (regionContent !== undefined && regionContent !== null) {
       return regionContent;
     }
 
-    const propValue = (props.props as Record<string, unknown>)[slotKey] as React.ReactNode | undefined;
+    const propValue = (props.props as Record<string, unknown>)[slotKey] as
+      | React.ReactNode
+      | undefined;
     if (propValue !== undefined && propValue !== null) {
       return propValue;
     }
 
     if (options?.metaKey) {
-      const metaValue = (props.meta as unknown as Record<string, unknown>)[options.metaKey] as React.ReactNode | undefined;
+      const metaValue = (props.meta as unknown as Record<string, unknown>)[options.metaKey] as
+        | React.ReactNode
+        | undefined;
       if (metaValue !== undefined && metaValue !== null) {
         return metaValue;
       }
@@ -160,8 +234,14 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const footerToolbarContent = resolveCrudSlotContent('footerToolbar');
   const emptyContent = resolveCrudSlotContent('empty', { fallback: defaultEmptyLabel });
 
-  const headerBlocks = useMemo(() => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header'), [normalizedSchema.toolbarLayout]);
-  const footerBlocks = useMemo(() => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer'), [normalizedSchema.toolbarLayout]);
+  const headerBlocks = useMemo(
+    () => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header'),
+    [normalizedSchema.toolbarLayout],
+  );
+  const footerBlocks = useMemo(
+    () => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer'),
+    [normalizedSchema.toolbarLayout],
+  );
   const hasToolbar = hasRendererSlotContent(toolbarContent);
   const hasListActions = hasRendererSlotContent(listActionsContent);
   const hasFooterToolbar = hasRendererSlotContent(footerToolbarContent);
@@ -214,7 +294,29 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     }
 
     return base as BaseSchema;
-  }, [defaultEmptyLabel, emptyContent, filterStatePath, filteredRows, normalizedSchema.columnSettings, normalizedSchema.columns, normalizedSchema.onRefresh, normalizedSchema.onRowClick, normalizedSchema.quickSaveAction, normalizedSchema.quickSaveItemAction, normalizedSchema.responsive, normalizedSchema.rowKey, normalizedSchema.selection?.type, normalizedSchema.selectionOwnership, paginationState.currentPage, paginationState.pageSize, paginationStatePath, props.id, selectedRowKeys, selectionStatePath, sortStatePath]);
+  }, [
+    defaultEmptyLabel,
+    emptyContent,
+    filterStatePath,
+    filteredRows,
+    normalizedSchema.columnSettings,
+    normalizedSchema.columns,
+    normalizedSchema.onRefresh,
+    normalizedSchema.onRowClick,
+    normalizedSchema.quickSaveAction,
+    normalizedSchema.quickSaveItemAction,
+    normalizedSchema.responsive,
+    normalizedSchema.rowKey,
+    normalizedSchema.selection?.type,
+    normalizedSchema.selectionOwnership,
+    paginationState.currentPage,
+    paginationState.pageSize,
+    paginationStatePath,
+    props.id,
+    selectedRowKeys,
+    selectionStatePath,
+    sortStatePath,
+  ]);
 
   const queryFormSchema = useMemo<BaseSchema | null>(() => {
     const queryForm = normalizedSchema.queryForm;
@@ -241,22 +343,36 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     return base as BaseSchema;
   }, [normalizedSchema.queryForm, queryFormId, queryState.values]);
 
-  const handleToolbarPageChange = useCallback((page: number) => {
-    scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
-  }, [paginationState.pageSize, paginationStatePath, scope]);
+  const handleToolbarPageChange = useCallback(
+    (page: number) => {
+      scope?.update(paginationStatePath, { currentPage: page, pageSize: paginationState.pageSize });
+    },
+    [paginationState.pageSize, paginationStatePath, scope],
+  );
 
-  const handleToolbarPageSizeChange = useCallback((pageSize: number) => {
-    scope?.update(paginationStatePath, { currentPage: 1, pageSize });
-  }, [paginationStatePath, scope]);
+  const handleToolbarPageSizeChange = useCallback(
+    (pageSize: number) => {
+      scope?.update(paginationStatePath, { currentPage: 1, pageSize });
+    },
+    [paginationStatePath, scope],
+  );
 
   return (
-    <div className={cn('nop-crud', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
+    <div
+      className={cn('nop-crud', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
+    >
       {queryFormSchema ? (
         <div className="nop-crud-query" data-slot="crud-query">
           {props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm', scope: crudScope })}
           <div className="mt-2 flex gap-2" data-slot="crud-query-controls">
-            <Button variant="outline" size="sm" onClick={() => void handleQuerySubmit()}>{t('flux.common.search')}</Button>
-            <Button variant="outline" size="sm" onClick={handleQueryReset}>{t('flux.common.reset')}</Button>
+            <Button variant="outline" size="sm" onClick={() => void handleQuerySubmit()}>
+              {t('flux.common.search')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleQueryReset}>
+              {t('flux.common.reset')}
+            </Button>
           </div>
         </div>
       ) : null}
@@ -265,7 +381,16 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         <div className="nop-crud-toolbar" data-slot="crud-toolbar">
           {hasToolbar ? <div data-slot="crud-toolbar-main">{toolbarContent}</div> : null}
           {hasListActions ? <div data-slot="crud-list-actions">{listActionsContent}</div> : null}
-          <CrudToolbarBlocks slot="header" blocks={headerBlocks} summary={summary} listActionsContent={listActionsContent} hasListActions={hasListActions} pagination={paginationState} onPageChange={handleToolbarPageChange} onPageSizeChange={handleToolbarPageSizeChange} />
+          <CrudToolbarBlocks
+            slot="header"
+            blocks={headerBlocks}
+            summary={summary}
+            listActionsContent={listActionsContent}
+            hasListActions={hasListActions}
+            pagination={paginationState}
+            onPageChange={handleToolbarPageChange}
+            onPageSizeChange={handleToolbarPageSizeChange}
+          />
         </div>
       ) : null}
 
@@ -275,11 +400,22 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
       {hasFooterToolbar || footerBlocks.length > 0 ? (
         <div className="nop-crud-footer" data-slot="crud-footer">
-          {hasFooterToolbar ? <div data-slot="crud-footer-toolbar">{footerToolbarContent}</div> : null}
+          {hasFooterToolbar ? (
+            <div data-slot="crud-footer-toolbar">{footerToolbarContent}</div>
+          ) : null}
           {footerBlocks.length > 0 ? (
             <>
               <Separator />
-              <CrudToolbarBlocks slot="footer" blocks={footerBlocks} summary={summary} listActionsContent={listActionsContent} hasListActions={hasListActions} pagination={paginationState} onPageChange={handleToolbarPageChange} onPageSizeChange={handleToolbarPageSizeChange} />
+              <CrudToolbarBlocks
+                slot="footer"
+                blocks={footerBlocks}
+                summary={summary}
+                listActionsContent={listActionsContent}
+                hasListActions={hasListActions}
+                pagination={paginationState}
+                onPageChange={handleToolbarPageChange}
+                onPageSizeChange={handleToolbarPageSizeChange}
+              />
             </>
           ) : null}
         </div>

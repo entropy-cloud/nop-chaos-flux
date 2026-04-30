@@ -1,16 +1,44 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent, useSchemaProps } from '@nop-chaos/flux-react';
+import {
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
+  useSchemaProps,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Checkbox, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Label, Table, TableHeader, cn } from '@nop-chaos/ui';
+import {
+  Button,
+  Checkbox,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Label,
+  Table,
+  TableHeader,
+  cn,
+} from '@nop-chaos/ui';
 import type { TableColumnSchema, TableSchema } from './schemas';
-import { createTableRowRepeatedTemplateId, processTableData, serializeInstancePath } from './table-renderer/table-data';
+import {
+  createTableRowRepeatedTemplateId,
+  processTableData,
+  serializeInstancePath,
+} from './table-renderer/table-data';
 import { TableBodyRows } from './table-renderer/table-body-rows';
 import { createFixedColumnLayout } from './table-renderer/fixed-columns';
 import { TableHeaderRow } from './table-renderer/table-header-row';
 import { TableLoadingOverlay } from './table-renderer/table-loading-overlay';
 import { TablePaginationBar } from './table-renderer/table-pagination-bar';
-import { useTablePagination, useTableSelection, useTableSort, useTableFilter, useTableExpand, useTableVisibleColumns } from './table-renderer/use-table-controls';
+import {
+  useTablePagination,
+  useTableSelection,
+  useTableSort,
+  useTableFilter,
+  useTableExpand,
+  useTableVisibleColumns,
+} from './table-renderer/use-table-controls';
 import { useTableHandle } from './table-renderer/use-table-handle';
 import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache';
 import type { TableResponsiveConfig } from './schemas';
@@ -30,7 +58,10 @@ function resolveResponsiveBreakpoint(breakpoint: TableResponsiveConfig['breakpoi
   }
 
   if (typeof breakpoint === 'string') {
-    return RESPONSIVE_BREAKPOINTS[breakpoint as keyof typeof RESPONSIVE_BREAKPOINTS] ?? RESPONSIVE_BREAKPOINTS.md;
+    return (
+      RESPONSIVE_BREAKPOINTS[breakpoint as keyof typeof RESPONSIVE_BREAKPOINTS] ??
+      RESPONSIVE_BREAKPOINTS.md
+    );
   }
 
   return RESPONSIVE_BREAKPOINTS.md;
@@ -39,7 +70,9 @@ function resolveResponsiveBreakpoint(breakpoint: TableResponsiveConfig['breakpoi
 function splitResponsiveColumns(columns: TableColumnSchema[]) {
   const leftFixedColumns = columns.filter((column) => column.fixed === 'left');
   const rightFixedColumns = columns.filter((column) => column.fixed === 'right');
-  const nonFixedColumns = columns.filter((column) => column.fixed !== 'left' && column.fixed !== 'right');
+  const nonFixedColumns = columns.filter(
+    (column) => column.fixed !== 'left' && column.fixed !== 'right',
+  );
   const primaryColumn = nonFixedColumns[0];
   const primaryColumnNames = new Set<string>();
 
@@ -55,7 +88,16 @@ function splitResponsiveColumns(columns: TableColumnSchema[]) {
     primaryColumnNames.add(primaryColumn.name ?? '__primary__');
   }
 
-  const primaryColumns = columns.filter((column, index) => primaryColumnNames.has(column.name ?? (column.fixed === 'left' ? `left-${index}` : column.fixed === 'right' ? `right-${index}` : '__primary__')));
+  const primaryColumns = columns.filter((column, index) =>
+    primaryColumnNames.has(
+      column.name ??
+        (column.fixed === 'left'
+          ? `left-${index}`
+          : column.fixed === 'right'
+            ? `right-${index}`
+            : '__primary__'),
+    ),
+  );
   const hiddenColumns = columns.filter((column) => !primaryColumns.includes(column));
 
   return {
@@ -97,54 +139,90 @@ function createTableOwnerKey(props: RendererComponentProps<TableSchema>): string
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const schemaProps = useSchemaProps(props);
   const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : EMPTY_TABLE_COLUMNS;
-  const source = Array.isArray(schemaProps.source) ? (schemaProps.source as Array<Record<string, any>>) : EMPTY_TABLE_ROWS;
+  const source = Array.isArray(schemaProps.source)
+    ? (schemaProps.source as Array<Record<string, any>>)
+    : EMPTY_TABLE_ROWS;
   const helpers = props.helpers;
   const paginationOwnership = schemaProps.paginationOwnership ?? 'local';
   const selectionOwnership = schemaProps.selectionOwnership ?? 'local';
-  const paginationStatePath = typeof schemaProps.paginationStatePath === 'string' ? schemaProps.paginationStatePath : undefined;
-  const selectionStatePath = typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
+  const paginationStatePath =
+    typeof schemaProps.paginationStatePath === 'string'
+      ? schemaProps.paginationStatePath
+      : undefined;
+  const selectionStatePath =
+    typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
 
-  const emptyContent = resolveRendererSlotContent(props, 'empty', { fallback: t('flux.table.noData') });
+  const emptyContent = resolveRendererSlotContent(props, 'empty', {
+    fallback: t('flux.table.noData'),
+  });
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
   const loadingContent = resolveRendererSlotContent(props, 'loadingSlot');
 
   const templateNodeId = props.node.templateNode.templateNodeId;
   const ownerKey = createTableOwnerKey(props);
-  const rowRepeatedTemplateId = useMemo(() => createTableRowRepeatedTemplateId(templateNodeId), [templateNodeId]);
+  const rowRepeatedTemplateId = useMemo(
+    () => createTableRowRepeatedTemplateId(templateNodeId),
+    [templateNodeId],
+  );
 
-  const { columnSettingsEnabled, visibleColumns, orderedColumns, tableColumns, toggleColumn, moveColumn } = useTableVisibleColumns(schemaProps, columns);
+  const {
+    columnSettingsEnabled,
+    visibleColumns,
+    orderedColumns,
+    tableColumns,
+    toggleColumn,
+    moveColumn,
+  } = useTableVisibleColumns(schemaProps, columns);
   const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
-  const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange } = useTablePagination(
+  const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange } =
+    useTablePagination(schemaProps, props.events.onPageChange, helpers);
+  const { selectedRowKeys, allSelected, handleSelectAll, handleSelectRow, setSelectionExternal } =
+    useTableSelection(schemaProps, source, props.events.onSelectionChange, helpers);
+  const { sortState, handleSort } = useTableSort(
     schemaProps,
-    props.events.onPageChange,
-    helpers
+    props.events.onSortChange,
+    tableColumns,
+    helpers,
   );
-  const { selectedRowKeys, allSelected, handleSelectAll, handleSelectRow, setSelectionExternal } = useTableSelection(
+  const { filterState, handleFilter, handleSearch, clearFilters } = useTableFilter(
     schemaProps,
-    source,
-    props.events.onSelectionChange,
-    helpers
+    props.events.onFilterChange,
+    helpers,
   );
-  const { sortState, handleSort } = useTableSort(schemaProps, props.events.onSortChange, tableColumns, helpers);
-  const { filterState, handleFilter, handleSearch, clearFilters } = useTableFilter(schemaProps, props.events.onFilterChange, helpers);
   const { expandedRowKeys, handleToggleExpand } = useTableExpand(schemaProps);
 
   const responsiveBreakpoint = resolveResponsiveBreakpoint(schemaProps.responsive?.breakpoint);
   const isBelowResponsiveBreakpoint = useIsBelowResponsiveBreakpoint(responsiveBreakpoint);
-  const responsiveExpandActive = schemaProps.responsive?.mode === 'expand' && isBelowResponsiveBreakpoint;
+  const responsiveExpandActive =
+    schemaProps.responsive?.mode === 'expand' && isBelowResponsiveBreakpoint;
   const responsiveColumns = useMemo(() => splitResponsiveColumns(tableColumns), [tableColumns]);
   const mainColumns = responsiveExpandActive ? responsiveColumns.primaryColumns : tableColumns;
-  const responsiveHiddenColumns = responsiveExpandActive ? responsiveColumns.hiddenColumns : EMPTY_TABLE_COLUMNS;
+  const responsiveHiddenColumns = responsiveExpandActive
+    ? responsiveColumns.hiddenColumns
+    : EMPTY_TABLE_COLUMNS;
   const showExpandColumn = Boolean(schemaProps.expandable) || responsiveHiddenColumns.length > 0;
-  const expandRowByClick = schemaProps.expandable?.expandRowByClick === true
-    || (responsiveExpandActive && schemaProps.responsive?.expandTrigger === 'row');
+  const expandRowByClick =
+    schemaProps.expandable?.expandRowByClick === true ||
+    (responsiveExpandActive && schemaProps.responsive?.expandTrigger === 'row');
 
   const processedData = useMemo(
-    () => processTableData(source, schemaProps.rowKey, sortState, filterState, paginationEnabled, currentPage, pageSize),
-    [source, schemaProps.rowKey, sortState, filterState, paginationEnabled, currentPage, pageSize]
+    () =>
+      processTableData(
+        source,
+        schemaProps.rowKey,
+        sortState,
+        filterState,
+        paginationEnabled,
+        currentPage,
+        pageSize,
+      ),
+    [source, schemaProps.rowKey, sortState, filterState, paginationEnabled, currentPage, pageSize],
   );
-  const fixedColumnLayout = useMemo(() => createFixedColumnLayout(schemaProps, mainColumns, showExpandColumn), [schemaProps, mainColumns, showExpandColumn]);
+  const fixedColumnLayout = useMemo(
+    () => createFixedColumnLayout(schemaProps, mainColumns, showExpandColumn),
+    [schemaProps, mainColumns, showExpandColumn],
+  );
 
   const rowScopeCache = useTableRowScopeCache(processedData, ownerKey, helpers, props.path);
 
@@ -157,7 +235,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     selectionStatePath,
     paginationOwnership,
     paginationStatePath,
-    setSelectionExternal
+    setSelectionExternal,
   );
 
   const totalPages = useMemo(() => {
@@ -168,42 +246,67 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isLoading = schemaProps.loading === true;
   const isStriped = schemaProps.stripe === true;
   const isBordered = schemaProps.bordered === true;
-  const columnCount = mainColumns.length + (schemaProps.rowSelection ? 1 : 0) + (showExpandColumn ? 1 : 0);
+  const columnCount =
+    mainColumns.length + (schemaProps.rowSelection ? 1 : 0) + (showExpandColumn ? 1 : 0);
   const columnSettingsOverlay = schemaProps.columnSettings?.overlay !== false;
-  const columnSettingsAlignmentClass = schemaProps.columnSettings?.align === 'left' ? 'items-start' : 'items-end';
+  const columnSettingsAlignmentClass =
+    schemaProps.columnSettings?.align === 'left' ? 'items-start' : 'items-end';
 
   const virtualThreshold = schemaProps.virtualThreshold;
   const scrollHeight = schemaProps.scrollHeight;
-  const virtualEnabled = !paginationEnabled && typeof virtualThreshold === 'number' && source.length > virtualThreshold;
+  const virtualEnabled =
+    !paginationEnabled && typeof virtualThreshold === 'number' && source.length > virtualThreshold;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className={cn('nop-table', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>
-      {hasRendererSlotContent(headerContent) ? <div data-slot="table-header-region">{headerContent}</div> : null}
+    <div
+      className={cn('nop-table', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
+    >
+      {hasRendererSlotContent(headerContent) ? (
+        <div data-slot="table-header-region">{headerContent}</div>
+      ) : null}
       {columnSettingsEnabled ? (
-        <div className={cn('mb-2 flex flex-col', columnSettingsAlignmentClass)} data-slot="table-column-settings">
+        <div
+          className={cn('mb-2 flex flex-col', columnSettingsAlignmentClass)}
+          data-slot="table-column-settings"
+        >
           {columnSettingsOverlay ? (
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={<Button variant="outline" size="sm">{t('flux.table.columns')}</Button>}
+                render={
+                  <Button variant="outline" size="sm">
+                    {t('flux.table.columns')}
+                  </Button>
+                }
               />
               <DropdownMenuContent>
                 {orderedColumns.map((key) => {
-                  const columnIndex = columns.findIndex((column, index) => (column.name ?? `column-${index}`) === key);
+                  const columnIndex = columns.findIndex(
+                    (column, index) => (column.name ?? `column-${index}`) === key,
+                  );
                   if (columnIndex < 0) {
                     return null;
                   }
 
                   const column = columns[columnIndex];
-                  const label = typeof column.label === 'string' ? column.label : column.name ?? key;
+                  const label =
+                    typeof column.label === 'string' ? column.label : (column.name ?? key);
                   const orderedIndex = orderedColumns.indexOf(key);
                   return (
                     <div key={key} data-slot="table-column-settings-item">
-                      <DropdownMenuCheckboxItem checked={visibleColumns.includes(key)} onCheckedChange={(checked) => toggleColumn(key, checked)}>
+                      <DropdownMenuCheckboxItem
+                        checked={visibleColumns.includes(key)}
+                        onCheckedChange={(checked) => toggleColumn(key, checked)}
+                      >
                         {label}
                       </DropdownMenuCheckboxItem>
-                      <div className="flex gap-1 px-1.5 pb-1" data-slot="table-column-settings-actions">
+                      <div
+                        className="flex gap-1 px-1.5 pb-1"
+                        data-slot="table-column-settings-actions"
+                      >
                         <DropdownMenuItem
                           aria-label={`${t('flux.table.moveUp')} ${label}`}
                           disabled={orderedIndex === 0}
@@ -227,19 +330,29 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="outline" size="sm" onClick={() => setInlineColumnSettingsOpen((value) => !value)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setInlineColumnSettingsOpen((value) => !value)}
+              >
                 {t('flux.table.columns')}
               </Button>
               {inlineColumnSettingsOpen ? (
-                <div className="mt-2 w-full max-w-sm rounded-md border bg-popover p-2 shadow-sm" data-slot="table-column-settings-inline">
+                <div
+                  className="mt-2 w-full max-w-sm rounded-md border bg-popover p-2 shadow-sm"
+                  data-slot="table-column-settings-inline"
+                >
                   {orderedColumns.map((key) => {
-                    const columnIndex = columns.findIndex((column, index) => (column.name ?? `column-${index}`) === key);
+                    const columnIndex = columns.findIndex(
+                      (column, index) => (column.name ?? `column-${index}`) === key,
+                    );
                     if (columnIndex < 0) {
                       return null;
                     }
 
                     const column = columns[columnIndex];
-                    const label = typeof column.label === 'string' ? column.label : column.name ?? key;
+                    const label =
+                      typeof column.label === 'string' ? column.label : (column.name ?? key);
                     const orderedIndex = orderedColumns.indexOf(key);
                     const checkboxId = `table-column-settings-${props.id}-${key}`;
 
@@ -291,7 +404,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
       <div
         ref={virtualEnabled ? scrollRef : undefined}
-        className={cn(virtualEnabled ? 'overflow-auto' : 'relative', fixedColumnLayout.hasStickyColumns ? 'overflow-x-auto' : undefined)}
+        className={cn(
+          virtualEnabled ? 'overflow-auto' : 'relative',
+          fixedColumnLayout.hasStickyColumns ? 'overflow-x-auto' : undefined,
+        )}
         style={virtualEnabled && scrollHeight ? { maxHeight: scrollHeight } : undefined}
         data-slot="table-container"
       >
@@ -316,25 +432,25 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
           </TableHeader>
 
           <TableBodyRows
-              props={props}
-              columns={mainColumns}
-              processedData={processedData}
-              rowScopeCache={rowScopeCache}
-              rowRepeatedTemplateId={rowRepeatedTemplateId}
-              expandedRowKeys={expandedRowKeys}
-              selectedRowKeys={selectedRowKeys}
-              columnCount={columnCount}
-              isStriped={isStriped}
-              fixedColumnLayout={fixedColumnLayout}
-              emptyContent={emptyContent}
-              responsiveHiddenColumns={responsiveHiddenColumns}
-              showExpandColumn={showExpandColumn}
-              expandRowByClick={expandRowByClick}
-              onToggleExpand={handleToggleExpand}
-              onSelectRow={handleSelectRow}
-              virtualEnabled={virtualEnabled}
-              scrollRef={scrollRef}
-            />
+            props={props}
+            columns={mainColumns}
+            processedData={processedData}
+            rowScopeCache={rowScopeCache}
+            rowRepeatedTemplateId={rowRepeatedTemplateId}
+            expandedRowKeys={expandedRowKeys}
+            selectedRowKeys={selectedRowKeys}
+            columnCount={columnCount}
+            isStriped={isStriped}
+            fixedColumnLayout={fixedColumnLayout}
+            emptyContent={emptyContent}
+            responsiveHiddenColumns={responsiveHiddenColumns}
+            showExpandColumn={showExpandColumn}
+            expandRowByClick={expandRowByClick}
+            onToggleExpand={handleToggleExpand}
+            onSelectRow={handleSelectRow}
+            virtualEnabled={virtualEnabled}
+            scrollRef={scrollRef}
+          />
         </Table>
 
         {isLoading ? <TableLoadingOverlay loadingContent={loadingContent} /> : null}
@@ -352,7 +468,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         />
       ) : null}
 
-      {hasRendererSlotContent(footerContent) ? <div data-slot="table-footer">{footerContent}</div> : null}
+      {hasRendererSlotContent(footerContent) ? (
+        <div data-slot="table-footer">{footerContent}</div>
+      ) : null}
     </div>
   );
 }

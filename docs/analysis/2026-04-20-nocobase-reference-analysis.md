@@ -19,14 +19,14 @@
 
 结论不是“照搬 NocoBase”，而是“有选择地吸收”。
 
-| 主题 | 参考价值 | 结论 |
-| --- | --- | --- |
-| JSON/schema 生成页面 | 高 | 可借鉴其统一递归渲染管线、组件注册表、decorator/provider 分层、远程 schema 与本地 schema 共用同一渲染链 |
-| 监听范围控制 | 高 | 可借鉴依赖提取、局部刷新边界、轻量高频渲染路径、稳定 context 外壳 |
-| 异步执行与取消 | 中 | 可借鉴统一请求入口、显式调度参数、局部 stale guard、长任务 `AbortController`；但其平台级一致性不足，不宜原样照搬 |
-| Formily 深绑定 | 低 | Flux 不应迁移到 Formily 字段对象图与 Proxy 响应式路线 |
-| 可变 schema patch 体系 | 低 | Flux 不应把编译型主干替换成运行时可变 schema patch 驱动 |
-| 大量 context 分层承载运行时状态 | 低 | Flux 已有 runtime/store/selector 主线，更应继续强化 store + selector，而不是扩张 context 树 |
+| 主题                            | 参考价值 | 结论                                                                                                             |
+| ------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| JSON/schema 生成页面            | 高       | 可借鉴其统一递归渲染管线、组件注册表、decorator/provider 分层、远程 schema 与本地 schema 共用同一渲染链          |
+| 监听范围控制                    | 高       | 可借鉴依赖提取、局部刷新边界、轻量高频渲染路径、稳定 context 外壳                                                |
+| 异步执行与取消                  | 中       | 可借鉴统一请求入口、显式调度参数、局部 stale guard、长任务 `AbortController`；但其平台级一致性不足，不宜原样照搬 |
+| Formily 深绑定                  | 低       | Flux 不应迁移到 Formily 字段对象图与 Proxy 响应式路线                                                            |
+| 可变 schema patch 体系          | 低       | Flux 不应把编译型主干替换成运行时可变 schema patch 驱动                                                          |
+| 大量 context 分层承载运行时状态 | 低       | Flux 已有 runtime/store/selector 主线，更应继续强化 store + selector，而不是扩张 context 树                      |
 
 一句话判断：
 

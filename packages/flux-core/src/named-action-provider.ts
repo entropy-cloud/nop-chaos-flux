@@ -2,14 +2,14 @@ import type {
   ActionContext,
   ActionNamespaceProvider,
   ActionResult,
-  CompiledActionProgram
+  CompiledActionProgram,
 } from './types';
 import { XUI_ACTIONS_NAMESPACE } from './constants';
 
 export function createNamedActionProvider(
   plans: Readonly<Record<string, CompiledActionProgram>>,
   parentActionScope: import('./types').ActionScope | undefined,
-  executeProgram: (program: CompiledActionProgram, ctx: ActionContext) => Promise<ActionResult>
+  executeProgram: (program: CompiledActionProgram, ctx: ActionContext) => Promise<ActionResult>,
 ): ActionNamespaceProvider {
   return {
     kind: 'import',
@@ -27,9 +27,11 @@ export function createNamedActionProvider(
       return { ok: false, error: new Error(`Unknown named action: ${method}`) };
     },
     listMethods() {
-      const parentResolved = parentActionScope?.resolve(`${XUI_ACTIONS_NAMESPACE}:__list_methods__`);
+      const parentResolved = parentActionScope?.resolve(
+        `${XUI_ACTIONS_NAMESPACE}:__list_methods__`,
+      );
       const parentMethods = parentResolved?.provider.listMethods?.() ?? [];
       return [...new Set([...Object.keys(plans), ...parentMethods])];
-    }
+    },
   };
 }

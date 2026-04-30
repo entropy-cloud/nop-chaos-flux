@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { createDesignerCore, simpleTreeLayout, projectTree, normalizeConfig } from '../../flow-designer-core/src/index';
-import type { DesignerConfig, GraphDocument, TreeDocument } from '../../flow-designer-core/src/index';
+import {
+  createDesignerCore,
+  simpleTreeLayout,
+  projectTree,
+  normalizeConfig,
+} from '../../flow-designer-core/src/index';
+import type {
+  DesignerConfig,
+  GraphDocument,
+  TreeDocument,
+} from '../../flow-designer-core/src/index';
 import { createDesignerCommandAdapter } from './designer-command-adapter';
 
 function createTestDesignerConfig(): DesignerConfig {
@@ -12,23 +21,23 @@ function createTestDesignerConfig(): DesignerConfig {
         id: 'start',
         label: 'Start',
         defaults: { label: 'Start' },
-        constraints: { maxInstances: 1 }
+        constraints: { maxInstances: 1 },
       },
       {
         id: 'task',
         label: 'Task',
-        defaults: { label: 'Task' }
+        defaults: { label: 'Task' },
       },
       {
         id: 'end',
         label: 'End',
-        defaults: { label: 'End' }
-      }
+        defaults: { label: 'End' },
+      },
     ],
     edgeTypes: [{ id: 'default', label: 'Flow', defaults: {} }],
     palette: {
-      groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['start', 'task', 'end'] }]
-    }
+      groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['start', 'task', 'end'] }],
+    },
   };
 }
 
@@ -41,13 +50,13 @@ function createDocumentWithEdgeChain(): GraphDocument {
     nodes: [
       { id: 'start-1', type: 'start', position: { x: 0, y: 0 }, data: { label: 'Start' } },
       { id: 'task-1', type: 'task', position: { x: 100, y: 0 }, data: { label: 'Task' } },
-      { id: 'end-1', type: 'end', position: { x: 200, y: 0 }, data: { label: 'End' } }
+      { id: 'end-1', type: 'end', position: { x: 200, y: 0 }, data: { label: 'End' } },
     ],
     edges: [
       { id: 'edge-1', type: 'default', source: 'start-1', target: 'task-1', data: {} },
-      { id: 'edge-2', type: 'default', source: 'task-1', target: 'end-1', data: {} }
+      { id: 'edge-2', type: 'default', source: 'task-1', target: 'end-1', data: {} },
     ],
-    viewport: { x: 0, y: 0, zoom: 1 }
+    viewport: { x: 0, y: 0, zoom: 1 },
   };
 }
 
@@ -60,26 +69,29 @@ describe('createDesignerCommandAdapter', () => {
       type: 'reconnectEdge',
       edgeId: 'edge-1',
       source: 'start-1',
-      target: 'end-1'
+      target: 'end-1',
     });
 
-    expect(success).toMatchObject({ ok: true, data: expect.objectContaining({ id: 'edge-1', target: 'end-1' }) });
+    expect(success).toMatchObject({
+      ok: true,
+      data: expect.objectContaining({ id: 'edge-1', target: 'end-1' }),
+    });
     expect(success.snapshot.doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
       source: 'start-1',
-      target: 'end-1'
+      target: 'end-1',
     });
 
     const failure = adapter.execute({
       type: 'reconnectEdge',
       edgeId: 'edge-2',
       source: 'start-1',
-      target: 'end-1'
+      target: 'end-1',
     });
 
     expect(failure).toMatchObject({
       ok: false,
       reason: 'duplicate-edge',
-      error: 'Duplicate edges are not supported in the playground example.'
+      error: 'Duplicate edges are not supported in the playground example.',
     });
   });
 
@@ -89,7 +101,7 @@ describe('createDesignerCommandAdapter', () => {
 
     const result = adapter.execute({
       type: 'setViewport',
-      viewport: { x: 0.004, y: 0.004, zoom: 1.0004 }
+      viewport: { x: 0.004, y: 0.004, zoom: 1.0004 },
     });
 
     expect(result).toMatchObject({ ok: true, reason: 'unchanged' });
@@ -103,15 +115,18 @@ describe('createDesignerCommandAdapter', () => {
     const moved = adapter.execute({
       type: 'moveNode',
       nodeId: 'task-1',
-      position: { x: 144, y: 24 }
+      position: { x: 144, y: 24 },
     });
 
-    expect(moved).toMatchObject({ ok: true, data: expect.objectContaining({ id: 'task-1', position: { x: 144, y: 24 } }) });
+    expect(moved).toMatchObject({
+      ok: true,
+      data: expect.objectContaining({ id: 'task-1', position: { x: 144, y: 24 } }),
+    });
 
     const unchanged = adapter.execute({
       type: 'moveNode',
       nodeId: 'task-1',
-      position: { x: 144, y: 24 }
+      position: { x: 144, y: 24 },
     });
 
     expect(unchanged).toMatchObject({ ok: true, reason: 'unchanged' });
@@ -211,10 +226,34 @@ function createDingFlowConfig(): DesignerConfig {
       mergeEdgeType: 'dt-merge',
     },
     nodeTypes: [
-      { id: 'dt-initiator', label: '发起人', icon: 'user', appearance: { minWidth: 200, minHeight: 80 }, tree: { allowChild: true, allowBranches: false, isTerminal: false } },
-      { id: 'dt-approval', label: '审批人', icon: 'user-check', appearance: { minWidth: 220, minHeight: 80 }, tree: { allowChild: true, allowBranches: false, isTerminal: false } },
-      { id: 'dt-cc', label: '抄送人', icon: 'mail', appearance: { minWidth: 200, minHeight: 80 }, tree: { allowChild: true, allowBranches: false, isTerminal: false } },
-      { id: 'dt-end', label: '结束', icon: 'square', appearance: { minWidth: 120, minHeight: 40 }, tree: { allowChild: false, allowBranches: false, isTerminal: true } },
+      {
+        id: 'dt-initiator',
+        label: '发起人',
+        icon: 'user',
+        appearance: { minWidth: 200, minHeight: 80 },
+        tree: { allowChild: true, allowBranches: false, isTerminal: false },
+      },
+      {
+        id: 'dt-approval',
+        label: '审批人',
+        icon: 'user-check',
+        appearance: { minWidth: 220, minHeight: 80 },
+        tree: { allowChild: true, allowBranches: false, isTerminal: false },
+      },
+      {
+        id: 'dt-cc',
+        label: '抄送人',
+        icon: 'mail',
+        appearance: { minWidth: 200, minHeight: 80 },
+        tree: { allowChild: true, allowBranches: false, isTerminal: false },
+      },
+      {
+        id: 'dt-end',
+        label: '结束',
+        icon: 'square',
+        appearance: { minWidth: 120, minHeight: 40 },
+        tree: { allowChild: false, allowBranches: false, isTerminal: true },
+      },
     ],
     edgeTypes: [
       { id: 'dt-chain', label: '流程连线' },
@@ -273,7 +312,7 @@ function createBranchingTreeDocument(): TreeDocument {
             id: 'b2',
             data: { label: '条件2', priority: 2 },
             child: { id: 'n4', type: 'dt-approval', data: { label: '分支B审批' } },
-          }
+          },
         ],
         child: {
           id: 'n5',
@@ -289,7 +328,12 @@ function projectTreeToDoc(treeDoc: TreeDocument, config: DesignerConfig): GraphD
   const normalizedConfig = normalizeConfig(config);
   const projected = projectTree(treeDoc, normalizedConfig);
   const treeConfig = normalizedConfig.treeConfig!;
-  const nodes = simpleTreeLayout(projected.nodes, projected.edges, treeConfig, normalizedConfig.nodeTypes);
+  const nodes = simpleTreeLayout(
+    projected.nodes,
+    projected.edges,
+    treeConfig,
+    normalizedConfig.nodeTypes,
+  );
   return {
     id: treeDoc.id,
     kind: treeDoc.kind,
@@ -333,13 +377,13 @@ describe('insertChainNode in tree mode', () => {
     expect(afterSnapshot.doc.edges.length).toBe(3);
 
     // Verify n1's outgoing goes to new node
-    const n1Outgoing = afterSnapshot.doc.edges.filter(e => e.source === 'n1');
+    const n1Outgoing = afterSnapshot.doc.edges.filter((e) => e.source === 'n1');
     expect(n1Outgoing.length).toBe(1);
     const newId = n1Outgoing[0].target;
     expect(newId).not.toBe('n2');
 
     // Verify new node's outgoing goes to n2
-    const newOutgoing = afterSnapshot.doc.edges.filter(e => e.source === newId);
+    const newOutgoing = afterSnapshot.doc.edges.filter((e) => e.source === newId);
     expect(newOutgoing.length).toBe(1);
     expect(newOutgoing[0].target).toBe('n2');
   });
@@ -362,10 +406,10 @@ describe('insertChainNode in tree mode', () => {
     expect(afterSnapshot.doc.nodes.length).toBe(4);
     expect(afterSnapshot.doc.edges.length).toBe(3);
 
-    const n2Outgoing = afterSnapshot.doc.edges.filter(e => e.source === 'n2');
+    const n2Outgoing = afterSnapshot.doc.edges.filter((e) => e.source === 'n2');
     expect(n2Outgoing.length).toBe(1);
     const newId = n2Outgoing[0].target;
-    const newOutgoing = afterSnapshot.doc.edges.filter(e => e.source === newId);
+    const newOutgoing = afterSnapshot.doc.edges.filter((e) => e.source === newId);
     expect(newOutgoing.length).toBe(1);
     expect(newOutgoing[0].target).toBe('n3');
   });
@@ -404,7 +448,9 @@ describe('insertChainNode in tree mode', () => {
     const core = createDesignerCore(doc, config);
     const adapter = createDesignerCommandAdapter(core, {
       getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => { ownedTree = next; },
+      setTreeDocument: (next) => {
+        ownedTree = next;
+      },
       config,
     });
 
@@ -429,7 +475,9 @@ describe('insertChainNode in tree mode', () => {
     const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
     const adapter = createDesignerCommandAdapter(core, {
       getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => { ownedTree = next; },
+      setTreeDocument: (next) => {
+        ownedTree = next;
+      },
       config,
     });
 
@@ -441,7 +489,9 @@ describe('insertChainNode in tree mode', () => {
 
     expect(result.ok).toBe(true);
     expect(ownedTree.root.child?.data.label).toBe('Updated Approver');
-    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'n2')?.data.label).toBe('Updated Approver');
+    expect(core.getSnapshot().doc.nodes.find((node) => node.id === 'n2')?.data.label).toBe(
+      'Updated Approver',
+    );
   });
 
   it('deletes a chain node through the owned TreeDocument and reconnects its child', () => {
@@ -450,7 +500,9 @@ describe('insertChainNode in tree mode', () => {
     const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
     const adapter = createDesignerCommandAdapter(core, {
       getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => { ownedTree = next; },
+      setTreeDocument: (next) => {
+        ownedTree = next;
+      },
       config,
     });
 
@@ -470,7 +522,9 @@ describe('insertChainNode in tree mode', () => {
     const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
     const adapter = createDesignerCommandAdapter(core, {
       getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => { ownedTree = next; },
+      setTreeDocument: (next) => {
+        ownedTree = next;
+      },
       config,
     });
 
@@ -494,7 +548,9 @@ describe('insertChainNode in tree mode', () => {
     const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
     const adapter = createDesignerCommandAdapter(core, {
       getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => { ownedTree = next; },
+      setTreeDocument: (next) => {
+        ownedTree = next;
+      },
       config,
     });
 
@@ -521,7 +577,9 @@ describe('insertChainNode in tree mode', () => {
     const core = createDesignerCore(projectTreeToDoc(ownedTree, config), config);
     const adapter = createDesignerCommandAdapter(core, {
       getTreeDocument: () => ownedTree,
-      setTreeDocument: (next) => { ownedTree = next; },
+      setTreeDocument: (next) => {
+        ownedTree = next;
+      },
       config,
     });
 

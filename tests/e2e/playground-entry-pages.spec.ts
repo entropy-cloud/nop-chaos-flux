@@ -5,7 +5,9 @@ type RouteAssertion = (page: Page) => Promise<void>;
 
 const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
   'flux-basic': async (page) => {
-    await expect(page.getByRole('heading', { name: 'Renderer Playground', level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Renderer Playground', level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
   },
   'flow-designer': async (page) => {
@@ -17,27 +19,41 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('.react-flow')).toBeVisible();
   },
   'report-designer': async (page) => {
-    await expect(page.getByRole('heading', { name: 'Report Designer Playground', level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByRole('heading', { name: 'Report Designer Playground', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('.report-designer-demo')).toBeVisible();
   },
   'debugger-lab': async (page) => {
-    await expect(page.getByRole('heading', { name: 'Debugger Lab', level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Debugger Lab', level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole('button', { name: 'Fire Render' })).toBeVisible();
   },
   'condition-builder': async (page) => {
-    await expect(page.getByRole('heading', { name: '条件构建器测试', level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: '条件构建器测试', level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
   },
   'code-editor': async (page) => {
-    await expect(page.getByRole('heading', { name: 'Code Editor Playground', level: 1 })).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('.nop-field').filter({ hasText: 'Expression Editor (with completion)' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Code Editor Playground', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.locator('.nop-field').filter({ hasText: 'Expression Editor (with completion)' }),
+    ).toBeVisible();
   },
   'word-editor': async (page) => {
-    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole('button', { name: '保存' })).toBeVisible();
   },
   'performance-table': async (page) => {
-    await expect(page.getByRole('heading', { name: 'Table Performance Playground', level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByRole('heading', { name: 'Table Performance Playground', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: 'Run 20 Host Mutations' })).toBeVisible();
   },
 };

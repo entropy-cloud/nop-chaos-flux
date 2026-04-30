@@ -7,7 +7,16 @@ import { hasRendererSlotContent, resolveRendererSlotContent } from './render-nod
 import { FieldFrame } from './field-frame';
 import { EMPTY_FORM_STORE_STATE } from './form-state';
 import { resolveFrameWrapMode } from './node-renderer-utils';
-import { buttonRenderer, env, formRenderer, pageRenderer, probeButtonRenderer, probeQueryInputRenderer, sharedFormulaCompiler, textRenderer } from './test-support';
+import {
+  buttonRenderer,
+  env,
+  formRenderer,
+  pageRenderer,
+  probeButtonRenderer,
+  probeQueryInputRenderer,
+  sharedFormulaCompiler,
+  textRenderer,
+} from './test-support';
 
 describe('resolveFrameWrapMode', () => {
   it('returns none when renderer definition is not wrap-compatible', () => {
@@ -39,17 +48,17 @@ describe('FieldFrame', () => {
         getState: () => ({
           ...EMPTY_FORM_STORE_STATE,
           fieldStates: {
-            '': { errors: [{ path: '', rule: 'form', message: 'Root error', sourceKind: 'form' }] }
-          }
-        })
+            '': { errors: [{ path: '', rule: 'form', message: 'Root error', sourceKind: 'form' }] },
+          },
+        }),
       },
-      validation: undefined
+      validation: undefined,
     } as any;
 
     render(
       <FormContext.Provider value={form}>
         <FieldFrame label="Unbound field">content</FieldFrame>
-      </FormContext.Provider>
+      </FormContext.Provider>,
     );
 
     expect(screen.getByText('Unbound field')).toBeTruthy();
@@ -64,27 +73,31 @@ describe('FieldFrame', () => {
           touched: true,
           dirty: true,
           visited: true,
-          errors: [{ path: 'email', rule: 'required', message: 'Email is required', sourceKind: 'field' }]
-        }
-      }
+          errors: [
+            { path: 'email', rule: 'required', message: 'Email is required', sourceKind: 'field' },
+          ],
+        },
+      },
     };
     const form = {
       store: {
         subscribe: () => () => undefined,
-        getState: () => state
+        getState: () => state,
       },
       validation: {
         behavior: {
           triggers: ['blur'],
-          showErrorOn: ['touched', 'submit']
-        }
-      }
+          showErrorOn: ['touched', 'submit'],
+        },
+      },
     } as any;
 
     const { container } = render(
       <FormContext.Provider value={form}>
-        <FieldFrame name="email" label="Email">content</FieldFrame>
-      </FormContext.Provider>
+        <FieldFrame name="email" label="Email">
+          content
+        </FieldFrame>
+      </FormContext.Provider>,
     );
 
     const field = container.querySelector('.nop-field');
@@ -96,23 +109,29 @@ describe('FieldFrame', () => {
     expect(field?.getAttribute('data-field-invalid')).toBe('');
     expect(container.querySelector('[data-slot="field-label"]')?.textContent).toContain('Email');
     expect(container.querySelector('[data-slot="field-required"]')).toBeNull();
-    expect(container.querySelector('[data-slot="field-control"]')?.textContent).toContain('content');
-    expect(container.querySelector('[data-slot="field-error"]')?.textContent).toContain('Email is required');
+    expect(container.querySelector('[data-slot="field-control"]')?.textContent).toContain(
+      'content',
+    );
+    expect(container.querySelector('[data-slot="field-error"]')?.textContent).toContain(
+      'Email is required',
+    );
   });
 
   it('omits presence-only field state attributes when the field is clean and exposes required/hint slots through data-slot markers', () => {
     const form = {
       store: {
         subscribe: () => () => undefined,
-        getState: () => EMPTY_FORM_STORE_STATE
+        getState: () => EMPTY_FORM_STORE_STATE,
       },
-      validation: undefined
+      validation: undefined,
     } as any;
 
     const { container } = render(
       <FormContext.Provider value={form}>
-        <FieldFrame name="email" label="Email" required hint="Helpful hint">content</FieldFrame>
-      </FormContext.Provider>
+        <FieldFrame name="email" label="Email" required hint="Helpful hint">
+          content
+        </FieldFrame>
+      </FormContext.Provider>,
     );
 
     const field = container.querySelector('.nop-field');
@@ -123,8 +142,12 @@ describe('FieldFrame', () => {
     expect(field?.hasAttribute('data-field-invalid')).toBe(false);
     expect(container.querySelector('[data-slot="field-label"]')?.textContent).toContain('Email');
     expect(container.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
-    expect(container.querySelector('[data-slot="field-control"]')?.textContent).toContain('content');
-    expect(container.querySelector('[data-slot="field-hint"]')?.textContent).toContain('Helpful hint');
+    expect(container.querySelector('[data-slot="field-control"]')?.textContent).toContain(
+      'content',
+    );
+    expect(container.querySelector('[data-slot="field-hint"]')?.textContent).toContain(
+      'Helpful hint',
+    );
     expect(container.querySelector('[data-slot="field-error"]')).toBeNull();
   });
 
@@ -132,15 +155,17 @@ describe('FieldFrame', () => {
     const form = {
       store: {
         subscribe: () => () => undefined,
-        getState: () => EMPTY_FORM_STORE_STATE
+        getState: () => EMPTY_FORM_STORE_STATE,
       },
-      validation: undefined
+      validation: undefined,
     } as any;
 
     const { container } = render(
       <FormContext.Provider value={form}>
-        <FieldFrame name="email" label="Email" rootProps={{ 'data-active-variant': 'text' }}>content</FieldFrame>
-      </FormContext.Provider>
+        <FieldFrame name="email" label="Email" rootProps={{ 'data-active-variant': 'text' }}>
+          content
+        </FieldFrame>
+      </FormContext.Provider>,
     );
 
     expect(container.querySelector('.nop-field')?.getAttribute('data-active-variant')).toBe('text');
@@ -150,20 +175,21 @@ describe('FieldFrame', () => {
     const form = {
       store: {
         subscribe: () => () => undefined,
-        getState: () => EMPTY_FORM_STORE_STATE
+        getState: () => EMPTY_FORM_STORE_STATE,
       },
-      validation: undefined
+      validation: undefined,
     } as any;
 
     const { container } = render(
       <FormContext.Provider value={form}>
-        <FieldFrame name="payload" label="Payload" rootTag="div">content</FieldFrame>
-      </FormContext.Provider>
+        <FieldFrame name="payload" label="Payload" rootTag="div">
+          content
+        </FieldFrame>
+      </FormContext.Provider>,
     );
 
     expect(container.querySelector('.nop-field')?.tagName).toBe('DIV');
   });
-
 });
 
 describe('renderer slot helpers', () => {
@@ -178,11 +204,11 @@ describe('renderer slot helpers', () => {
             key: 'title',
             templateNode: null,
             render: () => regionContent,
-          }
-        }
+          },
+        },
       },
       'title',
-      { metaKey: 'label', fallback: 'Fallback title' }
+      { metaKey: 'label', fallback: 'Fallback title' },
     );
 
     expect(slotContent).toBe(regionContent);
@@ -190,22 +216,30 @@ describe('renderer slot helpers', () => {
 
   it('falls back from prop to meta and then fallback when slot content is absent', () => {
     expect(
-      resolveRendererSlotContent({ props: { label: 'Prop label' }, meta: { label: 'Meta label' } as any, regions: {} }, 'label', {
-        metaKey: 'label',
-        fallback: 'Fallback label'
-      })
+      resolveRendererSlotContent(
+        { props: { label: 'Prop label' }, meta: { label: 'Meta label' } as any, regions: {} },
+        'label',
+        {
+          metaKey: 'label',
+          fallback: 'Fallback label',
+        },
+      ),
     ).toBe('Prop label');
     expect(
-      resolveRendererSlotContent({ props: {}, meta: { label: 'Meta label' } as any, regions: {} }, 'label', {
-        metaKey: 'label',
-        fallback: 'Fallback label'
-      })
+      resolveRendererSlotContent(
+        { props: {}, meta: { label: 'Meta label' } as any, regions: {} },
+        'label',
+        {
+          metaKey: 'label',
+          fallback: 'Fallback label',
+        },
+      ),
     ).toBe('Meta label');
     expect(
       resolveRendererSlotContent({ props: {}, meta: {} as any, regions: {} }, 'label', {
         metaKey: 'label',
-        fallback: 'Fallback label'
-      })
+        fallback: 'Fallback label',
+      }),
     ).toBe('Fallback label');
   });
 
@@ -223,27 +257,41 @@ describe('renderer slot helpers', () => {
 
 describe('reactive meta and draggable dialogs', () => {
   it('re-evaluates disabled expression when form scope changes', async () => {
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, formRenderer, probeButtonRenderer, probeQueryInputRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      formRenderer,
+      probeButtonRenderer,
+      probeQueryInputRenderer,
+    ]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'form',
-              id: 'search-form',
-              data: { query: '' },
-              body: [{ type: 'probe-button', disabled: '${!query}' }, { type: 'probe-query-input' }]
-            }
-          ]
-        } as any}
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'form',
+                id: 'search-form',
+                data: { query: '' },
+                body: [
+                  { type: 'probe-button', disabled: '${!query}' },
+                  { type: 'probe-query-input' },
+                ],
+              },
+            ],
+          } as any
+        }
         data={{}}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     const searchButton = screen.getByRole('button', { name: 'Search' }) as HTMLButtonElement;
-    fireEvent.change(screen.getByRole('textbox', { name: 'Query' }), { target: { value: 'alice' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Query' }), {
+      target: { value: 'alice' },
+    });
     await waitFor(() => {
       expect(searchButton.disabled).toBe(false);
     });
@@ -251,12 +299,29 @@ describe('reactive meta and draggable dialogs', () => {
 
   it('re-evaluates disabled expression when page scope changes', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, probeButtonRenderer]);
-    const schema = { type: 'page', body: [{ type: 'probe-button', disabled: '${!ready}' }] } as const;
+    const schema = {
+      type: 'page',
+      body: [{ type: 'probe-button', disabled: '${!ready}' }],
+    } as const;
     const { rerender } = render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={schema} data={{ ready: false }} env={env} formulaCompiler={sharedFormulaCompiler} />
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={schema}
+        data={{ ready: false }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
     );
     const searchButton = screen.getByRole('button', { name: 'Search' }) as HTMLButtonElement;
-    rerender(<SchemaRenderer schemaUrl="test://schema.json" schema={schema} data={{ ready: true }} env={env} formulaCompiler={sharedFormulaCompiler} />);
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={schema}
+        data={{ ready: true }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
     await waitFor(() => {
       expect(searchButton.disabled).toBe(false);
     });
@@ -265,19 +330,27 @@ describe('reactive meta and draggable dialogs', () => {
   it('renders dialog with drag handle around the title', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             {
               type: 'button',
               label: 'Open drag-handle dialog',
-              onClick: { action: 'openDialog', args: { title: 'Draggable title', body: [{ type: 'text', text: 'Dialog content' }] } }
-            }
-          ]
+              onClick: {
+                action: 'openDialog',
+                args: {
+                  title: 'Draggable title',
+                  body: [{ type: 'text', text: 'Dialog content' }],
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Open drag-handle dialog'));
@@ -290,15 +363,24 @@ describe('reactive meta and draggable dialogs', () => {
   it('applies inline transform for draggable dialogs instead of Tailwind centering', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
-            { type: 'button', label: 'Open transform dialog', onClick: { action: 'openDialog', args: { title: 'Drag test', body: [{ type: 'text', text: 'Body' }] } } }
-          ]
+            {
+              type: 'button',
+              label: 'Open transform dialog',
+              onClick: {
+                action: 'openDialog',
+                args: { title: 'Drag test', body: [{ type: 'text', text: 'Body' }] },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Open transform dialog'));
@@ -312,15 +394,24 @@ describe('reactive meta and draggable dialogs', () => {
   it('registers drag listeners on pointerdown and updates transform', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
-            { type: 'button', label: 'Open pointer dialog', onClick: { action: 'openDialog', args: { title: 'Drag me', body: [{ type: 'text', text: 'Content' }] } } }
-          ]
+            {
+              type: 'button',
+              label: 'Open pointer dialog',
+              onClick: {
+                action: 'openDialog',
+                args: { title: 'Drag me', body: [{ type: 'text', text: 'Content' }] },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Open pointer dialog'));
@@ -333,15 +424,24 @@ describe('reactive meta and draggable dialogs', () => {
   it('marks drawer host content with a data-slot instead of an internal nop drawer card class', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
-            { type: 'button', label: 'Open drawer', onClick: { action: 'openDrawer', args: { title: 'Drawer title', body: [{ type: 'text', text: 'Drawer body' }] } } }
-          ]
+            {
+              type: 'button',
+              label: 'Open drawer',
+              onClick: {
+                action: 'openDrawer',
+                args: { title: 'Drawer title', body: [{ type: 'text', text: 'Drawer body' }] },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Open drawer'));

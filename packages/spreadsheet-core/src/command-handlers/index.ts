@@ -11,7 +11,7 @@ export type { CommandHandler, CommandHandlerRegistry, SpreadsheetDispatchStore }
 
 export function createCommandHandlerRegistry(): CommandHandlerRegistry {
   const registry = new Map<string, CommandHandler>();
-  
+
   registerCellHandlers(registry);
   registerClipboardHandlers(registry);
   registerSheetHandlers(registry);
@@ -19,7 +19,7 @@ export function createCommandHandlerRegistry(): CommandHandlerRegistry {
   registerSearchHandlers(registry);
   registerSelectionHandlers(registry);
   registerHistoryHandlers(registry);
-  
+
   return registry;
 }
 

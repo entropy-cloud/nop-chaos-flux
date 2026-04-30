@@ -3,7 +3,6 @@
 > Plan Status: superseded
 > Last Reviewed: 2026-04-02
 
-
 > **Implementation Status: COMPLETED (P0–P6) · PARTIALLY ACTIVE (P7).**
 > P0–P6 are fully implemented: workspace, expression compiler, schema compiler, runtime/React integration, basic renderers, form/action system, and data renderers/CRUD are all in place.
 > P7 (convergence/hardening) is partially done — see "Current priority tasks" below for remaining items.
@@ -95,16 +94,16 @@ Still strategically important next:
 
 ## Phase Overview
 
-| Phase | Goal | Status |
-| --- | --- | --- |
-| P0 | workspace and framework bootstrap | done |
-| P1 | expression compiler foundation | done for current model |
-| P2 | schema compiler core | done for current model |
-| P3 | runtime and React integration | done for current model |
-| P4 | basic renderer set | done |
-| P5 | form and action system | done in first usable version |
-| P6 | data renderers and CRUD scenario | done in first usable version |
-| P7 | convergence, performance hardening, and release-quality docs | active |
+| Phase | Goal                                                         | Status                       |
+| ----- | ------------------------------------------------------------ | ---------------------------- |
+| P0    | workspace and framework bootstrap                            | done                         |
+| P1    | expression compiler foundation                               | done for current model       |
+| P2    | schema compiler core                                         | done for current model       |
+| P3    | runtime and React integration                                | done for current model       |
+| P4    | basic renderer set                                           | done                         |
+| P5    | form and action system                                       | done in first usable version |
+| P6    | data renderers and CRUD scenario                             | done in first usable version |
+| P7    | convergence, performance hardening, and release-quality docs | active                       |
 
 ## Phase Details
 
@@ -281,5 +280,3 @@ Recommended next sequence:
 - `docs/architecture/renderer-runtime.md`
 - `docs/references/renderer-interfaces.md`
 - `docs/examples/user-management-schema.md`
-
-

@@ -95,8 +95,8 @@ proof-policy route.navigate
 const binder = {
   intentId: 'SubmitDraft',
   goalId: 'PersistDraft',
-  payloadMapping: '{ orderId: payload.orderId }'
-}
+  payloadMapping: '{ orderId: payload.orderId }',
+};
 ```
 
 ### Proof Policy IR
@@ -111,16 +111,16 @@ const proofPolicies = {
     requestPayloadBuilder: 'BuildOrderWriteProofRequest',
     proofReceiptSchema: 'OrderWriteProofReceipt',
     revocationChannel: 'authz-revocation',
-    scopeTemplate: 'OrderScope(orderId)'
+    scopeTemplate: 'OrderScope(orderId)',
   },
   'route.navigate': {
     proofClass: 'route.navigate',
     source: 'derived',
     verifier: 'local-session',
     revocationChannel: 'session-revocation',
-    scopeTemplate: 'RouteScope(orderId)'
-  }
-}
+    scopeTemplate: 'RouteScope(orderId)',
+  },
+};
 ```
 
 ### Goal IR
@@ -142,16 +142,16 @@ const goal = {
     {
       cellId: 'submitReceipt',
       selector: { kind: 'key', expr: 'orderId' },
-      cardinality: 'one'
-    }
+      cardinality: 'one',
+    },
   ],
   versionSurface: [
     { cellId: 'order', selector: { kind: 'key', expr: 'orderId' }, cardinality: 'one' },
     { cellId: 'submitReceipt', selector: { kind: 'key', expr: 'orderId' }, cardinality: 'one' },
-    { cellId: 'orderDraft', selector: { kind: 'key', expr: 'orderId' }, cardinality: 'one' }
+    { cellId: 'orderDraft', selector: { kind: 'key', expr: 'orderId' }, cardinality: 'one' },
   ],
-  recipeId: 'PersistDraftRecipe'
-}
+  recipeId: 'PersistDraftRecipe',
+};
 ```
 
 ### Goal Recipe IR
@@ -174,7 +174,7 @@ const persistDraftRecipe = {
       receiptReducer: 'ApplyPersistedOrderReceipt',
       patchTargets: ['order', 'submitReceipt', 'orderDraft'],
       dependsOn: [],
-      onRejected: 'rejected'
+      onRejected: 'rejected',
     },
     {
       id: 'go-detail',
@@ -186,10 +186,10 @@ const persistDraftRecipe = {
       receiptReducer: 'NoopReducer',
       patchTargets: [],
       dependsOn: ['persist-order'],
-      onRejected: 'deferred'
-    }
-  ]
-}
+      onRejected: 'deferred',
+    },
+  ],
+};
 ```
 
 ## 一次真实执行
@@ -197,7 +197,7 @@ const persistDraftRecipe = {
 ### Step 1: 发出 intent
 
 ```ts
-dispatchIntent('SubmitDraft', { orderId: 'O-1001' })
+dispatchIntent('SubmitDraft', { orderId: 'O-1001' });
 ```
 
 ### Step 2: 生成 goal instance
@@ -290,22 +290,22 @@ dispatchIntent('SubmitDraft', { orderId: 'O-1001' })
     key: 'O-1001',
     op: 'merge',
     value: { id: 'O-1001', status: 'submitted', version: 9 },
-    expectedTargetVersion: 8
+    expectedTargetVersion: 8,
   },
   {
     targetCell: 'submitReceipt',
     key: 'O-1001',
     op: 'upsert',
     value: { receiptId: 'r-91', orderVersion: 9 },
-    expectedTargetVersion: 0
+    expectedTargetVersion: 0,
   },
   {
     targetCell: 'orderDraft',
     key: 'O-1001',
     op: 'delete',
-    expectedTargetVersion: 3
-  }
-]
+    expectedTargetVersion: 3,
+  },
+];
 ```
 
 ### Step 6: 重新求值 predicate
@@ -313,13 +313,13 @@ dispatchIntent('SubmitDraft', { orderId: 'O-1001' })
 运行时只在 `satisfactionSurface` 上求值：
 
 ```ts
-HasSubmitReceipt('O-1001') === true
+HasSubmitReceipt('O-1001') === true;
 ```
 
 因此：
 
 ```ts
-outcomeByClass.durable = 'satisfied'
+outcomeByClass.durable = 'satisfied';
 ```
 
 ### Step 7: 执行 `go-detail`
@@ -329,7 +329,7 @@ outcomeByClass.durable = 'satisfied'
 如果不支持：
 
 ```ts
-outcomeByClass.navigational = 'deferred'
+outcomeByClass.navigational = 'deferred';
 ```
 
 这要求目标宿主在 manifest 中把 `route/go` 显式标记为 `unavailable`，而不是让编译器把整个 goal 判为不可装配。
@@ -337,13 +337,13 @@ outcomeByClass.navigational = 'deferred'
 而 durable 结果仍保持：
 
 ```ts
-outcomeByClass.durable = 'satisfied'
+outcomeByClass.durable = 'satisfied';
 ```
 
 因此整体 goal 仍可进入：
 
 ```ts
-outcome = 'satisfied'
+outcome = 'satisfied';
 ```
 
 因为所有 required portability 已满足，只有 optional portability 被延期。

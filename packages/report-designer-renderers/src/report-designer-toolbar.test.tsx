@@ -6,7 +6,10 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
-import { createReportTemplateDocument, type ReportDesignerConfig } from '@nop-chaos/report-designer-core';
+import {
+  createReportTemplateDocument,
+  type ReportDesignerConfig,
+} from '@nop-chaos/report-designer-core';
 import { defineReportDesignerPageSchema, registerReportDesignerRenderers } from './index.js';
 
 const env: RendererEnv = {
@@ -70,9 +73,7 @@ describe('report-toolbar renderer', () => {
 
   it('renders with itemsOverride that removes a default item via visible:false', () => {
     renderToolbarInPage({
-      itemsOverride: [
-        { id: 'undo', type: 'button', visible: false },
-      ],
+      itemsOverride: [{ id: 'undo', type: 'button', visible: false }],
     });
     expect(screen.queryByText('Undo')).toBeNull();
   });

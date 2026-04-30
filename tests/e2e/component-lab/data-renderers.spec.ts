@@ -18,7 +18,9 @@ test.describe('table renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     // Use getByRole to avoid strict-mode violation (text also appears in scope debug JSON)
-    await expect(stage.getByRole('columnheader', { name: /username/i })).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByRole('columnheader', { name: /username/i })).toBeVisible({
+      timeout: 5_000,
+    });
     await expect(stage.getByRole('columnheader', { name: /email/i })).toBeVisible();
     await expect(stage.getByRole('columnheader', { name: /role/i })).toBeVisible();
     await expect(stage.getByRole('cell', { name: 'alice', exact: true })).toBeVisible();
@@ -32,7 +34,9 @@ test.describe('table renderer', () => {
     const slug = scenarioSlug('Empty state scenario');
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
-    await expect(stage.getByText('No users found. Try adjusting your search filters.')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('No users found. Try adjusting your search filters.')).toBeVisible(
+      { timeout: 5_000 },
+    );
   });
 });
 

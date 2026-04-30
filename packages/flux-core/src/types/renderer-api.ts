@@ -18,7 +18,10 @@ export interface ApiResponse<T = unknown> {
   raw?: unknown;
 }
 
-export type ApiFetcher = <T = unknown>(api: ExecutableApiRequest, ctx: ApiRequestContext) => Promise<ApiResponse<T>>;
+export type ApiFetcher = <T = unknown>(
+  api: ExecutableApiRequest,
+  ctx: ApiRequestContext,
+) => Promise<ApiResponse<T>>;
 
 export interface RenderMonitorPayload {
   nodeId: string;

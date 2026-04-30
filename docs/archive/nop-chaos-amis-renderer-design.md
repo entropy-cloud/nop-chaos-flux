@@ -123,14 +123,7 @@ resolved props + slots + render handles
 ## 5.1 Schema Basics
 
 ```ts
-type SchemaValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | SchemaObject
-  | SchemaValue[];
+type SchemaValue = string | number | boolean | null | undefined | SchemaObject | SchemaValue[];
 
 interface SchemaObject {
   [key: string]: SchemaValue;
@@ -168,10 +161,7 @@ interface StaticValue<T = unknown> {
   value: T;
 }
 
-type CompiledValue<T = unknown> =
-  | StaticValue<T>
-  | CompiledExpression<T>
-  | CompiledTemplate<T>;
+type CompiledValue<T = unknown> = StaticValue<T> | CompiledExpression<T> | CompiledTemplate<T>;
 
 interface CompiledRegion {
   key: string;
@@ -349,7 +339,10 @@ interface RendererHelpers {
   render: (input: RenderNodeInput, options?: RenderFragmentOptions) => React.ReactNode;
   evaluate: <T>(target: unknown, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
-  dispatch: (action: ActionSchema | ActionSchema[], ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+  dispatch: (
+    action: ActionSchema | ActionSchema[],
+    ctx?: Partial<ActionContext>,
+  ) => Promise<ActionResult>;
 }
 
 interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
@@ -453,7 +446,7 @@ function useRenderScope(): ScopeRef;
 
 function useScopeSelector<T>(
   selector: (scopeData: any) => T,
-  equalityFn?: (a: T, b: T) => boolean
+  equalityFn?: (a: T, b: T) => boolean,
 ): T;
 
 function useRendererEnv(): RendererEnv;
@@ -525,7 +518,7 @@ function ListRenderer(props: RendererComponentProps<ListSchema>) {
         <div key={index}>
           {props.regions.item?.render({
             data: { item, index },
-            scopeKey: `item:${index}`
+            scopeKey: `item:${index}`,
           })}
         </div>
       ))}
@@ -545,7 +538,7 @@ function EmptyStateWrapper(props: RendererComponentProps<EmptyWrapperSchema>) {
 
   if (isEmpty) {
     return render(props.schema.emptyBody, {
-      data: { reason: 'empty' }
+      data: { reason: 'empty' },
     });
   }
 
@@ -630,7 +623,7 @@ Example:
 ```ts
 const staticClassName = compiler.compileValue({
   size: 'md',
-  theme: 'primary'
+  theme: 'primary',
 });
 
 // Every call returns the exact same object reference.

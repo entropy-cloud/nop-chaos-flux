@@ -2,7 +2,7 @@ import type {
   CompiledFormValidationField,
   CompiledValidationRule,
   ScopeRef,
-  ValidationError
+  ValidationError,
 } from '@nop-chaos/flux-core';
 import { createBuiltInValidationRegistry, type ValidationRegistry } from './validation';
 
@@ -21,7 +21,7 @@ export function validateRule(
   value: unknown,
   field: CompiledFormValidationField,
   scope: ScopeRef,
-  registry: ValidationRegistry = getBuiltInValidationRegistry()
+  registry: ValidationRegistry = getBuiltInValidationRegistry(),
 ): ValidationError | undefined {
   const rule = compiledRule.rule;
 
@@ -40,7 +40,6 @@ export function validateRule(
     value,
     field,
     scope,
-    rule
+    rule,
   });
 }
-

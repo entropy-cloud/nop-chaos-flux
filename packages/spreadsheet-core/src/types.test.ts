@@ -92,11 +92,15 @@ describe('isSameCellRef', () => {
 
 describe('isRangeEmpty', () => {
   it('should return true for single cell range', () => {
-    expect(isRangeEmpty({ sheetId: 's1', startRow: 0, startCol: 0, endRow: 0, endCol: 0 })).toBe(true);
+    expect(isRangeEmpty({ sheetId: 's1', startRow: 0, startCol: 0, endRow: 0, endCol: 0 })).toBe(
+      true,
+    );
   });
 
   it('should return false for multi-cell range', () => {
-    expect(isRangeEmpty({ sheetId: 's1', startRow: 0, startCol: 0, endRow: 1, endCol: 1 })).toBe(false);
+    expect(isRangeEmpty({ sheetId: 's1', startRow: 0, startCol: 0, endRow: 1, endCol: 1 })).toBe(
+      false,
+    );
   });
 });
 

@@ -46,7 +46,7 @@ describe('controller inspector — basic lookup', () => {
       cid: 98,
       mounted: true,
       tagName: 'div',
-      className: 'owner-node'
+      className: 'owner-node',
     });
   });
 
@@ -86,10 +86,16 @@ describe('controller inspector — basic lookup', () => {
     div.setAttribute('data-cid', '100');
     document.body.appendChild(div);
 
-    const mockHandle = { id: 'handle-1', name: 'testForm', type: 'form', _cid: 100, _mounted: true };
+    const mockHandle = {
+      id: 'handle-1',
+      name: 'testForm',
+      type: 'form',
+      _cid: 100,
+      _mounted: true,
+    };
     const mockRegistry = {
       id: 'reg-1',
-      getHandleByCid: (cid: number) => (cid === 100 ? mockHandle : undefined)
+      getHandleByCid: (cid: number) => (cid === 100 ? mockHandle : undefined),
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -105,16 +111,17 @@ describe('controller inspector — basic lookup', () => {
 
     const mockRegistry = {
       id: 'reg-1',
-      inspectCid: (cid: number) => cid === 101
-        ? {
-            kind: 'resolved',
-            payload: {
-              cid: 101,
-              instancePath: []
+      inspectCid: (cid: number) =>
+        cid === 101
+          ? {
+              kind: 'resolved',
+              payload: {
+                cid: 101,
+                instancePath: [],
+              },
             }
-          }
-        : { kind: 'notFound' },
-      getHandleByCid: () => undefined
+          : { kind: 'notFound' },
+      getHandleByCid: () => undefined,
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -122,7 +129,7 @@ describe('controller inspector — basic lookup', () => {
     expect(result).toMatchObject({
       cid: 101,
       mounted: true,
-      instancePath: []
+      instancePath: [],
     });
   });
 
@@ -134,18 +141,24 @@ describe('controller inspector — basic lookup', () => {
 
     const mockRegistry = {
       id: 'reg-1',
-      inspectCid: (cid: number) => cid === 111
-        ? {
-            kind: 'resolved',
-            payload: {
-              cid: 111,
-              scopeChain: [
-                { id: 'form-1', path: '$form', label: '$form', data: { departmentId: 'runtime' } }
-              ]
+      inspectCid: (cid: number) =>
+        cid === 111
+          ? {
+              kind: 'resolved',
+              payload: {
+                cid: 111,
+                scopeChain: [
+                  {
+                    id: 'form-1',
+                    path: '$form',
+                    label: '$form',
+                    data: { departmentId: 'runtime' },
+                  },
+                ],
+              },
             }
-          }
-        : { kind: 'notFound' },
-      getHandleByCid: () => undefined
+          : { kind: 'notFound' },
+      getHandleByCid: () => undefined,
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -154,8 +167,8 @@ describe('controller inspector — basic lookup', () => {
       cid: 111,
       mounted: true,
       scopeChain: [
-        { id: 'form-1', path: '$form', label: '$form', data: { departmentId: 'runtime' } }
-      ]
+        { id: 'form-1', path: '$form', label: '$form', data: { departmentId: 'runtime' } },
+      ],
     });
   });
 
@@ -166,11 +179,11 @@ describe('controller inspector — basic lookup', () => {
       name: 'locatorForm',
       type: 'form',
       _cid: 106,
-      _mounted: true
+      _mounted: true,
     };
     const mockRegistry = {
       id: 'reg-1',
-      getHandleByCid: (cid: number) => (cid === 106 ? mockHandle : undefined)
+      getHandleByCid: (cid: number) => (cid === 106 ? mockHandle : undefined),
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -178,7 +191,7 @@ describe('controller inspector — basic lookup', () => {
     expect(ctrl.inspectNode(106)).toMatchObject({
       cid: 106,
       mounted: true,
-      handleId: 'handle-106'
+      handleId: 'handle-106',
     });
   });
 
@@ -186,7 +199,7 @@ describe('controller inspector — basic lookup', () => {
     const ctrl = createNopDebugger({ id: 'inspect-node-not-found', enabled: true });
     const mockRegistry = {
       id: 'reg-1',
-      getHandleByCid: () => undefined
+      getHandleByCid: () => undefined,
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -204,20 +217,19 @@ describe('controller inspector — basic lookup', () => {
 
     const mockRegistry = {
       id: 'reg-1',
-      inspectCid: (cid: number) => cid === 210
-        ? {
-            kind: 'resolved',
-            payload: {
-              cid: 210,
-              instancePath: [{ repeatedTemplateId: 'rows', instanceKey: '1' }],
-              scopeChain: [
-                { id: 'row-1', path: '$rows.1', label: '$rows.1', data: { id: 1 } }
-              ],
-              state: { mounted: true, metaState: {} }
+      inspectCid: (cid: number) =>
+        cid === 210
+          ? {
+              kind: 'resolved',
+              payload: {
+                cid: 210,
+                instancePath: [{ repeatedTemplateId: 'rows', instanceKey: '1' }],
+                scopeChain: [{ id: 'row-1', path: '$rows.1', label: '$rows.1', data: { id: 1 } }],
+                state: { mounted: true, metaState: {} },
+              },
             }
-          }
-        : { kind: 'notFound' },
-      getHandleByCid: () => undefined
+          : { kind: 'notFound' },
+      getHandleByCid: () => undefined,
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -226,9 +238,7 @@ describe('controller inspector — basic lookup', () => {
       cid: 210,
       mounted: true,
       instancePath: [{ repeatedTemplateId: 'rows', instanceKey: '1' }],
-      scopeChain: [
-        { id: 'row-1', path: '$rows.1', label: '$rows.1', data: { id: 1 } }
-      ]
+      scopeChain: [{ id: 'row-1', path: '$rows.1', label: '$rows.1', data: { id: 1 } }],
     });
   });
 
@@ -244,7 +254,7 @@ describe('controller inspector — basic lookup', () => {
       cid: 300,
       mounted: true,
       tagName: 'div',
-      className: 'my-component active'
+      className: 'my-component active',
     });
   });
 
@@ -262,7 +272,7 @@ describe('controller inspector — basic lookup', () => {
       cid: 400,
       mounted: true,
       tagName: 'span',
-      className: 'test-span'
+      className: 'test-span',
     });
   });
 });

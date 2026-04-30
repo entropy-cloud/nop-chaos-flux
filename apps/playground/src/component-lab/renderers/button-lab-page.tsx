@@ -13,10 +13,10 @@ const variantShowcase = {
         { type: 'button', label: 'Outline', variant: 'outline' },
         { type: 'button', label: 'Ghost', variant: 'ghost' },
         { type: 'button', label: 'Destructive', variant: 'destructive' },
-        { type: 'button', label: 'Disabled', disabled: true }
-      ]
-    }
-  ]
+        { type: 'button', label: 'Disabled', disabled: true },
+      ],
+    },
+  ],
 };
 
 const sizeVariants = {
@@ -30,10 +30,10 @@ const sizeVariants = {
       body: [
         { type: 'button', label: 'Small', size: 'sm' },
         { type: 'button', label: 'Default' },
-        { type: 'button', label: 'Large', size: 'lg' }
-      ]
-    }
-  ]
+        { type: 'button', label: 'Large', size: 'lg' },
+      ],
+    },
+  ],
 };
 
 const clickCounter = {
@@ -49,17 +49,20 @@ const clickCounter = {
         {
           type: 'button',
           label: 'Increment',
-          onClick: { action: 'setValue', args: { path: 'clickCount', value: '${(clickCount ?? 0) + 1}' } }
+          onClick: {
+            action: 'setValue',
+            args: { path: 'clickCount', value: '${(clickCount ?? 0) + 1}' },
+          },
         },
         {
           type: 'button',
           label: 'Reset',
           variant: 'outline',
-          onClick: { action: 'setValue', args: { path: 'clickCount', value: 0 } }
-        }
-      ]
-    }
-  ]
+          onClick: { action: 'setValue', args: { path: 'clickCount', value: 0 } },
+        },
+      ],
+    },
+  ],
 };
 
 export function ButtonLabPage() {
@@ -70,18 +73,19 @@ export function ButtonLabPage() {
         {
           title: 'All button variants',
           description: 'Default, secondary, outline, ghost, destructive, and disabled states.',
-          schema: variantShowcase
+          schema: variantShowcase,
         },
         {
           title: 'Size variants',
           description: 'Small (sm), default, and large (lg) sizes.',
-          schema: sizeVariants
+          schema: sizeVariants,
         },
         {
           title: 'onClick with visible scope side-effect (counter)',
-          description: 'Click "Increment" to call setValue and update the clickCount scope variable. The text renderer reacts immediately. Click "Reset" to set it back to zero.',
-          schema: clickCounter
-        }
+          description:
+            'Click "Increment" to call setValue and update the clickCount scope variable. The text renderer reacts immediately. Click "Reset" to set it back to zero.',
+          schema: clickCounter,
+        },
       ]}
     />
   );

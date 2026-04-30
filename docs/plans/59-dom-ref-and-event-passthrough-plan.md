@@ -100,17 +100,20 @@ Status: completed
 Targets: `packages/flux-runtime/src/schema-compiler/fields.ts`, `packages/flux-runtime/src/schema-compiler.ts`
 
 - [x] 在 `fields.ts` 的 `classifyField` 中，增加 lifecycle key 的优先判断：
+
   ```ts
   const LIFECYCLE_KEYS = new Set(['onMount', 'onUnmount']);
 
   export function classifyField(renderer: RendererDefinition, key: string): SchemaFieldRule {
     if (LIFECYCLE_KEYS.has(key)) {
-      return { key, kind: 'ignored' };  // 阻止进入 eventActions
+      return { key, kind: 'ignored' }; // 阻止进入 eventActions
     }
     // ... 现有逻辑
   }
   ```
+
   这确保 `onMount`/`onUnmount` 不会被 `/^on[A-Z]/` 规则误归类为 event。
+
 - [x] 在 `schema-compiler.ts` 的 `compileSingleNode` 中，在现有 `for (const key of Object.keys(schema))` 循环之前或之后，单独提取 lifecycle 字段：
   ```ts
   const lifecycleActions = extractLifecycleActions(schema);
@@ -138,6 +141,7 @@ Status: completed
 Targets: `packages/flux-react/src/node-renderer.tsx`
 
 - [x] 在 `NodeRenderer` 中增加 lifecycle 处理，**仅在 `lifecycleActions` 非空时注册 useEffect**：
+
   ```ts
   const lifecycle = props.node.lifecycleActions;
 
@@ -153,6 +157,7 @@ Targets: `packages/flux-react/src/node-renderer.tsx`
     };
   }, [lifecycle, helpers]);
   ```
+
   关键点：当 `lifecycleActions` 为 `undefined` 时，React 的 `useEffect` 仍然会注册，但由于 `if (!lifecycle) return` 会立即返回空 cleanup，实际开销极小。如果后续需要进一步优化，可以考虑在 `NodeRenderer` 外层条件判断是否渲染 lifecycle wrapper 组件。但当前的判断式 overhead 是可接受的，因为：
   - 大量节点是 static 的，走 `isStatic` fast path，根本不会进入 `NodeRenderer` 的 effect 逻辑
   - 非静态节点本身已有其他 useEffect（scope subscription），多一个轻量判断的边际成本为零

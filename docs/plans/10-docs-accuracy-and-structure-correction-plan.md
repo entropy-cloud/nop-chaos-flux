@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-04
 
-
 > **Implementation Status: âœ… COMPLETED**
 > W1â€“W7 are now closed at the repository level. A final 2026-04-04 audit confirmed that active docs under `docs/index.md`, `docs/architecture/`, `docs/references/`, and `docs/examples/` no longer carry the stale `amis-*` file references, `DialogInstance`, or `form-validation-errors.ts` references called out in this plan. Secondary analysis/reference material now clearly identifies itself as comparative or historical rather than current source of truth.
 >
@@ -475,7 +474,3 @@ This plan is complete when:
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/architecture/amis-runtime-module-boundaries.md`
-
-
-
-

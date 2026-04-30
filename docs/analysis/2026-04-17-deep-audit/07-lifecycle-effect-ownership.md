@@ -7,6 +7,7 @@
 ## 设计合理（无需迁移）
 
 ### [维度07] 匿名 source 生命周期由 `flux-react` 控制器持有
+
 - **文件**: `packages/flux-react/src/use-node-source-props.ts:21-48`; `packages/flux-react/src/node-source-prop-controller.ts:45-148`; `packages/flux-react/src/useSourceValue.ts:21-86`
 - **严重程度**: ~~P1~~ → **设计合理**
 - **effect 职责**: 在 React effect 中启动 source 执行、管理 `AbortController`、维护 loading/error/transient state
@@ -21,6 +22,7 @@
 ## 改进建议（低优先级）
 
 ### [维度07] `DynamicRenderer` 在 renderer effect 中直接执行 schema 请求
+
 - **文件**: `packages/flux-renderers-basic/src/dynamic-renderer.tsx:17-80`
 - **严重程度**: ~~P2~~ → **P3（改进建议）**
 - **effect 职责**: 拉取远端 schema，并在组件内维护异步请求生命周期
@@ -30,6 +32,7 @@
 - **参考文档**: `docs/architecture/api-data-source.md`, `docs/architecture/renderer-runtime.md`
 
 ### [维度07] `FormRenderer` 自己订阅 form store 并派生状态摘要
+
 - **文件**: `packages/flux-renderers-form/src/renderers/form.tsx:254-316`
 - **严重程度**: ~~P2~~ → **P3（改进建议）**
 - **effect 职责**: 订阅 `ownedForm.store`、聚合 field state、向父 scope 发布 `statusPath`
@@ -40,6 +43,7 @@
 ## 正确位于 React 层
 
 ### [维度07] `RenderNodes` 已避免 render 阶段写 store
+
 - **文件**: `packages/flux-react/src/render-nodes.tsx:257-275`
 - **严重程度**: P3
 - **effect 职责**: 在 render 之后把 fragment 绑定同步到 scope store
@@ -49,6 +53,7 @@
 - **参考文档**: `docs/architecture/renderer-runtime.md`, `docs/bugs/15-render-nodes-setstate-during-render-fix.md`
 
 ### [维度07] `SchemaRenderer` 的根数据同步只处理后续变更
+
 - **文件**: `packages/flux-react/src/schema-renderer.tsx:50-65`
 - **严重程度**: P3
 - **effect 职责**: 将后续 `props.data` 变化 reconcile 到 page scope
@@ -58,6 +63,7 @@
 - **参考文档**: `docs/architecture/renderer-runtime.md`
 
 ### [维度07] `DataSourceRenderer` 仅桥接挂载生命周期
+
 - **文件**: `packages/flux-renderers-data/src/data-source-renderer.tsx:10-20`
 - **严重程度**: P3
 - **effect 职责**: 注册/释放 data-source 实例
@@ -67,6 +73,7 @@
 - **参考文档**: `docs/architecture/api-data-source.md`, `docs/architecture/renderer-runtime.md`
 
 ### [维度07] `ReactionRenderer` 仅桥接 reaction 的挂载/卸载
+
 - **文件**: `packages/flux-renderers-basic/src/reaction.tsx:15-28`
 - **严重程度**: P3
 - **effect 职责**: 注册/释放 reaction
@@ -76,6 +83,7 @@
 - **参考文档**: `docs/architecture/api-data-source.md`, `docs/architecture/renderer-runtime.md`
 
 ### [维度07] 表格行 scope 同步使用 `useLayoutEffect` 是合理的
+
 - **文件**: `packages/flux-renderers-data/src/table-renderer/use-table-row-scope-cache.ts:64-98`
 - **严重程度**: P3
 - **effect 职责**: 在绘制前同步 row scope，保证子行读取到最新 record/index
@@ -85,6 +93,7 @@
 - **参考文档**: `docs/architecture/table-row-identity-and-scope-performance.md`, `docs/architecture/renderer-runtime.md`
 
 ### [维度07] 复杂控件 namespace 发布放在 `useLayoutEffect` 合理
+
 - **文件**: `packages/flow-designer-renderers/src/designer-page.tsx:339-345`
 - **严重程度**: P3
 - **effect 职责**: 在页面级复杂控件挂载时注册 action namespace

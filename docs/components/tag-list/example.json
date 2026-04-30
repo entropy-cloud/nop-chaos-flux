@@ -2,9 +2,5 @@
   "type": "tag-list",
   "name": "labels",
   "label": "标签",
-  "tags": [
-    "Docs",
-    "API",
-    "Urgent"
-  ]
+  "tags": ["Docs", "API", "Urgent"]
 }

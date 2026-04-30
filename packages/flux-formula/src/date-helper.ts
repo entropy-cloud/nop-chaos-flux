@@ -18,7 +18,7 @@ function getUtcParts(input: Date) {
     day: input.getUTCDate(),
     hours: input.getUTCHours(),
     minutes: input.getUTCMinutes(),
-    seconds: input.getUTCSeconds()
+    seconds: input.getUTCSeconds(),
   };
 }
 
@@ -26,7 +26,10 @@ function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
 
-function formatNamedDate(input: Date, format: 'iso-date' | 'iso-datetime' | 'date' | 'datetime'): string {
+function formatNamedDate(
+  input: Date,
+  format: 'iso-date' | 'iso-datetime' | 'date' | 'datetime',
+): string {
   const parts = getUtcParts(input);
   const datePart = `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
   const timePart = `${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`;
@@ -77,7 +80,10 @@ export const dateHelper = {
   parse(input: string | number | Date): Date | null {
     return normalizeDate(input);
   },
-  format(input: string | number | Date, format: 'iso-date' | 'iso-datetime' | 'date' | 'datetime'): string {
+  format(
+    input: string | number | Date,
+    format: 'iso-date' | 'iso-datetime' | 'date' | 'datetime',
+  ): string {
     const value = normalizeDate(input);
     return value ? formatNamedDate(value, format) : '';
   },
@@ -118,7 +124,11 @@ export const dateHelper = {
     const value = normalizeDate(input);
     return value ? addYears(value, count) : null;
   },
-  diff(left: string | number | Date, right: string | number | Date, unit: 'day' | 'month' | 'year'): number {
+  diff(
+    left: string | number | Date,
+    right: string | number | Date,
+    unit: 'day' | 'month' | 'year',
+  ): number {
     const a = normalizeDate(left);
     const b = normalizeDate(right);
 
@@ -134,5 +144,5 @@ export const dateHelper = {
       case 'year':
         return Math.trunc(monthDiff(a, b) / 12);
     }
-  }
+  },
 };

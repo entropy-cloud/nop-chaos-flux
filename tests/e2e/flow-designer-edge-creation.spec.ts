@@ -14,12 +14,14 @@ test('creates a new edge through handle drag interaction', async ({ page }) => {
   await expect(page.getByText('6 节点 · 6 边')).toBeVisible();
 
   await page.evaluate(() => {
-    window.dispatchEvent(new CustomEvent('nop-designer:test-connect', {
-      detail: {
-        source: 'task-1',
-        target: 'end-1',
-      },
-    }));
+    window.dispatchEvent(
+      new CustomEvent('nop-designer:test-connect', {
+        detail: {
+          source: 'task-1',
+          target: 'end-1',
+        },
+      }),
+    );
   });
 
   await expect(edgeCount).toHaveCount(7, { timeout: 10_000 });

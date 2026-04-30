@@ -2,12 +2,12 @@
 
 ## 复核结论
 
-| 发现 | 判定 | 核心依据 |
-|------|------|----------|
-| F1 | **保留 P1** | ui 依赖 flux-i18n 确认存在，6 个生产文件使用 t()，违反文档依赖层级 |
-| F2 | **保留 P2** | 4 个包在 playground 中被直接 import 但未声明，属隐式依赖 |
-| F3 | **保留 P3** | 仅测试文件引用，不应为生产依赖 |
-| F4 | **保留 P3** | workspace:^ 与其他 15 个依赖的 workspace:* 风格不一致 |
+| 发现 | 判定        | 核心依据                                                           |
+| ---- | ----------- | ------------------------------------------------------------------ |
+| F1   | **保留 P1** | ui 依赖 flux-i18n 确认存在，6 个生产文件使用 t()，违反文档依赖层级 |
+| F2   | **保留 P2** | 4 个包在 playground 中被直接 import 但未声明，属隐式依赖           |
+| F3   | **保留 P3** | 仅测试文件引用，不应为生产依赖                                     |
+| F4   | **保留 P3** | workspace:^ 与其他 15 个依赖的 workspace:\* 风格不一致             |
 
 ## 1. 完整内部依赖图
 
@@ -102,7 +102,7 @@
 - **风险**: 声明误导，实际运行时无依赖。
 - **建议**: 移至 `devDependencies`。
 
-### [维度01-F4] playground 使用 workspace:^ 而非 workspace:* 的不一致
+### [维度01-F4] playground 使用 workspace:^ 而非 workspace:\* 的不一致
 
 - **文件**: `apps/playground/package.json:28`
 - **严重程度**: P3
@@ -112,16 +112,16 @@
 
 ## 3. 合规检查矩阵
 
-| 规则 | 状态 |
-|------|------|
-| a. flux-core 不依赖其他 @nop-chaos/* | **PASS** |
-| b. flux-formula 只依赖 flux-core | **PASS** |
-| c. flux-runtime 只依赖 flux-core 和 flux-formula | **PASS** |
-| d. flux-react 不依赖任何 renderers 包 | **PASS** |
-| e. renderers 依赖公开 API，无内部路径导入 | **PASS** |
-| f. *-core 不依赖 *-renderers | **PASS** |
-| g. spreadsheet-core 不依赖 report-designer-core | **PASS** |
-| h. ui 不依赖 @nop-chaos/*（peerDeps 除外） | **FAIL** |
+| 规则                                              | 状态     |
+| ------------------------------------------------- | -------- |
+| a. flux-core 不依赖其他 @nop-chaos/\*             | **PASS** |
+| b. flux-formula 只依赖 flux-core                  | **PASS** |
+| c. flux-runtime 只依赖 flux-core 和 flux-formula  | **PASS** |
+| d. flux-react 不依赖任何 renderers 包             | **PASS** |
+| e. renderers 依赖公开 API，无内部路径导入         | **PASS** |
+| f. _-core 不依赖 _-renderers                      | **PASS** |
+| g. spreadsheet-core 不依赖 report-designer-core   | **PASS** |
+| h. ui 不依赖 @nop-chaos/\*（peerDeps 除外）       | **FAIL** |
 | i. tailwind-preset 和 theme-tokens 不依赖运行时包 | **PASS** |
 
 ## 4. 附加检查

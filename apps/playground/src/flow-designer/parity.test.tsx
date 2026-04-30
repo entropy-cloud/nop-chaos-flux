@@ -19,7 +19,7 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   Object.defineProperty(globalThis, 'ResizeObserver', {
     value: ResizeObserverMock,
     writable: true,
-    configurable: true
+    configurable: true,
   });
 }
 
@@ -32,15 +32,31 @@ function createTestConfig(): DesignerConfig {
     version: '1.0.0',
     kind: 'flow-designer',
     nodeTypes: [
-      { id: 'start', label: 'Start', icon: '▶', description: 'Start node', body: { type: 'text', text: 'Start node body' } },
-      { id: 'end', label: 'End', icon: '■', description: 'End node', body: { type: 'text', text: 'End node body' } },
-      { id: 'task', label: 'Task', icon: '⚙', description: 'Task node', body: { type: 'text', text: 'Task node body' } }
+      {
+        id: 'start',
+        label: 'Start',
+        icon: '▶',
+        description: 'Start node',
+        body: { type: 'text', text: 'Start node body' },
+      },
+      {
+        id: 'end',
+        label: 'End',
+        icon: '■',
+        description: 'End node',
+        body: { type: 'text', text: 'End node body' },
+      },
+      {
+        id: 'task',
+        label: 'Task',
+        icon: '⚙',
+        description: 'Task node',
+        body: { type: 'text', text: 'Task node body' },
+      },
     ],
     palette: {
-      groups: [
-        { id: 'basic', label: 'Basic', nodeTypes: ['start', 'end', 'task'] }
-      ]
-    }
+      groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['start', 'end', 'task'] }],
+    },
   };
 }
 
@@ -53,14 +69,14 @@ function createEmptySnapshot(): DesignerSnapshot {
       version: '1.0.0',
       nodes: [],
       edges: [],
-      viewport: { x: 0, y: 0, zoom: 1 }
+      viewport: { x: 0, y: 0, zoom: 1 },
     },
     selection: {
       selectedNodeIds: [],
       selectedEdgeIds: [],
       activeNodeId: null,
       activeEdgeId: null,
-      activeBranchId: null
+      activeBranchId: null,
     },
     viewport: { x: 0, y: 0, zoom: 1 },
     activeNode: null,
@@ -71,7 +87,7 @@ function createEmptySnapshot(): DesignerSnapshot {
     isDirty: false,
     gridEnabled: true,
     paletteCollapsed: false,
-    inspectorCollapsed: false
+    inspectorCollapsed: false,
   };
 }
 
@@ -91,7 +107,7 @@ describe('Flow Designer Parity Components', () => {
           onRestore={() => {}}
           onExport={() => {}}
           onTabChange={() => {}}
-        />
+        />,
       );
 
       expect(screen.getByText('Test Flow')).toBeTruthy();
@@ -115,7 +131,7 @@ describe('Flow Designer Parity Components', () => {
           onSearchChange={() => {}}
           onToggleGroup={() => {}}
           onAddNode={() => {}}
-        />
+        />,
       );
 
       expect(screen.getByText('Node Palette')).toBeTruthy();
@@ -135,7 +151,7 @@ describe('Flow Designer Parity Components', () => {
           onDeleteNode={() => {}}
           onUpdateEdge={() => {}}
           onDeleteEdge={() => {}}
-        />
+        />,
       );
 
       expect(screen.getByText('Select a node or edge to edit its properties')).toBeTruthy();
@@ -149,20 +165,30 @@ describe('Flow Designer Parity Components', () => {
           name: 'Test Flow',
           version: '1.0.0',
           nodes: [
-            { id: 'node-1', type: 'task', position: { x: 100, y: 100 }, data: { label: 'My Task', description: 'A task node' } }
+            {
+              id: 'node-1',
+              type: 'task',
+              position: { x: 100, y: 100 },
+              data: { label: 'My Task', description: 'A task node' },
+            },
           ],
           edges: [],
-          viewport: { x: 0, y: 0, zoom: 1 }
+          viewport: { x: 0, y: 0, zoom: 1 },
         },
         selection: {
           selectedNodeIds: ['node-1'],
           selectedEdgeIds: [],
           activeNodeId: 'node-1',
           activeEdgeId: null,
-          activeBranchId: null
+          activeBranchId: null,
         },
         viewport: { x: 0, y: 0, zoom: 1 },
-        activeNode: { id: 'node-1', type: 'task', position: { x: 100, y: 100 }, data: { label: 'My Task', description: 'A task node' } },
+        activeNode: {
+          id: 'node-1',
+          type: 'task',
+          position: { x: 100, y: 100 },
+          data: { label: 'My Task', description: 'A task node' },
+        },
         activeEdge: null,
         activeBranch: null,
         canUndo: true,
@@ -170,7 +196,7 @@ describe('Flow Designer Parity Components', () => {
         isDirty: false,
         gridEnabled: true,
         paletteCollapsed: false,
-        inspectorCollapsed: false
+        inspectorCollapsed: false,
       };
 
       render(
@@ -180,7 +206,7 @@ describe('Flow Designer Parity Components', () => {
           onDeleteNode={() => {}}
           onUpdateEdge={() => {}}
           onDeleteEdge={() => {}}
-        />
+        />,
       );
 
       expect(screen.getByText('Node Properties')).toBeTruthy();
@@ -196,20 +222,30 @@ describe('Flow Designer Parity Components', () => {
           name: 'Test Flow',
           version: '1.0.0',
           nodes: [
-            { id: 'node-1', type: 'condition', position: { x: 100, y: 100 }, data: { label: 'Check Status', condition: 'status === active' } }
+            {
+              id: 'node-1',
+              type: 'condition',
+              position: { x: 100, y: 100 },
+              data: { label: 'Check Status', condition: 'status === active' },
+            },
           ],
           edges: [],
-          viewport: { x: 0, y: 0, zoom: 1 }
+          viewport: { x: 0, y: 0, zoom: 1 },
         },
         selection: {
           selectedNodeIds: ['node-1'],
           selectedEdgeIds: [],
           activeNodeId: 'node-1',
           activeEdgeId: null,
-          activeBranchId: null
+          activeBranchId: null,
         },
         viewport: { x: 0, y: 0, zoom: 1 },
-        activeNode: { id: 'node-1', type: 'condition', position: { x: 100, y: 100 }, data: { label: 'Check Status', condition: 'status === active' } },
+        activeNode: {
+          id: 'node-1',
+          type: 'condition',
+          position: { x: 100, y: 100 },
+          data: { label: 'Check Status', condition: 'status === active' },
+        },
         activeEdge: null,
         activeBranch: null,
         canUndo: true,
@@ -217,7 +253,7 @@ describe('Flow Designer Parity Components', () => {
         isDirty: false,
         gridEnabled: true,
         paletteCollapsed: false,
-        inspectorCollapsed: false
+        inspectorCollapsed: false,
       };
 
       render(
@@ -227,7 +263,7 @@ describe('Flow Designer Parity Components', () => {
           onDeleteNode={() => {}}
           onUpdateEdge={() => {}}
           onDeleteEdge={() => {}}
-        />
+        />,
       );
 
       expect(screen.getByText('Condition Expression')).toBeTruthy();
@@ -243,27 +279,39 @@ describe('Flow Designer Parity Components', () => {
           version: '1.0.0',
           nodes: [],
           edges: [
-            { id: 'edge-1', type: 'default', source: 'node-1', target: 'node-2', data: { label: 'My Edge', condition: 'status === active' } }
+            {
+              id: 'edge-1',
+              type: 'default',
+              source: 'node-1',
+              target: 'node-2',
+              data: { label: 'My Edge', condition: 'status === active' },
+            },
           ],
-          viewport: { x: 0, y: 0, zoom: 1 }
+          viewport: { x: 0, y: 0, zoom: 1 },
         },
         selection: {
           selectedNodeIds: [],
           selectedEdgeIds: ['edge-1'],
           activeNodeId: null,
           activeEdgeId: 'edge-1',
-          activeBranchId: null
+          activeBranchId: null,
         },
         viewport: { x: 0, y: 0, zoom: 1 },
         activeNode: null,
-        activeEdge: { id: 'edge-1', type: 'default', source: 'node-1', target: 'node-2', data: { label: 'My Edge', condition: 'status === active' } },
+        activeEdge: {
+          id: 'edge-1',
+          type: 'default',
+          source: 'node-1',
+          target: 'node-2',
+          data: { label: 'My Edge', condition: 'status === active' },
+        },
         activeBranch: null,
         canUndo: false,
         canRedo: false,
         isDirty: false,
         gridEnabled: true,
         paletteCollapsed: false,
-        inspectorCollapsed: false
+        inspectorCollapsed: false,
       };
 
       render(
@@ -273,7 +321,7 @@ describe('Flow Designer Parity Components', () => {
           onDeleteNode={() => {}}
           onUpdateEdge={() => {}}
           onDeleteEdge={() => {}}
-        />
+        />,
       );
 
       expect(screen.getByText('Edge Properties')).toBeTruthy();

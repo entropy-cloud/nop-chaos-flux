@@ -2,7 +2,12 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import { allRenderers, baseEnv, formulaCompiler, makeCapturingFetcher } from './composite-form-support';
+import {
+  allRenderers,
+  baseEnv,
+  formulaCompiler,
+  makeCapturingFetcher,
+} from './composite-form-support';
 
 describe('composite form - variant-field branch-only validation', () => {
   it('submits when only active branch has valid values', async () => {
@@ -29,35 +34,35 @@ describe('composite form - variant-field branch-only validation', () => {
                   label: 'Email',
                   initialValue: { type: 'email', email: '' },
                   content: [
-                    { type: 'input-text', name: 'email', label: 'Email Address', required: true }
-                  ]
+                    { type: 'input-text', name: 'email', label: 'Email Address', required: true },
+                  ],
                 },
                 {
                   key: 'phone',
                   label: 'Phone',
                   initialValue: { type: 'phone', phone: '' },
                   content: [
-                    { type: 'input-text', name: 'phone', label: 'Phone Number', required: true }
-                  ]
-                }
-              ]
-            }
+                    { type: 'input-text', name: 'phone', label: 'Phone Number', required: true },
+                  ],
+                },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'variant-form' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'variant-form' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Submit')).toBeTruthy());
@@ -91,14 +96,14 @@ describe('composite form - detail-field draft validation gating', () => {
               surface: { mode: 'dialog', title: 'Edit Address' },
               content: [
                 { type: 'input-text', name: 'street', label: 'Street', required: true },
-                { type: 'input-text', name: 'city', label: 'City', required: true }
-              ]
-            }
-          ]
+                { type: 'input-text', name: 'city', label: 'City', required: true },
+              ],
+            },
+          ],
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
@@ -137,25 +142,25 @@ describe('composite form - detail-field draft validation gating', () => {
               surface: { mode: 'dialog', title: 'Edit Address' },
               content: [
                 { type: 'input-text', name: 'street', label: 'Street' },
-                { type: 'input-text', name: 'city', label: 'City' }
-              ]
-            }
+                { type: 'input-text', name: 'city', label: 'City' },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit Form',
-              onClick: { action: 'component:submit', componentId: 'detail-field-submit' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'detail-field-submit' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
@@ -175,7 +180,7 @@ describe('composite form - detail-field draft validation gating', () => {
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
 
     expect(submitValues[0]).toMatchObject({
-      address: { street: '42 Oak Ave', city: 'Springfield' }
+      address: { street: '42 Oak Ave', city: 'Springfield' },
     });
   });
 
@@ -200,25 +205,25 @@ describe('composite form - detail-field draft validation gating', () => {
               surface: { mode: 'dialog', title: 'Edit Address' },
               content: [
                 { type: 'input-text', name: 'street', label: 'Street' },
-                { type: 'input-text', name: 'city', label: 'City' }
-              ]
-            }
+                { type: 'input-text', name: 'city', label: 'City' },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit Form',
-              onClick: { action: 'component:submit', componentId: 'detail-cancel' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'detail-cancel' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
@@ -237,7 +242,7 @@ describe('composite form - detail-field draft validation gating', () => {
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
 
     expect(submitValues[0]).toMatchObject({
-      address: { street: '100 Main St', city: 'Oldtown' }
+      address: { street: '100 Main St', city: 'Oldtown' },
     });
   });
 
@@ -262,25 +267,25 @@ describe('composite form - detail-field draft validation gating', () => {
               surface: { mode: 'dialog', title: 'Edit Address' },
               content: [
                 { type: 'input-text', name: 'street', label: 'Street', required: true },
-                { type: 'input-text', name: 'city', label: 'City' }
-              ]
-            }
+                { type: 'input-text', name: 'city', label: 'City' },
+              ],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit Form',
-              onClick: { action: 'component:submit', componentId: 'detail-open-blocks-submit' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'detail-open-blocks-submit' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
@@ -318,15 +323,13 @@ describe('composite form - detail-view draft validation gating', () => {
               data: { title: '' },
               triggerLabel: 'Edit',
               surface: { mode: 'dialog', title: 'Edit Details' },
-              content: [
-                { type: 'input-text', name: 'title', label: 'Title', required: true }
-              ]
-            }
-          ]
+              content: [{ type: 'input-text', name: 'title', label: 'Title', required: true }],
+            },
+          ],
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Edit')).toBeTruthy());
@@ -358,15 +361,13 @@ describe('composite form - detail-view draft validation gating', () => {
               data: { theme: 'dark' },
               triggerLabel: 'Edit Config',
               surface: { mode: 'dialog', title: 'Edit Config' },
-              content: [
-                { type: 'input-text', name: 'theme', label: 'Theme' }
-              ]
-            }
-          ]
+              content: [{ type: 'input-text', name: 'theme', label: 'Theme' }],
+            },
+          ],
         }}
         env={baseEnv}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Edit Config')).toBeTruthy());
@@ -404,29 +405,29 @@ describe('composite form - loop renders form data and is not a validation owner'
               type: 'input-text',
               name: 'note',
               label: 'Note',
-              required: true
+              required: true,
             },
             {
               type: 'loop',
               items: '${items}',
-              body: [{ type: 'text', text: '${$slot.item}' }]
-            }
+              body: [{ type: 'text', text: '${$slot.item}' }],
+            },
           ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'loop-form' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'loop-form' },
+            },
+          ],
         }}
         env={{
           ...baseEnv,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -443,7 +444,9 @@ describe('composite form - loop renders form data and is not a validation owner'
 
     expect(submitValues.length).toBe(0);
 
-    fireEvent.change(screen.getByLabelText('Note', { exact: false }), { target: { value: 'My note' } });
+    fireEvent.change(screen.getByLabelText('Note', { exact: false }), {
+      target: { value: 'My note' },
+    });
 
     fireEvent.click(screen.getByText('Submit'));
 

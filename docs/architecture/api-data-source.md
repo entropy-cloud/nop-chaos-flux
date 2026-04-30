@@ -43,16 +43,16 @@ interface ApiSchema extends SchemaObject {
 
 ### Fields
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `url` | `string` | Request URL (required) |
-| `method` | `string` | HTTP method (default: `get`) |
-| `data` | `SchemaValue` | Request body data |
-| `params` | `SchemaValue` | URL query parameters |
-| `headers` | `Record<string, string>` | Request headers |
-| `includeScope` | `'*' \| string[]` | Auto-include scope variables in request data |
-| `responseAdaptor` | `string` | Expression to transform response |
-| `requestAdaptor` | `string` | Expression to transform request |
+| Field             | Type                     | Description                                  |
+| ----------------- | ------------------------ | -------------------------------------------- |
+| `url`             | `string`                 | Request URL (required)                       |
+| `method`          | `string`                 | HTTP method (default: `get`)                 |
+| `data`            | `SchemaValue`            | Request body data                            |
+| `params`          | `SchemaValue`            | URL query parameters                         |
+| `headers`         | `Record<string, string>` | Request headers                              |
+| `includeScope`    | `'*' \| string[]`        | Auto-include scope variables in request data |
+| `responseAdaptor` | `string`                 | Expression to transform response             |
+| `requestAdaptor`  | `string`                 | Expression to transform request              |
 
 ### ExecutableApiRequest
 
@@ -85,7 +85,10 @@ This executable shape is not the same concept as the declarative `ApiSchema`:
 Directionally:
 
 ```typescript
-type ApiFetcher = <T = unknown>(api: ExecutableApiRequest, ctx: ApiRequestContext) => Promise<ApiResponse<T>>;
+type ApiFetcher = <T = unknown>(
+  api: ExecutableApiRequest,
+  ctx: ApiRequestContext,
+) => Promise<ApiResponse<T>>;
 
 interface ApiResponse<T = unknown> {
   ok: boolean;
@@ -595,10 +598,10 @@ scope[name] = sourceValue
 
 Publication combinations:
 
-| Configuration | Runtime target identity | Published path |
-| --- | --- | --- |
-| `name` only | `name` | `name` |
-| `name` + `mergeToScope: true` | `name` | `name` plus shallow object-field merge into current scope |
+| Configuration                 | Runtime target identity | Published path                                            |
+| ----------------------------- | ----------------------- | --------------------------------------------------------- |
+| `name` only                   | `name`                  | `name`                                                    |
+| `name` + `mergeToScope: true` | `name`                  | `name` plus shallow object-field merge into current scope |
 
 The legacy AMIS-style behavior of publishing without an explicit binding target by merging into the current scope is non-normative and rejected because it causes namespace pollution, hides ownership, and makes collisions and debugging ambiguous. The only narrowed exception is explicit `mergeToScope: true` on a named `Resource`.
 
@@ -859,14 +862,14 @@ interface ReactionSchema extends BaseSchema {
 
 ### Fields
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `watch` | `SchemaValue` | Expression or value node to observe |
-| `when` | `string` | Optional guard expression evaluated against current and previous watch values |
-| `immediate` | `boolean` | Whether to evaluate and potentially fire immediately on mount |
-| `debounce` | `number` | Optional debounce delay before action dispatch |
-| `once` | `boolean` | Auto-dispose after the first successful trigger |
-| `actions` | `ActionSchema` | Root action object to dispatch when triggered |
+| Field       | Type           | Description                                                                   |
+| ----------- | -------------- | ----------------------------------------------------------------------------- |
+| `watch`     | `SchemaValue`  | Expression or value node to observe                                           |
+| `when`      | `string`       | Optional guard expression evaluated against current and previous watch values |
+| `immediate` | `boolean`      | Whether to evaluate and potentially fire immediately on mount                 |
+| `debounce`  | `number`       | Optional debounce delay before action dispatch                                |
+| `once`      | `boolean`      | Auto-dispose after the first successful trigger                               |
+| `actions`   | `ActionSchema` | Root action object to dispatch when triggered                                 |
 
 ### Semantics
 

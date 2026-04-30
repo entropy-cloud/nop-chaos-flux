@@ -17,17 +17,17 @@ export function createDefaultEnv(input?: Partial<SchemaRendererProps['env']>) {
         return {
           ok: true,
           status: 200,
-          data: null as T
+          data: null as T,
         };
       }
 
       return {
         ok: true,
         status: 200,
-        data: null as T
+        data: null as T,
       };
     },
     notify: () => undefined,
-    ...input
+    ...input,
   };
 }

@@ -1,4 +1,8 @@
-import type { ExpressionCompileOptions, SchemaDiagnosticCode, SchemaDiagnosticSeverity } from '@nop-chaos/flux-core';
+import type {
+  ExpressionCompileOptions,
+  SchemaDiagnosticCode,
+  SchemaDiagnosticSeverity,
+} from '@nop-chaos/flux-core';
 import type { FormulaAstNode } from '../ast';
 
 function buildMemberPath(node: FormulaAstNode): string[] | undefined {
@@ -40,7 +44,11 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
 
   const seen = new Set<string>();
 
-  function emit(code: SchemaDiagnosticCode, message: string, severity: SchemaDiagnosticSeverity = 'error') {
+  function emit(
+    code: SchemaDiagnosticCode,
+    message: string,
+    severity: SchemaDiagnosticSeverity = 'error',
+  ) {
     const key = `${code}:${message}:${sourcePath}`;
     if (seen.has(key)) {
       return;
@@ -51,7 +59,7 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
       message,
       path: sourcePath,
       severity,
-      source: 'core'
+      source: 'core',
     });
   }
 
@@ -62,7 +70,11 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
         if (node.name === '$slot') {
           emit('slot-used-outside-region', '$slot can only be used inside a parameterized region.');
         } else {
-          emit('ambient-dollar-reference', `Unclassified dollar reference ${node.name} will resolve at runtime only.`, 'info');
+          emit(
+            'ambient-dollar-reference',
+            `Unclassified dollar reference ${node.name} will resolve at runtime only.`,
+            'info',
+          );
         }
       }
     }
@@ -74,16 +86,38 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
 
         if (!resolved) {
           if (path[0] === '$slot') {
-            emit('slot-used-outside-region', '$slot can only be used inside a parameterized region.');
+            emit(
+              'slot-used-outside-region',
+              '$slot can only be used inside a parameterized region.',
+            );
           } else {
             emit('unknown-import-alias', `Unknown import alias ${path[0]}.`);
           }
-        } else if (resolved.kind === 'slot-root' && path.length > 1 && resolved.members && !resolved.members.includes(path[1])) {
+        } else if (
+          resolved.kind === 'slot-root' &&
+          path.length > 1 &&
+          resolved.members &&
+          !resolved.members.includes(path[1])
+        ) {
           emit('unknown-slot-param', `Unknown slot param ${path[1]} on $slot.`);
-        } else if (resolved.kind === 'builtin-namespace' && path.length > 1 && resolved.members && !resolved.members.includes(path[1])) {
+        } else if (
+          resolved.kind === 'builtin-namespace' &&
+          path.length > 1 &&
+          resolved.members &&
+          !resolved.members.includes(path[1])
+        ) {
           emit('unknown-builtin-member', `Unknown builtin member ${path[1]} on ${path[0]}.`);
-        } else if (resolved.kind === 'import-alias' && path.length > 1 && resolved.members && !resolved.members.includes(path[1])) {
-          emit('unknown-import-member', `Unknown imported member ${path[1]} on ${path[0]}.`, 'warning');
+        } else if (
+          resolved.kind === 'import-alias' &&
+          path.length > 1 &&
+          resolved.members &&
+          !resolved.members.includes(path[1])
+        ) {
+          emit(
+            'unknown-import-member',
+            `Unknown imported member ${path[1]} on ${path[0]}.`,
+            'warning',
+          );
         }
       }
     }
@@ -94,12 +128,14 @@ function emitSymbolDiagnostics(ast: FormulaAstNode, options?: ExpressionCompileO
         const resolved = requiredSymbolTable.resolve(path[0]);
         const definition = path.length > 1 ? resolved?.memberDefinitions?.[path[1]] : undefined;
         if (definition?.kind === 'function' && definition.params) {
-          const requiredCount = definition.params.filter((param) => param.required !== false).length;
+          const requiredCount = definition.params.filter(
+            (param) => param.required !== false,
+          ).length;
           const maxCount = definition.params.length;
           if (node.arguments.length < requiredCount || node.arguments.length > maxCount) {
             emit(
               'invalid-import-function-args',
-              `Imported function ${path[0]}.${path[1]} expects ${requiredCount === maxCount ? requiredCount : `${requiredCount}-${maxCount}`} args but got ${node.arguments.length}.`
+              `Imported function ${path[0]}.${path[1]} expects ${requiredCount === maxCount ? requiredCount : `${requiredCount}-${maxCount}`} args but got ${node.arguments.length}.`,
             );
           }
         }

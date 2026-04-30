@@ -4,7 +4,7 @@ import type {
   CompiledRuntimeValue,
   ExpressionCompiler,
   RendererDefinition,
-  SchemaFieldRule
+  SchemaFieldRule,
 } from '@nop-chaos/flux-core';
 import { META_FIELDS } from '@nop-chaos/flux-core';
 
@@ -15,7 +15,7 @@ export const DEFAULT_FIELD_RULES: Record<string, SchemaFieldRule> = {
   footer: { key: 'footer', kind: 'region', regionKey: 'footer' },
   toolbar: { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
   dialog: { key: 'dialog', kind: 'prop' },
-  columns: { key: 'columns', kind: 'prop' }
+  columns: { key: 'columns', kind: 'prop' },
 };
 
 const LIFECYCLE_KEYS = new Set(['onMount', 'onUnmount']);
@@ -49,7 +49,7 @@ export function classifyField(renderer: RendererDefinition, key: string): Schema
 export function buildMetaProgram(
   schema: BaseSchema,
   renderer: RendererDefinition,
-  expressionCompiler: ExpressionCompiler
+  expressionCompiler: ExpressionCompiler,
 ): NodeMetaProgram {
   const meta: NodeMetaProgram = {};
 

@@ -1,7 +1,10 @@
 import type { CompiledFormValidationField, ValidationRule } from '@nop-chaos/flux-core';
 import { getMessageFormatter } from '@nop-chaos/flux-core';
 
-export function buildValidationMessage(rule: ValidationRule, field: CompiledFormValidationField): string {
+export function buildValidationMessage(
+  rule: ValidationRule,
+  field: CompiledFormValidationField,
+): string {
   const label = field.label ?? field.path;
   const t = getMessageFormatter();
 

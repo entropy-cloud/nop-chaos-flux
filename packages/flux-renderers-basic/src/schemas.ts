@@ -1,13 +1,18 @@
-import type { BaseSchema, DynamicRendererSchema, SchemaInput, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  BaseSchema,
+  DynamicRendererSchema,
+  SchemaInput,
+  SchemaValue,
+} from '@nop-chaos/flux-core';
 
 export interface PageSchema extends BaseSchema {
   type: 'page';
   title?: string;
-   data?: Record<string, any>;
-   statusPath?: string;
+  data?: Record<string, any>;
+  statusPath?: string;
   body?: BaseSchema[];
-   header?: BaseSchema[];
-   footer?: BaseSchema[];
+  header?: BaseSchema[];
+  footer?: BaseSchema[];
   modalContainer?: string;
   bodyClassName?: string;
   headerClassName?: string;

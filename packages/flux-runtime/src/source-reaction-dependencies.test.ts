@@ -6,16 +6,16 @@ import { createRendererRegistry, createRendererRuntime } from './index';
 
 const textRenderer: RendererDefinition = {
   type: 'text',
-  component: () => null
+  component: () => null,
 };
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({
     ok: true,
     status: 200,
-    data: {} as T
+    data: {} as T,
   }),
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
@@ -25,19 +25,23 @@ describe('explicit dependency roots', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3 });
 
     const registration = runtime.registerDataSource({
       id: 'explicit-formula-source',
       scope: page.scope,
-      compiledSource: compileDataSource('explicit-formula-source', {
-        type: 'data-source',
-        name: 'total',
-        formula: '${(price || 0) * (qty || 0)}',
-        dependsOn: ['price']
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'explicit-formula-source',
+        {
+          type: 'data-source',
+          name: 'total',
+          formula: '${(price || 0) * (qty || 0)}',
+          dependsOn: ['price'],
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -65,28 +69,33 @@ describe('explicit dependency roots', () => {
       return {
         ok: true,
         status: 200,
-        data: { url: api.url } as T
+        data: { url: api.url } as T,
       };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ userId: 1, note: 'alpha' });
 
     const registration = runtime.registerDataSource({
       id: 'explicit-api-source',
       scope: page.scope,
-      compiledSource: compileDataSource('explicit-api-source', {
-        type: 'data-source',
-        action: 'ajax', args: { url: '/api/users/${userId}/${note}' },
-        name: 'payload',
-        dependsOn: ['userId']
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'explicit-api-source',
+        {
+          type: 'data-source',
+          action: 'ajax',
+          args: { url: '/api/users/${userId}/${note}' },
+          name: 'payload',
+          dependsOn: ['userId'],
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -113,19 +122,23 @@ describe('explicit dependency roots', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ total: 0, note: 'a' });
 
     const registration = runtime.registerDataSource({
       id: 'self-guarded-source',
       scope: page.scope,
-      compiledSource: compileDataSource('self-guarded-source', {
-        type: 'data-source',
-        name: 'total',
-        formula: '${(total || 0) + 1}',
-        dependsOn: ['total']
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'self-guarded-source',
+        {
+          type: 'data-source',
+          name: 'total',
+          formula: '${(total || 0) + 1}',
+          dependsOn: ['total'],
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -144,30 +157,35 @@ describe('explicit dependency roots', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3 });
 
     const registration = runtime.registerReaction({
       id: 'explicit-reaction',
       scope: page.scope,
-      compiledReaction: compileReaction('explicit-reaction', {
-        type: 'reaction',
-        watch: '${(price || 0) * (qty || 0)}',
-        dependsOn: ['price'],
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'message',
-            value: '${price}:${qty}'
-          }
-        }
-      }, expressionCompiler),
-      dispatch: (action, ctx) => runtime.dispatch(action, {
-        runtime,
-        scope: ctx?.scope ?? page.scope,
-        page
-      })
+      compiledReaction: compileReaction(
+        'explicit-reaction',
+        {
+          type: 'reaction',
+          watch: '${(price || 0) * (qty || 0)}',
+          dependsOn: ['price'],
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'message',
+              value: '${price}:${qty}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
+      dispatch: (action, ctx) =>
+        runtime.dispatch(action, {
+          runtime,
+          scope: ctx?.scope ?? page.scope,
+          page,
+        }),
     });
 
     page.scope.update('qty', 4);

@@ -127,8 +127,8 @@
 所以如果底层 API 改成：
 
 ```ts
-setValue(name, value, instancePath)
-getValue(name, instancePath)
+setValue(name, value, instancePath);
+getValue(name, instancePath);
 ```
 
 那同样的 path 解析复杂度只是被藏进底层，而不会消失。
@@ -136,8 +136,8 @@ getValue(name, instancePath)
 更合适的基线仍然是：
 
 ```ts
-setValue(absolutePath, value)
-getValue(absolutePath)
+setValue(absolutePath, value);
+getValue(absolutePath);
 ```
 
 只是相对路径到绝对路径的转换，不要再散落在各个控件里手写。
@@ -213,11 +213,11 @@ toRelative('tags.1') -> value
 
 当前 `object-field`、`variant-field`、`array-field` 的 form/store proxy 虽然实现细节不同，但核心动作基本一致：
 
-| 场景 | 当前做法 | 共同点 | 适合收敛到的能力 |
-| --- | --- | --- | --- |
-| `object-field` | `prefix = profile`，把 `firstName` 映射到 `profile.firstName` | 相对路径转绝对路径；绝对错误投影回相对路径 | `PathBindingService` |
-| `variant-field` | `prefix = current variant root`，把局部字段映射回 parent form | 相对路径转绝对路径；绝对错误投影回相对路径 | `PathBindingService` |
-| `array-field(item)` | `prefix = items.3` 或标量 alias `value -> items.3` | 相对路径转绝对路径；绝对错误投影回相对路径；局部 ownership 判断 | `PathBindingService` + 可选 alias |
+| 场景                | 当前做法                                                      | 共同点                                                          | 适合收敛到的能力                  |
+| ------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------- |
+| `object-field`      | `prefix = profile`，把 `firstName` 映射到 `profile.firstName` | 相对路径转绝对路径；绝对错误投影回相对路径                      | `PathBindingService`              |
+| `variant-field`     | `prefix = current variant root`，把局部字段映射回 parent form | 相对路径转绝对路径；绝对错误投影回相对路径                      | `PathBindingService`              |
+| `array-field(item)` | `prefix = items.3` 或标量 alias `value -> items.3`            | 相对路径转绝对路径；绝对错误投影回相对路径；局部 ownership 判断 | `PathBindingService` + 可选 alias |
 
 因此当前最合理的收敛方向不是新增 owner，也不是改写值 API，而是把这三类重复动作抽成统一的路径绑定能力。
 

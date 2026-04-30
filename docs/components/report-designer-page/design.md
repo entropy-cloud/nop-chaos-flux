@@ -70,36 +70,36 @@ host scope 向下投影以下字段。字段分为三类：
 
 **Canonical fields — 新 schema 应优先使用这些字段：**
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `designer` | object | 主投影：`kind`, `documentId`, `documentName`, `selectionTarget`, `selectionKind`, `inspector`, `inspectorPanels`, `fieldDrag`, `preview`, `activeMeta`, `fieldSources`, `fieldSourceCount`, `fieldCount` |
-| `runtime` | object | 运行时摘要：`canUndo`, `canRedo`, `previewRunning`, `previewMode`, `dirty` |
-| `spreadsheet` | object | 嵌套 spreadsheet 投影：`workbook`, `activeSheet`, `selection`, `activeCell`, `activeRange`, `runtime` |
-| `selectionTarget` | object | 当前选择目标（canonical） |
-| `reportDocument` | object | 当前报表文档快照 |
-| `workbook` | object | 当前工作簿 |
-| `activeSheet` | object | 当前活跃 sheet |
-| `activeCell` | object | 当前活跃单元格 |
-| `activeRange` | object | 当前活跃区域 |
+| 字段              | 类型   | 说明                                                                                                                                                                                                     |
+| ----------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `designer`        | object | 主投影：`kind`, `documentId`, `documentName`, `selectionTarget`, `selectionKind`, `inspector`, `inspectorPanels`, `fieldDrag`, `preview`, `activeMeta`, `fieldSources`, `fieldSourceCount`, `fieldCount` |
+| `runtime`         | object | 运行时摘要：`canUndo`, `canRedo`, `previewRunning`, `previewMode`, `dirty`                                                                                                                               |
+| `spreadsheet`     | object | 嵌套 spreadsheet 投影：`workbook`, `activeSheet`, `selection`, `activeCell`, `activeRange`, `runtime`                                                                                                    |
+| `selectionTarget` | object | 当前选择目标（canonical）                                                                                                                                                                                |
+| `reportDocument`  | object | 当前报表文档快照                                                                                                                                                                                         |
+| `workbook`        | object | 当前工作簿                                                                                                                                                                                               |
+| `activeSheet`     | object | 当前活跃 sheet                                                                                                                                                                                           |
+| `activeCell`      | object | 当前活跃单元格                                                                                                                                                                                           |
+| `activeRange`     | object | 当前活跃区域                                                                                                                                                                                             |
 
 **Compatibility aliases — 保留兼容，新 schema 应使用 canonical 字段：**
 
-| 字段 | Canonical 等价 | 说明 |
-|------|---------------|------|
+| 字段        | Canonical 等价    | 说明             |
+| ----------- | ----------------- | ---------------- |
 | `selection` | `selectionTarget` | 兼容别名，值相同 |
-| `target` | `selectionTarget` | 兼容别名，值相同 |
+| `target`    | `selectionTarget` | 兼容别名，值相同 |
 
 **Convenience mirrors — 从 `designer.*` 或 `spreadsheet.*` 或 `runtime.*` 派生的顶层快捷字段：**
 
-| 字段 | 派生来源 |
-|------|---------|
-| `inspector` | `designer.inspector` |
+| 字段              | 派生来源                   |
+| ----------------- | -------------------------- |
+| `inspector`       | `designer.inspector`       |
 | `inspectorPanels` | `designer.inspectorPanels` |
-| `meta` | `designer.activeMeta` |
-| `canUndo` | `runtime.canUndo` |
-| `canRedo` | `runtime.canRedo` |
-| `documentName` | `designer.documentName` |
-| `fieldCount` | `designer.fieldCount` |
+| `meta`            | `designer.activeMeta`      |
+| `canUndo`         | `runtime.canUndo`          |
+| `canRedo`         | `runtime.canRedo`          |
+| `documentName`    | `designer.documentName`    |
+| `fieldCount`      | `designer.fieldCount`      |
 
 ## 8. 事件、动作与组件句柄能力
 

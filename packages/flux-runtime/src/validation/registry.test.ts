@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createBuiltInValidationRegistry, createValidationRegistry, registerBuiltInValidators } from './registry';
+import {
+  createBuiltInValidationRegistry,
+  createValidationRegistry,
+  registerBuiltInValidators,
+} from './registry';
 
 describe('validation registry', () => {
   it('registers and resolves built-in validators', () => {
@@ -16,7 +20,9 @@ describe('validation registry', () => {
 
     registry.register('required', validator);
 
-    expect(() => registry.register('required', validator)).toThrow('Validation rule required is already registered.');
+    expect(() => registry.register('required', validator)).toThrow(
+      'Validation rule required is already registered.',
+    );
   });
 
   it('can populate an existing registry with built-ins', () => {

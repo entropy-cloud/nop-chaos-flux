@@ -130,9 +130,7 @@ Authoring input:
 ```json
 {
   "type": "crud",
-  "bulkActions": [
-    { "type": "button", "label": "批量删除" }
-  ]
+  "bulkActions": [{ "type": "button", "label": "批量删除" }]
 }
 ```
 
@@ -141,9 +139,7 @@ Canonical output:
 ```json
 {
   "type": "crud",
-  "listActions": [
-    { "type": "button", "label": "批量删除" }
-  ]
+  "listActions": [{ "type": "button", "label": "批量删除" }]
 }
 ```
 

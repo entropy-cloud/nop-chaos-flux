@@ -19,6 +19,7 @@
 3. **detail staged-owner helper functions**：是三个无状态纯函数（`runTransformIn` / `runTransformOut` / `runValidate`），不持有 draft lifecycle 状态。`detail-field` / `detail-view` 的 staged lifecycle 由 renderer 自行管理，helper 只负责 action 执行和 payload/result 规则。但 `object-field` / `array-field` / `variant-field` 完全没用它——不是不需要值适配，而是当前 helper 的 API 以 action schema 为入参，对不需要 action 的简单字段不够轻量。
 
 后果：
+
 - 每新增一种字段类型（date-picker、time-input、rich-text 等），都需要在 renderer 里重新发明值转换。
 - `object-field` 的 schema 已声明 `transformInAction`/`transformOutAction`，但 renderer 不调用它。
 - 没有统一的地方可以声明"这个字段的 UI 值和存储值不一样"。
@@ -103,7 +104,10 @@ Targets: `packages/flux-core/src/value-adapter.ts` (new), `docs/architecture/val
 interface ValueAdapter<TExternal = unknown, TInternal = unknown> {
   in(value: TExternal, ctx: AdapterContext): TInternal | Promise<TInternal>;
   out(value: TInternal, ctx: AdapterContext): TExternal | Promise<TExternal>;
-  validate?(value: TInternal, ctx: AdapterContext): AdapterValidationResult | Promise<AdapterValidationResult>;
+  validate?(
+    value: TInternal,
+    ctx: AdapterContext,
+  ): AdapterValidationResult | Promise<AdapterValidationResult>;
 }
 ```
 
@@ -129,9 +133,7 @@ interface AdapterActionContext extends AdapterContext {
 - [x] 定义 `AdapterValidationResult` 和 `AdapterValidationIssue`
 
 ```ts
-type AdapterValidationResult =
-  | { valid: true }
-  | { valid: false; issues: AdapterValidationIssue[] };
+type AdapterValidationResult = { valid: true } | { valid: false; issues: AdapterValidationIssue[] };
 
 interface AdapterValidationIssue {
   level: 'error' | 'warning';
@@ -194,6 +196,7 @@ Targets: `packages/flux-renderers-form-advanced/src/composite-field/object-field
 - [x] `array-field`：**不在本 phase 迁移**。其 scalar item `{ value }` 包装是 scope projection 机制（由 `array-field-runtime.ts` 的 `projectValues` 管理），不是值适配。`transformInAction`/`transformOutAction` 支持作为 follow-up
 
 **迁移风险**：现有 schema 如果已声明 `transformInAction`/`transformOutAction` 但预期它们不执行（因为当前 renderer 忽略它们），启用后行为会变化。缓解措施：
+
 - grep playground schemas 中所有 `transformInAction`/`transformOutAction` 声明，确认不存在因 renderer 忽略而依赖 no-op 语义的 schema
 - 如果发现此类 schema，考虑在 Phase 3 增加 opt-in 机制（如 schema 级 `enableTransform: true` 标记）而非默认启用
 

@@ -16,6 +16,9 @@ export function normalizeViewportInput(viewport: { x: number; y: number; zoom: n
   };
 }
 
-export function viewportsEqual(left: { x: number; y: number; zoom: number }, right: { x: number; y: number; zoom: number }) {
+export function viewportsEqual(
+  left: { x: number; y: number; zoom: number },
+  right: { x: number; y: number; zoom: number },
+) {
   return left.x === right.x && left.y === right.y && left.zoom === right.zoom;
 }

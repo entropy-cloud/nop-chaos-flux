@@ -9,7 +9,7 @@ describe('createAsyncGovernanceStore', () => {
       ownerKind: 'reaction',
       ownerId: 'owner-b',
       scopeId: 'scope-b',
-      cause: 'dependency-change'
+      cause: 'dependency-change',
     });
 
     expect(store.isCurrentRun(first)).toBe(true);
@@ -18,20 +18,20 @@ describe('createAsyncGovernanceStore', () => {
     expect(store.getOwnerState('owner-b')?.currentRun).toMatchObject({
       runId: 1,
       cancelled: true,
-      supersededBy: 99
+      supersededBy: 99,
     });
 
     const second = store.beginRun({
       ownerKind: 'reaction',
       ownerId: 'owner-b',
       scopeId: 'scope-c',
-      cause: 'manual-refresh'
+      cause: 'manual-refresh',
     });
 
     expect(store.getOwnerState('owner-b')).toMatchObject({
       ownerKind: 'reaction',
       scopeId: 'scope-c',
-      currentRun: expect.objectContaining({ runId: 2, outcome: 'running' })
+      currentRun: expect.objectContaining({ runId: 2, outcome: 'running' }),
     });
 
     const staleSettled = store.settleRun(first, { outcome: 'failed', error: 'boom' });
@@ -39,7 +39,7 @@ describe('createAsyncGovernanceStore', () => {
       runId: 1,
       outcome: 'stale-dropped',
       supersededBy: 2,
-      error: { message: 'boom' }
+      error: { message: 'boom' },
     });
 
     const finished = store.settleRun(second, { outcome: 'succeeded' });
@@ -50,19 +50,19 @@ describe('createAsyncGovernanceStore', () => {
       ownerKind: 'validation',
       ownerId: 'owner-a',
       scopeId: 'scope-a',
-      cause: 'submit'
+      cause: 'submit',
     });
     store.settleRun(snapshotOwner, {
       outcome: 'failed',
       timedOut: true,
-      error: new TypeError('timed out')
+      error: new TypeError('timed out'),
     });
 
     expect(store.getSnapshot()).toEqual({
       owners: [
         expect.objectContaining({ ownerId: 'owner-a', scopeId: 'scope-a' }),
-        expect.objectContaining({ ownerId: 'owner-b', scopeId: 'scope-c' })
-      ]
+        expect.objectContaining({ ownerId: 'owner-b', scopeId: 'scope-c' }),
+      ],
     });
   });
 
@@ -73,13 +73,13 @@ describe('createAsyncGovernanceStore', () => {
       ownerKind: 'data-source',
       ownerId: 'owner-x',
       scopeId: 'scope-x',
-      cause: 'initial-load'
+      cause: 'initial-load',
     });
     const second = store.beginRun({
       ownerKind: 'data-source',
       ownerId: 'owner-x',
       scopeId: 'scope-x',
-      cause: 'refresh'
+      cause: 'refresh',
     });
 
     store.markCancelled(first, { supersededBy: 123 });
@@ -96,7 +96,7 @@ describe('createAsyncGovernanceStore', () => {
     expect(store.getOwnerState('owner-x')?.recentRuns[0]).toMatchObject({
       runId: 2,
       outcome: 'stale-dropped',
-      error: undefined
+      error: undefined,
     });
 
     store.clearOwner('owner-x');

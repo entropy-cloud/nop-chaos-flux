@@ -21,9 +21,7 @@ afterEach(() => {
   cleanup();
 });
 
-function renderInspector(
-  schemaOverrides: Record<string, unknown> = {},
-) {
+function renderInspector(schemaOverrides: Record<string, unknown> = {}) {
   const registry = createDefaultRegistry([textRenderer]);
   registerReportDesignerRenderers(registry);
   const SchemaRenderer = createSchemaRenderer();

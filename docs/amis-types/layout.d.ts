@@ -167,7 +167,13 @@ export interface FlexSchema extends BaseSchema {
   /** 主轴方向 */
   direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
   /** 主轴对齐 */
-  justify?: 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
+  justify?:
+    | 'flex-start'
+    | 'flex-end'
+    | 'center'
+    | 'space-between'
+    | 'space-around'
+    | 'space-evenly';
   /** 交叉轴对齐 */
   alignItems?: 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline';
   /** 是否换行 */

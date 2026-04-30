@@ -6,7 +6,7 @@ import {
   createComponentHandleRegistry,
   createFormComponentHandle,
   createRendererRegistry,
-  createRendererRuntime
+  createRendererRuntime,
 } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
@@ -23,7 +23,7 @@ describe('createRendererRuntime', () => {
       return {
         ok: true,
         status: 200,
-        data: { ok: true } as T
+        data: { ok: true } as T,
       };
     };
     const fetcher = vi.fn(fetcherImpl);
@@ -31,9 +31,9 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
@@ -41,13 +41,13 @@ describe('createRendererRuntime', () => {
       {
         action: 'ajax',
         retry: { times: 2, delay: 0 },
-        args: { url: '/api/retry-success' }
+        args: { url: '/api/retry-success' },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, attempts: 3, data: { ok: true } });
@@ -66,9 +66,9 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
@@ -76,13 +76,13 @@ describe('createRendererRuntime', () => {
       {
         action: 'ajax',
         retry: { times: 2, delay: 0 },
-        args: { url: '/api/retry-fail' }
+        args: { url: '/api/retry-fail' },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(false);
@@ -111,11 +111,11 @@ describe('createRendererRuntime', () => {
             return {
               ok: true,
               status: 200,
-              data: { ok: true } as T
+              data: { ok: true } as T,
             };
-          }
+          },
         },
-        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       });
       const page = runtime.createPageRuntime({});
 
@@ -123,13 +123,13 @@ describe('createRendererRuntime', () => {
         {
           action: 'ajax',
           retry: { times: 2, delay: 10, strategy: 'exponential' },
-          args: { url: '/api/retry-exp' }
+          args: { url: '/api/retry-exp' },
         },
         {
           runtime,
           scope: page.scope,
-          page
-        }
+          page,
+        },
       );
 
       await vi.advanceTimersByTimeAsync(9);
@@ -151,20 +151,20 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
     const result = await runtime.dispatch(
       {
         action: 'refreshSource',
-        targetId: 'missing-source'
+        targetId: 'missing-source',
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(false);
@@ -178,7 +178,7 @@ describe('createRendererRuntime', () => {
       const runtime = createRendererRuntime({
         registry: createRendererRegistry([textRenderer]),
         env,
-        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       });
       const page = runtime.createPageRuntime({ status: 'idle' });
 
@@ -187,15 +187,15 @@ describe('createRendererRuntime', () => {
           action: 'setValue',
           args: {
             path: 'status',
-            value: 'first'
+            value: 'first',
           },
-          debounce: 50
+          debounce: 50,
         },
         {
           runtime,
           scope: page.scope,
-          page
-        }
+          page,
+        },
       );
 
       const secondPromise = runtime.dispatch(
@@ -203,15 +203,15 @@ describe('createRendererRuntime', () => {
           action: 'setValue',
           args: {
             path: 'status',
-            value: 'second'
+            value: 'second',
           },
-          debounce: 50
+          debounce: 50,
         },
         {
           runtime,
           scope: page.scope,
-          page
-        }
+          page,
+        },
       );
 
       await expect(firstPromise).resolves.toMatchObject({ ok: false, cancelled: true });
@@ -237,15 +237,15 @@ describe('createRendererRuntime', () => {
         monitor: {
           onActionStart,
           onActionEnd,
-          onApiRequest
+          onApiRequest,
         },
         fetcher: async <T>() => ({
           ok: true,
           status: 200,
-          data: { items: [1] } as T
-        })
+          data: { items: [1] } as T,
+        }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const compiled = runtime.compile({ type: 'text', text: 'trigger' });
     const page = runtime.createPageRuntime({});
@@ -254,7 +254,7 @@ describe('createRendererRuntime', () => {
       cid: templateNode.templateNodeId,
       templateNode,
       scope: page.scope,
-      state: { metaState: {}, mounted: true }
+      state: { metaState: {}, mounted: true },
     } as any;
 
     const result = await runtime.dispatch(
@@ -262,15 +262,15 @@ describe('createRendererRuntime', () => {
         action: 'ajax',
         args: {
           url: '/api/monitored',
-          method: 'get'
-        }
+          method: 'get',
+        },
       },
       {
         runtime,
         scope: page.scope,
         page,
-        nodeInstance
-      }
+        nodeInstance,
+      },
     );
 
     expect(result.ok).toBe(true);
@@ -278,22 +278,24 @@ describe('createRendererRuntime', () => {
       actionType: 'ajax',
       interactionId: expect.any(String),
       nodeId: templateNode.id,
-      path: templateNode.templatePath
-    });
-    expect(onApiRequest).toHaveBeenCalledWith(expect.objectContaining({
-      api: expect.objectContaining({ url: '/api/monitored', method: 'get', data: undefined }),
-      nodeId: templateNode.id,
       path: templateNode.templatePath,
-      interactionId: expect.any(String)
-    }));
+    });
+    expect(onApiRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        api: expect.objectContaining({ url: '/api/monitored', method: 'get', data: undefined }),
+        nodeId: templateNode.id,
+        path: templateNode.templatePath,
+        interactionId: expect.any(String),
+      }),
+    );
     expect(onActionEnd).toHaveBeenCalledWith(
       expect.objectContaining({
         actionType: 'ajax',
         dispatchMode: 'built-in',
         nodeId: templateNode.id,
         path: templateNode.templatePath,
-        result: expect.objectContaining({ ok: true })
-      })
+        result: expect.objectContaining({ ok: true }),
+      }),
     );
   });
 
@@ -302,18 +304,18 @@ describe('createRendererRuntime', () => {
     const fetcher = vi.fn(async <T>(api: ApiSchema, _ctx?: { signal?: AbortSignal }) => ({
       ok: true,
       status: 200,
-      data: { url: api.url, method: api.method } as T
+      data: { url: api.url, method: api.method } as T,
     }));
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
         monitor: {
-          onApiRequest
+          onApiRequest,
         },
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ path: '/api/from-args' });
 
@@ -322,27 +324,32 @@ describe('createRendererRuntime', () => {
         action: 'ajax',
         args: {
           url: '${path}',
-          method: 'get'
-        }
+          method: 'get',
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, data: { url: '/api/from-args', method: 'get' } });
-    expect(onApiRequest).toHaveBeenCalledWith(expect.objectContaining({
-      api: expect.objectContaining({
+    expect(onApiRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        api: expect.objectContaining({
+          url: '/api/from-args',
+          method: 'get',
+        }),
+      }),
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      expect.objectContaining({
         url: '/api/from-args',
-        method: 'get'
-      })
-    }));
-    expect(fetcher).toHaveBeenCalledWith(expect.objectContaining({
-      url: '/api/from-args',
-      method: 'get'
-    }), expect.any(Object));
+        method: 'get',
+      }),
+      expect.any(Object),
+    );
   });
 
   it('monitors the final executable ajax request after params canonicalization', async () => {
@@ -350,7 +357,7 @@ describe('createRendererRuntime', () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
       ok: true,
       status: 200,
-      data: { url: api.url } as T
+      data: { url: api.url } as T,
     });
     const fetcher = vi.fn(fetcherImpl);
     const runtime = createRendererRuntime({
@@ -358,11 +365,11 @@ describe('createRendererRuntime', () => {
       env: {
         ...env,
         monitor: {
-          onApiRequest
+          onApiRequest,
         },
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ token: 'live' });
 
@@ -372,32 +379,34 @@ describe('createRendererRuntime', () => {
         args: {
           url: '/api/items',
           method: 'get',
-          params: { mode: '${token}' }
-        }
+          params: { mode: '${token}' },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(true);
-    expect(onApiRequest).toHaveBeenCalledWith(expect.objectContaining({
-      api: expect.objectContaining({
-        url: '/api/items?mode=live',
-        method: 'get',
-        data: undefined
+    expect(onApiRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        api: expect.objectContaining({
+          url: '/api/items?mode=live',
+          method: 'get',
+          data: undefined,
+        }),
+        nodeId: undefined,
+        path: undefined,
+        interactionId: expect.any(String),
       }),
-      nodeId: undefined,
-      path: undefined,
-      interactionId: expect.any(String)
-    }));
+    );
     expect(fetcher).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: '/api/items?mode=live'
+        url: '/api/items?mode=live',
       }),
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 
@@ -408,10 +417,10 @@ describe('createRendererRuntime', () => {
       env: {
         ...env,
         monitor: {
-          onActionEnd
-        }
+          onActionEnd,
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const actionScope = createActionScope({ id: 'monitor-scope' });
@@ -421,40 +430,40 @@ describe('createRendererRuntime', () => {
       name: 'monitoredForm',
       initialValues: { username: 'Alice' },
       parentScope: page.scope,
-      page
+      page,
     });
 
     componentRegistry.register(createFormComponentHandle(form));
     actionScope.registerNamespace('designer', {
       kind: 'host',
-      invoke: async () => ({ ok: true })
+      invoke: async () => ({ ok: true }),
     });
 
     await runtime.dispatch(
       {
         action: 'component:validate',
-        componentId: 'monitored-form'
+        componentId: 'monitored-form',
       },
       {
         runtime,
         scope: page.scope,
         page,
         componentRegistry,
-        actionScope
-      }
+        actionScope,
+      },
     );
 
     await runtime.dispatch(
       {
-        action: 'designer:export'
+        action: 'designer:export',
       },
       {
         runtime,
         scope: page.scope,
         page,
         componentRegistry,
-        actionScope
-      }
+        actionScope,
+      },
     );
 
     expect(onActionEnd).toHaveBeenCalledWith(
@@ -463,8 +472,8 @@ describe('createRendererRuntime', () => {
         dispatchMode: 'component',
         componentId: 'monitored-form',
         componentType: 'form',
-        method: 'validate'
-      })
+        method: 'validate',
+      }),
     );
     expect(onActionEnd).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -473,8 +482,8 @@ describe('createRendererRuntime', () => {
         namespace: 'designer',
         method: 'export',
         sourceScopeId: 'monitor-scope',
-        providerKind: 'host'
-      })
+        providerKind: 'host',
+      }),
     );
   });
 
@@ -490,10 +499,10 @@ describe('createRendererRuntime', () => {
           ...env,
           monitor: {
             onActionStart,
-            onActionEnd
-          }
+            onActionEnd,
+          },
         },
-        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       });
       const page = runtime.createPageRuntime({ status: 'idle' });
 
@@ -502,15 +511,15 @@ describe('createRendererRuntime', () => {
           action: 'setValue',
           args: {
             path: 'status',
-            value: 'first'
+            value: 'first',
           },
-          debounce: 25
+          debounce: 25,
         },
         {
           runtime,
           scope: page.scope,
-          page
-        }
+          page,
+        },
       );
 
       const secondPromise = runtime.dispatch(
@@ -518,15 +527,15 @@ describe('createRendererRuntime', () => {
           action: 'setValue',
           args: {
             path: 'status',
-            value: 'second'
+            value: 'second',
           },
-          debounce: 25
+          debounce: 25,
         },
         {
           runtime,
           scope: page.scope,
-          page
-        }
+          page,
+        },
       );
 
       await expect(firstPromise).resolves.toMatchObject({ cancelled: true });
@@ -537,14 +546,14 @@ describe('createRendererRuntime', () => {
       expect(onActionEnd).toHaveBeenCalledWith(
         expect.objectContaining({
           actionType: 'setValue',
-          result: expect.objectContaining({ cancelled: true })
-        })
+          result: expect.objectContaining({ cancelled: true }),
+        }),
       );
       expect(onActionEnd).toHaveBeenLastCalledWith(
         expect.objectContaining({
           actionType: 'setValue',
-          result: expect.objectContaining({ ok: true, data: 'second' })
-        })
+          result: expect.objectContaining({ ok: true, data: 'second' }),
+        }),
       );
     } finally {
       vi.useRealTimers();

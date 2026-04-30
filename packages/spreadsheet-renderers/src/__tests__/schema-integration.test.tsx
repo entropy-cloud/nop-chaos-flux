@@ -3,13 +3,14 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, createDefaultRegistry, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  createSchemaRenderer,
+  createDefaultRegistry,
+  useScopeSelector,
+} from '@nop-chaos/flux-react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
-import {
-  defineSpreadsheetPageSchema,
-  registerSpreadsheetRenderers,
-} from '../index.js';
+import { defineSpreadsheetPageSchema, registerSpreadsheetRenderers } from '../index.js';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -71,13 +72,17 @@ const topLevelA1ProbeRenderer: RendererDefinition = {
 
 function SpreadsheetStatusProbe() {
   const status = useScopeSelector((data: any) => data.spreadsheetStatus);
-  return <span data-testid="spreadsheet-status">{status ? `${status.kind}:${status.readonly}:${status.canUndo}` : ''}</span>;
+  return (
+    <span data-testid="spreadsheet-status">
+      {status ? `${status.kind}:${status.readonly}:${status.canUndo}` : ''}
+    </span>
+  );
 }
 
 const pageRenderer: RendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render()}</section>,
-  regions: ['body']
+  regions: ['body'],
 };
 
 afterEach(() => {
@@ -117,7 +122,11 @@ describe('spreadsheet-page schema integration', () => {
       ],
     });
 
-    const registry = createDefaultRegistry([actionButtonRenderer, a1ProbeRenderer, topLevelA1ProbeRenderer]);
+    const registry = createDefaultRegistry([
+      actionButtonRenderer,
+      a1ProbeRenderer,
+      topLevelA1ProbeRenderer,
+    ]);
     registerSpreadsheetRenderers(registry);
     const SchemaRenderer = createSchemaRenderer();
 
@@ -201,16 +210,16 @@ describe('spreadsheet-page schema integration', () => {
           onClick: {
             action: 'showToast',
             args: {
-              message: 'noop'
-            }
-          }
-        }
-      ]
+              message: 'noop',
+            },
+          },
+        },
+      ],
     });
 
     const statusProbeRenderer: RendererDefinition = {
       type: 'spreadsheet-status-probe',
-      component: SpreadsheetStatusProbe
+      component: SpreadsheetStatusProbe,
     };
 
     const registry = createDefaultRegistry([

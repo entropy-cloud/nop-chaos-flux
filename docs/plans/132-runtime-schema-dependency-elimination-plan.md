@@ -28,15 +28,15 @@
 ```typescript
 // TemplateNode keeps full schema (unnecessary for runtime)
 interface TemplateNode {
-  schema: S;                    // ← Full original schema
-  propsProgram: CompiledRuntimeValue;  // ← Compiled props (duplicate)
+  schema: S; // ← Full original schema
+  propsProgram: CompiledRuntimeValue; // ← Compiled props (duplicate)
   // ...
 }
 
 // RendererComponentProps also passes schema
 interface RendererComponentProps {
-  schema: S;                    // ← Why? Renderers should use props/meta
-  props: Record<string, unknown>;  // ← Resolved values
+  schema: S; // ← Why? Renderers should use props/meta
+  props: Record<string, unknown>; // ← Resolved values
   // ...
 }
 ```
@@ -44,6 +44,7 @@ interface RendererComponentProps {
 ### Uncompiled Runtime Usage
 
 Found in `flux-runtime/src/async-data/source-registry.ts`:
+
 ```typescript
 // Data source schema is NOT compiled - used raw at runtime
 api: args.schema.api,
@@ -56,6 +57,7 @@ interval: asNumber(args.schema.interval),
 ```
 
 Found in `flux-runtime/src/runtime-factory.ts`:
+
 ```typescript
 // Reaction schema is NOT compiled
 watch: inputValue.schema.watch,
@@ -66,15 +68,15 @@ when: inputValue.schema.when,
 
 ### What's NOT Compiled
 
-| Schema Type | Compiled? | Location |
-|-------------|-----------|----------|
-| Node props | ✅ Yes | `propsProgram` |
-| Node meta | ✅ Yes | `metaProgram` |
-| Events | ✅ Yes | `eventPlans` |
-| Validations | ✅ Yes | `validationPlan` |
-| **Data Sources** | ❌ No | Raw `schema.sources` |
-| **Reactions** | ❌ No | Raw `schema.reactions` |
-| **Source API config** | ❌ No | Raw `schema.api`, etc. |
+| Schema Type           | Compiled? | Location               |
+| --------------------- | --------- | ---------------------- |
+| Node props            | ✅ Yes    | `propsProgram`         |
+| Node meta             | ✅ Yes    | `metaProgram`          |
+| Events                | ✅ Yes    | `eventPlans`           |
+| Validations           | ✅ Yes    | `validationPlan`       |
+| **Data Sources**      | ❌ No     | Raw `schema.sources`   |
+| **Reactions**         | ❌ No     | Raw `schema.reactions` |
+| **Source API config** | ❌ No     | Raw `schema.api`, etc. |
 
 ---
 
@@ -87,6 +89,7 @@ Status: ✅ completed
 File: `packages/flux-core/src/types/compilation.ts`
 
 Implemented types:
+
 - `CompiledApiConfig` - compiled API configuration
 - `CompiledOperationControl` - operation control settings
 - `CompiledDataSource` - full compiled data source
@@ -96,6 +99,7 @@ Implemented types:
 File: `packages/flux-core/src/types/compilation.ts`
 
 Implemented `CompiledReaction` with:
+
 - `id`, `watch` (static paths), `when` (compiled condition)
 - `action` (CompiledActionProgram), timing/dependency options
 
@@ -104,6 +108,7 @@ Implemented `CompiledReaction` with:
 File: `packages/flux-core/src/types/node-identity.ts`
 
 Added:
+
 - `compiledSources?: readonly CompiledDataSource[]`
 - `compiledReactions?: readonly CompiledReaction[]`
 
@@ -124,6 +129,7 @@ Status: ✅ completed
 File: `packages/flux-compiler/src/source-compiler.ts` (new)
 
 Implemented:
+
 - `compileDataSource(id, schema, compiler, options)` - compiles DataSourceSchema to CompiledDataSource
 - `isDataSourceFullyStatic(compiled)` - checks if all fields are static
 - Handles API sources (url, method, data, params, headers, adaptors)
@@ -136,6 +142,7 @@ Implemented:
 File: `packages/flux-compiler/src/reaction-compiler.ts` (new)
 
 Implemented:
+
 - `compileReaction(id, schema, compiler, options)` - compiles ReactionSchema to CompiledReaction
 - `isReactionFullyStatic(compiled)` - checks if when/action are static
 - Normalizes watch paths (string → array)
@@ -147,6 +154,7 @@ Implemented:
 File: `packages/flux-compiler/src/schema-compiler.ts`
 
 Integration:
+
 - Detects `type: 'data-source'` nodes and populates `compiledSources`
 - Detects `type: 'reaction'` nodes and populates `compiledReactions`
 - Added imports for new compilers
@@ -154,6 +162,7 @@ Integration:
 ### 2.4 Unit Tests
 
 New test files:
+
 - `packages/flux-compiler/src/source-compiler.test.ts` (14 tests)
 - `packages/flux-compiler/src/reaction-compiler.test.ts` (12 tests)
 
@@ -176,6 +185,7 @@ Status: ✅ completed
 File: `packages/flux-runtime/src/async-data/source-registry.ts`
 
 **Completed changes:**
+
 - `registerDataSource` requires `compiledSource: CompiledDataSource`
 - No fallback to raw schema
 - `resultMapping` passed as `CompiledRuntimeValue`, evaluated at apply time with `payload` context
@@ -186,6 +196,7 @@ File: `packages/flux-runtime/src/async-data/source-registry.ts`
 File: `packages/flux-runtime/src/async-data/data-source-runtime.ts`
 
 **Completed changes:**
+
 - `createDataSourceController` requires `compiledApi: CompiledApiConfig`
 - `compiledResultMapping?: CompiledRuntimeValue<unknown>` for deferred evaluation
 - New helpers in `data-source-runtime-utils.ts`:
@@ -198,6 +209,7 @@ File: `packages/flux-runtime/src/async-data/data-source-runtime.ts`
 File: `packages/flux-runtime/src/async-data/reaction-runtime.ts`
 
 **Completed changes:**
+
 - `registerReaction` requires `compiledReaction: CompiledReaction`
 - No fallback to raw schema
 - `watch` evaluated from `CompiledRuntimeValue<unknown>`
@@ -208,6 +220,7 @@ File: `packages/flux-runtime/src/async-data/reaction-runtime.ts`
 File: `packages/flux-core/src/types/renderer-core.ts`
 
 **Completed changes:**
+
 - `RendererRuntime.registerDataSource({ compiledSource })` - requires compiled source
 - `RendererRuntime.registerReaction({ compiledReaction })` - requires compiled reaction
 - `RendererRuntime.createDataSourceController({ compiledApi })` - requires compiled API config
@@ -236,7 +249,7 @@ Status: deferred
 // In schema compiler
 const templateNode: TemplateNode = {
   // ... compiled fields
-  
+
   // Only store schema in development
   schema: import.meta.env.DEV ? schema : undefined,
 };
@@ -245,6 +258,7 @@ const templateNode: TemplateNode = {
 ### 4.2 DevTools Access
 
 Ensure nop-debugger can still access schema for inspection:
+
 - Either store schema separately in a debug map
 - Or use conditional compilation to include schema
 
@@ -262,12 +276,14 @@ Status: deferred
 ### 5.1 Remove Deprecated Fields
 
 After transition period:
+
 - Remove `schema` from RendererComponentProps
 - Make `schema` truly optional in TemplateNode
 
 ### 5.2 Documentation
 
 Update:
+
 - `docs/architecture/flux-core.md` - document compiled sources/reactions
 - API documentation for new types
 
@@ -330,9 +346,9 @@ The following sub-goals should be addressed in separate successor plans:
 
 ## Risk Assessment
 
-| Risk | Mitigation |
-|------|------------|
-| Breaking existing renderers | Deprecation period, not immediate removal |
-| DevTools regression | Phase 4 specifically addresses this |
-| Performance during compilation | Compilation is one-time cost |
-| Increased compile time | Source/reaction compilation is lightweight |
+| Risk                           | Mitigation                                 |
+| ------------------------------ | ------------------------------------------ |
+| Breaking existing renderers    | Deprecation period, not immediate removal  |
+| DevTools regression            | Phase 4 specifically addresses this        |
+| Performance during compilation | Compilation is one-time cost               |
+| Increased compile time         | Source/reaction compilation is lightweight |

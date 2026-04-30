@@ -26,7 +26,7 @@ function getNodeIcon(type: string): string {
     task: '⚙',
     condition: '◇',
     parallel: '⫼',
-    loop: '↻'
+    loop: '↻',
   };
   return icons[type] ?? '○';
 }
@@ -38,12 +38,14 @@ function getChipLabel(type: string): string {
     task: '任务节点',
     condition: '条件分支',
     parallel: '并行网关',
-    loop: '循环节点'
+    loop: '循环节点',
   };
   return labels[type] ?? '';
 }
 
-function getNodePorts(type: string): Array<{ id: string; direction: 'input' | 'output'; position: string; label?: string }> {
+function getNodePorts(
+  type: string,
+): Array<{ id: string; direction: 'input' | 'output'; position: string; label?: string }> {
   switch (type) {
     case 'start':
       return [{ id: 'out', direction: 'output', position: 'right' }];
@@ -55,12 +57,12 @@ function getNodePorts(type: string): Array<{ id: string; direction: 'input' | 'o
     case 'loop':
       return [
         { id: 'in', direction: 'input', position: 'left' },
-        { id: 'out', direction: 'output', position: 'right' }
+        { id: 'out', direction: 'output', position: 'right' },
       ];
     default:
       return [
         { id: 'in', direction: 'input', position: 'left' },
-        { id: 'out', direction: 'output', position: 'right' }
+        { id: 'out', direction: 'output', position: 'right' },
       ];
   }
 }
@@ -75,7 +77,7 @@ export function FlowDesignerCanvas({
   onDeleteNode,
   onDrop,
   onNodeHover,
-  onEdgeHover
+  onEdgeHover,
 }: FlowDesignerCanvasProps) {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -92,7 +94,7 @@ export function FlowDesignerCanvas({
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const position = {
       x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      y: e.clientY - rect.top,
     };
     onDrop(nodeTypeId, position);
   };
@@ -112,14 +114,14 @@ export function FlowDesignerCanvas({
               className={classNames(
                 'fd-node',
                 snapshot.selection.activeNodeId === node.id && 'fd-node--selected',
-                node.type && `fd-node--${node.type}`
+                node.type && `fd-node--${node.type}`,
               )}
               data-slot="flow-designer-node"
               data-selected={snapshot.selection.activeNodeId === node.id ? '' : undefined}
               data-type={node.type || undefined}
               style={{
                 left: node.position.x,
-                top: node.position.y
+                top: node.position.y,
               }}
               onClick={(e) => onNodeClick(node.id, e)}
               onMouseEnter={() => onNodeHover?.(node.id)}
@@ -128,8 +130,12 @@ export function FlowDesignerCanvas({
               <div data-slot="flow-designer-node-header">
                 <span data-slot="flow-designer-node-icon">{getNodeIcon(node.type)}</span>
                 <div data-slot="flow-designer-node-info">
-                  <div data-slot="flow-designer-node-title">{String(node.data.label ?? node.type)}</div>
-                  <div data-slot="flow-designer-node-description">{String(node.data.description ?? '')}</div>
+                  <div data-slot="flow-designer-node-title">
+                    {String(node.data.label ?? node.type)}
+                  </div>
+                  <div data-slot="flow-designer-node-description">
+                    {String(node.data.description ?? '')}
+                  </div>
                 </div>
               </div>
               <div data-slot="flow-designer-node-footer">
@@ -195,7 +201,10 @@ export function FlowDesignerCanvas({
             return (
               <g
                 key={edge.id}
-                className={classNames('fd-edge', snapshot.selection.activeEdgeId === edge.id && 'fd-edge--selected')}
+                className={classNames(
+                  'fd-edge',
+                  snapshot.selection.activeEdgeId === edge.id && 'fd-edge--selected',
+                )}
                 data-slot="flow-designer-edge"
                 data-selected={snapshot.selection.activeEdgeId === edge.id ? '' : undefined}
                 onClick={(e) => onEdgeClick(edge.id, e as unknown as React.MouseEvent)}
@@ -226,8 +235,17 @@ export function FlowDesignerCanvas({
                       onEdgeClick(edge.id, e as unknown as React.MouseEvent);
                     }}
                   >
-                    <circle data-slot="flow-designer-edge-action-circle" data-action="delete" r={10} />
-                    <text data-slot="flow-designer-edge-action-text" textAnchor="middle" dy={4} fontSize={14}>
+                    <circle
+                      data-slot="flow-designer-edge-action-circle"
+                      data-action="delete"
+                      r={10}
+                    />
+                    <text
+                      data-slot="flow-designer-edge-action-text"
+                      textAnchor="middle"
+                      dy={4}
+                      fontSize={14}
+                    >
                       ×
                     </text>
                   </g>

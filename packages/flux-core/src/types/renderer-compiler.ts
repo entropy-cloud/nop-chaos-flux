@@ -1,4 +1,8 @@
-import type { SchemaCompileDiagnosticsOptions, SchemaCompileValidationOptions, SchemaDiagnostic } from '../schema-diagnostics';
+import type {
+  SchemaCompileDiagnosticsOptions,
+  SchemaCompileValidationOptions,
+  SchemaDiagnostic,
+} from '../schema-diagnostics';
 import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy } from './schema';
 import type { CompiledCidState } from '../compiled-cid';
 import type { CompiledTemplate } from './node-identity';
@@ -7,7 +11,7 @@ import type { CompileSymbolTable } from './compilation';
 export type WrapProvidersFn = (
   wrapProvider: (kind: string, value: unknown, children: unknown) => unknown,
   values: Record<string, unknown>,
-  children: unknown
+  children: unknown,
 ) => unknown;
 
 export interface ResolvedNodeProps {
@@ -58,7 +62,13 @@ export interface CompileNodeOptions {
 
 export interface SchemaCompiler {
   compile(schema: SchemaInput, options?: CompileSchemaOptions): CompiledTemplate;
-  prepare?(schema: SchemaInput, options?: CompileSchemaOptions): Promise<PreparedSchemaCompileResult>;
-  compileNode(schema: BaseSchema, options: CompileNodeOptions): import('./node-identity').TemplateNode;
+  prepare?(
+    schema: SchemaInput,
+    options?: CompileSchemaOptions,
+  ): Promise<PreparedSchemaCompileResult>;
+  compileNode(
+    schema: BaseSchema,
+    options: CompileNodeOptions,
+  ): import('./node-identity').TemplateNode;
   validate?(schema: SchemaInput, options?: CompileSchemaOptions): SchemaDiagnostic[];
 }

@@ -409,19 +409,19 @@ conformance-kit/
 
 ## 12. 代码落点总表
 
-| Concern | Package | Module |
-| --- | --- | --- |
-| package hash | `package-compiler` | `hash/` |
-| canonicalization | `package-compiler` | `determinism/` |
-| tx phases | `kernel-core` | `transaction/` |
-| failure taxonomy | `kernel-core` | `failures/` |
-| lane policy | `kernel-core` | `async/` |
-| action DAG execution | `kernel-actions` | `action-runtime/` |
-| validation edge cases | `kernel-validation` | `edge-cases/` |
-| draft confirm/transformOut | `kernel-owners` | `draft-owner/` |
-| row identity/cache | `kernel-owners` | `collection-owner/` |
-| composite field lowering bridge | `package-compiler` | `lowering/` |
-| host command envelope | `host-protocol` | `commands/` |
-| node contract | `renderer-contracts` | `node-contract/` |
-| React hooks | `react-host` | `hooks/` |
-| conformance runner | `conformance-kit` | `runner/` |
+| Concern                         | Package              | Module              |
+| ------------------------------- | -------------------- | ------------------- |
+| package hash                    | `package-compiler`   | `hash/`             |
+| canonicalization                | `package-compiler`   | `determinism/`      |
+| tx phases                       | `kernel-core`        | `transaction/`      |
+| failure taxonomy                | `kernel-core`        | `failures/`         |
+| lane policy                     | `kernel-core`        | `async/`            |
+| action DAG execution            | `kernel-actions`     | `action-runtime/`   |
+| validation edge cases           | `kernel-validation`  | `edge-cases/`       |
+| draft confirm/transformOut      | `kernel-owners`      | `draft-owner/`      |
+| row identity/cache              | `kernel-owners`      | `collection-owner/` |
+| composite field lowering bridge | `package-compiler`   | `lowering/`         |
+| host command envelope           | `host-protocol`      | `commands/`         |
+| node contract                   | `renderer-contracts` | `node-contract/`    |
+| React hooks                     | `react-host`         | `hooks/`            |
+| conformance runner              | `conformance-kit`    | `runner/`           |

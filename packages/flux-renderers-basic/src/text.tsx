@@ -20,5 +20,13 @@ export function TextRenderer(props: RendererComponentProps<TextSchema>) {
       : 'span';
   const Tag: keyof React.JSX.IntrinsicElements = tag;
 
-  return <Tag className={cn('nop-text', props.meta.className)} data-testid={props.meta.testid || undefined} data-cid={props.meta.cid || undefined}>{String(text ?? '')}</Tag>;
+  return (
+    <Tag
+      className={cn('nop-text', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid || undefined}
+    >
+      {String(text ?? '')}
+    </Tag>
+  );
 }

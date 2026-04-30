@@ -83,7 +83,9 @@ test.describe('Word Editor Page', () => {
   test('displays right panel with Outline', async ({ page }) => {
     await openWordEditor(page);
 
-    await expect(page.getByRole('heading', { name: '大纲', level: 2 })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: '大纲', level: 2 })).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test('can type text in editor', async ({ page }) => {
@@ -169,7 +171,10 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByPlaceholder('Enter dataset name')).toBeVisible();
     await expect(page.getByPlaceholder('Enter dataset description')).toBeVisible();
 
-    const typeSelect = page.locator('select').filter({ hasText: /SQL|API|Mongo|Static/ }).first();
+    const typeSelect = page
+      .locator('select')
+      .filter({ hasText: /SQL|API|Mongo|Static/ })
+      .first();
     await expect(typeSelect).toBeVisible();
   });
 
@@ -181,21 +186,26 @@ test.describe('Word Editor Page', () => {
     await saveButton.click();
     await page.waitForTimeout(500);
 
-    await expect.poll(async () => {
-      return page.evaluate(() => {
-        const raw = window.localStorage.getItem('nop-word-editor-document');
-        if (!raw) {
-          return null;
-        }
+    await expect
+      .poll(
+        async () => {
+          return page.evaluate(() => {
+            const raw = window.localStorage.getItem('nop-word-editor-document');
+            if (!raw) {
+              return null;
+            }
 
-        try {
-          const parsed = JSON.parse(raw) as { savedAt?: string };
-          return typeof parsed.savedAt === 'string' ? parsed.savedAt : null;
-        } catch {
-          return null;
-        }
-      });
-    }, { timeout: 5000 }).not.toBeNull();
+            try {
+              const parsed = JSON.parse(raw) as { savedAt?: string };
+              return typeof parsed.savedAt === 'string' ? parsed.savedAt : null;
+            } catch {
+              return null;
+            }
+          });
+        },
+        { timeout: 5000 },
+      )
+      .not.toBeNull();
   });
 
   test('can open search panel', async ({ page }) => {

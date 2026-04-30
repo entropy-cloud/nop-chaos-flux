@@ -132,7 +132,17 @@ export interface CellStyle {
   textIndent?: number;
 }
 
-export type BorderStyle = 'none' | 'all' | 'outer' | 'inner' | 'top' | 'right' | 'bottom' | 'left' | 'horizontal' | 'vertical';
+export type BorderStyle =
+  | 'none'
+  | 'all'
+  | 'outer'
+  | 'inner'
+  | 'top'
+  | 'right'
+  | 'bottom'
+  | 'left'
+  | 'horizontal'
+  | 'vertical';
 
 export interface BorderLineStyle {
   color: string;
@@ -352,7 +362,10 @@ export function createEmptyDocument(id?: string): SpreadsheetDocument {
   };
 }
 
-export function mergeCellStyle(existing: CellStyle | undefined, patch: Partial<CellStyle>): CellStyle {
+export function mergeCellStyle(
+  existing: CellStyle | undefined,
+  patch: Partial<CellStyle>,
+): CellStyle {
   return { ...(existing ?? {}), ...patch };
 }
 

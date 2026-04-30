@@ -129,7 +129,7 @@ function isOwnerCompatible(
   oldOwnerBoundaryKind: 'inherit-owner' | 'create-owner' | 'no-owner',
   newOwnerBoundaryKind: 'inherit-owner' | 'create-owner' | 'no-owner',
   oldOwnerSlotId: string,
-  newOwnerSlotId: string
+  newOwnerSlotId: string,
 ): boolean {
   return (
     oldOwnerBoundaryKind === newOwnerBoundaryKind &&

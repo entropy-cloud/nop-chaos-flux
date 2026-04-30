@@ -9,18 +9,15 @@ import {
   namespaceProviderRenderer,
   scopedHostRenderer,
 } from '../test-support-runtime';
-import {
-  env,
-  pageRenderer,
-  sharedFormulaCompiler,
-  textRenderer,
-} from '../test-support-core';
+import { env, pageRenderer, sharedFormulaCompiler, textRenderer } from '../test-support-core';
 
 describe('dialog container resolution', () => {
   it('renders dialog with showMask: false and no overlay element', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             {
@@ -31,15 +28,15 @@ describe('dialog container resolution', () => {
                 args: {
                   title: 'No Mask Dialog',
                   showMask: false,
-                  body: [{ type: 'text', text: 'No mask content' }]
-                }
-              }
-            }
-          ]
+                  body: [{ type: 'text', text: 'No mask content' }],
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('Open no-mask dialog'));
     expect(await screen.findByText('No Mask Dialog')).toBeTruthy();
@@ -50,7 +47,9 @@ describe('dialog container resolution', () => {
   it('renders dialog with showMask: true (default) and includes overlay element', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             {
@@ -60,15 +59,15 @@ describe('dialog container resolution', () => {
                 action: 'openDialog',
                 args: {
                   title: 'Default Dialog',
-                  body: [{ type: 'text', text: 'Default content' }]
-                }
-              }
-            }
-          ]
+                  body: [{ type: 'text', text: 'Default content' }],
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('Open default dialog'));
     expect(await screen.findByText('Default Dialog')).toBeTruthy();
@@ -79,7 +78,9 @@ describe('dialog container resolution', () => {
   it('opens dialog and closes it successfully', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             {
@@ -89,15 +90,15 @@ describe('dialog container resolution', () => {
                 action: 'openDialog',
                 args: {
                   title: 'Test Dialog',
-                  body: [{ type: 'text', text: 'Hello' }]
-                }
-              }
-            }
-          ]
+                  body: [{ type: 'text', text: 'Hello' }],
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('Open dialog'));
     expect(await screen.findByText('Test Dialog')).toBeTruthy();
@@ -110,7 +111,9 @@ describe('drawer container resolution', () => {
   it('renders drawer with showMask: false and no overlay', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             {
@@ -121,15 +124,15 @@ describe('drawer container resolution', () => {
                 args: {
                   title: 'No Mask Drawer',
                   showMask: false,
-                  body: [{ type: 'text', text: 'Drawer content' }]
-                }
-              }
-            }
-          ]
+                  body: [{ type: 'text', text: 'Drawer content' }],
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('Open no-mask drawer'));
     expect(await screen.findByText('No Mask Drawer')).toBeTruthy();
@@ -140,7 +143,9 @@ describe('drawer container resolution', () => {
   it('renders drawer with showMask: true (default) and includes overlay', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             {
@@ -150,15 +155,15 @@ describe('drawer container resolution', () => {
                 action: 'openDrawer',
                 args: {
                   title: 'Default Drawer',
-                  body: [{ type: 'text', text: 'Content' }]
-                }
-              }
-            }
-          ]
+                  body: [{ type: 'text', text: 'Content' }],
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('Open default drawer'));
     expect(await screen.findByText('Default Drawer')).toBeTruthy();
@@ -169,9 +174,17 @@ describe('drawer container resolution', () => {
 
 describe('page modalContainer', () => {
   it('passes modalContainer from page schema to DialogHost', async () => {
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, scopedHostRenderer, componentHandleProviderRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      buttonRenderer,
+      scopedHostRenderer,
+      componentHandleProviderRenderer,
+    ]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           modalContainer: 'workspace-area',
           body: [
@@ -182,15 +195,15 @@ describe('page modalContainer', () => {
                 action: 'openDialog',
                 args: {
                   title: 'Contained Dialog',
-                  body: [{ type: 'text', text: 'Should be contained' }]
-                }
-              }
-            }
-          ]
+                  body: [{ type: 'text', text: 'Should be contained' }],
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('Open dialog'));
     expect(await screen.findByText('Contained Dialog')).toBeTruthy();
@@ -199,7 +212,9 @@ describe('page modalContainer', () => {
   it('dialog-level container overrides page modalContainer', async () => {
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           modalContainer: 'page-container',
           body: [
@@ -212,15 +227,15 @@ describe('page modalContainer', () => {
                   title: 'Override Dialog',
                   container: 'custom-container',
                   showMask: false,
-                  body: [{ type: 'text', text: 'Overridden' }]
-                }
-              }
-            }
-          ]
+                  body: [{ type: 'text', text: 'Overridden' }],
+                },
+              },
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('Open dialog'));
     expect(await screen.findByText('Override Dialog')).toBeTruthy();
@@ -230,9 +245,57 @@ describe('page modalContainer', () => {
 describe('dialog state preservation', () => {
   it('reopens dialog with fresh child providers and falls back after close', async () => {
     const capturedDispatches: Array<(input: any) => Promise<any>> = [];
-    const dispatchCaptureRenderer = createDispatchCaptureRenderer((dispatch) => capturedDispatches.push(dispatch));
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer, scopedHostRenderer, namespaceProviderRenderer, componentHandleProviderRenderer, dispatchCaptureRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'page', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' }, { type: 'button', label: 'Open provider dialog', onClick: { action: 'openDialog', args: { title: 'Provider dialog', body: [{ type: 'scoped-host', body: [{ type: 'namespace-provider', namespace: 'demo', label: 'dialog-ns' }, { type: 'component-handle-provider', componentName: 'shared', label: 'dialog-handle' }, { type: 'dispatch-capture' }, { type: 'text', text: 'Dialog provider content' }] }] } } }] }} env={env} formulaCompiler={sharedFormulaCompiler} />);
+    const dispatchCaptureRenderer = createDispatchCaptureRenderer((dispatch) =>
+      capturedDispatches.push(dispatch),
+    );
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      buttonRenderer,
+      scopedHostRenderer,
+      namespaceProviderRenderer,
+      componentHandleProviderRenderer,
+      dispatchCaptureRenderer,
+    ]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' },
+            { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' },
+            {
+              type: 'button',
+              label: 'Open provider dialog',
+              onClick: {
+                action: 'openDialog',
+                args: {
+                  title: 'Provider dialog',
+                  body: [
+                    {
+                      type: 'scoped-host',
+                      body: [
+                        { type: 'namespace-provider', namespace: 'demo', label: 'dialog-ns' },
+                        {
+                          type: 'component-handle-provider',
+                          componentName: 'shared',
+                          label: 'dialog-handle',
+                        },
+                        { type: 'dispatch-capture' },
+                        { type: 'text', text: 'Dialog provider content' },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
     fireEvent.click(screen.getByText('Open provider dialog'));
     expect(await screen.findByText('Dialog provider content')).toBeTruthy();
     await waitFor(() => expect(capturedDispatches.length).toBe(1));

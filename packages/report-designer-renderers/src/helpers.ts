@@ -1,7 +1,4 @@
-import type {
-  FieldSourceSnapshot,
-  ReportSelectionTarget,
-} from '@nop-chaos/report-designer-core';
+import type { FieldSourceSnapshot, ReportSelectionTarget } from '@nop-chaos/report-designer-core';
 
 export function joinClassNames(...parts: Array<string | undefined | false>) {
   return parts.filter(Boolean).join(' ');
@@ -9,7 +6,10 @@ export function joinClassNames(...parts: Array<string | undefined | false>) {
 
 export function getFieldCount(fieldSources: FieldSourceSnapshot[]): number {
   return fieldSources.reduce((total: number, source) => {
-    return total + source.groups.reduce((groupTotal: number, group) => groupTotal + group.fields.length, 0);
+    return (
+      total +
+      source.groups.reduce((groupTotal: number, group) => groupTotal + group.fields.length, 0)
+    );
   }, 0);
 }
 
@@ -33,6 +33,7 @@ export function formatSelectionLabel(target: ReportSelectionTarget | undefined) 
 
 export function formatMetadataValue(value: unknown): string {
   if (value == null) return 'empty';
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    return String(value);
   return JSON.stringify(value);
 }

@@ -20,6 +20,7 @@
 ## 复核验证过程
 
 复核 agent 检查了以下关键组件：
+
 - `table-quick-edit-cell.tsx` — draft/saved 是有意设计
 - `array-editor.tsx` — itemsRef 是性能缓存
 - `dialog-host.tsx` / `drawer-host.tsx` — 标准受控模式

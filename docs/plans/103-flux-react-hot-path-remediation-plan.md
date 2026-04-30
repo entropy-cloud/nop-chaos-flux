@@ -83,6 +83,7 @@ Targets: `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/n
 `useNodeLifecycleActions`: Changed from depending on `[input.helpers, input.lifecycleActions, input.nodeInstance]` to using refs for `helpers` and `nodeInstance` with effect only depending on `[input.lifecycleActions]`. This prevents mount/unmount re-firing when helpers identity changes due to scope/form/page churn.
 
 `hooks.ts`: Memoized `subscribe` and `getSnapshot` closures with `useMemo` in:
+
 - `useScopeSelector` (was bare inline closure)
 - `useCurrentFormState` (was bare inline closure)
 - `useCurrentFormErrors` (was bare inline closure)

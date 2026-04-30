@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ActionSchema, ApiSchema, ApiRequestContext, RendererPlugin } from '@nop-chaos/flux-core';
+import type {
+  ActionSchema,
+  ApiSchema,
+  ApiRequestContext,
+  RendererPlugin,
+} from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  createActionScope,
-  createRendererRegistry,
-  createRendererRuntime
-} from '../index';
+import { createActionScope, createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
@@ -14,9 +15,9 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T })
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ status: 'idle' });
 
@@ -26,22 +27,22 @@ describe('createRendererRuntime', () => {
           action: 'ajax',
           args: {
             url: '/api/fail',
-            method: 'get'
-          }
+            method: 'get',
+          },
         },
         {
           action: 'setValue',
           args: {
             path: 'status',
-            value: 'done'
-          }
-        }
+            value: 'done',
+          },
+        },
       ],
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(false);
@@ -55,9 +56,9 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T })
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ status: 'idle' });
 
@@ -67,35 +68,34 @@ describe('createRendererRuntime', () => {
           action: 'ajax',
           args: {
             url: '/api/fail',
-            method: 'get'
+            method: 'get',
           },
-          continueOnError: true
+          continueOnError: true,
         },
         {
           action: 'setValue',
           args: {
             path: 'status',
-            value: 'done'
-          }
-        }
+            value: 'done',
+          },
+        },
       ],
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(true);
     expect(page.store.getState().data.status).toBe('done');
   });
 
-
   it('runs then actions after a successful action', async () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ status: 'idle', lastResult: 'none' });
 
@@ -104,27 +104,27 @@ describe('createRendererRuntime', () => {
         action: 'setValue',
         args: {
           path: 'status',
-          value: 'loading'
+          value: 'loading',
         },
         then: {
           action: 'setValue',
           args: {
             path: 'lastResult',
-            value: '${result.data}'
-          }
-        }
+            value: '${result.data}',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(true);
     expect(page.store.getState().data).toMatchObject({
       status: 'loading',
-      lastResult: 'loading'
+      lastResult: 'loading',
     });
   });
 
@@ -132,7 +132,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ status: 'idle', marker: 'unchanged' });
 
@@ -141,28 +141,28 @@ describe('createRendererRuntime', () => {
         action: 'setValue',
         args: {
           path: 'status',
-          value: 'loading'
+          value: 'loading',
         },
         when: '${false}',
         then: {
           action: 'setValue',
           args: {
             path: 'marker',
-            value: 'then-ran'
-          }
-        }
+            value: 'then-ran',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, skipped: true });
     expect(page.store.getState().data).toMatchObject({
       status: 'idle',
-      marker: 'unchanged'
+      marker: 'unchanged',
     });
   });
 
@@ -171,9 +171,9 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T })
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ status: 'idle', failure: 'none' });
 
@@ -182,27 +182,27 @@ describe('createRendererRuntime', () => {
         action: 'ajax',
         args: {
           url: '/api/fail',
-          method: 'get'
+          method: 'get',
         },
         onError: {
           action: 'setValue',
           args: {
             path: 'failure',
-            value: '${error.message}:${result.ok}:${prevResult.ok}'
-          }
-        }
+            value: '${error.message}:${result.ok}:${prevResult.ok}',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(false);
     expect(page.store.getState().data).toMatchObject({
       status: 'idle',
-      failure: 'boom:false:true'
+      failure: 'boom:false:true',
     });
   });
 
@@ -210,7 +210,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ status: 'idle', settled: 'no' });
 
@@ -219,21 +219,21 @@ describe('createRendererRuntime', () => {
         action: 'setValue',
         args: {
           path: 'status',
-          value: 'done'
+          value: 'done',
         },
         onSettled: {
           action: 'setValue',
           args: {
             path: 'settled',
-            value: '${result.data}'
-          }
-        }
+            value: '${result.data}',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, data: 'done' });
@@ -245,9 +245,9 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T })
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ settled: 'no' });
 
@@ -259,15 +259,15 @@ describe('createRendererRuntime', () => {
           action: 'setValue',
           args: {
             path: 'settled',
-            value: '${error.message}'
-          }
-        }
+            value: '${error.message}',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(false);
@@ -280,9 +280,9 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T })
+        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ status: 'idle', failure: 'none', success: 'none' });
 
@@ -291,36 +291,36 @@ describe('createRendererRuntime', () => {
         action: 'ajax',
         args: {
           url: '/api/fail',
-          method: 'get'
+          method: 'get',
         },
         continueOnError: true,
         then: {
           action: 'setValue',
           args: {
             path: 'success',
-            value: 'then-ran'
-          }
+            value: 'then-ran',
+          },
         },
         onError: {
           action: 'setValue',
           args: {
             path: 'failure',
-            value: '${error.message}'
-          }
-        }
+            value: '${error.message}',
+          },
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(true);
     expect(page.store.getState().data).toMatchObject({
       status: 'idle',
       failure: 'boom',
-      success: 'none'
+      success: 'none',
     });
   });
 
@@ -328,44 +328,44 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const actionScope = createActionScope({ id: 'designer-scope' });
     const invoke = vi.fn().mockResolvedValue({ ok: true });
     actionScope.registerNamespace('designer', {
       kind: 'host',
-      invoke
+      invoke,
     });
 
     await runtime.dispatch(
       {
         action: 'designer:addNode',
         args: {
-          nodeType: 'task'
+          nodeType: 'task',
         },
         onError: {
           action: 'setValue',
           args: {
             path: 'ignored',
-            value: 'ignored'
-          }
-        }
+            value: 'ignored',
+          },
+        },
       } as any,
       {
         runtime,
         scope: page.scope,
         page,
-        actionScope
-      }
+        actionScope,
+      },
     );
 
     expect(invoke).toHaveBeenCalledWith(
       'addNode',
       {
-        nodeType: 'task'
+        nodeType: 'task',
       },
-      expect.objectContaining({ actionScope })
+      expect.objectContaining({ actionScope }),
     );
   });
 
@@ -381,16 +381,16 @@ describe('createRendererRuntime', () => {
           ...action,
           args: {
             ...(action.args ?? {}),
-            value: 'rewritten'
-          }
+            value: 'rewritten',
+          },
         } as ActionSchema;
-      }
+      },
     };
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
       plugins: [plugin],
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ status: 'idle' });
 
@@ -399,14 +399,14 @@ describe('createRendererRuntime', () => {
         action: 'setValue',
         args: {
           path: 'status',
-          value: 'original'
-        }
+          value: 'original',
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, data: 'rewritten' });
@@ -422,16 +422,16 @@ describe('createRendererRuntime', () => {
         ...env,
         fetcher: async <T>() => {
           throw new Error('network down') as unknown as T;
-        }
+        },
       },
       plugins: [
         {
           name: 'error-monitor',
-          onError
-        }
+          onError,
+        },
       ],
       onActionError,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
@@ -440,21 +440,21 @@ describe('createRendererRuntime', () => {
         action: 'ajax',
         args: {
           url: '/api/fail',
-          method: 'get'
-        }
+          method: 'get',
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(false);
     expect(onActionError).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0]?.[1]).toMatchObject({
-      phase: 'action'
+      phase: 'action',
     });
   });
 
@@ -469,11 +469,11 @@ describe('createRendererRuntime', () => {
           return {
             ok: true,
             status: 200,
-            data: { submitted: ctx.scope.readOwn() } as T
+            data: { submitted: ctx.scope.readOwn() } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ pageValue: 'root' });
     const form = runtime.createFormRuntime({
@@ -485,29 +485,32 @@ describe('createRendererRuntime', () => {
         submitAction: async (options) =>
           runtime.dispatch(
             { action: 'ajax', args: { url: '/api/profile', method: 'post' } },
-            { runtime, scope: form.scope, page, signal: options?.signal }
-          )
-      }
+            { runtime, scope: form.scope, page, signal: options?.signal },
+          ),
+      },
     });
 
     form.setValue('role', 'admin');
 
     const result = await runtime.dispatch(
       { action: 'submitForm' },
-      { runtime, scope: form.scope, page, form }
+      { runtime, scope: form.scope, page, form },
     );
 
     expect(result.ok).toBe(true);
     expect(fetchCalls).toHaveLength(1);
     expect(fetchCalls[0].api).toMatchObject({ url: '/api/profile', method: 'post' });
-    expect(fetchCalls[0].scopeData).toMatchObject({ username: 'Alice', email: 'alice@example.com', role: 'admin' });
+    expect(fetchCalls[0].scopeData).toMatchObject({
+      username: 'Alice',
+      email: 'alice@example.com',
+      role: 'admin',
+    });
     expect(result.data).toMatchObject({
       submitted: {
         username: 'Alice',
         email: 'alice@example.com',
-        role: 'admin'
-      }
+        role: 'admin',
+      },
     });
   });
-
 });

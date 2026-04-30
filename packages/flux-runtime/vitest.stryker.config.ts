@@ -5,7 +5,7 @@ export default mergeConfig(
   baseConfig,
   defineConfig({
     test: {
-      include: ['src/validation/*.test.ts']
-    }
-  })
+      include: ['src/validation/*.test.ts'],
+    },
+  }),
 );

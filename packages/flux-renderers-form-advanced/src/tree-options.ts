@@ -41,7 +41,7 @@ export function getTreeOptionConfig(config?: TreeOptionConfig) {
     labelField: config?.labelField || DEFAULT_LABEL_FIELD,
     valueField: config?.valueField || DEFAULT_VALUE_FIELD,
     onlyLeaf: config?.onlyLeaf === true,
-    showPathLabel: config?.showPathLabel === true
+    showPathLabel: config?.showPathLabel === true,
   };
 }
 
@@ -56,17 +56,21 @@ function buildTreeOptionMeta(input: {
   const labelValue = getIn(input.node, input.config.labelField);
   const label = String(labelValue ?? `Node ${input.index + 1}`);
   const value = getIn(input.node, input.config.valueField);
-  const valueKey = value !== undefined && value !== null && value !== '' ? String(value) : `${label}:${input.index}`;
+  const valueKey =
+    value !== undefined && value !== null && value !== ''
+      ? String(value)
+      : `${label}:${input.index}`;
   const pathLabel = input.parentPathLabel ? `${input.parentPathLabel} / ${label}` : label;
-  const children = toTreeOptionArray(getIn(input.node, input.config.childrenKey)).map((childNode, childIndex) =>
-    buildTreeOptionMeta({
-      node: childNode,
-      index: childIndex,
-      depth: input.depth + 1,
-      parentNode: input.node,
-      parentPathLabel: pathLabel,
-      config: input.config
-    })
+  const children = toTreeOptionArray(getIn(input.node, input.config.childrenKey)).map(
+    (childNode, childIndex) =>
+      buildTreeOptionMeta({
+        node: childNode,
+        index: childIndex,
+        depth: input.depth + 1,
+        parentNode: input.node,
+        parentPathLabel: pathLabel,
+        config: input.config,
+      }),
   );
 
   return {
@@ -77,22 +81,30 @@ function buildTreeOptionMeta(input: {
     depth: input.depth,
     pathLabel,
     parentNode: input.parentNode,
-    children
+    children,
   };
 }
 
-export function buildTreeOptionMetaList(options: unknown, config?: TreeOptionConfig): TreeOptionMeta[] {
+export function buildTreeOptionMetaList(
+  options: unknown,
+  config?: TreeOptionConfig,
+): TreeOptionMeta[] {
   const resolvedConfig = getTreeOptionConfig(config);
 
-  return toTreeOptionArray(options).map((node, index) => buildTreeOptionMeta({
-    node,
-    index,
-    depth: 0,
-    config: resolvedConfig
-  }));
+  return toTreeOptionArray(options).map((node, index) =>
+    buildTreeOptionMeta({
+      node,
+      index,
+      depth: 0,
+      config: resolvedConfig,
+    }),
+  );
 }
 
-export function flattenTreeOptions(options: TreeOptionMeta[], config?: TreeOptionConfig): TreeOptionMeta[] {
+export function flattenTreeOptions(
+  options: TreeOptionMeta[],
+  config?: TreeOptionConfig,
+): TreeOptionMeta[] {
   const resolvedConfig = getTreeOptionConfig(config);
   const flattened: TreeOptionMeta[] = [];
 
@@ -114,7 +126,11 @@ export function flattenTreeOptions(options: TreeOptionMeta[], config?: TreeOptio
   return flattened;
 }
 
-export function isTreeSelectionChecked(value: unknown, candidate: unknown, multiple: boolean): boolean {
+export function isTreeSelectionChecked(
+  value: unknown,
+  candidate: unknown,
+  multiple: boolean,
+): boolean {
   if (multiple) {
     return Array.isArray(value) && value.some((entry) => Object.is(entry, candidate));
   }
@@ -122,7 +138,11 @@ export function isTreeSelectionChecked(value: unknown, candidate: unknown, multi
   return Object.is(value, candidate);
 }
 
-export function toggleTreeSelection(value: unknown, candidate: unknown, multiple: boolean): unknown {
+export function toggleTreeSelection(
+  value: unknown,
+  candidate: unknown,
+  multiple: boolean,
+): unknown {
   if (!multiple) {
     return candidate;
   }

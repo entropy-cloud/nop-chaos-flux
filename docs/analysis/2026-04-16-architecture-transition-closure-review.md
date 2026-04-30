@@ -192,7 +192,7 @@
    - `name` 作为 Resource publication
    - `resultMapping` 作为值整形
    - 明确的 action/setValue 作为写入副作用
-   而不是继续扩大 `mergeToScope` 的责任。
+     而不是继续扩大 `mergeToScope` 的责任。
 
 文档应如何写：
 

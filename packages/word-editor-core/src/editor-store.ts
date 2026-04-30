@@ -1,26 +1,26 @@
-import { createStore } from 'zustand/vanilla'
-import type { CanvasEditorBridge } from './canvas-editor-bridge.js'
-import type { PaperSettings } from './paper-settings.js'
-import { DEFAULT_PAPER_SETTINGS } from './paper-settings.js'
+import { createStore } from 'zustand/vanilla';
+import type { CanvasEditorBridge } from './canvas-editor-bridge.js';
+import type { PaperSettings } from './paper-settings.js';
+import { DEFAULT_PAPER_SETTINGS } from './paper-settings.js';
 
 export interface EditorSelectionState {
-  bold: boolean
-  italic: boolean
-  underline: boolean
-  strikeout: boolean
-  superscript: boolean
-  subscript: boolean
-  font: string | null
-  size: number
-  color: string | null
-  highlight: string | null
-  rowFlex: string | null
-  level: string | null
-  listType: string | null
-  listStyle: string | null
-  rowMargin: number
-  undo: boolean
-  redo: boolean
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  strikeout: boolean;
+  superscript: boolean;
+  subscript: boolean;
+  font: string | null;
+  size: number;
+  color: string | null;
+  highlight: string | null;
+  rowFlex: string | null;
+  level: string | null;
+  listType: string | null;
+  listStyle: string | null;
+  rowMargin: number;
+  undo: boolean;
+  redo: boolean;
 }
 
 const DEFAULT_SELECTION: EditorSelectionState = {
@@ -40,19 +40,19 @@ const DEFAULT_SELECTION: EditorSelectionState = {
   listStyle: null,
   rowMargin: 0,
   undo: false,
-  redo: false
-}
+  redo: false,
+};
 
 export interface EditorState {
-  bridge: CanvasEditorBridge | null
-  isReady: boolean
-  isDirty: boolean
-  paperSettings: PaperSettings
-  selection: EditorSelectionState
-  currentPage: number
-  totalPages: number
-  scale: number
-  wordCount: number
+  bridge: CanvasEditorBridge | null;
+  isReady: boolean;
+  isDirty: boolean;
+  paperSettings: PaperSettings;
+  selection: EditorSelectionState;
+  currentPage: number;
+  totalPages: number;
+  scale: number;
+  wordCount: number;
 }
 
 const initialState: EditorState = {
@@ -64,58 +64,58 @@ const initialState: EditorState = {
   currentPage: 0,
   totalPages: 0,
   scale: 1,
-  wordCount: 0
-}
+  wordCount: 0,
+};
 
 export function createEditorStore() {
-  const store = createStore<EditorState>(() => ({ ...initialState }))
+  const store = createStore<EditorState>(() => ({ ...initialState }));
 
   return {
     getState: store.getState,
     subscribe: store.subscribe,
 
     setBridge(bridge: CanvasEditorBridge | null) {
-      store.setState({ bridge, isReady: bridge !== null && bridge.isReady() })
+      store.setState({ bridge, isReady: bridge !== null && bridge.isReady() });
     },
 
     setReady(isReady: boolean) {
-      store.setState({ isReady })
+      store.setState({ isReady });
     },
 
     setDirty(isDirty: boolean) {
-      store.setState({ isDirty })
+      store.setState({ isDirty });
     },
 
     setTotalPages(total: number) {
-      store.setState({ totalPages: total })
+      store.setState({ totalPages: total });
     },
 
     setCurrentPage(page: number) {
-      store.setState({ currentPage: page })
+      store.setState({ currentPage: page });
     },
 
     setScale(scale: number) {
-      store.setState({ scale })
+      store.setState({ scale });
     },
 
     setPaperSettings(settings: PaperSettings) {
-      store.setState({ paperSettings: settings })
+      store.setState({ paperSettings: settings });
     },
 
     setSelection(selection: Partial<EditorSelectionState>) {
       store.setState((state) => ({
-        selection: { ...state.selection, ...selection }
-      }))
+        selection: { ...state.selection, ...selection },
+      }));
     },
 
     setWordCount(wordCount: number) {
-      store.setState({ wordCount })
+      store.setState({ wordCount });
     },
 
     reset() {
-      store.setState({ ...initialState })
-    }
-  }
+      store.setState({ ...initialState });
+    },
+  };
 }
 
-export type EditorStoreApi = ReturnType<typeof createEditorStore>
+export type EditorStoreApi = ReturnType<typeof createEditorStore>;

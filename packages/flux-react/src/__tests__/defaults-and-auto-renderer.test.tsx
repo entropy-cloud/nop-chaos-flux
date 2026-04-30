@@ -9,8 +9,14 @@ describe('defaults and auto renderer', () => {
     const notify = vi.fn();
     const env = createDefaultEnv({ notify });
 
-    expect(await env.fetcher<{ ok: true }>({ url: '/api/demo' } as any, {} as any)).toEqual({ ok: true, status: 200, data: null });
-    expect(await env.fetcher<{ ok: true }>({ url: 'https://example.com' } as any, {} as any)).toEqual({ ok: true, status: 200, data: null });
+    expect(await env.fetcher<{ ok: true }>({ url: '/api/demo' } as any, {} as any)).toEqual({
+      ok: true,
+      status: 200,
+      data: null,
+    });
+    expect(
+      await env.fetcher<{ ok: true }>({ url: 'https://example.com' } as any, {} as any),
+    ).toEqual({ ok: true, status: 200, data: null });
 
     env.notify?.('info', 'message');
     expect(notify).toHaveBeenCalledWith('info', 'message');
@@ -18,7 +24,18 @@ describe('defaults and auto renderer', () => {
 
   it('wraps react components into renderer components when needed', () => {
     function PlainComponent(props: Record<string, unknown>) {
-      return <button type="button" data-testid={String(props['data-testid'])} data-cid={String(props['data-cid'])} className={String(props.className)} disabled={Boolean(props.disabled)} onClick={() => (props.onClick as (() => void) | undefined)?.()}>{String(props.label ?? '')}</button>;
+      return (
+        <button
+          type="button"
+          data-testid={String(props['data-testid'])}
+          data-cid={String(props['data-cid'])}
+          className={String(props.className)}
+          disabled={Boolean(props.disabled)}
+          onClick={() => (props.onClick as (() => void) | undefined)?.()}
+        >
+          {String(props.label ?? '')}
+        </button>
+      );
     }
 
     const Auto = createAutoRendererComponent(PlainComponent);
@@ -35,7 +52,7 @@ describe('defaults and auto renderer', () => {
         regions={{}}
         templateNode={{} as any}
         node={{} as any}
-      />
+      />,
     );
 
     const btn = screen.getByTestId('auto-btn');
@@ -56,7 +73,7 @@ describe('defaults and auto renderer', () => {
 
     const registry = createDefaultRegistry([
       { type: 'x', reactComponent: () => null } as any,
-      { type: 'y', component } as any
+      { type: 'y', component } as any,
     ]);
     expect(registry.get('x')?.component).toBeTruthy();
     expect(registry.get('y')?.component).toBe(component);
@@ -84,7 +101,7 @@ describe('defaults and auto renderer', () => {
         regions={{}}
         templateNode={{} as any}
         node={{} as any}
-      />
+      />,
     );
 
     const props = seen.mock.calls[0]?.[0] as Record<string, unknown>;

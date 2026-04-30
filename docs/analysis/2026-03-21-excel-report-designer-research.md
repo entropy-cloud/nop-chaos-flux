@@ -518,4 +518,3 @@ The next artifacts that would make implementation concrete are:
 - `docs/architecture/flux-core.md`
 - `docs/references/maintenance-checklist.md`
 - `docs/logs/index.md`
-

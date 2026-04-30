@@ -18,7 +18,9 @@ export interface ReportDesignerAdapterContext {
 
 export interface FieldSourceProvider {
   id: string;
-  load(context: ReportDesignerAdapterContext): Promise<FieldSourceSnapshot[]> | FieldSourceSnapshot[];
+  load(
+    context: ReportDesignerAdapterContext,
+  ): Promise<FieldSourceSnapshot[]> | FieldSourceSnapshot[];
 }
 
 export interface FieldDropAdapter {

@@ -12,10 +12,10 @@ const iconGallery = {
         { type: 'icon', icon: 'Star' },
         { type: 'icon', icon: 'Heart' },
         { type: 'icon', icon: 'Bell' },
-        { type: 'icon', icon: 'Settings' }
-      ]
-    }
-  ]
+        { type: 'icon', icon: 'Settings' },
+      ],
+    },
+  ],
 };
 
 const inlineWithText = {
@@ -33,8 +33,8 @@ const inlineWithText = {
           gap: 2,
           body: [
             { type: 'icon', icon: 'User' },
-            { type: 'text', text: 'Alice Johnson' }
-          ]
+            { type: 'text', text: 'Alice Johnson' },
+          ],
         },
         {
           type: 'flex',
@@ -43,8 +43,8 @@ const inlineWithText = {
           gap: 2,
           body: [
             { type: 'icon', icon: 'Mail' },
-            { type: 'text', text: 'alice@example.com' }
-          ]
+            { type: 'text', text: 'alice@example.com' },
+          ],
         },
         {
           type: 'flex',
@@ -53,12 +53,12 @@ const inlineWithText = {
           gap: 2,
           body: [
             { type: 'icon', icon: 'MapPin' },
-            { type: 'text', text: 'San Francisco, CA' }
-          ]
-        }
-      ]
-    }
-  ]
+            { type: 'text', text: 'San Francisco, CA' },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 export function IconLabPage() {
@@ -68,14 +68,16 @@ export function IconLabPage() {
       scenarios={[
         {
           title: 'Named icon gallery',
-          description: 'Different Lucide icon names rendered with the current default icon presentation.',
-          schema: iconGallery
+          description:
+            'Different Lucide icon names rendered with the current default icon presentation.',
+          schema: iconGallery,
         },
         {
           title: 'Inline with text labels',
-          description: 'Icons are commonly used inline in flex rows next to text for labelled list items.',
-          schema: inlineWithText
-        }
+          description:
+            'Icons are commonly used inline in flex rows next to text for labelled list items.',
+          schema: inlineWithText,
+        },
       ]}
     />
   );

@@ -293,8 +293,17 @@ describe('detail-field renderer commit behavior', () => {
     });
     expect(calls.map((entry) => entry.method)).toEqual(['toDraft', 'validateDraft', 'toCommit']);
     expect(calls[0]?.payload).toMatchObject({ value: 'Alpha', name: 'address', readOnly: false });
-    expect(calls[1]?.payload).toMatchObject({ value: { street: 'Beta Draft' }, originalValue: 'Alpha', name: 'address' });
-    expect(calls[2]?.payload).toMatchObject({ value: { street: 'Beta Draft' }, originalValue: 'Alpha', name: 'address', readOnly: false });
+    expect(calls[1]?.payload).toMatchObject({
+      value: { street: 'Beta Draft' },
+      originalValue: 'Alpha',
+      name: 'address',
+    });
+    expect(calls[2]?.payload).toMatchObject({
+      value: { street: 'Beta Draft' },
+      originalValue: 'Alpha',
+      name: 'address',
+      readOnly: false,
+    });
   });
 
   it('uses explicit args instead of default validation payloads', async () => {

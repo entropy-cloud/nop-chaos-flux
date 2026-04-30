@@ -7,7 +7,11 @@ export interface ReportFieldPanelProps {
   onFieldDragStart: (sourceId: string, fieldId: string, label: string) => void;
 }
 
-export function ReportFieldPanel({ fieldSources, className, onFieldDragStart }: ReportFieldPanelProps) {
+export function ReportFieldPanel({
+  fieldSources,
+  className,
+  onFieldDragStart,
+}: ReportFieldPanelProps) {
   return (
     <div className={className}>
       <h3>{t('flux.reportDesigner.fieldSources')}</h3>

@@ -20,6 +20,7 @@
 要求在仔细阅读 `docs/architecture/` 下文档后，在 `docs/discussions/` 记录这次讨论。
 
 核心约束：
+
 - 方案必须是**声明式的**，在 JSON 中表达。
 - 命令式具体实现接口是底层实现细节，不是讨论焦点。
 - 首先要确定**使用层面**，必须是使用层面非常简单直观。
@@ -53,13 +54,13 @@ ScopeRef.store.subscribe(change => ...)
 
 **已经完整实现的部分：**
 
-| 模式 | 实现状态 |
-|---|---|
-| 当前 scope 内任意路径变化 → 表达式自动重算 | 完整 |
-| 父 scope 变化 → 子 scope 可见（composite 订阅） | 完整 |
-| scope 变化 → `data-source` 公式重算 / API 重新拉取 | 完整，有依赖追踪、自环防护 |
-| scope 变化 → `reaction` 调度 actions | 完整，有 debounce / once / 循环防护 |
-| FormStore / PageStore → ScopeRef 统一接入 | 通过 adapter 包装，完整 |
+| 模式                                               | 实现状态                            |
+| -------------------------------------------------- | ----------------------------------- |
+| 当前 scope 内任意路径变化 → 表达式自动重算         | 完整                                |
+| 父 scope 变化 → 子 scope 可见（composite 订阅）    | 完整                                |
+| scope 变化 → `data-source` 公式重算 / API 重新拉取 | 完整，有依赖追踪、自环防护          |
+| scope 变化 → `reaction` 调度 actions               | 完整，有 debounce / once / 循环防护 |
+| FormStore / PageStore → ScopeRef 统一接入          | 通过 adapter 包装，完整             |
 
 **核心设计原则**：不存在直接的 Zustand-to-Zustand 跨 store 订阅。一切响应都经由 `ScopeRef.store.subscribe()`，Zustand store 只是该 subscribe 接口的具体实现。
 
@@ -116,6 +117,7 @@ Domain Store 是指 Flow Designer、Report Designer、Spreadsheet 等的内部 Z
 当前的处理方式是"拉模式注入"：designer-page 在渲染 region（toolbar、inspector、dialogs）时，构建一个 `designerScopeData` 快照，作为 region 的子 scope 注入。
 
 问题在于：
+
 - 只有 **region 内部** 的 schema 能观测到 designer 状态。
 - **Region 外部** 无法响应 designer 状态变化——例如页面级标题栏需要显示"未保存"指示，或页面层的 `reaction` 需要在 designer 变脏时触发自动保存倒计时。
 - 注入是一次性快照，不是响应式的（designer 状态变化后，region schema 需要靠其他机制重新求值）。
@@ -138,14 +140,14 @@ Domain Store 是指 Flow Designer、Report Designer、Spreadsheet 等的内部 Z
 
 #### 4. 真实需要小结
 
-| 场景 | 是否需要跨 store | 当前是否解决 |
-|---|---|---|
-| 兄弟组件通过共同 scope 协调 | 不需要 | 已解决 |
-| 父 scope 驱动子 scope | 不需要 | 已解决 |
-| form 字段联动 | 不需要 | 已解决 |
-| data-source 依赖上游值自动刷新 | 不需要 | 已解决 |
-| Domain store 状态 → region 外 schema 可观测 | **需要** | **未解决** |
-| Domain store 状态变化 → schema reaction 触发 | **需要** | **未解决** |
+| 场景                                         | 是否需要跨 store | 当前是否解决 |
+| -------------------------------------------- | ---------------- | ------------ |
+| 兄弟组件通过共同 scope 协调                  | 不需要           | 已解决       |
+| 父 scope 驱动子 scope                        | 不需要           | 已解决       |
+| form 字段联动                                | 不需要           | 已解决       |
+| data-source 依赖上游值自动刷新               | 不需要           | 已解决       |
+| Domain store 状态 → region 外 schema 可观测  | **需要**         | **未解决**   |
+| Domain store 状态变化 → schema reaction 触发 | **需要**         | **未解决**   |
 
 ---
 
@@ -191,6 +193,7 @@ Domain Store 是指 Flow Designer、Report Designer、Spreadsheet 等的内部 Z
 ```
 
 **优势：**
+
 - 使用层完全透明——消费方什么都不需要知道，就是普通表达式。
 - 与现有 scope 模型天然兼容，不引入新的读取语法。
 - 复杂控件通过 `publishScope` 明确声明自己的状态边界，隐藏内部实现。
@@ -204,9 +207,7 @@ Domain Store 是指 Flow Designer、Report Designer、Spreadsheet 等的内部 Z
 {
   "type": "container",
   "xui:data": ["cart", "userPrefs"],
-  "body": [
-    { "type": "text", "text": "${cart.items.length} 件" }
-  ]
+  "body": [{ "type": "text", "text": "${cart.items.length} 件" }]
 }
 ```
 
@@ -274,10 +275,10 @@ Domain Store 是指 Flow Designer、Report Designer、Spreadsheet 等的内部 Z
 
 对比：
 
-| 概念 | 来源文档 | 机制描述 |
-|---|---|---|
-| `statusPath` | `action-interaction-state.md` | owner 将只读状态 DTO 发布到 scope 中的命名路径；外部表达式通过该路径读取 |
-| `publishScope`（第 1 轮候选方案 A） | 本讨论 | 复杂控件将 domain snapshot 发布到**父级** scope 中的命名路径；外部表达式直接使用 |
+| 概念                                | 来源文档                      | 机制描述                                                                         |
+| ----------------------------------- | ----------------------------- | -------------------------------------------------------------------------------- |
+| `statusPath`                        | `action-interaction-state.md` | owner 将只读状态 DTO 发布到 scope 中的命名路径；外部表达式通过该路径读取         |
+| `publishScope`（第 1 轮候选方案 A） | 本讨论                        | 复杂控件将 domain snapshot 发布到**父级** scope 中的命名路径；外部表达式直接使用 |
 
 二者的**底层实现路径完全相同**：
 
@@ -314,13 +315,13 @@ designer 的现有结构已经天然对应这个内外分离：
 
 字段名和语义：
 
-| Owner 类型 | 内部读 | 外部读（`statusPath`） | DTO 形状 |
-|---|---|---|---|
-| `form` | `$form` | `${myFormStatus.submitting}` | `FormStatusSummary` |
-| `data-source` | 当前 scope 内直接引用 `name` | `${usersStatus.loading}` | `SourceStatusSummary` |
-| `dialog` / `drawer` | `$surface` | via `statusPath` | `SurfaceStatusSummary` |
-| `flow-designer` | `${designer.isDirty}`（region 内） | `${mainDesignerStatus.isDirty}` | `DesignerStatusSummary` |
-| `spreadsheet-page` | region scope 内 | `${spreadsheetStatus.dirty}` | `SpreadsheetStatusSummary` |
+| Owner 类型          | 内部读                             | 外部读（`statusPath`）          | DTO 形状                   |
+| ------------------- | ---------------------------------- | ------------------------------- | -------------------------- |
+| `form`              | `$form`                            | `${myFormStatus.submitting}`    | `FormStatusSummary`        |
+| `data-source`       | 当前 scope 内直接引用 `name`       | `${usersStatus.loading}`        | `SourceStatusSummary`      |
+| `dialog` / `drawer` | `$surface`                         | via `statusPath`                | `SurfaceStatusSummary`     |
+| `flow-designer`     | `${designer.isDirty}`（region 内） | `${mainDesignerStatus.isDirty}` | `DesignerStatusSummary`    |
+| `spreadsheet-page`  | region scope 内                    | `${spreadsheetStatus.dirty}`    | `SpreadsheetStatusSummary` |
 
 对 designer 的 JSON 示例：
 

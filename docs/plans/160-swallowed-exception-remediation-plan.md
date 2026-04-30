@@ -13,16 +13,16 @@
 
 通过逐文件审查全部 42 个 catch 块和 .catch() 调用，确认以下 8 个代码位置存在异常吞掉：
 
-| # | 位置 | 严重度 | 问题 |
-|---|------|--------|------|
-| 1 | `packages/flux-runtime/src/async-data/formula-data-source-controller.ts:164` | 高 | `void Promise.resolve().then(() => publish())` 无 `.catch()`，`publish()` 失败后数据源永久卡在 `fetching` |
-| 2 | `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx:191` | 高 | `void committedValue.then(...).finally(...)` 无 `.catch()`，transformOut 失败后表单值静默丢失 |
-| 3 | `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx:140` | 中 | `void nextValue.then(...)` 无 `.catch()`，transformIn 失败后字段显示陈旧数据 |
-| 4 | `packages/flux-renderers-form/src/field-utils.tsx:245` | 中 | `void result.then(...)` 无 `.catch()`，adapter.in() 失败后字段值不更新 |
-| 4b | `packages/flux-renderers-form/src/field-utils.tsx:111,123,134` | 中 | L111/L123: `void (async () => { await setValue(nextValue) })()` 无 `.catch()`；L134: `void setValue(nextValue)` 直接丢弃 promise。adapter.out() 失败后用户输入静默丢失（Bug #4 的写入路径对称缺陷） |
-| 5 | `packages/flow-designer-renderers/src/use-designer-auto-layout.ts:76` | 低 | `.then(...).finally(...)` 无 `.catch()`，ELK 布局失败后 spinner 清除但无错误提示 |
-| 6a | `packages/word-editor-renderers/src/editor-canvas.tsx:118` | 低 | `wordCountPromise.then(...)` 无 `.catch()`，字数统计获取失败无处理 |
-| 6b | `packages/word-editor-renderers/src/preview/doc-preview-page.tsx:47` | 低 | 同上 |
+| #   | 位置                                                                             | 严重度 | 问题                                                                                                                                                                                                |
+| --- | -------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `packages/flux-runtime/src/async-data/formula-data-source-controller.ts:164`     | 高     | `void Promise.resolve().then(() => publish())` 无 `.catch()`，`publish()` 失败后数据源永久卡在 `fetching`                                                                                           |
+| 2   | `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx:191` | 高     | `void committedValue.then(...).finally(...)` 无 `.catch()`，transformOut 失败后表单值静默丢失                                                                                                       |
+| 3   | `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx:140` | 中     | `void nextValue.then(...)` 无 `.catch()`，transformIn 失败后字段显示陈旧数据                                                                                                                        |
+| 4   | `packages/flux-renderers-form/src/field-utils.tsx:245`                           | 中     | `void result.then(...)` 无 `.catch()`，adapter.in() 失败后字段值不更新                                                                                                                              |
+| 4b  | `packages/flux-renderers-form/src/field-utils.tsx:111,123,134`                   | 中     | L111/L123: `void (async () => { await setValue(nextValue) })()` 无 `.catch()`；L134: `void setValue(nextValue)` 直接丢弃 promise。adapter.out() 失败后用户输入静默丢失（Bug #4 的写入路径对称缺陷） |
+| 5   | `packages/flow-designer-renderers/src/use-designer-auto-layout.ts:76`            | 低     | `.then(...).finally(...)` 无 `.catch()`，ELK 布局失败后 spinner 清除但无错误提示                                                                                                                    |
+| 6a  | `packages/word-editor-renderers/src/editor-canvas.tsx:118`                       | 低     | `wordCountPromise.then(...)` 无 `.catch()`，字数统计获取失败无处理                                                                                                                                  |
+| 6b  | `packages/word-editor-renderers/src/preview/doc-preview-page.tsx:47`             | 低     | 同上                                                                                                                                                                                                |
 
 其余 35 个 catch 块和 5 个 .catch() 调用均已正确处理异常（rethrow / 日志 / monitor 上报 / 状态捕获），无需修改。
 

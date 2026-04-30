@@ -6,13 +6,13 @@ import { createRendererEnv, createTestConfig, ensureResizeObserverMock } from '.
 
 export const textRenderer: RendererDefinition = {
   type: 'text',
-  component: (props) => <span>{String(props.props.text ?? '')}</span>
+  component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render()}</section>,
-  regions: ['body']
+  regions: ['body'],
 };
 
 export const basicTestRendererDefinitions: RendererDefinition[] = [pageRenderer, textRenderer];

@@ -2,18 +2,18 @@
 
 ## 渲染器评分
 
-| 渲染器 | 评分 | 主要关注点 |
-|--------|------|-----------|
-| page-renderer | A | 无违规 |
-| container-renderer | A | 无违规 |
-| text-renderer | A | 无违规 |
-| input-renderer (含 select/checkbox/switch/radio-group/checkbox-group) | A | 无违规 |
-| form-renderer | A | 无违规 |
-| table-renderer | A- | loadingSlot/header/footer 未在 definition 声明 (P2) |
-| crud-renderer | B | queryForm region 未注册 (P1); loading 永远 false (P2); 内部 nop-crud-* class (P3) |
-| array-editor | A- | 内部硬编码行布局 (P3, 可接受) |
-| array-field | A | 无违规 |
-| condition-builder | B+ | ConditionGroup 大量实现性样式 (P2, 可接受); 缺少 data-testid/data-cid (P3) |
+| 渲染器                                                                | 评分 | 主要关注点                                                                         |
+| --------------------------------------------------------------------- | ---- | ---------------------------------------------------------------------------------- |
+| page-renderer                                                         | A    | 无违规                                                                             |
+| container-renderer                                                    | A    | 无违规                                                                             |
+| text-renderer                                                         | A    | 无违规                                                                             |
+| input-renderer (含 select/checkbox/switch/radio-group/checkbox-group) | A    | 无违规                                                                             |
+| form-renderer                                                         | A    | 无违规                                                                             |
+| table-renderer                                                        | A-   | loadingSlot/header/footer 未在 definition 声明 (P2)                                |
+| crud-renderer                                                         | B    | queryForm region 未注册 (P1); loading 永远 false (P2); 内部 nop-crud-\* class (P3) |
+| array-editor                                                          | A-   | 内部硬编码行布局 (P3, 可接受)                                                      |
+| array-field                                                           | A    | 无违规                                                                             |
+| condition-builder                                                     | B+   | ConditionGroup 大量实现性样式 (P2, 可接受); 缺少 data-testid/data-cid (P3)         |
 
 ## 实质性违规
 
@@ -37,6 +37,7 @@
 ## 可接受的实现性样式（P3）
 
 共 5 项 P3 级内部样式硬编码，均属"明确拥有 UI 壳层的组件"内部实现性样式：
+
 - ArrayEditor 行布局 grid
 - ConditionGroup 多层级布局
 - PickerModeContent 按钮样式

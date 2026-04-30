@@ -18,9 +18,24 @@ function makeActionFlowConfig(): NormalizedDesignerConfig {
       branchEdgeType: 'action-branch',
     },
     nodeTypes: [
-      { id: 'action-entry', label: '入口', body: { type: 'text' }, tree: { allowChild: true, allowBranches: false } },
-      { id: 'action-step', label: '动作', body: { type: 'text' }, tree: { allowChild: true, allowBranches: true, maxBranches: 3 } },
-      { id: 'action-end', label: '结束', body: { type: 'text' }, tree: { allowChild: false, allowBranches: false, isTerminal: true } },
+      {
+        id: 'action-entry',
+        label: '入口',
+        body: { type: 'text' },
+        tree: { allowChild: true, allowBranches: false },
+      },
+      {
+        id: 'action-step',
+        label: '动作',
+        body: { type: 'text' },
+        tree: { allowChild: true, allowBranches: true, maxBranches: 3 },
+      },
+      {
+        id: 'action-end',
+        label: '结束',
+        body: { type: 'text' },
+        tree: { allowChild: false, allowBranches: false, isTerminal: true },
+      },
     ],
     edgeTypes: [
       { id: 'action-chain', appearance: { stroke: '#64748b', strokeWidth: 2 } },
@@ -36,35 +51,47 @@ function makeActionFlowTree(): TreeDocument {
     name: '用户保存流程',
     version: '1.0.0',
     root: {
-      id: 'entry', type: 'action-entry',
+      id: 'entry',
+      type: 'action-entry',
       data: { label: '入口' },
       child: {
-        id: 'precheck', type: 'action-step',
+        id: 'precheck',
+        type: 'action-step',
         data: { label: '预检查', action: 'setValue', when: '${userId != null}' },
         branches: [
           {
             id: 'then-precheck',
             data: { branchType: 'then', label: '成功' },
             child: {
-              id: 'fetch-user', type: 'action-step',
+              id: 'fetch-user',
+              type: 'action-step',
               data: { label: '加载用户数据', action: 'ajax', timeout: 5000 },
               branches: [
                 {
                   id: 'then-fetch',
                   data: { branchType: 'then', label: '成功' },
                   child: {
-                    id: 'save-form', type: 'action-step',
+                    id: 'save-form',
+                    type: 'action-step',
                     data: { label: '保存表单', action: 'component:submit' },
                     branches: [
                       {
                         id: 'then-save',
                         data: { branchType: 'then', label: '成功' },
-                        child: { id: 'refresh-list', type: 'action-step', data: { label: '刷新列表', action: 'component:refresh' } },
+                        child: {
+                          id: 'refresh-list',
+                          type: 'action-step',
+                          data: { label: '刷新列表', action: 'component:refresh' },
+                        },
                       },
                       {
                         id: 'onerror-save',
                         data: { branchType: 'onError', label: '失败' },
-                        child: { id: 'show-save-error', type: 'action-step', data: { label: '显示错误', action: 'showToast' } },
+                        child: {
+                          id: 'show-save-error',
+                          type: 'action-step',
+                          data: { label: '显示错误', action: 'showToast' },
+                        },
                       },
                     ],
                   },
@@ -72,7 +99,11 @@ function makeActionFlowTree(): TreeDocument {
                 {
                   id: 'onerror-fetch',
                   data: { branchType: 'onError', label: '失败' },
-                  child: { id: 'retry-fetch', type: 'action-step', data: { label: '重试加载', action: 'ajax' } },
+                  child: {
+                    id: 'retry-fetch',
+                    type: 'action-step',
+                    data: { label: '重试加载', action: 'ajax' },
+                  },
                 },
               ],
             },
@@ -80,7 +111,11 @@ function makeActionFlowTree(): TreeDocument {
           {
             id: 'onerror-precheck',
             data: { branchType: 'onError', label: '失败' },
-            child: { id: 'show-precheck-error', type: 'action-step', data: { label: '提示选择用户', action: 'showToast' } },
+            child: {
+              id: 'show-precheck-error',
+              type: 'action-step',
+              data: { label: '提示选择用户', action: 'showToast' },
+            },
           },
         ],
         child: { id: 'end', type: 'action-end', data: { label: '结束' } },
@@ -203,7 +238,12 @@ describe('Action Flow Tree Projection', () => {
     expect(mergeToEnd).toHaveLength(4);
 
     const sources = mergeToEnd.map((e) => e.source).sort();
-    expect(sources).toEqual(['refresh-list', 'retry-fetch', 'show-precheck-error', 'show-save-error']);
+    expect(sources).toEqual([
+      'refresh-list',
+      'retry-fetch',
+      'show-precheck-error',
+      'show-save-error',
+    ]);
   });
 
   it('preserves node data through projection', () => {
@@ -223,16 +263,16 @@ describe('Action Flow Tree Projection', () => {
           data: { branchType: 'then', label: '成功' },
           childId: 'fetch-user',
           childType: 'action-step',
-          childLabel: '加载用户数据'
+          childLabel: '加载用户数据',
         },
         {
           id: 'onerror-precheck',
           data: { branchType: 'onError', label: '失败' },
           childId: 'show-precheck-error',
           childType: 'action-step',
-          childLabel: '提示选择用户'
-        }
-      ]
+          childLabel: '提示选择用户',
+        },
+      ],
     });
 
     const fetchUser = nodes.find((n) => n.id === 'fetch-user');
@@ -246,16 +286,16 @@ describe('Action Flow Tree Projection', () => {
           data: { branchType: 'then', label: '成功' },
           childId: 'save-form',
           childType: 'action-step',
-          childLabel: '保存表单'
+          childLabel: '保存表单',
         },
         {
           id: 'onerror-fetch',
           data: { branchType: 'onError', label: '失败' },
           childId: 'retry-fetch',
           childType: 'action-step',
-          childLabel: '重试加载'
-        }
-      ]
+          childLabel: '重试加载',
+        },
+      ],
     });
   });
 
@@ -265,12 +305,7 @@ describe('Action Flow Tree Projection', () => {
     const config = makeActionFlowConfig();
     const { nodes, edges } = projectTree(tree, config);
 
-    const laidOut = await layoutTreeWithElk(
-      nodes,
-      edges,
-      config.treeConfig!,
-      config.nodeTypes,
-    );
+    const laidOut = await layoutTreeWithElk(nodes, edges, config.treeConfig!, config.nodeTypes);
 
     for (const node of laidOut) {
       expect(node.position.x).toBeGreaterThanOrEqual(0);
@@ -284,12 +319,7 @@ describe('Action Flow Tree Projection', () => {
     const config = makeActionFlowConfig();
     const { nodes, edges } = projectTree(tree, config);
 
-    const laidOut = await layoutTreeWithElk(
-      nodes,
-      edges,
-      config.treeConfig!,
-      config.nodeTypes,
-    );
+    const laidOut = await layoutTreeWithElk(nodes, edges, config.treeConfig!, config.nodeTypes);
 
     const nodeMap = new Map(laidOut.map((n) => [n.id, n]));
     const yEntry = nodeMap.get('entry')!.position.y;

@@ -7,7 +7,7 @@ import {
   DOMAIN_RENDERER_ROUTES,
   parseRoute,
   buildRoute,
-  type RouteSpec
+  type RouteSpec,
 } from './route-model';
 import { RENDERER_LAB_REGISTRY } from './component-lab/renderer-lab-registry';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -31,7 +31,10 @@ describe('Route model - parseRoute', () => {
   });
 
   it('parses #/lab/object-field as lab-renderer with rendererId=object-field', () => {
-    expect(parseRoute('#/lab/object-field')).toEqual({ kind: 'lab-renderer', rendererId: 'object-field' });
+    expect(parseRoute('#/lab/object-field')).toEqual({
+      kind: 'lab-renderer',
+      rendererId: 'object-field',
+    });
   });
 
   it('parses #/flow-designer as domain route', () => {
@@ -39,7 +42,10 @@ describe('Route model - parseRoute', () => {
   });
 
   it('parses #/report-designer as domain route', () => {
-    expect(parseRoute('#/report-designer')).toEqual({ kind: 'domain', domainId: 'report-designer' });
+    expect(parseRoute('#/report-designer')).toEqual({
+      kind: 'domain',
+      domainId: 'report-designer',
+    });
   });
 
   it('parses unknown routes as home', () => {
@@ -59,7 +65,9 @@ describe('Route model - buildRoute', () => {
 
   it('builds lab-renderer route', () => {
     expect(buildRoute({ kind: 'lab-renderer', rendererId: 'button' })).toBe('#/lab/button');
-    expect(buildRoute({ kind: 'lab-renderer', rendererId: 'array-field' })).toBe('#/lab/array-field');
+    expect(buildRoute({ kind: 'lab-renderer', rendererId: 'array-field' })).toBe(
+      '#/lab/array-field',
+    );
   });
 
   it('builds domain routes', () => {
@@ -77,7 +85,7 @@ describe('Route model - round-trip stability', () => {
     { kind: 'domain', domainId: 'flow-designer' },
     { kind: 'domain', domainId: 'report-designer' },
     { kind: 'domain', domainId: 'debugger-lab' },
-    { kind: 'domain', domainId: 'performance-table' }
+    { kind: 'domain', domainId: 'performance-table' },
   ];
 
   for (const spec of specs) {
@@ -93,37 +101,61 @@ describe('Route inventory - live renderer coverage', () => {
   it('basic renderer routes cover all registered basic renderer types', () => {
     const routeIds = new Set(BASIC_RENDERER_ROUTES.map((r) => r.id));
     for (const def of basicRendererDefinitions) {
-      expect(routeIds.has(def.type), `basic renderer '${def.type}' missing from route inventory`).toBe(true);
+      expect(
+        routeIds.has(def.type),
+        `basic renderer '${def.type}' missing from route inventory`,
+      ).toBe(true);
     }
   });
 
   it('form renderer routes cover all registered form renderer types', () => {
     const routeIds = new Set(FORM_RENDERER_ROUTES.map((r) => r.id));
     for (const def of formRendererDefinitions) {
-      expect(routeIds.has(def.type), `form renderer '${def.type}' missing from route inventory`).toBe(true);
+      expect(
+        routeIds.has(def.type),
+        `form renderer '${def.type}' missing from route inventory`,
+      ).toBe(true);
     }
     for (const def of formAdvancedRendererDefinitions) {
-      expect(routeIds.has(def.type), `form-advanced renderer '${def.type}' missing from route inventory`).toBe(true);
+      expect(
+        routeIds.has(def.type),
+        `form-advanced renderer '${def.type}' missing from route inventory`,
+      ).toBe(true);
     }
   });
 
   it('data renderer routes cover all registered data renderer types', () => {
     const routeIds = new Set(DATA_RENDERER_ROUTES.map((r) => r.id));
     for (const def of dataRendererDefinitions) {
-      expect(routeIds.has(def.type), `data renderer '${def.type}' missing from route inventory`).toBe(true);
+      expect(
+        routeIds.has(def.type),
+        `data renderer '${def.type}' missing from route inventory`,
+      ).toBe(true);
     }
   });
 
   it('inventory includes all composite form renderers', () => {
-    const compositeIds = ['object-field', 'array-field', 'variant-field', 'detail-field', 'detail-view'];
+    const compositeIds = [
+      'object-field',
+      'array-field',
+      'variant-field',
+      'detail-field',
+      'detail-view',
+    ];
     const routeIds = new Set(FORM_RENDERER_ROUTES.map((r) => r.id));
     for (const id of compositeIds) {
-      expect(routeIds.has(id), `composite form renderer '${id}' missing from route inventory`).toBe(true);
+      expect(routeIds.has(id), `composite form renderer '${id}' missing from route inventory`).toBe(
+        true,
+      );
     }
   });
 
   it('total shared renderer count matches live registry sizes', () => {
-    const liveTotal = basicRendererDefinitions.length + formRendererDefinitions.length + formAdvancedRendererDefinitions.length + dataRendererDefinitions.length;
+    const liveTotal =
+      basicRendererDefinitions.length +
+      formRendererDefinitions.length +
+      formAdvancedRendererDefinitions.length +
+      dataRendererDefinitions.length;
     expect(ALL_SHARED_RENDERER_ROUTES.length).toBe(liveTotal);
   });
 });
@@ -140,7 +172,10 @@ describe('Renderer lab registry - coverage matrix', () => {
   it('lab registry has no orphaned entries missing from route inventory', () => {
     const routeIds = new Set(ALL_SHARED_RENDERER_ROUTES.map((r) => r.id));
     for (const id of Object.keys(RENDERER_LAB_REGISTRY)) {
-      expect(routeIds.has(id), `lab registry entry '${id}' has no matching route inventory entry`).toBe(true);
+      expect(
+        routeIds.has(id),
+        `lab registry entry '${id}' has no matching route inventory entry`,
+      ).toBe(true);
     }
   });
 });
@@ -156,8 +191,19 @@ describe('Domain route inventory', () => {
 
   it('domain inventory includes all existing specialized topic pages', () => {
     const domainIds = new Set(DOMAIN_RENDERER_ROUTES.map((r) => r.id));
-    for (const pageId of ['flow-designer', 'report-designer', 'debugger-lab', 'condition-builder', 'code-editor', 'word-editor', 'performance-table']) {
-      expect(domainIds.has(pageId), `domain page '${pageId}' missing from domain route inventory`).toBe(true);
+    for (const pageId of [
+      'flow-designer',
+      'report-designer',
+      'debugger-lab',
+      'condition-builder',
+      'code-editor',
+      'word-editor',
+      'performance-table',
+    ]) {
+      expect(
+        domainIds.has(pageId),
+        `domain page '${pageId}' missing from domain route inventory`,
+      ).toBe(true);
     }
   });
 });

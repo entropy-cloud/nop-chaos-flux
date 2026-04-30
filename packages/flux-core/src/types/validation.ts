@@ -111,11 +111,7 @@ export interface CompiledFormValidationModel {
   defaultHiddenFieldPolicy?: HiddenFieldPolicy;
 }
 
-export type ValidationOwnerLifecycleState =
-  | 'bootstrapping'
-  | 'active'
-  | 'refreshing'
-  | 'disposed';
+export type ValidationOwnerLifecycleState = 'bootstrapping' | 'active' | 'refreshing' | 'disposed';
 
 export type ValidationReason = 'change' | 'blur' | 'submit' | 'commit' | 'system' | 'manual';
 

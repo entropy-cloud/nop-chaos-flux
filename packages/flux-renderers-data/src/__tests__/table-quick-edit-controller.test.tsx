@@ -20,7 +20,11 @@ function createRowScope(record: Record<string, unknown>) {
   } as any;
 }
 
-function createHelpers(dispatch: ReturnType<typeof vi.fn<() => Promise<{ ok: boolean }>>> = vi.fn(async () => ({ ok: true }))) {
+function createHelpers(
+  dispatch: ReturnType<typeof vi.fn<() => Promise<{ ok: boolean }>>> = vi.fn(async () => ({
+    ok: true,
+  })),
+) {
   return {
     dispatch,
   } as any;
@@ -48,12 +52,24 @@ function ControllerHarness(props: {
       <span data-testid="dirty">{String(controller.dirty)}</span>
       <span data-testid="dialog-open">{String(controller.dialogOpen)}</span>
       <span data-testid="draft">{controller.draftValue}</span>
-      <button type="button" onClick={() => controller.handleInlineValueChange('Alicia')}>change</button>
-      <button type="button" onClick={controller.markBodyDirty}>mark-body-dirty</button>
-      <button type="button" onClick={controller.openDialog}>open</button>
-      <button type="button" onClick={controller.closeDialog}>close</button>
-      <button type="button" onClick={() => void controller.runSave()}>save</button>
-      <button type="button" onClick={() => controller.handleDialogOpenChange(false)}>dialog-change-close</button>
+      <button type="button" onClick={() => controller.handleInlineValueChange('Alicia')}>
+        change
+      </button>
+      <button type="button" onClick={controller.markBodyDirty}>
+        mark-body-dirty
+      </button>
+      <button type="button" onClick={controller.openDialog}>
+        open
+      </button>
+      <button type="button" onClick={controller.closeDialog}>
+        close
+      </button>
+      <button type="button" onClick={() => void controller.runSave()}>
+        save
+      </button>
+      <button type="button" onClick={() => controller.handleDialogOpenChange(false)}>
+        dialog-change-close
+      </button>
     </div>
   );
 }
@@ -71,7 +87,7 @@ describe('useTableQuickEditController', () => {
         rowScope={rowScope}
         helpers={createHelpers(dispatch)}
         saveAction={{ action: 'save' }}
-      />
+      />,
     );
 
     expect(screen.getByTestId('dirty').textContent).toBe('false');
@@ -103,7 +119,7 @@ describe('useTableQuickEditController', () => {
         helpers={createHelpers()}
         hasCustomBody
         saveAction={{ action: 'save' }}
-      />
+      />,
     );
 
     rowScope.update('record.name', 'Changed');
@@ -118,9 +134,12 @@ describe('useTableQuickEditController', () => {
   it('opens dialog with saved value and ignores close while saving', async () => {
     cleanup();
     let resolveSave: (() => void) | undefined;
-    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(() => new Promise<{ ok: boolean }>((resolve) => {
-      resolveSave = () => resolve({ ok: true });
-    }));
+    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(
+      () =>
+        new Promise<{ ok: boolean }>((resolve) => {
+          resolveSave = () => resolve({ ok: true });
+        }),
+    );
     const rowScope = createRowScope({ name: 'Alice' });
 
     render(
@@ -130,7 +149,7 @@ describe('useTableQuickEditController', () => {
         rowScope={rowScope}
         helpers={createHelpers(dispatch)}
         saveAction={{ action: 'save' }}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'open' }));

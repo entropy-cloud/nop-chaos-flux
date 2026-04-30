@@ -13,7 +13,7 @@ import type {
   RendererEnv,
   RendererRuntime,
   ScopeRef,
-  XuiImportSpec
+  XuiImportSpec,
 } from '@nop-chaos/flux-core';
 import { reportImportFailure } from '@nop-chaos/flux-core';
 
@@ -21,21 +21,25 @@ function normalizeImportSpec(spec: XuiImportSpec): XuiImportSpec {
   return {
     ...spec,
     from: spec.from.trim(),
-    as: spec.as.trim()
+    as: spec.as.trim(),
   };
 }
 
-function resolveImportSpec(env: RendererEnv, schemaUrl: string, spec: XuiImportSpec): XuiImportSpec {
+function resolveImportSpec(
+  env: RendererEnv,
+  schemaUrl: string,
+  spec: XuiImportSpec,
+): XuiImportSpec {
   return {
     ...spec,
-    from: env.resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
+    from: env.resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from,
   };
 }
 
 function createModuleKey(spec: XuiImportSpec): string {
   return JSON.stringify({
     from: spec.from,
-    options: spec.options ?? null
+    options: spec.options ?? null,
   });
 }
 
@@ -43,7 +47,7 @@ function createFrameEntryKey(spec: XuiImportSpec): string {
   return JSON.stringify({
     from: spec.from,
     as: spec.as,
-    options: spec.options ?? null
+    options: spec.options ?? null,
   });
 }
 
@@ -108,7 +112,10 @@ async function loadModule(input: {
   }
 }
 
-function buildFrameBindings(frame: ImportFrame | undefined, framesById: Map<string, InternalImportFrame>): Readonly<Record<string, unknown>> {
+function buildFrameBindings(
+  frame: ImportFrame | undefined,
+  framesById: Map<string, InternalImportFrame>,
+): Readonly<Record<string, unknown>> {
   if (!frame) {
     return {};
   }
@@ -160,24 +167,22 @@ export function createImportStack(input: {
     reportImportFailure({
       env: input.getEnv(),
       error,
-      imports: spec ? [spec] : []
+      imports: spec ? [spec] : [],
     });
   }
 
-  async function preload(args: {
-    imports?: readonly XuiImportSpec[];
-    schemaUrl: string;
-  }) {
-    const imports = args.imports
-      ?.map(normalizeImportSpec)
-      .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
-      .filter((spec) => spec.from && spec.as) ?? [];
+  async function preload(args: { imports?: readonly XuiImportSpec[]; schemaUrl: string }) {
+    const imports =
+      args.imports
+        ?.map(normalizeImportSpec)
+        .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
+        .filter((spec) => spec.from && spec.as) ?? [];
 
     for (const spec of imports) {
       await loadModule({
         moduleCache: input.moduleCache,
         getLoader: input.getLoader,
-        spec
+        spec,
       });
     }
   }
@@ -192,10 +197,11 @@ export function createImportStack(input: {
     schemaUrl: string;
     nodeInstance?: NodeInstance;
   }): Promise<ImportFrame | undefined> {
-    const imports = args.imports
-      ?.map(normalizeImportSpec)
-      .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
-      .filter((spec) => spec.from && spec.as) ?? [];
+    const imports =
+      args.imports
+        ?.map(normalizeImportSpec)
+        .map((spec) => resolveImportSpec(input.getEnv(), args.schemaUrl, spec))
+        .filter((spec) => spec.from && spec.as) ?? [];
 
     if (imports.length === 0) {
       return undefined;
@@ -208,15 +214,21 @@ export function createImportStack(input: {
 
     for (const spec of imports) {
       if (Object.prototype.hasOwnProperty.call(entries, spec.as)) {
-        const error = createImportError(`Duplicate import alias in the same node boundary: ${spec.as}`);
+        const error = createImportError(
+          `Duplicate import alias in the same node boundary: ${spec.as}`,
+        );
         notifyImportFailure(error, spec);
         throw error;
       }
 
       if (args.actionScope?.listNamespaces().includes(spec.as)) {
         const parentFrame = args.parentFrameId ? framesById.get(args.parentFrameId) : undefined;
-        const inherited = parentFrame ? buildFrameBindings(parentFrame, framesById)[`$${spec.as}`] : undefined;
-        const inheritedProvider = args.parentFrameId ? resolveAlias(spec.as, args.parentFrameId)?.actionProvider : undefined;
+        const inherited = parentFrame
+          ? buildFrameBindings(parentFrame, framesById)[`$${spec.as}`]
+          : undefined;
+        const inheritedProvider = args.parentFrameId
+          ? resolveAlias(spec.as, args.parentFrameId)?.actionProvider
+          : undefined;
 
         if (!inherited && !inheritedProvider) {
           const error = createImportError(`Namespace collision for import alias: ${spec.as}`);
@@ -235,16 +247,18 @@ export function createImportStack(input: {
           moduleCache: input.moduleCache,
           getLoader: input.getLoader,
           spec,
-          signal: controller.signal
+          signal: controller.signal,
         });
         const context: ImportedNamespaceContext = {
           runtime: input.getRuntime(),
           env: input.getEnv(),
-          actionScope: args.actionScope ?? input.getRuntime().createActionScope({ id: `${frameId}:${spec.as}:action-scope` }),
+          actionScope:
+            args.actionScope ??
+            input.getRuntime().createActionScope({ id: `${frameId}:${spec.as}:action-scope` }),
           componentRegistry: args.componentRegistry,
           scope: args.scope,
           spec,
-          nodeInstance: args.nodeInstance
+          nodeInstance: args.nodeInstance,
         };
         const provider = await module.createNamespace(context);
         expressionHelpers = module.createExpressionHelpers
@@ -252,23 +266,29 @@ export function createImportStack(input: {
           : undefined;
         wrappedProvider = {
           ...provider,
-          kind: provider.kind ?? 'import'
+          kind: provider.kind ?? 'import',
         };
       } catch (error) {
-        const wrappedError = createImportError(`Imported namespace ${spec.as} failed to load: ${toErrorMessage(error)}`, error);
+        const wrappedError = createImportError(
+          `Imported namespace ${spec.as} failed to load: ${toErrorMessage(error)}`,
+          error,
+        );
         notifyImportFailure(wrappedError, spec);
         throw wrappedError;
       }
 
       if (args.actionScope) {
-        releaseMap.set(createFrameEntryKey(spec), args.actionScope.registerNamespace(spec.as, wrappedProvider));
+        releaseMap.set(
+          createFrameEntryKey(spec),
+          args.actionScope.registerNamespace(spec.as, wrappedProvider),
+        );
       }
 
       entries[spec.as] = {
         alias: spec.as,
         spec,
         actionProvider: wrappedProvider,
-        expressionHelpers: expressionHelpers ?? undefined
+        expressionHelpers: expressionHelpers ?? undefined,
       };
     }
 
@@ -279,7 +299,7 @@ export function createImportStack(input: {
       actionScope: args.actionScope,
       entries,
       releaseMap,
-      controllerMap
+      controllerMap,
     };
 
     framesById.set(frameId, frame);
@@ -309,17 +329,25 @@ export function createImportStack(input: {
 
     for (const prepared of imports) {
       if (Object.prototype.hasOwnProperty.call(entries, prepared.spec.as)) {
-        const error = createImportError(`Duplicate import alias in the same node boundary: ${prepared.spec.as}`);
+        const error = createImportError(
+          `Duplicate import alias in the same node boundary: ${prepared.spec.as}`,
+        );
         notifyImportFailure(error, prepared.spec);
         throw error;
       }
 
       if (args.actionScope?.listNamespaces().includes(prepared.spec.as)) {
-        const inherited = args.parentFrame ? buildFrameBindings(args.parentFrame, framesById)[`$${prepared.spec.as}`] : undefined;
-        const inheritedProvider = args.parentFrame ? resolveAlias(prepared.spec.as, args.parentFrame.id)?.actionProvider : undefined;
+        const inherited = args.parentFrame
+          ? buildFrameBindings(args.parentFrame, framesById)[`$${prepared.spec.as}`]
+          : undefined;
+        const inheritedProvider = args.parentFrame
+          ? resolveAlias(prepared.spec.as, args.parentFrame.id)?.actionProvider
+          : undefined;
 
         if (!inherited && !inheritedProvider) {
-          const error = createImportError(`Namespace collision for import alias: ${prepared.spec.as}`);
+          const error = createImportError(
+            `Namespace collision for import alias: ${prepared.spec.as}`,
+          );
           notifyImportFailure(error, prepared.spec);
           throw error;
         }
@@ -327,7 +355,9 @@ export function createImportStack(input: {
 
       const module = input.moduleCache.get(createModuleKey(prepared.resolvedSpec));
       if (!module) {
-        const error = createImportError(`Prepared import missing cached module for ${prepared.spec.as}`);
+        const error = createImportError(
+          `Prepared import missing cached module for ${prepared.spec.as}`,
+        );
         notifyImportFailure(error, prepared.spec);
         throw error;
       }
@@ -335,29 +365,38 @@ export function createImportStack(input: {
       const context: ImportedNamespaceContext = {
         runtime: input.getRuntime(),
         env: input.getEnv(),
-        actionScope: args.actionScope ?? input.getRuntime().createActionScope({ id: `${frameId}:${prepared.spec.as}:action-scope` }),
+        actionScope:
+          args.actionScope ??
+          input
+            .getRuntime()
+            .createActionScope({ id: `${frameId}:${prepared.spec.as}:action-scope` }),
         componentRegistry: args.componentRegistry,
         scope: args.scope,
         spec: prepared.resolvedSpec,
-        nodeInstance: args.nodeInstance
+        nodeInstance: args.nodeInstance,
       };
 
       const providerResult = module.createNamespace(context);
       const helpersResult = module.createExpressionHelpers?.(context);
 
       if (providerResult instanceof Promise || helpersResult instanceof Promise) {
-        const error = createImportError(`Prepared import ${prepared.spec.as} must install synchronously at render time.`);
+        const error = createImportError(
+          `Prepared import ${prepared.spec.as} must install synchronously at render time.`,
+        );
         notifyImportFailure(error, prepared.spec);
         throw error;
       }
 
       const wrappedProvider: ActionNamespaceProvider = {
         ...providerResult,
-        kind: providerResult.kind ?? 'import'
+        kind: providerResult.kind ?? 'import',
       };
 
       if (args.actionScope) {
-        releaseMap.set(buildPreparedFrameEntryKey(prepared), args.actionScope.registerNamespace(prepared.spec.as, wrappedProvider));
+        releaseMap.set(
+          buildPreparedFrameEntryKey(prepared),
+          args.actionScope.registerNamespace(prepared.spec.as, wrappedProvider),
+        );
       }
 
       entries[prepared.spec.as] = {
@@ -365,7 +404,7 @@ export function createImportStack(input: {
         spec: prepared.resolvedSpec,
         actionProvider: wrappedProvider,
         expressionHelpers: helpersResult ?? undefined,
-        staticMeta: prepared.staticMeta
+        staticMeta: prepared.staticMeta,
       };
     }
 
@@ -377,7 +416,7 @@ export function createImportStack(input: {
       actionScope: args.actionScope,
       entries,
       releaseMap,
-      controllerMap
+      controllerMap,
     };
 
     framesById.set(frameId, frame);
@@ -452,6 +491,6 @@ export function createImportStack(input: {
     pop,
     resolveAlias,
     currentBindings,
-    dispose
+    dispose,
   };
 }

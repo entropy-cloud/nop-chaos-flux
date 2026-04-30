@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-03
 
-
 > **Status: ✅ REVIEWED / COMPLETED AS AN EXECUTION PLAN**
 > Source audit conducted 2026-03-31 via automated codebase analysis (7 agents + Oracle verification).
 > Covers `flux-core`, `flux-runtime`, `flux-react`, `flux-formula` and 3 renderer packages.
@@ -18,23 +17,23 @@ This document lists every issue found during the architecture audit, explains th
 
 这份文档现在更适合作为“审计结论 + 执行状态台账”，不再是纯待办清单。
 
-| ID | 当前状态 | 是否还在本计划执行 | 复审结论 |
-|----|----------|--------------------|----------|
-| P0-1 | 已实现 | 否 | `packages/flux-react/src/hooks.ts` 已移除 `require()` |
-| P2-7 | 已实现 | 否 | `AGENTS.md` 和 `docs/architecture/flux-core.md` 已修正定位 |
-| P1-1 | 已实现 | 否 | `packages/flux-core/src/types/` 已拆分；`types.ts` 保留为兼容 re-export，更合理 |
-| P1-2 | 已实现 | 否 | 仅推荐的 Phase B 已落地；Phase A/C 继续不执行 |
-| P1-3 | 已实现 | 否 | `validateRegisteredChildren` 已提取 |
-| P1-4 | 已部分实现并关闭 | 否 | 核心拆分已完成；剩余 provider 合并方案不推荐继续 |
-| P2-1 | 已实现 | 否 | `scheduleDebounce` / `cancelPendingDebounce` 已落地 |
-| P2-2 | 已实现 | 否 | `setValidating` 已复用 `setBooleanState` |
-| P2-3 | 已实现 | 否 | `executeArrayMutation` 已提取 |
-| ~~P2-4~~ | 已废弃 | 否 | 继续保持不推荐 |
-| P2-5 | 已实现 | 否 | `schema-compiler/` 子模块已落地；主文件保留 orchestrator |
-| P2-6 | 已实现 | 否 | 文档已移除不存在的 `flux-testing` 包 |
-| P3-1 | 已实现 | 否 | `flux-formula` 已拆为 5 个模块 |
-| P3-2 | 已实现 | 否 | `docs/architecture/flux-core.md` 已补充 `amis-formula` 适配边界说明 |
-| P3-3 | 已转移 / 废弃 | 否 | 后续领域包结构工作改由专门计划跟踪 |
+| ID       | 当前状态         | 是否还在本计划执行 | 复审结论                                                                        |
+| -------- | ---------------- | ------------------ | ------------------------------------------------------------------------------- |
+| P0-1     | 已实现           | 否                 | `packages/flux-react/src/hooks.ts` 已移除 `require()`                           |
+| P2-7     | 已实现           | 否                 | `AGENTS.md` 和 `docs/architecture/flux-core.md` 已修正定位                      |
+| P1-1     | 已实现           | 否                 | `packages/flux-core/src/types/` 已拆分；`types.ts` 保留为兼容 re-export，更合理 |
+| P1-2     | 已实现           | 否                 | 仅推荐的 Phase B 已落地；Phase A/C 继续不执行                                   |
+| P1-3     | 已实现           | 否                 | `validateRegisteredChildren` 已提取                                             |
+| P1-4     | 已部分实现并关闭 | 否                 | 核心拆分已完成；剩余 provider 合并方案不推荐继续                                |
+| P2-1     | 已实现           | 否                 | `scheduleDebounce` / `cancelPendingDebounce` 已落地                             |
+| P2-2     | 已实现           | 否                 | `setValidating` 已复用 `setBooleanState`                                        |
+| P2-3     | 已实现           | 否                 | `executeArrayMutation` 已提取                                                   |
+| ~~P2-4~~ | 已废弃           | 否                 | 继续保持不推荐                                                                  |
+| P2-5     | 已实现           | 否                 | `schema-compiler/` 子模块已落地；主文件保留 orchestrator                        |
+| P2-6     | 已实现           | 否                 | 文档已移除不存在的 `flux-testing` 包                                            |
+| P3-1     | 已实现           | 否                 | `flux-formula` 已拆为 5 个模块                                                  |
+| P3-2     | 已实现           | 否                 | `docs/architecture/flux-core.md` 已补充 `amis-formula` 适配边界说明             |
+| P3-3     | 已转移 / 废弃    | 否                 | 后续领域包结构工作改由专门计划跟踪                                              |
 
 **不应继续从本计划推进的项**：`P1-4` 剩余步骤、`P3-3` 领域包专项审计总项、以及所有已完成的 core-package 重构项。
 
@@ -51,14 +50,14 @@ This document lists every issue found during the architecture audit, explains th
 
 flux-core 的实际定位不是"纯类型包"，而是**基础契约与共享工具包**。当前包含的运行时代码：
 
-| File | Functions | 性质 |
-|------|-----------|------|
-| `utils/array.ts` | 6 | 纯函数，无副作用，等同于语言内置工具 |
-| `utils/path.ts` | 3 | 纯函数，嵌套对象访问 |
-| `utils/object.ts` | 2 | 纯函数，类型判断和浅比较 |
-| `utils/schema.ts` | 4 | 纯函数，Schema 类型守卫 |
-| `validation-model.ts` | 12 | 纯函数，验证模型数据变换 |
-| `class-aliases.ts` | 2 | 纯函数，别名解析 |
+| File                  | Functions | 性质                                 |
+| --------------------- | --------- | ------------------------------------ |
+| `utils/array.ts`      | 6         | 纯函数，无副作用，等同于语言内置工具 |
+| `utils/path.ts`       | 3         | 纯函数，嵌套对象访问                 |
+| `utils/object.ts`     | 2         | 纯函数，类型判断和浅比较             |
+| `utils/schema.ts`     | 4         | 纯函数，Schema 类型守卫              |
+| `validation-model.ts` | 12        | 纯函数，验证模型数据变换             |
+| `class-aliases.ts`    | 2         | 纯函数，别名解析                     |
 
 **放在 flux-core 是合理的原因**：
 
@@ -72,9 +71,11 @@ flux-core 的实际定位不是"纯类型包"，而是**基础契约与共享工
 **Step 1 — 更新 AGENTS.md**:
 
 将 flux-core 的描述从：
+
 > `@nop-chaos/flux-core` - Pure types/interfaces (no runtime code).
 
 改为：
+
 > `@nop-chaos/flux-core` - Foundation contracts and shared utilities. Contains type definitions, constants, and side-effect-free pure utility functions shared across all packages.
 
 **Step 2 — 更新 `docs/architecture/flux-core.md`**:
@@ -193,15 +194,18 @@ Low-code renderers deal with dynamic, user-defined schemas where field types are
 Incremental improvement — only target the highest-value, lowest-risk sites.
 
 **Phase A — `RendererDefinition.component` ⛔ 不推荐:**
+
 ```typescript
 // Proposed: use S instead of any
 interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   component: ComponentType<RendererComponentProps<S>>;
 }
 ```
+
 **不推荐原因**: 在低代码渲染器中，`S` 在编译时永远是 `BaseSchema`——schema 来自 JSON 运行时解析，不存在静态子类型信息。此改动对绝大多数 renderer 无实际类型收窄效果，ROI 极低。
 
 **Phase B — `useScopeSelector` ✅ 推荐 (0.5 day):**
+
 ```typescript
 // Before
 useScopeSelector<T>(selector: (scopeData: any) => T, ...): T
@@ -209,6 +213,7 @@ useScopeSelector<T>(selector: (scopeData: any) => T, ...): T
 // After — add a generic for the scope shape
 useScopeSelector<T, S = Record<string, unknown>>(selector: (scopeData: S) => T, ...): T
 ```
+
 这个改动向后兼容、低风险、为调用方提供了类型安全的入口点。
 
 **Phase C — `FormStoreState.values` and `ScopeStore` ⛔ 不推荐:**
@@ -257,7 +262,7 @@ async function validateRegisteredChildren(
   registration: RuntimeFieldRegistration,
   validateField: (path: string) => Promise<ValidationResult>,
   fieldErrors: Record<string, ValidationError[]>,
-  errors: ValidationError[]
+  errors: ValidationError[],
 ): Promise<void> {
   if (!registration.validateChild || !registration.childPaths?.length) return;
   for (const childPath of registration.childPaths) {
@@ -295,6 +300,7 @@ merge all errors
 ### Problem
 
 `packages/flux-react/src/node-renderer.tsx` (356 lines) combines:
+
 - Form runtime creation and lifecycle management (lines 100-136)
 - Action scope and component registry creation (lines 138-156)
 - xui:imports lifecycle (lines 182-197)
@@ -311,6 +317,7 @@ merge all errors
 **Step 1 — Extract custom hooks (2 files):**
 
 `useNodeForm.ts`:
+
 ```typescript
 export function useNodeForm(node, scope, page, resolvedProps, runtime): FormRuntime | undefined {
   // Move form creation logic (lines 100-136)
@@ -319,6 +326,7 @@ export function useNodeForm(node, scope, page, resolvedProps, runtime): FormRunt
 ```
 
 `useNodeScopes.ts`:
+
 ```typescript
 export function useNodeScopes(node, runtime, actionScope, componentRegistry) {
   // Move action scope + component registry creation (lines 138-156)
@@ -329,6 +337,7 @@ export function useNodeScopes(node, runtime, actionScope, componentRegistry) {
 **Step 2 — Fix monitoring performance (0.5 day):**
 
 Replace per-render `Date.now()` with conditional monitoring:
+
 ```typescript
 // Before (line 70)
 renderStartedAtRef.current = Date.now();
@@ -342,6 +351,7 @@ if (runtime.env.monitor) {
 **Step 3 — Consider flattening Context tree (optional, P2) ⚠️ 需谨慎:**
 
 Combine the 7 Context.Providers into a single `NodeContext` object:
+
 ```typescript
 interface NodeContextValue {
   scope: ScopeRef;
@@ -355,7 +365,7 @@ interface NodeContextValue {
 ```
 
 > **⚠️ 性能警告**: React 的 Context 机制决定了单一 context 意味着任一值变化都会触发所有消费者重新渲染。7 个独立 provider 反而提供了更细粒度的更新控制。**仅在性能分析确认 context 传播成本显著时才考虑合并**，否则维持现状更优。
-This reduces provider nesting but requires updating all consumers. Mark as optional scope — only do if performance profiling shows context propagation cost.
+> This reduces provider nesting but requires updating all consumers. Mark as optional scope — only do if performance profiling shows context propagation cost.
 
 **Scope**: `packages/flux-react/src/` only. No API changes to public hooks.
 
@@ -399,7 +409,7 @@ export function scheduleDebounce<K>(
   pendingMap: Map<K, { timer: ReturnType<typeof setTimeout>; resolve: (result: unknown) => void }>,
   key: K,
   timeoutMs: number,
-  factory: () => Promise<unknown>
+  factory: () => Promise<unknown>,
 ): Promise<unknown> {
   const previous = pendingMap.get(key);
   if (previous) {
@@ -587,7 +597,7 @@ appendValue(path, value) {
 Critical identifiers are all typed as plain `string`:
 
 ```typescript
-export type SchemaPath = string;        // types.ts:11
+export type SchemaPath = string; // types.ts:11
 // ComponentId, ActionName, etc. — not even aliases, just inline string
 ```
 
@@ -675,6 +685,7 @@ The package was planned but never created. Tests currently use local helpers or 
 Two options:
 
 **Option A — Create the package:**
+
 1. Create `packages/flux-testing/` with standard package structure
 2. Extract common test utilities from existing test files:
    - Mock scope/store factories used in multiple test files
@@ -683,6 +694,7 @@ Two options:
 3. Add workspace dependency in test files
 
 **Option B — Remove from documentation:**
+
 1. Remove `flux-testing` from AGENTS.md package list
 2. Keep test utilities colocated as they are today
 
@@ -703,6 +715,7 @@ Recommend **Option B** unless 3+ packages share significant test boilerplate.
 `packages/flux-formula/src/index.ts` is a 585-line single file containing the entire compilation pipeline: template parsing, expression compilation, value tree compilation, scope proxy creation, and evaluation.
 
 Two similar brace-counting parsers exist:
+
 - `parseTemplateSegments()` (lines 187-239, 53 lines) — full template segment extraction
 - `isPureExpression()` (lines 155-185, 31 lines) — checks if template is a single expression
 
@@ -774,6 +787,7 @@ Scope limitation — the initial audit focused on the core flux pipeline.
 ### Fix Plan
 
 Schedule separate audits for each domain package, following the same methodology:
+
 - Explore agent for structure/patterns
 - Check for internal duplication, oversized files, abstraction quality
 - Verify `*-core` / `*-renderers` boundary is clean
@@ -790,28 +804,26 @@ Priority: `spreadsheet-core` first (largest at 1698 lines), then `flow-designer-
 
 > **2026-04-03 复审总结**: 这份计划中的核心 `flux-*` 项目现已全部落地；剩余范围外的领域包结构工作已经转移到其他专项计划。
 
-| ID | 当前状态 | 方案复核 | 当前处理建议 |
-|----|----------|----------|--------------|
-| P0-1 | 已实现 | 原方案合理 | 关闭 |
-| P2-7 | 已实现 | 原方案合理 | 关闭 |
-| P2-6 | 已实现 | 原方案合理，Option B 正确 | 关闭 |
-| P2-2 | 已实现 | 原方案合理 | 关闭 |
-| P1-3 | 已实现 | 原方案合理 | 关闭 |
-| P2-3 | 已实现 | 原方案合理 | 关闭 |
-| P1-2 | 已实现 | 仅 Phase B 合理 | 关闭 |
-| P2-1 | 已实现 | 原方案合理，最终实现略强于计划 | 关闭 |
-| P2-5 | 已实现 | 原方向合理；保留 orchestrator 比“彻底拆空主文件”更合理 | 关闭 |
-| P1-1 | 已实现 | 原方向合理；保留兼容 `types.ts` 比彻底删除更合理 | 关闭 |
-| P3-1 | 已实现 | 原方案合理 | 关闭 |
-| P1-4 | 已部分实现 | Step 1/2 合理；Step 3 不合理 | 不再作为独立任务继续 |
-| ~~P2-4~~ | 已废弃 | 继续不推荐 | 保持废弃 |
-| P3-2 | 已实现 | 原方案在收窄为 docs-only 后合理 | 关闭 |
-| P3-3 | 已转移 / 废弃 | 不应继续挂在本计划下 | 改看 `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md` 等专项计划 |
+| ID       | 当前状态      | 方案复核                                               | 当前处理建议                                                                 |
+| -------- | ------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| P0-1     | 已实现        | 原方案合理                                             | 关闭                                                                         |
+| P2-7     | 已实现        | 原方案合理                                             | 关闭                                                                         |
+| P2-6     | 已实现        | 原方案合理，Option B 正确                              | 关闭                                                                         |
+| P2-2     | 已实现        | 原方案合理                                             | 关闭                                                                         |
+| P1-3     | 已实现        | 原方案合理                                             | 关闭                                                                         |
+| P2-3     | 已实现        | 原方案合理                                             | 关闭                                                                         |
+| P1-2     | 已实现        | 仅 Phase B 合理                                        | 关闭                                                                         |
+| P2-1     | 已实现        | 原方案合理，最终实现略强于计划                         | 关闭                                                                         |
+| P2-5     | 已实现        | 原方向合理；保留 orchestrator 比“彻底拆空主文件”更合理 | 关闭                                                                         |
+| P1-1     | 已实现        | 原方向合理；保留兼容 `types.ts` 比彻底删除更合理       | 关闭                                                                         |
+| P3-1     | 已实现        | 原方案合理                                             | 关闭                                                                         |
+| P1-4     | 已部分实现    | Step 1/2 合理；Step 3 不合理                           | 不再作为独立任务继续                                                         |
+| ~~P2-4~~ | 已废弃        | 继续不推荐                                             | 保持废弃                                                                     |
+| P3-2     | 已实现        | 原方案在收窄为 docs-only 后合理                        | 关闭                                                                         |
+| P3-3     | 已转移 / 废弃 | 不应继续挂在本计划下                                   | 改看 `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md` 等专项计划 |
 
 **当前处理建议**:
 
 1. 本计划可以视为已完成，不再作为活跃执行清单使用。
 2. 不要再从这份计划继续推进 `P1-4` 的 provider 合并或额外抽象。
 3. 领域包的大文件/结构债务后续直接看 `docs/plans/29-domain-runtime-and-debugger-refactor-plan.md`，不要回到 #23 聚合处理。
-
-

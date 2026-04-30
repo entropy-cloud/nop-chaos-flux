@@ -1,8 +1,4 @@
-import type {
-  FormRuntime,
-  FormStoreApi,
-  ScopeRef
-} from '@nop-chaos/flux-core';
+import type { FormRuntime, FormStoreApi, ScopeRef } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { createProjectedInlineForm } from '../composite-field/projected-inline-form';
 import { createProjectedOwnerScope } from '../projected-owner-scope';
@@ -22,11 +18,15 @@ export function createVariantFormProxy(parentForm: FormRuntime, prefix: string):
     prefixPath,
     projectValues(state) {
       const subValue = prefix ? getIn(state.values, prefix) : state.values;
-      return (subValue !== undefined ? subValue : null) as FormStoreApi['getState'] extends () => infer T
-        ? T extends { values: infer V } ? V : never
+      return (
+        subValue !== undefined ? subValue : null
+      ) as FormStoreApi['getState'] extends () => infer T
+        ? T extends { values: infer V }
+          ? V
+          : never
         : never;
     },
-    supportsArrayMutations: true
+    supportsArrayMutations: true,
   });
 }
 
@@ -34,7 +34,7 @@ export function createVariantScope(
   parentScope: ScopeRef,
   name: string,
   activeVariant: string | undefined,
-  readOnly: boolean
+  readOnly: boolean,
 ): ScopeRef {
   return createProjectedOwnerScope({
     parentScope,
@@ -70,6 +70,6 @@ export function createVariantScope(
       }
 
       parentScope.update(name, data);
-    }
+    },
   });
 }

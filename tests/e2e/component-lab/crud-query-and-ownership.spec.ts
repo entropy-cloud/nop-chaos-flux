@@ -41,7 +41,9 @@ test.describe('crud renderer query and ownership flows', () => {
     await stage.getByRole('button', { name: 'Refresh source owner' }).click();
 
     await expect(stage.getByRole('cell', { name: /User-\d+/, exact: false }).first()).toBeVisible();
-    await expect(stage.getByRole('cell', { name: /Owner-\d+/, exact: false }).first()).toBeVisible();
+    await expect(
+      stage.getByRole('cell', { name: /Owner-\d+/, exact: false }).first(),
+    ).toBeVisible();
     await expect(crudFooter(stage)).toContainText(/Visible rows: 1; Total: 4\d/);
     await expect(crudScopeDebug(stage)).toContainText('"pagedRecords"');
     await expect(crudScopeDebug(stage)).toContainText('"refreshCount": 1');
@@ -63,7 +65,9 @@ test.describe('crud renderer query and ownership flows', () => {
     await expect(crudScopeDebug(stage)).toContainText('"keyword": "Ga"');
   });
 
-  test('re-enters the upstream source owner when client-mode fetchOnFilter is enabled', async ({ page }) => {
+  test('re-enters the upstream source owner when client-mode fetchOnFilter is enabled', async ({
+    page,
+  }) => {
     const lab = await openCrudLab(page);
     const stage = crudStage(lab, 'CRUD client-mode fetch-on-filter baseline');
 

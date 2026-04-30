@@ -9,7 +9,31 @@ describe('createSchemaRenderer lifecycle and monitoring behavior', () => {
   it('dispatches lifecycle actions on mount and unmount', async () => {
     const onActionStart = vi.fn();
     const SchemaRenderer = createSchemaRenderer([pageRenderer, toggleHostRenderer, textRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'page', body: [{ type: 'toggle-host', body: [{ type: 'text', text: 'Lifecycle child', onMount: { action: 'probe:lifecycle', args: { stage: 'mounted' } }, onUnmount: { action: 'probe:lifecycle', args: { stage: 'unmounted' } } }] }] } as any} env={{ ...env, monitor: { onActionStart } }} formulaCompiler={createFormulaCompiler()} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'toggle-host',
+                body: [
+                  {
+                    type: 'text',
+                    text: 'Lifecycle child',
+                    onMount: { action: 'probe:lifecycle', args: { stage: 'mounted' } },
+                    onUnmount: { action: 'probe:lifecycle', args: { stage: 'unmounted' } },
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
+        env={{ ...env, monitor: { onActionStart } }}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     await waitFor(() => expect(onActionStart).toHaveBeenCalled());
     fireEvent.click(screen.getByText('Hide child boundary'));
     await waitFor(() => expect(onActionStart.mock.calls.length).toBeGreaterThan(1));
@@ -17,9 +41,34 @@ describe('createSchemaRenderer lifecycle and monitoring behavior', () => {
 
   it('supports wrapComponent plugins in the renderer pipeline', () => {
     const wrapped = vi.fn();
-    const plugin = { name: 'wrap-text', wrapComponent(definition: any) { if (definition.type !== 'text') return definition; return { ...definition, component: (props: any) => { wrapped(props.props.label ?? props.props.text); return <div><span data-testid="wrapped-prefix">Wrapped</span><definition.component {...props} /></div>; } }; } };
+    const plugin = {
+      name: 'wrap-text',
+      wrapComponent(definition: any) {
+        if (definition.type !== 'text') return definition;
+        return {
+          ...definition,
+          component: (props: any) => {
+            wrapped(props.props.label ?? props.props.text);
+            return (
+              <div>
+                <span data-testid="wrapped-prefix">Wrapped</span>
+                <definition.component {...props} />
+              </div>
+            );
+          },
+        };
+      },
+    };
     const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'page', body: [{ type: 'text', text: 'Wrapped hello' }] }} env={env} formulaCompiler={createFormulaCompiler()} plugins={[plugin]} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'page', body: [{ type: 'text', text: 'Wrapped hello' }] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        plugins={[plugin]}
+      />,
+    );
     expect(screen.getByTestId('wrapped-prefix')).toBeTruthy();
     expect(wrapped).toHaveBeenCalledWith('Wrapped hello');
   });
@@ -29,7 +78,14 @@ describe('createSchemaRenderer lifecycle and monitoring behavior', () => {
     const onRenderEnd = vi.fn();
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
     const monitoredEnv = { ...env, monitor: { onRenderStart, onRenderEnd } };
-    const view = render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'text', text: 'Monitored render' }} env={monitoredEnv} formulaCompiler={createFormulaCompiler()} />);
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'Monitored render' }}
+        env={monitoredEnv}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     await waitFor(() => expect(onRenderStart).toHaveBeenCalled());
     view.unmount();
     await waitFor(() => expect(onRenderEnd).toHaveBeenCalled());
@@ -37,7 +93,14 @@ describe('createSchemaRenderer lifecycle and monitoring behavior', () => {
 
   it('projects form errors by owner path and source kind', async () => {
     const SchemaRenderer = createSchemaRenderer([formRenderer, compositeProbeRenderer]);
-    render(<SchemaRenderer schemaUrl="test://schema.json" schema={{ type: 'form', body: [{ type: 'composite-probe' }] }} env={env} formulaCompiler={createFormulaCompiler()} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'form', body: [{ type: 'composite-probe' }] }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
     fireEvent.click(screen.getByText('Validate root'));
     fireEvent.click(screen.getByText('Validate child'));
     await waitFor(() => expect(screen.getByTestId('owned-count').textContent).toBe('2'));

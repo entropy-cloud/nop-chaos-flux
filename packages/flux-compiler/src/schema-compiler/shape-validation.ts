@@ -2,36 +2,39 @@ import type {
   BaseSchema,
   RendererDefinition,
   RendererPlugin,
-  RendererRegistry
+  RendererRegistry,
 } from '@nop-chaos/flux-core';
 import { isPlainObject, isSchemaInput } from '@nop-chaos/flux-core';
-import { appendJsonPointer, schemaPathToJsonPointer, type SchemaCompilerDiagnosticsContext } from './diagnostics';
+import {
+  appendJsonPointer,
+  schemaPathToJsonPointer,
+  type SchemaCompilerDiagnosticsContext,
+} from './diagnostics';
 import { classifyField } from './fields';
 import {
   emitSchemaDiagnostic,
   validateActionShape,
   validateApiSchemaShape,
   validateDependsOnRoots,
-  validateSourceShape
+  validateSourceShape,
 } from './shape-validation-rules';
 import {
   applyWrapComponentPlugins,
   getAcceptedSchemaKeys,
   getSchemaNamespace,
   hasClosedPropModel,
-  isNamespacedSchemaKey
+  isNamespacedSchemaKey,
 } from './shape-validation-utils';
 export { applyWrapComponentPlugins, isNamespacedSchemaKey } from './shape-validation-utils';
 import {
   createHostActionValidationContext,
-  type HostActionValidationContext
+  type HostActionValidationContext,
 } from './host-action-validation';
 
-function findNamespaceValidator(
-  diagnostics: SchemaCompilerDiagnosticsContext,
-  namespace: string
-) {
-  return diagnostics.validation.namespaceValidators.find((validator) => validator.namespace === namespace);
+function findNamespaceValidator(diagnostics: SchemaCompilerDiagnosticsContext, namespace: string) {
+  return diagnostics.validation.namespaceValidators.find(
+    (validator) => validator.namespace === namespace,
+  );
 }
 
 interface ValidationTraversalState {
@@ -43,7 +46,7 @@ function resolveNodeHostContext(
   renderer: RendererDefinition,
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
-  inheritedHostContext: HostActionValidationContext | undefined
+  inheritedHostContext: HostActionValidationContext | undefined,
 ): {
   hostContext?: HostActionValidationContext;
   startsHostBoundary: boolean;
@@ -53,13 +56,14 @@ function resolveNodeHostContext(
   if (!hostContract) {
     return {
       hostContext: inheritedHostContext,
-      startsHostBoundary: false
+      startsHostBoundary: false,
     };
   }
 
-  const versionSelector = typeof schema['xui:version'] === 'string' && schema['xui:version'].length > 0
-    ? schema['xui:version']
-    : hostContract.defaultVersion;
+  const versionSelector =
+    typeof schema['xui:version'] === 'string' && schema['xui:version'].length > 0
+      ? schema['xui:version']
+      : hostContract.defaultVersion;
   const manifest = hostContract.resolveManifest(versionSelector);
 
   if (!manifest) {
@@ -67,12 +71,12 @@ function resolveNodeHostContext(
       code: 'unsupported-host-contract-version',
       path: schemaPathToJsonPointer(path),
       message: `Renderer type "${renderer.type}" does not support host contract version selector "${versionSelector}" for family "${hostContract.family}".`,
-      source: 'host-contract'
+      source: 'host-contract',
     });
 
     return {
       hostContext: undefined,
-      startsHostBoundary: true
+      startsHostBoundary: true,
     };
   }
 
@@ -81,7 +85,7 @@ function resolveNodeHostContext(
       code: 'unknown-host-contract-family',
       path: schemaPathToJsonPointer(path),
       message: `Renderer type "${renderer.type}" resolved host contract family "${manifest.family}" but declared "${hostContract.family}".`,
-      source: 'host-contract'
+      source: 'host-contract',
     });
   }
 
@@ -95,7 +99,7 @@ function resolveNodeHostContext(
       path: schemaPathToJsonPointer(path),
       message: `Renderer type "${renderer.type}" resolved host contract version "${manifest.version}" but the enclosing validation context uses version "${inheritedHostContext.manifest.version}" for family "${manifest.family}".`,
       severity: 'warning',
-      source: 'host-contract'
+      source: 'host-contract',
     });
   }
 
@@ -104,16 +108,16 @@ function resolveNodeHostContext(
       family: manifest.family,
       version: manifest.version,
       manifest,
-      capabilityPublication: hostContract.capabilityPublication
+      capabilityPublication: hostContract.capabilityPublication,
     }),
-    startsHostBoundary: true
+    startsHostBoundary: true,
   };
 }
 
 function createChildTraversalState(
   state: ValidationTraversalState,
   regionKey: string,
-  startsHostBoundary: boolean
+  startsHostBoundary: boolean,
 ): ValidationTraversalState {
   if (!state.hostContext || !startsHostBoundary) {
     return state;
@@ -122,8 +126,8 @@ function createChildTraversalState(
   return {
     hostContext: {
       ...state.hostContext,
-      currentRegion: regionKey
-    }
+      currentRegion: regionKey,
+    },
   };
 }
 
@@ -133,7 +137,7 @@ export function inspectSchemaNodeFields(
   path: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
   enabled: boolean,
-  hostContext?: HostActionValidationContext
+  hostContext?: HostActionValidationContext,
 ): {
   extensions?: Readonly<Record<string, unknown>>;
   skippedPropKeys: ReadonlySet<string>;
@@ -160,22 +164,30 @@ export function inspectSchemaNodeFields(
           value,
           path: keyPath,
           add(issue) {
-            emitSchemaDiagnostic(diagnostics, {
-              code: issue.code,
-              message: issue.message,
-              path: issue.path ?? keyPath,
-              severity: issue.severity,
-              source: issue.source ?? 'namespace'
-            }, enabled);
-          }
+            emitSchemaDiagnostic(
+              diagnostics,
+              {
+                code: issue.code,
+                message: issue.message,
+                path: issue.path ?? keyPath,
+                severity: issue.severity,
+                source: issue.source ?? 'namespace',
+              },
+              enabled,
+            );
+          },
         });
       } else if (diagnostics.validation.namespacedPropertyPolicy === 'error') {
-        emitSchemaDiagnostic(diagnostics, {
-          code: 'invalid-namespace-property',
-          path: keyPath,
-          message: `Unknown namespaced property "${key}".`,
-          source: 'namespace'
-        }, enabled);
+        emitSchemaDiagnostic(
+          diagnostics,
+          {
+            code: 'invalid-namespace-property',
+            path: keyPath,
+            message: `Unknown namespaced property "${key}".`,
+            source: 'namespace',
+          },
+          enabled,
+        );
       }
 
       if (diagnostics.validation.extensionPassthroughPolicy === 'namespaced-only') {
@@ -208,12 +220,17 @@ export function inspectSchemaNodeFields(
       !acceptedKeys.has(key) &&
       diagnostics.validation.unknownBarePropertyPolicy !== 'ignore'
     ) {
-      emitSchemaDiagnostic(diagnostics, {
-        code: 'unknown-property',
-        path: keyPath,
-        message: `Unknown property "${key}" for renderer type "${renderer.type}".`,
-        severity: diagnostics.validation.unknownBarePropertyPolicy === 'warn' ? 'warning' : 'error'
-      }, enabled);
+      emitSchemaDiagnostic(
+        diagnostics,
+        {
+          code: 'unknown-property',
+          path: keyPath,
+          message: `Unknown property "${key}" for renderer type "${renderer.type}".`,
+          severity:
+            diagnostics.validation.unknownBarePropertyPolicy === 'warn' ? 'warning' : 'error',
+        },
+        enabled,
+      );
 
       if (diagnostics.validation.unknownBarePropertyPolicy === 'error') {
         skippedPropKeys.add(key);
@@ -226,20 +243,41 @@ export function inspectSchemaNodeFields(
     const hasAction = schema.action !== undefined;
 
     if ((hasFormula && hasAction) || (!hasFormula && !hasAction)) {
-      emitSchemaDiagnostic(diagnostics, {
-        code: 'invalid-source-shape',
-        path: pointer,
-        message: 'data-source requires exactly one of formula or action.'
-      }, enabled);
+      emitSchemaDiagnostic(
+        diagnostics,
+        {
+          code: 'invalid-source-shape',
+          path: pointer,
+          message: 'data-source requires exactly one of formula or action.',
+        },
+        enabled,
+      );
     }
 
-    if (hasAction && schema.args && typeof schema.args === 'object' && 'url' in (schema.args as object)) {
-      validateApiSchemaShape(schema.args as import('@nop-chaos/flux-core').ApiSchema, appendJsonPointer(pointer, 'args'), diagnostics, enabled, 'invalid-source-shape');
+    if (
+      hasAction &&
+      schema.args &&
+      typeof schema.args === 'object' &&
+      'url' in (schema.args as object)
+    ) {
+      validateApiSchemaShape(
+        schema.args as import('@nop-chaos/flux-core').ApiSchema,
+        appendJsonPointer(pointer, 'args'),
+        diagnostics,
+        enabled,
+        'invalid-source-shape',
+      );
     }
   }
 
   if (schema.type === 'reaction') {
-    validateActionShape(schema.actions, appendJsonPointer(pointer, 'actions'), diagnostics, enabled, hostContext);
+    validateActionShape(
+      schema.actions,
+      appendJsonPointer(pointer, 'actions'),
+      diagnostics,
+      enabled,
+      hostContext,
+    );
   }
 
   if (enabled && renderer.schemaValidator) {
@@ -252,15 +290,15 @@ export function inspectSchemaNodeFields(
           message: issue.message,
           path: issue.path ?? pointer,
           severity: issue.severity,
-          source: issue.source ?? 'renderer'
+          source: issue.source ?? 'renderer',
         });
-      }
+      },
     });
   }
 
   return {
     extensions: Object.keys(extensions).length > 0 ? extensions : undefined,
-    skippedPropKeys
+    skippedPropKeys,
   };
 }
 
@@ -273,8 +311,8 @@ export function analyzeSchemaInput(
   traversalState: ValidationTraversalState = {
     hostContext: diagnostics.validation.hostContractContext
       ? createHostActionValidationContext(diagnostics.validation.hostContractContext)
-      : undefined
-  }
+      : undefined,
+  },
 ) {
   if (diagnostics.hasReachedLimit()) {
     return;
@@ -291,9 +329,10 @@ export function analyzeSchemaInput(
     diagnostics.emit({
       code: path === '$' ? 'invalid-root' : 'expected-object',
       path: schemaPathToJsonPointer(path),
-      message: path === '$'
-        ? 'Schema root must be an object or an array of schema objects.'
-        : 'Schema nodes must be objects.'
+      message:
+        path === '$'
+          ? 'Schema root must be an object or an array of schema objects.'
+          : 'Schema nodes must be objects.',
     });
     return;
   }
@@ -302,7 +341,7 @@ export function analyzeSchemaInput(
     diagnostics.emit({
       code: 'missing-required-field',
       path: appendJsonPointer(schemaPathToJsonPointer(path), 'type'),
-      message: 'Schema nodes require a non-empty type field.'
+      message: 'Schema nodes require a non-empty type field.',
     });
     return;
   }
@@ -313,21 +352,31 @@ export function analyzeSchemaInput(
     diagnostics.emit({
       code: 'unknown-renderer-type',
       path: appendJsonPointer(schemaPathToJsonPointer(path), 'type'),
-      message: `Renderer not found for type: ${inputValue.type}`
+      message: `Renderer not found for type: ${inputValue.type}`,
     });
     return;
   }
 
-  const wrappedRenderer = applyWrapComponentPlugins(renderer, plugins as RendererPlugin[] | undefined);
+  const wrappedRenderer = applyWrapComponentPlugins(
+    renderer,
+    plugins as RendererPlugin[] | undefined,
+  );
   const schema = inputValue as BaseSchema;
   const nodeTraversal = resolveNodeHostContext(
     schema,
     wrappedRenderer,
     path,
     diagnostics,
-    traversalState.hostContext
+    traversalState.hostContext,
   );
-  inspectSchemaNodeFields(schema, wrappedRenderer, path, diagnostics, true, nodeTraversal.hostContext);
+  inspectSchemaNodeFields(
+    schema,
+    wrappedRenderer,
+    path,
+    diagnostics,
+    true,
+    nodeTraversal.hostContext,
+  );
 
   for (const key of Object.keys(schema)) {
     const value = schema[key];
@@ -342,7 +391,7 @@ export function analyzeSchemaInput(
         diagnostics.emit({
           code: 'invalid-region-node',
           path: appendJsonPointer(schemaPathToJsonPointer(path), key),
-          message: `Region "${rule.regionKey ?? key}" must contain schema input.`
+          message: `Region "${rule.regionKey ?? key}" must contain schema input.`,
         });
         continue;
       }
@@ -353,7 +402,11 @@ export function analyzeSchemaInput(
         registry,
         plugins,
         diagnostics,
-        createChildTraversalState(nodeTraversal, rule.regionKey ?? key, nodeTraversal.startsHostBoundary)
+        createChildTraversalState(
+          nodeTraversal,
+          rule.regionKey ?? key,
+          nodeTraversal.startsHostBoundary,
+        ),
       );
       continue;
     }
@@ -365,7 +418,11 @@ export function analyzeSchemaInput(
         registry,
         plugins,
         diagnostics,
-        createChildTraversalState(nodeTraversal, rule.regionKey ?? key, nodeTraversal.startsHostBoundary)
+        createChildTraversalState(
+          nodeTraversal,
+          rule.regionKey ?? key,
+          nodeTraversal.startsHostBoundary,
+        ),
       );
     }
   }

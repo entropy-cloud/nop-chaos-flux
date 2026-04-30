@@ -4,7 +4,7 @@ import type { InitialFieldState } from './form-runtime-types';
 
 export function buildInitialFieldState(
   values: Record<string, any>,
-  validation?: CompiledFormValidationModel
+  validation?: CompiledFormValidationModel,
 ): InitialFieldState {
   const initialValues: Record<string, unknown> = {};
   const dirty: Record<string, boolean> = {};
@@ -16,7 +16,6 @@ export function buildInitialFieldState(
 
   return {
     initialValues,
-    dirty
+    dirty,
   };
 }
-

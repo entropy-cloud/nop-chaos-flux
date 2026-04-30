@@ -221,11 +221,21 @@ describe('createItemFormProxy', () => {
       scope: {} as ScopeRef,
       scopeId: 'form-scope',
       rootPath: '',
-      get validation() { return undefined as any; },
-      get lifecycleState() { return 'active' as const; },
-      get modelGeneration() { return 0; },
-      get canSubmit() { return true; },
-      get allTouched() { return false; },
+      get validation() {
+        return undefined as any;
+      },
+      get lifecycleState() {
+        return 'active' as const;
+      },
+      get modelGeneration() {
+        return 0;
+      },
+      get canSubmit() {
+        return true;
+      },
+      get allTouched() {
+        return false;
+      },
       setLifecycleHandlers: vi.fn(),
       getScopeState: vi.fn(),
       getAsyncOwnerDebugSnapshot: vi.fn(),

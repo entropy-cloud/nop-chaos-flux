@@ -15,7 +15,7 @@ import type {
   FieldRegistrationHandle,
   ApplyExternalErrorsInput,
   ScopeValidationStateSnapshot,
-  ChildValidationContractRegistration
+  ChildValidationContractRegistration,
 } from './validation';
 import type { ActionScope } from './actions';
 import type { ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
@@ -156,10 +156,22 @@ export interface DataSourceStatusSummary {
 }
 
 export interface FormLifecycleHandlers {
-  submitAction?: (options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
-  onSubmitSuccess?: (result: ActionResult, options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
-  onSubmitError?: (result: ActionResult, options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
-  onValidateError?: (result: ActionResult, options?: { interactionId?: string; signal?: AbortSignal }) => Promise<ActionResult>;
+  submitAction?: (options?: {
+    interactionId?: string;
+    signal?: AbortSignal;
+  }) => Promise<ActionResult>;
+  onSubmitSuccess?: (
+    result: ActionResult,
+    options?: { interactionId?: string; signal?: AbortSignal },
+  ) => Promise<ActionResult>;
+  onSubmitError?: (
+    result: ActionResult,
+    options?: { interactionId?: string; signal?: AbortSignal },
+  ) => Promise<ActionResult>;
+  onValidateError?: (
+    result: ActionResult,
+    options?: { interactionId?: string; signal?: AbortSignal },
+  ) => Promise<ActionResult>;
 }
 
 export interface OwnedSurfaceStateBase {
@@ -279,14 +291,22 @@ export interface ValidationScopeRuntime {
   applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<FormValidationResult>;
   applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationStateSnapshot;
 
-  getFieldState(path: string): { ownerId: string; path: string; errors: ValidationError[]; validating: boolean };
+  getFieldState(path: string): {
+    ownerId: string;
+    path: string;
+    errors: ValidationError[];
+    validating: boolean;
+  };
   getScopeState(): ScopeValidationStateSnapshot;
   getAsyncOwnerDebugSnapshot?(): AsyncOwnerDebugSnapshot;
   getScopeRootErrors(): ValidationError[];
   isPathOwned(path: string): boolean;
 
   registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle;
-  updateFieldRegistration(registrationId: string, patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>): void;
+  updateFieldRegistration(
+    registrationId: string,
+    patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>,
+  ): void;
 
   refreshCompiledModel(newModel: CompiledFormValidationModel): void;
   dispose(): void;

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { createSchemaRenderer, createDefaultEnv, createDefaultRegistry } from '@nop-chaos/flux-react';
+import {
+  createSchemaRenderer,
+  createDefaultEnv,
+  createDefaultRegistry,
+} from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
@@ -78,72 +82,98 @@ const inspectorFormulaCompiler = createFormulaCompiler();
 
 export function ReportDesignerDemo() {
   const [draggingField, setDraggingField] = useState<{
-    sourceId: string; fieldId: string; label: string;
+    sourceId: string;
+    fieldId: string;
+    label: string;
   } | null>(null);
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
 
   const spreadsheetDoc = useMemo(() => createEmptyDocument('demo-spreadsheet'), []);
-  const spreadsheetCore = useMemo(() => createSpreadsheetCore({ document: spreadsheetDoc }), [spreadsheetDoc]);
-  const spreadsheetBridge = useMemo(() => createSpreadsheetBridge(spreadsheetCore), [spreadsheetCore]);
-  const reportDoc = useMemo(() => createReportTemplateDocument(spreadsheetDoc, 'Demo Report'), [spreadsheetDoc]);
-  const designerConfig: ReportDesignerConfig = useMemo(() => ({
-    kind: 'report-template',
-    fieldSources: fieldSources.map((fs) => ({ ...fs, provider: undefined })),
-    inspector: {
-      byTarget: {
-        workbook: {
-          type: 'container',
-          className: 'stack-sm text-sm',
-          body: [
-            { type: 'text', text: 'Workbook selected' },
-            { type: 'text', text: 'Use toolbar actions to edit metadata.' },
-          ],
-        },
-        sheet: {
-          type: 'container',
-          className: 'stack-sm text-sm',
-          body: [
-            { type: 'text', text: 'Sheet selected' },
-            { type: 'text', text: 'Switch sheets or drop fields onto cells.' },
-          ],
-        },
-        row: {
-          type: 'container',
-          className: 'stack-sm text-sm',
-          body: [
-            { type: 'text', text: 'Row selected' },
-            { type: 'text', text: 'Row metadata will be written through report-designer actions.' },
-          ],
-        },
-        column: {
-          type: 'container',
-          className: 'stack-sm text-sm',
-          body: [
-            { type: 'text', text: 'Column selected' },
-            { type: 'text', text: 'Column metadata will be written through report-designer actions.' },
-          ],
-        },
-        range: {
-          type: 'container',
-          className: 'stack-sm text-sm',
-          body: [
-            { type: 'text', text: 'Range selected' },
-            { type: 'text', text: 'Drop a field onto a range to fill cell bindings.' },
-          ],
-        },
-        cell: {
-          type: 'container',
-          className: 'stack-sm text-sm',
-          body: [
-            { type: 'text', text: 'Cell selected' },
-            { type: 'text', text: 'Use drop from the field panel to bind a dataset field.' },
-          ],
+  const spreadsheetCore = useMemo(
+    () => createSpreadsheetCore({ document: spreadsheetDoc }),
+    [spreadsheetDoc],
+  );
+  const spreadsheetBridge = useMemo(
+    () => createSpreadsheetBridge(spreadsheetCore),
+    [spreadsheetCore],
+  );
+  const reportDoc = useMemo(
+    () => createReportTemplateDocument(spreadsheetDoc, 'Demo Report'),
+    [spreadsheetDoc],
+  );
+  const designerConfig: ReportDesignerConfig = useMemo(
+    () => ({
+      kind: 'report-template',
+      fieldSources: fieldSources.map((fs) => ({ ...fs, provider: undefined })),
+      inspector: {
+        byTarget: {
+          workbook: {
+            type: 'container',
+            className: 'stack-sm text-sm',
+            body: [
+              { type: 'text', text: 'Workbook selected' },
+              { type: 'text', text: 'Use toolbar actions to edit metadata.' },
+            ],
+          },
+          sheet: {
+            type: 'container',
+            className: 'stack-sm text-sm',
+            body: [
+              { type: 'text', text: 'Sheet selected' },
+              { type: 'text', text: 'Switch sheets or drop fields onto cells.' },
+            ],
+          },
+          row: {
+            type: 'container',
+            className: 'stack-sm text-sm',
+            body: [
+              { type: 'text', text: 'Row selected' },
+              {
+                type: 'text',
+                text: 'Row metadata will be written through report-designer actions.',
+              },
+            ],
+          },
+          column: {
+            type: 'container',
+            className: 'stack-sm text-sm',
+            body: [
+              { type: 'text', text: 'Column selected' },
+              {
+                type: 'text',
+                text: 'Column metadata will be written through report-designer actions.',
+              },
+            ],
+          },
+          range: {
+            type: 'container',
+            className: 'stack-sm text-sm',
+            body: [
+              { type: 'text', text: 'Range selected' },
+              { type: 'text', text: 'Drop a field onto a range to fill cell bindings.' },
+            ],
+          },
+          cell: {
+            type: 'container',
+            className: 'stack-sm text-sm',
+            body: [
+              { type: 'text', text: 'Cell selected' },
+              { type: 'text', text: 'Use drop from the field panel to bind a dataset field.' },
+            ],
+          },
         },
       },
-    },
-  }), []);
-  const designerCore = useMemo(() => createReportDesignerCore({ document: reportDoc, config: designerConfig }), [reportDoc, designerConfig]);
-  const designerBridge = useMemo(() => createReportDesignerBridge(spreadsheetBridge, designerCore), [spreadsheetBridge, designerCore]);
+    }),
+    [],
+  );
+  const designerCore = useMemo(
+    () => createReportDesignerCore({ document: reportDoc, config: designerConfig }),
+    [reportDoc, designerConfig],
+  );
+  const designerBridge = useMemo(
+    () => createReportDesignerBridge(spreadsheetBridge, designerCore),
+    [spreadsheetBridge, designerCore],
+  );
   const designerSnapshot = useSyncExternalStore(
     designerCore.subscribe,
     designerCore.getSnapshot,
@@ -302,12 +332,15 @@ export function ReportDesignerDemo() {
     [designerCore, designerSnapshot, spreadsheetRuntimeSnapshot],
   );
 
-  const getCellMetadata = useCallback((row: number, col: number) => {
-    return designerCore.getMetadata({
-      kind: 'cell',
-      cell: { sheetId, address: cellAddress(row, col), row, col },
-    });
-  }, [designerCore, sheetId]);
+  const getCellMetadata = useCallback(
+    (row: number, col: number) => {
+      return designerCore.getMetadata({
+        kind: 'cell',
+        cell: { sheetId, address: cellAddress(row, col), row, col },
+      });
+    },
+    [designerCore, sheetId],
+  );
 
   return (
     <div className="report-designer-demo">
@@ -340,7 +373,7 @@ export function ReportDesignerDemo() {
           onUnfreeze={handleUnfreeze}
           onCellValueChange={handleCellValueChange}
           showFindReplace={showFindReplace}
-          onToggleFindReplace={() => setShowFindReplace(v => !v)}
+          onToggleFindReplace={() => setShowFindReplace((v) => !v)}
           findQuery={findQuery}
           onFindQueryChange={setFindQuery}
           replaceText={replaceText}
@@ -350,7 +383,7 @@ export function ReportDesignerDemo() {
           onReplace={() => {}}
           onReplaceAll={() => {}}
           showCommentInput={showCommentInput}
-          onToggleCommentInput={() => setShowCommentInput(v => !v)}
+          onToggleCommentInput={() => setShowCommentInput((v) => !v)}
           commentText={commentText}
           onCommentTextChange={setCommentText}
           onAddComment={handleAddComment}
@@ -360,7 +393,10 @@ export function ReportDesignerDemo() {
       </div>
 
       <div data-slot="report-demo-body">
-        <div data-slot="report-demo-field-panel-shell" data-collapsed={paletteCollapsed || undefined}>
+        <div
+          data-slot="report-demo-field-panel-shell"
+          data-collapsed={paletteCollapsed || undefined}
+        >
           <div data-slot="report-demo-panel-toolbar">
             <button
               type="button"
@@ -375,7 +411,9 @@ export function ReportDesignerDemo() {
             <div data-slot="report-demo-field-panel">
               <ReportFieldPanel
                 fieldSources={fieldSources}
-                onFieldDragStart={(sourceId, fieldId, label) => setDraggingField({ sourceId, fieldId, label })}
+                onFieldDragStart={(sourceId, fieldId, label) =>
+                  setDraggingField({ sourceId, fieldId, label })
+                }
               />
             </div>
           ) : null}
@@ -432,7 +470,9 @@ export function ReportDesignerDemo() {
           <SheetTabBar
             sheets={snapshot.workbook.sheets}
             activeSheetId={snapshot.activeSheet?.id ?? ''}
-            onSwitchSheet={(id) => spreadsheetBridge.dispatch({ type: 'spreadsheet:setActiveSheet', sheetId: id })}
+            onSwitchSheet={(id) =>
+              spreadsheetBridge.dispatch({ type: 'spreadsheet:setActiveSheet', sheetId: id })
+            }
             onAddSheet={handleAddSheet}
             onRemoveSheet={handleRemoveSheet}
             onRenameSheet={handleRenameSheet}
@@ -443,10 +483,12 @@ export function ReportDesignerDemo() {
         <div data-slot="report-demo-inspector">
           <SchemaRenderer
             schemaUrl="playground://report-designer/demo-inspector"
-            schema={{
-              type: 'report-inspector-shell',
-              title: 'Inspector',
-            } as any}
+            schema={
+              {
+                type: 'report-inspector-shell',
+                title: 'Inspector',
+              } as any
+            }
             registry={inspectorRegistry}
             env={inspectorEnv}
             formulaCompiler={inspectorFormulaCompiler}
@@ -454,7 +496,6 @@ export function ReportDesignerDemo() {
           />
         </div>
       </div>
-
     </div>
   );
 }

@@ -31,5 +31,5 @@ export const POSITION_MAP: Record<string, Position> = {
   top: Position.Top,
   right: Position.Right,
   bottom: Position.Bottom,
-  left: Position.Left
+  left: Position.Left,
 };

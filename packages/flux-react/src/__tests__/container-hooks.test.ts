@@ -24,7 +24,11 @@ describe('resolveContainerElement', () => {
       id: 'workspace-area',
       type: 'container',
       ref: element,
-      capabilities: { invoke() { return { ok: true }; } }
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        },
+      },
     });
 
     expect(resolveContainerElement('workspace-area', registry)).toBe(element);
@@ -37,7 +41,11 @@ describe('resolveContainerElement', () => {
       name: 'workspace',
       type: 'container',
       ref: element,
-      capabilities: { invoke() { return { ok: true }; } }
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        },
+      },
     });
 
     expect(resolveContainerElement('workspace', registry)).toBe(element);
@@ -49,7 +57,11 @@ describe('resolveContainerElement', () => {
       id: 'no-ref-container',
       type: 'container',
       ref: null,
-      capabilities: { invoke() { return { ok: true }; } }
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        },
+      },
     });
 
     expect(resolveContainerElement('no-ref-container', registry)).toBeNull();
@@ -66,13 +78,21 @@ describe('resolveContainerElement', () => {
       id: 'target',
       type: 'container',
       ref: byIdElement,
-      capabilities: { invoke() { return { ok: true }; } }
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        },
+      },
     });
     registry.register({
       name: 'target',
       type: 'container',
       ref: byNameElement,
-      capabilities: { invoke() { return { ok: true }; } }
+      capabilities: {
+        invoke() {
+          return { ok: true };
+        },
+      },
     });
 
     const result = resolveContainerElement('target', registry);

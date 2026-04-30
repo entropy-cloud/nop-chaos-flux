@@ -4,7 +4,9 @@ test.describe.configure({ mode: 'serial' });
 
 async function openPerformanceTable(page: import('@playwright/test').Page) {
   await page.goto('/#/performance-table', { waitUntil: 'commit' });
-  await expect(page.getByRole('heading', { name: 'Table Performance Playground', level: 1 })).toBeVisible({ timeout: 45_000 });
+  await expect(
+    page.getByRole('heading', { name: 'Table Performance Playground', level: 1 }),
+  ).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole('button', { name: 'Run 20 Host Mutations' })).toBeVisible();
 }
 
@@ -20,16 +22,22 @@ test.describe('Performance Table Page', () => {
     await expect(page.getByText('Scenario D: Editable subset form')).toBeVisible();
 
     await page.getByRole('button', { name: 'Table Only' }).click();
-    await expect(page.getByText('Scenario D: Editable subset form')).toHaveCount(0, { timeout: 20_000 });
+    await expect(page.getByText('Scenario D: Editable subset form')).toHaveCount(0, {
+      timeout: 20_000,
+    });
     await expect(page.getByText('user_1 / emea / offline')).toHaveCount(0, { timeout: 20_000 });
 
     await page.getByRole('button', { name: 'Full Stress' }).click();
-    await expect(page.getByText('Scenario D: Editable subset form')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Scenario D: Editable subset form')).toBeVisible({
+      timeout: 20_000,
+    });
     await expect(page.getByText('user_1 / emea / offline')).toBeVisible({ timeout: 20_000 });
 
     await page.getByRole('button', { name: 'Run 20 Host Mutations' }).click();
     await expect(page.getByText('Last Measurement')).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByText('Host row mutation benchmark: 20 updates')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText('Host row mutation benchmark: 20 updates')).toBeVisible({
+      timeout: 60_000,
+    });
   });
 
   test('resets the measurement panel after a host benchmark run', async ({ page }) => {
@@ -42,7 +50,9 @@ test.describe('Performance Table Page', () => {
     await expect(page.getByText('Last Measurement')).toHaveCount(0);
   });
 
-  test('renders all cell types with correct record-bound values on first and last pages', async ({ page }) => {
+  test('renders all cell types with correct record-bound values on first and last pages', async ({
+    page,
+  }) => {
     test.setTimeout(120_000);
     await openPerformanceTable(page);
 
@@ -65,7 +75,7 @@ test.describe('Performance Table Page', () => {
         select: selectBtn?.textContent?.trim(),
         checkboxChecked: checkbox?.getAttribute('aria-checked'),
         switchChecked: sw?.getAttribute('aria-checked'),
-        notes: textarea?.value?.trim()
+        notes: textarea?.value?.trim(),
       };
     });
 
@@ -83,7 +93,9 @@ test.describe('Performance Table Page', () => {
       await lastPageBtn.click();
     } else {
       for (let i = 0; i < 20; i++) {
-        const next = page.locator('[data-slot="table-pagination"] button, [data-slot="table-pagination"] a').last();
+        const next = page
+          .locator('[data-slot="table-pagination"] button, [data-slot="table-pagination"] a')
+          .last();
         await next.click();
         await page.waitForTimeout(500);
       }
@@ -113,7 +125,11 @@ test.describe('Performance Table Page', () => {
         if (profile && profile.includes('1000')) {
           const sw = cells[7]?.querySelector('[role="switch"]');
           const cb = cells[6]?.querySelector('[role="checkbox"]');
-          return { profile, switchChecked: sw?.getAttribute('aria-checked'), checkboxChecked: cb?.getAttribute('aria-checked') };
+          return {
+            profile,
+            switchChecked: sw?.getAttribute('aria-checked'),
+            checkboxChecked: cb?.getAttribute('aria-checked'),
+          };
         }
       }
       return null;

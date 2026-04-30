@@ -4,7 +4,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '../index';
-import { buttonRenderer, env, formStateProbeRenderer, formStateProbeRenderCounts } from './form-test-support';
+import {
+  buttonRenderer,
+  env,
+  formStateProbeRenderer,
+  formStateProbeRenderCounts,
+} from './form-test-support';
 
 describe('form render performance optimization', () => {
   it('changing one field does not trigger NodeRenderer re-renders for other fields', async () => {
@@ -21,20 +26,20 @@ describe('form render performance optimization', () => {
           data: {
             username: 'initial',
             email: 'test@example.com',
-            role: 'user'
+            role: 'user',
           },
           body: [
             {
               type: 'input-text',
               name: 'username',
               label: 'Username',
-              placeholder: 'Enter username'
+              placeholder: 'Enter username',
             },
             {
               type: 'input-email',
               name: 'email',
               label: 'Email',
-              placeholder: 'Enter email'
+              placeholder: 'Enter email',
             },
             {
               type: 'select',
@@ -42,17 +47,17 @@ describe('form render performance optimization', () => {
               label: 'Role',
               options: [
                 { label: 'User', value: 'user' },
-                { label: 'Admin', value: 'admin' }
-              ]
-            }
-          ]
+                { label: 'Admin', value: 'admin' },
+              ],
+            },
+          ],
         }}
         env={{
           ...env,
-          monitor: { onRenderStart, onRenderEnd }
+          monitor: { onRenderStart, onRenderEnd },
         }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -78,7 +83,10 @@ describe('form render performance optimization', () => {
     cleanup();
     formStateProbeRenderCounts.username = 0;
     formStateProbeRenderCounts.email = 0;
-    const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, formStateProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      ...formRendererDefinitions,
+      formStateProbeRenderer,
+    ]);
 
     render(
       <SchemaRenderer
@@ -87,32 +95,32 @@ describe('form render performance optimization', () => {
           type: 'form',
           data: {
             username: 'initial',
-            email: 'test@example.com'
+            email: 'test@example.com',
           },
           body: [
             {
               type: 'input-text',
               name: 'username',
-              label: 'Username'
+              label: 'Username',
             },
             {
               type: 'input-email',
               name: 'email',
-              label: 'Email'
+              label: 'Email',
             },
             {
               type: 'form-state-probe',
-              name: 'username'
+              name: 'username',
             },
             {
               type: 'form-state-probe',
-              name: 'email'
-            }
-          ]
+              name: 'email',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => {

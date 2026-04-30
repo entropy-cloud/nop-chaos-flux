@@ -1,11 +1,14 @@
-import type {
-  RendererDefinition,
-  RendererPlugin
-} from '@nop-chaos/flux-core';
+import type { RendererDefinition, RendererPlugin } from '@nop-chaos/flux-core';
 import { META_FIELDS } from '@nop-chaos/flux-core';
 
-export function applyWrapComponentPlugins(renderer: RendererDefinition, plugins?: RendererPlugin[]): RendererDefinition {
-  return (plugins ?? []).reduce((current, plugin) => plugin.wrapComponent?.(current) ?? current, renderer);
+export function applyWrapComponentPlugins(
+  renderer: RendererDefinition,
+  plugins?: RendererPlugin[],
+): RendererDefinition {
+  return (plugins ?? []).reduce(
+    (current, plugin) => plugin.wrapComponent?.(current) ?? current,
+    renderer,
+  );
 }
 
 export function isNamespacedSchemaKey(key: string): boolean {
@@ -22,7 +25,10 @@ export function getSchemaNamespace(key: string): string | undefined {
 }
 
 export function hasClosedPropModel(renderer: RendererDefinition): boolean {
-  return Object.keys(renderer.propSchema ?? {}).length > 0 || Object.keys(renderer.propContracts ?? {}).length > 0;
+  return (
+    Object.keys(renderer.propSchema ?? {}).length > 0 ||
+    Object.keys(renderer.propContracts ?? {}).length > 0
+  );
 }
 
 export function getAcceptedSchemaKeys(renderer: RendererDefinition): Set<string> {

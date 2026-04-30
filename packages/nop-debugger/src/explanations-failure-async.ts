@@ -8,7 +8,7 @@ import type {
   NopNodeAsyncExplanation,
   NopNodeAsyncExplanationQuery,
   NopNodeFailureExplanation,
-  NopNodeFailureExplanationQuery
+  NopNodeFailureExplanationQuery,
 } from './types';
 
 const MAX_EVIDENCE = 6;
@@ -45,10 +45,13 @@ export function explainNodeFailure(args: {
   const inspect = query.cid != null ? args.inspectByCid(query.cid) : undefined;
   const nodeId = query.nodeId ?? inspect?.nodeId;
   const path = query.path ?? inspect?.path;
-  const anchor = args.events.find((event) => (
-    (event.group === 'error' || (event.group === 'api' && (event.level === 'error' || event.kind === 'api:abort')))
-    && matchesNodeQuery(event, { nodeId, path })
-  )) ?? (query.inferFromLatest !== false ? getLatestFailedAction(args.events)?.event : undefined);
+  const anchor =
+    args.events.find(
+      (event) =>
+        (event.group === 'error' ||
+          (event.group === 'api' && (event.level === 'error' || event.kind === 'api:abort'))) &&
+        matchesNodeQuery(event, { nodeId, path }),
+    ) ?? (query.inferFromLatest !== false ? getLatestFailedAction(args.events)?.event : undefined);
 
   if (!anchor) {
     return {
@@ -63,8 +66,8 @@ export function explainNodeFailure(args: {
       data: {
         failureType: 'unknown',
         hints: [],
-        relatedEventIds: []
-      }
+        relatedEventIds: [],
+      },
     };
   }
 
@@ -72,12 +75,12 @@ export function explainNodeFailure(args: {
     eventId: anchor.id,
     inferFromLatest: false,
     mode: 'related',
-    limit: MAX_RELATED_EVENTS
+    limit: MAX_RELATED_EVENTS,
   });
   const hints = [
     anchor.kind === 'api:abort' ? 'request aborted before publish' : undefined,
     anchor.group === 'api' && anchor.level === 'error' ? 'request returned an error' : undefined,
-    anchor.group === 'error' ? 'action surfaced a runtime error' : undefined
+    anchor.group === 'error' ? 'action surfaced a runtime error' : undefined,
   ].filter((value): value is string => Boolean(value));
   const evidenceRefs: NopDebuggerEvidenceRef[] = [];
 
@@ -90,7 +93,7 @@ export function explainNodeFailure(args: {
     path: anchor.path,
     eventId: anchor.id,
     requestInstanceId: anchor.requestInstanceId,
-    interactionId: anchor.interactionId
+    interactionId: anchor.interactionId,
   });
 
   for (const event of trace.matchedEvents.slice(0, MAX_EVIDENCE - evidenceRefs.length)) {
@@ -101,7 +104,7 @@ export function explainNodeFailure(args: {
       path: event.path,
       eventId: event.id,
       requestInstanceId: event.requestInstanceId,
-      interactionId: event.interactionId
+      interactionId: event.interactionId,
     });
   }
 
@@ -112,39 +115,47 @@ export function explainNodeFailure(args: {
       nodeId: anchor.nodeId ?? nodeId,
       path: anchor.path ?? path,
       requestInstanceId: anchor.requestInstanceId,
-      interactionId: anchor.interactionId
+      interactionId: anchor.interactionId,
     },
-    answer: anchor.kind === 'api:abort'
-      ? `The latest failure for this node is an aborted request: ${anchor.summary}.`
-      : anchor.group === 'api'
-        ? `The latest failure for this node is a request error: ${anchor.summary}.`
-        : `The latest failure for this node is an action/runtime error: ${anchor.summary}.`,
+    answer:
+      anchor.kind === 'api:abort'
+        ? `The latest failure for this node is an aborted request: ${anchor.summary}.`
+        : anchor.group === 'api'
+          ? `The latest failure for this node is a request error: ${anchor.summary}.`
+          : `The latest failure for this node is an action/runtime error: ${anchor.summary}.`,
     confidence: 'high',
-    limitations: ['The explanation uses recent related debugger events, not a full historical causal graph.'],
+    limitations: [
+      'The explanation uses recent related debugger events, not a full historical causal graph.',
+    ],
     evidenceRefs,
     related: {
       cid: query.cid,
       nodeId: anchor.nodeId ?? nodeId,
       path: anchor.path ?? path,
       requestInstanceId: anchor.requestInstanceId,
-      interactionId: anchor.interactionId
+      interactionId: anchor.interactionId,
     },
     truncated,
     data: {
-      failureType: anchor.kind === 'api:abort'
-        ? 'request-aborted'
-        : anchor.group === 'api'
-          ? 'request-failed'
-          : 'action-error',
+      failureType:
+        anchor.kind === 'api:abort'
+          ? 'request-aborted'
+          : anchor.group === 'api'
+            ? 'request-failed'
+            : 'action-error',
       eventId: anchor.id,
       summary: anchor.summary,
       hints,
-      relatedEventIds: trace.matchedEvents.map((event) => event.id)
-    }
+      relatedEventIds: trace.matchedEvents.map((event) => event.id),
+    },
   };
 }
 
-function ownerMatchesQuery(ownerId: string, query: { nodeId?: string; path?: string }, inspect: NopComponentInspectResult | undefined) {
+function ownerMatchesQuery(
+  ownerId: string,
+  query: { nodeId?: string; path?: string },
+  inspect: NopComponentInspectResult | undefined,
+) {
   if (inspect?.scopeChain?.some((entry) => entry.id && ownerId.includes(entry.id))) {
     return true;
   }
@@ -170,27 +181,32 @@ export function explainNodeAsync(args: {
   const nodeId = query.nodeId ?? inspect?.nodeId;
   const path = query.path ?? inspect?.path;
 
-  const matchingOwners = args.asyncSnapshot.owners.filter((owner) => ownerMatchesQuery(owner.ownerId, { nodeId, path }, inspect));
+  const matchingOwners = args.asyncSnapshot.owners.filter((owner) =>
+    ownerMatchesQuery(owner.ownerId, { nodeId, path }, inspect),
+  );
   const matchedOwners = matchingOwners.slice(0, MAX_ASYNC_OWNERS);
   const ownerIds = matchedOwners.map((owner) => owner.ownerId);
   const evidenceRefs: NopDebuggerEvidenceRef[] = matchedOwners.map((owner) => ({
     kind: 'async-owner',
     summary: `${owner.ownerKind} owner ${owner.ownerId}`,
     ownerId: owner.ownerId,
-    ownerKind: owner.ownerKind
+    ownerKind: owner.ownerKind,
   }));
   const truncated = matchingOwners.length > matchedOwners.length;
 
   return {
     kind: 'async',
     subject: { cid: query.cid, nodeId, path },
-    answer: matchedOwners.length > 0
-      ? `The node currently maps to ${matchedOwners.length} async owner${matchedOwners.length === 1 ? '' : 's'}.`
-      : 'No async owners are directly attributable to the requested node from the current bounded snapshot.',
+    answer:
+      matchedOwners.length > 0
+        ? `The node currently maps to ${matchedOwners.length} async owner${matchedOwners.length === 1 ? '' : 's'}.`
+        : 'No async owners are directly attributable to the requested node from the current bounded snapshot.',
     confidence: matchedOwners.length > 0 ? 'medium' : 'low',
     limitations: [
       'Async explanation is node-scoped by owner id and scope matching, not a full runtime causality proof.',
-      matchedOwners.length === 0 ? 'Some async owners may not encode node identity in their owner id.' : ''
+      matchedOwners.length === 0
+        ? 'Some async owners may not encode node identity in their owner id.'
+        : '',
     ].filter(Boolean),
     evidenceRefs,
     related: { cid: query.cid, nodeId, path, ownerIds },
@@ -206,8 +222,8 @@ export function explainNodeAsync(args: {
         cancelled: owner.currentRun?.cancelled ?? owner.recentRuns[0]?.cancelled,
         timedOut: owner.currentRun?.timedOut ?? owner.recentRuns[0]?.timedOut,
         supersededBy: owner.currentRun?.supersededBy ?? owner.recentRuns[0]?.supersededBy,
-        recentRunIds: owner.recentRuns.slice(0, 3).map((run) => run.runId)
-      }))
-    }
+        recentRunIds: owner.recentRuns.slice(0, 3).map((run) => run.runId),
+      })),
+    },
   };
 }

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  createRendererRegistry,
-  createRendererRuntime,
-} from '../index';
+import { createRendererRegistry, createRendererRuntime } from '../index';
 import { env } from './test-fixtures';
 
 describe('createRendererRuntime host projection scope', () => {
@@ -55,7 +52,9 @@ describe('createRendererRuntime host projection scope', () => {
       scopeLabel: 'host',
     });
 
-    expect(() => hostScope.update('host.status', 'mutated')).toThrow('Cannot write projected host field: host.status');
+    expect(() => hostScope.update('host.status', 'mutated')).toThrow(
+      'Cannot write projected host field: host.status',
+    );
 
     hostScope.update('local.note', 'ok');
 

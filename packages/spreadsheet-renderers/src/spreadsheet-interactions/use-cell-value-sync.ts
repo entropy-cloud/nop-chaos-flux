@@ -8,21 +8,24 @@ export function useCellValueSync(input: {
   selectedCell: { row: number; col: number } | null;
   setCellValue: React.Dispatch<React.SetStateAction<string>>;
 }) {
-  return useCallback((value: string) => {
-    if (!input.selectedCell) {
-      return;
-    }
+  return useCallback(
+    (value: string) => {
+      if (!input.selectedCell) {
+        return;
+      }
 
-    input.setCellValue(value);
-    input.bridge.dispatch({
-      type: 'spreadsheet:setCellValue',
-      cell: {
-        sheetId: input.sheetId,
-        address: cellAddress(input.selectedCell.row, input.selectedCell.col),
-        row: input.selectedCell.row,
-        col: input.selectedCell.col,
-      },
-      value,
-    });
-  }, [input]);
+      input.setCellValue(value);
+      input.bridge.dispatch({
+        type: 'spreadsheet:setCellValue',
+        cell: {
+          sheetId: input.sheetId,
+          address: cellAddress(input.selectedCell.row, input.selectedCell.col),
+          row: input.selectedCell.row,
+          col: input.selectedCell.col,
+        },
+        value,
+      });
+    },
+    [input],
+  );
 }

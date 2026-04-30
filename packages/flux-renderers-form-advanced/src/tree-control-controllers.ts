@@ -5,7 +5,7 @@ import {
   isTreeSelectionChecked,
   toggleTreeSelection,
   type TreeOptionConfig,
-  type TreeOptionMeta
+  type TreeOptionMeta,
 } from './tree-options';
 
 export function getSourceErrorMessage(sourceState: SourceTransientState | undefined) {
@@ -17,7 +17,11 @@ export function getSourceErrorMessage(sourceState: SourceTransientState | undefi
     return sourceState.error;
   }
 
-  if (sourceState.error && typeof sourceState.error === 'object' && 'message' in sourceState.error) {
+  if (
+    sourceState.error &&
+    typeof sourceState.error === 'object' &&
+    'message' in sourceState.error
+  ) {
     const message = (sourceState.error as { message?: unknown }).message;
 
     if (typeof message === 'string' && message) {
@@ -35,7 +39,9 @@ export function isMultipleMode(treeMode: unknown) {
 function filterTreeOptions(entries: TreeOptionMeta[], lowerQuery: string): TreeOptionMeta[] {
   return entries.flatMap((entry) => {
     const nextChildren = filterTreeOptions(entry.children, lowerQuery);
-    const matches = entry.label.toLowerCase().includes(lowerQuery) || entry.pathLabel.toLowerCase().includes(lowerQuery);
+    const matches =
+      entry.label.toLowerCase().includes(lowerQuery) ||
+      entry.pathLabel.toLowerCase().includes(lowerQuery);
 
     if (!matches && nextChildren.length === 0) {
       return [];
@@ -65,26 +71,29 @@ export function useTreeOptionNodeController(input: {
     onChange(toggleTreeSelection(value, option.value, multiple));
   }, [disabled, multiple, onChange, option.value, value]);
 
-  const handleKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (disabled) {
-      return;
-    }
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (disabled) {
+        return;
+      }
 
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleSelect();
-    }
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleSelect();
+      }
 
-    if (event.key === 'ArrowRight' && hasChildren) {
-      event.preventDefault();
-      setExpanded(true);
-    }
+      if (event.key === 'ArrowRight' && hasChildren) {
+        event.preventDefault();
+        setExpanded(true);
+      }
 
-    if (event.key === 'ArrowLeft' && hasChildren) {
-      event.preventDefault();
-      setExpanded(false);
-    }
-  }, [disabled, handleSelect, hasChildren]);
+      if (event.key === 'ArrowLeft' && hasChildren) {
+        event.preventDefault();
+        setExpanded(false);
+      }
+    },
+    [disabled, handleSelect, hasChildren],
+  );
 
   const handleChevronClick = React.useCallback((event: React.MouseEvent<HTMLSpanElement>) => {
     event.stopPropagation();
@@ -97,7 +106,7 @@ export function useTreeOptionNodeController(input: {
     hasChildren,
     handleSelect,
     handleKeyDown,
-    handleChevronClick
+    handleChevronClick,
   };
 }
 
@@ -119,7 +128,7 @@ export function useTreeOptionListController(input: {
   return {
     query,
     setQuery,
-    filteredOptions
+    filteredOptions,
   };
 }
 
@@ -135,21 +144,20 @@ export function useTreeSelectController(input: {
   const triggerText = React.useMemo(() => {
     const flattenedOptions = flattenTreeOptions(options, treeConfig);
     const selectedLabels = multiple
-      ? flattenedOptions.filter((entry) => isTreeSelectionChecked(value, entry.value, true)).map((entry) => entry.label)
+      ? flattenedOptions
+          .filter((entry) => isTreeSelectionChecked(value, entry.value, true))
+          .map((entry) => entry.label)
       : flattenedOptions.find((entry) => Object.is(entry.value, value))?.label;
 
-    return Array.isArray(selectedLabels)
-      ? selectedLabels.join(', ')
-      : selectedLabels;
+    return Array.isArray(selectedLabels) ? selectedLabels.join(', ') : selectedLabels;
   }, [multiple, options, treeConfig, value]);
 
-  const triggerLabel = typeof placeholder === 'string' && placeholder
-    ? placeholder
-    : 'Select tree option';
+  const triggerLabel =
+    typeof placeholder === 'string' && placeholder ? placeholder : 'Select tree option';
 
   return {
     triggerText,
     triggerLabel,
-    hasSelection: Boolean(triggerText)
+    hasSelection: Boolean(triggerText),
   };
 }

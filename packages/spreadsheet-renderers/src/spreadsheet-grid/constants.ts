@@ -53,10 +53,12 @@ export function isCellWithinSelection(
   }
 
   if (selection.kind === 'range' && selection.range) {
-    return row >= selection.range.startRow
-      && row <= selection.range.endRow
-      && col >= selection.range.startCol
-      && col <= selection.range.endCol;
+    return (
+      row >= selection.range.startRow &&
+      row <= selection.range.endRow &&
+      col >= selection.range.startCol &&
+      col <= selection.range.endCol
+    );
   }
 
   if (selection.kind === 'row') {
@@ -100,7 +102,10 @@ export function getAnchorCellFromSelection(selection: SpreadsheetHostSnapshot['s
   return null;
 }
 
-export function getSelectedAxisInfo(selection: SpreadsheetHostSnapshot['selection'], axis: 'row' | 'column') {
+export function getSelectedAxisInfo(
+  selection: SpreadsheetHostSnapshot['selection'],
+  axis: 'row' | 'column',
+) {
   const values = axis === 'row' ? selection.rows : selection.columns;
   if (!values?.length) {
     return null;
@@ -118,10 +123,12 @@ export function getSelectedAxisInfo(selection: SpreadsheetHostSnapshot['selectio
 }
 
 export function rangesEqual(left: SpreadsheetRange, right: SpreadsheetRange | MergeRange) {
-  return left.startRow === right.startRow
-    && left.startCol === right.startCol
-    && left.endRow === right.endRow
-    && left.endCol === right.endCol;
+  return (
+    left.startRow === right.startRow &&
+    left.startCol === right.startCol &&
+    left.endRow === right.endRow &&
+    left.endCol === right.endCol
+  );
 }
 
 export function expandSortRangeToUsedColumns(

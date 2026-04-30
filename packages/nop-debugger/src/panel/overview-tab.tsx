@@ -25,12 +25,16 @@ export function OverviewTab(props: {
       </article>
       <article className="ndbg-metric-card">
         <span className="ndbg-metric-label">{t('flux.debugger.latestCompile')}</span>
-        <strong>{overview.latestCompile ? formatClock(overview.latestCompile.timestamp) : 'n/a'}</strong>
+        <strong>
+          {overview.latestCompile ? formatClock(overview.latestCompile.timestamp) : 'n/a'}
+        </strong>
         <span>{overview.latestCompile?.summary ?? 'No compile event yet'}</span>
       </article>
       <article className="ndbg-metric-card">
         <span className="ndbg-metric-label">{t('flux.debugger.latestAction')}</span>
-        <strong>{overview.latestAction ? formatClock(overview.latestAction.timestamp) : 'n/a'}</strong>
+        <strong>
+          {overview.latestAction ? formatClock(overview.latestAction.timestamp) : 'n/a'}
+        </strong>
         <span>{overview.latestAction?.summary ?? 'No action event yet'}</span>
       </article>
       <article className="ndbg-metric-card">
@@ -49,7 +53,12 @@ export function OverviewTab(props: {
         <span>{latestTraceSummary.headline}</span>
         <span className="ndbg-metric-label">{latestTraceSummary.detail}</span>
       </article>
-      <article className="ndbg-metric-card" data-slow={overview.slowestRenderMs != null && overview.slowestRenderMs > 16 ? '' : undefined}>
+      <article
+        className="ndbg-metric-card"
+        data-slow={
+          overview.slowestRenderMs != null && overview.slowestRenderMs > 16 ? '' : undefined
+        }
+      >
         <span className="ndbg-metric-label">{t('flux.debugger.renders')}</span>
         <strong>{overview.countsByGroup.render ?? 0}</strong>
         <span>

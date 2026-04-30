@@ -80,7 +80,7 @@
 - **严重程度**: P2
 - **现状**: ui 包在 dependencies 中声明了 `"@nop-chaos/flux-i18n": "workspace:*"`，同时在源码中 6 个组件使用了 i18n
 - **风险**: 违反 ui 包作为独立 UI 层的设计原则
-- **建议**: 
+- **建议**:
   - 方案 A：将 flux-i18n 移至 peerDependencies
   - 方案 B：为 UI 组件创建 prop-based 的 label 覆盖机制
 
@@ -90,11 +90,11 @@
 
 以下规则全部通过检查：
 
-- ✅ flux-core 不依赖任何其他 @nop-chaos/* 包
+- ✅ flux-core 不依赖任何其他 @nop-chaos/\* 包
 - ✅ flux-formula 只依赖 flux-core
 - ✅ flux-runtime 只依赖 flux-core 和 flux-formula
 - ✅ flux-react 不依赖任何 renderers 包
-- ✅ *-core 包不依赖 *-renderers 包
+- ✅ _-core 包不依赖 _-renderers 包
 - ✅ spreadsheet-core 不依赖 report-designer-core
 - ✅ tailwind-preset 和 theme-tokens 不依赖任何运行时包
 - ✅ 所有包 exports 字段使用 types + default 双条件导出

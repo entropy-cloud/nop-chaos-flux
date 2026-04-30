@@ -7,14 +7,14 @@ const variantShowcase = {
       type: 'flex',
       direction: 'row',
       gap: 2,
-        body: [
+      body: [
         { type: 'badge', text: 'Info' },
         { type: 'badge', text: 'Success', level: 'success' },
         { type: 'badge', text: 'Warning', level: 'warning' },
-        { type: 'badge', text: 'Danger', level: 'danger' }
-      ]
-    }
-  ]
+        { type: 'badge', text: 'Danger', level: 'danger' },
+      ],
+    },
+  ],
 };
 
 const expressionLabel = {
@@ -27,10 +27,10 @@ const expressionLabel = {
       align: 'center',
       body: [
         { type: 'text', text: 'User status:' },
-        { type: 'badge', text: '${status}' }
-      ]
-    }
-  ]
+        { type: 'badge', text: '${status}' },
+      ],
+    },
+  ],
 };
 
 const statusVariantMapping = {
@@ -48,8 +48,8 @@ const statusVariantMapping = {
           align: 'center',
           body: [
             { type: 'text', text: 'active →' },
-            { type: 'badge', text: 'active' }
-          ]
+            { type: 'badge', text: 'active' },
+          ],
         },
         {
           type: 'flex',
@@ -58,8 +58,8 @@ const statusVariantMapping = {
           align: 'center',
           body: [
             { type: 'text', text: 'pending →' },
-            { type: 'badge', text: 'pending', level: 'warning' }
-          ]
+            { type: 'badge', text: 'pending', level: 'warning' },
+          ],
         },
         {
           type: 'flex',
@@ -68,8 +68,8 @@ const statusVariantMapping = {
           align: 'center',
           body: [
             { type: 'text', text: 'error →' },
-            { type: 'badge', text: 'error', level: 'danger' }
-          ]
+            { type: 'badge', text: 'error', level: 'danger' },
+          ],
         },
         {
           type: 'flex',
@@ -78,12 +78,17 @@ const statusVariantMapping = {
           align: 'center',
           body: [
             { type: 'text', text: 'Dynamic from scope: ${userStatus} →' },
-            { type: 'badge', text: '${userStatus}', level: '${userStatus === "active" ? "success" : userStatus === "error" ? "danger" : "warning"}' }
-          ]
-        }
-      ]
-    }
-  ]
+            {
+              type: 'badge',
+              text: '${userStatus}',
+              level:
+                '${userStatus === "active" ? "success" : userStatus === "error" ? "danger" : "warning"}',
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 export function BadgeLabPage() {
@@ -93,21 +98,24 @@ export function BadgeLabPage() {
       scenarios={[
         {
           title: 'All badge variants',
-          description: 'The live badge renderer maps semantic levels to visual variants: info, success, warning, and danger.',
-          schema: variantShowcase
+          description:
+            'The live badge renderer maps semantic levels to visual variants: info, success, warning, and danger.',
+          schema: variantShowcase,
         },
         {
           title: 'Expression-driven label from scope',
-          description: 'The text prop accepts a ${...} expression, so the badge content can be dynamic.',
+          description:
+            'The text prop accepts a ${...} expression, so the badge content can be dynamic.',
           schema: expressionLabel,
-          data: { status: 'Active' }
+          data: { status: 'Active' },
         },
         {
           title: 'Status-to-level mapping',
-          description: 'Both text and level can be expressions. The bottom row dynamically picks the semantic level based on the userStatus scope variable.',
+          description:
+            'Both text and level can be expressions. The bottom row dynamically picks the semantic level based on the userStatus scope variable.',
           schema: statusVariantMapping,
-          data: { userStatus: 'error' }
-        }
+          data: { userStatus: 'error' },
+        },
       ]}
     />
   );

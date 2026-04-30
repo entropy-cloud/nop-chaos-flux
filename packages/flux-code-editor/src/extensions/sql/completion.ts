@@ -2,21 +2,75 @@ import type { CompletionContext, CompletionResult } from '@codemirror/autocomple
 import type { TableSchema } from '../../types';
 
 export const SQL_KEYWORDS = [
-  'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'BETWEEN',
-  'LIKE', 'IS', 'NULL', 'AS', 'ON', 'JOIN', 'LEFT', 'RIGHT', 'INNER',
-  'OUTER', 'CROSS', 'FULL', 'GROUP', 'BY', 'ORDER', 'ASC', 'DESC',
-  'HAVING', 'LIMIT', 'OFFSET', 'UNION', 'ALL', 'INSERT', 'INTO',
-  'VALUES', 'UPDATE', 'SET', 'DELETE', 'CREATE', 'TABLE', 'DROP',
-  'ALTER', 'ADD', 'COLUMN', 'INDEX', 'VIEW', 'DISTINCT', 'COUNT',
-  'SUM', 'AVG', 'MIN', 'MAX', 'EXISTS', 'CASE', 'WHEN', 'THEN',
-  'ELSE', 'END', 'TRUE', 'FALSE', 'PRIMARY', 'KEY', 'FOREIGN',
-  'REFERENCES', 'CONSTRAINT', 'DEFAULT', 'CHECK', 'UNIQUE',
+  'SELECT',
+  'FROM',
+  'WHERE',
+  'AND',
+  'OR',
+  'NOT',
+  'IN',
+  'BETWEEN',
+  'LIKE',
+  'IS',
+  'NULL',
+  'AS',
+  'ON',
+  'JOIN',
+  'LEFT',
+  'RIGHT',
+  'INNER',
+  'OUTER',
+  'CROSS',
+  'FULL',
+  'GROUP',
+  'BY',
+  'ORDER',
+  'ASC',
+  'DESC',
+  'HAVING',
+  'LIMIT',
+  'OFFSET',
+  'UNION',
+  'ALL',
+  'INSERT',
+  'INTO',
+  'VALUES',
+  'UPDATE',
+  'SET',
+  'DELETE',
+  'CREATE',
+  'TABLE',
+  'DROP',
+  'ALTER',
+  'ADD',
+  'COLUMN',
+  'INDEX',
+  'VIEW',
+  'DISTINCT',
+  'COUNT',
+  'SUM',
+  'AVG',
+  'MIN',
+  'MAX',
+  'EXISTS',
+  'CASE',
+  'WHEN',
+  'THEN',
+  'ELSE',
+  'END',
+  'TRUE',
+  'FALSE',
+  'PRIMARY',
+  'KEY',
+  'FOREIGN',
+  'REFERENCES',
+  'CONSTRAINT',
+  'DEFAULT',
+  'CHECK',
+  'UNIQUE',
 ];
 
-export function parseTableAliases(
-  sql: string,
-  tables: TableSchema[],
-): Map<string, TableSchema> {
+export function parseTableAliases(sql: string, tables: TableSchema[]): Map<string, TableSchema> {
   const aliasMap = new Map<string, TableSchema>();
 
   for (const table of tables) {
@@ -51,9 +105,7 @@ export function parseTableAliases(
 }
 
 export function sqlCompletionSource(tables: TableSchema[]) {
-  return function contextCompletion(
-    context: CompletionContext,
-  ): CompletionResult | null {
+  return function contextCompletion(context: CompletionContext): CompletionResult | null {
     if (context.view?.composing) return null;
 
     const doc = context.state.doc.toString();
@@ -95,12 +147,12 @@ export function sqlCompletionSource(tables: TableSchema[]) {
       type: 'type' as const,
     }));
 
-    const keywordOptions = SQL_KEYWORDS.filter((kw) =>
-      kw.toLowerCase().startsWith(partial),
-    ).map((kw) => ({
-      label: kw,
-      type: 'keyword' as const,
-    }));
+    const keywordOptions = SQL_KEYWORDS.filter((kw) => kw.toLowerCase().startsWith(partial)).map(
+      (kw) => ({
+        label: kw,
+        type: 'keyword' as const,
+      }),
+    );
 
     const options = [...tableOptions, ...keywordOptions];
     if (options.length === 0) return null;

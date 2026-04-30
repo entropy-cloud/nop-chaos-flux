@@ -10,14 +10,23 @@ import type {
 } from '@nop-chaos/report-designer-core';
 import { getFieldCount } from './helpers.js';
 
-function getActiveSheet(snapshot: ReportDesignerRuntimeSnapshot, target: ReportSelectionTarget | undefined) {
+function getActiveSheet(
+  snapshot: ReportDesignerRuntimeSnapshot,
+  target: ReportSelectionTarget | undefined,
+) {
   switch (target?.kind) {
     case 'sheet':
-      return snapshot.document.spreadsheet.workbook.sheets.find((sheet) => sheet.id === target.sheetId);
+      return snapshot.document.spreadsheet.workbook.sheets.find(
+        (sheet) => sheet.id === target.sheetId,
+      );
     case 'cell':
-      return snapshot.document.spreadsheet.workbook.sheets.find((sheet) => sheet.id === target.cell.sheetId);
+      return snapshot.document.spreadsheet.workbook.sheets.find(
+        (sheet) => sheet.id === target.cell.sheetId,
+      );
     case 'range':
-      return snapshot.document.spreadsheet.workbook.sheets.find((sheet) => sheet.id === target.range.sheetId);
+      return snapshot.document.spreadsheet.workbook.sheets.find(
+        (sheet) => sheet.id === target.range.sheetId,
+      );
     default:
       return undefined;
   }
@@ -70,14 +79,19 @@ export interface ReportDesignerHostData {
   selectionTarget: ReportSelectionTarget | undefined;
   reportDocument: ReportDesignerRuntimeSnapshot['document'];
   workbook: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook'];
-  activeSheet: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook']['sheets'][number] | undefined;
+  activeSheet:
+    | ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook']['sheets'][number]
+    | undefined;
   canUndo: boolean;
   canRedo: boolean;
   documentName: string;
   fieldCount: number;
 }
 
-export function createHostData(core: ReportDesignerCore, snapshot: ReportDesignerRuntimeSnapshot): ReportDesignerHostData {
+export function createHostData(
+  core: ReportDesignerCore,
+  snapshot: ReportDesignerRuntimeSnapshot,
+): ReportDesignerHostData {
   const fieldCount = getFieldCount(snapshot.fieldSources);
   const reportDocument = {
     ...snapshot.document,
@@ -121,9 +135,12 @@ export function buildReportDesignerScopeData(
   spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): Record<string, unknown> {
   const fieldCount = getFieldCount(snapshot.fieldSources);
-  const spreadsheet = spreadsheetSnapshot ? buildSpreadsheetScopeData(spreadsheetSnapshot) : undefined;
+  const spreadsheet = spreadsheetSnapshot
+    ? buildSpreadsheetScopeData(spreadsheetSnapshot)
+    : undefined;
   const workbook = spreadsheet?.workbook ?? snapshot.document.spreadsheet.workbook;
-  const activeSheet = spreadsheet?.activeSheet ?? getActiveSheet(snapshot, snapshot.selectionTarget);
+  const activeSheet =
+    spreadsheet?.activeSheet ?? getActiveSheet(snapshot, snapshot.selectionTarget);
   const runtimeCanUndo = snapshot.canUndo || (spreadsheetSnapshot?.history.canUndo ?? false);
   const runtimeCanRedo = snapshot.canRedo || (spreadsheetSnapshot?.history.canRedo ?? false);
   const runtimeDirty = snapshot.dirty || (spreadsheetSnapshot?.dirty ?? false);
@@ -135,12 +152,12 @@ export function buildReportDesignerScopeData(
     designer: {
       kind: snapshot.document.kind,
       documentId: snapshot.document.id,
-        documentName: snapshot.document.name,
-        selectionTarget: snapshot.selectionTarget,
-        selectionKind: snapshot.selectionTarget?.kind,
-        inspector: snapshot.inspector,
-        fieldDrag: snapshot.fieldDrag,
-        preview: snapshot.preview,
+      documentName: snapshot.document.name,
+      selectionTarget: snapshot.selectionTarget,
+      selectionKind: snapshot.selectionTarget?.kind,
+      inspector: snapshot.inspector,
+      fieldDrag: snapshot.fieldDrag,
+      preview: snapshot.preview,
       activeMeta: snapshot.activeMeta,
       fieldSources: snapshot.fieldSources,
       fieldSourceCount: snapshot.fieldSources.length,

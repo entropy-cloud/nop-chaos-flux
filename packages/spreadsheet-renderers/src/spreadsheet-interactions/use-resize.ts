@@ -10,31 +10,47 @@ export interface ResizeState {
 
 export function useResize() {
   const [resizeState, setResizeState] = useState<ResizeState>({
-    isResizing: false, type: 'column', index: -1, startPos: 0, startSize: 0,
+    isResizing: false,
+    type: 'column',
+    index: -1,
+    startPos: 0,
+    startSize: 0,
   });
   const [columnWidths, setColumnWidths] = useState<Record<number, number>>({});
   const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
 
-  const handleColumnResizeStart = useCallback((col: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setResizeState({
-      isResizing: true, type: 'column', index: col,
-      startPos: e.clientX, startSize: columnWidths[col] ?? 80,
-    });
-  }, [columnWidths]);
+  const handleColumnResizeStart = useCallback(
+    (col: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setResizeState({
+        isResizing: true,
+        type: 'column',
+        index: col,
+        startPos: e.clientX,
+        startSize: columnWidths[col] ?? 80,
+      });
+    },
+    [columnWidths],
+  );
 
-  const handleRowResizeStart = useCallback((row: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setResizeState({
-      isResizing: true, type: 'row', index: row,
-      startPos: e.clientY, startSize: rowHeights[row] ?? 24,
-    });
-  }, [rowHeights]);
+  const handleRowResizeStart = useCallback(
+    (row: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setResizeState({
+        isResizing: true,
+        type: 'row',
+        index: row,
+        startPos: e.clientY,
+        startSize: rowHeights[row] ?? 24,
+      });
+    },
+    [rowHeights],
+  );
 
   const endResize = useCallback(() => {
-    setResizeState(prev => ({ ...prev, isResizing: false }));
+    setResizeState((prev) => ({ ...prev, isResizing: false }));
   }, []);
 
   useEffect(() => {
@@ -48,11 +64,11 @@ export function useResize() {
           if (resizeState.type === 'column') {
             const delta = clientPos - resizeState.startPos;
             const newWidth = Math.max(30, resizeState.startSize + delta);
-            setColumnWidths(prev => ({ ...prev, [resizeState.index]: newWidth }));
+            setColumnWidths((prev) => ({ ...prev, [resizeState.index]: newWidth }));
           } else {
             const delta = clientPos - resizeState.startPos;
             const newHeight = Math.max(16, resizeState.startSize + delta);
-            setRowHeights(prev => ({ ...prev, [resizeState.index]: newHeight }));
+            setRowHeights((prev) => ({ ...prev, [resizeState.index]: newHeight }));
           }
         });
       }

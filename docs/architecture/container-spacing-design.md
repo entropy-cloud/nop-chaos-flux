@@ -18,18 +18,18 @@ Three layers, each independently overridable:
 
 Defined in `packages/theme-tokens/src/styles.css` `:root` block:
 
-| Token | Default | Purpose |
-|-------|---------|---------|
-| `--space-page-body` | 16px | Page body padding |
-| `--space-section-gap` | 24px | Gap between page sections |
-| `--space-form-item-gap` | 16px | Gap between form body items |
-| `--space-fieldset-body-gap` | 16px | Gap between fieldset body items |
-| `--space-form-actions-gap` | 12px | Gap between form action buttons |
-| `--space-form-body-to-actions` | 16px | Margin-top above form actions |
-| `--space-field-internal` | 4px | Internal field spacing (control-to-error) |
-| `--space-field-label-gap` | 8px | Label-to-control gap (label-top) |
-| `--space-field-label-h-gap` | 16px | Label-to-control gap (label-left) |
-| `--space-tabs-content-gap` | 16px | Gap inside tabs content panel |
+| Token                          | Default | Purpose                                   |
+| ------------------------------ | ------- | ----------------------------------------- |
+| `--space-page-body`            | 16px    | Page body padding                         |
+| `--space-section-gap`          | 24px    | Gap between page sections                 |
+| `--space-form-item-gap`        | 16px    | Gap between form body items               |
+| `--space-fieldset-body-gap`    | 16px    | Gap between fieldset body items           |
+| `--space-form-actions-gap`     | 12px    | Gap between form action buttons           |
+| `--space-form-body-to-actions` | 16px    | Margin-top above form actions             |
+| `--space-field-internal`       | 4px     | Internal field spacing (control-to-error) |
+| `--space-field-label-gap`      | 8px     | Label-to-control gap (label-top)          |
+| `--space-field-label-h-gap`    | 16px    | Label-to-control gap (label-left)         |
+| `--space-tabs-content-gap`     | 16px    | Gap inside tabs content panel             |
 
 Themes override these tokens in their theme blocks:
 
@@ -50,7 +50,7 @@ All default spacing rules live in `@layer base` so Tailwind utilities (`@layer u
 
 ```css
 @layer base {
-  .nop-form > [data-slot="form-body"] {
+  .nop-form > [data-slot='form-body'] {
     display: flex;
     flex-direction: column;
     gap: var(--space-form-item-gap);
@@ -66,49 +66,49 @@ File: `packages/flux-react/src/default-spacing.css`
 
 ### Page
 
-| Selector | Rules |
-|----------|-------|
-| `.nop-page` | `display: flex; flex-direction: column` |
+| Selector                              | Rules                                                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `.nop-page`                           | `display: flex; flex-direction: column`                                                                 |
 | `.nop-page > [data-slot="page-body"]` | `display: flex; flex-direction: column; gap: var(--space-section-gap); padding: var(--space-page-body)` |
 
 ### Form
 
-| Selector | Rules |
-|----------|-------|
-| `.nop-form` | `display: flex; flex-direction: column` |
-| `.nop-form > [data-slot="form-body"]` | `display: flex; flex-direction: column; gap: var(--space-form-item-gap)` |
+| Selector                                 | Rules                                                                                                                   |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `.nop-form`                              | `display: flex; flex-direction: column`                                                                                 |
+| `.nop-form > [data-slot="form-body"]`    | `display: flex; flex-direction: column; gap: var(--space-form-item-gap)`                                                |
 | `.nop-form > [data-slot="form-actions"]` | `display: flex; flex-direction: row; gap: var(--space-form-actions-gap); margin-top: var(--space-form-body-to-actions)` |
 
 ### FieldSet
 
-| Selector | Rules |
-|----------|-------|
-| `.nop-fieldset` | `display: flex; flex-direction: column; min-inline-size: 0; border: 1px solid hsl(var(--border)); border-radius: var(--radius-sm); padding: 0 var(--space-form-item-gap) var(--space-form-item-gap)` |
-| `.nop-fieldset > legend` | `padding: 0 var(--space-field-label-gap); font-weight: 500; font-size: 0.875rem` |
-| `.nop-fieldset > [data-slot="fieldset-body"]` | `display: flex; flex-direction: column; gap: var(--space-fieldset-body-gap)` |
+| Selector                                      | Rules                                                                                                                                                                                                |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.nop-fieldset`                               | `display: flex; flex-direction: column; min-inline-size: 0; border: 1px solid hsl(var(--border)); border-radius: var(--radius-sm); padding: 0 var(--space-form-item-gap) var(--space-form-item-gap)` |
+| `.nop-fieldset > legend`                      | `padding: 0 var(--space-field-label-gap); font-weight: 500; font-size: 0.875rem`                                                                                                                     |
+| `.nop-fieldset > [data-slot="fieldset-body"]` | `display: flex; flex-direction: column; gap: var(--space-fieldset-body-gap)`                                                                                                                         |
 
 ### Container (bare path only)
 
-| Selector | Rules |
-|----------|-------|
+| Selector                                                         | Rules                                                                    |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `.nop-container > [data-slot="container-body"]:not([data-flex])` | `display: flex; flex-direction: column; gap: var(--space-form-item-gap)` |
-| `.nop-container > [data-slot="container-header"]` | `margin-bottom: var(--space-field-label-gap)` |
-| `.nop-container > [data-slot="container-footer"]` | `margin-top: var(--space-field-label-gap)` |
+| `.nop-container > [data-slot="container-header"]`                | `margin-bottom: var(--space-field-label-gap)`                            |
+| `.nop-container > [data-slot="container-footer"]`                | `margin-top: var(--space-field-label-gap)`                               |
 
 ### Tabs content
 
-| Selector | Rules |
-|----------|-------|
+| Selector                     | Rules                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------- |
 | `[data-slot="tabs-content"]` | `display: flex; flex-direction: column; gap: var(--space-tabs-content-gap)` |
 
 ### FieldFrame
 
-| Selector | Rules |
-|----------|-------|
-| `.nop-field` | `display: flex; flex-direction: column; gap: var(--space-field-internal)` |
-| `.nop-field[data-label-align="top"]` | `flex-direction: column; gap: var(--space-field-label-gap)` |
-| `.nop-field[data-label-align="left"]` | `flex-direction: row; align-items: flex-start; gap: var(--space-field-label-h-gap)` |
-| `.nop-field > [data-slot="field-control"]` | `display: flex; flex-direction: column; gap: var(--space-field-internal)` |
+| Selector                                   | Rules                                                                               |
+| ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `.nop-field`                               | `display: flex; flex-direction: column; gap: var(--space-field-internal)`           |
+| `.nop-field[data-label-align="top"]`       | `flex-direction: column; gap: var(--space-field-label-gap)`                         |
+| `.nop-field[data-label-align="left"]`      | `flex-direction: row; align-items: flex-start; gap: var(--space-field-label-h-gap)` |
+| `.nop-field > [data-slot="field-control"]` | `display: flex; flex-direction: column; gap: var(--space-field-internal)`           |
 
 ### Field label/error/hint styling
 
@@ -140,21 +140,21 @@ Layout container schemas support per-slot `className` props that apply Tailwind 
 
 ### Available Props
 
-| Renderer | Prop | Target `data-slot` |
-|----------|------|-------------------|
-| Page | `bodyClassName` | `page-body` |
-| Page | `headerClassName` | `page-header` |
-| Page | `footerClassName` | `page-footer` |
-| Page | `toolbarClassName` | `page-toolbar` |
-| Container | `bodyClassName` | `container-body` |
-| Container | `headerClassName` | `container-header` |
-| Container | `footerClassName` | `container-footer` |
-| Form | `bodyClassName` | `form-body` |
-| Form | `actionsClassName` | `form-actions` |
-| Fieldset | `bodyClassName` | `fieldset-body` |
-| Fieldset | `titleClassName` | `fieldset-title` |
-| Tabs | `contentClassName` | `tabs-content` |
-| Tabs | `toolbarClassName` | `tabs-toolbar` |
+| Renderer  | Prop               | Target `data-slot` |
+| --------- | ------------------ | ------------------ |
+| Page      | `bodyClassName`    | `page-body`        |
+| Page      | `headerClassName`  | `page-header`      |
+| Page      | `footerClassName`  | `page-footer`      |
+| Page      | `toolbarClassName` | `page-toolbar`     |
+| Container | `bodyClassName`    | `container-body`   |
+| Container | `headerClassName`  | `container-header` |
+| Container | `footerClassName`  | `container-footer` |
+| Form      | `bodyClassName`    | `form-body`        |
+| Form      | `actionsClassName` | `form-actions`     |
+| Fieldset  | `bodyClassName`    | `fieldset-body`    |
+| Fieldset  | `titleClassName`   | `fieldset-title`   |
+| Tabs      | `contentClassName` | `tabs-content`     |
+| Tabs      | `toolbarClassName` | `tabs-toolbar`     |
 
 ### Usage
 
@@ -177,29 +177,29 @@ Per-slot props are simpler, match the existing pattern (`gap`, `direction`), and
 
 ## Override Mechanism
 
-| What to override | Mechanism |
-|-----------------|-----------|
-| All instances globally | Override `--space-*` tokens in theme block |
-| Form body item gap | `gap` prop on Form schema |
-| FieldSet body item gap | `gap` prop on FieldSet schema |
-| Container gap with semantic props | `gap` prop on Container (activates flex-child path) |
-| Gap between form-body and form-actions | `className: "gap-1"` on `.nop-form` root |
-| All spacing to zero (host embedding) | Set all `--space-*` tokens to `0px` |
+| What to override                       | Mechanism                                           |
+| -------------------------------------- | --------------------------------------------------- |
+| All instances globally                 | Override `--space-*` tokens in theme block          |
+| Form body item gap                     | `gap` prop on Form schema                           |
+| FieldSet body item gap                 | `gap` prop on FieldSet schema                       |
+| Container gap with semantic props      | `gap` prop on Container (activates flex-child path) |
+| Gap between form-body and form-actions | `className: "gap-1"` on `.nop-form` root            |
+| All spacing to zero (host embedding)   | Set all `--space-*` tokens to `0px`                 |
 
 **Limitation**: `className` on schema targets the root element (e.g., `.nop-form`), not internal slots like `[data-slot="form-body"]`. For per-slot styling control, use the `bodyClassName`, `headerClassName`, `footerClassName`, `toolbarClassName`, `actionsClassName`, `titleClassName`, or `contentClassName` props documented below.
 
 ## Container Inventory
 
-| Container | Default Internal Spacing | Mechanism |
-|-----------|------------------------|-----------|
-| Page | 24px gap between sections, 16px padding | CSS `@layer base` |
-| Form | 16px gap between fields, 12px between actions | CSS `@layer base`; override via `gap` prop |
-| FieldSet | 16px gap + border/padding reset | CSS `@layer base`; override via `gap` prop |
-| Container (bare) | 16px gap between children | CSS `@layer base`, scoped to `:not([data-flex])` |
-| Container (flex-child) | Per semantic props | Renderer handles layout |
-| Flex | Zero | Layout primitive — author sets `gap` prop |
-| Tabs content | 16px gap between children | CSS `@layer base` |
-| FieldFrame | 4px internal, 8px label-top, 16px label-left | CSS `@layer base` |
+| Container              | Default Internal Spacing                      | Mechanism                                        |
+| ---------------------- | --------------------------------------------- | ------------------------------------------------ |
+| Page                   | 24px gap between sections, 16px padding       | CSS `@layer base`                                |
+| Form                   | 16px gap between fields, 12px between actions | CSS `@layer base`; override via `gap` prop       |
+| FieldSet               | 16px gap + border/padding reset               | CSS `@layer base`; override via `gap` prop       |
+| Container (bare)       | 16px gap between children                     | CSS `@layer base`, scoped to `:not([data-flex])` |
+| Container (flex-child) | Per semantic props                            | Renderer handles layout                          |
+| Flex                   | Zero                                          | Layout primitive — author sets `gap` prop        |
+| Tabs content           | 16px gap between children                     | CSS `@layer base`                                |
+| FieldFrame             | 4px internal, 8px label-top, 16px label-left  | CSS `@layer base`                                |
 
 **Why Flex has no default gap**: Flex is a layout primitive. No single default is correct for toolbars, card grids, form rows, or tag lists.
 

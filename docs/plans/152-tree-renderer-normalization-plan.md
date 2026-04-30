@@ -19,14 +19,14 @@
 
 ### 涉及文件
 
-| 文件 | 包 | 角色 | 行数 |
-|------|-----|------|------|
-| `packages/flux-renderers-form-advanced/src/tree-controls.tsx` | form-advanced | `input-tree` + `tree-select` 渲染器 | 309 |
-| `packages/flux-renderers-form-advanced/src/tree-options.ts` | form-advanced | tree option 工具函数（纯逻辑，无需改动） | 134 |
-| `packages/flux-renderers-data/src/tree-renderer.tsx` | data | 视觉 `tree` 渲染器 | 185 |
-| `packages/flux-renderers-form-advanced/src/__tests__/form-tree-checkbox-fields.test.tsx` | form-advanced | tree 控件 checkbox/展开/折叠测试 | 637 |
-| `packages/flux-renderers-form-advanced/src/__tests__/form-tree-control-source-states.test.tsx` | form-advanced | tree 控件 source state 测试 | 200 |
-| `packages/flux-renderers-data/src/__tests__/data-tree-and-chart.test.tsx` | data | 视觉 tree 展开/折叠测试 | 225 |
+| 文件                                                                                           | 包            | 角色                                     | 行数 |
+| ---------------------------------------------------------------------------------------------- | ------------- | ---------------------------------------- | ---- |
+| `packages/flux-renderers-form-advanced/src/tree-controls.tsx`                                  | form-advanced | `input-tree` + `tree-select` 渲染器      | 309  |
+| `packages/flux-renderers-form-advanced/src/tree-options.ts`                                    | form-advanced | tree option 工具函数（纯逻辑，无需改动） | 134  |
+| `packages/flux-renderers-data/src/tree-renderer.tsx`                                           | data          | 视觉 `tree` 渲染器                       | 185  |
+| `packages/flux-renderers-form-advanced/src/__tests__/form-tree-checkbox-fields.test.tsx`       | form-advanced | tree 控件 checkbox/展开/折叠测试         | 637  |
+| `packages/flux-renderers-form-advanced/src/__tests__/form-tree-control-source-states.test.tsx` | form-advanced | tree 控件 source state 测试              | 200  |
+| `packages/flux-renderers-data/src/__tests__/data-tree-and-chart.test.tsx`                      | data          | 视觉 tree 展开/折叠测试                  | 225  |
 
 ### AMIS 参考做法（`amis-react19/packages/amis-ui/src/components/Tree.tsx`）
 

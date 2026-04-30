@@ -4,10 +4,18 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, createDefaultRegistry, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  createSchemaRenderer,
+  createDefaultRegistry,
+  useScopeSelector,
+} from '@nop-chaos/flux-react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
-import { createReportTemplateDocument, type ReportDesignerConfig, type ReportDesignerProfile } from '@nop-chaos/report-designer-core';
+import {
+  createReportTemplateDocument,
+  type ReportDesignerConfig,
+  type ReportDesignerProfile,
+} from '@nop-chaos/report-designer-core';
 import { defineReportDesignerPageSchema, registerReportDesignerRenderers } from './index.js';
 
 const env: RendererEnv = {
@@ -38,7 +46,9 @@ const pageRenderer: RendererDefinition = {
 
 function WorkbookTitleProbe() {
   const title = useScopeSelector((data: Record<string, unknown>) => {
-    const reportDocument = data.reportDocument as { semantic?: { workbookMeta?: { title?: string } } } | undefined;
+    const reportDocument = data.reportDocument as
+      | { semantic?: { workbookMeta?: { title?: string } } }
+      | undefined;
     return reportDocument?.semantic?.workbookMeta?.title ?? '';
   });
   return <span data-testid="sheet-title">{String(title)}</span>;
@@ -60,7 +70,9 @@ const reportRuntimeDirtyProbeRenderer: RendererDefinition = {
 };
 
 function ReportTargetKindProbe() {
-  const targetKind = useScopeSelector((data: any) => data.selectionTarget?.kind ?? data.target?.kind ?? data.selection?.kind ?? '');
+  const targetKind = useScopeSelector(
+    (data: any) => data.selectionTarget?.kind ?? data.target?.kind ?? data.selection?.kind ?? '',
+  );
   return <span data-testid="report-target-kind">{String(targetKind)}</span>;
 }
 
@@ -70,7 +82,10 @@ const reportTargetKindProbeRenderer: RendererDefinition = {
 };
 
 function ReportSpreadsheetA1Probe() {
-  const value = useScopeSelector((data: any) => data.spreadsheet?.activeSheet?.cells?.A1?.value ?? data.activeSheet?.cells?.A1?.value);
+  const value = useScopeSelector(
+    (data: any) =>
+      data.spreadsheet?.activeSheet?.cells?.A1?.value ?? data.activeSheet?.cells?.A1?.value,
+  );
   return <span data-testid="report-spreadsheet-a1">{value == null ? '' : String(value)}</span>;
 }
 
@@ -81,7 +96,13 @@ const reportSpreadsheetA1ProbeRenderer: RendererDefinition = {
 
 function ReportStatusProbe() {
   const status = useScopeSelector((data: any) => data.reportStatus);
-  return <span data-testid="report-status">{status ? `${status.kind}:${status.fieldSourceCount}:${status.dirty ? 'dirty' : 'clean'}` : ''}</span>;
+  return (
+    <span data-testid="report-status">
+      {status
+        ? `${status.kind}:${status.fieldSourceCount}:${status.dirty ? 'dirty' : 'clean'}`
+        : ''}
+    </span>
+  );
 }
 
 const reportStatusProbeRenderer: RendererDefinition = {
@@ -116,7 +137,8 @@ function renderReportDesignerPage(input: {
   inspector?: any;
 }) {
   const spreadsheet = createEmptyDocument('integration-report-designer');
-  const document = input.document ?? createReportTemplateDocument(spreadsheet, 'Integration Report');
+  const document =
+    input.document ?? createReportTemplateDocument(spreadsheet, 'Integration Report');
   const schema = defineReportDesignerPageSchema({
     type: 'report-designer-page',
     document,
@@ -264,18 +286,20 @@ describe('report-designer namespaced actions integration', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://report/renderers-status"
-        schema={{
-          type: 'page',
-          body: [
-            defineReportDesignerPageSchema({
-              type: 'report-designer-page',
-              document,
-              designer: createRuntimeConfig(),
-              statusPath: 'reportStatus',
-            }),
-            { type: 'report-status-probe' },
-          ],
-        } as any}
+        schema={
+          {
+            type: 'page',
+            body: [
+              defineReportDesignerPageSchema({
+                type: 'report-designer-page',
+                document,
+                designer: createRuntimeConfig(),
+                statusPath: 'reportStatus',
+              }),
+              { type: 'report-status-probe' },
+            ],
+          } as any
+        }
         env={env}
         registry={registry}
         formulaCompiler={createFormulaCompiler()}
@@ -342,6 +366,63 @@ describe('report-designer namespaced actions integration', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('report-target-kind').textContent).toBe('workbook');
+    });
+  });
+
+  it('clears report target projection when spreadsheet selection becomes none', async () => {
+    const spreadsheet = createEmptyDocument('selection-clear-report-designer');
+    const sheetId = spreadsheet.workbook.sheets[0].id;
+
+    renderReportDesignerPage({
+      toolbar: [
+        {
+          type: 'action-button',
+          label: 'Select A1',
+          onClick: {
+            action: 'spreadsheet:setSelection',
+            args: {
+              selection: {
+                kind: 'cell',
+                sheetId,
+                anchor: {
+                  sheetId,
+                  address: 'A1',
+                  row: 0,
+                  col: 0,
+                },
+              },
+            },
+          },
+        },
+        {
+          type: 'action-button',
+          label: 'Clear selection',
+          onClick: {
+            action: 'spreadsheet:setSelection',
+            args: {
+              selection: { kind: 'none' },
+            },
+          },
+        },
+        { type: 'report-target-kind-probe' },
+      ],
+      document: createReportTemplateDocument(spreadsheet, 'Integration Report') as any,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-target-kind').textContent).toBe('sheet');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select A1' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-target-kind').textContent).toBe('cell');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-target-kind').textContent).toBe('');
     });
   });
 

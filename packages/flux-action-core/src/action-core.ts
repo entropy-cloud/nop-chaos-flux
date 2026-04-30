@@ -5,7 +5,7 @@ import type {
   CompiledActionNode,
   CompiledRuntimeValue,
   OperationControlConfig,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { getIn, parsePath } from '@nop-chaos/flux-core';
 
@@ -19,7 +19,7 @@ export function createCancelledResult(error?: unknown): ActionResult {
   return {
     ok: false,
     cancelled: true,
-    error
+    error,
   };
 }
 
@@ -28,32 +28,37 @@ export function createTimedOutResult(error?: unknown): ActionResult {
     ok: false,
     cancelled: true,
     timedOut: true,
-    error
+    error,
   };
 }
 
 export function createActionKey(action: CompiledActionNode, ctx: ActionContext): string {
   const owner = ctx.nodeInstance?.templateNode.id ?? ctx.form?.id ?? ctx.scope.id;
   const args = action.source.args;
-  const requestUrl = args && typeof args === 'object' && typeof (args as Record<string, unknown>).url === 'string'
-    ? (args as Record<string, unknown>).url as string
-    : '';
-  const target = action.targeting.targetId
-    ?? action.targeting.componentId
-    ?? action.targeting.formId
-    ?? action.targeting.dialogId
-    ?? requestUrl
-    ?? '';
+  const requestUrl =
+    args && typeof args === 'object' && typeof (args as Record<string, unknown>).url === 'string'
+      ? ((args as Record<string, unknown>).url as string)
+      : '';
+  const target =
+    action.targeting.targetId ??
+    action.targeting.componentId ??
+    action.targeting.formId ??
+    action.targeting.dialogId ??
+    requestUrl ??
+    '';
   return `${owner}:${action.action}:${target}`;
 }
 
-export function buildActionMonitorPayload(action: CompiledActionNode, ctx: ActionContext): ActionMonitorPayload {
+export function buildActionMonitorPayload(
+  action: CompiledActionNode,
+  ctx: ActionContext,
+): ActionMonitorPayload {
   return {
     actionType: action.action,
     instancePath: ctx.instancePath,
     nodeId: ctx.nodeInstance?.templateNode.id,
     path: ctx.nodeInstance?.templateNode.templatePath,
-    interactionId: ctx.interactionId
+    interactionId: ctx.interactionId,
   };
 }
 
@@ -128,7 +133,10 @@ function hasBindingValue(bindings: Record<string, unknown>, path: string): boole
   return true;
 }
 
-export function withEvaluationBindings(scope: ScopeRef, bindings: Record<string, unknown> | undefined): ScopeRef {
+export function withEvaluationBindings(
+  scope: ScopeRef,
+  bindings: Record<string, unknown> | undefined,
+): ScopeRef {
   if (!bindings || Object.keys(bindings).length === 0) {
     return scope;
   }
@@ -152,16 +160,17 @@ export function withEvaluationBindings(scope: ScopeRef, bindings: Record<string,
       return scope.get(path);
     },
     has(path) {
-      return hasBindingRoot(bindings, path)
-        ? hasBindingValue(bindings, path)
-        : scope.has(path);
+      return hasBindingRoot(bindings, path) ? hasBindingValue(bindings, path) : scope.has(path);
     },
     readOwn() {
       return scope.readOwn();
     },
     readVisible() {
       if (!visibleView) {
-        visibleView = Object.assign(Object.create(scope.readVisible()) as Record<string, unknown>, bindings);
+        visibleView = Object.assign(
+          Object.create(scope.readVisible()) as Record<string, unknown>,
+          bindings,
+        );
       }
 
       return visibleView as Record<string, any>;
@@ -178,7 +187,7 @@ export function withEvaluationBindings(scope: ScopeRef, bindings: Record<string,
     },
     merge(data) {
       scope.merge(data);
-    }
+    },
   };
 }
 
@@ -186,17 +195,20 @@ export function getEvaluationScope(ctx: ActionContext): ScopeRef {
   return withEvaluationBindings(ctx.scope, ctx.evaluationBindings);
 }
 
-export function createBranchEvaluationBindings(result: ActionResult, previousResult: ActionResult | undefined): Record<string, unknown> {
+export function createBranchEvaluationBindings(
+  result: ActionResult,
+  previousResult: ActionResult | undefined,
+): Record<string, unknown> {
   return {
     result,
     error: isFailureClass(result) ? result.error : undefined,
-    prevResult: previousResult
+    prevResult: previousResult,
   };
 }
 
 export function mergeEvaluationBindings(
   base: Record<string, unknown> | undefined,
-  next: Record<string, unknown>
+  next: Record<string, unknown>,
 ): Record<string, unknown> {
   return base ? { ...base, ...next } : next;
 }
@@ -208,7 +220,7 @@ export function normalizeActionResult(result: ActionResult | unknown): ActionRes
 
   return {
     ok: true,
-    data: result
+    data: result,
   };
 }
 
@@ -221,26 +233,34 @@ export function getRetryControl(value: unknown): OperationControlConfig['retry']
     return undefined;
   }
 
-  const candidate = value as { times?: unknown; delay?: unknown; strategy?: unknown; maxDelay?: unknown };
+  const candidate = value as {
+    times?: unknown;
+    delay?: unknown;
+    strategy?: unknown;
+    maxDelay?: unknown;
+  };
   const times = getNumericControl(candidate.times);
 
   if (times === undefined) {
     return undefined;
   }
 
-  const strategy = candidate.strategy === 'exponential' || candidate.strategy === 'fixed'
-    ? candidate.strategy
-    : undefined;
+  const strategy =
+    candidate.strategy === 'exponential' || candidate.strategy === 'fixed'
+      ? candidate.strategy
+      : undefined;
 
   return {
     times,
     delay: getNumericControl(candidate.delay),
     strategy,
-    maxDelay: getNumericControl(candidate.maxDelay)
+    maxDelay: getNumericControl(candidate.maxDelay),
   };
 }
 
-export function resolveActionControl(action: CompiledActionNode): OperationControlConfig | undefined {
+export function resolveActionControl(
+  action: CompiledActionNode,
+): OperationControlConfig | undefined {
   const control = action.control?.control;
 
   if (!control || typeof control !== 'object' || Array.isArray(control)) {
@@ -250,7 +270,9 @@ export function resolveActionControl(action: CompiledActionNode): OperationContr
   return control as OperationControlConfig;
 }
 
-export function resolveRequestControl(action: CompiledActionNode): OperationControlConfig | undefined {
+export function resolveRequestControl(
+  action: CompiledActionNode,
+): OperationControlConfig | undefined {
   const base = resolveActionControl(action);
   const retry = getRetryControl(action.control?.retry);
 
@@ -260,7 +282,7 @@ export function resolveRequestControl(action: CompiledActionNode): OperationCont
 
   return {
     ...(base ?? {}),
-    retry: retry ?? base?.retry
+    retry: retry ?? base?.retry,
   };
 }
 
@@ -273,7 +295,7 @@ export interface ActionEvaluator {
 export function evaluateInActionContext<T = unknown>(
   target: unknown,
   ctx: ActionContext,
-  evaluator: ActionEvaluator
+  evaluator: ActionEvaluator,
 ): T {
   return evaluator.evaluate<T>(target, getEvaluationScope(ctx));
 }
@@ -281,23 +303,31 @@ export function evaluateInActionContext<T = unknown>(
 export function evaluateCompiledInActionContext<T = unknown>(
   compiled: CompiledRuntimeValue<T>,
   ctx: ActionContext,
-  evaluator: ActionEvaluator
+  evaluator: ActionEvaluator,
 ): T {
   return evaluator.evaluateCompiled<T>(compiled, getEvaluationScope(ctx));
 }
 
-export function evaluateActionArgs(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator) {
+export function evaluateActionArgs(
+  action: CompiledActionNode,
+  ctx: ActionContext,
+  evaluator: ActionEvaluator,
+) {
   if (!action.payload.args) {
     return undefined;
   }
 
-  return evaluateCompiledInActionContext<Record<string, unknown>>(action.payload.args, ctx, evaluator);
+  return evaluateCompiledInActionContext<Record<string, unknown>>(
+    action.payload.args,
+    ctx,
+    evaluator,
+  );
 }
 
 export function resolveSetValuePayload(
   action: CompiledActionNode,
   ctx: ActionContext,
-  evaluator: ActionEvaluator
+  evaluator: ActionEvaluator,
 ): { path?: string; value: unknown } {
   const args = evaluateActionArgs(action, ctx, evaluator);
   if (!args || !Object.prototype.hasOwnProperty.call(args, 'value')) {
@@ -306,14 +336,14 @@ export function resolveSetValuePayload(
 
   return {
     path: typeof args.path === 'string' ? args.path : undefined,
-    value: args.value
+    value: args.value,
   };
 }
 
 export function resolveSetValuesPayload(
   action: CompiledActionNode,
   ctx: ActionContext,
-  evaluator: ActionEvaluator
+  evaluator: ActionEvaluator,
 ): { path?: string; values: Record<string, unknown> } {
   const args = evaluateActionArgs(action, ctx, evaluator);
   if (!args || !args.values || typeof args.values !== 'object' || Array.isArray(args.values)) {
@@ -322,17 +352,23 @@ export function resolveSetValuesPayload(
 
   return {
     path: typeof args.path === 'string' ? args.path : undefined,
-    values: args.values as Record<string, unknown>
+    values: args.values as Record<string, unknown>,
   };
 }
 
-export function shouldRunActionWhen(action: CompiledActionNode, ctx: ActionContext, evaluator: ActionEvaluator): boolean {
+export function shouldRunActionWhen(
+  action: CompiledActionNode,
+  ctx: ActionContext,
+  evaluator: ActionEvaluator,
+): boolean {
   return action.when === undefined
     ? true
     : Boolean(evaluateCompiledInActionContext<boolean>(action.when, ctx, evaluator));
 }
 
-export function isAbortError(error: unknown): error is DOMException | { name?: string; code?: string } {
+export function isAbortError(
+  error: unknown,
+): error is DOMException | { name?: string; code?: string } {
   if (!error || typeof error !== 'object') {
     return false;
   }

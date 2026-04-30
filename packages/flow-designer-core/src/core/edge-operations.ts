@@ -1,9 +1,6 @@
 import type { GraphDocument, GraphEdge } from '../types';
 
-export function addEdgeToDocument(
-  doc: GraphDocument,
-  edge: GraphEdge,
-): GraphDocument {
+export function addEdgeToDocument(doc: GraphDocument, edge: GraphEdge): GraphDocument {
   return {
     ...doc,
     edges: [...doc.edges, edge],
@@ -44,10 +41,7 @@ export function replaceEdgeInDocument(
   };
 }
 
-export function removeEdgeFromDocument(
-  doc: GraphDocument,
-  edgeId: string,
-): GraphDocument {
+export function removeEdgeFromDocument(doc: GraphDocument, edgeId: string): GraphDocument {
   return {
     ...doc,
     edges: doc.edges.filter((edge) => edge.id !== edgeId),

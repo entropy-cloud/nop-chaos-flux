@@ -2,25 +2,25 @@
 
 ## 复核结论
 
-| # | 发现 | 判定 | 核心依据 |
-|---|------|------|----------|
-| 1 | ArrayEditor 删除双重写入 | **保留 P1** | 确认为真实 bug，removeValueOp 读取已过滤数组再删一个 |
-| 2 | KeyValue 删除双重写入 | **保留 P1** | 与 #1 完全同构，真实 bug |
-| 3 | ArrayEditor/KeyValue ref 先于 store 更新 | **降级** | composite field registration 的刻意设计，ref 必须先于 store 更新供同步验证链读取 |
-| 4 | ConditionBuilder valueRef 先于 store | **降级** | 同 #3，设计模式而非 bug |
-| 5 | Spreadsheet 选区双路径 | **保留 P2** | 确认存在双源，实际风险较低但架构上不理想 |
-| 6 | CrudRenderer loading 永远 false | **保留 P3** | 确认无 setLoading 调用，死代码 |
+| #   | 发现                                     | 判定        | 核心依据                                                                         |
+| --- | ---------------------------------------- | ----------- | -------------------------------------------------------------------------------- |
+| 1   | ArrayEditor 删除双重写入                 | **保留 P1** | 确认为真实 bug，removeValueOp 读取已过滤数组再删一个                             |
+| 2   | KeyValue 删除双重写入                    | **保留 P1** | 与 #1 完全同构，真实 bug                                                         |
+| 3   | ArrayEditor/KeyValue ref 先于 store 更新 | **降级**    | composite field registration 的刻意设计，ref 必须先于 store 更新供同步验证链读取 |
+| 4   | ConditionBuilder valueRef 先于 store     | **降级**    | 同 #3，设计模式而非 bug                                                          |
+| 5   | Spreadsheet 选区双路径                   | **保留 P2** | 确认存在双源，实际风险较低但架构上不理想                                         |
+| 6   | CrudRenderer loading 永远 false          | **保留 P3** | 确认无 setLoading 调用，死代码                                                   |
 
 ## 发现汇总
 
-| # | 标题 | 严重程度 | 文件 |
-|---|------|---------|------|
-| 1 | ArrayEditor 删除操作双重写入 | P1 | array-editor.tsx |
-| 2 | KeyValue 删除操作双重写入 | P1 | key-value.tsx |
-| 3 | ArrayEditor/KeyValue ref 在 onChange 时先于 store 更新 | P2 | array-editor.tsx, key-value.tsx |
-| 4 | ConditionBuilder valueRef 先于 store 更新 | P2 | ConditionBuilder.tsx |
-| 5 | Spreadsheet 选区本地状态与 core store 双路径 | P2 | use-selection.ts |
-| 6 | CrudRenderer `loading` 永远为 false | P3 | crud-renderer.tsx |
+| #   | 标题                                                   | 严重程度 | 文件                            |
+| --- | ------------------------------------------------------ | -------- | ------------------------------- |
+| 1   | ArrayEditor 删除操作双重写入                           | P1       | array-editor.tsx                |
+| 2   | KeyValue 删除操作双重写入                              | P1       | key-value.tsx                   |
+| 3   | ArrayEditor/KeyValue ref 在 onChange 时先于 store 更新 | P2       | array-editor.tsx, key-value.tsx |
+| 4   | ConditionBuilder valueRef 先于 store 更新              | P2       | ConditionBuilder.tsx            |
+| 5   | Spreadsheet 选区本地状态与 core store 双路径           | P2       | use-selection.ts                |
+| 6   | CrudRenderer `loading` 永远为 false                    | P3       | crud-renderer.tsx               |
 
 ---
 

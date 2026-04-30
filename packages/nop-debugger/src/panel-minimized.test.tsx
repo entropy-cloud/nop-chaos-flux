@@ -53,7 +53,22 @@ describe('NopDebuggerPanel – minimized state', () => {
   });
 
   it('minimized bar shows event count badge', () => {
-    const snapshot = { ...createSnapshot(), minimized: true, events: [{ id: 1, sessionId: 's', timestamp: 1, kind: 'render:end' as const, group: 'render' as const, level: 'info' as const, source: 'test', summary: 'render' }] };
+    const snapshot = {
+      ...createSnapshot(),
+      minimized: true,
+      events: [
+        {
+          id: 1,
+          sessionId: 's',
+          timestamp: 1,
+          kind: 'render:end' as const,
+          group: 'render' as const,
+          level: 'info' as const,
+          source: 'test',
+          summary: 'render',
+        },
+      ],
+    };
     const controller = createController(snapshot);
     render(<NopDebuggerPanel controller={controller} />);
     expect(screen.getByText('1')).toBeTruthy();
@@ -61,11 +76,42 @@ describe('NopDebuggerPanel – minimized state', () => {
   });
 
   it('minimized bar shows error badge when errors exist', () => {
-    const snapshot = { ...createSnapshot(), minimized: true, events: [
-      { id: 1, sessionId: 's', timestamp: 1, kind: 'error' as const, group: 'error' as const, level: 'error' as const, source: 'test', summary: 'err' },
-      { id: 2, sessionId: 's', timestamp: 2, kind: 'error' as const, group: 'error' as const, level: 'error' as const, source: 'test', summary: 'err2' },
-      { id: 3, sessionId: 's', timestamp: 3, kind: 'render:end' as const, group: 'render' as const, level: 'info' as const, source: 'test', summary: 'render' }
-    ] };
+    const snapshot = {
+      ...createSnapshot(),
+      minimized: true,
+      events: [
+        {
+          id: 1,
+          sessionId: 's',
+          timestamp: 1,
+          kind: 'error' as const,
+          group: 'error' as const,
+          level: 'error' as const,
+          source: 'test',
+          summary: 'err',
+        },
+        {
+          id: 2,
+          sessionId: 's',
+          timestamp: 2,
+          kind: 'error' as const,
+          group: 'error' as const,
+          level: 'error' as const,
+          source: 'test',
+          summary: 'err2',
+        },
+        {
+          id: 3,
+          sessionId: 's',
+          timestamp: 3,
+          kind: 'render:end' as const,
+          group: 'render' as const,
+          level: 'info' as const,
+          source: 'test',
+          summary: 'render',
+        },
+      ],
+    };
     const controller = createController(snapshot);
 
     render(<NopDebuggerPanel controller={controller} />);
@@ -82,7 +128,9 @@ describe('NopDebuggerPanel – minimized state', () => {
     controller.getSnapshot = () => currentSnapshot;
     controller.subscribe = (listener) => {
       listeners.add(listener);
-      return () => { listeners.delete(listener); };
+      return () => {
+        listeners.delete(listener);
+      };
     };
 
     const { rerender } = render(<NopDebuggerPanel controller={controller} />);
@@ -90,7 +138,7 @@ describe('NopDebuggerPanel – minimized state', () => {
     expect(document.querySelector('.nop-debugger[data-panel-state="minimized"]')).toBeTruthy();
 
     currentSnapshot = { ...currentSnapshot, minimized: false };
-    listeners.forEach(l => l());
+    listeners.forEach((l) => l());
     rerender(<NopDebuggerPanel controller={controller} />);
 
     expect(document.querySelector('.nop-debugger[data-panel-state="minimized"]')).toBeFalsy();

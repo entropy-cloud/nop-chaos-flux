@@ -4,7 +4,7 @@ import type {
   GraphEdge,
   NormalizedDesignerConfig,
   DesignerSnapshot,
-  DesignerEvent
+  DesignerEvent,
 } from './types';
 
 export interface DesignerCore {
@@ -14,14 +14,22 @@ export interface DesignerCore {
 
   subscribe(listener: (event: DesignerEvent) => void): () => void;
 
-  addNode(type: string, position: { x: number; y: number }, data?: Record<string, unknown>): GraphNode | null;
+  addNode(
+    type: string,
+    position: { x: number; y: number },
+    data?: Record<string, unknown>,
+  ): GraphNode | null;
   updateNode(nodeId: string, data: Record<string, unknown>): void;
   moveNode(nodeId: string, position: { x: number; y: number }): void;
   duplicateNode(nodeId: string): GraphNode | null;
   deleteNode(nodeId: string): void;
 
   addEdge(source: string, target: string, data?: Record<string, unknown>): GraphEdge | null;
-  reconnectEdge(edgeId: string, source: string, target: string): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string };
+  reconnectEdge(
+    edgeId: string,
+    source: string,
+    target: string,
+  ): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string };
   updateEdge(edgeId: string, data: Record<string, unknown>): void;
   deleteEdge(edgeId: string): void;
 

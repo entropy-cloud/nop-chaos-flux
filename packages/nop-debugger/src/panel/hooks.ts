@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import type { NopDebuggerController } from '../types';
 
 type PointerCaptureTarget = HTMLElement & {
@@ -36,7 +42,11 @@ export function useDebuggerSnapshot(controller: NopDebuggerController) {
   return useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
 }
 
-export function useDraggablePosition(controller: NopDebuggerController, initial: { x: number; y: number }, onTap?: () => void) {
+export function useDraggablePosition(
+  controller: NopDebuggerController,
+  initial: { x: number; y: number },
+  onTap?: () => void,
+) {
   const [position, setPosition] = useState(initial);
   const positionRef = useRef(initial);
   const dragState = useRef<{
@@ -149,7 +159,9 @@ export function useDraggablePosition(controller: NopDebuggerController, initial:
 
 export function useResizablePanel() {
   const [width, setWidth] = useState(420);
-  const resizeState = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null);
+  const resizeState = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     const clear = (event: PointerEvent) => {
@@ -165,7 +177,10 @@ export function useResizablePanel() {
         return;
       }
       const delta = event.clientX - resizeState.current.startX;
-      const next = Math.max(280, Math.min(window.innerWidth - 40, resizeState.current.startWidth - delta));
+      const next = Math.max(
+        280,
+        Math.min(window.innerWidth - 40, resizeState.current.startWidth - delta),
+      );
       setWidth(next);
     };
 
@@ -183,7 +198,11 @@ export function useResizablePanel() {
   const bind = {
     onPointerDown(event: ReactPointerEvent<HTMLElement>) {
       if (event.button !== 0) return;
-      resizeState.current = { pointerId: event.pointerId, startX: event.clientX, startWidth: width };
+      resizeState.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startWidth: width,
+      };
       // eslint-disable-next-line react-compiler/react-compiler
       document.body.style.cursor = 'ew-resize';
       document.body.style.userSelect = 'none';
@@ -195,7 +214,10 @@ export function useResizablePanel() {
   return { width, bind };
 }
 
-export function useLauncherDrag(controller: NopDebuggerController, initial: { x: number; y: number }) {
+export function useLauncherDrag(
+  controller: NopDebuggerController,
+  initial: { x: number; y: number },
+) {
   const [position, setPosition] = useState(initial);
   const positionRef = useRef(initial);
   const dragState = useRef<{
@@ -250,8 +272,14 @@ export function useLauncherDrag(controller: NopDebuggerController, initial: { x:
         return;
       }
 
-      const newX = Math.max(8, Math.min(window.innerWidth - 80, dragState.current.startPosX + deltaX));
-      const newY = Math.max(8, Math.min(window.innerHeight - 50, dragState.current.startPosY + deltaY));
+      const newX = Math.max(
+        8,
+        Math.min(window.innerWidth - 80, dragState.current.startPosX + deltaX),
+      );
+      const newY = Math.max(
+        8,
+        Math.min(window.innerHeight - 50, dragState.current.startPosY + deltaY),
+      );
       const next = { x: newX, y: newY };
 
       positionRef.current = next;

@@ -7,6 +7,7 @@
 ## 1. 目标
 
 将 playground 中的 Flow Designer 改造为完全基于 JSON 渲染：
+
 - 完全根据 JSON 配置渲染
 - 底层引擎修改时自动反映
 - 作为 flux renderer 的示例
@@ -47,7 +48,8 @@ FlowDesignerPage.tsx
     → FlowDesignerInspector
 ```
 
-**问题**: 
+**问题**:
+
 - 未使用 SchemaRenderer
 - 配置和文档硬编码在 TypeScript 中
 - 有独立的 store，未复用 flow-designer-core
@@ -141,10 +143,10 @@ FlowDesignerPage.tsx
 
 ### 4.1 已有 JSON 示例
 
-| 文件 | 内容 | 状态 | 说明 |
-|------|------|------|------|
-| `docs/examples/workflow-designer/config.json` | DesignerConfig | ✅ 完整 | 447 行，包含完整配置 |
-| `docs/examples/workflow-designer/document.json` | GraphDocument | ✅ 完整 | 111 行，示例文档 |
+| 文件                                            | 内容           | 状态    | 说明                 |
+| ----------------------------------------------- | -------------- | ------- | -------------------- |
+| `docs/examples/workflow-designer/config.json`   | DesignerConfig | ✅ 完整 | 447 行，包含完整配置 |
+| `docs/examples/workflow-designer/document.json` | GraphDocument  | ✅ 完整 | 111 行，示例文档     |
 
 ### 4.2 config.json 包含内容
 
@@ -174,14 +176,15 @@ FlowDesignerPage.tsx
 
 ### 4.4 已有 Renderer 包
 
-| Package | 状态 | 说明 |
-|---------|------|------|
-| `@nop-chaos/flow-designer-core` | ✅ 可用 | Graph runtime, DesignerCore |
-| `@nop-chaos/flow-designer-renderers` | ✅ 可用 | designer-page renderer |
+| Package                              | 状态    | 说明                        |
+| ------------------------------------ | ------- | --------------------------- |
+| `@nop-chaos/flow-designer-core`      | ✅ 可用 | Graph runtime, DesignerCore |
+| `@nop-chaos/flow-designer-renderers` | ✅ 可用 | designer-page renderer      |
 
 ### 4.5 designer-page Renderer 能力
 
 根据 `docs/architecture/flow-designer/design.md`:
+
 - `designer-page` renderer 已落地
 - 支持 toolbar/inspector/dialogs region
 - 通过 ActionScope 注册 `designer:*` 动作
@@ -194,6 +197,7 @@ FlowDesignerPage.tsx
 位置: `apps/playground/src/schemas/workflow-designer-schema.json`
 
 方案 A - 引用外部文件:
+
 ```json
 {
   "type": "designer-page",
@@ -204,6 +208,7 @@ FlowDesignerPage.tsx
 ```
 
 方案 B - 内联文档（推荐用于 playground）:
+
 ```json
 {
   "type": "designer-page",
@@ -241,16 +246,13 @@ interface FlowDesignerPageProps {
 
 export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
   const registry = useRegistry();
-  
+
   return (
     <div className="playground-flow-page">
       <button type="button" className="page-back page-back--floating" onClick={onBack}>
         Back to Home
       </button>
-      <SchemaRenderer
-        schema={workflowDesignerSchema}
-        registry={registry}
-      />
+      <SchemaRenderer schema={workflowDesignerSchema} registry={registry} />
     </div>
   );
 }
@@ -265,7 +267,9 @@ import workflowDesignerSchema from '../schemas/workflow-designer-schema.json';
 export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
   return (
     <div className="playground-flow-page">
-      <button type="button" onClick={onBack}>Back to Home</button>
+      <button type="button" onClick={onBack}>
+        Back to Home
+      </button>
       <SchemaRenderer schema={workflowDesignerSchema} />
     </div>
   );
@@ -275,6 +279,7 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
 ### 5.4 可删除的文件
 
 改造完成后可删除:
+
 - `apps/playground/src/FlowDesignerExample.tsx`
 - `apps/playground/src/flow-designer/FlowDesignerCanvas.tsx`
 - `apps/playground/src/flow-designer/FlowDesignerToolbar.tsx`
@@ -285,6 +290,7 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
 - `apps/playground/src/flow-designer/useFlowCanvasStore.ts`
 
 **保留文件**（作为独立 xyflow 示例）:
+
 - `apps/playground/src/flow-designer/FlowCanvas.tsx` - 独立 xyflow 封装
 - `apps/playground/src/flow-designer/FlowListPage.tsx` - 流程列表页
 - `apps/playground/src/flow-designer/flowNodeTypes.tsx` - xyflow 节点类型
@@ -295,12 +301,13 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
 
 遵循 `docs/architecture/flow-designer/config-schema.md`:
 
-| 概念 | 职责 | 示例 |
-|------|------|------|
-| `config` | 领域配置 | 节点类型、边类型、规则、palette、toolbar |
-| `document` | 实例数据 | 节点、边、视口、元数据 |
+| 概念       | 职责     | 示例                                     |
+| ---------- | -------- | ---------------------------------------- |
+| `config`   | 领域配置 | 节点类型、边类型、规则、palette、toolbar |
+| `document` | 实例数据 | 节点、边、视口、元数据                   |
 
 **好处**:
+
 - 同一 config 可用于多个 document
 - config 可以 extends 预设
 - document 只关注数据，不含行为定义
@@ -310,21 +317,23 @@ export function FlowDesignerPage({ onBack }: FlowDesignerPageProps) {
 根据 `docs/architecture/flow-designer/runtime-snapshot.md`:
 
 **当前已注入的字段**:
+
 ```ts
 interface DesignerSnapshot {
-  doc: GraphDocument
-  selection: SelectionSummary
-  activeNode: GraphNode | null
-  activeEdge: GraphEdge | null
-  canUndo: boolean
-  canRedo: boolean
-  isDirty: boolean
-  gridEnabled: boolean
-  viewport: { x: number; y: number; zoom: number }
+  doc: GraphDocument;
+  selection: SelectionSummary;
+  activeNode: GraphNode | null;
+  activeEdge: GraphEdge | null;
+  canUndo: boolean;
+  canRedo: boolean;
+  isDirty: boolean;
+  gridEnabled: boolean;
+  viewport: { x: number; y: number; zoom: number };
 }
 ```
 
 **在 schema 中使用**:
+
 ```json
 {
   "type": "tpl",
@@ -336,21 +345,22 @@ interface DesignerSnapshot {
 
 所有交互通过 `designer:*` actions:
 
-| Action | 说明 |
-|--------|------|
-| `designer:undo` | 撤销 |
-| `designer:redo` | 重做 |
-| `designer:save` | 保存 |
-| `designer:export` | 导出 |
-| `designer:restore` | 恢复 |
-| `designer:addNode` | 添加节点 |
-| `designer:deleteSelection` | 删除选中 |
-| `designer:duplicateSelection` | 复制选中 |
-| `designer:toggleGrid` | 切换网格 |
-| `designer:updateNodeData` | 更新节点数据 |
-| `designer:updateEdgeData` | 更新边数据 |
+| Action                        | 说明         |
+| ----------------------------- | ------------ |
+| `designer:undo`               | 撤销         |
+| `designer:redo`               | 重做         |
+| `designer:save`               | 保存         |
+| `designer:export`             | 导出         |
+| `designer:restore`            | 恢复         |
+| `designer:addNode`            | 添加节点     |
+| `designer:deleteSelection`    | 删除选中     |
+| `designer:duplicateSelection` | 复制选中     |
+| `designer:toggleGrid`         | 切换网格     |
+| `designer:updateNodeData`     | 更新节点数据 |
+| `designer:updateEdgeData`     | 更新边数据   |
 
 **在 schema 中使用**:
+
 ```json
 {
   "type": "button",
@@ -363,10 +373,12 @@ interface DesignerSnapshot {
 ### 6.4 节点 Body 渲染
 
 根据 `docs/architecture/flow-designer/config-schema.md`:
+
 - 节点 `body` 使用标准 AMIS Schema
 - 节点实例的 `data` 自动成为 body 的 scope
 
 **示例**:
+
 ```json
 {
   "id": "task",
@@ -417,7 +429,7 @@ interface DesignerSnapshot {
 - [ ] SchemaRenderer 能正确渲染 designer-page
 - [ ] 从 JSON 加载 config 成功
 - [ ] 从 JSON 加载 document 成功
-- [ ] Toolbar 按钮触发 designer:* actions
+- [ ] Toolbar 按钮触发 designer:\* actions
 - [ ] Palette 分组正确显示
 - [ ] Palette 拖拽添加节点到画布
 - [ ] Canvas 显示所有节点和边
@@ -450,12 +462,12 @@ interface DesignerSnapshot {
 
 ## 9. 风险与缓解
 
-| 风险 | 影响 | 缓解措施 |
-|------|------|----------|
-| designer-page renderer 功能不完整 | 部分功能缺失 | 参考 runtime-snapshot.md 确认已实现能力 |
-| JSON 引用路径问题 | 加载失败 | 使用内联方式或配置 Vite resolve |
-| 样式不兼容 | UI 异常 | 复用现有 CSS 类名 |
-| Action 未注册 | 按钮无响应 | 确认 registerFlowDesignerRenderers 已调用 |
+| 风险                              | 影响         | 缓解措施                                  |
+| --------------------------------- | ------------ | ----------------------------------------- |
+| designer-page renderer 功能不完整 | 部分功能缺失 | 参考 runtime-snapshot.md 确认已实现能力   |
+| JSON 引用路径问题                 | 加载失败     | 使用内联方式或配置 Vite resolve           |
+| 样式不兼容                        | UI 异常      | 复用现有 CSS 类名                         |
+| Action 未注册                     | 按钮无响应   | 确认 registerFlowDesignerRenderers 已调用 |
 
 ## 10. 后续工作
 
@@ -468,14 +480,14 @@ interface DesignerSnapshot {
 
 ## 11. 参考文档
 
-| 文档 | 路径 | 用途 |
-|------|------|------|
-| 架构设计 | `docs/architecture/flow-designer/design.md` | 总体架构 |
-| 配置模型 | `docs/architecture/flow-designer/config-schema.md` | JSON 配置定义 |
-| 运行时快照 | `docs/architecture/flow-designer/runtime-snapshot.md` | Scope 注入 |
-| 协作模型 | `docs/architecture/flow-designer/collaboration.md` | 各层协作 |
-| Canvas 适配器 | `docs/architecture/flow-designer/canvas-adapters.md` | xyflow 集成 |
-| API 参考 | `docs/architecture/flow-designer/api.md` | API 定义 |
-| 配置示例 | `docs/examples/workflow-designer/config.json` | DesignerConfig |
-| 文档示例 | `docs/examples/workflow-designer/document.json` | GraphDocument |
-| JSON 约定 | `docs/references/flux-json-conventions.md` | 表达式语法 |
+| 文档          | 路径                                                  | 用途           |
+| ------------- | ----------------------------------------------------- | -------------- |
+| 架构设计      | `docs/architecture/flow-designer/design.md`           | 总体架构       |
+| 配置模型      | `docs/architecture/flow-designer/config-schema.md`    | JSON 配置定义  |
+| 运行时快照    | `docs/architecture/flow-designer/runtime-snapshot.md` | Scope 注入     |
+| 协作模型      | `docs/architecture/flow-designer/collaboration.md`    | 各层协作       |
+| Canvas 适配器 | `docs/architecture/flow-designer/canvas-adapters.md`  | xyflow 集成    |
+| API 参考      | `docs/architecture/flow-designer/api.md`              | API 定义       |
+| 配置示例      | `docs/examples/workflow-designer/config.json`         | DesignerConfig |
+| 文档示例      | `docs/examples/workflow-designer/document.json`       | GraphDocument  |
+| JSON 约定     | `docs/references/flux-json-conventions.md`            | 表达式语法     |

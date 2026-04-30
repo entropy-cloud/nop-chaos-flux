@@ -51,6 +51,6 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
     value,
     handleChange,
     handleFocus,
-    handleBlur
+    handleBlur,
   };
 }

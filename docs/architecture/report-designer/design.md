@@ -148,16 +148,16 @@
 
 ```ts
 interface SpreadsheetPageSchema {
-  type: 'spreadsheet-page'
-  id?: string
-  title?: string
-  document: SpreadsheetDocumentInput
-  config?: SpreadsheetConfig
-  readOnly?: boolean
-  statusPath?: string
-  toolbar?: SchemaInput
-  body?: SchemaInput
-  dialogs?: SchemaInput
+  type: 'spreadsheet-page';
+  id?: string;
+  title?: string;
+  document: SpreadsheetDocumentInput;
+  config?: SpreadsheetConfig;
+  readOnly?: boolean;
+  statusPath?: string;
+  toolbar?: SchemaInput;
+  body?: SchemaInput;
+  dialogs?: SchemaInput;
 }
 ```
 
@@ -169,19 +169,19 @@ interface SpreadsheetPageSchema {
 
 ```ts
 interface ReportDesignerPageSchema {
-  type: 'report-designer-page'
-  id?: string
-  title?: string
-  document: ReportTemplateDocumentInput
-  designer: ReportDesignerConfig
-  profile?: ReportDesignerProfile
-  adapters?: ReportDesignerAdapterConfig
-  statusPath?: string
-  toolbar?: SchemaInput
-  fieldPanel?: SchemaInput
-  inspector?: SchemaInput
-  dialogs?: SchemaInput
-  body?: SchemaInput
+  type: 'report-designer-page';
+  id?: string;
+  title?: string;
+  document: ReportTemplateDocumentInput;
+  designer: ReportDesignerConfig;
+  profile?: ReportDesignerProfile;
+  adapters?: ReportDesignerAdapterConfig;
+  statusPath?: string;
+  toolbar?: SchemaInput;
+  fieldPanel?: SchemaInput;
+  inspector?: SchemaInput;
+  dialogs?: SchemaInput;
+  body?: SchemaInput;
 }
 ```
 

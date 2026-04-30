@@ -50,28 +50,28 @@
 
 ## Built-In Action Matrix
 
-| Action | Current payload field(s) | Current targeting field(s) | `args` usage | Notes |
-| --- | --- | --- | --- | --- |
-| `showToast` | `args` | none | canonical | 推荐写 `args` |
-| `navigate` | `args` | none | canonical | 推荐写 `args` |
-| `ajax` | `args` | `dataPath` optional | canonical | `args` 必须是 `ApiSchema`；`dataPath` 属于 targeting |
-| `submitForm` | none | implicit `ctx.form` | no payload | 语义型 submit command；执行验证后走 form runtime submit 流程 |
-| `openDialog` | `args` | implicit `ctx.surfaceRuntime` | canonical | `args` 承载 dialog surface payload |
-| `openDrawer` | `args` | none | canonical | `args` 承载 drawer surface payload |
-| `closeDialog` | none | `dialogId` optional | no payload | 主要是无 payload + optional targeting |
-| `closeDrawer` | none | `dialogId` optional, else current context | no payload | 当前实现实际也复用了 `dialogId` carrier |
-| `closeSurface` | none | `surfaceId` optional, else current context | no payload | 显式 surface close builtin |
-| `refreshTable` | none | implicit `ctx.page` | no payload | 更像 semantic entry，不需要 `args` |
-| `refreshSource` | none | `targetId` | no payload | runtime-owned source entry，targeting 独立存在 |
-| `setValue` | `args: { path?, value }` | `componentId` / `formId` | canonical | payload 统一到 `args`，写路径由 `args.path` 表达 |
-| `setValues` | `args: { path?, values }` | `formId` optional | canonical | `args.path` 存在时，`args.values` key 相对该路径 |
+| Action          | Current payload field(s)  | Current targeting field(s)                 | `args` usage | Notes                                                        |
+| --------------- | ------------------------- | ------------------------------------------ | ------------ | ------------------------------------------------------------ |
+| `showToast`     | `args`                    | none                                       | canonical    | 推荐写 `args`                                                |
+| `navigate`      | `args`                    | none                                       | canonical    | 推荐写 `args`                                                |
+| `ajax`          | `args`                    | `dataPath` optional                        | canonical    | `args` 必须是 `ApiSchema`；`dataPath` 属于 targeting         |
+| `submitForm`    | none                      | implicit `ctx.form`                        | no payload   | 语义型 submit command；执行验证后走 form runtime submit 流程 |
+| `openDialog`    | `args`                    | implicit `ctx.surfaceRuntime`              | canonical    | `args` 承载 dialog surface payload                           |
+| `openDrawer`    | `args`                    | none                                       | canonical    | `args` 承载 drawer surface payload                           |
+| `closeDialog`   | none                      | `dialogId` optional                        | no payload   | 主要是无 payload + optional targeting                        |
+| `closeDrawer`   | none                      | `dialogId` optional, else current context  | no payload   | 当前实现实际也复用了 `dialogId` carrier                      |
+| `closeSurface`  | none                      | `surfaceId` optional, else current context | no payload   | 显式 surface close builtin                                   |
+| `refreshTable`  | none                      | implicit `ctx.page`                        | no payload   | 更像 semantic entry，不需要 `args`                           |
+| `refreshSource` | none                      | `targetId`                                 | no payload   | runtime-owned source entry，targeting 独立存在               |
+| `setValue`      | `args: { path?, value }`  | `componentId` / `formId`                   | canonical    | payload 统一到 `args`，写路径由 `args.path` 表达             |
+| `setValues`     | `args: { path?, values }` | `formId` optional                          | canonical    | `args.path` 存在时，`args.values` key 相对该路径             |
 
 ## Non-Built-In Matrix
 
-| Action family | Current payload field(s) | Current targeting field(s) | `args` status | Notes |
-| --- | --- | --- | --- | --- |
-| `component:<method>` | `args` | `_targetCid` / `componentId` / `componentName` / internal target carrier | already aligned | payload 与 targeting 已分离 |
-| `namespace:method` | `args` | lexical `ActionScope` | already aligned | 这是推荐的 namespaced payload surface |
+| Action family        | Current payload field(s) | Current targeting field(s)                                               | `args` status   | Notes                                 |
+| -------------------- | ------------------------ | ------------------------------------------------------------------------ | --------------- | ------------------------------------- |
+| `component:<method>` | `args`                   | `_targetCid` / `componentId` / `componentName` / internal target carrier | already aligned | payload 与 targeting 已分离           |
+| `namespace:method`   | `args`                   | lexical `ActionScope`                                                    | already aligned | 这是推荐的 namespaced payload surface |
 
 ## Current Runtime Rules
 
@@ -131,38 +131,38 @@
 
 ### Payload Fields
 
-| Field | Scope | Contract Status |
-|-------|-------|-----------------|
+| Field  | Scope                                              | Contract Status                                  |
+| ------ | -------------------------------------------------- | ------------------------------------------------ |
 | `args` | 通用 payload carrier；对 write action 可承载窄 DTO | **canonical** — 正式 author-visible payload 载体 |
 
 ### Targeting Fields
 
-| Field | Scope | Contract Status |
-|-------|-------|-----------------|
-| `_targetCid` | 编译期注入的目标组件 cid | **internal** — runtime-only，不暴露给 author |
-| `_targetTemplateId` | 编译期注入的目标模板 id | **internal** — runtime-only，不暴露给 author |
-| `targetId` | 通用目标 id (refreshSource 等) | **stable** — 保留独立字段 |
-| `componentId` | 目标组件 id | **stable** — 保留独立字段 |
-| `componentName` | 目标组件 name | **stable** — 保留独立字段 |
-| `formId` | 目标表单 id | **stable** — 保留独立字段 |
-| `dialogId` | 目标 dialog id (close 操作) | **stable** — 保留独立字段 |
-| `surfaceId` | 目标 surface id (close 操作) | **stable** — 保留独立字段 |
-| `dataPath` | 响应写回目标路径 | **stable** — 保留独立字段 |
+| Field               | Scope                          | Contract Status                              |
+| ------------------- | ------------------------------ | -------------------------------------------- |
+| `_targetCid`        | 编译期注入的目标组件 cid       | **internal** — runtime-only，不暴露给 author |
+| `_targetTemplateId` | 编译期注入的目标模板 id        | **internal** — runtime-only，不暴露给 author |
+| `targetId`          | 通用目标 id (refreshSource 等) | **stable** — 保留独立字段                    |
+| `componentId`       | 目标组件 id                    | **stable** — 保留独立字段                    |
+| `componentName`     | 目标组件 name                  | **stable** — 保留独立字段                    |
+| `formId`            | 目标表单 id                    | **stable** — 保留独立字段                    |
+| `dialogId`          | 目标 dialog id (close 操作)    | **stable** — 保留独立字段                    |
+| `surfaceId`         | 目标 surface id (close 操作)   | **stable** — 保留独立字段                    |
+| `dataPath`          | 响应写回目标路径               | **stable** — 保留独立字段                    |
 
 ### Control-Flow And Execution-Control Fields
 
-| Field | Scope | Contract Status |
-|-------|-------|-----------------|
-| `when` | 条件守卫 | **stable** — control-flow primitive |
-| `parallel` | 并行聚合 | **stable** — control-flow primitive |
-| `then` | 成功分支 | **stable** — control-flow primitive |
-| `onError` | 失败分支 | **stable** — control-flow primitive |
-| `onSettled` | 完成分支 | **stable** — control-flow primitive |
-| `continueOnError` | 失败继续 | **stable** — control-flow modifier |
-| `control` | 操作控制配置 | **stable** — execution control |
-| `timeout` | 超时时间 | **stable** — execution control |
-| `retry` | 重试配置 | **stable** — execution control |
-| `debounce` | 防抖时间 | **stable** — execution control |
+| Field             | Scope        | Contract Status                     |
+| ----------------- | ------------ | ----------------------------------- |
+| `when`            | 条件守卫     | **stable** — control-flow primitive |
+| `parallel`        | 并行聚合     | **stable** — control-flow primitive |
+| `then`            | 成功分支     | **stable** — control-flow primitive |
+| `onError`         | 失败分支     | **stable** — control-flow primitive |
+| `onSettled`       | 完成分支     | **stable** — control-flow primitive |
+| `continueOnError` | 失败继续     | **stable** — control-flow modifier  |
+| `control`         | 操作控制配置 | **stable** — execution control      |
+| `timeout`         | 超时时间     | **stable** — execution control      |
+| `retry`           | 重试配置     | **stable** — execution control      |
+| `debounce`        | 防抖时间     | **stable** — execution control      |
 
 ## Convergence Decisions
 
@@ -171,11 +171,13 @@
 **Decision**: `ajax` 应收敛为 `action: 'ajax' + args: ApiSchema`
 
 **Rationale**:
+
 - 请求配置属于 payload
 - `ApiSchema` 可直接作为 `args` 值
 - `ajax` 完全符合 `action + args` 模式
 
 **Authoring**:
+
 1. `{ action: 'ajax', args: { url, method, data } }`
 
 ### `submitForm` (SEMANTIC COMMAND)
@@ -183,6 +185,7 @@
 **Decision**: `submitForm` 保持无 payload 的语义型 built-in action。
 
 **Rationale**:
+
 - 它的职责是触发当前 `ctx.form` 的 submit 流程，而不是承载一份新的 request payload
 - 表单数据、校验与 `submitAction` 选择都属于 `FormRuntime` 语义
 - 若 schema 需要显式 targeting 某个表单实例，更合理的长期路径是 `component:submit`，而不是把 `submitForm` 机械改造成 `ajax` 风格 payload action
@@ -194,6 +197,7 @@
 3. `packages/flux-runtime/src/action-adapter.ts` 对 `submitForm` 直接调用 `ctx.form.submit(...)`
 
 **Authoring**:
+
 1. `{ action: 'submitForm' }`
 
 ### `openDialog`/`openDrawer` → `args` (LANDED)
@@ -201,10 +205,12 @@
 **Decision**: `openDialog`/`openDrawer` 使用 `args`
 
 **Rationale**:
+
 - surface 打开配置属于 payload
 - 迁移后符合 `action + args` 模式
 
 **Authoring**:
+
 1. `{ action: 'openDialog', args: { ... } }`
 2. `{ action: 'openDrawer', args: { ... } }`
 
@@ -213,6 +219,7 @@
 **Decision**: `setValue`/`setValues` 的 author-visible payload 统一到 `args`
 
 **Rationale**:
+
 - `setValue` 适合表达为 `args: { path?, value }`
 - `setValues` 适合表达为 `args: { path?, values }`
 - 这样 payload 仍然统一为 `args`，同时保留 write action 的窄语义
@@ -221,6 +228,7 @@
 **Status**: `args` 为唯一 payload baseline
 
 **Authoring**:
+
 1. `{ action: 'setValue', args: { path: 'user.name', value: 'Alice' } }`
 2. `{ action: 'setValues', args: { values: { 'user.name': 'Alice', 'user.role': 'admin' } } }`
 3. `{ action: 'setValues', args: { path: 'user', values: { name: 'Alice', role: 'admin' } } }`
@@ -230,6 +238,7 @@
 **Decision**: 这些 action 保持现状
 
 **Rationale**:
+
 - `closeDialog`/`closeDrawer` 几乎无 payload，主要是 targeting（`dialogId`）
 - `refreshTable` 无 payload，只有 implicit targeting（`ctx.page`）
 

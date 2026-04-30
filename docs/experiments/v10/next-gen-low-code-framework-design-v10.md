@@ -4,7 +4,7 @@
 > **Tech Stack**: React 19 + Zustand 5 + TypeScript 6.0
 > **Date**: 2026-04-22
 > **Status**: Draft — Post-Review Revision
-> **Design Philosophy**: *Compile what you can, react only to what changes. The best runtime code is code that never runs.*
+> **Design Philosophy**: _Compile what you can, react only to what changes. The best runtime code is code that never runs._
 
 ---
 
@@ -18,24 +18,24 @@ FK10 is a **schema rendering engine**, not a full low-code platform. It competes
 
 ### What FK10 Genuinely Innovates On
 
-| Innovation | Why It Matters | Proven? | Caveats |
-|-----------|---------------|---------|---------|
-| Multi-stage IR compilation for schema | Moves analysis work out of render path | No (unproven at scale) | Svelte/Vue do similar for templates; applying to JSON schemas is incremental |
-| Compile-time dependency graph | Enables push-based invalidation | No (theoretical) | Dynamic array access produces imprecise DepPatterns → over-invalidation |
-| Pre-compiled Zustand selectors | Zero closure creation at render time | Yes (selector pattern is well-known) | Two subscriptions per node (props + meta); needs batching for large pages |
-| Structured concurrency for actions | Clean cancellation, no dangling promises | Yes (AbortController is standard) | Refine already uses AbortController in data hooks |
-| Scope chain with explicit projections | Solves the table-row blowout problem cleanly | Yes (pattern proven in React-Virtual) | Isolated scopes need explicit projections for any parent data access |
-| Time-travel state inspector | Schema-source mapping for debugging | Yes (Redux DevTools proved the concept) | Debugging tool, not authoring tool |
+| Innovation                            | Why It Matters                               | Proven?                                 | Caveats                                                                      |
+| ------------------------------------- | -------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------- |
+| Multi-stage IR compilation for schema | Moves analysis work out of render path       | No (unproven at scale)                  | Svelte/Vue do similar for templates; applying to JSON schemas is incremental |
+| Compile-time dependency graph         | Enables push-based invalidation              | No (theoretical)                        | Dynamic array access produces imprecise DepPatterns → over-invalidation      |
+| Pre-compiled Zustand selectors        | Zero closure creation at render time         | Yes (selector pattern is well-known)    | Two subscriptions per node (props + meta); needs batching for large pages    |
+| Structured concurrency for actions    | Clean cancellation, no dangling promises     | Yes (AbortController is standard)       | Refine already uses AbortController in data hooks                            |
+| Scope chain with explicit projections | Solves the table-row blowout problem cleanly | Yes (pattern proven in React-Virtual)   | Isolated scopes need explicit projections for any parent data access         |
+| Time-travel state inspector           | Schema-source mapping for debugging          | Yes (Redux DevTools proved the concept) | Debugging tool, not authoring tool                                           |
 
 ### What FK10 Does NOT Innovate On
 
-| Feature | Reality | Industry Leader |
-|---------|---------|-----------------|
+| Feature                 | Reality                                                                                               | Industry Leader             |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------- |
 | Fine-grained reactivity | Proxy-based (Formily) and signal-based (Solid) approaches achieve similar results without compilation | Formily `@formily/reactive` |
-| Validation engine | Formily's validation is industry-leading; FK10 matches it but doesn't surpass it | Formily 2.x |
-| Expression engine | AST walking with memoization is sufficient; bytecode VM is Phase 2 optimization | AMIS, Formily |
-| Type safety | Formily + TypeScript achieves similar results for form schemas | Formily 2.x |
-| SSR | React 19 RSC is available to any React framework, not FK10-specific | Any React 19 framework |
+| Validation engine       | Formily's validation is industry-leading; FK10 matches it but doesn't surpass it                      | Formily 2.x                 |
+| Expression engine       | AST walking with memoization is sufficient; bytecode VM is Phase 2 optimization                       | AMIS, Formily               |
+| Type safety             | Formily + TypeScript achieves similar results for form schemas                                        | Formily 2.x                 |
+| SSR                     | React 19 RSC is available to any React framework, not FK10-specific                                   | Any React 19 framework      |
 
 ### Design Principles
 
@@ -127,20 +127,20 @@ Schema (JSON)
 
 ### 1.4 Realistic Bundle Estimates
 
-| Bundle | Contents | Gzipped |
-|--------|----------|---------|
-| Core | kernel + expression + runtime | ~18KB |
-| React bridge | @flux/react | ~8KB |
-| Form | @flux/form | ~8KB |
-| Data source | @flux/data-source | ~5KB |
-| Surface | @flux/surface | ~3KB |
-| Host + stdlib | @flux/host + @flux/stdlib | ~6KB |
-| DevTools (dev only) | @flux/devtools | ~4KB |
-| **Full (excluding renderers)** | All above | **~48KB** |
-| Minimal renderer set | page, form, input, select, button, text, table, container (10 components) | ~25KB |
-| **Typical production** | Full + minimal renderers | **~73KB** |
+| Bundle                         | Contents                                                                  | Gzipped   |
+| ------------------------------ | ------------------------------------------------------------------------- | --------- |
+| Core                           | kernel + expression + runtime                                             | ~18KB     |
+| React bridge                   | @flux/react                                                               | ~8KB      |
+| Form                           | @flux/form                                                                | ~8KB      |
+| Data source                    | @flux/data-source                                                         | ~5KB      |
+| Surface                        | @flux/surface                                                             | ~3KB      |
+| Host + stdlib                  | @flux/host + @flux/stdlib                                                 | ~6KB      |
+| DevTools (dev only)            | @flux/devtools                                                            | ~4KB      |
+| **Full (excluding renderers)** | All above                                                                 | **~48KB** |
+| Minimal renderer set           | page, form, input, select, button, text, table, container (10 components) | ~25KB     |
+| **Typical production**         | Full + minimal renderers                                                  | **~73KB** |
 
-*These are estimates based on comparable libraries (Zustand ~1KB, React-hook-form ~8KB). Actual sizes depend on tree-shaking effectiveness and renderer complexity. The 48KB core excludes React itself (42KB gzipped).*
+_These are estimates based on comparable libraries (Zustand ~1KB, React-hook-form ~8KB). Actual sizes depend on tree-shaking effectiveness and renderer complexity. The 48KB core excludes React itself (42KB gzipped)._
 
 ---
 
@@ -174,6 +174,7 @@ type PropValue =
 ```
 
 The parser:
+
 - Assigns stable NodeIds (deterministic from schema position)
 - Classifies every prop value as literal/expression/template/i18n
 - Extracts regions, events, actions, validations into structured forms
@@ -205,10 +206,10 @@ interface NodeDeps {
 **Handling Dynamic Path Access**: Expressions like `${items[index].name}` where `index` is a variable produce **pattern dependencies** rather than precise paths:
 
 ```typescript
-type DepPattern = 
-  | { kind: 'exact'; path: string }           // "user.name"
-  | { kind: 'prefix'; prefix: string }        // "items.*" (any array element)
-  | { kind: 'computed'; paths: ExprRef[] };   // fully dynamic, re-evaluated each time
+type DepPattern =
+  | { kind: 'exact'; path: string } // "user.name"
+  | { kind: 'prefix'; prefix: string } // "items.*" (any array element)
+  | { kind: 'computed'; paths: ExprRef[] }; // fully dynamic, re-evaluated each time
 
 // Example: items[index].name → { kind: 'prefix', prefix: 'items' }
 // The dependency covers all children of 'items', not just items[0].name
@@ -267,7 +268,7 @@ interface ExecutionPackage {
   readonly validationGraph: ValidationGraphDef;
   readonly dataSourceRegistry: DataSourceRegistryDef;
   readonly surfaceStack: SurfaceStackDef;
-  readonly staticSubtrees: ReadonlySet<NodeId>;     // nodes with React.memo boundaries
+  readonly staticSubtrees: ReadonlySet<NodeId>; // nodes with React.memo boundaries
   readonly selectors: SelectorTable;
   readonly diagnostics: readonly Diagnostic[];
 }
@@ -287,14 +288,14 @@ interface IRNode {
 
 ### 2.3 Compilation Invariants
 
-| Invariant | Meaning |
-|-----------|---------|
-| All expressions are syntactically valid | Parser catches syntax errors |
-| All type references resolve | Analyzer validates against component registry |
-| No reactive cycles exist | Analyzer detects and rejects cycles |
-| All action references resolve | Analyzer validates against action registry |
-| All namespace references resolve | Analyzer validates namespace declarations |
-| No orphan nodes | Every node has a valid parent or is root |
+| Invariant                               | Meaning                                       |
+| --------------------------------------- | --------------------------------------------- |
+| All expressions are syntactically valid | Parser catches syntax errors                  |
+| All type references resolve             | Analyzer validates against component registry |
+| No reactive cycles exist                | Analyzer detects and rejects cycles           |
+| All action references resolve           | Analyzer validates against action registry    |
+| All namespace references resolve        | Analyzer validates namespace declarations     |
+| No orphan nodes                         | Every node has a valid parent or is root      |
 
 ### 2.4 HMR & Hot Schema Swap
 
@@ -322,15 +323,15 @@ This is not "hot-swapping individual IR nodes in an immutable structure"—it's 
 
 ### 3.1 Core Concept
 
-> **Naming note**: The previous draft called this a "Scope Graph," but the resolution algorithm is a chain walk (own → projection → parent → parent → ...). We call it what it is: a **scope chain with projections**. The reactive *dependency graph* (which expressions depend on which paths) is a separate concept.
+> **Naming note**: The previous draft called this a "Scope Graph," but the resolution algorithm is a chain walk (own → projection → parent → parent → ...). We call it what it is: a **scope chain with projections**. The reactive _dependency graph_ (which expressions depend on which paths) is a separate concept.
 
 ```typescript
 interface ScopeNode {
   readonly id: ScopeId;
   readonly own: Map<string, unknown>;
   readonly parent: ScopeId | null;
-  readonly projections: ReadonlyMap<string, ExprRef>;  // explicit imports from ancestors
-  readonly isolated: boolean;                          // if true, only projections, no inheritance
+  readonly projections: ReadonlyMap<string, ExprRef>; // explicit imports from ancestors
+  readonly isolated: boolean; // if true, only projections, no inheritance
   readonly owner: NodeId;
 }
 ```
@@ -340,21 +341,21 @@ interface ScopeNode {
 ```
 resolve(scopeId, path):
   node = chain.nodes[scopeId]
-  
+
   // 1. Check own data first
   if node.own.has(path):
     return node.own.get(path)
-  
+
   // 2. If isolated, only projections are available
   if node.isolated:
     if node.projections.has(path):
       return evaluate(node.projections[path])
     return UNDEFINED
-  
+
   // 3. Walk up the parent chain
   if node.parent != null:
     return resolve(node.parent, path)
-  
+
   return UNDEFINED
 ```
 
@@ -379,7 +380,7 @@ Transactions batch mutations and compute the minimal invalidation set at commit 
 FK10 uses a **push-based invalidation with lazy re-evaluation** model. This is NOT a pure pull system (where consumers poll for changes) nor a pure push system (where every change immediately propagates). It is a hybrid:
 
 1. **Dependency Registration (compile-time)**: The compiler statically determines which DepPatterns each expression reads. This is recorded in the Execution Package.
-2. **Invalidation (push, at transaction commit)**: When a transaction commits, the invalidation set is matched against registered dependencies. Affected subscribers are *marked dirty* but not immediately re-evaluated.
+2. **Invalidation (push, at transaction commit)**: When a transaction commits, the invalidation set is matched against registered dependencies. Affected subscribers are _marked dirty_ but not immediately re-evaluated.
 3. **Re-evaluation (pull, on demand)**: React triggers re-evaluation via `useSyncExternalStore`. The pre-compiled selector checks a version counter; if unchanged, returns the cached result. If changed, re-evaluates and caches.
 
 This avoids the "glitch" problem (subscribers see consistent state because re-evaluation happens in a single React render pass) while avoiding unnecessary work (only dirty subscribers re-evaluate).
@@ -405,7 +406,7 @@ interface ReactiveRuntime {
 class ScopeSubscriptionManager {
   private version = 0;
   private listeners = new Set<() => void>();
-  
+
   // Single Zustand subscription per scope
   connectToStore(store: ScopeStore): void {
     store.subscribe(() => {
@@ -418,13 +419,15 @@ class ScopeSubscriptionManager {
       });
     });
   }
-  
+
   subscribe(callback: () => void): () => void {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
-  
-  getVersion(): number { return this.version; }
+
+  getVersion(): number {
+    return this.version;
+  }
 }
 ```
 
@@ -434,7 +437,7 @@ Each component's selector includes a version check:
 function createSelectProps(nodeId: NodeId, compileVersion: number) {
   let cachedVersion = -1;
   let cachedResult: unknown = null;
-  
+
   return (state: ScopeSnapshot, currentVersion: number) => {
     if (currentVersion === cachedVersion) return cachedResult;
     cachedVersion = currentVersion;
@@ -450,7 +453,7 @@ Named data sources that write to scope paths are protected from re-triggering th
 
 ```typescript
 // In invalidation logic:
-if (subscriber.kind === 'dataSource' && 
+if (subscriber.kind === 'dataSource' &&
     subscriber.publishedPaths ∩ changedPaths ≠ ∅ &&
     currentTxn === subscriber.lastPublishTxn) {
   continue; // skip self-triggering
@@ -485,7 +488,7 @@ function useScopeValue<T>(scopeId: ScopeId, selector: (s: ScopeSnapshot) => T): 
     store.getState,
     store.getState,
     selector,
-    shallowEqual
+    shallowEqual,
   );
 }
 ```
@@ -504,10 +507,10 @@ The initial implementation uses an AST walker with compile-time pre-computation:
 interface CompiledExpression {
   readonly id: ExprId;
   readonly ast: ExprAST;
-  readonly readPaths: ReadonlySet<DepPattern>;  // statically known scope reads
+  readonly readPaths: ReadonlySet<DepPattern>; // statically known scope reads
   readonly effectType: EffectType;
-  readonly isConstant: boolean;                  // true → evaluate once, cache forever
-  readonly constantValue?: unknown;              // if isConstant, the pre-computed value
+  readonly isConstant: boolean; // true → evaluate once, cache forever
+  readonly constantValue?: unknown; // if isConstant, the pre-computed value
 }
 
 type EffectType = 'pure' | 'read' | 'async';
@@ -523,19 +526,27 @@ class ExprEvaluator {
     if (expr.isConstant) return expr.constantValue;
     return this.walkAST(expr.ast, scope);
   }
-  
+
   private walkAST(node: ExprAST, scope: ScopeReader): unknown {
     switch (node.type) {
-      case 'Literal': return node.value;
-      case 'ScopeRef': return scope.get(node.path);
-      case 'BinaryExpr': return this.evalBinary(node.op, 
-        this.walkAST(node.left, scope), 
-        this.walkAST(node.right, scope));
-      case 'CallExpr': return this.callFunction(node.callee, 
-        node.args.map(a => this.walkAST(a, scope)));
+      case 'Literal':
+        return node.value;
+      case 'ScopeRef':
+        return scope.get(node.path);
+      case 'BinaryExpr':
+        return this.evalBinary(
+          node.op,
+          this.walkAST(node.left, scope),
+          this.walkAST(node.right, scope),
+        );
+      case 'CallExpr':
+        return this.callFunction(
+          node.callee,
+          node.args.map((a) => this.walkAST(a, scope)),
+        );
       case 'MemberExpr': {
         const obj = this.walkAST(node.object, scope);
-        return obj?.[node.property];  // null-safe navigation
+        return obj?.[node.property]; // null-safe navigation
       }
       case 'ConditionalExpr': {
         return this.walkAST(node.test, scope)
@@ -549,12 +560,14 @@ class ExprEvaluator {
 ```
 
 **Why AST walker first**:
+
 - ~500 lines vs. ~5,000 lines for a bytecode VM
 - Preserves expression structure for error messages and debugging
 - Expression evaluation is rarely the bottleneck — React rendering and DOM updates dominate
 - Can be profiled and replaced with bytecode VM only if profiling shows it's needed
 
 **Phase 2: Bytecode VM** (deferred until profiling proves it necessary):
+
 - Stack-based VM with constant pool
 - Type-specialized opcodes for hot paths
 - ~2-5x faster than AST walker for complex expressions
@@ -565,28 +578,78 @@ class ExprEvaluator {
 ```typescript
 interface FunctionRegistry {
   // Math
-  abs, ceil, floor, round, min, max, clamp, random;
-  
+  abs;
+  ceil;
+  floor;
+  round;
+  min;
+  max;
+  clamp;
+  random;
+
   // String
-  upper, lower, trim, split, join, replace, startsWith, endsWith, includes, padStart, padEnd;
-  
+  upper;
+  lower;
+  trim;
+  split;
+  join;
+  replace;
+  startsWith;
+  endsWith;
+  includes;
+  padStart;
+  padEnd;
+
   // Array
-  map, filter, reduce, find, findIndex, some, every, includes, flat, flatMap, slice, sort, groupBy, uniq;
-  
+  map;
+  filter;
+  reduce;
+  find;
+  findIndex;
+  some;
+  every;
+  includes;
+  flat;
+  flatMap;
+  slice;
+  sort;
+  groupBy;
+  uniq;
+
   // Object
-  keys, values, entries, pick, omit, merge, get, has;
-  
+  keys;
+  values;
+  entries;
+  pick;
+  omit;
+  merge;
+  get;
+  has;
+
   // Type
-  typeof, isArray, isObject, isString, isNumber, isBoolean, isNil, isEmpty;
-  
+  typeof;
+  isArray;
+  isObject;
+  isString;
+  isNumber;
+  isBoolean;
+  isNil;
+  isEmpty;
+
   // Date
-  formatDate, parseDate, now, addDays, diffDays;
-  
+  formatDate;
+  parseDate;
+  now;
+  addDays;
+  diffDays;
+
   // i18n
   t(key, ...params);
-  
+
   // Utility
-  uuid, noop, identity;
+  uuid;
+  noop;
+  identity;
 }
 ```
 
@@ -624,7 +687,7 @@ interface RendererDef<TSchema> {
   readonly methods: ReadonlyMap<string, MethodContract>;
   readonly namespaces: ReadonlyMap<string, NamespaceContract>;
   readonly defaultMeta: Partial<MetaDefaults>;
-  readonly a11y: A11yContract;                   // accessibility requirements
+  readonly a11y: A11yContract; // accessibility requirements
 }
 ```
 
@@ -681,6 +744,7 @@ interface RendererHelpers {
 ### 5.3 Layout vs Widget Contract
 
 **Layout renderers** (page, container, flex, grid, panel, tabs):
+
 - Emit **marker classes only** (e.g., `flux-page`, `flux-flex`, `flux-container`)
 - Zero visual styling—no padding, gap, flex, or grid in component code
 - All visual styles come from schema `className` and `style` props
@@ -688,6 +752,7 @@ interface RendererHelpers {
 - Must apply correct ARIA roles (`role="main"`, `role="region"`, etc.)
 
 **Widget renderers** (input, select, table, code-editor, date-picker):
+
 - Complete, self-contained UI controls with internal styling
 - Built on the host's UI component library (shadcn/ui convention)
 - Schema `className` is for consumer customization overrides, not primary styling
@@ -698,11 +763,11 @@ interface RendererHelpers {
 
 ```typescript
 interface A11yContract {
-  readonly keyboardNavigable: boolean;          // can be operated via keyboard
-  readonly screenReaderCompatible: boolean;     // exposes correct ARIA attributes
-  readonly focusManagement: 'auto' | 'manual';  // focus trap for dialogs, etc.
-  readonly highContrastCompatible: boolean;     // works in Windows High Contrast mode
-  readonly reducedMotionAware: boolean;         // respects prefers-reduced-motion
+  readonly keyboardNavigable: boolean; // can be operated via keyboard
+  readonly screenReaderCompatible: boolean; // exposes correct ARIA attributes
+  readonly focusManagement: 'auto' | 'manual'; // focus trap for dialogs, etc.
+  readonly highContrastCompatible: boolean; // works in Windows High Contrast mode
+  readonly reducedMotionAware: boolean; // respects prefers-reduced-motion
 }
 ```
 
@@ -713,11 +778,11 @@ Every built-in renderer provides a `defaultA11y` that satisfies WCAG 2.1 AA. Sch
 ```typescript
 function createRenderer<TSchema>(def: RendererDef<TSchema>) {
   const Component = def.component;
-  
+
   return function FluxRenderer({ nodeId }: { nodeId: NodeId }) {
     const irNode = useIRNode(nodeId);
     const scopeStore = useScopeStore(irNode.scopeDef.scopeId);
-    
+
     const props = useSyncExternalStoreWithSelector(
       scopeStore.subscribe,
       scopeStore.getState,
@@ -725,7 +790,7 @@ function createRenderer<TSchema>(def: RendererDef<TSchema>) {
       irNode.selectors.props,
       shallowEqual
     );
-    
+
     const meta = useSyncExternalStoreWithSelector(
       scopeStore.subscribe,
       scopeStore.getState,
@@ -733,13 +798,13 @@ function createRenderer<TSchema>(def: RendererDef<TSchema>) {
       irNode.selectors.meta,
       shallowEqual
     );
-    
+
     const regions = useMemoStable(() => buildRegionHandles(irNode), [irNode.id]);
     const events = useMemoStable(() => buildEventHandles(irNode), [irNode.id]);
     const helpers = useMemoStable(() => buildHelpers(irNode), [irNode.id]);
-    
+
     if (!meta.visible) return null;
-    
+
     return (
       <Component
         nodeId={nodeId}
@@ -755,6 +820,7 @@ function createRenderer<TSchema>(def: RendererDef<TSchema>) {
 ```
 
 Key React 19 features leveraged:
+
 - **`useSyncExternalStore`** for Zustand store subscriptions (no tearing in concurrent mode)
 - **Ref as prop** (no `forwardRef` needed)
 - **Optimistic updates** for form submissions via `useOptimistic`
@@ -776,11 +842,11 @@ class RendererErrorBoundary extends React.Component<RendererErrorBoundaryProps, 
   static getDerivedStateFromError(error: unknown) {
     return { error };
   }
-  
+
   componentDidCatch(error: unknown, info: React.ErrorInfo) {
     hostEnv.onError?.(error, { nodeId: this.props.nodeId, componentStack: info.componentStack });
   }
-  
+
   render() {
     if (this.state.error) {
       return this.props.fallback ?? (
@@ -868,46 +934,42 @@ The compiler desugars `steps` into nested `then` chains. Each step can still hav
 class ActionOrchestrator {
   async execute(def: ActionDef, ctx: ActionContext): Promise<ActionResult> {
     if (def.when != null) {
-      const guardResult = this.evaluator.evaluate(
-        this.compileExpr(def.when), ctx.scope
-      );
+      const guardResult = this.evaluator.evaluate(this.compileExpr(def.when), ctx.scope);
       if (!guardResult) return { status: 'skipped' };
     }
-    
+
     if (ctx.signal.aborted) throw new ActionCancelledError();
-    
+
     const handler = this.resolveHandler(def.type);
-    
+
     const result = await withTimeout(
       handler(def.args ?? {}, ctx),
       def.timeout ?? Infinity,
-      ctx.signal
+      ctx.signal,
     );
-    
+
     if (result.status === 'success' && def.then) {
       return this.execute(def.then, { ...ctx, result: result.value, prevResult: ctx.result });
     }
-    
+
     if (result.status === 'failure' && def.onError) {
       return this.execute(def.onError, { ...ctx, error: result.error });
     }
-    
+
     return result;
   }
-  
+
   async executeParallel(defs: readonly ActionDef[], ctx: ActionContext): Promise<ActionResult> {
-    const results = await Promise.allSettled(
-      defs.map(d => this.execute(d, ctx))
-    );
-    
-    const failures = results.filter(r => r.status === 'rejected');
+    const results = await Promise.allSettled(defs.map((d) => this.execute(d, ctx)));
+
+    const failures = results.filter((r) => r.status === 'rejected');
     if (failures.length > 0) {
-      return { status: 'failure', error: failures.map(f => f.reason) };
+      return { status: 'failure', error: failures.map((f) => f.reason) };
     }
-    
-    return { 
-      status: 'success', 
-      value: results.map(r => (r as PromiseFulfilledResult<ActionResult>).value) 
+
+    return {
+      status: 'success',
+      value: results.map((r) => (r as PromiseFulfilledResult<ActionResult>).value),
     };
   }
 }
@@ -985,15 +1047,15 @@ interface FormRuntime {
   readonly submitting: boolean;
   readonly submitCount: number;
   readonly errors: ReadonlyMap<string, FieldError>;
-  
+
   validate(options?: ValidateOptions): Promise<ValidationResult>;
   validateField(path: string): Promise<FieldValidation>;
   validateSubtree(path: string): Promise<ValidationResult>;
-  
+
   getSubmitData(): Record<string, unknown>;
   reset(): void;
   resetField(path: string): void;
-  
+
   commitDraft(draftId: string): void;
   discardDraft(draftId: string): void;
 }
@@ -1022,10 +1084,10 @@ Dynamic array fields are a first-class concern:
 
 ```typescript
 interface ArrayFieldOperations {
-  addItem(index?: number): void;              // add item at index (default: append)
-  removeItem(index: number): void;            // remove item at index
-  moveItem(from: number, to: number): void;   // reorder
-  getItemScope(index: number): ScopeId;       // get scope for specific item
+  addItem(index?: number): void; // add item at index (default: append)
+  removeItem(index: number): void; // remove item at index
+  moveItem(from: number, to: number): void; // reorder
+  getItemScope(index: number): ScopeId; // get scope for specific item
 }
 
 // Schema:
@@ -1066,18 +1128,22 @@ For more complex dependencies (multi-field computed values), use a `computed` da
 #### Validation Rule Types
 
 ```typescript
-type ValidationRule =
-  | FieldRule
-  | ObjectRule
-  | ArrayRule
-  | ConditionalRule
-  | AsyncRule;
+type ValidationRule = FieldRule | ObjectRule | ArrayRule | ConditionalRule | AsyncRule;
 
 interface FieldRule {
   readonly kind: 'field';
   readonly path: string;
   readonly ruleId: string;
-  readonly type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'min' | 'max' | 'email' | 'url' | 'custom';
+  readonly type:
+    | 'required'
+    | 'minLength'
+    | 'maxLength'
+    | 'pattern'
+    | 'min'
+    | 'max'
+    | 'email'
+    | 'url'
+    | 'custom';
   readonly params: Record<string, unknown>;
   readonly message: string;
   readonly severity: 'error' | 'warning';
@@ -1138,22 +1204,20 @@ class ValidationEngine {
   async validate(
     rules: ReadonlyMap<string, ValidationRule>,
     scope: ScopeReader,
-    options: ValidateOptions
+    options: ValidateOptions,
   ): Promise<ValidationResult> {
     const applicable = this.filterRules(rules, options);
     const plan = this.buildPlan(applicable);
     const results = new Map<string, FieldValidation>();
-    
+
     for (const batch of plan.batches) {
-      const batchResults = await Promise.all(
-        batch.map(rule => this.evaluateRule(rule, scope))
-      );
+      const batchResults = await Promise.all(batch.map((rule) => this.evaluateRule(rule, scope)));
       for (const r of batchResults) {
         results.set(r.path, r);
       }
     }
-    
-    return { valid: !results.some(r => !r.valid), errors: results };
+
+    return { valid: !results.some((r) => !r.valid), errors: results };
   }
 }
 ```
@@ -1188,7 +1252,7 @@ interface DraftScope {
   readonly parentScopeId: ScopeId;
   readonly scope: ScopeNode;
   readonly form: FormRuntime;
-  
+
   commit(): void;
   discard(): void;
 }
@@ -1206,13 +1270,13 @@ interface DataSourceDef {
   readonly name: string;
   readonly type: 'api' | 'computed' | 'static' | 'polling' | 'websocket';
   readonly deps: ReadonlySet<string>;
-  
+
   readonly api?: ApiDef;
   readonly compute?: string;
   readonly initial?: unknown;
   readonly polling?: { interval: number; api: ApiDef };
   readonly websocket?: WebSocketDef;
-  
+
   readonly autoLoad: boolean;
   readonly refreshOn: readonly string[];
   readonly publishedPaths: ReadonlySet<string>;
@@ -1222,7 +1286,7 @@ interface WebSocketDef {
   readonly url: string | ExprRef;
   readonly protocols?: string[];
   readonly reconnect?: { delay: number; maxAttempts: number };
-  readonly messageAdapter?: string;             // expression to transform WS messages
+  readonly messageAdapter?: string; // expression to transform WS messages
 }
 
 interface ApiDef {
@@ -1263,6 +1327,7 @@ interface CachePolicy {
 ```
 
 **States**:
+
 - **Loading**: Initial fetch. No data available yet.
 - **Ready**: Data loaded successfully. Fresh.
 - **Stale**: Data loaded but TTL expired. Data still visible but marked as potentially outdated.
@@ -1277,7 +1342,7 @@ interface CachePolicy {
 interface WebSocketDataSource {
   connect(url: string, options: WebSocketDef): void;
   disconnect(): void;
-  
+
   // Messages are adapted and published to scope:
   // ws://realtime → adapter → scope.${name}.data
   // Connection state published to:
@@ -1323,13 +1388,13 @@ function useDataSource(name: string): DataSourceResult {
     scopeStore.subscribe,
     scopeStore.getState,
     scopeStore.getState,
-    (s) => ({ loading: s.data[`${name}.loading`], data: s.data[`${name}.data`] })
+    (s) => ({ loading: s.data[`${name}.loading`], data: s.data[`${name}.data`] }),
   );
-  
+
   if (loadState.loading) {
     throw dataSources.getPendingPromise(name);
   }
-  
+
   return { data: loadState.data };
 }
 ```
@@ -1409,29 +1474,29 @@ interface HostEnvironment {
   readonly timezone: string;
   readonly userId?: string;
   readonly permissions?: ReadonlySet<string>;
-  
+
   readonly fetch: HttpRequester;
   readonly wsFactory?: WebSocketFactory;
-  
+
   readonly navigate: (url: string, options?: NavOptions) => void;
   readonly goBack: () => void;
-  
+
   readonly toast: (message: string, options?: ToastOptions) => void;
   readonly confirm: (message: string) => Promise<boolean>;
-  
+
   readonly t: (key: string, params?: Record<string, unknown>) => string;
-  
+
   readonly onError?: (error: unknown, context: ErrorContext) => void;
-  
+
   registerNamespace(name: string, methods: NamespaceMethods): () => void;
-  
+
   readonly themeVars?: Readonly<Record<string, string>>;
-  
+
   // Responsive / viewport
   readonly matchMedia?: (query: string) => MediaQueryResult;
-  
+
   // Version
-  readonly version: string;                     // host API version for compatibility
+  readonly version: string; // host API version for compatibility
 }
 
 interface ErrorContext {
@@ -1457,8 +1522,9 @@ const stableRefs = {
 
 // On host re-render, compare individual functions:
 function shouldUpdate(newHost: HostEnvironment): boolean {
-  return !Object.is(stableRefs.fetch, newHost.fetch) ||
-         !Object.is(stableRefs.navigate, newHost.navigate);
+  return (
+    !Object.is(stableRefs.fetch, newHost.fetch) || !Object.is(stableRefs.navigate, newHost.navigate)
+  );
   // Only re-bind if actual functions changed
 }
 ```
@@ -1520,7 +1586,7 @@ const app = createFluxApp(schema, hostEnv);
 
 ```typescript
 interface TableRowScope extends ScopeNode {
-  readonly isolated: true;                    // always isolated
+  readonly isolated: true; // always isolated
   readonly projections: ReadonlyMap<string, ExprRef>;
   readonly own: {
     readonly record: unknown;
@@ -1610,11 +1676,11 @@ Scope updates use structural sharing to minimize reference changes:
 ```typescript
 function applyPatch(
   current: Readonly<Record<string, unknown>>,
-  patches: ReadonlyArray<[string, unknown]>
+  patches: ReadonlyArray<[string, unknown]>,
 ): Readonly<Record<string, unknown>> {
   let next = current;
   let changed = false;
-  
+
   for (const [path, value] of patches) {
     const existing = get(current, path);
     if (Object.is(existing, value)) continue;
@@ -1622,7 +1688,7 @@ function applyPatch(
     set(next, path, value);
     changed = true;
   }
-  
+
   return next;
 }
 ```
@@ -1643,18 +1709,18 @@ function compile(schema: unknown): ExecutionPackage {
 
 ### 13.4 Realistic Performance Targets
 
-| Operation | Target | Strategy |
-|-----------|--------|----------|
-| Schema compilation (100 nodes) | < 10ms | Multi-stage pipeline, caching |
-| Schema compilation (500 nodes) | < 50ms | Incremental compilation for HMR |
-| Expression evaluation (simple) | < 0.05ms | Pre-computed read paths, AST memoization |
-| Scope path read | < 0.01ms | Direct property access |
-| Scope mutation (single) | < 0.05ms | Transaction batching |
-| React render (single dynamic node) | < 0.5ms | Pre-compiled selectors, React.memo |
-| Table render (100 rows, 10 cols) | < 16ms (frame budget) | Row isolation + virtual scroll |
-| Form validation (50 fields) | < 10ms | Dependency-ordered batching |
+| Operation                          | Target                | Strategy                                 |
+| ---------------------------------- | --------------------- | ---------------------------------------- |
+| Schema compilation (100 nodes)     | < 10ms                | Multi-stage pipeline, caching            |
+| Schema compilation (500 nodes)     | < 50ms                | Incremental compilation for HMR          |
+| Expression evaluation (simple)     | < 0.05ms              | Pre-computed read paths, AST memoization |
+| Scope path read                    | < 0.01ms              | Direct property access                   |
+| Scope mutation (single)            | < 0.05ms              | Transaction batching                     |
+| React render (single dynamic node) | < 0.5ms               | Pre-compiled selectors, React.memo       |
+| Table render (100 rows, 10 cols)   | < 16ms (frame budget) | Row isolation + virtual scroll           |
+| Form validation (50 fields)        | < 10ms                | Dependency-ordered batching              |
 
-*These are targets, not guarantees. Actual performance depends on browser, device, expression complexity, and React workload. They should be monitored via benchmarks, not enforced at runtime.*
+_These are targets, not guarantees. Actual performance depends on browser, device, expression complexity, and React workload. They should be monitored via benchmarks, not enforced at runtime._
 
 ---
 
@@ -1675,7 +1741,7 @@ interface StateHistoryEntry {
 interface TimeTravelInspector {
   readonly history: readonly StateHistoryEntry[];
   readonly currentIndex: number;
-  
+
   jumpTo(index: number): ScopeSnapshot;
   diff(fromIndex: number, toIndex: number): StateDiff;
   filter(predicate: (entry: StateHistoryEntry) => boolean): readonly StateHistoryEntry[];
@@ -1688,7 +1754,7 @@ Every runtime node carries a source location:
 
 ```typescript
 interface SourceLocation {
-  readonly schemaPath: string;     // JSON pointer
+  readonly schemaPath: string; // JSON pointer
   readonly line?: number;
   readonly column?: number;
 }
@@ -1730,6 +1796,7 @@ interface FluxTelemetry {
 ### 14.5 Hot Module Replacement
 
 When a schema changes during development:
+
 1. Recompile changed subtrees only
 2. Diff old IR vs new IR at node level
 3. Preserve scope state for unchanged nodes
@@ -1772,8 +1839,8 @@ If the locale changes at runtime, the schema is re-compiled with the new locale.
 ```typescript
 // Data source adapter validates response shape:
 interface ApiDef {
-  readonly adapter?: string;           // expression to transform response
-  readonly validate?: string;          // expression to validate response shape
+  readonly adapter?: string; // expression to transform response
+  readonly validate?: string; // expression to validate response shape
 }
 
 // If validate returns false:
@@ -1829,10 +1896,10 @@ const mySchema = {
       type: 'form',
       fields: [
         { type: 'input-text', name: 'username', label: 'Username', required: true },
-        { type: 'input-password', name: 'password', label: 'Password', required: true }
-      ]
-    }
-  ]
+        { type: 'input-password', name: 'password', label: 'Password', required: true },
+      ],
+    },
+  ],
 } satisfies SchemaDefinition;
 ```
 
@@ -1849,6 +1916,7 @@ Type narrowing works for **statically known** schemas (TypeScript-authored). For
 FK10 supports server-side rendering with a **two-pass approach**:
 
 **Pass 1 (Server)**:
+
 1. Compile schema → Execution Package
 2. Create scope chain with initial data
 3. Resolve all `autoLoad: true` data sources on the server
@@ -1856,6 +1924,7 @@ FK10 supports server-side rendering with a **two-pass approach**:
 5. Serialize scope state and data source results as hydration data
 
 **Pass 2 (Client)**:
+
 1. Receive HTML + hydration data
 2. Compile schema → Execution Package (same schema, same IR)
 3. Create scope chain from hydration data (skip data source fetching)
@@ -1867,13 +1936,13 @@ async function renderSchemaToString(schema: unknown, hostEnv: HostEnvironment, i
   const pkg = compile(schema);
   const scopeChain = createScopeChain(pkg, hostEnv, initialData);
   await scopeChain.resolveAutoLoadDataSources();
-  
+
   const html = await renderToReadableStream(
     <FluxRoot package={pkg} scopeChain={scopeChain} />
   );
-  
+
   const hydrationData = scopeChain.serialize();
-  
+
   return { html, hydrationData };
 }
 
@@ -1881,7 +1950,7 @@ async function renderSchemaToString(schema: unknown, hostEnv: HostEnvironment, i
 function hydrateSchema(container: HTMLElement, schema: unknown, hostEnv: HostEnvironment, hydrationData: unknown) {
   const pkg = compile(schema);
   const scopeChain = createScopeChainFromHydration(pkg, hostEnv, hydrationData);
-  
+
   hydrateRoot(container, <FluxRoot package={pkg} scopeChain={scopeChain} />);
 }
 ```
@@ -1903,7 +1972,7 @@ The scope transaction system naturally supports undo/redo. Every transaction rec
 
 ```typescript
 interface UndoableTransaction extends ScopeTransaction {
-  readonly inverseOps: ReadonlyArray<ScopeOp>;  // operations to reverse this txn
+  readonly inverseOps: ReadonlyArray<ScopeOp>; // operations to reverse this txn
 }
 
 interface UndoRedoManager {
@@ -1926,13 +1995,13 @@ interface UndoRedoManager {
 interface ShortcutRegistry {
   register(keybinding: string, action: ActionDef, options?: ShortcutOptions): () => void;
   unregister(keybinding: string): void;
-  pause(): void;    // e.g., when a code editor has focus
+  pause(): void; // e.g., when a code editor has focus
   resume(): void;
 }
 
 interface ShortcutOptions {
-  readonly scope?: 'global' | 'surface' | 'form';   // where the shortcut is active
-  readonly when?: string;                              // guard expression
+  readonly scope?: 'global' | 'surface' | 'form'; // where the shortcut is active
+  readonly when?: string; // guard expression
   readonly preventDefault?: boolean;
 }
 
@@ -1983,8 +2052,8 @@ interface DataSourceDef {
 
 interface OfflinePolicy {
   readonly persistTo: 'indexeddb' | 'localstorage' | 'memory';
-  readonly staleWhileRevalidate: boolean;   // show cached data while fetching
-  readonly maxAge: number;                   // ms before cached data is discarded
+  readonly staleWhileRevalidate: boolean; // show cached data while fetching
+  readonly maxAge: number; // ms before cached data is discarded
 }
 ```
 
@@ -2096,34 +2165,34 @@ The runtime checks the version tag on saved data and applies migrations in seque
 
 ### What FK10 Genuinely Does Better
 
-| Feature | FK10 Advantage | Magnitude |
-|---------|---------------|-----------|
-| Compile-time dependency analysis | Catches cycles, missing refs, dead code before render | Significant |
-| Pre-compiled selectors with single-store subscription | Zero runtime closure allocation, O(1) notification per scope | Moderate |
-| Structured concurrency for actions | Clean cancellation propagation | Significant |
-| Scope chain with projections | Explicit row isolation without parent leak | Significant |
-| Time-travel inspector with source mapping | Debug from DOM to schema location | Significant |
-| Core bundle size | ~73KB (core + minimal renderers) vs AMIS ~200KB (full), Formily ~150KB (full) | Moderate (FK10 needs many more renderers to match) |
+| Feature                                               | FK10 Advantage                                                                | Magnitude                                          |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------- |
+| Compile-time dependency analysis                      | Catches cycles, missing refs, dead code before render                         | Significant                                        |
+| Pre-compiled selectors with single-store subscription | Zero runtime closure allocation, O(1) notification per scope                  | Moderate                                           |
+| Structured concurrency for actions                    | Clean cancellation propagation                                                | Significant                                        |
+| Scope chain with projections                          | Explicit row isolation without parent leak                                    | Significant                                        |
+| Time-travel inspector with source mapping             | Debug from DOM to schema location                                             | Significant                                        |
+| Core bundle size                                      | ~73KB (core + minimal renderers) vs AMIS ~200KB (full), Formily ~150KB (full) | Moderate (FK10 needs many more renderers to match) |
 
 ### Where FK10 Is Equivalent
 
-| Feature | FK10 | Competitor Match |
-|---------|------|-----------------|
-| Expression engine | AST walker (Phase 1) | AMIS, Formily have equivalent parsers |
-| Validation engine | Dependency-ordered batching | Formily 2.x is equally capable |
-| Fine-grained reactivity | Zustand + selectors + dependency graph | Formily's `@formily/reactive` achieves similar without compilation |
-| Type safety | TypeScript narrowing for static schemas | Formily 2.x has similar TypeScript support |
-| SSR | React 19 RSC | Available to any React framework |
+| Feature                 | FK10                                    | Competitor Match                                                   |
+| ----------------------- | --------------------------------------- | ------------------------------------------------------------------ |
+| Expression engine       | AST walker (Phase 1)                    | AMIS, Formily have equivalent parsers                              |
+| Validation engine       | Dependency-ordered batching             | Formily 2.x is equally capable                                     |
+| Fine-grained reactivity | Zustand + selectors + dependency graph  | Formily's `@formily/reactive` achieves similar without compilation |
+| Type safety             | TypeScript narrowing for static schemas | Formily 2.x has similar TypeScript support                         |
+| SSR                     | React 19 RSC                            | Available to any React framework                                   |
 
 ### Where FK10 Is Weaker
 
-| Feature | FK10 Gap | Competitor Advantage |
-|---------|----------|---------------------|
-| Ecosystem & renderers | 0 built-in renderers | AMIS: 200+, Formily: Ant Design integration |
-| Community & adoption | 0 users | AMIS: 15K+ stars, Formily: 10K+ stars |
-| Proxy-based reactivity | Requires compilation step | Formily: works without compilation |
-| Visual editor integration | Not addressed | AMIS: integrated editor |
-| Backend integration | Host must provide everything | Lowdefy: built-in MongoDB, Appsmith: built-in DB connectors |
+| Feature                   | FK10 Gap                     | Competitor Advantage                                        |
+| ------------------------- | ---------------------------- | ----------------------------------------------------------- |
+| Ecosystem & renderers     | 0 built-in renderers         | AMIS: 200+, Formily: Ant Design integration                 |
+| Community & adoption      | 0 users                      | AMIS: 15K+ stars, Formily: 10K+ stars                       |
+| Proxy-based reactivity    | Requires compilation step    | Formily: works without compilation                          |
+| Visual editor integration | Not addressed                | AMIS: integrated editor                                     |
+| Backend integration       | Host must provide everything | Lowdefy: built-in MongoDB, Appsmith: built-in DB connectors |
 
 ### Where FK10 Should Innovate but Doesn't Yet
 
@@ -2153,7 +2222,7 @@ describe('UserForm schema', () => {
     const result = testSchema(userFormSchema, { data: { name: '' } });
     expect(result.validationErrors).toContain('name is required');
   });
-  
+
   it('handles random data gracefully', async () => {
     await fuzzSchema(userFormSchema, { iterations: 1000 });
   });
@@ -2167,6 +2236,7 @@ The compilation pipeline is designed for multi-target emit, but currently only t
 ### 21.4 Incremental Adoptability
 
 Currently all-or-nothing: you provide a schema, FK10 renders it. Future:
+
 - Use FK10 components in an existing React app without a schema
 - Gradual migration from hand-written React to schema-driven
 - Schema extraction tool (reverse-engineer from React components)
@@ -2182,6 +2252,7 @@ The `Diagnostic` type exists but no examples of actual messages are provided. Fo
 ### 21.7 Semantic Schema Validation
 
 The parser validates structure; the dependency graph catches missing references. But no semantic validation for:
+
 - `setValue` targeting a non-existent scope path
 - `component:refresh` targeting a non-table component
 - Conflicting validation rules on the same field
@@ -2246,6 +2317,7 @@ These should produce warnings at compile time.
 ### What's NOT in this Roadmap
 
 These items are acknowledged as important but deferred to post-v1.0:
+
 - AI-native schema authoring
 - Schema-level testing framework
 - Real-time collaboration (CRDT/OT)
@@ -2296,9 +2368,7 @@ A complete CRUD page:
           "label": "Search",
           "variant": "primary",
           "onClick": {
-            "steps": [
-              { "action": "component:refresh", "target": "userTable" }
-            ]
+            "steps": [{ "action": "component:refresh", "target": "userTable" }]
           }
         },
         {
@@ -2319,7 +2389,12 @@ A complete CRUD page:
       "columns": [
         { "type": "text", "name": "name", "label": "Name" },
         { "type": "text", "name": "email", "label": "Email" },
-        { "type": "badge", "name": "status", "label": "Status", "colorMap": { "active": "green", "inactive": "red" } },
+        {
+          "type": "badge",
+          "name": "status",
+          "label": "Status",
+          "colorMap": { "active": "green", "inactive": "red" }
+        },
         {
           "type": "operation",
           "label": "Actions",
@@ -2363,16 +2438,16 @@ A complete CRUD page:
 
 ## Appendix B: Glossary
 
-| Term | Definition |
-|------|-----------|
-| **Execution Package (IR)** | Compiled, immutable representation of a schema |
-| **Scope Chain** | Hierarchical data environments with inheritance and projections |
-| **Projection** | Explicit data channel from an ancestor scope to an isolated child scope |
-| **Region** | Named child area of a component |
-| **Surface** | Dialog, drawer, or popover managed by the surface stack |
-| **Draft** | Isolated sub-scope with independent validation/dirty state |
-| **Static subtree** | Subtree with zero dynamic content, wrapped in React.memo |
-| **DepPattern** | Dependency pattern: exact path, prefix glob, or computed expression |
+| Term                       | Definition                                                              |
+| -------------------------- | ----------------------------------------------------------------------- |
+| **Execution Package (IR)** | Compiled, immutable representation of a schema                          |
+| **Scope Chain**            | Hierarchical data environments with inheritance and projections         |
+| **Projection**             | Explicit data channel from an ancestor scope to an isolated child scope |
+| **Region**                 | Named child area of a component                                         |
+| **Surface**                | Dialog, drawer, or popover managed by the surface stack                 |
+| **Draft**                  | Isolated sub-scope with independent validation/dirty state              |
+| **Static subtree**         | Subtree with zero dynamic content, wrapped in React.memo                |
+| **DepPattern**             | Dependency pattern: exact path, prefix glob, or computed expression     |
 
 ## Appendix C: Key API Surfaces
 

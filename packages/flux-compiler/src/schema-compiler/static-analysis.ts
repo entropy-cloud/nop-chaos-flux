@@ -3,12 +3,14 @@ import type {
   StaticAnalysisResult,
   TemplateNode,
   TemplateRegion,
-  WrapProvidersFn
+  WrapProvidersFn,
 } from '@nop-chaos/flux-core';
 
 export const PROVIDER_BUILD_ORDER = ['actionScope', 'componentRegistry', 'classAliases'] as const;
 
-export function buildWrapProvidersClosure(providers: TemplateNode['providerPlan']): WrapProvidersFn {
+export function buildWrapProvidersClosure(
+  providers: TemplateNode['providerPlan'],
+): WrapProvidersFn {
   let fn: WrapProvidersFn = (_wp, _v, ch) => ch;
 
   for (const kind of PROVIDER_BUILD_ORDER) {
@@ -48,49 +50,49 @@ function isMetaProgramStatic(metaProgram: TemplateNode['metaProgram']): boolean 
 
 export function computeStaticAnalysis(
   node: TemplateNode,
-  schema: BaseSchema
+  schema: BaseSchema,
 ): StaticAnalysisResult {
   const renderer = node.component;
 
   if (!renderer.staticCapable) {
     return {
       isStaticContent: false,
-      dependencies: collectDependencies(node)
+      dependencies: collectDependencies(node),
     };
   }
 
   if (!node.propsProgram.isStatic) {
     return {
       isStaticContent: false,
-      dependencies: collectDependencies(node)
+      dependencies: collectDependencies(node),
     };
   }
 
   if (!isMetaProgramStatic(node.metaProgram)) {
     return {
       isStaticContent: false,
-      dependencies: collectDependencies(node)
+      dependencies: collectDependencies(node),
     };
   }
 
   if (schema.name) {
     return {
       isStaticContent: false,
-      dependencies: collectDependencies(node)
+      dependencies: collectDependencies(node),
     };
   }
 
   if (Object.keys(node.eventPlans).length > 0) {
     return {
       isStaticContent: false,
-      dependencies: collectDependencies(node)
+      dependencies: collectDependencies(node),
     };
   }
 
   if (node.scopePlan.kind !== 'inherit') {
     return {
       isStaticContent: false,
-      dependencies: collectDependencies(node)
+      dependencies: collectDependencies(node),
     };
   }
 
@@ -99,7 +101,7 @@ export function computeStaticAnalysis(
       if (!child.staticAnalysis?.isStaticContent) {
         return {
           isStaticContent: false,
-          dependencies: collectDependencies(node)
+          dependencies: collectDependencies(node),
         };
       }
     }

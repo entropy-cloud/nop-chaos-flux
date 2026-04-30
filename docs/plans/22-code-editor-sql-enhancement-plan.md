@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-23
 
-
 > Date: 2026-03-31
 > Status: Completed
 > Triggered by: SpringReport SQL Editor 功能对比分析
@@ -17,15 +16,15 @@
 
 对比 `~/sources/springreport` 中基于 CodeMirror 5 的 SQL 编辑器，发现 Flux Code Editor (CM6) 在编辑器核心架构上领先一代，但在 SQL 场景的**实用性功能**上存在差距：
 
-| 维度 | Flux (CM6) | SpringReport (CM5) |
-|------|-----------|-------------------|
-| 编辑器架构 | CM6 Extension/Compartment，领先 | CM5 老旧 |
-| Schema 驱动 | JSON Schema 配置 | 硬编码 cmOptions |
-| 表达式/模板模式 | 有 | 无 |
-| SQL 格式化 | **无** | `sql-formatter` 一键美化 |
-| SQL 执行+预览 | **无** | execSql API + 结果分页表格 |
-| 变量面板 | **无** (仅 autocomplete popup) | 侧边变量列表 + 一键插入/复制 |
-| 条件注释模板 | **无** | MyBatis `<if>` 条件块插入 |
+| 维度            | Flux (CM6)                      | SpringReport (CM5)           |
+| --------------- | ------------------------------- | ---------------------------- |
+| 编辑器架构      | CM6 Extension/Compartment，领先 | CM5 老旧                     |
+| Schema 驱动     | JSON Schema 配置                | 硬编码 cmOptions             |
+| 表达式/模板模式 | 有                              | 无                           |
+| SQL 格式化      | **无**                          | `sql-formatter` 一键美化     |
+| SQL 执行+预览   | **无**                          | execSql API + 结果分页表格   |
+| 变量面板        | **无** (仅 autocomplete popup)  | 侧边变量列表 + 一键插入/复制 |
+| 条件注释模板    | **无**                          | MyBatis `<if>` 条件块插入    |
 
 **核心判断**：基础 JSON Schema 设计不改，纯增量扩展 `sqlConfig`。
 
@@ -54,10 +53,10 @@ export interface SQLFormatConfig {
   enabled: boolean;
   /** sql-formatter 语言，默认跟随 dialect */
   language?: 'sql' | 'mysql' | 'postgresql' | 'mariadb' | 'tsql' | 'plsql';
-  tabWidth?: number;         // 默认 2
-  keywordCase?: 'upper' | 'lower' | 'preserve';  // 默认 'upper'
-  indentStyle?: 'standard' | 'tabular';           // 默认 'standard'
-  logicalOperatorNewline?: 'before' | 'after';    // 默认 'before'
+  tabWidth?: number; // 默认 2
+  keywordCase?: 'upper' | 'lower' | 'preserve'; // 默认 'upper'
+  indentStyle?: 'standard' | 'tabular'; // 默认 'standard'
+  logicalOperatorNewline?: 'before' | 'after'; // 默认 'before'
 }
 
 /** SQL 执行配置 — 复用 Flux 动作系统 */
@@ -68,17 +67,17 @@ export interface SQLExecutionConfig {
   /** 执行结果的字段路径，默认 'responseData' */
   resultPath?: string;
   /** 执行参数映射（从 scope 取值注入到请求参数） */
-  params?: Record<string, string>;  // key=参数名, value=scope路径
+  params?: Record<string, string>; // key=参数名, value=scope路径
   /** 是否显示结果预览表格 */
   showPreview?: boolean;
 }
 
 /** 条件注释/代码片段模板 */
 export interface CodeSnippetTemplate {
-  name: string;           // 显示名称，如 "IF 条件"
-  template: string;       // 模板文本，${var} 为占位符
+  name: string; // 显示名称，如 "IF 条件"
+  template: string; // 模板文本，${var} 为占位符
   description?: string;
-  icon?: string;          // 可选图标
+  icon?: string; // 可选图标
 }
 
 /** 变量面板配置 */
@@ -221,12 +220,12 @@ pnpm --filter @nop-chaos/flux-code-editor add sql-formatter
 
 ### 4.2 Files to Change
 
-| File | Change |
-|------|--------|
-| `packages/flux-code-editor/src/types.ts` | 新增 `SQLFormatConfig`，扩展 `SQLEditorConfig.format` |
-| `packages/flux-code-editor/src/extensions/sql/format.ts` | **新增**，格式化逻辑 |
-| `packages/flux-code-editor/src/extensions/sql/index.ts` | **新增**，SQL 扩展 barrel |
-| `packages/flux-code-editor/src/code-editor-renderer.tsx` | toolbar 增加格式化按钮，调用 format |
+| File                                                     | Change                                                |
+| -------------------------------------------------------- | ----------------------------------------------------- |
+| `packages/flux-code-editor/src/types.ts`                 | 新增 `SQLFormatConfig`，扩展 `SQLEditorConfig.format` |
+| `packages/flux-code-editor/src/extensions/sql/format.ts` | **新增**，格式化逻辑                                  |
+| `packages/flux-code-editor/src/extensions/sql/index.ts`  | **新增**，SQL 扩展 barrel                             |
+| `packages/flux-code-editor/src/code-editor-renderer.tsx` | toolbar 增加格式化按钮，调用 format                   |
 
 ### 4.3 Implementation Sketch
 
@@ -250,9 +249,7 @@ export function formatSQL(
 ): string {
   if (!config) return sql;
 
-  const resolved: SQLFormatConfig = config === true
-    ? { enabled: true }
-    : config;
+  const resolved: SQLFormatConfig = config === true ? { enabled: true } : config;
 
   return sqlFormat(sql, {
     language: resolved.language ?? DIALECT_MAP[dialect ?? 'standard'] ?? 'sql',
@@ -269,17 +266,19 @@ export function formatSQL(
 在 `code-editor-renderer.tsx` 的 toolbar 区域，当 `language === 'sql'` 且 `sqlConfig.format` 为 truthy 时，显示格式化按钮：
 
 ```tsx
-{language === 'sql' && resolveFormatConfig(sqlConfig) && (
-  <span
-    role="button"
-    tabIndex={0}
-    className="nop-code-editor__toolbar-btn"
-    onClick={handleFormatSQL}
-    title="格式化 SQL"
-  >
-    <FormatIcon />
-  </span>
-)}
+{
+  language === 'sql' && resolveFormatConfig(sqlConfig) && (
+    <span
+      role="button"
+      tabIndex={0}
+      className="nop-code-editor__toolbar-btn"
+      onClick={handleFormatSQL}
+      title="格式化 SQL"
+    >
+      <FormatIcon />
+    </span>
+  );
+}
 ```
 
 ### 4.5 Verification
@@ -296,11 +295,11 @@ export function formatSQL(
 
 ### 5.1 Files to Change
 
-| File | Change |
-|------|--------|
-| `packages/flux-code-editor/src/types.ts` | 新增 `CodeSnippetTemplate`，扩展 `SQLEditorConfig.snippets` |
-| `packages/flux-code-editor/src/extensions/snippet-panel.tsx` | **新增**，snippet 选择 UI |
-| `packages/flux-code-editor/src/code-editor-renderer.tsx` | 集成 snippet panel |
+| File                                                         | Change                                                      |
+| ------------------------------------------------------------ | ----------------------------------------------------------- |
+| `packages/flux-code-editor/src/types.ts`                     | 新增 `CodeSnippetTemplate`，扩展 `SQLEditorConfig.snippets` |
+| `packages/flux-code-editor/src/extensions/snippet-panel.tsx` | **新增**，snippet 选择 UI                                   |
+| `packages/flux-code-editor/src/code-editor-renderer.tsx`     | 集成 snippet panel                                          |
 
 ### 5.2 Implementation Notes
 
@@ -321,11 +320,11 @@ export function formatSQL(
 
 ### 6.1 Files to Change
 
-| File | Change |
-|------|--------|
-| `packages/flux-code-editor/src/types.ts` | 新增 `VariablePanelConfig`，扩展 `SQLEditorConfig.variablePanel` |
-| `packages/flux-code-editor/src/variable-panel.tsx` | **新增**，变量面板组件 |
-| `packages/flux-code-editor/src/code-editor-renderer.tsx` | 集成变量面板布局 |
+| File                                                     | Change                                                           |
+| -------------------------------------------------------- | ---------------------------------------------------------------- |
+| `packages/flux-code-editor/src/types.ts`                 | 新增 `VariablePanelConfig`，扩展 `SQLEditorConfig.variablePanel` |
+| `packages/flux-code-editor/src/variable-panel.tsx`       | **新增**，变量面板组件                                           |
+| `packages/flux-code-editor/src/code-editor-renderer.tsx` | 集成变量面板布局                                                 |
 
 ### 6.2 Layout
 
@@ -360,11 +359,11 @@ export function formatSQL(
 
 ### 7.1 Files to Change
 
-| File | Change |
-|------|--------|
-| `packages/flux-code-editor/src/types.ts` | 新增 `SQLExecutionConfig`，扩展 `SQLEditorConfig.execution` |
-| `packages/flux-code-editor/src/sql-result-panel.tsx` | **新增**，结果预览表格 |
-| `packages/flux-code-editor/src/code-editor-renderer.tsx` | 执行按钮 + 结果面板集成 |
+| File                                                     | Change                                                      |
+| -------------------------------------------------------- | ----------------------------------------------------------- |
+| `packages/flux-code-editor/src/types.ts`                 | 新增 `SQLExecutionConfig`，扩展 `SQLEditorConfig.execution` |
+| `packages/flux-code-editor/src/sql-result-panel.tsx`     | **新增**，结果预览表格                                      |
+| `packages/flux-code-editor/src/code-editor-renderer.tsx` | 执行按钮 + 结果面板集成                                     |
 
 ### 7.2 Execution Flow
 
@@ -395,28 +394,28 @@ export function formatSQL(
 
 ## 8. Affected Files Summary
 
-| File | Phase | Change Type |
-|------|-------|-------------|
-| `packages/flux-code-editor/src/types.ts` | 1-4 | 扩展类型 |
-| `packages/flux-code-editor/src/extensions/sql/format.ts` | 1 | 新增 |
-| `packages/flux-code-editor/src/extensions/sql/index.ts` | 1 | 新增 |
-| `packages/flux-code-editor/src/code-editor-renderer.tsx` | 1-4 | 修改 |
-| `packages/flux-code-editor/src/extensions/snippet-panel.tsx` | 2 | 新增 |
-| `packages/flux-code-editor/src/variable-panel.tsx` | 3 | 新增 |
-| `packages/flux-code-editor/src/sql-result-panel.tsx` | 4 | 新增 |
-| `packages/flux-code-editor/package.json` | 1 | 新增 sql-formatter 依赖 |
-| `docs/components/code-editor/design.md` | 1-4 | 更新文档 |
+| File                                                         | Phase | Change Type             |
+| ------------------------------------------------------------ | ----- | ----------------------- |
+| `packages/flux-code-editor/src/types.ts`                     | 1-4   | 扩展类型                |
+| `packages/flux-code-editor/src/extensions/sql/format.ts`     | 1     | 新增                    |
+| `packages/flux-code-editor/src/extensions/sql/index.ts`      | 1     | 新增                    |
+| `packages/flux-code-editor/src/code-editor-renderer.tsx`     | 1-4   | 修改                    |
+| `packages/flux-code-editor/src/extensions/snippet-panel.tsx` | 2     | 新增                    |
+| `packages/flux-code-editor/src/variable-panel.tsx`           | 3     | 新增                    |
+| `packages/flux-code-editor/src/sql-result-panel.tsx`         | 4     | 新增                    |
+| `packages/flux-code-editor/package.json`                     | 1     | 新增 sql-formatter 依赖 |
+| `docs/components/code-editor/design.md`                      | 1-4   | 更新文档                |
 
 ---
 
 ## 9. Risks and Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| `sql-formatter` 增大 bundle | ~50KB gzip | Phase 1 only，tree-shakable，仅 sql 语言加载 |
-| 变量面板影响编辑器布局 | 布局抖动 | 使用 CSS flex，面板绝对定位或固定宽度 |
-| SQL 执行涉及后端 API | 需要后端配合 | Phase 4 纯前端预留接口，后端由 host 集成 |
-| CM5→CM6 功能迁移差异 | API 不兼容 | 不迁移，重新实现，利用 CM6 Extension 架构 |
+| Risk                        | Impact       | Mitigation                                   |
+| --------------------------- | ------------ | -------------------------------------------- |
+| `sql-formatter` 增大 bundle | ~50KB gzip   | Phase 1 only，tree-shakable，仅 sql 语言加载 |
+| 变量面板影响编辑器布局      | 布局抖动     | 使用 CSS flex，面板绝对定位或固定宽度        |
+| SQL 执行涉及后端 API        | 需要后端配合 | Phase 4 纯前端预留接口，后端由 host 集成     |
+| CM5→CM6 功能迁移差异        | API 不兼容   | 不迁移，重新实现，利用 CM6 Extension 架构    |
 
 ---
 
@@ -435,5 +434,3 @@ Closure Audit Evidence:
 
 - Reviewer / Agent: live repo re-audit plus focused package verification (2026-04-23)
 - Evidence: `packages/flux-code-editor/src/code-editor-renderer/use-sql-editor-state.ts` now maps `execution.params` into dispatched action/ajax requests, `packages/flux-code-editor/src/code-editor-renderer.tsx` respects `execution.showPreview`, `apps/playground/src/pages/code-editor-page.tsx` exercises the SQL editor surface, `docs/components/code-editor/design.md` still documents the landed SQL enhancement surface through the current owner-doc path, and focused verification is green for `pnpm --filter @nop-chaos/flux-code-editor typecheck`, `pnpm --filter @nop-chaos/flux-code-editor build`, `pnpm --filter @nop-chaos/flux-code-editor lint`, and `pnpm --filter @nop-chaos/flux-code-editor test`.
-
-

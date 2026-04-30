@@ -934,16 +934,16 @@ Tiny 生态的好处是：
 - 架构水平: 在本次审阅范围内，Flux 更高。原因不是功能更多，而是核心执行语义、边界和契约更集中。
 - 编码水平: 需要拆开看。以当前仓库可见证据看，Flux 核心代码整体最干净一致，`tiny-vue` 体现出成熟组件库工程能力，`tiny-engine` 则更像承担平台胶水、动态装配和历史兼容负担的工程层。
 
-| 维度 | nop-chaos-flux 更强的地方 | tiny-engine + tiny-vue 更强的地方 |
-| --- | --- | --- |
-| 运行时语义 | 在本次审阅范围内，compile/runtime 边界、owner 语义、action algebra、dependency tracking 更集中 | 语义更多分布在 canvas 解释器、material protocol、codegen 和生成后 Vue 应用运行链里 |
-| 设计器工作台 | 复杂 designer 可共享同一套 runtime support；更准确地说，Flux 仍是 execution/runtime core，但它已经为通用异构设计器内核提供了“内置缺省 UI + 选定区域 schema/config 覆盖”的清晰支撑 contract | 以当前仓库可见证据看，registry、plugins、toolbars、settings、configurators 覆盖更系统化 |
-| 组件与设计系统生态 | 当前更偏 runtime/renderers 自有体系 | `tiny-vue` 的组件、主题、图标、运行时资源更完整 |
-| 出码与交付 | 不是当前中心叙事 | codegen pipeline 与 deploy-without-engine 路线更完整 |
-| 嵌入式宿主与 host contract | 在本次审阅范围内，host projection/capability manifest 更清晰 | 更偏产品型工作台集成 |
-| 安全与信任边界 | 更严格、更明确 | 更灵活，但边界更宽 |
-| 可观测性与 AI 可操作性（补充） | debugger automation + owner docs 覆盖更系统化 | tiny-vue 对 AI 辅助组件开发更友好，但 engine runtime explainability 较弱 |
-| 组织模式 | 单仓语义收敛强 | 分仓生态与专业分工更自然 |
+| 维度                           | nop-chaos-flux 更强的地方                                                                                                                                                                  | tiny-engine + tiny-vue 更强的地方                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| 运行时语义                     | 在本次审阅范围内，compile/runtime 边界、owner 语义、action algebra、dependency tracking 更集中                                                                                             | 语义更多分布在 canvas 解释器、material protocol、codegen 和生成后 Vue 应用运行链里      |
+| 设计器工作台                   | 复杂 designer 可共享同一套 runtime support；更准确地说，Flux 仍是 execution/runtime core，但它已经为通用异构设计器内核提供了“内置缺省 UI + 选定区域 schema/config 覆盖”的清晰支撑 contract | 以当前仓库可见证据看，registry、plugins、toolbars、settings、configurators 覆盖更系统化 |
+| 组件与设计系统生态             | 当前更偏 runtime/renderers 自有体系                                                                                                                                                        | `tiny-vue` 的组件、主题、图标、运行时资源更完整                                         |
+| 出码与交付                     | 不是当前中心叙事                                                                                                                                                                           | codegen pipeline 与 deploy-without-engine 路线更完整                                    |
+| 嵌入式宿主与 host contract     | 在本次审阅范围内，host projection/capability manifest 更清晰                                                                                                                               | 更偏产品型工作台集成                                                                    |
+| 安全与信任边界                 | 更严格、更明确                                                                                                                                                                             | 更灵活，但边界更宽                                                                      |
+| 可观测性与 AI 可操作性（补充） | debugger automation + owner docs 覆盖更系统化                                                                                                                                              | tiny-vue 对 AI 辅助组件开发更友好，但 engine runtime explainability 较弱                |
+| 组织模式                       | 单仓语义收敛强                                                                                                                                                                             | 分仓生态与专业分工更自然                                                                |
 
 ### 18.2 更适合参考 `nop-chaos-flux` 的情况
 

@@ -12,6 +12,7 @@
 This audit reviewed all architecture documentation across L1-L4 layers and cross-validated against code implementation. The documentation system is **well-aligned** with code implementation, with a clear hierarchical structure and consistent terminology.
 
 **Key Findings**:
+
 - L1-L3 documents are internally consistent and cross-reference correctly
 - Code implementation in `flux-runtime`, `flux-react`, and `flux-core` aligns with documented contracts
 - The Scope API refactoring (`readOwn`/`readVisible`/`materializeVisible`) is fully landed
@@ -22,20 +23,20 @@ This audit reviewed all architecture documentation across L1-L4 layers and cross
 
 ### Document Hierarchy Reviewed
 
-| Layer | Documents | Status |
-|-------|-----------|--------|
-| L1 Governing Principles | `flux-design-principles.md` | Verified |
-| L2 Normative Architecture | 13 documents | Verified |
-| L3 Platform Extension | 5 documents + subdirectories | Verified |
-| L4 Focused Subsystem | 15+ documents | Spot-checked |
+| Layer                     | Documents                    | Status       |
+| ------------------------- | ---------------------------- | ------------ |
+| L1 Governing Principles   | `flux-design-principles.md`  | Verified     |
+| L2 Normative Architecture | 13 documents                 | Verified     |
+| L3 Platform Extension     | 5 documents + subdirectories | Verified     |
+| L4 Focused Subsystem      | 15+ documents                | Spot-checked |
 
 ### Code Files Verified
 
-| Package | Key Files | Alignment |
-|---------|-----------|-----------|
-| `flux-core` | `types/scope.ts` | Aligned |
-| `flux-runtime` | `scope.ts`, `action-runtime.ts`, `action-scope.ts`, `form-runtime.ts` | Aligned |
-| `flux-react` | `hooks.ts`, `node-renderer.tsx` | Aligned |
+| Package        | Key Files                                                             | Alignment |
+| -------------- | --------------------------------------------------------------------- | --------- |
+| `flux-core`    | `types/scope.ts`                                                      | Aligned   |
+| `flux-runtime` | `scope.ts`, `action-runtime.ts`, `action-scope.ts`, `form-runtime.ts` | Aligned   |
+| `flux-react`   | `hooks.ts`, `node-renderer.tsx`                                       | Aligned   |
 
 ---
 
@@ -60,26 +61,28 @@ Six core principles are consistently referenced across all L2-L4 documents:
 
 ### Seven Primitives Model (frontend-programming-model.md)
 
-| Primitive | Definition | Cross-Referenced In |
-|-----------|------------|---------------------|
-| Base Tree | Static schema structure | flux-core.md, renderer-runtime.md |
-| ScopeRef | Data environment handle | scope-ownership-and-isolation.md, form-validation.md |
-| Value | Reactive cell abstraction | dependency-tracking.md, api-data-source.md |
-| Resource | Async data producer | api-data-source.md |
-| Reaction | Side-effect executor | api-data-source.md, dependency-tracking.md |
-| Capability | Instance-targeted method | action-scope-and-imports.md, complex-control-host-protocol.md |
-| Host Projection | Platform integration point | complex-control-host-protocol.md |
+| Primitive       | Definition                 | Cross-Referenced In                                           |
+| --------------- | -------------------------- | ------------------------------------------------------------- |
+| Base Tree       | Static schema structure    | flux-core.md, renderer-runtime.md                             |
+| ScopeRef        | Data environment handle    | scope-ownership-and-isolation.md, form-validation.md          |
+| Value           | Reactive cell abstraction  | dependency-tracking.md, api-data-source.md                    |
+| Resource        | Async data producer        | api-data-source.md                                            |
+| Reaction        | Side-effect executor       | api-data-source.md, dependency-tracking.md                    |
+| Capability      | Instance-targeted method   | action-scope-and-imports.md, complex-control-host-protocol.md |
+| Host Projection | Platform integration point | complex-control-host-protocol.md                              |
 
 **Consistency Score**: 100%
 
 ### Scope API Refactoring
 
 **Documentation** (`scope-ownership-and-isolation.md`):
+
 - `readOwn()`: Owner-local snapshot (no prototype chain)
 - `readVisible()`: Prototype-backed lexical view
 - `materializeVisible()`: Plain-object flatten
 
 **Code Verification** (`packages/flux-core/src/types/scope.ts:12-21`):
+
 ```typescript
 export interface ScopeRef {
   readonly id: string;
@@ -94,6 +97,7 @@ export interface ScopeRef {
 ```
 
 **Code Implementation** (`packages/flux-runtime/src/scope.ts:90-130`):
+
 - `readOwn()` returns direct store snapshot
 - `readVisible()` returns prototype-backed lazy view
 - `materializeVisible()` walks prototype chain and flattens
@@ -103,11 +107,13 @@ export interface ScopeRef {
 ### Action Dispatch Three-Layer Model
 
 **Documentation** (`action-scope-and-imports.md`):
+
 1. Built-in platform actions
 2. Component-targeted (`component:<method>`)
 3. Namespaced actions (`ActionScope`)
 
 **Code Verification** (`packages/flux-runtime/src/action-runtime.ts:99-147`):
+
 ```typescript
 // Line 120-141: Three-layer dispatch order
 const parallelResult = await runParallelActions(...);
@@ -128,6 +134,7 @@ if (namespacedResult) return namespacedResult;
 ### Form Validation Architecture
 
 **Documentation** (`form-validation.md`, 1325 lines):
+
 - ValidationScopeRuntime as core abstraction
 - FormRuntime as specialization
 - Compile-time validation graph + runtime participation
@@ -135,6 +142,7 @@ if (namespacedResult) return namespacedResult;
 - Unified `fieldStates` map with per-path subscription
 
 **Code Verification** (`packages/flux-runtime/src/form-runtime.ts`):
+
 - `createManagedFormRuntime()` creates FormRuntime with:
   - `store` (FormStore with fieldStates)
   - `scope` (ScopeRef with form binding)
@@ -146,11 +154,13 @@ if (namespacedResult) return namespacedResult;
 ### Field Binding Contract
 
 **Documentation** (`field-binding-and-renderer-contract.md`):
+
 - `name` is the sole binding path for editable fields
 - `value` is NOT a universal editable field prop
 - `META_FIELDS = { id, className, visible, hidden, disabled, testid }`
 
 **Code Verification** (`packages/flux-react/src/hooks.ts`):
+
 - `useCurrentFormFieldState(path)` uses path-based subscription
 - No direct `value` prop handling in renderer contract
 
@@ -163,6 +173,7 @@ if (namespacedResult) return namespacedResult;
 ### Complex Control Host Protocol
 
 **Documentation** (`complex-control-host-protocol.md`):
+
 - `DomainBridge<TSnapshot, TCommand, TResult>` generic protocol
 - Flow Designer, Spreadsheet, Report Designer share same boundary
 - Host scope is read-only projection + namespaced action writes
@@ -172,6 +183,7 @@ if (namespacedResult) return namespacedResult;
 ### Flow Designer
 
 **Documentation** (`flow-designer/design.md`, `flow-designer/tree-mode.md`):
+
 - TreeDocument projects to GraphDocument
 - Three structural primitives: `child`, `branches`, `TreeNodeBranch.child`
 - Reuses React Flow canvas
@@ -181,6 +193,7 @@ if (namespacedResult) return namespacedResult;
 ### Report Designer
 
 **Documentation** (`report-designer/design.md`):
+
 - Spreadsheet Core + Report Designer Core two-layer split
 - Spreadsheet is independently usable
 - Adapter pattern for nop-report backend
@@ -193,12 +206,12 @@ if (namespacedResult) return namespacedResult;
 
 ### Spot-Check Results
 
-| Document | Consistency |
-|----------|-------------|
-| `styling-system.md` | Aligned with renderer contract |
-| `surface-owner.md` | Aligned with action-interaction-state.md |
-| `dependency-tracking.md` | Aligned with scope API and runtime |
-| `debugger-runtime.md` | Aligned with playground-experience.md |
+| Document                 | Consistency                              |
+| ------------------------ | ---------------------------------------- |
+| `styling-system.md`      | Aligned with renderer contract           |
+| `surface-owner.md`       | Aligned with action-interaction-state.md |
+| `dependency-tracking.md` | Aligned with scope API and runtime       |
+| `debugger-runtime.md`    | Aligned with playground-experience.md    |
 
 ---
 
@@ -226,15 +239,15 @@ Validation uses a separate compile-time dependency system distinct from scope de
 
 ## Cross-Reference Matrix
 
-| Source Doc | References | Verified |
-|------------|------------|----------|
-| `flux-design-principles.md` | All L2 docs | Yes |
-| `frontend-programming-model.md` | `flux-core.md`, `renderer-runtime.md`, `dependency-tracking.md` | Yes |
-| `scope-ownership-and-isolation.md` | `form-validation.md`, `action-scope-and-imports.md` | Yes |
-| `action-algebra-formal-spec.md` | `action-scope-and-imports.md` | Yes |
-| `form-validation.md` | `field-binding-and-renderer-contract.md`, `field-metadata-slot-modeling.md` | Yes |
-| `complex-control-host-protocol.md` | `flow-designer/design.md`, `report-designer/design.md` | Yes |
-| `flux-dsl-vm-extensibility.md` | `flux-core.md`, `frontend-programming-model.md` | Yes |
+| Source Doc                         | References                                                                  | Verified |
+| ---------------------------------- | --------------------------------------------------------------------------- | -------- |
+| `flux-design-principles.md`        | All L2 docs                                                                 | Yes      |
+| `frontend-programming-model.md`    | `flux-core.md`, `renderer-runtime.md`, `dependency-tracking.md`             | Yes      |
+| `scope-ownership-and-isolation.md` | `form-validation.md`, `action-scope-and-imports.md`                         | Yes      |
+| `action-algebra-formal-spec.md`    | `action-scope-and-imports.md`                                               | Yes      |
+| `form-validation.md`               | `field-binding-and-renderer-contract.md`, `field-metadata-slot-modeling.md` | Yes      |
+| `complex-control-host-protocol.md` | `flow-designer/design.md`, `report-designer/design.md`                      | Yes      |
+| `flux-dsl-vm-extensibility.md`     | `flux-core.md`, `frontend-programming-model.md`                             | Yes      |
 
 ---
 

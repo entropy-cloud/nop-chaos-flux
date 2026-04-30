@@ -12,6 +12,7 @@
 ## Current Baseline
 
 ### 已完成（Plan 93）：
+
 - 所有 `props.schema.name` 回退已清理为 `props.props.name`
 - 所有 `props.schema.required` 回退已清理为 `props.props.required`
 - 验证通过：typecheck, build, lint, test (409 tests)
@@ -22,7 +23,7 @@
 
 ```typescript
 // field-utils.tsx:148
-const presentation = useFieldPresentation(name, currentForm);  // ❌ 没有传 options
+const presentation = useFieldPresentation(name, currentForm); // ❌ 没有传 options
 ```
 
 **导致每个 renderer 都必须重复调用 `useFieldPresentation`：**
@@ -30,23 +31,24 @@ const presentation = useFieldPresentation(name, currentForm);  // ❌ 没有传 
 ```typescript
 // input.tsx:22-26 (重复 9 次)
 const { value, handlers, currentForm } = useFormFieldController(name);
-const presentation = useFieldPresentation(name, currentForm, {  // ❌ 重复调用
+const presentation = useFieldPresentation(name, currentForm, {
+  // ❌ 重复调用
   disabled: props.meta.disabled,
-  required: Boolean(props.props.required)
+  required: Boolean(props.props.required),
 });
 ```
 
 ### 影响范围：
 
-| 类别 | 文件 | 重复调用次数 |
-|------|------|-------------|
-| Simple Field Renderers | `input.tsx` | 9 组件 |
-| Simple Field Renderers | `tree-controls.tsx` | 2 组件 |
-| Complex Field Renderers | `tag-list.tsx` | 1 组件 |
-| Complex Field Renderers | `key-value.tsx` | 1 组件 |
-| Complex Field Renderers | `array-editor.tsx` | 1 组件 |
-| Complex Field Renderers | `condition-builder/ConditionBuilder.tsx` | 1 组件 |
-| **Total** | | **15 组件** |
+| 类别                    | 文件                                     | 重复调用次数 |
+| ----------------------- | ---------------------------------------- | ------------ |
+| Simple Field Renderers  | `input.tsx`                              | 9 组件       |
+| Simple Field Renderers  | `tree-controls.tsx`                      | 2 组件       |
+| Complex Field Renderers | `tag-list.tsx`                           | 1 组件       |
+| Complex Field Renderers | `key-value.tsx`                          | 1 组件       |
+| Complex Field Renderers | `array-editor.tsx`                       | 1 组件       |
+| Complex Field Renderers | `condition-builder/ConditionBuilder.tsx` | 1 组件       |
+| **Total**               |                                          | **15 组件**  |
 
 ## Goals
 
@@ -87,8 +89,12 @@ Targets: `packages/flux-renderers-form/src/field-utils.tsx`
 - [x] 确保向后兼容：不传递 options 时行为不变
 
 **Before:**
+
 ```typescript
-export function useFormFieldController(name: string, options?: { toFormValue?: (value: unknown) => unknown }) {
+export function useFormFieldController(
+  name: string,
+  options?: { toFormValue?: (value: unknown) => unknown },
+) {
   // ...
   const presentation = useFieldPresentation(name, currentForm);
   // ...
@@ -96,21 +102,22 @@ export function useFormFieldController(name: string, options?: { toFormValue?: (
 ```
 
 **After:**
+
 ```typescript
 export function useFormFieldController(
-  name: string, 
-  options?: { 
+  name: string,
+  options?: {
     toFormValue?: (value: unknown) => unknown;
     disabled?: boolean;
     required?: boolean;
     readOnly?: boolean;
-  }
+  },
 ) {
   // ...
   const presentation = useFieldPresentation(name, currentForm, {
     disabled: options?.disabled,
     required: options?.required,
-    readOnly: options?.readOnly
+    readOnly: options?.readOnly,
   });
   // ...
 }
@@ -136,21 +143,23 @@ Targets: `packages/flux-renderers-form/src/renderers/input.tsx`
 - [x] `CheckboxGroupRenderer` - 消除重复调用
 
 **Before (每个组件重复模式):**
+
 ```typescript
 const name = String(props.props.name ?? '');
 const { value, handlers, currentForm } = useFormFieldController(name);
 const presentation = useFieldPresentation(name, currentForm, {
   disabled: props.meta.disabled,
-  required: Boolean(props.props.required)
+  required: Boolean(props.props.required),
 });
 ```
 
 **After:**
+
 ```typescript
 const name = String(props.props.name ?? '');
 const { value, handlers, presentation } = useFormFieldController(name, {
   disabled: props.meta.disabled,
-  required: Boolean(props.props.required)
+  required: Boolean(props.props.required),
 });
 ```
 
@@ -179,21 +188,24 @@ Status: completed
 Targets: `tag-list.tsx`, `key-value.tsx`, `array-editor.tsx`, `condition-builder/ConditionBuilder.tsx`
 
 Complex Field Renderers 的特殊性：
+
 - 它们需要独立访问 `currentForm` 来执行 `registerField`、`validateField` 等操作
 - 它们不能完全依赖 `useFormFieldController`
 
 评估选项：
 
 **Option A: 保持现状**
+
 - Complex Field Renderers 继续使用 `useRenderScope()` + `useCurrentForm()` + `useFieldPresentation()`
 - 理由：它们需要 `currentForm` 做更多操作，使用 `useFormFieldController` 会导致解构 `currentForm` 又要单独获取
 
 **Option B: 使用 useFormFieldController + 解构 currentForm** ✓ CHOSEN
+
 ```typescript
 const name = String(props.props.name ?? '');
 const { currentForm, scope, value, handlers, presentation } = useFormFieldController(name, {
   disabled: props.meta.disabled,
-  required: Boolean(props.props.required)
+  required: Boolean(props.props.required),
 });
 // currentForm 和 scope 用于后续的 registerField 等操作
 ```

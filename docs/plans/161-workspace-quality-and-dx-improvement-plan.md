@@ -46,12 +46,12 @@
 
 ### In Scope
 
-| Phase | 主题 | 影响范围 |
-|-------|------|---------|
-| 1 | 工具链配置修复 | tsconfig.json, vitest configs, package.json, eslint.config.js |
-| 2 | 开发体验基础设施 | CI/CD, pre-commit hooks, 代码格式化 |
-| 3 | 代码质量修复 | dialog-host, app.tsx, .bak 文件, empty catch |
-| 4 | 测试覆盖提升 | @nop-chaos/ui, @nop-chaos/flux-action-core |
+| Phase | 主题             | 影响范围                                                      |
+| ----- | ---------------- | ------------------------------------------------------------- |
+| 1     | 工具链配置修复   | tsconfig.json, vitest configs, package.json, eslint.config.js |
+| 2     | 开发体验基础设施 | CI/CD, pre-commit hooks, 代码格式化                           |
+| 3     | 代码质量修复     | dialog-host, app.tsx, .bak 文件, empty catch                  |
+| 4     | 测试覆盖提升     | @nop-chaos/ui, @nop-chaos/flux-action-core                    |
 
 ### Out Of Scope
 
@@ -183,13 +183,13 @@ Exit Criteria:
 
 ## Risks And Rollback
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Phase 1.0 根因超出预期 | Phase 1 膨胀 | 时间盒限制调查，必要时拆分为独立 bug-fix plan |
-| Prettier 初始格式化产生大量 diff | 与 in-flight PR 冲突 | 2.4 在 2.3 之前完成，格式化 commit 独立提交 |
-| `no-explicit-any: warn` 产生大量 lint 输出 | 开发者忽略 warn | lint-staged 不设 `--max-warnings=0`，后续逐步消除 warn |
-| CI workflow Node/pnpm 版本不匹配 | CI 失败 | 使用 `engines` 字段或 `.nvmrc` 锁定版本 |
-| Phase 3.2 CodeEditorPage 懒加载导致 e2e 失败 | 验收阻塞 | Phase 3 Exit Criteria 包含 e2e 验证 |
+| Risk                                         | Impact               | Mitigation                                             |
+| -------------------------------------------- | -------------------- | ------------------------------------------------------ |
+| Phase 1.0 根因超出预期                       | Phase 1 膨胀         | 时间盒限制调查，必要时拆分为独立 bug-fix plan          |
+| Prettier 初始格式化产生大量 diff             | 与 in-flight PR 冲突 | 2.4 在 2.3 之前完成，格式化 commit 独立提交            |
+| `no-explicit-any: warn` 产生大量 lint 输出   | 开发者忽略 warn      | lint-staged 不设 `--max-warnings=0`，后续逐步消除 warn |
+| CI workflow Node/pnpm 版本不匹配             | CI 失败              | 使用 `engines` 字段或 `.nvmrc` 锁定版本                |
+| Phase 3.2 CodeEditorPage 懒加载导致 e2e 失败 | 验收阻塞             | Phase 3 Exit Criteria 包含 e2e 验证                    |
 
 ## Closure
 

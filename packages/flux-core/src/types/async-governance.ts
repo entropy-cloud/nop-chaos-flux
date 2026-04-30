@@ -53,7 +53,12 @@ export interface SettleAsyncRunInput {
 export interface AsyncGovernanceOwnerSnapshot extends AsyncOwnerDebugState {}
 
 export interface AsyncGovernanceStore {
-  beginRun(input: { ownerKind: AsyncOwnerKind; ownerId: string; scopeId: string; cause: string }): AsyncRunHandle;
+  beginRun(input: {
+    ownerKind: AsyncOwnerKind;
+    ownerId: string;
+    scopeId: string;
+    cause: string;
+  }): AsyncRunHandle;
   markCancelled(handle: AsyncRunHandle, options?: { supersededBy?: number }): void;
   invalidateCurrentRun(ownerId: string): void;
   isCurrentRun(handle: AsyncRunHandle): boolean;

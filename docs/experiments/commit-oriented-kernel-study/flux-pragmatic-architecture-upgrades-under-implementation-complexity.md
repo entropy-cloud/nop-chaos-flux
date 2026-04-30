@@ -48,16 +48,16 @@
 
 ## 排名
 
-| 排名 | 升级项 | 收益 | 复杂度 | 风险 | 复用率 |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Async authoritative/stale 协议 | 高 | 低 | 低 | 高 |
-| 2 | `ScopeChange.source + revision` | 高 | 低 | 低 | 高 |
-| 3 | Schema-safe normalization | 高 | 低 | 低 | 高 |
-| 4 | Value-oriented shared substrate | 高 | 中 | 中 | 中 |
-| 5 | `RendererRuntime` 内部分层 | 中 | 中 | 低 | 高 |
-| 6 | Null-safe expression + renderer error boundary | 中 | 低 | 低 | 高 |
-| 7 | diagnostics source-location 回溯链 | 中 | 中 | 低 | 中 |
-| 8 | 窄订阅与依赖追踪收紧 | 高 | 中 | 中 | 中 |
+| 排名 | 升级项                                         | 收益 | 复杂度 | 风险 | 复用率 |
+| ---- | ---------------------------------------------- | ---- | ------ | ---- | ------ |
+| 1    | Async authoritative/stale 协议                 | 高   | 低     | 低   | 高     |
+| 2    | `ScopeChange.source + revision`                | 高   | 低     | 低   | 高     |
+| 3    | Schema-safe normalization                      | 高   | 低     | 低   | 高     |
+| 4    | Value-oriented shared substrate                | 高   | 中     | 中   | 中     |
+| 5    | `RendererRuntime` 内部分层                     | 中   | 中     | 低   | 高     |
+| 6    | Null-safe expression + renderer error boundary | 中   | 低     | 低   | 高     |
+| 7    | diagnostics source-location 回溯链             | 中   | 中     | 低   | 中     |
+| 8    | 窄订阅与依赖追踪收紧                           | 高   | 中     | 中   | 中     |
 
 说明：
 

@@ -37,7 +37,9 @@
 }
 
 .spreadsheet-grid[data-sheet-filtered] {
-  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(59, 130, 246, 0.28);
+  box-shadow:
+    0 12px 36px rgba(15, 23, 42, 0.08),
+    inset 0 0 0 1px rgba(59, 130, 246, 0.28);
 }
 
 .spreadsheet-grid[data-fill-dragging] .ss-cell,
@@ -242,7 +244,9 @@
   height: 20px;
   border: 1px solid rgb(226, 232, 240);
   border-radius: 4px;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .bg-btn:hover {
@@ -274,7 +278,9 @@
   border: 1px solid rgb(226, 232, 240);
   border-radius: 4px;
   font-size: 13px;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .color-btn:hover {
@@ -307,7 +313,9 @@
   border: 1px solid rgb(226, 232, 240);
   border-radius: 8px;
   background: rgb(255, 255, 255);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
   z-index: 100;
 }
 
@@ -417,18 +425,38 @@
   line-height: normal;
 }
 
-.ss-bold { font-weight: bold; }
-.ss-italic { font-style: italic; }
-.ss-underline { text-decoration: underline; }
-.ss-strike { text-decoration: line-through; }
+.ss-bold {
+  font-weight: bold;
+}
+.ss-italic {
+  font-style: italic;
+}
+.ss-underline {
+  text-decoration: underline;
+}
+.ss-strike {
+  text-decoration: line-through;
+}
 
-.ss-align-left { text-align: left; }
-.ss-align-center { text-align: center; }
-.ss-align-right { text-align: right; }
+.ss-align-left {
+  text-align: left;
+}
+.ss-align-center {
+  text-align: center;
+}
+.ss-align-right {
+  text-align: right;
+}
 
-.ss-valign-top { vertical-align: top; }
-.ss-valign-middle { vertical-align: middle; }
-.ss-valign-bottom { vertical-align: bottom; }
+.ss-valign-top {
+  vertical-align: top;
+}
+.ss-valign-middle {
+  vertical-align: middle;
+}
+.ss-valign-bottom {
+  vertical-align: bottom;
+}
 
 .ss-wrap {
   white-space: normal;
@@ -437,10 +465,18 @@
   text-overflow: clip;
 }
 
-.ss-border-solid { border-style: solid; }
-.ss-border-dashed { border-style: dashed; }
-.ss-border-dotted { border-style: dotted; }
-.ss-border-double { border-style: double; }
+.ss-border-solid {
+  border-style: solid;
+}
+.ss-border-dashed {
+  border-style: dashed;
+}
+.ss-border-dotted {
+  border-style: dotted;
+}
+.ss-border-double {
+  border-style: double;
+}
 
 .ss-cell[data-cell-active] {
   outline: 2px solid #0f9d58;

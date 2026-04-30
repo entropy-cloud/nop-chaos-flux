@@ -6,10 +6,14 @@ import type {
   RendererComponentProps,
   RendererDefinition,
   RuntimeFieldRegistration,
-  ValidationRule
+  ValidationRule,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
-import { useCurrentFormState, useCurrentFormModelGeneration, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  useCurrentFormState,
+  useCurrentFormModelGeneration,
+  useScopeSelector,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
 import {
@@ -18,7 +22,7 @@ import {
   getFieldValidationBehavior,
   shouldValidateOn,
   useCompositeChildFieldState,
-  useFormFieldController
+  useFormFieldController,
 } from '@nop-chaos/flux-renderers-form';
 import type { KeyValuePair, KeyValueSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint } from '@nop-chaos/flux-renderers-form';
@@ -43,11 +47,11 @@ function KeyValueRow(props: {
   const valueFieldState = useCompositeChildFieldState(valuePath);
   const keyUi = getChildFieldUiState({
     behavior: childBehavior,
-    fieldState: keyFieldState
+    fieldState: keyFieldState,
   });
   const valueUi = getChildFieldUiState({
     behavior: childBehavior,
-    fieldState: valueFieldState
+    fieldState: valueFieldState,
   });
 
   return (
@@ -73,7 +77,7 @@ function KeyValueRow(props: {
           }}
           onChange={(event) => {
             const nextPairs = pairs.map((candidate, candidateIndex) =>
-              candidateIndex === index ? { ...candidate, key: event.target.value } : candidate
+              candidateIndex === index ? { ...candidate, key: event.target.value } : candidate,
             );
             onSync(nextPairs);
 
@@ -96,10 +100,7 @@ function KeyValueRow(props: {
             }
           }}
         />
-        <FieldHint
-          errorMessage={keyUi.error?.message}
-          showError={keyUi.showError}
-        />
+        <FieldHint errorMessage={keyUi.error?.message} showError={keyUi.showError} />
       </div>
       <div
         className={valueUi.className}
@@ -122,7 +123,7 @@ function KeyValueRow(props: {
           }}
           onChange={(event) => {
             const nextPairs = pairs.map((candidate, candidateIndex) =>
-              candidateIndex === index ? { ...candidate, value: event.target.value } : candidate
+              candidateIndex === index ? { ...candidate, value: event.target.value } : candidate,
             );
             onSync(nextPairs);
 
@@ -145,10 +146,7 @@ function KeyValueRow(props: {
             }
           }}
         />
-        <FieldHint
-          errorMessage={valueUi.error?.message}
-          showError={valueUi.showError}
-        />
+        <FieldHint errorMessage={valueUi.error?.message} showError={valueUi.showError} />
       </div>
       <Button
         type="button"
@@ -184,7 +182,7 @@ function toKeyValuePairs(value: unknown): KeyValuePair[] {
     return {
       id: typeof candidate.id === 'string' ? candidate.id : `pair-${index}`,
       key: typeof candidate.key === 'string' ? candidate.key : '',
-      value: typeof candidate.value === 'string' ? candidate.value : ''
+      value: typeof candidate.value === 'string' ? candidate.value : '',
     };
   });
 }
@@ -192,8 +190,9 @@ function toKeyValuePairs(value: unknown): KeyValuePair[] {
 function keyValuePairsEqual(a: KeyValuePair[], b: KeyValuePair[]): boolean {
   if (a === b) return true;
   if (a.length !== b.length) return false;
-  return a.every((pair, index) =>
-    pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value
+  return a.every(
+    (pair, index) =>
+      pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value,
   );
 }
 
@@ -201,7 +200,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   const name = String(props.props.name ?? '');
   const { currentForm, scope, presentation } = useFormFieldController(name, {
     disabled: props.meta.disabled,
-    required: Boolean(props.props.required)
+    required: Boolean(props.props.required),
   });
   const childBehavior = getFieldValidationBehavior(name, currentForm);
   const pairsRef = React.useRef<KeyValuePair[]>([]);
@@ -213,27 +212,29 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
-      return a.every((pair, index) =>
-        pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value
+      return a.every(
+        (pair, index) =>
+          pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value,
       );
     },
-    { path: name || undefined }
+    { path: name || undefined },
   );
   const scopeExternalValue = useScopeSelector(
     (scopeData) => (currentForm || !name ? undefined : toKeyValuePairs(getIn(scopeData, name))),
     (a, b) => {
       if (a === b) return true;
       if (!a || !b || a.length !== b.length) return false;
-      return a.every((pair, index) =>
-        pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value
+      return a.every(
+        (pair, index) =>
+          pair.id === b[index].id && pair.key === b[index].key && pair.value === b[index].value,
       );
-    }
+    },
   );
   const externalValue = currentForm ? formExternalValue : scopeExternalValue;
   const pairs = externalValue ?? EMPTY_KEY_VALUE_PAIRS;
   const childPaths = React.useMemo(
     () => pairs.flatMap((_, index) => [`${name}.${index}.key`, `${name}.${index}.value`]),
-    [name, pairs]
+    [name, pairs],
   );
 
   React.useEffect(() => {
@@ -264,7 +265,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       currentForm.setValue(name, nextPairs);
       void currentForm.validateField(name);
     },
-    [currentForm, name, scope]
+    [currentForm, name, scope],
   );
 
   React.useEffect(() => {
@@ -308,8 +309,8 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             {
               path,
               rule: 'required',
-              message: `Entry ${Number(match[1]) + 1} key is required`
-            }
+              message: `Entry ${Number(match[1]) + 1} key is required`,
+            },
           ];
         }
 
@@ -318,18 +319,18 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             {
               path,
               rule: 'required',
-              message: `Entry ${Number(match[1]) + 1} value is required`
-            }
+              message: `Entry ${Number(match[1]) + 1} value is required`,
+            },
           ];
         }
 
         return [];
-      }
+      },
     };
 
     registrationRef.current = registration;
     return currentForm.registerField(registration).unregister;
-    }, [childPaths, currentForm, modelGeneration, name]);
+  }, [childPaths, currentForm, modelGeneration, name]);
 
   return (
     <div className="grid gap-3" data-slot="field-control">
@@ -387,7 +388,11 @@ export const keyValueRendererDefinition: RendererDefinition = {
     collectRules(schema: BaseSchema) {
       const keyValueSchema = schema as KeyValueSchema;
       const rules: ValidationRule[] = [
-        { kind: 'minItems', value: 1, message: `${schema.label ?? schema.name ?? 'Field'} requires at least one entry` }
+        {
+          kind: 'minItems',
+          value: 1,
+          message: `${schema.label ?? schema.name ?? 'Field'} requires at least one entry`,
+        },
       ];
 
       if (keyValueSchema.uniqueKeys) {
@@ -396,12 +401,13 @@ export const keyValueRendererDefinition: RendererDefinition = {
           itemPath: 'key',
           message:
             typeof keyValueSchema.uniqueKeys === 'object'
-              ? keyValueSchema.uniqueKeys.message ?? `${schema.label ?? schema.name ?? 'Field'} keys must be unique`
-              : `${schema.label ?? schema.name ?? 'Field'} keys must be unique`
+              ? (keyValueSchema.uniqueKeys.message ??
+                `${schema.label ?? schema.name ?? 'Field'} keys must be unique`)
+              : `${schema.label ?? schema.name ?? 'Field'} keys must be unique`,
         });
       }
 
       return rules;
-    }
-  }
+    },
+  },
 };

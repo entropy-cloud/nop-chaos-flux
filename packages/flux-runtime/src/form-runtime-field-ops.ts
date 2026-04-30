@@ -1,7 +1,7 @@
 import type {
   FieldRegistrationHandle,
   FieldState,
-  RuntimeFieldRegistration
+  RuntimeFieldRegistration,
 } from '@nop-chaos/flux-core';
 import { getCompiledValidationField, setIn } from '@nop-chaos/flux-core';
 import { findRuntimeRegistration } from './form-runtime-registration';
@@ -15,7 +15,7 @@ export interface FieldValuePatchResult {
 function updateFieldStateInMap(
   fieldStates: Record<string, FieldState>,
   path: string,
-  patch: Partial<FieldState>
+  patch: Partial<FieldState>,
 ): Record<string, FieldState> {
   const existing = fieldStates[path];
   const merged: FieldState = { ...existing };
@@ -74,18 +74,20 @@ export function applyFieldValuePatch(
   state: { values: Record<string, unknown>; fieldStates: Record<string, FieldState> },
   name: string,
   value: unknown,
-  forceDirty: boolean
+  forceDirty: boolean,
 ): FieldValuePatchResult {
   const runtimeTarget = findRuntimeRegistration(sharedState, name);
   const nextValues = setIn(state.values, name, value);
 
   let nextFieldStates = updateFieldStateInMap(state.fieldStates, name, {
     validating: undefined,
-    errors: undefined
+    errors: undefined,
   });
 
   const shouldDirty = runtimeTarget.childPath && runtimeTarget.entry ? true : forceDirty;
-  nextFieldStates = updateFieldStateInMap(nextFieldStates, name, { dirty: shouldDirty ? true : undefined });
+  nextFieldStates = updateFieldStateInMap(nextFieldStates, name, {
+    dirty: shouldDirty ? true : undefined,
+  });
 
   return { nextValues, nextFieldStates };
 }
@@ -98,7 +100,7 @@ export function nextRegistrationId(): string {
 
 export function registerField(
   sharedState: ManagedFormRuntimeSharedState,
-  registration: RuntimeFieldRegistration
+  registration: RuntimeFieldRegistration,
 ): FieldRegistrationHandle {
   const { runtimeFieldRegistrations, pathToRegistrationId } = sharedState;
 
@@ -106,7 +108,7 @@ export function registerField(
     return {
       accepted: false,
       registrationId: '',
-      unregister() {}
+      unregister() {},
     };
   }
 
@@ -115,7 +117,7 @@ export function registerField(
     return {
       accepted: false,
       registrationId: '',
-      unregister() {}
+      unregister() {},
     };
   }
 
@@ -125,7 +127,7 @@ export function registerField(
   runtimeFieldRegistrations.set(registrationId, {
     registrationId,
     registration,
-    modelGeneration: capturedGeneration
+    modelGeneration: capturedGeneration,
   });
   pathToRegistrationId.set(registration.path, registrationId);
 
@@ -143,14 +145,14 @@ export function registerField(
       if (pathToRegistrationId.get(registration.path) === registrationId) {
         pathToRegistrationId.delete(registration.path);
       }
-    }
+    },
   };
 }
 
 export function updateFieldRegistration(
   sharedState: ManagedFormRuntimeSharedState,
   registrationId: string,
-  patch: Partial<RuntimeFieldRegistration>
+  patch: Partial<RuntimeFieldRegistration>,
 ): void {
   const { runtimeFieldRegistrations } = sharedState;
   const entry = runtimeFieldRegistrations.get(registrationId);
@@ -160,7 +162,7 @@ export function updateFieldRegistration(
 
   runtimeFieldRegistrations.set(registrationId, {
     ...entry,
-    registration: { ...entry.registration, ...patch }
+    registration: { ...entry.registration, ...patch },
   });
 }
 
@@ -169,7 +171,7 @@ export function notifyFieldHidden(
   path: string,
   hidden: boolean,
   currentValidation: import('@nop-chaos/flux-core').CompiledFormValidationModel | undefined,
-  setValue: (path: string, value: unknown) => void
+  setValue: (path: string, value: unknown) => void,
 ): void {
   const wasHidden = sharedState.hiddenFields.has(path);
 
@@ -193,13 +195,14 @@ export function notifyFieldHidden(
       const nextFieldState: FieldState = { ...existingFieldState };
       delete nextFieldState.errors;
       delete nextFieldState.validating;
-      const nextFieldStates = Object.keys(nextFieldState).length > 0
-        ? { ...fieldStates, [path]: nextFieldState }
-        : (() => {
-            const next = { ...fieldStates };
-            delete next[path];
-            return next;
-          })();
+      const nextFieldStates =
+        Object.keys(nextFieldState).length > 0
+          ? { ...fieldStates, [path]: nextFieldState }
+          : (() => {
+              const next = { ...fieldStates };
+              delete next[path];
+              return next;
+            })();
       sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
     }
 

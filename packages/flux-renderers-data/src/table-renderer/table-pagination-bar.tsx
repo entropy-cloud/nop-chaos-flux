@@ -1,4 +1,14 @@
-import { NativeSelect, NativeSelectOption, Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@nop-chaos/ui';
+import {
+  NativeSelect,
+  NativeSelectOption,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
 export function computeWindowRange(currentPage: number, totalPages: number): [number, number] {
@@ -7,8 +17,14 @@ export function computeWindowRange(currentPage: number, totalPages: number): [nu
   let start = currentPage - 1;
   let end = currentPage + 1;
 
-  if (start < 1) { end += 1 - start; start = 1; }
-  if (end > totalPages) { start -= end - totalPages; end = totalPages; }
+  if (start < 1) {
+    end += 1 - start;
+    start = 1;
+  }
+  if (end > totalPages) {
+    start -= end - totalPages;
+    end = totalPages;
+  }
 
   return [Math.max(1, start), Math.min(totalPages, end)];
 }
@@ -30,12 +46,15 @@ export function TablePaginationBar({
   totalRows,
   pageSizeOptions,
   onPageChange,
-  onPageSizeChange
+  onPageSizeChange,
 }: TablePaginationBarProps) {
   const [winStart, winEnd] = computeWindowRange(currentPage, totalPages);
 
   return (
-    <div data-slot="table-pagination" className="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div
+      data-slot="table-pagination"
+      className="flex flex-col sm:flex-row items-center justify-between gap-4"
+    >
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">{t('flux.pagination.rowsPerPage')}</span>
         <NativeSelect
@@ -64,7 +83,11 @@ export function TablePaginationBar({
           {winStart > 1 && (
             <>
               <PaginationItem>
-                <PaginationLink onClick={() => onPageChange(1)} isActive={currentPage === 1} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => onPageChange(1)}
+                  isActive={currentPage === 1}
+                  className="cursor-pointer"
+                >
                   1
                 </PaginationLink>
               </PaginationItem>
@@ -78,7 +101,11 @@ export function TablePaginationBar({
 
           {Array.from({ length: winEnd - winStart + 1 }, (_, i) => winStart + i).map((page) => (
             <PaginationItem key={page}>
-              <PaginationLink onClick={() => onPageChange(page)} isActive={page === currentPage} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => onPageChange(page)}
+                isActive={page === currentPage}
+                className="cursor-pointer"
+              >
                 {page}
               </PaginationLink>
             </PaginationItem>
@@ -92,7 +119,11 @@ export function TablePaginationBar({
                 </PaginationItem>
               )}
               <PaginationItem>
-                <PaginationLink onClick={() => onPageChange(totalPages)} isActive={currentPage === totalPages} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => onPageChange(totalPages)}
+                  isActive={currentPage === totalPages}
+                  className="cursor-pointer"
+                >
                   {totalPages}
                 </PaginationLink>
               </PaginationItem>
@@ -103,7 +134,9 @@ export function TablePaginationBar({
             <PaginationNext
               onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
               aria-disabled={currentPage === totalPages}
-              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              className={
+                currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+              }
             />
           </PaginationItem>
         </PaginationContent>

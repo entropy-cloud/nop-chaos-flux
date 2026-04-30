@@ -78,15 +78,15 @@ interface CompiledTemplate {
 }
 
 interface TemplateNode {
-  templateNodeId: TemplateNodeId;   // globally unique within one RendererRuntime
+  templateNodeId: TemplateNodeId; // globally unique within one RendererRuntime
   id: string;
   type: string;
   schema: BaseSchema;
   templatePath: string;
   rendererType: string;
-  component: RendererDefinition;    // resolved at compile time; no runtime registry lookup needed
+  component: RendererDefinition; // resolved at compile time; no runtime registry lookup needed
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
-  metaProgram: NodeMetaProgram;  // canonical compiled meta program for this template node
+  metaProgram: NodeMetaProgram; // canonical compiled meta program for this template node
   eventPlans: Readonly<Record<string, unknown>>;
   regions: Readonly<Record<string, TemplateRegion>>;
   scopePlan: ScopePlan;
@@ -149,7 +149,7 @@ interface InstanceFrame {
 }
 
 interface NodeInstance {
-  cid?: number;                            // live bridge token when the node is inspectable/materialized
+  cid?: number; // live bridge token when the node is inspectable/materialized
   templateNode: TemplateNode;
   instancePath?: readonly InstanceFrame[]; // undefined for singleton nodes
   scope: ScopeRef;
@@ -435,10 +435,10 @@ Example:
 
 ```ts
 // A node inside a nested repeated structure is identified by:
-const cid = 42;  // unique live node id for this mounted repeated instance
+const cid = 42; // unique live node id for this mounted repeated instance
 const instancePath = [
   { repeatedTemplateId: 'table.row', instanceKey: 'user:1001' },
-  { repeatedTemplateId: 'loop.line-item', instanceKey: 'line:3' }
+  { repeatedTemplateId: 'loop.line-item', instanceKey: 'line:3' },
 ];
 ```
 
@@ -456,7 +456,10 @@ The registry is a live-handle index only. Structural resolution belongs to the r
 
 ```ts
 interface ComponentHandleRegistry {
-  register(handle: ComponentHandle, options?: { cid?: number; id?: string; name?: string }): () => void;
+  register(
+    handle: ComponentHandle,
+    options?: { cid?: number; id?: string; name?: string },
+  ): () => void;
   unregister(handle: ComponentHandle): void;
   resolve(target: ComponentTarget): ComponentHandle | undefined;
   getHandleByCid(cid: number): ComponentHandle | undefined;
@@ -480,9 +483,9 @@ Removed indexes:
 
 ```ts
 interface ComponentTarget {
-  _targetCid?: number;    // preferred live target when already known
+  _targetCid?: number; // preferred live target when already known
   instancePath?: readonly InstanceFrame[];
-  componentId?: string;   // fallback author selector
+  componentId?: string; // fallback author selector
   componentName?: string; // fallback author selector
 }
 ```

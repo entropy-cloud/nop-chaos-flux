@@ -6,14 +6,9 @@ describe('form renderer static contracts', () => {
     expect(formRendererDefinition.rendererClass).toBe('flux-owner-renderer');
     expect(formRendererDefinition.rendererTraits).toContain('semantic-owner');
     expect(formRendererDefinition.scopeExportContracts?.$form?.kind).toBe('object');
-    expect(formRendererDefinition.componentCapabilityContracts?.map((item) => item.handle)).toEqual([
-      'submit',
-      'validate',
-      'reset',
-      'setValue',
-      'setValues',
-      'getValues'
-    ]);
+    expect(formRendererDefinition.componentCapabilityContracts?.map((item) => item.handle)).toEqual(
+      ['submit', 'validate', 'reset', 'setValue', 'setValues', 'getValues'],
+    );
     expect(formRendererDefinition.eventContracts?.submitAction?.displayName).toBe('Submit');
   });
 });

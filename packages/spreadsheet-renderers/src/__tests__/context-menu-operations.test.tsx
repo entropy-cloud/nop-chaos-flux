@@ -3,14 +3,18 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
-import {
-  createSpreadsheetBridge,
-  SpreadsheetGrid,
-  useSpreadsheetInteractions,
-} from '../index.js';
+import { createSpreadsheetBridge, SpreadsheetGrid, useSpreadsheetInteractions } from '../index.js';
 
-function SpreadsheetGridHarness(props: { sheetId: string; bridge: ReturnType<typeof createSpreadsheetBridge> }) {
-  const interactions = useSpreadsheetInteractions({ bridge: props.bridge, sheetId: props.sheetId, rows: 5, cols: 5 });
+function SpreadsheetGridHarness(props: {
+  sheetId: string;
+  bridge: ReturnType<typeof createSpreadsheetBridge>;
+}) {
+  const interactions = useSpreadsheetInteractions({
+    bridge: props.bridge,
+    sheetId: props.sheetId,
+    rows: 5,
+    cols: 5,
+  });
 
   return (
     <SpreadsheetGrid
@@ -80,7 +84,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-clear'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.cells?.A1?.value).toBeUndefined();
     });
   });
@@ -89,10 +95,26 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('double-click-fill-handle');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 1 });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'x' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B2', row: 1, col: 1 }, value: 'x' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B3', row: 2, col: 1 }, value: 'x' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 1,
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'x',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B2', row: 1, col: 1 },
+      value: 'x',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B3', row: 2, col: 1 },
+      value: 'x',
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -110,7 +132,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.doubleClick(fillHandle!);
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.cells?.A1?.value).toBe(1);
       expect(activeSheet?.cells?.A2?.value).toBe(2);
       expect(activeSheet?.cells?.A3?.value).toBe(3);
@@ -121,7 +145,11 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('double-click-fill-handle-no-adjacent-data');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 1 });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 1,
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -135,7 +163,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.doubleClick(fillHandle!);
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.cells?.A2).toBeUndefined();
       expect(activeSheet?.cells?.A3).toBeUndefined();
     });
@@ -145,8 +175,16 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('contextmenu-insert-row-below');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'top' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'second' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'top',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'second',
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -163,7 +201,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-insert-row-below'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.cells?.A1?.value).toBe('top');
       expect(activeSheet?.cells?.A2).toBeUndefined();
       expect(activeSheet?.cells?.A3?.value).toBe('second');
@@ -174,9 +214,21 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('contextmenu-insert-multi-row-below');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'r1' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'r2' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A3', row: 2, col: 0 }, value: 'r3' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'r1',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'r2',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A3', row: 2, col: 0 },
+      value: 'r3',
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -204,7 +256,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-insert-row-below'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.cells?.A1?.value).toBe('r1');
       expect(activeSheet?.cells?.A2?.value).toBe('r2');
       expect(activeSheet?.cells?.A3).toBeUndefined();
@@ -217,8 +271,16 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('contextmenu-merge-cells');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'left' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'right' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'left',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'right',
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -235,7 +297,12 @@ describe('spreadsheet context menu operations', () => {
 
     await waitFor(() => {
       expect(core.getSnapshot().selection.kind).toBe('range');
-      expect(core.getSnapshot().selection.range).toMatchObject({ startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
+      expect(core.getSnapshot().selection.range).toMatchObject({
+        startRow: 0,
+        startCol: 0,
+        endRow: 0,
+        endCol: 1,
+      });
     });
 
     fireEvent.contextMenu(secondCell!);
@@ -247,8 +314,16 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-merge'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
-      expect(activeSheet?.merges).toContainEqual({ sheetId, startRow: 0, startCol: 0, endRow: 0, endCol: 1 });
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      expect(activeSheet?.merges).toContainEqual({
+        sheetId,
+        startRow: 0,
+        startCol: 0,
+        endRow: 0,
+        endCol: 1,
+      });
     });
   });
 
@@ -274,7 +349,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-freeze'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.frozen).toEqual({ row: 1, col: 1 });
     });
   });
@@ -300,7 +377,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-unfreeze'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.frozen).toBeUndefined();
     });
   });
@@ -309,9 +388,21 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('contextmenu-insert-multi-column-right');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'a' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'b' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'C1', row: 0, col: 2 }, value: 'c' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'a',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'b',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'C1', row: 0, col: 2 },
+      value: 'c',
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -339,7 +430,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-insert-column-right'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.cells?.A1?.value).toBe('a');
       expect(activeSheet?.cells?.B1?.value).toBe('b');
       expect(activeSheet?.cells?.C1).toBeUndefined();
@@ -352,10 +445,26 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('contextmenu-delete-multi-column');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'a' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'b' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'C1', row: 0, col: 2 }, value: 'c' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'D1', row: 0, col: 3 }, value: 'd' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'a',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'b',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'C1', row: 0, col: 2 },
+      value: 'c',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'D1', row: 0, col: 3 },
+      value: 'd',
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -383,7 +492,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-delete-column'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.cells?.A1?.value).toBe('a');
       expect(activeSheet?.cells?.B1?.value).toBe('d');
       expect(activeSheet?.cells?.C1).toBeUndefined();
@@ -395,10 +506,26 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('contextmenu-sort-ascending');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'b' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'row-b' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'a' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B2', row: 1, col: 1 }, value: 'row-a' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'b',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'row-b',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'a',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B2', row: 1, col: 1 },
+      value: 'row-a',
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -426,7 +553,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-sort-asc'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.cells?.A1?.value).toBe('a');
       expect(activeSheet?.cells?.B1?.value).toBe('row-a');
       expect(activeSheet?.cells?.A2?.value).toBe('b');
@@ -438,9 +567,21 @@ describe('spreadsheet context menu operations', () => {
     const documentModel = createEmptyDocument('contextmenu-filter-by-selected-value');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'x' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'y' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A3', row: 2, col: 0 }, value: 'x' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'x',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'y',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A3', row: 2, col: 0 },
+      value: 'x',
+    });
     const bridge = createSpreadsheetBridge(core);
     const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
 
@@ -457,12 +598,16 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-filter-by-value'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.rows?.['1']?.filteredOut).toBe(true);
     });
 
     await waitFor(() => {
-      const rowButtons = Array.from(container.querySelectorAll('.ss-row-header-button')).map((node) => node.textContent);
+      const rowButtons = Array.from(container.querySelectorAll('.ss-row-header-button')).map(
+        (node) => node.textContent,
+      );
       expect(rowButtons).toEqual(expect.arrayContaining(['1', '3']));
       expect(rowButtons).not.toContain('2');
     });
@@ -476,7 +621,9 @@ describe('spreadsheet context menu operations', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-clear-filter'));
 
     await waitFor(() => {
-      const activeSheet = core.getSnapshot().document.workbook.sheets.find((sheet) => sheet.id === sheetId);
+      const activeSheet = core
+        .getSnapshot()
+        .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       expect(activeSheet?.rows?.['1']?.filteredOut).toBe(false);
     });
   });

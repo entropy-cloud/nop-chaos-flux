@@ -11,7 +11,7 @@ import type {
   ValidationError,
   ValidationRule,
   ValidationOwnerLifecycleState,
-  ChildValidationContractRegistration
+  ChildValidationContractRegistration,
 } from '@nop-chaos/flux-core';
 
 export interface CreateManagedFormRuntimeInput {
@@ -33,13 +33,13 @@ export interface CreateManagedFormRuntimeInput {
     rule: Extract<ValidationRule, { kind: 'async' }>,
     field: CompiledFormValidationField,
     scope: ScopeRef,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ) => Promise<ValidationError | undefined>;
   validateRule: (
     compiledRule: CompiledValidationRule,
     value: unknown,
     field: CompiledFormValidationField,
-    scope: ScopeRef
+    scope: ScopeRef,
   ) => ValidationError | undefined;
 }
 
@@ -82,15 +82,13 @@ export interface FormRuntimeValidationRunState {
 }
 
 export interface FormRuntimeRegistrationState
-  extends FormRuntimeStoreScopeState,
-    FormRuntimeInitialStateSlice {
+  extends FormRuntimeStoreScopeState, FormRuntimeInitialStateSlice {
   runtimeFieldRegistrations: Map<string, RegisteredFieldEntry>;
   pathToRegistrationId: Map<string, string>;
 }
 
 export interface FormRuntimeValidationState
-  extends FormRuntimeRegistrationState,
-    FormRuntimeValidationRunState {
+  extends FormRuntimeRegistrationState, FormRuntimeValidationRunState {
   inputValue: CreateManagedFormRuntimeInput;
   hiddenFields: Set<string>;
   lifecycleState: ValidationOwnerLifecycleState;
@@ -106,7 +104,8 @@ export interface FormRuntimeChildContractState {
 }
 
 export interface FormRuntimeOwnerState
-  extends FormRuntimeValidationState,
+  extends
+    FormRuntimeValidationState,
     FormRuntimeExternalErrorState,
     FormRuntimeChildContractState {}
 

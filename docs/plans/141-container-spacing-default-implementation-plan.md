@@ -239,4 +239,5 @@ Follow-up:
 ## Design Reference
 
 Full design rationale, AMIS comparison, override mechanism, and container inventory are documented in:
+
 - `docs/architecture/container-spacing-design.md` (to be rewritten from Draft to final design doc upon completion)

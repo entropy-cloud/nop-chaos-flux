@@ -7,16 +7,16 @@ describe('createSchemaCompiler', () => {
   it('extracts table column label fragments into compiled regions', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
-      component: () => null
+      component: () => null,
     };
     const textRenderer: RendererDefinition = {
       type: 'text',
-      component: () => null
+      component: () => null,
     };
     const registry = createRendererRegistry([tableRenderer, textRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -24,9 +24,9 @@ describe('createSchemaCompiler', () => {
       columns: [
         {
           label: { type: 'text', text: 'Member header' },
-          name: 'name'
-        }
-      ]
+          name: 'name',
+        },
+      ],
     });
     const node = compiled.root as any;
 
@@ -38,16 +38,16 @@ describe('createSchemaCompiler', () => {
   it('extracts table column cell fragments into compiled regions', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
-      component: () => null
+      component: () => null,
     };
     const textRenderer: RendererDefinition = {
       type: 'text',
-      component: () => null
+      component: () => null,
     };
     const registry = createRendererRegistry([tableRenderer, textRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -56,9 +56,9 @@ describe('createSchemaCompiler', () => {
         {
           label: 'Member',
           name: 'name',
-          cell: { type: 'text', text: 'User ${record.name}' }
-        }
-      ]
+          cell: { type: 'text', text: 'User ${record.name}' },
+        },
+      ],
     });
     const node = compiled.root as any;
 
@@ -71,25 +71,25 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
-      fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }]
+      fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }],
     };
     const textRenderer: RendererDefinition = {
       type: 'text',
-      component: () => null
+      component: () => null,
     };
     const registry = createRendererRegistry([tableRenderer, textRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const plainCompiled = compiler.compile({
       type: 'table',
-      empty: 'Nothing here'
+      empty: 'Nothing here',
     });
     const regionCompiled = compiler.compile({
       type: 'text',
-      empty: { type: 'text', text: 'No rows' }
+      empty: { type: 'text', text: 'No rows' },
     } as any);
     const plainNode = plainCompiled.root as any;
     const regionNode = regionCompiled.root as any;

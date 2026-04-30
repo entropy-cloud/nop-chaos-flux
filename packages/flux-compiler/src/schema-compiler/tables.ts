@@ -2,7 +2,7 @@ import type {
   TemplateRegion,
   TemplateNode,
   CompileSchemaOptions,
-  SchemaInput
+  SchemaInput,
 } from '@nop-chaos/flux-core';
 import { extractNestedSchemaRegions } from './regions';
 
@@ -13,35 +13,41 @@ export const TABLE_COLUMN_REGION_FIELDS = [
     regionKeySuffix: 'buttons',
     compiledKey: 'buttonsRegionKey',
     params: ['record', 'index'] as readonly string[],
-    isolate: true
+    isolate: true,
   },
   {
     key: 'cell',
     regionKeySuffix: 'cell',
     compiledKey: 'cellRegionKey',
     params: ['record', 'index'] as readonly string[],
-    isolate: true
-  }
+    isolate: true,
+  },
 ] as const;
 
 export const TABS_ITEM_REGION_FIELDS = [
   { key: 'title', regionKeySuffix: 'title', compiledKey: 'titleRegionKey' },
   { key: 'body', regionKeySuffix: 'body', compiledKey: 'bodyRegionKey' },
-  { key: 'toolbar', regionKeySuffix: 'toolbar', compiledKey: 'toolbarRegionKey' }
+  { key: 'toolbar', regionKeySuffix: 'toolbar', compiledKey: 'toolbarRegionKey' },
 ] as const;
 
 export type DeepFieldNormalizer = (input: {
   value: unknown;
   path: string;
   regions: Record<string, TemplateRegion>;
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[];
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+  ) => TemplateNode | TemplateNode[];
 }) => unknown;
 
 function normalizeTableColumns(
   value: unknown,
   path: string,
   regions: Record<string, TemplateRegion>,
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[]
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+  ) => TemplateNode | TemplateNode[],
 ) {
   if (!Array.isArray(value)) {
     return value;
@@ -58,7 +64,7 @@ function normalizeTableColumns(
       itemRegionKeyPrefix: `columns.${index}`,
       rules: TABLE_COLUMN_REGION_FIELDS,
       regions,
-      compileSchema
+      compileSchema,
     }).value;
   });
 }
@@ -67,7 +73,10 @@ function normalizeTabsItems(
   value: unknown,
   path: string,
   regions: Record<string, TemplateRegion>,
-  compileSchema: (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[]
+  compileSchema: (
+    input: SchemaInput,
+    options?: CompileSchemaOptions,
+  ) => TemplateNode | TemplateNode[],
 ) {
   if (!Array.isArray(value)) {
     return value;
@@ -84,7 +93,7 @@ function normalizeTabsItems(
       itemRegionKeyPrefix: `items.${index}`,
       rules: TABS_ITEM_REGION_FIELDS,
       regions,
-      compileSchema
+      compileSchema,
     }).value;
   });
 }
@@ -93,11 +102,11 @@ export const DEEP_FIELD_NORMALIZERS: Record<string, Record<string, DeepFieldNorm
   table: {
     columns(input) {
       return normalizeTableColumns(input.value, input.path, input.regions, input.compileSchema);
-    }
+    },
   },
   tabs: {
     items(input) {
       return normalizeTabsItems(input.value, input.path, input.regions, input.compileSchema);
-    }
-  }
+    },
+  },
 };

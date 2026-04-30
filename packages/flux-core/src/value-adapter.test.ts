@@ -29,68 +29,125 @@ describe('value-adapter', () => {
     expect(stringAdapter().out('alpha', { readOnly: false })).toBe('alpha');
     expect(booleanStringAdapter().in('false', { readOnly: false })).toBe(true);
     expect(booleanStringAdapter().out(0 as unknown as boolean, { readOnly: false })).toBe(false);
-    expect(await nullableAdapter(stringAdapter()).in(undefined, { readOnly: false })).toBeUndefined();
+    expect(
+      await nullableAdapter(stringAdapter()).in(undefined, { readOnly: false }),
+    ).toBeUndefined();
     expect(await nullableAdapter(stringAdapter()).in('42', { readOnly: false })).toBe('42');
   });
 
   it('injects default action payloads when args are omitted', async () => {
     const dispatch = vi.fn(async (_action: ActionSchema | ActionSchema[]) => ({
       ok: true,
-      data: 'draft'
+      data: 'draft',
     }));
-    const adapter = actionAdapter({ action: 'demo:in' }, { action: 'demo:out' }, { action: 'demo:validate' }, dispatch);
+    const adapter = actionAdapter(
+      { action: 'demo:in' },
+      { action: 'demo:out' },
+      { action: 'demo:validate' },
+      dispatch,
+    );
 
     await adapter.in('raw', { name: 'profile', readOnly: true, scope, form: null });
-    await adapter.out('working', { name: 'profile', readOnly: true, originalValue: 'raw', scope, form: null });
-    await adapter.validate?.('working', { name: 'profile', readOnly: true, originalValue: 'raw', scope, form: null });
+    await adapter.out('working', {
+      name: 'profile',
+      readOnly: true,
+      originalValue: 'raw',
+      scope,
+      form: null,
+    });
+    await adapter.validate?.('working', {
+      name: 'profile',
+      readOnly: true,
+      originalValue: 'raw',
+      scope,
+      form: null,
+    });
 
     expect(dispatch.mock.calls[0]?.[0]).toEqual({
       action: 'demo:in',
-      args: { value: 'raw', name: 'profile', readOnly: true }
+      args: { value: 'raw', name: 'profile', readOnly: true },
     });
     expect(dispatch.mock.calls[1]?.[0]).toEqual({
       action: 'demo:out',
-      args: { value: 'working', originalValue: 'raw', name: 'profile', readOnly: true }
+      args: { value: 'working', originalValue: 'raw', name: 'profile', readOnly: true },
     });
     expect(dispatch.mock.calls[2]?.[0]).toEqual({
       action: 'demo:validate',
-      args: { value: 'working', originalValue: 'raw', name: 'profile' }
+      args: { value: 'working', originalValue: 'raw', name: 'profile' },
     });
   });
 
   it('keeps explicit args replace semantics instead of merging defaults', async () => {
     const dispatch = vi.fn(async (_action: ActionSchema | ActionSchema[]) => ({
       ok: true,
-      data: 'draft'
+      data: 'draft',
     }));
     const adapter = actionAdapter(
       { action: 'demo:in', args: { mode: 'explicit' } },
       { action: 'demo:out', args: { mode: 'explicit' } },
       { action: 'demo:validate', args: { mode: 'explicit' } },
-      dispatch
+      dispatch,
     );
 
     await adapter.in('raw', { name: 'profile', readOnly: false, scope, form: null });
-    await adapter.out('working', { name: 'profile', readOnly: false, originalValue: 'raw', scope, form: null });
-    await adapter.validate?.('working', { name: 'profile', readOnly: false, originalValue: 'raw', scope, form: null });
+    await adapter.out('working', {
+      name: 'profile',
+      readOnly: false,
+      originalValue: 'raw',
+      scope,
+      form: null,
+    });
+    await adapter.validate?.('working', {
+      name: 'profile',
+      readOnly: false,
+      originalValue: 'raw',
+      scope,
+      form: null,
+    });
 
     expect(dispatch.mock.calls[0]?.[0]).toEqual({ action: 'demo:in', args: { mode: 'explicit' } });
     expect(dispatch.mock.calls[1]?.[0]).toEqual({ action: 'demo:out', args: { mode: 'explicit' } });
-    expect(dispatch.mock.calls[2]?.[0]).toEqual({ action: 'demo:validate', args: { mode: 'explicit' } });
+    expect(dispatch.mock.calls[2]?.[0]).toEqual({
+      action: 'demo:validate',
+      args: { mode: 'explicit' },
+    });
   });
 
   it('falls back to raw and working values when action dispatch fails', async () => {
     const dispatch = vi.fn(async () => ({
       ok: false,
-      error: 'boom'
+      error: 'boom',
     }));
-    const adapter = actionAdapter({ action: 'demo:in' }, { action: 'demo:out' }, { action: 'demo:validate' }, dispatch);
+    const adapter = actionAdapter(
+      { action: 'demo:in' },
+      { action: 'demo:out' },
+      { action: 'demo:validate' },
+      dispatch,
+    );
 
-    await expect(adapter.in('raw', { name: 'profile', readOnly: false, scope, form: null })).resolves.toBe('raw');
-    await expect(adapter.out('working', { name: 'profile', readOnly: false, originalValue: 'raw', scope, form: null })).resolves.toBe('working');
-    await expect(adapter.validate?.('working', { name: 'profile', readOnly: false, originalValue: 'raw', scope, form: null })).resolves.toEqual({
+    await expect(
+      adapter.in('raw', { name: 'profile', readOnly: false, scope, form: null }),
+    ).resolves.toBe('raw');
+    await expect(
+      adapter.out('working', {
+        name: 'profile',
+        readOnly: false,
+        originalValue: 'raw',
+        scope,
+        form: null,
+      }),
+    ).resolves.toBe('working');
+    await expect(
+      adapter.validate?.('working', {
+        name: 'profile',
+        readOnly: false,
+        originalValue: 'raw',
+        scope,
+        form: null,
+      }),
+    ).resolves.toEqual({
       valid: false,
-      issues: [{ level: 'error', message: 'boom' }]
+      issues: [{ level: 'error', message: 'boom' }],
     });
   });
 
@@ -99,14 +156,16 @@ describe('value-adapter', () => {
       ok: true,
       data: {
         valid: false,
-        issues: [{ level: 'warning', message: 'check value', path: 'value.amount' }]
-      }
+        issues: [{ level: 'warning', message: 'check value', path: 'value.amount' }],
+      },
     }));
     const adapter = actionAdapter(undefined, undefined, { action: 'demo:validate' }, dispatch);
 
-    await expect(adapter.validate?.({ amount: 1 }, { readOnly: false, scope, form: null })).resolves.toEqual({
+    await expect(
+      adapter.validate?.({ amount: 1 }, { readOnly: false, scope, form: null }),
+    ).resolves.toEqual({
       valid: false,
-      issues: [{ level: 'warning', message: 'check value', path: 'value.amount' }]
+      issues: [{ level: 'warning', message: 'check value', path: 'value.amount' }],
     });
   });
 });

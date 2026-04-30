@@ -41,7 +41,10 @@ export function buildSnapshot(state: SpreadsheetInternalState): SpreadsheetRunti
   };
 }
 
-export function pushUndo(state: SpreadsheetInternalState, maxUndoDepth?: number): SpreadsheetInternalState {
+export function pushUndo(
+  state: SpreadsheetInternalState,
+  maxUndoDepth?: number,
+): SpreadsheetInternalState {
   const maxDepth = maxUndoDepth ?? state.maxUndoDepth ?? 100;
   const undoStack = [...state.undoStack, state.document];
   if (undoStack.length > maxDepth) {

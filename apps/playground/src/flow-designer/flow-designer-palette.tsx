@@ -17,23 +17,25 @@ export function FlowDesignerPalette({
   expandedGroups,
   onSearchChange,
   onToggleGroup,
-  onAddNode
+  onAddNode,
 }: FlowDesignerPaletteProps) {
   const nodeTypes = config.nodeTypes;
   const paletteGroups = config.palette?.groups ?? [];
 
-  const filteredGroups = paletteGroups.map((group) => ({
-    ...group,
-    nodeTypes: group.nodeTypes.filter((ntId) => {
-      const nt = nodeTypes.find((n) => n.id === ntId);
-      if (!nt) return false;
-      if (!search) return true;
-      return (
-        nt.label.toLowerCase().includes(search.toLowerCase()) ||
-        nt.id.toLowerCase().includes(search.toLowerCase())
-      );
-    })
-  })).filter((g) => g.nodeTypes.length > 0);
+  const filteredGroups = paletteGroups
+    .map((group) => ({
+      ...group,
+      nodeTypes: group.nodeTypes.filter((ntId) => {
+        const nt = nodeTypes.find((n) => n.id === ntId);
+        if (!nt) return false;
+        if (!search) return true;
+        return (
+          nt.label.toLowerCase().includes(search.toLowerCase()) ||
+          nt.id.toLowerCase().includes(search.toLowerCase())
+        );
+      }),
+    }))
+    .filter((g) => g.nodeTypes.length > 0);
 
   return (
     <div data-slot="flow-designer-palette-shell">
@@ -73,7 +75,10 @@ export function FlowDesignerPalette({
                         size="sm"
                         draggable
                         onDragStart={(event) => {
-                          event.dataTransfer.setData('application/x-flow-designer-node-type', nt.id);
+                          event.dataTransfer.setData(
+                            'application/x-flow-designer-node-type',
+                            nt.id,
+                          );
                           event.dataTransfer.effectAllowed = 'copy';
                         }}
                         onClick={() => onAddNode(nt)}

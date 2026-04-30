@@ -77,4 +77,3 @@ Status Note: Completed. Architecture navigation now has a stable grouped index a
 Follow-up:
 
 - no remaining plan-owned work
-

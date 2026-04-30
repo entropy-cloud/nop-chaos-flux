@@ -12,7 +12,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 10, y: 20 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 5
+      errorBufferKeepLatest: 5,
     });
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
@@ -23,7 +23,7 @@ describe('createDebuggerStore', () => {
       level: 'info',
       source: 'test',
       summary: 'first',
-      timestamp: 100
+      timestamp: 100,
     });
     store.append({
       kind: 'notify',
@@ -31,7 +31,7 @@ describe('createDebuggerStore', () => {
       level: 'info',
       source: 'test',
       summary: 'second',
-      timestamp: 200
+      timestamp: 200,
     });
     store.append({
       kind: 'notify',
@@ -39,15 +39,18 @@ describe('createDebuggerStore', () => {
       level: 'info',
       source: 'test',
       summary: 'third',
-      timestamp: 300
+      timestamp: 300,
     });
 
     const snapshot = store.getSnapshot();
     expect(snapshot.events).toHaveLength(2);
-    expect(snapshot.events.map((event: NopDebugEvent) => event.summary)).toEqual(['third', 'second']);
+    expect(snapshot.events.map((event: NopDebugEvent) => event.summary)).toEqual([
+      'third',
+      'second',
+    ]);
     expect(snapshot.events[0]).toMatchObject({
       id: 3,
-      sessionId: 'session-1'
+      sessionId: 'session-1',
     });
     expect(listener).toHaveBeenCalledTimes(0);
 
@@ -69,7 +72,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'overview',
       position: { x: 1, y: 2 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 5
+      errorBufferKeepLatest: 5,
     });
 
     store.hide();
@@ -80,7 +83,7 @@ describe('createDebuggerStore', () => {
       group: 'error',
       level: 'error',
       source: 'test',
-      summary: 'ignored while paused'
+      summary: 'ignored while paused',
     });
     store.resume();
     store.setActiveTab('network');
@@ -89,9 +92,12 @@ describe('createDebuggerStore', () => {
     store.toggleFilter('render');
     expect(store.getSnapshot().filters.includes('render')).toBe(false);
 
-    store.getSnapshot().filters.slice(0, -1).forEach((filter: NopDebuggerFilterKind) => {
-      store.toggleFilter(filter);
-    });
+    store
+      .getSnapshot()
+      .filters.slice(0, -1)
+      .forEach((filter: NopDebuggerFilterKind) => {
+        store.toggleFilter(filter);
+      });
     const lastFilter = store.getSnapshot().filters[0];
     store.toggleFilter(lastFilter);
 
@@ -113,7 +119,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 5
+      errorBufferKeepLatest: 5,
     });
 
     store.append({
@@ -121,7 +127,7 @@ describe('createDebuggerStore', () => {
       group: 'notify',
       level: 'info',
       source: 'test',
-      summary: 'ignored while disabled'
+      summary: 'ignored while disabled',
     });
 
     expect(store.getSnapshot().events).toHaveLength(0);
@@ -136,15 +142,57 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 2,
-      errorBufferKeepLatest: 2
+      errorBufferKeepLatest: 2,
     });
 
-    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'error-1', timestamp: 100 });
-    store.append({ kind: 'notify', group: 'notify', level: 'info', source: 'test', summary: 'info-1', timestamp: 150 });
-    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'error-2', timestamp: 200 });
-    store.append({ kind: 'notify', group: 'notify', level: 'warning', source: 'test', summary: 'warn-1', timestamp: 250 });
-    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'error-3', timestamp: 300 });
-    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'error-4', timestamp: 350 });
+    store.append({
+      kind: 'error',
+      group: 'error',
+      level: 'error',
+      source: 'test',
+      summary: 'error-1',
+      timestamp: 100,
+    });
+    store.append({
+      kind: 'notify',
+      group: 'notify',
+      level: 'info',
+      source: 'test',
+      summary: 'info-1',
+      timestamp: 150,
+    });
+    store.append({
+      kind: 'error',
+      group: 'error',
+      level: 'error',
+      source: 'test',
+      summary: 'error-2',
+      timestamp: 200,
+    });
+    store.append({
+      kind: 'notify',
+      group: 'notify',
+      level: 'warning',
+      source: 'test',
+      summary: 'warn-1',
+      timestamp: 250,
+    });
+    store.append({
+      kind: 'error',
+      group: 'error',
+      level: 'error',
+      source: 'test',
+      summary: 'error-3',
+      timestamp: 300,
+    });
+    store.append({
+      kind: 'error',
+      group: 'error',
+      level: 'error',
+      source: 'test',
+      summary: 'error-4',
+      timestamp: 350,
+    });
 
     const snapshot = store.getSnapshot();
     expect(snapshot.events).toHaveLength(3);
@@ -168,10 +216,17 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 3
+      errorBufferKeepLatest: 3,
     });
 
-    store.append({ kind: 'error', group: 'error', level: 'error', source: 'test', summary: 'err', timestamp: 100 });
+    store.append({
+      kind: 'error',
+      group: 'error',
+      level: 'error',
+      source: 'test',
+      summary: 'err',
+      timestamp: 100,
+    });
     store.clear();
 
     const snapshot = store.getSnapshot();
@@ -188,11 +243,25 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 3
+      errorBufferKeepLatest: 3,
     });
 
-    store.append({ kind: 'notify', group: 'notify', level: 'info', source: 'test', summary: 'info-1', timestamp: 100 });
-    store.append({ kind: 'action:end', group: 'action', level: 'success', source: 'test', summary: 'success-1', timestamp: 200 });
+    store.append({
+      kind: 'notify',
+      group: 'notify',
+      level: 'info',
+      source: 'test',
+      summary: 'info-1',
+      timestamp: 100,
+    });
+    store.append({
+      kind: 'action:end',
+      group: 'action',
+      level: 'success',
+      source: 'test',
+      summary: 'success-1',
+      timestamp: 200,
+    });
 
     const snapshot = store.getSnapshot();
     expect(snapshot.pinnedErrors.earliest).toHaveLength(0);
@@ -208,7 +277,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 3
+      errorBufferKeepLatest: 3,
     });
 
     store.append({
@@ -218,7 +287,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-1',
       nodeId: 'node-1',
-      timestamp: 100
+      timestamp: 100,
     });
 
     store.append({
@@ -228,7 +297,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-2',
       nodeId: 'node-1',
-      timestamp: 150
+      timestamp: 150,
     });
 
     store.append({
@@ -238,7 +307,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-3',
       nodeId: 'node-1',
-      timestamp: 180
+      timestamp: 180,
     });
 
     store.append({
@@ -248,7 +317,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-4',
       nodeId: 'node-1',
-      timestamp: 250
+      timestamp: 250,
     });
 
     const snapshot = store.getSnapshot();
@@ -270,7 +339,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 3
+      errorBufferKeepLatest: 3,
     });
 
     store.append({
@@ -280,7 +349,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-node-1',
       nodeId: 'node-1',
-      timestamp: 100
+      timestamp: 100,
     });
 
     store.append({
@@ -290,7 +359,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-node-2',
       nodeId: 'node-2',
-      timestamp: 120
+      timestamp: 120,
     });
     store.append({
       kind: 'render:start',
@@ -299,7 +368,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-node-1-again',
       nodeId: 'node-1',
-      timestamp: 140
+      timestamp: 140,
     });
 
     const snapshot = store.getSnapshot();
@@ -321,7 +390,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 3
+      errorBufferKeepLatest: 3,
     });
 
     store.append({
@@ -331,7 +400,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-1',
       nodeId: 'node-1',
-      timestamp: 100
+      timestamp: 100,
     });
 
     store.append({
@@ -341,7 +410,7 @@ describe('createDebuggerStore', () => {
       source: 'test',
       summary: 'render-2',
       nodeId: 'node-1',
-      timestamp: 250
+      timestamp: 250,
     });
 
     const snapshot = store.getSnapshot();
@@ -363,7 +432,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 3
+      errorBufferKeepLatest: 3,
     });
 
     store.append({
@@ -374,7 +443,7 @@ describe('createDebuggerStore', () => {
       summary: 'render:end-1',
       nodeId: 'node-1',
       timestamp: 100,
-      durationMs: 10
+      durationMs: 10,
     });
 
     store.append({
@@ -385,7 +454,7 @@ describe('createDebuggerStore', () => {
       summary: 'render:end-2',
       nodeId: 'node-1',
       timestamp: 120,
-      durationMs: 20
+      durationMs: 20,
     });
 
     const snapshot = store.getSnapshot();
@@ -409,7 +478,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'timeline',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 3,
-      errorBufferKeepLatest: 3
+      errorBufferKeepLatest: 3,
     });
 
     store.append({
@@ -418,7 +487,7 @@ describe('createDebuggerStore', () => {
       level: 'info',
       source: 'test',
       summary: 'render-1',
-      timestamp: 100
+      timestamp: 100,
     });
 
     store.append({
@@ -427,7 +496,7 @@ describe('createDebuggerStore', () => {
       level: 'info',
       source: 'test',
       summary: 'render-2',
-      timestamp: 120
+      timestamp: 120,
     });
 
     const snapshot = store.getSnapshot();
@@ -449,7 +518,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'overview',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 0,
-      errorBufferKeepLatest: 0
+      errorBufferKeepLatest: 0,
     });
 
     expect(store.getSnapshot().minimized).toBe(false);
@@ -472,7 +541,7 @@ describe('createDebuggerStore', () => {
       defaultTab: 'overview',
       position: { x: 0, y: 0 },
       errorBufferKeepEarliest: 0,
-      errorBufferKeepLatest: 0
+      errorBufferKeepLatest: 0,
     });
 
     store.minimize();

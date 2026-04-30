@@ -34,4 +34,3 @@
 - shared field handlers must not assume every control can safely round-trip through strings
 - multi-value controls should preserve raw value types across render, store, and submit boundaries
 - if checkbox-like controls show stale checked state, inspect type coercion before changing validation or option schemas
-

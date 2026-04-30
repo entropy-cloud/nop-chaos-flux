@@ -6,8 +6,8 @@ export {
   SIDEBAR_WIDTH_MOBILE,
   SIDEBAR_WIDTH_ICON,
   SIDEBAR_KEYBOARD_SHORTCUT,
-} from "./sidebar-context"
-export type { SidebarContextProps } from "./sidebar-context"
+} from './sidebar-context';
+export type { SidebarContextProps } from './sidebar-context';
 
 export {
   Sidebar,
@@ -23,7 +23,7 @@ export {
   SidebarGroupLabel,
   SidebarGroupAction,
   SidebarGroupContent,
-} from "./sidebar-layout"
+} from './sidebar-layout';
 
 export {
   SidebarMenu,
@@ -36,4 +36,4 @@ export {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   sidebarMenuButtonVariants,
-} from "./sidebar-menu"
+} from './sidebar-menu';

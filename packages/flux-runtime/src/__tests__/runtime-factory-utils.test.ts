@@ -9,10 +9,13 @@ describe('createProjectedScopeStore', () => {
     const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: { value: 1 } });
     const projectSnapshot = vi.fn(() => ({ projected: scope.get('value') }));
 
-    const projected = createProjectedScopeStore({
-      ...scope,
-      store: undefined,
-    } as any, projectSnapshot);
+    const projected = createProjectedScopeStore(
+      {
+        ...scope,
+        store: undefined,
+      } as any,
+      projectSnapshot,
+    );
 
     expect(projected.store).toBeUndefined();
     expect(projected.readSnapshot()).toEqual({ projected: 1 });
@@ -38,7 +41,9 @@ describe('createProjectedScopeStore', () => {
     expect(listener).toHaveBeenCalled();
     unsubscribe?.();
 
-    expect(() => projected.store?.setSnapshot({ doubled: 6 })).toThrow('Cannot set snapshot on projected scope store');
+    expect(() => projected.store?.setSnapshot({ doubled: 6 })).toThrow(
+      'Cannot set snapshot on projected scope store',
+    );
   });
 });
 
@@ -67,7 +72,11 @@ describe('runtime factory utilities', () => {
       } as any,
     });
 
-    await expect(runtime.prepareSchema?.({ type: 'text', text: 'hello' } as any, { schemaUrl: '/schema.json' })).resolves.toEqual({
+    await expect(
+      runtime.prepareSchema?.({ type: 'text', text: 'hello' } as any, {
+        schemaUrl: '/schema.json',
+      }),
+    ).resolves.toEqual({
       preparedImports: new Map(),
     });
   });
@@ -80,15 +89,23 @@ describe('runtime factory utilities', () => {
         compile: vi.fn(),
         prepare: vi.fn().mockResolvedValue({
           preparedImports: new Map([
-            ['demo', { spec: { from: 'demo-lib', as: 'demo' }, resolvedSpec: { from: 'demo-lib', as: 'demo' } }]
-          ])
-        })
+            [
+              'demo',
+              {
+                spec: { from: 'demo-lib', as: 'demo' },
+                resolvedSpec: { from: 'demo-lib', as: 'demo' },
+              },
+            ],
+          ]),
+        }),
       } as any,
     });
 
-    await expect(runtime.prepareSchema?.({ type: 'text', text: 'hello' } as any, { schemaUrl: '/schema.json' })).rejects.toThrow(
-      'Schema preparation requires env.importLoader when xui:imports are present.'
-    );
+    await expect(
+      runtime.prepareSchema?.({ type: 'text', text: 'hello' } as any, {
+        schemaUrl: '/schema.json',
+      }),
+    ).rejects.toThrow('Schema preparation requires env.importLoader when xui:imports are present.');
   });
 
   it('resolves prepared import urls, updates env references, and disposes idempotently', async () => {
@@ -101,15 +118,17 @@ describe('runtime factory utilities', () => {
       },
     });
 
-    expect(runtime.resolvePreparedImports({
-      schemaUrl: '/schema.json',
-      imports: [{ from: './demo-lib', as: 'demo' } as any]
-    })).toEqual([
+    expect(
+      runtime.resolvePreparedImports({
+        schemaUrl: '/schema.json',
+        imports: [{ from: './demo-lib', as: 'demo' } as any],
+      }),
+    ).toEqual([
       {
         schemaUrl: '/schema.json',
         spec: { from: './demo-lib', as: 'demo' },
-        resolvedSpec: { from: '/schema.json:./demo-lib', as: 'demo' }
-      }
+        resolvedSpec: { from: '/schema.json:./demo-lib', as: 'demo' },
+      },
     ]);
 
     runtime.setEnv({
@@ -133,7 +152,11 @@ describe('runtime factory utilities', () => {
     const secondCid = runtime.allocateMountedCid?.();
     expect(secondCid).toBeGreaterThan(firstCid!);
 
-    const childScope = runtime.createChildScope(page.scope, { local: true }, { pathSuffix: 'child', scopeKey: 'child-scope', isolate: true });
+    const childScope = runtime.createChildScope(
+      page.scope,
+      { local: true },
+      { pathSuffix: 'child', scopeKey: 'child-scope', isolate: true },
+    );
     expect(childScope.id).toBe('child-scope');
     expect(childScope.path).toBe('$page.child');
     expect(childScope.readVisible()).toEqual({ local: true });
@@ -162,8 +185,12 @@ describe('runtime factory utilities', () => {
 
     runtime.dispose();
 
-    await expect(runtime.executeSource?.({ source: { type: 'data-source', action: 'noop' } as any, scope: page.scope, ctx: {} })).resolves.toEqual(
-      expect.objectContaining({ ok: false, error: expect.any(Error) })
-    );
+    await expect(
+      runtime.executeSource?.({
+        source: { type: 'data-source', action: 'noop' } as any,
+        scope: page.scope,
+        ctx: {},
+      }),
+    ).resolves.toEqual(expect.objectContaining({ ok: false, error: expect.any(Error) }));
   });
 });

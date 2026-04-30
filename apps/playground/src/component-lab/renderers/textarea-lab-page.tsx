@@ -7,13 +7,17 @@ const basicTextarea = {
       type: 'form',
       name: 'textareaForm',
       body: [
-        { type: 'textarea', name: 'bio', label: 'Biography', placeholder: 'Tell us about yourself...', required: true }
+        {
+          type: 'textarea',
+          name: 'bio',
+          label: 'Biography',
+          placeholder: 'Tell us about yourself...',
+          required: true,
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const rowVariants = {
@@ -28,21 +32,19 @@ const rowVariants = {
           name: 'notes',
           label: 'Notes (5 rows)',
           placeholder: 'Enter your notes...',
-          rows: 5
+          rows: 5,
         },
         {
           type: 'textarea',
           name: 'summary',
           label: 'Summary (3 rows)',
           placeholder: 'Compact textarea...',
-          rows: 3
-        }
+          rows: 3,
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 export function TextareaLabPage() {
@@ -52,14 +54,16 @@ export function TextareaLabPage() {
       scenarios={[
         {
           title: 'Basic required textarea',
-          description: 'A simple biography field that is required. Submitting empty shows a validation error.',
-          schema: basicTextarea
+          description:
+            'A simple biography field that is required. Submitting empty shows a validation error.',
+          schema: basicTextarea,
         },
         {
           title: 'Fixed row counts',
-          description: 'Different textarea fields can use different row counts to fit the surrounding form layout.',
-          schema: rowVariants
-        }
+          description:
+            'Different textarea fields can use different row counts to fit the surrounding form layout.',
+          schema: rowVariants,
+        },
       ]}
     />
   );

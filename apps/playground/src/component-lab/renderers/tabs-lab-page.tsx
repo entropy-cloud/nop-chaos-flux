@@ -10,7 +10,10 @@ const basicTabs = {
         {
           title: 'Overview',
           body: [
-            { type: 'text', text: 'Default horizontal tabs render the tab list above the active panel.' },
+            {
+              type: 'text',
+              text: 'Default horizontal tabs render the tab list above the active panel.',
+            },
             { type: 'text', text: 'Project status: In Progress' },
             {
               type: 'flex',
@@ -18,29 +21,27 @@ const basicTabs = {
               gap: 2,
               body: [
                 { type: 'badge', label: 'On Track', variant: 'default' },
-                { type: 'badge', label: '3 blockers', variant: 'destructive' }
-              ]
-            }
-          ]
+                { type: 'badge', label: '3 blockers', variant: 'destructive' },
+              ],
+            },
+          ],
         },
         {
           title: 'Team',
           body: [
             { type: 'text', text: 'Alice Johnson — Lead' },
             { type: 'text', text: 'Bob Smith — Developer' },
-            { type: 'text', text: 'Carol White — Designer' }
-          ]
+            { type: 'text', text: 'Carol White — Designer' },
+          ],
         },
         {
           title: 'Settings',
           disabled: true,
-          body: [
-            { type: 'text', text: 'Settings are not available yet.' }
-          ]
-        }
-      ]
-    }
-  ]
+          body: [{ type: 'text', text: 'Settings are not available yet.' }],
+        },
+      ],
+    },
+  ],
 };
 
 const lineTabs = {
@@ -52,25 +53,19 @@ const lineTabs = {
       items: [
         {
           title: 'Overview',
-          body: [
-            { type: 'text', text: 'Line-style tab with underline indicator.' }
-          ]
+          body: [{ type: 'text', text: 'Line-style tab with underline indicator.' }],
         },
         {
           title: 'Details',
-          body: [
-            { type: 'text', text: 'Content for details tab.' }
-          ]
+          body: [{ type: 'text', text: 'Content for details tab.' }],
         },
         {
           title: 'Archive',
-          body: [
-            { type: 'text', text: 'Content for archive tab.' }
-          ]
-        }
-      ]
-    }
-  ]
+          body: [{ type: 'text', text: 'Content for archive tab.' }],
+        },
+      ],
+    },
+  ],
 };
 
 const verticalTabs = {
@@ -84,26 +79,24 @@ const verticalTabs = {
           title: 'Overview',
           body: [
             { type: 'text', text: 'Vertical tabs with nav on the left side.' },
-            { type: 'text', text: 'Content area fills the remaining space.' }
-          ]
+            { type: 'text', text: 'Content area fills the remaining space.' },
+          ],
         },
         {
           title: 'Team',
           body: [
             { type: 'text', text: 'Alice Johnson — Lead' },
             { type: 'text', text: 'Bob Smith — Developer' },
-            { type: 'text', text: 'Carol White — Designer' }
-          ]
+            { type: 'text', text: 'Carol White — Designer' },
+          ],
         },
         {
           title: 'Settings',
-          body: [
-            { type: 'text', text: 'Settings content goes here.' }
-          ]
-        }
-      ]
-    }
-  ]
+          body: [{ type: 'text', text: 'Settings content goes here.' }],
+        },
+      ],
+    },
+  ],
 };
 
 const sidebarLeftTabs = {
@@ -116,25 +109,19 @@ const sidebarLeftTabs = {
       items: [
         {
           title: 'Dashboard',
-          body: [
-            { type: 'text', text: 'Sidebar on the left with Dashboard content.' }
-          ]
+          body: [{ type: 'text', text: 'Sidebar on the left with Dashboard content.' }],
         },
         {
           title: 'Analytics',
-          body: [
-            { type: 'text', text: 'Analytics content displayed here.' }
-          ]
+          body: [{ type: 'text', text: 'Analytics content displayed here.' }],
         },
         {
           title: 'Reports',
-          body: [
-            { type: 'text', text: 'Report viewer content.' }
-          ]
-        }
-      ]
-    }
-  ]
+          body: [{ type: 'text', text: 'Report viewer content.' }],
+        },
+      ],
+    },
+  ],
 };
 
 const sidebarRightTabs = {
@@ -147,25 +134,19 @@ const sidebarRightTabs = {
       items: [
         {
           title: 'Dashboard',
-          body: [
-            { type: 'text', text: 'Sidebar on the right with Dashboard content.' }
-          ]
+          body: [{ type: 'text', text: 'Sidebar on the right with Dashboard content.' }],
         },
         {
           title: 'Analytics',
-          body: [
-            { type: 'text', text: 'Analytics content displayed here.' }
-          ]
+          body: [{ type: 'text', text: 'Analytics content displayed here.' }],
         },
         {
           title: 'Reports',
-          body: [
-            { type: 'text', text: 'Report viewer content.' }
-          ]
-        }
-      ]
-    }
-  ]
+          body: [{ type: 'text', text: 'Report viewer content.' }],
+        },
+      ],
+    },
+  ],
 };
 
 const formTabs = {
@@ -182,13 +163,11 @@ const formTabs = {
               name: 'infoForm',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name', required: true },
-                { type: 'input-text', name: 'lastName', label: 'Last Name', required: true }
+                { type: 'input-text', name: 'lastName', label: 'Last Name', required: true },
               ],
-              actions: [
-                { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-              ]
-            }
-          ]
+              actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+            },
+          ],
         },
         {
           title: 'Contact',
@@ -198,17 +177,15 @@ const formTabs = {
               name: 'contactForm',
               body: [
                 { type: 'input-email', name: 'email', label: 'Email', required: true },
-                { type: 'input-text', name: 'phone', label: 'Phone' }
+                { type: 'input-text', name: 'phone', label: 'Phone' },
               ],
-              actions: [
-                { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
+              actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 export function TabsLabPage() {
@@ -218,34 +195,38 @@ export function TabsLabPage() {
       scenarios={[
         {
           title: 'Horizontal tabs (top)',
-          description: 'Default horizontal layout. The tab list stays on top and the active panel renders underneath.',
-          schema: basicTabs
+          description:
+            'Default horizontal layout. The tab list stays on top and the active panel renders underneath.',
+          schema: basicTabs,
         },
         {
           title: 'Horizontal tabs (line style)',
           description: 'Still top-aligned, but with an underline indicator (`tabsMode: "line"`).',
-          schema: lineTabs
+          schema: lineTabs,
         },
         {
           title: 'Vertical tabs (left nav)',
           description: 'Navigation on the left and content on the right (`tabsMode: "vertical"`).',
-          schema: verticalTabs
+          schema: verticalTabs,
         },
         {
           title: 'Sidebar tabs (left)',
-          description: 'Sidebar-style navigation on the left side (`tabsMode: "sidebar", sidePosition: "left"`).',
-          schema: sidebarLeftTabs
+          description:
+            'Sidebar-style navigation on the left side (`tabsMode: "sidebar", sidePosition: "left"`).',
+          schema: sidebarLeftTabs,
         },
         {
           title: 'Sidebar tabs (right)',
-          description: 'Sidebar-style navigation on the right side (`tabsMode: "sidebar", sidePosition: "right"`).',
-          schema: sidebarRightTabs
+          description:
+            'Sidebar-style navigation on the right side (`tabsMode: "sidebar", sidePosition: "right"`).',
+          schema: sidebarRightTabs,
         },
         {
           title: 'Tabs with forms',
-          description: 'Each tab panel can host a full form, which is useful for multi-section editors.',
-          schema: formTabs
-        }
+          description:
+            'Each tab panel can host a full form, which is useful for multi-section editors.',
+          schema: formTabs,
+        },
       ]}
     />
   );

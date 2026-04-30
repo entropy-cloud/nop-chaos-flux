@@ -8,10 +8,10 @@
 
 ### >700 行（必须拆分）
 
-| 文件 | 行数 | 类型 | 状态 |
-|------|------|------|------|
-| `packages/flux-renderers-form-advanced/src/composite-field/object-field.test.tsx` | ~755 | 测试 | P2 |
-| `packages/nop-debugger/src/controller-inspect.test.ts` | ~750 | 测试 | P2 |
+| 文件                                                                              | 行数 | 类型 | 状态 |
+| --------------------------------------------------------------------------------- | ---- | ---- | ---- |
+| `packages/flux-renderers-form-advanced/src/composite-field/object-field.test.tsx` | ~755 | 测试 | P2   |
+| `packages/nop-debugger/src/controller-inspect.test.ts`                            | ~750 | 测试 | P2   |
 
 ### 500-700 行（需评估）
 

@@ -3,7 +3,7 @@ import type { DesignerCommand } from '../designer-command-types';
 export function createDingFlowMenuCommand(
   sourceId: string,
   type: string,
-  sourceKind: 'node' | 'branch-group' | 'merge' = sourceId.startsWith('merge:') ? 'merge' : 'node'
+  sourceKind: 'node' | 'branch-group' | 'merge' = sourceId.startsWith('merge:') ? 'merge' : 'node',
 ): DesignerCommand {
   const isMerge = sourceKind === 'merge' || sourceId.startsWith('merge:');
   const effectiveId = isMerge ? sourceId.slice('merge:'.length) : sourceId;

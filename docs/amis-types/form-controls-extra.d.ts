@@ -1,4 +1,10 @@
-import { FormBaseControl, FormOptionsSchema, SchemaApi, SchemaClassName, SchemaTpl } from './common';
+import {
+  FormBaseControl,
+  FormOptionsSchema,
+  SchemaApi,
+  SchemaClassName,
+  SchemaTpl,
+} from './common';
 
 /**
  * PickerControl 选择器

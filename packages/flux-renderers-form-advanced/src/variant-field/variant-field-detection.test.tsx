@@ -118,7 +118,10 @@ describe('variant-field renderer detection behavior', () => {
                   key: 'advanced',
                   label: 'Advanced',
                   content: [{ type: 'input-text', name: 'kind', label: 'Kind' }],
-                  match: { kind: 'expression', when: '${value.enabled === true && value.kind === "advanced"}' },
+                  match: {
+                    kind: 'expression',
+                    when: '${value.enabled === true && value.kind === "advanced"}',
+                  },
                 },
               ],
             },
@@ -341,8 +344,16 @@ describe('variant-field renderer detection behavior', () => {
               'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
               detectVariantAction: { action: 'variantLib:detect' },
               variants: [
-                { key: 'first', label: 'First', content: [{ type: 'input-text', name: 'value', label: 'First Value' }] },
-                { key: 'second', label: 'Second', content: [{ type: 'input-text', name: 'value', label: 'Second Value' }] },
+                {
+                  key: 'first',
+                  label: 'First',
+                  content: [{ type: 'input-text', name: 'value', label: 'First Value' }],
+                },
+                {
+                  key: 'second',
+                  label: 'Second',
+                  content: [{ type: 'input-text', name: 'value', label: 'Second Value' }],
+                },
               ],
             },
             {
@@ -351,8 +362,16 @@ describe('variant-field renderer detection behavior', () => {
               'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
               detectVariantAction: { action: 'variantLib:detect', args: { reason: 'explicit' } },
               variants: [
-                { key: 'first', label: 'First Explicit', content: [{ type: 'input-text', name: 'value', label: 'First Explicit Value' }] },
-                { key: 'second', label: 'Second Explicit', content: [{ type: 'input-text', name: 'value', label: 'Second Explicit Value' }] },
+                {
+                  key: 'first',
+                  label: 'First Explicit',
+                  content: [{ type: 'input-text', name: 'value', label: 'First Explicit Value' }],
+                },
+                {
+                  key: 'second',
+                  label: 'Second Explicit',
+                  content: [{ type: 'input-text', name: 'value', label: 'Second Explicit Value' }],
+                },
               ],
             },
           ],

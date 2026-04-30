@@ -4,7 +4,7 @@ import type {
   ActionResult,
   ActionSchema,
   CompiledActionNode,
-  CompiledActionProgram
+  CompiledActionProgram,
 } from '@nop-chaos/flux-core';
 import { withRetry, withTimeout } from '../operation-control';
 import {
@@ -21,11 +21,15 @@ import {
   mergeEvaluationBindings,
   resolveActionControl,
   shouldRunActionWhen,
-  isAbortError
+  isAbortError,
 } from '../action-core';
 import { cancelPendingDebounce, scheduleDebounce } from '@nop-chaos/flux-core';
 import type { ActionDispatcherConfig, ActionDispatcherContext } from './types';
-import { isRequestBackedAction, normalizeCompiledActionProgram, applyActionControl } from './program-utils';
+import {
+  isRequestBackedAction,
+  normalizeCompiledActionProgram,
+  applyActionControl,
+} from './program-utils';
 import { finishAction } from './action-runners';
 import { runBuiltInAction } from './built-in-actions';
 import { runComponentAction, runNamespacedAction, runNamedAction } from './action-runners';
@@ -35,25 +39,27 @@ async function runParallelActions(
   action: CompiledActionNode,
   actionCtx: ActionContext,
   startedAt: number,
-  actionPayload: ActionMonitorPayload
+  actionPayload: ActionMonitorPayload,
 ): Promise<ActionResult | undefined> {
   if (!action.parallel || action.parallel.length === 0) {
     return undefined;
   }
 
   const results = await Promise.all(
-    action.parallel.map((entry) => runActionWithDebounce(ctx, entry, {
-      ...actionCtx,
-      interactionId: actionCtx.interactionId ?? createInteractionId(),
-      signal: actionCtx.signal,
-      prevResult: actionCtx.prevResult
-    }))
+    action.parallel.map((entry) =>
+      runActionWithDebounce(ctx, entry, {
+        ...actionCtx,
+        interactionId: actionCtx.interactionId ?? createInteractionId(),
+        signal: actionCtx.signal,
+        prevResult: actionCtx.prevResult,
+      }),
+    ),
   );
 
   return finishAction(ctx, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
     ok: results.every((result) => classifyActionResult(result) !== 'failure'),
     data: results,
-    results
+    results,
   });
 }
 
@@ -61,68 +67,105 @@ async function runSingleAction(
   ctx: ActionDispatcherContext,
   action: CompiledActionNode,
   actionCtx: ActionContext,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<ActionResult> {
   const effectiveSignal = signal ?? actionCtx.signal;
-  const activeCtx = effectiveSignal && actionCtx.signal !== effectiveSignal ? { ...actionCtx, signal: effectiveSignal } : actionCtx;
+  const activeCtx =
+    effectiveSignal && actionCtx.signal !== effectiveSignal
+      ? { ...actionCtx, signal: effectiveSignal }
+      : actionCtx;
   const startedAt = Date.now();
   const actionPayload = buildActionMonitorPayload(action, activeCtx);
   ctx.getEnv().monitor?.onActionStart?.(actionPayload);
 
   try {
-    const processedAction = (ctx.plugins?.length ?? 0) > 0
-      ? normalizeCompiledActionProgram(
-          await (ctx.plugins ?? []).reduce<Promise<ActionSchema>>(
-            async (currentPromise, plugin) => {
-              const current = await currentPromise;
-              return plugin.beforeAction ? plugin.beforeAction(current, activeCtx) : current;
-            },
-            Promise.resolve(action.source)
-          ),
-          ctx
-        ).nodes[0]!
-      : action;
+    const processedAction =
+      (ctx.plugins?.length ?? 0) > 0
+        ? normalizeCompiledActionProgram(
+            await (ctx.plugins ?? []).reduce<Promise<ActionSchema>>(
+              async (currentPromise, plugin) => {
+                const current = await currentPromise;
+                return plugin.beforeAction ? plugin.beforeAction(current, activeCtx) : current;
+              },
+              Promise.resolve(action.source),
+            ),
+            ctx,
+          ).nodes[0]!
+        : action;
 
     if (!shouldRunActionWhen(processedAction, activeCtx, ctx.evaluator)) {
       return finishAction(ctx, actionPayload, startedAt, {
         ok: true,
-        skipped: true
+        skipped: true,
       });
     }
 
-    const parallelResult = await runParallelActions(ctx, processedAction, activeCtx, startedAt, actionPayload);
+    const parallelResult = await runParallelActions(
+      ctx,
+      processedAction,
+      activeCtx,
+      startedAt,
+      actionPayload,
+    );
     if (parallelResult) {
       return parallelResult;
     }
 
-    const builtInResult = await runBuiltInAction(processedAction, activeCtx, startedAt, actionPayload, effectiveSignal, ctx);
+    const builtInResult = await runBuiltInAction(
+      processedAction,
+      activeCtx,
+      startedAt,
+      actionPayload,
+      effectiveSignal,
+      ctx,
+    );
     if (builtInResult) {
       return builtInResult;
     }
 
-    const componentResult = await runComponentAction(processedAction, activeCtx, startedAt, actionPayload, ctx);
+    const componentResult = await runComponentAction(
+      processedAction,
+      activeCtx,
+      startedAt,
+      actionPayload,
+      ctx,
+    );
     if (componentResult) {
       return componentResult;
     }
 
-    const namedResult = await runNamedAction(processedAction, activeCtx, startedAt, actionPayload, ctx);
+    const namedResult = await runNamedAction(
+      processedAction,
+      activeCtx,
+      startedAt,
+      actionPayload,
+      ctx,
+    );
     if (namedResult) {
       return namedResult;
     }
 
-    const namespacedResult = await runNamespacedAction(processedAction, activeCtx, startedAt, actionPayload, ctx);
+    const namespacedResult = await runNamespacedAction(
+      processedAction,
+      activeCtx,
+      startedAt,
+      actionPayload,
+      ctx,
+    );
     if (namespacedResult) {
       return namespacedResult;
     }
 
     return finishAction(ctx, actionPayload, startedAt, {
       ok: false,
-      error: new Error(`Unsupported action: ${processedAction.action}`)
+      error: new Error(`Unsupported action: ${processedAction.action}`),
     });
   } catch (error) {
     if (isAbortError(error)) {
       const result = createCancelledResult(error);
-      ctx.getEnv().monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+      ctx
+        .getEnv()
+        .monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
       return result;
     }
 
@@ -133,20 +176,26 @@ async function runSingleAction(
         phase: 'action',
         error,
         nodeId: activeCtx.nodeInstance?.templateNode.id,
-        path: activeCtx.nodeInstance?.templateNode.templatePath
+        path: activeCtx.nodeInstance?.templateNode.templatePath,
       });
     }
 
     const result = {
       ok: false,
-      error
+      error,
     };
-    ctx.getEnv().monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
+    ctx
+      .getEnv()
+      .monitor?.onActionEnd?.({ ...actionPayload, durationMs: Date.now() - startedAt, result });
     return result;
   }
 }
 
-function runActionWithDebounce(ctx: ActionDispatcherContext, action: CompiledActionNode, actionCtx: ActionContext): Promise<ActionResult> {
+function runActionWithDebounce(
+  ctx: ActionDispatcherContext,
+  action: CompiledActionNode,
+  actionCtx: ActionContext,
+): Promise<ActionResult> {
   const debounceMs = getNumericControl(action.control?.debounce);
 
   if (!debounceMs || debounceMs <= 0) {
@@ -160,51 +209,67 @@ function runActionWithDebounce(ctx: ActionDispatcherContext, action: CompiledAct
     ctx.getEnv().monitor?.onActionEnd?.({
       ...buildActionMonitorPayload(action, actionCtx),
       durationMs: 0,
-      result: cancelledResult
+      result: cancelledResult,
     });
   }
 
-  return scheduleDebounce<string, ActionResult>(
-    ctx.pendingDebounces,
-    key,
-    debounceMs,
-    () => runSingleActionWithRetry(ctx, action, actionCtx)
+  return scheduleDebounce<string, ActionResult>(ctx.pendingDebounces, key, debounceMs, () =>
+    runSingleActionWithRetry(ctx, action, actionCtx),
   );
 }
 
-async function runSingleActionWithRetry(ctx: ActionDispatcherContext, action: CompiledActionNode, actionCtx: ActionContext): Promise<ActionResult> {
+async function runSingleActionWithRetry(
+  ctx: ActionDispatcherContext,
+  action: CompiledActionNode,
+  actionCtx: ActionContext,
+): Promise<ActionResult> {
   if (isRequestBackedAction(action)) {
     const result = await runSingleActionWithTimeout(ctx, action, actionCtx);
-    const errorWithRetry = result.error as { attempts?: unknown; failureCount?: unknown } | undefined;
+    const errorWithRetry = result.error as
+      | { attempts?: unknown; failureCount?: unknown }
+      | undefined;
 
     return {
       ...result,
-      attempts: typeof errorWithRetry?.attempts === 'number' ? errorWithRetry.attempts : result.attempts,
-      failureCount: typeof errorWithRetry?.failureCount === 'number' ? errorWithRetry.failureCount : result.failureCount
+      attempts:
+        typeof errorWithRetry?.attempts === 'number' ? errorWithRetry.attempts : result.attempts,
+      failureCount:
+        typeof errorWithRetry?.failureCount === 'number'
+          ? errorWithRetry.failureCount
+          : result.failureCount,
     };
   }
 
   const retry = getRetryControl(action.control?.retry);
-  const { result: lastResult, attempts, failureCount, lastFailureReason } = await withRetry(
+  const {
+    result: lastResult,
+    attempts,
+    failureCount,
+    lastFailureReason,
+  } = await withRetry(
     () => runSingleActionWithTimeout(ctx, action, actionCtx),
     {
       times: retry?.times ?? 0,
       delay: retry?.delay ?? 0,
       strategy: retry?.strategy ?? 'fixed',
-      maxDelay: retry?.maxDelay
+      maxDelay: retry?.maxDelay,
     },
-    (result) => Boolean(result.ok || result.skipped || result.cancelled || result.timedOut)
+    (result) => Boolean(result.ok || result.skipped || result.cancelled || result.timedOut),
   );
 
   return {
     ...(lastResult ?? { ok: false, error: new Error('Action failed without result') }),
     attempts,
     failureCount,
-    error: lastResult?.error ?? lastFailureReason
+    error: lastResult?.error ?? lastFailureReason,
   };
 }
 
-function runSingleActionWithTimeout(ctx: ActionDispatcherContext, action: CompiledActionNode, actionCtx: ActionContext): Promise<ActionResult> {
+function runSingleActionWithTimeout(
+  ctx: ActionDispatcherContext,
+  action: CompiledActionNode,
+  actionCtx: ActionContext,
+): Promise<ActionResult> {
   const timeoutMs = getNumericControl(action.control?.timeout);
 
   if (!timeoutMs || timeoutMs <= 0) {
@@ -214,14 +279,14 @@ function runSingleActionWithTimeout(ctx: ActionDispatcherContext, action: Compil
   return withTimeout(
     (signal) => runSingleAction(ctx, action, actionCtx, signal),
     timeoutMs,
-    () => createTimedOutResult(new Error(`Action timed out after ${timeoutMs}ms`))
+    () => createTimedOutResult(new Error(`Action timed out after ${timeoutMs}ms`)),
   );
 }
 
 async function dispatch(
   ctx: ActionDispatcherContext,
   action: ActionSchema | ActionSchema[] | CompiledActionProgram,
-  actionCtx: ActionContext
+  actionCtx: ActionContext,
 ): Promise<ActionResult> {
   const actions = normalizeCompiledActionProgram(action, ctx).nodes;
   let previous: ActionResult = { ok: true };
@@ -231,7 +296,7 @@ async function dispatch(
       ...actionCtx,
       interactionId: actionCtx.interactionId ?? createInteractionId(),
       prevResult: previous,
-      evaluationBindings: actionCtx.evaluationBindings
+      evaluationBindings: actionCtx.evaluationBindings,
     };
     const normalizedAction = applyActionControl(current, resolveActionControl(current));
     const result = await runActionWithDebounce(ctx, normalizedAction, currentActionCtx);
@@ -241,62 +306,79 @@ async function dispatch(
 
     const branchBindings = mergeEvaluationBindings(
       actionCtx.evaluationBindings,
-      createBranchEvaluationBindings(result, currentActionCtx.prevResult)
+      createBranchEvaluationBindings(result, currentActionCtx.prevResult),
     );
 
     if (resultClass === 'success' && normalizedAction.then) {
-      previous = await dispatch(ctx, {
-        nodes: normalizedAction.then,
-        isFullyStatic: false
-      }, {
-        ...actionCtx,
-        interactionId: currentActionCtx.interactionId,
-        prevResult: result,
-        evaluationBindings: branchBindings
-      });
-    } else if (resultClass === 'failure' && normalizedAction.onError) {
-      const eventType = typeof (actionCtx.event as { type?: unknown } | undefined)?.type === 'string'
-        ? (actionCtx.event as { type: string }).type
-        : 'actionError';
-      previous = await dispatch(ctx, {
-        nodes: normalizedAction.onError,
-        isFullyStatic: false
-      }, {
-        ...actionCtx,
-        interactionId: currentActionCtx.interactionId,
-        prevResult: result,
-        event: {
-          ...(actionCtx.event && typeof actionCtx.event === 'object' ? actionCtx.event as Record<string, unknown> : {}),
-          type: eventType,
-          result,
-          error: result.error,
-          prevResult: currentActionCtx.prevResult
+      previous = await dispatch(
+        ctx,
+        {
+          nodes: normalizedAction.then,
+          isFullyStatic: false,
         },
-        evaluationBindings: branchBindings
-      });
+        {
+          ...actionCtx,
+          interactionId: currentActionCtx.interactionId,
+          prevResult: result,
+          evaluationBindings: branchBindings,
+        },
+      );
+    } else if (resultClass === 'failure' && normalizedAction.onError) {
+      const eventType =
+        typeof (actionCtx.event as { type?: unknown } | undefined)?.type === 'string'
+          ? (actionCtx.event as { type: string }).type
+          : 'actionError';
+      previous = await dispatch(
+        ctx,
+        {
+          nodes: normalizedAction.onError,
+          isFullyStatic: false,
+        },
+        {
+          ...actionCtx,
+          interactionId: currentActionCtx.interactionId,
+          prevResult: result,
+          event: {
+            ...(actionCtx.event && typeof actionCtx.event === 'object'
+              ? (actionCtx.event as Record<string, unknown>)
+              : {}),
+            type: eventType,
+            result,
+            error: result.error,
+            prevResult: currentActionCtx.prevResult,
+          },
+          evaluationBindings: branchBindings,
+        },
+      );
     }
 
     if ((resultClass === 'success' || resultClass === 'failure') && normalizedAction.onSettled) {
       const settledEventType = resultClass === 'failure' ? 'actionSettledError' : 'actionSettled';
 
       try {
-        await dispatch(ctx, {
-          nodes: normalizedAction.onSettled,
-          isFullyStatic: false
-        }, {
-          ...actionCtx,
-          interactionId: currentActionCtx.interactionId,
-          prevResult: result,
-          event: {
-            ...(actionCtx.event && typeof actionCtx.event === 'object' ? actionCtx.event as Record<string, unknown> : {}),
-            type: settledEventType,
-            result,
-            error: isFailureClass(result) ? result.error : undefined,
-            prevResult: currentActionCtx.prevResult,
-            settled: true
+        await dispatch(
+          ctx,
+          {
+            nodes: normalizedAction.onSettled,
+            isFullyStatic: false,
           },
-          evaluationBindings: branchBindings
-        });
+          {
+            ...actionCtx,
+            interactionId: currentActionCtx.interactionId,
+            prevResult: result,
+            event: {
+              ...(actionCtx.event && typeof actionCtx.event === 'object'
+                ? (actionCtx.event as Record<string, unknown>)
+                : {}),
+              type: settledEventType,
+              result,
+              error: isFailureClass(result) ? result.error : undefined,
+              prevResult: currentActionCtx.prevResult,
+              settled: true,
+            },
+            evaluationBindings: branchBindings,
+          },
+        );
       } catch (error) {
         ctx.onActionError?.(error, currentActionCtx);
 
@@ -305,7 +387,7 @@ async function dispatch(
             phase: 'action',
             error,
             nodeId: actionCtx.nodeInstance?.templateNode.id,
-            path: actionCtx.nodeInstance?.templateNode.templatePath
+            path: actionCtx.nodeInstance?.templateNode.templatePath,
           });
         }
 
@@ -331,11 +413,13 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
     adapter: config.adapter,
     runtime: config.runtime,
     compiledProgramCache: new WeakMap(),
-    pendingDebounces: new Map()
+    pendingDebounces: new Map(),
   };
 
   return {
-    dispatch: (action: ActionSchema | ActionSchema[] | CompiledActionProgram, actionCtx: ActionContext) =>
-      dispatch(ctx, action, actionCtx)
+    dispatch: (
+      action: ActionSchema | ActionSchema[] | CompiledActionProgram,
+      actionCtx: ActionContext,
+    ) => dispatch(ctx, action, actionCtx),
   };
 }

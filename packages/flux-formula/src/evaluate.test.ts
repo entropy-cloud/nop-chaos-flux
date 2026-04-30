@@ -3,14 +3,14 @@ import type {
   ArrayValueNode,
   ObjectValueNode,
   RendererEnv,
-  StaticValueNode
+  StaticValueNode,
 } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from './compile';
 import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate';
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 function staticNode<T>(value: T): StaticValueNode<T> {
@@ -35,7 +35,7 @@ function makeScope(data: Record<string, any>) {
     readVisible: () => data,
     materializeVisible: () => data,
     update: () => undefined,
-    merge: () => {}
+    merge: () => {},
   };
 }
 
@@ -43,7 +43,7 @@ describe('evaluateArray boundary guard (FIX-8)', () => {
   it('handles schema hot-reload shrinking array items', () => {
     const node3: ArrayValueNode = {
       kind: 'array-node',
-      items: [staticNode('a'), staticNode('b'), staticNode('c')]
+      items: [staticNode('a'), staticNode('b'), staticNode('c')],
     };
     const state = createStateFromNode(node3);
     const ctx = createEvalContext(makeScope({}));
@@ -53,7 +53,7 @@ describe('evaluateArray boundary guard (FIX-8)', () => {
 
     const node2: ArrayValueNode = {
       kind: 'array-node',
-      items: [staticNode('x'), staticNode('y')]
+      items: [staticNode('x'), staticNode('y')],
     };
     const r2 = evaluateNode(node2, ctx, env, state.root);
     expect(r2.value).toEqual(['x', 'y']);
@@ -62,7 +62,7 @@ describe('evaluateArray boundary guard (FIX-8)', () => {
   it('handles schema hot-reload growing array items', () => {
     const node2: ArrayValueNode = {
       kind: 'array-node',
-      items: [staticNode('a'), staticNode('b')]
+      items: [staticNode('a'), staticNode('b')],
     };
     const state = createStateFromNode(node2);
     const ctx = createEvalContext(makeScope({}));
@@ -71,7 +71,7 @@ describe('evaluateArray boundary guard (FIX-8)', () => {
 
     const node4: ArrayValueNode = {
       kind: 'array-node',
-      items: [staticNode('a'), staticNode('b'), staticNode('c'), staticNode('d')]
+      items: [staticNode('a'), staticNode('b'), staticNode('c'), staticNode('d')],
     };
     const r = evaluateNode(node4, ctx, env, state.root);
     expect(r.value).toEqual(['a', 'b', 'c', 'd']);
@@ -83,7 +83,7 @@ describe('evaluateObject boundary guard (FIX-8)', () => {
     const nodeAB: ObjectValueNode = {
       kind: 'object-node',
       keys: ['a', 'b'],
-      entries: { a: staticNode(1), b: staticNode(2) }
+      entries: { a: staticNode(1), b: staticNode(2) },
     };
     const state = createStateFromNode(nodeAB);
     const ctx = createEvalContext(makeScope({}));
@@ -94,7 +94,7 @@ describe('evaluateObject boundary guard (FIX-8)', () => {
     const nodeAC: ObjectValueNode = {
       kind: 'object-node',
       keys: ['a', 'c'],
-      entries: { a: staticNode(10), c: staticNode(30) }
+      entries: { a: staticNode(10), c: staticNode(30) },
     };
     const r2 = evaluateNode(nodeAC, ctx, env, state.root);
     expect(r2.value).toEqual({ a: 10, c: 30 });
@@ -104,7 +104,7 @@ describe('evaluateObject boundary guard (FIX-8)', () => {
     const node1: ObjectValueNode = {
       kind: 'object-node',
       keys: ['x'],
-      entries: { x: staticNode(1) }
+      entries: { x: staticNode(1) },
     };
     const state = createStateFromNode(node1);
     const ctx = createEvalContext(makeScope({}));
@@ -114,7 +114,7 @@ describe('evaluateObject boundary guard (FIX-8)', () => {
     const node3: ObjectValueNode = {
       kind: 'object-node',
       keys: ['x', 'y', 'z'],
-      entries: { x: staticNode(1), y: staticNode(2), z: staticNode(3) }
+      entries: { x: staticNode(1), y: staticNode(2), z: staticNode(3) },
     };
     const r = evaluateNode(node3, ctx, env, state.root);
     expect(r.value).toEqual({ x: 1, y: 2, z: 3 });
@@ -125,7 +125,7 @@ describe('early-exit optimization (FIX-12)', () => {
   it('returns reusedReference on second identical array evaluation', () => {
     const node: ArrayValueNode = {
       kind: 'array-node',
-      items: [staticNode('a'), staticNode('b')]
+      items: [staticNode('a'), staticNode('b')],
     };
     const state = createStateFromNode(node);
     const ctx = createEvalContext(makeScope({}));
@@ -142,7 +142,7 @@ describe('early-exit optimization (FIX-12)', () => {
     const node: ObjectValueNode = {
       kind: 'object-node',
       keys: ['a', 'b'],
-      entries: { a: staticNode(1), b: staticNode(2) }
+      entries: { a: staticNode(1), b: staticNode(2) },
     };
     const state = createStateFromNode(node);
     const ctx = createEvalContext(makeScope({}));
@@ -162,7 +162,7 @@ describe('dependency tracking', () => {
     const node = {
       kind: 'expression-node' as const,
       source: '${flag ? a : b}',
-      compiled: formulaCompiler.compileExpression<string>('${flag ? a : b}')
+      compiled: formulaCompiler.compileExpression<string>('${flag ? a : b}'),
     };
     const state = createStateFromNode(node);
 
@@ -174,7 +174,7 @@ describe('dependency tracking', () => {
     expect(state.root.kind === 'leaf-state' ? state.root.dependencies : undefined).toEqual({
       paths: ['a', 'flag'],
       wildcard: false,
-      broadAccess: false
+      broadAccess: false,
     });
 
     const secondScope = makeScope({ flag: false, a: 'left', b: 'right' });
@@ -184,7 +184,7 @@ describe('dependency tracking', () => {
     expect(state.root.kind === 'leaf-state' ? state.root.dependencies : undefined).toEqual({
       paths: ['b', 'flag'],
       wildcard: false,
-      broadAccess: false
+      broadAccess: false,
     });
   });
 });

@@ -49,12 +49,14 @@ export function FieldsetLabPage() {
       scenarios={[
         {
           title: 'Basic field grouping',
-          description: 'A fieldset can wrap related form inputs under a shared legend without introducing a new form owner.',
+          description:
+            'A fieldset can wrap related form inputs under a shared legend without introducing a new form owner.',
           schema: basicFieldset,
         },
         {
           title: 'Collapsible fieldset',
-          description: 'Fieldsets can also start collapsed and toggle their body visibility through the legend.',
+          description:
+            'Fieldsets can also start collapsed and toggle their body visibility through the legend.',
           schema: collapsibleFieldset,
         },
       ]}

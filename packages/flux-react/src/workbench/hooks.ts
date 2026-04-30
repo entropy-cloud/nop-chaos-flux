@@ -34,18 +34,14 @@ function createHostScopeStore(initial: ScopeRef): HostScopeStore {
       for (const listener of listeners) {
         listener();
       }
-    }
+    },
   };
 }
 
 export function useBridgeSnapshot<TSnapshot, TCommand, TResult>(
   bridge: DomainBridge<TSnapshot, TCommand, TResult>,
 ): TSnapshot {
-  return useSyncExternalStore(
-    bridge.subscribe,
-    bridge.getSnapshot,
-    bridge.getSnapshot,
-  );
+  return useSyncExternalStore(bridge.subscribe, bridge.getSnapshot, bridge.getSnapshot);
 }
 
 export function useHostScope(
@@ -55,31 +51,34 @@ export function useHostScope(
 ): ScopeRef {
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
-  const [store] = useState<HostScopeStore>(() => createHostScopeStore(runtime.createHostProjectionScope({
-    parentScope,
-    projection: scopeData,
-    path,
-    scopeLabel
-  })));
+  const [store] = useState<HostScopeStore>(() =>
+    createHostScopeStore(
+      runtime.createHostProjectionScope({
+        parentScope,
+        projection: scopeData,
+        path,
+        scopeLabel,
+      }),
+    ),
+  );
   const scope = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   useLayoutEffect(() => {
     const current = store.current;
     const expectedId = `${path}:${scopeLabel}-host`;
 
-    if (
-      current.parent === parentScope &&
-      current.id === expectedId
-    ) {
+    if (current.parent === parentScope && current.id === expectedId) {
       return;
     }
 
-    store.replace(runtime.createHostProjectionScope({
-      parentScope,
-      projection: scopeData,
-      path,
-      scopeLabel
-    }));
+    store.replace(
+      runtime.createHostProjectionScope({
+        parentScope,
+        projection: scopeData,
+        path,
+        scopeLabel,
+      }),
+    );
   }, [parentScope, path, runtime, scopeData, scopeLabel, store]);
 
   useLayoutEffect(() => {

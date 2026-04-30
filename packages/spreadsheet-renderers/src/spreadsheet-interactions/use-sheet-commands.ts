@@ -8,7 +8,7 @@ export function useSheetCommands(
   sheetId: string,
   selectedCell: { row: number; col: number } | null,
   getSelectedRange: () => SpreadsheetRange | null,
-  addLog: (msg: string) => void
+  addLog: (msg: string) => void,
 ) {
   const handleInsertRow = useCallback(async () => {
     if (!selectedCell) return;
@@ -41,29 +41,49 @@ export function useSheetCommands(
     addLog('Filled down');
   }, [getSelectedRange, bridge, addLog]);
 
-  const handleFillSeries = useCallback(async (direction: 'down' | 'right') => {
-    const range = getSelectedRange();
-    if (!range) return;
-    await bridge.dispatch({ type: 'spreadsheet:fillSeries', range, direction, seriesType: 'linear' });
-    addLog(`Filled series ${direction}`);
-  }, [getSelectedRange, bridge, addLog]);
+  const handleFillSeries = useCallback(
+    async (direction: 'down' | 'right') => {
+      const range = getSelectedRange();
+      if (!range) return;
+      await bridge.dispatch({
+        type: 'spreadsheet:fillSeries',
+        range,
+        direction,
+        seriesType: 'linear',
+      });
+      addLog(`Filled series ${direction}`);
+    },
+    [getSelectedRange, bridge, addLog],
+  );
 
   const handleAddSheet = useCallback(async () => {
-    await bridge.dispatch({ type: 'spreadsheet:addSheet', name: `Sheet${snapshot.workbook.sheets.length + 1}` });
+    await bridge.dispatch({
+      type: 'spreadsheet:addSheet',
+      name: `Sheet${snapshot.workbook.sheets.length + 1}`,
+    });
     addLog('Added new sheet');
   }, [bridge, snapshot, addLog]);
 
-  const handleRemoveSheet = useCallback(async (id: string) => {
-    if (snapshot.workbook.sheets.length <= 1) { addLog('Cannot remove last sheet'); return; }
-    await bridge.dispatch({ type: 'spreadsheet:removeSheet', sheetId: id });
-    addLog('Removed sheet');
-  }, [bridge, snapshot, addLog]);
+  const handleRemoveSheet = useCallback(
+    async (id: string) => {
+      if (snapshot.workbook.sheets.length <= 1) {
+        addLog('Cannot remove last sheet');
+        return;
+      }
+      await bridge.dispatch({ type: 'spreadsheet:removeSheet', sheetId: id });
+      addLog('Removed sheet');
+    },
+    [bridge, snapshot, addLog],
+  );
 
-  const handleRenameSheet = useCallback(async (id: string, name: string) => {
-    startTransition(() => {});
-    await bridge.dispatch({ type: 'spreadsheet:renameSheet', sheetId: id, name });
-    addLog(`Renamed sheet to "${name}"`);
-  }, [bridge, addLog]);
+  const handleRenameSheet = useCallback(
+    async (id: string, name: string) => {
+      startTransition(() => {});
+      await bridge.dispatch({ type: 'spreadsheet:renameSheet', sheetId: id, name });
+      addLog(`Renamed sheet to "${name}"`);
+    },
+    [bridge, addLog],
+  );
 
   const handleMerge = useCallback(async () => {
     const range = getSelectedRange();
@@ -88,7 +108,12 @@ export function useSheetCommands(
 
   const handleFreeze = useCallback(async () => {
     if (!selectedCell) return;
-    await bridge.dispatch({ type: 'spreadsheet:freezePanes', sheetId, row: selectedCell.row, col: selectedCell.col });
+    await bridge.dispatch({
+      type: 'spreadsheet:freezePanes',
+      sheetId,
+      row: selectedCell.row,
+      col: selectedCell.col,
+    });
     addLog(`Froze panes at ${cellAddress(selectedCell.row, selectedCell.col)}`);
   }, [selectedCell, sheetId, bridge, addLog]);
 
@@ -107,20 +132,31 @@ export function useSheetCommands(
     addLog('Redo');
   }, [bridge, addLog]);
 
-  const getMergeInfo = useCallback((row: number, col: number): { isMerged: boolean; isTopLeft: boolean; rowSpan: number; colSpan: number } => {
-    const merges = snapshot.activeSheet?.merges ?? [];
-    for (const merge of merges) {
-      if (row >= merge.startRow && row <= merge.endRow && col >= merge.startCol && col <= merge.endCol) {
-        return {
-          isMerged: true,
-          isTopLeft: row === merge.startRow && col === merge.startCol,
-          rowSpan: merge.endRow - merge.startRow + 1,
-          colSpan: merge.endCol - merge.startCol + 1,
-        };
+  const getMergeInfo = useCallback(
+    (
+      row: number,
+      col: number,
+    ): { isMerged: boolean; isTopLeft: boolean; rowSpan: number; colSpan: number } => {
+      const merges = snapshot.activeSheet?.merges ?? [];
+      for (const merge of merges) {
+        if (
+          row >= merge.startRow &&
+          row <= merge.endRow &&
+          col >= merge.startCol &&
+          col <= merge.endCol
+        ) {
+          return {
+            isMerged: true,
+            isTopLeft: row === merge.startRow && col === merge.startCol,
+            rowSpan: merge.endRow - merge.startRow + 1,
+            colSpan: merge.endCol - merge.startCol + 1,
+          };
+        }
       }
-    }
-    return { isMerged: false, isTopLeft: false, rowSpan: 1, colSpan: 1 };
-  }, [snapshot.activeSheet?.merges]);
+      return { isMerged: false, isTopLeft: false, rowSpan: 1, colSpan: 1 };
+    },
+    [snapshot.activeSheet?.merges],
+  );
 
   return {
     handleInsertRow,

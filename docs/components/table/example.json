@@ -50,11 +50,7 @@
     "enabled": true,
     "currentPage": 1,
     "pageSize": 10,
-    "pageSizeOptions": [
-      10,
-      20,
-      50
-    ]
+    "pageSizeOptions": [10, 20, 50]
   },
   "empty": "暂无数据"
 }

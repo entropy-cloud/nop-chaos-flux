@@ -225,7 +225,11 @@ interface ResolvedActionHandler {
 }
 
 interface ActionNamespaceProvider {
-  invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext): Promise<ActionResult> | ActionResult;
+  invoke(
+    method: string,
+    payload: Record<string, unknown> | undefined,
+    ctx: ActionContext,
+  ): Promise<ActionResult> | ActionResult;
   dispose?(): void;
   listMethods?(): readonly string[];
 }
@@ -258,7 +262,9 @@ Normative shape:
 interface ComponentHandleRegistry {
   register(handle: ComponentHandle): void;
   unregister(handle: ComponentHandle): void;
-  resolve(target: ComponentTarget):
+  resolve(
+    target: ComponentTarget,
+  ):
     | { kind: 'found'; handle: ComponentHandle }
     | { kind: 'not-found' }
     | { kind: 'ambiguous'; matches: readonly ComponentHandle[] };
@@ -279,7 +285,11 @@ interface ComponentHandle {
 
 interface ComponentCapabilities {
   store?: unknown;
-  invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext): Promise<ActionResult> | ActionResult;
+  invoke(
+    method: string,
+    payload: Record<string, unknown> | undefined,
+    ctx: ActionContext,
+  ): Promise<ActionResult> | ActionResult;
   hasMethod?(method: string): boolean;
   listMethods?(): readonly string[];
 }
@@ -686,18 +696,18 @@ function createDesignerActionProvider(input: DesignerActionProviderInput): Actio
             data: input.bridge.dispatch({
               type: 'addNode',
               nodeType: String(payload?.nodeType ?? ''),
-              position: payload?.position as { x: number; y: number } | undefined
-            })
+              position: payload?.position as { x: number; y: number } | undefined,
+            }),
           };
         case 'export':
           return {
             ok: true,
-            data: input.bridge.dispatch({ type: 'export' as never })
+            data: input.bridge.dispatch({ type: 'export' as never }),
           };
         default:
           return { ok: false, error: new Error(`Unknown designer method: ${method}`) };
       }
-    }
+    },
   };
 }
 ```
@@ -734,8 +744,8 @@ function createFormComponentHandle(form: FormRuntime): ComponentHandle {
           default:
             return { ok: false, error: new Error(`Unknown form method: ${method}`) };
         }
-      }
-    }
+      },
+    },
   };
 }
 ```
@@ -832,6 +842,7 @@ The button `confirm` in the dialog resolves to the dialog's `xui:actions.confirm
 6. not-found error
 
 This ordering ensures:
+
 - built-in actions can never be shadowed by `xui:actions` definitions
 - component targeting remains explicit
 - `xui:actions` names (plain identifiers) never collide with namespaced actions (`ns:method`)
@@ -957,9 +968,7 @@ Recommended shape:
 ```json
 {
   "type": "container",
-  "xui:imports": [
-    { "from": "demo-lib", "as": "demo" }
-  ],
+  "xui:imports": [{ "from": "demo-lib", "as": "demo" }],
   "body": [
     {
       "type": "button",
@@ -1020,8 +1029,12 @@ Recommended runtime boundary:
 
 ```ts
 interface ImportedLibraryModule {
-  createNamespace(context: ImportedNamespaceContext): Promise<ActionNamespaceProvider> | ActionNamespaceProvider;
-  createExpressionHelpers?(context: ImportedNamespaceContext): Promise<Record<string, unknown>> | Record<string, unknown>;
+  createNamespace(
+    context: ImportedNamespaceContext,
+  ): Promise<ActionNamespaceProvider> | ActionNamespaceProvider;
+  createExpressionHelpers?(
+    context: ImportedNamespaceContext,
+  ): Promise<Record<string, unknown>> | Record<string, unknown>;
 }
 
 interface ImportedLibraryLoader {

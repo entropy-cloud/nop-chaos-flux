@@ -23,8 +23,12 @@ const COMPONENT_LAB_RENDERER_TIMEOUT = 30_000;
 export async function openRendererDirect(page: Page, rendererId: string): Promise<void> {
   await page.goto(`/#/lab/${rendererId}`, { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
-  await expect(page.getByTestId('component-lab')).toBeVisible({ timeout: COMPONENT_LAB_BOOT_TIMEOUT });
-  await expect(page.getByTestId(`component-lab-renderer-${rendererId}`)).toBeVisible({ timeout: COMPONENT_LAB_RENDERER_TIMEOUT });
+  await expect(page.getByTestId('component-lab')).toBeVisible({
+    timeout: COMPONENT_LAB_BOOT_TIMEOUT,
+  });
+  await expect(page.getByTestId(`component-lab-renderer-${rendererId}`)).toBeVisible({
+    timeout: COMPONENT_LAB_RENDERER_TIMEOUT,
+  });
 }
 
 /**
@@ -33,7 +37,9 @@ export async function openRendererDirect(page: Page, rendererId: string): Promis
 export async function openLabHome(page: Page): Promise<void> {
   await page.goto('/#/lab', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
-  await expect(page.getByTestId('component-lab')).toBeVisible({ timeout: COMPONENT_LAB_BOOT_TIMEOUT });
+  await expect(page.getByTestId('component-lab')).toBeVisible({
+    timeout: COMPONENT_LAB_BOOT_TIMEOUT,
+  });
 }
 
 /**
@@ -108,5 +114,8 @@ export class ComponentLabHelper {
  * Mirrors the slug computation in MultiScenarioLabPage.tsx.
  */
 export function scenarioSlug(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }

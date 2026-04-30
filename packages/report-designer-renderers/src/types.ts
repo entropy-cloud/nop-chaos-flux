@@ -5,9 +5,18 @@ import type {
   ReportDesignerProfile,
   ReportTemplateDocument,
 } from '@nop-chaos/report-designer-core';
-import type { ReportFieldPanelSchema, ReportInspectorSchema, ReportToolbarSchema } from './schemas.js';
+import type {
+  ReportFieldPanelSchema,
+  ReportInspectorSchema,
+  ReportToolbarSchema,
+} from './schemas.js';
 
-export type { ToolbarItem, ReportToolbarSchema, ReportFieldPanelSchema, ReportInspectorSchema } from './schemas.js';
+export type {
+  ToolbarItem,
+  ReportToolbarSchema,
+  ReportFieldPanelSchema,
+  ReportInspectorSchema,
+} from './schemas.js';
 
 export interface ReportDesignerPageSchemaInput {
   type: 'report-designer-page';
@@ -33,7 +42,9 @@ export interface ReportDesignerPageSchemaInput {
 
 export type ReportDesignerPageSchema = BaseSchema & ReportDesignerPageSchemaInput;
 
-export function defineReportDesignerPageSchema<T extends ReportDesignerPageSchemaInput>(schema: T): ReportDesignerPageSchema {
+export function defineReportDesignerPageSchema<T extends ReportDesignerPageSchemaInput>(
+  schema: T,
+): ReportDesignerPageSchema {
   return schema as unknown as ReportDesignerPageSchema;
 }
 

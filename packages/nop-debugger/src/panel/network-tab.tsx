@@ -18,31 +18,68 @@ export function NetworkTab(props: {
 }) {
   const { mergedRequests, networkExpandedKey, setNetworkExpandedKey } = props;
 
-  const getStatusClassName = (status: MergedRequest['status']) => cn('ndbg-badge', {
-    'ndbg-status-pending': status === 'pending',
-    'ndbg-status-completed': status === 'completed',
-    'ndbg-status-failed': status === 'failed',
-    'ndbg-status-aborted': status === 'aborted',
-  });
+  const getStatusClassName = (status: MergedRequest['status']) =>
+    cn('ndbg-badge', {
+      'ndbg-status-pending': status === 'pending',
+      'ndbg-status-completed': status === 'completed',
+      'ndbg-status-failed': status === 'failed',
+      'ndbg-status-aborted': status === 'aborted',
+    });
 
   return (
     <div className="ndbg-list">
-      {mergedRequests.length === 0 ? <p className="ndbg-empty">{t('flux.debugger.noNetworkEvents')}</p> : null}
+      {mergedRequests.length === 0 ? (
+        <p className="ndbg-empty">{t('flux.debugger.noNetworkEvents')}</p>
+      ) : null}
       {mergedRequests.map((request) => (
-        <article key={request.key} className="ndbg-entry" onClick={() => setNetworkExpandedKey(networkExpandedKey === request.key ? null : request.key)}>
+        <article
+          key={request.key}
+          className="ndbg-entry"
+          onClick={() =>
+            setNetworkExpandedKey(networkExpandedKey === request.key ? null : request.key)
+          }
+        >
           <div className="ndbg-entry-topline">
-            <span className={getStatusClassName(request.status)} data-group="api">{request.status}</span>
+            <span className={getStatusClassName(request.status)} data-group="api">
+              {request.status}
+            </span>
             <time>{formatClock(request.startEvent?.timestamp ?? 0)}</time>
           </div>
           <strong className="ndbg-entry-summary">{request.summary}</strong>
-          <span className="ndbg-entry-meta">{request.requestInstanceId ? `${request.requestInstanceId} | ` : ''}{request.durationMs != null ? `${request.durationMs}ms` : request.status === 'pending' ? 'pending...' : ''}</span>
+          <span className="ndbg-entry-meta">
+            {request.requestInstanceId ? `${request.requestInstanceId} | ` : ''}
+            {request.durationMs != null
+              ? `${request.durationMs}ms`
+              : request.status === 'pending'
+                ? 'pending...'
+                : ''}
+          </span>
           {networkExpandedKey === request.key ? (
             <div className="ndbg-entry-expanded" onClick={(event) => event.stopPropagation()}>
-              {request.startEvent?.network ? <div><span className="ndbg-json-key">{t('flux.debugger.request')}</span><JsonViewer data={request.startEvent.network} defaultExpanded={2} /></div> : null}
-              {request.endEvent?.network ? <div><span className="ndbg-json-key">{t('flux.debugger.response')}</span><JsonViewer data={request.endEvent.network} defaultExpanded={2} /></div> : null}
-              {request.endEvent?.exportedData != null ? <div><span className="ndbg-json-key">{t('flux.debugger.responseData')}</span><JsonViewer data={request.endEvent.exportedData} defaultExpanded={2} /></div> : null}
-              {request.startEvent?.detail ? <code className="ndbg-entry-detail">{request.startEvent.detail}</code> : null}
-              {request.endEvent?.detail ? <code className="ndbg-entry-detail">{request.endEvent.detail}</code> : null}
+              {request.startEvent?.network ? (
+                <div>
+                  <span className="ndbg-json-key">{t('flux.debugger.request')}</span>
+                  <JsonViewer data={request.startEvent.network} defaultExpanded={2} />
+                </div>
+              ) : null}
+              {request.endEvent?.network ? (
+                <div>
+                  <span className="ndbg-json-key">{t('flux.debugger.response')}</span>
+                  <JsonViewer data={request.endEvent.network} defaultExpanded={2} />
+                </div>
+              ) : null}
+              {request.endEvent?.exportedData != null ? (
+                <div>
+                  <span className="ndbg-json-key">{t('flux.debugger.responseData')}</span>
+                  <JsonViewer data={request.endEvent.exportedData} defaultExpanded={2} />
+                </div>
+              ) : null}
+              {request.startEvent?.detail ? (
+                <code className="ndbg-entry-detail">{request.startEvent.detail}</code>
+              ) : null}
+              {request.endEvent?.detail ? (
+                <code className="ndbg-entry-detail">{request.endEvent.detail}</code>
+              ) : null}
             </div>
           ) : null}
         </article>

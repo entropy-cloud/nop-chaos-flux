@@ -13,7 +13,7 @@ import type {
 function compilePayload(
   action: ActionSchema,
   compiler: ExpressionCompiler,
-  options?: ExpressionCompileOptions
+  options?: ExpressionCompileOptions,
 ): CompiledActionPayload {
   const payload: CompiledActionPayload = {};
 
@@ -51,7 +51,7 @@ function compileActionNode(
   action: ActionSchema,
   compiler: ExpressionCompiler,
   basePath: string,
-  options?: ExpressionCompileOptions
+  options?: ExpressionCompileOptions,
 ): CompiledActionNode {
   const node: CompiledActionNode = {
     action: action.action,
@@ -63,33 +63,38 @@ function compileActionNode(
   };
 
   if (action.when !== undefined) {
-    node.when = compiler.compileValue(action.when, options) as unknown as CompiledRuntimeValue<boolean>;
+    node.when = compiler.compileValue(
+      action.when,
+      options,
+    ) as unknown as CompiledRuntimeValue<boolean>;
   }
 
   if (action.then !== undefined) {
     const thenActions = Array.isArray(action.then) ? action.then : [action.then];
     node.then = thenActions.map((a, i) =>
-      compileActionNode(a, compiler, `${basePath}.then[${i}]`, options)
+      compileActionNode(a, compiler, `${basePath}.then[${i}]`, options),
     );
   }
 
   if (action.onError !== undefined) {
     const onErrorActions = Array.isArray(action.onError) ? action.onError : [action.onError];
     node.onError = onErrorActions.map((a, i) =>
-      compileActionNode(a, compiler, `${basePath}.onError[${i}]`, options)
+      compileActionNode(a, compiler, `${basePath}.onError[${i}]`, options),
     );
   }
 
   if (action.onSettled !== undefined) {
-    const onSettledActions = Array.isArray(action.onSettled) ? action.onSettled : [action.onSettled];
+    const onSettledActions = Array.isArray(action.onSettled)
+      ? action.onSettled
+      : [action.onSettled];
     node.onSettled = onSettledActions.map((a, i) =>
-      compileActionNode(a, compiler, `${basePath}.onSettled[${i}]`, options)
+      compileActionNode(a, compiler, `${basePath}.onSettled[${i}]`, options),
     );
   }
 
   if (action.parallel !== undefined) {
     node.parallel = action.parallel.map((a, i) =>
-      compileActionNode(a, compiler, `${basePath}.parallel[${i}]`, options)
+      compileActionNode(a, compiler, `${basePath}.parallel[${i}]`, options),
     );
   }
 
@@ -97,9 +102,7 @@ function compileActionNode(
 }
 
 function isPayloadFullyStatic(payload: CompiledActionPayload): boolean {
-  const values = [
-    payload.args,
-  ];
+  const values = [payload.args];
 
   return values.every((v) => v === undefined || v.isStatic);
 }
@@ -131,7 +134,7 @@ export interface ActionCompilerOptions extends ExpressionCompileOptions {
 export function compileAction(
   action: ActionSchema,
   compiler: ExpressionCompiler,
-  options?: ActionCompilerOptions
+  options?: ActionCompilerOptions,
 ): CompiledActionProgram {
   const basePath = options?.basePath ?? '$';
   const node = compileActionNode(action, compiler, basePath, options);
@@ -145,12 +148,12 @@ export function compileAction(
 export function compileActions(
   actions: ActionSchema | ActionSchema[],
   compiler: ExpressionCompiler,
-  options?: ActionCompilerOptions
+  options?: ActionCompilerOptions,
 ): CompiledActionProgram {
   const basePath = options?.basePath ?? '$';
   const actionArray = Array.isArray(actions) ? actions : [actions];
   const nodes = actionArray.map((a, i) =>
-    compileActionNode(a, compiler, `${basePath}[${i}]`, options)
+    compileActionNode(a, compiler, `${basePath}[${i}]`, options),
   );
 
   return {

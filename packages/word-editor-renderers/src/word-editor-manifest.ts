@@ -175,7 +175,9 @@ const manifestVersions = new Map<string, HostCapabilityProjectionManifest>([
   ['latest', WORD_EDITOR_MANIFEST_V1],
 ]);
 
-export function resolveWordEditorManifest(versionSelector: string): HostCapabilityProjectionManifest | undefined {
+export function resolveWordEditorManifest(
+  versionSelector: string,
+): HostCapabilityProjectionManifest | undefined {
   return manifestVersions.get(versionSelector);
 }
 

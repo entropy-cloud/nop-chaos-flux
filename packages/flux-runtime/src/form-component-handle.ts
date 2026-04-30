@@ -12,7 +12,9 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
     capabilities: {
       store: form.store,
       hasMethod(method) {
-        return ['submit', 'validate', 'reset', 'setValue', 'setValues', 'getValues'].includes(method);
+        return ['submit', 'validate', 'reset', 'setValue', 'setValues', 'getValues'].includes(
+          method,
+        );
       },
       listMethods() {
         return ['submit', 'validate', 'reset', 'setValue', 'setValues', 'getValues'];
@@ -22,13 +24,18 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
 
         switch (method) {
           case 'submit':
-            return form.submit({ interactionId: payload && 'interactionId' in payload ? String(payload.interactionId ?? '') || undefined : undefined });
+            return form.submit({
+              interactionId:
+                payload && 'interactionId' in payload
+                  ? String(payload.interactionId ?? '') || undefined
+                  : undefined,
+            });
           case 'validate': {
             const result = await form.validateForm();
             return {
               ok: result.ok,
               data: result,
-              error: result.ok ? undefined : result.errors
+              error: result.ok ? undefined : result.errors,
             };
           }
           case 'reset':
@@ -45,10 +52,10 @@ export function createFormComponentHandle(form: FormRuntime): ComponentHandle {
           default:
             return {
               ok: false,
-              error: new Error(`Unsupported form method: ${method}`)
+              error: new Error(`Unsupported form method: ${method}`),
             };
         }
-      }
-    }
+      },
+    },
   };
 }

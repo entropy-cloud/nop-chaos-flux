@@ -5,12 +5,16 @@ export function createHostProjectionScope(input: {
   projection: Record<string, unknown>;
   path: string;
   scopeLabel: string;
-  createChildScope: (parent: ScopeRef, patch: Record<string, unknown>, options?: { scopeKey?: string; pathSuffix?: string; isolate?: boolean }) => ScopeRef;
+  createChildScope: (
+    parent: ScopeRef,
+    patch: Record<string, unknown>,
+    options?: { scopeKey?: string; pathSuffix?: string; isolate?: boolean },
+  ) => ScopeRef;
 }) {
   let reservedKeys = new Set(Object.keys(input.projection));
   const hostScope = input.createChildScope(input.parentScope, input.projection, {
     scopeKey: `${input.path}:${input.scopeLabel}-host`,
-    pathSuffix: input.scopeLabel
+    pathSuffix: input.scopeLabel,
   });
 
   return {
@@ -49,7 +53,9 @@ export function createHostProjectionScope(input: {
       const nextKeys = Object.keys(data);
 
       if (nextKeys.some((key) => reservedKeys.has(key))) {
-        throw new Error(`Cannot merge projected host fields into host scope: ${nextKeys.join(', ')}`);
+        throw new Error(
+          `Cannot merge projected host fields into host scope: ${nextKeys.join(', ')}`,
+        );
       }
 
       hostScope.merge(data);
@@ -57,6 +63,6 @@ export function createHostProjectionScope(input: {
     replace(data: Record<string, unknown>) {
       reservedKeys = new Set(Object.keys(data));
       hostScope.replace?.(data);
-    }
+    },
   };
 }

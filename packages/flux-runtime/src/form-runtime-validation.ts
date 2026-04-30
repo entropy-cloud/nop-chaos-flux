@@ -5,9 +5,13 @@ import type {
   RuntimeFieldRegistration,
   ValidationError,
   ValidationReason,
-  ValidationResult
+  ValidationResult,
 } from '@nop-chaos/flux-core';
-import { getCompiledValidationField, hasCompiledValidationNodes, validationErrorsEqual } from '@nop-chaos/flux-core';
+import {
+  getCompiledValidationField,
+  hasCompiledValidationNodes,
+  validationErrorsEqual,
+} from '@nop-chaos/flux-core';
 import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration';
 import { collectSubtreeNodePaths, collectSubtreePaths } from './form-runtime-subtree';
 import type { FormRuntimeValidationState } from './form-runtime-types';
@@ -17,13 +21,17 @@ import { normalizeRuntimeValidationErrors } from './validation';
 function createValidationResult(errors: ValidationError[]): ValidationResult {
   return {
     ok: errors.length === 0,
-    errors
+    errors,
   };
 }
 
 const VALIDATION_CANCELLED = Symbol('validation-cancelled');
 
-function setPathErrors(sharedState: FormRuntimeValidationState, path: string, errors: ValidationError[]) {
+function setPathErrors(
+  sharedState: FormRuntimeValidationState,
+  path: string,
+  errors: ValidationError[],
+) {
   sharedState.store.setPathErrors(path, errors);
 }
 
@@ -54,9 +62,14 @@ function commitPathValidationState(input: {
     }
   }
 
-  const nextFieldStates = Object.keys(nextFieldState).length > 0
-    ? { ...fieldStates, [input.path]: nextFieldState }
-    : (() => { const next = { ...fieldStates }; delete next[input.path]; return next; })();
+  const nextFieldStates =
+    Object.keys(nextFieldState).length > 0
+      ? { ...fieldStates, [input.path]: nextFieldState }
+      : (() => {
+          const next = { ...fieldStates };
+          delete next[input.path];
+          return next;
+        })();
 
   if (nextFieldStates !== fieldStates) {
     input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
@@ -94,7 +107,7 @@ export function waitForValidationDebounce(
   path: string,
   debounce: number | undefined,
   runId: number,
-  reason?: ValidationReason
+  reason?: ValidationReason,
 ): Promise<boolean> {
   const isHighPriority = reason === 'submit' || reason === 'commit';
 
@@ -110,19 +123,23 @@ export function waitForValidationDebounce(
 async function validateRuntimeRegistrationRoot(
   sharedState: FormRuntimeValidationState,
   path: string,
-  registration: RuntimeFieldRegistration
+  registration: RuntimeFieldRegistration,
 ): Promise<ValidationResult> {
   const capturedGeneration = sharedState.modelGeneration;
   const runId = (sharedState.validationRuns.get(path) ?? 0) + 1;
   sharedState.validationRuns.set(path, runId);
-  const runtimeErrors = normalizeRuntimeValidationErrors(await registration.validate?.(), registration, path) ?? [];
-  if (sharedState.validationRuns.get(path) !== runId || sharedState.modelGeneration !== capturedGeneration) {
+  const runtimeErrors =
+    normalizeRuntimeValidationErrors(await registration.validate?.(), registration, path) ?? [];
+  if (
+    sharedState.validationRuns.get(path) !== runId ||
+    sharedState.modelGeneration !== capturedGeneration
+  ) {
     return createValidationResult([]);
   }
   commitPathValidationState({
     sharedState,
     path,
-    errors: runtimeErrors
+    errors: runtimeErrors,
   });
   return createValidationResult(runtimeErrors);
 }
@@ -131,24 +148,28 @@ async function validateRuntimeRegistrationChild(
   sharedState: FormRuntimeValidationState,
   path: string,
   registration: RuntimeFieldRegistration,
-  childPath: string
+  childPath: string,
 ): Promise<ValidationResult> {
   const capturedGeneration = sharedState.modelGeneration;
   const runId = (sharedState.validationRuns.get(childPath) ?? 0) + 1;
   sharedState.validationRuns.set(childPath, runId);
-  const runtimeErrors = normalizeRuntimeValidationErrors(
-    await registration.validateChild?.(childPath),
-    registration,
-    path,
-    childPath
-  ) ?? [];
-  if (sharedState.validationRuns.get(childPath) !== runId || sharedState.modelGeneration !== capturedGeneration) {
+  const runtimeErrors =
+    normalizeRuntimeValidationErrors(
+      await registration.validateChild?.(childPath),
+      registration,
+      path,
+      childPath,
+    ) ?? [];
+  if (
+    sharedState.validationRuns.get(childPath) !== runId ||
+    sharedState.modelGeneration !== capturedGeneration
+  ) {
     return createValidationResult([]);
   }
   commitPathValidationState({
     sharedState,
     path: childPath,
-    errors: runtimeErrors
+    errors: runtimeErrors,
   });
   return createValidationResult(runtimeErrors);
 }
@@ -156,7 +177,7 @@ async function validateRuntimeRegistrationChild(
 async function collectRuntimeRegistrationChildErrors(
   registration: RuntimeFieldRegistration | undefined,
   runtimeTarget: { childPath: string | undefined },
-  path: string
+  path: string,
 ) {
   if (!registration || !runtimeTarget.childPath || !registration.validateChild) {
     return [];
@@ -166,7 +187,7 @@ async function collectRuntimeRegistrationChildErrors(
     await registration.validateChild(runtimeTarget.childPath),
     registration,
     path,
-    runtimeTarget.childPath
+    runtimeTarget.childPath,
   );
 }
 
@@ -174,7 +195,7 @@ async function validateCompiledField(
   sharedState: FormRuntimeValidationState,
   path: string,
   field: CompiledFormValidationField,
-  reason?: ValidationReason
+  reason?: ValidationReason,
 ): Promise<ValidationResult> {
   const runtimeTarget = findRuntimeRegistration(sharedState, path);
   const runtimeRegistration = runtimeTarget.entry?.registration;
@@ -193,7 +214,7 @@ async function validateCompiledField(
         ownerKind: 'validation',
         ownerId: `validation:${sharedState.scope.id}:${path}`,
         scopeId: sharedState.scope.id,
-        cause: reason ?? 'manual'
+        cause: reason ?? 'manual',
       })
     : undefined;
 
@@ -209,7 +230,10 @@ async function validateCompiledField(
       validatingTimer = setTimeout(() => {
         validatingTimer = undefined;
 
-        if (sharedState.validationRuns.get(path) === runId && sharedState.modelGeneration === capturedGeneration) {
+        if (
+          sharedState.validationRuns.get(path) === runId &&
+          sharedState.modelGeneration === capturedGeneration
+        ) {
           sharedState.store.setValidating(path, true);
         }
       }, validatingDelay);
@@ -223,7 +247,13 @@ async function validateCompiledField(
       const rule = compiledRule.rule;
 
       if (rule.kind === 'async') {
-        const shouldRun = await waitForValidationDebounce(sharedState, path, rule.debounce, runId, reason);
+        const shouldRun = await waitForValidationDebounce(
+          sharedState,
+          path,
+          rule.debounce,
+          runId,
+          reason,
+        );
 
         if (!shouldRun) {
           throw VALIDATION_CANCELLED;
@@ -238,7 +268,7 @@ async function validateCompiledField(
           rule,
           field,
           sharedState.scope,
-          validationAbortController?.signal
+          validationAbortController?.signal,
         );
 
         if (asyncError) {
@@ -248,28 +278,44 @@ async function validateCompiledField(
         continue;
       }
 
-      const syncError = sharedState.inputValue.validateRule(compiledRule, value, field, sharedState.scope);
+      const syncError = sharedState.inputValue.validateRule(
+        compiledRule,
+        value,
+        field,
+        sharedState.scope,
+      );
 
       if (syncError) {
         errors.push(syncError);
       }
     }
 
-    const runtimeChildErrors = await collectRuntimeRegistrationChildErrors(runtimeRegistration, runtimeTarget, path);
+    const runtimeChildErrors = await collectRuntimeRegistrationChildErrors(
+      runtimeRegistration,
+      runtimeTarget,
+      path,
+    );
 
     if (runtimeChildErrors.length > 0) {
       errors.push(...runtimeChildErrors);
     }
 
     if (runtimeRegistration?.validate) {
-      const runtimeErrors = normalizeRuntimeValidationErrors(await runtimeRegistration.validate(), runtimeRegistration, path);
+      const runtimeErrors = normalizeRuntimeValidationErrors(
+        await runtimeRegistration.validate(),
+        runtimeRegistration,
+        path,
+      );
 
       if (runtimeErrors.length > 0) {
         errors.push(...runtimeErrors);
       }
     }
 
-    if (sharedState.validationRuns.get(path) !== runId || sharedState.modelGeneration !== capturedGeneration) {
+    if (
+      sharedState.validationRuns.get(path) !== runId ||
+      sharedState.modelGeneration !== capturedGeneration
+    ) {
       finalErrors = [];
       if (validationRun) {
         sharedState.validationAsyncGovernance.settleRun(validationRun, { outcome: 'succeeded' });
@@ -292,7 +338,7 @@ async function validateCompiledField(
     if (validationRun && error === VALIDATION_CANCELLED) {
       sharedState.validationAsyncGovernance.settleRun(validationRun, {
         outcome: 'cancelled',
-        cancelled: true
+        cancelled: true,
       });
     }
 
@@ -303,22 +349,33 @@ async function validateCompiledField(
       validatingTimer = undefined;
     }
 
-    if (validationAbortController && sharedState.validationAbortControllers.get(path) === validationAbortController) {
+    if (
+      validationAbortController &&
+      sharedState.validationAbortControllers.get(path) === validationAbortController
+    ) {
       sharedState.validationAbortControllers.delete(path);
     }
 
-    if (hasAsyncRules && sharedState.validationRuns.get(path) === runId && sharedState.modelGeneration === capturedGeneration) {
+    if (
+      hasAsyncRules &&
+      sharedState.validationRuns.get(path) === runId &&
+      sharedState.modelGeneration === capturedGeneration
+    ) {
       commitPathValidationState({
         sharedState,
         path,
         errors: finalErrors,
-        validating: false
+        validating: false,
       });
     }
   }
 }
 
-export async function validatePath(sharedState: FormRuntimeValidationState, path: string, reason?: ValidationReason): Promise<ValidationResult> {
+export async function validatePath(
+  sharedState: FormRuntimeValidationState,
+  path: string,
+  reason?: ValidationReason,
+): Promise<ValidationResult> {
   if (sharedState.lifecycleState === 'disposed') {
     return createValidationResult([]);
   }
@@ -340,7 +397,12 @@ export async function validatePath(sharedState: FormRuntimeValidationState, path
   }
 
   if (!field && runtimeTarget.childPath && runtimeRegistration?.validateChild) {
-    return validateRuntimeRegistrationChild(sharedState, path, runtimeRegistration, runtimeTarget.childPath);
+    return validateRuntimeRegistrationChild(
+      sharedState,
+      path,
+      runtimeRegistration,
+      runtimeTarget.childPath,
+    );
   }
 
   if (!field && runtimeRegistration?.validate) {
@@ -365,7 +427,7 @@ export async function validatePath(sharedState: FormRuntimeValidationState, path
 export async function validateSubtreeByNode(
   sharedState: FormRuntimeValidationState,
   path: string,
-  reason?: ValidationReason
+  reason?: ValidationReason,
 ): Promise<FormValidationResult | undefined> {
   if (!hasCompiledValidationNodes(sharedState.inputValue.validation)) {
     return undefined;
@@ -403,6 +465,6 @@ export async function validateSubtreeByNode(
   return {
     ok: errors.length === 0,
     errors,
-    fieldErrors
+    fieldErrors,
   };
 }

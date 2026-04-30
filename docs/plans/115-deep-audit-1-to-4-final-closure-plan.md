@@ -82,18 +82,18 @@ Forbidden end states for this plan:
 
 ## Owned Item Ledger
 
-| ID | Item | Current Area | Allowed Final Outcome |
-| --- | --- | --- | --- |
-| A1 | Hidden-field stale error cleanup | `packages/flux-runtime/src/form-runtime-field-ops.ts`, `form-runtime-validation.ts`, `form-runtime-owner.ts` | `resolved` or `closed-no-further-action` |
-| A2 | Runtime-only async validation stale suppression | `packages/flux-runtime/src/form-runtime-validation.ts` | `resolved` or `closed-no-further-action` |
-| A3 | CRUD selection summary drift | `packages/flux-renderers-data/src/crud-renderer.tsx` | `resolved` or `closed-no-further-action` |
-| A4 | `operation-control` retry/backoff abort awareness | `packages/flux-runtime/src/operation-control.ts` | `resolved` or `closed-no-further-action` |
-| A5 | Table `loadingSlot` metadata gap | `packages/flux-renderers-data/src/index.tsx`, `table-renderer.tsx` | `resolved` or `closed-no-further-action` |
-| A6 | Condition Builder private i18n | `packages/flux-renderers-form-advanced/src/condition-builder/i18n.ts` | `resolved` or `closed-no-further-action` |
-| A7 | Word Editor hardcoded English | `packages/word-editor-renderers/src/` | `resolved` or `closed-no-further-action` |
-| A8 | Word Editor autosave second-source issue | `packages/word-editor-renderers/src/EditorCanvas.tsx`, `WordEditorPage.tsx` | `resolved` or `closed-no-further-action` |
-| A9 | `data-source-runtime` `stopWhen` behavior | `packages/flux-runtime/src/data-source-runtime.ts` | `resolved` or `closed-no-further-action` |
-| A10 | Oversized-file / public-surface residual items | `data-source-runtime.ts`, `flow-designer-renderers/src/index.tsx`, `report-designer-renderers/src/index.ts`, `word-editor-renderers/src/index.ts` | `resolved` or `closed-no-further-action` |
+| ID  | Item                                              | Current Area                                                                                                                                      | Allowed Final Outcome                    |
+| --- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| A1  | Hidden-field stale error cleanup                  | `packages/flux-runtime/src/form-runtime-field-ops.ts`, `form-runtime-validation.ts`, `form-runtime-owner.ts`                                      | `resolved` or `closed-no-further-action` |
+| A2  | Runtime-only async validation stale suppression   | `packages/flux-runtime/src/form-runtime-validation.ts`                                                                                            | `resolved` or `closed-no-further-action` |
+| A3  | CRUD selection summary drift                      | `packages/flux-renderers-data/src/crud-renderer.tsx`                                                                                              | `resolved` or `closed-no-further-action` |
+| A4  | `operation-control` retry/backoff abort awareness | `packages/flux-runtime/src/operation-control.ts`                                                                                                  | `resolved` or `closed-no-further-action` |
+| A5  | Table `loadingSlot` metadata gap                  | `packages/flux-renderers-data/src/index.tsx`, `table-renderer.tsx`                                                                                | `resolved` or `closed-no-further-action` |
+| A6  | Condition Builder private i18n                    | `packages/flux-renderers-form-advanced/src/condition-builder/i18n.ts`                                                                             | `resolved` or `closed-no-further-action` |
+| A7  | Word Editor hardcoded English                     | `packages/word-editor-renderers/src/`                                                                                                             | `resolved` or `closed-no-further-action` |
+| A8  | Word Editor autosave second-source issue          | `packages/word-editor-renderers/src/EditorCanvas.tsx`, `WordEditorPage.tsx`                                                                       | `resolved` or `closed-no-further-action` |
+| A9  | `data-source-runtime` `stopWhen` behavior         | `packages/flux-runtime/src/data-source-runtime.ts`                                                                                                | `resolved` or `closed-no-further-action` |
+| A10 | Oversized-file / public-surface residual items    | `data-source-runtime.ts`, `flow-designer-renderers/src/index.tsx`, `report-designer-renderers/src/index.ts`, `word-editor-renderers/src/index.ts` | `resolved` or `closed-no-further-action` |
 
 ## Execution Plan
 

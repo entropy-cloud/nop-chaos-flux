@@ -11,15 +11,15 @@ Flow Designer 由两部分输入组成：
 
 ```ts
 interface DesignerPageSchema {
-  type: 'designer-page'
-  id?: string
-  title?: string
-  document: GraphDocumentInput
-  config: DesignerConfig
-  statusPath?: string
-  toolbar?: SchemaInput
-  inspector?: SchemaInput
-  dialogs?: SchemaInput
+  type: 'designer-page';
+  id?: string;
+  title?: string;
+  document: GraphDocumentInput;
+  config: DesignerConfig;
+  statusPath?: string;
+  toolbar?: SchemaInput;
+  inspector?: SchemaInput;
+  dialogs?: SchemaInput;
 }
 ```
 
@@ -51,38 +51,38 @@ interface DesignerPageSchema {
 
 ```ts
 interface GraphDocument {
-  id: string
-  kind: string
-  name: string
-  version: string
-  meta?: Record<string, unknown>
+  id: string;
+  kind: string;
+  name: string;
+  version: string;
+  meta?: Record<string, unknown>;
   viewport?: {
-    x: number
-    y: number
-    zoom: number
-  }
-  nodes: GraphNode[]
-  edges: GraphEdge[]
+    x: number;
+    y: number;
+    zoom: number;
+  };
+  nodes: GraphNode[];
+  edges: GraphEdge[];
 }
 
 interface GraphNode {
-  id: string
-  type: string
+  id: string;
+  type: string;
   position: {
-    x: number
-    y: number
-  }
-  data: Record<string, unknown>
+    x: number;
+    y: number;
+  };
+  data: Record<string, unknown>;
 }
 
 interface GraphEdge {
-  id: string
-  type: string
-  source: string
-  target: string
-  sourcePort?: string
-  targetPort?: string
-  data: Record<string, unknown>
+  id: string;
+  type: string;
+  source: string;
+  target: string;
+  sourcePort?: string;
+  targetPort?: string;
+  data: Record<string, unknown>;
 }
 ```
 
@@ -90,17 +90,17 @@ interface GraphEdge {
 
 ```ts
 interface DesignerConfig {
-  $schema?: string
-  version: string
-  extends?: string | DesignerConfig
-  kind: string
-  nodeTypes: NodeTypeConfig[]
-  edgeTypes?: EdgeTypeConfig[]
-  palette?: PaletteConfig
-  features?: DesignerFeatures
-  rules?: DesignerRules
-  canvas?: CanvasConfig
-  presets?: string[]
+  $schema?: string;
+  version: string;
+  extends?: string | DesignerConfig;
+  kind: string;
+  nodeTypes: NodeTypeConfig[];
+  edgeTypes?: EdgeTypeConfig[];
+  palette?: PaletteConfig;
+  features?: DesignerFeatures;
+  rules?: DesignerRules;
+  canvas?: CanvasConfig;
+  presets?: string[];
 }
 ```
 
@@ -180,25 +180,25 @@ interface DesignerConfig {
 
 ```ts
 interface NodeTypeConfig {
-  id: string
-  label: string
-  description?: string
-  icon?: string
-  body: SchemaInput
-  ports?: PortConfig[]
-  roles?: NodeRoleConfig
-  constraints?: NodeConstraintConfig
-  defaults?: Record<string, unknown>
+  id: string;
+  label: string;
+  description?: string;
+  icon?: string;
+  body: SchemaInput;
+  ports?: PortConfig[];
+  roles?: NodeRoleConfig;
+  constraints?: NodeConstraintConfig;
+  defaults?: Record<string, unknown>;
   inspector?: {
-    mode?: 'panel' | 'drawer' | 'dialog'
-    body: SchemaInput
-  }
+    mode?: 'panel' | 'drawer' | 'dialog';
+    body: SchemaInput;
+  };
   createDialog?: {
-    title?: string
-    body: SchemaInput
-    submitAction?: ActionSchema | ActionSchema[]
-  }
-  quickActions?: SchemaInput
+    title?: string;
+    body: SchemaInput;
+    submitAction?: ActionSchema | ActionSchema[];
+  };
+  quickActions?: SchemaInput;
 }
 ```
 
@@ -254,12 +254,12 @@ interface NodeTypeConfig {
 ```ts
 interface NodeBodyBindings {
   node: {
-    id: string
-    type: string
-    label: string
-    data: Record<string, unknown>
-  }
-  data: Record<string, unknown>
+    id: string;
+    type: string;
+    label: string;
+    data: Record<string, unknown>;
+  };
+  data: Record<string, unknown>;
 }
 ```
 
@@ -270,6 +270,7 @@ interface NodeBodyBindings {
 - `position` 与 `selected` 不是当前稳定注入到 body binding 的字段
 
 在 `body` 中当前更准确的写法是：
+
 ```json
 {
   "type": "tpl",
@@ -297,9 +298,7 @@ interface NodeBodyBindings {
       }
     ]
   },
-  "ports": [
-    { "id": "out", "direction": "output", "position": "right" }
-  ]
+  "ports": [{ "id": "out", "direction": "output", "position": "right" }]
 }
 ```
 
@@ -360,10 +359,11 @@ interface NodeBodyBindings {
 ```
 
 自定义组件实现：
+
 ```tsx
 registerRenderer({
   type: 'api-node-renderer',
-  component: ApiNodeRenderer
+  component: ApiNodeRenderer,
 });
 
 function ApiNodeRenderer({ scope }) {
@@ -396,19 +396,19 @@ function ApiNodeRenderer({ scope }) {
 
 ```ts
 interface PortConfig {
-  id: string
-  label?: string
-  direction: 'input' | 'output'
-  position?: 'top' | 'right' | 'bottom' | 'left'
+  id: string;
+  label?: string;
+  direction: 'input' | 'output';
+  position?: 'top' | 'right' | 'bottom' | 'left';
   roles?: {
-    provides?: string[]
-    accepts?: string[]
-    rejects?: string[]
-  }
-  maxConnections?: number | 'unlimited'
+    provides?: string[];
+    accepts?: string[];
+    rejects?: string[];
+  };
+  maxConnections?: number | 'unlimited';
   appearance?: {
-    className?: string
-  }
+    className?: string;
+  };
 }
 ```
 
@@ -421,9 +421,9 @@ interface PortConfig {
 
 ```ts
 interface NodeRoleConfig {
-  provides?: string[]
-  accepts?: string[]
-  rejects?: string[]
+  provides?: string[];
+  accepts?: string[];
+  rejects?: string[];
 }
 ```
 
@@ -433,14 +433,14 @@ node role 是 port role 的兜底层，不是唯一层。
 
 ```ts
 interface NodeConstraintConfig {
-  maxInstances?: number | 'unlimited'
-  minInstances?: number
-  allowMove?: boolean
-  allowResize?: boolean
-  allowIncoming?: boolean
-  allowOutgoing?: boolean
-  maxIncoming?: number
-  maxOutgoing?: number
+  maxInstances?: number | 'unlimited';
+  minInstances?: number;
+  allowMove?: boolean;
+  allowResize?: boolean;
+  allowIncoming?: boolean;
+  allowOutgoing?: boolean;
+  maxIncoming?: number;
+  maxOutgoing?: number;
 }
 ```
 
@@ -461,26 +461,26 @@ See:
 
 ```ts
 interface EdgeTypeConfig {
-  id: string
-  label?: string
-  body?: SchemaInput
+  id: string;
+  label?: string;
+  body?: SchemaInput;
   appearance?: {
-    stroke?: string
-    strokeWidth?: number
-    strokeStyle?: 'solid' | 'dashed' | 'dotted'
-    animated?: boolean
-    markerEnd?: 'arrow' | 'arrowClosed' | 'none'
-  }
-  defaults?: Record<string, unknown>
+    stroke?: string;
+    strokeWidth?: number;
+    strokeStyle?: 'solid' | 'dashed' | 'dotted';
+    animated?: boolean;
+    markerEnd?: 'arrow' | 'arrowClosed' | 'none';
+  };
+  defaults?: Record<string, unknown>;
   inspector?: {
-    mode?: 'panel' | 'drawer' | 'dialog'
-    body: SchemaInput
-  }
+    mode?: 'panel' | 'drawer' | 'dialog';
+    body: SchemaInput;
+  };
   match?: {
-    when?: string
-    sourceRoles?: string[]
-    targetRoles?: string[]
-  }
+    when?: string;
+    sourceRoles?: string[];
+    targetRoles?: string[];
+  };
 }
 ```
 
@@ -516,14 +516,14 @@ interface EdgeTypeConfig {
 
 ```ts
 interface EdgeScope {
-  id: string
-  type: string
-  source: string
-  target: string
-  sourcePort?: string
-  targetPort?: string
-  data: Record<string, unknown>
-  selected: boolean
+  id: string;
+  type: string;
+  source: string;
+  target: string;
+  sourcePort?: string;
+  targetPort?: string;
+  data: Record<string, unknown>;
+  selected: boolean;
 }
 ```
 
@@ -591,16 +591,16 @@ interface EdgeScope {
 
 ```ts
 interface PaletteConfig {
-  searchable?: boolean
-  groups: PaletteGroupConfig[]
+  searchable?: boolean;
+  groups: PaletteGroupConfig[];
 }
 
 interface PaletteGroupConfig {
-  id: string
-  label: string
-  description?: string
-  nodeTypes: string[]
-  expanded?: boolean
+  id: string;
+  label: string;
+  description?: string;
+  nodeTypes: string[];
+  expanded?: boolean;
 }
 ```
 
@@ -613,9 +613,9 @@ interface PaletteGroupConfig {
 
 ```ts
 interface DesignerRules {
-  allowSelfLoop?: boolean
-  allowMultiEdge?: boolean
-  defaultEdgeType?: string
+  allowSelfLoop?: boolean;
+  allowMultiEdge?: boolean;
+  defaultEdgeType?: string;
 }
 ```
 
@@ -629,18 +629,18 @@ interface DesignerRules {
 
 ```ts
 interface DesignerFeatures {
-  undo?: boolean
-  redo?: boolean
-  history?: boolean
-  grid?: boolean
-  minimap?: boolean
-  fitView?: boolean
-  export?: boolean
-  shortcuts?: boolean
-  floatingToolbar?: boolean
-  clipboard?: boolean
-  autoLayout?: boolean
-  multiSelect?: boolean
+  undo?: boolean;
+  redo?: boolean;
+  history?: boolean;
+  grid?: boolean;
+  minimap?: boolean;
+  fitView?: boolean;
+  export?: boolean;
+  shortcuts?: boolean;
+  floatingToolbar?: boolean;
+  clipboard?: boolean;
+  autoLayout?: boolean;
+  multiSelect?: boolean;
 }
 ```
 
@@ -648,14 +648,14 @@ interface DesignerFeatures {
 
 ```ts
 interface CanvasConfig {
-  background?: 'dots' | 'lines' | 'cross' | 'none'
-  gridSize?: number
-  minZoom?: number
-  maxZoom?: number
-  defaultZoom?: number
-  pannable?: boolean
-  zoomable?: boolean
-  snapToGrid?: boolean
+  background?: 'dots' | 'lines' | 'cross' | 'none';
+  gridSize?: number;
+  minZoom?: number;
+  maxZoom?: number;
+  defaultZoom?: number;
+  pannable?: boolean;
+  zoomable?: boolean;
+  snapToGrid?: boolean;
 }
 ```
 
@@ -674,7 +674,7 @@ interface CanvasConfig {
 
 ```ts
 interface ToolbarConfig {
-  items: ToolbarItem[]
+  items: ToolbarItem[];
 }
 
 type ToolbarItem =
@@ -684,11 +684,19 @@ type ToolbarItem =
   | { type: 'text'; text: string }
   | { type: 'divider' }
   | { type: 'spacer' }
-  | { type: 'button'; action: string; icon?: string; label?: string; disabled?: string; active?: string; variant?: 'default' | 'primary' | 'danger' }
+  | {
+      type: 'button';
+      action: string;
+      icon?: string;
+      label?: string;
+      disabled?: string;
+      active?: string;
+      variant?: 'default' | 'primary' | 'danger';
+    };
 
 interface DesignerConfig {
   // ...
-  toolbar?: ToolbarConfig
+  toolbar?: ToolbarConfig;
 }
 ```
 
@@ -700,14 +708,37 @@ interface DesignerConfig {
     "items": [
       { "type": "back" },
       { "type": "title", "body": "${doc.name}" },
-      { "type": "badge", "level": "${runtime.dirty ? 'warning' : 'success'}", "text": "${runtime.dirty ? '未保存' : '已保存'}" },
+      {
+        "type": "badge",
+        "level": "${runtime.dirty ? 'warning' : 'success'}",
+        "text": "${runtime.dirty ? '未保存' : '已保存'}"
+      },
       { "type": "divider" },
       { "type": "text", "text": "${doc.nodes.length} 节点" },
       { "type": "divider" },
-      { "type": "button", "action": "designer:undo", "icon": "RotateCcw", "label": "撤销", "disabled": "${!runtime.canUndo}" },
-      { "type": "button", "action": "designer:redo", "icon": "RotateCw", "label": "重做", "disabled": "${!runtime.canRedo}" },
+      {
+        "type": "button",
+        "action": "designer:undo",
+        "icon": "RotateCcw",
+        "label": "撤销",
+        "disabled": "${!runtime.canUndo}"
+      },
+      {
+        "type": "button",
+        "action": "designer:redo",
+        "icon": "RotateCw",
+        "label": "重做",
+        "disabled": "${!runtime.canRedo}"
+      },
       { "type": "spacer" },
-      { "type": "button", "action": "designer:save", "icon": "Save", "label": "保存", "variant": "primary", "disabled": "${!runtime.dirty}" }
+      {
+        "type": "button",
+        "action": "designer:save",
+        "icon": "Save",
+        "label": "保存",
+        "variant": "primary",
+        "disabled": "${!runtime.dirty}"
+      }
     ]
   }
 }
@@ -748,13 +779,23 @@ const defaultToolbarItems: ToolbarItem[] = [
   { type: 'back' },
   { type: 'title', body: '${doc.name}' },
   { type: 'text', text: '${doc.nodes.length} 节点' },
-  { type: 'badge', level: '${runtime.dirty ? "warning" : "success"}', text: '${runtime.dirty ? "未保存" : "已保存"}' },
+  {
+    type: 'badge',
+    level: '${runtime.dirty ? "warning" : "success"}',
+    text: '${runtime.dirty ? "未保存" : "已保存"}',
+  },
   { type: 'divider' },
   { type: 'button', action: 'designer:undo', icon: 'RotateCcw', disabled: '${!runtime.canUndo}' },
   { type: 'button', action: 'designer:redo', icon: 'RotateCw', disabled: '${!runtime.canRedo}' },
   { type: 'spacer' },
-  { type: 'button', action: 'designer:save', icon: 'Save', variant: 'primary', disabled: '${!runtime.dirty}' }
-]
+  {
+    type: 'button',
+    action: 'designer:save',
+    icon: 'Save',
+    variant: 'primary',
+    disabled: '${!runtime.dirty}',
+  },
+];
 ```
 
 ### Toolbar Scope
@@ -763,19 +804,19 @@ const defaultToolbarItems: ToolbarItem[] = [
 
 ```ts
 interface ToolbarScope {
-  doc: GraphDocument       // 当前文档
-  selection: SelectionSummary
-  activeNode: GraphNode | null
-  activeEdge: GraphEdge | null
+  doc: GraphDocument; // 当前文档
+  selection: SelectionSummary;
+  activeNode: GraphNode | null;
+  activeEdge: GraphEdge | null;
   runtime: {
-    canUndo: boolean
-    canRedo: boolean
-    dirty: boolean
-    isDirty: boolean
-    gridEnabled: boolean
-    zoom: number
-    viewport: { x: number; y: number; zoom: number }
-  }
+    canUndo: boolean;
+    canRedo: boolean;
+    dirty: boolean;
+    isDirty: boolean;
+    gridEnabled: boolean;
+    zoom: number;
+    viewport: { x: number; y: number; zoom: number };
+  };
 }
 ```
 
@@ -816,8 +857,8 @@ const defaultShortcuts: ShortcutsConfig = {
   redo: ['Ctrl+Y', 'Cmd+Shift+Z'],
   copy: ['Ctrl+C', 'Cmd+C'],
   paste: ['Ctrl+V', 'Cmd+V'],
-  delete: ['Delete', 'Backspace']
-}
+  delete: ['Delete', 'Backspace'],
+};
 ```
 
 ## 14. 宿主 schema 示例
@@ -835,42 +876,43 @@ const schema = {
         type: 'button',
         label: 'Undo',
         onClick: {
-          action: 'designer:undo'
-        }
+          action: 'designer:undo',
+        },
       },
       {
         type: 'button',
         label: 'Auto Layout',
         onClick: {
-          action: 'designer:autoLayout'
-        }
-      }
-    ]
+          action: 'designer:autoLayout',
+        },
+      },
+    ],
   },
   inspector: {
     type: 'container',
     body: [
       {
         type: 'text',
-        text: '当前节点: ${activeNode.data.label}'
-      }
-    ]
-  }
-}
+        text: '当前节点: ${activeNode.data.label}',
+      },
+    ],
+  },
+};
 ```
 
 ## 15. 完整示例：Workflow Designer
 
 基于 nop-chaos-next flow editor 实现的完整配置示例，配置和文档分离存放：
 
-| 文件 | 说明 |
-|------|------|
-| `docs/examples/workflow-designer/config.json` | DesignerConfig - 节点类型、边类型、工具栏等配置 |
-| `docs/examples/workflow-designer/document.json` | GraphDocument - 流程实例数据（节点、边、视口） |
+| 文件                                            | 说明                                            |
+| ----------------------------------------------- | ----------------------------------------------- |
+| `docs/examples/workflow-designer/config.json`   | DesignerConfig - 节点类型、边类型、工具栏等配置 |
+| `docs/examples/workflow-designer/document.json` | GraphDocument - 流程实例数据（节点、边、视口）  |
 
 ### 15.1 配置要点
 
 **节点类型**（6 种）：
+
 - `start` - 开始节点，唯一，无输入端口
 - `end` - 结束节点，无输出端口
 - `task` - 任务节点，服务调用/脚本/审批
@@ -879,6 +921,7 @@ const schema = {
 - `loop` - 循环节点，重复执行
 
 **工具栏按钮**（从左到右）：
+
 1. 返回 - `{ type: 'back' }`
 2. 标题 - `{ type: 'title', body: '${doc.name}' }`
 3. 状态徽章 - `{ type: 'badge', ... }`
@@ -889,6 +932,7 @@ const schema = {
 8. 保存 - `{ type: 'button', action: 'designer:save', variant: 'primary' }`
 
 **面板分组**：
+
 - 基础节点：start, end
 - 逻辑控制：condition, parallel, loop
 - 执行任务：task
@@ -909,6 +953,7 @@ const schema = {
 实际使用时，`document` 和 `config` 分别加载对应的 JSON 文件内容。
 
 完整配置和文档数据见：
+
 - `docs/examples/workflow-designer/config.json`
 - `docs/examples/workflow-designer/document.json`
 
@@ -951,22 +996,22 @@ packages/theme-tokens/
 
 以下文件与 `nop-chaos-next` 完全一致，可直接替换：
 
-| 文件 | 说明 |
-|------|------|
-| `packages/tailwind-preset/src/index.ts` | TailwindCSS preset 配置 |
-| `packages/theme-tokens/src/styles.css` | 主题 CSS 变量（classic/glass，light/dark） |
+| 文件                                    | 说明                                       |
+| --------------------------------------- | ------------------------------------------ |
+| `packages/tailwind-preset/src/index.ts` | TailwindCSS preset 配置                    |
+| `packages/theme-tokens/src/styles.css`  | 主题 CSS 变量（classic/glass，light/dark） |
 
 ### 18.3 响应式断点
 
 使用 TailwindCSS 内置断点：
 
-| 断点 | 最小宽度 | 对应设备 |
-|------|---------|---------|
-| `sm` | 640px | 手机横屏 |
-| `md` | 768px | 平板 |
-| `lg` | 1024px | 笔记本 |
-| `xl` | 1280px | 桌面 |
-| `2xl` | 1536px | 大屏 |
+| 断点  | 最小宽度 | 对应设备 |
+| ----- | -------- | -------- |
+| `sm`  | 640px    | 手机横屏 |
+| `md`  | 768px    | 平板     |
+| `lg`  | 1024px   | 笔记本   |
+| `xl`  | 1280px   | 桌面     |
+| `2xl` | 1536px   | 大屏     |
 
 ### 18.4 主题切换
 
@@ -975,11 +1020,13 @@ packages/theme-tokens/
 ```html
 <!-- Classic 主题 -->
 <html data-theme="classic" data-mode="light">
-<html data-theme="classic" data-mode="dark">
-
-<!-- Glass 主题 -->
-<html data-theme="glass" data-mode="light">
-<html data-theme="glass" data-mode="dark">
+  <html data-theme="classic" data-mode="dark">
+    <!-- Glass 主题 -->
+    <html data-theme="glass" data-mode="light">
+      <html data-theme="glass" data-mode="dark"></html>
+    </html>
+  </html>
+</html>
 ```
 
 ### 18.5 常用 TailwindCSS 类
@@ -991,7 +1038,7 @@ Flow Designer 特定组件可使用以下类：
 <div className="fd-node fd-node--selected">
 
 // 使用 TailwindCSS（推荐）
-<div className="min-w-[160px] px-4 py-3 border rounded-lg shadow-sm 
+<div className="min-w-[160px] px-4 py-3 border rounded-lg shadow-sm
                 bg-card border-border hover:border-primary transition-colors">
 
 // 响应式三栏布局
@@ -1003,9 +1050,7 @@ Flow Designer 特定组件可使用以下类：
 使用 `.theme-card` 类实现毛玻璃效果：
 
 ```tsx
-<div className="theme-card rounded-xl p-4">
-  {/* 内容 */}
-</div>
+<div className="theme-card rounded-xl p-4">{/* 内容 */}</div>
 ```
 
 ## 19. TreeDocument (Tree Mode)
@@ -1026,8 +1071,8 @@ interface TreeNode {
   id: string;
   type: string;
   data: Record<string, unknown>;
-  child?: TreeNode;       // 链式序列 — 单个子节点
-  branches?: TreeNodeBranch[];  // 分支节点
+  child?: TreeNode; // 链式序列 — 单个子节点
+  branches?: TreeNodeBranch[]; // 分支节点
 }
 
 interface TreeNodeBranch {
@@ -1320,7 +1365,7 @@ const dingtalkAdapter: TreeDomainAdapter = {
       kind: 'dingtalk-workflow',
       name: external.name,
       version: external.version || '1.0',
-      root: convertDingtalkProcessToTreeNode(external.process)
+      root: convertDingtalkProcessToTreeNode(external.process),
     };
   },
   exportFromTree(tree) {
@@ -1329,9 +1374,9 @@ const dingtalkAdapter: TreeDomainAdapter = {
       id: tree.id,
       name: tree.name,
       version: tree.version,
-      process: convertTreeNodeToDingtalkProcess(tree.root)
+      process: convertTreeNodeToDingtalkProcess(tree.root),
     };
-  }
+  },
 };
 ```
 

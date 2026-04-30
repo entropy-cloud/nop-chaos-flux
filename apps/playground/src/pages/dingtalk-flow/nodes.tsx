@@ -14,7 +14,8 @@ import {
   W,
 } from './types.js';
 
-export let onPlusClick: ((sourceId: string, clientX: number, clientY: number) => void) | null = null;
+export let onPlusClick: ((sourceId: string, clientX: number, clientY: number) => void) | null =
+  null;
 
 export function setOnPlusClick(handler: typeof onPlusClick) {
   onPlusClick = handler;
@@ -67,7 +68,10 @@ function ApprovalNodeInner({ id, data }: NodeProps) {
         <div
           className="absolute left-1/2 -translate-x-1/2 z-[2]"
           style={{ bottom: -BTN_DIST }}
-          onClick={(e) => { e.stopPropagation(); onPlusClick?.(id, e.clientX, e.clientY); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPlusClick?.(id, e.clientX, e.clientY);
+          }}
         >
           <AddBtn />
         </div>
@@ -82,17 +86,11 @@ function CondNodeInner({ id, data }: NodeProps) {
     <div className="relative">
       <Handle type="target" position={Position.Top} className="!opacity-0" />
       <div
-        className={cn(
-          'bg-white cursor-pointer',
-          'rounded shadow-[0_2px_5px_0_rgba(0,0,0,0.1)]',
-        )}
+        className={cn('bg-white cursor-pointer', 'rounded shadow-[0_2px_5px_0_rgba(0,0,0,0.1)]')}
         style={{ width: W, minHeight: CARD_H, padding: 15 }}
       >
         <div className="flex items-center justify-between leading-[16px]">
-          <span
-            className="text-[13px] font-medium"
-            style={{ color: COLORS.condition }}
-          >
+          <span className="text-[13px] font-medium" style={{ color: COLORS.condition }}>
             {d.title}
           </span>
           <span className="text-[12px] text-[#999]">P{d.priority}</span>
@@ -104,7 +102,10 @@ function CondNodeInner({ id, data }: NodeProps) {
         <div
           className="absolute left-1/2 -translate-x-1/2 z-[2]"
           style={{ bottom: -BTN_DIST }}
-          onClick={(e) => { e.stopPropagation(); onPlusClick?.(id, e.clientX, e.clientY); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPlusClick?.(id, e.clientX, e.clientY);
+          }}
         >
           <AddBtn />
         </div>

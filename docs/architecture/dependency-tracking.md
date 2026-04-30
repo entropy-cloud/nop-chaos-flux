@@ -58,7 +58,7 @@ Source: `packages/flux-core/src/types/scope.ts`
 
 ```typescript
 interface ScopeDependencySet {
-  paths: readonly string[];   // normalized lexical roots or ['*']
+  paths: readonly string[]; // normalized lexical roots or ['*']
   wildcard: boolean;
   broadAccess: boolean;
 }
@@ -103,16 +103,17 @@ Dependency collection is driven by a Proxy-based scope wrapper that intercepts p
 
 `createFormulaScope(context: EvalContext)` returns a `Proxy` whose traps record reads. Recording is root-normalized even when the expression touches deeper members.
 
-| Proxy trap | Recording | Trigger example |
-|---|---|---|
-| `get(target, prop)` | `collector.recordPath(prop)` | `scope.user` |
-| `has(target, prop)` | `collector.recordPath(prop)` | `"name" in scope` |
-| `ownKeys(target)` | `collector.recordWildcard()` | `Object.keys(scope)` |
+| Proxy trap                 | Recording                    | Trigger example                |
+| -------------------------- | ---------------------------- | ------------------------------ |
+| `get(target, prop)`        | `collector.recordPath(prop)` | `scope.user`                   |
+| `has(target, prop)`        | `collector.recordPath(prop)` | `"name" in scope`              |
+| `ownKeys(target)`          | `collector.recordWildcard()` | `Object.keys(scope)`           |
 | `getOwnPropertyDescriptor` | `collector.recordWildcard()` | JSON.stringify-like operations |
 
 Nested objects are recursively wrapped via `wrapTrackedValue(value, basePath)`, but nested member access still records only the lexical root binding. For example, `scope.user.name` records `"user"`, not `"user.name"`.
 
 Current wildcard behavior is scoped deliberately:
+
 - enumerating the top-level scope records wildcard
 - enumerating a recursively wrapped nested object records its owning lexical root, not whole-scope wildcard
 - materialized whole-scope access can still drive wildcard through top-level proxy traps
@@ -124,6 +125,7 @@ A fresh `ScopeDependencyCollector` is created for every leaf evaluation. The com
 Source: `packages/flux-runtime/src/node-runtime.ts`
 
 `collectRuntimeDependencies(state)` traverses the `RuntimeValueState` tree:
+
 - `leaf-state`: reads `node.dependencies`
 - `array-state`: recursively visits `node.items`
 - `object-state`: recursively visits `Object.values(node.entries)`
@@ -135,6 +137,7 @@ Returns a merged `ScopeDependencySet` with deduplicated, sorted lexical roots.
 Source: `packages/flux-runtime/src/scope.ts`
 
 `createScopeStore()` wraps a Zustand vanilla store. On `setSnapshot(next, change)`:
+
 1. Zustand detects the state change (new `snapshot` reference).
 2. The `subscribe` listener filters no-op updates (same snapshot AND same lastChange reference).
 3. Calls `listener(state.lastChange)`.
@@ -142,6 +145,7 @@ Source: `packages/flux-runtime/src/scope.ts`
 Child scopes via `createCompositeScopeStore` subscribe to both their own store and the parent store, so parent scope writes propagate to all child scope subscribers.
 
 Write operations produce change paths:
+
 - `scope.update(path, value)` -> `ScopeChange { paths: [path], kind: 'update' }`
 - `scope.merge(data)` -> `ScopeChange { paths: Object.keys(data), kind: 'merge' }`
 
@@ -150,11 +154,13 @@ Write operations produce change paths:
 Source: `packages/flux-runtime/src/scope-change.ts`
 
 `scopeChangeHitsDependencies(change, dependencies)`:
+
 1. If either is missing -> `true` (conservative: invalidate on everything)
 2. If `dependencies.wildcard` or `change.paths.includes('*')` -> `true`
 3. Otherwise, normalize both sides to lexical roots and check root equality
 
 Examples:
+
 - `user.name` change hits `user`
 - `filters.status` change hits `filters`
 - wildcard still conservatively hits everything
@@ -199,6 +205,7 @@ const unsubscribe = scope.store?.subscribe((change) => {
 ```
 
 `scheduleReaction` uses microtask batching:
+
 - collects change paths into `pendingChangedPaths`
 - uses `Promise.resolve().then(invoke)` for microtask scheduling
 - supports optional `debounce` via `setTimeout`
@@ -209,6 +216,7 @@ const unsubscribe = scope.store?.subscribe((change) => {
 Source: `packages/flux-runtime/src/validation/rules.ts`, `packages/flux-core/src/validation-model.ts`
 
 Form validation uses a separate dependency system:
+
 - `collectValidationDependencyPaths(rule)` extracts explicit paths at compile time from rule schemas
 - `buildCompiledValidationDependentMap()` builds a reverse lookup `Record<path, fieldPaths[]>`
 - `revalidateDependents()` is called synchronously after `setValue()` / `setValues()`
@@ -226,6 +234,7 @@ This system does not use `ScopeDependencySet`, `ScopeChange`, or `scopeChangeHit
 That is correct for "unknown yet" but too broad for "known to depend on nothing".
 
 Current consequences:
+
 - static formula/api/watch values often leave `dependencies` as `undefined`
 - dynamic reactions populate dependencies on activation, but static reactions and static sources remain conservative forever
 - the runtime has no way to represent an explicit empty dependency set distinct from "not collected yet"
@@ -235,6 +244,7 @@ Current consequences:
 The active runtime baseline is explicit roots first, runtime fallback second.
 
 Current consequences:
+
 - `dependsOn` is authoritative when present
 - source/reaction still fall back to runtime-collected roots when `dependsOn` is absent
 - development diagnostics that compare declared roots with runtime reads are not implemented yet
@@ -244,6 +254,7 @@ Current consequences:
 `runtime.evaluate()` and related ad hoc evaluation paths compile/evaluate values outside an owning runtime state and discard any dependency information they could have collected.
 
 This includes current uses such as:
+
 - `stopWhen` checks
 - action `when` guards
 - request helper evaluation paths
@@ -255,6 +266,7 @@ Not all of these need to participate in source/reaction invalidation today. The 
 The current change surface reports raw paths such as `tableData.3.name`.
 
 That is enough for conservative invalidation, but it does not define the desired row-local behavior:
+
 - collection-level consumers should depend on `tableData`
 - row-local consumers should depend on `row` or `record`
 - changing one row should not force unrelated row scopes to re-run
@@ -274,6 +286,7 @@ Scope dependency tracking (Proxy-based, runtime) and validation dependency track
 The tracking unit is lexical root bindings, not deep member paths.
 
 Examples of root bindings:
+
 - `user`
 - `filters`
 - `status`
@@ -293,11 +306,13 @@ Layer 2: Runtime lexical-root tracking
 This document does not adopt compile-time AST extraction as the normative baseline.
 
 Reasons:
+
 - it increases compiler complexity for limited hot-path benefit
 - it is awkward for templates, object values, imported helpers, and parser-specific constructs
 - Flux's lexical execution model is already well-served by runtime root tracking plus conservative fallback
 
 Normative rules:
+
 1. If a producer or watcher declares its dependency roots explicitly, runtime uses that declaration as the invalidation contract.
 2. If nothing is declared explicitly, runtime collects dependency roots dynamically during evaluation.
 3. Production invalidation does not union runtime-collected roots back into an explicit declaration.
@@ -310,6 +325,7 @@ Source target: `packages/flux-formula/src/scope.ts`
 Runtime fallback should collect only lexical root bindings, not deep member paths.
 
 Examples:
+
 - `scope.user.name` -> `user`
 - `scope.user.profile.age` -> `user`
 - `scope.filters.status === 'active'` -> `filters`
@@ -317,23 +333,24 @@ Examples:
 
 Top-level scope access rules:
 
-| Operation | Recorded dependency |
-|---|---|
-| `scope.user.name` | `user` |
-| `'user' in scope` | `user` |
-| `Object.keys(scope)` | wildcard |
-| `{ ...scope }` | wildcard |
-| `getOwnPropertyDescriptor(scope, 'user')` through top-level enumeration flow | wildcard |
+| Operation                                                                    | Recorded dependency |
+| ---------------------------------------------------------------------------- | ------------------- |
+| `scope.user.name`                                                            | `user`              |
+| `'user' in scope`                                                            | `user`              |
+| `Object.keys(scope)`                                                         | wildcard            |
+| `{ ...scope }`                                                               | wildcard            |
+| `getOwnPropertyDescriptor(scope, 'user')` through top-level enumeration flow | wildcard            |
 
 Nested bound-object rules:
 
-| Operation | Recorded dependency |
-|---|---|
-| `Object.keys(user)` | `user` |
-| `{ ...user }` | `user` |
-| `'name' in user` | `user` |
+| Operation           | Recorded dependency |
+| ------------------- | ------------------- |
+| `Object.keys(user)` | `user`              |
+| `{ ...user }`       | `user`              |
+| `'name' in user`    | `user`              |
 
 Implementation note:
+
 - nested wrappers may still exist if they are the easiest way to preserve runtime behavior
 - but they must stay anchored to the same root binding instead of emitting deeper paths
 - only enumeration of the current lexical scope, or full lexical materialization, should degrade to wildcard
@@ -345,6 +362,7 @@ Implementation note:
 Directional carrier: schema-level `dependsOn` on `DataSourceSchema` and `ReactionSchema`, or an equivalent producer/watcher-owned field.
 
 Semantics:
+
 - entries are lexical root bindings visible in the owning scope
 - entries are authoritative when present
 - deep member paths are out of contract; authors declare `user`, not `user.name`
@@ -377,12 +395,14 @@ Source target: `packages/flux-runtime/src/scope-change.ts`
 Invalidation matching should normalize those paths to impacted roots before dependency comparison.
 
 Examples:
+
 - `scope.update('user.name', 'Bob')` -> impacted root `user`
 - `scope.update('filters.status', 'active')` -> impacted root `filters`
 - `scope.merge({ user, flag })` -> impacted roots `user`, `flag`
 - replace or unknown provenance -> wildcard
 
 After normalization, matching is simple:
+
 - wildcard change hits everything
 - wildcard dependency matches everything
 - otherwise root equality decides the hit
@@ -394,6 +414,7 @@ The current hierarchical `pathMatchesDependency` behavior is a reasonable deep-p
 Source targets: `packages/flux-runtime/src/async-data/source-registry.ts`, `packages/flux-runtime/src/async-data/data-source-runtime.ts`
 
 Source invalidation rules under the target model:
+
 - formula sources use explicit roots when declared, otherwise runtime-collected roots
 - API sources use explicit roots when declared, otherwise roots collected from evaluated request configuration
 - self-writes to the source's own published binding must be filtered out before dependency matching
@@ -406,12 +427,14 @@ Formula and API sources still share the same dependency substrate. The differenc
 Source target: `packages/flux-runtime/src/async-data/reaction-runtime.ts`
 
 Reaction invalidation rules under the target model:
+
 - the `watch` value owns the reaction's dependency roots
 - `when` stays a guard over the re-evaluated `watch` result
 - `when` does not automatically widen the reaction dependency set unless a narrower subsystem explicitly says so
 - `changedPaths` diagnostics may remain raw paths or normalized roots; correctness does not depend on member-path precision
 
 This keeps the dependency boundary narrow:
+
 - dependency change decides whether to re-evaluate the watched value
 - value change plus `when` decides whether to dispatch effects
 
@@ -420,6 +443,7 @@ This keeps the dependency boundary narrow:
 This section is normative for tables, loops, and similar collection renderers.
 
 Rules:
+
 1. A collection owner depends on the collection binding root, for example `tableData`.
 2. Each row scope introduces its own local root binding, for example `row` or `record`.
 3. Row-local expressions depend on that row root, not on the parent collection root.
@@ -427,6 +451,7 @@ Rules:
 5. Structural collection changes may invalidate collection layout and recreate affected row scopes.
 
 Concretely:
+
 - if `tableData[3].name` changes, the collection owner may detect that root `tableData` changed
 - the collection runtime should reconcile the affected row and publish a row-local change in row 3's scope as `row` or `record`
 - sibling rows should receive no row-local change if their bound row value is unchanged
@@ -440,6 +465,7 @@ The collection owner is therefore responsible for translating parent collection 
 Validation should remain separate for now.
 
 Rationale:
+
 - validation already uses an explicit field-graph model
 - it has deterministic compile-time extraction for its own domain
 - forcing it into the same general runtime dependency structure would add coupling without a clear correctness win
@@ -463,6 +489,7 @@ If the runtime later needs an explicit "depends on nothing" state, that state mu
 Under the target model, dependency matching happens on normalized roots, not deep paths.
 
 Examples:
+
 - dependency `user` is hit by write `user.name`
 - dependency `row` is hit by any row-local write once the collection owner has translated the change into the row scope
 - wildcard remains the escape hatch when precise rooting is impossible
@@ -474,6 +501,7 @@ Raw member paths may still be preserved for diagnostics, debugger output, and hu
 When explicit root dependencies are declared, they win.
 
 That means:
+
 - runtime fallback is only for undeclared producers/watchers
 - runtime-collected roots do not silently widen or replace an explicit declaration in production semantics
 - dev tooling may compare the two and report mismatches
@@ -486,7 +514,7 @@ The guard should filter self-written roots out of the change set before dependen
 Current shape to avoid:
 
 ```typescript
-if (targetPath && change.paths.every(p => p === targetPath || p.startsWith(`${targetPath}.`))) {
+if (targetPath && change.paths.every((p) => p === targetPath || p.startsWith(`${targetPath}.`))) {
   return;
 }
 if (!scopeChangeHitsDependencies(change, dependencies)) return;
@@ -511,6 +539,7 @@ if (!scopeChangeHitsDependencies({ ...change, paths: otherRoots }, dependencies)
 Child scopes still subscribe to both their own store and their parent store.
 
 Direction rules:
+
 - parent writes propagate downward
 - child writes do not propagate upward
 - collection owners with row scopes must translate parent collection changes into row-local roots instead of forwarding only raw parent paths
@@ -554,17 +583,17 @@ This direction is correct because data visibility flows downward through lexical
 
 ## 6. Implementation Anchors
 
-| Concern | Current location | Convergence target |
-|---|---|---|
-| `ScopeDependencySet` type | `packages/flux-core/src/types/scope.ts` | keep type, redefine `paths` semantically as normalized roots or `'*'` |
-| `ScopeDependencyCollector` | `packages/flux-formula/src/scope.ts` | emit root bindings only |
-| Formula scope wrapping | `packages/flux-formula/src/scope.ts` | keep nested access anchored to the first root binding |
-| `scopeChangeHitsDependencies` | `packages/flux-runtime/src/scope-change.ts` | normalize writes to roots before matching |
-| `collectRuntimeDependencies` | `packages/flux-runtime/src/node-runtime.ts` | unchanged aggregation shape |
-| Explicit dependency carrier | `packages/flux-core/src/types/schema.ts` (`dependsOn` on `DataSourceSchema` / `ReactionSchema`) | keep explicit roots first, runtime fallback second |
-| Source dependency init | `packages/flux-runtime/src/async-data/source-registry.ts` | explicit roots first, runtime fallback second |
-| API request dependency tracking | `packages/flux-runtime/src/async-data/data-source-runtime.ts` | collect request-config roots only when explicit roots are absent |
-| Reaction dependency init | `packages/flux-runtime/src/async-data/reaction-runtime.ts` | explicit roots first, runtime fallback second |
-| Self-write guard | `packages/flux-runtime/src/async-data/source-registry.ts` | filter self roots before match |
-| Collection/row root translation | collection-owning renderer/runtime code | publish row-local root changes for affected rows only |
-| Validation dependency system | `packages/flux-runtime/src/validation/*` | keep separate unless a concrete reuse case appears |
+| Concern                         | Current location                                                                                | Convergence target                                                    |
+| ------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `ScopeDependencySet` type       | `packages/flux-core/src/types/scope.ts`                                                         | keep type, redefine `paths` semantically as normalized roots or `'*'` |
+| `ScopeDependencyCollector`      | `packages/flux-formula/src/scope.ts`                                                            | emit root bindings only                                               |
+| Formula scope wrapping          | `packages/flux-formula/src/scope.ts`                                                            | keep nested access anchored to the first root binding                 |
+| `scopeChangeHitsDependencies`   | `packages/flux-runtime/src/scope-change.ts`                                                     | normalize writes to roots before matching                             |
+| `collectRuntimeDependencies`    | `packages/flux-runtime/src/node-runtime.ts`                                                     | unchanged aggregation shape                                           |
+| Explicit dependency carrier     | `packages/flux-core/src/types/schema.ts` (`dependsOn` on `DataSourceSchema` / `ReactionSchema`) | keep explicit roots first, runtime fallback second                    |
+| Source dependency init          | `packages/flux-runtime/src/async-data/source-registry.ts`                                       | explicit roots first, runtime fallback second                         |
+| API request dependency tracking | `packages/flux-runtime/src/async-data/data-source-runtime.ts`                                   | collect request-config roots only when explicit roots are absent      |
+| Reaction dependency init        | `packages/flux-runtime/src/async-data/reaction-runtime.ts`                                      | explicit roots first, runtime fallback second                         |
+| Self-write guard                | `packages/flux-runtime/src/async-data/source-registry.ts`                                       | filter self roots before match                                        |
+| Collection/row root translation | collection-owning renderer/runtime code                                                         | publish row-local root changes for affected rows only                 |
+| Validation dependency system    | `packages/flux-runtime/src/validation/*`                                                        | keep separate unless a concrete reuse case appears                    |

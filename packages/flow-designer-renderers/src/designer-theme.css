@@ -1,10 +1,18 @@
 :where(.fd-theme-root, .nop-designer) {
-  --fd-page-bg: linear-gradient(135deg, rgba(167, 243, 208, 0.15) 0%, rgba(196, 181, 253, 0.12) 50%, rgba(153, 246, 228, 0.1) 100%);
+  --fd-page-bg: linear-gradient(
+    135deg,
+    rgba(167, 243, 208, 0.15) 0%,
+    rgba(196, 181, 253, 0.12) 50%,
+    rgba(153, 246, 228, 0.1) 100%
+  );
   --fd-panel-bg: rgba(255, 255, 255, 0.4);
   --fd-panel-accent: hsl(var(--primary));
   --fd-toolbar-bg: rgba(255, 255, 255, 0.78);
   --fd-toolbar-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-  --fd-canvas-bg: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%), radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.1), transparent 30%), rgba(255, 255, 255, 0.78);
+  --fd-canvas-bg:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.1), transparent 30%),
+    rgba(255, 255, 255, 0.78);
   --fd-grid-color: rgba(148, 163, 184, 0.26);
   --fd-minimap-bg: rgba(219, 234, 254, 0.5);
   --fd-minimap-node: rgba(15, 23, 42, 0.92);

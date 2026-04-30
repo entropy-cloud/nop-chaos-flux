@@ -22,29 +22,34 @@ describe('redaction helpers', () => {
       },
       redactValue(context) {
         return `[${context.key.toUpperCase()}]`;
-      }
+      },
     });
 
-    expect(redactData({
-      token: 'secret-token',
-      nested: {
-        password: '123456',
-        keepSecret: 'visible',
-        deep: {
-          value: 'trimmed'
-        }
-      },
-      items: [{ secretKey: 'abc' }]
-    }, redaction)).toEqual({
+    expect(
+      redactData(
+        {
+          token: 'secret-token',
+          nested: {
+            password: '123456',
+            keepSecret: 'visible',
+            deep: {
+              value: 'trimmed',
+            },
+          },
+          items: [{ secretKey: 'abc' }],
+        },
+        redaction,
+      ),
+    ).toEqual({
       token: '[TOKEN]',
       nested: {
         password: '[PASSWORD]',
         keepSecret: 'visible',
         deep: {
-          value: '[MAX_DEPTH]'
-        }
+          value: '[MAX_DEPTH]',
+        },
       },
-      items: [{ secretKey: '[SECRETKEY]' }]
+      items: [{ secretKey: '[SECRETKEY]' }],
     });
   });
 });

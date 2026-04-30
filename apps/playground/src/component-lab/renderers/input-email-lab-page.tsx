@@ -7,13 +7,17 @@ const basicEmail = {
       type: 'form',
       name: 'emailForm',
       body: [
-        { type: 'input-email', name: 'email', label: 'Email Address', placeholder: 'user@example.com', required: true }
+        {
+          type: 'input-email',
+          name: 'email',
+          label: 'Email Address',
+          placeholder: 'user@example.com',
+          required: true,
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Verify', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Verify', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const prePopulatedInvalid = {
@@ -29,14 +33,14 @@ const prePopulatedInvalid = {
           name: 'workEmail',
           label: 'Work Email',
           placeholder: 'name@company.com',
-          required: true
-        }
+          required: true,
+        },
       ],
       actions: [
-        { type: 'button', label: 'Submit to see validation error', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+        { type: 'button', label: 'Submit to see validation error', onClick: { action: 'submit' } },
+      ],
+    },
+  ],
 };
 
 export function InputEmailLabPage() {
@@ -46,14 +50,16 @@ export function InputEmailLabPage() {
       scenarios={[
         {
           title: 'Standard email field',
-          description: 'A required email field. Blur or submit with an invalid value to see the format error.',
-          schema: basicEmail
+          description:
+            'A required email field. Blur or submit with an invalid value to see the format error.',
+          schema: basicEmail,
         },
         {
           title: 'Pre-populated with invalid value — submit to see error',
-          description: 'The field starts with an invalid email. Click Submit to trigger the validation error display.',
-          schema: prePopulatedInvalid
-        }
+          description:
+            'The field starts with an invalid email. Click Submit to trigger the validation error display.',
+          schema: prePopulatedInvalid,
+        },
       ]}
     />
   );

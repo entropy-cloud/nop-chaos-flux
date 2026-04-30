@@ -7,13 +7,26 @@ await page.goto('http://127.0.0.1:4173/');
 await page.getByRole('button', { name: 'Flow Designer' }).click();
 await page.waitForSelector('.react-flow__node', { timeout: 15000 });
 
-const firstNodeHtml = await page.locator('.react-flow__node').first().evaluate((el) => el.outerHTML);
+const firstNodeHtml = await page
+  .locator('.react-flow__node')
+  .first()
+  .evaluate((el) => el.outerHTML);
 const allNodeTexts = await page.locator('.react-flow__node').allTextContents();
-const toolbarHtml = await page.locator('.fd-page__header').first().evaluate((el) => el.outerHTML);
-const paletteHtml = await page.locator('.fd-page__palette').first().evaluate((el) => el.outerHTML);
+const toolbarHtml = await page
+  .locator('.fd-page__header')
+  .first()
+  .evaluate((el) => el.outerHTML);
+const paletteHtml = await page
+  .locator('.fd-page__palette')
+  .first()
+  .evaluate((el) => el.outerHTML);
 
 await page.locator('.react-flow__node').first().hover();
-const quickActionHtml = await page.locator('.fd-xyflow-node-toolbar').first().evaluate((el) => el.outerHTML).catch(() => 'NO_TOOLBAR');
+const quickActionHtml = await page
+  .locator('.fd-xyflow-node-toolbar')
+  .first()
+  .evaluate((el) => el.outerHTML)
+  .catch(() => 'NO_TOOLBAR');
 
 console.log('FIRST_NODE_HTML_START');
 console.log(firstNodeHtml);

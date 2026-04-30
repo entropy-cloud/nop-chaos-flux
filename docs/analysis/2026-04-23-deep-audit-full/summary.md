@@ -24,25 +24,25 @@
 
 ## P1 清单（按文件/主题归并）
 
-| 主题 | 关键文件 |
-|---|---|
+| 主题                                                   | 关键文件                                                                                                                                                      |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [已修复] Report Designer workbook source-of-truth 分叉 | `packages/report-designer-renderers/src/page-renderer.tsx`, `packages/report-designer-core/src/core.ts`, `packages/report-designer-core/src/core-dispatch.ts` |
-| [已修复] object-field async 回写竞态 | `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx` |
-| [已修复] validation external errors owner 边界缺失 | `packages/flux-runtime/src/form-runtime-owner.ts`, `packages/flux-runtime/src/form-runtime.ts` |
-| [已修复] submit-only 错误可见性错误 | `packages/flux-react/src/field-error-visibility.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts` |
-| [已修复] report-designer action DTO/type 混淆 | `packages/report-designer-renderers/src/inspector-shell-renderer.tsx`, `packages/report-designer-core/src/types.ts` |
-| >700 行必须拆分文件 | `packages/flux-runtime/src/async-data/data-source-runtime.ts`, `packages/flux-formula/src/compile.ts`, `packages/flux-action-core/src/action-dispatcher.ts` |
+| [已修复] object-field async 回写竞态                   | `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx`                                                                                  |
+| [已修复] validation external errors owner 边界缺失     | `packages/flux-runtime/src/form-runtime-owner.ts`, `packages/flux-runtime/src/form-runtime.ts`                                                                |
+| [已修复] submit-only 错误可见性错误                    | `packages/flux-react/src/field-error-visibility.ts`, `packages/flux-runtime/src/form-runtime-submit-flow.ts`                                                  |
+| [已修复] report-designer action DTO/type 混淆          | `packages/report-designer-renderers/src/inspector-shell-renderer.tsx`, `packages/report-designer-core/src/types.ts`                                           |
+| >700 行必须拆分文件                                    | `packages/flux-runtime/src/async-data/data-source-runtime.ts`, `packages/flux-formula/src/compile.ts`, `packages/flux-action-core/src/action-dispatcher.ts`   |
 
 ## 高频问题文件
 
-| 文件 | 命中维度 |
-|---|---|
-| `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx` | 04, 05, 06 |
-| `packages/flux-runtime/src/form-runtime-owner.ts` | 02, 08 |
-| `packages/report-designer-renderers/src/page-renderer.tsx` | 09, 12, 18 |
-| `packages/report-designer-renderers/src/inspector-shell-renderer.tsx` | 05, 09, 13 |
-| `packages/flow-designer-renderers/src/designer-page.tsx` | 02, 05, 07, 10, 12 |
-| `packages/flux-code-editor/src/code-editor-renderer.tsx` | 09, 10, 12 |
+| 文件                                                                         | 命中维度           |
+| ---------------------------------------------------------------------------- | ------------------ |
+| `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx` | 04, 05, 06         |
+| `packages/flux-runtime/src/form-runtime-owner.ts`                            | 02, 08             |
+| `packages/report-designer-renderers/src/page-renderer.tsx`                   | 09, 12, 18         |
+| `packages/report-designer-renderers/src/inspector-shell-renderer.tsx`        | 05, 09, 13         |
+| `packages/flow-designer-renderers/src/designer-page.tsx`                     | 02, 05, 07, 10, 12 |
+| `packages/flux-code-editor/src/code-editor-renderer.tsx`                     | 09, 10, 12         |
 
 ## 跨维度模式
 

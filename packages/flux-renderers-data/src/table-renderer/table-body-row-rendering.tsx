@@ -1,5 +1,10 @@
 import React from 'react';
-import type { BaseSchema, InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
+import type {
+  BaseSchema,
+  InstanceFrame,
+  RendererComponentProps,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { Button, Checkbox, RadioGroupItem, TableCell, TableRow } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import type { TableSchema } from '../schemas';
@@ -33,7 +38,7 @@ export function buildFlattenedItems(
   selectedRowKeys: Set<string>,
   columnCount: number,
   parentProps: RendererComponentProps<TableSchema>,
-  rowRepeatedTemplateId: string
+  rowRepeatedTemplateId: string,
 ): FlattenedItem[] {
   const items: FlattenedItem[] = [];
 
@@ -78,7 +83,7 @@ export function renderDataRow(
   expandRowByClick: boolean,
   onToggleExpand: (rowKey: string) => void,
   onSelectRow: (rowKey: string, checked: boolean) => void,
-  isStriped: boolean
+  isStriped: boolean,
 ) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
 
@@ -97,7 +102,11 @@ export function renderDataRow(
       }
     >
       {showExpandColumn ? (
-        <TableCell data-slot="table-expand-cell" className={fixedColumnLayout.getExpandCellProps().className} style={fixedColumnLayout.getExpandCellProps().style}>
+        <TableCell
+          data-slot="table-expand-cell"
+          className={fixedColumnLayout.getExpandCellProps().className}
+          style={fixedColumnLayout.getExpandCellProps().style}
+        >
           <Button
             type="button"
             variant="ghost"
@@ -109,15 +118,27 @@ export function renderDataRow(
             className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
             aria-label={isExpanded ? 'Collapse' : 'Expand'}
           >
-            {isExpanded ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
+            {isExpanded ? (
+              <ChevronDownIcon className="size-4" />
+            ) : (
+              <ChevronRightIcon className="size-4" />
+            )}
           </Button>
         </TableCell>
       ) : null}
 
       {schemaProps.rowSelection ? (
-        <TableCell data-slot="table-select-cell" className={fixedColumnLayout.getSelectionCellProps().className} style={fixedColumnLayout.getSelectionCellProps().style} onClick={(event) => event.stopPropagation()}>
+        <TableCell
+          data-slot="table-select-cell"
+          className={fixedColumnLayout.getSelectionCellProps().className}
+          style={fixedColumnLayout.getSelectionCellProps().style}
+          onClick={(event) => event.stopPropagation()}
+        >
           {schemaProps.rowSelection.type === 'checkbox' ? (
-            <Checkbox checked={isSelected} onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))} />
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
+            />
           ) : (
             <RadioGroupItem value={rowKey} />
           )}
@@ -125,13 +146,33 @@ export function renderDataRow(
       ) : null}
 
       {columns.map((column, columnIndex) => {
-        const cellRegion = typeof column.cellRegionKey === 'string' ? parentProps.regions[column.cellRegionKey] : undefined;
-        const buttonRegion = typeof column.buttonsRegionKey === 'string' ? parentProps.regions[column.buttonsRegionKey] : undefined;
+        const cellRegion =
+          typeof column.cellRegionKey === 'string'
+            ? parentProps.regions[column.cellRegionKey]
+            : undefined;
+        const buttonRegion =
+          typeof column.buttonsRegionKey === 'string'
+            ? parentProps.regions[column.buttonsRegionKey]
+            : undefined;
 
         if (column.type === 'operation' && (buttonRegion || Array.isArray(column.buttons))) {
           return (
-            <TableCell key={column.name ?? `op-${columnIndex}`} className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className} style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style }} data-fixed={fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined}>
-              <div data-slot="table-actions" className="flex flex-wrap gap-3" onClick={(event) => event.stopPropagation()}>
+            <TableCell
+              key={column.name ?? `op-${columnIndex}`}
+              className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className}
+              style={{
+                ...(column.width ? { width: column.width } : undefined),
+                ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+              }}
+              data-fixed={
+                fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
+              }
+            >
+              <div
+                data-slot="table-actions"
+                className="flex flex-wrap gap-3"
+                onClick={(event) => event.stopPropagation()}
+              >
                 {buttonRegion
                   ? buttonRegion.render({
                       bindings: { record: entry.record, index: entry.sourceIndex },
@@ -154,7 +195,17 @@ export function renderDataRow(
 
         if (cellRegion) {
           return (
-            <TableCell key={`${column.name ?? columnIndex}`} className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className} style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style }} data-fixed={fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined}>
+            <TableCell
+              key={`${column.name ?? columnIndex}`}
+              className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className}
+              style={{
+                ...(column.width ? { width: column.width } : undefined),
+                ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+              }}
+              data-fixed={
+                fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
+              }
+            >
               {cellRegion.render({
                 bindings: { record: entry.record, index: entry.sourceIndex },
                 instancePath: rowInstancePath,
@@ -167,7 +218,17 @@ export function renderDataRow(
         const quickEditConfig = resolveTableQuickEditConfig(column);
         if (quickEditConfig && column.name) {
           return (
-            <TableCell key={`${column.name ?? columnIndex}`} className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className} style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style }} data-fixed={fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined}>
+            <TableCell
+              key={`${column.name ?? columnIndex}`}
+              className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className}
+              style={{
+                ...(column.width ? { width: column.width } : undefined),
+                ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+              }}
+              data-fixed={
+                fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
+              }
+            >
               <TableQuickEditCell
                 column={column}
                 rowScope={rowScope}
@@ -181,7 +242,17 @@ export function renderDataRow(
         }
 
         return (
-          <TableCell key={`${column.name ?? columnIndex}`} className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className} style={{ ...(column.width ? { width: column.width } : undefined), ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style }} data-fixed={fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined}>
+          <TableCell
+            key={`${column.name ?? columnIndex}`}
+            className={fixedColumnLayout.getColumnCellProps(column, columnIndex).className}
+            style={{
+              ...(column.width ? { width: column.width } : undefined),
+              ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+            }}
+            data-fixed={
+              fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
+            }
+          >
             {column.name ? String(entry.record[column.name] ?? '') : ''}
           </TableCell>
         );
@@ -197,7 +268,7 @@ export function renderExpandedRow(
   parentProps: RendererComponentProps<TableSchema>,
   rowScopeCache: Map<string, ScopeRef>,
   rowRepeatedTemplateId: string,
-  responsiveHiddenColumns: import('../schemas').TableColumnSchema[]
+  responsiveHiddenColumns: import('../schemas').TableColumnSchema[],
 ) {
   const regionKey = schemaProps.expandable?.expandedRowRegionKey;
   const hasResponsiveHiddenColumns = responsiveHiddenColumns.length > 0;
@@ -217,12 +288,27 @@ export function renderExpandedRow(
         {hasResponsiveHiddenColumns ? (
           <div className="grid gap-2 sm:grid-cols-2" data-slot="table-responsive-expanded">
             {responsiveHiddenColumns.map((column, index) => {
-              const cellRegion = typeof column.cellRegionKey === 'string' ? parentProps.regions[column.cellRegionKey] : undefined;
-              const label = typeof column.label === 'string' ? column.label : column.name ?? `Column ${index + 1}`;
+              const cellRegion =
+                typeof column.cellRegionKey === 'string'
+                  ? parentProps.regions[column.cellRegionKey]
+                  : undefined;
+              const label =
+                typeof column.label === 'string'
+                  ? column.label
+                  : (column.name ?? `Column ${index + 1}`);
               const columnKey = column.name ?? `${label}-${column.type ?? 'value'}`;
               return (
-                <div key={columnKey} className="rounded-md border bg-muted/20 px-3 py-2" data-slot="table-responsive-expanded-item">
-                  <div className="text-xs font-medium text-muted-foreground" data-slot="table-responsive-expanded-label">{label}</div>
+                <div
+                  key={columnKey}
+                  className="rounded-md border bg-muted/20 px-3 py-2"
+                  data-slot="table-responsive-expanded-item"
+                >
+                  <div
+                    className="text-xs font-medium text-muted-foreground"
+                    data-slot="table-responsive-expanded-label"
+                  >
+                    {label}
+                  </div>
                   <div className="mt-1 text-sm" data-slot="table-responsive-expanded-value">
                     {cellRegion
                       ? cellRegion.render({
@@ -234,7 +320,11 @@ export function renderExpandedRow(
                           pathSuffix: `responsive.${index}`,
                         })
                       : column.name
-                        ? String(((rowScope.get('record') as Record<string, unknown> | undefined)?.[column.name]) ?? '')
+                        ? String(
+                            (rowScope.get('record') as Record<string, unknown> | undefined)?.[
+                              column.name
+                            ] ?? '',
+                          )
                         : ''}
                   </div>
                 </div>

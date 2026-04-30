@@ -11,37 +11,37 @@ describe('schema compiler renderer contract integration', () => {
       propContracts: {
         label: {
           shape: { kind: 'string' },
-          displayName: 'Label'
-        }
+          displayName: 'Label',
+        },
       },
       eventContracts: {
         onClick: {
-          displayName: 'Click'
-        }
+          displayName: 'Click',
+        },
       },
-      fields: [{ key: 'onClick', kind: 'event' }]
+      fields: [{ key: 'onClick', kind: 'event' }],
     };
 
     const diagnostics = validateSchema({
       schema: {
         type: 'contract-button',
         label: 'Hello',
-        typo: 'unexpected'
+        typo: 'unexpected',
       },
       registry: createRendererRegistry([renderer]),
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       options: {
         validation: {
-          unknownBarePropertyPolicy: 'error'
-        }
-      }
+          unknownBarePropertyPolicy: 'error',
+        },
+      },
     });
 
     expect(diagnostics).toEqual([
       expect.objectContaining({
         code: 'unknown-property',
-        path: '/typo'
-      })
+        path: '/typo',
+      }),
     ]);
   });
 
@@ -60,23 +60,23 @@ describe('schema compiler renderer contract integration', () => {
       propContracts: {
         label: {
           shape: { kind: 'string' },
-          displayName: 'Label'
-        }
-      }
+          displayName: 'Label',
+        },
+      },
     };
 
     const diagnostics = validateSchema({
       schema: {
         type: 'contract-transform-button',
-        legacyLabel: 'Hello'
+        legacyLabel: 'Hello',
       } as any,
       registry: createRendererRegistry([renderer]),
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       options: {
         validation: {
-          unknownBarePropertyPolicy: 'error'
-        }
-      }
+          unknownBarePropertyPolicy: 'error',
+        },
+      },
     });
 
     expect(diagnostics).toEqual([]);

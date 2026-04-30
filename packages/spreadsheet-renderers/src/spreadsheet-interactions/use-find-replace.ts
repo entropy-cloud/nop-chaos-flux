@@ -6,7 +6,7 @@ export function useFindReplace(
   bridge: SpreadsheetBridge,
   sheetId: string,
   selectedCell: { row: number; col: number } | null,
-  addLog: (msg: string) => void
+  addLog: (msg: string) => void,
 ) {
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [findQuery, setFindQuery] = useState('');

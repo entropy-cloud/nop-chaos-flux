@@ -30,29 +30,32 @@ export function applyFilterRowsByCellValue(
 
   const workbook = {
     ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) => (
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
       sheetDoc.id === sheetId
         ? (() => {
             const filters: WorksheetFilterState = {
               columns: [
-                ...((sheet.filters?.columns ?? []).filter((entry) => entry.col !== col)),
+                ...(sheet.filters?.columns ?? []).filter((entry) => entry.col !== col),
                 { col, kind: 'cellValue', value },
               ],
             };
 
             return {
-            ...sheetDoc,
-            rows,
+              ...sheetDoc,
+              rows,
               filters,
             };
           })()
-        : sheetDoc
-    )),
+        : sheetDoc,
+    ),
   };
   return { ...updated, workbook };
 }
 
-export function applyClearRowFilters(doc: SpreadsheetDocument, sheetId: string): SpreadsheetDocument {
+export function applyClearRowFilters(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+): SpreadsheetDocument {
   const { doc: updated, sheet } = ensureSheetCells(doc, sheetId);
   const rows = { ...sheet.rows };
 
@@ -68,14 +71,14 @@ export function applyClearRowFilters(doc: SpreadsheetDocument, sheetId: string):
 
   const workbook = {
     ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) => (
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
       sheetDoc.id === sheetId
         ? (() => {
             const filters: WorksheetFilterState = { columns: [] };
             return { ...sheetDoc, rows, filters };
           })()
-        : sheetDoc
-    )),
+        : sheetDoc,
+    ),
   };
   return { ...updated, workbook };
 }

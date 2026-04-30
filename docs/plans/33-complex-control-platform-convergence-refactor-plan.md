@@ -248,28 +248,28 @@ pnpm test
 
 ## å˜åŠ¨æ–‡ä»¶æ¸…å•
 
-| File | Change | Lines affected |
-|------|--------|---------------|
-| `docs/architecture/complex-control-host-protocol.md` | æ–°å¢žå…±äº« host/workbench/session åè®®è§„èŒƒ | ~180-260 |
-| `docs/architecture/flow-designer/runtime-snapshot.md` | æ ¡æ­£ host scope æ³¨å…¥çŽ°çŠ¶ä¸Žå…±äº«åè®®æ˜ å°„ | ~40-100 |
-| `docs/architecture/report-designer/design.md` | æ ¡æ­£ report/spreadsheet ç»„åˆè½åœ°çŠ¶æ€ä¸Žå…±äº«åè®®æŽ¥çº¿çº¦æŸ | ~40-80 |
-| `docs/architecture/code-editor.md` | æ”¶å£å½“å‰å·²æ”¯æŒèƒ½åŠ›ã€source-ref fallback è¯­ä¹‰ä¸Ž future phases è¾¹ç•Œ | ~60-140 |
-| `packages/flux-core/src/workbench/*.ts` | æ–°å¢žçº¯åè®®ç±»åž‹ä¸Žæ— å‰¯ä½œç”¨ helper | ~120-220 |
-| `packages/flux-react/src/workbench/*.ts(x)` | æ–°å¢ž host wiring helperï¼Œå¹¶åœ¨ API ç¨³å®šæ—¶æŠ½ React-level `WorkbenchShell` | ~220-380 |
-| `packages/flow-designer-renderers/src/designer-page.tsx` | åˆ‡æ¢åˆ°å…±äº« helperï¼Œä¿ç•™é¢†åŸŸé€»è¾‘ | ~60-140 |
-| `packages/flow-designer-renderers/src/designer-context.ts` | æ”¶å£ host scope æ•°æ®æš´éœ²ä¸Žå…±äº« helper æŽ¥çº¿ | ~40-100 |
-| `packages/report-designer-core/src/core.ts` | å¢žè¡¥ spreadsheet host åŒæ­¥/adapter surfaceï¼Œé¿å… renderer-only å‡è®¾ | ~60-160 |
-| `packages/report-designer-renderers/src/page-renderer.tsx` | é»˜è®¤è·¯å¾„ç›´æŽ¥ç»„åˆ spreadsheet hostï¼Œè€Œä¸æ˜¯ fallback placeholder | ~140-260 |
-| `packages/report-designer-core/src/commands.ts` | å¯¹é½ toolbar éœ€è¦çš„å‘½ä»¤é¢ | ~20-80 |
-| `packages/report-designer-renderers/src/bridge.ts` | ä¿æŒæ—¢æœ‰ç»§æ‰¿å…³ç³»å¹¶è®©é»˜è®¤ host è·¯å¾„çœŸæ­£æ¶ˆè´¹è¯¥ç»„åˆ | ~20-60 |
-| `packages/report-designer-renderers/src/host-data.ts` | è®© host data æ”¹ä»Ž composed spreadsheet/report snapshot æ´¾ç”Ÿï¼Œè€Œä¸æ˜¯æœ¬åœ°å¹³è¡Œ shape | ~40-100 |
-| `packages/word-editor-renderers/src/WordEditorPage.tsx` | æŽ¥å…¥ React-level shared shell/sessionï¼Œä¿æŒæ™®é€š React é¡µé¢å…¥å£ | ~120-220 |
-| `packages/word-editor-core/src/document-io.ts` | æŽ¥çº¿ datasets save/load æˆ–è¡¥è¶³ session helper æ”¯æ’‘ | ~20-60 |
-| `packages/flux-code-editor/src/types.ts` | ä¿æŒ public types / inline resolverï¼Œç§»é™¤å¯¹ runtime source lookup çš„é”™è¯¯æ‰¿è½½ | ~20-60 |
-| `packages/flux-code-editor/src/source-resolvers.ts` | æ–°å¢ž scope/API source-ref è§£æž helper | ~80-180 |
-| `packages/flux-code-editor/src/code-editor-renderer.tsx` | æŽ¥çº¿ `onChange` äº‹ä»¶å¹¶æŽ¥å…¥ runtime source resolver | ~40-120 |
-| `packages/flux-code-editor/src/use-code-mirror.ts` | è§†éœ€è¦è¡¥å¼º change/focus/blur æ¡¥æŽ¥ç»†èŠ‚ | ~10-40 |
-| `packages/flux-code-editor/src/index.ts` | å¯¼å‡ºæ–°å¢ž source resolver surface | ~10-30 |
+| File                                                       | Change                                                                                        | Lines affected |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------------- |
+| `docs/architecture/complex-control-host-protocol.md`       | æ–°å¢žå…±äº« host/workbench/session åè®®è§„èŒƒ                                                | ~180-260       |
+| `docs/architecture/flow-designer/runtime-snapshot.md`      | æ ¡æ­£ host scope æ³¨å…¥çŽ°çŠ¶ä¸Žå…±äº«åè®®æ˜ å°„                                             | ~40-100        |
+| `docs/architecture/report-designer/design.md`              | æ ¡æ­£ report/spreadsheet ç»„åˆè½åœ°çŠ¶æ€ä¸Žå…±äº«åè®®æŽ¥çº¿çº¦æŸ                             | ~40-80         |
+| `docs/architecture/code-editor.md`                         | æ”¶å£å½“å‰å·²æ”¯æŒèƒ½åŠ›ã€source-ref fallback è¯­ä¹‰ä¸Ž future phases è¾¹ç•Œ                  | ~60-140        |
+| `packages/flux-core/src/workbench/*.ts`                    | æ–°å¢žçº¯åè®®ç±»åž‹ä¸Žæ— å‰¯ä½œç”¨ helper                                                     | ~120-220       |
+| `packages/flux-react/src/workbench/*.ts(x)`                | æ–°å¢ž host wiring helperï¼Œå¹¶åœ¨ API ç¨³å®šæ—¶æŠ½ React-level `WorkbenchShell`              | ~220-380       |
+| `packages/flow-designer-renderers/src/designer-page.tsx`   | åˆ‡æ¢åˆ°å…±äº« helperï¼Œä¿ç•™é¢†åŸŸé€»è¾‘                                                     | ~60-140        |
+| `packages/flow-designer-renderers/src/designer-context.ts` | æ”¶å£ host scope æ•°æ®æš´éœ²ä¸Žå…±äº« helper æŽ¥çº¿                                           | ~40-100        |
+| `packages/report-designer-core/src/core.ts`                | å¢žè¡¥ spreadsheet host åŒæ­¥/adapter surfaceï¼Œé¿å… renderer-only å‡è®¾                      | ~60-160        |
+| `packages/report-designer-renderers/src/page-renderer.tsx` | é»˜è®¤è·¯å¾„ç›´æŽ¥ç»„åˆ spreadsheet hostï¼Œè€Œä¸æ˜¯ fallback placeholder                      | ~140-260       |
+| `packages/report-designer-core/src/commands.ts`            | å¯¹é½ toolbar éœ€è¦çš„å‘½ä»¤é¢                                                                | ~20-80         |
+| `packages/report-designer-renderers/src/bridge.ts`         | ä¿æŒæ—¢æœ‰ç»§æ‰¿å…³ç³»å¹¶è®©é»˜è®¤ host è·¯å¾„çœŸæ­£æ¶ˆè´¹è¯¥ç»„åˆ                            | ~20-60         |
+| `packages/report-designer-renderers/src/host-data.ts`      | è®© host data æ”¹ä»Ž composed spreadsheet/report snapshot æ´¾ç”Ÿï¼Œè€Œä¸æ˜¯æœ¬åœ°å¹³è¡Œ shape | ~40-100        |
+| `packages/word-editor-renderers/src/WordEditorPage.tsx`    | æŽ¥å…¥ React-level shared shell/sessionï¼Œä¿æŒæ™®é€š React é¡µé¢å…¥å£                         | ~120-220       |
+| `packages/word-editor-core/src/document-io.ts`             | æŽ¥çº¿ datasets save/load æˆ–è¡¥è¶³ session helper æ”¯æ’‘                                     | ~20-60         |
+| `packages/flux-code-editor/src/types.ts`                   | ä¿æŒ public types / inline resolverï¼Œç§»é™¤å¯¹ runtime source lookup çš„é”™è¯¯æ‰¿è½½         | ~20-60         |
+| `packages/flux-code-editor/src/source-resolvers.ts`        | æ–°å¢ž scope/API source-ref è§£æž helper                                                      | ~80-180        |
+| `packages/flux-code-editor/src/code-editor-renderer.tsx`   | æŽ¥çº¿ `onChange` äº‹ä»¶å¹¶æŽ¥å…¥ runtime source resolver                                     | ~40-120        |
+| `packages/flux-code-editor/src/use-code-mirror.ts`         | è§†éœ€è¦è¡¥å¼º change/focus/blur æ¡¥æŽ¥ç»†èŠ‚                                                 | ~10-40         |
+| `packages/flux-code-editor/src/index.ts`                   | å¯¼å‡ºæ–°å¢ž source resolver surface                                                          | ~10-30         |
 
 ## é£Žé™©ä¸Žå›žé€€
 
@@ -286,4 +286,3 @@ pnpm test
 - `word-editor` ä½¿ç”¨å…±äº«çš„ workbench shell/session è§„èŒƒï¼Œå¹¶æ˜Žç¡® document ä¸Ž datasets çš„ä¿å­˜è¾¹ç•Œï¼ŒåŒæ—¶ä¿ç•™æ™®é€š React page å…¥å£ã€‚
 - `code-editor` çš„ source-ref é€šè¿‡çœŸå®ž runtime resolver è·¯å¾„å¯ç”¨ï¼Œchange event ä¸Žæ–‡æ¡£å£°æ˜Žé¢å¯¹é½ï¼ŒåŒæ—¶ä»ä¿æŒå­—æ®µæŽ§ä»¶å®šä½ã€‚
 - å…±äº«åè®®æœ‰æž¶æž„æ–‡æ¡£ã€å‚è€ƒå®žçŽ°å’Œæµ‹è¯•ï¼Œè€Œä¸æ˜¯ç»§ç»­åœç•™åœ¨åˆ†æžç»“è®ºæˆ–å•æ¨¡å—ç»éªŒä¸­ã€‚
-

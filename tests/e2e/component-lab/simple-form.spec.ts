@@ -11,7 +11,9 @@ import { ComponentLabHelper, scenarioSlug } from './helpers';
 // form
 // ---------------------------------------------------------------------------
 test.describe('form renderer', () => {
-  test('write: form submit toggles local success state and renders the local username', async ({ page }) => {
+  test('write: form submit toggles local success state and renders the local username', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('form');
 
@@ -29,7 +31,9 @@ test.describe('form renderer', () => {
     await expect(stage.getByLabel('Username')).toHaveValue('testuser');
     await expect(stage.getByLabel('Email')).toHaveValue('testuser@example.com');
     await stage.getByRole('button', { name: 'Submit' }).click();
-    await expect(stage.getByText('Success! Submitted username: testuser')).toBeVisible({ timeout: 5_000 });
+    await expect(stage.getByText('Success! Submitted username: testuser')).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });
 
@@ -51,7 +55,9 @@ test.describe('input-text renderer', () => {
     const submitButton = stage.getByRole('button', { name: 'Submit' });
     await expect(submitButton).toBeVisible();
     await submitButton.click();
-    await expect(stage.locator('[data-slot="field-error"]')).toContainText(/Full Name.*(不能为空|required)|不能为空|required/i);
+    await expect(stage.locator('[data-slot="field-error"]')).toContainText(
+      /Full Name.*(不能为空|required)|不能为空|required/i,
+    );
   });
 
   test('write: typing in text field and clearing updates value', async ({ page }) => {
@@ -84,7 +90,9 @@ test.describe('input-email renderer', () => {
     const submitBtn = stage.getByRole('button', { name: 'Submit to see validation error' });
     await expect(submitBtn).toBeVisible();
     await submitBtn.click();
-    await expect(stage.locator('[data-slot="field-error"]')).toContainText(/有效的邮箱地址|valid email address/);
+    await expect(stage.locator('[data-slot="field-error"]')).toContainText(
+      /有效的邮箱地址|valid email address/,
+    );
   });
 });
 
@@ -92,7 +100,9 @@ test.describe('input-email renderer', () => {
 // input-password
 // ---------------------------------------------------------------------------
 test.describe('input-password renderer', () => {
-  test('write: mismatched password fields keep the live masked values after submit', async ({ page }) => {
+  test('write: mismatched password fields keep the live masked values after submit', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('input-password');
 
@@ -136,7 +146,9 @@ test.describe('input-password renderer', () => {
 // textarea
 // ---------------------------------------------------------------------------
 test.describe('textarea renderer', () => {
-  test('write: submitting the required textarea empty shows a validation error', async ({ page }) => {
+  test('write: submitting the required textarea empty shows a validation error', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('textarea');
 
@@ -149,7 +161,9 @@ test.describe('textarea renderer', () => {
     await expect(biography).toBeVisible();
     await expect(saveButton).toBeVisible();
     await saveButton.click();
-    await expect(stage.locator('[data-slot="field-error"]')).toContainText(/Biography.*(不能为空|required)|不能为空|required/i);
+    await expect(stage.locator('[data-slot="field-error"]')).toContainText(
+      /Biography.*(不能为空|required)|不能为空|required/i,
+    );
   });
 
   test('write: typing in textarea updates the value', async ({ page }) => {
@@ -177,7 +191,9 @@ test.describe('textarea renderer', () => {
 });
 
 test.describe('select renderer', () => {
-  test('write: open select, choose option, and verify the bound value updates', async ({ page }) => {
+  test('write: open select, choose option, and verify the bound value updates', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('select');
 
@@ -199,7 +215,9 @@ test.describe('select renderer', () => {
 // checkbox
 // ---------------------------------------------------------------------------
 test.describe('checkbox renderer', () => {
-  test('write: toggle email checkbox updates checkbox state and in-form live summary text', async ({ page }) => {
+  test('write: toggle email checkbox updates checkbox state and in-form live summary text', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('checkbox');
 
@@ -223,7 +241,9 @@ test.describe('checkbox renderer', () => {
 // switch
 // ---------------------------------------------------------------------------
 test.describe('switch renderer', () => {
-  test('write: toggle switch changes aria-checked state and in-form live summary text', async ({ page }) => {
+  test('write: toggle switch changes aria-checked state and in-form live summary text', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('switch');
 
@@ -248,7 +268,9 @@ test.describe('switch renderer', () => {
 // radio-group
 // ---------------------------------------------------------------------------
 test.describe('radio-group renderer', () => {
-  test('write: select High radio updates selection and in-form live summary text', async ({ page }) => {
+  test('write: select High radio updates selection and in-form live summary text', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('radio-group');
 
@@ -281,7 +303,9 @@ test.describe('radio-group renderer', () => {
 // checkbox-group
 // ---------------------------------------------------------------------------
 test.describe('checkbox-group renderer', () => {
-  test('write: check TypeScript checkbox updates its state while the summary text remains a static prefix', async ({ page }) => {
+  test('write: check TypeScript checkbox updates its state while the summary text remains a static prefix', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('checkbox-group');
 

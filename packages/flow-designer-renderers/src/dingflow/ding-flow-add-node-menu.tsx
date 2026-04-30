@@ -16,7 +16,13 @@ interface DingFlowAddNodeMenuProps {
   onClose: () => void;
 }
 
-export function DingFlowAddNodeMenu({ screenX, screenY, items, onSelect, onClose }: DingFlowAddNodeMenuProps) {
+export function DingFlowAddNodeMenu({
+  screenX,
+  screenY,
+  items,
+  onSelect,
+  onClose,
+}: DingFlowAddNodeMenuProps) {
   return (
     <>
       <div className="fixed inset-0 z-[100]" onClick={onClose} />
@@ -30,7 +36,10 @@ export function DingFlowAddNodeMenu({ screenX, screenY, items, onSelect, onClose
             type="button"
             variant="ghost"
             className="h-auto flex-col gap-1 px-0 py-0"
-            onClick={(e) => { e.stopPropagation(); onSelect(item.type); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(item.type);
+            }}
           >
             <div
               className="flex items-center justify-center rounded-full text-white"

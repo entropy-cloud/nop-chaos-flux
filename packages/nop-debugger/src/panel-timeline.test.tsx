@@ -31,7 +31,7 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         level: 'info',
         source: 'test',
         summary: 'User login',
-        actionType: 'login'
+        actionType: 'login',
       },
       {
         id: 2,
@@ -42,8 +42,8 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         level: 'info',
         source: 'test',
         summary: 'User logout',
-        actionType: 'logout'
-      }
+        actionType: 'logout',
+      },
     ];
     const controller = createController(snapshot);
 
@@ -53,7 +53,7 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
     expect(screen.getByText('User logout')).toBeTruthy();
 
     fireEvent.change(screen.getByPlaceholderText('Search events, /regex/, or path:body.0'), {
-      target: { value: 'login' }
+      target: { value: 'login' },
     });
 
     expect(screen.getByText((_, element) => element?.textContent === 'User login')).toBeTruthy();
@@ -72,8 +72,8 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         group: 'notify',
         level: 'info',
         source: 'toast',
-        summary: 'Saved successfully'
-      }
+        summary: 'Saved successfully',
+      },
     ];
     const controller = createController(snapshot);
 
@@ -88,7 +88,10 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
     fireEvent.change(search, { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'saved' }));
 
-    expect((screen.getByPlaceholderText('Search events, /regex/, or path:body.0') as HTMLInputElement).value).toBe('saved');
+    expect(
+      (screen.getByPlaceholderText('Search events, /regex/, or path:body.0') as HTMLInputElement)
+        .value,
+    ).toBe('saved');
   });
 
   it('highlights plain-text search matches in event summaries', () => {
@@ -103,15 +106,15 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         group: 'notify',
         level: 'info',
         source: 'toast',
-        summary: 'Saved successfully'
-      }
+        summary: 'Saved successfully',
+      },
     ];
     const controller = createController(snapshot);
 
     render(<NopDebuggerPanel controller={controller} />);
 
     fireEvent.change(screen.getByPlaceholderText('Search events, /regex/, or path:body.0'), {
-      target: { value: 'saved' }
+      target: { value: 'saved' },
     });
 
     expect(document.querySelector('.ndbg-highlight')?.textContent?.toLowerCase()).toBe('saved');
@@ -131,7 +134,7 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         source: 'test',
         summary: 'Submit body.0',
         path: 'body.0',
-        actionType: 'submit'
+        actionType: 'submit',
       },
       {
         id: 2,
@@ -143,15 +146,15 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         source: 'test',
         summary: 'Submit footer.0',
         path: 'footer.0',
-        actionType: 'submit'
-      }
+        actionType: 'submit',
+      },
     ];
     const controller = createController(snapshot);
 
     render(<NopDebuggerPanel controller={controller} />);
 
     fireEvent.change(screen.getByPlaceholderText('Search events, /regex/, or path:body.0'), {
-      target: { value: 'path:body.0' }
+      target: { value: 'path:body.0' },
     });
 
     expect(screen.getByText('Submit body.0')).toBeTruthy();
@@ -170,7 +173,7 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         group: 'notify',
         level: 'info',
         source: 'toast',
-        summary: 'Saved successfully'
+        summary: 'Saved successfully',
       },
       {
         id: 2,
@@ -180,15 +183,15 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         group: 'notify',
         level: 'info',
         source: 'toast',
-        summary: 'Save failed'
-      }
+        summary: 'Save failed',
+      },
     ];
     const controller = createController(snapshot);
 
     render(<NopDebuggerPanel controller={controller} />);
 
     fireEvent.change(screen.getByPlaceholderText('Search events, /regex/, or path:body.0'), {
-      target: { value: '/saved/i' }
+      target: { value: '/saved/i' },
     });
 
     expect(screen.getByText('Saved successfully')).toBeTruthy();
@@ -207,7 +210,7 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
       level: 'info' as const,
       source: 'test',
       summary: `Event ${index}`,
-      actionType: 'submit'
+      actionType: 'submit',
     }));
     const controller = createController(snapshot);
 
@@ -235,8 +238,8 @@ describe('NopDebuggerPanel – timeline search and filters', () => {
         group: 'error',
         level: 'error',
         source: 'test',
-        summary: 'Boom'
-      }
+        summary: 'Boom',
+      },
     ];
     const controller = createController(snapshot);
 

@@ -2,9 +2,15 @@ import type {
   CapabilityMethodContract,
   FluxValueShape,
   HostCapabilityMethod,
-  HostProjectionContract
+  HostProjectionContract,
 } from '../schema-diagnostics';
-import type { RendererDefinition, RendererEventContract, RendererPropContract, RendererRendererClass, RendererCapabilityContract } from './renderer-core';
+import type {
+  RendererDefinition,
+  RendererEventContract,
+  RendererPropContract,
+  RendererRendererClass,
+  RendererCapabilityContract,
+} from './renderer-core';
 
 export interface ResolvedAuthoringContract {
   rendererType: string;
@@ -24,7 +30,7 @@ function toCapabilityMethodContract(method: HostCapabilityMethod): CapabilityMet
     args: method.args,
     result: method.result,
     description: method.description,
-    deprecated: method.deprecated
+    deprecated: method.deprecated,
   };
 }
 
@@ -42,7 +48,7 @@ function toCapabilityMethodContract(method: HostCapabilityMethod): CapabilityMet
  */
 export function resolveHostContractManifest(
   definition: RendererDefinition,
-  versionSelector?: string
+  versionSelector?: string,
 ): import('../schema-diagnostics').HostCapabilityProjectionManifest | undefined {
   const hostContract = definition.hostContract;
   if (!hostContract) {
@@ -62,7 +68,7 @@ export function resolveHostContractManifest(
  */
 export function resolveRendererAuthoringContract(
   definition: RendererDefinition,
-  versionSelector?: string
+  versionSelector?: string,
 ): ResolvedAuthoringContract {
   const hostManifest = resolveHostContractManifest(definition, versionSelector);
 
@@ -77,9 +83,12 @@ export function resolveRendererAuthoringContract(
     hostProjection: hostManifest?.projection,
     hostActions: hostManifest
       ? Object.fromEntries(
-          Object.entries(hostManifest.capabilities.methods).map(([key, method]) => [key, toCapabilityMethodContract(method)])
+          Object.entries(hostManifest.capabilities.methods).map(([key, method]) => [
+            key,
+            toCapabilityMethodContract(method),
+          ]),
         )
       : undefined,
-    hostManifest
+    hostManifest,
   };
 }

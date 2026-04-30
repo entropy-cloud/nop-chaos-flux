@@ -1,1124 +1,1840 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nop平台：基于可逆计算理论的下一代软件技术架构</title>
     <!-- External Libraries: Font Awesome & html2pdf.js -->
-    <link rel="stylesheet" href="../assets/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/all.min.css" />
     <script src="../assets/js/html2pdf.bundle.min.js"></script>
-	<script src="../assets/js/mermaid.min.js"></script>
-	<script src="../assets/js/lightbox.js"></script>
+    <script src="../assets/js/mermaid.min.js"></script>
+    <script src="../assets/js/lightbox.js"></script>
     <style>
-        /* --- 1. Global Styles & Variables --- */
-        :root {
-            --color-primary: #2563eb;
-            --color-primary-dark: #1e40af;
-            --color-secondary: #059669;
-            --color-warning: #d97706;
-            --color-text-dark: #1f2937;
-            --color-text-light: #4b5563;
-            --color-bg-main: #f4f6f9;
-            --color-bg-slide: #ffffff;
-            --color-border: #e5e7eb;
-            --color-code-bg: #f8fafc;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-code: 'Fira Code', monospace;
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --font-size-base: 1.25rem;
-            --line-height-base: 1.7;
-            --controls-area-height: 40px;
-        }
+      /* --- 1. Global Styles & Variables --- */
+      :root {
+        --color-primary: #2563eb;
+        --color-primary-dark: #1e40af;
+        --color-secondary: #059669;
+        --color-warning: #d97706;
+        --color-text-dark: #1f2937;
+        --color-text-light: #4b5563;
+        --color-bg-main: #f4f6f9;
+        --color-bg-slide: #ffffff;
+        --color-border: #e5e7eb;
+        --color-code-bg: #f8fafc;
+        --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-code: 'Fira Code', monospace;
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --font-size-base: 1.25rem;
+        --line-height-base: 1.7;
+        --controls-area-height: 40px;
+      }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: var(--font-main);
-            background-color: var(--color-bg-main);
-            color: var(--color-text-dark);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            line-height: var(--line-height-base);
-        }
+      body {
+        font-family: var(--font-main);
+        background-color: var(--color-bg-main);
+        color: var(--color-text-dark);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+        line-height: var(--line-height-base);
+      }
 
-        /* --- 2. Core Layout & Container --- */
-        #presentation-container {
-            width: 90vw;
-            height: 90vh;
-            max-width: 1200px;
-            background: var(--color-bg-slide);
-            border-radius: 16px;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-            padding-bottom: var(--controls-area-height);
-        }
+      /* --- 2. Core Layout & Container --- */
+      #presentation-container {
+        width: 90vw;
+        height: 90vh;
+        max-width: 1200px;
+        background: var(--color-bg-slide);
+        border-radius: 16px;
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+        padding-bottom: var(--controls-area-height);
+      }
 
-        .slides-viewport { flex-grow: 1; position: relative; overflow: hidden; }
+      .slides-viewport {
+        flex-grow: 1;
+        position: relative;
+        overflow: hidden;
+      }
 
+      .slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 50px 60px;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.5s ease-in-out,
+          transform 0.5s ease-in-out;
+        transform: translateY(10px);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow-y: auto;
+        background-color: var(--color-bg-slide);
+      }
+
+      .slide.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        z-index: 1;
+      }
+
+      .title-slide .author {
+        font-size: 1.5rem;
+        color: var(--color-text-light);
+        margin-top: 1rem;
+        font-weight: 400;
+      }
+
+      /* --- 3. Typography --- */
+      h1,
+      h2,
+      h3 {
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+      h2 {
+        font-size: 2.2rem;
+        color: var(--color-text-dark);
+        border-bottom: 3px solid var(--color-primary);
+        padding-bottom: 0.75rem;
+        margin-bottom: 2.2rem;
+        font-weight: 600;
+      }
+      h3 {
+        font-size: 1.5rem;
+        color: var(--color-primary);
+        margin-bottom: 1rem;
+      }
+      h4 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-text-dark);
+        margin-bottom: 0.5rem;
+      }
+      p,
+      li {
+        font-size: var(--font-size-base);
+        color: var(--color-text-light);
+        margin-bottom: 1rem;
+      }
+      strong {
+        color: var(--color-primary);
+        font-weight: 600;
+      }
+      ul {
+        list-style: none;
+        padding-left: 0;
+      }
+      li p {
+        margin-bottom: 0.25rem;
+      }
+
+      .font-bold {
+        font-weight: bold;
+      }
+
+      /* --- 4. UI Components --- */
+      #progress-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 4px;
+        background-color: var(--color-primary);
+        width: 0%;
+        transition: width 0.4s ease;
+        z-index: 10;
+      }
+      .controls {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+      }
+      .btn {
+        background-color: var(--color-primary);
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-md);
+      }
+      .btn:hover:not(:disabled) {
+        background-color: var(--color-primary-dark);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+      .btn:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: var(--shadow-md);
+      }
+      #pdf-btn {
+        background-color: var(--color-secondary);
+      }
+      #pdf-btn:hover:not(:disabled) {
+        background-color: #047857;
+      }
+      #print-btn {
+        background-color: #6366f1;
+      }
+      #print-btn:hover:not(:disabled) {
+        background-color: #4f46e5;
+      }
+      #slide-counter {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-text-dark);
+        box-shadow: var(--shadow-md);
+        z-index: 10;
+      }
+
+      /* --- NEW: Timer Display --- */
+      #timer-display {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--color-text-dark);
+        box-shadow: var(--shadow-md);
+        z-index: 10;
+        font-family: var(--font-code); /* Monospaced font for stable width */
+      }
+
+      /* --- 5. Content Modules --- */
+      .title-slide {
+        text-align: center;
+        align-items: center;
+      }
+      .slide.title-slide {
+        justify-content: center;
+        align-items: center;
+      }
+      .title-slide h1 {
+        font-size: 3.5rem;
+        color: var(--color-text-dark);
+      }
+      .title-slide .subtitle {
+        font-size: 1.5rem;
+        color: var(--color-text-light);
+        font-weight: 400;
+      }
+      .icon-list {
+        list-style: none;
+        padding: 0;
+        margin: 1.5rem 0;
+      }
+      .icon-bullet {
+        display: flex;
+        gap: 16px;
+        background-color: var(--color-code-bg);
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        border: 1px solid var(--color-border);
+        transition: all 0.3s ease;
+      }
+      .icon-bullet:hover {
+        transform: translateX(5px);
+        box-shadow: var(--shadow-md);
+      }
+      .icon-bullet i {
+        font-size: 1.25rem;
+        color: var(--color-primary);
+        margin-top: 5px;
+        flex-shrink: 0;
+        width: 24px;
+        text-align: center;
+      }
+      .icon-bullet div {
+        flex-grow: 1;
+      }
+      .icon-bullet p {
+        margin-bottom: 0.25rem;
+        color: var(--color-text-dark);
+        font-weight: 500;
+      }
+      .icon-bullet .details {
+        font-size: calc(var(--font-size-base) - 0.2rem);
+        color: var(--color-text-light);
+        font-weight: 400;
+      }
+      .sub-items {
+        margin-top: 0.5rem;
+        margin-left: 1rem;
+      }
+      .sub-item {
+        font-size: calc(var(--font-size-base) - 0.1rem);
+        color: var(--color-text-light);
+        margin-bottom: 0.25rem;
+        position: relative;
+        padding-left: 1rem;
+      }
+      .sub-item::before {
+        content: '•';
+        color: var(--color-secondary);
+        position: absolute;
+        left: 0;
+      }
+      .sub-items-split {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .sub-items-split .sub-item {
+        flex: 1 1 0;
+      }
+      .two-column {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+        width: 100%;
+      }
+      .column {
+        flex: 1;
+      }
+      .column-narrow {
+        flex: 0.7;
+      }
+      .column-wide {
+        flex: 1.3;
+      }
+      .code-block {
+        background-color: var(--color-code-bg);
+        color: var(--color-text-dark);
+        padding: 1em 1.5em;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: var(--font-code);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        border: 1px solid var(--color-border);
+        margin: 1.5rem 0;
+      }
+      .code-block > code {
+        font-size: inherit;
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
+      }
+      .code-block.is-centered {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .code-comment {
+        color: #64748b;
+        font-style: normal;
+      }
+
+      .code-keyword {
+        color: #be185d;
+        font-weight: 600;
+      }
+
+      .code-string {
+        color: #057a55;
+      }
+
+      .code-attr {
+        color: #9333ea;
+      }
+
+      .img-placeholder {
+        width: 100%;
+        min-height: 250px;
+        background-color: var(--color-code-bg);
+        border: 2px dashed var(--color-border);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: var(--color-text-light);
+        margin: 1.5rem 0;
+      }
+      .img-placeholder i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+      .highlight-box {
+        background-color: #eff6ff;
+        border-left: 4px solid var(--color-primary);
+        padding: 20px;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .quote {
+        background: #fffbeb;
+        border-left: 4px solid var(--color-warning);
+        padding: 20px;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+        font-style: italic;
+        color: #92400e;
+      }
+      .quote p {
+        font-size: calc(var(--font-size-base) + 0.1rem);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 20px;
+        margin: 2rem 0;
+      }
+      .stat-card {
+        background: var(--color-code-bg);
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid var(--color-border);
+        transition: all 0.3s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md);
+      }
+      .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        display: block;
+      }
+      .stat-label {
+        font-size: 0.9rem;
+        color: var(--color-text-light);
+        margin-top: 0.25rem;
+      }
+
+      /* Mermaid diagram styling */
+      .mermaid-container {
+        background-color: var(--color-code-bg);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        margin: 1.5rem 0;
+        overflow: auto;
+      }
+
+      .mermaid {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+      }
+
+      /* Comparison table styling */
+      .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: var(--font-size-base);
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border: 1px solid var(--color-border);
+      }
+
+      .comparison-table th {
+        background-color: var(--color-primary);
+        color: white;
+        font-weight: 600;
+      }
+
+      .comparison-table tr:nth-child(even) {
+        background-color: var(--color-code-bg);
+      }
+
+      /* --- 6. Responsive & Print Styles --- */
+      @media (max-width: 768px) {
         .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 50px 60px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-            transform: translateY(10px);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            overflow-y: auto;
-            background-color: var(--color-bg-slide);
+          padding: 30px;
         }
-
-        .slide.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            z-index: 1;
+        h1 {
+          font-size: 2rem;
         }
-		
-        .title-slide .author {
-            font-size: 1.5rem;
-            color: var(--color-text-light);
-            margin-top: 1rem;
-            font-weight: 400;
-        }		
-
-        /* --- 3. Typography --- */
-        h1, h2, h3 { font-weight: 700; line-height: 1.2; }
-        h1 { font-size: 3rem; margin-bottom: 1rem; }
-        h2 { font-size: 2.2rem; color: var(--color-text-dark); border-bottom: 3px solid var(--color-primary); padding-bottom: 0.75rem; margin-bottom: 2.2rem; font-weight: 600; }
-        h3 { font-size: 1.5rem; color: var(--color-primary); margin-bottom: 1rem; }
-        h4 { font-size: 1.25rem; font-weight: 600; color: var(--color-text-dark); margin-bottom: 0.5rem; }
-        p, li { font-size: var(--font-size-base); color: var(--color-text-light); margin-bottom: 1rem; }
-        strong { color: var(--color-primary); font-weight: 600; }
-        ul { list-style: none; padding-left: 0; }
-        li p { margin-bottom: 0.25rem; }
-
-        .font-bold {
-            font-weight: bold;
+        h2 {
+          font-size: 1.5rem;
         }
-        
-        /* --- 4. UI Components --- */
-        #progress-bar { position: absolute; top: 0; left: 0; height: 4px; background-color: var(--color-primary); width: 0%; transition: width 0.4s ease; z-index: 10; }
-        .controls { position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 10; }
-        .btn { background-color: var(--color-primary); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; box-shadow: var(--shadow-md); }
-        .btn:hover:not(:disabled) { background-color: var(--color-primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-        .btn:disabled { background-color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: var(--shadow-md); }
-        #pdf-btn { background-color: var(--color-secondary); }
-        #pdf-btn:hover:not(:disabled) { background-color: #047857; }
-        #print-btn { background-color: #6366f1; }
-        #print-btn:hover:not(:disabled) { background-color: #4f46e5; }
-        #slide-counter { position: absolute; bottom: 20px; left: 20px; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: var(--color-text-dark); box-shadow: var(--shadow-md); z-index: 10; }
-        
-        /* --- NEW: Timer Display --- */
+        .two-column,
+        .stat-grid {
+          flex-direction: column;
+          grid-template-columns: 1fr;
+        }
+        .controls {
+          right: auto;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+        #slide-counter,
         #timer-display {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(5px);
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--color-text-dark);
-            box-shadow: var(--shadow-md);
-            z-index: 10;
-            font-family: var(--font-code); /* Monospaced font for stable width */
-        }
-
-        /* --- 5. Content Modules --- */
-        .title-slide { text-align: center; align-items: center; }
-        .slide.title-slide {
-            justify-content: center;
-            align-items: center;
-        }
-        .title-slide h1 { font-size: 3.5rem; color: var(--color-text-dark); }
-        .title-slide .subtitle { font-size: 1.5rem; color: var(--color-text-light); font-weight: 400; }
-        .icon-list { list-style: none; padding: 0; margin: 1.5rem 0; }
-        .icon-bullet { display: flex; gap: 16px; background-color: var(--color-code-bg); padding: 16px; border-radius: 10px; margin-bottom: 12px; border: 1px solid var(--color-border); transition: all 0.3s ease; }
-        .icon-bullet:hover { transform: translateX(5px); box-shadow: var(--shadow-md); }
-        .icon-bullet i { font-size: 1.25rem; color: var(--color-primary); margin-top: 5px; flex-shrink: 0; width: 24px; text-align: center; }
-        .icon-bullet div { flex-grow: 1; }
-        .icon-bullet p { margin-bottom: 0.25rem; color: var(--color-text-dark); font-weight: 500; }
-        .icon-bullet .details { font-size: calc(var(--font-size-base) - 0.2rem); color: var(--color-text-light); font-weight: 400; }
-        .sub-items { margin-top: 0.5rem; margin-left: 1rem; }
-        .sub-item { font-size: calc(var(--font-size-base) - 0.1rem); color: var(--color-text-light); margin-bottom: 0.25rem; position: relative; padding-left: 1rem; }
-        .sub-item::before { content: "•"; color: var(--color-secondary); position: absolute; left: 0; }
-        .sub-items-split {
-            display: flex;
-            gap: 1rem;
-            align-items: flex-start;
-        }
-
-        .sub-items-split .sub-item {
-            flex: 1 1 0;   
-        }
-        .two-column { display: flex; gap: 40px; align-items: flex-start; width: 100%; }
-        .column { flex: 1; }
-        .column-narrow { flex: 0.7; }
-        .column-wide { flex: 1.3; }
-        .code-block { background-color: var(--color-code-bg); color: var(--color-text-dark); padding: 1em 1.5em; border-radius: 8px; overflow-x: auto; font-family: var(--font-code); font-size: 0.95rem; line-height: 1.6; border: 1px solid var(--color-border); margin: 1.5rem 0; }
-        .code-block > code { font-size: inherit; background: transparent; padding: 0; border-radius: 0; }
-        .code-block.is-centered { display: flex; justify-content: center; align-items: center; }
-        
-        .code-comment {
-            color: #64748b;
-            font-style: normal;
-        }
-
-        .code-keyword {
-            color: #be185d;
-            font-weight: 600;
-        }
-
-        .code-string {
-            color: #057a55;
-        }
-
-        .code-attr {
-            color: #9333ea;
-        }
-        
-        .img-placeholder { width: 100%; min-height: 250px; background-color: var(--color-code-bg); border: 2px dashed var(--color-border); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--color-text-light); margin: 1.5rem 0; }
-        .img-placeholder i { font-size: 3rem; margin-bottom: 1rem; }
-        .highlight-box { background-color: #eff6ff; border-left: 4px solid var(--color-primary); padding: 20px; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
-        .quote { background: #fffbeb; border-left: 4px solid var(--color-warning); padding: 20px; margin: 1.5rem 0; border-radius: 0 8px 8px 0; font-style: italic; color: #92400e; }
-        .quote p { font-size: calc(var(--font-size-base) + 0.1rem); }
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin: 2rem 0; }
-        .stat-card { background: var(--color-code-bg); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--color-border); transition: all 0.3s ease; }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
-        .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--color-primary); display: block; }
-        .stat-label { font-size: 0.9rem; color: var(--color-text-light); margin-top: 0.25rem; }
-
-        /* Mermaid diagram styling */
-        .mermaid-container {
-            background-color: var(--color-code-bg);
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--color-border);
-            margin: 1.5rem 0;
-            overflow: auto;
-        }
-
-        .mermaid {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-        }
-
-        /* Comparison table styling */
+          display: none;
+        } /* Hide on small screens */
         .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-            font-size: var(--font-size-base);
+          font-size: 0.9rem;
         }
+        .comparison-table th,
+        .comparison-table td {
+          padding: 8px 10px;
+        }
+      }
 
-        .comparison-table th, .comparison-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border: 1px solid var(--color-border);
+      @media print {
+        body {
+          background: #fff !important;
+          height: auto;
+          overflow: visible;
+          display: block;
         }
+        /* --- MODIFIED: Added #timer-display to hide it on print --- */
+        .controls,
+        #progress-bar,
+        #slide-counter,
+        #timer-display {
+          display: none !important;
+        }
+        #presentation-container {
+          display: block;
+          width: 100%;
+          height: auto;
+          box-shadow: none;
+          border: none;
+          padding: 0;
+        }
+        .slides-viewport {
+          overflow: visible;
+          height: auto;
+        }
+        .slide {
+          display: flex !important;
+          opacity: 1 !important;
+          visibility: visible !important;
+          transform: none !important;
+          position: relative;
+          page-break-after: always;
+          page-break-inside: avoid;
+          width: 100%;
+          height: auto;
+          aspect-ratio: 16 / 9;
+          border: 1px solid #ddd;
+          margin-bottom: 20px;
+          box-shadow: none;
+          border-radius: 0;
+          overflow: hidden;
+        }
+        .slide:last-of-type {
+          page-break-after: avoid;
+        }
+        svg * {
+          animation-play-state: paused !important;
+        }
+      }
 
-        .comparison-table th {
-            background-color: var(--color-primary);
-            color: white;
-            font-weight: 600;
-        }
-
-        .comparison-table tr:nth-child(even) {
-            background-color: var(--color-code-bg);
-        }
-
-        /* --- 6. Responsive & Print Styles --- */
-        @media (max-width: 768px) {
-            .slide { padding: 30px; }
-            h1 { font-size: 2rem; }
-            h2 { font-size: 1.5rem; }
-            .two-column, .stat-grid { flex-direction: column; grid-template-columns: 1fr; }
-            .controls { right: auto; left: 50%; transform: translateX(-50%); }
-            #slide-counter, #timer-display { display: none; } /* Hide on small screens */
-            .comparison-table { font-size: 0.9rem; }
-            .comparison-table th, .comparison-table td { padding: 8px 10px; }
-        }
-
-        @media print {
-            body { background: #fff !important; height: auto; overflow: visible; display: block; }
-            /* --- MODIFIED: Added #timer-display to hide it on print --- */
-            .controls, #progress-bar, #slide-counter, #timer-display { display: none !important; }
-            #presentation-container { display: block; width: 100%; height: auto; box-shadow: none; border: none; padding: 0; }
-            .slides-viewport { overflow: visible; height: auto; }
-            .slide { display: flex !important; opacity: 1 !important; visibility: visible !important; transform: none !important; position: relative; page-break-after: always; page-break-inside: avoid; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: none; border-radius: 0; overflow: hidden; }
-            .slide:last-of-type { page-break-after: avoid; }
-            svg * { animation-play-state: paused !important; }
-        }
-        
-        .pdf-page-container { width: 100%; height: auto; background: white; color: black; box-shadow: none; }
-        .pdf-slide { position: relative !important; opacity: 1 !important; visibility: visible !important; transform: none !important; height: auto !important; width: 100%; background: white; border: 1px solid #eeeeee; padding: 40px 50px; box-shadow: none; margin-bottom: 0; overflow: hidden; page-break-after: always; break-inside: avoid; aspect-ratio: 16 / 12; }
-        .pdf-slide:last-of-type { page-break-after: avoid; }
+      .pdf-page-container {
+        width: 100%;
+        height: auto;
+        background: white;
+        color: black;
+        box-shadow: none;
+      }
+      .pdf-slide {
+        position: relative !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        height: auto !important;
+        width: 100%;
+        background: white;
+        border: 1px solid #eeeeee;
+        padding: 40px 50px;
+        box-shadow: none;
+        margin-bottom: 0;
+        overflow: hidden;
+        page-break-after: always;
+        break-inside: avoid;
+        aspect-ratio: 16 / 12;
+      }
+      .pdf-slide:last-of-type {
+        page-break-after: avoid;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="presentation-container">
-        <!-- UI Elements -->
-        <div id="progress-bar"></div>
-        <div id="slide-counter">1 / 21</div>
-        <!-- NEW: Timer Display Element -->
-        <div id="timer-display"></div>
+      <!-- UI Elements -->
+      <div id="progress-bar"></div>
+      <div id="slide-counter">1 / 21</div>
+      <!-- NEW: Timer Display Element -->
+      <div id="timer-display"></div>
 
-        <!-- Slides Viewport -->
-        <div class="slides-viewport">
-            
-            <!-- Slide 1: Title Slide -->
-            <section class="slide active title-slide">
-                <h1>Nop平台：基于可逆计算理论的下一代软件技术架构</h1>
-           
-				<p class="author">作者：Canonical</p>
-            </section>
+      <!-- Slides Viewport -->
+      <div class="slides-viewport">
+        <!-- Slide 1: Title Slide -->
+        <section class="slide active title-slide">
+          <h1>Nop平台：基于可逆计算理论的下一代软件技术架构</h1>
 
-            <!-- ... (The rest of your slides remain unchanged) ... -->
+          <p class="author">作者：Canonical</p>
+        </section>
 
-            <!-- Slide 2: Author Introduction -->
-            <section class="slide">
-                <h2>作者简介</h2>
-                <ul class="icon-list">
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                        <div>
-                            <p>2002年毕业于清华大学工程物理系</p>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-briefcase"></i>
-                        <div>
-                            <p>20多年架构设计经验</p>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-user-tie"></i>
-                        <div>
-                            <p>现任大型外企中国区首席架构师</p>
-                            <span class="details">负责亚太区新一代信用卡核心系统架构设计</span>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-lightbulb"></i>
-                        <div>
-                            <p>可逆计算理论提出者和开源Nop平台创始人</p>
-                        </div>
-                    </li>
-                </ul>
-            </section>
+        <!-- ... (The rest of your slides remain unchanged) ... -->
 
-            <!-- Slide 3: Agenda -->
-            <section class="slide">
-                <h2>演讲议程</h2>
-                <ul class="icon-list" >
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-1"></i>
-                        <div>
-                            <p>为什么需要下一代软件架构</p>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-2"></i>
-                        <div>
-                            <p>可逆计算理论简介</p>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-3"></i>
-                        <div>
-                            <p>Nop平台整体架构 ️</p>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-4"></i>
-                        <div>
-                            <p>核心引擎与技术对比</p>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-5"></i>
-                        <div>
-                            <p>如何集成与应用</p>
-                        </div>
-                    </li>
-                </ul>
-            </section>
+        <!-- Slide 2: Author Introduction -->
+        <section class="slide">
+          <h2>作者简介</h2>
+          <ul class="icon-list">
+            <li class="icon-bullet">
+              <i class="fa-solid fa-graduation-cap"></i>
+              <div>
+                <p>2002年毕业于清华大学工程物理系</p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-briefcase"></i>
+              <div>
+                <p>20多年架构设计经验</p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-user-tie"></i>
+              <div>
+                <p>现任大型外企中国区首席架构师</p>
+                <span class="details">负责亚太区新一代信用卡核心系统架构设计</span>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-lightbulb"></i>
+              <div>
+                <p>可逆计算理论提出者和开源Nop平台创始人</p>
+              </div>
+            </li>
+          </ul>
+        </section>
 
-<!-- Slide 4: Current Dilemma -->
-<section class="slide">
-    <h2>当前困境：定制化开发的泥潭</h2>
-    <div class="two-column">
-        <div class="column-wide">
-            <div class="mermaid-container">
+        <!-- Slide 3: Agenda -->
+        <section class="slide">
+          <h2>演讲议程</h2>
+          <ul class="icon-list">
+            <li class="icon-bullet">
+              <i class="fa-solid fa-1"></i>
+              <div>
+                <p>为什么需要下一代软件架构</p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-2"></i>
+              <div>
+                <p>可逆计算理论简介</p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-3"></i>
+              <div>
+                <p>Nop平台整体架构 ️</p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-4"></i>
+              <div>
+                <p>核心引擎与技术对比</p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-5"></i>
+              <div>
+                <p>如何集成与应用</p>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Slide 4: Current Dilemma -->
+        <section class="slide">
+          <h2>当前困境：定制化开发的泥潭</h2>
+          <div class="two-column">
+            <div class="column-wide">
+              <div class="mermaid-container">
                 <div class="mermaid">
-flowchart TD
-    A[标准产品 v1.0] --> B[为客户A创建分支]
-    B --> C[重度定制化&lt;br&gt;紧密耦合的代码]
-    A --> D[标准产品 v2.0&lt;br&gt;新功能 + 修复]
-    
-    C -.->|合并: 复杂, 昂贵| D
-    D -.->|升级: 高成本| C
-    
-    C --> E[&lt;b&gt;分支停滞在v1.0&lt;/b&gt;&lt;br&gt;高昂成本维护]
+                  flowchart TD A[标准产品 v1.0] --> B[为客户A创建分支] B -->
+                  C[重度定制化&lt;br&gt;紧密耦合的代码] A --> D[标准产品 v2.0&lt;br&gt;新功能 +
+                  修复] C -.->|合并: 复杂, 昂贵| D D -.->|升级: 高成本| C C -->
+                  E[&lt;b&gt;分支停滞在v1.0&lt;/b&gt;&lt;br&gt;高昂成本维护]
                 </div>
+              </div>
             </div>
-        </div>
-        <div class="column">
-            <div class="highlight-box">
+            <div class="column">
+              <div class="highlight-box">
                 <p><strong>恶性循环：</strong></p>
                 <ul>
-                    <li>技术债务累积</li>
-                    <li>版本分支泛滥</li>
-                    <li>维护成本指数级增长</li>
+                  <li>技术债务累积</li>
+                  <li>版本分支泛滥</li>
+                  <li>维护成本指数级增长</li>
                 </ul>
+              </div>
             </div>
-        </div>
-    </div>
-</section>
+          </div>
+        </section>
 
-<!-- Slide 5: Traditional Solutions -->
-<section class="slide">
-    <h2>传统方案的理论瓶颈</h2>
-    
-    <div class="two-column">
-        <div class="column">
-            <h3>粒度悖论（Granularity Paradox）</h3>
-            <ul class="icon-list">
-                <li class="icon-bullet">
-                    <i class="fa-solid fa-bullseye"></i>
-                    <div>
-                        <p><strong>目标</strong>：构建庞大、通用的公共核心</p>
-                    </div>
-                </li>
-                <li class="icon-bullet">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <div>
-                        <p><strong>矛盾</strong>：组件复用的是A和B之间的公共部分，公共部分是比A和B都要小的</p>
-                    </div>
-                </li>
-                <li class="icon-bullet">
-                    <i class="fa-solid fa-ban"></i>
-                    <div>
-                        <p><strong>结果</strong>：粗粒度的整体复用目标与细粒度的组件抽象手段之间，存在根本性冲突</p>
-                    </div>
-                </li>
-            </ul>
-        </div>
-        <div class="column">
-            <h3>预测悖论（Prediction Paradox）</h3>
-            <ul class="icon-list">
-                <li class="icon-bullet">
-                    <i class="fa-solid fa-bullseye"></i>
-                    <div>
-                        <p><strong>要求</strong>：预先定义稳定扩展点</p>
-                    </div>
-                </li>
-                <li class="icon-bullet">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <div>
-                        <p><strong>困境</strong>：</p>
-                        <div class="sub-items">
-                            <div class="sub-item">扩展点少 → 架构僵化</div>
-                            <div class="sub-item">扩展点多 → 架构溶解</div>
-                        </div>
-                    </div>
-                </li>
-                <li class="icon-bullet">
-                    <i class="fa-solid fa-ban"></i>
-                    <div>
-                        <p><strong>结果</strong>：完美预测未来变化不可能</p>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </div>
-    
-    <div class="quote" style="margin:0">
-        <p><strong>结论：这是"组装式复用"的理论天花板，并非工程问题。</strong></p>
-    </div>
-</section>
+        <!-- Slide 5: Traditional Solutions -->
+        <section class="slide">
+          <h2>传统方案的理论瓶颈</h2>
 
-<!-- Slide 6: Physics Inspiration -->
-<section class="slide">
-    <h2>来自物理学的启发</h2>
-    
-<div class="highlight-box" style="margin-top:0;margin-bottom: 2rem;border:none">
-        <p><strong>波粒二象性：</strong>量子实体具有波和粒子两种互斥又互补的描述方式</p>
-    </div>
-    
-    <div class="two-column">
-        <div class="column">
-            <h3>粒子视角：还原论</h3>
-            <div class="icon-bullet">
+          <div class="two-column">
+            <div class="column">
+              <h3>粒度悖论（Granularity Paradox）</h3>
+              <ul class="icon-list">
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-bullseye"></i>
+                  <div>
+                    <p><strong>目标</strong>：构建庞大、通用的公共核心</p>
+                  </div>
+                </li>
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-circle-exclamation"></i>
+                  <div>
+                    <p>
+                      <strong>矛盾</strong
+                      >：组件复用的是A和B之间的公共部分，公共部分是比A和B都要小的
+                    </p>
+                  </div>
+                </li>
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-ban"></i>
+                  <div>
+                    <p>
+                      <strong>结果</strong
+                      >：粗粒度的整体复用目标与细粒度的组件抽象手段之间，存在根本性冲突
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="column">
+              <h3>预测悖论（Prediction Paradox）</h3>
+              <ul class="icon-list">
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-bullseye"></i>
+                  <div>
+                    <p><strong>要求</strong>：预先定义稳定扩展点</p>
+                  </div>
+                </li>
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-circle-exclamation"></i>
+                  <div>
+                    <p><strong>困境</strong>：</p>
+                    <div class="sub-items">
+                      <div class="sub-item">扩展点少 → 架构僵化</div>
+                      <div class="sub-item">扩展点多 → 架构溶解</div>
+                    </div>
+                  </div>
+                </li>
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-ban"></i>
+                  <div>
+                    <p><strong>结果</strong>：完美预测未来变化不可能</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="quote" style="margin: 0">
+            <p><strong>结论：这是"组装式复用"的理论天花板，并非工程问题。</strong></p>
+          </div>
+        </section>
+
+        <!-- Slide 6: Physics Inspiration -->
+        <section class="slide">
+          <h2>来自物理学的启发</h2>
+
+          <div class="highlight-box" style="margin-top: 0; margin-bottom: 2rem; border: none">
+            <p><strong>波粒二象性：</strong>量子实体具有波和粒子两种互斥又互补的描述方式</p>
+          </div>
+
+          <div class="two-column">
+            <div class="column">
+              <h3>粒子视角：还原论</h3>
+              <div class="icon-bullet">
                 <i class="fa-solid fa-atom"></i>
                 <div>
-                    <p>离散个体的分解组合</p>
+                  <p>离散个体的分解组合</p>
                 </div>
+              </div>
             </div>
-        </div>
-        <div class="column">
-            <h3>波动视角：叠加</h3>
-            <div class="icon-bullet">
+            <div class="column">
+              <h3>波动视角：叠加</h3>
+              <div class="icon-bullet">
                 <i class="fa-solid fa-wave-square"></i>
                 <div>
-                    <p>连续模式的无侵入性的叠加干涉</p>
+                  <p>连续模式的无侵入性的叠加干涉</p>
                 </div>
+              </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="quote" style="margin-top: 1.5rem;">
-        <p><strong>问题：我们能否通过非侵入式的叠加，而非组装的方式，来构建软件？</strong></p>
-    </div>
-</section>
+          </div>
 
-<!-- Slide 7: 理论的自然演进 (修改后) -->
-<section class="slide">
-    <h2>理论的自然演进：从“组装”到“运算”</h2>
-    
-    <ul class="icon-list">
-        <li class="icon-bullet">
-            <i class="fa-solid fa-cubes"></i>
-            <div>
+          <div class="quote" style="margin-top: 1.5rem">
+            <p><strong>问题：我们能否通过非侵入式的叠加，而非组装的方式，来构建软件？</strong></p>
+          </div>
+        </section>
+
+        <!-- Slide 7: 理论的自然演进 (修改后) -->
+        <section class="slide">
+          <h2>理论的自然演进：从“组装”到“运算”</h2>
+
+          <ul class="icon-list">
+            <li class="icon-bullet">
+              <i class="fa-solid fa-cubes"></i>
+              <div>
                 <p><strong>面向对象：隐式的“加法” (A > B)</strong></p>
-                <span class="details">通过继承实现复用，但差量（子类新增部分）与基类紧密耦合，复用被限制在继承级列中。</span>
-            </div>
-        </li>
-        <li class="icon-bullet">
-            <i class="fa-solid fa-puzzle-piece"></i>
-            <div>
+                <span class="details"
+                  >通过继承实现复用，但差量（子类新增部分）与基类紧密耦合，复用被限制在继承级列中。</span
+                >
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-puzzle-piece"></i>
+              <div>
                 <p><strong>面向组件：显式的“加法” (A = B + C)</strong></p>
-                <span class="details">组合优于继承(Composition over inheritance)，将差量（C）表达为可独立复用的组件。</span>
-            </div>
-        </li>
-        <li class="icon-bullet">
-            <i class="fa-solid fa-arrows-rotate"></i>
-            <div>
+                <span class="details"
+                  >组合优于继承(Composition over
+                  inheritance)，将差量（C）表达为可独立复用的组件。</span
+                >
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <div>
                 <p><strong>可逆计算：引入“减法”的完备代数 (B = A + (- C))</strong></p>
-                <span class="details">引入形式化的逆元(-C)，使构造方程可解，实现了从“相同才可复用”到“相关即可复用”的飞跃。</span>
-            </div>
-        </li>
-    </ul>
+                <span class="details"
+                  >引入形式化的逆元(-C)，使构造方程可解，实现了从“相同才可复用”到“相关即可复用”的飞跃。</span
+                >
+              </div>
+            </li>
+          </ul>
 
-    <div class="code-block" style="display: flex; align-items: center; justify-content: center; gap: 1.25rem; padding: 1.5rem; flex-wrap: wrap;">
-        <span style="font-size: 1.5rem; font-weight: 600; color: var(--color-primary-dark);">可逆差量</span>
-        <span style="font-size: 1.5rem; font-weight: 600;">+</span>
-        <span style="font-size: 1.5rem; font-weight: 600; color: var(--color-primary-dark);">模型驱动</span>
-        <i class="fa-solid fa-arrow-right-long" style="font-size: 2rem; color: var(--color-primary);"></i>
-        <code style="font-family: var(--font-code); font-size: 1.5rem; font-weight: bold; color: var(--color-secondary);">
-            App = Delta x-extends Generator&lt;DSL&gt;
-        </code>
-    </div>
-</section>
+          <div
+            class="code-block"
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 1.25rem;
+              padding: 1.5rem;
+              flex-wrap: wrap;
+            "
+          >
+            <span style="font-size: 1.5rem; font-weight: 600; color: var(--color-primary-dark)"
+              >可逆差量</span
+            >
+            <span style="font-size: 1.5rem; font-weight: 600">+</span>
+            <span style="font-size: 1.5rem; font-weight: 600; color: var(--color-primary-dark)"
+              >模型驱动</span
+            >
+            <i
+              class="fa-solid fa-arrow-right-long"
+              style="font-size: 2rem; color: var(--color-primary)"
+            ></i>
+            <code
+              style="
+                font-family: var(--font-code);
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: var(--color-secondary);
+              "
+            >
+              App = Delta x-extends Generator&lt;DSL&gt;
+            </code>
+          </div>
+        </section>
 
-<!-- Slide 8: The Four Cornerstones -->
-<section class="slide">
-    <h2>颠覆传统可扩展性的四大基石</h2>
-    
-    <style>
-        /* Scoped styles for this specific slide to create a 2x2 grid */
-        .cornerstone-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 2.5rem 2rem; /* Vertical and horizontal gap */
-            margin-top: 2.5rem;
-            height: 70%; /* Adjust height to fill space */
-        }
-        .cornerstone-item {
-            display: flex;
-            flex-direction: column;
-            background-color: var(--color-code-bg);
-            padding: 1.8rem;
-            border-radius: 12px;
-            border: 1px solid var(--color-border);
-            transition: all 0.3s ease;
-        }
-        .cornerstone-item:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--color-primary);
-        }
-        .cornerstone-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        .cornerstone-header i {
-            font-size: 2.2rem;
-            color: var(--color-primary);
-            width: 40px;
-            text-align: center;
-        }
-        .cornerstone-header h3 {
-            font-size: 1.6rem;
-            margin-bottom: 0;
-            color: var(--color-text-dark);
-        }
-        .cornerstone-item p {
-            font-size: 1.1rem; /* Slightly smaller font for description */
-            color: var(--color-text-light);
-            line-height: 1.6;
-            margin-bottom: 0;
-        }
-    </style>
-    
-    <div class="cornerstone-grid">
-        <!-- Cornerstone 1: Unified Coordinate System -->
-        <div class="cornerstone-item">
-            <div class="cornerstone-header">
+        <!-- Slide 8: The Four Cornerstones -->
+        <section class="slide">
+          <h2>颠覆传统可扩展性的四大基石</h2>
+
+          <style>
+            /* Scoped styles for this specific slide to create a 2x2 grid */
+            .cornerstone-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              grid-template-rows: 1fr 1fr;
+              gap: 2.5rem 2rem; /* Vertical and horizontal gap */
+              margin-top: 2.5rem;
+              height: 70%; /* Adjust height to fill space */
+            }
+            .cornerstone-item {
+              display: flex;
+              flex-direction: column;
+              background-color: var(--color-code-bg);
+              padding: 1.8rem;
+              border-radius: 12px;
+              border: 1px solid var(--color-border);
+              transition: all 0.3s ease;
+            }
+            .cornerstone-item:hover {
+              transform: translateY(-5px);
+              box-shadow: var(--shadow-lg);
+              border-color: var(--color-primary);
+            }
+            .cornerstone-header {
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+              margin-bottom: 1rem;
+            }
+            .cornerstone-header i {
+              font-size: 2.2rem;
+              color: var(--color-primary);
+              width: 40px;
+              text-align: center;
+            }
+            .cornerstone-header h3 {
+              font-size: 1.6rem;
+              margin-bottom: 0;
+              color: var(--color-text-dark);
+            }
+            .cornerstone-item p {
+              font-size: 1.1rem; /* Slightly smaller font for description */
+              color: var(--color-text-light);
+              line-height: 1.6;
+              margin-bottom: 0;
+            }
+          </style>
+
+          <div class="cornerstone-grid">
+            <!-- Cornerstone 1: Unified Coordinate System -->
+            <div class="cornerstone-item">
+              <div class="cornerstone-header">
                 <i class="fa-solid fa-crosshairs"></i>
                 <h3>统一坐标系</h3>
+              </div>
+              <p>为系统万物建立唯一可寻址的坐标，实现从宏观文件到微观属性的任意粒度修改。</p>
             </div>
-            <p>为系统万物建立唯一可寻址的坐标，实现从宏观文件到微观属性的任意粒度修改。</p>
-        </div>
 
-        <!-- Cornerstone 2: Algebraic Completeness -->
-        <div class="cornerstone-item">
-            <div class="cornerstone-header">
+            <!-- Cornerstone 2: Algebraic Completeness -->
+            <div class="cornerstone-item">
+              <div class="cornerstone-header">
                 <i class="fa-solid fa-calculator"></i>
                 <h3>代数完备性</h3>
+              </div>
+              <p>形式化的“增、删、改”操作构成封闭代数，确保差量的最小化与精确性。</p>
             </div>
-            <p>形式化的“增、删、改”操作构成封闭代数，确保差量的最小化与精确性。</p>
-        </div>
 
-        <!-- Cornerstone 3: Recursive Self-Application -->
-        <div class="cornerstone-item">
-            <div class="cornerstone-header">
+            <!-- Cornerstone 3: Recursive Self-Application -->
+            <div class="cornerstone-item">
+              <div class="cornerstone-header">
                 <i class="fa-solid fa-infinity"></i>
                 <h3>递归自应用</h3>
+              </div>
+              <p>平台自身（如模型定义、代码生成器）同样可被差量定制，实现架构的自我演化。</p>
             </div>
-            <p>平台自身（如模型定义、代码生成器）同样可被差量定制，实现架构的自我演化。</p>
-        </div>
 
-        <!-- Cornerstone 4: Collaborative Model Chain -->
-        <div class="cornerstone-item">
-            <div class="cornerstone-header">
+            <!-- Cornerstone 4: Collaborative Model Chain -->
+            <div class="cornerstone-item">
+              <div class="cornerstone-header">
                 <i class="fa-solid fa-link"></i>
                 <h3>协同模型链</h3>
+              </div>
+              <p>
+                打破模型孤岛，构建
+                <code>A &rarr; _B &rarr; B</code> 式的自动化软件生产线，实现信息有序流动与复用。
+              </p>
             </div>
-            <p>打破模型孤岛，构建 <code>A &rarr; _B &rarr; B</code> 式的自动化软件生产线，实现信息有序流动与复用。</p>
-        </div>
-    </div>
-</section>
+          </div>
+        </section>
 
-<!-- Slide 9: Docker Reference -->
-<section class="slide">
-    <h2>现实参照：Docker作为可逆计算的实践</h2>
-    
-    <h3>Docker的构建过程</h3>
-    <div class="code-block is-centered" style="font-size: 1.5rem;font-weight:bold">
-	<code>App = DockerBuild&lt;Dockerfile&gt; overlay-fs BaseImage</code>
-    </div>
-    
-    <table class="comparison-table">
-        <tr>
-            <th>Docker概念</th>
-            <th>可逆计算概念</th>
-        </tr>
-        <tr>
-            <td><strong>DockerBuild&lt;Dockerfile&gt;</strong></td>
-            <td><strong>Generator&lt;DSL&gt;</strong></td>
-        </tr>
-        <tr>
-            <td><strong>overlay-fs（联合文件系统）</strong></td>
-            <td><strong>x-extends（差量合并）</strong></td>
-        </tr>
-    </table>
-    
-    <div class="quote">
-        <p>任何关于差量的创新实践都可以纳入到可逆计算理论的范畴。</p>
-		<p style="font-size: 1.2rem; color: var(--color-text-light); margin: 0;">Docker在“文件系统”空间实践了可逆计算，而Nop平台则将这一理论深化应用于“领域模型树”空间，通过更精细的坐标系实现了“手术刀”式的业务逻辑定制。</p>
-    </div>
-</section>
+        <!-- Slide 9: Docker Reference -->
+        <section class="slide">
+          <h2>现实参照：Docker作为可逆计算的实践</h2>
 
-<!-- Slide 10: Delta Customization -->
-<section class="slide">
-    <h2>Delta定制</h2>
-    <h3>非侵入式的精准修改</h3>
-    
-    <ul class="icon-list" >
-        <li class="icon-bullet">
-            <i class="fa-solid fa-file"></i>
-            <div>
-                <p><strong>文件级覆盖</strong>：差量层文件 <code>/_delta/xxx/</code> 自动覆盖基础文件</p>
-            </div>
-        </li>
-        <li class="icon-bullet">
-            <i class="fa-solid fa-code-merge"></i>
-            <div>
+          <h3>Docker的构建过程</h3>
+          <div class="code-block is-centered" style="font-size: 1.5rem; font-weight: bold">
+            <code>App = DockerBuild&lt;Dockerfile&gt; overlay-fs BaseImage</code>
+          </div>
+
+          <table class="comparison-table">
+            <tr>
+              <th>Docker概念</th>
+              <th>可逆计算概念</th>
+            </tr>
+            <tr>
+              <td><strong>DockerBuild&lt;Dockerfile&gt;</strong></td>
+              <td><strong>Generator&lt;DSL&gt;</strong></td>
+            </tr>
+            <tr>
+              <td><strong>overlay-fs（联合文件系统）</strong></td>
+              <td><strong>x-extends（差量合并）</strong></td>
+            </tr>
+          </table>
+
+          <div class="quote">
+            <p>任何关于差量的创新实践都可以纳入到可逆计算理论的范畴。</p>
+            <p style="font-size: 1.2rem; color: var(--color-text-light); margin: 0">
+              Docker在“文件系统”空间实践了可逆计算，而Nop平台则将这一理论深化应用于“领域模型树”空间，通过更精细的坐标系实现了“手术刀”式的业务逻辑定制。
+            </p>
+          </div>
+        </section>
+
+        <!-- Slide 10: Delta Customization -->
+        <section class="slide">
+          <h2>Delta定制</h2>
+          <h3>非侵入式的精准修改</h3>
+
+          <ul class="icon-list">
+            <li class="icon-bullet">
+              <i class="fa-solid fa-file"></i>
+              <div>
+                <p>
+                  <strong>文件级覆盖</strong>：差量层文件 <code>/_delta/xxx/</code> 自动覆盖基础文件
+                </p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-code-merge"></i>
+              <div>
                 <p><strong>文件内合并</strong>：XML/JSON/YAML结构树的精准手术刀式修改</p>
-            </div>
-        </li>
-    </ul>
-    
-    <pre class="code-block" style="margin:0"><code><span class="code-comment">&lt;!-- 差量文件示例 /_delta/default/app/test.beans.xml --&gt;</span>
+              </div>
+            </li>
+          </ul>
+
+          <pre
+            class="code-block"
+            style="margin: 0"
+          ><code><span class="code-comment">&lt;!-- 差量文件示例 /_delta/default/app/test.beans.xml --&gt;</span>
 &lt;beans <span class="code-attr">x:extends</span>=<span class="code-string">"super"</span>&gt;
     &lt;bean <span class="code-attr">id</span>=<span class="code-string">"service"</span> <span class="code-attr">class</span>=<span class="code-string">"com.cust.a.CustomService"</span>/&gt; 
     &lt;bean <span class="code-attr">id</span>=<span class="code-string">"oldService"</span> <span class="code-attr">x:override</span>=<span class="code-string">"remove"</span>/&gt;
     &lt;bean <span class="code-attr">id</span>=<span class="code-string">"auditLogger"</span> <span class="code-attr">class</span>=<span class="code-string">"com.customer.AuditLogger"</span><span class="code-attr">feature:on</span>=<span class="code-string">"auditing.enabled"</span>/&gt;
 &lt;/beans&gt;</code></pre>
-</section>
+        </section>
 
-<!-- Slide 11: Nop Architecture -->
-<section class="slide">
-    <h2>Nop平台核心架构</h2>
-    
-    <div class="two-column">
-        <div class="column">
-<svg width="1000" height="680" viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg" font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" style="width:100%;height:auto">
-  <defs>
-    <!-- 统一品牌渐变 -->
-    <linearGradient id="grad-business" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="grad-engine" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="grad-foundation" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="grad-delta-pillar" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#059669;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="grad-flow" x1="0.5" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="white" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="white" stop-opacity="0.1"/>
-    </linearGradient>
-    
-    <!-- 统一阴影效果 -->
-    <filter id="soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#1e3a8a" flood-opacity="0.15"/>
-    </filter>
-    <filter id="delta-glow" x="-100%" y="-100%" width="300%" height="300%">
-      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#059669" flood-opacity="0.6"/>
-    </filter>
-    
-    <!-- 统一箭头 -->
-    <marker id="arrow-delta" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
-      <path d="M0,0 L10,4 L0,8 Z" fill="#059669"/>
-    </marker>
-  </defs>
+        <!-- Slide 11: Nop Architecture -->
+        <section class="slide">
+          <h2>Nop平台核心架构</h2>
 
-  <!-- 统一背景 -->
-  <rect width="100%" height="100%" fill="#f8fafc"/>
+          <div class="two-column">
+            <div class="column">
+              <svg
+                width="1000"
+                height="680"
+                viewBox="0 0 1000 680"
+                xmlns="http://www.w3.org/2000/svg"
+                font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                style="width: 100%; height: auto"
+              >
+                <defs>
+                  <!-- 统一品牌渐变 -->
+                  <linearGradient id="grad-business" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color: #2563eb; stop-opacity: 1" />
+                    <stop offset="100%" style="stop-color: #3b82f6; stop-opacity: 1" />
+                  </linearGradient>
+                  <linearGradient id="grad-engine" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color: #1e40af; stop-opacity: 1" />
+                    <stop offset="100%" style="stop-color: #2563eb; stop-opacity: 1" />
+                  </linearGradient>
+                  <linearGradient id="grad-foundation" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color: #1e3a8a; stop-opacity: 1" />
+                    <stop offset="100%" style="stop-color: #1e40af; stop-opacity: 1" />
+                  </linearGradient>
+                  <linearGradient id="grad-delta-pillar" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color: #059669; stop-opacity: 1" />
+                    <stop offset="100%" style="stop-color: #10b981; stop-opacity: 1" />
+                  </linearGradient>
+                  <linearGradient id="grad-flow" x1="0.5" y1="0" x2="0.5" y2="1">
+                    <stop offset="0%" stop-color="white" stop-opacity="0.6" />
+                    <stop offset="100%" stop-color="white" stop-opacity="0.1" />
+                  </linearGradient>
 
-  <!-- 统一标题样式 - 向上移动25px -->
-  <g id="title-section">
-    <text x="500" y="35" font-size="26" font-weight="700" text-anchor="middle" fill="#1e3a8a">Delta-Oriented Architecture</text>
-    <text x="500" y="60" font-size="16" font-weight="400" text-anchor="middle" fill="#64748b">基于可逆计算的分层扩展架构</text>
-  </g>
+                  <!-- 统一阴影效果 -->
+                  <filter id="soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feDropShadow
+                      dx="0"
+                      dy="4"
+                      stdDeviation="6"
+                      flood-color="#1e3a8a"
+                      flood-opacity="0.15"
+                    />
+                  </filter>
+                  <filter id="delta-glow" x="-100%" y="-100%" width="300%" height="300%">
+                    <feDropShadow
+                      dx="0"
+                      dy="0"
+                      stdDeviation="4"
+                      flood-color="#059669"
+                      flood-opacity="0.6"
+                    />
+                  </filter>
 
-  <!-- 业务应用层 - 向上移动25px -->
-  <g id="layer-3" filter="url(#soft-shadow)">
-    <rect x="120" y="75" width="680" height="140" rx="16" fill="url(#grad-business)"/>
-    <rect x="120" y="75" width="680" height="45" rx="16" ry="16" fill="black" fill-opacity="0.15" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;"/>
-    <text x="140" y="105" font-size="18" font-weight="600" fill="white">业务应用层 (Business Application Layer)</text>
-    
-    <g transform="translate(140, 135)">
-      <rect width="200" height="50" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="100" y="32" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">发卡业务</text>
-    </g>
-    <g transform="translate(350, 135)">
-      <rect width="200" height="50" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="100" y="32" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">收单业务</text>
-    </g>
-    <g transform="translate(560, 135)">
-      <rect width="220" height="50" rx="12" fill="rgba(255,255,255,0.8)" stroke="#d1d5db" stroke-width="1" stroke-dasharray="6 3"/>
-      <text x="110" y="32" text-anchor="middle" fill="#6b7280" font-size="16" font-weight="500">其他业务模块</text>
-    </g>
-  </g>
+                  <!-- 统一箭头 -->
+                  <marker
+                    id="arrow-delta"
+                    markerWidth="10"
+                    markerHeight="8"
+                    refX="8"
+                    refY="4"
+                    orient="auto"
+                  >
+                    <path d="M0,0 L10,4 L0,8 Z" fill="#059669" />
+                  </marker>
+                </defs>
 
-  <!-- 核心引擎层 - 向上移动25px -->
-  <g id="layer-2" filter="url(#soft-shadow)">
-    <rect x="120" y="235" width="680" height="140" rx="16" fill="url(#grad-engine)"/>
-    <rect x="120" y="235" width="680" height="45" rx="16" ry="16" fill="black" fill-opacity="0.15" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;"/>
-    <text x="140" y="265" font-size="18" font-weight="600" fill="white">核心引擎层 (Core Engine Layer)</text>
-    
-    <g transform="translate(140, 295)">
-      <rect width="160" height="50" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="80" y="32" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">规则引擎</text>
-    </g>
-    <g transform="translate(310, 295)">
-      <rect width="160" height="50" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="80" y="32" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">批处理引擎</text>
-    </g>
-    <g transform="translate(480, 295)">
-      <rect width="160" height="50" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="80" y="32" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">工作流引擎</text>
-    </g>
-    <g transform="translate(650, 295)">
-      <rect width="130" height="50" rx="12" fill="rgba(255,255,255,0.8)" stroke="#d1d5db" stroke-width="1" stroke-dasharray="6 3"/>
-      <text x="65" y="32" text-anchor="middle" fill="#6b7280" font-size="16" font-weight="500">扩展组件</text>
-    </g>
-  </g>
+                <!-- 统一背景 -->
+                <rect width="100%" height="100%" fill="#f8fafc" />
 
-  <!-- 基础设施层 - 向上移动25px，高度稍微减少10px -->
-  <g id="layer-1" filter="url(#soft-shadow)">
-    <rect x="120" y="395" width="680" height="170" rx="16" fill="url(#grad-foundation)"/>
-    <rect x="120" y="395" width="680" height="45" rx="16" ry="16" fill="black" fill-opacity="0.15" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;"/>
-    <text x="140" y="425" font-size="18" font-weight="600" fill="white">基础设施层 (Foundation Layer)</text>
-    
-    <g transform="translate(140, 455)">
-      <rect width="310" height="52" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="155" y="24" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">差量虚拟文件系统</text>
-      <text x="155" y="40" text-anchor="middle" fill="#6b7280" font-size="14">(Delta Virtual FileSystem)</text>
-    </g>
-    <g transform="translate(470, 455)">
-      <rect width="310" height="52" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="155" y="24" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">统一模型与差量合并</text>
-      <text x="155" y="40" text-anchor="middle" fill="#6b7280" font-size="14">(Unified Model & x-extends)</text>
-    </g>
-    <g transform="translate(140, 515)">
-      <rect width="310" height="40" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="155" y="27" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">核心领域模型</text>
-    </g>
-    <g transform="translate(470, 515)">
-      <rect width="310" height="40" rx="12" fill="rgba(255,255,255,0.95)" stroke="#e2e8f0" stroke-width="1"/>
-      <text x="155" y="27" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="600">代码生成引擎</text>
-    </g>
-  </g>
-  
-  <!-- 差量定制支柱 - 向上移动25px，高度减少35px -->
-  <g id="delta-pillar">
-    <rect x="820" y="75" width="80" height="490" rx="16" fill="url(#grad-delta-pillar)" filter="url(#soft-shadow)"/>
-    <text x="860" y="335" font-size="20" font-weight="700" fill="white" text-anchor="middle" transform="rotate(-90, 860, 335)">
-      差量定制 (Delta Customization)
-    </text>
-  </g>
-  
-  <!-- 连接箭头 - 相应调整位置 -->
-  <g id="delta-arrows" filter="url(#delta-glow)">
-    <path d="M 820 145 C 810 145, 810 145, 800 145" stroke="#059669" stroke-width="3" fill="none" marker-end="url(#arrow-delta)"/>
-    <path d="M 820 305 C 810 305, 810 305, 800 305" stroke="#059669" stroke-width="3" fill="none" marker-end="url(#arrow-delta)"/>
-    <path d="M 820 480 C 810 480, 810 480, 800 480" stroke="#059669" stroke-width="3" fill="none" marker-end="url(#arrow-delta)"/>
-  </g>
-</svg>
-        </div>
-        <div class="column">
-            <ul class="icon-list">
+                <!-- 统一标题样式 - 向上移动25px -->
+                <g id="title-section">
+                  <text
+                    x="500"
+                    y="35"
+                    font-size="26"
+                    font-weight="700"
+                    text-anchor="middle"
+                    fill="#1e3a8a"
+                  >
+                    Delta-Oriented Architecture
+                  </text>
+                  <text
+                    x="500"
+                    y="60"
+                    font-size="16"
+                    font-weight="400"
+                    text-anchor="middle"
+                    fill="#64748b"
+                  >
+                    基于可逆计算的分层扩展架构
+                  </text>
+                </g>
+
+                <!-- 业务应用层 - 向上移动25px -->
+                <g id="layer-3" filter="url(#soft-shadow)">
+                  <rect
+                    x="120"
+                    y="75"
+                    width="680"
+                    height="140"
+                    rx="16"
+                    fill="url(#grad-business)"
+                  />
+                  <rect
+                    x="120"
+                    y="75"
+                    width="680"
+                    height="45"
+                    rx="16"
+                    ry="16"
+                    fill="black"
+                    fill-opacity="0.15"
+                    style="border-bottom-left-radius: 0; border-bottom-right-radius: 0"
+                  />
+                  <text x="140" y="105" font-size="18" font-weight="600" fill="white">
+                    业务应用层 (Business Application Layer)
+                  </text>
+
+                  <g transform="translate(140, 135)">
+                    <rect
+                      width="200"
+                      height="50"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="100"
+                      y="32"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      发卡业务
+                    </text>
+                  </g>
+                  <g transform="translate(350, 135)">
+                    <rect
+                      width="200"
+                      height="50"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="100"
+                      y="32"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      收单业务
+                    </text>
+                  </g>
+                  <g transform="translate(560, 135)">
+                    <rect
+                      width="220"
+                      height="50"
+                      rx="12"
+                      fill="rgba(255,255,255,0.8)"
+                      stroke="#d1d5db"
+                      stroke-width="1"
+                      stroke-dasharray="6 3"
+                    />
+                    <text
+                      x="110"
+                      y="32"
+                      text-anchor="middle"
+                      fill="#6b7280"
+                      font-size="16"
+                      font-weight="500"
+                    >
+                      其他业务模块
+                    </text>
+                  </g>
+                </g>
+
+                <!-- 核心引擎层 - 向上移动25px -->
+                <g id="layer-2" filter="url(#soft-shadow)">
+                  <rect x="120" y="235" width="680" height="140" rx="16" fill="url(#grad-engine)" />
+                  <rect
+                    x="120"
+                    y="235"
+                    width="680"
+                    height="45"
+                    rx="16"
+                    ry="16"
+                    fill="black"
+                    fill-opacity="0.15"
+                    style="border-bottom-left-radius: 0; border-bottom-right-radius: 0"
+                  />
+                  <text x="140" y="265" font-size="18" font-weight="600" fill="white">
+                    核心引擎层 (Core Engine Layer)
+                  </text>
+
+                  <g transform="translate(140, 295)">
+                    <rect
+                      width="160"
+                      height="50"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="80"
+                      y="32"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      规则引擎
+                    </text>
+                  </g>
+                  <g transform="translate(310, 295)">
+                    <rect
+                      width="160"
+                      height="50"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="80"
+                      y="32"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      批处理引擎
+                    </text>
+                  </g>
+                  <g transform="translate(480, 295)">
+                    <rect
+                      width="160"
+                      height="50"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="80"
+                      y="32"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      工作流引擎
+                    </text>
+                  </g>
+                  <g transform="translate(650, 295)">
+                    <rect
+                      width="130"
+                      height="50"
+                      rx="12"
+                      fill="rgba(255,255,255,0.8)"
+                      stroke="#d1d5db"
+                      stroke-width="1"
+                      stroke-dasharray="6 3"
+                    />
+                    <text
+                      x="65"
+                      y="32"
+                      text-anchor="middle"
+                      fill="#6b7280"
+                      font-size="16"
+                      font-weight="500"
+                    >
+                      扩展组件
+                    </text>
+                  </g>
+                </g>
+
+                <!-- 基础设施层 - 向上移动25px，高度稍微减少10px -->
+                <g id="layer-1" filter="url(#soft-shadow)">
+                  <rect
+                    x="120"
+                    y="395"
+                    width="680"
+                    height="170"
+                    rx="16"
+                    fill="url(#grad-foundation)"
+                  />
+                  <rect
+                    x="120"
+                    y="395"
+                    width="680"
+                    height="45"
+                    rx="16"
+                    ry="16"
+                    fill="black"
+                    fill-opacity="0.15"
+                    style="border-bottom-left-radius: 0; border-bottom-right-radius: 0"
+                  />
+                  <text x="140" y="425" font-size="18" font-weight="600" fill="white">
+                    基础设施层 (Foundation Layer)
+                  </text>
+
+                  <g transform="translate(140, 455)">
+                    <rect
+                      width="310"
+                      height="52"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="155"
+                      y="24"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      差量虚拟文件系统
+                    </text>
+                    <text x="155" y="40" text-anchor="middle" fill="#6b7280" font-size="14">
+                      (Delta Virtual FileSystem)
+                    </text>
+                  </g>
+                  <g transform="translate(470, 455)">
+                    <rect
+                      width="310"
+                      height="52"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="155"
+                      y="24"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      统一模型与差量合并
+                    </text>
+                    <text x="155" y="40" text-anchor="middle" fill="#6b7280" font-size="14">
+                      (Unified Model & x-extends)
+                    </text>
+                  </g>
+                  <g transform="translate(140, 515)">
+                    <rect
+                      width="310"
+                      height="40"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="155"
+                      y="27"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      核心领域模型
+                    </text>
+                  </g>
+                  <g transform="translate(470, 515)">
+                    <rect
+                      width="310"
+                      height="40"
+                      rx="12"
+                      fill="rgba(255,255,255,0.95)"
+                      stroke="#e2e8f0"
+                      stroke-width="1"
+                    />
+                    <text
+                      x="155"
+                      y="27"
+                      text-anchor="middle"
+                      fill="#1e3a8a"
+                      font-size="16"
+                      font-weight="600"
+                    >
+                      代码生成引擎
+                    </text>
+                  </g>
+                </g>
+
+                <!-- 差量定制支柱 - 向上移动25px，高度减少35px -->
+                <g id="delta-pillar">
+                  <rect
+                    x="820"
+                    y="75"
+                    width="80"
+                    height="490"
+                    rx="16"
+                    fill="url(#grad-delta-pillar)"
+                    filter="url(#soft-shadow)"
+                  />
+                  <text
+                    x="860"
+                    y="335"
+                    font-size="20"
+                    font-weight="700"
+                    fill="white"
+                    text-anchor="middle"
+                    transform="rotate(-90, 860, 335)"
+                  >
+                    差量定制 (Delta Customization)
+                  </text>
+                </g>
+
+                <!-- 连接箭头 - 相应调整位置 -->
+                <g id="delta-arrows" filter="url(#delta-glow)">
+                  <path
+                    d="M 820 145 C 810 145, 810 145, 800 145"
+                    stroke="#059669"
+                    stroke-width="3"
+                    fill="none"
+                    marker-end="url(#arrow-delta)"
+                  />
+                  <path
+                    d="M 820 305 C 810 305, 810 305, 800 305"
+                    stroke="#059669"
+                    stroke-width="3"
+                    fill="none"
+                    marker-end="url(#arrow-delta)"
+                  />
+                  <path
+                    d="M 820 480 C 810 480, 810 480, 800 480"
+                    stroke="#059669"
+                    stroke-width="3"
+                    fill="none"
+                    marker-end="url(#arrow-delta)"
+                  />
+                </g>
+              </svg>
+            </div>
+            <div class="column">
+              <ul class="icon-list">
                 <li class="icon-bullet">
-                    <i class="fa-solid fa-layer-group"></i>
-                    <div>
-                        <p><strong>基础层</strong>: XLang语言 | 差量合并 | 统一元编程框架</p>
-                    </div>
+                  <i class="fa-solid fa-layer-group"></i>
+                  <div>
+                    <p><strong>基础层</strong>: XLang语言 | 差量合并 | 统一元编程框架</p>
+                  </div>
                 </li>
                 <li class="icon-bullet">
-                    <i class="fa-solid fa-gears"></i>
-                    <div>
-                        <p><strong>引擎层</strong>: 基于统一XDSL机制的DSL森林</p>
-                    </div>
+                  <i class="fa-solid fa-gears"></i>
+                  <div>
+                    <p><strong>引擎层</strong>: 基于统一XDSL机制的DSL森林</p>
+                  </div>
                 </li>
                 <li class="icon-bullet">
-                    <i class="fa-solid fa-cube"></i>
-                    <div>
-                        <p><strong>应用层</strong>: DDD领域设计 | 全量代码生成</p>
-                    </div>
+                  <i class="fa-solid fa-cube"></i>
+                  <div>
+                    <p><strong>应用层</strong>: DDD领域设计 | 全量代码生成</p>
+                  </div>
                 </li>
                 <li class="icon-bullet">
-                    <i class="fa-solid fa-puzzle-piece"></i>
-                    <div>
-                        <p><strong>全域差量定制</strong>: 非侵入修改任何层级，<strong>兼顾标准化与个性化</strong></p>
-                    </div>
+                  <i class="fa-solid fa-puzzle-piece"></i>
+                  <div>
+                    <p>
+                      <strong>全域差量定制</strong>: 非侵入修改任何层级，<strong
+                        >兼顾标准化与个性化</strong
+                      >
+                    </p>
+                  </div>
                 </li>
-            </ul>
-        </div>
-    </div>
-</section>
+              </ul>
+            </div>
+          </div>
+        </section>
 
-<!-- Slide 12: Addressing Concerns  -->
-<section class="slide">
-    <h2>应对疑虑：性能与“银弹”谬误</h2>
+        <!-- Slide 12: Addressing Concerns  -->
+        <section class="slide">
+          <h2>应对疑虑：性能与“银弹”谬误</h2>
 
-    <!-- Scoped styles for this slide's compact grid layout -->
-    <style>
-        .concern-grid-layout {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.25rem;
-            margin-top: 1.5rem;
-        }
-        .concern-card {
-            background-color: var(--color-code-bg);
-            border: 1px solid var(--color-border);
-            border-radius: 10px;
-            padding: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.2s ease-in-out;
-        }
-        .concern-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-        }
-        .concern-card h4 {
-            font-size: 1.1rem;
-            color: var(--color-text-dark);
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .concern-card h4 i {
-            color: var(--color-primary);
-            font-size: 1.2rem;
-            width: 20px; /* Give icon a fixed width for alignment */
-            text-align: center;
-        }
-        .concern-card .details {
-            font-size: 0.95rem; /* Smaller font for details */
-            line-height: 1.6;
-            color: var(--color-text-light);
-            margin: 0;
-            flex-grow: 1; /* Allow details to fill space */
-        }
-        /* A simple, clean separator */
-        .grid-separator-line {
-            grid-column: 1 / -1; /* Span all columns */
-            border-bottom: 2px solid var(--color-border);
-            margin: 1.25rem 0; /* Adjusted margin for better spacing */
-        }
-    </style>
+          <!-- Scoped styles for this slide's compact grid layout -->
+          <style>
+            .concern-grid-layout {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 1.25rem;
+              margin-top: 1.5rem;
+            }
+            .concern-card {
+              background-color: var(--color-code-bg);
+              border: 1px solid var(--color-border);
+              border-radius: 10px;
+              padding: 1.25rem;
+              display: flex;
+              flex-direction: column;
+              transition: all 0.2s ease-in-out;
+            }
+            .concern-card:hover {
+              transform: translateY(-4px);
+              box-shadow: var(--shadow-md);
+            }
+            .concern-card h4 {
+              font-size: 1.1rem;
+              color: var(--color-text-dark);
+              margin-bottom: 0.75rem;
+              display: flex;
+              align-items: center;
+              gap: 0.75rem;
+            }
+            .concern-card h4 i {
+              color: var(--color-primary);
+              font-size: 1.2rem;
+              width: 20px; /* Give icon a fixed width for alignment */
+              text-align: center;
+            }
+            .concern-card .details {
+              font-size: 0.95rem; /* Smaller font for details */
+              line-height: 1.6;
+              color: var(--color-text-light);
+              margin: 0;
+              flex-grow: 1; /* Allow details to fill space */
+            }
+            /* A simple, clean separator */
+            .grid-separator-line {
+              grid-column: 1 / -1; /* Span all columns */
+              border-bottom: 2px solid var(--color-border);
+              margin: 1.25rem 0; /* Adjusted margin for better spacing */
+            }
+          </style>
 
-    <div class="concern-grid-layout">
-        <!-- Row 1: Performance -->
-        <div class="concern-card">
-            <h4><i class="fa-solid fa-rocket"></i>一次性、预编译合并</h4>
-            <p class="details">差量合并在服务启动时（甚至Maven打包时）一次性完成，而非在每次请求时。</p>
-        </div>
-        <div class="concern-card">
-            <h4><i class="fa-solid fa-exchange-alt"></i>通过模型加载器预处理</h4>
-            <p class="details">通过替换原生引擎的模型加载器，一个增强的加载器会预先读取基础模型和差量，生成引擎所需的最终模型。</p>
-        </div>
-        <div class="concern-card">
-            <h4><i class="fa-solid fa-shield-alt"></i>运行时引擎无感知</h4>
-            <p class="details">运行时引擎操作的是已合并的最终模型，完全不知道“差量”的存在，从而实现运行时100%原生性能。</p>
-        </div>
-        
-        <!-- Simple line separator -->
-        <div class="grid-separator-line"></div>
+          <div class="concern-grid-layout">
+            <!-- Row 1: Performance -->
+            <div class="concern-card">
+              <h4><i class="fa-solid fa-rocket"></i>一次性、预编译合并</h4>
+              <p class="details">
+                差量合并在服务启动时（甚至Maven打包时）一次性完成，而非在每次请求时。
+              </p>
+            </div>
+            <div class="concern-card">
+              <h4><i class="fa-solid fa-exchange-alt"></i>通过模型加载器预处理</h4>
+              <p class="details">
+                通过替换原生引擎的模型加载器，一个增强的加载器会预先读取基础模型和差量，生成引擎所需的最终模型。
+              </p>
+            </div>
+            <div class="concern-card">
+              <h4><i class="fa-solid fa-shield-alt"></i>运行时引擎无感知</h4>
+              <p class="details">
+                运行时引擎操作的是已合并的最终模型，完全不知道“差量”的存在，从而实现运行时100%原生性能。
+              </p>
+            </div>
 
-		<!-- Row 2: Silver Bullet -->
-        <div class="concern-card">
-            <h4><i class="fa-solid fa-toolbox"></i>统一扩展能力</h4>
-            <p class="details">提供统一的、与领域无关的扩展能力，将“如何设计扩展点”这一难题标准化、平台化。</p>
-        </div>
-        <div class="concern-card">
-            <h4><i class="fa-solid fa-map-signs"></i>提供工具，而非答案</h4>
-            <p class="details">它提供更强大的工具，但架构师的智慧和决策依然是系统成功的关键。</p>
-        </div>
-        <div class="concern-card">
-            <h4><i class="fa-solid fa-lightbulb"></i>分离业务与扩展</h4>
-            <p class="details">DSL设计者只需关注业务逻辑，扩展性由平台保障。告别为每个模块设计特殊扩展点的窘境。</p>
-        </div>
-    </div>
-</section>
+            <!-- Simple line separator -->
+            <div class="grid-separator-line"></div>
 
-<!-- Slide 13: Delta Oriented Framework Principle -->
-<section class="slide">
-    <h2>差量化框架：Loader as Generator原则</h2>
+            <!-- Row 2: Silver Bullet -->
+            <div class="concern-card">
+              <h4><i class="fa-solid fa-toolbox"></i>统一扩展能力</h4>
+              <p class="details">
+                提供统一的、与领域无关的扩展能力，将“如何设计扩展点”这一难题标准化、平台化。
+              </p>
+            </div>
+            <div class="concern-card">
+              <h4><i class="fa-solid fa-map-signs"></i>提供工具，而非答案</h4>
+              <p class="details">它提供更强大的工具，但架构师的智慧和决策依然是系统成功的关键。</p>
+            </div>
+            <div class="concern-card">
+              <h4><i class="fa-solid fa-lightbulb"></i>分离业务与扩展</h4>
+              <p class="details">
+                DSL设计者只需关注业务逻辑，扩展性由平台保障。告别为每个模块设计特殊扩展点的窘境。
+              </p>
+            </div>
+          </div>
+        </section>
 
-    <!-- Scoped styles for this specific slide's layout -->
-    <style>
-        .flow-layout-3-step {
-            display: flex;
-            align-items: flex-start;
-            gap: 1.5rem;
-            margin-top: 2rem;
-            width: 100%;
-        }
-        .flow-step {
-            flex: 1;
-            background-color: var(--color-code-bg);
-            border: 1px solid var(--color-border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 280px; /* Ensure consistent height */
-        }
-        .flow-step h4 {
-            font-size: 1.2rem;
-            color: var(--color-primary);
-            margin-bottom: 1rem;
-        }
-        .flow-step .details {
-            font-size: 1rem;
-            color: var(--color-text-light);
-            line-height: 1.6;
-        }
-        .flow-arrow {
-            font-size: 2.5rem;
-            color: var(--color-primary);
-            margin-top: 100px; /* Adjust vertical alignment */
-        }
-        /* Make the middle step slightly wider for the diagram */
-        .flow-step.middle {
-            flex: 1.2;
-        }
-        .flow-step .mermaid-container {
-            margin: 0;
-            padding: 0.5rem;
-            width: 100%;
-            background-color: #fff;
-        }
-    </style>
+        <!-- Slide 13: Delta Oriented Framework Principle -->
+        <section class="slide">
+          <h2>差量化框架：Loader as Generator原则</h2>
 
-    <div class="flow-layout-3-step">
-        <!-- Step 1: Replace -->
-        <div class="flow-step">
-            <h4>1. 替换原生加载器</h4>
-            <i class="fa-solid fa-cogs fa-3x" style="color: var(--color-secondary); margin: 1rem 0;"></i>
-            <p class="details">对于任何引擎（ORM、IoC等），用Nop的“差量感知加载器”替换其原生模型加载器。</p>
-        </div>
+          <!-- Scoped styles for this specific slide's layout -->
+          <style>
+            .flow-layout-3-step {
+              display: flex;
+              align-items: flex-start;
+              gap: 1.5rem;
+              margin-top: 2rem;
+              width: 100%;
+            }
+            .flow-step {
+              flex: 1;
+              background-color: var(--color-code-bg);
+              border: 1px solid var(--color-border);
+              border-radius: 12px;
+              padding: 1.5rem;
+              text-align: center;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              min-height: 280px; /* Ensure consistent height */
+            }
+            .flow-step h4 {
+              font-size: 1.2rem;
+              color: var(--color-primary);
+              margin-bottom: 1rem;
+            }
+            .flow-step .details {
+              font-size: 1rem;
+              color: var(--color-text-light);
+              line-height: 1.6;
+            }
+            .flow-arrow {
+              font-size: 2.5rem;
+              color: var(--color-primary);
+              margin-top: 100px; /* Adjust vertical alignment */
+            }
+            /* Make the middle step slightly wider for the diagram */
+            .flow-step.middle {
+              flex: 1.2;
+            }
+            .flow-step .mermaid-container {
+              margin: 0;
+              padding: 0.5rem;
+              width: 100%;
+              background-color: #fff;
+            }
+          </style>
 
-        <div class="flow-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
+          <div class="flow-layout-3-step">
+            <!-- Step 1: Replace -->
+            <div class="flow-step">
+              <h4>1. 替换原生加载器</h4>
+              <i
+                class="fa-solid fa-cogs fa-3x"
+                style="color: var(--color-secondary); margin: 1rem 0"
+              ></i>
+              <p class="details">
+                对于任何引擎（ORM、IoC等），用Nop的“差量感知加载器”替换其原生模型加载器。
+              </p>
+            </div>
 
-        <!-- Step 2: Merge & Generate (with Diagram) -->
-        <div class="flow-step middle">
-            <h4>2. 非侵入式合并与生成</h4>
-            <div class="mermaid-container">
+            <div class="flow-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
+
+            <!-- Step 2: Merge & Generate (with Diagram) -->
+            <div class="flow-step middle">
+              <h4>2. 非侵入式合并与生成</h4>
+              <div class="mermaid-container">
                 <div class="mermaid">
-graph LR
-    subgraph Inputs
-        Base["📄 Base"]
-        Delta["🧩 Delta"]
-    end
-    Loader["✅<br/>Loader"]
-    Final["📦 Final"]
-
-    Base --> Loader
-    Delta --> Loader
-    Loader --> Final
-
-    style Delta fill:#A855F7,color:#fff
+                  graph LR subgraph Inputs Base["📄 Base"] Delta["🧩 Delta"] end Loader["✅<br />Loader"]
+                  Final["📦 Final"] Base --> Loader Delta --> Loader Loader --> Final style Delta
+                  fill:#A855F7,color:#fff
                 </div>
+              </div>
+              <p class="details" style="margin-top: 1rem">
+                加载器自动合并基础与差量模型，生成一个标准的最终模型。
+              </p>
             </div>
-            <p class="details" style="margin-top: 1rem;">加载器自动合并基础与差量模型，生成一个标准的最终模型。</p>
-        </div>
 
-        <div class="flow-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
+            <div class="flow-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
 
-        <!-- Step 3: Achieve -->
-        <div class="flow-step">
-            <h4>3. 实现全栈一致性</h4>
-            <i class="fa-solid fa-layer-group fa-3x" style="color: var(--color-warning); margin: 1rem 0;"></i>
-            <p class="details">最终，我们获得了使用单一、一致的机制来定制从数据库到UI所有内容的能力。</p>
-        </div>
-    </div>
+            <!-- Step 3: Achieve -->
+            <div class="flow-step">
+              <h4>3. 实现全栈一致性</h4>
+              <i
+                class="fa-solid fa-layer-group fa-3x"
+                style="color: var(--color-warning); margin: 1rem 0"
+              ></i>
+              <p class="details">
+                最终，我们获得了使用单一、一致的机制来定制从数据库到UI所有内容的能力。
+              </p>
+            </div>
+          </div>
 
-    <div class="highlight-box" style="margin-top: 2.5rem;">
-        <p><strong>核心目标达成：</strong>为技术栈中的每一个引擎提供了统一的、与DSL无关的定制机制。</p>
-    </div>
+          <div class="highlight-box" style="margin-top: 2.5rem">
+            <p>
+              <strong>核心目标达成：</strong
+              >为技术栈中的每一个引擎提供了统一的、与DSL无关的定制机制。
+            </p>
+          </div>
+        </section>
 
-</section>
+        <!-- Slide 14: Born to Debug -->
+        <section class="slide">
+          <h2>为调试而生：告别黑盒</h2>
 
-<!-- Slide 14: Born to Debug -->
-<section class="slide">
-    <h2>为调试而生：告别黑盒</h2>
-    
-    <style>
-        .debug-flow {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 1rem;
-            margin: 0;
-            width: 100%;
-        }
-        .debug-col {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .debug-col.output {
-            flex: 1.3; /* Give more space to the final output */
-        }
-        .debug-col h4 {
-            margin-bottom: 1rem;
-            text-align: center;
-            color: var(--color-text-dark);
-            font-size: 1.1rem;
-        }
-        .source-file {
-            background-color: var(--color-bg-slide);
-            border: 1px solid var(--color-border);
-            padding: 0.8em 1em;
-            border-radius: 6px;
-            font-family: var(--font-code);
-            font-size: 0.85rem;
-            width: 100%;
-            margin-bottom: 1rem;
-            box-shadow: var(--shadow-md);
-        }
-        .source-file .path {
-            font-weight: 600;
-            color: var(--color-secondary);
-            margin-bottom: 0.5rem;
-            display: block;
-        }
-        .process-arrow {
-            font-size: 4rem;
-            color: var(--color-primary);
-            text-align: center;
-        }
-        .process-arrow p {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 0.5rem;
-            color: var(--color-primary-dark);
-        }
-    </style>
+          <style>
+            .debug-flow {
+              display: flex;
+              align-items: flex-start;
+              justify-content: space-between;
+              gap: 1rem;
+              margin: 0;
+              width: 100%;
+            }
+            .debug-col {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+            .debug-col.output {
+              flex: 1.3; /* Give more space to the final output */
+            }
+            .debug-col h4 {
+              margin-bottom: 1rem;
+              text-align: center;
+              color: var(--color-text-dark);
+              font-size: 1.1rem;
+            }
+            .source-file {
+              background-color: var(--color-bg-slide);
+              border: 1px solid var(--color-border);
+              padding: 0.8em 1em;
+              border-radius: 6px;
+              font-family: var(--font-code);
+              font-size: 0.85rem;
+              width: 100%;
+              margin-bottom: 1rem;
+              box-shadow: var(--shadow-md);
+            }
+            .source-file .path {
+              font-weight: 600;
+              color: var(--color-secondary);
+              margin-bottom: 0.5rem;
+              display: block;
+            }
+            .process-arrow {
+              font-size: 4rem;
+              color: var(--color-primary);
+              text-align: center;
+            }
+            .process-arrow p {
+              font-size: 1rem;
+              font-weight: 600;
+              margin-top: 0.5rem;
+              color: var(--color-primary-dark);
+            }
+          </style>
 
-    <div class="debug-flow">
-        <!-- Input Column -->
-        <div class="debug-col">
-            <h4>1. 输入源 (Input Sources)</h4>
-            <div class="source-file">
+          <div class="debug-flow">
+            <!-- Input Column -->
+            <div class="debug-col">
+              <h4>1. 输入源 (Input Sources)</h4>
+              <div class="source-file">
                 <span class="path">/base/config.beans.xml</span>
-                <code>&lt;beans>&lt;bean id="svc" class="app.MyService"&gt;<br>&nbsp;&nbsp;&lt;property name="timeout" value="<strong class="code-string">3000</strong>"/&gt;<br>&lt;/bean&gt;&lt;/beans></code>
-            </div>
-            <div class="source-file">
+                <code
+                  >&lt;beans>&lt;bean id="svc" class="app.MyService"&gt;<br />&nbsp;&nbsp;&lt;property
+                  name="timeout" value="<strong class="code-string">3000</strong
+                  >"/&gt;<br />&lt;/bean&gt;&lt;/beans></code
+                >
+              </div>
+              <div class="source-file">
                 <span class="path">/_delta/default/base/config.beans.xml</span>
-                <code>&lt;beans x:extends="super">&lt;bean id="svc" &gt;<br>&nbsp;&nbsp;&lt;property name="timeout" value="<strong class="code-string">5000</strong>"/&gt;<br>&lt;/bean&gt;&lt;/beans></code>
+                <code
+                  >&lt;beans x:extends="super">&lt;bean id="svc" &gt;<br />&nbsp;&nbsp;&lt;property
+                  name="timeout" value="<strong class="code-string">5000</strong
+                  >"/&gt;<br />&lt;/bean&gt;&lt;/beans></code
+                >
+              </div>
             </div>
-        </div>
 
-        <!-- Process Column -->
-        <div class="debug-col" style="flex: 0.3;">
-            <div class="process-arrow">
+            <!-- Process Column -->
+            <div class="debug-col" style="flex: 0.3">
+              <div class="process-arrow">
                 <i class="fa-solid fa-arrow-right-long"></i>
-                <p>统一合并<br>(XNode)</p>
+                <p>统一合并<br />(XNode)</p>
+              </div>
             </div>
-        </div>
 
-        <!-- Output Column -->
-        <div class="debug-col output">
-            <h4>2. 可追溯的输出 (Traceable Output)</h4>
-            <pre class="code-block" style="margin:0; width:100%; font-size: 0.85rem; line-height:1.7;"><code>&lt;beans&gt;
+            <!-- Output Column -->
+            <div class="debug-col output">
+              <h4>2. 可追溯的输出 (Traceable Output)</h4>
+              <pre
+                class="code-block"
+                style="margin: 0; width: 100%; font-size: 0.85rem; line-height: 1.7"
+              ><code>&lt;beans&gt;
 <span class="dump-comment-v3">&lt;!--LOC:[2:6:0:0]/base/config.beans.xml
     @id=[2:15:0:0]/_delta/default/base/config.beans.xml
 --&gt;</span>
@@ -1129,496 +1845,1172 @@ graph LR
         &lt;property name="timeout" value="<strong class="code-string">5000</strong>"/&gt;
     &lt;/bean&gt;
 &lt;/beans&gt;</code></pre>
-        </div>
-    </div>
-    
-    <div class="highlight-box" style="margin-top:2rem;">
-        <p><strong>确定性的调试</strong>: Nop平台采用统一的XNode中间表示，跟踪每个属性的源码位置。最终合并节点（包含位置信息）自动输出到_dump目录。使得每一个配置的来源都有据可查，将调试从猜测变为精确溯源。</p>
-    </div>
+            </div>
+          </div>
 
-</section>
+          <div class="highlight-box" style="margin-top: 2rem">
+            <p>
+              <strong>确定性的调试</strong>:
+              Nop平台采用统一的XNode中间表示，跟踪每个属性的源码位置。最终合并节点（包含位置信息）自动输出到_dump目录。使得每一个配置的来源都有据可查，将调试从猜测变为精确溯源。
+            </p>
+          </div>
+        </section>
 
-<!-- Slide: Core Mechanism - Programmable Evolution (Optimized Layout) -->
-<section class="slide">
-    <h2>让演化可编程</h2>
-    
-    <div class="highlight-box" style="text-align: center; margin-top: 0; margin-bottom: 2rem;">
-        <p style="font-size: 1.2rem; font-weight: 500; margin-bottom: 0;">
-            <strong>XLang:</strong> 在语言中明确定义领域结构坐标并内置通用的差量计算规则的第四代编程语言
-        </p>
-    </div>
+        <!-- Slide: Core Mechanism - Programmable Evolution (Optimized Layout) -->
+        <section class="slide">
+          <h2>让演化可编程</h2>
 
-    <!-- Container to center the SVG. Height is adjusted for the new compact SVG -->
-    <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: calc(100% - 200px);">
-        
-<svg width="1200" height="550" viewBox="0 0 1200 550" xmlns="http://www.w3.org/2000/svg" style="max-width: 98%; height: auto;">
-  <defs>
-    <!-- 统一品牌渐变 -->
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1e3a8a"/>
-      <stop offset="100%" style="stop-color:#2563eb"/>
-    </linearGradient>
-    
-    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff"/>
-      <stop offset="100%" style="stop-color:#f8fafc"/>
-    </linearGradient>
-    
-    <!-- 统一阴影 -->
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000" flood-opacity="0.12"/>
-    </filter>
-    
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#2563eb" flood-opacity="0.3"/>
-    </filter>
-  </defs>
+          <div class="highlight-box" style="text-align: center; margin-top: 0; margin-bottom: 2rem">
+            <p style="font-size: 1.2rem; font-weight: 500; margin-bottom: 0">
+              <strong>XLang:</strong>
+              在语言中明确定义领域结构坐标并内置通用的差量计算规则的第四代编程语言
+            </p>
+          </div>
 
-  <!-- 统一背景 -->
-  <rect width="100%" height="100%" fill="url(#bgGradient)"/>
-  
-  <!-- 装饰几何图形 (位置调整) -->
-  <circle cx="120" cy="80" r="50" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.15"/>
-  <circle cx="1080" cy="480" r="70" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.15"/>
-  <polygon points="200,500 240,460 280,500 240,540" fill="#ffffff" opacity="0.08"/>
+          <!-- Container to center the SVG. Height is adjusted for the new compact SVG -->
+          <div
+            style="
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              width: 100%;
+              height: calc(100% - 200px);
+            "
+          >
+            <svg
+              width="1200"
+              height="550"
+              viewBox="0 0 1200 550"
+              xmlns="http://www.w3.org/2000/svg"
+              style="max-width: 98%; height: auto"
+            >
+              <defs>
+                <!-- 统一品牌渐变 -->
+                <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color: #1e3a8a" />
+                  <stop offset="100%" style="stop-color: #2563eb" />
+                </linearGradient>
 
-  <!-- 核心公式卡片 (上移) -->
-  <g transform="translate(200, 40)">
-    <rect x="0" y="0" width="800" height="85" rx="20" 
-      fill="url(#cardGradient)" filter="url(#shadow)"/>
-    
-    <text x="400" y="55" text-anchor="middle" 
-      font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
-      font-size="32" font-weight="700" fill="#1e3a8a">
-      App = Delta <tspan fill="#2563eb">x-extends</tspan> Generator&lt;DSL&gt;
-    </text>
-  </g>
+                <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color: #ffffff" />
+                  <stop offset="100%" style="stop-color: #f8fafc" />
+                </linearGradient>
 
-  <!-- 三个主要卡片 (上移) -->
-  <!-- DSL 森林卡片 -->
-  <g transform="translate(80, 175)">
-    <rect x="0" y="0" width="320" height="240" rx="20" 
-      fill="url(#cardGradient)" filter="url(#shadow)"/>
-    <circle cx="60" cy="65" r="32" fill="#2563eb" opacity="0.12"/>
-    <text x="60" y="75" text-anchor="middle" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="30" fill="#2563eb">🗂</text>
-    <text x="110" y="50" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="26" font-weight="700" fill="#1e3a8a">DSL 森林</text>
-    <text x="110" y="75" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="15" font-weight="500" fill="#64748b">领域坐标系</text>
-    <text x="40" y="125" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• 统一元模型定义</text>
-    <text x="40" y="150" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• XPath 稳定路径</text>
-    <text x="40" y="175" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• 跨 DSL 协同</text>
-    <rect x="20" y="195" width="280" height="30" rx="10" fill="#f1f5f9"/>
-    <text x="30" y="215" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="13" fill="#64748b" font-weight="500">/app/entity[@name='User']/column[1]</text>
-  </g>
+                <!-- 统一阴影 -->
+                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow
+                    dx="0"
+                    dy="6"
+                    stdDeviation="12"
+                    flood-color="#000"
+                    flood-opacity="0.12"
+                  />
+                </filter>
 
-  <!-- Delta 差量卡片 -->
-  <g transform="translate(440, 175)">
-    <rect x="0" y="0" width="320" height="240" rx="20" 
-      fill="url(#cardGradient)" filter="url(#shadow)"/>
-    <circle cx="60" cy="65" r="32" fill="#059669" opacity="0.12"/>
-    <text x="60" y="75" text-anchor="middle" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="30" fill="#059669">⚡</text>
-    <text x="110" y="50" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="26" font-weight="700" fill="#1e3a8a">Delta 差量</text>
-    <text x="110" y="75" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="15" font-weight="500" fill="#64748b">可逆演化单元</text>
-    <text x="40" y="125" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• 删除语义支持</text>
-    <text x="40" y="150" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• 满足结合律</text>
-    <text x="40" y="175" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• 可组合复用</text>
-    <rect x="20" y="195" width="280" height="30" rx="10" fill="#ecfdf5"/>
-    <text x="160" y="215" text-anchor="middle" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="13" fill="#059669" font-weight="600">(A ⊕ B) ⊕ C = A ⊕ (B ⊕ C)</text>
-  </g>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow
+                    dx="0"
+                    dy="0"
+                    stdDeviation="6"
+                    flood-color="#2563eb"
+                    flood-opacity="0.3"
+                  />
+                </filter>
+              </defs>
 
-  <!-- Generator 卡片 -->
-  <g transform="translate(800, 175)">
-    <rect x="0" y="0" width="320" height="240" rx="20" 
-      fill="url(#cardGradient)" filter="url(#shadow)"/>
-    <circle cx="60" cy="65" r="32" fill="#d97706" opacity="0.12"/>
-    <text x="60" y="75" text-anchor="middle" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="30" fill="#d97706">⚙️</text>
-    <text x="110" y="50" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="26" font-weight="700" fill="#1e3a8a">Generator</text>
-    <text x="110" y="75" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="15" font-weight="500" fill="#64748b">编译期生成引擎</text>
-    <text x="40" y="125" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• 多阶段编译</text>
-    <text x="40" y="150" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• 结构化生成</text>
-    <text x="40" y="175" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="17" font-weight="500" fill="#475569">• 源码可追溯</text>
-    <g transform="translate(20, 195)">
-      <rect x="0" y="0" width="80" height="30" rx="10" fill="#fef3c7"/>
-      <text x="40" y="20" text-anchor="middle" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="13" font-weight="600" fill="#d97706">XDef</text>
-      <rect x="90" y="0" width="80" height="30" rx="10" fill="#fef3c7"/>
-      <text x="130" y="20" text-anchor="middle" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="13" font-weight="600" fill="#d97706">Xpl</text>
-      <rect x="180" y="0" width="80" height="30" rx="10" fill="#fef3c7"/>
-      <text x="220" y="20" text-anchor="middle" font-family="'Inter', 'SF Pro Display', sans-serif" font-size="13" font-weight="600" fill="#d97706">XScript</text>
-    </g>
-  </g>
+              <!-- 统一背景 -->
+              <rect width="100%" height="100%" fill="url(#bgGradient)" />
 
-  <!-- 底部亮点 (上移) -->
-  <g transform="translate(300, 445)">
-    <rect x="0" y="0" width="600" height="70" rx="35" 
-      fill="#ffffff" fill-opacity="0.18" filter="url(#glow)"/>
-    <text x="300" y="35" text-anchor="middle" 
-      font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
-      font-size="18" font-weight="600" fill="#ffffff">
-      从句法范式到结构空间构造规则的根本性重构
-    </text>
-    <text x="300" y="55" text-anchor="middle" 
-      font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
-      font-size="15" font-weight="400" fill="#ffffff" opacity="0.85">
-      Map → Tree 升维 · 删除语义回归 · 编译期元编程
-    </text>
-  </g>
-</svg>
-    </div>
-</section>
+              <!-- 装饰几何图形 (位置调整) -->
+              <circle
+                cx="120"
+                cy="80"
+                r="50"
+                fill="none"
+                stroke="#ffffff"
+                stroke-width="1"
+                opacity="0.15"
+              />
+              <circle
+                cx="1080"
+                cy="480"
+                r="70"
+                fill="none"
+                stroke="#ffffff"
+                stroke-width="1"
+                opacity="0.15"
+              />
+              <polygon points="200,500 240,460 280,500 240,540" fill="#ffffff" opacity="0.08" />
 
-            <!-- Slide 15: Why Nop is Next Gen -->
-            <section class="slide">
-                <h2>为什么Nop是下一代软件技术架构</h2>
-                
-                <ul class="icon-list" style="margin:0">
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-arrows-rotate"></i>
-                        <div>
-                            <p><strong>基于可逆计算理论，重构软件生产范式</strong>：</p>
-                            <span class="details">其核心是Generator + Delta的代数化软件生成范式，为软件构造提供了超越传统"组装式"开发的全新数学基础和解耦手段</span>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-language"></i>
-                        <div>
-                            <p><strong>通过模型驱动和语言导向，显著降低系统复杂性</strong>：</p>
-                            <span class="details">与传统Spring/微服务架构相比，通过声明式的领域特定语言（DSL）替代大量胶水代码和配置，使代码量减少十倍以上，并大幅降低认知负担。</span>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-puzzle-piece"></i>
-                        <div>
-                            <p><strong>为系统级可扩展性和产品化复用提供理论级解决方案</strong>：</p>
-                            <span class="details">通过元编程和差量定制，实现了非侵入式的系统级扩展（Extension），使得粗粒度的软件产品（如整个SaaS平台）能够像类一样被高效、无损地复用和定制，为实现"软件产品线"工程提供了可行的技术路径。</span>
-                        </div>
-                    </li>
-                </ul>
-            </section>
+              <!-- 核心公式卡片 (上移) -->
+              <g transform="translate(200, 40)">
+                <rect
+                  x="0"
+                  y="0"
+                  width="800"
+                  height="85"
+                  rx="20"
+                  fill="url(#cardGradient)"
+                  filter="url(#shadow)"
+                />
 
-            <!-- Slide 16: Nop vs Spring -->
-            <section class="slide">
-                <h2>Nop vs. Spring 技术栈对比</h2>
-                
-                <table class="comparison-table">
-                    <tr>
-                        <th>领域</th>
-                        <th>Nop</th>
-                        <th>Spring生态</th>
-                    </tr>
-                    <tr>
-                        <td><strong>脚本语言</strong></td>
-                        <td>XLang</td>
-                        <td>Spring EL/FreeMarker</td>
-                    </tr>
-                    <tr>
-                        <td><strong>依赖注入</strong></td>
-                        <td>NopIoC</td>
-                        <td>Spring IoC</td>
-                    </tr>
-                    <tr>
-                        <td><strong>数据访问</strong></td>
-                        <td>NopORM</td>
-                        <td>JPA/MyBatis</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Web服务</strong></td>
-                        <td>NopGraphQL</td>
-                        <td>SpringMVC</td>
-                    </tr>
-                    <tr>
-                        <td><strong>分布式</strong></td>
-                        <td>NopRPC/NopTcc</td>
-                        <td>Feign/Seata</td>
-                    </tr>
-                    <tr>
-                        <td><strong>业务流程</strong></td>
-                        <td>NopWorkflow/NopTaskFlow</td>
-                        <td>Flowable</td>
-                    </tr>
-                    <tr>
-                        <td><strong>业务规则</strong></td>
-                        <td>NopRule</td>
-                        <td>Drools</td>
-                    </tr>
-                    <tr>
-                        <td><strong>批处理</strong></td>
-                        <td>NopBatch</td>
-                        <td>Spring Batch</td>
-                    </tr>
-                    <tr>
-                        <td><strong>报表</strong></td>
-                        <td>NopReport</td>
-                        <td>JasperReports</td>
-                    </tr>
-                </table>
-            </section>
+                <text
+                  x="400"
+                  y="55"
+                  text-anchor="middle"
+                  font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                  font-size="32"
+                  font-weight="700"
+                  fill="#1e3a8a"
+                >
+                  App = Delta
+                  <tspan fill="#2563eb">x-extends</tspan>
+                  Generator&lt;DSL&gt;
+                </text>
+              </g>
 
-            <!-- Slide 17: Framework Neutral -->
-            <section class="slide">
-                <h2>Nop：框架中立，无缝集成</h2>
-                
-                <div class="two-column">
-                    <div class="column-narrow">
-                        <h3>协同而非替代</h3>
-                        <div class="icon-bullet">
-                            <i class="fa-solid fa-handshake"></i>
-                            <div>
-                                <p>Nop采用框架中立设计，可与 Spring、Quarkus、Solon 等基础框架协同工作</p>
-                            </div>
-                        </div>
-                        
-                        <h3>能力可插拔</h3>
-                        <div class="icon-bullet">
-                            <i class="fa-solid fa-plug"></i>
-                            <div>
-                                <p>可按需选用单个组件，基本无相互依赖</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="column" >
-                        <table class="comparison-table" style="margin:0">
-                            <tr>
-                                <th>采用方式</th>
-                                <th>获得能力</th>
-                                <th>适用场景</th>
-                            </tr>
-                            <tr>
-                                <td><strong>全栈使用</strong></td>
-                                <td>最大创新能力和定制性</td>
-                                <td>全新系统开发</td>
-                            </tr>
-                            <tr>
-                                <td><strong>组件选用</strong></td>
-                                <td>单独使用ORM/Report等引擎</td>
-                                <td>现有系统部分增强</td>
-                            </tr>
-                            <tr>
-                                <td><strong>机制复用</strong></td>
-                                <td>仅引入Delta差量定制能力</td>
-                                <td>快速实现产品化定制</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="highlight-box">
-                    <p><strong>用Nop增强现有系统，而非推倒重来</strong></p>
-                </div>
-            </section>
-			
-<!-- Slide 18: 全栈模型驱动开发 (修改后) -->
-<section class="slide">
-    <h2>全栈模型驱动开发</h2>
-    
-    <div style="text-align: center; margin: 0;">
-<svg width="700" height="400" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="shadow-final-18" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="5"/><feOffset dx="0" dy="4" result="offsetblur"/><feFlood flood-color="rgba(30, 64, 175, 0.15)"/><feComposite in2="offsetblur" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <marker id="arrow-final-18" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#1e3a8a"/></marker>
-    <!-- Arrow Gradient -->
-    <linearGradient id="arrow-grad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient>
-    <!-- Module Fills -->
-    <linearGradient id="fill-backend" x1="0" y1="0" x2="0" y2="1"><stop offset="0.5" stop-color="#3b82f6"/><stop offset="0.5" stop-color="#2563eb"/></linearGradient>
-    <linearGradient id="fill-frontend" x1="0" y1="0" x2="0" y2="1"><stop offset="0.5" stop-color="#10b981"/><stop offset="0.5" stop-color="#059669"/></linearGradient>
-    <linearGradient id="fill-source" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="100%" stop-color="#1e40af"/></linearGradient>
-    <linearGradient id="fill-service" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
-  </defs>
-  
-  <rect x="50" y="90" width="900" height="450" rx="20" fill="#f8fafc" stroke="#e5e7eb"/>
-  <rect x="65" y="105" width="425" height="420" rx="12" fill="rgba(37, 99, 235, 0.03)"/>
-  <rect x="510" y="105" width="425" height="420" rx="12" fill="rgba(5, 150, 105, 0.03)"/>
-  
-  <text x="500" y="60" text-anchor="middle" font-family="'Inter', sans-serif" font-size="32" font-weight="700" fill="#1e3a8a">差量化的软件生产线</text>
-  
-  <text x="280" y="130" text-anchor="middle" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#2563eb">后台 (Backend)</text>
-  <text x="725" y="130" text-anchor="middle" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#059669">前台 (Frontend)</text>
-  
-  <rect x="90" y="280" width="120" height="100" rx="12" fill="url(#fill-backend)" filter="url(#shadow-final-18)"/><text x="150" y="310" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">XORM</text><text x="150" y="355" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">_XORM</text>
-  <ellipse cx="150" cy="450" rx="70" ry="40" fill="url(#fill-source)" filter="url(#shadow-final-18)"/><text x="150" y="455" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">Excel</text>
-  <rect x="290" y="280" width="120" height="100" rx="12" fill="url(#fill-backend)" filter="url(#shadow-final-18)"/><text x="350" y="310" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">XMeta</text><text x="350" y="355" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">_XMeta</text>
-  <rect x="560" y="280" width="120" height="100" rx="12" fill="url(#fill-frontend)" filter="url(#shadow-final-18)"/><text x="620" y="310" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">XView</text><text x="620" y="355" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">_XView</text>
-  <rect x="760" y="280" width="120" height="100" rx="12" fill="url(#fill-frontend)" filter="url(#shadow-final-18)"/><text x="820" y="310" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">XPage</text><text x="820" y="355" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">_XPage</text>
-  <rect x="440" y="160" width="120" height="50" rx="12" fill="url(#fill-service)" filter="url(#shadow-final-18)"/><text x="500" y="190" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">GraphQL</text>
-  <rect x="760" y="160" width="120" height="50" rx="12" fill="url(#fill-source)" filter="url(#shadow-final-18)"/><text x="820" y="190" text-anchor="middle" font-family="'Inter', sans-serif" font-size="17" fill="white" font-weight="600">界面</text>
-  
-  <g stroke-width="3.5" fill="none" marker-end="url(#arrow-final-18)" stroke="#3b82f6">
-    <line x1="150" y1="410" x2="150" y2="380"/>
-    <path d="M210,305 L250,305 L250,355 L290,355"/>
-    <path d="M410,305 L500,305 L500,355 L560,355"/>
-    <path d="M680,305 L720,305 L720,355 L760,355"/>
-    <line x1="820" y1="280" x2="820" y2="210"/>
-    <path d="M350,280 L350,185 L440,185"/>
-  </g>
-  
-  <text x="360" y="225" text-anchor="middle" font-family="'Inter', sans-serif" font-size="15" fill="#d97706" font-weight="600">+ BizModel</text>
-  <text x="500" y="130" text-anchor="middle" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#d97706">服务层</text>
-</svg>
-    </div>
-    
-    <div class="highlight-box" style="margin-top: 0; ">
-        <p><strong>Nop平台内置的开发流程形成了完整的模型驱动开发闭环：</strong></p>
-        <p style="margin-bottom: 0.5rem;">Excel数据模型 → ORM模型 → Meta元数据模型 → 前端视图模型 → 页面文件，每个环节都支持差量修正，并构成了 ModelA -> _ModelB -> ModelB 式的协同生成链。</p>
-        <p style="font-size: 1.1rem; color: var(--color-secondary); font-weight: 600; margin-bottom: 0;">
-            <i class="fa-solid fa-lightbulb"></i> 工程实践：通过“下划线约定”（如生成代码至 `_MyClass`），确保生成代码与手工代码的分离。
-        </p>
-    </div>
-</section>
-		
+              <!-- 三个主要卡片 (上移) -->
+              <!-- DSL 森林卡片 -->
+              <g transform="translate(80, 175)">
+                <rect
+                  x="0"
+                  y="0"
+                  width="320"
+                  height="240"
+                  rx="20"
+                  fill="url(#cardGradient)"
+                  filter="url(#shadow)"
+                />
+                <circle cx="60" cy="65" r="32" fill="#2563eb" opacity="0.12" />
+                <text
+                  x="60"
+                  y="75"
+                  text-anchor="middle"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="30"
+                  fill="#2563eb"
+                >
+                  🗂
+                </text>
+                <text
+                  x="110"
+                  y="50"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="26"
+                  font-weight="700"
+                  fill="#1e3a8a"
+                >
+                  DSL 森林
+                </text>
+                <text
+                  x="110"
+                  y="75"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="15"
+                  font-weight="500"
+                  fill="#64748b"
+                >
+                  领域坐标系
+                </text>
+                <text
+                  x="40"
+                  y="125"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • 统一元模型定义
+                </text>
+                <text
+                  x="40"
+                  y="150"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • XPath 稳定路径
+                </text>
+                <text
+                  x="40"
+                  y="175"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • 跨 DSL 协同
+                </text>
+                <rect x="20" y="195" width="280" height="30" rx="10" fill="#f1f5f9" />
+                <text
+                  x="30"
+                  y="215"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="13"
+                  fill="#64748b"
+                  font-weight="500"
+                >
+                  /app/entity[@name='User']/column[1]
+                </text>
+              </g>
 
-            <!-- Slide 19: Customization Examples -->
-            <section class="slide">
-                <h2>定制示例</h2>
-                
-                <div class="two-column">
-                    <div class="column">
-                        <ul class="icon-list">
-                            <li class="icon-bullet">
-                                <i class="fa-solid fa-database"></i>
-                                <div>
-                                    <p><strong>数据模型定制</strong>: 数据表字段与关联关系灵活调整</p>
-                                </div>
-                            </li>
-                            <li class="icon-bullet">
-                                <i class="fa-solid fa-expand"></i>
-                                <div>
-                                    <p><strong>扩展字段支持</strong>: 一键启用内置动态扩展能力</p>
-                                </div>
-                            </li>
-                            <li class="icon-bullet">
-                                <i class="fa-solid fa-code"></i>
-                                <div>
-                                    <p><strong>服务接口定制</strong>: 消息请求与响应结构自由定制</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="column">
-                        <ul class="icon-list">
-                            <li class="icon-bullet">
-                                <i class="fa-solid fa-diagram-project"></i>
-                                <div>
-                                    <p><strong>处理流程定制</strong>: 业务处理逻辑与规则重写</p>
-                                </div>
-                            </li>
-                            <li class="icon-bullet">
-                                <i class="fa-solid fa-gear"></i>
-                                <div>
-                                    <p><strong>Bean组件定制</strong>: 平台组件删除与替换</p>
-                                </div>
-                            </li>
-                            <li class="icon-bullet">
-                                <i class="fa-solid fa-table-cells"></i>
-                                <div>
-                                    <p><strong>页面视图定制</strong>: 组件替换与页面的部分复用</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="quote" style="margin:0">
-                    <p>所有定制修改无需修改基础产品和Nop平台</p>
-                </div>
-            </section>
+              <!-- Delta 差量卡片 -->
+              <g transform="translate(440, 175)">
+                <rect
+                  x="0"
+                  y="0"
+                  width="320"
+                  height="240"
+                  rx="20"
+                  fill="url(#cardGradient)"
+                  filter="url(#shadow)"
+                />
+                <circle cx="60" cy="65" r="32" fill="#059669" opacity="0.12" />
+                <text
+                  x="60"
+                  y="75"
+                  text-anchor="middle"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="30"
+                  fill="#059669"
+                >
+                  ⚡
+                </text>
+                <text
+                  x="110"
+                  y="50"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="26"
+                  font-weight="700"
+                  fill="#1e3a8a"
+                >
+                  Delta 差量
+                </text>
+                <text
+                  x="110"
+                  y="75"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="15"
+                  font-weight="500"
+                  fill="#64748b"
+                >
+                  可逆演化单元
+                </text>
+                <text
+                  x="40"
+                  y="125"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • 删除语义支持
+                </text>
+                <text
+                  x="40"
+                  y="150"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • 满足结合律
+                </text>
+                <text
+                  x="40"
+                  y="175"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • 可组合复用
+                </text>
+                <rect x="20" y="195" width="280" height="30" rx="10" fill="#ecfdf5" />
+                <text
+                  x="160"
+                  y="215"
+                  text-anchor="middle"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="13"
+                  fill="#059669"
+                  font-weight="600"
+                >
+                  (A ⊕ B) ⊕ C = A ⊕ (B ⊕ C)
+                </text>
+              </g>
 
-            <!-- Slide 20: Summary -->
-            <section class="slide">
-                <h2>总结与展望</h2>
-                
-                <h3>Nop带来的范式转变：</h3>
-                <ul class="icon-list">
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
-                        <div>
-                            <p>从「定点扩展（Extension Points Everywhere）」到「随处覆盖（Overlays Above Everything）」</p>
-                        </div>
-                    </li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-code-branch"></i>
-                        <div>
-                            <p>从「1 core + N forks」到「1 base + N deltas」</p>
-                        </div>
-                    </li>
-					<li class="icon-bullet">
-						<i class="fa-solid fa-code"></i> <!-- 或者使用 fa-feather-alt -->
-						<div>
-							<p>从「命令式硬编码（Imperative Hardcoding）」到「声明式元编程（Declarative Metaprogramming）」</p>
-						</div>
-					</li>
-                    <li class="icon-bullet">
-                        <i class="fa-solid fa-square-plus"></i>
-                        <div>
-                            <p><strong>从「生产即组装」到「运算即生产」</strong>，Effective System = Base ⊕ ΔIndustry ⊕ ΔRegion ⊕ ΔCustomer</p>
-                        </div>
-                    </li>
-                </ul>
-                
-                <div class="highlight-box">
-                    <p><strong>愿景：</strong> 为AI时代的软件智能生产提供关键技术支撑。通过声明式的DSL与可逆的Delta运算，构建人机协同的软件生产新范式。</p>
-                </div>
-            </section>
-			
+              <!-- Generator 卡片 -->
+              <g transform="translate(800, 175)">
+                <rect
+                  x="0"
+                  y="0"
+                  width="320"
+                  height="240"
+                  rx="20"
+                  fill="url(#cardGradient)"
+                  filter="url(#shadow)"
+                />
+                <circle cx="60" cy="65" r="32" fill="#d97706" opacity="0.12" />
+                <text
+                  x="60"
+                  y="75"
+                  text-anchor="middle"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="30"
+                  fill="#d97706"
+                >
+                  ⚙️
+                </text>
+                <text
+                  x="110"
+                  y="50"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="26"
+                  font-weight="700"
+                  fill="#1e3a8a"
+                >
+                  Generator
+                </text>
+                <text
+                  x="110"
+                  y="75"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="15"
+                  font-weight="500"
+                  fill="#64748b"
+                >
+                  编译期生成引擎
+                </text>
+                <text
+                  x="40"
+                  y="125"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • 多阶段编译
+                </text>
+                <text
+                  x="40"
+                  y="150"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • 结构化生成
+                </text>
+                <text
+                  x="40"
+                  y="175"
+                  font-family="'Inter', 'SF Pro Display', sans-serif"
+                  font-size="17"
+                  font-weight="500"
+                  fill="#475569"
+                >
+                  • 源码可追溯
+                </text>
+                <g transform="translate(20, 195)">
+                  <rect x="0" y="0" width="80" height="30" rx="10" fill="#fef3c7" />
+                  <text
+                    x="40"
+                    y="20"
+                    text-anchor="middle"
+                    font-family="'Inter', 'SF Pro Display', sans-serif"
+                    font-size="13"
+                    font-weight="600"
+                    fill="#d97706"
+                  >
+                    XDef
+                  </text>
+                  <rect x="90" y="0" width="80" height="30" rx="10" fill="#fef3c7" />
+                  <text
+                    x="130"
+                    y="20"
+                    text-anchor="middle"
+                    font-family="'Inter', 'SF Pro Display', sans-serif"
+                    font-size="13"
+                    font-weight="600"
+                    fill="#d97706"
+                  >
+                    Xpl
+                  </text>
+                  <rect x="180" y="0" width="80" height="30" rx="10" fill="#fef3c7" />
+                  <text
+                    x="220"
+                    y="20"
+                    text-anchor="middle"
+                    font-family="'Inter', 'SF Pro Display', sans-serif"
+                    font-size="13"
+                    font-weight="600"
+                    fill="#d97706"
+                  >
+                    XScript
+                  </text>
+                </g>
+              </g>
 
-
-<!-- Slide 21: Q&A -->
-<section class="slide title-slide">
-    <h1>Q&A</h1>
-    <p class="subtitle">问题与讨论</p>
-    
-    <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 3rem;">
-        <div style="text-align: center;">
-            <p style="font-weight: 600; margin-bottom: 1rem;">微信公众号</p>
-            <svg width="250" height="250" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" shape-rendering="crispEdges" style="width: 250px; height: 250px; border-radius: 8px; border: 1px solid var(--color-border);">
-                <path fill="#ffffff" d="M0 0h41v41H0z"/>
-                <path stroke="#000000" d="M4 4.5h7m3 0h2m2 0h1m4 0h1m2 0h3m1 0h7M4 5.5h1m5 0h1m1 0h3m1 0h2m1 0h3m1 0h3m1 0h1m2 0h1m5 0h1M4 6.5h1m1 0h3m1 0h1m4 0h2m2 0h2m2 0h1m3 0h1m2 0h1m1 0h3m1 0h1M4 7.5h1m1 0h3m1 0h1m3 0h4m1 0h1m1 0h1m3 0h1m4 0h1m1 0h3m1 0h1M4 8.5h1m1 0h3m1 0h1m1 0h1m1 0h4m7 0h1m4 0h1m1 0h3m1 0h1M4 9.5h1m5 0h1m5 0h2m8 0h1m3 0h1m5 0h1M4 10.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M13 11.5h2m1 0h2m2 0h2m2 0h2m2 0h1M4 12.5h1m1 0h1m1 0h1m1 0h1m2 0h1m1 0h1m3 0h7m1 0h2m3 0h1m2 0h1M4 13.5h1m1 0h2m1 0h1m1 0h5m3 0h2m5 0h1m1 0h1m1 0h1m5 0h1M6 14.5h1m3 0h1m1 0h2m2 0h2m3 0h1m3 0h1m3 0h3m2 0h3M6 15.5h2m1 0h1m4 0h1m4 0h2m2 0h2m2 0h1m1 0h2m1 0h1m2 0h2M5 16.5h2m1 0h3m4 0h1m3 0h1m3 0h1m3 0h2m1 0h1m2 0h1m1 0h1M4 17.5h4m5 0h2m1 0h2m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h1M4 18.5h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m4 0h1m1 0h4m3 0h2M7 19.5h2m3 0h3m3 0h2m1 0h3m1 0h2m1 0h1m1 0h1m4 0h1M6 20.5h2m1 0h2m1 0h2m6 0h1m3 0h2m1 0h4M4 21.5h1m1 0h2m1 0h1m4 0h2m5 0h1m2 0h3m1 0h4m3 0h2M8 22.5h3m2 0h3m1 0h1m4 0h1m3 0h1m1 0h1m2 0h1m2 0h3M5 23.5h5m2 0h2m1 0h4m2 0h2m1 0h4m4 0h1m2 0h2M6 24.5h7m2 0h2m1 0h3m1 0h3m1 0h3m1 0h4m1 0h1M6 25.5h4m1 0h3m3 0h4m1 0h5m1 0h1m1 0h1m2 0h4M4 26.5h1m2 0h1m2 0h2m1 0h1m2 0h6m1 0h2m1 0h1m2 0h3m2 0h3M5 27.5h1m5 0h1m5 0h1m2 0h2m2 0h3m9 0h1M4 28.5h1m2 0h1m1 0h5m4 0h3m2 0h4m1 0h6M12 29.5h1m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m3 0h1m3 0h2m1 0h2M4 30.5h7m3 0h1m5 0h2m3 0h1m1 0h2m1 0h1m1 0h1m1 0h3M4 31.5h1m5 0h1m2 0h2m1 0h2m1 0h2m7 0h1m3 0h2M4 32.5h1m1 0h3m1 0h1m1 0h6m1 0h1m8 0h6m1 0h2M4 33.5h1m1 0h3m1 0h1m5 0h1m1 0h2m1 0h1m1 0h1m7 0h3m1 0h2M4 34.5h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h2m2 0h2m2 0h1m6 0h1m3 0h1M4 35.5h1m5 0h1m3 0h1m1 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h2m2 0h1M4 36.5h7m1 0h3m1 0h2m2 0h1m3 0h2m1 0h2m1 0h1m2 0h4"/>
+              <!-- 底部亮点 (上移) -->
+              <g transform="translate(300, 445)">
+                <rect
+                  x="0"
+                  y="0"
+                  width="600"
+                  height="70"
+                  rx="35"
+                  fill="#ffffff"
+                  fill-opacity="0.18"
+                  filter="url(#glow)"
+                />
+                <text
+                  x="300"
+                  y="35"
+                  text-anchor="middle"
+                  font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                  font-size="18"
+                  font-weight="600"
+                  fill="#ffffff"
+                >
+                  从句法范式到结构空间构造规则的根本性重构
+                </text>
+                <text
+                  x="300"
+                  y="55"
+                  text-anchor="middle"
+                  font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                  font-size="15"
+                  font-weight="400"
+                  fill="#ffffff"
+                  opacity="0.85"
+                >
+                  Map → Tree 升维 · 删除语义回归 · 编译期元编程
+                </text>
+              </g>
             </svg>
-        </div>
-        <div style="text-align: center;">
-            <p style="font-weight: 600; margin-bottom: 1rem;">微信群</p>
-            <svg width="250" height="250" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" shape-rendering="crispEdges" style="width: 250px; height: 250px; border-radius: 8px; border: 1px solid var(--color-border);">
-                <path fill="#ffffff" d="M0 0h41v41H0z"/>
-                <path stroke="#000000" d="M4 4.5h7m3 0h1m2 0h1m1 0h1m1 0h2m2 0h3m2 0h7M4 5.5h1m5 0h1m1 0h1m2 0h2m1 0h3m1 0h3m1 0h3m1 0h1m5 0h1M4 6.5h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h2m2 0h3m1 0h4m1 0h1m1 0h3m1 0h1M4 7.5h1m1 0h3m1 0h1m3 0h2m1 0h6m1 0h4m2 0h1m1 0h3m1 0h1M4 8.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h1M4 9.5h1m5 0h1m5 0h2m1 0h7m1 0h2m1 0h1m5 0h1M4 10.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M13 11.5h2m1 0h2m1 0h1m1 0h3m1 0h1m1 0h1M4 12.5h1m1 0h1m1 0h1m1 0h1m3 0h2m1 0h1m2 0h1m3 0h2m1 0h2m3 0h1m2 0h1M4 13.5h2m5 0h2m1 0h4m2 0h2m3 0h1m2 0h4m3 0h1M6 14.5h1m2 0h3m2 0h1m1 0h1m1 0h1m3 0h1m3 0h1m3 0h2m2 0h3M6 15.5h1m1 0h2m4 0h2m1 0h2m1 0h10m2 0h1M4 16.5h3m1 0h3m4 0h1m2 0h3m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1M6 17.5h2m3 0h3m1 0h1m1 0h12m1 0h1m3 0h1m1 0h1M8 18.5h1m1 0h2m2 0h3m2 0h3m1 0h2m1 0h1m2 0h1m2 0h2m1 0h2M4 19.5h1m2 0h2m2 0h1m1 0h2m1 0h1m3 0h2m2 0h3m3 0h1m4 0h1M5 20.5h3m1 0h3m2 0h1m2 0h1m1 0h3m1 0h3m1 0h4m2 0h1M4 21.5h4m1 0h1m3 0h5m1 0h2m3 0h1m1 0h1m1 0h1m1 0h2m3 0h1M4 22.5h1m3 0h1m1 0h1m2 0h3m4 0h2m3 0h1m4 0h1m3 0h3M5 23.5h1m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m4 0h1m3 0h1m2 0h2M4 24.5h1m1 0h2m1 0h2m4 0h4m4 0h1m4 0h6M6 25.5h1m1 0h1m2 0h1m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h3m5 0h2M4 26.5h1m3 0h4m2 0h1m1 0h1m1 0h1m9 0h6m1 0h2M5 27.5h2m4 0h1m2 0h4m1 0h1m1 0h1m1 0h1m1 0h1m6 0h1m2 0h1M4 28.5h1m1 0h1m2 0h2m1 0h3m1 0h3m2 0h1m2 0h3m1 0h5m1 0h2M12 29.5h3m5 0h3m1 0h2m2 0h1m3 0h2m1 0h2M4 30.5h7m4 0h1m4 0h1m1 0h1m3 0h3m1 0h1m1 0h1m1 0h3M4 31.5h1m5 0h1m3 0h5m1 0h3m2 0h2m1 0h1m3 0h1m2 0h1M4 32.5h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h4m1 0h1m1 0h1m1 0h1m1 0h6M4 33.5h1m1 0h3m1 0h1m5 0h1m2 0h6m1 0h4m2 0h1m1 0h3M4 34.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m2 0h3m1 0h1m4 0h1m3 0h1M4 35.5h1m5 0h1m5 0h1m1 0h1m1 0h3m1 0h2m1 0h4m1 0h1m2 0h1M4 36.5h7m1 0h1m1 0h1m2 0h4m2 0h3m1 0h4m1 0h1m2 0h2"/>
+          </div>
+        </section>
+
+        <!-- Slide 15: Why Nop is Next Gen -->
+        <section class="slide">
+          <h2>为什么Nop是下一代软件技术架构</h2>
+
+          <ul class="icon-list" style="margin: 0">
+            <li class="icon-bullet">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <div>
+                <p><strong>基于可逆计算理论，重构软件生产范式</strong>：</p>
+                <span class="details"
+                  >其核心是Generator +
+                  Delta的代数化软件生成范式，为软件构造提供了超越传统"组装式"开发的全新数学基础和解耦手段</span
+                >
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-language"></i>
+              <div>
+                <p><strong>通过模型驱动和语言导向，显著降低系统复杂性</strong>：</p>
+                <span class="details"
+                  >与传统Spring/微服务架构相比，通过声明式的领域特定语言（DSL）替代大量胶水代码和配置，使代码量减少十倍以上，并大幅降低认知负担。</span
+                >
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-puzzle-piece"></i>
+              <div>
+                <p><strong>为系统级可扩展性和产品化复用提供理论级解决方案</strong>：</p>
+                <span class="details"
+                  >通过元编程和差量定制，实现了非侵入式的系统级扩展（Extension），使得粗粒度的软件产品（如整个SaaS平台）能够像类一样被高效、无损地复用和定制，为实现"软件产品线"工程提供了可行的技术路径。</span
+                >
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Slide 16: Nop vs Spring -->
+        <section class="slide">
+          <h2>Nop vs. Spring 技术栈对比</h2>
+
+          <table class="comparison-table">
+            <tr>
+              <th>领域</th>
+              <th>Nop</th>
+              <th>Spring生态</th>
+            </tr>
+            <tr>
+              <td><strong>脚本语言</strong></td>
+              <td>XLang</td>
+              <td>Spring EL/FreeMarker</td>
+            </tr>
+            <tr>
+              <td><strong>依赖注入</strong></td>
+              <td>NopIoC</td>
+              <td>Spring IoC</td>
+            </tr>
+            <tr>
+              <td><strong>数据访问</strong></td>
+              <td>NopORM</td>
+              <td>JPA/MyBatis</td>
+            </tr>
+            <tr>
+              <td><strong>Web服务</strong></td>
+              <td>NopGraphQL</td>
+              <td>SpringMVC</td>
+            </tr>
+            <tr>
+              <td><strong>分布式</strong></td>
+              <td>NopRPC/NopTcc</td>
+              <td>Feign/Seata</td>
+            </tr>
+            <tr>
+              <td><strong>业务流程</strong></td>
+              <td>NopWorkflow/NopTaskFlow</td>
+              <td>Flowable</td>
+            </tr>
+            <tr>
+              <td><strong>业务规则</strong></td>
+              <td>NopRule</td>
+              <td>Drools</td>
+            </tr>
+            <tr>
+              <td><strong>批处理</strong></td>
+              <td>NopBatch</td>
+              <td>Spring Batch</td>
+            </tr>
+            <tr>
+              <td><strong>报表</strong></td>
+              <td>NopReport</td>
+              <td>JasperReports</td>
+            </tr>
+          </table>
+        </section>
+
+        <!-- Slide 17: Framework Neutral -->
+        <section class="slide">
+          <h2>Nop：框架中立，无缝集成</h2>
+
+          <div class="two-column">
+            <div class="column-narrow">
+              <h3>协同而非替代</h3>
+              <div class="icon-bullet">
+                <i class="fa-solid fa-handshake"></i>
+                <div>
+                  <p>Nop采用框架中立设计，可与 Spring、Quarkus、Solon 等基础框架协同工作</p>
+                </div>
+              </div>
+
+              <h3>能力可插拔</h3>
+              <div class="icon-bullet">
+                <i class="fa-solid fa-plug"></i>
+                <div>
+                  <p>可按需选用单个组件，基本无相互依赖</p>
+                </div>
+              </div>
+            </div>
+            <div class="column">
+              <table class="comparison-table" style="margin: 0">
+                <tr>
+                  <th>采用方式</th>
+                  <th>获得能力</th>
+                  <th>适用场景</th>
+                </tr>
+                <tr>
+                  <td><strong>全栈使用</strong></td>
+                  <td>最大创新能力和定制性</td>
+                  <td>全新系统开发</td>
+                </tr>
+                <tr>
+                  <td><strong>组件选用</strong></td>
+                  <td>单独使用ORM/Report等引擎</td>
+                  <td>现有系统部分增强</td>
+                </tr>
+                <tr>
+                  <td><strong>机制复用</strong></td>
+                  <td>仅引入Delta差量定制能力</td>
+                  <td>快速实现产品化定制</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <p><strong>用Nop增强现有系统，而非推倒重来</strong></p>
+          </div>
+        </section>
+
+        <!-- Slide 18: 全栈模型驱动开发 (修改后) -->
+        <section class="slide">
+          <h2>全栈模型驱动开发</h2>
+
+          <div style="text-align: center; margin: 0">
+            <svg width="700" height="400" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="shadow-final-18" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur in="SourceAlpha" stdDeviation="5" />
+                  <feOffset dx="0" dy="4" result="offsetblur" />
+                  <feFlood flood-color="rgba(30, 64, 175, 0.15)" />
+                  <feComposite in2="offsetblur" operator="in" />
+                  <feMerge>
+                    <feMergeNode />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <marker
+                  id="arrow-final-18"
+                  markerWidth="10"
+                  markerHeight="10"
+                  refX="9"
+                  refY="3"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <path d="M0,0 L0,6 L9,3 z" fill="#1e3a8a" />
+                </marker>
+                <!-- Arrow Gradient -->
+                <linearGradient id="arrow-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#3b82f6" />
+                  <stop offset="100%" stop-color="#1e3a8a" />
+                </linearGradient>
+                <!-- Module Fills -->
+                <linearGradient id="fill-backend" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0.5" stop-color="#3b82f6" />
+                  <stop offset="0.5" stop-color="#2563eb" />
+                </linearGradient>
+                <linearGradient id="fill-frontend" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0.5" stop-color="#10b981" />
+                  <stop offset="0.5" stop-color="#059669" />
+                </linearGradient>
+                <linearGradient id="fill-source" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#1e3a8a" />
+                  <stop offset="100%" stop-color="#1e40af" />
+                </linearGradient>
+                <linearGradient id="fill-service" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#f59e0b" />
+                  <stop offset="100%" stop-color="#d97706" />
+                </linearGradient>
+              </defs>
+
+              <rect
+                x="50"
+                y="90"
+                width="900"
+                height="450"
+                rx="20"
+                fill="#f8fafc"
+                stroke="#e5e7eb"
+              />
+              <rect
+                x="65"
+                y="105"
+                width="425"
+                height="420"
+                rx="12"
+                fill="rgba(37, 99, 235, 0.03)"
+              />
+              <rect
+                x="510"
+                y="105"
+                width="425"
+                height="420"
+                rx="12"
+                fill="rgba(5, 150, 105, 0.03)"
+              />
+
+              <text
+                x="500"
+                y="60"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="32"
+                font-weight="700"
+                fill="#1e3a8a"
+              >
+                差量化的软件生产线
+              </text>
+
+              <text
+                x="280"
+                y="130"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="18"
+                font-weight="600"
+                fill="#2563eb"
+              >
+                后台 (Backend)
+              </text>
+              <text
+                x="725"
+                y="130"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="18"
+                font-weight="600"
+                fill="#059669"
+              >
+                前台 (Frontend)
+              </text>
+
+              <rect
+                x="90"
+                y="280"
+                width="120"
+                height="100"
+                rx="12"
+                fill="url(#fill-backend)"
+                filter="url(#shadow-final-18)"
+              />
+              <text
+                x="150"
+                y="310"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                XORM
+              </text>
+              <text
+                x="150"
+                y="355"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                _XORM
+              </text>
+              <ellipse
+                cx="150"
+                cy="450"
+                rx="70"
+                ry="40"
+                fill="url(#fill-source)"
+                filter="url(#shadow-final-18)"
+              />
+              <text
+                x="150"
+                y="455"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                Excel
+              </text>
+              <rect
+                x="290"
+                y="280"
+                width="120"
+                height="100"
+                rx="12"
+                fill="url(#fill-backend)"
+                filter="url(#shadow-final-18)"
+              />
+              <text
+                x="350"
+                y="310"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                XMeta
+              </text>
+              <text
+                x="350"
+                y="355"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                _XMeta
+              </text>
+              <rect
+                x="560"
+                y="280"
+                width="120"
+                height="100"
+                rx="12"
+                fill="url(#fill-frontend)"
+                filter="url(#shadow-final-18)"
+              />
+              <text
+                x="620"
+                y="310"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                XView
+              </text>
+              <text
+                x="620"
+                y="355"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                _XView
+              </text>
+              <rect
+                x="760"
+                y="280"
+                width="120"
+                height="100"
+                rx="12"
+                fill="url(#fill-frontend)"
+                filter="url(#shadow-final-18)"
+              />
+              <text
+                x="820"
+                y="310"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                XPage
+              </text>
+              <text
+                x="820"
+                y="355"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                _XPage
+              </text>
+              <rect
+                x="440"
+                y="160"
+                width="120"
+                height="50"
+                rx="12"
+                fill="url(#fill-service)"
+                filter="url(#shadow-final-18)"
+              />
+              <text
+                x="500"
+                y="190"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                GraphQL
+              </text>
+              <rect
+                x="760"
+                y="160"
+                width="120"
+                height="50"
+                rx="12"
+                fill="url(#fill-source)"
+                filter="url(#shadow-final-18)"
+              />
+              <text
+                x="820"
+                y="190"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="17"
+                fill="white"
+                font-weight="600"
+              >
+                界面
+              </text>
+
+              <g stroke-width="3.5" fill="none" marker-end="url(#arrow-final-18)" stroke="#3b82f6">
+                <line x1="150" y1="410" x2="150" y2="380" />
+                <path d="M210,305 L250,305 L250,355 L290,355" />
+                <path d="M410,305 L500,305 L500,355 L560,355" />
+                <path d="M680,305 L720,305 L720,355 L760,355" />
+                <line x1="820" y1="280" x2="820" y2="210" />
+                <path d="M350,280 L350,185 L440,185" />
+              </g>
+
+              <text
+                x="360"
+                y="225"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="15"
+                fill="#d97706"
+                font-weight="600"
+              >
+                + BizModel
+              </text>
+              <text
+                x="500"
+                y="130"
+                text-anchor="middle"
+                font-family="'Inter', sans-serif"
+                font-size="18"
+                font-weight="600"
+                fill="#d97706"
+              >
+                服务层
+              </text>
             </svg>
-        </div>
-    </div>
-    
-    <!-- 添加项目链接 -->
-    <div style="margin-top: 3rem; text-align: center; font-size: 1.2rem;">
-        <p style="font-weight: 600; margin-bottom: 1rem;">项目地址</p>
-        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <div>GitHub: <a style="color: var(--color-primary);text-decoration:none" href="https://github.com/entropy-cloud/nop-entropy" >https://github.com/entropy-cloud/nop-entropy</a></div>
-            <div>GitCode: <a style="color: var(--color-primary);text-decoration:none" href="https://gitcode.com/canonical-entropy/nop-entropy">https://gitcode.com/canonical-entropy/nop-entropy</a></div>
-        </div>
-    </div>
-</section>
+          </div>
 
-        </div>
+          <div class="highlight-box" style="margin-top: 0">
+            <p><strong>Nop平台内置的开发流程形成了完整的模型驱动开发闭环：</strong></p>
+            <p style="margin-bottom: 0.5rem">
+              Excel数据模型 → ORM模型 → Meta元数据模型 → 前端视图模型 →
+              页面文件，每个环节都支持差量修正，并构成了 ModelA -> _ModelB -> ModelB
+              式的协同生成链。
+            </p>
+            <p
+              style="
+                font-size: 1.1rem;
+                color: var(--color-secondary);
+                font-weight: 600;
+                margin-bottom: 0;
+              "
+            >
+              <i class="fa-solid fa-lightbulb"></i> 工程实践：通过“下划线约定”（如生成代码至
+              `_MyClass`），确保生成代码与手工代码的分离。
+            </p>
+          </div>
+        </section>
 
-        <!-- Controls -->
-        <div class="controls">
-            <button class="btn" id="home-btn" title="First Slide"><i class="fa-solid fa-home"></i></button>
-            <button class="btn" id="prev-btn" title="Previous"><i class="fa-solid fa-arrow-left"></i></button>
-            <button class="btn" id="next-btn" title="Next"><i class="fa-solid fa-arrow-right"></i></button>
-            <button class="btn" id="fullscreen-btn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
-            <button class="btn" id="print-btn" title="Print"><i class="fa-solid fa-print"></i></button>
-            <button class="btn" id="pdf-btn" title="Export to PDF"><i class="fa-solid fa-file-pdf"></i></button>
-        </div>
+        <!-- Slide 19: Customization Examples -->
+        <section class="slide">
+          <h2>定制示例</h2>
+
+          <div class="two-column">
+            <div class="column">
+              <ul class="icon-list">
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-database"></i>
+                  <div>
+                    <p><strong>数据模型定制</strong>: 数据表字段与关联关系灵活调整</p>
+                  </div>
+                </li>
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-expand"></i>
+                  <div>
+                    <p><strong>扩展字段支持</strong>: 一键启用内置动态扩展能力</p>
+                  </div>
+                </li>
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-code"></i>
+                  <div>
+                    <p><strong>服务接口定制</strong>: 消息请求与响应结构自由定制</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="column">
+              <ul class="icon-list">
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-diagram-project"></i>
+                  <div>
+                    <p><strong>处理流程定制</strong>: 业务处理逻辑与规则重写</p>
+                  </div>
+                </li>
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-gear"></i>
+                  <div>
+                    <p><strong>Bean组件定制</strong>: 平台组件删除与替换</p>
+                  </div>
+                </li>
+                <li class="icon-bullet">
+                  <i class="fa-solid fa-table-cells"></i>
+                  <div>
+                    <p><strong>页面视图定制</strong>: 组件替换与页面的部分复用</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="quote" style="margin: 0">
+            <p>所有定制修改无需修改基础产品和Nop平台</p>
+          </div>
+        </section>
+
+        <!-- Slide 20: Summary -->
+        <section class="slide">
+          <h2>总结与展望</h2>
+
+          <h3>Nop带来的范式转变：</h3>
+          <ul class="icon-list">
+            <li class="icon-bullet">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+              <div>
+                <p>
+                  从「定点扩展（Extension Points Everywhere）」到「随处覆盖（Overlays Above
+                  Everything）」
+                </p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-code-branch"></i>
+              <div>
+                <p>从「1 core + N forks」到「1 base + N deltas」</p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-code"></i>
+              <!-- 或者使用 fa-feather-alt -->
+              <div>
+                <p>
+                  从「命令式硬编码（Imperative Hardcoding）」到「声明式元编程（Declarative
+                  Metaprogramming）」
+                </p>
+              </div>
+            </li>
+            <li class="icon-bullet">
+              <i class="fa-solid fa-square-plus"></i>
+              <div>
+                <p>
+                  <strong>从「生产即组装」到「运算即生产」</strong>，Effective System = Base ⊕
+                  ΔIndustry ⊕ ΔRegion ⊕ ΔCustomer
+                </p>
+              </div>
+            </li>
+          </ul>
+
+          <div class="highlight-box">
+            <p>
+              <strong>愿景：</strong>
+              为AI时代的软件智能生产提供关键技术支撑。通过声明式的DSL与可逆的Delta运算，构建人机协同的软件生产新范式。
+            </p>
+          </div>
+        </section>
+
+        <!-- Slide 21: Q&A -->
+        <section class="slide title-slide">
+          <h1>Q&A</h1>
+          <p class="subtitle">问题与讨论</p>
+
+          <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 3rem">
+            <div style="text-align: center">
+              <p style="font-weight: 600; margin-bottom: 1rem">微信公众号</p>
+              <svg
+                width="250"
+                height="250"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 41 41"
+                shape-rendering="crispEdges"
+                style="
+                  width: 250px;
+                  height: 250px;
+                  border-radius: 8px;
+                  border: 1px solid var(--color-border);
+                "
+              >
+                <path fill="#ffffff" d="M0 0h41v41H0z" />
+                <path
+                  stroke="#000000"
+                  d="M4 4.5h7m3 0h2m2 0h1m4 0h1m2 0h3m1 0h7M4 5.5h1m5 0h1m1 0h3m1 0h2m1 0h3m1 0h3m1 0h1m2 0h1m5 0h1M4 6.5h1m1 0h3m1 0h1m4 0h2m2 0h2m2 0h1m3 0h1m2 0h1m1 0h3m1 0h1M4 7.5h1m1 0h3m1 0h1m3 0h4m1 0h1m1 0h1m3 0h1m4 0h1m1 0h3m1 0h1M4 8.5h1m1 0h3m1 0h1m1 0h1m1 0h4m7 0h1m4 0h1m1 0h3m1 0h1M4 9.5h1m5 0h1m5 0h2m8 0h1m3 0h1m5 0h1M4 10.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M13 11.5h2m1 0h2m2 0h2m2 0h2m2 0h1M4 12.5h1m1 0h1m1 0h1m1 0h1m2 0h1m1 0h1m3 0h7m1 0h2m3 0h1m2 0h1M4 13.5h1m1 0h2m1 0h1m1 0h5m3 0h2m5 0h1m1 0h1m1 0h1m5 0h1M6 14.5h1m3 0h1m1 0h2m2 0h2m3 0h1m3 0h1m3 0h3m2 0h3M6 15.5h2m1 0h1m4 0h1m4 0h2m2 0h2m2 0h1m1 0h2m1 0h1m2 0h2M5 16.5h2m1 0h3m4 0h1m3 0h1m3 0h1m3 0h2m1 0h1m2 0h1m1 0h1M4 17.5h4m5 0h2m1 0h2m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m2 0h2m1 0h1M4 18.5h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m4 0h1m1 0h4m3 0h2M7 19.5h2m3 0h3m3 0h2m1 0h3m1 0h2m1 0h1m1 0h1m4 0h1M6 20.5h2m1 0h2m1 0h2m6 0h1m3 0h2m1 0h4M4 21.5h1m1 0h2m1 0h1m4 0h2m5 0h1m2 0h3m1 0h4m3 0h2M8 22.5h3m2 0h3m1 0h1m4 0h1m3 0h1m1 0h1m2 0h1m2 0h3M5 23.5h5m2 0h2m1 0h4m2 0h2m1 0h4m4 0h1m2 0h2M6 24.5h7m2 0h2m1 0h3m1 0h3m1 0h3m1 0h4m1 0h1M6 25.5h4m1 0h3m3 0h4m1 0h5m1 0h1m1 0h1m2 0h4M4 26.5h1m2 0h1m2 0h2m1 0h1m2 0h6m1 0h2m1 0h1m2 0h3m2 0h3M5 27.5h1m5 0h1m5 0h1m2 0h2m2 0h3m9 0h1M4 28.5h1m2 0h1m1 0h5m4 0h3m2 0h4m1 0h6M12 29.5h1m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m3 0h1m3 0h2m1 0h2M4 30.5h7m3 0h1m5 0h2m3 0h1m1 0h2m1 0h1m1 0h1m1 0h3M4 31.5h1m5 0h1m2 0h2m1 0h2m1 0h2m7 0h1m3 0h2M4 32.5h1m1 0h3m1 0h1m1 0h6m1 0h1m8 0h6m1 0h2M4 33.5h1m1 0h3m1 0h1m5 0h1m1 0h2m1 0h1m1 0h1m7 0h3m1 0h2M4 34.5h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h2m2 0h2m2 0h1m6 0h1m3 0h1M4 35.5h1m5 0h1m3 0h1m1 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h2m2 0h1M4 36.5h7m1 0h3m1 0h2m2 0h1m3 0h2m1 0h2m1 0h1m2 0h4"
+                />
+              </svg>
+            </div>
+            <div style="text-align: center">
+              <p style="font-weight: 600; margin-bottom: 1rem">微信群</p>
+              <svg
+                width="250"
+                height="250"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 41 41"
+                shape-rendering="crispEdges"
+                style="
+                  width: 250px;
+                  height: 250px;
+                  border-radius: 8px;
+                  border: 1px solid var(--color-border);
+                "
+              >
+                <path fill="#ffffff" d="M0 0h41v41H0z" />
+                <path
+                  stroke="#000000"
+                  d="M4 4.5h7m3 0h1m2 0h1m1 0h1m1 0h2m2 0h3m2 0h7M4 5.5h1m5 0h1m1 0h1m2 0h2m1 0h3m1 0h3m1 0h3m1 0h1m5 0h1M4 6.5h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h2m2 0h3m1 0h4m1 0h1m1 0h3m1 0h1M4 7.5h1m1 0h3m1 0h1m3 0h2m1 0h6m1 0h4m2 0h1m1 0h3m1 0h1M4 8.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h1M4 9.5h1m5 0h1m5 0h2m1 0h7m1 0h2m1 0h1m5 0h1M4 10.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M13 11.5h2m1 0h2m1 0h1m1 0h3m1 0h1m1 0h1M4 12.5h1m1 0h1m1 0h1m1 0h1m3 0h2m1 0h1m2 0h1m3 0h2m1 0h2m3 0h1m2 0h1M4 13.5h2m5 0h2m1 0h4m2 0h2m3 0h1m2 0h4m3 0h1M6 14.5h1m2 0h3m2 0h1m1 0h1m1 0h1m3 0h1m3 0h1m3 0h2m2 0h3M6 15.5h1m1 0h2m4 0h2m1 0h2m1 0h10m2 0h1M4 16.5h3m1 0h3m4 0h1m2 0h3m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1M6 17.5h2m3 0h3m1 0h1m1 0h12m1 0h1m3 0h1m1 0h1M8 18.5h1m1 0h2m2 0h3m2 0h3m1 0h2m1 0h1m2 0h1m2 0h2m1 0h2M4 19.5h1m2 0h2m2 0h1m1 0h2m1 0h1m3 0h2m2 0h3m3 0h1m4 0h1M5 20.5h3m1 0h3m2 0h1m2 0h1m1 0h3m1 0h3m1 0h4m2 0h1M4 21.5h4m1 0h1m3 0h5m1 0h2m3 0h1m1 0h1m1 0h1m1 0h2m3 0h1M4 22.5h1m3 0h1m1 0h1m2 0h3m4 0h2m3 0h1m4 0h1m3 0h3M5 23.5h1m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m4 0h1m3 0h1m2 0h2M4 24.5h1m1 0h2m1 0h2m4 0h4m4 0h1m4 0h6M6 25.5h1m1 0h1m2 0h1m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h3m5 0h2M4 26.5h1m3 0h4m2 0h1m1 0h1m1 0h1m9 0h6m1 0h2M5 27.5h2m4 0h1m2 0h4m1 0h1m1 0h1m1 0h1m1 0h1m6 0h1m2 0h1M4 28.5h1m1 0h1m2 0h2m1 0h3m1 0h3m2 0h1m2 0h3m1 0h5m1 0h2M12 29.5h3m5 0h3m1 0h2m2 0h1m3 0h2m1 0h2M4 30.5h7m4 0h1m4 0h1m1 0h1m3 0h3m1 0h1m1 0h1m1 0h3M4 31.5h1m5 0h1m3 0h5m1 0h3m2 0h2m1 0h1m3 0h1m2 0h1M4 32.5h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h4m1 0h1m1 0h1m1 0h1m1 0h6M4 33.5h1m1 0h3m1 0h1m5 0h1m2 0h6m1 0h4m2 0h1m1 0h3M4 34.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m2 0h3m1 0h1m4 0h1m3 0h1M4 35.5h1m5 0h1m5 0h1m1 0h1m1 0h3m1 0h2m1 0h4m1 0h1m2 0h1M4 36.5h7m1 0h1m1 0h1m2 0h4m2 0h3m1 0h4m1 0h1m2 0h2"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <!-- 添加项目链接 -->
+          <div style="margin-top: 3rem; text-align: center; font-size: 1.2rem">
+            <p style="font-weight: 600; margin-bottom: 1rem">项目地址</p>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem">
+              <div>
+                GitHub:
+                <a
+                  style="color: var(--color-primary); text-decoration: none"
+                  href="https://github.com/entropy-cloud/nop-entropy"
+                  >https://github.com/entropy-cloud/nop-entropy</a
+                >
+              </div>
+              <div>
+                GitCode:
+                <a
+                  style="color: var(--color-primary); text-decoration: none"
+                  href="https://gitcode.com/canonical-entropy/nop-entropy"
+                  >https://gitcode.com/canonical-entropy/nop-entropy</a
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button class="btn" id="home-btn" title="First Slide">
+          <i class="fa-solid fa-home"></i>
+        </button>
+        <button class="btn" id="prev-btn" title="Previous">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <button class="btn" id="next-btn" title="Next">
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <button class="btn" id="fullscreen-btn" title="Fullscreen">
+          <i class="fa-solid fa-expand"></i>
+        </button>
+        <button class="btn" id="print-btn" title="Print"><i class="fa-solid fa-print"></i></button>
+        <button class="btn" id="pdf-btn" title="Export to PDF">
+          <i class="fa-solid fa-file-pdf"></i>
+        </button>
+      </div>
     </div>
 
     <script>
-	// Mermaid图表配置和初始化
-    mermaid.initialize({
+      // Mermaid图表配置和初始化
+      mermaid.initialize({
         startOnLoad: true,
         theme: 'default',
         securityLevel: 'loose',
         fontFamily: 'var(--font-main)',
         flowchart: {
-            useMaxWidth: false,
-            htmlLabels: true,
-            curve: 'basis'
-        }
-    });
-	
-    document.addEventListener('DOMContentLoaded', () => {
+          useMaxWidth: false,
+          htmlLabels: true,
+          curve: 'basis',
+        },
+      });
+
+      document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('presentation-container');
         const allSlides = document.querySelectorAll('.slide');
         const homeBtn = document.getElementById('home-btn');
@@ -1630,115 +3022,127 @@ graph LR
         const slideCounter = document.getElementById('slide-counter');
         const progressBar = document.getElementById('progress-bar');
         const timerDisplay = document.getElementById('timer-display'); // Get timer element
-        
+
         let currentSlide = 0;
         const totalSlides = allSlides.length;
 
         function showSlide(index, skipHashUpdate = false) {
-            if (index < 0 || index >= totalSlides) return;
-            allSlides.forEach((slide, i) => slide.classList.toggle('active', i === index));
-            currentSlide = index;
-            updateControls();
-            if (!skipHashUpdate) {
-                updateHash(index);
-            }
+          if (index < 0 || index >= totalSlides) return;
+          allSlides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+          currentSlide = index;
+          updateControls();
+          if (!skipHashUpdate) {
+            updateHash(index);
+          }
         }
         function updateControls() {
-            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
-            progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
-            prevBtn.disabled = currentSlide === 0;
-            nextBtn.disabled = currentSlide === totalSlides - 1;
+          slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+          progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+          prevBtn.disabled = currentSlide === 0;
+          nextBtn.disabled = currentSlide === totalSlides - 1;
         }
-        function nextSlide() { showSlide(currentSlide + 1); }
-        function prevSlide() { showSlide(currentSlide - 1); }
-        function goToFirstSlide() { showSlide(0); }
+        function nextSlide() {
+          showSlide(currentSlide + 1);
+        }
+        function prevSlide() {
+          showSlide(currentSlide - 1);
+        }
+        function goToFirstSlide() {
+          showSlide(0);
+        }
         function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                container.requestFullscreen().catch(err => alert(`Cannot enter fullscreen mode: ${err.message}`));
-            } else {
-                document.exitFullscreen();
-            }
+          if (!document.fullscreenElement) {
+            container
+              .requestFullscreen()
+              .catch((err) => alert(`Cannot enter fullscreen mode: ${err.message}`));
+          } else {
+            document.exitFullscreen();
+          }
         }
         function updateHash(index) {
-            const hash = `#slide-${index + 1}`;
-            if (location.hash !== hash) {
-                history.pushState(null, null, hash);
-            }
+          const hash = `#slide-${index + 1}`;
+          if (location.hash !== hash) {
+            history.pushState(null, null, hash);
+          }
         }
         function parseHashToIndex() {
-            const h = location.hash;
-            const m = h.match(/slide-(\d+)/i);
-            if (m) {
-                const idx = parseInt(m[1], 10) - 1;
-                if (!isNaN(idx) && idx >= 0 && idx < totalSlides) {
-                    return idx;
-                }
+          const h = location.hash;
+          const m = h.match(/slide-(\d+)/i);
+          if (m) {
+            const idx = parseInt(m[1], 10) - 1;
+            if (!isNaN(idx) && idx >= 0 && idx < totalSlides) {
+              return idx;
             }
-            return null;
+          }
+          return null;
         }
 
         function printPresentation() {
-            window.print();
+          window.print();
         }
 
         async function prepareForPdf() {
-            const pdfContainer = document.createElement('div');
-            pdfContainer.className = 'pdf-page-container';
-            allSlides.forEach(slide => {
-                const clone = slide.cloneNode(true);
-                clone.classList.remove('active');
-                clone.classList.add('pdf-slide');
-				
-				// 删除所有图片元素
-				const images = clone.querySelectorAll('img');
-				images.forEach(img => img.remove());
-		
-                pdfContainer.appendChild(clone);
-            });
-		
-		
-            document.body.appendChild(pdfContainer);
-            return pdfContainer;
-        }
-        
-        function exportToPDF() {
-            console.log('Starting PDF export...');
-            const originalButtonContent = pdfBtn.innerHTML;
-            pdfBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
-            pdfBtn.disabled = true;
-            
-            prepareForPdf().then(pdfContainer => {
-                const options = {
-                    margin: 0,
-                    filename: 'nop-platform-presentation.pdf',
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, allowTaint:true, letterRendering: true },
-                    jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' },
-                    pagebreak: { mode: ['css'] }
-                };
+          const pdfContainer = document.createElement('div');
+          pdfContainer.className = 'pdf-page-container';
+          allSlides.forEach((slide) => {
+            const clone = slide.cloneNode(true);
+            clone.classList.remove('active');
+            clone.classList.add('pdf-slide');
 
-                html2pdf().set(options).from(pdfContainer).save().then(() => {
-                    console.log('PDF export successful!');
-                    document.body.removeChild(pdfContainer);
-                    pdfBtn.innerHTML = originalButtonContent;
-                    pdfBtn.disabled = false;
-                }).catch(err => {
-                    console.error('PDF export failed:', err);
-                    document.body.removeChild(pdfContainer);
-                    pdfBtn.innerHTML = originalButtonContent;
-                    pdfBtn.disabled = false;
-                    alert('PDF export failed. Check the console for details.');
-                });
-            });
+            // 删除所有图片元素
+            const images = clone.querySelectorAll('img');
+            images.forEach((img) => img.remove());
+
+            pdfContainer.appendChild(clone);
+          });
+
+          document.body.appendChild(pdfContainer);
+          return pdfContainer;
         }
-        
+
+        function exportToPDF() {
+          console.log('Starting PDF export...');
+          const originalButtonContent = pdfBtn.innerHTML;
+          pdfBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+          pdfBtn.disabled = true;
+
+          prepareForPdf().then((pdfContainer) => {
+            const options = {
+              margin: 0,
+              filename: 'nop-platform-presentation.pdf',
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, allowTaint: true, letterRendering: true },
+              jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' },
+              pagebreak: { mode: ['css'] },
+            };
+
+            html2pdf()
+              .set(options)
+              .from(pdfContainer)
+              .save()
+              .then(() => {
+                console.log('PDF export successful!');
+                document.body.removeChild(pdfContainer);
+                pdfBtn.innerHTML = originalButtonContent;
+                pdfBtn.disabled = false;
+              })
+              .catch((err) => {
+                console.error('PDF export failed:', err);
+                document.body.removeChild(pdfContainer);
+                pdfBtn.innerHTML = originalButtonContent;
+                pdfBtn.disabled = false;
+                alert('PDF export failed. Check the console for details.');
+              });
+          });
+        }
+
         // --- NEW: Timer Logic ---
         function updateTimer() {
-            if (!timerDisplay) return;
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            timerDisplay.textContent = `${hours}:${minutes}`;
+          if (!timerDisplay) return;
+          const now = new Date();
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          timerDisplay.textContent = `${hours}:${minutes}`;
         }
 
         homeBtn.addEventListener('click', goToFirstSlide);
@@ -1749,44 +3153,63 @@ graph LR
         pdfBtn.addEventListener('click', exportToPDF);
 
         document.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
-            if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
-            if (e.key === 'Home') { e.preventDefault(); goToFirstSlide(); }
-            if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+          if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+            e.preventDefault();
+            nextSlide();
+          }
+          if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            e.preventDefault();
+            prevSlide();
+          }
+          if (e.key === 'Home') {
+            e.preventDefault();
+            goToFirstSlide();
+          }
+          if (e.key === 'End') {
+            e.preventDefault();
+            showSlide(totalSlides - 1);
+          }
         });
 
         let touchStartX = 0;
-        container.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-        container.addEventListener('touchend', e => {
-            const touchEndX = e.changedTouches[0].screenX;
-            if (touchStartX - touchEndX > 50) nextSlide();
-            if (touchEndX - touchStartX > 50) prevSlide();
+        container.addEventListener(
+          'touchstart',
+          (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+          },
+          { passive: true },
+        );
+        container.addEventListener('touchend', (e) => {
+          const touchEndX = e.changedTouches[0].screenX;
+          if (touchStartX - touchEndX > 50) nextSlide();
+          if (touchEndX - touchStartX > 50) prevSlide();
         });
 
         window.addEventListener('popstate', () => {
-            const idx = parseHashToIndex();
-            if (idx !== null && idx !== currentSlide) {
-                showSlide(idx, true);
-            }
+          const idx = parseHashToIndex();
+          if (idx !== null && idx !== currentSlide) {
+            showSlide(idx, true);
+          }
         });
 
         // Initialize slides
         const initialIndexFromHash = parseHashToIndex();
         if (initialIndexFromHash !== null) {
-            showSlide(initialIndexFromHash, true);
+          showSlide(initialIndexFromHash, true);
         } else {
-            showSlide(0);
+          showSlide(0);
         }
 
         // Initialize and start the timer
         updateTimer();
         setInterval(updateTimer, 1000); // Update every second
-		
-		setTimeout(()=>{
-		  window.enableContentLightboxForSelector && window.enableContentLightboxForSelector('.mermaid svg, .column img,.slide svg')
-		}, 1000);
-    });
+
+        setTimeout(() => {
+          window.enableContentLightboxForSelector &&
+            window.enableContentLightboxForSelector('.mermaid svg, .column img,.slide svg');
+        }, 1000);
+      });
     </script>
-</body>
+  </body>
 </html>

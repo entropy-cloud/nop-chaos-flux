@@ -84,11 +84,15 @@ describe('evalTextTemplate', () => {
   });
 
   it('reads documentName from designer.documentName', () => {
-    expect(evalTextTemplate('${documentName}', { designer: { documentName: 'Report A' } })).toBe('Report A');
+    expect(evalTextTemplate('${documentName}', { designer: { documentName: 'Report A' } })).toBe(
+      'Report A',
+    );
   });
 
   it('handles ternary pattern', () => {
-    expect(evalTextTemplate("${isDirty ? 'Modified' : 'Saved'}", { isDirty: true })).toBe('Modified');
+    expect(evalTextTemplate("${isDirty ? 'Modified' : 'Saved'}", { isDirty: true })).toBe(
+      'Modified',
+    );
     expect(evalTextTemplate("${isDirty ? 'Modified' : 'Saved'}", { isDirty: false })).toBe('Saved');
   });
 
@@ -105,7 +109,9 @@ describe('evalTextTemplate', () => {
   });
 
   it('handles ${fieldCount} fields pattern', () => {
-    expect(evalTextTemplate('${fieldCount} fields', { designer: { fieldCount: 5 } })).toBe('5 fields');
+    expect(evalTextTemplate('${fieldCount} fields', { designer: { fieldCount: 5 } })).toBe(
+      '5 fields',
+    );
   });
 });
 
@@ -119,11 +125,17 @@ describe('toCommand', () => {
   });
 
   it('maps report-designer:preview with inline mode', () => {
-    expect(toCommand('report-designer:preview')).toEqual({ type: 'report-designer:preview', mode: 'inline' });
+    expect(toCommand('report-designer:preview')).toEqual({
+      type: 'report-designer:preview',
+      mode: 'inline',
+    });
   });
 
   it('maps report-designer:stopPreview with undefined mode', () => {
-    expect(toCommand('report-designer:stopPreview')).toEqual({ type: 'report-designer:preview', mode: undefined });
+    expect(toCommand('report-designer:stopPreview')).toEqual({
+      type: 'report-designer:preview',
+      mode: undefined,
+    });
   });
 
   it('maps report-designer:save', () => {
@@ -131,11 +143,15 @@ describe('toCommand', () => {
   });
 
   it('maps report-designer:openInspector', () => {
-    expect(toCommand('report-designer:openInspector')).toEqual({ type: 'report-designer:openInspector' });
+    expect(toCommand('report-designer:openInspector')).toEqual({
+      type: 'report-designer:openInspector',
+    });
   });
 
   it('maps report-designer:closeInspector', () => {
-    expect(toCommand('report-designer:closeInspector')).toEqual({ type: 'report-designer:closeInspector' });
+    expect(toCommand('report-designer:closeInspector')).toEqual({
+      type: 'report-designer:closeInspector',
+    });
   });
 
   it('returns null for undefined', () => {
@@ -169,7 +185,9 @@ describe('readState', () => {
   });
 
   it('reads hasSelection from designer.selectionTarget', () => {
-    expect(readState('hasSelection', { designer: { selectionTarget: { kind: 'cell' } } })).toBe(true);
+    expect(readState('hasSelection', { designer: { selectionTarget: { kind: 'cell' } } })).toBe(
+      true,
+    );
     expect(readState('hasSelection', { designer: { selectionTarget: undefined } })).toBe(false);
   });
 
@@ -178,7 +196,9 @@ describe('readState', () => {
   });
 
   it('reads documentName from designer.documentName', () => {
-    expect(readState('documentName', { designer: { documentName: 'Report.qry' } })).toBe('Report.qry');
+    expect(readState('documentName', { designer: { documentName: 'Report.qry' } })).toBe(
+      'Report.qry',
+    );
   });
 
   it('reads documentName from document.name as fallback', () => {
@@ -186,7 +206,12 @@ describe('readState', () => {
   });
 
   it('prefers designer.documentName over document.name', () => {
-    expect(readState('documentName', { designer: { documentName: 'Primary' }, document: { name: 'Secondary' } })).toBe('Primary');
+    expect(
+      readState('documentName', {
+        designer: { documentName: 'Primary' },
+        document: { name: 'Secondary' },
+      }),
+    ).toBe('Primary');
   });
 
   it('returns undefined for unknown state name', () => {
@@ -233,18 +258,14 @@ describe('mergeToolbarItems', () => {
   });
 
   it('removes default item when override has visible: false', () => {
-    const overrides: ToolbarItem[] = [
-      { id: 'redo', type: 'button', visible: false },
-    ];
+    const overrides: ToolbarItem[] = [{ id: 'redo', type: 'button', visible: false }];
     const result = mergeToolbarItems(defaults, overrides);
     expect(result).toHaveLength(2);
     expect(result.find((item) => item.id === 'redo')).toBeUndefined();
   });
 
   it('removes default item when override has visible: "false"', () => {
-    const overrides: ToolbarItem[] = [
-      { id: 'redo', type: 'button', visible: 'false' },
-    ];
+    const overrides: ToolbarItem[] = [{ id: 'redo', type: 'button', visible: 'false' }];
     const result = mergeToolbarItems(defaults, overrides);
     expect(result).toHaveLength(2);
     expect(result.find((item) => item.id === 'redo')).toBeUndefined();
@@ -285,11 +306,16 @@ describe('mergeToolbarItems', () => {
 
   it('merges override props onto default (spread default, then override)', () => {
     const defaultsFull: ToolbarItem[] = [
-      { id: 'undo', type: 'button', label: 'Undo', icon: 'undo', action: 'report-designer:undo', disabled: '${!canUndo}' },
+      {
+        id: 'undo',
+        type: 'button',
+        label: 'Undo',
+        icon: 'undo',
+        action: 'report-designer:undo',
+        disabled: '${!canUndo}',
+      },
     ];
-    const overrides: ToolbarItem[] = [
-      { id: 'undo', type: 'button', label: 'Undo Custom' },
-    ];
+    const overrides: ToolbarItem[] = [{ id: 'undo', type: 'button', label: 'Undo Custom' }];
     const result = mergeToolbarItems(defaultsFull, overrides);
     expect(result[0]).toEqual({
       id: 'undo',
@@ -302,9 +328,7 @@ describe('mergeToolbarItems', () => {
   });
 
   it('handles empty defaults with overrides', () => {
-    const overrides: ToolbarItem[] = [
-      { id: 'custom', type: 'button', label: 'Custom' },
-    ];
+    const overrides: ToolbarItem[] = [{ id: 'custom', type: 'button', label: 'Custom' }];
     const result = mergeToolbarItems([], overrides);
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('custom');
@@ -326,9 +350,7 @@ describe('mergeToolbarItems', () => {
   });
 
   it('ignores overrides without id', () => {
-    const overrides: ToolbarItem[] = [
-      { type: 'divider' },
-    ];
+    const overrides: ToolbarItem[] = [{ type: 'divider' }];
     const result = mergeToolbarItems(defaults, overrides);
     expect(result).toHaveLength(3);
   });

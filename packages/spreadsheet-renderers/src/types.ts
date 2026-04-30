@@ -22,6 +22,8 @@ export interface SpreadsheetPageSchemaInput {
 
 export type SpreadsheetPageSchema = BaseSchema & SpreadsheetPageSchemaInput;
 
-export function defineSpreadsheetPageSchema<T extends SpreadsheetPageSchemaInput>(schema: T): SpreadsheetPageSchema {
+export function defineSpreadsheetPageSchema<T extends SpreadsheetPageSchemaInput>(
+  schema: T,
+): SpreadsheetPageSchema {
   return schema as unknown as SpreadsheetPageSchema;
 }

@@ -84,7 +84,7 @@ interface PathOps {
   concat(prefix: Path, suffix: Path): Path;
   toString(path: Path): string;
   parse(segments: string[]): ConcretePath;
-  
+
   doesMatch(pattern: Path, concrete: ConcretePath): boolean;
   overlaps(a: Path, b: Path): boolean;
   isAncestorOf(parent: Path, child: ConcretePath): boolean;
@@ -94,6 +94,7 @@ interface PathOps {
 **Complexity guarantee**: `doesMatch` and `overlaps` run in O(depth) where depth is the path nesting level. This is always bounded by schema nesting depth (typically < 20). No wildcard-in-wildcard nesting is allowed — wildcards match exactly one segment.
 
 **Why structured paths over strings?**
+
 - Prefix-based invalidation: `users.3.name` change → check if subscriber pattern `users.*.name` overlaps → O(depth) trie walk, not O(n) string comparison.
 - No parsing at runtime: paths are compiled as structured values.
 - Pattern matching is explicit and bounded.
@@ -142,9 +143,20 @@ type LexicalBinding =
 
 type UnaryOp = 'not' | 'neg' | 'typeof';
 type BinaryOp =
-  | 'add' | 'sub' | 'mul' | 'div' | 'mod'
-  | 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
-  | 'and' | 'or' | 'nullish';
+  | 'add'
+  | 'sub'
+  | 'mul'
+  | 'div'
+  | 'mod'
+  | 'eq'
+  | 'ne'
+  | 'lt'
+  | 'le'
+  | 'gt'
+  | 'ge'
+  | 'and'
+  | 'or'
+  | 'nullish';
 ```
 
 **`slotParam`**: Accesses parameters passed to the current region (e.g., `$item`, `$index` in a loop body). Compiled to `LexicalBinding.slot(index)` — resolved to a lexical position at compile time. In Expr AST, this is the `$slot` access mechanism (requirement 2.5.5).
@@ -178,10 +190,12 @@ interface EvalEnv {
 The expression evaluator operates in two modes depending on calling context:
 
 **Inside reactive tracking** (within `computed()` or `effect()` callbacks):
+
 - `resolve` nodes call `scope.resolve(path)` which internally calls `Signal.get()` → dependency is automatically registered.
 - The reactive system tracks which scope paths were read during expression evaluation.
 
 **Outside reactive tracking** (one-shot command evaluation, debugger):
+
 - `resolve` nodes call `scope.asReader().peek(path)` → reads value without registering dependency.
 - Useful for debug inspection, initial data computation, and non-reactive contexts.
 
@@ -199,11 +213,11 @@ function evaluateOneShot(expr: Expr, env: EvalEnv, scope: Scope): unknown {
 
 This bridges the Expression system (§3) with the Reactive system (§5). All three dependency consumers use this bridge:
 
-| Consumer | Mechanism | Mode |
-|----------|-----------|------|
-| Value read (dynamic props) | `computed(() => evaluateInReactiveContext(expr, env, scope))` | Reactive |
-| Named data source | `effect(() => { read dep paths; if changed → refresh })` | Reactive |
-| Reaction observer | `computed(() => evaluateInReactiveContext(watchExpr, env, scope))` | Reactive |
+| Consumer                   | Mechanism                                                          | Mode     |
+| -------------------------- | ------------------------------------------------------------------ | -------- |
+| Value read (dynamic props) | `computed(() => evaluateInReactiveContext(expr, env, scope))`      | Reactive |
+| Named data source          | `effect(() => { read dep paths; if changed → refresh })`           | Reactive |
+| Reaction observer          | `computed(() => evaluateInReactiveContext(watchExpr, env, scope))` | Reactive |
 
 All three share the same Signal-based dependency tracking. Data sources subscribe to their dependency paths via the scope's `ChangeNotifier`, which is internally powered by the Signal system — ensuring a single dependency model (requirement 2.4.3).
 
@@ -316,6 +330,7 @@ The interpreter is part of the Runtime Core (not a separate layer). It evaluates
 - `openSurface`/`closeSurface` → Runtime Core (surface manager)
 
 **Chain execution**: `chain` effect carries `ChainContinuation` with slot indices. The interpreter:
+
 1. Executes `source` effect
 2. On success: writes result to `env.chainBindings[resultSlotIndex]`, preserves previous result at `prevResultSlotIndex`, evaluates `onSuccess.effect` with the extended env
 3. On failure: writes error info to `env.chainBindings[errorSlotIndex]`, evaluates `onError.effect`
@@ -337,6 +352,7 @@ Per the Reactive Data-Driven principle (§1.1.3), reads and writes are strictly 
 - **Dependency change → effect**: Data changes don't directly trigger arbitrary actions. The intermediate must go through Reaction (value change → effect dispatch) or Semantic Lifecycle Entry (lifecycle-owned business pipeline like form submit)
 
 **Write path enforcement**:
+
 - Renderers receive `ScopeReader` (read-only), mutations only via `EventHandles` → `Effect` → `EffectInterpreter`
 - `DataSourceRuntime` writes fetch results through `EffectInterpreter.interpret({ tag: 'write', ... })`, not directly
 - `FormRuntime.setValue` is an exception: it writes to form-local dirty/touched signals (internal bookkeeping) and delegates the actual data write to `ScopeRef.update()` with a `ChangeSource.form` marker — this is the only non-EffectInterpreter write path, restricted to form field mutations only
@@ -410,7 +426,7 @@ type ChangeSource =
 interface ChangeNotifier {
   // Subscribe to changes matching a path pattern
   subscribe(pattern: Path, callback: (changes: ScopeChange[]) => void): Disposable;
-  
+
   // Notify about changes (called by scope after write/patch)
   notify(changes: ScopeChange[]): void;
 }
@@ -426,11 +442,11 @@ Subscribers receive **what changed** (specific paths), not just "something chang
 
 Per the Lexical Ownership principle (§1.1.5), data lookup, behavior lookup, and instance capability lookup are architecturally separated:
 
-| Resolution | Mechanism | What it resolves |
-|-----------|-----------|-----------------|
-| **Data** | ScopeRef | Path-based value access in lexical scope chain |
-| **Behavior** | ActionScope | Namespace-based action resolution in lexical scope chain |
-| **Instance** | ComponentHandleRegistry | Instance-targeted method calls by component id |
+| Resolution   | Mechanism               | What it resolves                                         |
+| ------------ | ----------------------- | -------------------------------------------------------- |
+| **Data**     | ScopeRef                | Path-based value access in lexical scope chain           |
+| **Behavior** | ActionScope             | Namespace-based action resolution in lexical scope chain |
+| **Instance** | ComponentHandleRegistry | Instance-targeted method calls by component id           |
 
 These three never merge into a single context object.
 
@@ -470,6 +486,7 @@ interface ScopeChange {
 ```
 
 **Key constraints**:
+
 - ScopeRef is a pure data lookup contract — no methods for registering namespaces, component handles, or data sources
 - Runtime sidecars (Resource state, Reaction state, cache) follow lexical scope ownership but live in separate runtime containers, not as ScopeRef methods
 - Child scopes created via lexical chain with optional isolation
@@ -500,6 +517,7 @@ interface ActionNamespaceProvider {
 ```
 
 **Key constraints**:
+
 - ActionScope forms its own lexical chain, independent of ScopeRef
 - Child scope can shadow parent's namespaces
 - Resolution order: built-in actions → component:method → namespace:method
@@ -510,7 +528,9 @@ interface ActionNamespaceProvider {
 interface ComponentHandleRegistry {
   register(handle: ComponentHandle): void;
   unregister(handle: ComponentHandle): void;
-  resolve(target: ComponentTarget):
+  resolve(
+    target: ComponentTarget,
+  ):
     | { kind: 'found'; handle: ComponentHandle }
     | { kind: 'not-found' }
     | { kind: 'ambiguous'; matches: readonly ComponentHandle[] };
@@ -529,12 +549,12 @@ interface ComponentHandle {
 
 Complex domain controls (flow designer, spreadsheet, etc.) interact with the core through four narrow channels:
 
-| Direction | Mechanism | Meaning |
-|-----------|-----------|---------|
-| Core → Domain (read) | Host Projection | Read-only state snapshot, host-driven refresh |
-| Domain → Core (write) | Capability | Namespaced command dispatch (e.g., `designer:*`) |
-| Instance targeting | ComponentHandleRegistry | Explicit target component instance method calls |
-| Domain private | DomainBridge | `getSnapshot/subscribe/dispatch` — never enters schema-visible Scope |
+| Direction             | Mechanism               | Meaning                                                              |
+| --------------------- | ----------------------- | -------------------------------------------------------------------- |
+| Core → Domain (read)  | Host Projection         | Read-only state snapshot, host-driven refresh                        |
+| Domain → Core (write) | Capability              | Namespaced command dispatch (e.g., `designer:*`)                     |
+| Instance targeting    | ComponentHandleRegistry | Explicit target component instance method calls                      |
+| Domain private        | DomainBridge            | `getSnapshot/subscribe/dispatch` — never enters schema-visible Scope |
 
 Domain controls are **complex components with special types**, not platform-level entities. They do not need a second runtime protocol.
 
@@ -559,10 +579,14 @@ Domain controls are **complex components with special types**, not platform-leve
 // Writes use structural sharing: only the path to the changed node
 // creates new objects; siblings are shared by reference
 
-function setIn(data: Record<string, unknown>, path: string, value: unknown): {
+function setIn(
+  data: Record<string, unknown>,
+  path: string,
+  value: unknown,
+): {
   data: Record<string, unknown>;
   changed: boolean;
-}
+};
 ```
 
 ### 6.2 Isolation Semantics
@@ -586,7 +610,11 @@ function setIn(data: Record<string, unknown>, path: string, value: unknown): {
 // Writes use structural sharing: only the path to the changed node
 // creates new objects; siblings are shared by reference
 
-function setIn(data: Record<string, unknown>, path: ConcretePath, value: unknown): {
+function setIn(
+  data: Record<string, unknown>,
+  path: ConcretePath,
+  value: unknown,
+): {
   data: Record<string, unknown>;
   changed: boolean;
 } {
@@ -639,6 +667,7 @@ The runtime compiler receives the **final assembled model** from the Loader. The
 ### 7.2 CompiledIR — The Stable Contract
 
 `CompiledIR` is the boundary between compile-time and runtime. It is:
+
 - JSON-serializable (can be produced in a Web Worker)
 - Immutable (shared across multiple runtime instances)
 - Optimized for execution (no unnecessary indirection)
@@ -658,14 +687,14 @@ interface CompiledNode {
   readonly loc: SchemaLocation;
 
   // Field classification
-  readonly staticProps: Record<string, unknown>;    // Literal values, no evaluation
-  readonly dynamicProps: Record<string, Expr>;       // Expressions to evaluate
+  readonly staticProps: Record<string, unknown>; // Literal values, no evaluation
+  readonly dynamicProps: Record<string, Expr>; // Expressions to evaluate
   readonly asyncProps: Record<string, AsyncValueSpec>; // Action-based value producers
 
   readonly meta: CompiledMeta;
   readonly regions: Record<string, CompiledRegion>;
   readonly events: Record<string, CompiledEvent>;
-  
+
   readonly validation: CompiledValidation | null;
   readonly dataSources: CompiledDataSource[];
   readonly reactions: CompiledReaction[];
@@ -681,24 +710,24 @@ interface CompiledMeta {
 
 interface CompiledRegion {
   readonly children: CompiledNode[];
-  readonly parameters: string[];     // Slot param names
+  readonly parameters: string[]; // Slot param names
   readonly iterator: IteratorSpec | null;
   readonly recursive: RecursiveSpec | null;
 }
 
 interface IteratorSpec {
-  readonly collectionExpr: Expr;    // Expression producing the array
-  readonly itemVar: string;         // Name for current item (e.g., 'item')
-  readonly indexVar: string;        // Name for current index (e.g., 'index')
-  readonly keyExpr: Expr;           // Expression for unique key
-  readonly isolated: boolean;       // Whether each iteration gets isolated scope
+  readonly collectionExpr: Expr; // Expression producing the array
+  readonly itemVar: string; // Name for current item (e.g., 'item')
+  readonly indexVar: string; // Name for current index (e.g., 'index')
+  readonly keyExpr: Expr; // Expression for unique key
+  readonly isolated: boolean; // Whether each iteration gets isolated scope
   readonly projections: Projection[]; // For isolated iterations
 }
 
 interface RecursiveSpec {
-  readonly templateRef: string;     // References CompiledIR.templates key
-  readonly maxDepth: number;        // Bounded recursion limit
-  readonly childrenExpr: Expr;      // Expression producing child nodes
+  readonly templateRef: string; // References CompiledIR.templates key
+  readonly maxDepth: number; // Bounded recursion limit
+  readonly childrenExpr: Expr; // Expression producing child nodes
   readonly onDepthExceeded?: 'truncate' | 'error'; // What to do when maxDepth reached
 }
 
@@ -804,10 +833,10 @@ Requirement 4.1: Security constraints are verified at compile time.
 ```typescript
 function securityPass(ir: CompiledIR, allowedNamespaces: Set<string>): Diagnostics {
   const diagnostics: Diagnostics = [];
-  
+
   // 1. Verify no eval/new Function in expression AST
   //    (Structurally impossible since Expr has no code generation node)
-  
+
   // 2. Verify all namespace references in effects are in allowedNamespaces
   walkEffects(ir, (effect) => {
     if (effect.tag === 'callNamespace') {
@@ -816,10 +845,10 @@ function securityPass(ir: CompiledIR, allowedNamespaces: Set<string>): Diagnosti
       }
     }
   });
-  
+
   // 3. Verify all action references resolve to known actions
   // 4. No runtime permission checks — permissions stripped before compilation
-  
+
   return diagnostics;
 }
 ```
@@ -839,7 +868,7 @@ interface NodeInstance {
   readonly props: ComputedSignal<Record<string, unknown>>;
   readonly meta: ComputedSignal<ResolvedMeta>;
   readonly regions: Record<string, RegionInstance>;
-  
+
   readonly componentMethods: Map<string, (...args: unknown[]) => Promise<EffectResult>>;
 
   mount(): void;
@@ -855,7 +884,7 @@ interface RegionInstance {
 
   // For iterator regions
   renderItems(scope: Scope): RegionItem[];
-  
+
   // For static regions
   renderStatic(scope: Scope, slotBindings?: Record<string, unknown>): NodeInstance[];
 
@@ -865,7 +894,7 @@ interface RegionInstance {
 
 interface RegionItem {
   readonly key: string;
-  readonly scope: Scope;    // Isolated or inherited, depending on config
+  readonly scope: Scope; // Isolated or inherited, depending on config
   readonly instances: NodeInstance[];
 }
 ```
@@ -873,6 +902,7 @@ interface RegionItem {
 ### 8.3 Loop and Recursion (Requirement 2.12)
 
 **Loop (IteratorSpec)**:
+
 ```
 Schema: { type: 'loop', collection: '${users}', itemVar: 'user', indexVar: 'idx', body: [...] }
 Compiled: IteratorSpec { collectionExpr, itemVar: 'user', indexVar: 'idx', keyExpr, isolated: true }
@@ -884,10 +914,11 @@ Runtime: For each item in collection:
 ```
 
 **Recursion (RecursiveSpec)**:
+
 ```
 Schema: { type: 'tree-node', recursive: true, childrenField: 'children', body: [...] }
 Compiled: RecursiveSpec { templateRef: 'tree-node', maxDepth: 50, childrenExpr, onDepthExceeded: 'truncate' }
-Runtime: 
+Runtime:
   1. Look up template by templateRef in CompiledIR.templates
   2. For each level, evaluate childrenExpr to get child data
   3. Create scope, instantiate template
@@ -906,17 +937,17 @@ interface InstanceFactory {
     compiled: CompiledNode,
     parentScope: Scope,
     ir: CompiledIR,
-    slotBindings?: Record<string, unknown>
+    slotBindings?: Record<string, unknown>,
   ): NodeInstance;
-  
+
   instantiateIteratorItem(
     compiled: CompiledNode,
     itemData: unknown,
     index: number,
     iterator: IteratorSpec,
-    ir: CompiledIR
+    ir: CompiledIR,
   ): NodeInstance;
-  
+
   dispose(instance: NodeInstance): void;
 }
 ```
@@ -987,11 +1018,7 @@ Note: RenderResult does not describe low-level DOM elements. Each `component` no
 
 ```typescript
 interface RendererRegistry {
-  register<S>(
-    type: string,
-    renderer: RendererComponent<S>,
-    options?: RendererOptions
-  ): void;
+  register<S>(type: string, renderer: RendererComponent<S>, options?: RendererOptions): void;
   get(type: string): RendererComponent | null;
   extend(type: string, wrapper: RendererWrapper): void;
 }
@@ -1016,7 +1043,7 @@ function ContainerRenderer(props: RendererProps) {
   return {
     tag: 'component',
     className: cn(markerClass, props.meta.className),
-    children: props.regions.has('body') ? props.regions.render('body') : []
+    children: props.regions.has('body') ? props.regions.render('body') : [],
   };
 }
 
@@ -1080,10 +1107,10 @@ interface DraftHandle {
   readonly values: ComputedSignal<unknown>;
   readonly dirty: ComputedSignal<Set<string>>;
   readonly errors: WritableSignal<Record<string, string[]>>;
-  
+
   validate(): Promise<ValidationResult>;
-  commit(): void;    // Patch draft data into parent scope, merge dirty state
-  discard(): void;   // Discard all changes, dispose draft scope
+  commit(): void; // Patch draft data into parent scope, merge dirty state
+  discard(): void; // Discard all changes, dispose draft scope
 }
 ```
 
@@ -1092,19 +1119,20 @@ interface DraftHandle {
 ```typescript
 interface ValidationGraph {
   readonly rules: CompiledValidationRule[];
-  
+
   validate(
     paths: ConcretePath[],
     values: unknown,
     env: EvalEnv,
-    trigger: 'submit' | 'change' | 'blur'
+    trigger: 'submit' | 'change' | 'blur',
   ): Promise<Record<string, string[]>>;
-  
+
   getAffectedPaths(changedPath: ConcretePath): ConcretePath[];
 }
 ```
 
 Validation timing (requirement 2.8.3):
+
 - `submit`: validate all rules
 - `change`: validate rules for the changed field and dependent fields
 - `blur`: validate rules for the blurred field
@@ -1139,6 +1167,7 @@ interface ActionContext {
 ```
 
 Resolution order:
+
 1. `namespace:method` → `NamespaceRegistry.lookup(namespace, method)`
 2. `component:method` → `instance.componentMethods.get(method)`
 3. `method` → `BuiltinActionRegistry.get(method)`
@@ -1170,6 +1199,7 @@ interface NamespaceTypeContract {
 ```
 
 Domain controls (flow designer, spreadsheet, etc.) implement `NamespaceProvider`:
+
 - `stateProjection` is a read-only signal projected into scope (requirement 3.2.1)
 - `methods` are callable via `namespace:method` action (requirement 3.2.2)
 - Internal state is private and not exposed (requirement 3.2.3)
@@ -1185,7 +1215,7 @@ Domain controls (flow designer, spreadsheet, etc.) implement `NamespaceProvider`
 interface SurfaceManager {
   readonly stack: ComputedSignal<SurfaceState[]>;
   readonly active: ComputedSignal<SurfaceState | null>;
-  
+
   open(spec: SurfaceSpec, parentScope: Scope): SurfaceHandle;
   close(id: string, result?: unknown): void;
   closeAll(): void;
@@ -1196,7 +1226,10 @@ interface SurfaceState {
   readonly type: 'dialog' | 'drawer';
   readonly scope: Scope;
   readonly compiled: CompiledNode;
-  readonly resultResolver: { resolve: (value: unknown) => void; reject: (error: ErrorInfo) => void };
+  readonly resultResolver: {
+    resolve: (value: unknown) => void;
+    reject: (error: ErrorInfo) => void;
+  };
   readonly zIndex: number;
 }
 
@@ -1223,6 +1256,7 @@ Each surface has an independent scope (requirement 2.10.2), created as an isolat
 ### 12.2 Surface Lifecycle
 
 Surface close follows a strict cleanup order:
+
 1. **Reactions** → dispose all reaction handles (stop watching)
 2. **DataSources** → cancel in-flight fetches, clear timers, set `unmounted` flag (subsequent completions are silently discarded)
 3. **Child scopes** → unmount and release scope data
@@ -1259,10 +1293,10 @@ interface DataSourceRuntime {
   readonly name: string;
   readonly config: CompiledDataSource;
   readonly scope: Scope;
-  
+
   readonly loading: WritableSignal<boolean>;
   readonly error: WritableSignal<ErrorInfo | null>;
-  
+
   mount(): void;
   unmount(): void;
   refresh(): Promise<void>;
@@ -1310,7 +1344,7 @@ Field-level async values are compiled as `AsyncValueSpec` in `CompiledNode.async
 interface ReactionRuntime {
   readonly id: string;
   readonly config: CompiledReaction;
-  
+
   mount(): void;
   unmount(): void;
 }
@@ -1332,11 +1366,13 @@ interface ReactionRuntime {
 ### 13.4 Debounce Semantics
 
 All debounce operations (Reaction debounceMs, DataSource refreshDebounceMs, Effect debounce) use **trailing-edge debounce**:
+
 - Timer resets on each qualifying change
 - Only the last change in a burst triggers execution
 - Unmount / dispose cancels the pending timer
 - No leading-edge firing (first change does not immediately trigger)
-```
+
+````
 
 ---
 
@@ -1359,9 +1395,10 @@ interface SchemaRendererProps {
   componentRegistry?: ComponentHandleRegistry; // Parent component registry
   surfaceRuntime?: SurfaceRuntime;    // Surface manager (dialog/drawer)
 }
-```
+````
 
 **Key constraints**:
+
 - `schema` is the **final assembled model** — inheritance, permissions, i18n already resolved by Loader
 - `env` is host-owned, semantically stable — reference changes do not trigger runtime rebuild
 - Multiple `SchemaRenderer` instances can coexist on the same page independently
@@ -1392,6 +1429,7 @@ interface RenderEnv {
 ```
 
 **Key rules**:
+
 - RenderEnv is **static and immutable** — no reference stability concerns, no change detection needed
 - Runtime code calls `env.http.request()`, `env.notify.show()`, `env.router.navigate()`, `env.errorHandler.handle()` **directly** — no internal HttpClient/NotificationService/NavigationService facade types
 - EffectInterpreter holds a direct reference to `env` and delegates to it without wrapping
@@ -1727,56 +1765,56 @@ interface Runtime {
 
 ## 19. Requirements Traceability
 
-| Req | Description | Section | Status |
-|-----|-------------|---------|--------|
-| 2.1 | Schema parse & compile | §7 | ✅ |
-| 2.1.3 | Progressive value semantics (5 levels) | §3.1, §8.4 (asyncProps), §13.1 | ✅ |
-| 2.2 | Expression engine | §3 | ✅ |
-| 2.3 | Lexical data environment | §6 | ✅ |
-| 2.3.5 | Change propagation with paths | §5.3 | ✅ |
-| 2.4 | Dependency tracking & reactive | §5 | ✅ |
-| 2.4.5 | Read-write separation | §4.3 | ✅ |
-| 2.5 | Rendering & component system | §9 | ✅ |
-| 2.5.5 | Parameterized regions / $slot | §3.1 (slotParam), §8.2 | ✅ |
-| 2.6 | Action system & control flow | §4.1, §11 | ✅ |
-| 2.4.3 | Three consumer types share dependency model | §3.3, §5.1, §13.1 | ✅ |
-| 2.6.6 | Retry & timeout | §4.1 (RetryPolicy, timeout) | ✅ |
-| 2.8.2 | Object/array/field-level rules | §10.2 (CompiledValidator) | ✅ |
-| 3.1.5 | Environment stability | §14.2 | ✅ |
-| 2.6.7 | Debounce | §4.1, §13.3 | ✅ |
-| 2.6.9 | Chain result context | §4.2 (ChainContinuation) | ✅ |
-| 2.7 | 3-tier action resolution | §11.1 | ✅ |
-| 2.8 | Form & validation | §10 | ✅ |
-| 2.8.6 | Draft isolation | §10.1 (DraftHandle) | ✅ |
-| 2.9 | API & data source | §13 | ✅ |
-| 2.10 | Surface (dialog/drawer) | §12 | ✅ |
-| 2.11 | Table & collection rendering | §8.3, §16.4 | ✅ |
-| 2.12 | Loop & recursion | §8.3 | ✅ |
-| 3.1 | Host boundary | §14 | ✅ |
-| 3.2 | Domain control embedding | §11.2 | ✅ |
-| 3.3 | Theme & style compatibility | §9.4 | ✅ |
-| 4.1 | Security constraints | §7.4 | ✅ |
-| 4.2 | Performance constraints | §16 | ✅ |
-| 4.3 | Progressive complexity | §1.1 | ✅ |
-| 4.4 | Compile/runtime separation | §7.1, §7.2 | ✅ |
-| 5 | Internationalization | §7.3 | ✅ |
-| 6 | DevTools support | §15 | ✅ |
-| 7 | Quality attributes | §17, §9, §11 | ✅ |
+| Req   | Description                                 | Section                        | Status |
+| ----- | ------------------------------------------- | ------------------------------ | ------ |
+| 2.1   | Schema parse & compile                      | §7                             | ✅     |
+| 2.1.3 | Progressive value semantics (5 levels)      | §3.1, §8.4 (asyncProps), §13.1 | ✅     |
+| 2.2   | Expression engine                           | §3                             | ✅     |
+| 2.3   | Lexical data environment                    | §6                             | ✅     |
+| 2.3.5 | Change propagation with paths               | §5.3                           | ✅     |
+| 2.4   | Dependency tracking & reactive              | §5                             | ✅     |
+| 2.4.5 | Read-write separation                       | §4.3                           | ✅     |
+| 2.5   | Rendering & component system                | §9                             | ✅     |
+| 2.5.5 | Parameterized regions / $slot               | §3.1 (slotParam), §8.2         | ✅     |
+| 2.6   | Action system & control flow                | §4.1, §11                      | ✅     |
+| 2.4.3 | Three consumer types share dependency model | §3.3, §5.1, §13.1              | ✅     |
+| 2.6.6 | Retry & timeout                             | §4.1 (RetryPolicy, timeout)    | ✅     |
+| 2.8.2 | Object/array/field-level rules              | §10.2 (CompiledValidator)      | ✅     |
+| 3.1.5 | Environment stability                       | §14.2                          | ✅     |
+| 2.6.7 | Debounce                                    | §4.1, §13.3                    | ✅     |
+| 2.6.9 | Chain result context                        | §4.2 (ChainContinuation)       | ✅     |
+| 2.7   | 3-tier action resolution                    | §11.1                          | ✅     |
+| 2.8   | Form & validation                           | §10                            | ✅     |
+| 2.8.6 | Draft isolation                             | §10.1 (DraftHandle)            | ✅     |
+| 2.9   | API & data source                           | §13                            | ✅     |
+| 2.10  | Surface (dialog/drawer)                     | §12                            | ✅     |
+| 2.11  | Table & collection rendering                | §8.3, §16.4                    | ✅     |
+| 2.12  | Loop & recursion                            | §8.3                           | ✅     |
+| 3.1   | Host boundary                               | §14                            | ✅     |
+| 3.2   | Domain control embedding                    | §11.2                          | ✅     |
+| 3.3   | Theme & style compatibility                 | §9.4                           | ✅     |
+| 4.1   | Security constraints                        | §7.4                           | ✅     |
+| 4.2   | Performance constraints                     | §16                            | ✅     |
+| 4.3   | Progressive complexity                      | §1.1                           | ✅     |
+| 4.4   | Compile/runtime separation                  | §7.1, §7.2                     | ✅     |
+| 5     | Internationalization                        | §7.3                           | ✅     |
+| 6     | DevTools support                            | §15                            | ✅     |
+| 7     | Quality attributes                          | §17, §9, §11                   | ✅     |
 
 ---
 
 ## 20. Design Trade-offs
 
-| Decision | Benefit | Cost | Mitigation |
-|----------|---------|------|------------|
-| Structured Path instead of strings | O(depth) pattern matching, no runtime parsing | Memory overhead per path node | Path nodes are small objects; pool common patterns |
-| Serializable Effects (no closures) | Testable, replayable, serializable to Workers | More verbose than inline closures | Compile-time generation reduces verbosity |
-| Native JS values (no Value wrapper) | Zero overhead for primitives, natural interop | No runtime type discrimination | Type checks are compile-time only |
-| Compile-time i18n | Zero runtime i18n overhead | Must recompile for locale change | Acceptable: locale is a build-time concern |
-| Isolated scopes for rows | O(1) per-row update | Explicit projections needed | Projections are declared in schema, not per-row |
-| IR as stable boundary | Compile/runtime can version independently | IR format must be stable | IR version field + migration support |
-| Single reactive system | No abstraction mismatch between store types | Must be well-implemented once | Use proven signal library (Preact/Solid) |
+| Decision                            | Benefit                                       | Cost                              | Mitigation                                         |
+| ----------------------------------- | --------------------------------------------- | --------------------------------- | -------------------------------------------------- |
+| Structured Path instead of strings  | O(depth) pattern matching, no runtime parsing | Memory overhead per path node     | Path nodes are small objects; pool common patterns |
+| Serializable Effects (no closures)  | Testable, replayable, serializable to Workers | More verbose than inline closures | Compile-time generation reduces verbosity          |
+| Native JS values (no Value wrapper) | Zero overhead for primitives, natural interop | No runtime type discrimination    | Type checks are compile-time only                  |
+| Compile-time i18n                   | Zero runtime i18n overhead                    | Must recompile for locale change  | Acceptable: locale is a build-time concern         |
+| Isolated scopes for rows            | O(1) per-row update                           | Explicit projections needed       | Projections are declared in schema, not per-row    |
+| IR as stable boundary               | Compile/runtime can version independently     | IR format must be stable          | IR version field + migration support               |
+| Single reactive system              | No abstraction mismatch between store types   | Must be well-implemented once     | Use proven signal library (Preact/Solid)           |
 
 ---
 
-*End of Design Document v3*
+_End of Design Document v3_

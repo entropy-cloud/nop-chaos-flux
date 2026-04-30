@@ -11,14 +11,12 @@ const withShowToggle = {
           type: 'input-password',
           name: 'password',
           label: 'Password',
-          required: true
-        }
+          required: true,
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Continue', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Continue', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 const confirmPassword = {
@@ -33,7 +31,7 @@ const confirmPassword = {
           name: 'password',
           label: 'New Password',
           required: true,
-          minLength: 8
+          minLength: 8,
         },
         {
           type: 'input-password',
@@ -41,15 +39,17 @@ const confirmPassword = {
           label: 'Confirm Password',
           required: true,
           validations: [
-            { rule: 'custom', expression: '${confirmPassword === password}', message: 'Passwords must match' }
-          ]
-        }
+            {
+              rule: 'custom',
+              expression: '${confirmPassword === password}',
+              message: 'Passwords must match',
+            },
+          ],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Set Password', onClick: { action: 'submit' } }
-      ]
-    }
-  ]
+      actions: [{ type: 'button', label: 'Set Password', onClick: { action: 'submit' } }],
+    },
+  ],
 };
 
 export function InputPasswordLabPage() {
@@ -59,14 +59,16 @@ export function InputPasswordLabPage() {
       scenarios={[
         {
           title: 'Basic password field',
-          description: 'A standard masked password field. The current runtime keeps it as a normal password input.',
-          schema: withShowToggle
+          description:
+            'A standard masked password field. The current runtime keeps it as a normal password input.',
+          schema: withShowToggle,
         },
         {
           title: 'New password with confirm-password validator',
-          description: 'Two password fields are rendered together so authoring can express confirm-password rules. The current lab validates stable masked input behavior rather than overclaiming richer validation UI.',
-          schema: confirmPassword
-        }
+          description:
+            'Two password fields are rendered together so authoring can express confirm-password rules. The current lab validates stable masked input behavior rather than overclaiming richer validation UI.',
+          schema: confirmPassword,
+        },
       ]}
     />
   );

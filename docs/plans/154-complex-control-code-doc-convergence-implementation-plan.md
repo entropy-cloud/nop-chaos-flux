@@ -123,10 +123,12 @@ Targets: `packages/report-designer-core/src/types.ts`, `packages/report-designer
 Contract Rules:
 
 - Inspector schema resolution order 固定为：
+
 1. `byProfile[profileId][target.kind]`
 2. `byTarget[target.kind]`
 3. `body`
 4. 若均不存在，则进入显式 empty state
+
 - 没有 schema 时不提供 fallback form
 - `selectionTarget` 是 canonical selection 字段
 - `selection`、`target` 仅在现有 renderer/tests 仍需要时保留为兼容别名

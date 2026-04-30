@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-02
 
-
 > **Implementation Status: ✅ COMPLETED (historical)**
 > This document IS the acceptance record for Plans 05–07. All work accepted as complete.
 >
@@ -131,6 +130,3 @@ These items remain open by design and do not block checklist completion:
 ## Final Acceptance Statement
 
 The follow-up implementation checklist is accepted as complete for the intended scope of this pass.
-
-
-

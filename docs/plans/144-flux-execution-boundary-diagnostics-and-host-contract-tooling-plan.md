@@ -78,6 +78,7 @@ Exit Criteria:
 - [x] `docs/logs/` 对应日期条目已更新
 
 Implementation notes:
+
 - Added "Input Invariants" subsection to `docs/architecture/frontend-programming-model.md` enumerating 5 explicit invariants
 - Added cross-reference to `docs/architecture/flux-dsl-vm-extensibility.md` sections 6.7–6.8 for Loader output contract
 - Added status note to analysis doc section 3 pointing to the updated owner doc
@@ -102,6 +103,7 @@ Exit Criteria:
 - [x] `docs/logs/` 对应日期条目已更新
 
 Implementation notes:
+
 - Added `SchemaDiagnosticSourceLocation` type to `packages/flux-core/src/schema-diagnostics/index.ts` with `file`, `line`, `column` fields
 - Added optional `sourceLocation` field to `SchemaDiagnostic`
 - Updated `SchemaCompilerDiagnosticsContext` to accept and propagate `sourceLocation` through `emit()`
@@ -129,6 +131,7 @@ Exit Criteria:
 - [x] `docs/logs/` 对应日期条目已更新
 
 Implementation notes:
+
 - Added `resolveHostContractManifest(definition, versionSelector?)` shared helper in `packages/flux-core/src/types/renderer-authoring-contract.ts`
 - Enhanced `resolveRendererAuthoringContract()` to accept optional `versionSelector` parameter and expose `hostManifest` in result
 - Added `hostManifest` field to `ResolvedAuthoringContract` for tools that need full manifest access

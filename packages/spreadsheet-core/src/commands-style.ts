@@ -1,7 +1,4 @@
-import type {
-  SpreadsheetCellRef,
-  SpreadsheetRange,
-} from './types.js';
+import type { SpreadsheetCellRef, SpreadsheetRange } from './types.js';
 import type { SpreadsheetCommandBase } from './commands-base.js';
 
 export interface SetCellFontFamilyCommand extends SpreadsheetCommandBase {

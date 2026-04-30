@@ -37,7 +37,7 @@
 
 ## 已确认的一致性
 
-- 渲染器注册模式：所有 flux-renderers-* 包使用 RendererDefinition[] + registerXxxRenderers ✓（code-editor 除外）
+- 渲染器注册模式：所有 flux-renderers-\* 包使用 RendererDefinition[] + registerXxxRenderers ✓（code-editor 除外）
 - Domain core/renderers 分层：所有 domain 包遵守 core（无 React）→ renderers（React）分层 ✓
 - Hook 使用：所有渲染器使用相同的标准 hook 组合 ✓
 - Store 创建：所有包使用 Zustand vanilla store + use-sync-external-store ✓

@@ -35,8 +35,7 @@ flux-core is the **foundation contracts and shared utilities** package — the l
 
 **Known exception — `i18n-sink.ts`**: This module exports a module-level mutable singleton (`setMessageFormatter` / `getMessageFormatter`) that lets `flux-i18n` inject its concrete formatter at init time without creating a circular dependency. It is the **only** stateful module in flux-core and is documented as an intentional design trade-off. See the in-file JSDoc in `packages/flux-core/src/i18n-sink.ts` for ownership rules.
 
- ## flux-core Package
-
+## flux-core Package
 
 When this document needs to be checked against code, start with:
 
@@ -75,7 +74,11 @@ type CompiledValueNode<T = unknown> =
   | { kind: 'expression-node'; source: string; compiled: CompiledExpression<T> }
   | { kind: 'template-node'; source: string; compiled: CompiledTemplate<T> }
   | { kind: 'array-node'; items: ReadonlyArray<CompiledValueNode<unknown>> }
-  | { kind: 'object-node'; keys: readonly string[]; entries: Readonly<Record<string, CompiledValueNode<unknown>>> };
+  | {
+      kind: 'object-node';
+      keys: readonly string[];
+      entries: Readonly<Record<string, CompiledValueNode<unknown>>>;
+    };
 ```
 
 Current runtime wrapper shape is directionally:

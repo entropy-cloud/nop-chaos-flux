@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ActionScope, ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
-import { createNopDebugger, getNopDebuggerAutomationApi, installNopDebuggerWindowFlag } from './index';
+import {
+  createNopDebugger,
+  getNopDebuggerAutomationApi,
+  installNopDebuggerWindowFlag,
+} from './index';
 
 const windowStub = {} as Window & typeof globalThis;
 
 Object.defineProperty(globalThis, 'window', {
   value: windowStub,
-  configurable: true
+  configurable: true,
 });
 
 const baseEnv: RendererEnv = {
@@ -16,13 +20,13 @@ const baseEnv: RendererEnv = {
       status: 200,
       data: {
         url: api.url,
-        method: api.method ?? 'get'
-      } as T
+        method: api.method ?? 'get',
+      } as T,
     };
   },
   notify() {
     return undefined;
-  }
+  },
 };
 
 describe('nop-debugger automation api', () => {
@@ -35,7 +39,7 @@ describe('nop-debugger automation api', () => {
   it('queries events and builds diagnostic reports', async () => {
     const debuggerController = createNopDebugger({
       id: 'automation-query',
-      enabled: true
+      enabled: true,
     });
     const env = debuggerController.decorateEnv(baseEnv);
 
@@ -43,38 +47,38 @@ describe('nop-debugger automation api', () => {
       nodeId: 'node-1',
       path: 'body.0',
       type: 'text',
-      durationMs: 4
+      durationMs: 4,
     });
     env.monitor?.onActionEnd?.({
       actionType: 'submitForm',
       nodeId: 'node-1',
       path: 'body.0',
       durationMs: 8,
-      result: { ok: true }
+      result: { ok: true },
     });
     env.notify('warning', 'username duplicated');
     debuggerController.onActionError(new Error('submit exploded'), {
       runtime: {} as never,
       scope: {} as never,
       nodeInstance: {
-        templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' }
-      } as never
+        templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' },
+      } as never,
     });
 
     const renderEvents = debuggerController.queryEvents({
       group: 'render',
-      nodeId: 'node-1'
+      nodeId: 'node-1',
     });
     expect(renderEvents).toHaveLength(1);
     expect(renderEvents[0]).toMatchObject({
       kind: 'render:end',
-      rendererType: 'text'
+      rendererType: 'text',
     });
 
     const latestError = debuggerController.getLatestError();
     expect(latestError).toMatchObject({
       kind: 'error',
-      nodeId: 'node-1'
+      nodeId: 'node-1',
     });
 
     const report = debuggerController.createDiagnosticReport({ eventLimit: 3 });
@@ -87,7 +91,7 @@ describe('nop-debugger automation api', () => {
   it('captures structured network summaries and node diagnostics', async () => {
     const debuggerController = createNopDebugger({
       id: 'network-node',
-      enabled: true
+      enabled: true,
     });
     const env = debuggerController.decorateEnv(baseEnv);
 
@@ -97,47 +101,50 @@ describe('nop-debugger automation api', () => {
         method: 'post',
         data: {
           username: 'alice',
-          role: 'admin'
-        }
+          role: 'admin',
+        },
       },
       nodeId: 'form-node',
-      path: 'body.1'
+      path: 'body.1',
     });
     env.monitor?.onRenderEnd?.({
       nodeId: 'form-node',
       path: 'body.1',
       type: 'form',
-      durationMs: 6
+      durationMs: 6,
     });
-    await env.fetcher({
-      url: '/api/users',
-      method: 'post',
-      data: {
-        username: 'alice',
-        role: 'admin'
-      }
-    }, {
-      scope: {
-        readOwn() {
-          return { username: 'alice' };
-        }
-      } as never,
-      env,
-      signal: undefined
-    });
+    await env.fetcher(
+      {
+        url: '/api/users',
+        method: 'post',
+        data: {
+          username: 'alice',
+          role: 'admin',
+        },
+      },
+      {
+        scope: {
+          readOwn() {
+            return { username: 'alice' };
+          },
+        } as never,
+        env,
+        signal: undefined,
+      },
+    );
 
     const latestApi = debuggerController.getLatestEvent({ kind: 'api:end' });
     expect(latestApi?.network).toMatchObject({
       method: 'POST',
       url: '/api/users',
       status: 200,
-      responseType: 'object'
+      responseType: 'object',
     });
     expect(latestApi?.network?.requestDataKeys).toEqual(['username', 'role']);
     expect(latestApi?.network?.responseDataKeys).toEqual(['url', 'method']);
 
     const nodeDiagnostics = debuggerController.getNodeDiagnostics({
-      nodeId: 'form-node'
+      nodeId: 'form-node',
     });
     expect(nodeDiagnostics.nodeId).toBe('form-node');
     expect(nodeDiagnostics.countsByGroup.api).toBe(1);
@@ -149,37 +156,37 @@ describe('nop-debugger automation api', () => {
   it('exports sessions and interaction traces for AI analysis', async () => {
     const debuggerController = createNopDebugger({
       id: 'trace-export',
-      enabled: true
+      enabled: true,
     });
     const env = debuggerController.decorateEnv(baseEnv);
 
     env.monitor?.onActionStart?.({
       actionType: 'submitForm',
       nodeId: 'trace-node',
-      path: 'body.2'
+      path: 'body.2',
     });
     env.monitor?.onApiRequest?.({
       api: {
         url: '/api/trace',
         method: 'post',
         data: {
-          status: 'draft'
-        }
+          status: 'draft',
+        },
       },
       nodeId: 'trace-node',
-      path: 'body.2'
+      path: 'body.2',
     });
     debuggerController.onActionError(new Error('trace failure'), {
       runtime: {} as never,
       scope: {} as never,
       nodeInstance: {
-        templateNode: { id: 'trace-node', templatePath: 'body.2', rendererType: 'form' }
-      } as never
+        templateNode: { id: 'trace-node', templatePath: 'body.2', rendererType: 'form' },
+      } as never,
     });
 
     const trace = debuggerController.getInteractionTrace({
       nodeId: 'trace-node',
-      path: 'body.2'
+      path: 'body.2',
     });
     expect(trace.totalEvents).toBeGreaterThanOrEqual(3);
     expect(trace.latestAction?.actionType).toBe('submitForm');
@@ -188,8 +195,8 @@ describe('nop-debugger automation api', () => {
 
     const exported = debuggerController.exportSession({
       query: {
-        nodeId: 'trace-node'
-      }
+        nodeId: 'trace-node',
+      },
     });
     expect(exported.controllerId).toBe('trace-export');
     expect(exported.snapshot.events.length).toBeGreaterThanOrEqual(exported.events.length);
@@ -202,8 +209,8 @@ describe('nop-debugger automation api', () => {
       enabled: true,
       redaction: {
         redactKeys: ['token', 'password'],
-        mask: '[MASKED]'
-      }
+        mask: '[MASKED]',
+      },
     });
     const env = debuggerController.decorateEnv(baseEnv);
 
@@ -214,49 +221,56 @@ describe('nop-debugger automation api', () => {
         data: {
           username: 'architect',
           password: '123456',
-          token: 'top-secret'
-        }
+          token: 'top-secret',
+        },
       },
       nodeId: 'secure-node',
-      path: 'body.9'
+      path: 'body.9',
     });
 
-    await env.fetcher({
-      url: '/api/secure',
-      method: 'post',
-      data: {
-        username: 'architect',
-        password: '123456',
-        token: 'top-secret'
-      }
-    }, {
-      scope: {
-        readOwn() {
-          return {};
-        }
-      } as never,
-      env,
-      signal: undefined
-    });
+    await env.fetcher(
+      {
+        url: '/api/secure',
+        method: 'post',
+        data: {
+          username: 'architect',
+          password: '123456',
+          token: 'top-secret',
+        },
+      },
+      {
+        scope: {
+          readOwn() {
+            return {};
+          },
+        } as never,
+        env,
+        signal: undefined,
+      },
+    );
 
     const exported = debuggerController.exportSession({
       query: {
-        kind: 'api:end'
-      }
+        kind: 'api:end',
+      },
     });
     const apiEvent = exported.events[0];
 
     expect(apiEvent.exportedData).toMatchObject({
       url: '/api/secure',
-      method: 'post'
+      method: 'post',
     });
 
-    expect(exported.snapshot.events.some((event) => event.network?.url === '/api/secure')).toBe(true);
-    const redactedSecureEvent = exported.snapshot.events.find((event) => event.kind === 'api:start' && event.network?.url === '/api/secure');
+    expect(exported.snapshot.events.some((event) => event.network?.url === '/api/secure')).toBe(
+      true,
+    );
+    const redactedSecureEvent = exported.snapshot.events.find(
+      (event) => event.kind === 'api:start' && event.network?.url === '/api/secure',
+    );
     expect(redactedSecureEvent?.exportedData).toMatchObject({
       username: 'architect',
       password: '[MASKED]',
-      token: '[MASKED]'
+      token: '[MASKED]',
     });
   });
 
@@ -266,35 +280,38 @@ describe('nop-debugger automation api', () => {
     try {
       const debuggerController = createNopDebugger({
         id: 'automation-wait',
-        enabled: true
+        enabled: true,
       });
       const env = debuggerController.decorateEnv(baseEnv);
 
       const pending = debuggerController.waitForEvent({
         kind: 'api:end',
         text: '/api/users',
-        timeoutMs: 1000
+        timeoutMs: 1000,
       });
 
       setTimeout(() => {
-        void env.fetcher({
-          url: '/api/users',
-          method: 'get'
-        }, {
-          scope: {
-            readOwn() {
-              return { username: 'alice' };
-            }
-          } as never,
-          env,
-          signal: undefined
-        });
+        void env.fetcher(
+          {
+            url: '/api/users',
+            method: 'get',
+          },
+          {
+            scope: {
+              readOwn() {
+                return { username: 'alice' };
+              },
+            } as never,
+            env,
+            signal: undefined,
+          },
+        );
       }, 50);
 
       await vi.advanceTimersByTimeAsync(50);
 
       await expect(pending).resolves.toMatchObject({
-        kind: 'api:end'
+        kind: 'api:end',
       });
     } finally {
       vi.useRealTimers();
@@ -304,17 +321,17 @@ describe('nop-debugger automation api', () => {
   it('registers global automation api and hub handles', () => {
     const first = createNopDebugger({
       id: 'first-controller',
-      enabled: true
+      enabled: true,
     });
     const second = createNopDebugger({
       id: 'second-controller',
-      enabled: true
+      enabled: true,
     });
 
     expect(getNopDebuggerAutomationApi()).toBe(second.automation);
     expect(getNopDebuggerAutomationApi('first-controller')).toBe(first.automation);
     expect(window.__NOP_DEBUGGER_HUB__?.listControllers()).toEqual(
-      expect.arrayContaining(['first-controller', 'second-controller'])
+      expect.arrayContaining(['first-controller', 'second-controller']),
     );
     expect(window.__NOP_DEBUGGER_HUB__?.activeControllerId).toBe('second-controller');
   });
@@ -322,7 +339,7 @@ describe('nop-debugger automation api', () => {
   it('records state:snapshot events when an action scope with debug snapshot is attached', () => {
     const debuggerController = createNopDebugger({
       id: 'action-scope-snapshot',
-      enabled: true
+      enabled: true,
     });
 
     const actionScope: ActionScope = {
@@ -346,11 +363,11 @@ describe('nop-debugger automation api', () => {
             {
               namespace: 'app',
               providerKind: 'host',
-              methods: ['save', 'refresh']
-            }
-          ]
+              methods: ['save', 'refresh'],
+            },
+          ],
         };
-      }
+      },
     };
 
     debuggerController.setActionScope(actionScope);
@@ -359,7 +376,7 @@ describe('nop-debugger automation api', () => {
     expect(snapshotEvent).toMatchObject({
       kind: 'state:snapshot',
       group: 'node',
-      source: 'controller.setActionScope'
+      source: 'controller.setActionScope',
     });
     expect(snapshotEvent?.exportedData).toMatchObject({
       id: 'scope-root',
@@ -367,9 +384,9 @@ describe('nop-debugger automation api', () => {
         {
           namespace: 'app',
           providerKind: 'host',
-          methods: ['save', 'refresh']
-        }
-      ]
+          methods: ['save', 'refresh'],
+        },
+      ],
     });
 
     const nodeEvents = debuggerController.queryEvents({ group: 'node' });
@@ -379,7 +396,7 @@ describe('nop-debugger automation api', () => {
   it('exposes async owner diagnostics through automation without adding a new event channel', () => {
     const debuggerController = createNopDebugger({
       id: 'async-owner-snapshot',
-      enabled: true
+      enabled: true,
     });
 
     debuggerController.setRuntime({
@@ -400,30 +417,30 @@ describe('nop-debugger automation api', () => {
                   startedAt: 1,
                   settledAt: 2,
                   outcome: 'stale-dropped',
-                  supersededBy: 3
-                }
-              ]
-            }
-          ]
+                  supersededBy: 3,
+                },
+              ],
+            },
+          ],
         };
-      }
+      },
     } as never);
 
     expect(debuggerController.getAsyncOwnerDebugSnapshot()).toMatchObject({
       owners: [
         expect.objectContaining({
           ownerKind: 'reaction',
-          ownerId: 'reaction:page-1:watch-users'
-        })
-      ]
+          ownerId: 'reaction:page-1:watch-users',
+        }),
+      ],
     });
     expect(debuggerController.automation.getAsyncOwnerDebugSnapshot()).toMatchObject({
       owners: [
         expect.objectContaining({
           ownerKind: 'reaction',
-          ownerId: 'reaction:page-1:watch-users'
-        })
-      ]
+          ownerId: 'reaction:page-1:watch-users',
+        }),
+      ],
     });
     expect(debuggerController.queryEvents({ kind: 'state:snapshot' })).toEqual([]);
   });

@@ -32,4 +32,3 @@
 - nested form lifetime must not depend on wrapper scope object churn when the semantic parent context is unchanged
 - helper-driven fragment rendering should treat scope identity and scope snapshot updates as separate concerns
 - if a nested form resets during parent-only rerenders, inspect fragment scope recreation before changing form runtime rules
-

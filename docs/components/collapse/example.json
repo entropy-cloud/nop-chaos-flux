@@ -1,9 +1,7 @@
 {
   "type": "collapse",
   "multiple": false,
-  "defaultValue": [
-    "profile"
-  ],
+  "defaultValue": ["profile"],
   "items": [
     {
       "value": "profile",

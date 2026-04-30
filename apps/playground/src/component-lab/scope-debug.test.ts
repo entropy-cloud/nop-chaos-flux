@@ -11,11 +11,11 @@ describe('attachScopeDebugToSchema', () => {
           body: [
             {
               type: 'detail-view',
-              name: 'summary'
-            }
-          ]
-        }
-      ]
+              name: 'summary',
+            },
+          ],
+        },
+      ],
     } as const;
 
     const result = attachScopeDebugToSchema(schema as any, 'Current Scope') as any;
@@ -25,7 +25,7 @@ describe('attachScopeDebugToSchema', () => {
     expect(result.body[0].body).toHaveLength(2);
     expect(result.body[0].body[1]).toMatchObject({
       type: 'scope-debug',
-      title: 'Current Scope'
+      title: 'Current Scope',
     });
   });
 
@@ -35,9 +35,9 @@ describe('attachScopeDebugToSchema', () => {
       body: [
         {
           type: 'input-text',
-          name: 'title'
-        }
-      ]
+          name: 'title',
+        },
+      ],
     } as const;
 
     const result = attachScopeDebugToSchema(schema as any, 'Form Scope') as any;
@@ -45,7 +45,7 @@ describe('attachScopeDebugToSchema', () => {
     expect(result.body).toHaveLength(2);
     expect(result.body[1]).toMatchObject({
       type: 'scope-debug',
-      title: 'Form Scope'
+      title: 'Form Scope',
     });
   });
 });

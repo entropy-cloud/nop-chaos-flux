@@ -289,8 +289,16 @@ describe('projectTree', () => {
         type: 'condition',
         data: {},
         branches: [
-          { id: 'b1', data: { branchType: 'then', label: 'Success' }, child: { id: 't1', type: 'task', data: {} } },
-          { id: 'b2', data: { branchType: 'onError', label: 'Failure' }, child: { id: 't2', type: 'task', data: {} } },
+          {
+            id: 'b1',
+            data: { branchType: 'then', label: 'Success' },
+            child: { id: 't1', type: 'task', data: {} },
+          },
+          {
+            id: 'b2',
+            data: { branchType: 'onError', label: 'Failure' },
+            child: { id: 't2', type: 'task', data: {} },
+          },
         ],
         child: { id: 'end', type: 'end', data: {} },
       },
@@ -315,8 +323,16 @@ describe('projectTree', () => {
         type: 'condition',
         data: { label: 'Gateway' },
         branches: [
-          { id: 'b1', data: { label: 'Branch 1', priority: 1 }, child: { id: 't1', type: 'task', data: {} } },
-          { id: 'b2', data: { label: 'Branch 2', priority: 2 }, child: { id: 't2', type: 'task', data: {} } },
+          {
+            id: 'b1',
+            data: { label: 'Branch 1', priority: 1 },
+            child: { id: 't1', type: 'task', data: {} },
+          },
+          {
+            id: 'b2',
+            data: { label: 'Branch 2', priority: 2 },
+            child: { id: 't2', type: 'task', data: {} },
+          },
         ],
         child: { id: 'end', type: 'end', data: {} },
       },
@@ -326,8 +342,20 @@ describe('projectTree', () => {
 
     const owner = nodes.find((node) => node.id === 'gw');
     expect(owner?.data.branches).toEqual([
-      { id: 'b1', data: { label: 'Branch 1', priority: 1 }, childId: 't1', childType: 'task', childLabel: undefined },
-      { id: 'b2', data: { label: 'Branch 2', priority: 2 }, childId: 't2', childType: 'task', childLabel: undefined },
+      {
+        id: 'b1',
+        data: { label: 'Branch 1', priority: 1 },
+        childId: 't1',
+        childType: 'task',
+        childLabel: undefined,
+      },
+      {
+        id: 'b2',
+        data: { label: 'Branch 2', priority: 2 },
+        childId: 't2',
+        childType: 'task',
+        childLabel: undefined,
+      },
     ]);
   });
 
@@ -357,9 +385,7 @@ describe('projectTree', () => {
           tree: { branchEdgeType: 'custom-branch' },
         },
       ],
-      edgeTypes: [
-        { id: 'custom-branch', appearance: { stroke: '#f00' } },
-      ],
+      edgeTypes: [{ id: 'custom-branch', appearance: { stroke: '#f00' } }],
       treeConfig: {
         layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
         showGatewayNodes: false,

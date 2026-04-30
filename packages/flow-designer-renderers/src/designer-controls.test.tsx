@@ -22,19 +22,22 @@ vi.mock('./designer-context', () => ({
   useDesignerContext: () => mockContext,
   useDesignerFullSnapshot: () => mockSnapshot,
   useDesignerSnapshotSelector: (selector: (s: any) => any) => selector(mockSnapshot),
-  useNodeTypeConfig: (typeId: string) => mockContext.config.nodeTypes.find((nodeType: { id: string }) => nodeType.id === typeId)
+  useNodeTypeConfig: (typeId: string) =>
+    mockContext.config.nodeTypes.find((nodeType: { id: string }) => nodeType.id === typeId),
 }));
 
 vi.mock('./designer-icon', () => ({
-  DesignerIcon: (props: { icon: string; className?: string }) => <span data-testid={`icon-${props.icon}`} className={props.className} />
+  DesignerIcon: (props: { icon: string; className?: string }) => (
+    <span data-testid={`icon-${props.icon}`} className={props.className} />
+  ),
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentActionScope: () => ({
-    resolve: mockResolve
+    resolve: mockResolve,
   }),
   useRendererRuntime: () => ({}),
-  useRenderScope: () => ({})
+  useRenderScope: () => ({}),
 }));
 
 function createSnapshot(overrides: Partial<any> = {}) {
@@ -43,12 +46,18 @@ function createSnapshot(overrides: Partial<any> = {}) {
     canRedo: false,
     isDirty: false,
     gridEnabled: true,
-    selection: { selectedNodeIds: [], selectedEdgeIds: [], activeNodeId: null, activeEdgeId: null, activeBranchId: null },
+    selection: {
+      selectedNodeIds: [],
+      selectedEdgeIds: [],
+      activeNodeId: null,
+      activeEdgeId: null,
+      activeBranchId: null,
+    },
     doc: { name: 'Test Flow', nodes: [{ id: 'n1' }], edges: [] },
     activeNode: null,
     activeEdge: null,
     activeBranch: null,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -61,7 +70,7 @@ describe('flow designer controls', () => {
       config: { toolbar: { items: [] }, palette: { groups: [] }, nodeTypes: [] },
       dispatch: vi.fn(),
       openCreateDialog: vi.fn(),
-      core: { subscribe: () => () => {}, getSnapshot: () => mockSnapshot }
+      core: { subscribe: () => () => {}, getSnapshot: () => mockSnapshot },
     };
   });
 
@@ -72,14 +81,21 @@ describe('flow designer controls', () => {
         items: [
           { type: 'button', label: 'Undo', action: 'designer:undo', disabled: '${!canUndo}' },
           { type: 'button', label: 'Redo', action: 'designer:redo', disabled: '${!canRedo}' },
-          { type: 'button', label: 'Grid', action: 'designer:toggle-grid', active: '${gridEnabled}' }
-        ]
-      }
+          {
+            type: 'button',
+            label: 'Grid',
+            action: 'designer:toggle-grid',
+            active: '${gridEnabled}',
+          },
+        ],
+      },
     };
 
     render(<DesignerToolbarContent />);
 
-    expect(screen.getByTestId('designer-toolbar').classList.contains('nop-designer-toolbar')).toBe(true);
+    expect(screen.getByTestId('designer-toolbar').classList.contains('nop-designer-toolbar')).toBe(
+      true,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'undo' });
@@ -100,8 +116,8 @@ describe('flow designer controls', () => {
     mockContext.config = {
       ...mockContext.config,
       toolbar: {
-        items: [{ type: 'button', label: 'JSON', action: 'designer:export' }]
-      }
+        items: [{ type: 'button', label: 'JSON', action: 'designer:export' }],
+      },
     };
 
     render(<DesignerToolbarContent onExportToggle={onExportToggle} />);
@@ -117,8 +133,8 @@ describe('flow designer controls', () => {
     mockContext.config = {
       ...mockContext.config,
       toolbar: {
-        items: [{ type: 'back', label: 'Back', action: 'designer:navigate-back' }]
-      }
+        items: [{ type: 'back', label: 'Back', action: 'designer:navigate-back' }],
+      },
     };
 
     render(<DesignerToolbarContent />);
@@ -134,11 +150,11 @@ describe('flow designer controls', () => {
       ...mockContext.config,
       nodeTypes: [
         { id: 'task', label: 'Task' },
-        { id: 'end', label: 'End' }
+        { id: 'end', label: 'End' },
       ],
       palette: {
-        groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task', 'end'] }]
-      }
+        groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task', 'end'] }],
+      },
     };
 
     render(<DesignerPaletteContent />);
@@ -152,7 +168,7 @@ describe('flow designer controls', () => {
     expect(mockContext.dispatch).toHaveBeenCalledWith({
       type: 'addNode',
       nodeType: 'task',
-      position: { x: 180, y: 120 }
+      position: { x: 180, y: 120 },
     });
     randomSpy.mockRestore();
   });
@@ -160,7 +176,7 @@ describe('flow designer controls', () => {
   it('dispatches delete actions from inspector buttons', () => {
     mockSnapshot = createSnapshot({
       activeNode: { id: 'node-1', type: 'task', data: { label: 'Task' } },
-      activeEdge: null
+      activeEdge: null,
     });
 
     render(<DefaultInspector />);
@@ -173,7 +189,7 @@ describe('flow designer controls', () => {
   it('uses nodeType inspector schema before fallback fields', () => {
     mockSnapshot = createSnapshot({
       activeNode: { id: 'node-1', type: 'task', data: { label: 'Task' } },
-      activeEdge: null
+      activeEdge: null,
     });
     mockContext.config = {
       ...mockContext.config,
@@ -181,9 +197,9 @@ describe('flow designer controls', () => {
         {
           id: 'task',
           label: 'Task',
-          inspector: { body: { type: 'text', text: 'Schema inspector body' } }
-        }
-      ]
+          inspector: { body: { type: 'text', text: 'Schema inspector body' } },
+        },
+      ],
     };
 
     render(<DefaultInspector renderSchema={() => <div>Schema inspector body</div>} />);
@@ -195,31 +211,59 @@ describe('flow designer controls', () => {
 
   it('dispatches branch-group editing commands from inspector when active node exposes branches', () => {
     mockSnapshot = createSnapshot({
-      selection: { selectedNodeIds: ['node-1'], selectedEdgeIds: [], activeNodeId: 'node-1', activeEdgeId: null, activeBranchId: 'b1' },
+      selection: {
+        selectedNodeIds: ['node-1'],
+        selectedEdgeIds: [],
+        activeNodeId: 'node-1',
+        activeEdgeId: null,
+        activeBranchId: 'b1',
+      },
       activeNode: {
         id: 'node-1',
         type: 'condition',
         data: {
           label: 'Gateway',
           branches: [
-            { id: 'b1', data: { label: 'Branch 1', priority: 1 }, childId: 'n-branch-1', childLabel: 'Branch Node 1' },
-            { id: 'b2', data: { label: 'Branch 2', priority: 2 }, childId: 'n-branch-2', childLabel: 'Branch Node 2' },
-            { id: 'b3', data: { label: 'Branch 3', priority: 3 }, childId: 'n-branch-3', childLabel: 'Branch Node 3' },
-          ]
-        }
+            {
+              id: 'b1',
+              data: { label: 'Branch 1', priority: 1 },
+              childId: 'n-branch-1',
+              childLabel: 'Branch Node 1',
+            },
+            {
+              id: 'b2',
+              data: { label: 'Branch 2', priority: 2 },
+              childId: 'n-branch-2',
+              childLabel: 'Branch Node 2',
+            },
+            {
+              id: 'b3',
+              data: { label: 'Branch 3', priority: 3 },
+              childId: 'n-branch-3',
+              childLabel: 'Branch Node 3',
+            },
+          ],
+        },
       },
-      activeBranch: { id: 'b1', data: { label: 'Branch 1', priority: 1 }, childId: 'n-branch-1', childLabel: 'Branch Node 1' },
-      activeEdge: null
+      activeBranch: {
+        id: 'b1',
+        data: { label: 'Branch 1', priority: 1 },
+        childId: 'n-branch-1',
+        childLabel: 'Branch Node 1',
+      },
+      activeEdge: null,
     });
 
     render(<DefaultInspector />);
 
-    fireEvent.change(screen.getByDisplayValue('Branch 1'), { target: { value: 'Renamed Branch 1' } });
+    fireEvent.change(screen.getByDisplayValue('Branch 1'), {
+      target: { value: 'Renamed Branch 1' },
+    });
     expect(mockContext.dispatch).toHaveBeenCalledWith({
       type: 'updateBranchData',
       nodeId: 'node-1',
       branchId: 'b1',
-      data: { label: 'Renamed Branch 1' }
+      data: { label: 'Renamed Branch 1' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Move branch 2 left' }));
@@ -227,14 +271,14 @@ describe('flow designer controls', () => {
       type: 'moveBranch',
       nodeId: 'node-1',
       branchId: 'b2',
-      direction: 'left'
+      direction: 'left',
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete branch 3' }));
     expect(mockContext.dispatch).toHaveBeenCalledWith({
       type: 'deleteBranch',
       nodeId: 'node-1',
-      branchId: 'b3'
+      branchId: 'b3',
     });
 
     fireEvent.click(screen.getByRole('button', { name: '添加分支' }));
@@ -243,28 +287,58 @@ describe('flow designer controls', () => {
       nodeId: 'node-1',
       branchData: { label: '分支 4' },
       childType: 'condition',
-      childData: { label: '新分支 4' }
+      childData: { label: '新分支 4' },
     });
 
     fireEvent.click(screen.getByText('分支 2'));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'selectBranch', nodeId: 'node-1', branchId: 'b2' });
+    expect(mockContext.dispatch).toHaveBeenCalledWith({
+      type: 'selectBranch',
+      nodeId: 'node-1',
+      branchId: 'b2',
+    });
 
     mockSnapshot = createSnapshot({
-      selection: { selectedNodeIds: ['node-1'], selectedEdgeIds: [], activeNodeId: 'node-1', activeEdgeId: null, activeBranchId: 'b2' },
+      selection: {
+        selectedNodeIds: ['node-1'],
+        selectedEdgeIds: [],
+        activeNodeId: 'node-1',
+        activeEdgeId: null,
+        activeBranchId: 'b2',
+      },
       activeNode: {
         id: 'node-1',
         type: 'condition',
         data: {
           label: 'Gateway',
           branches: [
-            { id: 'b1', data: { label: 'Branch 1', priority: 1 }, childId: 'n-branch-1', childLabel: 'Branch Node 1' },
-            { id: 'b2', data: { label: 'Branch 2', priority: 2 }, childId: 'n-branch-2', childLabel: 'Branch Node 2' },
-            { id: 'b3', data: { label: 'Branch 3', priority: 3 }, childId: 'n-branch-3', childLabel: 'Branch Node 3' },
-          ]
-        }
+            {
+              id: 'b1',
+              data: { label: 'Branch 1', priority: 1 },
+              childId: 'n-branch-1',
+              childLabel: 'Branch Node 1',
+            },
+            {
+              id: 'b2',
+              data: { label: 'Branch 2', priority: 2 },
+              childId: 'n-branch-2',
+              childLabel: 'Branch Node 2',
+            },
+            {
+              id: 'b3',
+              data: { label: 'Branch 3', priority: 3 },
+              childId: 'n-branch-3',
+              childLabel: 'Branch Node 3',
+            },
+          ],
+        },
       },
-      activeBranch: { id: 'b2', data: { label: 'Branch 2', priority: 2 }, childId: 'n-branch-2', childLabel: 'Branch Node 2' },
-      activeEdge: null
+      activeBranch: {
+        id: 'b2',
+        data: { label: 'Branch 2', priority: 2 },
+        childId: 'n-branch-2',
+        childLabel: 'Branch Node 2',
+      },
+      activeEdge: null,
     });
 
     cleanup();
@@ -282,12 +356,12 @@ describe('flow designer controls', () => {
         {
           id: 'task',
           label: 'Task',
-          createDialog: { title: 'Create Task', body: { type: 'text', text: 'Dialog body' } }
-        }
+          createDialog: { title: 'Create Task', body: { type: 'text', text: 'Dialog body' } },
+        },
       ],
       palette: {
-        groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task'] }]
-      }
+        groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task'] }],
+      },
     };
 
     render(<DesignerPaletteContent />);
@@ -297,9 +371,11 @@ describe('flow designer controls', () => {
 
     expect(mockContext.openCreateDialog).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'task' }),
-      { x: 180, y: 120 }
+      { x: 180, y: 120 },
     );
-    expect(mockContext.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'addNode' }));
+    expect(mockContext.dispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'addNode' }),
+    );
     randomSpy.mockRestore();
   });
 });

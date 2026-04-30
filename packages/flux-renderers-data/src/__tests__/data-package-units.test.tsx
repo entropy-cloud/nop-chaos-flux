@@ -18,7 +18,13 @@ describe('data package units', () => {
     const registry = createRendererRegistry();
     registerDataRenderers(registry);
 
-    expect(dataRendererDefinitions.map((item) => item.type)).toEqual(['table', 'data-source', 'chart', 'tree', 'crud']);
+    expect(dataRendererDefinitions.map((item) => item.type)).toEqual([
+      'table',
+      'data-source',
+      'chart',
+      'tree',
+      'crud',
+    ]);
     expect(registry.get('table')?.type).toBe('table');
     expect(registry.get('crud')?.type).toBe('crud');
   });
@@ -28,14 +34,11 @@ describe('data package units', () => {
       normalizeToolbarBlocks(
         {
           header: ['statistics', { type: 'pagination', align: 'right' }, { bad: true } as any],
-          footer: undefined
+          footer: undefined,
         } as any,
-        'header'
-      )
-    ).toEqual([
-      { type: 'statistics' },
-      { type: 'pagination', align: 'right' }
-    ]);
+        'header',
+      ),
+    ).toEqual([{ type: 'statistics' }, { type: 'pagination', align: 'right' }]);
 
     expect(normalizeToolbarBlocks(undefined, 'footer')).toEqual([]);
   });
@@ -50,7 +53,7 @@ describe('data package units', () => {
           { type: 'listActions' },
           { type: 'statistics' },
           { type: 'switch-per-page' },
-          { type: 'pagination', align: 'right' }
+          { type: 'pagination', align: 'right' },
         ]}
         summary={{ total: 25, itemCount: 25 } as any}
         listActionsContent={<span>Bulk actions</span>}
@@ -58,12 +61,14 @@ describe('data package units', () => {
         pagination={{ currentPage: 2, pageSize: 10 } as any}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
-      />
+      />,
     );
 
     expect(screen.getByText('Bulk actions')).toBeTruthy();
     expect(screen.getByText('Total 25')).toBeTruthy();
-    fireEvent.change(document.querySelector('[data-slot="native-select"]')!, { target: { value: '50' } });
+    fireEvent.change(document.querySelector('[data-slot="native-select"]')!, {
+      target: { value: '50' },
+    });
     fireEvent.click(screen.getByText('Collapse'));
     fireEvent.click(screen.getByText('Expand'));
 
@@ -83,7 +88,7 @@ describe('data package units', () => {
         pagination={{ currentPage: 1, pageSize: 10 } as any}
         onPageChange={() => {}}
         onPageSizeChange={() => {}}
-      />
+      />,
     );
 
     expect(container.innerHTML).toBe('');
@@ -104,9 +109,9 @@ describe('useTableHandle', () => {
           id: 'table-1',
           meta: { cid: 'cid-1' },
           helpers: {
-            createScope: vi.fn((value) => ({ scopeValue: value }))
+            createScope: vi.fn((value) => ({ scopeValue: value })),
           },
-          events: { onRefresh, onPageChange }
+          events: { onRefresh, onPageChange },
         } as any,
         2,
         20,
@@ -115,36 +120,62 @@ describe('useTableHandle', () => {
         'selection.path',
         'scope',
         'pagination.path',
-        setSelectionExternal
+        setSelectionExternal,
       );
       return null;
     }
 
     render(
-      <ComponentRegistryContext.Provider value={{ register: (...args: any[]) => {
-        capturedHandle = args[0];
-        return register(args[0]);
-      } } as any}>
+      <ComponentRegistryContext.Provider
+        value={
+          {
+            register: (...args: any[]) => {
+              capturedHandle = args[0];
+              return register(args[0]);
+            },
+          } as any
+        }
+      >
         <Probe />
-      </ComponentRegistryContext.Provider>
+      </ComponentRegistryContext.Provider>,
     );
 
     expect(register).toHaveBeenCalled();
     expect(capturedHandle.capabilities.hasMethod('refresh')).toBe(true);
-    expect(capturedHandle.capabilities.listMethods()).toEqual(['refresh', 'getSelection', 'setSelection']);
+    expect(capturedHandle.capabilities.listMethods()).toEqual([
+      'refresh',
+      'getSelection',
+      'setSelection',
+    ]);
     expect(capturedHandle.capabilities.getDebugData()).toMatchObject({
       paginationOwnership: 'scope',
       selectionOwnership: 'local',
       currentPage: 2,
       pageSize: 20,
-      selectedRowKeys: ['r1']
+      selectedRowKeys: ['r1'],
     });
 
-    const ctx = { scope: { id: 'scope' }, actionScope: undefined, componentRegistry: undefined, form: undefined, page: undefined, nodeInstance: undefined };
-    expect(capturedHandle.capabilities.invoke('getSelection', undefined, ctx)).toEqual({ ok: true, data: ['r1'] });
-    expect(capturedHandle.capabilities.invoke('setSelection', ['r2'], ctx)).toEqual({ ok: true, data: ['r2'] });
+    const ctx = {
+      scope: { id: 'scope' },
+      actionScope: undefined,
+      componentRegistry: undefined,
+      form: undefined,
+      page: undefined,
+      nodeInstance: undefined,
+    };
+    expect(capturedHandle.capabilities.invoke('getSelection', undefined, ctx)).toEqual({
+      ok: true,
+      data: ['r1'],
+    });
+    expect(capturedHandle.capabilities.invoke('setSelection', ['r2'], ctx)).toEqual({
+      ok: true,
+      data: ['r2'],
+    });
     expect(setSelectionExternal).toHaveBeenCalled();
-    expect(capturedHandle.capabilities.invoke('refresh', undefined, ctx)).toEqual({ ok: true, data: { page: 2, pageSize: 20 } });
+    expect(capturedHandle.capabilities.invoke('refresh', undefined, ctx)).toEqual({
+      ok: true,
+      data: { page: 2, pageSize: 20 },
+    });
     expect(onRefresh).toHaveBeenCalled();
     expect(capturedHandle.capabilities.invoke('unsupported', undefined, ctx).ok).toBe(false);
   });
@@ -158,9 +189,9 @@ describe('useTableHandle', () => {
           id: 'table-2',
           meta: {},
           helpers: {
-            createScope: vi.fn((value) => ({ scopeValue: value }))
+            createScope: vi.fn((value) => ({ scopeValue: value })),
           },
-          events: { onPageChange: vi.fn() }
+          events: { onPageChange: vi.fn() },
         } as any,
         1,
         10,
@@ -169,18 +200,24 @@ describe('useTableHandle', () => {
         undefined,
         'local',
         undefined,
-        vi.fn()
+        vi.fn(),
       );
       return null;
     }
 
     render(
-      <ComponentRegistryContext.Provider value={{ register: (handle: any) => {
-        capturedHandle = handle;
-        return () => undefined;
-      } } as any}>
+      <ComponentRegistryContext.Provider
+        value={
+          {
+            register: (handle: any) => {
+              capturedHandle = handle;
+              return () => undefined;
+            },
+          } as any
+        }
+      >
         <Probe />
-      </ComponentRegistryContext.Provider>
+      </ComponentRegistryContext.Provider>,
     );
 
     expect(capturedHandle.capabilities.store).toBeUndefined();

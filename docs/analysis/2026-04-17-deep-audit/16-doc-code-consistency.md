@@ -8,6 +8,7 @@
 All issues were re-verified against the live repo. Results and remediation status below.
 
 ### [维度16] AGENTS 包清单未同步 `flux-renderers-form-advanced` — ✅ CONFIRMED, FIXED
+
 - **文档路径**: `AGENTS.md:9-30`, `AGENTS.md:32-49`
 - **代码路径**: `packages/flux-renderers-form-advanced/package.json:1-35`, `apps/playground/package.json:15-21`
 - **严重程度**: P2
@@ -18,6 +19,7 @@ All issues were re-verified against the live repo. Results and remediation statu
 - **修复**: 已在 AGENTS.md 包列表中添加 `@nop-chaos/flux-renderers-form-advanced`，依赖流中更新为 `flux-renderers-* (includes flux-renderers-form-advanced)`。
 
 ### [维度16] `flux-runtime-module-boundaries` 漏记 `form-store.ts` 的 surface store 归属 — ✅ CONFIRMED, FIXED
+
 - **文档路径**: `docs/architecture/flux-runtime-module-boundaries.md:171-188`
 - **代码路径**: `packages/flux-runtime/src/form-store.ts:206-273`
 - **严重程度**: P2
@@ -28,6 +30,7 @@ All issues were re-verified against the live repo. Results and remediation statu
 - **修复**: 已在文档的模块归属表中添加 "surface store state updates"。
 
 ### [维度16] `renderer-runtime` 的 React 合同描述落后于实际导出 — ✅ CONFIRMED, FIXED
+
 - **文档路径**: `docs/architecture/renderer-runtime.md:389-414`, `docs/architecture/renderer-runtime.md:686-701`
 - **代码路径**: `packages/flux-react/src/index.tsx:14-41`, `packages/flux-core/src/types/renderer-hooks.ts:120-144`
 - **严重程度**: P2
@@ -38,6 +41,7 @@ All issues were re-verified against the live repo. Results and remediation statu
 - **修复**: 已以 `renderer-hooks.ts` / `flux-react/src/index.tsx` 为准重写 hooks 列表，修正 `cid` 为 `cid?: number`，补充 `surfaceRuntime?: SurfaceRuntime` 到 `SchemaRendererProps`。
 
 ### [维度16] `terminology` 中对 `ResolvedNodeMeta` 的定义已过时 — ✅ CONFIRMED, FIXED
+
 - **文档路径**: `docs/references/terminology.md:79-90`
 - **代码路径**: `packages/flux-core/src/types/renderer-compiler.ts:21-30`
 - **严重程度**: P2
@@ -48,6 +52,7 @@ All issues were re-verified against the live repo. Results and remediation statu
 - **修复**: 已重写术语描述，列出所有实际字段，明确说明显示文本不属于此类型。
 
 ### [维度16] `form-validation` 仍在使用不存在的类型名 `CompiledValidationModel` — ✅ CONFIRMED, FIXED
+
 - **文档路径**: `docs/architecture/form-validation.md:125-130`
 - **代码路径**: `packages/flux-core/src/types/validation.ts:102-111`
 - **严重程度**: P2
@@ -58,6 +63,7 @@ All issues were re-verified against the live repo. Results and remediation statu
 - **修复**: 已将 `form-validation.md`、`form-validation-runtime-types.md`、`docs/index.md` 中的 `CompiledValidationModel` 统一改为 `CompiledFormValidationModel`。注意 `docs/analysis/` 和 `docs/logs/` 中的历史记录保持不变。
 
 ### [维度16] `field-binding-and-renderer-contract` 的代码锚点已失效 — ✅ CONFIRMED, FIXED
+
 - **文档路径**: `docs/architecture/field-binding-and-renderer-contract.md:22-34`
 - **代码路径**: `packages/flux-renderers-form-advanced/src/composite-field/composite-schemas.ts:1-40`
 - **严重程度**: P2
@@ -68,6 +74,7 @@ All issues were re-verified against the live repo. Results and remediation statu
 - **修复**: 已更新锚点到 `packages/flux-renderers-form-advanced/src/composite-field/composite-schemas.ts`。
 
 ### [维度16] `flow-designer/design` 仍引用不存在的旧示例路径 — ✅ CONFIRMED, FIXED
+
 - **文档路径**: `docs/architecture/flow-designer/design.md:12-18`
 - **代码路径**: 无（文档所述 `apps/main/src/pages/flow-editor` 在当前仓库不存在）
 - **严重程度**: P3
@@ -78,6 +85,7 @@ All issues were re-verified against the live repo. Results and remediation statu
 - **修复**: 已将失效路径改为 "当前位于 playground 体系"。
 
 ### [维度16] Plan 112 已标记 completed，但 closure 证据和校验清单未收口 — ✅ CONFIRMED, NOT FIXED (plan maintenance)
+
 - **文档路径**: `docs/plans/112-capability-projection-manifest-implementation-plan.md:144-175`
 - **代码路径**: `packages/flux-core/src/schema-diagnostics/manifest.ts:146`, `packages/flux-runtime/src/schema-compiler/host-action-validation.ts:129-296`, `packages/flow-designer-renderers/src/designer-manifest.ts:393-423`
 - **严重程度**: P2
@@ -86,6 +94,7 @@ All issues were re-verified against the live repo. Results and remediation statu
 - **处置**: 此为计划文档维护项，非代码缺陷，需要人工审阅后决策。不在本轮自动修复范围内。
 
 ### [维度16] Plan 113 已标记 completed，但执行清单与 live repo 明显不一致 — ✅ CONFIRMED, NOT FIXED (plan maintenance)
+
 - **文档路径**: `docs/plans/113-renderer-package-migration-plan.md:191-212`, `docs/plans/113-renderer-package-migration-plan.md:214-377`, `docs/plans/113-renderer-package-migration-plan.md:379-413`
 - **代码路径**: `packages/flux-renderers-form-advanced/src/index.tsx:24-27`, `packages/flux-renderers-form-advanced/src/composite-field/composite-schemas.ts:1-40`
 - **严重程度**: P2

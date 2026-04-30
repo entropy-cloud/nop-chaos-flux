@@ -1,5 +1,11 @@
 import type { ComponentType, ReactNode } from 'react';
-import type { ActionContext, ActionResult, ActionSchema, ActionScope, CompiledActionProgram } from './actions';
+import type {
+  ActionContext,
+  ActionResult,
+  ActionSchema,
+  ActionScope,
+  CompiledActionProgram,
+} from './actions';
 import type { AsyncOwnerDebugSnapshot, AsyncOwnerDebugState } from './async-governance';
 import type {
   CompiledApiConfig,
@@ -10,29 +16,49 @@ import type {
   ImportStack,
   ModuleCache,
   PreparedImportSpec,
-  SymbolInfo
+  SymbolInfo,
 } from './compilation';
 import type {
   CapabilityMethodContract,
   FluxValueShape,
   RendererAuthoringTransform,
   RendererSchemaValidator,
-  RendererHostContract
+  RendererHostContract,
 } from '../schema-diagnostics';
-import type { NodeInstance, NodeRuntimeState, ResolutionContext, TemplateNode } from './node-identity';
+import type {
+  NodeInstance,
+  NodeRuntimeState,
+  ResolutionContext,
+  TemplateNode,
+} from './node-identity';
 import type { ComponentHandleRegistry, ComponentTarget } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
 import type { ResolvedNodeMeta, ResolvedNodeProps, SchemaCompiler } from './renderer-compiler';
 import type { RenderFragmentOptions, RenderNodeInput, RenderRegionHandle } from './renderer-hooks';
 import type { RendererPlugin } from './renderer-plugin';
-import type { DataSourceController, DataSourceRegistration, FormLifecycleHandlers, FormRuntime, PageRuntime, ValidationScopeRuntime } from './runtime';
-import type { BaseSchema, SchemaFieldRule, SchemaInput, SchemaPath, ScopePolicy, SourceSchema, XuiImportSpec } from './schema';
+import type {
+  DataSourceController,
+  DataSourceRegistration,
+  FormLifecycleHandlers,
+  FormRuntime,
+  PageRuntime,
+  ValidationScopeRuntime,
+} from './runtime';
+import type {
+  BaseSchema,
+  SchemaFieldRule,
+  SchemaInput,
+  SchemaPath,
+  ScopePolicy,
+  SourceSchema,
+  XuiImportSpec,
+} from './schema';
 import type { CreateScopeOptions, ScopeRef } from './scope';
 import type {
   ChildValidationMode,
   CompiledFormValidationModel,
   ValidationOwnerBoundaryKind,
-  ValidationRule
+  ValidationRule,
 } from './validation';
 import type { CompiledTemplate } from './node-identity';
 
@@ -62,7 +88,10 @@ export interface RendererHelpers {
   render: (input: RenderNodeInput, options?: RenderFragmentOptions) => ReactNode;
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
-  dispatch: (action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+  dispatch: (
+    action: ActionSchema | ActionSchema[] | CompiledActionProgram,
+    ctx?: Partial<ActionContext>,
+  ) => Promise<ActionResult>;
   executeSource: (source: SourceSchema, options?: { scope?: ScopeRef }) => Promise<ActionResult>;
 }
 
@@ -107,7 +136,10 @@ export interface SourceRegistryDebugSnapshot {
   sources: SourceDebugEntry[];
 }
 
-export type RendererEventHandler = (event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+export type RendererEventHandler = (
+  event?: unknown,
+  ctx?: Partial<ActionContext>,
+) => Promise<ActionResult>;
 
 export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   id: string;
@@ -122,7 +154,10 @@ export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
   helpers: RendererHelpers;
 }
 
-export type RendererRendererClass = 'instance-renderer' | 'flux-owner-renderer' | 'domain-host-renderer';
+export type RendererRendererClass =
+  | 'instance-renderer'
+  | 'flux-owner-renderer'
+  | 'domain-host-renderer';
 
 export interface RendererPropContract {
   shape: FluxValueShape;
@@ -216,16 +251,26 @@ export interface RendererRuntime {
   plugins: readonly RendererPlugin[];
   importStack: ImportStack;
   compile(schema: SchemaInput): CompiledTemplate;
-  prepareSchema?(schema: SchemaInput, options?: {
-    schemaUrl?: string;
-  }): Promise<{
+  prepareSchema?(
+    schema: SchemaInput,
+    options?: {
+      schemaUrl?: string;
+    },
+  ): Promise<{
     preparedImports: ReadonlyMap<string, PreparedImportSpec>;
   }>;
   evaluate<T = unknown>(target: unknown, scope: ScopeRef): T;
   allocateMountedCid(): number;
-  resolveTarget(target: ComponentTarget, ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry }): NodeInstance | undefined;
+  resolveTarget(
+    target: ComponentTarget,
+    ctx: ResolutionContext & { componentRegistry?: ComponentHandleRegistry },
+  ): NodeInstance | undefined;
   resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeMeta;
-  resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeProps;
+  resolveNodeProps(
+    node: TemplateNode,
+    scope: ScopeRef,
+    state?: NodeRuntimeState,
+  ): ResolvedNodeProps;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
   createHostProjectionScope(input: {
     parentScope: ScopeRef;
@@ -234,7 +279,10 @@ export interface RendererRuntime {
     scopeLabel: string;
   }): ScopeRef;
   createActionScope(input?: { id?: string; parent?: ActionScope }): ActionScope;
-  createComponentHandleRegistry(input?: { id?: string; parent?: ComponentHandleRegistry }): ComponentHandleRegistry;
+  createComponentHandleRegistry(input?: {
+    id?: string;
+    parent?: ComponentHandleRegistry;
+  }): ComponentHandleRegistry;
   resolvePreparedImports(input: {
     imports?: readonly XuiImportSpec[];
     schemaUrl: string;
@@ -257,7 +305,10 @@ export interface RendererRuntime {
     actionScope?: ActionScope;
     schemaUrl: string;
   }): void;
-  dispatch(action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx: ActionContext): Promise<ActionResult>;
+  dispatch(
+    action: ActionSchema | ActionSchema[] | CompiledActionProgram,
+    ctx: ActionContext,
+  ): Promise<ActionResult>;
   executeSource(input: {
     source: SourceSchema;
     scope: ScopeRef;
@@ -289,15 +340,15 @@ export interface RendererRuntime {
     scope: ScopeRef;
     compiledSource: CompiledDataSource;
   }): DataSourceRegistration;
-  refreshDataSource(input: {
-    id: string;
-    scope?: ScopeRef;
-  }): Promise<boolean>;
+  refreshDataSource(input: { id: string; scope?: ScopeRef }): Promise<boolean>;
   registerReaction(input: {
     id: string;
     scope: ScopeRef;
     compiledReaction: CompiledReaction;
-    dispatch: (action: ActionSchema | ActionSchema[] | CompiledActionProgram, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+    dispatch: (
+      action: ActionSchema | ActionSchema[] | CompiledActionProgram,
+      ctx?: Partial<ActionContext>,
+    ) => Promise<ActionResult>;
   }): { id: string; dispose(): void };
   getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;
   getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;

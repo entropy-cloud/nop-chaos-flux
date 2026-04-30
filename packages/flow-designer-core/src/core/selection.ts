@@ -64,9 +64,7 @@ export function selectSingleEdge(
   };
 }
 
-export function clearSelectionState(
-  state: DesignerSelectionState,
-): DesignerSelectionState {
+export function clearSelectionState(state: DesignerSelectionState): DesignerSelectionState {
   if (state.selectedNodeIds.length === 0 && state.selectedEdgeIds.length === 0) {
     return state;
   }
@@ -177,7 +175,11 @@ export function selectActiveBranch(
   ownerNodeId: string,
   branchId: string | null,
 ): DesignerSelectionState {
-  if (state.selectedNodeIds.length === 1 && state.selectedNodeIds[0] === ownerNodeId && state.activeBranchId === branchId) {
+  if (
+    state.selectedNodeIds.length === 1 &&
+    state.selectedNodeIds[0] === ownerNodeId &&
+    state.activeBranchId === branchId
+  ) {
     return state;
   }
 

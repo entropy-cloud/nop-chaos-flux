@@ -6,7 +6,7 @@ import type {
   ModuleCache,
   RendererEnv,
   RendererRuntime,
-  XuiImportSpec
+  XuiImportSpec,
 } from '@nop-chaos/flux-core';
 import { createScopeRef } from '../scope';
 
@@ -14,10 +14,10 @@ function createMockModule(mod?: Partial<ImportedLibraryModule>): ImportedLibrary
   return {
     createNamespace: vi.fn(async () => ({
       kind: 'import' as const,
-      invoke: async () => ({ ok: true })
+      invoke: async () => ({ ok: true }),
     })),
     createExpressionHelpers: mod?.createExpressionHelpers,
-    ...mod
+    ...mod,
   };
 }
 
@@ -26,11 +26,17 @@ function createModuleCache(): ModuleCache {
   const pending = new Map<string, Promise<ImportedLibraryModule>>();
   return {
     get: (key: string) => cache.get(key),
-    set: (key: string, mod: ImportedLibraryModule) => { cache.set(key, mod); },
+    set: (key: string, mod: ImportedLibraryModule) => {
+      cache.set(key, mod);
+    },
     has: (key: string) => cache.has(key),
     getPending: (key: string) => pending.get(key),
-    setPending: (key: string, p: Promise<ImportedLibraryModule>) => { pending.set(key, p); },
-    removePending: (key: string) => { pending.delete(key); }
+    setPending: (key: string, p: Promise<ImportedLibraryModule>) => {
+      pending.set(key, p);
+    },
+    removePending: (key: string) => {
+      pending.delete(key);
+    },
   };
 }
 
@@ -43,25 +49,28 @@ function createMockActionScope(namespaces: string[] = []): ActionScope {
     registerNamespace: (alias: string) => {
       ns.add(alias);
       const key = `ns-${alias}`;
-      const release = () => { ns.delete(alias); releaseMap.delete(key); };
+      const release = () => {
+        ns.delete(alias);
+        releaseMap.delete(key);
+      };
       releaseMap.set(key, release);
       return release;
     },
     dispatch: async () => ({ ok: true }),
-    getNamespace: () => undefined
+    getNamespace: () => undefined,
   } as unknown as ActionScope;
 }
 
 function createMockRuntime(): RendererRuntime {
   return {
-    createActionScope: () => createMockActionScope()
+    createActionScope: () => createMockActionScope(),
   } as unknown as RendererRuntime;
 }
 
 function createMockEnv(): RendererEnv {
   return {
     fetcher: async () => ({ ok: true as const, status: 200, data: null as unknown as any }),
-    notify: () => {}
+    notify: () => {},
   };
 }
 
@@ -74,15 +83,24 @@ function createStackSetup() {
   const stack = createImportStack({
     moduleCache,
     getLoader: () => ({
-      load: async (_spec: XuiImportSpec) => loaderModule
+      load: async (_spec: XuiImportSpec) => loaderModule,
     }),
     getRuntime: () => runtime,
-    getEnv: () => env
+    getEnv: () => env,
   });
 
   const scope = createScopeRef({ id: 'test-scope', path: '$test', initialData: {} });
 
-  return { stack, moduleCache, env, runtime, scope, setLoaderModule: (m: ImportedLibraryModule) => { loaderModule = m; } };
+  return {
+    stack,
+    moduleCache,
+    env,
+    runtime,
+    scope,
+    setLoaderModule: (m: ImportedLibraryModule) => {
+      loaderModule = m;
+    },
+  };
 }
 
 describe('createImportStack', () => {
@@ -93,7 +111,7 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(frame).toBeUndefined();
     });
@@ -103,7 +121,7 @@ describe('createImportStack', () => {
       const frame = await stack.push({
         ownerNodeId: 'node-1',
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(frame).toBeUndefined();
     });
@@ -114,7 +132,7 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [{ from: 'lib-a', as: 'a' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(frame).toBeDefined();
       expect(frame!.entries['a']).toBeDefined();
@@ -128,7 +146,7 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [{ from: '  lib-a  ', as: '  a  ' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(frame!.entries['a']).toBeDefined();
       expect(frame!.entries['a'].spec.from).toBe('lib-a');
@@ -138,9 +156,12 @@ describe('createImportStack', () => {
       const { stack, scope } = createStackSetup();
       const frame = await stack.push({
         ownerNodeId: 'node-1',
-        imports: [{ from: '', as: 'a' }, { from: 'lib', as: '' }],
+        imports: [
+          { from: '', as: 'a' },
+          { from: 'lib', as: '' },
+        ],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(frame).toBeUndefined();
     });
@@ -150,10 +171,13 @@ describe('createImportStack', () => {
       await expect(
         stack.push({
           ownerNodeId: 'node-1',
-          imports: [{ from: 'lib-a', as: 'dup' }, { from: 'lib-b', as: 'dup' }],
+          imports: [
+            { from: 'lib-a', as: 'dup' },
+            { from: 'lib-b', as: 'dup' },
+          ],
           scope,
-          schemaUrl: '/schema.json'
-        })
+          schemaUrl: '/schema.json',
+        }),
       ).rejects.toThrow('Duplicate import alias in the same node boundary: dup');
     });
 
@@ -165,7 +189,7 @@ describe('createImportStack', () => {
         imports: [{ from: 'lib', as: 'myNs' }],
         actionScope,
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(actionScope.listNamespaces()).toContain('myNs');
     });
@@ -177,16 +201,16 @@ describe('createImportStack', () => {
       const stack2 = createImportStack({
         moduleCache,
         getLoader: () => ({
-          load: async () => createMockModule()
+          load: async () => createMockModule(),
         }),
         getRuntime: createMockRuntime,
-        getEnv: () => env
+        getEnv: () => env,
       });
       await stack2.push({
         ownerNodeId: 'node-1',
         imports: [{ from: './relative', as: 'rel' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(resolveImportUrl).toHaveBeenCalledWith('/schema.json', './relative', undefined);
     });
@@ -196,18 +220,20 @@ describe('createImportStack', () => {
       const stack = createImportStack({
         moduleCache,
         getLoader: () => ({
-          load: async () => { throw new Error('loader boom'); }
+          load: async () => {
+            throw new Error('loader boom');
+          },
         }),
         getRuntime: createMockRuntime,
-        getEnv: createMockEnv
+        getEnv: createMockEnv,
       });
       await expect(
         stack.push({
           ownerNodeId: 'node-1',
           imports: [{ from: 'lib', as: 'a' }],
           scope,
-          schemaUrl: '/schema.json'
-        })
+          schemaUrl: '/schema.json',
+        }),
       ).rejects.toThrow('Imported namespace a failed to load: loader boom');
     });
 
@@ -215,19 +241,19 @@ describe('createImportStack', () => {
       const { moduleCache, scope } = createStackSetup();
       const helpers = { compute: vi.fn(() => 42) };
       const mod = createMockModule({
-        createExpressionHelpers: vi.fn(async () => helpers)
+        createExpressionHelpers: vi.fn(async () => helpers),
       });
       const stack = createImportStack({
         moduleCache,
         getLoader: () => ({ load: async () => mod }),
         getRuntime: createMockRuntime,
-        getEnv: createMockEnv
+        getEnv: createMockEnv,
       });
       const frame = await stack.push({
         ownerNodeId: 'node-1',
         imports: [{ from: 'lib', as: 'a' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(frame!.entries['a'].expressionHelpers).toEqual(helpers);
     });
@@ -236,20 +262,20 @@ describe('createImportStack', () => {
       const { moduleCache, scope } = createStackSetup();
       const mod: ImportedLibraryModule = {
         createNamespace: vi.fn(async () => ({
-          invoke: async () => ({ ok: true })
-        }))
+          invoke: async () => ({ ok: true }),
+        })),
       };
       const stack = createImportStack({
         moduleCache,
         getLoader: () => ({ load: async () => mod }),
         getRuntime: createMockRuntime,
-        getEnv: createMockEnv
+        getEnv: createMockEnv,
       });
       const frame = await stack.push({
         ownerNodeId: 'node-1',
         imports: [{ from: 'lib', as: 'a' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect((frame!.entries['a'].actionProvider as any).kind).toBe('import');
     });
@@ -262,7 +288,7 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       } as any);
       expect(result).toBeUndefined();
     });
@@ -272,14 +298,16 @@ describe('createImportStack', () => {
       expect(() =>
         stack.installPrepared({
           ownerNodeId: 'node-1',
-          imports: [{
-            spec: { from: 'lib', as: 'a' },
-            resolvedSpec: { from: 'lib', as: 'a' },
-            staticMeta: undefined
-          }],
+          imports: [
+            {
+              spec: { from: 'lib', as: 'a' },
+              resolvedSpec: { from: 'lib', as: 'a' },
+              staticMeta: undefined,
+            },
+          ],
           scope,
-          schemaUrl: '/schema.json'
-        } as any)
+          schemaUrl: '/schema.json',
+        } as any),
       ).toThrow('Prepared import missing cached module for a');
     });
 
@@ -287,23 +315,25 @@ describe('createImportStack', () => {
       const { stack, moduleCache, scope } = createStackSetup();
       const provider = { kind: 'import' as const, invoke: async () => ({ ok: true }) };
       const mod: ImportedLibraryModule = {
-        createNamespace: vi.fn(() => provider)
+        createNamespace: vi.fn(() => provider),
       };
       moduleCache.set('{"from":"lib","options":null}', mod);
       const frame = stack.installPrepared({
         ownerNodeId: 'node-1',
-        imports: [{
-          spec: { from: 'lib', as: 'a' },
-          resolvedSpec: { from: 'lib', as: 'a' },
-          staticMeta: { some: 'meta' }
-        }],
+        imports: [
+          {
+            spec: { from: 'lib', as: 'a' },
+            resolvedSpec: { from: 'lib', as: 'a' },
+            staticMeta: { some: 'meta' },
+          },
+        ],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       } as any);
       expect(frame).toBeDefined();
       expect(frame!.entries['a'].actionProvider).toStrictEqual({
         ...provider,
-        kind: 'import'
+        kind: 'import',
       });
       expect(frame!.entries['a'].staticMeta).toEqual({ some: 'meta' });
     });
@@ -313,20 +343,22 @@ describe('createImportStack', () => {
       const mod: ImportedLibraryModule = {
         createNamespace: vi.fn(async () => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true })
-        }))
+          invoke: async () => ({ ok: true }),
+        })),
       };
       moduleCache.set('{"from":"lib","options":null}', mod);
       expect(() =>
         stack.installPrepared({
           ownerNodeId: 'node-1',
-          imports: [{
-            spec: { from: 'lib', as: 'a' },
-            resolvedSpec: { from: 'lib', as: 'a' }
-          }],
+          imports: [
+            {
+              spec: { from: 'lib', as: 'a' },
+              resolvedSpec: { from: 'lib', as: 'a' },
+            },
+          ],
           scope,
-          schemaUrl: '/schema.json'
-        } as any)
+          schemaUrl: '/schema.json',
+        } as any),
       ).toThrow('Prepared import a must install synchronously at render time');
     });
 
@@ -335,21 +367,23 @@ describe('createImportStack', () => {
       const mod: ImportedLibraryModule = {
         createNamespace: vi.fn(() => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true })
+          invoke: async () => ({ ok: true }),
         })),
-        createExpressionHelpers: vi.fn(async () => ({}))
+        createExpressionHelpers: vi.fn(async () => ({})),
       };
       moduleCache.set('{"from":"lib","options":null}', mod);
       expect(() =>
         stack.installPrepared({
           ownerNodeId: 'node-1',
-          imports: [{
-            spec: { from: 'lib', as: 'a' },
-            resolvedSpec: { from: 'lib', as: 'a' }
-          }],
+          imports: [
+            {
+              spec: { from: 'lib', as: 'a' },
+              resolvedSpec: { from: 'lib', as: 'a' },
+            },
+          ],
           scope,
-          schemaUrl: '/schema.json'
-        } as any)
+          schemaUrl: '/schema.json',
+        } as any),
       ).toThrow('Prepared import a must install synchronously at render time');
     });
 
@@ -358,8 +392,8 @@ describe('createImportStack', () => {
       const mod: ImportedLibraryModule = {
         createNamespace: vi.fn(() => ({
           kind: 'import' as const,
-          invoke: async () => ({ ok: true })
-        }))
+          invoke: async () => ({ ok: true }),
+        })),
       };
       moduleCache.set('{"from":"lib-a","options":null}', mod);
       moduleCache.set('{"from":"lib-b","options":null}', mod);
@@ -368,11 +402,11 @@ describe('createImportStack', () => {
           ownerNodeId: 'node-1',
           imports: [
             { spec: { from: 'lib-a', as: 'dup' }, resolvedSpec: { from: 'lib-a', as: 'dup' } },
-            { spec: { from: 'lib-b', as: 'dup' }, resolvedSpec: { from: 'lib-b', as: 'dup' } }
+            { spec: { from: 'lib-b', as: 'dup' }, resolvedSpec: { from: 'lib-b', as: 'dup' } },
           ],
           scope,
-          schemaUrl: '/schema.json'
-        } as any)
+          schemaUrl: '/schema.json',
+        } as any),
       ).toThrow('Duplicate import alias in the same node boundary: dup');
     });
   });
@@ -391,7 +425,7 @@ describe('createImportStack', () => {
         imports: [{ from: 'lib', as: 'a' }],
         actionScope,
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(actionScope.listNamespaces()).toContain('a');
       stack.pop(frame!.id);
@@ -412,7 +446,7 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [{ from: 'lib', as: 'a' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       const resolved = stack.resolveAlias('a');
       expect(resolved).toBeDefined();
@@ -425,14 +459,14 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [{ from: 'lib', as: 'parentNs' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       await stack.push({
         ownerNodeId: 'node-2',
         parentFrameId: parent!.id,
         imports: [{ from: 'lib2', as: 'childNs' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(stack.resolveAlias('childNs', parent!.id)).toBeUndefined();
     });
@@ -443,7 +477,7 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [{ from: 'lib', as: 'a' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(stack.resolveAlias('nonexistent')).toBeUndefined();
     });
@@ -461,7 +495,7 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [{ from: 'lib', as: 'demo' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       const bindings = stack.currentBindings();
       expect(bindings.$demo).toBeDefined();
@@ -473,7 +507,7 @@ describe('createImportStack', () => {
       const { stack, moduleCache } = createStackSetup();
       await stack.preload({
         imports: [{ from: 'lib', as: 'a' }],
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(moduleCache.get('{"from":"lib","options":null}')).toBeDefined();
       expect(stack.frames.length).toBe(0);
@@ -481,7 +515,9 @@ describe('createImportStack', () => {
 
     it('handles empty imports', async () => {
       const { stack } = createStackSetup();
-      await expect(stack.preload({ imports: [], schemaUrl: '/schema.json' })).resolves.toBeUndefined();
+      await expect(
+        stack.preload({ imports: [], schemaUrl: '/schema.json' }),
+      ).resolves.toBeUndefined();
     });
   });
 
@@ -492,13 +528,13 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [{ from: 'lib', as: 'a' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       await stack.push({
         ownerNodeId: 'node-2',
         imports: [{ from: 'lib2', as: 'b' }],
         scope,
-        schemaUrl: '/schema.json'
+        schemaUrl: '/schema.json',
       });
       expect(stack.frames.length).toBe(2);
       stack.dispose();
@@ -513,13 +549,13 @@ describe('createImportStack', () => {
         ownerNodeId: 'n1',
         imports: [{ from: 'lib', as: 'a' }],
         scope,
-        schemaUrl: '/s.json'
+        schemaUrl: '/s.json',
       });
       const f2 = await stack.push({
         ownerNodeId: 'n2',
         imports: [{ from: 'lib2', as: 'b' }],
         scope,
-        schemaUrl: '/s.json'
+        schemaUrl: '/s.json',
       });
       expect(stack.frames[0]).toBe(f1);
       expect(stack.frames[1]).toBe(f2);

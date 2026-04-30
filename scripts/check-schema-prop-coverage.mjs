@@ -29,8 +29,13 @@ const META_FIELDS = new Set(['id', 'className', 'visible', 'hidden', 'disabled',
 const LIFECYCLE_KEYS = new Set(['onMount', 'onUnmount']);
 const NAMESPACED_KEYS = new Set(['xui:imports', 'xui:actions']);
 const BASE_SCHEMA_OPTIONAL_KEYS = new Set([
-  'name', 'label', 'title', 'classAliases', 'frameWrap',
-  'validateOn', 'showErrorOn',
+  'name',
+  'label',
+  'title',
+  'classAliases',
+  'frameWrap',
+  'validateOn',
+  'showErrorOn',
 ]);
 const ALL_UNIVERSAL_KEYS = new Set([
   ...META_FIELDS,
@@ -65,8 +70,10 @@ function findMatchingBrace(content, openIndex) {
     const ch = content[i];
     const prev = i > 0 ? content[i - 1] : '';
     if ((ch === "'" || ch === '"' || ch === '`') && prev !== '\\') {
-      if (!inStr) { inStr = true; sch = ch; }
-      else if (ch === sch) inStr = false;
+      if (!inStr) {
+        inStr = true;
+        sch = ch;
+      } else if (ch === sch) inStr = false;
       continue;
     }
     if (inStr) continue;
@@ -171,9 +178,21 @@ function extractRenderersFromFile(content) {
 // ─── Phase 2: Scan test files ────────────────────────────────────────────────
 
 const ACTION_TYPES = new Set([
-  'ajax', 'setValue', 'setValues', 'submitForm', 'openDialog', 'openDrawer',
-  'closeDialog', 'closeDrawer', 'closeSurface', 'showToast', 'navigate',
-  'refreshTable', 'refreshSource', 'submit', 'source',
+  'ajax',
+  'setValue',
+  'setValues',
+  'submitForm',
+  'openDialog',
+  'openDrawer',
+  'closeDialog',
+  'closeDrawer',
+  'closeSurface',
+  'showToast',
+  'navigate',
+  'refreshTable',
+  'refreshSource',
+  'submit',
+  'source',
 ]);
 
 function extractObjectKeys(objText) {
@@ -213,12 +232,19 @@ function extractTestKeysFromFile(content) {
 
 async function walkTestFiles(dir, visitor) {
   let entries;
-  try { entries = await readdir(dir, { withFileTypes: true }); } catch { return; }
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
   for (const entry of entries) {
     const fp = join(dir, entry.name);
     if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.git') continue;
-    if (entry.isDirectory()) { await walkTestFiles(fp, visitor); continue; }
-    if (!TEST_EXTENSIONS.some(e => entry.name.endsWith(e))) continue;
+    if (entry.isDirectory()) {
+      await walkTestFiles(fp, visitor);
+      continue;
+    }
+    if (!TEST_EXTENSIONS.some((e) => entry.name.endsWith(e))) continue;
     try {
       const content = await readFile(fp, 'utf-8');
       await visitor(content, fp);
@@ -339,36 +365,45 @@ async function main() {
 
   // Output
   if (jsonOutput) {
-    const universalPct = ALL_UNIVERSAL_KEYS.size > 0
-      ? ((universalCovered.size / ALL_UNIVERSAL_KEYS.size) * 100).toFixed(1)
-      : '0.0';
-    const specificPct = totalSpecificDeclared > 0
-      ? ((totalSpecificCovered / totalSpecificDeclared) * 100).toFixed(1)
-      : '0.0';
+    const universalPct =
+      ALL_UNIVERSAL_KEYS.size > 0
+        ? ((universalCovered.size / ALL_UNIVERSAL_KEYS.size) * 100).toFixed(1)
+        : '0.0';
+    const specificPct =
+      totalSpecificDeclared > 0
+        ? ((totalSpecificCovered / totalSpecificDeclared) * 100).toFixed(1)
+        : '0.0';
     const totalDeclared = ALL_UNIVERSAL_KEYS.size + totalSpecificDeclared;
     const totalCovered = universalCovered.size + totalSpecificCovered;
     const totalUncovered = universalUncovered.size + totalSpecificUncovered;
-    console.log(JSON.stringify({
-      summary: {
-        totalDeclared,
-        totalCovered,
-        totalUncovered,
-        coveragePercent: totalDeclared > 0 ? ((totalCovered / totalDeclared) * 100).toFixed(1) : '0.0',
-        universal: {
-          declared: ALL_UNIVERSAL_KEYS.size,
-          covered: universalCovered.size,
-          uncovered: [...universalUncovered].sort(),
-          coveragePercent: universalPct,
+    console.log(
+      JSON.stringify(
+        {
+          summary: {
+            totalDeclared,
+            totalCovered,
+            totalUncovered,
+            coveragePercent:
+              totalDeclared > 0 ? ((totalCovered / totalDeclared) * 100).toFixed(1) : '0.0',
+            universal: {
+              declared: ALL_UNIVERSAL_KEYS.size,
+              covered: universalCovered.size,
+              uncovered: [...universalUncovered].sort(),
+              coveragePercent: universalPct,
+            },
+            rendererSpecific: {
+              declared: totalSpecificDeclared,
+              covered: totalSpecificCovered,
+              uncovered: totalSpecificUncovered,
+              coveragePercent: specificPct,
+            },
+          },
+          renderers: rendererResults,
         },
-        rendererSpecific: {
-          declared: totalSpecificDeclared,
-          covered: totalSpecificCovered,
-          uncovered: totalSpecificUncovered,
-          coveragePercent: specificPct,
-        },
-      },
-      renderers: rendererResults,
-    }, null, 2));
+        null,
+        2,
+      ),
+    );
   } else {
     const totalDeclared = ALL_UNIVERSAL_KEYS.size + totalSpecificDeclared;
     const totalCovered = universalCovered.size + totalSpecificCovered;
@@ -382,11 +417,21 @@ async function main() {
     console.log(`Uncovered:                 ${totalUncovered}`);
     console.log(`Coverage:                  ${pct}%`);
 
-    const uniPct = ALL_UNIVERSAL_KEYS.size > 0 ? ((universalCovered.size / ALL_UNIVERSAL_KEYS.size) * 100).toFixed(1) : '0.0';
-    const specPct = totalSpecificDeclared > 0 ? ((totalSpecificCovered / totalSpecificDeclared) * 100).toFixed(1) : '0.0';
+    const uniPct =
+      ALL_UNIVERSAL_KEYS.size > 0
+        ? ((universalCovered.size / ALL_UNIVERSAL_KEYS.size) * 100).toFixed(1)
+        : '0.0';
+    const specPct =
+      totalSpecificDeclared > 0
+        ? ((totalSpecificCovered / totalSpecificDeclared) * 100).toFixed(1)
+        : '0.0';
     console.log('');
-    console.log(`Layer 1 — Universal (BaseSchema):  ${universalCovered.size}/${ALL_UNIVERSAL_KEYS.size} = ${uniPct}%`);
-    console.log(`Layer 2 — Renderer-specific:       ${totalSpecificCovered}/${totalSpecificDeclared} = ${specPct}%`);
+    console.log(
+      `Layer 1 — Universal (BaseSchema):  ${universalCovered.size}/${ALL_UNIVERSAL_KEYS.size} = ${uniPct}%`,
+    );
+    console.log(
+      `Layer 2 — Renderer-specific:       ${totalSpecificCovered}/${totalSpecificDeclared} = ${specPct}%`,
+    );
     console.log('='.repeat(60));
 
     // Layer 1 report
@@ -400,11 +445,13 @@ async function main() {
     }
 
     // Layer 2 report
-    const withUncovered = rendererResults.filter(r => r.uncovered.length > 0);
+    const withUncovered = rendererResults.filter((r) => r.uncovered.length > 0);
     if (withUncovered.length === 0) {
       console.log('\n✅ Layer 2 — All renderer-specific properties covered.\n');
     } else {
-      console.log(`\n❌ Layer 2 — ${withUncovered.length} renderer(s) with uncovered properties:\n`);
+      console.log(
+        `\n❌ Layer 2 — ${withUncovered.length} renderer(s) with uncovered properties:\n`,
+      );
       for (const r of withUncovered) {
         const rp = r.declared > 0 ? ((r.covered / r.declared) * 100).toFixed(0) : '0';
         console.log(`  ${r.type} (${r.covered}/${r.declared} = ${rp}%)`);
@@ -435,7 +482,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error('Error:', error);
   process.exit(1);
 });

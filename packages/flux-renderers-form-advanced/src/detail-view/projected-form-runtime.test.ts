@@ -163,7 +163,7 @@ describe('projected form runtime helpers', () => {
       expect.objectContaining({
         path: 'profile.filters',
         childPaths: ['child.left', 'child.right'],
-      })
+      }),
     );
     expect(parentForm.appendValue).toHaveBeenCalledWith('profile.items', { id: 1 });
     expect(parentForm.removeValue).toHaveBeenCalledWith('profile.items', 0);

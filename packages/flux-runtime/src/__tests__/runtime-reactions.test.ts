@@ -11,7 +11,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ count: 1 });
     const updates: string[] = [];
@@ -19,49 +19,57 @@ describe('createRendererRuntime', () => {
     const first = runtime.registerReaction({
       id: 'count-reaction',
       scope: page.scope,
-      compiledReaction: compileReaction('count-reaction', {
-        type: 'reaction',
-        watch: '${count}',
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'message',
-            value: 'first:${count}'
-          }
-        }
-      }, expressionCompiler),
+      compiledReaction: compileReaction(
+        'count-reaction',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'message',
+              value: 'first:${count}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
       dispatch: async (action, ctx) => {
         updates.push('first');
         return runtime.dispatch(action, {
           runtime,
           scope: ctx?.scope ?? page.scope,
-          page
+          page,
         });
-      }
+      },
     });
 
     const second = runtime.registerReaction({
       id: 'count-reaction',
       scope: page.scope,
-      compiledReaction: compileReaction('count-reaction', {
-        type: 'reaction',
-        watch: '${count}',
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'message',
-            value: 'second:${count}'
-          }
-        }
-      }, expressionCompiler),
+      compiledReaction: compileReaction(
+        'count-reaction',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'message',
+              value: 'second:${count}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
       dispatch: async (action, ctx) => {
         updates.push('second');
         return runtime.dispatch(action, {
           runtime,
           scope: ctx?.scope ?? page.scope,
-          page
+          page,
         });
-      }
+      },
     });
 
     page.scope.update('count', 2);
@@ -80,30 +88,35 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ count: 1 });
 
     const registration = runtime.registerReaction({
       id: 'debug-reaction',
       scope: page.scope,
-      compiledReaction: compileReaction('debug-reaction', {
-        type: 'reaction',
-        watch: '${count}',
-        immediate: true,
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'message',
-            value: 'count:${count}'
-          }
-        }
-      }, expressionCompiler),
-      dispatch: (action, ctx) => runtime.dispatch(action, {
-        runtime,
-        scope: ctx?.scope ?? page.scope,
-        page
-      })
+      compiledReaction: compileReaction(
+        'debug-reaction',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          immediate: true,
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'message',
+              value: 'count:${count}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
+      dispatch: (action, ctx) =>
+        runtime.dispatch(action, {
+          runtime,
+          scope: ctx?.scope ?? page.scope,
+          page,
+        }),
     });
 
     await vi.waitFor(() => {
@@ -118,9 +131,9 @@ describe('createRendererRuntime', () => {
           immediate: true,
           fireCount: 1,
           disposed: false,
-          dependencies: ['count']
-        })
-      ]
+          dependencies: ['count'],
+        }),
+      ],
     });
 
     registration.dispose();
@@ -131,30 +144,35 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ count: 0, message: 'start' });
 
     const registration = runtime.registerReaction({
       id: 'debounced-reaction',
       scope: page.scope,
-      compiledReaction: compileReaction('debounced-reaction', {
-        type: 'reaction',
-        watch: '${count}',
-        debounce: 20,
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'message',
-            value: 'count:${count}'
-          }
-        }
-      }, expressionCompiler),
-      dispatch: (action, ctx) => runtime.dispatch(action, {
-        runtime,
-        scope: ctx?.scope ?? page.scope,
-        page
-      })
+      compiledReaction: compileReaction(
+        'debounced-reaction',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          debounce: 20,
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'message',
+              value: 'count:${count}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
+      dispatch: (action, ctx) =>
+        runtime.dispatch(action, {
+          runtime,
+          scope: ctx?.scope ?? page.scope,
+          page,
+        }),
     });
 
     try {
@@ -174,7 +192,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ count: 0 });
     const dispatches: number[] = [];
@@ -182,25 +200,29 @@ describe('createRendererRuntime', () => {
     const registration = runtime.registerReaction({
       id: 'async-reaction',
       scope: page.scope,
-      compiledReaction: compileReaction('async-reaction', {
-        type: 'reaction',
-        watch: '${count}',
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'message',
-            value: 'count:${count}'
-          }
-        }
-      }, expressionCompiler),
+      compiledReaction: compileReaction(
+        'async-reaction',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'message',
+              value: 'count:${count}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
       dispatch: (action, ctx) => {
         dispatches.push(Number(page.scope.get('count') ?? 0));
         return runtime.dispatch(action, {
           runtime,
           scope: ctx?.scope ?? page.scope,
-          page
+          page,
         });
-      }
+      },
     });
 
     try {
@@ -227,50 +249,54 @@ describe('createRendererRuntime', () => {
       env: {
         ...env,
         notify,
-        monitor: { onError }
+        monitor: { onError },
       },
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ count: 0 });
 
     runtime.registerReaction({
       id: 'bounded-reaction',
       scope: page.scope,
-      compiledReaction: compileReaction('bounded-reaction', {
-        type: 'reaction',
-        watch: '${count}',
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'count',
-            value: '${count + 1}'
-          }
-        }
-      }, expressionCompiler),
-      dispatch: (action, ctx) => runtime.dispatch(action, {
-        runtime,
-        scope: ctx?.scope ?? page.scope,
-        page
-      })
+      compiledReaction: compileReaction(
+        'bounded-reaction',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'count',
+              value: '${count + 1}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
+      dispatch: (action, ctx) =>
+        runtime.dispatch(action, {
+          runtime,
+          scope: ctx?.scope ?? page.scope,
+          page,
+        }),
     });
 
     page.scope.update('count', 1);
 
     await vi.waitFor(() => {
-      expect(notify).toHaveBeenCalledWith(
-        'warning',
-        expect.stringContaining('bounded-reaction')
-      );
+      expect(notify).toHaveBeenCalledWith('warning', expect.stringContaining('bounded-reaction'));
     });
 
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-      phase: 'action',
-      details: expect.objectContaining({
-        reason: 'reaction-fire-count-limit',
-        reactionId: 'bounded-reaction',
-        maxFireCount: 10
-      })
-    }));
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 'action',
+        details: expect.objectContaining({
+          reason: 'reaction-fire-count-limit',
+          reactionId: 'bounded-reaction',
+          maxFireCount: 10,
+        }),
+      }),
+    );
     expect(runtime.getReactionDebugSnapshot?.()).toEqual({ reactions: [] });
   });
 
@@ -278,31 +304,36 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler
+      expressionCompiler,
     });
     const page = runtime.createPageRuntime({ count: 1 });
 
     const registration = runtime.registerReaction({
       id: 'reaction-bindings',
       scope: page.scope,
-      compiledReaction: compileReaction('reaction-bindings', {
-        type: 'reaction',
-        watch: '${count}',
-        actions: {
-          action: 'setValue',
-          args: {
-            path: 'message',
-            value: '${value}:${prev}:${changed}:${changedPaths[0]}'
-          }
-        }
-      }, expressionCompiler),
-      dispatch: (action, ctx) => runtime.dispatch(action, {
-        runtime,
-        scope: ctx?.scope ?? page.scope,
-        page,
-        event: ctx?.event,
-        evaluationBindings: ctx?.evaluationBindings
-      })
+      compiledReaction: compileReaction(
+        'reaction-bindings',
+        {
+          type: 'reaction',
+          watch: '${count}',
+          actions: {
+            action: 'setValue',
+            args: {
+              path: 'message',
+              value: '${value}:${prev}:${changed}:${changedPaths[0]}',
+            },
+          },
+        },
+        expressionCompiler,
+      ),
+      dispatch: (action, ctx) =>
+        runtime.dispatch(action, {
+          runtime,
+          scope: ctx?.scope ?? page.scope,
+          page,
+          event: ctx?.event,
+          evaluationBindings: ctx?.evaluationBindings,
+        }),
     });
 
     try {
@@ -315,5 +346,4 @@ describe('createRendererRuntime', () => {
       registration.dispose();
     }
   });
-
 });

@@ -41,7 +41,9 @@ test('debug collapsible state', async ({ page }) => {
 
   // Check if React re-rendered at all
   const allTestIds = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll('[data-testid]')).map(el => el.getAttribute('data-testid'));
+    return Array.from(document.querySelectorAll('[data-testid]')).map((el) =>
+      el.getAttribute('data-testid'),
+    );
   });
   console.log('ALL TESTIDS:', allTestIds);
 });

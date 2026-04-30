@@ -9,7 +9,7 @@ function resolveChromiumExecutablePath() {
         'C:/Program Files/Google/Chrome/Application/chrome.exe',
         'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
         'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
-        'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
+        'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
       ]
     : [];
 
@@ -21,11 +21,17 @@ function resolveChromiumChannel() {
     return undefined;
   }
 
-  if (existsSync('C:/Program Files/Google/Chrome/Application/chrome.exe') || existsSync('C:/Program Files (x86)/Google/Chrome/Application/chrome.exe')) {
+  if (
+    existsSync('C:/Program Files/Google/Chrome/Application/chrome.exe') ||
+    existsSync('C:/Program Files (x86)/Google/Chrome/Application/chrome.exe')
+  ) {
     return 'chrome' as const;
   }
 
-  if (existsSync('C:/Program Files/Microsoft/Edge/Application/msedge.exe') || existsSync('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe')) {
+  if (
+    existsSync('C:/Program Files/Microsoft/Edge/Application/msedge.exe') ||
+    existsSync('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe')
+  ) {
     return 'msedge' as const;
   }
 
@@ -45,7 +51,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4175',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
   },
   projects: [
     {
@@ -54,17 +60,17 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         ...(chromiumChannel
           ? {
-              channel: chromiumChannel
+              channel: chromiumChannel,
             }
           : chromiumExecutablePath
-          ? {
-              launchOptions: {
-                executablePath: chromiumExecutablePath
+            ? {
+                launchOptions: {
+                  executablePath: chromiumExecutablePath,
+                },
               }
-            }
-          : {})
-      }
-    }
+            : {}),
+      },
+    },
   ],
   webServer: {
     command: isWin
@@ -72,6 +78,6 @@ export default defineConfig({
       : 'pnpm --filter @nop-chaos/flux-playground dev --host 127.0.0.1 --port 4175 --strictPort',
     url: 'http://127.0.0.1:4175',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000
-  }
+    timeout: 120_000,
+  },
 });

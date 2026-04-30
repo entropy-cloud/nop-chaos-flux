@@ -16,6 +16,7 @@
 ## Retained Findings
 
 ### [Dimension05] `useCurrentFormState` still wakes field-level selectors through whole-store subscription
+
 - **Status**: Downgraded and retained
 - **Files**:
   - `packages/flux-react/src/hooks.ts:225-241`
@@ -26,25 +27,29 @@
 - **Current scope**: `form?.store.subscribe` + `form?.store.getState()` subscribe to the full form store.
 - **Actual need**: Many runtime call sites only read one field value or one field presentation slice.
 - **Evidence**:
+
 ```ts
 // packages/flux-react/src/hooks.ts:232-241
 const subscribe = useMemo(
-  () => (enabled ? form?.store.subscribe ?? (() => () => undefined) : () => () => undefined),
-  [enabled, form]
+  () => (enabled ? (form?.store.subscribe ?? (() => () => undefined)) : () => () => undefined),
+  [enabled, form],
 );
 const getSnapshot = useMemo(
-  () => (enabled ? () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE),
-  [enabled, form]
+  () =>
+    enabled ? () => form?.store.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE,
+  [enabled, form],
 );
 return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, equalityFn);
 ```
+
 ```ts
 // packages/flux-renderers-form/src/field-utils.tsx:75-80
 const formValue = useCurrentFormState(
   currentForm ? (state) => (name ? getIn(state.values, name) : state.values) : () => UNUSED_VALUE,
-  eq
+  eq,
 );
 ```
+
 ```ts
 // packages/flux-renderers-form/src/field-utils.tsx:368-390
 const currentPresentation = useCurrentFormState(
@@ -55,10 +60,12 @@ const currentPresentation = useCurrentFormState(
   (left, right) => ...
 );
 ```
+
 - **Risk**: The equality function suppresses many rerenders, but unrelated form updates still wake these selectors and recompute them. This keeps the codebase short of the P7 per-path target on large forms.
 - **Independent review outcome**: Keep as a performance debt, not a high-severity correctness bug. The current implementation is partially mitigated by `useSyncExternalStoreWithSelector` equality checks and existing per-path hooks for field-state/error reads.
 
 ### [Dimension05] Condition builder equality uses `JSON.stringify` inside the field subscription path
+
 - **Status**: Retained
 - **Files**:
   - `packages/flux-renderers-form-advanced/src/condition-builder/condition-builder.tsx:48-52`
@@ -69,6 +76,7 @@ const currentPresentation = useCurrentFormState(
 - **Current scope**: Whole-form subscription path via `useBoundFieldValue` -> `useCurrentFormState`.
 - **Actual need**: Equality for the current condition-tree field only.
 - **Evidence**:
+
 ```ts
 // packages/flux-renderers-form-advanced/src/condition-builder/condition-builder.tsx:48-52
 const { currentForm, value, handlers, presentation } = useFormFieldController(name, {
@@ -77,6 +85,7 @@ const { currentForm, value, handlers, presentation } = useFormFieldController(na
   areValuesEqual: groupValuesEqual,
 });
 ```
+
 ```ts
 // packages/flux-renderers-form-advanced/src/condition-builder/utils.ts:18-20
 export function groupValuesEqual(a: unknown, b: unknown): boolean {
@@ -84,6 +93,7 @@ export function groupValuesEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 ```
+
 - **Risk**: Condition-builder values are recursive trees. Any unrelated form-store update can still trigger deep serialization work in the equality function, making condition editing and validation paths more expensive than they need to be.
 - **Independent review outcome**: Keep. This is a real hot-path deep-comparison issue, not just a theoretical style preference.
 

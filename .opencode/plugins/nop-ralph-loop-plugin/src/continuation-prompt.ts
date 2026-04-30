@@ -1,8 +1,8 @@
-import type { RalphLoopState } from "./types"
-import { SYSTEM_DIRECTIVE_PREFIX } from "./constants"
+import type { RalphLoopState } from './types';
+import { SYSTEM_DIRECTIVE_PREFIX } from './constants';
 
 function getMaxIterationsLabel(state: RalphLoopState): string {
-  return typeof state.max_iterations === "number" ? String(state.max_iterations) : "unbounded"
+  return typeof state.max_iterations === 'number' ? String(state.max_iterations) : 'unbounded';
 }
 
 const CONTINUATION_PROMPT = `${SYSTEM_DIRECTIVE_PREFIX} - RALPH LOOP {{ITERATION}}/{{MAX}}]
@@ -16,7 +16,7 @@ IMPORTANT:
 - Do not stop until the task is truly done
 
 Original task:
-{{PROMPT}}`
+{{PROMPT}}`;
 
 const ULTRAWORK_VERIFICATION_PROMPT = `${SYSTEM_DIRECTIVE_PREFIX} - ULTRAWORK LOOP VERIFICATION {{ITERATION}}/{{MAX}}]
 
@@ -29,7 +29,7 @@ REQUIRED NOW:
 - If Oracle does not verify, continue fixing the task and do not consider it complete
 
 Original task:
-{{PROMPT}}`
+{{PROMPT}}`;
 
 const ULTRAWORK_VERIFICATION_FAILED_PROMPT = `${SYSTEM_DIRECTIVE_PREFIX} - ULTRAWORK LOOP VERIFICATION FAILED {{ITERATION}}/{{MAX}}]
 
@@ -43,28 +43,28 @@ REQUIRED NOW:
 - Only when the work is ready for review again, output: <promise>{{PROMISE}}</promise>
 
 Original task:
-{{PROMPT}}`
+{{PROMPT}}`;
 
 export function buildContinuationPrompt(state: RalphLoopState): string {
-  const template = state.verification_pending
-    ? ULTRAWORK_VERIFICATION_PROMPT
-    : CONTINUATION_PROMPT
+  const template = state.verification_pending ? ULTRAWORK_VERIFICATION_PROMPT : CONTINUATION_PROMPT;
   const continuationPrompt = template
-    .replace("{{ITERATION}}", String(state.iteration))
-    .replace("{{MAX}}", getMaxIterationsLabel(state))
-    .replace("{{INITIAL_PROMISE}}", state.initial_completion_promise ?? state.completion_promise)
-    .replace("{{PROMISE}}", state.completion_promise)
-    .replace("{{PROMPT}}", state.prompt)
+    .replace('{{ITERATION}}', String(state.iteration))
+    .replace('{{MAX}}', getMaxIterationsLabel(state))
+    .replace('{{INITIAL_PROMISE}}', state.initial_completion_promise ?? state.completion_promise)
+    .replace('{{PROMISE}}', state.completion_promise)
+    .replace('{{PROMPT}}', state.prompt);
 
-  return state.ultrawork ? `ultrawork ${continuationPrompt}` : continuationPrompt
+  return state.ultrawork ? `ultrawork ${continuationPrompt}` : continuationPrompt;
 }
 
 export function buildVerificationFailurePrompt(state: RalphLoopState): string {
-  const continuationPrompt = ULTRAWORK_VERIFICATION_FAILED_PROMPT
-    .replace("{{ITERATION}}", String(state.iteration))
-    .replace("{{MAX}}", getMaxIterationsLabel(state))
-    .replace("{{PROMISE}}", state.completion_promise)
-    .replace("{{PROMPT}}", state.prompt)
+  const continuationPrompt = ULTRAWORK_VERIFICATION_FAILED_PROMPT.replace(
+    '{{ITERATION}}',
+    String(state.iteration),
+  )
+    .replace('{{MAX}}', getMaxIterationsLabel(state))
+    .replace('{{PROMISE}}', state.completion_promise)
+    .replace('{{PROMPT}}', state.prompt);
 
-  return state.ultrawork ? `ultrawork ${continuationPrompt}` : continuationPrompt
+  return state.ultrawork ? `ultrawork ${continuationPrompt}` : continuationPrompt;
 }

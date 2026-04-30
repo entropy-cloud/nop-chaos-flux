@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-04
 
-
 > Date: 2026-03-31
 > Status: Completed on 2026-04-04
 > Triggered by: `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md`
@@ -43,21 +42,21 @@ Add `frameWrap` to `BaseSchema` as an optional per-instance override for FieldFr
 frameWrap?: boolean | 'label' | 'group' | 'none';
 ```
 
-| `frameWrap` value | Behavior |
-|---|---|
-| unset (undefined) | Follow renderer definition's `wrap` (current default) |
-| `true` / `'label'` | Force FieldFrame with `<label>` layout |
-| `'group'` | Force FieldFrame with `<fieldset>` layout |
-| `false` / `'none'` | Skip FieldFrame entirely |
+| `frameWrap` value  | Behavior                                              |
+| ------------------ | ----------------------------------------------------- |
+| unset (undefined)  | Follow renderer definition's `wrap` (current default) |
+| `true` / `'label'` | Force FieldFrame with `<label>` layout                |
+| `'group'`          | Force FieldFrame with `<fieldset>` layout             |
+| `false` / `'none'` | Skip FieldFrame entirely                              |
 
 ### Semantic boundary: `wrap` vs `frameWrap`
 
-| Aspect | `wrap` (RendererDefinition) | `frameWrap` (BaseSchema) |
-|---|---|---|
-| Level | Registration-time, per renderer type | Per schema instance |
-| Meaning | "This renderer is designed to work inside FieldFrame" | "This instance wants/doesn't want FieldFrame" |
-| Override | Cannot be changed per instance | Overrides `wrap` for this instance |
-| When `wrap: false` | Renderer is NOT FieldFrame-compatible | `frameWrap: true` should be **ignored** — the renderer hasn't opted into FieldFrame semantics |
+| Aspect             | `wrap` (RendererDefinition)                           | `frameWrap` (BaseSchema)                                                                      |
+| ------------------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Level              | Registration-time, per renderer type                  | Per schema instance                                                                           |
+| Meaning            | "This renderer is designed to work inside FieldFrame" | "This instance wants/doesn't want FieldFrame"                                                 |
+| Override           | Cannot be changed per instance                        | Overrides `wrap` for this instance                                                            |
+| When `wrap: false` | Renderer is NOT FieldFrame-compatible                 | `frameWrap: true` should be **ignored** — the renderer hasn't opted into FieldFrame semantics |
 
 **Key rule**: `frameWrap` can only **suppress** or **restyle** wrapping, never **enable** it for a renderer that declared `wrap: false`. A renderer must declare `wrap: true` to signal FieldFrame compatibility before `frameWrap` can customize it.
 
@@ -108,6 +107,7 @@ The compiler or `NodeRenderer` reads `schema.frameWrap` directly (it is on the r
 File: `packages/flux-react/src/node-renderer.tsx`
 
 Current logic (line 289):
+
 ```typescript
 if (props.node.component.wrap) {
   return <FieldFrame ...>{element}</FieldFrame>
@@ -115,6 +115,7 @@ if (props.node.component.wrap) {
 ```
 
 New logic:
+
 ```typescript
 const shouldWrap = resolveShouldWrap(props.node.component.wrap, props.node.schema.frameWrap);
 
@@ -125,10 +126,11 @@ if (shouldWrap !== 'none') {
 ```
 
 Helper function (can be inline or extracted):
+
 ```typescript
 function resolveShouldWrap(
   definitionWrap: boolean | undefined,
-  schemaFrameWrap: boolean | 'label' | 'group' | 'none' | undefined
+  schemaFrameWrap: boolean | 'label' | 'group' | 'none' | undefined,
 ): 'label' | 'group' | 'none' {
   if (!definitionWrap) return 'none';
 
@@ -161,21 +163,21 @@ Add a renderer using `frameWrap: false` to demonstrate the feature. Code-editor 
 
 ### Must update (directly affected)
 
-| Doc | What to change |
-|---|---|
-| `docs/architecture/field-frame.md` | Document `frameWrap` as the per-instance control for FieldFrame wrapping. Update the "Opt-in per control" section and the AMIS comparison table row `wrap: false`. Add `frameWrap` to the usage examples. |
-| `docs/architecture/renderer-runtime.md` | Document the `frameWrap` resolution logic in the renderer component contract section. Mention it as a schema-level override that sits alongside renderer definition's `wrap`. |
-| `docs/references/renderer-interfaces.md` | Add `frameWrap` to the `BaseSchema` field listing in the Core Schema Types section. |
-| `docs/references/flux-json-conventions.md` | Add `frameWrap` as a recognized schema attribute with its allowed values and semantics. |
-| `docs/references/maintenance-checklist.md` | Add a change trigger entry for `frameWrap` / FieldFrame wrapping changes. |
-| `docs/architecture/field-metadata-slot-modeling.md` | Mention `frameWrap` as a way to opt out of field chrome (label, error, etc.) at the schema level. |
+| Doc                                                 | What to change                                                                                                                                                                                            |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/field-frame.md`                  | Document `frameWrap` as the per-instance control for FieldFrame wrapping. Update the "Opt-in per control" section and the AMIS comparison table row `wrap: false`. Add `frameWrap` to the usage examples. |
+| `docs/architecture/renderer-runtime.md`             | Document the `frameWrap` resolution logic in the renderer component contract section. Mention it as a schema-level override that sits alongside renderer definition's `wrap`.                             |
+| `docs/references/renderer-interfaces.md`            | Add `frameWrap` to the `BaseSchema` field listing in the Core Schema Types section.                                                                                                                       |
+| `docs/references/flux-json-conventions.md`          | Add `frameWrap` as a recognized schema attribute with its allowed values and semantics.                                                                                                                   |
+| `docs/references/maintenance-checklist.md`          | Add a change trigger entry for `frameWrap` / FieldFrame wrapping changes.                                                                                                                                 |
+| `docs/architecture/field-metadata-slot-modeling.md` | Mention `frameWrap` as a way to opt out of field chrome (label, error, etc.) at the schema level.                                                                                                         |
 
 ### Should update (contextual)
 
-| Doc | What to change |
-|---|---|
+| Doc                                                                          | What to change                                                                      |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `docs/bugs/19-code-editor-label-click-forwarding-triggers-fullscreen-fix.md` | Add note: code-editor 已通过 `<span role="button">` 修复，不需要 `frameWrap` 迁移。 |
-| `docs/logs/index.md` | Entry when this plan is implemented. |
+| `docs/logs/index.md`                                                         | Entry when this plan is implemented.                                                |
 
 ## 4. Scope and Risk
 
@@ -197,5 +199,3 @@ Add a renderer using `frameWrap: false` to demonstrate the feature. Code-editor 
 - Adding `frameWrap` to `RendererDefinition` (stays schema-only)
 - Any changes to form validation or field state management
 - Migrating code-editor to use `frameWrap` (already fixed via `<span role="button">`)
-
-

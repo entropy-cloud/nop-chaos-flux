@@ -33,40 +33,40 @@
 
 ## Owner Taxonomy
 
-| Owner kind | Typical examples | Owns what | External read surface | Local binding direction |
-| --- | --- | --- | --- | --- |
-| `Producer Owner` | `data-source`, options loader, autocomplete loader | `loading`, `ready`, `stale`, `error`, freshness | `statusPath` | usually none |
-| `Semantic Lifecycle Owner` | `form submit`, future dialog confirm, future wizard step commit | `submitting`, `validating`, semantic success/failure/cancelled | `statusPath` | `$form` when subtree-local demand is strong |
-| `Interaction Owner` | `table`, `tabs`, future wizard step switching | active/selected/current interaction state | optional `statusPath` | future `$table` / `$tabs` only if justified |
-| `Surface Owner` | `dialog`, `drawer`, future sheet-if-surface | `open`, `active`, `opening`, `closing` | `statusPath` | prefer shared `$surface` over `$dialog` / `$drawer` |
-| `Domain Host Owner` | `designer-page`, `spreadsheet-page`, `report-designer-page` | readonly host snapshot fields plus domain session summary | optional `statusPath` | internal reads use `Host Projection`, not `$designer` / `$spreadsheet` by default |
-| `Shell Owner` | `page` | shell-level lifecycle such as initializing/refreshing/route readiness | `statusPath` | future `$page` only if page lifecycle becomes schema-visible |
-| `Explicit Tracked Operation` | bulk delete, export, arbitrary async graph | tracked pending/result state for non-natural owners | explicit published summary path | none by default |
+| Owner kind                   | Typical examples                                                | Owns what                                                             | External read surface           | Local binding direction                                                           |
+| ---------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------- |
+| `Producer Owner`             | `data-source`, options loader, autocomplete loader              | `loading`, `ready`, `stale`, `error`, freshness                       | `statusPath`                    | usually none                                                                      |
+| `Semantic Lifecycle Owner`   | `form submit`, future dialog confirm, future wizard step commit | `submitting`, `validating`, semantic success/failure/cancelled        | `statusPath`                    | `$form` when subtree-local demand is strong                                       |
+| `Interaction Owner`          | `table`, `tabs`, future wizard step switching                   | active/selected/current interaction state                             | optional `statusPath`           | future `$table` / `$tabs` only if justified                                       |
+| `Surface Owner`              | `dialog`, `drawer`, future sheet-if-surface                     | `open`, `active`, `opening`, `closing`                                | `statusPath`                    | prefer shared `$surface` over `$dialog` / `$drawer`                               |
+| `Domain Host Owner`          | `designer-page`, `spreadsheet-page`, `report-designer-page`     | readonly host snapshot fields plus domain session summary             | optional `statusPath`           | internal reads use `Host Projection`, not `$designer` / `$spreadsheet` by default |
+| `Shell Owner`                | `page`                                                          | shell-level lifecycle such as initializing/refreshing/route readiness | `statusPath`                    | future `$page` only if page lifecycle becomes schema-visible                      |
+| `Explicit Tracked Operation` | bulk delete, export, arbitrary async graph                      | tracked pending/result state for non-natural owners                   | explicit published summary path | none by default                                                                   |
 
 ## Classification Heuristics
 
 遇到一个新组件时，按下面顺序判断：
 
 1. 它是否主要生产值或请求结果。
-是的话，优先归 `Producer Owner`。
+   是的话，优先归 `Producer Owner`。
 
 2. 它是否拥有明确的业务生命周期入口。
-是的话，优先归 `Semantic Lifecycle Owner`。
+   是的话，优先归 `Semantic Lifecycle Owner`。
 
 3. 它是否主要维护当前选中项、当前步骤、当前分页、展开态这类 UI 交互状态。
-是的话，优先归 `Interaction Owner`。
+   是的话，优先归 `Interaction Owner`。
 
 4. 它是否主要表现为一个弹层或浮层表面。
-是的话，优先归 `Surface Owner`。
+   是的话，优先归 `Surface Owner`。
 
 5. 它是否宿主化了一个 domain runtime/bridge，并通过固定 host scope + namespaced actions 暴露能力。
-是的话，优先归 `Domain Host Owner`。
+   是的话，优先归 `Domain Host Owner`。
 
 6. 它是否只是页面壳层本身。
-是的话，才归 `Shell Owner`。
+   是的话，才归 `Shell Owner`。
 
 7. 如果以上都不自然，但仍需要作者可见的 pending/result。
-这时才进入 `Explicit Tracked Operation`。
+   这时才进入 `Explicit Tracked Operation`。
 
 ## Read Surfaces
 
@@ -244,32 +244,32 @@ future `sheet` 的规则不是按名字命名，而是先归类：
 
 ## Quick Classification Table
 
-| Component/domain | Recommended owner kind | Why |
-| --- | --- | --- |
-| `form` submit | `Semantic Lifecycle Owner` | validate -> submit -> success/error 业务管道 |
-| `data-source` | `Producer Owner` | 生产值并发布 loading/error/freshness |
-| source-backed `select` options | `Producer Owner` | owner 是 options producer，不是 select shell |
-| `table` selection/pagination | `Interaction Owner` | 核心是局部交互状态 |
-| `table` rows loading | `Producer Owner` upstream | 真正 owner 是 query/source |
-| `tabs` active item | `Interaction Owner` | 核心是当前激活项切换 |
-| future `wizard` step switching | `Interaction Owner` | 核心是当前步骤切换 |
-| future `wizard` step commit | `Semantic Lifecycle Owner` | 核心是 next/commit/validate 业务入口 |
-| `dialog` / `drawer` open state | `Surface Owner` | 核心是弹层表面开合 |
-| `designer-page` host state | `Domain Host Owner` | 内部读面是 `Host Projection`，不是普通局部绑定 |
-| `spreadsheet-page` host state | `Domain Host Owner` | 内部读面是 domain host snapshot，外部才是窄摘要 |
-| `report-designer-page` host state | `Domain Host Owner` | 同时承载 domain snapshot 与 namespaced action boundary |
-| `page` refresh/init shell state | `Shell Owner` | 核心是页面壳层生命周期 |
-| bulk delete/export | `Explicit Tracked Operation` | 没有更自然的单一 owner |
+| Component/domain                  | Recommended owner kind       | Why                                                    |
+| --------------------------------- | ---------------------------- | ------------------------------------------------------ |
+| `form` submit                     | `Semantic Lifecycle Owner`   | validate -> submit -> success/error 业务管道           |
+| `data-source`                     | `Producer Owner`             | 生产值并发布 loading/error/freshness                   |
+| source-backed `select` options    | `Producer Owner`             | owner 是 options producer，不是 select shell           |
+| `table` selection/pagination      | `Interaction Owner`          | 核心是局部交互状态                                     |
+| `table` rows loading              | `Producer Owner` upstream    | 真正 owner 是 query/source                             |
+| `tabs` active item                | `Interaction Owner`          | 核心是当前激活项切换                                   |
+| future `wizard` step switching    | `Interaction Owner`          | 核心是当前步骤切换                                     |
+| future `wizard` step commit       | `Semantic Lifecycle Owner`   | 核心是 next/commit/validate 业务入口                   |
+| `dialog` / `drawer` open state    | `Surface Owner`              | 核心是弹层表面开合                                     |
+| `designer-page` host state        | `Domain Host Owner`          | 内部读面是 `Host Projection`，不是普通局部绑定         |
+| `spreadsheet-page` host state     | `Domain Host Owner`          | 内部读面是 domain host snapshot，外部才是窄摘要        |
+| `report-designer-page` host state | `Domain Host Owner`          | 同时承载 domain snapshot 与 namespaced action boundary |
+| `page` refresh/init shell state   | `Shell Owner`                | 核心是页面壳层生命周期                                 |
+| bulk delete/export                | `Explicit Tracked Operation` | 没有更自然的单一 owner                                 |
 
 ## Auto-Disable Rules
 
-| Surface | Owner-known state | Recommended auto disabled/loading | Why |
-| --- | --- | --- | --- |
-| form 内部语义 submit trigger | `$form.submitting` | Yes | correctness 与 UX 都属于 form semantic boundary |
-| 外部 `component:submit` trigger | target form `statusPath` summary | Yes | owner 仍然是 form，不是 button |
-| source-backed `select` / `radio-group` / `checkbox-group` | source `loading` | Yes | 阻塞的是字段自己的 options 交互 |
-| generic button `onClick` arbitrary async graph | none | No | runtime 不应猜测主操作 |
-| field `onChange` 触发的 arbitrary async action | none | No | 不应因为不相关异步链静默冻结字段 |
+| Surface                                                   | Owner-known state                | Recommended auto disabled/loading | Why                                             |
+| --------------------------------------------------------- | -------------------------------- | --------------------------------- | ----------------------------------------------- |
+| form 内部语义 submit trigger                              | `$form.submitting`               | Yes                               | correctness 与 UX 都属于 form semantic boundary |
+| 外部 `component:submit` trigger                           | target form `statusPath` summary | Yes                               | owner 仍然是 form，不是 button                  |
+| source-backed `select` / `radio-group` / `checkbox-group` | source `loading`                 | Yes                               | 阻塞的是字段自己的 options 交互                 |
+| generic button `onClick` arbitrary async graph            | none                             | No                                | runtime 不应猜测主操作                          |
+| field `onChange` 触发的 arbitrary async action            | none                             | No                                | 不应因为不相关异步链静默冻结字段                |
 
 ## Generic Trigger Controls
 

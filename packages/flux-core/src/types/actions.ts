@@ -1,5 +1,11 @@
 import type { NodeInstance, InstanceFrame } from './node-identity';
-import type { ApiSchema, SchemaObject, SchemaValue, SchemaPath, OperationControlConfig } from './schema';
+import type {
+  ApiSchema,
+  SchemaObject,
+  SchemaValue,
+  SchemaPath,
+  OperationControlConfig,
+} from './schema';
 import type { ScopeRef } from './scope';
 import type { ComponentHandleRegistry, RendererRuntime, RendererEnv } from './renderer';
 import type { FormRuntime, PageRuntime, SurfaceRuntime } from './runtime';
@@ -190,7 +196,11 @@ export interface ActionContext {
 
 export interface ActionNamespaceProvider {
   kind?: 'host' | 'import';
-  invoke(method: string, payload: Record<string, unknown> | undefined, ctx: ActionContext): Promise<ActionResult> | ActionResult;
+  invoke(
+    method: string,
+    payload: Record<string, unknown> | undefined,
+    ctx: ActionContext,
+  ): Promise<ActionResult> | ActionResult;
   dispose?(): void;
   listMethods?(): readonly string[];
 }
@@ -225,13 +235,22 @@ export interface ActionScope {
 }
 
 export interface ImportedLibraryModule {
-  createNamespace(context: ImportedNamespaceContext): Promise<ActionNamespaceProvider> | ActionNamespaceProvider;
-  createExpressionHelpers?(context: ImportedNamespaceContext): Promise<Record<string, unknown>> | Record<string, unknown>;
-  getStaticMeta?(): import('./compilation').ImportedLibraryStaticMeta | Promise<import('./compilation').ImportedLibraryStaticMeta>;
+  createNamespace(
+    context: ImportedNamespaceContext,
+  ): Promise<ActionNamespaceProvider> | ActionNamespaceProvider;
+  createExpressionHelpers?(
+    context: ImportedNamespaceContext,
+  ): Promise<Record<string, unknown>> | Record<string, unknown>;
+  getStaticMeta?():
+    | import('./compilation').ImportedLibraryStaticMeta
+    | Promise<import('./compilation').ImportedLibraryStaticMeta>;
 }
 
 export interface ImportedLibraryLoader {
-  load(spec: import('./schema').XuiImportSpec, signal?: AbortSignal): Promise<ImportedLibraryModule>;
+  load(
+    spec: import('./schema').XuiImportSpec,
+    signal?: AbortSignal,
+  ): Promise<ImportedLibraryModule>;
 }
 
 export interface ImportedNamespaceContext {
@@ -361,15 +380,24 @@ export interface ActionRuntimeAdapter {
    * Built-in payload remains args-centric at this boundary; action-specific DTO
    * normalization is a runtime implementation detail below the adapter surface.
    */
-  invokeBuiltInAction(invocation: BuiltInActionInvocation, ctx: ActionContext): Promise<ActionResult>;
+  invokeBuiltInAction(
+    invocation: BuiltInActionInvocation,
+    ctx: ActionContext,
+  ): Promise<ActionResult>;
 
   /**
    * Resolve a component handle and invoke a component-targeted action.
    */
-  invokeComponentAction(invocation: ComponentActionInvocation, ctx: ActionContext): Promise<ActionResult>;
+  invokeComponentAction(
+    invocation: ComponentActionInvocation,
+    ctx: ActionContext,
+  ): Promise<ActionResult>;
 
   /**
    * Resolve a namespaced action and invoke it.
    */
-  invokeNamespacedAction(invocation: NamespacedActionInvocation, ctx: ActionContext): Promise<ActionResult>;
+  invokeNamespacedAction(
+    invocation: NamespacedActionInvocation,
+    ctx: ActionContext,
+  ): Promise<ActionResult>;
 }

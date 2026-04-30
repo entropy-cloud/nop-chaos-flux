@@ -189,19 +189,24 @@ dialog 的当前链路是：
 真正会需要主动触发的场景，主要是以下几类：
 
 1. **非 React host 或命令式挂载路径**
-  - 如果未来有 canvas host、designer host、headless preview host 或别的非 React runtime，就不能依赖 React effect cleanup。
+
+- 如果未来有 canvas host、designer host、headless preview host 或别的非 React runtime，就不能依赖 React effect cleanup。
 
 2. **retained / keep-alive / cached subtree 管理**
-  - 例如 workbench tab、缓存 dialog、预加载 panel、可恢复 inspector；宿主可能想保留 subtree 状态，但在某一时刻明确终结它。
+
+- 例如 workbench tab、缓存 dialog、预加载 panel、可恢复 inspector；宿主可能想保留 subtree 状态，但在某一时刻明确终结它。
 
 3. **virtualized / recycled subtree**
-  - 例如大型设计器或虚拟列表把一批 row / node subtree 移出活跃区；此时宿主需要决定它们是 suspend 还是 dispose，而不是等 React 普通卸载语义隐式决定。
+
+- 例如大型设计器或虚拟列表把一批 row / node subtree 移出活跃区；此时宿主需要决定它们是 suspend 还是 dispose，而不是等 React 普通卸载语义隐式决定。
 
 4. **调试器、测试 harness、预览沙箱的显式 teardown**
-  - 例如一个测试场景结束后，需要在不销毁整个 runtime 的情况下手动清掉某个 scope 及其 sidecar resources。
+
+- 例如一个测试场景结束后，需要在不销毁整个 runtime 的情况下手动清掉某个 scope 及其 sidecar resources。
 
 5. **未来出现 non-renderer-owned scope resources**
-  - 如果某些资源不是由一个 activator renderer 的 `useEffect` 直接拥有，而是由更底层运行时或 tooling 创建，那么就需要统一的 owner-scope teardown。
+
+- 如果某些资源不是由一个 activator renderer 的 `useEffect` 直接拥有，而是由更底层运行时或 tooling 创建，那么就需要统一的 owner-scope teardown。
 
 所以，如果将来公开这个能力，它的语义应该被理解为：
 
@@ -220,15 +225,18 @@ dialog 的当前链路是：
 因此更稳妥的原则是：
 
 1. **普通 DSL 自然语义保持简单**
-  - 渲染中 / 挂载中 = active
-  - 被替换 / 被关闭 / 不再渲染 = disposed
+
+- 渲染中 / 挂载中 = active
+- 被替换 / 被关闭 / 不再渲染 = disposed
 
 2. **retained / suspended 不是默认语义**
-  - 它不应因为某个 UI 框架底层“刚好还缓存了 DOM/组件实例”就自动成立
-  - 它必须来自明确的 narrower contract，或者未来明确引入的 DSL/host 特性
+
+- 它不应因为某个 UI 框架底层“刚好还缓存了 DOM/组件实例”就自动成立
+- 它必须来自明确的 narrower contract，或者未来明确引入的 DSL/host 特性
 
 3. **dialog 关闭的自然语义仍应是 dispose，而不是 suspend**
-  - 当前 dialog close 已经符合这一点：从 store 删除后真实卸载
+
+- 当前 dialog close 已经符合这一点：从 store 删除后真实卸载
 
 4. **只有显式 keepAlive / cache / preload / retained-panel 一类语义，才应该进入 suspended 语义空间**
 
@@ -251,19 +259,22 @@ dialog 的当前链路是：
 对应的 runtime 行为可以是：
 
 1. `active`
-  - reaction 订阅生效
-  - polling / timer 生效
-  - request refresh / retry 正常运行
+
+- reaction 订阅生效
+- polling / timer 生效
+- request refresh / retry 正常运行
 
 2. `suspended`
-  - 暂停 polling、debounce timer、后台 refresh、reaction dispatch
-  - 保留已解析状态、已加载值、scope 数据、必要的 host cache
+
+- 暂停 polling、debounce timer、后台 refresh、reaction dispatch
+- 保留已解析状态、已加载值、scope 数据、必要的 host cache
 
 3. `disposed`
-  - 清理 timer
-  - abort in-flight request
-  - 释放 reaction/source registrations
-  - 从 scope-owned registry bucket 中删除
+
+- 清理 timer
+- abort in-flight request
+- 释放 reaction/source registrations
+- 从 scope-owned registry bucket 中删除
 
 在这种设计下：
 

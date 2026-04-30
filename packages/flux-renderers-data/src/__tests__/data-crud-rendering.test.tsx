@@ -1,12 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { t } from '@nop-chaos/flux-i18n';
-import {
-  buttonRenderer,
-  createDataSchemaRenderer,
-  env,
-  formulaCompiler,
-} from '../test-support';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
 
 describe('CRUD renderer', () => {
   it('renders crud shell with toolbar and list action regions', async () => {
@@ -63,7 +58,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const crudRoot = document.querySelector('.nop-crud');
@@ -92,7 +87,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText('暂无用户数据')).toBeTruthy();
@@ -116,7 +111,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText(t('flux.common.noData'))).toBeTruthy();
@@ -146,7 +141,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText('Query filters')).toBeTruthy();
@@ -181,7 +176,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(document.querySelector('[data-slot="crud-list-actions"]')).toBeTruthy();
@@ -208,13 +203,13 @@ describe('CRUD renderer', () => {
               source: [{ id: '1', name: 'Alice' }],
               columns: [{ name: 'name', label: '姓名' }],
               toolbar: [{ type: 'button', label: 'Add' }],
-               listActions: [{ type: 'button', label: 'Delete' }],
+              listActions: [{ type: 'button', label: 'Delete' }],
             },
           ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const crudRoot = document.querySelector('.nop-crud');

@@ -26,29 +26,42 @@ async function collectGeneratedCSS(page: import('@playwright/test').Page): Promi
 async function checkClassHasCSS(
   page: import('@playwright/test').Page,
   className: string,
-  property: string
+  property: string,
 ): Promise<{ found: boolean; value: string }> {
-  return page.evaluate(([cls, prop]) => {
-    const el = document.createElement('div');
-    el.className = cls;
-    el.style.position = 'fixed';
-    el.style.top = '-9999px';
-    document.body.appendChild(el);
-    const value = window.getComputedStyle(el)[prop as any];
-    document.body.removeChild(el);
+  return page.evaluate(
+    ([cls, prop]) => {
+      const el = document.createElement('div');
+      el.className = cls;
+      el.style.position = 'fixed';
+      el.style.top = '-9999px';
+      document.body.appendChild(el);
+      const value = window.getComputedStyle(el)[prop as any];
+      document.body.removeChild(el);
 
-    const defaultEl = document.createElement('div');
-    defaultEl.style.position = 'fixed';
-    defaultEl.style.top = '-9999px';
-    document.body.appendChild(defaultEl);
-    const defaultValue = window.getComputedStyle(defaultEl)[prop as any];
-    document.body.removeChild(defaultEl);
+      const defaultEl = document.createElement('div');
+      defaultEl.style.position = 'fixed';
+      defaultEl.style.top = '-9999px';
+      document.body.appendChild(defaultEl);
+      const defaultValue = window.getComputedStyle(defaultEl)[prop as any];
+      document.body.removeChild(defaultEl);
 
-    const trivialDefaults = new Set(['none', 'auto', 'normal', '0s', 'static', 'visible', 'transparent', 'rgba(0, 0, 0, 0)', '']);
-    const isTrivial = trivialDefaults.has(value);
-    const matchesDefault = value === defaultValue && isTrivial;
-    return { found: !matchesDefault, value };
-  }, [className, property]);
+      const trivialDefaults = new Set([
+        'none',
+        'auto',
+        'normal',
+        '0s',
+        'static',
+        'visible',
+        'transparent',
+        'rgba(0, 0, 0, 0)',
+        '',
+      ]);
+      const isTrivial = trivialDefaults.has(value);
+      const matchesDefault = value === defaultValue && isTrivial;
+      return { found: !matchesDefault, value };
+    },
+    [className, property],
+  );
 }
 
 test('verifies basic Tailwind utilities are generated', async ({ page }) => {
@@ -89,7 +102,9 @@ test('verifies basic Tailwind utilities are generated', async ({ page }) => {
     if (!result.found) missing.push(cls);
   }
 
-  expect(missing, `These basic Tailwind utilities have no CSS: ${missing.join(', ')}`).toHaveLength(0);
+  expect(missing, `These basic Tailwind utilities have no CSS: ${missing.join(', ')}`).toHaveLength(
+    0,
+  );
 });
 
 test('verifies grid-template-rows utilities are generated', async ({ page }) => {
@@ -157,8 +172,10 @@ test('searches stylesheets for specific rules', async ({ page }) => {
 
   console.log('\n=== STYLESHEET RULE SEARCH ===');
   for (const term of searchTerms) {
-    const matching = selectors.filter(s => s.includes(term));
-    console.log(`  "${term}": ${matching.length} rules -> ${matching.slice(0, 3).join(', ') || 'NONE'}`);
+    const matching = selectors.filter((s) => s.includes(term));
+    console.log(
+      `  "${term}": ${matching.length} rules -> ${matching.slice(0, 3).join(', ') || 'NONE'}`,
+    );
   }
 
   const totalRules = selectors.length;

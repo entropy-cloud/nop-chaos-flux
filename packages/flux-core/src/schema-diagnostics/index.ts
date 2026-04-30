@@ -114,8 +114,12 @@ export interface RendererAuthoringTransformContext<S extends BaseSchema = BaseSc
   }): void;
 }
 
-export type RendererSchemaValidator<S extends BaseSchema = BaseSchema> = (context: RendererSchemaValidationContext<S>) => void;
-export type RendererAuthoringTransform<S extends BaseSchema = BaseSchema> = (context: RendererAuthoringTransformContext<S>) => S;
+export type RendererSchemaValidator<S extends BaseSchema = BaseSchema> = (
+  context: RendererSchemaValidationContext<S>,
+) => void;
+export type RendererAuthoringTransform<S extends BaseSchema = BaseSchema> = (
+  context: RendererAuthoringTransformContext<S>,
+) => S;
 
 export function createSchemaDiagnosticCollector() {
   const diagnostics: SchemaDiagnostic[] = [];
@@ -124,9 +128,9 @@ export function createSchemaDiagnosticCollector() {
     collector: {
       add(issue: SchemaDiagnostic) {
         diagnostics.push(issue);
-      }
+      },
     } satisfies SchemaDiagnosticCollector,
-    diagnostics
+    diagnostics,
   };
 }
 

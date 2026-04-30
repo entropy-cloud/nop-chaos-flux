@@ -46,7 +46,9 @@ describe('form error hooks subscriptions', () => {
       ...EMPTY_FORM_STORE_STATE,
       fieldStates: {
         'profile.email': {
-          errors: [{ path: 'profile.email', ownerPath: 'profile', rule: 'required', message: 'Required' }],
+          errors: [
+            { path: 'profile.email', ownerPath: 'profile', rule: 'required', message: 'Required' },
+          ],
         },
       },
     };

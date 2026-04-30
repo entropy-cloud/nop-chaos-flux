@@ -4,12 +4,12 @@
 
 ## 发现清单（经初审+维度复核）
 
-### [P2] CrudRenderer 内部区域使用 nop-* class 标记
+### [P2] CrudRenderer 内部区域使用 nop-\* class 标记
 
 - **文件**: `packages/flux-renderers-data/src/crud-renderer.tsx:218,224,230`
 - **严重程度**: P2
 - **现状**: 内部子区域 div 同时使用 `nop-crud-query`/`nop-crud-toolbar`/`nop-crud-table` class 和 `data-slot` 属性。根标记 `nop-crud` 正确，但内部区域应仅用 `data-slot`。
-- **建议**: 移除内部区域 nop-* class，仅保留 `data-slot`。
+- **建议**: 移除内部区域 nop-\* class，仅保留 `data-slot`。
 
 ### [P2] variant-field detail-view detail-field 使用 `as any` 类型转换
 
@@ -44,11 +44,11 @@
 - **现状**: 1 处 `as any` 因 ValidationRule 类型定义缺少 `'custom'` 变体，导致需要强制类型转换。
 - **建议**: 在 ValidationRule 类型中添加 `'custom'` 变体，移除 `as any`。
 
-### [P3] designer-palette 内部使用 nop-* class
+### [P3] designer-palette 内部使用 nop-\* class
 
 - **文件**: `packages/flow-designer-renderers/src/designer-palette.tsx`（约）
 - **严重程度**: P3（同类问题扫描新增）
-- **现状**: 内部区域使用 nop-* class（视觉效果 class，非 marker）。与 crud-renderer 同类但影响更小。
+- **现状**: 内部区域使用 nop-\* class（视觉效果 class，非 marker）。与 crud-renderer 同类但影响更小。
 - **建议**: 低优先级，逐步迁移到 data-slot。
 
 ### [P3] flux-renderers-form 9 个 input 定义缺少 displayName/sourcePackage
@@ -70,12 +70,14 @@
 ## 同类问题扫描备注
 
 `as any` 扩展扫描从 3 处扩展到 9 处：
+
 - 3 处 component 定义（已记录，P2）
 - 3 处 helpers.render(xxx as any)（新增，P3，variant-field.tsx）
 - 2 处 dispatch(xxx as any)（新增，P2，detail-view/detail-field）
 - 1 处 ValidationRule 类型缺 custom 变体（新增，P3，value-adaptation-helper）
 
-内部区域 nop-* class：
+内部区域 nop-\* class：
+
 - crud-renderer 3 处（已记录，P2）
 - designer-palette 1 处（新增，P3）
 

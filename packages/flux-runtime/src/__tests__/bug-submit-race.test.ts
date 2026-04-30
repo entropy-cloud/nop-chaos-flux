@@ -11,7 +11,7 @@ function createStubScope(): ScopeRef {
       getSnapshot: () => ({}),
       getLastChange: () => ({ paths: ['*'], sourceScopeId: 'root', kind: 'replace' as const }),
       setSnapshot: () => {},
-      subscribe: () => () => {}
+      subscribe: () => () => {},
     },
     value: {},
     update: () => {},
@@ -20,7 +20,7 @@ function createStubScope(): ScopeRef {
     readOwn: () => ({}),
     readVisible: () => ({}),
     materializeVisible: () => ({}),
-    merge: () => {}
+    merge: () => {},
   };
 }
 
@@ -31,7 +31,7 @@ describe('FormRuntime.submit() concurrent submission bug', () => {
       initialValues: {},
       parentScope: createStubScope(),
       executeValidationRule: async () => undefined,
-      validateRule: () => undefined
+      validateRule: () => undefined,
     });
 
     const first = form.submit();
@@ -40,7 +40,7 @@ describe('FormRuntime.submit() concurrent submission bug', () => {
     await expect(second).resolves.toMatchObject({
       ok: false,
       cancelled: true,
-      error: expect.any(Error)
+      error: expect.any(Error),
     });
 
     await expect(first).resolves.toMatchObject({ ok: true });

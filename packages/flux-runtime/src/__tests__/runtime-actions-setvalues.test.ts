@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  createRendererRegistry,
-  createRendererRuntime
-} from '../index';
+import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
@@ -11,14 +8,14 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ pageValue: 'root' });
     const form = runtime.createFormRuntime({
       id: 'profile-form',
       initialValues: { username: 'Alice', role: 'viewer' },
       parentScope: page.scope,
-      page
+      page,
     });
 
     let commits = 0;
@@ -33,16 +30,16 @@ describe('createRendererRuntime', () => {
         args: {
           values: {
             username: 'Bob',
-            role: 'admin'
-          }
-        }
+            role: 'admin',
+          },
+        },
       },
       {
         runtime,
         scope: form.scope,
         page,
-        form
-      }
+        form,
+      },
     );
 
     unsubscribe();
@@ -51,8 +48,8 @@ describe('createRendererRuntime', () => {
       ok: true,
       data: {
         username: 'Bob',
-        role: 'admin'
-      }
+        role: 'admin',
+      },
     });
     expect(form.scope.get('username')).toBe('Bob');
     expect(form.scope.get('role')).toBe('admin');
@@ -63,14 +60,14 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
     const form = runtime.createFormRuntime({
       id: 'profile-form',
       initialValues: { username: 'Alice', role: 'viewer' },
       parentScope: page.scope,
-      page
+      page,
     });
 
     let chainedCommits = 0;
@@ -85,24 +82,24 @@ describe('createRendererRuntime', () => {
           formId: 'profile-form',
           args: {
             path: 'username',
-            value: 'Bob'
-          }
+            value: 'Bob',
+          },
         },
         {
           action: 'setValue',
           formId: 'profile-form',
           args: {
             path: 'role',
-            value: 'admin'
-          }
-        }
+            value: 'admin',
+          },
+        },
       ],
       {
         runtime,
         scope: form.scope,
         page,
-        form
-      }
+        form,
+      },
     );
 
     unsubscribeChained();
@@ -123,16 +120,16 @@ describe('createRendererRuntime', () => {
         args: {
           values: {
             username: 'Bob',
-            role: 'admin'
-          }
-        }
+            role: 'admin',
+          },
+        },
       },
       {
         runtime,
         scope: form.scope,
         page,
-        form
-      }
+        form,
+      },
     );
 
     unsubscribeBatched();

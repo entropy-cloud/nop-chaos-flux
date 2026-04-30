@@ -18,7 +18,7 @@ export function FlowDesignerHoverToolbar({
   onDuplicateNode,
   onDeleteNode,
   onEditEdge,
-  onDeleteEdge
+  onDeleteEdge,
 }: FlowDesignerHoverToolbarProps) {
   if (!nodeId && !edgeId) {
     return null;
@@ -28,12 +28,7 @@ export function FlowDesignerHoverToolbar({
     <div data-slot="flow-designer-hover-toolbar">
       {nodeId && (
         <div data-slot="flow-designer-hover-toolbar-group">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onEditNode(nodeId)}
-            title="Edit node"
-          >
+          <Button variant="ghost" size="icon" onClick={() => onEditNode(nodeId)} title="Edit node">
             ✏️
           </Button>
           <Button
@@ -56,12 +51,7 @@ export function FlowDesignerHoverToolbar({
       )}
       {edgeId && (
         <div data-slot="flow-designer-hover-toolbar-group">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onEditEdge(edgeId)}
-            title="Edit edge"
-          >
+          <Button variant="ghost" size="icon" onClick={() => onEditEdge(edgeId)} title="Edit edge">
             ✏️
           </Button>
           <Button

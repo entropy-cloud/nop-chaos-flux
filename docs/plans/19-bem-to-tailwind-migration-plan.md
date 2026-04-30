@@ -3,7 +3,6 @@
 > Plan Status: completed
 > Last Reviewed: 2026-04-08
 
-
 > **Design doc:** `docs/architecture/renderer-markers-and-selectors.md`
 >
 > **Implementation Status: ✅ COMPLETED**
@@ -48,20 +47,20 @@ Final re-check performed on 2026-04-08:
 
 ## Phase Overview
 
-| Phase | Scope | Files | Risk | Depends On |
-|---|---|---|---|---|
-| 1 | Core: `field-frame` + `field-utils` | 2 | Medium | None |
-| 2 | Form renderers: BEM wrapper removal | 7 | Low | Phase 1 |
-| 3 | Data renderers: table refactor | 1 | Medium | Phase 1 |
-| 4 | Basic renderers: page/container | 2 | Low | Phase 1 |
-| 5 | Dialog host: shadcn Dialog refactor | 1 | Medium | Phase 1 |
-| 6 | Flow designer: CSS deletion | 2 | Low | Phase 2 |
-| 7 | Report designer: CSS deletion + Tailwind rewrite | 2 | Medium | Phase 2 |
-| 8 | Playground pages: Tailwind rewrite | 5 | Medium | Phase 1-5 |
-| 9 | Test assertions: data-* migration | 2 | Low | Phase 1-2 |
-| 10 | CSS cleanup: delete files + remove imports | 3 | Low | Phase 6-8 |
-| 11 | Final verification | - | - | All |
-| 12 | Docs update | 2 | Low | Phase 11 |
+| Phase | Scope                                            | Files | Risk   | Depends On |
+| ----- | ------------------------------------------------ | ----- | ------ | ---------- |
+| 1     | Core: `field-frame` + `field-utils`              | 2     | Medium | None       |
+| 2     | Form renderers: BEM wrapper removal              | 7     | Low    | Phase 1    |
+| 3     | Data renderers: table refactor                   | 1     | Medium | Phase 1    |
+| 4     | Basic renderers: page/container                  | 2     | Low    | Phase 1    |
+| 5     | Dialog host: shadcn Dialog refactor              | 1     | Medium | Phase 1    |
+| 6     | Flow designer: CSS deletion                      | 2     | Low    | Phase 2    |
+| 7     | Report designer: CSS deletion + Tailwind rewrite | 2     | Medium | Phase 2    |
+| 8     | Playground pages: Tailwind rewrite               | 5     | Medium | Phase 1-5  |
+| 9     | Test assertions: data-\* migration               | 2     | Low    | Phase 1-2  |
+| 10    | CSS cleanup: delete files + remove imports       | 3     | Low    | Phase 6-8  |
+| 11    | Final verification                               | -     | -      | All        |
+| 12    | Docs update                                      | 2     | Low    | Phase 11   |
 
 ---
 
@@ -73,14 +72,15 @@ Final re-check performed on 2026-04-08:
 
 > Historical note (2026-04-09): the file-by-file examples in this section capture earlier migration steps and may still show pre-`data-slot` intermediate markup. The current authoritative rule is in `docs/architecture/renderer-markers-and-selectors.md`, and active code no longer treats internal `__` region classes shown below as the target end state.
 
-| File | Change |
-|---|---|
-| `packages/flux-react/src/field-frame.tsx` | BEM state classes → `data-field-*` attributes + Tailwind `grid gap-2` |
+| File                                               | Change                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------ |
+| `packages/flux-react/src/field-frame.tsx`          | BEM state classes → `data-field-*` attributes + Tailwind `grid gap-2`    |
 | `packages/flux-renderers-form/src/field-utils.tsx` | `getFieldClassName` deleted; `getChildFieldUiState` returns `data-*` map |
 
 ### `field-frame.tsx` Change Detail
 
 **Before:**
+
 ```tsx
 const stateClasses = [
   'nop-field',
@@ -94,6 +94,7 @@ const stateClasses = [
 ```
 
 **After:**
+
 ```tsx
 <Tag
   className={classNames('nop-field grid gap-2', className)}
@@ -105,6 +106,7 @@ const stateClasses = [
 ```
 
 Internal regions now use `data-slot` markers:
+
 - `data-slot="field-label"`
 - `data-slot="field-control"`
 - `data-slot="field-error"`
@@ -119,17 +121,27 @@ Internal regions now use `data-slot` markers:
 **`getChildFieldUiState`** — Return type changes:
 
 **Before:**
+
 ```tsx
 return {
-  error, touched, dirty, visited, showError,
-  className: ['nop-child-field', ...modifiers].filter(Boolean).join(' ')
+  error,
+  touched,
+  dirty,
+  visited,
+  showError,
+  className: ['nop-child-field', ...modifiers].filter(Boolean).join(' '),
 };
 ```
 
 **After:**
+
 ```tsx
 return {
-  error, touched, dirty, visited, showError,
+  error,
+  touched,
+  dirty,
+  visited,
+  showError,
   className: 'grid gap-1.5',
   'data-child-field-visited': visited || undefined,
   'data-child-field-touched': touched || undefined,
@@ -141,15 +153,17 @@ return {
 **`useFieldPresentation`** — Return type changes:
 
 **Before:**
+
 ```tsx
 return {
   fieldState: { ...fieldState, error: visibleError },
   showError,
-  className: getFieldClassName({ ...fieldState, showError })
+  className: getFieldClassName({ ...fieldState, showError }),
 };
 ```
 
 **After:**
+
 ```tsx
 return {
   fieldState: { ...fieldState, error: visibleError },
@@ -187,22 +201,23 @@ Typecheck only — tests break here intentionally, fixed in Phase 9.
 
 ### Files
 
-| File | BEM Classes Removed | Tailwind Replacement |
-|---|---|---|
-| `src/renderers/input.tsx` | `nop-checkbox`, `nop-checkbox__input`, `nop-checkbox__label`, `nop-checkbox-group`, `nop-switch`, `nop-switch__input`, `nop-switch__label`, `nop-radio-group`, `nop-radio`, `nop-radio__input`, `nop-radio__label` | `inline-flex items-center gap-2.5`, `grid gap-2.5` |
-| `src/renderers/tag-list.tsx` | `nop-tag-list`, `nop-tag`, `nop-tag--active` | `flex flex-wrap gap-2.5` + Button variant |
-| `src/renderers/key-value.tsx` | `nop-kv-list`, `nop-kv-row`, `nop-kv-add`, `nop-kv-remove`, `nop-input` | `grid gap-3`, `grid grid-cols-[1fr_1fr_auto] gap-2.5`, Button |
-| `src/renderers/array-editor.tsx` | `nop-array-editor`, `nop-array-editor__row`, `nop-kv-add`, `nop-kv-remove`, `nop-input` | `grid gap-3`, `grid grid-cols-[1fr_auto] gap-2.5`, Button |
-| `src/renderers/form.tsx` | `nop-form__body`, `nop-form__actions` (CSS rules) | `grid gap-4`, `flex flex-wrap gap-3` |
-| `src/renderers/shared/label.tsx` | None (class names kept as semantic markers) | — |
-| `src/renderers/shared/error.tsx` | None (class names kept as semantic markers) | — |
-| `src/renderers/shared/help-text.tsx` | None (class names kept as semantic markers) | — |
+| File                                 | BEM Classes Removed                                                                                                                                                                                                | Tailwind Replacement                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `src/renderers/input.tsx`            | `nop-checkbox`, `nop-checkbox__input`, `nop-checkbox__label`, `nop-checkbox-group`, `nop-switch`, `nop-switch__input`, `nop-switch__label`, `nop-radio-group`, `nop-radio`, `nop-radio__input`, `nop-radio__label` | `inline-flex items-center gap-2.5`, `grid gap-2.5`            |
+| `src/renderers/tag-list.tsx`         | `nop-tag-list`, `nop-tag`, `nop-tag--active`                                                                                                                                                                       | `flex flex-wrap gap-2.5` + Button variant                     |
+| `src/renderers/key-value.tsx`        | `nop-kv-list`, `nop-kv-row`, `nop-kv-add`, `nop-kv-remove`, `nop-input`                                                                                                                                            | `grid gap-3`, `grid grid-cols-[1fr_1fr_auto] gap-2.5`, Button |
+| `src/renderers/array-editor.tsx`     | `nop-array-editor`, `nop-array-editor__row`, `nop-kv-add`, `nop-kv-remove`, `nop-input`                                                                                                                            | `grid gap-3`, `grid grid-cols-[1fr_auto] gap-2.5`, Button     |
+| `src/renderers/form.tsx`             | `nop-form__body`, `nop-form__actions` (CSS rules)                                                                                                                                                                  | `grid gap-4`, `flex flex-wrap gap-3`                          |
+| `src/renderers/shared/label.tsx`     | None (class names kept as semantic markers)                                                                                                                                                                        | —                                                             |
+| `src/renderers/shared/error.tsx`     | None (class names kept as semantic markers)                                                                                                                                                                        | —                                                             |
+| `src/renderers/shared/help-text.tsx` | None (class names kept as semantic markers)                                                                                                                                                                        | —                                                             |
 
 ### Key Changes in `input.tsx`
 
 > Historical note (2026-04-09): this before/after block documents the original Tailwind migration step. For current field chrome and internal renderer region guidance, prefer `data-slot` examples in `docs/architecture/field-frame.md` and `docs/architecture/renderer-markers-and-selectors.md`.
 
 **Checkbox — Before:**
+
 ```tsx
 <span className="nop-checkbox">
   <Checkbox className="nop-checkbox__input" ... />
@@ -211,6 +226,7 @@ Typecheck only — tests break here intentionally, fixed in Phase 9.
 ```
 
 **Checkbox — After:**
+
 ```tsx
 <span className="inline-flex items-center gap-2.5">
   <Checkbox ... />
@@ -225,11 +241,13 @@ Same pattern for Switch, RadioGroup, CheckboxGroup — remove BEM wrappers, add 
 Spread `data-*` from `getChildFieldUiState`:
 
 **Before:**
+
 ```tsx
 <div className={childUi.className}>
 ```
 
 **After:**
+
 ```tsx
 <div
   className={childUi.className}
@@ -254,18 +272,20 @@ pnpm --filter @nop-chaos/flux-renderers-form typecheck
 
 ### File
 
-| File | Change |
-|---|---|
+| File                                                  | Change                                                                         |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `packages/flux-renderers-data/src/table-renderer.tsx` | Replace HTML `<table>` with shadcn Table components; keep semantic class names |
 
 ### Change Detail
 
 Import shadcn Table components:
+
 ```tsx
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@nop-chaos/ui';
 ```
 
 Replace:
+
 - `<table className="nop-table">` → `<Table className="nop-table">`
 - `<thead>` → `<TableHeader className="nop-table__header">`
 - `<tbody>` → `<TableBody>`
@@ -289,14 +309,15 @@ pnpm --filter @nop-chaos/flux-renderers-data typecheck
 
 ### Files
 
-| File | Change |
-|---|---|
-| `packages/flux-renderers-basic/src/page.tsx` | Add Tailwind utilities alongside semantic classes |
+| File                                              | Change                                            |
+| ------------------------------------------------- | ------------------------------------------------- |
+| `packages/flux-renderers-basic/src/page.tsx`      | Add Tailwind utilities alongside semantic classes |
 | `packages/flux-renderers-basic/src/container.tsx` | Add Tailwind utilities alongside semantic classes |
 
 ### Change Detail
 
 `page.tsx`:
+
 ```tsx
 <section className={classNames('nop-page grid gap-4', props.meta.className)}>
   <header className="nop-page__header">
@@ -307,6 +328,7 @@ pnpm --filter @nop-chaos/flux-renderers-data typecheck
 ```
 
 `container.tsx`:
+
 ```tsx
 <div className={classNames('nop-container grid gap-4', props.meta.className)}>
   <div className="nop-container__header">{headerContent}</div>
@@ -328,18 +350,20 @@ pnpm --filter @nop-chaos/flux-renderers-basic typecheck
 
 ### File
 
-| File | Change |
-|---|---|
+| File                                      | Change                                                     |
+| ----------------------------------------- | ---------------------------------------------------------- |
 | `packages/flux-react/src/dialog-host.tsx` | Replace custom dialog markup with shadcn Dialog components |
 
 ### Change Detail
 
 Import:
+
 ```tsx
 import { Dialog, DialogContent, DialogOverlay, DialogClose } from '@nop-chaos/ui';
 ```
 
 Replace:
+
 - `<div className="nop-dialog-host nop-theme-root">` → keep class name, wrap with Dialog
 - `<div className="nop-dialog-backdrop nop-theme-root">` → `<DialogOverlay>`
 - `<div className="nop-dialog-card">` → `<DialogContent>`
@@ -359,21 +383,21 @@ pnpm --filter @nop-chaos/flux-react typecheck
 
 ### Files
 
-| File | Change |
-|---|---|
-| `packages/flow-designer-renderers/src/styles.css` | **Delete entirely** |
-| `packages/flow-designer-renderers/src/index.tsx` | Remove `import './styles.css'` |
+| File                                                                                   | Change                                     |
+| -------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `packages/flow-designer-renderers/src/styles.css`                                      | **Delete entirely**                        |
+| `packages/flow-designer-renderers/src/index.tsx`                                       | Remove `import './styles.css'`             |
 | `packages/flow-designer-renderers/src/designer-xyflow-canvas/DesignerXyflowCanvas.tsx` | `fd-xyflow-surface` etc. → Tailwind inline |
 
 ### BEM → Tailwind Mapping
 
-| BEM Class | Tailwind Replacement |
-|---|---|
-| `.fd-xyflow-surface .react-flow__controls` | Inline style or Tailwind on Controls wrapper |
-| `.fd-xyflow-surface .react-flow__controls-button` | Tailwind via className prop |
-| `.fd-xyflow-surface .react-flow__minimap` | Tailwind via className prop |
-| `.fd-xyflow-minimap` | Tailwind classes on Minimap wrapper |
-| `.fd-xyflow-controls` | Tailwind classes on Controls wrapper |
+| BEM Class                                         | Tailwind Replacement                         |
+| ------------------------------------------------- | -------------------------------------------- |
+| `.fd-xyflow-surface .react-flow__controls`        | Inline style or Tailwind on Controls wrapper |
+| `.fd-xyflow-surface .react-flow__controls-button` | Tailwind via className prop                  |
+| `.fd-xyflow-surface .react-flow__minimap`         | Tailwind via className prop                  |
+| `.fd-xyflow-minimap`                              | Tailwind classes on Minimap wrapper          |
+| `.fd-xyflow-controls`                             | Tailwind classes on Controls wrapper         |
 
 ### Verify
 
@@ -387,36 +411,37 @@ pnpm --filter @nop-chaos/flow-designer-renderers typecheck
 
 ### Files
 
-| File | Change |
-|---|---|
-| `packages/report-designer-renderers/src/styles.css` | **Delete entirely** (702 lines) |
-| `packages/report-designer-renderers/src/index.ts` | Remove `import './styles.css'` |
-| `apps/playground/src/pages/ReportDesignerDemo.tsx` | All BEM classes → Tailwind inline |
+| File                                                | Change                            |
+| --------------------------------------------------- | --------------------------------- |
+| `packages/report-designer-renderers/src/styles.css` | **Delete entirely** (702 lines)   |
+| `packages/report-designer-renderers/src/index.ts`   | Remove `import './styles.css'`    |
+| `apps/playground/src/pages/ReportDesignerDemo.tsx`  | All BEM classes → Tailwind inline |
 
 ### BEM → Tailwind Key Mappings (from 702 lines)
 
-| BEM Class | Tailwind Replacement |
-|---|---|
-| `.report-designer-demo` | `w-full max-w-[1400px] mx-auto` |
-| `.report-designer-demo__header` | `mb-4` |
-| `.report-designer-demo__toolbar` | `flex gap-2 items-center flex-wrap` |
-| `.report-designer-demo__body` | `grid grid-cols-[200px_1fr_280px] gap-4 mb-4` |
-| `.report-designer-demo__field-panel` | `bg-white border border-border rounded-xl p-4 overflow-y-auto max-h-[500px]` |
-| `.report-designer-demo__canvas` | `bg-white border border-border rounded-xl p-4 overflow-auto` |
-| `.report-designer-demo__inspector` | `bg-white border border-border rounded-xl p-4 overflow-y-auto max-h-[500px]` |
-| `.report-designer-demo__log` | `bg-white border border-border rounded-xl p-4` |
-| `.spreadsheet-grid table` | `border-collapse w-full text-xs table-fixed` |
-| `.spreadsheet-grid td/th` | `border border-border p-1 h-6 overflow-hidden text-ellipsis whitespace-nowrap` |
-| `.cell--selected` | `outline-2 outline-accent outline -outline-offset-1 bg-amber-50` |
-| `.cell--bound` | `bg-blue-50` |
-| `.cell--editing` | `outline-2 outline-primary -outline-offset-1 p-0` |
-| `.sheet-tab` / `.sheet-tab.active` | Button with variant |
-| `.toolbar` | `flex gap-3 items-center flex-wrap p-2 px-3 bg-muted rounded-lg mb-2` |
-| `.toolbar button` | `<Button variant="outline" size="sm">` |
-| `.find-replace-panel` | `bg-muted border border-border rounded-xl p-3 mt-2` |
-| `.comment-text` | `text-xs text-muted-foreground bg-amber-50 p-2 rounded` |
+| BEM Class                            | Tailwind Replacement                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------------ |
+| `.report-designer-demo`              | `w-full max-w-[1400px] mx-auto`                                                |
+| `.report-designer-demo__header`      | `mb-4`                                                                         |
+| `.report-designer-demo__toolbar`     | `flex gap-2 items-center flex-wrap`                                            |
+| `.report-designer-demo__body`        | `grid grid-cols-[200px_1fr_280px] gap-4 mb-4`                                  |
+| `.report-designer-demo__field-panel` | `bg-white border border-border rounded-xl p-4 overflow-y-auto max-h-[500px]`   |
+| `.report-designer-demo__canvas`      | `bg-white border border-border rounded-xl p-4 overflow-auto`                   |
+| `.report-designer-demo__inspector`   | `bg-white border border-border rounded-xl p-4 overflow-y-auto max-h-[500px]`   |
+| `.report-designer-demo__log`         | `bg-white border border-border rounded-xl p-4`                                 |
+| `.spreadsheet-grid table`            | `border-collapse w-full text-xs table-fixed`                                   |
+| `.spreadsheet-grid td/th`            | `border border-border p-1 h-6 overflow-hidden text-ellipsis whitespace-nowrap` |
+| `.cell--selected`                    | `outline-2 outline-accent outline -outline-offset-1 bg-amber-50`               |
+| `.cell--bound`                       | `bg-blue-50`                                                                   |
+| `.cell--editing`                     | `outline-2 outline-primary -outline-offset-1 p-0`                              |
+| `.sheet-tab` / `.sheet-tab.active`   | Button with variant                                                            |
+| `.toolbar`                           | `flex gap-3 items-center flex-wrap p-2 px-3 bg-muted rounded-lg mb-2`          |
+| `.toolbar button`                    | `<Button variant="outline" size="sm">`                                         |
+| `.find-replace-panel`                | `bg-muted border border-border rounded-xl p-3 mt-2`                            |
+| `.comment-text`                      | `text-xs text-muted-foreground bg-amber-50 p-2 rounded`                        |
 
 Responsive:
+
 ```tsx
 // Replace @media (max-width: 980px)
 <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_280px] gap-4 mb-4">
@@ -434,41 +459,42 @@ pnpm --filter @nop-chaos/report-designer-renderers typecheck
 
 ### Files
 
-| File | BEM Classes Removed |
-|---|---|
-| `apps/playground/src/styles.css` | Strip all BEM rules (lines 145–828). Keep: `@import`, `@theme inline`, `:root`, `.nop-theme-root`, `*`, `body`, `#root` |
-| `apps/playground/src/pages/HomePage.tsx` | `app-shell`, `hero-card`, `eyebrow`, `body-copy`, `nav-grid`, `nav-card`, `nav-card__*` |
-| `apps/playground/src/pages/FluxBasicPage.tsx` | `app-shell`, `hero-card`, `page-back`, `eyebrow`, `body-copy`, `playground-stage`, `playground-layout`, `nop-ai-debug-card__*` |
-| `apps/playground/src/pages/ReportDesignerPage.tsx` | `app-shell`, `hero-card`, `page-back`, `eyebrow`, `body-copy` |
-| `apps/playground/src/pages/FlowDesignerPage.tsx` | (if it uses BEM classes) |
+| File                                               | BEM Classes Removed                                                                                                            |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/playground/src/styles.css`                   | Strip all BEM rules (lines 145–828). Keep: `@import`, `@theme inline`, `:root`, `.nop-theme-root`, `*`, `body`, `#root`        |
+| `apps/playground/src/pages/HomePage.tsx`           | `app-shell`, `hero-card`, `eyebrow`, `body-copy`, `nav-grid`, `nav-card`, `nav-card__*`                                        |
+| `apps/playground/src/pages/FluxBasicPage.tsx`      | `app-shell`, `hero-card`, `page-back`, `eyebrow`, `body-copy`, `playground-stage`, `playground-layout`, `nop-ai-debug-card__*` |
+| `apps/playground/src/pages/ReportDesignerPage.tsx` | `app-shell`, `hero-card`, `page-back`, `eyebrow`, `body-copy`                                                                  |
+| `apps/playground/src/pages/FlowDesignerPage.tsx`   | (if it uses BEM classes)                                                                                                       |
 
 ### BEM → Tailwind Mapping
 
-| BEM Class | Tailwind Replacement |
-|---|---|
-| `.app-shell` | `min-h-screen grid place-items-center p-6` |
-| `.app-shell--home` | `min-h-screen flex items-center justify-center` |
-| `.hero-card` | `<Card>` + `max-w-[720px] p-10 rounded-3xl` |
-| `.hero-card--wide` | `max-w-[1100px]` |
-| `.hero-card--home` | `max-w-[800px] text-center` |
-| `.eyebrow` | `mb-3 uppercase tracking-[0.16em] text-xs text-accent-muted` |
-| `.body-copy` | `text-lg leading-relaxed text-muted-foreground` |
-| `.body-copy--compact` | `mt-2.5 text-[15px]` |
-| `.page-back` | `<Button variant="outline" size="sm" className="rounded-full">` |
-| `.page-back--floating` | `fixed top-6 left-6 z-40` |
-| `.nav-grid` | `grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mt-6` |
-| `.nav-card` | `<Card>` with hover transition + `cursor-pointer` |
-| `.nav-card__eyebrow` | `mb-2 uppercase tracking-[0.14em] text-[11px] font-bold text-accent-muted` |
-| `.nav-card__title` | `mb-2 text-xl font-bold text-foreground` |
-| `.nav-card__copy` | `text-sm leading-relaxed text-muted-foreground` |
-| `.nav-card__arrow` | `absolute right-4 bottom-4 text-xl text-accent opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0` |
-| `.playground-stage` | `p-6 rounded-[20px] bg-card/96 border border-border` |
-| `.playground-layout` | `mt-8 grid grid-cols-[minmax(0,2fr)_minmax(280px,360px)] gap-6 items-start` |
-| `.nop-ai-debug-card` | `mt-4 p-4 rounded-[18px] bg-gradient-to-b from-slate-900/94 to-slate-950/98 border border-amber-200/18` |
-| `.nop-ai-debug-card__eyebrow` | `mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-amber-300` |
-| `.nop-ai-debug-card__code` | `p-3.5 rounded-[14px] bg-black/30 text-sky-200 text-[13px] leading-relaxed overflow-x-auto` |
+| BEM Class                     | Tailwind Replacement                                                                                                                      |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `.app-shell`                  | `min-h-screen grid place-items-center p-6`                                                                                                |
+| `.app-shell--home`            | `min-h-screen flex items-center justify-center`                                                                                           |
+| `.hero-card`                  | `<Card>` + `max-w-[720px] p-10 rounded-3xl`                                                                                               |
+| `.hero-card--wide`            | `max-w-[1100px]`                                                                                                                          |
+| `.hero-card--home`            | `max-w-[800px] text-center`                                                                                                               |
+| `.eyebrow`                    | `mb-3 uppercase tracking-[0.16em] text-xs text-accent-muted`                                                                              |
+| `.body-copy`                  | `text-lg leading-relaxed text-muted-foreground`                                                                                           |
+| `.body-copy--compact`         | `mt-2.5 text-[15px]`                                                                                                                      |
+| `.page-back`                  | `<Button variant="outline" size="sm" className="rounded-full">`                                                                           |
+| `.page-back--floating`        | `fixed top-6 left-6 z-40`                                                                                                                 |
+| `.nav-grid`                   | `grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mt-6`                                                                          |
+| `.nav-card`                   | `<Card>` with hover transition + `cursor-pointer`                                                                                         |
+| `.nav-card__eyebrow`          | `mb-2 uppercase tracking-[0.14em] text-[11px] font-bold text-accent-muted`                                                                |
+| `.nav-card__title`            | `mb-2 text-xl font-bold text-foreground`                                                                                                  |
+| `.nav-card__copy`             | `text-sm leading-relaxed text-muted-foreground`                                                                                           |
+| `.nav-card__arrow`            | `absolute right-4 bottom-4 text-xl text-accent opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0` |
+| `.playground-stage`           | `p-6 rounded-[20px] bg-card/96 border border-border`                                                                                      |
+| `.playground-layout`          | `mt-8 grid grid-cols-[minmax(0,2fr)_minmax(280px,360px)] gap-6 items-start`                                                               |
+| `.nop-ai-debug-card`          | `mt-4 p-4 rounded-[18px] bg-gradient-to-b from-slate-900/94 to-slate-950/98 border border-amber-200/18`                                   |
+| `.nop-ai-debug-card__eyebrow` | `mb-2.5 uppercase tracking-[0.14em] text-[11px] font-bold text-amber-300`                                                                 |
+| `.nop-ai-debug-card__code`    | `p-3.5 rounded-[14px] bg-black/30 text-sky-200 text-[13px] leading-relaxed overflow-x-auto`                                               |
 
 Responsive:
+
 ```tsx
 // Replace @media (max-width: 980px) for playground-layout
 <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,360px)] gap-6 items-start">
@@ -485,40 +511,40 @@ pnpm --filter @nop-chaos/playground-app typecheck
 
 ---
 
-## Phase 9: Test Assertions — data-* Migration
+## Phase 9: Test Assertions — data-\* Migration
 
 ### Files
 
-| File | Assertions to Update |
-|---|---|
-| `packages/flux-renderers-form/src/index.test.tsx` | ~12 assertions |
-| `packages/flux-renderers-form/src/renderers/shared/index.test.tsx` | ~2 assertions |
+| File                                                               | Assertions to Update |
+| ------------------------------------------------------------------ | -------------------- |
+| `packages/flux-renderers-form/src/index.test.tsx`                  | ~12 assertions       |
+| `packages/flux-renderers-form/src/renderers/shared/index.test.tsx` | ~2 assertions        |
 
 ### Assertion Migration Map
 
-| Old | New |
-|---|---|
-| `field?.className).toContain('nop-field--visited')` | `field?.hasAttribute('data-field-visited')).toBe(true)` |
-| `field?.className).toContain('nop-field--touched')` | `field?.hasAttribute('data-field-touched')).toBe(true)` |
-| `field?.className).toContain('nop-field--dirty')` | `field?.hasAttribute('data-field-dirty')).toBe(true)` |
-| `field?.className).toContain('nop-field--invalid')` | `field?.hasAttribute('data-field-invalid')).toBe(true)` |
-| `keyField?.className).toContain('nop-child-field--visited')` | `keyField?.hasAttribute('data-child-field-visited')).toBe(true)` |
-| `keyField?.className).toContain('nop-child-field--touched')` | `keyField?.hasAttribute('data-child-field-touched')).toBe(true)` |
-| `keyField?.className).toContain('nop-child-field--invalid')` | `keyField?.hasAttribute('data-child-field-invalid')).toBe(true)` |
-| `valueField?.className ?? '').not.toContain('nop-child-field--invalid')` | `expect(valueField?.hasAttribute('data-child-field-invalid')).toBe(false)` |
-| `keyField?.className).toContain('nop-child-field--dirty')` | `keyField?.hasAttribute('data-child-field-dirty')).toBe(true)` |
-| `childField?.className).toContain('nop-child-field--visited')` | `childField?.hasAttribute('data-child-field-visited')).toBe(true)` |
-| `childField?.className).toContain('nop-child-field--touched')` | `childField?.hasAttribute('data-child-field-touched')).toBe(true)` |
-| `childField?.className).toContain('nop-child-field--dirty')` | `childField?.hasAttribute('data-child-field-dirty')).toBe(true)` |
-| `childField?.className).toContain('nop-child-field--invalid')` | `childField?.hasAttribute('data-child-field-invalid')).toBe(true)` |
+| Old                                                                                 | New                                                                                    |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `field?.className).toContain('nop-field--visited')`                                 | `field?.hasAttribute('data-field-visited')).toBe(true)`                                |
+| `field?.className).toContain('nop-field--touched')`                                 | `field?.hasAttribute('data-field-touched')).toBe(true)`                                |
+| `field?.className).toContain('nop-field--dirty')`                                   | `field?.hasAttribute('data-field-dirty')).toBe(true)`                                  |
+| `field?.className).toContain('nop-field--invalid')`                                 | `field?.hasAttribute('data-field-invalid')).toBe(true)`                                |
+| `keyField?.className).toContain('nop-child-field--visited')`                        | `keyField?.hasAttribute('data-child-field-visited')).toBe(true)`                       |
+| `keyField?.className).toContain('nop-child-field--touched')`                        | `keyField?.hasAttribute('data-child-field-touched')).toBe(true)`                       |
+| `keyField?.className).toContain('nop-child-field--invalid')`                        | `keyField?.hasAttribute('data-child-field-invalid')).toBe(true)`                       |
+| `valueField?.className ?? '').not.toContain('nop-child-field--invalid')`            | `expect(valueField?.hasAttribute('data-child-field-invalid')).toBe(false)`             |
+| `keyField?.className).toContain('nop-child-field--dirty')`                          | `keyField?.hasAttribute('data-child-field-dirty')).toBe(true)`                         |
+| `childField?.className).toContain('nop-child-field--visited')`                      | `childField?.hasAttribute('data-child-field-visited')).toBe(true)`                     |
+| `childField?.className).toContain('nop-child-field--touched')`                      | `childField?.hasAttribute('data-child-field-touched')).toBe(true)`                     |
+| `childField?.className).toContain('nop-child-field--dirty')`                        | `childField?.hasAttribute('data-child-field-dirty')).toBe(true)`                       |
+| `childField?.className).toContain('nop-child-field--invalid')`                      | `childField?.hasAttribute('data-child-field-invalid')).toBe(true)`                     |
 | `screen.getByText('Username is required').className).toContain('nop-field__error')` | `screen.getByText('Username is required').getAttribute('data-slot') === 'field-error'` |
-| `screen.getByText('Validating...').className).toContain('nop-field__hint')` | `screen.getByText('Validating...').getAttribute('data-slot') === 'field-hint'` |
+| `screen.getByText('Validating...').className).toContain('nop-field__hint')`         | `screen.getByText('Validating...').getAttribute('data-slot') === 'field-hint'`         |
 
 ### DOM Traversal Updates
 
-| Old | New |
-|---|---|
-| `input.closest('.nop-field')` | **No change** |
+| Old                                    | New                                                                        |
+| -------------------------------------- | -------------------------------------------------------------------------- |
+| `input.closest('.nop-field')`          | **No change**                                                              |
 | `keyInput.closest('.nop-child-field')` | `keyInput.closest('[data-child-field-dirty]')` or keep structural approach |
 
 ### Verify
@@ -533,21 +559,22 @@ pnpm --filter @nop-chaos/flux-renderers-form test
 
 ### Files to Delete
 
-| File | Action |
-|---|---|
-| `packages/flow-designer-renderers/src/styles.css` | Delete |
+| File                                                | Action |
+| --------------------------------------------------- | ------ |
+| `packages/flow-designer-renderers/src/styles.css`   | Delete |
 | `packages/report-designer-renderers/src/styles.css` | Delete |
 
 ### Imports to Remove
 
-| File | Line to Remove |
-|---|---|
-| `packages/flow-designer-renderers/src/index.tsx` | `import './styles.css';` |
+| File                                              | Line to Remove           |
+| ------------------------------------------------- | ------------------------ |
+| `packages/flow-designer-renderers/src/index.tsx`  | `import './styles.css';` |
 | `packages/report-designer-renderers/src/index.ts` | `import './styles.css';` |
 
 ### `apps/playground/src/styles.css` — Strip BEM Rules
 
 Keep lines:
+
 - `@import "tailwindcss";` (line 1)
 - `@theme inline { ... }` (lines 3-26)
 - `:root { ... }` CSS variables (lines 28-48)
@@ -603,11 +630,11 @@ pnpm typecheck && pnpm build && pnpm lint && pnpm test
 
 ### Files to Update
 
-| File | Update |
-|---|---|
-| `docs/logs/index.md` | Add entry describing the BEM removal |
-| `docs/references/maintenance-checklist.md` | Add link to `docs/architecture/renderer-markers-and-selectors.md` |
-| `docs/architecture/renderer-markers-and-selectors.md` | Mark as current (update if any deviations occurred) |
+| File                                                  | Update                                                            |
+| ----------------------------------------------------- | ----------------------------------------------------------------- |
+| `docs/logs/index.md`                                  | Add entry describing the BEM removal                              |
+| `docs/references/maintenance-checklist.md`            | Add link to `docs/architecture/renderer-markers-and-selectors.md` |
+| `docs/architecture/renderer-markers-and-selectors.md` | Mark as current (update if any deviations occurred)               |
 
 ---
 
@@ -624,23 +651,23 @@ Each phase is independent and reversible:
 
 ## Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|
-| `getChildFieldUiState` return type breaks consumers | Medium | High | Phase 1 typecheck catches all consumers |
-| shadcn Dialog API differs from custom dialog | Medium | Medium | Phase 5 isolated; Dialog has well-known API |
-| Report designer CSS (702 lines) Tailwind conversion misses edge cases | Medium | Low | Visual verification in playground |
-| Tailwind `data-*` variants not configured | Low | Medium | Verify `@tailwindcss` v4 supports `data-[field-dirty]:` natively |
-| Test assertion format change introduces false positives | Low | High | Phase 9 runs full test suite |
+| Risk                                                                  | Likelihood | Impact | Mitigation                                                       |
+| --------------------------------------------------------------------- | ---------- | ------ | ---------------------------------------------------------------- |
+| `getChildFieldUiState` return type breaks consumers                   | Medium     | High   | Phase 1 typecheck catches all consumers                          |
+| shadcn Dialog API differs from custom dialog                          | Medium     | Medium | Phase 5 isolated; Dialog has well-known API                      |
+| Report designer CSS (702 lines) Tailwind conversion misses edge cases | Medium     | Low    | Visual verification in playground                                |
+| Tailwind `data-*` variants not configured                             | Low        | Medium | Verify `@tailwindcss` v4 supports `data-[field-dirty]:` natively |
+| Test assertion format change introduces false positives               | Low        | High   | Phase 9 runs full test suite                                     |
 
 ---
 
 ## File Count Summary
 
-| Category | Count |
-|---|---|
-| TSX source files modified | ~15 |
-| CSS files deleted | 2 |
-| CSS files stripped | 1 |
-| Test files modified | 2 |
-| Doc files updated | 3 |
-| **Total** | **~23 files** |
+| Category                  | Count         |
+| ------------------------- | ------------- |
+| TSX source files modified | ~15           |
+| CSS files deleted         | 2             |
+| CSS files stripped        | 1             |
+| Test files modified       | 2             |
+| Doc files updated         | 3             |
+| **Total**                 | **~23 files** |

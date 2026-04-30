@@ -3,11 +3,7 @@ import { afterEach, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { ConditionGroup } from './condition-group';
-import type {
-  ConditionBuilderSchema,
-  ConditionField,
-  ConditionGroupValue,
-} from './types';
+import type { ConditionBuilderSchema, ConditionField, ConditionGroupValue } from './types';
 
 vi.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: any) => <>{children}</>,
@@ -49,7 +45,9 @@ vi.mock('@nop-chaos/ui', () => {
   }
 
   function MockComboboxInput({ placeholder, className }: any) {
-    return <input data-testid="mock-combobox-input" placeholder={placeholder} className={className} />;
+    return (
+      <input data-testid="mock-combobox-input" placeholder={placeholder} className={className} />
+    );
   }
 
   function MockComboboxContent({ children }: any) {
@@ -61,25 +59,37 @@ vi.mock('@nop-chaos/ui', () => {
   }
 
   function MockComboboxList({ children }: any) {
-    return <div data-testid="mock-combobox-list">{typeof children === 'function' ? null : children}</div>;
+    return (
+      <div data-testid="mock-combobox-list">{typeof children === 'function' ? null : children}</div>
+    );
   }
 
   function MockComboboxItem({ children, value, disabled }: any) {
-    return <div data-testid={`combobox-item-${value?.name ?? value}`} data-disabled={disabled ?? false}>{children}</div>;
+    return (
+      <div data-testid={`combobox-item-${value?.name ?? value}`} data-disabled={disabled ?? false}>
+        {children}
+      </div>
+    );
   }
 
   const MockSelectTrigger = forwardRef(({ children, ...props }: any, ref: any) => (
-    <div ref={ref} data-testid="select-trigger" {...props}>{children}</div>
+    <div ref={ref} data-testid="select-trigger" {...props}>
+      {children}
+    </div>
   ));
   (MockSelectTrigger as any).displayName = 'SelectTrigger';
 
   const MockSelectContent = forwardRef(({ children, ...props }: any, ref: any) => (
-    <div ref={ref} data-testid="select-content" {...props}>{children}</div>
+    <div ref={ref} data-testid="select-content" {...props}>
+      {children}
+    </div>
   ));
   (MockSelectContent as any).displayName = 'SelectContent';
 
   const MockSelectItem = forwardRef(({ children, value, ...props }: any, ref: any) => (
-    <div ref={ref} data-testid={`select-item-${value}`} data-value={value} {...props}>{children}</div>
+    <div ref={ref} data-testid={`select-item-${value}`} data-value={value} {...props}>
+      {children}
+    </div>
   ));
   (MockSelectItem as any).displayName = 'SelectItem';
 
@@ -87,19 +97,27 @@ vi.mock('@nop-chaos/ui', () => {
   MockSelectValue.displayName = 'SelectValue';
 
   const MockSelectGroup = forwardRef(({ children, ...props }: any, ref: any) => (
-    <div ref={ref} {...props}>{children}</div>
+    <div ref={ref} {...props}>
+      {children}
+    </div>
   ));
   (MockSelectGroup as any).displayName = 'SelectGroup';
 
   const MockSelectLabel = forwardRef(({ children, ...props }: any, ref: any) => (
-    <div ref={ref} {...props}>{children}</div>
+    <div ref={ref} {...props}>
+      {children}
+    </div>
   ));
   (MockSelectLabel as any).displayName = 'SelectLabel';
 
   function MockSelect({ children, value, onValueChange, disabled }: any) {
     return (
       <div data-testid="mock-select" data-value={value} data-disabled={disabled ?? false}>
-        <button type="button" data-testid="mock-select-trigger" onClick={() => onValueChange?.('__test_value__')}>
+        <button
+          type="button"
+          data-testid="mock-select-trigger"
+          onClick={() => onValueChange?.('__test_value__')}
+        >
           {value || 'select'}
         </button>
         <div data-testid="mock-select-content">{children}</div>
@@ -107,11 +125,13 @@ vi.mock('@nop-chaos/ui', () => {
     );
   }
 
-  const MockButton = forwardRef(({ children, onClick, disabled, type: _type, ...props }: any, ref: any) => (
-    <button ref={ref} type="button" onClick={onClick} disabled={disabled} {...props}>
-      {children}
-    </button>
-  ));
+  const MockButton = forwardRef(
+    ({ children, onClick, disabled, type: _type, ...props }: any, ref: any) => (
+      <button ref={ref} type="button" onClick={onClick} disabled={disabled} {...props}>
+        {children}
+      </button>
+    ),
+  );
   (MockButton as any).displayName = 'Button';
 
   const MockInput = forwardRef(({ onChange, value, ...props }: any, ref: any) => (
@@ -120,7 +140,9 @@ vi.mock('@nop-chaos/ui', () => {
   (MockInput as any).displayName = 'Input';
 
   const MockBadge = forwardRef(({ children, ...props }: any, ref: any) => (
-    <span ref={ref} {...props}>{children}</span>
+    <span ref={ref} {...props}>
+      {children}
+    </span>
   ));
   (MockBadge as any).displayName = 'Badge';
 

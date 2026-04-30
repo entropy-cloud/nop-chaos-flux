@@ -23,26 +23,32 @@ export function DesignerXyflowNode(props: NodeProps) {
   const [showToolbar, setShowToolbar] = useState(false);
   const hideToolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const nodeRenderData = useMemo(() => ({
-    node: {
-      id: props.id,
-      type: data.typeId,
-      label: data.label,
-      data: props.data
-    },
-    data: props.data
-  }), [props.id, props.data, data.typeId, data.label]);
+  const nodeRenderData = useMemo(
+    () => ({
+      node: {
+        id: props.id,
+        type: data.typeId,
+        label: data.label,
+        data: props.data,
+      },
+      data: props.data,
+    }),
+    [props.id, props.data, data.typeId, data.label],
+  );
 
   const hasQuickActions = nodeType?.quickActions && isSchemaInput(nodeType.quickActions);
 
   const treeNodeType = nodeType as TreeNodeTypeConfig | undefined;
   const showPlusButton = onPlusButtonClick && !treeNodeType?.tree?.isTerminal;
 
-  const actionScope = useMemo(() => ({
-    onEdit: () => dispatch({ type: 'selectNode', nodeId: props.id }),
-    onDuplicate: () => dispatch({ type: 'duplicateNode', nodeId: props.id }),
-    onDelete: () => dispatch({ type: 'deleteNode', nodeId: props.id })
-  }), [dispatch, props.id]);
+  const actionScope = useMemo(
+    () => ({
+      onEdit: () => dispatch({ type: 'selectNode', nodeId: props.id }),
+      onDuplicate: () => dispatch({ type: 'duplicateNode', nodeId: props.id }),
+      onDelete: () => dispatch({ type: 'deleteNode', nodeId: props.id }),
+    }),
+    [dispatch, props.id],
+  );
 
   function showToolbarNow() {
     if (hideToolbarTimeoutRef.current) {
@@ -144,10 +150,10 @@ export function DesignerXyflowNode(props: NodeProps) {
                   options={{
                     bindings: {
                       ...nodeRenderData,
-                      ...actionScope
+                      ...actionScope,
                     },
                     scopeKey: `node:${props.id}:quick-actions`,
-                    pathSuffix: 'node.quickActions'
+                    pathSuffix: 'node.quickActions',
                   }}
                 />
               </ClassAliasesContext.Provider>

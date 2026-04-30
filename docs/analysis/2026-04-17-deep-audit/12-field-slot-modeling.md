@@ -13,21 +13,21 @@
 
 ## 审计验证与修正摘要
 
-| 渲染器 | 原始违规类别 | 验证结果 | 修正状态 |
-|--------|-------------|---------|---------|
-| input-tree | slot | **已确认** | **已修正** |
-| tree-select | slot | **已确认** | **已修正** |
-| tag-list | field-frame | **已确认** | **已修正** |
-| key-value | field-frame | **已确认** | **已修正** |
-| array-editor | field-frame | **已确认** | **已修正** |
-| condition-builder | field-frame | **已确认** | **已修正** |
-| object-field | field-frame | **已确认** | **已修正** |
-| array-field | field-frame | **已确认** | **已修正** |
-| variant-field | field-frame | **已确认** | 保留（继续延期） |
-| variant-field | deep-region | **已确认** | 保留（需深层 region 提取架构） |
-| detail-field | field-frame | **已确认** | **已修正** |
-| detail-view | field-frame | **误报** | 不需要修正 |
-| code-editor | event | **已确认** | **已修正** |
+| 渲染器            | 原始违规类别 | 验证结果   | 修正状态                       |
+| ----------------- | ------------ | ---------- | ------------------------------ |
+| input-tree        | slot         | **已确认** | **已修正**                     |
+| tree-select       | slot         | **已确认** | **已修正**                     |
+| tag-list          | field-frame  | **已确认** | **已修正**                     |
+| key-value         | field-frame  | **已确认** | **已修正**                     |
+| array-editor      | field-frame  | **已确认** | **已修正**                     |
+| condition-builder | field-frame  | **已确认** | **已修正**                     |
+| object-field      | field-frame  | **已确认** | **已修正**                     |
+| array-field       | field-frame  | **已确认** | **已修正**                     |
+| variant-field     | field-frame  | **已确认** | 保留（继续延期）               |
+| variant-field     | deep-region  | **已确认** | 保留（需深层 region 提取架构） |
+| detail-field      | field-frame  | **已确认** | **已修正**                     |
+| detail-view       | field-frame  | **误报**   | 不需要修正                     |
+| code-editor       | event        | **已确认** | **已修正**                     |
 
 ## 重新评估结论
 
@@ -38,6 +38,7 @@
 ## 已修正的违规项
 
 ### [维度12] 渲染器名: input-tree — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/tree-controls.tsx`
@@ -48,6 +49,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: tree-select — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/tree-controls.tsx`
@@ -58,6 +60,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: condition-builder — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/condition-builder/ConditionBuilder.tsx`
@@ -68,6 +71,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: code-editor — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-code-editor/src/types.ts:45-47`
@@ -78,6 +82,7 @@
   - **参考文档**: `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: tag-list — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/tag-list.tsx`
@@ -88,6 +93,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: key-value — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/key-value.tsx`
@@ -98,6 +104,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: array-editor — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/array-editor.tsx`
@@ -108,6 +115,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: object-field — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/composite-field/object-field.tsx`
@@ -118,6 +126,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: array-field — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/composite-field/array-field.tsx`
@@ -128,6 +137,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: detail-field — **已修正**
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/detail-view/detail-field.tsx`
@@ -138,7 +148,9 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ## 已确认但暂不修正的违规项（仍需专门重构）
+
 ### [维度12] 渲染器名: variant-field (field-frame)
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx`
@@ -150,6 +162,7 @@
   - **参考文档**: `docs/architecture/field-frame.md`, `docs/architecture/field-metadata-slot-modeling.md`
 
 ### [维度12] 渲染器名: variant-field (deep-region)
+
 - **field metadata 完整性**: 部分
 - **违规项**:
   - **文件**: `packages/flux-renderers-form-advanced/src/variant-field/variant-field.tsx`
@@ -163,6 +176,7 @@
 ## 误报项
 
 ### [维度12] 渲染器名: detail-view — **误报**
+
 - **field metadata 完整性**: N/A
 - **原报告违规类别**: field-frame
 - **原报告内容**: `viewer` / `content` slot 解析位置正确，但字段级 `label` 仍由组件内 `FieldLabel` 直接渲染，且定义未接入 `wrap: true`。

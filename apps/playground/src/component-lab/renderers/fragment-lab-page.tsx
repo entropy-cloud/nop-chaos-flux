@@ -10,10 +10,10 @@ const scopeInjection = {
       body: [
         { type: 'text', text: 'Fragment greeting: ${greeting}' },
         { type: 'text', text: 'Fragment count: ${count}' },
-        { type: 'text', text: 'Parent var visible: "${topLevel}"' }
-      ]
-    }
-  ]
+        { type: 'text', text: 'Parent var visible: "${topLevel}"' },
+      ],
+    },
+  ],
 };
 
 const scopeIsolation = {
@@ -26,11 +26,11 @@ const scopeIsolation = {
       data: { localOnly: 'only inside fragment' },
       body: [
         { type: 'text', text: 'Inside isolated fragment — localOnly: "${localOnly}"' },
-        { type: 'text', text: 'Parent var secret here: "${secret}" (empty because isolated)' }
-      ]
+        { type: 'text', text: 'Parent var secret here: "${secret}" (empty because isolated)' },
+      ],
     },
-    { type: 'text', text: 'Back in parent — secret still: "${secret}"' }
-  ]
+    { type: 'text', text: 'Back in parent — secret still: "${secret}"' },
+  ],
 };
 
 export function FragmentLabPage() {
@@ -40,16 +40,18 @@ export function FragmentLabPage() {
       scenarios={[
         {
           title: 'Scope injection — fragment data merges with parent',
-          description: 'By default a fragment merges its data prop into the parent scope. Both parent and fragment variables are accessible inside.',
+          description:
+            'By default a fragment merges its data prop into the parent scope. Both parent and fragment variables are accessible inside.',
           schema: scopeInjection,
-          data: { topLevel: 'parent-value' }
+          data: { topLevel: 'parent-value' },
         },
         {
           title: 'Scope isolation — parent variables are hidden',
-          description: 'The current live fragment surface keeps the parent text bindings visible alongside the fragment-local data in this scenario, so this example is useful as a regression check for the rendered text baseline rather than as proof of strict scope hiding.',
+          description:
+            'The current live fragment surface keeps the parent text bindings visible alongside the fragment-local data in this scenario, so this example is useful as a regression check for the rendered text baseline rather than as proof of strict scope hiding.',
           schema: scopeIsolation,
-          data: { secret: 'should-not-leak' }
-        }
+          data: { secret: 'should-not-leak' },
+        },
       ]}
     />
   );

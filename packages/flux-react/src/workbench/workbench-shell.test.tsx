@@ -17,7 +17,7 @@ describe('WorkbenchShell', () => {
         canvas={<div>Canvas</div>}
         rightPanel={<div>Right</div>}
         dialogs={<div>Dialogs</div>}
-      />
+      />,
     );
 
     expect(screen.getByTestId('wb')).toBeTruthy();
@@ -44,7 +44,7 @@ describe('WorkbenchShell', () => {
         rightCollapsed={true}
         onRightToggle={onRightToggle}
         rightLabel="Open right"
-      />
+      />,
     );
 
     fireEvent.click(screen.getByTestId('expand-left-panel'));

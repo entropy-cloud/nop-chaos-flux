@@ -1,4 +1,10 @@
-import type { ActionResult, RendererRuntime, ScopeRef, SourceSchema, TemplateNode } from '@nop-chaos/flux-core';
+import type {
+  ActionResult,
+  RendererRuntime,
+  ScopeRef,
+  SourceSchema,
+  TemplateNode,
+} from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { isSourceSchema } from './use-source-value';
 
@@ -20,19 +26,21 @@ interface ControllerSnapshot {
 
 function buildLoadingPatch(
   entries: readonly SourceEntry[],
-  sourceStatePropKeys: Readonly<Record<string, string>>
+  sourceStatePropKeys: Readonly<Record<string, string>>,
 ): Record<string, SourceTransientState> {
   return Object.fromEntries(
     entries.flatMap((entry) => {
       const stateKey = sourceStatePropKeys[entry.key];
       if (!stateKey) return [];
       return [[stateKey, { loading: true, error: undefined, status: 'loading' as const }]];
-    })
+    }),
   );
 }
 
 function sameInputs(left: readonly unknown[], right: readonly unknown[]) {
-  return left.length === right.length && left.every((value, index) => Object.is(value, right[index]));
+  return (
+    left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
+  );
 }
 
 export interface NodeSourcePropController {
@@ -44,14 +52,14 @@ export interface NodeSourcePropController {
 
 export function createNodeSourcePropController(
   node: TemplateNode,
-  runtime: RendererRuntime
+  runtime: RendererRuntime,
 ): NodeSourcePropController {
   const sourcePropKeys = node.sourcePropKeys;
   const sourceStatePropKeys = node.sourceStatePropKeys;
 
   let currentSnapshot: ControllerSnapshot = {
     sourceInputs: [],
-    value: {}
+    value: {},
   };
   const listeners = new Set<() => void>();
   let currentController: AbortController | undefined;
@@ -73,7 +81,10 @@ export function createNodeSourcePropController(
       currentController?.abort();
       currentController = undefined;
       const next = { sourceInputs, value: propsValue };
-      if (!sameInputs(currentSnapshot.sourceInputs, sourceInputs) || !shallowEqual(currentSnapshot.value, propsValue)) {
+      if (
+        !sameInputs(currentSnapshot.sourceInputs, sourceInputs) ||
+        !shallowEqual(currentSnapshot.value, propsValue)
+      ) {
         currentSnapshot = next;
         notify();
       }
@@ -91,44 +102,60 @@ export function createNodeSourcePropController(
 
     void Promise.all(
       sourceEntries.map(async (entry) => {
-        const result: ActionResult = await runtime.executeSource({ source: entry.source, scope, ctx: { signal: controller.signal } });
+        const result: ActionResult = await runtime.executeSource({
+          source: entry.source,
+          scope,
+          ctx: { signal: controller.signal },
+        });
         return [entry, result] as const;
+      }),
+    )
+      .then((entries) => {
+        if (controller.signal.aborted) return;
+
+        const valuePatch = Object.fromEntries(
+          entries.map(([entry, result]) => [entry.key, result.ok ? result.data : undefined]),
+        );
+        const transientPatch = Object.fromEntries(
+          entries.flatMap(([entry, result]) => {
+            const stateKey = sourceStatePropKeys[entry.key];
+            if (!stateKey) return [];
+            return [
+              [
+                stateKey,
+                {
+                  loading: false,
+                  error: result.ok ? undefined : result.error,
+                  status: result.ok ? 'ready' : 'error',
+                } satisfies SourceTransientState,
+              ],
+            ];
+          }),
+        );
+        const nextValue = { ...propsValue, ...valuePatch, ...transientPatch };
+        const next: ControllerSnapshot = { sourceInputs, value: nextValue };
+
+        if (
+          !sameInputs(currentSnapshot.sourceInputs, sourceInputs) ||
+          !shallowEqual(currentSnapshot.value, nextValue)
+        ) {
+          currentSnapshot = next;
+          notify();
+        }
       })
-    ).then((entries) => {
-      if (controller.signal.aborted) return;
+      .catch((error) => {
+        if (controller.signal.aborted) return;
 
-      const valuePatch = Object.fromEntries(entries.map(([entry, result]) => [entry.key, result.ok ? result.data : undefined]));
-      const transientPatch = Object.fromEntries(
-        entries.flatMap(([entry, result]) => {
-          const stateKey = sourceStatePropKeys[entry.key];
-          if (!stateKey) return [];
-          return [[stateKey, {
-            loading: false,
-            error: result.ok ? undefined : result.error,
-            status: result.ok ? 'ready' : 'error'
-          } satisfies SourceTransientState]];
-        })
-      );
-      const nextValue = { ...propsValue, ...valuePatch, ...transientPatch };
-      const next: ControllerSnapshot = { sourceInputs, value: nextValue };
-
-      if (!sameInputs(currentSnapshot.sourceInputs, sourceInputs) || !shallowEqual(currentSnapshot.value, nextValue)) {
-        currentSnapshot = next;
+        const errorPatch = Object.fromEntries(
+          sourceEntries.flatMap((entry) => {
+            const stateKey = sourceStatePropKeys[entry.key];
+            if (!stateKey) return [];
+            return [[stateKey, { loading: false, error, status: 'error' as const }]];
+          }),
+        );
+        currentSnapshot = { sourceInputs, value: { ...propsValue, ...errorPatch } };
         notify();
-      }
-    }).catch((error) => {
-      if (controller.signal.aborted) return;
-
-      const errorPatch = Object.fromEntries(
-        sourceEntries.flatMap((entry) => {
-          const stateKey = sourceStatePropKeys[entry.key];
-          if (!stateKey) return [];
-          return [[stateKey, { loading: false, error, status: 'error' as const }]];
-        })
-      );
-      currentSnapshot = { sourceInputs, value: { ...propsValue, ...errorPatch } };
-      notify();
-    });
+      });
   }
 
   function dispose() {
@@ -141,9 +168,11 @@ export function createNodeSourcePropController(
     getSnapshot: () => currentSnapshot,
     subscribe(listener) {
       listeners.add(listener);
-      return () => { listeners.delete(listener); };
+      return () => {
+        listeners.delete(listener);
+      };
     },
     run,
-    dispose
+    dispose,
   };
 }

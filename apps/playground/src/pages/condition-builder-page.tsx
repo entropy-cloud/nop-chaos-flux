@@ -43,10 +43,13 @@ export function ConditionBuilderPage({ onBack }: ConditionBuilderPageProps) {
         >
           Back to Home
         </Button>
-        <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">Condition Builder</p>
+        <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">
+          Condition Builder
+        </p>
         <h1 className="m-0 mb-4">条件构建器测试</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)] mb-2">
-          测试 condition-builder 渲染器的各种配置：嵌入/弹出模式、AND/OR/NOT 切换、字段搜索、唯一字段约束、嵌套分组、自定义操作符。
+          测试 condition-builder 渲染器的各种配置：嵌入/弹出模式、AND/OR/NOT
+          切换、字段搜索、唯一字段约束、嵌套分组、自定义操作符。
         </p>
         <div className="mt-8 p-6 rounded-[20px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)]">
           <SchemaRenderer

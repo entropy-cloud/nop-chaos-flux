@@ -18,7 +18,7 @@ import type {
   ModuleCache,
   ImportedLibraryModule,
   PreparedImportSpec,
-  XuiImportSpec
+  XuiImportSpec,
 } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
@@ -66,7 +66,7 @@ export function createModuleCache(): ModuleCache {
     },
     removePending(absUrl) {
       pending.delete(absUrl);
-    }
+    },
   };
 }
 
@@ -82,16 +82,19 @@ export function createRendererRuntime(input: {
 }): RendererRuntime {
   const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
   const plugins = sortRendererPlugins(input.plugins);
-  const expressionCompiler = input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
+  const expressionCompiler =
+    input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
   const defaultCidState = createCompiledCidState();
-  const schemaCompiler = input.schemaCompiler ?? createSchemaCompiler({
-    registry: input.registry,
-    expressionCompiler,
-    plugins,
-    defaultCidState
-  });
+  const schemaCompiler =
+    input.schemaCompiler ??
+    createSchemaCompiler({
+      registry: input.registry,
+      expressionCompiler,
+      plugins,
+      defaultCidState,
+    });
   const envRef: { current: RendererEnv } = {
-    current: input.env
+    current: input.env,
   };
   const getEnv = () => envRef.current;
   const apiCache = createApiCacheStore();
@@ -107,7 +110,7 @@ export function createRendererRuntime(input: {
   const runtimeRef: { current?: RendererRuntime } = {};
   const nodeRuntime = createNodeRuntime({
     expressionCompiler,
-    getEnv
+    getEnv,
   });
   const runtimeNodeResolverRef: { current?: ReturnType<typeof createRuntimeNodeResolver> } = {};
   const ownedPages = new Set<PageRuntime>();
@@ -124,13 +127,13 @@ export function createRendererRuntime(input: {
 
       return runtimeRef.current;
     },
-    getEnv
+    getEnv,
   });
 
   function createModuleKey(spec: XuiImportSpec): string {
     return JSON.stringify({
       from: spec.from,
-      options: spec.options ?? null
+      options: spec.options ?? null,
     });
   }
 
@@ -138,18 +141,20 @@ export function createRendererRuntime(input: {
     actionScopeCounter += 1;
     const actionScope = createActionScope({
       id: scopeInput.id ?? `action-scope-${actionScopeCounter}`,
-      parent: scopeInput.parent
+      parent: scopeInput.parent,
     });
 
     ownedActionScopes.add(actionScope);
     return actionScope;
   }
 
-  function createOwnedComponentRegistry(registryInput: { id?: string; parent?: ComponentHandleRegistry } = {}) {
+  function createOwnedComponentRegistry(
+    registryInput: { id?: string; parent?: ComponentHandleRegistry } = {},
+  ) {
     componentRegistryCounter += 1;
     return createComponentHandleRegistry({
       id: registryInput.id ?? `component-registry-${componentRegistryCounter}`,
-      parent: registryInput.parent
+      parent: registryInput.parent,
     });
   }
 
@@ -164,17 +169,23 @@ export function createRendererRuntime(input: {
     },
     getEnv,
     moduleCache,
-    importStack
+    importStack,
   });
 
-  const { evaluate, compileValue, evaluateCompiled } = createRuntimeEvalHelpers(expressionCompiler, getEnv);
+  const { evaluate, compileValue, evaluateCompiled } = createRuntimeEvalHelpers(
+    expressionCompiler,
+    getEnv,
+  );
 
-  const actionDispatcherRef: { current?: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
+  const actionDispatcherRef: {
+    current?: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
+  } = {};
   const runtimeOwnedFactories = createRuntimeOwnedFactories({
     pageStore: input.pageStore,
     ownedPages,
     ownedSurfaceRuntimes,
-    createValidationScopeRuntime: (inputValue) => runtimeOwnedFactories.createValidationScopeRuntime(inputValue),
+    createValidationScopeRuntime: (inputValue) =>
+      runtimeOwnedFactories.createValidationScopeRuntime(inputValue),
     dispatchAction: (action, ctx) => {
       if (!actionDispatcherRef.current) {
         throw new Error('Action dispatcher not initialized');
@@ -186,10 +197,16 @@ export function createRendererRuntime(input: {
     disposeScopeTree: (scopeId) => {
       sourceRegistryRef.current?.disposeScopeTree(scopeId);
       reactionRegistryRef.current?.disposeScopeTree(scopeId);
-    }
+    },
   });
 
-  const executeSourceRef: { current?: (source: SourceSchema, scope: ScopeRef, ctx?: Partial<ActionContext>) => Promise<ActionResult> } = {};
+  const executeSourceRef: {
+    current?: (
+      source: SourceSchema,
+      scope: ScopeRef,
+      ctx?: Partial<ActionContext>,
+    ) => Promise<ActionResult>;
+  } = {};
 
   const runtime: RendererRuntime = {
     runtimeId,
@@ -214,13 +231,15 @@ export function createRendererRuntime(input: {
       const result = await prepare(schema, {
         schemaUrl: options?.schemaUrl,
         importLoader: getEnv().importLoader,
-        resolveImportUrl: getEnv().resolveImportUrl
+        resolveImportUrl: getEnv().resolveImportUrl,
       });
 
       const importLoader = getEnv().importLoader;
 
       if (result.preparedImports.size > 0 && !importLoader) {
-        throw new Error('Schema preparation requires env.importLoader when xui:imports are present.');
+        throw new Error(
+          'Schema preparation requires env.importLoader when xui:imports are present.',
+        );
       }
 
       const preparedEntries = await Promise.all(
@@ -251,14 +270,19 @@ export function createRendererRuntime(input: {
               throw new Error(`Prepared import missing cached module for ${prepared.spec.as}`);
             }
 
-            return [key, {
-              ...prepared,
-              staticMeta: await loadedModule.getStaticMeta?.()
-            } satisfies PreparedImportSpec] as const;
+            return [
+              key,
+              {
+                ...prepared,
+                staticMeta: await loadedModule.getStaticMeta?.(),
+              } satisfies PreparedImportSpec,
+            ] as const;
           } catch (error) {
-            throw new Error(`Imported namespace ${prepared.spec.as} failed to load: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error(
+              `Imported namespace ${prepared.spec.as} failed to load: ${error instanceof Error ? error.message : String(error)}`,
+            );
           }
-        })
+        }),
       );
 
       return { preparedImports: new Map(preparedEntries) };
@@ -286,14 +310,14 @@ export function createRendererRuntime(input: {
         path: options?.pathSuffix ? `${parent.path}.${options.pathSuffix}` : `${parent.path}.child`,
         parent,
         store,
-        isolate: options?.isolate
+        isolate: options?.isolate,
       });
     },
     createHostProjectionScope({
       parentScope,
       projection,
       path,
-      scopeLabel
+      scopeLabel,
     }: {
       parentScope: ScopeRef;
       projection: Record<string, unknown>;
@@ -305,21 +329,23 @@ export function createRendererRuntime(input: {
         projection,
         path,
         scopeLabel,
-        createChildScope: runtime.createChildScope
+        createChildScope: runtime.createChildScope,
       });
     },
     createActionScope: createOwnedActionScope,
     createComponentHandleRegistry: createOwnedComponentRegistry,
     resolvePreparedImports(inputValue) {
       const schemaUrl = inputValue.schemaUrl;
-      return (inputValue.imports ?? []).map((spec): PreparedImportSpec => ({
-        schemaUrl,
-        spec,
-        resolvedSpec: {
-          ...spec,
-          from: getEnv().resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from
-        }
-      }));
+      return (inputValue.imports ?? []).map(
+        (spec): PreparedImportSpec => ({
+          schemaUrl,
+          spec,
+          resolvedSpec: {
+            ...spec,
+            from: getEnv().resolveImportUrl?.(schemaUrl, spec.from, spec.options) ?? spec.from,
+          },
+        }),
+      );
     },
     ensureImportedNamespaces(args) {
       return importManager.ensureImportedNamespaces(args);
@@ -348,8 +374,9 @@ export function createRendererRuntime(input: {
         runtime,
         apiCache,
         asyncGovernance,
-        executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options),
-        ...inputValue
+        executeApiRequest: (actionType, api, scope, options) =>
+          executeApiRequest(actionType, api, scope, undefined, options),
+        ...inputValue,
       });
     },
     registerDataSource(inputValue: {
@@ -364,13 +391,10 @@ export function createRendererRuntime(input: {
       return sourceRegistryRef.current.registerDataSource({
         id: inputValue.id,
         scope: inputValue.scope,
-        compiledSource: inputValue.compiledSource
+        compiledSource: inputValue.compiledSource,
       });
     },
-    refreshDataSource(inputValue: {
-      id: string;
-      scope?: ScopeRef;
-    }) {
+    refreshDataSource(inputValue: { id: string; scope?: ScopeRef }) {
       if (!sourceRegistryRef.current) {
         throw new Error('Runtime source registry is not initialized yet');
       }
@@ -381,7 +405,13 @@ export function createRendererRuntime(input: {
       id: string;
       compiledReaction: import('@nop-chaos/flux-core').CompiledReaction;
       scope: ScopeRef;
-      dispatch: (action: import('@nop-chaos/flux-core').ActionSchema | import('@nop-chaos/flux-core').ActionSchema[] | import('@nop-chaos/flux-core').CompiledActionProgram, ctx?: Partial<import('@nop-chaos/flux-core').ActionContext>) => Promise<import('@nop-chaos/flux-core').ActionResult>;
+      dispatch: (
+        action:
+          | import('@nop-chaos/flux-core').ActionSchema
+          | import('@nop-chaos/flux-core').ActionSchema[]
+          | import('@nop-chaos/flux-core').CompiledActionProgram,
+        ctx?: Partial<import('@nop-chaos/flux-core').ActionContext>,
+      ) => Promise<import('@nop-chaos/flux-core').ActionResult>;
     }) {
       if (!reactionRegistryRef.current) {
         throw new Error('Runtime reaction registry is not initialized yet');
@@ -394,8 +424,8 @@ export function createRendererRuntime(input: {
         asyncGovernance,
         compiledReaction: inputValue.compiledReaction,
         helpers: {
-          dispatch: inputValue.dispatch
-        }
+          dispatch: inputValue.dispatch,
+        },
       });
     },
     getSourceDebugSnapshot() {
@@ -436,7 +466,7 @@ export function createRendererRuntime(input: {
       ownedActionScopes.clear();
       executeApiRequest.dispose?.();
     },
-    createFormRuntime: runtimeOwnedFactories.createFormRuntime
+    createFormRuntime: runtimeOwnedFactories.createFormRuntime,
   };
 
   const adapter = createActionRuntimeAdapter({
@@ -451,9 +481,9 @@ export function createRendererRuntime(input: {
         path: `${ctx.scope.path}.dialog`,
         parent: ctx.scope,
         initialData: {
-          dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`
-        }
-      })
+          dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
+        },
+      }),
   });
 
   const actionDispatcher = createActionDispatcher({
@@ -462,22 +492,24 @@ export function createRendererRuntime(input: {
     onActionError: input.onActionError,
     evaluator: { evaluate, compileValue, evaluateCompiled },
     adapter,
-    runtime
+    runtime,
   });
 
-  actionDispatcherRef.current = (action, ctx) => actionDispatcher.dispatch(action, ctx as ActionContext);
+  actionDispatcherRef.current = (action, ctx) =>
+    actionDispatcher.dispatch(action, ctx as ActionContext);
 
   sourceRegistryRef.current = createRuntimeSourceRegistry({
     runtime,
     apiCache,
     asyncGovernance,
-    executeApiRequest: (actionType, api, scope, options) => executeApiRequest(actionType, api, scope, undefined, options)
+    executeApiRequest: (actionType, api, scope, options) =>
+      executeApiRequest(actionType, api, scope, undefined, options),
   });
   reactionRegistryRef.current = createRuntimeReactionRegistry();
 
   executeSourceRef.current = createSourceExecutor({
     runtime,
-    executeAction: (action, ctx) => actionDispatcher.dispatch(action, ctx)
+    executeAction: (action, ctx) => actionDispatcher.dispatch(action, ctx),
   });
 
   runtimeRef.current = runtime;

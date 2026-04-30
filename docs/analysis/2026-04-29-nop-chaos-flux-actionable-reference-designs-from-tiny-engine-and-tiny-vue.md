@@ -23,15 +23,15 @@
 
 在本次审阅范围内，最值得参考的设计有七类。
 
-| 设计 | 来源锚点 | 与当前 Flux 边界的适配度 | 推荐优先级 | 首个落点 |
-| --- | --- | --- | --- | --- |
-| 基于“内置缺省 UI + schema/config 差量覆盖”的工作台装配收敛 | `tiny-engine/docs/extension-capabilities-overview/registry.md`, `tiny-engine/designer-demo/registry.js` | Good fit now | 高 | 先在各 host family 的 override 面与默认内容边界上收敛 |
-| 工具化 material catalog | `tiny-engine/scripts/buildMaterials.mjs`, `tiny-engine/designer-demo/public/mock/bundle.json` | Good fit now | 高 | 先落在 tooling/domain 包，再视复用度上提 |
-| 基于 `ResolvedAuthoringContract` 的属性面板/配置器协议 | `tiny-engine/packages/settings/props/src/composable/useProperties.ts` | Good fit now | 高 | `ResolvedAuthoringContract` 的 tooling 消费层 |
-| Flow Designer 的 `quickActions` / `contextActions` / authoring hints | `tiny-engine/designer-demo/public/mock/bundle.json` | Good fit now | 高 | `flow-designer` config + renderers |
-| 可选 schema export / codegen pipeline | `tiny-engine/packages/vue-generator/README.md` | Good fit now | 中 | 先原型化在 tooling，再决定是否独立包 |
-| iframe 隔离预览 host | `tiny-engine/packages/canvas/README.md` | Good fit later | 中 | `apps/playground` 或 workbench host |
-| 复杂控件的局部 headless/controller 抽取 | `tiny-vue/packages/renderless/src/button/vue.ts` | Good fit later | 中 | 从个别复杂 renderer 试点 |
+| 设计                                                                 | 来源锚点                                                                                                | 与当前 Flux 边界的适配度 | 推荐优先级 | 首个落点                                              |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------ | ---------- | ----------------------------------------------------- |
+| 基于“内置缺省 UI + schema/config 差量覆盖”的工作台装配收敛           | `tiny-engine/docs/extension-capabilities-overview/registry.md`, `tiny-engine/designer-demo/registry.js` | Good fit now             | 高         | 先在各 host family 的 override 面与默认内容边界上收敛 |
+| 工具化 material catalog                                              | `tiny-engine/scripts/buildMaterials.mjs`, `tiny-engine/designer-demo/public/mock/bundle.json`           | Good fit now             | 高         | 先落在 tooling/domain 包，再视复用度上提              |
+| 基于 `ResolvedAuthoringContract` 的属性面板/配置器协议               | `tiny-engine/packages/settings/props/src/composable/useProperties.ts`                                   | Good fit now             | 高         | `ResolvedAuthoringContract` 的 tooling 消费层         |
+| Flow Designer 的 `quickActions` / `contextActions` / authoring hints | `tiny-engine/designer-demo/public/mock/bundle.json`                                                     | Good fit now             | 高         | `flow-designer` config + renderers                    |
+| 可选 schema export / codegen pipeline                                | `tiny-engine/packages/vue-generator/README.md`                                                          | Good fit now             | 中         | 先原型化在 tooling，再决定是否独立包                  |
+| iframe 隔离预览 host                                                 | `tiny-engine/packages/canvas/README.md`                                                                 | Good fit later           | 中         | `apps/playground` 或 workbench host                   |
+| 复杂控件的局部 headless/controller 抽取                              | `tiny-vue/packages/renderless/src/button/vue.ts`                                                        | Good fit later           | 中         | 从个别复杂 renderer 试点                              |
 
 最重要的判断是：
 

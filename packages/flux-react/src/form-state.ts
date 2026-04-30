@@ -1,12 +1,19 @@
 import { getCompiledValidationField, getIn } from '@nop-chaos/flux-core';
-import type { CompiledFormValidationModel, FormErrorQuery, FormFieldPresentationSnapshot, FormFieldStateSnapshot, FormStoreState, ValidationError } from '@nop-chaos/flux-core';
+import type {
+  CompiledFormValidationModel,
+  FormErrorQuery,
+  FormFieldPresentationSnapshot,
+  FormFieldStateSnapshot,
+  FormStoreState,
+  ValidationError,
+} from '@nop-chaos/flux-core';
 import { resolveShowErrorTriggers, shouldShowFieldError } from './field-error-visibility';
 
 export const EMPTY_FORM_STORE_STATE: FormStoreState = {
   values: {},
   fieldStates: {},
   submitting: false,
-  submitAttempted: false
+  submitAttempted: false,
 };
 
 export const EMPTY_FORM_FIELD_STATE: FormFieldStateSnapshot = {
@@ -16,7 +23,7 @@ export const EMPTY_FORM_FIELD_STATE: FormFieldStateSnapshot = {
   dirty: false,
   visited: false,
   submitting: false,
-  submitAttempted: false
+  submitAttempted: false,
 };
 
 function matchesFormErrorQuery(error: ValidationError, query?: FormErrorQuery): boolean {
@@ -36,14 +43,20 @@ function matchesFormErrorQuery(error: ValidationError, query?: FormErrorQuery): 
     return false;
   }
 
-  if (query.sourceKinds?.length && (!error.sourceKind || !query.sourceKinds.includes(error.sourceKind))) {
+  if (
+    query.sourceKinds?.length &&
+    (!error.sourceKind || !query.sourceKinds.includes(error.sourceKind))
+  ) {
     return false;
   }
 
   return true;
 }
 
-export function selectCurrentFormErrors(state: FormStoreState, query?: FormErrorQuery): ValidationError[] {
+export function selectCurrentFormErrors(
+  state: FormStoreState,
+  query?: FormErrorQuery,
+): ValidationError[] {
   const matches: ValidationError[] = [];
 
   if (query?.path) {
@@ -67,7 +80,7 @@ export function selectCurrentFormErrors(state: FormStoreState, query?: FormError
 export function selectCurrentFormFieldState(
   state: FormStoreState,
   path: string,
-  query?: FormErrorQuery
+  query?: FormErrorQuery,
 ): FormFieldStateSnapshot {
   const fieldState = state.fieldStates[path];
   return {
@@ -77,32 +90,34 @@ export function selectCurrentFormFieldState(
     dirty: fieldState?.dirty === true,
     visited: fieldState?.visited === true,
     submitting: state.submitting,
-    submitAttempted: state.submitAttempted
+    submitAttempted: state.submitAttempted,
   };
 }
 
 export function isFieldEffectivelyRequired(
   validation: CompiledFormValidationModel | undefined,
   path: string,
-  values: Record<string, any>
+  values: Record<string, any>,
 ): boolean {
   const field = getCompiledValidationField(validation, path);
 
-  return Boolean(field?.rules.some(({ rule }) => {
-    if (rule.kind === 'required') {
-      return true;
-    }
+  return Boolean(
+    field?.rules.some(({ rule }) => {
+      if (rule.kind === 'required') {
+        return true;
+      }
 
-    if (rule.kind === 'requiredWhen') {
-      return Object.is(getIn(values, rule.path), rule.equals);
-    }
+      if (rule.kind === 'requiredWhen') {
+        return Object.is(getIn(values, rule.path), rule.equals);
+      }
 
-    if (rule.kind === 'requiredUnless') {
-      return !Object.is(getIn(values, rule.path), rule.equals);
-    }
+      if (rule.kind === 'requiredUnless') {
+        return !Object.is(getIn(values, rule.path), rule.equals);
+      }
 
-    return false;
-  }));
+      return false;
+    }),
+  );
 }
 
 export function selectCurrentFormFieldPresentation(
@@ -114,24 +129,33 @@ export function selectCurrentFormFieldPresentation(
     readOnly?: boolean;
     required?: boolean;
     query?: FormErrorQuery;
-  }
+  },
 ): FormFieldPresentationSnapshot {
-  const fieldState = selectCurrentFormFieldState(state, input.path, input.query ?? { path: input.path, ownerPath: input.path });
-  const error = selectCurrentFormErrors(state, {
-    path: input.path,
-    ownerPath: input.path,
-    sourceKinds: ['array', 'object', 'form', 'runtime-registration']
-  })[0] ?? fieldState.error;
+  const fieldState = selectCurrentFormFieldState(
+    state,
+    input.path,
+    input.query ?? { path: input.path, ownerPath: input.path },
+  );
+  const error =
+    selectCurrentFormErrors(state, {
+      path: input.path,
+      ownerPath: input.path,
+      sourceKinds: ['array', 'object', 'form', 'runtime-registration'],
+    })[0] ?? fieldState.error;
   const field = getCompiledValidationField(input.validation, input.path);
   const showErrorOn = resolveShowErrorTriggers(field?.behavior ?? input.validation?.behavior);
   const showError = Boolean(
-    error && shouldShowFieldError({ showErrorOn }, {
-      touched: fieldState.touched,
-      dirty: fieldState.dirty,
-      visited: fieldState.visited,
-      submitting: fieldState.submitting,
-      submitAttempted: fieldState.submitAttempted
-    })
+    error &&
+    shouldShowFieldError(
+      { showErrorOn },
+      {
+        touched: fieldState.touched,
+        dirty: fieldState.dirty,
+        visited: fieldState.visited,
+        submitting: fieldState.submitting,
+        submitAttempted: fieldState.submitAttempted,
+      },
+    ),
   );
   const effectiveDisabled = Boolean(input.disabled);
   const readOnly = Boolean(input.readOnly);
@@ -140,9 +164,11 @@ export function selectCurrentFormFieldPresentation(
     ...fieldState,
     error,
     effectiveDisabled,
-    effectiveRequired: Boolean(input.required) || isFieldEffectivelyRequired(input.validation, input.path, state.values),
+    effectiveRequired:
+      Boolean(input.required) ||
+      isFieldEffectivelyRequired(input.validation, input.path, state.values),
     showError,
     interactive: !effectiveDisabled && !readOnly,
-    readOnly
+    readOnly,
   };
 }

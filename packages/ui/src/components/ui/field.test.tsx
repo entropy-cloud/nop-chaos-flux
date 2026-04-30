@@ -11,7 +11,7 @@ describe('Field', () => {
         <FieldContent>
           <input id="username" />
         </FieldContent>
-      </Field>
+      </Field>,
     );
 
     const field = screen.getByRole('group');
@@ -32,10 +32,12 @@ describe('Field', () => {
             { message: 'Needs approval' },
           ]}
         />
-      </Field>
+      </Field>,
     );
 
-    expect(screen.getByText('Public profile settings').getAttribute('data-slot')).toBe('field-description');
+    expect(screen.getByText('Public profile settings').getAttribute('data-slot')).toBe(
+      'field-description',
+    );
     const alert = screen.getByRole('alert');
     expect(alert.getAttribute('data-slot')).toBe('field-error');
     expect(screen.getAllByRole('listitem')).toHaveLength(2);

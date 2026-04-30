@@ -18,13 +18,13 @@ The experimental design's biggest contribution is not the design itself, but the
 
 ### 1.1 Schema Compilation
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Compilation model** | Pipeline: Parse → Resolve → Classify → Compile → Optimize → TypeCheck | Similar pipeline: normalization → region extraction → field classification → expression compilation → template assembly |
-| **Output artifact** | `CompiledSchema` with explicit `PropSlot` classification | `TemplateNode` with `CompiledRuntimeValue` classification |
-| **Static/dynamic split** | `PropSlot: static \| dynamic \| i18n \| region \| action` | `CompiledRuntimeValue: { kind: 'static', isStatic: true } \| { kind: 'dynamic', isStatic: false }` |
-| **Serialization** | Claims to be serializable (no closures) — but `CompiledExpr.bytecode` is a `Uint32Array` and `constantPool` is `unknown[]`, which is effectively a closure-equivalent | Template nodes are immutable but carry compiled expression objects with `exec()` methods — not serializable |
-| **Renderer field metadata** | Uses `StaticRendererIndex.getPropSchema()` to classify fields at compile time | Uses `RendererDefinition.fields` metadata — same concept, different name |
+| Dimension                   | Experimental Design                                                                                                                                                   | Current Flux                                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Compilation model**       | Pipeline: Parse → Resolve → Classify → Compile → Optimize → TypeCheck                                                                                                 | Similar pipeline: normalization → region extraction → field classification → expression compilation → template assembly |
+| **Output artifact**         | `CompiledSchema` with explicit `PropSlot` classification                                                                                                              | `TemplateNode` with `CompiledRuntimeValue` classification                                                               |
+| **Static/dynamic split**    | `PropSlot: static \| dynamic \| i18n \| region \| action`                                                                                                             | `CompiledRuntimeValue: { kind: 'static', isStatic: true } \| { kind: 'dynamic', isStatic: false }`                      |
+| **Serialization**           | Claims to be serializable (no closures) — but `CompiledExpr.bytecode` is a `Uint32Array` and `constantPool` is `unknown[]`, which is effectively a closure-equivalent | Template nodes are immutable but carry compiled expression objects with `exec()` methods — not serializable             |
+| **Renderer field metadata** | Uses `StaticRendererIndex.getPropSchema()` to classify fields at compile time                                                                                         | Uses `RendererDefinition.fields` metadata — same concept, different name                                                |
 
 **Winner: Tie.** Both designs use nearly identical compilation strategies. The experimental design's `PropSlot` is slightly more explicit with the `i18n` kind, but the current Flux design achieves the same with its `CompiledRuntimeValue` classification plus runtime i18n resolution.
 
@@ -32,14 +32,14 @@ The experimental design's biggest contribution is not the design itself, but the
 
 ### 1.2 Expression Engine
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Compilation target** | Register-based bytecode (`Uint32Array`) | AST (recursive-descent parse → tree) |
-| **Execution model** | Bytecode VM interpreter | AST-walking evaluator |
-| **No eval/new Function** | Yes | Yes |
-| **Dependency tracking** | Via read barriers in VM instructions (`LOAD_VAR` logs to `DependencyLog`) | Via Proxy-based scope interception during evaluation |
-| **Built-in functions** | In constant pool, CALL_FUNC opcode | ~25 global functions + 3 namespace objects |
-| **Lazy evaluation** | Not mentioned | `IF()`/`SWITCH()` use lazy thunks |
+| Dimension                | Experimental Design                                                       | Current Flux                                         |
+| ------------------------ | ------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Compilation target**   | Register-based bytecode (`Uint32Array`)                                   | AST (recursive-descent parse → tree)                 |
+| **Execution model**      | Bytecode VM interpreter                                                   | AST-walking evaluator                                |
+| **No eval/new Function** | Yes                                                                       | Yes                                                  |
+| **Dependency tracking**  | Via read barriers in VM instructions (`LOAD_VAR` logs to `DependencyLog`) | Via Proxy-based scope interception during evaluation |
+| **Built-in functions**   | In constant pool, CALL_FUNC opcode                                        | ~25 global functions + 3 namespace objects           |
+| **Lazy evaluation**      | Not mentioned                                                             | `IF()`/`SWITCH()` use lazy thunks                    |
 
 **Winner: Current Flux.**
 
@@ -57,14 +57,14 @@ The bytecode VM is the experimental design's most ambitious and most risky claim
 
 ### 1.3 Scope / Data Environment
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Core model** | `Scope` with `get/has/_applyChange` | `ScopeRef` with `get/has/update/readOwn/readVisible` |
-| **Inheritance** | Parent chain with shadowing, `isolated` flag | Parent chain with shadowing, `isolate: true` |
-| **Write model** | All writes through `EffectDispatcher` → `Scope._applyChange` | Direct `scope.update(path, value)` |
-| **Read-only view** | `ReadableScope` for L4/L5 | `ScopeRef` itself is the read API (update is separate method) |
-| **Change notification** | `RootChange` (root-normalized) | `ScopeChange` (root-normalized paths) |
-| **Structural sharing** | Claimed but not specified | Prototype-backed `readVisible()` for zero-alc inheritance |
+| Dimension               | Experimental Design                                          | Current Flux                                                  |
+| ----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| **Core model**          | `Scope` with `get/has/_applyChange`                          | `ScopeRef` with `get/has/update/readOwn/readVisible`          |
+| **Inheritance**         | Parent chain with shadowing, `isolated` flag                 | Parent chain with shadowing, `isolate: true`                  |
+| **Write model**         | All writes through `EffectDispatcher` → `Scope._applyChange` | Direct `scope.update(path, value)`                            |
+| **Read-only view**      | `ReadableScope` for L4/L5                                    | `ScopeRef` itself is the read API (update is separate method) |
+| **Change notification** | `RootChange` (root-normalized)                               | `ScopeChange` (root-normalized paths)                         |
+| **Structural sharing**  | Claimed but not specified                                    | Prototype-backed `readVisible()` for zero-alc inheritance     |
 
 **Winner: Current Flux, with one important exception.**
 
@@ -76,35 +76,35 @@ However, the current Flux's `ScopeRef` is a simpler, more pragmatic design that 
 
 ### 1.4 Dependency Tracking / Reactivity
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Granularity** | Root-normalized (acknowledged as conservative over-approximation) | Root-normalized (same tradeoff) |
-| **Collection mechanism** | VM read barriers (theoretical) | Proxy-based runtime interception (implemented) |
-| **Compile-time pre-computation** | Claims dependency graph is pre-computed at compile time | `dependsOn` is explicit at compile time; runtime collection is supplementary |
-| **Three consumer types** | Source signals, derived signals, effect signals — same dependency model | Data sources, reactions, expressions — same unified model |
-| **Self-write protection** | `suppressFor(sourceId, roots)` | Sources filter out their own published roots |
-| **Topological ordering** | Explicitly required (glitch-free guarantee) | Implicit via scope subscription ordering |
+| Dimension                        | Experimental Design                                                     | Current Flux                                                                 |
+| -------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Granularity**                  | Root-normalized (acknowledged as conservative over-approximation)       | Root-normalized (same tradeoff)                                              |
+| **Collection mechanism**         | VM read barriers (theoretical)                                          | Proxy-based runtime interception (implemented)                               |
+| **Compile-time pre-computation** | Claims dependency graph is pre-computed at compile time                 | `dependsOn` is explicit at compile time; runtime collection is supplementary |
+| **Three consumer types**         | Source signals, derived signals, effect signals — same dependency model | Data sources, reactions, expressions — same unified model                    |
+| **Self-write protection**        | `suppressFor(sourceId, roots)`                                          | Sources filter out their own published roots                                 |
+| **Topological ordering**         | Explicitly required (glitch-free guarantee)                             | Implicit via scope subscription ordering                                     |
 
 **Winner: Current Flux.**
 
 Both designs converge on the same fundamental approach: root-normalized dependency tracking with conservative over-approximation. The experimental design's claim of "compile-time pre-computed dependency graph" is **overstated**:
 
 - Expression dependencies depend on runtime values (think: `items[getUserIndex()].name` — the index is dynamic)
-- The compile-time graph can only list *possible* dependency roots, not *actual* ones for a given execution
+- The compile-time graph can only list _possible_ dependency roots, not _actual_ ones for a given execution
 - The current Flux's approach (compile-time `dependsOn` as authoritative hint + runtime Proxy collection as fallback) handles this duality correctly
 
 The experimental design's `DependencyRuntime` with `wireDerived`, `wireDataSource`, `wireReaction`, `wireProjection` is architecturally clean but describes what is essentially a graph data structure that both designs would need to implement.
 
 ### 1.5 Action System
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Action representation** | Algebraic data type: `CompiledAction = dispatch \| sequence \| parallel \| guarded \| retry \| debounce \| timeout \| chain \| noop` | Schema-driven: `ActionSchema { action, args, when, then, onError, parallel, retry, timeout }` |
-| **Effect channel** | Unified `EffectDispatcher` with typed effect variants | Direct handler invocation (built-in / component / namespace) |
-| **Effect scoping** | `EffectScope` groups effects from a single action execution | No explicit effect scoping |
-| **Three-layer resolution** | Built-in → component → namespace | Built-in → component → namespace (identical) |
-| **Action scope** | Not explicitly lexical | `ActionScope` with parent chaining, `xui:imports` for namespace provisioning |
-| **Control flow** | `chain` with `then`/`onError`/`finally` | `then`/`onError` chains, no `finally` |
+| Dimension                  | Experimental Design                                                                                                                  | Current Flux                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| **Action representation**  | Algebraic data type: `CompiledAction = dispatch \| sequence \| parallel \| guarded \| retry \| debounce \| timeout \| chain \| noop` | Schema-driven: `ActionSchema { action, args, when, then, onError, parallel, retry, timeout }` |
+| **Effect channel**         | Unified `EffectDispatcher` with typed effect variants                                                                                | Direct handler invocation (built-in / component / namespace)                                  |
+| **Effect scoping**         | `EffectScope` groups effects from a single action execution                                                                          | No explicit effect scoping                                                                    |
+| **Three-layer resolution** | Built-in → component → namespace                                                                                                     | Built-in → component → namespace (identical)                                                  |
+| **Action scope**           | Not explicitly lexical                                                                                                               | `ActionScope` with parent chaining, `xui:imports` for namespace provisioning                  |
+| **Control flow**           | `chain` with `then`/`onError`/`finally`                                                                                              | `then`/`onError` chains, no `finally`                                                         |
 
 **Winner: Experimental Design (clear win).**
 
@@ -123,14 +123,14 @@ This is the one area where the experimental design is genuinely superior:
 
 ### 1.6 Rendering System
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Framework coupling** | Claims framework-portable via `RendererHost` protocol | React-specific (`React.ReactNode`, hooks, context) |
-| **Renderer contract** | `RendererInstance.mount/update/unmount` lifecycle | `RendererComponentProps<T>` with hooks |
-| **Region rendering** | `RegionHandle.render(bindings)` returns `RenderResult` | `RenderRegionHandle.render(options)` returns `React.ReactNode` |
-| **Error boundaries** | `RendererHost.wrapErrorBoundary()` | React error boundaries in `NodeRenderer` |
-| **Owner boundaries** | Not explicitly addressed | Creator-owned: page/form/surface renderers create their own runtimes |
-| **Renderer classification** | Layout vs widget | Layout vs widget (identical concept) |
+| Dimension                   | Experimental Design                                    | Current Flux                                                         |
+| --------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------- |
+| **Framework coupling**      | Claims framework-portable via `RendererHost` protocol  | React-specific (`React.ReactNode`, hooks, context)                   |
+| **Renderer contract**       | `RendererInstance.mount/update/unmount` lifecycle      | `RendererComponentProps<T>` with hooks                               |
+| **Region rendering**        | `RegionHandle.render(bindings)` returns `RenderResult` | `RenderRegionHandle.render(options)` returns `React.ReactNode`       |
+| **Error boundaries**        | `RendererHost.wrapErrorBoundary()`                     | React error boundaries in `NodeRenderer`                             |
+| **Owner boundaries**        | Not explicitly addressed                               | Creator-owned: page/form/surface renderers create their own runtimes |
+| **Renderer classification** | Layout vs widget                                       | Layout vs widget (identical concept)                                 |
 
 **Winner: Current Flux.**
 
@@ -148,14 +148,14 @@ The experimental design's "framework portability" claim is **aspirational but un
 
 ### 1.7 Form & Validation
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Validation model** | `ValidationGraph` with `CompiledValidationRule` (validatorRef) | `CompiledFormValidationModel` with `CompiledRuleTemplate` |
-| **Form runtime** | `FormRuntime` with getValue/setValue/validate/submit/draft | `FormRuntime extends ValidationScopeRuntime` with richer API |
-| **Validation timing** | `'submit' \| 'change' \| 'blur'` | `showErrorOn` policy + timing configuration |
-| **Draft isolation** | `DraftScope` with commit/discard | Renderer-level FormRuntime instances |
-| **Rule representation** | Pure data (`validatorRef: string`) | Closure-based (`CompiledRuleTemplate` with `args: CompiledRuntimeValue`) |
-| **Dependency substrate** | Same as expression dependency tracking | Separate compile-time field-graph (more correct for cross-field rules) |
+| Dimension                | Experimental Design                                            | Current Flux                                                             |
+| ------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Validation model**     | `ValidationGraph` with `CompiledValidationRule` (validatorRef) | `CompiledFormValidationModel` with `CompiledRuleTemplate`                |
+| **Form runtime**         | `FormRuntime` with getValue/setValue/validate/submit/draft     | `FormRuntime extends ValidationScopeRuntime` with richer API             |
+| **Validation timing**    | `'submit' \| 'change' \| 'blur'`                               | `showErrorOn` policy + timing configuration                              |
+| **Draft isolation**      | `DraftScope` with commit/discard                               | Renderer-level FormRuntime instances                                     |
+| **Rule representation**  | Pure data (`validatorRef: string`)                             | Closure-based (`CompiledRuleTemplate` with `args: CompiledRuntimeValue`) |
+| **Dependency substrate** | Same as expression dependency tracking                         | Separate compile-time field-graph (more correct for cross-field rules)   |
 
 **Winner: Current Flux.**
 
@@ -169,14 +169,14 @@ The current Flux's validation system is notably more sophisticated:
 
 ### 1.8 Data Sources / API
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Data source types** | API-backed only (implied) | API-backed + formula-backed (unified lifecycle) |
-| **Refresh strategies** | `'manual' \| 'polling' \| 'onDependency'` | Manual + polling + dependency-based + `stopWhen` condition |
-| **Result mapping** | `paramMapping` (scopePath → paramName) | `resultMapping` + `mergeToScope` + `mergeStrategy` (replace/append/prepend/merge/upsert) |
-| **Scope injection** | `paramMapping` concept | `includeScope: '*' \| string[]` |
-| **Refresh dedup** | Not specified | `cancel-previous` / `ignore-new` / `parallel` strategies |
-| **Reactions** | `CompiledReaction` with watchExpr/conditionExpr/action | `ReactionSchema` with watch/when/immediate/debounce/once/actions |
+| Dimension              | Experimental Design                                    | Current Flux                                                                             |
+| ---------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| **Data source types**  | API-backed only (implied)                              | API-backed + formula-backed (unified lifecycle)                                          |
+| **Refresh strategies** | `'manual' \| 'polling' \| 'onDependency'`              | Manual + polling + dependency-based + `stopWhen` condition                               |
+| **Result mapping**     | `paramMapping` (scopePath → paramName)                 | `resultMapping` + `mergeToScope` + `mergeStrategy` (replace/append/prepend/merge/upsert) |
+| **Scope injection**    | `paramMapping` concept                                 | `includeScope: '*' \| string[]`                                                          |
+| **Refresh dedup**      | Not specified                                          | `cancel-previous` / `ignore-new` / `parallel` strategies                                 |
+| **Reactions**          | `CompiledReaction` with watchExpr/conditionExpr/action | `ReactionSchema` with watch/when/immediate/debounce/once/actions                         |
 
 **Winner: Current Flux (by a significant margin).**
 
@@ -194,23 +194,23 @@ The current Flux's data source system is one of its most mature subsystems:
 
 ### 1.9 Surface/Dialog Management
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Surface types** | `dialog \| drawer` with shared model | `dialog \| drawer` with shared model |
-| **Stack management** | `SurfaceManager` with stack | `SurfaceRuntime`/`SurfaceStore` with stack |
-| **Scope ownership** | Each surface has independent scope | Same |
+| Dimension            | Experimental Design                   | Current Flux                                                |
+| -------------------- | ------------------------------------- | ----------------------------------------------------------- |
+| **Surface types**    | `dialog \| drawer` with shared model  | `dialog \| drawer` with shared model                        |
+| **Stack management** | `SurfaceManager` with stack           | `SurfaceRuntime`/`SurfaceStore` with stack                  |
+| **Scope ownership**  | Each surface has independent scope    | Same                                                        |
 | **Focus management** | "Only top surface has focus" (stated) | Focus trap, escape handling, backdrop dismiss (implemented) |
 
 **Winner: Tie.** Both designs use the same fundamental model. The current Flux has more implementation detail.
 
 ### 1.10 Loop/Table/Collection Rendering
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| **Row scope** | Isolated, with projections | Isolated by default, with `rowData` projection |
-| **Scope reuse** | Not specified (implied per-render) | Cached by `rowKey`, reused across renders |
-| **Row identity** | Not specified | `rowKey`-based identity separate from value path |
-| **Instance path** | Not specified | `instancePath` with `repeatedTemplateId + instanceKey` |
+| Dimension         | Experimental Design                | Current Flux                                           |
+| ----------------- | ---------------------------------- | ------------------------------------------------------ |
+| **Row scope**     | Isolated, with projections         | Isolated by default, with `rowData` projection         |
+| **Scope reuse**   | Not specified (implied per-render) | Cached by `rowKey`, reused across renders              |
+| **Row identity**  | Not specified                      | `rowKey`-based identity separate from value path       |
+| **Instance path** | Not specified                      | `instancePath` with `repeatedTemplateId + instanceKey` |
 
 **Winner: Current Flux.**
 
@@ -230,11 +230,11 @@ The experimental design's `LoopRuntime` is correct at the concept level but miss
 
 ### 2.1 Framework Agnosticism
 
-| Claim | Experimental Design | Current Flux |
-|-------|-------------------|--------------|
-| Core is framework-free | Claims L1–L4 are framework-agnostic | Core (flux-core, flux-formula, flux-runtime) is truly framework-agnostic |
-| React coupling | Only L5 | Only flux-react and renderer packages |
-| Testability without DOM | Claimed | Demonstrated (Vitest tests run without DOM) |
+| Claim                   | Experimental Design                 | Current Flux                                                             |
+| ----------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
+| Core is framework-free  | Claims L1–L4 are framework-agnostic | Core (flux-core, flux-formula, flux-runtime) is truly framework-agnostic |
+| React coupling          | Only L5                             | Only flux-react and renderer packages                                    |
+| Testability without DOM | Claimed                             | Demonstrated (Vitest tests run without DOM)                              |
 
 Both designs achieve framework agnosticism for their core logic. The current Flux is more honest about its React commitment in the rendering layer.
 
@@ -251,22 +251,22 @@ Both designs make the same fundamental split. The experimental design's claims a
 
 ### 2.3 Type Safety
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| TypeScript annotations | Extensive but with pervasive `unknown` | Extensive with more specific types where possible |
-| Runtime type checks | `ExprType` tagged union (proposed) | No runtime type system; TypeScript-only |
+| Dimension                | Experimental Design                    | Current Flux                                      |
+| ------------------------ | -------------------------------------- | ------------------------------------------------- |
+| TypeScript annotations   | Extensive but with pervasive `unknown` | Extensive with more specific types where possible |
+| Runtime type checks      | `ExprType` tagged union (proposed)     | No runtime type system; TypeScript-only           |
 | Schema-level type safety | Claimed via compile-time type checking | Achieved via `RendererDefinition.fields` metadata |
-| Generic type parameters | Used on `RendererComponentProps<S>` | Same pattern |
+| Generic type parameters  | Used on `RendererComponentProps<S>`    | Same pattern                                      |
 
 **Winner: Tie.** Neither design achieves true type safety for dynamic schema values. The experimental design's `ExprType` runtime type tag system adds complexity without clear benefit — TypeScript's `unknown` with narrowing is sufficient.
 
 ### 2.4 Testability
 
-| Dimension | Experimental Design | Current Flux |
-|-----------|-------------------|--------------|
-| Per-layer isolation | Explicitly designed for | Achieved through package boundaries |
-| Mock effects | `EffectDispatcher` enables easy mocking | Host adapter (`env.fetcher`, etc.) enables mocking |
-| No-DOM testing | Claimed for L1–L4 | Demonstrated in test suite |
+| Dimension           | Experimental Design                     | Current Flux                                       |
+| ------------------- | --------------------------------------- | -------------------------------------------------- |
+| Per-layer isolation | Explicitly designed for                 | Achieved through package boundaries                |
+| Mock effects        | `EffectDispatcher` enables easy mocking | Host adapter (`env.fetcher`, etc.) enables mocking |
+| No-DOM testing      | Claimed for L1–L4                       | Demonstrated in test suite                         |
 
 **Winner: Tie.** Both are testable. The experimental design's `EffectDispatcher` provides slightly better mockability for actions, but the current Flux's `env` adapter achieves the same goal.
 
@@ -279,6 +279,7 @@ These are ideas from the experimental design that the current Flux should consid
 ### 3.1 Effect Scoping and Transactional Semantics (High Value)
 
 **Current Flux gap**: Actions can trigger side effects (scope writes, API calls, navigation) without any centralized interception or grouping. There's no way to:
+
 - Cancel all in-flight effects when a scope is disposed
 - Audit all effects triggered by a specific action
 - Roll back effects from a failed action chain
@@ -306,6 +307,7 @@ These are areas where the current Flux's design is fundamentally superior:
 ### 4.1 Creator-Owned Boundaries
 
 The current Flux's "creator-owned boundaries" pattern is a crucial architectural decision that the experimental design misses entirely. In the current Flux:
+
 - Page renderer creates `PageRuntime`
 - Form renderer creates `FormRuntime`
 - Surface host creates `SurfaceRuntime`
@@ -337,23 +339,23 @@ The current Flux's `xui:imports` mechanism provides declaration-style import sem
 
 ## 5. Summary Scorecard
 
-| Dimension | Experimental Design | Current Flux | Winner |
-|-----------|:---:|:---:|:---:|
-| Schema Compilation | 8 | 8 | Tie |
-| Expression Engine | 6 | 8 | **Flux** |
-| Scope / Data Environment | 7 | 8 | **Flux** |
-| Dependency Tracking | 7 | 8 | **Flux** |
-| Action System | **9** | 7 | **Experimental** |
-| Rendering System | 6 | 8 | **Flux** |
-| Form & Validation | 7 | 9 | **Flux** |
-| Data Sources / API | 6 | 9 | **Flux** |
-| Surface Management | 7 | 7 | Tie |
-| Loop / Table / Collection | 6 | 8 | **Flux** |
-| Framework Portability | 5 (unproven) | 7 (React-committed) | **Flux** (pragmatic) |
-| Effect Discipline | **9** | 6 | **Experimental** |
-| Type Safety | 7 | 7 | Tie |
-| Testability | 8 | 8 | Tie |
-| **Overall** | **7.0** | **7.9** | **Flux** |
+| Dimension                 | Experimental Design |    Current Flux     |        Winner        |
+| ------------------------- | :-----------------: | :-----------------: | :------------------: |
+| Schema Compilation        |          8          |          8          |         Tie          |
+| Expression Engine         |          6          |          8          |       **Flux**       |
+| Scope / Data Environment  |          7          |          8          |       **Flux**       |
+| Dependency Tracking       |          7          |          8          |       **Flux**       |
+| Action System             |        **9**        |          7          |   **Experimental**   |
+| Rendering System          |          6          |          8          |       **Flux**       |
+| Form & Validation         |          7          |          9          |       **Flux**       |
+| Data Sources / API        |          6          |          9          |       **Flux**       |
+| Surface Management        |          7          |          7          |         Tie          |
+| Loop / Table / Collection |          6          |          8          |       **Flux**       |
+| Framework Portability     |    5 (unproven)     | 7 (React-committed) | **Flux** (pragmatic) |
+| Effect Discipline         |        **9**        |          6          |   **Experimental**   |
+| Type Safety               |          7          |          7          |         Tie          |
+| Testability               |          8          |          8          |         Tie          |
+| **Overall**               |       **7.0**       |       **7.9**       |       **Flux**       |
 
 ---
 

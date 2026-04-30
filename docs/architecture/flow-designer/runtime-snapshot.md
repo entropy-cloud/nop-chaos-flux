@@ -40,26 +40,26 @@
 
 ```ts
 interface SelectionSummary {
-  selectedNodeIds: string[]
-  selectedEdgeIds: string[]
-  activeNodeId: string | null
-  activeEdgeId: string | null
-  activeBranchId: string | null
+  selectedNodeIds: string[];
+  selectedEdgeIds: string[];
+  activeNodeId: string | null;
+  activeEdgeId: string | null;
+  activeBranchId: string | null;
 }
 
 interface DesignerSnapshot {
-  doc: GraphDocument
-  selection: SelectionSummary
-  activeNode: GraphNode | null
-  activeEdge: GraphEdge | null
-  activeBranch: DesignerBranchSummary | null
-  canUndo: boolean
-  canRedo: boolean
-  isDirty: boolean
-  gridEnabled: boolean
-  paletteCollapsed: boolean
-  inspectorCollapsed: boolean
-  viewport: { x: number; y: number; zoom: number }
+  doc: GraphDocument;
+  selection: SelectionSummary;
+  activeNode: GraphNode | null;
+  activeEdge: GraphEdge | null;
+  activeBranch: DesignerBranchSummary | null;
+  canUndo: boolean;
+  canRedo: boolean;
+  isDirty: boolean;
+  gridEnabled: boolean;
+  paletteCollapsed: boolean;
+  inspectorCollapsed: boolean;
+  viewport: { x: number; y: number; zoom: number };
 }
 ```
 
@@ -179,11 +179,11 @@ interface DesignerSnapshot {
 
 ```ts
 interface DesignerContextValue {
-  core: DesignerCore
-  commandAdapter: DesignerCommandAdapter
-  dispatch: (command: DesignerCommand) => DesignerCommandResult
-  snapshot: DesignerSnapshot
-  config: DesignerConfig
+  core: DesignerCore;
+  commandAdapter: DesignerCommandAdapter;
+  dispatch: (command: DesignerCommand) => DesignerCommandResult;
+  snapshot: DesignerSnapshot;
+  config: DesignerConfig;
 }
 ```
 
@@ -220,9 +220,9 @@ interface DesignerContextValue {
 然后在 `toolbar`、`inspector`、`dialogs` region 渲染时通过 `helpers.render(...)` 显式传入:
 
 ```ts
-props.helpers.render(props.regions.toolbar.templateNode, { scope: designerScope, actionScope })
-props.helpers.render(props.regions.inspector.templateNode, { scope: designerScope, actionScope })
-props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope, actionScope })
+props.helpers.render(props.regions.toolbar.templateNode, { scope: designerScope, actionScope });
+props.helpers.render(props.regions.inspector.templateNode, { scope: designerScope, actionScope });
+props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope, actionScope });
 ```
 
 因此这三个 region 内部的 schema 表达式当前稳定可读取由 `buildDesignerScopeData` 投影出的字段:
@@ -250,12 +250,12 @@ props.helpers.render(props.regions.dialogs.templateNode, { scope: designerScope,
 
 ### Region capability matrix
 
-| Path | Mounted by `designer-page` | Reads injected designer scope | Dispatches `designer:*` | Covered by regression |
-| --- | --- | --- | --- | --- |
-| `toolbar` region | Yes | Yes | Yes | Yes |
-| `inspector` region | Yes | Yes | Yes | Yes |
-| `dialogs` region | Yes | Yes | Yes | Yes |
-| shared `dialog` action popup | Via dialog runtime | Inherits popup scope | Yes | Yes |
+| Path                         | Mounted by `designer-page` | Reads injected designer scope | Dispatches `designer:*` | Covered by regression |
+| ---------------------------- | -------------------------- | ----------------------------- | ----------------------- | --------------------- |
+| `toolbar` region             | Yes                        | Yes                           | Yes                     | Yes                   |
+| `inspector` region           | Yes                        | Yes                           | Yes                     | Yes                   |
+| `dialogs` region             | Yes                        | Yes                           | Yes                     | Yes                   |
+| shared `dialog` action popup | Via dialog runtime         | Inherits popup scope          | Yes                     | Yes                   |
 
 ### 尚未落地（保留设计目标）
 
@@ -332,35 +332,35 @@ DesignerSnapshot (reactive via useSyncExternalStore)
 ### `DesignerSnapshot`
 
 ```ts
-snapshot.doc
-snapshot.selection
-snapshot.activeNode
-snapshot.activeEdge
-snapshot.canUndo
-snapshot.canRedo
-snapshot.isDirty
-snapshot.gridEnabled
-snapshot.viewport
+snapshot.doc;
+snapshot.selection;
+snapshot.activeNode;
+snapshot.activeEdge;
+snapshot.canUndo;
+snapshot.canRedo;
+snapshot.isDirty;
+snapshot.gridEnabled;
+snapshot.viewport;
 ```
 
 ### `DesignerContextValue`
 
 ```ts
-ctx.core
-ctx.commandAdapter
-ctx.dispatch
-ctx.snapshot
-ctx.config
+ctx.core;
+ctx.commandAdapter;
+ctx.dispatch;
+ctx.snapshot;
+ctx.config;
 ```
 
 ### region child scope 字段（toolbar / inspector / dialogs 内部有效）
 
 ```ts
-doc
-selection   // { kind, count, nodeIds, edgeIds, activeNodeId, activeEdgeId }
-activeNode
-activeEdge
-runtime     // { canUndo, canRedo, dirty, isDirty, gridEnabled, zoom, viewport }
+doc;
+selection; // { kind, count, nodeIds, edgeIds, activeNodeId, activeEdgeId }
+activeNode;
+activeEdge;
+runtime; // { canUndo, canRedo, dirty, isDirty, gridEnabled, zoom, viewport }
 ```
 
 ## 9. 当前不应写成"已经存在"的能力

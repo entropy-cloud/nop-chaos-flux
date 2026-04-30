@@ -12,7 +12,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ record: { from: 'page' } });
     const rowScope = runtime.createChildScope(page.scope, { record: { name: 'Alice' } });
@@ -43,11 +43,11 @@ describe('createRendererRuntime', () => {
           return {
             ok: true,
             status: 200,
-            data: { request: callCount } as T
+            data: { request: callCount } as T,
           };
-        }
+        },
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
@@ -56,14 +56,14 @@ describe('createRendererRuntime', () => {
         action: 'ajax',
         args: {
           url: '/api/search',
-          method: 'get'
-        }
+          method: 'get',
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     const secondResult = await runtime.dispatch(
@@ -71,14 +71,14 @@ describe('createRendererRuntime', () => {
         action: 'ajax',
         args: {
           url: '/api/search',
-          method: 'get'
-        }
+          method: 'get',
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     const firstResult = await firstPromise;
@@ -91,30 +91,30 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
     const first = await runtime.dispatch(
       {
-        action: 'refreshTable'
+        action: 'refreshTable',
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     const second = await runtime.dispatch(
       {
-        action: 'refreshTable'
+        action: 'refreshTable',
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(first).toMatchObject({ ok: true, data: 1 });
@@ -126,18 +126,22 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3 });
 
     const registration = runtime.registerDataSource({
       id: 'total-source',
       scope: page.scope,
-      compiledSource: compileDataSource('total-source', {
-        type: 'data-source',
-        name: 'total',
-        formula: '${(price || 0) * (qty || 0)}'
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'total-source',
+        {
+          type: 'data-source',
+          name: 'total',
+          formula: '${(price || 0) * (qty || 0)}',
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -149,13 +153,13 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'refreshSource',
-        targetId: 'total-source'
+        targetId: 'total-source',
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, data: true });
@@ -168,18 +172,22 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ price: 2, qty: 3 });
 
     const registration = runtime.registerDataSource({
       id: 'total-source-id',
       scope: page.scope,
-      compiledSource: compileDataSource('total-source-id', {
-        type: 'data-source',
-        name: 'total',
-        formula: '${(price || 0) * (qty || 0)}'
-      }, expressionCompiler)
+      compiledSource: compileDataSource(
+        'total-source-id',
+        {
+          type: 'data-source',
+          name: 'total',
+          formula: '${(price || 0) * (qty || 0)}',
+        },
+        expressionCompiler,
+      ),
     });
 
     await vi.waitFor(() => {
@@ -191,13 +199,13 @@ describe('createRendererRuntime', () => {
     const result = await runtime.dispatch(
       {
         action: 'refreshSource',
-        targetId: 'total'
+        targetId: 'total',
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, data: true });
@@ -210,7 +218,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ enabled: false, message: 'initial' });
 
@@ -220,14 +228,14 @@ describe('createRendererRuntime', () => {
         when: '${enabled}',
         args: {
           path: 'message',
-          value: 'updated'
-        }
+          value: 'updated',
+        },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result).toMatchObject({ ok: true, skipped: true });
@@ -238,7 +246,7 @@ describe('createRendererRuntime', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ left: 'a', right: 'b' });
 
@@ -250,23 +258,23 @@ describe('createRendererRuntime', () => {
             action: 'setValue',
             args: {
               path: 'left',
-              value: 'left-updated'
-            }
+              value: 'left-updated',
+            },
           },
           {
             action: 'setValue',
             args: {
               path: 'right',
-              value: 'right-updated'
-            }
-          }
-        ]
+              value: 'right-updated',
+            },
+          },
+        ],
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     expect(result.ok).toBe(true);
@@ -279,22 +287,29 @@ describe('createRendererRuntime', () => {
     vi.useFakeTimers();
 
     try {
-      const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+      const fetcherImpl: RendererEnv['fetcher'] = async <T>(
+        _api: ApiSchema,
+        ctx: { signal?: AbortSignal },
+      ) => {
         return new Promise((resolve, reject) => {
-          ctx.signal?.addEventListener('abort', () => {
-            const error = new Error('aborted');
-            (error as Error & { name: string }).name = 'AbortError';
-            reject(error);
-          }, { once: true });
+          ctx.signal?.addEventListener(
+            'abort',
+            () => {
+              const error = new Error('aborted');
+              (error as Error & { name: string }).name = 'AbortError';
+              reject(error);
+            },
+            { once: true },
+          );
         }) as Promise<{ ok: true; status: number; data: T }>;
       };
       const runtime = createRendererRuntime({
         registry: createRendererRegistry([textRenderer]),
         env: {
           ...env,
-          fetcher: fetcherImpl
+          fetcher: fetcherImpl,
         },
-        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       });
       const page = runtime.createPageRuntime({});
 
@@ -306,21 +321,21 @@ describe('createRendererRuntime', () => {
               action: 'setValue',
               args: {
                 path: 'left',
-                value: 'ok'
-              }
+                value: 'ok',
+              },
             },
             {
               action: 'ajax',
               timeout: 5,
-              args: { url: '/api/slow' }
-            }
-          ]
+              args: { url: '/api/slow' },
+            },
+          ],
         },
         {
           runtime,
           scope: page.scope,
-          page
-        }
+          page,
+        },
       );
 
       await vi.advanceTimersByTimeAsync(5);
@@ -329,8 +344,8 @@ describe('createRendererRuntime', () => {
         ok: false,
         results: [
           expect.objectContaining({ ok: true }),
-          expect.objectContaining({ ok: false, timedOut: true, cancelled: true })
-        ]
+          expect.objectContaining({ ok: false, timedOut: true, cancelled: true }),
+        ],
       });
     } finally {
       vi.useRealTimers();
@@ -341,13 +356,20 @@ describe('createRendererRuntime', () => {
     vi.useFakeTimers();
 
     try {
-      const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+      const fetcherImpl: RendererEnv['fetcher'] = async <T>(
+        _api: ApiSchema,
+        ctx: { signal?: AbortSignal },
+      ) => {
         return new Promise((resolve, reject) => {
-          ctx.signal?.addEventListener('abort', () => {
-            const error = new Error('aborted');
-            (error as Error & { name: string }).name = 'AbortError';
-            reject(error);
-          }, { once: true });
+          ctx.signal?.addEventListener(
+            'abort',
+            () => {
+              const error = new Error('aborted');
+              (error as Error & { name: string }).name = 'AbortError';
+              reject(error);
+            },
+            { once: true },
+          );
         }) as Promise<{ ok: true; status: number; data: T }>;
       };
       const fetcher = vi.fn(fetcherImpl);
@@ -355,23 +377,23 @@ describe('createRendererRuntime', () => {
         registry: createRendererRegistry([textRenderer]),
         env: {
           ...env,
-          fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+          fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
         },
-        expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       });
       const page = runtime.createPageRuntime({});
 
       const resultPromise = runtime.dispatch(
-      {
-        action: 'ajax',
-        timeout: 10,
-        args: { url: '/api/slow' }
-      },
+        {
+          action: 'ajax',
+          timeout: 10,
+          args: { url: '/api/slow' },
+        },
         {
           runtime,
           scope: page.scope,
-          page
-        }
+          page,
+        },
       );
 
       await vi.advanceTimersByTimeAsync(10);
@@ -379,7 +401,7 @@ describe('createRendererRuntime', () => {
       await expect(resultPromise).resolves.toMatchObject({
         ok: false,
         cancelled: true,
-        timedOut: true
+        timedOut: true,
       });
     } finally {
       vi.useRealTimers();
@@ -388,15 +410,22 @@ describe('createRendererRuntime', () => {
 
   it('aborts ajax requests when action timeouts fire', async () => {
     let capturedSignal: AbortSignal | undefined;
-    const fetcherImpl: RendererEnv['fetcher'] = async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>(
+      _api: ApiSchema,
+      ctx: { signal?: AbortSignal },
+    ) => {
       capturedSignal = ctx.signal;
 
       return new Promise((resolve, reject) => {
-        ctx.signal?.addEventListener('abort', () => {
-          const error = new Error('aborted');
-          (error as Error & { name: string }).name = 'AbortError';
-          reject(error);
-        }, { once: true });
+        ctx.signal?.addEventListener(
+          'abort',
+          () => {
+            const error = new Error('aborted');
+            (error as Error & { name: string }).name = 'AbortError';
+            reject(error);
+          },
+          { once: true },
+        );
       }) as Promise<{ ok: true; status: number; data: T }>;
     };
     const fetcher = vi.fn(fetcherImpl);
@@ -404,9 +433,9 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher']
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
       },
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
@@ -414,13 +443,13 @@ describe('createRendererRuntime', () => {
       {
         action: 'ajax',
         timeout: 5,
-        args: { url: '/api/slow' }
+        args: { url: '/api/slow' },
       },
       {
         runtime,
         scope: page.scope,
-        page
-      }
+        page,
+      },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -428,7 +457,7 @@ describe('createRendererRuntime', () => {
     await expect(resultPromise).resolves.toMatchObject({
       ok: false,
       cancelled: true,
-      timedOut: true
+      timedOut: true,
     });
     expect(capturedSignal?.aborted).toBe(true);
   });

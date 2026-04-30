@@ -75,7 +75,12 @@ describe('code-editor integration', () => {
                   {
                     groupName: 'Logic',
                     items: [
-                      { name: 'IF', description: 'Conditional', example: 'IF(cond, t, f)', returnType: 'any' },
+                      {
+                        name: 'IF',
+                        description: 'Conditional',
+                        example: 'IF(cond, t, f)',
+                        returnType: 'any',
+                      },
                     ],
                   },
                 ],
@@ -201,9 +206,7 @@ describe('code-editor integration', () => {
               mode: 'template',
               autoHeight: true,
               expressionConfig: {
-                variables: [
-                  { label: 'Name', value: 'data.name', type: 'string' },
-                ],
+                variables: [{ label: 'Name', value: 'data.name', type: 'string' }],
               },
             },
           ],

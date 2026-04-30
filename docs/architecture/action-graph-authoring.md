@@ -115,12 +115,12 @@
 
 ### Recommended Node Types
 
-| Node | Purpose | Input Ports | Output Ports | Export Shape |
-| --- | --- | --- | --- | --- |
-| `entry` | 一次交互或语义生命周期的起点 | - | `next` | root action / root ordered array |
-| `step` | 一个 effectful 或 semantic action 节点 | `prev` | `next`, `then`, `onError` | one `ActionSchema` leaf |
-| `parallel` | 并发 fan-out + join aggregate | `prev` | `next`, `branch[*]`, `then`, `onError` | one `ActionSchema` with `parallel` |
-| `end` | 可选的 UX terminator | `prev` | - | omitted in export |
+| Node       | Purpose                                | Input Ports | Output Ports                           | Export Shape                       |
+| ---------- | -------------------------------------- | ----------- | -------------------------------------- | ---------------------------------- |
+| `entry`    | 一次交互或语义生命周期的起点           | -           | `next`                                 | root action / root ordered array   |
+| `step`     | 一个 effectful 或 semantic action 节点 | `prev`      | `next`, `then`, `onError`              | one `ActionSchema` leaf            |
+| `parallel` | 并发 fan-out + join aggregate          | `prev`      | `next`, `branch[*]`, `then`, `onError` | one `ActionSchema` with `parallel` |
+| `end`      | 可选的 UX terminator                   | `prev`      | -                                      | omitted in export                  |
 
 补充说明：
 
@@ -130,12 +130,12 @@
 
 ### Port Meanings
 
-| Port | Meaning | Lowers To |
-| --- | --- | --- |
-| `next` | 主顺序链中的下一个 sibling step | ordered array position |
-| `then` | success-only subordinate branch | `then` |
-| `onError` | failure-only subordinate branch | `onError` |
-| `branch[*]` | `parallel` fan-out 子分支 | `parallel[*]` |
+| Port        | Meaning                         | Lowers To              |
+| ----------- | ------------------------------- | ---------------------- |
+| `next`      | 主顺序链中的下一个 sibling step | ordered array position |
+| `then`      | success-only subordinate branch | `then`                 |
+| `onError`   | failure-only subordinate branch | `onError`              |
+| `branch[*]` | `parallel` fan-out 子分支       | `parallel[*]`          |
 
 关键约束：
 
@@ -157,15 +157,15 @@
 
 ## Lowering Rules
 
-| Visual authoring construct | Exported DSL |
-| --- | --- |
-| `entry -> next lane` | root `ActionSchema` or ordered `ActionSchema[]` |
-| `next` edges | ordered list order |
-| `step.then` | `then` |
-| `step.onError` | `onError` |
-| `parallel.branch[*]` | `parallel` array entries |
-| node `when` | node `when` |
-| authoring-only guarded group | compiler transform; not a new runtime field |
+| Visual authoring construct   | Exported DSL                                    |
+| ---------------------------- | ----------------------------------------------- |
+| `entry -> next lane`         | root `ActionSchema` or ordered `ActionSchema[]` |
+| `next` edges                 | ordered list order                              |
+| `step.then`                  | `then`                                          |
+| `step.onError`               | `onError`                                       |
+| `parallel.branch[*]`         | `parallel` array entries                        |
+| node `when`                  | node `when`                                     |
+| authoring-only guarded group | compiler transform; not a new runtime field     |
 
 一个重要规则：
 

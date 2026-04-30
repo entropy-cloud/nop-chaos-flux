@@ -5,7 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { NopDebuggerPanel } from './panel';
 import type { NopComponentTreeItem } from './types';
-import type { NopDebuggerController, NopDebuggerOverview, NopDebuggerSnapshot, NopDiagnosticReport, NopInteractionTrace } from './types';
+import type {
+  NopDebuggerController,
+  NopDebuggerOverview,
+  NopDebuggerSnapshot,
+  NopDiagnosticReport,
+  NopInteractionTrace,
+} from './types';
 
 function createValueExplanation() {
   return {
@@ -17,7 +23,7 @@ function createValueExplanation() {
     evidenceRefs: [],
     related: { cid: 1 },
     truncated: false,
-    data: { field: 'value', valueSource: 'unknown' as const }
+    data: { field: 'value', valueSource: 'unknown' as const },
   };
 }
 
@@ -31,7 +37,7 @@ function createMetaExplanation() {
     evidenceRefs: [],
     related: { cid: 1 },
     truncated: false,
-    data: { field: 'visible' as const, source: 'unknown' as const, dependencyPaths: [] }
+    data: { field: 'visible' as const, source: 'unknown' as const, dependencyPaths: [] },
   };
 }
 
@@ -45,7 +51,7 @@ function createFailureExplanation() {
     evidenceRefs: [],
     related: { cid: 1 },
     truncated: false,
-    data: { failureType: 'unknown' as const, hints: [], relatedEventIds: [] }
+    data: { failureType: 'unknown' as const, hints: [], relatedEventIds: [] },
   };
 }
 
@@ -59,7 +65,7 @@ function createAsyncExplanation() {
     evidenceRefs: [],
     related: { cid: 1, ownerIds: [] },
     truncated: false,
-    data: { ownerCount: 0, owners: [] }
+    data: { ownerCount: 0, owners: [] },
   };
 }
 
@@ -73,7 +79,7 @@ export function createSnapshot(): NopDebuggerSnapshot {
     position: { x: 24, y: 24 },
     events: [],
     filters: ['render', 'action', 'api', 'compile', 'notify', 'error'],
-    pinnedErrors: { earliest: [], latest: [] }
+    pinnedErrors: { earliest: [], latest: [] },
   };
 }
 
@@ -81,7 +87,7 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
   const emptyOverview: NopDebuggerOverview = {
     errorCount: 0,
     totalEvents: 0,
-    countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 }
+    countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 },
   };
   const latestTrace: NopInteractionTrace = {
     query: { inferFromLatest: true },
@@ -94,7 +100,7 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
       group: 'error',
       level: 'error',
       source: 'root.onActionError',
-      summary: 'submit failed'
+      summary: 'submit failed',
     },
     totalEvents: 4,
     matchedEvents: [],
@@ -104,17 +110,27 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     interactionIds: ['interaction-1'],
     actionTypes: ['submitForm'],
     nodeIds: ['user-form'],
-    paths: ['body.1']
+    paths: ['body.1'],
   };
   const metricReport: NopDiagnosticReport = {
     controllerId: 'panel-test',
     sessionId: 'session-test',
     generatedAt: 1,
-    snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters },
-    overview: { errorCount: 1, totalEvents: 4, countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1, node: 0 } },
+    snapshot: {
+      enabled: true,
+      panelOpen: true,
+      paused: false,
+      activeTab: 'overview',
+      filters: snapshot.filters,
+    },
+    overview: {
+      errorCount: 1,
+      totalEvents: 4,
+      countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1, node: 0 },
+    },
     latestInteractionTrace: latestTrace,
     recentEvents: [],
-    pinnedErrors: { earliest: [], latest: [] }
+    pinnedErrors: { earliest: [], latest: [] },
   };
   const show = vi.fn();
   const hide = vi.fn();
@@ -142,15 +158,43 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
       getEarliestErrors: () => [],
       getLatestErrors: () => [],
       getPinnedErrors: () => ({ earliest: [], latest: [] }),
-      getNodeDiagnostics: () => ({ rendererTypes: [], totalEvents: 0, countsByGroup: {}, countsByKind: {}, recentEvents: [] }),
+      getNodeDiagnostics: () => ({
+        rendererTypes: [],
+        totalEvents: 0,
+        countsByGroup: {},
+        countsByKind: {},
+        recentEvents: [],
+      }),
       getInteractionTrace: () => latestTrace,
       getLatestFailedRequest: () => undefined,
       getLatestFailedAction: () => undefined,
       getNodeAnomalies: () => undefined,
       getRecentFailures: () => [],
       getAsyncOwnerDebugSnapshot: () => ({ owners: [] }),
-      createDiagnosticReport: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot: { enabled: true, panelOpen: true, paused: false, activeTab: 'overview', filters: snapshot.filters }, overview: emptyOverview, recentEvents: [], pinnedErrors: { earliest: [], latest: [] } }),
-      exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
+      createDiagnosticReport: () => ({
+        controllerId: 'panel-test',
+        sessionId: 'session-test',
+        generatedAt: 1,
+        snapshot: {
+          enabled: true,
+          panelOpen: true,
+          paused: false,
+          activeTab: 'overview',
+          filters: snapshot.filters,
+        },
+        overview: emptyOverview,
+        recentEvents: [],
+        pinnedErrors: { earliest: [], latest: [] },
+      }),
+      exportSession: () => ({
+        controllerId: 'panel-test',
+        sessionId: 'session-test',
+        generatedAt: 1,
+        snapshot,
+        overview: emptyOverview,
+        events: [],
+        pinnedErrors: { earliest: [], latest: [] },
+      }),
       waitForEvent: async () => snapshot.events[0]!,
       inspectNode: vi.fn(() => undefined),
       clear,
@@ -169,7 +213,7 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
       explainNodeValue: vi.fn(() => createValueExplanation()),
       explainNodeMeta: vi.fn(() => createMetaExplanation()),
       explainNodeFailure: vi.fn(() => createFailureExplanation()),
-      explainNodeAsync: vi.fn(() => createAsyncExplanation())
+      explainNodeAsync: vi.fn(() => createAsyncExplanation()),
     },
     decorateEnv: (env) => env,
     onActionError() {},
@@ -190,7 +234,13 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     getEarliestErrors: () => [],
     getLatestErrors: () => [],
     getPinnedErrors: () => ({ earliest: [], latest: [] }),
-    getNodeDiagnostics: () => ({ rendererTypes: [], totalEvents: 0, countsByGroup: {}, countsByKind: {}, recentEvents: [] }),
+    getNodeDiagnostics: () => ({
+      rendererTypes: [],
+      totalEvents: 0,
+      countsByGroup: {},
+      countsByKind: {},
+      recentEvents: [],
+    }),
     getInteractionTrace: () => latestTrace,
     getLatestFailedRequest: () => undefined,
     getLatestFailedAction: () => undefined,
@@ -199,7 +249,15 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     getAsyncOwnerDebugSnapshot: () => ({ owners: [] }),
     getOverview: () => emptyOverview,
     createDiagnosticReport: vi.fn(() => metricReport),
-    exportSession: () => ({ controllerId: 'panel-test', sessionId: 'session-test', generatedAt: 1, snapshot, overview: emptyOverview, events: [], pinnedErrors: { earliest: [], latest: [] } }),
+    exportSession: () => ({
+      controllerId: 'panel-test',
+      sessionId: 'session-test',
+      generatedAt: 1,
+      snapshot,
+      overview: emptyOverview,
+      events: [],
+      pinnedErrors: { earliest: [], latest: [] },
+    }),
     waitForEvent: async () => snapshot.events[0]!,
     setRuntime: vi.fn(),
     setComponentRegistry: vi.fn(),
@@ -214,7 +272,7 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     explainNodeFailure: vi.fn(() => createFailureExplanation()),
     explainNodeAsync: vi.fn(() => createAsyncExplanation()),
     subscribe: () => () => {},
-    getSnapshot: () => snapshot
+    getSnapshot: () => snapshot,
   };
 }
 
@@ -265,8 +323,8 @@ describe('NopDebuggerPanel', () => {
         type: 'form',
         label: 'user-form',
         depth: 0,
-        mounted: true
-      }
+        mounted: true,
+      },
     ];
     controller.inspectByCid = inspectByCid;
 
@@ -289,8 +347,8 @@ describe('NopDebuggerPanel', () => {
         type: 'form',
         label: 'user-form',
         depth: 0,
-        mounted: true
-      }
+        mounted: true,
+      },
     ];
     controller.inspectByCid = vi.fn(() => ({ cid: 41, mounted: true, handleType: 'form' }));
 
@@ -321,21 +379,23 @@ describe('NopDebuggerPanel', () => {
 
   it('renders JsonViewer for expanded event details', () => {
     const snapshot = createSnapshot();
-    snapshot.events = [{
-      id: 1,
-      sessionId: 'session-test',
-      timestamp: 100,
-      kind: 'action:end',
-      group: 'action',
-      level: 'success',
-      source: 'test',
-      summary: 'Action completed',
-      detail: 'Form submitted',
-      actionType: 'submitForm',
-      nodeId: 'form-1',
-      path: 'body.0',
-      durationMs: 150
-    }];
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'action:end',
+        group: 'action',
+        level: 'success',
+        source: 'test',
+        summary: 'Action completed',
+        detail: 'Form submitted',
+        actionType: 'submitForm',
+        nodeId: 'form-1',
+        path: 'body.0',
+        durationMs: 150,
+      },
+    ];
     const controller = createController(snapshot);
 
     render(<NopDebuggerPanel controller={controller} />);
@@ -345,16 +405,18 @@ describe('NopDebuggerPanel', () => {
 
   it('shows error badge on launcher when errors exist', () => {
     const snapshot = { ...createSnapshot(), panelOpen: false };
-    snapshot.events = [{
-      id: 1,
-      sessionId: 'session-test',
-      timestamp: 100,
-      kind: 'error',
-      group: 'error',
-      level: 'error',
-      source: 'test',
-      summary: 'Test error'
-    }];
+    snapshot.events = [
+      {
+        id: 1,
+        sessionId: 'session-test',
+        timestamp: 100,
+        kind: 'error',
+        group: 'error',
+        level: 'error',
+        source: 'test',
+        summary: 'Test error',
+      },
+    ];
     const controller = createController(snapshot);
 
     render(<NopDebuggerPanel controller={controller} />);
@@ -382,8 +444,12 @@ describe('NopDebuggerPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Pick element' }));
 
-    expect(document.querySelector('.nop-debugger-overlay[data-overlay-state="hover"]')).toBeTruthy();
-    expect(document.querySelector('.nop-debugger-overlay[data-overlay-state="active"]')).toBeTruthy();
+    expect(
+      document.querySelector('.nop-debugger-overlay[data-overlay-state="hover"]'),
+    ).toBeTruthy();
+    expect(
+      document.querySelector('.nop-debugger-overlay[data-overlay-state="active"]'),
+    ).toBeTruthy();
   });
 
   it('renders network tab with merged requests', () => {
@@ -399,7 +465,7 @@ describe('NopDebuggerPanel', () => {
         level: 'info',
         source: 'test',
         summary: 'GET /api/users',
-        requestKey: 'GET /api/users'
+        requestKey: 'GET /api/users',
       },
       {
         id: 2,
@@ -411,8 +477,8 @@ describe('NopDebuggerPanel', () => {
         source: 'test',
         summary: 'GET /api/users',
         requestKey: 'GET /api/users',
-        durationMs: 50
-      }
+        durationMs: 50,
+      },
     ];
     const controller = createController(snapshot);
 

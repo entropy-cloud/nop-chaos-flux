@@ -4,14 +4,26 @@ const defaultShowErrorOn: readonly ValidationVisibilityTrigger[] = ['touched', '
 type ValidationVisibilityBehavior = { showErrorOn: readonly ValidationVisibilityTrigger[] };
 
 export function resolveShowErrorTriggers(
-  behavior: Pick<CompiledValidationBehavior, 'showErrorOn'> | ValidationVisibilityBehavior | undefined
+  behavior:
+    | Pick<CompiledValidationBehavior, 'showErrorOn'>
+    | ValidationVisibilityBehavior
+    | undefined,
 ): readonly ValidationVisibilityTrigger[] {
   return behavior?.showErrorOn ?? defaultShowErrorOn;
 }
 
 export function shouldShowFieldError(
-  behavior: Pick<CompiledValidationBehavior, 'showErrorOn'> | ValidationVisibilityBehavior | undefined,
-  state: { touched: boolean; dirty: boolean; visited: boolean; submitting: boolean; submitAttempted: boolean }
+  behavior:
+    | Pick<CompiledValidationBehavior, 'showErrorOn'>
+    | ValidationVisibilityBehavior
+    | undefined,
+  state: {
+    touched: boolean;
+    dirty: boolean;
+    visited: boolean;
+    submitting: boolean;
+    submitAttempted: boolean;
+  },
 ): boolean {
   return resolveShowErrorTriggers(behavior).some((trigger) => {
     switch (trigger) {

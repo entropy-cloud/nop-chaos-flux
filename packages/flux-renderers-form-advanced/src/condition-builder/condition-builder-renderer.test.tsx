@@ -28,25 +28,27 @@ describe('condition-builder renderer integration', () => {
     const { rerender } = render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#1"
-        schema={{
-          type: 'form',
-          data: {
-            filters: { id: 'root', conjunction: 'and', children: [] },
-          },
-          body: [
-            {
-              type: 'condition-builder',
-              name: 'filters',
-              label: 'Filters',
-              embed: false,
-              placeholder: 'Choose filters',
-              fields: [{ name: 'status', label: 'Status', type: 'text' }],
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: { id: 'root', conjunction: 'and', children: [] },
             },
-          ],
-        } as any}
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                embed: false,
+                placeholder: 'Choose filters',
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Choose filters')).toBeTruthy();
@@ -54,29 +56,38 @@ describe('condition-builder renderer integration', () => {
     rerender(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#1b"
-        schema={{
-          type: 'form',
-          data: {
-            filters: {
-              id: 'root',
-              conjunction: 'and',
-              children: [{ id: 'item-1', left: { type: 'field', field: 'status' }, op: 'equal', right: 'active' }],
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: {
+                id: 'root',
+                conjunction: 'and',
+                children: [
+                  {
+                    id: 'item-1',
+                    left: { type: 'field', field: 'status' },
+                    op: 'equal',
+                    right: 'active',
+                  },
+                ],
+              },
             },
-          },
-          body: [
-            {
-              type: 'condition-builder',
-              name: 'filters',
-              label: 'Filters',
-              embed: false,
-              placeholder: 'Choose filters',
-              fields: [{ name: 'status', label: 'Status', type: 'text' }],
-            },
-          ],
-        } as any}
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                embed: false,
+                placeholder: 'Choose filters',
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(await screen.findByText('1 conditions')).toBeTruthy();
@@ -89,33 +100,37 @@ describe('condition-builder renderer integration', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#2"
-        schema={{
-          type: 'form',
-          data: {
-            filters: { id: 'root', conjunction: 'and', children: [] },
-          },
-          body: [
-            {
-              type: 'condition-builder',
-              name: 'filters',
-              label: 'Filters',
-              fields: [{ name: 'status', label: 'Status', type: 'text' }],
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: { id: 'root', conjunction: 'and', children: [] },
             },
-            {
-              type: 'form-state-probe',
-              name: 'filters',
-            },
-          ],
-        } as any}
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+              {
+                type: 'form-state-probe',
+                name: 'filters',
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(await screen.findByText('Add condition'));
 
     await waitFor(() => {
-      expect(JSON.parse(screen.getByTestId('form-state:filters').textContent ?? 'null')).toMatchObject({
+      expect(
+        JSON.parse(screen.getByTestId('form-state:filters').textContent ?? 'null'),
+      ).toMatchObject({
         children: [
           {
             left: { field: 'status', type: 'field' },
@@ -133,33 +148,37 @@ describe('condition-builder renderer integration', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#3"
-        schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'condition-builder',
-              name: 'filters',
-              label: 'Filters',
-              fields: [{ name: 'status', label: 'Status', type: 'text' }],
-            },
-            {
-              type: 'scope-state-probe',
-              name: 'filters',
-            },
-          ],
-        } as any}
+        schema={
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+              {
+                type: 'scope-state-probe',
+                name: 'filters',
+              },
+            ],
+          } as any
+        }
         data={{
           filters: { id: 'root', conjunction: 'and', children: [] },
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     fireEvent.click(await screen.findByText('Add condition'));
 
     await waitFor(() => {
-      expect(JSON.parse(screen.getByTestId('scope-state:filters').textContent ?? 'null')).toMatchObject({
+      expect(
+        JSON.parse(screen.getByTestId('scope-state:filters').textContent ?? 'null'),
+      ).toMatchObject({
         children: [
           {
             left: { field: 'status', type: 'field' },
@@ -177,25 +196,27 @@ describe('condition-builder renderer integration', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#4"
-        schema={{
-          type: 'form',
-          data: {
-            filters: { id: 'root', conjunction: 'and', children: [] },
-          },
-          body: [
-            {
-              type: 'condition-builder',
-              name: 'filters',
-              label: 'Filters',
-              embed: false,
-              disabled: true,
-              fields: [{ name: 'status', label: 'Status', type: 'text' }],
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: { id: 'root', conjunction: 'and', children: [] },
             },
-          ],
-        } as any}
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                embed: false,
+                disabled: true,
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+            ],
+          } as any
+        }
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     const trigger = await screen.findByRole('button', { name: /Filters/ });

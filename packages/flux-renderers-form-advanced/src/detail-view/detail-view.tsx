@@ -1,30 +1,33 @@
 import React from 'react';
-import type {
-  RendererComponentProps,
-  RendererDefinition
-} from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
   useCurrentForm,
   useRendererRuntime,
   useRenderScope,
-  useScopeSelector
+  useScopeSelector,
 } from '@nop-chaos/flux-react';
-import {
-  Button,
-  cn
-} from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DetailViewSchema } from '../composite-field/composite-schemas';
-import { formLabelFieldRule, resolveFieldLabelContent, FieldLabel } from '@nop-chaos/flux-renderers-form';
-import { publishValidateResultErrors, runTransformIn, runTransformOut, runValidate } from './value-adaptation-helper';
+import {
+  formLabelFieldRule,
+  resolveFieldLabelContent,
+  FieldLabel,
+} from '@nop-chaos/flux-renderers-form';
+import {
+  publishValidateResultErrors,
+  runTransformIn,
+  runTransformOut,
+  runValidate,
+} from './value-adaptation-helper';
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface';
 import {
   buildDetailDraftInitialValues,
   readDetailDraftValues,
   useDetailAdaptationAction,
   useDetailChildValidationContract,
-  useDetailDraftControllerState
+  useDetailDraftControllerState,
 } from './detail-draft-controller';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
@@ -36,7 +39,8 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const schema = props.schema as DetailViewSchema;
   const schemaProps = props.props as DetailViewSchema;
   const readOnly = Boolean(schemaProps.readOnly);
-  const scopePath = schemaProps.scopePath ?? (typeof schemaProps.name === 'string' ? schemaProps.name : undefined);
+  const scopePath =
+    schemaProps.scopePath ?? (typeof schemaProps.name === 'string' ? schemaProps.name : undefined);
   const staticData = schemaProps.data as Record<string, unknown> | undefined;
   const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
   const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
@@ -48,14 +52,19 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 
   const scopeProjectedValue = useScopeSelector(
     (data) => (scopePath ? (data as Record<string, unknown>)[scopePath] : undefined),
-    Object.is
+    Object.is,
   );
 
   function getInitialValues(): Record<string, unknown> {
     if (staticData) {
       return { ...staticData };
     }
-    if (scopePath && scopeProjectedValue !== undefined && typeof scopeProjectedValue === 'object' && scopeProjectedValue !== null) {
+    if (
+      scopePath &&
+      scopeProjectedValue !== undefined &&
+      typeof scopeProjectedValue === 'object' &&
+      scopeProjectedValue !== null
+    ) {
       return { ...(scopeProjectedValue as Record<string, unknown>) };
     }
     if (scopePath && scopeProjectedValue !== undefined) {
@@ -73,12 +82,12 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     closeDraft,
     beginConfirm,
     finishConfirm,
-    setDraftErrorSafe
+    setDraftErrorSafe,
   } = useDetailDraftControllerState();
 
   const childOwnerId = React.useMemo(
     () => `detail-view:${props.id}:${scopePath ?? 'root'}`,
-    [props.id, scopePath]
+    [props.id, scopePath],
   );
 
   useDetailChildValidationContract({
@@ -86,7 +95,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     draftForm,
     childOwnerId,
     mode: props.templateNode.validationOwnerPlan?.childContractMode,
-    active: open
+    active: open,
   });
 
   const currentValue = React.useMemo(() => {
@@ -101,18 +110,19 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     helpers: props.helpers,
     parentScope,
     parentForm,
-    node: props.node
+    node: props.node,
   });
 
   async function handleOpen() {
     if (effectiveDisabled) return;
 
     const adaptedValue = await runTransformIn(
-      schema.transformInAction,      {
+      schema.transformInAction,
+      {
         rawValue: currentValue,
-        readOnly
+        readOnly,
       },
-      runAdaptationAction
+      runAdaptationAction,
     );
 
     const initialValues = buildDetailDraftInitialValues(adaptedValue, getInitialValues());
@@ -121,7 +131,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       id: `detail-view-draft:${scopePath ?? 'static'}:${Date.now()}`,
       initialValues,
       parentScope,
-      validation: props.templateNode.validationPlan
+      validation: props.templateNode.validationPlan,
     });
 
     openDraft(newDraftForm);
@@ -142,7 +152,11 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
             parentScope.update(`${scopePath}.${p.path}`, p.value);
           }
         }
-      } else if ('updates' in draftValues && typeof draftValues.updates === 'object' && draftValues.updates !== null) {
+      } else if (
+        'updates' in draftValues &&
+        typeof draftValues.updates === 'object' &&
+        draftValues.updates !== null
+      ) {
         const updates = draftValues.updates as Record<string, unknown>;
         for (const [key, val] of Object.entries(updates)) {
           if (parentForm) {
@@ -163,9 +177,10 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         void parentForm.validateSubtree(scopePath);
       }
     } else {
-      const updates = draftValues.updates !== undefined
-        ? draftValues.updates as Record<string, unknown>
-        : commitValue;
+      const updates =
+        draftValues.updates !== undefined
+          ? (draftValues.updates as Record<string, unknown>)
+          : commitValue;
 
       if (parentForm) {
         for (const [key, val] of Object.entries(updates as Record<string, unknown>)) {
@@ -196,9 +211,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         schema.validateValueAction,
         {
           workingValue,
-          originalValue: currentValue
+          originalValue: currentValue,
         },
-        runAdaptationAction
+        runAdaptationAction,
       );
 
       if (parentForm && scopePath) {
@@ -215,15 +230,15 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         {
           workingValue,
           originalValue: currentValue,
-          readOnly
+          readOnly,
         },
-        runAdaptationAction
+        runAdaptationAction,
       );
 
       await applyCommitResult(
         typeof commitResult === 'object' && commitResult !== null
-          ? commitResult as Record<string, unknown>
-          : { __value: commitResult }
+          ? (commitResult as Record<string, unknown>)
+          : { __value: commitResult },
       );
 
       closeDraft();
@@ -246,16 +261,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       data-cid={props.meta.cid || undefined}
     >
       <FieldLabel content={labelContent} />
-      <div data-slot="detail-view-viewer">
-        {viewerContent}
-      </div>
+      <div data-slot="detail-view-viewer">{viewerContent}</div>
       {!effectiveDisabled && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => void handleOpen()}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={() => void handleOpen()}>
           {triggerLabel}
         </Button>
       )}
@@ -266,7 +274,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         bodySlot="detail-view-surface-body"
         readOnly={readOnly}
         onClose={handleCancel}
-        footer={(
+        footer={
           <DetailDraftFooter
             error={draftError}
             errorSlot="detail-view-draft-error"
@@ -274,7 +282,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
             onCancel={handleCancel}
             onConfirm={() => void handleConfirm()}
           />
-        )}
+        }
       >
         <DetailDraftBody form={draftForm} bodySlot="detail-view-draft-body">
           {editContent}
@@ -297,12 +305,12 @@ export const detailViewRendererDefinition: RendererDefinition = {
     { key: 'surface', kind: 'ignored' },
     { key: 'transformInAction', kind: 'ignored' },
     { key: 'validateValueAction', kind: 'ignored' },
-    { key: 'transformOutAction', kind: 'ignored' }
+    { key: 'transformOutAction', kind: 'ignored' },
   ],
   scopePolicy: 'form',
   validation: {
     kind: 'container',
     ownerResolution: 'create-owner',
-    childContractMode: 'summary-gate'
-  }
+    childContractMode: 'summary-gate',
+  },
 };

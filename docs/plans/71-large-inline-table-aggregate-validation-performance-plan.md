@@ -189,11 +189,13 @@ Status Note: completed 2026-04-12.
 `applyChangesAndRevalidate` now short-circuits for `reason === 'change'`, returning the current error snapshot after `revalidateDependents` without calling `validateForm`. All other reasons proceed as before.
 
 **Focused tests** (`packages/flux-runtime/src/__tests__/form-runtime-performance.test.ts`, `applyChangesAndRevalidate deferred-aggregate policy` describe block):
+
 - Test 1: `change` reason produces ≤ 2 store commits, no `contacts` error published.
 - Test 2: `blur` reason with duplicate emails publishes `uniqueBy` error (`rule: 'uniqueBy'`, correct message).
 - Test 3: 10 rapid `change` calls produce 0 `validateForm` calls via spy; single `blur` call produces exactly 1 `validateForm` call and correct `uniqueBy` error.
 
 **Verification run** (2026-04-12):
+
 - `pnpm typecheck` — clean
 - `pnpm build` — clean
 - `pnpm lint` — clean

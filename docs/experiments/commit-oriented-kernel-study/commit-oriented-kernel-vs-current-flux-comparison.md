@@ -419,19 +419,19 @@
 
 ## 5. 分维度对比
 
-| 维度 | 当前 Flux | COLK |
-| --- | --- | --- |
-| 执行主体 | `Final Execution Schema` runtime | `Commit Unit` business-change kernel |
-| 核心优势 | 原语清晰、runtime 稳定、前端工程化成熟 | 审计强、多入口统一、AI/协作天然友好 |
-| 状态边界 | scope/data-domain owner/form/page/surface 边界清楚 | canonical/draft/journal 边界更统一 |
-| 副作用模型 | capability + action algebra | admission + lease + effect schedule |
-| 宿主集成 | 已有成熟 host projection / manifest / action scope 设计 | 还需补完整 host projection authoring 体系 |
-| 表单/局部编辑 | 很成熟，细节多 | 还偏高层，缺很多局部编辑细节 |
-| 审计/回放 | 可做，但不是内核主轴 | 内核主轴 |
-| AI 适配 | 可生成 schema/action，但仍易落回页面中心心智 | 目标更结构化，更适合 agent 提交 |
-| 简单场景成本 | 较低 | 较高 |
-| 实现成熟度 | 高 | 低 |
-| 理论统一性 | 前端执行统一性强 | 业务变化统一性强 |
+| 维度          | 当前 Flux                                               | COLK                                      |
+| ------------- | ------------------------------------------------------- | ----------------------------------------- |
+| 执行主体      | `Final Execution Schema` runtime                        | `Commit Unit` business-change kernel      |
+| 核心优势      | 原语清晰、runtime 稳定、前端工程化成熟                  | 审计强、多入口统一、AI/协作天然友好       |
+| 状态边界      | scope/data-domain owner/form/page/surface 边界清楚      | canonical/draft/journal 边界更统一        |
+| 副作用模型    | capability + action algebra                             | admission + lease + effect schedule       |
+| 宿主集成      | 已有成熟 host projection / manifest / action scope 设计 | 还需补完整 host projection authoring 体系 |
+| 表单/局部编辑 | 很成熟，细节多                                          | 还偏高层，缺很多局部编辑细节              |
+| 审计/回放     | 可做，但不是内核主轴                                    | 内核主轴                                  |
+| AI 适配       | 可生成 schema/action，但仍易落回页面中心心智            | 目标更结构化，更适合 agent 提交           |
+| 简单场景成本  | 较低                                                    | 较高                                      |
+| 实现成熟度    | 高                                                      | 低                                        |
+| 理论统一性    | 前端执行统一性强                                        | 业务变化统一性强                          |
 
 ## 6. 哪些地方当前 Flux 更好
 

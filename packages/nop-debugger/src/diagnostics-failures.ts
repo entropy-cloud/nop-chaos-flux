@@ -6,15 +6,23 @@ import type {
   NopDebuggerSessionExportOptions,
   NopDebuggerSnapshot,
   NopNodeAnomalySummary,
-  NopNodeDiagnosticsOptions
+  NopNodeDiagnosticsOptions,
 } from './types';
 import type { NormalizedRedactionOptions } from './redaction';
 import { redactData } from './redaction';
-import { applyEventQuery, buildInteractionTrace, buildNodeDiagnostics, buildOverview } from './diagnostics';
+import {
+  applyEventQuery,
+  buildInteractionTrace,
+  buildNodeDiagnostics,
+  buildOverview,
+} from './diagnostics';
 
 const EMPTY_PINNED_ERRORS: NopDebuggerPinnedErrors = { earliest: [], latest: [] };
 
-function createFailureHints(event: NopDebugEvent | undefined, relatedEvents: NopDebugEvent[] = []): string[] {
+function createFailureHints(
+  event: NopDebugEvent | undefined,
+  relatedEvents: NopDebugEvent[] = [],
+): string[] {
   if (!event) {
     return [];
   }
@@ -29,7 +37,10 @@ function createFailureHints(event: NopDebugEvent | undefined, relatedEvents: Nop
     hints.push('request failed');
   }
 
-  if (event.group === 'error' && relatedEvents.some((candidate) => candidate.group === 'api' && candidate.level === 'error')) {
+  if (
+    event.group === 'error' &&
+    relatedEvents.some((candidate) => candidate.group === 'api' && candidate.level === 'error')
+  ) {
     hints.push('action ended with error after api failure');
   }
 
@@ -40,8 +51,13 @@ function createFailureHints(event: NopDebugEvent | undefined, relatedEvents: Nop
   return hints;
 }
 
-export function getLatestFailedRequest(events: NopDebugEvent[]): NopDebuggerFailureSummary | undefined {
-  const event = events.find((candidate) => candidate.group === 'api' && (candidate.level === 'error' || candidate.kind === 'api:abort'));
+export function getLatestFailedRequest(
+  events: NopDebugEvent[],
+): NopDebuggerFailureSummary | undefined {
+  const event = events.find(
+    (candidate) =>
+      candidate.group === 'api' && (candidate.level === 'error' || candidate.kind === 'api:abort'),
+  );
 
   if (!event) {
     return undefined;
@@ -55,12 +71,17 @@ export function getLatestFailedRequest(events: NopDebugEvent[]): NopDebuggerFail
     path: event.path,
     actionType: event.actionType,
     requestKey: event.requestKey,
-    hints: createFailureHints(event)
+    hints: createFailureHints(event),
   };
 }
 
-export function getLatestFailedAction(events: NopDebugEvent[]): NopDebuggerFailureSummary | undefined {
-  const event = events.find((candidate) => candidate.group === 'error' || (candidate.group === 'action' && candidate.level === 'error'));
+export function getLatestFailedAction(
+  events: NopDebugEvent[],
+): NopDebuggerFailureSummary | undefined {
+  const event = events.find(
+    (candidate) =>
+      candidate.group === 'error' || (candidate.group === 'action' && candidate.level === 'error'),
+  );
 
   if (!event) {
     return undefined;
@@ -70,7 +91,7 @@ export function getLatestFailedAction(events: NopDebugEvent[]): NopDebuggerFailu
     eventId: event.id,
     inferFromLatest: false,
     mode: 'related',
-    limit: 20
+    limit: 20,
   }).matchedEvents;
 
   return {
@@ -81,14 +102,17 @@ export function getLatestFailedAction(events: NopDebugEvent[]): NopDebuggerFailu
     path: event.path,
     actionType: event.actionType,
     requestKey: event.requestKey,
-    hints: createFailureHints(event, relatedEvents)
+    hints: createFailureHints(event, relatedEvents),
   };
 }
 
-export function getNodeAnomalies(events: NopDebugEvent[], options: NopNodeDiagnosticsOptions): NopNodeAnomalySummary | undefined {
+export function getNodeAnomalies(
+  events: NopDebugEvent[],
+  options: NopNodeDiagnosticsOptions,
+): NopNodeAnomalySummary | undefined {
   const diagnostics = buildNodeDiagnostics(events, {
     ...options,
-    limit: options.limit ?? 10
+    limit: options.limit ?? 10,
   });
 
   if (diagnostics.totalEvents === 0) {
@@ -101,7 +125,10 @@ export function getNodeAnomalies(events: NopDebugEvent[], options: NopNodeDiagno
     hints.push('node has recent errors');
   }
 
-  if ((diagnostics.countsByGroup.api ?? 0) > 1 && diagnostics.recentEvents.some((event) => event.kind === 'api:abort')) {
+  if (
+    (diagnostics.countsByGroup.api ?? 0) > 1 &&
+    diagnostics.recentEvents.some((event) => event.kind === 'api:abort')
+  ) {
     hints.push('request churn or aborts');
   }
 
@@ -113,16 +140,23 @@ export function getNodeAnomalies(events: NopDebugEvent[], options: NopNodeDiagno
     nodeId: diagnostics.nodeId,
     path: diagnostics.path,
     recentEvents: diagnostics.recentEvents,
-    hints
+    hints,
   };
 }
 
-export function getRecentFailures(events: NopDebugEvent[], options?: { sinceTimestamp?: number; limit?: number }): NopDebuggerFailureSummary[] {
+export function getRecentFailures(
+  events: NopDebugEvent[],
+  options?: { sinceTimestamp?: number; limit?: number },
+): NopDebuggerFailureSummary[] {
   return applyEventQuery(events, {
     sinceTimestamp: options?.sinceTimestamp,
-    limit: options?.limit ?? 10
+    limit: options?.limit ?? 10,
   })
-    .filter((event) => event.group === 'error' || (event.group === 'api' && (event.level === 'error' || event.kind === 'api:abort')))
+    .filter(
+      (event) =>
+        event.group === 'error' ||
+        (event.group === 'api' && (event.level === 'error' || event.kind === 'api:abort')),
+    )
     .map((event) => ({
       event,
       requestInstanceId: event.requestInstanceId,
@@ -131,7 +165,7 @@ export function getRecentFailures(events: NopDebugEvent[], options?: { sinceTime
       path: event.path,
       actionType: event.actionType,
       requestKey: event.requestKey,
-      hints: createFailureHints(event)
+      hints: createFailureHints(event),
     }));
 }
 
@@ -140,11 +174,11 @@ export function buildSessionExport(
   sessionId: string,
   snapshot: NopDebuggerSnapshot,
   redaction: NormalizedRedactionOptions,
-  options?: NopDebuggerSessionExportOptions
+  options?: NopDebuggerSessionExportOptions,
 ): NopDebuggerSessionExport {
   const events = applyEventQuery(snapshot.events, {
     ...options?.query,
-    limit: options?.eventLimit ?? options?.query?.limit
+    limit: options?.eventLimit ?? options?.query?.limit,
   });
   const overview = buildOverview(snapshot.events);
 
@@ -156,8 +190,8 @@ export function buildSessionExport(
       ...snapshot,
       events: snapshot.events.map((event) => ({
         ...event,
-        exportedData: redactData(event.exportedData, redaction)
-      }))
+        exportedData: redactData(event.exportedData, redaction),
+      })),
     },
     overview,
     latestError: overview.latestError,
@@ -165,8 +199,8 @@ export function buildSessionExport(
     latestApi: overview.latestApi,
     events: events.map((event) => ({
       ...event,
-      exportedData: redactData(event.exportedData, redaction)
+      exportedData: redactData(event.exportedData, redaction),
     })),
-    pinnedErrors: snapshot.pinnedErrors ?? EMPTY_PINNED_ERRORS
+    pinnedErrors: snapshot.pinnedErrors ?? EMPTY_PINNED_ERRORS,
   };
 }

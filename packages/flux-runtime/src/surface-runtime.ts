@@ -1,16 +1,13 @@
-import type {
-  ScopeRef,
-  SurfaceEntry,
-  SurfaceRuntime,
-  SurfaceStoreApi
-} from '@nop-chaos/flux-core';
+import type { ScopeRef, SurfaceEntry, SurfaceRuntime, SurfaceStoreApi } from '@nop-chaos/flux-core';
 import { publishOwnerStatus } from './status-owner';
 import { createSurfaceStore } from './form-store';
 
-export function createManagedSurfaceRuntime(input: {
-  surfaceStore?: SurfaceStoreApi;
-  disposeScope?: (scopeId: string) => void;
-} = {}): SurfaceRuntime {
+export function createManagedSurfaceRuntime(
+  input: {
+    surfaceStore?: SurfaceStoreApi;
+    disposeScope?: (scopeId: string) => void;
+  } = {},
+): SurfaceRuntime {
   const store = input.surfaceStore ?? createSurfaceStore();
   let surfaceCounter = 0;
 
@@ -20,7 +17,8 @@ export function createManagedSurfaceRuntime(input: {
   }
 
   function publishSurfaceStatus(entry: SurfaceEntry) {
-    const statusPath = typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
+    const statusPath =
+      typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
     const ownerScope = entry.scope.parent ?? entry.scope;
     publishOwnerStatus(ownerScope, statusPath, {
       id: entry.id,
@@ -28,7 +26,7 @@ export function createManagedSurfaceRuntime(input: {
       open: true,
       active: true,
       opening: false,
-      closing: false
+      closing: false,
     });
   }
 
@@ -37,7 +35,8 @@ export function createManagedSurfaceRuntime(input: {
       return;
     }
 
-    const statusPath = typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
+    const statusPath =
+      typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
     const ownerScope = entry.scope.parent ?? entry.scope;
     publishOwnerStatus(ownerScope, statusPath, {
       id: entry.id,
@@ -45,7 +44,7 @@ export function createManagedSurfaceRuntime(input: {
       open: false,
       active: false,
       opening: false,
-      closing: false
+      closing: false,
     });
   }
 
@@ -70,7 +69,7 @@ export function createManagedSurfaceRuntime(input: {
         ownerTemplateNode: options?.ownerTemplateNode,
         ownerNodeInstance: options?.ownerNodeInstance,
         title: typeof surface.title === 'string' ? surface.title : surface.title || undefined,
-        body: surface.body || undefined
+        body: surface.body || undefined,
       };
 
       store.push(entry);
@@ -86,6 +85,6 @@ export function createManagedSurfaceRuntime(input: {
       const removed = store.remove();
       clearSurfaceStatus(removed);
       disposeOwnedScope(removed?.scope.id);
-    }
+    },
   };
 }

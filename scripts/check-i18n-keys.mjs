@@ -47,7 +47,7 @@ function extractKeys(obj, prefix = '') {
       keys.add(fullKey);
     } else if (typeof value === 'object' && value !== null) {
       const nestedKeys = extractKeys(value, fullKey);
-      nestedKeys.forEach(k => keys.add(k));
+      nestedKeys.forEach((k) => keys.add(k));
     }
   }
 
@@ -279,7 +279,7 @@ async function scanForUsedKeys(dir, relativePath = '') {
       const entryRelPath = currentRelPath ? join(currentRelPath, entry.name) : entry.name;
 
       // Skip excluded patterns
-      if (EXCLUDE_PATTERNS.some(p => fullPath.includes(p) || entryRelPath.includes(p))) {
+      if (EXCLUDE_PATTERNS.some((p) => fullPath.includes(p) || entryRelPath.includes(p))) {
         continue;
       }
 
@@ -304,8 +304,8 @@ async function scanFile(filePath, relativePath, usedKeys) {
 
   // Pattern to match t('flux.xxx') or t("flux.xxx") or t(`flux.xxx`)
   const patterns = [
-    /\bt\(\s*['"]([^'"]+)['"]\s*[,)]/g,  // t('key') or t('key', ...)
-    /\bt\(\s*`([^`]+)`\s*[,)]/g,          // t(`key`)
+    /\bt\(\s*['"]([^'"]+)['"]\s*[,)]/g, // t('key') or t('key', ...)
+    /\bt\(\s*`([^`]+)`\s*[,)]/g, // t(`key`)
   ];
 
   for (let lineNum = 0; lineNum < lines.length; lineNum++) {
@@ -348,17 +348,17 @@ async function main() {
   console.log(`Defined keys in en-US.ts: ${enKeys.size}`);
 
   // Check for keys defined in one but not the other
-  const onlyInZh = [...zhKeys].filter(k => !enKeys.has(k));
-  const onlyInEn = [...enKeys].filter(k => !zhKeys.has(k));
+  const onlyInZh = [...zhKeys].filter((k) => !enKeys.has(k));
+  const onlyInEn = [...enKeys].filter((k) => !zhKeys.has(k));
 
   if (onlyInZh.length > 0) {
     console.log(`\n⚠️  Keys only in zh-CN.ts (missing in en-US.ts):`);
-    onlyInZh.forEach(k => console.log(`  - ${k}`));
+    onlyInZh.forEach((k) => console.log(`  - ${k}`));
   }
 
   if (onlyInEn.length > 0) {
     console.log(`\n⚠️  Keys only in en-US.ts (missing in zh-CN.ts):`);
-    onlyInEn.forEach(k => console.log(`  - ${k}`));
+    onlyInEn.forEach((k) => console.log(`  - ${k}`));
   }
 
   // Scan for used keys
@@ -397,7 +397,7 @@ async function main() {
   }
 
   // Find unused keys (defined but never used)
-  const unusedKeys = [...allDefinedKeys].filter(k => !usedKeys.has(k));
+  const unusedKeys = [...allDefinedKeys].filter((k) => !usedKeys.has(k));
 
   // Report results
   let hasErrors = false;
@@ -409,7 +409,7 @@ async function main() {
 
     for (const { key, locations } of undefinedKeys) {
       console.log(`\n  ${key}`);
-      locations.slice(0, 5).forEach(loc => console.log(`    - ${loc}`));
+      locations.slice(0, 5).forEach((loc) => console.log(`    - ${loc}`));
       if (locations.length > 5) {
         console.log(`    ... and ${locations.length - 5} more`);
       }
@@ -420,7 +420,10 @@ async function main() {
 
   if (unusedKeys.length > 0) {
     console.log(`\n⚠️  Found ${unusedKeys.length} potentially unused keys:`);
-    unusedKeys.sort().slice(0, 20).forEach(k => console.log(`  - ${k}`));
+    unusedKeys
+      .sort()
+      .slice(0, 20)
+      .forEach((k) => console.log(`  - ${k}`));
     if (unusedKeys.length > 20) {
       console.log(`  ... and ${unusedKeys.length - 20} more`);
     }
@@ -434,7 +437,7 @@ async function main() {
   console.log('\n✅ i18n key check passed');
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error('Error:', error);
   process.exit(1);
 });

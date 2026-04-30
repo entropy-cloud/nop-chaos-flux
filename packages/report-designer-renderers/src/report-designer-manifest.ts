@@ -298,7 +298,9 @@ const manifestVersions = new Map<string, HostCapabilityProjectionManifest>([
   ['latest', REPORT_DESIGNER_MANIFEST_V1],
 ]);
 
-export function resolveReportDesignerManifest(versionSelector: string): HostCapabilityProjectionManifest | undefined {
+export function resolveReportDesignerManifest(
+  versionSelector: string,
+): HostCapabilityProjectionManifest | undefined {
   return manifestVersions.get(versionSelector);
 }
 

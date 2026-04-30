@@ -15,65 +15,73 @@ describe('controller inspector — advanced data', () => {
 
     const mockRegistry = {
       id: 'reg-1',
-      inspectCid: (cid: number) => cid === 112
-        ? {
-            kind: 'resolved',
-            payload: {
-              cid: 112,
-              state: { mounted: true },
-              scopeChain: [],
+      inspectCid: (cid: number) =>
+        cid === 112
+          ? {
+              kind: 'resolved',
+              payload: {
+                cid: 112,
+                state: { mounted: true },
+                scopeChain: [],
+              },
             }
-          }
-        : { kind: 'notFound' },
+          : { kind: 'notFound' },
       getHandleByCid: () => undefined,
-      getHandleDebugData: () => ({ rendererType: 'designer-page' })
+      getHandleDebugData: () => ({ rendererType: 'designer-page' }),
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
     ctrl.setRuntime({
       registry: {
-        get: vi.fn((type: string) => type === 'designer-page' ? {
-          type: 'designer-page',
-          component: () => null,
-          rendererClass: 'domain-host-renderer',
-          propContracts: {
-            config: {
-              displayName: 'Config',
-              shape: { kind: 'object' },
-              required: true
-            }
-          },
-          hostContract: {
-            family: 'designer',
-            defaultVersion: '1.0',
-            capabilityPublication: { namespace: 'designer' },
-            resolveManifest(versionSelector: string) {
-              return versionSelector === '1.0'
-                ? {
-                    family: 'designer',
-                    version: '1.0',
-                    projection: {
-                      fields: {
-                        activeNode: { schema: { kind: 'object' }, description: 'Active node' }
-                      }
-                    },
-                    capabilities: {
-                      namespace: 'designer',
-                      methods: {
-                        addNode: {
-                          args: { kind: 'object' },
-                          result: { kind: 'object' }
+        get: vi.fn((type: string) =>
+          type === 'designer-page'
+            ? {
+                type: 'designer-page',
+                component: () => null,
+                rendererClass: 'domain-host-renderer',
+                propContracts: {
+                  config: {
+                    displayName: 'Config',
+                    shape: { kind: 'object' },
+                    required: true,
+                  },
+                },
+                hostContract: {
+                  family: 'designer',
+                  defaultVersion: '1.0',
+                  capabilityPublication: { namespace: 'designer' },
+                  resolveManifest(versionSelector: string) {
+                    return versionSelector === '1.0'
+                      ? {
+                          family: 'designer',
+                          version: '1.0',
+                          projection: {
+                            fields: {
+                              activeNode: {
+                                schema: { kind: 'object' },
+                                description: 'Active node',
+                              },
+                            },
+                          },
+                          capabilities: {
+                            namespace: 'designer',
+                            methods: {
+                              addNode: {
+                                args: { kind: 'object' },
+                                result: { kind: 'object' },
+                              },
+                            },
+                          },
                         }
-                      }
-                    }
-                  }
-                : undefined;
-            }
-          }
-        } : undefined),
+                      : undefined;
+                  },
+                },
+              }
+            : undefined,
+        ),
         has: vi.fn(),
-        list: vi.fn()
-      }
+        list: vi.fn(),
+      },
     } as never);
 
     expect(ctrl.inspectByCid(112)).toMatchObject({
@@ -83,14 +91,14 @@ describe('controller inspector — advanced data', () => {
         rendererType: 'designer-page',
         rendererClass: 'domain-host-renderer',
         editableProps: {
-          config: expect.objectContaining({ displayName: 'Config', required: true })
+          config: expect.objectContaining({ displayName: 'Config', required: true }),
         },
         hostManifest: expect.objectContaining({ family: 'designer', version: '1.0' }),
         hostProjection: expect.objectContaining({
-          fields: expect.objectContaining({ activeNode: expect.any(Object) })
+          fields: expect.objectContaining({ activeNode: expect.any(Object) }),
         }),
-        hostActions: expect.objectContaining({ addNode: expect.any(Object) })
-      }
+        hostActions: expect.objectContaining({ addNode: expect.any(Object) }),
+      },
     });
   });
 
@@ -102,23 +110,24 @@ describe('controller inspector — advanced data', () => {
       name: 'runtimeForm',
       type: 'form',
       _cid: 103,
-      _mounted: true
+      _mounted: true,
     };
     const mockRegistry = {
       id: 'reg-1',
-      inspectCid: (cid: number) => cid === 103
-        ? {
-            kind: 'resolved',
-            payload: {
-              cid: 103,
-              state: {
-                mounted: true,
-                metaState: {}
-              }
+      inspectCid: (cid: number) =>
+        cid === 103
+          ? {
+              kind: 'resolved',
+              payload: {
+                cid: 103,
+                state: {
+                  mounted: true,
+                  metaState: {},
+                },
+              },
             }
-          }
-        : { kind: 'notFound' },
-      getHandleByCid: (cid: number) => (cid === 103 ? mockHandle : undefined)
+          : { kind: 'notFound' },
+      getHandleByCid: (cid: number) => (cid === 103 ? mockHandle : undefined),
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -126,7 +135,7 @@ describe('controller inspector — advanced data', () => {
     expect(ctrl.inspectByCid(103)).toMatchObject({
       cid: 103,
       mounted: true,
-      handleId: 'handle-103'
+      handleId: 'handle-103',
     });
   });
 
@@ -141,27 +150,28 @@ describe('controller inspector — advanced data', () => {
             id: 'form-104',
             name: 'userForm',
             type: 'form',
-            mounted: true
+            mounted: true,
           },
           {
             cid: 105,
             id: 'stale-105',
             name: 'staleHandle',
             type: 'text',
-            mounted: false
-          }
-        ]
+            mounted: false,
+          },
+        ],
       }),
-      getHandleDebugData: (cid: number) => cid === 104
-        ? {
-            nodeId: 'user-form',
-            path: 'body.0.form',
-            rendererType: 'form',
-            nodeInstance: {
-              instancePath: [{ repeatedTemplateId: 'list', instanceKey: '0' }]
+      getHandleDebugData: (cid: number) =>
+        cid === 104
+          ? {
+              nodeId: 'user-form',
+              path: 'body.0.form',
+              rendererType: 'form',
+              nodeInstance: {
+                instancePath: [{ repeatedTemplateId: 'list', instanceKey: '0' }],
+              },
             }
-          }
-        : undefined
+          : undefined,
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -174,7 +184,7 @@ describe('controller inspector — advanced data', () => {
       type: 'form',
       label: 'user-form',
       path: 'body.0.form',
-      mounted: true
+      mounted: true,
     });
     expect(result[0]?.depth).toBeGreaterThan(0);
   });
@@ -188,23 +198,24 @@ describe('controller inspector — advanced data', () => {
     const mockRegistry = {
       id: 'reg-1',
       getHandleByCid: () => undefined,
-      getHandleDebugData: (cid: number) => cid === 102
-        ? {
-            nodeInstance: {
-              state: {
-                mounted: true,
-                metaState: {},
-                propsState: undefined,
-                metaDependencies: {
-                  paths: ['record.name'],
-                  wildcard: false,
-                  broadAccess: false
+      getHandleDebugData: (cid: number) =>
+        cid === 102
+          ? {
+              nodeInstance: {
+                state: {
+                  mounted: true,
+                  metaState: {},
+                  propsState: undefined,
+                  metaDependencies: {
+                    paths: ['record.name'],
+                    wildcard: false,
+                    broadAccess: false,
+                  },
+                  propsDependencies: undefined,
                 },
-                propsDependencies: undefined
-              }
+              },
             }
-          }
-        : undefined
+          : undefined,
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -216,8 +227,8 @@ describe('controller inspector — advanced data', () => {
         hasPropsDependencies: false,
         metaDependencyPaths: ['record.name'],
         metaDependencyWildcard: false,
-        metaDependencyBroadAccess: false
-      }
+        metaDependencyBroadAccess: false,
+      },
     });
   });
 
@@ -229,24 +240,29 @@ describe('controller inspector — advanced data', () => {
 
     const mockRegistry = {
       id: 'reg-1',
-      inspectCid: (cid: number) => cid === 103
-        ? {
-            kind: 'resolved',
-            payload: {
-              cid: 103,
-              state: {
-                mounted: true,
-                resolvedMeta: { visible: true, disabled: false },
-                resolvedProps: { label: 'Username', value: 'alice' }
+      inspectCid: (cid: number) =>
+        cid === 103
+          ? {
+              kind: 'resolved',
+              payload: {
+                cid: 103,
+                state: {
+                  mounted: true,
+                  resolvedMeta: { visible: true, disabled: false },
+                  resolvedProps: { label: 'Username', value: 'alice' },
+                },
+                scopeChain: [
+                  { id: 'scope-103', path: '$form', label: '$form', data: { username: 'alice' } },
+                ],
               },
-              scopeChain: [
-                { id: 'scope-103', path: '$form', label: '$form', data: { username: 'alice' } }
-              ]
             }
-          }
-        : { kind: 'notFound' },
+          : { kind: 'notFound' },
       getHandleByCid: () => undefined,
-      getHandleDebugData: () => ({ nodeId: 'field-username', path: 'body.0', rendererType: 'input-text' })
+      getHandleDebugData: () => ({
+        nodeId: 'field-username',
+        path: 'body.0',
+        rendererType: 'input-text',
+      }),
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -255,7 +271,7 @@ describe('controller inspector — advanced data', () => {
     expect(result).toMatchObject({
       scopeData: { username: 'alice' },
       metaSummary: { visible: true, disabled: false },
-      propsSummary: { label: 'Username', value: 'alice' }
+      propsSummary: { label: 'Username', value: 'alice' },
     });
   });
 
@@ -267,26 +283,32 @@ describe('controller inspector — advanced data', () => {
 
     const mockRegistry = {
       id: 'reg-1',
-      inspectCid: (cid: number) => cid === 500
-        ? {
-            kind: 'resolved',
-            payload: {
-              cid: 500,
-              state: {
-                mounted: true,
-                metaState: {},
-                metaDependencies: {
-                  paths: ['role', 'currentUser.name'],
-                  wildcard: false,
-                  broadAccess: false
-                }
+      inspectCid: (cid: number) =>
+        cid === 500
+          ? {
+              kind: 'resolved',
+              payload: {
+                cid: 500,
+                state: {
+                  mounted: true,
+                  metaState: {},
+                  metaDependencies: {
+                    paths: ['role', 'currentUser.name'],
+                    wildcard: false,
+                    broadAccess: false,
+                  },
+                },
+                scopeChain: [
+                  {
+                    id: 'form-scope',
+                    path: '$form',
+                    label: '$form',
+                    data: { role: 'admin', username: 'alice' },
+                  },
+                ],
               },
-              scopeChain: [
-                { id: 'form-scope', path: '$form', label: '$form', data: { role: 'admin', username: 'alice' } }
-              ]
             }
-          }
-        : { kind: 'notFound' },
+          : { kind: 'notFound' },
       getHandleByCid: () => ({
         id: 'form-500',
         name: 'userForm',
@@ -301,10 +323,10 @@ describe('controller inspector — advanced data', () => {
               touched: {},
               dirty: {},
               visited: {},
-              submitting: false
-            })
-          }
-        }
+              submitting: false,
+            }),
+          },
+        },
       }),
       getHandleDebugData: () => ({
         nodeId: 'user-form',
@@ -318,16 +340,16 @@ describe('controller inspector — advanced data', () => {
             metaDependencies: {
               paths: ['role', 'currentUser.name'],
               wildcard: false,
-              broadAccess: false
+              broadAccess: false,
             },
             propsDependencies: {
               paths: ['username'],
               wildcard: false,
-              broadAccess: false
-            }
-          }
-        }
-      })
+              broadAccess: false,
+            },
+          },
+        },
+      }),
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -348,7 +370,7 @@ describe('controller inspector — advanced data', () => {
                 startedAt: 1,
                 outcome: 'failed',
                 cancelled: false,
-                timedOut: false
+                timedOut: false,
               },
               recentRuns: [
                 {
@@ -358,13 +380,13 @@ describe('controller inspector — advanced data', () => {
                   runId: 7,
                   cause: 'blur',
                   startedAt: 1,
-                  outcome: 'failed'
-                }
-              ]
-            }
-          ]
+                  outcome: 'failed',
+                },
+              ],
+            },
+          ],
         };
-      }
+      },
     } as never);
 
     const snapshot = ctrl.getSnapshot();
@@ -380,7 +402,7 @@ describe('controller inspector — advanced data', () => {
         summary: 'submit failed',
         nodeId: 'user-form',
         path: 'body.1',
-        interactionId: 'interaction-1'
+        interactionId: 'interaction-1',
       },
       {
         id: 2,
@@ -394,8 +416,8 @@ describe('controller inspector — advanced data', () => {
         nodeId: 'user-form',
         path: 'body.1',
         requestInstanceId: 'req-1',
-        interactionId: 'interaction-1'
-      }
+        interactionId: 'interaction-1',
+      },
     );
 
     const valueExplanation = ctrl.explainNodeValue({ cid: 500, field: 'username' });
@@ -404,8 +426,8 @@ describe('controller inspector — advanced data', () => {
       data: {
         field: 'username',
         valueSource: 'form-state',
-        value: 'alice'
-      }
+        value: 'alice',
+      },
     });
 
     const metaExplanation = ctrl.explainNodeMeta({ cid: 500, field: 'visible' });
@@ -414,8 +436,8 @@ describe('controller inspector — advanced data', () => {
       data: {
         field: 'visible',
         source: 'resolved-meta',
-        dependencyPaths: ['role', 'currentUser.name']
-      }
+        dependencyPaths: ['role', 'currentUser.name'],
+      },
     });
 
     const failureExplanation = ctrl.explainNodeFailure({ cid: 500 });
@@ -423,8 +445,8 @@ describe('controller inspector — advanced data', () => {
       kind: 'failure',
       data: {
         failureType: 'action-error',
-        relatedEventIds: [3, 2]
-      }
+        relatedEventIds: [3, 2],
+      },
     });
 
     const asyncExplanation = ctrl.explainNodeAsync({ cid: 500 });
@@ -437,10 +459,10 @@ describe('controller inspector — advanced data', () => {
             ownerKind: 'validation',
             ownerId: 'validation:form-scope:username',
             scopeId: 'form-scope',
-            currentRunId: 7
-          }
-        ]
-      }
+            currentRunId: 7,
+          },
+        ],
+      },
     });
   });
 
@@ -457,8 +479,8 @@ describe('controller inspector — advanced data', () => {
         touched: { username: true },
         dirty: { username: true },
         visited: {},
-        submitting: false
-      })
+        submitting: false,
+      }),
     };
 
     const mockHandle = {
@@ -467,12 +489,12 @@ describe('controller inspector — advanced data', () => {
       type: 'form',
       _cid: 200,
       _mounted: true,
-      capabilities: { store: mockStore }
+      capabilities: { store: mockStore },
     };
 
     const mockRegistry = {
       id: 'reg-1',
-      getHandleByCid: (cid: number) => (cid === 200 ? mockHandle : undefined)
+      getHandleByCid: (cid: number) => (cid === 200 ? mockHandle : undefined),
     };
 
     ctrl.setComponentRegistry(mockRegistry as never);
@@ -484,7 +506,7 @@ describe('controller inspector — advanced data', () => {
       touched: { username: true },
       dirty: { username: true },
       visited: {},
-      submitting: false
+      submitting: false,
     });
     expect(result?.scopeData).toMatchObject({ username: 'Alice' });
   });

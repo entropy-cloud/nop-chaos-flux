@@ -4,7 +4,7 @@ import type {
   NodeInstance,
   RendererHelpers,
   ResolvedNodeMeta,
-  TemplateNode
+  TemplateNode,
 } from '@nop-chaos/flux-core';
 
 export function useRenderMonitor(input: {
@@ -28,7 +28,7 @@ export function useRenderMonitor(input: {
     const payload = {
       nodeId: input.templateNode.id,
       path: input.templateNode.templatePath,
-      type: input.templateNode.rendererType
+      type: input.templateNode.rendererType,
     };
 
     startedAtRef.current = Date.now();
@@ -45,7 +45,7 @@ export function useRenderMonitor(input: {
 
       input.monitor?.onRenderEnd?.({
         ...payload,
-        durationMs: Math.max(0, Date.now() - startedAt)
+        durationMs: Math.max(0, Date.now() - startedAt),
       });
     };
   }, [
@@ -54,29 +54,31 @@ export function useRenderMonitor(input: {
     input.templateNode.templatePath,
     input.templateNode.rendererType,
     input.resolvedMeta.visible,
-    input.resolvedMeta.hidden
+    input.resolvedMeta.hidden,
   ]);
 }
 
 export function useNodeLifecycleActions(input: {
-  lifecycleActions: {
-    onMount?: ActionSchema | ActionSchema[];
-    onUnmount?: ActionSchema | ActionSchema[];
-  } | undefined;
+  lifecycleActions:
+    | {
+        onMount?: ActionSchema | ActionSchema[];
+        onUnmount?: ActionSchema | ActionSchema[];
+      }
+    | undefined;
   helpers: RendererHelpers;
   nodeInstance: NodeInstance;
 }) {
   useEffect(() => {
     if (input.lifecycleActions?.onMount) {
       void input.helpers.dispatch(input.lifecycleActions.onMount, {
-        nodeInstance: input.nodeInstance
+        nodeInstance: input.nodeInstance,
       });
     }
 
     return () => {
       if (input.lifecycleActions?.onUnmount) {
         void input.helpers.dispatch(input.lifecycleActions.onUnmount, {
-          nodeInstance: input.nodeInstance
+          nodeInstance: input.nodeInstance,
         });
       }
     };

@@ -25,7 +25,11 @@ describe('publishOwnerStatus', () => {
 });
 
 describe('createReadonlyScopeBinding', () => {
-  function createBinding(bindingKey: string, initialData: Record<string, any>, getSummary: () => any) {
+  function createBinding(
+    bindingKey: string,
+    initialData: Record<string, any>,
+    getSummary: () => any,
+  ) {
     const scope = createScopeRef({ id: 'parent', path: '$parent', initialData });
     return { scope, binding: createReadonlyScopeBinding(scope, bindingKey, getSummary) };
   }
@@ -94,7 +98,10 @@ describe('createReadonlyScopeBinding', () => {
     it('caches when parent and summary are same reference', () => {
       let callCount = 0;
       const summary = { v: 1 };
-      const getSummary = () => { callCount++; return summary; };
+      const getSummary = () => {
+        callCount++;
+        return summary;
+      };
       const { binding } = createBinding('s', {}, getSummary);
       const vis1 = binding.readVisible();
       const vis2 = binding.readVisible();
@@ -113,7 +120,10 @@ describe('createReadonlyScopeBinding', () => {
     it('caches when parent and summary are same reference', () => {
       let callCount = 0;
       const summary = { v: 1 };
-      const getSummary = () => { callCount++; return summary; };
+      const getSummary = () => {
+        callCount++;
+        return summary;
+      };
       const { binding } = createBinding('s', {}, getSummary);
       const mat1 = binding.materializeVisible();
       const mat2 = binding.materializeVisible();
@@ -135,7 +145,9 @@ describe('createReadonlyScopeBinding', () => {
   describe('store', () => {
     it('provides a store that throws on setSnapshot', () => {
       const { binding } = createBinding('status', {}, () => ({}));
-      expect(() => binding.store?.setSnapshot({})).toThrow('Cannot set snapshot on projected scope store');
+      expect(() => binding.store?.setSnapshot({})).toThrow(
+        'Cannot set snapshot on projected scope store',
+      );
     });
 
     it('store subscribe delegates to parent store', () => {

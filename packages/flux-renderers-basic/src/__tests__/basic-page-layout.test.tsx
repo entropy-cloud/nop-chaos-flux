@@ -5,7 +5,18 @@ import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support
 describe('basicRendererDefinitions page and layout behavior', () => {
   it('renders page title from a plain value', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', title: 'User Profile', body: [{ type: 'text', text: 'Page body' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          title: 'User Profile',
+          body: [{ type: 'text', text: 'Page body' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     expect(screen.getByRole('heading', { name: 'User Profile' })).toBeTruthy();
     expect(screen.getByText('Page body')).toBeTruthy();
     cleanup();
@@ -13,7 +24,19 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('renders page title from a schema fragment', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', title: { type: 'text', text: 'Profile for ${user.name}' } as any, body: [{ type: 'text', text: 'Page body' }] }} data={{ user: { name: 'Alice' } }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          title: { type: 'text', text: 'Profile for ${user.name}' } as any,
+          body: [{ type: 'text', text: 'Page body' }],
+        }}
+        data={{ user: { name: 'Alice' } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     expect(screen.getByRole('heading', { name: 'Profile for Alice' })).toBeTruthy();
     expect(screen.getByText('Page body')).toBeTruthy();
     cleanup();
@@ -21,14 +44,33 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('renders text nodes with interpolated values', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', body: [{ type: 'text', text: 'Welcome, ${user.name}' }] }} data={{ user: { name: 'Alice' } }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{ type: 'page', body: [{ type: 'text', text: 'Welcome, ${user.name}' }] }}
+        data={{ user: { name: 'Alice' } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     expect(screen.getByText('Welcome, Alice')).toBeTruthy();
     cleanup();
   });
 
   it('prefers flex body region over deprecated items region', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'flex', body: [{ type: 'text', text: 'Body content' }], items: [{ type: 'text', text: 'Deprecated items content' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'flex',
+          body: [{ type: 'text', text: 'Body content' }],
+          items: [{ type: 'text', text: 'Deprecated items content' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     expect(screen.getByText('Body content')).toBeTruthy();
     expect(screen.queryByText('Deprecated items content')).toBeNull();
     cleanup();
@@ -36,21 +78,65 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('falls back to flex items region when body is absent', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'flex', items: [{ type: 'text', text: 'Deprecated items fallback' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{ type: 'flex', items: [{ type: 'text', text: 'Deprecated items fallback' }] }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     expect(screen.getByText('Deprecated items fallback')).toBeTruthy();
     cleanup();
   });
 
   it('publishes page status summary through statusPath', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', statusPath: 'pageStatus', body: [{ type: 'text', text: '${pageStatus?.refreshTick}' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          statusPath: 'pageStatus',
+          body: [{ type: 'text', text: '${pageStatus?.refreshTick}' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     await waitFor(() => expect(screen.getByText('0')).toBeTruthy());
     cleanup();
   });
 
   it('publishes tabs status and supports scope ownership', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', body: [{ type: 'tabs', valueOwnership: 'scope', valueStatePath: 'ui.activeTab', statusPath: 'ui.tabsStatus', items: [{ key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] }, { key: 'second', title: 'Second', body: [{ type: 'text', text: 'Second body' }] }] }, { type: 'text', text: '${ui.tabsStatus?.activeValue}:${ui.tabsStatus?.activeIndex}:${ui.activeTab}' }] }} data={{ ui: { activeTab: 'first' } }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tabs',
+              valueOwnership: 'scope',
+              valueStatePath: 'ui.activeTab',
+              statusPath: 'ui.tabsStatus',
+              items: [
+                { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
+                { key: 'second', title: 'Second', body: [{ type: 'text', text: 'Second body' }] },
+              ],
+            },
+            {
+              type: 'text',
+              text: '${ui.tabsStatus?.activeValue}:${ui.tabsStatus?.activeIndex}:${ui.activeTab}',
+            },
+          ],
+        }}
+        data={{ ui: { activeTab: 'first' } }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     await waitFor(() => expect(screen.getByText('first:0:first')).toBeTruthy());
     fireEvent.click(screen.getByText('Second'));
     await waitFor(() => {
@@ -67,11 +153,18 @@ describe('basicRendererDefinitions page and layout behavior', () => {
         schemaUrl="test://basic/page-layout"
         schema={{
           type: 'page',
-          body: [{ type: 'tabs', items: [{ key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] }] }]
+          body: [
+            {
+              type: 'tabs',
+              items: [
+                { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(document.querySelector('[data-slot="tabs-root"]')?.className).toContain('flex-col');
@@ -81,11 +174,19 @@ describe('basicRendererDefinitions page and layout behavior', () => {
         schemaUrl="test://basic/page-layout"
         schema={{
           type: 'page',
-          body: [{ type: 'tabs', tabsMode: 'vertical', items: [{ key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] }] }]
+          body: [
+            {
+              type: 'tabs',
+              tabsMode: 'vertical',
+              items: [
+                { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(document.querySelector('[data-slot="tabs-root"]')?.className).not.toContain('flex-col');
@@ -105,21 +206,24 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               title: 'Dialog title',
               statusPath: 'ui.dialogStatus',
               open: true,
-              body: [{ type: 'text', text: 'Dialog body' }]
+              body: [{ type: 'text', text: 'Dialog body' }],
             },
             {
               type: 'drawer',
               title: 'Drawer title',
               statusPath: 'ui.drawerStatus',
               open: true,
-              body: [{ type: 'text', text: 'Drawer body' }]
+              body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.kind}:${ui.dialogStatus?.open}:${ui.drawerStatus?.kind}:${ui.drawerStatus?.open}' }
-          ]
+            {
+              type: 'text',
+              text: '${ui.dialogStatus?.kind}:${ui.dialogStatus?.open}:${ui.drawerStatus?.kind}:${ui.drawerStatus?.open}',
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('dialog:true:drawer:true')).toBeTruthy());
@@ -129,13 +233,11 @@ describe('basicRendererDefinitions page and layout behavior', () => {
         schemaUrl="test://basic/page-layout"
         schema={{
           type: 'page',
-          body: [
-            { type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' }
-          ]
+          body: [{ type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('false:false')).toBeTruthy());
@@ -155,14 +257,14 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               title: 'Dialog title',
               statusPath: 'ui.dialogStatus',
               defaultOpen: true,
-              body: [{ type: 'text', text: 'Dialog body' }]
+              body: [{ type: 'text', text: 'Dialog body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.open}' }
-          ]
+            { type: 'text', text: '${ui.dialogStatus?.open}' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('true')).toBeTruthy());
@@ -181,11 +283,11 @@ describe('basicRendererDefinitions page and layout behavior', () => {
           type: 'drawer',
           title: 'Drawer title',
           open: true,
-          body: [{ type: 'text', text: 'Drawer body' }]
+          body: [{ type: 'text', text: 'Drawer body' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Drawer body')).toBeTruthy());
@@ -205,20 +307,20 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               type: 'dialog',
               title: 'Dialog title',
               statusPath: 'ui.dialogStatus',
-              body: [{ type: 'text', text: 'Dialog body' }]
+              body: [{ type: 'text', text: 'Dialog body' }],
             },
             {
               type: 'drawer',
               title: 'Drawer title',
               statusPath: 'ui.drawerStatus',
-              body: [{ type: 'text', text: 'Drawer body' }]
+              body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' }
-          ]
+            { type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('false:false')).toBeTruthy());
@@ -238,21 +340,21 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               title: 'Dialog title',
               statusPath: 'ui.dialogStatus',
               defaultOpen: true,
-              body: [{ type: 'text', text: 'Dialog body' }]
+              body: [{ type: 'text', text: 'Dialog body' }],
             },
             {
               type: 'drawer',
               title: 'Drawer title',
               statusPath: 'ui.drawerStatus',
               defaultOpen: true,
-              body: [{ type: 'text', text: 'Drawer body' }]
+              body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' }
-          ]
+            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('false:true')).toBeTruthy());
@@ -272,21 +374,21 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               title: 'Dialog title',
               statusPath: 'ui.dialogStatus',
               defaultOpen: true,
-              body: [{ type: 'text', text: 'Dialog body' }]
+              body: [{ type: 'text', text: 'Dialog body' }],
             },
             {
               type: 'drawer',
               title: 'Drawer title',
               statusPath: 'ui.drawerStatus',
               defaultOpen: true,
-              body: [{ type: 'text', text: 'Drawer body' }]
+              body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' }
-          ]
+            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('false:true')).toBeTruthy());
@@ -302,21 +404,21 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               title: 'Dialog title',
               statusPath: 'ui.dialogStatus',
               defaultOpen: true,
-              body: [{ type: 'text', text: 'Dialog body' }]
+              body: [{ type: 'text', text: 'Dialog body' }],
             },
             {
               type: 'drawer',
               title: 'Drawer title',
               statusPath: 'ui.drawerStatus',
               open: false,
-              body: [{ type: 'text', text: 'Drawer body' }]
+              body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' }
-          ]
+            { type: 'text', text: '${ui.dialogStatus?.active}:${ui.drawerStatus?.active}' },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('true:false')).toBeTruthy());
@@ -325,7 +427,20 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('renders page header and footer through normalized regions', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    const { container } = render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', title: 'Workspace', header: [{ type: 'text', text: 'Header tools' }], body: [{ type: 'text', text: 'Page body' }], footer: [{ type: 'text', text: 'Footer actions' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          title: 'Workspace',
+          header: [{ type: 'text', text: 'Header tools' }],
+          body: [{ type: 'text', text: 'Page body' }],
+          footer: [{ type: 'text', text: 'Footer actions' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     expect(screen.getByRole('heading', { name: 'Workspace' })).toBeTruthy();
     expect(screen.getByText('Header tools')).toBeTruthy();
     expect(screen.getByText('Page body')).toBeTruthy();
@@ -341,7 +456,19 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('renders container header and footer through normalized regions', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    const { container } = render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'container', header: [{ type: 'text', text: 'Container header' }], body: [{ type: 'text', text: 'Container body' }], footer: [{ type: 'text', text: 'Container footer' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'container',
+          header: [{ type: 'text', text: 'Container header' }],
+          body: [{ type: 'text', text: 'Container body' }],
+          footer: [{ type: 'text', text: 'Container footer' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     expect(screen.getByText('Container header')).toBeTruthy();
     expect(screen.getByText('Container body')).toBeTruthy();
     expect(screen.getByText('Container footer')).toBeTruthy();
@@ -355,7 +482,24 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('resolves classAliases at page level', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', classAliases: { card: 'bg-white rounded-lg shadow-md p-4' }, body: [{ type: 'container', className: 'card custom-class', body: [{ type: 'text', text: 'Card content' }] }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          classAliases: { card: 'bg-white rounded-lg shadow-md p-4' },
+          body: [
+            {
+              type: 'container',
+              className: 'card custom-class',
+              body: [{ type: 'text', text: 'Card content' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     const container = screen.getByText('Card content').closest('.nop-container');
     expect(container?.className).toContain('bg-white');
     expect(container?.className).toContain('rounded-lg');
@@ -367,7 +511,18 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('supports nested classAliases expansion', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', classAliases: { btn: 'px-4 py-2 rounded', 'btn-primary': 'btn bg-blue-500 text-white' }, body: [{ type: 'button', label: 'Submit', className: 'btn-primary' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          classAliases: { btn: 'px-4 py-2 rounded', 'btn-primary': 'btn bg-blue-500 text-white' },
+          body: [{ type: 'button', label: 'Submit', className: 'btn-primary' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     const button = screen.getByRole('button', { name: 'Submit' });
     expect(button.className).toContain('px-4');
     expect(button.className).toContain('py-2');
@@ -379,7 +534,24 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('inherits classAliases from parent to child', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', classAliases: { card: 'bg-white rounded-lg' }, body: [{ type: 'container', classAliases: { card: 'bg-gray-100 rounded-xl' }, body: [{ type: 'text', text: 'Nested card', className: 'card' }] }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          classAliases: { card: 'bg-white rounded-lg' },
+          body: [
+            {
+              type: 'container',
+              classAliases: { card: 'bg-gray-100 rounded-xl' },
+              body: [{ type: 'text', text: 'Nested card', className: 'card' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     const text = screen.getByText('Nested card');
     expect(text.className).toContain('bg-gray-100');
     expect(text.className).toContain('rounded-xl');
@@ -390,7 +562,14 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('uses data-icon for icon identity without a modifier marker class', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', body: [{ type: 'icon', icon: 'gear', testid: 'settings-icon' }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{ type: 'page', body: [{ type: 'icon', icon: 'gear', testid: 'settings-icon' }] }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     const icon = screen.getByTestId('settings-icon');
     const className = icon.getAttribute('class') ?? '';
     expect(icon.getAttribute('data-icon')).toBe('gear');
@@ -401,7 +580,24 @@ describe('basicRendererDefinitions page and layout behavior', () => {
 
   it('uses data-slot markers for tabs internal structure instead of nop-tabs region classes', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
-    render(<SchemaRenderer schemaUrl="test://basic/page-layout" schema={{ type: 'page', body: [{ type: 'tabs', items: [{ key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] }] }] }} env={env} formulaCompiler={formulaCompiler} />);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tabs',
+              items: [
+                { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     const tabsRoot = document.querySelector('[data-slot="tabs-root"]');
     const tabsContent = document.querySelector('[data-slot="tabs-content"]');
 

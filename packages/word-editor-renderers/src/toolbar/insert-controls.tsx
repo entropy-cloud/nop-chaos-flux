@@ -1,7 +1,15 @@
-import { useState, useRef } from 'react'
-import { Table, ImagePlus, Link2, SeparatorHorizontal, ArrowDownToLine, BarChart3, QrCode } from 'lucide-react'
-import type { CanvasEditorBridge, DocChart, DocCode } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
+import { useState, useRef } from 'react';
+import {
+  Table,
+  ImagePlus,
+  Link2,
+  SeparatorHorizontal,
+  ArrowDownToLine,
+  BarChart3,
+  QrCode,
+} from 'lucide-react';
+import type { CanvasEditorBridge, DocChart, DocCode } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   Dialog,
@@ -10,77 +18,99 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Input
-} from '@nop-chaos/ui'
-import { ToolbarButton, ToolbarGroup } from './shared.js'
-import { ChartDialog } from '../dialogs/chart-dialog.js'
-import { CodeDialog } from '../dialogs/code-dialog.js'
+  Input,
+} from '@nop-chaos/ui';
+import { ToolbarButton, ToolbarGroup } from './shared.js';
+import { ChartDialog } from '../dialogs/chart-dialog.js';
+import { CodeDialog } from '../dialogs/code-dialog.js';
 
 interface InsertControlsProps {
-  bridge: CanvasEditorBridge | null
-  onChartSave?: (chart: DocChart) => void
-  onCodeSave?: (code: DocCode) => void
+  bridge: CanvasEditorBridge | null;
+  onChartSave?: (chart: DocChart) => void;
+  onCodeSave?: (code: DocCode) => void;
 }
 
 export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertControlsProps) {
-  const [showLinkDialog, setShowLinkDialog] = useState(false)
-  const [showChartDialog, setShowChartDialog] = useState(false)
-  const [showCodeDialog, setShowCodeDialog] = useState(false)
-  const imageInputRef = useRef<HTMLInputElement>(null)
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showChartDialog, setShowChartDialog] = useState(false);
+  const [showCodeDialog, setShowCodeDialog] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
-  const [hyperlinkUrl, setHyperlinkUrl] = useState('')
-  const [hyperlinkDisplay, setHyperlinkDisplay] = useState('')
+  const [hyperlinkUrl, setHyperlinkUrl] = useState('');
+  const [hyperlinkDisplay, setHyperlinkDisplay] = useState('');
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result as string
+      const dataUrl = reader.result as string;
       bridge?.command?.executeImage({
         value: dataUrl,
         width: 0,
-        height: 0
-      })
-    }
-    reader.readAsDataURL(file)
-  }
+        height: 0,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleInsertHyperlink = () => {
-    if (!hyperlinkUrl.trim()) return
+    if (!hyperlinkUrl.trim()) return;
     bridge?.command?.executeHyperlink({
       valueList: [{ value: hyperlinkDisplay.trim() || hyperlinkUrl.trim() }],
-      url: hyperlinkUrl.trim()
-    })
-    setShowLinkDialog(false)
-    setHyperlinkUrl('')
-    setHyperlinkDisplay('')
-  }
+      url: hyperlinkUrl.trim(),
+    });
+    setShowLinkDialog(false);
+    setHyperlinkUrl('');
+    setHyperlinkDisplay('');
+  };
 
   const handleDialogClose = (open: boolean) => {
     if (!open) {
-      setShowLinkDialog(false)
-      setHyperlinkUrl('')
-      setHyperlinkDisplay('')
+      setShowLinkDialog(false);
+      setHyperlinkUrl('');
+      setHyperlinkDisplay('');
     }
-  }
+  };
 
   return (
     <ToolbarGroup>
-      <ToolbarButton icon={Table} onClick={() => bridge?.command?.executeInsertTable(3, 3)} title="Insert Table (3×3)" />
-      <ToolbarButton icon={ImagePlus} onClick={() => imageInputRef.current?.click()} title="Insert Image" />
-      <ToolbarButton icon={Link2} onClick={() => setShowLinkDialog(true)} title="Insert Hyperlink" />
-      <ToolbarButton icon={BarChart3} onClick={() => setShowChartDialog(true)} title="Insert Chart" />
-      <ToolbarButton icon={QrCode} onClick={() => setShowCodeDialog(true)} title="Insert Barcode/QR Code" />
-      <ToolbarButton icon={SeparatorHorizontal} onClick={() => bridge?.command?.executeSeparator([])} title="Separator" />
-      <ToolbarButton icon={ArrowDownToLine} onClick={() => bridge?.command?.executePageBreak()} title="Page Break" />
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleImageSelect}
-        hidden
+      <ToolbarButton
+        icon={Table}
+        onClick={() => bridge?.command?.executeInsertTable(3, 3)}
+        title="Insert Table (3×3)"
       />
+      <ToolbarButton
+        icon={ImagePlus}
+        onClick={() => imageInputRef.current?.click()}
+        title="Insert Image"
+      />
+      <ToolbarButton
+        icon={Link2}
+        onClick={() => setShowLinkDialog(true)}
+        title="Insert Hyperlink"
+      />
+      <ToolbarButton
+        icon={BarChart3}
+        onClick={() => setShowChartDialog(true)}
+        title="Insert Chart"
+      />
+      <ToolbarButton
+        icon={QrCode}
+        onClick={() => setShowCodeDialog(true)}
+        title="Insert Barcode/QR Code"
+      />
+      <ToolbarButton
+        icon={SeparatorHorizontal}
+        onClick={() => bridge?.command?.executeSeparator([])}
+        title="Separator"
+      />
+      <ToolbarButton
+        icon={ArrowDownToLine}
+        onClick={() => bridge?.command?.executePageBreak()}
+        title="Page Break"
+      />
+      <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageSelect} hidden />
       <Dialog open={showLinkDialog} onOpenChange={handleDialogClose}>
         <DialogContent size="sm">
           <DialogHeader>
@@ -115,8 +145,8 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
         open={showChartDialog}
         onClose={() => setShowChartDialog(false)}
         onSave={(chart) => {
-          onChartSave?.(chart)
-          setShowChartDialog(false)
+          onChartSave?.(chart);
+          setShowChartDialog(false);
         }}
       />
 
@@ -124,10 +154,10 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
         open={showCodeDialog}
         onClose={() => setShowCodeDialog(false)}
         onSave={(code) => {
-          onCodeSave?.(code)
-          setShowCodeDialog(false)
+          onCodeSave?.(code);
+          setShowCodeDialog(false);
         }}
       />
     </ToolbarGroup>
-  )
+  );
 }

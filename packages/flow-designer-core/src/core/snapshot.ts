@@ -1,22 +1,19 @@
-import type {
-  DesignerSelectionState
-} from './selection';
+import type { DesignerSelectionState } from './selection';
 import { getSelectionSummary } from './selection';
-import type {
-  DesignerShellState
-} from './shell-state';
-import type {
-  DesignerSnapshot,
-  BranchSummary,
-  GraphDocument
-} from '../types';
+import type { DesignerShellState } from './shell-state';
+import type { DesignerSnapshot, BranchSummary, GraphDocument } from '../types';
 
-function resolveActiveBranch(activeNode: DesignerSnapshot['activeNode'], activeBranchId: string | null): BranchSummary | null {
+function resolveActiveBranch(
+  activeNode: DesignerSnapshot['activeNode'],
+  activeBranchId: string | null,
+): BranchSummary | null {
   if (!activeNode || !activeBranchId) {
     return null;
   }
 
-  const branches = Array.isArray(activeNode.data.branches) ? activeNode.data.branches as BranchSummary[] : [];
+  const branches = Array.isArray(activeNode.data.branches)
+    ? (activeNode.data.branches as BranchSummary[])
+    : [];
   return branches.find((branch) => branch.id === activeBranchId) ?? null;
 }
 
@@ -50,7 +47,7 @@ export function createDesignerSnapshotCache(input: {
       paletteCollapsed: input.shell.paletteCollapsed,
       inspectorCollapsed: input.shell.inspectorCollapsed,
       viewport: input.shell.viewport,
-    }
+    },
   };
 }
 
@@ -66,8 +63,12 @@ export function getDesignerSnapshot(input: {
   const selection = getSelectionSummary(input.selectionState);
   const activeNodeId = selection.activeNodeId;
   const activeEdgeId = selection.activeEdgeId;
-  const activeNode = activeNodeId ? input.doc.nodes.find((n) => n.id === activeNodeId) ?? null : null;
-  const activeEdge = activeEdgeId ? input.doc.edges.find((e) => e.id === activeEdgeId) ?? null : null;
+  const activeNode = activeNodeId
+    ? (input.doc.nodes.find((n) => n.id === activeNodeId) ?? null)
+    : null;
+  const activeEdge = activeEdgeId
+    ? (input.doc.edges.find((e) => e.id === activeEdgeId) ?? null)
+    : null;
   const activeBranch = resolveActiveBranch(activeNode, selection.activeBranchId);
 
   const selectionUnchanged =

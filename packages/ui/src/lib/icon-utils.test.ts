@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  normalizeIconName,
-  resolveLucideIcon,
-  toIconLookupKey,
-  toLucideKey
-} from './icon-utils';
+import { normalizeIconName, resolveLucideIcon, toIconLookupKey, toLucideKey } from './icon-utils';
 
 describe('toIconLookupKey', () => {
   it('converts spaces to dashes', () => {

@@ -45,14 +45,10 @@ export function WorkbenchShell({
   const gridColsClass = useMemo(() => {
     if (!hasLeft && !hasRight) return 'grid-cols-1';
     if (hasLeft && !hasRight) {
-      return leftCollapsed
-        ? 'grid-cols-[2rem_minmax(0,1fr)]'
-        : 'grid-cols-[15rem_minmax(0,1fr)]';
+      return leftCollapsed ? 'grid-cols-[2rem_minmax(0,1fr)]' : 'grid-cols-[15rem_minmax(0,1fr)]';
     }
     if (!hasLeft && hasRight) {
-      return rightCollapsed
-        ? 'grid-cols-[minmax(0,1fr)_2rem]'
-        : 'grid-cols-[minmax(0,1fr)_22rem]';
+      return rightCollapsed ? 'grid-cols-[minmax(0,1fr)_2rem]' : 'grid-cols-[minmax(0,1fr)_22rem]';
     }
     if (leftCollapsed && rightCollapsed) return 'grid-cols-[2rem_minmax(0,1fr)_2rem]';
     if (leftCollapsed) return 'grid-cols-[2rem_minmax(0,1fr)_22rem]';
@@ -84,8 +80,8 @@ export function WorkbenchShell({
           hasBoth && 'max-[767px]:[&>*:first-child]:hidden',
         )}
       >
-        {hasLeft && (
-          leftCollapsed ? (
+        {hasLeft &&
+          (leftCollapsed ? (
             <div
               className={cn(PANEL_CARD, 'flex items-center justify-center')}
               data-slot="workbench-left-panel"
@@ -109,8 +105,7 @@ export function WorkbenchShell({
             >
               {leftPanel}
             </div>
-          )
-        )}
+          ))}
         <div
           className={cn(PANEL_CARD, 'relative')}
           data-slot="workbench-canvas"
@@ -118,8 +113,8 @@ export function WorkbenchShell({
         >
           {canvas}
         </div>
-        {hasRight && (
-          rightCollapsed ? (
+        {hasRight &&
+          (rightCollapsed ? (
             <div
               className={cn(PANEL_CARD, 'flex items-center justify-center')}
               data-slot="workbench-right-panel"
@@ -143,11 +138,12 @@ export function WorkbenchShell({
             >
               {rightPanel}
             </div>
-          )
-        )}
+          ))}
       </div>
       {dialogs !== undefined && (
-        <div data-slot="workbench-dialogs" className="relative">{dialogs}</div>
+        <div data-slot="workbench-dialogs" className="relative">
+          {dialogs}
+        </div>
       )}
     </div>
   );

@@ -1,39 +1,39 @@
-import type { CanvasEditorBridge } from './canvas-editor-bridge.js'
-import type { PaperSettings, } from './paper-settings.js'
-import type { WordDocument } from './template-model.js'
-import type { DataSet } from './dataset-model.js'
-import type { DocChart } from './chart-model.js'
-import type { DocCode } from './code-model.js'
+import type { CanvasEditorBridge } from './canvas-editor-bridge.js';
+import type { PaperSettings } from './paper-settings.js';
+import type { WordDocument } from './template-model.js';
+import type { DataSet } from './dataset-model.js';
+import type { DocChart } from './chart-model.js';
+import type { DocCode } from './code-model.js';
 
-const STORAGE_KEY = 'nop-word-editor-document'
-const DATASET_STORAGE_KEY = 'nop-word-editor-datasets'
+const STORAGE_KEY = 'nop-word-editor-document';
+const DATASET_STORAGE_KEY = 'nop-word-editor-datasets';
 
 export interface SavedDocumentData {
-  data: WordDocument
-  paperSettings: PaperSettings
-  savedAt: string
+  data: WordDocument;
+  paperSettings: PaperSettings;
+  savedAt: string;
 }
 
 function normalizeWordDocument(value: unknown): WordDocument | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null
+    return null;
   }
 
-  const record = value as Record<string, unknown>
+  const record = value as Record<string, unknown>;
 
   return {
-    header: Array.isArray(record.header) ? record.header as WordDocument['header'] : [],
-    main: Array.isArray(record.main) ? record.main as WordDocument['main'] : [],
-    footer: Array.isArray(record.footer) ? record.footer as WordDocument['footer'] : [],
-    charts: Array.isArray(record.charts) ? record.charts as DocChart[] : [],
-    codes: Array.isArray(record.codes) ? record.codes as DocCode[] : []
-  }
+    header: Array.isArray(record.header) ? (record.header as WordDocument['header']) : [],
+    main: Array.isArray(record.main) ? (record.main as WordDocument['main']) : [],
+    footer: Array.isArray(record.footer) ? (record.footer as WordDocument['footer']) : [],
+    charts: Array.isArray(record.charts) ? (record.charts as DocChart[]) : [],
+    codes: Array.isArray(record.codes) ? (record.codes as DocCode[]) : [],
+  };
 }
 
 export function createSavedDocumentData(input: {
-  data: WordDocument
-  paperSettings: PaperSettings | null | undefined
-  savedAt?: string
+  data: WordDocument;
+  paperSettings: PaperSettings | null | undefined;
+  savedAt?: string;
 }): SavedDocumentData {
   return {
     data: {
@@ -41,27 +41,27 @@ export function createSavedDocumentData(input: {
       main: input.data.main ?? [],
       footer: input.data.footer ?? [],
       charts: input.data.charts ?? [],
-      codes: input.data.codes ?? []
+      codes: input.data.codes ?? [],
     },
     paperSettings: input.paperSettings ?? {
       width: 595,
       height: 842,
       direction: 'vertical',
-      margins: [100, 120, 100, 120]
+      margins: [100, 120, 100, 120],
     },
-    savedAt: input.savedAt ?? new Date().toISOString()
-  }
+    savedAt: input.savedAt ?? new Date().toISOString(),
+  };
 }
 
 export function saveDocument(
   bridge: CanvasEditorBridge,
-  extras?: { charts?: DocChart[]; codes?: DocCode[] }
+  extras?: { charts?: DocChart[]; codes?: DocCode[] },
 ): boolean {
   try {
-    const value = bridge.getValue()
-    if (!value) return false
+    const value = bridge.getValue();
+    if (!value) return false;
 
-    const paperSettings = bridge.getPaperSettings()
+    const paperSettings = bridge.getPaperSettings();
 
     const saved = createSavedDocumentData({
       data: {
@@ -69,52 +69,52 @@ export function saveDocument(
         main: value.data.main,
         footer: value.data.footer ?? [],
         charts: extras?.charts ?? [],
-        codes: extras?.codes ?? []
+        codes: extras?.codes ?? [],
       },
-      paperSettings
-    })
+      paperSettings,
+    });
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
-    return true
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 
 export function loadDocument(): SavedDocumentData | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as Record<string, unknown>
-    const data = normalizeWordDocument(parsed.data)
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const data = normalizeWordDocument(parsed.data);
     if (!data) {
-      return null
+      return null;
     }
 
     return {
       data,
       paperSettings: parsed.paperSettings as PaperSettings,
-      savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date(0).toISOString()
-    }
+      savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date(0).toISOString(),
+    };
   } catch {
-    return null
+    return null;
   }
 }
 
 export function clearDocument(): void {
-  localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(STORAGE_KEY);
 }
 
 export function saveDatasets(datasets: DataSet[]): void {
-  localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(datasets))
+  localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(datasets));
 }
 
 export function loadDatasets(): DataSet[] {
   try {
-    const raw = localStorage.getItem(DATASET_STORAGE_KEY)
-    if (!raw) return []
-    return JSON.parse(raw) as DataSet[]
+    const raw = localStorage.getItem(DATASET_STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as DataSet[];
   } catch {
-    return []
+    return [];
   }
 }

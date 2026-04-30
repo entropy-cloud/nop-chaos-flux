@@ -34,4 +34,3 @@
 - dialog lifecycle state and dialog-local scope reactivity are separate concerns and should not share a single subscription boundary
 - compiled dialog content may still need rerender triggers from scope changes even when the dialog list itself is unchanged
 - if dialog expressions look frozen, inspect subscription coverage before changing action dispatch or expression evaluation
-

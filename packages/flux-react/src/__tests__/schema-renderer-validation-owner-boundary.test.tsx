@@ -11,7 +11,7 @@ const validationOwnerProbeRenderer = {
   component: function ValidationOwnerProbe() {
     const validationOwner = useCurrentValidationScope();
     return <span data-testid="validation-owner-id">{validationOwner?.scopeId ?? ''}</span>;
-  }
+  },
 };
 
 const embeddedParentScope = {
@@ -24,7 +24,7 @@ const embeddedParentScope = {
   materializeVisible: () => ({}),
   value: {},
   update: () => undefined,
-  merge: () => undefined
+  merge: () => undefined,
 } as any;
 
 describe('createSchemaRenderer validation owner boundary behavior', () => {
@@ -37,7 +37,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
         schema={{ type: 'page', body: [{ type: 'validation-owner-probe' }] }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
@@ -49,7 +49,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
         env={env}
         formulaCompiler={createFormulaCompiler()}
         parentScope={embeddedParentScope}
-      />
+      />,
     );
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('');

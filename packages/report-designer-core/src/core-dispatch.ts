@@ -7,17 +7,9 @@ import type {
   FieldDragState,
   InspectorRuntimeState,
 } from './types.js';
-import {
-  getTargetMeta,
-} from './types.js';
-import type {
-  ReportDesignerCommand,
-  ReportDesignerCommandResult,
-} from './commands.js';
-import type {
-  ReportDesignerAdapterRegistry,
-  ReportDesignerProfile,
-} from './adapters.js';
+import { getTargetMeta } from './types.js';
+import type { ReportDesignerCommand, ReportDesignerCommandResult } from './commands.js';
+import type { ReportDesignerAdapterRegistry, ReportDesignerProfile } from './adapters.js';
 import {
   applyFieldDrop,
   cloneDocument,
@@ -25,10 +17,7 @@ import {
   updateMetadata,
 } from './runtime/metadata.js';
 import { createAdapterContext } from './runtime/adapter-context.js';
-import {
-  resolvePreviewAdapter,
-  runPreviewCommand,
-} from './runtime/preview-commands.js';
+import { resolvePreviewAdapter, runPreviewCommand } from './runtime/preview-commands.js';
 import {
   exportTemplateWithCodec,
   importTemplateWithCodec,
@@ -53,7 +42,11 @@ export interface ReportDesignerInternalState {
 export interface DispatchContext {
   store: {
     getState: () => ReportDesignerInternalState;
-    setState: (updater: Partial<ReportDesignerInternalState> | ((s: ReportDesignerInternalState) => ReportDesignerInternalState)) => void;
+    setState: (
+      updater:
+        | Partial<ReportDesignerInternalState>
+        | ((s: ReportDesignerInternalState) => ReportDesignerInternalState),
+    ) => void;
   };
   registry: ReportDesignerAdapterRegistry;
   config: ReportDesignerConfig;
@@ -67,7 +60,7 @@ export interface DispatchContext {
 
 export async function dispatchReportDesignerCommand(
   ctx: DispatchContext,
-  command: ReportDesignerCommand
+  command: ReportDesignerCommand,
 ): Promise<ReportDesignerCommandResult> {
   const { store, registry, config, profile, allowedFieldDropIds } = ctx;
 
@@ -82,8 +75,10 @@ export async function dispatchReportDesignerCommand(
       case 'report-designer:dropFieldToTarget': {
         return withDerivedRefresh(async () => {
           const current = store.getState();
-          const adapter = Array.from(registry.fieldDrops.values()).find((candidate) =>
-            (!allowedFieldDropIds || allowedFieldDropIds.has(candidate.id)) && candidate.canHandle(command.field, command.target),
+          const adapter = Array.from(registry.fieldDrops.values()).find(
+            (candidate) =>
+              (!allowedFieldDropIds || allowedFieldDropIds.has(candidate.id)) &&
+              candidate.canHandle(command.field, command.target),
           );
 
           if (!adapter) {

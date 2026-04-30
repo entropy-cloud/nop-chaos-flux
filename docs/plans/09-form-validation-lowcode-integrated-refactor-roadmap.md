@@ -869,7 +869,3 @@ The recommended next implementation step is to start with Stage 0 and Stage 1 to
 5. migrate internal callers to the canonical graph before removing redundant structures
 
 This is the highest-leverage place to begin because it creates the foundation for every later optimization in memory use, execution model, and composite-control integration.
-
-
-
-

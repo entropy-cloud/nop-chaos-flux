@@ -8,13 +8,9 @@ import {
   dispatchProbeRenderer,
   namespaceProviderRenderer,
   scopedHostRenderer,
-  toggleHostRenderer
+  toggleHostRenderer,
 } from './test-support-runtime';
-import {
-  env,
-  pageRenderer,
-  sharedFormulaCompiler,
-} from './test-support-core';
+import { env, pageRenderer, sharedFormulaCompiler } from './test-support-core';
 import { useCurrentActionScope } from './hooks';
 
 describe('createSchemaRenderer import scope boundaries', () => {
@@ -25,10 +21,10 @@ describe('createSchemaRenderer import scope boundaries', () => {
           kind: 'import' as const,
           invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
             ok: true,
-            data: `${spec.as}:${method}:${String(payload?.value ?? '')}`
-          })
-        })
-      }))
+            data: `${spec.as}:${method}:${String(payload?.value ?? '')}`,
+          }),
+        }),
+      })),
     };
     const actionScopeIds: string[] = [];
     const actionScopeProbeRenderer = {
@@ -44,26 +40,39 @@ describe('createSchemaRenderer import scope boundaries', () => {
 
         return <div>{props.regions.body?.render()}</div>;
       },
-      regions: ['body']
+      regions: ['body'],
     };
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, actionScopeProbeRenderer, dispatchProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      actionScopeProbeRenderer,
+      dispatchProbeRenderer,
+    ]);
 
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
-          type: 'page',
-          body: [
-            {
-              type: 'action-scope-probe',
-              'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
-              body: [
-                { type: 'dispatch-probe', label: 'Run import action', resultKey: 'import-action-result', runAction: { action: 'demo:ping', args: { value: 'local' } } }
-              ]
-            }
-          ]
-        } as any}
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={
+          {
+            type: 'page',
+            body: [
+              {
+                type: 'action-scope-probe',
+                'xui:imports': [{ from: 'demo-lib', as: 'demo' }],
+                body: [
+                  {
+                    type: 'dispatch-probe',
+                    label: 'Run import action',
+                    resultKey: 'import-action-result',
+                    runAction: { action: 'demo:ping', args: { value: 'local' } },
+                  },
+                ],
+              },
+            ],
+          } as any
+        }
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     await screen.findByText('Run import action');
@@ -84,19 +93,27 @@ describe('createSchemaRenderer import scope boundaries', () => {
           kind: 'import' as const,
           invoke: async (method: string, payload: Record<string, unknown> | undefined) => ({
             ok: true,
-            data: `${spec.as}:${method}:${String(payload?.value ?? '')}`
-          })
-        })
-      }))
+            data: `${spec.as}:${method}:${String(payload?.value ?? '')}`,
+          }),
+        }),
+      })),
     };
     let retainedDispatch: any;
     const dispatchCaptureRenderer = createDispatchCaptureRenderer((dispatch) => {
       retainedDispatch = dispatch;
     });
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, toggleHostRenderer, scopedHostRenderer, dispatchCaptureRenderer, dispatchProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      toggleHostRenderer,
+      scopedHostRenderer,
+      dispatchCaptureRenderer,
+      dispatchProbeRenderer,
+    ]);
 
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             {
@@ -107,17 +124,27 @@ describe('createSchemaRenderer import scope boundaries', () => {
                   'xui:imports': [{ from: 'child-lib', as: 'child' }],
                   body: [
                     { type: 'dispatch-capture' },
-                    { type: 'dispatch-probe', label: 'Run child scoped import', resultKey: 'child-scoped-import-result', runAction: { action: 'child:ping', args: { value: 'mounted' } } }
-                  ]
-                }
-              ]
+                    {
+                      type: 'dispatch-probe',
+                      label: 'Run child scoped import',
+                      resultKey: 'child-scoped-import-result',
+                      runAction: { action: 'child:ping', args: { value: 'mounted' } },
+                    },
+                  ],
+                },
+              ],
             },
-            { type: 'dispatch-probe', label: 'Run root child import', resultKey: 'root-child-import-result', runAction: { action: 'child:ping', args: { value: 'root' } } }
-          ]
+            {
+              type: 'dispatch-probe',
+              label: 'Run root child import',
+              resultKey: 'root-child-import-result',
+              runAction: { action: 'child:ping', args: { value: 'root' } },
+            },
+          ],
         }}
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -126,7 +153,9 @@ describe('createSchemaRenderer import scope boundaries', () => {
 
     fireEvent.click(screen.getByText('Run child scoped import'));
     await waitFor(() => {
-      expect(screen.getByTestId('child-scoped-import-result').textContent).toBe('child:ping:mounted');
+      expect(screen.getByTestId('child-scoped-import-result').textContent).toBe(
+        'child:ping:mounted',
+      );
     });
 
     fireEvent.click(screen.getByText('Hide child boundary'));
@@ -136,30 +165,70 @@ describe('createSchemaRenderer import scope boundaries', () => {
   });
 
   it('prefers nested action scopes and component registries over parent providers', async () => {
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, scopedHostRenderer, namespaceProviderRenderer, componentHandleProviderRenderer, dispatchProbeRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      scopedHostRenderer,
+      namespaceProviderRenderer,
+      componentHandleProviderRenderer,
+      dispatchProbeRenderer,
+    ]);
 
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             { type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' },
             { type: 'component-handle-provider', componentName: 'shared', label: 'outer-handle' },
-            { type: 'dispatch-probe', label: 'Run outer namespace', resultKey: 'outer-namespace-result', runAction: { action: 'demo:ping', args: { value: 'root' } } },
-            { type: 'dispatch-probe', label: 'Run outer handle', resultKey: 'outer-handle-result', runAction: { action: 'component:ping', componentName: 'shared', args: { value: 'root' } } },
+            {
+              type: 'dispatch-probe',
+              label: 'Run outer namespace',
+              resultKey: 'outer-namespace-result',
+              runAction: { action: 'demo:ping', args: { value: 'root' } },
+            },
+            {
+              type: 'dispatch-probe',
+              label: 'Run outer handle',
+              resultKey: 'outer-handle-result',
+              runAction: {
+                action: 'component:ping',
+                componentName: 'shared',
+                args: { value: 'root' },
+              },
+            },
             {
               type: 'scoped-host',
               body: [
                 { type: 'namespace-provider', namespace: 'demo', label: 'inner-ns' },
-                { type: 'component-handle-provider', componentName: 'shared', label: 'inner-handle' },
-                { type: 'dispatch-probe', label: 'Run inner namespace', resultKey: 'inner-namespace-result', runAction: { action: 'demo:ping', args: { value: 'child' } } },
-                { type: 'dispatch-probe', label: 'Run inner handle', resultKey: 'inner-handle-result', runAction: { action: 'component:ping', componentName: 'shared', args: { value: 'child' } } }
-              ]
-            }
-          ]
+                {
+                  type: 'component-handle-provider',
+                  componentName: 'shared',
+                  label: 'inner-handle',
+                },
+                {
+                  type: 'dispatch-probe',
+                  label: 'Run inner namespace',
+                  resultKey: 'inner-namespace-result',
+                  runAction: { action: 'demo:ping', args: { value: 'child' } },
+                },
+                {
+                  type: 'dispatch-probe',
+                  label: 'Run inner handle',
+                  resultKey: 'inner-handle-result',
+                  runAction: {
+                    action: 'component:ping',
+                    componentName: 'shared',
+                    args: { value: 'child' },
+                  },
+                },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Run outer namespace'));
@@ -186,11 +255,13 @@ describe('createSchemaRenderer import scope boundaries', () => {
       scopedHostRenderer,
       namespaceProviderRenderer,
       componentHandleProviderRenderer,
-      dispatchCaptureRenderer
+      dispatchCaptureRenderer,
     ]);
 
     render(
-      <SchemaRenderer schemaUrl="test://schema.json" schema={{
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
           type: 'page',
           body: [
             { type: 'namespace-provider', namespace: 'demo', label: 'outer-ns' },
@@ -202,17 +273,21 @@ describe('createSchemaRenderer import scope boundaries', () => {
                   type: 'scoped-host',
                   body: [
                     { type: 'namespace-provider', namespace: 'demo', label: 'inner-ns' },
-                    { type: 'component-handle-provider', componentName: 'shared', label: 'inner-handle' },
-                    { type: 'dispatch-capture' }
-                  ]
-                }
-              ]
-            }
-          ]
+                    {
+                      type: 'component-handle-provider',
+                      componentName: 'shared',
+                      label: 'inner-handle',
+                    },
+                    { type: 'dispatch-capture' },
+                  ],
+                },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={sharedFormulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -224,9 +299,22 @@ describe('createSchemaRenderer import scope boundaries', () => {
       expect(screen.getByText('Show child boundary')).toBeTruthy();
     });
 
-    const fallbackNamespaceResult = await retainedDispatch({ action: 'demo:ping', args: { value: 'after-unmount' } } as any);
-    expect(fallbackNamespaceResult).toMatchObject({ ok: true, data: 'outer-ns:ping:after-unmount' });
-    const fallbackHandleResult = await retainedDispatch({ action: 'component:ping', componentName: 'shared', args: { value: 'after-unmount' } } as any);
-    expect(fallbackHandleResult).toMatchObject({ ok: true, data: 'outer-handle:ping:after-unmount' });
+    const fallbackNamespaceResult = await retainedDispatch({
+      action: 'demo:ping',
+      args: { value: 'after-unmount' },
+    } as any);
+    expect(fallbackNamespaceResult).toMatchObject({
+      ok: true,
+      data: 'outer-ns:ping:after-unmount',
+    });
+    const fallbackHandleResult = await retainedDispatch({
+      action: 'component:ping',
+      componentName: 'shared',
+      args: { value: 'after-unmount' },
+    } as any);
+    expect(fallbackHandleResult).toMatchObject({
+      ok: true,
+      data: 'outer-handle:ping:after-unmount',
+    });
   });
 });

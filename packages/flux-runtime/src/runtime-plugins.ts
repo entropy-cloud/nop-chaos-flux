@@ -1,6 +1,8 @@
 import type { RendererPlugin } from '@nop-chaos/flux-core';
 
-export function sortRendererPlugins(plugins: readonly RendererPlugin[] | undefined): RendererPlugin[] {
+export function sortRendererPlugins(
+  plugins: readonly RendererPlugin[] | undefined,
+): RendererPlugin[] {
   return [...(plugins ?? [])]
     .map((plugin, index) => ({ plugin, index }))
     .sort((left, right) => {

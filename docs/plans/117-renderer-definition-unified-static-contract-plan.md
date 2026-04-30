@@ -188,8 +188,8 @@ Status Note: 已完成。`RendererDefinition` 现在同时承载普通 renderer 
 
 Closure Audit Evidence:
 
- - Reviewer / Agent: independent `general` subagent closure audit
- - Evidence: task result recorded after full repo re-audit of docs/code/tests plus green `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`
+- Reviewer / Agent: independent `general` subagent closure audit
+- Evidence: task result recorded after full repo re-audit of docs/code/tests plus green `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`
 
 Follow-up:
 

@@ -8,11 +8,13 @@ import type {
   ResolvedNodeProps,
   RuntimeValueState,
   ScopeDependencySet,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 
-function mergeDependencySets(sets: Array<ScopeDependencySet | undefined>): ScopeDependencySet | undefined {
+function mergeDependencySets(
+  sets: Array<ScopeDependencySet | undefined>,
+): ScopeDependencySet | undefined {
   const paths = new Set<string>();
   let wildcard = false;
   let broadAccess = false;
@@ -42,7 +44,7 @@ function mergeDependencySets(sets: Array<ScopeDependencySet | undefined>): Scope
   return {
     paths: wildcard ? ['*'] : Array.from(paths).sort(),
     wildcard,
-    broadAccess
+    broadAccess,
   };
 }
 
@@ -51,7 +53,7 @@ function evaluateCompiledValue<T>(
   value: CompiledRuntimeValue<T> | undefined,
   scope: ScopeRef,
   env: RendererEnv,
-  state?: RuntimeValueState<unknown>
+  state?: RuntimeValueState<unknown>,
 ): T | undefined {
   if (!value) {
     return undefined;
@@ -60,7 +62,9 @@ function evaluateCompiledValue<T>(
   return compiler.evaluateValue(value, scope, env, state) as T | undefined;
 }
 
-export function collectRuntimeDependencies(state: RuntimeValueState<unknown> | undefined): ScopeDependencySet | undefined {
+export function collectRuntimeDependencies(
+  state: RuntimeValueState<unknown> | undefined,
+): ScopeDependencySet | undefined {
   if (!state) {
     return undefined;
   }
@@ -102,16 +106,20 @@ export function collectRuntimeDependencies(state: RuntimeValueState<unknown> | u
   return {
     paths: wildcard ? ['*'] : Array.from(paths).sort(),
     wildcard,
-    broadAccess
+    broadAccess,
   };
 }
 
-function collectMetaDependencies(state: NodeRuntimeState | undefined): ScopeDependencySet | undefined {
+function collectMetaDependencies(
+  state: NodeRuntimeState | undefined,
+): ScopeDependencySet | undefined {
   if (!state) {
     return undefined;
   }
 
-  const sets: Array<ScopeDependencySet | undefined> = Object.values(state.meta).map(collectRuntimeDependencies);
+  const sets: Array<ScopeDependencySet | undefined> = Object.values(state.meta).map(
+    collectRuntimeDependencies,
+  );
 
   return mergeDependencySets(sets);
 }
@@ -120,16 +128,56 @@ export function createNodeRuntime(input: {
   expressionCompiler: ExpressionCompiler;
   getEnv: () => RendererEnv;
 }) {
-  function resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeMeta {
+  function resolveNodeMeta(
+    node: TemplateNode,
+    scope: ScopeRef,
+    state?: NodeRuntimeState,
+  ): ResolvedNodeMeta {
     const env = input.getEnv();
     const meta = node.metaProgram;
     const resolved: ResolvedNodeMeta = {
       id: evaluateCompiledValue(input.expressionCompiler, meta.id, scope, env, state?.meta.id),
-      className: evaluateCompiledValue(input.expressionCompiler, meta.className, scope, env, state?.meta.className),
-      visible: Boolean(evaluateCompiledValue(input.expressionCompiler, meta.visible, scope, env, state?.meta.visible) ?? true),
-      hidden: Boolean(evaluateCompiledValue(input.expressionCompiler, meta.hidden, scope, env, state?.meta.hidden) ?? false),
-      disabled: Boolean(evaluateCompiledValue(input.expressionCompiler, meta.disabled, scope, env, state?.meta.disabled) ?? false),
-      testid: evaluateCompiledValue(input.expressionCompiler, meta.testid, scope, env, state?.meta.testid),
+      className: evaluateCompiledValue(
+        input.expressionCompiler,
+        meta.className,
+        scope,
+        env,
+        state?.meta.className,
+      ),
+      visible: Boolean(
+        evaluateCompiledValue(
+          input.expressionCompiler,
+          meta.visible,
+          scope,
+          env,
+          state?.meta.visible,
+        ) ?? true,
+      ),
+      hidden: Boolean(
+        evaluateCompiledValue(
+          input.expressionCompiler,
+          meta.hidden,
+          scope,
+          env,
+          state?.meta.hidden,
+        ) ?? false,
+      ),
+      disabled: Boolean(
+        evaluateCompiledValue(
+          input.expressionCompiler,
+          meta.disabled,
+          scope,
+          env,
+          state?.meta.disabled,
+        ) ?? false,
+      ),
+      testid: evaluateCompiledValue(
+        input.expressionCompiler,
+        meta.testid,
+        scope,
+        env,
+        state?.meta.testid,
+      ),
       changed: true,
     };
 
@@ -147,21 +195,26 @@ export function createNodeRuntime(input: {
     return resolved;
   }
 
-  function resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?: NodeRuntimeState): ResolvedNodeProps {
+  function resolveNodeProps(
+    node: TemplateNode,
+    scope: ScopeRef,
+    state?: NodeRuntimeState,
+  ): ResolvedNodeProps {
     const env = input.getEnv();
     const propsProgram = node.propsProgram;
-    const execution = propsProgram.kind === 'static'
-      ? (state?._staticPropsResult ?? {
-          value: propsProgram.value,
-          changed: false,
-          reusedReference: true
-        })
-      : input.expressionCompiler.evaluateWithState(
-          propsProgram,
-          scope,
-          env,
-          state?.props ?? propsProgram.createState()
-        );
+    const execution =
+      propsProgram.kind === 'static'
+        ? (state?._staticPropsResult ?? {
+            value: propsProgram.value,
+            changed: false,
+            reusedReference: true,
+          })
+        : input.expressionCompiler.evaluateWithState(
+            propsProgram,
+            scope,
+            env,
+            state?.props ?? propsProgram.createState(),
+          );
 
     if (propsProgram.kind === 'static' && state && !state._staticPropsResult) {
       state._staticPropsResult = execution;
@@ -182,6 +235,6 @@ export function createNodeRuntime(input: {
 
   return {
     resolveNodeMeta,
-    resolveNodeProps
+    resolveNodeProps,
   };
 }

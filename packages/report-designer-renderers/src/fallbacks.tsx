@@ -57,9 +57,23 @@ export function renderFallbackCanvas(snapshot: ReportDesignerRuntimeSnapshot) {
     <div data-slot="report-designer-canvas-fallback">
       <p data-slot="report-designer-eyebrow">{t('flux.reportDesigner.coreTitle')}</p>
       <h3>{snapshot.document.name}</h3>
-      <p>{t('flux.reportDesigner.target')}: <strong>{snapshot.selectionTarget?.kind ?? t('flux.reportDesigner.none')}</strong></p>
-      <p>{t('flux.reportDesigner.preview')}: <strong>{snapshot.preview.lastResult ? t('flux.reportDesigner.ready') : snapshot.preview.running ? t('flux.reportDesigner.running') : t('flux.reportDesigner.idle')}</strong></p>
-      <p>{t('flux.reportDesigner.fields')}: <strong>{getFieldCount(snapshot.fieldSources)}</strong></p>
+      <p>
+        {t('flux.reportDesigner.target')}:{' '}
+        <strong>{snapshot.selectionTarget?.kind ?? t('flux.reportDesigner.none')}</strong>
+      </p>
+      <p>
+        {t('flux.reportDesigner.preview')}:{' '}
+        <strong>
+          {snapshot.preview.lastResult
+            ? t('flux.reportDesigner.ready')
+            : snapshot.preview.running
+              ? t('flux.reportDesigner.running')
+              : t('flux.reportDesigner.idle')}
+        </strong>
+      </p>
+      <p>
+        {t('flux.reportDesigner.fields')}: <strong>{getFieldCount(snapshot.fieldSources)}</strong>
+      </p>
     </div>
   );
 }

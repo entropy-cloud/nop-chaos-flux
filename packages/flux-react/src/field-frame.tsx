@@ -1,5 +1,12 @@
 import type { ReactNode } from 'react';
-import { useAggregateError, useCurrentForm, useCurrentFormFieldState, useCurrentFormState, useCurrentValidationScope, useFormLayout } from './hooks';
+import {
+  useAggregateError,
+  useCurrentForm,
+  useCurrentFormFieldState,
+  useCurrentFormState,
+  useCurrentValidationScope,
+  useFormLayout,
+} from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
 import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired } from './form-state';
@@ -26,7 +33,7 @@ export function toFieldRemarkProps(schema: FieldRemarkSchemaLike): FieldRemarkPr
     icon: schema.icon,
     content: schema.content,
     placement: schema.placement,
-    trigger: schema.trigger
+    trigger: schema.trigger,
   };
 }
 
@@ -52,7 +59,7 @@ export interface FieldFrameProps {
 
 const defaultBehavior: CompiledValidationBehavior = {
   triggers: ['blur'],
-  showErrorOn: ['touched', 'submit']
+  showErrorOn: ['touched', 'submit'],
 };
 
 export function FieldFrame(props: FieldFrameProps) {
@@ -73,24 +80,30 @@ export function FieldFrame(props: FieldFrameProps) {
     testid,
     cid,
     rootProps,
-    children
+    children,
   } = props;
 
   const formLayout = useFormLayout();
 
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
-  
-  const rawFieldState = useCurrentFormFieldState(name ?? '', { path: name ?? '', ownerPath: name ?? '' });
+
+  const rawFieldState = useCurrentFormFieldState(name ?? '', {
+    path: name ?? '',
+    ownerPath: name ?? '',
+  });
   const fieldState = name ? rawFieldState : EMPTY_FORM_FIELD_STATE;
-  
+
   const aggregateError = useAggregateError(name ?? '', { enabled: Boolean(name) });
   const validationModel = currentForm?.validation ?? currentValidationScope?.validation;
   const validationField = name ? getCompiledValidationField(validationModel, name) : undefined;
   const fieldBehavior = validationField?.behavior;
-  const behavior = validationBehavior ?? fieldBehavior ?? validationModel?.behavior ?? defaultBehavior;
+  const behavior =
+    validationBehavior ?? fieldBehavior ?? validationModel?.behavior ?? defaultBehavior;
   const hasDynamicRequiredRule = Boolean(
-    validationField?.rules.some(({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless')
+    validationField?.rules.some(
+      ({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless',
+    ),
   );
   const dynamicRequired = useCurrentFormState(
     (state) => {
@@ -98,18 +111,19 @@ export function FieldFrame(props: FieldFrameProps) {
       return isFieldEffectivelyRequired(validationModel, name, state.values);
     },
     Object.is,
-    { enabled: hasDynamicRequiredRule && Boolean(name) }
+    { enabled: hasDynamicRequiredRule && Boolean(name) },
   );
 
   const error = aggregateError ?? fieldState.error;
   const showError = Boolean(
-    error && shouldShowFieldError(behavior, {
+    error &&
+    shouldShowFieldError(behavior, {
       touched: fieldState.touched,
       dirty: fieldState.dirty,
       visited: fieldState.visited,
       submitting: fieldState.submitting,
-      submitAttempted: fieldState.submitAttempted
-    })
+      submitAttempted: fieldState.submitAttempted,
+    }),
   );
 
   const isGroup = layout === 'checkbox' || layout === 'radio';
@@ -122,15 +136,13 @@ export function FieldFrame(props: FieldFrameProps) {
   const formMode = formLayout.mode ?? 'normal';
 
   const labelStyle = effectiveLabelWidth != null ? { width: effectiveLabelWidth } : undefined;
-  const isLabelTop = effectiveLabelAlign === 'top' || (formMode === 'normal' && !effectiveLabelAlign);
+  const isLabelTop =
+    effectiveLabelAlign === 'top' || (formMode === 'normal' && !effectiveLabelAlign);
 
   return (
     <Tag
       {...rootProps}
-      className={cn(
-        'nop-field',
-        className
-      )}
+      className={cn('nop-field', className)}
       data-label-align={isLabelTop ? 'top' : 'left'}
       data-testid={testid || undefined}
       data-cid={cid != null ? cid : undefined}
@@ -143,14 +155,32 @@ export function FieldFrame(props: FieldFrameProps) {
       {label ? (
         <LabelTag data-slot="field-label" style={labelStyle}>
           {label}
-          {effectiveRequired ? <span data-slot="field-required" aria-hidden="true">*</span> : null}
-          {labelRemark ? <span data-slot="field-label-remark" title={typeof labelRemark.content === 'string' ? labelRemark.content : undefined}>{labelRemark.icon ?? '?'}</span> : null}
+          {effectiveRequired ? (
+            <span data-slot="field-required" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+          {labelRemark ? (
+            <span
+              data-slot="field-label-remark"
+              title={typeof labelRemark.content === 'string' ? labelRemark.content : undefined}
+            >
+              {labelRemark.icon ?? '?'}
+            </span>
+          ) : null}
         </LabelTag>
       ) : null}
 
       <div data-slot="field-control">
         {children}
-        {remark ? <span data-slot="field-remark" title={typeof remark.content === 'string' ? remark.content : undefined}>{remark.icon ?? '?'}</span> : null}
+        {remark ? (
+          <span
+            data-slot="field-remark"
+            title={typeof remark.content === 'string' ? remark.content : undefined}
+          >
+            {remark.icon ?? '?'}
+          </span>
+        ) : null}
       </div>
 
       {error && showError ? (

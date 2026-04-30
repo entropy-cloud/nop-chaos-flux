@@ -8,15 +8,24 @@ export interface SetValuesContext {
   formId: string;
   setLastChange: (change: ScopeChange) => void;
   clearExternalErrorsForPath: (path: string) => boolean;
-  rebuildStoreErrorsFromExternal: (fieldStates: Record<string, FieldState>) => Record<string, ValidationError[]>;
-  revalidateDependents: (path: string, reason?: import('@nop-chaos/flux-core').ValidationReason) => Promise<void>;
+  rebuildStoreErrorsFromExternal: (
+    fieldStates: Record<string, FieldState>,
+  ) => Record<string, ValidationError[]>;
+  revalidateDependents: (
+    path: string,
+    reason?: import('@nop-chaos/flux-core').ValidationReason,
+  ) => Promise<void>;
 }
 
-export function executeSetValues(
-  ctx: SetValuesContext,
-  values: Record<string, unknown>
-): void {
-  const { sharedState, formId, setLastChange, clearExternalErrorsForPath, rebuildStoreErrorsFromExternal, revalidateDependents } = ctx;
+export function executeSetValues(ctx: SetValuesContext, values: Record<string, unknown>): void {
+  const {
+    sharedState,
+    formId,
+    setLastChange,
+    clearExternalErrorsForPath,
+    rebuildStoreErrorsFromExternal,
+    revalidateDependents,
+  } = ctx;
   const { store, lifecycleState, validationRuns, initialFieldState } = sharedState;
 
   if (lifecycleState === 'disposed') return;
@@ -42,7 +51,7 @@ export function executeSetValues(
       { values: nextValues, fieldStates: nextFieldStates },
       name,
       value,
-      !Object.is(baseline, value)
+      !Object.is(baseline, value),
     );
 
     nextValues = patch.nextValues;
@@ -54,12 +63,12 @@ export function executeSetValues(
   setLastChange({
     paths: changedPaths.length > 0 ? changedPaths : ['*'],
     sourceScopeId: formId,
-    kind: 'update'
+    kind: 'update',
   });
 
   store.batchUpdate({
     values: nextValues,
-    fieldStates: nextFieldStates
+    fieldStates: nextFieldStates,
   });
 
   let externalChanged = false;

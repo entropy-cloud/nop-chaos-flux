@@ -1,5 +1,9 @@
 import type { SchemaInput } from '@nop-chaos/flux-core';
-import type { SpreadsheetDocument, SpreadsheetCellRef, SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
+import type {
+  SpreadsheetDocument,
+  SpreadsheetCellRef,
+  SpreadsheetRange,
+} from '@nop-chaos/spreadsheet-core';
 
 export interface ReportDesignerHostStatusSummary {
   kind: 'report-designer';
@@ -127,9 +131,7 @@ export interface ReportDesignerConfig {
   };
 }
 
-export function getDefaultSelectionTarget(
-  document: ReportTemplateDocument,
-): ReportSelectionTarget {
+export function getDefaultSelectionTarget(document: ReportTemplateDocument): ReportSelectionTarget {
   const firstSheet = document.spreadsheet.workbook.sheets[0];
 
   if (!firstSheet) {
@@ -183,7 +185,10 @@ export function setCellMeta(
   return { ...semantic, cellMeta: sheetEntries };
 }
 
-function deepMerge(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
+function deepMerge(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+): Record<string, unknown> {
   const result: Record<string, unknown> = { ...target };
   for (const key of Object.keys(source)) {
     const sourceVal = source[key];
@@ -196,7 +201,10 @@ function deepMerge(target: Record<string, unknown>, source: Record<string, unkno
       typeof targetVal === 'object' &&
       !Array.isArray(targetVal)
     ) {
-      result[key] = deepMerge(targetVal as Record<string, unknown>, sourceVal as Record<string, unknown>);
+      result[key] = deepMerge(
+        targetVal as Record<string, unknown>,
+        sourceVal as Record<string, unknown>,
+      );
     } else {
       result[key] = sourceVal;
     }

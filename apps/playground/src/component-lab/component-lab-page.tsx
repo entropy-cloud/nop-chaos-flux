@@ -4,11 +4,19 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import {
   ALL_SHARED_RENDERER_ROUTES,
   type RendererRouteEntry,
-  type RendererCategory
+  type RendererCategory,
 } from '../route-model';
 import { RENDERER_LAB_REGISTRY } from './renderer-lab-registry';
 
-const CATEGORY_ORDER: RendererCategory[] = ['layout', 'content', 'actions', 'logic', 'advanced', 'form', 'data'];
+const CATEGORY_ORDER: RendererCategory[] = [
+  'layout',
+  'content',
+  'actions',
+  'logic',
+  'advanced',
+  'form',
+  'data',
+];
 
 const CATEGORY_LABELS: Record<RendererCategory, string> = {
   layout: 'Layout',
@@ -18,7 +26,7 @@ const CATEGORY_LABELS: Record<RendererCategory, string> = {
   advanced: 'Advanced',
   form: 'Form',
   data: 'Data',
-  domain: 'Domain'
+  domain: 'Domain',
 };
 
 const PACKAGE_SHORT: Record<string, string> = {
@@ -34,7 +42,9 @@ interface ComponentLabPageProps {
   onBack: () => void;
 }
 
-function groupByCategory(routes: RendererRouteEntry[]): Array<{ category: RendererCategory; entries: RendererRouteEntry[] }> {
+function groupByCategory(
+  routes: RendererRouteEntry[],
+): Array<{ category: RendererCategory; entries: RendererRouteEntry[] }> {
   const map = new Map<RendererCategory, RendererRouteEntry[]>();
 
   for (const entry of routes) {
@@ -46,9 +56,10 @@ function groupByCategory(routes: RendererRouteEntry[]): Array<{ category: Render
     }
   }
 
-  return CATEGORY_ORDER
-    .filter((cat) => map.has(cat))
-    .map((cat) => ({ category: cat, entries: map.get(cat)! }));
+  return CATEGORY_ORDER.filter((cat) => map.has(cat)).map((cat) => ({
+    category: cat,
+    entries: map.get(cat)!,
+  }));
 }
 
 const grouped = groupByCategory(ALL_SHARED_RENDERER_ROUTES);
@@ -95,19 +106,17 @@ function NavGroup({
           'w-full flex items-center justify-between px-2 py-1.5 rounded-md',
           'text-[10px] font-bold uppercase tracking-wider cursor-pointer',
           'hover:bg-[var(--nop-nav-surface)] transition-colors duration-100',
-          hasActive
-            ? 'text-[var(--nop-accent)]'
-            : 'text-[var(--nop-accent-muted)]'
+          hasActive ? 'text-[var(--nop-accent)]' : 'text-[var(--nop-accent-muted)]',
         )}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
         <span>{CATEGORY_LABELS[category]}</span>
         <span className="flex items-center gap-1 opacity-60">
-          <span className="text-[9px] font-normal normal-case tracking-normal">{entries.length}</span>
-          {open
-            ? <ChevronDown className="w-3 h-3" />
-            : <ChevronRight className="w-3 h-3" />}
+          <span className="text-[9px] font-normal normal-case tracking-normal">
+            {entries.length}
+          </span>
+          {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         </span>
       </Button>
       {open && (
@@ -122,7 +131,7 @@ function NavGroup({
                 'flex items-center justify-between gap-1',
                 activeRendererId === entry.id
                   ? 'bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-medium'
-                  : 'text-[var(--nop-body-copy)] hover:bg-[var(--nop-nav-surface)] hover:text-[var(--nop-text-strong)]'
+                  : 'text-[var(--nop-body-copy)] hover:bg-[var(--nop-nav-surface)] hover:text-[var(--nop-text-strong)]',
               )}
               onClick={() => onSelectRenderer(entry.id)}
               data-testid={`nav-renderer-${entry.id}`}
@@ -139,13 +148,20 @@ function NavGroup({
   );
 }
 
-export function ComponentLabPage({ activeRendererId, onSelectRenderer, onBack }: ComponentLabPageProps) {
+export function ComponentLabPage({
+  activeRendererId,
+  onSelectRenderer,
+  onBack,
+}: ComponentLabPageProps) {
   const activeEntry = resolveActiveEntry(activeRendererId);
   const LabPage = activeRendererId ? RENDERER_LAB_REGISTRY[activeRendererId] : null;
 
   return (
     <div className="flex h-screen overflow-hidden" data-testid="component-lab">
-      <aside className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col h-screen" data-testid="component-lab-sidebar">
+      <aside
+        className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col h-screen"
+        data-testid="component-lab-sidebar"
+      >
         <div className="p-4 border-b border-[var(--nop-nav-border)] shrink-0">
           <Button
             variant="ghost"
@@ -156,8 +172,12 @@ export function ComponentLabPage({ activeRendererId, onSelectRenderer, onBack }:
           >
             ← Back to Home
           </Button>
-          <p className="uppercase tracking-[0.14em] text-[10px] font-bold text-[var(--nop-accent-muted)]">Component Lab</p>
-          <p className="text-xs text-[var(--nop-body-copy)] mt-0.5">{ALL_SHARED_RENDERER_ROUTES.length} renderers</p>
+          <p className="uppercase tracking-[0.14em] text-[10px] font-bold text-[var(--nop-accent-muted)]">
+            Component Lab
+          </p>
+          <p className="text-xs text-[var(--nop-body-copy)] mt-0.5">
+            {ALL_SHARED_RENDERER_ROUTES.length} renderers
+          </p>
         </div>
         <nav className="flex-1 min-h-0 overflow-y-auto p-2" data-testid="component-lab-nav">
           {grouped.map(({ category, entries }) => (
@@ -185,8 +205,18 @@ export function ComponentLabPage({ activeRendererId, onSelectRenderer, onBack }:
                     {PACKAGE_SHORT[activeEntry.sourcePackage] ?? activeEntry.sourcePackage}
                   </Badge>
                 </div>
-                <h1 className="text-2xl font-bold text-[var(--nop-text-strong)] m-0" data-testid="component-lab-renderer-title">{activeEntry.title}</h1>
-                <p className="text-[11px] text-[var(--nop-body-copy)] opacity-60 mt-0.5 font-mono" data-testid="component-lab-renderer-id">{activeEntry.id}</p>
+                <h1
+                  className="text-2xl font-bold text-[var(--nop-text-strong)] m-0"
+                  data-testid="component-lab-renderer-title"
+                >
+                  {activeEntry.title}
+                </h1>
+                <p
+                  className="text-[11px] text-[var(--nop-body-copy)] opacity-60 mt-0.5 font-mono"
+                  data-testid="component-lab-renderer-id"
+                >
+                  {activeEntry.id}
+                </p>
               </div>
             </div>
             <LabPage />

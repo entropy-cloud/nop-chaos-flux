@@ -39,10 +39,16 @@ function RuntimeStateProbe(props: { args: any; onReady: (value: any) => void }) 
 
 describe('crud-renderer-state helpers', () => {
   it('normalizes pagination and sort values with fallbacks', () => {
-    expect(normalizePagination({ currentPage: 3, pageSize: '25' }, 10)).toEqual({ currentPage: 3, pageSize: 25 });
+    expect(normalizePagination({ currentPage: 3, pageSize: '25' }, 10)).toEqual({
+      currentPage: 3,
+      pageSize: 25,
+    });
     expect(normalizePagination(undefined, 20)).toEqual({ currentPage: 1, pageSize: 20 });
     expect(normalizeSort({ field: 'name', order: 'asc' })).toEqual({ field: 'name', order: 'asc' });
-    expect(normalizeSort({ field: 3, order: 'bad' })).toEqual({ field: undefined, order: undefined });
+    expect(normalizeSort({ field: 3, order: 'bad' })).toEqual({
+      field: undefined,
+      order: undefined,
+    });
   });
 
   it('applies query filtering for scalars, arrays, keywords, and non-record rows', () => {
@@ -57,14 +63,14 @@ describe('crud-renderer-state helpers', () => {
       applyQueryToRows(rows as any, {
         role: ['admin'],
         name: 'ali',
-      })
+      }),
     ).toEqual([{ id: 1, role: 'admin', name: 'Alice', city: 'Paris' }]);
 
     expect(
       applyQueryToRows(rows as any, {
         keyword: 'ber',
         id: 3,
-      })
+      }),
     ).toEqual([{ id: 3, role: 'admin', name: 'Carol', city: 'Berlin' }]);
 
     expect(applyQueryToRows(rows as any, { name: '   ' })).toBe(rows);
@@ -72,10 +78,22 @@ describe('crud-renderer-state helpers', () => {
 
   it('normalizes array and record-based CRUD source values', () => {
     expect(normalizeCrudSourceValue([{ id: 1 }])).toEqual({ rows: [{ id: 1 }], total: 1 });
-    expect(normalizeCrudSourceValue({ items: [{ id: 2 }], total: 9 })).toEqual({ rows: [{ id: 2 }], total: 9 });
-    expect(normalizeCrudSourceValue({ rows: [{ id: 3 }], count: 4 })).toEqual({ rows: [{ id: 3 }], total: 4 });
-    expect(normalizeCrudSourceValue({ records: [{ id: 4 }] })).toEqual({ rows: [{ id: 4 }], total: 1 });
-    expect(normalizeCrudSourceValue({ list: [{ id: 5 }] })).toEqual({ rows: [{ id: 5 }], total: 1 });
+    expect(normalizeCrudSourceValue({ items: [{ id: 2 }], total: 9 })).toEqual({
+      rows: [{ id: 2 }],
+      total: 9,
+    });
+    expect(normalizeCrudSourceValue({ rows: [{ id: 3 }], count: 4 })).toEqual({
+      rows: [{ id: 3 }],
+      total: 4,
+    });
+    expect(normalizeCrudSourceValue({ records: [{ id: 4 }] })).toEqual({
+      rows: [{ id: 4 }],
+      total: 1,
+    });
+    expect(normalizeCrudSourceValue({ list: [{ id: 5 }] })).toEqual({
+      rows: [{ id: 5 }],
+      total: 1,
+    });
     expect(normalizeCrudSourceValue(undefined)).toEqual({ rows: [], total: 0 });
   });
 });
@@ -86,17 +104,31 @@ describe('useCrudStatusPublisher', () => {
     const scope = { update };
     const summary = { kind: 'crud', total: 1 };
 
-    const { rerender } = render(<StatusProbe scope={scope} statusPath="status.path" summary={summary} />);
+    const { rerender } = render(
+      <StatusProbe scope={scope} statusPath="status.path" summary={summary} />,
+    );
     expect(update).toHaveBeenCalledWith('status.path', summary);
 
-    rerender(<StatusProbe scope={scope} statusPath="status.path" summary={{ kind: 'crud', total: 1 }} />);
+    rerender(
+      <StatusProbe scope={scope} statusPath="status.path" summary={{ kind: 'crud', total: 1 }} />,
+    );
     expect(update).toHaveBeenCalledTimes(1);
 
-    rerender(<StatusProbe scope={scope} statusPath="status.path" summary={{ kind: 'crud', total: 2 }} />);
+    rerender(
+      <StatusProbe scope={scope} statusPath="status.path" summary={{ kind: 'crud', total: 2 }} />,
+    );
     expect(update).toHaveBeenCalledTimes(2);
 
-    rerender(<StatusProbe scope={undefined} statusPath="status.path" summary={{ kind: 'crud', total: 3 }} />);
-    rerender(<StatusProbe scope={scope} statusPath={undefined} summary={{ kind: 'crud', total: 4 }} />);
+    rerender(
+      <StatusProbe
+        scope={undefined}
+        statusPath="status.path"
+        summary={{ kind: 'crud', total: 3 }}
+      />,
+    );
+    rerender(
+      <StatusProbe scope={scope} statusPath={undefined} summary={{ kind: 'crud', total: 4 }} />,
+    );
     expect(update).toHaveBeenCalledTimes(2);
   });
 });
@@ -125,7 +157,7 @@ describe('useCrudHandle', () => {
         inputProps={{ meta: { cid: 3 }, id: 'crud-1', props: { name: 'users' } }}
         internalTableRef={internalTableRef}
         handleRefresh={handleRefresh}
-      />
+      />,
     );
 
     const handle = (register.mock.lastCall as unknown[] | undefined)?.[0] as any;
@@ -133,10 +165,17 @@ describe('useCrudHandle', () => {
     expect(register).toHaveBeenCalledWith(expect.any(Object), { cid: 3 });
     expect(handle.name).toBe('users');
     expect(handle.capabilities.hasMethod('refresh')).toBe(true);
-    expect(handle.capabilities.listMethods()).toEqual(['refresh', 'getSelection', 'clearSelection']);
+    expect(handle.capabilities.listMethods()).toEqual([
+      'refresh',
+      'getSelection',
+      'clearSelection',
+    ]);
     await expect(handle.capabilities.invoke('refresh')).resolves.toEqual({ ok: true });
     expect(handleRefresh).toHaveBeenCalled();
-    await expect(handle.capabilities.invoke('getSelection')).resolves.toEqual({ ok: true, data: ['r1'] });
+    await expect(handle.capabilities.invoke('getSelection')).resolves.toEqual({
+      ok: true,
+      data: ['r1'],
+    });
     await expect(handle.capabilities.invoke('clearSelection')).resolves.toEqual({ ok: true });
     expect(clearSelection).toHaveBeenCalled();
     await expect(handle.capabilities.invoke('unknown')).resolves.toMatchObject({ ok: false });
@@ -154,7 +193,7 @@ describe('useCrudHandle', () => {
         inputProps={{ meta: {}, id: 'crud-1', props: {} }}
         internalTableRef={{ current: {} }}
         handleRefresh={() => {}}
-      />
+      />,
     );
 
     expect(register).not.toHaveBeenCalled();
@@ -165,7 +204,7 @@ describe('useCrudHandle', () => {
         inputProps={{ meta: { cid: 1 }, id: 'crud-1', props: {} }}
         internalTableRef={{ current: {} }}
         handleRefresh={() => {}}
-      />
+      />,
     );
     expect(register).not.toHaveBeenCalled();
   });
@@ -189,7 +228,15 @@ describe('useCrudRuntimeState', () => {
     const update = vi.fn();
     const scope = {
       update,
-      readVisible: () => ({ owner: { query: { values: { role: 'admin' }, refreshCount: 2 }, pagination: { currentPage: 4, pageSize: 25 }, sort: { field: 'name', order: 'desc' }, filters: { status: 'active' }, selection: ['r2'] } }),
+      readVisible: () => ({
+        owner: {
+          query: { values: { role: 'admin' }, refreshCount: 2 },
+          pagination: { currentPage: 4, pageSize: 25 },
+          sort: { field: 'name', order: 'desc' },
+          filters: { status: 'active' },
+          selection: ['r2'],
+        },
+      }),
     };
     let runtimeState: any;
 
@@ -209,7 +256,7 @@ describe('useCrudRuntimeState', () => {
         onReady={(value) => {
           runtimeState = value;
         }}
-      />
+      />,
     );
 
     expect(runtimeState.queryState).toEqual({ values: { role: 'admin' }, refreshCount: 0 });
@@ -263,7 +310,7 @@ describe('useCrudRuntimeState', () => {
         onReady={(value) => {
           runtimeState = value;
         }}
-      />
+      />,
     );
 
     expect(runtimeState.queryState).toEqual({ values: { role: 'scope' }, refreshCount: 7 });

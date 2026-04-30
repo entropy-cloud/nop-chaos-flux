@@ -1,9 +1,15 @@
 import type { BaseSchema } from '@nop-chaos/flux-core';
+import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 
-export interface DesignerPageSchema extends BaseSchema {
+export interface DesignerPageSchemaInput {
   type: 'designer-page';
+  config?: DesignerConfig;
+  document?: GraphDocument;
+  treeDocument?: TreeDocument;
   statusPath?: string;
 }
+
+export type DesignerPageSchema = BaseSchema & DesignerPageSchemaInput;
 
 export interface DesignerFieldSchema extends BaseSchema {
   type: 'designer-field';

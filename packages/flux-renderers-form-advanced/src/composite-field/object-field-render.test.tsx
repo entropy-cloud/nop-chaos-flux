@@ -8,7 +8,7 @@ import {
   formulaCompiler,
   fieldValueProbeRenderer,
   submitButtonRenderer,
-  makeCapturingFetcher
+  makeCapturingFetcher,
 } from './__tests__/object-field-test-support';
 
 describe('object-field renderer', () => {
@@ -24,8 +24,8 @@ describe('object-field renderer', () => {
           data: {
             profile: {
               firstName: 'Alice',
-              lastName: 'Smith'
-            }
+              lastName: 'Smith',
+            },
           },
           body: [
             {
@@ -35,14 +35,14 @@ describe('object-field renderer', () => {
               className: 'border',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
-                { type: 'input-text', name: 'lastName', label: 'Last Name' }
-              ]
-            }
-          ]
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -75,8 +75,8 @@ describe('object-field renderer', () => {
           data: {
             profile: {
               firstName: 'Alice',
-              lastName: 'Smith'
-            }
+              lastName: 'Smith',
+            },
           },
           body: [
             {
@@ -85,28 +85,28 @@ describe('object-field renderer', () => {
               label: 'Profile',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
-                { type: 'input-text', name: 'lastName', label: 'Last Name' }
-              ]
-            }
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
           ],
           submitAction: {
             action: 'ajax',
-            args: { url: '/api/test', method: 'post' }
+            args: { url: '/api/test', method: 'post' },
           },
           actions: [
             {
               type: 'button',
               label: 'Submit',
-              onClick: { action: 'component:submit', componentId: 'obj-form' }
-            }
-          ]
+              onClick: { action: 'component:submit', componentId: 'obj-form' },
+            },
+          ],
         }}
         env={{
           ...env,
-          fetcher: makeCapturingFetcher(submitValues)
+          fetcher: makeCapturingFetcher(submitValues),
         }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());
@@ -118,7 +118,7 @@ describe('object-field renderer', () => {
     await waitFor(() => expect(submitValues.length).toBeGreaterThan(0));
 
     expect(submitValues[0]).toMatchObject({
-      profile: { firstName: 'Bob', lastName: 'Smith' }
+      profile: { firstName: 'Bob', lastName: 'Smith' },
     });
   });
 
@@ -132,7 +132,7 @@ describe('object-field renderer', () => {
         schema={{
           type: 'form',
           data: {
-            profile: { email: '' }
+            profile: { email: '' },
           },
           body: [
             {
@@ -144,15 +144,15 @@ describe('object-field renderer', () => {
                   type: 'input-text',
                   name: 'email',
                   label: 'Email',
-                  required: true
-                }
-              ]
-            }
-          ]
+                  required: true,
+                },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByLabelText('Email', { exact: false })).toBeTruthy());
@@ -177,7 +177,7 @@ describe('object-field renderer', () => {
         schema={{
           type: 'form',
           data: {
-            profile: { firstName: 'Alice', lastName: 'Smith' }
+            profile: { firstName: 'Alice', lastName: 'Smith' },
           },
           body: [
             {
@@ -185,20 +185,22 @@ describe('object-field renderer', () => {
               name: 'profile',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
-                { type: 'input-text', name: 'lastName', label: 'Last Name' }
-              ]
-            }
-          ]
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
+          ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const firstName = await screen.findByLabelText('First Name');
     fireEvent.change(firstName, { target: { value: 'Bob' } });
 
-    await waitFor(() => expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Bob'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('First Name') as HTMLInputElement).value).toBe('Bob'),
+    );
     expect((screen.getByLabelText('Last Name') as HTMLInputElement).value).toBe('Smith');
   });
 
@@ -215,19 +217,29 @@ describe('object-field renderer', () => {
           type: 'form',
           id: 'obj-second-edit-form',
           data: { profile: { firstName: 'Alice', lastName: 'Smith' } },
-          body: [{
-            type: 'object-field', name: 'profile', label: 'Profile',
-            body: [
-              { type: 'input-text', name: 'firstName', label: 'First Name' },
-              { type: 'input-text', name: 'lastName', label: 'Last Name' }
-            ]
-          }],
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              label: 'Profile',
+              body: [
+                { type: 'input-text', name: 'firstName', label: 'First Name' },
+                { type: 'input-text', name: 'lastName', label: 'Last Name' },
+              ],
+            },
+          ],
           submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
-          actions: [{ type: 'button', label: 'Submit', onClick: { action: 'component:submit', componentId: 'obj-second-edit-form' } }]
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'obj-second-edit-form' },
+            },
+          ],
         }}
         env={{ ...env, fetcher: makeCapturingFetcher(submitValues) }}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());

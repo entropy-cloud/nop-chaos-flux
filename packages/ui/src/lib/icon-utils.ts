@@ -8,7 +8,7 @@ const ICON_ALIAS_MAP: Record<string, string> = {
   language: 'languages',
   'puzzle-piece': 'puzzle',
   gear: 'settings-2',
-  cog: 'settings-2'
+  cog: 'settings-2',
 };
 
 export function toIconLookupKey(value: string): string {
@@ -45,5 +45,8 @@ export function resolveLucideIcon(iconName: string | undefined): LucideIconCompo
   }
 
   const key = toLucideKey(normalizedIconName);
-  return (icons as Record<string, LucideIconComponent>)[key] ?? (Circle as unknown as LucideIconComponent);
+  return (
+    (icons as Record<string, LucideIconComponent>)[key] ??
+    (Circle as unknown as LucideIconComponent)
+  );
 }

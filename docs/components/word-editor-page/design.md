@@ -45,6 +45,7 @@ interface WordEditorPageSchema {
 ```
 
 核心字段：
+
 - `onBack` 是必需回调，用于返回上级页面
 - `initialDocument` 和 `datasets` 是可选初始数据
 - `initialCharts` / `initialCodes` 允许宿主直接注入初始占位符元数据
@@ -53,19 +54,19 @@ interface WordEditorPageSchema {
 
 ## 5. 字段分类
 
-| 字段 | 分类 | 说明 |
-|------|------|------|
-| `title` | `value-or-region` | 页面标题 |
-| `onBack` | `event` | 返回动作 |
-| `onSave` | `event` | 保存动作 |
-| `statusPath` | `value` | 外部只读状态摘要路径 |
-| `initialDocument` | `value` | 初始文档数据 |
-| `datasets` | `value` | 预配置数据集 |
-| `initialCharts` | `value` | 初始图表占位符 |
-| `initialCodes` | `value` | 初始条码/二维码占位符 |
-| `toolbar` | `region` | 顶部 Ribbon 工具栏 |
-| `leftPanel` | `region` | 左侧面板 (大纲/数据集) |
-| `rightPanel` | `region` | 右侧属性面板 |
+| 字段              | 分类              | 说明                   |
+| ----------------- | ----------------- | ---------------------- |
+| `title`           | `value-or-region` | 页面标题               |
+| `onBack`          | `event`           | 返回动作               |
+| `onSave`          | `event`           | 保存动作               |
+| `statusPath`      | `value`           | 外部只读状态摘要路径   |
+| `initialDocument` | `value`           | 初始文档数据           |
+| `datasets`        | `value`           | 预配置数据集           |
+| `initialCharts`   | `value`           | 初始图表占位符         |
+| `initialCodes`    | `value`           | 初始条码/二维码占位符  |
+| `toolbar`         | `region`          | 顶部 Ribbon 工具栏     |
+| `leftPanel`       | `region`          | 左侧面板 (大纲/数据集) |
+| `rightPanel`      | `region`          | 右侧属性面板           |
 
 ## 6. regions 与 slot 约定
 
@@ -76,11 +77,11 @@ interface WordEditorPageSchema {
 
 ## 7. 运行期状态归属
 
-| 状态 | 归属 | 说明 |
-|------|------|------|
-| 编辑器模式/选区/脏标记 | `editor-store` | 通过 Zustand store 管理 |
-| 数据集/字段定义 | `dataset-store` | 独立 Zustand store |
-| canvas-editor 实例 | `CanvasEditorBridge` | 桥接层封装 |
+| 状态                   | 归属                 | 说明                    |
+| ---------------------- | -------------------- | ----------------------- |
+| 编辑器模式/选区/脏标记 | `editor-store`       | 通过 Zustand store 管理 |
+| 数据集/字段定义        | `dataset-store`      | 独立 Zustand store      |
+| canvas-editor 实例     | `CanvasEditorBridge` | 桥接层封装              |
 
 - schema 片段通过宿主 scope 读取快照，并通过命名空间动作写操作。
 - `word-editor-page` 属于 `Domain Host Owner`：内部读面是 host projection，宿主外部若需要观测状态，应通过窄 `statusPath` 摘要。
@@ -89,26 +90,27 @@ interface WordEditorPageSchema {
 
 host scope 向下投影四个只读字段：
 
-| 字段 | 来源 | 时效性 | 说明 |
-|------|------|--------|------|
-| `document` | `savedDocument.data`（autosave 回调写入），null 时回退到空骨架 | **滞后** — 由 `EditorCanvas` 内部 500ms 防抖 autosave 回调驱动，不是实时编辑内容 | consumer 不应假定 `document` 反映当前屏幕上的实时编辑状态；若需实时脏标记，应读 `runtime.dirty` |
-| `datasets` | `dataset-store` | 实时 | 响应 dataset-store mutation |
-| `runtime` | `editor-store` + `dataset-store` 计数 + React state 计数 | 实时 | 聚合字段：`ready`/`dirty`/`wordCount`/`canUndo`/`canRedo`/`currentPage`/`totalPages`/`scale` 来自 editor-store；`datasetCount`/`chartCount`/`codeCount` 来自独立订阅 |
-| `selection` | `editor-store` | 实时 | 当前选区格式化快照 |
+| 字段        | 来源                                                           | 时效性                                                                           | 说明                                                                                                                                                                 |
+| ----------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `document`  | `savedDocument.data`（autosave 回调写入），null 时回退到空骨架 | **滞后** — 由 `EditorCanvas` 内部 500ms 防抖 autosave 回调驱动，不是实时编辑内容 | consumer 不应假定 `document` 反映当前屏幕上的实时编辑状态；若需实时脏标记，应读 `runtime.dirty`                                                                      |
+| `datasets`  | `dataset-store`                                                | 实时                                                                             | 响应 dataset-store mutation                                                                                                                                          |
+| `runtime`   | `editor-store` + `dataset-store` 计数 + React state 计数       | 实时                                                                             | 聚合字段：`ready`/`dirty`/`wordCount`/`canUndo`/`canRedo`/`currentPage`/`totalPages`/`scale` 来自 editor-store；`datasetCount`/`chartCount`/`codeCount` 来自独立订阅 |
+| `selection` | `editor-store`                                                 | 实时                                                                             | 当前选区格式化快照                                                                                                                                                   |
 
 关键约束：
+
 - `document` 与 `runtime`/`selection` 存在时效差异：`runtime.dirty=true` 时 `document` 可能仍为上一次 autosave 时的内容。
 - `runtime` 中 `datasetCount`/`chartCount`/`codeCount` 不从 editor-store selector 内读取，而是由独立订阅聚合，避免跨 store 热路径污染。
 
 ## 8. 事件、动作与组件句柄能力
 
-| 动作 | 命名空间 | 说明 |
-|------|----------|------|
-| 保存文档 | `word-editor:save` | 序列化并持久化当前文档 |
-| 插入字段 | `word-editor:insertField` | 在光标位置插入数据字段 |
-| 插入图表 | `word-editor:insertChart` | 插入 `nop:chart` 自闭合模板占位符并持久化元数据 |
-| 插入代码块 | `word-editor:insertCode` | 插入 `nop:code` 自闭合模板占位符并持久化元数据 |
-| 撤销/重做 | `word-editor:undo` / `word-editor:redo` | 历史操作 |
+| 动作       | 命名空间                                | 说明                                            |
+| ---------- | --------------------------------------- | ----------------------------------------------- |
+| 保存文档   | `word-editor:save`                      | 序列化并持久化当前文档                          |
+| 插入字段   | `word-editor:insertField`               | 在光标位置插入数据字段                          |
+| 插入图表   | `word-editor:insertChart`               | 插入 `nop:chart` 自闭合模板占位符并持久化元数据 |
+| 插入代码块 | `word-editor:insertCode`                | 插入 `nop:code` 自闭合模板占位符并持久化元数据  |
+| 撤销/重做  | `word-editor:undo` / `word-editor:redo` | 历史操作                                        |
 
 - 页面自身不应暴露大而全的 imperative ref。
 
@@ -128,14 +130,14 @@ host scope 向下投影四个只读字段：
 
 ## 11. 实现拆分建议
 
-| 模块 | 位置 | 职责 |
-|------|------|------|
-| `WordEditorPage.tsx` | renderers | 主页面编排 |
-| `EditorCanvas.tsx` | renderers | canvas-editor React 封装 |
-| `toolbar/` | renderers | Ribbon 工具栏组件 |
-| `panels/` | renderers | 左侧面板 (大纲、数据集、字段) |
-| `dialogs/` | renderers | 数据集配置、图表配置等对话框 |
-| `hooks/` | renderers | 快捷键、store 订阅等 hooks |
+| 模块                 | 位置      | 职责                          |
+| -------------------- | --------- | ----------------------------- |
+| `WordEditorPage.tsx` | renderers | 主页面编排                    |
+| `EditorCanvas.tsx`   | renderers | canvas-editor React 封装      |
+| `toolbar/`           | renderers | Ribbon 工具栏组件             |
+| `panels/`            | renderers | 左侧面板 (大纲、数据集、字段) |
+| `dialogs/`           | renderers | 数据集配置、图表配置等对话框  |
+| `hooks/`             | renderers | 快捷键、store 订阅等 hooks    |
 
 ## 12. 风险、取舍与后续阶段
 

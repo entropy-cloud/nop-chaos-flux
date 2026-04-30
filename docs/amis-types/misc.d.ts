@@ -147,7 +147,16 @@ export interface SubFormControlSchema extends BaseSchema {
   /** 按钮文字 */
   btnLabel?: string;
   /** 按钮样式 */
-  btnLevel?: 'link' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'light' | 'dark' | 'info';
+  btnLevel?:
+    | 'link'
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'light'
+    | 'dark'
+    | 'info';
   /** 表单字段名 */
   name?: string;
   /** 标签 */

@@ -1,13 +1,13 @@
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
-import { Database, Plus, MoreVertical } from 'lucide-react'
-import type { DatasetStoreApi } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
-import { Button, ScrollArea, cn } from '@nop-chaos/ui'
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { Database, Plus, MoreVertical } from 'lucide-react';
+import type { DatasetStoreApi } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
+import { Button, ScrollArea, cn } from '@nop-chaos/ui';
 
 interface DatasetPanelProps {
-  store: DatasetStoreApi
-  onAddDataset: () => void
-  onEditDataset: (datasetId: string) => void
+  store: DatasetStoreApi;
+  onAddDataset: () => void;
+  onEditDataset: (datasetId: string) => void;
 }
 
 export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPanelProps) {
@@ -15,45 +15,47 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
     store.subscribe,
     store.getState,
     store.getState,
-    (state) => state.datasets
-  )
+    (state) => state.datasets,
+  );
 
   const selectedDatasetId = useSyncExternalStoreWithSelector(
     store.subscribe,
     store.getState,
     store.getState,
-    (state) => state.selectedDatasetId
-  )
+    (state) => state.selectedDatasetId,
+  );
 
   const handleDatasetMenu = (datasetId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
-  }
+    event.stopPropagation();
+  };
 
   const getTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
       sql: 'SQL',
       api: 'API',
       mongo: 'Mongo',
-      static: 'Static'
-    }
-    return labels[type] || type
-  }
+      static: 'Static',
+    };
+    return labels[type] || type;
+  };
 
   const getTypeColor = (type: string): string => {
     const colors: Record<string, string> = {
       sql: 'bg-primary/10 text-primary',
       api: 'bg-emerald-500/10 text-emerald-700',
       mongo: 'bg-violet-500/10 text-violet-700',
-      static: 'bg-muted text-muted-foreground'
-    }
-    return colors[type] || 'bg-muted text-muted-foreground'
-  }
+      static: 'bg-muted text-muted-foreground',
+    };
+    return colors[type] || 'bg-muted text-muted-foreground';
+  };
 
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--nop-border)]">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.datasets')}</h2>
+          <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
+            {t('flux.wordEditor.datasets')}
+          </h2>
           <Button
             type="button"
             variant="ghost"
@@ -76,12 +78,7 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
               <p className="text-[10px] text-[var(--nop-body-copy)] opacity-50 mt-1">
                 {t('flux.wordEditor.createDatasetHint')}
               </p>
-              <Button
-                type="button"
-                size="xs"
-                onClick={onAddDataset}
-                className="mt-3"
-              >
+              <Button type="button" size="xs" onClick={onAddDataset} className="mt-3">
                 {t('flux.wordEditor.addDataset')}
               </Button>
             </div>
@@ -95,7 +92,7 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
                     'group rounded-lg border p-3 cursor-pointer transition-all duration-160 outline-none focus:ring-2 focus:ring-[var(--nop-accent)] focus:ring-opacity-30',
                     selectedDatasetId === dataset.id
                       ? 'border-[var(--nop-accent)] bg-[var(--nop-surface-soft)]'
-                      : 'border-[var(--nop-border)] hover:border-[var(--nop-accent)] hover:bg-[var(--nop-surface-soft)]'
+                      : 'border-[var(--nop-border)] hover:border-[var(--nop-accent)] hover:bg-[var(--nop-surface-soft)]',
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -105,7 +102,10 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
                           {dataset.name}
                         </h3>
                         <span
-                          className={cn('px-1.5 py-0.5 text-[10px] font-medium rounded', getTypeColor(dataset.type))}
+                          className={cn(
+                            'px-1.5 py-0.5 text-[10px] font-medium rounded',
+                            getTypeColor(dataset.type),
+                          )}
                         >
                           {getTypeLabel(dataset.type)}
                         </span>
@@ -116,7 +116,9 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
                       {dataset.columns.length > 0 && (
                         <div className="mt-2 flex items-center gap-1 text-[10px] text-[var(--nop-body-copy)]">
                           <Database className="w-3 h-3 opacity-70" />
-                          <span>{dataset.columns.length} column{dataset.columns.length !== 1 ? 's' : ''}</span>
+                          <span>
+                            {dataset.columns.length} column{dataset.columns.length !== 1 ? 's' : ''}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -138,5 +140,5 @@ export function DatasetPanel({ store, onAddDataset, onEditDataset }: DatasetPane
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }

@@ -35,4 +35,3 @@
 - treat `env` as runtime configuration, not as a container for frequently changing business state
 - if a host app needs fresh state inside `env` callbacks, prefer refs or another stable indirection instead of rebuilding `env`
 - when a form appears to reset during unrelated interactions, inspect runtime identity inputs before changing form logic
-

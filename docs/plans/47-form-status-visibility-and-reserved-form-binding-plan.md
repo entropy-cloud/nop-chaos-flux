@@ -81,6 +81,7 @@ Targets: `packages/flux-renderers-form/src/schemas.ts`, `packages/flux-renderers
 - [x] ensure `$form` / `statusPath` stay data-only and cannot be used as command objects
 
 Implementation notes:
+
 - `FormStatusSummary` type added to `packages/flux-core/src/types/runtime.ts`
 - `statusPath?: string` added to `FormSchema` in `packages/flux-renderers-form/src/schemas.ts`
 - `$form` injected via scope overlay in `createManagedFormRuntime` (`packages/flux-runtime/src/form-runtime.ts`): `formScopeWithBinding` wraps the form scope, overriding `get`, `has`, `readOwn`, and `read` to include `$form` as a computed `FormStatusSummary`
@@ -123,7 +124,9 @@ Exit Criteria:
 Status Note: All workstreams completed. `$form` and `statusPath` are both implemented.
 
 Deferred:
+
 - `submitCount` and `lastSubmitStatus` fields in `FormStatusSummary` require form store changes; deferred to a future plan.
 
 Follow-up:
+
 - generic interaction tracking can stay in `docs/architecture/action-interaction-state.md` and a separate future implementation plan

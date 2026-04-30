@@ -8,7 +8,7 @@ import {
   buildUrlWithParams,
   finalizeApiRequest,
   prepareApiData,
-  prepareApiRequestForExecution
+  prepareApiRequestForExecution,
 } from '../async-data/request-runtime';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
@@ -16,7 +16,7 @@ function createTestScope(data: Record<string, any>): ScopeRef {
   return createScopeRef({
     id: 'test-scope',
     path: 'test',
-    store: createScopeStore(data)
+    store: createScopeStore(data),
   });
 }
 
@@ -25,7 +25,7 @@ function createChildScope(parent: ScopeRef, ownData: Record<string, any>): Scope
     id: 'child-scope',
     path: 'child',
     parent,
-    store: createScopeStore(ownData)
+    store: createScopeStore(ownData),
   });
 }
 
@@ -144,7 +144,11 @@ describe('prepareApiData', () => {
 
   it('returns extracted scope data when includeScope is set and no explicit data', () => {
     const scope = createTestScope({ userId: 1, projectId: 5 });
-    const api: ApiSchema = { url: '/api/test', type: 'test', includeScope: ['userId', 'projectId'] };
+    const api: ApiSchema = {
+      url: '/api/test',
+      type: 'test',
+      includeScope: ['userId', 'projectId'],
+    };
     const result = prepareApiData(api, scope);
     expect(result.data).toEqual({ userId: 1, projectId: 5 });
   });
@@ -162,7 +166,7 @@ describe('prepareApiData', () => {
       url: '/api/test',
       type: 'test',
       includeScope: ['userId', 'projectId'],
-      data: { userId: 999, extra: 'value' }
+      data: { userId: 999, extra: 'value' },
     };
     const result = prepareApiData(api, scope);
     expect(result.data).toEqual({ userId: 999, projectId: 5, extra: 'value' });
@@ -174,7 +178,7 @@ describe('prepareApiData', () => {
       url: '/api/test',
       type: 'test',
       includeScope: ['userId'],
-      data: 'raw-string-data'
+      data: 'raw-string-data',
     };
     const result = prepareApiData(api, scope);
     expect(result.data).toBe('raw-string-data');
@@ -186,7 +190,7 @@ describe('prepareApiData', () => {
       url: '/api/test',
       type: 'test',
       includeScope: ['userId'],
-      data: [1, 2, 3]
+      data: [1, 2, 3],
     };
     const result = prepareApiData(api, scope);
     expect(result.data).toEqual([1, 2, 3]);
@@ -197,7 +201,7 @@ describe('prepareApiData', () => {
     const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
-      params: { page: 1, size: 10 }
+      params: { page: 1, size: 10 },
     };
     const result = prepareApiData(api, scope);
     expect(result.params).toEqual({ page: 1, size: 10 });
@@ -209,7 +213,7 @@ describe('prepareApiData', () => {
     const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
-      params: 'not-an-object'
+      params: 'not-an-object',
     };
     const result = prepareApiData(api, scope);
     expect(result.params).toBeUndefined();
@@ -222,7 +226,7 @@ describe('prepareApiData', () => {
       type: 'test',
       includeScope: ['userId'],
       data: { extra: 'value' },
-      params: { version: 'v2' }
+      params: { version: 'v2' },
     };
     const result = prepareApiData(api, scope);
     expect(result.data).toEqual({ userId: 1, extra: 'value' });
@@ -234,7 +238,7 @@ describe('prepareApiData', () => {
     const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
-      includeScope: ['missing']
+      includeScope: ['missing'],
     };
     const result = prepareApiData(api, scope);
     expect(result.data).toBeUndefined();
@@ -245,7 +249,7 @@ describe('prepareApiData', () => {
     const api: ApiSchema = {
       url: '/api/test',
       type: 'test',
-      data: { name: 'test' }
+      data: { name: 'test' },
     };
     const result = prepareApiData(api, scope);
     expect(result.data).toEqual({ name: 'test' });
@@ -264,11 +268,11 @@ describe('prepareApiRequestForExecution', () => {
         method: 'post',
         includeScope: ['token'],
         data: { projectId: 99 },
-        params: { page: 2, status: 'open' }
+        params: { page: 2, status: 'open' },
       },
       scope,
       env,
-      expressionCompiler
+      expressionCompiler,
     );
 
     expect(prepared.finalUrl).toBe('/api/tasks?page=2&status=open');
@@ -277,7 +281,7 @@ describe('prepareApiRequestForExecution', () => {
     expect(prepared.request).toMatchObject({
       url: '/api/tasks?page=2&status=open',
       method: 'post',
-      data: { token: 'abc', projectId: 99 }
+      data: { token: 'abc', projectId: 99 },
     });
     expect(prepared.request.params).toBeUndefined();
   });
@@ -292,18 +296,19 @@ describe('prepareApiRequestForExecution', () => {
         url: '/api/users',
         method: 'get',
         params: { page: 1 },
-        requestAdaptor: 'return {params: {page: api.params.page, token: scope.token}, data: {query: scope.token}};'
+        requestAdaptor:
+          'return {params: {page: api.params.page, token: scope.token}, data: {query: scope.token}};',
       },
       scope,
       env,
-      expressionCompiler
+      expressionCompiler,
     );
 
     expect(prepared.finalUrl).toBe('/api/users?page=1&token=secure-token');
     expect(prepared.request).toMatchObject({
       url: '/api/users?page=1&token=secure-token',
       method: 'get',
-      data: { query: 'secure-token' }
+      data: { query: 'secure-token' },
     });
     expect(prepared.request.params).toBeUndefined();
   });
@@ -315,7 +320,7 @@ describe('finalizeApiRequest', () => {
       url: '/api/items',
       method: 'get',
       params: { page: 3, filter: 'active' },
-      data: { q: 'demo' }
+      data: { q: 'demo' },
     });
 
     expect(finalized.finalUrl).toBe('/api/items?page=3&filter=active');
@@ -323,7 +328,7 @@ describe('finalizeApiRequest', () => {
       url: '/api/items?page=3&filter=active',
       method: 'get',
       data: { q: 'demo' },
-      params: undefined
+      params: undefined,
     });
   });
 });
@@ -331,14 +336,17 @@ describe('finalizeApiRequest', () => {
 describe('createApiRequestExecutor', () => {
   it('treats different params as distinct requests', async () => {
     let resolveFirst: ((value: any) => void) | undefined;
-    const fetcher = vi.fn((api: ApiSchema) => new Promise((resolve) => {
-      if (api.url.includes('page=1')) {
-        resolveFirst = resolve;
-        return;
-      }
+    const fetcher = vi.fn(
+      (api: ApiSchema) =>
+        new Promise((resolve) => {
+          if (api.url.includes('page=1')) {
+            resolveFirst = resolve;
+            return;
+          }
 
-      resolve({ ok: true, status: 200, data: { page: 2 } });
-    }));
+          resolve({ ok: true, status: 200, data: { page: 2 } });
+        }),
+    );
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
@@ -354,30 +362,56 @@ describe('createApiRequestExecutor', () => {
   });
 
   it('supports parallel dedup strategy without cancelling earlier requests', async () => {
-    const fetcher = vi.fn(async (api: ApiSchema) => ({ ok: true, status: 200, data: { requestId: api.data } }));
-    const env = { fetcher } as unknown as RendererEnv;
-    const execute = createApiRequestExecutor(() => env);
-    const scope = createTestScope({});
-
-    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 } }, scope, undefined, { control: { dedup: 'parallel' } });
-    const second = execute('ajax', { url: '/api/items', data: { requestId: 2 } }, scope, undefined, { control: { dedup: 'parallel' } });
-
-    await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 1 } } });
-    await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 2 } } });
-    expect(fetcher).toHaveBeenCalledTimes(2);
-  });
-
-  it('returns the in-flight promise for ignore-new dedup strategy', async () => {
-    let resolveFirst: ((value: any) => void) | undefined;
-    const fetcher = vi.fn(() => new Promise((resolve) => {
-      resolveFirst = resolve;
+    const fetcher = vi.fn(async (api: ApiSchema) => ({
+      ok: true,
+      status: 200,
+      data: { requestId: api.data },
     }));
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
-    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 } }, scope, undefined, { control: { dedup: 'ignore-new' } });
-    const second = execute('ajax', { url: '/api/items', data: { requestId: 1 } }, scope, undefined, { control: { dedup: 'ignore-new' } });
+    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 } }, scope, undefined, {
+      control: { dedup: 'parallel' },
+    });
+    const second = execute(
+      'ajax',
+      { url: '/api/items', data: { requestId: 2 } },
+      scope,
+      undefined,
+      { control: { dedup: 'parallel' } },
+    );
+
+    await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 1 } } });
+    await expect(second).resolves.toMatchObject({
+      ok: true,
+      data: { requestId: { requestId: 2 } },
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns the in-flight promise for ignore-new dedup strategy', async () => {
+    let resolveFirst: ((value: any) => void) | undefined;
+    const fetcher = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+    );
+    const env = { fetcher } as unknown as RendererEnv;
+    const execute = createApiRequestExecutor(() => env);
+    const scope = createTestScope({});
+
+    const first = execute('ajax', { url: '/api/items', data: { requestId: 1 } }, scope, undefined, {
+      control: { dedup: 'ignore-new' },
+    });
+    const second = execute(
+      'ajax',
+      { url: '/api/items', data: { requestId: 1 } },
+      scope,
+      undefined,
+      { control: { dedup: 'ignore-new' } },
+    );
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 
@@ -389,20 +423,27 @@ describe('createApiRequestExecutor', () => {
 
   it('treats different params as distinct requests for ignore-new dedup strategy', async () => {
     let resolvePageOne: ((value: any) => void) | undefined;
-    const fetcher = vi.fn((api: ApiSchema) => new Promise((resolve) => {
-      if (api.url.includes('page=1')) {
-        resolvePageOne = resolve;
-        return;
-      }
+    const fetcher = vi.fn(
+      (api: ApiSchema) =>
+        new Promise((resolve) => {
+          if (api.url.includes('page=1')) {
+            resolvePageOne = resolve;
+            return;
+          }
 
-      resolve({ ok: true, status: 200, data: { page: 2 } });
-    }));
+          resolve({ ok: true, status: 200, data: { page: 2 } });
+        }),
+    );
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
-    const first = execute('ajax', { url: '/api/items', params: { page: 1 } }, scope, undefined, { control: { dedup: 'ignore-new' } });
-    const second = execute('ajax', { url: '/api/items', params: { page: 2 } }, scope, undefined, { control: { dedup: 'ignore-new' } });
+    const first = execute('ajax', { url: '/api/items', params: { page: 1 } }, scope, undefined, {
+      control: { dedup: 'ignore-new' },
+    });
+    const second = execute('ajax', { url: '/api/items', params: { page: 2 } }, scope, undefined, {
+      control: { dedup: 'ignore-new' },
+    });
 
     expect(fetcher).toHaveBeenCalledTimes(2);
 
@@ -414,25 +455,40 @@ describe('createApiRequestExecutor', () => {
 
   it('reuses the same in-flight fetch only for identical ignore-new request keys', async () => {
     let release: ((value: any) => void) | undefined;
-    const fetcher = vi.fn(() => new Promise((resolve) => {
-      release = resolve;
-    }));
+    const fetcher = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
-    const first = execute('ajax', {
-      url: '/api/items',
-      params: { page: 1 },
-      data: { filter: 'active' },
-      headers: { 'x-mode': 'live' }
-    }, scope, undefined, { control: { dedup: 'ignore-new' } });
-    const second = execute('ajax', {
-      url: '/api/items',
-      params: { page: 1 },
-      data: { filter: 'active' },
-      headers: { 'x-mode': 'live' }
-    }, scope, undefined, { control: { dedup: 'ignore-new' } });
+    const first = execute(
+      'ajax',
+      {
+        url: '/api/items',
+        params: { page: 1 },
+        data: { filter: 'active' },
+        headers: { 'x-mode': 'live' },
+      },
+      scope,
+      undefined,
+      { control: { dedup: 'ignore-new' } },
+    );
+    const second = execute(
+      'ajax',
+      {
+        url: '/api/items',
+        params: { page: 1 },
+        data: { filter: 'active' },
+        headers: { 'x-mode': 'live' },
+      },
+      scope,
+      undefined,
+      { control: { dedup: 'ignore-new' } },
+    );
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 
@@ -444,22 +500,37 @@ describe('createApiRequestExecutor', () => {
 
   it('dedupes identical final executable requests after adaptor rewrites params into the url', async () => {
     let release: ((value: any) => void) | undefined;
-    const fetcher = vi.fn(() => new Promise((resolve) => {
-      release = resolve;
-    }));
+    const fetcher = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
 
-    const first = execute('ajax', {
-      url: '/api/items?page=1',
-      method: 'get',
-    }, scope, undefined, { control: { dedup: 'ignore-new' } });
-    const second = execute('ajax', {
-      url: '/api/items',
-      method: 'get',
-      params: { page: 1 },
-    }, scope, undefined, { control: { dedup: 'ignore-new' } });
+    const first = execute(
+      'ajax',
+      {
+        url: '/api/items?page=1',
+        method: 'get',
+      },
+      scope,
+      undefined,
+      { control: { dedup: 'ignore-new' } },
+    );
+    const second = execute(
+      'ajax',
+      {
+        url: '/api/items',
+        method: 'get',
+        params: { page: 1 },
+      },
+      scope,
+      undefined,
+      { control: { dedup: 'ignore-new' } },
+    );
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 

@@ -121,7 +121,14 @@ export interface ToastSchema {
   /** 提示级别 */
   level?: 'info' | 'success' | 'warning' | 'error';
   /** 显示位置 */
-  position?: 'top-right' | 'top-center' | 'top-left' | 'bottom-center' | 'bottom-left' | 'bottom-right' | 'center';
+  position?:
+    | 'top-right'
+    | 'top-center'
+    | 'top-left'
+    | 'bottom-center'
+    | 'bottom-left'
+    | 'bottom-right'
+    | 'center';
   /** 显示时长 (ms) */
   timeout?: number;
 }

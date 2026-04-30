@@ -51,9 +51,9 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
       },
       notify(level, message) {
         console.info(`[performance-table-page] ${level}: ${message}`);
-      }
+      },
     }),
-    []
+    [],
   );
 
   const data = useMemo(
@@ -64,12 +64,12 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
         selectedKeys: [],
         pagination: {
           currentPage: 1,
-          pageSize: 50
+          pageSize: 50,
         },
-        lastAction: ''
-      }
+        lastAction: '',
+      },
     }),
-    [initialRows, perfRows]
+    [initialRows, perfRows],
   );
 
   const handleProfilerRender = (
@@ -82,7 +82,8 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
     const next: RenderMetrics = {
       commitCount,
       lastActualDuration: actualDuration,
-      averageActualDuration: ((current.averageActualDuration * current.commitCount) + actualDuration) / commitCount,
+      averageActualDuration:
+        (current.averageActualDuration * current.commitCount + actualDuration) / commitCount,
       maxActualDuration: Math.max(current.maxActualDuration, actualDuration),
       lastCommitAt: Date.now(),
     };
@@ -116,7 +117,8 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
       steps,
       durationMs: endedAt - startedAt,
       commitsDelta,
-      avgCommitMs: commitsDelta > 0 ? (after.averageActualDuration + before.averageActualDuration) / 2 : 0,
+      avgCommitMs:
+        commitsDelta > 0 ? (after.averageActualDuration + before.averageActualDuration) / 2 : 0,
       maxCommitMs: after.maxActualDuration,
     });
   }
@@ -129,74 +131,124 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
         <Button type="button" variant="outline" className="mb-[18px]" onClick={onBack}>
           Back to Home
         </Button>
-        <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">Performance</p>
+        <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">
+          Performance
+        </p>
         <h1 className="m-0 mb-4">Table Performance Playground</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)] mb-2">
-          Dedicated performance page for large-table and repeated-scope testing. The main scenario mounts a 1000-row table with 10 mixed cell renderers.
+          Dedicated performance page for large-table and repeated-scope testing. The main scenario
+          mounts a 1000-row table with 10 mixed cell renderers.
         </p>
         <p className="text-base leading-relaxed text-[var(--nop-body-copy)]">
-          Additional scenarios on the same page intentionally stress broad aggregate formulas, nested loop rendering, scope-owned table state, and many mounted editable controls.
+          Additional scenarios on the same page intentionally stress broad aggregate formulas,
+          nested loop rendering, scope-owned table state, and many mounted editable controls.
         </p>
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <div className="rounded-[20px] border border-[var(--nop-playground-stage-border)] bg-[var(--nop-playground-stage-bg)] p-5">
-            <p className="mb-2 text-sm font-semibold text-[var(--nop-text-strong)]">Scenario Mode</p>
+            <p className="mb-2 text-sm font-semibold text-[var(--nop-text-strong)]">
+              Scenario Mode
+            </p>
             <div className="flex flex-wrap gap-3">
-              <Button type="button" variant={mode === 'table-only' ? 'default' : 'outline'} onClick={() => startTransition(() => setMode('table-only'))}>
+              <Button
+                type="button"
+                variant={mode === 'table-only' ? 'default' : 'outline'}
+                onClick={() => startTransition(() => setMode('table-only'))}
+              >
                 Table Only
               </Button>
-              <Button type="button" variant={mode === 'scope-read-stress' ? 'default' : 'outline'} onClick={() => startTransition(() => setMode('scope-read-stress'))}>
+              <Button
+                type="button"
+                variant={mode === 'scope-read-stress' ? 'default' : 'outline'}
+                onClick={() => startTransition(() => setMode('scope-read-stress'))}
+              >
                 Scope Read Stress
               </Button>
-              <Button type="button" variant={mode === 'full-stress' ? 'default' : 'outline'} onClick={() => startTransition(() => setMode('full-stress'))}>
+              <Button
+                type="button"
+                variant={mode === 'full-stress' ? 'default' : 'outline'}
+                onClick={() => startTransition(() => setMode('full-stress'))}
+              >
                 Full Stress
               </Button>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-[var(--nop-body-copy)]">{modeDescription}</p>
+            <p className="mt-4 text-sm leading-relaxed text-[var(--nop-body-copy)]">
+              {modeDescription}
+            </p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <Button type="button" variant="outline" onClick={() => void runHostBatch('Host row mutation benchmark', 20)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void runHostBatch('Host row mutation benchmark', 20)}
+              >
                 Run 20 Host Mutations
               </Button>
-              <Button type="button" variant="outline" onClick={() => {
-                setPerfRows(initialRows);
-                metricsRef.current = INITIAL_METRICS;
-                setMetrics(INITIAL_METRICS);
-                setBatchSummary(null);
-              }}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setPerfRows(initialRows);
+                  metricsRef.current = INITIAL_METRICS;
+                  setMetrics(INITIAL_METRICS);
+                  setBatchSummary(null);
+                }}
+              >
                 Reset Metrics
               </Button>
             </div>
           </div>
           <div className="rounded-[20px] border border-[var(--nop-playground-stage-border)] bg-[var(--nop-playground-stage-bg)] p-5">
-            <p className="mb-2 text-sm font-semibold text-[var(--nop-text-strong)]">Live Render Metrics</p>
+            <p className="mb-2 text-sm font-semibold text-[var(--nop-text-strong)]">
+              Live Render Metrics
+            </p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg border border-[var(--nop-nav-border)] p-3">
                 <div className="text-[var(--nop-body-copy)]">Last commit</div>
-                <div className="text-lg font-semibold text-[var(--nop-text-strong)]">{metrics.lastActualDuration.toFixed(1)} ms</div>
+                <div className="text-lg font-semibold text-[var(--nop-text-strong)]">
+                  {metrics.lastActualDuration.toFixed(1)} ms
+                </div>
               </div>
               <div className="rounded-lg border border-[var(--nop-nav-border)] p-3">
                 <div className="text-[var(--nop-body-copy)]">Average</div>
-                <div className="text-lg font-semibold text-[var(--nop-text-strong)]">{metrics.averageActualDuration.toFixed(1)} ms</div>
+                <div className="text-lg font-semibold text-[var(--nop-text-strong)]">
+                  {metrics.averageActualDuration.toFixed(1)} ms
+                </div>
               </div>
               <div className="rounded-lg border border-[var(--nop-nav-border)] p-3">
                 <div className="text-[var(--nop-body-copy)]">Max</div>
-                <div className="text-lg font-semibold text-[var(--nop-text-strong)]">{metrics.maxActualDuration.toFixed(1)} ms</div>
+                <div className="text-lg font-semibold text-[var(--nop-text-strong)]">
+                  {metrics.maxActualDuration.toFixed(1)} ms
+                </div>
               </div>
               <div className="rounded-lg border border-[var(--nop-nav-border)] p-3">
                 <div className="text-[var(--nop-body-copy)]">Commits</div>
-                <div className="text-lg font-semibold text-[var(--nop-text-strong)]">{metrics.commitCount}</div>
+                <div className="text-lg font-semibold text-[var(--nop-text-strong)]">
+                  {metrics.commitCount}
+                </div>
               </div>
             </div>
             <p className="mt-4 text-xs leading-relaxed text-[var(--nop-body-copy)]">
-              Compare mode-switch commits, sort/select interactions, and dataset mutation buttons. If scope materialization is a hotspot, `Table Only` should be much cheaper than `Full Stress`.
+              Compare mode-switch commits, sort/select interactions, and dataset mutation buttons.
+              If scope materialization is a hotspot, `Table Only` should be much cheaper than `Full
+              Stress`.
             </p>
             {batchSummary ? (
               <div className="mt-4 rounded-lg border border-[var(--nop-nav-border)] p-3 text-sm">
                 <div className="font-semibold text-[var(--nop-text-strong)]">Last Measurement</div>
-                <div className="mt-2 text-[var(--nop-body-copy)]">{batchSummary.label}: {batchSummary.steps} updates</div>
-                <div className="text-[var(--nop-body-copy)]">Wall time: {batchSummary.durationMs.toFixed(1)} ms</div>
-                <div className="text-[var(--nop-body-copy)]">Commit delta: {batchSummary.commitsDelta}</div>
-                <div className="text-[var(--nop-body-copy)]">Avg commit baseline: {batchSummary.avgCommitMs.toFixed(1)} ms</div>
-                <div className="text-[var(--nop-body-copy)]">Max commit seen: {batchSummary.maxCommitMs.toFixed(1)} ms</div>
+                <div className="mt-2 text-[var(--nop-body-copy)]">
+                  {batchSummary.label}: {batchSummary.steps} updates
+                </div>
+                <div className="text-[var(--nop-body-copy)]">
+                  Wall time: {batchSummary.durationMs.toFixed(1)} ms
+                </div>
+                <div className="text-[var(--nop-body-copy)]">
+                  Commit delta: {batchSummary.commitsDelta}
+                </div>
+                <div className="text-[var(--nop-body-copy)]">
+                  Avg commit baseline: {batchSummary.avgCommitMs.toFixed(1)} ms
+                </div>
+                <div className="text-[var(--nop-body-copy)]">
+                  Max commit seen: {batchSummary.maxCommitMs.toFixed(1)} ms
+                </div>
               </div>
             ) : null}
           </div>

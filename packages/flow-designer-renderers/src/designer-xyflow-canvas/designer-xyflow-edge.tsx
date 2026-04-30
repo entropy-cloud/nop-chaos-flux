@@ -24,18 +24,21 @@ export function DesignerXyflowEdge(props: EdgeProps) {
     targetX: props.targetX,
     targetY: props.targetY,
     sourcePosition: props.sourcePosition,
-    targetPosition: props.targetPosition
+    targetPosition: props.targetPosition,
   });
 
-  const edgeRenderData = React.useMemo(() => ({
-    edge: {
-      id: props.id,
-      source: props.source,
-      target: props.target,
-      data: props.data
-    },
-    data: props.data
-  }), [props.id, props.source, props.target, props.data]);
+  const edgeRenderData = React.useMemo(
+    () => ({
+      edge: {
+        id: props.id,
+        source: props.source,
+        target: props.target,
+        data: props.data,
+      },
+      data: props.data,
+    }),
+    [props.id, props.source, props.target, props.data],
+  );
 
   const handleLabelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,12 +52,17 @@ export function DesignerXyflowEdge(props: EdgeProps) {
 
   const appearance = edgeType?.appearance;
   const hasBody = edgeType?.body && isSchemaInput(edgeType.body);
-  const lineStyle = typeof edgeData?.lineStyle === 'string' ? edgeData.lineStyle : appearance?.strokeStyle;
+  const lineStyle =
+    typeof edgeData?.lineStyle === 'string' ? edgeData.lineStyle : appearance?.strokeStyle;
   const showQuickActions = props.selected || edgeData?.__fdHovered === true;
 
   const edgeStyle: React.CSSProperties = {
-    stroke: edgeData?.__fdBranchFocused ? 'var(--primary)' : (appearance?.stroke ?? 'var(--fd-edge-stroke)'),
-    strokeWidth: edgeData?.__fdBranchFocused ? Math.max((appearance?.strokeWidth ?? 2) + 1, 3) : (appearance?.strokeWidth ?? 2)
+    stroke: edgeData?.__fdBranchFocused
+      ? 'var(--primary)'
+      : (appearance?.stroke ?? 'var(--fd-edge-stroke)'),
+    strokeWidth: edgeData?.__fdBranchFocused
+      ? Math.max((appearance?.strokeWidth ?? 2) + 1, 3)
+      : (appearance?.strokeWidth ?? 2),
   };
 
   if (lineStyle === 'dashed') {
@@ -68,7 +76,11 @@ export function DesignerXyflowEdge(props: EdgeProps) {
       <BaseEdge
         path={edgePath}
         style={edgeStyle}
-        markerEnd={appearance?.markerEnd && appearance.markerEnd !== 'none' ? `url(#${appearance.markerEnd})` : undefined}
+        markerEnd={
+          appearance?.markerEnd && appearance.markerEnd !== 'none'
+            ? `url(#${appearance.markerEnd})`
+            : undefined
+        }
         className={cn(appearance?.animated && 'react-flow__edge-animated')}
       />
 
@@ -77,18 +89,22 @@ export function DesignerXyflowEdge(props: EdgeProps) {
           <div
             className={cn(
               'fd-edge-label px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
-              props.selected && 'border-primary text-foreground'
+              props.selected && 'border-primary text-foreground',
             )}
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-              pointerEvents: 'all'
+              pointerEvents: 'all',
             }}
             onClick={handleLabelClick}
           >
             <RenderNodes
               input={edgeType!.body!}
-              options={{ bindings: edgeRenderData, scopeKey: `edge:${props.id}`, pathSuffix: 'edge' }}
+              options={{
+                bindings: edgeRenderData,
+                scopeKey: `edge:${props.id}`,
+                pathSuffix: 'edge',
+              }}
             />
           </div>
         </EdgeLabelRenderer>
@@ -102,7 +118,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY - 30}px)`,
-              pointerEvents: 'all'
+              pointerEvents: 'all',
             }}
             onMouseDown={(e) => e.stopPropagation()}
           >

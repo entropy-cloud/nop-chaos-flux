@@ -12,15 +12,13 @@ const techTags = {
           type: 'tag-list',
           name: 'tags',
           label: 'Technologies',
-          tags: ['react', 'typescript', 'vite', 'vitest', 'zustand']
-        }
+          tags: ['react', 'typescript', 'vite', 'vitest', 'zustand'],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Save', onClick: { action: 'submit' } }
-      ]
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submit' } }],
     },
-    { type: 'text', text: 'Current tags: ${(tagListForm.tags ?? []).join(", ") || "(none)"}' }
-  ]
+    { type: 'text', text: 'Current tags: ${(tagListForm.tags ?? []).join(", ") || "(none)"}' },
+  ],
 };
 
 const emptyStart = {
@@ -35,15 +33,13 @@ const emptyStart = {
           type: 'tag-list',
           name: 'labels',
           label: 'Issue Labels',
-          tags: ['bug', 'feature', 'docs', 'help wanted']
-        }
+          tags: ['bug', 'feature', 'docs', 'help wanted'],
+        },
       ],
-      actions: [
-        { type: 'button', label: 'Apply Labels', onClick: { action: 'submit' } }
-      ]
+      actions: [{ type: 'button', label: 'Apply Labels', onClick: { action: 'submit' } }],
     },
-    { type: 'text', text: '${(labelForm.labels ?? []).length} label(s) added' }
-  ]
+    { type: 'text', text: '${(labelForm.labels ?? []).length} label(s) added' },
+  ],
 };
 
 export function TagListLabPage() {
@@ -53,14 +49,16 @@ export function TagListLabPage() {
       scenarios={[
         {
           title: 'Pre-populated technology tags',
-          description: 'Three tags start selected. Click any technology tag to toggle it on or off. The current selection is reflected in the attached scope-debug state.',
-          schema: techTags
+          description:
+            'Three tags start selected. Click any technology tag to toggle it on or off. The current selection is reflected in the attached scope-debug state.',
+          schema: techTags,
         },
         {
           title: 'Starting from empty — add issue labels',
-          description: 'The field starts empty. Click one or more issue labels to build the selection. The current selection is reflected in the attached scope-debug state.',
-          schema: emptyStart
-        }
+          description:
+            'The field starts empty. Click one or more issue labels to build the selection. The current selection is reflected in the attached scope-debug state.',
+          schema: emptyStart,
+        },
       ]}
     />
   );

@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  createRendererRegistry,
-  createRendererRuntime
-} from '../index';
+import { createRendererRegistry, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 
@@ -17,13 +14,13 @@ describe('navigate action', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: createEnvWithNavigate(navigate),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
     const result = await runtime.dispatch(
       { action: 'navigate', args: { url: '/report-designer' } },
-      { runtime, scope: page.scope, page }
+      { runtime, scope: page.scope, page },
     );
 
     expect(result.ok).toBe(true);
@@ -36,13 +33,13 @@ describe('navigate action', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: createEnvWithNavigate(navigate),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
     const result = await runtime.dispatch(
       { action: 'navigate', args: { url: '/flux-basic', replace: true } },
-      { runtime, scope: page.scope, page }
+      { runtime, scope: page.scope, page },
     );
 
     expect(result.ok).toBe(true);
@@ -54,13 +51,13 @@ describe('navigate action', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: createEnvWithNavigate(navigate),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
     const result = await runtime.dispatch(
       { action: 'navigate', args: { back: true } },
-      { runtime, scope: page.scope, page }
+      { runtime, scope: page.scope, page },
     );
 
     expect(result.ok).toBe(true);
@@ -71,13 +68,13 @@ describe('navigate action', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
     const result = await runtime.dispatch(
       { action: 'navigate', args: { url: '/some-page' } },
-      { runtime, scope: page.scope, page }
+      { runtime, scope: page.scope, page },
     );
 
     expect(result.ok).toBe(false);
@@ -90,13 +87,13 @@ describe('navigate action', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: createEnvWithNavigate(navigate),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({});
 
     const result = await runtime.dispatch(
       { action: 'navigate', args: {} },
-      { runtime, scope: page.scope, page }
+      { runtime, scope: page.scope, page },
     );
 
     expect(result.ok).toBe(false);
@@ -110,13 +107,13 @@ describe('navigate action', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: createEnvWithNavigate(navigate),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
     const page = runtime.createPageRuntime({ targetPath: '/dynamic-page' });
 
     const result = await runtime.dispatch(
       { action: 'navigate', args: { url: '${targetPath}' } },
-      { runtime, scope: page.scope, page }
+      { runtime, scope: page.scope, page },
     );
 
     expect(result.ok).toBe(true);

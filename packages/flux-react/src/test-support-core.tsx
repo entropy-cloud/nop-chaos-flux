@@ -2,16 +2,9 @@ import React from 'react';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { Button, Input, Label } from '@nop-chaos/ui';
-import type {
-  RendererComponentProps,
-  RendererDefinition,
-  RendererEnv
-} from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  FormContext,
-  ScopeContext,
-} from './contexts';
+import { FormContext, ScopeContext } from './contexts';
 import {
   useCurrentActionScope,
   useCurrentComponentRegistry,
@@ -20,7 +13,7 @@ import {
   useOwnScopeSelector,
   useRenderScope,
   useRendererRuntime,
-  useScopeSelector
+  useScopeSelector,
 } from './hooks';
 
 afterEach(() => {
@@ -32,7 +25,7 @@ export const env: RendererEnv = {
   fetcher: async function <T>() {
     return { ok: true, status: 200, data: null as T };
   },
-  notify: () => undefined
+  notify: () => undefined,
 };
 
 export const sharedFormulaCompiler = createFormulaCompiler();
@@ -40,33 +33,36 @@ export const sharedFormulaCompiler = createFormulaCompiler();
 export const textRenderer: RendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
-  fields: [{ key: 'text', kind: 'prop', allowSource: true }]
+  fields: [{ key: 'text', kind: 'prop', allowSource: true }],
 };
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render()}</section>,
-  regions: ['body']
+  regions: ['body'],
 };
 
 function FormStub(props: RendererComponentProps) {
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
-  const formId = typeof (props.props as Record<string, unknown>).id === 'string'
-    ? (props.props as Record<string, unknown>).id as string
-    : props.id;
-  const initialValues = (props.props as Record<string, unknown>).data &&
+  const formId =
+    typeof (props.props as Record<string, unknown>).id === 'string'
+      ? ((props.props as Record<string, unknown>).id as string)
+      : props.id;
+  const initialValues =
+    (props.props as Record<string, unknown>).data &&
     typeof (props.props as Record<string, unknown>).data === 'object'
-    ? (props.props as Record<string, unknown>).data as Record<string, unknown>
-    : undefined;
+      ? ((props.props as Record<string, unknown>).data as Record<string, unknown>)
+      : undefined;
   const ownedForm = React.useMemo(
-    () => runtime.createFormRuntime({
-      id: formId,
-      initialValues,
-      parentScope,
-      validation: props.templateNode.validationPlan
-    }),
-    [runtime, formId, initialValues, parentScope, props.templateNode.validationPlan]
+    () =>
+      runtime.createFormRuntime({
+        id: formId,
+        initialValues,
+        parentScope,
+        validation: props.templateNode.validationPlan,
+      }),
+    [runtime, formId, initialValues, parentScope, props.templateNode.validationPlan],
   );
 
   return (
@@ -85,8 +81,8 @@ export const formRenderer: RendererDefinition = {
   scopePolicy: 'form',
   componentRegistryPolicy: 'new',
   validation: {
-    kind: 'container'
-  }
+    kind: 'container',
+  },
 };
 
 function ProbeInput() {
@@ -107,7 +103,7 @@ function ProbeInput() {
 
 export const probeInputRenderer: RendererDefinition = {
   type: 'probe-input',
-  component: ProbeInput
+  component: ProbeInput,
 };
 
 function ProbeButton() {
@@ -136,56 +132,58 @@ export const probeButtonRenderer: RendererDefinition = {
     <Button variant="ghost" size="sm" disabled={props.meta.disabled} aria-label="Search">
       Search
     </Button>
-  )
+  ),
 };
 
 export const probeQueryInputRenderer: RendererDefinition = {
   type: 'probe-query-input',
-  component: ProbeButton
+  component: ProbeButton,
 };
 
 function PageValueProbe() {
-  const name = useScopeSelector((data: { currentUser?: { name?: string } }) => data.currentUser?.name ?? '');
+  const name = useScopeSelector(
+    (data: { currentUser?: { name?: string } }) => data.currentUser?.name ?? '',
+  );
   return <span data-testid="page-value">{name}</span>;
 }
 
 export const pageValueProbeRenderer: RendererDefinition = {
   type: 'page-value-probe',
-  component: PageValueProbe
+  component: PageValueProbe,
 };
 
 export const probeFormSchema = {
   type: 'form',
   data: {
-    email: ''
+    email: '',
   },
   body: [
     {
-      type: 'probe-input'
-    }
-  ]
+      type: 'probe-input',
+    },
+  ],
 } as const;
 
 export const pageWithProbeFormSchema = {
   type: 'page',
   body: [
     {
-      type: 'page-value-probe'
+      type: 'page-value-probe',
     },
-    probeFormSchema
-  ]
+    probeFormSchema,
+  ],
 } as const;
 
 export const fragmentScopedProbeFormSchema = {
   type: 'form',
   data: {
-    email: ''
+    email: '',
   },
   body: [
     {
-      type: 'probe-input'
-    }
-  ]
+      type: 'probe-input',
+    },
+  ],
 } as const;
 
 function SelectorText() {
@@ -224,7 +222,7 @@ function ActionScopeProbe() {
 
 export const selectorRenderer: RendererDefinition = {
   type: 'selector-text',
-  component: SelectorText
+  component: SelectorText,
 };
 
 function NodeIdentityProbe(props: RendererComponentProps) {
@@ -240,25 +238,25 @@ function NodeIdentityProbe(props: RendererComponentProps) {
 
 export const nodeIdentityProbeRenderer: RendererDefinition = {
   type: 'node-identity-probe',
-  component: NodeIdentityProbe
+  component: NodeIdentityProbe,
 };
 
 export const scopeLayerProbeRenderer: RendererDefinition = {
   type: 'scope-layer-probe',
-  component: ScopeLayerProbe
+  component: ScopeLayerProbe,
 };
 
 export const ownScopeValueProbeRenderer: RendererDefinition = {
   type: 'own-scope-value-probe',
-  component: OwnScopeValueProbe
+  component: OwnScopeValueProbe,
 };
 
 export const actionScopeProbeRenderer: RendererDefinition = {
   type: 'action-scope-probe',
-  component: ActionScopeProbe
+  component: ActionScopeProbe,
 };
 
 export const countingTextRenderer: RendererDefinition = {
   type: 'counting-text',
-  component: (props) => <span>{String(props.props.text ?? '')}</span>
+  component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };

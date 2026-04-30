@@ -3,14 +3,18 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
-import {
-  createSpreadsheetBridge,
-  SpreadsheetGrid,
-  useSpreadsheetInteractions,
-} from '../index.js';
+import { createSpreadsheetBridge, SpreadsheetGrid, useSpreadsheetInteractions } from '../index.js';
 
-function SpreadsheetGridHarness(props: { sheetId: string; bridge: ReturnType<typeof createSpreadsheetBridge> }) {
-  const interactions = useSpreadsheetInteractions({ bridge: props.bridge, sheetId: props.sheetId, rows: 5, cols: 5 });
+function SpreadsheetGridHarness(props: {
+  sheetId: string;
+  bridge: ReturnType<typeof createSpreadsheetBridge>;
+}) {
+  const interactions = useSpreadsheetInteractions({
+    bridge: props.bridge,
+    sheetId: props.sheetId,
+    rows: 5,
+    cols: 5,
+  });
 
   return (
     <SpreadsheetGrid
@@ -72,7 +76,9 @@ describe('spreadsheet grid selection', () => {
     fireEvent.mouseEnter(secondRowSecondColCell!);
 
     await waitFor(() => {
-      expect(container.querySelectorAll('td.ss-cell[data-range-highlight]').length).toBeGreaterThan(1);
+      expect(container.querySelectorAll('td.ss-cell[data-range-highlight]').length).toBeGreaterThan(
+        1,
+      );
     });
 
     fireEvent.mouseUp(window);

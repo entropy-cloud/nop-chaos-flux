@@ -28,6 +28,7 @@
 - `FormStoreApi` 已有较完整的参考文档：`docs/references/form-validation-runtime-types.md:307-364`。
 
 ### [维度03][F1] `flux-renderers-form` 测试支撑已从根 API 收口
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\index.tsx:6-12`; `C:\can\nop\nop-chaos-flux\packages\flux-renderers-form\src\__tests__\form-test-support.tsx:22-164`
 - **严重程度**: 已修复
 - **发现方式**: 自动化 + 人工复核
@@ -36,6 +37,7 @@
 - **参考文档**: `docs/references/renderer-interfaces.md`
 
 ### [维度03][F2] `word-editor-renderers` 注册协议与文档契约已收敛
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\word-editor-renderers\src\index.ts:1-18`
 - **严重程度**: 已修复
 - **发现方式**: 人工复核
@@ -44,6 +46,7 @@
 - **参考文档**: `docs/components/word-editor-page/design.md`, `docs/architecture/capability-projection-manifest.md`
 
 ### [维度03][F3] host publisher 的 `RendererDefinition.hostContract` 已补齐并接入编译诊断
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\spreadsheet-renderers\src\renderers.tsx:5-17`; `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\renderers.tsx:22-54`; 对照 `C:\can\nop\nop-chaos-flux\packages\flow-designer-renderers\src\index.tsx:38-45`
 - **严重程度**: 已修复
 - **发现方式**: 人工复核
@@ -52,6 +55,7 @@
 - **参考文档**: `docs/architecture/capability-projection-manifest.md`
 
 ### [维度03][F4] `flux-renderers-basic` 根 API 泄露了内部样式/布局 helper
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-renderers-basic\src\index.tsx:20-21`; `C:\can\nop\nop-chaos-flux\packages\flux-renderers-basic\src\utils.ts:1-24`
 - **严重程度**: P2
 - **发现方式**: 人工复核
@@ -61,6 +65,7 @@
 - **参考文档**: `docs/architecture/styling-system.md`
 
 ### [维度03][F5] `flux-react` 根 API 暴露了大量内部 wiring primitive
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-react\src\index.tsx:4-9`; `C:\can\nop\nop-chaos-flux\packages\flux-react\src\index.tsx:42-57`; `C:\can\nop\nop-chaos-flux\packages\flux-react\src\helpers.tsx:66-143`; `C:\can\nop\nop-chaos-flux\packages\flux-react\src\contexts.ts:15-34`
 - **严重程度**: P2
 - **发现方式**: 人工复核
@@ -70,6 +75,7 @@
 - **参考文档**: `docs/references/renderer-interfaces.md`, `docs/references/terminology.md`
 
 ### [维度03][F6] `flux-runtime` 根 API 暴露了未被参考文档定义的运行时内脏
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\index.ts:52-62`; `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\api-cache.ts:129-143`; `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\request-runtime.ts:97-176`
 - **严重程度**: P2
 - **发现方式**: 人工复核
@@ -79,6 +85,7 @@
 - **参考文档**: `docs/references/renderer-interfaces.md`, `docs/architecture/flux-runtime-module-boundaries.md`
 
 ### [维度03][F7] `PageStoreApi` 代码契约已收敛，但文档仍冲突且缺少完整参考说明
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flux-core\src\types\runtime.ts:189-195`
 - **严重程度**: P2
 - **发现方式**: 人工复核
@@ -88,6 +95,7 @@
 - **参考文档**: `docs/architecture/flux-core.md`, `docs/references/terminology.md`, `docs/references/renderer-interfaces.md`
 
 ### [维度03][F8] “死代码”结论已从主结论移除
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\flow-designer-core\src\core-shell-commands.ts:1-95`; `C:\can\nop\nop-chaos-flux\packages\flux-code-editor\src\extensions\sql\index.ts:1-3`; `C:\can\nop\nop-chaos-flux\packages\flux-runtime\src\schema-compiler\index.ts:1-15`
 - **严重程度**: 已移除
 - **发现方式**: 自动化 + 人工复核
@@ -96,6 +104,7 @@
 - **参考文档**: `docs/architecture/frontend-baseline.md`
 
 ### [维度03][F9] `report-designer-renderers` 根 API 暴露了单一实现专用 helper
+
 - **文件**: `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\index.ts:29-35`; `C:\can\nop\nop-chaos-flux\packages\report-designer-renderers\src\report-designer-toolbar-helpers.ts:4-133`
 - **严重程度**: P2
 - **发现方式**: 自动化 + 人工复核

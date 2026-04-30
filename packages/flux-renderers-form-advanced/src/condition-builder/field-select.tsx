@@ -27,7 +27,12 @@ interface FieldItem {
   disabled?: boolean;
 }
 
-function buildItems(fields: ConditionField[], usedFields?: Set<string>, uniqueFields?: boolean, currentValue?: string): FieldItem[] {
+function buildItems(
+  fields: ConditionField[],
+  usedFields?: Set<string>,
+  uniqueFields?: boolean,
+  currentValue?: string,
+): FieldItem[] {
   const result: FieldItem[] = [];
   for (const f of fields) {
     if (f.type === 'group') {
@@ -45,7 +50,14 @@ function buildItems(fields: ConditionField[], usedFields?: Set<string>, uniqueFi
   return result;
 }
 
-export function FieldSelect({ fields, value, onChange, disabled, usedFields, uniqueFields }: FieldSelectProps) {
+export function FieldSelect({
+  fields,
+  value,
+  onChange,
+  disabled,
+  usedFields,
+  uniqueFields,
+}: FieldSelectProps) {
   const items = useMemo(
     () => buildItems(fields, usedFields, uniqueFields, value),
     [fields, usedFields, uniqueFields, value],
@@ -70,7 +82,9 @@ export function FieldSelect({ fields, value, onChange, disabled, usedFields, uni
       />
       <ComboboxContent>
         <ComboboxEmpty>
-          <div className="px-3 py-2 text-xs text-muted-foreground">{t('conditionBuilder.noMatchField')}</div>
+          <div className="px-3 py-2 text-xs text-muted-foreground">
+            {t('conditionBuilder.noMatchField')}
+          </div>
         </ComboboxEmpty>
         <ComboboxList>
           {(item: FieldItem) => (

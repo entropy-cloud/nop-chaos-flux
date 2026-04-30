@@ -3,6 +3,7 @@
 ## Purpose
 
 This document defines how the low-code framework handles styling in a TailwindCSS-first environment, including:
+
 - Relationship between semantic props and Tailwind classes
 - When to use semantic props vs raw className
 - `classAliases` mechanism for reusable class definitions
@@ -69,24 +70,24 @@ For the detailed DOM marker contract around `role`, `data-slot`, root `nop-*` ma
 
 ### What shadcn/ui Handles
 
-| Concern | Owner | Example |
-|---------|-------|---------|
-| Hover/focus styles | shadcn/ui | `hover:bg-primary/90`, `focus-visible:ring-2` |
-| Keyboard navigation | radix-ui | Tab, Enter, Escape handling |
-| Accessibility | radix-ui | ARIA attributes, roles |
-| Animation | Tailwind | `transition-colors`, `animate-in` |
-| Variant styles | cva | `variant="destructive"` → red background |
-| Size styles | cva | `size="sm"` → smaller padding |
+| Concern             | Owner     | Example                                       |
+| ------------------- | --------- | --------------------------------------------- |
+| Hover/focus styles  | shadcn/ui | `hover:bg-primary/90`, `focus-visible:ring-2` |
+| Keyboard navigation | radix-ui  | Tab, Enter, Escape handling                   |
+| Accessibility       | radix-ui  | ARIA attributes, roles                        |
+| Animation           | Tailwind  | `transition-colors`, `animate-in`             |
+| Variant styles      | cva       | `variant="destructive"` → red background      |
+| Size styles         | cva       | `size="sm"` → smaller padding                 |
 
 ### What flux-runtime Handles
 
-| Concern | Owner | Example |
-|---------|-------|---------|
-| Disabled state | schema/runtime | `disabled: "${$form.submitting}"` |
-| Visibility | schema/runtime | `visible: "${hasPermission}"` |
-| Click action | schema/runtime | `onClick: { action: "submitForm" }` |
-| Label text | schema/runtime | `label: "${i18n.submit}"` |
-| Form binding | schema/runtime | `name: "email"` with validation |
+| Concern        | Owner          | Example                             |
+| -------------- | -------------- | ----------------------------------- |
+| Disabled state | schema/runtime | `disabled: "${$form.submitting}"`   |
+| Visibility     | schema/runtime | `visible: "${hasPermission}"`       |
+| Click action   | schema/runtime | `onClick: { action: "submitForm" }` |
+| Label text     | schema/runtime | `label: "${i18n.submit}"`           |
+| Form binding   | schema/runtime | `name: "email"` with validation     |
 
 ### Component Props Mapping
 
@@ -111,12 +112,14 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 ### Dependency Profile
 
 Core dependencies (shared across most components):
+
 - `radix-ui` - UI primitives (Dialog, Select, Tabs, etc.)
 - `class-variance-authority` - Variant/size class generation
 - `clsx` + `tailwind-merge` - Tailwind class merging via `cn()`
 - `lucide-react` - Icon library
 
 Excluded dependencies (not needed for basic rendering):
+
 - `react-hook-form` - Form validation (flux has its own)
 - `zod` - Schema validation (flux has its own)
 - `recharts` - Charts (separate concern)
@@ -173,17 +176,18 @@ Schema → (semantic props OR className OR classAliases) → Tailwind classes �
 
 ### 2. Three Authoring Modes
 
-| Mode | User Type | Example |
-|------|-----------|---------|
-| Semantic Props | Visual editor users | `direction: "row", gap: "md"` |
-| Raw className | Developers | `className: "flex flex-row gap-4"` |
-| classAliases | Both (reusable patterns) | `className: "card"` → expands to full classes |
+| Mode           | User Type                | Example                                       |
+| -------------- | ------------------------ | --------------------------------------------- |
+| Semantic Props | Visual editor users      | `direction: "row", gap: "md"`                 |
+| Raw className  | Developers               | `className: "flex flex-row gap-4"`            |
+| classAliases   | Both (reusable patterns) | `className: "card"` → expands to full classes |
 
 All modes can coexist. Semantic props and classAliases both convert to Tailwind classes internally.
 
 ### 3. Semantic Props as Sugar
 
 Semantic props are "syntax sugar" that:
+
 - Improve readability in JSON schema
 - Enable visual editor UI (dropdowns, sliders)
 - Provide type-safe, validated input
@@ -214,20 +218,22 @@ Internally converts to:
 ### Purpose
 
 Long Tailwind class strings are:
+
 - Hard to read in schema
 - Hard to maintain (change requires updating multiple places)
 - Not semantic (what does `bg-white rounded-lg shadow-md p-4` mean?)
 
 ### Why `classAliases` (not `styles` or `stylePresets`)
 
-| Name | Problem |
-|------|---------|
-| `styles` | Misleading - suggests inline styles `{color: red}` |
-| `stylePresets` | Too long |
-| `classNames` | Confusing - looks like an array of class names |
+| Name           | Problem                                               |
+| -------------- | ----------------------------------------------------- |
+| `styles`       | Misleading - suggests inline styles `{color: red}`    |
+| `stylePresets` | Too long                                              |
+| `classNames`   | Confusing - looks like an array of class names        |
 | `classAliases` | Accurate - expresses "short name → long name" mapping |
 
 The name `classAliases` clearly expresses:
+
 1. It's about CSS **classes** (not styles)
 2. It's an **alias** mechanism (short name expands to full definition)
 
@@ -236,7 +242,7 @@ The name `classAliases` clearly expresses:
 ```typescript
 interface BaseSchema {
   type: string;
-  classAliases?: Record<string, string>;  // Alias name → Tailwind classes
+  classAliases?: Record<string, string>; // Alias name → Tailwind classes
   className?: string;
   // ...
 }
@@ -292,29 +298,29 @@ Aliases can reference other aliases:
 function resolveClassAliases(
   className: string | undefined,
   aliases: Record<string, string> | undefined,
-  visited: Set<string> = new Set()
+  visited: Set<string> = new Set(),
 ): string {
   if (!className || !aliases) return className ?? '';
-  
+
   return className
     .split(/\s+/)
     .filter(Boolean)
-    .flatMap(token => {
+    .flatMap((token) => {
       // Prevent circular references
       if (visited.has(token)) {
         return [token];
       }
-      
+
       // Not an alias, keep as-is
       if (!aliases[token]) {
         return [token];
       }
-      
+
       // Expand alias recursively
       visited.add(token);
       const expanded = resolveClassAliases(aliases[token], aliases, visited);
       visited.delete(token);
-      
+
       return expanded.split(/\s+/).filter(Boolean);
     })
     .join(' ');
@@ -341,9 +347,7 @@ Child components can add their own aliases that extend parent aliases:
     {
       "type": "form",
       "classAliases": { "btn": "px-4 py-2 rounded font-bold" },
-      "body": [
-        { "type": "button", "className": "btn" }
-      ]
+      "body": [{ "type": "button", "className": "btn" }]
     }
   ]
 }
@@ -353,9 +357,9 @@ Child aliases override parent aliases with the same name.
 
 ### Implementation Location
 
-| Package | Responsibility |
-|---------|----------------|
-| `flux-core` | `resolveClassAliases` and `mergeClassAliases` utility functions |
+| Package      | Responsibility                                                                                                                                                                                        |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flux-core`  | `resolveClassAliases` and `mergeClassAliases` utility functions                                                                                                                                       |
 | `flux-react` | `NodeRenderer` derives the merged alias map from parent context + node-local `classAliases`, publishes that map through `ClassAliasesContext`, and resolves concrete `className` values during render |
 
 ## Renderer Styling Contract
@@ -372,12 +376,12 @@ Not all renderers follow the same styling rules. Renderers fall into two categor
 
 Layout renderers must follow a strict separation:
 
-| Layer | Owns | Does NOT own |
-|-------|------|-------------|
-| **Renderer (code)** | Structural marker class (`nop-container`, `nop-flex`), ARIA attributes, DOM structure | gap, direction, padding, margin, width, height |
-| **Schema (classAliases + className)** | Author-controlled visual and layout choices that should stay explicit at usage sites | Hidden default layout injected by renderer code |
-| **Component/UI layer** | Component chrome, variant/size styling, stable class structure | Page- or feature-specific layout decisions that only the schema/host can know |
-| **Global CSS / theme layer** | Interaction pseudo-states (`[data-selected]`, `:hover`), design tokens (`--foreground`, `--primary`), host overrides | Replacing schema-authored explicit layout choices with hidden defaults |
+| Layer                                 | Owns                                                                                                                 | Does NOT own                                                                  |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Renderer (code)**                   | Structural marker class (`nop-container`, `nop-flex`), ARIA attributes, DOM structure                                | gap, direction, padding, margin, width, height                                |
+| **Schema (classAliases + className)** | Author-controlled visual and layout choices that should stay explicit at usage sites                                 | Hidden default layout injected by renderer code                               |
+| **Component/UI layer**                | Component chrome, variant/size styling, stable class structure                                                       | Page- or feature-specific layout decisions that only the schema/host can know |
+| **Global CSS / theme layer**          | Interaction pseudo-states (`[data-selected]`, `:hover`), design tokens (`--foreground`, `--primary`), host overrides | Replacing schema-authored explicit layout choices with hidden defaults        |
 
 **Why**: A container used inside a card needs `gap-1` (4px), the same container in a form needs `gap-4` (16px), and in a list item it needs `gap-0`. The renderer cannot predict the correct value. When a renderer hardcodes `gap-4`, schema authors cannot see this hidden style and cannot override it without knowing it exists.
 
@@ -421,12 +425,12 @@ See `docs/architecture/container-spacing-design.md` → "Per-Slot ClassName Over
 
 Renderer marker classes use the `nop-` prefix for root-level semantic markers only:
 
-| Renderer | Marker class | Purpose |
-|----------|-------------|---------|
-| Container | `nop-container` | Enables CSS targeting for state rules |
-| Flex | `nop-flex` | Flex wrapper marker |
-| Text | (none) | Inline element, no wrapper needed |
-| Button | (handled by shadcn/ui) | `data-slot="button"` via shadcn |
+| Renderer  | Marker class           | Purpose                               |
+| --------- | ---------------------- | ------------------------------------- |
+| Container | `nop-container`        | Enables CSS targeting for state rules |
+| Flex      | `nop-flex`             | Flex wrapper marker                   |
+| Text      | (none)                 | Inline element, no wrapper needed     |
+| Button    | (handled by shadcn/ui) | `data-slot="button"` via shadcn       |
 
 Renderer component code must NOT hardcode implicit visual styles onto marker classes. Marker classes still exist primarily for CSS selectors, debugging, host integration, and test anchoring. Themeable shipped defaults such as gap, padding, flex-direction, and field chrome spacing may be provided by package-owned `@layer base` CSS using root markers together with slot selectors, as in `flux-react/default-spacing.css`.
 
@@ -453,15 +457,15 @@ When a schema author writes `"direction": "column", "gap": "md"`, these are **ex
 
 Following shadcn/ui's approach: spacing is context-specific, always explicit at the usage site, but guided by these conventions:
 
-| Context | Typical gap | Tailwind | Notes |
-|---------|-----------|----------|-------|
-| Card internal sections | 16px | `gap-4` | Header / body / footer separation |
-| Icon + adjacent text | 12px | `gap-3` | Horizontal header layouts |
-| Title + subtitle | 4px | `mt-1` or `gap-1` | Tight text pairing |
-| Form fields (between) | 16px | `gap-4` | Vertical form spacing |
-| Label + input (within field) | 8px | `gap-2` | Input group internal |
-| Badge / chip spacing | 8px | `gap-2` | Horizontal tag groups |
-| Footer items (between) | 8px | `gap-2` | Left/right footer split |
+| Context                      | Typical gap | Tailwind          | Notes                             |
+| ---------------------------- | ----------- | ----------------- | --------------------------------- |
+| Card internal sections       | 16px        | `gap-4`           | Header / body / footer separation |
+| Icon + adjacent text         | 12px        | `gap-3`           | Horizontal header layouts         |
+| Title + subtitle             | 4px         | `mt-1` or `gap-1` | Tight text pairing                |
+| Form fields (between)        | 16px        | `gap-4`           | Vertical form spacing             |
+| Label + input (within field) | 8px         | `gap-2`           | Input group internal              |
+| Badge / chip spacing         | 8px         | `gap-2`           | Horizontal tag groups             |
+| Footer items (between)       | 8px         | `gap-2`           | Left/right footer split           |
 
 These values are **conventions, not enforced defaults**. Every usage site declares its spacing explicitly via classAliases or semantic props.
 
@@ -543,12 +547,12 @@ The outer wrapper (`nop-container`) never injects layout styles.
 
 ### Semantic Prop Mapping
 
-| Prop | Values | Tailwind Output |
-|------|--------|-----------------|
-| `direction` | `'row'` \| `'column'` | `flex-row` \| `flex-col` |
-| `wrap` | `boolean` | `flex-wrap` |
-| `align` | `'start'` \| `'center'` \| `'end'` \| `'stretch'` | `items-* justify-*` |
-| `gap` | Named tokens: `'none'` \| `'xs'` \| `'sm'` \| `'md'` \| `'lg'` \| `'xl'` → Tailwind gap classes<br>Number values → inline style with px unit<br>Arbitrary CSS string values → inline style passthrough | `gap-*` or `style={{gap: '...'}}` |
+| Prop        | Values                                                                                                                                                                                                 | Tailwind Output                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| `direction` | `'row'` \| `'column'`                                                                                                                                                                                  | `flex-row` \| `flex-col`          |
+| `wrap`      | `boolean`                                                                                                                                                                                              | `flex-wrap`                       |
+| `align`     | `'start'` \| `'center'` \| `'end'` \| `'stretch'`                                                                                                                                                      | `items-* justify-*`               |
+| `gap`       | Named tokens: `'none'` \| `'xs'` \| `'sm'` \| `'md'` \| `'lg'` \| `'xl'` → Tailwind gap classes<br>Number values → inline style with px unit<br>Arbitrary CSS string values → inline style passthrough | `gap-*` or `style={{gap: '...'}}` |
 
 ### Gap Token Mapping
 
@@ -573,8 +577,8 @@ When both semantic props and `className` are provided, merge them:
 ```typescript
 const finalClassName = classNames(
   'nop-container',
-  flexClasses,        // from semantic props (only when props are present)
-  props.meta.className // user-provided className (after alias resolution)
+  flexClasses, // from semantic props (only when props are present)
+  props.meta.className, // user-provided className (after alias resolution)
 );
 ```
 
@@ -582,24 +586,26 @@ User-provided `className` takes precedence for conflicts (Tailwind's last-wins b
 
 ## Decision Matrix
 
-| Scenario | Recommendation |
-|----------|----------------|
-| Simple layout (flex, gap) | Semantic props (`direction`, `gap`) |
-| Complex custom styling | Direct `className` with Tailwind |
-| Repeated patterns | Define in `classAliases`, reference by name |
-| Visual editor | Semantic props only (editor provides UI) |
-| Developer-authored schema | Either mode, prefer semantic for clarity |
+| Scenario                  | Recommendation                              |
+| ------------------------- | ------------------------------------------- |
+| Simple layout (flex, gap) | Semantic props (`direction`, `gap`)         |
+| Complex custom styling    | Direct `className` with Tailwind            |
+| Repeated patterns         | Define in `classAliases`, reference by name |
+| Visual editor             | Semantic props only (editor provides UI)    |
+| Developer-authored schema | Either mode, prefer semantic for clarity    |
 
 ## Component Guidelines
 
 ### When to Add Semantic Props
 
 Add semantic props when:
+
 - The prop is commonly used (layout, spacing, alignment)
 - Visual editor needs a friendly control (dropdown, slider)
 - The prop maps cleanly to Tailwind tokens
 
 Do NOT add semantic props when:
+
 - The styling is one-off or rarely used
 - The prop would be too complex to validate
 - Raw className is simpler and more flexible
@@ -645,11 +651,11 @@ A typical visible spreadsheet area renders ~100 rows × 26 columns = **2,600 cel
 
 The spreadsheet canvas uses a three-layer hybrid approach instead:
 
-| Layer | When | How |
-|-------|------|-----|
-| Predefined CSS classes (`ss-*`) | CellStyle properties with finite value sets (bold, alignment, border style) | Dedicated CSS file: `canvas-styles.css` |
-| Inline `style` | CellStyle properties with continuous values (font size, font family, colors) | React `style` prop |
-| `data-*` attributes | Interaction state (selected, editing, range highlight) | CSS attribute selectors |
+| Layer                           | When                                                                         | How                                     |
+| ------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------- |
+| Predefined CSS classes (`ss-*`) | CellStyle properties with finite value sets (bold, alignment, border style)  | Dedicated CSS file: `canvas-styles.css` |
+| Inline `style`                  | CellStyle properties with continuous values (font size, font family, colors) | React `style` prop                      |
+| `data-*` attributes             | Interaction state (selected, editing, range highlight)                       | CSS attribute selectors                 |
 
 This is a self-contained rendering subtree. The `ss-*` classes stay inside the canvas boundary and do not leak to the outer shell (toolbar, sidebar, dialogs), which continues to use shadcn/ui + Tailwind.
 
@@ -685,6 +691,7 @@ CSS file: `packages/spreadsheet-renderers/src/canvas-styles.css`
 - NOT runtime theme switching - aliases are resolved at compile/render time
 
 ## Related Docs
+
 - `docs/architecture/theme-compatibility.md` - CSS variables and host theming
 - `docs/architecture/renderer-runtime.md` - Renderer props resolution
 - `docs/architecture/renderer-markers-and-selectors.md` - DOM marker protocol

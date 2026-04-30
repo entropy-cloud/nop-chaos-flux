@@ -65,7 +65,11 @@ const templateTokenizer = {
       return 'blockComment';
     }
 
-    if (stream.match(/^(?:function|return|var|let|const|if|else|for|while|do|switch|case|break|continue|new|typeof|instanceof|in|of|throw|try|catch|finally|class|extends|import|export|default|void|delete|yield|async|await)\b/)) {
+    if (
+      stream.match(
+        /^(?:function|return|var|let|const|if|else|for|while|do|switch|case|break|continue|new|typeof|instanceof|in|of|throw|try|catch|finally|class|extends|import|export|default|void|delete|yield|async|await)\b/,
+      )
+    ) {
       return 'keyword';
     }
 

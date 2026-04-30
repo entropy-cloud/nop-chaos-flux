@@ -8,9 +8,12 @@ interface SnippetPanelProps {
 }
 
 export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
-  const handleSelect = useCallback((template: string) => {
-    onInsert(template);
-  }, [onInsert]);
+  const handleSelect = useCallback(
+    (template: string) => {
+      onInsert(template);
+    },
+    [onInsert],
+  );
 
   if (snippets.length === 0) return null;
 

@@ -1,6 +1,11 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { baseEnv, createFormSchemaRenderer, createPageSchemaRenderer, formulaCompiler } from '../test-support';
+import {
+  baseEnv,
+  createFormSchemaRenderer,
+  createPageSchemaRenderer,
+  formulaCompiler,
+} from '../test-support';
 
 describe('variant-field renderer transform behavior', () => {
   it('runs target variant transformInAction when switching variants', async () => {
@@ -66,7 +71,9 @@ describe('variant-field renderer transform behavior', () => {
       const container = document.querySelector('[data-active-variant]');
       expect(container?.getAttribute('data-active-variant')).toBe('number');
     });
-    await waitFor(() => expect((screen.getByLabelText('Amount') as HTMLInputElement).value).toBe('42'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('Amount') as HTMLInputElement).value).toBe('42'),
+    );
 
     expect(calls[0]).toEqual({ value: 'alpha', name: 'number', readOnly: false });
   });
@@ -116,7 +123,10 @@ describe('variant-field renderer transform behavior', () => {
                   label: 'Number',
                   content: [{ type: 'input-text', name: 'amount', label: 'Amount' }],
                   initialValue: { amount: 0 },
-                  transformInAction: { action: 'variantLib:migrate', args: { reason: 'explicit-only' } },
+                  transformInAction: {
+                    action: 'variantLib:migrate',
+                    args: { reason: 'explicit-only' },
+                  },
                 },
               ],
             },
@@ -129,7 +139,9 @@ describe('variant-field renderer transform behavior', () => {
 
     await waitFor(() => expect(screen.getByText('Number')).toBeTruthy());
     fireEvent.click(screen.getByRole('tab', { name: 'Number' }));
-    await waitFor(() => expect((screen.getByLabelText('Amount') as HTMLInputElement).value).toBe('7'));
+    await waitFor(() =>
+      expect((screen.getByLabelText('Amount') as HTMLInputElement).value).toBe('7'),
+    );
 
     expect(calls[0]).toEqual({ reason: 'explicit-only' });
   });

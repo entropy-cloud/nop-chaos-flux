@@ -16,22 +16,37 @@ export function countOutgoingEdges(doc: GraphDocument, nodeId: string): number {
   return doc.edges.filter((edge) => edge.source === nodeId).length;
 }
 
-export function checkMaxInstances(doc: GraphDocument, constraints: NodeConstraintConfig | undefined, type: string): boolean {
+export function checkMaxInstances(
+  doc: GraphDocument,
+  constraints: NodeConstraintConfig | undefined,
+  type: string,
+): boolean {
   if (!constraints?.maxInstances || constraints.maxInstances === 'unlimited') {
     return true;
   }
   return countNodesOfType(doc, type) < constraints.maxInstances;
 }
 
-export function checkMinInstances(doc: GraphDocument, constraints: NodeConstraintConfig | undefined, type: string): boolean {
+export function checkMinInstances(
+  doc: GraphDocument,
+  constraints: NodeConstraintConfig | undefined,
+  type: string,
+): boolean {
   if (constraints?.minInstances === undefined) {
     return true;
   }
   return countNodesOfType(doc, type) > constraints.minInstances;
 }
 
-export function hasEdgeConnection(doc: GraphDocument, source: string, target: string, ignoreEdgeId?: string): boolean {
-  return doc.edges.some((edge) => edge.id !== ignoreEdgeId && edge.source === source && edge.target === target);
+export function hasEdgeConnection(
+  doc: GraphDocument,
+  source: string,
+  target: string,
+  ignoreEdgeId?: string,
+): boolean {
+  return doc.edges.some(
+    (edge) => edge.id !== ignoreEdgeId && edge.source === source && edge.target === target,
+  );
 }
 
 export function validateEdgeConnection(
@@ -50,7 +65,10 @@ export function validateEdgeConnection(
   if (!normalizedConfig.rules.allowSelfLoop && source === target) {
     return EDGE_SELF_LOOP_ERROR;
   }
-  if (!normalizedConfig.rules.allowMultiEdge && hasEdgeConnection(doc, source, target, ignoreEdgeId)) {
+  if (
+    !normalizedConfig.rules.allowMultiEdge &&
+    hasEdgeConnection(doc, source, target, ignoreEdgeId)
+  ) {
     return EDGE_DUPLICATE_ERROR;
   }
 

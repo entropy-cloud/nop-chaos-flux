@@ -11,13 +11,13 @@ export default createSharedVitestConfig({
       'src/constants.ts',
       'src/validation-model.ts',
       'src/utils/path-binding.ts',
-      'src/utils/instance-path.ts'
+      'src/utils/instance-path.ts',
     ],
     thresholds: {
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80
-    }
-  }
+      statements: 80,
+    },
+  },
 });

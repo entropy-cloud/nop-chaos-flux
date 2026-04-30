@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import type { TemplateRegion, CompileSchemaOptions, SchemaInput, TemplateNode } from '@nop-chaos/flux-core';
+import type {
+  TemplateRegion,
+  CompileSchemaOptions,
+  SchemaInput,
+  TemplateNode,
+} from '@nop-chaos/flux-core';
 import { DEEP_FIELD_NORMALIZERS } from './schema-compiler/tables';
 
-function createMockCompileSchema(): (input: SchemaInput, options?: CompileSchemaOptions) => TemplateNode | TemplateNode[] {
-  return (_input: SchemaInput, _options?: CompileSchemaOptions) => ({ type: 'text', text: 'mock' } as unknown as TemplateNode);
+function createMockCompileSchema(): (
+  input: SchemaInput,
+  options?: CompileSchemaOptions,
+) => TemplateNode | TemplateNode[] {
+  return (_input: SchemaInput, _options?: CompileSchemaOptions) =>
+    ({ type: 'text', text: 'mock' }) as unknown as TemplateNode;
 }
 
 describe('DEEP_FIELD_NORMALIZERS', () => {
@@ -13,7 +22,9 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      expect(normalize({ value: 'not-array', path: '$', regions, compileSchema })).toBe('not-array');
+      expect(normalize({ value: 'not-array', path: '$', regions, compileSchema })).toBe(
+        'not-array',
+      );
       expect(normalize({ value: null, path: '$', regions, compileSchema })).toBeNull();
       expect(normalize({ value: 42, path: '$', regions, compileSchema })).toBe(42);
     });
@@ -32,7 +43,12 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const result = normalize({ value: ['string', 42, null, true], path: '$', regions, compileSchema });
+      const result = normalize({
+        value: ['string', 42, null, true],
+        path: '$',
+        regions,
+        compileSchema,
+      });
       expect(result).toEqual(['string', 42, null, true]);
     });
 
@@ -43,7 +59,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
 
       const columns = [
         { label: 'Name', name: 'name' },
-        { label: 'Age', name: 'age' }
+        { label: 'Age', name: 'age' },
       ];
 
       const result = normalize({ value: columns, path: '$.columns', regions, compileSchema });
@@ -55,9 +71,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const columns = [
-        { label: { type: 'text', text: 'Dynamic Header' }, name: 'name' }
-      ];
+      const columns = [{ label: { type: 'text', text: 'Dynamic Header' }, name: 'name' }];
 
       normalize({ value: columns, path: '$.columns', regions, compileSchema });
 
@@ -70,9 +84,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const columns = [
-        { name: 'name', cell: { type: 'text', text: 'Cell ${record.name}' } }
-      ];
+      const columns = [{ name: 'name', cell: { type: 'text', text: 'Cell ${record.name}' } }];
 
       normalize({ value: columns, path: '$.columns', regions, compileSchema });
 
@@ -85,9 +97,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const columns = [
-        { label: 'Actions', buttons: { type: 'button', label: 'Edit' } }
-      ];
+      const columns = [{ label: 'Actions', buttons: { type: 'button', label: 'Edit' } }];
 
       normalize({ value: columns, path: '$.columns', regions, compileSchema });
 
@@ -103,7 +113,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const columns = [
         { label: 'Plain', name: 'plain' },
         { label: { type: 'text', text: 'Dynamic' }, name: 'dynamic' },
-        { name: 'cell', cell: { type: 'text', text: 'Cell' } }
+        { name: 'cell', cell: { type: 'text', text: 'Cell' } },
       ];
 
       normalize({ value: columns, path: '$.columns', regions, compileSchema });
@@ -120,7 +130,9 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      expect(normalize({ value: 'not-array', path: '$', regions, compileSchema })).toBe('not-array');
+      expect(normalize({ value: 'not-array', path: '$', regions, compileSchema })).toBe(
+        'not-array',
+      );
     });
 
     it('returns item unchanged when item is not an object', () => {
@@ -139,7 +151,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
 
       const items = [
         { title: 'Tab 1', key: 'tab1' },
-        { title: 'Tab 2', key: 'tab2' }
+        { title: 'Tab 2', key: 'tab2' },
       ];
 
       const result = normalize({ value: items, path: '$', regions, compileSchema });
@@ -151,9 +163,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const items = [
-        { title: { type: 'text', text: 'Dynamic Tab' }, key: 'tab1' }
-      ];
+      const items = [{ title: { type: 'text', text: 'Dynamic Tab' }, key: 'tab1' }];
 
       normalize({ value: items, path: '$', regions, compileSchema });
 
@@ -166,9 +176,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const items = [
-        { title: 'Tab 1', body: { type: 'text', text: 'Content' }, key: 'tab1' }
-      ];
+      const items = [{ title: 'Tab 1', body: { type: 'text', text: 'Content' }, key: 'tab1' }];
 
       normalize({ value: items, path: '$', regions, compileSchema });
 
@@ -180,9 +188,7 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
       const regions: Record<string, TemplateRegion> = {};
       const compileSchema = createMockCompileSchema();
 
-      const items = [
-        { title: 'Tab 1', toolbar: { type: 'text', text: 'Tools' }, key: 'tab1' }
-      ];
+      const items = [{ title: 'Tab 1', toolbar: { type: 'text', text: 'Tools' }, key: 'tab1' }];
 
       normalize({ value: items, path: '$', regions, compileSchema });
 
@@ -196,7 +202,11 @@ describe('DEEP_FIELD_NORMALIZERS', () => {
 
       const items = [
         { title: 'Plain', key: 'tab1' },
-        { title: { type: 'text', text: 'Dynamic' }, key: 'tab2', body: { type: 'text', text: 'Body' } }
+        {
+          title: { type: 'text', text: 'Dynamic' },
+          key: 'tab2',
+          body: { type: 'text', text: 'Body' },
+        },
       ];
 
       normalize({ value: items, path: '$', regions, compileSchema });

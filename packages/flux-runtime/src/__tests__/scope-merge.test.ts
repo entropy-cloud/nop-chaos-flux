@@ -6,7 +6,7 @@ function createTestScope(data: Record<string, any>): ScopeRef {
   return createScopeRef({
     id: 'test-scope',
     path: 'test',
-    store: createScopeStore(data)
+    store: createScopeStore(data),
   });
 }
 
@@ -15,7 +15,7 @@ function createChildScope(parent: ScopeRef, ownData: Record<string, any>): Scope
     id: 'child-scope',
     path: 'child',
     parent,
-    store: createScopeStore(ownData)
+    store: createScopeStore(ownData),
   });
 }
 
@@ -56,7 +56,7 @@ describe('ScopeRef.merge', () => {
       paths: ['a', 'b'],
       sourceScopeId: 'test-scope',
       kind: 'merge',
-      revision: 1
+      revision: 1,
     });
     expect(scope.readOwn()).toEqual({ a: 1, b: 99 });
   });
@@ -73,7 +73,7 @@ describe('ScopeRef.merge', () => {
       paths: ['b'],
       sourceScopeId: 'test-scope',
       kind: 'merge',
-      revision: 1
+      revision: 1,
     });
     expect(scope.readOwn()).toEqual({ a: 1, b: 2 });
   });
@@ -140,7 +140,7 @@ describe('ScopeRef.merge', () => {
       paths: ['user.name'],
       sourceScopeId: 'test-scope',
       kind: 'update',
-      revision: 1
+      revision: 1,
     });
     expect(scope.get('user.name')).toBe('Bob');
   });
@@ -157,7 +157,7 @@ describe('ScopeRef.merge', () => {
       paths: ['user.name'],
       sourceScopeId: 'test-scope',
       kind: 'update',
-      revision: 1
+      revision: 1,
     });
     expect(child.get('user.name')).toBe('Bob');
   });
@@ -168,13 +168,13 @@ describe('ScopeRef.merge', () => {
     scope.update('a', 2);
     expect(scope.store?.getLastChange()).toMatchObject({
       paths: ['a'],
-      revision: 1
+      revision: 1,
     });
 
     scope.merge({ b: 3 });
     expect(scope.store?.getLastChange()).toMatchObject({
       paths: ['b'],
-      revision: 2
+      revision: 2,
     });
   });
 });

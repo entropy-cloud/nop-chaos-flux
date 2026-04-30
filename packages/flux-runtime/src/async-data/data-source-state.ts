@@ -2,7 +2,11 @@ import type { DataSourceState, ScopeRef } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { publishOwnerStatus } from '../status-owner';
 
-export function writeStatusToScope(scope: ScopeRef, statusPath: string | undefined, state: DataSourceState): void {
+export function writeStatusToScope(
+  scope: ScopeRef,
+  statusPath: string | undefined,
+  state: DataSourceState,
+): void {
   const loading = state.fetchStatus === 'fetching';
   publishOwnerStatus(scope, statusPath, {
     started: state.started,
@@ -21,7 +25,7 @@ export function writeStatusToScope(scope: ScopeRef, statusPath: string | undefin
     async: state.async,
     error: state.error
       ? { message: state.error instanceof Error ? state.error.message : String(state.error) }
-      : undefined
+      : undefined,
   });
 }
 
@@ -44,7 +48,7 @@ export function createInitialDataSourceState(initialData: unknown): DataSourceSt
     errorUpdatedAt: 0,
     failureCount: 0,
     failureReason: undefined,
-    async: undefined
+    async: undefined,
   };
 }
 
@@ -69,10 +73,13 @@ export function deriveDataSourceState(current: DataSourceState): DataSourceState
     hasError,
     isInitialLoading: loading && !hasData,
     isRefreshing: loading && hasData,
-    inFlightCount
+    inFlightCount,
   };
 }
 
-export function toNextDataSourceState(current: DataSourceState, patch: Partial<DataSourceState>): DataSourceState {
+export function toNextDataSourceState(
+  current: DataSourceState,
+  patch: Partial<DataSourceState>,
+): DataSourceState {
   return { ...current, ...patch };
 }

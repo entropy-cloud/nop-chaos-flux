@@ -4,16 +4,16 @@ import type { ActionContext } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import {
-  buttonRenderer,
-  createDataSchemaRenderer,
-  env,
-  formulaCompiler,
-} from '../test-support';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support';
 
 function DisabledAwareButtonRenderer(props: RendererComponentProps) {
   return (
-    <Button variant="ghost" size="sm" disabled={props.meta.disabled} onClick={() => void props.events.onClick?.()}>
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={props.meta.disabled}
+      onClick={() => void props.events.onClick?.()}
+    >
       {String(props.props.label ?? 'Button')}
     </Button>
   );
@@ -55,7 +55,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText('Selection: no')).toBeTruthy();
@@ -92,7 +92,7 @@ describe('CRUD renderer', () => {
         data={{ crudSelection: { keys: [] } }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText('Selected: 0')).toBeTruthy();
@@ -128,7 +128,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     expect(screen.getByText('Query: none')).toBeTruthy();
@@ -141,14 +141,18 @@ describe('CRUD renderer', () => {
 
     const queryControls = document.querySelector('[data-slot="crud-query-controls"]');
     expect(queryControls).toBeTruthy();
-    fireEvent.click(within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }));
+    fireEvent.click(
+      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+    );
     await waitFor(() => {
       expect(screen.getByText('Query: Ali')).toBeTruthy();
       expect(screen.getByText('Alice')).toBeTruthy();
       expect(screen.queryByText('Bob')).toBeNull();
     });
 
-    fireEvent.click(within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.reset') }));
+    fireEvent.click(
+      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.reset') }),
+    );
     await waitFor(() => {
       expect(screen.getByText('Query: none')).toBeTruthy();
       expect(screen.getByText('Bob')).toBeTruthy();
@@ -182,7 +186,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const input = screen.getByLabelText('Keyword') as HTMLInputElement;
@@ -190,7 +194,9 @@ describe('CRUD renderer', () => {
     expect(queryControls).toBeTruthy();
 
     fireEvent.change(input, { target: { value: 'Ali' } });
-    fireEvent.click(within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }));
+    fireEvent.click(
+      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Query: Ali')).toBeTruthy();
@@ -199,7 +205,9 @@ describe('CRUD renderer', () => {
     });
 
     fireEvent.change(input, { target: { value: '' } });
-    fireEvent.click(within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }));
+    fireEvent.click(
+      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Query: Ali')).toBeTruthy();
@@ -249,7 +257,9 @@ describe('CRUD renderer', () => {
                   limit: '${$crud.pagination.pageSize}',
                 },
               },
-              footerToolbar: [{ type: 'text', text: 'Active query: ${$crud.query.keyword || "none"}' }],
+              footerToolbar: [
+                { type: 'text', text: 'Active query: ${$crud.query.keyword || "none"}' },
+              ],
               columns: [{ name: 'name', label: 'Name' }],
             },
           ],
@@ -263,7 +273,11 @@ describe('CRUD renderer', () => {
 
           actionScope.registerNamespace('probe', {
             kind: 'host',
-            invoke(method: string, payload: Record<string, unknown> | undefined, _ctx: ActionContext) {
+            invoke(
+              method: string,
+              payload: Record<string, unknown> | undefined,
+              _ctx: ActionContext,
+            ) {
               if (method === 'recordRefresh') {
                 const query = (payload?.query ?? {}) as Record<string, unknown>;
                 const pageNo = payload?.pageNo;
@@ -277,7 +291,7 @@ describe('CRUD renderer', () => {
             },
           });
         }}
-      />
+      />,
     );
 
     const input = screen.getByLabelText('Keyword') as HTMLInputElement;
@@ -285,7 +299,9 @@ describe('CRUD renderer', () => {
     expect(queryControls).toBeTruthy();
 
     fireEvent.change(input, { target: { value: 'Ali' } });
-    fireEvent.click(within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }));
+    fireEvent.click(
+      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.search') }),
+    );
 
     await waitFor(() => expect(screen.getByText('Active query: Ali')).toBeTruthy());
 
@@ -299,7 +315,9 @@ describe('CRUD renderer', () => {
       });
     });
 
-    fireEvent.click(within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.reset') }));
+    fireEvent.click(
+      within(queryControls as HTMLElement).getByRole('button', { name: t('flux.common.reset') }),
+    );
 
     await waitFor(() => expect(screen.getByText('Active query: none')).toBeTruthy());
 
@@ -349,16 +367,14 @@ describe('CRUD renderer', () => {
                   disabled: '${!$crud.hasSelection}',
                 },
               ],
-              footerToolbar: [
-                { type: 'text', text: 'Selected rows: ${$crud.selectionCount}' },
-              ],
+              footerToolbar: [{ type: 'text', text: 'Selected rows: ${$crud.selectionCount}' }],
               columns: [{ name: 'name', label: 'Name' }],
             },
           ],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const bulkDeleteButton = screen.getByRole('button', { name: 'Bulk Delete' });
@@ -369,14 +385,18 @@ describe('CRUD renderer', () => {
     fireEvent.click(checkboxes[1] as HTMLElement);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Bulk Delete' }).hasAttribute('disabled')).toBe(false);
+      expect(screen.getByRole('button', { name: 'Bulk Delete' }).hasAttribute('disabled')).toBe(
+        false,
+      );
       expect(screen.getByText('Selected rows: 1')).toBeTruthy();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh current list' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Bulk Delete' }).hasAttribute('disabled')).toBe(true);
+      expect(screen.getByRole('button', { name: 'Bulk Delete' }).hasAttribute('disabled')).toBe(
+        true,
+      );
       expect(screen.getByText('Selected rows: 0')).toBeTruthy();
     });
   });
@@ -399,9 +419,7 @@ describe('CRUD renderer', () => {
                 breakpoint: 1400,
                 expandTrigger: 'row',
               },
-              source: [
-                { id: '1', name: 'Alpha', owner: 'Alice', status: 'active' },
-              ],
+              source: [{ id: '1', name: 'Alpha', owner: 'Alice', status: 'active' }],
               columns: [
                 { name: 'name', label: 'Name' },
                 { name: 'owner', label: 'Owner' },
@@ -412,11 +430,13 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
-      const headers = Array.from(document.querySelectorAll('[data-slot="table-head"]')).map((node) => node.textContent?.replace(/\s+/g, ' ').trim());
+      const headers = Array.from(document.querySelectorAll('[data-slot="table-head"]')).map(
+        (node) => node.textContent?.replace(/\s+/g, ' ').trim(),
+      );
       expect(headers).toEqual(['Name']);
       expect(screen.queryByText('Alice')).toBeNull();
     });
@@ -469,7 +489,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -505,15 +525,22 @@ describe('CRUD renderer', () => {
             },
           ],
         }}
-        data={{ crudState: { toggledColumns: ['role', 'name'], orderedColumns: ['role', 'name', 'email'] } }}
+        data={{
+          crudState: {
+            toggledColumns: ['role', 'name'],
+            orderedColumns: ['role', 'name', 'email'],
+          },
+        }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     await waitFor(() => {
       expect(screen.getByText('Visible: role,name')).toBeTruthy();
-      const headers = Array.from(document.querySelectorAll('[data-slot="table-head"]')).map((node) => node.textContent?.replace(/\s+/g, ' ').trim());
+      const headers = Array.from(document.querySelectorAll('[data-slot="table-head"]')).map(
+        (node) => node.textContent?.replace(/\s+/g, ' ').trim(),
+      );
       expect(headers).toEqual(['Role', 'Name']);
       expect(screen.queryByText('alice@example.com')).toBeNull();
     });
@@ -531,7 +558,10 @@ describe('CRUD renderer', () => {
           body: [
             {
               type: 'crud',
-              source: [{ id: '1', name: 'Alice' }, { id: '2', name: 'Bob' }],
+              source: [
+                { id: '1', name: 'Alice' },
+                { id: '2', name: 'Bob' },
+              ],
               columns: [
                 { name: 'name', label: 'Name' },
                 {
@@ -557,7 +587,7 @@ describe('CRUD renderer', () => {
         }}
         env={env}
         formulaCompiler={formulaCompiler}
-      />
+      />,
     );
 
     const inspectButtons = screen.getAllByText('Inspect');
@@ -598,7 +628,7 @@ describe('CRUD renderer', () => {
         env={env}
         formulaCompiler={formulaCompiler}
         onComponentRegistryChange={onComponentRegistryChange}
-      />
+      />,
     );
 
     const registry = onComponentRegistryChange.mock.calls[0]?.[0];

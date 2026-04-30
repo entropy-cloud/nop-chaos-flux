@@ -86,23 +86,23 @@
 
 ## 正面评估
 
-| 架构特性 | 状态 |
-|---------|------|
-| 验证所有权（FormRuntime 拥有） | 正确实现 |
-| fieldStates 单一 flat map | 与文档一致 |
-| 异步验证 generation-aware | runId + modelGeneration 双重检查 |
-| submit/commit bypass debounce | waitForValidationDebounce 正确 |
-| per-path 订阅 | subscribeToPath O(1) 唤醒 |
-| showErrorOn 策略 | 四种触发器完整实现 |
-| 隐藏字段策略 | validateWhenHidden 正确 |
-| 草稿隔离 | 独立 FormRuntime 实例 |
-| 外部错误注入 | sourceId 粒度管理 |
-| 编译时依赖图 | 正确构建 |
+| 架构特性                       | 状态                             |
+| ------------------------------ | -------------------------------- |
+| 验证所有权（FormRuntime 拥有） | 正确实现                         |
+| fieldStates 单一 flat map      | 与文档一致                       |
+| 异步验证 generation-aware      | runId + modelGeneration 双重检查 |
+| submit/commit bypass debounce  | waitForValidationDebounce 正确   |
+| per-path 订阅                  | subscribeToPath O(1) 唤醒        |
+| showErrorOn 策略               | 四种触发器完整实现               |
+| 隐藏字段策略                   | validateWhenHidden 正确          |
+| 草稿隔离                       | 独立 FormRuntime 实例            |
+| 外部错误注入                   | sourceId 粒度管理                |
+| 编译时依赖图                   | 正确构建                         |
 
 ## 统计
 
 | 严重程度 | 数量 |
-|---------|------|
-| P2 | 0 |
-| P3 | 7 |
-| 驳回 | 3 |
+| -------- | ---- |
+| P2       | 0    |
+| P3       | 7    |
+| 驳回     | 3    |

@@ -2,7 +2,7 @@ import type {
   CompiledRuntimeValue,
   ExpressionCompiler,
   RendererEnv,
-  ScopeRef
+  ScopeRef,
 } from '@nop-chaos/flux-core';
 
 export interface RuntimeEvalHelpers {
@@ -13,7 +13,7 @@ export interface RuntimeEvalHelpers {
 
 export function createRuntimeEvalHelpers(
   expressionCompiler: ExpressionCompiler,
-  getEnv: () => RendererEnv
+  getEnv: () => RendererEnv,
 ): RuntimeEvalHelpers {
   const compiledValueCache = new WeakMap<object, ReturnType<ExpressionCompiler['compileValue']>>();
 

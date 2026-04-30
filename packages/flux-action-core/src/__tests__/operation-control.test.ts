@@ -15,7 +15,7 @@ describe('withTimeout', () => {
     const result = await withTimeout(
       async () => 42,
       1000,
-      () => -1
+      () => -1,
     );
     expect(result).toBe(42);
   });
@@ -28,7 +28,7 @@ describe('withTimeout', () => {
         return 'never';
       },
       50,
-      () => 'timed-out'
+      () => 'timed-out',
     );
 
     await vi.advanceTimersByTimeAsync(60);
@@ -41,10 +41,12 @@ describe('withTimeout', () => {
   it('rejects when function rejects before timeout', async () => {
     await expect(
       withTimeout(
-        async () => { throw new Error('boom'); },
+        async () => {
+          throw new Error('boom');
+        },
         1000,
-        () => 'fallback'
-      )
+        () => 'fallback',
+      ),
     ).rejects.toThrow('boom');
   });
 
@@ -58,7 +60,7 @@ describe('withTimeout', () => {
         return 'never';
       },
       50,
-      () => 'timed-out'
+      () => 'timed-out',
     );
 
     await vi.advanceTimersByTimeAsync(60);
@@ -70,11 +72,7 @@ describe('withTimeout', () => {
 
   it('does not call onTimeout when function resolves in time', async () => {
     const onTimeout = vi.fn(() => 'fallback');
-    const result = await withTimeout(
-      async () => 'ok',
-      1000,
-      onTimeout
-    );
+    const result = await withTimeout(async () => 'ok', 1000, onTimeout);
     expect(result).toBe('ok');
     expect(onTimeout).not.toHaveBeenCalled();
   });
@@ -85,7 +83,7 @@ describe('withRetry', () => {
     const result = await withRetry(
       async () => 'done',
       { times: 3 },
-      (r) => r === 'done'
+      (r) => r === 'done',
     );
     expect(result).toEqual({ result: 'done', attempts: 1, failureCount: 0 });
   });
@@ -99,7 +97,7 @@ describe('withRetry', () => {
         return 'ok';
       },
       { times: 3, delay: 0 },
-      () => true
+      () => true,
     );
     expect(result.result).toBe('ok');
     expect(result.attempts).toBe(3);
@@ -109,10 +107,12 @@ describe('withRetry', () => {
   it('throws after exhausting retries', async () => {
     await expect(
       withRetry(
-        async () => { throw new Error('always'); },
+        async () => {
+          throw new Error('always');
+        },
         { times: 2, delay: 0 },
-        () => true
-      )
+        () => true,
+      ),
     ).rejects.toThrow('always');
   });
 
@@ -124,7 +124,7 @@ describe('withRetry', () => {
         return callCount;
       },
       { times: 3, delay: 0 },
-      (r) => r === 3
+      (r) => r === 3,
     );
     expect(result.result).toBe(3);
     expect(result.attempts).toBe(3);
@@ -135,7 +135,7 @@ describe('withRetry', () => {
     const result = await withRetry(
       async () => 'partial',
       { times: 2, delay: 0 },
-      () => false
+      () => false,
     );
     expect(result.result).toBe('partial');
     expect(result.attempts).toBe(3);
@@ -151,7 +151,7 @@ describe('withRetry', () => {
         return 'ok';
       },
       { times: 3, delay: 0, onFailedAttempt: (count) => failures.push(count) },
-      () => true
+      () => true,
     );
     expect(failures).toEqual([1, 2]);
   });
@@ -164,8 +164,8 @@ describe('withRetry', () => {
       withRetry(
         async () => 'never',
         { times: 2, delay: 0, signal: controller.signal },
-        () => true
-      )
+        () => true,
+      ),
     ).rejects.toThrow('aborted');
   });
 
@@ -181,7 +181,7 @@ describe('withRetry', () => {
         return 'ok';
       },
       { times: 3, delay: 100, signal: controller.signal },
-      () => true
+      () => true,
     );
 
     const assertionPromise = expect(promise).rejects.toThrow('aborted');
@@ -205,7 +205,7 @@ describe('withRetry', () => {
         return 'ok';
       },
       { times: 3, delay: 50, strategy: 'fixed' },
-      () => true
+      () => true,
     );
 
     while (callCount < 3) {
@@ -229,7 +229,7 @@ describe('withRetry', () => {
         return 'ok';
       },
       { times: 3, delay: 10, strategy: 'exponential', maxDelay: 1000 },
-      () => true
+      () => true,
     );
 
     while (callCount < 3) {
@@ -243,7 +243,7 @@ describe('withRetry', () => {
 
   it('respects maxDelay for exponential strategy', () => {
     const getDelay = (failureCount: number, delay: number, maxDelay: number) =>
-      Math.min(delay * (2 ** Math.max(0, failureCount - 1)), maxDelay);
+      Math.min(delay * 2 ** Math.max(0, failureCount - 1), maxDelay);
 
     expect(getDelay(1, 100, 500)).toBe(100);
     expect(getDelay(2, 100, 500)).toBe(200);
@@ -256,7 +256,7 @@ describe('withRetry', () => {
     const result = await withRetry(
       async () => 'ok',
       { times: 0, delay: 0 },
-      () => true
+      () => true,
     );
     expect(result.attempts).toBe(1);
     expect(result.result).toBe('ok');
@@ -265,9 +265,11 @@ describe('withRetry', () => {
   it('includes metadata on thrown error', async () => {
     try {
       await withRetry(
-        async () => { throw new Error('boom'); },
+        async () => {
+          throw new Error('boom');
+        },
         { times: 1, delay: 0 },
-        () => true
+        () => true,
       );
       expect.unreachable('should have thrown');
     } catch (error) {

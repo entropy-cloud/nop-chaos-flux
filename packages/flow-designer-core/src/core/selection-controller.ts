@@ -54,6 +54,6 @@ export function createSelectionController(args: SelectionControllerArgs) {
     },
     setSelection(nodeIds: string[], edgeIds: string[]) {
       apply(setSelectionState(args.getSelectionState(), nodeIds, edgeIds));
-    }
+    },
   };
 }

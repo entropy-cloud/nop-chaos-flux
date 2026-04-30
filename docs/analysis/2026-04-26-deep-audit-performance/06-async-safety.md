@@ -16,6 +16,7 @@
 ## Retained Findings
 
 ### [Dimension06] `api-data-source-controller` can mark a run succeeded before mapping/publish work finishes, then swallow the real failure
+
 - **Status**: Retained
 - **Files**:
   - `packages/flux-runtime/src/async-data/api-data-source-controller.ts:259-274`
@@ -29,6 +30,7 @@
   3. `applyResultMapping(...)` or `publishData(...)` throws.
   4. The catch block sees the run as no longer current and returns early, skipping failure-state publication and telemetry.
 - **Evidence**:
+
 ```ts
 // packages/flux-runtime/src/async-data/api-data-source-controller.ts:259-274
 const settledRun = settleRunIfNeeded(run, requestSequence, { outcome: 'succeeded' });
@@ -37,6 +39,7 @@ const mappedValue = applyResultMapping({ ... payload: cached.data });
 publishData(mappedValue);
 latestSettledRequestSequence = Math.max(latestSettledRequestSequence, requestSequence);
 ```
+
 ```ts
 // packages/flux-runtime/src/async-data/api-data-source-controller.ts:331-351
 const settledRun = settleRunIfNeeded(run, requestSequence, { outcome: 'succeeded' });
@@ -45,6 +48,7 @@ const mappedValue = applyResultMapping({ ... payload: response.data });
 publishData(mappedValue);
 updateState((current) => ({ ...current, status: 'success', ... }));
 ```
+
 ```ts
 // packages/flux-runtime/src/async-data/api-data-source-controller.ts:393-426
 const settledRun = settleRunIfNeeded(run, requestSequence, {
@@ -59,10 +63,12 @@ if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run) && 
 ...
 reportRuntimeHostIssue({ env: runtime.env, error: caughtError, phase: 'api' });
 ```
+
 - **User-visible failure**: The controller can leave the async-governance bookkeeping or local state on a success path while a real mapping/publish error is neither surfaced as failure state nor reported through telemetry.
 - **Independent review outcome**: Keep. This is a concrete observable-failure bug, not a theoretical cancellation style issue.
 
 ### [Dimension06] Schema preparation remains non-abortable across the `SchemaRenderer` -> `prepareSchema` chain
+
 - **Status**: Downgraded and retained
 - **Files**:
   - `packages/flux-react/src/schema-renderer.tsx:146-190`
@@ -70,6 +76,7 @@ reportRuntimeHostIssue({ env: runtime.env, error: caughtError, phase: 'api' });
 - **Async operation**: Schema import preloading / preparation.
 - **Current state**: `SchemaRenderer` uses a local `disposed` boolean to ignore stale results because the `prepareSchema` API does not accept an `AbortSignal`.
 - **Evidence**:
+
 ```ts
 // packages/flux-react/src/schema-renderer.tsx:146-190
 useEffect(() => {
@@ -94,6 +101,7 @@ useEffect(() => {
   };
 }, [runtime, props.schema, props.schemaUrl, props.env, hasSchemaImports]);
 ```
+
 - **Risk**: Schema switches or unmounts still allow background preloading work to continue. The code avoids stale state writes, but it does not stop the work itself.
 - **Independent review outcome**: Keep only as a low-severity chain-level cancellation gap. The real issue is the missing abort plumbing on `prepareSchema`, not a local misuse of an existing signal-aware API.
 

@@ -33,8 +33,14 @@ describe('scheduleDebounce', () => {
     const pending = new Map();
     let callCount = 0;
 
-    scheduleDebounce(pending, 'a', 100, () => { callCount++; return 'first'; });
-    const promise = scheduleDebounce(pending, 'a', 100, () => { callCount++; return 'second'; });
+    scheduleDebounce(pending, 'a', 100, () => {
+      callCount++;
+      return 'first';
+    });
+    const promise = scheduleDebounce(pending, 'a', 100, () => {
+      callCount++;
+      return 'second';
+    });
 
     await vi.advanceTimersByTimeAsync(100);
 
@@ -106,7 +112,9 @@ describe('scheduleDebounce', () => {
 
   it('removes entry from map after rejection', async () => {
     const pending = new Map();
-    const promise = scheduleDebounce(pending, 'a', 50, () => { throw new Error('x'); });
+    const promise = scheduleDebounce(pending, 'a', 50, () => {
+      throw new Error('x');
+    });
 
     expect(pending.has('a')).toBe(true);
     const assertionPromise = expect(promise).rejects.toThrow('x');
@@ -135,7 +143,10 @@ describe('cancelPendingDebounce', () => {
     const pending = new Map();
     let factoryCalled = false;
 
-    scheduleDebounce(pending, 'a', 100, () => { factoryCalled = true; return 1; });
+    scheduleDebounce(pending, 'a', 100, () => {
+      factoryCalled = true;
+      return 1;
+    });
     const result = cancelPendingDebounce(pending, 'a');
 
     expect(result).toBe(true);

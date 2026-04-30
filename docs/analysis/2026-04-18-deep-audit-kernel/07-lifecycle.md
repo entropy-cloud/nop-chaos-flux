@@ -53,21 +53,21 @@
 
 ## 已验证无问题
 
-| 维度 | 结果 |
-|------|------|
-| 渲染阶段 store 变更（Bug 15） | **已收敛** — 所有 setSnapshot/setState 均在 useEffect 内 |
-| 组件卸载清理完整性 | **全部 effect 有正确 cleanup** |
-| useLayoutEffect vs useEffect | **选择合理** — 仅 workbench 中的同步 scope 操作使用 useLayoutEffect |
-| 正确位于 React 层的 effect | **16 个** — 无问题 |
+| 维度                          | 结果                                                                |
+| ----------------------------- | ------------------------------------------------------------------- |
+| 渲染阶段 store 变更（Bug 15） | **已收敛** — 所有 setSnapshot/setState 均在 useEffect 内            |
+| 组件卸载清理完整性            | **全部 effect 有正确 cleanup**                                      |
+| useLayoutEffect vs useEffect  | **选择合理** — 仅 workbench 中的同步 scope 操作使用 useLayoutEffect |
+| 正确位于 React 层的 effect    | **16 个** — 无问题                                                  |
 
 ---
 
 ## 复核结论
 
-| 发现 | 维度复核 | 子项复核 | 最终严重程度 |
-|------|---------|---------|------------|
-| 07-1: import预加载props.env依赖 | 保留降级P3 | **成立P3** | P3 |
-| 07-2: useSourceValue缺少controller | **驳回** | — | — |
-| 07-3: ref更新effect无依赖数组 | **驳回** | — | — |
-| 07-4: useNodeImports依赖冗余 | 保留P3 | **成立P3** | P3 |
-| 07-5: 生命周期action依赖偏宽 | 保留P3 | **降级Info**（依赖对象实际稳定） | Info |
+| 发现                               | 维度复核   | 子项复核                         | 最终严重程度 |
+| ---------------------------------- | ---------- | -------------------------------- | ------------ |
+| 07-1: import预加载props.env依赖    | 保留降级P3 | **成立P3**                       | P3           |
+| 07-2: useSourceValue缺少controller | **驳回**   | —                                | —            |
+| 07-3: ref更新effect无依赖数组      | **驳回**   | —                                | —            |
+| 07-4: useNodeImports依赖冗余       | 保留P3     | **成立P3**                       | P3           |
+| 07-5: 生命周期action依赖偏宽       | 保留P3     | **降级Info**（依赖对象实际稳定） | Info         |

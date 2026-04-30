@@ -148,15 +148,15 @@ Flow Designer 的宿主 schema 采用一个根节点类型：`designer-page`。
 
 ```ts
 interface DesignerPageSchema {
-  type: 'designer-page'
-  id?: string
-  title?: string
-  document: GraphDocumentInput
-  config: DesignerConfig
-  statusPath?: string
-  toolbar?: SchemaInput
-  inspector?: SchemaInput
-  dialogs?: SchemaInput
+  type: 'designer-page';
+  id?: string;
+  title?: string;
+  document: GraphDocumentInput;
+  config: DesignerConfig;
+  statusPath?: string;
+  toolbar?: SchemaInput;
+  inspector?: SchemaInput;
+  dialogs?: SchemaInput;
 }
 ```
 
@@ -252,19 +252,16 @@ interface DesignerPageSchema {
 ## 7. 节点类型模型
 
 节点类型采用 designer 专用 config，不直接退化成普通 renderer schema。但节点类型内部允许嵌入 schema 片段：
+
 - `inspector.body` - 属性面板
 - `createDialog.body` - 创建节点弹窗
 - `quickActions` - 快速操作按钮
 - `emptyState` - 空节点空状态提示
 
-但节点组件通过 `body: SchemaInput` 渲染，使用 Flux schema 组合现有 renderer
-            - 内置节点图标通过 `icon` 字段（kebab-case 格式）
-            - `label`、 `description` 秊外观样式
-            - 边标签和说明节点类型
+但节点组件通过 `body: SchemaInput` 渲染，使用 Flux schema 组合现有 renderer - 内置节点图标通过 `icon` 字段（kebab-case 格式）- `label`、 `description` 秊外观样式 - 边标签和说明节点类型
+
 - **节点组件支持自定义 renderer**
-  通过在 `nodeTypes[].body` 中使用自定义组件类型（如 `my-custom-node`），注册后通过 Flux renderer 引用。
-            - 或在 `nodeTypes` 中配置一个使用内置组件
-            - 通过 `nodeTypes[].appearance` 配置基础样式（颜色、边框等）
+  通过在 `nodeTypes[].body` 中使用自定义组件类型（如 `my-custom-node`），注册后通过 Flux renderer 引用。- 或在 `nodeTypes` 中配置一个使用内置组件 - 通过 `nodeTypes[].appearance` 配置基础样式（颜色、边框等）
 - 节点内部允许嵌入 schema 片段：
   - `inspector.body` - 属性面板
   - `createDialog.body` - 创建节点弹窗
@@ -545,21 +542,25 @@ Canvas rendering
 Tree Mode 定义了三种核心结构原语：
 
 #### `child`（链序列）
+
 - 表示节点的单一后续链
 - 投影为 `GraphNode` 的单个出边
 - 链节点按顺序连接，支持条件分支前的线性执行路径
 
 #### `branches`（扇出）
+
 - 表示节点的多分支能力
 - 投影为多个 `GraphNode` 实例，每个分支对应一个 branch subtree
 - 分支数量受 `TreeNodeTypeConfig.tree.maxBranches` / `minBranches` 约束
 
 #### implicit merge（隐含汇合）
+
 - 当节点同时拥有 `branches` 和 `child` 时，`child` 表示整个 branch group 汇合后的 continuation
 - merge 线和 merge overlay 是投影/渲染语义，不要求文档里显式保存 merge 节点
 - 这与 `wflow-web-next` 一类 DingFlow 实现一致：分支组内部结构化展开，汇合后回到单一下游主干
 
 #### `TreeNodeBranch.child`（分支子树）
+
 - 表示单个分支的递归子结构
 - 每个分支可以有独立的 `child` 或进一步 `branches`
 - 投影时递归展开为完整的图结构
@@ -568,12 +569,17 @@ Tree Mode 定义了三种核心结构原语：
 
 ```ts
 interface TreeNode {
-  id: string; type: string; data: Record<string, unknown>;
-  child?: TreeNode; branches?: TreeNodeBranch[];
+  id: string;
+  type: string;
+  data: Record<string, unknown>;
+  child?: TreeNode;
+  branches?: TreeNodeBranch[];
 }
 
 interface TreeNodeBranch {
-  id: string; data: Record<string, unknown>; child?: TreeNode;
+  id: string;
+  data: Record<string, unknown>;
+  child?: TreeNode;
 }
 ```
 
@@ -596,13 +602,23 @@ interface TreeNodeBranch {
 ```ts
 interface TreeConfig {
   layout: { direction: 'TB' | 'LR'; nodeSpacing: number; layerSpacing: number };
-  showGatewayNodes: boolean; showMergeNodes: boolean; autoLayout: boolean;
-  chainEdgeType?: string; branchEdgeType?: string; mergeEdgeType?: string;
+  showGatewayNodes: boolean;
+  showMergeNodes: boolean;
+  autoLayout: boolean;
+  chainEdgeType?: string;
+  branchEdgeType?: string;
+  mergeEdgeType?: string;
 }
 
 interface TreeNodeTypeConfig extends NodeTypeConfig {
-  tree?: { allowBranches?: boolean; maxBranches?: number; minBranches?: number;
-           allowChild?: boolean; isTerminal?: boolean; branchEdgeType?: string };
+  tree?: {
+    allowBranches?: boolean;
+    maxBranches?: number;
+    minBranches?: number;
+    allowChild?: boolean;
+    isTerminal?: boolean;
+    branchEdgeType?: string;
+  };
 }
 ```
 
@@ -647,6 +663,7 @@ interface TreeDomainAdapter {
 Tree Mode 当前实现的范围和约束：
 
 **已支持：**
+
 - TreeDocument 到 GraphDocument 的投影
 - React Flow 画布渲染
 - 布局计算和自动布局
@@ -654,6 +671,7 @@ Tree Mode 当前实现的范围和约束：
 - 领域适配器的导入导出能力
 
 **不支持（非目标）：**
+
 - 反向投影（GraphDocument → TreeDocument）
 - 在 tree mode 中把 React Flow 暴露成任意连线/任意重连的自由 graph 编辑器
 - 通过自由 edge 操作制造 branch merge 结构

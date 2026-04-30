@@ -4,7 +4,10 @@ import { createDesignerCommandAdapter } from './designer-command-adapter';
 import type { DesignerCommandAdapter } from './designer-command-adapter';
 import { notifyCommandFailure, toActionResult } from './designer-context';
 
-export function createDesignerActionProvider(core: DesignerCore, adapterInput?: DesignerCommandAdapter): ActionNamespaceProvider {
+export function createDesignerActionProvider(
+  core: DesignerCore,
+  adapterInput?: DesignerCommandAdapter,
+): ActionNamespaceProvider {
   const adapter = adapterInput ?? createDesignerCommandAdapter(core);
 
   return {
@@ -45,7 +48,7 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
         'selectAllNodes',
         'setSelection',
         'moveNodes',
-        'updateMultipleNodes'
+        'updateMultipleNodes',
       ];
     },
     invoke(method, payload, ctx) {
@@ -54,8 +57,11 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
           const result = adapter.execute({
             type: 'addNode',
             nodeType: String(payload?.nodeType ?? ''),
-            position: (payload?.position as { x: number; y: number } | undefined) ?? { x: 200, y: 120 },
-            data: payload?.data as Record<string, unknown> | undefined
+            position: (payload?.position as { x: number; y: number } | undefined) ?? {
+              x: 200,
+              y: 120,
+            },
+            data: payload?.data as Record<string, unknown> | undefined,
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
@@ -76,7 +82,7 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
             type: 'addEdge',
             source: String(payload?.source ?? ''),
             target: String(payload?.target ?? ''),
-            data: payload?.data as Record<string, unknown> | undefined
+            data: payload?.data as Record<string, unknown> | undefined,
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
@@ -86,23 +92,32 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
           return toActionResult(result);
         }
         case 'selectNode': {
-          const result = adapter.execute({ type: 'selectNode', nodeId: typeof payload?.nodeId === 'string' ? payload.nodeId : null });
+          const result = adapter.execute({
+            type: 'selectNode',
+            nodeId: typeof payload?.nodeId === 'string' ? payload.nodeId : null,
+          });
           return toActionResult(result);
         }
         case 'selectBranch': {
           const result = adapter.execute({
             type: 'selectBranch',
             nodeId: String(payload?.nodeId ?? ''),
-            branchId: typeof payload?.branchId === 'string' ? payload.branchId : null
+            branchId: typeof payload?.branchId === 'string' ? payload.branchId : null,
           });
           return toActionResult(result);
         }
         case 'selectEdge': {
-          const result = adapter.execute({ type: 'selectEdge', edgeId: typeof payload?.edgeId === 'string' ? payload.edgeId : null });
+          const result = adapter.execute({
+            type: 'selectEdge',
+            edgeId: typeof payload?.edgeId === 'string' ? payload.edgeId : null,
+          });
           return toActionResult(result);
         }
         case 'deleteNode': {
-          const result = adapter.execute({ type: 'deleteNode', nodeId: String(payload?.nodeId ?? '') });
+          const result = adapter.execute({
+            type: 'deleteNode',
+            nodeId: String(payload?.nodeId ?? ''),
+          });
           return toActionResult(result);
         }
         case 'deleteBranch': {
@@ -115,11 +130,17 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
           return toActionResult(result);
         }
         case 'deleteEdge': {
-          const result = adapter.execute({ type: 'deleteEdge', edgeId: String(payload?.edgeId ?? '') });
+          const result = adapter.execute({
+            type: 'deleteEdge',
+            edgeId: String(payload?.edgeId ?? ''),
+          });
           return toActionResult(result);
         }
         case 'duplicateNode': {
-          const result = adapter.execute({ type: 'duplicateNode', nodeId: String(payload?.nodeId ?? '') });
+          const result = adapter.execute({
+            type: 'duplicateNode',
+            nodeId: String(payload?.nodeId ?? ''),
+          });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
         }
@@ -127,7 +148,7 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
           const result = adapter.execute({
             type: 'moveNode',
             nodeId: String(payload?.nodeId ?? ''),
-            position: (payload?.position as { x: number; y: number } | undefined) ?? { x: 0, y: 0 }
+            position: (payload?.position as { x: number; y: number } | undefined) ?? { x: 0, y: 0 },
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
@@ -137,7 +158,7 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
             type: 'moveBranch',
             nodeId: String(payload?.nodeId ?? ''),
             branchId: String(payload?.branchId ?? ''),
-            direction: payload?.direction === 'left' ? 'left' : 'right'
+            direction: payload?.direction === 'left' ? 'left' : 'right',
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
@@ -147,7 +168,7 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
             type: 'updateBranchData',
             nodeId: String(payload?.nodeId ?? ''),
             branchId: String(payload?.branchId ?? ''),
-            data: (payload?.data as Record<string, unknown>) ?? {}
+            data: (payload?.data as Record<string, unknown>) ?? {},
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
@@ -157,7 +178,7 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
             type: 'reconnectEdge',
             edgeId: String(payload?.edgeId ?? ''),
             source: String(payload?.source ?? ''),
-            target: String(payload?.target ?? '')
+            target: String(payload?.target ?? ''),
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
@@ -166,7 +187,7 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
           const result = adapter.execute({
             type: 'updateNodeData',
             nodeId: String(payload?.nodeId ?? ''),
-            data: (payload?.data as Record<string, unknown>) ?? {}
+            data: (payload?.data as Record<string, unknown>) ?? {},
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
@@ -175,7 +196,7 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
           const result = adapter.execute({
             type: 'updateEdgeData',
             edgeId: String(payload?.edgeId ?? ''),
-            data: (payload?.data as Record<string, unknown>) ?? {}
+            data: (payload?.data as Record<string, unknown>) ?? {},
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);
@@ -209,7 +230,11 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
         case 'setViewport': {
           const result = adapter.execute({
             type: 'setViewport',
-            viewport: (payload?.viewport as { x: number; y: number; zoom: number } | undefined) ?? { x: 0, y: 0, zoom: 1 }
+            viewport: (payload?.viewport as { x: number; y: number; zoom: number } | undefined) ?? {
+              x: 0,
+              y: 0,
+              zoom: 1,
+            },
           });
           return toActionResult(result);
         }
@@ -224,19 +249,19 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
         case 'beginTransaction': {
           const txId = core.beginTransaction(
             typeof payload?.label === 'string' ? payload.label : undefined,
-            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined
+            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined,
           );
           return { ok: true, data: txId };
         }
         case 'commitTransaction': {
           core.commitTransaction(
-            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined
+            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined,
           );
           return { ok: true };
         }
         case 'rollbackTransaction': {
           core.rollbackTransaction(
-            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined
+            typeof payload?.transactionId === 'string' ? payload.transactionId : undefined,
           );
           return { ok: true };
         }
@@ -276,13 +301,13 @@ export function createDesignerActionProvider(core: DesignerCore, adapterInput?: 
             return { ok: false, error: new Error('updateMultipleNodes requires updates array') };
           }
           core.updateMultipleNodes(
-            payload.updates as Array<{ nodeId: string; data: Record<string, unknown> }>
+            payload.updates as Array<{ nodeId: string; data: Record<string, unknown> }>,
           );
           return { ok: true };
         }
         default:
           return { ok: false, error: new Error(`Unknown designer method: ${method}`) };
       }
-    }
+    },
   };
 }

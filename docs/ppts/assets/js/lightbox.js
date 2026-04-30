@@ -1,4 +1,4 @@
-(function() {
+(function () {
   // 已绑定的目标元素集合，避免重复绑定
   // 使用一个简单标记在元素上，避免重复绑定
   const boundMarker = '__clb_bound_clb';
@@ -77,13 +77,13 @@
     document.head.appendChild(styleEl);
 
     // 点击灯箱遮罩关闭
-    lightboxEl.addEventListener('click', function(e) {
+    lightboxEl.addEventListener('click', function (e) {
       if (e.target === lightboxEl) closeLightbox();
     });
 
     // Esc 关闭
     if (!keyListenerBound) {
-      document.addEventListener('keydown', function(e) {
+      document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') closeLightbox();
       });
       keyListenerBound = true;
@@ -112,16 +112,16 @@
   // 公共 API：为指定选择器绑定放大查看
   // selectors: 字符串（可逗号分隔）或字符串数组
   // options: { maxWidth, maxHeight }
-  window.enableContentLightboxForSelector = function(selectors, options) {
+  window.enableContentLightboxForSelector = function (selectors, options) {
     // 归一化选择器
     const selList = [];
     if (typeof selectors === 'string') {
-      selectors.split(',').forEach(s => {
+      selectors.split(',').forEach((s) => {
         const t = s.trim();
         if (t) selList.push(t);
       });
     } else if (Array.isArray(selectors)) {
-      selectors.forEach(s => {
+      selectors.forEach((s) => {
         if (typeof s === 'string') selList.push(s);
       });
     } else {
@@ -140,9 +140,9 @@
 
     const boundList = [];
 
-    selList.forEach(sel => {
+    selList.forEach((sel) => {
       try {
-        document.querySelectorAll(sel).forEach(el => {
+        document.querySelectorAll(sel).forEach((el) => {
           // 只对 img 或 svg 生效
           const tag = (el.tagName || '').toLowerCase();
           if (!(tag === 'img' || tag === 'svg')) return;
@@ -152,7 +152,7 @@
           el[boundMarker] = true;
 
           el.style.cursor = 'zoom-in';
-          const handler = function(e) {
+          const handler = function (e) {
             e.preventDefault();
             openFromNode(el);
           };
@@ -174,44 +174,45 @@
         clone.style.maxHeight = '90vh';
         clone.style.width = 'auto';
         clone.style.height = 'auto';
-        clone.style.display
-	} else if (clone && clone.tagName && clone.tagName.toLowerCase() === 'svg') {
-		// 针对 Mermaid 生成的 SVG，放大到容器宽度
- // 1) 尝试从 viewBox 解析 intrinsic 宽高
-  let intrinsicW = null, intrinsicH = null;
-  const vb = clone.getAttribute('viewBox');
-  if (vb) {
-    const parts = vb.trim().split(/\s+/);
-    if (parts.length === 4) {
-      intrinsicW = parseFloat(parts[2]);
-      intrinsicH = parseFloat(parts[3]);
-    }
-  }
-  // 2) 回退到 width/height 属性
-  if (!intrinsicW || !intrinsicH || intrinsicW <= 0 || intrinsicH <= 0) {
-    const wAttr = clone.getAttribute('width');
-    const hAttr = clone.getAttribute('height');
-    if (wAttr) intrinsicW = parseFloat(wAttr);
-    if (hAttr) intrinsicH = parseFloat(hAttr);
-  }
-  // 3) 兜底值
-  if (!intrinsicW || !intrinsicH || intrinsicW <= 0 || intrinsicH <= 0) {
-    intrinsicW = 800;
-    intrinsicH = 600;
-  }
+        clone.style.display;
+      } else if (clone && clone.tagName && clone.tagName.toLowerCase() === 'svg') {
+        // 针对 Mermaid 生成的 SVG，放大到容器宽度
+        // 1) 尝试从 viewBox 解析 intrinsic 宽高
+        let intrinsicW = null,
+          intrinsicH = null;
+        const vb = clone.getAttribute('viewBox');
+        if (vb) {
+          const parts = vb.trim().split(/\s+/);
+          if (parts.length === 4) {
+            intrinsicW = parseFloat(parts[2]);
+            intrinsicH = parseFloat(parts[3]);
+          }
+        }
+        // 2) 回退到 width/height 属性
+        if (!intrinsicW || !intrinsicH || intrinsicW <= 0 || intrinsicH <= 0) {
+          const wAttr = clone.getAttribute('width');
+          const hAttr = clone.getAttribute('height');
+          if (wAttr) intrinsicW = parseFloat(wAttr);
+          if (hAttr) intrinsicH = parseFloat(hAttr);
+        }
+        // 3) 兜底值
+        if (!intrinsicW || !intrinsicH || intrinsicW <= 0 || intrinsicH <= 0) {
+          intrinsicW = 800;
+          intrinsicH = 600;
+        }
 
-  // 4) 计算最大尺寸并按纵横比缩放到一个合适的具体像素尺寸
-  const maxW = Math.floor(window.innerWidth * 0.9);
-  const maxH = Math.floor(window.innerHeight * 0.9);
-  const scale = Math.min(maxW / intrinsicW, maxH / intrinsicH);
-  const targetW = Math.max(1, Math.round(intrinsicW * scale));
-  const targetH = Math.max(1, Math.round(intrinsicH * scale));
+        // 4) 计算最大尺寸并按纵横比缩放到一个合适的具体像素尺寸
+        const maxW = Math.floor(window.innerWidth * 0.9);
+        const maxH = Math.floor(window.innerHeight * 0.9);
+        const scale = Math.min(maxW / intrinsicW, maxH / intrinsicH);
+        const targetW = Math.max(1, Math.round(intrinsicW * scale));
+        const targetH = Math.max(1, Math.round(intrinsicH * scale));
 
-  clone.setAttribute('width', targetW);
-  clone.setAttribute('height', targetH);
-  clone.style.width = targetW + 'px';
-  clone.style.height = targetH + 'px';
-  clone.style.display = 'block';	
+        clone.setAttribute('width', targetW);
+        clone.setAttribute('height', targetH);
+        clone.style.width = targetW + 'px';
+        clone.style.height = targetH + 'px';
+        clone.style.display = 'block';
       } else {
         clone.style.display = 'block';
       }
@@ -222,13 +223,13 @@
     }
 
     const api = {
-      destroy: function() {
+      destroy: function () {
         boundList.forEach(({ el, handler }) => {
           el.removeEventListener('click', handler);
           if (el[boundMarker]) delete el[boundMarker];
         });
         boundList.length = 0;
-      }
+      },
     };
 
     return api;

@@ -344,33 +344,26 @@ interface BoundFieldSchemaBase extends BaseSchema {
 
 ### Field Channel Assignment
 
-| Author-Facing Field | Normalized Channel | Frozen Rule |
-| --- | --- | --- |
-| `name` | `props.name` | 从 META_FIELDS 移除，由 renderer metadata 分类为 prop；editable field 的唯一双向绑定入口 |
-| `readOnly` | `props.readOnly` | 业务编辑语义，进入 props，不进入 meta |
-| `required` | `props.required` | 字段级校验语义，进入 props |
-| `label` | `props.label` 或 `regions.label` | 由 renderer metadata 决定；不再硬编码为全局 meta |
-| `title` | `props.title` 或 `regions.title` | 由 renderer metadata 决定；不再硬编码为全局 meta |
-| `disabled` | `meta.disabled` | runtime 节点控制态，保留在 meta |
-| `visible` / `hidden` | `meta.*` | runtime 节点可见性，保留在 meta |
-| `className` / `testid` / `id` | `meta.*` | 外层 wrapper / observability，保留在 meta |
-| `text`, `data`, `options`, `items`, `placeholder`, … | `props.*` | 语义化内容字段，保留命名，通过 renderer metadata 进入 props |
-| `body`, `header`, `footer`, `actions`, `toolbar` | `regions.*` | 子 schema 片段，由 renderer metadata 分类为 region |
-| `onClick`, `onSubmit`, `onChange`, … | `events.*` | declarative action，保留 on* 命名 |
+| Author-Facing Field                                  | Normalized Channel               | Frozen Rule                                                                              |
+| ---------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `name`                                               | `props.name`                     | 从 META_FIELDS 移除，由 renderer metadata 分类为 prop；editable field 的唯一双向绑定入口 |
+| `readOnly`                                           | `props.readOnly`                 | 业务编辑语义，进入 props，不进入 meta                                                    |
+| `required`                                           | `props.required`                 | 字段级校验语义，进入 props                                                               |
+| `label`                                              | `props.label` 或 `regions.label` | 由 renderer metadata 决定；不再硬编码为全局 meta                                         |
+| `title`                                              | `props.title` 或 `regions.title` | 由 renderer metadata 决定；不再硬编码为全局 meta                                         |
+| `disabled`                                           | `meta.disabled`                  | runtime 节点控制态，保留在 meta                                                          |
+| `visible` / `hidden`                                 | `meta.*`                         | runtime 节点可见性，保留在 meta                                                          |
+| `className` / `testid` / `id`                        | `meta.*`                         | 外层 wrapper / observability，保留在 meta                                                |
+| `text`, `data`, `options`, `items`, `placeholder`, … | `props.*`                        | 语义化内容字段，保留命名，通过 renderer metadata 进入 props                              |
+| `body`, `header`, `footer`, `actions`, `toolbar`     | `regions.*`                      | 子 schema 片段，由 renderer metadata 分类为 region                                       |
+| `onClick`, `onSubmit`, `onChange`, …                 | `events.*`                       | declarative action，保留 on\* 命名                                                       |
 
 ### Global META_FIELDS Frozen Set
 
 以下是冻结后的 `META_FIELDS` 最小集合：
 
 ```ts
-export const META_FIELDS = new Set([
-  'id',
-  'className',
-  'visible',
-  'hidden',
-  'disabled',
-  'testid'
-]);
+export const META_FIELDS = new Set(['id', 'className', 'visible', 'hidden', 'disabled', 'testid']);
 ```
 
 移除的字段：`name`、`label`、`title`。这三个字段改由各 renderer 的 `fields` metadata 明确分类。
@@ -379,11 +372,11 @@ export const META_FIELDS = new Set([
 
 以下字段可由 renderer 直接读取 raw `schema`，无需进入归一化通道：
 
-| Field | Renderer(s) | Justification |
-| --- | --- | --- |
-| `statusPath` | `page`, `form`, `dialog`, `drawer`, `tree-renderer` | 纯结构配置，不支持表达式，读取一次后不变 |
-| `componentId` | `chart-renderer` | 纯结构配置，chart 实例标识 |
-| `frameWrap` | `NodeFrameWrapper` | 结构配置，不是业务值 |
+| Field         | Renderer(s)                                         | Justification                            |
+| ------------- | --------------------------------------------------- | ---------------------------------------- |
+| `statusPath`  | `page`, `form`, `dialog`, `drawer`, `tree-renderer` | 纯结构配置，不支持表达式，读取一次后不变 |
+| `componentId` | `chart-renderer`                                    | 纯结构配置，chart 实例标识               |
+| `frameWrap`   | `NodeFrameWrapper`                                  | 结构配置，不是业务值                     |
 
 如果未来需要让这些字段支持表达式求值，必须显式迁移到 `props`，不得继续保留在 raw schema 直读路径中。
 
@@ -406,19 +399,19 @@ export const META_FIELDS = new Set([
 
 ## Recommended Channel Mapping
 
-| Concern | Author-Facing Field | Normalized Channel | Notes |
-| --- | --- | --- | --- |
-| Editable binding path | `name` | `props.name` | 唯一双向绑定入口 |
-| Field read-only semantics | `readOnly` | `props.readOnly` | 业务编辑语义 |
-| Field required semantics | `required` | `props.required` | 字段级业务语义 |
-| Outer-frame label | `label` | `props.label` or `regions.label` | 由 renderer metadata 决定 |
-| Title-like content | `title` | `props.title` or `regions.title` | 不应默认为全局 meta |
-| Semantic display content | `text`, `data`, `options`, `items` | `props.*` | 表达式直接写在普通字段上 |
-| Node disabled state | `disabled` | `meta.disabled` | runtime control state |
-| Node visibility | `visible`, `hidden` | `meta.*` | runtime control state |
-| Node class/test identity | `className`, `testid`, `id` | `meta.*` | 外层 wrapper / observability |
-| Child schema fragments | `body`, `item`, `header`, `footer`, `label` | `regions.*` | 由 field metadata 定义 |
-| Declarative events | `onClick`, `onSubmit`, `onChange` | `events.*` | 保留 declarative action 语义 |
+| Concern                   | Author-Facing Field                         | Normalized Channel               | Notes                        |
+| ------------------------- | ------------------------------------------- | -------------------------------- | ---------------------------- |
+| Editable binding path     | `name`                                      | `props.name`                     | 唯一双向绑定入口             |
+| Field read-only semantics | `readOnly`                                  | `props.readOnly`                 | 业务编辑语义                 |
+| Field required semantics  | `required`                                  | `props.required`                 | 字段级业务语义               |
+| Outer-frame label         | `label`                                     | `props.label` or `regions.label` | 由 renderer metadata 决定    |
+| Title-like content        | `title`                                     | `props.title` or `regions.title` | 不应默认为全局 meta          |
+| Semantic display content  | `text`, `data`, `options`, `items`          | `props.*`                        | 表达式直接写在普通字段上     |
+| Node disabled state       | `disabled`                                  | `meta.disabled`                  | runtime control state        |
+| Node visibility           | `visible`, `hidden`                         | `meta.*`                         | runtime control state        |
+| Node class/test identity  | `className`, `testid`, `id`                 | `meta.*`                         | 外层 wrapper / observability |
+| Child schema fragments    | `body`, `item`, `header`, `footer`, `label` | `regions.*`                      | 由 field metadata 定义       |
+| Declarative events        | `onClick`, `onSubmit`, `onChange`           | `events.*`                       | 保留 declarative action 语义 |
 
 ## Authoring Examples
 

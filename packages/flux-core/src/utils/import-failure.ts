@@ -33,8 +33,8 @@ export function reportImportFailure(input: {
     path: input.path,
     details: {
       reason: input.reason ?? 'import-namespace-setup-failed',
-      imports: input.imports ?? []
-    }
+      imports: input.imports ?? [],
+    },
   });
 
   return error;

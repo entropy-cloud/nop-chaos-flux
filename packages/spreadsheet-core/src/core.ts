@@ -7,10 +7,7 @@ import type {
 } from './types.js';
 import { createDefaultViewport } from './types.js';
 import type { SpreadsheetCommand, SpreadsheetCommandResult } from './commands.js';
-import {
-  buildSnapshot,
-  type SpreadsheetInternalState,
-} from './core/internal-state.js';
+import { buildSnapshot, type SpreadsheetInternalState } from './core/internal-state.js';
 import { dispatchSpreadsheetCommand } from './core-dispatch.js';
 
 export interface SpreadsheetCore {
@@ -28,9 +25,7 @@ export interface CreateSpreadsheetCoreOptions {
   readonly?: boolean;
 }
 
-export function createSpreadsheetCore(
-  options: CreateSpreadsheetCoreOptions,
-): SpreadsheetCore {
+export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): SpreadsheetCore {
   const { document, config, readonly = false } = options;
   const firstSheetId = document.workbook.sheets[0]?.id ?? '';
 

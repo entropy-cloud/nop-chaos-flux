@@ -6,14 +6,10 @@ import type {
   NodeInstance,
   RenderNodeInput,
   ScopeRef,
-  TemplateNode
+  TemplateNode,
 } from '@nop-chaos/flux-core';
 import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
-import {
-  ActionScopeContext,
-  ComponentRegistryContext,
-  ScopeContext
-} from './contexts';
+import { ActionScopeContext, ComponentRegistryContext, ScopeContext } from './contexts';
 import { RenderNodes } from './render-nodes';
 
 export interface SurfaceRenderContext {
@@ -50,7 +46,7 @@ export function useSurfaceScopeSnapshot(scope: ScopeRef) {
     () => scope.readVisible(),
     () => scope.readVisible(),
     (state: unknown) => state,
-    Object.is
+    Object.is,
   );
 }
 
@@ -58,18 +54,13 @@ export function SurfaceScopeProviders(props: React.PropsWithChildren<SurfaceRend
   return (
     <ActionScopeContext.Provider value={props.actionScope}>
       <ComponentRegistryContext.Provider value={props.componentRegistry}>
-        <ScopeContext.Provider value={props.scope}>
-          {props.children}
-        </ScopeContext.Provider>
+        <ScopeContext.Provider value={props.scope}>{props.children}</ScopeContext.Provider>
       </ComponentRegistryContext.Provider>
     </ActionScopeContext.Provider>
   );
 }
 
-export function renderSurfaceNode(
-  node: unknown,
-  context: SurfaceRenderContext
-): React.ReactNode {
+export function renderSurfaceNode(node: unknown, context: SurfaceRenderContext): React.ReactNode {
   if (node == null) {
     return null;
   }
@@ -78,7 +69,12 @@ export function renderSurfaceNode(
     return node;
   }
 
-  if (isTemplateNode(node) || isTemplateNodeArray(node) || isSchema(node) || isSchemaArray(node as unknown[])) {
+  if (
+    isTemplateNode(node) ||
+    isTemplateNodeArray(node) ||
+    isSchema(node) ||
+    isSchemaArray(node as unknown[])
+  ) {
     return (
       <RenderNodes
         input={node as unknown as RenderNodeInput}
@@ -86,7 +82,7 @@ export function renderSurfaceNode(
           scope: context.scope,
           actionScope: context.actionScope,
           componentRegistry: context.componentRegistry,
-          ownerNodeInstance: context.ownerNodeInstance
+          ownerNodeInstance: context.ownerNodeInstance,
         }}
       />
     );

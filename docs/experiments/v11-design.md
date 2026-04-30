@@ -7,16 +7,17 @@
 ---
 
 > **⚠️ ARCHITECTURAL WARNING**
-> 
+>
 > This document contains execution strategy designs (Resumability, Islands, ExecutionStrategy, QRL) that are **architecturally flawed**. These concepts assume the DSL layer can control framework-level execution, which is incorrect.
-> 
+>
 > **What's wrong:**
+>
 > - `ExecutionStrategy` per node cannot be honored by React
 > - `Resumability` requires Qwik's architecture, not implementable on React
 > - `Islands` / `hydration: visible|interaction` require framework-level support
-> 
+>
 > **See**: `v11-final-design.md` for the corrected design that properly separates DSL concerns from framework concerns.
-> 
+>
 > **What remains valid**: Seven Primitives, Algebraic Schema Calculus, Security Sandbox, Expression Engine design.
 
 ---
@@ -27,13 +28,13 @@ This document presents a **truly next-generation** frontend programming model de
 
 **Core Differentiators from ALL Existing Frameworks:**
 
-| Concept | Innovation | Why It's Different |
-|---------|-----------|-------------------|
-| **Resumable-First Architecture** | Zero hydration by default | Unlike React/Vue/Solid, components serialize their state for instant resume |
-| **Compile-Time Reactivity** | No runtime VDOM diff | Unlike Solid's runtime signals, generates direct DOM mutation code |
-| **Algebraic Schema Calculus** | Formally verifiable compositions | Not marketing - actual monoid/functor laws with proofs |
-| **Selective Hydration Islands** | Per-node execution control | Beyond Astro - schema-level hydration strategies |
-| **Server-Client Schema Unification** | Single schema, execution boundary control | Beyond RSC - declarative execution location |
+| Concept                              | Innovation                                | Why It's Different                                                          |
+| ------------------------------------ | ----------------------------------------- | --------------------------------------------------------------------------- |
+| **Resumable-First Architecture**     | Zero hydration by default                 | Unlike React/Vue/Solid, components serialize their state for instant resume |
+| **Compile-Time Reactivity**          | No runtime VDOM diff                      | Unlike Solid's runtime signals, generates direct DOM mutation code          |
+| **Algebraic Schema Calculus**        | Formally verifiable compositions          | Not marketing - actual monoid/functor laws with proofs                      |
+| **Selective Hydration Islands**      | Per-node execution control                | Beyond Astro - schema-level hydration strategies                            |
+| **Server-Client Schema Unification** | Single schema, execution boundary control | Beyond RSC - declarative execution location                                 |
 
 ---
 
@@ -85,11 +86,11 @@ Query        | Q      | Server State  | Cached async resource with invalidation
 ### 2.1 Value (V) - Unchanged but Clarified
 
 ```typescript
-type Value<T> = 
+type Value<T> =
   | { kind: 'static'; data: T }
   | { kind: 'expr'; source: string; deps: string[]; evaluate: (scope: Scope) => T }
   | { kind: 'async'; loader: (signal: AbortSignal) => Promise<T>; fallback?: T }
-  | { kind: 'bound'; cell: Cell<any>; lens: Lens<any, T> }
+  | { kind: 'bound'; cell: Cell<any>; lens: Lens<any, T> };
 
 // Clarification: Values are LAZY and MEMOIZED
 // They only compute when .resolve(scope) is called
@@ -102,25 +103,25 @@ type Value<T> =
 interface Cell<T> {
   // Read via identity lens
   get(): T;
-  
+
   // Read via arbitrary lens
   view<U>(lens: Lens<T, U>): U;
-  
-  // Write via identity lens  
+
+  // Write via identity lens
   set(value: T): void;
-  
+
   // Write via arbitrary lens
   over<U>(lens: Lens<T, U>, updater: (u: U) => U): void;
-  
+
   // Derived cell (read-only computed)
   derive<U>(fn: (value: T) => U): ReadonlyCell<U>;
-  
+
   // Bidirectional derived cell (requires Iso)
   focus<U>(iso: Iso<T, U>): Cell<U>;
-  
+
   // Subscribe with automatic cleanup tracking
   subscribe(listener: (value: T, prev: T) => void): Unsubscribe;
-  
+
   // Serialization for resumability
   serialize(): SerializedCell;
   static hydrate<T>(data: SerializedCell): Cell<T>;
@@ -144,7 +145,7 @@ interface Transform<A, B> {
 // Bidirectional isomorphism (reversible)
 interface Iso<A, B> extends Transform<A, B> {
   reverse(b: B): A;
-  
+
   // Iso laws:
   // reverse(apply(a)) === a  (round-trip A)
   // apply(reverse(b)) === b  (round-trip B)
@@ -154,20 +155,20 @@ interface Iso<A, B> extends Transform<A, B> {
 interface Lens<S, A> {
   get(source: S): A;
   set(source: S, value: A): S;
-  
+
   // Composition
   compose<B>(other: Lens<A, B>): Lens<S, B>;
-  
+
   // Array index lens
   at(index: number): Lens<S, ElementOf<A>>;
   at(index: Value<number>): Lens<S, ElementOf<A>>; // Dynamic index
-  
+
   // Object key lens
   prop<K extends keyof A>(key: K): Lens<S, A[K]>;
-  
+
   // Optional lens (for nullable paths)
   optional(): Lens<S, A | undefined>;
-  
+
   // Lens laws:
   // get(set(s, a)) === a           (get-put)
   // set(s, get(s)) === s           (put-get)
@@ -188,19 +189,19 @@ const Lens = {
 interface Node<Props = any, Slots extends string = string> {
   // Type identifier
   type: string;
-  
+
   // Resolved props
   props: Props;
-  
+
   // Named child slots
   slots: Partial<Record<Slots, Node[]>>;
-  
+
   // Metadata
   meta: NodeMeta;
-  
+
   // Event handlers
   events: Record<string, Action>;
-  
+
   // NEW: Execution and hydration control
   execution: ExecutionStrategy;
 }
@@ -211,7 +212,7 @@ interface NodeMeta {
   disabled: boolean;
   className?: string;
   testId?: string;
-  
+
   // Accessibility
   ariaLabel?: string;
   ariaDescribedBy?: string;
@@ -222,13 +223,13 @@ interface NodeMeta {
 interface ExecutionStrategy {
   // Where the node executes
   location: 'server' | 'client' | 'edge';
-  
+
   // When to hydrate (if location includes client)
   hydration: 'none' | 'load' | 'visible' | 'idle' | 'interaction';
-  
+
   // Whether to stream or block
   streaming: boolean;
-  
+
   // Priority for scheduling
   priority: 'critical' | 'high' | 'normal' | 'low';
 }
@@ -262,16 +263,16 @@ const Action = {
 interface Effect<T = void> {
   // Unique identifier
   id: string;
-  
+
   // Setup function - returns cleanup
   setup: (context: EffectContext) => EffectCleanup | void;
-  
+
   // Dependencies that trigger re-run
   deps: Value<any>[];
-  
+
   // Associated resource (optional)
   resource?: Cell<T>;
-  
+
   // Lifecycle hooks
   onError?: (error: Error) => void;
   onComplete?: () => void;
@@ -279,7 +280,7 @@ interface Effect<T = void> {
 
 interface EffectContext {
   scope: Scope;
-  signal: AbortSignal;  // For cancellation
+  signal: AbortSignal; // For cancellation
   services: ServiceRegistry;
 }
 
@@ -292,10 +293,10 @@ const wsEffect: Effect = {
   setup: ({ scope, signal }) => {
     const ws = new WebSocket(scope.resolve('wsUrl'));
     signal.addEventListener('abort', () => ws.close());
-    ws.onmessage = (e) => scope.cell('messages').set(prev => [...prev, e.data]);
+    ws.onmessage = (e) => scope.cell('messages').set((prev) => [...prev, e.data]);
     return () => ws.close();
   },
-  deps: [V.expr('${wsUrl}')]
+  deps: [V.expr('${wsUrl}')],
 };
 
 // Timer
@@ -303,10 +304,10 @@ const timerEffect: Effect<number> = {
   id: 'timer',
   resource: timerCell,
   setup: ({ signal }) => {
-    const id = setInterval(() => timerCell.set(v => v + 1), 1000);
+    const id = setInterval(() => timerCell.set((v) => v + 1), 1000);
     return () => clearInterval(id);
   },
-  deps: []
+  deps: [],
 };
 ```
 
@@ -316,31 +317,31 @@ const timerEffect: Effect<number> = {
 interface Query<T, TError = Error> {
   // Cache key (can be dynamic)
   key: string | Value<(string | number)[]>;
-  
+
   // Fetch function
   fetch: (context: QueryContext) => Promise<T>;
-  
+
   // Cache configuration
-  staleTime: number;      // How long data is considered fresh (ms)
-  cacheTime: number;      // How long to keep in cache after unmount (ms)
-  
+  staleTime: number; // How long data is considered fresh (ms)
+  cacheTime: number; // How long to keep in cache after unmount (ms)
+
   // Retry configuration
   retry: number | ((failureCount: number, error: TError) => boolean);
   retryDelay: number | ((failureCount: number) => number);
-  
+
   // Behavior
-  enabled: Value<boolean>;           // Conditional fetching
-  refetchOnWindowFocus: boolean;     // Refetch when tab becomes active
-  refetchOnReconnect: boolean;       // Refetch when network reconnects
-  keepPreviousData: boolean;         // Show stale data while fetching
-  
+  enabled: Value<boolean>; // Conditional fetching
+  refetchOnWindowFocus: boolean; // Refetch when tab becomes active
+  refetchOnReconnect: boolean; // Refetch when network reconnects
+  keepPreviousData: boolean; // Show stale data while fetching
+
   // Transformations
-  select?: (data: T) => any;         // Transform result
-  
+  select?: (data: T) => any; // Transform result
+
   // Optimistic updates
   optimisticUpdate?: (variables: any) => T;
   rollbackOnError?: boolean;
-  
+
   // Placeholder/initial data
   placeholderData?: T | (() => T);
   initialData?: T;
@@ -364,7 +365,7 @@ interface QueryState<T, TError = Error> {
   isError: boolean;
   isSuccess: boolean;
   isStale: boolean;
-  
+
   // Actions
   refetch: () => Promise<T>;
   invalidate: () => void;
@@ -398,17 +399,18 @@ Schema (YAML/JSON)
 ### 3.2 Compilation Example
 
 **Input Schema:**
+
 ```yaml
 type: container
 props:
-  className: "counter"
+  className: 'counter'
 body:
   - type: text
     props:
-      content: "Count: ${count}"
+      content: 'Count: ${count}'
   - type: button
     props:
-      label: "Increment"
+      label: 'Increment'
     events:
       onClick:
         type: setValue
@@ -423,25 +425,25 @@ body:
 function mount(scope, container) {
   const div = document.createElement('div');
   div.className = 'counter';
-  
+
   const text = document.createTextNode('');
-  
+
   const button = document.createElement('button');
   button.textContent = 'Increment';
-  button.onclick = () => scope.cell('count').set(v => v + 1);
-  
+  button.onclick = () => scope.cell('count').set((v) => v + 1);
+
   div.appendChild(text);
   div.appendChild(button);
   container.appendChild(div);
-  
+
   // Fine-grained subscription - only updates the text node
   const unsub = scope.cell('count').subscribe((count) => {
     text.data = `Count: ${count}`;
   });
-  
+
   // Initial render
   text.data = `Count: ${scope.cell('count').get()}`;
-  
+
   return () => {
     unsub();
     container.removeChild(div);
@@ -451,12 +453,12 @@ function mount(scope, container) {
 
 ### 3.3 Why This Matters
 
-| Approach | Runtime Cost | Memory | Updates |
-|----------|--------------|--------|---------|
-| React VDOM | O(tree) diff every render | O(tree) VDOM | Reconciliation |
-| Vue VDOM | O(tree) diff every render | O(tree) VDOM | Reconciliation |
-| Solid Signals | O(1) signal reads | O(signals) | Direct DOM |
-| **V11 Compiled** | **O(0) at runtime** | **O(changed nodes)** | **Direct DOM** |
+| Approach         | Runtime Cost              | Memory               | Updates        |
+| ---------------- | ------------------------- | -------------------- | -------------- |
+| React VDOM       | O(tree) diff every render | O(tree) VDOM         | Reconciliation |
+| Vue VDOM         | O(tree) diff every render | O(tree) VDOM         | Reconciliation |
+| Solid Signals    | O(1) signal reads         | O(signals)           | Direct DOM     |
+| **V11 Compiled** | **O(0) at runtime**       | **O(changed nodes)** | **Direct DOM** |
 
 The key insight: **dependency tracking happens at compile time**, so runtime only executes pre-analyzed subscriptions.
 
@@ -467,6 +469,7 @@ The key insight: **dependency tracking happens at compile time**, so runtime onl
 ### 4.1 The Problem with Hydration
 
 Traditional SSR:
+
 ```
 Server: Render HTML → Send to Client
 Client: Parse HTML → Download JS → Execute → Rebuild State → Attach Listeners
@@ -474,6 +477,7 @@ Client: Parse HTML → Download JS → Execute → Rebuild State → Attach List
 ```
 
 V11 Resumability:
+
 ```
 Server: Render HTML + Serialize State → Send to Client
 Client: Parse HTML → Resume (O(1) per interaction)
@@ -486,10 +490,10 @@ Client: Parse HTML → Resume (O(1) per interaction)
 interface ResumableNode extends Node {
   // Serialized state snapshot
   $state: SerializedState;
-  
+
   // Lazy-loadable event handlers
-  $handlers: Record<string, QRL>;  // QRL = serialized function reference
-  
+  $handlers: Record<string, QRL>; // QRL = serialized function reference
+
   // Restore point
   $resume: ResumePoint;
 }
@@ -498,10 +502,10 @@ interface ResumableNode extends Node {
 interface QRL<T = any> {
   // Module path for lazy loading
   $chunk: string;
-  
+
   // Symbol name within module
   $symbol: string;
-  
+
   // Captured lexical scope (serialized)
   $capture: any[];
 }
@@ -510,15 +514,15 @@ interface QRL<T = any> {
 interface ResumePoint {
   // Scope state
   cells: Record<string, any>;
-  
+
   // Pending queries
   queries: Record<string, QueryState>;
-  
+
   // Active effects (to reconnect)
   effects: string[];
-  
+
   // Element references
-  refs: Record<string, string>;  // id -> DOM selector
+  refs: Record<string, string>; // id -> DOM selector
 }
 ```
 
@@ -529,48 +533,52 @@ interface ResumePoint {
 async function renderToResumableHTML(schema: Schema, data: any): Promise<string> {
   const scope = createScope(data);
   const nodes = await compile(schema).resolve(scope);
-  
+
   // Render HTML with embedded state
   const html = renderHTML(nodes);
-  
+
   // Serialize resume points
   const resumeScript = `<script type="application/json" id="__V11_STATE__">
     ${JSON.stringify(scope.serialize())}
   </script>`;
-  
+
   // Serialize QRLs for event handlers
   const qrlScript = `<script type="module">
     import { resume } from 'v11/client';
     resume(document.getElementById('__V11_STATE__'));
   </script>`;
-  
+
   return html + resumeScript + qrlScript;
 }
 
 // Client-side resume (NOT hydrate)
 function resume(stateElement: HTMLElement) {
   const state = JSON.parse(stateElement.textContent!);
-  
+
   // Attach event listeners lazily
-  document.addEventListener('click', async (e) => {
-    const target = e.target as HTMLElement;
-    const qrl = target.getAttribute('on:click');
-    if (qrl) {
-      const handler = await loadQRL(qrl);
-      handler(e, state);
-    }
-  }, { capture: true });
+  document.addEventListener(
+    'click',
+    async (e) => {
+      const target = e.target as HTMLElement;
+      const qrl = target.getAttribute('on:click');
+      if (qrl) {
+        const handler = await loadQRL(qrl);
+        handler(e, state);
+      }
+    },
+    { capture: true },
+  );
 }
 ```
 
 ### 4.4 Benefits
 
-| Metric | Traditional Hydration | V11 Resumability |
-|--------|----------------------|------------------|
-| TTI (Time to Interactive) | O(components) | O(1) |
-| JS Bundle | All components | Only interacted |
-| Memory | Full component tree | On-demand |
-| First Interaction | After hydration | Immediate |
+| Metric                    | Traditional Hydration | V11 Resumability |
+| ------------------------- | --------------------- | ---------------- |
+| TTI (Time to Interactive) | O(components)         | O(1)             |
+| JS Bundle                 | All components        | Only interacted  |
+| Memory                    | Full component tree   | On-demand        |
+| First Interaction         | After hydration       | Immediate        |
 
 ---
 
@@ -589,42 +597,42 @@ body:
   # Static hero - no JS needed
   - type: hero
     props:
-      title: "Welcome"
-      image: "/hero.jpg"
+      title: 'Welcome'
+      image: '/hero.jpg'
     execution:
       location: server
-      hydration: none  # Pure HTML, zero JS
-      
+      hydration: none # Pure HTML, zero JS
+
   # Interactive search - hydrate when visible
   - type: search-bar
     execution:
       location: client
-      hydration: visible  # Load JS when scrolled into view
-      
+      hydration: visible # Load JS when scrolled into view
+
   # Data table - hydrate on interaction
   - type: data-table
     props:
       data: ${users}
     execution:
-      location: server  # Initial render on server
-      hydration: interaction  # Only load JS when user interacts
-      
+      location: server # Initial render on server
+      hydration: interaction # Only load JS when user interacts
+
   # Real-time chat - always client
   - type: chat-widget
     execution:
       location: client
-      hydration: load  # Load JS immediately
+      hydration: load # Load JS immediately
       streaming: true
 ```
 
 ### 5.2 Hydration Strategies
 
-| Strategy | When JS Loads | Use Case |
-|----------|---------------|----------|
-| `none` | Never | Static content, SEO text |
-| `load` | Page load | Critical interactive components |
-| `visible` | Scroll into viewport | Below-fold interactive content |
-| `idle` | Browser idle | Non-critical components |
+| Strategy      | When JS Loads          | Use Case                         |
+| ------------- | ---------------------- | -------------------------------- |
+| `none`        | Never                  | Static content, SEO text         |
+| `load`        | Page load              | Critical interactive components  |
+| `visible`     | Scroll into viewport   | Below-fold interactive content   |
+| `idle`        | Browser idle           | Non-critical components          |
 | `interaction` | First user interaction | Hover/click-activated components |
 
 ### 5.3 Automatic Island Detection
@@ -639,12 +647,15 @@ interface HydrationAnalysis {
 
 // Analysis result
 interface HydrationMap {
-  nodes: Map<string, {
-    hasEvents: boolean;        // Has onClick, onChange, etc.
-    hasClientCells: boolean;   // Uses client-side state
-    hasDynamicContent: boolean; // Content changes after load
-    recommendedHydration: HydrationStrategy;
-  }>;
+  nodes: Map<
+    string,
+    {
+      hasEvents: boolean; // Has onClick, onChange, etc.
+      hasClientCells: boolean; // Uses client-side state
+      hasDynamicContent: boolean; // Content changes after load
+      recommendedHydration: HydrationStrategy;
+    }
+  >;
 }
 ```
 
@@ -660,11 +671,11 @@ A Schema forms a **Monoid** under composition:
 // Monoid laws
 interface SchemaMonoid {
   // Identity element
-  empty: Schema;  // Empty schema that renders nothing
-  
+  empty: Schema; // Empty schema that renders nothing
+
   // Binary operation (composition)
   compose(a: Schema, b: Schema): Schema;
-  
+
   // Laws:
   // compose(empty, a) === a          (left identity)
   // compose(a, empty) === a          (right identity)
@@ -681,17 +692,17 @@ Schemas can be mapped over:
 interface SchemaFunctor {
   // Map function over all nodes
   map<A, B>(schema: Schema<A>, fn: (node: Node<A>) => Node<B>): Schema<B>;
-  
+
   // Functor laws:
   // map(schema, identity) === schema                    (identity)
   // map(schema, f . g) === map(map(schema, g), f)       (composition)
 }
 
 // Example: Transform all button labels to uppercase
-const uppercaseButtons = Schema.map(schema, node => 
-  node.type === 'button' 
+const uppercaseButtons = Schema.map(schema, (node) =>
+  node.type === 'button'
     ? { ...node, props: { ...node.props, label: node.props.label.toUpperCase() } }
-    : node
+    : node,
 );
 ```
 
@@ -701,26 +712,35 @@ const uppercaseButtons = Schema.map(schema, node =>
 // Algebra of transformations
 const Transform = {
   // Map: Apply function to all nodes
-  map: <A, B>(f: (a: A) => B) => (schema: Schema<A>) => Schema<B>,
-  
+  map:
+    <A, B>(f: (a: A) => B) =>
+    (schema: Schema<A>) =>
+      Schema<B>,
+
   // Filter: Remove nodes matching predicate
   filter: (pred: (node: Node) => boolean) => (schema: Schema) => Schema,
-  
+
   // FlatMap: Replace nodes with schemas
   flatMap: (f: (node: Node) => Schema) => (schema: Schema) => Schema,
-  
+
   // Fold: Reduce schema to single value
-  fold: <A>(init: A, f: (acc: A, node: Node) => A) => (schema: Schema) => A,
-  
+  fold:
+    <A>(init: A, f: (acc: A, node: Node) => A) =>
+    (schema: Schema) =>
+      A,
+
   // Traverse: Apply effectful function to all nodes
-  traverse: <F>(f: (node: Node) => F<Node>) => (schema: Schema) => F<Schema>,
+  traverse:
+    <F>(f: (node: Node) => F<Node>) =>
+    (schema: Schema) =>
+      F<Schema>,
 };
 
 // Composition is associative
 const pipeline = Transform.compose(
-  Transform.filter(n => n.meta.visible),
-  Transform.map(n => ({ ...n, meta: { ...n.meta, testId: `test-${n.type}` } })),
-  Transform.flatMap(n => n.type === 'fragment' ? n.slots.children : [n])
+  Transform.filter((n) => n.meta.visible),
+  Transform.map((n) => ({ ...n, meta: { ...n.meta, testId: `test-${n.type}` } })),
+  Transform.flatMap((n) => (n.type === 'fragment' ? n.slots.children : [n])),
 );
 ```
 
@@ -741,29 +761,29 @@ const pipeline = Transform.compose(
 interface FormDefinition<T extends Record<string, any> = Record<string, any>> {
   // Data
   initialValues: Value<T>;
-  
+
   // Field definitions
   fields: FieldDefinitions<T>;
-  
+
   // Validation
   validations: ValidationRule<T>[];
   validationStrategy: ValidationStrategy;
-  
+
   // Actions
   onSubmit: Action;
   onReset?: Action;
   onValidate?: Action;
   onValuesChange?: Action;
-  
+
   // State management
   state: FormStateConfig;
-  
+
   // Auto-save
   autoSave?: AutoSaveConfig;
-  
+
   // Navigation guard
   confirmOnLeave?: ConfirmOnLeaveConfig;
-  
+
   // Persistence
   persist?: PersistConfig;
 }
@@ -771,13 +791,13 @@ interface FormDefinition<T extends Record<string, any> = Record<string, any>> {
 interface ValidationStrategy {
   // When to validate
   mode: 'onChange' | 'onBlur' | 'onSubmit' | 'all';
-  
+
   // When to re-validate after error
   revalidateMode: 'onChange' | 'onBlur' | 'onSubmit';
-  
+
   // Debounce for onChange validation
   debounceMs?: number;
-  
+
   // Continue validation after first error?
   validateAll: boolean;
 }
@@ -785,10 +805,10 @@ interface ValidationStrategy {
 interface FormStateConfig {
   // Track touched fields
   trackTouched: boolean;
-  
+
   // Track dirty fields
   trackDirty: boolean;
-  
+
   // Store submit count
   trackSubmitCount: boolean;
 }
@@ -823,32 +843,32 @@ interface PersistConfig {
 interface FormState<T = Record<string, any>> {
   // Current values
   values: T;
-  
+
   // Original values for dirty checking
   initialValues: T;
-  
+
   // Validation errors by path
   errors: Record<string, string[]>;
-  
+
   // Touched fields (user has interacted)
   touched: Record<string, boolean>;
-  
+
   // Dirty fields (value differs from initial)
   dirty: Record<string, boolean>;
-  
+
   // Submission state
   isSubmitting: boolean;
   isSubmitSuccessful: boolean;
   submitCount: number;
-  
+
   // Validation state
   isValidating: boolean;
   isValid: boolean;
-  
+
   // Derived flags
-  isDirty: boolean;      // Any field dirty
-  isTouched: boolean;    // Any field touched
-  
+  isDirty: boolean; // Any field dirty
+  isTouched: boolean; // Any field touched
+
   // Actions
   setValue: (path: string, value: any) => void;
   setValues: (values: Partial<T>, options?: { merge?: boolean }) => void;
@@ -858,7 +878,7 @@ interface FormState<T = Record<string, any>> {
   resetField: (path: string) => void;
   validate: (path?: string) => Promise<boolean>;
   submit: () => Promise<void>;
-  
+
   // Field-level state
   getFieldState: (path: string) => FieldState;
 }
@@ -878,28 +898,28 @@ interface FieldState {
 interface ValidationContext<T = Record<string, any>> {
   // Current field value
   value: any;
-  
+
   // Full path to current field
   path: string;
-  
+
   // Entire form data
   formData: T;
-  
+
   // Access other field values
   getFieldValue: <V = any>(path: string) => V;
-  
+
   // Access other field metadata
   getFieldState: (path: string) => FieldState;
-  
+
   // Current scope
   scope: Scope;
-  
+
   // Services (API, i18n, etc.)
   services: ServiceRegistry;
-  
+
   // For async validation: abort signal
   signal: AbortSignal;
-  
+
   // Previous value (for change-based validation)
   previousValue?: any;
 }
@@ -911,54 +931,54 @@ interface ValidationContext<T = Record<string, any>> {
 interface ValidationRule<T = any> {
   // Unique identifier
   id: string;
-  
+
   // Validation logic
-  validate: 
-    | Value<boolean>  // Expression-based
+  validate:
+    | Value<boolean> // Expression-based
     | ((context: ValidationContext<T>) => boolean | Promise<boolean>)
     | ((context: ValidationContext<T>) => ValidationResult | Promise<ValidationResult>);
-  
+
   // Error message (supports i18n and interpolation)
   message: Value<string>;
-  
+
   // When to trigger
   trigger: ('change' | 'blur' | 'submit')[];
-  
+
   // Async configuration
   async?: boolean;
   debounceMs?: number;
-  cancelOnChange?: boolean;  // Cancel pending async validation on new change
-  
+  cancelOnChange?: boolean; // Cancel pending async validation on new change
+
   // Dependencies (re-run when these fields change)
   dependsOn?: string[];
-  
+
   // Validation level
   level?: 'error' | 'warning' | 'info';
-  
+
   // Validation priority (lower runs first)
   priority?: number;
-  
+
   // Condition to run validation
   when?: Value<boolean>;
 }
 
 // Rich validation result
-type ValidationResult = 
-  | boolean 
-  | string  // Single error message
-  | { 
+type ValidationResult =
+  | boolean
+  | string // Single error message
+  | {
       valid: boolean;
       message?: string;
       level?: 'error' | 'warning' | 'info';
-      path?: string;  // For object/array level validation
+      path?: string; // For object/array level validation
     }
-  | ValidationResult[];  // Multiple results
+  | ValidationResult[]; // Multiple results
 ```
 
 ### 7.5 FieldDefinition Union Type (Recursive)
 
 ```typescript
-type FieldDefinition = 
+type FieldDefinition =
   | SimpleFieldDefinition
   | ObjectFieldDefinition
   | ArrayFieldDefinition
@@ -972,11 +992,11 @@ interface SimpleFieldDefinition {
   visible?: Value<boolean>;
   disabled?: Value<boolean>;
   readOnly?: Value<boolean>;
-  
+
   // Transform on read/write
   transform?: {
-    input?: Transform<any, any>;   // Transform before display
-    output?: Transform<any, any>;  // Transform before storage
+    input?: Transform<any, any>; // Transform before display
+    output?: Transform<any, any>; // Transform before storage
   };
 }
 ```
@@ -986,28 +1006,28 @@ interface SimpleFieldDefinition {
 ```typescript
 interface VariantFieldDefinition {
   type: 'variant';
-  
+
   // Single or multiple discriminators
   discriminator: string | string[];
-  
+
   // Or use expression for complex discrimination
   discriminatorExpr?: Value<string>;
-  
+
   // Static variants
   variants?: Record<string, VariantConfig>;
-  
+
   // Dynamic variants (from API or computed)
   variantsSource?: Value<Record<string, VariantConfig>>;
-  
+
   // Default variant when discriminator is empty
   default?: string;
-  
+
   // Behavior when variant changes
   onSwitch: 'preserve' | 'clear' | 'reset-to-default';
-  
+
   // Custom action on variant change
   onVariantChange?: Action;
-  
+
   // Path configuration
   path?: string;
   pathMode?: 'absolute' | 'relative';
@@ -1016,16 +1036,16 @@ interface VariantFieldDefinition {
 interface VariantConfig {
   // Label for UI (e.g., tabs, radio)
   label?: Value<string>;
-  
+
   // Fields for this variant
   fields: Record<string, FieldDefinition>;
-  
+
   // UI schema for rendering
   schema?: NodeSchema;
-  
+
   // Visibility condition
   visible?: Value<boolean>;
-  
+
   // Icon for UI
   icon?: string;
 }
@@ -1036,23 +1056,23 @@ interface VariantConfig {
 ```typescript
 interface ObjectFieldDefinition {
   type: 'object';
-  
+
   // Path to object in form data
   path: string;
-  
+
   // Path interpretation
   pathMode?: 'absolute' | 'relative';
-  
+
   // Nested fields (can include any FieldDefinition type)
   fields: Record<string, FieldDefinition>;
-  
+
   // Object-level validation
   validations?: ValidationRule[];
-  
+
   // Visibility and state
   visible?: Value<boolean>;
   disabled?: Value<boolean>;
-  
+
   // Collapse/expand for UI
   collapsible?: boolean;
   defaultCollapsed?: boolean;
@@ -1064,37 +1084,37 @@ interface ObjectFieldDefinition {
 ```typescript
 interface ArrayFieldDefinition {
   type: 'array';
-  
+
   // Path to array
   path: string;
-  
+
   // Item definition (recursive - can be any FieldDefinition)
   item: FieldDefinition;
-  
+
   // Item rendering
   itemSchema?: NodeSchema;
   itemLayout?: 'inline' | 'card' | 'row' | 'accordion' | 'table';
-  
+
   // Empty state
   emptySchema?: NodeSchema;
   emptyMessage?: Value<string>;
-  
+
   // Constraints
   minItems?: number;
   maxItems?: number;
-  
+
   // Operations
   reorderable?: boolean;
-  addable?: boolean;       // Show add button
-  removable?: boolean;     // Show remove button
-  duplicatable?: boolean;  // Show duplicate button
-  
+  addable?: boolean; // Show add button
+  removable?: boolean; // Show remove button
+  duplicatable?: boolean; // Show duplicate button
+
   // Item identity
   keyExtractor: string | ((item: any, index: number) => string);
-  
+
   // Validation
   validations?: ValidationRule[];
-  
+
   // Actions
   onAdd?: Action;
   onRemove?: Action;
@@ -1102,7 +1122,7 @@ interface ArrayFieldDefinition {
 }
 
 // Built-in array actions
-type ArrayAction = 
+type ArrayAction =
   | { type: 'array.push'; path: string; value?: any }
   | { type: 'array.insert'; path: string; index: number; value?: any }
   | { type: 'array.remove'; path: string; index: number }
@@ -1150,7 +1170,7 @@ body:
     execution:
       location: server
       hydration: none
-      
+
   # Client interactive components
   - type: user-search
     execution:
@@ -1170,13 +1190,13 @@ interface ExecutionBoundary {
   // Automatic serialization at boundary
   serialize: (data: any) => string;
   deserialize: (data: string) => any;
-  
+
   // Type checking at boundary
   validate: (data: any, schema: TypeDescriptor) => boolean;
-  
+
   // Security: What can cross the boundary
-  allowlist?: string[];  // Only these fields
-  blocklist?: string[];  // Not these fields
+  allowlist?: string[]; // Only these fields
+  blocklist?: string[]; // Not these fields
 }
 ```
 
@@ -1194,7 +1214,7 @@ interface NodeMeta {
   id: string;
   visible: boolean;
   disabled: boolean;
-  
+
   // Accessibility (WCAG 2.1 AA compliance)
   aria?: {
     label?: string;
@@ -1213,13 +1233,13 @@ interface NodeMeta {
     invalid?: boolean | 'grammar' | 'spelling';
     errormessage?: string;
   };
-  
+
   // Keyboard navigation
   keyboard?: {
     tabIndex?: number;
-    shortcuts?: Record<string, Action>;  // e.g., { 'ctrl+s': submitAction }
+    shortcuts?: Record<string, Action>; // e.g., { 'ctrl+s': submitAction }
   };
-  
+
   // Focus management
   focus?: {
     autoFocus?: boolean;
@@ -1261,12 +1281,12 @@ Output Optimized Bundle
 
 ### 10.2 Runtime Performance
 
-| Operation | Complexity | Notes |
-|-----------|-----------|-------|
-| Initial render | O(visible nodes) | Only visible islands |
-| State update | O(affected subscriptions) | Pre-computed from dep graph |
-| Event dispatch | O(1) | Direct handler lookup |
-| Hydration | O(1) per interaction | Lazy loading, no global hydration |
+| Operation      | Complexity                | Notes                             |
+| -------------- | ------------------------- | --------------------------------- |
+| Initial render | O(visible nodes)          | Only visible islands              |
+| State update   | O(affected subscriptions) | Pre-computed from dep graph       |
+| Event dispatch | O(1)                      | Direct handler lookup             |
+| Hydration      | O(1) per interaction      | Lazy loading, no global hydration |
 
 ### 10.3 Memory Model
 
@@ -1278,14 +1298,14 @@ interface MemoryConfig {
     // Collect unused cells after this time
     unusedTimeoutMs: number;
   };
-  
+
   // Query cache limits
   queryCache: {
-    maxSize: number;      // Max cached queries
-    maxAge: number;       // Max cache age
-    gcInterval: number;   // GC interval
+    maxSize: number; // Max cached queries
+    maxAge: number; // Max cache age
+    gcInterval: number; // GC interval
   };
-  
+
   // Effect cleanup
   effectCleanup: 'eager' | 'lazy';
 }
@@ -1314,7 +1334,7 @@ queries:
     staleTime: 60000
     execution:
       location: server
-      
+
   reviews:
     key: ['reviews', '${productId}']
     fetch: |
@@ -1328,7 +1348,7 @@ body:
   # Hero section - server rendered, no JS
   - type: container
     props:
-      className: "product-hero"
+      className: 'product-hero'
     execution:
       location: server
       hydration: none
@@ -1337,16 +1357,16 @@ body:
         props:
           src: ${product.data.image}
           alt: ${product.data.name}
-          
+
       - type: heading
         props:
           level: 1
           content: ${product.data.name}
-          
+
       - type: text
         props:
           content: ${product.data.price | currency}
-          
+
   # Add to cart form - client interactive
   - type: form
     execution:
@@ -1362,21 +1382,21 @@ body:
           true:
             - type: select
               props:
-                label: "Select Option"
+                label: 'Select Option'
                 bind: ${selectedVariant}
                 options: ${product.data.variants | mapToOptions('id', 'name')}
           false: []
-              
+
       - type: number-input
         props:
-          label: "Quantity"
+          label: 'Quantity'
           bind: ${quantity}
           min: 1
           max: ${product.data.stock}
-          
+
       - type: button
         props:
-          label: "Add to Cart"
+          label: 'Add to Cart'
           disabled: ${product.data.stock === 0}
         events:
           onClick:
@@ -1389,14 +1409,14 @@ body:
               variant: ${selectedVariant}
             then:
               - type: toast
-                message: "Added to cart!"
+                message: 'Added to cart!'
               - type: invalidateQuery
                 key: ['cart']
-                
+
   # Reviews - server rendered, hydrate on visible
   - type: container
     props:
-      className: "reviews-section"
+      className: 'reviews-section'
     execution:
       location: server
       hydration: visible
@@ -1404,8 +1424,8 @@ body:
       - type: heading
         props:
           level: 2
-          content: "Reviews"
-          
+          content: 'Reviews'
+
       - type: each
         items: ${reviews.data}
         as: review
@@ -1416,10 +1436,10 @@ body:
               rating: ${review.rating}
               content: ${review.content}
               date: ${review.created_at | formatDate}
-              
+
       - type: button
         props:
-          label: "Load More Reviews"
+          label: 'Load More Reviews'
         events:
           onClick:
             type: setValue
@@ -1433,16 +1453,16 @@ body:
 
 ### 12.1 Innovation Matrix
 
-| Feature | React | Vue | Solid | Qwik | AMIS | **V11** |
-|---------|-------|-----|-------|------|------|---------|
-| No VDOM | ❌ | ❌ | ✅ | ✅ | ❌ | ✅ |
-| Resumability | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Compile-time reactivity | ❌ | ⚠️ | ❌ | ✅ | ❌ | ✅ |
-| Islands | ⚠️ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Server components | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Schema-driven | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Formal algebra | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Low-code native | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Feature                 | React | Vue | Solid | Qwik | AMIS | **V11** |
+| ----------------------- | ----- | --- | ----- | ---- | ---- | ------- |
+| No VDOM                 | ❌    | ❌  | ✅    | ✅   | ❌   | ✅      |
+| Resumability            | ❌    | ❌  | ❌    | ✅   | ❌   | ✅      |
+| Compile-time reactivity | ❌    | ⚠️  | ❌    | ✅   | ❌   | ✅      |
+| Islands                 | ⚠️    | ❌  | ❌    | ✅   | ❌   | ✅      |
+| Server components       | ✅    | ❌  | ❌    | ✅   | ❌   | ✅      |
+| Schema-driven           | ❌    | ❌  | ❌    | ❌   | ✅   | ✅      |
+| Formal algebra          | ❌    | ❌  | ❌    | ❌   | ❌   | ✅      |
+| Low-code native         | ❌    | ❌  | ❌    | ❌   | ✅   | ✅      |
 
 ### 12.2 What V11 Uniquely Provides
 
@@ -1456,12 +1476,14 @@ body:
 ## Part XIII: Implementation Roadmap (Revised)
 
 ### Phase 1: Core Primitives (4 weeks)
+
 - [ ] Cell implementation with serialize/hydrate
 - [ ] Lens library with laws verification
 - [ ] Effect lifecycle management
 - [ ] Query cache implementation
 
 ### Phase 2: Compiler (6 weeks)
+
 - [ ] Schema parser (YAML/JSON)
 - [ ] Dependency analyzer
 - [ ] Island detector
@@ -1469,18 +1491,21 @@ body:
 - [ ] WASM codegen (optional)
 
 ### Phase 3: Resumability (4 weeks)
+
 - [ ] Server renderer with state serialization
 - [ ] QRL system for lazy event handlers
 - [ ] Client resume (not hydrate) runtime
 - [ ] State transfer protocol
 
 ### Phase 4: Form System (4 weeks)
+
 - [ ] FormState implementation
 - [ ] Validation engine
 - [ ] Variant/Object/Array fields
 - [ ] Form actions
 
 ### Phase 5: Developer Experience (2 weeks)
+
 - [ ] DevTools extension
 - [ ] Schema IntelliSense (JSON Schema + LSP)
 - [ ] Error overlay
@@ -1490,22 +1515,22 @@ body:
 
 ## Appendix A: Glossary (Updated)
 
-| Term | Definition |
-|------|------------|
-| **Cell** | Observable state atom with serialization support |
-| **Lens** | Bidirectional data path with algebraic laws |
-| **Iso** | Bidirectional transform (reversible pipe) |
-| **Transform** | One-way data transform (non-reversible pipe) |
-| **Value** | Polymorphic lazy/memoized data container |
-| **Node** | UI render unit with execution strategy |
-| **Action** | One-shot side effect descriptor |
-| **Effect** | Persistent side effect with cleanup |
-| **Query** | Cached async server state resource |
-| **Scope** | Hierarchical execution context |
-| **Blueprint** | Compiled intermediate representation |
-| **QRL** | Serializable function reference for lazy loading |
+| Term             | Definition                                       |
+| ---------------- | ------------------------------------------------ |
+| **Cell**         | Observable state atom with serialization support |
+| **Lens**         | Bidirectional data path with algebraic laws      |
+| **Iso**          | Bidirectional transform (reversible pipe)        |
+| **Transform**    | One-way data transform (non-reversible pipe)     |
+| **Value**        | Polymorphic lazy/memoized data container         |
+| **Node**         | UI render unit with execution strategy           |
+| **Action**       | One-shot side effect descriptor                  |
+| **Effect**       | Persistent side effect with cleanup              |
+| **Query**        | Cached async server state resource               |
+| **Scope**        | Hierarchical execution context                   |
+| **Blueprint**    | Compiled intermediate representation             |
+| **QRL**          | Serializable function reference for lazy loading |
 | **Resumability** | Ability to continue execution without re-running |
-| **Island** | Independently hydratable UI region |
+| **Island**       | Independently hydratable UI region               |
 
 ---
 
@@ -1521,4 +1546,4 @@ body:
 
 ---
 
-*End of V11 Design Document - Revision 1*
+_End of V11 Design Document - Revision 1_

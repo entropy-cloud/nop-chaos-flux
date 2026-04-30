@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  createRendererRegistry,
-  type RendererDefinition
-} from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index';
 
-const crudAuthoringTransform = (context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<import('@nop-chaos/flux-core').BaseSchema>) => {
+const crudAuthoringTransform = (
+  context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<
+    import('@nop-chaos/flux-core').BaseSchema
+  >,
+) => {
   if (context.schema.type !== 'crud') {
     return context.schema;
   }
@@ -41,7 +42,10 @@ const crudAuthoringTransform = (context: import('@nop-chaos/flux-core').Renderer
   }
 
   const { bulkActions, ...rest } = nextSchema;
-  return { ...rest, listActions: bulkActions } as unknown as import('@nop-chaos/flux-core').BaseSchema;
+  return {
+    ...rest,
+    listActions: bulkActions,
+  } as unknown as import('@nop-chaos/flux-core').BaseSchema;
 };
 
 const tableRenderer: RendererDefinition = {
@@ -55,8 +59,8 @@ const tableRenderer: RendererDefinition = {
     { key: 'onSelectionChange', kind: 'event' },
     { key: 'onRefresh', kind: 'event' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-    { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' }
-  ]
+    { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' },
+  ],
 };
 
 const crudRenderer: RendererDefinition = {
@@ -73,47 +77,50 @@ const crudRenderer: RendererDefinition = {
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     { key: 'onRowClick', kind: 'event' },
     { key: 'onSelectionChange', kind: 'event' },
-    { key: 'onRefresh', kind: 'event' }
-  ]
+    { key: 'onRefresh', kind: 'event' },
+  ],
 };
 
 const dataSourceRenderer: RendererDefinition = {
   type: 'data-source',
-  component: () => null
+  component: () => null,
 };
 
 const localDataRendererDefinitions: RendererDefinition[] = [
   tableRenderer,
   crudRenderer,
-  dataSourceRenderer
+  dataSourceRenderer,
 ];
 
 const textRenderer: RendererDefinition = {
   type: 'text',
-  component: () => null
+  component: () => null,
 };
 
 const pageRenderer: RendererDefinition = {
   type: 'page',
   component: () => null,
-  regions: ['body']
+  regions: ['body'],
 };
 
 const cardRenderer: RendererDefinition = {
   type: 'card',
   component: () => null,
-  fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }, { key: 'body', kind: 'region', regionKey: 'body' }]
+  fields: [
+    { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+    { key: 'body', kind: 'region', regionKey: 'body' },
+  ],
 };
 
 const actionButtonRenderer: RendererDefinition = {
   type: 'action-button',
   component: () => null,
-  fields: [{ key: 'onClick', kind: 'event' }]
+  fields: [{ key: 'onClick', kind: 'event' }],
 };
 
 const importHostRenderer: RendererDefinition = {
   type: 'import-host',
-  component: () => null
+  component: () => null,
 };
 
 const formRenderer: RendererDefinition = {
@@ -122,8 +129,8 @@ const formRenderer: RendererDefinition = {
   regions: ['body', 'actions'],
   scopePolicy: 'form',
   validation: {
-    kind: 'container'
-  }
+    kind: 'container',
+  },
 };
 
 const inputRenderer: RendererDefinition = {
@@ -136,23 +143,23 @@ const inputRenderer: RendererDefinition = {
     },
     collectRules() {
       return [];
-    }
-  }
+    },
+  },
 };
 
 describe('createSchemaCompiler', () => {
   it('fails fast on duplicate initial renderer definitions', () => {
     expect(() => createRendererRegistry([textRenderer, textRenderer])).toThrow(
-      'Duplicate renderer definition for type "text"'
+      'Duplicate renderer definition for type "text"',
     );
   });
 
   it('rejects duplicate renderer registrations without explicit override', () => {
     const registry = createRendererRegistry([textRenderer]);
 
-    expect(() => registry.register({ ...textRenderer, component: () => 'override' } as RendererDefinition)).toThrow(
-      'Duplicate renderer definition for type "text"'
-    );
+    expect(() =>
+      registry.register({ ...textRenderer, component: () => 'override' } as RendererDefinition),
+    ).toThrow('Duplicate renderer definition for type "text"');
   });
 
   it('allows explicit renderer overrides and warns when replacing definitions', () => {
@@ -166,7 +173,7 @@ describe('createSchemaCompiler', () => {
 
       expect(registry.get('text')).toBe(override);
       expect(warnSpy).toHaveBeenCalledWith(
-        '[RendererRegistry] Overriding renderer definition for type "text"'
+        '[RendererRegistry] Overriding renderer definition for type "text"',
       );
     } finally {
       warnSpy.mockRestore();
@@ -183,14 +190,14 @@ describe('createSchemaCompiler', () => {
       sourcePackage: '@nop-chaos/test-renderers',
       defaultSchema: {
         type: 'metadata-text',
-        text: 'Hello'
+        text: 'Hello',
       },
       propSchema: {
         type: 'object',
         properties: {
-          text: { type: 'string' }
-        }
-      }
+          text: { type: 'string' },
+        },
+      },
     };
     const registry = createRendererRegistry([metadataRenderer]);
 
@@ -201,14 +208,14 @@ describe('createSchemaCompiler', () => {
       sourcePackage: '@nop-chaos/test-renderers',
       defaultSchema: {
         type: 'metadata-text',
-        text: 'Hello'
+        text: 'Hello',
       },
       propSchema: {
         type: 'object',
         properties: {
-          text: { type: 'string' }
-        }
-      }
+          text: { type: 'string' },
+        },
+      },
     });
   });
 
@@ -216,12 +223,12 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([pageRenderer, textRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'page',
-      body: [{ type: 'text', text: '${message}' }]
+      body: [{ type: 'text', text: '${message}' }],
     });
 
     expect(Array.isArray(compiled)).toBe(false);
@@ -233,13 +240,13 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([cardRenderer, textRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'card',
       title: 'Profile',
-      body: [{ type: 'text', text: 'body' }]
+      body: [{ type: 'text', text: 'body' }],
     });
     const node = compiled.root as any;
 
@@ -252,16 +259,14 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([cardRenderer, textRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
-    const compiled = compiler.compile(
-      {
-        type: 'card',
-        title: { type: 'text', text: 'Profile' },
-        body: [{ type: 'text', text: 'body' }]
-      } as any
-    );
+    const compiled = compiler.compile({
+      type: 'card',
+      title: { type: 'text', text: 'Profile' },
+      body: [{ type: 'text', text: 'body' }],
+    } as any);
     const node = compiled.root as any;
 
     expect(node.regions.title.node).toBeTruthy();
@@ -273,12 +278,12 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([inputRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'input-text',
-      name: 'user.email'
+      name: 'user.email',
     });
     const node = compiled.root as any;
 
@@ -290,7 +295,7 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([actionButtonRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -299,9 +304,9 @@ describe('createSchemaCompiler', () => {
         action: 'setValue',
         args: {
           path: 'message',
-          value: 'clicked'
-        }
-      }
+          value: 'clicked',
+        },
+      },
     });
     const node = compiled.root as any;
 
@@ -317,12 +322,12 @@ describe('createSchemaCompiler', () => {
               isStatic: true,
               value: expect.objectContaining({
                 path: 'message',
-                value: 'clicked'
-              })
-            })
-          })
-        })
-      ]
+                value: 'clicked',
+              }),
+            }),
+          }),
+        }),
+      ],
     });
   });
 
@@ -330,26 +335,26 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([textRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'text',
       text: 'Lifecycle text',
       onMount: { action: 'probe:mount' },
-      onUnmount: { action: 'probe:unmount' }
+      onUnmount: { action: 'probe:unmount' },
     } as any);
     const node = compiled.root as any;
 
     expect(node.lifecycleActions).toEqual({
       onMount: {
         isFullyStatic: true,
-        nodes: [expect.objectContaining({ action: 'probe:mount' })]
+        nodes: [expect.objectContaining({ action: 'probe:mount' })],
       },
       onUnmount: {
         isFullyStatic: true,
-        nodes: [expect.objectContaining({ action: 'probe:unmount' })]
-      }
+        nodes: [expect.objectContaining({ action: 'probe:unmount' })],
+      },
     });
     expect(node.eventPlans.onMount).toBeUndefined();
     expect(node.eventPlans.onUnmount).toBeUndefined();
@@ -370,20 +375,20 @@ describe('createSchemaCompiler', () => {
       propContracts: {
         label: {
           shape: { kind: 'string' },
-          displayName: 'Label'
-        }
-      }
+          displayName: 'Label',
+        },
+      },
     };
 
     const registry = createRendererRegistry([transformedRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'transform-probe',
-      legacyLabel: 'hello'
+      legacyLabel: 'hello',
     } as any);
     const node = compiled.root as any;
 
@@ -396,7 +401,7 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -407,14 +412,16 @@ describe('createSchemaCompiler', () => {
           type: 'action-button',
           onClick: {
             action: 'component:validate',
-            componentId: 'user-form'
-          }
-        }
-      ]
+            componentId: 'user-form',
+          },
+        },
+      ],
     });
     const root = compiled.root as any;
 
-    const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
+    const bodyNodes = Array.isArray(root.regions.body.node)
+      ? root.regions.body.node
+      : [root.regions.body.node];
     const formNode = bodyNodes[0];
     const buttonNode = bodyNodes[1];
     const clickNode = buttonNode.eventPlans.onClick.nodes[0];
@@ -434,10 +441,10 @@ describe('createSchemaCompiler', () => {
         actions: [
           {
             type: 'action-button',
-            onClick: { action: 'component:validate', componentId: 'user-form' }
-          }
-        ]
-      }
+            onClick: { action: 'component:validate', componentId: 'user-form' },
+          },
+        ],
+      },
     });
 
     const root = compiled.root as any;
@@ -453,7 +460,7 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -464,14 +471,16 @@ describe('createSchemaCompiler', () => {
           type: 'action-button',
           onClick: {
             action: 'component:validate',
-            componentName: 'userForm'
-          }
-        }
-      ]
+            componentName: 'userForm',
+          },
+        },
+      ],
     });
     const root = compiled.root as any;
 
-    const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
+    const bodyNodes = Array.isArray(root.regions.body.node)
+      ? root.regions.body.node
+      : [root.regions.body.node];
     const buttonNode = bodyNodes[1];
     expect(buttonNode.eventPlans.onClick.nodes[0].targeting._targetCid).toBeUndefined();
   });
@@ -480,7 +489,7 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([pageRenderer, formRenderer, actionButtonRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -492,14 +501,16 @@ describe('createSchemaCompiler', () => {
           type: 'action-button',
           onClick: {
             action: 'component:validate',
-            componentId: 'dup-form'
-          }
-        }
-      ]
+            componentId: 'dup-form',
+          },
+        },
+      ],
     });
     const root = compiled.root as any;
 
-    const bodyNodes = Array.isArray(root.regions.body.node) ? root.regions.body.node : [root.regions.body.node];
+    const bodyNodes = Array.isArray(root.regions.body.node)
+      ? root.regions.body.node
+      : [root.regions.body.node];
     const buttonNode = bodyNodes[2];
 
     expect(buttonNode.eventPlans.onClick.nodes[0].targeting.componentId).toBe('dup-form');
@@ -510,7 +521,7 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([importHostRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -518,9 +529,9 @@ describe('createSchemaCompiler', () => {
       'xui:imports': [
         {
           from: 'demo-lib',
-          as: 'demo'
-        }
-      ]
+          as: 'demo',
+        },
+      ],
     });
     const node = compiled.root as any;
 
@@ -530,16 +541,16 @@ describe('createSchemaCompiler', () => {
   it('extracts table operation buttons into compiled regions', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
-      component: () => null
+      component: () => null,
     };
     const buttonRenderer: RendererDefinition = {
       type: 'button',
-      component: () => null
+      component: () => null,
     };
     const registry = createRendererRegistry([tableRenderer, buttonRenderer]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -548,9 +559,9 @@ describe('createSchemaCompiler', () => {
         {
           type: 'operation',
           label: 'Actions',
-          buttons: [{ type: 'button', label: 'Inspect' }]
-        }
-      ]
+          buttons: [{ type: 'button', label: 'Inspect' }],
+        },
+      ],
     });
     const node = compiled.root as any;
 
@@ -562,16 +573,16 @@ describe('createSchemaCompiler', () => {
   it('extracts table column label fragments into compiled regions', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
-      component: () => null
+      component: () => null,
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
-      component: () => null
+      component: () => null,
     };
     const registry = createRendererRegistry([tableRenderer, textRendererLocal]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -579,9 +590,9 @@ describe('createSchemaCompiler', () => {
       columns: [
         {
           label: { type: 'text', text: 'Member header' },
-          name: 'name'
-        }
-      ]
+          name: 'name',
+        },
+      ],
     });
     const node = compiled.root as any;
 
@@ -593,16 +604,16 @@ describe('createSchemaCompiler', () => {
   it('extracts table column cell fragments into compiled regions', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
-      component: () => null
+      component: () => null,
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
-      component: () => null
+      component: () => null,
     };
     const registry = createRendererRegistry([tableRenderer, textRendererLocal]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
@@ -611,9 +622,9 @@ describe('createSchemaCompiler', () => {
         {
           label: 'Member',
           name: 'name',
-          cell: { type: 'text', text: 'User ${record.name}' }
-        }
-      ]
+          cell: { type: 'text', text: 'User ${record.name}' },
+        },
+      ],
     });
     const node = compiled.root as any;
 
@@ -626,17 +637,17 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([...localDataRendererDefinitions]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'crud',
       filter: {
-        body: [{ type: 'text', text: 'Query region' }]
+        body: [{ type: 'text', text: 'Query region' }],
       },
       primaryField: 'id',
       perPageField: 'pageSize',
-      columns: [{ name: 'name', label: 'Name' }]
+      columns: [{ name: 'name', label: 'Name' }],
     } as any);
     const node = compiled.root as any;
 
@@ -652,13 +663,13 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([textRenderer, ...localDataRendererDefinitions]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'crud',
       bulkActions: [{ type: 'text', text: 'Delete selected' }],
-      columns: [{ name: 'name', label: 'Name' }]
+      columns: [{ name: 'name', label: 'Name' }],
     } as any);
     const node = compiled.root as any;
 
@@ -670,27 +681,27 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([...localDataRendererDefinitions]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const compiled = compiler.compile({
       type: 'crud',
       filter: {
-        body: [{ type: 'text', text: 'Legacy query region' }]
+        body: [{ type: 'text', text: 'Legacy query region' }],
       },
       queryForm: {
-        body: [{ type: 'text', text: 'Canonical query region' }]
+        body: [{ type: 'text', text: 'Canonical query region' }],
       },
       primaryField: 'legacy-id',
       rowKey: 'canonical-id',
       perPageField: 'legacyPageSize',
       pageSizeField: 'canonicalPageSize',
-      columns: [{ name: 'name', label: 'Name' }]
+      columns: [{ name: 'name', label: 'Name' }],
     } as any);
     const node = compiled.root as any;
 
     expect(node.schema.queryForm).toEqual({
-      body: [{ type: 'text', text: 'Canonical query region' }]
+      body: [{ type: 'text', text: 'Canonical query region' }],
     });
     expect(node.schema.rowKey).toBe('canonical-id');
     expect(node.schema.pageSizeField).toBe('canonicalPageSize');
@@ -703,25 +714,25 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RendererDefinition = {
       type: 'table',
       component: () => null,
-      fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }]
+      fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }],
     };
     const textRendererLocal: RendererDefinition = {
       type: 'text',
-      component: () => null
+      component: () => null,
     };
     const registry = createRendererRegistry([tableRenderer, textRendererLocal]);
     const compiler = createSchemaCompiler({
       registry,
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
 
     const plainCompiled = compiler.compile({
       type: 'table',
-      empty: 'Nothing here'
+      empty: 'Nothing here',
     });
     const regionCompiled = compiler.compile({
       type: 'text',
-      empty: { type: 'text', text: 'No rows' }
+      empty: { type: 'text', text: 'No rows' },
     } as any);
     const plainNode = plainCompiled.root as any;
     const regionNode = regionCompiled.root as any;

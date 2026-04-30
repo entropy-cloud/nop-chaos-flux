@@ -1,6 +1,10 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { hasRendererSlotContent, resolveRendererSlotContent, useOwnScopeSelector } from '@nop-chaos/flux-react';
+import {
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
+  useOwnScopeSelector,
+} from '@nop-chaos/flux-react';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { getFieldCount, joinClassNames } from './helpers.js';
 import type { ReportFieldPanelSchema } from './types.js';
@@ -13,9 +17,10 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
   const scopeFieldSources = Array.isArray(scopeData.fieldSources)
     ? (scopeData.fieldSources as FieldSourceSnapshot[])
     : [];
-  const fieldSources: FieldSourceSnapshot[] = Array.isArray(schemaFieldSources) && schemaFieldSources.length > 0
-    ? schemaFieldSources
-    : scopeFieldSources;
+  const fieldSources: FieldSourceSnapshot[] =
+    Array.isArray(schemaFieldSources) && schemaFieldSources.length > 0
+      ? schemaFieldSources
+      : scopeFieldSources;
 
   const designer = scopeData.designer as { documentName?: string; fieldCount?: number } | undefined;
 
@@ -24,7 +29,10 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
   const emptyLabel = String(props.props.emptyLabel ?? 'No field sources registered.');
 
   return (
-    <section className={joinClassNames('nop-report-designer', props.meta.className)} data-slot="report-field-panel-shell">
+    <section
+      className={joinClassNames('nop-report-designer', props.meta.className)}
+      data-slot="report-field-panel-shell"
+    >
       {hasRendererSlotContent(titleContent) ? (
         <header data-slot="report-designer-section-header">
           <h3>{titleContent}</h3>

@@ -11,14 +11,24 @@ import type {
   ResolvedNodeProps,
   ScopeChange,
   ScopeRef,
-  TemplateNode
+  TemplateNode,
 } from '@nop-chaos/flux-core';
-import { createNamedActionProvider, mergeClassAliases, resolveClassAliases } from '@nop-chaos/flux-core';
-import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
 import {
-  ClassAliasesContext,
-} from './contexts';
-import { useRenderInstancePath, useRendererRuntime, useCurrentForm, useCurrentPage, useCurrentSurfaceRuntime, useCurrentImportFrame, useCurrentValidationScope } from './hooks';
+  createNamedActionProvider,
+  mergeClassAliases,
+  resolveClassAliases,
+} from '@nop-chaos/flux-core';
+import { scopeChangeHitsDependencies } from '@nop-chaos/flux-runtime';
+import { ClassAliasesContext } from './contexts';
+import {
+  useRenderInstancePath,
+  useRendererRuntime,
+  useCurrentForm,
+  useCurrentPage,
+  useCurrentSurfaceRuntime,
+  useCurrentImportFrame,
+  useCurrentValidationScope,
+} from './hooks';
 import { createHelpers } from './helpers';
 import { createNormalizedActionEvent } from './helpers';
 import { RenderNodes } from './render-nodes';
@@ -37,10 +47,14 @@ function useMountedCid(runtime: import('@nop-chaos/flux-core').RendererRuntime) 
   return useMemo(() => runtime.allocateMountedCid(), [runtime]);
 }
 
-function createImportOwnedActionScope(runtime: import('@nop-chaos/flux-core').RendererRuntime, parent: ActionScope | undefined, nodeId: string) {
+function createImportOwnedActionScope(
+  runtime: import('@nop-chaos/flux-core').RendererRuntime,
+  parent: ActionScope | undefined,
+  nodeId: string,
+) {
   return runtime.createActionScope({
     id: `${nodeId}:action-scope`,
-    parent
+    parent,
   });
 }
 
@@ -62,41 +76,43 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const mountedCid = props.mountedCid;
   const nodeState = useMemo<NodeRuntimeState>(
     () => createTemplateNodeRuntimeState(props.node),
-    [props.node]
+    [props.node],
   );
 
   const propsProgram = props.node.propsProgram;
   const metaProgram = props.node.metaProgram;
   const isStatic = useMemo(
-    () => propsProgram.kind === 'static' && Object.keys(metaProgram).every((key) => {
-      const v = metaProgram[key as keyof typeof metaProgram];
-      return !v || (v as { kind?: string }).kind !== 'dynamic';
-    }),
-    [propsProgram, metaProgram]
+    () =>
+      propsProgram.kind === 'static' &&
+      Object.keys(metaProgram).every((key) => {
+        const v = metaProgram[key as keyof typeof metaProgram];
+        return !v || (v as { kind?: string }).kind !== 'dynamic';
+      }),
+    [propsProgram, metaProgram],
   );
 
   const getNodeResolution = () => ({
     meta: runtime.resolveNodeMeta(props.node, props.scope, nodeState),
-    resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState)
+    resolvedProps: runtime.resolveNodeProps(props.node, props.scope, nodeState),
   });
   const subscribe = useMemo(
-    () => isStatic
-      ? (() => () => undefined)
-      : ((listener: () => void) => props.scope.store?.subscribe((change: ScopeChange) => {
-        const metaHit = scopeChangeHitsDependencies(change, nodeState.metaDependencies);
-        const propsHit = scopeChangeHitsDependencies(change, nodeState.propsDependencies);
+    () =>
+      isStatic
+        ? () => () => undefined
+        : (listener: () => void) =>
+            props.scope.store?.subscribe((change: ScopeChange) => {
+              const metaHit = scopeChangeHitsDependencies(change, nodeState.metaDependencies);
+              const propsHit = scopeChangeHitsDependencies(change, nodeState.propsDependencies);
 
-        if (metaHit || propsHit) {
-          listener();
-        }
-      }) ?? (() => undefined)),
-    [isStatic, props.scope, nodeState]
+              if (metaHit || propsHit) {
+                listener();
+              }
+            }) ?? (() => undefined),
+    [isStatic, props.scope, nodeState],
   );
   const getSnapshot = useMemo(
-    () => isStatic
-      ? (() => null)
-      : (() => props.scope.store?.getLastChange() ?? null),
-    [isStatic, props.scope]
+    () => (isStatic ? () => null : () => props.scope.store?.getLastChange() ?? null),
+    [isStatic, props.scope],
   );
 
   const { meta: baseMeta, resolvedProps: baseResolvedProps } = useSyncExternalStoreWithSelector(
@@ -104,52 +120,68 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     getSnapshot,
     getSnapshot,
     getNodeResolution,
-    (prev: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps } | null, next: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps }) => {
+    (
+      prev: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps } | null,
+      next: { meta: ResolvedNodeMeta; resolvedProps: ResolvedNodeProps },
+    ) => {
       if (!prev) return false;
       return prev.meta === next.meta && prev.resolvedProps === next.resolvedProps;
-    }
+    },
   );
 
   const nodeClassAliases = props.node.classAliasesPlan?.aliases;
   const hasNodeClassAliases = Boolean(nodeClassAliases);
   const hasParentClassAliases = Boolean(parentClassAliases);
   const mergedClassAliases = useMemo(
-    () => hasParentClassAliases || hasNodeClassAliases
-      ? mergeClassAliases(parentClassAliases, nodeClassAliases)
-      : undefined,
-    [hasNodeClassAliases, hasParentClassAliases, parentClassAliases, nodeClassAliases]
+    () =>
+      hasParentClassAliases || hasNodeClassAliases
+        ? mergeClassAliases(parentClassAliases, nodeClassAliases)
+        : undefined,
+    [hasNodeClassAliases, hasParentClassAliases, parentClassAliases, nodeClassAliases],
   );
   const resolvedMeta = useMemo(() => {
     const resolvedClassName = mergedClassAliases
       ? resolveClassAliases(baseMeta.className, mergedClassAliases)
       : baseMeta.className;
-    const nextMeta = resolvedClassName !== baseMeta.className
-      ? { ...baseMeta, className: resolvedClassName }
-      : baseMeta;
+    const nextMeta =
+      resolvedClassName !== baseMeta.className
+        ? { ...baseMeta, className: resolvedClassName }
+        : baseMeta;
 
-    return nextMeta.cid === mountedCid
-      ? nextMeta
-      : { ...nextMeta, cid: mountedCid };
+    return nextMeta.cid === mountedCid ? nextMeta : { ...nextMeta, cid: mountedCid };
   }, [baseMeta, mergedClassAliases, mountedCid]);
 
   const activeActionScope = props.actionScope;
   const activeComponentRegistry = props.componentRegistry;
   const renderScope = props.scope;
   const finalResolvedMeta = resolvedMeta;
-  const resolvedComponentProps = useNodeSourceProps(props.node, baseResolvedProps.value, renderScope);
+  const resolvedComponentProps = useNodeSourceProps(
+    props.node,
+    baseResolvedProps.value,
+    renderScope,
+  );
   const nodeInstance = useMemo(
-    () => createNodeInstance({
-      templateNode: props.node,
-      scope: renderScope,
-      state: nodeState,
-      cid: finalResolvedMeta.cid,
-      instancePath,
-      mounted: true
-    }),
-    [props.node, renderScope, nodeState, finalResolvedMeta.cid, instancePath]
+    () =>
+      createNodeInstance({
+        templateNode: props.node,
+        scope: renderScope,
+        state: nodeState,
+        cid: finalResolvedMeta.cid,
+        instancePath,
+        mounted: true,
+      }),
+    [props.node, renderScope, nodeState, finalResolvedMeta.cid, instancePath],
   );
 
-  useNodeDebugData(activeComponentRegistry, finalResolvedMeta.cid, nodeInstance, renderScope, finalResolvedMeta, resolvedComponentProps, currentForm);
+  useNodeDebugData(
+    activeComponentRegistry,
+    finalResolvedMeta.cid,
+    nodeInstance,
+    renderScope,
+    finalResolvedMeta,
+    resolvedComponentProps,
+    currentForm,
+  );
 
   const helpers = useMemo(
     () =>
@@ -161,9 +193,18 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
         form: currentForm,
         page: currentPage,
         surfaceRuntime: currentSurfaceRuntime,
-        nodeInstance
+        nodeInstance,
       }),
-    [runtime, renderScope, activeActionScope, activeComponentRegistry, currentForm, currentPage, currentSurfaceRuntime, nodeInstance]
+    [
+      runtime,
+      renderScope,
+      activeActionScope,
+      activeComponentRegistry,
+      currentForm,
+      currentPage,
+      currentSurfaceRuntime,
+      nodeInstance,
+    ],
   );
   const lifecycleActions = props.node.lifecycleActions;
 
@@ -180,10 +221,10 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
             helpers.dispatch(action as any, {
               ...eventContext,
               nodeInstance: eventContext?.nodeInstance ?? nodeInstance,
-              event: createNormalizedActionEvent(event)
-            })
+              event: createNormalizedActionEvent(event),
+            }),
         ];
-      })
+      }),
     );
   }, [helpers, nodeInstance, props.node.eventPlans]);
 
@@ -197,7 +238,8 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
           const rawBindings = options?.bindings;
 
           if (params && params.length > 0 && rawBindings) {
-            const currentScopeData = renderScope.readVisible?.() as Record<string, unknown> | undefined ?? {};
+            const currentScopeData =
+              (renderScope.readVisible?.() as Record<string, unknown> | undefined) ?? {};
             const outerSlotFrame = readSlotFrame(currentScopeData);
             const slotFrame = buildSlotFrame(rawBindings, outerSlotFrame);
             return (
@@ -207,7 +249,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
                   ...options,
                   bindings: { [SLOT_KEY]: slotFrame },
                   isolate: options?.isolate ?? regionIsolate,
-                  ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance
+                  ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance,
                 }}
               />
             );
@@ -218,7 +260,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
               input={region.node as any}
               options={{
                 ...options,
-                ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance
+                ownerNodeInstance: options?.ownerNodeInstance ?? nodeInstance,
               }}
             />
           );
@@ -231,9 +273,9 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
             templateNode: region.node,
             params,
             render: instantiateRegion,
-          }
+          },
         ];
-      })
+      }),
     );
   }, [nodeInstance, renderScope, props.node.regions]);
 
@@ -247,7 +289,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     meta: finalResolvedMeta,
     regions,
     events,
-    helpers
+    helpers,
   };
 
   const Comp = props.node.component.component!;
@@ -261,12 +303,12 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   useRenderMonitor({
     monitor: runtime.env.monitor,
     templateNode: props.node,
-    resolvedMeta: finalResolvedMeta
+    resolvedMeta: finalResolvedMeta,
   });
   useNodeLifecycleActions({
     lifecycleActions: lifecycleActionsValue,
     helpers,
-    nodeInstance
+    nodeInstance,
   });
 
   const fieldName = typeof props.node.schema.name === 'string' ? props.node.schema.name : undefined;
@@ -278,10 +320,16 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       return;
     }
 
-    (hiddenOwner as import('@nop-chaos/flux-core').FormRuntime).notifyFieldHidden(fieldName, isFieldHidden);
+    (hiddenOwner as import('@nop-chaos/flux-core').FormRuntime).notifyFieldHidden(
+      fieldName,
+      isFieldHidden,
+    );
 
     return () => {
-      (hiddenOwner as import('@nop-chaos/flux-core').FormRuntime).notifyFieldHidden(fieldName, false);
+      (hiddenOwner as import('@nop-chaos/flux-core').FormRuntime).notifyFieldHidden(
+        fieldName,
+        false,
+      );
     };
   }, [hiddenOwner, fieldName, isFieldHidden]);
 
@@ -308,7 +356,10 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       templateNode={props.node}
       nodeInstance={nodeInstance}
       actionScope={activeActionScope}
-      provideActionScope={props.node.component.actionScopePolicy !== 'new' && Boolean(props.node.importsPlan?.preparedImports.length)}
+      provideActionScope={
+        props.node.component.actionScopePolicy !== 'new' &&
+        Boolean(props.node.importsPlan?.preparedImports.length)
+      }
       componentRegistry={activeComponentRegistry}
       importFrame={props.importFrame}
       scope={renderScope}
@@ -337,44 +388,58 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
 
     return createImportOwnedActionScope(runtime, props.actionScope, props.node.id);
   }, [runtime, props.actionScope, props.node.id, nodeImports]);
-  const { activeActionScope, activeComponentRegistry } = useNodeScopes(runtime, {
-    nodeId: props.node.id,
-    actionScopePolicy: props.node.component.actionScopePolicy,
-    componentRegistryPolicy: props.node.component.componentRegistryPolicy
-  }, props.actionScope, props.componentRegistry);
+  const { activeActionScope, activeComponentRegistry } = useNodeScopes(
+    runtime,
+    {
+      nodeId: props.node.id,
+      actionScopePolicy: props.node.component.actionScopePolicy,
+      componentRegistryPolicy: props.node.component.componentRegistryPolicy,
+    },
+    props.actionScope,
+    props.componentRegistry,
+  );
   const resolvedActionScope = importOwnedActionScope ?? activeActionScope;
   const importSetupState = useMemo<NodeRuntimeState | undefined>(
-    () => nodeImports?.length
-      ? createTemplateNodeRuntimeState(props.node)
-      : undefined,
-    [props.node, nodeImports]
+    () => (nodeImports?.length ? createTemplateNodeRuntimeState(props.node) : undefined),
+    [props.node, nodeImports],
   );
   const importOwnerNodeInstance = useMemo(
-    () => nodeImports?.length && importSetupState
-      ? createNodeInstance({
-          templateNode: props.node,
-          scope: props.scope,
-          state: importSetupState,
-          cid: mountedCid,
-          instancePath,
-          mounted: true
-        })
-      : undefined,
-    [props.node, props.scope, importSetupState, mountedCid, instancePath, nodeImports]
+    () =>
+      nodeImports?.length && importSetupState
+        ? createNodeInstance({
+            templateNode: props.node,
+            scope: props.scope,
+            state: importSetupState,
+            cid: mountedCid,
+            instancePath,
+            mounted: true,
+          })
+        : undefined,
+    [props.node, props.scope, importSetupState, mountedCid, instancePath, nodeImports],
   );
   const importFrame = useMemo(
-    () => nodeImports?.length
-      ? runtime.importStack.installPrepared({
-          ownerNodeId: props.node.id,
-          parentFrame: parentImportFrame,
-          imports: nodeImports,
-          actionScope: resolvedActionScope,
-          componentRegistry: activeComponentRegistry,
-          scope: props.scope,
-          nodeInstance: importOwnerNodeInstance
-        })
-      : parentImportFrame,
-    [runtime, props.node.id, parentImportFrame, nodeImports, resolvedActionScope, activeComponentRegistry, props.scope, importOwnerNodeInstance]
+    () =>
+      nodeImports?.length
+        ? runtime.importStack.installPrepared({
+            ownerNodeId: props.node.id,
+            parentFrame: parentImportFrame,
+            imports: nodeImports,
+            actionScope: resolvedActionScope,
+            componentRegistry: activeComponentRegistry,
+            scope: props.scope,
+            nodeInstance: importOwnerNodeInstance,
+          })
+        : parentImportFrame,
+    [
+      runtime,
+      props.node.id,
+      parentImportFrame,
+      nodeImports,
+      resolvedActionScope,
+      activeComponentRegistry,
+      props.scope,
+      importOwnerNodeInstance,
+    ],
   );
   useEffect(() => {
     return () => {
@@ -391,7 +456,7 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     const provider = createNamedActionProvider(
       namedActionPlans,
       resolvedActionScope.parent,
-      (program, ctx) => ctx.runtime.dispatch(program, ctx)
+      (program, ctx) => ctx.runtime.dispatch(program, ctx),
     );
     return resolvedActionScope.registerNamespace('__xui_actions__', provider);
   }, [namedActionPlans, resolvedActionScope]);
@@ -401,17 +466,18 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     };
   }, [namedActionCleanup]);
   const importBindings = useMemo(
-    () => importFrame ? runtime.importStack.currentBindings(importFrame.id) : undefined,
-    [runtime, importFrame]
+    () => (importFrame ? runtime.importStack.currentBindings(importFrame.id) : undefined),
+    [runtime, importFrame],
   );
   const renderScope = useMemo(
-    () => !importBindings || Object.keys(importBindings).length === 0
-      ? props.scope
-      : runtime.createChildScope(props.scope, importBindings, {
-          pathSuffix: 'imports',
-          scopeKey: `${props.node.id}:imports`
-        }),
-    [runtime, props.scope, importBindings, props.node.id]
+    () =>
+      !importBindings || Object.keys(importBindings).length === 0
+        ? props.scope
+        : runtime.createChildScope(props.scope, importBindings, {
+            pathSuffix: 'imports',
+            scopeKey: `${props.node.id}:imports`,
+          }),
+    [runtime, props.scope, importBindings, props.node.id],
   );
 
   return (

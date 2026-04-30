@@ -107,9 +107,12 @@ export function replaceInDocument(
   }
 
   const cells = { ...sheet.cells, [key]: { ...existing, value: newValue } };
-  const workbook = { ...updated.workbook, sheets: updated.workbook.sheets.map((sheetDoc) =>
-    sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-  ) };
+  const workbook = {
+    ...updated.workbook,
+    sheets: updated.workbook.sheets.map((sheetDoc) =>
+      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
+    ),
+  };
   return { ...updated, workbook };
 }
 
@@ -121,9 +124,10 @@ export function replaceAllInDocument(
   sheetId?: string,
 ): { doc: SpreadsheetDocument; count: number } {
   let count = 0;
-  const sheets = options.searchScope === 'workbook' || !sheetId
-    ? doc.workbook.sheets
-    : doc.workbook.sheets.filter((sheet) => sheet.id === sheetId);
+  const sheets =
+    options.searchScope === 'workbook' || !sheetId
+      ? doc.workbook.sheets
+      : doc.workbook.sheets.filter((sheet) => sheet.id === sheetId);
 
   const sheetPatches = new Map<string, Record<string, { value: string }>>();
 

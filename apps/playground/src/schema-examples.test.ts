@@ -27,7 +27,10 @@ describe('docs schema examples', () => {
     registerFormAdvancedRenderers(registry);
     registerDataRenderers(registry);
 
-    const markdown = readFileSync(resolve(process.cwd(), '../../docs/examples/user-management-schema.md'), 'utf8');
+    const markdown = readFileSync(
+      resolve(process.cwd(), '../../docs/examples/user-management-schema.md'),
+      'utf8',
+    );
     const schema = extractJsonExample(markdown);
     const diagnostics = validateSchema({
       schema,
@@ -35,9 +38,9 @@ describe('docs schema examples', () => {
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
       options: {
         validation: {
-          unknownBarePropertyPolicy: 'error'
-        }
-      }
+          unknownBarePropertyPolicy: 'error',
+        },
+      },
     });
 
     expect(diagnostics).toEqual([]);

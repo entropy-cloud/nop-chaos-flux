@@ -37,7 +37,7 @@ const esmUtils = {
 
   return Object.keys(props).some((key) => key === 'role' || key === 'title' || key.startsWith('aria-'));
 }
-`
+`,
 };
 
 async function ensurePatched(esmDir) {

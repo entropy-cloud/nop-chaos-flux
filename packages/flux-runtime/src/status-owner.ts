@@ -1,7 +1,11 @@
 import { getIn, parsePath, type ScopeRef } from '@nop-chaos/flux-core';
 import { createProjectedScopeStore } from './projected-scope-store';
 
-export function publishOwnerStatus<TSummary>(scope: ScopeRef | undefined, statusPath: string | undefined, summary: TSummary): void {
+export function publishOwnerStatus<TSummary>(
+  scope: ScopeRef | undefined,
+  statusPath: string | undefined,
+  summary: TSummary,
+): void {
   if (!scope || !statusPath) {
     return;
   }
@@ -9,10 +13,14 @@ export function publishOwnerStatus<TSummary>(scope: ScopeRef | undefined, status
   scope.update(statusPath, summary);
 }
 
-export function createReadonlyScopeBinding<TSummary>(scope: ScopeRef, bindingKey: string, getSummary: () => TSummary): ScopeRef {
+export function createReadonlyScopeBinding<TSummary>(
+  scope: ScopeRef,
+  bindingKey: string,
+  getSummary: () => TSummary,
+): ScopeRef {
   const buildOwnSnapshot = () => ({
     ...scope.readOwn(),
-    [bindingKey]: getSummary()
+    [bindingKey]: getSummary(),
   });
   const { readSnapshot, store } = createProjectedScopeStore(scope, buildOwnSnapshot);
 
@@ -63,7 +71,11 @@ export function createReadonlyScopeBinding<TSummary>(scope: ScopeRef, bindingKey
     readVisible() {
       const parentVisible = scope.readVisible();
       const summary = getSummary();
-      if (cachedVisible && lastParentVisible === parentVisible && lastSummaryForVisible === summary) {
+      if (
+        cachedVisible &&
+        lastParentVisible === parentVisible &&
+        lastSummaryForVisible === summary
+      ) {
         return cachedVisible;
       }
       lastParentVisible = parentVisible;
@@ -83,9 +95,9 @@ export function createReadonlyScopeBinding<TSummary>(scope: ScopeRef, bindingKey
       lastSummaryForMat = summary;
       cachedMat = {
         ...parentMat,
-        [bindingKey]: summary
+        [bindingKey]: summary,
       };
       return cachedMat;
-    }
+    },
   };
 }

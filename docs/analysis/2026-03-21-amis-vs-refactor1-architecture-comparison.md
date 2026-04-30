@@ -6,10 +6,10 @@
 
 ### 1.1 项目信息
 
-| 项目 | 路径 | 技术栈 |
-|------|------|--------|
-| 当前项目 | `C:\can\nop\nop-amis-wt\refactor-1` | React 19, Zustand, Vite 8, Vitest |
-| amis 模板 | `c:/can/nop/templates/amis` | React 18, MobX MST, fis3/rollup, Jest |
+| 项目      | 路径                                | 技术栈                                |
+| --------- | ----------------------------------- | ------------------------------------- |
+| 当前项目  | `C:\can\nop\nop-amis-wt\refactor-1` | React 19, Zustand, Vite 8, Vitest     |
+| amis 模板 | `c:/can/nop/templates/amis`         | React 18, MobX MST, fis3/rollup, Jest |
 
 ---
 
@@ -17,13 +17,13 @@
 
 ### 2.1 整体架构模式
 
-| 维度 | 当前项目 | amis 模板 |
-|------|----------|-----------|
-| **架构风格** | 编译时 + 运行时分离 | 运行时优先 |
-| **Schema 处理** | 预编译为 `CompiledSchemaNode` | 运行时动态解析 |
-| **状态管理** | Zustand (Vanilla Store) | MobX State Tree |
-| **数据流** | 单向数据流 + 外部订阅 | 响应式双向绑定 |
-| **类型系统** | 严格类型定义 (`@nop-chaos/flux-core`) | 渐进式类型 |
+| 维度            | 当前项目                              | amis 模板       |
+| --------------- | ------------------------------------- | --------------- |
+| **架构风格**    | 编译时 + 运行时分离                   | 运行时优先      |
+| **Schema 处理** | 预编译为 `CompiledSchemaNode`         | 运行时动态解析  |
+| **状态管理**    | Zustand (Vanilla Store)               | MobX State Tree |
+| **数据流**      | 单向数据流 + 外部订阅                 | 响应式双向绑定  |
+| **类型系统**    | 严格类型定义 (`@nop-chaos/flux-core`) | 渐进式类型      |
 
 ### 2.2 包结构对比
 
@@ -58,15 +58,19 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     touched: {},
     dirty: {},
     visited: {},
-    submitting: false
+    submitting: false,
   }));
-  
+
   return {
-    getState() { return store.getState(); },
-    subscribe(listener) { return store.subscribe(listener); },
-    setValue(path, value) { 
-      store.setState({ values: setIn(store.getState().values, path, value) }); 
-    }
+    getState() {
+      return store.getState();
+    },
+    subscribe(listener) {
+      return store.subscribe(listener);
+    },
+    setValue(path, value) {
+      store.setState({ values: setIn(store.getState().values, path, value) });
+    },
   };
 }
 ```
@@ -83,23 +87,28 @@ export function createScopeRef(input: {
 }): ScopeRef {
   const store = input.store ?? createScopeStore(input.initialData ?? {});
   const read = createScopeReader(input.parent, store, input.isolate);
-  
+
   return {
     id: input.id,
     path: input.path,
     parent: input.parent,
     store,
-    get value() { return read(); },
-    get(path) { return resolveScopePath(this, path); },
+    get value() {
+      return read();
+    },
+    get(path) {
+      return resolveScopePath(this, path);
+    },
     update(path, value) {
       const snapshot = store.getSnapshot();
       store.setSnapshot(setIn(snapshot, path, value));
-    }
+    },
   };
 }
 ```
 
 **设计特点**:
+
 - 纯数据结构，无 React 依赖
 - 惰性计算 + 缓存优化 (通过 `lastMaterialized` 缓存)
 - 明确的作用域链 (`parent` 引用)
@@ -116,13 +125,15 @@ export const FormStore = ServiceStore.named('FormStore')
     submited: false,
     submiting: false,
     savedData: types.frozen(),
-    canAccessSuperData: true
+    canAccessSuperData: true,
   })
-  .views(self => ({
-    get items() { return getItems(); },
+  .views((self) => ({
+    get items() {
+      return getItems();
+    },
     get errors() {
       let errors: { [propName: string]: Array<string> } = {};
-      self.items.forEach(item => {
+      self.items.forEach((item) => {
         if (!item.valid) {
           errors[item.name] = Array.isArray(errors[item.name])
             ? errors[item.name].concat(item.errors)
@@ -132,14 +143,13 @@ export const FormStore = ServiceStore.named('FormStore')
       return errors;
     },
     get valid() {
-      return self.items.every(item => item.valid) && 
-             (!self.restError || !self.restError.length);
-    }
+      return self.items.every((item) => item.valid) && (!self.restError || !self.restError.length);
+    },
   }))
-  .actions(self => ({
+  .actions((self) => ({
     setValues(values: object, tag?: object, replace?: boolean) {
       self.updateData(values, tag, replace);
-    }
+    },
   }));
 ```
 
@@ -161,15 +171,15 @@ export const ScopedContext = React.createContext(rootScopedContext);
 
 ### 3.3 状态管理对比总结
 
-| 特性 | 当前项目 (Zustand) | amis (MobX MST) |
-|------|-------------------|-----------------|
-| 包体积 | ~3KB gzipped | ~50KB gzipped |
-| 框架依赖 | 无 | 与 React 强绑定 |
-| 依赖追踪 | 手动实现 | 自动追踪 |
-| 时间旅行 | 需额外实现 | 内置支持 |
-| 异步 action | 需包装 | 内置 `flow` 支持 |
-| 调试工具 | 需自建 | mobx-devtools |
-| 代码风格 | 函数式 | 装饰器语法 |
+| 特性        | 当前项目 (Zustand) | amis (MobX MST)  |
+| ----------- | ------------------ | ---------------- |
+| 包体积      | ~3KB gzipped       | ~50KB gzipped    |
+| 框架依赖    | 无                 | 与 React 强绑定  |
+| 依赖追踪    | 手动实现           | 自动追踪         |
+| 时间旅行    | 需额外实现         | 内置支持         |
+| 异步 action | 需包装             | 内置 `flow` 支持 |
+| 调试工具    | 需自建             | mobx-devtools    |
+| 代码风格    | 函数式             | 装饰器语法       |
 
 ---
 
@@ -178,6 +188,7 @@ export const ScopedContext = React.createContext(rootScopedContext);
 ### 4.1 当前项目: AOT 编译
 
 **编译时**:
+
 ```
 Schema (JSON)
      ↓
@@ -206,14 +217,14 @@ function NodeRenderer(props: {
   page?: PageRuntime;
 }) {
   const runtime = useRendererRuntime();
-  
+
   // 1. 创建节点运行时状态
   const nodeState = props.node.createRuntimeState();
-  
+
   // 2. 解析元数据和属性
   const meta = runtime.resolveNodeMeta(props.node, props.scope, nodeState);
   const resolvedProps = runtime.resolveNodeProps(props.node, props.scope, nodeState);
-  
+
   // 3. 渲染组件
   const Comp = props.node.component.component;
   return <Comp {...componentProps} />;
@@ -228,26 +239,26 @@ function NodeRenderer(props: {
 export class SchemaRenderer extends React.Component<SchemaRendererProps> {
   resolveRenderer(props: SchemaRendererProps) {
     let schema = props.schema;
-    
+
     // 1. 处理 $ref 引用
     if (schema && schema.$ref) {
       schema = { ...props.resolveDefinitions(schema.$ref), ...schema };
     }
-    
+
     // 2. 查找渲染器
     this.renderer = resolveRenderer(path, schema, props);
-    
+
     return { path, schema };
   }
-  
+
   render() {
     let { schema } = this.resolveRenderer(this.props);
-    
+
     // 3. 处理 children/component
     if (schema.children) {
       return schema.children({ ...rest, render: this.renderChild });
     }
-    
+
     // 4. 渲染组件
     const Component = this.renderer.component!;
     return <Component {...props} ref={this.childRef} />;
@@ -257,12 +268,12 @@ export class SchemaRenderer extends React.Component<SchemaRendererProps> {
 
 ### 4.3 渲染流程对比
 
-| 阶段 | 当前项目 | amis |
-|------|---------|------|
-| Schema 解析 | 编译时完成 | 运行时解析 |
-| 表达式处理 | 预编译为执行函数 | 运行时 evaluate |
-| 验证规则 | 预构建依赖图 | 运行时动态构建 |
-| 渲染器查找 | 注册表直接映射 | 注册表 + 正则匹配 |
+| 阶段        | 当前项目         | amis              |
+| ----------- | ---------------- | ----------------- |
+| Schema 解析 | 编译时完成       | 运行时解析        |
+| 表达式处理  | 预编译为执行函数 | 运行时 evaluate   |
+| 验证规则    | 预构建依赖图     | 运行时动态构建    |
+| 渲染器查找  | 注册表直接映射   | 注册表 + 正则匹配 |
 
 ---
 
@@ -278,21 +289,21 @@ export interface FormRuntime {
   store: FormStoreApi;
   scope: ScopeRef;
   validation?: CompiledFormValidationModel;
-  
+
   registerField(registration: RuntimeFieldRegistration): () => void;
   validateField(path: string): Promise<ValidationResult>;
   validateForm(): Promise<FormValidationResult>;
   validateSubtree(path: string): Promise<FormValidationResult>;
-  
+
   getError(path: string): ValidationError[] | undefined;
   isValidating(path: string): boolean;
   isTouched(path: string): boolean;
   isDirty(path: string): boolean;
-  
+
   submit(api?: ApiObject): Promise<ActionResult>;
   reset(values?: object): void;
   setValue(name: string, value: unknown): void;
-  
+
   // 数组操作
   appendValue(path: string, value: unknown): void;
   removeValue(path: string, index: number): void;
@@ -311,29 +322,39 @@ export const FormStore = ServiceStore.named('FormStore')
     inited: false,
     validated: false,
     submited: false,
-    submiting: false
+    submiting: false,
   })
-  .views(self => ({
-    get items() { return getItems(); },
-    get valid() { return self.items.every(item => item.valid); },
-    get validating() { return self.items.some(item => item.validating); }
+  .views((self) => ({
+    get items() {
+      return getItems();
+    },
+    get valid() {
+      return self.items.every((item) => item.valid);
+    },
+    get validating() {
+      return self.items.some((item) => item.validating);
+    },
   }))
-  .actions(self => ({
-    setValues(values, tag, replace, concatFields, changeReason) { /* ... */ },
-    validate(): Promise<boolean> { /* ... */ }
+  .actions((self) => ({
+    setValues(values, tag, replace, concatFields, changeReason) {
+      /* ... */
+    },
+    validate(): Promise<boolean> {
+      /* ... */
+    },
   }));
 ```
 
 ### 5.3 验证系统对比
 
-| 特性 | 当前项目 | amis |
-|------|---------|------|
-| 验证时机 | 编译时确定 traversal order | 运行时动态触发 |
-| 依赖追踪 | 显式声明 `dependsOn` | MobX 自动追踪 |
-| 异步验证 | 内置防抖 + 取消机制 | lodash debounce |
-| 验证注册 | ValidationRegistry | 各 FormItem 自管理 |
-| 错误收集 | 按路径聚合 | 按组件实例聚合 |
-| 数组验证 | 自动重映射状态 | FormItemStore 管理 |
+| 特性     | 当前项目                   | amis               |
+| -------- | -------------------------- | ------------------ |
+| 验证时机 | 编译时确定 traversal order | 运行时动态触发     |
+| 依赖追踪 | 显式声明 `dependsOn`       | MobX 自动追踪      |
+| 异步验证 | 内置防抖 + 取消机制        | lodash debounce    |
+| 验证注册 | ValidationRegistry         | 各 FormItem 自管理 |
+| 错误收集 | 按路径聚合                 | 按组件实例聚合     |
+| 数组验证 | 自动重映射状态             | FormItemStore 管理 |
 
 ---
 
@@ -345,11 +366,11 @@ export const FormStore = ServiceStore.named('FormStore')
 
 ```typescript
 export interface ActionSchema extends SchemaObject {
-  action: string;            // 动作类型
-  componentId?: string;    // 目标组件 ID
-  api?: ApiObject;          // API 配置
+  action: string; // 动作类型
+  componentId?: string; // 目标组件 ID
+  api?: ApiObject; // API 配置
   dialog?: Record<string, any>;
-  then?: ActionSchema | ActionSchema[];  // 后续动作
+  then?: ActionSchema | ActionSchema[]; // 后续动作
 }
 
 export interface ActionContext {
@@ -389,7 +410,7 @@ export const registerAction = (type: string, action: RendererAction) => {
 export const runActions = async (
   actions: ListenerAction | ListenerAction[],
   renderer: ListenerContext,
-  event: any
+  event: any,
 ) => {
   for (const actionConfig of actions) {
     let actionInstance = getActionByType(actionConfig.actionType);
@@ -401,12 +422,12 @@ export const runActions = async (
 
 ### 6.3 事件系统对比
 
-| 维度 | 当前项目 | amis |
-|------|---------|------|
-| 事件绑定 | 编译时收集 | 运行时 bindEvent |
-| 事件分发 | 通过作用域传播 | ScopedContext |
+| 维度     | 当前项目       | amis             |
+| -------- | -------------- | ---------------- |
+| 事件绑定 | 编译时收集     | 运行时 bindEvent |
+| 事件分发 | 通过作用域传播 | ScopedContext    |
 | 全局广播 | 通过 pageStore | BroadcastChannel |
-| 动作注册 | 内置 + 可扩展 | 全局注册表 |
+| 动作注册 | 内置 + 可扩展  | 全局注册表       |
 
 ---
 
@@ -434,13 +455,19 @@ export type ScopePolicy = 'inherit' | 'isolate' | 'page' | 'form' | 'dialog' | '
 
 ```typescript
 export function createRendererRegistry(
-  initialDefinitions: RendererDefinition[] = []
+  initialDefinitions: RendererDefinition[] = [],
 ): RendererRegistry {
   const map = new Map<string, RendererDefinition>();
   return {
-    register(definition) { map.set(definition.type, definition); },
-    get(type) { return map.get(type); },
-    has(type) { return map.has(type); }
+    register(definition) {
+      map.set(definition.type, definition);
+    },
+    get(type) {
+      return map.get(type);
+    },
+    has(type) {
+      return map.has(type);
+    },
   };
 }
 ```
@@ -464,20 +491,20 @@ export interface RendererConfig extends RendererBasicConfig {
 @Renderer({
   type: 'page',
   storeType: ServiceStore.name,
-  isolateScope: true
+  isolateScope: true,
 })
 export class PageRenderer extends PageRendererBase {}
 ```
 
 ### 7.3 渲染器注册对比
 
-| 维度 | 当前项目 | amis |
-|------|---------|------|
-| 注册方式 | 函数式 API | 装饰器 |
-| 类型安全 | 强类型定义 | 渐进式类型 |
-| Store 关联 | `scopePolicy` 策略 | `storeType` + HOC |
-| 作用域控制 | 显式策略枚举 | `isolateScope` 布尔值 |
-| 优先级 | 无 | `weight` 属性 |
+| 维度       | 当前项目           | amis                  |
+| ---------- | ------------------ | --------------------- |
+| 注册方式   | 函数式 API         | 装饰器                |
+| 类型安全   | 强类型定义         | 渐进式类型            |
+| Store 关联 | `scopePolicy` 策略 | `storeType` + HOC     |
+| 作用域控制 | 显式策略枚举       | `isolateScope` 布尔值 |
+| 优先级     | 无                 | `weight` 属性         |
 
 ---
 
@@ -517,6 +544,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
 ```
 
 **Context 体系**:
+
 - `RuntimeContext`: 渲染器运行时
 - `ScopeContext`: 作用域引用
 - `FormContext`: 表单运行时
@@ -601,6 +629,7 @@ function AMISSchema({ schema, options, ...props }) {
 ### 10.1 当前项目 (refactor-1)
 
 **优势**:
+
 - 更现代的技术栈 (React 19, Zustand, Vite 8)
 - 编译时优化，运行时性能更优
 - 强类型系统，更好的 IDE 支持
@@ -609,6 +638,7 @@ function AMISSchema({ schema, options, ...props }) {
 - ESM-first，更好的 tree-shaking
 
 **劣势**:
+
 - 功能不完整（缺少 editor, office-viewer）
 - 生态较小，社区支持少
 - 学习曲线（新的架构模式）
@@ -617,6 +647,7 @@ function AMISSchema({ schema, options, ...props }) {
 ### 10.2 amis 模板
 
 **优势**:
+
 - 功能完整，生态成熟
 - MobX MST 提供丰富的状态管理能力
 - 大量内置组件和渲染器
@@ -624,6 +655,7 @@ function AMISSchema({ schema, options, ...props }) {
 - 可视化编辑器支持
 
 **劣势**:
+
 - 包体积较大
 - 装饰器语法，现代化不足
 - 运行时解析，性能有优化空间
@@ -661,21 +693,20 @@ function AMISSchema({ schema, options, ...props }) {
 
 ### 当前项目核心文件
 
-| 文件 | 位置 | 描述 |
-|------|------|------|
-| FormStore | `packages/flux-runtime/src/form-store.ts` | 表单状态存储 |
-| FormRuntime | `packages/flux-runtime/src/form-runtime.ts` | 表单运行时 |
-| ScopeRef | `packages/flux-runtime/src/scope.ts` | 作用域引用 |
-| React 层 | `packages/flux-react/src/index.tsx` | React 渲染层 |
-| Registry | `packages/flux-runtime/src/registry.ts` | 渲染器注册表 |
+| 文件        | 位置                                        | 描述         |
+| ----------- | ------------------------------------------- | ------------ |
+| FormStore   | `packages/flux-runtime/src/form-store.ts`   | 表单状态存储 |
+| FormRuntime | `packages/flux-runtime/src/form-runtime.ts` | 表单运行时   |
+| ScopeRef    | `packages/flux-runtime/src/scope.ts`        | 作用域引用   |
+| React 层    | `packages/flux-react/src/index.tsx`         | React 渲染层 |
+| Registry    | `packages/flux-runtime/src/registry.ts`     | 渲染器注册表 |
 
 ### amis 模板核心文件
 
-| 文件 | 位置 | 描述 |
-|------|------|------|
-| FormStore | `packages/amis-core/src/store/form.ts` | 表单 Store |
+| 文件           | 位置                                        | 描述          |
+| -------------- | ------------------------------------------- | ------------- |
+| FormStore      | `packages/amis-core/src/store/form.ts`      | 表单 Store    |
 | SchemaRenderer | `packages/amis-core/src/SchemaRenderer.tsx` | Schema 渲染器 |
-| Scoped | `packages/amis-core/src/Scoped.tsx` | 作用域系统 |
-| Actions | `packages/amis-core/src/actions/` | 动作系统 |
-| Factory | `packages/amis-core/src/factory.tsx` | 渲染器工厂 |
-
+| Scoped         | `packages/amis-core/src/Scoped.tsx`         | 作用域系统    |
+| Actions        | `packages/amis-core/src/actions/`           | 动作系统      |
+| Factory        | `packages/amis-core/src/factory.tsx`        | 渲染器工厂    |

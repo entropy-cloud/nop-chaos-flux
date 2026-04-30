@@ -18,23 +18,28 @@ Instead, the React Flow integration sits behind the same host-owned bridge contr
 
 ```ts
 interface DesignerCanvasBridgeProps {
-  snapshot: DesignerSnapshot
-  pendingConnectionSourceId: string | null
-  reconnectingEdgeId: string | null
-  onPaneClick(): void
-  onNodeSelect(nodeId: string, event: React.MouseEvent): void
-  onEdgeSelect(edgeId: string, event: React.MouseEvent): void
-  onStartConnection(nodeId: string, event: React.MouseEvent): void
-  onCancelConnection(nodeId: string, event: React.MouseEvent): void
-  onCompleteConnection(nodeId: string, event: React.MouseEvent): void
-  onStartReconnect(edgeId: string, event: React.MouseEvent): void
-  onCancelReconnect(edgeId: string, event: React.MouseEvent): void
-  onCompleteReconnect(edgeId: string, sourceId: string, targetId: string, event: React.MouseEvent): void
-  onDuplicateNode(nodeId: string, event: React.MouseEvent): void
-  onDeleteNode(nodeId: string, event: React.MouseEvent): void
-  onDeleteEdge(edgeId: string, event: React.MouseEvent): void
-  onMoveNode(nodeId: string, event: React.MouseEvent, position?: { x: number; y: number }): void
-  onViewportChange(viewport: { x: number; y: number; zoom: number }, event: React.MouseEvent): void
+  snapshot: DesignerSnapshot;
+  pendingConnectionSourceId: string | null;
+  reconnectingEdgeId: string | null;
+  onPaneClick(): void;
+  onNodeSelect(nodeId: string, event: React.MouseEvent): void;
+  onEdgeSelect(edgeId: string, event: React.MouseEvent): void;
+  onStartConnection(nodeId: string, event: React.MouseEvent): void;
+  onCancelConnection(nodeId: string, event: React.MouseEvent): void;
+  onCompleteConnection(nodeId: string, event: React.MouseEvent): void;
+  onStartReconnect(edgeId: string, event: React.MouseEvent): void;
+  onCancelReconnect(edgeId: string, event: React.MouseEvent): void;
+  onCompleteReconnect(
+    edgeId: string,
+    sourceId: string,
+    targetId: string,
+    event: React.MouseEvent,
+  ): void;
+  onDuplicateNode(nodeId: string, event: React.MouseEvent): void;
+  onDeleteNode(nodeId: string, event: React.MouseEvent): void;
+  onDeleteEdge(edgeId: string, event: React.MouseEvent): void;
+  onMoveNode(nodeId: string, event: React.MouseEvent, position?: { x: number; y: number }): void;
+  onViewportChange(viewport: { x: number; y: number; zoom: number }, event: React.MouseEvent): void;
 }
 ```
 

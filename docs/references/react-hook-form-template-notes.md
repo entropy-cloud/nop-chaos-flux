@@ -120,10 +120,10 @@ But RHF shows that subscription granularity should be treated as a first-class d
 Potential future APIs:
 
 ```ts
-useFormNodeState(path)
-useFieldError(path)
-useValidationState(path)
-subscribeFormState(selector, callback)
+useFormNodeState(path);
+useFieldError(path);
+useValidationState(path);
+subscribeFormState(selector, callback);
 ```
 
 We do not need RHF's exact proxy mechanism, but the selective-subscription principle is highly relevant.
@@ -161,13 +161,13 @@ We already identified that array semantics need to become first-class in `flux`,
 We should likely add runtime methods along the lines of:
 
 ```ts
-appendValue(path, value)
-prependValue(path, value)
-insertValue(path, index, value)
-removeValue(path, index)
-moveValue(path, from, to)
-swapValue(path, a, b)
-replaceValue(path, value)
+appendValue(path, value);
+prependValue(path, value);
+insertValue(path, index, value);
+removeValue(path, index);
+moveValue(path, from, to);
+swapValue(path, a, b);
+replaceValue(path, value);
 ```
 
 This is one of the strongest references from the RHF template.
@@ -369,9 +369,9 @@ RHF strongly reinforces that we should keep investing in:
 We should consider renderer-facing helpers like:
 
 ```ts
-useValidationNodeState(path)
-useAggregateError(path)
-useChildFieldState(path)
+useValidationNodeState(path);
+useAggregateError(path);
+useChildFieldState(path);
 ```
 
 These would extend the same performance principle RHF uses in `useFormState` and `useWatch`.

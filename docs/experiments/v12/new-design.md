@@ -1047,12 +1047,12 @@ This section is normative. If an implementation differs here, it is a different 
 
 ### 15.3.1 Participation Matrix
 
-| State | Editable | Dirty-tracked | Validates | Serializes | Blocks Submit | Visible in Default UI |
-|---|---|---:|---:|---:|---:|---:|
-| visible | yes if enabled+writable | yes | yes | yes | yes, by issue policy | yes |
-| hidden | no direct user edit | yes if changed indirectly | yes unless detached | yes unless detached | yes, by issue policy | no |
-| disabled | no direct user edit | yes if changed indirectly | yes | yes | yes, by issue policy | yes |
-| detached | no | no | no | no | no | no by default |
+| State    | Editable                |             Dirty-tracked |           Validates |          Serializes |        Blocks Submit | Visible in Default UI |
+| -------- | ----------------------- | ------------------------: | ------------------: | ------------------: | -------------------: | --------------------: |
+| visible  | yes if enabled+writable |                       yes |                 yes |                 yes | yes, by issue policy |                   yes |
+| hidden   | no direct user edit     | yes if changed indirectly | yes unless detached | yes unless detached | yes, by issue policy |                    no |
+| disabled | no direct user edit     | yes if changed indirectly |                 yes |                 yes | yes, by issue policy |                   yes |
+| detached | no                      |                        no |                  no |                  no |                   no |         no by default |
 
 Normative notes:
 
@@ -1062,11 +1062,11 @@ Normative notes:
 
 ### 15.3.2 Owner Mode Matrix
 
-| Owner Mode | Local Draft | Local Commit | Parent Submit Reads Draft | Parent Submit Reads Committed | Local Discard | Status Bubbles to Parent |
-|---|---:|---:|---:|---:|---:|---:|
-| inline / embedded | no separate draft | no separate commit | yes | n/a | via parent reset | yes |
-| staged / independent | yes | yes | no | yes by default | yes | configurable summary only |
-| linked / referenced | no local draft by default | foreign owner only | no | yes, reference only | n/a | reference health only |
+| Owner Mode           |               Local Draft |       Local Commit | Parent Submit Reads Draft | Parent Submit Reads Committed |    Local Discard |  Status Bubbles to Parent |
+| -------------------- | ------------------------: | -----------------: | ------------------------: | ----------------------------: | ---------------: | ------------------------: |
+| inline / embedded    |         no separate draft | no separate commit |                       yes |                           n/a | via parent reset |                       yes |
+| staged / independent |                       yes |                yes |                        no |                yes by default |              yes | configurable summary only |
+| linked / referenced  | no local draft by default | foreign owner only |                        no |           yes, reference only |              n/a |     reference health only |
 
 Normative notes:
 
@@ -1076,12 +1076,12 @@ Normative notes:
 
 ### 15.3.3 Variant Retention Matrix
 
-| Retention | Inactive Data Kept | Inactive Issues Kept | Inactive Validates | Inactive Serializes | Restorable on Re-activate | Undo Preserves Prior Branch |
-|---|---:|---:|---:|---:|---:|---:|
-| prune | no | historical audit only | no | no | no | yes through transaction history |
-| freeze | yes | yes | no | no | yes | yes |
-| detach | yes | yes | no | no | yes | yes |
-| snapshot | snapshot only | snapshot only | no | no | restore from snapshot only | yes |
+| Retention | Inactive Data Kept |  Inactive Issues Kept | Inactive Validates | Inactive Serializes |  Restorable on Re-activate |     Undo Preserves Prior Branch |
+| --------- | -----------------: | --------------------: | -----------------: | ------------------: | -------------------------: | ------------------------------: |
+| prune     |                 no | historical audit only |                 no |                  no |                         no | yes through transaction history |
+| freeze    |                yes |                   yes |                 no |                  no |                        yes |                             yes |
+| detach    |                yes |                   yes |                 no |                  no |                        yes |                             yes |
+| snapshot  |      snapshot only |         snapshot only |                 no |                  no | restore from snapshot only |                             yes |
 
 Normative note:
 
@@ -1091,12 +1091,12 @@ Normative note:
 
 ### 15.3.4 Hydration Matrix For Object Fields
 
-| Hydration | Editable | Validates | Serializes | Submit Default |
-|---|---:|---:|---:|---:|
-| absent | no | no | no | skip |
-| stub | limited by reference fields only | no unless policy says reference-valid | reference only | submit reference |
-| partial | only hydrated fields | hydrated slice only | partial or reference by policy | auto-load or partial by policy |
-| full | yes | yes | yes | full object |
+| Hydration |                         Editable |                             Validates |                     Serializes |                 Submit Default |
+| --------- | -------------------------------: | ------------------------------------: | -----------------------------: | -----------------------------: |
+| absent    |                               no |                                    no |                             no |                           skip |
+| stub      | limited by reference fields only | no unless policy says reference-valid |                 reference only |               submit reference |
+| partial   |             only hydrated fields |                   hydrated slice only | partial or reference by policy | auto-load or partial by policy |
+| full      |                              yes |                                   yes |                            yes |                    full object |
 
 ### 15.3.5 Branch Switch Algorithm
 

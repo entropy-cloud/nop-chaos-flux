@@ -42,9 +42,7 @@ test.describe('Template Expression Insertion', () => {
     await expect(insertExprButton).toBeVisible({ timeout: 15000 });
     await insertExprButton.click();
 
-    await expect(
-      page.getByText('插入模板表达式')
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('插入模板表达式')).toBeVisible({ timeout: 5000 });
   });
 
   test('EL Expression type is selected by default', async ({ page }) => {
@@ -85,7 +83,16 @@ test.describe('Template Expression Insertion', () => {
     await expect(tagSelect).toBeVisible();
     await expect(tagSelect).toHaveValue('c:if');
 
-    const tags = ['c:if', 'c:for', 'c:forEach', 'c:choose', 'c:when', 'c:otherwise', 'c:set', 'c:out'];
+    const tags = [
+      'c:if',
+      'c:for',
+      'c:forEach',
+      'c:choose',
+      'c:when',
+      'c:otherwise',
+      'c:set',
+      'c:out',
+    ];
     for (const tag of tags) {
       await expect(tagSelect.locator(`option[value="${tag}"]`)).toHaveCount(1);
     }

@@ -456,13 +456,13 @@ child owner commit 只写入其 **immediate parent owner**。
 
 ### Recommended Family Defaults
 
-| Owner family | Ingress default | Egress default | Notes |
-| --- | --- | --- | --- |
-| `form` | owner-local current value | `live-write-through` | form 默认是 live owner，但可承载 staged child domains |
-| `detail-field` / `detail-view` | `seed-on-open` | `commit-only` or `publish-patch` | 当前最成熟的 staged child-domain baseline |
-| row-local staged editor | `seed-on-open` | `publish-patch` | commit target resolve 必须优先按 `rowKey` |
-| filter/search panel | owner-specific seed | `commit-only` | 是否发布到 page/query owner 由 action contract 决定 |
-| wizard step | owner-specific seed | `commit-only` | staged boundary 由 step confirm/next 决定 |
+| Owner family                   | Ingress default           | Egress default                   | Notes                                                 |
+| ------------------------------ | ------------------------- | -------------------------------- | ----------------------------------------------------- |
+| `form`                         | owner-local current value | `live-write-through`             | form 默认是 live owner，但可承载 staged child domains |
+| `detail-field` / `detail-view` | `seed-on-open`            | `commit-only` or `publish-patch` | 当前最成熟的 staged child-domain baseline             |
+| row-local staged editor        | `seed-on-open`            | `publish-patch`                  | commit target resolve 必须优先按 `rowKey`             |
+| filter/search panel            | owner-specific seed       | `commit-only`                    | 是否发布到 page/query owner 由 action contract 决定   |
+| wizard step                    | owner-specific seed       | `commit-only`                    | staged boundary 由 step confirm/next 决定             |
 
 这些默认值是 owner-family baseline，不排除更窄的 schema option 特化。
 
@@ -476,21 +476,21 @@ child owner commit 只写入其 **immediate parent owner**。
 2. 是否创建 `Surface Owner`
 3. 是否创建 `Data Domain Owner`
 
-| Boundary | Own scope | Surface owner | Data domain owner | Default interpretation |
-| --- | --- | --- | --- | --- |
-| `page` root | yes | no | conditional yes | 在没有更近 form/draft owner 时可承接 page/root data ownership |
-| `form` | yes | no | yes | live publish 的 submit-capable domain owner |
-| `dialog` / `drawer` shell | yes | yes | no | own scope + surface state，不默认拥有业务 submit boundary |
-| `detail-field` / `detail-view` | yes | usually hosted in surface | yes | 当前 staged child-domain baseline |
-| `object-field` | maybe projected scope/view | no | no | parent-owned projected editor |
-| `array-field(item)` | yes or projected item view | no | no | parent-owned item editor；item scope 不等于 item owner |
-| `variant-field` | maybe projected scope/view | no | no | parent-owned polymorphic editor |
-| table row scope | yes | no | no | isolated row scope 默认不是 child domain |
-| row-local staged editor | yes | optional | conditional yes | 只有显式 local validation + publish boundary 时才 create-owner |
-| filter/search panel | yes | optional | conditional yes | 非 form owner，但可以是 validation-capable data domain |
-| wizard step | yes | no | conditional yes | 取决于是否拥有独立 publish boundary |
-| `loop item` | yes | no | no | lexical repeated scope，不默认 create-owner |
-| `recurse` | structural only | no | no | recursive structure 本身不构成 owner boundary |
+| Boundary                       | Own scope                  | Surface owner             | Data domain owner | Default interpretation                                         |
+| ------------------------------ | -------------------------- | ------------------------- | ----------------- | -------------------------------------------------------------- |
+| `page` root                    | yes                        | no                        | conditional yes   | 在没有更近 form/draft owner 时可承接 page/root data ownership  |
+| `form`                         | yes                        | no                        | yes               | live publish 的 submit-capable domain owner                    |
+| `dialog` / `drawer` shell      | yes                        | yes                       | no                | own scope + surface state，不默认拥有业务 submit boundary      |
+| `detail-field` / `detail-view` | yes                        | usually hosted in surface | yes               | 当前 staged child-domain baseline                              |
+| `object-field`                 | maybe projected scope/view | no                        | no                | parent-owned projected editor                                  |
+| `array-field(item)`            | yes or projected item view | no                        | no                | parent-owned item editor；item scope 不等于 item owner         |
+| `variant-field`                | maybe projected scope/view | no                        | no                | parent-owned polymorphic editor                                |
+| table row scope                | yes                        | no                        | no                | isolated row scope 默认不是 child domain                       |
+| row-local staged editor        | yes                        | optional                  | conditional yes   | 只有显式 local validation + publish boundary 时才 create-owner |
+| filter/search panel            | yes                        | optional                  | conditional yes   | 非 form owner，但可以是 validation-capable data domain         |
+| wizard step                    | yes                        | no                        | conditional yes   | 取决于是否拥有独立 publish boundary                            |
+| `loop item`                    | yes                        | no                        | no                | lexical repeated scope，不默认 create-owner                    |
+| `recurse`                      | structural only            | no                        | no                | recursive structure 本身不构成 owner boundary                  |
 
 ## Owner Taxonomy Under This Model
 

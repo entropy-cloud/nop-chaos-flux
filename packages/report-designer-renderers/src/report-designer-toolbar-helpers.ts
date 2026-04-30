@@ -32,14 +32,16 @@ export function readState(name: string, snapshot: Record<string, unknown>): unkn
   }
 }
 
-export function evalBooleanExpr(value: boolean | string | undefined, snapshot: Record<string, unknown>): boolean {
+export function evalBooleanExpr(
+  value: boolean | string | undefined,
+  snapshot: Record<string, unknown>,
+): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value !== 'string') return false;
 
   const trimmed = value.trim();
-  const expr = trimmed.startsWith('${') && trimmed.endsWith('}')
-    ? trimmed.slice(2, -1).trim()
-    : trimmed;
+  const expr =
+    trimmed.startsWith('${') && trimmed.endsWith('}') ? trimmed.slice(2, -1).trim() : trimmed;
 
   if (expr === '') return false;
   if (expr.startsWith('!')) {
@@ -48,7 +50,10 @@ export function evalBooleanExpr(value: boolean | string | undefined, snapshot: R
   return readState(expr, snapshot) === true;
 }
 
-export function evalTextTemplate(template: string | undefined, snapshot: Record<string, unknown>): string {
+export function evalTextTemplate(
+  template: string | undefined,
+  snapshot: Record<string, unknown>,
+): string {
   if (!template) return '';
 
   const trimmed = template.trim();
@@ -94,7 +99,10 @@ export function toCommand(action: string | undefined): Record<string, unknown> |
   }
 }
 
-export function mergeToolbarItems(defaults: ToolbarItem[], overrides: ToolbarItem[] | undefined): ToolbarItem[] {
+export function mergeToolbarItems(
+  defaults: ToolbarItem[],
+  overrides: ToolbarItem[] | undefined,
+): ToolbarItem[] {
   if (!overrides || overrides.length === 0) return [...defaults];
 
   const overrideMap = new Map<string, ToolbarItem>();

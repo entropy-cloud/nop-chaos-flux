@@ -10,33 +10,44 @@ export { useTableVisibleColumns } from './use-table-visible-columns';
 export function useTablePagination(
   schemaProps: TableSchema,
   onPageChange: RendererComponentProps<TableSchema>['events']['onPageChange'],
-  helpers: RendererComponentProps<TableSchema>['helpers']
+  helpers: RendererComponentProps<TableSchema>['helpers'],
 ) {
   const renderScope = useRenderScope();
   const paginationOwnership = schemaProps.paginationOwnership ?? 'local';
-  const paginationStatePath = typeof schemaProps.paginationStatePath === 'string' ? schemaProps.paginationStatePath : undefined;
+  const paginationStatePath =
+    typeof schemaProps.paginationStatePath === 'string'
+      ? schemaProps.paginationStatePath
+      : undefined;
   const paginationEnabled = schemaProps.pagination?.enabled !== false;
 
   const [localCurrentPage, setLocalCurrentPage] = useState(1);
   const [localPageSize, setLocalPageSize] = useState(schemaProps.pagination?.pageSize ?? 10);
 
-  const scopePaginationState = useScopeSelector(
-    (scopeData) => paginationOwnership === 'scope' && paginationStatePath
+  const scopePaginationState = useScopeSelector((scopeData) =>
+    paginationOwnership === 'scope' && paginationStatePath
       ? (getIn(scopeData, paginationStatePath) as Record<string, unknown> | undefined)
-      : undefined
+      : undefined,
   );
 
-  const currentPage = paginationOwnership === 'controlled'
-    ? toPositiveNumber(schemaProps.pagination?.currentPage, 1)
-    : paginationOwnership === 'scope'
-      ? toPositiveNumber(scopePaginationState?.currentPage, toPositiveNumber(schemaProps.pagination?.currentPage, 1))
-      : localCurrentPage;
+  const currentPage =
+    paginationOwnership === 'controlled'
+      ? toPositiveNumber(schemaProps.pagination?.currentPage, 1)
+      : paginationOwnership === 'scope'
+        ? toPositiveNumber(
+            scopePaginationState?.currentPage,
+            toPositiveNumber(schemaProps.pagination?.currentPage, 1),
+          )
+        : localCurrentPage;
 
-  const pageSize = paginationOwnership === 'controlled'
-    ? toPositiveNumber(schemaProps.pagination?.pageSize, 10)
-    : paginationOwnership === 'scope'
-      ? toPositiveNumber(scopePaginationState?.pageSize, toPositiveNumber(schemaProps.pagination?.pageSize, 10))
-      : localPageSize;
+  const pageSize =
+    paginationOwnership === 'controlled'
+      ? toPositiveNumber(schemaProps.pagination?.pageSize, 10)
+      : paginationOwnership === 'scope'
+        ? toPositiveNumber(
+            scopePaginationState?.pageSize,
+            toPositiveNumber(schemaProps.pagination?.pageSize, 10),
+          )
+        : localPageSize;
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -48,10 +59,13 @@ export function useTablePagination(
         }
       });
       onPageChange?.(null, {
-        scope: helpers.createScope({ page, pageSize }, { scopeKey: 'pagination', pathSuffix: 'pagination' }),
+        scope: helpers.createScope(
+          { page, pageSize },
+          { scopeKey: 'pagination', pathSuffix: 'pagination' },
+        ),
       });
     },
-    [paginationOwnership, paginationStatePath, pageSize, onPageChange, helpers, renderScope]
+    [paginationOwnership, paginationStatePath, pageSize, onPageChange, helpers, renderScope],
   );
 
   const handlePageSizeChange = useCallback(
@@ -65,10 +79,13 @@ export function useTablePagination(
         }
       });
       onPageChange?.(null, {
-        scope: helpers.createScope({ page: 1, pageSize: newPageSize }, { scopeKey: 'pagination', pathSuffix: 'pagination' }),
+        scope: helpers.createScope(
+          { page: 1, pageSize: newPageSize },
+          { scopeKey: 'pagination', pathSuffix: 'pagination' },
+        ),
       });
     },
-    [paginationOwnership, paginationStatePath, onPageChange, helpers, renderScope]
+    [paginationOwnership, paginationStatePath, onPageChange, helpers, renderScope],
   );
 
   return { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange };
@@ -78,25 +95,27 @@ export function useTableSelection(
   schemaProps: TableSchema,
   source: Array<Record<string, any>>,
   onSelectionChange: RendererComponentProps<TableSchema>['events']['onSelectionChange'],
-  helpers: RendererComponentProps<TableSchema>['helpers']
+  helpers: RendererComponentProps<TableSchema>['helpers'],
 ) {
   const renderScope = useRenderScope();
   const selectionOwnership = schemaProps.selectionOwnership ?? 'local';
-  const selectionStatePath = typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
+  const selectionStatePath =
+    typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
 
   const [localSelectedRowKeys, setLocalSelectedRowKeys] = useState<Set<string>>(
-    new Set(schemaProps.rowSelection?.selectedRowKeys ?? [])
+    new Set(schemaProps.rowSelection?.selectedRowKeys ?? []),
   );
 
   const controlledSelectedRowKeys = useMemo(
     () => new Set(toStringArray(schemaProps.rowSelection?.selectedRowKeys)),
-    [schemaProps.rowSelection?.selectedRowKeys]
+    [schemaProps.rowSelection?.selectedRowKeys],
   );
 
   const scopeSelectedRowKeys = useScopeSelector(
-    (scopeData) => selectionOwnership === 'scope' && selectionStatePath
-      ? new Set(toStringArray(getIn(scopeData, selectionStatePath)))
-      : undefined,
+    (scopeData) =>
+      selectionOwnership === 'scope' && selectionStatePath
+        ? new Set(toStringArray(getIn(scopeData, selectionStatePath)))
+        : undefined,
     (a, b) => {
       if (a === b) return true;
       if (!a || !b) return a === b;
@@ -105,7 +124,7 @@ export function useTableSelection(
         if (!b.has(key)) return false;
       }
       return true;
-    }
+    },
   );
 
   const selectedRowKeys = useMemo(
@@ -115,19 +134,17 @@ export function useTableSelection(
         : selectionOwnership === 'scope'
           ? (scopeSelectedRowKeys ?? new Set<string>())
           : localSelectedRowKeys,
-    [selectionOwnership, controlledSelectedRowKeys, scopeSelectedRowKeys, localSelectedRowKeys]
+    [selectionOwnership, controlledSelectedRowKeys, scopeSelectedRowKeys, localSelectedRowKeys],
   );
 
   const allSelected = useMemo(
     () => source.length > 0 && source.every((r) => selectedRowKeys.has(String(r.id ?? ''))),
-    [source, selectedRowKeys]
+    [source, selectedRowKeys],
   );
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
-      const nextKeys = checked
-        ? new Set(source.map((r) => String(r.id ?? '')))
-        : new Set<string>();
+      const nextKeys = checked ? new Set(source.map((r) => String(r.id ?? ''))) : new Set<string>();
 
       startTransition(() => {
         if (selectionOwnership === 'local') {
@@ -138,10 +155,13 @@ export function useTableSelection(
       });
 
       onSelectionChange?.(null, {
-        scope: helpers.createScope({ selectedRowKeys: Array.from(nextKeys) }, { scopeKey: 'selection', pathSuffix: 'selection' }),
+        scope: helpers.createScope(
+          { selectedRowKeys: Array.from(nextKeys) },
+          { scopeKey: 'selection', pathSuffix: 'selection' },
+        ),
       });
     },
-    [selectionOwnership, selectionStatePath, source, onSelectionChange, helpers, renderScope]
+    [selectionOwnership, selectionStatePath, source, onSelectionChange, helpers, renderScope],
   );
 
   const handleSelectRow = useCallback(
@@ -164,10 +184,21 @@ export function useTableSelection(
       });
 
       onSelectionChange?.(null, {
-        scope: helpers.createScope({ selectedRowKeys: Array.from(newSet) }, { scopeKey: 'selection', pathSuffix: 'selection' }),
+        scope: helpers.createScope(
+          { selectedRowKeys: Array.from(newSet) },
+          { scopeKey: 'selection', pathSuffix: 'selection' },
+        ),
       });
     },
-    [helpers, localSelectedRowKeys, onSelectionChange, renderScope, selectedRowKeys, selectionOwnership, selectionStatePath]
+    [
+      helpers,
+      localSelectedRowKeys,
+      onSelectionChange,
+      renderScope,
+      selectedRowKeys,
+      selectionOwnership,
+      selectionStatePath,
+    ],
   );
 
   const setSelectionExternal = useCallback(
@@ -180,10 +211,13 @@ export function useTableSelection(
         }
       });
       onSelectionChange?.(null, {
-        scope: helpers.createScope({ selectedRowKeys: Array.from(nextKeys) }, { scopeKey: 'selection', pathSuffix: 'selection' }),
+        scope: helpers.createScope(
+          { selectedRowKeys: Array.from(nextKeys) },
+          { scopeKey: 'selection', pathSuffix: 'selection' },
+        ),
       });
     },
-    [selectionOwnership, selectionStatePath, onSelectionChange, helpers, renderScope]
+    [selectionOwnership, selectionStatePath, onSelectionChange, helpers, renderScope],
   );
 
   return {
@@ -191,7 +225,7 @@ export function useTableSelection(
     allSelected,
     handleSelectAll,
     handleSelectRow,
-    setSelectionExternal
+    setSelectionExternal,
   };
 }
 
@@ -199,11 +233,12 @@ export function useTableSort(
   schemaProps: TableSchema,
   onSortChange: RendererComponentProps<TableSchema>['events']['onSortChange'],
   columns: NonNullable<TableSchema['columns']>,
-  helpers: RendererComponentProps<TableSchema>['helpers']
+  helpers: RendererComponentProps<TableSchema>['helpers'],
 ) {
   const renderScope = useRenderScope();
   const sortOwnership = schemaProps.sortOwnership ?? 'local';
-  const sortStatePath = typeof schemaProps.sortStatePath === 'string' ? schemaProps.sortStatePath : undefined;
+  const sortStatePath =
+    typeof schemaProps.sortStatePath === 'string' ? schemaProps.sortStatePath : undefined;
   const [localSortState, setLocalSortState] = useState<SortState>({ column: '', direction: null });
 
   const scopeSortState = useScopeSelector(
@@ -215,15 +250,19 @@ export function useTableSort(
       const value = getIn(scopeData, sortStatePath) as Record<string, unknown> | undefined;
       return {
         column: typeof value?.column === 'string' ? value.column : '',
-        direction: value?.direction === 'asc' || value?.direction === 'desc' ? value.direction : null,
+        direction:
+          value?.direction === 'asc' || value?.direction === 'desc' ? value.direction : null,
       } satisfies SortState;
     },
-    (a, b) => a?.column === b?.column && a?.direction === b?.direction
+    (a, b) => a?.column === b?.column && a?.direction === b?.direction,
   );
 
   const sortState = useMemo(
-    () => (sortOwnership === 'scope' ? (scopeSortState ?? { column: '', direction: null }) : localSortState),
-    [localSortState, scopeSortState, sortOwnership]
+    () =>
+      sortOwnership === 'scope'
+        ? (scopeSortState ?? { column: '', direction: null })
+        : localSortState,
+    [localSortState, scopeSortState, sortOwnership],
   );
 
   const handleSort = useCallback(
@@ -233,31 +272,34 @@ export function useTableSort(
       }
 
       const prev = sortState;
-        let newDirection: 'asc' | 'desc' | null;
-        if (prev.column !== columnName) {
-          newDirection = 'asc';
-        } else if (prev.direction === 'asc') {
-          newDirection = 'desc';
-        } else if (prev.direction === 'desc') {
-          newDirection = null;
+      let newDirection: 'asc' | 'desc' | null;
+      if (prev.column !== columnName) {
+        newDirection = 'asc';
+      } else if (prev.direction === 'asc') {
+        newDirection = 'desc';
+      } else if (prev.direction === 'desc') {
+        newDirection = null;
+      } else {
+        newDirection = 'asc';
+      }
+
+      const newState = { column: columnName, direction: newDirection } satisfies SortState;
+      startTransition(() => {
+        if (sortOwnership === 'scope' && sortStatePath) {
+          renderScope.update(sortStatePath, newState);
         } else {
-          newDirection = 'asc';
+          setLocalSortState(newState);
         }
+      });
 
-        const newState = { column: columnName, direction: newDirection } satisfies SortState;
-        startTransition(() => {
-          if (sortOwnership === 'scope' && sortStatePath) {
-            renderScope.update(sortStatePath, newState);
-          } else {
-            setLocalSortState(newState);
-          }
-        });
-
-        onSortChange?.(null, {
-          scope: helpers.createScope({ column: columnName, direction: newDirection }, { scopeKey: 'sort', pathSuffix: 'sort' }),
-        });
+      onSortChange?.(null, {
+        scope: helpers.createScope(
+          { column: columnName, direction: newDirection },
+          { scopeKey: 'sort', pathSuffix: 'sort' },
+        ),
+      });
     },
-    [columns, helpers, onSortChange, renderScope, sortOwnership, sortState, sortStatePath]
+    [columns, helpers, onSortChange, renderScope, sortOwnership, sortState, sortStatePath],
   );
 
   return { sortState, handleSort };
@@ -266,11 +308,12 @@ export function useTableSort(
 export function useTableFilter(
   schemaProps: TableSchema,
   onFilterChange: RendererComponentProps<TableSchema>['events']['onFilterChange'],
-  helpers: RendererComponentProps<TableSchema>['helpers']
+  helpers: RendererComponentProps<TableSchema>['helpers'],
 ) {
   const renderScope = useRenderScope();
   const filterOwnership = schemaProps.filterOwnership ?? 'local';
-  const filterStatePath = typeof schemaProps.filterStatePath === 'string' ? schemaProps.filterStatePath : undefined;
+  const filterStatePath =
+    typeof schemaProps.filterStatePath === 'string' ? schemaProps.filterStatePath : undefined;
   const [localFilterState, setLocalFilterState] = useState<FilterState>({});
 
   const scopeFilterState = useScopeSelector(
@@ -279,7 +322,9 @@ export function useTableFilter(
         return undefined;
       }
 
-      const value = getIn(scopeData, filterStatePath) as Record<string, { filters?: string[]; keyword?: string } | undefined> | undefined;
+      const value = getIn(scopeData, filterStatePath) as
+        | Record<string, { filters?: string[]; keyword?: string } | undefined>
+        | undefined;
       const next: FilterState = {};
       Object.entries(value ?? {}).forEach(([key, entry]) => {
         next[key] = {
@@ -305,12 +350,12 @@ export function useTableFilter(
         }
         return true;
       });
-    }
+    },
   );
 
   const filterState = useMemo(
     () => (filterOwnership === 'scope' ? (scopeFilterState ?? {}) : localFilterState),
-    [filterOwnership, localFilterState, scopeFilterState]
+    [filterOwnership, localFilterState, scopeFilterState],
   );
 
   const handleFilter = useCallback(
@@ -334,17 +379,28 @@ export function useTableFilter(
 
       startTransition(() => {
         if (filterOwnership === 'scope' && filterStatePath) {
-          renderScope.update(filterStatePath, Object.fromEntries(Object.entries(newFilters).map(([key, entry]) => [key, { filters: Array.from(entry.values), keyword: entry.keyword }])));
+          renderScope.update(
+            filterStatePath,
+            Object.fromEntries(
+              Object.entries(newFilters).map(([key, entry]) => [
+                key,
+                { filters: Array.from(entry.values), keyword: entry.keyword },
+              ]),
+            ),
+          );
         } else {
           setLocalFilterState(newFilters);
         }
       });
 
       onFilterChange?.(null, {
-        scope: helpers.createScope({ column: columnName, filters: Array.from(currentFilters), keyword: current.keyword }, { scopeKey: 'filter', pathSuffix: 'filter' }),
+        scope: helpers.createScope(
+          { column: columnName, filters: Array.from(currentFilters), keyword: current.keyword },
+          { scopeKey: 'filter', pathSuffix: 'filter' },
+        ),
       });
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope]
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope],
   );
 
   const handleSearch = useCallback(
@@ -361,17 +417,28 @@ export function useTableFilter(
 
       startTransition(() => {
         if (filterOwnership === 'scope' && filterStatePath) {
-          renderScope.update(filterStatePath, Object.fromEntries(Object.entries(newFilters).map(([key, entry]) => [key, { filters: Array.from(entry.values), keyword: entry.keyword }])));
+          renderScope.update(
+            filterStatePath,
+            Object.fromEntries(
+              Object.entries(newFilters).map(([key, entry]) => [
+                key,
+                { filters: Array.from(entry.values), keyword: entry.keyword },
+              ]),
+            ),
+          );
         } else {
           setLocalFilterState(newFilters);
         }
       });
 
       onFilterChange?.(null, {
-        scope: helpers.createScope({ column: columnName, filters: Array.from(current.values), keyword }, { scopeKey: 'filter', pathSuffix: 'filter' }),
+        scope: helpers.createScope(
+          { column: columnName, filters: Array.from(current.values), keyword },
+          { scopeKey: 'filter', pathSuffix: 'filter' },
+        ),
       });
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope]
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope],
   );
 
   const clearFilters = useCallback(
@@ -385,17 +452,28 @@ export function useTableFilter(
 
       startTransition(() => {
         if (filterOwnership === 'scope' && filterStatePath) {
-          renderScope.update(filterStatePath, Object.fromEntries(Object.entries(newFilters).map(([key, entry]) => [key, { filters: Array.from(entry.values), keyword: entry.keyword }])));
+          renderScope.update(
+            filterStatePath,
+            Object.fromEntries(
+              Object.entries(newFilters).map(([key, entry]) => [
+                key,
+                { filters: Array.from(entry.values), keyword: entry.keyword },
+              ]),
+            ),
+          );
         } else {
           setLocalFilterState(newFilters);
         }
       });
 
       onFilterChange?.(null, {
-        scope: helpers.createScope({ column: columnName, filters: [], keyword: '' }, { scopeKey: 'filter', pathSuffix: 'filter' }),
+        scope: helpers.createScope(
+          { column: columnName, filters: [], keyword: '' },
+          { scopeKey: 'filter', pathSuffix: 'filter' },
+        ),
       });
     },
-    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope]
+    [filterOwnership, filterState, filterStatePath, helpers, onFilterChange, renderScope],
   );
 
   return { filterState, handleFilter, handleSearch, clearFilters };
@@ -403,7 +481,7 @@ export function useTableFilter(
 
 export function useTableExpand(schemaProps: TableSchema) {
   const [expandedRowKeys, setExpandedRowKeys] = useState<Set<string>>(
-    new Set(schemaProps.expandable?.expandedRowKeys ?? [])
+    new Set(schemaProps.expandable?.expandedRowKeys ?? []),
   );
 
   const handleToggleExpand = useCallback((rowKey: string) => {

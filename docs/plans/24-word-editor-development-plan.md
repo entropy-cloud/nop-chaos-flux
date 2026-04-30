@@ -10,7 +10,6 @@
 >
 > This status was re-verified against the codebase on 2026-04-04.
 
-
 ## Purpose
 
 基于 `@hufe921/canvas-editor` 构建一个类 Word 文档编辑器，作为 nop-chaos-flux 平台的文档模板设计器。整体功能布局仿照 SpringReport 的 docDesign 页面，但模板表达式体系采用 NOP 平台的 XLang 语法（`${expr}` + `<tag>content</tag>`），与 nop-entropy 的 WordTemplate 模型对齐。
@@ -30,14 +29,14 @@
 
 ### canvas-editor 项目状态
 
-| 指标 | 数据 |
-|------|------|
-| Stars | 4,859 |
-| Forks | 810 |
-| License | MIT |
-| 最新版本 | v0.9.130（2026-03-27） |
-| 发版频率 | 1-2 周 |
-| Open Issues | 60 |
+| 指标        | 数据                   |
+| ----------- | ---------------------- |
+| Stars       | 4,859                  |
+| Forks       | 810                    |
+| License     | MIT                    |
+| 最新版本    | v0.9.130（2026-03-27） |
+| 发版频率    | 1-2 周                 |
+| Open Issues | 60                     |
 
 结论：**项目活跃，可放心用于生产。**
 
@@ -69,19 +68,19 @@
 
 ## 与 SpringReport 的核心差异
 
-| 维度 | SpringReport | 本项目 |
-|------|-------------|--------|
-| **模板表达式** | `{{数据集.字段}}` | `${expr}`（EL 表达式） |
-| **区域/循环** | `{{?数据集}}...{{/数据集}}` | `<c:for items="${list}">...</c:for>` |
-| **条件判断** | 无原生支持 | `<c:if test="${condition}">...</c:if>` |
-| **图片变量** | `{{@数据集.字段}}` | `expr:${imageResource}` |
-| **数据集概念** | SQL/API 数据集 + 字段列表 | 与 nop-entropy ReportDataSet 对齐 |
-| **后端渲染** | Java POI 变量替换 | nop-entropy WordTemplate + XPL 编译执行 |
-| **表格展开** | 无 | 支持 XptWordTable（NopReport 中国式报表展开） |
-| **标签扩展** | 无 | 支持自定义 XPL 标签库 |
-| **前端框架** | Vue 3 + Options API | React 19 + TypeScript + Zustand |
-| **状态管理** | Vue data + 直接 DOM 操作 | Zustand store + React hooks |
-| **代码组织** | 单文件 2500+ 行 JS | 按职责拆分的 TypeScript 模块 |
+| 维度           | SpringReport                | 本项目                                        |
+| -------------- | --------------------------- | --------------------------------------------- |
+| **模板表达式** | `{{数据集.字段}}`           | `${expr}`（EL 表达式）                        |
+| **区域/循环**  | `{{?数据集}}...{{/数据集}}` | `<c:for items="${list}">...</c:for>`          |
+| **条件判断**   | 无原生支持                  | `<c:if test="${condition}">...</c:if>`        |
+| **图片变量**   | `{{@数据集.字段}}`          | `expr:${imageResource}`                       |
+| **数据集概念** | SQL/API 数据集 + 字段列表   | 与 nop-entropy ReportDataSet 对齐             |
+| **后端渲染**   | Java POI 变量替换           | nop-entropy WordTemplate + XPL 编译执行       |
+| **表格展开**   | 无                          | 支持 XptWordTable（NopReport 中国式报表展开） |
+| **标签扩展**   | 无                          | 支持自定义 XPL 标签库                         |
+| **前端框架**   | Vue 3 + Options API         | React 19 + TypeScript + Zustand               |
+| **状态管理**   | Vue data + 直接 DOM 操作    | Zustand store + React hooks                   |
+| **代码组织**   | 单文件 2500+ 行 JS          | 按职责拆分的 TypeScript 模块                  |
 
 ---
 
@@ -194,19 +193,19 @@ packages/
 - [ ] `editor-store.ts`: Zustand store 管理编辑器实例、文档状态
   ```typescript
   interface WordEditorState {
-    instance: Editor | null
-    isReady: boolean
-    isDirty: boolean
-    paperSettings: PaperSettings
-    documentData: DocumentData | null
+    instance: Editor | null;
+    isReady: boolean;
+    isDirty: boolean;
+    paperSettings: PaperSettings;
+    documentData: DocumentData | null;
   }
   ```
 - [ ] `template-model.ts`: 文档数据模型
   ```typescript
   interface DocumentData {
-    header: IElement[]    // canvas-editor IElement 格式
-    main: IElement[]
-    footer: IElement[]
+    header: IElement[]; // canvas-editor IElement 格式
+    main: IElement[];
+    footer: IElement[];
   }
   ```
 
@@ -235,6 +234,7 @@ packages/
 - [ ] 页面加载时恢复文档状态
 
 **验收标准**:
+
 - playground `/word-editor` 可打开编辑器
 - 能输入文字、调整格式、插入表格和图片
 - 页面刷新后文档状态保持
@@ -252,11 +252,11 @@ packages/
   ```typescript
   // 支持的表达式类型
   type TemplateExpr =
-    | { kind: 'el'; expr: string }                     // ${order.amount}
-    | { kind: 'image'; expr: string }                   // expr:${imageResource}
-    | { kind: 'tag-open'; tagName: string; attrs: Record<string, string> }  // <c:for var="item" items="${list}">
-    | { kind: 'tag-close'; tagName: string }            // </c:for>
-    | { kind: 'tag-selfclose'; tagName: string; attrs: Record<string, string> } // <c:if test="${cond}" />
+    | { kind: 'el'; expr: string } // ${order.amount}
+    | { kind: 'image'; expr: string } // expr:${imageResource}
+    | { kind: 'tag-open'; tagName: string; attrs: Record<string, string> } // <c:for var="item" items="${list}">
+    | { kind: 'tag-close'; tagName: string } // </c:for>
+    | { kind: 'tag-selfclose'; tagName: string; attrs: Record<string, string> }; // <c:if test="${cond}" />
   ```
 
 #### 2.2 表达式插入机制
@@ -292,6 +292,7 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
   - 语法校验（基本的括号匹配、标签闭合检查）
 
 **验收标准**:
+
 - 可在文档中插入 `${expr}` 表达式
 - 可插入 `<c:for>...</c:for>` 配对标签
 - 标签和表达式在编辑器中有视觉区分（颜色/边框/图标）
@@ -306,32 +307,34 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
 #### 3.1 数据集模型
 
 - [ ] `dataset-model.ts`: 数据集定义
+
   ```typescript
   interface DataSet {
-    id: string
-    name: string
-    type: 'sql' | 'api' | 'mongo' | 'static'
-    datasourceId?: string
-    sql?: string
-    apiUrl?: string
-    params: DataParam[]
-    columns: DataColumn[]
+    id: string;
+    name: string;
+    type: 'sql' | 'api' | 'mongo' | 'static';
+    datasourceId?: string;
+    sql?: string;
+    apiUrl?: string;
+    params: DataParam[];
+    columns: DataColumn[];
   }
 
   interface DataColumn {
-    name: string           // 字段编码
-    label: string          // 字段名称
-    dataType: string       // 数据类型
+    name: string; // 字段编码
+    label: string; // 字段名称
+    dataType: string; // 数据类型
   }
 
   interface DataParam {
-    paramName: string
-    paramCode: string
-    paramType: string
-    paramDefault?: string
-    paramRequired: boolean
+    paramName: string;
+    paramCode: string;
+    paramType: string;
+    paramDefault?: string;
+    paramRequired: boolean;
   }
   ```
+
 - [ ] `dataset-store.ts`: 数据集列表的 CRUD 状态管理
 
 #### 3.2 数据集面板 UI
@@ -361,6 +364,7 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
 - [ ] 拖拽字段到文档中自动插入对应表达式
 
 **验收标准**:
+
 - 可创建 SQL 数据集，编辑 SQL 文本（不内置远程执行）
 - 外部调用者可通过接口传入字段列表，面板正确显示
 - 字段列表正确显示
@@ -419,6 +423,7 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
 - [ ] 字数统计显示: `getWordCount()`
 
 **验收标准**:
+
 - 所有格式控制按钮功能正常
 - 纸张设置可调整且持久化
 - 搜索替换可正常工作
@@ -433,11 +438,13 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
 #### 5.1 DOCX 导入
 
 **前端流程**:
+
 - [ ] 上传 DOCX 文件到后端
 - [ ] 后端解析 DOCX → 转换为 canvas-editor JSON 格式
 - [ ] 前端接收 JSON → `executeSetValue()` 加载
 
 **后端 API**（依赖 nop-entropy 基础设施）:
+
 - [ ] `POST /api/word-editor/import-docx`: 接收 DOCX 文件
   - 使用 Apache POI 或 nop-ooxml 解析
   - 将 OOXML 结构转换为 canvas-editor IElement JSON
@@ -457,6 +464,7 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
   - 或使用 `docx-preview` 前端预览 DOCX
 
 **验收标准**:
+
 - 可上传 .docx 文件并在编辑器中打开
 - 文档格式基本保持（字体、表格、图片）
 - 可导出为 .docx 文件
@@ -475,14 +483,14 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
 - [ ] `chart-model.ts`: 图表配置模型
   ```typescript
   interface DocChart {
-    id: string
-    chartName: string
-    chartType: 'bar' | 'line' | 'pie' | 'scatter' | 'area'
-    showChartName: boolean
-    datasetId: string
-    categoryField: string
-    valueField: string[]
-    seriesField?: string[]
+    id: string;
+    chartName: string;
+    chartType: 'bar' | 'line' | 'pie' | 'scatter' | 'area';
+    showChartName: boolean;
+    datasetId: string;
+    categoryField: string;
+    valueField: string[];
+    seriesField?: string[];
   }
   ```
 - [ ] `ChartDialog.tsx`: 图表配置弹窗
@@ -502,17 +510,18 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
 - [ ] `code-model.ts`: 条码配置模型
   ```typescript
   interface DocCode {
-    id: string
-    codeName: string
-    codeType: 'barcode' | 'qrcode'
-    datasetId: string
-    valueField: string
+    id: string;
+    codeName: string;
+    codeType: 'barcode' | 'qrcode';
+    datasetId: string;
+    valueField: string;
   }
   ```
 - [ ] `CodeDialog.tsx`: 条码配置弹窗
 - [ ] 在文档中插入条码占位图片
 
 **验收标准**:
+
 - 可配置图表（类型、数据集、字段）并插入文档
 - 可配置条形码/二维码并插入文档
 - 图表和条码配置随文档保存
@@ -545,6 +554,7 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
 - [ ] 调试模式: 显示编译后的 XPL 代码
 
 **验收标准**:
+
 - 在编辑器中设计的模板可通过 nop-entropy 后端编译执行
 - 生成的 DOCX 文件中表达式被正确替换
 - Xpt 表格可正确展开
@@ -591,6 +601,7 @@ canvas-editor 支持通过超链接和控件实现表达式标注。本项目的
 - [ ] E2E 测试（完整编辑流程）
 
 **验收标准**:
+
 - 快捷键全部可用
 - 100 页文档流畅编辑
 - 核心功能有测试覆盖
@@ -626,22 +637,28 @@ canvas-editor 是命令式的（new Editor(container, data)），不提供 React
 ```typescript
 // canvas-editor-bridge.ts
 export class CanvasEditorBridge {
-  private instance: Editor | null = null
+  private instance: Editor | null = null;
 
   mount(container: HTMLElement, data: DocumentData): void {
-    this.instance = new Editor(container, data)
-    this.setupListeners()
+    this.instance = new Editor(container, data);
+    this.setupListeners();
   }
 
   unmount(): void {
-    this.instance?.destroy()
-    this.instance = null
+    this.instance?.destroy();
+    this.instance = null;
   }
 
   // 代理所有 command API
-  get command() { return this.instance?.command }
-  get listener() { return this.instance?.listener }
-  get register() { return this.instance?.register }
+  get command() {
+    return this.instance?.command;
+  }
+  get listener() {
+    return this.instance?.listener;
+  }
+  get register() {
+    return this.instance?.register;
+  }
 }
 ```
 
@@ -680,44 +697,52 @@ canvas-editor 内部管理自己的状态（文本、选区、格式），我们
 
 ## Risk Assessment
 
-| 风险 | 概率 | 影响 | 缓解措施 |
-|------|------|------|---------|
-| canvas-editor 控件 API 不够灵活 | 中 | 高 | 利用超链接作为备用方案 |
-| DOCX 导入格式丢失 | 高 | 中 | 支持常见格式即可，复杂文档建议直接在编辑器中设计 |
-| 大文档性能 | 中 | 中 | canvas-editor 基于 Canvas 渲染，天然比 DOM 方案好 |
-| canvas-editor 版本升级不兼容 | 低 | 中 | 锁定版本，按需升级 |
-| 模板表达式与 WordTemplate 对齐 | 中 | 高 | Phase 7 专门处理，前期可用 mock |
-| 图表渲染依赖后端 | 低 | 低 | 编辑时用占位图，渲染时后端生成 |
+| 风险                            | 概率 | 影响 | 缓解措施                                          |
+| ------------------------------- | ---- | ---- | ------------------------------------------------- |
+| canvas-editor 控件 API 不够灵活 | 中   | 高   | 利用超链接作为备用方案                            |
+| DOCX 导入格式丢失               | 高   | 中   | 支持常见格式即可，复杂文档建议直接在编辑器中设计  |
+| 大文档性能                      | 中   | 中   | canvas-editor 基于 Canvas 渲染，天然比 DOM 方案好 |
+| canvas-editor 版本升级不兼容    | 低   | 中   | 锁定版本，按需升级                                |
+| 模板表达式与 WordTemplate 对齐  | 中   | 高   | Phase 7 专门处理，前期可用 mock                   |
+| 图表渲染依赖后端                | 低   | 低   | 编辑时用占位图，渲染时后端生成                    |
 
 ---
 
 ## Success Metrics
 
 ### Phase 1 (MVP)
+
 - playground 可打开 Word 编辑器
 - 基本文档编辑（输入、格式、保存）正常工作
 - 纸张设置可调整
 
 ### Phase 2 (模板表达式)
+
 - 可在文档中插入 `${expr}` 和 `<tag>...</tag>`
 - 表达式有视觉区分
 
 ### Phase 3 (数据集)
+
 - 可管理数据集、浏览字段、插入表达式到文档
 
 ### Phase 4 (完整格式)
+
 - 所有工具栏按钮功能正常
 - 搜索替换、目录、打印正常
 
 ### Phase 5 (DOCX)
+
 - 可导入/导出 .docx 文件
 - 基本格式保持
 
 ### Phase 6 (图表/条码)
+
 - 图表和条码可配置并插入
 
 ### Phase 7 (后端集成)
+
 - 模板可通过 nop-entropy 后端编译执行
 
 ### Phase 8 (生产化)
+
 - 快捷键、性能、测试、无障碍全部到位

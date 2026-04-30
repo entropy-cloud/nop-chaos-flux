@@ -2,7 +2,7 @@ import type {
   FieldState,
   FormValidationResult,
   ActionResult,
-  ValidationReason
+  ValidationReason,
 } from '@nop-chaos/flux-core';
 import { buildSubmitTouchedState, classifySubmitResult } from './form-runtime-submit';
 import { isAbortError } from './error-utils';
@@ -20,7 +20,9 @@ export interface SubmitFormInput {
   getIsSubmitting: () => boolean;
   setIsSubmitting: (value: boolean) => void;
   getLifecycleHandlers: () => import('@nop-chaos/flux-core').FormLifecycleHandlers | undefined;
-  getCurrentValidation: () => import('@nop-chaos/flux-core').CompiledFormValidationModel | undefined;
+  getCurrentValidation: () =>
+    | import('@nop-chaos/flux-core').CompiledFormValidationModel
+    | undefined;
   validateForm: (reason?: ValidationReason) => Promise<FormValidationResult>;
 }
 
@@ -31,13 +33,13 @@ function toSubmitFailureResult(error: unknown): ActionResult {
     return {
       ok: false,
       cancelled: true,
-      error
+      error,
     };
   }
 
   return {
     ok: false,
-    error
+    error,
   };
 }
 
@@ -53,7 +55,7 @@ function extractTouchedPaths(fieldStates: Record<string, FieldState>): Record<st
 
 export async function executeFormSubmit(
   input: SubmitFormInput,
-  options?: { interactionId?: string; signal?: AbortSignal }
+  options?: { interactionId?: string; signal?: AbortSignal },
 ): Promise<import('@nop-chaos/flux-core').ActionResult> {
   const {
     sharedState,
@@ -64,14 +66,14 @@ export async function executeFormSubmit(
     setIsSubmitting,
     getLifecycleHandlers,
     getCurrentValidation,
-    validateForm
+    validateForm,
   } = input;
 
   if (getIsSubmitting()) {
     return {
       ok: false,
       cancelled: true,
-      error: new Error('Submit already in progress')
+      error: new Error('Submit already in progress'),
     };
   }
 
@@ -105,8 +107,10 @@ export async function executeFormSubmit(
   const nextTouched = buildSubmitTouchedState({
     touched: currentTouched,
     validation: currentValidation,
-    runtimeFieldRegistrations: Array.from(runtimeFieldRegistrations.values()).map((e) => e.registration),
-    defaultValidationTriggers
+    runtimeFieldRegistrations: Array.from(runtimeFieldRegistrations.values()).map(
+      (e) => e.registration,
+    ),
+    defaultValidationTriggers,
   });
 
   if (nextTouched !== currentTouched) {
@@ -124,9 +128,10 @@ export async function executeFormSubmit(
 
   ownerRuntime.supersedeLowerPriorityWork();
 
-  const validation = (!currentValidation && runtimeFieldRegistrations.size === 0)
-    ? { ok: true, errors: [], fieldErrors: {} } as FormValidationResult
-    : await validateForm('submit');
+  const validation =
+    !currentValidation && runtimeFieldRegistrations.size === 0
+      ? ({ ok: true, errors: [], fieldErrors: {} } as FormValidationResult)
+      : await validateForm('submit');
 
   const lifecycleHandlers = getLifecycleHandlers();
 
@@ -134,7 +139,7 @@ export async function executeFormSubmit(
     const validationFailure = {
       ok: false,
       error: validation.errors,
-      data: validation.fieldErrors
+      data: validation.fieldErrors,
     } as const;
 
     if (options?.signal?.aborted) {
@@ -171,7 +176,7 @@ export async function executeFormSubmit(
       const childValidationFailure = {
         ok: false,
         error: childErrors,
-        data: {}
+        data: {},
       } as const;
 
       setIsSubmitting(false);

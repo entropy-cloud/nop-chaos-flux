@@ -1,4 +1,8 @@
-import type { ActionNamespaceProvider, ActionScope, ResolvedActionHandler } from '@nop-chaos/flux-core';
+import type {
+  ActionNamespaceProvider,
+  ActionScope,
+  ResolvedActionHandler,
+} from '@nop-chaos/flux-core';
 
 function parseActionName(actionName: string): { namespace: string; method: string } | undefined {
   const separatorIndex = actionName.indexOf(':');
@@ -9,7 +13,7 @@ function parseActionName(actionName: string): { namespace: string; method: strin
 
   return {
     namespace: actionName.slice(0, separatorIndex),
-    method: actionName.slice(separatorIndex + 1)
+    method: actionName.slice(separatorIndex + 1),
   };
 }
 
@@ -30,7 +34,7 @@ export function createActionScope(input: { id: string; parent?: ActionScope }): 
         namespace: parsed.namespace,
         method: parsed.method,
         provider,
-        sourceScopeId: input.id
+        sourceScopeId: input.id,
       };
     }
 
@@ -77,10 +81,10 @@ export function createActionScope(input: { id: string; parent?: ActionScope }): 
         namespaces: Array.from(namespaces.entries()).map(([namespace, provider]) => ({
           namespace,
           providerKind: provider.kind,
-          methods: provider.listMethods?.()
-        }))
+          methods: provider.listMethods?.(),
+        })),
       };
-    }
+    },
   };
 }
 

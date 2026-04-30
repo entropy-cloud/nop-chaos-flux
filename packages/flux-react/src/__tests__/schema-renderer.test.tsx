@@ -16,7 +16,7 @@ describe('SchemaRenderer callbacks', () => {
         env={env}
         formulaCompiler={createFormulaCompiler()}
         onRuntimeChange={onRuntimeChange}
-      />
+      />,
     );
 
     await waitFor(() => expect(onRuntimeChange).toHaveBeenCalledTimes(1));
@@ -37,7 +37,7 @@ describe('SchemaRenderer callbacks', () => {
         env={env}
         formulaCompiler={createFormulaCompiler()}
         onComponentRegistryChange={onComponentRegistryChange}
-      />
+      />,
     );
 
     await waitFor(() => expect(onComponentRegistryChange).toHaveBeenCalledTimes(1));
@@ -58,7 +58,7 @@ describe('SchemaRenderer callbacks', () => {
         env={env}
         formulaCompiler={createFormulaCompiler()}
         onActionScopeChange={onActionScopeChange}
-      />
+      />,
     );
 
     await waitFor(() => expect(onActionScopeChange).toHaveBeenCalledTimes(1));
@@ -80,7 +80,7 @@ describe('SchemaRenderer data update', () => {
         data={{ name: 'Alice' }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Data test Alice')).toBeTruthy());
@@ -92,7 +92,7 @@ describe('SchemaRenderer data update', () => {
         data={{ name: 'Bob' }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => expect(screen.getByText('Data test Bob')).toBeTruthy());
@@ -103,21 +103,25 @@ describe('SchemaRenderer import preparation', () => {
   it('shows nothing when import preparation fails', async () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const failingLoader = {
-      load: vi.fn(async () => { throw new Error('Import load failed'); }),
+      load: vi.fn(async () => {
+        throw new Error('Import load failed');
+      }),
     };
 
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
     const { container } = render(
       <SchemaRenderer
         schemaUrl="test://schema.json"
-        schema={{
-          type: 'text',
-          text: 'Import fail test',
-          'xui:imports': [{ from: 'failing-lib', as: 'fail' }],
-        } as any}
+        schema={
+          {
+            type: 'text',
+            text: 'Import fail test',
+            'xui:imports': [{ from: 'failing-lib', as: 'fail' }],
+          } as any
+        }
         env={{ ...env, importLoader: failingLoader }}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
 
     await waitFor(() => expect(failingLoader.load).toHaveBeenCalled());
@@ -136,7 +140,7 @@ describe('SchemaRenderer null rendering', () => {
         schema={{ type: 'text', text: 'Visible' }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
-      />
+      />,
     );
     expect(container.textContent).toContain('Visible');
   });
@@ -149,11 +153,15 @@ describe('SchemaRenderer page modalContainer', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://schema.json"
-        schema={{ type: 'page', modalContainer: 'my-container', body: [{ type: 'text', text: 'Modal test' }] }}
+        schema={{
+          type: 'page',
+          modalContainer: 'my-container',
+          body: [{ type: 'text', text: 'Modal test' }],
+        }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
         onRuntimeChange={onRuntimeChange}
-      />
+      />,
     );
 
     await waitFor(() => expect(onRuntimeChange).toHaveBeenCalled());

@@ -1,21 +1,21 @@
-import { useEffect, useState, useCallback } from 'react'
-import { ChevronRight, ChevronDown, FileText } from 'lucide-react'
-import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core'
-import { t } from '@nop-chaos/flux-i18n'
-import { Button, ScrollArea, cn } from '@nop-chaos/ui'
-import type { IElement, TitleLevel } from '@hufe921/canvas-editor'
+import { useEffect, useState, useCallback } from 'react';
+import { ChevronRight, ChevronDown, FileText } from 'lucide-react';
+import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
+import { t } from '@nop-chaos/flux-i18n';
+import { Button, ScrollArea, cn } from '@nop-chaos/ui';
+import type { IElement, TitleLevel } from '@hufe921/canvas-editor';
 
 interface OutlinePanelProps {
-  bridge: CanvasEditorBridge | null
+  bridge: CanvasEditorBridge | null;
 }
 
 interface HeadingItem {
-  id: string
-  name: string
-  level: TitleLevel
-  pageNo?: number
-  subCatalog: HeadingItem[]
-  expanded: boolean
+  id: string;
+  name: string;
+  level: TitleLevel;
+  pageNo?: number;
+  subCatalog: HeadingItem[];
+  expanded: boolean;
 }
 
 const TITLE_LEVEL_ORDER: Record<TitleLevel, number> = {
@@ -24,11 +24,11 @@ const TITLE_LEVEL_ORDER: Record<TitleLevel, number> = {
   third: 3,
   fourth: 4,
   fifth: 5,
-  sixth: 6
-}
+  sixth: 6,
+};
 
 function extractHeadings(elements: IElement[]): HeadingItem[] {
-  const headings: HeadingItem[] = []
+  const headings: HeadingItem[] = [];
 
   for (const element of elements) {
     if (element.level) {
@@ -38,108 +38,120 @@ function extractHeadings(elements: IElement[]): HeadingItem[] {
         level: element.level,
         pageNo: 1,
         subCatalog: [],
-        expanded: element.level === 'first' || element.level === 'second'
-      })
+        expanded: element.level === 'first' || element.level === 'second',
+      });
     }
   }
 
-  return headings
+  return headings;
 }
 
 function buildHeadingTree(headings: HeadingItem[]): HeadingItem[] {
-  const result: HeadingItem[] = []
-  const stack: HeadingItem[] = []
+  const result: HeadingItem[] = [];
+  const stack: HeadingItem[] = [];
 
   for (const heading of headings) {
-    while (stack.length > 0 && TITLE_LEVEL_ORDER[stack[stack.length - 1].level] >= TITLE_LEVEL_ORDER[heading.level]) {
-      stack.pop()
+    while (
+      stack.length > 0 &&
+      TITLE_LEVEL_ORDER[stack[stack.length - 1].level] >= TITLE_LEVEL_ORDER[heading.level]
+    ) {
+      stack.pop();
     }
 
     if (stack.length === 0) {
-      result.push(heading)
+      result.push(heading);
     } else {
-      stack[stack.length - 1].subCatalog.push(heading)
+      stack[stack.length - 1].subCatalog.push(heading);
     }
 
-    stack.push(heading)
+    stack.push(heading);
   }
 
-  return result
+  return result;
 }
 
 function readOutline(bridge: CanvasEditorBridge | null): HeadingItem[] {
   if (!bridge?.command?.getValue) {
-    return []
+    return [];
   }
 
   try {
-    const result = bridge.command.getValue()
+    const result = bridge.command.getValue();
     if (!result?.data?.main) {
-      return []
+      return [];
     }
 
-    return buildHeadingTree(extractHeadings(result.data.main))
+    return buildHeadingTree(extractHeadings(result.data.main));
   } catch (error) {
-    console.error('Failed to fetch outline:', error)
-    return []
+    console.error('Failed to fetch outline:', error);
+    return [];
   }
 }
 
-function applyExpandedState(items: HeadingItem[], expandedState: Record<string, boolean>): HeadingItem[] {
+function applyExpandedState(
+  items: HeadingItem[],
+  expandedState: Record<string, boolean>,
+): HeadingItem[] {
   return items.map((item) => ({
     ...item,
     expanded: expandedState[item.id] ?? item.expanded,
-    subCatalog: applyExpandedState(item.subCatalog, expandedState)
-  }))
+    subCatalog: applyExpandedState(item.subCatalog, expandedState),
+  }));
 }
 
 export function OutlinePanel({ bridge }: OutlinePanelProps) {
-  const [outlineRevision, setOutlineRevision] = useState(0)
-  const [expandedState, setExpandedState] = useState<Record<string, boolean>>({})
-  void outlineRevision
-  const outline = applyExpandedState(readOutline(bridge), expandedState)
+  const [outlineRevision, setOutlineRevision] = useState(0);
+  const [expandedState, setExpandedState] = useState<Record<string, boolean>>({});
+  void outlineRevision;
+  const outline = applyExpandedState(readOutline(bridge), expandedState);
 
-  const toggleExpanded = useCallback((itemIndex: number) => {
-    setExpandedState((prev) => {
-      const item = outline[itemIndex]
-      if (!item) {
-        return prev
-      }
+  const toggleExpanded = useCallback(
+    (itemIndex: number) => {
+      setExpandedState((prev) => {
+        const item = outline[itemIndex];
+        if (!item) {
+          return prev;
+        }
 
-      return {
-        ...prev,
-        [item.id]: !item.expanded
-      }
-    })
-  }, [outline])
+        return {
+          ...prev,
+          [item.id]: !item.expanded,
+        };
+      });
+    },
+    [outline],
+  );
 
   useEffect(() => {
-    if (!bridge) return
+    if (!bridge) return;
 
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const unsubscribe = bridge.subscribeContentChange(() => {
-      if (debounceTimer) clearTimeout(debounceTimer)
+      if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
-        setOutlineRevision((prev) => prev + 1)
-      }, 500)
-    })
+        setOutlineRevision((prev) => prev + 1);
+      }, 500);
+    });
 
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer)
-      unsubscribe()
-    }
-  }, [bridge])
+      if (debounceTimer) clearTimeout(debounceTimer);
+      unsubscribe();
+    };
+  }, [bridge]);
 
-  const navigateToHeading = useCallback((item: HeadingItem) => {
-    if (!bridge?.command?.executeLocationCatalog) return
+  const navigateToHeading = useCallback(
+    (item: HeadingItem) => {
+      if (!bridge?.command?.executeLocationCatalog) return;
 
-    try {
-      bridge.command.executeLocationCatalog(item.id)
-    } catch (error) {
-      console.error('Failed to navigate to heading:', error)
-    }
-  }, [bridge])
+      try {
+        bridge.command.executeLocationCatalog(item.id);
+      } catch (error) {
+        console.error('Failed to navigate to heading:', error);
+      }
+    },
+    [bridge],
+  );
 
   const getLevelTextSize = (level: string) => {
     const levelMap: Record<string, string> = {
@@ -148,13 +160,13 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
       third: 'text-[12px] font-normal',
       fourth: 'text-[11px] font-normal',
       fifth: 'text-[11px] font-normal',
-      sixth: 'text-[11px] font-normal'
-    }
-    return levelMap[level] || 'text-[12px] font-normal'
-  }
+      sixth: 'text-[11px] font-normal',
+    };
+    return levelMap[level] || 'text-[12px] font-normal';
+  };
 
   const renderSubCatalog = (items: HeadingItem[], level: number): React.ReactNode => {
-    if (!items || items.length === 0) return null
+    if (!items || items.length === 0) return null;
 
     return (
       <div className="ml-3 mt-1">
@@ -164,23 +176,28 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
               type="button"
               variant="ghost"
               onClick={() => navigateToHeading(subItem)}
-              className={cn('flex items-center gap-1.5 w-full text-left justify-start h-auto px-2 py-1 text-[var(--nop-body-copy)] hover:text-[var(--nop-accent)]', getLevelTextSize(subItem.level))}
+              className={cn(
+                'flex items-center gap-1.5 w-full text-left justify-start h-auto px-2 py-1 text-[var(--nop-body-copy)] hover:text-[var(--nop-accent)]',
+                getLevelTextSize(subItem.level),
+              )}
             >
               <span className="truncate flex-1">{subItem.name}</span>
             </Button>
-            {subItem.subCatalog && subItem.subCatalog.length > 0 && (
-              renderSubCatalog(subItem.subCatalog, level + 1)
-            )}
+            {subItem.subCatalog &&
+              subItem.subCatalog.length > 0 &&
+              renderSubCatalog(subItem.subCatalog, level + 1)}
           </div>
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--nop-border)]">
-        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">{t('flux.wordEditor.outline')}</h2>
+        <h2 className="text-sm font-semibold text-[var(--nop-text-strong)]">
+          {t('flux.wordEditor.outline')}
+        </h2>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3">
@@ -197,35 +214,39 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
           ) : (
             <div className="space-y-0.5">
               {outline.map((item, index) => (
-                  <div key={item.id}>
-                    <div className="flex items-center gap-0.5 py-0.5">
-                      {item.subCatalog && item.subCatalog.length > 0 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => toggleExpanded(index)}
-                          className="p-0.5"
-                        >
-                          {item.expanded ? (
-                            <ChevronDown className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />
-                          ) : (
-                            <ChevronRight className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />
-                          )}
-                        </Button>
+                <div key={item.id}>
+                  <div className="flex items-center gap-0.5 py-0.5">
+                    {item.subCatalog && item.subCatalog.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => toggleExpanded(index)}
+                        className="p-0.5"
+                      >
+                        {item.expanded ? (
+                          <ChevronDown className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />
+                        ) : (
+                          <ChevronRight className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />
                         )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => navigateToHeading(item)}
-                          className={cn('flex items-center gap-1.5 w-full text-left justify-start flex-1 h-auto px-2 py-1 text-[var(--nop-body-copy)] hover:text-[var(--nop-accent)]', getLevelTextSize(item.level))}
-                        >
-                          <span className="truncate">{item.name}</span>
-                        </Button>
-                      </div>
-                  {item.expanded && item.subCatalog && item.subCatalog.length > 0 && (
-                    renderSubCatalog(item.subCatalog, 2)
-                  )}
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => navigateToHeading(item)}
+                      className={cn(
+                        'flex items-center gap-1.5 w-full text-left justify-start flex-1 h-auto px-2 py-1 text-[var(--nop-body-copy)] hover:text-[var(--nop-accent)]',
+                        getLevelTextSize(item.level),
+                      )}
+                    >
+                      <span className="truncate">{item.name}</span>
+                    </Button>
+                  </div>
+                  {item.expanded &&
+                    item.subCatalog &&
+                    item.subCatalog.length > 0 &&
+                    renderSubCatalog(item.subCatalog, 2)}
                 </div>
               ))}
             </div>
@@ -233,5 +254,5 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }
