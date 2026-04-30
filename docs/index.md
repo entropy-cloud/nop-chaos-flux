@@ -72,6 +72,7 @@ Choose the smallest document that matches the task.
 | 了解 report designer 与 nop-report 的导入导出/round-trip 设计 | `docs/architecture/report-designer/codec-design.md` | `docs/architecture/report-designer/nop-report-profile.md` |
 | 设计 report designer 的右侧属性面板与 expression/reference 字段编辑边界 | `docs/architecture/report-designer/inspector-design.md` | `docs/architecture/report-designer/config-schema.md` |
 | Change React integration, renderer props, hooks, or fragment rendering | `docs/architecture/renderer-runtime.md` | `docs/references/renderer-interfaces.md` |
+| Implement or refactor a renderer and decide between one file, pure helpers, local controller hooks, or domain core | `docs/references/renderer-implementation-guidelines.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/flux-dsl-vm-extensibility.md`, `docs/references/refactoring-guidelines.md` |
 | Design or update the `condition-builder` component contract | `docs/components/condition-builder/design.md` | `docs/architecture/form-validation.md`, `docs/architecture/renderer-runtime.md` |
 | Design or update the `code-editor` component contract | `docs/components/code-editor/design.md` | `docs/architecture/renderer-runtime.md`, `docs/architecture/field-metadata-slot-modeling.md` |
 | Design compile-once/runtime-instantiation behavior, `cid`/template-node identity, repeated-instance identity, or future `type: 'loop'` rules | `docs/architecture/template-instantiation-and-node-identity.md` | `docs/architecture/component-resolution.md` |

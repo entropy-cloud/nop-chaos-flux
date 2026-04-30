@@ -1236,7 +1236,7 @@ Examples:
 
 Component-targeted invocation is also useful here when multiple instances exist on one page and one caller must target a specific host by `componentId`.
 
-This keeps the action model consistent with `docs/architecture/report-designer/design.md:303` and the typed command contracts in `docs/architecture/report-designer/contracts.md:314`.
+This keeps the action model consistent with `docs/architecture/report-designer/design.md:303` and, when reviewing the future package/API target, the typed command draft in `docs/architecture/report-designer/contracts.md:314`.
 
 ## Security Model For Imports
 

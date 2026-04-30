@@ -32,6 +32,8 @@
 - `componentName`
 - `formId`
 - `dialogId`
+- `surfaceId`
+- `dataPath`
 
 ### Control-Flow And Execution-Control Fields
 
@@ -52,12 +54,13 @@
 | --- | --- | --- | --- | --- |
 | `showToast` | `args` | none | canonical | 推荐写 `args` |
 | `navigate` | `args` | none | canonical | 推荐写 `args` |
-| `ajax` | `args` | none | canonical | `args` 必须是 `ApiSchema` |
-| `submitForm` | `args` | implicit `ctx.form` | canonical | `args` 必须是 `ApiSchema` |
+| `ajax` | `args` | `dataPath` optional | canonical | `args` 必须是 `ApiSchema`；`dataPath` 属于 targeting |
+| `submitForm` | none in live built-in invocation | implicit `ctx.form` | target-state only | 当前 live built-in invocation 仍调用 `ctx.form.submit()`，没有把 `args` 下放到 built-in adapter |
 | `openDialog` | `args` | implicit `ctx.surfaceRuntime` | canonical | `args` 承载 dialog surface payload |
 | `openDrawer` | `args` | none | canonical | `args` 承载 drawer surface payload |
 | `closeDialog` | none | `dialogId` optional | no payload | 主要是无 payload + optional targeting |
 | `closeDrawer` | none | `dialogId` optional, else current context | no payload | 当前实现实际也复用了 `dialogId` carrier |
+| `closeSurface` | none | `surfaceId` optional, else current context | no payload | 显式 surface close builtin |
 | `refreshTable` | none | implicit `ctx.page` | no payload | 更像 semantic entry，不需要 `args` |
 | `refreshSource` | none | `targetId` | no payload | runtime-owned source entry，targeting 独立存在 |
 | `setValue` | `args: { path?, value }` | `componentId` / `formId` | canonical | payload 统一到 `args`，写路径由 `args.path` 表达 |
@@ -94,11 +97,12 @@
 
 ### Request And Surface Payloads Use `args`
 
-当前 `ajax` / `submitForm` / `openDialog` / `openDrawer` 都只通过 `args` 读取 payload：
+当前 request / surface payload 读取规则是：
 
-1. `ajax` / `submitForm` 使用 `args: ApiSchema`
+1. `ajax` 使用 `args: ApiSchema`
 2. `openDialog` / `openDrawer` 使用 `args` 承载 surface payload
-3. `action: 'dialog'` / `action: 'drawer'` 不是正式 contract
+3. `submitForm` 的 authoring convergence 目标仍是 `args: ApiSchema`，但 live built-in dispatch 目前没有把 `args` 透传到 built-in adapter
+4. `action: 'dialog'` / `action: 'drawer'` 不是正式 contract
 
 ### `setValue` / `setValues` Use Narrower `args` DTOs
 
@@ -142,6 +146,8 @@
 | `componentName` | 目标组件 name | **stable** — 保留独立字段 |
 | `formId` | 目标表单 id | **stable** — 保留独立字段 |
 | `dialogId` | 目标 dialog id (close 操作) | **stable** — 保留独立字段 |
+| `surfaceId` | 目标 surface id (close 操作) | **stable** — 保留独立字段 |
+| `dataPath` | 响应写回目标路径 | **stable** — 保留独立字段 |
 
 ### Control-Flow And Execution-Control Fields
 
@@ -172,16 +178,23 @@
 **Authoring**:
 1. `{ action: 'ajax', args: { url, method, data } }`
 
-### `submitForm` → `args: ApiSchema` (LANDED)
+### `submitForm` → `args: ApiSchema` (NOT FULLY LANDED)
 
-**Decision**: `submitForm` 跟随 `ajax` 统一到 `args: ApiSchema`
+**Decision**: `submitForm` 的收敛目标仍是 `args: ApiSchema`，但当前 live baseline 不能把它记为已落地。
 
 **Rationale**:
 - 请求配置与 `ajax` 语义一致
 - 表单数据来自 `ctx.form`，不需要额外 wrapper
 - 统一后减少 author 心智负担
+- 但当前 built-in dispatch 仍创建 `args: undefined` 的 invocation，而 built-in adapter 直接走 `ctx.form.submit()`
 
-**Authoring**:
+**Current live baseline**:
+
+1. `SubmitFormActionSchema` 仍未把 `args` 收紧为 `ApiSchema`
+2. `packages/flux-action-core/src/action-dispatcher/built-in-actions.ts` 当前对 `submitForm` 生成 `args: undefined`
+3. `packages/flux-runtime/src/action-adapter.ts` 当前对 `submitForm` 直接调用 `ctx.form.submit(...)`
+
+**Target authoring**:
 1. `{ action: 'submitForm', args: { url, method } }`
 
 ### `openDialog`/`openDrawer` → `args` (LANDED)
@@ -230,11 +243,11 @@
    - `namespace:method`
 2. 已收敛到 `args` 正式 contract 的 built-in action：
    - `ajax` → `args: ApiSchema`
-   - `submitForm` → `args: ApiSchema`
    - `openDialog` → `args: DialogOpenArgs`
    - `openDrawer` → `args: DrawerOpenArgs`
-3. 无 payload 的 built-in action 仍然存在，例如 `closeDialog`、`closeDrawer`、`refreshTable`。
-4. write action 的 payload baseline 已统一为 `args`，但它们仍使用窄 DTO，而不是自由 map payload。
+3. `submitForm -> args: ApiSchema` 仍是已记录但未闭环的目标收敛，不应在 live reference docs 中记为 LANDED。
+4. 无 payload 的 built-in action 仍然存在，例如 `closeDialog`、`closeDrawer`、`closeSurface`、`refreshTable`。
+5. write action 的 payload baseline 已统一为 `args`，但它们仍使用窄 DTO，而不是自由 map payload。
 
 ## Related Documents
 

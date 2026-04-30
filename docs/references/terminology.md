@@ -101,7 +101,10 @@ The explicit boundary contract received by a concrete renderer component.
 
 It includes:
 
+- `id`
+- `path`
 - `schema`
+- `templateNode`
 - `node`
 - resolved `props`
 - resolved `meta`
@@ -119,6 +122,7 @@ It exposes imperative capabilities such as:
 - evaluating a target value
 - creating child scope
 - dispatching actions
+- executing a `source`
 
 ## `RendererEventHandler`
 
@@ -316,7 +320,7 @@ Examples include:
 
 - `ajax`
 - `submitForm`
-- `dialog`
+- `openDialog`
 - `closeDialog`
 - `setValue`
 
@@ -368,7 +372,24 @@ This keeps the post-fetch runtime contract simple: success returns data, failure
 
 The runtime context object passed through action execution.
 
-It can carry runtime, scope, page, form, node, dialog, and `prevResult` information.
+It can carry:
+
+- `runtime`
+- `scope`
+- `instancePath`
+- `nodeInstance`
+- `getInstanceKey`
+- `interactionId`
+- `signal`
+- `actionScope`
+- `componentRegistry`
+- structured `event`
+- `form`
+- `page`
+- `surfaceRuntime`
+- `dialogId`
+- `prevResult`
+- `evaluationBindings`
 
 ## `prevResult`
 

@@ -1,38 +1,45 @@
 # Form Validation Runtime Types Reference
 
 > Reference Status: Active
-> Last Updated: 2026-04-16
+> Last Updated: 2026-04-30
 > Owner Doc: `docs/architecture/form-validation.md`
 
-This document contains the complete TypeScript type definitions for the form validation runtime model. It is a companion reference to the main architecture document `docs/architecture/form-validation.md`.
+This document is the live-code reference for the exported validation runtime types.
 
-For conceptual design, principles, and implementation guidance, see the owner document.
+Use `docs/architecture/form-validation.md` for behavior, phased architecture, and target-state discussion. Use this file only for the current exported type surface.
 
----
+## Source Of Truth
 
-## Minimal Normative Types
+- `packages/flux-core/src/types/schema.ts`
+- `packages/flux-core/src/types/validation.ts`
+- `packages/flux-core/src/types/runtime.ts`
+
+## Trigger And Reason Types
 
 ```ts
-type ValidateOnPolicy = 'change' | 'blur' | 'submit' | 'manual';
-type ShowErrorOnPolicy = 'touched' | 'dirty' | 'visited' | 'submit';
+type ValidationTrigger = 'change' | 'blur' | 'submit';
+
+type ValidationVisibilityTrigger = 'touched' | 'dirty' | 'visited' | 'submit';
+
 type ValidationOwnerLifecycleState =
   | 'bootstrapping'
   | 'active'
   | 'refreshing'
   | 'disposed';
 
-type ValidationRuleKind = string;
+type ValidationReason = 'change' | 'blur' | 'submit' | 'commit' | 'system' | 'manual';
+```
 
-type CompiledRuntimeValue<T> =
-  | { kind: 'static'; value: T }
-  | { kind: 'expression'; code: string; dependencies: string[] };
+## Core Result Types
 
+```ts
 interface ValidationError {
   path: string;
-  ownerId: string;
-  rule: string;
   message: string;
-  sourceKind:
+  rule: ValidationRule['kind'];
+  ruleId?: string;
+  ownerPath?: string;
+  sourceKind?:
     | 'field'
     | 'object'
     | 'array'
@@ -40,67 +47,221 @@ interface ValidationError {
     | 'scope-root'
     | 'external'
     | 'runtime-overlay'
-    | 'runtime-opaque';
+    | 'runtime-opaque'
+    | 'form'
+    | 'runtime-registration';
+  relatedPaths?: string[];
 }
 
 interface ValidationResult {
   ok: boolean;
   errors: ValidationError[];
-  validating?: boolean;
 }
 
-interface ScopeValidationResult {
-  ok: boolean;
-  errors: ValidationError[];
+interface FormValidationResult extends ValidationResult {
   fieldErrors: Record<string, ValidationError[]>;
-  validating?: boolean;
-}
-
-interface FormSubmitResult {
-  ok: boolean;
-  errors: ValidationError[];
 }
 ```
 
-### Result Type Usage
+Current return-shape baseline:
 
-- **`ValidationResult`**: Use for local validation entry points such as `validateAt(path)`, where the caller needs the outcome of one path-centered validation run and does not need a full owner-wide field error map.
+- `ValidationScopeRuntime.validateAt()` returns `Promise<ValidationResult>`
+- `ValidationScopeRuntime.validateSubtree()` returns `Promise<FormValidationResult>`
+- `ValidationScopeRuntime.validateAll()` returns `Promise<FormValidationResult>`
+- `ValidationScopeRuntime.applyChangesAndRevalidate()` returns `Promise<FormValidationResult>`
+- `FormRuntime.submit()` returns `Promise<ActionResult>`
 
-- **`ScopeValidationResult`**: Use for subtree-level or owner-level operations such as `validateSubtree(path)`, `validateAll()`, and `applyChangesAndRevalidate(...)`, where the caller needs an aggregated view of the validated scope including `fieldErrors`.
-
----
-
-## ValidationScopeRuntime
-
-The core runtime abstraction for any scope that has validation semantics.
+## Registration And Behavior Types
 
 ```ts
-type ValidationReason = 'change' | 'blur' | 'submit' | 'commit' | 'system';
-
-interface ValidationScopeRuntime {
-  readonly scopeId: string;
-  readonly rootPath: string;
-  readonly compiledModel: CompiledFormValidationModel | null;
-  readonly lifecycleState: ValidationOwnerLifecycleState;
-  readonly modelGeneration: number;
-  readonly showErrorOn: ShowErrorOnPolicy;
-
-  validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
-  validateSubtree(path: string, reason?: ValidationReason): Promise<ScopeValidationResult>;
-  validateAll(reason?: ValidationReason): Promise<ScopeValidationResult>;
-
-  applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<ScopeValidationResult>;
-  applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationResult;
-
-  getFieldState(path: string): FieldValidationStateSnapshot;
-  getScopeState(): ScopeValidationStateSnapshot;
-  getScopeRootErrors(): ValidationError[];
-  isPathOwned(path: string): boolean;
-
-  registerField(state: FieldRegistrationState): FieldRegistrationHandle;
-  updateFieldRegistration(registrationId: string, patch: Partial<FieldRegistrationState>): void;
+interface RuntimeFieldRegistration {
+  path: string;
+  getValue(): unknown;
+  childPaths?: string[];
+  syncValue?(): unknown;
+  onRemove?(): void;
+  validateChild?(path: string): Promise<ValidationError[]> | ValidationError[];
+  validate?(): Promise<ValidationError[]> | ValidationError[];
 }
 
+interface FieldRegistrationHandle {
+  accepted: boolean;
+  registrationId: string;
+  unregister(): void;
+}
+
+interface CompiledValidationBehavior {
+  triggers: ValidationTrigger[];
+  showErrorOn: ValidationVisibilityTrigger[];
+}
+```
+
+## Compiled Validation Model Types
+
+```ts
+interface HiddenFieldPolicy {
+  validateWhenHidden?: boolean;
+  clearValueWhenHidden?: boolean;
+}
+
+interface CompiledValidationRule {
+  id: string;
+  rule: ValidationRule;
+  dependencyPaths: string[];
+  precompiled?: {
+    regex?: RegExp;
+  };
+}
+
+type CompiledValidationNodeKind = 'field' | 'object' | 'array' | 'form';
+
+interface CompiledValidationNode {
+  path: string;
+  kind: CompiledValidationNodeKind;
+  controlType?: string;
+  label?: string;
+  rules: CompiledValidationRule[];
+  behavior?: CompiledValidationBehavior;
+  children: string[];
+  parent?: string;
+  hiddenFieldPolicy?: HiddenFieldPolicy;
+}
+
+interface CompiledFormValidationField {
+  path: string;
+  controlType: string;
+  label?: string;
+  rules: CompiledValidationRule[];
+  behavior: CompiledValidationBehavior;
+  hiddenFieldPolicy: HiddenFieldPolicy;
+}
+
+interface CompiledFormValidationModel {
+  order: string[];
+  behavior: CompiledValidationBehavior;
+  dependents: Record<string, string[]>;
+  nodes?: Record<string, CompiledValidationNode>;
+  validationOrder?: string[];
+  rootPath?: string;
+  ownerId?: string;
+  defaultHiddenFieldPolicy?: HiddenFieldPolicy;
+}
+```
+
+Current live note:
+
+- `CompiledFormValidationModel.order` and `behavior` are required
+- `nodes`, `validationOrder`, `rootPath`, and `ownerId` are optional on the exported type
+
+## Store And Snapshot Types
+
+```ts
+interface FieldState {
+  touched?: true;
+  dirty?: true;
+  visited?: true;
+  validating?: true;
+  errors?: ValidationError[];
+}
+
+interface FormStoreState {
+  values: Record<string, any>;
+  fieldStates: Record<string, FieldState>;
+  submitting: boolean;
+  submitAttempted: boolean;
+}
+
+interface FormPathState {
+  errors: ValidationError[] | undefined;
+  validating: boolean;
+  touched: boolean;
+  dirty: boolean;
+  visited: boolean;
+}
+
+interface ScopeValidationStateSnapshot {
+  valid: boolean;
+  hasErrors: boolean;
+  validating: boolean;
+  lifecycleState: ValidationOwnerLifecycleState;
+  ready: boolean;
+  modelGeneration: number;
+}
+
+interface FormFieldStateSnapshot {
+  error?: ValidationError;
+  validating: boolean;
+  touched: boolean;
+  dirty: boolean;
+  visited: boolean;
+  submitting: boolean;
+  submitAttempted: boolean;
+}
+
+interface FormFieldPresentationSnapshot extends FormFieldStateSnapshot {
+  effectiveDisabled: boolean;
+  effectiveRequired: boolean;
+  showError: boolean;
+  interactive: boolean;
+  readOnly: boolean;
+}
+```
+
+## Store APIs
+
+```ts
+interface ValidationStoreApi {
+  getState(): FormStoreState;
+  subscribe(listener: () => void): () => void;
+  subscribeToPath(path: string, listener: () => void): () => void;
+  subscribeToSubmitting(listener: () => void): () => void;
+  getPathState(path: string): FormPathState;
+  getFieldState(path: string): FieldState | undefined;
+}
+
+interface FormStoreApi extends ValidationStoreApi {
+  setFieldState(path: string, state: Partial<FieldState>): void;
+  setValues(values: Record<string, any>): void;
+  setValue(path: string, value: unknown): void;
+  setPathErrors(path: string, errors?: ValidationError[]): void;
+  setValidating(path: string, validating: boolean): void;
+  setTouched(path: string, touched: boolean): void;
+  setDirty(path: string, dirty: boolean): void;
+  setVisited(path: string, visited: boolean): void;
+  setSubmitting(submitting: boolean): void;
+  setSubmitAttempted(submitAttempted: boolean): void;
+  batchUpdate(updates: Partial<FormStoreState>): void;
+}
+```
+
+## Child Contract Types
+
+```ts
+type ChildValidationMode = 'ignore' | 'summary-gate' | 'recurse-submit';
+
+interface ChildValidationContract {
+  childOwnerId: string;
+  mode: ChildValidationMode;
+}
+
+interface ChildValidationScopeState {
+  ready: boolean;
+  validating: boolean;
+  valid: boolean;
+  hasErrors: boolean;
+}
+
+interface ChildValidationContractRegistration extends ChildValidationContract {
+  active: boolean;
+  unregister(): void;
+  getState(): ChildValidationScopeState;
+  triggerValidation(): Promise<ValidationResult>;
+}
+```
+
+## `ValidationScopeRuntime`
+
+```ts
 interface ApplyScopeChangesInput {
   writes: Record<string, unknown>;
   changedPaths: string[];
@@ -113,313 +274,97 @@ interface ApplyExternalErrorsInput {
   replace?: boolean;
 }
 
-interface ScopeValidationStateSnapshot {
-  valid: boolean;
-  hasErrors: boolean;
-  validating: boolean;
-  lifecycleState: ValidationOwnerLifecycleState;
-  /**
-   * Whether this scope is in a state where it can be submitted or confirmed.
-   * FormRuntime: form-specific readiness derived from validity, validating state,
-   * and touch policy.
-   * Non-form ValidationScopeRuntime: ready = valid && !validating.
-   * Parent scopes read this field instead of valid when gating on a child scope,
-   * to prevent misreading a FormRuntime child as ready when allTouched is false.
-   */
-  ready: boolean;
-}
+interface ValidationScopeRuntime {
+  readonly scopeId: string;
+  readonly rootPath: string;
+  readonly lifecycleState: ValidationOwnerLifecycleState;
+  readonly modelGeneration: number;
+  readonly store?: ValidationStoreApi;
+  readonly scope?: ScopeRef;
+  readonly validation?: CompiledFormValidationModel;
 
-interface FieldRegistrationHandle {
-  accepted: boolean;
-  registrationId: string;
-  unregister(): void;
+  validateAt(path: string, reason?: ValidationReason): Promise<ValidationResult>;
+  validateSubtree(path: string, reason?: ValidationReason): Promise<FormValidationResult>;
+  validateAll(reason?: ValidationReason): Promise<FormValidationResult>;
+
+  applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<FormValidationResult>;
+  applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationStateSnapshot;
+
+  getFieldState(path: string): {
+    ownerId: string;
+    path: string;
+    errors: ValidationError[];
+    validating: boolean;
+  };
+  getScopeState(): ScopeValidationStateSnapshot;
+  getAsyncOwnerDebugSnapshot?(): AsyncOwnerDebugSnapshot;
+  getScopeRootErrors(): ValidationError[];
+  isPathOwned(path: string): boolean;
+
+  registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle;
+  updateFieldRegistration(
+    registrationId: string,
+    patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>,
+  ): void;
+
+  refreshCompiledModel(newModel: CompiledFormValidationModel): void;
+  dispose(): void;
+
+  registerChildContract(contract: ChildValidationContractRegistration): void;
+  unregisterChildContract(childOwnerId: string): void;
 }
 ```
 
-### Applicable Scopes
+Current live note:
 
-This runtime exists for any scope that has validation semantics:
+- the exported property name is `validation?`, not `compiledModel`
+- subtree and owner-wide operations currently return `FormValidationResult`
+- `applyExternalErrors(...)` currently returns `ScopeValidationStateSnapshot`
 
-1. normal forms
-2. draft editors
-3. non-form filter scopes
-4. row-local editors when they own local validation
-
----
-
-## FormRuntime
-
-`FormRuntime` is a specialization of `ValidationScopeRuntime`.
+## `FormRuntime`
 
 ```ts
 interface FormRuntime extends ValidationScopeRuntime {
-  readonly validateOn: ValidateOnPolicy;
-  readonly showErrorOn: ShowErrorOnPolicy;
+  id: string;
+  name?: string;
+  store: FormStoreApi;
+  scope: ScopeRef;
+  validation?: CompiledFormValidationModel;
+  readonly canSubmit: boolean;
+  readonly allTouched: boolean;
 
-  touchField(path: string): void;
-  visitField(path: string): void;
+  setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
+  notifyFieldHidden(path: string, hidden: boolean): void;
+  validateField(path: string, reason?: ValidationReason): Promise<ValidationResult>;
+  validateForm(reason?: ValidationReason): Promise<FormValidationResult>;
+  getError(path: string): ValidationError[] | undefined;
+  isValidating(path: string): boolean;
   isTouched(path: string): boolean;
   isDirty(path: string): boolean;
   isVisited(path: string): boolean;
-
-  submit(): Promise<FormSubmitResult>;
-  readonly canSubmit: boolean;
-  readonly allTouched: boolean;
+  touchField(path: string): void;
+  visitField(path: string): void;
+  clearErrors(path?: string): void;
+  submit(options?: { interactionId?: string; signal?: AbortSignal }): Promise<ActionResult>;
+  reset(values?: object): void;
+  setValue(name: string, value: unknown): void;
+  setValues(values: Record<string, unknown>): void;
+  appendValue(path: string, value: unknown): void;
+  prependValue(path: string, value: unknown): void;
+  insertValue(path: string, index: number, value: unknown): void;
+  removeValue(path: string, index: number): void;
+  moveValue(path: string, from: number, to: number): void;
+  swapValue(path: string, a: number, b: number): void;
+  replaceValue(path: string, value: unknown): void;
+  getField(path: string): CompiledFormValidationField | undefined;
+  getDependents(path: string): string[];
+  findByPrefix(prefix: string): string[];
+  getChildren(path: string): string[];
 }
 ```
-
-### Additional FormRuntime Responsibilities
-
-1. tracking touched/dirty/visited state
-2. implementing `showErrorOn: 'touched'` policy, with live runtime visibility triggers currently limited to `touched` / `dirty` / `visited` / `submit`
-3. providing `submit()` with form-specific validation and gating
-4. computing `canSubmit` and `allTouched`
-
----
-
-## Compiled Validation Model
-
-Immutable runtime input produced by the compiler.
-
-```ts
-interface CompiledFormValidationModel {
-  rootPath: string;
-  ownerId: string;
-  nodes: Record<string, CompiledFieldTreeNode>;
-  validationOrder: string[];
-  dependents: Record<string, string[]>;
-}
-
-type FieldTreeNodeKind =
-  | 'scope-root'
-  | 'form-root'
-  | 'field'
-  | 'object'
-  | 'array'
-  | 'variant-root'
-  | 'variant-branch'
-  | 'repeated-template';
-
-interface CompiledFieldTreeNode {
-  id: string;
-  path: string;
-  ownerId: string;
-  kind: FieldTreeNodeKind;
-  parent?: string;
-  children: string[];
-  ruleTemplates: CompiledRuleTemplate[];
-  dependencyPaths: string[];
-  aggregateDependencies?: string[];
-}
-```
-
-### Repeated Template Handling
-
-For repeated templates, `id` is the template identity and runtime indexed paths are materialized from that template.
-
-```ts
-// compiled template node
-{ id: 'contacts[].email', path: 'contacts[].email', kind: 'field' }
-
-// runtime active instances
-'contacts.0.email'
-'contacts.1.email'
-'contacts.2.email'
-```
-
----
-
-## Field Registration State
-
-Runtime participation state.
-
-```ts
-interface FieldRegistrationState {
-  registrationId: string;
-  path: string;
-  mounted: boolean;
-  visible: boolean;
-  disabled: boolean;
-  /**
-   * These UX fields are actively maintained by FormRuntime.
-   * Base ValidationScopeRuntime may leave them at their default values.
-   */
-  touched: boolean;
-  dirty: boolean;
-  visited: boolean;
-}
-```
-
----
-
-## Field Validation State
-
-Runtime validation result state.
-
-```ts
-interface FieldValidationStateSnapshot {
-  ownerId: string;
-  path: string;
-  errors: ValidationError[];
-  validating: boolean;
-}
-```
-
----
-
-## Form Store State Structure
-
-Form state uses a normalized flat structure following React/Redux best practices.
-
-```ts
-/**
- * Per-field state stored in a single flat map.
- * Properties use `true | undefined` pattern for memory efficiency.
- */
-interface FieldState {
-  touched?: true;
-  dirty?: true;
-  visited?: true;
-  validating?: true;
-  errors?: ValidationError[];
-}
-
-/**
- * The form store state structure.
- * Uses a single `fieldStates` map instead of multiple separate maps.
- */
-interface FormStoreState {
-  values: Record<string, unknown>;
-  fieldStates: Record<string, FieldState>;
-  submitting: boolean;
-}
-```
-
-### Design Rationale
-
-1. **Single map instead of five**: Previous design stored `touched`, `dirty`, `visited`, `validating`, and `errors` in five separate maps, duplicating path strings. The unified `fieldStates` map stores all field metadata together.
-2. **`true | undefined` pattern**: Boolean flags use `true | undefined` instead of `boolean` to save memory. When a flag is false, it is omitted from the object entirely.
-3. **Empty cleanup**: When all properties of a `FieldState` become undefined, the entire entry is removed from the map.
-4. **Array remapping efficiency**: Array operations (insert/remove/move) traverse the map once instead of five times.
-
----
-
-## Per-Path Subscription API
-
-`FormStoreApi` exposes fine-grained subscription methods for field-level reactivity.
-
-```ts
-interface FormPathState {
-  errors: ValidationError[] | undefined;
-  validating: boolean;
-  touched: boolean;
-  dirty: boolean;
-  visited: boolean;
-}
-
-interface FormStoreApi {
-  // ... existing members ...
-
-  /**
-   * Subscribe to state changes for a specific path.
-   * The listener fires only when the field's state changes for this exact path.
-   * Returns an unsubscribe function.
-   */
-  subscribeToPath(path: string, listener: () => void): () => void;
-
-  /**
-   * Subscribe to submitting state changes.
-   * The listener fires only when the form's submitting flag changes.
-   * Returns an unsubscribe function.
-   */
-  subscribeToSubmitting(listener: () => void): () => void;
-
-  /**
-   * Read the current field state for a specific path.
-   * Returns a snapshot suitable for useSyncExternalStore's getSnapshot.
-   */
-  getPathState(path: string): FormPathState;
-
-  /**
-   * Get the raw FieldState for a path (may be undefined if no state exists).
-   */
-  getFieldState(path: string): FieldState | undefined;
-
-  /**
-   * Update field state for a path. Merges with existing state.
-   * Empty entries are automatically cleaned up.
-   */
-  setFieldState(path: string, state: Partial<FieldState>): void;
-}
-```
-
-### Semantics And Guarantees
-
-1. `subscribeToPath` fires only when the specified path's field state changes, not when unrelated paths change.
-2. In a 1000-field form, a keystroke that updates `fieldStates["name"]` wakes only hooks subscribed to `"name"`.
-3. `subscribeToSubmitting` is separate from path subscriptions because `submitting` is a form-wide flag, not per-path state.
-4. `getPathState` returns a plain object snapshot with no allocation beyond the returned object itself.
-5. Projected stores (for object-field, array-item, variant-field) delegate these methods to the parent store with path translation, using the shared `projectFieldStates` helper from `flux-core`.
-6. `batchUpdate` (array remap) performs diffing before notification: only paths whose state actually changed receive listener calls.
-7. `getFieldState` and `setFieldState` provide direct access to the raw `FieldState` objects for internal use.
-
----
-
-## Canonical Identity
-
-Canonical bookkeeping identity is not plain path alone.
-
-```ts
-interface OwnerQualifiedPath {
-  ownerId: string;
-  path: string;
-}
-```
-
-### Rules
-
-1. `path` is always an absolute path inside the owning scope's address space
-2. `ownerId` distinguishes parent-owned committed state from child-owned draft state
-3. caches, async run ownership, runtime overlays, and field validation buckets are keyed by `OwnerQualifiedPath`
-4. public APIs may accept plain absolute paths only when the owner runtime is already known from context
-
-Repeated instances use absolute indexed paths inside their owner, such as `items.3.email`, plus owner identity for isolation when needed.
-
-When repeated items have a stable logical identity, validation and UX state migration should prefer that logical identity over raw positional index. Pure index-based remapping is only the fallback when no stable item identity exists.
-
----
-
-## React Hook Integration Example
-
-```ts
-// Simplified implementation pattern
-function useCurrentFormFieldState(path: string) {
-  const form = useCurrentForm();
-  const absolutePath = resolveAbsolutePath(path);
-
-  return useSyncExternalStore(
-    useCallback(
-      (onStoreChange) => {
-        const unsub1 = form.store.subscribeToPath(absolutePath, onStoreChange);
-        const unsub2 = form.store.subscribeToSubmitting(onStoreChange);
-        return () => { unsub1(); unsub2(); };
-      },
-      [form.store, absolutePath]
-    ),
-    () => ({
-      ...form.store.getPathState(absolutePath),
-      submitting: form.store.getState().submitting,
-    })
-  );
-}
-```
-
-This per-path subscription model ensures O(1) hook wake-up cost per field change, regardless of form size.
-
----
 
 ## Related Documents
 
-- `docs/architecture/form-validation.md` - Owner architecture document
-- `docs/architecture/flux-runtime-module-boundaries.md` - Module ownership
-- `docs/references/renderer-interfaces.md` - Renderer contract types
+- `docs/architecture/form-validation.md`
+- `docs/references/form-validation-execution-details.md`
+- `docs/architecture/flux-runtime-module-boundaries.md`

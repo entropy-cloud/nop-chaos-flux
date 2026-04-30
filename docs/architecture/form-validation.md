@@ -137,11 +137,10 @@ The validation runtime model has three core abstractions:
 
 | Type | Purpose |
 |------|---------|
-| `ValidationError` | Single validation error with path, owner, rule, message, and sourceKind |
-| `ValidationResult` | Result for single-path validation (ok, errors, validating) |
-| `ScopeValidationResult` | Result for subtree/scope validation (adds fieldErrors map) |
-| `FormSubmitResult` | Result for form submit (ok, errors) |
-| `FieldValidationStateSnapshot` | Per-field validation state snapshot |
+| `ValidationError` | Single validation error with path, rule, message, and sourceKind |
+| `ValidationResult` | Current exported result for single-path validation |
+| `FormValidationResult` | Current exported result for subtree/scope validation |
+| `ActionResult` | Current exported result for `FormRuntime.submit()` |
 | `ScopeValidationStateSnapshot` | Scope-wide validation state summary |
 
 ### ValidationScopeRuntime
@@ -402,13 +401,13 @@ Validation uses three separate kinds of state:
 
 Immutable runtime input produced by the compiler, containing:
 - `rootPath` and `ownerId` for scope identity
-- `nodes` map of `CompiledFieldTreeNode` keyed by path
+- optional `nodes` map of compiled validation nodes keyed by path
 - `validationOrder` for deterministic traversal
 - `dependents` map for dependency-triggered revalidation
 
-Each `CompiledFieldTreeNode` has a `kind` that is one of: `scope-root`, `form-root`, `field`, `object`, `array`, `variant-root`, `variant-branch`, or `repeated-template`.
+In the current exported live types, `CompiledValidationNode.kind` is one of: `field`, `object`, `array`, or `form`.
 
-For repeated templates, `id` is the template identity (e.g., `contacts[].email`) and runtime indexed paths (e.g., `contacts.0.email`) are materialized from that template.
+Repeated-template expansion and richer node-shape vocabulary remain part of the broader architecture discussion, not the current exported type names.
 
 ### Field Registration State
 
@@ -449,7 +448,7 @@ This per-path subscription model ensures O(1) hook wake-up cost per field change
 
 ### Canonical Identity
 
-Canonical bookkeeping identity is `OwnerQualifiedPath`:
+Canonical bookkeeping identity is the pair `{ ownerId, path }`:
 - `ownerId` — distinguishes parent-owned committed state from child-owned draft state
 - `path` — absolute path inside the owning scope's address space
 
@@ -525,20 +524,27 @@ Current implementation note:
 
 ## Compile-Time Collection
 
-> **Implementation Status**: The target interface below (`ValidationCompileContribution`) is a **Phase 3 goal**. The current codebase uses `ValidationContributor` (defined in `flux-core/src/types/renderer-core.ts`) which provides a subset of these capabilities (`kind`, `valueKind`, `getFieldPath`, `collectRules`, `getChildFieldPathPrefix`). The full `ownerResolution`-driven boundary classification and `collectDependencies` are not yet implemented. Do not search for `ValidationCompileContribution` in code; search for `ValidationContributor` instead.
+> **Implementation Status**: The target collection shape below is a Phase 3 design sketch, not a live exported interface. The current codebase uses `ValidationContributor` (defined in `flux-core/src/types/renderer-core.ts`) which provides a subset of these capabilities (`kind`, `valueKind`, `getFieldPath`, `collectRules`, `getChildFieldPathPrefix`). The full `ownerResolution`-driven boundary classification and `collectDependencies` are not yet implemented.
 
 Validation structure is compiled by component-aware collector hooks.
 
 ```ts
-interface ValidationCompileContribution<S = unknown> {
+// target-state sketch only; not a live exported type
+{
   ownerResolution?: 'inherit-owner' | 'create-owner' | 'no-owner';
-  kind: FieldTreeNodeKind | 'none';
-  collectNode?(schema: S, ctx: ValidationCompileContext<S>): CompiledFieldTreeNodeInput | undefined;
-  collectChildren?(schema: S, ctx: ValidationCompileContext<S>): ValidationChildDescriptor[];
-  collectRules?(schema: S, ctx: ValidationCompileContext<S>): CompiledRuleTemplate[];
-  collectDependencies?(schema: S, ctx: ValidationCompileContext<S>): string[];
+  kind: 'field' | 'object' | 'array' | 'form' | 'none';
+  collectNode?(schema: unknown, ctx: unknown): unknown;
+  collectChildren?(schema: unknown, ctx: unknown): unknown[];
+  collectRules?(schema: unknown, ctx: unknown): unknown[];
+  collectDependencies?(schema: unknown, ctx: unknown): string[];
 }
 ```
+
+Current live baseline note:
+
+1. this document keeps the target owner-architecture discussion because it is the local owner doc
+2. reference docs must not copy this sketch as if it were a live exported TypeScript interface
+3. this live-vs-target split is a narrow existing exception under cleanup, not a general template for other architecture docs
 
 `ownerResolution` is the compile-time contract that participates in owner-boundary partitioning.
 

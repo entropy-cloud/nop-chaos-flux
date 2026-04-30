@@ -123,10 +123,11 @@ Role summary:
 
 Stable field groups:
 
-- Runtime registration: `type`, `component`, `fields`, `regions`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`
+- Runtime registration: `type`, `component`, `reactComponent`, `fields`, `regions`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`, `staticCapable`
 - Discovery metadata: `displayName`, `icon`, `category`, `sourcePackage`, `defaultSchema`
-- Renderer classification: `rendererClass`, `rendererTraits`
+- Renderer classification: `rendererClass`, `rendererTraits`, `injectedLocals`
 - Ordinary renderer authoring contracts: `propContracts`, `eventContracts`, `componentCapabilityContracts`, `scopeExportContracts`
+- Authoring adaptation: `propSchema`, `authoringTransform`
 - Host-only contract: `hostContract`
 
 Classification baseline:
@@ -210,7 +211,7 @@ Key contracts:
 Role summary:
 
 - `RendererComponentProps` is the concrete renderer boundary
-- `RendererHelpers` exposes stable runtime helpers such as `render`, `evaluate`, `createScope`, and `dispatch`
+- `RendererHelpers` exposes stable runtime helpers such as `render`, `evaluate`, `createScope`, `dispatch`, and `executeSource`
 - `RendererEventHandler` is the runtime callback shape used for declarative event fields
 - `RenderRegionHandle` gives components an easy way to render declared child regions
 - `ComponentHandle` may optionally expose `ref?: HTMLElement | null` alongside explicit imperative capabilities
@@ -303,10 +304,11 @@ Key contract:
 Boundary inputs remain explicit:
 
 - `schema`
+- `schemaUrl`
 - `data`
 - `env`
 - `formulaCompiler`
-- optional `registry`, `plugins`, `pageStore`, `parentScope`, and `onActionError`
+- optional `registry`, `plugins`, `pageStore`, `surfaceRuntime`, `moduleCache`, `parentScope`, `actionScope`, `componentRegistry`, `onRuntimeChange`, `onComponentRegistryChange`, `onActionScopeChange`, and `onActionError`
 
 ## Recommended Reading Path
 

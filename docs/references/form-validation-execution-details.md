@@ -480,7 +480,7 @@ Update:
 API return shape depends on the entry point:
 
 1. `ValidationResult` for local path-centered calls
-2. `ScopeValidationResult` for subtree or owner-scoped calls
+2. `FormValidationResult` for current exported subtree or owner-scoped calls
 
 ## 6.2.1 Transitional Owner Lifecycle
 
@@ -919,9 +919,9 @@ Additional clarification:
 
 This is especially important for nested non-form scopes and draft editors.
 
-## 7.1 `ValidationResult` vs `ScopeValidationResult`
+## 7.1 `ValidationResult` vs `FormValidationResult`
 
-These two result types exist because Flux has both local validation entry points and scope-level validation entry points.
+The current exported baseline uses `ValidationResult` for path-centered calls and `FormValidationResult` for subtree or owner-scoped calls.
 
 ### `ValidationResult`
 
@@ -935,9 +935,9 @@ It answers:
 
 It does not imply a full owner-wide error map.
 
-### `ScopeValidationResult`
+### `FormValidationResult`
 
-Use `ScopeValidationResult` for subtree or owner-wide validation such as:
+Use `FormValidationResult` for current exported subtree or owner-wide validation such as:
 
 1. `validateSubtree(path)`
 2. `validateAll()`
@@ -952,7 +952,7 @@ It answers:
 Shortcut:
 
 1. `ValidationResult` is a local run result
-2. `ScopeValidationResult` is a subtree / owner aggregate result
+2. `FormValidationResult` is the current exported subtree / owner aggregate result
 
 ## 7.2 How To Tell Whether Something Is Draft
 

@@ -211,7 +211,7 @@ interface ScopeStore<T> { ... }
 Flux 的包依赖链是单向的：
 
 ```
-flux-core → flux-formula → flux-runtime → flux-react → flux-renderers-*
+flux-core → flux-formula → flux-compiler → flux-action-core → flux-runtime → flux-react → flux-renderers-*
 ```
 
 **代码放置原则**：

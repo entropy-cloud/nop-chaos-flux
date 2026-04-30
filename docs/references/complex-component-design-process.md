@@ -4,16 +4,19 @@
 
 ## 1. 核心原则
 
-### 1.1 AMIS JSON 是核心 DSL
+### 1.1 Flux Final Execution Schema 是当前运行时基线
 
-AMIS JSON 是最重要的设计产出，它：
-- 反映领域的组合规律
-- 定义用户可配置的边界
-- 决定运行时的灵活性上限
+当前 owner-doc 基线不是“AMIS JSON 是核心 DSL”，而是 Flux 运行时消费已经装配完成的 `Final Execution Schema`。
 
-设计顺序：**先 JSON Schema，后实现**。
+复杂组件设计时仍然可以参考 AMIS 作为历史输入或兼容来源，但新的 owner docs 和当前参考文档应围绕 Flux / `SchemaRenderer` 基线表达：
 
-### 1.2 充分利用 AMIS Runtime
+- 领域 schema 反映组合规律
+- loader / compiler 负责装配和预处理
+- runtime 消费最终执行 schema，而不是在运行时继续承担 authoring-model 组装
+
+设计顺序仍然是：**先 schema contract，后实现**。
+
+### 1.2 充分利用 Flux Runtime / SchemaRenderer
 
 复杂组件不是独立再造一套渲染引擎，而是：
 - 复用 SchemaRenderer 渲染 UI 片段
@@ -26,7 +29,7 @@ AMIS JSON 是最重要的设计产出，它：
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ AMIS JSON Schema（用户可配置层）                     │
+│ Schema Contract / Authoring Input                    │
 │ - 领域 DSL 定义                                      │
 │ - 组合规则                                           │
 │ - 默认值和约束                                       │
@@ -66,7 +69,7 @@ AMIS JSON 是最重要的设计产出，它：
 
 ### 2.2 阶段二：JSON Schema 设计
 
-**目标**：定义 AMIS JSON DSL
+**目标**：定义 Flux schema contract
 
 **产出**：
 - 页面级 Schema 定义（如 `designer-page`）
@@ -82,7 +85,7 @@ AMIS JSON 是最重要的设计产出，它：
 
 **审查清单**：
 - [ ] Schema 是否反映了领域组合规律？
-- [ ] 是否充分复用了现有 AMIS 能力？
+- [ ] 是否充分复用了现有 Flux / SchemaRenderer 能力？
 - [ ] Config 和 Document 是否清晰分离？
 - [ ] 是否有冗余的自定义字段？
 - [ ] 是否便于后端存储和版本迁移？
@@ -125,22 +128,22 @@ AMIS JSON 是最重要的设计产出，它：
 **产出**：
 - 独立 CSS 文件（如 `styles.css`）
 - CSS 变量定义（如 `--fd-*`）
-- 主题 token 映射（如 `--na-*` → `--fd-*`）
+- 主题 token 映射（如 `--nop-*` → `--fd-*`）
 
 **设计要点**：
 ```css
 /* 主题 token 定义 */
 .theme-root {
-  --na-primary: #3b82f6;
-  --na-surface: #ffffff;
-  --na-border: rgba(0,0,0,0.1);
+  --nop-primary: #3b82f6;
+  --nop-surface: #ffffff;
+  --nop-border: rgba(0,0,0,0.1);
 }
 
 /* 组件变量引用主题 token */
 .fd-component-root {
-  --fd-node-bg: var(--na-surface);
-  --fd-node-border: var(--na-border);
-  --fd-primary: var(--na-primary);
+  --fd-node-bg: var(--nop-surface);
+  --fd-node-border: var(--nop-border);
+  --fd-primary: var(--nop-primary);
 }
 
 /* 组件样式使用组件变量 */
@@ -156,7 +159,7 @@ AMIS JSON 是最重要的设计产出，它：
 
 - [ ] 类型定义完整且有 TypeScript 对应
 - [ ] Config（类型配置）和 Document（实例数据）分离
-- [ ] 充分复用现有 AMIS renderer
+- [ ] 充分复用现有 Flux renderer / SchemaRenderer 能力
 - [ ] 表达式使用现有语法
 - [ ] 可序列化，便于持久化
 - [ ] 版本字段支持迁移
@@ -186,8 +189,9 @@ AMIS JSON 是最重要的设计产出，它：
 
 | 组件 | 状态 | 文档位置 |
 |------|------|----------|
-| Flow Designer | 进行中 | `docs/architecture/flow-designer/` |
-| Report Designer | 待设计 | `docs/architecture/report-designer/` |
+| Flow Designer | 已落地并持续演进 | `docs/architecture/flow-designer/` |
+| Report Designer | 已落地并持续演进 | `docs/architecture/report-designer/` |
+| Word Editor | 已落地并持续演进 | `docs/architecture/word-editor/design.md` |
 
 ## 5. 反模式
 
@@ -199,7 +203,7 @@ AMIS JSON 是最重要的设计产出，它：
 ### 5.2 重复造轮子
 
 错误：复杂组件自己实现表单引擎、表达式引擎
-正确：复用 AMIS Runtime 的 FormRuntime、FormulaCompiler
+正确：复用 Flux Runtime / SchemaRenderer 的 FormRuntime、FormulaCompiler、ActionScope 等既有能力
 
 ### 5.3 Config 与 Document 混杂
 

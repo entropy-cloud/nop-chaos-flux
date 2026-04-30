@@ -179,7 +179,7 @@ These still use the same `RendererDefinition` registration system, but they are 
 
 ## Minimum Viable Renderer
 
-The only required fields on `RendererDefinition` are `type` and `component`:
+The minimum required registration surface on `RendererDefinition` is `type` plus one render entry: `component` or `reactComponent`.
 
 ```ts
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
@@ -194,6 +194,8 @@ const registry = createRendererRegistry([
 ]);
 ```
 
+If you already have a plain React component that accepts normal props, you can also register `reactComponent`; the runtime will auto-wrap it into the standard `RendererComponentProps` boundary.
+
 Schema usage:
 
 ```json
@@ -207,7 +209,7 @@ Schema usage:
 | Field | What it contains | Typical use |
 |---|---|---|
 | `props.props` | Resolved runtime values (all schema fields after expression evaluation) | Primary data input: `label`, `data`, `options`, etc. |
-| `props.meta` | Control meta: `className`, `disabled`, `visible`, `testid`, `cid`, `label` | Style, accessibility, and control state |
+| `props.meta` | Control meta: `className`, `disabled`, `visible`, `testid`, `cid` | Style, accessibility, and control state |
 | `props.events` | Runtime event handlers keyed by event name | `onClick`, `onChange`, `onSubmit` |
 | `props.regions` | Precompiled child region handles | Slot content via `.render()` |
 | `props.schema` | The raw declared schema for this node | Reading static config not in `props.props` |
@@ -328,7 +330,7 @@ The `wrap: true` flag tells `NodeRenderer` to automatically wrap the component i
 | Hook | Package | Purpose |
 |---|---|---|
 | `useFormFieldController(name)` | `flux-renderers-form` | Returns `{ value, handlers, currentForm }` — the primary controller |
-| `useFieldPresentation(name, form, options)` | `flux-renderers-form` | Returns `effectiveDisabled`, `showError`, `interactive`, etc. |
+| `useFieldPresentation(name, owner, options)` | `flux-renderers-form` | Returns `effectiveDisabled`, `showError`, `interactive`, etc.; the second parameter is `ValidationScopeRuntime | undefined`, not only `FormRuntime` |
 | `useCurrentForm()` | `flux-react` | Direct access to `FormRuntime` for advanced scenarios |
 | `useRenderScope()` | `flux-react` | Direct scope access for non-form scope writes |
 
@@ -507,12 +509,14 @@ function MyRenderer(props) {
 | Field | Required | Default | Purpose |
 |---|---|---|---|
 | `type` | yes | — | Unique string matching `schema.type` |
-| `component` | yes | — | The React component |
+| `component` | one of `component` / `reactComponent` | — | The standard Flux renderer component |
+| `reactComponent` | one of `component` / `reactComponent` | — | Plain React component path auto-wrapped by the runtime |
 | `displayName` | no | — | Human-readable name for tooling |
 | `category` | no | — | Grouping for tooling (e.g. `"content"`, `"form"`) |
 | `icon` | no | — | Icon name for tooling |
 | `sourcePackage` | no | — | Package name for tooling |
 | `defaultSchema` | no | — | Default schema values when inserting |
+| `propSchema` | no | — | Renderer-local prop schema metadata |
 | `regions` | no | — | Declared region names |
 | `fields` | no | — | `SchemaFieldRule[]` for compiler field classification |
 | `validation` | no | — | `ValidationContributor` for form validation |
@@ -520,6 +524,9 @@ function MyRenderer(props) {
 | `scopePolicy` | no | — | Scope creation policy |
 | `actionScopePolicy` | no | `'inherit'` | `'inherit'` or `'new'` action scope boundary |
 | `componentRegistryPolicy` | no | `'inherit'` | `'inherit'` or `'new'` component registry boundary |
+| `injectedLocals` | no | — | Static injected-local metadata for compile-time symbol resolution |
+| `authoringTransform` | no | — | Optional renderer-local schema transform before compilation |
+| `staticCapable` | no | `false` | Declares whether the renderer is static-rendering capable |
 
 ## Related Documents
 
