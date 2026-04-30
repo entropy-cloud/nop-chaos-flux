@@ -1,6 +1,6 @@
 # 157 Validation Owner Boundary And Child Contract Implementation Alignment Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-30
 > Source: `docs/index.md`, `docs/architecture/README.md`, `docs/architecture/form-validation.md`, `docs/architecture/data-domain-owner.md`, `docs/architecture/value-adaptation-and-detail-field.md`, `docs/architecture/action-scope-and-imports.md`, `docs/plans/119-action-precompile-and-args-unification-plan.md`, `docs/plans/135-non-form-validation-scope-and-owner-boundary-implementation-plan.md`, `docs/logs/2026/04-30.md`
 > Related: `docs/plans/119-action-precompile-and-args-unification-plan.md`, `docs/plans/135-non-form-validation-scope-and-owner-boundary-implementation-plan.md`, `docs/plans/155-architecture-owner-doc-convergence-plan.md`, `docs/plans/156-reference-doc-sync-and-audit-consensus-plan.md`
@@ -119,20 +119,20 @@ Exit Criteria:
 
 ### Phase 4 - Verification And Final Owner-Doc Cleanup
 
-Status: in progress
+Status: completed
 Targets: scoped tests, `docs/architecture/form-validation.md`, `docs/architecture/data-domain-owner.md`, `docs/architecture/value-adaptation-and-detail-field.md`, `docs/plans/157-validation-owner-and-submitform-implementation-alignment-plan.md`, corresponding execution-date `docs/logs/` entry
 
-- [ ] Re-audit the scoped owner docs against live code after Phases 2-3.
-- [ ] Remove any remaining plan-scoped current-vs-target exception wording that is no longer justified.
-- [ ] Run focused verification plus repo-wide required verification for the landed code changes.
-- [ ] Run a fresh independent closure audit before marking the plan complete.
+- [x] Re-audit the scoped owner docs against live code after Phases 2-3.
+- [x] Remove any remaining plan-scoped current-vs-target exception wording that is no longer justified.
+- [x] Run focused verification plus repo-wide required verification for the landed code changes.
+- [x] Run a fresh independent closure audit before marking the plan complete.
 
 Exit Criteria:
 
-- [ ] In this plan's scope, `docs/architecture/` files describe final design state only and do not rely on current-vs-target exception wording.
-- [ ] All Phase 2-3 behavior claims are backed by live code paths and focused tests.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` succeed.
-- [ ] The corresponding execution-date `docs/logs/` entry records the closure-audit evidence.
+- [x] In this plan's scope, `docs/architecture/` files describe final design state only and do not rely on current-vs-target exception wording.
+- [x] All Phase 2-3 behavior claims are backed by live code paths and focused tests.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` succeed.
+- [x] The corresponding execution-date `docs/logs/` entry records the closure-audit evidence.
 
 ## Validation Checklist
 
@@ -141,20 +141,20 @@ Exit Criteria:
 - [x] parent-child validation contract behavior is proven by focused tests for the supported paths
 - [x] `docs/architecture/form-validation.md`, `docs/architecture/data-domain-owner.md`, and `docs/architecture/value-adaptation-and-detail-field.md` no longer require plan-scoped current-vs-target exception wording
 - [x] focused verification for changed code paths is complete
-- [ ] independent closure audit has re-checked every phase exit criterion and this checklist
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] independent closure audit has re-checked every phase exit criterion and this checklist
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: <<fill at closure: explain why the scoped validation-owner code now satisfies the owner-doc design baseline and why no plan-owned mixed-doc exception remains>>
+Status Note: The supported validation-owner paths in this plan now match the owner-doc baseline: compiler/runtime metadata classifies supported owner boundaries, detail child owners register real parent-visible contracts while active, and the scoped architecture docs describe final supported design state rather than preserving a plan-owned current-vs-target exception.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<independent reviewer or subagent>>
-- Evidence: <<task id / daily log link / findings summary>>
+- Reviewer / Agent: independent general subagent
+- Evidence: `ses_2225c72ffffe7rkOLk8DE95DBD` re-checked every phase/checklist item against live repo state, initially found two remaining Phase 4 doc/log gaps in `docs/architecture/form-validation.md` and closure evidence recording, and passed after those were resolved and recorded in `docs/logs/2026/04-30.md`.
 
 Follow-up:
 

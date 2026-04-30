@@ -509,7 +509,7 @@ Current implementation note:
 
 ## Compile-Time Collection
 
-> **Implementation Status**: The target collection shape below is a Phase 3 design sketch, not a live exported interface. The current codebase uses `ValidationContributor` (defined in `flux-core/src/types/renderer-core.ts`) which provides a subset of these capabilities (`kind`, `valueKind`, `getFieldPath`, `collectRules`, `getChildFieldPathPrefix`). The full `ownerResolution`-driven boundary classification and `collectDependencies` are not yet implemented.
+> **Implementation Status**: The illustrative collection shape below is not a live exported interface. The current codebase uses `ValidationContributor` (defined in `flux-core/src/types/renderer-core.ts`) as the live compiler contract. In the supported family set, that live contract already includes compile-time owner-boundary metadata (`ownerResolution`, `childContractMode`) plus the existing field/rule/path collection hooks. Richer collection hooks such as `collectDependencies` remain future work rather than a requirement for the supported owner families.
 
 Validation structure is compiled by component-aware collector hooks.
 
@@ -527,9 +527,9 @@ Validation structure is compiled by component-aware collector hooks.
 
 Current live baseline note:
 
-1. this document keeps the target owner-architecture discussion because it is the local owner doc
-2. reference docs must not copy this sketch as if it were a live exported TypeScript interface
-3. this live-vs-target split is a narrow existing exception under cleanup, not a general template for other architecture docs
+1. reference docs must not copy this sketch as if it were a live exported TypeScript interface
+2. the live exported compiler contract is `ValidationContributor`, not the sketch block above
+3. supported owner-boundary classification already flows through that live contract for `form`, page-owned root, and detail child owners
 
 `ownerResolution` is the compile-time contract that participates in owner-boundary partitioning.
 
@@ -1073,7 +1073,7 @@ Flux validation uses the following architecture:
 5. field-addressed validation state is stored and coordinated by the owning scope runtime
 6. rules are compiled as templates and materialized per run
 7. partial validation is owner-scoped and path-aware
-8. draft validation is isolated until commit — currently via renderer-level form creation, future via compiler-driven owner boundaries
+8. draft validation is isolated until commit through explicit child-owner boundaries; in the supported detail path the renderer instantiates the child runtime at open time, while compiler/runtime metadata owns the boundary classification and parent-child coordination contract
 
 ## Related Documents
 
