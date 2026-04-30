@@ -36,9 +36,13 @@ function TreeModeLayoutWrapper(props: RendererComponentProps<DesignerPageSchema>
   const { config, rawSchemaProps } = props;
   const inputTreeDocument = rawSchemaProps.treeDocument as TreeDocument | undefined;
   const [treeDocument, setTreeDocument] = React.useState<TreeDocument | undefined>(inputTreeDocument);
+  const prevInputRef = React.useRef(inputTreeDocument);
 
   useEffect(() => {
-    setTreeDocument(inputTreeDocument);
+    if (prevInputRef.current !== inputTreeDocument) {
+      prevInputRef.current = inputTreeDocument;
+      setTreeDocument(inputTreeDocument);
+    }
   }, [inputTreeDocument]);
 
   const document: GraphDocument = useMemo(

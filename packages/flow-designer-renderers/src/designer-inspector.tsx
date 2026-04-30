@@ -102,7 +102,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
 
     return (
       <div className="fd-panel-card rounded-lg border border-border p-4 mt-4">
-        <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">分支组</div>
+        <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">{t('flux.flowDesigner.inspector.branchGroup')}</div>
         <div className="mt-4 flex flex-col gap-4">
           {branchItems.map((branch, index) => {
             const canMoveLeft = index > 0;
@@ -116,7 +116,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
               >
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div>
-                    <div className="text-sm font-medium text-foreground">分支 {index + 1}</div>
+                    <div className="text-sm font-medium text-foreground">{t('flux.flowDesigner.inspector.branchLabel', { index: index + 1 })}</div>
                     <div className="text-xs text-muted-foreground font-mono">{branch.id}</div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -154,7 +154,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="text-sm font-medium text-foreground">分支名称</Label>
+                  <Label className="text-sm font-medium text-foreground">{t('flux.flowDesigner.inspector.branchName')}</Label>
                   <Input
                     type="text"
                     value={String(branch.data.label ?? '')}
@@ -175,21 +175,21 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
             onClick={() => dispatch({
               type: 'addBranch',
               nodeId: activeNode.id,
-              branchData: { label: `分支 ${branchItems.length + 1}` },
+              branchData: { label: t('flux.flowDesigner.inspector.branchLabel', { index: branchItems.length + 1 }) },
               childType: activeNode.type,
-              childData: { label: `新分支 ${branchItems.length + 1}` }
+              childData: { label: t('flux.flowDesigner.inspector.newBranch', { index: branchItems.length + 1 }) }
             })}
           >
-            添加分支
+            {t('flux.flowDesigner.inspector.addBranch')}
           </Button>
           {focusedBranch && (
             <div className="rounded-lg border border-border/70 p-3 bg-muted/20">
-              <div className="text-sm font-medium text-foreground">当前分支</div>
+              <div className="text-sm font-medium text-foreground">{t('flux.flowDesigner.inspector.currentBranch')}</div>
               <div className="text-xs text-muted-foreground mt-1">{String(focusedBranch.data.label ?? focusedBranch.id)}</div>
               {focusedBranch.childId ? (
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs text-muted-foreground">首节点</div>
+                    <div className="text-xs text-muted-foreground">{t('flux.flowDesigner.inspector.firstNode')}</div>
                     <div className="text-sm text-foreground">{focusedBranch.childLabel ?? focusedBranch.childId}</div>
                   </div>
                   <Button
@@ -198,11 +198,11 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                     size="sm"
                     onClick={() => dispatch({ type: 'selectNode', nodeId: focusedBranch.childId ?? null })}
                   >
-                    定位节点
+                    {t('flux.flowDesigner.inspector.locateNode')}
                   </Button>
                 </div>
               ) : (
-                <div className="mt-3 text-xs text-muted-foreground">该分支当前为空。</div>
+                <div className="mt-3 text-xs text-muted-foreground">{t('flux.flowDesigner.inspector.emptyBranch')}</div>
               )}
             </div>
           )}
@@ -215,8 +215,8 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
     <div className={cn('nop-inspector flex flex-col h-full text-foreground')}>
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
-          <div className="text-sm font-semibold text-foreground">属性面板</div>
-          <div className="text-sm text-muted-foreground">编辑节点或连线属性</div>
+          <div className="text-sm font-semibold text-foreground">{t('flux.flowDesigner.inspector.propertyPanel')}</div>
+          <div className="text-sm text-muted-foreground">{t('flux.flowDesigner.inspector.editNodeOrEdge')}</div>
         </div>
         <Button variant="ghost" size="icon-sm" onClick={() => dispatch({ type: 'toggleInspector' })} aria-label="Collapse inspector" data-testid="collapse-inspector">
           <DesignerIcon icon="chevron-right" />
@@ -224,19 +224,19 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-4">
         <div className="fd-panel-card rounded-lg border border-border p-4 mb-4">
-          <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">流程信息</div>
+          <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">{t('flux.flowDesigner.inspector.flowInfo')}</div>
           <div className="mt-2 font-medium text-foreground">{doc.name}</div>
           <div className="flex flex-wrap items-center gap-2 mt-3 text-sm text-muted-foreground">
-            <Badge variant="success">已启用</Badge>
-            <span>{nodeCount} 个节点</span>
-            <span>{edgeCount} 条连线</span>
+            <Badge variant="success">{t('flux.flowDesigner.inspector.enabled')}</Badge>
+            <span>{t('flux.flowDesigner.inspector.nodeCount', { count: nodeCount })}</span>
+            <span>{t('flux.flowDesigner.inspector.edgeCount', { count: edgeCount })}</span>
           </div>
         </div>
 
         {activeNode ? (
           <>
             <div className="fd-panel-card rounded-lg border border-border p-4 mb-4">
-              <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">当前选中</div>
+              <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">{t('flux.flowDesigner.inspector.currentSelection')}</div>
               <div className="mt-3">
                 {renderNodeTypeHeader()}
                 {activeNode.data.description ? (
@@ -250,7 +250,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
             <div className="fd-panel-card rounded-lg border border-border p-4">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <Label className="text-sm font-medium text-foreground">名称</Label>
+                  <Label className="text-sm font-medium text-foreground">{t('flux.flowDesigner.inspector.name')}</Label>
                   <Input
                     type="text"
                     value={String(activeNode.data.label ?? '')}
@@ -258,7 +258,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="text-sm font-medium text-foreground">描述</Label>
+                  <Label className="text-sm font-medium text-foreground">{t('flux.flowDesigner.inspector.description')}</Label>
                   <Textarea
                     className="min-h-[80px] resize-y"
                     value={String(activeNode.data.description ?? '')}
@@ -275,9 +275,9 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
         ) : activeEdge ? (
           <>
             <div className="fd-panel-card rounded-lg border border-border p-4 mb-4">
-              <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">当前选中</div>
+              <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">{t('flux.flowDesigner.inspector.currentSelection')}</div>
               <div className="mt-3">
-                <div className="font-medium text-foreground">连线</div>
+                <div className="font-medium text-foreground">{t('flux.flowDesigner.inspector.connection')}</div>
                 <div className="text-sm text-muted-foreground mt-1">{activeEdge.source} → {activeEdge.target}</div>
               </div>
             </div>
@@ -301,7 +301,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
           </>
         ) : (
           <div className="fd-panel-card rounded-lg border border-border p-4">
-            <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">快捷键</div>
+            <div className="fd-panel-caption text-xs font-semibold uppercase tracking-[0.18em]">{t('flux.flowDesigner.inspector.shortcuts')}</div>
             <div className="mt-3 text-sm text-muted-foreground space-y-2">
               <div><strong>{t('flux.flowDesigner.shortcutUndo')}</strong> {t('flux.flowDesigner.undo')}</div>
               <div><strong>{t('flux.flowDesigner.shortcutRedo')}</strong> {t('flux.flowDesigner.redo')}</div>
@@ -319,7 +319,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
               size="sm"
               onClick={() => dispatch({ type: 'deleteNode', nodeId: activeNode.id })}
             >
-              删除节点
+              {t('flux.flowDesigner.inspector.deleteNode')}
             </Button>
           </div>
         )}
