@@ -254,8 +254,14 @@ describe('createReportDesignerBridge', () => {
     expect(snap.designer.inspector.open).toBe(true);
   });
 
-  it('should include inspector panels in designer snapshot', () => {
+  it('should expose the DSL-first inspector runtime shape in designer snapshot', async () => {
+    await designerBridge.dispatchDesigner({
+      type: 'report-designer:openInspector',
+      target: { kind: 'sheet', sheetId },
+    });
+
     const snap = designerBridge.getDesignerSnapshot();
-    expect(snap.inspectorPanels).toEqual([]);
+    expect('resolvedSchema' in snap.designer.inspector).toBe(true);
+    expect('loading' in snap.designer.inspector).toBe(true);
   });
 });

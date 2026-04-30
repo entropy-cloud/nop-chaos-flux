@@ -8,7 +8,6 @@ import type {
   ReportDesignerCommand,
   ReportDesignerCommandResult,
   InspectorRuntimeState,
-  InspectorPanelDescriptor,
   FieldSourceSnapshot,
   FieldDragState,
   MetadataBag,
@@ -27,7 +26,6 @@ export interface ReportDesignerHostSnapshot extends SpreadsheetHostSnapshot {
     running: boolean;
     mode?: string;
   };
-  inspectorPanels: InspectorPanelDescriptor[];
 }
 
 export interface ReportDesignerBridge extends SpreadsheetBridge {
@@ -67,7 +65,6 @@ export function createEventEmitter(): ReportDesignerEventEmitter {
 export function deriveDesignerHostSnapshot(
   spreadsheet: SpreadsheetHostSnapshot,
   designer: ReportDesignerRuntimeSnapshot,
-  inspectorPanels?: InspectorPanelDescriptor[],
 ): ReportDesignerHostSnapshot {
   return {
     ...spreadsheet,
@@ -83,7 +80,6 @@ export function deriveDesignerHostSnapshot(
       running: designer.preview.running,
       mode: designer.preview.mode,
     },
-    inspectorPanels: inspectorPanels ?? [],
   };
 }
 
@@ -97,7 +93,7 @@ export function createReportDesignerBridge(
     getDesignerSnapshot() {
       const spreadsheet = spreadsheetBridge.getSnapshot();
       const designer = designerCore.getSnapshot();
-      return deriveDesignerHostSnapshot(spreadsheet, designer, designerCore.getInspectorPanels());
+      return deriveDesignerHostSnapshot(spreadsheet, designer);
     },
 
     dispatchDesigner(command: ReportDesignerCommand) {

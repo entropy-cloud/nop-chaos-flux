@@ -4,25 +4,11 @@ import { useOwnScopeSelector } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import type { ReportInspectorSchema } from './schemas.js';
 
-interface InspectorPanelShape {
-  id: string;
-  title: string;
-  body: SchemaInput;
-}
-
-function toPanelShape(raw: Record<string, unknown>): InspectorPanelShape {
-  return {
-    id: String(raw.id ?? ''),
-    title: String(raw.title ?? ''),
-    body: raw.body as SchemaInput,
-  };
-}
-
 export function ReportInspectorRenderer(props: RendererComponentProps<ReportInspectorSchema>) {
   const scopeData = useOwnScopeSelector((data: Record<string, unknown>) => data);
   const hasSelection = scopeData.selectionTarget != null;
-  const rawPanels = (props.props.inspectorPanels ?? []) as Record<string, unknown>[];
-  const panels = rawPanels.map(toPanelShape);
+  const inspector = scopeData.inspector as { resolvedSchema?: SchemaInput } | undefined;
+  const body = (props.props.body ?? scopeData.inspectorBody ?? inspector?.resolvedSchema) as SchemaInput | undefined;
   const emptyLabel = String(props.props.emptyLabel ?? 'No inspector panels available.');
   const noSelectionLabel = String(props.props.noSelectionLabel ?? 'Select a target to inspect.');
 
@@ -34,7 +20,7 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
     );
   }
 
-  if (panels.length === 0) {
+  if (!body) {
     return (
       <section className={cn('nop-report-inspector')}>
         <p data-slot="report-designer-empty">{emptyLabel}</p>
@@ -44,16 +30,9 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
 
   return (
     <section className={cn('nop-report-inspector')} data-testid="report-inspector">
-      {panels.map((panel) => (
-        <div key={panel.id} data-slot="report-designer-stack">
-          <div data-slot="report-designer-section-header">
-            <h4>{panel.title}</h4>
-          </div>
-          {props.helpers.render(panel.body, {
-            pathSuffix: `inspector-panels.${panel.id}`,
-          })}
-        </div>
-      ))}
+      {props.helpers.render(body, {
+        pathSuffix: 'inspector-body',
+      })}
     </section>
   );
 }

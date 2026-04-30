@@ -14,8 +14,7 @@ import type {
 import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
-import { renderFallbackFieldPanel, renderFallbackInspector } from './fallbacks.js';
-import { defaultSelectionSummaryInspectorProvider, withDefaultSelectionSummaryInspector } from './default-selection-summary-inspector.js';
+import { renderFallbackFieldPanel } from './fallbacks.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 import { getFieldCount } from './helpers.js';
 import { useReportDesignerHostScope } from './host-data.js';
@@ -80,11 +79,7 @@ function createSpreadsheetActionProvider(
 export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportDesignerPageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
   const resolvedDocument = props.props.document as ReportTemplateDocument;
-  const inputDesigner = props.props.designer as ReportDesignerConfig;
-  const resolvedDesigner = useMemo(
-    () => withDefaultSelectionSummaryInspector(inputDesigner),
-    [inputDesigner],
-  );
+  const resolvedDesigner = props.props.designer as ReportDesignerConfig;
   const resolvedProfile = props.props.profile as ReportDesignerProfile | undefined;
   const resolvedAdapters = props.props.adapters as Partial<ReportDesignerAdapterRegistry> | undefined;
   const spreadsheetCore = useMemo(
@@ -132,7 +127,6 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
   }, [actionScope, spreadsheetProvider]);
 
   useEffect(() => {
-    core.registerInspector(defaultSelectionSummaryInspectorProvider);
     void core.refreshFieldSources();
   }, [core]);
 
@@ -228,7 +222,7 @@ export function ReportDesignerPageRenderer(props: RendererComponentProps<ReportD
       onLeftToggle={() => setLeftCollapsed((v) => !v)}
       leftLabel={t('flux.reportDesigner.expandFieldPanel')}
       canvas={hasRendererSlotContent(bodyContent) ? bodyContent : <ReportSpreadsheetCanvas core={core} snapshot={snapshot} spreadsheetBridge={spreadsheetBridge} spreadsheetSnapshot={spreadsheetSnapshot} />}
-      rightPanel={hasRendererSlotContent(inspectorContent) ? inspectorContent : renderFallbackInspector(snapshot.activeMeta)}
+      rightPanel={hasRendererSlotContent(inspectorContent) ? inspectorContent : props.helpers.render({ type: 'report-inspector-shell' } as any, { scope: reportDesignerScope, actionScope })}
       rightCollapsed={rightCollapsed}
       onRightToggle={() => setRightCollapsed((v) => !v)}
       rightLabel={t('flux.reportDesigner.expandInspector')}

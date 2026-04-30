@@ -46,60 +46,52 @@ function renderInspector(
 }
 
 describe('ReportInspectorRenderer', () => {
-  it('renders empty label when no panels', () => {
-    renderInspector({ inspectorPanels: [] });
+  it('renders empty label when no schema body is available', () => {
+    renderInspector({});
 
     expect(screen.getByText('No inspector panels available.')).toBeTruthy();
   });
 
-  it('renders custom emptyLabel when no panels', () => {
-    renderInspector({ inspectorPanels: [], emptyLabel: 'Custom empty' });
+  it('renders custom emptyLabel when no schema body is available', () => {
+    renderInspector({ emptyLabel: 'Custom empty' });
 
     expect(screen.getByText('Custom empty')).toBeTruthy();
   });
 
-  it('renders panels with titles', () => {
+  it('renders schema body content', () => {
     renderInspector({
-      inspectorPanels: [
-        { id: 'panel-1', title: 'Cell Properties', targetKind: 'cell', body: { type: 'text', text: 'Panel body' } },
-        { id: 'panel-2', title: 'Style', targetKind: 'cell', body: { type: 'text', text: 'Style body' } },
-      ],
+      body: { type: 'text', text: 'Panel body' },
     });
 
-    expect(screen.getByText('Cell Properties')).toBeTruthy();
-    expect(screen.getByText('Style')).toBeTruthy();
     expect(screen.getByText('Panel body')).toBeTruthy();
-    expect(screen.getByText('Style body')).toBeTruthy();
   });
 
-  it('renders single panel', () => {
+  it('has data-testid when schema body is present', () => {
     renderInspector({
-      inspectorPanels: [
-        { id: 'panel-1', title: 'Basic', targetKind: 'cell', body: { type: 'text', text: 'Content' } },
-      ],
-    });
-
-    expect(screen.getByText('Basic')).toBeTruthy();
-    expect(screen.getByText('Content')).toBeTruthy();
-  });
-
-  it('has data-testid when panels present', () => {
-    renderInspector({
-      inspectorPanels: [
-        { id: 'panel-1', title: 'Test', targetKind: 'cell', body: { type: 'text', text: 'x' } },
-      ],
+      body: { type: 'text', text: 'x' },
     });
 
     const inspector = screen.getByTestId('report-inspector');
     expect(inspector).toBeTruthy();
     expect(inspector.classList.contains('nop-report-inspector')).toBe(true);
-    expect(inspector.querySelector('[data-slot="report-designer-section-header"]')).toBeTruthy();
-    expect(inspector.querySelector('[data-slot="report-designer-stack"]')).toBeTruthy();
   });
 
-  it('renders default empty label when inspectorPanels is undefined', () => {
-    renderInspector({});
+  it('renders noSelectionLabel when selection is absent', () => {
+    const registry = createDefaultRegistry([textRenderer]);
+    registerReportDesignerRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
 
-    expect(screen.getByText('No inspector panels available.')).toBeTruthy();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://report/inspector-no-selection"
+        schema={{ type: 'report-inspector', noSelectionLabel: 'Select something first' }}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />,
+    );
+
+    expect(screen.getByText('Select something first')).toBeTruthy();
   });
 });

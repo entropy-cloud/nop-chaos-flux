@@ -60,7 +60,6 @@ export interface ReportDesignerHostData {
     selectionTarget: ReportSelectionTarget | undefined;
     selectionKind: ReportSelectionTarget['kind'] | undefined;
     inspector: ReportDesignerRuntimeSnapshot['inspector'];
-    inspectorPanels: ReturnType<ReportDesignerCore['getInspectorPanels']>;
     fieldDrag: ReportDesignerRuntimeSnapshot['fieldDrag'];
     preview: ReportDesignerRuntimeSnapshot['preview'];
     activeMeta: ReportDesignerRuntimeSnapshot['activeMeta'];
@@ -83,7 +82,6 @@ export interface ReportDesignerHostData {
 }
 
 export function createHostData(core: ReportDesignerCore, snapshot: ReportDesignerRuntimeSnapshot): ReportDesignerHostData {
-  const inspectorPanels = core.getInspectorPanels();
   const fieldCount = getFieldCount(snapshot.fieldSources);
   const reportDocument = {
     ...snapshot.document,
@@ -103,7 +101,6 @@ export function createHostData(core: ReportDesignerCore, snapshot: ReportDesigne
       selectionTarget: snapshot.selectionTarget,
       selectionKind: snapshot.selectionTarget?.kind,
       inspector: snapshot.inspector,
-      inspectorPanels,
       fieldDrag: snapshot.fieldDrag,
       preview: snapshot.preview,
       activeMeta: snapshot.activeMeta,
@@ -129,7 +126,6 @@ export function buildReportDesignerScopeData(
   snapshot: ReportDesignerRuntimeSnapshot,
   spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): Record<string, unknown> {
-  const inspectorPanels = core.getInspectorPanels();
   const fieldCount = getFieldCount(snapshot.fieldSources);
   const spreadsheet = spreadsheetSnapshot ? buildSpreadsheetScopeData(spreadsheetSnapshot) : undefined;
   const workbook = spreadsheet?.workbook ?? snapshot.document.spreadsheet.workbook;
@@ -145,13 +141,12 @@ export function buildReportDesignerScopeData(
     designer: {
       kind: snapshot.document.kind,
       documentId: snapshot.document.id,
-      documentName: snapshot.document.name,
-      selectionTarget: snapshot.selectionTarget,
-      selectionKind: snapshot.selectionTarget?.kind,
-      inspector: snapshot.inspector,
-      inspectorPanels,
-      fieldDrag: snapshot.fieldDrag,
-      preview: snapshot.preview,
+        documentName: snapshot.document.name,
+        selectionTarget: snapshot.selectionTarget,
+        selectionKind: snapshot.selectionTarget?.kind,
+        inspector: snapshot.inspector,
+        fieldDrag: snapshot.fieldDrag,
+        preview: snapshot.preview,
       activeMeta: snapshot.activeMeta,
       fieldSources: snapshot.fieldSources,
       fieldSourceCount: snapshot.fieldSources.length,
@@ -178,7 +173,7 @@ export function buildReportDesignerScopeData(
     documentName: snapshot.document.name,
     fieldCount,
     inspector: snapshot.inspector,
-    inspectorPanels,
+    inspectorBody: snapshot.inspector.resolvedSchema,
     meta: snapshot.activeMeta,
   };
 }

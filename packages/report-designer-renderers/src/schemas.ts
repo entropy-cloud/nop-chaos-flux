@@ -29,7 +29,7 @@ export interface ReportFieldPanelSchema extends BaseSchema {
 
 export interface ReportInspectorSchema extends BaseSchema {
   type: 'report-inspector';
-  inspectorPanels?: SchemaObject[];
+  body?: SchemaObject;
   emptyLabel?: string;
   noSelectionLabel?: string;
 }

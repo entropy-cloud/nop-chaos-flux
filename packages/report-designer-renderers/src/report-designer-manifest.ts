@@ -48,13 +48,12 @@ const inspectorShape: FluxValueShape = {
   kind: 'object',
   fields: {
     open: { kind: 'boolean' },
-    activePanelId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
-    providerIds: { kind: 'array', item: { kind: 'string' } },
-    panelIds: { kind: 'array', item: { kind: 'string' } },
+    mode: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
+    resolvedSchema: { kind: 'unknown' },
     loading: { kind: 'boolean' },
     error: { kind: 'unknown' },
   },
-  optional: ['activePanelId', 'error'],
+  optional: ['mode', 'resolvedSchema', 'error'],
 };
 
 const previewShape: FluxValueShape = {
@@ -112,7 +111,6 @@ const reportDesignerProjection: HostProjectionContract = {
           selectionTarget: selectionTargetShape,
           selectionKind: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
           inspector: inspectorShape,
-          inspectorPanels: { kind: 'array', item: { kind: 'object', fields: {} } },
           fieldDrag: { kind: 'object', fields: {} },
           preview: previewShape,
           activeMeta: { kind: 'unknown' },
@@ -244,15 +242,6 @@ const reportDesignerCapabilities: HostCapabilityContract = {
     },
     closeInspector: {
       description: 'Close the inspector.',
-    },
-    setActivePanel: {
-      args: {
-        kind: 'object',
-        fields: {
-          panelId: { kind: 'string' },
-        },
-      },
-      description: 'Switch the active inspector panel.',
     },
     preview: {
       args: {

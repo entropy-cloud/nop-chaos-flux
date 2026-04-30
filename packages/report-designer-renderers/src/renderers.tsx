@@ -29,7 +29,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'report-inspector',
     component: ReportInspectorRenderer,
-    fields: [{ key: 'inspectorPanels', kind: 'prop' }],
+    fields: [{ key: 'body', kind: 'prop' }],
   },
   {
     type: 'report-field-panel',

@@ -41,6 +41,5 @@ export interface ReportInspectorShellSchema extends BaseSchema {
   type: 'report-inspector-shell';
   emptyLabel?: string;
   noSelectionLabel?: string;
-  saveLabel?: string;
   errorLabel?: string;
 }
