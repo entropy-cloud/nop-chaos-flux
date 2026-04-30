@@ -278,11 +278,11 @@ Target architecture cases are:
 
 Current live baseline:
 
-1. `form` is the only concrete validation owner runtime family in ordinary shipped code paths
-2. renderer-local draft editors such as `detail-field` / `detail-view` create temporary `FormRuntime` instances to obtain isolated validation
+1. `form` remains the primary concrete validation owner runtime family in ordinary shipped code paths
+2. `detail-field` / `detail-view` are live `create-owner` child-owner boundaries: the compiler marks them as owner boundaries, the renderer instantiates the child `FormRuntime` when the detail session opens, and the parent coordinates through child contracts while the detail owner is active
 3. `SchemaRenderer` page-owned root now provisions the first concrete non-form validation owner family when the render tree uses its own page scope
 4. embedded `SchemaRenderer` trees that render against `props.parentScope` remain parent-owned in the current baseline and do not auto-create a second page/root fallback owner
-5. generic non-form owner families such as filter/search panels still remain target architecture rather than broadly landed live behavior
+5. generic non-form owner families such as filter/search panels still remain explicitly out of scope rather than broadly landed live behavior
 
 A plain visual container with no validation content does not create a validation runtime.
 
@@ -319,8 +319,6 @@ Authoring guidance:
 This keeps validation attached to the same owner model that already governs data scope and value lifecycle.
 
 ### Owner Resolution Algorithm
-
-> **Implementation Status**: This section describes the target architecture for multi-owner validation. Current implementation is still form-first: `FormRuntime` is the concrete validation owner runtime, parent-owned inline editors stay inside that owner via projected form proxies, and draft isolation for `detail-field` / `detail-view` is handled by renderers creating their own temporary `FormRuntime` instances. The compiler-level owner resolution described below is planned for a future phase.
 
 Each schema boundary that may introduce a scope should be classifiable as one of:
 
@@ -362,26 +360,13 @@ Examples:
 
 "Nearest owner" therefore means the nearest ancestor boundary whose resolution is `create-owner`, unless the current subtree itself resolves to `create-owner`.
 
-### Current Implementation: Renderer-Level Draft Isolation
-
-In the current implementation, draft isolation is achieved at the renderer level rather than through compiler-driven owner partitioning:
-
-1. `detail-field` and `detail-view` create temporary `FormRuntime` instances when opening
-2. The draft form has its own validation state, separate from the parent form
-3. On confirm, the renderer validates the draft form, then writes back to the parent
-4. On cancel, the draft form is simply discarded
-
-This approach satisfies the core draft-isolation requirement without requiring compiler-level owner resolution. The trade-off is that each renderer needing draft semantics must implement its own isolation logic.
-
 Current live nearest-owner summary:
 
 1. inline/object/array/variant editors stay in the parent owner via projected form proxies and owner-root path rebasing
-2. `detail-field` / `detail-view` obtain isolated validation today by creating temporary draft `FormRuntime`
-3. there is not yet a generalized compiler-resolved owner tree used across all validation-capable scope families
+2. `detail-field` / `detail-view` are compiler-classified `create-owner` boundaries whose child owner is activated when the detail session opens
+3. the current supported owner-family set is still intentionally narrow: page-owned root, ordinary `form`, and the detail child-owner path; broader non-form families remain out of scope
 
-### Future: Compiler-Level Owner Resolution (Phase 3)
-
-The following rules describe the target Phase 3 architecture where the compiler automatically partitions validation models by owner boundary:
+Owner-boundary rules in the supported families are:
 
 1. the same renderer family may resolve to `inherit-owner` or `create-owner` depending on schema options such as draft mode
 2. child owners register their parent contract only when they become active
@@ -942,8 +927,6 @@ Current async-governance baseline:
 
 ## Parent And Child Scope Interaction
 
-> **Implementation Status**: This section describes the target architecture for parent-child validation contracts. Current implementation (Phase 2) uses renderer-level draft isolation where `detail-field` / `detail-view` create their own `FormRuntime` and handle commit/cancel internally. The `ChildValidationContract` mechanism described below is partially implemented but primarily serves as a placeholder for Phase 3 multi-owner coordination.
-
 Child scopes do not automatically merge their internal field states into parent field state maps.
 
 The parent sees child scopes through explicit contracts.
@@ -972,20 +955,7 @@ Modes:
 2. `summary-gate`: parent may read child summary state for gating, but does not inspect child internals
 3. `recurse-submit`: parent submit explicitly invokes child submit-time validation and waits for its required async runs
 
-### Current Implementation
-
-In the current implementation:
-
-1. `detail-field` / `detail-view` create temporary draft `FormRuntime` instances
-2. These draft forms do not register child contracts with the parent — they are fully isolated
-3. On confirm, the renderer validates locally, transforms values, and writes back to the parent form or parent scope through renderer-managed writeback
-4. The parent has no awareness of the draft form's existence during editing
-
-This achieves the core isolation requirement without the full child contract mechanism.
-
-### Future: Full Child Contract Coordination (Phase 3)
-
-The following rules describe the target architecture:
+The supported live coordination rules are:
 
 Lifecycle rules:
 
@@ -1026,9 +996,8 @@ Rules:
 
 Current live implementation note:
 
-- current submit flow is narrower than the target snapshot model above
-- live code iterates the current child-contract map and triggers `recurse-submit` validation for contracts whose `active` flag is true
-- lifecycle-aware activation snapshots and broader automatic orchestration remain future work
+- active detail child owners currently use `summary-gate` so the parent submit path blocks on child readiness/validity while the detail session is open
+- the parent still iterates the current child-contract map directly; lifecycle-aware submit snapshots and broader automatic orchestration remain future work outside the supported family set
 
 Commit propagation is also owner-local.
 
@@ -1041,7 +1010,7 @@ Rules:
 
 Default contracts:
 
-1. child draft editors default to `ignore` until commit time
+1. detail draft editors default to `summary-gate` while the child owner is active, and confirm/commit still performs child-local validation before writeback
 2. standalone filter/search scopes use `summary-gate` only when an action explicitly depends on them
 3. nested submit-capable forms default to `ignore` unless explicitly configured otherwise
 4. a literal nested `form` remains a child owner; if a dialog must edit parent live values directly, use bound editable content rather than introducing a nested `form`

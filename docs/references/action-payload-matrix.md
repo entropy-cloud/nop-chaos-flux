@@ -55,7 +55,7 @@
 | `showToast` | `args` | none | canonical | 推荐写 `args` |
 | `navigate` | `args` | none | canonical | 推荐写 `args` |
 | `ajax` | `args` | `dataPath` optional | canonical | `args` 必须是 `ApiSchema`；`dataPath` 属于 targeting |
-| `submitForm` | none in live built-in invocation | implicit `ctx.form` | target-state only | 当前 live built-in invocation 仍调用 `ctx.form.submit()`，没有把 `args` 下放到 built-in adapter |
+| `submitForm` | none | implicit `ctx.form` | no payload | 语义型 submit command；执行验证后走 form runtime submit 流程 |
 | `openDialog` | `args` | implicit `ctx.surfaceRuntime` | canonical | `args` 承载 dialog surface payload |
 | `openDrawer` | `args` | none | canonical | `args` 承载 drawer surface payload |
 | `closeDialog` | none | `dialogId` optional | no payload | 主要是无 payload + optional targeting |
@@ -101,7 +101,7 @@
 
 1. `ajax` 使用 `args: ApiSchema`
 2. `openDialog` / `openDrawer` 使用 `args` 承载 surface payload
-3. `submitForm` 的 authoring convergence 目标仍是 `args: ApiSchema`，但 live built-in dispatch 目前没有把 `args` 透传到 built-in adapter
+3. `submitForm` 是语义型 form submit command，不要求业务 payload；若要显式指定目标 form，优先使用 `component:submit` 与 targeting
 4. `action: 'dialog'` / `action: 'drawer'` 不是正式 contract
 
 ### `setValue` / `setValues` Use Narrower `args` DTOs
@@ -178,24 +178,23 @@
 **Authoring**:
 1. `{ action: 'ajax', args: { url, method, data } }`
 
-### `submitForm` → `args: ApiSchema` (NOT FULLY LANDED)
+### `submitForm` (SEMANTIC COMMAND)
 
-**Decision**: `submitForm` 的收敛目标仍是 `args: ApiSchema`，但当前 live baseline 不能把它记为已落地。
+**Decision**: `submitForm` 保持无 payload 的语义型 built-in action。
 
 **Rationale**:
-- 请求配置与 `ajax` 语义一致
-- 表单数据来自 `ctx.form`，不需要额外 wrapper
-- 统一后减少 author 心智负担
-- 但当前 built-in dispatch 仍创建 `args: undefined` 的 invocation，而 built-in adapter 直接走 `ctx.form.submit()`
+- 它的职责是触发当前 `ctx.form` 的 submit 流程，而不是承载一份新的 request payload
+- 表单数据、校验与 `submitAction` 选择都属于 `FormRuntime` 语义
+- 若 schema 需要显式 targeting 某个表单实例，更合理的长期路径是 `component:submit`，而不是把 `submitForm` 机械改造成 `ajax` 风格 payload action
 
 **Current live baseline**:
 
-1. `SubmitFormActionSchema` 仍未把 `args` 收紧为 `ApiSchema`
-2. `packages/flux-action-core/src/action-dispatcher/built-in-actions.ts` 当前对 `submitForm` 生成 `args: undefined`
-3. `packages/flux-runtime/src/action-adapter.ts` 当前对 `submitForm` 直接调用 `ctx.form.submit(...)`
+1. `SubmitFormActionSchema` 只要求 `action: 'submitForm'`
+2. `packages/flux-action-core/src/action-dispatcher/built-in-actions.ts` 对 `submitForm` 生成无 payload invocation
+3. `packages/flux-runtime/src/action-adapter.ts` 对 `submitForm` 直接调用 `ctx.form.submit(...)`
 
-**Target authoring**:
-1. `{ action: 'submitForm', args: { url, method } }`
+**Authoring**:
+1. `{ action: 'submitForm' }`
 
 ### `openDialog`/`openDrawer` → `args` (LANDED)
 
@@ -245,7 +244,7 @@
    - `ajax` → `args: ApiSchema`
    - `openDialog` → `args: DialogOpenArgs`
    - `openDrawer` → `args: DrawerOpenArgs`
-3. `submitForm -> args: ApiSchema` 仍是已记录但未闭环的目标收敛，不应在 live reference docs 中记为 LANDED。
+3. `submitForm` 是无 payload 的语义型 built-in action，不应再按 `ajax` 的 `args: ApiSchema` 路线理解。
 4. 无 payload 的 built-in action 仍然存在，例如 `closeDialog`、`closeDrawer`、`closeSurface`、`refreshTable`。
 5. write action 的 payload baseline 已统一为 `args`，但它们仍使用窄 DTO，而不是自由 map payload。
 

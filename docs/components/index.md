@@ -66,6 +66,8 @@ docs/components/
 - 优先引用 `docs/architecture/` 中已经确定的机制，而不是重新发明组件私有协议。
 - schema 字段要明确区分：静态值、表达式值、region、event、source-enabled value。
 - 需要组件内部状态时，先判断是 `local`、`controlled` 还是 `scope` ownership，不要默认全塞进 React 本地 state。
+- 对复杂交互控件，组件文档应明确说明实现拆分判断：哪些逻辑应保持在 renderer/view 层，哪些应抽成 pure helpers，哪些在复杂度上升后适合抽成 local controller hook；默认追求边界清晰，而不是机械地把所有组件 renderless/headless 化。
+- 如果组件实现预计会涉及 local controller hook、共享运行时 helper 或 domain core 下沉，文档应在“实现拆分建议”一节里明确写出推荐落点，并引用 `docs/references/renderer-implementation-guidelines.md`，避免后续实现时重复发明拆分标准。
 - 可被外部动作驱动的交互能力，优先落到 action / component handle，而不是 undocumented imperative ref。
 - 样式设计必须遵守 renderer marker contract；视觉布局来自 schema/className/classAliases，而不是 renderer 内硬编码布局。
 

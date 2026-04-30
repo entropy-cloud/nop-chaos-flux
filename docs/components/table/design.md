@@ -77,6 +77,12 @@
 ## 11. 实现拆分建议
 
 - 列归一化、ownership 状态桥接、selection 句柄和分页 UI 拆分为独立模块。
+- `table` renderer 本身更适合作为 orchestration shell：负责拼装列、行、slot、handle、responsive 分支和 `@nop-chaos/ui` Table 结构，而不是继续把分页、选择、排序、过滤、展开、列显隐再塞回一个巨型 view 文件。
+- 对 `table` 这类复杂 renderer，首选拆分方向是 shared hooks / helpers，而不是再抽一个新的本地 headless controller：例如 `useTablePagination`、`useTableSelection`、`useTableSort`、`useTableFilter`、`useTableExpand`、`useTableVisibleColumns` 这类 capability 维度的 hook 更符合当前 owner 模型。
+- 只有当某个局部子特性重新出现“同一文件混合 dirty/open/save/restore/keyboard/derived label + JSX”这类控件级行为复杂度时，才考虑局部 controller hook；不要把整个 `table` 重新包装成一个新的 renderer-local headless system。
+- 纯数据处理应继续优先放在 helper 层，例如行数据处理、固定列布局、responsive 列拆分和 repeated-template id 解析；如果 helper 已经足够解决复杂度，就不要再追加 hook 抽象。
+- 如果未来需要进一步下沉复杂度，更可能正确的方向是 table family shared runtime/helper 收敛，而不是在 `table-renderer.tsx` 之上再发明第二层通用 controller 协议。
+- 拆分判断应遵循 `docs/references/renderer-implementation-guidelines.md`：对 `table` 这类 orchestration renderer，优先保留薄 shell + shared hooks/helpers 的结构，不机械追求 local headless 化。
 
 ## 12. 风险、取舍与后续阶段
 

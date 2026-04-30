@@ -72,3 +72,12 @@ interface TreeSelectSchema extends InputSchema {
 
 - `tree-select` 应作为独立 field renderer 保留
 - 它与 `tree`、`select`、`input-tree` 都应保持明确边界
+
+## 10. 实现拆分建议
+
+- `tree-select` 的 renderer/view 层应主要负责 trigger、popover、`@nop-chaos/ui` 组合和 field contract 接线，不应把搜索、节点展开、选中标签派生、键盘交互全部堆回同一个 JSX 文件。
+- 纯 tree option 数据处理应优先放在 helper 模块，例如 option meta 构建、flatten、path label 计算、选择切换等；这类逻辑适合脱离 React 单独测试。
+- 当同一个 renderer 文件同时承担 query 状态、过滤投影、展开状态、selected label 派生、commit/cancel 或键盘交互时，优先抽出 local controller hook，而不是发明新的平台协议。
+- `tree-select` 与 `input-tree` 可以共享 tree option helper 层，但不应强行共享同一个交互 controller：`tree-select` 额外拥有 trigger/popup open-state、placeholder/trigger text、popover close/open 等外壳语义。
+- 若未来扩展到 async search、lazy expand、批量展开或 richer controlled open/expanded state，再评估是否需要进一步下沉到 shared runtime helper；在此之前，本地 controller hook 仍应视为 renderer 内部实现细节。
+- 实现时应遵循 `docs/references/renderer-implementation-guidelines.md`：优先最小正确实现，先抽 pure helpers，再在行为复杂时抽 local controller hook，不机械追求 renderless/headless 化。

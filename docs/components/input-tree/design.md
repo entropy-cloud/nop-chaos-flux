@@ -89,3 +89,12 @@ interface InputTreeSchema extends InputSchema {
 - `input-tree` 应作为独立 form field family 保留
 - 它不应退化成普通 `tree`
 - 也不应直接吞并 `tree-select`
+
+## 11. 实现拆分建议
+
+- `input-tree` 的 renderer/view 层应保留 field contract 接线、树节点结构输出和 `@nop-chaos/ui` 组合；不要把 option normalization、过滤投影、节点交互和字段 writeback 全部塞进一个主组件文件。
+- 纯数据处理应优先抽成 helper 模块并与 `tree-select` 共享，例如 option meta 构建、path label 解析、flatten 和 selection toggle；这些逻辑不需要依赖 React 生命周期。
+- 当 `input-tree` 开始同时承担搜索 query、过滤结果树、节点展开/折叠、selected summary、checkbox/radio 模式切换等交互语义时，优先抽 local controller hook。该 hook 只服务当前控件 family，不应变成新的通用 renderer 协议。
+- 如果未来确实加入 `editable`、`draggable`、`creatable`、异步节点加载或 order persistence，先判断新增复杂度属于 renderer-local 交互、共享 tree helper，还是更大的 owner/runtime 问题；不要默认继续把所有能力累积到一个 React 文件。
+- 对 `input-tree` 来说，最先共享的应是 tree option helper 层，而不是 popup shell；与 `tree-select` 的差异主要在交互壳而不是数据模型。
+- 具体拆分判断应遵循 `docs/references/renderer-implementation-guidelines.md`，并在实现时保持 `RendererComponentProps`、field state ownership 和现有 runtime hooks 不变。

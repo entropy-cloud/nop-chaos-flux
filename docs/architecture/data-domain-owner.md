@@ -697,7 +697,7 @@ surface 负责：
 当前已成立的实现事实：
 
 1. `ValidationScopeRuntime` / `FormRuntime` 已经具备 owner-local `rootPath`、owner-qualified error/path bookkeeping、child contract 以及 owner rejection rules 的基础能力
-2. `detail-field` / `detail-view` 已经通过 renderer-level draft `FormRuntime` 落地 staged child-domain baseline
+2. `detail-field` / `detail-view` 已经落地为受 compiler owner metadata 约束的 staged child-domain baseline：detail renderer 负责在打开时实例化 child `FormRuntime`，但 owner boundary 与 parent child-contract 已进入 shared compiler/runtime contract
 3. `object-field` / `array-field` / `variant-field` 已经通过 projected form/runtime view 与 path binding 实现 parent-owned local editing
 4. table 已有 row scope isolation、`rowKey` identity、row scope cache；但 row-local staged editor 仍不是一个已经成熟落地的共享 owner family
 

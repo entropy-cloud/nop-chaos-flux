@@ -1,6 +1,6 @@
 # 156 Reference Doc Sync And Audit Consensus Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-30
 > Source: `docs/analysis/2026-04-30-references-doc-code-consistency-audit.md`, `docs/index.md`, `docs/architecture/README.md`, `docs/architecture/frontend-programming-model.md`, `docs/architecture/flux-design-principles.md`, `docs/architecture/form-validation.md`, `docs/logs/2026/04-20.md`, `docs/logs/2026/04-21.md`, `docs/logs/2026/04-30.md`
 > Related: `docs/plans/155-architecture-owner-doc-convergence-plan.md`
@@ -154,22 +154,22 @@ Exit Criteria:
 
 ### Phase 5 - Repeated Independent Audit Until Consensus
 
-Status: planned
+Status: completed
 Targets: `docs/plans/156-reference-doc-sync-and-audit-consensus-plan.md`, scoped docs/logs/code paths changed by this plan
 
-- [ ] Run a first fresh subagent audit over the drafted/updated plan and scoped files.
-- [ ] Resolve findings or narrow the plan if the first audit finds overreach or misclassification.
-- [ ] Run at least one additional fresh subagent audit after revisions.
-- [ ] After the repeated review rounds converge, run one explicit closure-audit pass that re-checks every phase exit criterion and the full validation checklist.
-- [ ] Do not mark the plan `completed` until that explicit closure-audit pass confirms the scoped sync work and remaining debt ownership are clear.
+- [x] Run a first fresh subagent audit over the drafted/updated plan and scoped files.
+- [x] Resolve findings or narrow the plan if the first audit finds overreach or misclassification.
+- [x] Run at least one additional fresh subagent audit after revisions.
+- [x] After the repeated review rounds converge, run one explicit closure-audit pass that re-checks every phase exit criterion and the full validation checklist.
+- [x] Do not mark the plan `completed` until that explicit closure-audit pass confirms the scoped sync work and remaining debt ownership are clear.
 
 Exit Criteria:
 
-- [ ] At least two fresh independent subagent reviews have re-checked the scoped files after plan drafting / execution.
-- [ ] Any disagreements between audit rounds are resolved in the plan, the scoped docs, or explicit follow-up ownership notes.
-- [ ] Repeated audit evidence is recorded in this plan and/or the corresponding daily log.
-- [ ] One explicit independent closure-audit pass has re-checked every phase exit criterion and the validation checklist after the review rounds converged.
-- [ ] The corresponding execution-date `docs/logs/` entry is updated with consensus evidence.
+- [x] At least two fresh independent subagent reviews have re-checked the scoped files after plan drafting / execution.
+- [x] Any disagreements between audit rounds are resolved in the plan, the scoped docs, or explicit follow-up ownership notes.
+- [x] Repeated audit evidence is recorded in this plan and/or the corresponding daily log.
+- [x] One explicit independent closure-audit pass has re-checked every phase exit criterion and the validation checklist after the review rounds converged.
+- [x] The corresponding execution-date `docs/logs/` entry is updated with consensus evidence.
 
 ## Validation Checklist
 
@@ -177,31 +177,33 @@ Exit Criteria:
 - [x] `submitForm -> args` status is consistent across docs, logs, and live code, or an explicit successor implementation plan owns the remaining code gap
 - [x] validation owner-doc vs reference-doc responsibilities are explicitly separated again
 - [x] complex-component reference wording no longer conflicts with the current Flux top-level architecture baseline
-- [ ] repeated independent subagent audits have been completed and recorded
-- [ ] independent closure audit has re-checked every phase exit criterion and this checklist, and the evidence is recorded
-- [ ] focused verification for any code-backed adjudication has been completed
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] repeated independent subagent audits have been completed and recorded
+- [x] independent closure audit has re-checked every phase exit criterion and this checklist, and the evidence is recorded
+- [x] focused verification for any code-backed adjudication has been completed
+- [x] `pnpm typecheck` — N/A (docs-only plan, no code changed)
+- [x] `pnpm build` — N/A
+- [x] `pnpm lint` — N/A
+- [x] `pnpm test` — N/A
 
 ## Audit Evidence Log
 
 - Plan review round 1: `ses_223110346ffe7uNm2dP8vAICkP` - found soft `submitForm` ownership, over-broad owner-doc wording, contradictory validation wording, and incomplete source provenance; resolved in the revised plan before execution.
 - Plan review round 2: `ses_2230ece1effeDYxfvvbShRU8Go` - found mutable-scope leakage, still-too-broad goals wording, and closure-audit gaps; resolved before execution.
-- Post-update audit round 1: reviewer/task id/outcome pending
-- Post-update audit round 2: reviewer/task id/outcome pending
+- Post-update audit round 1: ses_222aad6f3ffeYZt1qLDbvynFd1 — PASS WITH MINOR ISSUES. All Phase 1-4 exit criteria MET. All validation checklist items SATISFIED. Two minor issues: (1) audit evidence log not yet updated, (2) 04-30.md log entry does not enumerate verified exit criteria. No blockers for closure.
+- Post-update audit round 2: ses_222a615a4ffe1rcZU7u6A35485 — PASS WITH MINOR ISSUES. All 7 verification items VERIFIED. New finding: `architecture-doc-status-matrix.md` missing family sub-documents (flow-designer/*, report-designer/*) — pre-existing gap outside plan scope. No blockers for closure.
 
 ## Closure
 
-Status Note: execution complete for Phases 1-4; plan remains in progress until repeated independent post-update audits and one explicit closure-audit pass confirm the scoped sync work with no remaining plan-owned drift.
+Status Note: All five phases completed. Phases 1-4 executed the reference-doc sync work. Phase 5 completed three independent audit rounds (two post-update reviews + one closure audit). All exit criteria verified. The plan is closed with no remaining plan-owned work.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending fresh independent closure audit
-- Evidence: pending
+- Reviewer / Agent: ses_222a1f3ebffe9Gb3wxWZLGu7Ax (independent closure-audit subagent)
+- Evidence: All Phase 1-4 exit criteria re-checked and PASS. All validation checklist items SATISFIED or N/A (docs-only plan). Code-backed adjudication confirmed via `built-in-actions.ts:231` (`args: undefined`) and `action-adapter.ts:140` (`ctx.form.submit()`). `submitForm -> args` consistently marked NOT FULLY LANDED across docs, logs, and live code. Three audit rounds completed and recorded in Audit Evidence Log.
 
 Follow-up:
 
 - If `submitForm -> args` requires a real runtime landing rather than a doc/log downgrade, move that work to a narrow successor implementation plan instead of silently widening this plan.
 - If additional reference-doc drift is discovered outside this plan's scoped files, record it in a successor plan or follow-up analysis instead of expanding this plan without review.
+- `architecture-doc-status-matrix.md` is missing family sub-document entries (flow-designer/*, report-designer/*). This is a pre-existing gap outside plan 156's scope. A follow-up should add these entries.
+- `docs/architecture/form-validation.md` live-vs-target split is labeled as a narrow existing exception under cleanup. Future work should continue tightening this until the exception is either removed or the target state is landed.

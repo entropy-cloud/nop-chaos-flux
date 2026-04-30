@@ -96,6 +96,12 @@ Current live implementation note:
 
 - dialog shell、open-state bridge、host integration 和 actions footer 分开实现。
 - host integration 应围绕共享 surface host / stack 实现，而不是让每个 dialog renderer 自己管理一套嵌套 host。
+- `dialog` 的实现拆分重点不是 local controller hook，而是 surface family shared helper / runtime：open-state bridge、active-surface 判断、stack registration、status publish 这类逻辑如果在 `dialog` 和 `drawer` 中重复出现，应优先抽成共享 surface helper，而不是分别在两个 renderer 里长出各自的 controller。
+- renderer/view 层应保留 `DialogContent -> DialogHeader? -> DialogBody -> DialogFooter?` 结构、slot 组合、`RendererComponentProps` 接线和事件透传；不要把共享 stack/runtime 规则重新混回每个具体 surface renderer 的 JSX 文件。
+- 如果某一类 dialog 子特性后续新增明显的控件级交互复杂度，例如 confirm/dirty/cancel restore 这类语义生命周期，再考虑在更窄的子特性层引入 local controller hook；但 dialog 基础 surface lifecycle 本身更适合沉到 shared helper 或 runtime 层。
+- 纯 helper 仍应先行，例如 status summary 组装、container 解析、surface stack snapshot 判断；只有 helper 不能覆盖交互复杂度时才继续提升抽象层级。
+- 这也是 `dialog` 与 `tree-select` 一类控件的区别：前者主要问题是 surface family shared lifecycle，后者主要问题是 renderer-local interaction complexity，二者不应套用同一拆分模板。
+- 具体拆分判断应参考 `docs/references/renderer-implementation-guidelines.md`，并结合 `docs/architecture/surface-owner.md` 保持 surface owner 边界不被 renderer-local 状态侵蚀。
 
 ## 12. 风险、取舍与后续阶段
 
