@@ -5,7 +5,88 @@ import {
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index';
-import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
+
+const crudAuthoringTransform = (context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<import('@nop-chaos/flux-core').BaseSchema>) => {
+  if (context.schema.type !== 'crud') {
+    return context.schema;
+  }
+
+  const schema = context.schema as Record<string, unknown>;
+  const nextSchema: Record<string, unknown> = { ...schema };
+
+  if (nextSchema.filter !== undefined && nextSchema.queryForm === undefined) {
+    nextSchema.queryForm = nextSchema.filter;
+  }
+
+  if (nextSchema.primaryField !== undefined && nextSchema.rowKey === undefined) {
+    nextSchema.rowKey = nextSchema.primaryField;
+  }
+
+  if (nextSchema.perPageField !== undefined && nextSchema.pageSizeField === undefined) {
+    nextSchema.pageSizeField = nextSchema.perPageField;
+  }
+
+  delete nextSchema.filter;
+  delete nextSchema.primaryField;
+  delete nextSchema.perPageField;
+
+  if (nextSchema.bulkActions === undefined) {
+    return nextSchema as import('@nop-chaos/flux-core').BaseSchema;
+  }
+
+  if (nextSchema.listActions !== undefined) {
+    const { bulkActions, ...rest } = nextSchema;
+    void bulkActions;
+    return rest as import('@nop-chaos/flux-core').BaseSchema;
+  }
+
+  const { bulkActions, ...rest } = nextSchema;
+  return { ...rest, listActions: bulkActions } as unknown as import('@nop-chaos/flux-core').BaseSchema;
+};
+
+const tableRenderer: RendererDefinition = {
+  type: 'table',
+  component: () => null,
+  fields: [
+    { key: 'onRowClick', kind: 'event' },
+    { key: 'onSortChange', kind: 'event' },
+    { key: 'onFilterChange', kind: 'event' },
+    { key: 'onPageChange', kind: 'event' },
+    { key: 'onSelectionChange', kind: 'event' },
+    { key: 'onRefresh', kind: 'event' },
+    { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    { key: 'loadingSlot', kind: 'value-or-region', regionKey: 'loadingSlot' }
+  ]
+};
+
+const crudRenderer: RendererDefinition = {
+  type: 'crud',
+  component: () => null,
+  rendererClass: 'flux-owner-renderer',
+  rendererTraits: ['semantic-owner', 'composite'],
+  authoringTransform: crudAuthoringTransform,
+  fields: [
+    { key: 'queryForm', kind: 'prop' },
+    { key: 'toolbar', kind: 'region' },
+    { key: 'listActions', kind: 'region' },
+    { key: 'footerToolbar', kind: 'region' },
+    { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    { key: 'onRowClick', kind: 'event' },
+    { key: 'onSelectionChange', kind: 'event' },
+    { key: 'onRefresh', kind: 'event' }
+  ]
+};
+
+const dataSourceRenderer: RendererDefinition = {
+  type: 'data-source',
+  component: () => null
+};
+
+const localDataRendererDefinitions: RendererDefinition[] = [
+  tableRenderer,
+  crudRenderer,
+  dataSourceRenderer
+];
 
 const textRenderer: RendererDefinition = {
   type: 'text',
@@ -542,7 +623,7 @@ describe('createSchemaCompiler', () => {
   });
 
   it('canonicalizes crud migration aliases before compilation', () => {
-    const registry = createRendererRegistry([...dataRendererDefinitions]);
+    const registry = createRendererRegistry([...localDataRendererDefinitions]);
     const compiler = createSchemaCompiler({
       registry,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
@@ -568,7 +649,7 @@ describe('createSchemaCompiler', () => {
   });
 
   it('canonicalizes crud bulkActions to listActions before compilation', () => {
-    const registry = createRendererRegistry([textRenderer, ...dataRendererDefinitions]);
+    const registry = createRendererRegistry([textRenderer, ...localDataRendererDefinitions]);
     const compiler = createSchemaCompiler({
       registry,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
@@ -586,7 +667,7 @@ describe('createSchemaCompiler', () => {
   });
 
   it('keeps canonical crud fields when legacy aliases are also present', () => {
-    const registry = createRendererRegistry([...dataRendererDefinitions]);
+    const registry = createRendererRegistry([...localDataRendererDefinitions]);
     const compiler = createSchemaCompiler({
       registry,
       expressionCompiler: createExpressionCompiler(createFormulaCompiler())
