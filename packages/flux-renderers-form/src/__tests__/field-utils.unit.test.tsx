@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import type { FormFieldStateSnapshot, ScopeRef } from '@nop-chaos/flux-core';
 import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
 import {
@@ -14,6 +14,7 @@ import {
   resolveFieldLabelText,
   shouldValidateOn,
   shouldValidateOnOwner,
+  useFormFieldController,
   useHiddenFieldPolicy
 } from '../field-utils';
 
@@ -254,5 +255,176 @@ describe('useHiddenFieldPolicy', () => {
 
     unmount();
     expect(notifyFieldHidden).toHaveBeenLastCalledWith('name', false);
+  });
+});
+
+function makeAdapterScope(data: Record<string, unknown>): ScopeRef {
+  return {
+    id: 'scope-adapter',
+    path: '$',
+    value: data,
+    get(path: string) { return data[path]; },
+    has(path: string) { return Object.prototype.hasOwnProperty.call(data, path); },
+    readOwn() { return data; },
+    readVisible() { return data; },
+    materializeVisible() { return { ...data }; },
+    update: vi.fn(),
+    merge: vi.fn(),
+  };
+}
+
+function wrapInContexts(scope: ScopeRef, children: React.ReactNode) {
+  return (
+    <FormContext.Provider value={undefined}>
+      <ValidationContext.Provider value={undefined}>
+        <ScopeContext.Provider value={scope}>
+          {children}
+        </ScopeContext.Provider>
+      </ValidationContext.Provider>
+    </FormContext.Provider>
+  );
+}
+
+describe('useFormFieldController adapter behavior', () => {
+  it('returns raw value when no adapter is provided', () => {
+    cleanup();
+    const scope = makeAdapterScope({ status: 'active' });
+
+    function Probe() {
+      const ctrl = useFormFieldController('status');
+      return <span data-testid="value">{String(ctrl.value)}</span>;
+    }
+
+    render(wrapInContexts(scope, <Probe />));
+    expect(screen.getByTestId('value').textContent).toBe('active');
+  });
+
+  it('resolves synchronous adapter.in immediately with __syncIn', () => {
+    cleanup();
+    const adapter = {
+      __syncIn: true as const,
+      in: vi.fn((value: unknown) => String(value).toUpperCase()),
+      out: vi.fn((value: unknown) => value),
+    };
+    const scope = makeAdapterScope({ status: 'active' });
+
+    function Probe() {
+      const ctrl = useFormFieldController('status', { adapter });
+      return <span data-testid="value">{String(ctrl.value)}</span>;
+    }
+
+    render(wrapInContexts(scope, <Probe />));
+    expect(screen.getByTestId('value').textContent).toBe('ACTIVE');
+    expect(adapter.in).toHaveBeenCalledWith('active', expect.objectContaining({ name: 'status' }));
+  });
+
+  it('resolves synchronous adapter.in via microtask when __syncIn is absent', async () => {
+    cleanup();
+    const adapter = {
+      in: vi.fn((value: unknown) => String(value).toUpperCase()),
+      out: vi.fn((value: unknown) => value),
+    };
+    const scope = makeAdapterScope({ status: 'active' });
+
+    function Probe() {
+      const ctrl = useFormFieldController('status', { adapter });
+      return <span data-testid="value">{String(ctrl.value)}</span>;
+    }
+
+    render(wrapInContexts(scope, <Probe />));
+    expect(screen.getByTestId('value').textContent).toBe('active');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('value').textContent).toBe('ACTIVE');
+    });
+  });
+
+  it('resolves async adapter.in and updates value', async () => {
+    cleanup();
+    let resolveAdapter!: (value: unknown) => void;
+    const adapter = {
+      in: vi.fn((_value: unknown) => new Promise((resolve) => { resolveAdapter = resolve; })),
+      out: vi.fn((_value: unknown) => _value),
+    };
+    const scope = makeAdapterScope({ status: 'active' });
+
+    function Probe() {
+      const ctrl = useFormFieldController('status', { adapter });
+      return <span data-testid="value">{String(ctrl.value)}</span>;
+    }
+
+    render(wrapInContexts(scope, <Probe />));
+    expect(screen.getByTestId('value').textContent).toBe('active');
+
+    resolveAdapter('ACTIVE');
+    await waitFor(() => {
+      expect(screen.getByTestId('value').textContent).toBe('ACTIVE');
+    });
+  });
+
+  it('cancels stale async adapter.in on rapid value change', async () => {
+    cleanup();
+    const _callLog: Array<{ input: string; output: string }> = [];
+    let resolveFirst!: (value: unknown) => void;
+    let resolveSecond!: (value: unknown) => void;
+    let callIndex = 0;
+
+    const adapter = {
+      in: vi.fn((_value: unknown) => {
+        const idx = callIndex++;
+        return new Promise((resolve) => {
+          if (idx === 0) resolveFirst = resolve;
+          else resolveSecond = resolve;
+        });
+      }),
+      out: vi.fn((value: unknown) => value),
+    };
+
+    const scopeData = { status: 'active' };
+    const scope = makeAdapterScope(scopeData);
+
+    function Probe() {
+      const ctrl = useFormFieldController('status', { adapter });
+      return <span data-testid="value">{String(ctrl.value)}</span>;
+    }
+
+    const { rerender } = render(wrapInContexts(scope, <Probe />));
+    expect(adapter.in).toHaveBeenCalledTimes(1);
+
+    scopeData.status = 'pending';
+    rerender(wrapInContexts(makeAdapterScope(scopeData), <Probe />));
+    expect(adapter.in).toHaveBeenCalledTimes(2);
+
+    resolveFirst('STALE');
+    resolveSecond('PENDING');
+    await waitFor(() => {
+      expect(screen.getByTestId('value').textContent).toBe('PENDING');
+    });
+  });
+
+  it('logs warning when async adapter.in rejects', async () => {
+    cleanup();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const adapter = {
+      in: vi.fn(() => Promise.reject(new Error('adapter boom'))),
+      out: vi.fn((value: unknown) => value),
+    };
+    const scope = makeAdapterScope({ status: 'active' });
+
+    function Probe() {
+      const ctrl = useFormFieldController('status', { adapter });
+      return <span data-testid="value">{String(ctrl.value)}</span>;
+    }
+
+    render(wrapInContexts(scope, <Probe />));
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[field-utils] adapter.in failed',
+        expect.any(Error)
+      );
+    });
+
+    warnSpy.mockRestore();
   });
 });
