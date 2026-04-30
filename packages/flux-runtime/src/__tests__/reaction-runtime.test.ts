@@ -185,4 +185,31 @@ describe('registerReaction dispose race with scheduled microtask', () => {
       registration.dispose();
     }
   });
+
+  it('marks reaction runs as cancelled when dispatch returns a cancelled result', async () => {
+    const runtime = createRuntime();
+    const page = runtime.createPageRuntime({ count: 0 });
+
+    const registration = runtime.registerReaction({
+      id: 'cancelled-reaction-result',
+      scope: page.scope,
+      compiledReaction: compileReaction('cancelled-reaction-result', {
+        type: 'reaction',
+        watch: '${count}',
+        actions: { action: 'custom:noop' }
+      }, expressionCompiler),
+      dispatch: vi.fn().mockResolvedValue({ ok: false, cancelled: true, error: new Error('aborted') })
+    });
+
+    try {
+      page.scope.update('count', 1);
+
+      await vi.waitFor(() => {
+        const reaction = runtime.getReactionDebugSnapshot?.().reactions.find((entry) => entry.id === 'cancelled-reaction-result');
+        expect(reaction?.async?.recentRuns.some((run) => run.outcome === 'cancelled' && run.cancelled)).toBe(true);
+      });
+    } finally {
+      registration.dispose();
+    }
+  });
 });

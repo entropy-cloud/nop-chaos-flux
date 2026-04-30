@@ -4,6 +4,7 @@ import type {
   ActionResult,
   CompiledActionProgram
 } from './types';
+import { XUI_ACTIONS_NAMESPACE } from './constants';
 
 export function createNamedActionProvider(
   plans: Readonly<Record<string, CompiledActionProgram>>,
@@ -18,7 +19,6 @@ export function createNamedActionProvider(
         return executeProgram(program, ctx);
       }
 
-      const XUI_ACTIONS_NAMESPACE = '__xui_actions__';
       const parentResolved = parentActionScope?.resolve(`${XUI_ACTIONS_NAMESPACE}:${method}`);
       if (parentResolved) {
         return parentResolved.provider.invoke(method, payload, ctx);
@@ -27,7 +27,6 @@ export function createNamedActionProvider(
       return { ok: false, error: new Error(`Unknown named action: ${method}`) };
     },
     listMethods() {
-      const XUI_ACTIONS_NAMESPACE = '__xui_actions__';
       const parentResolved = parentActionScope?.resolve(`${XUI_ACTIONS_NAMESPACE}:__list_methods__`);
       const parentMethods = parentResolved?.provider.listMethods?.() ?? [];
       return [...new Set([...Object.keys(plans), ...parentMethods])];

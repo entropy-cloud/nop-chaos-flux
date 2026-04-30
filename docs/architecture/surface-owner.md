@@ -24,6 +24,7 @@ Current live implementation note:
   2. declarative `type: 'dialog'` / `type: 'drawer'` renderers：直接包裹 UI primitive 的 renderer path
 - 本文中的 shared `SurfaceRuntime` / root host 规则，优先适用于 managed surface path，不应自动外推为 declarative renderer 已全部共享同一路径
 - current live baseline 也已支持 declarative `dialog` / `drawer` 在 renderer path 上发布 `statusPath` summary；但它们仍不是 `SurfaceRuntime`-managed entries
+- declarative `dialog` / `drawer` 当前已共享同一个 renderer-local surface helper，用于 controlled/local open 状态、declarative stack 订阅、register/unregister 和 owner summary publication；这只是 renderer-path 内部去重，不改变它们不是 `SurfaceRuntime`-managed entries 的 baseline
 
 ## Core Claim
 

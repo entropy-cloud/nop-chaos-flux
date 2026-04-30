@@ -123,6 +123,28 @@ describe('executeRuntimeAjaxAction', () => {
 
     expect(result.ok).toBe(true);
   });
+
+  it('returns a shared cancelled result when ajax execution aborts', async () => {
+    const executeApiRequest = Object.assign(
+      vi.fn().mockRejectedValue(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+      { dispose: vi.fn() }
+    );
+
+    const result = await executeRuntimeAjaxAction(
+      { url: '/api/demo' } as any,
+      { api: { url: '/api/demo' } } as any,
+      { scope: { id: 'scope-1' }, interactionId: 'interaction-1' } as any,
+      undefined,
+      {
+        getEnv: () => ({} as any),
+        expressionCompiler: {} as any,
+        evaluate: <T,>(target: unknown) => target as T,
+        executeApiRequest,
+      }
+    );
+
+    expect(result).toMatchObject({ ok: false, cancelled: true, error: expect.any(Error) });
+  });
 });
 
 describe('createRuntimeOwnedFactories', () => {

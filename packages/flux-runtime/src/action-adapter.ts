@@ -11,10 +11,8 @@ import type {
   RendererRuntime,
   ScopeRef
 } from '@nop-chaos/flux-core';
-import { resolveRequestControl } from '@nop-chaos/flux-action-core';
-import { isAbortError } from './error-utils';
-import { applyResponseDataPath, executeApiSchema } from './async-data/request-runtime';
 import type { ApiRequestExecutor } from './async-data/request-runtime';
+import { executeRuntimeAjaxAction } from './runtime-action-helpers';
 
 export interface ActionAdapterInput {
   getEnv: () => RendererEnv;
@@ -84,52 +82,12 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
 
         case 'ajax': {
           const apiSchema = invocation.args as ApiSchema;
-          let monitoredApi: import('@nop-chaos/flux-core').ExecutableApiRequest | undefined;
-          const requestControl = resolveRequestControl(invocation.actionNode);
-
-          try {
-            const response = await executeApiSchema(apiSchema, ctx.scope, getEnv(), expressionCompiler, {
-              signal: invocation.signal,
-              evaluate,
-              onPreparedRequest: (preparedApi) => {
-                monitoredApi = preparedApi;
-              },
-              executor: (adaptedApi) => executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
-                signal: invocation.signal,
-                interactionId: ctx.interactionId,
-                control: requestControl
-              }),
-              control: requestControl
-            });
-
-            if (monitoredApi) {
-              getEnv().monitor?.onApiRequest?.({
-                api: monitoredApi,
-                nodeId: ctx.nodeInstance?.templateNode.id,
-                path: ctx.nodeInstance?.templateNode.templatePath,
-                interactionId: ctx.interactionId
-              });
-            }
-
-            const dataPath = invocation.targeting.dataPath;
-            if (dataPath && ctx.page) {
-              const nextData = applyResponseDataPath(ctx.page.store.getState().data, dataPath, response.data);
-              ctx.page.store.setData(nextData);
-            }
-
-            return {
-              ok: true,
-              data: response.data,
-              attempts: response.attempts,
-              failureCount: response.failureCount,
-              error: undefined
-            };
-          } catch (error) {
-            if (isAbortError(error)) {
-              return { ok: false, cancelled: true, error };
-            }
-            throw error;
-          }
+          return executeRuntimeAjaxAction(apiSchema, invocation.actionNode, ctx, invocation.signal, {
+            getEnv,
+            expressionCompiler,
+            evaluate,
+            executeApiRequest
+          });
         }
 
         case 'submitForm': {

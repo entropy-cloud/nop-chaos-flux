@@ -151,8 +151,10 @@ export function createRuntimeSourceRegistry(input: {
     const ignoredRootPaths = [targetPath, statusPath].filter((value): value is string => Boolean(value));
     const ignoredRootsSet: Set<string> | undefined = ignoredRootPaths.length > 0 ? new Set(normalizeRootPaths(ignoredRootPaths)) : undefined;
 
+    const abortController = new AbortController();
+
     const unsubscribe = args.scope.store?.subscribe((change) => {
-      if (disposed) {
+      if (abortController.signal.aborted) {
         return;
       }
 
@@ -171,8 +173,6 @@ export function createRuntimeSourceRegistry(input: {
       void controller.refresh();
     });
 
-    let disposed = false;
-
     const sourceName = compiled.targetPath?.isStatic ? compiled.targetPath.value : undefined;
 
     const entry: RuntimeSourceEntry = {
@@ -185,11 +185,11 @@ export function createRuntimeSourceRegistry(input: {
       targetPath,
       statusPath,
       dispose() {
-        if (disposed) {
+        if (abortController.signal.aborted) {
           return;
         }
 
-        disposed = true;
+        abortController.abort();
         unsubscribe?.();
         controller.stop();
 

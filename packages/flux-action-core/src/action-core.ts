@@ -332,6 +332,11 @@ export function shouldRunActionWhen(action: CompiledActionNode, ctx: ActionConte
     : Boolean(evaluateCompiledInActionContext<boolean>(action.when, ctx, evaluator));
 }
 
-export function isAbortError(error: unknown): error is DOMException {
-  return error instanceof DOMException && error.name === 'AbortError';
+export function isAbortError(error: unknown): error is DOMException | { name?: string; code?: string } {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const candidate = error as { name?: string; code?: string };
+  return candidate.name === 'AbortError' || candidate.code === 'ABORT_ERR';
 }

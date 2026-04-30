@@ -13,8 +13,7 @@ import type {
   ValidationRule,
   ActionSchema
 } from '@nop-chaos/flux-core';
-import { resolveRequestControl } from '@nop-chaos/flux-action-core';
-import { isAbortError } from './error-utils';
+import { createCancelledResult, isAbortError, resolveRequestControl } from '@nop-chaos/flux-action-core';
 import { applyResponseDataPath, executeApiSchema } from './async-data/request-runtime';
 import { createValidationError } from './validation';
 import type { ApiRequestExecutor } from './async-data/request-runtime';
@@ -76,43 +75,51 @@ export async function executeRuntimeAjaxAction(
     executeApiRequest: ApiRequestExecutor;
   }
 ): Promise<ActionResult> {
-  let monitoredApi: ExecutableApiRequest | undefined;
-  const requestControl = resolveRequestControl(action);
-  const response = await executeApiSchema(api, ctx.scope, helpers.getEnv(), helpers.expressionCompiler, {
-    signal,
-    evaluate: helpers.evaluate,
-    onPreparedRequest: (preparedApi) => {
-      monitoredApi = preparedApi;
-    },
-    executor: (adaptedApi) => helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
+  try {
+    let monitoredApi: ExecutableApiRequest | undefined;
+    const requestControl = resolveRequestControl(action);
+    const response = await executeApiSchema(api, ctx.scope, helpers.getEnv(), helpers.expressionCompiler, {
       signal,
-      interactionId: ctx.interactionId,
+      evaluate: helpers.evaluate,
+      onPreparedRequest: (preparedApi) => {
+        monitoredApi = preparedApi;
+      },
+      executor: (adaptedApi) => helpers.executeApiRequest('ajax', adaptedApi, ctx.scope, ctx.form, {
+        signal,
+        interactionId: ctx.interactionId,
+        control: requestControl
+      }),
       control: requestControl
-    }),
-    control: requestControl
-  });
-
-  if (monitoredApi) {
-    helpers.getEnv().monitor?.onApiRequest?.({
-      api: monitoredApi,
-      nodeId: ctx.nodeInstance?.templateNode.id,
-      path: ctx.nodeInstance?.templateNode.templatePath,
-      interactionId: ctx.interactionId
     });
+
+    if (monitoredApi) {
+      helpers.getEnv().monitor?.onApiRequest?.({
+        api: monitoredApi,
+        nodeId: ctx.nodeInstance?.templateNode.id,
+        path: ctx.nodeInstance?.templateNode.templatePath,
+        interactionId: ctx.interactionId
+      });
+    }
+
+    const dataPath = action.targeting?.dataPath;
+
+    if (dataPath && ctx.page) {
+      const nextData = applyResponseDataPath(ctx.page.store.getState().data, dataPath, response.data);
+      ctx.page.store.setData(nextData);
+    }
+
+    return {
+      ok: true,
+      data: response.data,
+      attempts: response.attempts,
+      failureCount: response.failureCount,
+      error: undefined
+    };
+  } catch (error) {
+    if (isAbortError(error)) {
+      return createCancelledResult(error);
+    }
+
+    throw error;
   }
-
-  const dataPath = action.targeting?.dataPath;
-
-  if (dataPath && ctx.page) {
-    const nextData = applyResponseDataPath(ctx.page.store.getState().data, dataPath, response.data);
-    ctx.page.store.setData(nextData);
-  }
-
-  return {
-    ok: true,
-    data: response.data,
-    attempts: response.attempts,
-    failureCount: response.failureCount,
-    error: undefined
-  };
 }

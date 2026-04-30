@@ -153,6 +153,108 @@ function useCurrentValidationStore(): ValidationStoreApi | undefined {
   return useCurrentValidationScope()?.store;
 }
 
+function useFormStoreSelector<T>(args: {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => FormStoreState;
+  selector: (state: FormStoreState) => T;
+  equalityFn: (a: T, b: T) => boolean;
+}) {
+  return useSyncExternalStoreWithSelector(
+    args.subscribe,
+    args.getSnapshot,
+    args.getSnapshot,
+    args.selector,
+    args.equalityFn
+  );
+}
+
+function useCurrentFormLikeStore(): FormStoreApi | undefined {
+  const form = useCurrentForm();
+  const validationStore = useCurrentValidationStore();
+  return (form?.store ?? validationStore) as FormStoreApi | undefined;
+}
+
+function useStableFormErrorQuery(query?: FormErrorQuery) {
+  const stablePath = query?.path;
+  const stableOwnerPath = query?.ownerPath;
+  const stableRule = query?.rule;
+  const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
+
+  return useMemo(() => {
+    if (!stablePath && !stableOwnerPath && !stableRule && !sourceKindsKey) {
+      return {
+        stablePath,
+        resolvedQuery: undefined,
+      };
+    }
+
+    return {
+      stablePath,
+      resolvedQuery: {
+        path: stablePath,
+        ownerPath: stableOwnerPath,
+        rule: stableRule,
+        sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined,
+      } satisfies FormErrorQuery,
+    };
+  }, [stablePath, stableOwnerPath, stableRule, sourceKindsKey]);
+}
+
+function useFormErrorStoreSelector<T>(args: {
+  query?: FormErrorQuery;
+  enabled?: boolean;
+  selector: (state: FormStoreState, resolvedQuery: FormErrorQuery | undefined) => T;
+  equalityFn: (a: T, b: T) => boolean;
+}) {
+  const store = useCurrentFormLikeStore();
+  const enabled = args.enabled !== false;
+  const { stablePath, resolvedQuery } = useStableFormErrorQuery(args.query);
+  const subscribe = useMemo(
+    () => enabled ? createFormErrorSubscribe(store, stablePath) : () => emptyUnsubscribe,
+    [enabled, store, stablePath]
+  );
+  const getSnapshot = useMemo(
+    () => enabled ? () => store?.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE,
+    [enabled, store]
+  );
+  const selector = useCallback(
+    (state: FormStoreState) => args.selector(state, resolvedQuery),
+    [args, resolvedQuery]
+  );
+
+  return useFormStoreSelector({
+    subscribe,
+    getSnapshot,
+    selector,
+    equalityFn: args.equalityFn,
+  });
+}
+
+function usePathFieldStoreSelector<T>(args: {
+  path: string;
+  skipSubscription?: boolean;
+  selector: (state: FormStoreState) => T;
+  equalityFn: (a: T, b: T) => boolean;
+}) {
+  const store = useCurrentFormLikeStore();
+  const skipSubscription = args.skipSubscription ?? false;
+  const subscribe = useMemo(
+    () => createFormFieldStateSubscribe(store, args.path, skipSubscription),
+    [store, args.path, skipSubscription]
+  );
+  const getSnapshot = useCallback(
+    (): FormStoreState => skipSubscription ? EMPTY_FORM_STORE_STATE : store?.getState() ?? EMPTY_FORM_STORE_STATE,
+    [store, skipSubscription]
+  );
+
+  return useFormStoreSelector({
+    subscribe,
+    getSnapshot,
+    selector: args.selector,
+    equalityFn: args.equalityFn,
+  });
+}
+
 export function useCurrentFormState<T>(
   selector: (state: FormStoreState) => T,
   equalityFn: (a: T, b: T) => boolean = Object.is,
@@ -169,90 +271,41 @@ export function useCurrentFormState<T>(
 }
 
 export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] {
-  const form = useCurrentForm();
-  const validationStore = useCurrentValidationStore();
-  const store = form?.store ?? validationStore;
-  const stablePath = query?.path;
-  const stableOwnerPath = query?.ownerPath;
-  const stableRule = query?.rule;
-  const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
-  const subscribe = useMemo(() => createFormErrorSubscribe(store as FormStoreApi | undefined, stablePath), [store, stablePath]);
-  const getSnapshot = useMemo(() => () => store?.getState() ?? EMPTY_FORM_STORE_STATE, [store]);
-  const selector = useCallback(
-    (state: FormStoreState): ValidationError[] => {
-      const q: FormErrorQuery | undefined = stablePath || stableOwnerPath || stableRule || sourceKindsKey
-        ? { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined }
-        : undefined;
-      return selectCurrentFormErrors(state, q);
-    },
-    [stablePath, stableOwnerPath, stableRule, sourceKindsKey]
-  );
-
-  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, shallowEqualArrays);
+  return useFormErrorStoreSelector({
+    query,
+    selector: (state, resolvedQuery) => selectCurrentFormErrors(state, resolvedQuery),
+    equalityFn: shallowEqualArrays,
+  });
 }
 
 export function useCurrentFormError(query: FormErrorQuery, options?: { enabled?: boolean }): ValidationError | undefined {
-  const form = useCurrentForm();
-  const validationStore = useCurrentValidationStore();
-  const store = form?.store ?? validationStore;
-  const enabled = options?.enabled !== false;
-  const stablePath = query?.path;
-  const stableOwnerPath = query?.ownerPath;
-  const stableRule = query?.rule;
-  const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
-  const subscribe = useMemo(
-    () => enabled ? createFormErrorSubscribe(store as FormStoreApi | undefined, stablePath) : () => emptyUnsubscribe,
-    [enabled, store, stablePath]
-  );
-  const getSnapshot = useMemo(
-    () => enabled ? () => store?.getState() ?? EMPTY_FORM_STORE_STATE : () => EMPTY_FORM_STORE_STATE,
-    [enabled, store]
-  );
-  const selector = useCallback(
-    (state: FormStoreState): ValidationError | undefined => {
-      const q: FormErrorQuery = { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined };
-      return selectCurrentFormErrors(state, q)[0];
-    },
-    [stablePath, stableOwnerPath, stableRule, sourceKindsKey]
-  );
-
-  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, Object.is);
+  return useFormErrorStoreSelector({
+    query,
+    enabled: options?.enabled,
+    selector: (state, resolvedQuery) => selectCurrentFormErrors(state, resolvedQuery)[0],
+    equalityFn: Object.is,
+  });
 }
 
 export function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot {
-  const form = useCurrentForm();
-  const validationStore = useCurrentValidationStore();
-  const store = form?.store ?? validationStore;
-  const stablePath = query?.path;
-  const stableOwnerPath = query?.ownerPath;
-  const stableRule = query?.rule;
-  const sourceKindsKey = query?.sourceKinds ? JSON.stringify(query.sourceKinds) : undefined;
-  
   // When path is empty, skip subscription entirely and return empty state
   const skipSubscription = !path;
-
-  const subscribe = useMemo(() => createFormFieldStateSubscribe(store as FormStoreApi | undefined, path, skipSubscription), [store, path, skipSubscription]);
-
-  const getSnapshot = useCallback(
-    (): FormStoreState => {
-      if (skipSubscription) return EMPTY_FORM_STORE_STATE;
-      return store ? store.getState() : EMPTY_FORM_STORE_STATE;
-    },
-    [store, skipSubscription]
-  );
+  const { resolvedQuery } = useStableFormErrorQuery(query);
 
   const selector = useCallback(
     (state: FormStoreState): FormFieldStateSnapshot => {
       if (skipSubscription) return EMPTY_FORM_FIELD_STATE;
-      const q: FormErrorQuery | undefined = stablePath || stableOwnerPath || stableRule || sourceKindsKey
-        ? { path: stablePath, ownerPath: stableOwnerPath, rule: stableRule, sourceKinds: sourceKindsKey ? (JSON.parse(sourceKindsKey) as FormErrorQuery['sourceKinds']) : undefined }
-        : undefined;
-      return selectCurrentFormFieldState(state, path, q);
+      return selectCurrentFormFieldState(state, path, resolvedQuery);
     },
-    [path, stablePath, stableOwnerPath, stableRule, sourceKindsKey, skipSubscription]
+    [path, resolvedQuery, skipSubscription]
   );
 
-  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, shallowEqualFormFieldState);
+  return usePathFieldStoreSelector({
+    path,
+    skipSubscription,
+    selector,
+    equalityFn: shallowEqualFormFieldState,
+  });
 }
 
 export function useValidationNodeState(path: string): FormFieldStateSnapshot {
@@ -260,17 +313,6 @@ export function useValidationNodeState(path: string): FormFieldStateSnapshot {
 }
 
 export function useFieldError(path: string): ValidationError | undefined {
-  const form = useCurrentForm();
-  const validationStore = useCurrentValidationStore();
-  const store = form?.store ?? validationStore;
-
-  const subscribe = useMemo(() => createFormFieldStateSubscribe(store as FormStoreApi | undefined, path), [store, path]);
-
-  const getSnapshot = useCallback(
-    (): FormStoreState => (store ? store.getState() : EMPTY_FORM_STORE_STATE),
-    [store]
-  );
-
   const selector = useCallback(
     (state: FormStoreState): ValidationError | undefined => {
       const fieldState = state.fieldStates[path];
@@ -282,7 +324,11 @@ export function useFieldError(path: string): ValidationError | undefined {
     [path]
   );
 
-  return useSyncExternalStoreWithSelector(subscribe, getSnapshot, getSnapshot, selector, Object.is);
+  return usePathFieldStoreSelector({
+    path,
+    selector,
+    equalityFn: Object.is,
+  });
 }
 
 export function useDataSourceStatus(path: string, options?: { enabled?: boolean }): DataSourceStatusSummary | undefined {
@@ -303,6 +349,10 @@ export function useOwnedFieldState(path: string): FormFieldStateSnapshot {
   return useCurrentFormFieldState(path, { path, ownerPath: path });
 }
 
+/**
+ * Alias for path-scoped child field observation within composite/owner UIs.
+ * It intentionally matches `useCurrentFormFieldState(path, { path })`.
+ */
 export function useChildFieldState(path: string): FormFieldStateSnapshot {
   return useCurrentFormFieldState(path, { path });
 }

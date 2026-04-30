@@ -73,7 +73,7 @@ export function registerReaction(input: {
   const watchState = dynamicWatch?.createState();
   const explicitDependencies = createRootDependencySet(dependsOnSource);
 
-  let disposed = false;
+  const abortController = new AbortController();
   let initialized = false;
   let previousValue: unknown;
   let dependencies: ScopeDependencySet | undefined = explicitDependencies;
@@ -87,7 +87,7 @@ export function registerReaction(input: {
 
   function emitDebug() {
     input.onDebugUpdate?.({
-      disposed,
+      disposed: abortController.signal.aborted,
       queued: triggerQueued || Boolean(debounceTimer),
       running,
       fireCount,
@@ -113,7 +113,7 @@ export function registerReaction(input: {
   async function runReaction(changePaths: readonly string[], force = false, run: AsyncRunHandle | undefined = createRunHandle({ asyncGovernance: input.asyncGovernance, scope: input.scope, id: input.id, force })) {
 
     try {
-      if (disposed) {
+      if (abortController.signal.aborted) {
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, { outcome: 'cancelled', cancelled: true });
         }
@@ -155,7 +155,7 @@ export function registerReaction(input: {
         return;
       }
 
-      await input.helpers.dispatch(normalizeActionArray(actionsSource), {
+      const dispatchResult = await input.helpers.dispatch(normalizeActionArray(actionsSource), {
         scope: input.scope,
         event: {
           type: 'reaction',
@@ -171,6 +171,17 @@ export function registerReaction(input: {
           changedPaths: changePaths
         }
       });
+
+      if (dispatchResult.cancelled) {
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, {
+            outcome: 'cancelled',
+            cancelled: true,
+            error: dispatchResult.error
+          });
+        }
+        return;
+      }
 
       fireCount += 1;
 
@@ -198,7 +209,7 @@ export function registerReaction(input: {
       }
       emitDebug();
     } catch (error) {
-      if (disposed || isAbortError(error)) {
+      if (abortController.signal.aborted || isAbortError(error)) {
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, {
             outcome: 'cancelled',
@@ -226,7 +237,7 @@ export function registerReaction(input: {
       running = false;
       emitDebug();
 
-      if (!disposed && triggerQueued && !debounceTimer) {
+      if (!abortController.signal.aborted && triggerQueued && !debounceTimer) {
         const queuedRun = pendingRun;
         pendingRun = undefined;
         const nextChangedPaths = Array.from(pendingChangedPaths);
@@ -240,12 +251,12 @@ export function registerReaction(input: {
   }
 
   function scheduleReaction(changePaths: readonly string[], force = false) {
-    if (disposed || triggerQueued || running) {
+    if (abortController.signal.aborted || triggerQueued || running) {
       for (const path of changePaths) {
         pendingChangedPaths.add(path);
       }
       pendingForce = pendingForce || force;
-      if (!disposed) {
+      if (!abortController.signal.aborted) {
         triggerQueued = true;
         pendingRun ??= createRunHandle({ asyncGovernance: input.asyncGovernance, scope: input.scope, id: input.id, force });
         emitDebug();
@@ -259,7 +270,7 @@ export function registerReaction(input: {
     pendingForce = pendingForce || force;
     triggerQueued = true;
     const invoke = () => {
-      if (disposed) {
+      if (abortController.signal.aborted) {
         return;
       }
       triggerQueued = false;
@@ -287,11 +298,11 @@ export function registerReaction(input: {
   }
 
   function dispose() {
-    if (disposed) {
+    if (abortController.signal.aborted) {
       return;
     }
 
-    disposed = true;
+    abortController.abort();
     unsubscribe?.();
     pendingChangedPaths.clear();
     pendingForce = false;
@@ -315,7 +326,7 @@ export function registerReaction(input: {
   }
 
   const unsubscribe = input.scope.store?.subscribe((change) => {
-    if (disposed) {
+    if (abortController.signal.aborted) {
       return;
     }
 
@@ -355,7 +366,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     const compiled = input.compiledReaction;
 
     let latestDependencies: readonly string[] | undefined;
-    let disposed = false;
+    const registryAbort = new AbortController();
     let queued = false;
     let running = false;
     let fireCount = 0;
@@ -367,7 +378,9 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
       onDebugUpdate: (debug) => {
         latestDependencies = debug.dependencies;
         fireCount = debug.fireCount;
-        disposed = debug.disposed;
+        if (debug.disposed) {
+          registryAbort.abort();
+        }
         queued = debug.queued;
         running = debug.running;
         asyncState = debug.async;
@@ -379,7 +392,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
     const ownedRegistration: OwnedReactionRegistration = {
       id: input.id,
       dispose() {
-        if (disposed) {
+        if (registryAbort.signal.aborted) {
           const currentBucket = scopeEntries.get(ownerScopeId);
           currentBucket?.delete(input.id);
           if (currentBucket && currentBucket.size === 0) {
@@ -389,7 +402,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
         }
 
         registration.dispose();
-        disposed = true;
+        registryAbort.abort();
 
         const currentBucket = scopeEntries.get(ownerScopeId);
         if (!currentBucket) {
@@ -412,7 +425,7 @@ export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
           immediate: compiled.immediate,
           debounce: compiled.debounce,
           once: compiled.once,
-          disposed,
+          disposed: registryAbort.signal.aborted,
           queued,
           running,
           fireCount,

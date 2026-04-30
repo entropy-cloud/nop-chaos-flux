@@ -545,8 +545,9 @@ Form-specific hooks such as `useCurrentFormErrors`, `useCurrentFormError`, `useC
 
 Current form-hook implementation note:
 
-- `useCurrentFormState`, `useCurrentFormFieldState`, and `useFieldError` now share named subscription helpers in `packages/flux-react/src/hook-subscriptions.ts`.
+- `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormFieldState`, and `useFieldError` share internal form-store subscription wiring, while `hook-subscriptions.ts` remains the owner of the low-level subscribe primitives.
 - `useCurrentFormState(..., { path })` is the active path-aware subscription surface for single-path value reads; callers that only need one form value should prefer it over whole-store subscriptions.
+- `useChildFieldState(path)` remains an intentional alias for `useCurrentFormFieldState(path, { path })` in composite-field style UIs; it is still part of the active public hook surface.
 
 ## Regions And Fragment Rendering
 

@@ -250,6 +250,11 @@ describe('isAbortError', () => {
     expect(isAbortError(new DOMException('aborted', 'AbortError'))).toBe(true);
   });
 
+  it('returns true for abort-like objects used by runtime tests and adapters', () => {
+    expect(isAbortError({ name: 'AbortError' })).toBe(true);
+    expect(isAbortError({ code: 'ABORT_ERR' })).toBe(true);
+  });
+
   it('returns false for other errors', () => {
     expect(isAbortError(new Error(' AbortError'))).toBe(false);
     expect(isAbortError(null)).toBe(false);

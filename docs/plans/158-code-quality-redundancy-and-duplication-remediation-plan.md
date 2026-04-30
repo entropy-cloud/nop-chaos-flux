@@ -1,6 +1,6 @@
 # 158 Code Quality: Residual Redundancy And Duplication Remediation Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-04-30
 > Source: live repo re-audit of `packages/flux-runtime`, `packages/flux-react`, `packages/flux-renderers-basic`, `packages/flux-core`, plus repeated independent subagent review on 2026-04-30
 > Related: `docs/plans/76-repo-refactor-hotspots-remediation-plan.md`, `docs/plans/122-compiler-package-extraction-and-boundary-plan.md`, `docs/plans/123-flux-runtime-split-and-boundary-hardening-plan.md`, `docs/plans/145-runtime-react-renderer-hotspot-boundary-convergence-plan.md`, `docs/plans/159-code-refactor-discovery-remediation-plan.md`
@@ -60,60 +60,61 @@
 
 ### Phase 1 - Runtime And Surface Duplication Cleanup
 
-Status: in progress
+Status: completed
 Targets: `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-runtime/src/runtime-action-helpers.ts`, `packages/flux-renderers-basic/src/dialog.tsx`, `packages/flux-renderers-basic/src/drawer.tsx`, `packages/flux-renderers-basic/src/use-surface-renderer.ts`
 
-- [ ] Replace the `ajax` branch in `action-adapter.ts` so it delegates to `executeRuntimeAjaxAction(...)` instead of keeping a second inline implementation.
-- [ ] Extract the shared declarative surface lifecycle and `statusPath` publication logic from `dialog.tsx` and `drawer.tsx` into a local `useSurfaceRenderer(...)` helper.
-- [ ] Keep renderer-specific UI concerns (`Dialog` vs `Drawer`, direction handling, body/footer slots, close-on-outside-click behavior) in each renderer file; only move the duplicated owner/lifecycle logic.
-- [ ] Re-run focused runtime/basic renderer tests covering ajax action execution and declarative surface status behavior.
+- [x] Replace the `ajax` branch in `action-adapter.ts` so it delegates to `executeRuntimeAjaxAction(...)` instead of keeping a second inline implementation.
+- [x] Preserve the existing adapter-level abort contract while deduplicating ajax execution: cancelled ajax actions must still resolve to `{ ok: false, cancelled: true }` instead of throwing.
+- [x] Extract the shared declarative surface lifecycle and `statusPath` publication logic from `dialog.tsx` and `drawer.tsx` into a local `useSurfaceRenderer(...)` helper.
+- [x] Keep renderer-specific UI concerns (`Dialog` vs `Drawer`, direction handling, body/footer slots, close-on-outside-click behavior) in each renderer file; only move the duplicated owner/lifecycle logic.
+- [x] Re-run focused runtime/basic renderer tests covering ajax action execution and declarative surface status behavior.
 
 Exit Criteria:
 
-- [ ] `action-adapter.ts` no longer carries a second inline ajax execution flow already owned by `executeRuntimeAjaxAction(...)`.
-- [ ] `dialog.tsx` and `drawer.tsx` share one local surface lifecycle helper for controlled/local open state, declarative stack subscription, registration, and owner status publication.
-- [ ] Existing declarative surface behavior and focused tests remain green with no user-visible semantic change.
-- [ ] `docs/architecture/surface-owner.md` and `docs/architecture/renderer-runtime.md` are updated if the helper extraction changes the documented implementation anchor wording.
-- [ ] `docs/logs/2026/04-30.md` is updated.
+- [x] `action-adapter.ts` no longer carries a second inline ajax execution flow already owned by `executeRuntimeAjaxAction(...)`.
+- [x] `dialog.tsx` and `drawer.tsx` share one local surface lifecycle helper for controlled/local open state, declarative stack subscription, registration, and owner status publication.
+- [x] Existing declarative surface behavior and focused tests remain green with no user-visible semantic change.
+- [x] `docs/architecture/surface-owner.md` and `docs/architecture/renderer-runtime.md` are updated if the helper extraction changes the documented implementation anchor wording.
+- [x] The corresponding execution-day entry under `docs/logs/` is updated.
 
 ### Phase 2 - React Hook And Constant Hygiene
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/hooks.ts`, `packages/flux-core/src/named-action-provider.ts`
 
-- [ ] Introduce a small internal helper in `hooks.ts` for repeated form-store subscription wiring used by `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormFieldState`, and `useFieldError`.
-- [ ] Preserve all existing public hooks, including `useChildFieldState(...)`; if it remains an alias, make that relationship explicit in code/comments instead of treating it as undocumented duplication.
-- [ ] Replace the duplicated `XUI_ACTIONS_NAMESPACE` local string in `named-action-provider.ts` with the shared constant from `constants.ts`.
-- [ ] Re-run focused `flux-react` tests that cover hook subscription and composite field error observation behavior.
+- [x] Introduce a small internal helper in `hooks.ts` for repeated form-store subscription wiring used by `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormFieldState`, and `useFieldError`.
+- [x] Preserve all existing public hooks, including `useChildFieldState(...)`; if it remains an alias, make that relationship explicit in code/comments instead of treating it as undocumented duplication.
+- [x] Replace the duplicated `XUI_ACTIONS_NAMESPACE` local string in `named-action-provider.ts` with the shared constant from `constants.ts`.
+- [x] Re-run focused `flux-react` tests that cover hook subscription and composite field error observation behavior.
 
 Exit Criteria:
 
-- [ ] `hooks.ts` no longer repeats near-identical form-store subscribe/getSnapshot setup across the targeted hooks.
-- [ ] `useChildFieldState(...)` remains either a documented alias or a justified distinct surface; no accidental public API removal occurs in this plan.
-- [ ] `named-action-provider.ts` imports `XUI_ACTIONS_NAMESPACE` from `constants.ts` instead of hardcoding the same string twice.
-- [ ] Focused `flux-react` verification stays green with no hook contract drift.
-- [ ] `docs/architecture/renderer-runtime.md` is updated to reflect any clarified hook-surface wording.
-- [ ] `docs/logs/2026/04-30.md` is updated.
+- [x] `hooks.ts` no longer repeats near-identical form-store subscribe/getSnapshot setup across the targeted hooks.
+- [x] `useChildFieldState(...)` remains either a documented alias or a justified distinct surface; no accidental public API removal occurs in this plan.
+- [x] `named-action-provider.ts` imports `XUI_ACTIONS_NAMESPACE` from `constants.ts` instead of hardcoding the same string twice.
+- [x] Focused `flux-react` verification stays green with no hook contract drift.
+- [x] `docs/architecture/renderer-runtime.md` is updated to reflect any clarified hook-surface wording.
+- [x] The corresponding execution-day entry under `docs/logs/` is updated.
 
 ## Validation Checklist
 
-- [ ] All phase exit criteria are satisfied.
-- [ ] Focused tests cover ajax helper reuse, declarative surface status behavior, and form-hook subscription behavior.
-- [ ] Relevant architecture docs and the daily dev log are updated to the final baseline.
-- [ ] Independent subagent closure audit is completed and recorded with evidence.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All phase exit criteria are satisfied.
+- [x] Focused tests cover ajax helper reuse, declarative surface status behavior, and form-hook subscription behavior.
+- [x] Relevant architecture docs and the daily dev log are updated to the final baseline.
+- [x] Independent subagent closure audit is completed and recorded with evidence.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: <<completed or closed after execution and closure audit>>
+Status Note: Completed after both phases landed against the narrowed residual-cleanup scope: ajax built-in execution now delegates to the shared runtime helper while preserving cancelled-abort semantics, declarative `dialog` and `drawer` share one renderer-local surface helper, `flux-react` form error/field-state hooks now share both the `useSyncExternalStoreWithSelector` wrapper and the repeated store/query wiring helpers, and the remaining `XUI_ACTIONS_NAMESPACE` hardcoding in `named-action-provider.ts` was removed. Full workspace verification passed (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`).
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<fresh independent subagent>>
-- Evidence: <<task id / findings summary / doc-log link>>
+- Reviewer / Agent: fresh independent `general` subagents
+- Evidence: initial post-execution audits `ses_221fa2f1cffe5RBdTqBLqObenP`, `ses_221fa2ed1ffe1ZwRq26Ni7OIVR`, and `ses_221fa2df6ffeUkmPwr8GQEMMEr` found two closure blockers: Phase 2 hook dedup was overstated and the closure-audit evidence had not yet been written back into the plan artifact. Those blockers were resolved by a second hooks dedup pass in `packages/flux-react/src/hooks.ts`, plus final plan/log sync. Final fresh audits `ses_221e661acffeBuZshGIgyvO5Zy` and `ses_221e6612bffe9gbgvn8ajVBY4z` then confirmed no remaining boundary conflict or code-level closure blocker beyond the missing recorded audit evidence, which is now filled here. Implementation landed in `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-renderers-basic/src/use-surface-renderer.ts`, `packages/flux-renderers-basic/src/{dialog.tsx,drawer.tsx}`, `packages/flux-react/src/hooks.ts`, and `packages/flux-core/src/named-action-provider.ts`; docs/log sync landed in `docs/architecture/{surface-owner.md,renderer-runtime.md}` and `docs/logs/2026/04-30.md`; workspace verification passed with green `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` results during this execution pass.
 
 Follow-up:
 

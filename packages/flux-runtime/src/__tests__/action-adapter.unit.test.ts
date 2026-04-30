@@ -133,6 +133,33 @@ describe('createActionRuntimeAdapter direct branches', () => {
     await expect(adapter.invokeBuiltInAction(createBuiltInInvocation('unsupportedBuiltIn'), createCtx())).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
   });
 
+  it('returns a cancelled result when ajax execution aborts', async () => {
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify: vi.fn() } as any),
+      expressionCompiler: {} as any,
+      evaluate: <T,>(target: unknown) => target as T,
+      executeApiRequest: vi.fn().mockRejectedValue(Object.assign(new Error('aborted'), { name: 'AbortError' })) as any,
+      runtime: {
+        env: { notify: vi.fn() },
+        createChildScope: vi.fn(),
+        refreshDataSource: vi.fn(),
+      } as any,
+      createDialogScope: vi.fn(),
+    });
+
+    await expect(
+      adapter.invokeBuiltInAction(
+        {
+          action: 'ajax',
+          args: { url: '/api/test', method: 'get' },
+          targeting: {},
+          actionNode: {},
+        } as any,
+        createCtx({ interactionId: 'ajax-1' })
+      )
+    ).resolves.toMatchObject({ ok: false, cancelled: true, error: expect.any(Error) });
+  });
+
   it('fails component actions when registry is missing, resolve throws, or no handle exists', async () => {
     const adapter = createAdapter();
 
