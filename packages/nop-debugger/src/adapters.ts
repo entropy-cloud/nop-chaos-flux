@@ -15,6 +15,15 @@ import { buildNetworkSummary, createRequestKey, formatActionResult, formatErrorD
 import { redactData, type NormalizedRedactionOptions } from './redaction';
 import type { NopDebuggerStore } from './store';
 
+function isAbortLikeError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const candidate = error as { name?: string; code?: string };
+  return candidate.name === 'AbortError' || candidate.code === 'ABORT_ERR';
+}
+
 export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
   return {
     name: 'nop-debugger',
@@ -247,7 +256,7 @@ export function decorateDebuggerEnv(input: {
       input.requestState.delete(requestInstanceId);
       return response;
     } catch (error) {
-      const aborted = error instanceof Error && error.name === 'AbortError';
+      const aborted = isAbortLikeError(error);
       input.store.append({
         kind: aborted ? 'api:abort' : 'error',
         group: aborted ? 'api' : 'error',

@@ -175,4 +175,40 @@ describe('debugger adapters', () => {
       rendererType: 'form'
     });
   });
+
+  it('records abort-like fetcher failures as api abort events', async () => {
+    const store = createStore();
+    const env: RendererEnv = {
+      async fetcher() {
+        throw { code: 'ABORT_ERR' };
+      },
+      notify() {
+        return undefined;
+      }
+    };
+
+    const decoratedEnv = decorateDebuggerEnv({
+      enabled: true,
+      env,
+      store,
+      redaction: normalizeRedactionOptions(undefined),
+      requestState: new Map(),
+      nextRequestInstanceId: createRequestInstanceIdFactory()
+    });
+
+    await expect(
+      decoratedEnv.fetcher({ url: '/api/abort', method: 'get' }, {
+        env: decoratedEnv,
+        scope: { readOwn() { return {}; } } as never,
+        signal: undefined
+      })
+    ).rejects.toEqual({ code: 'ABORT_ERR' });
+
+    expect(store.getSnapshot().events[0]).toMatchObject({
+      kind: 'api:abort',
+      group: 'api',
+      level: 'warning',
+      summary: 'GET /api/abort aborted'
+    });
+  });
 });
