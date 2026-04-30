@@ -33,7 +33,6 @@ export { FragmentRenderer } from './fragment';
 export { LoopRenderer } from './loop';
 export { RecurseRenderer } from './recurse';
 export { ScopeDebugRenderer } from './scope-debug';
-export { resolveGap } from './utils';
 
 export const basicRendererDefinitions: RendererDefinition[] = [
   {

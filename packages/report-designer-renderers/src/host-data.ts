@@ -154,8 +154,6 @@ export function buildReportDesignerScopeData(
       dirty: runtimeDirty,
     },
     spreadsheet,
-    selection: snapshot.selectionTarget,
-    target: snapshot.selectionTarget,
     selectionTarget: snapshot.selectionTarget,
     reportDocument,
     workbook,

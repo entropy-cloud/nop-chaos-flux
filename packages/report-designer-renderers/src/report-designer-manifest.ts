@@ -146,14 +146,6 @@ const reportDesignerProjection: HostProjectionContract = {
       schema: previewShape,
       description: 'Preview execution status.',
     },
-    selection: {
-      schema: selectionTargetShape,
-      description: 'Compatibility alias for selectionTarget. Prefer selectionTarget in new schema.',
-    },
-    target: {
-      schema: selectionTargetShape,
-      description: 'Compatibility alias for selectionTarget. Prefer selectionTarget in new schema.',
-    },
     selectionTarget: {
       schema: selectionTargetShape,
       description: 'Canonical current selection target.',
