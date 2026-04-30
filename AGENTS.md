@@ -567,6 +567,7 @@ Before finishing any task:
 - [ ] `pnpm build` passes
 - [ ] `pnpm lint` passes (if applicable)
 - [ ] `pnpm test` passes (if applicable)
+- [ ] Formatting is handled by Husky pre-commit hook (`lint-staged` runs Prettier + ESLint --fix). No need to run `pnpm format:check` manually during daily development.
 - [ ] `docs/logs/` updated (for significant changes)
 - [ ] Relevant architecture docs updated (if design changed)
 
