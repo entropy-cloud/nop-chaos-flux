@@ -106,11 +106,6 @@ export interface ApiSchema extends SchemaObject {
   includeScope?: '*' | string[];
   responseAdaptor?: string;
   requestAdaptor?: string;
-
-  // Legacy compatibility carriers. Prefer ActionSchema/SourceSchema.control.
-  cacheTTL?: number;
-  cacheKey?: string;
-  dedupStrategy?: RequestDedupStrategy;
 }
 
 export interface ExecutableApiRequest extends SchemaObject {
@@ -122,9 +117,6 @@ export interface ExecutableApiRequest extends SchemaObject {
   includeScope?: never;
   responseAdaptor?: never;
   requestAdaptor?: never;
-  cacheTTL?: never;
-  cacheKey?: never;
-  dedupStrategy?: never;
 }
 
 export interface PreparedApiRequest {

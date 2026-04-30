@@ -36,9 +36,6 @@ export function compileApiConfig(
     includeScope: api.includeScope,
     responseAdaptor: api.responseAdaptor,
     requestAdaptor: api.requestAdaptor,
-    cacheTTL: api.cacheTTL,
-    cacheKey: api.cacheKey,
-    dedupStrategy: api.dedupStrategy,
   };
 }
 

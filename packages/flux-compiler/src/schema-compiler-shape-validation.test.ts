@@ -199,38 +199,6 @@ describe('analyzeSchemaInput validation', () => {
     );
   });
 
-  it('reports invalid api shape in action', () => {
-    const renderer: RendererDefinition = {
-      type: 'button', component: () => null, fields: [{ key: 'onClick', kind: 'event' }]
-    };
-    const compiler = createSchemaCompiler({
-      registry: createRendererRegistry([renderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-
-    expect(compiler.validate?.({ type: 'button', onClick: { action: 'ajax', api: 123 } } as any)).toEqual(
-      expect.arrayContaining([expect.objectContaining({
-        code: 'invalid-action-shape', message: 'api must be an object.'
-      })])
-    );
-  });
-
-  it('reports api without url in action', () => {
-    const renderer: RendererDefinition = {
-      type: 'button', component: () => null, fields: [{ key: 'onClick', kind: 'event' }]
-    };
-    const compiler = createSchemaCompiler({
-      registry: createRendererRegistry([renderer]),
-      expressionCompiler: createExpressionCompiler(createFormulaCompiler())
-    });
-
-    expect(compiler.validate?.({ type: 'button', onClick: { action: 'ajax', api: {} } } as any)).toEqual(
-      expect.arrayContaining([expect.objectContaining({
-        code: 'invalid-action-shape', message: 'api.url must be a non-empty string.'
-      })])
-    );
-  });
-
   it('reports invalid source shape', () => {
     const renderer: RendererDefinition = {
       type: 'page', component: () => null, regions: ['body'],

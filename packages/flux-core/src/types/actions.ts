@@ -36,7 +36,6 @@ export interface ActionShapeFields extends SchemaObject {
   formId?: string;
   dialogId?: string;
   surfaceId?: string;
-  dataPath?: string;
   args?: Record<string, SchemaValue>;
   control?: OperationControlConfig;
   timeout?: number;
@@ -283,7 +282,6 @@ export interface CompiledActionTargeting {
   formId?: string;
   dialogId?: string;
   surfaceId?: string;
-  dataPath?: string;
 }
 
 /**

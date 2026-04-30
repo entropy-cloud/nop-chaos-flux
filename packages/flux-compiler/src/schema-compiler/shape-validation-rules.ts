@@ -131,10 +131,6 @@ export function validateActionShape(
     }, enabled);
   }
 
-  if (value.api !== undefined) {
-    validateApiSchemaShape(value.api, appendJsonPointer(path, 'api'), diagnostics, enabled, 'invalid-action-shape');
-  }
-
   if (value.parallel !== undefined && !Array.isArray(value.parallel)) {
     emitSchemaDiagnostic(diagnostics, {
       code: 'invalid-action-shape',

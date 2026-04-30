@@ -33,76 +33,6 @@ describe('compileAction', () => {
     expect((result.nodes[0].payload.args as any)?.isStatic).toBe(false);
   });
 
-  it('extracts api as legacy payload', () => {
-    const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'ajax', api: { url: '/api/data' } } as ActionSchema,
-      compiler
-    );
-
-    expect((result.nodes[0].payload.args as any)?.value).toEqual({ url: '/api/data' });
-  });
-
-  it('extracts dialog as legacy payload', () => {
-    const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'openDialog', dialog: { title: 'Confirm' } } as ActionSchema,
-      compiler
-    );
-
-    expect((result.nodes[0].payload.args as any)?.value).toEqual({ title: 'Confirm' });
-  });
-
-  it('extracts drawer as legacy payload', () => {
-    const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'openDrawer', drawer: { title: 'Settings' } } as ActionSchema,
-      compiler
-    );
-
-    expect((result.nodes[0].payload.args as any)?.value).toEqual({ title: 'Settings' });
-  });
-
-  it('extracts value with componentPath as legacy payload', () => {
-    const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'setValue', value: 'hello', componentPath: 'form.name' } as ActionSchema,
-      compiler
-    );
-
-    expect((result.nodes[0].payload.args as any)?.value).toEqual({ path: 'form.name', value: 'hello' });
-  });
-
-  it('extracts value without componentPath as legacy payload', () => {
-    const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'setValue', value: 'hello' } as ActionSchema,
-      compiler
-    );
-
-    expect((result.nodes[0].payload.args as any)?.value).toEqual({ path: undefined, value: 'hello' });
-  });
-
-  it('extracts values as legacy payload', () => {
-    const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'setValues', values: { a: 1, b: 2 } } as ActionSchema,
-      compiler
-    );
-
-    expect((result.nodes[0].payload.args as any)?.value).toEqual({ values: { a: 1, b: 2 } });
-  });
-
-  it('extracts generic non-reserved fields as legacy payload', () => {
-    const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'custom', nodeType: 'task', position: { x: 0, y: 0 } } as ActionSchema,
-      compiler
-    );
-
-    expect((result.nodes[0].payload.args as any)?.value).toEqual({ nodeType: 'task', position: { x: 0, y: 0 } });
-  });
-
   it('returns empty payload when no args or legacy payload', () => {
     const compiler = createCompiler();
     const result = compileAction(
@@ -113,14 +43,19 @@ describe('compileAction', () => {
     expect(result.nodes[0].payload.args).toBeUndefined();
   });
 
-  it('prefers explicit args over legacy payload', () => {
+  it('uses explicit args when provided', () => {
     const compiler = createCompiler();
-    const result = compileAction(
-      { action: 'ajax', api: { url: '/legacy' }, args: { url: '/explicit' } } as ActionSchema,
+    const withArgs = compileAction(
+      { action: 'ajax', args: { url: '/explicit' } } as ActionSchema,
       compiler
     );
+    expect((withArgs.nodes[0].payload.args as any)?.value).toEqual({ url: '/explicit' });
 
-    expect((result.nodes[0].payload.args as any)?.value).toEqual({ url: '/explicit' });
+    const withoutArgs = compileAction(
+      { action: 'ajax', api: { url: '/legacy' } } as ActionSchema,
+      compiler
+    );
+    expect(withoutArgs.nodes[0].payload.args).toBeUndefined();
   });
 
   it('compiles targeting fields', () => {
@@ -134,7 +69,6 @@ describe('compileAction', () => {
       formId: 'form-1',
       dialogId: 'dialog-1',
       surfaceId: 'surface-1',
-      dataPath: 'data.items'
     } as unknown as ActionSchema, compiler);
 
     const targeting = result.nodes[0].targeting;
@@ -144,7 +78,6 @@ describe('compileAction', () => {
     expect(targeting.formId).toBe('form-1');
     expect(targeting.dialogId).toBe('dialog-1');
     expect(targeting.surfaceId).toBe('surface-1');
-    expect(targeting.dataPath).toBe('data.items');
   });
 
   it('compiles control fields', () => {

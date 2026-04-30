@@ -270,9 +270,6 @@ export interface CompiledApiConfig {
   includeScope?: '*' | readonly string[];
   responseAdaptor?: string;
   requestAdaptor?: string;
-  cacheTTL?: number;
-  cacheKey?: string;
-  dedupStrategy?: RequestDedupStrategy;
 }
 
 /**
