@@ -12,10 +12,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./test-support": {
-      "types": "./dist/test-support.d.ts",
-      "default": "./dist/test-support.js"
     }
   },
   "dependencies": {

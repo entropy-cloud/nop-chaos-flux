@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { FormFieldStateSnapshot, ScopeRef } from '@nop-chaos/flux-core';
 import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
 import {
@@ -467,5 +467,132 @@ describe('useFormFieldController adapter behavior', () => {
     });
 
     warnSpy.mockRestore();
+  });
+});
+
+describe('useFieldPresentation subscription precision', () => {
+  it('uses path-scoped subscription rather than whole-store broadcast', () => {
+    cleanup();
+    const subscribe = vi.fn(() => () => undefined);
+    const subscribeToPath = vi.fn(() => () => undefined);
+    const subscribeToSubmitting = vi.fn(() => () => undefined);
+    const form = {
+      store: {
+        subscribe,
+        subscribeToPath,
+        subscribeToSubmitting,
+        getState: () => ({
+          values: { email: 'a@b.com' },
+          fieldStates: {
+            email: {
+              touched: false,
+              dirty: false,
+              visited: false,
+              errors: [],
+              validating: false,
+            },
+          },
+          submitting: false,
+          submitAttempted: false,
+        }),
+      },
+      validation: undefined,
+    } as any;
+
+    const scope = makeScope();
+
+    function PresentationProbe() {
+      useFormFieldController('email');
+      return <span data-testid="probe">ok</span>;
+    }
+
+    render(
+      <FormContext.Provider value={form}>
+        <ValidationContext.Provider value={undefined}>
+          <ScopeContext.Provider value={scope}>
+            <PresentationProbe />
+          </ScopeContext.Provider>
+        </ValidationContext.Provider>
+      </FormContext.Provider>,
+    );
+
+    expect(subscribeToPath).toHaveBeenCalledWith('email', expect.any(Function));
+    expect(subscribe).not.toHaveBeenCalled();
+  });
+});
+
+describe('async adapter.out stale-result guard', () => {
+  it('ignores stale adapter.out result when a newer change resolves first via useFormFieldController', async () => {
+    cleanup();
+    let resolveFirst!: (v: unknown) => void;
+    let resolveSecond!: (v: unknown) => void;
+    let callIdx = 0;
+
+    const adapter = {
+      in: vi.fn((v: unknown) => v),
+      out: vi.fn((_v: unknown) => {
+        const idx = callIdx++;
+        return new Promise((resolve) => {
+          if (idx === 0) resolveFirst = resolve;
+          else resolveSecond = resolve;
+        });
+      }),
+    };
+
+    const scopeData: Record<string, unknown> = { status: 'init' };
+    const updateFn = vi.fn((path: string, value: unknown) => {
+      scopeData[path] = value;
+    });
+    const scope: ScopeRef = {
+      id: 'scope-stale',
+      path: '$',
+      value: scopeData,
+      get(path: string) {
+        return scopeData[path];
+      },
+      has(path: string) {
+        return Object.prototype.hasOwnProperty.call(scopeData, path);
+      },
+      readOwn() {
+        return scopeData;
+      },
+      readVisible() {
+        return scopeData;
+      },
+      materializeVisible() {
+        return { ...scopeData };
+      },
+      update: updateFn,
+      merge: vi.fn(),
+    };
+
+    function Probe() {
+      const ctrl = useFormFieldController('status', { adapter });
+      return (
+        <span
+          data-testid="probe"
+          data-value={String(ctrl.value)}
+          onClick={() => {
+            ctrl.handlers.onChange('fast');
+            ctrl.handlers.onChange('slow');
+          }}
+        >
+          probe
+        </span>
+      );
+    }
+
+    render(wrapInContexts(scope, <Probe />));
+
+    const probe = screen.getByTestId('probe');
+    fireEvent.click(probe);
+
+    resolveSecond('SLOW_RESOLVED');
+    await new Promise((r) => setTimeout(r, 0));
+    resolveFirst('FAST_STALE');
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(updateFn).toHaveBeenCalledWith('status', 'SLOW_RESOLVED');
+    expect(updateFn).not.toHaveBeenCalledWith('status', 'FAST_STALE');
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getIn,
   getCompiledValidationField,
@@ -205,9 +205,11 @@ export function useFieldHandlers(args: {
 }) {
   const { name, currentForm, scope, toFormValue = identityValue, adapter, adapterContext } = args;
   const currentValidationScope = useCurrentValidationScope();
+  const generationRef = useRef(0);
 
   return useMemo(
     () =>
+      /* eslint-disable react-hooks/refs */
       createFieldHandlers({
         name,
         currentForm,
@@ -218,7 +220,10 @@ export function useFieldHandlers(args: {
             : toFormValue(nextValue);
 
           if (isPromiseLike(convertedValue)) {
+            const gen = ++generationRef.current;
             return convertedValue.then((resolvedValue) => {
+              if (gen !== generationRef.current) return;
+
               if (currentForm) {
                 currentForm.setValue(name, resolvedValue);
                 return;
@@ -236,6 +241,7 @@ export function useFieldHandlers(args: {
           scope.update(name, convertedValue);
         },
       }),
+      /* eslint-enable react-hooks/refs */
     [name, currentForm, currentValidationScope, scope, toFormValue, adapter, adapterContext],
   );
 }
@@ -432,6 +438,7 @@ export function useFieldPresentation(
       left.showError === right.showError &&
       left.interactive === right.interactive &&
       left.readOnly === right.readOnly,
+    { path: name },
   );
   const presentation = currentForm
     ? currentPresentation

@@ -29,6 +29,16 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
     }
   }, [collapsible]);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (collapsible && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        setCollapsed((prev) => !prev);
+      }
+    },
+    [collapsible],
+  );
+
   const bodyStyle = collapsed ? { display: 'none', ...fieldsetGap.style } : fieldsetGap.style;
 
   return (
@@ -44,12 +54,18 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
           data-slot="fieldset-title"
           className={cn(slotProps.titleClassName)}
           onClick={toggle}
+          onKeyDown={collapsible ? handleKeyDown : undefined}
+          tabIndex={collapsible ? 0 : undefined}
+          role={collapsible ? 'button' : undefined}
+          aria-expanded={collapsible ? !collapsed : undefined}
+          aria-controls={collapsible ? `${props.meta.cid}-body` : undefined}
           style={collapsible ? { cursor: 'pointer' } : undefined}
         >
           {title}
         </legend>
       ) : null}
       <div
+        id={collapsible ? `${props.meta.cid}-body` : undefined}
         data-slot="fieldset-body"
         className={cn(fieldsetGap.className, slotProps.bodyClassName)}
         style={bodyStyle}
