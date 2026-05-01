@@ -168,16 +168,16 @@ Follow these rules:
 
 ### Directory Roles
 
-| Directory            | Purpose                                                                                                                                 |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/architecture/` | Current normative design docs (source of truth)                                                                                         |
-| `docs/references/`   | Stable lookup material (terminology, interfaces, maintenance)                                                                           |
-| `docs/analysis/`     | Investigatory/comparison reports                                                                                                        |
-| `docs/examples/`     | Representative schemas and usage notes                                                                                                  |
-| `docs/plans/`        | Implementation plans and execution checklists (execution docs, not normative design docs; after closure they become historical records) |
-| `docs/bugs/`         | Numbered defect histories and fix notes                                                                                                 |
-| `docs/archive/`      | Preserved legacy drafts                                                                                                                 |
-| `docs/logs/`         | Daily dev logs â€” `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/index.md` for writing guide and index                            |
+| Directory            | Purpose                                                                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/` | Current normative design docs (source of truth)                                                                                    |
+| `docs/references/`   | Stable lookup material (terminology, interfaces, maintenance)                                                                      |
+| `docs/analysis/`     | Investigatory/comparison reports                                                                                                   |
+| `docs/examples/`     | Representative schemas and usage notes                                                                                             |
+| `docs/plans/`        | Active implementation plans and execution checklists (100+). Completed plans are archived periodically. See archival policy below. |
+| `docs/bugs/`         | Numbered defect histories and fix notes                                                                                            |
+| `docs/archive/`      | Preserved legacy drafts and completed plans (plans 01–99 archived here under `docs/archive/plans/`)                                |
+| `docs/logs/`         | Daily dev logs â€” `docs/logs/{year}/{month}-{day}.md`, see `docs/logs/index.md` for writing guide and index                       |
 
 ### Entry Point
 
