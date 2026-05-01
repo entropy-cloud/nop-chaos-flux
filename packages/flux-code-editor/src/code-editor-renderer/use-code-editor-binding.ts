@@ -1,24 +1,23 @@
-import { useCurrentForm, useRenderScope } from '@nop-chaos/flux-react';
+import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { getIn } from '@nop-chaos/flux-core';
 import type { CodeEditorRendererProps } from './shared';
-
-function getValueAtPath(obj: unknown, path: string): unknown {
-  return path.split('.').reduce((current, key) => {
-    if (current == null || typeof current !== 'object') {
-      return undefined;
-    }
-    return (current as Record<string, unknown>)[key];
-  }, obj);
-}
 
 export function useCodeEditorBinding(props: CodeEditorRendererProps, name: string) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
 
+  const formValue = useCurrentFormState(
+    (state) => (name ? getIn(state.values, name) : state.values),
+    Object.is,
+    { path: name || undefined },
+  );
+  const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
+
   let value: string;
   if (currentForm && name) {
-    value = String(getValueAtPath(currentForm.store.getState().values, name) ?? '');
+    value = String(formValue ?? '');
   } else if (name) {
-    value = String(scope.get(name) ?? '');
+    value = String(scopeValue ?? '');
   } else {
     value = String(props.props.value ?? '');
   }
