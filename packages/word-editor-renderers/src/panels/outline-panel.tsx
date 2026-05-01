@@ -3,7 +3,7 @@ import { ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, ScrollArea, cn } from '@nop-chaos/ui';
-import type { IElement, TitleLevel } from '@hufe921/canvas-editor';
+import type { IElement, TitleLevel } from '@nop-chaos/word-editor-core';
 
 interface OutlinePanelProps {
   bridge: CanvasEditorBridge | null;

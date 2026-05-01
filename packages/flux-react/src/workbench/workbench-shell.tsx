@@ -18,6 +18,7 @@ export interface WorkbenchShellProps {
   rightLabel?: string;
   dialogs?: ReactNode;
   'data-testid'?: string;
+  'data-cid'?: string;
 }
 
 const PANEL_CARD = 'min-h-0 overflow-hidden rounded-xl border border-border shadow-sm';
@@ -37,6 +38,7 @@ export function WorkbenchShell({
   rightLabel = 'Expand right panel',
   dialogs,
   'data-testid': testId,
+  'data-cid': cid,
 }: WorkbenchShellProps) {
   const hasLeft = leftPanel !== undefined;
   const hasRight = rightPanel !== undefined;
@@ -64,6 +66,7 @@ export function WorkbenchShell({
       )}
       style={style}
       data-testid={testId}
+      data-cid={cid}
     >
       {header !== undefined && (
         <div data-slot="workbench-header" className="min-h-0">

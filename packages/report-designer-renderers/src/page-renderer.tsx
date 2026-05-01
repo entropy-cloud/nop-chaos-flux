@@ -205,7 +205,7 @@ export function ReportDesignerPageRenderer(
       })
     : undefined;
   const statusPath =
-    typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+    typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -258,6 +258,8 @@ export function ReportDesignerPageRenderer(
   return (
     <WorkbenchShell
       className={cn('nop-report-designer', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
       header={headerSlot}
       leftPanel={
         hasRendererSlotContent(fieldPanelContent)

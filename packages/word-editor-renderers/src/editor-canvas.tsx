@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import type { IEditorData } from '@hufe921/canvas-editor';
+import type { IEditorData } from '@nop-chaos/word-editor-core';
 import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { createSavedDocumentData, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core';

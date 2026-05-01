@@ -284,7 +284,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   );
 
   const statusPath =
-    typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+    typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
 
   useEffect(() => {
     if (!statusPath) {
@@ -425,6 +425,8 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         'nop-word-editor-page h-screen overflow-hidden bg-[var(--nop-app-bg)]',
         props.meta.className,
       )}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       <WorkbenchShell
         style={{ padding: 0 }}

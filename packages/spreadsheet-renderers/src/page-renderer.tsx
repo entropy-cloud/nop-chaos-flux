@@ -150,7 +150,7 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
       })
     : undefined;
   const statusPath =
-    typeof props.schema.statusPath === 'string' ? props.schema.statusPath : undefined;
+    typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
 
   useEffect(() => {
     if (!statusPath) {
@@ -171,7 +171,11 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   }, [props.node.scope, snapshot.selection.kind, spreadsheet, statusPath]);
 
   return (
-    <section className={cn('nop-spreadsheet-page')}>
+    <section
+      className={cn('nop-spreadsheet-page', props.meta.className)}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
+    >
       <header data-slot="spreadsheet-page-header">
         <h2>
           {hasRendererSlotContent(titleContent) ? titleContent : t('flux.spreadsheet.designer')}
