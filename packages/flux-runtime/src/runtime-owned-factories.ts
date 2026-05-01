@@ -69,6 +69,8 @@ function createManagedValidationScopeRuntime(formRuntime: FormRuntime): Validati
     registerField: (registration) => formRuntime.registerField(registration),
     updateFieldRegistration: (registrationId, patch) =>
       formRuntime.updateFieldRegistration(registrationId, patch),
+    touchField: (path) => formRuntime.touchField(path),
+    visitField: (path) => formRuntime.visitField(path),
     refreshCompiledModel: (newModel) => formRuntime.refreshCompiledModel(newModel),
     dispose: () => formRuntime.dispose(),
     registerChildContract: (contract) => formRuntime.registerChildContract(contract),

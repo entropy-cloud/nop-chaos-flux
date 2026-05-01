@@ -307,6 +307,8 @@ export interface ValidationScopeRuntime {
     registrationId: string,
     patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>,
   ): void;
+  touchField?(path: string): void;
+  visitField?(path: string): void;
 
   refreshCompiledModel(newModel: CompiledFormValidationModel): void;
   dispose(): void;
