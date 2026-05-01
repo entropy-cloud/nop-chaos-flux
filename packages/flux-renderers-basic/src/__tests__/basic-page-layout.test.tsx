@@ -217,7 +217,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
             },
             {
               type: 'text',
-              text: '${ui.dialogStatus?.kind}:${ui.dialogStatus?.open}:${ui.drawerStatus?.kind}:${ui.drawerStatus?.open}',
+              text: '${ui?.dialogStatus?.kind}:${ui?.dialogStatus?.open}:${ui?.drawerStatus?.kind}:${ui?.drawerStatus?.open}',
             },
           ],
         }}
@@ -233,7 +233,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
         schemaUrl="test://basic/page-layout"
         schema={{
           type: 'page',
-          body: [{ type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' }],
+          body: [{ type: 'text', text: '${ui?.dialogStatus?.open}:${ui?.drawerStatus?.open}' }],
         }}
         env={env}
         formulaCompiler={formulaCompiler}
@@ -259,7 +259,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               defaultOpen: true,
               body: [{ type: 'text', text: 'Dialog body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.open}' },
+            { type: 'text', text: '${ui?.dialogStatus?.open}' },
           ],
         }}
         env={env}
@@ -315,7 +315,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
               statusPath: 'ui.drawerStatus',
               body: [{ type: 'text', text: 'Drawer body' }],
             },
-            { type: 'text', text: '${ui.dialogStatus?.open}:${ui.drawerStatus?.open}' },
+            { type: 'text', text: '${ui?.dialogStatus?.open}:${ui?.drawerStatus?.open}' },
           ],
         }}
         env={env}
