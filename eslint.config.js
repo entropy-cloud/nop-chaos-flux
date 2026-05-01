@@ -93,7 +93,9 @@ module.exports = [
           minimumDescriptionLength: 3,
         },
       ],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // Low-code system: appropriate use of any is normal in schema-driven renderers and dynamic evaluation.
+      // Disabled to avoid noise in a codebase that intentionally uses any for schema/host boundaries.
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
