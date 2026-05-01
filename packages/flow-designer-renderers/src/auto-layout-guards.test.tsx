@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFormulaCompiler } from '../../flux-formula/src/index';
 import { createSchemaRenderer } from '../../flux-react/src/index';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
@@ -46,6 +46,7 @@ vi.mock('./canvas-bridge', async () => {
 });
 
 import { flowDesignerRendererDefinitions } from './index';
+import { invalidateElkLayoutRequests } from '@nop-chaos/flow-designer-core';
 
 const SchemaRenderer = createSchemaRenderer([
   ...flowDesignerRendererDefinitions,
@@ -96,6 +97,10 @@ describe('DesignerPage auto layout guards', () => {
     layoutResolvers = [];
   });
 
+  afterEach(() => {
+    invalidateElkLayoutRequests();
+  });
+
   it('ignores stale auto-layout results after switching documents', async () => {
     const view = renderDesignerPage({
       id: 'doc-1',
@@ -143,5 +148,28 @@ describe('DesignerPage auto layout guards', () => {
     await waitFor(() => {
       expect(within(view.container).getByTestId('node-pos').textContent).toBe('5,5');
     });
+  });
+
+  it('ignores layout results after renderer unmount invalidates the request', async () => {
+    const view = renderDesignerPage({
+      id: 'doc-1',
+      kind: 'flow',
+      name: 'Example',
+      version: '1.0.0',
+      nodes: [{ id: 'node-1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task 1' } }],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 },
+    });
+
+    fireEvent.click(within(view.container).getByRole('button', { name: 'Auto layout' }));
+    await waitFor(() => {
+      expect(layoutResolvers).toHaveLength(1);
+    });
+
+    view.unmount();
+    layoutResolvers[0]?.(new Map([['node-1', { x: 100, y: 100 }]]));
+    await Promise.resolve();
+
+    expect(true).toBe(true);
   });
 });

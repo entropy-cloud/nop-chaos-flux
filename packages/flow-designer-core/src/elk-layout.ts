@@ -2,6 +2,11 @@ import ELK from 'elkjs/lib/elk.bundled.js';
 import type { GraphNode, GraphEdge, NodeTypeConfig } from './types';
 
 const elk = new ELK();
+let layoutRequestId = 0;
+
+export function invalidateElkLayoutRequests() {
+  layoutRequestId += 1;
+}
 
 export interface ElkLayoutOptions {
   direction?: 'RIGHT' | 'DOWN' | 'LEFT' | 'UP';
@@ -15,6 +20,7 @@ export async function layoutWithElk(
   nodeTypes?: Map<string, NodeTypeConfig>,
   options?: ElkLayoutOptions,
 ): Promise<Map<string, { x: number; y: number }>> {
+  const requestId = ++layoutRequestId;
   const direction = options?.direction ?? 'RIGHT';
   const nodeSpacing = options?.nodeSpacing ?? 60;
   const layerSpacing = options?.layerSpacing ?? 120;
@@ -50,6 +56,10 @@ export async function layoutWithElk(
   };
 
   const layouted = await elk.layout(graph);
+
+  if (requestId !== layoutRequestId) {
+    return new Map();
+  }
 
   const positions = new Map<string, { x: number; y: number }>();
 

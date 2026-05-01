@@ -10,6 +10,7 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
+import { invalidateElkLayoutRequests } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 import {
   Button,
@@ -275,6 +276,12 @@ function DesignerPageBody({
   );
 
   useEffect(() => {
+    return () => {
+      invalidateElkLayoutRequests();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!statusPath) {
       return;
     }
@@ -405,7 +412,11 @@ function DesignerPageBody({
             </Button>
             <Button
               type="button"
-              onClick={() => void handleConfirmCreateDialog()}
+              onClick={() => {
+                handleConfirmCreateDialog().catch((error) => {
+                  console.warn('[flow-designer] create dialog confirm failed', error);
+                });
+              }}
               disabled={creatingNode}
             >
               {creatingNode ? t('flux.flowDesigner.creating') : t('flux.flowDesigner.create')}
