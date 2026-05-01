@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps, SchemaInput } from '@nop-chaos/flux-core';
 import { useOwnScopeSelector } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { ReportInspectorSchema } from './schemas.js';
 
@@ -11,8 +12,10 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
   const body = (props.props.body ?? scopeData.inspectorBody ?? inspector?.resolvedSchema) as
     | SchemaInput
     | undefined;
-  const emptyLabel = String(props.props.emptyLabel ?? 'No inspector panels available.');
-  const noSelectionLabel = String(props.props.noSelectionLabel ?? 'Select a target to inspect.');
+  const emptyLabel = String(props.props.emptyLabel ?? t('flux.reportDesigner.noPanels'));
+  const noSelectionLabel = String(
+    props.props.noSelectionLabel ?? t('flux.reportDesigner.noSelection'),
+  );
 
   if (!hasSelection) {
     return (

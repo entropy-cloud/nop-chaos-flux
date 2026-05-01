@@ -5,6 +5,7 @@ import {
   resolveRendererSlotContent,
   useOwnScopeSelector,
 } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { getFieldCount, joinClassNames } from './helpers.js';
 import type { ReportFieldPanelSchema } from './types.js';
@@ -26,7 +27,7 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
 
   const showHeader = props.props.showFieldSourceHeader !== false;
   const dragEnabled = props.props.dragEnabled !== false;
-  const emptyLabel = String(props.props.emptyLabel ?? 'No field sources registered.');
+  const emptyLabel = String(props.props.emptyLabel ?? t('flux.reportDesigner.noFieldSources'));
 
   return (
     <section
