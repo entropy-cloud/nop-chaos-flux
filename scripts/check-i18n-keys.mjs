@@ -12,6 +12,7 @@
 
 import { readFile, readdir, stat } from 'fs/promises';
 import { join, extname } from 'path';
+import ts from '@typescript/typescript6';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -201,58 +202,74 @@ function parseNestedObject(str, prefix, keys) {
   }
 }
 
-/**
- * Alternative: directly evaluate the locale structure
- */
 async function extractDefinedKeys(filePath) {
   const content = await readFile(filePath, 'utf-8');
   const keys = new Set();
 
-  // Use regex to find all leaf key paths
-  // Pattern: matches sequences like common: { loading: '...' }
-  // We'll build paths by tracking nesting
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 
-  const lines = content.split('\n');
-  const pathStack = [];
-  let inFluxObject = false;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // Detect entering flux object
-    if (trimmed.match(/^\s*flux\s*:\s*\{/)) {
-      inFluxObject = true;
-      pathStack.push('flux');
-      continue;
+  function getPropertyName(name) {
+    if (ts.isIdentifier(name) || ts.isStringLiteral(name)) {
+      return name.text;
     }
+    return undefined;
+  }
 
-    if (!inFluxObject) continue;
-
-    // Detect nested object start: key: {
-    const nestedMatch = trimmed.match(/^(\w+)\s*:\s*\{\s*$/);
-    if (nestedMatch) {
-      pathStack.push(nestedMatch[1]);
-      continue;
-    }
-
-    // Detect closing brace
-    if (trimmed === '},' || trimmed === '}') {
-      if (pathStack.length > 0) {
-        pathStack.pop();
+  function visitObjectLiteral(node, path) {
+    for (const property of node.properties) {
+      if (!ts.isPropertyAssignment(property)) {
+        continue;
       }
-      if (pathStack.length === 0) {
-        inFluxObject = false;
-      }
-      continue;
-    }
 
-    // Detect leaf value: key: 'value', or key: "value",
-    const leafMatch = trimmed.match(/^(\w+)\s*:\s*['"`].*['"`]\s*,?\s*$/);
-    if (leafMatch && pathStack.length > 0) {
-      const fullKey = [...pathStack, leafMatch[1]].join('.');
-      keys.add(fullKey);
+      const propertyName = getPropertyName(property.name);
+      if (!propertyName) {
+        continue;
+      }
+
+      const nextPath = [...path, propertyName];
+      const initializer = property.initializer;
+
+      if (
+        ts.isStringLiteral(initializer) ||
+        ts.isNoSubstitutionTemplateLiteral(initializer) ||
+        ts.isTemplateExpression(initializer)
+      ) {
+        keys.add(nextPath.join('.'));
+        continue;
+      }
+
+      if (ts.isObjectLiteralExpression(initializer)) {
+        visitObjectLiteral(initializer, nextPath);
+      }
     }
   }
+
+  function visit(node) {
+    if (!ts.isVariableDeclaration(node) || !node.initializer) {
+      ts.forEachChild(node, visit);
+      return;
+    }
+
+    if (!ts.isObjectLiteralExpression(node.initializer)) {
+      ts.forEachChild(node, visit);
+      return;
+    }
+
+    const fluxProperty = node.initializer.properties.find(
+      (property) =>
+        ts.isPropertyAssignment(property) &&
+        getPropertyName(property.name) === 'flux' &&
+        ts.isObjectLiteralExpression(property.initializer),
+    );
+
+    if (fluxProperty && ts.isPropertyAssignment(fluxProperty)) {
+      visitObjectLiteral(fluxProperty.initializer, ['flux']);
+    }
+
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
 
   return keys;
 }
