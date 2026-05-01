@@ -1,3 +1,4 @@
+import './code-editor-styles.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';

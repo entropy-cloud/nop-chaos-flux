@@ -60,21 +60,3 @@ export function registerCodeEditorRenderers(registry: RendererRegistry) {
   }
   return registry;
 }
-
-export {
-  createBaseExtensions,
-  createLanguageExtension,
-  createSQLDialectExtension,
-} from './extensions/base';
-export type { CompletionConfig, CreateBaseExtensionsOptions } from './extensions/base';
-
-export { createExpressionLinter } from './extensions/expression/linter';
-
-export { createFriendlyNameDecoration } from './extensions/expression/decoration';
-
-export { createTemplateModeExtension } from './extensions/expression/template-mode';
-
-export { SnippetPanel } from './extensions/snippet-panel';
-export { VariablePanel } from './variable-panel';
-export { SQLResultPanel } from './sql-result-panel';
-export type { SQLResultState } from './sql-result-panel';
