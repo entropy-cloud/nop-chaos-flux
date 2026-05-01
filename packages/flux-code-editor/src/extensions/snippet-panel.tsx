@@ -22,14 +22,16 @@ export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
       <div data-slot="code-editor-snippet-panel">
         <PopoverTrigger
           render={
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               data-slot="code-editor-snippet-toggle"
               title="Insert snippet"
-              className="inline-flex items-center justify-center gap-1 h-6 px-2 rounded-md text-xs cursor-pointer select-none text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring transition-colors"
+              className="h-6 px-2 text-xs text-muted-foreground"
             >
               {'{…}'}
-            </button>
+            </Button>
           }
         />
       </div>
