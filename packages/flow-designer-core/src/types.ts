@@ -234,6 +234,13 @@ export type ToolbarItem =
       disabled?: string;
       active?: string;
       variant?: 'default' | 'primary' | 'danger';
+    }
+  | {
+      type: 'switch';
+      action?: string;
+      label?: string;
+      disabled?: string;
+      active?: string;
     };
 
 export interface ToolbarConfig {

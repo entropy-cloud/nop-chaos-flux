@@ -5,19 +5,6 @@ import { DesignerIcon } from './designer-icon';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { Badge, Button, Label, Switch, cn } from '@nop-chaos/ui';
 
-type ToolbarItemLike = {
-  type?: string;
-  label?: string;
-  text?: string;
-  body?: string;
-  level?: string;
-  action?: string;
-  icon?: string;
-  disabled?: boolean | string;
-  active?: boolean | string;
-  variant?: 'default' | 'primary' | 'danger';
-};
-
 function readState(name: string, snapshot: DesignerSnapshot) {
   switch (name) {
     case 'canUndo':
@@ -130,8 +117,8 @@ export function DesignerToolbarContent(props: {
   );
 
   const items = useMemo(() => {
-    return ((config.toolbar?.items ?? []) as unknown as ToolbarItemLike[]).map((item, index) => ({
-      key: `${item.type ?? 'item'}:${index}`,
+    return (config.toolbar?.items ?? []).map((item, index) => ({
+      key: `${item.type}:${index}`,
       item,
     }));
   }, [config.toolbar?.items]);
@@ -161,7 +148,7 @@ export function DesignerToolbarContent(props: {
             <div key={key} className="mr-auto flex items-center gap-2 min-w-0">
               <div>
                 <div className="text-sm font-semibold text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
-                  {evalTextTemplate(item.body ?? item.text, snapshot)}
+                  {evalTextTemplate(item.body, snapshot)}
                 </div>
               </div>
             </div>
@@ -177,7 +164,7 @@ export function DesignerToolbarContent(props: {
                 level === 'success' ? 'success' : level === 'warning' ? 'warning' : 'secondary'
               }
             >
-              {evalTextTemplate(item.text ?? item.body, snapshot)}
+              {evalTextTemplate(item.text, snapshot)}
             </Badge>
           );
         }
@@ -185,7 +172,7 @@ export function DesignerToolbarContent(props: {
         if (item.type === 'text') {
           return (
             <span key={key} className="text-sm text-muted-foreground whitespace-nowrap">
-              {evalTextTemplate(item.body ?? item.text, snapshot)}
+              {evalTextTemplate(item.text, snapshot)}
             </span>
           );
         }

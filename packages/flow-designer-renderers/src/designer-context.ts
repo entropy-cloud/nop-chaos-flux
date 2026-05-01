@@ -107,8 +107,6 @@ export function toActionResult(result: import('./designer-command-adapter').Desi
 
 export function buildDesignerScopeData(input: {
   snapshot: DesignerSnapshot;
-  config: DesignerConfig;
-  core: DesignerCore;
 }) {
   const { snapshot } = input;
   const selectionKind = snapshot.activeBranch
@@ -155,7 +153,10 @@ export function useDesignerHostScope(input: {
   core: DesignerCore;
   path: string;
 }): ScopeRef {
-  const scopeData = useMemo(() => buildDesignerScopeData(input), [input]);
+  const scopeData = useMemo(
+    () => buildDesignerScopeData({ snapshot: input.snapshot }),
+    [input.snapshot],
+  );
   return useHostScope(scopeData, input.path, 'designer');
 }
 

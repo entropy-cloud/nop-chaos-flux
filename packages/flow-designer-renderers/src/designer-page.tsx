@@ -317,7 +317,9 @@ function DesignerPageBody({
       <div ref={rootRef} className="contents">
         {config.themeStyles && <style>{config.themeStyles}</style>}
         <WorkbenchShell
-          className={cn('nop-designer fd-theme-root text-foreground')}
+          className={cn('nop-designer fd-theme-root text-foreground', props.meta.className)}
+          data-testid={props.meta.testid || undefined}
+          data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
           header={
             hasRendererSlotContent(toolbarSlot) ? (
               toolbarSlot
