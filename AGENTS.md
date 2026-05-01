@@ -344,7 +344,7 @@ function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 
 ### MANDATORY: Styling Rules
 
-1. **Layout renderers** (container, flex, page, panel) emit **marker classes ONLY** (`nop-container`, `nop-flex`, `nop-page`, etc.). Markers carry zero visual styles. **NO implicit layout** — no hardcoded `gap-4`, `flex`, `p-4`, `grid`. All visual styles come from schema (`className`, semantic props, `classAliases`).
+1. **Layout renderers** (container, flex, page, panel) emit **marker classes ONLY** (`nop-container`, `nop-flex`, `nop-page`, etc.). Renderer component code must not hardcode implicit layout styles such as `gap-4`, `flex`, `p-4`, or `grid`; visual styling comes from schema (`className`, semantic props, `classAliases`). Package-owned theme CSS may still provide themeable defaults for marker roots and slots via `@layer base`, such as `flux-react/default-spacing.css`.
 2. **Widget renderers** (condition-builder, tag-list, key-value, array-editor, table, tree, code-editor, etc.) are complete, styled UI controls built on shadcn/ui. Internal layout classes (`flex`, `gap`, `padding`, `grid`) are part of the visual design. Schema `className` is for consumer customization overrides.
 3. Use `cn()` from `@nop-chaos/ui` for class merging, not `classNames` or template literals.
 4. Use `stack-*`/`hstack-*` aliases from `apps/playground/src/styles-theme-utilities.css` for layout in schema.
