@@ -191,7 +191,9 @@ export function createRuntimeSourceRegistry(input: {
         return;
       }
 
-      void controller.refresh();
+      controller.refresh().catch((error) => {
+        console.warn('[source-registry] refresh failed', error);
+      });
     });
 
     const sourceName = compiled.targetPath?.isStatic ? compiled.targetPath.value : undefined;
