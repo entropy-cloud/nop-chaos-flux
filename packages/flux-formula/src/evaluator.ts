@@ -3,6 +3,8 @@ import type { FormulaAstNode, IdentifierNode, MemberExpressionNode } from './ast
 import { customEquals } from './builtins';
 import { getFormulaRegistrySnapshot, type FormulaRegistrySnapshot } from './registry';
 
+const MAX_EVAL_DEPTH = 256;
+
 interface LambdaFrame {
   values: Record<string, unknown>;
   parent?: LambdaFrame;
@@ -112,76 +114,85 @@ function applyUnaryOperator(op: string, value: unknown): unknown {
 
 export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unknown {
   const registry = options.registry ?? getFormulaRegistrySnapshot();
+  let evalDepth = 0;
 
   const evaluateNode = (node: FormulaAstNode, frame?: LambdaFrame): unknown => {
-    switch (node.type) {
-      case 'Literal':
-        return node.value;
-      case 'Identifier':
-        return evaluateIdentifier(node, frame);
-      case 'UnaryExpression':
-        return applyUnaryOperator(node.op, evaluateNode(node.argument, frame));
-      case 'BinaryExpression':
-        return applyBinaryOperator(
-          node.op,
-          evaluateNode(node.left, frame),
-          evaluateNode(node.right, frame),
-        );
-      case 'LogicalExpression': {
-        const left = evaluateNode(node.left, frame);
-        const op = normalizeLogicalName(node.op);
-        return op === '&&'
-          ? left
-            ? evaluateNode(node.right, frame)
-            : left
-          : left
+    evalDepth += 1;
+    if (evalDepth > MAX_EVAL_DEPTH) {
+      throw createExpressionError(`Evaluation depth limit exceeded (${MAX_EVAL_DEPTH})`);
+    }
+    try {
+      switch (node.type) {
+        case 'Literal':
+          return node.value;
+        case 'Identifier':
+          return evaluateIdentifier(node, frame);
+        case 'UnaryExpression':
+          return applyUnaryOperator(node.op, evaluateNode(node.argument, frame));
+        case 'BinaryExpression':
+          return applyBinaryOperator(
+            node.op,
+            evaluateNode(node.left, frame),
+            evaluateNode(node.right, frame),
+          );
+        case 'LogicalExpression': {
+          const left = evaluateNode(node.left, frame);
+          const op = normalizeLogicalName(node.op);
+          return op === '&&'
             ? left
-            : evaluateNode(node.right, frame);
-      }
-      case 'NullCoalesceExpression': {
-        const left = evaluateNode(node.left, frame);
-        return left ?? evaluateNode(node.right, frame);
-      }
-      case 'ConditionalExpression':
-        return evaluateNode(node.test, frame)
-          ? evaluateNode(node.consequent, frame)
-          : evaluateNode(node.alternate, frame);
-      case 'ArrayExpression':
-        return node.elements.map((element) => evaluateNode(element, frame));
-      case 'ObjectExpression': {
-        const result: Record<string, unknown> = {};
-        for (const property of node.properties) {
-          const key = property.computed
-            ? evaluateNode(property.key, frame)
-            : property.key.type === 'Identifier'
-              ? property.key.name
-              : property.key.type === 'Literal'
-                ? property.key.value
-                : evaluateNode(property.key, frame);
-          result[String(key)] = evaluateNode(property.value, frame);
+              ? evaluateNode(node.right, frame)
+              : left
+            : left
+              ? left
+              : evaluateNode(node.right, frame);
         }
-        return result;
-      }
-      case 'MemberExpression':
-        return evaluateMember(node, frame);
-      case 'CallExpression':
-        return evaluateCall(node, frame);
-      case 'ArrowFunctionExpression': {
-        const params = node.params;
-        if (params.length === 1) {
-          const paramName = params[0].name;
+        case 'NullCoalesceExpression': {
+          const left = evaluateNode(node.left, frame);
+          return left ?? evaluateNode(node.right, frame);
+        }
+        case 'ConditionalExpression':
+          return evaluateNode(node.test, frame)
+            ? evaluateNode(node.consequent, frame)
+            : evaluateNode(node.alternate, frame);
+        case 'ArrayExpression':
+          return node.elements.map((element) => evaluateNode(element, frame));
+        case 'ObjectExpression': {
+          const result: Record<string, unknown> = {};
+          for (const property of node.properties) {
+            const key = property.computed
+              ? evaluateNode(property.key, frame)
+              : property.key.type === 'Identifier'
+                ? property.key.name
+                : property.key.type === 'Literal'
+                  ? property.key.value
+                  : evaluateNode(property.key, frame);
+            result[String(key)] = evaluateNode(property.value, frame);
+          }
+          return result;
+        }
+        case 'MemberExpression':
+          return evaluateMember(node, frame);
+        case 'CallExpression':
+          return evaluateCall(node, frame);
+        case 'ArrowFunctionExpression': {
+          const params = node.params;
+          if (params.length === 1) {
+            const paramName = params[0].name;
+            return (...args: unknown[]) => {
+              return evaluateNode(node.body, { values: { [paramName]: args[0] }, parent: frame });
+            };
+          }
           return (...args: unknown[]) => {
-            return evaluateNode(node.body, { values: { [paramName]: args[0] }, parent: frame });
+            const values: Record<string, unknown> = {};
+            for (let i = 0; i < params.length; i++) {
+              values[params[i].name] = args[i];
+            }
+            return evaluateNode(node.body, { values, parent: frame });
           };
         }
-        return (...args: unknown[]) => {
-          const values: Record<string, unknown> = {};
-          for (let i = 0; i < params.length; i++) {
-            values[params[i].name] = args[i];
-          }
-          return evaluateNode(node.body, { values, parent: frame });
-        };
       }
+    } finally {
+      evalDepth -= 1;
     }
   };
 

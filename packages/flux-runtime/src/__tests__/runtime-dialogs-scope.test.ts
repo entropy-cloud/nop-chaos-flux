@@ -37,6 +37,8 @@ describe('createRendererRuntime', () => {
     expect(dialogState.surface.title).toBe('Runtime dialog');
     expect(dialogState.body).toBeTruthy();
     expect(dialogState.scope.get('dialogId')).toBe(dialogState.id);
+    expect(dialogState.validationOwner?.scopeId).toBe(`${dialogState.id}-validation`);
+    expect(dialogState.validationOwner?.scope?.parent).toBe(dialogState.scope);
 
     const closeResult = await runtime.dispatch(
       {
@@ -226,6 +228,7 @@ describe('createRendererRuntime', () => {
     const dialogState = surfaceRuntime.store.getState().entries[0] as any;
     expect(dialogState.surface.title).toBe('Args dialog');
     expect(dialogState.body).toEqual([{ type: 'text', text: 'Body from args' }]);
+    expect(dialogState.validationOwner?.scopeId).toBe(`${dialogState.id}-validation`);
   });
 
   it('stores ownerNodeInstance in dialog state when opened from a trigger node', async () => {

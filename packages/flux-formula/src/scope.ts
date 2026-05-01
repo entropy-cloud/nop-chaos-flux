@@ -121,7 +121,7 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
           return Reflect.get(target, property);
         }
 
-        if (property === '__proto__') {
+        if (property === '__proto__' || property === 'constructor' || property === 'prototype') {
           return undefined;
         }
 
@@ -160,7 +160,7 @@ function createFormulaScope(context: EvalContext): Record<string, any> {
           return undefined;
         }
 
-        if (property === '__proto__') {
+        if (property === '__proto__' || property === 'constructor' || property === 'prototype') {
           return undefined;
         }
 

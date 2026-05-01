@@ -434,6 +434,87 @@ describe('collectValidationModel', () => {
     expect(nodes[''].children).toContain('email');
   });
 
+  it('stops validation collection at create-owner boundaries', () => {
+    const nestedFormRenderer: RendererDefinition = {
+      type: 'nested-form',
+      component: () => null,
+      regions: ['body'],
+      scopePolicy: 'form',
+      validation: {
+        kind: 'container',
+      },
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([formRenderer, nestedFormRenderer, inputRenderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({
+      type: 'form',
+      body: [
+        { type: 'input-text', name: 'parentField' },
+        {
+          type: 'nested-form',
+          body: [
+            { type: 'input-text', name: 'childField1' },
+            { type: 'input-text', name: 'childField2' },
+          ],
+        },
+        { type: 'input-text', name: 'afterNested' },
+      ],
+    });
+
+    const root = compiled.root as TemplateNode;
+    const nodes = root.validationPlan!.nodes as Record<string, CompiledValidationNode>;
+
+    expect(nodes['parentField']).toBeDefined();
+    expect(nodes['afterNested']).toBeDefined();
+    expect(nodes['childField1']).toBeUndefined();
+    expect(nodes['childField2']).toBeUndefined();
+  });
+
+  it('stops validation collection at detail-view create-owner boundary', () => {
+    const detailRenderer: RendererDefinition = {
+      type: 'detail-view',
+      component: () => null,
+      regions: ['content'],
+      scopePolicy: 'form',
+      validation: {
+        kind: 'container',
+        ownerResolution: 'create-owner',
+        childContractMode: 'summary-gate',
+      },
+    };
+
+    const compiler = createSchemaCompiler({
+      registry: createRendererRegistry([formRenderer, detailRenderer, inputRenderer]),
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+
+    const compiled = compiler.compile({
+      type: 'form',
+      body: [
+        { type: 'input-text', name: 'name' },
+        {
+          type: 'detail-view',
+          content: { type: 'input-text', name: 'draftTitle', required: true },
+        },
+      ],
+    });
+
+    const root = compiled.root as TemplateNode;
+    const nodes = root.validationPlan!.nodes as Record<string, CompiledValidationNode>;
+
+    expect(nodes['name']).toBeDefined();
+    expect(nodes['draftTitle']).toBeUndefined();
+
+    const detailNode = (root.regions.body.node as TemplateNode[])[1] as TemplateNode;
+    expect(detailNode.validationPlan).toBeDefined();
+    const detailNodes = detailNode.validationPlan!.nodes as Record<string, CompiledValidationNode>;
+    expect(detailNodes['draftTitle']).toBeDefined();
+  });
+
   it('pools identical behaviors', () => {
     const compiler = createSchemaCompiler({
       registry: createRendererRegistry([formRenderer, inputRenderer]),

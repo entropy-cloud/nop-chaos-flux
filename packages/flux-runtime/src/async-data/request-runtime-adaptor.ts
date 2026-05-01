@@ -54,7 +54,7 @@ export function createAdaptorScopeView(scope: ScopeRef): object {
           return undefined;
         }
 
-        if (property === '__proto__') {
+        if (property === '__proto__' || property === 'constructor' || property === 'prototype') {
           return undefined;
         }
 

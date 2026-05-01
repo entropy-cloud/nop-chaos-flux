@@ -132,7 +132,7 @@ export function createFieldHandlers(args: {
         void (async () => {
           await setValue(nextValue);
 
-          if (shouldValidateOn(name, currentForm, 'change') && currentForm.isTouched(name)) {
+          if (shouldValidateOn(name, currentForm, 'change')) {
             await currentForm.validateField(name);
           }
         })().catch((error: unknown) => {

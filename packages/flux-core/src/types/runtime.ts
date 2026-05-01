@@ -19,7 +19,6 @@ import type {
 } from './validation';
 import type { ActionScope } from './actions';
 import type { ComponentHandleRegistry, RendererRuntime, RenderNodeInput } from './renderer';
-import type { ReactNode } from 'react';
 
 export interface FieldState {
   touched?: true;
@@ -178,6 +177,7 @@ export interface OwnedSurfaceStateBase {
   id: string;
   kind: 'dialog' | 'drawer' | 'sheet';
   scope: ScopeRef;
+  validationOwner?: ValidationScopeRuntime;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   ownerTemplateNode?: TemplateNode;
@@ -362,5 +362,5 @@ export interface PageRuntime {
 
 export interface SurfaceRendererProps {
   surfaces: SurfaceEntry[];
-  renderSurface: (surface: SurfaceEntry) => ReactNode;
+  renderSurface: (surface: SurfaceEntry) => any;
 }

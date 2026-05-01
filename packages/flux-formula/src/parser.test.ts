@@ -50,4 +50,12 @@ describe('parseFormula', () => {
     expect(() => parseFormula('`value`')).toThrow();
     expect(() => parseFormula('/test/')).toThrow();
   });
+
+  it('throws when parser depth exceeds limit', () => {
+    let deep = '';
+    for (let i = 0; i < 300; i++) {
+      deep = `(${deep}a)`;
+    }
+    expect(() => parseFormula(deep)).toThrow(/depth limit exceeded/);
+  });
 });

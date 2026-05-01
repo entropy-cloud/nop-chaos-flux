@@ -75,6 +75,7 @@ export function TableHeaderRow({
             <Checkbox
               checked={allSelected && selectedRowCount === sourceLength && sourceLength > 0}
               onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
+              aria-label={t('flux.table.selectAll')}
             />
           )}
         </TableHead>
@@ -126,7 +127,15 @@ export function TableHeaderRow({
               <div className="flex items-center gap-1">
                 <span
                   className={isSortable ? 'cursor-pointer hover:text-primary' : ''}
+                  role={isSortable ? 'button' : undefined}
+                  tabIndex={isSortable ? 0 : undefined}
                   onClick={() => isSortable && column.name && onSort(column.name)}
+                  onKeyDown={(e) => {
+                    if (isSortable && (e.key === 'Enter' || e.key === ' ') && column.name) {
+                      e.preventDefault();
+                      onSort(column.name);
+                    }
+                  }}
                 >
                   {labelContent}
                   {isSortable && (
@@ -171,9 +180,9 @@ export function TableHeaderRow({
                               typeof column.searchable === 'object' && column.searchable
                                 ? String(
                                     (column.searchable as { placeholder?: string }).placeholder ??
-                                      'Search',
+                                       t('flux.table.search'),
                                   )
-                                : 'Search'
+                                : t('flux.table.search')
                             }
                             onChange={(event) => onSearch(column.name!, event.target.value)}
                           />

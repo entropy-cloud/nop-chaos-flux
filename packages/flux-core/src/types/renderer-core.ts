@@ -1,4 +1,3 @@
-import type { ComponentType, ReactNode } from 'react';
 import type {
   ActionContext,
   ActionResult,
@@ -85,7 +84,7 @@ export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
 }
 
 export interface RendererHelpers {
-  render: (input: RenderNodeInput, options?: RenderFragmentOptions) => ReactNode;
+  render: (input: RenderNodeInput, options?: RenderFragmentOptions) => any;
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
   dispatch: (
@@ -185,8 +184,7 @@ export interface RendererCapabilityContract extends CapabilityMethodContract {
 
 export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   type: S['type'];
-  component?: ComponentType<RendererComponentProps<any>>;
-  reactComponent?: ComponentType<Record<string, unknown>>;
+  component?: (props: RendererComponentProps<any>) => any;
   displayName?: string;
   icon?: string;
   category?: string;

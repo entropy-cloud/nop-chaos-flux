@@ -246,14 +246,18 @@ export function buildFormOwnerRuntime(input: {
 
     const validationPaths = getCompiledValidationTraversalOrder(currentValidation);
 
-    const pathResults = await Promise.all(
+    const pathResults = await Promise.allSettled(
       validationPaths.map(async (path) => {
         validatedPaths.add(path);
         return { path, result: await input.getThisForm().validateField(path, reason) };
       }),
     );
 
-    for (const { path, result } of pathResults) {
+    for (const settled of pathResults) {
+      if (settled.status === 'rejected') {
+        continue;
+      }
+      const { path, result } = settled.value;
       if (!result.ok) {
         fieldErrors[path] = result.errors;
         errors.push(...result.errors);

@@ -151,6 +151,27 @@ describe('createFormulaScope', () => {
     expect(objectContext.materialize()).toEqual({ nested: { value: 3 }, missing: undefined });
   });
 
+  it('blocks __proto__, constructor, and prototype on top-level scope proxy', () => {
+    const ctx = makeEvalContext({ name: 'Alice' });
+    const scope = createFormulaScope(ctx);
+
+    expect(scope.__proto__).toBeUndefined();
+    expect((scope as any).constructor).toBeUndefined();
+    expect((scope as any).prototype).toBeUndefined();
+    expect(scope.name).toBe('Alice');
+  });
+
+  it('blocks __proto__, constructor, and prototype on nested value proxy', () => {
+    const ctx = makeEvalContext({ user: { name: 'Bob' } });
+    const scope = createFormulaScope(ctx);
+    const user = scope.user as Record<string, unknown>;
+
+    expect(user.__proto__).toBeUndefined();
+    expect((user as any).constructor).toBeUndefined();
+    expect((user as any).prototype).toBeUndefined();
+    expect(user.name).toBe('Bob');
+  });
+
   it('covers proxy traps for non-string keys, __proto__, has, and property descriptors', () => {
     const tracked = createScopeDependencyCollector();
     const symbolKey = Symbol('test');

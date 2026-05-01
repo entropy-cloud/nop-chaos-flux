@@ -56,7 +56,13 @@ function compileNode<T>(
           source: input,
           compiled,
         };
-      } catch {
+      } catch (error) {
+        options?.reportDiagnostic?.({
+          code: 'unhandled-compilation-error',
+          message: `Expression compilation failed: ${String(error)}`,
+          path: options?.sourcePath ?? '',
+          source: 'core',
+        });
         return {
           kind: 'static-node',
           value: input,
@@ -78,7 +84,13 @@ function compileNode<T>(
         source: input,
         compiled,
       };
-    } catch {
+    } catch (error) {
+      options?.reportDiagnostic?.({
+        code: 'unhandled-compilation-error',
+        message: `Template compilation failed: ${String(error)}`,
+        path: options?.sourcePath ?? '',
+        source: 'core',
+      });
       return {
         kind: 'static-node',
         value: input,

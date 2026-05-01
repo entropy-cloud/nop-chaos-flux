@@ -2,6 +2,7 @@ import { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { ArrowLeft, Save, FileText, Database, Columns, Type } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { shallowEqual } from '@nop-chaos/flux-core';
 import type { WordEditorHostStatusSummary } from '@nop-chaos/word-editor-core';
 import {
   hasRendererSlotContent,
@@ -107,6 +108,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       totalPages: state.totalPages,
       scale: state.scale,
     }),
+    shallowEqual,
   );
 
   const datasets = useSyncExternalStoreWithSelector(
@@ -133,8 +135,8 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     [charts.length, codes.length, datasets.length, editorRuntime],
   );
 
-  const hostScope = useHostScope(
-    {
+  const hostScopeData = useMemo(
+    () => ({
       document: savedDocument?.data ?? {
         header: [],
         main: [],
@@ -145,7 +147,12 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       datasets,
       runtime: runtimeHostSummary,
       selection,
-    },
+    }),
+    [charts, codes, datasets, runtimeHostSummary, savedDocument?.data, selection],
+  );
+
+  const hostScope = useHostScope(
+    hostScopeData,
     props.path,
     'word-editor',
   );

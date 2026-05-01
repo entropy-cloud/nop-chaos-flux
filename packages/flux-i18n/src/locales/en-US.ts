@@ -39,6 +39,10 @@ export const enUS: Resource = {
       moveUp: 'Move Up',
       moveDown: 'Move Down',
       noData: 'No Data',
+      selectAll: 'Select All',
+      selectRow: 'Select Row',
+      collapse: 'Collapse',
+      search: 'Search',
     },
     form: {
       required: 'Required',

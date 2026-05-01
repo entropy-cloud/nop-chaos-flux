@@ -279,11 +279,12 @@ Target architecture cases are:
 
 Current live baseline:
 
-1. `form` remains the primary concrete validation owner runtime family in ordinary shipped code paths
+1. `form` remains the primary submit-capable validation owner runtime family in ordinary shipped code paths
 2. `detail-field` / `detail-view` are live `create-owner` child-owner boundaries: the compiler marks them as owner boundaries, the renderer instantiates the child `FormRuntime` when the detail session opens, and the parent coordinates through child contracts while the detail owner is active
-3. `SchemaRenderer` page-owned root now provisions the first concrete non-form validation owner family when the render tree uses its own page scope
-4. embedded `SchemaRenderer` trees that render against `props.parentScope` remain parent-owned in the current baseline and do not auto-create a second page/root fallback owner
-5. generic non-form owner families such as filter/search panels still remain explicitly out of scope rather than broadly landed live behavior
+3. `SchemaRenderer` page-owned root provisions a non-form validation owner when the render tree uses its own page scope
+4. managed `dialog` / `drawer` surfaces opened through `SurfaceRuntime` provision their own surface-root validation owners, published by `DialogHost` around the surface body
+5. embedded `SchemaRenderer` trees that render against `props.parentScope` remain parent-owned in the current baseline and do not auto-create a second page/root fallback owner
+6. broader non-form owner families such as filter/search panels still remain explicitly out of scope rather than broadly landed live behavior
 
 A plain visual container with no validation content does not create a validation runtime.
 
@@ -365,7 +366,7 @@ Current live nearest-owner summary:
 
 1. inline/object/array/variant editors stay in the parent owner via projected form proxies and owner-root path rebasing
 2. `detail-field` / `detail-view` are compiler-classified `create-owner` boundaries whose child owner is activated when the detail session opens
-3. the current supported owner-family set is still intentionally narrow: page-owned root, ordinary `form`, and the detail child-owner path; broader non-form families remain out of scope
+3. the current supported owner-family set is still intentionally narrow: page-owned root, managed surface-root, ordinary `form`, and the detail child-owner path; broader non-form families remain out of scope
 
 Owner-boundary rules in the supported families are:
 
@@ -1035,9 +1036,10 @@ Current live concrete cases:
 
 1. normal form: `FormRuntime`
 2. `SchemaRenderer` page-owned root: page/root-backed non-form validation owner for bound fields outside `<form>`
-3. inline table editing bound to parent values: parent `FormRuntime`
-4. detail dialog editing draft data: temporary child `FormRuntime`
-5. pure action controls: no validation scope runtime
+3. managed `openDialog` / `openDrawer` surface body: surface-root non-form validation owner for bound fields outside an inner `<form>`
+4. inline table editing bound to parent values: parent `FormRuntime`
+5. detail dialog editing draft data: temporary child `FormRuntime`
+6. pure action controls: no validation scope runtime
 
 Target architecture cases:
 

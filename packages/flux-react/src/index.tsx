@@ -1,6 +1,13 @@
 export { createDefaultEnv, createDefaultRegistry } from './defaults';
 export { createSchemaRenderer } from './schema-renderer';
 export { createAutoRendererComponent, ensureRendererComponent } from './auto-renderer';
+export type {
+  RenderRegionHandle,
+  RendererDefinition,
+  RendererHelpers,
+  SchemaRendererComponent,
+  StructuralLoopRenderContext,
+} from './react-contracts';
 export { resolveRendererSlotContent, hasRendererSlotContent, useSchemaProps } from './render-nodes';
 export { mergeActionContext, createHelpers, EMPTY_SCOPE_DATA, RenderNodes } from './helpers';
 export { DialogHost } from './dialog-host';

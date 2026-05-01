@@ -93,8 +93,14 @@ function TreeNodeRenderer(props: {
                 <span
                   role="button"
                   tabIndex={0}
-                  aria-label={open ? 'Collapse node' : 'Expand node'}
+                  aria-label={open ? t('flux.common.collapse') : t('flux.common.expand')}
                   className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-accent"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setOpen((prev) => !prev);
+                    }
+                  }}
                 >
                   <ChevronRightIcon
                     className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')}
@@ -113,8 +119,16 @@ function TreeNodeRenderer(props: {
 
           <div
             className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted"
+            role={hasChildren && expandOnClickNode ? 'button' : undefined}
+            tabIndex={hasChildren && expandOnClickNode ? 0 : undefined}
             onClick={() => {
               if (hasChildren && expandOnClickNode) {
+                setOpen((previous) => !previous);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (hasChildren && expandOnClickNode && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
                 setOpen((previous) => !previous);
               }
             }}

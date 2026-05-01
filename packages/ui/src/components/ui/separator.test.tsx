@@ -16,7 +16,9 @@ describe('Separator', () => {
     const { container } = render(<Separator orientation="vertical" />);
 
     const separator = container.querySelector('[data-slot="separator"]');
-    expect(separator).toBeTruthy();
+    if (!separator) {
+      throw new Error('Expected separator to render');
+    }
     expect(separator.getAttribute('aria-orientation')).toBe('vertical');
   });
 });

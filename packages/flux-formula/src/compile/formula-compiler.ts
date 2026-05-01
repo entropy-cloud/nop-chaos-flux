@@ -128,7 +128,11 @@ function createFormulaCompiler(): FormulaCompiler {
               reportError: createExpressionMonitorReporter(env, source),
             }) as T;
           } catch {
-            return undefined as T;
+            createExpressionMonitorReporter(env, source)(
+              new Error('Expression evaluation failed'),
+              { source: 'formula-compiler' },
+            );
+            throw new Error(`Expression evaluation failed for: ${source}`);
           }
         },
       };
@@ -201,8 +205,11 @@ function createFormulaCompiler(): FormulaCompiler {
                 });
 
                 return evaluated == null ? '' : String(evaluated);
-              } catch {
-                return '';
+              } catch (segmentError) {
+                createExpressionMonitorReporter(env, source)(segmentError, {
+                  source: 'formula-compiler-template',
+                });
+                return `[error]`;
               }
             })
             .join('');

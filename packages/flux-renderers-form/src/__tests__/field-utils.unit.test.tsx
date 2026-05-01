@@ -174,6 +174,33 @@ describe('createFieldHandlers', () => {
     expect(currentForm.touchField).toHaveBeenCalledWith('name');
   });
 
+  it('validates on change regardless of touched state when validateOn includes change', async () => {
+    const setValue = vi.fn(async () => undefined);
+    const currentForm = {
+      visitField: vi.fn(),
+      touchField: vi.fn(),
+      isTouched: vi.fn(() => false),
+      validateField: vi.fn(async () => undefined),
+      validation: {
+        behavior: { triggers: ['change'], showErrorOn: ['touched'] },
+        nodes: {},
+      },
+    } as any;
+
+    const handlers = createFieldHandlers({
+      name: 'name',
+      currentForm,
+      currentValidationScope: undefined,
+      setValue,
+    });
+
+    handlers.onChange('Alice');
+
+    await waitFor(() => {
+      expect(currentForm.validateField).toHaveBeenCalledWith('name');
+    });
+  });
+
   it('delegates to validation scope when no form exists', async () => {
     const setValue = vi.fn(async () => undefined);
     const currentValidationScope = {

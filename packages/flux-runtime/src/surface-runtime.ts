@@ -1,4 +1,10 @@
-import type { ScopeRef, SurfaceEntry, SurfaceRuntime, SurfaceStoreApi } from '@nop-chaos/flux-core';
+import type {
+  ScopeRef,
+  SurfaceEntry,
+  SurfaceRuntime,
+  SurfaceStoreApi,
+  ValidationScopeRuntime,
+} from '@nop-chaos/flux-core';
 import { publishOwnerStatus } from './status-owner';
 import { createSurfaceStore } from './form-store';
 
@@ -6,6 +12,13 @@ export function createManagedSurfaceRuntime(
   input: {
     surfaceStore?: SurfaceStoreApi;
     disposeScope?: (scopeId: string) => void;
+    createValidationOwner?: (input: {
+      id?: string;
+      parentScope?: ScopeRef;
+      scopePath?: string;
+      initialValues?: Record<string, any>;
+    }) => ValidationScopeRuntime;
+    releaseValidationOwner?: (owner: ValidationScopeRuntime) => void;
   } = {},
 ): SurfaceRuntime {
   const store = input.surfaceStore ?? createSurfaceStore();
@@ -59,11 +72,19 @@ export function createManagedSurfaceRuntime(
   return {
     store,
     open({ kind, surface, scope, options }) {
+      const surfaceId = createSurfaceId(scope, kind);
+      const validationOwner = input.createValidationOwner?.({
+        id: `${surfaceId}-validation`,
+        parentScope: scope,
+        scopePath: scope.path,
+        initialValues: scope.readOwn(),
+      });
       const entry: SurfaceEntry = {
-        id: createSurfaceId(scope, kind),
+        id: surfaceId,
         kind,
         surface,
         scope,
+        validationOwner,
         actionScope: options?.actionScope,
         componentRegistry: options?.componentRegistry,
         ownerTemplateNode: options?.ownerTemplateNode,
@@ -79,11 +100,19 @@ export function createManagedSurfaceRuntime(
     close(surfaceId) {
       const removed = store.remove(surfaceId);
       clearSurfaceStatus(removed);
+      removed?.validationOwner?.dispose();
+      if (removed?.validationOwner) {
+        input.releaseValidationOwner?.(removed.validationOwner);
+      }
       disposeOwnedScope(removed?.scope.id);
     },
     closeTop() {
       const removed = store.remove();
       clearSurfaceStatus(removed);
+      removed?.validationOwner?.dispose();
+      if (removed?.validationOwner) {
+        input.releaseValidationOwner?.(removed.validationOwner);
+      }
       disposeOwnedScope(removed?.scope.id);
     },
   };

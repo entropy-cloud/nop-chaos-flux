@@ -229,44 +229,69 @@ export function useCrudRuntimeState(args: {
     fallbackPageSize,
   } = args;
 
-  const state = useScopeSelector(
+  const [stableDefaultQuery, setStableDefaultQuery] = useState(defaultQuery);
+  useEffect(() => {
+    if (!shallowEqualRecords(stableDefaultQuery, defaultQuery)) {
+      setStableDefaultQuery(defaultQuery);
+    }
+  }, [defaultQuery, stableDefaultQuery]);
+
+  const queryState = useScopeSelector(
     (scopeData) => {
       const owner = toRecord(getIn(scopeData, ownerStatePath));
       const ownerQuery = toRecord(owner.query);
       const query = toRecord(getIn(scopeData, queryStatePath));
-      const pagination = getIn(scopeData, paginationStatePath);
-      const sort = getIn(scopeData, sortStatePath);
-      const filters = getIn(scopeData, filterStatePath);
-      const selection = getIn(scopeData, selectionStatePath);
-
       return {
-        queryState: {
-          values:
-            isRecord(query) && isRecord(query.values)
-              ? toRecord(query.values)
-              : isRecord(ownerQuery.values)
-                ? toRecord(ownerQuery.values)
-                : defaultQuery,
-          refreshCount: isRecord(query)
-            ? toPositiveNumber(query.refreshCount, 0)
-            : toPositiveNumber(ownerQuery.refreshCount, 0),
-        } satisfies CrudQueryState,
-        paginationState: normalizePagination(pagination ?? owner.pagination, fallbackPageSize),
-        sortState: normalizeSort(sort ?? owner.sort),
-        filterState: toRecord(filters ?? owner.filters),
-        selectedRowKeys: toStringArray(selection ?? owner.selection),
-      };
+        values:
+          isRecord(query) && isRecord(query.values)
+            ? toRecord(query.values)
+            : isRecord(ownerQuery.values)
+              ? toRecord(ownerQuery.values)
+              : stableDefaultQueryRef.current,
+        refreshCount: isRecord(query)
+          ? toPositiveNumber(query.refreshCount, 0)
+          : toPositiveNumber(ownerQuery.refreshCount, 0),
+      } satisfies CrudQueryState;
     },
     (a, b) =>
-      a.queryState.refreshCount === b.queryState.refreshCount &&
-      shallowEqualRecords(a.queryState.values, b.queryState.values) &&
-      a.paginationState.currentPage === b.paginationState.currentPage &&
-      a.paginationState.pageSize === b.paginationState.pageSize &&
-      a.sortState.field === b.sortState.field &&
-      a.sortState.order === b.sortState.order &&
-      shallowEqualRecords(a.filterState, b.filterState) &&
-      a.selectedRowKeys.length === b.selectedRowKeys.length &&
-      a.selectedRowKeys.every((value, index) => value === b.selectedRowKeys[index]),
+      a.refreshCount === b.refreshCount &&
+      shallowEqualRecords(a.values, b.values),
+  );
+
+  const paginationState = useScopeSelector(
+    (scopeData) => {
+      const owner = toRecord(getIn(scopeData, ownerStatePath));
+      const pagination = getIn(scopeData, paginationStatePath);
+      return normalizePagination(pagination ?? owner.pagination, fallbackPageSize);
+    },
+    (a, b) => a.currentPage === b.currentPage && a.pageSize === b.pageSize,
+  );
+
+  const sortState = useScopeSelector(
+    (scopeData) => {
+      const owner = toRecord(getIn(scopeData, ownerStatePath));
+      const sort = getIn(scopeData, sortStatePath);
+      return normalizeSort(sort ?? owner.sort);
+    },
+    (a, b) => a.field === b.field && a.order === b.order,
+  );
+
+  const filterState = useScopeSelector(
+    (scopeData) => {
+      const owner = toRecord(getIn(scopeData, ownerStatePath));
+      const filters = getIn(scopeData, filterStatePath);
+      return toRecord(filters ?? owner.filters);
+    },
+    shallowEqualRecords,
+  );
+
+  const selectedRowKeys = useScopeSelector(
+    (scopeData) => {
+      const owner = toRecord(getIn(scopeData, ownerStatePath));
+      const selection = getIn(scopeData, selectionStatePath);
+      return toStringArray(selection ?? owner.selection);
+    },
+    (a, b) => a.length === b.length && a.every((value, index) => value === b[index]),
   );
 
   useEffect(() => {
@@ -277,7 +302,7 @@ export function useCrudRuntimeState(args: {
     const snapshot = scope.readVisible();
 
     if (!isRecord(getIn(snapshot, queryStatePath))) {
-      scope.update(queryStatePath, { values: defaultQuery, refreshCount: 0 });
+      scope.update(queryStatePath, { values: stableDefaultQueryRef.current, refreshCount: 0 });
     }
     if (!getIn(snapshot, paginationStatePath)) {
       scope.update(paginationStatePath, { currentPage: 1, pageSize: fallbackPageSize });
@@ -292,7 +317,6 @@ export function useCrudRuntimeState(args: {
       scope.update(selectionStatePath, []);
     }
   }, [
-    defaultQuery,
     fallbackPageSize,
     filterStatePath,
     paginationStatePath,
@@ -302,5 +326,8 @@ export function useCrudRuntimeState(args: {
     sortStatePath,
   ]);
 
-  return useMemo(() => state, [state]);
+  return useMemo(
+    () => ({ queryState, paginationState, sortState, filterState, selectedRowKeys }),
+    [queryState, paginationState, sortState, filterState, selectedRowKeys],
+  );
 }

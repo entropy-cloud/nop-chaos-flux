@@ -19,9 +19,12 @@ export interface FormulaSyntaxError extends Error {
   source: string;
 }
 
+const MAX_PARSER_DEPTH = 256;
+
 class Parser {
   private readonly tokens: FormulaToken[];
   private index = 0;
+  private depth = 0;
 
   constructor(private readonly source: string) {
     this.tokens = tokenizeFormula(source);
@@ -66,32 +69,48 @@ class Parser {
     throw error;
   }
 
+  private enterRecursive(): void {
+    this.depth += 1;
+    if (this.depth > MAX_PARSER_DEPTH) {
+      throw new Error(`Parser depth limit exceeded (${MAX_PARSER_DEPTH}) at ${this.current().start}`) as FormulaSyntaxError;
+    }
+  }
+
+  private leaveRecursive(): void {
+    this.depth -= 1;
+  }
+
   private parseArrowExpression(): FormulaAstNode {
-    if (this.match('identifier') && this.lookahead().type === 'arrow') {
-      const param = this.consume();
-      this.consume();
-      const body = this.parseArrowExpression();
-      return {
-        type: 'ArrowFunctionExpression',
-        params: [createIdentifierNode(param)],
-        body,
-        loc: createSourceLocation(param.start, body.loc.end),
-      } satisfies ArrowFunctionExpressionNode;
-    }
+    this.enterRecursive();
+    try {
+      if (this.match('identifier') && this.lookahead().type === 'arrow') {
+        const param = this.consume();
+        this.consume();
+        const body = this.parseArrowExpression();
+        return {
+          type: 'ArrowFunctionExpression',
+          params: [createIdentifierNode(param)],
+          body,
+          loc: createSourceLocation(param.start, body.loc.end),
+        } satisfies ArrowFunctionExpressionNode;
+      }
 
-    if (this.isArrowParameterList()) {
-      const start = this.current().start;
-      const params = this.parseArrowParameters();
-      const body = this.parseArrowExpression();
-      return {
-        type: 'ArrowFunctionExpression',
-        params,
-        body,
-        loc: createSourceLocation(start, body.loc.end),
-      } satisfies ArrowFunctionExpressionNode;
-    }
+      if (this.isArrowParameterList()) {
+        const start = this.current().start;
+        const params = this.parseArrowParameters();
+        const body = this.parseArrowExpression();
+        return {
+          type: 'ArrowFunctionExpression',
+          params,
+          body,
+          loc: createSourceLocation(start, body.loc.end),
+        } satisfies ArrowFunctionExpressionNode;
+      }
 
-    return this.parseConditional();
+      return this.parseConditional();
+    } finally {
+      this.leaveRecursive();
+    }
   }
 
   private isArrowParameterList(): boolean {
@@ -349,7 +368,9 @@ class Parser {
   }
 
   private parsePrimary(): FormulaAstNode {
-    const token = this.current();
+    this.enterRecursive();
+    try {
+      const token = this.current();
 
     if (this.match('number')) {
       this.consume();
@@ -397,6 +418,9 @@ class Parser {
     }
 
     this.throwSyntaxError(`Unexpected token ${token.value || token.type}`);
+    } finally {
+      this.leaveRecursive();
+    }
   }
 
   private parseArrayExpression(): ArrayExpressionNode {

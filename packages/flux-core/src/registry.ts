@@ -1,10 +1,8 @@
 import type { RendererDefinition, RendererRegistry } from './types';
 
 function validateDefinition(definition: RendererDefinition): void {
-  if (!definition.component && !definition.reactComponent) {
-    throw new Error(
-      `Renderer definition for type "${definition.type}" must specify either "component" or "reactComponent".`,
-    );
+  if (!definition.component) {
+    throw new Error(`Renderer definition for type "${definition.type}" must specify "component".`);
   }
 }
 

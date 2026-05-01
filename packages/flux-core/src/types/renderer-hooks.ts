@@ -1,4 +1,3 @@
-import type { ReactElement, ReactNode } from 'react';
 import type { ActionContext, ActionScope } from './actions';
 import type { FormulaCompiler, ModuleCache } from './compilation';
 import type { CompiledTemplate, InstanceFrame, NodeInstance, TemplateNode } from './node-identity';
@@ -52,7 +51,7 @@ export interface StructuralLoopRenderContext {
   renderBody(
     slotBindings: Record<string, unknown>,
     instancePath: readonly InstanceFrame[],
-  ): ReactNode;
+  ): any;
 }
 
 export interface RenderRegionHandle {
@@ -81,7 +80,7 @@ export interface RenderRegionHandle {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     ownerNodeInstance?: NodeInstance;
-  }): ReactNode;
+  }): any;
 }
 
 export type RenderNodeInput =
@@ -176,5 +175,3 @@ export interface SchemaRendererProps {
   onActionScopeChange?: (actionScope: ActionScope | null) => void;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }
-
-export type SchemaRendererComponent = (props: SchemaRendererProps) => ReactElement | null;

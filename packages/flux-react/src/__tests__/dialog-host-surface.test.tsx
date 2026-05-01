@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { ActionScopeContext, ComponentRegistryContext, ScopeContext } from '../contexts';
 import {
   SurfaceScopeProviders,
@@ -171,5 +171,159 @@ describe('useSurfaceScopeSnapshot', () => {
       </ScopeContext.Provider>,
     );
     expect(screen.getByTestId('probe').textContent).toBe('ok');
+  });
+
+  it('maintains backward compatibility without paths parameter', () => {
+    let currentData = { a: 1, b: 2 };
+    const listeners = new Set<() => void>();
+    const scope = {
+      id: 'scope-bc',
+      path: '$',
+      get: () => undefined,
+      has: () => false,
+      readOwn: () => currentData,
+      readVisible: () => currentData,
+      materializeVisible: () => currentData,
+      value: currentData,
+      update: vi.fn(),
+      merge: vi.fn(),
+      store: {
+        subscribe: (listener: () => void) => {
+          listeners.add(listener);
+          return () => listeners.delete(listener);
+        },
+        getSnapshot: () => currentData,
+      },
+    };
+
+    let renderCount = 0;
+    function Probe() {
+      renderCount++;
+      useSurfaceScopeSnapshot(scope as any);
+      return <span data-testid="probe">{renderCount}</span>;
+    }
+
+    render(
+      <ScopeContext.Provider value={scope as any}>
+        <Probe />
+      </ScopeContext.Provider>,
+    );
+    expect(renderCount).toBe(1);
+
+    currentData = { a: 1, b: 3 };
+    act(() => {
+      for (const listener of listeners) {
+        listener();
+      }
+    });
+    expect(renderCount).toBe(2);
+  });
+
+  it('only re-renders when specified paths change', () => {
+    let data: Record<string, unknown> = { a: 1, b: 2 };
+    const listeners = new Set<() => void>();
+    const scope = {
+      id: 'scope-paths',
+      path: '$',
+      get: () => undefined,
+      has: () => false,
+      readOwn: () => data,
+      readVisible: () => data,
+      materializeVisible: () => data,
+      value: data,
+      update: vi.fn(),
+      merge: vi.fn(),
+      store: {
+        subscribe: (listener: () => void) => {
+          listeners.add(listener);
+          return () => listeners.delete(listener);
+        },
+        getSnapshot: () => data,
+      },
+    };
+
+    let renderCount = 0;
+    function Probe() {
+      renderCount++;
+      useSurfaceScopeSnapshot(scope as any, ['a']);
+      return <span data-testid="probe">{renderCount}</span>;
+    }
+
+    render(
+      <ScopeContext.Provider value={scope as any}>
+        <Probe />
+      </ScopeContext.Provider>,
+    );
+    expect(renderCount).toBe(1);
+
+    data = { a: 1, b: 99 };
+    act(() => {
+      for (const listener of listeners) {
+        listener();
+      }
+    });
+    expect(renderCount).toBe(1);
+
+    data = { a: 42, b: 99 };
+    act(() => {
+      for (const listener of listeners) {
+        listener();
+      }
+    });
+    expect(renderCount).toBe(2);
+  });
+
+  it('re-renders when multiple watched paths change', () => {
+    let data: Record<string, unknown> = { x: 10, y: 20, z: 30 };
+    const listeners = new Set<() => void>();
+    const scope = {
+      id: 'scope-multi',
+      path: '$',
+      get: () => undefined,
+      has: () => false,
+      readOwn: () => data,
+      readVisible: () => data,
+      materializeVisible: () => data,
+      value: data,
+      update: vi.fn(),
+      merge: vi.fn(),
+      store: {
+        subscribe: (listener: () => void) => {
+          listeners.add(listener);
+          return () => listeners.delete(listener);
+        },
+        getSnapshot: () => data,
+      },
+    };
+
+    let renderCount = 0;
+    function Probe() {
+      renderCount++;
+      useSurfaceScopeSnapshot(scope as any, ['x', 'y']);
+      return <span data-testid="probe">{renderCount}</span>;
+    }
+
+    render(
+      <ScopeContext.Provider value={scope as any}>
+        <Probe />
+      </ScopeContext.Provider>,
+    );
+    expect(renderCount).toBe(1);
+
+    data = { x: 10, y: 20, z: 999 };
+    act(() => {
+      for (const listener of listeners) {
+        listener();
+      }
+    });
+    expect(renderCount).toBe(1);
+
+    data = { x: 11, y: 20, z: 999 };
+    act(() => {
+      for (const listener of listeners) {
+        listener();
+      }
+    });
+    expect(renderCount).toBe(2);
   });
 });

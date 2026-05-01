@@ -26,12 +26,14 @@ Code-level source of truth lives primarily in `packages/flux-core/src/index.ts`,
 
 flux-core is the **foundation contracts and shared utilities** package — the lowest-level shared layer that all other packages depend on. It contains:
 
-- **Type definitions and interfaces**: Core contracts (`ScopeRef`, `FormRuntime`, `RendererRuntime`, `CompiledValueNode`, etc.) that define the boundaries between packages.
+- **Type definitions and interfaces**: Host-neutral core contracts (`ScopeRef`, `FormRuntime`, `ValidationScopeRuntime`, `RendererRuntime`, `CompiledValueNode`, etc.) that define the boundaries between packages.
 - **Constants**: Shared constants like `META_FIELDS`.
 - **Side-effect-free pure utility functions**: Functions that have no external dependencies and no side effects — e.g. `getIn`, `isPlainObject`, `shallowEqual`, `buildCompiledFormValidationModel`. These are shared across all packages because they operate on language-level primitives, not business logic.
 - **Validation model data transforms**: Pure functions for validation model construction (`buildCompiledFormValidationModel`, `buildCompiledValidationOrder`, etc.) that are needed by both `flux-formula` and `flux-runtime`.
 
 **What does NOT belong in flux-core**: Business logic with side effects, framework-specific code (React/Zustand), or any function that depends on external state. The dependency direction is strictly `flux-core ← all other packages`.
+
+The renderer registration contract in `flux-core` is host-neutral: `RendererDefinition` exposes the callable `component(props)` entry plus static metadata and policies. React-only conveniences such as `reactComponent(props)` are owned by `@nop-chaos/flux-react`, which normalizes them into `component` before definitions reach the core `RendererRegistry`.
 
 **Known exception — `i18n-sink.ts`**: This module exports a module-level mutable singleton (`setMessageFormatter` / `getMessageFormatter`) that lets `flux-i18n` inject its concrete formatter at init time without creating a circular dependency. It is the **only** stateful module in flux-core and is documented as an intentional design trade-off. See the in-file JSDoc in `packages/flux-core/src/i18n-sink.ts` for ownership rules.
 
@@ -106,6 +108,12 @@ The preferred hot path is:
 - `scope.materializeVisible()` only when a plain-object snapshot of the full visible scope is truly needed (formula broad-access, debugger dump, serialization)
 
 `read()` has been removed. All callers use either `readVisible()` (prototype-backed, zero allocation for hot paths) or `materializeVisible()` (eager spread, for boundaries that need a plain own-enumerable object).
+
+### Scope prototype-pollution defense
+
+All scope write paths (`merge`, `update`, `replace`) and read paths (`readVisible`, `materializeVisible`) filter dangerous keys (`__proto__`, `constructor`, `prototype`) through `sanitizeSnapshot()`. Initial data passed to `createScopeStore()` is also sanitized. The `update(path, value)` method skips writes whose first path segment is a dangerous key.
+
+Formula scope proxies (`flux-formula/src/scope.ts`) and adaptor scope views (`flux-runtime/src/async-data/request-runtime-adaptor.ts`) intercept reads of `__proto__`, `constructor`, and `prototype`, returning `undefined`.
 
 ### `flux-formula` is the expression base
 
@@ -243,6 +251,7 @@ Owns:
 - fragment rendering
 - dialog hosting
 - selector-based subscriptions and renderer hooks
+- React-specialized renderer contract aliases such as `RendererDefinition`, `RendererHelpers`, `RenderRegionHandle`, and `SchemaRendererComponent`
 
 Current orchestration boundary note:
 
@@ -359,6 +368,11 @@ The React side follows one stable rule:
 - boundary inputs stay explicit
 - shared runtime services come from hooks and contexts
 - local fragment rendering uses `RenderRegionHandle` or `helpers.render(...)`
+
+Current boundary note:
+
+- `@nop-chaos/flux-core` keeps the host-neutral callable contract for renderer definitions and fragment helpers, but it does not import or re-export React types.
+- `@nop-chaos/flux-react` owns the React-specialized aliases and root renderer component contract used by React hosts.
 
 Important current hooks include:
 

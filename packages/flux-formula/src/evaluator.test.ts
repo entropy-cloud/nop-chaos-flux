@@ -344,4 +344,14 @@ describe('evaluateAst', () => {
     expect(evaluateAst(parseFormula('1 !== 2'), { env, context })).toBe(true);
     expect(evaluateAst(parseFormula('1 instanceof 3'), { env, context })).toBe(false);
   });
+
+  it('throws when evaluation depth exceeds limit', () => {
+    let expr = '1';
+    for (let i = 0; i < 300; i++) {
+      expr = `(${expr} + 1)`;
+    }
+    expect(() =>
+      evaluateAst(parseFormula(expr), { env, context: createContext({}) })
+    ).toThrow(/depth limit exceeded/);
+  });
 });

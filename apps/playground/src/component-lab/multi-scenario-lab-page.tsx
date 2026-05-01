@@ -5,11 +5,12 @@ import {
   createDefaultRegistry,
   createDefaultEnv,
 } from '@nop-chaos/flux-react';
+import type { SchemaRendererComponent } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
-import type { BaseSchema, SchemaRendererProps } from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererEnv } from '@nop-chaos/flux-core';
 import { attachScopeDebugToSchema } from './scope-debug';
 
 const registry = createDefaultRegistry();
@@ -18,7 +19,7 @@ registerFormRenderers(registry);
 registerFormAdvancedRenderers(registry);
 registerDataRenderers(registry);
 
-const SchemaRenderer = createSchemaRenderer();
+const SchemaRenderer: SchemaRendererComponent = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();
 const defaultEnv = createDefaultEnv();
 
@@ -27,7 +28,7 @@ export interface ScenarioBlockProps {
   description?: string;
   schema: BaseSchema;
   data?: Record<string, unknown>;
-  env?: Partial<SchemaRendererProps['env']>;
+  env?: Partial<RendererEnv>;
 }
 
 function ScenarioBlock({ title, description, schema, data, env: envOverride }: ScenarioBlockProps) {

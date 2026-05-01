@@ -207,3 +207,22 @@ Follow-up:
 - 添加 bundle 分析工具（follow-up 计划）
 - 撰写 CONTRIBUTING.md 和 CHANGELOG.md（follow-up 计划）
 - 文档体系治理（plans/ 归档、bugs/ 编号去重、experiments/ 清理）
+
+### Adversarial Review Cross-Reference (2026-05-01)
+
+`docs/analysis/2026-05-01-adversarial-review.md` 独立对仓库做了对抗性审查。以下发现与 Plan 161 有交叉：
+
+**Phase 3 已在本 commit (0ebe0acd) 中完成：**
+
+- 3.1 (`dialog-host.tsx` useMemo)、3.2 (`app.tsx` 懒加载)、3.3 (`.bak` 删除)、3.4-3.5 (word-editor 空 catch) 均已落地。
+
+**Phase 4 已在本 commit (0ebe0acd) 中完成：**
+
+- 4.1 的 10 个 UI 组件测试文件已创建（badge, button, checkbox, dialog, input, popover, select, separator, switch, tooltip）。
+- 4.2 (`flux-action-core` 测试) 尚未完成。
+
+**Phase 1-2 仍待执行。**
+
+**Adversarial review 中发现但不在 Plan 161 scope 内的问题：**
+
+- Finding 6 中指出的未使用生产依赖（`flux-renderers-basic` 的 `flux-runtime`、`flux-formula`，`flux-react` 的 `flux-compiler`）与 Plan 161 Phase 1 的"移除未使用依赖"方向一致，但具体的包不在 Plan 161 Phase 1.2 的 scope 内（Phase 1.2 只覆盖 `flux-code-editor` 的 `flux-runtime`）。建议将这三个依赖清理纳入 Phase 1 或后续计划。

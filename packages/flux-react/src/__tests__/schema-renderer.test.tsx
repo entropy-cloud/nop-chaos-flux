@@ -1,9 +1,18 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer';
+import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { env, pageRenderer, textRenderer } from '../test-support-core';
+
+const openDialogButtonRenderer = {
+  type: 'open-dialog-button',
+  component: (props: any) => (
+    <Button onClick={(event) => props.events.onClick?.(event)}>{String(props.props.label ?? '')}</Button>
+  ),
+};
 
 describe('SchemaRenderer callbacks', () => {
   it('calls onRuntimeChange on mount and null on unmount', async () => {
@@ -165,5 +174,46 @@ describe('SchemaRenderer page modalContainer', () => {
     );
 
     await waitFor(() => expect(onRuntimeChange).toHaveBeenCalled());
+  });
+});
+
+describe('SchemaRenderer surface runtime seam', () => {
+  it('uses caller-supplied surfaceRuntime for managed surfaces', async () => {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, openDialogButtonRenderer]);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([pageRenderer, textRenderer, openDialogButtonRenderer]),
+      env,
+    });
+    const externalSurfaceRuntime = runtime.createSurfaceRuntime();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'open-dialog-button',
+              label: 'Open external dialog',
+              onClick: {
+                action: 'openDialog',
+                args: {
+                  title: 'External dialog',
+                  body: [{ type: 'text', text: 'External surface runtime' }],
+                },
+              },
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        surfaceRuntime={externalSurfaceRuntime}
+      />,
+    );
+
+    screen.getByText('Open external dialog').click();
+    await waitFor(() => expect(externalSurfaceRuntime.store.getState().entries).toHaveLength(1));
+    expect(screen.getByText('External surface runtime')).toBeTruthy();
+    runtime.dispose();
   });
 });

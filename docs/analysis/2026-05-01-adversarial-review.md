@@ -2,6 +2,33 @@
 
 Open-ended adversarial review of nop-chaos-flux. No preset checklist — followed the code where it led.
 
+## Existing Plan Coverage
+
+审查完成后交叉比对了 `docs/plans/` 中所有未完成计划。当前仅两个未关闭的计划：
+
+- **Plan 161** (`proposed`) — Workspace Quality And DX Improvement
+- **Plan 163** (`proposed`) — Core Boundary, Validation Owner, And Host Contract Convergence
+
+下表标注每个发现是否已被现有计划覆盖：
+
+| Finding                                            | Severity    | Plan Coverage                                                                                                                                                                                          |
+| -------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Runtime disposal leaks                          | HIGH        | **Plan 163 WS2** 部分覆盖：提到了 surface-root validation owner 的创建与 disposal 耦合，但未显式覆盖 page bidirectional sync 订阅泄漏和 standalone `createFormRuntime` 追踪问题                        |
+| 2. `RendererComponentProps.props` 类型安全幻觉     | HIGH        | **Plan 163 WS1** 间接相关：将 React 类型移出 flux-core 会触及 `RendererDefinition.component` 的类型签名，但不直接解决 `props` 为 `Record<string, unknown>` 的问题。Plan 161 Non-Goals 明确排除了此问题 |
+| 3. Scope DANGEROUS_KEYS 写入路径未过滤             | HIGH        | **无计划覆盖**                                                                                                                                                                                         |
+| 4. Formula parser 无递归深度限制                   | MEDIUM      | **无计划覆盖**                                                                                                                                                                                         |
+| 5. 表达式错误三层静默吞掉                          | MEDIUM      | **无计划覆盖**。Plan 160 (completed) 仅处理了 `.catch(() => {})` 空捕获，未覆盖 formula 编译层的静默降级                                                                                               |
+| 6. 文档-代码契约漂移                               | MEDIUM-HIGH | **无计划覆盖**（废弃 API 文档未删除、未导出类型、未使用依赖等）                                                                                                                                        |
+| 7. `Promise.all` 校验单点失败                      | MEDIUM      | **无计划覆盖**                                                                                                                                                                                         |
+| 8. 无障碍性 — tree/table 键盘不可操作              | MEDIUM      | **无计划覆盖**                                                                                                                                                                                         |
+| 9. 硬编码用户可见字符串                            | MEDIUM      | **无计划覆盖**                                                                                                                                                                                         |
+| 10. `createAutoRendererComponent` 每次渲染重建函数 | LOW-MEDIUM  | **无计划覆盖**                                                                                                                                                                                         |
+| 11. flux-core/types/ 循环类型依赖                  | LOW-MEDIUM  | **Plan 163 WS1** 间接相关：将 React 类型移出后可能缓解循环，但不直接解决                                                                                                                               |
+| 12. Formula namespace 原型链暴露                   | LOW         | **无计划覆盖**                                                                                                                                                                                         |
+| 13. `ManagedFormRuntimeSharedState` 大可变对象     | LOW         | **无计划覆盖**（by design）                                                                                                                                                                            |
+| 14. `classifyField` 线性扫描                       | LOW         | **无计划覆盖**                                                                                                                                                                                         |
+| 15. `compileSymbolTable.push()` 数组拷贝           | LOW         | **无计划覆盖**                                                                                                                                                                                         |
+
 ---
 
 ## Finding 1: Runtime Disposal Leaks Three Resource Categories (HIGH)
@@ -19,6 +46,8 @@ Open-ended adversarial review of nop-chaos-flux. No preset checklist — followe
 **Why it matters:** These compound into a real leak in SPA scenarios. Each page navigation creates a new runtime, disposes the old one, but leaves 2+ dangling subscriptions and an undead form runtime per page. Over time, the `externalPageStore`'s listener set grows, and every external data change fires stale sync callbacks on disposed stores. The standalone form runtimes accumulate validation governance state.
 
 **Confidence:** Confirmed. Traced the complete disposal path end-to-end.
+
+**Plan Coverage:** Plan 163 WS2 部分覆盖了 validation owner disposal 的设计方向（"creation, provider wiring, and disposal coupled to the surface lifecycle"），但未显式提及 page bidirectional sync 订阅泄漏和 standalone `createFormRuntime` 生命周期追踪。建议 Plan 163 WS2 在执行时将这两项纳入 scope 或创建 successor plan。
 
 ---
 
@@ -40,6 +69,8 @@ The AGENTS.md example shows `props.props.variant` as if it's typed, but in reali
 
 **Confidence:** Confirmed. Traced from type definition through registration, compilation, runtime construction, and 237 usage sites.
 
+**Plan Coverage:** Plan 161 Non-Goals 明确排除了 `RendererDefinition` 泛型改进。Plan 163 WS1 将 React 类型移出 flux-core 可能会触及 `RendererDefinition.component` 的类型签名，但不直接解决 `props` 字段的类型安全缺口。此问题需要独立的设计决策——是让编译器生成带类型的 props 结构，还是在运行时 bridge 层做更强的类型收窄。
+
 ---
 
 ## Finding 3: Scope Prototype Chain — Dangerous Keys Not Filtered on Write Paths (HIGH)
@@ -55,6 +86,8 @@ The formula scope proxy (`packages/flux-formula/src/scope.ts:124,163`) and the a
 **Why it matters:** API responses are user-controlled data. In a low-code platform where schemas are often user-authored, this is a realistic attack vector. The inconsistency between `readVisible()` (no filter) and `materializeVisible()` (full filter) means two reads of the same scope can return different results for `constructor`/`prototype` keys.
 
 **Confidence:** Confirmed. Traced all write and read paths.
+
+**Plan Coverage:** 无计划覆盖。此发现独立于现有计划。建议作为安全加固项在 Plan 163 落地后或独立处理。
 
 ---
 
@@ -254,6 +287,25 @@ Mitigated by: no assignment/mutation in the expression language, no `eval`/`new 
 **Why it matters:** Likely negligible in practice (MAX_COMPILE_DEPTH is 64), but the pattern is structurally quadratic.
 
 **Confidence:** Confirmed.
+
+---
+
+## 未被现有计划覆盖的发现汇总
+
+Findings 4-10 和 12-15 均无现有计划覆盖。按优先级分类：
+
+**建议创建新计划或纳入后续计划的高优先级项：**
+
+- Finding 4 (formula parser 递归深度限制) — DoS 向量
+- Finding 5 (表达式错误静默吞掉) — 影响开发者体验，是 low-code 平台最常见的问题来源
+- Finding 8 (无障碍性) — 合规风险
+- Finding 9 (i18n 硬编码字符串) — 国际化一致性
+
+**可作为技术债务跟踪的中低优先级项：**
+
+- Finding 6 (文档-代码漂移) — 可与 Plan 163 的文档更新合并
+- Finding 7 (Promise.all 校验) — 防御性改进
+- Finding 10-15 — 性能和代码质量改进
 
 ---
 

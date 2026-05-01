@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useMemo, useState } from 'react';
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, shallowEqual } from '@nop-chaos/flux-core';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas';
@@ -27,7 +27,7 @@ export function useTablePagination(
     paginationOwnership === 'scope' && paginationStatePath
       ? (getIn(scopeData, paginationStatePath) as Record<string, unknown> | undefined)
       : undefined,
-  );
+  shallowEqual);
 
   const currentPage =
     paginationOwnership === 'controlled'

@@ -1,6 +1,7 @@
-import type { RendererDefinition, SchemaRendererProps } from '@nop-chaos/flux-core';
+import type { SchemaRendererProps } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { ensureRendererComponent } from './auto-renderer';
+import type { RendererDefinition } from './react-contracts';
 
 export function createDefaultRegistry(definitions: RendererDefinition[] = []) {
   const registry = createRendererRegistry();

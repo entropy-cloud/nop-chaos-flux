@@ -142,6 +142,8 @@ Practical ownership split:
 - runtime resolution decides what each dynamic field evaluates to now
 - `NodeRenderer` assembles the final renderer contract
 - owner renderers such as `form` create descendant runtime boundaries
+- `@nop-chaos/flux-core` owns only the host-neutral callable contract shape for renderer definitions and fragment helpers
+- `@nop-chaos/flux-react` owns the React-specialized aliases for `RendererDefinition`, `RenderRegionHandle`, `RendererHelpers`, and `SchemaRendererComponent`, including the optional `reactComponent` convenience registration path
 
 ## NodeRenderer Responsibilities
 
@@ -878,6 +880,12 @@ Root lifecycle callbacks exist for host tooling integrations such as the debugge
 
 These callbacks are for diagnostics/tooling handoff, not normal renderer data flow.
 
+`surfaceRuntime` is a real supported seam:
+
+- when supplied, `SchemaRenderer` uses the caller-owned `SurfaceRuntime` instead of creating a private one
+- when omitted, `SchemaRenderer` creates and owns a root `SurfaceRuntime`
+- this seam applies only to managed `openDialog` / `openDrawer` surfaces rendered through `DialogHost`
+
 Root uses explicit props because:
 
 - ownership stays obvious
@@ -900,6 +908,7 @@ Normative baseline:
 
 - `page`, `form`, and `surface` are different owner families and should not all share one owner runtime/store
 - `dialog` and `drawer` should share one `SurfaceRuntime` / `SurfaceStore` model and differ by stable kind metadata such as `kind: 'dialog' | 'drawer'`
+- each managed surface entry also owns its own `ValidationScopeRuntime`, published around the surface body by `DialogHost`
 - surfaces are rendered by one root surface host stack rather than by recursively nesting independent hosts inside already-open surfaces
 - a newly opened surface is appended after existing surfaces in the same host container so DOM/render order determines which surface appears in front
 - this ordering rule should be preferred over per-open `z-index` escalation for same-family surfaces inside the same host container

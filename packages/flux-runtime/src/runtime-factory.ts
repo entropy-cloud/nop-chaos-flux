@@ -18,6 +18,8 @@ import type {
   ModuleCache,
   ImportedLibraryModule,
   PreparedImportSpec,
+  ValidationScopeRuntime,
+  FormRuntime,
   XuiImportSpec,
 } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
@@ -115,6 +117,8 @@ export function createRendererRuntime(input: {
   const runtimeNodeResolverRef: { current?: ReturnType<typeof createRuntimeNodeResolver> } = {};
   const ownedPages = new Set<PageRuntime>();
   const ownedSurfaceRuntimes = new Set<SurfaceRuntime>();
+  const ownedValidationScopes = new Set<ValidationScopeRuntime>();
+  const ownedFormRuntimes = new Set<FormRuntime>();
   let disposed = false;
   const moduleCache = input.moduleCache ?? createModuleCache();
   const importStack = createImportStack({
@@ -184,6 +188,8 @@ export function createRendererRuntime(input: {
     pageStore: input.pageStore,
     ownedPages,
     ownedSurfaceRuntimes,
+    ownedValidationScopes,
+    ownedFormRuntimes,
     createValidationScopeRuntime: (inputValue) =>
       runtimeOwnedFactories.createValidationScopeRuntime(inputValue),
     dispatchAction: (action, ctx) => {
@@ -450,6 +456,7 @@ export function createRendererRuntime(input: {
       for (const page of ownedPages) {
         sourceRegistryRef.current?.disposeScopeTree(page.scope.id);
         reactionRegistryRef.current?.disposeScopeTree(page.scope.id);
+        runtimeOwnedFactories.disposeOwnedPage(page);
       }
 
       for (const surfaceRuntime of ownedSurfaceRuntimes) {
@@ -459,8 +466,20 @@ export function createRendererRuntime(input: {
         }
       }
 
+      for (const validationScope of ownedValidationScopes) {
+        if (!ownedFormRuntimes.has(validationScope as FormRuntime)) {
+          validationScope.dispose();
+        }
+      }
+
+      for (const formRuntime of ownedFormRuntimes) {
+        formRuntime.dispose();
+      }
+
       ownedPages.clear();
       ownedSurfaceRuntimes.clear();
+      ownedValidationScopes.clear();
+      ownedFormRuntimes.clear();
       importManager.dispose({ actionScopes: Array.from(ownedActionScopes) });
       importStack.dispose();
       ownedActionScopes.clear();

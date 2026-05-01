@@ -1,4 +1,5 @@
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { RendererDefinition } from './react-contracts';
 
 export function createAutoRendererComponent(
   ReactComponent: React.ComponentType<Record<string, unknown>>,
@@ -29,5 +30,10 @@ export function ensureRendererComponent(definition: RendererDefinition): Rendere
     return definition;
   }
 
-  return { ...definition, component: createAutoRendererComponent(definition.reactComponent!) };
+  const reactComponent = definition.reactComponent as React.ComponentType<Record<string, unknown>>;
+
+  return {
+    ...definition,
+    component: createAutoRendererComponent(reactComponent) as RendererDefinition['component'],
+  };
 }

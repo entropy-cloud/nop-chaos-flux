@@ -7,6 +7,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { Button, Checkbox, RadioGroupItem, TableCell, TableRow } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema } from '../schemas';
 import type { FixedColumnLayout } from './fixed-columns';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell';
@@ -116,7 +117,7 @@ export function renderDataRow(
               onToggleExpand(rowKey);
             }}
             className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
-            aria-label={isExpanded ? 'Collapse' : 'Expand'}
+            aria-label={isExpanded ? t('flux.table.collapse') : t('flux.table.expand')}
           >
             {isExpanded ? (
               <ChevronDownIcon className="size-4" />
@@ -138,6 +139,7 @@ export function renderDataRow(
             <Checkbox
               checked={isSelected}
               onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
+              aria-label={t('flux.table.selectRow')}
             />
           ) : (
             <RadioGroupItem value={rowKey} />

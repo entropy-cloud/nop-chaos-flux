@@ -18,16 +18,77 @@ import { createManagedSurfaceRuntime } from './surface-runtime';
 import { executeRuntimeValidationRule } from './runtime-action-helpers';
 import { validateRule } from './validation-runtime';
 
+function createValidationStoreView(
+  store: import('@nop-chaos/flux-core').FormStoreApi,
+): import('@nop-chaos/flux-core').ValidationStoreApi {
+  return {
+    getState: () => store.getState(),
+    subscribe: (listener) => store.subscribe(listener),
+    subscribeToPath: (path, listener) => store.subscribeToPath(path, listener),
+    subscribeToSubmitting: (listener) => store.subscribeToSubmitting(listener),
+    getPathState: (path) => store.getPathState(path),
+    getFieldState: (path) => store.getFieldState(path),
+  };
+}
+
+function createManagedValidationScopeRuntime(formRuntime: FormRuntime): ValidationScopeRuntime {
+  const storeView = createValidationStoreView(formRuntime.store);
+
+  return {
+    get scopeId() {
+      return formRuntime.scopeId;
+    },
+    get rootPath() {
+      return formRuntime.rootPath;
+    },
+    get lifecycleState() {
+      return formRuntime.lifecycleState;
+    },
+    get modelGeneration() {
+      return formRuntime.modelGeneration;
+    },
+    get store() {
+      return storeView;
+    },
+    get scope() {
+      return formRuntime.scope;
+    },
+    get validation() {
+      return formRuntime.validation;
+    },
+    validateAt: (path, reason) => formRuntime.validateAt(path, reason),
+    validateSubtree: (path, reason) => formRuntime.validateSubtree(path, reason),
+    validateAll: (reason) => formRuntime.validateAll(reason),
+    applyChangesAndRevalidate: (input) => formRuntime.applyChangesAndRevalidate(input),
+    applyExternalErrors: (input) => formRuntime.applyExternalErrors(input),
+    getFieldState: (path) => formRuntime.getFieldState(path),
+    getScopeState: () => formRuntime.getScopeState(),
+    getAsyncOwnerDebugSnapshot: () => formRuntime.getAsyncOwnerDebugSnapshot?.() ?? { owners: [] },
+    getScopeRootErrors: () => formRuntime.getScopeRootErrors(),
+    isPathOwned: (path) => formRuntime.isPathOwned(path),
+    registerField: (registration) => formRuntime.registerField(registration),
+    updateFieldRegistration: (registrationId, patch) =>
+      formRuntime.updateFieldRegistration(registrationId, patch),
+    refreshCompiledModel: (newModel) => formRuntime.refreshCompiledModel(newModel),
+    dispose: () => formRuntime.dispose(),
+    registerChildContract: (contract) => formRuntime.registerChildContract(contract),
+    unregisterChildContract: (childOwnerId) => formRuntime.unregisterChildContract(childOwnerId),
+  };
+}
+
 export function createRuntimeOwnedFactories(input: {
   pageStore?: PageStoreApi;
   ownedPages: Set<PageRuntime>;
   ownedSurfaceRuntimes: Set<SurfaceRuntime>;
+  ownedValidationScopes?: Set<ValidationScopeRuntime>;
+  ownedFormRuntimes?: Set<FormRuntime>;
   createValidationScopeRuntime: (inputValue: {
     id?: string;
     parentScope?: ScopeRef;
     scopePath?: string;
     validation?: CompiledFormValidationModel;
     initialValues?: Record<string, any>;
+    existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
   }) => ValidationScopeRuntime;
   dispatchAction: (
     action: import('@nop-chaos/flux-core').ActionSchema,
@@ -36,17 +97,23 @@ export function createRuntimeOwnedFactories(input: {
   validationRegistry: ValidationRegistry;
   disposeScopeTree: (scopeId: string) => void;
 }) {
+  const ownedValidationScopes = input.ownedValidationScopes ?? new Set<ValidationScopeRuntime>();
+  const ownedFormRuntimes = input.ownedFormRuntimes ?? new Set<FormRuntime>();
+  const pageStoreSyncCleanups = new Map<PageRuntime, Array<() => void>>();
+
   function createPageRuntime(data: Record<string, any> = {}): PageRuntime {
     const externalPageStore = input.pageStore;
     const initialData = externalPageStore?.getState().data ?? data;
+    const validationStore = createFormStore(initialData);
     const pageValidation = input.createValidationScopeRuntime({
       id: 'page-root-validation',
       scopePath: '$page',
       initialValues: initialData,
+      existingStore: validationStore,
     });
-    const validationStore = pageValidation.store as import('@nop-chaos/flux-core').FormStoreApi;
     let refreshTick = 0;
     const refreshListeners = new Set<() => void>();
+    const syncCleanups: Array<() => void> = [];
     const pageStore: PageStoreApi = {
       getState() {
         return {
@@ -121,8 +188,8 @@ export function createRuntimeOwnedFactories(input: {
         }
       };
 
-      externalPageStore.subscribe(syncExternalPageStoreToValidation);
-      validationStore.subscribe(syncValidationToExternalPageStore);
+      syncCleanups.push(externalPageStore.subscribe(syncExternalPageStoreToValidation));
+      syncCleanups.push(validationStore.subscribe(syncValidationToExternalPageStore));
     }
 
     const page = createManagedPageRuntime({
@@ -133,6 +200,7 @@ export function createRuntimeOwnedFactories(input: {
     });
 
     input.ownedPages.add(page);
+    pageStoreSyncCleanups.set(page, syncCleanups);
     return page;
   }
 
@@ -142,15 +210,14 @@ export function createRuntimeOwnedFactories(input: {
     scopePath?: string;
     validation?: CompiledFormValidationModel;
     initialValues?: Record<string, any>;
+    existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
   }): ValidationScopeRuntime {
-    const store = createFormStore(inputValue.initialValues ?? {});
-
-    return createManagedFormRuntime({
+    const formRuntime = createManagedFormRuntime({
       id: inputValue.id,
       parentScope: inputValue.parentScope,
       validation: inputValue.validation,
       initialValues: inputValue.initialValues,
-      existingStore: store,
+      existingStore: inputValue.existingStore,
       scopePath: inputValue.scopePath,
       scopeBinding: 'none',
       executeValidationRule: (compiledRule, rule, field, validationScope, signal) =>
@@ -160,6 +227,10 @@ export function createRuntimeOwnedFactories(input: {
       validateRule: (compiledRule, value, field, validationScope) =>
         validateRule(compiledRule, value, field, validationScope, input.validationRegistry),
     });
+    const validationScopeRuntime = createManagedValidationScopeRuntime(formRuntime);
+
+    ownedValidationScopes.add(validationScopeRuntime);
+    return validationScopeRuntime;
   }
 
   function createSurfaceRuntime(
@@ -167,6 +238,10 @@ export function createRuntimeOwnedFactories(input: {
   ): SurfaceRuntime {
     const surfaceRuntime = createManagedSurfaceRuntime({
       disposeScope: inputValue.disposeScope ?? input.disposeScopeTree,
+      createValidationOwner: (ownerInput) => input.createValidationScopeRuntime(ownerInput),
+      releaseValidationOwner: (owner) => {
+        ownedValidationScopes.delete(owner);
+      },
     });
 
     input.ownedSurfaceRuntimes.add(surfaceRuntime);
@@ -182,7 +257,7 @@ export function createRuntimeOwnedFactories(input: {
     validation?: CompiledFormValidationModel;
     lifecycle?: FormLifecycleHandlers;
   }): FormRuntime {
-    return createManagedFormRuntime({
+    const formRuntime = createManagedFormRuntime({
       ...inputValue,
       executeValidationRule: (compiledRule, rule, field, scope, signal) =>
         executeRuntimeValidationRule(compiledRule, rule, field, scope, signal, {
@@ -191,6 +266,9 @@ export function createRuntimeOwnedFactories(input: {
       validateRule: (compiledRule, value, field, scope) =>
         validateRule(compiledRule, value, field, scope, input.validationRegistry),
     });
+
+    ownedFormRuntimes.add(formRuntime);
+    return formRuntime;
   }
 
   return {
@@ -198,5 +276,15 @@ export function createRuntimeOwnedFactories(input: {
     createValidationScopeRuntime,
     createSurfaceRuntime,
     createFormRuntime,
+    disposeOwnedPage(page: PageRuntime) {
+      for (const cleanup of pageStoreSyncCleanups.get(page) ?? []) {
+        cleanup();
+      }
+      pageStoreSyncCleanups.delete(page);
+      if (page.validationOwner) {
+        ownedValidationScopes.delete(page.validationOwner);
+      }
+      page.validationOwner?.dispose();
+    },
   };
 }

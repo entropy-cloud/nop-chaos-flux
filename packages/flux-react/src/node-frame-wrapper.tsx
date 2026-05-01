@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import type { RenderRegionHandle, ResolvedNodeMeta, TemplateNode } from '@nop-chaos/flux-core';
+import type { ResolvedNodeMeta, TemplateNode } from '@nop-chaos/flux-core';
+import type { RenderRegionHandle } from './react-contracts';
 import { FieldFrame, toFieldRemarkProps } from './field-frame';
 import type { FieldRemarkSchemaLike } from './field-frame';
 import { resolveFrameWrapMode } from './node-renderer-utils';
@@ -27,7 +28,7 @@ export function NodeFrameWrapper(props: {
   const labelValue =
     typeof props.resolvedPropsValue.label !== 'undefined'
       ? (props.resolvedPropsValue.label as ReactNode)
-      : props.regions.label?.render();
+      : (props.regions.label?.render() as ReactNode);
   const requiredValue =
     typeof props.resolvedPropsValue.required === 'boolean'
       ? props.resolvedPropsValue.required

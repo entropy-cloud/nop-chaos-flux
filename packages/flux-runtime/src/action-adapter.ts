@@ -28,6 +28,36 @@ export interface ActionAdapterInput {
 export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRuntimeAdapter {
   const { getEnv, expressionCompiler, evaluate, executeApiRequest, runtime } = input;
 
+  function resolveFormTarget(
+    formId: string | undefined,
+    ctx: ActionContext,
+  ): { kind: 'current' } | { kind: 'resolved'; form: import('@nop-chaos/flux-core').FormRuntime } | { kind: 'not-found'; formId: string } {
+    if (!formId) {
+      return { kind: 'current' };
+    }
+
+    if (ctx.form && ctx.form.id === formId) {
+      return { kind: 'resolved', form: ctx.form };
+    }
+
+    if (ctx.componentRegistry) {
+      try {
+        const handle = ctx.componentRegistry.resolve({ componentId: formId });
+        if (handle?.capabilities?.store && typeof (handle.capabilities.store as any).getState === 'function') {
+          const store = handle.capabilities.store as any;
+          const state = store.getState();
+          if (state && 'values' in state && 'fieldStates' in state) {
+            return { kind: 'not-found', formId };
+          }
+        }
+      } catch {
+        // resolve threw, treat as not found
+      }
+    }
+
+    return { kind: 'not-found', formId };
+  }
+
   return {
     async invokeBuiltInAction(invocation: BuiltInActionInvocation, ctx) {
       switch (invocation.action) {
@@ -37,11 +67,15 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               ? invocation.args.path
               : (invocation.targeting.componentId ?? '');
           const value = invocation.args?.value;
-          if (
-            ctx.form &&
-            invocation.targeting.formId &&
-            ctx.form.id === invocation.targeting.formId
-          ) {
+
+          const target = resolveFormTarget(invocation.targeting.formId, ctx);
+          if (target.kind === 'not-found') {
+            return { ok: false, error: new Error(`Form not found: ${target.formId}`) };
+          }
+
+          if (target.kind === 'resolved') {
+            target.form.setValue(path, value);
+          } else if (ctx.form && !invocation.targeting.formId) {
             ctx.form.setValue(path, value);
           } else {
             ctx.scope.update(path, value);
@@ -60,20 +94,25 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               ? invocation.args.path
               : invocation.targeting.targetId;
 
-          if (
-            ctx.form &&
-            invocation.targeting.formId &&
-            ctx.form.id === invocation.targeting.formId
-          ) {
+          const target = resolveFormTarget(invocation.targeting.formId, ctx);
+          if (target.kind === 'not-found') {
+            return { ok: false, error: new Error(`Form not found: ${target.formId}`) };
+          }
+
+          const formTarget = target.kind === 'resolved'
+            ? target.form
+            : (ctx.form && !invocation.targeting.formId ? ctx.form : undefined);
+
+          if (formTarget) {
             if (basePath) {
               const nextValues = Object.fromEntries(
                 Object.entries(values).map(([key, val]) => [`${basePath}.${key}`, val]),
               );
-              ctx.form.setValues(nextValues);
+              formTarget.setValues(nextValues);
               return { ok: true, data: nextValues };
             }
 
-            ctx.form.setValues(values);
+            formTarget.setValues(values);
           } else {
             for (const [targetPath, val] of Object.entries(values)) {
               ctx.scope.update(basePath ? `${basePath}.${targetPath}` : targetPath, val);

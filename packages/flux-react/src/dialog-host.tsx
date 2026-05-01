@@ -78,11 +78,18 @@ function DialogView(props: {
   const surfaceContext = React.useMemo(
     () => ({
       scope: surface.scope,
+      validationOwner: surface.validationOwner,
       actionScope: surface.actionScope,
       componentRegistry: surface.componentRegistry,
       ownerNodeInstance: surface.ownerNodeInstance,
     }),
-    [surface.scope, surface.actionScope, surface.componentRegistry, surface.ownerNodeInstance],
+    [
+      surface.scope,
+      surface.validationOwner,
+      surface.actionScope,
+      surface.componentRegistry,
+      surface.ownerNodeInstance,
+    ],
   );
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 
@@ -146,11 +153,18 @@ function DrawerView(props: {
   const surfaceContext = React.useMemo(
     () => ({
       scope: surface.scope,
+      validationOwner: surface.validationOwner,
       actionScope: surface.actionScope,
       componentRegistry: surface.componentRegistry,
       ownerNodeInstance: surface.ownerNodeInstance,
     }),
-    [surface.scope, surface.actionScope, surface.componentRegistry, surface.ownerNodeInstance],
+    [
+      surface.scope,
+      surface.validationOwner,
+      surface.actionScope,
+      surface.componentRegistry,
+      surface.ownerNodeInstance,
+    ],
   );
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
 

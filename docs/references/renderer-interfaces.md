@@ -123,7 +123,7 @@ Role summary:
 
 Stable field groups:
 
-- Runtime registration: `type`, `component`, `reactComponent`, `fields`, `regions`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`, `staticCapable`
+- Runtime registration: `type`, `component`, `fields`, `regions`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`, `staticCapable`
 - Discovery metadata: `displayName`, `icon`, `category`, `sourcePackage`, `defaultSchema`
 - Renderer classification: `rendererClass`, `rendererTraits`, `injectedLocals`
 - Ordinary renderer authoring contracts: `propContracts`, `eventContracts`, `componentCapabilityContracts`, `scopeExportContracts`

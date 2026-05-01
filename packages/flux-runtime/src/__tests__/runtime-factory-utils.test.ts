@@ -137,8 +137,28 @@ describe('runtime factory utilities', () => {
     });
     expect(runtime.env.notify).toBe(executeDispose);
 
+    expect(() => runtime.dispose()).not.toThrow();
+    expect(() => runtime.dispose()).not.toThrow();
+  });
+
+  it('disposes page validation owners and tracked form runtimes with runtime disposal', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+    });
+    const page = runtime.createPageRuntime({ pageValue: 'root' });
+    const form = runtime.createFormRuntime({
+      id: 'tracked-form',
+      parentScope: page.scope,
+      initialValues: { email: '' },
+    });
+    const pageValidationDispose = vi.spyOn(page.validationOwner!, 'dispose');
+    const formDispose = vi.spyOn(form, 'dispose');
+
     runtime.dispose();
-    runtime.dispose();
+
+    expect(pageValidationDispose).toHaveBeenCalledTimes(1);
+    expect(formDispose).toHaveBeenCalledTimes(1);
   });
 
   it('allocates mounted cids, creates child scopes/action scopes/component registries, and exposes default debug snapshots', () => {

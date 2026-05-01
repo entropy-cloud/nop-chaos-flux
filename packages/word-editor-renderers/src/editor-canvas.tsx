@@ -129,7 +129,9 @@ export function EditorCanvas({
       .then((count) => {
         if (!controller.signal.aborted) editorStore.setWordCount(count);
       })
-      .catch((err) => { console.debug('[word-editor] word count failed', err) });
+      .catch((err) => {
+        console.debug('[word-editor] word count failed', err);
+      });
 
     return () => {
       controller.abort();

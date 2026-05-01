@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'fs/promises';
 import path from 'path';
 import process from 'process';
-import ts from 'typescript';
+import ts from '@typescript/typescript6';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));

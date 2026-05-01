@@ -133,6 +133,7 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 Current live implementation note:
 
 - 上面的 `statusPath` 规则当前适用于 action-opened managed surfaces
+- action-opened managed surfaces 当前还会为每个 surface entry 创建独立的 surface-root validation owner，并在 `DialogHost` 中把它包裹到 surface body 外层
 - declarative `dialog` / `drawer` renderers 当前也会在 renderer path 上发布自己的 summary DTO
 - 但 declarative path 仍不是通过 `SurfaceRuntime` store/stack 完成该发布
 
@@ -206,7 +207,7 @@ future `sheet` 不能因为名字不同就自动获得独立 owner family。
 
 - `page` runtime/store is created by the page renderer; `NodeRenderer` does not publish it as a generic provider
 - the concrete host/owner creates one surface-family entry per opened surface, not `NodeRenderer`
-- each opened dialog or drawer entry owns its own surface-family owner instance; ownership is disposed when the surface closes
+- each opened managed dialog or drawer entry owns its own surface-family owner instance and surface-root validation owner; both are disposed when the surface closes
 
 Current live split:
 

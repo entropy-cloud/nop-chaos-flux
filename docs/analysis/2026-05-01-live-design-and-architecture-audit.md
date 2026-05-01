@@ -20,9 +20,10 @@
 - 证据：`docs/architecture/flux-core.md:27-35`
 - 证据：`packages/flux-core/src/types/renderer-core.ts:1,87-96,186-189`
 - 证据：`packages/flux-core/src/types/renderer-hooks.ts:1,23-85,160-180`
+- 证据：`packages/flux-core/src/types/runtime.ts:21-22`
 - 证据：`packages/flux-core/package.json:21-23`
-- 问题：文档把 `flux-core` 定义为“纯契约 + 纯工具 + 无 framework-specific code”的最低层，但当前 `RendererDefinition.component`、`SchemaRendererComponent`、`RenderRegionHandle.render`、`RendererHelpers.render` 等核心类型已经直接使用 `ComponentType`、`ReactNode`、`ReactElement`。
-- 影响：`flux-core` 现在已经不是纯粹的跨运行时基础层；未来如果要支持非 React host，或者只是想把 renderer contract 和 React host specialization 分开，这一层都会成为反向耦合点。这里的问题不是单个 `ComponentType` 字段命名不够中性，而是整套 render surface 已经在 core package 上暴露成 React contract。
+- 问题：文档把 `flux-core` 定义为“纯契约 + 纯工具 + 无 framework-specific code”的最低层，但当前 `RendererDefinition.component`、`SchemaRendererComponent`、`RenderRegionHandle.render`、`RendererHelpers.render`，以及 runtime 类型中的 `ReactNode` 面，已经直接把 React-shaped type surface 放在 core public contract 上。
+- 影响：`flux-core` 现在已经不是纯粹的跨运行时基础层；未来如果要支持非 React host，或者只是想把 renderer contract 和 React host specialization 分开，这一层都会成为反向耦合点。这里的问题不是单个 `ComponentType` 字段命名不够中性，也不是 package.json 里是否存在 `react` 运行时依赖，而是整套 public type surface 仍要求 React 类型参与。
 - 改进方向：把 React-specialized renderer surface 整体从 `flux-core` 拆出去，而不是只做一个名义上的类型占位替换。`flux-core` 只保留 host-neutral contract IR；`RendererDefinition.component`、`SchemaRendererComponent`、`RenderRegionHandle.render`、`RendererHelpers.render` 一类 React 输出面应迁到 `flux-react` 或单独的 host adapter contract 层。
 
 ### A-02 `SchemaRendererProps.surfaceRuntime` 是公开 root contract，但 `SchemaRenderer` 实现没有使用它
@@ -116,7 +117,7 @@
 - 证据：`docs/components/report-designer-page/design.md:69-103`
 - 证据：`packages/report-designer-renderers/src/report-designer-manifest.ts:102-189`
 - 证据：`packages/report-designer-renderers/src/host-data.ts:151-187`
-- 问题：组件文档把 `selection` / `target` 标成兼容别名，并把 `designer.inspectorPanels`、顶层 `inspectorPanels` 写进 vocabulary；manifest 又声明了顶层 `fieldSources`、`preview`；但实际 `buildReportDesignerScopeData()` 没有注入这些字段，反而注入了 manifest 未声明的 `inspectorBody`。
+- 问题：这里的剩余漂移已经不是 `selectionTarget` canonicalization 本身，因为 top-level `selection` / `target` alias removal 已是 live fact。当前真正未收口的是：组件文档仍把 `selection` / `target` 标成兼容别名，并把 `designer.inspectorPanels`、顶层 `inspectorPanels` 写进 vocabulary；manifest 又声明了顶层 `fieldSources`、`preview`；但实际 `buildReportDesignerScopeData()` 没有注入这些字段，反而注入了 manifest 未声明的 `inspectorBody`。
 - 影响：report designer 的 host contract 已经不是单一来源真相，schema authoring、compiler 校验和运行时读取看到的是三套略有差异的接口。
 - 改进方向：先明确“当前 live host scope 到底是什么”，再同步删掉未接线字段或补齐未声明字段，避免继续平行演化。
 

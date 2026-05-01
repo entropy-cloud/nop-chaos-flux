@@ -39,6 +39,10 @@ export const zhCN: Resource = {
       moveUp: '上移',
       moveDown: '下移',
       noData: '暂无数据',
+      selectAll: '全选',
+      selectRow: '选择行',
+      collapse: '收起',
+      search: '搜索',
     },
     form: {
       required: '必填',

@@ -172,7 +172,7 @@ These still use the same `RendererDefinition` registration system, but they are 
 
 ## Minimum Viable Renderer
 
-The minimum required registration surface on `RendererDefinition` is `type` plus one render entry: `component` or `reactComponent`.
+The minimum required registration surface on the host-neutral `RendererDefinition` is `type` plus `component`. If you are registering through the React host helpers in `@nop-chaos/flux-react`, you may also use the React-only convenience field `reactComponent` and let the host auto-wrap it.
 
 ```ts
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
@@ -187,7 +187,7 @@ const registry = createRendererRegistry([
 ]);
 ```
 
-If you already have a plain React component that accepts normal props, you can also register `reactComponent`; the runtime will auto-wrap it into the standard `RendererComponentProps` boundary.
+If you already have a plain React component that accepts normal props, register it through `@nop-chaos/flux-react` using `reactComponent`; the React host will auto-wrap it into the standard `RendererComponentProps` boundary before registration reaches the core registry.
 
 Schema usage:
 
@@ -501,8 +501,8 @@ function MyRenderer(props) {
 | Field                     | Required                              | Default     | Purpose                                                           |
 | ------------------------- | ------------------------------------- | ----------- | ----------------------------------------------------------------- |
 | `type`                    | yes                                   | —           | Unique string matching `schema.type`                              |
-| `component`               | one of `component` / `reactComponent` | —           | The standard Flux renderer component                              |
-| `reactComponent`          | one of `component` / `reactComponent` | —           | Plain React component path auto-wrapped by the runtime            |
+| `component`               | yes on core contract                  | —           | The standard Flux renderer component                              |
+| `reactComponent`          | React-host convenience only           | —           | Plain React component path auto-wrapped by `@nop-chaos/flux-react` |
 | `displayName`             | no                                    | —           | Human-readable name for tooling                                   |
 | `category`                | no                                    | —           | Grouping for tooling (e.g. `"content"`, `"form"`)                 |
 | `icon`                    | no                                    | —           | Icon name for tooling                                             |

@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { BaseSchema, RendererDefinition, SchemaRendererProps } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaRendererProps } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { reportImportFailure } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { ensureRendererComponent } from './auto-renderer';
+import type { RendererDefinition } from './react-contracts';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
@@ -63,7 +64,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const initialPageDataRef = useRef(pageData);
     const initialDataAppliedRef = useRef(false);
     const page = useMemo(() => runtime.createPageRuntime(initialPageDataRef.current), [runtime]);
-    const surfaceRuntime = useMemo(() => runtime.createSurfaceRuntime(), [runtime]);
+    const ownedSurfaceRuntime = useMemo(() => runtime.createSurfaceRuntime(), [runtime]);
 
     useEffect(() => {
       const schemaInput = props.schema;
@@ -103,6 +104,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
 
     const rootScope = props.parentScope ?? page.scope;
     const rootValidationOwner = props.parentScope ? NO_VALIDATION_OWNER : page.validationOwner;
+    const surfaceRuntime = props.surfaceRuntime ?? ownedSurfaceRuntime;
     const rootActionScope = useMemo(
       () => props.actionScope ?? runtime.createActionScope({ id: 'root-action-scope' }),
       [props.actionScope, runtime],

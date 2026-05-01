@@ -113,8 +113,8 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   );
 
   const spreadsheet = useMemo(() => deriveHostSnapshot(snapshot), [snapshot]);
-  const spreadsheetScope = useHostScope(
-    {
+  const spreadsheetScopeData = useMemo(
+    () => ({
       spreadsheet,
       workbook: spreadsheet.workbook,
       activeSheet: spreadsheet.activeSheet,
@@ -122,7 +122,11 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
       activeCell: spreadsheet.activeCell,
       activeRange: spreadsheet.activeRange,
       runtime: spreadsheet.runtime,
-    },
+    }),
+    [spreadsheet],
+  );
+  const spreadsheetScope = useHostScope(
+    spreadsheetScopeData,
     props.path,
     'spreadsheet',
   );

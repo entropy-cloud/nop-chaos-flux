@@ -292,7 +292,7 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     helpers,
   };
 
-  const Comp = props.node.component.component!;
+  const Comp = props.node.component.component as React.ComponentType<RendererComponentProps>;
   const lifecycleActionsValue = lifecycleActions
     ? {
         onMount: lifecycleActions.onMount as ActionSchema | ActionSchema[] | undefined,

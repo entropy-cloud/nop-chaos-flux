@@ -146,6 +146,8 @@ Targets: `<<文件/模块/文档>>`
 
 Exit Criteria:
 
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
+
 - [ ] <<完成判定>>
 - [ ] <<验证点>>
 - [ ] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
@@ -160,6 +162,8 @@ Targets: `<<文件/模块/文档>>`
 - [ ] <<执行项>>
 
 Exit Criteria:
+
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
 - [ ] <<完成判定>>
 - [ ] <<验证点>>
@@ -176,12 +180,16 @@ Targets: `<<文件/模块/文档>>`
 
 Exit Criteria:
 
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
+
 - [ ] <<完成判定>>
 - [ ] <<验证点>>
 - [ ] 相关 `docs/architecture/` 或 `docs/components/` 已更新为最终设计状态
 - [ ] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
+
+> **关闭条件**：只有本 section 所有条目及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
 
 - [ ] <<行为/契约结果>>
 - [ ] <<相关 docs/examples 已更新>>

@@ -111,26 +111,19 @@ describe('createFormulaCompiler', () => {
     expect(expression.exec(createScope({ name: 'Ada' }), env)).toBe('[Ada]');
   });
 
-  it('reports runtime expression errors through monitor.onError', () => {
+  it('reports runtime expression errors through monitor.onError and throws', () => {
     const onError = vi.fn();
     const compiler = createFormulaCompiler();
     const expression = compiler.compileExpression('${user.name.first}');
 
-    const result = expression.exec(createScope({ user: null }), {
-      ...env,
-      monitor: { onError },
-    });
+    expect(() =>
+      expression.exec(createScope({ user: null }), {
+        ...env,
+        monitor: { onError },
+      })
+    ).toThrow(/Expression evaluation failed/);
 
-    expect(result).toBeUndefined();
-    expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        phase: 'expression',
-        details: expect.objectContaining({
-          source: '${user.name.first}',
-        }),
-      }),
-    );
+    expect(onError).toHaveBeenCalled();
   });
 
   it('keeps IF lazy and does not evaluate the untaken branch', () => {
@@ -180,12 +173,14 @@ describe('createFormulaCompiler', () => {
     expect(
       compiler.compileExpression('${$varName}').exec(createScope({ $varName: 'scoped' }), env),
     ).toBe('scoped');
-    expect(
+    expect(() =>
       compiler
         .compileExpression('${AND(flag, other)}')
-        .exec(createScope({ flag: true, other: true }), env),
-    ).toBeUndefined();
-    expect(compiler.compileExpression('${ABS(-3)}').exec(createScope({}), env)).toBeUndefined();
+        .exec(createScope({ flag: true, other: true }), env)
+    ).toThrow();
+    expect(() =>
+      compiler.compileExpression('${ABS(-3)}').exec(createScope({}), env)
+    ).toThrow();
   });
 
   it('emits compile-time diagnostics for invalid dollar references', () => {
@@ -356,5 +351,53 @@ describe('createExpressionCompiler', () => {
       throw new Error('Expected static compiled value');
     }
     expect(compiled.value).toBe('${...}');
+  });
+
+  it('calls reportDiagnostic when expression compilation fails', () => {
+    const reportDiagnostic = vi.fn();
+    const compiler = createExpressionCompiler();
+    const compiled = compiler.compileNode('${new X()}', {
+      sourcePath: '$.body[0]',
+      reportDiagnostic,
+    });
+
+    expect(compiled.kind).toBe('static-node');
+    expect(reportDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'unhandled-compilation-error',
+        message: expect.stringContaining('Expression compilation failed'),
+      }),
+    );
+  });
+
+  it('calls reportDiagnostic when template compilation fails', () => {
+    const reportDiagnostic = vi.fn();
+    const compiler = createExpressionCompiler();
+    const compiled = compiler.compileNode('Hello ${new X()} world', {
+      sourcePath: '$.body[1]',
+      reportDiagnostic,
+    });
+
+    expect(compiled.kind).toBe('static-node');
+    expect(reportDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'unhandled-compilation-error',
+        message: expect.stringContaining('Template compilation failed'),
+      }),
+    );
+  });
+
+  it('returns error marker in template when segment evaluation fails', () => {
+    const onError = vi.fn();
+    const compiler = createFormulaCompiler();
+    const template = compiler.compileTemplate('Hello ${user.name.first}!');
+
+    const result = template.exec(createScope({ user: null }), {
+      ...env,
+      monitor: { onError },
+    });
+
+    expect(result).toBe('Hello [error]!');
+    expect(onError).toHaveBeenCalled();
   });
 });

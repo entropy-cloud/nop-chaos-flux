@@ -28,7 +28,7 @@ export function createScopeStore(
     snapshot: Record<string, any>;
     lastChange: ScopeChange;
   }>(() => ({
-    snapshot: initialData,
+    snapshot: sanitizeSnapshot(initialData),
     lastChange: createDefaultChange(),
   }));
 
@@ -86,6 +86,34 @@ export function createScopeStore(
 
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
+function sanitizeSnapshot(data: Record<string, any>): Record<string, any> {
+  const keys = Object.keys(data);
+  let hasDangerous = false;
+  for (let i = 0; i < keys.length; i += 1) {
+    if (DANGEROUS_KEYS.has(keys[i])) {
+      hasDangerous = true;
+      break;
+    }
+  }
+  if (!hasDangerous) {
+    return data;
+  }
+  const result: Record<string, any> = {};
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    if (!DANGEROUS_KEYS.has(key)) {
+      result[key] = data[key];
+    }
+  }
+  return result;
+}
+
+function isDangerousPathHead(path: string): boolean {
+  const dotIndex = path.indexOf('.');
+  const head = dotIndex === -1 ? path : path.slice(0, dotIndex);
+  return DANGEROUS_KEYS.has(head);
+}
+
 function safeCreate(parent: Record<string, any>): Record<string, any> {
   return Object.create(parent) as Record<string, any>;
 }
@@ -122,7 +150,7 @@ function createVisibleViewHelpers(
 
     lastOwnSnapshotForView = ownSnapshot;
     lastParentSnapshotForView = parentVisible;
-    lastVisibleView = Object.assign(safeCreate(parentVisible), ownSnapshot);
+    lastVisibleView = sanitizeSnapshot(Object.assign(safeCreate(parentVisible), ownSnapshot));
 
     return lastVisibleView;
   }
@@ -328,6 +356,10 @@ export function createScopeRef(input: {
     readVisible,
     materializeVisible,
     update(path, value) {
+      if (path && isDangerousPathHead(path)) {
+        return;
+      }
+
       if (input.update) {
         input.update(path, value, scope);
         return;
@@ -341,8 +373,9 @@ export function createScopeRef(input: {
       });
     },
     merge(data) {
+      const sanitized = sanitizeSnapshot(data);
       const current = ownStore.getSnapshot();
-      const keys = Object.keys(data);
+      const keys = Object.keys(sanitized);
 
       if (keys.length === 0) {
         return;
@@ -351,7 +384,7 @@ export function createScopeRef(input: {
       let changed = false;
 
       for (let i = 0; i < keys.length; i += 1) {
-        if (!Object.is(current[keys[i]], data[keys[i]])) {
+        if (!Object.is(current[keys[i]], sanitized[keys[i]])) {
           changed = true;
           break;
         }
@@ -362,7 +395,7 @@ export function createScopeRef(input: {
       }
 
       ownStore.setSnapshot(
-        { ...current, ...data },
+        { ...current, ...sanitized },
         {
           paths: keys,
           sourceScopeId: input.id,
@@ -371,7 +404,7 @@ export function createScopeRef(input: {
       );
     },
     replace(data) {
-      const next = toRecord(data);
+      const next = toRecord(sanitizeSnapshot(toRecord(data)));
       const current = ownStore.getSnapshot();
 
       if (current === next) {

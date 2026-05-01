@@ -88,6 +88,10 @@ export function collectValidationModel(
       return;
     }
 
+    if (entry.validationOwnerPlan?.boundary === 'create-owner') {
+      return;
+    }
+
     if (entry.type === 'form') {
       rootBehavior = poolValidationBehavior(
         behaviorPool,

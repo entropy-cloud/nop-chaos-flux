@@ -46,7 +46,9 @@ export function DocPreviewPage({ documentData, paperSettings, onBack }: DocPrevi
           setWordCount(count);
         }
       })
-      .catch((err) => { console.debug('[word-editor] preview load failed', err) });
+      .catch((err) => {
+        console.debug('[word-editor] preview load failed', err);
+      });
 
     return () => {
       controller.abort();
