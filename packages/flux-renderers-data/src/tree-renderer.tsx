@@ -89,25 +89,13 @@ function TreeNodeRenderer(props: {
         <div className="flex items-start gap-2" style={{ paddingInlineStart: `${depth * 16}px` }}>
           {hasChildren ? (
             <CollapsibleTrigger
-              render={
-                <span
-                  role="button"
-                  tabIndex={0}
-                  aria-label={open ? t('flux.common.collapse') : t('flux.common.expand')}
-                  className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-accent"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setOpen((prev) => !prev);
-                    }
-                  }}
-                >
-                  <ChevronRightIcon
-                    className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')}
-                  />
-                </span>
-              }
-            />
+              aria-label={open ? t('flux.common.collapse') : t('flux.common.expand')}
+              className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm hover:bg-accent"
+            >
+              <ChevronRightIcon
+                className={cn('size-3.5 transition-transform', open ? 'rotate-90' : '')}
+              />
+            </CollapsibleTrigger>
           ) : (
             <span
               className="inline-flex size-6 items-center justify-center text-muted-foreground"

@@ -1,5 +1,5 @@
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
+import { Button, Label, NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import type { CrudStatusSummary } from './crud-schema';
 import { isRecord } from '@nop-chaos/flux-core';
 import { DEFAULT_PAGE_SIZE_OPTIONS, type CrudPaginationState } from './crud-renderer-state';
@@ -61,6 +61,7 @@ export function CrudToolbarBlocks(props: {
 
   const leftBlocks = blocks.filter((block) => block.align !== 'right');
   const rightBlocks = blocks.filter((block) => block.align === 'right');
+  const pageSizeSelectId = `${slot}-toolbar-page-size-select`;
 
   function renderBlock(block: ToolbarBlockDefinition, index: number) {
     switch (block.type) {
@@ -81,13 +82,14 @@ export function CrudToolbarBlocks(props: {
         );
       case 'switch-per-page':
         return (
-          <label
+          <div
             key={`${slot}-switch-per-page-${index}`}
             data-slot={`${slot}-toolbar-page-size`}
             className="flex items-center gap-2 text-sm text-muted-foreground"
           >
-            <span>{t('flux.pagination.rowsPerPage')}</span>
+            <Label htmlFor={pageSizeSelectId}>{t('flux.pagination.rowsPerPage')}</Label>
             <NativeSelect
+              id={pageSizeSelectId}
               size="sm"
               value={String(pagination.pageSize)}
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
@@ -98,7 +100,7 @@ export function CrudToolbarBlocks(props: {
                 </NativeSelectOption>
               ))}
             </NativeSelect>
-          </label>
+          </div>
         );
       case 'pagination':
         return (
