@@ -65,8 +65,17 @@ fieldset 不传播 mode/labelAlign/labelWidth。AMIS 的 `subFormMode` / `subFor
 
 ```
 <fieldset class="nop-fieldset [className]">
-  <legend data-slot="fieldset-title">{title}</legend>
-  <div data-slot="fieldset-body">
+  <legend
+    data-slot="fieldset-title"
+    role="button"               <!-- collapsible 时 -->
+    tabindex="0"                <!-- collapsible 时 -->
+    aria-expanded="true|false"  <!-- collapsible 时 -->
+    aria-controls="{cid}-body"  <!-- collapsible 时 -->
+  >{title}</legend>
+  <div
+    id="{cid}-body"             <!-- collapsible 时 -->
+    data-slot="fieldset-body"
+  >
     ...子字段
   </div>
 </fieldset>
@@ -76,6 +85,7 @@ fieldset 不传播 mode/labelAlign/labelWidth。AMIS 的 `subFormMode` / `subFor
 - `data-slot="fieldset-title"`: 标题区域
 - `data-slot="fieldset-body"`: 子字段内容区域
 - 当 `collapsible: true` 时，body 区域可折叠，根节点添加 `data-collapsible` 和 `data-collapsed` 属性
+- collapsible fieldset 的 `<legend>` 添加 `role="button"`、`tabindex="0"`、`aria-expanded`、`aria-controls` 属性，支持键盘 Enter/Space 切换折叠
 - 视觉样式（边框、间距、标题样式）由 schema `className` 和 host CSS 控制，不在 renderer 中硬编码
 
 ## 10. 布局配置

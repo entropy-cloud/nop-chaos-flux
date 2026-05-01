@@ -520,6 +520,8 @@ Current implementation note:
 
 > **Implementation Status**: The illustrative collection shape below is not a live exported interface. The current codebase uses `ValidationContributor` (defined in `flux-core/src/types/renderer-core.ts`) as the live compiler contract. In the supported family set, that live contract already includes compile-time owner-boundary metadata (`ownerResolution`, `childContractMode`) plus the existing field/rule/path collection hooks. Richer collection hooks such as `collectDependencies` remain future work rather than a requirement for the supported owner families.
 
+Validation collection stops at `create-owner` boundaries. When `collectValidationModel` encounters a child node whose `validationOwnerPlan.boundary === 'create-owner'`, it skips that node and does not recurse into its regions. The child owner generates its own validation model through its own `collectValidationModel` call. This prevents parent owners from absorbing child-owner field validation into their own compiled model.
+
 Validation structure is compiled by component-aware collector hooks.
 
 ```ts
@@ -1000,7 +1002,15 @@ Parent `canSubmit` semantics:
 3. child scopes in `summary-gate` mode affect parent `canSubmit` through child summary state; current live code blocks on `!ready`, `validating`, and `!valid`
 4. child scopes in `recurse-submit` mode are validated during parent submit and may block submit
 
-Parent submit orchestration target model uses a deterministic child snapshot.
+Parent submit orchestration enforces both `summary-gate` and `recurse-submit` child contracts.
+
+Rules:
+
+1. before executing the submit action, the submit flow checks all active child contracts
+2. `summary-gate` contracts: if any active `summary-gate` child is not ready, currently validating, or not valid, the submit is blocked with an error
+3. `recurse-submit` contracts: parent submit triggers child validation and waits for results; errors block submit
+4. `summary-gate` enforcement happens before `recurse-submit` validation, so a child that is still validating or not ready blocks submit regardless of mode
+5. inactive child contracts are ignored during submit
 
 Rules:
 

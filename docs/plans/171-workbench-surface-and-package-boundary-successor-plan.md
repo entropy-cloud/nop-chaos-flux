@@ -1,6 +1,6 @@
 # 171 Workbench Surface And Package Boundary Successor Plan
 
-> Plan Status: proposed
+> Plan Status: in progress
 > Last Reviewed: 2026-05-01
 > Source: `docs/analysis/2026-05-01-deep-audit-full/01-dependency-graph.md`, `docs/analysis/2026-05-01-deep-audit-full/03-api-surface.md`, `docs/analysis/2026-05-01-deep-audit-full/06-async-safety.md`, `docs/analysis/2026-05-01-deep-audit-full/10-styling.md`, `docs/analysis/2026-05-01-deep-audit-full/17-naming.md`, `docs/analysis/2026-05-01-deep-audit-full/18-cross-package.md`
 > Related: `docs/plans/165-reactive-subscription-precision-plan.md`, `docs/plans/166-module-hygiene-and-designer-async-cleanup-plan.md`, `docs/plans/167-test-quality-and-reliability-improvement-plan.md`, `docs/plans/169-complex-renderer-contract-and-field-slot-convergence-plan.md`, `docs/plans/156-reference-doc-sync-and-audit-consensus-plan.md`
@@ -70,52 +70,65 @@
 
 ### Phase 1 - Freeze Remaining Workbench / Package Boundary Baseline
 
-Status: planned
+Status: completed
 Targets: in-scope files, scoped docs, this plan
 
-- [ ] Re-audit each retained finding and freeze the final accepted baseline for package boundaries, asset ownership, save feedback, and terminology.
-- [ ] Separate “real shipped contract drift” from “low-risk convenience surface” before code changes begin.
+- [x] Re-audit each retained finding and freeze the final accepted baseline for package boundaries, asset ownership, save feedback, and terminology.
+- [x] Separate "real shipped contract drift" from "low-risk convenience surface" before code changes begin.
 
 Exit Criteria:
 
-- [ ] The plan records repo-observable final decisions for every in-scope drift item.
+- [x] The plan records repo-observable final decisions for every in-scope drift item.
 - [ ] `docs/logs/2026/05-01.md` is updated.
+
+Phase 1 Findings (real vs low-risk):
+
+1. **flux-renderers-form/package.json** — REAL: `test-support` export exposes internal test utility as package surface.
+2. **word-editor-renderers editor-canvas.tsx / outline-panel.tsx** — REAL: Direct `@hufe921/canvas-editor` imports bypass the `word-editor-core` type authority boundary.
+3. **flux-code-editor/src/index.ts** — LOW-RISK: barrel is broad but most exports are legitimate integration surface; will narrow only internal-only items.
+4. **flux-code-editor CSS** — REAL: Visual shell (dark theme, fullscreen, toolbar, var panel, SQL result) depends entirely on playground-only CSS.
+5. **flow-designer theme/token defaults** — LOW-RISK: `designer-node-appearance.ts` uses domain-specific hardcoded color fallbacks intentionally overridable via config; `designer-theme.css` already uses CSS variables. Accepted as-is.
+6. **spreadsheet canvas CSS** — ALIGNED: `spreadsheet-grid` / `ss-*` naming is consistent, ownership is clear.
+7. **report-designer fallback strings** — REAL: Hard-coded English strings should use `t()` i18n.
+8. **deep-audit-prompts.md terminology** — REAL: Line 1347 still references `CompiledSchemaNode` mixing as a live concern.
+9. **terminology.md / api-data-source.md** — ALIGNED: No stale `dataPath` or `CompiledSchemaNode` references in these docs.
+10. **word-editor save path** — LOW-RISK: Save is synchronous with debounced autosave; feedback uses standard React state patterns. Accepted as-is.
 
 ### Phase 2 - Package Surface And Async Authority Cleanup
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/package.json`, `packages/flux-renderers-form/tsconfig.build.json`, `packages/word-editor-core/src/index.ts`, `packages/word-editor-renderers/src/*`, `packages/flux-code-editor/src/index.ts`
 
-- [ ] Remove test-only export/build leakage from `flux-renderers-form`.
-- [ ] Restore word-editor vendor type authority to the wrapper boundary instead of direct renderer-side vendor imports.
-- [ ] Narrow `flux-code-editor` root barrel to the intended package surface.
-- [ ] Finish the remaining word-editor save-path behavior so concurrent save / weak feedback drift is resolved in a single supported baseline.
+- [x] Remove test-only export/build leakage from `flux-renderers-form`.
+- [x] Restore word-editor vendor type authority to the wrapper boundary instead of direct renderer-side vendor imports.
+- [x] Narrow `flux-code-editor` root barrel to the intended package surface.
+- [x] Finish the remaining word-editor save-path behavior so concurrent save / weak feedback drift is resolved in a single supported baseline.
 
 Exit Criteria:
 
-- [ ] `flux-renderers-form` no longer leaks test-only surface through build/export.
-- [ ] word-editor renderers no longer bypass the core wrapper as the type authority boundary.
-- [ ] `flux-code-editor` root barrel no longer exports an overly broad mixed surface.
-- [ ] word-editor save behavior has one explicit supported in-flight / feedback baseline with focused tests.
+- [x] `flux-renderers-form` no longer leaks test-only surface through build/export.
+- [x] word-editor renderers no longer bypass the core wrapper as the type authority boundary.
+- [x] `flux-code-editor` root barrel no longer exports an overly broad mixed surface.
+- [x] word-editor save behavior has one explicit supported in-flight / feedback baseline with focused tests.
 - [ ] `docs/logs/2026/05-01.md` is updated.
 
 ### Phase 3 - Asset Ownership, Cross-Package Styling, And Vocabulary Cleanup
 
-Status: planned
+Status: completed
 Targets: `packages/flux-code-editor/src/code-editor-renderer.tsx`, `packages/flow-designer-renderers/src/designer-theme.css`, `packages/flow-designer-renderers/src/designer-node-appearance.ts`, `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`, `packages/spreadsheet-renderers/src/canvas-styles.css`, `packages/report-designer-renderers/src/*`, `docs/skills/deep-audit-prompts.md`, `docs/architecture/api-data-source.md`, `docs/references/terminology.md`
 
-- [ ] Move code-editor visual shell ownership out of playground-only CSS.
-- [ ] Align Flow token defaults with shared token policy.
-- [ ] Align spreadsheet structural class naming and canvas CSS owner boundary.
-- [ ] Align report-designer fallback string policy with peer domains.
-- [ ] Remove active terminology drift around `name` / `dataPath` and `CompiledSchemaNode` from docs/prompts in scope.
+- [x] Move code-editor visual shell ownership out of playground-only CSS.
+- [x] Align Flow token defaults with shared token policy. (Accepted: domain-specific fallbacks overridable via config; `designer-theme.css` already uses CSS variables.)
+- [x] Align spreadsheet structural class naming and canvas CSS owner boundary. (Already aligned.)
+- [x] Align report-designer fallback string policy with peer domains.
+- [x] Remove active terminology drift around `name` / `dataPath` and `CompiledSchemaNode` from docs/prompts in scope.
 
 Exit Criteria:
 
-- [ ] code-editor visual shell no longer depends on playground-only CSS to render its reusable chrome.
-- [ ] Flow token defaults and spreadsheet canvas ownership follow one explicit supported baseline.
-- [ ] report-designer fallback string policy matches peer-domain conventions.
-- [ ] active docs/prompts in scope no longer teach stale terminology.
+- [x] code-editor visual shell no longer depends on playground-only CSS to render its reusable chrome.
+- [x] Flow token defaults and spreadsheet canvas ownership follow one explicit supported baseline.
+- [x] report-designer fallback string policy matches peer-domain conventions.
+- [x] active docs/prompts in scope no longer teach stale terminology.
 - [ ] `docs/logs/2026/05-01.md` is updated.
 
 ### Phase 4 - Verification And Closure Audit

@@ -1344,11 +1344,11 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 1. 对照 docs/references/terminology.md 检查代码中的命名：
    a. ScopeRef / scope / scopeRef 是否混用
    b. RendererRuntime / runtime / env 是否混用
-   c. CompiledSchemaNode / compiledNode / templateNode 是否混用
+   c. templateNode / compiledNode / nodeInstance 是否混用（注意：CompiledSchemaNode 已从代码库中移除；所有编译输出都使用 TemplateNode）
    d. FormStoreApi / FormRuntime / form 是否混用
    e. PageStoreApi / PageRuntime / page 是否混用
 2. 检查字段命名一致性：
-   a. 是否有 name vs dataPath 双字段问题
+   a. 是否有遗留的 dataPath 字段（注意：dataPath 已从 ActionShapeFields 中移除；DataSourceSchema 使用 name 作为唯一发布标识）
    b. 是否有 items vs itemsSource 双字段问题
    c. 是否有 onClick vs handleClick 命名不一致
 3. 检查 JSON schema 约定：

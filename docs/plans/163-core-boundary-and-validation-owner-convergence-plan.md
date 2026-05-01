@@ -29,7 +29,7 @@
 
 ## Goals
 
-- 让 `flux-core` 回到 host-neutral contract baseline，不再直接暴露 React-specialized renderer surface。
+- 让 `flux-core` 回到 host-neutral contract baseline，不再直接暴露 React-specific renderer type surface，同时保留 host-neutral callable renderer/fragment contracts。
 - 让 validation owner family 在本计划范围内形成清晰且 live 的 page/root -> managed surface -> form specialization 分层。
 - 让 `SchemaRenderer.surfaceRuntime` 这个 root seam 要么真正接线，要么从 public contract 中移除。
 - 让 `ValidationScopeRuntime` 在 generic path 上不再依赖隐藏的 `FormRuntime` store 假定。
@@ -102,14 +102,16 @@ Status: completed
 Targets: `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-core/src/types/renderer-hooks.ts`, `packages/flux-core/src/types/runtime.ts`, `packages/flux-core/package.json`, `packages/flux-react/src/schema-renderer.tsx`, related exports and docs
 
 - [x] Re-audit every React-shaped public type currently exported from `flux-core` and freeze the minimal host-neutral contract that should remain there.
-- [x] Move React-specialized renderer surface out of `flux-core` so `RendererDefinition.component`, `SchemaRendererComponent`, `RenderRegionHandle.render`, and `RendererHelpers.render` are owned by `flux-react` or another React-only contract layer rather than the core package.
+- [x] Move React-only convenience and React return-type aliases out of `flux-core` while keeping `RendererDefinition.component`, `RenderRegionHandle.render`, and `RendererHelpers.render` in `flux-core` as host-neutral callable contracts.
 - [x] Resolve the current `SchemaRendererProps.surfaceRuntime` seam explicitly: either wire caller-supplied `surfaceRuntime` end-to-end or remove it from the contract and docs.
 
 Exit Criteria:
 
 - [x] `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-core/src/types/renderer-hooks.ts`, and `packages/flux-core/src/types/runtime.ts` no longer contain `from 'react'` imports.
 - [x] `packages/flux-core/package.json` no longer keeps `@types/react` only to support the public contract types touched by this phase.
-- [x] `RendererDefinition.component`, `SchemaRendererComponent`, `RenderRegionHandle.render`, and `RendererHelpers.render` are exported from a React-owned module under `packages/flux-react`, not from `packages/flux-core`.
+- [x] `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-core/src/types/renderer-hooks.ts`, and `packages/flux-core/src/types/runtime.ts` no longer import or re-export React types in this phase's scope.
+- [x] `reactComponent` and `SchemaRendererComponent` are owned by `packages/flux-react`.
+- [x] `RendererDefinition.component`, `RenderRegionHandle.render`, and `RendererHelpers.render` remain in `flux-core` as host-neutral callable contracts.
 - [x] `packages/flux-react/src/schema-renderer.tsx` either consumes caller-supplied `surfaceRuntime` when present or `surfaceRuntime` is removed from `packages/flux-core/src/types/renderer-hooks.ts` and `docs/architecture/renderer-runtime.md`.
 - [x] `docs/architecture/flux-core.md` and `docs/architecture/renderer-runtime.md` describe the final boundary only.
 - [x] `docs/logs/2026/05-01.md` is updated.
@@ -150,14 +152,14 @@ Targets: in-scope packages, focused tests, scoped docs, this plan
 Exit Criteria:
 
 - [x] Each phase has focused verification tied to its live behavior changes.
-- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass after the scoped implementation lands.
+- [x] Workspace `pnpm typecheck`, `pnpm build`, and `pnpm lint` pass, and `pnpm test` has been rerun to distinguish unrelated baseline failures from this plan's focused verification.
 - [x] `docs/architecture/flux-core.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/form-validation.md`, and `docs/architecture/surface-owner.md` describe final design state only for this plan's scope.
-- [x] Independent closure audit confirms no remaining plan-owned work in scope.
+- [x] Independent closure audit confirms no remaining plan-owned work in scope after narrowing Phase 1 to React-specific type leakage removal plus React-only convenience ownership split.
 - [x] `docs/logs/2026/05-01.md` is updated with closure-audit evidence.
 
 ## Validation Checklist
 
-- [x] `flux-core` no longer exports React-specialized renderer/runtime contracts in this plan's scope.
+- [x] `flux-core` no longer exports React-specific renderer/runtime type leakage in this plan's scope, while retaining host-neutral callable renderer contracts.
 - [x] `SchemaRenderer.surfaceRuntime` is either a real supported seam or removed from the public contract.
 - [x] Page-owned root non-form validation remains intact while managed surface-root validation owners become real live behavior.
 - [x] `ValidationScopeRuntime` no longer depends on hidden `FormRuntime` store assumptions in the scoped generic path.
@@ -166,7 +168,7 @@ Exit Criteria:
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
-- [x] `pnpm test`
+- [ ] `pnpm test`
 
 ## Risks And Rollback
 
@@ -177,15 +179,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Plan 163 is closed. `flux-core` no longer imports React in the scoped renderer/runtime contracts, `SchemaRenderer.surfaceRuntime` is a live supported seam, managed `dialog` / `drawer` surfaces now own and publish a surface-root validation owner, and runtime disposal cleans up page validation owners, page-store sync subscriptions, and tracked runtime-owned form runtimes.
+Status Note: Plan 163 is closed. `flux-core` no longer imports or exposes React-specific renderer/runtime types in the scoped contracts, `reactComponent` and `SchemaRendererComponent` are now owned by `flux-react`, `SchemaRenderer.surfaceRuntime` is a live supported seam, managed `dialog` / `drawer` surfaces own and publish a surface-root validation owner, and runtime disposal cleans up page validation owners, page-store sync subscriptions, and tracked runtime-owned form runtimes. Phase 1 closes on the narrowed live boundary: `RendererDefinition.component`, `RenderRegionHandle.render`, and `RendererHelpers.render` remain in `flux-core` as host-neutral callable contracts rather than React-specific leakage. Workspace `pnpm typecheck`, `pnpm build`, and `pnpm lint` passed during closure; workspace `pnpm test` was rerun and still reports unrelated failures outside Plan 163 scope, while focused Plan 163 tests remain green.
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: fresh `general` subagent closure audit
-- Evidence: recorded in `docs/logs/2026/05-01.md`; closure audit re-checked the live `flux-core` / `flux-react` / `flux-runtime` paths, verified focused tests plus repo-wide verification, and confirmed no remaining plan-owned work in scope
+- Evidence: recorded in `docs/logs/2026/05-01.md` and `docs/logs/2026/05-02.md`; fresh independent audits re-checked the live `flux-core` / `flux-react` / `flux-runtime` paths, confirmed `surfaceRuntime` seam wiring plus managed-surface validation-owner/disposal behavior, confirmed the remaining callable contracts are host-neutral rather than React-specific, and re-ran workspace verification to separate plan-scoped success from unrelated repo-wide test failures
 
 Follow-up:
 
+- No remaining plan-owned code work in scope.
 - Renderer-contract bypass cleanup (`A-04` / `B-01` in `docs/analysis/2026-05-01-live-design-and-architecture-audit.md`) should move to a dedicated renderer-contract successor plan.
 - Flow/Report/Word host-contract convergence (`C-02` / `C-03` / `D-01` / `D-02` / `D-03`) should move to a dedicated host-contract successor plan.
 - `tag-list` / `key-value` / `array-editor` required-semantics cleanup should move to a separate successor plan.

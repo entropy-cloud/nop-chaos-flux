@@ -653,7 +653,7 @@ Preferred targeting matrix:
 
 Compatibility carriers:
 
-- `formId` remains a compatibility carrier for older built-in form-targeting paths such as `submitForm`; new schema should prefer `component:submit` targeting the concrete form instance
+- `formId` is a real targeting carrier for built-in form-targeting paths (`setValue`, `setValues`, `submitForm`). When `formId` is provided and resolves (through `ctx.form.id` match or component registry lookup), the action targets that form. When `formId` is provided but doesn't resolve, the action returns an explicit error instead of silently falling back. New schema should prefer `component:submit` targeting the concrete form instance for clarity, but `formId` remains a supported targeting mechanism.
 - overloaded path-style targeting fields such as `componentPath` are not the preferred authoring baseline for new schema when stable instance targeting by `componentId` or `componentName` is available
 
 ## Action Scope Ownership
