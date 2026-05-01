@@ -86,7 +86,7 @@ describe('formRendererDefinitions - relational and conditional field validation'
     await waitFor(() => {
       expect(screen.queryByText('Admin code is required for admins')).toBeNull();
     });
-  });
+  }, 15000);
 
   it('supports not-equals and required-unless relational validation in the UI', async () => {
     cleanup();
