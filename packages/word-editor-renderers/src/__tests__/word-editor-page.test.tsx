@@ -12,6 +12,7 @@ import {
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js';
+import * as wordEditorActionProvider from '../word-editor-action-provider.js';
 
 const mockedCore = vi.hoisted(() => ({
   saveDocumentMock: vi.fn(() => true),
@@ -385,6 +386,45 @@ describe('WordEditorPage', () => {
       expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
       expect(editorStore.setDirty).toHaveBeenCalledWith(false);
     });
+  });
+
+  it('ignores concurrent save triggers while a save is already running', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    let resolveSave: ((value: { ok: boolean }) => void) | undefined;
+    const saveProviderResult = new Promise<{ ok: boolean }>((resolve) => {
+      resolveSave = resolve;
+    });
+    const invoke = vi.fn(async (method: string) => {
+      if (method !== 'save') {
+        return { ok: false, error: new Error('unexpected method') };
+      }
+      await saveProviderResult;
+      return { ok: true };
+    });
+    const providerSpy = vi
+      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+      .mockReturnValue({
+        kind: 'host',
+        listMethods() {
+          return ['save'];
+        },
+        invoke,
+      } as any);
+
+    renderWordEditor();
+
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+
+    expect(invoke).toHaveBeenCalledTimes(1);
+    resolveSave?.({ ok: true });
+    await waitFor(() => {
+      expect(screen.getByText('已保存')).toBeTruthy();
+    });
+    providerSpy.mockRestore();
   });
 
   it('invokes onBack directly without local confirm handling', async () => {

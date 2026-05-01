@@ -48,6 +48,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSavingRef = useRef(false);
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets');
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false);
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null);
@@ -186,11 +187,20 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   }, [datasetStore, props.props.datasets]);
 
   const handleSave = useCallback(async () => {
-    const result = await actionProvider.invoke('save', undefined, {} as any);
-    if (result.ok) {
-      setSaveMessage(t('wordEditor.saved'));
-      if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current);
-      saveMessageTimerRef.current = setTimeout(() => setSaveMessage(null), 2000);
+    if (isSavingRef.current) {
+      return;
+    }
+
+    isSavingRef.current = true;
+    try {
+      const result = await actionProvider.invoke('save', undefined, {} as any);
+      if (result.ok) {
+        setSaveMessage(t('wordEditor.saved'));
+        if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current);
+        saveMessageTimerRef.current = setTimeout(() => setSaveMessage(null), 2000);
+      }
+    } finally {
+      isSavingRef.current = false;
     }
   }, [actionProvider]);
 
