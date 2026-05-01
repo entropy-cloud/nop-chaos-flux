@@ -31,6 +31,10 @@ import {
 } from './detail-draft-controller';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
+function logDetailViewAsyncError(action: 'open' | 'confirm', error: unknown) {
+  console.warn(`[detail-view] ${action} failed`, error);
+}
+
 export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchema>) {
   const parentForm = useCurrentForm();
   const runtime = useRendererRuntime();
@@ -262,9 +266,18 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       <FieldLabel content={labelContent} />
       <div data-slot="detail-view-viewer">{viewerContent}</div>
       {!effectiveDisabled && (
-        <Button type="button" variant="outline" size="sm" onClick={() => void handleOpen()}>
-          {triggerLabel}
-        </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              handleOpen().catch((error) => {
+                logDetailViewAsyncError('open', error);
+              });
+            }}
+          >
+            {triggerLabel}
+          </Button>
       )}
       <DetailSurface
         open={open}
@@ -279,7 +292,11 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
             errorSlot="detail-view-draft-error"
             confirming={confirming}
             onCancel={handleCancel}
-            onConfirm={() => void handleConfirm()}
+            onConfirm={() => {
+              handleConfirm().catch((error) => {
+                logDetailViewAsyncError('confirm', error);
+              });
+            }}
           />
         }
       >

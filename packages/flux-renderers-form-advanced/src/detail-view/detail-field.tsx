@@ -29,6 +29,10 @@ import {
 } from './detail-draft-controller';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
 
+function logDetailFieldAsyncError(action: 'open' | 'confirm', error: unknown) {
+  console.warn(`[detail-field] ${action} failed`, error);
+}
+
 export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSchema>) {
   const parentForm = useCurrentForm();
   const runtime = useRendererRuntime();
@@ -194,7 +198,16 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
           )}
         </div>
         {!presentation.effectiveDisabled && (
-          <Button type="button" variant="outline" size="sm" onClick={() => void handleOpen()}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              handleOpen().catch((error) => {
+                logDetailFieldAsyncError('open', error);
+              });
+            }}
+          >
             {triggerLabel}
           </Button>
         )}
@@ -212,7 +225,11 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
             errorSlot="detail-field-draft-error"
             confirming={confirming}
             onCancel={handleCancel}
-            onConfirm={() => void handleConfirm()}
+            onConfirm={() => {
+              handleConfirm().catch((error) => {
+                logDetailFieldAsyncError('confirm', error);
+              });
+            }}
           />
         }
       >
