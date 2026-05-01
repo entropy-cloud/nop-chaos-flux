@@ -261,7 +261,7 @@ describe('table row rendering helpers', () => {
       </table>,
     );
 
-    fireEvent.click(screen.getByLabelText('Expand'));
+    fireEvent.click(document.querySelector('[data-slot="table-expand-cell"] button')!);
     fireEvent.click(document.querySelector('[data-slot="checkbox"]')!);
     fireEvent.click(screen.getByText('Alice'));
 

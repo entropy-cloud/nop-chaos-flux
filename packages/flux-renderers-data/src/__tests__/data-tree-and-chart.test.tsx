@@ -260,8 +260,9 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
       expect(screen.getByText('Child B')).toBeTruthy();
     });
 
-    const rootTrigger = screen.getByLabelText('Collapse node');
-    fireEvent.click(rootTrigger);
+    const rootTrigger = document.querySelector('[data-slot="tree-node"] [aria-label]');
+    expect(rootTrigger).toBeTruthy();
+    fireEvent.click(rootTrigger as Element);
 
     await waitFor(() => {
       expect(screen.queryByText('Child A')).toBeNull();
@@ -305,8 +306,9 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
 
     expect(screen.queryByText('Child')).toBeNull();
 
-    const expandTrigger = screen.getByLabelText('Expand node');
-    fireEvent.click(expandTrigger);
+    const expandTrigger = document.querySelector('[data-slot="tree-node"] [aria-label]');
+    expect(expandTrigger).toBeTruthy();
+    fireEvent.click(expandTrigger as Element);
 
     await waitFor(() => {
       expect(screen.getByText('Child')).toBeTruthy();
