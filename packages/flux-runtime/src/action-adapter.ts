@@ -75,8 +75,6 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
 
           if (target.kind === 'resolved') {
             target.form.setValue(path, value);
-          } else if (ctx.form && !invocation.targeting.formId) {
-            ctx.form.setValue(path, value);
           } else {
             ctx.scope.update(path, value);
           }
@@ -99,9 +97,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: false, error: new Error(`Form not found: ${target.formId}`) };
           }
 
-          const formTarget = target.kind === 'resolved'
-            ? target.form
-            : (ctx.form && !invocation.targeting.formId ? ctx.form : undefined);
+          const formTarget = target.kind === 'resolved' ? target.form : undefined;
 
           if (formTarget) {
             if (basePath) {
@@ -148,6 +144,24 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         }
 
         case 'submitForm': {
+          if (invocation.targeting.formId) {
+            if (!ctx.componentRegistry) {
+              return { ok: false, error: new Error(`Form not found: ${invocation.targeting.formId} (no component registry)`) };
+            }
+            try {
+              const handle = ctx.componentRegistry.resolve({ componentId: invocation.targeting.formId });
+              if (!handle) {
+                return { ok: false, error: new Error(`Form not found: ${invocation.targeting.formId}`) };
+              }
+              return handle.capabilities.invoke('submit', {
+                interactionId: ctx.interactionId,
+                signal: invocation.signal,
+              }, ctx);
+            } catch {
+              return { ok: false, error: new Error(`Form not found: ${invocation.targeting.formId}`) };
+            }
+          }
+
           if (!ctx.form) {
             return { ok: false, error: new Error('submitForm requires form runtime') };
           }

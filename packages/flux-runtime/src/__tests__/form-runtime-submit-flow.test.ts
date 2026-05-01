@@ -191,6 +191,90 @@ describe('executeFormSubmit', () => {
     expect(submitAction).not.toHaveBeenCalled();
   });
 
+  it('blocks submit when summary-gate child is not ready or not valid', async () => {
+    const submitAction = vi.fn();
+    const notReadyState = { ready: false, validating: false, valid: true, hasErrors: false };
+    const setup = createSubmitInput({
+      sharedState: {
+        store: createSubmitInput().store,
+        lifecycleState: 'active',
+        runtimeFieldRegistrations: new Map(),
+        childContracts: new Map([
+          ['child-1', {
+            mode: 'summary-gate',
+            active: true,
+            childOwnerId: 'detail-1',
+            getState: () => notReadyState,
+          }],
+        ]),
+      },
+      input: {
+        getLifecycleHandlers: () => ({ submitAction }),
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input)).resolves.toMatchObject({
+      ok: false,
+    });
+    expect(submitAction).not.toHaveBeenCalled();
+  });
+
+  it('allows submit when summary-gate child is ready and valid', async () => {
+    const submitAction = vi.fn().mockResolvedValue({ ok: true, data: {} });
+    const validState = { ready: true, validating: false, valid: true, hasErrors: false };
+    const setup = createSubmitInput({
+      sharedState: {
+        store: createSubmitInput().store,
+        lifecycleState: 'active',
+        runtimeFieldRegistrations: new Map(),
+        childContracts: new Map([
+          ['child-1', {
+            mode: 'summary-gate',
+            active: true,
+            childOwnerId: 'detail-1',
+            getState: () => validState,
+          }],
+        ]),
+      },
+      input: {
+        getLifecycleHandlers: () => ({ submitAction }),
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input)).resolves.toMatchObject({
+      ok: true,
+    });
+    expect(submitAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores inactive summary-gate children', async () => {
+    const submitAction = vi.fn().mockResolvedValue({ ok: true, data: {} });
+    const notValidState = { ready: true, validating: false, valid: false, hasErrors: true };
+    const setup = createSubmitInput({
+      sharedState: {
+        store: createSubmitInput().store,
+        lifecycleState: 'active',
+        runtimeFieldRegistrations: new Map(),
+        childContracts: new Map([
+          ['inactive-child', {
+            mode: 'summary-gate',
+            active: false,
+            childOwnerId: 'detail-inactive',
+            getState: () => notValidState,
+          }],
+        ]),
+      },
+      input: {
+        getLifecycleHandlers: () => ({ submitAction }),
+      },
+    });
+
+    await expect(executeFormSubmit(setup.input)).resolves.toMatchObject({
+      ok: true,
+    });
+    expect(submitAction).toHaveBeenCalledTimes(1);
+  });
+
   it('routes success, failure, neutral, thrown, and aborted submit outcomes through the right lifecycle branches', async () => {
     const successResult = { ok: true, data: { saved: true } };
     const successHandler = vi.fn().mockResolvedValue({ ok: true, data: { wrapped: 'success' } });

@@ -163,10 +163,39 @@ export async function executeFormSubmit(
   }
 
   const childValidationPromises: Promise<import('@nop-chaos/flux-core').ValidationResult>[] = [];
+  const summaryGateBlockers: string[] = [];
   for (const contract of sharedState.childContracts.values()) {
-    if (contract.mode === 'recurse-submit' && contract.active) {
+    if (!contract.active) continue;
+
+    if (contract.mode === 'recurse-submit') {
       childValidationPromises.push(contract.triggerValidation());
+    } else if (contract.mode === 'summary-gate') {
+      const childState = contract.getState();
+      if (!childState.ready || childState.validating || !childState.valid) {
+        summaryGateBlockers.push(contract.childOwnerId);
+      }
     }
+  }
+
+  if (summaryGateBlockers.length > 0) {
+    const summaryGateFailure = {
+      ok: false,
+      error: [new Error(`Submit blocked by child scope: ${summaryGateBlockers.join(', ')}`)],
+      data: {},
+    } as const;
+
+    setIsSubmitting(false);
+
+    if (submittingTimer !== undefined) {
+      clearTimeout(submittingTimer);
+      submittingTimer = undefined;
+    }
+
+    store.setSubmitting(false);
+
+    return lifecycleHandlers?.onValidateError
+      ? await lifecycleHandlers.onValidateError(summaryGateFailure, options)
+      : summaryGateFailure;
   }
 
   if (childValidationPromises.length > 0) {

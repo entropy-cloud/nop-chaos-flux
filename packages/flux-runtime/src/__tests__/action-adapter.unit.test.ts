@@ -26,11 +26,11 @@ function createCtx(overrides: Record<string, unknown> = {}) {
   } as any;
 }
 
-function createBuiltInInvocation(action: string, args?: Record<string, unknown>) {
+function createBuiltInInvocation(action: string, args?: Record<string, unknown>, targeting?: Record<string, unknown>) {
   return {
     action,
     args,
-    targeting: {},
+    targeting: targeting ?? {},
     actionNode: {},
   } as any;
 }
@@ -372,5 +372,136 @@ describe('createActionRuntimeAdapter direct branches', () => {
       ),
     ).resolves.toEqual({ ok: true, data: { opened: true } });
     expect(provider.invoke).toHaveBeenCalledWith('open', { title: 'Test' }, ctx);
+  });
+});
+
+describe('formId targeting in built-in actions', () => {
+  it('setValue uses form when formId matches', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', setValue: vi.fn() };
+    const scopeUpdate = vi.fn();
+    const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
+    scope.update = scopeUpdate;
+
+    await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('setValue', { path: 'name', value: 'Alice' }, { formId: 'form-1' }),
+      createCtx({ form, scope }),
+    );
+
+    expect(form.setValue).toHaveBeenCalledWith('name', 'Alice');
+    expect(scopeUpdate).not.toHaveBeenCalled();
+  });
+
+  it('setValue returns error when formId does not match', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', setValue: vi.fn() };
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('setValue', { path: 'name', value: 'Alice' }, { formId: 'form-2' }),
+      createCtx({ form }),
+    );
+
+    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
+    expect(form.setValue).not.toHaveBeenCalled();
+  });
+
+  it('setValue uses scope without formId even when form exists', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', setValue: vi.fn() };
+    const scopeUpdate = vi.fn();
+    const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
+    scope.update = scopeUpdate;
+
+    await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('setValue', { path: 'name', value: 'Alice' }),
+      createCtx({ form, scope }),
+    );
+
+    expect(scopeUpdate).toHaveBeenCalledWith('name', 'Alice');
+    expect(form.setValue).not.toHaveBeenCalled();
+  });
+
+  it('setValue uses scope without form when no formId and no form', async () => {
+    const adapter = createAdapter();
+    const scopeUpdate = vi.fn();
+    const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
+    scope.update = scopeUpdate;
+
+    await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('setValue', { path: 'name', value: 'Alice' }),
+      createCtx({ form: undefined, scope }),
+    );
+
+    expect(scopeUpdate).toHaveBeenCalledWith('name', 'Alice');
+  });
+
+  it('setValues returns error when formId does not match', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', setValues: vi.fn() };
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('setValues', { values: { name: 'Alice' } }, { formId: 'form-2' }),
+      createCtx({ form }),
+    );
+
+    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
+    expect(form.setValues).not.toHaveBeenCalled();
+  });
+
+  it('submitForm resolves through component registry when formId is provided', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', submit: vi.fn() };
+    const remoteHandle = {
+      capabilities: {
+        invoke: vi.fn().mockResolvedValue({ ok: true, data: { submitted: true } }),
+      },
+    };
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('submitForm', undefined, { formId: 'remote-form' }),
+      createCtx({
+        form,
+        componentRegistry: {
+          resolve: vi.fn().mockReturnValue(remoteHandle),
+        },
+      }),
+    );
+
+    expect(result).toMatchObject({ ok: true, data: { submitted: true } });
+    expect(form.submit).not.toHaveBeenCalled();
+  });
+
+  it('submitForm returns error when formId does not resolve', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', submit: vi.fn() };
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('submitForm', undefined, { formId: 'missing-form' }),
+      createCtx({
+        form,
+        componentRegistry: {
+          resolve: vi.fn().mockReturnValue(undefined),
+        },
+      }),
+    );
+
+    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
+    expect(form.submit).not.toHaveBeenCalled();
+  });
+
+  it('submitForm returns error when formId is provided but no component registry', async () => {
+    const adapter = createAdapter();
+    const form = { id: 'form-1', submit: vi.fn() };
+
+    const result = await adapter.invokeBuiltInAction(
+      createBuiltInInvocation('submitForm', undefined, { formId: 'missing-form' }),
+      createCtx({
+        form,
+        componentRegistry: undefined,
+      }),
+    );
+
+    expect(result).toMatchObject({ ok: false, error: expect.any(Error) });
+    expect(form.submit).not.toHaveBeenCalled();
   });
 });
