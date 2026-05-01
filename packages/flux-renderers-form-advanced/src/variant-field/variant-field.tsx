@@ -57,17 +57,16 @@ function injectDetectVariantArgs(
 export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldSchema>) {
   const parentForm = useCurrentForm();
   const parentScope = useRenderScope();
-  const schema = props.schema as VariantFieldSchema;
   const schemaProps = props.props as VariantFieldSchema;
   const name = String(schemaProps.name ?? '');
   const readOnly = Boolean(schemaProps.readOnly);
   const variants = React.useMemo(
-    () => (schema.variants ?? []) as VariantOption[],
-    [schema.variants],
+    () => ((props.schema as VariantFieldSchema).variants ?? []) as VariantOption[],
+    [props.schema],
   );
   const selectorMode =
-    (schema.selector as { mode?: string } | undefined)?.mode ?? schema.selectorMode ?? 'tabs';
-  const defaultVariant = schema.defaultVariant;
+    (schemaProps.selector as { mode?: string } | undefined)?.mode ?? schemaProps.selectorMode ?? 'tabs';
+  const defaultVariant = schemaProps.defaultVariant;
 
   const rawValue = useCurrentFormState(
     (state) => (name ? getIn(state.values, name) : state.values),
@@ -115,13 +114,13 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   }, []);
 
   const runDetectVariantAction = React.useCallback(async () => {
-    if (!schema.detectVariantAction || matchedKey) {
+    if (!schemaProps.detectVariantAction || matchedKey) {
       setDetectedKey(undefined);
       return;
     }
 
     const result = await props.helpers.dispatch(
-      injectDetectVariantArgs(schema.detectVariantAction, {
+      injectDetectVariantArgs(schemaProps.detectVariantAction, {
         value: currentValue,
         variants: variants.map((variant) => variant.key),
       }),
@@ -151,7 +150,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     parentScope,
     props.helpers,
     props.node,
-    schema.detectVariantAction,
+    schemaProps.detectVariantAction,
     variants,
   ]);
 
@@ -291,14 +290,14 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     );
   };
 
-  const labelAlignValue = schema.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
+  const labelAlignValue = schemaProps.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
   const remarkValue =
-    typeof schema.remark === 'object' && schema.remark !== null
-      ? toFieldRemarkProps(schema.remark as Parameters<typeof toFieldRemarkProps>[0])
+    typeof schemaProps.remark === 'object' && schemaProps.remark !== null
+      ? toFieldRemarkProps(schemaProps.remark as Parameters<typeof toFieldRemarkProps>[0])
       : undefined;
   const labelRemarkValue =
-    typeof schema.labelRemark === 'object' && schema.labelRemark !== null
-      ? toFieldRemarkProps(schema.labelRemark as Parameters<typeof toFieldRemarkProps>[0])
+    typeof schemaProps.labelRemark === 'object' && schemaProps.labelRemark !== null
+      ? toFieldRemarkProps(schemaProps.labelRemark as Parameters<typeof toFieldRemarkProps>[0])
       : undefined;
 
   return (
@@ -306,12 +305,12 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       name={name || undefined}
       label={labelContent}
       required={Boolean(schemaProps.required) || undefined}
-      hint={schema.hint}
-      description={schema.description}
+      hint={schemaProps.hint as string | undefined}
+      description={schemaProps.description as string | undefined}
       remark={remarkValue}
       labelRemark={labelRemarkValue}
       labelAlign={labelAlignValue === 'inherit' ? undefined : labelAlignValue}
-      labelWidth={schema.labelWidth}
+      labelWidth={schemaProps.labelWidth as string | number | undefined}
       rootTag="div"
       className={props.meta.className}
       testid={props.meta.testid}
@@ -331,13 +330,13 @@ export const variantFieldRendererDefinition: RendererDefinition = {
   fields: [
     formLabelFieldRule,
     { key: 'variants', kind: 'ignored' },
-    { key: 'selector', kind: 'ignored' },
-    { key: 'selectorMode', kind: 'ignored' },
-    { key: 'defaultVariant', kind: 'ignored' },
-    { key: 'detectVariantAction', kind: 'ignored' },
-    { key: 'transformInAction', kind: 'ignored' },
-    { key: 'transformOutAction', kind: 'ignored' },
-    { key: 'validateValueAction', kind: 'ignored' },
+    { key: 'selector', kind: 'prop' },
+    { key: 'selectorMode', kind: 'prop' },
+    { key: 'defaultVariant', kind: 'prop' },
+    { key: 'detectVariantAction', kind: 'prop' },
+    { key: 'transformInAction', kind: 'prop' },
+    { key: 'transformOutAction', kind: 'prop' },
+    { key: 'validateValueAction', kind: 'prop' },
   ],
   validation: {
     kind: 'field',

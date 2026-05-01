@@ -97,7 +97,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const parentForm = useCurrentForm();
   const name = String(props.props.name ?? '');
   const readOnly = Boolean(props.props.readOnly);
-  const schema = props.schema as ObjectFieldSchema;
+  const schemaProps = props.props as ObjectFieldSchema;
 
   const formValue = useCurrentFormState(
     (state) => (name ? getIn(state.values, name) : state.values),
@@ -106,7 +106,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   );
   const scopeValue = useScopeSelector((data) => (name ? getIn(data, name) : data), Object.is);
   const rawValue = parentForm ? formValue : scopeValue;
-  const usesWorkingValue = Boolean(schema.transformInAction || schema.transformOutAction);
+  const usesWorkingValue = Boolean(schemaProps.transformInAction || schemaProps.transformOutAction);
 
   const runAdaptationAction = React.useCallback(
     (actionSchema: ObjectFieldSchema['transformInAction']) =>
@@ -122,12 +122,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const valueAdapter = React.useMemo(
     () =>
       actionAdapter(
-        schema.transformInAction,
-        schema.transformOutAction,
+        schemaProps.transformInAction,
+        schemaProps.transformOutAction,
         undefined,
         runAdaptationAction,
       ),
-    [runAdaptationAction, schema.transformInAction, schema.transformOutAction],
+    [runAdaptationAction, schemaProps.transformInAction, schemaProps.transformOutAction],
   );
 
   const [resolvedValue, setResolvedValue] = React.useState(rawValue);
@@ -136,7 +136,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   const pendingTransformOutOwner = React.useMemo(() => ({}), []);
 
   React.useEffect(() => {
-    if (!usesWorkingValue || !schema.transformInAction) {
+    if (!usesWorkingValue || !schemaProps.transformInAction) {
       setResolvedValue(rawValue);
       return;
     }
@@ -179,7 +179,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     props.meta.disabled,
     rawValue,
     readOnly,
-    schema.transformInAction,
+    schemaProps.transformInAction,
     usesWorkingValue,
     valueAdapter,
   ]);
@@ -207,7 +207,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
         setResolvedValue(nextWorkingValue);
       }
 
-      if (schema.transformOutAction) {
+      if (schemaProps.transformOutAction) {
         const committedValue = valueAdapter.out(nextWorkingValue, {
           name,
           readOnly: readOnly || Boolean(props.meta.disabled),
@@ -284,7 +284,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
       props.meta.disabled,
       rawValue,
       readOnly,
-      schema.transformOutAction,
+      schemaProps.transformOutAction,
       transformOutOwner,
       usesWorkingValue,
       valueAdapter,
@@ -342,7 +342,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   }, [parentForm, name, projectedValue, writeProjectedValue]);
 
   React.useEffect(() => {
-    if (!parentForm || !name || !schema.transformOutAction) {
+    if (!parentForm || !name || !schemaProps.transformOutAction) {
       return;
     }
 
@@ -371,7 +371,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
     return () => {
       parentForm.unregisterChildContract(childOwnerId);
     };
-  }, [name, parentForm, pendingTransformOutOwner, schema.transformOutAction]);
+  }, [name, parentForm, pendingTransformOutOwner, schemaProps.transformOutAction]);
 
   return (
     <div data-slot="field-control">
@@ -391,8 +391,8 @@ export const objectFieldRendererDefinition: RendererDefinition = {
   regions: ['body'],
   fields: [
     formLabelFieldRule,
-    { key: 'transformInAction', kind: 'ignored' },
-    { key: 'transformOutAction', kind: 'ignored' },
+    { key: 'transformInAction', kind: 'prop' },
+    { key: 'transformOutAction', kind: 'prop' },
   ],
   validation: {
     kind: 'field',

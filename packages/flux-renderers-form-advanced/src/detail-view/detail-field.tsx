@@ -34,12 +34,11 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const parentValidationOwner = useCurrentValidationScope();
-  const schema = props.schema as DetailFieldSchema;
   const schemaProps = props.props as DetailFieldSchema;
   const name = String(schemaProps.name ?? '');
   const readOnly = Boolean(schemaProps.readOnly);
-  const surfaceMode = (schema.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
-  const surfaceTitle = (schema.surface as { title?: string } | undefined)?.title ?? '';
+  const surfaceMode = (schemaProps.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
+  const surfaceTitle = (schemaProps.surface as { title?: string } | undefined)?.title ?? '';
   const triggerLabel = String(schemaProps.triggerLabel ?? 'Edit');
   const validationMessage = t('flux.common.detailDraftValidationError');
 
@@ -96,7 +95,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     if (presentation.effectiveDisabled) return;
 
     const adaptedValue = await runTransformIn(
-      schema.transformInAction,
+      schemaProps.transformInAction,
       {
         rawValue: fieldValue,
         name,
@@ -136,7 +135,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       const { workingValue } = readDetailDraftValues(draftForm);
 
       const validation = await runValidate(
-        schema.validateValueAction,
+        schemaProps.validateValueAction,
         {
           workingValue,
           originalValue: fieldValue,
@@ -155,7 +154,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       }
 
       const writeback = await runTransformOut(
-        schema.transformOutAction,
+        schemaProps.transformOutAction,
         {
           workingValue,
           originalValue: fieldValue,
@@ -234,10 +233,10 @@ export const detailFieldRendererDefinition: RendererDefinition = {
     formLabelFieldRule,
     { key: 'triggerLabel', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
-    { key: 'surface', kind: 'ignored' },
-    { key: 'transformInAction', kind: 'ignored' },
-    { key: 'validateValueAction', kind: 'ignored' },
-    { key: 'transformOutAction', kind: 'ignored' },
+    { key: 'surface', kind: 'prop' },
+    { key: 'transformInAction', kind: 'prop' },
+    { key: 'validateValueAction', kind: 'prop' },
+    { key: 'transformOutAction', kind: 'prop' },
   ],
   scopePolicy: 'form',
   validation: {
