@@ -47,7 +47,7 @@ describe('ReportInspectorRenderer', () => {
   it('renders empty label when no schema body is available', () => {
     renderInspector({});
 
-    expect(screen.getByText('No inspector panels available.')).toBeTruthy();
+    expect(screen.getByText('无可用的检查器面板。')).toBeTruthy();
   });
 
   it('renders custom emptyLabel when no schema body is available', () => {

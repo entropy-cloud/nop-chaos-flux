@@ -41,6 +41,7 @@ export interface ReportDesignerCore {
   registerFieldDrop(adapter: FieldDropAdapter): void;
   registerPreview(adapter: import('./adapters.js').PreviewAdapter): void;
   registerCodec(adapter: import('./adapters.js').TemplateCodecAdapter): void;
+  dispose(): void;
 }
 
 export interface CreateReportDesignerCoreOptions {
@@ -113,8 +114,49 @@ export function createReportDesignerCore(
   }));
   let cachedState = store.getState();
   let cachedSnapshot = buildSnapshot(cachedState);
+  let disposed = false;
+  let refreshDerivedStateController: AbortController | undefined;
+  let refreshFieldSourcesController: AbortController | undefined;
+
+  function createOperationSignal(kind: 'refresh-derived-state' | 'refresh-field-sources') {
+    if (disposed) {
+      const controller = new AbortController();
+      controller.abort();
+      return controller.signal;
+    }
+
+    const controller = new AbortController();
+    if (kind === 'refresh-derived-state') {
+      refreshDerivedStateController?.abort();
+      refreshDerivedStateController = controller;
+    } else {
+      refreshFieldSourcesController?.abort();
+      refreshFieldSourcesController = controller;
+    }
+
+    return controller.signal;
+  }
+
+  function clearOperationSignal(kind: 'refresh-derived-state' | 'refresh-field-sources', signal: AbortSignal) {
+    const current =
+      kind === 'refresh-derived-state' ? refreshDerivedStateController : refreshFieldSourcesController;
+    if (current?.signal !== signal) {
+      return;
+    }
+
+    if (kind === 'refresh-derived-state') {
+      refreshDerivedStateController = undefined;
+    } else {
+      refreshFieldSourcesController = undefined;
+    }
+  }
 
   async function refreshDerivedState() {
+    const signal = createOperationSignal('refresh-derived-state');
+    if (signal.aborted) {
+      return [];
+    }
+
     const snapshot = store.getState();
     try {
       const fieldSources = await loadFieldSources({
@@ -127,40 +169,54 @@ export function createReportDesignerCore(
         getSnapshot: () => buildSnapshot(store.getState()),
       });
 
+      if (signal.aborted || disposed) {
+        return [];
+      }
+
       const resolvedSchema = resolveInspectorSchemaForTarget({
         config,
         target: snapshot.selectionTarget,
         profile,
       });
 
-      store.setState((current) => ({
-        ...current,
-        fieldSources,
-        inspector: {
-          ...current.inspector,
-          mode: config.inspector?.mode,
-          resolvedSchema,
-          loading: false,
-          error: undefined,
-        },
-      }));
+      if (!signal.aborted && !disposed) {
+        store.setState((current) => ({
+          ...current,
+          fieldSources,
+          inspector: {
+            ...current.inspector,
+            mode: config.inspector?.mode,
+            resolvedSchema,
+            loading: false,
+            error: undefined,
+          },
+        }));
+      }
 
       return resolvedSchema;
     } catch (error) {
-      store.setState((current) => ({
-        ...current,
-        inspector: {
-          ...current.inspector,
-          resolvedSchema: undefined,
-          loading: false,
-          error,
-        },
-      }));
+      if (!signal.aborted && !disposed) {
+        store.setState((current) => ({
+          ...current,
+          inspector: {
+            ...current.inspector,
+            resolvedSchema: undefined,
+            loading: false,
+            error,
+          },
+        }));
+      }
       return [];
+    } finally {
+      clearOperationSignal('refresh-derived-state', signal);
     }
   }
 
   async function setSelectionTarget(target?: ReportSelectionTarget) {
+    if (disposed) {
+      return;
+    }
+
     store.setState((current) => ({
       ...current,
       selectionTarget: target,
@@ -199,6 +255,11 @@ export function createReportDesignerCore(
   }
 
   async function refreshFieldSources(): Promise<FieldSourceSnapshot[]> {
+    const signal = createOperationSignal('refresh-field-sources');
+    if (signal.aborted) {
+      return [];
+    }
+
     const fieldSources = await loadFieldSources({
       config,
       document: store.getState().document,
@@ -209,7 +270,13 @@ export function createReportDesignerCore(
       getSnapshot: () => buildSnapshot(store.getState()),
     });
 
+    if (signal.aborted || disposed) {
+      clearOperationSignal('refresh-field-sources', signal);
+      return [];
+    }
+
     store.setState((current) => ({ ...current, fieldSources }));
+    clearOperationSignal('refresh-field-sources', signal);
     return fieldSources;
   }
 
@@ -292,6 +359,18 @@ export function createReportDesignerCore(
 
     registerCodec(adapter) {
       registry.codecs.set(adapter.id, adapter);
+    },
+
+    dispose() {
+      if (disposed) {
+        return;
+      }
+
+      disposed = true;
+      refreshDerivedStateController?.abort();
+      refreshFieldSourcesController?.abort();
+      refreshDerivedStateController = undefined;
+      refreshFieldSourcesController = undefined;
     },
   };
 }

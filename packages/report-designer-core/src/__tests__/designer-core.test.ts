@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { vi } from 'vitest';
 import {
   createEmptyDocument,
   createReportDesignerCore,
@@ -312,5 +313,45 @@ describe('createReportDesignerCore', () => {
   it('should refresh field sources', async () => {
     const sources = await core.refreshFieldSources();
     expect(Array.isArray(sources)).toBe(true);
+  });
+
+  it('aborts stale selection refreshes and dispose aborts in-flight work', async () => {
+    const resolvers: Array<(value: any) => void> = [];
+
+    const fieldSourceProvider = {
+      id: 'async-provider',
+      load: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolvers.push(resolve);
+          }),
+      ),
+    };
+
+    const asyncCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        fieldSources: [{ id: 'remote', label: 'Remote', provider: 'async-provider', groups: [] }],
+      },
+      adapters: {
+        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
+      },
+    });
+
+    const first = asyncCore.setSelectionTarget({ kind: 'workbook' });
+    const second = asyncCore.setSelectionTarget({ kind: 'sheet', sheetId });
+
+    expect(resolvers.length).toBeGreaterThanOrEqual(3);
+
+    resolvers[0]?.([{ id: 'initial', label: 'Initial', groups: [] }]);
+    resolvers[1]?.([{ id: 'stale', label: 'Stale', groups: [] }]);
+    await Promise.allSettled([first]);
+    expect(asyncCore.getSnapshot().fieldSources).toEqual([]);
+
+    asyncCore.dispose();
+    resolvers[2]?.([{ id: 'fresh', label: 'Fresh', groups: [] }]);
+    await Promise.allSettled([second]);
+    expect(asyncCore.getSnapshot().fieldSources).toEqual([]);
   });
 });

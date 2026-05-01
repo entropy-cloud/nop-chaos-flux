@@ -146,6 +146,12 @@ export function ReportDesignerPageRenderer(
     void core.refreshFieldSources();
   }, [core]);
 
+  useEffect(() => {
+    return () => {
+      core.dispose();
+    };
+  }, [core]);
+
   const snapshot = useSyncExternalStore(core.subscribe, core.getSnapshot, core.getSnapshot);
   const spreadsheetSnapshot = useSyncExternalStore(
     spreadsheetCore.subscribe,

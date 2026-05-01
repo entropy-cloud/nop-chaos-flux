@@ -96,7 +96,7 @@ describe('ReportFieldPanelRenderer', () => {
   it('renders default empty label when no field sources and no emptyLabel', () => {
     renderFieldPanel({ fieldSources: [] });
 
-    expect(screen.getByText('No field sources registered.')).toBeTruthy();
+    expect(screen.getByText('未注册字段源。')).toBeTruthy();
   });
 
   it('disables dragging when dragEnabled is false', () => {
