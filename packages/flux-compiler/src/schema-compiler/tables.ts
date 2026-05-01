@@ -22,6 +22,11 @@ export const TABLE_COLUMN_REGION_FIELDS = [
     params: ['record', 'index'] as readonly string[],
     isolate: true,
   },
+  {
+    key: 'body',
+    regionKeySuffix: 'quickEditBody',
+    compiledKey: 'quickEditBodyRegionKey',
+  },
 ] as const;
 
 export const TABS_ITEM_REGION_FIELDS = [

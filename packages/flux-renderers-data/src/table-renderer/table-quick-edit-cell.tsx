@@ -36,7 +36,7 @@ export function resolveTableQuickEditConfig(
   }
 
   const config = column.quickEdit as TableColumnQuickEditConfig;
-  if (!column.name && config.body === undefined) {
+  if (!column.name && config.body === undefined && !(column as Record<string, unknown>).quickEditBodyRegionKey) {
     return undefined;
   }
 

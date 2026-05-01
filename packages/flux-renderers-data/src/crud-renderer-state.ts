@@ -229,13 +229,6 @@ export function useCrudRuntimeState(args: {
     fallbackPageSize,
   } = args;
 
-  const [stableDefaultQuery, setStableDefaultQuery] = useState(defaultQuery);
-  useEffect(() => {
-    if (!shallowEqualRecords(stableDefaultQuery, defaultQuery)) {
-      setStableDefaultQuery(defaultQuery);
-    }
-  }, [defaultQuery, stableDefaultQuery]);
-
   const queryState = useScopeSelector(
     (scopeData) => {
       const owner = toRecord(getIn(scopeData, ownerStatePath));
@@ -247,7 +240,7 @@ export function useCrudRuntimeState(args: {
             ? toRecord(query.values)
             : isRecord(ownerQuery.values)
               ? toRecord(ownerQuery.values)
-              : stableDefaultQueryRef.current,
+              : defaultQuery,
         refreshCount: isRecord(query)
           ? toPositiveNumber(query.refreshCount, 0)
           : toPositiveNumber(ownerQuery.refreshCount, 0),
@@ -302,7 +295,7 @@ export function useCrudRuntimeState(args: {
     const snapshot = scope.readVisible();
 
     if (!isRecord(getIn(snapshot, queryStatePath))) {
-      scope.update(queryStatePath, { values: stableDefaultQueryRef.current, refreshCount: 0 });
+      scope.update(queryStatePath, { values: defaultQuery, refreshCount: 0 });
     }
     if (!getIn(snapshot, paginationStatePath)) {
       scope.update(paginationStatePath, { currentPage: 1, pageSize: fallbackPageSize });
@@ -319,6 +312,7 @@ export function useCrudRuntimeState(args: {
   }, [
     fallbackPageSize,
     filterStatePath,
+    defaultQuery,
     paginationStatePath,
     queryStatePath,
     scope,

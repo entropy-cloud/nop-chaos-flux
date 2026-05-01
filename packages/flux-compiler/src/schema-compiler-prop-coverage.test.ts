@@ -117,9 +117,8 @@ const formRenderer: RendererDefinition = {
             fields: {
               validateWhenHidden: { kind: 'boolean' },
               clearValueWhenHidden: { kind: 'boolean' },
-              submitWhenHidden: { kind: 'boolean' },
             },
-            optional: ['validateWhenHidden', 'clearValueWhenHidden', 'submitWhenHidden'],
+            optional: ['validateWhenHidden', 'clearValueWhenHidden'],
           },
         ],
       },
@@ -465,19 +464,6 @@ describe('schema property coverage — form', () => {
       statusPath: 'formStatus',
     });
     expect(root.propsProgram.value.statusPath).toBe('formStatus');
-  });
-
-  it('compiles form with submitWhenHidden via hiddenFieldPolicy', () => {
-    const root = compileNode(compiler, {
-      type: 'form',
-      body: [],
-      hiddenFieldPolicy: {
-        validateWhenHidden: false,
-        clearValueWhenHidden: true,
-        submitWhenHidden: true,
-      },
-    });
-    expect(root.propsProgram.value.hiddenFieldPolicy.submitWhenHidden).toBe(true);
   });
 });
 
