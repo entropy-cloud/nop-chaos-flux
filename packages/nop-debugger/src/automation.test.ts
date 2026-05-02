@@ -103,6 +103,7 @@ describe('debugger automation helpers', () => {
       events: [],
       filters,
       pinnedErrors: { earliest: [], latest: [] },
+      strictMode: false,
     };
     const overview: NopDebuggerOverview = {
       errorCount: 0,
@@ -293,6 +294,7 @@ describe('debugger automation helpers', () => {
       events: [],
       filters,
       pinnedErrors: { earliest: [], latest: [] },
+      strictMode: false,
     };
     const overview: NopDebuggerOverview = {
       errorCount: 0,

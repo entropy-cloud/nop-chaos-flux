@@ -6,6 +6,7 @@ import type {
   RendererPlugin,
   RendererRuntime,
 } from '@nop-chaos/flux-core';
+import { setStrictValidationGlobal } from '@nop-chaos/flux-core';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters';
 import {
   createAutomationApi,
@@ -375,6 +376,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
       currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
       currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
+      store.setStrictMode(runtime?.strictMode ?? false);
     },
     subscribe(listener: () => void) {
       return store.subscribe(listener);
@@ -401,6 +403,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
           actionScope,
         });
       }
+    },
+    setStrictMode(enabled: boolean) {
+      setStrictValidationGlobal(enabled);
+      store.setStrictMode(enabled);
     },
     getComponentTree() {
       return currentGetComponentTree();

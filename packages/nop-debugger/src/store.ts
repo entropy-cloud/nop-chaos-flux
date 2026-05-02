@@ -18,6 +18,7 @@ export interface NopDebuggerStore {
   setActiveTab(tab: NopDebuggerTab): void;
   setPosition(position: { x: number; y: number }): void;
   toggleFilter(filter: NopDebuggerSnapshot['filters'][number]): void;
+  setStrictMode(enabled: boolean): void;
 }
 
 export function createDebuggerStore(input: {
@@ -39,6 +40,7 @@ export function createDebuggerStore(input: {
     panelOpen: input.defaultOpen,
     minimized: false,
     paused: false,
+    strictMode: false,
     activeTab: input.defaultTab,
     position: input.position,
     events: [],
@@ -210,6 +212,9 @@ export function createDebuggerStore(input: {
           filters: [...current.filters, filter],
         };
       });
+    },
+    setStrictMode(enabled: boolean) {
+      setSnapshot((current) => ({ ...current, strictMode: enabled }));
     },
   };
 }

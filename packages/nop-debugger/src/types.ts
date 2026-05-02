@@ -144,6 +144,7 @@ export interface NopDebuggerSnapshot {
   panelOpen: boolean;
   minimized: boolean;
   paused: boolean;
+  strictMode: boolean;
   activeTab: NopDebuggerTab;
   position: { x: number; y: number };
   events: NopDebugEvent[];
@@ -449,6 +450,7 @@ export interface NopDebuggerController {
   setRuntime(runtime: RendererRuntime | null): void;
   setComponentRegistry(registry: ComponentHandleRegistry | null): void;
   setActionScope(actionScope: ActionScope | null): void;
+  setStrictMode(enabled: boolean): void;
   getComponentTree(): NopComponentTreeItem[];
   inspectNode(cid: number): NopComponentInspectResult | undefined;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;

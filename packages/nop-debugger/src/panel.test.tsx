@@ -80,6 +80,7 @@ export function createSnapshot(): NopDebuggerSnapshot {
     events: [],
     filters: ['render', 'action', 'api', 'compile', 'notify', 'error'],
     pinnedErrors: { earliest: [], latest: [] },
+    strictMode: false,
   };
 }
 
@@ -228,6 +229,7 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     setActiveTab,
     setPanelPosition,
     toggleFilter,
+    setStrictMode: vi.fn(),
     queryEvents: () => [],
     getLatestEvent: () => undefined,
     getLatestError: () => undefined,

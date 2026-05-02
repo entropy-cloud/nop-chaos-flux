@@ -376,6 +376,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         <OverviewTab
           overview={overview}
           paused={snapshot.paused}
+          strictMode={snapshot.strictMode}
           latestTrace={latestTrace}
           latestTraceSummary={latestTraceSummary}
         />

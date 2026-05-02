@@ -40,6 +40,7 @@ function createSnapshot(events: NopDebugEvent[]): NopDebuggerSnapshot {
     events,
     filters: ['render', 'action', 'api', 'compile', 'notify', 'error'],
     pinnedErrors: { earliest: [], latest: [] },
+    strictMode: false,
   };
 }
 

@@ -12,10 +12,11 @@ function formatClock(timestamp: number) {
 export function OverviewTab(props: {
   overview: NopDebuggerOverview;
   paused: boolean;
+  strictMode: boolean;
   latestTrace?: NopInteractionTrace;
   latestTraceSummary: { headline: string; detail: string };
 }) {
-  const { overview, paused, latestTrace, latestTraceSummary } = props;
+  const { overview, paused, strictMode, latestTrace, latestTraceSummary } = props;
   return (
     <div className="ndbg-overview">
       <article className="ndbg-metric-card">
@@ -66,6 +67,11 @@ export function OverviewTab(props: {
             ? `Slowest: ${overview.slowestRenderMs}ms${overview.slowestRenderMs > 16 ? ' (slow)' : ''}`
             : 'No render:end events'}
         </span>
+      </article>
+      <article className="ndbg-metric-card" data-error={strictMode ? undefined : ''}>
+        <span className="ndbg-metric-label">{t('flux.debugger.strictValidation')}</span>
+        <strong>{strictMode ? 'ON' : 'OFF'}</strong>
+        <span>{strictMode ? 'Unknown properties generate diagnostics' : 'Unknown properties silently become props'}</span>
       </article>
     </div>
   );
