@@ -275,15 +275,16 @@ function usePathFieldStoreSelector<T>(args: {
 export function useCurrentFormState<T>(
   selector: (state: FormStoreState) => T,
   equalityFn: (a: T, b: T) => boolean = Object.is,
-  options?: { enabled?: boolean; path?: string },
+  options?: { enabled?: boolean; path?: string; paths?: readonly string[] },
 ): T {
   const form = useCurrentForm();
   const enabled = options?.enabled !== false;
   const path = options?.path;
+  const paths = options?.paths;
   const store = form?.store;
   const subscribe = useMemo(
-    () => createFormStoreSubscribe(store, { enabled, path }),
-    [enabled, path, store],
+    () => createFormStoreSubscribe(store, { enabled, path, paths }),
+    [enabled, path, paths, store],
   );
   const getSnapshot = useMemo(() => createFormStoreSnapshot(store, enabled), [enabled, store]);
 

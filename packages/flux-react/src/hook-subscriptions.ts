@@ -69,14 +69,19 @@ export function createFormErrorSubscribe(
 
 export function createFormStoreSubscribe(
   store: FormStoreApi | undefined,
-  options?: { enabled?: boolean; path?: string },
+  options?: { enabled?: boolean; path?: string; paths?: readonly string[] },
 ) {
   const enabled = options?.enabled !== false;
   const path = options?.path;
+  const paths = options?.paths;
 
   return (listener: () => void) => {
     if (!enabled || !store) {
       return emptyUnsubscribe;
+    }
+
+    if (paths && paths.length > 0 && typeof store.subscribeToPaths === 'function') {
+      return store.subscribeToPaths(paths, listener);
     }
 
     if (path && typeof store.subscribeToPath === 'function') {

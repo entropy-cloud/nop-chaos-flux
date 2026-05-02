@@ -68,19 +68,31 @@ export function useNodeLifecycleActions(input: {
   helpers: RendererHelpers;
   nodeInstance: NodeInstance;
 }) {
+  const latestHelpersRef = useRef(input.helpers);
+  const latestLifecycleActionsRef = useRef(input.lifecycleActions);
+
   useEffect(() => {
-    if (input.lifecycleActions?.onMount) {
-      void input.helpers.dispatch(input.lifecycleActions.onMount, {
+    latestHelpersRef.current = input.helpers;
+    latestLifecycleActionsRef.current = input.lifecycleActions;
+  });
+
+  useEffect(() => {
+    const lifecycleActions = latestLifecycleActionsRef.current;
+
+    if (lifecycleActions?.onMount) {
+      void latestHelpersRef.current.dispatch(lifecycleActions.onMount, {
         nodeInstance: input.nodeInstance,
       });
     }
 
     return () => {
-      if (input.lifecycleActions?.onUnmount) {
-        void input.helpers.dispatch(input.lifecycleActions.onUnmount, {
+      const currentLifecycleActions = latestLifecycleActionsRef.current;
+
+      if (currentLifecycleActions?.onUnmount) {
+        void latestHelpersRef.current.dispatch(currentLifecycleActions.onUnmount, {
           nodeInstance: input.nodeInstance,
         });
       }
     };
-  }, [input.helpers, input.lifecycleActions, input.nodeInstance]);
+  }, [input.nodeInstance]);
 }

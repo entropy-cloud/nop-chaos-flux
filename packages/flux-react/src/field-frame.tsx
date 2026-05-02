@@ -9,7 +9,11 @@ import {
 } from './hooks';
 import type { CompiledValidationBehavior } from '@nop-chaos/flux-core';
 import { getCompiledValidationField } from '@nop-chaos/flux-core';
-import { EMPTY_FORM_FIELD_STATE, isFieldEffectivelyRequired } from './form-state';
+import {
+  EMPTY_FORM_FIELD_STATE,
+  getDynamicRequiredDependencyPaths,
+  isFieldEffectivelyRequired,
+} from './form-state';
 import { shouldShowFieldError } from './field-error-visibility';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -100,18 +104,23 @@ export function FieldFrame(props: FieldFrameProps) {
   const fieldBehavior = validationField?.behavior;
   const behavior =
     validationBehavior ?? fieldBehavior ?? validationModel?.behavior ?? defaultBehavior;
-  const hasDynamicRequiredRule = Boolean(
-    validationField?.rules.some(
-      ({ rule }) => rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless',
-    ),
-  );
+  const dynamicRequiredDependencyPaths = name
+    ? getDynamicRequiredDependencyPaths(validationField)
+    : EMPTY_DYNAMIC_REQUIRED_PATHS;
+  const hasDynamicRequiredRule = dynamicRequiredDependencyPaths.length > 0;
   const dynamicRequired = useCurrentFormState(
     (state) => {
-      if (!hasDynamicRequiredRule || !name) return false;
+      if (!hasDynamicRequiredRule || !name || !validationModel) {
+        return false;
+      }
+
       return isFieldEffectivelyRequired(validationModel, name, state.values);
     },
     Object.is,
-    { enabled: hasDynamicRequiredRule && Boolean(name) },
+    {
+      enabled: hasDynamicRequiredRule && Boolean(name),
+      paths: dynamicRequiredDependencyPaths,
+    },
   );
 
   const error = aggregateError ?? fieldState.error;
@@ -195,3 +204,5 @@ export function FieldFrame(props: FieldFrameProps) {
     </Tag>
   );
 }
+
+const EMPTY_DYNAMIC_REQUIRED_PATHS: readonly string[] = [];

@@ -9,6 +9,8 @@ import type {
 } from '@nop-chaos/flux-core';
 import { resolveShowErrorTriggers, shouldShowFieldError } from './field-error-visibility';
 
+type CompiledValidationField = ReturnType<typeof getCompiledValidationField>;
+
 export const EMPTY_FORM_STORE_STATE: FormStoreState = {
   values: {},
   fieldStates: {},
@@ -101,8 +103,37 @@ export function isFieldEffectivelyRequired(
 ): boolean {
   const field = getCompiledValidationField(validation, path);
 
+  return isValidationFieldEffectivelyRequired(field, values);
+}
+
+export function getDynamicRequiredDependencyPaths(
+  field: CompiledValidationField | undefined,
+): readonly string[] {
+  if (!field) {
+    return [];
+  }
+
+  const dependencies = new Set<string>();
+
+  for (const { rule } of field.rules) {
+    if ((rule.kind === 'requiredWhen' || rule.kind === 'requiredUnless') && rule.path) {
+      dependencies.add(rule.path);
+    }
+  }
+
+  return [...dependencies];
+}
+
+export function isValidationFieldEffectivelyRequired(
+  field: CompiledValidationField | undefined,
+  values: Record<string, any>,
+): boolean {
+  if (!field) {
+    return false;
+  }
+
   return Boolean(
-    field?.rules.some(({ rule }) => {
+    field.rules.some(({ rule }) => {
       if (rule.kind === 'required') {
         return true;
       }
