@@ -130,6 +130,7 @@ Better AST candidate:
 Practical heuristic note:
 
 - prefer top-level mutable declarations only; function-local `let` inside an individual test body is common and should not be reported by the first-pass scanner
+- first-pass global-patch scanning may ignore files that patch a known test-only window flag and also contain explicit same-file cleanup (for example `delete window.__NOP_DEBUGGER__` or `vi.unstubAllGlobals()`), so the queue stays focused on unowned global writes rather than already-contained test harness setup
 
 Best use:
 

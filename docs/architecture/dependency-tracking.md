@@ -597,3 +597,9 @@ This direction is correct because data visibility flows downward through lexical
 | Self-write guard                | `packages/flux-runtime/src/async-data/source-registry.ts`                                       | filter self roots before match                                        |
 | Collection/row root translation | collection-owning renderer/runtime code                                                         | publish row-local root changes for affected rows only                 |
 | Validation dependency system    | `packages/flux-runtime/src/validation/*`                                                        | keep separate unless a concrete reuse case appears                    |
+
+Current runtime note:
+
+- `scopeChangeHitsDependencies()` now keeps the root-normalization baseline while using prefix-aware deep-path matching for multi-segment paths instead of the older pairwise overlap scan.
+- Form-store value subscriptions now support `subscribeToPaths(paths, listener)` so hot-path consumers can subscribe to exact dependency sets without whole-store fallback.
+- Collection/row reconciliation remains the next owner surface under Phase 4; the current landing does not change that scope.

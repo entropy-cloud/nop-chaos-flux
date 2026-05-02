@@ -216,6 +216,12 @@ Role summary:
 - `RenderRegionHandle` gives components an easy way to render declared child regions
 - `ComponentHandle` may optionally expose `ref?: HTMLElement | null` alongside explicit imperative capabilities
 
+Current typing baseline:
+
+- `RendererComponentProps<S, P>` lets a renderer declare both its authored schema shape `S` and its resolved runtime prop bag `P`.
+- `RendererResolvedProps<S>` defaults to `Record<string, any> & Partial<S>` so runtime prop bags stay honest for low-code dynamic fields without forcing every schema-only field into `props`.
+- `RendererDefinition.component`, `RendererHelpers.render`, and `RenderRegionHandle.render` share a host-neutral render-result alias in `flux-core`; React element typing stays in `@nop-chaos/flux-react` aliases rather than flowing back into core.
+
 ## Runtime Family Contracts
 
 Key contracts:

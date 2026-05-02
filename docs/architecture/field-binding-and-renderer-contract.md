@@ -37,6 +37,7 @@
 当前仓库已经具备统一 renderer contract 的大骨架：
 
 - `RendererComponentProps` 已把 renderer 输入统一为 `schema`、`props`、`meta`、`regions`、`events`、`helpers`
+- `RendererComponentProps<S, P>` 现在允许 renderer 为 resolved runtime prop bag 显式声明 `P`，而不是只能把 `props` 视作匿名字典
 - `SchemaFieldRule` 已允许 renderer metadata 决定字段进入 `meta`、`prop`、`region`、`value-or-region`、`event`、`ignored`
 - 大部分 concrete renderer 已经采用 `RendererComponentProps<T>` 作为签名
 
@@ -55,6 +56,12 @@
 核心决策只有一句话：
 
 **editable field 使用 `name` 作为唯一双向绑定入口，语义化内容字段继续保留自然命名，renderer 只应消费归一化后的运行时通道。**
+
+补充说明：
+
+- `schema` 仍拥有结构性字段和 authoring-time 原始形态，例如 `type`、静态 region 壳层信息、或只有编译期才需要的结构信息。
+- `props` 拥有 renderer 当前这次 render 真正要消费的 resolved runtime value bag。
+- 如果某个字段的意义是“当前运行时业务值”，优先从 `props` 读取；只有静态结构判断或编译后不会进入 runtime prop bag 的信息才应读取 `schema`。
 
 ## Rule 1: Expressions Use Ordinary Props
 

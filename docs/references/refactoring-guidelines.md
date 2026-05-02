@@ -209,6 +209,12 @@ interface ScopeStore<T> { ... }
 - **500-900 行**：应该拆分，但要评估是否近期还会频繁修改
 - **> 900 行**：需要拆分，优先拆分出独立的子域
 
+当前仓库基线补充：
+
+- 对 500+ 行的 owner-heavy 热点，优先把原文件降为 thin orchestrator / composition shell / barrel，而不是把多个新职责继续塞回同一个根文件。
+- 拆分后的模块应按 owner 面切开，例如 runtime state/publication、runtime execution、typed contracts，或 renderer reading/presentation/handlers/hidden-policy，而不是只按“前 200 行 / 后 200 行”机械切片。
+- 如果拆分后 root file 已经只剩稳定导出或顶层编排，保持它很薄是目标状态，不需要再为了“避免 barrel”把职责重新合并回来。
+
 ### 4.4 包边界
 
 Flux 的包依赖链是单向的：

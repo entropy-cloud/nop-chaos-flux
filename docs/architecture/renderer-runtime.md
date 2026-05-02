@@ -176,13 +176,18 @@ Those boundaries belong to the concrete creator path that introduces them.
 Renderer components receive:
 
 ```ts
-interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
+type RendererResolvedProps<S extends BaseSchema = BaseSchema> = Record<string, any> & Partial<S>;
+
+interface RendererComponentProps<
+  S extends BaseSchema = BaseSchema,
+  P extends Record<string, unknown> = RendererResolvedProps<S>,
+> {
   id: string;
   path: SchemaPath;
   schema: S;
   templateNode: TemplateNode<S>;
   node: NodeInstance<S>;
-  props: Readonly<Record<string, unknown>>;
+  props: Readonly<P>;
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
   events: Readonly<Record<string, RendererEventHandler | undefined>>;
@@ -196,6 +201,7 @@ Meaning:
 - `templateNode` is the immutable structural definition produced at compile time; `templateNode.component` carries the resolved `RendererDefinition` directly
 - `node` is the live runtime `NodeInstance` for this mounted node; `node.cid` is the unique live mounted-node id used by DOM/debugger/registry lookup
 - `props` is the resolved runtime prop object for the current render
+- `RendererResolvedProps<S>` is intentionally wider than raw `S`: runtime prop bags may include only the resolved business fields a renderer consumes, while structural schema-only fields still remain on `schema`
 - `meta` is the resolved node meta such as visibility or disabled state
 - `meta.testid` is the resolved testid for `data-testid` attribute output on the root element
 - `schema.frameWrap` is the per-instance override for `RendererDefinition.wrap`; it can suppress wrapping or switch wrap-compatible renderers to grouped `<fieldset>` layout
@@ -563,6 +569,7 @@ Current form-hook implementation note:
 
 - `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormFieldState`, and `useFieldError` share internal form-store subscription wiring, while `hook-subscriptions.ts` remains the owner of the low-level subscribe primitives.
 - `useCurrentFormState(..., { path })` is the active path-aware subscription surface for single-path value reads; callers that only need one form value should prefer it over whole-store subscriptions.
+- `useCurrentFormState(..., { paths })` is the active multi-path subscription surface for derived reads such as dynamic requiredness; callers should subscribe to the exact dependency set they need instead of falling back to whole-form `state.values` reads.
 - `useChildFieldState(path)` remains an intentional alias for `useCurrentFormFieldState(path, { path })` in composite-field style UIs; it is still part of the active public hook surface.
 
 ## Regions And Fragment Rendering
@@ -572,7 +579,7 @@ Local schema rendering should prefer region handles over raw child schema whenev
 Region handle shape:
 
 ```ts
-interface RenderRegionHandle {
+interface RenderRegionHandle<R = React.ReactNode> {
   key: string;
   templateNode: TemplateNode | TemplateNode[] | null;
   /** Declared slot parameter names for parameterized regions (e.g. ['item', 'index']). */
@@ -592,9 +599,14 @@ interface RenderRegionHandle {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     ownerNodeInstance?: NodeInstance;
-  }): React.ReactNode;
+  }): R;
 }
 ```
+
+Host boundary note:
+
+- `@nop-chaos/flux-core` owns the host-neutral callable shape (`RendererComponentProps`, `RendererHelpers`, `RenderRegionHandle`, `RendererDefinition`) and uses a host-owned render-result alias rather than React element types.
+- `@nop-chaos/flux-react` owns the React-specialized aliases layered on top of that core contract, including `RenderRegionHandle<ReactElement | null>` and the optional `reactComponent` convenience registration path.
 
 Why this is preferred:
 

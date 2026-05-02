@@ -244,7 +244,13 @@ Note:
 - `packages/flux-runtime/src/async-data/formula-data-source-controller.ts`
   - formula-based data source controller
 - `packages/flux-runtime/src/async-data/api-data-source-controller.ts`
-  - API-based data source controller
+  - thin API data-source controller coordinator (`start` / `stop` / `refresh` / polling shell)
+- `packages/flux-runtime/src/async-data/api-data-source-controller-types.ts`
+  - API data-source controller input/state contracts
+- `packages/flux-runtime/src/async-data/api-data-source-controller-state.ts`
+  - controller-local state creation, state publication, and async-governance settle helpers
+- `packages/flux-runtime/src/async-data/api-data-source-controller-runtime.ts`
+  - request execution, cache/publish flow, stop-condition checks, and refresh dedup runtime behavior
 - `packages/flux-runtime/src/async-data/api-data-source-controller-helpers.ts`
   - helper functions for API data source controller
 

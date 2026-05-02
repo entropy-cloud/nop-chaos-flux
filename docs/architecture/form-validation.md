@@ -680,6 +680,12 @@ The dependency graph merges three sources:
 
 This dependency graph is used to expand validation impact beyond a single leaf path.
 
+Current dynamic-required baseline:
+
+- `requiredWhen` / `requiredUnless` dependency paths are extracted from compiled field rules and consumed as explicit form-store path subscriptions.
+- `FieldFrame` no longer subscribes to whole-form `state.values` just to compute the required indicator for these rules.
+- Unrelated writes should not retrigger dynamic-required recomputation unless they touch one of the rule dependency paths.
+
 Dependency edges are owner-local.
 
 Compiled expression dependencies may only create reactive edges within the current owner.
