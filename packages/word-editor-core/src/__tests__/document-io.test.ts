@@ -33,11 +33,13 @@ function createLocalStorageMock() {
   };
 }
 
-let localStorageMock: ReturnType<typeof createLocalStorageMock>;
+const localStorageState = {
+  current: createLocalStorageMock(),
+};
 
 beforeEach(() => {
-  localStorageMock = createLocalStorageMock();
-  vi.stubGlobal('localStorage', localStorageMock);
+  localStorageState.current = createLocalStorageMock();
+  vi.stubGlobal('localStorage', localStorageState.current);
 });
 
 describe('saveDocument', () => {
@@ -77,8 +79,8 @@ describe('saveDocument', () => {
     });
 
     expect(result).toBe(true);
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String));
-    const saved = JSON.parse(localStorageMock.setItem.mock.calls[0][1]) as any;
+    expect(localStorageState.current.setItem).toHaveBeenCalledWith(STORAGE_KEY, expect.any(String));
+    const saved = JSON.parse(localStorageState.current.setItem.mock.calls[0][1]) as any;
     expect(saved.data.main).toEqual([{ value: 'main' }]);
     expect(saved.data.header).toEqual([{ value: 'header' }]);
     expect(saved.data.footer).toEqual([{ value: 'footer' }]);
@@ -95,7 +97,7 @@ describe('saveDocument', () => {
     } as any;
 
     expect(saveDocument(mockBridge)).toBe(false);
-    expect(localStorageMock.setItem).not.toHaveBeenCalled();
+    expect(localStorageState.current.setItem).not.toHaveBeenCalled();
   });
 
   it('handles missing header/footer with defaults', () => {
@@ -107,7 +109,7 @@ describe('saveDocument', () => {
 
     const result = saveDocument(mockBridge);
     expect(result).toBe(true);
-    const saved = JSON.parse(localStorageMock.setItem.mock.calls[0][1]) as any;
+    const saved = JSON.parse(localStorageState.current.setItem.mock.calls[0][1]) as any;
     expect(saved.data.header).toEqual([]);
     expect(saved.data.footer).toEqual([]);
     expect(saved.data.charts).toEqual([]);
@@ -153,7 +155,7 @@ describe('loadDocument', () => {
       },
       savedAt: '2025-01-01T00:00:00.000Z',
     };
-    localStorageMock._store[STORAGE_KEY] = JSON.stringify(saved);
+    localStorageState.current._store[STORAGE_KEY] = JSON.stringify(saved);
 
     const result = loadDocument();
     expect(result).toEqual(saved);
@@ -170,7 +172,7 @@ describe('loadDocument', () => {
       },
       savedAt: '2025-01-01T00:00:00.000Z',
     };
-    localStorageMock._store[STORAGE_KEY] = JSON.stringify(saved);
+    localStorageState.current._store[STORAGE_KEY] = JSON.stringify(saved);
 
     const result = loadDocument();
     expect(result?.data.charts).toEqual([]);
@@ -180,9 +182,9 @@ describe('loadDocument', () => {
 
 describe('clearDocument', () => {
   it('removes stored data', () => {
-    localStorageMock._store[STORAGE_KEY] = '{"data":{}}';
+    localStorageState.current._store[STORAGE_KEY] = '{"data":{}}';
     clearDocument();
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith(STORAGE_KEY);
+    expect(localStorageState.current.removeItem).toHaveBeenCalledWith(STORAGE_KEY);
   });
 });
 
@@ -203,7 +205,10 @@ describe('saveDatasets', () => {
     const loaded = loadDatasets();
 
     expect(loaded).toEqual(datasets);
-    expect(localStorageMock.setItem).toHaveBeenCalledWith(DATASET_STORAGE_KEY, expect.any(String));
+    expect(localStorageState.current.setItem).toHaveBeenCalledWith(
+      DATASET_STORAGE_KEY,
+      expect.any(String),
+    );
   });
 
   it('handles empty array', () => {

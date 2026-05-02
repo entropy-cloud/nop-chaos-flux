@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChartRenderer } from '../chart-renderer';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 
-let currentRegistry: { register: ReturnType<typeof vi.fn> } | undefined;
+const mockState: {
+  currentRegistry: { register: ReturnType<typeof vi.fn> } | undefined;
+} = {
+  currentRegistry: undefined,
+};
 
 function simplifyValue(value: unknown, seen = new WeakSet<object>()): unknown {
   if (
@@ -68,7 +72,7 @@ function createMockComponent(name: string) {
 }
 
 vi.mock('@nop-chaos/flux-react', () => ({
-  useCurrentComponentRegistry: () => currentRegistry,
+  useCurrentComponentRegistry: () => mockState.currentRegistry,
   resolveRendererSlotContent: (props: any, key: string, options: { fallback: string }) =>
     props.props[key] ?? options.fallback,
 }));
@@ -112,13 +116,13 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 
 describe('ChartRenderer', () => {
   beforeEach(() => {
-    currentRegistry = undefined;
+    mockState.currentRegistry = undefined;
     resetFluxI18n();
     initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
   });
 
   afterEach(() => {
-    currentRegistry = undefined;
+    mockState.currentRegistry = undefined;
     cleanup();
   });
 
@@ -160,7 +164,7 @@ describe('ChartRenderer', () => {
   it('registers a chart handle and supports the resize capability', () => {
     const dispose = vi.fn();
     const register = vi.fn(() => dispose);
-    currentRegistry = { register };
+    mockState.currentRegistry = { register };
 
     const { unmount } = render(
       <ChartRenderer

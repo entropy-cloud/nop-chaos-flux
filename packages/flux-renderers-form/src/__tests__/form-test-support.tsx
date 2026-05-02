@@ -20,22 +20,6 @@ import {
 } from '@nop-chaos/flux-react';
 import { useFieldHandlers } from '../field-utils';
 
-if (!Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = () => undefined;
-}
-
-if (typeof PointerEvent === 'undefined') {
-  class PointerEvent extends MouseEvent {
-    constructor(
-      type: string,
-      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
-    ) {
-      super(type, props);
-    }
-  }
-  globalThis.PointerEvent = PointerEvent as any;
-}
-
 resetFluxI18n();
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 

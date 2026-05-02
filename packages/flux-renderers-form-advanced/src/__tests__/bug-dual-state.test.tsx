@@ -29,21 +29,6 @@ const env: RendererEnv = {
   notify: () => undefined,
 };
 
-let capturedForm: FormRuntime | undefined;
-
-function FormHandleProbe() {
-  const form = useCurrentForm();
-  React.useEffect(() => {
-    capturedForm = form;
-  }, [form]);
-  return null;
-}
-
-const formHandleProbeRenderer: RendererDefinition = {
-  type: 'form-handle-probe',
-  component: FormHandleProbe,
-};
-
 const PlainScopeSchemaRenderer = createSchemaRenderer(allFormDefs);
 
 const buttonRenderer: RendererDefinition = {
@@ -110,16 +95,31 @@ function PlainScopeKeyValueHost() {
 describe('bug: dual state in array-editor and key-value renderers', () => {
   beforeEach(() => {
     submitCalls.length = 0;
-    capturedForm = undefined;
     cleanup();
   });
 
+  function createSchemaRendererWithFormProbe(onForm: (form: FormRuntime | undefined) => void) {
+    function FormHandleProbe() {
+      const form = useCurrentForm();
+      React.useEffect(() => {
+        onForm(form);
+      }, [form]);
+      return null;
+    }
+
+    const formHandleProbeRenderer: RendererDefinition = {
+      type: 'form-handle-probe',
+      component: FormHandleProbe,
+    };
+
+    return createSchemaRenderer([...allFormDefs, buttonRenderer, formHandleProbeRenderer]);
+  }
+
   it('array-editor UI should reflect values after form.reset()', async () => {
-    const SchemaRenderer = createSchemaRenderer([
-      ...allFormDefs,
-      buttonRenderer,
-      formHandleProbeRenderer,
-    ]);
+    let capturedForm: FormRuntime | undefined;
+    const SchemaRenderer = createSchemaRendererWithFormProbe((form) => {
+      capturedForm = form;
+    });
 
     render(
       <SchemaRenderer
@@ -161,11 +161,10 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
   });
 
   it('array-editor UI should reflect values after form.setValue()', async () => {
-    const SchemaRenderer = createSchemaRenderer([
-      ...allFormDefs,
-      buttonRenderer,
-      formHandleProbeRenderer,
-    ]);
+    let capturedForm: FormRuntime | undefined;
+    const SchemaRenderer = createSchemaRendererWithFormProbe((form) => {
+      capturedForm = form;
+    });
 
     render(
       <SchemaRenderer
@@ -207,11 +206,10 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
   });
 
   it('key-value UI should reflect values after form.reset()', async () => {
-    const SchemaRenderer = createSchemaRenderer([
-      ...allFormDefs,
-      buttonRenderer,
-      formHandleProbeRenderer,
-    ]);
+    let capturedForm: FormRuntime | undefined;
+    const SchemaRenderer = createSchemaRendererWithFormProbe((form) => {
+      capturedForm = form;
+    });
 
     render(
       <SchemaRenderer
@@ -260,11 +258,10 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
   });
 
   it('key-value UI should reflect values after form.setValue()', async () => {
-    const SchemaRenderer = createSchemaRenderer([
-      ...allFormDefs,
-      buttonRenderer,
-      formHandleProbeRenderer,
-    ]);
+    let capturedForm: FormRuntime | undefined;
+    const SchemaRenderer = createSchemaRendererWithFormProbe((form) => {
+      capturedForm = form;
+    });
 
     render(
       <SchemaRenderer

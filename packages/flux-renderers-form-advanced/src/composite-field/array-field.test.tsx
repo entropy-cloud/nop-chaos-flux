@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import '../test-support';
 import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -13,22 +14,6 @@ const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefiniti
 
 resetFluxI18n();
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
-
-if (!Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = () => undefined;
-}
-
-if (typeof PointerEvent === 'undefined') {
-  class PointerEvent extends MouseEvent {
-    constructor(
-      type: string,
-      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
-    ) {
-      super(type, props);
-    }
-  }
-  globalThis.PointerEvent = PointerEvent as any;
-}
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
@@ -59,7 +44,9 @@ const buttonRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-let nextArrayItemProbeMountId = 1;
+const testState = {
+  nextArrayItemProbeMountId: 1,
+};
 
 const arrayItemInstanceProbeRenderer: RendererDefinition = {
   type: 'array-item-instance-probe',
@@ -70,7 +57,7 @@ const arrayItemInstanceProbeRenderer: RendererDefinition = {
 
 function ArrayItemInstanceProbeWithInstancePath(props: { instancePath: unknown }) {
   const scope = useRenderScope();
-  const mountIdRef = React.useRef(nextArrayItemProbeMountId++);
+  const mountIdRef = React.useRef(testState.nextArrayItemProbeMountId++);
   const itemName = String(
     (scope.get('value') as { name?: unknown } | undefined)?.name ?? scope.get('name') ?? 'unknown',
   );

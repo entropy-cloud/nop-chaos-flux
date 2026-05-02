@@ -13,8 +13,6 @@ import {
   getChildFieldUiState,
   getFieldValidationBehavior,
   getValidationBehaviorForOwner,
-  readCheckboxGroupValue,
-  readFieldValue,
   resolveFieldLabelText,
   shouldValidateOn,
   shouldValidateOnOwner,
@@ -102,14 +100,6 @@ describe('field-utils unit helpers', () => {
     expect(shouldValidateOnOwner('age', owner, 'change')).toBe(true);
     expect(shouldValidateOnOwner('age', owner, 'blur')).toBe(false);
     expect(shouldValidateOn('missing', owner as any, 'submit')).toBe(true);
-  });
-
-  it('reads scalar and object field values from scope', () => {
-    const scope = makeScope();
-    expect(readFieldValue(scope, 'value')).toBe('scope-value');
-    expect(readFieldValue(scope, '')).toEqual(scope.readOwn());
-    expect(readCheckboxGroupValue(scope, 'checks')).toEqual(['a', '2']);
-    expect(readCheckboxGroupValue(scope, 'missing')).toEqual([]);
   });
 
   it('builds child field ui state with error markers', () => {

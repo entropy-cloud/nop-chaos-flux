@@ -1,3 +1,4 @@
+import '../../test-support';
 import React from 'react';
 import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -6,22 +7,6 @@ import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../../index';
 
 export const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
-
-if (!Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = () => undefined;
-}
-
-if (typeof PointerEvent === 'undefined') {
-  class PointerEvent extends MouseEvent {
-    constructor(
-      type: string,
-      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
-    ) {
-      super(type, props);
-    }
-  }
-  globalThis.PointerEvent = PointerEvent as any;
-}
 
 export const env: RendererEnv = {
   fetcher: async function <T>() {

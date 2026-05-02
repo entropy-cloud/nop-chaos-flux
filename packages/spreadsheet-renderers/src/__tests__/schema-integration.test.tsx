@@ -81,7 +81,7 @@ function SpreadsheetStatusProbe() {
 
 const pageRenderer: RendererDefinition = {
   type: 'page',
-  component: (props) => <section>{props.regions.body?.render()}</section>,
+  component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
   regions: ['body'],
 };
 

@@ -11,12 +11,18 @@ import {
   useCrudStatusPublisher,
 } from '../crud-renderer-state';
 
-let currentRegistry: { register: ReturnType<typeof vi.fn> } | undefined;
-let scopeData: Record<string, unknown> = {};
+const mockState: {
+  currentRegistry: { register: ReturnType<typeof vi.fn> } | undefined;
+  scopeData: Record<string, unknown>;
+} = {
+  currentRegistry: undefined,
+  scopeData: {},
+};
 
 vi.mock('@nop-chaos/flux-react', () => ({
-  useCurrentComponentRegistry: () => currentRegistry,
-  useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) => selector(scopeData),
+  useCurrentComponentRegistry: () => mockState.currentRegistry,
+  useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) =>
+    selector(mockState.scopeData),
 }));
 
 function StatusProbe(props: { scope?: any; statusPath?: string; summary: any }) {
@@ -135,17 +141,17 @@ describe('useCrudStatusPublisher', () => {
 
 describe('useCrudHandle', () => {
   beforeEach(() => {
-    currentRegistry = undefined;
+    mockState.currentRegistry = undefined;
   });
 
   afterEach(() => {
-    currentRegistry = undefined;
+    mockState.currentRegistry = undefined;
   });
 
   it('registers the CRUD handle and exposes refresh/selection methods', async () => {
     const dispose = vi.fn();
     const register = vi.fn(() => dispose);
-    currentRegistry = { register };
+    mockState.currentRegistry = { register };
 
     const handleRefresh = vi.fn();
     const getSelection = vi.fn(() => ['r1']);
@@ -186,7 +192,7 @@ describe('useCrudHandle', () => {
 
   it('skips registration when registry or cid is missing', () => {
     const register = vi.fn();
-    currentRegistry = { register };
+    mockState.currentRegistry = { register };
 
     const { rerender } = render(
       <HandleProbe
@@ -198,7 +204,7 @@ describe('useCrudHandle', () => {
 
     expect(register).not.toHaveBeenCalled();
 
-    currentRegistry = undefined;
+    mockState.currentRegistry = undefined;
     rerender(
       <HandleProbe
         inputProps={{ meta: { cid: 1 }, id: 'crud-1', props: {} }}
@@ -212,11 +218,11 @@ describe('useCrudHandle', () => {
 
 describe('useCrudRuntimeState', () => {
   beforeEach(() => {
-    scopeData = {};
+    mockState.scopeData = {};
   });
 
   it('reads owner/scope state and initializes missing scope branches', () => {
-    scopeData = {
+    mockState.scopeData = {
       owner: {
         query: { values: { role: 'admin' }, refreshCount: 2 },
         pagination: { currentPage: 4, pageSize: 25 },
@@ -272,7 +278,7 @@ describe('useCrudRuntimeState', () => {
   });
 
   it('prefers explicit scope state over owner fallbacks and avoids initialization when already present', () => {
-    scopeData = {
+    mockState.scopeData = {
       owner: {
         query: { values: { role: 'owner' }, refreshCount: 1 },
         pagination: { currentPage: 9, pageSize: 50 },
@@ -290,7 +296,7 @@ describe('useCrudRuntimeState', () => {
     const update = vi.fn();
     const scope = {
       update,
-      readVisible: () => scopeData,
+      readVisible: () => mockState.scopeData,
     };
     let runtimeState: any;
 

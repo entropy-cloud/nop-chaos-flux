@@ -19,8 +19,21 @@ const mockedCore = vi.hoisted(() => ({
   saveDatasetsMock: vi.fn(),
   loadDatasetsMock: vi.fn(() => []),
 }));
-let shortcutOptions: { onSave?: () => void } | undefined;
-let lastEditorCanvasProps: any;
+const mockState: {
+  shortcutOptions: { onSave?: () => void } | undefined;
+  lastEditorCanvasProps: any;
+  datasetState: {
+    datasets: Array<{ id: string; name: string }>;
+    selectedDatasetId: string | null;
+  };
+} = {
+  shortcutOptions: undefined,
+  lastEditorCanvasProps: undefined,
+  datasetState: {
+    datasets: [],
+    selectedDatasetId: null,
+  },
+};
 
 const editorStoreState = {
   isReady: true,
@@ -57,28 +70,27 @@ const editorStore = {
 };
 
 const datasetListeners = new Set<() => void>();
-let datasetState = {
-  datasets: [] as Array<{ id: string; name: string }>,
-  selectedDatasetId: null as string | null,
-};
 
 const datasetStore = {
   subscribe: (listener: () => void) => {
     datasetListeners.add(listener);
     return () => datasetListeners.delete(listener);
   },
-  getState: () => datasetState,
+  getState: () => mockState.datasetState,
   load: vi.fn((datasets: Array<{ id: string; name: string }>) => {
-    datasetState = { ...datasetState, datasets };
+    mockState.datasetState = { ...mockState.datasetState, datasets };
     for (const listener of datasetListeners) listener();
   }),
-  getAll: vi.fn(() => datasetState.datasets),
+  getAll: vi.fn(() => mockState.datasetState.datasets),
   getById: vi.fn(
-    (id: string) => datasetState.datasets.find((dataset) => dataset.id === id) ?? null,
+    (id: string) => mockState.datasetState.datasets.find((dataset) => dataset.id === id) ?? null,
   ),
   add: vi.fn((dataset: { name: string }) => {
-    const next = { id: `dataset-${datasetState.datasets.length + 1}`, ...dataset };
-    datasetState = { ...datasetState, datasets: [...datasetState.datasets, next] };
+    const next = { id: `dataset-${mockState.datasetState.datasets.length + 1}`, ...dataset };
+    mockState.datasetState = {
+      ...mockState.datasetState,
+      datasets: [...mockState.datasetState.datasets, next],
+    };
     for (const listener of datasetListeners) listener();
     return next;
   }),
@@ -86,7 +98,7 @@ const datasetStore = {
 };
 
 function resetMockStores() {
-  datasetState = {
+  mockState.datasetState = {
     datasets: [],
     selectedDatasetId: null,
   };
@@ -94,13 +106,13 @@ function resetMockStores() {
   mockedCore.saveDocumentMock.mockClear();
   mockedCore.saveDatasetsMock.mockClear();
   mockedCore.loadDatasetsMock.mockClear();
-  shortcutOptions = undefined;
+  mockState.shortcutOptions = undefined;
   datasetStore.load.mockClear();
   datasetStore.getAll.mockClear();
   datasetStore.getById.mockClear();
   datasetStore.add.mockClear();
   datasetStore.update.mockClear();
-  lastEditorCanvasProps = undefined;
+  mockState.lastEditorCanvasProps = undefined;
 }
 
 vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
@@ -138,7 +150,7 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
 
 vi.mock('../editor-canvas.js', () => ({
   EditorCanvas: (props: any) => {
-    lastEditorCanvasProps = props;
+    mockState.lastEditorCanvasProps = props;
     return <div data-testid="editor-canvas" />;
   },
 }));
@@ -165,7 +177,7 @@ vi.mock('../dialogs/dataset-dialog.js', () => ({
 
 vi.mock('../hooks/use-word-editor-shortcuts.js', () => ({
   useWordEditorShortcuts: (options: { onSave?: () => void }) => {
-    shortcutOptions = options;
+    mockState.shortcutOptions = options;
   },
 }));
 
@@ -384,7 +396,7 @@ describe('WordEditorPage', () => {
     resetMockStores();
 
     renderWordEditor();
-    shortcutOptions?.onSave?.();
+    mockState.shortcutOptions?.onSave?.();
 
     await waitFor(() => {
       expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1);
@@ -418,7 +430,7 @@ describe('WordEditorPage', () => {
       extraRenderers: [DocumentProbe],
     });
 
-    lastEditorCanvasProps.onAutosave({
+    mockState.lastEditorCanvasProps.onAutosave({
       data: {
         header: [],
         main: [],

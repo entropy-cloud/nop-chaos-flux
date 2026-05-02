@@ -9,12 +9,15 @@ import {
   useTableSort,
 } from '../table-renderer/use-table-controls';
 
-let scopeData: Record<string, unknown> = {};
+const mockScopeState: { data: Record<string, unknown> } = {
+  data: {},
+};
 const renderScopeUpdate = vi.fn();
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useRenderScope: () => ({ update: renderScopeUpdate }),
-  useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) => selector(scopeData),
+  useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) =>
+    selector(mockScopeState.data),
 }));
 
 function createHelpers() {
@@ -105,7 +108,7 @@ function ExpandProbe(props: { schemaProps: any; onReady: (value: any) => void })
 
 describe('useTablePagination', () => {
   beforeEach(() => {
-    scopeData = {};
+    mockScopeState.data = {};
     renderScopeUpdate.mockReset();
   });
 
@@ -176,7 +179,7 @@ describe('useTablePagination', () => {
     });
     expect(renderScopeUpdate).not.toHaveBeenCalled();
 
-    scopeData = { tableState: { pagination: { currentPage: 7, pageSize: 15 } } };
+    mockScopeState.data = { tableState: { pagination: { currentPage: 7, pageSize: 15 } } };
     rerender(
       <PaginationProbe
         schemaProps={{
@@ -207,7 +210,7 @@ describe('useTablePagination', () => {
 
 describe('useTableSelection', () => {
   beforeEach(() => {
-    scopeData = {};
+    mockScopeState.data = {};
     renderScopeUpdate.mockReset();
   });
 
@@ -278,7 +281,7 @@ describe('useTableSelection', () => {
 
     controlled.unmount();
 
-    scopeData = { tableState: { selected: ['r3'] } };
+    mockScopeState.data = { tableState: { selected: ['r3'] } };
     render(
       <SelectionProbe
         schemaProps={{
@@ -306,7 +309,7 @@ describe('useTableSelection', () => {
 
 describe('useTableSort', () => {
   beforeEach(() => {
-    scopeData = {};
+    mockScopeState.data = {};
     renderScopeUpdate.mockReset();
   });
 
@@ -353,7 +356,7 @@ describe('useTableSort', () => {
   });
 
   it('reads and updates scope-backed sort state', () => {
-    scopeData = { tableState: { sort: { column: 'email', direction: 'desc' } } };
+    mockScopeState.data = { tableState: { sort: { column: 'email', direction: 'desc' } } };
     let api: any;
 
     render(
@@ -382,7 +385,7 @@ describe('useTableSort', () => {
 
 describe('useTableFilter', () => {
   beforeEach(() => {
-    scopeData = {};
+    mockScopeState.data = {};
     renderScopeUpdate.mockReset();
   });
 
@@ -429,7 +432,7 @@ describe('useTableFilter', () => {
   });
 
   it('reads and updates scope-backed filter state', () => {
-    scopeData = {
+    mockScopeState.data = {
       tableState: {
         filters: {
           role: { filters: ['admin'], keyword: 'adm' },

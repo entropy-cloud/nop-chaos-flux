@@ -1,25 +1,10 @@
+import '../test-support';
 import type { ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index';
-
-if (!Element.prototype.scrollIntoView) {
-  Element.prototype.scrollIntoView = () => undefined;
-}
-
-if (typeof PointerEvent === 'undefined') {
-  class PointerEvent extends MouseEvent {
-    constructor(
-      type: string,
-      props: MouseEventInit & { pointerId?: number; pressure?: number } = {},
-    ) {
-      super(type, props);
-    }
-  }
-  globalThis.PointerEvent = PointerEvent as any;
-}
 
 resetFluxI18n();
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
