@@ -77,19 +77,19 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
           ) : (
             <div className="space-y-2">
               {selectedDataset.columns.map((column) => (
-                <Button
-                  key={column.name}
-                  type="button"
-                  variant="ghost"
-                  onClick={() => handleFieldClick(column)}
-                  className="w-full text-left justify-start h-auto p-3 group"
-                >
-                  <div className="flex items-start justify-between gap-2 w-full">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-sm font-medium text-[var(--nop-text-strong)] truncate">
-                          {column.name}
-                        </h3>
+                <div key={column.name} className="group relative">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => handleFieldClick(column)}
+                    className="h-auto w-full justify-start p-3 pr-10 text-left"
+                  >
+                    <div className="flex w-full items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-sm font-medium text-[var(--nop-text-strong)] truncate">
+                            {column.name}
+                          </h3>
                         <span
                           className={cn(
                             'px-1.5 py-0.5 text-[10px] font-medium rounded border',
@@ -108,21 +108,19 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
                         </p>
                       )}
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFieldClick(column);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 transition-all"
-                      title="Copy field reference"
-                    >
-                      <Copy className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />
-                    </Button>
-                  </div>
-                </Button>
+                    </div>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => handleFieldClick(column)}
+                    className="absolute top-3 right-3 opacity-0 transition-all group-hover:opacity-100"
+                    title="Copy field reference"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />
+                  </Button>
+                </div>
               ))}
             </div>
           )}

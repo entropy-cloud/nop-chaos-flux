@@ -20,6 +20,7 @@ const mockedCore = vi.hoisted(() => ({
   loadDatasetsMock: vi.fn(() => []),
 }));
 let shortcutOptions: { onSave?: () => void } | undefined;
+let lastEditorCanvasProps: any;
 
 const editorStoreState = {
   isReady: true,
@@ -99,6 +100,7 @@ function resetMockStores() {
   datasetStore.getById.mockClear();
   datasetStore.add.mockClear();
   datasetStore.update.mockClear();
+  lastEditorCanvasProps = undefined;
 }
 
 vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
@@ -135,7 +137,10 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
 });
 
 vi.mock('../editor-canvas.js', () => ({
-  EditorCanvas: () => <div data-testid="editor-canvas" />,
+  EditorCanvas: (props: any) => {
+    lastEditorCanvasProps = props;
+    return <div data-testid="editor-canvas" />;
+  },
 }));
 
 vi.mock('../toolbar/ribbon-toolbar.js', () => ({
@@ -385,6 +390,49 @@ describe('WordEditorPage', () => {
       expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1);
       expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
       expect(editorStore.setDirty).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('projects autosaved charts and codes into host scope', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    const DocumentProbe: RendererDefinition = {
+      type: 'document-count-probe',
+      component: function DocumentCountProbe() {
+        const doc = useScopeSelector(
+          (data: any) => data.document as { charts?: unknown[]; codes?: unknown[] },
+        );
+        return (
+          <div>
+            <span data-testid="doc-chart-count">{String(doc.charts?.length ?? 0)}</span>
+            <span data-testid="doc-code-count">{String(doc.codes?.length ?? 0)}</span>
+          </div>
+        );
+      },
+    };
+
+    renderWordEditor({
+      schema: { type: 'word-editor-page', leftPanel: { type: 'document-count-probe' } },
+      extraRenderers: [DocumentProbe],
+    });
+
+    lastEditorCanvasProps.onAutosave({
+      data: {
+        header: [],
+        main: [],
+        footer: [],
+        charts: [{ id: 'chart-1', chartName: 'Chart' }],
+        codes: [{ id: 'code-1', codeName: 'Code' }],
+      },
+      paperSettings: null,
+      savedAt: new Date().toISOString(),
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('doc-chart-count').textContent).toBe('1');
+      expect(screen.getByTestId('doc-code-count').textContent).toBe('1');
     });
   });
 

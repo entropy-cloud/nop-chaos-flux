@@ -71,11 +71,17 @@ export function deriveDesignerHostSnapshot(
   spreadsheet: SpreadsheetHostSnapshot,
   designer: ReportDesignerRuntimeSnapshot,
 ): ReportDesignerHostSnapshot {
+  const runtimeDirty = designer.dirty || spreadsheet.runtime.dirty;
+
   return {
     ...spreadsheet,
+    runtime: {
+      ...spreadsheet.runtime,
+      dirty: runtimeDirty,
+    },
     designer: {
       kind: designer.document.kind,
-      dirty: spreadsheet.runtime.dirty,
+      dirty: designer.dirty,
       inspector: designer.inspector,
     },
     fieldSources: designer.fieldSources,

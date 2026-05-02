@@ -212,24 +212,31 @@ export async function dispatchReportDesignerCommand(
       }
 
       case 'report-designer:importTemplate': {
-        const codecResolution = resolveCodecAdapter({ adapters: registry, profile });
-        if ('error' in codecResolution) {
-          return { ok: false, changed: false, error: codecResolution.error };
-        }
-        const imported = await importTemplateWithCodec({
-          adapter: codecResolution.adapter,
-          payload: command.payload,
-          config,
-          document: store.getState().document,
-          designer: ctx.buildSnapshot(store.getState()),
-          profile,
+        return withDerivedRefresh(async () => {
+          const codecResolution = resolveCodecAdapter({ adapters: registry, profile });
+          if ('error' in codecResolution) {
+            return { ok: false, changed: false, error: codecResolution.error };
+          }
+          const imported = await importTemplateWithCodec({
+            adapter: codecResolution.adapter,
+            payload: command.payload,
+            config,
+            document: store.getState().document,
+            designer: ctx.buildSnapshot(store.getState()),
+            profile,
+          });
+          store.setState((current) => ({
+            ...current,
+            document: imported,
+            selectionTarget: undefined,
+            inspector: {
+              ...current.inspector,
+              loading: true,
+              error: undefined,
+            },
+          }));
+          return { ok: true, changed: true };
         });
-        store.setState((current) => ({
-          ...current,
-          document: imported,
-          selectionTarget: undefined,
-        }));
-        return { ok: true, changed: true };
       }
 
       case 'report-designer:exportTemplate': {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportDesignerCore,
@@ -57,6 +57,72 @@ describe('importTemplate / exportTemplate commands', () => {
     expect(result.changed).toBe(true);
     expect(core.getSnapshot().document.name).toBe('Imported');
     expect(core.getSnapshot().selectionTarget).toBeUndefined();
+  });
+
+  it('should refresh derived state immediately after import', async () => {
+    const spreadsheetDoc = createEmptyDocument();
+    const originalDoc = createReportTemplateDocument(spreadsheetDoc, 'Original');
+    const importedDoc = createReportTemplateDocument(createEmptyDocument(), 'Imported');
+    const provider = {
+      id: 'derived-source',
+      load: vi
+        .fn()
+        .mockReturnValueOnce([{ id: 'original-source', label: 'Original Source', groups: [] }])
+        .mockReturnValueOnce([{ id: 'original-source', label: 'Original Source', groups: [] }])
+        .mockReturnValueOnce([{ id: 'imported-source', label: 'Imported Source', groups: [] }]),
+    };
+
+    const core = createReportDesignerCore({
+      document: originalDoc,
+      config: {
+        kind: 'report-template',
+        fieldSources: [{ id: 'remote', label: 'Remote', provider: provider.id, groups: [] }],
+        inspector: {
+          byTarget: {
+            workbook: { type: 'text', text: 'Workbook inspector' },
+          },
+        },
+      },
+      adapters: {
+        fieldSources: new Map([[provider.id, provider]]),
+      },
+      profile: {
+        id: 'p1',
+        kind: 'report-template',
+        fieldSourceIds: ['remote'],
+        fieldDropIds: [],
+        codecId: 'json-codec',
+      },
+    });
+
+    core.registerCodec({
+      id: 'json-codec',
+      async importDocument() {
+        return importedDoc;
+      },
+      exportDocument() {
+        return {};
+      },
+    });
+
+    await core.setSelectionTarget({ kind: 'workbook' });
+    expect(core.getSnapshot().fieldSources.map((source) => source.id)).toEqual(['original-source']);
+    expect(core.getSnapshot().inspector.resolvedSchema).toEqual({
+      type: 'text',
+      text: 'Workbook inspector',
+    });
+
+    const result = await core.dispatch({
+      type: 'report-designer:importTemplate',
+      payload: { data: 'test' },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(core.getSnapshot().selectionTarget).toBeUndefined();
+    expect(core.getSnapshot().fieldSources.map((source) => source.id)).toEqual(['imported-source']);
+    expect(core.getSnapshot().inspector.loading).toBe(false);
+    expect(core.getSnapshot().inspector.error).toBeUndefined();
+    expect(core.getSnapshot().inspector.resolvedSchema).toBeUndefined();
   });
 
   it('should export document via codec and return data', async () => {

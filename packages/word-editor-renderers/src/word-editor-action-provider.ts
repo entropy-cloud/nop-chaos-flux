@@ -27,6 +27,7 @@ export function createWordEditorActionProvider(input: {
   saveEvent?:
     | ((event?: unknown, ctx?: Partial<ActionContext>) => Promise<ActionResult>)
     | undefined;
+  onDocumentSaved?: (saved: { charts: DocChart[]; codes: DocCode[] }) => void;
 }): ActionNamespaceProvider {
   return {
     kind: 'host',
@@ -36,21 +37,24 @@ export function createWordEditorActionProvider(input: {
     async invoke(method, payload, ctx) {
       switch (method) {
         case 'save': {
+          const charts = input.getCharts();
+          const codes = input.getCodes();
           const saved = saveDocument(input.bridge, {
-            charts: input.getCharts(),
-            codes: input.getCodes(),
+            charts,
+            codes,
           });
           if (!saved) {
             return fail('Unable to save word document.');
           }
           saveDatasets(input.datasetStore.getAll());
-          input.editorStore.setDirty(false);
           if (input.saveEvent) {
             const result = await input.saveEvent(undefined, ctx);
             if (!result.ok) {
               return result;
             }
           }
+          input.editorStore.setDirty(false);
+          input.onDocumentSaved?.({ charts, codes });
           return ok({ saved: true });
         }
         case 'insertField': {

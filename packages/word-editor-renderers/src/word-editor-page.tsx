@@ -66,6 +66,22 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
       : null;
   });
+  const updateSavedDocumentExtras = useCallback((extras: { charts: DocChart[]; codes: DocCode[] }) => {
+    setSavedDocument((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        data: {
+          ...current.data,
+          charts: extras.charts,
+          codes: extras.codes,
+        },
+      };
+    });
+  }, []);
   useEffect(() => {
     return () => {
       if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current);
@@ -169,8 +185,9 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         getCodes: () => codes,
         setCodes,
         saveEvent: props.events.onSave,
+        onDocumentSaved: updateSavedDocumentExtras,
       }),
-    [bridge, charts, codes, datasetStore, editorStore, props.events.onSave],
+    [bridge, charts, codes, datasetStore, editorStore, props.events.onSave, updateSavedDocumentExtras],
   );
 
   useNamespaceRegistration(actionScope, 'word-editor', actionProvider);
@@ -413,6 +430,8 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         editorStore={editorStore}
         bridge={bridge}
         initialDocument={props.props.initialDocument as WordDocument | undefined}
+        charts={charts}
+        codes={codes}
         onAutosave={setSavedDocument}
       />
     </div>

@@ -132,6 +132,21 @@ describe('deriveDesignerHostSnapshot', () => {
     const host = deriveDesignerHostSnapshot(spreadsheet, designer);
 
     expect(host.runtime.dirty).toBe(true);
+    expect(host.designer.dirty).toBe(false);
+  });
+
+  it('should expose metadata-only dirty state through designer.dirty', async () => {
+    await designerCore.dispatch({
+      type: 'report-designer:updateMeta',
+      target: { kind: 'workbook' },
+      patch: { title: 'Sales' },
+    });
+
+    const spreadsheet = spreadsheetBridge.getSnapshot();
+    const designer = designerCore.getSnapshot();
+    const host = deriveDesignerHostSnapshot(spreadsheet, designer);
+
+    expect(host.runtime.dirty).toBe(true);
     expect(host.designer.dirty).toBe(true);
   });
 });

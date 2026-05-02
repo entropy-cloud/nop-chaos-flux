@@ -1,4 +1,4 @@
-import { startTransition, useCallback } from 'react';
+import { useCallback } from 'react';
 import { cellAddress, type SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
 
@@ -78,7 +78,6 @@ export function useSheetCommands(
 
   const handleRenameSheet = useCallback(
     async (id: string, name: string) => {
-      startTransition(() => {});
       await bridge.dispatch({ type: 'spreadsheet:renameSheet', sheetId: id, name });
       addLog(`Renamed sheet to "${name}"`);
     },

@@ -64,6 +64,7 @@ function buildSpreadsheetScopeData(snapshot: SpreadsheetRuntimeSnapshot) {
 export interface ReportDesignerHostData {
   designer: {
     kind: string;
+    dirty: boolean;
     documentId: string;
     documentName: string;
     selectionTarget: ReportSelectionTarget | undefined;
@@ -106,6 +107,7 @@ export function createHostData(
   return {
     designer: {
       kind: snapshot.document.kind,
+      dirty: snapshot.dirty,
       documentId: snapshot.document.id,
       documentName: snapshot.document.name,
       selectionTarget: snapshot.selectionTarget,
@@ -151,6 +153,7 @@ export function buildReportDesignerScopeData(
   return {
     designer: {
       kind: snapshot.document.kind,
+      dirty: snapshot.dirty,
       documentId: snapshot.document.id,
       documentName: snapshot.document.name,
       selectionTarget: snapshot.selectionTarget,
