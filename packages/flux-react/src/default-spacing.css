@@ -54,7 +54,7 @@
     gap: var(--space-fieldset-body-gap);
   }
 
-  .nop-container > [data-slot='container-body']:not([data-flex]) {
+  .nop-container > [data-slot='container-body'] {
     display: flex;
     flex-direction: column;
     gap: var(--space-form-item-gap);

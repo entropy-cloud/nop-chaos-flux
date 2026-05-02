@@ -105,6 +105,50 @@ describe('per-slot className props', () => {
     expect(body?.hasAttribute('data-flex')).toBe(false);
   });
 
+  it('does not inject inline default gap on bare path', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://slot-className"
+        schema={{
+          type: 'container',
+          body: [{ type: 'text', text: 'A' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const body = container.querySelector('[data-slot="container-body"]');
+    expect(body?.hasAttribute('style')).toBe(false);
+    expect(body?.hasAttribute('data-flex')).toBe(false);
+  });
+
+  it('does not inject inline default gap on flex-child path without explicit gap', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://slot-className"
+        schema={{
+          type: 'container',
+          direction: 'column',
+          body: [
+            { type: 'text', text: 'A' },
+            { type: 'text', text: 'B' },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const body = container.querySelector('[data-slot="container-body"]');
+    expect(body?.className).toContain('flex');
+    expect(body?.className).toContain('flex-col');
+    expect(body?.hasAttribute('data-flex')).toBe(true);
+    expect(body?.hasAttribute('style')).toBe(false);
+  });
+
   it('applies all three slot classNames simultaneously', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(

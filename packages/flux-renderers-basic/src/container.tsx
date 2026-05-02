@@ -23,10 +23,6 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
 
   const useFlexChild =
     wrap || align !== undefined || gap.className || gap.style || direction !== 'row';
-  const flexChildGapStyle =
-    useFlexChild && !gap.className && !gap.style
-      ? { gap: 'var(--space-form-item-gap)' }
-      : gap.style;
   return (
     <div
       className={cn('nop-container', props.meta.className)}
@@ -53,7 +49,7 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
             gap.className,
             slotProps.bodyClassName,
           )}
-          style={flexChildGapStyle}
+          style={gap.style}
         >
           {bodyContent}
         </div>
