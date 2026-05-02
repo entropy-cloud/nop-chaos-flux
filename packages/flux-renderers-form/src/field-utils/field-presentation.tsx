@@ -1,9 +1,20 @@
-import { shouldShowFieldError, selectCurrentFormFieldPresentation, useCurrentForm, useCurrentFormState, useOwnedFieldState } from '@nop-chaos/flux-react';
+import {
+  shouldShowFieldError,
+  selectCurrentFormFieldPresentation,
+  useChildFieldState,
+  useCurrentForm,
+  useCurrentFormState,
+  useOwnedFieldState,
+} from '@nop-chaos/flux-react';
 import type { ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { getValidationBehaviorForOwner } from './field-validation';
 
 function useFormFieldState(name: string) {
   return useOwnedFieldState(name);
+}
+
+export function useCompositeChildFieldState(name: string) {
+  return useChildFieldState(name);
 }
 
 export function useFieldPresentation(

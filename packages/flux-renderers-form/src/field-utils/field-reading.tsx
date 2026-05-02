@@ -3,7 +3,6 @@ import {
   type FormFieldStateSnapshot,
   type RendererComponentProps,
   type SchemaFieldRule,
-  type ScopeRef,
   type ValidationError,
 } from '@nop-chaos/flux-core';
 import { shouldShowFieldError, resolveRendererSlotContent } from '@nop-chaos/flux-react';
@@ -13,15 +12,6 @@ export const formLabelFieldRule: SchemaFieldRule = {
   kind: 'value-or-region',
   regionKey: 'label',
 };
-
-export function readFieldValue(scope: ScopeRef, name: string): unknown {
-  return name ? (scope.get(name) ?? '') : scope.readOwn();
-}
-
-export function readCheckboxGroupValue(scope: ScopeRef, name: string): string[] {
-  const value = readFieldValue(scope, name);
-  return Array.isArray(value) ? value.map((item) => String(item)) : [];
-}
 
 export function resolveFieldLabelContent(
   props: Pick<RendererComponentProps, 'props' | 'meta' | 'regions'>,
