@@ -22,11 +22,41 @@ function hasMultiSegmentPath(paths: readonly string[]): boolean {
   return false;
 }
 
-function pathsOverlap(a: string, b: string): boolean {
-  if (a === b) return true;
-  if (a.length < b.length) return b.startsWith(a + '.');
-  if (b.length < a.length) return a.startsWith(b + '.');
-  return false;
+function pathPrefixes(path: string): readonly string[] {
+  const prefixes = [path];
+  let index = path.lastIndexOf('.');
+
+  while (index >= 0) {
+    prefixes.push(path.slice(0, index));
+    index = path.lastIndexOf('.', index - 1);
+  }
+
+  return prefixes;
+}
+
+function buildDependencyPathIndex(paths: readonly string[]) {
+  const exact = new Set<string>();
+  const descendantsByPrefix = new Map<string, string[]>();
+
+  for (const path of paths) {
+    exact.add(path);
+
+    const prefixes = pathPrefixes(path);
+    for (let index = 1; index < prefixes.length; index += 1) {
+      const prefix = prefixes[index];
+      const descendants = descendantsByPrefix.get(prefix);
+      if (descendants) {
+        descendants.push(path);
+      } else {
+        descendantsByPrefix.set(prefix, [path]);
+      }
+    }
+  }
+
+  return {
+    exact,
+    descendantsByPrefix,
+  };
 }
 
 export function createRootDependencySet(
@@ -121,10 +151,15 @@ export function scopeChangeHitsDependencies(
     return false;
   }
 
-  const sortedDeps = [...dependencies.paths].sort();
+  const dependencyIndex = buildDependencyPathIndex(dependencies.paths);
+
   for (const changePath of change.paths) {
-    for (const depPath of sortedDeps) {
-      if (pathsOverlap(changePath, depPath)) {
+    if (dependencyIndex.exact.has(changePath)) {
+      return true;
+    }
+
+    for (const prefix of pathPrefixes(changePath)) {
+      if (dependencyIndex.exact.has(prefix) || dependencyIndex.descendantsByPrefix.has(prefix)) {
         return true;
       }
     }

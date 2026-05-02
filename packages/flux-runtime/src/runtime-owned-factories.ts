@@ -25,6 +25,7 @@ function createValidationStoreView(
     getState: () => store.getState(),
     subscribe: (listener) => store.subscribe(listener),
     subscribeToPath: (path, listener) => store.subscribeToPath(path, listener),
+    subscribeToPaths: (paths, listener) => store.subscribeToPaths(paths, listener),
     subscribeToSubmitting: (listener) => store.subscribeToSubmitting(listener),
     getPathState: (path) => store.getPathState(path),
     getFieldState: (path) => store.getFieldState(path),

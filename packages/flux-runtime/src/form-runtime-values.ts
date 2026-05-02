@@ -17,6 +17,20 @@ export interface SetValuesContext {
   ) => Promise<void>;
 }
 
+function reportDependentRevalidationFailure(path: string, error: unknown): void {
+  console.warn(`[form-runtime] dependent revalidation failed for "${path}"`, error);
+}
+
+function attachDependentRevalidationFailureHandler(path: string, result: Promise<void> | void): void {
+  if (!result || typeof (result as Promise<void>).catch !== 'function') {
+    return;
+  }
+
+  result.catch((error: unknown) => {
+    reportDependentRevalidationFailure(path, error);
+  });
+}
+
 export function executeSetValues(ctx: SetValuesContext, values: Record<string, unknown>): void {
   const {
     sharedState,
@@ -101,6 +115,9 @@ export function executeSetValues(ctx: SetValuesContext, values: Record<string, u
   }
 
   for (const changedPath of changedPaths) {
-    void revalidateDependents(changedPath, 'change');
+    attachDependentRevalidationFailureHandler(
+      changedPath,
+      revalidateDependents(changedPath, 'change'),
+    );
   }
 }

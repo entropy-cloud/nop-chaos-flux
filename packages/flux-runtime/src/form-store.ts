@@ -75,21 +75,149 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
   const pathListeners = new Map<string, Set<() => void>>();
   const submittingListeners = new Set<() => void>();
 
+  function notifyPathListeners(listeners: Set<() => void> | undefined) {
+    if (!listeners) {
+      return;
+    }
+
+    for (const listener of listeners) {
+      listener();
+    }
+  }
+
   function notifyPath(path: string) {
-    const listeners = pathListeners.get(path);
-    if (listeners) {
-      for (const listener of listeners) {
-        listener();
+    notifyPathListeners(pathListeners.get(path));
+  }
+
+  function pathPrefixes(path: string): readonly string[] {
+    const prefixes = [path];
+    let index = path.lastIndexOf('.');
+
+    while (index >= 0) {
+      prefixes.push(path.slice(0, index));
+      index = path.lastIndexOf('.', index - 1);
+    }
+
+    return prefixes;
+  }
+
+  function subscribeToPaths(paths: readonly string[], listener: () => void): () => void {
+    if (paths.length === 0) {
+      return () => undefined;
+    }
+
+    const unsubscribers = paths.map((path) => {
+      let listeners = pathListeners.get(path);
+      if (!listeners) {
+        listeners = new Set();
+        pathListeners.set(path, listeners);
+      }
+      listeners.add(listener);
+
+      return () => {
+        listeners!.delete(listener);
+        if (listeners!.size === 0) {
+          pathListeners.delete(path);
+        }
+      };
+    });
+
+    return () => {
+      for (const unsubscribe of unsubscribers) {
+        unsubscribe();
+      }
+    };
+  }
+
+  function collectChangedValuePaths(
+    before: unknown,
+    after: unknown,
+    changed: Set<string>,
+    basePath?: string,
+  ) {
+    if (Object.is(before, after)) {
+      return;
+    }
+
+    const beforeIsObject = typeof before === 'object' && before !== null;
+    const afterIsObject = typeof after === 'object' && after !== null;
+
+    if (!beforeIsObject || !afterIsObject || Array.isArray(before) || Array.isArray(after)) {
+      if (basePath) {
+        changed.add(basePath);
+      }
+      return;
+    }
+
+    const beforeRecord = before as Record<string, unknown>;
+    const afterRecord = after as Record<string, unknown>;
+    const keys = new Set([...Object.keys(beforeRecord), ...Object.keys(afterRecord)]);
+
+    if (keys.size === 0 && basePath) {
+      changed.add(basePath);
+      return;
+    }
+
+    for (const key of keys) {
+      const nextPath = basePath ? `${basePath}.${key}` : key;
+      collectChangedValuePaths(beforeRecord[key], afterRecord[key], changed, nextPath);
+    }
+  }
+
+  function notifyValuePathListeners(changedPaths: Set<string>) {
+    if (changedPaths.size === 0) {
+      return;
+    }
+
+    const notified = new Set<() => void>();
+
+    for (const changedPath of changedPaths) {
+      for (const prefix of pathPrefixes(changedPath)) {
+        const listeners = pathListeners.get(prefix);
+        if (!listeners) {
+          continue;
+        }
+
+        for (const listener of listeners) {
+          if (notified.has(listener)) {
+            continue;
+          }
+
+          notified.add(listener);
+          listener();
+        }
+      }
+
+      for (const [listenerPath, listeners] of pathListeners) {
+        if (!listenerPath.startsWith(changedPath + '.')) {
+          continue;
+        }
+
+        for (const listener of listeners) {
+          if (notified.has(listener)) {
+            continue;
+          }
+
+          notified.add(listener);
+          listener();
+        }
       }
     }
   }
 
   function diffAndNotifyValuePaths(before: Record<string, any>, after: Record<string, any>) {
-    for (const path of pathListeners.keys()) {
-      if (getIn(before, path) !== getIn(after, path)) {
-        notifyPath(path);
+    const changedPaths = new Set<string>();
+    collectChangedValuePaths(before, after, changedPaths);
+
+    if (changedPaths.size === 0 && before !== after) {
+      for (const path of pathListeners.keys()) {
+        if (getIn(before, path) !== getIn(after, path)) {
+          changedPaths.add(path);
+        }
       }
     }
+
+    notifyValuePathListeners(changedPaths);
   }
 
   function notifySubmitting() {
@@ -141,18 +269,10 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       return store.subscribe(listener);
     },
     subscribeToPath(path, listener) {
-      let listeners = pathListeners.get(path);
-      if (!listeners) {
-        listeners = new Set();
-        pathListeners.set(path, listeners);
-      }
-      listeners.add(listener);
-      return () => {
-        listeners!.delete(listener);
-        if (listeners!.size === 0) {
-          pathListeners.delete(path);
-        }
-      };
+      return subscribeToPaths([path], listener);
+    },
+    subscribeToPaths(paths, listener) {
+      return subscribeToPaths(paths, listener);
     },
     subscribeToSubmitting(listener) {
       submittingListeners.add(listener);
