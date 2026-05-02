@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
@@ -17,8 +17,11 @@ import {
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 
 describe('second edit to the same field reflects updated value (bug 30 regression)', () => {
-  it('input-text: second edit to the same field is reflected on submit', async () => {
+  afterEach(() => {
     submitCalls.length = 0;
+  });
+
+  it('input-text: second edit to the same field is reflected on submit', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -58,7 +61,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('input-password: second edit to the same field is reflected on submit', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -97,7 +99,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('textarea: second edit to the same field is reflected on submit', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -133,7 +134,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('select: second selection on the same field is reflected on submit', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -179,7 +179,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('checkbox: toggling the same checkbox twice returns to original value', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -217,7 +216,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('switch: toggling the same switch twice returns to original value', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -253,7 +251,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('radio-group: second selection replaces the first', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -299,7 +296,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('checkbox-group: unchecking a previously checked item updates the array', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -344,7 +340,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('input-tree: unchecking a previously checked node updates the array', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -459,7 +454,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('tag-list: unchecking a previously selected tag updates the array', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -496,7 +490,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('key-value: user edits the same row value twice and submits the second value', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 
@@ -545,7 +538,6 @@ describe('second edit to the same field reflects updated value (bug 30 regressio
   });
 
   it('array-editor: user edits the same cell twice and submits the second value', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs, buttonRenderer]);
 

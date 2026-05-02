@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AsyncOwnerDebugSnapshot } from '@nop-chaos/flux-core';
 import {
   createAutomationApi,
@@ -79,16 +79,16 @@ function createAsyncExplanation(): NopNodeAsyncExplanation {
   };
 }
 
-Object.defineProperty(globalThis, 'window', {
-  value: windowStub,
-  configurable: true,
-});
-
 describe('debugger automation helpers', () => {
   beforeEach(() => {
+    vi.stubGlobal('window', windowStub);
     delete window.__NOP_DEBUGGER__;
     delete window.__NOP_DEBUGGER_API__;
     delete window.__NOP_DEBUGGER_HUB__;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('creates an automation api that delegates controller actions', async () => {

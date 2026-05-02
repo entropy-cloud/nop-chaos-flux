@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createActionScope } from '@nop-chaos/flux-runtime';
@@ -33,9 +33,12 @@ import {
   wrapProbeRenderer,
 } from '../test-support';
 
-const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+let expressionCompiler: ReturnType<typeof createExpressionCompiler>;
 
 describe('createSchemaRenderer runtime core behavior', () => {
+  beforeEach(() => {
+    expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+  });
   it('compiles runtime boundary flags for form, scope, provider, and class alias changes', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([formRenderer, scopedHostRenderer, textRenderer]),
