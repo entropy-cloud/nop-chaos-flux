@@ -85,15 +85,15 @@ export function createRuntimeOwnedFactories(input: {
   ownedSurfaceRuntimes: Set<SurfaceRuntime>;
   ownedValidationScopes?: Set<ValidationScopeRuntime>;
   ownedFormRuntimes?: Set<FormRuntime>;
-    createValidationScopeRuntime: (inputValue: {
-      id?: string;
-      parentScope?: ScopeRef;
-      scopePath?: string;
-      validation?: CompiledFormValidationModel;
-      initialValues?: Record<string, any>;
-      existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
-      initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
-    }) => ValidationScopeRuntime;
+  createValidationScopeRuntime: (inputValue: {
+    id?: string;
+    parentScope?: ScopeRef;
+    scopePath?: string;
+    validation?: CompiledFormValidationModel;
+    initialValues?: Record<string, any>;
+    existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
+    initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
+  }) => ValidationScopeRuntime;
   dispatchAction: (
     action: import('@nop-chaos/flux-core').ActionSchema,
     ctx?: Partial<ActionContext>,
