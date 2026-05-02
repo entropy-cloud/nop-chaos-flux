@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from '@nop-chaos/ui';
 import type { TabsItemSchema, TabsSchema } from './schemas';
 import { useOwnedAxisValue } from './interaction-owner';
 import { useStatusPathPublication } from './status-hooks';
+import { asReactNode } from './utils';
 
 const EMPTY_ITEMS: TabsItemSchema[] = [];
 
@@ -123,7 +124,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
         const value = getItemValue(item, index);
         const titleRegion =
           typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
-        const titleContent = titleRegion?.render() ?? item.title ?? item.label ?? value;
+        const titleContent = asReactNode(titleRegion?.render()) ?? item.title ?? item.label ?? value;
         return (
           <TabsTrigger key={value} value={value} disabled={Boolean(item.disabled)}>
             {titleContent}
@@ -151,9 +152,9 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
             className={cn(schemaProps.contentClassName)}
           >
             {toolbarRegion ? (
-              <div data-slot="tabs-item-toolbar">{toolbarRegion.render()}</div>
+              <div data-slot="tabs-item-toolbar">{asReactNode(toolbarRegion.render())}</div>
             ) : null}
-            {bodyRegion ? bodyRegion.render() : null}
+            {bodyRegion ? asReactNode(bodyRegion.render()) : null}
           </TabsContent>
         );
       })}
@@ -170,7 +171,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     >
       {toolbarContent ? (
         <div data-slot="tabs-toolbar" className={cn(schemaProps.toolbarClassName)}>
-          {toolbarContent}
+          {asReactNode(toolbarContent)}
         </div>
       ) : null}
       <Tabs

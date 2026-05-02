@@ -12,6 +12,7 @@ import {
   renderStructuralLoop,
   resolveLoopBindings,
 } from './structural-loop';
+import { asReactNode } from './utils';
 
 interface LoopProviderProps {
   bindings: StructuralLoopBindings;
@@ -79,7 +80,7 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
         ownerId: props.id,
         parentInstancePath,
         repeatedTemplateId,
-        renderEmpty: () => props.regions.empty?.render() ?? null,
+        renderEmpty: () => asReactNode(props.regions.empty?.render()),
         renderItem: ({ itemKey, slotBindings, instancePath, depth }) => (
           <LoopProvider
             key={itemKey}
@@ -88,17 +89,21 @@ export function LoopRenderer(props: RendererComponentProps<LoopSchema>) {
             keyBy={props.props.keyBy}
             instancePath={instancePath}
             depth={depth}
-            renderBody={(childSlotBindings, childInstancePath) =>
-              props.regions.body?.render({
-                bindings: childSlotBindings,
-                instancePath: childInstancePath,
-              }) ?? null
+            renderBody={(childSlotBindings, childInstancePath): React.ReactNode =>
+              asReactNode(
+                props.regions.body?.render({
+                  bindings: childSlotBindings,
+                  instancePath: childInstancePath,
+                }),
+              )
             }
           >
-            {props.regions.body?.render({
-              bindings: slotBindings,
-              instancePath,
-            }) ?? null}
+            {asReactNode(
+              props.regions.body?.render({
+                bindings: slotBindings,
+                instancePath,
+              }),
+            )}
           </LoopProvider>
         ),
       })}

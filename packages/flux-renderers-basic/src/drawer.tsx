@@ -10,12 +10,13 @@ import {
   cn,
 } from '@nop-chaos/ui';
 import type { DrawerSchema } from './schemas';
+import { asReactNode } from './utils';
 import { useSurfaceRenderer } from './use-surface-renderer';
 
 export function DrawerRenderer(props: RendererComponentProps<DrawerSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
-  const bodyContent = props.regions.body?.render();
-  const actionsContent = props.regions.actions?.render();
+  const bodyContent = asReactNode(props.regions.body?.render());
+  const actionsContent = asReactNode(props.regions.actions?.render());
   const showMask = props.props.showMask !== false;
   const { summary, containerElement, handleOpenChange } = useSurfaceRenderer(props, 'drawer');
 

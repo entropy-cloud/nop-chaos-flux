@@ -12,6 +12,7 @@ import {
   renderStructuralLoop,
   resolveLoopBindings,
 } from './structural-loop';
+import { asReactNode } from './utils';
 
 const DEFAULT_RECURSE_BINDINGS = {
   itemName: 'item',
@@ -105,7 +106,7 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
             instancePath={instancePath}
             depth={depth}
           >
-            {loopContext.renderBody(slotBindings, instancePath)}
+            {asReactNode(loopContext.renderBody(slotBindings, instancePath))}
           </RecurseProvider>
         ),
       })}

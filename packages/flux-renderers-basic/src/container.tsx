@@ -3,7 +3,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import type { ContainerSchema } from './schemas';
-import { resolveDirection, resolveGap } from './utils';
+import { asReactNode, resolveDirection, resolveGap } from './utils';
 
 export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
   const slotProps = props.props;
@@ -19,7 +19,7 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
   const gap = resolveGap(slotProps.gap as number | string | undefined);
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');
-  const bodyContent = props.regions.body?.render();
+  const bodyContent = asReactNode(props.regions.body?.render());
 
   const useFlexChild =
     wrap || align !== undefined || gap.className || gap.style || direction !== 'row';

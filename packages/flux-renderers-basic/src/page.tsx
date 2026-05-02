@@ -9,6 +9,7 @@ import {
 import { cn } from '@nop-chaos/ui';
 import type { PageSchema } from './schemas';
 import { useStatusPathPublication } from './status-hooks';
+import { asReactNode } from './utils';
 
 export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const titleContent = resolveRendererSlotContent(props, 'title');
@@ -48,7 +49,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
         </div>
       ) : null}
       <div data-slot="page-body" className={cn(slotProps.bodyClassName)}>
-        {props.regions.body?.render()}
+        {asReactNode(props.regions.body?.render())}
       </div>
       {hasRendererSlotContent(footerContent) ? (
         <footer data-slot="page-footer" className={cn(slotProps.footerClassName)}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import { resolveDirection, resolveGap } from './utils';
+import { asReactNode, resolveDirection, resolveGap } from './utils';
 import type { FlexSchema } from './schemas';
 
 export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
@@ -23,8 +23,8 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
       ? props.props.justify
       : undefined;
   const gap = resolveGap(props.props.gap as number | string | undefined);
-  const bodyContent = props.regions.body?.render();
-  const itemsContent = props.regions.items?.render();
+  const bodyContent = asReactNode(props.regions.body?.render());
+  const itemsContent = asReactNode(props.regions.items?.render());
 
   return (
     <div

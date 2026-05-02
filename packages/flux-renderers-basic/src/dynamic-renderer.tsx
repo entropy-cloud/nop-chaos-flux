@@ -8,6 +8,7 @@ import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
 import { executeApiObject } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { asReactNode } from './utils';
 
 function isBaseSchemaLike(value: unknown): value is BaseSchema {
   return (
@@ -90,7 +91,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
       >
-        {props.helpers.render(state.schema)}
+        {asReactNode(props.helpers.render(state.schema))}
       </div>
     );
   }
@@ -101,7 +102,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >
-      {props.regions.body?.render()}
+      {asReactNode(props.regions.body?.render())}
     </div>
   );
 }
