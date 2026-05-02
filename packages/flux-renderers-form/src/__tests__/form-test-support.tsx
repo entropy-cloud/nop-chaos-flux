@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
+import '../test-dom-polyfills';
 import type {
   ApiSchema,
   ApiRequestContext,

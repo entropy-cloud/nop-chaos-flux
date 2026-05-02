@@ -1,4 +1,11 @@
-import { type CompiledValidationBehavior, type FormFieldStateSnapshot, type RendererComponentProps, type SchemaFieldRule, type ScopeRef } from '@nop-chaos/flux-core';
+import {
+  type CompiledValidationBehavior,
+  type FormFieldStateSnapshot,
+  type RendererComponentProps,
+  type SchemaFieldRule,
+  type ScopeRef,
+  type ValidationError,
+} from '@nop-chaos/flux-core';
 import { shouldShowFieldError, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 
 export const formLabelFieldRule: SchemaFieldRule = {

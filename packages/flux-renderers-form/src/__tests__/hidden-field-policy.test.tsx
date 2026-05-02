@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { cleanup, render, act } from '@testing-library/react';
+import '../test-dom-polyfills';
 import type {
   ApiSchema,
   ApiRequestContext,
