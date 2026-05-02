@@ -8,6 +8,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-ch
 import { ChevronRightIcon, DotIcon } from 'lucide-react';
 import type { TreeSchema } from './schemas';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 interface TreeNodeRecord {
   [key: string]: unknown;
 }
@@ -121,8 +125,8 @@ function TreeNodeRenderer(props: {
               }
             }}
           >
-            {hasRendererSlotContent(nodeContent) ? (
-              nodeContent
+            {hasRendererSlotContent(asReactNode(nodeContent)) ? (
+              asReactNode(nodeContent)
             ) : (
               <span>{String(label ?? nodeKey)}</span>
             )}

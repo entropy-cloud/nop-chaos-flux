@@ -43,6 +43,10 @@ import { useTableHandle } from './table-renderer/use-table-handle';
 import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache';
 import type { TableResponsiveConfig } from './schemas';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
 const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];
 const RESPONSIVE_BREAKPOINTS = {
@@ -138,6 +142,7 @@ function createTableOwnerKey(props: RendererComponentProps<TableSchema>): string
 
 export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const schemaProps = useSchemaProps(props);
+  const tableSchemaProps = schemaProps as TableSchema;
   const columns = Array.isArray(schemaProps.columns) ? schemaProps.columns : EMPTY_TABLE_COLUMNS;
   const source = Array.isArray(schemaProps.source)
     ? (schemaProps.source as Array<Record<string, any>>)
@@ -173,24 +178,24 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     tableColumns,
     toggleColumn,
     moveColumn,
-  } = useTableVisibleColumns(schemaProps, columns);
+  } = useTableVisibleColumns(tableSchemaProps, columns);
   const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
   const { paginationEnabled, currentPage, pageSize, handlePageChange, handlePageSizeChange } =
-    useTablePagination(schemaProps, props.events.onPageChange, helpers);
+    useTablePagination(tableSchemaProps, props.events.onPageChange, helpers);
   const { selectedRowKeys, allSelected, handleSelectAll, handleSelectRow, setSelectionExternal } =
-    useTableSelection(schemaProps, source, props.events.onSelectionChange, helpers);
+    useTableSelection(tableSchemaProps, source, props.events.onSelectionChange, helpers);
   const { sortState, handleSort } = useTableSort(
-    schemaProps,
+    tableSchemaProps,
     props.events.onSortChange,
     tableColumns,
     helpers,
   );
   const { filterState, handleFilter, handleSearch, clearFilters } = useTableFilter(
-    schemaProps,
+    tableSchemaProps,
     props.events.onFilterChange,
     helpers,
   );
-  const { expandedRowKeys, handleToggleExpand } = useTableExpand(schemaProps);
+  const { expandedRowKeys, handleToggleExpand } = useTableExpand(tableSchemaProps);
 
   const responsiveBreakpoint = resolveResponsiveBreakpoint(schemaProps.responsive?.breakpoint);
   const isBelowResponsiveBreakpoint = useIsBelowResponsiveBreakpoint(responsiveBreakpoint);
@@ -220,8 +225,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     [source, schemaProps.rowKey, sortState, filterState, paginationEnabled, currentPage, pageSize],
   );
   const fixedColumnLayout = useMemo(
-    () => createFixedColumnLayout(schemaProps, mainColumns, showExpandColumn),
-    [schemaProps, mainColumns, showExpandColumn],
+    () => createFixedColumnLayout(tableSchemaProps, mainColumns, showExpandColumn),
+    [tableSchemaProps, mainColumns, showExpandColumn],
   );
 
   const rowScopeCache = useTableRowScopeCache(processedData, ownerKey, helpers, props.path);
@@ -266,7 +271,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       data-cid={props.meta.cid || undefined}
     >
       {hasRendererSlotContent(headerContent) ? (
-        <div data-slot="table-header-region">{headerContent}</div>
+        <div data-slot="table-header-region">{asReactNode(headerContent)}</div>
       ) : null}
       {columnSettingsEnabled ? (
         <div
@@ -469,7 +474,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       ) : null}
 
       {hasRendererSlotContent(footerContent) ? (
-        <div data-slot="table-footer">{footerContent}</div>
+        <div data-slot="table-footer">{asReactNode(footerContent)}</div>
       ) : null}
     </div>
   );

@@ -30,6 +30,10 @@ import {
   useCrudVisibleColumnNames,
 } from './crud-renderer-ownership';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const defaultEmptyLabel = t('flux.common.noData');
   const schemaProps = useSchemaProps(props);
@@ -242,9 +246,9 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     () => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer'),
     [normalizedSchema.toolbarLayout],
   );
-  const hasToolbar = hasRendererSlotContent(toolbarContent);
-  const hasListActions = hasRendererSlotContent(listActionsContent);
-  const hasFooterToolbar = hasRendererSlotContent(footerToolbarContent);
+  const hasToolbar = hasRendererSlotContent(asReactNode(toolbarContent));
+  const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
+  const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
 
   const tableSchema = useMemo<BaseSchema>(() => {
     const base: Record<string, unknown> = {
@@ -365,7 +369,9 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     >
       {queryFormSchema ? (
         <div className="nop-crud-query" data-slot="crud-query">
-          {props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm', scope: crudScope })}
+          {asReactNode(
+            props.helpers.render(queryFormSchema, { pathSuffix: 'queryForm', scope: crudScope }),
+          )}
           <div className="mt-2 flex gap-2" data-slot="crud-query-controls">
             <Button variant="outline" size="sm" onClick={() => void handleQuerySubmit()}>
               {t('flux.common.search')}
@@ -379,13 +385,17 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
       {hasToolbar || hasListActions || headerBlocks.length > 0 ? (
         <div className="nop-crud-toolbar" data-slot="crud-toolbar">
-          {hasToolbar ? <div data-slot="crud-toolbar-main">{toolbarContent}</div> : null}
-          {hasListActions ? <div data-slot="crud-list-actions">{listActionsContent}</div> : null}
+          {hasToolbar ? (
+            <div data-slot="crud-toolbar-main">{asReactNode(toolbarContent)}</div>
+          ) : null}
+          {hasListActions ? (
+            <div data-slot="crud-list-actions">{asReactNode(listActionsContent)}</div>
+          ) : null}
           <CrudToolbarBlocks
             slot="header"
             blocks={headerBlocks}
             summary={summary}
-            listActionsContent={listActionsContent}
+            listActionsContent={asReactNode(listActionsContent)}
             hasListActions={hasListActions}
             pagination={paginationState}
             onPageChange={handleToolbarPageChange}
@@ -395,13 +405,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       ) : null}
 
       <div className="nop-crud-table" data-slot="crud-table">
-        {props.helpers.render(tableSchema, { pathSuffix: 'table', scope: crudScope })}
+        {asReactNode(props.helpers.render(tableSchema, { pathSuffix: 'table', scope: crudScope }))}
       </div>
 
       {hasFooterToolbar || footerBlocks.length > 0 ? (
         <div className="nop-crud-footer" data-slot="crud-footer">
           {hasFooterToolbar ? (
-            <div data-slot="crud-footer-toolbar">{footerToolbarContent}</div>
+            <div data-slot="crud-footer-toolbar">{asReactNode(footerToolbarContent)}</div>
           ) : null}
           {footerBlocks.length > 0 ? (
             <>
@@ -410,7 +420,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
                 slot="footer"
                 blocks={footerBlocks}
                 summary={summary}
-                listActionsContent={listActionsContent}
+                listActionsContent={asReactNode(listActionsContent)}
                 hasListActions={hasListActions}
                 pagination={paginationState}
                 onPageChange={handleToolbarPageChange}
