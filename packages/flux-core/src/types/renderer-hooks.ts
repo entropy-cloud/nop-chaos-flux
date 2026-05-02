@@ -3,7 +3,12 @@ import type { FormulaCompiler, ModuleCache } from './compilation';
 import type { CompiledTemplate, InstanceFrame, NodeInstance, TemplateNode } from './node-identity';
 import type { ComponentHandleRegistry } from './renderer-component';
 import type { RendererEnv } from './renderer-api';
-import type { RendererHelpers, RendererRegistry, RendererRuntime } from './renderer-core';
+import type {
+  RendererHelpers,
+  RendererRegistry,
+  RendererRenderOutput,
+  RendererRuntime,
+} from './renderer-core';
 import type { RendererPlugin } from './renderer-plugin';
 import type {
   DataSourceStatusSummary,
@@ -51,10 +56,10 @@ export interface StructuralLoopRenderContext {
   renderBody(
     slotBindings: Record<string, unknown>,
     instancePath: readonly InstanceFrame[],
-  ): any;
+  ): RendererRenderOutput;
 }
 
-export interface RenderRegionHandle {
+export interface RenderRegionHandle<R = RendererRenderOutput> {
   key: string;
   templateNode: TemplateNode | readonly TemplateNode[] | null;
   /**
@@ -80,7 +85,7 @@ export interface RenderRegionHandle {
     actionScope?: ActionScope;
     componentRegistry?: ComponentHandleRegistry;
     ownerNodeInstance?: NodeInstance;
-  }): any;
+  }): R;
 }
 
 export type RenderNodeInput =

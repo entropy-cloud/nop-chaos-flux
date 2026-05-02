@@ -74,6 +74,7 @@ export interface FormStoreApi {
   getState(): FormStoreState;
   subscribe(listener: () => void): () => void;
   subscribeToPath(path: string, listener: () => void): () => void;
+  subscribeToPaths(paths: readonly string[], listener: () => void): () => void;
   subscribeToSubmitting(listener: () => void): () => void;
   getPathState(path: string): FormPathState;
   getFieldState(path: string): FieldState | undefined;
@@ -94,6 +95,7 @@ export interface ValidationStoreApi {
   getState(): FormStoreState;
   subscribe(listener: () => void): () => void;
   subscribeToPath(path: string, listener: () => void): () => void;
+  subscribeToPaths(paths: readonly string[], listener: () => void): () => void;
   subscribeToSubmitting(listener: () => void): () => void;
   getPathState(path: string): FormPathState;
   getFieldState(path: string): FieldState | undefined;

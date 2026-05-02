@@ -20,8 +20,6 @@ import type {
 import type {
   CapabilityMethodContract,
   FluxValueShape,
-  RendererAuthoringTransform,
-  RendererSchemaValidator,
   RendererHostContract,
 } from '../schema-diagnostics';
 import type {
@@ -83,8 +81,12 @@ export interface ValidationContributor<S extends BaseSchema = BaseSchema> {
   getChildFieldPathPrefix?(schema: S, ctx: ValidationCollectContext<S>): string | false | undefined;
 }
 
+type BivariantCallback<Args extends readonly unknown[], Result> = {
+  bivarianceHack(...args: Args): Result;
+}['bivarianceHack'];
+
 export interface RendererHelpers {
-  render: (input: RenderNodeInput, options?: RenderFragmentOptions) => any;
+  render: (input: RenderNodeInput, options?: RenderFragmentOptions) => RendererRenderOutput;
   evaluate: <T = unknown>(target: unknown, scope?: ScopeRef) => T;
   createScope: (patch?: object, options?: CreateScopeOptions) => ScopeRef;
   dispatch: (
@@ -93,6 +95,11 @@ export interface RendererHelpers {
   ) => Promise<ActionResult>;
   executeSource: (source: SourceSchema, options?: { scope?: ScopeRef }) => Promise<ActionResult>;
 }
+
+export type RendererRenderOutput = any;
+
+export type RendererResolvedProps<S extends BaseSchema = BaseSchema> =
+  Record<string, any> & Partial<S>;
 
 export interface ReactionDebugEntry {
   id: string;
@@ -140,13 +147,16 @@ export type RendererEventHandler = (
   ctx?: Partial<ActionContext>,
 ) => Promise<ActionResult>;
 
-export interface RendererComponentProps<S extends BaseSchema = BaseSchema> {
+export interface RendererComponentProps<
+  S extends BaseSchema = BaseSchema,
+  P extends Record<string, unknown> = RendererResolvedProps<S>,
+> {
   id: string;
   path: SchemaPath;
   schema: S;
   templateNode: TemplateNode<S>;
   node: NodeInstance<S>;
-  props: Readonly<Record<string, unknown>>;
+  props: Readonly<P>;
   meta: ResolvedNodeMeta;
   regions: Readonly<Record<string, RenderRegionHandle>>;
   events: Readonly<Record<string, RendererEventHandler | undefined>>;
@@ -182,9 +192,12 @@ export interface RendererCapabilityContract extends CapabilityMethodContract {
   displayName: string;
 }
 
-export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
+export interface RendererDefinition<
+  S extends BaseSchema = BaseSchema,
+  P extends Record<string, unknown> = RendererResolvedProps<S>,
+> {
   type: S['type'];
-  component?: (props: RendererComponentProps<any>) => any;
+  component?: BivariantCallback<[RendererComponentProps<S, P>], RendererRenderOutput>;
   displayName?: string;
   icon?: string;
   category?: string;
@@ -204,8 +217,14 @@ export interface RendererDefinition<S extends BaseSchema = BaseSchema> {
   sourcePackage?: string;
   regions?: readonly string[];
   fields?: readonly SchemaFieldRule[];
-  authoringTransform?: RendererAuthoringTransform<S>;
-  schemaValidator?: RendererSchemaValidator<S>;
+  authoringTransform?: BivariantCallback<
+    [import('../schema-diagnostics').RendererAuthoringTransformContext<S>],
+    S
+  >;
+  schemaValidator?: BivariantCallback<
+    [import('../schema-diagnostics').RendererSchemaValidationContext<S>],
+    void
+  >;
   scopePolicy?: ScopePolicy;
   actionScopePolicy?: 'inherit' | 'new';
   componentRegistryPolicy?: 'inherit' | 'new';
