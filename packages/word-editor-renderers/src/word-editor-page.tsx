@@ -41,6 +41,10 @@ import { DatasetDialog } from './dialogs/dataset-dialog.js';
 import { useWordEditorShortcuts } from './hooks/use-word-editor-shortcuts.js';
 import type { WordEditorPageSchema } from './types.js';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchema>) {
   const bridge = useMemo(() => new CanvasEditorBridge(), []);
   const editorStore = useMemo(() => createEditorStore(), []);
@@ -352,7 +356,9 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-[var(--nop-accent)]" />
             <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">
-              {hasRendererSlotContent(titleContent) ? titleContent : t('wordEditor.title')}
+              {hasRendererSlotContent(titleContent)
+                ? asReactNode(titleContent)
+                : t('wordEditor.title')}
             </h1>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[var(--nop-body-copy)]">
@@ -374,7 +380,12 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         </Button>
       </div>
       {props.regions.toolbar ? (
-        props.helpers.render(props.regions.toolbar.templateNode, { scope: hostScope, actionScope })
+        asReactNode(
+          props.helpers.render(props.regions.toolbar.templateNode, {
+            scope: hostScope,
+            actionScope,
+          }),
+        )
       ) : (
         <RibbonToolbar
           bridge={bridge}
@@ -438,11 +449,21 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   );
 
   const leftPanelSlot = props.regions.leftPanel
-    ? props.helpers.render(props.regions.leftPanel.templateNode, { scope: hostScope, actionScope })
+    ? asReactNode(
+        props.helpers.render(props.regions.leftPanel.templateNode, {
+          scope: hostScope,
+          actionScope,
+        }),
+      )
     : defaultLeftPanelSlot;
 
   const rightPanelSlot = props.regions.rightPanel ? (
-    props.helpers.render(props.regions.rightPanel.templateNode, { scope: hostScope, actionScope })
+    asReactNode(
+      props.helpers.render(props.regions.rightPanel.templateNode, {
+        scope: hostScope,
+        actionScope,
+      }),
+    )
   ) : (
     <OutlinePanel bridge={bridge} />
   );

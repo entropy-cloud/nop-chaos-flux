@@ -28,6 +28,10 @@ import {
 } from './page-model.js';
 import type { SpreadsheetPageSchema } from './types.js';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 function toActionResult(response: unknown): ActionResult {
   if (response && typeof response === 'object' && 'ok' in response) {
     return {
@@ -178,21 +182,25 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
     >
       <header data-slot="spreadsheet-page-header">
         <h2>
-          {hasRendererSlotContent(titleContent) ? titleContent : t('flux.spreadsheet.designer')}
+          {hasRendererSlotContent(titleContent)
+            ? asReactNode(titleContent)
+            : t('flux.spreadsheet.designer')}
         </h2>
         <p>{buildSpreadsheetStatusLabel(spreadsheet)}</p>
       </header>
 
-      {hasRendererSlotContent(toolbarContent) ? (
-        <div data-slot="spreadsheet-page-toolbar">{toolbarContent}</div>
+      {hasRendererSlotContent(asReactNode(toolbarContent)) ? (
+        <div data-slot="spreadsheet-page-toolbar">{asReactNode(toolbarContent)}</div>
       ) : null}
 
       <main data-slot="spreadsheet-page-body">
-        {hasRendererSlotContent(bodyContent) ? bodyContent : renderFallbackBody(snapshot)}
+        {hasRendererSlotContent(asReactNode(bodyContent))
+          ? asReactNode(bodyContent)
+          : renderFallbackBody(snapshot)}
       </main>
 
-      {hasRendererSlotContent(dialogsContent) ? (
-        <div data-slot="spreadsheet-page-dialogs">{dialogsContent}</div>
+      {hasRendererSlotContent(asReactNode(dialogsContent)) ? (
+        <div data-slot="spreadsheet-page-dialogs">{asReactNode(dialogsContent)}</div>
       ) : null}
     </section>
   );

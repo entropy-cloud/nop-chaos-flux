@@ -30,6 +30,10 @@ import { getFieldCount } from './helpers.js';
 import { useReportDesignerHostScope } from './host-data.js';
 import type { ReportDesignerPageSchema } from './types.js';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 function toActionResult(response: unknown): ActionResult {
   if (response && typeof response === 'object' && 'ok' in response) {
     return {
@@ -240,7 +244,7 @@ export function ReportDesignerPageRenderer(
         <div>
           <p data-slot="report-designer-eyebrow">{t('flux.reportDesigner.title')}</p>
           {hasRendererSlotContent(titleContent) ? (
-            <h2>{titleContent}</h2>
+            <h2>{asReactNode(titleContent)}</h2>
           ) : (
             <h2>{snapshot.document.name}</h2>
           )}
@@ -255,8 +259,8 @@ export function ReportDesignerPageRenderer(
           </span>
         </div>
       </div>
-      {hasRendererSlotContent(toolbarContent) ? (
-        <div data-slot="report-designer-toolbar">{toolbarContent}</div>
+      {hasRendererSlotContent(asReactNode(toolbarContent)) ? (
+        <div data-slot="report-designer-toolbar">{asReactNode(toolbarContent)}</div>
       ) : null}
     </>
   );
@@ -268,16 +272,16 @@ export function ReportDesignerPageRenderer(
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
       header={headerSlot}
       leftPanel={
-        hasRendererSlotContent(fieldPanelContent)
-          ? fieldPanelContent
+        hasRendererSlotContent(asReactNode(fieldPanelContent))
+          ? asReactNode(fieldPanelContent)
           : renderFallbackFieldPanel(snapshot.fieldSources)
       }
       leftCollapsed={leftCollapsed}
       onLeftToggle={() => setLeftCollapsed((v) => !v)}
       leftLabel={t('flux.reportDesigner.expandFieldPanel')}
       canvas={
-        hasRendererSlotContent(bodyContent) ? (
-          bodyContent
+        hasRendererSlotContent(asReactNode(bodyContent)) ? (
+          asReactNode(bodyContent)
         ) : (
           <ReportSpreadsheetCanvas
             core={core}
@@ -288,17 +292,19 @@ export function ReportDesignerPageRenderer(
         )
       }
       rightPanel={
-        hasRendererSlotContent(inspectorContent)
-          ? inspectorContent
-          : props.helpers.render({ type: 'report-inspector-shell' } as any, {
+        hasRendererSlotContent(asReactNode(inspectorContent))
+          ? asReactNode(inspectorContent)
+          : asReactNode(props.helpers.render({ type: 'report-inspector-shell' }, {
               scope: reportDesignerScope,
               actionScope,
-            })
+            }))
       }
       rightCollapsed={rightCollapsed}
       onRightToggle={() => setRightCollapsed((v) => !v)}
       rightLabel={t('flux.reportDesigner.expandInspector')}
-      dialogs={hasRendererSlotContent(dialogsContent) ? dialogsContent : undefined}
+      dialogs={
+        hasRendererSlotContent(asReactNode(dialogsContent)) ? asReactNode(dialogsContent) : undefined
+      }
     />
   );
 }

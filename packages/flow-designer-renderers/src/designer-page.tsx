@@ -47,6 +47,10 @@ import { DesignerToolbarContent } from './designer-toolbar';
 import { useDesignerAutoLayout } from './use-designer-auto-layout';
 import { useDesignerShortcuts } from './use-designer-shortcuts';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 function readDesignerResolvedProp<T>(
   props: RendererComponentProps<DesignerPageSchema>,
   key: string,
@@ -269,7 +273,9 @@ function DesignerPageBody({
     : ((props.props as Record<string, unknown>).dialogs as React.ReactNode);
   const renderInspectorSchema = useCallback(
     (schema: import('@nop-chaos/flux-core').SchemaInput) => {
-      return renderDesignerSchema({ schema, helpers: props.helpers, designerScope, actionScope });
+      return asReactNode(
+        renderDesignerSchema({ schema, helpers: props.helpers, designerScope, actionScope }),
+      );
     },
     [actionScope, designerScope, props.helpers],
   );
@@ -321,8 +327,8 @@ function DesignerPageBody({
           data-testid={props.meta.testid || undefined}
           data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
           header={
-            hasRendererSlotContent(toolbarSlot) ? (
-              toolbarSlot
+            hasRendererSlotContent(asReactNode(toolbarSlot)) ? (
+              asReactNode(toolbarSlot)
             ) : (
               <DesignerToolbarContent
                 exportActive={jsonOpen}
@@ -338,8 +344,8 @@ function DesignerPageBody({
           leftLabel="Expand palette"
           canvas={<DesignerCanvasContent />}
           rightPanel={
-            hasRendererSlotContent(inspectorSlot) ? (
-              inspectorSlot
+            hasRendererSlotContent(asReactNode(inspectorSlot)) ? (
+              asReactNode(inspectorSlot)
             ) : (
               <DefaultInspector renderSchema={renderInspectorSchema} />
             )
@@ -347,7 +353,9 @@ function DesignerPageBody({
           rightCollapsed={snapshot.inspectorCollapsed}
           onRightToggle={() => dispatch({ type: 'toggleInspector' })}
           rightLabel="Expand inspector"
-          dialogs={hasRendererSlotContent(dialogsSlot) ? dialogsSlot : undefined}
+          dialogs={
+            hasRendererSlotContent(asReactNode(dialogsSlot)) ? asReactNode(dialogsSlot) : undefined
+          }
         />
       </div>
       <Dialog
@@ -387,11 +395,13 @@ function DesignerPageBody({
           </DialogHeader>
           <DialogBody data-slot="designer-create-dialog-body">
             {pendingCreateDialog?.nodeType.createDialog?.body
-              ? props.helpers.render(pendingCreateDialog.nodeType.createDialog.body as any, {
-                  scope: designerScope,
-                  actionScope,
-                  pathSuffix: `create-dialog:${pendingCreateDialog.nodeType.id}`,
-                })
+              ? asReactNode(
+                  props.helpers.render(pendingCreateDialog.nodeType.createDialog.body, {
+                    scope: designerScope,
+                    actionScope,
+                    pathSuffix: `create-dialog:${pendingCreateDialog.nodeType.id}`,
+                  }),
+                )
               : null}
           </DialogBody>
           <DialogFooter data-slot="designer-create-dialog-actions" className="bg-transparent">
