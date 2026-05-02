@@ -23,6 +23,10 @@ import type { ArrayFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
@@ -357,10 +361,12 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
               removable={removable && !readOnly && !presentation.effectiveDisabled}
               onRemove={handleRemove}
               renderItem={() =>
-                props.regions.item?.render({
+                asReactNode(
+                  props.regions.item?.render({
                   bindings: { index, value: item },
                   instancePath: itemInstancePath,
-                }) ?? null
+                  }),
+                ) ?? null
               }
             />
           );

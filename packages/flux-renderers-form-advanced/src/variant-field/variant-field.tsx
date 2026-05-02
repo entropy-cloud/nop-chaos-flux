@@ -1,5 +1,6 @@
 import React from 'react';
 import type {
+  AdapterDispatch,
   ActionSchema,
   BaseSchema,
   RendererComponentProps,
@@ -37,7 +38,16 @@ import {
 } from './variant-field-matching';
 import { createVariantFormProxy, createVariantScope } from './variant-field-runtime';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 type BaseNodeInstance = RendererComponentProps['node'];
+type VariantSchemaInput = VariantFieldSchema['variants'][number]['content'];
+
+function toRenderInput(input: VariantSchemaInput | null | undefined) {
+  return input;
+}
 
 function injectDetectVariantArgs(
   actionSchema: ActionSchema | ActionSchema[],
@@ -196,17 +206,19 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         let nextValue = nextOption.initialValue !== undefined ? nextOption.initialValue : null;
 
         if (nextOption.transformInAction) {
+          const dispatchAction: AdapterDispatch = (action, ctx) =>
+            props.helpers.dispatch(action, {
+              scope: ctx?.scope ?? parentScope,
+              form: ctx?.form ?? parentForm,
+              page: undefined,
+              nodeInstance: props.node as BaseNodeInstance,
+            });
+
           const adapter = actionAdapter(
             nextOption.transformInAction,
             undefined,
             undefined,
-            (action, ctx) =>
-              props.helpers.dispatch(action as any, {
-                scope: ctx?.scope ?? parentScope,
-                form: ctx?.form ?? parentForm,
-                page: undefined,
-                nodeInstance: props.node as BaseNodeInstance,
-              }),
+            dispatchAction,
           );
 
           const migratedValue = await adapter.in(currentValue, {
@@ -287,7 +299,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
           </Select>
           <FormContext.Provider value={variantForm}>
             <ScopeContext.Provider value={variantScope}>
-              {props.helpers.render(activeContent as any)}
+              {asReactNode(props.helpers.render(toRenderInput(activeContent)))}
             </ScopeContext.Provider>
           </FormContext.Provider>
         </div>
@@ -314,7 +326,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
               {v.key === activeKey ? (
                 <FormContext.Provider value={variantForm}>
                   <ScopeContext.Provider value={variantScope}>
-                    {props.helpers.render(activeContent as any)}
+                    {asReactNode(props.helpers.render(toRenderInput(activeContent)))}
                   </ScopeContext.Provider>
                 </FormContext.Provider>
               ) : null}
@@ -332,7 +344,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       <div data-slot="variant-field-readonly-body">
         <FormContext.Provider value={variantForm}>
           <ScopeContext.Provider value={variantScope}>
-            {props.helpers.render(activeViewer as any)}
+            {asReactNode(props.helpers.render(toRenderInput(activeViewer)))}
           </ScopeContext.Provider>
         </FormContext.Provider>
       </div>
