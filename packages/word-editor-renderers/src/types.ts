@@ -1,5 +1,5 @@
 import type { ActionSchema, BaseSchema } from '@nop-chaos/flux-core';
-import type { DataSet, DocChart, DocCode, WordDocument } from '@nop-chaos/word-editor-core';
+import type { Dataset, DocChart, DocCode, WordDocument } from '@nop-chaos/word-editor-core';
 
 export interface WordEditorPageSchemaInput {
   type: 'word-editor-page';
@@ -15,7 +15,7 @@ export interface WordEditorPageSchemaInput {
   onBack?: ActionSchema;
   onSave?: ActionSchema;
   initialDocument?: WordDocument;
-  datasets?: DataSet[];
+  datasets?: Dataset[];
   initialCharts?: DocChart[];
   initialCodes?: DocCode[];
   toolbar?: BaseSchema | BaseSchema[];

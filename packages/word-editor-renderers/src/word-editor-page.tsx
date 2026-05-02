@@ -22,9 +22,9 @@ import {
   loadDatasets,
 } from '@nop-chaos/word-editor-core';
 import type {
-  DataSetSourceType,
+  DatasetSourceType,
   DataColumnInput,
-  DataSet,
+  Dataset,
   DocChart,
   DocCode,
   SavedDocumentData,
@@ -197,7 +197,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     if (savedDatasets.length > 0) {
       datasetStore.load(savedDatasets);
     }
-    const initialDatasets = props.props.datasets as DataSet[] | undefined;
+    const initialDatasets = props.props.datasets as Dataset[] | undefined;
     if (initialDatasets && initialDatasets.length > 0) {
       datasetStore.load(initialDatasets);
     }
@@ -241,10 +241,10 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     (data: {
       name: string;
       description: string;
-      type: DataSetSourceType;
+      type: DatasetSourceType;
       columns: DataColumnInput[];
     }) => {
-      const datasetData: Omit<DataSet, 'id'> = {
+      const datasetData: Omit<Dataset, 'id'> = {
         name: data.name,
         description: data.description,
         type: data.type,
@@ -252,7 +252,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           name: col.name ?? '',
           label: col.label ?? '',
           description: col.description,
-          type: (col.type as DataSetSourceType) ?? 'static',
+          type: (col.type as DatasetSourceType) ?? 'static',
         })),
       };
       if (editingDatasetId) {

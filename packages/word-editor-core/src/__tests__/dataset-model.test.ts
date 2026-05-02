@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
+  createDataset,
   createDataSet,
   createDataColumn,
+  validateDataset,
   validateDataSet,
+  datasetColumnToExpression,
   dataSetColumnToExpression,
 } from '../dataset-model.js';
-import type { DataColumn, DataSetSourceType } from '../dataset-model.js';
+import type { DataColumn, DatasetSourceType, DataSetSourceType } from '../dataset-model.js';
 
 describe('DataColumn', () => {
   it('createDataColumn returns defaults', () => {
@@ -41,9 +44,9 @@ describe('DataColumn', () => {
   });
 });
 
-describe('DataSet', () => {
-  it('createDataSet returns defaults with generated id', () => {
-    const ds = createDataSet();
+describe('Dataset', () => {
+  it('createDataset returns defaults with generated id', () => {
+    const ds = createDataset();
     expect(ds.id).toMatch(/^ds_\d+_\d+$/);
     expect(ds.name).toBe('');
     expect(ds.description).toBe('');
@@ -51,12 +54,12 @@ describe('DataSet', () => {
     expect(ds.columns).toEqual([]);
   });
 
-  it('createDataSet applies full overrides', () => {
+  it('createDataset applies full overrides', () => {
     const columns: DataColumn[] = [
       createDataColumn({ name: 'id', label: 'ID', type: 'sql' }),
       createDataColumn({ name: 'name', label: 'Name', type: 'sql' }),
     ];
-    const ds = createDataSet({
+    const ds = createDataset({
       id: 'ds_custom_1',
       name: 'users',
       description: 'User table',
@@ -72,14 +75,14 @@ describe('DataSet', () => {
     expect(ds.columns[1].name).toBe('name');
   });
 
-  it('createDataSet generates unique ids', () => {
-    const ds1 = createDataSet();
-    const ds2 = createDataSet();
+  it('createDataset generates unique ids', () => {
+    const ds1 = createDataset();
+    const ds2 = createDataset();
     expect(ds1.id).not.toBe(ds2.id);
   });
 
-  it('createDataSet partial overrides keep defaults', () => {
-    const ds = createDataSet({ name: 'orders', type: 'api' });
+  it('createDataset partial overrides keep defaults', () => {
+    const ds = createDataset({ name: 'orders', type: 'api' });
     expect(ds.name).toBe('orders');
     expect(ds.type).toBe('api');
     expect(ds.id).toMatch(/^ds_/);
@@ -88,9 +91,9 @@ describe('DataSet', () => {
   });
 });
 
-describe('validateDataSet', () => {
+describe('validateDataset', () => {
   it('validates a complete valid dataset', () => {
-    const ds = createDataSet({
+    const ds = createDataset({
       name: 'users',
       type: 'sql',
       columns: [
@@ -98,51 +101,56 @@ describe('validateDataSet', () => {
         createDataColumn({ name: 'email', label: 'Email', type: 'sql' }),
       ],
     });
-    const result = validateDataSet(ds);
+    const result = validateDataset(ds);
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
   });
 
   it('rejects empty name', () => {
-    const result = validateDataSet({ type: 'sql', columns: [] });
+    const result = validateDataset({ type: 'sql', columns: [] });
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('DataSet name is required');
+    expect(result.errors).toContain('Dataset name is required');
   });
 
   it('rejects whitespace-only name', () => {
-    const result = validateDataSet({ name: '   ', type: 'sql', columns: [] });
+    const result = validateDataset({ name: '   ', type: 'sql', columns: [] });
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('DataSet name is required');
+    expect(result.errors).toContain('Dataset name is required');
   });
 
   it('rejects missing type', () => {
-    const result = validateDataSet({ name: 'test', columns: [] });
+    const result = validateDataset({ name: 'test', columns: [] });
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('type must be one of'))).toBe(true);
   });
 
   it('rejects invalid type', () => {
-    const result = validateDataSet({ name: 'test', type: 'invalid' as any, columns: [] });
+    const result = validateDataset({ name: 'test', type: 'invalid' as any, columns: [] });
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('type must be one of'))).toBe(true);
   });
 
   it('accepts all valid source types', () => {
-    const types: DataSetSourceType[] = ['sql', 'api', 'mongo', 'static'];
+    const types: DatasetSourceType[] = ['sql', 'api', 'mongo', 'static'];
     for (const t of types) {
-      const result = validateDataSet({ name: 'test', type: t, columns: [] });
+      const result = validateDataset({ name: 'test', type: t, columns: [] });
       expect(result.valid).toBe(true);
     }
   });
 
+  it('keeps deprecated DataSetSourceType as an alias of DatasetSourceType', () => {
+    const types: DataSetSourceType[] = ['sql', 'api', 'mongo', 'static'];
+    expect(types).toHaveLength(4);
+  });
+
   it('rejects columns that are not an array', () => {
-    const result = validateDataSet({ name: 'test', type: 'sql', columns: 'bad' as any });
+    const result = validateDataset({ name: 'test', type: 'sql', columns: 'bad' as any });
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('DataSet columns must be an array');
+    expect(result.errors).toContain('Dataset columns must be an array');
   });
 
   it('rejects column with empty name', () => {
-    const result = validateDataSet({
+    const result = validateDataset({
       name: 'test',
       type: 'sql',
       columns: [{ label: 'L', type: 'sql' }],
@@ -152,7 +160,7 @@ describe('validateDataSet', () => {
   });
 
   it('rejects column with empty label', () => {
-    const result = validateDataSet({
+    const result = validateDataset({
       name: 'test',
       type: 'sql',
       columns: [{ name: 'col', type: 'sql' }],
@@ -162,7 +170,7 @@ describe('validateDataSet', () => {
   });
 
   it('rejects column with invalid type', () => {
-    const result = validateDataSet({
+    const result = validateDataset({
       name: 'test',
       type: 'sql',
       columns: [{ name: 'col', label: 'Col', type: 'invalid' }],
@@ -172,7 +180,7 @@ describe('validateDataSet', () => {
   });
 
   it('rejects duplicate column names', () => {
-    const result = validateDataSet({
+    const result = validateDataset({
       name: 'test',
       type: 'sql',
       columns: [
@@ -185,7 +193,7 @@ describe('validateDataSet', () => {
   });
 
   it('collects multiple errors at once', () => {
-    const result = validateDataSet({
+    const result = validateDataset({
       type: 'bad',
       columns: [
         { label: 'L', type: 'sql' },
@@ -195,12 +203,12 @@ describe('validateDataSet', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThanOrEqual(3);
     expect(result.errors.some((e) => e.includes('name is required'))).toBe(true);
-    expect(result.errors.some((e) => e.includes('DataSet name is required'))).toBe(true);
-    expect(result.errors.some((e) => e.includes('DataSet type must be one of'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('Dataset name is required'))).toBe(true);
+    expect(result.errors.some((e) => e.includes('Dataset type must be one of'))).toBe(true);
   });
 
   it('accepts valid columns with description', () => {
-    const result = validateDataSet({
+    const result = validateDataset({
       name: 'test',
       type: 'api',
       columns: [{ name: 'id', label: 'ID', type: 'api', description: 'Unique identifier' }],
@@ -209,21 +217,31 @@ describe('validateDataSet', () => {
   });
 });
 
-describe('dataSetColumnToExpression', () => {
+describe('datasetColumnToExpression', () => {
   it('formats expression with dataset name and column name', () => {
     const col = createDataColumn({ name: 'price', label: 'Price', type: 'sql' });
-    expect(dataSetColumnToExpression('products', col)).toBe('${products.price}');
+    expect(datasetColumnToExpression('products', col)).toBe('${products.price}');
   });
 
   it('handles column with different names', () => {
     const col = createDataColumn({ name: 'user_email', label: 'Email' });
-    expect(dataSetColumnToExpression('users', col)).toBe('${users.user_email}');
+    expect(datasetColumnToExpression('users', col)).toBe('${users.user_email}');
+  });
+
+  it('keeps deprecated dataset expression helper as an alias', () => {
+    const col = createDataColumn({ name: 'legacy_id', label: 'Legacy ID', type: 'sql' });
+    expect(dataSetColumnToExpression('legacy', col)).toBe('${legacy.legacy_id}');
+  });
+
+  it('keeps deprecated dataset creation and validation helpers as aliases', () => {
+    const ds = createDataSet({ name: 'legacy', type: 'api' });
+    expect(validateDataSet(ds).valid).toBe(true);
   });
 });
 
 describe('type narrowing', () => {
-  it('DataSetSourceType covers all expected values', () => {
-    const types: DataSetSourceType[] = ['sql', 'api', 'mongo', 'static'];
+  it('DatasetSourceType covers all expected values', () => {
+    const types: DatasetSourceType[] = ['sql', 'api', 'mongo', 'static'];
     expect(types).toHaveLength(4);
   });
 });

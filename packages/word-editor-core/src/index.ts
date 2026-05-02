@@ -19,16 +19,22 @@ export type { DocumentData, WordDocument, SavedDocument } from './template-model
 export { DEFAULT_PAPER_SETTINGS, PAPER_SIZE_PRESETS } from './paper-settings.js';
 export type { PaperSettings } from './paper-settings.js';
 export {
-  createDataSet,
+  createDataset,
   createDataColumn,
+  validateDataset,
+  datasetColumnToExpression,
+  createDataSet,
   validateDataSet,
   dataSetColumnToExpression,
 } from './dataset-model.js';
 export type {
-  DataSet,
+  Dataset,
   DataColumn,
+  DatasetSourceType,
+  DatasetValidationResult,
+  DatasetValidationInput,
+  DataSet,
   DataSetSourceType,
-  DataSetValidationResult,
   DataSetValidationInput,
   DataColumnInput,
 } from './dataset-model.js';

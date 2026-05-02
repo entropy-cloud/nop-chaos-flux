@@ -1,7 +1,7 @@
 import type { CanvasEditorBridge } from './canvas-editor-bridge.js';
 import type { PaperSettings } from './paper-settings.js';
 import type { WordDocument } from './template-model.js';
-import type { DataSet } from './dataset-model.js';
+import type { Dataset } from './dataset-model.js';
 import type { DocChart } from './chart-model.js';
 import type { DocCode } from './code-model.js';
 
@@ -105,15 +105,15 @@ export function clearDocument(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-export function saveDatasets(datasets: DataSet[]): void {
+export function saveDatasets(datasets: Dataset[]): void {
   localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(datasets));
 }
 
-export function loadDatasets(): DataSet[] {
+export function loadDatasets(): Dataset[] {
   try {
     const raw = localStorage.getItem(DATASET_STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as DataSet[];
+    return JSON.parse(raw) as Dataset[];
   } catch {
     return [];
   }

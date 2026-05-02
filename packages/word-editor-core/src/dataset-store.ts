@@ -1,9 +1,9 @@
 import { createStore } from 'zustand/vanilla';
-import type { DataSet, DataColumn, DataSetValidationResult } from './dataset-model.js';
-import { validateDataSet, createDataSet, createDataColumn } from './dataset-model.js';
+import type { Dataset, DataColumn, DatasetValidationResult } from './dataset-model.js';
+import { validateDataset, createDataset, createDataColumn } from './dataset-model.js';
 
 export interface DatasetStoreState {
-  datasets: DataSet[];
+  datasets: Dataset[];
   selectedDatasetId: string | null;
 }
 
@@ -19,29 +19,29 @@ export function createDatasetStore() {
     getState: store.getState,
     subscribe: store.subscribe,
 
-    getAll(): DataSet[] {
+    getAll(): Dataset[] {
       return store.getState().datasets;
     },
 
-    getById(id: string): DataSet | undefined {
+    getById(id: string): Dataset | undefined {
       return store.getState().datasets.find((ds) => ds.id === id);
     },
 
-    getSelected(): DataSet | undefined {
+    getSelected(): Dataset | undefined {
       const { selectedDatasetId, datasets } = store.getState();
       if (!selectedDatasetId) return undefined;
       return datasets.find((ds) => ds.id === selectedDatasetId);
     },
 
-    add(dataset: Omit<DataSet, 'id'>): DataSet {
-      const newDataset = createDataSet(dataset);
+    add(dataset: Omit<Dataset, 'id'>): Dataset {
+      const newDataset = createDataset(dataset);
       store.setState((state) => ({
         datasets: [...state.datasets, newDataset],
       }));
       return newDataset;
     },
 
-    update(id: string, updates: Partial<DataSet>): DataSet | null {
+    update(id: string, updates: Partial<Dataset>): Dataset | null {
       const current = store.getState().datasets.find((ds) => ds.id === id);
       if (!current) return null;
 
@@ -129,13 +129,13 @@ export function createDatasetStore() {
       return true;
     },
 
-    validate(datasetId?: string): DataSetValidationResult {
+    validate(datasetId?: string): DatasetValidationResult {
       if (datasetId) {
         const dataset = this.getById(datasetId);
         if (!dataset) {
           return { valid: false, errors: ['Dataset not found'] };
         }
-        return validateDataSet(dataset);
+        return validateDataset(dataset);
       }
       return { valid: true, errors: [] };
     },
@@ -148,7 +148,7 @@ export function createDatasetStore() {
       store.setState({ ...initialState });
     },
 
-    load(datasets: DataSet[]): void {
+    load(datasets: Dataset[]): void {
       store.setState({ datasets });
     },
   };

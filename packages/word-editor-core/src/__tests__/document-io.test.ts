@@ -7,7 +7,7 @@ import {
   saveDatasets,
   loadDatasets,
 } from '../document-io.js';
-import type { DataSet } from '../dataset-model.js';
+import type { Dataset } from '../dataset-model.js';
 
 const STORAGE_KEY = 'nop-word-editor-document';
 const DATASET_STORAGE_KEY = 'nop-word-editor-datasets';
@@ -188,7 +188,7 @@ describe('clearDocument', () => {
 
 describe('saveDatasets', () => {
   it('saves and loads datasets round-trip', () => {
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       {
         id: 'ds_1',
         name: 'Users',

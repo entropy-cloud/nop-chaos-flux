@@ -1,17 +1,17 @@
-export type DataSetSourceType = 'sql' | 'api' | 'mongo' | 'static';
+export type DatasetSourceType = 'sql' | 'api' | 'mongo' | 'static';
 
 export interface DataColumn {
   name: string;
   label: string;
   description?: string;
-  type: DataSetSourceType;
+  type: DatasetSourceType;
 }
 
-export interface DataSet {
+export interface Dataset {
   id: string;
   name: string;
   description: string;
-  type: DataSetSourceType;
+  type: DatasetSourceType;
   columns: DataColumn[];
 }
 
@@ -21,7 +21,7 @@ function generateDataSetId(): string {
   return `ds_${Date.now()}_${++_idCounter}`;
 }
 
-export interface DataSetValidationResult {
+export interface DatasetValidationResult {
   valid: boolean;
   errors: string[];
 }
@@ -33,31 +33,31 @@ export interface DataColumnInput {
   type?: string;
 }
 
-export interface DataSetValidationInput {
+export interface DatasetValidationInput {
   name?: string;
   description?: string;
   type?: string;
   columns?: DataColumnInput[];
 }
 
-export function validateDataSet(dataSet: DataSetValidationInput): DataSetValidationResult {
+export function validateDataset(dataset: DatasetValidationInput): DatasetValidationResult {
   const errors: string[] = [];
 
-  if (!dataSet.name || dataSet.name.trim() === '') {
-    errors.push('DataSet name is required');
+  if (!dataset.name || dataset.name.trim() === '') {
+    errors.push('Dataset name is required');
   }
 
-  if (!dataSet.type || !['sql', 'api', 'mongo', 'static'].includes(dataSet.type)) {
-    errors.push('DataSet type must be one of: sql, api, mongo, static');
+  if (!dataset.type || !['sql', 'api', 'mongo', 'static'].includes(dataset.type)) {
+    errors.push('Dataset type must be one of: sql, api, mongo, static');
   }
 
-  if (dataSet.columns !== undefined) {
-    if (!Array.isArray(dataSet.columns)) {
-      errors.push('DataSet columns must be an array');
+  if (dataset.columns !== undefined) {
+    if (!Array.isArray(dataset.columns)) {
+      errors.push('Dataset columns must be an array');
     } else {
       const seenNames = new Set<string>();
-      for (let i = 0; i < dataSet.columns.length; i++) {
-        const col = dataSet.columns[i] ?? {};
+      for (let i = 0; i < dataset.columns.length; i++) {
+        const col = dataset.columns[i] ?? {};
         if (!col.name || col.name.trim() === '') {
           errors.push(`Column at index ${i}: name is required`);
         }
@@ -80,8 +80,8 @@ export function validateDataSet(dataSet: DataSetValidationInput): DataSetValidat
   return { valid: errors.length === 0, errors };
 }
 
-export function createDataSet(overrides: Partial<DataSet> = {}): DataSet {
-  const dataSet: DataSet = {
+export function createDataset(overrides: Partial<Dataset> = {}): Dataset {
+  const dataset: Dataset = {
     id: overrides.id ?? generateDataSetId(),
     name: overrides.name ?? '',
     description: overrides.description ?? '',
@@ -89,7 +89,7 @@ export function createDataSet(overrides: Partial<DataSet> = {}): DataSet {
     columns: overrides.columns ?? [],
   };
 
-  return dataSet;
+  return dataset;
 }
 
 export function createDataColumn(overrides: Partial<DataColumn> = {}): DataColumn {
@@ -101,6 +101,21 @@ export function createDataColumn(overrides: Partial<DataColumn> = {}): DataColum
   };
 }
 
-export function dataSetColumnToExpression(dataSetName: string, column: DataColumn): string {
-  return `\${${dataSetName}.${column.name}}`;
+export function datasetColumnToExpression(datasetName: string, column: DataColumn): string {
+  return `\${${datasetName}.${column.name}}`;
 }
+
+/** @deprecated Use `DatasetSourceType` instead. */
+export type DataSetSourceType = DatasetSourceType;
+/** @deprecated Use `Dataset` instead. */
+export type DataSet = Dataset;
+/** @deprecated Use `DatasetValidationResult` instead. */
+export type DataSetValidationResult = DatasetValidationResult;
+/** @deprecated Use `DatasetValidationInput` instead. */
+export type DataSetValidationInput = DatasetValidationInput;
+/** @deprecated Use `createDataset` instead. */
+export const createDataSet = createDataset;
+/** @deprecated Use `validateDataset` instead. */
+export const validateDataSet = validateDataset;
+/** @deprecated Use `datasetColumnToExpression` instead. */
+export const dataSetColumnToExpression = datasetColumnToExpression;
