@@ -6,7 +6,7 @@ import type { ContainerSchema } from './schemas';
 import { resolveDirection, resolveGap } from './utils';
 
 export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>) {
-  const slotProps = props.props as ContainerSchema;
+  const slotProps = props.props;
   const direction = slotProps.direction === 'column' ? 'column' : 'row';
   const wrap = slotProps.wrap === true;
   const align =
