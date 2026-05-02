@@ -1,7 +1,7 @@
 # Form Validation Runtime Types Reference
 
 > Reference Status: Active
-> Last Updated: 2026-04-30
+> Last Updated: 2026-05-02
 > Owner Doc: `docs/architecture/form-validation.md`
 
 This document is the live-code reference for the exported validation runtime types.
@@ -203,6 +203,11 @@ interface FormFieldPresentationSnapshot extends FormFieldStateSnapshot {
 }
 ```
 
+Current live note:
+
+- `ready` is published only when `lifecycleState === 'active'`, no validation is still running, and no owned errors are present
+- owners that are still `bootstrapping` therefore publish `ready: false` until a compiled model is attached and the owner becomes `active`
+
 ## Store APIs
 
 ```ts
@@ -302,6 +307,7 @@ interface ValidationScopeRuntime {
     registrationId: string,
     patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>,
   ): void;
+  notifyFieldHidden(path: string, hidden: boolean): void;
 
   refreshCompiledModel(newModel: CompiledFormValidationModel): void;
   dispose(): void;
@@ -316,6 +322,7 @@ Current live note:
 - the exported property name is `validation?`, not `compiledModel`
 - subtree and owner-wide operations currently return `FormValidationResult`
 - `applyExternalErrors(...)` currently returns `ScopeValidationStateSnapshot`
+- `notifyFieldHidden(...)` is part of `ValidationScopeRuntime`, so non-form owners participate in hidden-field policy without a `FormRuntime`-only contract
 
 ## `FormRuntime`
 
@@ -330,7 +337,6 @@ interface FormRuntime extends ValidationScopeRuntime {
   readonly allTouched: boolean;
 
   setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
-  notifyFieldHidden(path: string, hidden: boolean): void;
   validateField(path: string, reason?: ValidationReason): Promise<ValidationResult>;
   validateForm(reason?: ValidationReason): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;

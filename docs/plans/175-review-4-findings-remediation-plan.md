@@ -1,6 +1,6 @@
 # 175 Review-4 Findings Remediation Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-02
 > Source: `docs/analysis/2026-05-02-adversarial-audit-review-4.md`
 > Related: `docs/plans/166-module-hygiene-and-designer-async-cleanup-plan.md`, `docs/plans/171-workbench-surface-and-package-boundary-successor-plan.md`
@@ -123,7 +123,7 @@ Exit Criteria:
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -137,14 +137,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 实现与 focused regression coverage 已完成，三阶段 exit criteria 已全部满足，独立 closure audit 也已完成；plan 仍保持 `in progress`，因为 validation checklist 中的仓库级 `pnpm test` 仍受本计划之外的红项阻塞。
+Status Note: 实现、focused regression coverage、独立 closure audit、以及仓库级验证现已全部完成；Plan 175 的三阶段 exit criteria 和 validation checklist 均已满足，可以按当前 live repo 基线关闭。
 
 Closure Audit Evidence:
 
 - Reviewer / Agent: fresh general subagent (`ses_21a0053f1ffe6YsO3FJRRSSx4U`)
-- Evidence: subagent closure audit initially发现 `packages/report-designer-renderers/src/host-data.ts` 未发布 `designer.dirty`；已补 `host-data.ts` + `packages/report-designer-renderers/src/host-data.test.ts`，并在 `docs/logs/2026/05-02.md` 记录审计与修复结果
+- Evidence: subagent closure audit initially发现 `packages/report-designer-renderers/src/host-data.ts` 未发布 `designer.dirty`；已补 `host-data.ts` + `packages/report-designer-renderers/src/host-data.test.ts`，随后在同日 closure follow-up 中清理了阻塞 repo-wide 验证的额外工作区问题，并在 `docs/logs/2026/05-02.md` 记录最终全绿基线
 
 Follow-up:
 
-- 若要求计划关闭时必须全仓 green，则需先解决当前 workspace `pnpm test` 的非 Plan 175 红项，再决定是否将本计划标记为 `completed`
 - no remaining plan-owned code work

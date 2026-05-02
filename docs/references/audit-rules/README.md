@@ -11,6 +11,21 @@ This directory holds stable audit rules used to review implementation consistenc
 ## Current Rules
 
 - `surface-shell-consistency.md` - standard dialog/drawer shell structure and allowed exceptions.
+- `owner-bridge-async-state-coherence.md` - owner-local async invalidation, bridge semantic coherence, derived-state refresh, and save/autosave truth alignment.
+- `reactive-subscription-and-derived-snapshot-stability.md` - selector granularity, stable derived `getSnapshot()`, and host-scope publication stability.
+- `owner-lifecycle-and-generic-owner-contracts.md` - honest transitional lifecycle publication and generic owner capability surfaces.
+- `field-frame-wrap-interaction-semantics.md` - `wrap: true` / `FieldFrame` label semantics and internal control safety.
+- `reactive-read-vs-imperative-read.md` - subscribed render reads versus one-shot imperative reads.
+- `snapshot-key-and-change-token-publication.md` - mutation helpers must advance the snapshot/change token used by subscribers.
+- `async-error-diagnosability-and-swallowed-failures.md` - fire-and-forget async paths need explicit failure handling that respects abort/stale guards.
+- `docs-logs-code-landed-claim-adjudication.md` - landed/completed claims must match live code and live-baseline docs.
+- `test-reliability-and-contract-freshness.md` - test isolation, stale assertions, and oversized cross-domain suites.
+- `single-owner-styling-defaults-and-marker-contracts.md` - one explicit owner for shipped default visuals and consistent semantic marker contracts.
+- `cleanup-and-disposal-boundaries.md` - cleanup must cover queued continuations and post-disposal completion paths.
+- `wrapper-bypass-of-shared-renderer-contracts.md` - manual wrapper paths must not silently fork shared renderer contract semantics.
+- `vocabulary-and-cross-shell-contract-drift.md` - canonical terminology, explicit compatibility aliases, and cross-shell label/i18n convergence.
+- `shadow-types-and-duplicate-contract-surfaces.md` - import canonical shared contracts instead of maintaining drifting local duplicates.
+- `false-positive-friendly-ui-diagnostics.md` - verify contrasting cases and trace producer boundaries before patching consumer UI symptoms.
 
 ## Authoring Rules
 

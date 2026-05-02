@@ -138,6 +138,32 @@ Primary architecture anchors:
 
 - `docs/architecture/frontend-baseline.md`
 
+### 7) Owner, Bridge, And Persisted State Must Stay Coherent
+
+Rule:
+
+- Owner-local async invalidation must be instance-owned, not module-global.
+- Bridge projections, host scope publication, and status summaries must use the same semantics for shared fields like `dirty`, `ready`, or selection state.
+- Primary document/model replacement must refresh dependent derived state immediately.
+- Save/autosave flows must publish authoritative persisted truth, not stale initialization state.
+
+Why:
+
+- These bugs create the most misleading failures: one layer looks healthy while another layer exposes stale or contradictory truth.
+
+Bug evidence:
+
+- `docs/analysis/2026-05-02-adversarial-audit-review-4.md`
+- `docs/bugs/37-report-designer-demo-selection-bridge-inspector-stuck-on-sheet-fix.md`
+- `docs/bugs/38-report-designer-preview-cancellation-and-stale-result-fix.md`
+
+Primary architecture anchors:
+
+- `docs/architecture/flow-designer/canvas-adapters.md`
+- `docs/architecture/report-designer/design.md`
+- `docs/architecture/word-editor/design.md`
+- `docs/references/audit-rules/owner-bridge-async-state-coherence.md`
+
 ## Review Checklist
 
 Use this quick checklist in reviews for high-risk changes:
@@ -148,6 +174,7 @@ Use this quick checklist in reviews for high-risk changes:
 - Mutating async calls define overlap behavior.
 - Tailwind scanning config is path-verified in monorepo contexts.
 - Source directories remain artifact-free.
+- Owner snapshots, bridge projections, and persisted/autosaved truth stay semantically aligned.
 
 ## Related Docs
 

@@ -33,7 +33,7 @@ interface WordEditorPageSchema {
   initialDocument?: WordDocument;
 
   // 预配置数据集 (可选)
-  datasets?: DataSet[];
+  datasets?: Dataset[];
 
   // 预置占位符
   initialCharts?: DocChart[];
@@ -48,6 +48,7 @@ interface WordEditorPageSchema {
 
 - `onBack` 是必需回调，用于返回上级页面
 - `initialDocument` 和 `datasets` 是可选初始数据
+- `Dataset` 是当前公开契约词汇；`DataSet` 仅作为 `word-editor-core` 的兼容别名保留，不应继续作为本组件文档主写法
 - `initialCharts` / `initialCodes` 允许宿主直接注入初始占位符元数据
 - `onSave` 是可选持久化回调
 - `statusPath` 用于向宿主外部发布窄只读摘要 DTO

@@ -1,6 +1,6 @@
 # 180 Report Preview Cancellation And Stale-Result Plan
 
-> Plan Status: proposed
+> Plan Status: completed
 > Last Reviewed: 2026-05-02
 > Source: `docs/analysis/2026-05-02-deep-audit-full/summary.md`, live code verification of `packages/report-designer-core/src/core-dispatch.ts`, `packages/report-designer-core/src/runtime/preview-commands.ts`, `packages/report-designer-core/src/adapters.ts`, `packages/report-designer-core/src/core.ts`
 > Related: `docs/plans/176-deep-audit-residual-owner-assignment-plan.md`
@@ -47,39 +47,39 @@ Close the retained report-designer preview residual: preview requests are still 
 
 ### Phase 1 - Preview Cancellation Contract
 
-Status: planned
+Status: completed
 Targets: `packages/report-designer-core/src/core-dispatch.ts`, `packages/report-designer-core/src/runtime/preview-commands.ts`, `packages/report-designer-core/src/adapters.ts`, focused tests, `docs/architecture/report-designer/design.md`, `docs/logs/2026/05-02.md`
 
-- [ ] Add sequencing and true cancellation support to the preview path.
-- [ ] Extend the preview adapter/runtime contract as needed so in-flight preview work can observe cancellation.
-- [ ] Add focused regression tests for superseded preview requests and `stopPreview` behavior.
+- [x] Add sequencing and true cancellation support to the preview path.
+- [x] Extend the preview adapter/runtime contract as needed so in-flight preview work can observe cancellation.
+- [x] Add focused regression tests for superseded preview requests and `stopPreview` behavior.
 
 Exit Criteria:
 
-- [ ] Report preview requests are sequence-safe and cancellable in the live runtime path.
-- [ ] Stale preview completion can no longer clear `running` or overwrite the latest preview result.
-- [ ] Focused tests cover superseded preview and explicit stop/cancel behavior.
-- [ ] `docs/architecture/report-designer/design.md` records the current cancellation baseline.
-- [ ] `docs/logs/2026/05-02.md` records the preview-contract fix.
+- [x] Report preview requests are sequence-safe and cancellable in the live runtime path.
+- [x] Stale preview completion can no longer clear `running` or overwrite the latest preview result.
+- [x] Focused tests cover superseded preview and explicit stop/cancel behavior.
+- [x] `docs/architecture/report-designer/design.md` records the current cancellation baseline.
+- [x] `docs/logs/2026/05-02.md` records the preview-contract fix.
 
 ## Validation Checklist
 
-- [ ] report preview sequencing is cancellable and stale-result-safe
-- [ ] focused tests cover the in-scope preview behavior family
-- [ ] independent closure audit confirms no remaining plan-owned preview residual in scope
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] report preview sequencing is cancellable and stale-result-safe
+- [x] focused tests cover the in-scope preview behavior family
+- [x] independent closure audit confirms no remaining plan-owned preview residual in scope
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: <<fill when completed>>
+Status Note: Completed on 2026-05-02. The preview path now uses request ownership plus `AbortController` cancellation, `stopPreview` invalidates the active request owner, stale completions cannot republish preview state, focused regression coverage was added, and owner docs/logs were updated.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<independent reviewer or subagent>>
-- Evidence: <<task id / daily log link / findings summary>>
+- Reviewer / Agent: `explore` subagent
+- Evidence: task `ses_217960a0effe1r8NaqsVWu0EVq` confirmed no remaining in-scope Plan 180 residual after the final `cancelPreviewRun()` ownership invalidation update in `packages/report-designer-core/src/core.ts`; workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` also passed.
 
 Follow-up:
 

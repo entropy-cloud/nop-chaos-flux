@@ -396,7 +396,7 @@ Widget renderers are self-styled UI controls. Their internal components use Tail
 
 ### Rule: No Hardcoded Layout Styles in Renderer Code
 
-Renderer components emit marker classes and schema-derived classes only. Default spacing comes from theme CSS in `@layer base` (`flux-react/default-spacing.css`), not from renderer component code. This ensures defaults are theme-tunable and always overridable by Tailwind utilities.
+Renderer components emit marker classes and schema-derived classes only. Default spacing comes from theme CSS in `@layer base` (`flux-react/default-spacing.css`), not from renderer component code, including container flex-child cases where semantic props change layout structure but the default gap baseline still remains CSS-owned. This ensures defaults are theme-tunable and always overridable by Tailwind utilities.
 
 ```
 // Good: renderer is a transparent wrapper (default spacing comes from CSS)
@@ -410,7 +410,7 @@ Renderer components emit marker classes and schema-derived classes only. Default
 </div>
 ```
 
-The default spacing rules in `@layer base` apply `display: flex`, `flex-direction`, `gap`, and `padding` to layout renderer slots (page-body, form-body, fieldset-body, container-body, tabs-content, field-frame). These are overridable because Tailwind utilities live in `@layer utilities` which takes precedence over `@layer base`.
+The default spacing rules in `@layer base` apply `display: flex`, `flex-direction`, `gap`, and `padding` to layout renderer slots (page-body, form-body, fieldset-body, container-body, tabs-content, field-frame). For container bodies, this CSS baseline applies to both the bare path and the semantic flex-child path; renderer code only contributes explicit direction, wrap, alignment, and gap overrides requested by schema props. These defaults remain overridable because Tailwind utilities live in `@layer utilities` which takes precedence over `@layer base`.
 
 ### Per-Slot ClassName Props
 

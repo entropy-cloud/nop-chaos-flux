@@ -1,6 +1,6 @@
 # 181 Word Editor Dataset Vocabulary Convergence Plan
 
-> Plan Status: proposed
+> Plan Status: completed
 > Last Reviewed: 2026-05-02
 > Source: `docs/analysis/2026-05-02-deep-audit-full/summary.md`, live code verification of `packages/word-editor-core/src/index.ts`, `packages/word-editor-core/src/dataset-model.ts`, `packages/word-editor-renderers/src/word-editor-page.tsx`, `packages/word-editor-renderers/src/types.ts`, `docs/architecture/word-editor/design.md`, `docs/components/word-editor-page/design.md`
 > Related: `docs/plans/171-workbench-surface-and-package-boundary-successor-plan.md`, `docs/plans/176-deep-audit-residual-owner-assignment-plan.md`
@@ -52,41 +52,41 @@ Close the retained word-editor public-vocabulary residual by converging the curr
 
 ### Phase 1 - Canonical Dataset Vocabulary
 
-Status: planned
+Status: completed
 Targets: in-scope code/tests/docs above
 
-- [ ] Choose the canonical Dataset spelling for the supported public surface.
-- [ ] Decide whether compatibility aliases remain temporarily; if they do, mark them as explicit compatibility/deprecation surface rather than silent peers.
-- [ ] Update live consumers and owner docs as needed for the chosen baseline.
-- [ ] Add focused tests for the supported export surface or deprecation/migration contract.
+- [x] Choose the canonical Dataset spelling for the supported public surface.
+- [x] Decide whether compatibility aliases remain temporarily; if they do, mark them as explicit compatibility/deprecation surface rather than silent peers.
+- [x] Update live consumers and owner docs as needed for the chosen baseline.
+- [x] Add focused tests for the supported export surface or deprecation/migration contract.
 
 Exit Criteria:
 
-- [ ] `word-editor-core` public exports use one canonical Dataset vocabulary.
-- [ ] Any compatibility alias is explicitly documented rather than silently co-equal.
-- [ ] In-scope live consumers and owner docs use the same final baseline vocabulary.
-- [ ] Focused tests cover the supported export surface or alias contract.
-- [ ] `docs/logs/2026/05-02.md` records the naming convergence work.
+- [x] `word-editor-core` public exports use one canonical Dataset vocabulary.
+- [x] Any compatibility alias is explicitly documented rather than silently co-equal.
+- [x] In-scope live consumers and owner docs use the same final baseline vocabulary.
+- [x] Focused tests cover the supported export surface or alias contract.
+- [x] `docs/logs/2026/05-02.md` records the naming convergence work.
 
 ## Validation Checklist
 
-- [ ] word-editor public surface uses one canonical Dataset vocabulary
-- [ ] any compatibility alias is explicit and documented
-- [ ] focused tests cover the in-scope naming/export behavior family
-- [ ] independent closure audit confirms no remaining plan-owned vocabulary residual in scope
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] word-editor public surface uses one canonical Dataset vocabulary
+- [x] any compatibility alias is explicit and documented
+- [x] focused tests cover the in-scope naming/export behavior family
+- [x] independent closure audit confirms no remaining plan-owned vocabulary residual in scope
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: <<fill when completed>>
+Status Note: Completed on 2026-05-02. `Dataset*` is now the canonical public vocabulary, deprecated `DataSet*` aliases remain explicit compatibility surface, in-scope consumers and owner docs were aligned, and focused tests cover the canonical plus compatibility contract.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<independent reviewer or subagent>>
-- Evidence: <<task id / daily log link / findings summary>>
+- Reviewer / Agent: `explore` subagent
+- Evidence: task `ses_217960a0effe1r8NaqsVWu0EVq` confirmed no remaining in-scope Plan 181 residual across the scoped code/docs files; workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` also passed.
 
 Follow-up:
 

@@ -18,8 +18,8 @@ Validation in Flux is owned by the nearest **validation-capable scope runtime**.
 
 Current live baseline note:
 
-- the concrete owner runtime in live code is still `FormRuntime`
-- `ValidationScopeRuntime` is already the right architectural abstraction and type contract, but it is not yet a separately mature generic runtime/factory used across page/root and non-form scopes
+- the shared owner-validation substrate in live code is still the managed `FormRuntime` implementation
+- `ValidationScopeRuntime` is the exported owner contract used by page/root and managed-surface non-form owners, even though the broader non-form owner family set is still intentionally narrow
 
 This means:
 
@@ -160,6 +160,7 @@ Key APIs:
 - `getFieldState(path)` — read field validation state
 - `getScopeState()` — read scope summary state
 - `registerField(state)` — register field participation
+- `notifyFieldHidden(path, hidden)` — publish hidden-field participation changes to the current owner
 
 ### FormRuntime
 
@@ -186,6 +187,12 @@ Rules:
 It means the owner currently has no executable compiled validation model attached.
 
 `getScopeState()` and any debugger-facing snapshot must surface the current `lifecycleState` so callers can distinguish `active` from transitional states.
+
+Current live bootstrap baseline:
+
+- page-owned root validation owners may be published before a compiled root model exists, but they must start in `bootstrapping`
+- `refreshCompiledModel(...)` is the transition point that attaches the compiled root validation plan and moves that owner to `active`
+- `ready` must remain `false` until the owner is `active` with a compiled model attached
 
 Validation entry arbitration is also owner-local.
 
@@ -281,7 +288,7 @@ Current live baseline:
 
 1. `form` remains the primary submit-capable validation owner runtime family in ordinary shipped code paths
 2. `detail-field` / `detail-view` are live `create-owner` child-owner boundaries: the compiler marks them as owner boundaries, the renderer instantiates the child `FormRuntime` when the detail session opens, and the parent coordinates through child contracts while the detail owner is active
-3. `SchemaRenderer` page-owned root provisions a non-form validation owner when the render tree uses its own page scope
+3. `SchemaRenderer` page-owned root provisions a non-form validation owner when the render tree uses its own page scope; that owner is published first in `bootstrapping` and becomes `active` only after the compiled root validation plan attaches
 4. managed `dialog` / `drawer` surfaces opened through `SurfaceRuntime` provision their own surface-root validation owners, published by `DialogHost` around the surface body
 5. embedded `SchemaRenderer` trees that render against `props.parentScope` remain parent-owned in the current baseline and do not auto-create a second page/root fallback owner
 6. broader non-form owner families such as filter/search panels still remain explicitly out of scope rather than broadly landed live behavior
@@ -736,6 +743,11 @@ Default rules:
 2. hidden fields skip validation unless policy says otherwise
 3. hidden transitions clear stale errors for non-participating paths
 4. if policy requires clearing the value, that value change participates in the same validation preparation flow
+
+Current live participation baseline:
+
+- hidden-field participation is published through the nearest `ValidationScopeRuntime` via `notifyFieldHidden(...)`
+- forms and non-form validation owners therefore use the same supported hidden-participation contract
 
 Branch inactivity follows the same principle:
 

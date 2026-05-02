@@ -42,3 +42,5 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/29-detail-view-confirm-viewer-not-updated-fix.md`
 - `docs/bugs/30-form-runtime-setvalue-setlastchange-missing-rerender-fix.md`
 - `docs/bugs/32-react19-external-store-derived-snapshot-loop-fix.md`
+- `docs/bugs/37-report-designer-demo-selection-bridge-inspector-stuck-on-sheet-fix.md`
+- `docs/bugs/38-report-designer-preview-cancellation-and-stale-result-fix.md`
