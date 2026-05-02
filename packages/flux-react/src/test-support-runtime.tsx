@@ -382,6 +382,7 @@ export function renderWithRuntimeProviders(input: {
   page: ReturnType<ReturnType<typeof createRendererRuntime>['createPageRuntime']>;
   surfaceRuntime?: ReturnType<ReturnType<typeof createRendererRuntime>['createSurfaceRuntime']>;
   schema: Record<string, unknown>;
+  strictValidation?: boolean;
 }): RenderResult {
   const actionScope = input.runtime.createActionScope({ id: 'test-action-scope' });
   const componentRegistry = input.runtime.createComponentHandleRegistry({

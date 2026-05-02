@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { BaseSchema, SchemaRendererProps } from '@nop-chaos/flux-core';
-import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createRendererRegistry, isStrictValidationEnabled } from '@nop-chaos/flux-core';
 import { reportImportFailure } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
@@ -56,9 +56,17 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         plugins: props.plugins,
         pageStore: props.pageStore,
         moduleCache: props.moduleCache,
+        strictMode: isStrictValidationEnabled(props.strictValidation),
         onActionError: (error, ctx) => onActionErrorRef.current?.(error, ctx),
       });
-    }, [props.formulaCompiler, props.plugins, props.registry, props.pageStore, props.moduleCache]);
+    }, [
+      props.formulaCompiler,
+      props.plugins,
+      props.registry,
+      props.pageStore,
+      props.moduleCache,
+      props.strictValidation,
+    ]);
 
     const pageData = props.data ?? EMPTY_SCOPE_DATA;
     const initialPageDataRef = useRef(pageData);
@@ -205,6 +213,8 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       };
     }, [runtime, props.schema, props.schemaUrl, props.env, hasSchemaImports]);
 
+    const strictMode = isStrictValidationEnabled(props.strictValidation);
+
     const compiledRoot = useMemo<import('@nop-chaos/flux-core').CompiledTemplate | null>(() => {
       if (!preparedImports) {
         return null;
@@ -215,6 +225,15 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
         importLoader: props.env.importLoader,
         resolveImportUrl: props.env.resolveImportUrl,
         preparedImports,
+        validation: {
+          strictMode,
+        },
+        diagnostics: strictMode
+          ? {
+              enabled: true,
+              continueOnError: true,
+            }
+          : undefined,
       });
     }, [
       runtime,
@@ -223,6 +242,7 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       props.env.importLoader,
       props.env.resolveImportUrl,
       preparedImports,
+      strictMode,
     ]);
 
     useEffect(() => {

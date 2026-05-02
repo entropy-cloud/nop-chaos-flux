@@ -45,6 +45,7 @@ export {
   useRenderFragment,
   useCurrentFormModelGeneration,
   useFormLayout,
+  useStrictMode,
   rendererHooks,
 } from './hooks';
 export {

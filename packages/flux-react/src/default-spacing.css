@@ -1,4 +1,8 @@
 @layer base {
+  .nop-flex {
+    display: flex;
+  }
+
   .nop-page {
     display: flex;
     flex-direction: column;

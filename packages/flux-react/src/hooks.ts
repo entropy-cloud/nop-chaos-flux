@@ -465,6 +465,10 @@ export function useFormLayout(): FormLayoutContextValue {
   return useContext(FormLayoutContext) ?? {};
 }
 
+export function useStrictMode(): boolean {
+  return useRendererRuntime().strictMode;
+}
+
 export const rendererHooks = {
   useRendererRuntime,
   useRenderScope,
@@ -495,4 +499,5 @@ export const rendererHooks = {
   useRenderFragment,
   useCurrentFormModelGeneration,
   useFormLayout,
+  useStrictMode,
 };

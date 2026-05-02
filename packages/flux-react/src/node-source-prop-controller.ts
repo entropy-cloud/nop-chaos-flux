@@ -100,7 +100,7 @@ export function createNodeSourcePropController(
     currentSnapshot = { sourceInputs, value: loadingValue };
     notify();
 
-    void Promise.all(
+    void Promise.allSettled(
       sourceEntries.map(async (entry) => {
         const result: ActionResult = await runtime.executeSource({
           source: entry.source,
@@ -110,28 +110,38 @@ export function createNodeSourcePropController(
         return [entry, result] as const;
       }),
     )
-      .then((entries) => {
+      .then((settled) => {
         if (controller.signal.aborted) return;
 
-        const valuePatch = Object.fromEntries(
-          entries.map(([entry, result]) => [entry.key, result.ok ? result.data : undefined]),
-        );
-        const transientPatch = Object.fromEntries(
-          entries.flatMap(([entry, result]) => {
+        const valuePatch: Record<string, unknown> = {};
+        const transientPatch: Record<string, SourceTransientState> = {};
+
+        for (const result of settled) {
+          if (result.status === 'fulfilled') {
+            const [entry, actionResult] = result.value;
+            valuePatch[entry.key] = actionResult.ok ? actionResult.data : undefined;
             const stateKey = sourceStatePropKeys[entry.key];
-            if (!stateKey) return [];
-            return [
-              [
-                stateKey,
-                {
-                  loading: false,
-                  error: result.ok ? undefined : result.error,
-                  status: result.ok ? 'ready' : 'error',
-                } satisfies SourceTransientState,
-              ],
-            ];
-          }),
-        );
+            if (stateKey) {
+              transientPatch[stateKey] = {
+                loading: false,
+                error: actionResult.ok ? undefined : actionResult.error,
+                status: actionResult.ok ? 'ready' : 'error',
+              };
+            }
+          } else {
+            const error = result.reason;
+            for (const entry of sourceEntries) {
+              if (!(entry.key in valuePatch)) {
+                valuePatch[entry.key] = undefined;
+              }
+              const stateKey = sourceStatePropKeys[entry.key];
+              if (stateKey && !(stateKey in transientPatch)) {
+                transientPatch[stateKey] = { loading: false, error, status: 'error' };
+              }
+            }
+          }
+        }
+
         const nextValue = { ...propsValue, ...valuePatch, ...transientPatch };
         const next: ControllerSnapshot = { sourceInputs, value: nextValue };
 
@@ -142,19 +152,6 @@ export function createNodeSourcePropController(
           currentSnapshot = next;
           notify();
         }
-      })
-      .catch((error) => {
-        if (controller.signal.aborted) return;
-
-        const errorPatch = Object.fromEntries(
-          sourceEntries.flatMap((entry) => {
-            const stateKey = sourceStatePropKeys[entry.key];
-            if (!stateKey) return [];
-            return [[stateKey, { loading: false, error, status: 'error' as const }]];
-          }),
-        );
-        currentSnapshot = { sourceInputs, value: { ...propsValue, ...errorPatch } };
-        notify();
       });
   }
 

@@ -316,20 +316,14 @@ const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const hiddenOwner = currentForm ?? currentValidationScope;
 
   useEffect(() => {
-    if (!hiddenOwner || !fieldName || !('notifyFieldHidden' in hiddenOwner)) {
+    if (!hiddenOwner || !fieldName) {
       return;
     }
 
-    (hiddenOwner as import('@nop-chaos/flux-core').FormRuntime).notifyFieldHidden(
-      fieldName,
-      isFieldHidden,
-    );
+    hiddenOwner.notifyFieldHidden(fieldName, isFieldHidden);
 
     return () => {
-      (hiddenOwner as import('@nop-chaos/flux-core').FormRuntime).notifyFieldHidden(
-        fieldName,
-        false,
-      );
+      hiddenOwner.notifyFieldHidden(fieldName, false);
     };
   }, [hiddenOwner, fieldName, isFieldHidden]);
 

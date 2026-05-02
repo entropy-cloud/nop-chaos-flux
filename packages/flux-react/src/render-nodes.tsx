@@ -114,6 +114,19 @@ export function normalizeNodeInput(
     return null;
   }
 
+  const strictOptions: CompileSchemaOptions | undefined =
+    runtime.strictMode
+      ? {
+          ...compileOptions,
+          validation: { strictMode: true, ...compileOptions?.validation },
+          diagnostics: {
+            enabled: true,
+            continueOnError: true,
+            ...compileOptions?.diagnostics,
+          },
+        }
+      : compileOptions;
+
   if (Array.isArray(input)) {
     if (input.length === 0) {
       return [];
@@ -124,7 +137,7 @@ export function normalizeNodeInput(
     }
 
     if (isSchemaArray(input)) {
-      const compiled = runtime.schemaCompiler.compile(input, compileOptions);
+      const compiled = runtime.schemaCompiler.compile(input, strictOptions);
       return extractTemplateNodes(compiled);
     }
 
@@ -140,7 +153,7 @@ export function normalizeNodeInput(
   }
 
   if (isSchema(input)) {
-    const compiled = runtime.schemaCompiler.compile(input, compileOptions);
+    const compiled = runtime.schemaCompiler.compile(input, strictOptions);
     return extractTemplateNodes(compiled);
   }
 
