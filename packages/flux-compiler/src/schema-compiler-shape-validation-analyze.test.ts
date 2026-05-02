@@ -1,0 +1,290 @@
+import { describe, expect, it } from 'vitest';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { makeCompiler } from './schema-compiler-shape-validation-test-utils';
+
+describe('analyzeSchemaInput validation', () => {
+  it('reports invalid root (non-object, non-array)', () => {
+    const compiler = makeCompiler();
+
+    expect(compiler.validate?.('string' as any)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'invalid-root' })]),
+    );
+  });
+
+  it('reports missing type field as invalid root', () => {
+    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ label: 'test' } as any)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'invalid-root' })]),
+    );
+  });
+
+  it('reports empty type field', () => {
+    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: '' } as any)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'missing-required-field' })]),
+    );
+  });
+
+  it('reports unknown renderer type', () => {
+    const compiler = makeCompiler();
+
+    expect(compiler.validate?.({ type: 'unknown-type' })).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'unknown-renderer-type' })]),
+    );
+  });
+
+  it('reports invalid region node', () => {
+    const renderer: RendererDefinition = {
+      type: 'container',
+      component: () => null,
+      regions: ['body'],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'container', body: 42 } as any)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'invalid-region-node' })]),
+    );
+  });
+
+  it('reports invalid action shape', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'button', onClick: 'not-an-object' } as any)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'invalid-action-shape' })]),
+    );
+  });
+
+  it('reports action without action field', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({ type: 'button', onClick: { args: { path: 'x' } } } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          message: 'Action objects require a non-empty action field.',
+        }),
+      ]),
+    );
+  });
+
+  it('reports invalid action args', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({
+        type: 'button',
+        onClick: { action: 'test', args: 'not-object' },
+      } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          message: 'Action args must be an object when provided.',
+        }),
+      ]),
+    );
+  });
+
+  it('reports non-array parallel in action', () => {
+    const renderer: RendererDefinition = {
+      type: 'button',
+      component: () => null,
+      fields: [{ key: 'onClick', kind: 'event' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({
+        type: 'button',
+        onClick: { action: 'test', parallel: 'not-array' },
+      } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          message: 'Action parallel must be an array when provided.',
+        }),
+      ]),
+    );
+  });
+
+  it('reports invalid source shape', () => {
+    const renderer: RendererDefinition = {
+      type: 'page',
+      component: () => null,
+      regions: ['body'],
+      propSchema: { data: { type: 'object' } },
+      fields: [{ key: 'data', kind: 'prop' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'page', data: { type: 'source' } } as any)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-source-shape',
+          message: 'Source values require formula, action, or args.',
+        }),
+      ]),
+    );
+  });
+
+  it('reports invalid source action type', () => {
+    const renderer: RendererDefinition = {
+      type: 'page',
+      component: () => null,
+      regions: ['body'],
+      propSchema: { data: { type: 'object' } },
+      fields: [{ key: 'data', kind: 'prop' }],
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(
+      compiler.validate?.({ type: 'page', data: { type: 'source', action: 123 } } as any),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-source-shape',
+          message: 'Source action must be a string when provided.',
+        }),
+      ]),
+    );
+  });
+
+  it('reports invalid dependsOn entries', () => {
+    const renderer: RendererDefinition = { type: 'page', component: () => null, regions: ['body'] };
+    const compiler = makeCompiler([renderer]);
+
+    const diagnostics = compiler.validate?.({
+      type: 'page',
+      dependsOn: [123, '', 'deep.nested.path'],
+    } as any);
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-shape',
+          message: 'dependsOn entries must be non-empty strings.',
+        }),
+        expect.objectContaining({
+          code: 'invalid-property-shape',
+          message: 'dependsOn entries must use lexical root bindings, not deep member paths.',
+        }),
+      ]),
+    );
+  });
+
+  it('reports non-array dependsOn', () => {
+    const renderer: RendererDefinition = { type: 'page', component: () => null, regions: ['body'] };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'page', dependsOn: 'not-array' } as any)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-shape',
+          message: 'dependsOn must be an array of lexical root strings.',
+        }),
+      ]),
+    );
+  });
+
+  it('traverses value-or-region fields during validation', () => {
+    const cardRenderer: RendererDefinition = {
+      type: 'card',
+      component: () => null,
+      propSchema: { title: { type: 'string' } },
+      fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
+    };
+    const textRenderer: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+      propSchema: { text: { type: 'string' } },
+    };
+    const compiler = makeCompiler([cardRenderer, textRenderer]);
+
+    expect(
+      compiler.validate?.({ type: 'card', title: { type: 'text', unknownProp: 'val' } } as any, {
+        validation: { unknownBarePropertyPolicy: 'warn' },
+      }),
+    ).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'unknown-property' })]));
+  });
+
+  it('deduplicates diagnostic entries', () => {
+    const renderer: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+      propSchema: { text: { type: 'string' } },
+    };
+    const compiler = makeCompiler([renderer]);
+
+    const diagnostics = compiler.validate?.(
+      { type: 'text', typo: 'value1' },
+      {
+        validation: { unknownBarePropertyPolicy: 'error' },
+      },
+    );
+    expect(diagnostics?.filter((d) => d.code === 'unknown-property')).toHaveLength(1);
+  });
+
+  it('respects maxIssues limit', () => {
+    const renderer: RendererDefinition = {
+      type: 'text',
+      component: () => null,
+      propSchema: { text: { type: 'string' } },
+    };
+    const compiler = makeCompiler([renderer]);
+
+    const diagnostics = compiler.validate?.(
+      { type: 'text', a: 1, b: 2, c: 3 },
+      {
+        diagnostics: { maxIssues: 1 },
+        validation: { unknownBarePropertyPolicy: 'warn' },
+      },
+    );
+    expect(diagnostics!.length).toBeLessThanOrEqual(1);
+  });
+
+  it('reports renderer schemaValidator issues', () => {
+    const renderer: RendererDefinition = {
+      type: 'validated',
+      component: () => null,
+      schemaValidator({ emit }) {
+        emit({
+          code: 'invalid-property-shape',
+          message: 'Custom validation failed',
+          path: '/custom',
+        });
+      },
+    };
+    const compiler = makeCompiler([renderer]);
+
+    expect(compiler.validate?.({ type: 'validated' })).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-property-shape',
+          message: 'Custom validation failed',
+          source: 'renderer',
+        }),
+      ]),
+    );
+  });
+});
