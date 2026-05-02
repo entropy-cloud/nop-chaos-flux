@@ -166,7 +166,7 @@ It is intentionally not the owner of every runtime boundary in the tree.
 
 - page runtime creation
 - form runtime creation
-- fragment child scope creation for `render({ data })`
+- fragment child scope creation for `render({ bindings })`
 - dialog / drawer surface runtime ownership
 
 Those boundaries belong to the concrete creator path that introduces them.
@@ -593,14 +593,6 @@ interface RenderRegionHandle {
     componentRegistry?: ComponentHandleRegistry;
     ownerNodeInstance?: NodeInstance;
   }): React.ReactNode;
-  /**
-   * @deprecated Use render() instead. Kept for back-compat on non-parameterized regions.
-   */
-  instantiate(options?: {
-    scope?: ScopeRef;
-    bindings?: Record<string, unknown>;
-    instancePath?: readonly InstanceFrame[];
-  }): React.ReactNode;
 }
 ```
 
@@ -680,7 +672,7 @@ function EmptyStateWrapper(props: RendererComponentProps<EmptyWrapperSchema>) {
 
   if (isEmpty) {
     return render(props.schema.emptyBody, {
-      data: { reason: 'empty' },
+      bindings: { reason: 'empty' },
     });
   }
 
@@ -711,7 +703,7 @@ Not every boundary in the render tree has the same creator. The table below is t
 | --------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `classAliases` publication              | Node-local (compile-time closure)                | `NodeRenderer` executes compiled closure                                     | Compiled into `renderPlan.wrapProviders`                                                                                                                                                          |
 | `xui:imports`-driven import boundary    | Import-owned node boundary                       | `NodeRenderer` creates import-owned `ActionScope` and executes import wiring | Introduces import-owned lexical boundary. `xui:imports` always creates a child `ActionScope` for imported namespace providers; `ImportStack` separately owns alias frames and expression bindings |
-| Fragment child data scope               | Fragment render path (`RenderNodes`)             | Created inside `RenderNodes` when `options.data` is passed                   | Not `NodeRenderer`'s responsibility                                                                                                                                                               |
+| Fragment child data scope               | Fragment render path (`RenderNodes`)             | Created inside `RenderNodes` when `options.bindings` is passed               | Not `NodeRenderer`'s responsibility                                                                                                                                                               |
 | Page data scope + `PageRuntime`         | Page owner/renderer                              | Created by page renderer/host at mount                                       | Published via `PageContext`                                                                                                                                                                       |
 | Form data scope + `FormRuntime`         | Form owner/renderer                              | Created by form renderer at mount                                            | Published via `FormContext`; form scope is the active child scope for form children                                                                                                               |
 | Dialog surface scope + `SurfaceRuntime` | Dialog host/renderer                             | Created per opened dialog entry                                              | `SurfaceRuntime`/`SurfaceStore` shared with drawer; `page` store is NOT reused                                                                                                                    |
@@ -787,8 +779,6 @@ Normative contract:
 
 ```ts
 interface RenderFragmentOptions {
-  /** @deprecated Use `bindings` instead. */
-  data?: object;
   bindings?: Record<string, unknown>;
   scope?: ScopeRef;
   instancePath?: readonly InstanceFrame[];
@@ -817,7 +807,7 @@ Node-local capability boundaries should be created by the owner that actually in
 
 Normative baseline:
 
-- fragment `render({ data })` creates the child data scope in the fragment render path itself
+- fragment `render({ bindings })` creates the child data scope in the fragment render path itself
 - page and form renderers/owners create and publish their own data/runtime boundaries
 - node-local `xui:imports` boundaries create an import-owned child `ActionScope` plus import-frame wiring for that node; this remains distinct from renderer-owned `actionScopePolicy` and does not imply host projection or component-registry boundaries
 - component registries should be created only by the concrete owner that needs a new registry boundary, not by every node pre-emptively
@@ -833,7 +823,7 @@ Fragment rendering keeps the same explicitness rule as data scope: callers must 
 Expected behavior:
 
 - if `scope` is provided, use it directly
-- otherwise, if `data` is provided, create a child scope
+- otherwise, if `bindings` is provided, create a child scope
 - if `isolate` is true, do not chain to the current parent scope
 - `scopeKey` helps keep repeated scopes stable
 - `pathSuffix` helps with path clarity and debugability
@@ -841,7 +831,7 @@ Expected behavior:
 Authoring guidance:
 
 - fragment / region render paths should default to lexical inheritance
-- use `data` when a fragment needs a narrow own-scope patch
+- use `bindings` when a fragment needs a narrow own-scope patch
 - use `isolate: true` only when the fragment should become own-scope-only for clear boundary or performance reasons
 - do not compensate for `isolate: true` by introducing `$parentScope`; explicitly copy/projection-pass the small parent values the fragment really needs
 

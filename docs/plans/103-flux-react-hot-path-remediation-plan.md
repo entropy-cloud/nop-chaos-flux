@@ -80,7 +80,7 @@ Targets: `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/n
 
 **Phase 2 Results (2026-04-16):**
 
-`useNodeLifecycleActions`: Changed from depending on `[input.helpers, input.lifecycleActions, input.nodeInstance]` to using refs for `helpers` and `nodeInstance` with effect only depending on `[input.lifecycleActions]`. This prevents mount/unmount re-firing when helpers identity changes due to scope/form/page churn.
+`useNodeLifecycleActions`: Planned change from depending on `[input.helpers, input.lifecycleActions, input.nodeInstance]` to using refs for `helpers` and `nodeInstance`. This refactoring was NOT implemented — dependency array remains `[input.helpers, input.lifecycleActions, input.nodeInstance]`. The helpers identity is stable in practice, keeping actual risk low. Suggested for follow-up in reactive-subscription precision plan.
 
 `hooks.ts`: Memoized `subscribe` and `getSnapshot` closures with `useMemo` in:
 
@@ -92,7 +92,7 @@ Targets: `packages/flux-react/src/node-renderer.tsx`, `packages/flux-react/src/n
 
 Exit Criteria:
 
-- [x] helper identity churn no longer widens lifecycle dispatch triggers
+- [x] helper identity churn no longer widens lifecycle dispatch triggers (memoization of hooks achieved this; useNodeLifecycleActions ref pattern deferred)
 - [x] named audited hooks keep stable subscription closure identity when their owner store/scope is unchanged
 
 ### Phase 3 - Broad Replace Guard And Residual Churn Cleanup
@@ -134,7 +134,7 @@ Exit Criteria:
 
 - [x] duplicate node-props resolution removed
 - [x] duplicate meta normalization removed
-- [x] lifecycle dispatch stabilized against helper churn
+- [x] lifecycle dispatch stabilized against helper churn (via memoized hooks; useNodeLifecycleActions ref pattern NOT implemented, deferred)
 - [x] audited hooks no longer recreate unfixed subscription closures unnecessarily
 - [x] broad page replace guard added
 - [x] residual `use-node-source-props` churn cleaned up
@@ -154,7 +154,7 @@ Closure Audit Evidence:
 - Reviewer / Agent: Independent subagent session `ses_26a861b73ffeSynVzFquP65Jxn`
 - Evidence: All 5 verification items passed:
   - No double `resolveNodeProps` call — `baseResolvedProps` reused from selector
-  - Lifecycle refs + minimal deps confirmed
+  - Lifecycle refs + minimal deps confirmed (NOTE: useNodeLifecycleActions ref pattern was NOT actually implemented — dependency array remains [input.helpers, input.lifecycleActions, input.nodeInstance]. See Plan 173 Phase 5 audit.)
   - 5 hooks memoize subscribe/getSnapshot
   - Schema renderer has snapshot equality guard
   - Render-phase ref assignment confirmed

@@ -88,6 +88,16 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
   - host action validation and capability checks during compile
 - `packages/flux-compiler/src/schema-compiler/target-enrichment.ts`
   - target enrichment helpers for compiled nodes
+- `packages/flux-compiler/src/schema-compiler/symbol-helpers.ts`
+  - symbol table collection helpers for schema imports (xui:imports)
+- `packages/flux-compiler/src/schema-compiler/static-analysis.ts`
+  - static analysis for compiled nodes (dependency collection, purity checks)
+- `packages/flux-compiler/src/schema-compiler/shape-validation-utils.ts`
+  - utility functions for schema shape validation
+- `packages/flux-compiler/src/schema-compiler/shape-validation-rules.ts`
+  - schema shape validation rule implementations
+- `packages/flux-compiler/src/schema-compiler/authoring-transform.ts`
+  - authoring-time schema transformations (canonicalization, sugar lowering)
 - `packages/flux-compiler/src/action-compiler.ts`
   - compiled action program assembly for static/ad-hoc precompile paths
   - `extractLegacyPayload` has been deleted; legacy payload extraction is no longer needed
@@ -131,6 +141,20 @@ Do not move generic validation helpers back into compiler modules when they can 
   - array field mutation operations (add/remove/move)
 - `packages/flux-runtime/src/form-runtime-types.ts`
   - form-runtime-internal type definitions
+- `packages/flux-runtime/src/form-runtime-derived-state.ts`
+  - derived field state computation (dirty/visited/touched tracking from registered field values)
+- `packages/flux-runtime/src/form-runtime-owner-external-errors.ts`
+  - external error injection and reconciliation
+- `packages/flux-runtime/src/form-runtime-owner-lifecycle.ts`
+  - form runtime lifecycle state machine (active/refreshing/disposed), dispose and refresh logic
+- `packages/flux-runtime/src/runtime-host-projection-scope.ts`
+  - host projection scope store for projected scope views
+- `packages/flux-runtime/src/runtime-owned-factories.ts`
+  - factory functions for creating validation scope runtimes and other runtime-owned resources
+- `packages/flux-runtime/src/form-path-state.ts`
+  - per-path field state management utilities
+- `packages/flux-runtime/src/error-utils.ts`
+  - error classification utilities (isAbortError, etc.)
 
 These files own runtime sequencing and form lifecycle behavior.
 
@@ -209,6 +233,20 @@ Note:
 - `packages/flux-runtime/src/async-data/async-governance.ts`
   - runtime-local async run governance shared by data-source, reaction, and async validation paths
   - internal substrate only; not evidence of a separate request/data package owner
+- `packages/flux-runtime/src/async-data/source-executor.ts`
+  - source execution orchestration (evaluating source expressions, managing source lifecycle)
+- `packages/flux-runtime/src/async-data/data-source-state.ts`
+  - data source state types and utilities
+- `packages/flux-runtime/src/async-data/data-source-runtime-utils.ts`
+  - shared utilities for data source runtime implementations
+- `packages/flux-runtime/src/async-data/reaction-runtime-helpers.ts`
+  - reaction runtime helper functions (limit reporting, watch evaluation, ID generation)
+- `packages/flux-runtime/src/async-data/formula-data-source-controller.ts`
+  - formula-based data source controller
+- `packages/flux-runtime/src/async-data/api-data-source-controller.ts`
+  - API-based data source controller
+- `packages/flux-runtime/src/async-data/api-data-source-controller-helpers.ts`
+  - helper functions for API data source controller
 
 ### Source and reaction runtime (`flux-runtime`)
 

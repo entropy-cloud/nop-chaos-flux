@@ -24,7 +24,7 @@ The architecture baseline keeps these properties:
 - if a scope-scoped runtime sidecar is needed, prefer a `RendererRuntime`-owned `scopeEntries` structure keyed by `ScopeRef.id`
 - actions are dispatched by a centralized built-in dispatcher keyed by `action.action`; see `packages/flux-action-core/src/action-dispatcher.ts`
 - `ActionSchema` uses `action: string` and optional structured fields such as `args?: Record<string, SchemaValue>`; see `packages/flux-core/src/types/actions.ts`
-- React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ data })`; see `packages/flux-react/src/index.tsx`
+- React renderers can only change descendant scope explicitly through fragment render options such as `render({ scope })` or `render({ bindings })`; see `packages/flux-react/src/helpers.tsx` and `packages/flux-react/src/render-nodes.tsx`
 - flow-designer and report-designer architecture already assume `schema reads fixed host scope snapshot` and `writes go through namespaced actions`; see `docs/architecture/flow-designer/design.md` and `docs/architecture/report-designer/design.md`
 
 Those constraints mean the extension model must preserve:
@@ -1365,7 +1365,7 @@ These are boundaries that belong to specific concrete owner nodes and are create
 
 - page data scope + `PageRuntime` — created by the page renderer/host
 - form data scope + `FormRuntime` — created by the form renderer
-- fragment child data scope — created by `RenderNodes` when `options.data` is passed
+- fragment child data scope — created by `RenderNodes` when `options.bindings` is passed
 - dialog/drawer surface scope + `SurfaceRuntime`/`SurfaceStore` — created per opened surface by the dialog/drawer host
 
 Rule: these boundaries are not compiled into a generic `NodeRenderer` provider layer. Each is created and published by the concrete owner. `NodeRenderer` does not receive these as props for the purpose of re-publishing them.

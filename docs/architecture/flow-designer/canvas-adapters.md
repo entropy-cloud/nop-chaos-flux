@@ -83,6 +83,17 @@ This rule exists so users can immediately retry another target or cancel, instea
 
 This behavior must remain consistent across all React Flow entry points in the renderer shell.
 
+## ELK Request Ownership
+
+ELK auto-layout stale-result guards are instance-owned.
+
+- each `designer-page` renderer instance creates its own ELK layout owner
+- stale detection compares results only against that instance's latest request id
+- renderer cleanup invalidates only the owner created by the same instance
+- one designer instance unmounting or starting a new layout must not cancel a sibling instance's in-flight ELK result
+
+This keeps layout cancellation aligned with the host-owner boundary instead of using a module-level shared token.
+
 ## Live Xyflow Translation Rules
 
 The React Flow integration translates library callbacks back into the host contract.

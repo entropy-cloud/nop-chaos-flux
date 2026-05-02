@@ -339,7 +339,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    e. renderers 包可以依赖 `flux-react` 以及 `flux-core` / `flux-formula` / `flux-runtime` 的稳定公开 API；应重点检查是否直接依赖这些包的内部模块、私有子路径或形成难以解释的边界耦合
    f. *-core 包不能依赖 *-renderers 包
    g. spreadsheet-core 不能依赖 report-designer-core（反向可以）
-   h. ui 不依赖任何 @nop-chaos/* 包（peerDependencies 除外）
+   h. ui 可以依赖被明确设计为共享基础设施的 `@nop-chaos/*` 包（例如 `flux-i18n`）；重点检查是否出现未被文档/公开契约支撑的私有耦合、内部子路径依赖，或把本应保持独立的运行时边界硬耦合进 `ui`
    i. tailwind-preset 和 theme-tokens 不依赖任何运行时包
 4. 对每个违规或可疑依赖，指出：
    - 哪个包的 package.json

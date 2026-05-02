@@ -1,7 +1,7 @@
 # 167 Test Quality And Reliability Improvement Plan
 
 > Plan Status: proposed
-> Last Reviewed: 2026-05-01
+> Last Reviewed: 2026-05-02
 > Source: `docs/analysis/2026-05-01-deep-audit-full-2/14-test-coverage.md`, live code verification
 > Related: `docs/plans/161-workspace-quality-and-dx-improvement-plan.md` (Phase 4 ui/action-core tests, Phase 1.7 no-explicit-any warn), `docs/plans/143-unit-test-coverage-80-percent-target-plan.md` (completed)
 
@@ -17,7 +17,8 @@
 - Q01-Q03 vitest.config.ts 环境不匹配已由 Plan 161 Phase 1 规划
 - Live code 验证：709 处 `as any` 在测试文件中（`rg "as any" -g "*.test.*" -c` 精确计数），1 处 describe.skip（benchmark 文件），15 个文件使用 fake timers
 - test-support 工具（`@nop-chaos/flux-react` 的 `test-support-runtime.tsx`/`test-support-core.tsx`、`flow-designer-renderers` 的 `test-support.tsx`）有 66 个测试文件采用，全量 359 个测试文件中采用率约 18.4%
-- Q10 `form-tree-checkbox-fields.test.tsx` (680行) 为 P1 跨领域文件，但测试间耦合度低于 Q09/Q11，纳入本计划 Phase 2 渐进处理
+- 2026-05-02 deep audit 重新确认当前 hard-threshold mega tests 为：`flux-compiler/src/schema-compiler-registry.test.ts` (746 行)、`flux-compiler/src/schema-compiler-shape-validation.test.ts` (744 行)、`flux-react/src/__tests__/schema-renderer-runtime-core.test.tsx` (742 行)。这 3 个文件已超过仓库 `>700` 强制拆分阈值，必须由本计划 Phase 2 一并收口，而不是再分裂成第二个测试 successor plan。
+- `data-crud-state-interactions.test.tsx` (643 行) 与 `form-tree-checkbox-fields.test.tsx` (680 行) 仍属 P1 跨领域热点，但优先级低于上述 3 个 hard-threshold 文件；它们继续纳入本计划 Phase 2 渐进处理。
 
 ## Goals
 
@@ -40,16 +41,18 @@
 
 ### In Scope
 
-| Finding | Severity | File | Phase |
-|---------|----------|------|-------|
-| 模块顶层共享 expressionCompiler（stateless，风险低） | P2 | `flux-react/src/__tests__/schema-renderer-runtime-core.test.tsx` | Phase 1 |
-| 共享可变状态 submitCalls（手动重置，非 afterEach） | P2 | `flux-renderers-form-advanced/src/__tests__/form-double-edit-regression.test.tsx` | Phase 1 |
-| window 全局污染（globalThis.window 替换） | P1 | `nop-debugger/src/automation.test.ts` | Phase 1 |
-| schema-compiler-registry.test.ts 745 行跨领域 | P1 | `flux-compiler/src/schema-compiler-registry.test.ts` | Phase 2 |
-| data-crud-state-interactions.test.tsx 643 行跨领域 | P1 | `flux-renderers-data/src/__tests__/data-crud-state-interactions.test.tsx` | Phase 2 |
-| form-tree-checkbox-fields.test.tsx 680 行跨领域 | P1 | `flux-renderers-form/src/__tests__/form-tree-checkbox-fields.test.tsx` | Phase 2 |
-| 709 处 as any 降低测试类型安全 | P1 | 多文件 | Phase 3 |
-| test-support 采用率需提升 | P1 | 多文件 | Phase 4 |
+| Finding                                                        | Severity | File                                                                              | Phase   |
+| -------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------- | ------- |
+| 模块顶层共享 expressionCompiler（stateless，风险低）           | P2       | `flux-react/src/__tests__/schema-renderer-runtime-core.test.tsx`                  | Phase 1 |
+| 共享可变状态 submitCalls（手动重置，非 afterEach）             | P2       | `flux-renderers-form-advanced/src/__tests__/form-double-edit-regression.test.tsx` | Phase 1 |
+| window 全局污染（globalThis.window 替换）                      | P1       | `nop-debugger/src/automation.test.ts`                                             | Phase 1 |
+| schema-compiler-registry.test.ts 745 行跨领域                  | P1       | `flux-compiler/src/schema-compiler-registry.test.ts`                              | Phase 2 |
+| schema-compiler-shape-validation.test.ts 744 行跨领域          | P1       | `flux-compiler/src/schema-compiler-shape-validation.test.ts`                      | Phase 2 |
+| schema-renderer-runtime-core.test.tsx 742 行跨多个运行时测试域 | P1       | `flux-react/src/__tests__/schema-renderer-runtime-core.test.tsx`                  | Phase 2 |
+| data-crud-state-interactions.test.tsx 643 行跨领域             | P1       | `flux-renderers-data/src/__tests__/data-crud-state-interactions.test.tsx`         | Phase 2 |
+| form-tree-checkbox-fields.test.tsx 680 行跨领域                | P1       | `flux-renderers-form/src/__tests__/form-tree-checkbox-fields.test.tsx`            | Phase 2 |
+| 709 处 as any 降低测试类型安全                                 | P1       | 多文件                                                                            | Phase 3 |
+| test-support 采用率需提升                                      | P1       | 多文件                                                                            | Phase 4 |
 
 ### Out Of Scope
 
@@ -81,32 +84,46 @@ Exit Criteria:
 - [ ] 确认相关 `docs/architecture/` 无需更新（测试内部修改，无契约变更）
 - [ ] `docs/logs/` 对应日期条目已更新
 
-### Phase 2 - Split Cross-Cutting Test Files (P1)
+### Phase 2 - Split Cross-Cutting And Hard-Threshold Test Files (P1)
 
 Status: planned
-Targets: `packages/flux-compiler/src/schema-compiler-registry.test.ts` (745行), `packages/flux-renderers-data/src/__tests__/data-crud-state-interactions.test.tsx` (643行), `packages/flux-renderers-form/src/__tests__/form-tree-checkbox-fields.test.tsx` (680行)
+Targets: `packages/flux-compiler/src/schema-compiler-registry.test.ts` (746行), `packages/flux-compiler/src/schema-compiler-shape-validation.test.ts` (744行), `packages/flux-react/src/__tests__/schema-renderer-runtime-core.test.tsx` (742行), `packages/flux-renderers-data/src/__tests__/data-crud-state-interactions.test.tsx` (643行), `packages/flux-renderers-form/src/__tests__/form-tree-checkbox-fields.test.tsx` (680行)
 
 - [ ] **schema-compiler-registry.test.ts** (745行)：
   - 将 lines 1-94 的 helper/fixture 定义提取到 `schema-compiler-registry-fixtures.ts` 共享文件
   - 按测试主题拆分（注意：实际的 test groupings 不严格按 renderer/validator/action 划分）：
-    - `schema-compiler-registry-core.test.ts` — 核心注册/查找/生命周期
-    - `schema-compiler-registry-compilation.test.ts` — 编译行为和 transform
-    - `schema-compiler-registry-features.test.ts` — table extraction、CRUD aliases、imports 等特性
+  - `schema-compiler-registry-core.test.ts` — 核心注册/查找/生命周期
+  - `schema-compiler-registry-compilation.test.ts` — 编译行为和 transform
+  - `schema-compiler-registry-features.test.ts` — table extraction、CRUD aliases、imports 等特性
+  - 确保拆分后每个文件不超过 300 行
+- [ ] **schema-compiler-shape-validation.test.ts** (744行)：
+  - 将 `isNamespacedSchemaKey` / `applyWrapComponentPlugins` 这类 shape-validation helper tests 从 compile/validate integration tests 中拆开
+  - 按实际测试主题拆分为 2-3 个文件，例如：
+    - `schema-compiler-shape-validation-helpers.test.ts`
+    - `schema-compiler-shape-validation-analyze.test.ts`
+    - `schema-compiler-shape-validation-compile.test.ts`
+  - 确保拆分后每个文件不超过 300 行
+- [ ] **schema-renderer-runtime-core.test.tsx** (742行)：
+  - 按实际测试域拆分 runtime-core mega suite，至少把以下主题分离：
+    - 编译/边界与 import/class-alias fast paths
+    - scope/data-source/reactivity 行为
+    - frameWrap / node identity / wrapper behavior
+  - 提取共享 renderer/test-support fixture，避免拆分后重复膨胀
   - 确保拆分后每个文件不超过 300 行
 - [ ] **data-crud-state-interactions.test.tsx** (643行)：
   - 按实际测试结构拆分（注意：多个测试跨 domain boundary，如 query+pagination、selection+refresh）：
-    - `crud-binding-and-status.test.tsx` — $crud binding, status summary, visible columns
-    - `crud-query-and-pagination.test.tsx` — query flow, validation, refresh params, pagination/sort/filter summary
+  - `crud-binding-and-status.test.tsx` — $crud binding, status summary, visible columns
+  - `crud-query-and-pagination.test.tsx` — query flow, validation, refresh params, pagination/sort/filter summary
     - `crud-selection-and-features.test.tsx` — selection state, responsive expand, operation columns, component handles
   - 确保拆分后每个文件不超过 300 行
 - [ ] **form-tree-checkbox-fields.test.tsx** (680行)：
   - 分析实际测试 groupings，按主题拆分为 2-3 个文件
   - 确保拆分后每个文件不超过 300 行
-- [ ] 拆分前运行原文件全量测试记录 `it()` 块数量，拆分后对比确认无遗漏
+- [ ] 拆分前运行原文件全量测试记录 `it()` 块数量，拆分后对比确认无遗漏；3 个 `>700` 文件优先完成，确保先消除硬阈值违规
 
 Exit Criteria:
 
-- [ ] 3 个跨领域大文件已拆分为聚焦的单主题测试模块
+- [ ] 3 个 `>700` hard-threshold 文件和 2 个额外 P1 跨领域热点都已拆分为聚焦的单主题测试模块
 - [ ] 每个拆分后文件不超过 300 行
 - [ ] 所有原有测试用例保留且通过（`it()` 块总数与拆分前一致）
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 通过
@@ -172,14 +189,14 @@ Exit Criteria:
 
 ## Risks And Rollback
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| 拆分测试文件可能遗漏 describe 嵌套和共享 setup | 测试用例丢失 | 拆分前记录 `it()` 块数量，拆分后对比；shared fixtures 提取到独立文件避免重复 |
-| 共享 fixture 文件可能引入新的共享可变状态 | Phase 1 的修复被绕过 | fixture 文件只导出纯函数和不可变常量，不导出可变状态 |
-| 消除 `as any` 可能引入过于严格的类型导致测试脆弱 | 测试因类型变更频繁失败 | Category B 优先使用 `Partial`/`Pick` 等标准工具类型；不触碰 Category C |
-| test-support 迁移可能改变测试运行时行为 | 测试失败 | 逐文件迁移，每次迁移后运行全量测试 |
-| Phase 2 和 Phase 3 同修改 schema-compiler-registry 相关文件 | Merge conflict | Phase 2 先拆分，Phase 3 再处理拆分后文件的 `as any` |
-| Phase 3 目标可能过于激进或保守 | 延期或标准过低 | 先做 A/B/C 分类计数，再根据 Category A+B 实际占比调整目标 |
+| Risk                                                        | Impact                 | Mitigation                                                                   |
+| ----------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------- |
+| 拆分测试文件可能遗漏 describe 嵌套和共享 setup              | 测试用例丢失           | 拆分前记录 `it()` 块数量，拆分后对比；shared fixtures 提取到独立文件避免重复 |
+| 共享 fixture 文件可能引入新的共享可变状态                   | Phase 1 的修复被绕过   | fixture 文件只导出纯函数和不可变常量，不导出可变状态                         |
+| 消除 `as any` 可能引入过于严格的类型导致测试脆弱            | 测试因类型变更频繁失败 | Category B 优先使用 `Partial`/`Pick` 等标准工具类型；不触碰 Category C       |
+| test-support 迁移可能改变测试运行时行为                     | 测试失败               | 逐文件迁移，每次迁移后运行全量测试                                           |
+| Phase 2 和 Phase 3 同修改 schema-compiler-registry 相关文件 | Merge conflict         | Phase 2 先拆分，Phase 3 再处理拆分后文件的 `as any`                          |
+| Phase 3 目标可能过于激进或保守                              | 延期或标准过低         | 先做 A/B/C 分类计数，再根据 Category A+B 实际占比调整目标                    |
 
 ## Closure
 

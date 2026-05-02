@@ -190,6 +190,8 @@ Exit Criteria:
 ## Validation Checklist
 
 > **关闭条件**：只有本 section 所有条目及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
+>
+> **纯文档计划**：如果计划不涉及任何代码变更（仅修改 `docs/` 下的文件），`pnpm test`、`pnpm lint`、`pnpm typecheck`、`pnpm build` 这些条目可以直接从 Validation Checklist 中删除，不需要执行。
 
 - [ ] <<行为/契约结果>>
 - [ ] <<相关 docs/examples 已更新>>
@@ -233,7 +235,11 @@ Follow-up:
 3. 如果 `Goals` / `Non-Goals` 写不清，说明边界还不够硬。
 4. 如果 slice 写不出 `Exit Criteria`，说明它还不够可执行。
 5. 如果你正在规划的是一个完整 feature，先问自己这份 plan 是否真的能把 feature 收口；如果答案是否定的，再考虑拆成 successor plans，而不是一开始就把 feature 切碎。
-6. `Exit Criteria` 尽量写成 repo-observable 结果：具体 API、具体行为、具体测试，而不是只写抽象语义。
+6. `Exit Criteria` 尽量写成 repo-observable 结果——在仓库里能直接看到、能验证的东西，而不是模糊的抽象语义。不同性质的计划，"可观测"的含义不同：
+   - **代码变更**：具体 API 签名、具体行为描述、对应的单元测试用例及其预期结果。
+   - **文档改进**：具体文件路径、章节标题、内容与 live repo 中代码实际行为的一致性。例如"`docs/architecture/flux-core.md` 的 Scope Model 章节已更新为 `compileScope()` 的当前行为"。
+   - **重构治理**：具体文件行数阈值、迁移完成的文件清单、`pnpm typecheck && pnpm build && pnpm test` 全过。
+     判断标准：读完这条 Exit Criteria 后，任何人都能在仓库里找到对应的文件、代码或文档，明确判断它是否成立。
 7. 如果计划要处理重构热点或大文件治理，先基于 live repo audit 写清当前超大文件清单、目标阈值，以及 closure 时将使用的复核命令；不要只引用旧日志或旧计划里的行数结论。
 8. **每个 Phase 的 Exit Criteria 必须包含文档更新项**。如果某个 Phase 改了代码或行为，该 Phase 的 exit criteria 必须列出需要更新的 `docs/architecture/`、`docs/components/` 或 `docs/logs/` 条目。文档更新不是全局收尾工作，而是 Phase 内的工作。`docs/architecture/` 下的文档只写最终设计状态（见 Minimum Rules 第 14 条）。
 
@@ -252,7 +258,7 @@ Follow-up:
 2. 逐条核对每个 slice 的 `Exit Criteria`。
 3. 逐条核对 `Validation Checklist`。
 4. 把剩余工作写进 `Follow-up`，明确 successor plan 或明确无剩余 debt。
-5. 明确区分“接口存在”与“行为完成”，至少抽查一轮 live code path 和 focused tests，确认实现语义真的满足 exit criteria。
+5. 明确区分“接口存在”与“行为完成”（对代码变更计划：至少抽查一轮 live code path 和 focused tests；对纯文档计划：抽查文档内容与 live repo 代码的一致性），确认实现语义真的满足 exit criteria。
 6. 由独立审阅者或独立子 agent 做 closure-audit，并在 plan 或对应 daily log 中记录证据。这里的独立子 agent 指为 closure audit 单独启动的 fresh session，而不是复用实现阶段的同一 task session 继续自查。
 
 如果这些事没做完，就不要把 `Plan Status` 改成 `completed`。

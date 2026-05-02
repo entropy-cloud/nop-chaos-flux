@@ -156,7 +156,7 @@ The active system is organized into five layers:
 raw schema
   -> TemplateCompiler
 compiled template graph
-  -> RendererRuntime.instantiate(...)
+  -> runtime normalization + `NodeRenderer` / `RenderNodes` execution
 runtime node instances + action dispatch + page/form runtimes
   -> React renderer
 concrete component render

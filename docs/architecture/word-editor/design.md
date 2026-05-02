@@ -140,6 +140,13 @@ The host scope projects four read-only fields (`document`, `datasets`, `runtime`
 - `runtime`, `selection`, and `datasets` are real-time, driven by their respective Zustand stores via `useSyncExternalStoreWithSelector`.
 - The `runtime` field aggregates editor-store state with cross-store counts (`datasetCount`, `chartCount`, `codeCount`) via independent subscriptions, avoiding cross-store hot-path contamination inside the editor-store selector.
 
+Save and autosave truth rules:
+
+- local dirty state is cleared only after the renderer-local save succeeds and the host `saveEvent` also returns success
+- a failed host save keeps the editor dirty so close protection, status publication, and host integrations still see unsaved work
+- autosave must build `SavedDocumentData` from the current runtime `charts` / `codes`, not from `initialDocument`
+- when an explicit save succeeds, the persisted host projection updates its saved `charts` / `codes` extras from the same runtime values used for the save
+
 ### With nop-entropy Backend
 
 Template compilation flow:
