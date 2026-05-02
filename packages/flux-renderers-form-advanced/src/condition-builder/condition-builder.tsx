@@ -91,14 +91,14 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     return currentForm.registerField(registration).unregister;
   }, [currentForm, modelGeneration, name]);
 
-  const embed = props.props.embed !== false;
+  const embed = schemaProps.embed !== false;
 
   if (!embed) {
     return (
       <PickerModeContent
         value={effectiveValue}
         fields={fields}
-        schema={schemaProps}
+        schema={props.schema}
         operatorsOverride={operatorsOverride}
         onChange={syncValue}
         disabled={presentation.effectiveDisabled || presentation.fieldState.submitting}
@@ -110,7 +110,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
     <div className={cn('nop-condition-builder')}>
       <ConditionGroup
         value={effectiveValue}
-        schema={schemaProps}
+        schema={props.schema}
         fields={fields}
         operatorsOverride={operatorsOverride}
         onChange={syncValue}

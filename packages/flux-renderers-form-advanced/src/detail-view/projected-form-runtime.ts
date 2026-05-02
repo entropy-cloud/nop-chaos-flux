@@ -70,6 +70,12 @@ export function createProjectedFormStore(
     subscribeToPath(relativePath, listener) {
       return parentStore.subscribeToPath(binding.toAbsolute(relativePath), listener);
     },
+    subscribeToPaths(relativePaths, listener) {
+      return parentStore.subscribeToPaths(
+        relativePaths.map((relativePath) => binding.toAbsolute(relativePath)),
+        listener,
+      );
+    },
     subscribeToSubmitting(listener) {
       return parentStore.subscribeToSubmitting(listener);
     },

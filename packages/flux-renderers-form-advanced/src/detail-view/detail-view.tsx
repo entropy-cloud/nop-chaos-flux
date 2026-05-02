@@ -40,7 +40,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const parentValidationOwner = useCurrentValidationScope();
-  const schemaProps = props.props as DetailViewSchema;
+  const schemaProps = props.props;
   const readOnly = Boolean(schemaProps.readOnly);
   const scopePath =
     schemaProps.scopePath ?? (typeof schemaProps.name === 'string' ? schemaProps.name : undefined);
@@ -86,6 +86,8 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     beginConfirm,
     finishConfirm,
     setDraftErrorSafe,
+    openSequencer,
+    confirmSequencer,
   } = useDetailDraftControllerState();
 
   const childOwnerId = React.useMemo(
@@ -119,6 +121,8 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   async function handleOpen() {
     if (effectiveDisabled) return;
 
+    const openToken = openSequencer.nextToken();
+
     const adaptedValue = await runTransformIn(
       schemaProps.transformInAction,
       {
@@ -136,6 +140,11 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       parentScope,
       validation: props.templateNode.validationPlan,
     });
+
+    if (!openSequencer.isCurrent(openToken)) {
+      newDraftForm.dispose();
+      return;
+    }
 
     openDraft(newDraftForm);
   }
@@ -199,10 +208,18 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   async function handleConfirm() {
     if (readOnly || !draftForm) return;
 
-    beginConfirm();
+    const confirmToken = beginConfirm();
+
+    if (confirmToken == null) {
+      return;
+    }
 
     try {
       const result = await draftForm.validateAll('submit');
+      if (!confirmSequencer.isCurrent(confirmToken)) {
+        return;
+      }
+
       if (!result.ok) {
         setDraftErrorSafe(validationMessage);
         return;
@@ -218,6 +235,10 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         },
         runAdaptationAction,
       );
+
+      if (!confirmSequencer.isCurrent(confirmToken)) {
+        return;
+      }
 
       if (parentForm && scopePath) {
         publishValidateResultErrors(validation, scopePath, parentForm);
@@ -238,6 +259,10 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         runAdaptationAction,
       );
 
+      if (!confirmSequencer.isCurrent(confirmToken)) {
+        return;
+      }
+
       await applyCommitResult(
         typeof commitResult === 'object' && commitResult !== null
           ? (commitResult as Record<string, unknown>)
@@ -246,7 +271,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 
       closeDraft();
     } finally {
-      finishConfirm();
+      if (confirmSequencer.isCurrent(confirmToken)) {
+        finishConfirm();
+      }
     }
   }
 
@@ -308,9 +335,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   );
 }
 
-export const detailViewRendererDefinition: RendererDefinition = {
+export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> = {
   type: 'detail-view',
-  component: DetailViewRenderer as any,
+  component: DetailViewRenderer,
   regions: ['viewer', 'content'],
   fields: [
     formLabelFieldRule,

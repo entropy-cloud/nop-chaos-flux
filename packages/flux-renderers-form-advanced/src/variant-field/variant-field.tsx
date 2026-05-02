@@ -57,7 +57,7 @@ function injectDetectVariantArgs(
 export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldSchema>) {
   const parentForm = useCurrentForm();
   const parentScope = useRenderScope();
-  const schemaProps = props.props as VariantFieldSchema;
+  const schemaProps = props.props;
   const name = String(schemaProps.name ?? '');
   const readOnly = Boolean(schemaProps.readOnly);
   const variants = React.useMemo(
@@ -96,6 +96,8 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   );
   const [userSelectedKey, setUserSelectedKey] = React.useState<string | undefined>(undefined);
   const [detectedKey, setDetectedKey] = React.useState<string | undefined>(undefined);
+  const detectRequestIdRef = React.useRef(0);
+  const switchRequestIdRef = React.useRef(0);
 
   const activeKey = React.useMemo(() => {
     if (matchedKey) return matchedKey;
@@ -114,35 +116,50 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   }, []);
 
   const runDetectVariantAction = React.useCallback(async () => {
+    const requestId = ++detectRequestIdRef.current;
+
     if (!schemaProps.detectVariantAction || matchedKey) {
-      setDetectedKey(undefined);
+      if (mountedRef.current && requestId === detectRequestIdRef.current) {
+        setDetectedKey(undefined);
+      }
       return;
     }
 
-    const result = await props.helpers.dispatch(
-      injectDetectVariantArgs(schemaProps.detectVariantAction, {
-        value: currentValue,
-        variants: variants.map((variant) => variant.key),
-      }),
-      {
-        scope: parentScope,
-        form: parentForm ?? undefined,
-        page: undefined,
-        nodeInstance: props.node as BaseNodeInstance,
-      },
-    );
+    try {
+      const result = await props.helpers.dispatch(
+        injectDetectVariantArgs(schemaProps.detectVariantAction, {
+          value: currentValue,
+          variants: variants.map((variant) => variant.key),
+        }),
+        {
+          scope: parentScope,
+          form: parentForm ?? undefined,
+          page: undefined,
+          nodeInstance: props.node as BaseNodeInstance,
+        },
+      );
 
-    if (!mountedRef.current) return;
+      if (!mountedRef.current || requestId !== detectRequestIdRef.current) {
+        return;
+      }
 
-    if (!result.ok) {
+      if (!result.ok) {
+        setDetectedKey(undefined);
+        return;
+      }
+
+      const nextKey = extractDetectedVariant(result.data);
+      setDetectedKey(
+        nextKey && variants.some((variant) => variant.key === nextKey) ? nextKey : undefined,
+      );
+    } catch (error: unknown) {
+      if (!mountedRef.current || requestId !== detectRequestIdRef.current) {
+        return;
+      }
+
       setDetectedKey(undefined);
-      return;
+      console.warn('[variant-field] detectVariantAction failed', error);
     }
-
-    const nextKey = extractDetectedVariant(result.data);
-    setDetectedKey(
-      nextKey && variants.some((variant) => variant.key === nextKey) ? nextKey : undefined,
-    );
   }, [
     currentValue,
     matchedKey,
@@ -154,51 +171,83 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     variants,
   ]);
 
-  React.useEffect(() => {
-    void runDetectVariantAction();
+  const triggerDetectVariantAction = React.useCallback(() => {
+    runDetectVariantAction().catch((error: unknown) => {
+      console.warn('[variant-field] unexpected detectVariantAction failure', error);
+    });
   }, [runDetectVariantAction]);
 
-  async function handleVariantSwitch(key: string) {
-    if (key === activeKey) return;
+  React.useEffect(() => {
+    triggerDetectVariantAction();
+  }, [triggerDetectVariantAction]);
 
-    if (parentForm) {
-      parentForm.clearErrors(name);
-    }
+  const handleVariantSwitch = React.useCallback(
+    async (key: string) => {
+      if (key === activeKey) return;
 
-    const nextOption = variants.find((v) => v.key === key);
-    if (nextOption && parentForm && name) {
-      let nextValue = nextOption.initialValue !== undefined ? nextOption.initialValue : null;
+      const requestId = ++switchRequestIdRef.current;
 
-      if (nextOption.transformInAction) {
-        const adapter = actionAdapter(
-          nextOption.transformInAction,
-          undefined,
-          undefined,
-          (action, ctx) =>
-            props.helpers.dispatch(action as any, {
-              scope: ctx?.scope ?? parentScope,
-              form: ctx?.form ?? parentForm,
-              page: undefined,
-              nodeInstance: props.node as BaseNodeInstance,
-            }),
-        );
-
-        const migratedValue = await adapter.in(currentValue, {
-          name: key,
-          readOnly,
-          scope: parentScope,
-          form: parentForm,
-        });
-
-        nextValue = (migratedValue as VariantOption['initialValue']) ?? null;
+      if (parentForm) {
+        parentForm.clearErrors(name);
       }
 
-      parentForm.setValue(name, nextValue);
-      parentForm.touchField(name);
-    }
+      const nextOption = variants.find((v) => v.key === key);
+      if (nextOption && parentForm && name) {
+        let nextValue = nextOption.initialValue !== undefined ? nextOption.initialValue : null;
 
-    setUserSelectedKey(key);
-  }
+        if (nextOption.transformInAction) {
+          const adapter = actionAdapter(
+            nextOption.transformInAction,
+            undefined,
+            undefined,
+            (action, ctx) =>
+              props.helpers.dispatch(action as any, {
+                scope: ctx?.scope ?? parentScope,
+                form: ctx?.form ?? parentForm,
+                page: undefined,
+                nodeInstance: props.node as BaseNodeInstance,
+              }),
+          );
+
+          const migratedValue = await adapter.in(currentValue, {
+            name: key,
+            readOnly,
+            scope: parentScope,
+            form: parentForm,
+          });
+
+          if (!mountedRef.current || requestId !== switchRequestIdRef.current) {
+            return;
+          }
+
+          nextValue = (migratedValue as VariantOption['initialValue']) ?? null;
+        }
+
+        if (!mountedRef.current || requestId !== switchRequestIdRef.current) {
+          return;
+        }
+
+        parentForm.setValue(name, nextValue);
+        parentForm.touchField(name);
+      }
+
+      if (!mountedRef.current || requestId !== switchRequestIdRef.current) {
+        return;
+      }
+
+      setUserSelectedKey(key);
+    },
+    [activeKey, currentValue, name, parentForm, parentScope, props.helpers, props.node, readOnly, variants],
+  );
+
+  const triggerVariantSwitch = React.useCallback(
+    (key: string) => {
+      handleVariantSwitch(key).catch((error: unknown) => {
+        console.warn('[variant-field] variant switch failed', error);
+      });
+    },
+    [handleVariantSwitch],
+  );
 
   const activeContent = activeOption?.content ?? null;
   const activeViewer = activeOption?.viewer ?? activeContent;
@@ -222,7 +271,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
           <Select
             value={activeKey ?? ''}
             onValueChange={(value) => {
-              if (value) void handleVariantSwitch(value);
+              if (value) triggerVariantSwitch(value);
             }}
           >
             <SelectTrigger>
@@ -250,7 +299,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
         <Tabs
           value={activeKey ?? ''}
           onValueChange={(value) => {
-            void handleVariantSwitch(value);
+            triggerVariantSwitch(value);
           }}
         >
           <TabsList>
@@ -323,9 +372,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   );
 }
 
-export const variantFieldRendererDefinition: RendererDefinition = {
+export const variantFieldRendererDefinition: RendererDefinition<VariantFieldSchema> = {
   type: 'variant-field',
-  component: VariantFieldRenderer as any,
+  component: VariantFieldRenderer,
   regions: ['content'],
   fields: [
     formLabelFieldRule,

@@ -38,7 +38,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const runtime = useRendererRuntime();
   const parentScope = useRenderScope();
   const parentValidationOwner = useCurrentValidationScope();
-  const schemaProps = props.props as DetailFieldSchema;
+  const schemaProps = props.props;
   const name = String(schemaProps.name ?? '');
   const readOnly = Boolean(schemaProps.readOnly);
   const surfaceMode = (schemaProps.surface as { mode?: string } | undefined)?.mode ?? 'dialog';
@@ -73,6 +73,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     beginConfirm,
     finishConfirm,
     setDraftErrorSafe,
+    openSequencer,
+    confirmSequencer,
   } = useDetailDraftControllerState();
 
   const childOwnerId = React.useMemo(
@@ -98,6 +100,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   async function handleOpen() {
     if (presentation.effectiveDisabled) return;
 
+    const openToken = openSequencer.nextToken();
+
     const adaptedValue = await runTransformIn(
       schemaProps.transformInAction,
       {
@@ -119,17 +123,26 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       validation: props.templateNode.validationPlan,
     });
 
+    if (!mountedRef.current || !openSequencer.isCurrent(openToken)) {
+      newDraftForm.dispose();
+      return;
+    }
+
     openDraft(newDraftForm);
   }
 
   async function handleConfirm() {
     if (readOnly || !draftForm || !parentForm) return;
 
-    beginConfirm();
+    const confirmToken = beginConfirm();
+
+    if (confirmToken == null) {
+      return;
+    }
 
     try {
       const result = await draftForm.validateAll('submit');
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
 
       if (!result.ok) {
         setDraftErrorSafe(validationMessage);
@@ -148,7 +161,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         runAdaptationAction,
       );
 
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
 
       publishValidateResultErrors(validation, name, parentForm);
 
@@ -168,7 +181,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         runAdaptationAction,
       );
 
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
 
       parentForm.setValue(name, writeback);
       parentForm.touchField(name);
@@ -176,7 +189,9 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
       closeDraft();
     } finally {
-      finishConfirm();
+      if (confirmSequencer.isCurrent(confirmToken)) {
+        finishConfirm();
+      }
     }
   }
 
@@ -241,9 +256,9 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   );
 }
 
-export const detailFieldRendererDefinition: RendererDefinition = {
+export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema> = {
   type: 'detail-field',
-  component: DetailFieldRenderer as any,
+  component: DetailFieldRenderer,
   wrap: true,
   regions: ['viewer', 'content'],
   fields: [

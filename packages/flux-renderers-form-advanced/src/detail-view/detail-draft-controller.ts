@@ -8,6 +8,32 @@ import type {
 
 type BaseNodeInstance = RendererComponentProps<any>['node'];
 
+export interface AsyncSequencer {
+  nextToken(): number;
+  isCurrent(token: number): boolean;
+  invalidate(): void;
+}
+
+export function useAsyncSequencer(): AsyncSequencer {
+  const currentTokenRef = React.useRef(0);
+
+  return React.useMemo(
+    () => ({
+      nextToken() {
+        currentTokenRef.current += 1;
+        return currentTokenRef.current;
+      },
+      isCurrent(token: number) {
+        return currentTokenRef.current === token;
+      },
+      invalidate() {
+        currentTokenRef.current += 1;
+      },
+    }),
+    [],
+  );
+}
+
 export function buildDetailDraftInitialValues(
   adaptedValue: unknown,
   fallback: Record<string, unknown> = {},
@@ -61,16 +87,20 @@ export function useDetailDraftControllerState() {
   const [draftError, setDraftError] = React.useState<string | undefined>(undefined);
   const mountedRef = React.useRef(true);
   const draftFormRef = React.useRef<FormRuntime | undefined>(undefined);
+  const openSequencer = useAsyncSequencer();
+  const confirmSequencer = useAsyncSequencer();
 
   React.useEffect(() => {
     mountedRef.current = true;
 
     return () => {
       mountedRef.current = false;
+      openSequencer.invalidate();
+      confirmSequencer.invalidate();
       draftFormRef.current?.dispose();
       draftFormRef.current = undefined;
     };
-  }, []);
+  }, [confirmSequencer, openSequencer]);
 
   const assignDraftForm = React.useCallback((nextDraftForm: FormRuntime | undefined) => {
     draftFormRef.current = nextDraftForm;
@@ -84,11 +114,14 @@ export function useDetailDraftControllerState() {
         return;
       }
 
+      confirmSequencer.invalidate();
+      setConfirming(false);
+      draftFormRef.current?.dispose();
       assignDraftForm(nextDraftForm);
       setDraftError(undefined);
       setOpen(true);
     },
-    [assignDraftForm],
+    [assignDraftForm, confirmSequencer],
   );
 
   const closeDraft = React.useCallback(() => {
@@ -96,20 +129,25 @@ export function useDetailDraftControllerState() {
       return;
     }
 
+    openSequencer.invalidate();
+    confirmSequencer.invalidate();
+    setConfirming(false);
     setOpen(false);
     draftFormRef.current?.dispose();
     assignDraftForm(undefined);
     setDraftError(undefined);
-  }, [assignDraftForm]);
+  }, [assignDraftForm, confirmSequencer, openSequencer]);
 
   const beginConfirm = React.useCallback(() => {
     if (!mountedRef.current) {
-      return;
+      return undefined;
     }
 
+    const token = confirmSequencer.nextToken();
     setConfirming(true);
     setDraftError(undefined);
-  }, []);
+    return token;
+  }, [confirmSequencer]);
 
   const finishConfirm = React.useCallback(() => {
     if (mountedRef.current) {
@@ -129,6 +167,8 @@ export function useDetailDraftControllerState() {
     confirming,
     draftError,
     mountedRef,
+    openSequencer,
+    confirmSequencer,
     openDraft,
     closeDraft,
     beginConfirm,
