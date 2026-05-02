@@ -32,7 +32,7 @@ describe('xui:actions compilation', () => {
         save: { action: 'ajax', args: { url: '/api/save' } },
       },
       onClick: { action: 'save' },
-    } as any);
+    });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(root.namedActionPlans).toBeDefined();
