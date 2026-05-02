@@ -13,8 +13,8 @@
 
 - 审核于 2026-05-02 完成，共 0 P0 / 7 P1 / ~24 P2 / ~24 P3
 - P1 中有 2 项 i18n 缺陷（crud-renderer-toolbar.tsx）已修复
-- P1 中 3 项巨型文件拆分不在本计划范围（需独立计划）
-- P1 中 2 项类型系统改动不在本计划范围（需独立计划）
+- P1 中 3 项巨型文件拆分不在本计划范围，现由 `docs/plans/185-large-file-hotspot-split-plan.md` owning
+- P1 中 2 项类型系统改动不在本计划范围，现由 `docs/plans/183-renderer-props-and-host-neutral-typing-convergence-plan.md` owning
 - Phase 3（void promise .catch()）经复核确认为误报，已跳过
 
 ## Goals
@@ -28,12 +28,12 @@
 
 ## Non-Goals
 
-- 巨型文件拆分（field-utils.tsx, api-data-source-controller.ts, spreadsheet-toolbar.tsx）→ 需独立计划
-- 渲染器类型系统改动（RendererHelpers.render any, RendererDefinition.component any）→ 需独立计划
-- requiredWhen per-path 订阅 bug → 需独立计划
-- detail-view AbortController → 需独立计划
-- variant-field 竞态 guard → 需独立计划
-- 文件拆分相关 P2 项（schema-compiler, runtime-factory, reaction-runtime, form-runtime, 测试文件）→ 需独立计划
+- 巨型文件拆分（`field-utils.tsx`, `api-data-source-controller.ts`, `spreadsheet-toolbar.tsx`）→ `docs/plans/185-large-file-hotspot-split-plan.md`
+- 渲染器类型系统改动（`RendererHelpers.render` / `RendererDefinition.component`）→ `docs/plans/183-renderer-props-and-host-neutral-typing-convergence-plan.md`
+- `requiredWhen` per-path 订阅 bug → `docs/plans/184-reactive-hot-path-precision-and-notification-scaling-plan.md`
+- `detail-view` async sequencing / stale-result guard → `docs/plans/186-detail-and-variant-async-sequencing-safety-plan.md`
+- `variant-field` async sequencing / race guard → `docs/plans/186-detail-and-variant-async-sequencing-safety-plan.md`
+- 文件拆分相关 P2 项（`schema-compiler`, `runtime-factory`, `reaction-runtime`, `form-runtime`, 测试文件）仍超出本计划与当前 successor set scope；若转为 active work，需再按 owner surface 单独起 plan
 
 ## Scope
 
@@ -145,7 +145,7 @@ Exit Criteria:
 
 ## Follow-up
 
-- **巨型文件拆分计划**: field-utils.tsx, api-data-source-controller.ts, spreadsheet-toolbar.tsx 的拆分重构
-- **渲染器类型系统计划**: RendererHelpers.render / RendererDefinition.component 的泛型化
-- **订阅精度计划**: requiredWhen 跨字段依赖 per-path 订阅修复
-- **异步取消计划**: detail-view AbortController + variant-field sequence guard
+- **巨型文件拆分计划**: `docs/plans/185-large-file-hotspot-split-plan.md`
+- **渲染器类型系统计划**: `docs/plans/183-renderer-props-and-host-neutral-typing-convergence-plan.md`
+- **订阅精度计划**: `docs/plans/184-reactive-hot-path-precision-and-notification-scaling-plan.md`
+- **detail/variant 异步 sequencing 计划**: `docs/plans/186-detail-and-variant-async-sequencing-safety-plan.md`

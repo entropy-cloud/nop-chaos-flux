@@ -576,6 +576,8 @@ Current live implementation note:
 - 当前 live detail surface 由 `detail-surface.tsx` 直接挂接本地 `Dialog` / `Drawer` UI primitive
 - 当前 live path 不经过 shared `SurfaceRuntime` / `DialogHost`
 - 当前 live `readOnly=true` 时允许打开 detail surface，但只暴露 close-only footer，不进入 confirm/writeback path
+- `detail-field` / `detail-view` open and confirm flows use request-token sequencing: a newer open or close/reopen cycle supersedes older async `transformInAction` / `validateValueAction` / `transformOutAction` completions, stale completions are dropped, and any superseded draft form created by an older open is disposed instead of reopening or recommitting stale state
+- closing a detail session also clears owner-local `confirming` state so a completed or superseded confirm cannot leave the next detail session stuck in a perpetual confirming footer
 
 ### Scope Recommendation
 

@@ -225,7 +225,5 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- Finding 6 (useNodeLifecycleActions ref 模式) 建议纳入后续 reactive-subscription 精度计划
-- Finding 10 (diffAndNotifyValuePaths 全路径遍历) 建议纳入后续 form-store 性能优化计划
-- Finding 14 (stableStringify 循环引用) 建议在 api-cache 重构时一并处理
-- scopeChangeHitsDependencies 多段路径 O(n\*m) 优化建议纳入后续 scope-change 性能计划
+- Finding 6 (`useNodeLifecycleActions` ref / latest-value 模式)、Finding 10 (`diffAndNotifyValuePaths` 全路径遍历)、以及 `scopeChangeHitsDependencies` 多段路径 O(n\*m) 优化，现统一由 `docs/plans/184-reactive-hot-path-precision-and-notification-scaling-plan.md` owning
+- Finding 14 (`stableStringify` 循环引用) 目前保留为低优先级 api-cache watchpoint；本轮 closure-audit 未把它判定为必须立即起草的 active successor plan

@@ -168,6 +168,7 @@ Mounted-subtree rule:
 - built-in match + optional `detectVariantAction`
 - switch 时使用目标 variant `initialValue` 或目标 variant `transformInAction`
 - 切换后直接把结果写回 parent field value
+- `detectVariantAction` 与 async switch migration 采用 latest-request-wins sequencing；superseded completion 会被静默丢弃，不再覆盖当前 active variant / parent value
 - 当前并没有完整落地 field-level / variant-level `validateValueAction` 与 `transformOutAction` pipeline
 
 如果未来要扩展 richer adapter ordering，推荐顺序是：

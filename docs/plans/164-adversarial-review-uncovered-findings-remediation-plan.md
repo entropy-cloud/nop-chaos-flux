@@ -45,14 +45,14 @@
 
 ### In Scope
 
-| Finding | Severity | Phase |
-|---------|----------|-------|
-| 3. Scope DANGEROUS_KEYS 写入路径未过滤 | HIGH | Phase 1 |
-| 4. Formula parser 无递归深度限制 | MEDIUM | Phase 2 |
-| 5. 表达式错误静默吞掉 | MEDIUM | Phase 2 |
-| 7. `Promise.all` 校验单点失败 | MEDIUM | Phase 3 |
-| 8. Tree/table 键盘不可操作 | MEDIUM | Phase 4 |
-| 9. 硬编码用户可见字符串 | MEDIUM | Phase 4 |
+| Finding                                | Severity | Phase   |
+| -------------------------------------- | -------- | ------- |
+| 3. Scope DANGEROUS_KEYS 写入路径未过滤 | HIGH     | Phase 1 |
+| 4. Formula parser 无递归深度限制       | MEDIUM   | Phase 2 |
+| 5. 表达式错误静默吞掉                  | MEDIUM   | Phase 2 |
+| 7. `Promise.all` 校验单点失败          | MEDIUM   | Phase 3 |
+| 8. Tree/table 键盘不可操作             | MEDIUM   | Phase 4 |
+| 9. 硬编码用户可见字符串                | MEDIUM   | Phase 4 |
 
 ### Out Of Scope
 
@@ -174,13 +174,13 @@ Exit Criteria:
 
 ## Risks And Rollback
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| DANGEROUS_KEYS 过滤可能破坏依赖 `constructor` 键的合法数据 | 运行时行为变更 | 先 grep 全仓库确认无合法使用，再落地；如有则用白名单 |
-| Parser 深度限制可能截断合法的复杂表达式 | 编译失败 | 设 256 上限（远超正常使用），且错误信息明确 |
-| `Promise.all` 改为 `Promise.allSettled` 可能改变错误聚合时序 | 校验行为微妙变化 | rejected 字段仍记录到 fieldStates，只是不再中断 |
-| i18n key 命名可能与已有 key 冲突 | 翻译丢失 | 先检查已有 `flux.` 前缀 key 的命名空间 |
-| evaluator 深度限制可能截断当前可用的深度嵌套表达式 | 运行时错误 | 256 上限远超正常使用；执行前 grep 仓库确认无超限表达式 |
+| Risk                                                                                 | Impact                    | Mitigation                                                 |
+| ------------------------------------------------------------------------------------ | ------------------------- | ---------------------------------------------------------- |
+| DANGEROUS_KEYS 过滤可能破坏依赖 `constructor` 键的合法数据                           | 运行时行为变更            | 先 grep 全仓库确认无合法使用，再落地；如有则用白名单       |
+| Parser 深度限制可能截断合法的复杂表达式                                              | 编译失败                  | 设 256 上限（远超正常使用），且错误信息明确                |
+| `Promise.all` 改为 `Promise.allSettled` 可能改变错误聚合时序                         | 校验行为微妙变化          | rejected 字段仍记录到 fieldStates，只是不再中断            |
+| i18n key 命名可能与已有 key 冲突                                                     | 翻译丢失                  | 先检查已有 `flux.` 前缀 key 的命名空间                     |
+| evaluator 深度限制可能截断当前可用的深度嵌套表达式                                   | 运行时错误                | 256 上限远超正常使用；执行前 grep 仓库确认无超限表达式     |
 | Base UI `CollapsibleTrigger` 可能已为 `<span>` render prop 提供 Enter/Space 键盘处理 | Phase 4 tree 修复方向偏移 | 执行前在 playground 验证 CollapsibleTrigger 的实际键盘行为 |
 
 ## Closure
@@ -194,6 +194,6 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- Finding 2 (props 类型安全) 需要独立的设计提案
-- Finding 6 (doc-code 漂移) 应随 Plan 163 文档同步处理
-- Finding 10 (auto-renderer memo) 可作为后续 DX 改进
+- Finding 2 (`RendererComponentProps.props` / renderer props 类型安全) 现由 `docs/plans/183-renderer-props-and-host-neutral-typing-convergence-plan.md` owning
+- Finding 6 (doc-code 漂移) 已由 `docs/plans/163-core-boundary-and-validation-owner-convergence-plan.md` 的文档同步工作收口；无新的 successor plan
+- Finding 10 (auto-renderer memo) 目前仅保留为未来 DX 观察点；暂无必须落地的 active successor plan
