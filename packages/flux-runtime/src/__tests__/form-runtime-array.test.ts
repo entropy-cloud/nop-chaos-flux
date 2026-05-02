@@ -10,7 +10,12 @@ import { createFormStore } from '../form-store';
 import { createScopeRef } from '../scope';
 import { createAsyncGovernanceStore } from '../async-data/async-governance';
 import type { FieldState } from '@nop-chaos/flux-core';
-import type { ManagedFormRuntimeSharedState } from '../form-runtime-types';
+import type {
+  FormRuntimeValidationRunState,
+  FormRuntimeInitialStateSlice,
+  ManagedFormRuntimeSharedState,
+  PendingValidationDebounce,
+} from '../form-runtime-types';
 
 describe('remapValidationRunState', () => {
   it('remaps validation run paths under array', () => {
@@ -22,7 +27,7 @@ describe('remapValidationRunState', () => {
     ]);
     const pendingDebounces = new Map();
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
+      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
       'items',
       (i) => i - 1,
       vi.fn(),
@@ -35,12 +40,12 @@ describe('remapValidationRunState', () => {
 
   it('remaps pending validation debounces', () => {
     const validationRuns = new Map<string, number>();
-    const pendingDebounces = new Map<string, any>([
+    const pendingDebounces = new Map<string, PendingValidationDebounce>([
       ['items.1.field', { timer: 1, resolve: vi.fn(), reject: vi.fn() }],
       ['items.2.field', { timer: 2, resolve: vi.fn(), reject: vi.fn() }],
     ]);
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
+      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
       'items',
       (i) => i - 1,
       vi.fn(),
@@ -53,11 +58,11 @@ describe('remapValidationRunState', () => {
   it('cancels debounces when transform returns undefined', () => {
     const validationRuns = new Map<string, number>();
     const cancelFn = vi.fn();
-    const pendingDebounces = new Map<string, any>([
+    const pendingDebounces = new Map<string, PendingValidationDebounce>([
       ['items.2.field', { timer: 1, resolve: vi.fn(), reject: vi.fn() }],
     ]);
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
+      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
       'items',
       () => undefined,
       cancelFn,
@@ -67,9 +72,9 @@ describe('remapValidationRunState', () => {
 
   it('skips pending debounce when entry is missing', () => {
     const validationRuns = new Map<string, number>();
-    const pendingDebounces = new Map<string, any>([['items.1.field', undefined as any]]);
+    const pendingDebounces = new Map<string, PendingValidationDebounce | undefined>([['items.1.field', undefined]]);
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
+      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
       'items',
       (i) => i - 1,
       vi.fn(),
@@ -81,7 +86,7 @@ describe('remapValidationRunState', () => {
     const validationRuns = new Map<string, number>([['items.0.name', 5]]);
     const pendingDebounces = new Map();
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as any,
+      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
       'items',
       (i) => i,
       vi.fn(),
@@ -107,7 +112,7 @@ describe('remapInitialFieldState', () => {
         },
       },
     };
-    remapInitialFieldState(sharedState as any, 'items', (i) => i - 1);
+    remapInitialFieldState(sharedState as FormRuntimeInitialStateSlice, 'items', (i) => i - 1);
     expect(sharedState.initialFieldState.initialValues['items.0.name']).toBe('B');
     expect(sharedState.initialFieldState.initialValues['items.1.name']).toBe('C');
     expect(sharedState.initialFieldState.initialValues['standalone']).toBe(42);
@@ -122,7 +127,7 @@ describe('remapInitialFieldState', () => {
         dirty: { 'items.0.x': true, 'items.1.x': false },
       },
     };
-    remapInitialFieldState(sharedState as any, 'items', () => undefined);
+    remapInitialFieldState(sharedState as FormRuntimeInitialStateSlice, 'items', () => undefined);
     expect(Object.keys(sharedState.initialFieldState.initialValues)).toHaveLength(0);
     expect(Object.keys(sharedState.initialFieldState.dirty)).toHaveLength(0);
   });
@@ -134,7 +139,7 @@ describe('remapInitialFieldState', () => {
         dirty: { 'items.0.x': false },
       },
     };
-    remapInitialFieldState(sharedState as any, 'items', (i) => i);
+    remapInitialFieldState(sharedState as FormRuntimeInitialStateSlice, 'items', (i) => i);
     expect(sharedState.initialFieldState.dirty['items.0.x']).toBeUndefined();
   });
 });
@@ -246,7 +251,7 @@ describe('executeArrayMutation', () => {
       pendingValidationDebounces: new Map(),
       validationAbortControllers: new Map(),
       validationAsyncGovernance: createAsyncGovernanceStore(),
-      inputValue: {} as any,
+      inputValue: {} as ManagedFormRuntimeSharedState['inputValue'],
       runtimeFieldRegistrations: new Map(),
       pathToRegistrationId: new Map(),
       childPathToRegistrationId: new Map(),
@@ -265,7 +270,7 @@ describe('executeArrayMutation', () => {
     executeArrayMutation({
       sharedState: shared,
       scope: shared.scope,
-      getArrayValue: (path) => (shared.store.getState().values as any)[path],
+      getArrayValue: (path) => shared.store.getState().values[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr.slice(0, 1), ...arr.slice(2)],
       indexTransform: (i) => (i < 1 ? i : i > 1 ? i - 1 : undefined),
@@ -281,7 +286,7 @@ describe('executeArrayMutation', () => {
     executeArrayMutation({
       sharedState: shared,
       scope: shared.scope,
-      getArrayValue: (path) => (shared.store.getState().values as any)[path],
+      getArrayValue: (path) => shared.store.getState().values[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr, 'new'],
       indexTransform: () => 0,
@@ -297,7 +302,7 @@ describe('executeArrayMutation', () => {
     executeArrayMutation({
       sharedState: shared,
       scope: shared.scope,
-      getArrayValue: (path) => (shared.store.getState().values as any)[path],
+      getArrayValue: (path) => shared.store.getState().values[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr, 'b'],
       indexTransform: (i) => i,
@@ -313,7 +318,7 @@ describe('executeArrayMutation', () => {
     executeArrayMutation({
       sharedState: shared,
       scope: shared.scope,
-      getArrayValue: (path) => (shared.store.getState().values as any)[path],
+      getArrayValue: (path) => shared.store.getState().values[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr, 'b'],
       indexTransform: (i) => i,

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import {
+  createRendererRegistry,
+  type RendererDefinition,
+  type TemplateNode,
+} from '@nop-chaos/flux-core';
 import {
   textRenderer,
   pageRenderer,
@@ -11,6 +15,10 @@ import {
 } from './schema-compiler-registry-fixtures';
 import { createSchemaCompiler } from './index';
 
+type CompiledNode = TemplateNode & {
+  propsProgram: { kind: 'static'; value: Record<string, unknown> };
+};
+
 describe('createSchemaCompiler', () => {
   it('compiles regions and dynamic props', () => {
     const compiler = createTestCompiler([pageRenderer, textRenderer]);
@@ -21,7 +29,7 @@ describe('createSchemaCompiler', () => {
     });
 
     expect(Array.isArray(compiled)).toBe(false);
-    const root = compiled.root as any;
+    const root = compiled.root as TemplateNode;
     expect(root.regions.body.node).toBeTruthy();
   });
 
@@ -33,7 +41,7 @@ describe('createSchemaCompiler', () => {
       title: 'Profile',
       body: [{ type: 'text', text: 'body' }],
     });
-    const node = compiled.root as any;
+    const node = compiled.root as CompiledNode;
 
     expect(node.regions.title).toBeUndefined();
     expect(node.propsProgram.kind).toBe('static');
@@ -48,7 +56,7 @@ describe('createSchemaCompiler', () => {
       title: { type: 'text', text: 'Profile' },
       body: [{ type: 'text', text: 'body' }],
     } as any);
-    const node = compiled.root as any;
+    const node = compiled.root as CompiledNode;
 
     expect(node.regions.title.node).toBeTruthy();
     expect(node.propsProgram.kind).toBe('static');
@@ -62,7 +70,7 @@ describe('createSchemaCompiler', () => {
       type: 'input-text',
       name: 'user.email',
     });
-    const node = compiled.root as any;
+    const node = compiled.root as CompiledNode;
 
     expect(node.propsProgram.value.name).toBe('user.email');
     expect((node.metaProgram as Record<string, unknown>).name).toBeUndefined();
@@ -81,7 +89,7 @@ describe('createSchemaCompiler', () => {
         },
       },
     });
-    const node = compiled.root as any;
+    const node = compiled.root as CompiledNode;
 
     expect(node.regions.onClick).toBeUndefined();
     expect(node.propsProgram.value.onClick).toBeUndefined();
@@ -112,8 +120,8 @@ describe('createSchemaCompiler', () => {
       text: 'Lifecycle text',
       onMount: { action: 'probe:mount' },
       onUnmount: { action: 'probe:unmount' },
-    } as any);
-    const node = compiled.root as any;
+    });
+    const node = compiled.root as TemplateNode;
 
     expect(node.lifecycleActions).toEqual({
       onMount: {
@@ -154,8 +162,8 @@ describe('createSchemaCompiler', () => {
     const compiled = compiler.compile({
       type: 'transform-probe',
       legacyLabel: 'hello',
-    } as any);
-    const node = compiled.root as any;
+    });
+    const node = compiled.root as CompiledNode;
 
     expect(node.schema.label).toBe('hello');
     expect(node.schema.legacyLabel).toBeUndefined();
@@ -178,7 +186,7 @@ describe('createSchemaCompiler', () => {
         },
       ],
     });
-    const root = compiled.root as any;
+    const root = compiled.root as TemplateNode;
 
     const bodyNodes = Array.isArray(root.regions.body.node)
       ? root.regions.body.node
@@ -208,9 +216,9 @@ describe('createSchemaCompiler', () => {
       },
     });
 
-    const root = compiled.root as any;
-    const formNode = root.regions.body.node as any;
-    const buttonNode = (formNode.regions.actions.node as any[])[0];
+    const root = compiled.root as TemplateNode;
+    const formNode = root.regions.body.node as TemplateNode;
+    const buttonNode = (formNode.regions.actions.node as readonly TemplateNode[])[0];
 
     expect(typeof root.templateNodeId).toBe('number');
     expect(typeof formNode.templateNodeId).toBe('number');
@@ -233,7 +241,7 @@ describe('createSchemaCompiler', () => {
         },
       ],
     });
-    const root = compiled.root as any;
+    const root = compiled.root as TemplateNode;
 
     const bodyNodes = Array.isArray(root.regions.body.node)
       ? root.regions.body.node
@@ -259,7 +267,7 @@ describe('createSchemaCompiler', () => {
         },
       ],
     });
-    const root = compiled.root as any;
+    const root = compiled.root as TemplateNode;
 
     const bodyNodes = Array.isArray(root.regions.body.node)
       ? root.regions.body.node

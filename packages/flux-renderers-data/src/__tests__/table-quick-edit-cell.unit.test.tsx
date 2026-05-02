@@ -55,32 +55,33 @@ function renderCell(overrides: Record<string, unknown> = {}) {
 
 describe('resolveTableQuickEditConfig', () => {
   it('returns expected inline/dialog configs and rejects nameless inline edits without body', () => {
-    expect(resolveTableQuickEditConfig({ name: 'title', quickEdit: true } as any)).toEqual({
+    expect(resolveTableQuickEditConfig({ type: 'text', name: 'title', quickEdit: true })).toEqual({
       mode: 'inline',
       saveImmediately: false,
     });
-    expect(resolveTableQuickEditConfig({ quickEdit: true } as any)).toBeUndefined();
+    expect(resolveTableQuickEditConfig({ type: 'text', quickEdit: true })).toBeUndefined();
     expect(
-      resolveTableQuickEditConfig({ quickEdit: { saveImmediately: true } } as any),
+      resolveTableQuickEditConfig({ type: 'text', quickEdit: { saveImmediately: true } }),
     ).toBeUndefined();
     expect(
       resolveTableQuickEditConfig({
+        type: 'text',
         name: 'title',
         quickEdit: { mode: 'dialog', saveImmediately: true },
-      } as any),
+      }),
     ).toEqual({
       mode: 'dialog',
       saveImmediately: true,
       body: undefined,
     });
     expect(
-      resolveTableQuickEditConfig({ quickEdit: { body: { type: 'input-text' } } } as any),
+      resolveTableQuickEditConfig({ type: 'text', quickEdit: { body: { type: 'input-text' } } }),
     ).toEqual({
       mode: 'inline',
       saveImmediately: false,
       body: { type: 'input-text' },
     });
-    expect(resolveTableQuickEditConfig({ quickEdit: undefined } as any)).toBeUndefined();
+    expect(resolveTableQuickEditConfig({ type: 'text', quickEdit: undefined })).toBeUndefined();
   });
 });
 
@@ -110,7 +111,7 @@ describe('TableQuickEditCell', () => {
 
     rerender(
       <TableQuickEditCell
-        column={{ type: 'text', name: 'name', label: 'Name', quickEdit: true } as any}
+        column={{ type: 'text', name: 'name', label: 'Name', quickEdit: true }}
         rowScope={rowScope}
         record={{ name: 'Bob' }}
         helpers={helpers}

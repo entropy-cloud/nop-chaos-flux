@@ -177,6 +177,32 @@ describe('executeSetValues', () => {
     expect(revalidate).toHaveBeenCalledWith('a', 'change');
   });
 
+  it('reports dependent revalidation failures without throwing', async () => {
+    const sharedState = createSharedState({ a: 1 });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    executeSetValues(
+      {
+        sharedState,
+        formId: 'f1',
+        setLastChange: () => {},
+        clearExternalErrorsForPath: () => false,
+        rebuildStoreErrorsFromExternal: () => ({}),
+        revalidateDependents: vi.fn().mockRejectedValue(new Error('boom')),
+      },
+      { a: 10 },
+    );
+
+    await Promise.resolve();
+
+    expect(warn).toHaveBeenCalledWith(
+      '[form-runtime] dependent revalidation failed for "a"',
+      expect.any(Error),
+    );
+
+    warn.mockRestore();
+  });
+
   it('clears external errors and rebuilds store errors', () => {
     const sharedState = createSharedState({ x: 1 });
     sharedState.externalErrors.set('ext1', {

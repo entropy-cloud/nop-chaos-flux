@@ -4,6 +4,7 @@ import type {
   ActionScope,
   ImportedLibraryModule,
   ModuleCache,
+  PreparedImportSpec,
   RendererEnv,
   RendererRuntime,
   XuiImportSpec,
@@ -69,7 +70,7 @@ function createMockRuntime(): RendererRuntime {
 
 function createMockEnv(): RendererEnv {
   return {
-    fetcher: async () => ({ ok: true as const, status: 200, data: null as unknown as any }),
+    fetcher: async <T>() => ({ ok: true as const, status: 200, data: null as T }),
     notify: () => {},
   };
 }
@@ -277,7 +278,7 @@ describe('createImportStack', () => {
         scope,
         schemaUrl: '/schema.json',
       });
-      expect((frame!.entries['a'].actionProvider as any).kind).toBe('import');
+      expect(frame!.entries['a'].actionProvider?.kind).toBe('import');
     });
   });
 
@@ -288,8 +289,7 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [],
         scope,
-        schemaUrl: '/schema.json',
-      } as any);
+      });
       expect(result).toBeUndefined();
     });
 
@@ -300,14 +300,14 @@ describe('createImportStack', () => {
           ownerNodeId: 'node-1',
           imports: [
             {
+              schemaUrl: '/schema.json',
               spec: { from: 'lib', as: 'a' },
               resolvedSpec: { from: 'lib', as: 'a' },
               staticMeta: undefined,
-            },
+            } satisfies PreparedImportSpec,
           ],
           scope,
-          schemaUrl: '/schema.json',
-        } as any),
+        }),
       ).toThrow('Prepared import missing cached module for a');
     });
 
@@ -322,20 +322,20 @@ describe('createImportStack', () => {
         ownerNodeId: 'node-1',
         imports: [
           {
+            schemaUrl: '/schema.json',
             spec: { from: 'lib', as: 'a' },
             resolvedSpec: { from: 'lib', as: 'a' },
-            staticMeta: { some: 'meta' },
-          },
+            staticMeta: { namespaceMethods: ['invoke'] },
+          } satisfies PreparedImportSpec,
         ],
         scope,
-        schemaUrl: '/schema.json',
-      } as any);
+      });
       expect(frame).toBeDefined();
       expect(frame!.entries['a'].actionProvider).toStrictEqual({
         ...provider,
         kind: 'import',
       });
-      expect(frame!.entries['a'].staticMeta).toEqual({ some: 'meta' });
+      expect(frame!.entries['a'].staticMeta).toEqual({ namespaceMethods: ['invoke'] });
     });
 
     it('throws when createNamespace returns a promise', () => {
@@ -352,13 +352,13 @@ describe('createImportStack', () => {
           ownerNodeId: 'node-1',
           imports: [
             {
+              schemaUrl: '/schema.json',
               spec: { from: 'lib', as: 'a' },
               resolvedSpec: { from: 'lib', as: 'a' },
-            },
+            } satisfies PreparedImportSpec,
           ],
           scope,
-          schemaUrl: '/schema.json',
-        } as any),
+        }),
       ).toThrow('Prepared import a must install synchronously at render time');
     });
 
@@ -377,13 +377,13 @@ describe('createImportStack', () => {
           ownerNodeId: 'node-1',
           imports: [
             {
+              schemaUrl: '/schema.json',
               spec: { from: 'lib', as: 'a' },
               resolvedSpec: { from: 'lib', as: 'a' },
-            },
+            } satisfies PreparedImportSpec,
           ],
           scope,
-          schemaUrl: '/schema.json',
-        } as any),
+        }),
       ).toThrow('Prepared import a must install synchronously at render time');
     });
 
@@ -401,12 +401,11 @@ describe('createImportStack', () => {
         stack.installPrepared({
           ownerNodeId: 'node-1',
           imports: [
-            { spec: { from: 'lib-a', as: 'dup' }, resolvedSpec: { from: 'lib-a', as: 'dup' } },
-            { spec: { from: 'lib-b', as: 'dup' }, resolvedSpec: { from: 'lib-b', as: 'dup' } },
+            { schemaUrl: '/schema.json', spec: { from: 'lib-a', as: 'dup' }, resolvedSpec: { from: 'lib-a', as: 'dup' } } satisfies PreparedImportSpec,
+            { schemaUrl: '/schema.json', spec: { from: 'lib-b', as: 'dup' }, resolvedSpec: { from: 'lib-b', as: 'dup' } } satisfies PreparedImportSpec,
           ],
           scope,
-          schemaUrl: '/schema.json',
-        } as any),
+        }),
       ).toThrow('Duplicate import alias in the same node boundary: dup');
     });
   });

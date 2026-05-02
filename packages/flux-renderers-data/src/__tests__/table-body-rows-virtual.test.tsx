@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TableBodyRows } from '../table-renderer/table-body-rows';
+import type { TableRowEntry } from '../table-renderer/types';
 
 const useVirtualizerMock = vi.fn();
 
@@ -81,7 +82,7 @@ describe('TableBodyRows virtual body', () => {
                 sourceIndex: 0,
                 record: { name: 'Alice', email: 'alice@example.com' },
               },
-            ] as any
+            ] as TableRowEntry[]
           }
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="table-row:test"
@@ -128,7 +129,7 @@ describe('TableBodyRows virtual body', () => {
           props={makeTableProps()}
           columns={[{ label: 'Name', name: 'name' } as any]}
           responsiveHiddenColumns={[]}
-          processedData={[{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }] as any}
+          processedData={[{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }] as TableRowEntry[]}
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="table-row:test"
           expandedRowKeys={new Set(['1'])}

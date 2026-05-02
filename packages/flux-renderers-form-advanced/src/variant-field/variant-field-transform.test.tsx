@@ -242,4 +242,89 @@ describe('variant-field renderer transform behavior', () => {
     await waitFor(() => expect(submitValues.length).toBe(2));
     expect(submitValues[1]).toMatchObject({ payload: 'second text' });
   });
+
+  it('drops stale async variant migrations when a newer switch wins', async () => {
+    cleanup();
+    const pendingMigrations: Array<(result: { ok: true; data: Record<string, unknown> }) => void> = [];
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () =>
+            await new Promise<{ ok: true; data: Record<string, unknown> }>((resolve) => {
+              pendingMigrations.push(resolve);
+            }),
+        }),
+      })),
+    };
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-transform.test.tsx#4"
+        schema={{
+          type: 'form',
+          data: {
+            payload: 'alpha',
+          },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              defaultVariant: 'text',
+              'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [{ type: 'input-text', name: '', label: 'Text Value' }],
+                  initialValue: 'alpha',
+                },
+                {
+                  key: 'number',
+                  label: 'Number',
+                  content: [{ type: 'input-text', name: 'amount', label: 'Amount' }],
+                  initialValue: { amount: 0 },
+                  transformInAction: { action: 'variantLib:migrate' },
+                },
+                {
+                  key: 'object',
+                  label: 'Object',
+                  content: [{ type: 'input-text', name: 'title', label: 'Title' }],
+                  initialValue: { title: '' },
+                  transformInAction: { action: 'variantLib:migrate' },
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Number')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Number' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Object' }));
+
+    await waitFor(() => expect(pendingMigrations).toHaveLength(2));
+
+    pendingMigrations[1]!({ ok: true, data: { title: 'latest object' } });
+
+    await waitFor(() => {
+      const container = document.querySelector('[data-active-variant]');
+      expect(container?.getAttribute('data-active-variant')).toBe('object');
+      expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('latest object');
+    });
+
+    pendingMigrations[0]!({ ok: true, data: { amount: 42 } });
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+
+    const container = document.querySelector('[data-active-variant]');
+    expect(container?.getAttribute('data-active-variant')).toBe('object');
+    expect(screen.queryByLabelText('Amount')).toBeNull();
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('latest object');
+  });
 });

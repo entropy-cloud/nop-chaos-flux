@@ -1,4 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
+import type {
+  ComponentHandleRegistry,
+  CompiledFormValidationField,
+  CompiledValidationRule,
+  ImportStack,
+  ModuleCache,
+  NodeInstance,
+  PreparedImportSpec,
+  RendererEnv,
+  RendererRuntime,
+} from '@nop-chaos/flux-core';
+import type { ValidationRegistry } from '../validation';
 import { createScopeRef } from '../scope';
 import {
   buildFormStatusSummary,
@@ -14,7 +26,9 @@ describe('form runtime status helpers', () => {
   it('builds form status summaries from aggregate field state flags', () => {
     const summary = buildFormStatusSummary(
       {
+        values: {},
         submitting: true,
+        submitAttempted: false,
         fieldStates: {
           name: {
             errors: [{ message: 'required' }],
@@ -31,7 +45,7 @@ describe('form runtime status helpers', () => {
             visited: true,
           },
         },
-      } as any,
+      } as unknown as Parameters<typeof buildFormStatusSummary>[0],
       'form-1',
       'profile',
     );
@@ -58,11 +72,13 @@ describe('form runtime status helpers', () => {
       initialData: { title: 'Draft' },
     });
     const storeState = {
+      values: {},
       submitting: false,
+      submitAttempted: false,
       fieldStates: {
         title: { errors: [], validating: false, dirty: true, touched: true, visited: true },
       },
-    } as any;
+    } as unknown as Parameters<typeof buildFormStatusSummary>[0];
     const boundScope = createFormScopeWithBinding({
       scope,
       formId: 'form-1',
@@ -89,22 +105,43 @@ describe('form runtime status helpers', () => {
 
 describe('validation runtime helper', () => {
   it('returns undefined for async and unknown rules and delegates sync rules to the registry', () => {
-    const field = { path: 'email', label: 'Email' } as any;
+    const field = { path: 'email', label: 'Email' } as CompiledFormValidationField;
     const scope = createScopeRef({ id: 'scope', path: '$scope', initialData: {} });
     const validator = vi.fn().mockReturnValue({ path: 'email', message: 'invalid' });
     const registry = {
       get: vi.fn((kind: string) => (kind === 'required' ? validator : undefined)),
-    } as any;
+    } as unknown as ValidationRegistry;
 
     expect(
-      validateRule({ rule: { kind: 'async' } } as any, '', field, scope, registry),
+      validateRule(
+        { id: 'r1', rule: { kind: 'async' }, dependencyPaths: [] } as unknown as CompiledValidationRule,
+        '',
+        field,
+        scope,
+        registry,
+      ),
     ).toBeUndefined();
     expect(
-      validateRule({ rule: { kind: 'missing' } } as any, '', field, scope, registry),
+      validateRule(
+        { id: 'r2', rule: { kind: 'missing' }, dependencyPaths: [] } as unknown as CompiledValidationRule,
+        '',
+        field,
+        scope,
+        registry,
+      ),
     ).toBeUndefined();
-    expect(validateRule({ rule: { kind: 'required' } } as any, '', field, scope, registry)).toEqual(
-      { path: 'email', message: 'invalid' },
-    );
+    expect(
+      validateRule(
+        { id: 'r3', rule: { kind: 'required' }, dependencyPaths: [] } as CompiledValidationRule,
+        '',
+        field,
+        scope,
+        registry,
+      ),
+    ).toEqual({
+      path: 'email',
+      message: 'invalid',
+    });
     expect(validator).toHaveBeenCalledWith(
       expect.objectContaining({ field, scope, value: '', rule: { kind: 'required' } }),
     );
@@ -112,29 +149,32 @@ describe('validation runtime helper', () => {
 });
 
 describe('import manager', () => {
-  function createPreparedImport(from: string, as: string) {
+  function createPreparedImport(from: string, as: string): PreparedImportSpec {
     return {
+      schemaUrl: '/schema.json',
       resolvedSpec: { from, as, options: undefined },
       spec: { from, as },
-    } as any;
+    };
   }
 
   it('ref-counts prepared import frames, exposes bindings, and cleans up on release/dispose', async () => {
     const installPrepared = vi
       .fn()
-      .mockImplementation(({ imports }) => ({ id: `frame:${imports[0].resolvedSpec.as}` }));
+      .mockImplementation(({ imports }: { imports: PreparedImportSpec[] }) => ({
+        id: `frame:${imports[0].resolvedSpec.as}`,
+      }));
     const currentBindings = vi.fn().mockReturnValue({ demo: { version: 1 } });
     const pop = vi.fn();
     const dispose = vi.fn();
-    const importStack = { installPrepared, currentBindings, pop, dispose } as any;
+    const importStack = { installPrepared, currentBindings, pop, dispose } as unknown as ImportStack;
     const actionScope = createActionScope({ id: 'scope-1' });
-    const componentRegistry = { id: 'registry-1' } as any;
+    const componentRegistry = { id: 'registry-1' } as unknown as ComponentHandleRegistry;
     const scope = createScopeRef({ id: 'page', path: '$page', initialData: {} });
     const manager = createImportManager({
       getLoader: () => undefined,
-      getRuntime: () => ({}) as any,
-      getEnv: () => ({}) as any,
-      moduleCache: {} as any,
+      getRuntime: () => ({}) as RendererRuntime,
+      getEnv: () => ({}) as RendererEnv,
+      moduleCache: {} as ModuleCache,
       importStack,
     });
     const imports = [createPreparedImport('demo-lib', 'demo')];
@@ -145,7 +185,7 @@ describe('import manager', () => {
       componentRegistry,
       scope,
       schemaUrl: '/schema.json',
-      nodeInstance: { templateNode: { id: 'node-1' } } as any,
+      nodeInstance: { templateNode: { id: 'node-1' } } as unknown as NodeInstance,
     });
     await manager.ensureImportedNamespaces({
       imports,
@@ -190,15 +230,15 @@ describe('import manager', () => {
   it('ignores installs that return no frame', async () => {
     const manager = createImportManager({
       getLoader: () => undefined,
-      getRuntime: () => ({}) as any,
-      getEnv: () => ({}) as any,
-      moduleCache: {} as any,
+      getRuntime: () => ({}) as RendererRuntime,
+      getEnv: () => ({}) as RendererEnv,
+      moduleCache: {} as ModuleCache,
       importStack: {
         installPrepared: vi.fn().mockReturnValue(undefined),
         currentBindings: vi.fn(),
         pop: vi.fn(),
         dispose: vi.fn(),
-      } as any,
+      } as unknown as ImportStack,
     });
     const scope = createScopeRef({ id: 'page', path: '$page', initialData: {} });
     const actionScope = createActionScope({ id: 'scope-1' });

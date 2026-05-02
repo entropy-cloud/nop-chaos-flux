@@ -176,4 +176,64 @@ describe('detail-field unmount protection', () => {
 
     await waitFor(() => expect(screen.getByLabelText('First Name')).toBeTruthy());
   });
+
+  it('drops stale open completions when a newer open request wins', async () => {
+    cleanup();
+    const pendingOpens: Array<(value: { ok: true; data: { street: string } }) => void> = [];
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: vi.fn(async () =>
+            await new Promise<{ ok: true; data: { street: string } }>((resolve) => {
+              pendingOpens.push(resolve);
+            }),
+          ),
+        }),
+      })),
+    };
+
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-unmount.test.tsx#4"
+        schema={{
+          type: 'form',
+          data: { address: 'Alpha' },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              triggerLabel: 'Edit Address',
+              'xui:imports': [{ from: 'detail-lib', as: 'detailLib' }],
+              transformInAction: { action: 'detailLib:toDraft' },
+              content: [{ type: 'input-text', name: 'street', label: 'Street' }],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Address'));
+    await waitFor(() => expect(pendingOpens).toHaveLength(1));
+
+    fireEvent.click(screen.getByText('Edit Address'));
+    await waitFor(() => expect(pendingOpens).toHaveLength(2));
+
+    pendingOpens[1]!({ ok: true, data: { street: 'Second Draft' } });
+
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+    expect((screen.getByLabelText('Street') as HTMLInputElement).value).toBe('Second Draft');
+
+    pendingOpens[0]!({ ok: true, data: { street: 'First Draft' } });
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+
+    expect((screen.getByLabelText('Street') as HTMLInputElement).value).toBe('Second Draft');
+  });
 });

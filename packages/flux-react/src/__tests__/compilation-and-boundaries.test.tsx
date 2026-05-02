@@ -70,7 +70,7 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     render(
       <RuntimeContext.Provider value={runtime}>
         <ScopeContext.Provider value={page.scope}>
-          <NodeRenderer node={root as any} scope={page.scope} />
+          <NodeRenderer node={root} scope={page.scope} />
         </ScopeContext.Provider>
       </RuntimeContext.Provider>,
     );
@@ -96,7 +96,7 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
     render(
       <RuntimeContext.Provider value={runtime}>
         <ScopeContext.Provider value={page.scope}>
-          <NodeRenderer node={root as any} scope={page.scope} />
+          <NodeRenderer node={root} scope={page.scope} />
         </ScopeContext.Provider>
       </RuntimeContext.Provider>,
     );

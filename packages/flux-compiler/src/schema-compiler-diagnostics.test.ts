@@ -86,8 +86,9 @@ describe('schema compiler diagnostics', () => {
           unknownBarePropertyPolicy: 'error',
         },
       },
-    ) as any;
-    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    );
+    const root = compiled.root;
+    const node = Array.isArray(root) ? root[0] : root;
 
     expect(node.propsProgram.value).toEqual({ type: 'strict-text', text: 'Hello' });
   });
@@ -112,8 +113,9 @@ describe('schema compiler diagnostics', () => {
           extensionPassthroughPolicy: 'namespaced-only',
         },
       },
-    ) as any;
-    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
+    );
+    const root = compiled.root;
+    const node = Array.isArray(root) ? root[0] : root;
 
     expect(node.propsProgram.value).toEqual({ type: 'strict-text', text: 'Hello' });
     expect(node.schema?.['acme:layout']).toEqual({
@@ -153,7 +155,7 @@ describe('schema compiler diagnostics', () => {
         type: 'strict-text',
         text: 'Hello',
         'xui:version': '1.x',
-      } as any),
+      }),
     ).toEqual([]);
   });
 
@@ -165,7 +167,7 @@ describe('schema compiler diagnostics', () => {
         type: 'strict-text',
         text: 'Hello',
         'xui:version': 123,
-      } as any),
+      }),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -185,7 +187,7 @@ describe('schema compiler diagnostics', () => {
         type: 'strict-text',
         text: 'Hello',
         'xui:version': '',
-      } as any),
+      }),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -534,7 +536,7 @@ describe('host action validation', () => {
           type: 'strict-text',
           text: 'Hello',
           'xui:actions': 'bad',
-        } as any),
+        }),
       ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -554,7 +556,7 @@ describe('host action validation', () => {
           type: 'strict-text',
           text: 'Hello',
           'xui:actions': [{ action: 'ajax' }],
-        } as any),
+        }),
       ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -574,7 +576,7 @@ describe('host action validation', () => {
           type: 'strict-text',
           text: 'Hello',
           'xui:actions': null,
-        } as any),
+        }),
       ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -596,7 +598,7 @@ describe('host action validation', () => {
           'xui:actions': {
             'ns:method': { action: 'ajax' },
           },
-        } as any),
+        }),
       ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -619,7 +621,7 @@ describe('host action validation', () => {
           'xui:actions': {
             ajax: { action: 'showToast' },
           },
-        } as any),
+        }),
       ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -642,7 +644,7 @@ describe('host action validation', () => {
           'xui:actions': {
             bad: 'string-value',
           },
-        } as any),
+        }),
       ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -664,7 +666,7 @@ describe('host action validation', () => {
           'xui:actions': {
             loop: { action: 'loop' },
           },
-        } as any),
+        }),
       ).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -688,7 +690,7 @@ describe('host action validation', () => {
             save: { action: 'ajax', args: { url: '/save' } },
             reset: { action: 'setValue', args: { path: 'x', value: 0 } },
           },
-        } as any),
+        }),
       ).toEqual([]);
     });
   });

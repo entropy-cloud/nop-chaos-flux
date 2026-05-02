@@ -1,6 +1,9 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import type { ScopeRef } from '@nop-chaos/flux-core';
+import type { FixedColumnLayout } from '../table-renderer/fixed-columns';
+import type { TableColumnSchema, TableSchema } from '../schemas';
 import { createFixedColumnLayout } from '../table-renderer/fixed-columns';
 import {
   buildTableRowEntries,
@@ -19,7 +22,7 @@ import {
   renderExpandedRow,
 } from '../table-renderer/table-body-row-rendering';
 
-function makeRowScope(record: Record<string, unknown>, index: number) {
+function makeRowScope(record: Record<string, unknown>, index: number): ScopeRef {
   return {
     id: `scope-${index}`,
     path: `$rows.${index}`,
@@ -35,7 +38,7 @@ function makeRowScope(record: Record<string, unknown>, index: number) {
     materializeVisible: () => ({ record, index }),
     update: vi.fn(),
     merge() {},
-  } as any;
+  };
 }
 
 function makeParentProps(overrides: Record<string, unknown> = {}) {
@@ -144,12 +147,12 @@ describe('table-data helpers', () => {
 describe('fixed column layout', () => {
   it('computes sticky props for control, left, and right fixed columns', () => {
     const layout = createFixedColumnLayout(
-      { expandable: {}, rowSelection: { type: 'checkbox' } } as any,
+      { type: 'table', expandable: {}, rowSelection: { type: 'checkbox' } } as TableSchema,
       [
         { name: 'name', fixed: 'left', width: 120 },
         { name: 'email', fixed: 'right', width: '180px' },
         { name: 'role', width: 'bad' },
-      ] as any,
+      ] as TableColumnSchema[],
       true,
     );
 
@@ -157,22 +160,22 @@ describe('fixed column layout', () => {
     expect(layout.getExpandCellProps()).toMatchObject({ fixed: 'left' });
     expect(layout.getSelectionCellProps()).toMatchObject({ fixed: 'left' });
     expect(
-      layout.getColumnCellProps({ name: 'name', fixed: 'left', width: 120 } as any, 0),
+      layout.getColumnCellProps({ name: 'name', fixed: 'left', width: 120 } as TableColumnSchema, 0),
     ).toMatchObject({
       fixed: 'left',
       style: expect.objectContaining({ left: '80px', width: 120 }),
     });
     expect(
-      layout.getColumnCellProps({ name: 'email', fixed: 'right', width: '180px' } as any, 1),
+      layout.getColumnCellProps({ name: 'email', fixed: 'right', width: '180px' } as TableColumnSchema, 1),
     ).toMatchObject({
       fixed: 'right',
       style: expect.objectContaining({ right: '0px', width: '180px' }),
     });
-    expect(layout.getColumnCellProps({ name: 'role', width: 'bad' } as any, 2)).toEqual({});
+    expect(layout.getColumnCellProps({ name: 'role', width: 'bad' } as TableColumnSchema, 2)).toEqual({});
   });
 
   it('returns non-sticky layout when no fixed columns exist', () => {
-    const layout = createFixedColumnLayout({} as any, [{ name: 'name' }] as any, false);
+    const layout = createFixedColumnLayout({ type: 'table' } as TableSchema, [{ name: 'name' }] as TableColumnSchema[], false);
     expect(layout.hasStickyColumns).toBe(false);
     expect(layout.getExpandCellProps()).toEqual({});
     expect(layout.getSelectionCellProps()).toEqual({});
@@ -201,7 +204,7 @@ describe('table row rendering helpers', () => {
       isSelected: true,
       isEven: true,
     });
-    expect((flattened[0] as any).rowInstancePath).toEqual([
+    expect((flattened[0] as import('../table-renderer/table-body-row-rendering').FlattenedRow).rowInstancePath).toEqual([
       { repeatedTemplateId: 'page', instanceKey: 'root' },
       { repeatedTemplateId: 'table-row:unit', instanceKey: 'r1' },
     ]);
@@ -239,18 +242,19 @@ describe('table row rendering helpers', () => {
               isSelected: true,
               isEven: true,
             },
-            { rowSelection: { type: 'checkbox' } } as any,
+            { rowSelection: { type: 'checkbox' } } as TableSchema,
             [
               { label: 'Actions', type: 'operation', buttonsRegionKey: 'actions' },
               { label: 'Name', name: 'name' },
-            ] as any,
+            ] as TableColumnSchema[],
             parentProps.helpers,
             parentProps,
             {
               getExpandCellProps: () => ({ className: 'expand-cell', style: {} }),
               getSelectionCellProps: () => ({ className: 'select-cell', style: {} }),
               getColumnCellProps: () => ({ className: 'data-cell', style: {}, fixed: undefined }),
-            } as any,
+              hasStickyColumns: false,
+            } as FixedColumnLayout,
             true,
             false,
             onToggleExpand,
@@ -305,15 +309,16 @@ describe('table row rendering helpers', () => {
               isSelected: false,
               isEven: false,
             },
-            { rowSelection: { type: 'radio' } } as any,
-            [{ label: 'Name', name: 'name', cellRegionKey: 'cell' }] as any,
+            { rowSelection: { type: 'radio' } } as TableSchema,
+            [{ label: 'Name', name: 'name', cellRegionKey: 'cell' }] as TableColumnSchema[],
             parentProps.helpers,
             parentProps,
             {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
-            } as any,
+              hasStickyColumns: false,
+            } as FixedColumnLayout,
             false,
             true,
             onToggleExpand,
@@ -322,12 +327,12 @@ describe('table row rendering helpers', () => {
           )}
           {renderExpandedRow(
             { kind: 'expanded', rowKey: 'r1', columnCount: 2 },
-            { expandable: { expandedRowRegionKey: 'expanded' } } as any,
+            { expandable: { expandedRowRegionKey: 'expanded' } } as TableSchema,
             parentProps.helpers,
             parentProps,
             rowScopeCache,
             'table-row:unit',
-            [{ label: 'Email', name: 'email' }] as any,
+            [{ label: 'Email', name: 'email' }] as TableColumnSchema[],
           )}
         </tbody>
       </table>,
@@ -343,12 +348,12 @@ describe('table row rendering helpers', () => {
     expect(
       renderExpandedRow(
         { kind: 'expanded', rowKey: 'missing', columnCount: 1 },
-        {} as any,
+        { type: 'table' } as TableSchema,
         parentProps.helpers,
         parentProps,
         rowScopeCache,
         'table-row:unit',
-        [] as any,
+        [],
       ),
     ).toBeNull();
   });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
-import type { FormStoreState, ScopeRef } from '@nop-chaos/flux-core';
+import type { FormRuntime, FormStoreState, ScopeRef, ValidationError } from '@nop-chaos/flux-core';
 import {
   usePublishedFormStatus,
   usePublishedFormValues,
@@ -39,7 +39,11 @@ function makeScope(): ScopeRef {
     materializeVisible: () => ({}),
     update: vi.fn(),
     merge: vi.fn(),
-  } as ScopeRef;
+  };
+}
+
+function makeOwnedForm(store: ReturnType<typeof createFormStore>): FormRuntime {
+  return { id: 'form-1', name: 'demo', store } as unknown as FormRuntime;
 }
 
 describe('form-status-publication hooks', () => {
@@ -50,13 +54,13 @@ describe('form-status-publication hooks', () => {
       fieldStates: {
         name: {
           touched: true,
-          errors: [{ path: 'name', rule: 'required', message: 'Required' } as any],
+          errors: [{ path: 'name', rule: 'required', message: 'Required' }] as ValidationError[],
         },
       },
       submitting: false,
       submitAttempted: false,
     });
-    const ownedForm = { id: 'form-1', name: 'demo', store } as any;
+    const ownedForm = makeOwnedForm(store);
 
     function Probe() {
       usePublishedFormStatus({ statusPath: 'ui.status', parentScope, ownedForm });
@@ -80,19 +84,20 @@ describe('form-status-publication hooks', () => {
       );
     });
 
-    const before = (parentScope.update as any).mock.calls.length;
+    const updateMock = parentScope.update as ReturnType<typeof vi.fn>;
+    const before = updateMock.mock.calls.length;
     store.setState({
       values: {},
       fieldStates: {
         name: {
           touched: true,
-          errors: [{ path: 'name', rule: 'required', message: 'Required' } as any],
+          errors: [{ path: 'name', rule: 'required', message: 'Required' }] as ValidationError[],
         },
       },
       submitting: false,
       submitAttempted: false,
     });
-    expect((parentScope.update as any).mock.calls.length).toBe(before);
+    expect(updateMock.mock.calls.length).toBe(before);
 
     store.setState({
       values: {},
@@ -129,7 +134,7 @@ describe('form-status-publication hooks', () => {
       submitting: false,
       submitAttempted: false,
     });
-    const ownedForm = { id: 'form-1', name: 'demo', store } as any;
+    const ownedForm = makeOwnedForm(store);
 
     function Probe() {
       usePublishedFormValues({ valuesPath: 'ui.values', parentScope, ownedForm });
@@ -142,14 +147,15 @@ describe('form-status-publication hooks', () => {
       expect(parentScope.update).toHaveBeenCalledWith('ui.values', initialValues);
     });
 
-    const before = (parentScope.update as any).mock.calls.length;
+    const updateMock = parentScope.update as ReturnType<typeof vi.fn>;
+    const before = updateMock.mock.calls.length;
     store.setState({
       values: initialValues,
       fieldStates: { name: { touched: true } },
       submitting: false,
       submitAttempted: false,
     });
-    expect((parentScope.update as any).mock.calls.length).toBe(before);
+    expect(updateMock.mock.calls.length).toBe(before);
 
     const nextValues = { username: 'Bob' };
     store.setState({
@@ -172,7 +178,7 @@ describe('form-status-publication hooks', () => {
       submitting: false,
       submitAttempted: false,
     });
-    const ownedForm = { id: 'form-1', name: 'demo', store } as any;
+    const ownedForm = makeOwnedForm(store);
 
     function Probe() {
       usePublishedFormStatus({ parentScope, ownedForm });

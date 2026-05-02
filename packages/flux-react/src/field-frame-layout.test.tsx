@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
+import type { CompiledFormValidationModel } from '@nop-chaos/flux-core';
 import { FormContext, FormLayoutContext } from './contexts';
 import { FieldFrame } from './field-frame';
 import { EMPTY_FORM_STORE_STATE } from './form-state';
@@ -15,6 +16,43 @@ function createMockForm(overrides?: Record<string, unknown>) {
     ...overrides,
   } as any;
 }
+
+const dynamicRequiredValidation = {
+  order: ['email'],
+  behavior: { triggers: ['blur'], showErrorOn: ['touched'] },
+  dependents: { 'contact.method': ['email'], 'contact.enabled': ['email'] },
+  nodes: {
+    email: {
+      path: 'email',
+      kind: 'field',
+      controlType: 'input-text',
+      rules: [
+        {
+          id: 'required-when-email',
+          rule: {
+            kind: 'requiredWhen',
+            path: 'contact.method',
+            equals: 'email',
+            message: 'Required',
+          },
+          dependencyPaths: ['contact.method'],
+        },
+        {
+          id: 'required-unless-disabled',
+          rule: {
+            kind: 'requiredUnless',
+            path: 'contact.enabled',
+            equals: false,
+            message: 'Required',
+          },
+          dependencyPaths: ['contact.enabled'],
+        },
+      ],
+      behavior: { triggers: ['blur'], showErrorOn: ['touched'] },
+      children: [],
+    },
+  },
+} as const satisfies CompiledFormValidationModel;
 
 describe('FieldFrame — form layout context', () => {
   it('uses data-label-align="top" by default (normal mode, no context)', () => {
@@ -199,5 +237,45 @@ describe('FieldFrame — hint, description, remark, labelRemark', () => {
     expect(container.querySelector('[data-slot="field-remark"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="field-label-remark"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="field-error"]')).toBeTruthy();
+  });
+});
+
+describe('FieldFrame — dynamic required subscriptions', () => {
+  it('subscribes to dynamic required dependency paths instead of the whole form store', () => {
+    const subscribe = () => () => undefined;
+    const subscribeToPath = () => () => undefined;
+    let capturedPaths: readonly string[] | undefined;
+
+    const form = createMockForm({
+      store: {
+        subscribe,
+        subscribeToPath,
+        subscribeToPaths: (paths: readonly string[]) => {
+          capturedPaths = paths;
+          return () => undefined;
+        },
+        getState: () => ({
+          ...EMPTY_FORM_STORE_STATE,
+          values: {
+            contact: {
+              method: 'email',
+              enabled: true,
+            },
+          },
+        }),
+      },
+      validation: dynamicRequiredValidation,
+    });
+
+    const { container } = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="email" label="Email">
+          input
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+
+    expect(capturedPaths).toEqual(['contact.method', 'contact.enabled']);
+    expect(container.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
   });
 });

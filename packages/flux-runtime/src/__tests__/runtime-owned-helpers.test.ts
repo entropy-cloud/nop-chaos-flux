@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CompiledFormValidationModel, RendererRuntime } from '@nop-chaos/flux-core';
+import type {
+  ApiSchema,
+  CompiledFormValidationField,
+  CompiledFormValidationModel,
+  CompiledValidationRule,
+  PageRuntime,
+  RendererRuntime,
+  SurfaceRuntime,
+  ValidationRule,
+} from '@nop-chaos/flux-core';
 import { executeRuntimeAjaxAction, executeRuntimeValidationRule } from '../runtime-action-helpers';
 import { createRuntimeOwnedFactories } from '../runtime-owned-factories';
 import { createFormComponentHandle } from '../form-component-handle';
@@ -10,10 +19,20 @@ describe('executeRuntimeValidationRule', () => {
     id: 'rule-1',
     rule: { kind: 'async', action: { action: 'ajax' } },
     dependencyPaths: [],
-  } as any;
-  const rule = { kind: 'async', action: { action: 'ajax' }, message: 'rule failed' } as any;
-  const field = { path: 'email', label: 'Email' } as any;
-  const scope = { id: 'scope-1' } as any;
+  } as CompiledValidationRule;
+  const rule = { kind: 'async', action: { action: 'ajax' }, message: 'rule failed' } as Extract<
+    ValidationRule,
+    { kind: 'async' }
+  >;
+  const field: CompiledFormValidationField = {
+    path: 'email',
+    label: 'Email',
+    controlType: 'input-text',
+    rules: [],
+    behavior: { triggers: [], showErrorOn: [] },
+    hiddenFieldPolicy: {},
+  };
+  const scope = createScopeRef({ id: 'scope-1', path: '$scope', initialData: {} });
 
   it('returns a validation error when async validation reports valid=false', async () => {
     const result = await executeRuntimeValidationRule(compiledRule, rule, field, scope, undefined, {
@@ -99,7 +118,7 @@ describe('executeRuntimeAjaxAction', () => {
       interactionId: 'interaction-1',
       nodeInstance: { templateNode: { id: 'node-1', templatePath: '$.body[0]' } },
     } as any;
-    const preparedApi = { url: '/api/demo', method: 'get' } as any;
+    const preparedApi = { url: '/api/demo', method: 'get' };
     const executeApiRequest = Object.assign(
       vi.fn().mockResolvedValue({ ok: true, status: 200, data: { next: 2 } }),
       { dispose: vi.fn() },
@@ -107,7 +126,7 @@ describe('executeRuntimeAjaxAction', () => {
     const monitor = { onApiRequest: vi.fn() };
 
     const result = await executeRuntimeAjaxAction(
-      { url: '/api/demo' } as any,
+      { url: '/api/demo' } as ApiSchema,
       { api: { url: '/api/demo' }, targeting: {} } as any,
       ctx,
       undefined,
@@ -149,7 +168,7 @@ describe('executeRuntimeAjaxAction', () => {
     );
 
     const result = await executeRuntimeAjaxAction(
-      { url: '/api/demo' } as any,
+      { url: '/api/demo' } as ApiSchema,
       { api: { url: '/api/demo' } } as any,
       { scope: { id: 'scope-1' } } as any,
       undefined,
@@ -171,7 +190,7 @@ describe('executeRuntimeAjaxAction', () => {
     );
 
     const result = await executeRuntimeAjaxAction(
-      { url: '/api/demo' } as any,
+      { url: '/api/demo' } as ApiSchema,
       { api: { url: '/api/demo' } } as any,
       { scope: { id: 'scope-1' }, interactionId: 'interaction-1' } as any,
       undefined,
@@ -207,8 +226,8 @@ describe('createRuntimeOwnedFactories', () => {
         }
       }),
     } as any;
-    const ownedPages = new Set<any>();
-    const ownedSurfaceRuntimes = new Set<any>();
+    const ownedPages = new Set<PageRuntime>();
+    const ownedSurfaceRuntimes = new Set<SurfaceRuntime>();
     const factories = createRuntimeOwnedFactories({
       pageStore: externalPageStore,
       ownedPages,
@@ -273,8 +292,8 @@ describe('createRuntimeOwnedFactories', () => {
   });
 
   it('creates validation, surface, and form runtimes with runtime-owned hooks', async () => {
-    const ownedPages = new Set<any>();
-    const ownedSurfaceRuntimes = new Set<any>();
+    const ownedPages = new Set<PageRuntime>();
+    const ownedSurfaceRuntimes = new Set<SurfaceRuntime>();
     const dispatchAction = vi
       .fn()
       .mockResolvedValue({ data: { valid: false, message: 'invalid' } });

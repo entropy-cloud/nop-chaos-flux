@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 
+import React from 'react';
 import { describe, expect, it } from 'vitest';
+import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
 import { render, waitFor, fireEvent, within, screen } from '@testing-library/react';
 import { flowDesignerRendererDefinitions } from './index';
@@ -17,7 +19,7 @@ installFlowDesignerTestHooks();
 describe('designer-page status publication', () => {
   it('publishes designer host status through literal statusPath', async () => {
     function StatusProbe() {
-      const status = useScopeSelector((data: any) => data.designerStatus);
+      const status = useScopeSelector((data: Record<string, unknown>) => data.designerStatus as { kind: string; selectionKind: string; selectionCount: number } | undefined);
       return (
         <span data-testid="designer-status">
           {status ? `${status.kind}:${status.selectionKind}:${status.selectionCount}` : ''}
@@ -28,7 +30,7 @@ describe('designer-page status publication', () => {
     const statusProbeRenderer = {
       type: 'designer-status-probe',
       component: StatusProbe,
-    } as any;
+    } as RendererDefinition;
     const SchemaRenderer = createSchemaRenderer([
       ...basicTestRendererDefinitions,
       ...flowDesignerRendererDefinitions,
@@ -60,9 +62,9 @@ describe('designer-page status publication', () => {
                 type: 'designer-status-probe',
               },
             ],
-          } as any
+          }
         }
-        env={createRendererEnv() as any}
+        env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,
     );
@@ -77,18 +79,18 @@ describe('designer-page status publication', () => {
   it('mounts toolbar, inspector, and dialogs regions with designer host scope and keeps edge selection on fallback inspector path', async () => {
     const actionButtonRenderer = {
       type: 'action-button',
-      component: (props: any) => (
+      component: (props: { props: { label?: string }; events: { onClick?: () => void } }) => (
         <button type="button" onClick={() => void props.events.onClick?.()}>
           {String(props.props.label ?? 'Action')}
         </button>
       ),
       fields: [{ key: 'onClick', kind: 'event' }],
-    } as any;
+    } as RendererDefinition;
 
     function RegionProbe() {
-      const summary = useScopeSelector((data: any) => {
-        const selection = data.selection;
-        const runtime = data.runtime;
+      const summary = useScopeSelector((data: Record<string, unknown>) => {
+        const selection = data.selection as { kind?: string } | undefined;
+        const runtime = data.runtime as { isDirty?: boolean } | undefined;
         return `${selection?.kind ?? 'missing'}:${runtime?.isDirty ?? 'missing'}`;
       });
       return <span data-testid="designer-region-probe">{String(summary)}</span>;
@@ -97,7 +99,7 @@ describe('designer-page status publication', () => {
     const regionProbeRenderer = {
       type: 'designer-region-probe',
       component: RegionProbe,
-    } as any;
+    } as RendererDefinition;
     const SchemaRenderer = createSchemaRenderer([
       ...basicTestRendererDefinitions,
       ...flowDesignerRendererDefinitions,
@@ -155,9 +157,9 @@ describe('designer-page status publication', () => {
             ],
             inspector: { type: 'designer-region-probe' },
             dialogs: { type: 'designer-region-probe' },
-          } as any
+          }
         }
-        env={createRendererEnv() as any}
+        env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,
     );
@@ -233,9 +235,9 @@ describe('DesignerPageRenderer basic rendering', () => {
               viewport: { x: 0, y: 0, zoom: 1 },
             },
             config: createTestConfig(),
-          } as any
+          }
         }
-        env={createRendererEnv()}
+        env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,
     );
@@ -254,8 +256,8 @@ describe('DesignerPageRenderer basic rendering', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/index-fallback"
-        schema={{ type: 'designer-page' } as any}
-        env={createRendererEnv()}
+        schema={{ type: 'designer-page' }}
+        env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,
     );
@@ -309,9 +311,9 @@ describe('DesignerPageRenderer basic rendering', () => {
                 },
               ],
             },
-          } as any
+          }
         }
-        env={createRendererEnv()}
+        env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,
     );

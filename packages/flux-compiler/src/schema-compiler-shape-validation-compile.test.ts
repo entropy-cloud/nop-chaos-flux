@@ -15,8 +15,8 @@ describe('compile and validate integration', () => {
     const plugin: RendererPlugin = {
       name: 'uppercase-plugin',
       beforeCompile(schema) {
-        if (schema && typeof schema === 'object' && 'text' in schema) {
-          return { ...schema, text: (schema as any).text?.toUpperCase() };
+        if (schema && typeof schema === 'object' && !Array.isArray(schema) && 'text' in schema) {
+          return { ...schema, text: String(schema.text ?? '').toUpperCase() };
         }
         return schema;
       },
@@ -31,7 +31,9 @@ describe('compile and validate integration', () => {
     });
 
     const compiled = compilerWithPlugins.compile({ type: 'text', text: 'hello' });
-    expect((compiled.root as any).propsProgram.value.text).toBe('HELLO');
+    const root = compiled.root;
+    const node = Array.isArray(root) ? root[0] : root;
+    expect(node.propsProgram.value.text).toBe('HELLO');
   });
 
   it('reports host contract family mismatch', () => {
@@ -104,7 +106,7 @@ describe('compile and validate integration', () => {
         schema: {
           type: 'designer-host',
           toolbar: { type: 'child-host', body: { type: 'child-host' } },
-        } as any,
+        },
         registry: createRendererRegistry([renderer, childRenderer]),
       }),
     ).toEqual(
@@ -146,7 +148,7 @@ describe('compile and validate integration', () => {
     const compiler = makeCompiler([renderer]);
 
     expect(
-      compiler.validate?.({ type: 'data-source', formula: '${data}', action: 'ajax' } as any),
+      compiler.validate?.({ type: 'data-source', formula: '${data}', action: 'ajax' }),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -161,7 +163,7 @@ describe('compile and validate integration', () => {
     const renderer: RendererDefinition = { type: 'data-source', component: () => null };
     const compiler = makeCompiler([renderer]);
 
-    expect(compiler.validate?.({ type: 'data-source' } as any)).toEqual(
+    expect(compiler.validate?.({ type: 'data-source' })).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: 'invalid-source-shape',
@@ -180,7 +182,7 @@ describe('compile and validate integration', () => {
         type: 'reaction',
         watch: '${status}',
         actions: 'not-an-object',
-      } as any),
+      }),
     ).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'invalid-action-shape' })]));
   });
 
@@ -189,7 +191,7 @@ describe('compile and validate integration', () => {
     const compiler = makeCompiler([renderer]);
 
     expect(
-      compiler.validate?.({ type: 'text', text: 'hello', 'xui:unknownProp': 'value' } as any, {
+      compiler.validate?.({ type: 'text', text: 'hello', 'xui:unknownProp': 'value' }, {
         validation: { namespacedPropertyPolicy: 'error' },
       }),
     ).toEqual(
@@ -250,7 +252,7 @@ describe('compile and validate integration', () => {
     const compiler = makeCompiler([renderer]);
 
     expect(
-      compiler.validate?.({ type: 'data-source', action: 'ajax', args: { url: '' } } as any),
+      compiler.validate?.({ type: 'data-source', action: 'ajax', args: { url: '' } }),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

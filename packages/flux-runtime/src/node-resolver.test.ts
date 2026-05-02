@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { NodeInstance, RendererDefinition, RendererEnv, ResolvedNodeMeta, ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
   createComponentHandleRegistry,
   createRendererRegistry,
   createRendererRuntime,
 } from './index';
+
+const defaultResolvedMeta: ResolvedNodeMeta = { visible: true, hidden: false, disabled: false, changed: false };
 
 const textRenderer: RendererDefinition = {
   type: 'text',
@@ -154,22 +156,26 @@ describe('node identity contracts', () => {
     });
     childRegistry.setDebugEnabled?.(true);
 
+    const debugScope: ScopeRef = {
+      id: 'form-scope',
+      path: '$form',
+      value: {},
+      get: () => undefined,
+      has: () => false,
+      readOwn: () => ({ username: 'alice' }),
+      readVisible: () => ({ username: 'alice' }),
+      materializeVisible: () => ({ username: 'alice' }),
+      update: () => undefined,
+      merge: () => undefined,
+    };
+
     childRegistry.setHandleDebugData?.(9, {
+      nodeInstance: undefined,
       nodeId: 'username-field',
       path: '$.body[1].body[0]',
       rendererType: 'input-text',
-      scope: {
-        id: 'form-scope',
-        path: '$form',
-        get: () => undefined,
-        has: () => false,
-        readOwn: () => ({ username: 'alice' }),
-        readVisible: () => ({ username: 'alice' }),
-        materializeVisible: () => ({ username: 'alice' }),
-        update: () => undefined,
-        merge: () => undefined,
-      } as any,
-      resolvedMeta: { visible: true, hidden: false, disabled: false, changed: true, cid: 9 } as any,
+      scope: debugScope,
+      resolvedMeta: { visible: true, hidden: false, disabled: false, changed: true, cid: 9 },
       resolvedProps: { name: 'username', label: 'Username' },
       updatedAt: Date.now(),
     });
@@ -203,6 +209,20 @@ describe('node identity contracts', () => {
         },
       },
     };
+
+    const debugScope: ScopeRef = {
+      id: 'page',
+      path: '$page',
+      value: {},
+      get: () => undefined,
+      has: () => false,
+      readOwn: () => ({}),
+      readVisible: () => ({}),
+      materializeVisible: () => ({}),
+      update: () => undefined,
+      merge: () => undefined,
+    };
+
     const nodeInstance = {
       cid: 42,
       templateNode: {
@@ -221,18 +241,9 @@ describe('node identity contracts', () => {
         sourcePropKeys: [],
         sourceStatePropKeys: {},
       },
-      scope: {
-        id: 'page',
-        path: '$page',
-        get: () => undefined,
-        has: () => false,
-        readOwn: () => ({}),
-        read: () => ({}),
-        update: () => undefined,
-        merge: () => undefined,
-      },
+      scope: debugScope,
       state: { metaState: {}, mounted: true },
-    } as any;
+    } as unknown as NodeInstance;
 
     const unregister = componentRegistry.register(handle, { cid: 42 });
 
@@ -243,7 +254,7 @@ describe('node identity contracts', () => {
         path: '$.body[0]',
         rendererType: 'text',
         scope: nodeInstance.scope,
-        resolvedMeta: {} as any,
+        resolvedMeta: defaultResolvedMeta,
         resolvedProps: {},
         updatedAt: Date.now(),
       });
@@ -276,6 +287,20 @@ describe('node identity contracts', () => {
         },
       },
     };
+
+    const debugScope: ScopeRef = {
+      id: 'page',
+      path: '$page',
+      value: {},
+      get: () => undefined,
+      has: () => false,
+      readOwn: () => ({}),
+      readVisible: () => ({}),
+      materializeVisible: () => ({}),
+      update: () => undefined,
+      merge: () => undefined,
+    };
+
     const nodeInstance = {
       cid: undefined,
       templateNode: {
@@ -294,18 +319,9 @@ describe('node identity contracts', () => {
         sourcePropKeys: [],
         sourceStatePropKeys: {},
       },
-      scope: {
-        id: 'page',
-        path: '$page',
-        get: () => undefined,
-        has: () => false,
-        readOwn: () => ({}),
-        read: () => ({}),
-        update: () => undefined,
-        merge: () => undefined,
-      },
+      scope: debugScope,
       state: { metaState: {}, mounted: true },
-    } as any;
+    } as unknown as NodeInstance;
 
     const unregister = componentRegistry.register(handle, { cid: 42 });
 
@@ -316,7 +332,7 @@ describe('node identity contracts', () => {
         path: '$.body[0]',
         rendererType: 'text',
         scope: nodeInstance.scope,
-        resolvedMeta: {} as any,
+        resolvedMeta: defaultResolvedMeta,
         resolvedProps: {},
         updatedAt: Date.now(),
       });
@@ -351,6 +367,20 @@ describe('node identity contracts', () => {
         },
       },
     };
+
+    const debugScope: ScopeRef = {
+      id: 'page',
+      path: '$page',
+      value: {},
+      get: () => undefined,
+      has: () => false,
+      readOwn: () => ({}),
+      readVisible: () => ({}),
+      materializeVisible: () => ({}),
+      update: () => undefined,
+      merge: () => undefined,
+    };
+
     const nodeInstance = {
       cid: undefined,
       instancePath: [{ repeatedTemplateId: 'rows', instanceKey: 'row-2' }],
@@ -370,18 +400,9 @@ describe('node identity contracts', () => {
         sourcePropKeys: [],
         sourceStatePropKeys: {},
       },
-      scope: {
-        id: 'page',
-        path: '$page',
-        get: () => undefined,
-        has: () => false,
-        readOwn: () => ({}),
-        read: () => ({}),
-        update: () => undefined,
-        merge: () => undefined,
-      },
+      scope: debugScope,
       state: { metaState: {}, mounted: true },
-    } as any;
+    } as unknown as NodeInstance;
 
     const unregister = componentRegistry.register(handle, { cid: 77 });
 
@@ -392,7 +413,7 @@ describe('node identity contracts', () => {
         path: '$.body[0]',
         rendererType: 'text',
         scope: nodeInstance.scope,
-        resolvedMeta: {} as any,
+        resolvedMeta: defaultResolvedMeta,
         resolvedProps: {},
         updatedAt: Date.now(),
       });

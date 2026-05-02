@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ImportedLibraryModule, ScopeRef, SchemaCompiler, XuiImportSpec } from '@nop-chaos/flux-core';
 import { createScopeRef } from '../scope';
 import { createProjectedScopeStore } from '../projected-scope-store';
 import { createModuleCache, createRendererRegistry, createRendererRuntime } from '../index';
@@ -13,7 +14,7 @@ describe('createProjectedScopeStore', () => {
       {
         ...scope,
         store: undefined,
-      } as any,
+      } as ScopeRef,
       projectSnapshot,
     );
 
@@ -50,7 +51,7 @@ describe('createProjectedScopeStore', () => {
 describe('runtime factory utilities', () => {
   it('stores resolved and pending modules in the module cache', async () => {
     const cache = createModuleCache();
-    const module = { createNamespace: vi.fn() } as any;
+    const module = { createNamespace: vi.fn() } as unknown as ImportedLibraryModule;
     const pending = Promise.resolve(module);
 
     expect(cache.has('demo')).toBe(false);
@@ -69,11 +70,12 @@ describe('runtime factory utilities', () => {
       env,
       schemaCompiler: {
         compile: vi.fn(),
-      } as any,
+        compileNode: vi.fn(),
+      } as unknown as SchemaCompiler,
     });
 
     await expect(
-      runtime.prepareSchema?.({ type: 'text', text: 'hello' } as any, {
+      runtime.prepareSchema?.({ type: 'text', text: 'hello' }, {
         schemaUrl: '/schema.json',
       }),
     ).resolves.toEqual({
@@ -87,6 +89,7 @@ describe('runtime factory utilities', () => {
       env,
       schemaCompiler: {
         compile: vi.fn(),
+        compileNode: vi.fn(),
         prepare: vi.fn().mockResolvedValue({
           preparedImports: new Map([
             [
@@ -98,11 +101,11 @@ describe('runtime factory utilities', () => {
             ],
           ]),
         }),
-      } as any,
+      } as unknown as SchemaCompiler,
     });
 
     await expect(
-      runtime.prepareSchema?.({ type: 'text', text: 'hello' } as any, {
+      runtime.prepareSchema?.({ type: 'text', text: 'hello' }, {
         schemaUrl: '/schema.json',
       }),
     ).rejects.toThrow('Schema preparation requires env.importLoader when xui:imports are present.');
@@ -121,7 +124,7 @@ describe('runtime factory utilities', () => {
     expect(
       runtime.resolvePreparedImports({
         schemaUrl: '/schema.json',
-        imports: [{ from: './demo-lib', as: 'demo' } as any],
+        imports: [{ from: './demo-lib', as: 'demo' } satisfies XuiImportSpec],
       }),
     ).toEqual([
       {
@@ -207,7 +210,7 @@ describe('runtime factory utilities', () => {
 
     await expect(
       runtime.executeSource?.({
-        source: { type: 'data-source', action: 'noop' } as any,
+        source: { type: 'data-source', action: 'noop' } as never,
         scope: page.scope,
         ctx: {},
       }),

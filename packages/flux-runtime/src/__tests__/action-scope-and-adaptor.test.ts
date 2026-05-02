@@ -7,6 +7,8 @@ import {
   getCachedAdaptorExpression,
 } from '../async-data/request-runtime-adaptor';
 import { createScopeRef } from '../scope';
+import type { ApiSchema } from '@nop-chaos/flux-core';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 
 describe('action scope helpers', () => {
   it('parses namespaced actions and rejects invalid names', () => {
@@ -130,23 +132,23 @@ describe('request runtime adaptor helpers', () => {
   it('applies request adaptors only when they return plain objects', () => {
     const expressionCompiler = createExpressionCompiler();
     const scope = createScopeRef({ id: 'scope', path: '$scope', initialData: { token: 'secret' } });
-    const env = {} as any;
+    const env = {} as RendererEnv;
 
     const untouched = applyRequestAdaptor(
       expressionCompiler,
-      { url: '/api/demo' } as any,
+      { url: '/api/demo' } satisfies ApiSchema,
       scope,
       env,
     );
     const adapted = applyRequestAdaptor(
       expressionCompiler,
-      { url: '/api/demo', headers: {}, requestAdaptor: 'return api;' } as any,
+      { url: '/api/demo', headers: {}, requestAdaptor: 'return api;' } satisfies ApiSchema,
       scope,
       env,
     );
     const primitive = applyRequestAdaptor(
       expressionCompiler,
-      { url: '/api/demo', requestAdaptor: 'primitive' } as any,
+      { url: '/api/demo', requestAdaptor: 'primitive' } satisfies ApiSchema,
       scope,
       env,
     );
@@ -163,20 +165,20 @@ describe('request runtime adaptor helpers', () => {
   it('applies response adaptors and falls back to raw payloads when absent', () => {
     const expressionCompiler = createExpressionCompiler();
     const scope = createScopeRef({ id: 'scope', path: '$scope', initialData: { token: 'secret' } });
-    const env = {} as any;
+    const env = {} as RendererEnv;
 
     const untouched = applyResponseAdaptor(
       expressionCompiler,
-      { url: '/api/demo' } as any,
-      { url: '/api/demo' } as any,
+      { url: '/api/demo' } satisfies ApiSchema,
+      { url: '/api/demo' } satisfies ApiSchema,
       { ok: true },
       scope,
       env,
     );
     const adapted = applyResponseAdaptor(
       expressionCompiler,
-      { url: '/api/demo' } as any,
-      { url: '/api/demo', responseAdaptor: 'payload' } as any,
+      { url: '/api/demo' } satisfies ApiSchema,
+      { url: '/api/demo', responseAdaptor: 'payload' } satisfies ApiSchema,
       { ok: true },
       scope,
       env,

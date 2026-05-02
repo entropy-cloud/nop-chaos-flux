@@ -1,4 +1,4 @@
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { baseEnv, createFormSchemaRenderer, formulaCompiler } from '../test-support';
 
@@ -388,5 +388,78 @@ describe('variant-field renderer detection behavior', () => {
       variants: ['first', 'second'],
     });
     expect(calls[1]).toEqual({ reason: 'explicit' });
+  });
+
+  it('drops stale detectVariantAction completions when a newer detection request wins', async () => {
+    cleanup();
+    const pendingDetects: Array<(result: { ok: true; data: { variant: string } }) => void> = [];
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async () =>
+            await new Promise<{ ok: true; data: { variant: string } }>((resolve) => {
+              pendingDetects.push(resolve);
+            }),
+        }),
+      })),
+    };
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-detection.test.tsx#8"
+        schema={{
+          type: 'form',
+          data: {
+            payload: 'alpha',
+          },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              defaultVariant: 'first',
+              'xui:imports': [{ from: 'variant-lib', as: 'variantLib' }],
+              detectVariantAction: { action: 'variantLib:detect' },
+              variants: [
+                {
+                  key: 'first',
+                  label: 'First',
+                  content: [{ type: 'input-text', name: '', label: 'Payload Value' }],
+                },
+                {
+                  key: 'second',
+                  label: 'Second',
+                  content: [{ type: 'input-text', name: '', label: 'Payload Value' }],
+                },
+              ],
+            },
+          ],
+        }}
+        env={{ ...baseEnv, importLoader }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByLabelText('Payload Value')).toBeTruthy());
+    await waitFor(() => expect(pendingDetects).toHaveLength(1));
+
+    fireEvent.change(screen.getByLabelText('Payload Value'), { target: { value: 'beta' } });
+
+    await waitFor(() => expect(pendingDetects).toHaveLength(2));
+
+    pendingDetects[1]!({ ok: true, data: { variant: 'second' } });
+
+    await waitFor(() => {
+      const container = document.querySelector('[data-active-variant]');
+      expect(container?.getAttribute('data-active-variant')).toBe('second');
+    });
+
+    pendingDetects[0]!({ ok: true, data: { variant: 'first' } });
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+
+    const container = document.querySelector('[data-active-variant]');
+    expect(container?.getAttribute('data-active-variant')).toBe('second');
   });
 });

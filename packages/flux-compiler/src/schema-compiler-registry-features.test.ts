@@ -20,7 +20,7 @@ describe('createSchemaCompiler', () => {
         },
       ],
     });
-    const node = compiled.root as any;
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(node.schema['xui:imports']).toEqual([{ from: 'demo-lib', as: 'demo' }]);
   });
@@ -46,7 +46,7 @@ describe('createSchemaCompiler', () => {
         },
       ],
     });
-    const node = compiled.root as any;
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(node.regions['columns.0.buttons']?.node).toBeTruthy();
     expect(node.propsProgram.value.columns[0].buttons).toBeUndefined();
@@ -73,7 +73,7 @@ describe('createSchemaCompiler', () => {
         },
       ],
     });
-    const node = compiled.root as any;
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(node.regions['columns.0.label']?.node).toBeTruthy();
     expect(node.propsProgram.value.columns[0].label).toBeUndefined();
@@ -101,7 +101,7 @@ describe('createSchemaCompiler', () => {
         },
       ],
     });
-    const node = compiled.root as any;
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(node.regions['columns.0.cell']?.node).toBeTruthy();
     expect(node.propsProgram.value.columns[0].cell).toBeUndefined();
@@ -119,8 +119,8 @@ describe('createSchemaCompiler', () => {
       primaryField: 'id',
       perPageField: 'pageSize',
       columns: [{ name: 'name', label: 'Name' }],
-    } as any);
-    const node = compiled.root as any;
+    });
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(node.schema.queryForm).toBeTruthy();
     expect(node.schema.rowKey).toBe('id');
@@ -137,8 +137,8 @@ describe('createSchemaCompiler', () => {
       type: 'crud',
       bulkActions: [{ type: 'text', text: 'Delete selected' }],
       columns: [{ name: 'name', label: 'Name' }],
-    } as any);
-    const node = compiled.root as any;
+    });
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(node.schema.listActions).toEqual([{ type: 'text', text: 'Delete selected' }]);
     expect(node.schema.bulkActions).toBeUndefined();
@@ -160,8 +160,8 @@ describe('createSchemaCompiler', () => {
       perPageField: 'legacyPageSize',
       pageSizeField: 'canonicalPageSize',
       columns: [{ name: 'name', label: 'Name' }],
-    } as any);
-    const node = compiled.root as any;
+    });
+    const node = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(node.schema.queryForm).toEqual({
       body: [{ type: 'text', text: 'Canonical query region' }],
@@ -192,9 +192,9 @@ describe('createSchemaCompiler', () => {
     const regionCompiled = compiler.compile({
       type: 'text',
       empty: { type: 'text', text: 'No rows' },
-    } as any);
-    const plainNode = plainCompiled.root as any;
-    const regionNode = regionCompiled.root as any;
+    });
+    const plainNode = Array.isArray(plainCompiled.root) ? plainCompiled.root[0] : plainCompiled.root;
+    const regionNode = Array.isArray(regionCompiled.root) ? regionCompiled.root[0] : regionCompiled.root;
 
     expect(plainNode.propsProgram.value.empty).toBe('Nothing here');
     expect(plainNode.regions.empty).toBeUndefined();

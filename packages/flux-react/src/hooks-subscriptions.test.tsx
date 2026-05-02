@@ -30,6 +30,15 @@ function PresentationProbe({ name }: { name: string }) {
   return null;
 }
 
+function MultiPathProbe() {
+  useCurrentFormState(
+    (state) => state.values.profile,
+    Object.is,
+    { paths: ['profile.email', 'profile.name'] },
+  );
+  return null;
+}
+
 describe('hook subscription helpers', () => {
   it('uses per-path subscriptions for useCurrentFormState path mode', () => {
     const subscribe = vi.fn(() => () => undefined);
@@ -118,6 +127,33 @@ describe('hook subscription helpers', () => {
     );
 
     expect(subscribeToPath).toHaveBeenCalledWith('address.city', expect.any(Function));
+    expect(subscribe).not.toHaveBeenCalled();
+  });
+
+  it('uses multi-path subscriptions for useCurrentFormState paths mode', () => {
+    const subscribe = vi.fn(() => () => undefined);
+    const subscribeToPath = vi.fn(() => () => undefined);
+    const subscribeToPaths = vi.fn(() => () => undefined);
+    const form = {
+      store: {
+        subscribe,
+        subscribeToPath,
+        subscribeToPaths,
+        getState: () => EMPTY_FORM_STORE_STATE,
+      },
+    } as any;
+
+    render(
+      <FormContext.Provider value={form}>
+        <MultiPathProbe />
+      </FormContext.Provider>,
+    );
+
+    expect(subscribeToPaths).toHaveBeenCalledWith(
+      ['profile.email', 'profile.name'],
+      expect.any(Function),
+    );
+    expect(subscribeToPath).not.toHaveBeenCalled();
     expect(subscribe).not.toHaveBeenCalled();
   });
 });

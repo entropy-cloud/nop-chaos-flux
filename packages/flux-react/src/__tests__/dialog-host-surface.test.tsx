@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
+import type { ScopeRef } from '@nop-chaos/flux-core';
 import { ActionScopeContext, ComponentRegistryContext, ScopeContext } from '../contexts';
 import {
   SurfaceScopeProviders,
@@ -8,7 +9,7 @@ import {
   useSurfaceScopeSnapshot,
 } from '../dialog-host-surface';
 
-function makeScope(overrides: Record<string, unknown> = {}) {
+function makeScope(overrides: Record<string, unknown> = {}): ScopeRef {
   const data = { value: 'test' };
   const listeners = new Set<() => void>();
   return {
@@ -23,19 +24,21 @@ function makeScope(overrides: Record<string, unknown> = {}) {
     update: vi.fn(),
     merge: vi.fn(),
     store: {
-      subscribe: (listener: () => void) => {
-        listeners.add(listener);
-        return () => listeners.delete(listener);
+      subscribe: (listener: (change: unknown) => void) => {
+        listeners.add(listener as () => void);
+        return () => listeners.delete(listener as () => void);
       },
       getSnapshot: () => data,
+      getLastChange: () => undefined,
+      setSnapshot: () => {},
     },
     ...overrides,
-  };
+  } as ScopeRef;
 }
 
 describe('renderSurfaceNode', () => {
   const context = {
-    scope: makeScope() as any,
+    scope: makeScope(),
     actionScope: undefined,
     componentRegistry: undefined,
     ownerNodeInstance: undefined,
@@ -134,7 +137,7 @@ describe('SurfaceScopeProviders', () => {
 
     render(
       <SurfaceScopeProviders
-        scope={scope as any}
+        scope={scope}
         actionScope={actionScope}
         componentRegistry={componentRegistry}
       >
@@ -149,7 +152,7 @@ describe('SurfaceScopeProviders', () => {
 
   it('renders children', () => {
     render(
-      <SurfaceScopeProviders scope={makeScope() as any}>
+      <SurfaceScopeProviders scope={makeScope()}>
         <span data-testid="child">Hello</span>
       </SurfaceScopeProviders>,
     );
@@ -160,13 +163,13 @@ describe('SurfaceScopeProviders', () => {
 describe('useSurfaceScopeSnapshot', () => {
   it('subscribes to scope store and renders', () => {
     function Probe() {
-      useSurfaceScopeSnapshot(makeScope() as any);
+      useSurfaceScopeSnapshot(makeScope());
       return <span data-testid="probe">ok</span>;
     }
 
     const scope = makeScope();
     render(
-      <ScopeContext.Provider value={scope as any}>
+      <ScopeContext.Provider value={scope}>
         <Probe />
       </ScopeContext.Provider>,
     );
@@ -188,23 +191,25 @@ describe('useSurfaceScopeSnapshot', () => {
       update: vi.fn(),
       merge: vi.fn(),
       store: {
-        subscribe: (listener: () => void) => {
-          listeners.add(listener);
-          return () => listeners.delete(listener);
+        subscribe: (listener: (change: unknown) => void) => {
+          listeners.add(listener as () => void);
+          return () => listeners.delete(listener as () => void);
         },
         getSnapshot: () => currentData,
+        getLastChange: () => undefined,
+        setSnapshot: () => {},
       },
     };
 
     let renderCount = 0;
     function Probe() {
       renderCount++;
-      useSurfaceScopeSnapshot(scope as any);
+      useSurfaceScopeSnapshot(scope as ScopeRef);
       return <span data-testid="probe">{renderCount}</span>;
     }
 
     render(
-      <ScopeContext.Provider value={scope as any}>
+      <ScopeContext.Provider value={scope as ScopeRef}>
         <Probe />
       </ScopeContext.Provider>,
     );
@@ -234,23 +239,25 @@ describe('useSurfaceScopeSnapshot', () => {
       update: vi.fn(),
       merge: vi.fn(),
       store: {
-        subscribe: (listener: () => void) => {
-          listeners.add(listener);
-          return () => listeners.delete(listener);
+        subscribe: (listener: (change: unknown) => void) => {
+          listeners.add(listener as () => void);
+          return () => listeners.delete(listener as () => void);
         },
         getSnapshot: () => data,
+        getLastChange: () => undefined,
+        setSnapshot: () => {},
       },
     };
 
     let renderCount = 0;
     function Probe() {
       renderCount++;
-      useSurfaceScopeSnapshot(scope as any, ['a']);
+      useSurfaceScopeSnapshot(scope as ScopeRef, ['a']);
       return <span data-testid="probe">{renderCount}</span>;
     }
 
     render(
-      <ScopeContext.Provider value={scope as any}>
+      <ScopeContext.Provider value={scope as ScopeRef}>
         <Probe />
       </ScopeContext.Provider>,
     );
@@ -288,23 +295,25 @@ describe('useSurfaceScopeSnapshot', () => {
       update: vi.fn(),
       merge: vi.fn(),
       store: {
-        subscribe: (listener: () => void) => {
-          listeners.add(listener);
-          return () => listeners.delete(listener);
+        subscribe: (listener: (change: unknown) => void) => {
+          listeners.add(listener as () => void);
+          return () => listeners.delete(listener as () => void);
         },
         getSnapshot: () => data,
+        getLastChange: () => undefined,
+        setSnapshot: () => {},
       },
     };
 
     let renderCount = 0;
     function Probe() {
       renderCount++;
-      useSurfaceScopeSnapshot(scope as any, ['x', 'y']);
+      useSurfaceScopeSnapshot(scope as ScopeRef, ['x', 'y']);
       return <span data-testid="probe">{renderCount}</span>;
     }
 
     render(
-      <ScopeContext.Provider value={scope as any}>
+      <ScopeContext.Provider value={scope as ScopeRef}>
         <Probe />
       </ScopeContext.Provider>,
     );

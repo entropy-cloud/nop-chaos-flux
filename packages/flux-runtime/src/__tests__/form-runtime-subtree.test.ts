@@ -6,12 +6,14 @@ import {
 } from '../form-runtime-subtree';
 import type { CompiledFormValidationModel, RuntimeFieldRegistration } from '@nop-chaos/flux-core';
 
+type SubtreeCollectionState = Parameters<typeof collectSubtreePaths>[0];
+
 function createValidationModel(
   nodes: Record<string, { kind?: string; children?: string[] }> = {},
   traversalOrder: string[] = [],
   rootPath = '',
 ): CompiledFormValidationModel {
-  const builtNodes: Record<string, any> = {};
+  const builtNodes: Record<string, { path: string; kind: string; children: string[] }> = {};
   for (const [path, node] of Object.entries(nodes)) {
     builtNodes[path] = {
       path,
@@ -25,7 +27,7 @@ function createValidationModel(
     validationOrder: traversalOrder,
     order: traversalOrder,
     nodes: builtNodes,
-    behavior: { triggers: ['blur'] },
+    behavior: { triggers: ['blur'], showErrorOn: [] },
     dependents: {},
   } as unknown as CompiledFormValidationModel;
 }
@@ -33,7 +35,7 @@ function createValidationModel(
 function createRegistration(path: string, childPaths?: string[]) {
   return {
     registrationId: `reg-${path}`,
-    registration: { path, childPaths } as RuntimeFieldRegistration,
+    registration: { path, childPaths } as unknown as RuntimeFieldRegistration,
     modelGeneration: 1,
   };
 }
@@ -41,7 +43,7 @@ function createRegistration(path: string, childPaths?: string[]) {
 function createSharedState(
   validation: CompiledFormValidationModel,
   registrations: Array<ReturnType<typeof createRegistration>> = [],
-) {
+): SubtreeCollectionState {
   const runtimeFieldRegistrations = new Map<string, ReturnType<typeof createRegistration>>();
   for (const reg of registrations) {
     runtimeFieldRegistrations.set(reg.registrationId, reg);
@@ -54,14 +56,14 @@ function createSharedState(
     store: {} as any,
     scope: {} as any,
     initialFieldState: { initialValues: {}, dirty: {} },
-  };
+  } as SubtreeCollectionState;
 }
 
 describe('collectSubtreePaths', () => {
   it('returns empty for no matching paths in traversal or registrations', () => {
     const validation = createValidationModel({}, ['a', 'b']);
     const state = createSharedState(validation);
-    const paths = collectSubtreePaths(state as any, 'nonexistent');
+    const paths = collectSubtreePaths(state, 'nonexistent');
     expect(paths).toEqual([]);
   });
 
@@ -73,7 +75,7 @@ describe('collectSubtreePaths', () => {
       'other',
     ]);
     const state = createSharedState(validation);
-    const paths = collectSubtreePaths(state as any, 'parent');
+    const paths = collectSubtreePaths(state, 'parent');
     expect(paths.sort()).toEqual(['parent', 'parent.child1', 'parent.child2']);
   });
 
@@ -84,14 +86,14 @@ describe('collectSubtreePaths', () => {
       createRegistration('form.field1.subfield'),
       createRegistration('unrelated'),
     ]);
-    const paths = collectSubtreePaths(state as any, 'form.field1');
+    const paths = collectSubtreePaths(state, 'form.field1');
     expect(paths.sort()).toEqual(['form.field1', 'form.field1.subfield']);
   });
 
   it('includes paths where registration is a prefix of the target', () => {
     const validation = createValidationModel({}, []);
     const state = createSharedState(validation, [createRegistration('form', ['form.a', 'form.b'])]);
-    const paths = collectSubtreePaths(state as any, 'form.a');
+    const paths = collectSubtreePaths(state, 'form.a');
     expect(paths).toContain('form');
     expect(paths).toContain('form.a');
   });
@@ -101,7 +103,7 @@ describe('collectSubtreePaths', () => {
     const state = createSharedState(validation, [
       createRegistration('container', ['container.item1', 'container.item2', 'other']),
     ]);
-    const paths = collectSubtreePaths(state as any, 'container');
+    const paths = collectSubtreePaths(state, 'container');
     expect(paths).toContain('container');
     expect(paths).toContain('container.item1');
     expect(paths).toContain('container.item2');
@@ -111,7 +113,7 @@ describe('collectSubtreePaths', () => {
   it('combines traversal and registration paths', () => {
     const validation = createValidationModel({}, ['parent.a', 'parent.b']);
     const state = createSharedState(validation, [createRegistration('parent.c')]);
-    const paths = collectSubtreePaths(state as any, 'parent');
+    const paths = collectSubtreePaths(state, 'parent');
     expect(paths.sort()).toEqual(['parent.a', 'parent.b', 'parent.c']);
   });
 });
@@ -120,7 +122,7 @@ describe('collectSubtreeNodePaths', () => {
   it('returns empty when no validation nodes exist', () => {
     const validation = createValidationModel();
     const state = createSharedState(validation);
-    const paths = collectSubtreeNodePaths(state as any, 'anything');
+    const paths = collectSubtreeNodePaths(state, 'anything');
     expect(paths).toEqual([]);
   });
 
@@ -135,7 +137,7 @@ describe('collectSubtreeNodePaths', () => {
       '',
     );
     const state = createSharedState(validation);
-    const paths = collectSubtreeNodePaths(state as any, 'parent');
+    const paths = collectSubtreeNodePaths(state, 'parent');
     expect(paths).toEqual(['parent', 'parent.a', 'parent.b']);
   });
 
@@ -149,7 +151,7 @@ describe('collectSubtreeNodePaths', () => {
       'root',
     );
     const state = createSharedState(validation);
-    const paths = collectSubtreeNodePaths(state as any, 'root');
+    const paths = collectSubtreeNodePaths(state, 'root');
     expect(paths).toEqual([]);
   });
 
@@ -163,7 +165,7 @@ describe('collectSubtreeNodePaths', () => {
       '',
     );
     const state = createSharedState(validation);
-    const paths = collectSubtreeNodePaths(state as any, 'group');
+    const paths = collectSubtreeNodePaths(state, 'group');
     expect(paths.sort()).toEqual(['group.field1', 'group.field2']);
   });
 
@@ -177,14 +179,14 @@ describe('collectSubtreeNodePaths', () => {
       'root',
     );
     const state = createSharedState(validation);
-    const paths = collectSubtreeNodePaths(state as any, 'root');
+    const paths = collectSubtreeNodePaths(state, 'root');
     expect(paths).toEqual(['root', 'root.a']);
   });
 
   it('returns empty for empty traversal and no direct node', () => {
     const validation = createValidationModel({}, [], '');
     const state = createSharedState(validation);
-    const paths = collectSubtreeNodePaths(state as any, 'missing');
+    const paths = collectSubtreeNodePaths(state, 'missing');
     expect(paths).toEqual([]);
   });
 });
@@ -200,7 +202,7 @@ describe('collectSubtreeValidationTargets', () => {
       'parent',
     );
     const state = createSharedState(validation);
-    const targets = collectSubtreeValidationTargets(state as any, 'parent');
+    const targets = collectSubtreeValidationTargets(state, 'parent');
     expect(targets).toContain('parent');
     expect(targets).toContain('parent.a');
     expect(targets).toContain('parent.b');
@@ -215,7 +217,7 @@ describe('collectSubtreeValidationTargets', () => {
       '',
     );
     const state = createSharedState(validation);
-    const targets = collectSubtreeValidationTargets(state as any, 'g');
+    const targets = collectSubtreeValidationTargets(state, 'g');
     const count = targets.filter((t) => t === 'g.x').length;
     expect(count).toBe(1);
   });

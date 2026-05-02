@@ -58,7 +58,7 @@ describe('data package units', () => {
         summary={{ total: 25, itemCount: 25 } as any}
         listActionsContent={<span>Bulk actions</span>}
         hasListActions={true}
-        pagination={{ currentPage: 2, pageSize: 10 } as any}
+        pagination={{ currentPage: 2, pageSize: 10 }}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
       />,
@@ -85,7 +85,7 @@ describe('data package units', () => {
         summary={{ total: 0, itemCount: 0 } as any}
         listActionsContent={null}
         hasListActions={false}
-        pagination={{ currentPage: 1, pageSize: 10 } as any}
+        pagination={{ currentPage: 1, pageSize: 10 }}
         onPageChange={() => {}}
         onPageSizeChange={() => {}}
       />,

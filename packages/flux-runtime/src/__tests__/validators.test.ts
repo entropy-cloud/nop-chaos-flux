@@ -45,10 +45,10 @@ function makeScope(data: Record<string, unknown> = {}): ScopeRef {
     value: data,
     get(path: string) {
       const keys = path.split('.');
-      let current: any = data;
+      let current: Record<string, unknown> | undefined = data as Record<string, unknown>;
       for (const key of keys) {
         if (current == null || typeof current !== 'object') return undefined;
-        current = current[key];
+        current = current[key] as Record<string, unknown> | undefined;
       }
       return current;
     },

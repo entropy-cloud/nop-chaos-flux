@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
+import type { CompiledDataSource, RendererRuntime, ScopeRef } from '@nop-chaos/flux-core';
 import { createRuntimeSourceRegistry } from '../async-data/source-registry';
 
 afterEach(() => {
@@ -18,22 +19,23 @@ describe('createRuntimeSourceRegistry', () => {
           return () => undefined;
         },
       },
-    } as any;
+    } as unknown as ScopeRef;
 
     const registry = createRuntimeSourceRegistry({
       runtime: {
-        env: {},
+        env: {} as never,
         expressionCompiler: {
           evaluateValue: (value: { value?: unknown }) => value.value,
           compileValue: (value: unknown) => ({ isStatic: true, value }),
         },
-      } as any,
+      } as unknown as RendererRuntime,
       apiCache: {
         get: vi.fn(),
         set: vi.fn(),
         delete: vi.fn(),
         clear: vi.fn(),
-      } as any,
+        has: vi.fn(),
+      },
       asyncGovernance: undefined,
       executeApiRequest: vi.fn(),
     });
@@ -45,7 +47,7 @@ describe('createRuntimeSourceRegistry', () => {
         kind: 'formula',
         formula: { isStatic: true, value: 1 },
         targetPath: { isStatic: true, value: 'query' },
-      } as any,
+      } as unknown as CompiledDataSource,
     });
 
     expect(registration.id).toBe('source-1');
@@ -67,22 +69,23 @@ describe('createRuntimeSourceRegistry', () => {
           return () => undefined;
         },
       },
-    } as any;
+    } as unknown as ScopeRef;
 
     const registry = createRuntimeSourceRegistry({
       runtime: {
-        env: {},
+        env: {} as never,
         expressionCompiler: {
           evaluateValue: (value: { value?: unknown }) => value.value,
           compileValue: (value: unknown) => ({ isStatic: true, value }),
         },
-      } as any,
+      } as unknown as RendererRuntime,
       apiCache: {
         get: vi.fn(),
         set: vi.fn(),
         delete: vi.fn(),
         clear: vi.fn(),
-      } as any,
+        has: vi.fn(),
+      },
       asyncGovernance: undefined,
       executeApiRequest: vi.fn(),
     });
@@ -95,10 +98,10 @@ describe('createRuntimeSourceRegistry', () => {
         dependsOn: ['query'],
         formula: { isStatic: true, value: 1 },
         targetPath: { isStatic: true, value: 'result' },
-      } as any,
+      } as unknown as CompiledDataSource,
     });
 
-    registration.controller.refresh = refresh as any;
+    registration.controller.refresh = refresh as () => Promise<void>;
     emitChange?.({ paths: ['query'] });
     await Promise.resolve();
     await Promise.resolve();

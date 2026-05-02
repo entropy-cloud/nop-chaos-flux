@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
+import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import { flowDesignerRendererDefinitions } from './index';
@@ -10,7 +11,7 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { render, waitFor, within } from '@testing-library/react';
 
 const { layoutTreeWithElkMock } = vi.hoisted(() => ({
-  layoutTreeWithElkMock: vi.fn(async (nodes: any[]) => nodes),
+  layoutTreeWithElkMock: vi.fn(async (nodes: unknown[]) => nodes),
 }));
 
 vi.mock('@nop-chaos/flow-designer-core', async () => {
@@ -99,7 +100,7 @@ function createGraphTestConfig(): DesignerConfig {
   };
 }
 
-function createRendererEnv(notify = vi.fn()) {
+function createRendererEnv(notify = vi.fn()): RendererEnv {
   return {
     fetcher: async function <T>() {
       return { ok: true, status: 200, data: null as T };
@@ -146,7 +147,7 @@ describe('DesignerPageRenderer tree mode', () => {
             type: 'designer-page',
             treeDocument,
             config: createTreeTestConfig(),
-          } as any
+          }
         }
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
@@ -196,7 +197,7 @@ describe('DesignerPageRenderer tree mode', () => {
             type: 'designer-page',
             treeDocument,
             config: createTreeTestConfig(),
-          } as any
+          }
         }
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
@@ -253,7 +254,7 @@ describe('DesignerPageRenderer tree mode', () => {
             type: 'designer-page',
             treeDocument,
             config: createTreeTestConfig(),
-          } as any
+          }
         }
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
@@ -278,7 +279,7 @@ describe('DesignerPageRenderer tree mode', () => {
           {
             type: 'designer-page',
             config: createTreeTestConfig(),
-          } as any
+          }
         }
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
@@ -314,7 +315,7 @@ describe('DesignerPageRenderer tree mode', () => {
               viewport: { x: 0, y: 0, zoom: 1 },
             },
             config: createGraphTestConfig(),
-          } as any
+          }
         }
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
@@ -342,7 +343,7 @@ describe('DesignerPageRenderer tree mode', () => {
             type: 'designer-page',
             treeDocument: '${$scope.treeDocument}',
             config: '${$scope.config}',
-          } as any
+          }
         }
         data={{
           treeDocument: {
@@ -383,7 +384,7 @@ describe('DesignerPageRenderer tree mode', () => {
             type: 'designer-page',
             document: '${$scope.document}',
             config: '${$scope.config}',
-          } as any
+          }
         }
         data={{
           document: {
@@ -426,7 +427,7 @@ describe('DesignerPageRenderer tree mode', () => {
             type: 'designer-page',
             treeDocument: '${$scope.treeDocument}',
             config: '${$scope.config}',
-          } as any
+          }
         }
         data={{
           treeDocument: {
@@ -459,7 +460,7 @@ describe('DesignerPageRenderer tree mode', () => {
             type: 'designer-page',
             treeDocument: '${$scope.treeDocument}',
             config: '${$scope.config}',
-          } as any
+          }
         }
         data={{
           treeDocument: {

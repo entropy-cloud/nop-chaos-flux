@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererDefinition, TemplateNode } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from './index';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -54,7 +54,7 @@ describe('xui:actions compilation', () => {
     const compiled = compiler.compile({
       type: 'button',
       'xui:actions': {},
-    } as any);
+    });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(root.namedActionPlans).toBeUndefined();
@@ -68,7 +68,7 @@ describe('xui:actions compilation', () => {
         save: { action: 'ajax', args: { url: '/save' } },
         reset: { action: 'setValue', args: { path: 'form', value: {} } },
       },
-    } as any);
+    });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(Object.keys(root.namedActionPlans!)).toEqual(['save', 'reset']);
@@ -85,7 +85,7 @@ describe('xui:actions compilation', () => {
           then: { action: 'closeDialog' },
         },
       },
-    } as any);
+    });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     const plan = root.namedActionPlans!.saveAndClose;
@@ -102,7 +102,7 @@ describe('xui:actions compilation', () => {
       'xui:actions': {
         save: { action: 'ajax' },
       },
-    } as any);
+    });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(root.propsProgram.value).toEqual({ type: 'button', label: 'Click' });
@@ -120,12 +120,12 @@ describe('xui:actions compilation', () => {
         type: 'button',
         onClick: { action: 'save' },
       },
-    } as any);
+    });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(root.namedActionPlans).toBeDefined();
     expect(root.namedActionPlans!.save.nodes[0].action).toBe('ajax');
-    const childNode = root.regions.body.node as any;
+    const childNode = root.regions.body.node as TemplateNode;
     expect(childNode).toBeDefined();
     expect(childNode.eventPlans.onClick.nodes[0].action).toBe('save');
   });
@@ -144,12 +144,12 @@ describe('xui:actions compilation', () => {
         },
         onClick: { action: 'save' },
       },
-    } as any);
+    });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
-    const childNode = root.regions.body.node as any;
+    const childNode = root.regions.body.node as TemplateNode;
 
-    expect(root.namedActionPlans!.save.nodes[0].source.args.url).toBe('/parent-save');
-    expect(childNode.namedActionPlans.save.nodes[0].source.args.url).toBe('/child-save');
+    expect(root.namedActionPlans!.save.nodes[0].source.args!.url).toBe('/parent-save');
+    expect(childNode.namedActionPlans!.save.nodes[0].source.args!.url).toBe('/child-save');
   });
 
   it('handles xui:actions with expression args', () => {
@@ -159,7 +159,7 @@ describe('xui:actions compilation', () => {
       'xui:actions': {
         dynamicSave: { action: 'ajax', args: { url: '${apiUrl}', data: '${formData}' } },
       },
-    } as any);
+    });
     const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 
     expect(root.namedActionPlans!.dynamicSave.isFullyStatic).toBe(false);
@@ -170,7 +170,7 @@ describe('xui:actions compilation', () => {
     const compiled = compiler.compile({
       type: 'button',
       'xui:actions': {
-        bad: null as any,
+        bad: null,
         good: { action: 'ajax' },
       },
     });

@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { RendererHelpers } from '@nop-chaos/flux-core';
+import type { VariantOption } from '../composite-field/composite-schemas';
 import {
   detectMatchedVariant,
   extractDetectedVariant,
@@ -8,28 +10,28 @@ import {
 
 describe('variant-field matching utilities', () => {
   it('matches built-in kinds and rejects unsupported values', () => {
-    expect(matchesVariant({ key: 'missing' } as any, 'value')).toBe(false);
+    expect(matchesVariant({ key: 'missing' } as VariantOption, 'value')).toBe(false);
     expect(
-      matchesVariant({ key: 'string', match: { kind: 'typeof', value: 'string' } } as any, 'value'),
+      matchesVariant({ key: 'string', match: { kind: 'typeof', value: 'string' } } as VariantOption, 'value'),
     ).toBe(true);
-    expect(matchesVariant({ key: 'array', match: { kind: 'array' } } as any, ['a'])).toBe(true);
+    expect(matchesVariant({ key: 'array', match: { kind: 'array' } } as VariantOption, ['a'])).toBe(true);
     expect(
-      matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as any, {
+      matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as VariantOption, {
         name: 'Alice',
       }),
     ).toBe(true);
     expect(
-      matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as any, ['name']),
+      matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as VariantOption, ['name']),
     ).toBe(false);
     expect(
       matchesVariant(
-        { key: 'shape', match: { kind: 'shape', requiredKeys: ['name', 'role'] } } as any,
+        { key: 'shape', match: { kind: 'shape', requiredKeys: ['name', 'role'] } } as VariantOption,
         { name: 'Alice', role: 'admin' },
       ),
     ).toBe(true);
     expect(
       matchesVariant(
-        { key: 'shape', match: { kind: 'shape', requiredKeys: ['name'] } } as any,
+        { key: 'shape', match: { kind: 'shape', requiredKeys: ['name'] } } as VariantOption,
         null,
       ),
     ).toBe(false);
@@ -47,11 +49,11 @@ describe('variant-field matching utilities', () => {
         {
           key: 'expression',
           match: { kind: 'expression', when: '${value.enabled === true}' },
-        } as any,
+        } as VariantOption,
         { enabled: true },
-        evaluate as any,
+        evaluate as RendererHelpers['evaluate'],
         undefined,
-        createScope as any,
+        createScope as RendererHelpers['createScope'],
       ),
     ).toBe(true);
     expect(evaluate).toHaveBeenCalledTimes(1);
@@ -62,11 +64,11 @@ describe('variant-field matching utilities', () => {
         {
           key: 'missing-evaluate',
           match: { kind: 'expression', when: '${value.enabled === true}' },
-        } as any,
+        } as VariantOption,
         { enabled: true },
         undefined,
         undefined,
-        createScope as any,
+        createScope as RendererHelpers['createScope'],
       ),
     ).toBe(false);
     expect(
@@ -74,9 +76,9 @@ describe('variant-field matching utilities', () => {
         {
           key: 'missing-scope',
           match: { kind: 'expression', when: '${value.enabled === true}' },
-        } as any,
+        } as VariantOption,
         { enabled: true },
-        evaluate as any,
+        evaluate as RendererHelpers['evaluate'],
         undefined,
         undefined,
       ),
@@ -86,11 +88,11 @@ describe('variant-field matching utilities', () => {
         {
           key: 'null-value',
           match: { kind: 'expression', when: '${value.enabled === true}' },
-        } as any,
+        } as VariantOption,
         null,
-        evaluate as any,
+        evaluate as RendererHelpers['evaluate'],
         undefined,
-        createScope as any,
+        createScope as RendererHelpers['createScope'],
       ),
     ).toBe(false);
   });
@@ -99,13 +101,13 @@ describe('variant-field matching utilities', () => {
     const variants = [
       { key: 'string', match: { kind: 'typeof', value: 'string' } },
       { key: 'array', match: { kind: 'array' } },
-    ] as any[];
+    ] as VariantOption[];
 
-    expect(detectMatchedVariant(variants as any, ['x'])).toBe('array');
-    expect(detectMatchedVariant(variants as any, 42)).toBeUndefined();
-    expect(resolveInitialVariant(variants as any, 'hello', 'array')).toBe('string');
-    expect(resolveInitialVariant(variants as any, 42, 'array')).toBe('array');
-    expect(resolveInitialVariant(variants as any, 42, 'missing')).toBe('string');
+    expect(detectMatchedVariant(variants, ['x'])).toBe('array');
+    expect(detectMatchedVariant(variants, 42)).toBeUndefined();
+    expect(resolveInitialVariant(variants, 'hello', 'array')).toBe('string');
+    expect(resolveInitialVariant(variants, 42, 'array')).toBe('array');
+    expect(resolveInitialVariant(variants, 42, 'missing')).toBe('string');
     expect(resolveInitialVariant([], 42, 'missing')).toBeUndefined();
   });
 

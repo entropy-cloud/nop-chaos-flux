@@ -1,11 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ScopeRef } from '@nop-chaos/flux-core';
+import type {
+  ActionScope,
+  ComponentHandleRegistry,
+  RendererHelpers,
+  RendererRuntime,
+  ScopeRef,
+  SourceSchema,
+} from '@nop-chaos/flux-core';
 import {
   mergeActionContext,
   createNormalizedActionEvent,
   createHelpers,
   EMPTY_SCOPE_DATA,
 } from '../helpers';
+
+type DispatchWithMeta = RendererHelpers['dispatch'] & {
+  __actionScope?: ActionScope;
+  __componentRegistry?: ComponentHandleRegistry;
+};
 
 function makeScope(overrides: Partial<ScopeRef> = {}): ScopeRef {
   return {
@@ -30,10 +42,10 @@ function makeBase(overrides: Record<string, unknown> = {}) {
       evaluate: vi.fn(() => 'evaluated'),
       createChildScope: vi.fn(() => makeScope()),
       executeSource: vi.fn(async () => ({ ok: true })),
-    } as any,
+    } as unknown as RendererRuntime,
     scope: makeScope(),
-    actionScope: { id: 'action-1' } as any,
-    componentRegistry: { id: 'registry-1' } as any,
+    actionScope: { id: 'action-1' } as unknown as ActionScope,
+    componentRegistry: { id: 'registry-1' } as unknown as ComponentHandleRegistry,
     form: undefined,
     page: undefined,
     surfaceRuntime: undefined,
@@ -131,14 +143,14 @@ describe('mergeActionContext', () => {
 
   it('overrides actionScope from partial', () => {
     const base = makeBase();
-    const overrideScope = { id: 'override' } as any;
+    const overrideScope = { id: 'override' } as unknown as ActionScope;
     const result = mergeActionContext(base, { actionScope: overrideScope });
     expect(result.actionScope).toBe(overrideScope);
   });
 
   it('overrides componentRegistry from partial', () => {
     const base = makeBase();
-    const overrideReg = { id: 'override' } as any;
+    const overrideReg = { id: 'override' } as unknown as ComponentHandleRegistry;
     const result = mergeActionContext(base, { componentRegistry: overrideReg });
     expect(result.componentRegistry).toBe(overrideReg);
   });
@@ -191,28 +203,28 @@ describe('mergeActionContext', () => {
 
   it('passes signal through', () => {
     const base = makeBase();
-    const signal = {} as any;
+    const signal = {} as AbortSignal;
     const result = mergeActionContext(base, { signal });
     expect(result.signal).toBe(signal);
   });
 
   it('passes prevResult through', () => {
     const base = makeBase();
-    const prevResult = { ok: true } as any;
+    const prevResult = { ok: true };
     const result = mergeActionContext(base, { prevResult });
     expect(result.prevResult).toBe(prevResult);
   });
 
   it('passes evaluationBindings through', () => {
     const base = makeBase();
-    const bindings = { x: 1 } as any;
+    const bindings = { x: 1 };
     const result = mergeActionContext(base, { evaluationBindings: bindings });
     expect(result.evaluationBindings).toBe(bindings);
   });
 
   it('normalizes event', () => {
     const base = makeBase();
-    const result = mergeActionContext(base, { event: { type: 'click' } as any });
+    const result = mergeActionContext(base, { event: { type: 'click' } });
     expect(result.event).toMatchObject({ type: 'click' });
   });
 });
@@ -251,8 +263,8 @@ describe('createHelpers', () => {
   it('dispatch carries __actionScope and __componentRegistry', () => {
     const base = makeBase();
     const helpers = createHelpers(base);
-    expect((helpers.dispatch as any).__actionScope).toBe(base.actionScope);
-    expect((helpers.dispatch as any).__componentRegistry).toBe(base.componentRegistry);
+    expect((helpers.dispatch as DispatchWithMeta).__actionScope).toBe(base.actionScope);
+    expect((helpers.dispatch as DispatchWithMeta).__componentRegistry).toBe(base.componentRegistry);
   });
 
   it('evaluate calls runtime.evaluate with provided scope', () => {
@@ -283,7 +295,7 @@ describe('createHelpers', () => {
   it('executeSource calls runtime.executeSource', () => {
     const base = makeBase();
     const helpers = createHelpers(base);
-    const source = { type: 'data-source', action: 'ajax' } as any;
+    const source: SourceSchema = { type: 'source', action: 'ajax' };
     helpers.executeSource(source);
     expect(base.runtime.executeSource).toHaveBeenCalledWith(
       expect.objectContaining({ source, scope: base.scope }),
@@ -294,7 +306,7 @@ describe('createHelpers', () => {
     const base = makeBase();
     const helpers = createHelpers(base);
     const customScope = makeScope({ id: 'custom' });
-    const source = { type: 'data-source', action: 'ajax' } as any;
+    const source: SourceSchema = { type: 'source', action: 'ajax' };
     helpers.executeSource(source, { scope: customScope });
     expect(base.runtime.executeSource).toHaveBeenCalledWith(
       expect.objectContaining({ source, scope: customScope }),

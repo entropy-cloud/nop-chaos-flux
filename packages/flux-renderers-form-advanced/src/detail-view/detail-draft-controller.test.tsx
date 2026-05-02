@@ -2,6 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  useAsyncSequencer,
   buildDetailDraftInitialValues,
   readDetailDraftValues,
   useDetailChildValidationContract,
@@ -38,11 +39,18 @@ function DraftControllerHarness() {
     <div>
       <span data-testid="open">{String(controller.open)}</span>
       <span data-testid="error">{controller.draftError ?? ''}</span>
+      <span data-testid="confirming">{String(controller.confirming)}</span>
       <button type="button" onClick={() => controller.openDraft({ dispose: vi.fn() } as any)}>
         open
       </button>
       <button type="button" onClick={() => controller.setDraftErrorSafe('boom')}>
         set-error
+      </button>
+      <button type="button" onClick={() => controller.beginConfirm()}>
+        begin-confirm
+      </button>
+      <button type="button" onClick={controller.finishConfirm}>
+        finish-confirm
       </button>
       <button type="button" onClick={controller.closeDraft}>
         close
@@ -67,6 +75,123 @@ describe('useDetailDraftControllerState', () => {
     fireEvent.click(screen.getByRole('button', { name: 'close' }));
     expect(screen.getByTestId('open').textContent).toBe('false');
     expect(screen.getByTestId('error').textContent).toBe('');
+  });
+
+  it('clears confirming state when closeDraft invalidates an active confirm session', () => {
+    cleanup();
+    render(<DraftControllerHarness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'open' }));
+    fireEvent.click(screen.getByRole('button', { name: 'begin-confirm' }));
+
+    expect(screen.getByTestId('confirming').textContent).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'close' }));
+
+    expect(screen.getByTestId('open').textContent).toBe('false');
+    expect(screen.getByTestId('confirming').textContent).toBe('false');
+  });
+
+  it('disposes the previous draft form when a new draft replaces it', () => {
+    cleanup();
+    const firstDispose = vi.fn();
+    const secondDispose = vi.fn();
+
+    function ReplaceDraftHarness() {
+      const controller = useDetailDraftControllerState();
+
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() => controller.openDraft({ dispose: firstDispose } as any)}
+          >
+            open-first
+          </button>
+          <button
+            type="button"
+            onClick={() => controller.openDraft({ dispose: secondDispose } as any)}
+          >
+            open-second
+          </button>
+          <button type="button" onClick={controller.closeDraft}>
+            close
+          </button>
+        </div>
+      );
+    }
+
+    render(<ReplaceDraftHarness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'open-first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'open-second' }));
+
+    expect(firstDispose).toHaveBeenCalledTimes(1);
+    expect(secondDispose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'close' }));
+
+    expect(secondDispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('opening a newer draft clears confirming state from an older session', () => {
+    cleanup();
+
+    function ReplaceWhileConfirmingHarness() {
+      const controller = useDetailDraftControllerState();
+
+      return (
+        <div>
+          <span data-testid="confirming">{String(controller.confirming)}</span>
+          <button type="button" onClick={() => controller.openDraft({ dispose: vi.fn() } as any)}>
+            open-first
+          </button>
+          <button type="button" onClick={() => controller.beginConfirm()}>
+            begin-confirm
+          </button>
+          <button type="button" onClick={() => controller.openDraft({ dispose: vi.fn() } as any)}>
+            open-second
+          </button>
+        </div>
+      );
+    }
+
+    render(<ReplaceWhileConfirmingHarness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'open-first' }));
+    fireEvent.click(screen.getByRole('button', { name: 'begin-confirm' }));
+    expect(screen.getByTestId('confirming').textContent).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'open-second' }));
+
+    expect(screen.getByTestId('confirming').textContent).toBe('false');
+  });
+});
+
+describe('useAsyncSequencer', () => {
+  it('invalidates older tokens after advancing or explicit invalidation', () => {
+    function SequencerHarness() {
+      const sequencer = useAsyncSequencer();
+      const first = sequencer.nextToken();
+      const second = sequencer.nextToken();
+      const beforeInvalidate = sequencer.isCurrent(second);
+      sequencer.invalidate();
+      const afterInvalidate = sequencer.isCurrent(second);
+
+      return (
+        <div>
+          <span data-testid="first-current">{String(sequencer.isCurrent(first))}</span>
+          <span data-testid="second-before">{String(beforeInvalidate)}</span>
+          <span data-testid="second-after">{String(afterInvalidate)}</span>
+        </div>
+      );
+    }
+
+    render(<SequencerHarness />);
+
+    expect(screen.getByTestId('first-current').textContent).toBe('false');
+    expect(screen.getByTestId('second-before').textContent).toBe('true');
+    expect(screen.getByTestId('second-after').textContent).toBe('false');
   });
 });
 

@@ -1,7 +1,11 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { FormFieldStateSnapshot, ScopeRef } from '@nop-chaos/flux-core';
+import type {
+  FormFieldStateSnapshot,
+  ScopeRef,
+  ValidationError,
+} from '@nop-chaos/flux-core';
 import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
 import {
   createFieldHandlers,
@@ -109,7 +113,7 @@ describe('field-utils unit helpers', () => {
   });
 
   it('builds child field ui state with error markers', () => {
-    const error = { path: 'name', rule: 'required', message: 'required' } as any;
+    const error: ValidationError = { path: 'name', rule: 'required', message: 'required' };
     const fieldState: FormFieldStateSnapshot = {
       error,
       touched: true,

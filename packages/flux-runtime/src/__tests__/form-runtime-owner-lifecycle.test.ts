@@ -3,7 +3,8 @@ import { createAsyncGovernanceStore } from '../async-data/async-governance';
 import { createFormStore } from '../form-store';
 import { createScopeRef } from '../scope';
 import { disposeOwnerState, refreshCompiledModelState } from '../form-runtime-owner-lifecycle';
-import type { ManagedFormRuntimeSharedState } from '../form-runtime-types';
+import type { ManagedFormRuntimeSharedState, CreateManagedFormRuntimeInput } from '../form-runtime-types';
+import type { ValidationError } from '@nop-chaos/flux-core';
 
 function createSharedState(
   overrides: Partial<ManagedFormRuntimeSharedState> = {},
@@ -13,7 +14,7 @@ function createSharedState(
       executeValidationRule: async () => undefined,
       validateRule: () => undefined,
       validation: undefined,
-    } as any,
+    } satisfies CreateManagedFormRuntimeInput,
     store: createFormStore({ name: 'Alice' }),
     scope: createScopeRef({ id: 'form-scope', path: '$form', initialData: { name: 'Alice' } }),
     initialFieldState: { initialValues: { name: 'Alice' }, dirty: {} },
@@ -85,11 +86,11 @@ describe('refreshCompiledModelState', () => {
     sharedState.store.batchUpdate({
       fieldStates: {
         name: {
-          errors: [{ path: 'name', message: 'keep', rule: 'required' } as any],
+          errors: [{ path: 'name', message: 'keep', rule: 'required' } satisfies ValidationError],
           touched: true,
         },
         email: {
-          errors: [{ path: 'email', message: 'drop', rule: 'required' } as any],
+          errors: [{ path: 'email', message: 'drop', rule: 'required' } satisfies ValidationError],
           visited: true,
         },
       },
@@ -152,7 +153,7 @@ describe('refreshCompiledModelState', () => {
     sharedState.store.batchUpdate({
       fieldStates: {
         name: {
-          errors: [{ path: 'name', message: 'drop', rule: 'required' } as any],
+          errors: [{ path: 'name', message: 'drop', rule: 'required' } satisfies ValidationError],
           touched: true,
         },
         email: { visited: true },

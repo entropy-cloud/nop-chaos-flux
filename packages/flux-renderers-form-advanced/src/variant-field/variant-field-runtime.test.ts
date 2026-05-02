@@ -230,6 +230,7 @@ describe('createVariantFormProxy', () => {
       setFieldState: vi.fn(),
       subscribe: () => () => {},
       subscribeToPath: () => () => {},
+      subscribeToPaths: () => () => {},
       subscribeToSubmitting: () => () => {},
       getPathState: vi.fn(),
       setValues: vi.fn(),

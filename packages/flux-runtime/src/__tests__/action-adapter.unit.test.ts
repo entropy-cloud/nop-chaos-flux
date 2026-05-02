@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ComponentActionInvocation, NamespacedActionInvocation } from '@nop-chaos/flux-core';
 import { createActionRuntimeAdapter } from '../action-adapter';
 import { createActionScope } from '../action-scope';
 import { createScopeRef } from '../scope';
@@ -256,14 +257,14 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
     await expect(
       adapter.invokeComponentAction(
-        { method: 'submit', target: { componentId: 'form-1' } } as any,
+        { method: 'submit', target: { componentId: 'form-1' }, payload: undefined } as ComponentActionInvocation,
         createCtx({ componentRegistry: undefined }),
       ),
     ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
 
     await expect(
       adapter.invokeComponentAction(
-        { method: 'submit', target: { componentId: 'form-1' } } as any,
+        { method: 'submit', target: { componentId: 'form-1' }, payload: undefined } as ComponentActionInvocation,
         createCtx({
           componentRegistry: {
             resolve: () => {
@@ -276,7 +277,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
     await expect(
       adapter.invokeComponentAction(
-        { method: 'submit', target: { componentName: 'named-form' } } as any,
+        { method: 'submit', target: { componentName: 'named-form' }, payload: undefined } as ComponentActionInvocation,
         createCtx({
           componentRegistry: {
             resolve: () => undefined,
@@ -301,7 +302,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
     await expect(
       adapter.invokeComponentAction(
-        { method: 'reset', target: { componentId: 'form-1' } } as any,
+        { method: 'reset', target: { componentId: 'form-1' }, payload: undefined } as ComponentActionInvocation,
         createCtx({
           componentRegistry: { resolve: () => handle },
         }),
@@ -326,7 +327,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
     await expect(
       adapter.invokeComponentAction(
-        { method: 'click', payload: { via: 'test' }, target: { componentId: 'button-1' } } as any,
+        { method: 'click', payload: { via: 'test' }, target: { componentId: 'button-1' } } as ComponentActionInvocation,
         createCtx({
           componentRegistry: { resolve: () => primitiveHandle },
         }),
@@ -345,7 +346,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
     await expect(
       adapter.invokeNamespacedAction(
-        { actionName: 'dialog:open' } as any,
+        { actionName: 'dialog:open', namespace: 'dialog', method: 'open', payload: undefined } as NamespacedActionInvocation,
         createCtx({ actionScope: undefined }),
       ),
     ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
@@ -353,7 +354,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
     const emptyScope = createActionScope({ id: 'action-scope-1' });
     await expect(
       adapter.invokeNamespacedAction(
-        { actionName: 'dialog:open' } as any,
+        { actionName: 'dialog:open', namespace: 'dialog', method: 'open', payload: undefined } as NamespacedActionInvocation,
         createCtx({ actionScope: emptyScope }),
       ),
     ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
@@ -367,7 +368,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
     await expect(
       adapter.invokeNamespacedAction(
-        { actionName: 'dialog:open', payload: { title: 'Test' } } as any,
+        { actionName: 'dialog:open', namespace: 'dialog', method: 'open', payload: { title: 'Test' } } as NamespacedActionInvocation,
         ctx,
       ),
     ).resolves.toEqual({ ok: true, data: { opened: true } });

@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { FieldError, FieldHelpText, FieldLabel } from '../renderers/shared';
 import { FieldsetRenderer } from '../renderers/fieldset';
+import type { FieldsetSchema } from '../renderers/fieldset';
 import { formRendererDefinition, formRendererDefinitions, registerFormRenderers } from '../index';
 
 describe('form package exports', () => {
@@ -37,12 +38,10 @@ describe('FieldsetRenderer', () => {
       <FieldsetRenderer
         id="fieldset-1"
         path="$.body[0]"
-        props={
-          { title: 'Advanced', collapsible: true, collapsed: true, bodyClassName: 'body-x' } as any
-        }
-        schema={{ type: 'fieldset' } as any}
+        props={{ title: 'Advanced', collapsible: true, collapsed: true, bodyClassName: 'body-x' }}
+        schema={{ type: 'fieldset' } as FieldsetSchema}
         meta={{ className: 'outer-x', cid: '1' } as any}
-        events={{} as any}
+        events={{}}
         helpers={{} as any}
         regions={{}}
         templateNode={{} as any}
@@ -68,10 +67,10 @@ describe('FieldsetRenderer', () => {
       <FieldsetRenderer
         id="fieldset-2"
         path="$.body[1]"
-        props={{ title: 'Static', collapsible: false } as any}
-        schema={{ type: 'fieldset' } as any}
+        props={{ title: 'Static', collapsible: false }}
+        schema={{ type: 'fieldset' } as FieldsetSchema}
         meta={{} as any}
-        events={{} as any}
+        events={{}}
         helpers={{} as any}
         regions={{ body: null as any }}
         templateNode={{} as any}

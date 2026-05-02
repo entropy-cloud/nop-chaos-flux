@@ -53,7 +53,7 @@ describe('detail-field renderer commit behavior', () => {
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
 
-    fireEvent.click(screen.getByText('Edit Address'));
+    fireEvent.click(screen.getAllByText('Edit Address')[0]!);
     await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
 
     fireEvent.change(screen.getByLabelText('Street'), { target: { value: '999 Changed St' } });
@@ -116,7 +116,7 @@ describe('detail-field renderer commit behavior', () => {
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
 
-    fireEvent.click(screen.getByText('Edit Address'));
+    fireEvent.click(screen.getAllByText('Edit Address')[0]!);
     await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
 
     fireEvent.change(screen.getByLabelText('Street'), { target: { value: '456 Oak Ave' } });
@@ -176,13 +176,13 @@ describe('detail-field renderer commit behavior', () => {
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
 
-    fireEvent.click(screen.getByText('Edit Address'));
+    fireEvent.click(screen.getAllByText('Edit Address')[0]!);
     await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
     fireEvent.change(screen.getByLabelText('Street'), { target: { value: '456 Oak Ave' } });
     fireEvent.click(screen.getByText('Confirm'));
     await waitFor(() => expect(screen.queryByLabelText('Street')).toBeNull());
 
-    fireEvent.click(screen.getByText('Edit Address'));
+    fireEvent.click(screen.getAllByText('Edit Address')[0]!);
     await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
     expect((screen.getByLabelText('Street') as HTMLInputElement).value).toBe('456 Oak Ave');
     fireEvent.change(screen.getByLabelText('Street'), { target: { value: '789 Pine Rd' } });
@@ -276,7 +276,7 @@ describe('detail-field renderer commit behavior', () => {
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
 
-    fireEvent.click(screen.getByText('Edit Address'));
+    fireEvent.click(screen.getAllByText('Edit Address')[0]!);
 
     await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
     expect((screen.getByLabelText('Street') as HTMLInputElement).value).toBe('Alpha Draft');
@@ -360,7 +360,7 @@ describe('detail-field renderer commit behavior', () => {
     );
 
     await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
-    fireEvent.click(screen.getByText('Edit Address'));
+    fireEvent.click(screen.getAllByText('Edit Address')[0]!);
     await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
     fireEvent.click(screen.getByText('Confirm'));
 
@@ -370,5 +370,91 @@ describe('detail-field renderer commit behavior', () => {
 
     expect(calls).toHaveLength(1);
     expect(calls[0]?.payload).toEqual({ reason: 'explicit-only' });
+  });
+
+  it('drops stale confirm completions after a newer reopen session wins', async () => {
+    cleanup();
+    const pendingCommits: Array<() => void> = [];
+    const importLoader = {
+      load: vi.fn(async () => ({
+        createNamespace: () => ({
+          kind: 'import' as const,
+          invoke: async (_method: string, payload: Record<string, unknown> | undefined) => {
+            const value = payload?.value as Record<string, unknown> | undefined;
+            return await new Promise<{ ok: true; data: string }>((resolve) => {
+              pendingCommits.push(() => resolve({ ok: true, data: String(value?.street ?? '') }));
+            });
+          },
+        }),
+      })),
+    };
+    const submitValues: Record<string, unknown>[] = [];
+    const SchemaRenderer = createFormSchemaRendererWithButton();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-commit.test.tsx#6"
+        schema={{
+          type: 'form',
+          id: 'stale-confirm-form',
+          data: { address: 'Alpha' },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'address',
+              triggerLabel: 'Edit Address',
+              surface: { mode: 'dialog', title: 'Edit Address' },
+              'xui:imports': [{ from: 'detail-field-lib', as: 'detailFieldLib' }],
+              transformOutAction: { action: 'detailFieldLib:toCommit' },
+              content: [{ type: 'input-text', name: 'street', label: 'Street' }],
+            },
+          ],
+          submitAction: {
+            action: 'ajax',
+            args: { url: '/api/test', method: 'post' },
+          },
+          actions: [
+            {
+              type: 'button',
+              label: 'Submit',
+              onClick: { action: 'component:submit', componentId: 'stale-confirm-form' },
+            },
+          ],
+        }}
+        env={{
+          ...baseEnv,
+          importLoader,
+          fetcher: makeCapturingFetcher(submitValues),
+        }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('Edit Address')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Edit Address'));
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('Street'), { target: { value: 'First Draft' } });
+    fireEvent.click(screen.getByText('Confirm'));
+
+    await waitFor(() => expect(pendingCommits).toHaveLength(1));
+    expect(screen.getByText('Confirming...')).toBeTruthy();
+
+    fireEvent.click(screen.getAllByText('Edit Address')[0]!);
+    await waitFor(() => expect(screen.getByLabelText('Street')).toBeTruthy());
+    expect(screen.queryByText('Confirming...')).toBeNull();
+    expect(screen.getByText('Confirm')).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText('Street'), { target: { value: 'Second Draft' } });
+    fireEvent.click(screen.getByText('Cancel'));
+    await waitFor(() => expect(screen.queryByLabelText('Street')).toBeNull());
+
+    pendingCommits[0]!();
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitValues.length).toBe(1));
+    expect(submitValues[0]).toMatchObject({ address: 'Alpha' });
   });
 });

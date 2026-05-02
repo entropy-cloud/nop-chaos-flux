@@ -1,23 +1,24 @@
+import React from 'react';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { DatasetPanel } from '../panels/dataset-panel.js';
-import type { DataSet } from '@nop-chaos/word-editor-core';
+import type { DataSet, DatasetStoreApi } from '@nop-chaos/word-editor-core';
 
 vi.mock('@nop-chaos/ui', () => {
   return {
-    Button: ({ children, onClick, title, ...props }: any) => (
+    Button: ({ children, onClick, title, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { title?: string }) => (
       <button type="button" data-testid="button" onClick={onClick} title={title} {...props}>
         {children}
       </button>
     ),
-    ScrollArea: ({ children }: any) => <div data-testid="scroll-area">{children}</div>,
-    cn: (...args: any[]) => args.filter(Boolean).join(' '),
+    ScrollArea: ({ children }: { children: React.ReactNode }) => <div data-testid="scroll-area">{children}</div>,
+    cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
   };
 });
 
-function createMockStore(datasets: DataSet[] = [], selectedDatasetId: string | null = null) {
+function createMockStore(datasets: DataSet[] = [], selectedDatasetId: string | null = null): DatasetStoreApi {
   const state = { datasets, selectedDatasetId };
   const listeners = new Set<() => void>();
 
@@ -27,7 +28,7 @@ function createMockStore(datasets: DataSet[] = [], selectedDatasetId: string | n
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-  };
+  } as unknown as DatasetStoreApi;
 }
 
 beforeEach(async () => {
@@ -43,19 +44,19 @@ afterEach(() => {
 describe('DatasetPanel', () => {
   it('renders Datasets header', () => {
     const store = createMockStore();
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
     expect(screen.getByText('Datasets')).toBeInTheDocument();
   });
 
   it('renders add button', () => {
     const store = createMockStore();
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
     expect(screen.getByTitle('Add Dataset')).toBeInTheDocument();
   });
 
   it('shows empty state when no datasets', () => {
     const store = createMockStore();
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
     expect(screen.getByText('No datasets found')).toBeInTheDocument();
   });
 
@@ -63,7 +64,7 @@ describe('DatasetPanel', () => {
     const onAddDataset = vi.fn();
     const store = createMockStore();
     render(
-      <DatasetPanel store={store as any} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />,
+      <DatasetPanel store={store} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />,
     );
 
     const addButton = screen.getByText('Add Dataset');
@@ -76,7 +77,7 @@ describe('DatasetPanel', () => {
       { id: 'ds2', name: 'Products', description: 'Product table', type: 'api', columns: [] },
     ];
     const store = createMockStore(datasets);
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
 
     expect(screen.getByText('Users')).toBeInTheDocument();
     expect(screen.getByText('Products')).toBeInTheDocument();
@@ -87,7 +88,7 @@ describe('DatasetPanel', () => {
       { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
     expect(screen.getByText('SQL')).toBeInTheDocument();
   });
 
@@ -105,7 +106,7 @@ describe('DatasetPanel', () => {
       },
     ];
     const store = createMockStore(datasets);
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
     expect(screen.getByText('2 columns')).toBeInTheDocument();
   });
 
@@ -120,7 +121,7 @@ describe('DatasetPanel', () => {
       },
     ];
     const store = createMockStore(datasets);
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
     expect(screen.getByText('1 column')).toBeInTheDocument();
   });
 
@@ -128,7 +129,7 @@ describe('DatasetPanel', () => {
     const onAddDataset = vi.fn();
     const store = createMockStore();
     render(
-      <DatasetPanel store={store as any} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />,
+      <DatasetPanel store={store} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />,
     );
 
     await userEvent.click(screen.getByTitle('Add Dataset'));
@@ -142,7 +143,7 @@ describe('DatasetPanel', () => {
     ];
     const store = createMockStore(datasets);
     render(
-      <DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={onEditDataset} />,
+      <DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={onEditDataset} />,
     );
 
     const datasetEl = screen.getByText('Users').closest('[class*="cursor-pointer"]');
@@ -157,7 +158,7 @@ describe('DatasetPanel', () => {
       { id: 'ds1', name: 'Users', description: '', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);
-    render(<DatasetPanel store={store as any} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={vi.fn()} />);
     expect(screen.getByText('No description')).toBeInTheDocument();
   });
 });

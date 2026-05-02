@@ -24,7 +24,7 @@ describe('analyzeSchemaInput validation', () => {
     const renderer: RendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
-    expect(compiler.validate?.({ type: '' } as any)).toEqual(
+    expect(compiler.validate?.({ type: '' })).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'missing-required-field' })]),
     );
   });
@@ -45,7 +45,7 @@ describe('analyzeSchemaInput validation', () => {
     };
     const compiler = makeCompiler([renderer]);
 
-    expect(compiler.validate?.({ type: 'container', body: 42 } as any)).toEqual(
+    expect(compiler.validate?.({ type: 'container', body: 42 })).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'invalid-region-node' })]),
     );
   });
@@ -58,7 +58,7 @@ describe('analyzeSchemaInput validation', () => {
     };
     const compiler = makeCompiler([renderer]);
 
-    expect(compiler.validate?.({ type: 'button', onClick: 'not-an-object' } as any)).toEqual(
+    expect(compiler.validate?.({ type: 'button', onClick: 'not-an-object' })).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'invalid-action-shape' })]),
     );
   });
@@ -72,7 +72,7 @@ describe('analyzeSchemaInput validation', () => {
     const compiler = makeCompiler([renderer]);
 
     expect(
-      compiler.validate?.({ type: 'button', onClick: { args: { path: 'x' } } } as any),
+      compiler.validate?.({ type: 'button', onClick: { args: { path: 'x' } } }),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -95,7 +95,7 @@ describe('analyzeSchemaInput validation', () => {
       compiler.validate?.({
         type: 'button',
         onClick: { action: 'test', args: 'not-object' },
-      } as any),
+      }),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -118,7 +118,7 @@ describe('analyzeSchemaInput validation', () => {
       compiler.validate?.({
         type: 'button',
         onClick: { action: 'test', parallel: 'not-array' },
-      } as any),
+      }),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -139,7 +139,7 @@ describe('analyzeSchemaInput validation', () => {
     };
     const compiler = makeCompiler([renderer]);
 
-    expect(compiler.validate?.({ type: 'page', data: { type: 'source' } } as any)).toEqual(
+    expect(compiler.validate?.({ type: 'page', data: { type: 'source' } })).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: 'invalid-source-shape',
@@ -160,7 +160,7 @@ describe('analyzeSchemaInput validation', () => {
     const compiler = makeCompiler([renderer]);
 
     expect(
-      compiler.validate?.({ type: 'page', data: { type: 'source', action: 123 } } as any),
+      compiler.validate?.({ type: 'page', data: { type: 'source', action: 123 } }),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -178,7 +178,7 @@ describe('analyzeSchemaInput validation', () => {
     const diagnostics = compiler.validate?.({
       type: 'page',
       dependsOn: [123, '', 'deep.nested.path'],
-    } as any);
+    });
     expect(diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -197,7 +197,7 @@ describe('analyzeSchemaInput validation', () => {
     const renderer: RendererDefinition = { type: 'page', component: () => null, regions: ['body'] };
     const compiler = makeCompiler([renderer]);
 
-    expect(compiler.validate?.({ type: 'page', dependsOn: 'not-array' } as any)).toEqual(
+    expect(compiler.validate?.({ type: 'page', dependsOn: 'not-array' })).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: 'invalid-property-shape',
