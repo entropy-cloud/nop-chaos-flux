@@ -5,8 +5,11 @@ import {
   getCompiledValidationField,
   resolveHiddenFieldPolicy,
 } from '@nop-chaos/flux-core';
+import { createRendererRegistry, createRendererRuntime } from '../index';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createManagedFormRuntime } from '../form-runtime';
 import { createScopeRef, createScopeStore } from '../scope';
+import { env } from './test-fixtures';
 
 function makeNode(
   path: string,
@@ -312,5 +315,32 @@ describe('notifyFieldHidden idempotency', () => {
 
     runtime.notifyFieldHidden('email', true);
     expect(runtime.scope.get('email')).toBe('restored@example.com');
+  });
+
+  it('validation-scope owners honor hidden-field participation without FormRuntime-specific APIs', async () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ email: '' });
+    const validationModel = makeFormModel({
+      email: makeNode('email', { required: true }),
+    });
+    const validationOwner = runtime.createValidationScopeRuntime({
+      id: 'non-form-owner',
+      parentScope: page.scope,
+      initialValues: { email: '' },
+      validation: validationModel,
+    });
+
+    const beforeHide = await validationOwner.validateAt('email');
+    expect(beforeHide.ok).toBe(false);
+
+    validationOwner.notifyFieldHidden('email', true);
+
+    const afterHide = await validationOwner.validateAt('email');
+    expect(afterHide.ok).toBe(true);
+    expect(validationOwner.getFieldState('email').errors).toEqual([]);
   });
 });

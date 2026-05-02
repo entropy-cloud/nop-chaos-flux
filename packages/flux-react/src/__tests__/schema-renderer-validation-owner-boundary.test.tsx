@@ -1,16 +1,50 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import type { ScopeValidationStateSnapshot, ValidationScopeRuntime } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer';
 import { useCurrentValidationScope } from '../hooks';
 import { env, pageRenderer } from '../test-support-core';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
 
 const validationOwnerProbeRenderer = {
   type: 'validation-owner-probe',
   component: function ValidationOwnerProbe() {
     const validationOwner = useCurrentValidationScope();
     return <span data-testid="validation-owner-id">{validationOwner?.scopeId ?? ''}</span>;
+  },
+};
+
+let firstPublishedScopeState: ScopeValidationStateSnapshot | undefined;
+let latestValidationOwner: ValidationScopeRuntime | undefined;
+
+const validationOwnerStateProbeRenderer: RendererDefinition = {
+  type: 'validation-owner-state-probe',
+  component: function ValidationOwnerStateProbe() {
+    const validationOwner = useCurrentValidationScope();
+
+    if (validationOwner) {
+      latestValidationOwner = validationOwner;
+      firstPublishedScopeState ??= validationOwner.getScopeState();
+    }
+
+    return <span data-testid="validation-owner-state-probe">probe</span>;
+  },
+};
+
+const fieldProbeRenderer: RendererDefinition = {
+  type: 'field-probe',
+  component: () => <span data-testid="field-probe">field</span>,
+  validation: {
+    kind: 'field',
+    valueKind: 'scalar',
+    getFieldPath(schema) {
+      return typeof schema.name === 'string' ? schema.name : undefined;
+    },
+    collectRules() {
+      return [{ kind: 'required' as const }];
+    },
   },
 };
 
@@ -29,23 +63,47 @@ const embeddedParentScope = {
 
 describe('createSchemaRenderer validation owner boundary behavior', () => {
   it('only exposes page fallback validation owner for page-owned root renders', () => {
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, validationOwnerProbeRenderer]);
+    firstPublishedScopeState = undefined;
+    latestValidationOwner = undefined;
+
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      validationOwnerProbeRenderer,
+      validationOwnerStateProbeRenderer,
+      fieldProbeRenderer,
+    ]);
 
     const { rerender } = render(
       <SchemaRenderer
         schemaUrl="test://schema.json"
-        schema={{ type: 'page', body: [{ type: 'validation-owner-probe' }] }}
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'validation-owner-probe' },
+            { type: 'validation-owner-state-probe' },
+          ],
+        }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
       />,
     );
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
+    expect(firstPublishedScopeState).toMatchObject({
+      lifecycleState: 'bootstrapping',
+      ready: false,
+    });
 
     rerender(
       <SchemaRenderer
         schemaUrl="test://schema.json"
-        schema={{ type: 'page', body: [{ type: 'validation-owner-probe' }] }}
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'validation-owner-probe' },
+            { type: 'validation-owner-state-probe' },
+          ],
+        }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
         parentScope={embeddedParentScope}
@@ -53,5 +111,48 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     );
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('');
+  });
+
+  it('promotes the page-root owner from bootstrapping to active after the root validation plan attaches', async () => {
+    firstPublishedScopeState = undefined;
+    latestValidationOwner = undefined;
+
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      validationOwnerProbeRenderer,
+      validationOwnerStateProbeRenderer,
+      fieldProbeRenderer,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{
+          type: 'page',
+          body: [
+            { type: 'validation-owner-probe' },
+            { type: 'validation-owner-state-probe' },
+            { type: 'field-probe', name: 'email' },
+          ],
+        }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
+    expect(firstPublishedScopeState).toMatchObject({
+      lifecycleState: 'bootstrapping',
+      ready: false,
+    });
+
+    await waitFor(() => {
+      expect(latestValidationOwner?.getScopeState()).toMatchObject({
+        lifecycleState: 'active',
+        ready: true,
+      });
+    });
+
+    await screen.findByTestId('field-probe');
   });
 });

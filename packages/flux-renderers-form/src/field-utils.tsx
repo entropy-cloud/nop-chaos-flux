@@ -5,6 +5,7 @@ import {
   type AdapterContext,
   type CompiledValidationBehavior,
   type FormFieldStateSnapshot,
+  type FormRuntime,
   type RendererComponentProps,
   type SchemaFieldRule,
   type ValidationScopeRuntime,
