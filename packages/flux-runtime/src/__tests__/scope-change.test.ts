@@ -72,4 +72,22 @@ describe('scopeChangeHitsDependencies', () => {
       broadAccess: false,
     });
   });
+
+  it('matches deep descendant dependency paths without pairwise overlap scanning', () => {
+    expect(
+      scopeChangeHitsDependencies(
+        { paths: ['user.profile.contact.email'], sourceScopeId: 'scope', kind: 'update' },
+        { paths: ['user.profile'], wildcard: false, broadAccess: false },
+      ),
+    ).toBe(true);
+  });
+
+  it('matches ancestor writes against deep dependency paths', () => {
+    expect(
+      scopeChangeHitsDependencies(
+        { paths: ['user.profile'], sourceScopeId: 'scope', kind: 'merge' },
+        { paths: ['user.profile.contact.email'], wildcard: false, broadAccess: false },
+      ),
+    ).toBe(true);
+  });
 });

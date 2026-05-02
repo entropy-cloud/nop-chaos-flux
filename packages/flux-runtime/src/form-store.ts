@@ -73,6 +73,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
   }));
 
   const pathListeners = new Map<string, Set<() => void>>();
+  const descendantPathListeners = new Map<string, Set<() => void>>();
   const submittingListeners = new Set<() => void>();
 
   function notifyPathListeners(listeners: Set<() => void> | undefined) {
@@ -114,10 +115,30 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       }
       listeners.add(listener);
 
+      const descendantUnsubscribers = pathPrefixes(path).slice(1).map((prefix) => {
+        let descendantListeners = descendantPathListeners.get(prefix);
+        if (!descendantListeners) {
+          descendantListeners = new Set();
+          descendantPathListeners.set(prefix, descendantListeners);
+        }
+        descendantListeners.add(listener);
+
+        return () => {
+          descendantListeners!.delete(listener);
+          if (descendantListeners!.size === 0) {
+            descendantPathListeners.delete(prefix);
+          }
+        };
+      });
+
       return () => {
         listeners!.delete(listener);
         if (listeners!.size === 0) {
           pathListeners.delete(path);
+        }
+
+        for (const unsubscribeDescendant of descendantUnsubscribers) {
+          unsubscribeDescendant();
         }
       };
     });
@@ -188,19 +209,35 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
         }
       }
 
-      for (const [listenerPath, listeners] of pathListeners) {
-        if (!listenerPath.startsWith(changedPath + '.')) {
+      const descendantListeners = descendantPathListeners.get(changedPath);
+      if (!descendantListeners) {
+        continue;
+      }
+
+      for (const listener of descendantListeners) {
+        if (notified.has(listener)) {
           continue;
         }
 
-        for (const listener of listeners) {
-          if (notified.has(listener)) {
-            continue;
-          }
+        notified.add(listener);
+        listener();
+      }
+    }
+  }
 
-          notified.add(listener);
-          listener();
-        }
+  function collectSubscribedChangedPaths(
+    before: Record<string, any>,
+    after: Record<string, any>,
+    changedPaths: Set<string>,
+  ) {
+    const candidatePaths = new Set<string>([
+      ...pathListeners.keys(),
+      ...descendantPathListeners.keys(),
+    ]);
+
+    for (const path of candidatePaths) {
+      if (getIn(before, path) !== getIn(after, path)) {
+        changedPaths.add(path);
       }
     }
   }
@@ -210,11 +247,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     collectChangedValuePaths(before, after, changedPaths);
 
     if (changedPaths.size === 0 && before !== after) {
-      for (const path of pathListeners.keys()) {
-        if (getIn(before, path) !== getIn(after, path)) {
-          changedPaths.add(path);
-        }
-      }
+      collectSubscribedChangedPaths(before, after, changedPaths);
     }
 
     notifyValuePathListeners(changedPaths);
