@@ -28,6 +28,12 @@ const actionHostRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
+const openRenderer: RendererDefinition = {
+  type: 'open-renderer',
+  component: () => null,
+  fields: [{ key: 'label', kind: 'prop' }],
+};
+
 function createCompiler(...definitions: RendererDefinition[]) {
   return createSchemaCompiler({
     registry: createRendererRegistry(definitions),
@@ -296,6 +302,95 @@ describe('schema compiler diagnostics', () => {
         }),
       ]),
     );
+  });
+
+  describe('strict mode', () => {
+    it('reports warning for unknown property on open renderer when strictMode is true', () => {
+      const compiler = createCompiler(openRenderer);
+
+      expect(
+        compiler.validate?.(
+          {
+            type: 'open-renderer',
+            label: 'Hello',
+            lable: 'typo',
+          },
+          {
+            validation: {
+              strictMode: true,
+            },
+          },
+        ),
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'unknown-property',
+            path: '/lable',
+            severity: 'warning',
+          }),
+        ]),
+      );
+    });
+
+    it('does not report unknown property on open renderer when strictMode is false', () => {
+      const compiler = createCompiler(openRenderer);
+
+      expect(
+        compiler.validate?.(
+          {
+            type: 'open-renderer',
+            label: 'Hello',
+            lable: 'typo',
+          },
+          {
+            validation: {
+              strictMode: false,
+            },
+          },
+        ),
+      ).toEqual([]);
+    });
+
+    it('reports error for unknown property on closed renderer when strictMode is true', () => {
+      const compiler = createCompiler(strictTextRenderer);
+
+      expect(
+        compiler.validate?.(
+          {
+            type: 'strict-text',
+            text: 'Hello',
+            txt: 'typo',
+          },
+          {
+            validation: {
+              strictMode: true,
+            },
+          },
+        ),
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'unknown-property',
+            path: '/txt',
+            severity: 'error',
+          }),
+        ]),
+      );
+    });
+
+    it('does not report unknown property on open renderer when strictMode is not set', () => {
+      const compiler = createCompiler(openRenderer);
+
+      expect(
+        compiler.validate?.(
+          {
+            type: 'open-renderer',
+            label: 'Hello',
+            lable: 'typo',
+          },
+        ),
+      ).toEqual([]);
+    });
   });
 });
 

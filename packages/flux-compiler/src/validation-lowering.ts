@@ -202,9 +202,22 @@ export function compileValidationRules(
     dependencyPaths: collectValidationDependencyPaths(rule),
     precompiled:
       rule.kind === 'pattern'
-        ? {
-            regex: new RegExp(rule.value),
-          }
+        ? compilePatternPrecompiled(rule.value as string, path, index)
         : undefined,
   }));
+}
+
+function compilePatternPrecompiled(
+  patternValue: string,
+  path: string,
+  _index: number,
+): { regex?: RegExp; error?: string } {
+  try {
+    return { regex: new RegExp(patternValue) };
+  } catch (err) {
+    console.warn(
+      `[flux-compiler] Invalid regex pattern at ${path}: /${patternValue}/ — ${err instanceof Error ? err.message : err}`,
+    );
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
 }

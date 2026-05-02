@@ -228,9 +228,10 @@ function mergeNamespaceValidators(
 
 type ResolvedValidationOptions = Omit<
   Required<SchemaCompileValidationOptions>,
-  'hostContractContext'
+  'hostContractContext' | 'strictMode'
 > & {
   hostContractContext?: HostContractContext;
+  strictMode?: boolean;
 };
 
 function resolveValidationOptions(
@@ -246,6 +247,7 @@ function resolveValidationOptions(
     extensionPassthroughPolicy: 'namespaced-only' as const,
     namespaceValidators: [] as readonly SchemaNamespaceValidator[],
     hostContractContext: undefined as HostContractContext | undefined,
+    strictMode: undefined as boolean | undefined,
   };
 
   const validation = options?.validation;
@@ -259,6 +261,7 @@ function resolveValidationOptions(
       validation?.extensionPassthroughPolicy ?? defaults.extensionPassthroughPolicy,
     namespaceValidators: mergeNamespaceValidators(validation?.namespaceValidators),
     hostContractContext: validation?.hostContractContext ?? defaults.hostContractContext,
+    strictMode: validation?.strictMode ?? defaults.strictMode,
   };
 }
 

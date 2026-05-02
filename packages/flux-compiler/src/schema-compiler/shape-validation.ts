@@ -215,24 +215,34 @@ export function inspectSchemaNodeFields(
       validateSourceShape(sourceCandidate, keyPath, diagnostics, enabled);
     }
 
+    const closedModel = hasClosedPropModel(renderer);
+    const strictMode = diagnostics.validation.strictMode === true;
+
     if (
-      hasClosedPropModel(renderer) &&
+      (closedModel || strictMode) &&
       !acceptedKeys.has(key) &&
       diagnostics.validation.unknownBarePropertyPolicy !== 'ignore'
     ) {
+      const severity = closedModel
+        ? strictMode
+          ? 'error'
+          : diagnostics.validation.unknownBarePropertyPolicy === 'warn'
+            ? 'warning'
+            : 'error'
+        : 'warning';
+
       emitSchemaDiagnostic(
         diagnostics,
         {
           code: 'unknown-property',
           path: keyPath,
           message: `Unknown property "${key}" for renderer type "${renderer.type}".`,
-          severity:
-            diagnostics.validation.unknownBarePropertyPolicy === 'warn' ? 'warning' : 'error',
+          severity,
         },
         enabled,
       );
 
-      if (diagnostics.validation.unknownBarePropertyPolicy === 'error') {
+      if (severity === 'error') {
         skippedPropKeys.add(key);
       }
     }

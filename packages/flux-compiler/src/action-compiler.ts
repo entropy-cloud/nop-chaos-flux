@@ -47,12 +47,22 @@ function compileControl(action: ActionSchema): CompiledActionControl {
   };
 }
 
+export const MAX_ACTION_COMPILE_DEPTH = 128;
+
 function compileActionNode(
   action: ActionSchema,
   compiler: ExpressionCompiler,
   basePath: string,
   options?: ExpressionCompileOptions,
+  depth = 0,
 ): CompiledActionNode {
+  if (depth > MAX_ACTION_COMPILE_DEPTH) {
+    throw new Error(
+      `Action compilation depth exceeded ${MAX_ACTION_COMPILE_DEPTH} at ${basePath}. ` +
+        `Check for excessively nested action chains (then/onError/onSettled/parallel).`,
+    );
+  }
+
   const node: CompiledActionNode = {
     action: action.action,
     payload: compilePayload(action, compiler, options),
@@ -69,17 +79,19 @@ function compileActionNode(
     ) as unknown as CompiledRuntimeValue<boolean>;
   }
 
+  const nextDepth = depth + 1;
+
   if (action.then !== undefined) {
     const thenActions = Array.isArray(action.then) ? action.then : [action.then];
     node.then = thenActions.map((a, i) =>
-      compileActionNode(a, compiler, `${basePath}.then[${i}]`, options),
+      compileActionNode(a, compiler, `${basePath}.then[${i}]`, options, nextDepth),
     );
   }
 
   if (action.onError !== undefined) {
     const onErrorActions = Array.isArray(action.onError) ? action.onError : [action.onError];
     node.onError = onErrorActions.map((a, i) =>
-      compileActionNode(a, compiler, `${basePath}.onError[${i}]`, options),
+      compileActionNode(a, compiler, `${basePath}.onError[${i}]`, options, nextDepth),
     );
   }
 
@@ -88,13 +100,13 @@ function compileActionNode(
       ? action.onSettled
       : [action.onSettled];
     node.onSettled = onSettledActions.map((a, i) =>
-      compileActionNode(a, compiler, `${basePath}.onSettled[${i}]`, options),
+      compileActionNode(a, compiler, `${basePath}.onSettled[${i}]`, options, nextDepth),
     );
   }
 
   if (action.parallel !== undefined) {
     node.parallel = action.parallel.map((a, i) =>
-      compileActionNode(a, compiler, `${basePath}.parallel[${i}]`, options),
+      compileActionNode(a, compiler, `${basePath}.parallel[${i}]`, options, nextDepth),
     );
   }
 
@@ -107,7 +119,9 @@ function isPayloadFullyStatic(payload: CompiledActionPayload): boolean {
   return values.every((v) => v === undefined || v.isStatic);
 }
 
-function isNodeFullyStatic(node: CompiledActionNode): boolean {
+function isNodeFullyStatic(node: CompiledActionNode, depth = 0): boolean {
+  if (depth > MAX_ACTION_COMPILE_DEPTH) return true;
+
   if (node.when !== undefined && !node.when.isStatic) {
     return false;
   }
@@ -116,10 +130,11 @@ function isNodeFullyStatic(node: CompiledActionNode): boolean {
     return false;
   }
 
+  const nextDepth = depth + 1;
   const branches = [node.then, node.onError, node.onSettled, node.parallel];
 
   for (const branch of branches) {
-    if (branch !== undefined && !branch.every(isNodeFullyStatic)) {
+    if (branch !== undefined && !branch.every((n) => isNodeFullyStatic(n, nextDepth))) {
       return false;
     }
   }
