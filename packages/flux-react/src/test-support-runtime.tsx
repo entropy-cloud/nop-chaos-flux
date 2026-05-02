@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
 import { Button, Input } from '@nop-chaos/ui';
 import type {
+  ActionSchema,
   DataSourceSchema,
   RendererComponentProps,
   RendererDefinition,
@@ -36,6 +37,10 @@ import {
 } from './hooks';
 import { RenderNodes } from './helpers';
 import { fragmentScopedProbeFormSchema } from './test-support-core';
+
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
 
 const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
@@ -175,14 +180,16 @@ function FragmentRenderHost(props: RendererComponentProps) {
       <Button variant="ghost" size="sm" onClick={() => setTick((current) => current + 1)}>
         Refresh fragment {tick}
       </Button>
-      {props.helpers.render(fragmentScopedProbeFormSchema, {
-        bindings: {
-          currentUser: {
-            role: 'architect',
+      {asReactNode(
+        props.helpers.render(fragmentScopedProbeFormSchema, {
+          bindings: {
+            currentUser: {
+              role: 'architect',
+            },
           },
-        },
-        pathSuffix: 'fragment',
-      })}
+          pathSuffix: 'fragment',
+        }),
+      )}
     </div>
   );
 }
@@ -196,12 +203,14 @@ function FragmentScopeProbeHost(props: RendererComponentProps) {
       <Button variant="ghost" size="sm" onClick={() => setTick((current) => current + 1)}>
         Refresh fragment {tick}
       </Button>
-      {props.helpers.render(props.regions.body?.templateNode as any, {
-        bindings: {
-          child: childValue,
-        },
-        pathSuffix: 'fragment',
-      })}
+      {asReactNode(
+        props.helpers.render(props.regions.body?.templateNode, {
+          bindings: {
+            child: childValue,
+          },
+          pathSuffix: 'fragment',
+        }),
+      )}
     </div>
   );
 }
@@ -219,7 +228,7 @@ export const fragmentScopeProbeHostRenderer: RendererDefinition = {
 
 export const scopedHostRenderer: RendererDefinition = {
   type: 'scoped-host',
-  component: (props) => <section>{props.regions.body?.render()}</section>,
+  component: (props) => <section>{asReactNode(props.regions.body?.render())}</section>,
   regions: ['body'],
   actionScopePolicy: 'new',
   componentRegistryPolicy: 'new',
@@ -300,7 +309,7 @@ function DispatchProbe(props: RendererComponentProps) {
         variant="ghost"
         size="sm"
         onClick={async () => {
-          const result = await props.helpers.dispatch(props.props.runAction as any);
+          const result = await props.helpers.dispatch(props.props.runAction as ActionSchema | ActionSchema[]);
           setResultText(result.ok ? String(result.data ?? '') : String(result.error ?? ''));
         }}
       >
@@ -324,7 +333,7 @@ function ToggleHost(props: RendererComponentProps) {
       <Button variant="ghost" size="sm" onClick={() => setVisible((current) => !current)}>
         {visible ? 'Hide child boundary' : 'Show child boundary'}
       </Button>
-      {visible ? props.regions.body?.render() : null}
+      {visible ? asReactNode(props.regions.body?.render()) : null}
     </div>
   );
 }

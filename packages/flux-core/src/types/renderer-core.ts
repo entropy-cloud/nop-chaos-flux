@@ -96,7 +96,7 @@ export interface RendererHelpers {
   executeSource: (source: SourceSchema, options?: { scope?: ScopeRef }) => Promise<ActionResult>;
 }
 
-export type RendererRenderOutput = any;
+export type RendererRenderOutput = unknown;
 
 export type RendererResolvedProps<S extends BaseSchema = BaseSchema> =
   Record<string, any> & Partial<S>;

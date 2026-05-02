@@ -16,6 +16,10 @@ import {
   useScopeSelector,
 } from './hooks';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -38,7 +42,7 @@ export const textRenderer: RendererDefinition = {
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',
-  component: (props) => <section>{props.regions.body?.render()}</section>,
+  component: (props) => <section>{asReactNode(props.regions.body?.render())}</section>,
   regions: ['body'],
 };
 
@@ -68,7 +72,7 @@ function FormStub(props: RendererComponentProps) {
   return (
     <FormContext.Provider value={ownedForm}>
       <ScopeContext.Provider value={ownedForm.scope}>
-        <section>{props.regions.body?.render()}</section>
+        <section>{asReactNode(props.regions.body?.render())}</section>
       </ScopeContext.Provider>
     </FormContext.Provider>
   );

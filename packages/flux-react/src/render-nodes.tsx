@@ -168,11 +168,11 @@ export function resolveRendererSlotContent(
     metaKey?: string;
     fallback?: React.ReactNode;
   },
-) {
+) : React.ReactNode {
   const regionContent = props.regions[slotKey]?.render();
 
   if (regionContent !== undefined && regionContent !== null) {
-    return regionContent;
+    return regionContent as React.ReactNode;
   }
 
   const propValue = (props.props as Record<string, unknown>)[slotKey] as
