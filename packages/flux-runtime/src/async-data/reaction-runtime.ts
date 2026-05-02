@@ -16,7 +16,7 @@ import {
   createReactionOwnerId,
   createRunHandle,
   evaluateReactionWatchValue,
-  MAX_REACTION_FIRE_COUNT,
+  MAX_CASCADE_DEPTH,
   normalizeActionArray,
   reportReactionFireLimit,
   type OwnedReactionRegistration,
@@ -121,6 +121,7 @@ export function registerReaction(input: {
       id: input.id,
       force,
     }),
+    cascadeDepth = 0,
   ) {
     try {
       if (abortController.signal.aborted) {
@@ -207,12 +208,12 @@ export function registerReaction(input: {
         return;
       }
 
-      if (fireCount >= MAX_REACTION_FIRE_COUNT) {
+      if (cascadeDepth >= MAX_CASCADE_DEPTH) {
         const error = reportReactionFireLimit({
           runtime: input.runtime,
           id: input.id,
           scope: input.scope,
-          fireCount,
+          cascadeDepth,
         });
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
@@ -263,7 +264,7 @@ export function registerReaction(input: {
         pendingChangedPaths = new Set<string>();
         pendingForce = false;
         triggerQueued = false;
-        void runReaction(nextChangedPaths, nextForce, queuedRun);
+        void runReaction(nextChangedPaths, nextForce, queuedRun, cascadeDepth + 1);
       }
     }
   }

@@ -68,6 +68,7 @@ function createSharedState(initialValues: Record<string, any> = {}) {
     validationAsyncGovernance: createAsyncGovernanceStore(),
     runtimeFieldRegistrations: new Map(),
     pathToRegistrationId: new Map(),
+    childPathToRegistrationId: new Map(),
     hiddenFields: new Set(),
     lifecycleState: 'active',
     modelGeneration: 1,

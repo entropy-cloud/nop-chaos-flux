@@ -41,13 +41,22 @@ export function buildFormOwnerRuntime(input: {
   setLastChange: (change: ScopeChange) => void;
 }) {
   let cachedFieldStatesRef: Record<string, FieldState> | undefined;
+  let cachedLifecycleState = input.sharedState.lifecycleState;
+  let cachedModelGeneration = input.sharedState.modelGeneration;
   let cachedScopeState: ScopeValidationStateSnapshot | undefined;
 
   function computeScopeState(): ScopeValidationStateSnapshot {
     const state = input.sharedState.store.getState();
     const fieldStates = state.fieldStates;
+    const lifecycleState = input.sharedState.lifecycleState;
+    const modelGeneration = input.sharedState.modelGeneration;
 
-    if (cachedScopeState && cachedFieldStatesRef === fieldStates) {
+    if (
+      cachedScopeState &&
+      cachedFieldStatesRef === fieldStates &&
+      cachedLifecycleState === lifecycleState &&
+      cachedModelGeneration === modelGeneration
+    ) {
       return cachedScopeState;
     }
 
@@ -61,14 +70,17 @@ export function buildFormOwnerRuntime(input: {
     }
 
     const valid = !hasErrors;
+    const ready = lifecycleState === 'active' && valid && !isValidating;
     cachedFieldStatesRef = fieldStates;
+    cachedLifecycleState = lifecycleState;
+    cachedModelGeneration = modelGeneration;
     cachedScopeState = {
       valid,
       hasErrors,
       validating: isValidating,
-      lifecycleState: input.sharedState.lifecycleState,
-      ready: valid && !isValidating,
-      modelGeneration: input.sharedState.modelGeneration,
+      lifecycleState,
+      ready,
+      modelGeneration,
     };
     return cachedScopeState;
   }

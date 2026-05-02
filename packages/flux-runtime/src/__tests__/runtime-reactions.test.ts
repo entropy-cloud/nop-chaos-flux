@@ -293,7 +293,7 @@ describe('createRendererRuntime', () => {
         details: expect.objectContaining({
           reason: 'reaction-fire-count-limit',
           reactionId: 'bounded-reaction',
-          maxFireCount: 10,
+          maxCascadeDepth: 100,
         }),
       }),
     );

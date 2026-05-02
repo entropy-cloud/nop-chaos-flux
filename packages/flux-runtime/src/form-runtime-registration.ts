@@ -15,8 +15,10 @@ export function findRuntimeRegistration(
     }
   }
 
-  for (const entry of sharedState.runtimeFieldRegistrations.values()) {
-    if (entry.registration.childPaths?.includes(path)) {
+  const childRegId = sharedState.childPathToRegistrationId.get(path);
+  if (childRegId) {
+    const entry = sharedState.runtimeFieldRegistrations.get(childRegId);
+    if (entry) {
       return { entry, childPath: path };
     }
   }

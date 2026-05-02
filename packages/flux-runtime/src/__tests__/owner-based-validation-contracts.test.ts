@@ -78,6 +78,7 @@ function makeFormModel(
 function makeRuntime(
   validation: CompiledFormValidationModel | undefined,
   initialValues: Record<string, any> = {},
+  options: { initialLifecycleState?: 'active' | 'bootstrapping' | 'disposed' } = {},
 ) {
   const parentStore = createScopeStore(initialValues);
   const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
@@ -90,6 +91,7 @@ function makeRuntime(
     initialValues,
     parentScope,
     validation,
+    initialLifecycleState: options.initialLifecycleState,
     validateRule,
     executeValidationRule,
   });
@@ -287,6 +289,17 @@ describe('getScopeState', () => {
     const { runtime } = makeRuntime(undefined);
     expect(runtime.getScopeState().modelGeneration).toBe(1);
   });
+
+  it('returns ready:false when lifecycle is transitional even without field errors', () => {
+    const { runtime } = makeRuntime(makeFormModel({ name: makeNode('name') }), {}, {
+      initialLifecycleState: 'bootstrapping',
+    });
+    const state = runtime.getScopeState();
+
+    expect(state.lifecycleState).toBe('bootstrapping');
+    expect(state.valid).toBe(true);
+    expect(state.ready).toBe(false);
+  });
 });
 
 describe('isPathOwned', () => {
@@ -425,6 +438,23 @@ describe('lifecycleState transitions', () => {
     expect(runtime.lifecycleState).toBe('active');
   });
 
+  it('can start in bootstrapping when requested', () => {
+    const parentStore = createScopeStore({});
+    const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
+
+    const runtime = createManagedFormRuntime({
+      id: 'bootstrapping-runtime',
+      parentScope,
+      validation: undefined,
+      initialLifecycleState: 'bootstrapping',
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    expect(runtime.lifecycleState).toBe('bootstrapping');
+    expect(runtime.getScopeState().ready).toBe(false);
+  });
+
   it('transitions to disposed after dispose()', () => {
     const { runtime } = makeRuntime(undefined);
     runtime.dispose();
@@ -549,6 +579,27 @@ describe('refreshCompiledModel', () => {
 
     runtime.refreshCompiledModel(model2);
     expect(runtime.lifecycleState).toBe('active');
+  });
+
+  it('refreshCompiledModel transitions a bootstrapping owner to active and ready when no errors exist', () => {
+    const model = makeFormModel({ name: makeNode('name') });
+    const parentStore = createScopeStore({});
+    const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
+
+    const runtime = createManagedFormRuntime({
+      id: 'bootstrapping-runtime',
+      parentScope,
+      validation: undefined,
+      initialLifecycleState: 'bootstrapping',
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    expect(runtime.getScopeState()).toMatchObject({ lifecycleState: 'bootstrapping', ready: false });
+
+    runtime.refreshCompiledModel(model);
+
+    expect(runtime.getScopeState()).toMatchObject({ lifecycleState: 'active', ready: true });
   });
 });
 

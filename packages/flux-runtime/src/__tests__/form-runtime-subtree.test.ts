@@ -50,6 +50,7 @@ function createSharedState(
     inputValue: { validation },
     runtimeFieldRegistrations,
     pathToRegistrationId: new Map(),
+    childPathToRegistrationId: new Map(),
     store: {} as any,
     scope: {} as any,
     initialFieldState: { initialValues: {}, dirty: {} },

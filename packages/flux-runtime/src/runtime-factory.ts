@@ -80,6 +80,7 @@ export function createRendererRuntime(input: {
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
   moduleCache?: ModuleCache;
+  strictMode?: boolean;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }): RendererRuntime {
   const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
@@ -224,6 +225,7 @@ export function createRendererRuntime(input: {
     schemaCompiler,
     plugins,
     importStack,
+    strictMode: input.strictMode ?? false,
     moduleCache,
     compile(schema) {
       return schemaCompiler.compile(schema);

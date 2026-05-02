@@ -41,6 +41,13 @@ export function refreshCompiledModelState(args: {
   for (const [regId, entry] of staleRegistrations) {
     args.sharedState.runtimeFieldRegistrations.delete(regId);
     args.sharedState.pathToRegistrationId.delete(entry.registration.path);
+    if (entry.registration.childPaths) {
+      for (const childPath of entry.registration.childPaths) {
+        if (args.sharedState.childPathToRegistrationId.get(childPath) === regId) {
+          args.sharedState.childPathToRegistrationId.delete(childPath);
+        }
+      }
+    }
   }
 
   if (oldModel) {
@@ -110,6 +117,7 @@ export function disposeOwnerState(args: {
   args.sharedState.validationAbortControllers.clear();
   args.sharedState.runtimeFieldRegistrations.clear();
   args.sharedState.pathToRegistrationId.clear();
+  args.sharedState.childPathToRegistrationId.clear();
   args.sharedState.childContracts.clear();
   args.sharedState.externalErrors.clear();
   args.setLastChange({

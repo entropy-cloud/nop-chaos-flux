@@ -339,6 +339,23 @@ describe('pattern', () => {
     ctx.value = 'hello';
     expect(builtInValidators.pattern(ctx as any)).toBeDefined();
   });
+
+  it('skips validation when precompiled has error (invalid regex)', () => {
+    const compiledRule: CompiledValidationRule = {
+      id: 'field#0:pattern',
+      rule: { kind: 'pattern', value: '[' },
+      dependencyPaths: [],
+      precompiled: { error: 'Invalid regular expression' },
+    };
+    const ctx: SyncValidationContext = {
+      compiledRule,
+      value: 'anything',
+      field: makeField(),
+      scope: makeScope(),
+      rule: compiledRule.rule as any,
+    };
+    expect(builtInValidators.pattern(ctx as any)).toBeUndefined();
+  });
 });
 
 describe('email', () => {

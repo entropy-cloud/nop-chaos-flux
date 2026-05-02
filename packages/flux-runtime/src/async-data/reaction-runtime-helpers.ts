@@ -16,15 +16,15 @@ import type {
 import { collectRuntimeDependencies } from '../node-runtime';
 import { createRootDependencySet } from '../scope-change';
 
-export const MAX_REACTION_FIRE_COUNT = 10;
+export const MAX_CASCADE_DEPTH = 100;
 
 export function createReactionLimitError(input: {
   id: string;
   scope: ScopeRef;
-  fireCount: number;
+  cascadeDepth: number;
 }) {
   return new Error(
-    `Reaction "${input.id}" in scope "${input.scope.id}" exceeded MAX_REACTION_FIRE_COUNT (${MAX_REACTION_FIRE_COUNT}) and was disposed`,
+    `Reaction "${input.id}" in scope "${input.scope.id}" exceeded MAX_CASCADE_DEPTH (${MAX_CASCADE_DEPTH}) at cascade depth ${input.cascadeDepth} and was disposed`,
   );
 }
 
@@ -83,12 +83,12 @@ export function reportReactionFireLimit(args: {
   runtime: RendererRuntime;
   id: string;
   scope: ScopeRef;
-  fireCount: number;
+  cascadeDepth: number;
 }) {
   const error = createReactionLimitError({
     id: args.id,
     scope: args.scope,
-    fireCount: args.fireCount,
+    cascadeDepth: args.cascadeDepth,
   });
   reportRuntimeHostIssue({
     env: args.runtime.env,
@@ -100,8 +100,8 @@ export function reportReactionFireLimit(args: {
       reason: 'reaction-fire-count-limit',
       reactionId: args.id,
       scopeId: args.scope.id,
-      fireCount: args.fireCount,
-      maxFireCount: MAX_REACTION_FIRE_COUNT,
+      cascadeDepth: args.cascadeDepth,
+      maxCascadeDepth: MAX_CASCADE_DEPTH,
     },
   });
   return error;

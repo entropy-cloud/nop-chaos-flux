@@ -69,6 +69,7 @@ function createManagedValidationScopeRuntime(formRuntime: FormRuntime): Validati
     registerField: (registration) => formRuntime.registerField(registration),
     updateFieldRegistration: (registrationId, patch) =>
       formRuntime.updateFieldRegistration(registrationId, patch),
+    notifyFieldHidden: (path, hidden) => formRuntime.notifyFieldHidden(path, hidden),
     touchField: (path) => formRuntime.touchField(path),
     visitField: (path) => formRuntime.visitField(path),
     refreshCompiledModel: (newModel) => formRuntime.refreshCompiledModel(newModel),
@@ -84,14 +85,15 @@ export function createRuntimeOwnedFactories(input: {
   ownedSurfaceRuntimes: Set<SurfaceRuntime>;
   ownedValidationScopes?: Set<ValidationScopeRuntime>;
   ownedFormRuntimes?: Set<FormRuntime>;
-  createValidationScopeRuntime: (inputValue: {
-    id?: string;
-    parentScope?: ScopeRef;
-    scopePath?: string;
-    validation?: CompiledFormValidationModel;
-    initialValues?: Record<string, any>;
-    existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
-  }) => ValidationScopeRuntime;
+    createValidationScopeRuntime: (inputValue: {
+      id?: string;
+      parentScope?: ScopeRef;
+      scopePath?: string;
+      validation?: CompiledFormValidationModel;
+      initialValues?: Record<string, any>;
+      existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
+      initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
+    }) => ValidationScopeRuntime;
   dispatchAction: (
     action: import('@nop-chaos/flux-core').ActionSchema,
     ctx?: Partial<ActionContext>,
@@ -112,6 +114,7 @@ export function createRuntimeOwnedFactories(input: {
       scopePath: '$page',
       initialValues: initialData,
       existingStore: validationStore,
+      initialLifecycleState: 'bootstrapping',
     });
     let refreshTick = 0;
     const refreshListeners = new Set<() => void>();
@@ -213,6 +216,7 @@ export function createRuntimeOwnedFactories(input: {
     validation?: CompiledFormValidationModel;
     initialValues?: Record<string, any>;
     existingStore?: import('@nop-chaos/flux-core').FormStoreApi;
+    initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
   }): ValidationScopeRuntime {
     const formRuntime = createManagedFormRuntime({
       id: inputValue.id,
@@ -222,6 +226,7 @@ export function createRuntimeOwnedFactories(input: {
       existingStore: inputValue.existingStore,
       scopePath: inputValue.scopePath,
       scopeBinding: 'none',
+      initialLifecycleState: inputValue.initialLifecycleState,
       executeValidationRule: (compiledRule, rule, field, validationScope, signal) =>
         executeRuntimeValidationRule(compiledRule, rule, field, validationScope, signal, {
           dispatch: (action, ctx) => input.dispatchAction(action, ctx),

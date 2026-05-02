@@ -249,6 +249,7 @@ describe('executeArrayMutation', () => {
       inputValue: {} as any,
       runtimeFieldRegistrations: new Map(),
       pathToRegistrationId: new Map(),
+      childPathToRegistrationId: new Map(),
       hiddenFields: new Set(),
       lifecycleState: 'active' as const,
       modelGeneration: 1,

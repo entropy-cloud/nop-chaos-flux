@@ -28,6 +28,7 @@ export interface CreateManagedFormRuntimeInput {
   existingScope?: ScopeRef;
   scopePath?: string;
   scopeBinding?: 'form' | 'none';
+  initialLifecycleState?: ValidationOwnerLifecycleState;
   executeValidationRule: (
     compiledRule: CompiledValidationRule,
     rule: Extract<ValidationRule, { kind: 'async' }>,
@@ -85,6 +86,7 @@ export interface FormRuntimeRegistrationState
   extends FormRuntimeStoreScopeState, FormRuntimeInitialStateSlice {
   runtimeFieldRegistrations: Map<string, RegisteredFieldEntry>;
   pathToRegistrationId: Map<string, string>;
+  childPathToRegistrationId: Map<string, string>;
 }
 
 export interface FormRuntimeValidationState

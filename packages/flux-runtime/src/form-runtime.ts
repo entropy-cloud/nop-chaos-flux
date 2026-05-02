@@ -74,6 +74,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     import('./form-runtime-types').RegisteredFieldEntry
   >();
   const pathToRegistrationId = new Map<string, string>();
+  const childPathToRegistrationId = new Map<string, string>();
   const validationAsyncGovernance = createAsyncGovernanceStore();
   const initialFieldState = buildInitialFieldState(
     inputValue.initialValues ?? {},
@@ -148,8 +149,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     validationAsyncGovernance,
     runtimeFieldRegistrations,
     pathToRegistrationId,
+    childPathToRegistrationId,
     hiddenFields: new Set(),
-    lifecycleState: 'active',
+    lifecycleState: inputValue.initialLifecycleState ?? 'active',
     modelGeneration: 1,
     externalErrors: new Map(),
     childContracts: new Map(),

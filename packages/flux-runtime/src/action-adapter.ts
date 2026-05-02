@@ -40,21 +40,6 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
       return { kind: 'resolved', form: ctx.form };
     }
 
-    if (ctx.componentRegistry) {
-      try {
-        const handle = ctx.componentRegistry.resolve({ componentId: formId });
-        if (handle?.capabilities?.store && typeof (handle.capabilities.store as any).getState === 'function') {
-          const store = handle.capabilities.store as any;
-          const state = store.getState();
-          if (state && 'values' in state && 'fieldStates' in state) {
-            return { kind: 'not-found', formId };
-          }
-        }
-      } catch {
-        // resolve threw, treat as not found
-      }
-    }
-
     return { kind: 'not-found', formId };
   }
 

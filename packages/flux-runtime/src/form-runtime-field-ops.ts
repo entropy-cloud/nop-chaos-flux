@@ -102,7 +102,7 @@ export function registerField(
   sharedState: ManagedFormRuntimeSharedState,
   registration: RuntimeFieldRegistration,
 ): FieldRegistrationHandle {
-  const { runtimeFieldRegistrations, pathToRegistrationId } = sharedState;
+  const { runtimeFieldRegistrations, pathToRegistrationId, childPathToRegistrationId } = sharedState;
 
   if (sharedState.lifecycleState === 'disposed') {
     return {
@@ -131,6 +131,12 @@ export function registerField(
   });
   pathToRegistrationId.set(registration.path, registrationId);
 
+  if (registration.childPaths) {
+    for (const childPath of registration.childPaths) {
+      childPathToRegistrationId.set(childPath, registrationId);
+    }
+  }
+
   return {
     accepted: true,
     registrationId,
@@ -145,6 +151,14 @@ export function registerField(
       if (pathToRegistrationId.get(registration.path) === registrationId) {
         pathToRegistrationId.delete(registration.path);
       }
+
+      if (entry.registration.childPaths) {
+        for (const childPath of entry.registration.childPaths) {
+          if (childPathToRegistrationId.get(childPath) === registrationId) {
+            childPathToRegistrationId.delete(childPath);
+          }
+        }
+      }
     },
   };
 }
@@ -154,11 +168,25 @@ export function updateFieldRegistration(
   registrationId: string,
   patch: Partial<RuntimeFieldRegistration>,
 ): void {
-  const { runtimeFieldRegistrations } = sharedState;
+  const { runtimeFieldRegistrations, childPathToRegistrationId } = sharedState;
   const entry = runtimeFieldRegistrations.get(registrationId);
   if (!entry) return;
 
   if (entry.modelGeneration !== sharedState.modelGeneration) return;
+
+  if (patch.childPaths !== undefined) {
+    const oldChildPaths = entry.registration.childPaths;
+    if (oldChildPaths) {
+      for (const childPath of oldChildPaths) {
+        if (childPathToRegistrationId.get(childPath) === registrationId) {
+          childPathToRegistrationId.delete(childPath);
+        }
+      }
+    }
+    for (const childPath of patch.childPaths) {
+      childPathToRegistrationId.set(childPath, registrationId);
+    }
+  }
 
   runtimeFieldRegistrations.set(registrationId, {
     ...entry,

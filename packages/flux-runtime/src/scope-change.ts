@@ -112,12 +112,18 @@ export function scopeChangeHitsDependencies(
     return true;
   }
 
+  const changeRootsSet = new Set(changeRoots);
+
   if (!hasMultiSegmentPath(change.paths) && !hasMultiSegmentPath(dependencies.paths)) {
-    return changeRoots.some((root) => dependencyRoots.includes(root));
+    for (const root of dependencyRoots) {
+      if (changeRootsSet.has(root)) return true;
+    }
+    return false;
   }
 
+  const sortedDeps = [...dependencies.paths].sort();
   for (const changePath of change.paths) {
-    for (const depPath of dependencies.paths) {
+    for (const depPath of sortedDeps) {
       if (pathsOverlap(changePath, depPath)) {
         return true;
       }
