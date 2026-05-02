@@ -160,6 +160,7 @@ export function stringAdapter(): ValueAdapter<unknown, string> {
 export function booleanStringAdapter(): ValueAdapter<unknown, boolean> {
   return markSyncAdapter({
     in(value) {
+      if (typeof value === 'string') return value === 'true';
       return Boolean(value);
     },
     out(value) {
@@ -231,7 +232,8 @@ export function actionAdapter(
         }
 
         return getActionResultValue(result, value);
-      } catch {
+      } catch (error) {
+        console.warn('[flux] actionAdapter.in error:', error);
         return value;
       }
     },
@@ -259,7 +261,8 @@ export function actionAdapter(
         }
 
         return getActionResultValue(result, value);
-      } catch {
+      } catch (error) {
+        console.warn('[flux] actionAdapter.out error:', error);
         return value;
       }
     },

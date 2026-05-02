@@ -83,6 +83,7 @@ export interface CompiledValidationRule {
   dependencyPaths: string[];
   precompiled?: {
     regex?: RegExp;
+    error?: string;
   };
 }
 

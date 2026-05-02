@@ -307,6 +307,7 @@ export interface ValidationScopeRuntime {
     registrationId: string,
     patch: Partial<Pick<RuntimeFieldRegistration, 'childPaths'>>,
   ): void;
+  notifyFieldHidden(path: string, hidden: boolean): void;
   touchField?(path: string): void;
   visitField?(path: string): void;
 
@@ -326,7 +327,6 @@ export interface FormRuntime extends ValidationScopeRuntime {
   readonly canSubmit: boolean;
   readonly allTouched: boolean;
   setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
-  notifyFieldHidden(path: string, hidden: boolean): void;
   validateField(path: string, reason?: ValidationReason): Promise<ValidationResult>;
   validateForm(reason?: ValidationReason): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;

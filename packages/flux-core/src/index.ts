@@ -38,6 +38,12 @@ export { reportRuntimeHostIssue } from './utils/runtime-host-reporting';
 
 export { createNamedActionProvider } from './named-action-provider';
 
+export {
+  STRICT_VALIDATION_KEY,
+  isStrictValidationEnabled,
+  setStrictValidationGlobal,
+} from './strict-mode';
+
 export type { PathBindingContext, PathBindingService } from './utils/path-binding';
 export { createPathBinding, projectBooleanMap, projectFieldStates } from './utils/path-binding';
 export type { RendererEnvDecoratorHooks } from './utils/renderer-env';

@@ -248,6 +248,7 @@ export interface RendererRuntime {
   schemaCompiler: SchemaCompiler;
   plugins: readonly RendererPlugin[];
   importStack: ImportStack;
+  strictMode: boolean;
   compile(schema: SchemaInput): CompiledTemplate;
   prepareSchema?(
     schema: SchemaInput,

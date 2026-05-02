@@ -170,6 +170,7 @@ export interface SchemaRendererProps {
   parentScope?: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  strictValidation?: boolean;
   onRuntimeChange?: (runtime: RendererRuntime | null) => void;
   onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
   onActionScopeChange?: (actionScope: ActionScope | null) => void;

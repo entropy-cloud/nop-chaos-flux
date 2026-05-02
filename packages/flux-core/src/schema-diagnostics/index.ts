@@ -87,6 +87,7 @@ export interface SchemaCompileValidationOptions {
   extensionPassthroughPolicy?: 'none' | 'namespaced-only';
   namespaceValidators?: readonly SchemaNamespaceValidator[];
   hostContractContext?: HostContractContext;
+  strictMode?: boolean;
 }
 
 export interface RendererSchemaValidationContext<S extends BaseSchema = BaseSchema> {

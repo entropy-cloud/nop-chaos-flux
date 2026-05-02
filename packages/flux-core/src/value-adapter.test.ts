@@ -27,7 +27,10 @@ describe('value-adapter', () => {
     expect(identityAdapter<number>().in(2, { readOnly: false })).toBe(2);
     expect(stringAdapter().in(null, { readOnly: false })).toBe('');
     expect(stringAdapter().out('alpha', { readOnly: false })).toBe('alpha');
-    expect(booleanStringAdapter().in('false', { readOnly: false })).toBe(true);
+    expect(booleanStringAdapter().in('false', { readOnly: false })).toBe(false);
+    expect(booleanStringAdapter().in('true', { readOnly: false })).toBe(true);
+    expect(booleanStringAdapter().in(0, { readOnly: false })).toBe(false);
+    expect(booleanStringAdapter().in(1, { readOnly: false })).toBe(true);
     expect(booleanStringAdapter().out(0 as unknown as boolean, { readOnly: false })).toBe(false);
     expect(
       await nullableAdapter(stringAdapter()).in(undefined, { readOnly: false }),
