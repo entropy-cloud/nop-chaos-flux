@@ -117,6 +117,8 @@ export function createReportDesignerCore(
   let disposed = false;
   let refreshDerivedStateController: AbortController | undefined;
   let refreshFieldSourcesController: AbortController | undefined;
+  let previewController: AbortController | undefined;
+  let previewRequestId = 0;
 
   function createOperationSignal(kind: 'refresh-derived-state' | 'refresh-field-sources') {
     if (disposed) {
@@ -149,6 +151,24 @@ export function createReportDesignerCore(
     } else {
       refreshFieldSourcesController = undefined;
     }
+  }
+
+  function startPreviewRun() {
+    previewController?.abort();
+    const controller = new AbortController();
+    previewController = controller;
+    previewRequestId += 1;
+    return { requestId: previewRequestId, signal: controller.signal };
+  }
+
+  function cancelPreviewRun() {
+    previewController?.abort();
+    previewController = undefined;
+    previewRequestId += 1;
+  }
+
+  function isCurrentPreviewRun(requestId: number) {
+    return previewRequestId === requestId;
   }
 
   async function refreshDerivedState() {
@@ -248,6 +268,9 @@ export function createReportDesignerCore(
     refreshDerivedState,
     setSelectionTarget,
     pushUndoEntry,
+    startPreviewRun,
+    cancelPreviewRun,
+    isCurrentPreviewRun,
   };
 
   async function dispatch(command: ReportDesignerCommand): Promise<ReportDesignerCommandResult> {
@@ -367,10 +390,12 @@ export function createReportDesignerCore(
       }
 
       disposed = true;
-      refreshDerivedStateController?.abort();
-      refreshFieldSourcesController?.abort();
-      refreshDerivedStateController = undefined;
-      refreshFieldSourcesController = undefined;
-    },
+        refreshDerivedStateController?.abort();
+        refreshFieldSourcesController?.abort();
+        previewController?.abort();
+        refreshDerivedStateController = undefined;
+        refreshFieldSourcesController = undefined;
+        previewController = undefined;
+      },
   };
 }

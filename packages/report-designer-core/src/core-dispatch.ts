@@ -56,6 +56,13 @@ export interface DispatchContext {
   refreshDerivedState: () => Promise<unknown>;
   setSelectionTarget: (target?: ReportSelectionTarget) => Promise<void>;
   pushUndoEntry: (current: ReportDesignerInternalState) => Partial<ReportDesignerInternalState>;
+  startPreviewRun: () => { requestId: number; signal: AbortSignal };
+  cancelPreviewRun: () => void;
+  isCurrentPreviewRun: (requestId: number) => boolean;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 export async function dispatchReportDesignerCommand(
@@ -167,6 +174,7 @@ export async function dispatchReportDesignerCommand(
       }
 
       case 'report-designer:preview': {
+        const { requestId, signal } = ctx.startPreviewRun();
         store.setState((current) => ({
           ...current,
           preview: { ...current.preview, running: true, mode: command.mode },
@@ -178,10 +186,13 @@ export async function dispatchReportDesignerCommand(
           profile,
         });
         if ('error' in previewResolution) {
-          store.setState((current) => ({
-            ...current,
-            preview: { running: false, mode: command.mode },
-          }));
+          if (ctx.isCurrentPreviewRun(requestId)) {
+            store.setState((current) => ({
+              ...current,
+              preview: { running: false, mode: command.mode },
+            }));
+            ctx.cancelPreviewRun();
+          }
           return { ok: false, changed: false, error: previewResolution.error };
         }
 
@@ -194,19 +205,29 @@ export async function dispatchReportDesignerCommand(
             profile,
             mode: command.mode,
             commandArgs: command.args,
+            signal,
           });
 
-          store.setState((current) => ({
-            ...current,
-            preview: { running: false, mode: command.mode, lastResult: result },
-          }));
+          if (ctx.isCurrentPreviewRun(requestId)) {
+            store.setState((current) => ({
+              ...current,
+              preview: { running: false, mode: command.mode, lastResult: result },
+            }));
+            ctx.cancelPreviewRun();
+          }
 
           return { ok: result.ok, changed: false, data: result.data, error: result.error };
         } catch (err) {
-          store.setState((current) => ({
-            ...current,
-            preview: { running: false, mode: command.mode },
-          }));
+          if (ctx.isCurrentPreviewRun(requestId)) {
+            store.setState((current) => ({
+              ...current,
+              preview: { running: false, mode: command.mode },
+            }));
+            ctx.cancelPreviewRun();
+          }
+          if (isAbortError(err)) {
+            return { ok: false, changed: false, error: err };
+          }
           return { ok: false, changed: false, error: err };
         }
       }
@@ -256,9 +277,10 @@ export async function dispatchReportDesignerCommand(
       }
 
       case 'report-designer:stopPreview': {
+        ctx.cancelPreviewRun();
         store.setState((current) => ({
           ...current,
-          preview: { ...current.preview, running: false },
+          preview: { ...current.preview, running: false, mode: undefined },
         }));
         return { ok: true, changed: true };
       }

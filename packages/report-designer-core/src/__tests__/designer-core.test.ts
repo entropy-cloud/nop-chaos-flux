@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { vi } from 'vitest';
+import type { PreviewResult } from '../adapters.js';
 import {
   createEmptyDocument,
   createReportDesignerCore,
@@ -257,6 +258,118 @@ describe('createReportDesignerCore', () => {
     });
 
     expect(result.ok).toBe(false);
+  });
+
+  it('keeps the latest preview result when an older preview resolves later', async () => {
+    let resolveFirst: ((value: { ok: boolean; data: unknown }) => void) | undefined;
+    let resolveSecond: ((value: { ok: boolean; data: unknown }) => void) | undefined;
+
+    const previewCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        preview: { provider: 'async-preview' },
+      },
+      adapters: {
+        previews: new Map([
+          [
+            'async-preview',
+            {
+              id: 'async-preview',
+              preview: vi
+                .fn()
+                .mockImplementationOnce(
+                  () =>
+                    new Promise((resolve) => {
+                      resolveFirst = resolve;
+                    }),
+                )
+                .mockImplementationOnce(
+                  () =>
+                    new Promise((resolve) => {
+                      resolveSecond = resolve;
+                    }),
+                ),
+            },
+          ],
+        ]),
+      },
+    });
+
+    const first = previewCore.dispatch({ type: 'report-designer:preview', mode: 'inline' });
+    const second = previewCore.dispatch({ type: 'report-designer:preview', mode: 'dialog' });
+
+    expect(previewCore.getSnapshot().preview.running).toBe(true);
+    expect(previewCore.getSnapshot().preview.mode).toBe('dialog');
+
+    resolveFirst?.({ ok: true, data: { request: 'stale' } });
+    await Promise.resolve();
+
+    expect(previewCore.getSnapshot().preview.running).toBe(true);
+    expect(previewCore.getSnapshot().preview.lastResult).toBeUndefined();
+
+    resolveSecond?.({ ok: true, data: { request: 'latest' } });
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+
+    expect(firstResult.ok).toBe(true);
+    expect(secondResult.ok).toBe(true);
+    expect(previewCore.getSnapshot().preview.running).toBe(false);
+    expect(previewCore.getSnapshot().preview.mode).toBe('dialog');
+    expect(previewCore.getSnapshot().preview.lastResult).toEqual({
+      ok: true,
+      data: { request: 'latest' },
+    });
+  });
+
+  it('aborts in-flight preview on stopPreview without letting stale completion publish', async () => {
+    let observedSignal: AbortSignal | undefined;
+    let resolvePreview: ((value: { ok: boolean; data: unknown }) => void) | undefined;
+
+    const previewCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        preview: { provider: 'abortable-preview' },
+      },
+      adapters: {
+        previews: new Map([
+          [
+            'abortable-preview',
+            {
+              id: 'abortable-preview',
+              preview: vi.fn(async ({ signal }): Promise<PreviewResult> => {
+                observedSignal = signal;
+                return new Promise((resolve, reject) => {
+                  resolvePreview = resolve as (value: { ok: boolean; data: unknown }) => void;
+                  signal?.addEventListener('abort', () => {
+                    reject(new DOMException('Aborted', 'AbortError'));
+                  });
+                });
+              }),
+            },
+          ],
+        ]),
+      },
+    });
+
+    const previewPromise = previewCore.dispatch({ type: 'report-designer:preview', mode: 'inline' });
+    await Promise.resolve();
+
+    const stopResult = await previewCore.dispatch({ type: 'report-designer:stopPreview' });
+    const previewResult = await previewPromise;
+
+    expect(stopResult.ok).toBe(true);
+    expect(observedSignal?.aborted).toBe(true);
+    expect(previewResult.ok).toBe(false);
+    expect((previewResult.error as Error).name).toBe('AbortError');
+    expect(previewCore.getSnapshot().preview.running).toBe(false);
+    expect(previewCore.getSnapshot().preview.lastResult).toBeUndefined();
+
+    resolvePreview?.({ ok: true, data: { request: 'should-not-publish' } });
+    await Promise.resolve();
+
+    expect(previewCore.getSnapshot().preview.lastResult).toBeUndefined();
   });
 
   it('should fail import when no codec configured in profile', async () => {

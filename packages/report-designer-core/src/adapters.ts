@@ -44,6 +44,7 @@ export interface PreviewAdapter {
     mode?: string;
     params?: Record<string, unknown>;
     context: ReportDesignerAdapterContext;
+    signal?: AbortSignal;
   }): Promise<PreviewResult>;
 }
 

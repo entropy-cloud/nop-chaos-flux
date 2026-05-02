@@ -38,11 +38,13 @@ export async function runPreviewCommand(args: {
   profile?: ReportDesignerProfile;
   mode?: 'inline' | 'dialog' | 'replace-page' | 'download';
   commandArgs?: Record<string, unknown>;
+  signal?: AbortSignal;
 }) {
   return args.adapter.preview({
     document: cloneDocument(args.document),
     mode: args.mode,
     params: args.commandArgs,
+    signal: args.signal,
     context: createAdapterContext({
       config: args.config,
       document: args.document,
