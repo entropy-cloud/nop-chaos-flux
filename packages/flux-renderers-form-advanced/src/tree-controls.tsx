@@ -153,7 +153,7 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const sourceError = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div data-slot="input-tree-control">
+    <div data-slot="input-tree-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
       <div data-slot="input-tree-options">
         <TreeOptionList
           options={options}
@@ -194,7 +194,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const sourceError = getSourceErrorMessage(optionsSourceState);
 
   return (
-    <div data-slot="tree-select-control">
+    <div data-slot="tree-select-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
       <Popover>
         <div className="flex items-center gap-2" data-slot="tree-select-trigger-row">
           <PopoverTrigger

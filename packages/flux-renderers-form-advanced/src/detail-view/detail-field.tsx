@@ -9,7 +9,7 @@ import {
   useScopeSelector,
   useCurrentFormState,
 } from '@nop-chaos/flux-react';
-import { Button } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import type { DetailFieldSchema } from '../composite-field/composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { t } from '@nop-chaos/flux-i18n';
@@ -189,7 +189,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
 
   return (
     <>
-      <div data-slot="field-control">
+      <div className={cn('nop-detail-field')} data-slot="field-control">
         <div data-slot="detail-field-viewer">
           {viewerContent ?? (
             <span>

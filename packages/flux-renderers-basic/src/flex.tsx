@@ -30,7 +30,6 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
     <div
       className={cn(
         'nop-flex',
-        'flex',
         resolveDirection(direction),
         wrap && 'flex-wrap',
         align === 'center' && 'items-center',

@@ -69,8 +69,8 @@ describe('data package units', () => {
     fireEvent.change(document.querySelector('[data-slot="native-select"]')!, {
       target: { value: '50' },
     });
-    fireEvent.click(screen.getByText('Collapse'));
-    fireEvent.click(screen.getByText('Expand'));
+    fireEvent.click(screen.getByText('Previous'));
+    fireEvent.click(screen.getByText('Next'));
 
     expect(onPageSizeChange).toHaveBeenCalledWith(50);
     expect(onPageChange).toHaveBeenCalledWith(1);

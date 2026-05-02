@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { useCurrentFormFieldState, useCurrentFormModelGeneration } from '@nop-chaos/flux-react';
-import { Button } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   resolveFieldLabelText,
@@ -68,7 +68,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   }, [currentForm, labelText, modelGeneration, name]);
 
   return (
-    <div className="flex flex-wrap gap-2.5" data-slot="field-control">
+    <div className={cn('nop-tag-list', 'flex flex-wrap gap-2.5')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
       {tags.map((tag) => {
         const active = value.includes(tag);
 

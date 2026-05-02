@@ -28,6 +28,9 @@ export const enUS: Resource = {
       rowsPerPage: 'Rows per page:',
       page: 'Page {{current}} of {{total}}',
       goto: 'Go to',
+      total: 'Total {{count}}',
+      previous: 'Previous',
+      next: 'Next',
     },
     table: {
       columns: 'Columns',
@@ -231,6 +234,7 @@ export const enUS: Resource = {
       latestApi: 'Latest API',
       latestTrace: 'Latest trace',
       renders: 'Renders',
+      strictValidation: 'Strict Validation',
       network: 'Network: ',
       data: 'Data: ',
       noDetailedData: 'No detailed data available.',

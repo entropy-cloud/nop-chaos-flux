@@ -15,7 +15,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Input } from '@nop-chaos/ui';
+import { Button, Input, cn } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   getChildFieldUiState,
@@ -333,7 +333,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   }, [childPaths, currentForm, modelGeneration, name]);
 
   return (
-    <div className="grid gap-3" data-slot="field-control">
+    <div className={cn('nop-key-value', 'grid gap-3')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
       {pairs.map((pair, index) => {
         return (
           <KeyValueRow

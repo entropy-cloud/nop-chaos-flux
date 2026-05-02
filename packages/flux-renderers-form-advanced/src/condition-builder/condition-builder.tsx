@@ -9,7 +9,7 @@ import type {
 import { useCurrentFormModelGeneration, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { formLabelFieldRule, useFormFieldController } from '@nop-chaos/flux-renderers-form';
-import { Button, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
+import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import type {
   ConditionBuilderSchema,
@@ -107,7 +107,7 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
   }
 
   return (
-    <div className="nop-condition-builder">
+    <div className={cn('nop-condition-builder')}>
       <ConditionGroup
         value={effectiveValue}
         schema={schemaProps}
@@ -139,7 +139,7 @@ function PickerModeContent({
   const hasConditions = value.children.length > 0;
 
   return (
-    <div className="nop-condition-builder">
+    <div className={cn('nop-condition-builder')}>
       <Popover>
         <PopoverTrigger
           render={

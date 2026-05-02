@@ -14,7 +14,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Input } from '@nop-chaos/ui';
+import { Button, Input, cn } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   getChildFieldUiState,
@@ -255,7 +255,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
 
   return (
-    <div className="grid gap-3" data-slot="field-control">
+    <div className={cn('nop-array-editor', 'grid gap-3')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
       {items.map((item, index) => {
         return (
           <ArrayEditorRow

@@ -18,7 +18,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime';
@@ -341,7 +341,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   }, [itemKind, modelGeneration, name, parentForm, scalarChildPaths, scalarItemField]);
 
   return (
-    <div data-slot="field-control">
+    <div className={cn('nop-array-field')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
       <div data-slot="array-field-body">
         {itemEntries.map(({ item, index, itemIdentity, itemInstancePath }) => {
           return (

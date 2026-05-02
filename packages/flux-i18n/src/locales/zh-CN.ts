@@ -28,6 +28,9 @@ export const zhCN: Resource = {
       rowsPerPage: '每页行数:',
       page: '第 {{current}} 页，共 {{total}} 页',
       goto: '跳至',
+      total: '共 {{count}} 条',
+      previous: '上一页',
+      next: '下一页',
     },
     table: {
       columns: '列设置',
@@ -230,6 +233,7 @@ export const zhCN: Resource = {
       latestApi: '最近 API',
       latestTrace: '最近追踪',
       renders: '渲染次数',
+      strictValidation: '严格校验',
       network: '网络: ',
       data: '数据: ',
       noDetailedData: '无详细数据。',

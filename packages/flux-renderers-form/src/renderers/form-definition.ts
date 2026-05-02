@@ -230,6 +230,8 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'mode', kind: 'prop' },
     { key: 'labelAlign', kind: 'prop' },
     { key: 'labelWidth', kind: 'prop' },
+    { key: 'bodyClassName', kind: 'prop' },
+    { key: 'actionsClassName', kind: 'prop' },
   ],
   scopePolicy: 'form',
   componentRegistryPolicy: 'new',

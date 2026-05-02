@@ -5,7 +5,6 @@ import {
   type AdapterContext,
   type CompiledValidationBehavior,
   type FormFieldStateSnapshot,
-  type FormRuntime,
   type RendererComponentProps,
   type SchemaFieldRule,
   type ValidationScopeRuntime,
@@ -488,14 +487,14 @@ export function useHiddenFieldPolicy(name: string, hidden: boolean) {
   const hiddenOwner = currentForm ?? currentValidationScope;
 
   useEffect(() => {
-    if (!hiddenOwner || !name || !('notifyFieldHidden' in hiddenOwner)) {
+    if (!hiddenOwner || !name) {
       return;
     }
 
-    (hiddenOwner as FormRuntime).notifyFieldHidden(name, hidden);
+    hiddenOwner.notifyFieldHidden(name, hidden);
 
     return () => {
-      (hiddenOwner as FormRuntime).notifyFieldHidden(name, false);
+      hiddenOwner.notifyFieldHidden(name, false);
     };
   }, [hiddenOwner, name, hidden]);
 }

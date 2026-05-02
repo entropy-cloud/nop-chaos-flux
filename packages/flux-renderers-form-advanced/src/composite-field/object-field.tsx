@@ -16,6 +16,7 @@ import {
 } from '@nop-chaos/flux-react';
 import type { ObjectFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
+import { cn } from '@nop-chaos/ui';
 import { createProjectedInlineForm } from './projected-inline-form';
 import { createProjectedOwnerScope } from '../projected-owner-scope';
 
@@ -374,7 +375,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   }, [name, parentForm, pendingTransformOutOwner, schemaProps.transformOutAction]);
 
   return (
-    <div data-slot="field-control">
+    <div className={cn('nop-object-field')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
       <FormContext.Provider value={childForm ?? undefined}>
         <ScopeContext.Provider value={childScope}>
           <div data-slot="object-field-body">{bodyContent}</div>
