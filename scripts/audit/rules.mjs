@@ -103,6 +103,21 @@ function shouldIgnoreAsyncFailure(relativePath, lineText, content, line) {
   return false;
 }
 
+function shouldIgnoreTestGlobalPatch(lineText, content) {
+  const trimmed = lineText.trim();
+
+  if (trimmed.includes('window.__NOP_DEBUGGER__')) {
+    if (
+      content.includes('delete window.__NOP_DEBUGGER__') ||
+      content.includes('vi.unstubAllGlobals()')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function scanMissingRendererMarkers({ rule, relativePath, content }) {
   if (!content.includes('RendererComponentProps')) {
     return [];
@@ -195,6 +210,9 @@ export const testLeakRules = [
       /\bglobalThis\.[A-Za-z_$][\w$]*\s*=(?!=)\s*/g,
       /\bwindow\.[A-Za-z_$][\w$]*\s*=(?!=)\s*/g,
     ],
+    filterMatch: ({ lineText, content }) => {
+      return !shouldIgnoreTestGlobalPatch(lineText, content);
+    },
   },
 ];
 
