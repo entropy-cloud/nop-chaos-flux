@@ -2,10 +2,28 @@ import ELK from 'elkjs/lib/elk.bundled.js';
 import type { GraphNode, GraphEdge, NodeTypeConfig } from './types';
 
 const elk = new ELK();
-let layoutRequestId = 0;
 
-export function invalidateElkLayoutRequests() {
-  layoutRequestId += 1;
+export interface ElkLayoutOwner {
+  nextRequestId(): number;
+  isActive(requestId: number): boolean;
+  invalidate(): void;
+}
+
+export function createElkLayoutOwner(): ElkLayoutOwner {
+  let requestId = 0;
+
+  return {
+    nextRequestId() {
+      requestId += 1;
+      return requestId;
+    },
+    isActive(activeRequestId) {
+      return activeRequestId === requestId;
+    },
+    invalidate() {
+      requestId += 1;
+    },
+  };
 }
 
 export interface ElkLayoutOptions {
@@ -19,8 +37,9 @@ export async function layoutWithElk(
   edges: GraphEdge[],
   nodeTypes?: Map<string, NodeTypeConfig>,
   options?: ElkLayoutOptions,
+  owner?: ElkLayoutOwner,
 ): Promise<Map<string, { x: number; y: number }>> {
-  const requestId = ++layoutRequestId;
+  const requestId = owner?.nextRequestId();
   const direction = options?.direction ?? 'RIGHT';
   const nodeSpacing = options?.nodeSpacing ?? 60;
   const layerSpacing = options?.layerSpacing ?? 120;
@@ -57,7 +76,7 @@ export async function layoutWithElk(
 
   const layouted = await elk.layout(graph);
 
-  if (requestId !== layoutRequestId) {
+  if (requestId !== undefined && owner && !owner.isActive(requestId)) {
     return new Map();
   }
 

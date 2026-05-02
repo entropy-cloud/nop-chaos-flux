@@ -1,5 +1,6 @@
 import type { GraphNode, GraphEdge, TreeConfig, NodeTypeConfig } from './types';
 import { layoutWithElk } from './elk-layout';
+import type { ElkLayoutOwner } from './elk-layout';
 
 export function simpleTreeLayout(
   nodes: GraphNode[],
@@ -134,6 +135,7 @@ export async function layoutTreeWithElk(
   edges: GraphEdge[],
   treeConfig: TreeConfig,
   nodeTypes?: Map<string, NodeTypeConfig>,
+  owner?: ElkLayoutOwner,
 ): Promise<GraphNode[]> {
   if (nodes.length === 0) return nodes;
 
@@ -143,7 +145,7 @@ export async function layoutTreeWithElk(
     direction,
     nodeSpacing: treeConfig.layout.nodeSpacing,
     layerSpacing: treeConfig.layout.layerSpacing,
-  });
+  }, owner);
 
   return nodes.map((node) => {
     const pos = positions.get(node.id);

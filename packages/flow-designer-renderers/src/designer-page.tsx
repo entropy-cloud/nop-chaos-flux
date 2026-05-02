@@ -10,7 +10,6 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
-import { invalidateElkLayoutRequests } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 import {
   Button,
@@ -274,12 +273,6 @@ function DesignerPageBody({
     },
     [actionScope, designerScope, props.helpers],
   );
-
-  useEffect(() => {
-    return () => {
-      invalidateElkLayoutRequests();
-    };
-  }, []);
 
   useEffect(() => {
     if (!statusPath) {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { fireEvent, render, waitFor, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFormulaCompiler } from '../../flux-formula/src/index';
 import { createSchemaRenderer } from '../../flux-react/src/index';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
@@ -46,7 +46,6 @@ vi.mock('./canvas-bridge', async () => {
 });
 
 import { flowDesignerRendererDefinitions } from './index';
-import { invalidateElkLayoutRequests } from '@nop-chaos/flow-designer-core';
 
 const SchemaRenderer = createSchemaRenderer([
   ...flowDesignerRendererDefinitions,
@@ -95,10 +94,6 @@ function renderDesignerPage(document: GraphDocument) {
 describe('DesignerPage auto layout guards', () => {
   beforeEach(() => {
     layoutResolvers = [];
-  });
-
-  afterEach(() => {
-    invalidateElkLayoutRequests();
   });
 
   it('ignores stale auto-layout results after switching documents', async () => {
@@ -171,5 +166,43 @@ describe('DesignerPage auto layout guards', () => {
     await Promise.resolve();
 
     expect(true).toBe(true);
+  });
+
+  it('keeps sibling layout requests active across instance cleanup', async () => {
+    const first = renderDesignerPage({
+      id: 'doc-1',
+      kind: 'flow',
+      name: 'First',
+      version: '1.0.0',
+      nodes: [{ id: 'node-1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task 1' } }],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 },
+    });
+    const second = renderDesignerPage({
+      id: 'doc-2',
+      kind: 'flow',
+      name: 'Second',
+      version: '1.0.0',
+      nodes: [{ id: 'node-2', type: 'task', position: { x: 10, y: 10 }, data: { label: 'Task 2' } }],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 },
+    });
+
+    fireEvent.click(within(first.container).getByRole('button', { name: 'Auto layout' }));
+    fireEvent.click(within(second.container).getByRole('button', { name: 'Auto layout' }));
+
+    await waitFor(() => {
+      expect(layoutResolvers).toHaveLength(2);
+    });
+
+    first.unmount();
+    layoutResolvers[1]?.(new Map([['node-2', { x: 200, y: 120 }]]));
+    await Promise.resolve();
+
+    await waitFor(() => {
+      expect(within(second.container).getByTestId('node-pos').textContent).toBe('200,120');
+    });
+
+    second.unmount();
   });
 });

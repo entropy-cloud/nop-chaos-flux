@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { layoutTreeWithElk, layoutWithElk } from '@nop-chaos/flow-designer-core';
+import {
+  createElkLayoutOwner,
+  layoutTreeWithElk,
+  layoutWithElk,
+} from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import type { createDesignerCore } from '@nop-chaos/flow-designer-core';
 
@@ -9,6 +13,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
   const [layoutBusy, setLayoutBusy] = useState(false);
   const layoutRequestRef = useRef(0);
   const initialTreeAutolayoutDoneRef = useRef(false);
+  const elkOwnerRef = useRef(createElkLayoutOwner());
 
   const handleAutoLayout = useCallback(async () => {
     const requestId = layoutRequestRef.current + 1;
@@ -34,6 +39,7 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
           doc.edges,
           treeConfig,
           normalizedCfg.nodeTypes,
+          elkOwnerRef.current,
         );
         if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
           return;
@@ -43,7 +49,13 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         return;
       }
 
-      const positions = await layoutWithElk(doc.nodes, doc.edges, core.getConfig().nodeTypes);
+      const positions = await layoutWithElk(
+        doc.nodes,
+        doc.edges,
+        core.getConfig().nodeTypes,
+        undefined,
+        elkOwnerRef.current,
+      );
       if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
         return;
       }
@@ -77,7 +89,13 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
     layoutRequestRef.current = requestId;
     setLayoutBusy(true);
 
-    void layoutTreeWithElk(doc.nodes, doc.edges, treeConfig, normalizedCfg.nodeTypes)
+    void layoutTreeWithElk(
+      doc.nodes,
+      doc.edges,
+      treeConfig,
+      normalizedCfg.nodeTypes,
+      elkOwnerRef.current,
+    )
       .then((layoutedNodes) => {
         if (layoutRequestRef.current !== requestId || core.getDocument() !== doc) {
           return;
@@ -95,6 +113,14 @@ export function useDesignerAutoLayout(core: DesignerCoreLike, config: DesignerCo
         }
       });
   }, [config.documentMode, core]);
+
+  useEffect(() => {
+    const elkOwner = elkOwnerRef.current;
+
+    return () => {
+      elkOwner.invalidate();
+    };
+  }, []);
 
   return {
     layoutBusy,
