@@ -1,10 +1,14 @@
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import React from 'react';
+import type { BaseSchema, RendererComponentProps, RendererResolvedProps } from '@nop-chaos/flux-core';
 import type { RendererDefinition } from './react-contracts';
 
-export function createAutoRendererComponent(
-  ReactComponent: React.ComponentType<Record<string, unknown>>,
-): React.ComponentType<RendererComponentProps> {
-  return function AutoRenderer(props: RendererComponentProps) {
+export function createAutoRendererComponent<
+  S extends BaseSchema = BaseSchema,
+  P extends Record<string, unknown> = RendererResolvedProps<S>,
+>(
+  ReactComponent: React.ComponentType<Readonly<P>>,
+): (props: RendererComponentProps<S, P>) => React.ReactElement | null {
+  return function AutoRenderer(props: RendererComponentProps<S, P>) {
     const uiProps: Record<string, unknown> = { ...props.props };
 
     for (const [key, handler] of Object.entries(props.events)) {
@@ -13,27 +17,27 @@ export function createAutoRendererComponent(
       }
     }
 
-    return (
-      <ReactComponent
-        {...uiProps}
-        disabled={props.meta.disabled}
-        className={props.meta.className}
-        data-testid={props.meta.testid || undefined}
-        data-cid={props.meta.cid || undefined}
-      />
-    );
+    return React.createElement(ReactComponent, {
+      ...(uiProps as P),
+      disabled: props.meta.disabled,
+      className: props.meta.className,
+      'data-testid': props.meta.testid || undefined,
+      'data-cid': props.meta.cid || undefined,
+    } as P);
   };
 }
 
-export function ensureRendererComponent(definition: RendererDefinition): RendererDefinition {
+export function ensureRendererComponent<S extends BaseSchema, P extends Record<string, unknown>>(
+  definition: RendererDefinition<S, P>,
+): RendererDefinition<S, P> {
   if (definition.component) {
     return definition;
   }
 
-  const reactComponent = definition.reactComponent as React.ComponentType<Record<string, unknown>>;
+  const reactComponent = definition.reactComponent as React.ComponentType<Readonly<P>>;
 
   return {
     ...definition,
-    component: createAutoRendererComponent(reactComponent) as RendererDefinition['component'],
+    component: createAutoRendererComponent<S, P>(reactComponent),
   };
 }

@@ -143,7 +143,7 @@ function PollingSource(props: RendererComponentProps<DataSourceSchema>) {
 
 export const pollingSourceRenderer: RendererDefinition = {
   type: 'polling-source',
-  component: PollingSource,
+  component: PollingSource as RendererDefinition['component'],
 };
 
 export const cidProbeRenderer: RendererDefinition = {

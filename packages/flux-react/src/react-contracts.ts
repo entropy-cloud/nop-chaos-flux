@@ -4,16 +4,20 @@ import type {
   RenderRegionHandle as CoreRenderRegionHandle,
   RendererDefinition as CoreRendererDefinition,
   RendererHelpers as CoreRendererHelpers,
+  RendererResolvedProps,
   SchemaRendererProps,
   StructuralLoopRenderContext as CoreStructuralLoopRenderContext,
 } from '@nop-chaos/flux-core';
 
 export type RendererHelpers = CoreRendererHelpers;
-export type RenderRegionHandle = CoreRenderRegionHandle;
+export type RenderOutput = ReactElement | null;
+export type RenderRegionHandle = CoreRenderRegionHandle<RenderOutput>;
 export type StructuralLoopRenderContext = CoreStructuralLoopRenderContext;
-export interface RendererDefinition<S extends BaseSchema = BaseSchema>
-  extends CoreRendererDefinition<S> {
-  reactComponent?: (props: Record<string, unknown>) => ReactElement | null;
+export interface RendererDefinition<
+  S extends BaseSchema = BaseSchema,
+  P extends Record<string, unknown> = RendererResolvedProps<S>,
+> extends CoreRendererDefinition<S, P> {
+  reactComponent?: (props: Readonly<P>) => ReactElement | null;
 }
 
 export type SchemaRendererComponent = (props: SchemaRendererProps) => ReactElement | null;

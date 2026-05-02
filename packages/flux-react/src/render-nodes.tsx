@@ -6,6 +6,7 @@ import type {
   RenderFragmentOptions,
   RenderNodeInput,
   RendererComponentProps,
+  RendererResolvedProps,
   RendererRuntime,
   ScopeRef,
   TemplateNode,
@@ -39,8 +40,8 @@ import { NodeRenderer } from './node-renderer';
  */
 export function useSchemaProps<S extends BaseSchema>(
   props: RendererComponentProps<S>,
-): Readonly<S> {
-  return props.props as unknown as Readonly<S>;
+): Readonly<RendererResolvedProps<S>> {
+  return props.props;
 }
 
 function getOwnerTemplatePath(input: {
