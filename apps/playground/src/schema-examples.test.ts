@@ -10,13 +10,15 @@ import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-ad
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 
 function extractJsonExample(markdown: string) {
-  const match = markdown.match(/```json\s*([\s\S]*?)```/);
+  const match = markdown.match(/```jsonc?\s*([\s\S]*?)```/);
 
   if (!match) {
-    throw new Error('Expected a fenced json example in the markdown document.');
+    throw new Error('Expected a fenced json/jsonc example in the markdown document.');
   }
 
-  return JSON.parse(match[1]);
+  const raw = match[1].replace(/,\s*([}\]])/g, '$1');
+
+  return JSON.parse(raw);
 }
 
 describe('docs schema examples', () => {
@@ -29,6 +31,32 @@ describe('docs schema examples', () => {
 
     const markdown = readFileSync(
       resolve(process.cwd(), '../../docs/examples/user-management-schema.md'),
+      'utf8',
+    );
+    const schema = extractJsonExample(markdown);
+    const diagnostics = validateSchema({
+      schema,
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+      options: {
+        validation: {
+          unknownBarePropertyPolicy: 'error',
+        },
+      },
+    });
+
+    expect(diagnostics).toEqual([]);
+  });
+
+  it('validate the README 30-second example with strict unknown-property policy', () => {
+    const registry = createRendererRegistry();
+    registerBasicRenderers(registry);
+    registerFormRenderers(registry);
+    registerFormAdvancedRenderers(registry);
+    registerDataRenderers(registry);
+
+    const markdown = readFileSync(
+      resolve(process.cwd(), '../../README.md'),
       'utf8',
     );
     const schema = extractJsonExample(markdown);

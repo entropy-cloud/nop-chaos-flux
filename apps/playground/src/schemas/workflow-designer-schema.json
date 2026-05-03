@@ -166,12 +166,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${data.label}",
+                      "body": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${data.config.trigger}",
+                      "body": "${trigger}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -255,12 +255,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${data.label}",
+                      "body": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${data.config.result}",
+                      "body": "${result}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -342,12 +342,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${data.label}",
+                      "body": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${data.description}",
+                      "body": "${description}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -431,12 +431,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${data.label}",
+                      "body": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${data.config.expression}",
+                      "body": "${expression}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -509,12 +509,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${data.label}",
+                      "body": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "${data.config.branches} 分支",
+                      "body": "${branches} 分支",
                       "className": "node-subtitle"
                     }
                   ]
@@ -586,12 +586,12 @@
                   "body": [
                     {
                       "type": "text",
-                      "body": "${data.label}",
+                      "body": "${label}",
                       "className": "node-title"
                     },
                     {
                       "type": "text",
-                      "body": "×${data.config.limit} / ${data.config.interval}",
+                      "body": "×${limit} / ${interval}",
                       "className": "node-subtitle"
                     }
                   ]
@@ -646,7 +646,7 @@
         "label": "默认边",
         "body": {
           "type": "text",
-          "body": "${data.condition}",
+          "body": "${condition}",
           "className": "text-sm font-medium text-gray-600"
         },
         "appearance": {
@@ -704,21 +704,21 @@
     "toolbar": {
       "items": [
         { "type": "back", "label": "返回", "action": "designer:navigate-back" },
-        { "type": "title", "body": "${doc.name}" },
+        { "type": "title", "body": "{{doc.name}}" },
         {
           "type": "badge",
-          "level": "${isDirty ? 'warning' : 'success'}",
-          "text": "${isDirty ? '未保存' : '已保存'}"
+          "level": "isDirty ? 'warning' : 'success'",
+          "text": "isDirty ? '未保存' : '已保存'"
         },
         { "type": "divider" },
-        { "type": "text", "body": "${doc.nodes.length} 节点 · ${doc.edges.length} 边" },
+        { "type": "text", "body": "{{doc.nodes.length}} 节点 · {{doc.edges.length}} 边" },
         { "type": "divider" },
         {
           "type": "switch",
           "action": "designer:toggle-grid",
           "icon": "grid-3x3",
           "label": "网格",
-          "active": "${gridEnabled}"
+          "active": "gridEnabled"
         },
         {
           "type": "button",
@@ -731,21 +731,21 @@
           "action": "designer:undo",
           "icon": "rotate-ccw",
           "label": "撤销",
-          "disabled": "${!canUndo}"
+          "disabled": "!canUndo"
         },
         {
           "type": "button",
           "action": "designer:redo",
           "icon": "rotate-cw",
           "label": "重做",
-          "disabled": "${!canRedo}"
+          "disabled": "!canRedo"
         },
         {
           "type": "button",
           "action": "designer:restore",
           "icon": "download",
           "label": "恢复",
-          "disabled": "${!isDirty}"
+          "disabled": "!isDirty"
         },
         { "type": "button", "action": "designer:export", "icon": "file-json", "label": "JSON" },
         { "type": "spacer" },
@@ -755,7 +755,7 @@
           "icon": "save",
           "label": "保存",
           "variant": "default",
-          "disabled": "${!isDirty}"
+          "disabled": "!isDirty"
         }
       ]
     },

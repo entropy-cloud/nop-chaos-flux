@@ -10,7 +10,7 @@ const rootDir = path.join(__dirname, '..');
 const workspaceImportPattern = /from\s+['"](@nop-chaos\/[^'"]+)['"]|import\s*\(['"](@nop-chaos\/[^'"]+)['"]\)/g;
 
 async function getTrackedFiles() {
-  const { stdout } = await execFileAsync('git', ['ls-files', 'packages/*/src/**/*.test.ts', 'packages/*/src/**/*.test.tsx'], {
+  const { stdout } = await execFileAsync('git', ['ls-files', 'packages/*/src/**/*.ts', 'packages/*/src/**/*.tsx'], {
     cwd: rootDir,
     maxBuffer: 10 * 1024 * 1024,
   });
@@ -18,7 +18,26 @@ async function getTrackedFiles() {
   return stdout
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((filePath) => {
+      if (!filePath.startsWith('packages/')) {
+        return false;
+      }
+
+      if (!filePath.includes('/src/')) {
+        return false;
+      }
+
+      if (filePath.includes('/dist/')) {
+        return false;
+      }
+
+      if (filePath.endsWith('.d.ts')) {
+        return false;
+      }
+
+      return true;
+    });
 }
 
 function owningPackagePath(filePath) {
@@ -91,14 +110,14 @@ async function main() {
   }
 
   if (problems.length > 0) {
-    console.error('[check-workspace-manifest-deps] ERROR: undeclared workspace imports found in package test sources:');
+    console.error('[check-workspace-manifest-deps] ERROR: undeclared workspace imports found in package sources:');
     for (const problem of problems) {
       console.error(`  - ${problem.filePath}: ${problem.specifier} missing from ${problem.packagePath}/package.json`);
     }
     process.exit(1);
   }
 
-  console.log('[check-workspace-manifest-deps] All package test-source workspace imports are declared in local manifests');
+  console.log('[check-workspace-manifest-deps] All package source workspace imports are declared in local manifests');
 }
 
 main().catch((error) => {

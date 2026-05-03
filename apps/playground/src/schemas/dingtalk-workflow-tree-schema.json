@@ -109,7 +109,7 @@
               "className": "nop-dt-node__header",
               "items": [
                 { "type": "icon", "icon": "user", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
               ]
             },
             { "type": "text", "body": "所有人", "className": "nop-dt-node__subtitle" }
@@ -133,12 +133,12 @@
               "className": "nop-dt-node__header",
               "items": [
                 { "type": "icon", "icon": "user-check", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
               ]
             },
             {
               "type": "text",
-              "body": "${data.examineMode === 1 ? '依次审批' : data.examineMode === 2 ? '会签' : data.examineMode === 3 ? '或签' : '审批'}",
+              "body": "${examineMode === 1 ? '依次审批' : examineMode === 2 ? '会签' : examineMode === 3 ? '或签' : '审批'}",
               "className": "nop-dt-node__subtitle"
             }
           ]
@@ -189,7 +189,7 @@
               "className": "nop-dt-node__header",
               "items": [
                 { "type": "icon", "icon": "mail", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
               ]
             },
             { "type": "text", "body": "抄送给相关人员", "className": "nop-dt-node__subtitle" }
@@ -211,9 +211,7 @@
             {
               "type": "flex",
               "className": "nop-dt-node__header",
-              "items": [
-                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
-              ]
+              "items": [{ "type": "text", "body": "${label}", "className": "nop-dt-node__title" }]
             },
             { "type": "text", "body": "排他分支", "className": "nop-dt-node__description" }
           ]
@@ -259,7 +257,7 @@
               "className": "nop-dt-node__header",
               "items": [
                 { "type": "icon", "icon": "git-merge", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
               ]
             },
             { "type": "text", "body": "同时执行多个分支", "className": "nop-dt-node__subtitle" }
@@ -289,10 +287,10 @@
               "className": "nop-dt-node__header",
               "items": [
                 { "type": "icon", "icon": "layers", "className": "nop-dt-node__icon" },
-                { "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }
+                { "type": "text", "body": "${label}", "className": "nop-dt-node__title" }
               ]
             },
-            { "type": "text", "body": "${data.callProcess}", "className": "nop-dt-node__subtitle" }
+            { "type": "text", "body": "${callProcess}", "className": "nop-dt-node__subtitle" }
           ]
         },
         "appearance": { "minWidth": 200, "minHeight": 80 },
@@ -321,7 +319,7 @@
           "justifyContent": "center",
           "alignItems": "center",
           "className": "nop-dt-node nop-dt-node--end",
-          "items": [{ "type": "text", "body": "${data.label}", "className": "nop-dt-node__title" }]
+          "items": [{ "type": "text", "body": "${label}", "className": "nop-dt-node__title" }]
         },
         "appearance": { "minWidth": 120, "minHeight": 40 },
         "tree": { "allowChild": false, "allowBranches": false, "isTerminal": true }

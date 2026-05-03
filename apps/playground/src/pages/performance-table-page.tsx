@@ -33,7 +33,7 @@ const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();
 
 export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
-  const [mode, setMode] = useState<PerformanceMode>('full-stress');
+  const [mode, setMode] = useState<PerformanceMode>('table-only');
   const [perfRows, setPerfRows] = useState<PerfRow[]>(() => createRows(1000));
   const [metrics, setMetrics] = useState<RenderMetrics>(INITIAL_METRICS);
   const [batchSummary, setBatchSummary] = useState<BatchRunSummary | null>(null);
@@ -88,7 +88,6 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
       lastCommitAt: Date.now(),
     };
     metricsRef.current = next;
-    setMetrics(next);
   };
 
   async function runHostBatch(label: string, steps: number) {
@@ -256,6 +255,7 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
         <div className="mt-8 p-6 rounded-[20px] bg-[var(--nop-playground-stage-bg)] border border-[var(--nop-playground-stage-border)] overflow-x-auto">
           <Profiler id="performance-table-page" onRender={handleProfilerRender}>
             <SchemaRenderer
+              key={mode}
               schemaUrl={`playground://pages/performance-table/${mode}`}
               schema={schema}
               data={data}

@@ -129,7 +129,7 @@
               "className": "nop-af-node__header",
               "items": [
                 { "type": "icon", "icon": "play", "className": "nop-af-node__icon" },
-                { "type": "text", "body": "${data.label}", "className": "nop-af-node__title" }
+                { "type": "text", "body": "${label}", "className": "nop-af-node__title" }
               ]
             },
             {
@@ -157,7 +157,7 @@
               "className": "nop-af-node__header",
               "items": [
                 { "type": "icon", "icon": "zap", "className": "nop-af-node__icon" },
-                { "type": "text", "body": "${data.label}", "className": "nop-af-node__title" }
+                { "type": "text", "body": "${label}", "className": "nop-af-node__title" }
               ]
             },
             {
@@ -168,17 +168,17 @@
               "items": [
                 {
                   "type": "text",
-                  "body": "${data.action}",
+                  "body": "${action}",
                   "className": "nop-af-node__subtitle"
                 },
                 {
                   "type": "text",
-                  "body": "${data.when}",
+                  "body": "${when}",
                   "className": "nop-af-node__meta nop-af-node__meta--when"
                 },
                 {
                   "type": "text",
-                  "body": "${data.timeout}",
+                  "body": "${timeout}",
                   "className": "nop-af-node__meta nop-af-node__meta--timeout"
                 }
               ]
@@ -219,7 +219,7 @@
         "body": {
           "type": "flex",
           "className": "nop-af-node nop-af-node--end",
-          "items": [{ "type": "text", "body": "${data.label}", "className": "nop-af-node__title" }]
+          "items": [{ "type": "text", "body": "${label}", "className": "nop-af-node__title" }]
         },
         "appearance": { "minWidth": 80, "minHeight": 60 },
         "tree": { "allowChild": false, "allowBranches": false, "isTerminal": true }

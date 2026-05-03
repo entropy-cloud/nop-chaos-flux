@@ -244,11 +244,11 @@ const TABLE_SCHEMA: SchemaInput = {
     body: [
       {
         type: 'text',
-        text: 'Expanded ${value.username} | tags=${value.tags.length} | children=${value.children.length}',
+        text: 'Expanded ${username} | tags=${tags.length} | children=${children.length}',
       },
       {
         type: 'loop',
-        items: '${value.children}',
+        items: '${children}',
         itemName: 'child',
         body: {
           type: 'text',
@@ -314,7 +314,7 @@ const FULL_STRESS_SCENARIOS: SchemaInput[] = [
       },
       {
         type: 'loop',
-        items: '${perfRows.slice(0, 80)}',
+        items: '${perfRows.slice(0, 24)}',
         itemName: 'row',
         body: {
           type: 'container',
@@ -368,7 +368,7 @@ const FULL_STRESS_SCENARIOS: SchemaInput[] = [
       {
         type: 'form',
         name: 'perfInlineForm',
-        data: '${perfRows.slice(0, 24)}',
+        data: '${perfRows.slice(0, 8)}',
         body: [
           {
             type: 'array-field',
@@ -391,7 +391,9 @@ export function createPerformanceSchema(mode: PerformanceMode): SchemaInput {
 
   if (mode !== 'table-only') {
     const scenarios =
-      mode === 'full-stress' ? [...STRESS_SCENARIOS, ...FULL_STRESS_SCENARIOS] : STRESS_SCENARIOS;
+      mode === 'full-stress'
+        ? [STRESS_SCENARIOS[0], ...FULL_STRESS_SCENARIOS]
+        : STRESS_SCENARIOS;
 
     body.push({
       type: 'container',

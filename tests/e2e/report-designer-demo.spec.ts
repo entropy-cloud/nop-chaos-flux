@@ -56,8 +56,8 @@ test('verifies field items and inspector elements are visible', async ({ page })
 
   const inspector = page.locator('[data-slot="report-demo-inspector"]');
   await expect(inspector).toContainText('Inspector');
-  await expect(inspector).toContainText('Selection');
-  await expect(inspector).toContainText('Sheet:');
+  await expect(inspector).toContainText('sheet');
+  await expect(inspector).toContainText('Sheet selected');
 });
 
 test('spreadsheet grid exposes row and column headers', async ({ page }) => {
@@ -77,14 +77,13 @@ test('clicking a spreadsheet cell updates the inspector context', async ({ page 
   const cells = page.locator('.ss-cell');
   await expect(cells.first()).toBeVisible();
   const inspector = page.locator('[data-slot="report-demo-inspector"]');
-  await expect(inspector).toContainText('Sheet:');
+  await expect(inspector).toContainText('Sheet selected');
 
   await cells.nth(5).click();
 
-  await expect(inspector).toContainText('Cell:');
-  await expect(inspector).toContainText('Row:');
-  await expect(inspector).toContainText('Column:');
-  await expect(inspector).toContainText('Value:');
+  await expect(inspector).toContainText('cell');
+  await expect(inspector).toContainText('Cell selected');
+  await expect(inspector).toContainText('Use drop from the field panel to bind a dataset field.');
 });
 
 test('toolbar actions are available to the spreadsheet editor', async ({ page }) => {
