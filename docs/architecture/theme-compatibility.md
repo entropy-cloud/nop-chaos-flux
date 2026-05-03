@@ -234,6 +234,12 @@ That means:
 - `apps/playground/src/styles.css` may style home page, cards, and documentation-like shells
 - reusable renderer visuals must live with the package or in a shared style entry
 
+Current live baseline for in-scope workbench packages:
+
+- `apps/playground/src/styles.css` consumes the public `@nop-chaos/ui/base.css` entry instead of importing `packages/ui/src/*` directly
+- `@nop-chaos/word-editor-renderers` ships its default `--nop-*` fallback tokens from `packages/word-editor-renderers/src/styles.css`, so standalone word-editor surfaces do not rely on playground CSS to define `--nop-app-bg`, `--nop-border`, or `--nop-playground-stage-bg`
+- `report-field-panel` package-owned styling now lives in `packages/report-designer-renderers/src/report-field-panel.css` via stable `data-slot="report-field-panel-*"` markers instead of playground-only `.field-*` classes
+
 ## Migration Rules
 
 ### 1. Migrate hardcoded visuals to variables without changing output

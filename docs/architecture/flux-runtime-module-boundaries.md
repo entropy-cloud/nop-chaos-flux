@@ -431,6 +431,28 @@ Current rule for plugin ordering:
 
 The `selection`/`target` compatibility aliases for `selectionTarget` have been removed from the report-designer manifest (`report-designer-manifest.ts`); only `selectionTarget` remains in scope data.
 
+## Package Entry Boundaries
+
+`@nop-chaos/flux-react` root exports are now limited to the stable renderer/runtime surface. Internal orchestration helpers and raw contexts that are still needed by renderer packages live behind `@nop-chaos/flux-react/unstable`.
+
+Current unstable-only examples:
+
+- `RenderNodes`
+- raw context exports such as `FormContext` / `ScopeContext` / `RuntimeContext`
+- internal helper surfaces such as `createHelpers`, `mergeActionContext`, `publishOwnerStatus`, `createProjectedScopeStore`, and `createReadonlyScopeBinding`
+
+The same rule now applies to `@nop-chaos/flow-designer-renderers`: the root entry keeps the stable schema/manifest registration surface, while Xyflow bridge primitives, palette/canvas internals, and designer context helpers move behind `@nop-chaos/flow-designer-renderers/unstable`.
+
+## Namespaced Host Provider Result Contract
+
+Workbench host families that publish namespaced providers through `ActionScope` should converge on one result baseline:
+
+- provider adapters own host-command normalization at the package boundary instead of forwarding `Record<string, unknown> + as any` glue into domain cores
+- host command failures surface through top-level `ActionResult.error`
+- any payload returned by the domain core remains available in `ActionResult.data`
+
+`spreadsheet-renderers` and `report-designer-renderers` now follow this baseline through package-local host action providers, matching the established flow/word host family pattern.
+
 ## Related Documents
 
 - `docs/references/terminology.md`

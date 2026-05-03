@@ -31,12 +31,18 @@
 
 负责和 `SchemaRenderer` 集成。
 
-建议导出：
+root 稳定导出：
 
 - `flowDesignerRendererDefinitions`
 - `registerFlowDesignerRenderers(registry)`
 - `createFlowDesignerRegistry()`
 - `createDesignerActionProvider(core)`
+- `FLOW_DESIGNER_MANIFEST_V1`
+- `resolveDesignerManifest()`
+- `designerHostContract`
+- `DESIGNER_CAPABILITY_PUBLICATION`
+
+`@nop-chaos/flow-designer-renderers` root entry 不再把 `DesignerXyflow*` bridge、`DesignerCanvasContent`、`DesignerPaletteContent`、`DefaultInspector`、或 `designer-context` hooks 当作稳定公共 API。需要这些实现叶子时，使用 `@nop-chaos/flow-designer-renderers/unstable`。
 
 - `designer:*` 动作不是通过 root `actionHandlers` 注入，也不是通过修改 built-in action switch 实现，而是由 `designer-page` 在自身 `ActionScope` 边界内注册 `designer` namespace provider。
 - `designer-page` 负责创建 `DesignerCore`，并向内部 React renderer 子树暴露 `DesignerContext`；关于当前 snapshot 契约与 host scope 落地状态，见 `docs/architecture/flow-designer/runtime-snapshot.md`。

@@ -181,6 +181,37 @@ It provides:
 
 It is the main bridge between compiled expressions and live runtime data.
 
+## `ImportStackEntry`
+
+A single import alias entry bound inside an `ImportFrame`.
+
+It carries the imported namespace helper or capability reference that makes expressions like `$demo.formatName(...)` resolve at runtime.
+
+## `ImportFrame`
+
+A lexical import boundary frame pushed onto the `ImportStack` when a node with `xui:imports` is mounted.
+
+It owns:
+
+- a set of alias-to-entry bindings (`$demo` → `ImportStackEntry`)
+- a parent-frame chain for nearest-frame shadowing
+- a lifecycle scoped to the owning node's mount/unmount
+
+It is distinct from `ActionScope` and `ScopeRef`. `ActionScope` carries imported capability providers for action resolution; `ImportFrame` carries alias visibility for expression helpers.
+
+## `ImportStack`
+
+The per-`RendererRuntime` stack of `ImportFrame` objects that manages import alias visibility and lifetime.
+
+It provides:
+
+- `installPrepared(...)` — synchronous frame creation from compiler-prepared import data
+- `push(...)` / `pop(...)` — frame lifecycle during node mount/unmount
+- `resolveAlias(...)` — nearest-frame alias lookup with parent-chain fallback
+- `dispose()` — cleanup on runtime teardown
+
+Architecture detail lives in `docs/architecture/module-cache-and-import-stack.md`.
+
 ## `RendererRuntime`
 
 The top-level runtime services container for one `SchemaRenderer` execution root.
