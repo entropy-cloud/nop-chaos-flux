@@ -3,6 +3,7 @@ import './canvas-styles.css';
 export type { SpreadsheetHostSnapshot, SpreadsheetBridge } from './bridge.js';
 
 export { deriveHostSnapshot, createSpreadsheetBridge } from './bridge.js';
+export { createSpreadsheetActionProvider, toSpreadsheetActionResult } from './host-action-provider.js';
 
 export type { SpreadsheetPageSchemaInput, SpreadsheetPageSchema } from './types.js';
 

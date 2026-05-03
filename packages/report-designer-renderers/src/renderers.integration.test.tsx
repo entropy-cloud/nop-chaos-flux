@@ -9,6 +9,7 @@ import {
   createDefaultRegistry,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
+import { createActionScope } from '@nop-chaos/flux-runtime';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
@@ -16,7 +17,11 @@ import {
   type ReportDesignerConfig,
   type ReportDesignerProfile,
 } from '@nop-chaos/report-designer-core';
-import { defineReportDesignerPageSchema, registerReportDesignerRenderers } from './index.js';
+import {
+  defineReportDesignerPageSchema,
+  registerReportDesignerRenderers,
+} from './index.js';
+import { createReportDesignerActionProvider } from './host-action-provider.js';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -499,5 +504,30 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
       expect(screen.getByTestId('report-spreadsheet-a1').textContent).toBe('42');
       expect(screen.getByTestId('report-runtime-dirty').textContent).toBe('true');
     });
+  });
+
+  it('maps failed report-designer commands to top-level action result errors', async () => {
+    const provider = createReportDesignerActionProvider(async () => ({
+      ok: false,
+      changed: false,
+      error: 'Preview adapter unavailable',
+      data: { code: 'preview-unavailable' },
+    }));
+
+    const actionScope = createActionScope({ id: 'report-designer-test-scope' });
+    const unregister = actionScope.registerNamespace('report-designer', provider);
+
+    try {
+      const resolved = actionScope.resolve('report-designer:preview');
+      expect(resolved?.method).toBe('preview');
+
+      const result = await resolved!.provider.invoke(resolved!.method, {}, {} as any);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
+      expect((result.error as Error).message).toBe('Preview adapter unavailable');
+      expect(result.data).toEqual({ code: 'preview-unavailable' });
+    } finally {
+      unregister();
+    }
   });
 });

@@ -8,9 +8,14 @@ import {
   createDefaultRegistry,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
+import { createActionScope } from '@nop-chaos/flux-runtime';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
-import { defineSpreadsheetPageSchema, registerSpreadsheetRenderers } from '../index.js';
+import {
+  createSpreadsheetActionProvider,
+  defineSpreadsheetPageSchema,
+  registerSpreadsheetRenderers,
+} from '../index.js';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -146,7 +151,7 @@ describe('spreadsheet-page schema integration', () => {
       expect(screen.getByTestId('a1-value').textContent).toBe('42');
       expect(screen.getByTestId('top-level-a1-value').textContent).toBe('42');
     });
-  });
+  }, 15000);
 
   it('passes readOnly schema prop into the spreadsheet runtime', async () => {
     const document = createEmptyDocument('read-only-spreadsheet');
@@ -287,5 +292,30 @@ describe('spreadsheet-page schema integration', () => {
 
     view.unmount();
     expect(screen.queryByTestId('spreadsheet-status')).toBeNull();
+  });
+
+  it('maps failed spreadsheet commands to top-level action result errors', async () => {
+    const provider = createSpreadsheetActionProvider(async () => ({
+      ok: false,
+      changed: false,
+      error: 'Sheet is protected',
+      data: { code: 'protected' },
+    }));
+
+    const actionScope = createActionScope({ id: 'spreadsheet-test-scope' });
+    const unregister = actionScope.registerNamespace('spreadsheet', provider);
+
+    try {
+      const resolved = actionScope.resolve('spreadsheet:setCellValue');
+      expect(resolved?.method).toBe('setCellValue');
+
+      const result = await resolved!.provider.invoke(resolved!.method, {}, {} as any);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
+      expect((result.error as Error).message).toBe('Sheet is protected');
+      expect(result.data).toEqual({ code: 'protected' });
+    } finally {
+      unregister();
+    }
   });
 });

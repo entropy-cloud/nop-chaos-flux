@@ -1,10 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import type {
-  ActionNamespaceProvider,
-  ActionResult,
-  RendererComponentProps,
-  RenderNodeInput,
-} from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RenderNodeInput } from '@nop-chaos/flux-core';
 import type { ReportDesignerHostStatusSummary } from '@nop-chaos/report-designer-core';
 import {
   hasRendererSlotContent,
@@ -14,8 +9,13 @@ import {
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
 import { createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
-import { createSpreadsheetBridge } from '@nop-chaos/spreadsheet-renderers';
+import {
+  createSpreadsheetBridge,
+  createSpreadsheetActionProvider,
+} from '@nop-chaos/spreadsheet-renderers';
 import type {
+  ReportDesignerCommand,
+  ReportDesignerCommandResult,
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
   ReportDesignerProfile,
@@ -25,6 +25,7 @@ import { createReportDesignerCore } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import { renderFallbackFieldPanel } from './fallbacks.js';
+import { createReportDesignerActionProvider } from './host-action-provider.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
 import { getFieldCount } from './helpers.js';
 import { useReportDesignerHostScope } from './host-data.js';
@@ -32,64 +33,6 @@ import type { ReportDesignerPageSchema } from './types.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
-}
-
-function toActionResult(response: unknown): ActionResult {
-  if (response && typeof response === 'object' && 'ok' in response) {
-    return {
-      ok: Boolean((response as { ok?: unknown }).ok),
-      data: response,
-    };
-  }
-
-  return {
-    ok: true,
-    data: response,
-  };
-}
-
-function createReportDesignerActionProvider(
-  dispatch: (command: Record<string, unknown>) => Promise<unknown>,
-): ActionNamespaceProvider {
-  return {
-    kind: 'host',
-    listMethods() {
-      return [];
-    },
-    async invoke(method, payload) {
-      const args =
-        payload && typeof payload === 'object' && !Array.isArray(payload)
-          ? (payload as Record<string, unknown>)
-          : {};
-      const result = await dispatch({
-        type: `report-designer:${method}`,
-        ...args,
-      });
-      return toActionResult(result);
-    },
-  };
-}
-
-function createSpreadsheetActionProvider(
-  dispatch: (command: Record<string, unknown>) => Promise<unknown>,
-): ActionNamespaceProvider {
-  return {
-    kind: 'host',
-    listMethods() {
-      return [];
-    },
-    async invoke(method, payload) {
-      const args =
-        payload && typeof payload === 'object' && !Array.isArray(payload)
-          ? (payload as Record<string, unknown>)
-          : {};
-      const result = await dispatch({
-        type: `spreadsheet:${method}`,
-        ...args,
-      });
-      return toActionResult(result);
-    },
-  };
 }
 
 export function ReportDesignerPageRenderer(
@@ -107,7 +50,7 @@ export function ReportDesignerPageRenderer(
     [resolvedDocument],
   );
   const spreadsheetProvider = useMemo(
-    () => createSpreadsheetActionProvider((command) => spreadsheetCore.dispatch(command as any)),
+    () => createSpreadsheetActionProvider(spreadsheetCore.dispatch),
     [spreadsheetCore],
   );
   const spreadsheetBridge = useMemo(
@@ -125,7 +68,10 @@ export function ReportDesignerPageRenderer(
     [resolvedAdapters, resolvedDesigner, resolvedDocument, resolvedProfile],
   );
   const reportDesignerProvider = useMemo(
-    () => createReportDesignerActionProvider((command) => core.dispatch(command as any)),
+    () =>
+      createReportDesignerActionProvider((command: ReportDesignerCommand) =>
+        core.dispatch(command) as Promise<ReportDesignerCommandResult>,
+      ),
     [core],
   );
   const actionScope = useCurrentActionScope();

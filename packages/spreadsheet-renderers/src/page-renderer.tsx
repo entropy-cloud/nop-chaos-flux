@@ -1,9 +1,5 @@
 import React, { useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
-import type {
-  ActionNamespaceProvider,
-  ActionResult,
-  RendererComponentProps,
-} from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { SpreadsheetHostStatusSummary } from '@nop-chaos/spreadsheet-core';
 import {
   hasRendererSlotContent,
@@ -16,11 +12,14 @@ import { t } from '@nop-chaos/flux-i18n';
 import {
   createSpreadsheetCore,
   type SpreadsheetConfig,
+  type SpreadsheetCommand,
+  type SpreadsheetCommandResult,
   type SpreadsheetDocument,
   type SpreadsheetRuntimeSnapshot,
 } from '@nop-chaos/spreadsheet-core';
 import { cn } from '@nop-chaos/ui';
 import { deriveHostSnapshot } from './bridge.js';
+import { createSpreadsheetActionProvider } from './host-action-provider.js';
 import {
   buildSpreadsheetStatusLabel,
   getRuntimeActiveSheetCellCount,
@@ -30,42 +29,6 @@ import type { SpreadsheetPageSchema } from './types.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
-}
-
-function toActionResult(response: unknown): ActionResult {
-  if (response && typeof response === 'object' && 'ok' in response) {
-    return {
-      ok: Boolean((response as { ok?: unknown }).ok),
-      data: response,
-    };
-  }
-
-  return {
-    ok: true,
-    data: response,
-  };
-}
-
-function createSpreadsheetActionProvider(
-  dispatch: (command: Record<string, unknown>) => Promise<unknown>,
-): ActionNamespaceProvider {
-  return {
-    kind: 'host',
-    listMethods() {
-      return [];
-    },
-    async invoke(method, payload) {
-      const args =
-        payload && typeof payload === 'object' && !Array.isArray(payload)
-          ? (payload as Record<string, unknown>)
-          : {};
-      const result = await dispatch({
-        type: `spreadsheet:${method}`,
-        ...args,
-      });
-      return toActionResult(result);
-    },
-  };
 }
 
 function renderFallbackBody(snapshot: SpreadsheetRuntimeSnapshot) {
@@ -97,7 +60,10 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
     [resolvedConfig, resolvedDocument, resolvedReadOnly],
   );
   const spreadsheetProvider = useMemo(
-    () => createSpreadsheetActionProvider((command) => spreadsheetCore.dispatch(command as any)),
+    () =>
+      createSpreadsheetActionProvider((command: SpreadsheetCommand) =>
+        spreadsheetCore.dispatch(command) as Promise<SpreadsheetCommandResult>,
+      ),
     [spreadsheetCore],
   );
   const actionScope = useCurrentActionScope();
