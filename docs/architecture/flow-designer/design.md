@@ -43,12 +43,6 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 +-----------------------------------------------------+
 ```
 
-### 2.1 Current Implementation Note
-
-The repository already has a working first slice, but that slice is implementation progress, not the architecture contract itself.
-
-When checking implementation progress, use `runtime-snapshot.md` and code anchors. The rest of this document describes the target architecture baseline.
-
 ## 3. 模块拆分
 
 ### 3.1 `@nop-chaos/flow-designer-core`
@@ -73,8 +67,6 @@ When checking implementation progress, use `runtime-snapshot.md` and code anchor
 - 权限裁剪由上游平台在 schema 进入 runtime 前完成。
 - core 仅处理图编辑约束与校验，不处理访问控制语义。
 
-Representative implementation progress includes:
-
 - `GraphDocument` / `GraphNode` / `GraphEdge` / `DesignerConfig`
 - `createDesignerCore()`
 - `addNode` / `updateNode` / `moveNode` / `duplicateNode` / `deleteNode`
@@ -96,8 +88,6 @@ Representative implementation progress includes:
 - 宿主 scope 注入
 - `designer:*` action 注册
 - 与 `@xyflow/react` 的适配
-
-Representative implementation progress includes:
 
 - `designer-page` renderer
 - `designer-field` inspector 控件
@@ -202,20 +192,12 @@ interface DesignerPageSchema {
 
 桥接层负责把 graph runtime 暴露给 `designer-page` 下的 renderer shell 与 schema 片段，但必须保持单向职责清晰。
 
-这里要区分两层含义：
-
-- 目标架构：schema 片段可以通过固定宿主 scope 读取 designer 只读快照
-- 当前实现：稳定快照已经存在，但主要通过 `DesignerContext` 暴露给 Flow Designer 自己的 React 子组件；schema 表达式 scope 还没有完整拿到同一组字段
-
-当前代码真相请优先看 `docs/architecture/flow-designer/runtime-snapshot.md`。
-
-目标态桥接约束如下：
-
 - schema 片段通过固定宿主 scope 读取 graph runtime 的只读快照
 - schema 片段通过 `designer:*` actions 提交写操作
 - toolbar / inspector 片段当前已经显式收到该宿主 scope 与 action-scope；dialog 则通过共享 dialog runtime 继承打开它时的 action-scope，因此不会形成第二条 graph action 路径
 - schema 层不得直接拿到底层 graph store 并原地修改 document
 - bridge 对外暴露的是稳定快照与有限命令面，而不是整套 store 私有实现
+- 当前快照字段与协作链路锚点见 `docs/architecture/flow-designer/runtime-snapshot.md`
 
 ### 6.4 通用 graph editor 与 domain 语义的边界
 
@@ -295,13 +277,11 @@ interface DesignerPageSchema {
 
 属性面板直接使用 schema 片段驱动，而不是单独维护字段引擎。
 
-目标态推荐方式：
+支持的属性编辑方式：
 
 - inspector schema 使用固定宿主 scope 读取 `activeNode` / `activeEdge`
 - 保存按钮触发 `designer:updateNodeData` / `designer:updateEdgeData`
 - 校验复用现有 form runtime
-
-现状补充：
 
 - 默认 inspector 与 `designer-field` 当前直接消费 `DesignerContext.snapshot`
 - 默认 inspector 现已优先渲染 `nodeType.inspector.body`；renderer 不再内置领域专属 inspector 表单，只保留名称/描述与通用标量字段 fallback

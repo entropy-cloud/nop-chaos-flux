@@ -38,8 +38,6 @@
 - `createFlowDesignerRegistry()`
 - `createDesignerActionProvider(core)`
 
-Implementation note:
-
 - `designer:*` 动作不是通过 root `actionHandlers` 注入，也不是通过修改 built-in action switch 实现，而是由 `designer-page` 在自身 `ActionScope` 边界内注册 `designer` namespace provider。
 - `designer-page` 负责创建 `DesignerCore`，并向内部 React renderer 子树暴露 `DesignerContext`；关于当前 snapshot 契约与 host scope 落地状态，见 `docs/architecture/flow-designer/runtime-snapshot.md`。
 - `designer-page` 当前还会把 designer host `scope` 与当前 `actionScope` 显式传给 `toolbar` / `inspector` / `dialogs` region render，因此这些 schema 片段不是仅靠“位于同一 React 子树”才可用，而是明确绑定到同一份 designer snapshot 视图与 namespace 边界。
@@ -90,8 +88,6 @@ interface DesignerPageSchema {
 - 在本地 `ActionScope` 内注册 `designer:*` actions
 - 通过 `statusPath` 向宿主发布窄只读状态摘要
 
-Current implementation note:
-
 - `toolbar`、`inspector`、`dialogs` 都是普通 schema 片段，renderer 会显式给它们透传 host `scope` 与 `actionScope`
 - 通过共享 `dialog` action 打开的弹窗仍走共享 dialog runtime；它们与常驻 `dialogs` region 不是同一条渲染路径，但会继承触发它的 action scope，因此 dialog 内也可以继续 dispatch `designer:*`
 
@@ -99,7 +95,7 @@ Current implementation note:
 
 `designer-page` 还负责建立 graph runtime 与 schema runtime 的 bridge。
 
-推荐最小接口：
+最小接口：
 
 ```ts
 interface DesignerBridge {
@@ -121,24 +117,24 @@ interface DesignerBridge {
 
 ## 3. 固定宿主 Scope
 
-固定宿主 scope 仍然是 Flow Designer 的目标架构，但当前代码里“真实已落地的 snapshot 契约”和“尚未完整接线到 schema 表达式 scope 的字段”需要分开看。
+固定宿主 scope 对外暴露稳定的 designer host snapshot 与 `designer:*` 动作边界。
 
-当前建议直接查阅:
+相关锚点：
 
-- `docs/architecture/flow-designer/runtime-snapshot.md` - 当前 `DesignerSnapshot`、`DesignerContextValue`、已接线字段、未接线字段
+- `docs/architecture/flow-designer/runtime-snapshot.md` - `DesignerSnapshot`、`DesignerContextValue`、已接线字段
 - `docs/architecture/flow-designer/collaboration.md` - `designer-page`、ActionScope、command adapter、canvas host、inspector 的协作链路
 
-本节只保留 API 级结论:
+API 级结论：
 
 - Flow Designer 已经存在稳定的 `DesignerSnapshot` 契约
-- 当前 snapshot 主要通过 `DesignerContext` 暴露给 Flow Designer 自己的 React 子组件
-- schema 层当前最稳定的能力是 `designer:*` namespaced actions
-- toolbar / inspector / dialog 中触发的 schema action 当前都沿用同一条 `designer-page` -> local `ActionScope` -> `designer` namespace provider 路径
-- `dialogs` region 片段本身现在也已经是 live mount，而不是仅存在于 schema shape 中的保留字段
-- `${doc.*}`、`${selection.*}`、`${activeNode.*}`、`${activeEdge.*}`、`${runtime.*}` 这类 designer host scope 变量，当前已经稳定落地在 `toolbar` / `inspector` / `dialogs` 三个 region 内部
+- snapshot 主要通过 `DesignerContext` 暴露给 Flow Designer 自己的 React 子组件
+- schema 层通过 `designer:*` namespaced actions 参与图编辑
+- toolbar / inspector / dialog 中触发的 schema action 都沿用同一条 `designer-page` -> local `ActionScope` -> `designer` namespace provider 路径
+- `dialogs` region 片段是 live mount 的 schema surface
+- `${doc.*}`、`${selection.*}`、`${activeNode.*}`、`${activeEdge.*}`、`${runtime.*}` 这类 designer host scope 变量稳定落地在 `toolbar` / `inspector` / `dialogs` 三个 region 内部
 - 但这些字段不应被写成 `designer-page` 外部的全局 schema scope 自动可见
-- `activeEdge` 当前稳定包含 `sourcePort?` / `targetPort?`，与持久化 `GraphEdge` 和 `designer:*` edge 命令参数一致
-- `nodeType.inspector.body` 已是 live 主路径；`edgeType.inspector.body` / `mode` 仍属于 schema 合同先行、renderer 未完整消费的实现滞后
+- `activeEdge` 稳定包含 `sourcePort?` / `targetPort?`，与持久化 `GraphEdge` 和 `designer:*` edge 命令参数一致
+- `nodeType.inspector.body` 是主路径；`edgeType.inspector.body` / `mode` 不属于当前已支持 baseline
 
 ## 4. Designer Actions
 
