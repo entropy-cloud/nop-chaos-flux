@@ -164,6 +164,50 @@ Flux 将运行时拆分为三个独立的树结构。
 
 这种"三棵树分离"的设计延续了 MVC 等经典架构中关注点分离的思想，但将其落地为低代码领域的一套自洽的实现方案。
 
+### 5.1 xui:actions — Schema-Local 命名动作链
+
+三棵树的分离让动作的来源清晰可控，但在实际使用中还有一个反复出现的问题：可复用的动作序列如何在 schema 中表达？
+
+在之前的实现中，如果多个 schema 节点需要执行相同的动作序列（例如一组参数固定的 `ajax` 调用），唯一的办法是将这些动作定义在高层级节点上并通过命名引用，或者在每个节点上重复定义。前者导致动作定义远离使用位置，后者造成冗余。
+
+`xui:actions` 解决了这个问题。Schema 节点现在可以通过 `xui:actions` 声明命名动作链：
+
+```json
+{
+  "type": "container",
+  "xui:actions": {
+    "myAction": [
+      { "action": "ajax", "args": { "url": "/api/submit" } },
+      { "action": "notify", "args": { "message": "提交成功" } }
+    ]
+  },
+  "body": [
+    {
+      "type": "button",
+      "onEvent": {
+        "click": {
+          "actions": [{ "action": "myAction" }]
+        }
+      }
+    }
+  ]
+}
+```
+
+编译时，`xui:actions` 中声明的动作链被编译为 `namedActionPlans` 存储在 TemplateNode 上。运行时通过 ActionScope 中的 `__xui_actions__` 合成命名空间提供访问——这是一个由编译结果驱动的特殊命名空间，不需要通过 `xui:imports` 显式导入。
+
+词法继承是关键设计：命名空间的提供者在当前层未找到请求的动作名时，会向上回退到父作用域继续查找。这意味着子节点自动继承父节点定义的命名动作，无需重新声明。这一行为与数据作用域的词法查找模型完全一致——动作的来源虽然与数据不同，但查找语义遵循相同的设计直觉。
+
+动作的解析顺序因此扩展为：
+
+1. **内置平台动作**（`setValue`、`ajax`、`dialog` 等）
+2. **组件目标动作**（`component:submit`、`component:validate`）
+3. **命名动作**（`xui:actions` 定义的局部动作链）
+4. **命名空间动作**（`xui:imports` 导入的外部库）
+5. **解析失败**：以上均未匹配时报错
+
+`xui:actions` 的加入让"命名动作"成为解析链中的一等公民，与内置动作和命名空间动作并列，各层各有来源、各有优先级。这解决了之前的实际痛点：可复用的动作序列可以就近定义、词法继承，不再需要在全局层级与逐节点复制之间做二选一的妥协。
+
 ## 6. xui:imports — 声明式能力导入
 
 `xui:imports` 是行为与数据分离的直接体现，解决的是一个很实际的问题：schema 作者不能写 `import` 语句，schema 可能从服务端动态加载，如何让 schema 片段声明它所依赖的外部能力，又不造成全局污染？
@@ -594,7 +638,27 @@ React 上下文的拆分也很关键。runtime、scope、action-scope、componen
 
 **开发工具**：`nop-debugger` 当前提供浮动调试面板，可查看 compile、render、action、api、notify、error 等事件的时间线，以及 network 视图和基于 `data-cid` 的节点检查能力。结合组件句柄与表单 store，它已经能够展示部分组件状态与 form state 快照。`ActionScope` 的命名空间链和 `ComponentHandleRegistry` 的完整内部索引尚未作为稳定的调试 UI 暴露；表达式求值面板当前也保持禁用状态。动态节点（expression-node、template-node）在编译后保留 source 字段，可在调试时追溯到原始表达式文本；静态节点没有 source 字段。
 
-## 15. 总结 — 设计哲学
+**严格校验模式（Strict Validation）**：Schema 作者可以在 `SchemaRenderer` 上启用 `strictValidation: true` 来激活严格编译模式。在严格模式下，编译器对 schema 属性进行更严格的检查：对于封闭属性模型（closed-prop-model）的渲染器，未知的 schema 属性被报告为错误；对于开放渲染器，未知属性被报告为警告。这种区分既保证了严格性，又不影响那些设计上就接受任意属性的渲染器类型。
+
+严格模式的实际价值在于前向兼容性安全：当渲染器的 schema 契约发生变化时（例如某个属性被重命名或移除），严格模式会立即捕获到残留的旧属性，而不是静默忽略它们。这种即时反馈机制避免了"schema 看起来正确但行为不符合预期"的隐蔽问题。严格模式也可以在运行时通过调试器动态切换，允许在不重新部署的情况下实时检查 schema 有效性。
+
+## 15. 验证 Owner 分层
+
+Flux 的验证系统围绕一个分层的 Owner 层次结构组织，每个 Owner 管理一组具有独立生命周期的验证合约。
+
+**Form owner**：表单作用域内的主要验证 Owner，负责管理表单级字段验证。当渲染器检测到 `type: "form"` 时，自动创建 Form owner 并接管其下所有字段的验证生命周期。
+
+**Page-root owner**：`SchemaRenderer` 在页面根级别创建一个验证 Owner，负责处理不属于任何表单的根级字段验证。这确保了即使没有显式表单包装，顶层字段也能获得验证支持。
+
+**Surface owner**：由托管的对话框（dialog）或抽屉（drawer）表面创建的独立验证 Owner，为表面承载的内容提供作用域化的验证。Surface owner 的生命周期与表面的打开/关闭绑定，关闭时自动销毁其下所有验证状态。
+
+**Detail-child owner**：`detail-field` / `detail-view` 创建的子验证合约，挂靠在父 Owner 上，支持分阶段编辑（staged editing）与草稿验证。子 Owner 可以独立验证而不影响父 Owner 的验证状态，提交时才将验证结果合并到父级。
+
+每个 Owner 都有显式的生命周期阶段：`bootstrapping` → `active` → `refreshing` → `disposed`。`bootstrapping` 阶段完成字段注册与初始校验规则的挂载；`active` 阶段接受用户交互与实时验证；`refreshing` 阶段处理作用域数据刷新导致的验证状态同步；`disposed` 阶段清理所有验证资源。
+
+`formId` 机制使得跨表单操作成为可能：`setValue` / `setValues` / `submitForm` 等动作可以通过 `formId` 精确指定目标表单，在 `formId` 不匹配时显式失败——这避免了动作误发到错误表单的隐蔽问题。
+
+## 16. 总结 — 设计哲学
 
 回顾整个 Flux 的设计，可以看到几个贯穿始终的核心原则：
 
@@ -620,9 +684,7 @@ React 上下文的拆分也很关键。runtime、scope、action-scope、componen
 
 11. **性能设计前置到架构层**。不是事后修补，而是从第一行代码起就作为设计约束。
 
-这些原则之间存在依赖关系：统一值语义让全值树编译成为可能，值层面的判断让字段组合无歧义；三棵树的正交分治让 `xui:imports` 的异步生命周期得以独立管理；`data-source` 与 `dynamic-renderer` 的计算语义分离让 Service 的拆分有了更坚实的理论基础；`RendererEnv` 让分层架构的最外层有了明确的宿主集成边界。Flux 不需要成为一个全能框架，它只需要把渲染层的事情做对，其余交给平台层和组件库层各司其职。
-
----
+## 这些原则之间存在依赖关系：统一值语义让全值树编译成为可能，值层面的判断让字段组合无歧义；三棵树的正交分治让 `xui:imports` 的异步生命周期得以独立管理；`data-source` 与 `dynamic-renderer` 的计算语义分离让 Service 的拆分有了更坚实的理论基础；`RendererEnv` 让分层架构的最外层有了明确的宿主集成边界。Flux 不需要成为一个全能框架，它只需要把渲染层的事情做对，其余交给平台层和组件库层各司其职。
 
 **nop-chaos-flux 已开源：**
 

@@ -1,6 +1,6 @@
 # NOP Chaos Flux 架构演变史：从 AMIS 重写到现代低代码运行时
 
-> 本文基于 `docs/logs/2026/` 下的开发日志（2026-03-20 至 2026-04-25），梳理整个框架从零到成型过程中的架构决策、模块拆分、性能优化和平台化演进。每个阶段都附有关键代码路径和文档链接，便于溯源。
+> 本文基于 `docs/logs/2026/` 下的开发日志（2026-03-20 至 2026-05-03），梳理整个框架从零到成型过程中的架构决策、模块拆分、性能优化和平台化演进。每个阶段都附有关键代码路径和文档链接，便于溯源。
 >
 > 本文是历史演化与实现轨迹整理，不是当前规范性 owner doc。凡涉及现行 primitive 边界、动作执行模型、资源发布契约、模板实例化或包边界的判断，应以 `docs/architecture/README.md` 指向的当前 owner docs 和 live code 为准。
 >
@@ -52,8 +52,9 @@ Flux 的核心设计思想并不是在实现过程中逐步发现的，而是早
 8. [第八阶段：模板实例化与节点身份体系](#8-第八阶段模板实例化与节点身份体系)
 9. [第九阶段：深度审计、性能优化与架构收敛](#9-第九阶段深度审计性能优化与架构收敛)
 10. [第十阶段：编译器独立与包边界硬化](#10-第十阶段编译器独立与包边界硬化)
-11. [架构演变的关键原则](#11-架构演变的关键原则)
-12. [附录：时间线总览](#12-附录时间线总览)
+11. [第十一阶段：全面质量收敛与宿主成熟](#11-第十一阶段全面质量收敛与宿主成熟)
+12. [架构演变的关键原则](#12-架构演变的关键原则)
+13. [附录：时间线总览](#13-附录时间线总览)
 
 ---
 
@@ -571,66 +572,211 @@ CRUD 的设计与实现跨越多个阶段：04-12 完成组件合约文档（`do
 
 ---
 
-## 11. 架构演变的关键原则
+## 11. 第十一阶段：全面质量收敛与宿主成熟
 
-纵观 2026-03-20 至 2026-04-25 期间的演变历史，以下原则反复出现在关键决策中：
+**时间**：2026-04-25 ~ 2026-05-03
 
-### 11.1 编译优先
+> 注：本阶段是继第九阶段（04-12~04-20）之后第二次高密度收敛期，但重心从"架构合约对齐"转向"全面质量收敛"——性能审计、测试制度化、对抗性安全审查、验证 Owner 边界精确化、宿主工具工程化。如果说第九阶段是在回答"架构对不对"，第十一阶段则在回答"实现够不够健壮"。
 
-Flux 始终在编译阶段尽可能多地做工作：值分类、表达式编译、动作预编译、Schema 诊断。运行时只执行编译产物，不做额外判断。这一原则从 `CompiledValueNode` 的五种节点类型贯穿到 `TemplateNode`/`NodeInstance` 分离。
+### 11a. 性能审计与热路径优化 (04-26)
 
-### 11.2 数据与能力分离
+对 runtime、form、spreadsheet、report-designer 四条热路径进行了深度性能审计：
 
-`ScopeRef` 纯承载数据，`ActionScope` 纯承载能力，两者正交分离。这一决策避免了将 `ScopeRef` 变成通用方法注册表，保持了作用域模型的简洁性。
+- **消除 `JSON.stringify` 全值比较**：表单 `valuesPath` 发布使用 `JSON.stringify` 做变更检测，在高字段数表单中产生显著的序列化开销。替换为 path-aware 结构比较。
+- **Spreadsheet 批量写入**：粘贴/剪切等批量操作从逐单元格全量 Map 克隆改为 `setCells()` 批量接口，消除 O(n) 不可变克隆开销。
+- **Condition-builder 递归结构相等性**：条件构建器使用 `JSON.stringify` 做值比较，替换为递归结构相等函数，避免字符串化开销和键序敏感问题。
+- **Path-aware 表单值订阅**：`useCurrentFormState` 增加可选 `{ path: name }` 参数，字段级订阅者只在指定路径变更时被唤醒，消除无关字段的级联重渲染。
+- **高级表单渲染器全面接入**：path-aware 订阅扩展到 object-field、array-field、detail-field、variant-field、array-editor、key-value 等所有高级表单渲染器。
 
-### 11.3 渲染器合约一致性
+### 11b. 测试覆盖率制度化与深度审计 (04-26 ~ 04-27)
 
-所有渲染器遵循统一的 `RendererComponentProps` 模式，数据来自 `props.props`/`props.meta`/`props.regions`/`props.events`/`props.helpers`，不直接访问 store。这确保了渲染器的可替换性和可测试性。
+**Plan 143：覆盖率门槛制度化**
 
-### 11.4 标记类不携带样式
+在所有核心包配置中强制 80% Vitest 覆盖率阈值。系统性地关闭了以下包的覆盖缺口：
 
-布局渲染器只发射语义标记类（`nop-container`、`nop-flex`），标记类不携带任何视觉样式。所有间距/方向/填充通过 schema 中的 `classAliases` 或语义属性显式声明。这避免了隐式布局和样式漂移。
+- flux-runtime、flux-react、flux-renderers-data
+- flux-renderers-form、flux-renderers-form-advanced、flux-renderers-basic
+- flux-formula
 
-### 11.5 域桥接模式
+**首次 18 维深度审计 (04-27)**
 
-复杂设计器（Flow Designer、Report Designer、Spreadsheet）通过域桥接（DomainBridge）模式集成：核心包提供纯逻辑运行时，渲染器包提供 React 集成，画布通过桥接回调解耦。这使得画布实现可以替换而不影响核心逻辑。
+覆盖 24 个包的全维度审计，发现 1 P0、16 P1、28 P2、36 P3 问题。审计维度包括：
 
-### 11.6 文档即架构
+- 架构一致性、状态所有权、异步安全、响应精度
+- 宿主合约、测试质量、可访问性、安全
+- 性能、边界清晰度、依赖方向、API 表面稳定性
+- 文档同步、类型安全、错误处理、国际化、可观测性、可扩展性
 
-从 Flow Designer 的分层文档体系到前端编程模型的多轮讨论，Flux 项目始终将文档作为架构决策的载体。目标态与快照态分离、讨论记录与规范性文档分离，确保了架构知识的可持续维护。
+### 11c. 渲染器合约与宿主投影收敛 (04-26 ~ 04-30)
 
-### 11.7 AI 优先的可观测性
+**Plan 145：runtime/react/renderer 热点边界收敛**
 
-调试器从一开始就被设计为 AI 优先：结构化自动化 API、诊断报告、会话导出、交互追踪。后续的依赖追踪变更路径、源/反应注册表快照、节点定位器身份，都遵循了"机器可读优于人眼可读"的可观测性设计。
+提取共享辅助函数，建立 projected-owner scope 基底，CRUD 所有者桥接，Flow Designer page-shell/adapter 拆分。渲染器热路径中的跨包依赖收敛为显式合约。
 
-### 11.8 设计先行，实现逼近
+**Plan 146：域-宿主投影与词汇收敛**
 
-Flux 的核心设计思想（Env 环境抽象、Api/Resource 异步响应式值、词法作用域数据链、`xui:imports` 动作模块化、声明式优先）早在 AMIS 理论研究阶段就已确立。架构演变记录的不是设计方向的发现，而是实现精度对设计原则的逐步逼近——从运行时解释到编译期静态化，从隐式约定到显式合约，从单体到分层包边界。
+- Word Editor 实时保存 vs 自动保存时序语义明确化
+- Report Designer 规范化选择词汇（selection vocabulary）
+- 各域设计器的宿主投影接口对齐到统一基线
 
-### 11.9 宿主边界试验田
+**Plan 144：执行边界诊断与宿主合约工具化**
 
-Flow Designer 是 Flux 验证宿主协议的第一块试验田。Flux 从 Flow Designer 学到的不是"怎么做一个流程图编辑器"，而是复杂控件必须通过宿主边界、命名空间动作、桥接快照和配置驱动来接入运行时。同一套总运行时后来成功容纳了结构化流程树（DingFlow）和 Excel 原生工作台（Spreadsheet/Report Designer）两种截然不同的复杂宿主范式。
+- 诊断信息携带源位置（source location），支持从运行时错误精确跳转到 schema 定义位置
+- 宿主合约清单（host contract manifest）工具化，支持自动化合约检查
 
-### 11.10 实现驱动收敛
+**Plan 150：`xui:actions` — Schema 本地命名动作链**
 
-设计思想虽然早已确立，但实现路径并非一蹴而就。Flux 的架构是在持续的实现、失败、回归、拆分、重命名、重写文档、再由子审计逼着收敛的过程中逐步精确化的。每一步实现跃迁都伴随着明确的文档记录和回归测试覆盖，确保了实现决策的可追溯性。
+引入 `xui:actions` 属性，允许在 schema 节点上声明命名动作链：
+
+- `__xui_actions__` 合成命名空间承载 schema-local 动作定义
+- 词法继承：子节点通过父作用域继承 `xui:actions`，与 `xui:imports` 共享同一套命名空间解析机制
+- 动作链支持 `when`/`then`/`onError` 控制流
+
+### 11d. 对抗性审查与安全加固 (05-01 ~ 05-02)
+
+对整个代码库（24 个包）进行对抗性审查，覆盖编译器-运行时合约一致性、反应级联深度、scope 危险键过滤、公式解析器/求值器深度限制、表单验证韧性、可访问性。
+
+关键修复：
+
+- **`$Date` 符号表修正**：从 7 个方法补全到 14 个方法，覆盖所有日期操作
+- **`booleanStringAdapter("false")` 修复**：`Boolean("false")` 陷阱——字符串 `"false"` 在 JavaScript 中为 truthy，适配器必须显式解析
+- **动作编译深度限制**：`MAX_ACTION_COMPILE_DEPTH=128`，防止恶意嵌套动作链导致编译栈溢出
+- **Scope 快照净化**：`sanitizeSnapshot()` 阻止 `__proto__`、`constructor`、`prototype` 等原型污染键
+- **公式解析器深度限制**：`MAX_PARSER_DEPTH=256`，`MAX_EVAL_DEPTH=256`，防止深度嵌套表达式攻击
+
+### 11e. 验证 Owner 边界收敛 (04-30 ~ 05-03)
+
+验证 Owner 边界经历了三阶段精确化，最终形成清晰的所有权分层：
+
+**Plan 157：validation owner boundary**
+
+- `formId` 成为真实的定向载体（targeting carrier），不再仅是标识符
+- `submitWhenHidden` 语义移除——隐藏字段的提交行为由 owner 统一控制
+- 注册身份保持 path-singleton：同一路径上的注册自动替换，不产生重复
+
+**Plan 163：core boundary**
+
+- `flux-core` 彻底移除 React 类型依赖，成为纯 TypeScript 包
+- `flux-react` 拥有 `reactComponent` 便捷路径的所有权
+- Surface 运行时为每个 surface 创建独立的验证 owner，实现验证隔离
+
+**Plan 168：validation owner convergence**
+
+- `formId` 解析路径统一
+- `validateOn: 'change'` 不再以 `touched` 为门控条件——变更即验证，与 touched 状态正交
+- 提交期间的 summary-gate 强制执行：提交时收集所有验证摘要，阻塞直到全部通过
+
+**Plan 174：Strict Validation Mode**
+
+Schema 作者可启用严格编译模式，编译器报告未知属性。这一机制填补了 schema 验证的最后一块拼图：从"编译器忽略未知属性"到"严格模式下未知属性是编译错误"。
+
+**验证 Owner 最终分层**：
+
+| Owner 层级   | 覆盖范围                   | 典型场景                |
+| ------------ | -------------------------- | ----------------------- |
+| form         | 表单内所有字段             | 主表单提交              |
+| page-root    | 页面级验证                 | 页面级联动约束          |
+| surface      | dialog/drawer 内独立验证域 | 弹窗表单独立提交        |
+| detail-child | staged owner 内的子验证域  | 明细行编辑确认/取消边界 |
+
+### 11f. 宿主工具与工程化 (04-30)
+
+**Turborepo 引入**
+
+Turborepo 作为工作区任务运行器，实现 build/typecheck/test/lint 的并行化执行。任务依赖图由 Turborepo 自动拓扑排序，消除手动编排脚本。
+
+**仓库级审计工具链**
+
+- **dependency-cruiser**：依赖方向校验，防止循环依赖和违规跨层引用
+- **knip**：死代码检测，识别未使用的导出、类型和依赖
+- **Stryker**：变异测试试点（mutation testing），验证测试套件的有效性
+- **Semgrep**：静态安全扫描，检测已知的不安全模式
+
+**Bundle 分析**
+
+通过 `rollup-plugin-visualizer` 支持 `pnpm analyze`，可视化各包的 bundle 组成，辅助识别体积回归和意外依赖。
+
+> 关键路径：`packages/flux-runtime/src/form-runtime.ts`，`packages/spreadsheet-core/src/`，`packages/flux-formula/src/`，`packages/flux-core/src/`，`docs/plans/143-*`，`docs/plans/145-*`，`docs/plans/157-*`，`docs/plans/163-*`，`docs/plans/168-*`
 
 ---
 
-## 12. 附录：时间线总览
+## 12. 架构演变的关键原则
 
-| 阶段     | 时间          | 关键事件                                                                                                                                                                                                                                                       |
-| -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 第一阶段 | 03-20 ~ 03-23 | Bug #1~#5 分析与修复，调试器诞生，ActionScope/Import 语义确立，Flow Designer 包创建，画布桥接初始实现                                                                                                                                                          |
-| 第二阶段 | 03-23 ~ 03-27 | 画布桥接、命令适配器、Schema 驱动设计器、生产级视觉对齐                                                                                                                                                                                                        |
-| 第三阶段 | 03-25 ~ 03-29 | AMIS→Flux 重命名，flux-core 拆分，样式系统，shadcn/ui 迁移，FieldFrame，Report/Spreadsheet 迁移，testid                                                                                                                                                        |
-| 第四阶段 | 03-28 ~ 03-31 | shadcn/ui 全量迁移，Code Editor，Condition Builder，Word Editor，架构审计                                                                                                                                                                                      |
-| 第五阶段 | 04-01 ~ 04-03 | 代码审计修复、全面整改、数据源重设计、双钩子设计、@nop-chaos/ui 全量采纳                                                                                                                                                                                       |
-| 第六阶段 | 04-04 ~ 04-06 | Formily 对比、依赖追踪、源注册表、反应运行时、动作控制流、WorkbenchShell、表格状态所有权、编程模型文档                                                                                                                                                         |
-| 第七阶段 | 04-06 ~ 04-11 | 编程模型定型、Action/API 收敛、Owner Status、组件文档体系、imports 表达式投影、验证设计、HiddenFieldPolicy                                                                                                                                                     |
-| 第八阶段 | 04-07 ~ 04-08 | 模板实例化、重复实例身份、NodeRenderer 迁移、编译器诊断、BEM 清理                                                                                                                                                                                              |
-| 第九阶段 | 04-12 ~ 04-20 | 深度审计、架构文档一致性、Plan 82 合约收敛、ScopeRef 读写分离、per-path 订阅、性能优化系列（Plans 100~110）、form-advanced 拆分、Capability Projection Manifest、flux-i18n 国际化、ValueAdapter 统一协议、CompiledSchemaNode 消除、动作预编译 IR、异步治理收敛 |
-| 第十阶段 | 04-21 ~ 04-25 | 编译器包提取、动作核心包提取、Import Boundary 收敛、Base Tree→Template、DingFlow 树模式、CRUD、共享上下文菜单                                                                                                                                                  |
+纵观 2026-03-20 至 2026-05-03 期间的演变历史，以下原则反复出现在关键决策中：
+
+### 12.1 编译优先
+
+Flux 始终在编译阶段尽可能多地做工作：值分类、表达式编译、动作预编译、Schema 诊断。运行时只执行编译产物，不做额外判断。这一原则从 `CompiledValueNode` 的五种节点类型贯穿到 `TemplateNode`/`NodeInstance` 分离。
+
+### 12.2 数据与能力分离
+
+`ScopeRef` 纯承载数据，`ActionScope` 纯承载能力，两者正交分离。这一决策避免了将 `ScopeRef` 变成通用方法注册表，保持了作用域模型的简洁性。
+
+### 12.3 渲染器合约一致性
+
+所有渲染器遵循统一的 `RendererComponentProps` 模式，数据来自 `props.props`/`props.meta`/`props.regions`/`props.events`/`props.helpers`，不直接访问 store。这确保了渲染器的可替换性和可测试性。
+
+### 12.4 标记类不携带样式
+
+布局渲染器只发射语义标记类（`nop-container`、`nop-flex`），标记类不携带任何视觉样式。所有间距/方向/填充通过 schema 中的 `classAliases` 或语义属性显式声明。这避免了隐式布局和样式漂移。
+
+### 12.5 域桥接模式
+
+复杂设计器（Flow Designer、Report Designer、Spreadsheet）通过域桥接（DomainBridge）模式集成：核心包提供纯逻辑运行时，渲染器包提供 React 集成，画布通过桥接回调解耦。这使得画布实现可以替换而不影响核心逻辑。
+
+### 12.6 文档即架构
+
+从 Flow Designer 的分层文档体系到前端编程模型的多轮讨论，Flux 项目始终将文档作为架构决策的载体。目标态与快照态分离、讨论记录与规范性文档分离，确保了架构知识的可持续维护。
+
+### 12.7 AI 优先的可观测性
+
+调试器从一开始就被设计为 AI 优先：结构化自动化 API、诊断报告、会话导出、交互追踪。后续的依赖追踪变更路径、源/反应注册表快照、节点定位器身份，都遵循了"机器可读优于人眼可读"的可观测性设计。
+
+### 12.8 设计先行，实现逼近
+
+Flux 的核心设计思想（Env 环境抽象、Api/Resource 异步响应式值、词法作用域数据链、`xui:imports` 动作模块化、声明式优先）早在 AMIS 理论研究阶段就已确立。架构演变记录的不是设计方向的发现，而是实现精度对设计原则的逐步逼近——从运行时解释到编译期静态化，从隐式约定到显式合约，从单体到分层包边界。
+
+### 12.9 宿主边界试验田
+
+Flow Designer 是 Flux 验证宿主协议的第一块试验田。Flux 从 Flow Designer 学到的不是"怎么做一个流程图编辑器"，而是复杂控件必须通过宿主边界、命名空间动作、桥接快照和配置驱动来接入运行时。同一套总运行时后来成功容纳了结构化流程树（DingFlow）和 Excel 原生工作台（Spreadsheet/Report Designer）两种截然不同的复杂宿主范式。
+
+### 12.10 实现驱动收敛
+
+设计思想虽然早已确立，但实现路径并非一蹴而就。Flux 的架构是在持续的实现、失败、回归、拆分、重命名、重写文档、再由子审计逼着收敛的过程中逐步精确化的。每一步实现跃迁都伴随着明确的文档记录和回归测试覆盖，确保了实现决策的可追溯性。
+
+### 12.11 审计规则提取形成长期治理闭环
+
+从第九阶段的深度审计到第十一阶段的 18 维审计，Flux 项目将审计发现不断沉淀为可复用的治理规则：覆盖率阈值（Plan 143）、编译深度限制、scope 快照净化、strict validation mode。每次审计的产出不只是修复，更是新规则的提取。这些规则写入代码（阈值配置、编译器检查）而非文档，形成自动化治理闭环。
+
+### 12.12 对抗性审查与深度审计互补
+
+深度审计从架构维度（状态所有权、依赖方向、合约一致性）发现问题，对抗性审查从攻击者视角（原型污染、深度嵌套、truthy 陷阱）暴露漏洞。两者互补：深度审计确保"架构对"，对抗性审查确保"攻击不成功"。第十一阶段将两者制度化，成为版本发布前的标准流程。
+
+### 12.13 Reactive 订阅精度是架构级问题
+
+从第九阶段的 per-path 订阅（Plan 90）到第十一阶段的 path-aware `useCurrentFormState`，订阅精度始终是架构级关注点而非局部优化。React 重渲染的唤醒范围直接决定了表单、表格、设计器的响应性能。Flux 的答案是从全值比较 → 依赖路径交集 → path-aware 精确订阅的渐进精确化，每一步都是架构决策而非实现细节。
+
+### 12.14 验证 Owner 分层
+
+验证系统的所有权不是二元的"有/无"，而是一个分层模型：form（表单域）→ page-root（页面域）→ surface（弹窗域）→ detail-child（staged 子域）。每一层拥有独立的生命周期、提交门控和验证摘要。这一分层是第十一阶段三条 Plan（157 → 163 → 168）逐步收敛的结果，从隐式的"表单拥有所有验证"演化为显式的四层所有权模型。
+
+---
+
+## 13. 附录：时间线总览
+
+| 阶段       | 时间          | 关键事件                                                                                                                                                                                                                                                       |
+| ---------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 第一阶段   | 03-20 ~ 03-23 | Bug #1~#5 分析与修复，调试器诞生，ActionScope/Import 语义确立，Flow Designer 包创建，画布桥接初始实现                                                                                                                                                          |
+| 第二阶段   | 03-23 ~ 03-27 | 画布桥接、命令适配器、Schema 驱动设计器、生产级视觉对齐                                                                                                                                                                                                        |
+| 第三阶段   | 03-25 ~ 03-29 | AMIS→Flux 重命名，flux-core 拆分，样式系统，shadcn/ui 迁移，FieldFrame，Report/Spreadsheet 迁移，testid                                                                                                                                                        |
+| 第四阶段   | 03-28 ~ 03-31 | shadcn/ui 全量迁移，Code Editor，Condition Builder，Word Editor，架构审计                                                                                                                                                                                      |
+| 第五阶段   | 04-01 ~ 04-03 | 代码审计修复、全面整改、数据源重设计、双钩子设计、@nop-chaos/ui 全量采纳                                                                                                                                                                                       |
+| 第六阶段   | 04-04 ~ 04-06 | Formily 对比、依赖追踪、源注册表、反应运行时、动作控制流、WorkbenchShell、表格状态所有权、编程模型文档                                                                                                                                                         |
+| 第七阶段   | 04-06 ~ 04-11 | 编程模型定型、Action/API 收敛、Owner Status、组件文档体系、imports 表达式投影、验证设计、HiddenFieldPolicy                                                                                                                                                     |
+| 第八阶段   | 04-07 ~ 04-08 | 模板实例化、重复实例身份、NodeRenderer 迁移、编译器诊断、BEM 清理                                                                                                                                                                                              |
+| 第九阶段   | 04-12 ~ 04-20 | 深度审计、架构文档一致性、Plan 82 合约收敛、ScopeRef 读写分离、per-path 订阅、性能优化系列（Plans 100~110）、form-advanced 拆分、Capability Projection Manifest、flux-i18n 国际化、ValueAdapter 统一协议、CompiledSchemaNode 消除、动作预编译 IR、异步治理收敛 |
+| 第十阶段   | 04-21 ~ 04-25 | 编译器包提取、动作核心包提取、Import Boundary 收敛、Base Tree→Template、DingFlow 树模式、CRUD、共享上下文菜单                                                                                                                                                  |
+| 第十一阶段 | 04-25 ~ 05-03 | 性能审计与热路径优化、测试覆盖率制度化（Plan 143）、18 维深度审计、渲染器合约收敛（Plans 145/146/144）、xui:actions（Plan 150）、对抗性安全审查与加固、验证 Owner 四层边界收敛（Plans 157/163/168）、Strict Validation Mode（Plan 174）、Turborepo 工程化      |
 
 ---
 
@@ -638,9 +784,9 @@ Flow Designer 是 Flux 验证宿主协议的第一块试验田。Flux 从 Flow D
 
 NOP Chaos Flux 的架构演变，是一个将已确立的设计思想在现代技术栈上系统化实现的过程。核心设计——Env 环境抽象、Api/Resource 作为异步响应式值、词法作用域数据链、`xui:imports` 动作模块化、声明式优先——早在 AMIS 理论研究阶段就已经确立（参见 `c:/can/nop/nop-entropy/docs/theory/amis/`）。Flux 所做的不是发明这些原则，而是解决 AMIS 在 Schema 层（平行字段膨胀）和运行时层（MST 紧耦合）的结构性限制，将这些原则以编译优先、类型安全、包边界清晰的方式落地。
 
-整个演变的最强主线是从运行时解释到编译执行：值分类、模板实例化、动作预编译、宿主合约静态化、编译器包提取——每一步都是把运行时判断前移到编译期的同一条路线上的里程碑。但这条主线不是唯一的。与之并行且同等重要的还有两条：owner / validation / surface 的所有权收敛（从隐式双状态到显式 staged owner），以及 host contract / import boundary / capability manifest 的边界显式化（从运行时接线约定到编译期可见合约）。最终的 `flux-compiler` / `flux-action-core` / `flux-runtime` 三层拆分，是编译前移主线的物理形态。
+整个演变的最强主线是从运行时解释到编译执行：值分类、模板实例化、动作预编译、宿主合约静态化、编译器包提取——每一步都是把运行时判断前移到编译期的同一条路线上的里程碑。但这条主线不是唯一的。与之并行且同等重要的还有两条：owner / validation / surface 的所有权收敛（从隐式双状态到显式 staged owner，最终收敛为 form / page-root / surface / detail-child 四层验证 Owner），以及 host contract / import boundary / capability manifest 的边界显式化（从运行时接线约定到编译期可见合约）。最终的 `flux-compiler` / `flux-action-core` / `flux-runtime` 三层拆分，是编译前移主线的物理形态。第十一阶段在三层拆分基础上完成了全面质量收敛：性能热路径优化、80% 覆盖率制度化、对抗性安全审查、验证 Owner 边界精确化、宿主工具工程化——从"架构对"到"实现健壮"的跃迁。
 
-最终形成的架构——DSL 优先 + 编译/执行分离 + 正交作用域 + 模板实例化 + 域桥接 + 编译期宿主契约——为声明式前端低代码 DSL 提供了一个清晰的现代运行时参考。
+最终形成的架构——DSL 优先 + 编译/执行分离 + 正交作用域 + 模板实例化 + 域桥接 + 编译期宿主契约 + 分层验证 Owner + 自动化质量治理——为声明式前端低代码 DSL 提供了一个清晰的现代运行时参考。
 
 ---
 
