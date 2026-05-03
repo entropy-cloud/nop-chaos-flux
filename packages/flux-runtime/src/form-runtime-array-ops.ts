@@ -14,6 +14,8 @@ import type { ManagedFormRuntimeSharedState } from './form-runtime-types';
 export interface ArrayMutationContext {
   sharedState: ManagedFormRuntimeSharedState;
   scope: ScopeRef;
+  formId: string;
+  setLastChange: (change: import('@nop-chaos/flux-core').ScopeChange) => void;
   getArrayValue: (path: string) => unknown;
   revalidateDependents: (
     path: string,
@@ -25,6 +27,8 @@ export function appendValueOp(ctx: ArrayMutationContext, path: string, value: un
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    formId: ctx.formId,
+    setLastChange: ctx.setLastChange,
     getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: (current) => insertArrayValue(current, Number.MAX_SAFE_INTEGER, value),
@@ -38,6 +42,8 @@ export function prependValueOp(ctx: ArrayMutationContext, path: string, value: u
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    formId: ctx.formId,
+    setLastChange: ctx.setLastChange,
     getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: (current) => insertArrayValue(current, 0, value),
@@ -59,6 +65,8 @@ export function insertValueOp(
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    formId: ctx.formId,
+    setLastChange: ctx.setLastChange,
     getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => insertArrayValue(safeArray, insertIndex, value),
@@ -79,6 +87,8 @@ export function removeValueOp(ctx: ArrayMutationContext, path: string, index: nu
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    formId: ctx.formId,
+    setLastChange: ctx.setLastChange,
     getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => removeArrayValue(currentValue, removeIndex),
@@ -116,6 +126,8 @@ export function moveValueOp(
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    formId: ctx.formId,
+    setLastChange: ctx.setLastChange,
     getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => moveArrayValue(currentValue, fromIndex, toIndex),
@@ -156,6 +168,8 @@ export function swapValueOp(ctx: ArrayMutationContext, path: string, a: number, 
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    formId: ctx.formId,
+    setLastChange: ctx.setLastChange,
     getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => swapArrayValue(currentValue, first, second),
@@ -180,6 +194,8 @@ export function replaceValueOp(ctx: ArrayMutationContext, path: string, value: u
   executeArrayMutation({
     sharedState: ctx.sharedState,
     scope: ctx.scope,
+    formId: ctx.formId,
+    setLastChange: ctx.setLastChange,
     getArrayValue: ctx.getArrayValue,
     arrayPath: path,
     arrayOperation: () => nextValue,

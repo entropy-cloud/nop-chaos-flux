@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { NodeInstance, RendererDefinition, RendererEnv, ResolvedNodeMeta, ScopeRef } from '@nop-chaos/flux-core';
+import {
+  createRendererRegistry,
+  type NodeInstance,
+  type RendererDefinition,
+  type RendererEnv,
+  type ResolvedNodeMeta,
+  type ScopeRef,
+} from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
   createComponentHandleRegistry,
-  createRendererRegistry,
   createRendererRuntime,
 } from './index';
 

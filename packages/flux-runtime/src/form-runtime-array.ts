@@ -146,6 +146,8 @@ export function replaceManagedArrayValue(input: {
 export function executeArrayMutation(ctx: {
   sharedState: ArrayMutationState;
   scope: ScopeRef;
+  formId?: string;
+  setLastChange?: (change: import('@nop-chaos/flux-core').ScopeChange) => void;
   getArrayValue: (path: string) => unknown;
   arrayPath: string;
   arrayOperation: (current: unknown[]) => unknown[];
@@ -176,6 +178,11 @@ export function executeArrayMutation(ctx: {
     remappedState,
   });
 
+  ctx.setLastChange?.({
+    paths: [ctx.arrayPath],
+    sourceScopeId: ctx.formId ?? ctx.scope.id,
+    kind: 'update',
+  });
   ctx.sharedState.store.batchUpdate(nextStoreState);
   remapValidationRunState(
     ctx.sharedState,

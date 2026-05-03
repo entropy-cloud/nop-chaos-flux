@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type CompiledFormValidationModel, type RendererEnv } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type CompiledFormValidationModel, type RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index';
 import { textRenderer, env, compiledRule } from './test-fixtures';
 
 describe('createRendererRuntime', () => {
@@ -498,5 +498,29 @@ describe('createRendererRuntime', () => {
     expect(form.isVisited('username')).toBe(false);
     expect(form.isTouched('username')).toBe(false);
     expect(form.isDirty('username')).toBe(false);
+  });
+
+  it('reset publishes a replace lastChange for scope-driven subscribers', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'profile-form',
+      initialValues: {
+        username: 'alice',
+      },
+      parentScope: page.scope,
+    });
+
+    form.reset({ username: 'bob' });
+
+    expect(form.scope.store!.getLastChange()).toMatchObject({
+      paths: ['*'],
+      sourceScopeId: 'profile-form',
+      kind: 'replace',
+    });
   });
 });

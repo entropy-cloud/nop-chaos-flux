@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RendererDefinition, type RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { compileDataSource, compileReaction } from '@nop-chaos/flux-compiler';
-import { createRendererRegistry, createRendererRuntime } from './index';
+import { createRendererRuntime } from './index';
 
 const textRenderer: RendererDefinition = {
   type: 'text',

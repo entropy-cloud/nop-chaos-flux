@@ -166,6 +166,7 @@ describe('form-runtime array-ops: remove', () => {
     expect(state.fieldStates['items.0.name']?.dirty).toBe(true);
     expect(state.fieldStates['items.1.name']).toBeUndefined();
   });
+
 });
 
 describe('form-runtime array-ops: move', () => {

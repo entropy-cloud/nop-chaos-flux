@@ -51,11 +51,15 @@ export function buildArrayMutationContext(args: {
   sharedState: ManagedFormRuntimeSharedState;
   scope: FormRuntime['scope'];
   store: FormRuntime['store'];
+  formId: string;
+  setLastChange: (change: import('@nop-chaos/flux-core').ScopeChange) => void;
   revalidateDependents: ArrayMutationContext['revalidateDependents'];
 }): ArrayMutationContext {
   return {
     sharedState: args.sharedState,
     scope: args.scope,
+    formId: args.formId,
+    setLastChange: args.setLastChange,
     getArrayValue(path) {
       return getIn(args.store.getState().values, path);
     },

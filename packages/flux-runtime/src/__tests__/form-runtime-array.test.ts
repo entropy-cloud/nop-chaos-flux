@@ -270,6 +270,8 @@ describe('executeArrayMutation', () => {
     executeArrayMutation({
       sharedState: shared,
       scope: shared.scope,
+      formId: 'test-form',
+      setLastChange: vi.fn(),
       getArrayValue: (path) => shared.store.getState().values[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr.slice(0, 1), ...arr.slice(2)],
@@ -286,6 +288,8 @@ describe('executeArrayMutation', () => {
     executeArrayMutation({
       sharedState: shared,
       scope: shared.scope,
+      formId: 'test-form',
+      setLastChange: vi.fn(),
       getArrayValue: (path) => shared.store.getState().values[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr, 'new'],
@@ -302,6 +306,8 @@ describe('executeArrayMutation', () => {
     executeArrayMutation({
       sharedState: shared,
       scope: shared.scope,
+      formId: 'test-form',
+      setLastChange: vi.fn(),
       getArrayValue: (path) => shared.store.getState().values[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr, 'b'],
@@ -318,6 +324,8 @@ describe('executeArrayMutation', () => {
     executeArrayMutation({
       sharedState: shared,
       scope: shared.scope,
+      formId: 'test-form',
+      setLastChange: vi.fn(),
       getArrayValue: (path) => shared.store.getState().values[path],
       arrayPath: 'items',
       arrayOperation: (arr) => [...arr, 'b'],

@@ -131,12 +131,13 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   const runtimeScope =
     inputValue.scopeBinding === 'none'
       ? scope
-      : createFormScopeWithBinding({
-          scope,
-          formId,
-          formName,
-          getStoreState: () => store.getState(),
-        });
+        : createFormScopeWithBinding({
+            scope,
+            formId,
+            formName,
+            getStoreState: () => store.getState(),
+            getPendingValidationDebounceCount: () => pendingValidationDebounces.size,
+          });
 
   const sharedState: ManagedFormRuntimeSharedState = {
     inputValue,
@@ -180,6 +181,8 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       sharedState,
       scope,
       store,
+      formId,
+      setLastChange,
       revalidateDependents: ownerRuntime.revalidateDependents,
     });
   }
@@ -390,6 +393,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
       initialFieldState.initialValues = nextInitialFieldState.initialValues;
       cancelAllValidationDebounces(sharedState);
+      setLastChange({
+        paths: ['*'],
+        sourceScopeId: formId,
+        kind: 'replace',
+      });
       store.batchUpdate({
         values: nextValues,
         fieldStates: {},

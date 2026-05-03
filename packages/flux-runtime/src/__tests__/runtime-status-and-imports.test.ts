@@ -48,6 +48,7 @@ describe('form runtime status helpers', () => {
       } as unknown as Parameters<typeof buildFormStatusSummary>[0],
       'form-1',
       'profile',
+      0,
     );
 
     expect(summary).toEqual({
@@ -100,6 +101,22 @@ describe('form runtime status helpers', () => {
       revision: 0,
     });
     expect(validationErrorsEqual([], [])).toBe(true);
+  });
+
+  it('treats pending debounces as validating in form status summaries', () => {
+    const summary = buildFormStatusSummary(
+      {
+        values: {},
+        submitting: false,
+        submitAttempted: false,
+        fieldStates: {},
+      } as unknown as Parameters<typeof buildFormStatusSummary>[0],
+      'form-1',
+      'profile',
+      1,
+    );
+
+    expect(summary.validating).toBe(true);
   });
 });
 

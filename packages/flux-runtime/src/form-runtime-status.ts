@@ -7,15 +7,23 @@ import type {
 import { validationErrorsEqual } from '@nop-chaos/flux-core';
 import { createReadonlyScopeBinding } from './status-owner';
 
+export function hasPendingValidationWork(state: FormStoreState, pendingValidationDebounceCount = 0): boolean {
+  if (pendingValidationDebounceCount > 0) {
+    return true;
+  }
+
+  return Object.values(state.fieldStates).some((fieldState) => fieldState.validating === true);
+}
+
 export { validationErrorsEqual };
 
 export function buildFormStatusSummary(
   state: FormStoreState,
   id: string | undefined,
   name: string | undefined,
+  pendingValidationDebounceCount = 0,
 ): FormStatusSummary {
   let errorCount = 0;
-  let validating = false;
   let dirty = false;
   let touched = false;
   let visited = false;
@@ -24,12 +32,12 @@ export function buildFormStatusSummary(
     if (fieldState.errors) {
       errorCount += fieldState.errors.length;
     }
-    if (fieldState.validating) validating = true;
     if (fieldState.dirty) dirty = true;
     if (fieldState.touched) touched = true;
     if (fieldState.visited) visited = true;
   }
 
+  const validating = hasPendingValidationWork(state, pendingValidationDebounceCount);
   const hasErrors = errorCount > 0;
 
   return {
@@ -52,9 +60,15 @@ export function createFormScopeWithBinding(input: {
   formId: string;
   formName: string | undefined;
   getStoreState: () => FormStoreState;
+  getPendingValidationDebounceCount?: () => number;
 }) {
   const formScopeWithBinding = createReadonlyScopeBinding(input.scope, '$form', () =>
-    buildFormStatusSummary(input.getStoreState(), input.formId, input.formName),
+    buildFormStatusSummary(
+      input.getStoreState(),
+      input.formId,
+      input.formName,
+      input.getPendingValidationDebounceCount?.() ?? 0,
+    ),
   );
 
   Object.defineProperty(formScopeWithBinding, 'value', {
