@@ -210,7 +210,7 @@ export async function runBuiltInAction(
     }
     case 'submit':
     case 'submitForm': {
-      if (!ctx.form) {
+      if (!action.targeting.formId && !ctx.form) {
         return finishAction(internals, { ...actionPayload, dispatchMode: 'built-in' }, startedAt, {
           ok: false,
           error: new Error('submit requires form runtime'),

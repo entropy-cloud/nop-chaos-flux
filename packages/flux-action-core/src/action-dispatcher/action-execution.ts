@@ -280,6 +280,7 @@ function runSingleActionWithTimeout(
     (signal) => runSingleAction(ctx, action, actionCtx, signal),
     timeoutMs,
     () => createTimedOutResult(new Error(`Action timed out after ${timeoutMs}ms`)),
+    actionCtx.signal,
   );
 }
 

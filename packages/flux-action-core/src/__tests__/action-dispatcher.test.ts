@@ -173,6 +173,39 @@ describe('action-dispatcher dispatch ordering', () => {
     expect(invocation.action).toBe('showToast');
   });
 
+  it('dispatches submitForm with formId through built-in adapter without local form runtime', async () => {
+    const adapter = createMockAdapter();
+    const env = createMockEnv();
+    const runtime = createMockRuntime(env);
+    const evaluator = createMockEvaluator();
+    const dispatcher = createActionDispatcher({
+      getEnv: () => env,
+      evaluator,
+      adapter,
+      runtime,
+    });
+
+    const result = await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'submitForm',
+          payload: {},
+          targeting: { formId: 'remote-form' },
+          control: {},
+          source: { action: 'submitForm', formId: 'remote-form' },
+        },
+      ]),
+      createActionCtx({ runtime, form: undefined }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(adapter.invokeBuiltInAction).toHaveBeenCalledOnce();
+    const invocation = (adapter.invokeBuiltInAction as ReturnType<typeof vi.fn>).mock
+      .calls[0][0] as BuiltInActionInvocation;
+    expect(invocation.action).toBe('submitForm');
+    expect(invocation.targeting).toEqual({ formId: 'remote-form' });
+  });
+
   it('executes sequential actions in order', async () => {
     const order: string[] = [];
     const adapter = createMockAdapter({

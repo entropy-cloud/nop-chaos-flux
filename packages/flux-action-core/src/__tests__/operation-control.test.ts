@@ -76,6 +76,31 @@ describe('withTimeout', () => {
     expect(result).toBe('ok');
     expect(onTimeout).not.toHaveBeenCalled();
   });
+
+  it('rejects when parent signal aborts before timeout', async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    let signalRef: AbortSignal | undefined;
+
+    const promise = withTimeout(
+      async (signal) => {
+        signalRef = signal;
+        await new Promise(() => {});
+        return 'never';
+      },
+      1000,
+      () => 'timed-out',
+      controller.signal,
+    );
+    const assertionPromise = expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+
+    controller.abort('parent-abort');
+    await vi.runAllTimersAsync();
+
+    await assertionPromise;
+    expect(signalRef?.aborted).toBe(true);
+    vi.useRealTimers();
+  });
 });
 
 describe('withRetry', () => {

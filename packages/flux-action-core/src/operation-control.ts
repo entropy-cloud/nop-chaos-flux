@@ -34,15 +34,55 @@ export function createAbortScope(): { signal: AbortSignal; cancel(): void } {
   };
 }
 
+function createAbortError(reason?: unknown): Error {
+  if (reason instanceof Error) {
+    return reason;
+  }
+
+  if (typeof DOMException !== 'undefined') {
+    return new DOMException(
+      typeof reason === 'string' && reason.length > 0 ? reason : 'The operation was aborted',
+      'AbortError',
+    );
+  }
+
+  const error = new Error(
+    typeof reason === 'string' && reason.length > 0 ? reason : 'The operation was aborted',
+  );
+  error.name = 'AbortError';
+  return error;
+}
+
 export function withTimeout<T>(
   fn: (signal: AbortSignal) => Promise<T>,
   ms: number,
   onTimeout: () => T,
+  parentSignal?: AbortSignal,
 ): Promise<T> {
+  if (parentSignal?.aborted) {
+    return Promise.reject(createAbortError(parentSignal.reason));
+  }
+
   const controller = new AbortController();
 
   return new Promise((resolve, reject) => {
     let settled = false;
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      parentSignal?.removeEventListener('abort', abortFromParent);
+    };
+
+    const abortFromParent = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      controller.abort(parentSignal?.reason);
+      cleanup();
+      reject(createAbortError(parentSignal?.reason));
+    };
 
     const timeoutId = setTimeout(() => {
       if (settled) {
@@ -51,8 +91,11 @@ export function withTimeout<T>(
 
       settled = true;
       controller.abort();
+      cleanup();
       resolve(onTimeout());
     }, ms);
+
+    parentSignal?.addEventListener('abort', abortFromParent, { once: true });
 
     void fn(controller.signal)
       .then((result) => {
@@ -61,7 +104,7 @@ export function withTimeout<T>(
         }
 
         settled = true;
-        clearTimeout(timeoutId);
+        cleanup();
         resolve(result);
       })
       .catch((error) => {
@@ -70,7 +113,7 @@ export function withTimeout<T>(
         }
 
         settled = true;
-        clearTimeout(timeoutId);
+        cleanup();
         reject(error);
       });
   });
