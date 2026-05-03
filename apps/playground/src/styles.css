@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import '@nop-chaos/theme-tokens/styles.css';
 @import '@nop-chaos/flux-react/default-spacing.css';
-@import '../../../packages/ui/src/styles/base.css';
+@import '@nop-chaos/ui/base.css';
 @import './styles-theme-utilities.css';
 @source "../../../packages";
 
