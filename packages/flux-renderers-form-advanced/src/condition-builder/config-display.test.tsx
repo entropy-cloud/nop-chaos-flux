@@ -299,9 +299,9 @@ describe('condition-builder config integration display behavior', () => {
     it('disables add buttons when disabled is true', () => {
       renderGroup({}, makeEmptyGroup(), vi.fn(), { disabled: true });
       const addBtns = screen.queryAllByText('Add condition');
-      const button = addBtns[0].closest('button');
+      const button = addBtns[0].closest('[role="button"]');
       expect(button).toBeTruthy();
-      expect((button as HTMLButtonElement).disabled).toBe(true);
+      expect(button?.getAttribute('aria-disabled')).toBe('true');
     });
   });
 
