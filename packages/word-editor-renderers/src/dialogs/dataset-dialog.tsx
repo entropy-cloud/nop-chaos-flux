@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import type { DataSetSourceType, DataColumnInput } from '@nop-chaos/word-editor-core';
+import type { DatasetSourceType, DataColumnInput } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
@@ -24,13 +24,13 @@ interface DatasetDialogProps {
   onSave: (data: {
     name: string;
     description: string;
-    type: DataSetSourceType;
+    type: DatasetSourceType;
     columns: DataColumnInput[];
   }) => void;
   initialData?: {
     name: string;
     description: string;
-    type: DataSetSourceType;
+    type: DatasetSourceType;
     columns: DataColumnInput[];
   } | null;
 }
@@ -39,7 +39,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
   const nextColumnKeyRef = useRef(initialData?.columns?.length ?? 0);
   const [name, setName] = useState(() => initialData?.name ?? '');
   const [description, setDescription] = useState(() => initialData?.description ?? '');
-  const [type, setType] = useState<DataSetSourceType>(() => initialData?.type ?? 'static');
+  const [type, setType] = useState<DatasetSourceType>(() => initialData?.type ?? 'static');
   const [columns, setColumns] = useState<DataColumnInput[]>(() => initialData?.columns ?? []);
   const [columnKeys, setColumnKeys] = useState<string[]>(() =>
     (initialData?.columns ?? []).map((_, index) => `column-${index}`),
@@ -80,7 +80,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
         name: col.name?.trim() || '',
         label: col.label?.trim() || '',
         description: col.description?.trim(),
-        type: (col.type as DataSetSourceType) || 'static',
+        type: (col.type as DatasetSourceType) || 'static',
       })),
     });
     onClose();
@@ -130,7 +130,7 @@ export function DatasetDialog({ open, onClose, onSave, initialData }: DatasetDia
                 <Label>{t('flux.wordEditor.type')}</Label>
                 <NativeSelect
                   value={type}
-                  onChange={(e) => setType(e.target.value as DataSetSourceType)}
+                  onChange={(e) => setType(e.target.value as DatasetSourceType)}
                   className="w-full"
                 >
                   <NativeSelectOption value="sql">SQL</NativeSelectOption>

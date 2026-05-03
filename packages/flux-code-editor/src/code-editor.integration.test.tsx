@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, expect, it, afterEach, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv, SchemaInput } from '@nop-chaos/flux-core';
@@ -273,6 +273,46 @@ describe('code-editor integration', () => {
     });
 
     expect(screen.getByText('JSON Editor')).toBeTruthy();
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('does not open the snippet trigger when the wrapped field shell is clicked', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderCodeEditorSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          name: 'testForm',
+          body: [
+            {
+              type: 'code-editor',
+              name: 'sqlEditor',
+              label: 'SQL Editor',
+              language: 'sql',
+              height: 200,
+              sqlConfig: {
+                snippets: [
+                  {
+                    name: 'Current user',
+                    template: 'select current_user();',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const field = screen.getByText('SQL Editor').closest('.nop-field');
+    expect(field).toBeTruthy();
+
+    fireEvent.click(field!);
+
+    expect(screen.queryByText('Current user')).toBeNull();
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });

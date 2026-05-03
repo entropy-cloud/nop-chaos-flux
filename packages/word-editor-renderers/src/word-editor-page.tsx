@@ -52,6 +52,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
   const isSavingRef = useRef(false);
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets');
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false);
@@ -88,6 +89,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   }, []);
   useEffect(() => {
     return () => {
+      mountedRef.current = false;
       if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current);
     };
   }, []);
@@ -215,10 +217,18 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     isSavingRef.current = true;
     try {
       const result = await actionProvider.invoke('save', undefined, {} as any);
+      if (!mountedRef.current) {
+        return;
+      }
+
       if (result.ok) {
-        setSaveMessage(t('wordEditor.saved'));
+        setSaveMessage(t('flux.wordEditor.saved'));
         if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current);
-        saveMessageTimerRef.current = setTimeout(() => setSaveMessage(null), 2000);
+        saveMessageTimerRef.current = setTimeout(() => {
+          if (mountedRef.current) {
+            setSaveMessage(null);
+          }
+        }, 2000);
       }
     } finally {
       isSavingRef.current = false;
@@ -346,7 +356,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
             variant="outline"
             size="icon-sm"
             onClick={handleBack}
-            title={t('wordEditor.back')}
+            title={t('flux.wordEditor.back')}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -355,13 +365,13 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
             <h1 className="text-lg font-semibold text-[var(--nop-text-strong)]">
               {hasRendererSlotContent(titleContent)
                 ? asReactNode(titleContent)
-                : t('wordEditor.title')}
+                : t('flux.wordEditor.title')}
             </h1>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[var(--nop-body-copy)]">
             <Type className="w-3.5 h-3.5 opacity-70" />
             <span className="tabular-nums">
-              {t('wordEditor.words', { count: wordCount.toLocaleString() })}
+              {t('flux.wordEditor.words', { count: wordCount.toLocaleString() })}
             </span>
           </div>
         </div>
@@ -373,7 +383,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           className="rounded-full"
         >
           <Save className="w-4 h-4" />
-          {saveMessage || t('wordEditor.save')}
+          {saveMessage || t('flux.wordEditor.save')}
         </Button>
       </div>
       {props.regions.toolbar ? (
@@ -406,7 +416,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           className="flex-1 py-2.5"
         >
           <Database className="w-3.5 h-3.5" />
-          <span>{t('wordEditor.datasets')}</span>
+          <span>{t('flux.wordEditor.datasets')}</span>
         </TabsTrigger>
         <TabsTrigger
           value="fields"
@@ -415,7 +425,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
           className="flex-1 py-2.5"
         >
           <Columns className="w-3.5 h-3.5" />
-          <span>{t('wordEditor.fields')}</span>
+          <span>{t('flux.wordEditor.fields')}</span>
         </TabsTrigger>
       </TabsList>
       <TabsContent value={activePanel} className="flex-1 min-h-0 overflow-hidden">
@@ -481,12 +491,12 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         leftPanel={leftPanelSlot}
         leftCollapsed={leftCollapsed}
         onLeftToggle={() => setLeftCollapsed((v) => !v)}
-        leftLabel={t('wordEditor.expandFieldPanel')}
+        leftLabel={t('flux.wordEditor.expandFieldPanel')}
         canvas={canvasSlot}
         rightPanel={rightPanelSlot}
         rightCollapsed={rightCollapsed}
         onRightToggle={() => setRightCollapsed((v) => !v)}
-        rightLabel={t('wordEditor.expandOutline')}
+        rightLabel={t('flux.wordEditor.expandOutline')}
         dialogs={
           <DatasetDialog
             key={`${editingDatasetId ?? 'new'}:${datasetDialogOpen ? 'open' : 'closed'}`}

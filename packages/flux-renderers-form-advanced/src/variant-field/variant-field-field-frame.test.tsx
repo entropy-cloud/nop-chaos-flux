@@ -204,4 +204,83 @@ describe('variant-field FieldFrame attribute forwarding', () => {
     expect(descEl).toBeTruthy();
     expect(descEl?.textContent).toBe('Helper description');
   });
+
+  it('supports frameWrap none without emitting field chrome', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-field-frame.test.tsx#6"
+        schema={{
+          type: 'form',
+          data: { payload: null },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              frameWrap: 'none',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [{ type: 'input-text', name: 'value', label: 'Value' }],
+                  initialValue: { value: '' },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(document.querySelector('[data-active-variant]')).toBeTruthy());
+    const container = document.querySelector('[data-active-variant]');
+    expect(container).toBeTruthy();
+    expect(screen.queryByText('Payload')).toBeNull();
+    expect(container?.classList.contains('nop-field')).toBe(false);
+  });
+
+  it('preserves group frameWrap intent on variant-field root', async () => {
+    cleanup();
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/variant-field/variant-field-field-frame.test.tsx#7"
+        schema={{
+          type: 'form',
+          data: { payload: null },
+          body: [
+            {
+              type: 'variant-field',
+              name: 'payload',
+              label: 'Payload',
+              frameWrap: 'group',
+              defaultVariant: 'text',
+              variants: [
+                {
+                  key: 'text',
+                  label: 'Text',
+                  content: [{ type: 'input-text', name: 'value', label: 'Value' }],
+                  initialValue: { value: '' },
+                },
+              ],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(document.querySelector('[data-active-variant]')).toBeTruthy());
+    const container = document.querySelector('[data-active-variant]');
+    expect(container?.getAttribute('data-frame-wrap')).toBe('group');
+    expect(container?.classList.contains('nop-field')).toBe(true);
+  });
 });

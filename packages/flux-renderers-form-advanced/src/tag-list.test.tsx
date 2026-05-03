@@ -38,17 +38,23 @@ describe('tag-list renderer', () => {
     const redTag = await screen.findByText('red');
     const blueTag = screen.getByText('blue');
 
-    const initialRedClass = redTag.closest('button')?.className;
-    const initialBlueClass = blueTag.closest('button')?.className;
+    const initialRedClass = redTag.closest('[role="button"]')?.className;
+    const initialBlueClass = blueTag.closest('[role="button"]')?.className;
 
     fireEvent.click(redTag);
-    await waitFor(() => expect(redTag.closest('button')?.className).not.toBe(initialRedClass));
+    await waitFor(() =>
+      expect(redTag.closest('[role="button"]')?.className).not.toBe(initialRedClass),
+    );
 
     fireEvent.click(blueTag);
-    await waitFor(() => expect(blueTag.closest('button')?.className).not.toBe(initialBlueClass));
+    await waitFor(() =>
+      expect(blueTag.closest('[role="button"]')?.className).not.toBe(initialBlueClass),
+    );
 
     fireEvent.click(redTag);
-    await waitFor(() => expect(redTag.closest('button')?.className).toBe(initialRedClass));
+    await waitFor(() =>
+      expect(redTag.closest('[role="button"]')?.className).toBe(initialRedClass),
+    );
   });
 
   it('validates required selections after the field has been touched in a form', async () => {
@@ -88,5 +94,44 @@ describe('tag-list renderer', () => {
     fireEvent.click(redTag);
 
     await waitFor(() => expect(screen.getByText('Tags requires at least one tag')).toBeTruthy());
+  });
+
+  it('does not toggle an internal tag action when the wrapped field shell is clicked', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicRendererDefinitions,
+      ...formRendererDefinitions,
+      ...formAdvancedRendererDefinitions,
+    ]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/tag-list.test.tsx#3"
+        schema={{
+          type: 'page',
+          data: {},
+          body: [
+            {
+              type: 'tag-list',
+              name: 'tags',
+              label: 'Tags',
+              tags: ['red'],
+            },
+          ],
+        }}
+        env={baseEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const redTag = await screen.findByText('red');
+    const field = redTag.closest('.nop-field');
+
+    expect(field).toBeTruthy();
+    expect(redTag.closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.click(field!);
+
+    expect(redTag.closest('[role="button"]')?.getAttribute('aria-pressed')).toBe('false');
   });
 });

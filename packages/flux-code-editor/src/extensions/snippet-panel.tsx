@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@nop-chaos/ui';
 import type { CodeSnippetTemplate } from '../types';
+import { ToolbarButton } from '../code-editor-renderer/toolbar-button';
 
 interface SnippetPanelProps {
   snippets: CodeSnippetTemplate[];
@@ -21,17 +22,16 @@ export function SnippetPanel({ snippets, onInsert }: SnippetPanelProps) {
     <Popover>
       <div data-slot="code-editor-snippet-panel">
         <PopoverTrigger
+          nativeButton={false}
           render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
+            <ToolbarButton
+              size="xs"
               data-slot="code-editor-snippet-toggle"
               title="Insert snippet"
               className="h-6 px-2 text-xs text-muted-foreground"
             >
               {'{…}'}
-            </Button>
+            </ToolbarButton>
           }
         />
       </div>

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ActionScope, ApiSchema, RendererEnv } from '@nop-chaos/flux-core';
 import {
   createNopDebugger,
@@ -7,11 +7,6 @@ import {
 } from './index';
 
 const windowStub = {} as Window & typeof globalThis;
-
-Object.defineProperty(globalThis, 'window', {
-  value: windowStub,
-  configurable: true,
-});
 
 const baseEnv: RendererEnv = {
   async fetcher<T>(api: ApiSchema) {
@@ -31,9 +26,14 @@ const baseEnv: RendererEnv = {
 
 describe('nop-debugger automation api', () => {
   beforeEach(() => {
+    vi.stubGlobal('window', windowStub);
     installNopDebuggerWindowFlag(false);
     delete window.__NOP_DEBUGGER_API__;
     delete window.__NOP_DEBUGGER_HUB__;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('queries events and builds diagnostic reports', async () => {

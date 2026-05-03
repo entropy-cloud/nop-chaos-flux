@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildScopeChain,
   buildNetworkSummary,
@@ -20,14 +20,14 @@ import {
 
 const windowStub = {} as Window & typeof globalThis;
 
-Object.defineProperty(globalThis, 'window', {
-  value: windowStub,
-  configurable: true,
-});
-
 describe('controller helpers', () => {
   beforeEach(() => {
+    vi.stubGlobal('window', windowStub);
     delete window.__NOP_DEBUGGER__;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('reads debugger window config from defaults, boolean flags, and explicit config', () => {

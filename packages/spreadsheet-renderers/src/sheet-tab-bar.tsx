@@ -4,6 +4,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogFooter,
@@ -168,10 +169,12 @@ export function SheetTabBar({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('flux.sheet.deleteTitle')}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
             <DialogDescription>
               {t('flux.sheet.deleteDescription', { name: pendingSheetName || 'this sheet' })}
             </DialogDescription>
-          </DialogHeader>
+          </DialogBody>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>
               {t('flux.common.cancel')}

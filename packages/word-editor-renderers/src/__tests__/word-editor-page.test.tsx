@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -213,6 +213,10 @@ function renderWordEditor(input?: {
 }
 
 describe('WordEditorPage', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('updates host scope dataset projection when dataset store changes', async () => {
     resetFluxI18n();
     initFluxI18n();
@@ -509,6 +513,51 @@ describe('WordEditorPage', () => {
     });
     expect(confirmSpy).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
+  });
+
+  it('does not publish save message updates after unmount', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+    vi.useFakeTimers();
+
+    let resolveSave: ((value: { ok: boolean }) => void) | undefined;
+    const saveProviderResult = new Promise<{ ok: boolean }>((resolve) => {
+      resolveSave = resolve;
+    });
+    const invoke = vi.fn(async (method: string) => {
+      if (method !== 'save') {
+        return { ok: false, error: new Error('unexpected method') };
+      }
+
+      await saveProviderResult;
+      return { ok: true };
+    });
+    const providerSpy = vi
+      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
+      .mockReturnValue({
+        kind: 'host',
+        listMethods() {
+          return ['save'];
+        },
+        invoke,
+      } as any);
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderWordEditor();
+
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+    expect(invoke).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    resolveSave?.({ ok: true });
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    expect(consoleError).not.toHaveBeenCalled();
+
+    consoleError.mockRestore();
+    providerSpy.mockRestore();
   });
 
   it('publishes host status and mounts override regions with word-editor scope', async () => {

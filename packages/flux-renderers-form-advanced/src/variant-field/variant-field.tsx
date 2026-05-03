@@ -38,6 +38,20 @@ import {
 } from './variant-field-matching';
 import { createVariantFormProxy, createVariantScope } from './variant-field-runtime';
 
+function resolveVariantFrameWrap(
+  frameWrap: boolean | 'label' | 'group' | 'none' | undefined,
+): 'label' | 'group' | 'none' {
+  if (frameWrap === false || frameWrap === 'none') {
+    return 'none';
+  }
+
+  if (frameWrap === 'group') {
+    return 'group';
+  }
+
+  return 'label';
+}
+
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
@@ -361,6 +375,37 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       ? toFieldRemarkProps(schemaProps.labelRemark as Parameters<typeof toFieldRemarkProps>[0])
       : undefined;
 
+  const frameWrapMode = resolveVariantFrameWrap(
+    (props.schema as VariantFieldSchema).frameWrap as
+      | boolean
+      | 'label'
+      | 'group'
+      | 'none'
+      | undefined,
+  );
+
+  const body = (
+    <div data-slot="variant-field-body" data-active-variant={activeKey}>
+      {renderSelector()}
+      {renderReadOnlyContent()}
+    </div>
+  );
+
+  if (frameWrapMode === 'none') {
+    return (
+      <div
+        data-slot="variant-field-body"
+        data-active-variant={activeKey}
+        className={props.meta.className}
+        data-testid={props.meta.testid}
+        data-cid={props.meta.cid}
+      >
+        {renderSelector()}
+        {renderReadOnlyContent()}
+      </div>
+    );
+  }
+
   return (
     <FieldFrame
       name={name || undefined}
@@ -373,13 +418,13 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       labelAlign={labelAlignValue === 'inherit' ? undefined : labelAlignValue}
       labelWidth={schemaProps.labelWidth as string | number | undefined}
       rootTag="div"
+      layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
       className={props.meta.className}
       testid={props.meta.testid}
       cid={props.meta.cid}
-      rootProps={{ 'data-active-variant': activeKey }}
+      rootProps={{ 'data-active-variant': activeKey, 'data-frame-wrap': frameWrapMode }}
     >
-      {renderSelector()}
-      {renderReadOnlyContent()}
+      {body}
     </FieldFrame>
   );
 }

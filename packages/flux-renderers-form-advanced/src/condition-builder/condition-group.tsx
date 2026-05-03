@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { PlusIcon, GroupIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, cn } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import {
   DndContext,
   closestCenter,
@@ -30,6 +30,7 @@ import type {
 import { ConditionItem } from './condition-item';
 import { genId } from './id-utils';
 import { computeUsedFields } from './utils';
+import { WrappedFieldAction } from '../wrapped-field-action';
 
 interface ConditionGroupProps {
   value: ConditionGroupValue;
@@ -244,8 +245,7 @@ export function ConditionGroup({
 
       <div className="relative rounded-lg border border-border bg-card pl-0">
         {depth > 0 && onRemove && (
-          <Button
-            type="button"
+          <WrappedFieldAction
             variant="outline"
             size="icon-xs"
             className="absolute -right-2 -top-2 z-10 rounded-full text-muted-foreground hover:text-destructive hover:border-destructive shadow-sm"
@@ -253,15 +253,14 @@ export function ConditionGroup({
             title={removeGroupLabel}
           >
             ×
-          </Button>
+          </WrappedFieldAction>
         )}
 
         {(showAndOr || showNot) && (
           <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted/30 rounded-t-lg">
             {showAndOr && !isSimple ? (
               <div className="flex items-center rounded-full border border-border p-0.5 bg-background">
-                <Button
-                  type="button"
+                <WrappedFieldAction
                   variant="ghost"
                   size="xs"
                   className={cn(
@@ -274,9 +273,8 @@ export function ConditionGroup({
                   disabled={disabled}
                 >
                   {t('conditionBuilder.and')}
-                </Button>
-                <Button
-                  type="button"
+                </WrappedFieldAction>
+                <WrappedFieldAction
                   variant="ghost"
                   size="xs"
                   className={cn(
@@ -289,15 +287,14 @@ export function ConditionGroup({
                   disabled={disabled}
                 >
                   {t('conditionBuilder.or')}
-                </Button>
+                </WrappedFieldAction>
               </div>
             ) : (
               <span className="text-xs font-medium text-muted-foreground">{conjunctionLabel}</span>
             )}
 
             {showNot && (
-              <Button
-                type="button"
+              <WrappedFieldAction
                 variant="ghost"
                 size="xs"
                 className={cn(
@@ -310,7 +307,7 @@ export function ConditionGroup({
                 disabled={disabled}
               >
                 {value.not ? t('conditionBuilder.notActive') : t('conditionBuilder.not')}
-              </Button>
+              </WrappedFieldAction>
             )}
           </div>
         )}
@@ -320,8 +317,7 @@ export function ConditionGroup({
         {(!atMaxItems || canNest) && (
           <div className="flex items-center gap-1.5 px-3 pb-3">
             {!atMaxItems && (
-              <Button
-                type="button"
+              <WrappedFieldAction
                 variant="ghost"
                 size="xs"
                 className="text-xs text-muted-foreground hover:text-primary"
@@ -330,12 +326,11 @@ export function ConditionGroup({
               >
                 <PlusIcon className="size-3 mr-1" />
                 {addConditionLabel}
-              </Button>
+              </WrappedFieldAction>
             )}
             {canNest && !atMaxItems && <span className="text-muted-foreground/40 text-xs">|</span>}
             {canNest && (
-              <Button
-                type="button"
+              <WrappedFieldAction
                 variant="ghost"
                 size="xs"
                 className="text-xs text-muted-foreground hover:text-primary"
@@ -344,7 +339,7 @@ export function ConditionGroup({
               >
                 <GroupIcon className="size-3 mr-1" />
                 {addGroupLabel}
-              </Button>
+              </WrappedFieldAction>
             )}
           </div>
         )}

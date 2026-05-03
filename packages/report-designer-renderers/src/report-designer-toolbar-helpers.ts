@@ -87,7 +87,7 @@ export function toCommand(action: string | undefined): Record<string, unknown> |
     case 'report-designer:preview':
       return { type: 'report-designer:preview', mode: 'inline' };
     case 'report-designer:stopPreview':
-      return { type: 'report-designer:preview', mode: undefined };
+      return { type: 'report-designer:stopPreview' };
     case 'report-designer:save':
       return { type: 'report-designer:save' };
     case 'report-designer:openInspector':

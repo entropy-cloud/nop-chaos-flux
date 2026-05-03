@@ -18,10 +18,11 @@ import {
 } from '@nop-chaos/flux-react';
 import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, cn } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';
 import { formLabelFieldRule, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { createItemFormProxy, createItemScope } from './array-field-runtime';
+import { WrappedFieldAction } from '../wrapped-field-action';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -129,9 +130,13 @@ function ArrayItem(props: {
         </FormContext.Provider>
       </div>
       {removable && (
-        <Button type="button" variant="destructive" size="sm" onClick={() => onRemove(index)}>
+        <WrappedFieldAction
+          variant="destructive"
+          size="sm"
+          onClick={() => onRemove(index)}
+        >
           {t('flux.form.remove')}
-        </Button>
+        </WrappedFieldAction>
       )}
     </div>
   );
@@ -372,9 +377,13 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
           );
         })}
         {addable && !readOnly && !presentation.effectiveDisabled && (
-          <Button type="button" variant="outline" size="sm" onClick={handleAdd}>
+          <WrappedFieldAction
+            variant="outline"
+            size="sm"
+            onClick={handleAdd}
+          >
             {t('flux.form.addItem')}
-          </Button>
+          </WrappedFieldAction>
         )}
       </div>
     </div>

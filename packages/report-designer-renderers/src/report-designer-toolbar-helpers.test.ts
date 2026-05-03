@@ -131,10 +131,9 @@ describe('toCommand', () => {
     });
   });
 
-  it('maps report-designer:stopPreview with undefined mode', () => {
+  it('maps report-designer:stopPreview to the canonical stop command', () => {
     expect(toCommand('report-designer:stopPreview')).toEqual({
-      type: 'report-designer:preview',
-      mode: undefined,
+      type: 'report-designer:stopPreview',
     });
   });
 

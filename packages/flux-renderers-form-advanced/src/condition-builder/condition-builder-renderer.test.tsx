@@ -25,7 +25,7 @@ describe('condition-builder renderer integration', () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer(allDefs);
 
-    const { rerender } = render(
+    render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#1"
         schema={
@@ -53,7 +53,9 @@ describe('condition-builder renderer integration', () => {
 
     expect(await screen.findByText('Choose filters')).toBeTruthy();
 
-    rerender(
+    cleanup();
+
+    render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#1b"
         schema={
@@ -221,5 +223,47 @@ describe('condition-builder renderer integration', () => {
 
     const trigger = await screen.findByRole('button', { name: /Filters/ });
     expect((trigger as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('does not trigger internal add-condition action when the wrapped field shell is clicked', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer(allDefs);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/condition-builder/condition-builder-renderer.test.tsx#5"
+        schema={
+          {
+            type: 'form',
+            data: {
+              filters: { id: 'root', conjunction: 'and', children: [] },
+            },
+            body: [
+              {
+                type: 'condition-builder',
+                name: 'filters',
+                label: 'Filters',
+                fields: [{ name: 'status', label: 'Status', type: 'text' }],
+              },
+              {
+                type: 'form-state-probe',
+                name: 'filters',
+              },
+            ],
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const field = (await screen.findByText('Add condition')).closest('.nop-field');
+    expect(field).toBeTruthy();
+
+    fireEvent.click(field!);
+
+    expect(JSON.parse(screen.getByTestId('form-state:filters').textContent ?? 'null')).toMatchObject({
+      children: [],
+    });
   });
 });

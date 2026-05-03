@@ -10,7 +10,7 @@ import { FieldSelect } from './field-select';
 import { OperatorSelect } from './operator-select';
 import { ValueInput } from './value-input';
 import { resolveOperators, resolveDefaultOp } from './operators';
-import { Button } from '@nop-chaos/ui';
+import { WrappedFieldAction } from '../wrapped-field-action';
 
 interface ConditionItemProps {
   value: ConditionItemValue;
@@ -138,15 +138,14 @@ export function ConditionItem({
       />
 
       {!disabled && (
-        <Button
-          type="button"
+        <WrappedFieldAction
           variant="ghost"
           size="icon-xs"
           className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
           onClick={onRemove}
         >
           <Trash2Icon className="size-3.5" />
-        </Button>
+        </WrappedFieldAction>
       )}
     </div>
   );

@@ -1,13 +1,14 @@
 import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { useCurrentFormFieldState, useCurrentFormModelGeneration } from '@nop-chaos/flux-react';
-import { Button, cn } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import {
   formLabelFieldRule,
   resolveFieldLabelText,
   useFormFieldController,
 } from '@nop-chaos/flux-renderers-form';
 import type { TagListSchema } from '@nop-chaos/flux-renderers-form';
+import { WrappedFieldAction } from './wrapped-field-action';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const name = String(props.props.name ?? '');
@@ -73,9 +74,8 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
         const active = value.includes(tag);
 
         return (
-          <Button
+          <WrappedFieldAction
             key={tag}
-            type="button"
             variant={active ? 'secondary' : 'outline'}
             size="sm"
             disabled={presentation.effectiveDisabled}
@@ -84,6 +84,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
                 currentForm.visitField(name);
               }
             }}
+            aria-pressed={active}
             onClick={() => {
               const nextValue = active ? value.filter((item) => item !== tag) : [...value, tag];
 
@@ -99,7 +100,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
             }}
           >
             {tag}
-          </Button>
+          </WrappedFieldAction>
         );
       })}
     </div>

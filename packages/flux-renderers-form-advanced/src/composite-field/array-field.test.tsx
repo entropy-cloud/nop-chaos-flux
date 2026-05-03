@@ -211,6 +211,38 @@ describe('array-field renderer (scalar)', () => {
       expect(screen.getByTestId('scalar-scope').textContent).toBe('Tag alpha / 0 / true'),
     );
   });
+
+  it('does not trigger add-item when the wrapped field shell is clicked', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/array-field.test.tsx#shell"
+        schema={{
+          type: 'form',
+          data: {
+            tags: ['alpha'],
+          },
+          body: [
+            {
+              type: 'array-field',
+              name: 'tags',
+              itemKind: 'scalar',
+              label: 'Tags',
+              item: [{ type: 'input-text', name: 'value', label: 'Tag' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getAllByText('Remove').length).toBe(1));
+    fireEvent.click(screen.getByText('Tags').closest('.nop-field')!);
+    expect(screen.getAllByText('Remove').length).toBe(1);
+  });
 });
 
 describe('array-field renderer (object itemKind)', () => {
