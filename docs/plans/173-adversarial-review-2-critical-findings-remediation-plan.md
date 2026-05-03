@@ -101,14 +101,14 @@ Targets: `packages/flux-compiler/src/compile-symbol-table.ts`, `packages/flux-co
 
 Exit Criteria:
 
-- [ ] `${$Date.today()}`、`${$Date.diff(...)}` 等 9 个之前报错的表达式不再产生 false-positive 诊断
-- [ ] `${$Date.startOfDay()}` 产生 `unknown-builtin-member` 诊断（因为 runtime 不存在此方法）
-- [ ] `booleanStringAdapter().in('false')` 返回 `false`
-- [ ] 深度嵌套 200+ 层的 action 链产生描述性错误而非栈溢出
-- [ ] `pattern: "["` 在 `compiler.compile()` 路径上产生编译诊断而非崩溃
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm test` 通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `${$Date.today()}`、`${$Date.diff(...)}` 等 9 个之前报错的表达式不再产生 false-positive 诊断
+- [x] `${$Date.startOfDay()}` 产生 `unknown-builtin-member` 诊断（因为 runtime 不存在此方法）
+- [x] `booleanStringAdapter().in('false')` 返回 `false`
+- [x] 深度嵌套 200+ 层的 action 链产生描述性错误而非栈溢出
+- [x] `pattern: "["` 在 `compiler.compile()` 路径上产生编译诊断而非崩溃
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm test` 通过
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 2 - Reaction Cascade Depth And Error Visibility (Findings 5, 9)
 
@@ -127,14 +127,14 @@ Targets: `packages/flux-runtime/src/async-data/reaction-runtime.ts`, `packages/f
 
 Exit Criteria:
 
-- [ ] Reaction 在 100+ 次独立外部触发后仍然正常工作（不因级联深度被 dispose）
-- [ ] Reaction 自引用循环（dispatch 改变自身监听的 scope 值）在级联深度超过 100 后被 dispose
-- [ ] `cascadeDepth` 仅在 `finally` 块的递归路径中递增，外部触发（`scheduleReaction` → `invoke`）重置为 0
-- [ ] `actionAdapter` 的 catch 块有可见的警告输出
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm test` 通过
-- [ ] `docs/architecture/api-data-source.md` reaction 火焰计数段落已更新为级联深度语义
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] Reaction 在 100+ 次独立外部触发后仍然正常工作（不因级联深度被 dispose）
+- [x] Reaction 自引用循环（dispatch 改变自身监听的 scope 值）在级联深度超过 100 后被 dispose
+- [x] `cascadeDepth` 仅在 `finally` 块的递归路径中递增，外部触发（`scheduleReaction` → `invoke`）重置为 0
+- [x] `actionAdapter` 的 catch 块有可见的警告输出
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm test` 通过
+- [x] `docs/architecture/api-data-source.md` reaction 火焰计数段落已更新为级联深度语义
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 3 - Hot-Path Performance Optimization (Findings 7, 8)
 
@@ -152,10 +152,10 @@ Exit Criteria:
 
 - [x] `scopeChangeHitsDependencies` 单段路径使用 `Set.has()` O(1) 查找；多段路径仍为 O(n\*m)（deferred）
 - [x] `findRuntimeRegistration` 的子路径查找通过反向索引 Map 实现 O(1)
-- [ ] 现有测试全部通过
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm test` 通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] 现有测试全部通过
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm test` 通过
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 4 - Action Adapter Safety (Findings 13, 15)
 
@@ -168,11 +168,11 @@ Targets: `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-react/src
 
 Exit Criteria:
 
-- [ ] `resolveFormTarget` 的 dead-code store 检查和 `as any` 已删除
-- [ ] 多 source prop 节点中单个失败不影响其他成功的 prop
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm test` 通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `resolveFormTarget` 的 dead-code store 检查和 `as any` 已删除
+- [x] 多 source prop 节点中单个失败不影响其他成功的 prop
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm test` 通过
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 5 - Documentation And Contract Sync (Findings D1, D5, Plan 103)
 
@@ -185,13 +185,13 @@ Targets: `docs/architecture/flux-runtime-module-boundaries.md`, `docs/plans/103-
 
 Exit Criteria:
 
-- [ ] `flux-runtime-module-boundaries.md` 覆盖所有 `flux-runtime/src/` 下的活跃源文件
-- [ ] Plan 103 验证清单准确反映代码实际状态
-- [ ] 所有修改的 renderer 组件在 DOM 中输出 `data-testid` 和 `data-cid`
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm build` 通过
-- [ ] `pnpm test` 通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `flux-runtime-module-boundaries.md` 覆盖所有 `flux-runtime/src/` 下的活跃源文件
+- [x] Plan 103 验证清单准确反映代码实际状态
+- [x] 所有修改的 renderer 组件在 DOM 中输出 `data-testid` 和 `data-cid`
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm build` 通过
+- [x] `pnpm test` 通过
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 

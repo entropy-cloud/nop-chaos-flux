@@ -1,5 +1,7 @@
 # NOP Chaos Flux：一个低代码渲染框架的设计哲学
 
+> 本文是设计哲学与架构动机说明，不是当前 contract owner doc。凡涉及现行运行时接口、动作执行路径、包边界与资源发布语义，均以 `docs/architecture/frontend-programming-model.md`、`docs/architecture/flux-core.md`、`docs/architecture/api-data-source.md`、`docs/architecture/action-scope-and-imports.md` 以及 live code 为准。
+
 ## 1. 引言 — 为什么需要又一个低代码框架？
 
 当我们谈论低代码渲染框架时，AMIS 是绕不过去的名字。它功能强大、文档丰富，被广泛用于各种企业级应用。但就像所有成功的老项目一样，它的架构也背负着历史包袱。随着功能不断叠加，各种 `disabledOn`、`visibleOn`、`hiddenOn`、`staticOn` 这样的平行字段家族不断膨胀——每个需要动态控制的属性都要配一个 `xxxOn` 变体。schema 变得越来越复杂，维护成本也水涨船高。
@@ -195,10 +197,10 @@ Flux 借鉴了 ES 模块导入的设计，引入了 `xui:imports` 声明：
 
 - **声明式**：在 schema 里明确声明依赖，不需要在代码里注册
 - **词法可见性**：子容器可以看到父容器的导入，但兄弟容器之间互相看不到——这符合直觉，也避免了命名冲突
-- **幂等性与自动去重**：同一个库在多个层级导入时，模块加载会按规范化后的 import key 去重；scope 侧注册按容器生命周期维护，导入管理器在自身销毁时会对实现了 `dispose()` 的 provider 执行清理（注：按引用计数自动回收尚未实现，当前 `releaseImportedNamespaces` 为 no-op）
+- **幂等性与自动去重**：同一个库在多个层级导入时，模块加载会按规范化后的 import key 去重；scope 侧注册按容器生命周期维护。当前实现已经有 frame 级引用计数与释放路径，重复安装会增加 `refCount`，释放时通过 import stack 出栈并清理对应注册
 - **安全性**：`from` 的值通过宿主提供的 `env.importLoader` 解析，框架本身不执行任何 URL 解析或脚本加载。安全边界的划分是明确的：框架负责管理导入的词法可见性和生命周期（注册与 teardown），宿主负责决定哪些库可以被加载以及如何加载。建议宿主实现时采用白名单机制，只允许加载预先注册的可信库标识符，而非接受任意 URL。当前实现下，如果宿主未提供 `importLoader`，导入不会被静默忽略，而是进入显式失败状态，并通过 `env.notify('error', ...)` 与 monitor 诊断暴露接线错误；后续对该命名空间的调用会返回失败结果。命名空间的隔离保证了导入的库不能覆盖内置平台动作（`setValue`、`ajax` 等），命名空间动作的解析优先级始终低于内置动作
 
-这也解释了为什么 `ActionScope` 必须与 `ScopeRef` 分离：导入库的加载是异步的，有独立的引用计数和 teardown 语义，这些特性与数据作用域的同步、结构性生长方式根本不兼容。
+这也解释了为什么 `ActionScope` 必须与 `ScopeRef` 分离：导入库的加载是异步的，并且拥有独立的注册、引用计数与 teardown 语义，这些特性与数据作用域的同步、结构性生长方式根本不兼容。
 
 ## 7. 数据获取与动态 Schema — Service 的拆分
 
@@ -208,7 +210,7 @@ Flux 借鉴了 ES 模块导入的设计，引入了 `xui:imports` 声明：
 
 从计算模型的视角看，`api` 和 `schemaApi` 是两种根本不同的计算模式。`api` 本质上是一个**响应式异步计算**：它建立的是"状态 → 远程值"的映射关系，状态变化时重新触发请求，是异步版本的 `computed`——输入是作用域中的当前状态，输出是一个会随状态变化而更新的远程值。而 `schemaApi` 是一次性的**结构初始化**：它在组件首次挂载时触发，拿到的结果是渲染树的描述，用于决定"渲染什么"，而不是"显示什么数据"。将两者混合在同一个组件里，既是生命周期耦合，也是计算语义的类型混淆。
 
-Flux 将这两项职责拆为独立的渲染器：
+Flux 将这两项职责拆为独立的渲染器，但当前作者侧基线已经进一步收敛：远程调用统一通过 action dispatch 进入运行时，`ApiSchema` 主要作为 `ajax` action 的内部 transport contract，而不再是 `data-source` 对外暴露的一条独立 authoring 主路径。
 
 ```json
 {
@@ -216,7 +218,8 @@ Flux 将这两项职责拆为独立的渲染器：
   "body": [
     {
       "type": "data-source",
-      "api": {
+      "action": "ajax",
+      "args": {
         "url": "/api/user/${userId}",
         "includeScope": ["userId"]
       },
@@ -232,9 +235,9 @@ Flux 将这两项职责拆为独立的渲染器：
 }
 ```
 
-`data-source` 专门负责声明式数据获取。它是一个不直接渲染 UI 的副作用组件：负责根据 `api` 发起请求、按 `name` 将结果写入当前作用域，并可选地通过 `interval` + `stopWhen` 轮询。`name` 是规范的发布路径标识；如果返回值为对象且需要将其顶层字段浅合并到当前作用域，可设置 `mergeToScope: true`。如果 schema 需要显式渲染 producer 状态，则通过 `statusPath` 读取 runtime 发布的只读 summary DTO，而不是依赖隐式 sibling 路径。它自身返回 `null`，因此 loading skeleton、空态或错误展示通常由同一作用域下的兄弟节点或宿主通知机制承担。
+`data-source` 专门负责声明式数据获取或其他 runtime-owned 值生产。它是一个不直接渲染 UI 的副作用节点：负责通过 action-backed 或 formula-backed producer 生成值、按 `name` 将结果发布到当前作用域，并可选地通过 `interval` + `stopWhen` 轮询。`name` 是规范的发布路径标识；如果返回值为对象且需要将其顶层字段浅合并到当前作用域，可设置 `mergeToScope: true`。如果 schema 需要显式渲染 producer 状态，则通过 `statusPath` 读取 runtime 发布的只读 summary DTO，而不是依赖隐式 sibling 路径。它自身返回 `null`，因此 loading skeleton、空态或错误展示通常由同一作用域下的兄弟节点或宿主通知机制承担。
 
-当前实现说明：`data-source` 的 `name`-first 发布、`mergeToScope: true` 显式浅合并、以及 `statusPath` 状态摘要已经进入主链；但 live `NodeInstance` 仍在 Plan 40 继续收敛，文章中涉及节点身份的更强结论应以对应架构计划为准。
+当前实现说明：`data-source` 的 `name`-first 发布、`mergeToScope: true` 显式浅合并、`statusPath` 状态摘要，以及 action-backed / formula-backed 双 producer 形态都已进入主链。节点身份与模板实例化的现行细节，应直接以 `docs/architecture/template-instantiation-and-node-identity.md` 为准。
 
 ```json
 {
@@ -251,9 +254,7 @@ Flux 将这两项职责拆为独立的渲染器：
 
 `dynamic-renderer` 专门负责动态 Schema 加载。它通过 `schemaApi` 获取远端 Schema 并渲染，只关注"渲染什么"这一件事。
 
-这种拆分带来了几个好处。首先，关注点更清晰：一个组件只做一件事，意图更容易理解。其次，生命周期独立——`data-source` 的轮询不会影响 `dynamic-renderer` 的 Schema 加载。最后，API 对象的语义也更精确。
-
-API 对象的类型契约中设计了 `includeScope` 字段——其意图是让 schema 作者明确声明哪些作用域变量需要注入到请求中，而不是依赖框架内部的隐式合并；这是比 AMIS 隐式作用域合并更清晰的接口语义设计，具体渲染器的实现会随框架演进逐步落地。`params` 字段将 URL 查询参数从请求体中分离出来，语义更加清晰。
+这种拆分带来了几个好处。首先，关注点更清晰：一个组件只做一件事，意图更容易理解。其次，生命周期独立——`data-source` 的轮询不会影响 `dynamic-renderer` 的 Schema 加载。最后，请求描述对象的语义也更精确：`includeScope` 明确声明哪些词法作用域变量会被注入请求，`params` 明确区分 URL 查询参数，而真正的执行路径则统一收敛到 `ajax` action 与运行时请求准备流程。
 
 ## 8. 字段元数据驱动 — 编译器而非渲染器做决策
 
@@ -532,10 +533,16 @@ Flux 采用 React 19、TypeScript 6.0 严格模式、Zustand 5、Vite 8、Tailwi
 ```
 flux-core (类型定义、契约、纯工具函数)
   → flux-formula (表达式编译器、求值器)
-    → flux-runtime (Zustand stores、动作、验证)
-      → flux-react (React hooks、渲染层)
-        → flux-renderers-* (页面、表单、数据渲染器)
-          → apps/playground
+    → flux-compiler (schema 编译、诊断、模板图构建)
+      → flux-action-core (动作编译与调度语义)
+        → flux-runtime (stores、生命周期、运行时桥接)
+          → flux-react (React hooks、渲染层)
+            → flux-renderers-* / 设计器 / 编辑器
+              → apps/playground
+
+flux-core
+  → flux-i18n
+    → flux-react / @nop-chaos/ui
 ```
 
 每一层都有明确的职责，上层依赖下层，下层不依赖上层。依赖方向单向，包的职责边界清晰。
@@ -553,9 +560,9 @@ React 集成方式也很讲究：在边界处显式，在中间隐式。
 
 Flux 在这个基础上做了两处完善。
 
-第一处是 **`env.importLoader` 的引入**。`xui:imports` 是 Flux 新增的能力，AMIS 中没有对应机制，因此 AMIS 的 `RendererEnv` 自然也没有这个接口。`importLoader` 承接了 `xui:imports` 声明的库加载逻辑——加载哪个 URL、如何缓存、如何处理加载失败——这些决策全部由宿主掌控，框架只负责在正确的时机调用它并管理引用计数。安全边界也随之确立：框架负责执行 schema 中的表达式，但外部库的加载与执行完全由宿主通过 importLoader 控制——宿主决定哪些库可以被信任和加载。
+第一处是 **`env.importLoader` 的引入**。`xui:imports` 是 Flux 新增的能力，AMIS 中没有对应机制，因此 AMIS 的 `RendererEnv` 自然也没有这个接口。`importLoader` 承接了 `xui:imports` 声明的库加载逻辑——加载哪个模块标识、如何缓存、如何处理加载失败——这些决策全部由宿主掌控，框架只负责在正确的时机调用它并管理词法可见性、注册与释放。安全边界也随之确立：框架负责执行 schema 中已进入运行时边界的声明，而外部库的加载与执行完全由宿主通过 `importLoader` 控制。
 
-第二处是 **最小必选接口的明确化**。Flux 的 `RendererEnv` 将接口精简为两个必选字段——`fetcher`（网络请求）和 `notify`（消息通知），其余能力（`navigate`、`confirm`、`functions`、`filters`、`importLoader`、`monitor`）均为可选字段。渲染器对必选字段直接调用，不做任何空值检查；对可选字段则通过 TypeScript 的 `?.` 可选链访问。这种方式没有引入复杂的分层或能力注册机制，而是用最朴素的"必选 / 可选"分区来表达接口语义：宿主至少要提供请求和通知能力，其他能力按需实现。
+第二处是 **最小必选接口的明确化**。Flux 的 `RendererEnv` 将接口精简为两个必选字段——`fetcher`（网络请求）和 `notify`（消息通知），其余能力（`navigate`、`confirm`、`functions`、`filters`、`importLoader`、`monitor`）均为可选字段。当前 `fetcher` 接收的已经不是 author-facing `ApiSchema`，而是经过运行时请求准备后的 `ExecutableApiRequest`；也就是说，请求表达式求值、`includeScope` 合并、`params` 规范化与 adaptor 应用发生在 fetcher 之前，宿主看到的是最终可执行请求。
 
 这两处完善合在一起，让 Flux 的宿主契约可以用一个公式来概括：
 
@@ -583,7 +590,7 @@ React 上下文的拆分也很关键。runtime、scope、action-scope、componen
 
 ## 14. 错误处理与开发体验
 
-**编译阶段**：表达式语法错误在编译时被静默捕获，回退为保留原始字符串的 static-node，不影响渲染流程（compile.ts）；未知渲染器类型则直接抛出异常，宿主需在调用 compile() 时自行处理。
+**编译阶段**：当前基线下，表达式与模板编译失败不再作为默认的“静默降级”路径；编译/求值错误应按可能抛错来理解和处理。未知渲染器类型等结构性问题同样应由编译或运行时显式暴露，而不是依赖隐式回退。
 
 **表达式求值**：运行时表达式求值的错误会向上传播。容错边界在宿主侧或 React 的 ErrorBoundary，而不在框架内部。
 
@@ -603,18 +610,18 @@ React 上下文的拆分也很关键。runtime、scope、action-scope、componen
 
 4. **GUI 三棵树正交分治**。ComponentTree、StateTree、ActionTree 各自独立，共享词法查找的设计直觉但维护不同的生命周期语义。
 
-5. **声明式导入与词法可见性**。ES 模块风格的导入，作用域内的能力可见性，独立生命周期管理（幂等加载 + 可选引用计数与卸载）。
+5. **声明式导入与词法可见性**。ES 模块风格的导入，作用域内的能力可见性，独立生命周期管理（幂等加载 + 引用计数 + 释放）。
 
 6. **字段元数据驱动编译，渲染器不做猜测**。编译器前置处理复杂逻辑，渲染器消费规范化的输出。
 
-7. **职责单一，计算语义清晰**。`api` 是响应式异步计算（异步 computed），`schemaApi` 是一次性结构初始化，两者分治为独立组件；API 对象的类型契约声明显式的作用域注入语义。
+7. **职责单一，计算语义清晰**。`data-source` 是 runtime-owned 的值生产节点，`schemaApi` 是一次性结构初始化；远程调用统一通过 action dispatch 进入运行时，而请求描述对象只负责 transport contract。
 
 8. **可配置的显式样式**。渲染器层不注入与 schema 意图无关的默认视觉样式；基础组件视觉表现由 shadcn/ui 提供；布局和定制通过 Tailwind 工具类和 `classAliases` 在 schema 中显式声明，在可预测与可复用之间取得平衡。
 
-9. **沿用并完善宿主契约**。`RendererEnv` 是 AMIS 奠定的抽象方向；Flux 在此基础上引入 `env.importLoader` 支持 `xui:imports`，并通过 TypeScript 严格类型对接口分层，让框架成为纯粹的 schema 解释器。
+9. **沿用并完善宿主契约**。`RendererEnv` 是 AMIS 奠定的抽象方向；Flux 在此基础上引入 `env.importLoader` 支持 `xui:imports`，并把 fetcher 收敛到最终可执行请求边界，让框架成为纯粹的 schema 运行时。
 
 10. **分层解决，不越界处理**。i18n、权限、模块化在平台层通过 JSON 结构变换解决，a11y 在组件库层通过 Radix UI 解决，渲染框架层只处理属于自己的关注点——编译、作用域、动作、渲染协调。每一层的职责边界是显式的：能在结构变换层解决的问题不带进运行时，能在组件库层解决的问题不在渲染器中重复实现。
 
 11. **性能设计前置到架构层**。不是事后修补，而是从第一行代码起就作为设计约束。
 
-这些原则之间存在依赖关系：统一值语义让全值树编译成为可能，值层面的判断让字段组合无歧义；三棵树的正交分治让 `xui:imports` 的异步生命周期得以独立管理；`api` 与 `schemaApi` 的计算语义分离让 Service 的拆分有了更坚实的理论基础；`RendererEnv` 让分层架构的最外层有了明确的宿主集成边界。Flux 不需要成为一个全能框架，它只需要把渲染层的事情做对，其余交给平台层和组件库层各司其职。
+这些原则之间存在依赖关系：统一值语义让全值树编译成为可能，值层面的判断让字段组合无歧义；三棵树的正交分治让 `xui:imports` 的异步生命周期得以独立管理；`data-source` 与 `dynamic-renderer` 的计算语义分离让 Service 的拆分有了更坚实的理论基础；`RendererEnv` 让分层架构的最外层有了明确的宿主集成边界。Flux 不需要成为一个全能框架，它只需要把渲染层的事情做对，其余交给平台层和组件库层各司其职。

@@ -147,6 +147,8 @@ Save and autosave truth rules:
 - a failed host save keeps the editor dirty so close protection, status publication, and host integrations still see unsaved work
 - autosave must build `SavedDocumentData` from the current runtime `charts` / `codes`, not from `initialDocument`
 - when an explicit save succeeds, the persisted host projection updates its saved `charts` / `codes` extras from the same runtime values used for the save
+- async save completion must not recreate local UI state after unmount; save-success banners and timers are renderer-local affordances only while the page is still mounted
+- in-repo live renderer call sites use the canonical `flux.wordEditor.*` i18n namespace; legacy unprefixed forms are not the current source baseline
 
 ### With nop-entropy Backend
 

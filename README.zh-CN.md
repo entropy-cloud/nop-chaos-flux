@@ -82,24 +82,25 @@ Flux 不是简单地把 JSON 映射成组件，而是用一致的概念模型、
 ```jsonc
 {
   "type": "form",
-  "id": "profile-form",
-  "title": "Profile",
+  "statusPath": "profileFormStatus",
   "data": {
-    "fullName": "Alice",
-    "email": "alice@example.com",
+    "name": "Alice",
   },
   "body": [
     {
-      "type": "input-text",
-      "name": "fullName",
-      "label": "Full Name",
-      "required": true,
+      "type": "text",
+      "text": "Hello ${name || 'Anonymous'}",
     },
     {
-      "type": "input-email",
-      "name": "email",
-      "label": "Email",
+      "type": "input-text",
+      "name": "name",
+      "label": "Name",
       "required": true,
+      "minLength": 3,
+    },
+    {
+      "type": "text",
+      "text": "Submit status: ${profileFormStatus.submitting ? 'submitting' : 'idle'}",
     },
   ],
   "submitAction": {
@@ -107,12 +108,14 @@ Flux 不是简单地把 JSON 映射成组件，而是用一致的概念模型、
     "args": {
       "method": "post",
       "url": "/api/profile",
+      "requestAdaptor": "return {data: {name: scope.name}};",
     },
   },
   "actions": [
     {
       "type": "button",
-      "label": "Submit",
+      "label": "Save",
+      "disabled": "${$form.submitting}",
       "onClick": {
         "action": "submitForm",
       },
@@ -121,7 +124,7 @@ Flux 不是简单地把 JSON 映射成组件，而是用一致的概念模型、
 }
 ```
 
-Flux 会把这份 Schema 编译成可执行值，实例化表单运行时，解析渲染器属性和元数据，执行表单校验，并把触发动作接入表单自身的语义化提交流程。
+Flux 会把这份 Schema 编译成可执行值，实例化表单运行时，解析表达式绑定，执行字段校验（`required`、`minLength`），并把按钮的 `onClick` 接入表单自身的语义化 `submitAction` 流程。
 
 - `Authoring`：用 JSON 描述字段、事件和 API 意图
 - `Compilation`：Flux 在热路径渲染之前先分类值、表达式、模板和渲染器元数据

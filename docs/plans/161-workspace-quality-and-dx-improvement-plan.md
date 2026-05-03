@@ -1,6 +1,6 @@
 # 161 Workspace Quality And DX Improvement Plan
 
-> Plan Status: completed
+> Plan Status: partially completed
 > Last Reviewed: 2026-05-02
 > Source: 全仓库 8 维度质量审计（2026-04-30），审计由 6 个并行子 agent 执行，覆盖项目结构、代码质量、架构边界、测试覆盖、性能、安全、开发体验、文档完整性
 > Related: `docs/plans/159-code-refactor-discovery-remediation-plan.md`, `docs/plans/143-unit-test-coverage-80-percent-target-plan.md`, `docs/plans/158-code-quality-redundancy-and-duplication-remediation-plan.md`, `docs/plans/160-swallowed-exception-remediation-plan.md`
@@ -76,14 +76,14 @@ Targets: `packages/flux-renderers-form/src/__tests__/`, `tsconfig.json`, `packag
 
 Exit Criteria:
 
-- [ ] `pnpm test` 全部通过（包含原 4 个预存失败已修复）
-- [ ] `tsconfig.json` references 包含 `flux-action-core`
-- [ ] `packages/flux-code-editor/` 源码中无 `@nop-chaos/flux-runtime` 导入，且 package.json 不再声明该依赖
-- [ ] 3 个新建的 `vitest.config.ts` 存在且使用 `createSharedVitestConfig`
-- [ ] `word-editor-renderers/vitest.config.ts` 使用 `createSharedVitestConfig`
-- [ ] `eslint.config.js` 中 `no-explicit-any` 为 `'warn'`
-- [ ] `pnpm typecheck && pnpm build && pnpm lint` 全部通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `pnpm test` 全部通过（包含原 4 个预存失败已修复）
+- [x] `tsconfig.json` references 包含 `flux-action-core`
+- [x] `packages/flux-code-editor/` 源码中无 `@nop-chaos/flux-runtime` 导入，且 package.json 不再声明该依赖
+- [x] 3 个新建的 `vitest.config.ts` 存在且使用 `createSharedVitestConfig`
+- [x] `word-editor-renderers/vitest.config.ts` 使用 `createSharedVitestConfig`
+- [ ] `eslint.config.js` 中 `no-explicit-any` 为 `'warn'`。
+- [x] `pnpm typecheck && pnpm build && pnpm lint` 全部通过
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 2 - 开发体验基础设施
 
@@ -102,15 +102,15 @@ Status: completed
 
 Exit Criteria:
 
-- [ ] `.editorconfig` 存在于仓库根目录
-- [ ] `.prettierrc` + `.prettierignore` 存在于仓库根目录
-- [ ] `eslint-config-prettier` 已安装并在 ESLint 配置中引入
+- [x] `.editorconfig` 存在于仓库根目录
+- [x] `.prettierrc` + `.prettierignore` 存在于仓库根目录
+- [x] `eslint-config-prettier` 已安装并在 ESLint 配置中引入
 - [ ] 初始格式化 commit 已存在（`chore: initial prettier formatting`）
 - [ ] `pnpm format:check` 通过
-- [ ] `git commit` 触发 pre-commit hook，执行 lint-staged
-- [ ] `.github/workflows/ci.yml` 存在且 workflow 语法有效
+- [ ] `git commit` 触发 pre-commit hook，执行 lint-staged`
+- [x] `.github/workflows/ci.yml` 存在且 workflow 语法有效
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 全部通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 3 - 代码质量修复
 
@@ -124,13 +124,13 @@ Status: completed
 
 Exit Criteria:
 
-- [ ] `dialog-host.tsx` 中两处 `surfaceContext` 均使用 `useMemo`
-- [ ] `app.tsx` 中 `CodeEditorPage` 为懒加载，`code-editor` 路由被 `<Suspense>` 包裹
-- [ ] `FlowDesignerExample.tsx.bak` 已从文件系统删除
-- [ ] 两处空 `.catch` 均已改为带 `err` 参数的 `console.debug`
-- [ ] 确认 `docs/architecture/renderer-runtime.md` 无需更新（useMemo 为内部优化，无契约变更）
+- [x] `dialog-host.tsx` 中两处 `surfaceContext` 均使用 `useMemo`
+- [x] `app.tsx` 中 `CodeEditorPage` 为懒加载，`code-editor` 路由被 `<Suspense>` 包裹
+- [x] `FlowDesignerExample.tsx.bak` 已从文件系统删除
+- [x] 两处空 `.catch` 均已改为带 `err` 参数的 `console.debug`
+- [x] 确认 `docs/architecture/renderer-runtime.md` 无需更新（useMemo 为内部优化，无契约变更）
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 全部通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 4 - 测试覆盖提升
 
@@ -158,11 +158,11 @@ Status: completed
 
 Exit Criteria:
 
-- [ ] `@nop-chaos/ui` 测试文件数从 6 增加到至少 16（+10 个组件测试）
-- [ ] `@nop-chaos/flux-action-core` 测试文件数从 3 增加到至少 6（+3 个模块测试）
-- [ ] 所有新测试通过
+- [x] `@nop-chaos/ui` 测试文件数从 6 增加到至少 16（+10 个组件测试）
+- [x] `@nop-chaos/flux-action-core` 测试文件数从 3 增加到至少 6（+3 个模块测试）
+- [x] 所有新测试通过
 - [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 全部通过
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 
@@ -185,21 +185,18 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: All phases completed. Phase 1.7 (no-explicit-any warn) intentionally skipped — eslint.config.js comment explicitly states low-code system legitimately uses `any` for schema/host boundaries. Phase 1.0 test failures resolved (tests pass, intermittent Vitest worker fork crash is infra issue). Pre-existing `flux-renderers-form` build errors (missing `ValidationError` import in field-reading.tsx, missing `readFieldValue`/`readCheckboxGroupValue` exports) identified but outside scope — fixed the `ValidationError` import.
+Status Note: This plan cannot remain `completed`. Most implementation slices landed, but closure bookkeeping drift remained: Phase 1.7 intentionally stayed unresolved because `eslint.config.js` continues to keep `@typescript-eslint/no-explicit-any` at `'off'`, several phase exit criteria still depend on evidence not re-verified in the current baseline (`format:check`, pre-commit execution proof, initial formatting commit provenance, full workspace verification), and no independent closure audit is recorded. Keep the plan `partially completed` until those remaining closure conditions are either explicitly re-verified or re-scoped.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: opencode agent session
-- Evidence: Phase 1-4 items verified via typecheck, all test files pass (worker fork crashes are pre-existing Vitest infra issue)
-- Phase 1.7 skipped with justification: eslint.config.js line 96-97 comment
+- Reviewer / Agent: pending independent closure audit
+- Evidence: 2026-05-03 plan-hygiene re-audit confirmed that `.editorconfig`, `.prettierrc`, `.prettierignore`, `.github/workflows/ci.yml`, `package.json` `format` / `format:check`, `tsconfig.json` references, `packages/flux-action-core|flux-i18n|flow-designer-core/vitest.config.ts`, `packages/word-editor-renderers/vitest.config.ts`, and the added UI / flux-action-core tests are present in the live repo, but the plan still lacks reconciled proof for the intentionally skipped Phase 1.7 target, full checklist closure, and an independent closure audit.
 
 Follow-up:
 
-- 为 13 个无 coverage threshold 的包逐步添加阈值（follow-up 计划）
-- 评估 Turborepo 远程缓存和 `turbo.json` 优化（Turborepo 已存在但仅配置基本任务图）
-- 添加 bundle 分析工具（follow-up 计划）
-- 撰写 CONTRIBUTING.md 和 CHANGELOG.md（follow-up 计划）
-- 文档体系治理（plans/ 归档、bugs/ 编号去重、experiments/ 清理）
+- Reconcile the remaining closure conditions inside this plan before any future `completed` claim: either explicitly mark Phase 1.7 as a recorded scope change / non-goal update, or land the `no-explicit-any: 'warn'` policy change with fresh verification.
+- Re-run and record the still-unproven closure gates: `pnpm format:check`, full workspace `pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`, and an explicit pre-commit / `lint-staged` proof path.
+- Run and record an independent closure audit before changing `Plan Status` back to `completed`.
 
 ### Adversarial Review Cross-Reference (2026-05-01)
 

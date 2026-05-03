@@ -22,10 +22,11 @@ Apply this rule when code changes touch any of the following:
 - If the work can fail, the code must either publish error state, log a scoped diagnostic, or intentionally ignore the failure with an explicit empty handler and reason.
 - Do not allow promise rejections to disappear implicitly.
 - Non-critical decorative flows may intentionally ignore failure, but the ignore path must still be explicit.
+- Internal `try/catch` only counts if it encloses all throw-capable setup reachable from the discarded promise, not just the later awaited body.
 
 Review checks:
 
-- Search for `void` promise chains, async IIFEs, and `.then(...)` chains with no `.catch()`.
+- Search for `void` promise chains, async IIFEs, and `.then(...)`/`.finally(...)` relaunch chains with no terminal `.catch()`.
 - Check whether the failure path leaves the owner in a diagnosable state.
 - For non-critical flows, verify the intentional ignore is visible in code.
 

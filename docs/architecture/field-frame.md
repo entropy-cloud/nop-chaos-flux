@@ -280,6 +280,12 @@ const inputTextDefinition: RendererDefinition = {
 
 Once a renderer opts into `wrap: true`, `NodeFrameWrapper` resolves normalized `name` / `label` / `required` / `className` / `testid` / `cid` and renders `FieldFrame` around the control.
 
+Wrapped-field interaction rule:
+
+- the default `layout: 'default'` path still renders a real `<label>` root
+- internal secondary action controls inside that subtree must not rely on native labelable elements such as `<button>` if non-control area clicks must stay inert
+- for those cases, use a non-labelable button-like pattern (`role="button"`, keyboard handling, shared button classes) or move the action outside the wrapped label subtree through an allowed portal/opt-out path
+
 ### Control renderer stays focused on control semantics
 
 ```tsx
@@ -332,6 +338,8 @@ The renderer does not manually create `<FieldFrame>` and does not read `props.sc
 ```
 
 This keeps the renderer's normal root element and skips the outer `<label>`/`<fieldset>` field chrome for that instance.
+
+When a renderer still needs shared field chrome but cannot safely host secondary action controls under a real `<label>`, the owner renderer may also choose a local `FieldFrame rootTag="div"` path, as long as that renderer explicitly preserves the intended `frameWrap` semantics and tests the resulting wrapper contract.
 
 ### Grouped field chrome via `frameWrap: 'group'`
 

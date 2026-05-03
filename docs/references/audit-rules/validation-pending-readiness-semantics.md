@@ -22,6 +22,7 @@ Apply this rule when code changes touch any of the following:
 - A debounced async validation run that has been scheduled but not started yet still counts as pending validation.
 - Owner-level `validating` and `ready` semantics must include scheduled debounce windows, not only already-running async calls.
 - Do not let `validatingDelay` or UI-spinner timing control the truth of owner readiness.
+- Semantic publication surfaces such as `$form` summaries and `statusPath` host publication must reuse the same pending-work truth instead of inventing a weaker derived summary.
 
 Review checks:
 
@@ -51,6 +52,7 @@ Review checks:
 - Debounced validation work contributes to owner pending-work semantics.
 - `ready`/`canSubmit` remain false while scheduled work may still change the result.
 - `validatingDelay` affects presentation only, not owner-truth semantics.
+- `$form` and `statusPath` publication remain aligned with the owner pending-work truth during debounce windows.
 - Focused tests cover queued-but-not-started validation windows.
 
 ## Evidence From This Repository

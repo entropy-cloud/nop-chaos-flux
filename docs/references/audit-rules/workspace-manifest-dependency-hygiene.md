@@ -8,12 +8,18 @@ Use it when reviewing package boundaries, test-only workspace imports, or reposi
 
 ## Scope
 
-Apply this rule when code changes touch any of the following:
+Apply this rule when code changes touch any of the following package-scoped surfaces:
 
 - `packages/*/package.json`
-- source or test files importing `@nop-chaos/*`
+- `packages/*/src/**/*.ts`
+- `packages/*/src/**/*.tsx`
 - package-level test setup, schema validation tests, or cross-package helpers
 - automation that validates workspace manifests
+
+Out of scope under the current rule:
+
+- `apps/*`
+- docs/examples notes that do not participate in package source execution
 
 ## Required Pattern
 
@@ -43,7 +49,7 @@ Review checks:
 
 Current repo verification path:
 
-- `pnpm check:workspace-manifest-deps` checks tracked `packages/*/src/**/*.test.ts(x)` files for `@nop-chaos/*` imports and verifies that each imported workspace package is declared in the owning package manifest.
+- `pnpm check:workspace-manifest-deps` checks tracked `packages/*/src/**/*.ts` and `packages/*/src/**/*.tsx` files for `@nop-chaos/*` imports and verifies that each imported workspace package is declared in the owning package manifest.
 
 ## Allowed Exceptions
 

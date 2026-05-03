@@ -57,9 +57,9 @@ Review checks:
 
 ## Evidence From This Repository
 
-- `docs/plans/178-validation-owner-bootstrap-and-hidden-participation-plan.md`
-- `docs/analysis/2026-05-02-deep-audit-full/08-validation.md`
-- `docs/analysis/2026-05-02-deep-audit-full-3/08-validation.md`
+- `docs/analysis/2026-05-03-audit-rules-review/owner-lifecycle-and-generic-owner-contracts.md`
+- `packages/flux-runtime/src/runtime-factory.ts`
+- `packages/flux-runtime/src/__tests__/runtime-status-and-imports.test.ts`
 
 ## Primary Architecture Anchors
 

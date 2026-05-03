@@ -34,7 +34,7 @@ Required standard structure:
 </DrawerContent>
 ```
 
-Header and footer are optional. Body is the standard content slot whenever the surface hosts normal page/form/detail content.
+Header and footer are optional. Body is the standard content slot whenever the surface hosts normal page/form/detail content, including compact confirm-style dialogs unless the surface is explicitly classified as a specialized exception.
 
 ## Responsibility Split
 
@@ -65,6 +65,7 @@ Allowed exception categories:
 - command palettes or search overlays whose child widget owns the full internal layout
 - floating workbench panels whose content is intentionally edge-to-edge and does not behave like a normal form/detail body
 - full-custom media/canvas surfaces with a dedicated internal shell component
+- compact confirm or alert-style surfaces only when the owner doc or component API explicitly defines that shell as a specialized exception rather than a normal dialog body with less content
 
 Exception requirements:
 

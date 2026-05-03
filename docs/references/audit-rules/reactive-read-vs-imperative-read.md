@@ -22,12 +22,13 @@ Apply this rule when code changes touch any of the following:
 - If the component must re-render when the value changes, use a subscribed selector hook.
 - Imperative reads are one-shot reads only; they do not establish a subscription.
 - Do not use imperative reads as if they were reactive bindings.
+- Preferred reactive APIs are `useScopeSelector`, `useOwnScopeSelector`, `useCurrentFormState`, and other owner/store selector hooks that establish the actual subscription boundary for the rendered value.
 
 Review checks:
 
 - Search React component bodies for direct `scope.get()`, `scope.readOwn()`, `scope.read()`, or store snapshot calls.
 - Check whether the component expects the value to update reactively.
-- Replace render-time imperative reads with the supported selector hook when reactivity is required.
+- Replace render-time imperative reads with the supported selector hook that matches the real owner boundary when reactivity is required.
 
 ### 2) Diagnostics must include a contrasting case that defeats lucky defaults
 

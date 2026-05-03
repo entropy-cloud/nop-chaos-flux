@@ -34,6 +34,7 @@ Review checks:
 - Some aliases may remain for compatibility or readability, but they must be intentional.
 - Silent parallel surfaces are not acceptable because they create ambiguous ownership.
 - Closure should record why the alias still exists and which contract remains canonical.
+- Public facade re-exports are allowed only when the facade status is explicit and the canonical owner package remains named in docs and review notes.
 
 Review checks:
 

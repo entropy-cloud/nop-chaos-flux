@@ -82,24 +82,25 @@ The two projects can collaborate: Next can integrate Flux's designer and runtime
 ```jsonc
 {
   "type": "form",
-  "id": "profile-form",
-  "title": "Profile",
+  "statusPath": "profileFormStatus",
   "data": {
-    "fullName": "Alice",
-    "email": "alice@example.com",
+    "name": "Alice",
   },
   "body": [
     {
-      "type": "input-text",
-      "name": "fullName",
-      "label": "Full Name",
-      "required": true,
+      "type": "text",
+      "text": "Hello ${name || 'Anonymous'}",
     },
     {
-      "type": "input-email",
-      "name": "email",
-      "label": "Email",
+      "type": "input-text",
+      "name": "name",
+      "label": "Name",
       "required": true,
+      "minLength": 3,
+    },
+    {
+      "type": "text",
+      "text": "Submit status: ${profileFormStatus.submitting ? 'submitting' : 'idle'}",
     },
   ],
   "submitAction": {
@@ -107,12 +108,14 @@ The two projects can collaborate: Next can integrate Flux's designer and runtime
     "args": {
       "method": "post",
       "url": "/api/profile",
+      "requestAdaptor": "return {data: {name: scope.name}};",
     },
   },
   "actions": [
     {
       "type": "button",
-      "label": "Submit",
+      "label": "Save",
+      "disabled": "${$form.submitting}",
       "onClick": {
         "action": "submitForm",
       },
@@ -121,13 +124,13 @@ The two projects can collaborate: Next can integrate Flux's designer and runtime
 }
 ```
 
-Flux compiles that schema into executable values, instantiates a form runtime, resolves renderer props and metadata, validates the form, and routes the trigger through the form's semantic submit lifecycle.
+Flux compiles that schema into executable values, instantiates a form runtime, resolves expression bindings, tracks field validation (`required`, `minLength`), and routes the button `onClick` through the form's semantic `submitAction` lifecycle.
 
 - `Authoring`: schema authors describe fields, events, and API intent in JSON
 - `Compilation`: Flux classifies values, expressions, templates, and renderer metadata before hot-path rendering
 - `Runtime guarantees`: data scope, action scope, validation, and side effects keep distinct runtime boundaries
 
-For semantic-owner surfaces, Flux also keeps a small set of owner-aware built-in actions. For example, `submitForm` acts on the current form runtime, and `closeDialog` closes the nearest active dialog by default. Explicit instance targeting such as `component:submit` remains available when a trigger needs to address a specific component outside the local owner context.
+For semantic-owner surfaces, Flux also keeps a small set of owner-aware built-in actions. For example, `submitForm` acts on the current form runtime, and `closeDialog` closes the nearest active dialog by default. Explicit instance targeting such as `component:submit` remains available for cases where a trigger needs to address a component outside the local owner context.
 
 The same execution model scales from simple forms to tables, dialogs, and designer workbenches.
 

@@ -203,6 +203,7 @@ Mounted-subtree rule:
 - projected variant scope/view 不等于 child owner
 - scalar/root variant child input 如需直接编辑字段根值，当前 live baseline 应使用空路径 `name: ''`，而不是把 `value` 当成 projected form alias
 - 若某个 variant 真正需要独立 validation/publish boundary，应在该 variant subtree 内显式组合 staged owner
+- 当前 live wrapper baseline 不再静默绕过 `frameWrap`：`frameWrap: 'none'` 直接跳过 field chrome，`frameWrap: 'group'` 仍保留 grouped `FieldFrame` layout，而默认 wrapped path 通过 `FieldFrame rootTag="div"` 保留字段 chrome 同时避免把 selector/body subtree 放到真实 `<label>` 根下
 
 ## `detectVariantAction`
 

@@ -1,6 +1,6 @@
 # 167 Test Quality And Reliability Improvement Plan
 
-> Plan Status: completed
+> Plan Status: partially completed
 > Last Reviewed: 2026-05-02
 > Source: `docs/analysis/2026-05-01-deep-audit-full-2/14-test-coverage.md`, live code verification
 > Related: `docs/plans/161-workspace-quality-and-dx-improvement-plan.md` (Phase 4 ui/action-core tests, Phase 1.7 no-explicit-any warn), `docs/plans/143-unit-test-coverage-80-percent-target-plan.md` (completed)
@@ -168,16 +168,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Phase 1-3 completed and verified. Phase 4 (test-support adoption) explicitly deferred to independent follow-up — not blocking plan closure. `as any` reduced from 758 to 437 (-42.4%), exceeding the <500 target.
+Status Note: Phase 1-3 completed and remain the landed baseline. This plan cannot stay `completed` because Phase 4 is still marked `deferred` inside the same plan, its exit criteria and validation checklist remain unchecked, no successor plan currently owns the deferred test-support adoption scope, and no independent closure audit evidence is recorded. Keep the plan `partially completed` until Phase 4 is either executed here or moved to an explicit successor owner plan.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: opencode agent session
-- Evidence: Phase 1 fixes verified via targeted test runs; Phase 2 split verified via `it(` count matching; Phase 3 verified via `rg "as any" -g "*.test.*" -c` total count 437>
+- Reviewer / Agent: pending independent closure audit
+- Evidence: 2026-05-03 plan-hygiene re-audit confirms the Phase 1-3 closure note is directionally consistent with the live baseline, but closure cannot be claimed while Phase 4 remains deferred without successor ownership and while the validation checklist still requires test-support adoption >= 25%.
 
 Follow-up:
 
-- Phase 4 test-support 采用率提升（从 ~19.8% 到 25%+）独立跟进
+- Create or route to an explicit successor owner plan for Phase 4 test-support adoption, then update this plan to `superseded` / `partially completed` with that path or finish Phase 4 here.
 - Q12-Q14 其他跨领域测试文件（400-700 行）可按 Phase 2 的拆分模式渐进处理
 - Q07 真实定时器 sleep → vi.useFakeTimers 渐进替换
 - Q18/Q19 ui/i18n 覆盖率提升独立跟进

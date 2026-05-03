@@ -34,6 +34,7 @@ Review checks:
 - If a bypass is legitimate, it still must honor the shared semantics for className, markers, metadata, and wrapper-owned interactions where applicable.
 - A visually similar result is not enough if the semantic contract drifts.
 - Tests should confirm the preserved contract behavior, not just render success.
+- If a bypass remains as an explicit facade or compatibility path, the docs must name which shared wrapper semantics are preserved and which are intentionally unsupported.
 
 Review checks:
 

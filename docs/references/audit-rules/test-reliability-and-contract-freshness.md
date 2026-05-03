@@ -33,13 +33,20 @@ Review checks:
 
 - Do not preserve old wrong behavior by leaving stale labels, stale DOM markers, or stale semantics in assertions.
 - After a contract fix, update tests to the final agreed behavior rather than patching code to satisfy stale expectations.
-- Large cross-domain test files should be split before they become the only place multiple unrelated contracts are frozen together.
+- Large cross-domain test files should be triaged explicitly before they become the only place multiple unrelated contracts are frozen together.
+
+Suite-size triage baseline:
+
+- files under roughly 300 lines are normally fine when the assertions still cover one coherent contract family
+- files around 300-500 lines should trigger a quick maintainability review before more unrelated coverage is added
+- files above 500 lines are not an automatic violation, but adding new unrelated assertions without a split or explicit justification counts as rule pressure
+- file size alone is a maintainability signal; it becomes a reliability finding only when stale expectations, cross-domain coupling, timeout sprawl, or shared mutable setup make the suite harder to trust
 
 Review checks:
 
 - Compare new assertions with the current owner doc or live behavior.
 - Search for assertions that still use old labels, DOM markers, or pre-fix semantics.
-- Check whether a mega suite should be split by domain before more assertions are added.
+- Check whether a large suite is merely broad or is actually freezing multiple unrelated contracts behind shared mutable setup.
 
 ## Allowed Exceptions
 
@@ -50,7 +57,7 @@ Review checks:
 
 - Tests do not leak mutable module-top state or unmanaged globals.
 - Regression assertions match current contract semantics.
-- Oversized cross-domain suites are split or explicitly justified.
+- Oversized cross-domain suites are either split, justified, or kept narrow enough that they do not become a reliability liability.
 - Shared test-support utilities are preferred over bespoke repeated setup when available.
 
 ## Evidence From This Repository

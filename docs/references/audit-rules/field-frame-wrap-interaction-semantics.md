@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This rule captures recurring interaction bugs caused by `wrap: true` / `FieldFrame` label semantics, especially when renderer-internal controls use labelable HTML elements.
+This rule captures recurring interaction bugs caused by `wrap: true` / `FieldFrame` label semantics, especially when secondary or internal renderer controls use labelable HTML elements.
 
 Use it when reviewing field renderers that opt into `wrap: true`, or when migrating renderer-local controls to shared UI components.
 
@@ -20,12 +20,12 @@ Apply this rule when code changes touch any of the following:
 ### 1) Wrapped field renderers must respect label forwarding semantics
 
 - `wrap: true` means the field can be wrapped by a `<label>`-like shell.
-- Internal interactive controls must not accidentally become the forwarded click target for the whole field.
+- Secondary or internal interactive controls must not accidentally become the forwarded click target for the whole field.
 - Do not assume a visually local button only receives direct clicks.
 
 Review checks:
 
-- Search for wrapped renderers containing `<button>`, `<input>`, `<select>`, `<textarea>`, or other labelable controls.
+- Search for wrapped renderers containing secondary/internal `<button>`, `<input>`, `<select>`, `<textarea>`, or other labelable controls.
 - Confirm whether those controls live inside the label-wrapped subtree or in a portal/outside shell.
 - Test clicks on non-control content inside the wrapped field, not only clicks on the trigger itself.
 
@@ -33,7 +33,7 @@ Review checks:
 
 - Replacing a local non-labelable trigger with a shared `<Button>` or other labelable control can reintroduce forwarding bugs.
 - Shared visual components are not automatically safe inside `wrap: true` renderers.
-- If a renderer needs an internal trigger inside a wrapped field, prefer a non-labelable semantic control pattern unless the control is explicitly exempted.
+- If a renderer needs a secondary/internal trigger inside a wrapped field, prefer a non-labelable semantic control pattern unless the control is explicitly exempted.
 
 Review checks:
 
