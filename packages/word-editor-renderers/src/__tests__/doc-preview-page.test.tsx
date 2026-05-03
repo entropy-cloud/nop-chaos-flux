@@ -1,8 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { DocPreviewPage } from '../preview/doc-preview-page.js';
+import '../styles.css';
 
 const bridgeState = {
   mountedDocs: [] as string[],
@@ -62,5 +65,14 @@ describe('DocPreviewPage', () => {
     await waitFor(() => {
       expect(screen.getByText('22 个词')).toBeTruthy();
     });
+  });
+
+  it('provides package-owned word-editor token fallbacks on nop theme roots', () => {
+    const packageStyles = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
+
+    expect(packageStyles).toContain('.nop-theme-root');
+    expect(packageStyles).toContain('--nop-app-bg:');
+    expect(packageStyles).toContain('--nop-border:');
+    expect(packageStyles).toContain('--nop-playground-stage-bg:');
   });
 });

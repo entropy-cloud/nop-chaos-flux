@@ -2,7 +2,9 @@
   "name": "@nop-chaos/word-editor-renderers",
   "version": "0.1.0",
   "private": true,
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +12,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./styles.css": "./src/styles.css"
   },
   "dependencies": {
     "@hufe921/canvas-editor": "^0.9.130",
@@ -18,6 +21,7 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
+    "@nop-chaos/theme-tokens": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@nop-chaos/word-editor-core": "workspace:*",
     "lucide-react": "^1.7.0",

@@ -1,0 +1,15 @@
+.nop-theme-root {
+  --nop-app-bg: var(--background, #fff);
+  --nop-app-text: var(--foreground, #0f172a);
+  --nop-accent: hsl(var(--primary, 217 89% 53%));
+  --nop-text-strong: color-mix(in srgb, var(--nop-app-text) 88%, #000 12%);
+  --nop-body-copy: color-mix(in srgb, var(--nop-app-text) 72%, #fff 28%);
+  --nop-surface-soft: color-mix(in srgb, var(--card, #fff) 92%, transparent);
+  --nop-border: hsl(var(--border, 214 32% 91%));
+  --nop-nav-surface: color-mix(in srgb, var(--card, #fff) 94%, transparent);
+  --nop-playground-stage-bg: color-mix(
+    in srgb,
+    var(--muted, #f8fafc) 88%,
+    var(--background, #fff) 12%
+  );
+}
