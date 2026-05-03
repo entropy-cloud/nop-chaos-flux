@@ -71,6 +71,7 @@ function createSharedState(initialValues: Record<string, any> = {}) {
     childPathToRegistrationId: new Map(),
     hiddenFields: new Set(),
     lifecycleState: 'active',
+    lifecycleWaiters: new Set(),
     modelGeneration: 1,
     externalErrors: new Map(),
     childContracts: new Map(),

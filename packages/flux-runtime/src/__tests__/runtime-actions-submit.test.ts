@@ -406,6 +406,62 @@ describe('createRendererRuntime', () => {
     expect(capturedSignal?.aborted).toBe(true);
   });
 
+  it('preserves parent abort propagation when timed submitAction also has timeout', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    let abortCount = 0;
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: async <T>(_api: ApiSchema, ctx: { signal?: AbortSignal }) => {
+          capturedSignal = ctx.signal;
+
+          return new Promise((_, reject) => {
+            ctx.signal?.addEventListener(
+              'abort',
+              () => {
+                abortCount += 1;
+                reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+              },
+              { once: true },
+            );
+          }) as Promise<{ ok: true; status: number; data: T }>;
+        },
+      },
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const form = runtime.createFormRuntime({
+      id: 'timeout-parent-abort-submit-form',
+      initialValues: { username: 'Alice' },
+      parentScope: page.scope,
+      page,
+      lifecycle: {
+        submitAction: async () =>
+          runtime.dispatch(
+            { action: 'ajax', args: { url: '/api/profile', method: 'post' }, timeout: 1000 },
+            { runtime, scope: form.scope, page },
+          ),
+      },
+    });
+    const parentController = new AbortController();
+
+    const resultPromise = runtime.dispatch(
+      { action: 'submitForm' },
+      { runtime, scope: form.scope, page, form, signal: parentController.signal },
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    parentController.abort();
+
+    await expect(resultPromise).resolves.toMatchObject({
+      ok: false,
+      cancelled: true,
+    });
+    expect(capturedSignal?.aborted).toBe(true);
+    expect(abortCount).toBe(1);
+  });
+
   it('applies compile plugins before and after schema compilation', () => {
     const plugin: RendererPlugin = {
       name: 'compile-hooks',

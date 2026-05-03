@@ -95,6 +95,7 @@ export interface FormRuntimeValidationState
   hiddenFields: Set<string>;
   lifecycleState: ValidationOwnerLifecycleState;
   modelGeneration: number;
+  lifecycleWaiters: Set<() => void>;
 }
 
 export interface FormRuntimeExternalErrorState extends FormRuntimeStoreScopeState {

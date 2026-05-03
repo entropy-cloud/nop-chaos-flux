@@ -25,6 +25,26 @@ function createValidationResult(errors: ValidationError[]): ValidationResult {
   };
 }
 
+function isLifecycleTransitional(state: FormRuntimeValidationState): boolean {
+  return state.lifecycleState === 'bootstrapping' || state.lifecycleState === 'refreshing';
+}
+
+async function waitForActiveLifecycle(sharedState: FormRuntimeValidationState): Promise<boolean> {
+  if (sharedState.lifecycleState === 'disposed') {
+    return false;
+  }
+
+  if (!isLifecycleTransitional(sharedState)) {
+    return true;
+  }
+
+  await new Promise<void>((resolve) => {
+    sharedState.lifecycleWaiters.add(resolve);
+  });
+
+  return sharedState.lifecycleState === 'active';
+}
+
 const VALIDATION_CANCELLED = Symbol('validation-cancelled');
 
 function setPathErrors(
@@ -378,6 +398,14 @@ export async function validatePath(
 ): Promise<ValidationResult> {
   if (sharedState.lifecycleState === 'disposed') {
     return createValidationResult([]);
+  }
+
+  if (isLifecycleTransitional(sharedState)) {
+    const activated = await waitForActiveLifecycle(sharedState);
+
+    if (!activated) {
+      return createValidationResult([]);
+    }
   }
 
   const field = getCompiledValidationField(sharedState.inputValue.validation, path);

@@ -28,6 +28,7 @@ function createSharedState(
     hiddenFields: new Set(),
     lifecycleState: 'active',
     modelGeneration: 1,
+    lifecycleWaiters: new Set(),
     externalErrors: new Map(),
     childContracts: new Map(),
     ...overrides,

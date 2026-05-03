@@ -28,6 +28,19 @@ export interface SubmitFormInput {
 
 export type { FormValidationResult };
 
+function isLifecycleTransitional(state: ManagedFormRuntimeSharedState['lifecycleState']): boolean {
+  return state === 'bootstrapping' || state === 'refreshing';
+}
+
+function createLifecycleBlockedSubmitResult(
+  lifecycleState: ManagedFormRuntimeSharedState['lifecycleState'],
+): ActionResult {
+  return {
+    ok: false,
+    error: new Error(`Submit is blocked while form lifecycleState is "${lifecycleState}".`),
+  };
+}
+
 function toSubmitFailureResult(error: unknown): ActionResult {
   if (isAbortError(error)) {
     return {
@@ -79,6 +92,10 @@ export async function executeFormSubmit(
 
   if (sharedState.lifecycleState === 'disposed') {
     return { ok: false, cancelled: true, error: new Error('Form is disposed') };
+  }
+
+  if (isLifecycleTransitional(sharedState.lifecycleState)) {
+    return createLifecycleBlockedSubmitResult(sharedState.lifecycleState);
   }
 
   if (options?.signal?.aborted) {

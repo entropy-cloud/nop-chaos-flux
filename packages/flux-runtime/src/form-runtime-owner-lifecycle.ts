@@ -13,6 +13,15 @@ function clearValidationAsyncOwners(sharedState: ManagedFormRuntimeSharedState) 
   }
 }
 
+function resolveLifecycleWaiters(sharedState: ManagedFormRuntimeSharedState) {
+  const waiters = Array.from(sharedState.lifecycleWaiters);
+  sharedState.lifecycleWaiters.clear();
+
+  for (const waiter of waiters) {
+    waiter();
+  }
+}
+
 export function refreshCompiledModelState(args: {
   sharedState: ManagedFormRuntimeSharedState;
   getCurrentValidation: () => FormRuntime['validation'];
@@ -99,6 +108,7 @@ export function refreshCompiledModelState(args: {
   }
 
   args.sharedState.lifecycleState = 'active';
+  resolveLifecycleWaiters(args.sharedState);
 }
 
 export function disposeOwnerState(args: {
@@ -111,6 +121,7 @@ export function disposeOwnerState(args: {
   }
 
   args.sharedState.lifecycleState = 'disposed';
+  resolveLifecycleWaiters(args.sharedState);
   cancelAllValidationDebounces(args.sharedState);
   clearValidationAsyncOwners(args.sharedState);
   args.sharedState.validationRuns.clear();

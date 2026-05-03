@@ -153,6 +153,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     hiddenFields: new Set(),
     lifecycleState: inputValue.initialLifecycleState ?? 'active',
     modelGeneration: 1,
+    lifecycleWaiters: new Set(),
     externalErrors: new Map(),
     childContracts: new Map(),
   };

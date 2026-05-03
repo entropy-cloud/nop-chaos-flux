@@ -43,6 +43,7 @@ export function buildFormOwnerRuntime(input: {
   let cachedFieldStatesRef: Record<string, FieldState> | undefined;
   let cachedLifecycleState = input.sharedState.lifecycleState;
   let cachedModelGeneration = input.sharedState.modelGeneration;
+  let cachedPendingValidationDebounceCount = input.sharedState.pendingValidationDebounces.size;
   let cachedScopeState: ScopeValidationStateSnapshot | undefined;
 
   function computeScopeState(): ScopeValidationStateSnapshot {
@@ -50,12 +51,14 @@ export function buildFormOwnerRuntime(input: {
     const fieldStates = state.fieldStates;
     const lifecycleState = input.sharedState.lifecycleState;
     const modelGeneration = input.sharedState.modelGeneration;
+    const pendingValidationDebounceCount = input.sharedState.pendingValidationDebounces.size;
 
     if (
       cachedScopeState &&
       cachedFieldStatesRef === fieldStates &&
       cachedLifecycleState === lifecycleState &&
-      cachedModelGeneration === modelGeneration
+      cachedModelGeneration === modelGeneration &&
+      cachedPendingValidationDebounceCount === pendingValidationDebounceCount
     ) {
       return cachedScopeState;
     }
@@ -69,11 +72,16 @@ export function buildFormOwnerRuntime(input: {
       if (hasErrors && isValidating) break;
     }
 
+    if (!isValidating && pendingValidationDebounceCount > 0) {
+      isValidating = true;
+    }
+
     const valid = !hasErrors;
     const ready = lifecycleState === 'active' && valid && !isValidating;
     cachedFieldStatesRef = fieldStates;
     cachedLifecycleState = lifecycleState;
     cachedModelGeneration = modelGeneration;
+    cachedPendingValidationDebounceCount = pendingValidationDebounceCount;
     cachedScopeState = {
       valid,
       hasErrors,

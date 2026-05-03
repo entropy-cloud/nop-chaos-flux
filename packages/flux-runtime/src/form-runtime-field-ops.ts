@@ -98,6 +98,26 @@ export function nextRegistrationId(): string {
   return `reg-${++_registrationIdCounter}`;
 }
 
+function isOwnedRegistrationPath(
+  sharedState: ManagedFormRuntimeSharedState,
+  path: string,
+): boolean {
+  const rootPath = sharedState.inputValue.validation?.rootPath ?? '';
+
+  return rootPath === '' || path === rootPath || path.startsWith(`${rootPath}.`);
+}
+
+function isRegistrationContained(
+  sharedState: ManagedFormRuntimeSharedState,
+  registration: Pick<RuntimeFieldRegistration, 'path' | 'childPaths'>,
+): boolean {
+  if (!isOwnedRegistrationPath(sharedState, registration.path)) {
+    return false;
+  }
+
+  return !registration.childPaths?.some((childPath) => !isOwnedRegistrationPath(sharedState, childPath));
+}
+
 export function registerField(
   sharedState: ManagedFormRuntimeSharedState,
   registration: RuntimeFieldRegistration,
@@ -105,6 +125,14 @@ export function registerField(
   const { runtimeFieldRegistrations, pathToRegistrationId, childPathToRegistrationId } = sharedState;
 
   if (sharedState.lifecycleState === 'disposed') {
+    return {
+      accepted: false,
+      registrationId: '',
+      unregister() {},
+    };
+  }
+
+  if (!isRegistrationContained(sharedState, registration)) {
     return {
       accepted: false,
       registrationId: '',
@@ -173,6 +201,20 @@ export function updateFieldRegistration(
   if (!entry) return;
 
   if (entry.modelGeneration !== sharedState.modelGeneration) return;
+
+  if (patch.path !== undefined && patch.path !== entry.registration.path) {
+    return;
+  }
+
+  if (
+    patch.childPaths !== undefined &&
+    !isRegistrationContained(sharedState, {
+      path: entry.registration.path,
+      childPaths: patch.childPaths,
+    })
+  ) {
+    return;
+  }
 
   if (patch.childPaths !== undefined) {
     const oldChildPaths = entry.registration.childPaths;
