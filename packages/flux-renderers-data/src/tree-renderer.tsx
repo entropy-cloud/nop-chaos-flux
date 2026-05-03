@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import { publishOwnerStatus } from '@nop-chaos/flux-react';
+import {
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
+  useStatusPathPublication,
+} from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronRightIcon, DotIcon } from 'lucide-react';
 import type { TreeSchema } from './schemas';
@@ -181,19 +184,13 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const statusPath =
     typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
 
-  useEffect(() => {
-    if (!statusPath) {
-      return;
-    }
-
-    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, {
-      kind: 'tree',
-      nodeCount: data.length,
-      childrenKey,
-      keyField,
-      labelField,
-    });
-  }, [props.node.scope, statusPath, data.length, childrenKey, keyField, labelField]);
+  useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, {
+    kind: 'tree',
+    nodeCount: data.length,
+    childrenKey,
+    keyField,
+    labelField,
+  });
 
   if (data.length === 0) {
     return (

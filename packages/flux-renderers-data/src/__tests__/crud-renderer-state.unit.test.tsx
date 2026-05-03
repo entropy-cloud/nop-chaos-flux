@@ -19,11 +19,15 @@ const mockState: {
   scopeData: {},
 };
 
-vi.mock('@nop-chaos/flux-react', () => ({
-  useCurrentComponentRegistry: () => mockState.currentRegistry,
-  useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) =>
-    selector(mockState.scopeData),
-}));
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@nop-chaos/flux-react')>();
+  return {
+    ...actual,
+    useCurrentComponentRegistry: () => mockState.currentRegistry,
+    useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) =>
+      selector(mockState.scopeData),
+  };
+});
 
 function StatusProbe(props: { scope?: any; statusPath?: string; summary: any }) {
   useCrudStatusPublisher(props.scope, props.statusPath, props.summary);
@@ -123,7 +127,9 @@ describe('useCrudStatusPublisher', () => {
     rerender(
       <StatusProbe scope={scope} statusPath="status.path" summary={{ kind: 'crud', total: 2 }} />,
     );
-    expect(update).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenCalledTimes(3);
+    expect(update.mock.calls[1]).toEqual(['status.path', undefined]);
+    expect(update.mock.calls[2]).toEqual(['status.path', { kind: 'crud', total: 2 }]);
 
     rerender(
       <StatusProbe
@@ -135,7 +141,21 @@ describe('useCrudStatusPublisher', () => {
     rerender(
       <StatusProbe scope={scope} statusPath={undefined} summary={{ kind: 'crud', total: 4 }} />,
     );
-    expect(update).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenCalledTimes(4);
+    expect(update.mock.calls[3]).toEqual(['status.path', undefined]);
+  });
+
+  it('clears previously published status on unmount', () => {
+    const update = vi.fn();
+    const scope = { update };
+
+    const view = render(
+      <StatusProbe scope={scope} statusPath="status.path" summary={{ kind: 'crud', total: 1 }} />,
+    );
+
+    view.unmount();
+
+    expect(update).toHaveBeenLastCalledWith('status.path', undefined);
   });
 });
 

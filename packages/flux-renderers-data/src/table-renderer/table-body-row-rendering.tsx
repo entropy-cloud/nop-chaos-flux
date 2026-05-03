@@ -13,6 +13,10 @@ import type { FixedColumnLayout } from './fixed-columns';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell';
 import type { TableRowEntry } from './types';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 export interface FlattenedRow {
   kind: 'data';
   entry: TableRowEntry;
@@ -176,18 +180,22 @@ export function renderDataRow(
                 onClick={(event) => event.stopPropagation()}
               >
                 {buttonRegion
-                  ? buttonRegion.render({
-                      bindings: { record: entry.record, index: entry.sourceIndex },
-                      instancePath: rowInstancePath,
-                      pathSuffix: `buttons.${columnIndex}`,
-                    })
+                  ? asReactNode(
+                      buttonRegion.render({
+                        bindings: { record: entry.record, index: entry.sourceIndex },
+                        instancePath: rowInstancePath,
+                        pathSuffix: `buttons.${columnIndex}`,
+                      }),
+                    )
                   : (column.buttons ?? []).map((button: BaseSchema, buttonIndex: number) => (
                       <div key={button.id ?? button.name ?? `btn-${buttonIndex}`}>
-                        {helpers.render(button, {
-                          scope: rowScope,
-                          instancePath: rowInstancePath,
-                          pathSuffix: `buttons.${buttonIndex}`,
-                        })}
+                        {asReactNode(
+                          helpers.render(button, {
+                            scope: rowScope,
+                            instancePath: rowInstancePath,
+                            pathSuffix: `buttons.${buttonIndex}`,
+                          }),
+                        )}
                       </div>
                     ))}
               </div>
@@ -208,11 +216,13 @@ export function renderDataRow(
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
               }
             >
-              {cellRegion.render({
-                bindings: { record: entry.record, index: entry.sourceIndex },
-                instancePath: rowInstancePath,
-                pathSuffix: `cells.${columnIndex}`,
-              })}
+              {asReactNode(
+                cellRegion.render({
+                  bindings: { record: entry.record, index: entry.sourceIndex },
+                  instancePath: rowInstancePath,
+                  pathSuffix: `cells.${columnIndex}`,
+                }),
+              )}
             </TableCell>
           );
         }
@@ -313,14 +323,16 @@ export function renderExpandedRow(
                   </div>
                   <div className="mt-1 text-sm" data-slot="table-responsive-expanded-value">
                     {cellRegion
-                      ? cellRegion.render({
-                          bindings: {
-                            record: rowScope.get('record'),
-                            index: rowScope.get('index'),
-                          },
-                          instancePath: rowInstancePath,
-                          pathSuffix: `responsive.${index}`,
-                        })
+                      ? asReactNode(
+                          cellRegion.render({
+                            bindings: {
+                              record: rowScope.get('record'),
+                              index: rowScope.get('index'),
+                            },
+                            instancePath: rowInstancePath,
+                            pathSuffix: `responsive.${index}`,
+                          }),
+                        )
                       : column.name
                         ? String(
                             (rowScope.get('record') as Record<string, unknown> | undefined)?.[
@@ -335,11 +347,13 @@ export function renderExpandedRow(
           </div>
         ) : null}
         {regionKey && parentProps.regions[regionKey]
-          ? helpers.render(parentProps.regions[regionKey].templateNode, {
-              scope: rowScope,
-              instancePath: rowInstancePath,
-              pathSuffix: `expanded.${item.rowKey}`,
-            })
+          ? asReactNode(
+              helpers.render(parentProps.regions[regionKey].templateNode, {
+                scope: rowScope,
+                instancePath: rowInstancePath,
+                pathSuffix: `expanded.${item.rowKey}`,
+              }),
+            )
           : null}
       </TableCell>
     </TableRow>

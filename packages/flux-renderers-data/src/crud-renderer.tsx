@@ -237,6 +237,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const listActionsContent = resolveCrudSlotContent('listActions');
   const footerToolbarContent = resolveCrudSlotContent('footerToolbar');
   const emptyContent = resolveCrudSlotContent('empty', { fallback: defaultEmptyLabel });
+  const tableEmpty = typeof emptyContent === 'string' ? emptyContent : defaultEmptyLabel;
 
   const headerBlocks = useMemo(
     () => normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header'),
@@ -272,7 +273,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
         showSizeChanger: true,
       },
-      empty: typeof emptyContent === 'string' ? emptyContent : defaultEmptyLabel,
+      empty: tableEmpty,
       quickSaveAction: normalizedSchema.quickSaveAction,
       quickSaveItemAction: normalizedSchema.quickSaveItemAction,
     };
@@ -299,8 +300,6 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
     return base as BaseSchema;
   }, [
-    defaultEmptyLabel,
-    emptyContent,
     filterStatePath,
     filteredRows,
     normalizedSchema.columnSettings,
@@ -320,6 +319,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     selectedRowKeys,
     selectionStatePath,
     sortStatePath,
+    tableEmpty,
   ]);
 
   const queryFormSchema = useMemo<BaseSchema | null>(() => {

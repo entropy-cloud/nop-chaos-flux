@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { getIn, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
-import { useCurrentComponentRegistry, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  useCurrentComponentRegistry,
+  useScopeSelector,
+  useStatusPathPublication,
+} from '@nop-chaos/flux-react';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema';
 
 export const EMPTY_ROWS: unknown[] = [];
@@ -139,23 +143,7 @@ export function useCrudStatusPublisher(
   statusPath: string | undefined,
   summary: CrudStatusSummary,
 ) {
-  const prevSummaryRef = useRef<CrudStatusSummary | undefined>(undefined);
-
-  useEffect(() => {
-    if (!scope || !statusPath) {
-      return;
-    }
-
-    const prev = prevSummaryRef.current;
-    const nextRecord = summary as unknown as Record<string, unknown>;
-    const prevRecord = prev as unknown as Record<string, unknown> | undefined;
-    if (prevRecord && Object.keys(nextRecord).every((key) => prevRecord[key] === nextRecord[key])) {
-      return;
-    }
-
-    prevSummaryRef.current = summary;
-    scope.update(statusPath, summary);
-  }, [scope, statusPath, summary]);
+  useStatusPathPublication(scope, statusPath, summary);
 }
 
 export function useCrudHandle(

@@ -18,6 +18,10 @@ import type { TableColumnSchema, TableSchema } from '../schemas';
 import type { FixedColumnLayout } from './fixed-columns';
 import type { FilterState, SortState } from './types';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 interface TableHeaderRowProps {
   props: RendererComponentProps<TableSchema>;
   columns: TableColumnSchema[];
@@ -86,7 +90,7 @@ export function TableHeaderRow({
           typeof column.labelRegionKey === 'string'
             ? props.regions[column.labelRegionKey]
             : undefined;
-        const labelContent = labelRegion?.render() ?? column.label ?? column.name;
+        const labelContent = asReactNode(labelRegion?.render()) ?? column.label ?? column.name;
         const isSortable = column.sortable === true;
         const filterConfig =
           typeof column.filterable === 'object' && column.filterable

@@ -14,6 +14,10 @@ import {
 import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas';
 import { useTableQuickEditController } from './table-quick-edit-controller';
 
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
+
 interface ResolvedTableQuickEditConfig {
   mode: 'inline' | 'dialog';
   saveImmediately: boolean;
@@ -86,7 +90,9 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
   });
 
   const editorNode = hasCustomBody ? (
-    helpers.render(config.body!, { scope: rowScope, pathSuffix: `quickEdit.${field ?? 'custom'}` })
+    asReactNode(
+      helpers.render(config.body!, { scope: rowScope, pathSuffix: `quickEdit.${field ?? 'custom'}` }),
+    )
   ) : (
     <Input
       name={`quick-edit-${field}`}

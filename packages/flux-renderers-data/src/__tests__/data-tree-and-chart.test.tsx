@@ -130,6 +130,28 @@ describe('dataRendererDefinitions tree and chart behavior', () => {
     await waitFor(() => expect(screen.getByText('tree:1:children')).toBeTruthy());
   });
 
+  it('clears tree statusPath publication on unmount', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-and-chart-unmount"
+        schema={{
+          type: 'page',
+          body: [{ type: 'tree', data: '${nodes}', statusPath: 'treeStatus' }],
+        }}
+        data={{ nodes: [{ id: 'root', label: 'Root', children: [] }], treeStatus: 'stale' }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(document.body.textContent).toContain('Root'));
+    view.unmount();
+
+    expect(document.body.textContent ?? '').not.toContain('stale');
+  });
+
   it('registers chart handles with DOM refs and imperative methods', async () => {
     cleanup();
     const registrySnapshots: any[] = [];
