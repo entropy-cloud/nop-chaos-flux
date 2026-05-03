@@ -7,7 +7,9 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index';
-import { buttonRenderer, env, submitCalls } from './form-test-support';
+import { buttonRenderer, env, formTestHarness } from './form-test-support';
+
+const { submitCalls } = formTestHarness;
 
 beforeEach(async () => {
   resetFluxI18n();
@@ -16,12 +18,12 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
+  formTestHarness.reset();
   resetFluxI18n();
 });
 
 describe('formRendererDefinitions - validation timing and visibility', () => {
   it('blocks submit when compiled validation rules fail', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -70,7 +72,6 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
   });
 
   it('validates fields on blur and renders async validating feedback', async () => {
-    submitCalls.length = 0;
     cleanup();
     let resolveValidation:
       | ((value: {
@@ -334,7 +335,6 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
   it('respects submit-only validation policy until form submission', async () => {
     cleanup();
-    submitCalls.length = 0;
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
     render(

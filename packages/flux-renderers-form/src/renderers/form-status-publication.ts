@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { FormStatusSummary, ScopeRef } from '@nop-chaos/flux-core';
 import type { FormRuntime } from '@nop-chaos/flux-core';
+import { buildFormStatusSummary, publishOwnerStatus } from '@nop-chaos/flux-runtime';
 
 export function usePublishedFormStatus(args: {
   statusPath?: string;
@@ -19,58 +20,37 @@ export function usePublishedFormStatus(args: {
     let lastSummary: FormStatusSummary | undefined;
 
     function publishStatus() {
-      const state = ownedForm.store.getState();
-      let errorCount = 0;
-      let validating = false;
-      let dirty = false;
-      let touched = false;
-      let visited = false;
-
-      for (const fieldState of Object.values(state.fieldStates)) {
-        if (fieldState.errors) {
-          errorCount += fieldState.errors.length;
-        }
-        if (fieldState.validating) validating = true;
-        if (fieldState.dirty) dirty = true;
-        if (fieldState.touched) touched = true;
-        if (fieldState.visited) visited = true;
-      }
-
-      const hasErrors = errorCount > 0;
+      const summary = buildFormStatusSummary(
+        ownedForm.store.getState(),
+        ownedForm.id,
+        ownedForm.name,
+        ownedForm.getScopeState().validating ? 1 : 0,
+      );
 
       if (
         lastSummary &&
-        lastSummary.submitting === state.submitting &&
-        lastSummary.validating === validating &&
-        lastSummary.dirty === dirty &&
-        lastSummary.touched === touched &&
-        lastSummary.visited === visited &&
-        lastSummary.errorCount === errorCount
+        lastSummary.submitting === summary.submitting &&
+        lastSummary.validating === summary.validating &&
+        lastSummary.dirty === summary.dirty &&
+        lastSummary.touched === summary.touched &&
+        lastSummary.visited === summary.visited &&
+        lastSummary.errorCount === summary.errorCount
       ) {
         return;
       }
 
-      const summary: FormStatusSummary = {
-        id: ownedForm.id,
-        name: ownedForm.name,
-        submitting: state.submitting,
-        validating,
-        dirty,
-        touched,
-        visited,
-        hasErrors,
-        errorCount,
-        valid: !hasErrors,
-        invalid: hasErrors,
-      };
-
       lastSummary = summary;
-      resolvedParentScope.update(resolvedStatusPath, summary);
+      publishOwnerStatus(resolvedParentScope, resolvedStatusPath, summary);
     }
 
     publishStatus();
 
-    return ownedForm.store.subscribe(publishStatus);
+    const unsubscribe = ownedForm.store.subscribe(publishStatus);
+
+    return () => {
+      unsubscribe();
+      publishOwnerStatus(resolvedParentScope, resolvedStatusPath, undefined);
+    };
   }, [statusPath, ownedForm, parentScope]);
 }
 
@@ -102,6 +82,11 @@ export function usePublishedFormValues(args: {
 
     publishValues();
 
-    return ownedForm.store.subscribe(publishValues);
+    const unsubscribe = ownedForm.store.subscribe(publishValues);
+
+    return () => {
+      unsubscribe();
+      resolvedParentScope.update(resolvedValuesPath, undefined);
+    };
   }, [valuesPath, ownedForm, parentScope]);
 }

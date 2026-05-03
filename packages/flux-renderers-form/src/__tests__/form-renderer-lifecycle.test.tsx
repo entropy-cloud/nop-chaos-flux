@@ -359,4 +359,56 @@ describe('FormRenderer lifecycle wiring', () => {
     expect(getCallOptions(plainSuccessCall, 'plain submit success action').scope).toBe(parentScope);
     expect(screen.getByTestId('plain-form').textContent).toBe('');
   });
+
+  it('does not recreate the form runtime when rerender receives a fresh data object with the same values', () => {
+    const parentScope = makeScope({ id: 'parent', visible: { parentValue: 'plain' } });
+    const ownedScope = makeScope({ id: 'owned-stable', visible: { username: 'Alice' } });
+    const ownedForm = {
+      scope: ownedScope,
+      store: { getState: () => ({ values: { username: 'Alice' } }) },
+      setLifecycleHandlers: vi.fn(),
+    } as any;
+    const runtime = {
+      getImportedExpressionBindings: vi.fn(() => ({})),
+      createFormRuntime: vi.fn(() => ownedForm),
+    } as any;
+
+    mocks.useRendererRuntime.mockReturnValue(runtime);
+    mocks.useCurrentActionScope.mockReturnValue(undefined);
+    mocks.useCurrentComponentRegistry.mockReturnValue(undefined);
+    mocks.useCurrentPage.mockReturnValue(undefined);
+    mocks.useRenderScope.mockReturnValue(parentScope);
+
+    const { rerender } = render(
+      <FormRenderer
+        {...buildProps({
+          props: {
+            name: 'profile',
+            data: { username: 'Alice' },
+          },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    expect(runtime.createFormRuntime).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <FormRenderer
+        {...buildProps({
+          props: {
+            name: 'profile',
+            data: { username: 'Alice' },
+          },
+          regions: {},
+          templateNode: { validationPlan: undefined, importsPlan: undefined, schemaUrl: undefined },
+          node: { instancePath: [] },
+        })}
+      />,
+    );
+
+    expect(runtime.createFormRuntime).toHaveBeenCalledTimes(1);
+  });
 });

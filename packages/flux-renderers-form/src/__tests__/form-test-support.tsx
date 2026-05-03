@@ -18,6 +18,7 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
+import { Input } from '@nop-chaos/ui';
 import { useFieldHandlers } from '../field-utils';
 
 resetFluxI18n();
@@ -34,14 +35,48 @@ export async function selectOption(labelText: string, optionText: string) {
   fireEvent.click(optionEl);
 }
 
-export const submitCalls: Array<Record<string, any>> = [];
-export const notifyCalls: Array<{ level: string; message: string }> = [];
-export const formStateProbeRenderCounts: Record<string, number> = {};
 export const sharedFormulaCompiler = createFormulaCompiler();
+
+export interface FormTestHarness {
+  readonly submitCalls: Array<Record<string, any>>;
+  readonly notifyCalls: Array<{ level: string; message: string }>;
+  readonly formStateProbeRenderCounts: Record<string, number>;
+  readonly handlerIdentitySnapshots: Array<ReturnType<typeof useFieldHandlers>>;
+  reset(): void;
+}
+
+function createFormTestHarness(): FormTestHarness {
+  const submitCalls: Array<Record<string, any>> = [];
+  const notifyCalls: Array<{ level: string; message: string }> = [];
+  const formStateProbeRenderCounts: Record<string, number> = {};
+  const handlerIdentitySnapshots: Array<ReturnType<typeof useFieldHandlers>> = [];
+
+  return {
+    submitCalls,
+    notifyCalls,
+    formStateProbeRenderCounts,
+    handlerIdentitySnapshots,
+    reset() {
+      submitCalls.length = 0;
+      notifyCalls.length = 0;
+      handlerIdentitySnapshots.length = 0;
+      for (const key of Object.keys(formStateProbeRenderCounts)) {
+        delete formStateProbeRenderCounts[key];
+      }
+    },
+  };
+}
+
+export const formTestHarness = createFormTestHarness();
+
+export const submitCalls = formTestHarness.submitCalls;
+export const notifyCalls = formTestHarness.notifyCalls;
+export const formStateProbeRenderCounts = formTestHarness.formStateProbeRenderCounts;
+export const handlerIdentitySnapshots = formTestHarness.handlerIdentitySnapshots;
 
 export const env: RendererEnv = {
   fetcher: async function <T>(_api: ApiSchema, ctx: ApiRequestContext) {
-    submitCalls.push(ctx.scope.readOwn());
+    formTestHarness.submitCalls.push(ctx.scope.readOwn());
     return {
       ok: true,
       status: 200,
@@ -49,7 +84,7 @@ export const env: RendererEnv = {
     };
   },
   notify: (level, message) => {
-    notifyCalls.push({ level, message });
+    formTestHarness.notifyCalls.push({ level, message });
   },
 };
 
@@ -64,18 +99,20 @@ export const buttonRenderer: RendererDefinition = {
 };
 
 function ContactGroupRenderer(props: RendererComponentProps) {
-  const scope = useRenderScope();
   const form = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
-  const value = (scope.get(name) as Record<string, string> | undefined) ?? {};
+  const value = useCurrentFormState(
+    (state) => ((name ? getIn(state.values, name) : undefined) as Record<string, string> | undefined) ?? {},
+    Object.is,
+    { path: name || undefined },
+  );
   const error = useAggregateError(name)?.message;
 
   return (
     <label className="nop-field">
       <span data-slot="field-label">{String(props.props.label ?? 'Contact')}</span>
-      <input
+      <Input
         aria-label="Contact Email"
-        className="nop-input"
         value={value.email ?? ''}
         onFocus={() => {
           form?.visitField(name);
@@ -87,9 +124,8 @@ function ContactGroupRenderer(props: RendererComponentProps) {
           form?.touchField(name);
         }}
       />
-      <input
+      <Input
         aria-label="Contact Phone"
-        className="nop-input"
         value={value.phone ?? ''}
         onFocus={() => {
           form?.visitField(name);
@@ -130,7 +166,8 @@ function FormStateProbeRenderer(props: RendererComponentProps) {
   );
 
   React.useEffect(() => {
-    formStateProbeRenderCounts[path] = (formStateProbeRenderCounts[path] ?? 0) + 1;
+    formTestHarness.formStateProbeRenderCounts[path] =
+      (formTestHarness.formStateProbeRenderCounts[path] ?? 0) + 1;
   });
 
   return <pre data-testid={`form-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
@@ -153,8 +190,6 @@ export const scopeStateProbeRenderer: RendererDefinition = {
   component: ScopeStateProbeRenderer,
 };
 
-export const handlerIdentitySnapshots: Array<ReturnType<typeof useFieldHandlers>> = [];
-
 function HandlerIdentityProbeRenderer(props: RendererComponentProps) {
   const scope = useRenderScope();
   const form = useCurrentForm();
@@ -162,7 +197,7 @@ function HandlerIdentityProbeRenderer(props: RendererComponentProps) {
   const handlers = useFieldHandlers({ name, currentForm: form, scope });
 
   React.useEffect(() => {
-    handlerIdentitySnapshots.push(handlers);
+    formTestHarness.handlerIdentitySnapshots.push(handlers);
   }, [handlers]);
 
   return <span data-testid="handler-identity-probe">{name}</span>;

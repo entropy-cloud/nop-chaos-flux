@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -7,13 +7,18 @@ import { formRendererDefinitions } from '../index';
 import {
   buttonRenderer,
   env,
+  formTestHarness,
   handlerIdentityProbeRenderer,
-  handlerIdentitySnapshots,
   sharedFormulaCompiler,
-  submitCalls,
 } from './form-test-support';
 
+const { handlerIdentitySnapshots, submitCalls } = formTestHarness;
+
 describe('formRendererDefinitions - input types and field handlers', () => {
+  afterEach(() => {
+    formTestHarness.reset();
+  });
+
   it('allows appending multiple characters in input-email fields', () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
@@ -53,7 +58,6 @@ describe('formRendererDefinitions - input types and field handlers', () => {
 
   it('keeps field handler object identity stable across host rerenders when inputs are unchanged', () => {
     cleanup();
-    handlerIdentitySnapshots.length = 0;
     const SchemaRenderer = createSchemaRenderer([
       ...formRendererDefinitions,
       handlerIdentityProbeRenderer,
@@ -96,7 +100,6 @@ describe('formRendererDefinitions - input types and field handlers', () => {
   });
 
   it('submits checkbox values through shared field handlers', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -151,7 +154,6 @@ describe('formRendererDefinitions - input types and field handlers', () => {
   });
 
   it('submits textarea and radio-group values through shared field helpers', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -218,7 +220,6 @@ describe('formRendererDefinitions - input types and field handlers', () => {
   });
 
   it('submits switch and checkbox-group values through shared field helpers', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -316,7 +317,6 @@ describe('formRendererDefinitions - input types and field handlers', () => {
   });
 
   it('submits checkbox false values through shared field handlers', async () => {
-    submitCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 

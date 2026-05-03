@@ -133,13 +133,14 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     props.props.data && typeof props.props.data === 'object'
       ? (props.props.data as Record<string, unknown>)
       : undefined;
+  const initialValuesRef = useRef(initialValues);
 
   const ownedForm = useMemo(
     () =>
       runtime.createFormRuntime({
         id: formId,
         name: formName,
-        initialValues,
+        initialValues: initialValuesRef.current, // eslint-disable-line react-hooks/refs -- intentional: initial values must not retrigger useMemo
         parentScope,
         page: currentPage,
         validation: props.templateNode.validationPlan,
@@ -148,7 +149,6 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       runtime,
       formId,
       formName,
-      initialValues,
       parentScope,
       currentPage,
       props.templateNode.validationPlan,

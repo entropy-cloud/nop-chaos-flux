@@ -43,7 +43,12 @@ function makeScope(): ScopeRef {
 }
 
 function makeOwnedForm(store: ReturnType<typeof createFormStore>): FormRuntime {
-  return { id: 'form-1', name: 'demo', store } as unknown as FormRuntime;
+  return {
+    id: 'form-1',
+    name: 'demo',
+    store,
+    getScopeState: () => ({ valid: true, hasErrors: false, validating: false, ready: true }),
+  } as unknown as FormRuntime;
 }
 
 describe('form-status-publication hooks', () => {
@@ -188,5 +193,37 @@ describe('form-status-publication hooks', () => {
 
     render(<Probe />);
     expect(parentScope.update).not.toHaveBeenCalled();
+  });
+
+  it('clears published status and values on unmount', async () => {
+    const parentScope = makeScope();
+    const store = createFormStore({
+      values: { username: 'Alice' },
+      fieldStates: {},
+      submitting: false,
+      submitAttempted: false,
+    });
+    const ownedForm = {
+      ...makeOwnedForm(store),
+      getScopeState: () => ({ valid: true, hasErrors: false, validating: false, ready: true }),
+    } as unknown as FormRuntime;
+
+    function Probe() {
+      usePublishedFormStatus({ statusPath: 'ui.status', parentScope, ownedForm });
+      usePublishedFormValues({ valuesPath: 'ui.values', parentScope, ownedForm });
+      return null;
+    }
+
+    const rendered = render(<Probe />);
+
+    await waitFor(() => {
+      expect(parentScope.update).toHaveBeenCalledWith('ui.status', expect.any(Object));
+      expect(parentScope.update).toHaveBeenCalledWith('ui.values', { username: 'Alice' });
+    });
+
+    rendered.unmount();
+
+    expect(parentScope.update).toHaveBeenCalledWith('ui.status', undefined);
+    expect(parentScope.update).toHaveBeenCalledWith('ui.values', undefined);
   });
 });

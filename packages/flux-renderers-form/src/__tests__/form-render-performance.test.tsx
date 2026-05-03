@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -7,11 +7,17 @@ import { formRendererDefinitions } from '../index';
 import {
   buttonRenderer,
   env,
+  formTestHarness,
   formStateProbeRenderer,
-  formStateProbeRenderCounts,
 } from './form-test-support';
 
+const { formStateProbeRenderCounts } = formTestHarness;
+
 describe('form render performance optimization', () => {
+  afterEach(() => {
+    formTestHarness.reset();
+  });
+
   it('changing one field does not trigger NodeRenderer re-renders for other fields', async () => {
     const onRenderStart = vi.fn();
     const onRenderEnd = vi.fn();
@@ -81,8 +87,6 @@ describe('form render performance optimization', () => {
 
   it('does not rerender a field-value probe for unrelated field updates', async () => {
     cleanup();
-    formStateProbeRenderCounts.username = 0;
-    formStateProbeRenderCounts.email = 0;
     const SchemaRenderer = createSchemaRenderer([
       ...formRendererDefinitions,
       formStateProbeRenderer,

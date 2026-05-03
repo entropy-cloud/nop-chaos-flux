@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -8,16 +8,19 @@ import { formRendererDefinitions } from '../index';
 import {
   buttonRenderer,
   env,
-  notifyCalls,
+  formTestHarness,
   scopeStateProbeRenderer,
   selectOption,
-  submitCalls,
 } from './form-test-support';
 
+const { notifyCalls, submitCalls } = formTestHarness;
+
 describe('formRendererDefinitions - submit and init actions', () => {
+  afterEach(() => {
+    formTestHarness.reset();
+  });
+
   it('runs form-owned submitAction and follow-up branches through component:submit', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -71,8 +74,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('runs form-owned onSubmitError when submitAction fails', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -130,8 +131,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('runs form-owned onValidateError when semantic submit is blocked by validation', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
@@ -193,8 +192,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('runs form-owned initAction once per activation instance', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
@@ -262,8 +259,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('publishes initial form values through valuesPath to the parent scope', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
@@ -305,8 +300,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('publishes live form value edits through valuesPath to the parent scope', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
@@ -356,8 +349,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('submits updated form values from input and select renderers', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions, buttonRenderer]);
 
     render(
@@ -427,8 +418,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('runs submit success in parent scope without exposing form-name value aliases', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
@@ -501,8 +490,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('writes submit success through the business parent when the immediate parent is a surface shell', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
@@ -563,8 +550,6 @@ describe('formRendererDefinitions - submit and init actions', () => {
   });
 
   it('does not implicitly expose local form values to the surface parent write scope', async () => {
-    submitCalls.length = 0;
-    notifyCalls.length = 0;
     cleanup();
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
