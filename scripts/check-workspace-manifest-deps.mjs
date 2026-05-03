@@ -9,6 +9,11 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const workspaceImportPattern = /from\s+['"](@nop-chaos\/[^'"]+)['"]|import\s*\(['"](@nop-chaos\/[^'"]+)['"]\)/g;
 
+function normalizeWorkspaceSpecifier(specifier) {
+  const parts = specifier.split('/');
+  return parts.length >= 2 ? parts.slice(0, 2).join('/') : specifier;
+}
+
 async function getTrackedFiles() {
   const { stdout } = await execFileAsync('git', ['ls-files', 'packages/*/src/**/*.ts', 'packages/*/src/**/*.tsx'], {
     cwd: rootDir,
@@ -64,7 +69,7 @@ function collectWorkspaceImports(content) {
   while ((match = workspaceImportPattern.exec(content))) {
     const specifier = match[1] ?? match[2];
     if (specifier) {
-      imports.add(specifier);
+      imports.add(normalizeWorkspaceSpecifier(specifier));
     }
   }
 

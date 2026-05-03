@@ -49,7 +49,7 @@ Review checks:
 
 Current repo verification path:
 
-- `pnpm check:workspace-manifest-deps` checks tracked `packages/*/src/**/*.ts` and `packages/*/src/**/*.tsx` files for `@nop-chaos/*` imports and verifies that each imported workspace package is declared in the owning package manifest.
+- `pnpm check:workspace-manifest-deps` checks tracked `packages/*/src/**/*.ts` and `packages/*/src/**/*.tsx` files for `@nop-chaos/*` imports, normalizes legal workspace export subpaths such as `@nop-chaos/flux-react/unstable` back to the owning root package, and verifies that the owning workspace package is declared in the local manifest.
 
 ## Allowed Exceptions
 
