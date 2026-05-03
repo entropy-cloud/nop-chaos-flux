@@ -26,6 +26,18 @@ export function createApiDataSourceRequestRunner(
   mutable: ApiDataSourceControllerMutableState,
   options: { stop: () => void },
 ) {
+  function relaunchPendingRefresh() {
+    void runRequest().catch((error: unknown) => {
+      if (!input.silent) {
+        reportRuntimeHostIssue({
+          env: input.runtime.env,
+          error,
+          phase: 'api',
+        });
+      }
+    });
+  }
+
   async function runRequest(): Promise<void> {
     if (mutable.stopped) {
       return;
@@ -46,41 +58,46 @@ export function createApiDataSourceRequestRunner(
     }
 
     mutable.pendingRefresh = false;
-
-    const run =
-      mutable.asyncOwnerId && input.asyncGovernance
-        ? input.asyncGovernance.beginRun({
-            ownerKind: 'data-source',
-            ownerId: mutable.asyncOwnerId,
-            scopeId: input.scope.id,
-            cause: mutable.started ? 'refresh' : 'start',
-          })
-        : undefined;
-
-    updateControllerState(input, mutable, (current) => ({
-      ...current,
-      inFlightCount: current.inFlightCount + 1,
-      fetchStatus: 'fetching',
-      status: typeof current.data === 'undefined' ? 'pending' : current.status,
-      stale: typeof current.data !== 'undefined',
-      error: undefined,
-    }));
-
-    if (mutable.refreshDedup === 'cancel-previous') {
-      mutable.abortController?.abort();
-    }
-    mutable.abortController = new AbortController();
-    const controller = mutable.abortController;
-    const requestSequence = ++mutable.nextRequestSequence;
-    mutable.activeControllers.add(controller);
-    mutable.activeRequestCount += 1;
+    let run:
+      | ReturnType<NonNullable<CreateApiDataSourceControllerInput['asyncGovernance']>['beginRun']>
+      | undefined;
+    let controller: AbortController | undefined;
+    let requestSequence = 0;
 
     try {
-      const requestScope = input.runtime.createChildScope(
-        input.scope,
-        {},
-        { source: 'custom', pathSuffix: 'data-source-request' },
-      );
+      run =
+        mutable.asyncOwnerId && input.asyncGovernance
+          ? input.asyncGovernance.beginRun({
+              ownerKind: 'data-source',
+              ownerId: mutable.asyncOwnerId,
+              scopeId: input.scope.id,
+              cause: mutable.started ? 'refresh' : 'start',
+            })
+          : undefined;
+
+      updateControllerState(input, mutable, (current) => ({
+        ...current,
+        inFlightCount: current.inFlightCount + 1,
+        fetchStatus: 'fetching',
+        status: typeof current.data === 'undefined' ? 'pending' : current.status,
+        stale: typeof current.data !== 'undefined',
+        error: undefined,
+      }));
+
+      if (mutable.refreshDedup === 'cancel-previous') {
+        mutable.abortController?.abort();
+      }
+      controller = new AbortController();
+      mutable.abortController = controller;
+      requestSequence = ++mutable.nextRequestSequence;
+      mutable.activeControllers.add(controller);
+      mutable.activeRequestCount += 1;
+      const activeController = controller;
+
+      const requestScope = input.runtime.createChildScope(input.scope, {}, {
+        source: 'custom',
+        pathSuffix: 'data-source-request',
+      });
       const trackedApi = evaluateCompiledApiConfig({
         compiledApi: input.compiledApi,
         scope: input.scope,
@@ -102,7 +119,7 @@ export function createApiDataSourceRequestRunner(
         if (cached) {
           await Promise.resolve();
 
-          if (mutable.stopped || controller.signal.aborted) {
+          if (mutable.stopped || activeController.signal.aborted) {
             if (run && input.asyncGovernance) {
               input.asyncGovernance.settleRun(run, {
                 outcome: 'cancelled',
@@ -156,19 +173,19 @@ export function createApiDataSourceRequestRunner(
         input.runtime.env,
         input.runtime.expressionCompiler,
         {
-          signal: controller.signal,
+          signal: activeController.signal,
           evaluate: input.runtime.evaluate,
           preparedRequest,
           executor: (adaptedApi) =>
             input.executeApiRequest('data-source', adaptedApi, requestScope, {
-              signal: controller.signal,
+              signal: activeController.signal,
               control: input.control,
             }),
           control: input.control,
         },
       );
 
-      if (mutable.stopped || controller.signal.aborted) {
+      if (mutable.stopped || activeController.signal.aborted) {
         if (run && input.asyncGovernance) {
           input.asyncGovernance.settleRun(run, {
             outcome: 'cancelled',
@@ -264,8 +281,10 @@ export function createApiDataSourceRequestRunner(
 
       updateControllerState(input, mutable, (current) => current);
     } finally {
-      mutable.activeControllers.delete(controller);
-      mutable.activeRequestCount = Math.max(0, mutable.activeRequestCount - 1);
+      if (controller) {
+        mutable.activeControllers.delete(controller);
+        mutable.activeRequestCount = Math.max(0, mutable.activeRequestCount - 1);
+      }
 
       if (
         run &&
@@ -277,7 +296,7 @@ export function createApiDataSourceRequestRunner(
         updateControllerState(input, mutable, (current) => current);
       }
 
-      if (mutable.abortController === controller) {
+      if (controller && mutable.abortController === controller) {
         mutable.abortController = undefined;
       }
 
@@ -292,7 +311,7 @@ export function createApiDataSourceRequestRunner(
       }
 
       if (!mutable.stopped && mutable.pendingRefresh) {
-        void runRequest();
+        relaunchPendingRefresh();
       }
     }
   }

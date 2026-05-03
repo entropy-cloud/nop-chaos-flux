@@ -1,4 +1,4 @@
-import type { DataSourceController } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue, type DataSourceController } from '@nop-chaos/flux-core';
 import { createInitialDataSourceState } from './data-source-state';
 import { abortActiveControllers } from './api-data-source-controller-helpers';
 import {
@@ -13,6 +13,15 @@ export function createDataSourceController(
   input: CreateApiDataSourceControllerInput,
 ): DataSourceController {
   const mutable = createApiDataSourceControllerMutableState(input);
+  const reportRunRequestError = (error: unknown) => {
+    if (!input.silent) {
+      reportRuntimeHostIssue({
+        env: input.runtime.env,
+        error,
+        phase: 'api',
+      });
+    }
+  };
 
   function schedulePoll(): void {
     if (mutable.stopped || !input.interval || input.interval <= 0) {
@@ -20,11 +29,13 @@ export function createDataSourceController(
     }
 
     mutable.pollTimer = setTimeout(() => {
-      void runRequest().finally(() => {
-        if (!mutable.stopped) {
-          schedulePoll();
-        }
-      });
+      void runRequest()
+        .catch(reportRunRequestError)
+        .finally(() => {
+          if (!mutable.stopped) {
+            schedulePoll();
+          }
+        });
     }, input.interval);
   }
 
@@ -66,7 +77,7 @@ export function createDataSourceController(
       status: typeof current.data === 'undefined' ? 'idle' : current.status,
     }));
 
-    void runRequest();
+    void runRequest().catch(reportRunRequestError);
 
     if (input.interval && input.interval > 0) {
       schedulePoll();
