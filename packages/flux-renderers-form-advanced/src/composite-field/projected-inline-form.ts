@@ -28,7 +28,9 @@ export function createProjectedInlineForm(options: CreateProjectedInlineFormOpti
   } = options;
 
   return createProjectedFormRuntime(parentForm, {
+    ownerRootPath,
     prefixPath,
+    scalarValueAlias,
     store: createProjectedFormStore(parentForm.store, {
       ownerRootPath,
       scalarValueAlias,

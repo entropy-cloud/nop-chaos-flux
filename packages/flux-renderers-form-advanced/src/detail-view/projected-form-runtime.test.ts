@@ -169,6 +169,90 @@ describe('projected form runtime helpers', () => {
     expect(parentForm.removeValue).toHaveBeenCalledWith('profile.items', 0);
   });
 
+  it('projects validation metadata into the owner-local subtree', () => {
+    const parentValidation = {
+      behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+      order: ['profile', 'profile.name', 'profile.age'],
+      dependents: {},
+      rootPath: 'profile',
+      nodes: {
+        profile: {
+          path: 'profile',
+          kind: 'object',
+          controlType: 'object-field',
+          behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+          rules: [],
+          children: ['profile.name', 'profile.age'],
+          parent: '',
+        },
+        'profile.name': {
+          path: 'profile.name',
+          kind: 'field',
+          controlType: 'input-text',
+          behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
+          rules: [{ id: 'profile.name#required', rule: { kind: 'required' }, dependencyPaths: [] }],
+          children: [],
+          parent: 'profile',
+        },
+        'profile.age': {
+          path: 'profile.age',
+          kind: 'field',
+          controlType: 'input-number',
+          behavior: { triggers: ['change'], showErrorOn: ['dirty'] },
+          rules: [],
+          children: [],
+          parent: 'profile',
+        },
+      },
+    } as any;
+    const parentForm = {
+      validation: parentValidation,
+      lifecycleState: 'active',
+      modelGeneration: 1,
+      scopeId: 'scope-id',
+      rootPath: 'profile',
+      canSubmit: true,
+      allTouched: false,
+      store: { id: 'parent-store' },
+      isPathOwned: vi.fn(() => true),
+      getFieldState: vi.fn(),
+      validateAt: vi.fn(),
+      validateField: vi.fn(),
+      getField: vi.fn(),
+      getDependents: vi.fn(),
+      findByPrefix: vi.fn(),
+      getChildren: vi.fn(),
+      getError: vi.fn(),
+      isValidating: vi.fn(),
+      isTouched: vi.fn(),
+      isDirty: vi.fn(),
+      isVisited: vi.fn(),
+      touchField: vi.fn(),
+      visitField: vi.fn(),
+      clearErrors: vi.fn(),
+      setValue: vi.fn(),
+      setValues: vi.fn(),
+      registerField: vi.fn(() => ({ unregister: vi.fn() })),
+      notifyFieldHidden: vi.fn(),
+      validateSubtree: vi.fn(),
+    } as any;
+
+    const projectedForm = createProjectedFormRuntime(parentForm, {
+      ownerRootPath: 'profile',
+      store: { id: 'projected-store' } as any,
+      prefixPath: (path) => (path ? `profile.${path}` : 'profile'),
+    });
+
+    expect(projectedForm.rootPath).toBe('');
+    expect(projectedForm.validation?.order).toEqual(['', 'name', 'age']);
+    expect(projectedForm.validation?.nodes).toMatchObject({
+      '': expect.objectContaining({ path: '', children: ['name', 'age'] }),
+      name: expect.objectContaining({ path: 'name', parent: '', rules: expect.any(Array) }),
+      age: expect.objectContaining({ path: 'age', parent: '' }),
+    });
+    expect(projectedForm.validation?.nodes?.name?.rules[0]?.id).toBe('profile.name#required');
+  });
+
   it('falls back to parent setValue and setValues when no override is provided', () => {
     const parentForm = {
       store: { id: 'parent-store' },

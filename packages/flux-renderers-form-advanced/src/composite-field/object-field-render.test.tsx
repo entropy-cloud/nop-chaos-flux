@@ -167,6 +167,44 @@ describe('object-field renderer', () => {
     });
   });
 
+  it('projects required metadata for relative child fields inside object-field', async () => {
+    cleanup();
+    const SchemaRenderer = createSchemaRenderer([...allFormDefs]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/composite-field/object-field.test.tsx#3b"
+        schema={{
+          type: 'form',
+          data: {
+            profile: { email: '' },
+          },
+          body: [
+            {
+              type: 'object-field',
+              name: 'profile',
+              label: 'Profile',
+              body: [
+                {
+                  type: 'input-text',
+                  name: 'email',
+                  label: 'Email',
+                  required: true,
+                },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const email = await screen.findByLabelText('Email', { exact: false });
+    const emailField = email.closest('.nop-field');
+    expect(emailField?.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
+  });
+
   it('keeps relative payload paths writable through the shared projected owner scope', async () => {
     cleanup();
     const SchemaRenderer = createSchemaRenderer([...allFormDefs]);

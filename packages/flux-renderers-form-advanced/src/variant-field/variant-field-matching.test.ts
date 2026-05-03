@@ -53,7 +53,7 @@ describe('variant-field matching utilities', () => {
         { enabled: true },
         evaluate as RendererHelpers['evaluate'],
         undefined,
-        createScope as RendererHelpers['createScope'],
+        createScope as unknown as RendererHelpers['createScope'],
       ),
     ).toBe(true);
     expect(evaluate).toHaveBeenCalledTimes(1);
@@ -68,7 +68,7 @@ describe('variant-field matching utilities', () => {
         { enabled: true },
         undefined,
         undefined,
-        createScope as RendererHelpers['createScope'],
+        createScope as unknown as RendererHelpers['createScope'],
       ),
     ).toBe(false);
     expect(
@@ -92,7 +92,7 @@ describe('variant-field matching utilities', () => {
         null,
         evaluate as RendererHelpers['evaluate'],
         undefined,
-        createScope as RendererHelpers['createScope'],
+        createScope as unknown as RendererHelpers['createScope'],
       ),
     ).toBe(false);
   });

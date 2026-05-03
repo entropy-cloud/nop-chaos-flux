@@ -44,10 +44,6 @@ const buttonRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-const testState = {
-  nextArrayItemProbeMountId: 1,
-};
-
 const arrayItemInstanceProbeRenderer: RendererDefinition = {
   type: 'array-item-instance-probe',
   component: (props) => (
@@ -57,14 +53,14 @@ const arrayItemInstanceProbeRenderer: RendererDefinition = {
 
 function ArrayItemInstanceProbeWithInstancePath(props: { instancePath: unknown }) {
   const scope = useRenderScope();
-  const mountIdRef = React.useRef(testState.nextArrayItemProbeMountId++);
+  const mountId = React.useId();
   const itemName = String(
     (scope.get('value') as { name?: unknown } | undefined)?.name ?? scope.get('name') ?? 'unknown',
   );
 
   return (
     <span data-testid={`array-item-probe-${itemName}`}>
-      {`${mountIdRef.current}|${scope.id}|${JSON.stringify(props.instancePath ?? null)}`}
+      {`${mountId}|${scope.id}|${JSON.stringify(props.instancePath ?? null)}`}
     </span>
   );
 }

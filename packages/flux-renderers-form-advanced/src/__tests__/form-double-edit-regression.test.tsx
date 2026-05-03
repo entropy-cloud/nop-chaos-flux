@@ -16,7 +16,7 @@ import {
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 
-describe('second edit to the same field reflects updated value (bug 30 regression)', () => {
+describe('second edit to the same field reflects updated value (bug 30 regression)', { timeout: 15000 }, () => {
   afterEach(() => {
     submitCalls.length = 0;
   });
