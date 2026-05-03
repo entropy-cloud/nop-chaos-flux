@@ -1,6 +1,6 @@
 # 187 Adversarial Review 2026-05-03 Remediation Plan
 
-> Plan Status: in_progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-03
 > Source: `docs/analysis/2026-05-03-adversarial-review.md`, `docs/architecture/form-validation.md`, `docs/architecture/object-field.md`, `docs/architecture/action-scope-and-imports.md`, `docs/architecture/flow-designer/design.md`, `docs/architecture/flow-designer/tree-mode.md`
 > Related: `docs/plans/157-validation-owner-and-submitform-implementation-alignment-plan.md`, `docs/plans/168-validation-and-built-in-form-targeting-semantics-convergence-plan.md`, `docs/plans/178-validation-owner-bootstrap-and-hidden-participation-plan.md`, `docs/plans/175-review-4-findings-remediation-plan.md`
@@ -162,11 +162,11 @@ Exit Criteria:
 - [x] Flow Designer tree-mode baseline is truthful in both docs and live runtime behavior
 - [x] Flow Designer supported port semantics survive connect/reconnect/persist/render-back paths
 - [x] focused regression coverage exists for each plan-owned semantic fix
-- [ ] independent subagent or independent reviewer closure audit is completed and recorded
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] independent subagent or independent reviewer closure audit is completed and recorded
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -177,13 +177,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: All three plan phases are landed with focused tests and owner-doc updates. Remaining closure gates are repo-wide verification and independent closure audit evidence.
+Status Note: All three plan phases are landed, focused and repo-wide verification are green, and the independent closure audit confirmed the remaining work was limited to doc wording and closure bookkeeping now recorded here.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent subagent audit `ses_2147b8296ffevWBlyq7B3066eL`
+- Evidence: initial audit found remaining doc/test/closure gaps; follow-up audit cleared runtime/test concerns and final spot-check reduced the remaining blockers to doc wording plus checklist bookkeeping. Those final doc edits landed in `docs/architecture/flow-designer/design.md` and `docs/architecture/flow-designer/api.md`, while repo-wide verification completed green via `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test`.
 
 Follow-up:
 
-- pending; if tree constraint enforcement or broader owner-family work remains after this plan, move it into explicit successor plans rather than silently extending this scope
+- If tree constraint enforcement or broader owner-family work remains after this plan, move it into explicit successor plans rather than silently extending this scope.

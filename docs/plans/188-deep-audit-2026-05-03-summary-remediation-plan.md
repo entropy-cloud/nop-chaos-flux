@@ -1,6 +1,6 @@
 # 188 Deep Audit 2026-05-03 Summary Remediation Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-03
 > Source: `docs/analysis/2026-05-03-deep-audit-full/summary.md`, `docs/analysis/2026-05-03-deep-audit-full/01-dependency-graph.md`, `docs/analysis/2026-05-03-deep-audit-full/02-module-responsibility.md`, `docs/analysis/2026-05-03-deep-audit-full/04-state-ownership.md`, `docs/analysis/2026-05-03-deep-audit-full/07-lifecycle.md`, `docs/analysis/2026-05-03-deep-audit-full/08-validation.md`
 > Related: `docs/plans/178-validation-owner-bootstrap-and-hidden-participation-plan.md`, `docs/plans/166-module-hygiene-and-designer-async-cleanup-plan.md`, `docs/plans/161-workspace-quality-and-dx-improvement-plan.md`, `docs/plans/185-large-file-hotspot-split-plan.md`, `docs/plans/187-adversarial-review-2026-05-03-remediation-plan.md`
@@ -191,39 +191,39 @@ Exit Criteria:
 
 ### Phase 4 - Closure Audit And Follow-Up Routing
 
-Status: planned
+Status: completed
 Targets: in-scope packages, focused tests, this plan, successor-plan routing for deferred low-risk residuals
 
-- [ ] Re-audit the live repo against `docs/analysis/2026-05-03-deep-audit-full/summary.md` and the 4 new audit rules added on 2026-05-03.
-- [ ] Confirm every in-scope row from the routing matrix in `Current Baseline` is marked fixed or explicitly moved out of scope with a named successor before closure.
-- [ ] Route the deferred low-risk `DesignerXyflow*` root barrel cleanup into a successor plan or explicit follow-up note instead of silently dropping it.
-- [ ] Record an independent closure audit with live-code evidence and focused verification results.
+- [x] Re-audit the live repo against `docs/analysis/2026-05-03-deep-audit-full/summary.md` and the 4 new audit rules added on 2026-05-03.
+- [x] Confirm every in-scope row from the routing matrix in `Current Baseline` is marked fixed or explicitly moved out of scope with a named successor before closure.
+- [x] Route the deferred low-risk `DesignerXyflow*` root barrel cleanup into a successor plan or explicit follow-up note instead of silently dropping it.
+- [x] Record an independent closure audit with live-code evidence and focused verification results.
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
 
-- [ ] All in-scope summary findings are fixed or explicitly moved to a named successor.
-- [ ] Independent closure audit re-checks live behavior, tests, docs, and the routing matrix rather than relying on implementation notes alone.
-- [ ] Deferred low-risk residuals have explicit follow-up ownership.
-- [ ] This plan's `Closure` section contains independent reviewer/task evidence and the `Follow-up` section names any deferred successor work explicitly.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] All in-scope summary findings are fixed or explicitly moved to a named successor.
+- [x] Independent closure audit re-checks live behavior, tests, docs, and the routing matrix rather than relying on implementation notes alone.
+- [x] Deferred low-risk residuals have explicit follow-up ownership.
+- [x] This plan's `Closure` section contains independent reviewer/task evidence and the `Follow-up` section names any deferred successor work explicitly.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Validation Checklist
 
 > **关闭条件**：只有本 section 所有条目及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。本计划涉及代码和文档变更，因此关闭前仍需完成 focused verification、repo-wide verification 和独立 closure audit。
 
-- [ ] Validation owner containment, submit bootstrapping behavior, and pending-readiness semantics are a single live fact across runtime code, tests, and docs.
-- [ ] The 6 summary-owned `statusPath` publishers clean up on unmount and focused tests prove parent scopes do not retain stale summaries.
-- [ ] Page-margin editing is synchronized with owner truth rather than a disconnected local draft.
-- [ ] Workspace manifest hygiene gaps are closed and have a repeatable verification path.
-- [ ] The oversized validation contract test surface is split and still covers the same live contracts.
-- [ ] All affected architecture/reference docs and `docs/logs/` entries are synchronized with the final live baseline.
-- [ ] Independent subagent or independent reviewer closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] Validation owner containment, submit bootstrapping behavior, and pending-readiness semantics are a single live fact across runtime code, tests, and docs.
+- [x] The 6 summary-owned `statusPath` publishers clean up on unmount and focused tests prove parent scopes do not retain stale summaries.
+- [x] Page-margin editing is synchronized with owner truth rather than a disconnected local draft.
+- [x] Workspace manifest hygiene gaps are closed and have a repeatable verification path.
+- [x] The oversized validation contract test surface is split and still covers the same live contracts.
+- [x] All affected architecture/reference docs and `docs/logs/` entries are synchronized with the final live baseline.
+- [x] Independent subagent or independent reviewer closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 
@@ -235,13 +235,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Pending execution.
+Status Note: Completed after the live repo converged on all plan-owned summary fixes, full workspace verification passed (`pnpm typecheck`, `pnpm build`, `pnpm lint`, `pnpm test`), and an independent closure audit re-checked the routing matrix, docs, and deferred follow-up ownership.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: pending
-- Evidence: pending
+- Reviewer / Agent: independent general subagent `ses_2147833afffemLmA4U0y6bxfbo`
+- Evidence: initial closure audit caught stale evidence and forced a fresh repo-wide `pnpm test` rerun plus a stability hardening update in `packages/word-editor-renderers/src/toolbar/page-controls.test.tsx`; refreshed audit then confirmed plan-owned implementation/docs fixes are landed and only explicit closure routing was still needed before this plan could close.
 
 Follow-up:
 
-- pending; if low-risk surface cleanup or non-summary deep-audit residuals remain after this plan lands, move them into explicit successor plans rather than widening this scope during execution
+- Deferred low-risk `DesignerXyflow*` root barrel cleanup remains out of scope for this plan and is not claimed fixed here; follow it under the next flow-designer public-surface cleanup owner plan, starting from `packages/flow-designer-renderers/src/index.tsx` exports.
+- No other plan-owned summary residuals remain after this closure pass.

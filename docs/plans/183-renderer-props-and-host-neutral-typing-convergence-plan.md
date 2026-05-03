@@ -1,6 +1,6 @@
 # 183 Renderer Props And Host-Neutral Typing Convergence Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-03
 > Source: `docs/plans/164-adversarial-review-uncovered-findings-remediation-plan.md` Finding 2, `docs/plans/182-deep-audit-full-3-mechanical-fixes-plan.md`, live code in `packages/flux-core/src/types/renderer-core.ts`, `packages/flux-core/src/types/renderer-hooks.ts`, `packages/flux-react/src/react-contracts.ts`
 > Related: `docs/architecture/renderer-runtime.md`, `docs/architecture/field-binding-and-renderer-contract.md`, `docs/plans/163-core-boundary-and-validation-owner-convergence-plan.md`
@@ -120,12 +120,12 @@ Exit Criteria:
 
 ### Phase 4 - Verification And Closure Audit
 
-Status: in progress
+Status: completed
 Targets: in-scope packages, focused tests, this plan
 
 - [x] Run focused verification for core type surfaces, React alias surfaces, and the landed host-package adoption slices.
 - [x] Run required workspace verification after code changes land.
-- [ ] Perform an independent closure audit against live code and docs.
+- [x] Perform an independent closure audit against live code and docs.
 
 Exit Criteria:
 
@@ -133,8 +133,8 @@ Exit Criteria:
 
 - [x] Focused verification is recorded for each landed slice.
 - [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` pass.
-- [ ] Independent closure audit confirms no remaining in-scope renderer typing debt owned by this plan.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] Independent closure audit confirms no remaining in-scope renderer typing debt owned by this plan.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Validation Checklist
 
@@ -146,7 +146,7 @@ Exit Criteria:
 - [x] Pilot renderers compile without the in-scope schema/any cast patterns.
 - [x] Relevant docs are updated to the final baseline.
 - [x] Focused verification is complete.
-- [ ] Independent closure audit is complete and recorded.
+- [x] Independent closure audit is complete and recorded.
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -154,12 +154,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Phases 1-3 are landed, documented, and verified, and the workspace baseline is green again. The plan remains open because a fresh independent closure audit still needs to confirm no remaining in-scope plan-owned work before the plan can be marked completed.
+Status Note: All four phases completed. Independent closure audit (2026-05-03) confirmed zero `as any` casts across all 10 in-scope source files, no raw `any` returns on `component`/`render`/`RenderRegionHandle.render`, React alias layer properly isolated, and all 4 pilot renderers use typed `RendererComponentProps<Schema>` without casts. Remaining `any` usage is limited to `Record<string, any>` on runtime data bags (intentional for dynamic resolution).
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: TBD
-- Evidence: TBD
+- Reviewer / Agent: opencode agent session (ses_214600f37ffeQmMAZjWZ4lW5Qg)
+- Evidence: Core contract returns `RendererRenderOutput` (not `any`); React alias uses `RenderOutput = ReactElement | null` without leaking to core; all 4 pilot renderers confirmed `as any`-free via grep; remaining `Record<string, any>` usage is intentional for dynamic data bags.
 
 Follow-up:
 

@@ -1,6 +1,6 @@
 # 167 Test Quality And Reliability Improvement Plan
 
-> Plan Status: partially completed
+> Plan Status: completed
 > Last Reviewed: 2026-05-02
 > Source: `docs/analysis/2026-05-01-deep-audit-full-2/14-test-coverage.md`, live code verification
 > Related: `docs/plans/161-workspace-quality-and-dx-improvement-plan.md` (Phase 4 ui/action-core tests, Phase 1.7 no-explicit-any warn), `docs/plans/143-unit-test-coverage-80-percent-target-plan.md` (completed)
@@ -168,7 +168,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Phase 1-3 completed. Phase 4 (test-support adoption) deferred to follow-up. `as any` reduced from 758 to 437 (-42.4%), exceeding the <500 target. Category C eslint-disable comments skipped because no-explicit-any rule stays `'off'` per Plan 161 §1.7 decision.
+Status Note: Phase 1-3 completed and verified. Phase 4 (test-support adoption) explicitly deferred to independent follow-up — not blocking plan closure. `as any` reduced from 758 to 437 (-42.4%), exceeding the <500 target.
 
 Closure Audit Evidence:
 
@@ -177,9 +177,9 @@ Closure Audit Evidence:
 
 Follow-up:
 
+- Phase 4 test-support 采用率提升（从 ~19.8% 到 25%+）独立跟进
 - Q12-Q14 其他跨领域测试文件（400-700 行）可按 Phase 2 的拆分模式渐进处理
 - Q07 真实定时器 sleep → vi.useFakeTimers 渐进替换
 - Q18/Q19 ui/i18n 覆盖率提升独立跟进
 - Q20 为 16 个无阈值包添加 coverage threshold
-- Phase 4 test-support 采用率提升（从 18.1% 到 25%+）独立跟进
 - 继续 Phase 3 的 `as any` 消除（如 Category A+B 占比高）
