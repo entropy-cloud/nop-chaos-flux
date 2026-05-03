@@ -6,7 +6,9 @@ import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { DesignerXyflowCanvasBridge, renderDesignerCanvasBridge } from './canvas-bridge';
 import { DesignerXyflowNode } from './designer-xyflow-canvas';
 
-let latestReactFlowProps: any = null;
+const mockState: { latestReactFlowProps: any } = {
+  latestReactFlowProps: null,
+};
 
 vi.mock('@xyflow/react', () => ({
   Background: () => null,
@@ -24,7 +26,7 @@ vi.mock('@xyflow/react', () => ({
   applyNodeChanges: (_changes: any[], nodes: any[]) => nodes,
   ReactFlowProvider: ({ children }: { children: React.ReactNode }) => children,
   ReactFlow: (props: any) => {
-    latestReactFlowProps = props;
+    mockState.latestReactFlowProps = props;
     return <div data-testid="react-flow">{props.nodes?.length ?? 0} nodes</div>;
   },
   useNodesState: (initialNodes: any[]) => [initialNodes, vi.fn(), vi.fn()],
@@ -140,7 +142,7 @@ vi.mock('./designer-context', () => ({
 }));
 
 beforeEach(() => {
-  latestReactFlowProps = null;
+  mockState.latestReactFlowProps = null;
 });
 
 function createSnapshot(): DesignerSnapshot {
@@ -230,7 +232,7 @@ describe('DesignerXyflowCanvasBridge', () => {
       />,
     );
     expect(screen.getByTestId('react-flow')).toBeTruthy();
-    expect(latestReactFlowProps).toBeTruthy();
+    expect(mockState.latestReactFlowProps).toBeTruthy();
 
     render(
       <DesignerXyflowNode
@@ -285,27 +287,34 @@ describe('DesignerXyflowCanvasBridge', () => {
       />,
     );
 
-    expect(latestReactFlowProps.onConnect).toBeTruthy();
-    expect(latestReactFlowProps.onReconnect).toBeTruthy();
-    expect(latestReactFlowProps.onNodesChange).toBeTruthy();
-    expect(latestReactFlowProps.onEdgesChange).toBeTruthy();
-    expect(latestReactFlowProps.onMoveEnd).toBeTruthy();
-    expect(latestReactFlowProps.onSelectionChange).toBeTruthy();
+    expect(mockState.latestReactFlowProps.onConnect).toBeTruthy();
+    expect(mockState.latestReactFlowProps.onReconnect).toBeTruthy();
+    expect(mockState.latestReactFlowProps.onNodesChange).toBeTruthy();
+    expect(mockState.latestReactFlowProps.onEdgesChange).toBeTruthy();
+    expect(mockState.latestReactFlowProps.onMoveEnd).toBeTruthy();
+    expect(mockState.latestReactFlowProps.onSelectionChange).toBeTruthy();
 
     const mockConnection = { source: 'node-1', target: 'node-2' };
-    expect(() => latestReactFlowProps.onConnect(mockConnection)).not.toThrow();
+    expect(() => mockState.latestReactFlowProps.onConnect(mockConnection)).not.toThrow();
     expect(onStartConnection).toHaveBeenCalledWith('node-1', undefined);
-    expect(onCompleteConnection).toHaveBeenCalledWith('node-2', undefined);
+    expect(onCompleteConnection).toHaveBeenCalledWith('node-2', undefined, undefined, undefined);
 
     const mockEdge = { id: 'edge-1' };
-    expect(() => latestReactFlowProps.onReconnect(mockEdge, mockConnection)).not.toThrow();
+    expect(() => mockState.latestReactFlowProps.onReconnect(mockEdge, mockConnection)).not.toThrow();
     expect(onStartReconnect).toHaveBeenCalledWith('edge-1', undefined);
-    expect(onCompleteReconnect).toHaveBeenCalledWith('edge-1', 'node-1', 'node-2', undefined);
+    expect(onCompleteReconnect).toHaveBeenCalledWith(
+      'edge-1',
+      'node-1',
+      'node-2',
+      undefined,
+      undefined,
+      undefined,
+    );
 
     const mockNodeChanges = [
       { id: 'node-1', type: 'position', position: { x: 50, y: 50 }, dragging: false },
     ];
-    expect(() => latestReactFlowProps.onNodesChange(mockNodeChanges)).not.toThrow();
+    expect(() => mockState.latestReactFlowProps.onNodesChange(mockNodeChanges)).not.toThrow();
     expect(onMoveNode).toHaveBeenCalledWith('node-1', undefined, { x: 50, y: 50 });
   });
 
@@ -333,10 +342,10 @@ describe('DesignerXyflowCanvasBridge', () => {
       />,
     );
 
-    expect(latestReactFlowProps.nodesConnectable).toBe(false);
-    expect(latestReactFlowProps.nodesDraggable).toBe(false);
-    expect(latestReactFlowProps.onConnect).toBeUndefined();
-    expect(latestReactFlowProps.onReconnect).toBeUndefined();
+    expect(mockState.latestReactFlowProps.nodesConnectable).toBe(false);
+    expect(mockState.latestReactFlowProps.nodesDraggable).toBe(false);
+    expect(mockState.latestReactFlowProps.onConnect).toBeUndefined();
+    expect(mockState.latestReactFlowProps.onReconnect).toBeUndefined();
   });
 });
 

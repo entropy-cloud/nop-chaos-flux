@@ -82,6 +82,8 @@ export function createDesignerActionProvider(
             type: 'addEdge',
             source: String(payload?.source ?? ''),
             target: String(payload?.target ?? ''),
+            sourcePort: typeof payload?.sourcePort === 'string' ? payload.sourcePort : undefined,
+            targetPort: typeof payload?.targetPort === 'string' ? payload.targetPort : undefined,
             data: payload?.data as Record<string, unknown> | undefined,
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
@@ -179,6 +181,8 @@ export function createDesignerActionProvider(
             edgeId: String(payload?.edgeId ?? ''),
             source: String(payload?.source ?? ''),
             target: String(payload?.target ?? ''),
+            sourcePort: typeof payload?.sourcePort === 'string' ? payload.sourcePort : undefined,
+            targetPort: typeof payload?.targetPort === 'string' ? payload.targetPort : undefined,
           });
           notifyCommandFailure(ctx?.runtime?.env?.notify, result.error, result.reason);
           return toActionResult(result);

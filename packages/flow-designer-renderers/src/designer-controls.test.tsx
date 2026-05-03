@@ -14,16 +14,22 @@ type MockContext = {
   core: { subscribe: () => () => void; getSnapshot: () => any };
 };
 
-let mockContext: MockContext;
-let mockSnapshot: any;
-let mockResolve = vi.fn();
+const mockState: {
+  context: MockContext;
+  snapshot: any;
+  resolve: ReturnType<typeof vi.fn>;
+} = {
+  context: undefined as unknown as MockContext,
+  snapshot: undefined,
+  resolve: vi.fn(),
+};
 
 vi.mock('./designer-context', () => ({
-  useDesignerContext: () => mockContext,
-  useDesignerFullSnapshot: () => mockSnapshot,
-  useDesignerSnapshotSelector: (selector: (s: any) => any) => selector(mockSnapshot),
+  useDesignerContext: () => mockState.context,
+  useDesignerFullSnapshot: () => mockState.snapshot,
+  useDesignerSnapshotSelector: (selector: (s: any) => any) => selector(mockState.snapshot),
   useNodeTypeConfig: (typeId: string) =>
-    mockContext.config.nodeTypes.find((nodeType: { id: string }) => nodeType.id === typeId),
+    mockState.context.config.nodeTypes.find((nodeType: { id: string }) => nodeType.id === typeId),
 }));
 
 vi.mock('./designer-icon', () => ({
@@ -34,7 +40,7 @@ vi.mock('./designer-icon', () => ({
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentActionScope: () => ({
-    resolve: mockResolve,
+    resolve: mockState.resolve,
   }),
   useRendererRuntime: () => ({}),
   useRenderScope: () => ({}),
@@ -64,19 +70,19 @@ function createSnapshot(overrides: Partial<any> = {}) {
 describe('flow designer controls', () => {
   beforeEach(() => {
     cleanup();
-    mockResolve = vi.fn();
-    mockSnapshot = createSnapshot();
-    mockContext = {
+    mockState.resolve = vi.fn();
+    mockState.snapshot = createSnapshot();
+    mockState.context = {
       config: { toolbar: { items: [] }, palette: { groups: [] }, nodeTypes: [] },
       dispatch: vi.fn(),
       openCreateDialog: vi.fn(),
-      core: { subscribe: () => () => {}, getSnapshot: () => mockSnapshot },
+      core: { subscribe: () => () => {}, getSnapshot: () => mockState.snapshot },
     };
   });
 
   it('dispatches toolbar commands for action buttons', () => {
-    mockContext.config = {
-      ...mockContext.config,
+    mockState.context.config = {
+      ...mockState.context.config,
       toolbar: {
         items: [
           { type: 'button', label: 'Undo', action: 'designer:undo', disabled: '${!canUndo}' },
@@ -98,23 +104,23 @@ describe('flow designer controls', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'undo' });
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({ type: 'undo' });
 
     const redoButton = screen.getByRole('button', { name: 'Redo' });
     expect((redoButton as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(redoButton);
-    expect(mockContext.dispatch).toHaveBeenCalledTimes(1);
+    expect(mockState.context.dispatch).toHaveBeenCalledTimes(1);
 
     const gridButton = screen.getByRole('button', { name: 'Grid' });
     expect((gridButton as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(gridButton);
-    expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'toggleGrid' });
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({ type: 'toggleGrid' });
   });
 
   it('uses export toggle callback for JSON toolbar button', () => {
     const onExportToggle = vi.fn();
-    mockContext.config = {
-      ...mockContext.config,
+    mockState.context.config = {
+      ...mockState.context.config,
       toolbar: {
         items: [{ type: 'button', label: 'JSON', action: 'designer:export' }],
       },
@@ -124,14 +130,14 @@ describe('flow designer controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
 
     expect(onExportToggle).toHaveBeenCalledTimes(1);
-    expect(mockContext.dispatch).not.toHaveBeenCalled();
+    expect(mockState.context.dispatch).not.toHaveBeenCalled();
   });
 
   it('invokes upstream action for back button', async () => {
     const invoke = vi.fn().mockResolvedValue(undefined);
-    mockResolve.mockReturnValue({ method: 'goBack', provider: { invoke } });
-    mockContext.config = {
-      ...mockContext.config,
+    mockState.resolve.mockReturnValue({ method: 'goBack', provider: { invoke } });
+    mockState.context.config = {
+      ...mockState.context.config,
       toolbar: {
         items: [{ type: 'back', label: 'Back', action: 'designer:navigate-back' }],
       },
@@ -140,14 +146,14 @@ describe('flow designer controls', () => {
     render(<DesignerToolbarContent />);
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(mockResolve).toHaveBeenCalledWith('designer:navigate-back');
+    expect(mockState.resolve).toHaveBeenCalledWith('designer:navigate-back');
     expect(invoke).toHaveBeenCalledWith('goBack', undefined, expect.any(Object));
   });
 
   it('dispatches addNode from palette item button click', () => {
     const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
-    mockContext.config = {
-      ...mockContext.config,
+    mockState.context.config = {
+      ...mockState.context.config,
       nodeTypes: [
         { id: 'task', label: 'Task' },
         { id: 'end', label: 'End' },
@@ -165,7 +171,7 @@ describe('flow designer controls', () => {
     expect((paletteItem as HTMLElement).querySelectorAll('[data-slot="button"]')).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'Task' }));
 
-    expect(mockContext.dispatch).toHaveBeenCalledWith({
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'addNode',
       nodeType: 'task',
       position: { x: 180, y: 120 },
@@ -174,7 +180,7 @@ describe('flow designer controls', () => {
   });
 
   it('dispatches delete actions from inspector buttons', () => {
-    mockSnapshot = createSnapshot({
+    mockState.snapshot = createSnapshot({
       activeNode: { id: 'node-1', type: 'task', data: { label: 'Task' } },
       activeEdge: null,
     });
@@ -183,16 +189,16 @@ describe('flow designer controls', () => {
     expect(document.querySelector('.nop-inspector')).toBeTruthy();
     expect(screen.getByText('名称')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '删除节点' }));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'deleteNode', nodeId: 'node-1' });
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({ type: 'deleteNode', nodeId: 'node-1' });
   });
 
   it('uses nodeType inspector schema before fallback fields', () => {
-    mockSnapshot = createSnapshot({
+    mockState.snapshot = createSnapshot({
       activeNode: { id: 'node-1', type: 'task', data: { label: 'Task' } },
       activeEdge: null,
     });
-    mockContext.config = {
-      ...mockContext.config,
+    mockState.context.config = {
+      ...mockState.context.config,
       nodeTypes: [
         {
           id: 'task',
@@ -210,7 +216,7 @@ describe('flow designer controls', () => {
   });
 
   it('dispatches branch-group editing commands from inspector when active node exposes branches', () => {
-    mockSnapshot = createSnapshot({
+    mockState.snapshot = createSnapshot({
       selection: {
         selectedNodeIds: ['node-1'],
         selectedEdgeIds: [],
@@ -259,7 +265,7 @@ describe('flow designer controls', () => {
     fireEvent.change(screen.getByDisplayValue('Branch 1'), {
       target: { value: 'Renamed Branch 1' },
     });
-    expect(mockContext.dispatch).toHaveBeenCalledWith({
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'updateBranchData',
       nodeId: 'node-1',
       branchId: 'b1',
@@ -267,7 +273,7 @@ describe('flow designer controls', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Move branch 2 left' }));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'moveBranch',
       nodeId: 'node-1',
       branchId: 'b2',
@@ -275,14 +281,14 @@ describe('flow designer controls', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete branch 3' }));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'deleteBranch',
       nodeId: 'node-1',
       branchId: 'b3',
     });
 
     fireEvent.click(screen.getByRole('button', { name: '添加分支' }));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'addBranch',
       nodeId: 'node-1',
       branchData: { label: '分支 4' },
@@ -291,13 +297,13 @@ describe('flow designer controls', () => {
     });
 
     fireEvent.click(screen.getByText('分支 2'));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'selectBranch',
       nodeId: 'node-1',
       branchId: 'b2',
     });
 
-    mockSnapshot = createSnapshot({
+    mockState.snapshot = createSnapshot({
       selection: {
         selectedNodeIds: ['node-1'],
         selectedEdgeIds: [],
@@ -345,13 +351,13 @@ describe('flow designer controls', () => {
     render(<DefaultInspector />);
     expect(screen.getByText('Branch Node 2')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '定位节点' }));
-    expect(mockContext.dispatch).toHaveBeenCalledWith({ type: 'selectNode', nodeId: 'n-branch-2' });
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({ type: 'selectNode', nodeId: 'n-branch-2' });
   });
 
   it('opens createDialog-configured node types instead of dispatching addNode immediately', () => {
     const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
-    mockContext.config = {
-      ...mockContext.config,
+    mockState.context.config = {
+      ...mockState.context.config,
       nodeTypes: [
         {
           id: 'task',
@@ -369,11 +375,11 @@ describe('flow designer controls', () => {
     expect(paletteItem).toBeTruthy();
     fireEvent.click(within(paletteItem as HTMLElement).getByRole('button', { name: 'Task' }));
 
-    expect(mockContext.openCreateDialog).toHaveBeenCalledWith(
+    expect(mockState.context.openCreateDialog).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'task' }),
       { x: 180, y: 120 },
     );
-    expect(mockContext.dispatch).not.toHaveBeenCalledWith(
+    expect(mockState.context.dispatch).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: 'addNode' }),
     );
     randomSpy.mockRestore();

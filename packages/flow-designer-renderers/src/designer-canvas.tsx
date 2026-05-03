@@ -169,7 +169,12 @@ export function DesignerCanvasContent() {
         setPendingConnectionSourceId(null);
       }
     },
-    onCompleteConnection: (nodeId: string, event?: React.MouseEvent) => {
+    onCompleteConnection: (
+      nodeId: string,
+      event?: React.MouseEvent,
+      sourcePort?: string,
+      targetPort?: string,
+    ) => {
       if (config.documentMode === 'tree') {
         return;
       }
@@ -182,6 +187,8 @@ export function DesignerCanvasContent() {
         type: 'addEdge',
         source: pendingConnectionSourceId,
         target: nodeId,
+        sourcePort,
+        targetPort,
       });
       if (result.ok) {
         setPendingConnectionSourceId(null);
@@ -206,17 +213,32 @@ export function DesignerCanvasContent() {
       sourceId: string,
       nodeId: string,
       event?: React.MouseEvent,
+      sourcePort?: string,
+      targetPort?: string,
     ) => {
       if (config.documentMode === 'tree') {
         return;
       }
       event?.stopPropagation();
       const edge = snapshot.doc.edges.find((item) => item.id === edgeId);
-      if (!edge || edge.target === nodeId) {
+      if (
+        !edge ||
+        (edge.target === nodeId &&
+          edge.source === sourceId &&
+          edge.sourcePort === sourcePort &&
+          edge.targetPort === targetPort)
+      ) {
         return;
       }
 
-      const result = dispatch({ type: 'reconnectEdge', edgeId, source: sourceId, target: nodeId });
+      const result = dispatch({
+        type: 'reconnectEdge',
+        edgeId,
+        source: sourceId,
+        target: nodeId,
+        sourcePort,
+        targetPort,
+      });
       if (result.ok) {
         setReconnectingEdgeId(null);
       }

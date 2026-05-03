@@ -42,10 +42,17 @@ export function hasEdgeConnection(
   doc: GraphDocument,
   source: string,
   target: string,
+  sourcePort?: string,
+  targetPort?: string,
   ignoreEdgeId?: string,
 ): boolean {
   return doc.edges.some(
-    (edge) => edge.id !== ignoreEdgeId && edge.source === source && edge.target === target,
+    (edge) =>
+      edge.id !== ignoreEdgeId &&
+      edge.source === source &&
+      edge.target === target &&
+      edge.sourcePort === sourcePort &&
+      edge.targetPort === targetPort,
   );
 }
 
@@ -54,6 +61,8 @@ export function validateEdgeConnection(
   normalizedConfig: NormalizedDesignerConfig,
   source: string,
   target: string,
+  sourcePort?: string,
+  targetPort?: string,
   ignoreEdgeId?: string,
 ): string | undefined {
   const sourceNode = doc.nodes.find((node) => node.id === source);
@@ -67,7 +76,7 @@ export function validateEdgeConnection(
   }
   if (
     !normalizedConfig.rules.allowMultiEdge &&
-    hasEdgeConnection(doc, source, target, ignoreEdgeId)
+    hasEdgeConnection(doc, source, target, sourcePort, targetPort, ignoreEdgeId)
   ) {
     return EDGE_DUPLICATE_ERROR;
   }

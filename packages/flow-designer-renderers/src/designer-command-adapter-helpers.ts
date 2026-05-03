@@ -59,10 +59,17 @@ export function hasEdgeConnection(
   doc: GraphDocument,
   source: string,
   target: string,
+  sourcePort?: string,
+  targetPort?: string,
   ignoreEdgeId?: string,
 ): boolean {
   return doc.edges.some(
-    (edge) => edge.id !== ignoreEdgeId && edge.source === source && edge.target === target,
+    (edge) =>
+      edge.id !== ignoreEdgeId &&
+      edge.source === source &&
+      edge.target === target &&
+      edge.sourcePort === sourcePort &&
+      edge.targetPort === targetPort,
   );
 }
 
@@ -77,6 +84,8 @@ export function validateEdgeMutation(
   core: DesignerCore,
   source: string,
   target: string,
+  sourcePort?: string,
+  targetPort?: string,
   ignoreEdgeId?: string,
 ): { error?: string; reason?: DesignerCommandReason } {
   const doc = core.getDocument();
@@ -90,7 +99,7 @@ export function validateEdgeMutation(
     return { error: EDGE_SELF_LOOP_ERROR, reason: 'self-loop' };
   }
 
-  if (hasEdgeConnection(doc, source, target, ignoreEdgeId)) {
+  if (hasEdgeConnection(doc, source, target, sourcePort, targetPort, ignoreEdgeId)) {
     return { error: EDGE_DUPLICATE_ERROR, reason: 'duplicate-edge' };
   }
 

@@ -5,10 +5,10 @@ import {
   hasRendererSlotContent,
   useCurrentActionScope,
   useRendererEnv,
+  useStatusPathPublication,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 import {
@@ -63,6 +63,7 @@ function TreeModeLayoutWrapper(
 ) {
   const { config } = props;
   const inputTreeDocument = readDesignerResolvedProp<TreeDocument>(props, 'treeDocument');
+  const [initialTreeDocument] = React.useState(() => inputTreeDocument);
   const [treeDocument, setTreeDocument] = React.useState<TreeDocument | undefined>(
     inputTreeDocument,
   );
@@ -71,13 +72,27 @@ function TreeModeLayoutWrapper(
     setTreeDocument(inputTreeDocument);
   }, [inputTreeDocument]);
 
-  const document: GraphDocument = useMemo(
+  const core = useMemo(
     () =>
-      treeDocument
-        ? computeTreeModeDocument(treeDocument, config)
-        : { id: '', kind: '', name: '', version: '', nodes: [], edges: [] },
-    [config, treeDocument],
+      createDesignerCore(
+        initialTreeDocument
+          ? computeTreeModeDocument(initialTreeDocument, config)
+          : { id: '', kind: '', name: '', version: '', nodes: [], edges: [] },
+        config,
+      ),
+    [config, initialTreeDocument],
   );
+  const lastSyncedInputRef = useRef<TreeDocument | undefined>(inputTreeDocument);
+
+  useEffect(() => {
+    if (inputTreeDocument === lastSyncedInputRef.current) {
+      return;
+    }
+    lastSyncedInputRef.current = inputTreeDocument;
+    if (inputTreeDocument) {
+      core.replaceDocument(computeTreeModeDocument(inputTreeDocument, config));
+    }
+  }, [config, core, inputTreeDocument]);
 
   if (!treeDocument) {
     return <div>{t('flux.flowDesigner.treeDocumentRequired')}</div>;
@@ -86,8 +101,8 @@ function TreeModeLayoutWrapper(
   return (
     <DesignerPageInner
       rendererProps={props}
-      document={document}
       config={config}
+      core={core}
       treeDocument={treeDocument}
       setTreeDocument={setTreeDocument}
     />
@@ -128,6 +143,8 @@ interface DesignerPageBodyProps {
 interface DesignerTestConnectDetail {
   source: string;
   target: string;
+  sourcePort?: string;
+  targetPort?: string;
 }
 
 function DesignerPageBody({
@@ -280,12 +297,10 @@ function DesignerPageBody({
     [actionScope, designerScope, props.helpers],
   );
 
-  useEffect(() => {
-    if (!statusPath) {
-      return;
-    }
-
-    const summary: DesignerHostStatusSummary = {
+  useStatusPathPublication<DesignerHostStatusSummary>(
+    props.node.scope.parent ?? props.node.scope,
+    statusPath,
+    {
       kind: 'designer',
       dirty: snapshot.isDirty,
       busy: layoutBusy,
@@ -294,9 +309,8 @@ function DesignerPageBody({
       selectionKind: snapshot.activeNode ? 'node' : snapshot.activeEdge ? 'edge' : 'none',
       selectionCount:
         snapshot.selection.selectedNodeIds.length + snapshot.selection.selectedEdgeIds.length,
-    };
-    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
-  }, [layoutBusy, props.node.scope, snapshot, statusPath]);
+    },
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -309,7 +323,13 @@ function DesignerPageBody({
         return;
       }
 
-      dispatch({ type: 'addEdge', source: detail.source, target: detail.target });
+      dispatch({
+        type: 'addEdge',
+        source: detail.source,
+        target: detail.target,
+        sourcePort: detail.sourcePort,
+        targetPort: detail.targetPort,
+      });
     };
 
     window.addEventListener('nop-designer:test-connect', handleTestConnect as EventListener);
@@ -433,8 +453,9 @@ function DesignerPageBody({
 
 interface DesignerPageInnerProps {
   rendererProps: RendererComponentProps<DesignerPageSchema>;
-  document: GraphDocument;
+  document?: GraphDocument;
   config: DesignerConfig;
+  core?: ReturnType<typeof createDesignerCore>;
   treeDocument?: TreeDocument;
   setTreeDocument?: React.Dispatch<React.SetStateAction<TreeDocument | undefined>>;
 }
@@ -443,11 +464,20 @@ function DesignerPageInner({
   rendererProps: props,
   document,
   config,
+  core: providedCore,
   treeDocument,
   setTreeDocument,
 }: DesignerPageInnerProps) {
   const env = useRendererEnv();
-  const core = useMemo(() => createDesignerCore(document, config), [document, config]);
+  const core = useMemo(() => {
+    if (providedCore) {
+      return providedCore;
+    }
+    if (!document) {
+      throw new Error('DesignerPageInner requires document when core is not provided.');
+    }
+    return createDesignerCore(document, config);
+  }, [config, document, providedCore]);
   const commandAdapter = useMemo(
     () =>
       createDesignerCommandAdapter(

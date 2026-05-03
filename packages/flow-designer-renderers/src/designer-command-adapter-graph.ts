@@ -17,12 +17,24 @@ export function executeGraphOnlyCommand(
 ): DesignerCommandResult | undefined {
   switch (command.type) {
     case 'addEdge': {
-      const validation = validateEdgeMutation(core, command.source, command.target);
+      const validation = validateEdgeMutation(
+        core,
+        command.source,
+        command.target,
+        command.sourcePort,
+        command.targetPort,
+      );
       if (validation.error) {
         return createFailure(core, validation.error, validation.reason);
       }
 
-      const edge = core.addEdge(command.source, command.target, command.data);
+      const edge = core.addEdge(
+        command.source,
+        command.target,
+        command.data,
+        command.sourcePort,
+        command.targetPort,
+      );
       if (!edge) {
         return createFailure(core, 'Unable to add edge.');
       }
@@ -78,12 +90,25 @@ export function executeGraphOnlyCommand(
         return createFailure(core, `Unknown edge: ${command.edgeId}`, 'missing-edge');
       }
 
-      const validation = validateEdgeMutation(core, command.source, command.target, command.edgeId);
+      const validation = validateEdgeMutation(
+        core,
+        command.source,
+        command.target,
+        command.sourcePort,
+        command.targetPort,
+        command.edgeId,
+      );
       if (validation.error) {
         return createFailure(core, validation.error, validation.reason);
       }
 
-      const result = core.reconnectEdge(command.edgeId, command.source, command.target);
+      const result = core.reconnectEdge(
+        command.edgeId,
+        command.source,
+        command.target,
+        command.sourcePort,
+        command.targetPort,
+      );
       if (!result.ok) {
         return createFailure(
           core,

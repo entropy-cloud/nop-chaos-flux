@@ -257,16 +257,20 @@ export function createDesignerCore(
     source: string,
     target: string,
     data?: Record<string, unknown>,
+    sourcePort?: string,
+    targetPort?: string,
   ): GraphEdge | null {
-    return addEdgeCommand(buildEdgeCtx(), source, target, data);
+    return addEdgeCommand(buildEdgeCtx(), source, target, data, sourcePort, targetPort);
   }
 
   function reconnectEdge(
     edgeId: string,
     source: string,
     target: string,
+    sourcePort?: string,
+    targetPort?: string,
   ): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string } {
-    return reconnectEdgeCommand(buildEdgeCtx(), edgeId, source, target);
+    return reconnectEdgeCommand(buildEdgeCtx(), edgeId, source, target, sourcePort, targetPort);
   }
 
   function updateEdge(edgeId: string, data: Record<string, unknown>): void {

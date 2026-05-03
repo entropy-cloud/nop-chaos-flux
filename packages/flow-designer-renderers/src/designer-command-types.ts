@@ -11,7 +11,14 @@ export type DesignerCommandReason =
   | 'unavailable';
 
 export type DesignerCommand =
-  | { type: 'addEdge'; source: string; target: string; data?: Record<string, unknown> }
+  | {
+      type: 'addEdge';
+      source: string;
+      target: string;
+      sourcePort?: string;
+      targetPort?: string;
+      data?: Record<string, unknown>;
+    }
   | {
       type: 'addNode';
       nodeType: string;
@@ -36,7 +43,14 @@ export type DesignerCommand =
   | { type: 'deleteSelection' }
   | { type: 'export' }
   | { type: 'moveNode'; nodeId: string; position: { x: number; y: number } }
-  | { type: 'reconnectEdge'; edgeId: string; source: string; target: string }
+  | {
+      type: 'reconnectEdge';
+      edgeId: string;
+      source: string;
+      target: string;
+      sourcePort?: string;
+      targetPort?: string;
+    }
   | { type: 'redo' }
   | { type: 'restore' }
   | { type: 'save' }

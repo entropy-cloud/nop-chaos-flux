@@ -38,6 +38,8 @@ export function addEdgeCommand(
   source: string,
   target: string,
   data?: Record<string, unknown>,
+  sourcePort?: string,
+  targetPort?: string,
 ): GraphEdge | null {
   const sourceNode = ctx.doc.nodes.find((n) => n.id === source);
   const targetNode = ctx.doc.nodes.find((n) => n.id === target);
@@ -66,12 +68,20 @@ export function addEdgeCommand(
 
   if (ctx.normalizedConfig.hooks?.beforeConnect) {
     try {
-      const result = ctx.normalizedConfig.hooks.beforeConnect({ source, target, data });
+      const result = ctx.normalizedConfig.hooks.beforeConnect({
+        source,
+        target,
+        sourcePort,
+        targetPort,
+        data,
+      });
       if (result === false) {
         return null;
       }
       source = result.source;
       target = result.target;
+      sourcePort = result.sourcePort;
+      targetPort = result.targetPort;
       data = result.data;
     } catch (err) {
       ctx.emit({ type: 'lifecycleHookError', hook: 'beforeConnect', error: String(err) });
@@ -79,7 +89,14 @@ export function addEdgeCommand(
     }
   }
 
-  const validationError = validateEdgeConnection(ctx.doc, ctx.normalizedConfig, source, target);
+  const validationError = validateEdgeConnection(
+    ctx.doc,
+    ctx.normalizedConfig,
+    source,
+    target,
+    sourcePort,
+    targetPort,
+  );
   if (validationError) {
     return null;
   }
@@ -89,6 +106,8 @@ export function addEdgeCommand(
     type: ctx.normalizedConfig.rules.defaultEdgeType ?? 'default',
     source,
     target,
+    sourcePort,
+    targetPort,
     data: { ...data },
   };
 
@@ -106,6 +125,8 @@ export function reconnectEdgeCommand(
   edgeId: string,
   source: string,
   target: string,
+  sourcePort?: string,
+  targetPort?: string,
 ): { ok: boolean; edge?: GraphEdge; error?: string; reason?: string } {
   const edgeIndex = ctx.doc.edges.findIndex((edge) => edge.id === edgeId);
   if (edgeIndex === -1) {
@@ -118,6 +139,8 @@ export function reconnectEdgeCommand(
     ctx.normalizedConfig,
     source,
     target,
+    sourcePort,
+    targetPort,
     edgeId,
   );
   if (validationError) {
@@ -135,7 +158,12 @@ export function reconnectEdgeCommand(
 
   ctx.setSelectionState(selectSingleEdge(ctx.selectionState, edgeId));
 
-  if (currentEdge.source === source && currentEdge.target === target) {
+  if (
+    currentEdge.source === source &&
+    currentEdge.target === target &&
+    currentEdge.sourcePort === sourcePort &&
+    currentEdge.targetPort === targetPort
+  ) {
     ctx.emit({ type: 'selectionChanged', selection: getSelectionSummary(ctx.selectionState) });
     return { ok: true, edge: currentEdge, reason: 'unchanged' };
   }
@@ -144,6 +172,8 @@ export function reconnectEdgeCommand(
     ...currentEdge,
     source,
     target,
+    sourcePort,
+    targetPort,
   };
   ctx.setDocument(replaceEdgeInDocument(ctx.doc, edgeId, updatedEdge));
 

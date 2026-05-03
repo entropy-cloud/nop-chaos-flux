@@ -17,7 +17,10 @@ describe('createDesignerActionProvider', () => {
           kind: 'flow',
           name: 'Example',
           version: '1.0.0',
-          nodes: [],
+          nodes: [
+            { id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: {} },
+            { id: 'n2', type: 'task', position: { x: 120, y: 0 }, data: {} },
+          ],
           edges: [],
           viewport: { x: 0, y: 0, zoom: 1 },
         },
@@ -42,7 +45,10 @@ describe('createDesignerActionProvider', () => {
         kind: 'flow',
         name: 'Example',
         version: '1.0.0',
-        nodes: [],
+        nodes: [
+          { id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: {} },
+          { id: 'n2', type: 'task', position: { x: 120, y: 0 }, data: {} },
+        ],
         edges: [],
         viewport: { x: 0, y: 0, zoom: 1 },
       }),
@@ -68,6 +74,23 @@ describe('createDesignerActionProvider', () => {
       updateNode: () => undefined,
       updateEdge: () => undefined,
       exportDocument: () => '{"ok":true}',
+      addEdge: (
+        source: string,
+        target: string,
+        _data?: Record<string, unknown>,
+        sourcePort?: string,
+        targetPort?: string,
+      ) => ({ id: 'e1', type: 'default', source, target, sourcePort, targetPort, data: {} }),
+      reconnectEdge: (
+        edgeId: string,
+        source: string,
+        target: string,
+        sourcePort?: string,
+        targetPort?: string,
+      ) => ({
+        ok: true,
+        edge: { id: edgeId, type: 'default', source, target, sourcePort, targetPort, data: {} },
+      }),
       undo: () => undefined,
       redo: () => undefined,
       toggleGrid: () => undefined,
@@ -87,10 +110,19 @@ describe('createDesignerActionProvider', () => {
       { nodeId: 'gateway-1', branchId: 'b2' },
       {} as any,
     );
+    const addEdgeResult = await provider.invoke(
+      'addEdge',
+      { source: 'n1', target: 'n2', sourcePort: 'out-1', targetPort: 'in-1' },
+      {} as any,
+    );
 
     expect(addResult).toMatchObject({ ok: true, data: expect.objectContaining({ type: 'task' }) });
     expect(exportResult).toMatchObject({ ok: true, data: '{"ok":true}' });
     expect(branchResult).toMatchObject({ ok: true });
+    expect(addEdgeResult).toMatchObject({
+      ok: true,
+      data: expect.objectContaining({ sourcePort: 'out-1', targetPort: 'in-1' }),
+    });
   });
 
   it('routes validation failures through warning notify while returning a failed action result', async () => {
@@ -220,5 +252,8 @@ describe('flow-designer manifest', () => {
     expect(fields.activeNode).toBeTruthy();
     expect(fields.activeEdge).toBeTruthy();
     expect(fields.runtime).toBeTruthy();
+    const activeEdgeFields = (fields.activeEdge.schema as any).anyOf[1].fields;
+    expect(activeEdgeFields.sourcePort).toBeTruthy();
+    expect(activeEdgeFields.targetPort).toBeTruthy();
   });
 });

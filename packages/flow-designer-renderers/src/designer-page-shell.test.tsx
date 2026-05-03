@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createSchemaRenderer, useScopeSelector } from '@nop-chaos/flux-react';
-import { render, waitFor, fireEvent, within, screen } from '@testing-library/react';
+import { cleanup, render, waitFor, fireEvent, within, screen } from '@testing-library/react';
 import { flowDesignerRendererDefinitions } from './index';
 import {
   basicTestRendererDefinitions,
@@ -15,6 +15,10 @@ import {
 } from './index-test-support';
 
 installFlowDesignerTestHooks();
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('designer-page status publication', () => {
   it('publishes designer host status through literal statusPath', async () => {

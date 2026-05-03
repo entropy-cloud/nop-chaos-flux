@@ -32,6 +32,14 @@ vi.mock('./canvas-bridge', async () => {
         <button type="button" onClick={(event) => props.onCompleteConnection('node-2', event)}>
           Complete connection node-2
         </button>
+        <button
+          type="button"
+          onClick={(event) =>
+            props.onCompleteConnection('node-2', event, 'out-primary', 'in-primary')
+          }
+        >
+          Complete connection node-2 with ports
+        </button>
         <button type="button" onClick={(event) => props.onStartReconnect('edge-2', event)}>
           Start reconnect edge-2
         </button>
@@ -40,6 +48,21 @@ vi.mock('./canvas-bridge', async () => {
           onClick={(event) => props.onCompleteReconnect('edge-2', 'node-1', 'node-2', event)}
         >
           Complete reconnect edge-2 to node-2
+        </button>
+        <button
+          type="button"
+          onClick={(event) =>
+            props.onCompleteReconnect(
+              'edge-2',
+              'node-1',
+              'node-2',
+              event,
+              'out-secondary',
+              'in-secondary',
+            )
+          }
+        >
+          Complete reconnect edge-2 to node-2 with ports
         </button>
       </div>
     );
@@ -230,6 +253,30 @@ describe('designer-page live xyflow intent retention', () => {
         'Duplicate edges are not supported in the playground example.',
       );
       expect(canvas.getByText('reconnecting:edge-2')).toBeTruthy();
+    });
+  });
+
+  it('dispatches port-aware edge payloads through the live canvas bridge', async () => {
+    const view = renderDesignerPage({
+      id: 'doc-ports',
+      kind: 'flow',
+      name: 'Port Example',
+      version: '1.0.0',
+      nodes: [
+        { id: 'node-1', type: 'task', position: { x: 20, y: 40 }, data: { label: 'Task 1' } },
+        { id: 'node-2', type: 'end', position: { x: 220, y: 40 }, data: { label: 'Task 2' } },
+      ],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 },
+    });
+    const canvas = within(view.container);
+
+    fireEvent.click(canvas.getByText('Start connection node-1'));
+    fireEvent.click(canvas.getByText('Complete connection node-2 with ports'));
+
+    await waitFor(() => {
+      expect(view.notify).not.toHaveBeenCalled();
+      expect(canvas.getByText('pending:none')).toBeTruthy();
     });
   });
 

@@ -237,6 +237,33 @@ describe('createDesignerCore', () => {
     });
   });
 
+  it('preserves port identity across add, reconnect, undo, and redo', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig()) as
+      typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+
+    const added = (core as any).addEdge('start-1', 'end-1', undefined, 'out-1', 'in-1');
+    expect(added).toMatchObject({ sourcePort: 'out-1', targetPort: 'in-1' });
+
+    const reconnected = (core as any).reconnectEdge('edge-1', 'start-1', 'end-1', 'out-2', 'in-2');
+    expect(reconnected).toMatchObject({
+      ok: true,
+      edge: expect.objectContaining({ sourcePort: 'out-2', targetPort: 'in-2' }),
+    });
+
+    core.undo();
+    const undoneEdge = core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1');
+    expect(undoneEdge?.source).toBe('start-1');
+    expect(undoneEdge?.target).toBe('task-1');
+    expect('sourcePort' in (undoneEdge ?? {})).toBe(false);
+    expect('targetPort' in (undoneEdge ?? {})).toBe(false);
+
+    core.redo();
+    expect(core.getSnapshot().doc.edges.find((edge) => edge.id === 'edge-1')).toMatchObject({
+      sourcePort: 'out-2',
+      targetPort: 'in-2',
+    });
+  });
+
   it('treats unchanged reconnect as a no-op that preserves the selected edge', () => {
     const core = createDesignerCore(
       createDocumentWithEdgeChain(),

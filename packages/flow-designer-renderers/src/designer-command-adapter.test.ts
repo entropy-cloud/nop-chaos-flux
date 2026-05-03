@@ -95,6 +95,38 @@ describe('createDesignerCommandAdapter', () => {
     });
   });
 
+  it('preserves port ids when adding and reconnecting edges', () => {
+    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
+    const adapter = createDesignerCommandAdapter(core);
+
+    const added = adapter.execute({
+      type: 'addEdge',
+      source: 'start-1',
+      target: 'end-1',
+      sourcePort: 'out-1',
+      targetPort: 'in-1',
+    });
+
+    expect(added).toMatchObject({
+      ok: true,
+      data: expect.objectContaining({ sourcePort: 'out-1', targetPort: 'in-1' }),
+    });
+
+    const reconnect = adapter.execute({
+      type: 'reconnectEdge',
+      edgeId: 'edge-1',
+      source: 'start-1',
+      target: 'task-1',
+      sourcePort: 'out-2',
+      targetPort: 'in-2',
+    });
+
+    expect(reconnect).toMatchObject({
+      ok: true,
+      data: expect.objectContaining({ sourcePort: 'out-2', targetPort: 'in-2' }),
+    });
+  });
+
   it('marks unchanged viewport updates without creating a failure result', () => {
     const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig());
     const adapter = createDesignerCommandAdapter(core);

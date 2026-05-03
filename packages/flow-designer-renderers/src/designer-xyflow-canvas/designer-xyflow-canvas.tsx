@@ -54,7 +54,12 @@ export interface DesignerXyflowCanvasProps {
   onEdgeSelect(edgeId: string, event?: React.MouseEvent): void;
   onStartConnection(nodeId: string, event?: React.MouseEvent): void;
   onCancelConnection(nodeId: string, event?: React.MouseEvent): void;
-  onCompleteConnection(nodeId: string, event?: React.MouseEvent): void;
+  onCompleteConnection(
+    nodeId: string,
+    event?: React.MouseEvent,
+    sourcePort?: string,
+    targetPort?: string,
+  ): void;
   onStartReconnect(edgeId: string, event?: React.MouseEvent): void;
   onCancelReconnect(edgeId: string, event?: React.MouseEvent): void;
   onCompleteReconnect(
@@ -62,6 +67,8 @@ export interface DesignerXyflowCanvasProps {
     sourceId: string,
     targetId: string,
     event?: React.MouseEvent,
+    sourcePort?: string,
+    targetPort?: string,
   ): void;
   onDuplicateNode(nodeId: string, event?: React.MouseEvent): void;
   onDeleteNode(nodeId: string, event?: React.MouseEvent): void;
@@ -382,7 +389,12 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     }
 
     props.onStartConnection(connection.source, undefined);
-    props.onCompleteConnection(connection.target, undefined);
+    props.onCompleteConnection(
+      connection.target,
+      undefined,
+      connection.sourceHandle ?? undefined,
+      connection.targetHandle ?? undefined,
+    );
   }
 
   const handleReconnect = useCallback<NonNullable<OnReconnect>>(
@@ -397,7 +409,14 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
       }
 
       onStartReconnect(oldEdge.id, undefined);
-      onCompleteReconnect(oldEdge.id, newConnection.source, newConnection.target, undefined);
+      onCompleteReconnect(
+        oldEdge.id,
+        newConnection.source,
+        newConnection.target,
+        undefined,
+        newConnection.sourceHandle ?? undefined,
+        newConnection.targetHandle ?? undefined,
+      );
     },
     [onStartReconnect, onCompleteReconnect],
   );

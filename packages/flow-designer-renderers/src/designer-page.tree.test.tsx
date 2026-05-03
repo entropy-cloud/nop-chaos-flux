@@ -10,8 +10,9 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { render, waitFor, within } from '@testing-library/react';
 
-const { layoutTreeWithElkMock } = vi.hoisted(() => ({
+const { layoutTreeWithElkMock, createDesignerCoreMock } = vi.hoisted(() => ({
   layoutTreeWithElkMock: vi.fn(async (nodes: unknown[]) => nodes),
+  createDesignerCoreMock: vi.fn(),
 }));
 
 vi.mock('@nop-chaos/flow-designer-core', async () => {
@@ -21,6 +22,9 @@ vi.mock('@nop-chaos/flow-designer-core', async () => {
   return {
     ...actual,
     layoutTreeWithElk: layoutTreeWithElkMock,
+    createDesignerCore: createDesignerCoreMock.mockImplementation((...args) =>
+      actual.createDesignerCore(...args),
+    ),
   };
 });
 
@@ -51,6 +55,7 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
 
 beforeEach(async () => {
   layoutTreeWithElkMock.mockClear();
+  createDesignerCoreMock.mockClear();
   resetFluxI18n();
   initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
   await changeLanguage('en-US');
@@ -500,5 +505,88 @@ describe('DesignerPageRenderer tree mode', () => {
     ).toBe(false);
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it('does not recreate core when treeDocument changes in tree mode', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...flowDesignerRendererDefinitions,
+    ]);
+    const config = createTreeTestConfig();
+
+    const initialTreeDocument = {
+      id: 'tree-selection',
+      kind: 'test-tree',
+      name: 'Selection Continuity Tree',
+      version: '1.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'task-1',
+          type: 'task',
+          data: { label: 'Task 1' },
+        },
+      },
+    };
+
+    const { container, rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-selection-continuity"
+        schema={
+          {
+            type: 'designer-page',
+            treeDocument: initialTreeDocument,
+            config,
+          }
+        }
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('.react-flow__node').length).toBeGreaterThan(0);
+    });
+
+    expect(createDesignerCoreMock).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-selection-continuity"
+        schema={
+          {
+            type: 'designer-page',
+            treeDocument: {
+              ...initialTreeDocument,
+              root: {
+                ...initialTreeDocument.root,
+                child: {
+                  id: 'task-1',
+                  type: 'task',
+                  data: { label: 'Task 1 updated' },
+                  child: {
+                    id: 'end-1',
+                    type: 'end',
+                    data: { label: 'End' },
+                  },
+                },
+              },
+            },
+            config,
+          }
+        }
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('.react-flow__node').length).toBeGreaterThan(0);
+    });
+
+    expect(createDesignerCoreMock).toHaveBeenCalledTimes(1);
   });
 });

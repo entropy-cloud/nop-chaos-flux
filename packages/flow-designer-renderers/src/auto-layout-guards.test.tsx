@@ -7,7 +7,11 @@ import { createFormulaCompiler } from '../../flux-formula/src/index';
 import { createSchemaRenderer } from '../../flux-react/src/index';
 import type { DesignerConfig, GraphDocument } from '../../flow-designer-core/src/index';
 
-let layoutResolvers: Array<(positions: Map<string, { x: number; y: number }>) => void> = [];
+const testState: {
+  layoutResolvers: Array<(positions: Map<string, { x: number; y: number }>) => void>;
+} = {
+  layoutResolvers: [],
+};
 
 vi.mock('@nop-chaos/flow-designer-core', async () => {
   const actual = await vi.importActual<typeof import('@nop-chaos/flow-designer-core')>(
@@ -19,7 +23,7 @@ vi.mock('@nop-chaos/flow-designer-core', async () => {
     layoutWithElk: vi.fn(
       () =>
         new Promise((resolve) => {
-          layoutResolvers.push(resolve);
+          testState.layoutResolvers.push(resolve);
         }),
     ),
   };
@@ -93,7 +97,7 @@ function renderDesignerPage(document: GraphDocument) {
 
 describe('DesignerPage auto layout guards', () => {
   beforeEach(() => {
-    layoutResolvers = [];
+    testState.layoutResolvers = [];
   });
 
   it('ignores stale auto-layout results after switching documents', async () => {
@@ -110,7 +114,7 @@ describe('DesignerPage auto layout guards', () => {
 
     fireEvent.click(canvas.getByRole('button', { name: 'Auto layout' }));
     await waitFor(() => {
-      expect(layoutResolvers).toHaveLength(1);
+      expect(testState.layoutResolvers).toHaveLength(1);
     });
 
     view.rerender(
@@ -137,7 +141,7 @@ describe('DesignerPage auto layout guards', () => {
       />,
     );
 
-    layoutResolvers[0]?.(new Map([['node-1', { x: 100, y: 100 }]]));
+    testState.layoutResolvers[0]?.(new Map([['node-1', { x: 100, y: 100 }]]));
     await Promise.resolve();
 
     await waitFor(() => {
@@ -158,11 +162,11 @@ describe('DesignerPage auto layout guards', () => {
 
     fireEvent.click(within(view.container).getByRole('button', { name: 'Auto layout' }));
     await waitFor(() => {
-      expect(layoutResolvers).toHaveLength(1);
+      expect(testState.layoutResolvers).toHaveLength(1);
     });
 
     view.unmount();
-    layoutResolvers[0]?.(new Map([['node-1', { x: 100, y: 100 }]]));
+    testState.layoutResolvers[0]?.(new Map([['node-1', { x: 100, y: 100 }]]));
     await Promise.resolve();
 
     expect(true).toBe(true);
@@ -192,11 +196,11 @@ describe('DesignerPage auto layout guards', () => {
     fireEvent.click(within(second.container).getByRole('button', { name: 'Auto layout' }));
 
     await waitFor(() => {
-      expect(layoutResolvers).toHaveLength(2);
+      expect(testState.layoutResolvers).toHaveLength(2);
     });
 
     first.unmount();
-    layoutResolvers[1]?.(new Map([['node-2', { x: 200, y: 120 }]]));
+    testState.layoutResolvers[1]?.(new Map([['node-2', { x: 200, y: 120 }]]));
     await Promise.resolve();
 
     await waitFor(() => {
