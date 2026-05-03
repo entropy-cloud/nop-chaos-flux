@@ -1035,12 +1035,13 @@ Remaining compatibility-oriented gaps:
 - dependency invalidation is already root-normalized, but runtime fallback still exists when `dependsOn` is absent
 - richer debugger integration and advanced loop-depth diagnostics for `reaction` are still incomplete beyond the current debug snapshot plus bounded-fire safety rail
 
-## ActionSchema.dataPath
+## Action Write Targeting Boundary
 
-- `ActionSchema.dataPath` controls where an ajax action result is written in page data
+- Action write targeting now uses the write-action DTOs under `args.path` (`setValue`) and `args.path + args.values` (`setValues`)
 - This is distinct from DataSource `name`, which is the publication identity for scope binding
+- Legacy `DataSourceSchema.dataPath` compatibility wording is a separate source-publication concern and is not part of the current action contract
 
-`ApiSchema` remains request description only. The write target belongs to the consumer context: action result target or source binding target.
+`ApiSchema` remains request description only. If an ajax result should be published into scope state, do that through an explicit follow-up action such as `setValue` or `setValues` rather than an ajax-local top-level write-target field.
 
 ## Related Documents
 

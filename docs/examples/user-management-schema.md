@@ -9,7 +9,7 @@ This example is intentionally small but complete.
 - submit buttons stay thin and trigger `component:submit`
 - inside a form subtree, pending UI reads the readonly `$form` binding
 - `closeDialog` uses the default nearest-dialog behavior
-- page data updates rely on current `ajax` plus `dataPath` semantics instead of outdated `setValue` assumptions (note: `dataPath` here is `ActionSchema.dataPath` for ajax action result targeting, not `DataSourceSchema.dataPath` for Resource publication)
+- page data updates rely on current `ajax` plus explicit follow-up write actions instead of outdated top-level write-field assumptions
 
 Covered capabilities:
 
@@ -19,7 +19,7 @@ Covered capabilities:
 - search form
 - `ajax`
 - `requestAdaptor` and `responseAdaptor`
-- `dataPath` (ajax action result targeting)
+- `setValues.args.path`
 - `openDialog`
 - form-owned `submitAction`
 - `component:submit`
@@ -57,8 +57,17 @@ Covered capabilities:
               "url": "/api/users/search",
               "requestAdaptor": "return {data: {keyword: scope.keyword, page: scope.page, perPage: scope.perPage}};",
               "responseAdaptor": "return {items: payload.items, total: payload.total};"
-            },
-            "dataPath": "searchResult"
+            }
+          },
+          "onSubmitSuccess": {
+            "action": "setValues",
+            "args": {
+              "path": "searchResult",
+              "values": {
+                "items": "${result.data.items}",
+                "total": "${result.data.total}"
+              }
+            }
           },
           "body": [
             {
@@ -254,5 +263,5 @@ Covered capabilities:
 - Submit buttons are intentionally thin: validation, request dispatch, and success follow-up all belong to the owning `form` node through `submitAction` and `onSubmitSuccess`.
 - Inside a form subtree, pending UI reads `${$form.submitting}`. Outside the form subtree, the same readonly status summary can be read through `statusPath`.
 - Form `id` and `name` are for component targeting and diagnostics. They are not implicit data-binding paths.
-- The search flow uses one semantic form submit backed by one `ajax` action with `dataPath` to update page data. Note: this `dataPath` is `ActionSchema.dataPath` for action result targeting, not the `DataSourceSchema` publication path (which should use `name` per the normative Resource publication contract in `docs/architecture/frontend-programming-model.md`).
+- The search flow uses one semantic form submit backed by one `ajax` action, then a follow-up `setValues` write through `args.path` to publish the returned list data into page state.
 - If schema semantics change, update `docs/architecture/flux-core.md` first, then update this example.

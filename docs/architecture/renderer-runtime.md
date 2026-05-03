@@ -529,7 +529,7 @@ function useCurrentFormError(query: FormErrorQuery): ValidationError | undefined
 function useCurrentFormState<T>(
   selector: (state: FormStoreState) => T,
   equalityFn?: (a: T, b: T) => boolean,
-  options?: { enabled?: boolean; path?: string },
+  options?: { enabled?: boolean; path?: string; paths?: readonly string[] },
 ): T;
 function useCurrentFormFieldState(path: string, query?: FormErrorQuery): FormFieldStateSnapshot;
 function useValidationNodeState(path: string): FormFieldStateSnapshot;

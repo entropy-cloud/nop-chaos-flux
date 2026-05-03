@@ -33,7 +33,6 @@
 - `formId`
 - `dialogId`
 - `surfaceId`
-- `dataPath`
 
 ### Control-Flow And Execution-Control Fields
 
@@ -54,7 +53,7 @@
 | --------------- | ------------------------- | ------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `showToast`     | `args`                    | none                                                                            | canonical    | 推荐写 `args`                                                                                                                                                                                                              |
 | `navigate`      | `args`                    | none                                                                            | canonical    | 推荐写 `args`                                                                                                                                                                                                              |
-| `ajax`          | `args`                    | `dataPath` optional                                                             | canonical    | `args` 必须是 `ApiSchema`；`dataPath` 属于 targeting                                                                                                                                                                       |
+| `ajax`          | `args`                    | none                                                                            | canonical    | `args` 必须是 `ApiSchema`；ajax action 自身不再声明独立 `dataPath` targeting 字段                                                                                                                                          |
 | `submitForm`    | none                      | implicit `ctx.form`; `formId` resolves through component registry when provided | no payload   | Dispatcher and runtime share the same baseline: when `formId` is provided, the action targets that form even without a local `ctx.form`. When not provided, it uses `ctx.form`. Failure to resolve returns explicit error. |
 | `openDialog`    | `args`                    | implicit `ctx.surfaceRuntime`                                                   | canonical    | `args` 承载 dialog surface payload                                                                                                                                                                                         |
 | `openDrawer`    | `args`                    | none                                                                            | canonical    | `args` 承载 drawer surface payload                                                                                                                                                                                         |
@@ -147,7 +146,6 @@
 | `formId`            | 目标表单 id                    | **stable** — 保留独立字段                    |
 | `dialogId`          | 目标 dialog id (close 操作)    | **stable** — 保留独立字段                    |
 | `surfaceId`         | 目标 surface id (close 操作)   | **stable** — 保留独立字段                    |
-| `dataPath`          | 响应写回目标路径               | **stable** — 保留独立字段                    |
 
 ### Control-Flow And Execution-Control Fields
 
@@ -223,7 +221,7 @@
 - `setValue` 适合表达为 `args: { path?, value }`
 - `setValues` 适合表达为 `args: { path?, values }`
 - 这样 payload 仍然统一为 `args`，同时保留 write action 的窄语义
-- `path` 比 `dataPath` 更贴近现有 scope/path 术语，也避免与 ajax response `dataPath` 混淆
+- `path` 比旧的 `dataPath` 命名更贴近现有 scope/path 术语，也避免与 `DataSourceSchema` legacy `dataPath` compatibility wording 混淆
 
 **Status**: `args` 为唯一 payload baseline
 

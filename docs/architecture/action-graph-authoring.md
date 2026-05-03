@@ -70,8 +70,10 @@
 {
   "action": "setValue",
   "when": "${shouldWrite}",
-  "dataPath": "filters.keyword",
-  "value": "${keyword}"
+  "args": {
+    "path": "filters.keyword",
+    "value": "${keyword}"
+  }
 }
 ```
 

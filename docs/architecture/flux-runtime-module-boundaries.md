@@ -390,9 +390,9 @@ If a helper can be reused without knowledge of compiled regions or deep schema t
 
 Shared field chrome lives in `packages/flux-renderers-form/src/renderers/shared/`.
 
-`resolveGap` has been moved from `flux-renderers-basic` to `flux-react` (at `flux-react/src/resolve-gap.ts`).
+`resolveGap` is part of the shared renderer/runtime surface through `@nop-chaos/flux-react`, while `flux-renderers-basic` still keeps its own local utility copy for package-internal layout renderers.
 
-`crud-renderer.tsx` now imports `createReadonlyScopeBinding` from `@nop-chaos/flux-react` instead of `@nop-chaos/flux-renderers-basic`.
+`crud-renderer.tsx` now imports `createReadonlyScopeBinding` from `@nop-chaos/flux-react/unstable`; the implementation owner remains `@nop-chaos/flux-runtime` and is also still exported from `@nop-chaos/flux-runtime` root.
 
 `schema-compiler-registry.test.ts` no longer imports `@nop-chaos/flux-renderers-data`.
 
@@ -439,7 +439,9 @@ Current unstable-only examples:
 
 - `RenderNodes`
 - raw context exports such as `FormContext` / `ScopeContext` / `RuntimeContext`
-- internal helper surfaces such as `createHelpers`, `mergeActionContext`, `publishOwnerStatus`, `createProjectedScopeStore`, and `createReadonlyScopeBinding`
+- internal helper surfaces such as `createHelpers`, `mergeActionContext`, `publishOwnerStatus`, and `createProjectedScopeStore`
+
+`createReadonlyScopeBinding` remains runtime-owned (`packages/flux-runtime/src/status-owner.ts`) and is currently reachable both from `@nop-chaos/flux-runtime` root and the convenience re-export at `@nop-chaos/flux-react/unstable`; treat the unstable path as a renderer-facing convenience surface rather than proof that ownership moved into `flux-react`.
 
 The same rule now applies to `@nop-chaos/flow-designer-renderers`: the root entry keeps the stable schema/manifest registration surface, while Xyflow bridge primitives, palette/canvas internals, and designer context helpers move behind `@nop-chaos/flow-designer-renderers/unstable`.
 

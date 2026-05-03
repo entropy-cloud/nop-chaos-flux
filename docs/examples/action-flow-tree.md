@@ -72,7 +72,7 @@ Action flow：
         "label": "预检查",
         "action": "setValue",
         "args": {
-          "dataPath": "checked",
+          "path": "checked",
           "value": true
         },
         "when": "${userId != null}"

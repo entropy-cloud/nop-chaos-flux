@@ -132,13 +132,13 @@ interface CompiledActionNode {
 
 ### Field Categories
 
-| Category                                                          | Compiled Form                                   | Rationale                                                                             |
-| ----------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `when`                                                            | `CompiledRuntimeValue<boolean>`                 | Expression evaluated at dispatch time                                                 |
-| `args`                                                            | `CompiledRuntimeValue<Record<string, unknown>>` | Payload is authored through one explicit carrier and may contain dynamic values       |
-| `targetId`, `componentId`, `formId`, `dialogId`, `dataPath`, etc. | Original values (uncompiled)                    | Targeting and publication fields are structural selectors, not runtime value payloads |
-| `timeout`, `retry`, `debounce`, `continueOnError`, `control`      | Original values (uncompiled)                    | Static execution control config                                                       |
-| `then`, `onError`, `onSettled`, `parallel`                        | `CompiledActionNode[]`                          | Recursive branch compilation                                                          |
+| Category                                                           | Compiled Form                                   | Rationale                                                                       |
+| ------------------------------------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| `when`                                                             | `CompiledRuntimeValue<boolean>`                 | Expression evaluated at dispatch time                                           |
+| `args`                                                             | `CompiledRuntimeValue<Record<string, unknown>>` | Payload is authored through one explicit carrier and may contain dynamic values |
+| `targetId`, `componentId`, `formId`, `dialogId`, `surfaceId`, etc. | Original values (uncompiled)                    | Targeting fields are structural selectors, not runtime value payloads           |
+| `timeout`, `retry`, `debounce`, `continueOnError`, `control`       | Original values (uncompiled)                    | Static execution control config                                                 |
+| `then`, `onError`, `onSettled`, `parallel`                         | `CompiledActionNode[]`                          | Recursive branch compilation                                                    |
 
 ### Compiler Lowering Rules
 
@@ -185,7 +185,7 @@ Reasons for this choice:
 
 1. `setValue` and `setValues` share the same mental model: optional base path plus write payload
 2. `path` is shorter and matches the existing runtime vocabulary used by scope reads, writes, validation, and dependency tracking
-3. `dataPath` is reserved for other semantics such as API response publication, so reusing it here would blur two different concepts
+3. the older `dataPath` name would blur write-path semantics with other legacy publication terminology, so `path` stays the canonical write DTO field
 4. `setValues.args.path` allows concise subtree patching without forcing every patch key to repeat the same prefix
 
 ### Static Optimization Hint
