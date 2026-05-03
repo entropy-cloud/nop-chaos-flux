@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "turbo run dev --filter=@nop-chaos/flux-playground",
     "postinstall": "node scripts/patch-lucide-react.mjs",
-    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:i18n-keys && pnpm check:audit-suspects",
+    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:audit-suspects",
     "analyze": "turbo run analyze --filter=@nop-chaos/flux-playground",
     "audit:deps": "depcruise --config .dependency-cruiser.cjs apps packages scripts",
     "audit:knip": "knip --config knip.json",
@@ -24,6 +24,7 @@
     "check:oversized-code-files": "node scripts/check-oversized-code-files.mjs",
     "check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs",
     "check:i18n-keys": "node scripts/check-i18n-keys.mjs",
+    "check:workspace-manifest-deps": "node scripts/check-workspace-manifest-deps.mjs",
     "check:audit-suspects": "node scripts/audit/discover-audit-suspects.mjs",
     "check:audit-reactive-render-reads": "node scripts/audit/find-reactive-render-reads.mjs",
     "check:audit-async-failure-paths": "node scripts/audit/find-async-without-failure-path.mjs",
