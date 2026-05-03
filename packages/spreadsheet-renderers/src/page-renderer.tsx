@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
+import React, { useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
 import type {
   ActionNamespaceProvider,
   ActionResult,
@@ -10,9 +10,9 @@ import {
   resolveRendererSlotContent,
   useCurrentActionScope,
   useHostScope,
+  useStatusPathPublication,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import {
   createSpreadsheetCore,
   type SpreadsheetConfig,
@@ -156,12 +156,10 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   const statusPath =
     typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
 
-  useEffect(() => {
-    if (!statusPath) {
-      return;
-    }
-
-    const summary: SpreadsheetHostStatusSummary = {
+  useStatusPathPublication<SpreadsheetHostStatusSummary>(
+    props.node.scope.parent ?? props.node.scope,
+    statusPath,
+    {
       kind: 'spreadsheet',
       dirty: spreadsheet.runtime.dirty,
       busy: false,
@@ -170,9 +168,8 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
       readonly: spreadsheet.runtime.readonly,
       activeSheetId: spreadsheet.activeSheet?.id,
       selectionKind: snapshot.selection.kind,
-    };
-    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
-  }, [props.node.scope, snapshot.selection.kind, spreadsheet, statusPath]);
+    },
+  );
 
   return (
     <section

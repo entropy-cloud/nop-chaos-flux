@@ -252,4 +252,40 @@ describe('spreadsheet-page schema integration', () => {
     expect(document.querySelector('[data-slot="spreadsheet-page-header"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="spreadsheet-page-body"]')).toBeTruthy();
   });
+
+  it('clears spreadsheet host status on unmount', async () => {
+    const sheetDocument = createEmptyDocument('status-spreadsheet-unmount');
+    const schema = defineSpreadsheetPageSchema({
+      type: 'spreadsheet-page',
+      document: sheetDocument,
+      statusPath: 'spreadsheetStatus',
+    });
+
+    const statusProbeRenderer: RendererDefinition = {
+      type: 'spreadsheet-status-probe',
+      component: SpreadsheetStatusProbe,
+    };
+
+    const registry = createDefaultRegistry([pageRenderer, statusProbeRenderer]);
+    registerSpreadsheetRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://spreadsheet/renderers-integration-unmount"
+        schema={{ type: 'page', body: [schema, { type: 'spreadsheet-status-probe' }] } as any}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('spreadsheet-status').textContent).toContain('spreadsheet:false');
+    });
+
+    view.unmount();
+    expect(screen.queryByTestId('spreadsheet-status')).toBeNull();
+  });
 });
