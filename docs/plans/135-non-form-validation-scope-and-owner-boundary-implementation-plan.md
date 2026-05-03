@@ -174,21 +174,21 @@ Targets: focused tests, `docs/architecture/form-validation.md`, `docs/architectu
 
 Exit Criteria:
 
-- [ ] Focused tests cover the new runtime path and fail without the feature.
-- [ ] Documentation matches live behavior for form and non-form owners.
-- [ ] Closure evidence records an independent audit that checks live behavior rather than interface presence alone.
+- [x] Focused tests cover the new runtime path and fail without the feature.
+- [x] Documentation matches live behavior for form and non-form owners.
+- [x] Closure evidence records an independent audit that checks live behavior rather than interface presence alone.
 
 ## Validation Checklist
 
-- [ ] `ValidationScopeRuntime` has a reusable concrete implementation path independent of full `FormRuntime` semantics.
+- [x] `ValidationScopeRuntime` has a reusable concrete implementation path independent of full `FormRuntime` semantics.
 - [x] Inputs outside `<form>` validate when a nearest validation owner exists.
 - [x] Page/root fallback ownership is explicit and tested, not accidental.
 - [x] Page-owned root is implemented and documented as the first concrete non-form owner family in this plan.
 - [x] Existing `FormRuntime` submit/touch semantics remain intact.
 - [x] React/provider/hook wiring supports nearest-owner field-state subscription without forcing consumers onto `FormRuntime.store`.
-- [ ] Unsupported owner families such as row-local staged editors remain explicitly out of scope and do not receive accidental partial semantics.
-- [ ] Unclassified boundaries still do not create owners.
-- [ ] Embedded `SchemaRenderer` trees with `parentScope` remain parent-owned unless a later successor plan explicitly widens support.
+- [x] Unsupported owner families such as row-local staged editors remain explicitly out of scope and do not receive accidental partial semantics.
+- [x] Unclassified boundaries still do not create owners.
+- [x] Embedded `SchemaRenderer` trees with `parentScope` remain parent-owned unless a later successor plan explicitly widens support.
 - [x] Relevant architecture docs are updated to reflect the landed baseline.
 - [x] A representative example/schema for non-form validation owner behavior is updated.
 - [x] Focused verification is completed for runtime behavior and regression coverage.

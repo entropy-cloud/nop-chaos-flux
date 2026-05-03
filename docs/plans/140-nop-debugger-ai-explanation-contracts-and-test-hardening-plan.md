@@ -159,10 +159,10 @@ Exit Criteria:
 - [x] `pnpm --filter @nop-chaos/nop-debugger lint`
 - [x] `pnpm --filter @nop-chaos/nop-debugger test`
 - [x] `pnpm test:e2e`（targeted debugger explanation contract run）
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
 - [x] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 

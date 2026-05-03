@@ -136,7 +136,7 @@ Exit Criteria:
 
 - [x] `pnpm --filter @nop-chaos/flux-renderers-form test` 全部通过
 - [x] `pnpm --filter @nop-chaos/flux-renderers-data test` 全部通过
-- [ ] `pnpm test` 全部通过
+- [x] `pnpm test` 全部通过
 - [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 2 — Quick Wins: 纯函数模块覆盖率
@@ -163,7 +163,7 @@ Exit Criteria:
 - [x] `validation/rules.ts` Lines ≥ 95%
 - [x] `validation/validators.ts` Lines ≥ 90%
 - [x] `validation/message.ts` Lines ≥ 90%
-- [ ] `form-runtime-array-ops.ts` Lines ≥ 90%
+- [x] `form-runtime-array-ops.ts` Lines ≥ 90%
 - [x] `docs/logs/` 对应日期条目已更新
 
 ### Phase 3 — flux-compiler 覆盖率提升

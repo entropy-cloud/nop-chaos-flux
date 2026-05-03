@@ -113,8 +113,8 @@ Exit Criteria:
 - [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 

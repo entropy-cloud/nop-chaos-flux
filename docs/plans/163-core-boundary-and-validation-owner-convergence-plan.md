@@ -168,7 +168,7 @@ Exit Criteria:
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm test`
 
 ## Risks And Rollback
 

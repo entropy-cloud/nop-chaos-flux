@@ -103,10 +103,10 @@ Exit Criteria:
 - [x] `NodeRenderer` 不再承担与当前 boundary 模型无关的历史性隐式创建规则
 - [x] focused verification 已覆盖 imports、namespace dispatch、component-target dispatch、fragment rendering
 - [x] 独立子 agent / 独立审阅者 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 

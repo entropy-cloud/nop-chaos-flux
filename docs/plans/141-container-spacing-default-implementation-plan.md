@@ -155,7 +155,7 @@ Exit Criteria:
 - [x] Tailwind gap class from prop (in `@layer utilities`) overrides CSS default (in `@layer base`)
 - [x] `pnpm --filter @nop-chaos/flux-renderers-form typecheck` passes
 - [x] `pnpm --filter @nop-chaos/flux-renderers-form build` passes
-- [ ] `docs/architecture/container-spacing-design.md` updated with Form/FieldSet `gap` prop contract in the final design
+- [x] `docs/architecture/container-spacing-design.md` updated with Form/FieldSet `gap` prop contract in the final design
 - [x] `docs/logs/2026/04-25.md` updated with Phase 4 entry
 
 ### Phase 5 - Playground CSS Migration
@@ -171,9 +171,9 @@ Targets: `apps/playground/src/styles.css`, `docs/architecture/styling-system.md`
 Exit Criteria:
 
 - [x] No `.nop-field*` or `[data-slot="field-*"]` rules remain in `apps/playground/src/styles.css`
-- [ ] `pnpm dev` starts and playground renders with correct spacing
-- [ ] No visual regression in code-editor, report-designer, or other playground-specific UI
-- [ ] `docs/architecture/styling-system.md` updated: "No Default Layout Styles in Layout Renderers" rule changed to "No Hardcoded Layout Styles in Renderer Code" — defaults come from theme CSS in `@layer base`, not from renderer component code
+- [x] `pnpm dev` starts and playground renders with correct spacing
+- [x] No visual regression in code-editor, report-designer, or other playground-specific UI
+- [x] `docs/architecture/styling-system.md` updated: "No Default Layout Styles in Layout Renderers" rule changed to "No Hardcoded Layout Styles in Renderer Code" — defaults come from theme CSS in `@layer base`, not from renderer component code
 - [x] `docs/logs/2026/04-25.md` updated with Phase 5 entry
 
 ### Phase 6 - Visual Verification and Schema Alignment
@@ -189,17 +189,17 @@ Targets: `apps/playground/src/pages/fluxBasicPageSchema.json`, visual inspection
   - Container with semantic props (e.g., `direction: "column"` in fluxBasicPageSchema): gap from schema, not CSS default
   - FieldFrame: label-to-control gap, control-to-error gap
   - Tabs content: gap between tab panel children (if applicable)
-- [ ] Verify Tailwind utility overrides work: test `className: "gap-1"` on a form still overrides the CSS default
-- [ ] Verify `gap` prop on Form/FieldSet overrides CSS default
-- [ ] Check that the `fluxBasicPageSchema.json` Composite Validation Lab section (which uses `container` with `direction: "column"`) correctly gets the `data-flex` attribute and does not double-apply CSS defaults
+- [x] Verify Tailwind utility overrides work: test `className: "gap-1"` on a form still overrides the CSS default
+- [x] Verify `gap` prop on Form/FieldSet overrides CSS default
+- [x] Check that the `fluxBasicPageSchema.json` Composite Validation Lab section (which uses `container` with `direction: "column"`) correctly gets the `data-flex` attribute and does not double-apply CSS defaults
 
 Exit Criteria:
 
-- [ ] Flux-basic page renders with visually correct spacing
-- [ ] No overlapping or zero-gap elements
-- [ ] Manual Tailwind overrides still work
-- [ ] Component Lab pages unaffected
-- [ ] `docs/logs/2026/04-25.md` updated with final verification entry
+- [x] Flux-basic page renders with visually correct spacing
+- [x] No overlapping or zero-gap elements
+- [x] Manual Tailwind overrides still work
+- [x] Component Lab pages unaffected
+- [x] `docs/logs/2026/04-25.md` updated with final verification entry
 
 ## Validation Checklist
 
@@ -207,7 +207,7 @@ Exit Criteria:
 - [x] `pnpm build` passes (affected packages)
 - [x] `pnpm lint` passes (affected packages)
 - [x] `pnpm test` passes (affected packages — 2 pre-existing failures unrelated to this change)
-- [ ] Playground flux-basic page has correct spacing (visual check)
+- [x] Playground flux-basic page has correct spacing (visual check)
 - [x] No `.nop-field*` rules remain in playground `styles.css`
 - [x] `--space-*` tokens exist in `theme-tokens`
 - [x] `default-spacing.css` exists in `flux-react` with `@layer base`
@@ -220,7 +220,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: All 5 phases completed and verified. Independent closure audit passed with all 6 exit criteria confirmed against live repo state.
+Status Note: All 6 phases completed and verified. Independent closure audit passed with all 6 exit criteria confirmed against live repo state.
 
 Closure Audit Evidence:
 
@@ -240,4 +240,4 @@ Follow-up:
 
 Full design rationale, AMIS comparison, override mechanism, and container inventory are documented in:
 
-- `docs/architecture/container-spacing-design.md` (to be rewritten from Draft to final design doc upon completion)
+- `docs/architecture/container-spacing-design.md` (final implemented design baseline)
