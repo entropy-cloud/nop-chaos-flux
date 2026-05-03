@@ -25,6 +25,11 @@ export function DesignerXyflowNode(props: NodeProps) {
 
   const nodeRenderData = useMemo(
     () => ({
+      config:
+        typeof props.data === 'object' && props.data !== null
+          ? (((props.data as Record<string, unknown>).config as Record<string, unknown> | undefined) ??
+            (props.data as Record<string, unknown>))
+          : undefined,
       node: {
         id: props.id,
         type: data.typeId,
@@ -32,6 +37,7 @@ export function DesignerXyflowNode(props: NodeProps) {
         data: props.data,
       },
       data: props.data,
+      ...(typeof props.data === 'object' && props.data !== null ? (props.data as Record<string, unknown>) : {}),
     }),
     [props.id, props.data, data.typeId, data.label],
   );

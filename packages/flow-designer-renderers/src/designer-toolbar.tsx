@@ -39,7 +39,8 @@ function evalBooleanExpr(value: boolean | string | undefined, snapshot: Designer
 function evalTextTemplate(template: string | undefined, snapshot: DesignerSnapshot) {
   if (!template) return '';
 
-  const trimmed = template.trim();
+  const normalized = template.replace(/\{\{([^}]+)\}\}/g, '${$1}');
+  const trimmed = normalized.trim();
   if (trimmed.startsWith('${') && trimmed.endsWith('}')) {
     const expr = trimmed.slice(2, -1).trim();
     const ternaryMatch = expr.match(/^([A-Za-z0-9_.]+)\s*\?\s*'([^']*)'\s*:\s*'([^']*)'$/);
@@ -49,7 +50,7 @@ function evalTextTemplate(template: string | undefined, snapshot: DesignerSnapsh
     }
   }
 
-  return template.replace(/\$\{([^}]+)\}/g, (_full, exprSource: string) => {
+  return normalized.replace(/\$\{([^}]+)\}/g, (_full, exprSource: string) => {
     const expr = exprSource.trim();
     if (expr === 'doc.name') return snapshot.doc.name;
     if (expr === 'doc.nodes.length') return String(snapshot.doc.nodes.length);
