@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { RendererEnv } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RendererEnv } from '@nop-chaos/flux-core';
 import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 const expressionCompiler = createExpressionCompiler(createFormulaCompiler());

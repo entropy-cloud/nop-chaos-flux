@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ApiSchema, ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type ApiSchema, type ApiRequestContext, type RendererEnv } from '@nop-chaos/flux-core';
 import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createModuleCache, createRendererRegistry, createRendererRuntime } from '../index';
+import { createModuleCache, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 const expressionCompiler = createExpressionCompiler(createFormulaCompiler());

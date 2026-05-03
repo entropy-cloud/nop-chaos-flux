@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
+import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { flowDesignerRendererDefinitions } from './index';
 import { createTestConfig, createRendererEnv } from './test-support';
 

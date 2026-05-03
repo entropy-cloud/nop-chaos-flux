@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { setIn, type NodeRuntimeState, type RuntimeValueState } from '@nop-chaos/flux-core';
+import { createRendererRegistry, setIn, type NodeRuntimeState, type RuntimeValueState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 function createRuntimeStateFromTemplateNode(

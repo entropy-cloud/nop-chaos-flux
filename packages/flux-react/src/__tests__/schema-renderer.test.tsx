@@ -1,10 +1,11 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer';
-import { createRendererRegistry, createRendererRuntime } from '@nop-chaos/flux-runtime';
+import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { env, pageRenderer, textRenderer } from '../test-support-core';
 
 const openDialogButtonRenderer = {

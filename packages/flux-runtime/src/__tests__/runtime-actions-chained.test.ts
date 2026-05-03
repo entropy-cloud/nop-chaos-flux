@@ -5,8 +5,9 @@ import type {
   ApiRequestContext,
   RendererPlugin,
 } from '@nop-chaos/flux-core';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createActionScope, createRendererRegistry, createRendererRuntime } from '../index';
+import { createActionScope, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {

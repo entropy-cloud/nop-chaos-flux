@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ImportedLibraryModule, ScopeRef, SchemaCompiler, XuiImportSpec } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type ImportedLibraryModule, type ScopeRef, type SchemaCompiler, type XuiImportSpec } from '@nop-chaos/flux-core';
 import { createScopeRef } from '../scope';
 import { createProjectedScopeStore } from '../projected-scope-store';
-import { createModuleCache, createRendererRegistry, createRendererRuntime } from '../index';
+import { createModuleCache, createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createProjectedScopeStore', () => {

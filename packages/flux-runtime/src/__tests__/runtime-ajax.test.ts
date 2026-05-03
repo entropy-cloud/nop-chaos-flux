@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { ApiSchema } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type ApiSchema } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
 
 describe('createRendererRuntime', () => {

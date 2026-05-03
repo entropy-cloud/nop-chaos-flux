@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createRendererRegistry, type RendererEnv } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRegistry, createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';
-import type { RendererEnv } from '@nop-chaos/flux-core';
 
 function createEnvWithNavigate(navigate: RendererEnv['navigate']): RendererEnv {
   return { ...env, navigate };

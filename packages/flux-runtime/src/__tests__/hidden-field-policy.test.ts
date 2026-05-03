@@ -2,10 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CompiledFormValidationModel, CompiledValidationNode } from '@nop-chaos/flux-core';
 import {
   buildCompiledFormValidationModel,
+  createRendererRegistry,
   getCompiledValidationField,
   resolveHiddenFieldPolicy,
 } from '@nop-chaos/flux-core';
-import { createRendererRegistry, createRendererRuntime } from '../index';
+import { createRendererRuntime } from '../index';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createManagedFormRuntime } from '../form-runtime';
 import { createScopeRef, createScopeStore } from '../scope';
