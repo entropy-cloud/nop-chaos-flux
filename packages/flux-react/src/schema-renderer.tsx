@@ -41,6 +41,8 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const onActionScopeChange = props.onActionScopeChange;
     const envRef = useRef(props.env);
     envRef.current = props.env;
+    const mountedRef = useRef(false);
+    const activeRuntimeRef = useRef<import('@nop-chaos/flux-core').RendererRuntime | null>(null);
     const onActionErrorRef = useRef(props.onActionError);
     onActionErrorRef.current = props.onActionError;
     const runtime = useMemo(() => {
@@ -105,8 +107,18 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     }, [page, props.env, runtime]);
 
     useEffect(() => {
+      mountedRef.current = true;
+      activeRuntimeRef.current = runtime;
+
       return () => {
-        runtime.dispose();
+        mountedRef.current = false;
+        const disposedRuntime = runtime;
+
+        queueMicrotask(() => {
+          if (!mountedRef.current || activeRuntimeRef.current !== disposedRuntime) {
+            disposedRuntime.dispose();
+          }
+        });
       };
     }, [runtime]);
 
