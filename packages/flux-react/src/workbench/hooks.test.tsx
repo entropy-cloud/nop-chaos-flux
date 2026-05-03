@@ -13,8 +13,12 @@ const env = {
   notify: () => undefined,
 };
 
+const testState: { capturedScope: ScopeRef | undefined } = {
+  capturedScope: undefined,
+};
+
 afterEach(() => {
-  capturedScope = undefined;
+  testState.capturedScope = undefined;
   cleanup();
 });
 
@@ -34,8 +38,6 @@ function HostScopeProbe(props: {
   return <ScopeCapture scope={scope} onCapture={props.onCapture} />;
 }
 
-let capturedScope: ScopeRef | undefined;
-
 function renderProbe(scopeData: Record<string, unknown>) {
   const runtime = createRendererRuntime({
     registry: createRendererRegistry([]),
@@ -50,7 +52,7 @@ function renderProbe(scopeData: Record<string, unknown>) {
         <HostScopeProbe
           scopeData={scopeData}
           onCapture={(scope) => {
-            capturedScope = scope;
+            testState.capturedScope = scope;
           }}
         />
       </ScopeContext.Provider>
@@ -71,7 +73,7 @@ describe('useHostScope', () => {
       stale: 'remove-me',
     });
 
-    expect(capturedScope?.readOwn()).toEqual({
+    expect(testState.capturedScope?.readOwn()).toEqual({
       host: { status: 'ready' },
       stale: 'remove-me',
     });
@@ -81,18 +83,18 @@ describe('useHostScope', () => {
         <ScopeContext.Provider value={view.page.scope}>
           <HostScopeProbe
             scopeData={{ host: { status: 'updated' } }}
-            onCapture={(scope) => {
-              capturedScope = scope;
+              onCapture={(scope) => {
+              testState.capturedScope = scope;
             }}
           />
         </ScopeContext.Provider>
       </RuntimeContext.Provider>,
     );
 
-    expect(capturedScope?.readOwn()).toEqual({
+    expect(testState.capturedScope?.readOwn()).toEqual({
       host: { status: 'updated' },
     });
-    expect(JSON.stringify(capturedScope?.materializeVisible())).not.toContain('remove-me');
+    expect(JSON.stringify(testState.capturedScope?.materializeVisible())).not.toContain('remove-me');
   });
 
   it('rejects writes to projected host fields', () => {
@@ -100,7 +102,7 @@ describe('useHostScope', () => {
       host: { status: 'ready' },
     });
 
-    expect(() => capturedScope?.update('host.status', 'mutated')).toThrow(
+    expect(() => testState.capturedScope?.update('host.status', 'mutated')).toThrow(
       'Cannot write projected host field: host.status',
     );
   });
@@ -110,9 +112,9 @@ describe('useHostScope', () => {
       host: { status: 'ready' },
     });
 
-    capturedScope?.update('local.note', 'ok');
+    testState.capturedScope?.update('local.note', 'ok');
 
-    expect(capturedScope?.materializeVisible()).toMatchObject({
+    expect(testState.capturedScope?.materializeVisible()).toMatchObject({
       pageValue: 'root',
       host: { status: 'ready' },
       local: { note: 'ok' },

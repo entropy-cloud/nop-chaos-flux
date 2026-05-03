@@ -84,6 +84,7 @@ export {
   resolveContainerElement,
 } from './container-hooks';
 export { useSourceValue } from './use-source-value';
+export { useStatusPathPublication } from './status-path';
 export type { SourceTransientState } from './use-node-source-props';
 export type { WorkbenchShellProps } from './workbench';
 

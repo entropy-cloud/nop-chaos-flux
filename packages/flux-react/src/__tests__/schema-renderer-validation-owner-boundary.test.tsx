@@ -16,8 +16,13 @@ const validationOwnerProbeRenderer = {
   },
 };
 
-let firstPublishedScopeState: ScopeValidationStateSnapshot | undefined;
-let latestValidationOwner: ValidationScopeRuntime | undefined;
+const testState: {
+  firstPublishedScopeState: ScopeValidationStateSnapshot | undefined;
+  latestValidationOwner: ValidationScopeRuntime | undefined;
+} = {
+  firstPublishedScopeState: undefined,
+  latestValidationOwner: undefined,
+};
 
 const validationOwnerStateProbeRenderer: RendererDefinition = {
   type: 'validation-owner-state-probe',
@@ -25,8 +30,8 @@ const validationOwnerStateProbeRenderer: RendererDefinition = {
     const validationOwner = useCurrentValidationScope();
 
     if (validationOwner) {
-      latestValidationOwner = validationOwner;
-      firstPublishedScopeState ??= validationOwner.getScopeState();
+      testState.latestValidationOwner = validationOwner;
+      testState.firstPublishedScopeState ??= validationOwner.getScopeState();
     }
 
     return <span data-testid="validation-owner-state-probe">probe</span>;
@@ -63,8 +68,8 @@ const embeddedParentScope = {
 
 describe('createSchemaRenderer validation owner boundary behavior', () => {
   it('only exposes page fallback validation owner for page-owned root renders', () => {
-    firstPublishedScopeState = undefined;
-    latestValidationOwner = undefined;
+    testState.firstPublishedScopeState = undefined;
+    testState.latestValidationOwner = undefined;
 
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
@@ -89,7 +94,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     );
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
-    expect(firstPublishedScopeState).toMatchObject({
+    expect(testState.firstPublishedScopeState).toMatchObject({
       lifecycleState: 'bootstrapping',
       ready: false,
     });
@@ -114,8 +119,8 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
   });
 
   it('promotes the page-root owner from bootstrapping to active after the root validation plan attaches', async () => {
-    firstPublishedScopeState = undefined;
-    latestValidationOwner = undefined;
+    testState.firstPublishedScopeState = undefined;
+    testState.latestValidationOwner = undefined;
 
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
@@ -141,13 +146,13 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     );
 
     expect(screen.getByTestId('validation-owner-id').textContent).toBe('page-root-validation');
-    expect(firstPublishedScopeState).toMatchObject({
+    expect(testState.firstPublishedScopeState).toMatchObject({
       lifecycleState: 'bootstrapping',
       ready: false,
     });
 
     await waitFor(() => {
-      expect(latestValidationOwner?.getScopeState()).toMatchObject({
+      expect(testState.latestValidationOwner?.getScopeState()).toMatchObject({
         lifecycleState: 'active',
         ready: true,
       });

@@ -20,11 +20,15 @@ import {
   wrapProbeRenderer,
 } from '../test-support';
 
-let expressionCompiler: ReturnType<typeof createExpressionCompiler>;
+const testState: {
+  expressionCompiler: ReturnType<typeof createExpressionCompiler>;
+} = {
+  expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+};
 
 describe('createSchemaRenderer data sources and node identity', () => {
   beforeEach(() => {
-    expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+    testState.expressionCompiler = createExpressionCompiler(createFormulaCompiler());
   });
 
   it('reads published data-source status summaries through useDataSourceStatus', async () => {
@@ -71,7 +75,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
                 name: 'user',
                 statusPath: 'userStatus',
               },
-              expressionCompiler,
+                testState.expressionCompiler,
             ),
           });
 
@@ -167,7 +171,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
                 args: { url: '/api/user/1' },
                 name: 'user',
               },
-              expressionCompiler,
+              testState.expressionCompiler,
             ),
           });
 
