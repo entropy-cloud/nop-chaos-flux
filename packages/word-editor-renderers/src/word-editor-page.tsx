@@ -10,10 +10,10 @@ import {
   useCurrentActionScope,
   useHostScope,
   useNamespaceRegistration,
+  useStatusPathPublication,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import {
   CanvasEditorBridge,
   createDatasetStore,
@@ -317,12 +317,10 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
   const statusPath =
     typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
 
-  useEffect(() => {
-    if (!statusPath) {
-      return;
-    }
-
-    const summary: WordEditorHostStatusSummary = {
+  useStatusPathPublication<WordEditorHostStatusSummary>(
+    props.node.scope.parent ?? props.node.scope,
+    statusPath,
+    {
       kind: 'word-editor',
       dirty: editorRuntime.dirty,
       busy: false,
@@ -332,9 +330,8 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       datasetCount: datasets.length,
       chartCount: charts.length,
       codeCount: codes.length,
-    };
-    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
-  }, [charts.length, codes.length, datasets.length, editorRuntime, props.node.scope, statusPath]);
+    },
+  );
 
   const editingDataset = editingDatasetId
     ? datasets.find((ds) => ds.id === editingDatasetId)

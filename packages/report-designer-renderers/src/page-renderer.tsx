@@ -10,9 +10,9 @@ import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useCurrentActionScope,
+  useStatusPathPublication,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
-import { publishOwnerStatus } from '@nop-chaos/flux-react';
 import { createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
 import { createSpreadsheetBridge } from '@nop-chaos/spreadsheet-renderers';
 import type {
@@ -220,12 +220,10 @@ export function ReportDesignerPageRenderer(
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
 
-  useEffect(() => {
-    if (!statusPath) {
-      return;
-    }
-
-    const summary: ReportDesignerHostStatusSummary = {
+  useStatusPathPublication<ReportDesignerHostStatusSummary>(
+    props.node.scope.parent ?? props.node.scope,
+    statusPath,
+    {
       kind: 'report-designer',
       dirty: snapshot.dirty || spreadsheetSnapshot.dirty,
       busy: snapshot.preview.running,
@@ -234,9 +232,8 @@ export function ReportDesignerPageRenderer(
       previewRunning: snapshot.preview.running,
       selectionKind: snapshot.selectionTarget?.kind,
       fieldSourceCount: snapshot.fieldSources.length,
-    };
-    publishOwnerStatus(props.node.scope.parent ?? props.node.scope, statusPath, summary);
-  }, [props.node.scope, snapshot, spreadsheetSnapshot, statusPath]);
+    },
+  );
 
   const headerSlot = (
     <>

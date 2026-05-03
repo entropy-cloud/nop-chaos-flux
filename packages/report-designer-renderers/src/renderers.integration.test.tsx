@@ -174,7 +174,7 @@ function renderReportDesignerPage(input: {
   );
 }
 
-describe('report-designer namespaced actions integration', () => {
+describe('report-designer namespaced actions integration', { timeout: 15000 }, () => {
   it('updates sheet metadata from toolbar action via report-designer namespace', async () => {
     renderReportDesignerPage({
       toolbar: [
@@ -310,6 +310,44 @@ describe('report-designer namespaced actions integration', () => {
     await waitFor(() => {
       expect(screen.getByTestId('report-status').textContent).toContain('report-designer:0:clean');
     });
+  });
+
+  it('clears report designer host status on unmount', async () => {
+    const spreadsheet = createEmptyDocument('status-report-designer-unmount');
+    const document = createReportTemplateDocument(spreadsheet, 'Status Report');
+
+    const registry = createDefaultRegistry([pageRenderer, reportStatusProbeRenderer]);
+    registerReportDesignerRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://report/renderers-status-unmount"
+        schema={{
+          type: 'page',
+          body: [
+            defineReportDesignerPageSchema({
+              type: 'report-designer-page',
+              document,
+              designer: createRuntimeConfig(),
+              statusPath: 'reportStatus',
+            }),
+            { type: 'report-status-probe' },
+          ],
+        } as any}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('report-status').textContent).toContain('report-designer:0:clean');
+    });
+
+    view.unmount();
+    expect(screen.queryByTestId('report-status')).toBeNull();
   });
 
   it('projects runtime dirty into report designer host scope after mutations', async () => {

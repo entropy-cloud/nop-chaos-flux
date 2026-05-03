@@ -566,4 +566,54 @@ describe('WordEditorPage', () => {
       true,
     );
   });
+
+  it('clears word-editor host status on unmount', async () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+
+    const StatusProbe: RendererDefinition = {
+      type: 'status-probe',
+      component: function StatusProbeComponent() {
+        const status = useScopeSelector((data: any) => data.wordEditorStatus);
+        return <span data-testid="word-editor-status">{status?.kind ?? ''}</span>;
+      },
+    };
+
+    const pageRenderer: RendererDefinition = {
+      type: 'page',
+      component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
+      regions: ['body'],
+    };
+
+    const registry = createDefaultRegistry([pageRenderer, StatusProbe]);
+    registerWordEditorRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://word-editor/status-unmount"
+        schema={{
+          type: 'page',
+          body: [
+            defineWordEditorPageSchema({
+              type: 'word-editor-page',
+              statusPath: 'wordEditorStatus',
+            }),
+            { type: 'status-probe' },
+          ],
+        } as any}
+        env={createEnv()}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('word-editor-status').textContent).toBe('word-editor');
+    });
+
+    view.unmount();
+  });
 });

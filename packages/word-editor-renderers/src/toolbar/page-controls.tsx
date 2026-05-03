@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { FileText, ZoomIn, ZoomOut, Maximize, LayoutGrid, Printer, Rows3 } from 'lucide-react';
-import type { CanvasEditorBridge, EditorStoreApi } from '@nop-chaos/word-editor-core';
+import type { CanvasEditorBridge, EditorStoreApi, PaperSettings } from '@nop-chaos/word-editor-core';
 import { PAPER_SIZE_PRESETS, PageMode, PaperDirection } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -23,6 +23,10 @@ interface PageControlsProps {
   store: EditorStoreApi;
 }
 
+function cloneMargins(settings: PaperSettings): [number, number, number, number] {
+  return [...settings.margins] as [number, number, number, number];
+}
+
 export function PageControls({ bridge, store }: PageControlsProps) {
   const scale = useSyncExternalStoreWithSelector(
     store.subscribe,
@@ -40,7 +44,9 @@ export function PageControls({ bridge, store }: PageControlsProps) {
 
   const [showMarginDialog, setShowMarginDialog] = useState(false);
   const [showWatermarkDialog, setShowWatermarkDialog] = useState(false);
-  const [margins, setMargins] = useState<[number, number, number, number]>([100, 120, 100, 120]);
+  const [margins, setMargins] = useState<[number, number, number, number]>(() =>
+    cloneMargins(paperSettings),
+  );
   const [watermarkText, setWatermarkText] = useState('');
 
   const handleZoomIn = () => bridge?.command?.executePageScaleAdd();
@@ -84,6 +90,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
   };
 
   const handleApplyMargins = () => {
+    store.setPaperSettings({ ...paperSettings, margins });
     bridge?.command?.executeSetPaperMargin(margins);
     setShowMarginDialog(false);
   };
@@ -135,7 +142,10 @@ export function PageControls({ bridge, store }: PageControlsProps) {
       />
       <ToolbarButton
         icon={LayoutGrid}
-        onClick={() => setShowMarginDialog(true)}
+        onClick={() => {
+          setMargins(cloneMargins(paperSettings));
+          setShowMarginDialog(true);
+        }}
         title="Set Margins"
       />
       <ToolbarSeparator />
