@@ -565,7 +565,7 @@ Current runtime baseline:
 - `when` now acts as a structured precondition; a false result returns a normal `ActionResult` with `skipped: true`
 - `parallel` now runs child actions with `Promise.allSettled`-style aggregate semantics and returns an aggregate `ActionResult` with `results` in stable input order
 - `retry` now supports a first-cut fixed-count/fixed-delay policy and returns `attempts` on the final `ActionResult`
-- `timeout` now returns a structured `ActionResult` with `timedOut: true`; request-style actions cooperate with abort signals, while non-cancellable actions only time out structurally and may still finish in the background
+- `timeout` now returns a structured `ActionResult` with `timedOut: true`; timeout control composes with the parent abort signal instead of replacing it, so upstream cancellation still reaches timed request-style and namespaced work while non-cancellable actions may still finish in the background after the timeout-classified result has been published
 - `then` is the success branch and `onError` is the failure branch for chained actions
 - `result`, `error`, and `prevResult` are now injected through transient action-evaluation bindings for chained branches rather than via ambient scope publication
 
@@ -653,7 +653,7 @@ Preferred targeting matrix:
 
 Compatibility carriers:
 
-- `formId` is a real targeting carrier for built-in form-targeting paths (`setValue`, `setValues`, `submitForm`). When `formId` is provided and resolves (through `ctx.form.id` match or component registry lookup), the action targets that form. When `formId` is provided but doesn't resolve, the action returns an explicit error instead of silently falling back. New schema should prefer `component:submit` targeting the concrete form instance for clarity, but `formId` remains a supported targeting mechanism.
+- `formId` is a real targeting carrier for built-in form-targeting paths (`setValue`, `setValues`, `submitForm`). For `submitForm`, dispatcher and runtime now share one baseline: when `formId` is provided and resolves (through `ctx.form.id` match or component registry lookup), the action targets that form even if the current action context has no local `ctx.form`. When `formId` is provided but doesn't resolve, the action returns an explicit error instead of silently falling back. New schema should prefer `component:submit` targeting the concrete form instance for clarity, but `formId` remains a supported targeting mechanism.
 - overloaded path-style targeting fields such as `componentPath` are not the preferred authoring baseline for new schema when stable instance targeting by `componentId` or `componentName` is available
 
 ## Action Scope Ownership

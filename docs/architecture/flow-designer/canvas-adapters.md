@@ -26,7 +26,12 @@ interface DesignerCanvasBridgeProps {
   onEdgeSelect(edgeId: string, event: React.MouseEvent): void;
   onStartConnection(nodeId: string, event: React.MouseEvent): void;
   onCancelConnection(nodeId: string, event: React.MouseEvent): void;
-  onCompleteConnection(nodeId: string, event: React.MouseEvent): void;
+  onCompleteConnection(
+    nodeId: string,
+    event: React.MouseEvent,
+    sourcePort?: string,
+    targetPort?: string,
+  ): void;
   onStartReconnect(edgeId: string, event: React.MouseEvent): void;
   onCancelReconnect(edgeId: string, event: React.MouseEvent): void;
   onCompleteReconnect(
@@ -34,6 +39,8 @@ interface DesignerCanvasBridgeProps {
     sourceId: string,
     targetId: string,
     event: React.MouseEvent,
+    sourcePort?: string,
+    targetPort?: string,
   ): void;
   onDuplicateNode(nodeId: string, event: React.MouseEvent): void;
   onDeleteNode(nodeId: string, event: React.MouseEvent): void;
@@ -112,7 +119,7 @@ Key mappings:
 
 The React Flow layer may keep UI-library-local transient state such as controlled viewport bookkeeping, but document updates still belong to the host command path.
 
-Reconnect completion must carry both the edge id and the source/target pair produced by the library callback, because reconnect gestures are allowed to move either side of the edge instead of assuming the original source is unchanged.
+Reconnect completion must carry both the edge id and the source/target pair produced by the library callback, plus the selected `sourcePort` / `targetPort` when present. Connect completion follows the same rule. The host command path preserves these port ids through `addEdge` / `reconnectEdge`, document persistence, and Xyflow render-back via `sourceHandle` / `targetHandle`.
 
 ## Testing Expectations
 
@@ -124,6 +131,7 @@ When changing React Flow bridge behavior, keep coverage in at least these places
 Minimum regression areas:
 
 - connect and reconnect success translation
+- port-aware connect and reconnect translation (`sourceHandle` / `targetHandle` round-trip)
 - warning visibility on semantic failures
 - failure-intent retention after rejected connect or reconnect commands
 - viewport normalization

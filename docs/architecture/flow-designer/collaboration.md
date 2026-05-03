@@ -113,7 +113,7 @@ Flow Designer 复用这层，而不是重新做一套页面状态机。
 
 `designer-page` 真正依赖的是通用 `NodeRenderer` 先给它搭好 runtime 边界，再在它自己的组件里创建 graph runtime。
 
-当前实现里，`DesignerPageRenderer` / `TreeModeLayoutWrapper` / `DesignerPageInner` 负责 page-shell 与 tree-document 装配，`DesignerPageBody` 负责 provider registration、region render、dialogs 和 shell 组合，auto-layout 与 keyboard shortcut 副作用则分别下沉到 `use-designer-auto-layout.ts` 与 `use-designer-shortcuts.ts`。
+当前实现里，`DesignerPageRenderer` / `TreeModeLayoutWrapper` / `DesignerPageInner` 负责 page-shell 与 tree-document 装配，`DesignerPageBody` 负责 provider registration、region render、dialogs 和 shell 组合，auto-layout 与 keyboard shortcut 副作用则分别下沉到 `use-designer-auto-layout.ts` 与 `use-designer-shortcuts.ts`。tree 模式下 `TreeModeLayoutWrapper` 只创建一次 `DesignerCore`，后续 tree 输入变化通过 `core.replaceDocument(...)` 同步投影结果，而不是重建 core。
 
 ### 调用链图: `designer-page` 首次挂载
 
@@ -296,7 +296,7 @@ xyflow only reflects snapshot and emits gestures
 canvas adapter gesture
   -> bridge callback
   -> DesignerCanvasContent host
-  -> dispatch addEdge / reconnectEdge command
+  -> dispatch addEdge / reconnectEdge command (with optional sourcePort / targetPort)
   -> command adapter validates and executes
   -> core mutates document and emits events
   -> snapshot subscription updates
@@ -319,7 +319,7 @@ flowchart LR
 ReactFlow onConnect(connection)
   -> DesignerXyflowCanvasBridge
   -> onStartConnection(sourceId)
-  -> onCompleteConnection(targetId)
+  -> onCompleteConnection(targetId, sourceHandle, targetHandle)
   -> DesignerCanvasContent dispatch({ type: 'addEdge' })
   -> DesignerCommandAdapter.execute(...)
   -> DesignerCore.addEdge(...)
@@ -344,6 +344,8 @@ ReactFlow onConnect(connection)
 - 用户可以直接换一个 target 重试或手动取消
 
 这条规则保证画布交互不会在失败后丢失上下文。
+
+当前 port-aware baseline 还要求：`designer-command-adapter`、`designer:*` action provider、manifest、canvas callbacks、core `GraphEdge` 持久化字段、以及 Xyflow `sourceHandle` / `targetHandle` 回渲染都使用同一组 `sourcePort` / `targetPort` 语义，避免 connect 成功后在 reconnect 或重新渲染时丢失端口身份。
 
 ## Inspector 协作链路
 

@@ -505,6 +505,7 @@ Rules:
 1. ordinary validation calls must not execute against a `null` model
 2. implementations may queue or await those calls until the owner becomes `active`
 3. once the owner is `disposed`, new validation calls must be rejected rather than queued forever
+4. current live `submit()` semantics are narrower: if the owner is still `bootstrapping` or `refreshing`, submit returns an explicit failure result instead of waiting, and it does so before mutating submit/touched state
 
 ### Field Registration During Transitional States
 

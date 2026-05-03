@@ -180,7 +180,9 @@ Rules:
 3. `compiledModel === null` is only valid while the owner is `bootstrapping`, `refreshing`, or `disposed`
 4. `compiledModel !== null` is required before ordinary validation work may execute
 5. `disposed` owners must reject new validation and registration requests
-6. owners in `bootstrapping` or `refreshing` may delay validation requests until the owner becomes `active`, but they must not execute validation against a `null` model
+6. owners in `bootstrapping` or `refreshing` may delay ordinary validation requests until the owner becomes `active`, but they must not execute validation against a `null` model
+7. ordinary validation requests in `bootstrapping` or `refreshing` currently wait for the owner to become `active`; they must not resolve immediately as an ordinary clean-success path that is indistinguishable from "no errors"
+8. `submit()` follows a different live baseline: if the owner is still `bootstrapping` or `refreshing`, it returns an explicit failure result before mutating touched or submitting state
 
 `compiledModel: null` therefore does not mean “registration-only validation mode”.
 
@@ -269,6 +271,12 @@ Rules:
 4. `submit` and `commit` bypass change-oriented debounce and run required async validation immediately
 5. a debounced async rule that is scheduled but not yet started still counts as owner-local pending validation work for `validating` and readiness purposes
 6. `blur` and `manual` validation use the debounce declared on the async rule unless a higher-priority owner policy explicitly supersedes that run
+
+Current live registration containment baseline:
+
+1. owner runtimes reject runtime field registrations whose root `path` falls outside the current owner subtree
+2. owner runtimes reject runtime field registrations whose `childPaths` fall outside the current owner subtree
+3. rejected registrations must not mutate owner-local participation maps before returning `accepted: false`
 
 ## What Counts As A Validation Scope
 
@@ -372,8 +380,9 @@ Examples:
 Current live nearest-owner summary:
 
 1. inline/object/array/variant editors stay in the parent owner via projected form proxies and owner-root path rebasing
-2. `detail-field` / `detail-view` are compiler-classified `create-owner` boundaries whose child owner is activated when the detail session opens
-3. the current supported owner-family set is still intentionally narrow: page-owned root, managed surface-root, ordinary `form`, and the detail child-owner path; broader non-form families remain out of scope
+2. projected child-editor validation metadata follows the same rebasing rule as value reads and writes, so relative child names continue to resolve field-level validation behavior against the projected owner-local subtree
+3. `detail-field` / `detail-view` are compiler-classified `create-owner` boundaries whose child owner is activated when the detail session opens
+4. the current supported owner-family set is still intentionally narrow: page-owned root, managed surface-root, ordinary `form`, and the detail child-owner path; broader non-form families remain out of scope
 
 Owner-boundary rules in the supported families are:
 
@@ -1029,6 +1038,7 @@ Rules:
 3. `recurse-submit` contracts: parent submit triggers child validation and waits for results; errors block submit
 4. `summary-gate` enforcement happens before `recurse-submit` validation, so a child that is still validating or not ready blocks submit regardless of mode
 5. inactive child contracts are ignored during submit
+6. these child-contract checks only run after the parent owner itself is `active`; if the parent is still `bootstrapping` or `refreshing`, submit returns the explicit parent-lifecycle failure result first
 
 Rules:
 

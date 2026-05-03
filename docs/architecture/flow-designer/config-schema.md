@@ -43,7 +43,7 @@ interface DesignerPageSchema {
 }
 ```
 
-当 `config.documentMode` 为 `'tree'` 时，应使用 `treeDocument` 字段而非 `document` 字段。
+当 `config.documentMode` 为 `'tree'` 时，应使用 `treeDocument` 字段而非 `document` 字段。运行时会先把它投影成 `GraphDocument`，然后用同一个 `DesignerCore` 通过 `replaceDocument(...)` 保持 tree 编辑前后的 `selection`、`history`、`snapshot` 连续性。
 
 ## 2. GraphDocument
 
@@ -85,6 +85,8 @@ interface GraphEdge {
   data: Record<string, unknown>;
 }
 ```
+
+`sourcePort` / `targetPort` 是当前 live baseline 的一部分：connect、reconnect、duplicate-edge 校验、`designer:addEdge` / `designer:reconnectEdge`、持久化文档、以及 Xyflow `sourceHandle` / `targetHandle` 回渲染都会保留这两个字段。
 
 ## 3. DesignerConfig
 

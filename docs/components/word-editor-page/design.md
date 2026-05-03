@@ -86,6 +86,7 @@ interface WordEditorPageSchema {
 
 - schema 片段通过宿主 scope 读取快照，并通过命名空间动作写操作。
 - `word-editor-page` 属于 `Domain Host Owner`：内部读面是 host projection，宿主外部若需要观测状态，应通过窄 `statusPath` 摘要。
+- 页边距对话框以 `editor-store.paperSettings` 为 owner truth：打开时从当前 paper settings hydrate，确认时同时回写 store 与 canvas bridge 的 `executeSetPaperMargin(...)` 路径。
 
 ### 7.1 Host Projection Contract
 

@@ -30,6 +30,7 @@ Current live implementation note:
 - 当前 live detail surface 只实现 `dialog` 和 `drawer`
 - `object-field` / `array-field` / `variant-field` 这类 inline projected editors 现在已经共享 projected scope/form substrate，而不是继续各自维护完全独立的 ScopeRef/FormRuntime proxy 模板
 - 其中 `object-field` 默认路径现在直接投影 parent owner 当前值；只有声明 `transformInAction` / `transformOutAction` 的场景才保留局部 working value，用于承载 adapted draft value 与 committed parent value 的差异
+- 这些 projected inline editors 现在也共享 owner-local validation-model projection，因此相对字段 authoring、值读写、字段级 required/behavior lookup 保持同一条 rebasing 语义
 
 ## Core Model
 

@@ -93,6 +93,7 @@ interface ObjectFieldSchema extends BaseSchema {
 - `object-field` 默认不创建新的独立 owner runtime
 - 当前 live implementation 会创建 projected `FormRuntime` / `ScopeRef` view，但这些 view 继续把 registration、validation、writeback 绑定到 parent owner
 - 默认未声明 transform actions 的场景下，这些 projected views 直接读取 parent owner 当前对象值，而不是额外维护独立 draft 副本
+- projected validation metadata 也会按同一 owner-root rebasing 规则映射，因此 `firstName` 这类相对字段名会继续命中 parent owner 下的 `profile.firstName` 验证节点，而不是退回 parent-level 默认行为
 - 推荐实现是复用父 `FormRuntime` / `ValidationScopeRuntime`，并对 `name` 对应对象根做 owner-root projection
 
 如果某个对象值真的需要“编辑中”和“已确认”两阶段语义，应优先使用 `detail-field` 或其它 surface-backed owner，而不是把 `object-field` 本身升级成 staged submit owner。

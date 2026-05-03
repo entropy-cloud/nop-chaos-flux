@@ -22,6 +22,10 @@ This directory holds stable audit rules used to review implementation consistenc
 - `test-reliability-and-contract-freshness.md` - test isolation, stale assertions, and oversized cross-domain suites.
 - `single-owner-styling-defaults-and-marker-contracts.md` - one explicit owner for shipped default visuals and consistent semantic marker contracts.
 - `cleanup-and-disposal-boundaries.md` - cleanup must cover queued continuations and post-disposal completion paths.
+- `status-path-publication-cleanup.md` - `statusPath` publishers must define explicit unmount/disposal cleanup semantics.
+- `owner-registration-containment-and-validation-participation.md` - runtime field registration must reject paths outside the receiving owner's subtree.
+- `validation-pending-readiness-semantics.md` - scheduled validation work still counts as pending for `validating` / `ready` semantics.
+- `workspace-manifest-dependency-hygiene.md` - every live workspace import must be declared in the owning package manifest.
 - `wrapper-bypass-of-shared-renderer-contracts.md` - manual wrapper paths must not silently fork shared renderer contract semantics.
 - `vocabulary-and-cross-shell-contract-drift.md` - canonical terminology, explicit compatibility aliases, and cross-shell label/i18n convergence.
 - `shadow-types-and-duplicate-contract-surfaces.md` - import canonical shared contracts instead of maintaining drifting local duplicates.

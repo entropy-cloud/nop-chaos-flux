@@ -88,6 +88,7 @@ The following are architecture-level constraints distilled from historical regre
 - Root page scope should be seeded when `SchemaRenderer` creates the page runtime. Effects should only reconcile subsequent prop changes so mount-time child effects do not lose writes to a later root-data sync.
 - Scope identity and lifecycle must stay stable. Fragment/dialog render paths should avoid unnecessary scope recreation and must preserve parent-child reactivity when parent scope data changes.
 - React host effects should not republish owner summaries that already belong to runtime owners. For example, `DialogHost` / `DrawerHost` may render the mounted surface tree, but `statusPath` publication belongs to `SurfaceRuntime` so React rendering does not create a second source of truth or write to the wrong scope.
+- When React-owned host shells or renderers publish `statusPath`, the publication effect must clear that path on unmount by writing `undefined`. Cleanup-safe publication is part of the supported host baseline so parent scopes do not retain stale summaries after a publisher disappears.
 
 Use `docs/references/architecture-guardrails-from-bugs.md` for concrete anti-patterns, regression examples, and verification checks.
 
@@ -868,6 +869,7 @@ interface SchemaRendererProps {
   parentScope?: ScopeRef;
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
+  strictValidation?: boolean;
   onRuntimeChange?: (runtime: RendererRuntime | null) => void;
   onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
   onActionScopeChange?: (actionScope: ActionScope | null) => void;

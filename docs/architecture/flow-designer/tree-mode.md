@@ -293,12 +293,12 @@ interface DesignerPageSchema {
 }
 ```
 
-`designer-page` 渲染器根据 `config.documentMode` 决定使用哪条数据路径和哪个 Core 实现：
+`designer-page` 渲染器根据 `config.documentMode` 决定使用哪条输入路径，但两种模式最终都落到同一个 `DesignerCore` API：
 
-- `graph`：现有 `DesignerCore`，直接管理 `nodes[]` + `edges[]`
-- `tree`：新增 `TreeDesignerCore`，内部持有 `TreeDocument`，通过投影产出 `GraphNode[] + GraphEdge[]`
+- `graph`：直接以 `document` 初始化 `DesignerCore`
+- `tree`：先把 `treeDocument` 投影成 `GraphDocument`，然后在页面生命周期内复用同一个 `DesignerCore`，后续 tree 输入变化通过 `core.replaceDocument(projectedDoc)` 同步
 
-两个 Core 共享：selection、history (undo/redo)、clipboard、snapshot、toolbar/inspector 渲染。
+因此 tree 模式当前冻结基线是：`selection`、`history (undo/redo)`、`snapshot` 在 tree 编辑前后保持连续。clipboard 仍由 core 提供单节点 copy/paste，但本文档不再把它写成 tree-mode closure 的额外共享承诺。
 
 ## Domain Examples
 
@@ -346,11 +346,11 @@ Tree DSL 本身不解释领域语义。以下是不同 domain 如何复用同一
 - 实现 `tree-projection.ts`：tree → flat nodes + edges
 - 验证：手动构造 TreeDocument JSON，通过投影在 React Flow 中渲染
 
-### Phase 2: TreeDesignerCore
+### Phase 2: Tree-mode command surface
 
 - 树形 CRUD 操作：添加/删除/移动节点、添加/删除分支
-- 复用 DesignerCore 的 history、selection、clipboard
-- 验证：通过 designer actions 操作 TreeDocument
+- 继续复用单一 `DesignerCore` 的 history、selection、snapshot，以及现有 core clipboard 能力
+- 验证：通过 designer actions 操作 tree 投影并保持同一个 core 实例连续工作
 
 ### Phase 3: designer-page 支持 tree 模式
 

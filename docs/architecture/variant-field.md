@@ -122,6 +122,7 @@ type VariantMatch =
 - `variant-field` 默认不创建新的独立 owner runtime
 - 当前 live implementation 会创建 projected `FormRuntime` / `ScopeRef` view，但这些 view 继续把 registration、validation、writeback 绑定到 parent owner
 - 推荐实现是复用父 `FormRuntime` / `ValidationScopeRuntime`，再为当前变体发布一个很窄的 projected scope payload，例如 `{ value, variant, readOnly }`
+- projected validation metadata 与路径 rebasing 一起下沉到当前 active variant subtree，因此相对字段名仍按 parent owner 的 owner-local absolute path 命中对应验证节点
 
 ## Variant Switching
 

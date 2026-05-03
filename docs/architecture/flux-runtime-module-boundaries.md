@@ -244,15 +244,15 @@ Note:
 - `packages/flux-runtime/src/async-data/formula-data-source-controller.ts`
   - formula-based data source controller
 - `packages/flux-runtime/src/async-data/api-data-source-controller.ts`
-  - thin API data-source controller coordinator (`start` / `stop` / `refresh` / polling shell)
+  - thin API data-source controller coordinator (`start` / `stop` / `refresh` / `reset` shell)
 - `packages/flux-runtime/src/async-data/api-data-source-controller-types.ts`
-  - API data-source controller input/state contracts
+  - API data-source controller input contract and mutable controller-state shape
 - `packages/flux-runtime/src/async-data/api-data-source-controller-state.ts`
-  - controller-local state creation, state publication, and async-governance settle helpers
+  - controller-local state creation, state publication, async-governance settle helpers, and stop-condition evaluation
 - `packages/flux-runtime/src/async-data/api-data-source-controller-runtime.ts`
-  - request execution, cache/publish flow, stop-condition checks, and refresh dedup runtime behavior
+  - request execution, cache/publish flow, request dedup, stale-settle handling, and refresh orchestration
 - `packages/flux-runtime/src/async-data/api-data-source-controller-helpers.ts`
-  - helper functions for API data source controller
+  - helper functions for API data source controller (abort helpers, state transforms, request-state shaping)
 
 ### Source and reaction runtime (`flux-runtime`)
 
@@ -279,6 +279,7 @@ Note:
   - stack-based open/close behavior and disposal hooks
 - `packages/flux-runtime/src/status-owner.ts`
   - readonly status-summary publication helpers such as `statusPath` projection and owner-status binding helpers
+  - cleanup-safe `statusPath` publication semantics, including the supported `publishOwnerStatus(scope, statusPath, undefined)` unmount cleanup path
 - focused helpers such as `packages/flux-runtime/src/scope-change.ts` and `packages/flux-runtime/src/runtime-plugins.ts`
   - changed-path dependency matching
   - plugin ordering and similar hot-path coordination helpers

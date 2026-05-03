@@ -64,7 +64,8 @@ interface DesignerPageSchema {
   type: 'designer-page';
   id?: string;
   title?: string;
-  document: GraphDocumentInput;
+  document?: GraphDocumentInput;
+  treeDocument?: TreeDocumentInput;
   config: DesignerConfig;
   statusPath?: string;
   toolbar?: SchemaInput;
@@ -79,6 +80,7 @@ interface DesignerPageSchema {
 - `statusPath` 用于向宿主外部发布 `DesignerHostStatusSummary`
 - `config.toolbar` 只配置 built-in default toolbar 的 item 集合，不是完整 schema 容器
 - `toolbar` / `inspector` / `dialogs` 是 page 级 schema override surfaces
+- 当 `config.documentMode === 'tree'` 时，renderer 接收 `treeDocument`，先投影为 `GraphDocument`，再在稳定的 `DesignerCore` 上用 `replaceDocument(...)` 同步后续 tree 变化
 
 `designer-page` 是宿主入口，不是普通容器的简单别名。它负责：
 
@@ -113,7 +115,7 @@ interface DesignerBridge {
 - schema 片段只读 bridge snapshot，不直接改 graph store
 - graph 写操作必须通过 `dispatch(command)` 或映射后的 `designer:*` action
 - `@xyflow/react` 回调先转换为 `DesignerCommand`，再进入 core 执行链
-- canvas bridge 组件只消费 `snapshot` 和显式 bridge callbacks，例如 `onPaneClick`、`onNodeSelect`、`onEdgeSelect`、`onDuplicateNode`、`onDeleteNode`、`onDeleteEdge`、`onMoveNode`、`onViewportChange`、`onStartConnection`、`onCancelConnection`、`onCompleteConnection`、`onStartReconnect`、`onCancelReconnect`、`onCompleteReconnect`；bridge host 可以持有临时 UI intent（如 pending connection source 或 reconnecting edge id），但不得把 graph mutation 本身分叉到 command adapter 之外
+- canvas bridge 组件只消费 `snapshot` 和显式 bridge callbacks，例如 `onPaneClick`、`onNodeSelect`、`onEdgeSelect`、`onDuplicateNode`、`onDeleteNode`、`onDeleteEdge`、`onMoveNode`、`onViewportChange`、`onStartConnection`、`onCancelConnection`、`onCompleteConnection`、`onStartReconnect`、`onCancelReconnect`、`onCompleteReconnect`；connect / reconnect completion 回调会显式携带 `sourcePort` / `targetPort`，bridge host 可以持有临时 UI intent（如 pending connection source 或 reconnecting edge id），但不得把 graph mutation 本身分叉到 command adapter 之外
 
 当前 bridge 的主要消费者是 `designer-page` 自身、`designer-field` inspector 控件，以及 playground 的 toolbar/inspector schema。
 
@@ -135,6 +137,7 @@ interface DesignerBridge {
 - `dialogs` region 片段本身现在也已经是 live mount，而不是仅存在于 schema shape 中的保留字段
 - `${doc.*}`、`${selection.*}`、`${activeNode.*}`、`${activeEdge.*}`、`${runtime.*}` 这类 designer host scope 变量，当前已经稳定落地在 `toolbar` / `inspector` / `dialogs` 三个 region 内部
 - 但这些字段不应被写成 `designer-page` 外部的全局 schema scope 自动可见
+- `activeEdge` 当前稳定包含 `sourcePort?` / `targetPort?`，与持久化 `GraphEdge` 和 `designer:*` edge 命令参数一致
 - `nodeType.inspector.body` 已是 live 主路径；`edgeType.inspector.body` / `mode` 仍属于 schema 合同先行、renderer 未完整消费的实现滞后
 
 ## 4. Designer Actions
@@ -287,6 +290,11 @@ Flow Designer 扩展现有 action schema，新增一组 graph action。
 - `designer:fitView`
 - `designer:disconnect`
 - `designer:exportDocument`
+
+Port-aware contract note:
+
+- `designer:addEdge` 和 `designer:reconnectEdge` 的 `sourcePort` / `targetPort` 是当前受支持的 payload 组成部分，不是仅 canvas 内部使用的临时字段
+- 同一对 node 之间，如果端口不同，则 duplicate-edge 校验按完整 `(source, sourcePort, target, targetPort)` 身份判断，而不是把所有同节点边都折叠成一条
 
 Design note:
 

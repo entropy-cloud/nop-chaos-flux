@@ -62,8 +62,8 @@
 ## 11. 实现拆分建议
 
 - runtime bridge、host snapshot、toolbar/body shell 和 spreadsheet namespace provider 分层实现。
-- `spreadsheet-toolbar.tsx` 当前只保留顶层 composition shell；toolbar action groups、button primitives、find/replace panel、cell/comment editor panel 已拆到 `packages/spreadsheet-renderers/src/spreadsheet-toolbar/` 下的独立子模块。
-- `SpreadsheetToolbarProps` 继续作为稳定顶层契约，由 shell 统一编排这些子模块；拆分只收敛实现职责，不改变对外 prop surface。
+- `SpreadsheetToolbarProps` 继续作为稳定顶层契约，由 `packages/spreadsheet-renderers/src/spreadsheet-toolbar.tsx` 顶层 shell 编排。
+- 当前 live 实现已拆到 `packages/spreadsheet-renderers/src/spreadsheet-toolbar/` 子模块：`toolbar-groups.tsx` 负责 action groups，`find-replace-panel.tsx` 负责 find/replace UI，`cell-editor.tsx` 负责 cell/comment editor，`toolbar-status.tsx` 负责状态展示，`types.ts` 保持共享 prop/type 契约。
 
 ## 12. 风险、取舍与后续阶段
 
