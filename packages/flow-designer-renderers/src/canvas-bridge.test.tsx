@@ -58,12 +58,6 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
 }
 
 vi.mock('@nop-chaos/flux-react', () => ({
-  ClassAliasesContext: {
-    Provider: ({ children }: { children: React.ReactNode }) => children,
-  },
-  RenderNodes: ({ input }: { input: any }) => {
-    return input ? <div data-testid="rendered-body">{String(input?.type ?? 'unknown')}</div> : null;
-  },
   useRendererRuntime: () => ({
     createChildScope: (parent: any, data: any) => ({
       store: { setSnapshot: vi.fn() },
@@ -71,6 +65,15 @@ vi.mock('@nop-chaos/flux-react', () => ({
     }),
   }),
   useRenderScope: () => ({}),
+}));
+
+vi.mock('@nop-chaos/flux-react/unstable', () => ({
+  ClassAliasesContext: {
+    Provider: ({ children }: { children: React.ReactNode }) => children,
+  },
+  RenderNodes: ({ input }: { input: any }) => {
+    return input ? <div data-testid="rendered-body">{String(input?.type ?? 'unknown')}</div> : null;
+  },
 }));
 
 vi.mock('./designer-context', () => ({

@@ -25,6 +25,9 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-react/default-spacing.css': fileURLToPath(
     new URL('./packages/flux-react/src/default-spacing.css', import.meta.url),
   ),
+  '@nop-chaos/flux-react/unstable': fileURLToPath(
+    new URL('./packages/flux-react/src/unstable.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-react': fileURLToPath(
     new URL('./packages/flux-react/src/index.tsx', import.meta.url),
   ),
@@ -76,6 +79,9 @@ export const workspacePackageAliases = {
   ),
   '@nop-chaos/flow-designer-core': fileURLToPath(
     new URL('./packages/flow-designer-core/src/index.ts', import.meta.url),
+  ),
+  '@nop-chaos/flow-designer-renderers/unstable': fileURLToPath(
+    new URL('./packages/flow-designer-renderers/src/unstable.ts', import.meta.url),
   ),
   '@nop-chaos/flow-designer-renderers': fileURLToPath(
     new URL('./packages/flow-designer-renderers/src/index.tsx', import.meta.url),

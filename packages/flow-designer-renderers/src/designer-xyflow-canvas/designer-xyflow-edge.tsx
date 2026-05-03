@@ -2,7 +2,7 @@ import React from 'react';
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { isSchema } from '@nop-chaos/flux-core';
-import { RenderNodes } from '@nop-chaos/flux-react';
+import { RenderNodes } from '@nop-chaos/flux-react/unstable';
 import { useEdgeTypeConfig, useDesignerContext } from '../designer-context';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import type { DesignerFlowEdgeData } from './types';

@@ -3,7 +3,7 @@ import type { NodeProps } from '@xyflow/react';
 import { NodeToolbar, Position } from '@xyflow/react';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import { isSchema } from '@nop-chaos/flux-core';
-import { RenderNodes, ClassAliasesContext } from '@nop-chaos/flux-react';
+import { RenderNodes, ClassAliasesContext } from '@nop-chaos/flux-react/unstable';
 import { useNodeTypeConfig, useDesignerContext } from '../designer-context';
 import { renderPorts } from './render-ports';
 import type { DesignerFlowNodeData } from './types';
