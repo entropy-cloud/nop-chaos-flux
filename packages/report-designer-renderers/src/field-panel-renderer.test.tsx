@@ -7,6 +7,7 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { registerReportDesignerRenderers } from './index.js';
+import './report-field-panel.css';
 
 const env: RendererEnv = {
   fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
@@ -82,9 +83,9 @@ describe('ReportFieldPanelRenderer', () => {
     const shell = document.querySelector('[data-slot="report-field-panel-shell"]');
     expect(shell).toBeTruthy();
     expect(shell?.className).toContain('nop-report-designer');
-    expect(shell?.querySelector('[data-slot="report-designer-stack"]')).toBeTruthy();
-    expect(shell?.querySelector('[data-slot="report-designer-section"]')).toBeTruthy();
-    expect(shell?.querySelector('[data-slot="report-designer-group"]')).toBeTruthy();
+    expect(shell?.querySelector('[data-slot="report-field-panel-stack"]')).toBeTruthy();
+    expect(shell?.querySelector('[data-slot="report-field-panel-source"]')).toBeTruthy();
+    expect(shell?.querySelector('[data-slot="report-field-panel-group"]')).toBeTruthy();
   });
 
   it('renders custom emptyLabel when no field sources', () => {
@@ -157,5 +158,13 @@ describe('ReportFieldPanelRenderer', () => {
     const userNameItem = screen.getByText('User Name').closest('li');
     expect(userNameItem?.getAttribute('data-field-id')).toBe('field-1');
     expect(userNameItem?.getAttribute('data-field-source-id')).toBe('source-1');
+  });
+
+  it('ships package-owned field panel styling markers', () => {
+    renderFieldPanel({ fieldSources: sampleFieldSources });
+
+    expect(document.querySelector('[data-slot="report-field-panel-source"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="report-field-panel-items"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="report-field-panel-item"]')).toBeTruthy();
   });
 });

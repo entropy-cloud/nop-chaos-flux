@@ -48,22 +48,25 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
       {fieldSources.length === 0 ? (
         <p data-slot="report-designer-empty">{emptyLabel}</p>
       ) : (
-        <div data-slot="report-designer-stack">
+        <div data-slot="report-field-panel-stack">
           {fieldSources.map((source) => (
-            <section key={source.id} data-slot="report-designer-section">
-              {showHeader ? <h4>{source.label}</h4> : null}
+            <section key={source.id} data-slot="report-field-panel-source">
+              {showHeader ? (
+                <h4 data-slot="report-field-panel-source-label">{source.label}</h4>
+              ) : null}
               {source.groups.map((group) => (
-                <div key={group.id} data-slot="report-designer-group">
+                <div key={group.id} data-slot="report-field-panel-group">
                   {showHeader ? <strong>{group.label}</strong> : null}
-                  <ul>
+                  <ul data-slot="report-field-panel-items">
                     {group.fields.map((field) => (
                       <li
                         key={field.id}
                         draggable={dragEnabled}
                         data-field-id={field.id}
                         data-field-source-id={source.id}
+                        data-slot="report-field-panel-item"
                       >
-                        {field.label}
+                        <span data-slot="report-field-panel-item-label">{field.label}</span>
                       </li>
                     ))}
                   </ul>

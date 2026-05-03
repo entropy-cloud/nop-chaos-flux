@@ -1,3 +1,5 @@
+import './report-field-panel.css';
+
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -16,20 +18,20 @@ export function ReportFieldPanel({
     <div className={className}>
       <h3>{t('flux.reportDesigner.fieldSources')}</h3>
       {fieldSources.map((source) => (
-        <div key={source.id} className="field-source">
-          <div data-slot="field-source-label">{source.label}</div>
+        <div key={source.id} data-slot="report-field-panel-source">
+          <div data-slot="report-field-panel-source-label">{source.label}</div>
           {source.groups.map((group) => (
-            <div key={group.id} className="field-group">
-              <div data-slot="field-group-items">
+            <div key={group.id} data-slot="report-field-panel-group">
+              <div data-slot="report-field-panel-items">
                 {group.fields.map((field) => (
                   <div
                     key={field.id}
-                    className="field-item"
+                    data-slot="report-field-panel-item"
                     draggable
                     onDragStart={() => onFieldDragStart(source.id, field.id, field.label)}
                   >
-                    <span data-slot="field-item-type">{field.fieldType}</span>
-                    <span data-slot="field-item-label">{field.label}</span>
+                    <span data-slot="report-field-panel-item-type">{field.fieldType}</span>
+                    <span data-slot="report-field-panel-item-label">{field.label}</span>
                   </div>
                 ))}
               </div>
