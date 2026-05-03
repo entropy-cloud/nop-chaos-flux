@@ -16,7 +16,7 @@ import {
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
+import { FormContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas';

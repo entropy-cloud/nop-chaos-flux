@@ -1,10 +1,7 @@
 import React, { useMemo } from 'react';
 import type { RendererComponentProps, SurfaceStatusSummary } from '@nop-chaos/flux-core';
-import {
-  publishOwnerStatus,
-  useCurrentComponentRegistry,
-  useResolvedContainer,
-} from '@nop-chaos/flux-react';
+import { useCurrentComponentRegistry, useResolvedContainer } from '@nop-chaos/flux-react';
+import { publishOwnerStatus } from '@nop-chaos/flux-react/unstable';
 import type { DialogSchema, DrawerSchema } from './schemas';
 import {
   getDeclarativeSurfaceStackSnapshot,

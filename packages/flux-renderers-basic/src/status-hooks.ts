@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
-import { publishOwnerStatus } from '@nop-chaos/flux-react';
+import { publishOwnerStatus } from '@nop-chaos/flux-react/unstable';
 
 export function useStatusPathPublication<TSummary>(
   scope: ScopeRef | undefined,

@@ -6,7 +6,7 @@ import type {
   ScopeRef,
   ValidationError,
 } from '@nop-chaos/flux-core';
-import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
+import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react/unstable';
 import {
   createFieldHandlers,
   defaultValidationBehavior,

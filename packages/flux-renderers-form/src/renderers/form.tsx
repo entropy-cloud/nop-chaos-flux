@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { FormContext, FormLayoutContext, ScopeContext } from '@nop-chaos/flux-react';
+import { FormContext, FormLayoutContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import { type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -11,7 +11,7 @@ import {
   useRendererRuntime,
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
-import { createFormComponentHandle } from '@nop-chaos/flux-react';
+import { createFormComponentHandle, type FormLayoutContextValue } from '@nop-chaos/flux-react/unstable';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas';
 import { usePublishedFormStatus, usePublishedFormValues } from './form-status-publication';
@@ -283,7 +283,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const formLabelWidth = (props.props as FormSchema).labelWidth;
 
   const formLayoutValue = useMemo(() => {
-    const value: import('@nop-chaos/flux-react').FormLayoutContextValue = {};
+    const value: FormLayoutContextValue = {};
     if (formMode) value.mode = formMode;
     if (formLabelAlign) value.labelAlign = formLabelAlign;
     if (formLabelWidth !== undefined) value.labelWidth = formLabelWidth;

@@ -6,8 +6,8 @@ import {
   useCurrentComponentRegistry,
   useRenderScope,
   useSchemaProps,
-  createReadonlyScopeBinding,
 } from '@nop-chaos/flux-react';
+import { createReadonlyScopeBinding } from '@nop-chaos/flux-react/unstable';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Separator, cn } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema';

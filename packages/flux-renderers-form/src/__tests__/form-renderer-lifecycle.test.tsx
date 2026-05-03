@@ -35,6 +35,17 @@ vi.mock('@nop-chaos/flux-react', async () => {
   };
 });
 
+vi.mock('@nop-chaos/flux-react/unstable', async () => {
+  const ReactModule = await vi.importActual<typeof import('react')>('react');
+
+  return {
+    FormContext: ReactModule.createContext(undefined),
+    FormLayoutContext: ReactModule.createContext(undefined),
+    ScopeContext: ReactModule.createContext(null),
+    createFormComponentHandle: mocks.createFormComponentHandle,
+  };
+});
+
 vi.mock('../renderers/form-status-publication', () => ({
   usePublishedFormStatus: mocks.usePublishedFormStatus,
   usePublishedFormValues: mocks.usePublishedFormValues,

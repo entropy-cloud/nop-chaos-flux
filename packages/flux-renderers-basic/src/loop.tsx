@@ -5,7 +5,8 @@ import type {
   StructuralLoopBindings,
   StructuralLoopRenderContext,
 } from '@nop-chaos/flux-core';
-import { StructuralLoopContext, useRenderInstancePath } from '@nop-chaos/flux-react';
+import { useRenderInstancePath } from '@nop-chaos/flux-react';
+import { StructuralLoopContext } from '@nop-chaos/flux-react/unstable';
 import type { LoopSchema } from './schemas';
 import {
   createStructuralRepeatedTemplateId,

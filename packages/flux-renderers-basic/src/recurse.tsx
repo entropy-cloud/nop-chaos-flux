@@ -5,7 +5,8 @@ import type {
   StructuralLoopBindings,
   StructuralLoopRenderContext,
 } from '@nop-chaos/flux-core';
-import { StructuralLoopContext, useStructuralLoopContext } from '@nop-chaos/flux-react';
+import { useStructuralLoopContext } from '@nop-chaos/flux-react';
+import { StructuralLoopContext } from '@nop-chaos/flux-react/unstable';
 import type { RecurseSchema } from './schemas';
 import {
   createStructuralRepeatedTemplateId,

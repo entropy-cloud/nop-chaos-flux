@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { FieldsetRenderer } from '../renderers/fieldset';
 import type { FieldsetSchema } from '../renderers/fieldset';
-import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react';
+import { RuntimeContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import type { ScopeRef, RendererRuntime } from '@nop-chaos/flux-core';
 
 function makeMockScope(): ScopeRef {

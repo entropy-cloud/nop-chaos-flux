@@ -7,7 +7,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { actionAdapter, getIn, setIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
-import { FormContext, ScopeContext } from '@nop-chaos/flux-react';
+import { FormContext, ScopeContext } from '@nop-chaos/flux-react/unstable';
 import {
   useCurrentForm,
   useCurrentFormState,

@@ -5,7 +5,7 @@ import type {
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
 import { useRendererEnv, useRendererRuntime } from '@nop-chaos/flux-react';
-import { executeApiObject } from '@nop-chaos/flux-react';
+import { executeApiObject } from '@nop-chaos/flux-react/unstable';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { asReactNode } from './utils';
