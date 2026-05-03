@@ -127,9 +127,8 @@ describe('useCrudStatusPublisher', () => {
     rerender(
       <StatusProbe scope={scope} statusPath="status.path" summary={{ kind: 'crud', total: 2 }} />,
     );
-    expect(update).toHaveBeenCalledTimes(3);
-    expect(update.mock.calls[1]).toEqual(['status.path', undefined]);
-    expect(update.mock.calls[2]).toEqual(['status.path', { kind: 'crud', total: 2 }]);
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(update.mock.calls[1]).toEqual(['status.path', { kind: 'crud', total: 2 }]);
 
     rerender(
       <StatusProbe
@@ -141,8 +140,8 @@ describe('useCrudStatusPublisher', () => {
     rerender(
       <StatusProbe scope={scope} statusPath={undefined} summary={{ kind: 'crud', total: 4 }} />,
     );
-    expect(update).toHaveBeenCalledTimes(4);
-    expect(update.mock.calls[3]).toEqual(['status.path', undefined]);
+    expect(update).toHaveBeenCalledTimes(3);
+    expect(update.mock.calls[2]).toEqual(['status.path', undefined]);
   });
 
   it('clears previously published status on unmount', () => {
