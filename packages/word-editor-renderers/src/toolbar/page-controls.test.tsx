@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { PageControls } from './page-controls.js';
@@ -45,7 +45,7 @@ function createStore(overrides?: {
 }
 
 describe('PageControls', () => {
-  it('hydrates page margins from current store state on open and writes back on apply', () => {
+  it('hydrates page margins from current store state on open and writes back on apply', async () => {
     resetFluxI18n();
     initFluxI18n();
 
@@ -77,7 +77,8 @@ describe('PageControls', () => {
 
     fireEvent.click(screen.getByTitle('Set Margins'));
 
-    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    const dialog = await screen.findByRole('dialog');
+    const inputs = within(dialog).getAllByRole('spinbutton') as HTMLInputElement[];
     expect(inputs.map((input) => input.value)).toEqual(['11', '22', '33', '44']);
 
     fireEvent.change(inputs[0], { target: { value: '77' } });
@@ -85,14 +86,16 @@ describe('PageControls', () => {
     fireEvent.change(inputs[2], { target: { value: '99' } });
     fireEvent.change(inputs[3], { target: { value: '111' } });
 
-    fireEvent.click(screen.getByRole('button', { name: '确认' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: '确认' }));
 
-    expect(store.setPaperSettings).toHaveBeenCalledWith({
-      width: 595,
-      height: 842,
-      direction: 'vertical',
-      margins: [77, 88, 99, 111],
+    await waitFor(() => {
+      expect(store.setPaperSettings).toHaveBeenCalledWith({
+        width: 595,
+        height: 842,
+        direction: 'vertical',
+        margins: [77, 88, 99, 111],
+      });
+      expect(executeSetPaperMargin).toHaveBeenCalledWith([77, 88, 99, 111]);
     });
-    expect(executeSetPaperMargin).toHaveBeenCalledWith([77, 88, 99, 111]);
   });
 });

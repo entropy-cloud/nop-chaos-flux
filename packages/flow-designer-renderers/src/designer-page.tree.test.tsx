@@ -4,7 +4,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
+import type { DesignerConfig, DesignerCore } from '@nop-chaos/flow-designer-core';
 import { flowDesignerRendererDefinitions } from './index';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -588,5 +588,104 @@ describe('DesignerPageRenderer tree mode', () => {
     });
 
     expect(createDesignerCoreMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves selection and undo history continuity across treeDocument updates', async () => {
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      ...flowDesignerRendererDefinitions,
+    ]);
+    const config = createTreeTestConfig();
+
+    const initialTreeDocument = {
+      id: 'tree-history-continuity',
+      kind: 'test-tree',
+      name: 'History Continuity Tree',
+      version: '1.0',
+      root: {
+        id: 'start',
+        type: 'start',
+        data: { label: 'Start' },
+        child: {
+          id: 'task-1',
+          type: 'task',
+          data: { label: 'Task 1' },
+        },
+      },
+    };
+
+    const { container, rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-history-continuity"
+        schema={
+          {
+            type: 'designer-page',
+            treeDocument: initialTreeDocument,
+            config,
+          }
+        }
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('.react-flow__node')).toHaveLength(2);
+    });
+
+    const core = createDesignerCoreMock.mock.results[0]?.value as DesignerCore | undefined;
+    expect(core).toBeTruthy();
+
+    core?.selectNode('task-1');
+    core?.setViewport({ x: 24, y: 48, zoom: 1.2 });
+
+    expect(core?.getSnapshot().selection.activeNodeId).toBe('task-1');
+    expect(core?.getSnapshot().canUndo).toBe(true);
+
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://flow/tree-history-continuity"
+        schema={
+          {
+            type: 'designer-page',
+            treeDocument: {
+              ...initialTreeDocument,
+              root: {
+                ...initialTreeDocument.root,
+                child: {
+                  id: 'task-1',
+                  type: 'task',
+                  data: { label: 'Task 1 updated' },
+                  child: {
+                    id: 'end-1',
+                    type: 'end',
+                    data: { label: 'End' },
+                  },
+                },
+              },
+            },
+            config,
+          }
+        }
+        env={createRendererEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('.react-flow__node')).toHaveLength(3);
+    });
+
+    expect(createDesignerCoreMock).toHaveBeenCalledTimes(1);
+    expect(core?.getSnapshot().selection.activeNodeId).toBe('task-1');
+    expect(core?.getSnapshot().activeNode?.id).toBe('task-1');
+    expect(core?.getSnapshot().canUndo).toBe(true);
+    expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(true);
+
+    core?.undo();
+
+    expect(core?.getSnapshot().selection.activeNodeId).toBe('task-1');
+    expect(core?.getSnapshot().doc.nodes.some((node) => node.id === 'end-1')).toBe(false);
   });
 });

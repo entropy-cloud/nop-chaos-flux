@@ -294,10 +294,20 @@ describe('DesignerXyflowCanvasBridge', () => {
     expect(mockState.latestReactFlowProps.onMoveEnd).toBeTruthy();
     expect(mockState.latestReactFlowProps.onSelectionChange).toBeTruthy();
 
-    const mockConnection = { source: 'node-1', target: 'node-2' };
+    const mockConnection = {
+      source: 'node-1',
+      target: 'node-2',
+      sourceHandle: 'out-primary',
+      targetHandle: 'in-primary',
+    };
     expect(() => mockState.latestReactFlowProps.onConnect(mockConnection)).not.toThrow();
     expect(onStartConnection).toHaveBeenCalledWith('node-1', undefined);
-    expect(onCompleteConnection).toHaveBeenCalledWith('node-2', undefined, undefined, undefined);
+    expect(onCompleteConnection).toHaveBeenCalledWith(
+      'node-2',
+      undefined,
+      'out-primary',
+      'in-primary',
+    );
 
     const mockEdge = { id: 'edge-1' };
     expect(() => mockState.latestReactFlowProps.onReconnect(mockEdge, mockConnection)).not.toThrow();
@@ -307,8 +317,8 @@ describe('DesignerXyflowCanvasBridge', () => {
       'node-1',
       'node-2',
       undefined,
-      undefined,
-      undefined,
+      'out-primary',
+      'in-primary',
     );
 
     const mockNodeChanges = [
