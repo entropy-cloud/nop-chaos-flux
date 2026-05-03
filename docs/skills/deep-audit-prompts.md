@@ -191,7 +191,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 执行前先阅读：
 1. docs/index.md（文档导航基线）
 2. AGENTS.md（代码规范、验证命令、agent 工作流）
-3. 本维度列出的 owner 文档
+3. docs/references/deep-audit-calibration-patterns.md（项目特定的误报校准与举证门槛）
+4. 本维度列出的 owner 文档
 
 注意：这是一个持续演进中的仓库，很多 domain 包和复杂 host 能力仍在逐步收敛。审核时不要默认所有包都已经完成最终契约收口；要区分“当前真实缺陷”和“尚未完成的实现切片/过渡结构”。
 
@@ -202,16 +203,10 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 4. 对低代码动态边界保持克制。any、Record<string, unknown>、动态 schema 对象在边界上可能是合理的。
 5. 每个发现必须可定位：文件路径 + 行号范围 + 3-10 行证据片段。
 6. 区分已自动化 vs 需人工发现。已被 lint/check 覆盖的问题，只有在“自动化有漏洞”时才报告。
-7. 不要把理想化分层图当成硬约束。只要依赖的是稳定公开 API，而不是跨包内部路径、私有实现或循环依赖，renderers -> flux-core/flux-formula/flux-runtime 的直接依赖默认不作为问题。
-8. 不要机械禁止原生 HTML。平台原生特例和高性能/强语义宿主表面可以合理保留。
-9. 不要把共享可复用包的生产依赖机械判为越层。
-10. 把仓库视为持续演进中的中间态，而不是默认已完整收口的成品。
-11. 区分“真实缺陷”与“未完成实现”。
-12. 不要把未从根 barrel 导出的源码机械判成死代码。
-13. 草案文档不等于当前违约；只有当前 baseline 文档与 live code 同时宣称契约已生效时，偏差才算文档-代码不一致。
-14. 初审输出只是线索，不是最终事实；最终结论必须经过独立复核。
-15. 不要机械把 style、局部 useState、或 renderer 内部 UI 类判成违规；先判断 owner 和公开契约。
-16. 文件大小规则：>500 行需评估是否拆分，>700 行默认必须拆分。
+7. 初审输出只是线索，不是最终事实；最终结论必须经过独立复核。
+8. 命中 calibration patterns 的候选问题，必须按该文档要求执行 reject / downgrade / require-stronger-evidence 规则，不得跳过。
+9. 如果某条发现看起来像历史上的高频误报模式，必须明确写出“为什么这次不是同类误报”。
+10. 文件大小规则：>500 行需评估是否拆分，>700 行默认必须拆分。
 
 严重程度判级：
 - P0: 当前已构成错误行为、安全违约、核心数据损坏风险、或违反 CI/硬性架构红线。
@@ -224,7 +219,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 维护规则：
 
-- 共享背景、通用审计口径、严重程度判级、命令基线策略只维护在“共享提示词前缀”中。
+- 共享方法论、严重程度判级、命令基线策略只维护在“共享提示词前缀”中。
+- 项目特定的重复误报模式、降级模式、举证门槛维护在 `docs/references/deep-audit-calibration-patterns.md` 中。
 - 各维度正文只保留该维度特有的目标、owner 文档、执行步骤、特例说明和额外输出要求。
 - 如果某个维度需要额外约束，只写该维度新增部分，不要重复抄写共享前缀内容。
 
@@ -232,7 +228,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 ## 通用审计口径
 
-以下口径会嵌入每个子 agent 的提示词中，所有维度的审核员必须遵守：
+以下口径会嵌入每个子 agent 的提示词中，所有维度的审核员必须遵守。项目特定的误报校准与例外模式不再在此处展开，统一维护在 `docs/references/deep-audit-calibration-patterns.md`：
 
 1. **以当前代码为准**，不以历史日志、已关闭的计划或口头约定为准。
 2. **不重复报告已收敛的问题**。如果代码中已按架构规则实现，不再标记为问题。
@@ -240,16 +236,9 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 4. **对低代码动态边界保持克制**。`any`、`Record<string, unknown>`、动态 schema 对象在边界上是合理的。
 5. **每个发现必须可定位**：文件路径 + 行号范围 + 具体代码片段。
 6. **区分已自动化 vs 需人工发现**。已被 lint/check 覆盖的问题只在"自动化有漏洞"时才报告。
-7. **不要把理想化分层图当成硬约束**。只要依赖的是稳定公开 API，而不是跨包内部路径、私有实现或循环依赖，`renderers -> flux-core/flux-formula/flux-runtime` 的直接依赖默认不作为问题；只有当它造成真实维护痛点、契约重复、边界漂移或文档冲突时才报告。
-8. **不要机械禁止原生 HTML**。优先使用 `@nop-chaos/ui`，但平台原生特例（如 `input[type=file]`、`input[type=color]`）以及高性能/强语义宿主表面（如 spreadsheet grid）可以合理使用原生元素；只有当存在等价 UI 抽象且替换有明确收益时才报告。
-9. **不要把共享可复用包的生产依赖当成越层问题**。如果 `spreadsheet-renderers` 这类包本身就是被其他 domain 复用的公共 renderer/bridge 包，则 `report-designer-renderers -> spreadsheet-renderers` 这类依赖默认视为合理复用，而不是先验违规。
-10. **把仓库视为持续演进中的中间态，而不是默认已完整收口的成品**。未接线模块、过渡导出、草案合同、计划中的 owner 收敛，本身都不自动等于缺陷；只有当当前代码已经承诺稳定契约、且存在真实 bug 风险、文档-代码冲突、错误公共暴露或明确误导时才报告。
-11. **区分“真实缺陷”与“未完成实现”**。如果代码显示某能力还在开发中，应优先判断它是“尚未接线/尚未收口/过渡方案”还是“已经对外承诺但实现错误”；前者最多作为中间态风险或跟踪项，不要直接按已完工系统的违约口径定级。
-12. **不要把未从根 barrel 导出的源码机械判成死代码**。只有在确认“没有任何活跃源码引用、没有测试/桥接/计划中的明确 owner、也没有正在形成的公开子路径或集成切片”后，才可报告为死代码；否则应改报为“未接线中的中间模块”或直接不报。
-13. **草案文档不等于当前违约**。若 owner doc 明确写着 draft/future/proposed，应把它视为未来方向而非当前强约束；只有当前 baseline 文档、引用路由和 live code 同时宣称某契约已生效时，才把偏差当成文档-代码不一致。
-14. **所有结论都必须经过独立复核**。初审 agent 的输出只是线索，不是最终事实；维度级结论与每条发现都要由新的独立子 agent 二次核验。
-15. **不要机械把 `style`、局部 `useState`、或 renderer 内部 UI 类判成违规**。如果某 renderer 本身就是明确拥有 UI 壳层、层级交互或高性能宿主表面的组件，那么动态 style、局部状态和少量实现性样式可能正是当前最优实现；只有当它们制造了第二事实源、破坏公开契约、与 owner 文档冲突、或把本应外部显式控制的默认视觉偷偷固化时才报告。
-16. **文件大小限额**。源代码文件超过 **500 行**需要仔细考虑是否要拆分（职责混合、多 owner、入口文件泄露实现）；超过 **700 行**必须拆分。报告时区分"超过 700 行必须拆"和"500-700 行需评估"两档。
+7. **所有结论都必须经过独立复核**。初审 agent 的输出只是线索，不是最终事实；维度级结论与每条发现都要由新的独立子 agent 二次核验。
+8. **命中 calibration patterns 的候选问题必须按校准文档抬高举证门槛**。没有越过证据门槛时，应驳回或降级，而不是直接进入 remediation backlog。
+9. **文件大小限额**。源代码文件超过 **500 行**需要仔细考虑是否要拆分（职责混合、多 owner、入口文件泄露实现）；超过 **700 行**必须拆分。报告时区分"超过 700 行必须拆"和"500-700 行需评估"两档。
 
 **自动化执行工具**：
 
@@ -262,49 +251,11 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 ---
 
-## 固定项目背景
+## 项目校准说明
 
-以下背景会嵌入每个子 agent 的提示词头部：
+项目特定的高频误报模式、降级规则、以及“什么时候仍可保留该发现”的说明，统一维护在 `docs/references/deep-audit-calibration-patterns.md`。
 
-```
-你正在审核 nop-chaos-flux 项目。这是一个 React 19 + Zustand + TypeScript 的低代码渲染引擎 monorepo（pnpm workspace）。
-
-注意：这是一个持续演进中的仓库，很多 domain 包和复杂 host 能力仍在逐步收敛。审核时不要默认所有包都已经完成最终契约收口；要区分“当前真实缺陷”和“尚未完成的实现切片/过渡结构”。
-
-包结构：
-- flux-core — 基础类型和纯工具函数（无依赖）
-- flux-formula — 表达式编译/求值（依赖 flux-core）
-- flux-runtime — Zustand store、验证、action、编译器（依赖 flux-core、flux-formula）
-- flux-react — React 渲染层：hooks、NodeRenderer、SchemaRenderer（依赖 flux-runtime）
-- flux-renderers-basic — 基础渲染器（page、text、container 等）
-- flux-renderers-form — 表单渲染器
-- flux-renderers-data — 数据渲染器
-- ui — shadcn/ui 组件库
-- tailwind-preset — 共享 Tailwind 配置
-- theme-tokens — CSS 变量主题令牌
-- flow-designer-core / flow-designer-renderers — 流程设计器
-- spreadsheet-core / spreadsheet-renderers — 电子表格
-- report-designer-core / report-designer-renderers — 报表设计器
-- word-editor-core / word-editor-renderers — 文档编辑器
-- nop-debugger — 调试器
-- flux-code-editor — 代码编辑器
-- flux-playground — 开发 Playground
-
-依赖流：flux-core → flux-formula → flux-runtime → flux-react → renderers-*
-         *-core → *-renderers
-         spreadsheet-core → report-designer-core → report-designer-renderers
-         tailwind-preset → ui
-
-关键架构规则：
-- 渲染器根 marker class（`nop-*`）只做语义标识；但不要把“存在局部 UI 样式/动态 style”机械等同于违规，需先判断该 renderer 是纯结构壳还是明确拥有 UI 壳层/交互的组件
-- 运行时逻辑属于 flux-runtime，不属于 React 层
-- 复杂字段不得维护与 form store 并存的字段值镜像；但局部 UI 状态、变体切换、展开态、悬浮态等瞬时状态不自动构成违规
-- 所有渲染器组件必须遵循 RendererComponentProps 模式
-- 严禁在渲染器中直接访问 store，必须用标准 hooks
-- UI 组件默认统一使用 @nop-chaos/ui；但浏览器原生能力控件和高性能专用宿主表面可以保留原生 HTML
-- renderer 包可以直接依赖 `flux-core` / `flux-formula` / `flux-runtime` 的稳定公开 API；真正要警惕的是跨包内部路径导入、循环依赖、文档未声明的私有耦合
-- `spreadsheet-renderers` 可作为可复用公共包被其他 domain renderer 复用；不要将这类共享依赖机械判为边界违规
-```
+不要再在本文件重复维护第二份“项目背景 + 特例口径”清单，以避免提示词与历史 meta-review 结论继续漂移。
 
 ---
 
@@ -1567,8 +1518,9 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 6. **结果汇总**: 主 agent 负责收集所有子 agent 的输出，去重（同一问题可能被多个维度发现），仅汇总已通过独立复核的结果。
 7. **增量审核**: 可以只选择部分维度执行，不必每次全量审核。用维度编号指定要执行的维度即可，但选中的维度仍需完整复核链路。
 8. **与现有检查的关系**: 审核发现的机械问题应优先转化为 lint 规则或 check 脚本，而非持续依赖审核。
-9. **结果归档**: 审核结果必须保存到 `docs/analysis/{YYYY}-{MM}-{DD}-deep-audit-{简短标识}/` 子目录中，每个维度一个 md 文件，汇总报告写入 `summary.md`。详见"结果输出与归档"章节。
-10. **需要命令基线的维度**: 若某维度依赖 `pnpm check:*`、依赖图、文件行数等命令输出，优先由主 agent 先跑命令并把结果传给子 agent，避免不同子 agent 对工具能力做出不一致假设。
+9. **先读项目校准文档**: 派发前先读取 `docs/references/deep-audit-calibration-patterns.md`；命中其中模式的候选问题，必须按校准要求抬高证据门槛或直接降级/驳回。
+10. **结果归档**: 审核结果必须保存到 `docs/analysis/{YYYY}-{MM}-{DD}-deep-audit-{简短标识}/` 子目录中，每个维度一个 md 文件，汇总报告写入 `summary.md`。详见"结果输出与归档"章节。
+11. **需要命令基线的维度**: 若某维度依赖 `pnpm check:*`、依赖图、文件行数等命令输出，优先由主 agent 先跑命令并把结果传给子 agent，避免不同子 agent 对工具能力做出不一致假设。
 
 ---
 
