@@ -37,6 +37,7 @@
 - `drawer`
 - `tabs`
 - `form`
+- `fieldset`
 - `code-editor`
 - `input-text`
 - `input-email`
@@ -57,6 +58,7 @@
 - `tree`
 - `data-source`
 - `chart`
+- `crud`
 
 ### 2. 当前仓库已注册的领域 renderer
 
@@ -72,6 +74,7 @@
 - `report-designer-page`
 - `report-toolbar`
 - `spreadsheet-page`
+- `word-editor-page`
 
 ### 3. 已文档化且当前尚未实现的 retained renderer
 
@@ -83,7 +86,6 @@
 - `carousel`
 - `collapse`
 - `combo`
-- `crud`
 - `date-range`
 - `dropdown-button`
 - `editor`
@@ -147,11 +149,12 @@
 
 - 巩固当前已注册 renderer 的 schema、field metadata、example.json 和回归验证。
 - 让 `docs/components/<type>/design.md` 与实际 renderer definition 持续保持一致。
+- surface family（`dialog` / `drawer`）优先收口为统一 runtime/host/entry 模型，不再长期保留 declarative path 与 action-opened path 的双轨实现。
 
 ### P1
 
 - 继续实现并验证当前已文档化但尚未实现的 retained renderer，优先顺序建议：`list`、`card`、`link`、`empty`、`json-view`、`pagination`、`service`、`input-number`、日期时间 family。
-- `crud` 是高优先级复合数据 renderer，应在 `table`、`form`、`dialog`、`data-source` 的 owner 边界稳定后优先补齐；实现方式应走组合/编译 lowering，而不是回到单体巨型 JSX 组件。
+- `crud` 已按组合/编译 lowering 落地；后续优先级应转向补强验证覆盖和继续扩展 retained 但尚未实现的数据 family。
 - Plan 78 已完成 retained family 的 owner-doc 覆盖，后续优先级应转向 retained renderer 的 runtime 实现与验证，而不是再把 retained doc 缺口重新留回候选区。
 
 树相关边界已经稳定并落地首版：`tree` 是通用 UI renderer，`input-tree` / `tree-select` 是 form field family，`loop + recurse` 是结构层。

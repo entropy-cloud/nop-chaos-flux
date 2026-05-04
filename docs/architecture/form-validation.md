@@ -1074,7 +1074,7 @@ Current live concrete cases:
 
 1. normal form: `FormRuntime`
 2. `SchemaRenderer` page-owned root: page/root-backed non-form validation owner for bound fields outside `<form>`
-3. managed `openDialog` / `openDrawer` surface body: surface-root non-form validation owner for bound fields outside an inner `<form>`
+3. surface-family body opened through declarative `dialog` / `drawer` nodes or built-in `openDialog` / `openDrawer`: surface-root non-form validation owner for bound fields outside an inner `<form>`
 4. inline table editing bound to parent values: parent `FormRuntime`
 5. detail dialog editing draft data: temporary child `FormRuntime`
 6. pure action controls: no validation scope runtime

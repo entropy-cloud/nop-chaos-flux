@@ -124,7 +124,7 @@
 理由：
 
 - `report-toolbar/design.md` 明确 `itemsOverride` 的元素类型是 `ToolbarItem`，不是任意子 schema。
-- `docs/plans/32-report-designer-schema-driven-refactor-plan.md` 和 `docs/logs/2026/04-04.md` 都明确记录了 `ToolbarItem` 契约，其中字段就是 `action?: string`。
+- `docs/archive/plans/32-report-designer-schema-driven-refactor-plan.md` 和 `docs/logs/2026/04-04.md` 都明确记录了 `ToolbarItem` 契约，其中字段就是 `action?: string`。
 - 这说明它是领域特定的轻量 item 配置协议，而不是通用 renderer 事件字段。
 
 因此更合理的结论是：
@@ -439,13 +439,14 @@
 
 | manifest 分类             | 数量 | 说明                                                         |
 | ------------------------- | ---- | ------------------------------------------------------------ |
-| `runtime`                 | 46   | 已注册实现且有 owner doc 的组件                              |
+| `runtime`                 | 48   | 已注册实现且有 owner doc 的组件                              |
 | `targetContract`          | 44   | owner doc 已落地、当前尚未注册实现的 retained canonical 组件 |
 | `declaredButUnregistered` | 2    | `designer-node-card`、`designer-edge-row`                    |
 
 说明：
 
 - `code-editor`、`fragment`、`loop`、`recurse`、`wizard` 现已补齐 `example.json` 并与 manifest 对齐。
+- `fieldset` 已按 live runtime 收入 `runtime` 基线；`word-editor-page` 已补齐 `example.json` 并收入 `runtime` manifest。
 - `wizard` 以及 Plan 78 新增 retained family 现已纳入 manifest，不再存在“目录已存在但 manifest 未登记”的漂移。
 
 ### 10.3 口径更新

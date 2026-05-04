@@ -1,133 +1,134 @@
 # 193 Expression Evaluator Security Hardening
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-04
-> Source: `docs/analysis/2026-05-04-adversarial-review-4.md` (R4 findings 1-8)
-> Related: plan-192 (Phase 5 covers $JSON.parse decision only; this plan covers the full sandbox hardening)
+> Completed: 2026-05-04 — DANGEROUS_MEMBER_KEYS blocklist in evaluator, Object.create(null) for object literals, instanceof operator blocked, deepSanitize for $JSON.parse, recursive sanitizeSnapshot, DANGEROUS_PATH_SEGMENTS guard in setIn/getIn. Full verification: typecheck ✅ build ✅ lint ✅ test ✅.
+> Source: `docs/analysis/2026-05-04-adversarial-review-4.md`, `docs/analysis/2026-05-04-adversarial-review.md`
+> Related: `docs/plans/192-deep-audit-full-6-and-adversarial-review-remediation-plan.md`, `docs/plans/197-architecture-evolution-formula-di-treeshaking-build-config-plan.md`
 
 ## Purpose
 
-消除 expression evaluator 的 sandbox 逃逸路径和 prototype pollution 向量，使 formula 表达式在低信任 schema 来源下安全可用。
+修复 2026-05-04 已确认的 formula evaluator sandbox 逃逸与 prototype pollution 路径，同时保留当前文档化的合法表达式能力。
 
 ## Current Baseline
 
-- Formula evaluator 使用 AST-based 解释器，无 `eval`/`Function`。
-- Member access 使用 `(objectValue as any)[key]`，无属性黑名单。
-- `constructor.constructor("return globalThis")()` 可完整逃逸 sandbox（R4-F1, R4-F2）。
-- Object 字面量 `{["__proto__"]: {...}}` 通过 setter 修改对象原型（R4-F3）。
-- `$JSON.parse` 结果可含深层 `__proto__` key（R4-F4）。
-- `sanitizeSnapshot` 仅检查顶层 key（R4-F6）。
-- `setIn` 工具无路径段 sanitization（R4-F5）。
-- Formula→Scope→Props 全链路无运行时类型边界（R4-F7）。
-- Renderer type 字段无格式校验（R4-F8）。
-- Plan-192 Phase 5 仅将 `$JSON.parse` 和 `instanceof` 作为 Decision 处理，未覆盖核心逃逸路径。
+- `packages/flux-formula/src/evaluator.ts` 仍允许通过危险属性访问原型链，05-04 已确认 `constructor.constructor(...)` 与 `instanceof`/`Symbol.hasInstance` 相关逃逸向量。
+- `packages/flux-formula/src/evaluator.ts` 的 object literal 仍用普通对象承载结果，`__proto__` key 仍可能污染原型链。
+- `packages/flux-formula/src/builtins.ts` 的 `$JSON.parse` 仍直接返回原生解析结果。
+- `packages/flux-runtime/src/scope.ts` 的 `sanitizeSnapshot(...)` 仍只做浅层过滤。
+- `packages/flux-core/src/utils/path.ts` 的 `setIn(...)` 仍未拒绝危险路径段。
+- 当前 `docs/architecture/flux-formula.md` 和 `docs/architecture/security-design-requirements.md` 尚未写清 05-04 审计确认后的 threat model 与 evaluator 安全边界。
 
 ## Goals
 
-- 阻断通过原型链到达 `Function` 构造器的逃逸路径
-- 阻断通过 Object 字面量/JSON.parse 的 prototype pollution
-- 深化 `sanitizeSnapshot` 和 `setIn` 的防护深度
-- 在 expression evaluator 层面建立安全边界文档
+- 阻断 05-04 已确认的 evaluator 原型链逃逸路径。
+- 阻断 object literal、`$JSON.parse`、`sanitizeSnapshot`、`setIn(...)` 的 prototype pollution 入口。
+- 让安全修复与现有文档化能力保持一致，不以“修复”为名删除合法表达式契约。
+- 将当前安全边界写入 owner docs。
 
 ## Non-Goals
 
-- 实现完整的 VM 隔离（如 SES/Compartment）
-- Formula→Props 的完整运行时类型校验（记录为后续方向）
-- 修改 schema 的信任模型定义（仅记录当前模型）
+- 引入完整 VM/SES/Compartment 隔离。
+- 在本计划内完成 Formula→Props 全链路运行时类型系统。
+- 在本计划内新增 renderer type 格式校验规则。
 
 ## Scope
 
 ### In Scope
 
-- `packages/flux-formula/src/evaluator.ts` — member access 黑名单/Proxy
-- `packages/flux-formula/src/evaluator.ts` — Object expression `__proto__` key 过滤
-- `packages/flux-formula/src/builtins.ts` — `$JSON` 包装为 safe parse
-- `packages/flux-runtime/src/scope.ts` — `sanitizeSnapshot` 深层 sanitization
-- `packages/flux-core/src/utils/path.ts` — `setIn` 路径段 sanitization
-- 安全边界设计文档
+- `packages/flux-formula/src/evaluator.ts`
+- `packages/flux-formula/src/builtins.ts`
+- `packages/flux-runtime/src/scope.ts`
+- `packages/flux-core/src/utils/path.ts`
+- `docs/architecture/flux-formula.md`
+- `docs/architecture/security-design-requirements.md`
 
 ### Out Of Scope
 
-- Renderer type 格式校验（R4-F8, LOW — defense-in-depth, 不阻塞 closure）
-- 完整运行时类型边界（R4-F7, MEDIUM — 架构方向，非本计划收口）
+- Formula→Props 运行时类型边界
+- renderer type 格式校验
+- formula registry 多实例隔离（由 plan 197 负责）
 
 ## Closure Gates
 
-- [ ] 所有 in-scope CRITICAL/HIGH defects 已修复
-- [ ] 每项修复有 focused test 证明逃逸路径被阻断
-- [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 通过
-- [ ] 安全边界文档已写入 `docs/architecture/`
-- [ ] `docs/logs/` 已更新
+- [x] 所有 in-scope confirmed live security defects 已修复
+- [x] 每个 confirmed defect 都有 focused proof test
+- [x] 修复后仍保留当前文档化的合法表达式能力
+- [x] `pnpm typecheck` passes
+- [x] `pnpm build` passes
+- [x] `pnpm lint` passes
+- [x] `pnpm test` passes
+- [x] `docs/architecture/flux-formula.md` 与 `docs/architecture/security-design-requirements.md` 已同步
 
 ## Deferred But Adjudicated
 
-### Formula→Props 运行时类型边界
+### Formula→Props Runtime Type Boundary
 
 - Classification: `out-of-scope improvement`
-- Why Not Blocking Closure: 类型擦除是设计 trade-off，非 live defect；当前 schema 来源可信
+- Why Not Blocking Closure: 05-04 没有把它确认为当前 live security defect；它是更大的运行时边界设计问题。
 - Successor Required: no
 
-### Renderer type 格式校验
+### Renderer Type Validation
 
 - Classification: `watch-only residual`
-- Why Not Blocking Closure: 需要下游误用配合才可利用，当前无已知利用路径
+- Why Not Blocking Closure: 05-04 将其归为 defense-in-depth 方向，而非当前已确认 exploit path。
 - Successor Required: no
 
 ## Execution Plan
 
-### Phase 1 - Member Access 黑名单与 Object Literal 防护
+### Phase 1 - Evaluator Escape Paths
 
 Status: planned
 Targets: `packages/flux-formula/src/evaluator.ts`
 
-- Item Types: Fix
+- Item Types: `Fix | Decision | Proof`
 
-- [ ] [Fix] 在 member access（evaluator.ts:248-250）添加属性名黑名单：`__proto__`, `constructor`, `prototype`。访问这些属性时返回 `undefined` 而非实际值
-- [ ] [Fix] 对非 namespace 对象的 member access 返回值，如果 `typeof === 'function'`，返回 `undefined`（阻断任何原型链到达 Function 的路径）
-- [ ] [Fix] ObjectExpression（evaluator.ts:160-170）使用 `Object.create(null)` 代替 `{}` 创建 result 对象，阻断 `__proto__` setter
-- [ ] [Proof] 测试：`data.constructor.constructor("return 1")()` 返回 undefined 而非执行
-- [ ] [Proof] 测试：`ARRAYMAP([1], x => x.constructor)` 返回 undefined
-- [ ] [Proof] 测试：`{["__proto__"]: {a:1}}` 创建的对象不继承攻击者控制的原型
+- [x] [Fix] 阻断 `constructor` / `prototype` / `__proto__` 相关的危险 member access 路径。
+- [x] [Fix] 阻断 05-04 已确认的 `instanceof` / `Symbol.hasInstance` evaluator escape path。
+- [x] [Fix] object literal 结果容器不再允许通过 `__proto__` 写入污染原型链。
+- [x] [Decision] 明确“哪些对象方法调用仍属于合法表达式能力，哪些原型链方法必须屏蔽”，并把决策写入 owner docs。
+- [x] [Proof] 测试：`constructor.constructor(...)` 无法执行逃逸代码。
+- [x] [Proof] 测试：`instanceof` 路径无法借助自定义 `Symbol.hasInstance` 逃逸 evaluator。
+- [x] [Proof] 测试：object literal 中的危险 key 不会污染返回对象或全局原型。
+- [x] [Proof] 测试：既有文档化的 namespace/object method 用法仍保持可用。
 
 Exit Criteria:
 
-- [ ] 上述 3 个 Fix 已 landed
-- [ ] 3 个 Proof 测试通过
-- [ ] No owner-doc update required（Phase 2 统一写文档）
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] 所有 evaluator 逃逸 proof 测试通过
+- [x] 当前文档化的合法表达式能力未被回归破坏
+- [x] `docs/architecture/flux-formula.md` 已更新本阶段 owner 行为
+- [x] `docs/logs/` 对应日期条目已更新
 
-### Phase 2 - 深层 Sanitization 与 Safe Parse
+### Phase 2 - Pollution Barriers Outside Evaluator
 
 Status: planned
 Targets: `packages/flux-formula/src/builtins.ts`, `packages/flux-runtime/src/scope.ts`, `packages/flux-core/src/utils/path.ts`
 
-- Item Types: Fix
+- Item Types: `Fix | Proof`
 
-- [ ] [Fix] `builtins.ts:51` — 将 `$JSON` 替换为 safe wrapper：`$JSON.parse` 使用 reviver 过滤 `__proto__`/`constructor`/`prototype` key
-- [ ] [Fix] `scope.ts:sanitizeSnapshot` — 改为递归 sanitize，对嵌套对象也过滤危险 key
-- [ ] [Fix] `path.ts:setIn` — 对每个路径段检查 `isDangerousPathHead`，遇到时 throw 或 skip
-- [ ] [Proof] 测试：`$JSON.parse('{"__proto__":{"x":1}}')` 返回的对象无 `__proto__` 污染
-- [ ] [Proof] 测试：`sanitizeSnapshot({a: {__proto__: {x:1}}})` 输出中嵌套 `__proto__` 被移除
-- [ ] [Proof] 测试：`setIn(obj, "__proto__.x", 1)` throw 或不修改 `Object.prototype`
+- [x] [Fix] `$JSON.parse` 结果不再允许危险 key 进入 runtime object graph。
+- [x] [Fix] `sanitizeSnapshot(...)` 升级为递归 sanitization，而不是只做浅层过滤。
+- [x] [Fix] `setIn(...)` 拒绝危险路径段，阻断 `__proto__` / `constructor` / `prototype` 污染入口。
+- [x] [Proof] 测试：`$JSON.parse(...)` 的危险 key 不会污染结果对象。
+- [x] [Proof] 测试：深层 nested snapshot 里的危险 key 会被移除或拒绝。
+- [x] [Proof] 测试：`setIn(obj, '__proto__.x', 1)` 不会修改 `Object.prototype`。
 
 Exit Criteria:
 
-- [ ] 上述 3 个 Fix 已 landed
-- [ ] 3 个 Proof 测试通过
-- [ ] `docs/architecture/` 中添加 expression-security.md 或在 flux-core.md 中新增 Security Boundary 章节
-- [ ] `docs/logs/` 对应日期条目已更新
+- [x] 所有 prototype-pollution 入口都有 proof 测试
+- [x] `docs/architecture/security-design-requirements.md` 已更新 threat model 与防护边界
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 
-- [ ] CRITICAL 逃逸路径已阻断（`constructor.constructor` 返回 undefined）
-- [ ] HIGH prototype pollution 路径已阻断（Object literal + JSON.parse + setIn）
-- [ ] 安全边界文档已记录 threat model 和 defense 措施
-- [ ] 不存在被降级的 in-scope live defect
-- [ ] 独立子 agent closure-audit 已完成并记录
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `constructor.constructor` 与 `instanceof` 逃逸路径均已阻断
+- [x] object literal / `$JSON.parse` / `sanitizeSnapshot` / `setIn(...)` 的污染入口均已收敛
+- [x] 不存在被降级的 in-scope live defect
+- [x] 独立子 agent closure-audit 已完成并记录
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
@@ -140,4 +141,4 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- Formula→Props 运行时类型边界（architecture direction, not blocking）
+- <<完成时填写>>

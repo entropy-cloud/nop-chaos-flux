@@ -297,6 +297,7 @@ UI primitive 对齐补充规则：
 - `drawer`
 - `tabs`
 - `form`
+- `fieldset`
 - `code-editor`
 - `input-text`
 - `input-email`
@@ -333,6 +334,7 @@ UI primitive 对齐补充规则：
 - `report-designer-page`
 - `report-toolbar`
 - `spreadsheet-page`
+- `word-editor-page`
 
 ### 已文档化且当前尚未实现的 retained renderer
 
@@ -407,6 +409,20 @@ UI primitive 对齐补充规则：
   - 优先仍用 `button`，通过 action 或 form 语义表达提交/重置
 - 不建议把同一概念拆成多个历史别名 type
   - 例如优先选一个正式 type，而不是长期同时保留 `qrcode`/`qr-code`、`image`/`static-image`
+
+### 坚持 Flux 收敛的高频规则
+
+- `action` / `submit` / `reset` 统一收敛到 `button`
+- `tpl` 不保留为正式 type，按语义拆分到 `text` / `markdown` / `html`
+- `hbox` / `vbox` 不保留，统一到 `flex`
+- `input-date-range` / `input-datetime-range` / `input-time-range` 不分别保留，统一到 `date-range`
+- AMIS 顶层 `editor` 的代码编辑语义不保留为正式 `editor` type，而是收敛到 `code-editor`
+- `tree` / `input-tree` / `tree-select` 分属 display renderer、embedded field、popup field 三个边界，不混成一个大组件
+- `service` 与 `data-source` 分层：`data-source` 是非视觉 source owner，`service` 是可视数据组合容器
+- 集合类字段和容器优先坚持单一正式字段，例如 `items`，避免默认引入 `itemsSource` 一类平行字段
+- `dialog` / `drawer` 共享同一个 surface runtime family；`openDialog` / `openDrawer` / `closeSurface` 是 authoring 入口，不代表第二套 runtime
+
+这些规则不是临时审计结论，而是当前 `docs/components/amis-baseline-matrix.md`、`docs/components/index.md` 与相关 owner doc 共同约束的正式文档基线。后续如果某个 retained family 要偏离这些规则，应在对应 `design.md` 里显式说明原因，而不是靠审计时重复推断。
 
 ### 从 AMIS 迁移时的简化原则
 
@@ -483,6 +499,7 @@ UI primitive 对齐补充规则：
 - `input-email/`
 - `input-password/`
 - `textarea/`
+- `fieldset/`
 - `input-number/`
 - `select/`
 - `checkbox/`
@@ -533,6 +550,7 @@ UI primitive 对齐补充规则：
 - `report-designer-page/`
 - `report-toolbar/`
 - `spreadsheet-page/`
+- `word-editor-page/`
 
 边界说明：
 

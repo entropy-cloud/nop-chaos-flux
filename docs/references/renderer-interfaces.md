@@ -280,8 +280,9 @@ Current action system supports directionally:
 - `setValue`
 - `ajax`
 - `submitForm`
-- `dialog`
-- `closeDialog`
+- `openDialog`
+- `openDrawer`
+- `closeSurface`
 - `refreshTable`
 - chaining through `then`
 - debounce and request cancellation

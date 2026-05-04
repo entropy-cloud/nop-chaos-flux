@@ -360,7 +360,7 @@ remark 和 labelRemark 默认渲染为：
 
 - 需要避免把 React 表单库生命周期重新耦合回 runtime。
 - `submitApi` 与 `data-source` 的边界需要后续文档统一，不宜各组件各说各话。
-- `fieldset` 需要在 `amis-baseline-matrix.md` 中从 `notRetained` 更新为 `targetContract`。
+- `fieldset` 已在 `amis-baseline-matrix.md` 中收口为 live retained family，后续需保持 matrix、manifest 与 form owner doc 同步。
 - `fieldset` 内部字段的 form mode 继承需要通过 React context 传播，不能在 FieldFrame 内回读 schema。
 - `hint` 和 `description` 的 schema → FieldFrame 接线需要在 `NodeFrameWrapper` 中完成，不能在 FieldFrame 内回读 schema。
 - `remark` 和 `labelRemark` 依赖 `@nop-chaos/ui` 的 Tooltip 组件，需确认组件可用。

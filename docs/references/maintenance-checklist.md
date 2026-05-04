@@ -97,7 +97,7 @@ Review:
 Examples:
 
 - changes in `packages/flux-action-core/src/action-dispatcher.ts`
-- changed `setValue`, `ajax`, `dialog`, `closeDialog`, or `refreshTable` behavior
+- changed `setValue`, `ajax`, `openDialog`, `openDrawer`, `closeSurface`, or `refreshTable` behavior
 - changed chained action context or `prevResult` flow
 
 Review:

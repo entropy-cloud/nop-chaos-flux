@@ -1,8 +1,8 @@
 # Plan Authoring And Execution Guide
 
 > Status: active workflow guide
-> Last Reviewed: 2026-05-03
-> Sources: `docs/logs/2026/03-31.md`, `docs/logs/2026/04-03.md`, `docs/logs/2026/04-04.md`, `docs/logs/2026/04-07.md`, `docs/logs/2026/04-08.md`, `docs/logs/2026/04-09.md`, `docs/logs/2026/04-10.md`
+> Last Reviewed: 2026-05-04
+> Sources: `docs/logs/2026/03-31.md`, `docs/logs/2026/04-03.md`, `docs/logs/2026/04-04.md`, `docs/logs/2026/04-07.md`, `docs/logs/2026/04-08.md`, `docs/logs/2026/04-09.md`, `docs/logs/2026/04-10.md`, `docs/logs/2026/05-04.md`
 
 ## Goal
 
@@ -31,7 +31,7 @@
 1. 写计划前先核对 live repo，再写 `Current Baseline`。
 2. 一个计划只负责一个明确结果面；过宽就拆成新 plan。
 3. 必须有 `Goals` 和 `Non-Goals`，因为历史上真正稳定的计划几乎都靠这两段防止 scope drift。
-4. 必须有 plan 级状态、execution-slice 级状态、validation checklist。
+4. 必须有 plan 级状态、execution-slice 级状态、Closure Gates。
 5. 不要求给 `Purpose`、`Scope`、`Risks` 这类说明段落单独标记完成状态。
 6. 只有当前 scope 真正完成，且 leftover 已明确移出 debt，才能标 `completed`。
 7. 旧 baseline 失效时，显式写 `Outdated Note`、`Supersession Note` 或 `replaced/superseded`，不要让多套 baseline 并存。
@@ -45,6 +45,7 @@
 15. 每个 execution item 都必须能被归类为 `Fix`、`Decision`、`Proof`、或 `Follow-up`。已确认的 live defect 或 contract drift 只能属于 `Fix`，不能降级成 `Follow-up`。
 16. 允许 deferred 的是优化项或已裁定为 non-blocking 的 residual，不允许 deferred 的是已确认且仍在 scope 内的 live defect、contract gap、owner-doc drift、以及未满足的硬门禁。
 17. 如果某个 Phase 改变了 live baseline、public contract、或 owner behavior，该 Phase 的 Exit Criteria 必须包含相应文档更新项。纯测试拆分、纯工具整理、纯内部重构可以显式写明 `No owner-doc update required`，但不能默默跳过文档裁定。
+18. **Checklist 打勾是 closure 的前置条件，不是附带动作。** 执行完一个 item 后必须立即将对应 `- [ ]` 改为 `- [x]`。标记 `Plan Status: completed` 时，文件内不得残留任何未勾选的 in-scope checklist item。如果存在未勾选项，要么完成它，要么显式移入 `Deferred But Adjudicated` 并写清原因。
 
 ## Anti-Slacking Rule
 
@@ -167,28 +168,6 @@
 - <<说明>>
 - <<说明>>
 
-## Closure Gates
-
-- [ ] <<所有 in-scope confirmed live defects 已修复>>
-- [ ] <<所有 in-scope confirmed contract drifts 已收敛>>
-- [ ] <<必要 focused verification 已完成>>
-- [ ] <<所有适用的 lint / script / CI hard gates 已通过>>
-- [ ] <<受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required>>
-
-## Deferred But Adjudicated
-
-### <<条目名称>>
-
-- Classification: `watch-only residual | optimization candidate | out-of-scope improvement`
-- Why Not Blocking Closure: <<一条明确理由>>
-- Successor Required: `yes | no`
-- Successor Path: <<如需要则填写 plan path>>
-
-## Non-Blocking Follow-ups
-
-- <<不影响当前 contract closure 的治理项或优化项>>
-- <<不影响当前 contract closure 的治理项或优化项>>
-
 ## Execution Plan
 
 <<顺序任务用 Phase；并行任务用 Workstream。二选一即可，不要求同时使用。>>
@@ -250,21 +229,37 @@ Exit Criteria:
 - [ ] <<若该 Workstream 改变 live baseline：相关 `docs/architecture/` / `docs/components/` 已更新；否则明确写 `No owner-doc update required`>>
 - [ ] `docs/logs/` 对应日期条目已更新
 
-## Validation Checklist
+## Closure Gates
 
-> **关闭条件**：只有本 section 所有条目、`Closure Gates`、以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
+> **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。关闭流程详见本 guide 的 `When Closing The Plan` 和 `Closure Audit Rule`。
 >
-> **纯文档计划**：如果计划不涉及任何代码变更（仅修改 `docs/` 下的文件），`pnpm test`、`pnpm lint`、`pnpm typecheck`、`pnpm build` 这些条目可以直接从 Validation Checklist 中删除，不需要执行。
+> **纯文档计划**：如果计划不涉及任何代码变更（仅修改 `docs/` 下的文件），`pnpm test`、`pnpm lint`、`pnpm typecheck`、`pnpm build` 这些条目可以直接从 Closure Gates 中删除，不需要执行。
 
-- [ ] <<行为/契约结果>>
-- [ ] <<相关 docs/examples 已更新>>
-- [ ] <<focused verification 已完成>>
+- [ ] <<所有 in-scope confirmed live defects 已修复>>
+- [ ] <<所有 in-scope confirmed contract drifts 已收敛>>
+- [ ] <<行为/契约结果已达成>>
+- [ ] <<必要 focused verification 已完成>>
 - [ ] <<不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift>>
+- [ ] <<受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required>>
 - [ ] <<独立子 agent / 独立审阅者 closure-audit 已完成并记录证据>>
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
+
+## Deferred But Adjudicated
+
+### <<条目名称>>
+
+- Classification: `watch-only residual | optimization candidate | out-of-scope improvement`
+- Why Not Blocking Closure: <<一条明确理由>>
+- Successor Required: `yes | no`
+- Successor Path: <<如需要则填写 plan path>>
+
+## Non-Blocking Follow-ups
+
+- <<不影响当前 contract closure 的治理项或优化项>>
+- <<不影响当前 contract closure 的治理项或优化项>>
 
 ## Closure
 
@@ -322,7 +317,7 @@ Follow-up:
 
 1. 从头重读整份 plan，不只看最近 landing 的部分。
 2. 逐条核对每个 slice 的 `Exit Criteria`。
-3. 逐条核对 `Validation Checklist`。
+3. 逐条核对 `Closure Gates`。
 4. 把剩余工作写进 `Follow-up`，明确 successor plan 或明确无剩余 debt。
 5. 明确区分“接口存在”与“行为完成”（对代码变更计划：至少抽查一轮 live code path 和 focused tests；对纯文档计划：抽查文档内容与 live repo 代码的一致性），确认实现语义真的满足 exit criteria。
 6. 由独立审阅者或独立子 agent 做 closure-audit，并在 plan 或对应 daily log 中记录证据。这里的独立子 agent 指为 closure audit 单独启动的 fresh session，而不是复用实现阶段的同一 task session 继续自查。
@@ -341,7 +336,7 @@ Follow-up:
 3. closure audit 必须由独立审阅者或独立子 agent 执行；实现者自己的 self-audit 不能单独作为 `completed` 的依据。
 4. 每个 `Phase` / `Workstream` 都必须已经是 `completed`，否则 plan 不能关闭。
 5. 如果某个 slice 的工作不再属于本 plan，先把它显式移到 successor plan 或标注取消原因，再关闭本 plan。
-6. `Validation Checklist` 中的未完成项只能保留在 plan 仍未关闭时；若计划关闭，这些项也必须完成或被移出当前 scope。
+6. `Closure Gates` 中的未完成项只能保留在 plan 仍未关闭时；若计划关闭，这些项也必须完成或被移出当前 scope。
 7. closure audit 必须抽查“关键行为是否真的被实现”，不能只因为接口、类型、方法名、或注释已经存在就判定完成。
 8. 如果 closure audit 发现 only-partial landing，必须把 plan 改成 `partially completed` 或 `in progress`，而不是勉强保留 `completed`。
 9. closure audit 必须检查 deferred / follow-up 项的分类是否诚实；已确认的 live defect、contract drift、owner-doc drift、或硬门禁失败项不能留在 non-blocking 区域。

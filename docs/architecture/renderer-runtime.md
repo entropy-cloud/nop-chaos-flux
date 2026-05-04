@@ -888,7 +888,7 @@ These callbacks are for diagnostics/tooling handoff, not normal renderer data fl
 
 - when supplied, `SchemaRenderer` uses the caller-owned `SurfaceRuntime` instead of creating a private one
 - when omitted, `SchemaRenderer` creates and owns a root `SurfaceRuntime`
-- this seam applies only to managed `openDialog` / `openDrawer` surfaces rendered through `DialogHost`
+- this seam owns the root surface-family boundary used by declarative `dialog` / `drawer` nodes and built-in `openDialog` / `openDrawer` actions, all rendered through the shared surface host stack
 
 Root uses explicit props because:
 

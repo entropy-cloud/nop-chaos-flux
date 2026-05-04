@@ -15,8 +15,8 @@ It covers:
 Historical exploration, earlier proposals, and execution notes live in:
 
 - `docs/analysis/2026-03-21-framework-debugger-design.md`
-- `docs/plans/20-nop-debugger-implementation-plan.md`
-- `docs/plans/22-debugger-node-inspector-enhancement-plan.md`
+- `docs/archive/plans/20-nop-debugger-implementation-plan.md`
+- `docs/archive/plans/22-debugger-node-inspector-enhancement-plan.md`
 
 ## Current Code Anchors
 

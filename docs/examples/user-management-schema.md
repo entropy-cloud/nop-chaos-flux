@@ -8,7 +8,7 @@ This example is intentionally small but complete.
 - form business flow is owned by the `form` node
 - submit buttons stay thin and trigger `component:submit`
 - inside a form subtree, pending UI reads the readonly `$form` binding
-- `closeDialog` uses the default nearest-dialog behavior
+- `closeSurface` uses the default current-surface behavior
 - page data updates rely on current `ajax` plus explicit follow-up write actions instead of outdated top-level write-field assumptions
 
 Covered capabilities:
@@ -24,7 +24,7 @@ Covered capabilities:
 - form-owned `submitAction`
 - `component:submit`
 - `$form`
-- `closeDialog`
+- `closeSurface`
 - `component:refresh`
 - table row `record` scope
 
@@ -114,7 +114,7 @@ Covered capabilities:
                     },
                     "onSubmitSuccess": [
                       {
-                        "action": "closeDialog"
+                        "action": "closeSurface"
                       },
                       {
                         "action": "component:refresh",
@@ -157,7 +157,7 @@ Covered capabilities:
                         "type": "button",
                         "label": "取消",
                         "onClick": {
-                          "action": "closeDialog"
+                          "action": "closeSurface"
                         }
                       },
                       {
@@ -234,7 +234,7 @@ Covered capabilities:
                             "type": "button",
                             "label": "关闭",
                             "onClick": {
-                              "action": "closeDialog"
+                              "action": "closeSurface"
                             }
                           }
                         ]

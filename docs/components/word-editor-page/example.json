@@ -1,0 +1,36 @@
+{
+  "type": "word-editor-page",
+  "title": "Word Template Designer",
+  "statusPath": "wordEditor.status",
+  "initialDocument": {
+    "header": [],
+    "main": [
+      {
+        "value": "Hello Flux"
+      }
+    ],
+    "footer": [],
+    "charts": [],
+    "codes": []
+  },
+  "datasets": [
+    {
+      "id": "users",
+      "name": "users",
+      "label": "Users",
+      "sourceType": "static",
+      "columns": [
+        {
+          "name": "name",
+          "label": "Name",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        {
+          "name": "Alice"
+        }
+      ]
+    }
+  ]
+}

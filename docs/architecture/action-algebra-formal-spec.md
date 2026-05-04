@@ -207,7 +207,7 @@ Current typed schema fields already include control-flow carriers such as:
 - `then`
 - `onError`
 
-Built-in platform actions use plain camelCase selectors such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `closeDialog`, `openDrawer`, and `showToast`.
+Built-in platform actions use plain camelCase selectors such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `openDrawer`, `closeSurface`, and `showToast`.
 
 `args` is the only author-visible payload carrier.
 

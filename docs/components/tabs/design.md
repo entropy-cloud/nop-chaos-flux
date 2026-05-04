@@ -2,7 +2,7 @@
 
 ## 1. 组件定位
 
-规划中的 `tabs` 是一个容器型 renderer，用来在同一结构节点下组织多个互斥可见的内容面板。
+`tabs` 是一个已落地的容器型 renderer，用来在同一结构节点下组织多个互斥可见的内容面板。
 
 它的职责是：
 
@@ -17,7 +17,7 @@
 
 ## 2. 设计目标
 
-当前仓库尚未注册通用 `tabs` renderer；本文档描述的是已经文档化、用于后续实现与验证的目标契约。
+当前仓库已经注册通用 `tabs` renderer；本文档描述的是当前 live contract 与后续演进边界。
 
 在 Flux 中，`tabs` 需要保留 AMIS `tabs` 的核心体验，但实现方式应服从现有架构：
 
@@ -35,22 +35,23 @@
 1. 首阶段必须支持
    - 静态 `items`
    - `value` / `defaultValue`
-   - `mountOnEnter` / `unmountOnExit`
    - `toolbar`
-   - `title`、`icon`、`disabled`
+   - `title` / `label`、`disabled`
    - `change` 事件
-   - `setValue` 动作
+   - `setValue` / `getValue` 能力
 
-2. 第二阶段建议支持
+2. 当前实现已支持或已显式保留的能力
    - `items` 的表达式或 `type: 'source'` 动态输入
+   - `tabsMode` / `sidePosition` 与 `variant` / `orientation` 的并存映射
+   - `statusPath`
+   - `valueOwnership` / `valueStatePath`
+
+3. 谨慎收敛或延后支持
    - `closable` / `remove` 事件 / `removeItem` 动作
    - `addable`
    - `draggable`
-   - `variant` / `orientation`
    - `showTooltip`
    - form 值绑定
-
-3. 谨慎收敛或延后支持
    - 双击编辑 `editable`
    - hash 与地址栏联动
    - `collapseOnExceed`
@@ -88,29 +89,30 @@
 interface TabsSchema extends BaseSchema {
   type: 'tabs';
   name?: string;
-  items?: TabItemSchema[] | SchemaValue;
+  items?: Array<Record<string, any>>;
   value?: string | number;
   defaultValue?: string | number;
-  valueMode?: 'key' | 'index' | 'value';
-  mountOnEnter?: boolean;
-  unmountOnExit?: boolean;
+  statusPath?: string;
   variant?: 'default' | 'line';
   orientation?: 'horizontal' | 'vertical';
+  tabsMode?:
+    | ''
+    | 'line'
+    | 'card'
+    | 'radio'
+    | 'vertical'
+    | 'chrome'
+    | 'simple'
+    | 'strong'
+    | 'tiled'
+    | 'sidebar';
+  sidePosition?: 'left' | 'right';
   toolbar?: SchemaInput;
-  addable?: boolean;
-  addTrigger?: SchemaInput;
-  closable?: boolean;
-  draggable?: boolean;
-  showTooltip?: boolean;
-  overflowMode?: 'wrap' | 'scroll' | 'collapse';
-  overflowCollapseLimit?: number;
-  overflowTriggerLabel?: SchemaValue;
   valueOwnership?: 'local' | 'controlled' | 'scope';
   valueStatePath?: string;
+  contentClassName?: string;
+  toolbarClassName?: string;
   onChange?: ActionSchema;
-  onRemove?: ActionSchema;
-  onAdd?: ActionSchema;
-  onReorder?: ActionSchema;
 }
 ```
 
@@ -119,11 +121,10 @@ interface TabsSchema extends BaseSchema {
 - `name` 仅在组件需要参与表单值时使用。
 - `items` 是 tabs 的唯一正式集合字段；如果需要动态值输入，应优先让 `items` 直接接收表达式结果，或在 renderer field metadata 允许时接收内联 `type: 'source'`。
 - `value` / `defaultValue` 与底层 tabs primitive 对齐，避免在 renderer、schema、UI 三层之间再制造 `activeKey` 这类同义命名。
-- `valueMode` 用来明确对外发布和比较当前 tab 值时的语义，避免把 AMIS 里“hash / index / value / title 混用”的规则继续扩大。
+- `statusPath` 当前已 live，用于发布 tabs owner 的只读摘要。
 - `valueOwnership` 复用现有 runtime ownership 设计语言，避免未来 tabs 又形成独立状态模型。
-- `variant` 与 `orientation` 对齐当前 `@nop-chaos/ui` tabs primitives 的命名，而不是继续扩散组件私有的 `tabsMode`。
+- 当前实现同时保留 `variant` / `orientation` 与 `tabsMode` / `sidePosition`。其中前者更贴近 Flux/UI primitive 命名，后者是当前 live contract 的兼容表达。
 - 如果页面需要从业务数据映射出 tabs 结构，更符合 Flux 最终模型原则的做法是由 loader 先产出最终 `items`，而不是让 `tabs` renderer 内部承担结构生成。
-- `addable`、`closable`、`draggable` 属于 tabs renderer 扩展能力，不是当前 UI primitive 的原生 prop；这里保留现有语义词，而不再额外改造成 `allowAdd`、`allowRemove`、`allowReorder`。
 
 ### 5.2 单个 tab schema
 
@@ -131,27 +132,20 @@ interface TabsSchema extends BaseSchema {
 interface TabItemSchema extends BaseSchemaWithoutType {
   key?: string | number;
   value?: string | number;
-  title?: SchemaValue | SchemaInput;
-  icon?: SchemaValue;
-  iconPosition?: 'left' | 'right';
-  badge?: SchemaValue;
-  disabled?: SchemaValue;
-  closable?: SchemaValue;
-  routeFragment?: string;
-  mountOnEnter?: boolean;
-  unmountOnExit?: boolean;
-  body?: SchemaInput;
-  toolbar?: SchemaInput;
-  className?: string;
+  title?: string;
+  label?: string;
+  disabled?: boolean | string;
+  titleRegionKey?: string;
+  bodyRegionKey?: string;
+  toolbarRegionKey?: string;
 }
 ```
 
 收敛规则：
 
-- 用 `body` 作为规范内容字段，不再引入 AMIS 兼容字段 `tab`。
-- `title` 采用 `value-or-region`，允许简单字符串，也允许 schema 片段。
-- `key` 是首选的稳定标识；`routeFragment` 只在需要 URL 联动时使用，不能替代内部主键语义。
-- item 级挂载策略优先复用 `mountOnEnter` / `unmountOnExit`，而不是再引入额外的 `lazy`、`keepAlive` 私有命名。
+- 当前 live item 结构通过 `titleRegionKey`、`bodyRegionKey`、`toolbarRegionKey` 把 item 内部 region 显式编译成命名 handle；renderer 不直接回收原始子 schema。
+- `title` 与 `label` 当前都可作为静态标题来源，最终显示值按 `titleRegion -> title -> label -> value` 的顺序回退。
+- `key` / `value` 共同参与激活值解析，当前实现优先 `value ?? key ?? index`。
 
 ## 6. 字段分类
 
@@ -165,21 +159,21 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 | `defaultValue` | value                                | 初始化默认值，对齐 UI primitive 的 defaultValue                                             |
 | `items`        | ignored 或 renderer-owned deep field | renderer 自身按 item 子结构协议解释；如需表达式或 source 输入，需要显式定义该字段的解析策略 |
 | `toolbar`      | region                               | 顶部工具栏区域                                                                              |
-| `addTrigger`   | region                               | 自定义新增入口区域                                                                          |
 | `onChange`     | event                                | tab 切换动作                                                                                |
-| `onRemove`     | event                                | tab 移除动作                                                                                |
-| `onAdd`        | event                                | 新增动作                                                                                    |
-| `onReorder`    | event                                | 重排动作                                                                                    |
+| `statusPath`   | value                                | 发布只读状态摘要                                                                            |
+| `tabsMode`     | value                                | 当前 live 的视觉模式输入                                                                    |
+| `sidePosition` | value                                | 当前 live 的 sidebar 方向补充                                                               |
 
 单个 `TabItemSchema` 的关键字段：
 
-| 字段       | 语义            | 说明                   |
-| ---------- | --------------- | ---------------------- |
-| `title`    | value-or-region | 文本标题或 schema 标题 |
-| `body`     | region          | 面板内容               |
-| `toolbar`  | region          | tab 级附加操作         |
-| `disabled` | value           | 可为表达式             |
-| `closable` | value           | item 优先级高于组件级  |
+| 字段               | 语义       | 说明                    |
+| ------------------ | ---------- | ----------------------- |
+| `title`            | value      | 静态标题文本            |
+| `label`            | value      | 兼容静态标题别名        |
+| `titleRegionKey`   | region key | 指向标题 region handle  |
+| `bodyRegionKey`    | region key | 指向内容 region handle  |
+| `toolbarRegionKey` | region key | 指向 item 工具区 handle |
+| `disabled`         | value      | 可为表达式              |
 
 `items` 数组本身不适合简单作为普通 `prop`。推荐为 `items` 增加专门的 renderer-level 解析流程：
 
@@ -192,16 +186,14 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 建议 `tabs` renderer 暴露以下命名区域：
 
 - `toolbar`：tabs 顶栏右侧或上侧工具区
-- `addTrigger`：自定义新增入口
-- `items[].title`：仅当标题为 schema 时形成匿名 title region
-- `items[].body`：每个 tab 的内容 region
-- `items[].toolbar`：单个 tab 头部右侧补充能力
+- `items[].titleRegionKey`：标题 region handle
+- `items[].bodyRegionKey`：内容 region handle
+- `items[].toolbarRegionKey`：tab 级工具区 region handle
 
 实现建议：
 
-- 顶层 `toolbar`、`addTrigger` 可直接走标准 region。
-- `items[].body` 属于 item 内部 region，应在 tabs item 规范化阶段为每个 item 创建 render handle。
-- `items[].title` 如为 schema，也应编译为 region，而不是让 renderer 直接拿原始 schema 再次递归。
+- 顶层 `toolbar` 直接走标准 region。
+- `items[].bodyRegionKey` / `items[].titleRegionKey` / `items[].toolbarRegionKey` 由编译期或 schema 规范化阶段产出，运行期只按 key 读取 `props.regions[...]`。
 
 这与 `docs/architecture/field-metadata-slot-modeling.md` 的原则一致：renderer 只消费规范化后的 `props` 和 `regions`。
 
@@ -298,21 +290,15 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 ## 11. 事件设计
 
-建议最小事件集：
+当前 live 事件集：
 
-| 事件      | 参数                           | 说明         |
-| --------- | ------------------------------ | ------------ |
-| `change`  | `value`, `index`, `item`       | 激活项变化   |
-| `remove`  | `key`, `index`, `item`         | 移除 tab     |
-| `add`     | `index?`                       | 请求新增 tab |
-| `reorder` | `fromIndex`, `toIndex`, `item` | 重排 tab     |
+| 事件     | 参数             | 说明       |
+| -------- | ---------------- | ---------- |
+| `change` | `value`, `index` | 激活项变化 |
 
 建议事件字段命名：
 
 - `onChange`
-- `onRemove`
-- `onAdd`
-- `onReorder`
 
 事件 payload 应直接走 Flux `ActionSchema` 事件分发，不需要保留 AMIS 的字符串脚本 `onSelect: "alert(key)"` 形式。
 
@@ -322,12 +308,9 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 ### 12.1 声明式动作
 
-建议支持：
+当前 live 声明式能力：
 
 - `component:setValue`
-- `component:removeItem`
-- `component:addItem`
-- `component:moveItem`
 
 示例：
 
@@ -343,31 +326,22 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 ### 12.2 组件句柄能力
 
-建议 `tabs` 注册如下 capability：
+当前 live capability：
 
 - `component:setValue`
 - `component:getValue`
-- `component:getItems`
-- `component:addItem`
-- `component:removeItem`
-- `component:moveItem`
 
 这与 `docs/architecture/action-scope-and-imports.md`、`docs/architecture/component-resolution.md` 的组件定向调用模型一致。
 
 ## 13. 表单集成
 
-当声明 `name` 时，`tabs` 可以作为一个轻量表单字段参与表单值同步，但需要明确规则。
+当前 live runtime 仍以 interaction owner 为主，尚未提供专门的 tabs 表单值投影 contract。
 
-建议：
+建议边界：
 
-- `valueMode: 'key'` 时，表单值取当前 tab 的 `key`
-- `valueMode: 'index'` 时，取当前索引
-- `valueMode: 'value'` 时，取 item 的 `value`
-- 默认建议为 `key`
-
-不建议继续沿用 AMIS 的“没配 value 就提交 title”。原因是标题是展示文案，不是稳定业务值。
-
-如果 `tabs` 仅用于布局切换，不建议默认参与表单；必须显式提供 `name` 才接入表单运行时。
+- `tabs` 当前应优先视为布局/交互容器，而不是表单字段
+- 如果后续要接入 form runtime，应显式补文档与实现，而不是继续沿用 AMIS 的“默认把 active tab 当字段值”规则
+- 不建议把标题文案当提交值；稳定业务值仍应优先来自 `value` / `key`
 
 ## 14. 样式与 DOM 约定
 
@@ -452,7 +426,7 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 1. 不直接复制 AMIS 的 `tab` 字段，统一收敛到 `body`
 2. 不保留字符串脚本式 `onSelect`，统一走 Flux `ActionSchema`
 3. 不默认把 title 当提交值，避免展示文案和业务值耦合
-4. 不把 `tabsMode` 直接搬进正式契约，改用 `variant` + `orientation` + `overflowMode`
+4. 当前 live contract 保留 `tabsMode` / `sidePosition`，但后续若继续收敛，优先朝 `variant` + `orientation` 靠拢，而不是反向扩大 AMIS mode 名称
 5. 直接映射到底层 UI primitive 的字段优先沿用其现有命名，如 `value` / `defaultValue` / `orientation`
 6. `addable`、`closable`、`draggable` 作为 renderer 扩展能力保留语义原名，不额外改造成 `allowXxx`
 7. 对外部驱动优先提供 component handle capability，而不是暴露 React ref
@@ -461,24 +435,24 @@ interface TabItemSchema extends BaseSchemaWithoutType {
 
 下表仅用于迁移和参考，不代表 Flux 正式契约保留这些旧字段。
 
-| AMIS 字段          | Flux 建议字段                              | 说明                                                                                            |
-| ------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `tabs`             | `items`                                    | 集合统一命名                                                                                    |
-| `source`           | 不作为首选正式字段                         | 优先让 `items` 直接承载最终数组值；如需动态来源，走 `${expr}` 或 field-enabled `type: 'source'` |
-| `activeKey`        | `value`                                    | 与底层 tabs primitive 对齐                                                                      |
-| `defaultKey`       | `defaultValue`                             | 与底层 tabs primitive 对齐                                                                      |
-| `tabsMode`         | `variant` + `orientation` + `overflowMode` | 视觉与布局语义拆开                                                                              |
-| `sidePosition`     | 暂不作为基础契约                           | 首版不提前固化右侧标签栏                                                                        |
-| `addable`          | `addable`                                  | 保留 renderer 扩展能力语义名                                                                    |
-| `closable`         | `closable`                                 | 组件级与 item 级都沿用同词根                                                                    |
-| `draggable`        | `draggable`                                | 保留现有交互能力语义                                                                            |
-| `showTip`          | `showTooltip`                              | 避免缩写风格扩散                                                                                |
-| `collapseOnExceed` | `overflowCollapseLimit`                    | 归入 overflow 语义组                                                                            |
-| `collapseBtnLabel` | `overflowTriggerLabel`                     | 归入 overflow 语义组                                                                            |
-| `hash`             | `routeFragment`                            | 避免 URL 原始实现细节直接进入主契约                                                             |
-| `tab`              | `body`                                     | 统一内容字段                                                                                    |
-| `changeActiveKey`  | `component:setValue`                       | 与底层 value 语义对齐                                                                           |
-| `deleteTab`        | `component:removeItem`                     | 集合项操作统一语言                                                                              |
+| AMIS 字段          | Flux 建议字段                                                | 说明                                                                                            |
+| ------------------ | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `tabs`             | `items`                                                      | 集合统一命名                                                                                    |
+| `source`           | 不作为首选正式字段                                           | 优先让 `items` 直接承载最终数组值；如需动态来源，走 `${expr}` 或 field-enabled `type: 'source'` |
+| `activeKey`        | `value`                                                      | 与底层 tabs primitive 对齐                                                                      |
+| `defaultKey`       | `defaultValue`                                               | 与底层 tabs primitive 对齐                                                                      |
+| `tabsMode`         | `tabsMode`（live），后续可渐进收敛到 `variant`/`orientation` | 当前代码已实现并消费                                                                            |
+| `sidePosition`     | `sidePosition`（live）                                       | 当前代码已实现 sidebar 方向补充                                                                 |
+| `addable`          | future `addable`                                             | 当前 live 未实现                                                                                |
+| `closable`         | future `closable`                                            | 当前 live 未实现                                                                                |
+| `draggable`        | future `draggable`                                           | 当前 live 未实现                                                                                |
+| `showTip`          | future `showTooltip`                                         | 当前 live 未实现                                                                                |
+| `collapseOnExceed` | future overflow-related contract                             | 当前 live 未实现                                                                                |
+| `collapseBtnLabel` | future overflow-related contract                             | 当前 live 未实现                                                                                |
+| `hash`             | future route/deep-link contract                              | 当前 live 未实现                                                                                |
+| `tab`              | compiled `bodyRegionKey` / region handle                     | 当前 live 通过 region key 消费内容                                                              |
+| `changeActiveKey`  | `component:setValue`                                         | 与底层 value 语义对齐                                                                           |
+| `deleteTab`        | future `component:removeItem`                                | 当前 live 未实现                                                                                |
 
 ## 19. 与架构文档的关系
 

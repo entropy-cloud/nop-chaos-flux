@@ -476,4 +476,4 @@ This document's primary role is the target architecture contract, not a historic
 
 - `docs/architecture/complex-control-host-protocol.md` — 跨域共享协议
 - `docs/architecture/flow-designer/runtime-snapshot.md` — Flow Designer host scope 参考实现
-- `docs/plans/33-complex-control-platform-convergence-refactor-plan.md` — Phase 3 执行计划
+- `docs/archive/plans/33-complex-control-platform-convergence-refactor-plan.md` — Phase 3 执行计划

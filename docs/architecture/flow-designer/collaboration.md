@@ -417,7 +417,7 @@ toolbar or quick action
   -> dialog body rendered by RenderNodes
   -> confirm button dispatches designer:deleteNode or designer:deleteEdge
   -> provider -> command adapter -> core mutation
-  -> built-in closeDialog closes dialog
+  -> built-in closeSurface closes the current surface
 ```
 
 这说明:

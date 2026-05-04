@@ -55,11 +55,9 @@
 | `navigate`      | `args`                    | none                                                                            | canonical    | 推荐写 `args`                                                                                                                                                                                                              |
 | `ajax`          | `args`                    | none                                                                            | canonical    | `args` 必须是 `ApiSchema`；ajax action 自身不再声明独立 `dataPath` targeting 字段                                                                                                                                          |
 | `submitForm`    | none                      | implicit `ctx.form`; `formId` resolves through component registry when provided | no payload   | Dispatcher and runtime share the same baseline: when `formId` is provided, the action targets that form even without a local `ctx.form`. When not provided, it uses `ctx.form`. Failure to resolve returns explicit error. |
-| `openDialog`    | `args`                    | implicit `ctx.surfaceRuntime`                                                   | canonical    | `args` 承载 dialog surface payload                                                                                                                                                                                         |
-| `openDrawer`    | `args`                    | none                                                                            | canonical    | `args` 承载 drawer surface payload                                                                                                                                                                                         |
-| `closeDialog`   | none                      | `dialogId` optional                                                             | no payload   | 主要是无 payload + optional targeting                                                                                                                                                                                      |
-| `closeDrawer`   | none                      | `dialogId` optional, else current context                                       | no payload   | 当前实现实际也复用了 `dialogId` carrier                                                                                                                                                                                    |
-| `closeSurface`  | none                      | `surfaceId` optional, else current context                                      | no payload   | 显式 surface close builtin                                                                                                                                                                                                 |
+| `openDialog`    | `args`                    | implicit `ctx.surfaceRuntime`                                                   | canonical    | `args` 承载 dialog public DSL 对应的 surface payload                                                                                                                                                                       |
+| `openDrawer`    | `args`                    | implicit `ctx.surfaceRuntime`                                                   | canonical    | `args` 承载 drawer public DSL 对应的 surface payload                                                                                                                                                                       |
+| `closeSurface`  | none                      | `surfaceId` optional, else current context                                      | no payload   | 正式 surface-family close builtin；默认关闭当前 surface                                                                                                                                                                    |
 | `refreshTable`  | none                      | implicit `ctx.page`                                                             | no payload   | 更像 semantic entry，不需要 `args`                                                                                                                                                                                         |
 | `refreshSource` | none                      | `targetId`                                                                      | no payload   | runtime-owned source entry，targeting 独立存在                                                                                                                                                                             |
 | `setValue`      | `args: { path?, value }`  | `componentId` / `formId`                                                        | canonical    | When `formId` is provided and resolves, targets that form. When `formId` is provided but doesn't resolve, returns error. When `formId` is not provided, writes to `ctx.scope.update`.                                      |
@@ -231,13 +229,13 @@
 2. `{ action: 'setValues', args: { values: { 'user.name': 'Alice', 'user.role': 'admin' } } }`
 3. `{ action: 'setValues', args: { path: 'user', values: { name: 'Alice', role: 'admin' } } }`
 
-### `closeDialog`/`closeDrawer`/`refreshTable`
+### `closeSurface`/`refreshTable`
 
 **Decision**: 这些 action 保持现状
 
 **Rationale**:
 
-- `closeDialog`/`closeDrawer` 几乎无 payload，主要是 targeting（`dialogId`）
+- `closeSurface` 几乎无 payload，主要是 targeting（`surfaceId`）
 - `refreshTable` 无 payload，只有 implicit targeting（`ctx.page`）
 
 ## Immediate Conclusions
@@ -252,8 +250,13 @@
    - `openDialog` → `args: DialogOpenArgs`
    - `openDrawer` → `args: DrawerOpenArgs`
 3. `submitForm` 是无 payload 的语义型 built-in action，不应再按 `ajax` 的 `args: ApiSchema` 路线理解。
-4. 无 payload 的 built-in action 仍然存在，例如 `closeDialog`、`closeDrawer`、`closeSurface`、`refreshTable`。
+4. 无 payload 的 built-in action 仍然存在，例如 `closeSurface`、`refreshTable`。
 5. write action 的 payload baseline 已统一为 `args`，但它们仍使用窄 DTO，而不是自由 map payload。
+
+Compatibility note:
+
+- `closeDialog` / `closeDrawer` may still exist in live code as compatibility aliases
+- active authoring and owner docs should treat `closeSurface` as the only formal close baseline
 
 ## Related Documents
 

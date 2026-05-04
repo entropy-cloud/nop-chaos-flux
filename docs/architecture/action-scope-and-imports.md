@@ -42,7 +42,8 @@ The current action model is effective for platform actions such as:
 - `setValue`
 - `ajax`
 - `openDialog`
-- `closeDialog`
+- `openDrawer`
+- `closeSurface`
 - `refreshTable`
 - `submitForm`
 
@@ -468,7 +469,7 @@ Do not make the design depend on implicit bare action names like `save` or `vali
 
 For clarity, the runtime action namespace separator is `:` for dispatched action names such as `designer:addNode`, `report-designer:preview`, and `demo:open`.
 
-Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `dialog`, `openDialog`, `closeSurface`, `openDrawer`, and `showToast`.
+Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `openDrawer`, `closeSurface`, and `showToast`.
 
 Schema authoring preference:
 
@@ -476,6 +477,8 @@ Schema authoring preference:
 - `dialog` remains supported for compatibility but should be treated as a legacy alias.
 - Both names resolve to the same runtime behavior; this is a naming convention choice, not a functional difference.
 - When writing new examples or shared schema libraries, use `openDialog` consistently.
+- New schema should prefer `openDrawer` for opening drawers.
+- `drawer` remains supported for compatibility but should be treated as a legacy alias.
 - New schema should prefer `closeSurface` for closing the current surface. `closeDialog` and `closeDrawer` remain compatibility aliases.
 
 Compatibility note:
@@ -591,18 +594,7 @@ For expressions evaluated inside `then` and `onError`, the reserved branch-resul
 
 These names are reserved for chained-action evaluation. They are not ordinary `ScopeRef` data and must not be modeled as ambient host or page scope fields.
 
-In practice this means both of the following are valid today:
-
-```json
-{
-  "action": "designer:addNode",
-  "nodeType": "task",
-  "position": {
-    "x": 160,
-    "y": 120
-  }
-}
-```
+In practice this means payload should be authored under `args`:
 
 ```json
 {
@@ -756,7 +748,7 @@ The important rule is that `submit`, `validate`, `reset`, and `setValue` are exp
 
 ### Purpose
 
-`xui:actions` provides schema-local named action chain definitions. It solves action chain duplication in JSON schema: when multiple buttons or events share the same action chain (e.g., validate → submit → closeDialog), authors currently must inline the full chain at each usage point.
+`xui:actions` provides schema-local named action chain definitions. It solves action chain duplication in JSON schema: when multiple buttons or events share the same action chain (e.g., validate → submit → closeSurface), authors currently must inline the full chain at each usage point.
 
 With `xui:actions`, the chain is defined once and referenced by name:
 
@@ -768,7 +760,7 @@ With `xui:actions`, the chain is defined once and referenced by name:
       "action": "validate",
       "then": {
         "action": "app:submitOrder",
-        "then": { "action": "closeDialog" }
+        "then": { "action": "closeSurface" }
       }
     },
     "saveDraft": {
@@ -793,7 +785,7 @@ Any schema node may carry `xui:actions`, not just the root. Child nodes inherit 
 {
   "type": "page",
   "xui:actions": {
-    "refresh": { "action": "refreshSource", "args": { "targetId": "mainData" } }
+    "refresh": { "action": "refreshSource", "targetId": "mainData" }
   },
   "body": [
     {
@@ -879,14 +871,14 @@ This means `xui:actions` compiles down to the same `ActionScope` registration me
       "then": {
         "action": "ajax",
         "args": { "url": "mutation://orders" },
-        "then": { "action": "closeDialog" }
+        "then": { "action": "closeSurface" }
       }
     }
   }
 }
 ```
 
-The built-in actions (`validate`, `ajax`, `closeDialog`) remain platform semantics. `xui:actions` simply gives them a reusable name in the schema.
+The built-in actions (`validate`, `ajax`, `closeSurface`) remain platform semantics. `xui:actions` simply gives them a reusable name in the schema.
 
 ### Naming Restrictions
 

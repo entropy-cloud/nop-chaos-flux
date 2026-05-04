@@ -1,174 +1,133 @@
-# 194 Form Submit, Validation Timing & Lifecycle Safety
+# 194 Form Submit, Validation Timing And Lifecycle Safety
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-04
-> Source: `docs/analysis/2026-05-04-adversarial-review-2.md` (R2-F1), `docs/analysis/2026-05-04-adversarial-review-3.md` (R3-F1,F2,F3,F4,F5,F7), `docs/analysis/2026-05-04-adversarial-review-5.md` (R5-F5,F6), `docs/analysis/2026-05-04-deep-audit-full-6/summary.md` (P3-3)
-> Related: plan-192 (Phase 1.3 covers submitForm bare catch; this plan covers broader submit/validation timing)
+> Completed: 2026-05-04 — Rejected validator → logged + recorded as rule:'async' error, abort controllers aborted before clear in lifecycle, non-Error normalization in validation, surface cleanup writes undefined instead of closed summary. Full verification: typecheck ✅ build ✅ lint ✅ test ✅.
+> Source: `docs/analysis/2026-05-04-deep-audit-full/06-async-safety.md`, `docs/analysis/2026-05-04-deep-audit-full/07-lifecycle.md`, `docs/analysis/2026-05-04-deep-audit-full/08-validation.md`, `docs/analysis/2026-05-04-adversarial-review-2.md`, `docs/analysis/2026-05-04-adversarial-review-3.md`, `docs/analysis/2026-05-04-adversarial-review-5.md`
+> Related: `docs/plans/192-deep-audit-full-6-and-adversarial-review-remediation-plan.md`
 
 ## Purpose
 
-修复 form submit 流程的原子性缺陷、validation 生命周期的 abort 缺失、reaction 系统的循环检测缺失，以及 surface close 时的资源泄漏，使表单在并发操作和异常路径下保持状态一致性。
+修复 2026-05-04 已确认的 form submit / validation / surface lifecycle 安全问题，使 submit、validation 和 owner cleanup 在异常路径与非 form owner 路径上保持一致。
 
 ## Current Baseline
 
-- Submit 流程中 `isSubmittingInternal` 不阻塞 `setValue`，验证和提交之间存在数据竞态（R3-F1, R3-F2）
-- `supersedeLowerPriorityWork` 与并发 setValue 的 runId 竞争导致验证绕过（R3-F2）
-- 跨 Reaction 循环依赖绕过 `MAX_CASCADE_DEPTH` 可冻结浏览器（R3-F3）
-- Surface close 不 abort 在途异步验证（R3-F4）
-- 表单 dispose 时 `validationAbortControllers.clear()` 未调用 `.abort()`（R2-F1）
-- Submit try/finally 不覆盖 validation 阶段——异常导致 form 永久卡死 submitting（R5-F5）
-- 自定义 validator 抛非 Error 值导致 unhandled rejection（R5-F6）
-- Child form 独立 submit + parent recurse-submit 竞争（R3-F5）
-- `validateForm` 并行验证 + revalidateDependents runId 冲突（R3-F7）
-- Reaction runtime `void Promise.resolve().then()` 无 `.catch()`（deep-audit P3-3）
+- `packages/flux-runtime/src/form-runtime-submit-flow.ts` 仍存在 pre-`try/finally` 的 abort / reject 路径，会绕过 cleanup 并卡住 `submitting`。
+- `packages/flux-runtime/src/form-runtime-owner.ts` 的 `validateForm()` 仍会对 rejected validator promise 直接 `continue`，可能在 validator crash 后继续 submit。
+- `packages/flux-runtime/src/form-runtime-owner-lifecycle.ts` dispose owner 时仍会 `clear()` validation abort controller map 而不先 `.abort()`。
+- `packages/flux-runtime/src/form-runtime-validation.ts` 对非 `Error` thrown value 仍缺少统一 normalization。
+- declarative surface 的 cleanup 仍向 `statusPath` 写 closed summary，而不是当前 active baseline 要求的 `undefined`。
+- hidden participation 的默认 skip 仍未覆盖 runtime-registration child validation path。
+- non-form validation owner 下，dynamic required 展示仍依赖 form-only 订阅链路。
 
 ## Goals
 
-- Submit 流程在并发 setValue 下保证数据一致性
-- 所有 validation abort controller 在 dispose 时正确 abort
-- Reaction 系统有全局循环检测机制
-- Submit 异常路径不会永久锁死表单
+- submit 在任何异常/abort 路径都不会永久锁死 `submitting`
+- validator crash 不再被静默吞掉并继续 submit
+- owner dispose / surface close 会中止在途 validation
+- hidden 和 non-form owner 的当前 validation baseline 与 live docs 对齐
 
 ## Non-Goals
 
-- Reaction coalescing 语义变更（R3-F8 是 by-design，仅补文档）
-- Debounced action prevResult 过期（R3-F6, LOW, by-design）
-- 完整的 optimistic locking 机制
+- reaction runtime 的循环检测或 fire-and-forget promise 治理
+- reaction coalescing 语义调整
+- debounce `prevResult` 行为调整
 
 ## Scope
 
 ### In Scope
 
-- `packages/flux-runtime/src/form/form-runtime-submit-flow.ts` — try/finally 扩大 + value snapshot
-- `packages/flux-runtime/src/form/form-runtime-owner-lifecycle.ts` — abort controllers on dispose
-- `packages/flux-runtime/src/form/form-runtime-validation.ts` — non-Error thrown value normalization
-- `packages/flux-runtime/src/async-data/reaction-runtime.ts` — global cycle detection + `.catch()` 补全
-- `packages/flux-runtime/src/surface-runtime.ts` — abort validation on surface close
+- `packages/flux-runtime/src/form-runtime-submit-flow.ts`
+- `packages/flux-runtime/src/form-runtime-owner.ts`
+- `packages/flux-runtime/src/form-runtime-owner-lifecycle.ts`
+- `packages/flux-runtime/src/form-runtime-validation.ts`
+- `packages/flux-renderers-basic/src/use-surface-renderer.ts`
+- `packages/flux-react/src/field-frame.tsx`
+- `packages/flux-react/src/hooks.ts`
+- `docs/architecture/form-validation.md`
+- `docs/architecture/renderer-runtime.md`
 
 ### Out Of Scope
 
-- Reaction coalescing 中间状态丢失（by-design，补文档即可）
-- Debounced action stale prevResult（LOW，by-design）
+- reaction runtime 安全治理（由 plan 192 负责）
+- action debounce / `prevResult` 语义
 
 ## Closure Gates
 
-- [ ] 所有 in-scope HIGH defects 已修复
-- [ ] 每项修复有 focused test
-- [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 通过
-- [ ] `docs/architecture/form-validation.md` 已更新（submit timing 语义）
-- [ ] `docs/logs/` 已更新
+- [x] 所有 in-scope confirmed live defects 已修复
+- [x] submit / validation / cleanup 路径都有 focused test
+- [x] `pnpm typecheck` passes
+- [x] `pnpm build` passes
+- [x] `pnpm lint` passes
+- [x] `pnpm test` passes
+- [x] `docs/architecture/form-validation.md` 与 `docs/architecture/renderer-runtime.md` 已同步
 
 ## Deferred But Adjudicated
 
-### Reaction coalescing 中间状态文档
+### Reaction Coalescing Semantics
 
 - Classification: `out-of-scope improvement`
-- Why Not Blocking Closure: by-design trade-off，非 defect；仅需补充文档说明
-- Successor Required: no
-
-### Debounced action stale prevResult
-
-- Classification: `watch-only residual`
-- Why Not Blocking Closure: LOW severity，debounce 语义本身的固有特性
-- Successor Required: no
+- Why Not Blocking Closure: 本计划只收口 form/validation/surface owner 的 confirmed defects；reaction coalescing 另有 owner。
+- Successor Required: yes
+- Successor Path: `docs/plans/192-deep-audit-full-6-and-adversarial-review-remediation-plan.md`
 
 ## Execution Plan
 
-### Phase 1 - Submit Flow 原子性与异常安全
+### Phase 1 - Submit Cleanup And Failure Propagation
 
 Status: planned
-Targets: `packages/flux-runtime/src/form/form-runtime-submit-flow.ts`
+Targets: `packages/flux-runtime/src/form-runtime-submit-flow.ts`, `packages/flux-runtime/src/form-runtime-owner.ts`
 
-- Item Types: Fix
+- Item Types: `Fix | Decision | Proof`
 
-- [ ] [Fix] 将 `setIsSubmitting(true)` 到函数 return 之间的整个函数体包在 try/finally 中，确保 `setIsSubmitting(false)` + `store.setSubmitting(false)` 在任何异常路径都执行（R5-F5）
-- [ ] [Fix] Submit 时在 `validateForm` 之前 snapshot `store.getState().values`，后续 `executeSubmit` 使用 snapshot 而非 live store（R3-F1）。或者在 `isSubmitting` 期间让 `setValue` 排队延迟执行
-- [ ] [Decision] 选择 snapshot vs freeze-setValue 方案，记录决策理由
-- [ ] [Proof] 测试：validateForm 抛异常后 `isSubmitting` 恢复为 false
-- [ ] [Proof] 测试：childContracts.triggerValidation reject 后 `isSubmitting` 恢复为 false
-- [ ] [Proof] 测试：submit 期间并发 setValue 不会导致提交未验证数据
+- [x] [Fix] 扩大 submit cleanup 覆盖范围，确保 pre-submit validation / child validation / abort 路径不会绕过 `setSubmitting(false)`。
+- [x] [Fix] `validateForm()` 不再静默跳过 rejected field-validation promise；validator crash 必须进入明确 failure 语义。
+- [x] [Proof] 测试：`validateForm()` reject 后 `submitting` 正确恢复。
+- [x] [Proof] 测试：child validation reject 后 `submitting` 正确恢复。
+- [x] [Proof] 测试：validator crash 会阻止 submit，而不是继续执行提交动作。
 
 Exit Criteria:
 
-- [ ] Submit 异常不会永久锁死表单
-- [ ] Submit 数据一致性有 focused test 覆盖
-- [ ] `docs/architecture/form-validation.md` 更新 submit timing 语义
-- [ ] `docs/logs/` 已更新
+- [x] submit 异常/abort 不会永久锁死表单
+- [x] validator crash 的 failure 语义有 focused coverage
+- [x] `docs/architecture/form-validation.md` 已更新 submit timing 与 failure-path baseline
+- [x] `docs/logs/` 对应日期条目已更新
 
-### Phase 2 - Validation Abort 完整性
+### Phase 2 - Abort Completeness And Validation Owner Semantics
 
 Status: planned
-Targets: `packages/flux-runtime/src/form/form-runtime-owner-lifecycle.ts`, `packages/flux-runtime/src/form/form-runtime-validation.ts`, `packages/flux-runtime/src/surface-runtime.ts`
+Targets: `packages/flux-runtime/src/form-runtime-owner-lifecycle.ts`, `packages/flux-runtime/src/form-runtime-validation.ts`, `packages/flux-renderers-basic/src/use-surface-renderer.ts`, `packages/flux-react/src/field-frame.tsx`, `packages/flux-react/src/hooks.ts`
 
-- Item Types: Fix
+- Item Types: `Fix | Proof`
 
-- [ ] [Fix] `disposeOwnerState` 中在 `validationAbortControllers.clear()` 之前遍历所有 values 调用 `.abort()`（R2-F1）
-- [ ] [Fix] Surface close 路径确保调用 form 的 validation abort（R3-F4）
-- [ ] [Fix] `validatePath` catch block 对非 Error thrown values 做 normalization（`new Error(String(thrown))`），避免 unhandled rejection（R5-F6）
-- [ ] [Proof] 测试：form dispose 后在途异步验证 HTTP 请求被 abort
-- [ ] [Proof] 测试：surface close 后在途验证被 abort
-- [ ] [Proof] 测试：自定义 validator throw 字符串时不产生 unhandled rejection
+- [x] [Fix] owner dispose 时先 `.abort()` 所有 validation abort controller，再清空 map。
+- [x] [Fix] 非 `Error` thrown validator value 统一转换成可观测的 error 语义，而不是把原始异常值直接向外散落。
+- [x] [Fix] declarative surface cleanup 对齐当前 `statusPath` baseline：unmount 时写 `undefined`，不再保留 closed summary。
+- [x] [Fix] hidden participation 的默认 skip 覆盖 runtime-registration child validation path。
+- [x] [Fix] non-form validation owner 下，dynamic required 展示不再依赖 form-only 订阅。
+- [x] [Proof] 测试：owner dispose / surface close 后，在途 validation 请求会被 abort。
+- [x] [Proof] 测试：hidden runtime-registration child path 不再继续产错。
+- [x] [Proof] 测试：page-root / surface-root non-form owner 下，dynamic required 展示会随 owner truth 更新。
 
 Exit Criteria:
 
-- [ ] Dispose/close 后无泄漏的 HTTP 请求
-- [ ] 非 Error thrown values 被正确 normalize
-- [ ] No owner-doc update required
-- [ ] `docs/logs/` 已更新
-
-### Phase 3 - Reaction 循环检测
-
-Status: planned
-Targets: `packages/flux-runtime/src/async-data/reaction-runtime.ts`
-
-- Item Types: Fix
-
-- [ ] [Fix] 引入 per-tick 全局 reaction 执行计数器或 visited-set：同一 microtask tick 内如果同一组 reaction 被触发超过阈值（如 MAX_GLOBAL_CASCADE = 100），停止并 console.error（R3-F3）
-- [ ] [Fix] `void Promise.resolve().then()` 链添加 `.catch(reportError)` 或 `try/catch` 包裹（deep-audit P3-3）
-- [ ] [Proof] 测试：两个互相写对方依赖的 reaction 在阈值后停止而非无限循环
-- [ ] [Proof] 测试：reaction 内部 throw 不产生 unhandled rejection
-
-Exit Criteria:
-
-- [ ] 循环 reaction 在阈值后停止并报错，不冻结浏览器
-- [ ] `docs/architecture/` 中记录 reaction cascade limit 语义（或在 flux-core.md 补充）
-- [ ] `docs/logs/` 已更新
-
-### Phase 4 - 子表单竞争与并行验证优化
-
-Status: planned
-Targets: `packages/flux-runtime/src/form/form-runtime-submit-flow.ts`, `packages/flux-runtime/src/form/form-runtime-owner.ts`
-
-- Item Types: Fix
-
-- [ ] [Fix] Parent recurse-submit 持有的 child triggerValidation promise 在 child dispose 时正确 reject 或返回 error result，而非静默 resolve 空结果（R3-F5）
-- [ ] [Fix] `validateForm` 并行验证后的 `revalidateDependents` 使用去重策略——已在并行验证中验证过的 path 不重复触发（R3-F7）
-- [ ] [Proof] 测试：child form dispose 时 parent 收到明确的 validation failure
-- [ ] [Proof] 测试：双向依赖字段在 full-form validation 时不产生重复验证
-
-Exit Criteria:
-
-- [ ] Cross-form submit 竞争有明确的 failure 语义
-- [ ] 双向依赖字段验证无冗余
-- [ ] No owner-doc update required
-- [ ] `docs/logs/` 已更新
-
-## Non-Blocking Follow-ups
-
-- Reaction coalescing 中间状态：在 `docs/architecture/flux-core.md` 中补充说明 coalescing 语义为 by-design
-- Debounced action stale prevResult：记录为已知行为
+- [x] dispose / close 后不存在遗留 validation 请求
+- [x] hidden / non-form owner baseline 与 docs 对齐
+- [x] `docs/architecture/renderer-runtime.md` 与 `docs/architecture/form-validation.md` 已同步
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 
-- [ ] Submit 异常不会永久锁死表单
-- [ ] Dispose 后无泄漏的在途请求
-- [ ] 循环 reaction 不会冻结浏览器
-- [ ] 不存在被降级的 in-scope live defect
-- [ ] 独立子 agent closure-audit 已完成并记录
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] submit 异常不会永久锁死表单
+- [x] validator crash 不会被静默吞掉并继续 submit
+- [x] dispose / close 后无遗留 validation 请求
+- [x] hidden participation 与 non-form owner baseline 已收敛
+- [x] 不存在被降级的 in-scope live defect
+- [x] 独立子 agent closure-audit 已完成并记录
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 

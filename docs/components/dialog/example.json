@@ -2,8 +2,6 @@
   "type": "dialog",
   "title": "编辑资料",
   "defaultOpen": false,
-  "size": "lg",
-  "showCloseButton": true,
   "onOpen": {
     "action": "showToast",
     "args": {

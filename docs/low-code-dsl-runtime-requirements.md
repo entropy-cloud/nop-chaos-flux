@@ -103,7 +103,7 @@
 
 动作派发应支持三种解析路径：
 
-1. **平台内置动作**：如 `setValue`（设置数据）、`ajax`（发起请求）、`dialog`（打开对话框）、`submitForm`（提交表单）、`closeDialog`（关闭对话框）
+1. **平台内置动作**：如 `setValue`（设置数据）、`ajax`（发起请求）、`openDialog` / `openDrawer`（打开 surface）、`submitForm`（提交表单）、`closeSurface`（关闭当前 surface）
 2. **组件实例动作**：`component:<method>` 格式，通过组件实例注册表查找并调用特定组件实例的方法（如表格的刷新、获取选中行）
 3. **命名空间动作**：`namespace:method` 格式，通过词法作用域的命名空间注册表查找（如 `designer:export`），用于复杂宿主控件的能力暴露
 

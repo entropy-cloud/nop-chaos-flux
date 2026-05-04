@@ -19,7 +19,7 @@ Flux 不必一次性照搬全部能力，但应承认该组件属于独立 field
 
 - `type: 'input-tree'`
 - `category: 'form'`
-- 预期 source package: `@nop-chaos/flux-renderers-form`
+- 当前 source package: `@nop-chaos/flux-renderers-form-advanced`
 
 ## 4. schema 设计
 

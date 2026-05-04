@@ -17,7 +17,7 @@
 - `type: 'word-editor-page'`
 - `sourcePackage: '@nop-chaos/word-editor-renderers'`
 - 当前 regions: `toolbar`、`leftPanel`、`rightPanel`
-- 当前 fields: `title` 为 `value-or-region`
+- 当前 fields: `title` 为 `value-or-region`；`onBack`、`onSave` 为 `event`；`initialDocument`、`datasets`、`initialCharts`、`initialCodes` 为 `prop`
 
 ## 4. schema 设计
 
@@ -46,7 +46,7 @@ interface WordEditorPageSchema {
 
 核心字段：
 
-- `onBack` 是必需回调，用于返回上级页面
+- `onBack` 是可选回调；提供时用于返回上级页面
 - `initialDocument` 和 `datasets` 是可选初始数据
 - `Dataset` 是当前公开契约词汇；`DataSet` 仅作为 `word-editor-core` 的兼容别名保留，不应继续作为本组件文档主写法
 - `initialCharts` / `initialCodes` 允许宿主直接注入初始占位符元数据
@@ -130,6 +130,10 @@ host scope 向下投影四个只读字段：
 - 工具栏使用 Ribbon 风格分组布局。
 - playground 入口现在通过 `SchemaRenderer` + `registerWordEditorRenderers()` 渲染，而不是直接 lazy import 页面组件。
 
+当前 runtime 状态说明：
+
+- `word-editor-page` 已是 live registered renderer，应视为 `runtime` family，而不是目标契约占位文档。
+
 ## 11. 实现拆分建议
 
 | 模块                 | 位置      | 职责                          |
@@ -150,5 +154,5 @@ host scope 向下投影四个只读字段：
 ## 13. 相关文档
 
 - `docs/architecture/word-editor/design.md` - Word Editor 架构总览
-- `docs/plans/24-word-editor-development-plan.md` - 历史开发计划 (已 superseded)
+- `docs/archive/plans/24-word-editor-development-plan.md` - 历史开发计划 (已 superseded)
 - `docs/bugs/24-*`, `docs/bugs/25-*`, `docs/bugs/26-*` - 相关 bug 修复记录

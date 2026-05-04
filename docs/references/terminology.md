@@ -352,7 +352,8 @@ Examples include:
 - `ajax`
 - `submitForm`
 - `openDialog`
-- `closeDialog`
+- `openDrawer`
+- `closeSurface`
 - `setValue`
 
 ## `DataSourceSchema`

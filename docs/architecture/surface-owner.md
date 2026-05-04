@@ -8,6 +8,7 @@
 
 - dialog 和 drawer 的状态应该归谁
 - 为什么它们不应上卷到 `page`
+- 为什么 declarative surface 和 action-opened surface 不应长期保留两套 runtime
 - 为什么不建议分别发明 `$dialog`、`$drawer`
 - future `sheet` 应如何归类
 
@@ -15,16 +16,13 @@
 
 - `docs/architecture/action-interaction-state.md` 拥有通用 owner taxonomy。
 - 本文档只收口 surface owner family 的窄规则。
-- 本文档描述的是目标 owner 基线，不要求当前代码已经完全落地同名 runtime/store 实现。
+- 本文档现在定义的是长期统一基线：`dialog` / `drawer` / future `sheet` 应共享一套 surface-family runtime，而不是长期保留 declarative path 与 managed path 两套平行模型。
 
 Current live implementation note:
 
-- 当前代码库同时存在两条 surface path：
-  1. action-opened managed surfaces：通过 `openDialog` / `openDrawer` 进入 `SurfaceRuntime` + `DialogHost`
-  2. declarative `type: 'dialog'` / `type: 'drawer'` renderers：直接包裹 UI primitive 的 renderer path
-- 本文中的 shared `SurfaceRuntime` / root host 规则，优先适用于 managed surface path，不应自动外推为 declarative renderer 已全部共享同一路径
-- current live baseline 也已支持 declarative `dialog` / `drawer` 在 renderer path 上发布 `statusPath` summary；但它们仍不是 `SurfaceRuntime`-managed entries
-- declarative `dialog` / `drawer` 当前已共享同一个 renderer-local surface helper，用于 controlled/local open 状态、declarative stack 订阅、register/unregister 和 owner summary publication；这只是 renderer-path 内部去重，不改变它们不是 `SurfaceRuntime`-managed entries 的 baseline
+- 当前 live 代码仍存在 renderer-path declarative surfaces 与 action-opened managed surfaces 的历史分裂。
+- 但从第一版长期基线看，这种分裂不应继续保留；后续实现应把两者收敛到同一个 `SurfaceRuntime` / root host / `SurfaceEntry` 模型。
+- 下文所有 owner 规则都以这个统一模型为准；live 代码若暂时未完全对齐，应视为实现待收口，而不是另立第二套文档基线。
 
 ## Core Claim
 
@@ -76,18 +74,56 @@ surface owner 不直接拥有：
 
 `dialog` 和 `drawer` 应共享一套 surface-family runtime/store 抽象，而不是各自发明完全不同的 store，也不是直接复用 page store。
 
+更进一步地说：
+
+- schema 中声明式 `type: 'dialog'` / `type: 'drawer'`
+- 内置动作 `openDialog` / `openDrawer`
+
+都应进入同一个 `SurfaceRuntime` + root host + `SurfaceEntry` 栈模型。
+
 推荐基线：
 
 - `page` 使用 page shell 自己的 runtime/store
 - `form` 使用 form 自己的 runtime/store
 - `dialog` / `drawer` / future `sheet` 共享 surface-family owner substrate（文档中记作 `SurfaceRuntime` / `SurfaceStore`）
 - surface family 内部通过稳定 kind 区分具体表面，例如 `kind: 'dialog' | 'drawer'`
+- 每一个已打开的 surface 都对应一个 `SurfaceEntry`
+- declarative surface 在运行时也应注册为 `SurfaceEntry`，而不是绕过 host 直接各自持有局部 lifecycle
 
 这样做的原因：
 
 - surface family 共享 open/close/active/dismiss/focus 语义
 - page shell 状态与 surface 状态不是同一个 owner family
 - dialog 和 drawer 在运行期行为上足够接近，没必要为了名字不同拆成两套 store 模型
+- declarative surface 与 action-opened surface 如果长期双轨，未来所有新需求都会被迫做两遍
+
+## Public DSL vs Internal Canonical Model
+
+对外 public DSL：
+
+- `type: 'dialog'`
+- `type: 'drawer'`
+- built-in actions: `openDialog`、`openDrawer`、`closeSurface`
+
+对内 canonical model：
+
+- `SurfaceRuntime.open({ kind: 'dialog' | 'drawer', ... })`
+- `SurfaceRuntime.close(...)`
+- `SurfaceEntry`
+
+因此：
+
+- `openDialog` = surface open 的 dialog authoring sugar
+- `openDrawer` = surface open 的 drawer authoring sugar
+- `closeSurface` = 统一关闭动作
+- declarative `dialog` / `drawer` = surface node authoring sugar，而不是另一套 runtime family
+
+不建议对外暴露 `type: 'surface'` 作为公共 DSL。
+
+原因：
+
+- 作者更容易理解 `dialog` / `drawer`
+- surface 是 runtime owner family，不是最终用户最关心的业务概念
 
 ## Root Host And Stacking
 
@@ -122,6 +158,29 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 - 交互控制权回到前一个 surface
 - 焦点恢复也应按 stack 顺序回退
 
+## Scope And Data Initialization
+
+每个已打开的 surface 都应拥有自己的 child scope。
+
+统一规则：
+
+- child scope 由打开位置的当前 scope 派生，而不是默认挂到 page root
+- `data` 的语义是 child scope init patch
+- 关闭 surface 时，对应 child scope 生命周期结束
+
+因此这些都应成立：
+
+- page scope -> dialog scope
+- form scope -> dialog scope
+- row scope -> drawer scope
+
+不应长期保留：
+
+- action-opened surface 有 child scope
+- declarative surface 没有 child scope
+
+这种双轨差异。
+
 ## Read Surfaces
 
 外部读取规则：
@@ -132,10 +191,8 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 
 Current live implementation note:
 
-- 上面的 `statusPath` 规则当前适用于 action-opened managed surfaces
-- action-opened managed surfaces 当前还会为每个 surface entry 创建独立的 surface-root validation owner，并在 `DialogHost` 中把它包裹到 surface body 外层
-- declarative `dialog` / `drawer` renderers 当前也会在 renderer path 上发布自己的 summary DTO
-- 但 declarative path 仍不是通过 `SurfaceRuntime` store/stack 完成该发布
+- 上面的 `statusPath` 规则是统一基线。
+- live 代码中如果 declarative path 仍未通过 `SurfaceRuntime` 发布，应视为实现待收口，而不是另一套契约。
 
 局部读取规则：
 
@@ -163,18 +220,29 @@ interface SurfaceStatusSummary {
 
 更窄的 renderer 可以按需补充少量稳定字段，但不应把内部业务 owner 的状态混进同一个 summary。
 
-## Actions And Handles
+## Built-In Actions And Handles
 
 surface owner 的典型 instance capability 是：
 
 - `component:open`
 - `component:close`
+- `component:toggle`（可选，但推荐）
 
 对于内置 action authoring：
 
-- 打开 surface 时继续区分 `openDialog` / `openDrawer`
-- 关闭当前 surface 时应优先使用统一的 `closeSurface`
-- `closeDialog` / `closeDrawer` 仅作为兼容别名保留
+- 打开 surface 时对外保留 `openDialog` / `openDrawer`
+- 关闭 surface 时统一使用 `closeSurface`
+- runtime 内部应统一 lower 到单一 surface 内核，例如 `surface:open` / `surface:close`
+- `closeDialog` / `closeDrawer` 不应成为长期正式基线
+
+建议语义：
+
+- `openDialog(args)` -> `kind: 'dialog'`
+- `openDrawer(args)` -> `kind: 'drawer'`
+- `closeSurface(args?)` 支持：
+  - 按 `surfaceId` 关闭
+  - 关闭当前 action 所在 surface
+  - 未指定时关闭 top-most active surface
 
 这些动作只解决 surface control，不替代内部更具体 owner 的入口，例如：
 
@@ -201,6 +269,21 @@ future `sheet` 不能因为名字不同就自动获得独立 owner family。
 
 不要先发明 `$sheet`，先完成 owner classification。
 
+## Declarative And Action-Opened Surfaces
+
+长期基线下，二者不是两套 runtime，只是两种 authoring 入口：
+
+- declarative `type: 'dialog' | 'drawer'`
+- built-in `openDialog` / `openDrawer`
+
+它们都应：
+
+- 注册成 `SurfaceEntry`
+- 进入同一个 root host stack
+- 遵守同一套 focus / dismiss / child scope / status publication 规则
+
+不应再把 declarative surface 定义为“只是一个普通 renderer 包 UI primitive”。
+
 ## Relation To NodeRenderer
 
 `NodeRenderer` does not create or manage surface runtime/store boundaries.
@@ -211,10 +294,10 @@ future `sheet` 不能因为名字不同就自动获得独立 owner family。
 
 Current live split:
 
-- managed surfaces 满足这条规则
-- declarative `dialog` / `drawer` renderers 当前只是 renderer-level UI wrapper，不等于“每个 declarative dialog 都已经注册成 host-managed surface entry”
+- 当前 live 代码可能还没有完全满足这条规则
+- 但目标基线已经明确：declarative `dialog` / `drawer` 也应成为 host-managed surface entry，而不是长期停留在 renderer-level wrapper path
 
-This rule is part of the broader creator-owned boundary model documented in `docs/architecture/renderer-runtime.md` → "Execution Boundary Ownership Matrix".
+This rule is part of the broader creator-owned boundary model documented in `docs/architecture/renderer-runtime.md` -> "Execution Boundary Ownership Matrix".
 
 ## Related Documents
 

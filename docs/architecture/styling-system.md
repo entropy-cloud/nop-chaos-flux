@@ -243,7 +243,8 @@ The name `classAliases` clearly expresses:
 interface BaseSchema {
   type: string;
   classAliases?: Record<string, string>; // Alias name → Tailwind classes
-  className?: string;
+  className?: string; // Applied to the renderer component (control)
+  frameClassName?: string; // Applied to the FieldFrame wrapper (.nop-field)
   // ...
 }
 ```
@@ -416,7 +417,8 @@ The default spacing rules in `@layer base` apply `display: flex`, `flex-directio
 
 Layout containers support per-slot `className` props for controlling inner slot styling (grid layout, flex direction on body, etc.):
 
-- `className` on schema targets the root element
+- `className` on schema targets the renderer component's root element (the control itself)
+- `frameClassName` on schema targets the FieldFrame wrapper element (the `.nop-field` label/fieldset)
 - `bodyClassName`, `headerClassName`, `footerClassName`, `toolbarClassName`, `actionsClassName`, `titleClassName`, `contentClassName` target the corresponding `data-slot` wrapper
 
 See `docs/architecture/container-spacing-design.md` → "Per-Slot ClassName Override" for the complete prop-to-slot mapping table.

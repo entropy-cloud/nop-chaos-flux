@@ -138,7 +138,7 @@ The production direction is:
 
 - normal schema authors should not need to pass `surfaceId`
 - explicit surface targeting exists as a narrow extension path
-- `closeDialog` and `closeDrawer` remain supported as compatibility aliases
+- `closeDialog` and `closeDrawer` may still exist as compatibility aliases, but active docs and new schema should use `closeSurface`
 
 Architecturally, this should resolve through the nearest creator-owned surface boundary rather than through page-owned dialog state.
 
@@ -348,8 +348,9 @@ Current action system supports at least:
 - `setValue`
 - `ajax`
 - `submitForm`
-- `dialog`
-- `closeDialog`
+- `openDialog`
+- `openDrawer`
+- `closeSurface`
 - `refreshTable`
 
 Current behavior includes:

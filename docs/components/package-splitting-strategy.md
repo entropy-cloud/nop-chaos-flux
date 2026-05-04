@@ -414,16 +414,16 @@ src/
 
 **新增组件**：
 
-| 组件          | 类型       | 状态           | wave | 说明                   |
-| ------------- | ---------- | -------------- | ---- | ---------------------- |
-| `table`       | 数据展示   | runtime        | —    | 已有                   |
-| `tree`        | 数据展示   | runtime        | —    | 已有                   |
-| `chart`       | 数据展示   | runtime        | —    | 已有                   |
-| `data-source` | 数据源     | runtime        | —    | 已有                   |
-| `crud`        | 复合工作流 | targetContract | 1    | 通过 lowering 组合实现 |
-| `list`        | 集合展示   | targetContract | 1    | 有序列表               |
-| `pagination`  | 交互 owner | targetContract | 2    | 分页                   |
-| `service`     | 数据容器   | targetContract | 2    | 可视化数据装配容器     |
+| 组件          | 类型       | 状态           | wave   | 说明                 |
+| ------------- | ---------- | -------------- | ------ | -------------------- |
+| `table`       | 数据展示   | runtime        | —      | 已有                 |
+| `tree`        | 数据展示   | runtime        | —      | 已有                 |
+| `chart`       | 数据展示   | runtime        | —      | 已有                 |
+| `data-source` | 数据源     | runtime        | —      | 已有                 |
+| `crud`        | 复合工作流 | runtime        | landed | 已通过 lowering 落地 |
+| `list`        | 集合展示   | targetContract | 1      | 有序列表             |
+| `pagination`  | 交互 owner | targetContract | 2      | 分页                 |
+| `service`     | 数据容器   | targetContract | 2      | 可视化数据装配容器   |
 
 **预估总规模**：~4,000–6,000 行。
 
@@ -494,11 +494,12 @@ src/
 | `timeline`        | targetContract | 4    |
 | `wizard`          | targetContract | 2    |
 
-### 3.4 `flux-renderers-form`（18 个，拆分后）
+### 3.4 `flux-renderers-form`（19 个，拆分后）
 
 | 组件             | 状态           | wave |
 | ---------------- | -------------- | ---- |
 | `form`           | runtime        | —    |
+| `fieldset`       | runtime        | —    |
 | `input-text`     | runtime        | —    |
 | `input-email`    | runtime        | —    |
 | `input-password` | runtime        | —    |
@@ -555,16 +556,16 @@ src/
 
 ### 3.6 `flux-renderers-data`（8 个，扩展）
 
-| 组件          | 状态           | wave |
-| ------------- | -------------- | ---- |
-| `table`       | runtime        | —    |
-| `tree`        | runtime        | —    |
-| `chart`       | runtime        | —    |
-| `data-source` | runtime        | —    |
-| `crud`        | targetContract | 1    |
-| `list`        | targetContract | 1    |
-| `pagination`  | targetContract | 2    |
-| `service`     | targetContract | 2    |
+| 组件          | 状态           | wave   |
+| ------------- | -------------- | ------ |
+| `table`       | runtime        | —      |
+| `tree`        | runtime        | —      |
+| `chart`       | runtime        | —      |
+| `data-source` | runtime        | —      |
+| `crud`        | runtime        | landed |
+| `list`        | targetContract | 1      |
+| `pagination`  | targetContract | 2      |
+| `service`     | targetContract | 2      |
 
 ### 3.7 领域包（不变）
 
@@ -582,6 +583,7 @@ src/
 | `report-toolbar`         | `report-designer-renderers`                          |
 | `report-designer-page`   | `report-designer-renderers`                          |
 | `spreadsheet-page`       | `spreadsheet-renderers`                              |
+| `word-editor-page`       | `word-editor-renderers`                              |
 | `code-editor`            | `flux-code-editor`                                   |
 
 ---
@@ -635,7 +637,7 @@ core → formula → runtime → react → basic
 
 **目标**：不拆分，只做代码整理。
 
-- [ ] 巩固现有 36 个 `runtime` 组件的 schema、field metadata、example.json。
+- [ ] 巩固现有 48 个 `runtime` 组件的 schema、field metadata、example.json。
 - [ ] 确保 `docs/components/<type>/design.md` 与实际 renderer definition 一致。
 - [ ] 修复 `flux-renderers-form` 内部的模块边界问题（如有）。
 
@@ -717,9 +719,9 @@ core → formula → runtime → react → basic
 
 ### Phase 4：扩展 `flux-renderers-data`
 
-**目标**：加入 `crud`, `list`, `pagination`, `service`。
+**目标**：继续扩展 `list`, `pagination`, `service`，并在 `crud` 已落地基线上补强验证与能力覆盖。
 
-- [ ] 实现 `list` 和 `crud`（wave 1，`crud` 通过 lowering）。
+- [ ] 实现 `list`（wave 1），并继续巩固 `crud` lowering 路径的验证覆盖。
 - [ ] 实现 `pagination` 和 `service`（wave 2）。
 - [ ] 更新 manifest。
 

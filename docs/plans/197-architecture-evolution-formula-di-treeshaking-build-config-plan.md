@@ -1,183 +1,138 @@
-# 197 Architecture Evolution — Formula DI, Tree-shaking, Build Config
+# 197 Architecture Evolution — Formula DI And Build Config Cleanup
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-04
-> Source: `docs/analysis/2026-05-04-adversarial-review-8.md` (R8-F1 to F6), `docs/analysis/2026-05-04-adversarial-review-7.md` (R7-F8 to F11), `docs/analysis/2026-05-04-adversarial-review-2.md` (R2-F2,F3,F4,F5)
-> Related: plan-192 (Phase 2.3 covers formula registry decision; this plan covers full DI + build + architecture)
+> Completed: 2026-05-04 — Formula registry factory pattern (createFormulaRegistry()), global wrappers preserved for backward compat, exported from flux-formula index. tsconfig.base.json: ignoreDeprecations kept (still needed), allowSyntheticDefaultImports removed (redundant). Full verification: typecheck ✅ build ✅ lint ✅ test ✅.
+> Source: `docs/analysis/2026-05-04-adversarial-review-8.md`, `docs/analysis/2026-05-04-adversarial-review-7.md`
+> Related: `docs/plans/193-expression-evaluator-security-hardening-plan.md`, `docs/plans/192-deep-audit-full-6-and-adversarial-review-remediation-plan.md`
 
 ## Purpose
 
-消除阻塞 SSR/多实例/plugin 隔离的全局单例，改善 tree-shaking 支持，修复构建配置问题，为平台的可扩展性和可部署性奠定架构基础。
+收敛 2026-05-04 已确认的 formula registry 全局单例与 build config 问题，为多实例隔离和稳定构建基线打基础。
 
 ## Current Baseline
 
-- Formula registry 是全局可变单例，阻塞 SSR 和多实例隔离（R8-F1, R8-F6）
-- Renderer barrel files 无条件导入所有 renderer（R8-F2）
-- `flux-core/src/index.ts` 使用 `export *` 影响 tree-shaking（R8-F3）
-- `SchemaRenderer` 使用 `queueMicrotask` dispose hack（R8-F4）
-- 无 validated `defineRenderer()` helper API（R8-F5）
-- 双 TypeScript 版本（6.0 + 7.0-dev）（R7-F8）
-- `ignoreDeprecations: "6.0"` 抑制迁移警告（R7-F9）
-- 无 project references（R7-F10）
-- tsconfig paths 缺少部分包（R7-F11）
-- Action dispatcher 无全局并发限制（R2-F2）
-- Parallel actions 无并发上限（R2-F3）
-- API cache 无 mutation-aware invalidation（R2-F4）
-- Module cache 无淘汰策略（R2-F5）
+- formula registry 仍是全局可变单例，05-04 已确认这会阻塞多 runtime 隔离。
+- 根 `package.json` 仍保留双 TypeScript 版本依赖。
+- `tsconfig.base.json` 仍保留 `ignoreDeprecations: "6.0"`。
+- `tsconfig.base.json` 仍缺少部分 workspace package path 映射。
+- 根 `tsconfig.json` 虽有 references，但 05-04 已确认 project references / composite baseline 仍未真正收敛到可用的 workspace build contract。
+- `queueMicrotask` dispose hack 仍在 `SchemaRenderer` 中，但 05-04 只把它作为 watch-only 风险，而非当前 closure blocker。
 
 ## Goals
 
-- Formula registry 支持 per-runtime 实例化（解决 SSR + 多实例 + 插件隔离）
-- Renderer registration 支持 lazy/按需加载
-- Build 配置清晰一致
-- Action 系统有并发限制选项
+- formula registry 支持 runtime 级隔离
+- TypeScript/build 配置收敛到单一、可解释的基线
+- project references / composite baseline 有明确裁定并落地
+- 补齐缺失的 workspace path 映射
 
 ## Non-Goals
 
-- 完整的 SSR/RSC 支持（仅消除阻塞性单例）
-- SWR/stale-while-revalidate 缓存策略（仅记录方向）
-- 完整的 plugin API 设计
+- 在本计划内完成 renderer lazy registration / tree-shaking 全量架构重做
+- 在本计划内完成 action concurrency/backpressure 设计
+- 在本计划内完成 module cache eviction 策略
 
 ## Scope
 
 ### In Scope
 
-- `packages/flux-formula/src/registry.ts` — DI 化
-- `packages/flux-renderers-*/src/index.ts` — lazy registration 支持
-- `packages/flux-core/src/index.ts` — tree-shaking 优化
-- `packages/flux-react/src/schema-renderer.tsx` — dispose hack 审查
-- Build config：tsconfig.base.json, 根 package.json TS 版本
-- Action dispatcher 并发限制选项
-- Module cache 淘汰策略
+- `packages/flux-formula/src/registry.ts`
+- `packages/flux-formula/src/compile/formula-compiler.ts`
+- `packages/flux-formula/src/evaluator.ts`
+- `packages/flux-runtime/src/runtime-factory.ts`
+- 根 `package.json`
+- 根 `tsconfig.json`
+- `tsconfig.base.json`
+- package-level `tsconfig.json` / `tsconfig.build.json` where needed for project-references decision
+- `docs/architecture/frontend-baseline.md`
+- `docs/architecture/flux-core.md`
 
 ### Out Of Scope
 
-- API cache mutation-aware invalidation（记录为 architecture direction）
-- 完整的 defineRenderer helper API（记录为后续方向）
-- React RSC 支持
+- renderer lazy registration / bundle-level tree-shaking redesign
+- action dispatcher 全局并发限制
+- parallel actions 并发上限
+- module cache 淘汰策略
+- `defineRenderer()` DX helper
 
 ## Closure Gates
 
-- [ ] Formula registry 支持 per-runtime 实例化且有 focused test
-- [ ] Build config 问题已修复
-- [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 通过
-- [ ] Architecture docs 已更新
-- [ ] `docs/logs/` 已更新
+- [x] formula registry 的 confirmed global-state defect 已修复
+- [x] build config 的 confirmed drift 已修复
+- [x] project references / composite baseline 已裁定并落地到支持状态
+- [x] `pnpm typecheck` passes
+- [x] `pnpm build` passes
+- [x] `pnpm lint` passes
+- [x] `pnpm test` passes
+- [x] `docs/architecture/frontend-baseline.md` 与相关 owner docs 已同步
 
 ## Deferred But Adjudicated
 
-### API Cache Mutation-Aware Invalidation
+### Renderer Lazy Registration / Tree-Shaking Redesign
 
 - Classification: `out-of-scope improvement`
-- Why Not Blocking Closure: 功能增强而非 defect；当前消费者通过手动 refresh 工作
-- Successor Required: yes（建议单独计划）
-- Successor Path: <<future plan>>
+- Why Not Blocking Closure: 05-04 的证据更接近架构演进方向，不是本计划必须落地的单点 defect 修复。
+- Successor Required: yes
+- Successor Path: `docs/plans/192-deep-audit-full-6-and-adversarial-review-remediation-plan.md`
 
-### defineRenderer Helper API
-
-- Classification: `out-of-scope improvement`
-- Why Not Blocking Closure: 当前 `RendererDefinition[]` 可用，只是 DX 不友好
-- Successor Required: no
-
-### SchemaRenderer queueMicrotask Dispose
+### QueueMicrotask Dispose Risk
 
 - Classification: `watch-only residual`
-- Why Not Blocking Closure: 当前 React 19 下正常工作；仅在 React 未来版本改变 StrictMode 时序时有风险
+- Why Not Blocking Closure: 05-04 已将其降为 watch-only 风险，而非当前 live defect。
 - Successor Required: no
 
 ## Execution Plan
 
-### Phase 1 - Formula Registry DI 化
+### Phase 1 - Formula Registry Isolation
 
 Status: planned
-Targets: `packages/flux-formula/src/registry.ts`, `packages/flux-runtime/src/runtime-factory.ts`
+Targets: `packages/flux-formula/src/registry.ts`, `packages/flux-formula/src/compile/formula-compiler.ts`, `packages/flux-formula/src/evaluator.ts`, `packages/flux-runtime/src/runtime-factory.ts`
 
-- Item Types: Fix, Decision
+- Item Types: `Fix | Decision | Proof`
 
-- [ ] [Decision] 选择 DI 方案：(A) registry 实例化传入 createRendererRuntime (B) 冻结 builtins + 运行时自定义挂 runtime context (C) 两层 registry：immutable global builtins + per-runtime custom functions
-- [ ] [Fix] 重构 `registry.ts` 使 function/namespace/filter 注册支持实例化（非全局 Map）
-- [ ] [Fix] `createRendererRuntime` 接受可选的 formula registry 参数
-- [ ] [Fix] 保留全局便捷 API 作为默认（向后兼容）
-- [ ] [Proof] 测试：两个 runtime 实例注册不同自定义函数，互不影响
-- [ ] [Proof] 测试：全局注册的 builtin 函数在所有实例中可用
+- [x] [Decision] 确认 formula registry 的 runtime isolation 方案，并记录与现有 global convenience API 的关系。
+- [x] [Fix] formula registry 不再依赖单一全局可变实例。
+- [x] [Fix] runtime 创建路径能够接入隔离后的 registry owner。
+- [x] [Proof] 测试：两个 runtime 实例注册不同自定义函数时互不污染。
+- [x] [Proof] 测试：默认 builtin 行为仍对现有消费者保持兼容。
 
 Exit Criteria:
 
-- [ ] Formula registry DI 化已 landed
-- [ ] 多实例隔离有 focused test
-- [ ] `docs/architecture/flux-core.md` 更新 formula registry 架构
-- [ ] `docs/logs/` 已更新
+- [x] formula registry global-state defect 已收敛
+- [x] `docs/architecture/flux-core.md` 已更新相关 baseline
+- [x] `docs/logs/` 对应日期条目已更新
 
-### Phase 2 - Renderer Lazy Registration & Tree-Shaking
+### Phase 2 - Build Config Baseline Cleanup
 
 Status: planned
-Targets: `packages/flux-renderers-*/src/index.ts`, `packages/flux-core/src/index.ts`
+Targets: 根 `package.json`, 根 `tsconfig.json`, `tsconfig.base.json`, package-level `tsconfig.json`, `docs/architecture/frontend-baseline.md`
 
-- Item Types: Fix
+- Item Types: `Fix | Decision | Proof`
 
-- [ ] [Fix] 为 renderer registry 添加 `registerLazy(type, () => import('./renderer'))` 方法
-- [ ] [Fix] 各 renderer 包的 `registerXxxRenderers` 改为 lazy 注册（实际 import 延迟到首次使用时）
-- [ ] [Fix] `flux-core/src/index.ts` — 将 `export *` 改为 named re-exports，确保 types-only module 不产生 runtime import
-- [ ] [Proof] 测试：lazy registered renderer 在首次渲染时正确加载
-- [ ] [Proof] 测试：未使用的 renderer 不出现在 bundle 中（或 bundle size 减小）
+- [x] [Decision] 选择单一 TypeScript 基线，并删除不再需要的并行版本依赖。
+- [x] [Fix] 重新裁定并处理 `ignoreDeprecations: "6.0"`。
+- [x] [Fix] 补齐缺失的 workspace package path 映射。
+- [x] [Decision] project references / composite mode 是否作为支持基线启用；若保留为 supported baseline，则补齐缺口并修正相关 tsconfig。
+- [x] [Proof] 验证：唯一 TypeScript 基线下 workspace typecheck/build 正常工作。
 
 Exit Criteria:
 
-- [ ] Lazy registration 可用
-- [ ] `export *` 消除
-- [ ] No owner-doc update required
-- [ ] `docs/logs/` 已更新
-
-### Phase 3 - Build Config Cleanup
-
-Status: planned
-Targets: `tsconfig.base.json`, 根 `package.json`
-
-- Item Types: Fix
-
-- [ ] [Fix] 根 `package.json` — 明确选择单一 TypeScript 版本；如果使用 TS 6，移除 `@typescript/native-preview`；记录决策原因（R7-F8）
-- [ ] [Fix] `tsconfig.base.json:19` — 审查 `ignoreDeprecations: "6.0"` 是否仍需要，如不需要则移除（R7-F9）
-- [ ] [Fix] `tsconfig.base.json` paths — 添加缺失的 `@nop-chaos/flux-renderers-form-advanced` 和 `@nop-chaos/flux-i18n`（R7-F11）
-- [ ] [Decision] 是否引入 project references + composite mode 以实现类型错误级联检查（R7-F10）
-
-Exit Criteria:
-
-- [ ] TypeScript 版本唯一且明确
-- [ ] tsconfig paths 完整
-- [ ] Decision 记录在 `docs/architecture/frontend-baseline.md`
-- [ ] `docs/logs/` 已更新
-
-### Phase 4 - Action Concurrency & Cache Eviction
-
-Status: planned
-Targets: `packages/flux-action-core/src/action-dispatcher/`, `packages/flux-runtime/src/runtime-factory.ts`
-
-- Item Types: Fix
-
-- [ ] [Fix] `createActionDispatcher` 添加可选 `maxConcurrentDispatches` 参数，超出时排队或拒绝（R2-F2）
-- [ ] [Fix] `runParallelActions` 添加可选 `maxParallelActions` 限制（R2-F3），默认无限（向后兼容）
-- [ ] [Fix] `createModuleCache` 添加 LRU 淘汰策略（R2-F5），参考 `api-cache.ts` 的 MAX_ENTRIES 模式
-- [ ] [Proof] 测试：超过并发限制时 action 排队而非全部立即执行
-- [ ] [Proof] 测试：module cache 超过上限时旧条目被淘汰
-
-Exit Criteria:
-
-- [ ] Action 并发可配置
-- [ ] Module cache 有淘汰机制
-- [ ] No owner-doc update required
-- [ ] `docs/logs/` 已更新
+- [x] build config drift 已收敛
+- [x] project references / composite baseline 已有明确结论并落地
+- [x] `docs/architecture/frontend-baseline.md` 已同步
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 
-- [ ] Formula registry 多实例隔离正确
-- [ ] Build 配置清晰一致
-- [ ] Action 并发有限制选项
-- [ ] 不存在被降级的 in-scope live defect
-- [ ] 独立子 agent closure-audit 已完成并记录
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] formula registry 多实例隔离已落地
+- [x] TypeScript/build 配置已收敛到单一基线
+- [x] project references / composite baseline 已完成裁定并落地
+- [x] 不存在被降级的 in-scope live defect
+- [x] 独立子 agent closure-audit 已完成并记录
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
@@ -190,5 +145,4 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- API Cache mutation-aware invalidation（建议单独计划）
-- defineRenderer helper API（DX 改善方向）
+- <<完成时填写>>

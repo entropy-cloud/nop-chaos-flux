@@ -104,4 +104,4 @@ fieldset 不涉及布局配置。`mode`/`labelAlign`/`labelWidth` 通过 React c
 ## 12. 风险、取舍与后续阶段
 
 - 需要避免把折叠逻辑耦合到 form runtime。
-- 此前 `amis-baseline-matrix.md` 将 fieldset 标记为 `notRetained`，需更新为 `targetContract`。
+- `fieldset` 已按当前 live runtime 收入口径矩阵；后续重点是保持 matrix、manifest 与实现同步，避免再次漂移。

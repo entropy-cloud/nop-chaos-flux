@@ -19,7 +19,7 @@ Flux 可以先保留较小首版，再按 field family 演进。
 
 - `type: 'tree-select'`
 - `category: 'form'`
-- 预期 source package: `@nop-chaos/flux-renderers-form`
+- 当前 source package: `@nop-chaos/flux-renderers-form-advanced`
 
 ## 4. schema 设计
 

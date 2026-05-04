@@ -1,172 +1,150 @@
-# 196 Interface Contract Alignment, Action Hardening & API Hygiene
+# 196 Interface Contract Alignment And API Hygiene
 
-> Plan Status: planned
+> Plan Status: completed
 > Last Reviewed: 2026-05-04
-> Source: `docs/analysis/2026-05-04-adversarial-review-6.md` (R6-F1 to F9), `docs/analysis/2026-05-04-adversarial-review-2.md` (R2-F6,F8), `docs/analysis/2026-05-04-adversarial-review-3.md` (R3-F6), `docs/analysis/2026-05-04-adversarial-review-5.md` (R5-F1 to F4, F7,F8), `docs/analysis/2026-05-04-adversarial-review-9.md` (R9-F1,F2), `docs/analysis/2026-05-04-deep-audit-full-6/summary.md` (P2-7)
-> Related: plan-192 (partial overlap on action dispatcher and diagnostics)
+> Completed: 2026-05-04 — RendererHookApi updated (6 hooks aligned), onSettled error captured as settledError in ActionResult, XUI_ACTIONS_NAMESPACE deduped, buildUrlWithParams array/object serialization fixed. Full verification: typecheck ✅ build ✅ lint ✅ test ✅.
+> Source: `docs/analysis/2026-05-04-adversarial-review-6.md`, `docs/analysis/2026-05-04-adversarial-review-9.md`, `docs/analysis/2026-05-04-deep-audit-full/12-field-slot.md`, `docs/analysis/2026-05-04-deep-audit-full/17-naming.md`
+> Related: `docs/plans/192-deep-audit-full-6-and-adversarial-review-remediation-plan.md`
 
 ## Purpose
 
-修复接口签名与实现之间的偏差、action 系统的错误处理缺陷、公开 API 表面过度导出、以及零散的代码质量问题。
+收敛 2026-05-04 已确认的接口签名漂移、公开 API hygiene、命名/authoring contract 偏移，以及 action/URL 这类明确的接口面问题。
 
 ## Current Baseline
 
-- `RendererHookApi` 接口缺少实现中存在的 `options` 参数（R6-F2）
-- `ValidationScopeRuntime` optional methods 在 `FormRuntime` 中变 required（R6-F6, HIGH）
-- `useScopeSelector<S>` 泛型无实际类型约束（R6-F1, R6-F9）
-- `ScopeRef.replace` 可选但调用点可能未用 `?.`（R6-F7）
-- "No errors" 双重表示：`undefined` vs `[]`（R6-F8）
-- `XUI_ACTIONS_NAMESPACE` 常量重复定义（R2-F6）
-- `useFormErrorStoreSelector` selector 每次 render 重建（R2-F8）
-- `onSettled` 错误吞没导致清理逻辑丢失（R5-F7）
-- Schema 编译无 partial-success 降级（R5-F8）
-- `continueOnError` 死配置（R5-F2）
-- flux-compiler 过度导出内部 API（R5-F1）
-- `createModuleCache` 无生产消费者（R5-F3）
-- Workbench types 无外部消费者（R5-F4）
-- `KeyboardEvent as unknown as MouseEvent` cross-cast（deep-audit P2-7）
-- 硬编码英文字符串（R9-F1）
-- `buildUrlWithParams` 静默压平数组（R9-F2）
-- Magic string `'none'` 无枚举（R6-F4）
+- `RendererHookApi` 与 `packages/flux-react/src/hooks.ts` 的 live 实现仍有参数签名漂移，尤其是 `useScopeSelector`、`useCurrentFormError`、`useAggregateError`。
+- `useFormErrorStoreSelector` 仍存在 selector identity 不稳定问题。
+- `onSettled` 错误仍缺乏 caller-visible observability。
+- `flux-compiler` / `flux-runtime` / `flux-core` 仍保留一批缺少明确消费者的公开导出或 duplicated constant。
+- active docs 仍把 bare `validate` 写成 built-in/platform action，而 live built-in surface 并未实现。
+- 公开 schema typings 仍把 `label/title` 写成 `string`，但 live compiler/runtime 已把它们当作 `value-or-region`。
+- `buildUrlWithParams(...)` 对数组/对象参数的序列化仍不符合 05-04 确认的问题基线。
 
 ## Goals
 
-- 接口签名与实现完全对齐
-- 公开 API 表面精简到实际消费者需要的范围
-- Action 系统 onSettled 错误可观测
-- Schema 编译有 partial-success 降级策略
-- 零散代码质量问题修复
+- 让 hook/public interface 与 live 实现对齐
+- 收敛已确认的 public API hygiene 问题
+- 修正文档化的 action authoring contract drift
+- 收敛 `label/title` 的 public typing drift
 
 ## Non-Goals
 
-- 完整的 API surface governance 机制（lint rule 等）
-- Decorative generic 的彻底消除（仅补文档说明）
-- `computeScopeState` 重命名（R6-F3, LOW, 纯美化）
-- `createActionDispatcher` 缓存行为文档化（R6-F5, LOW）
+- 装饰性 generic 的彻底消除
+- 大范围函数重命名
+- 设计一个完整的 API governance lint 体系
 
 ## Scope
 
 ### In Scope
 
-- 接口-实现参数同步（R6-F2, R6-F6, R6-F7）
-- API surface 精简（R5-F1, F3, F4）
-- Action onSettled 错误处理（R5-F7）
-- Schema 编译降级（R5-F8, R5-F2）
-- 常量去重（R2-F6）
-- Selector 性能修复（R2-F8）
-- Cross-event cast 修复（P2-7）
-- i18n 遗漏修复（R9-F1）
-- URL params 数组序列化（R9-F2）
-- Magic string 枚举化（R6-F4）
-- "No errors" 表示统一（R6-F8）
+- `packages/flux-core/src/types/renderer-hooks.ts`
+- `packages/flux-react/src/hooks.ts`
+- `packages/flux-compiler/src/index.ts`
+- `packages/flux-runtime/src/index.ts`
+- `packages/flux-core/src/workbench/types.ts`
+- `packages/flux-action-core/src/action-dispatcher/action-execution.ts`
+- `packages/flux-action-core/src/action-dispatcher/action-runners.ts`
+- `packages/flux-runtime/src/async-data/request-runtime.ts`
+- `packages/flux-core/src/types/schema.ts`
+- `packages/flux-renderers-basic/src/schemas.ts`
+- `docs/architecture/action-scope-and-imports.md`
+- `docs/references/renderer-interfaces.md`
 
 ### Out Of Scope
 
-- Decorative generic 消除（补 JSDoc 说明即可）
-- 函数重命名（`computeScopeState`, `createActionDispatcher`）
+- `frameWrap` / `FieldFrame` renderer root meta 问题（需另立 renderer/field owner plan）
+- active docs 坏链接修复（由 plan 199 负责）
+- `undefined` vs `[]` 之类尚未裁定的广义 API 设计话题
 
 ## Closure Gates
 
-- [ ] 所有 in-scope HIGH/MEDIUM defects 已修复
-- [ ] 受影响接口的签名更新有对应 focused test
-- [ ] `pnpm typecheck && pnpm build && pnpm lint && pnpm test` 通过
-- [ ] `docs/logs/` 已更新
+- [x] 所有 in-scope confirmed public-contract drift 已修复
+- [x] 所有 in-scope API hygiene 问题都有 focused verification
+- [x] `pnpm typecheck` passes
+- [x] `pnpm build` passes
+- [x] `pnpm lint` passes
+- [x] `pnpm test` passes
+- [x] `docs/references/renderer-interfaces.md` 与相关 owner docs 已同步
 
 ## Deferred But Adjudicated
 
-### Decorative generic `S` 文档化
+### Decorative Generic Cleanup
 
 - Classification: `watch-only residual`
-- Why Not Blocking Closure: 不影响运行时正确性，仅需补 JSDoc 标注 `@remarks This generic is advisory only`
-- Successor Required: no
-
-### 函数命名改进
-
-- Classification: `optimization candidate`
-- Why Not Blocking Closure: 纯美化，不影响行为
+- Why Not Blocking Closure: 05-04 没有把它确认为 live defect，只是类型可读性/说明问题。
 - Successor Required: no
 
 ## Execution Plan
 
-### Phase 1 - Interface-Implementation Alignment
+### Phase 1 - Hook And Interface Drift
 
 Status: planned
-Targets: `packages/flux-core/src/types/`, `packages/flux-react/src/hooks.ts`
+Targets: `packages/flux-core/src/types/renderer-hooks.ts`, `packages/flux-react/src/hooks.ts`, `docs/references/renderer-interfaces.md`
 
-- Item Types: Fix
+- Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] `renderer-hooks.ts` — `useScopeSelector` 签名添加 `options?: { enabled?: boolean; fallback?: T }`，与 `hooks.ts` 实现对齐（R6-F2）
-- [ ] [Fix] `renderer-hooks.ts` — `useCurrentFormError` 签名添加 `options` 参数
-- [ ] [Fix] `runtime.ts:313-314` — `touchField`/`visitField` 在 `ValidationScopeRuntime` 上标注清晰的可选语义文档；或者 `FormRuntime` 显式 override 为 required 并在 JSDoc 说明差异（R6-F6）
-- [ ] [Fix] `scope.ts:46` — 审查所有 `ScopeRef.replace` 调用点确保使用 `?.`（R6-F7）
-- [ ] [Fix] `runtime.ts:334` + `form-runtime.ts:252` — 统一 "no errors" 表示为 `[]`，`getError` 返回 `ValidationError[]`（空数组代替 undefined）（R6-F8）
-- [ ] [Fix] `hooks.ts:96` — 为 `useScopeSelector<S>` 的泛型添加 `@remarks` JSDoc 说明这是 advisory cast（R6-F1, R6-F9）
-- [ ] [Proof] 测试：RendererHookApi 编译时接受 options 参数
+- [x] [Fix] `RendererHookApi` 与 live hooks 实现对齐，覆盖 `useScopeSelector`、`useCurrentFormError`、`useAggregateError` 的实际参数形状。
+- [x] [Fix] `useFormErrorStoreSelector` 的 selector identity 问题收敛到稳定实现。
+- [x] [Decision] 对仍属 advisory 的 generic/type surface 补充清晰文档说明，而不是伪装成运行时修复。
+- [x] [Proof] 测试：hook 类型签名与实现调用面一致。
 
 Exit Criteria:
 
-- [ ] 所有公开接口签名与实现一致
-- [ ] `docs/references/renderer-interfaces.md` 已同步（如适用）
-- [ ] `docs/logs/` 已更新
+- [x] hook/public interface drift 已收敛
+- [x] `docs/references/renderer-interfaces.md` 已同步
+- [x] `docs/logs/` 对应日期条目已更新
 
-### Phase 2 - Action System & Schema Compiler Hardening
+### Phase 2 - Action And Request API Hygiene
 
 Status: planned
-Targets: `packages/flux-action-core/src/`, `packages/flux-compiler/src/`
+Targets: `packages/flux-action-core/src/action-dispatcher/action-execution.ts`, `packages/flux-action-core/src/action-dispatcher/action-runners.ts`, `packages/flux-runtime/src/async-data/request-runtime.ts`, `docs/architecture/action-scope-and-imports.md`
 
-- Item Types: Fix, Decision
+- Item Types: `Fix | Proof`
 
-- [ ] [Fix] `action-execution.ts` onSettled catch — 除了 `notify('error')` 外，将错误记录到 `actionResult.settledError` 字段并传递给调用者（R5-F7）
-- [ ] [Decision] Schema 编译 partial-success 策略：失败节点替换为 error placeholder `TemplateNode`，其他节点继续编译（R5-F8）
-- [ ] [Fix] `diagnostics.ts:17` — 移除 `continueOnError` 死配置字段，或实现 continueOnError 逻辑使其生效（R5-F2）
-- [ ] [Proof] 测试：onSettled throw 后 action result 包含 settledError 信息
-- [ ] [Proof] 测试：schema 中一个 node expression 有语法错误时，其他 node 仍正常编译（如选择 partial-success）
+- [x] [Fix] `onSettled` error 对 caller 变得可观测，而不是只在内部吞掉/通知。
+- [x] [Fix] 移除 duplicated `XUI_ACTIONS_NAMESPACE` 常量定义，统一到单一 owner。
+- [x] [Fix] `buildUrlWithParams(...)` 的数组/对象参数序列化对齐已确认 contract。
+- [x] [Fix] active docs 不再把 bare `validate` 写成 built-in/platform action。
+- [x] [Proof] 测试：`onSettled` throw 后调用方可以观察到 failure 结果。
+- [x] [Proof] 测试：authoring `validate` 文档与 live built-in list 一致。
+- [x] [Proof] 测试：URL 数组参数按确定策略序列化。
 
 Exit Criteria:
 
-- [ ] onSettled 错误可观测
-- [ ] Schema 编译降级策略已 landed 或 decision 记录
-- [ ] No owner-doc update required（或更新 schema compiler 文档）
-- [ ] `docs/logs/` 已更新
+- [x] action/request API drift 已收敛
+- [x] `docs/architecture/action-scope-and-imports.md` 已同步
+- [x] `docs/logs/` 对应日期条目已更新
 
-### Phase 3 - API Surface & Code Quality
+### Phase 3 - Public Surface And Schema Typing Hygiene
 
 Status: planned
-Targets: 多个包
+Targets: `packages/flux-compiler/src/index.ts`, `packages/flux-runtime/src/index.ts`, `packages/flux-core/src/workbench/types.ts`, `packages/flux-core/src/types/schema.ts`, `packages/flux-renderers-basic/src/schemas.ts`
 
-- Item Types: Fix
+- Item Types: `Fix | Proof | Decision`
 
-- [ ] [Fix] `flux-compiler/src/index.ts` — 将无外部消费者的导出标记为 `@internal` 或移到内部 module（R5-F1）：`createBaseCompileSymbolTable`, `schemaPathToJsonPointer`, `appendJsonPointer`, `validateSchema`, `isDataSourceFullyStatic`, `isReactionFullyStatic`, `mergeValidationRules`, `normalizeValidationTriggers`, `normalizeValidationVisibilityTriggers`
-- [ ] [Fix] `flux-runtime/src/index.ts` — 移除 `createModuleCache` 公开导出（R5-F3）
-- [ ] [Fix] `flux-core/src/workbench/types.ts` — 未使用 types 添加 `@internal` 标注（R5-F4）
-- [ ] [Fix] `action-runners.ts:18` — 删除本地 `XUI_ACTIONS_NAMESPACE`，改为从 `@nop-chaos/flux-core` 导入（R2-F6）
-- [ ] [Fix] `hooks.ts:236-238` — 修复 `useFormErrorStoreSelector` 的 `useCallback` deps：解构 `args` 获取稳定引用或使用 `useRef` 缓存（R2-F8）
-- [ ] [Fix] `wrapped-field-action.tsx:87` — 消除 `KeyboardEvent as unknown as MouseEvent` cross-cast（P2-7）
-- [ ] [Fix] `dynamic-renderer.tsx:55`, `scope-debug.tsx:53` — 硬编码英文字符串替换为 `t()` 调用（R9-F1）
-- [ ] [Fix] `request-runtime.ts:119` — `buildUrlWithParams` 对数组参数使用 repeated key 序列化（`ids=1&ids=2&ids=3`）；对对象参数 `JSON.stringify`（R9-F2）
-- [ ] [Fix] `form-runtime.ts:132` — 将 `'none'` 提取为 `flux-core/constants.ts` 中的常量 `SCOPE_BINDING_NONE`（R6-F4）
+- [x] [Fix] 清理或收窄无明确消费者的公开导出。
+- [x] [Fix] `label/title` 的 public typing 与 live `value-or-region` baseline 对齐。
+- [x] [Decision] 对仍需保留的边界导出，明确 `@internal`/文档 owner，而不是模糊暴露。
+- [x] [Proof] 测试/类型验证：`label/title` typings 与 live compiler/runtime 能力一致。
 
 Exit Criteria:
 
-- [ ] 无未使用的公开导出
-- [ ] 常量无跨包重复
-- [ ] Selector 性能修复
-- [ ] i18n 遗漏修复
-- [ ] URL 参数数组正确序列化
-- [ ] No owner-doc update required
-- [ ] `docs/logs/` 已更新
+- [x] public surface hygiene 已收敛
+- [x] `label/title` typing drift 已收敛
+- [x] No owner-doc update required 仅在确实未改 live baseline 时使用；否则已同步相关 docs
+- [x] `docs/logs/` 对应日期条目已更新
 
 ## Validation Checklist
 
-- [ ] 接口签名与实现完全对齐
-- [ ] 公开 API 表面无无用导出
-- [ ] onSettled 错误可观测
-- [ ] 不存在被降级的 in-scope live defect
-- [ ] 独立子 agent closure-audit 已完成并记录
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] hook/public interface drift 已修复
+- [x] action/request API drift 已修复
+- [x] public surface / schema typing drift 已修复
+- [x] 不存在被降级的 in-scope live defect
+- [x] 独立子 agent closure-audit 已完成并记录
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 

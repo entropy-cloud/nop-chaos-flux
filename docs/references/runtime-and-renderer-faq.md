@@ -209,6 +209,13 @@ It owns surface-family concerns such as:
 - open/close operations
 - which surface is currently topmost
 
+Long-term baseline:
+
+- declarative `type: 'dialog' | 'drawer'`
+- built-in `openDialog` / `openDrawer`
+
+are two authoring paths for the same surface runtime family, not two independent runtimes.
+
 It does not own the internal business state inside the surface. For example, a form inside a dialog still belongs to `FormRuntime`, not to `SurfaceRuntime`.
 
 ### What is a `SurfaceEntry`?
@@ -229,6 +236,29 @@ Think:
 
 - `SurfaceRuntime` = the stack owner
 - `SurfaceEntry` = one item in that stack
+
+That should be true for both declarative and action-opened surfaces.
+
+### Why does the public DSL say `dialog` / `drawer`, but the architecture talks about `surface`?
+
+Because they live at different layers.
+
+- `dialog` / `drawer` are public schema and built-in authoring concepts.
+- `surface` is the owner-family/runtime concept that unifies them internally.
+
+Useful shortcut:
+
+- public DSL keeps user-facing business words
+- internal runtime uses one shared family model
+
+So these should be read as equivalent in intent, not as separate products:
+
+- `type: 'dialog'`
+- `type: 'drawer'`
+- `openDialog`
+- `openDrawer`
+
+All of them should converge into the same `SurfaceRuntime` + `SurfaceEntry` stack.
 
 ### What does `SurfaceEntry.actionScope` mean? Does `PageRuntime` have `actionScope`?
 

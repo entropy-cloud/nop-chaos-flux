@@ -169,5 +169,5 @@ Template compilation flow:
 ## Related Documentation
 
 - Component contract: `docs/components/word-editor-page/README.md`
-- Development plan (historical): `docs/plans/24-word-editor-development-plan.md`
+- Development plan (historical): `docs/archive/plans/24-word-editor-development-plan.md`
 - Bug fixes: `docs/bugs/24-*`, `docs/bugs/25-*`, `docs/bugs/26-*`

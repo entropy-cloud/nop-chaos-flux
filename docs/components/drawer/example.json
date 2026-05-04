@@ -3,7 +3,6 @@
   "title": "侧边详情",
   "defaultOpen": false,
   "side": "right",
-  "size": "md",
   "onOpen": {
     "action": "showToast",
     "args": {

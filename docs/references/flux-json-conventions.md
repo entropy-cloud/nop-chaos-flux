@@ -148,7 +148,7 @@
 定向调用推荐矩阵：
 
 - 组件实例能力：`component:<method>` + `componentId` / `componentName`
-- 对话框栈控制：`closeDialog`，默认关闭最近活动 dialog；仅在需要显式目标时再传 `dialogId`
+- surface 栈控制：`closeSurface`，默认关闭当前 surface；仅在需要显式目标时再传 `surfaceId`
 - source/runtime 入口：`refreshSource` + `targetId`
 
 ### 2.6 Source 值
