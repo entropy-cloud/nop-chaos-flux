@@ -150,12 +150,12 @@ describe('evaluateAst', () => {
         context: createContext({ user: null }),
       }),
     ).toBeUndefined();
-    expect(
+    expect(() =>
       evaluateAst(parseFormula('created instanceof $Ctor'), {
         env,
         context: createContext({ created: new Date(), $Ctor: Date }),
       }),
-    ).toBe(true);
+    ).toThrow(/instanceof operator is not allowed/);
 
     expect(
       evaluateAst(parseFormula('missing'), {
@@ -342,7 +342,7 @@ describe('evaluateAst', () => {
     expect(evaluateAst(parseFormula('1 == 1'), { env, context })).toBe(true);
     expect(evaluateAst(parseFormula('1 != 2'), { env, context })).toBe(true);
     expect(evaluateAst(parseFormula('1 !== 2'), { env, context })).toBe(true);
-    expect(evaluateAst(parseFormula('1 instanceof 3'), { env, context })).toBe(false);
+    expect(() => evaluateAst(parseFormula('1 instanceof 3'), { env, context })).toThrow(/instanceof operator is not allowed/);
   });
 
   it('throws when evaluation depth exceeds limit', () => {

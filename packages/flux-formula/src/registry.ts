@@ -12,10 +12,64 @@ export interface FormulaRegistrySnapshot {
   namespaces: Readonly<Record<string, unknown>>;
 }
 
-const defaultFunctions = new Map<string, FormulaFunction>();
-const defaultFunctionMeta = new Map<string, FormulaFunctionMeta>();
-const defaultNamespaces = new Map<string, unknown>();
-let cachedSnapshot: FormulaRegistrySnapshot | undefined;
+export interface FormulaRegistry {
+  registerFunction(
+    name: string,
+    fn: FormulaFunction,
+    options?: { invoke?: FormulaInvokeMode },
+  ): void;
+  registerNamespace(name: string, value: unknown): void;
+  getSnapshot(): FormulaRegistrySnapshot;
+  reset(): void;
+}
+
+export function createFormulaRegistry(): FormulaRegistry {
+  const functions = new Map<string, FormulaFunction>();
+  const functionMeta = new Map<string, FormulaFunctionMeta>();
+  const namespaces = new Map<string, unknown>();
+  let cachedSnapshot: FormulaRegistrySnapshot | undefined;
+
+  return {
+    registerFunction(
+      name: string,
+      fn: FormulaFunction,
+      options: { invoke?: FormulaInvokeMode } = {},
+    ): void {
+      functions.set(name, fn);
+      functionMeta.set(name, { invoke: options.invoke ?? 'eager' });
+      cachedSnapshot = undefined;
+    },
+
+    registerNamespace(name: string, value: unknown): void {
+      namespaces.set(name, value);
+      cachedSnapshot = undefined;
+    },
+
+    getSnapshot(): FormulaRegistrySnapshot {
+      if (cachedSnapshot) {
+        return cachedSnapshot;
+      }
+
+      cachedSnapshot = {
+        functions: Object.freeze(Object.fromEntries(functions.entries())),
+        functionMeta: Object.freeze(Object.fromEntries(functionMeta.entries())),
+        namespaces: Object.freeze(Object.fromEntries(namespaces.entries())),
+      };
+      return cachedSnapshot;
+    },
+
+    reset(): void {
+      functions.clear();
+      functionMeta.clear();
+      namespaces.clear();
+      cachedSnapshot = undefined;
+    },
+  };
+}
+
+// Default global instance for backward compatibility
+const defaultRegistry = createFormulaRegistry();
+
 let builtinsInstalled = false;
 
 export function getBuiltinsInstalled(): boolean {
@@ -31,33 +85,18 @@ export function registerFunction(
   fn: FormulaFunction,
   options: { invoke?: FormulaInvokeMode } = {},
 ): void {
-  defaultFunctions.set(name, fn);
-  defaultFunctionMeta.set(name, { invoke: options.invoke ?? 'eager' });
-  cachedSnapshot = undefined;
+  defaultRegistry.registerFunction(name, fn, options);
 }
 
 export function registerNamespace(name: string, value: unknown): void {
-  defaultNamespaces.set(name, value);
-  cachedSnapshot = undefined;
+  defaultRegistry.registerNamespace(name, value);
 }
 
 export function getFormulaRegistrySnapshot(): FormulaRegistrySnapshot {
-  if (cachedSnapshot) {
-    return cachedSnapshot;
-  }
-
-  cachedSnapshot = {
-    functions: Object.freeze(Object.fromEntries(defaultFunctions.entries())),
-    functionMeta: Object.freeze(Object.fromEntries(defaultFunctionMeta.entries())),
-    namespaces: Object.freeze(Object.fromEntries(defaultNamespaces.entries())),
-  };
-  return cachedSnapshot;
+  return defaultRegistry.getSnapshot();
 }
 
 export function resetFormulaRegistry(): void {
-  defaultFunctions.clear();
-  defaultFunctionMeta.clear();
-  defaultNamespaces.clear();
-  cachedSnapshot = undefined;
+  defaultRegistry.reset();
   builtinsInstalled = false;
 }

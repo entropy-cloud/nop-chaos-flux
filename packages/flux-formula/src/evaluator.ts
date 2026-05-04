@@ -4,6 +4,7 @@ import { customEquals } from './builtins';
 import { getFormulaRegistrySnapshot, type FormulaRegistrySnapshot } from './registry';
 
 const MAX_EVAL_DEPTH = 256;
+const DANGEROUS_MEMBER_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 interface LambdaFrame {
   values: Record<string, unknown>;
@@ -85,7 +86,7 @@ function applyBinaryOperator(op: string, left: unknown, right: unknown): unknown
     case '>>>':
       return Number(left) >>> Number(right);
     case 'instanceof':
-      return typeof right === 'function' ? left instanceof (right as any) : false;
+      throw createExpressionError('instanceof operator is not allowed in expressions');
     case '==':
     case '===':
       return customEquals(left, right);
@@ -157,7 +158,7 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
         case 'ArrayExpression':
           return node.elements.map((element) => evaluateNode(element, frame));
         case 'ObjectExpression': {
-          const result: Record<string, unknown> = {};
+          const result: Record<string, unknown> = Object.create(null);
           for (const property of node.properties) {
             const key = property.computed
               ? evaluateNode(property.key, frame)
@@ -166,7 +167,11 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
                 : property.key.type === 'Literal'
                   ? property.key.value
                   : evaluateNode(property.key, frame);
-            result[String(key)] = evaluateNode(property.value, frame);
+            const keyStr = String(key);
+            if (DANGEROUS_MEMBER_KEYS.has(keyStr)) {
+              throw createExpressionError(`Object key '${keyStr}' is not allowed in expressions`);
+            }
+            result[keyStr] = evaluateNode(property.value, frame);
           }
           return result;
         }
@@ -246,6 +251,9 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
     }
 
     const key = toPropertyKey(propertyValue);
+    if (typeof key === 'string' && DANGEROUS_MEMBER_KEYS.has(key)) {
+      throw createExpressionError(`Access to '${key}' is not allowed in expressions`);
+    }
     return {
       value: (objectValue as any)[key],
       receiver: objectValue,

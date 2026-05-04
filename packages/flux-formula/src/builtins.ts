@@ -43,12 +43,31 @@ function customEquals(left: unknown, right: unknown): boolean {
   return false;
 }
 
+const DANGEROUS_KEYS_SET = new Set(['__proto__', 'constructor', 'prototype']);
+
+function deepSanitize(value: unknown): unknown {
+  if (value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(deepSanitize);
+  const result: Record<string, unknown> = Object.create(null);
+  for (const key of Object.keys(value as Record<string, unknown>)) {
+    if (!DANGEROUS_KEYS_SET.has(key)) {
+      result[key] = deepSanitize((value as Record<string, unknown>)[key]);
+    }
+  }
+  return result;
+}
+
 export function installBuiltins(): void {
   if (getBuiltinsInstalled()) return;
   setBuiltinsInstalled(true);
 
   registerNamespace('$Math', Math);
-  registerNamespace('$JSON', JSON);
+  registerNamespace('$JSON', {
+    parse(text: string) {
+      return deepSanitize(JSON.parse(text));
+    },
+    stringify: JSON.stringify.bind(JSON),
+  });
   registerNamespace('$Date', dateHelper);
 
   registerFunction(
