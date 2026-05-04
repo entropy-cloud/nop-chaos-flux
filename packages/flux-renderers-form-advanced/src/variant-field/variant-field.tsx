@@ -435,7 +435,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
       labelWidth={schemaProps.labelWidth as string | number | undefined}
       rootTag="div"
       layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
-      className={props.meta.className}
+      className={props.meta.frameClassName}
       testid={props.meta.testid}
       cid={props.meta.cid}
       rootProps={{ 'data-active-variant': activeKey, 'data-frame-wrap': frameWrapMode }}

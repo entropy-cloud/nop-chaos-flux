@@ -60,7 +60,7 @@ export function NodeFrameWrapper(props: {
       labelAlign={labelAlignValue === 'inherit' ? undefined : labelAlignValue}
       labelWidth={labelWidthValue}
       layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
-      className={props.resolvedMeta.className}
+      className={props.resolvedMeta.frameClassName}
       testid={props.resolvedMeta.testid}
       cid={props.resolvedMeta.cid}
     >

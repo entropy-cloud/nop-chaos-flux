@@ -214,7 +214,7 @@ describe('ConditionItem', () => {
         onRemove={onRemove}
       />,
     );
-    const removeBtn = screen.getByRole('button', { name: '' });
+    const removeBtn = screen.getByRole('button', { name: /remove/i });
     fireEvent.click(removeBtn);
     expect(onRemove).toHaveBeenCalledTimes(1);
   });

@@ -82,16 +82,9 @@ export function useSurfaceRenderer(
 
   React.useEffect(() => {
     return () => {
-      publishOwnerStatus(ownerScope, statusPath, {
-        id: props.id,
-        kind,
-        open: false,
-        active: false,
-        opening: false,
-        closing: false,
-      });
+      publishOwnerStatus(ownerScope, statusPath, undefined);
     };
-  }, [kind, ownerScope, props.id, statusPath]);
+  }, [ownerScope, statusPath]);
 
   function handleOpenChange(nextOpen: boolean) {
     if (controlledOpen === undefined) {

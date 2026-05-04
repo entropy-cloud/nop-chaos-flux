@@ -67,7 +67,7 @@ describe('variant-field renderer selector behavior', () => {
           body: [
             {
               ...variantSchema.body[0],
-              className: 'border',
+              frameClassName: 'border',
             },
           ],
         }}

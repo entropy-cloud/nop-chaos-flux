@@ -63,6 +63,7 @@ function ArrayEditorRow(props: {
           value={item.value}
           disabled={disabled}
           placeholder={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
+          aria-label={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
           aria-invalid={itemUi.showError ? true : undefined}
           onFocus={() => {
             if (currentForm && name) {
@@ -102,6 +103,7 @@ function ArrayEditorRow(props: {
         variant="destructive"
         size="sm"
         disabled={disabled}
+        aria-label={`${t('flux.form.remove')} ${itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}`}
         onClick={() => {
           const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
 

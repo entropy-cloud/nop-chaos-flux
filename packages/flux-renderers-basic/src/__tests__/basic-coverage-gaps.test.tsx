@@ -8,7 +8,8 @@ import {
   renderStructuralLoop,
   resolveLoopBindings,
 } from '../structural-loop';
-import { classNames, resolveDirection, resolveGap } from '../utils';
+import { classNames, resolveDirection } from '../utils';
+import { resolveGap } from '@nop-chaos/flux-react';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support';
 
 describe('basic renderer coverage gaps', () => {

@@ -126,6 +126,15 @@ export function TableHeaderRow({
             data-slot="table-head"
             data-fixed={fixedColumnLayout.getColumnCellProps(column, index).fixed || undefined}
             data-interactive={isSortable || isFilterable || undefined}
+            aria-sort={
+              isSortable && currentSort === 'asc'
+                ? 'ascending'
+                : isSortable && currentSort === 'desc'
+                  ? 'descending'
+                  : isSortable
+                    ? 'none'
+                    : undefined
+            }
           >
             {isSortable || isFilterable || isSearchable ? (
               <div className="flex items-center gap-1">

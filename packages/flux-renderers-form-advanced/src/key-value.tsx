@@ -68,6 +68,7 @@ function KeyValueRow(props: {
           value={pair.key}
           disabled={disabled}
           placeholder="Key"
+          aria-label={`Key ${index + 1}`}
           aria-invalid={keyUi.showError ? true : undefined}
           onFocus={() => {
             if (currentForm && name) {
@@ -114,6 +115,7 @@ function KeyValueRow(props: {
           value={pair.value}
           disabled={disabled}
           placeholder="Value"
+          aria-label={`Value ${index + 1}`}
           aria-invalid={valueUi.showError ? true : undefined}
           onFocus={() => {
             if (currentForm && name) {
@@ -153,6 +155,7 @@ function KeyValueRow(props: {
         variant="destructive"
         size="sm"
         disabled={disabled}
+        aria-label={`${t('flux.form.remove')} entry ${index + 1}`}
         onClick={() => {
           const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
 

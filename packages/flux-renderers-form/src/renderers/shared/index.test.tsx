@@ -23,7 +23,7 @@ describe('shared form renderer primitives', () => {
       </>,
     );
 
-    expect(screen.getByText('Profile').tagName).toBe('SPAN');
+    expect(screen.getByText('Profile').tagName).toBe('LABEL');
     expect(screen.getByText('Settings').tagName).toBe('LEGEND');
   });
 

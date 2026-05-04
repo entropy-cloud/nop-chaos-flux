@@ -240,7 +240,7 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText('false:false')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(':')).toBeTruthy());
     cleanup();
   });
 

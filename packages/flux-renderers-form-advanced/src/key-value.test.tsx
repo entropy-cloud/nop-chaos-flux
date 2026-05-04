@@ -67,7 +67,7 @@ describe('key-value renderer', () => {
     fireEvent.change(screen.getAllByPlaceholderText('Key')[0], { target: { value: 'mode' } });
     fireEvent.change(screen.getAllByPlaceholderText('Value')[0], { target: { value: 'light' } });
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /Remove entry/ })[0]);
 
     await waitFor(() => expect(screen.queryAllByPlaceholderText('Key')).toHaveLength(0));
     expect(screen.queryAllByPlaceholderText('Value')).toHaveLength(0);

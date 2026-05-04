@@ -11,6 +11,7 @@ import { OperatorSelect } from './operator-select';
 import { ValueInput } from './value-input';
 import { resolveOperators, resolveDefaultOp } from './operators';
 import { WrappedFieldAction } from '../wrapped-field-action';
+import { t } from '@nop-chaos/flux-i18n';
 
 interface ConditionItemProps {
   value: ConditionItemValue;
@@ -141,8 +142,9 @@ export function ConditionItem({
         <WrappedFieldAction
           variant="ghost"
           size="icon-xs"
-          className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+          className="text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-destructive transition-opacity"
           onClick={onRemove}
+          aria-label={t('conditionBuilder.removeCondition')}
         >
           <Trash2Icon className="size-3.5" />
         </WrappedFieldAction>

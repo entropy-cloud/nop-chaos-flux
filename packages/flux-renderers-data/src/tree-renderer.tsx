@@ -91,7 +91,7 @@ function TreeNodeRenderer(props: {
     : null;
 
   return (
-    <div data-slot="tree-node" data-depth={depth} data-node-key={nodeKey}>
+    <div data-slot="tree-node" data-depth={depth} data-node-key={nodeKey} role="treeitem" aria-expanded={hasChildren ? open : undefined}>
       <Collapsible open={open} onOpenChange={setOpen}>
         <div className="flex items-start gap-2" style={{ paddingInlineStart: `${depth * 16}px` }}>
           {hasChildren ? (
@@ -138,7 +138,7 @@ function TreeNodeRenderer(props: {
 
         {hasChildren ? (
           <CollapsibleContent>
-            <div data-slot="tree-children">
+            <div data-slot="tree-children" role="group">
               {childNodes.map((childNode, childIndex) => (
                 <TreeNodeRenderer
                   key={`${nodeKey}:${toNodeKey(childNode, keyField, childIndex)}`}
@@ -198,6 +198,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
         className={cn('nop-tree', props.meta.className)}
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
+        role="tree"
       >
         {hasRendererSlotContent(emptyContent) ? (
           <div data-slot="tree-empty">{emptyContent}</div>
@@ -211,6 +212,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       className={cn('nop-tree', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      role="tree"
     >
       {data.map((node, index) => (
         <TreeNodeRenderer

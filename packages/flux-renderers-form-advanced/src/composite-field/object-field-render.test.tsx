@@ -32,7 +32,7 @@ describe('object-field renderer', () => {
               type: 'object-field',
               name: 'profile',
               label: 'Profile',
-              className: 'border',
+              frameClassName: 'border',
               body: [
                 { type: 'input-text', name: 'firstName', label: 'First Name' },
                 { type: 'input-text', name: 'lastName', label: 'Last Name' },

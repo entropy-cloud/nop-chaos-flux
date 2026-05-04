@@ -139,6 +139,8 @@ export function FieldFrame(props: FieldFrameProps) {
   const Tag = isGroup ? 'fieldset' : (rootTag ?? 'label');
   const LabelTag = isGroup ? 'legend' : 'span';
   const effectiveRequired = Boolean(required) || Boolean(dynamicRequired);
+  const errorId = name ? `${name}-error` : undefined;
+  const controlId = name ? `${name}-control` : undefined;
 
   const effectiveLabelAlign = labelAlignProp ?? formLayout.labelAlign;
   const effectiveLabelWidth = labelWidthProp ?? formLayout.labelWidth;
@@ -160,6 +162,7 @@ export function FieldFrame(props: FieldFrameProps) {
       data-field-dirty={fieldState.dirty ? '' : undefined}
       data-field-invalid={showError ? '' : undefined}
       data-field-mode={formMode}
+      aria-required={effectiveRequired || undefined}
     >
       {label ? (
         <LabelTag data-slot="field-label" style={labelStyle}>
@@ -180,7 +183,12 @@ export function FieldFrame(props: FieldFrameProps) {
         </LabelTag>
       ) : null}
 
-      <div data-slot="field-control">
+      <div
+        data-slot="field-control"
+        id={controlId}
+        aria-describedby={showError ? errorId : undefined}
+        aria-invalid={showError || undefined}
+      >
         {children}
         {remark ? (
           <span
@@ -193,7 +201,7 @@ export function FieldFrame(props: FieldFrameProps) {
       </div>
 
       {error && showError ? (
-        <span data-slot="field-error">{error.message}</span>
+        <span data-slot="field-error" id={errorId} role="alert" aria-live="assertive">{error.message}</span>
       ) : fieldState.validating ? (
         <span data-slot="field-hint">{t('flux.common.validating')}</span>
       ) : !error && hint ? (
