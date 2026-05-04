@@ -119,137 +119,110 @@ export async function executeFormSubmit(
     store.setSubmitting(true);
   }
 
-  const currentValidation = getCurrentValidation();
-  const currentTouched = extractTouchedPaths(store.getState().fieldStates);
-  const nextTouched = buildSubmitTouchedState({
-    touched: currentTouched,
-    validation: currentValidation,
-    runtimeFieldRegistrations: Array.from(runtimeFieldRegistrations.values()).map(
-      (e) => e.registration,
-    ),
-    defaultValidationTriggers,
-  });
+  try {
+    const currentValidation = getCurrentValidation();
+    const currentTouched = extractTouchedPaths(store.getState().fieldStates);
+    const nextTouched = buildSubmitTouchedState({
+      touched: currentTouched,
+      validation: currentValidation,
+      runtimeFieldRegistrations: Array.from(runtimeFieldRegistrations.values()).map(
+        (e) => e.registration,
+      ),
+      defaultValidationTriggers,
+    });
 
-  if (nextTouched !== currentTouched) {
-    const fieldStates = store.getState().fieldStates;
-    const nextFieldStates = { ...fieldStates };
+    if (nextTouched !== currentTouched) {
+      const fieldStates = store.getState().fieldStates;
+      const nextFieldStates = { ...fieldStates };
 
-    for (const path of Object.keys(nextTouched)) {
-      if (!currentTouched[path]) {
-        nextFieldStates[path] = { ...nextFieldStates[path], touched: true };
+      for (const path of Object.keys(nextTouched)) {
+        if (!currentTouched[path]) {
+          nextFieldStates[path] = { ...nextFieldStates[path], touched: true };
+        }
+      }
+
+      store.batchUpdate({ fieldStates: nextFieldStates });
+    }
+
+    ownerRuntime.supersedeLowerPriorityWork();
+
+    const validation =
+      !currentValidation && runtimeFieldRegistrations.size === 0
+        ? ({ ok: true, errors: [], fieldErrors: {} } as FormValidationResult)
+        : await validateForm('submit');
+
+    const lifecycleHandlers = getLifecycleHandlers();
+
+    if (!validation.ok) {
+      const validationFailure = {
+        ok: false,
+        error: validation.errors,
+        data: validation.fieldErrors,
+      } as const;
+
+      if (options?.signal?.aborted) {
+        return { ok: false, cancelled: true, error: new Error('Submit aborted') };
+      }
+
+      const lifecycleResult = lifecycleHandlers?.onValidateError
+        ? await lifecycleHandlers.onValidateError(validationFailure, options)
+        : undefined;
+
+      return lifecycleResult ?? validationFailure;
+    }
+
+    const childValidationPromises: Promise<import('@nop-chaos/flux-core').ValidationResult>[] = [];
+    const summaryGateBlockers: string[] = [];
+    for (const contract of sharedState.childContracts.values()) {
+      if (!contract.active) continue;
+
+      if (contract.mode === 'recurse-submit') {
+        childValidationPromises.push(contract.triggerValidation());
+      } else if (contract.mode === 'summary-gate') {
+        const childState = contract.getState();
+        if (!childState.ready || childState.validating || !childState.valid) {
+          summaryGateBlockers.push(contract.childOwnerId);
+        }
       }
     }
 
-    store.batchUpdate({ fieldStates: nextFieldStates });
-  }
+    if (summaryGateBlockers.length > 0) {
+      const summaryGateFailure = {
+        ok: false,
+        error: [new Error(`Submit blocked by child scope: ${summaryGateBlockers.join(', ')}`)],
+        data: {},
+      } as const;
 
-  ownerRuntime.supersedeLowerPriorityWork();
+      return lifecycleHandlers?.onValidateError
+        ? await lifecycleHandlers.onValidateError(summaryGateFailure, options)
+        : summaryGateFailure;
+    }
 
-  const validation =
-    !currentValidation && runtimeFieldRegistrations.size === 0
-      ? ({ ok: true, errors: [], fieldErrors: {} } as FormValidationResult)
-      : await validateForm('submit');
+    if (childValidationPromises.length > 0) {
+      const childResults = await Promise.all(childValidationPromises);
+      const childErrors = childResults.flatMap((r) => r.errors);
+      if (childErrors.length > 0) {
+        const childValidationFailure = {
+          ok: false,
+          error: childErrors,
+          data: {},
+        } as const;
 
-  const lifecycleHandlers = getLifecycleHandlers();
+        return lifecycleHandlers?.onValidateError
+          ? await lifecycleHandlers.onValidateError(childValidationFailure, options)
+          : childValidationFailure;
+      }
+    }
 
-  if (!validation.ok) {
-    const validationFailure = {
-      ok: false,
-      error: validation.errors,
-      data: validation.fieldErrors,
-    } as const;
+    const submitLifecycleAction = lifecycleHandlers?.submitAction;
+    const executeSubmit = submitLifecycleAction
+      ? () => submitLifecycleAction(options)
+      : () => Promise.resolve({ ok: true, data: store.getState().values });
 
     if (options?.signal?.aborted) {
       return { ok: false, cancelled: true, error: new Error('Submit aborted') };
     }
 
-    const lifecycleResult = lifecycleHandlers?.onValidateError
-      ? await lifecycleHandlers.onValidateError(validationFailure, options)
-      : undefined;
-
-    setIsSubmitting(false);
-
-    if (submittingTimer !== undefined) {
-      clearTimeout(submittingTimer);
-      submittingTimer = undefined;
-    }
-
-    store.setSubmitting(false);
-
-    return lifecycleResult ?? validationFailure;
-  }
-
-  const childValidationPromises: Promise<import('@nop-chaos/flux-core').ValidationResult>[] = [];
-  const summaryGateBlockers: string[] = [];
-  for (const contract of sharedState.childContracts.values()) {
-    if (!contract.active) continue;
-
-    if (contract.mode === 'recurse-submit') {
-      childValidationPromises.push(contract.triggerValidation());
-    } else if (contract.mode === 'summary-gate') {
-      const childState = contract.getState();
-      if (!childState.ready || childState.validating || !childState.valid) {
-        summaryGateBlockers.push(contract.childOwnerId);
-      }
-    }
-  }
-
-  if (summaryGateBlockers.length > 0) {
-    const summaryGateFailure = {
-      ok: false,
-      error: [new Error(`Submit blocked by child scope: ${summaryGateBlockers.join(', ')}`)],
-      data: {},
-    } as const;
-
-    setIsSubmitting(false);
-
-    if (submittingTimer !== undefined) {
-      clearTimeout(submittingTimer);
-      submittingTimer = undefined;
-    }
-
-    store.setSubmitting(false);
-
-    return lifecycleHandlers?.onValidateError
-      ? await lifecycleHandlers.onValidateError(summaryGateFailure, options)
-      : summaryGateFailure;
-  }
-
-  if (childValidationPromises.length > 0) {
-    const childResults = await Promise.all(childValidationPromises);
-    const childErrors = childResults.flatMap((r) => r.errors);
-    if (childErrors.length > 0) {
-      const childValidationFailure = {
-        ok: false,
-        error: childErrors,
-        data: {},
-      } as const;
-
-      setIsSubmitting(false);
-
-      if (submittingTimer !== undefined) {
-        clearTimeout(submittingTimer);
-        submittingTimer = undefined;
-      }
-
-      store.setSubmitting(false);
-
-      return lifecycleHandlers?.onValidateError
-        ? await lifecycleHandlers.onValidateError(childValidationFailure, options)
-        : childValidationFailure;
-    }
-  }
-
-  const submitLifecycleAction = lifecycleHandlers?.submitAction;
-  const executeSubmit = submitLifecycleAction
-    ? () => submitLifecycleAction(options)
-    : () => Promise.resolve({ ok: true, data: store.getState().values });
-
-  if (options?.signal?.aborted) {
-    return { ok: false, cancelled: true, error: new Error('Submit aborted') };
-  }
-
-  try {
     const result = await executeSubmit();
 
     if (options?.signal?.aborted) {
@@ -278,8 +251,8 @@ export async function executeFormSubmit(
       return failureResult;
     }
 
-    return lifecycleHandlers?.onSubmitError
-      ? await lifecycleHandlers.onSubmitError(failureResult, options)
+    return getLifecycleHandlers()?.onSubmitError
+      ? await getLifecycleHandlers()?.onSubmitError?.(failureResult, options) ?? failureResult
       : failureResult;
   } finally {
     setIsSubmitting(false);

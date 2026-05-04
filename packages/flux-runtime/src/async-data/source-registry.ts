@@ -8,6 +8,9 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { normalizeRootPaths } from '@nop-chaos/flux-core';
+
+const MAX_SOURCE_CASCADE_DEPTH = 100;
+let sourceCascadeDepth = 0;
 import type { ApiCacheStore } from './api-cache';
 import {
   createDataSourceController,
@@ -191,9 +194,19 @@ export function createRuntimeSourceRegistry(input: {
         return;
       }
 
-      controller.refresh().catch((error) => {
-        console.warn('[source-registry] refresh failed', error);
-      });
+      sourceCascadeDepth += 1;
+      if (sourceCascadeDepth > MAX_SOURCE_CASCADE_DEPTH) {
+        sourceCascadeDepth = 0;
+        console.error('[flux-runtime] Source cascade depth limit exceeded');
+        return;
+      }
+      try {
+        controller.refresh().catch((error) => {
+          console.warn('[source-registry] refresh failed', error);
+        });
+      } finally {
+        sourceCascadeDepth -= 1;
+      }
     });
 
     const sourceName = compiled.targetPath?.isStatic ? compiled.targetPath.value : undefined;

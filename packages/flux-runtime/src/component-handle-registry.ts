@@ -4,28 +4,7 @@ import type {
   ComponentHandleRegistry,
   ComponentTarget,
 } from '@nop-chaos/flux-core';
-import type { ScopeRef, ScopeSnapshot } from '@nop-chaos/flux-core';
-
-function buildScopeChain(scope: ScopeRef | undefined): readonly ScopeSnapshot[] | undefined {
-  if (!scope) {
-    return undefined;
-  }
-
-  const chain: ScopeSnapshot[] = [];
-  let current: ScopeRef | undefined = scope;
-
-  while (current) {
-    chain.push({
-      id: current.id,
-      path: current.path,
-      label: current.path || current.id,
-      data: current.readOwn(),
-    });
-    current = current.parent;
-  }
-
-  return chain;
-}
+import { buildScopeChain } from '@nop-chaos/flux-core';
 
 export function createComponentHandleRegistry(input: {
   id: string;
@@ -388,6 +367,23 @@ export function createComponentHandleRegistry(input: {
           ),
         ],
       };
+    },
+    dispose() {
+      for (const child of childRegistries) {
+        child.dispose?.();
+      }
+      childRegistries.clear();
+      // remove from parent
+      if (input.parent) {
+        (input.parent as RegistryWithChildren).__childRegistries?.delete(registry);
+      }
+      // clear own state
+      handles.clear();
+      handlesByCid.clear();
+      debugDataByCid.clear();
+      handlesById.clear();
+      handlesByName.clear();
+      nameIndex.clear();
     },
   } satisfies ComponentHandleRegistry;
 

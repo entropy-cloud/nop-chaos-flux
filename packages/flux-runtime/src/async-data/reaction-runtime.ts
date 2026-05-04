@@ -11,6 +11,9 @@ import {
   type ScopeRef,
 } from '@nop-chaos/flux-core';
 import { isAbortError } from '../error-utils';
+
+let globalCascadeDepth = 0;
+const MAX_GLOBAL_CASCADE_DEPTH = 200;
 import { createRootDependencySet, scopeChangeHitsDependencies } from '../scope-change';
 import {
   createReactionOwnerId,
@@ -123,6 +126,19 @@ export function registerReaction(input: {
     }),
     cascadeDepth = 0,
   ) {
+    globalCascadeDepth += 1;
+    if (globalCascadeDepth > MAX_GLOBAL_CASCADE_DEPTH) {
+      globalCascadeDepth = 0;
+      console.error('[flux-runtime] Global reaction cascade depth limit exceeded');
+      if (run && input.asyncGovernance) {
+        input.asyncGovernance.settleRun(run, {
+          outcome: 'failed',
+          error: new Error('Global reaction cascade depth limit exceeded'),
+        });
+      }
+      dispose();
+      return;
+    }
     try {
       if (abortController.signal.aborted) {
         if (run && input.asyncGovernance) {
@@ -253,6 +269,7 @@ export function registerReaction(input: {
         input.asyncGovernance.settleRun(run, { outcome: 'failed', error });
       }
     } finally {
+      globalCascadeDepth -= 1;
       running = false;
       emitDebug();
 

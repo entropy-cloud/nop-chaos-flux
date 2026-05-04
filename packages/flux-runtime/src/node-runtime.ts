@@ -144,6 +144,13 @@ export function createNodeRuntime(input: {
         env,
         state?.meta.className,
       ),
+      frameClassName: evaluateCompiledValue(
+        input.expressionCompiler,
+        meta.frameClassName,
+        scope,
+        env,
+        state?.meta.frameClassName,
+      ),
       visible: Boolean(
         evaluateCompiledValue(
           input.expressionCompiler,

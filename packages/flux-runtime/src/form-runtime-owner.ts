@@ -273,8 +273,16 @@ export function buildFormOwnerRuntime(input: {
       }),
     );
 
-    for (const settled of pathResults) {
+    for (let index = 0; index < pathResults.length; index++) {
+      const settled = pathResults[index]!;
       if (settled.status === 'rejected') {
+        const fieldPath = validationPaths[index];
+        console.error(`[flux-runtime] Field validation threw for path "${fieldPath}":`, settled.reason);
+        // Treat validator crash as validation failure rather than silently skipping
+        if (fieldPath) {
+          fieldErrors[fieldPath] = [{ path: fieldPath, message: 'Validation failed due to an internal error', rule: 'async' }];
+          errors.push({ path: fieldPath, message: 'Validation failed due to an internal error', rule: 'async' });
+        }
         continue;
       }
       const { path, result } = settled.value;

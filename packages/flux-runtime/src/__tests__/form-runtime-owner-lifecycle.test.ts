@@ -131,7 +131,7 @@ describe('refreshCompiledModelState', () => {
     expect(sharedState.pendingValidationDebounces.size).toBe(0);
     expect(sharedState.validationAbortControllers.size).toBe(0);
     expect(resolved).toHaveBeenCalledWith(false);
-    expect(abortController.signal.aborted).toBe(false);
+    expect(abortController.signal.aborted).toBe(true);
     expect(
       sharedState.validationAsyncGovernance.getOwnerState('validation:form-scope:name'),
     ).toBeUndefined();

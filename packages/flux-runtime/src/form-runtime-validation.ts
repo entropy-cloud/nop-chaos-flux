@@ -355,14 +355,25 @@ async function validateCompiledField(
 
     return createValidationResult(errors);
   } catch (error) {
-    if (validationRun && error === VALIDATION_CANCELLED) {
+    if (error === VALIDATION_CANCELLED) {
+      if (validationRun) {
+        sharedState.validationAsyncGovernance.settleRun(validationRun, {
+          outcome: 'cancelled',
+          cancelled: true,
+        });
+      }
+      throw error;
+    }
+
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    if (validationRun) {
       sharedState.validationAsyncGovernance.settleRun(validationRun, {
         outcome: 'cancelled',
         cancelled: true,
       });
     }
 
-    throw error;
+    throw normalizedError;
   } finally {
     if (validatingTimer !== undefined) {
       clearTimeout(validatingTimer);

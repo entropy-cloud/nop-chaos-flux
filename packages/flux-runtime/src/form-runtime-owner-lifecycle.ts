@@ -44,6 +44,9 @@ export function refreshCompiledModelState(args: {
   cancelAllValidationDebounces(args.sharedState);
   clearValidationAsyncOwners(args.sharedState);
   args.sharedState.validationRuns.clear();
+  for (const controller of args.sharedState.validationAbortControllers.values()) {
+    controller.abort();
+  }
   args.sharedState.validationAbortControllers.clear();
 
   const staleRegistrations = Array.from(args.sharedState.runtimeFieldRegistrations.entries());
@@ -125,6 +128,9 @@ export function disposeOwnerState(args: {
   cancelAllValidationDebounces(args.sharedState);
   clearValidationAsyncOwners(args.sharedState);
   args.sharedState.validationRuns.clear();
+  for (const controller of args.sharedState.validationAbortControllers.values()) {
+    controller.abort();
+  }
   args.sharedState.validationAbortControllers.clear();
   args.sharedState.runtimeFieldRegistrations.clear();
   args.sharedState.pathToRegistrationId.clear();

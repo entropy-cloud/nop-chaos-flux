@@ -102,7 +102,34 @@ function sanitizeSnapshot(data: Record<string, any>): Record<string, any> {
   for (let i = 0; i < keys.length; i += 1) {
     const key = keys[i];
     if (!DANGEROUS_KEYS.has(key)) {
-      result[key] = data[key];
+      result[key] = sanitizeValue(data[key]);
+    }
+  }
+  return result;
+}
+
+function sanitizeValue(value: unknown): unknown {
+  if (value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(sanitizeValue);
+  const obj = value as Record<string, any>;
+  const keys = Object.keys(obj);
+  let hasDangerous = false;
+  let hasNestedObject = false;
+  for (let i = 0; i < keys.length; i += 1) {
+    if (DANGEROUS_KEYS.has(keys[i])) {
+      hasDangerous = true;
+    }
+    const val = obj[keys[i]];
+    if (val !== null && typeof val === 'object') {
+      hasNestedObject = true;
+    }
+  }
+  if (!hasDangerous && !hasNestedObject) return value;
+  const result: Record<string, any> = {};
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    if (!DANGEROUS_KEYS.has(key)) {
+      result[key] = sanitizeValue(obj[key]);
     }
   }
   return result;
