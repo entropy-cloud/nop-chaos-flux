@@ -5,7 +5,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { parsePath, resolveRendererAuthoringContract } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { buildScopeChain } from './controller-helpers';
+import { buildScopeChain } from '@nop-chaos/flux-core';
 import type {
   NopComponentInspectResult,
   NopComponentTreeItem,

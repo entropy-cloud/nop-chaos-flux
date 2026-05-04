@@ -70,6 +70,7 @@ export const zhCN: Resource = {
       addCondition: '添加条件',
       addGroup: '添加分组',
       removeGroup: '删除分组',
+      removeCondition: '删除条件',
       placeholder: '暂无条件，请点击下方按钮添加',
       pickerPlaceholder: '点击配置条件',
       selectField: '选择字段',

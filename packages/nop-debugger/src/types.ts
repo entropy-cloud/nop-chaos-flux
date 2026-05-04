@@ -8,6 +8,7 @@ import type {
   RendererEnv,
   RendererPlugin,
   RendererRuntime,
+  ScopeSnapshot,
 } from '@nop-chaos/flux-core';
 import type {
   NopExpressionEvaluationResult,
@@ -127,12 +128,8 @@ export interface NopDebugEvent {
   exportedData?: unknown;
 }
 
-export interface NopScopeChainEntry {
-  id?: string;
-  path?: string;
-  label: string;
-  data: Record<string, unknown>;
-}
+/** @deprecated Use `ScopeSnapshot` from `@nop-chaos/flux-core` instead. */
+export type NopScopeChainEntry = ScopeSnapshot;
 
 export interface NopDebuggerPinnedErrors {
   earliest: NopDebugEvent[];
@@ -295,7 +292,7 @@ export interface NopComponentInspectResult {
     submitting: boolean;
   };
   scopeData?: Record<string, unknown>;
-  scopeChain?: NopScopeChainEntry[];
+  scopeChain?: ScopeSnapshot[];
   metaSummary?: Record<string, unknown>;
   propsSummary?: Record<string, unknown>;
   authoringContract?: ResolvedAuthoringContract;

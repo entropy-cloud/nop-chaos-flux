@@ -70,6 +70,7 @@ export const enUS: Resource = {
       addCondition: 'Add condition',
       addGroup: 'Add group',
       removeGroup: 'Remove group',
+      removeCondition: 'Remove condition',
       placeholder: 'No conditions yet. Use the buttons below to add one.',
       pickerPlaceholder: 'Click to configure conditions',
       selectField: 'Select field',

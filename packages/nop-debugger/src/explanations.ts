@@ -1,6 +1,7 @@
 import { redactData } from './redaction';
 import type { NormalizedRedactionOptions } from './redaction';
 export { explainNodeAsync, explainNodeFailure } from './explanations-failure-async';
+import type { ScopeSnapshot } from '@nop-chaos/flux-core';
 import type {
   NopComponentInspectResult,
   NopDebuggerEvidenceRef,
@@ -9,7 +10,6 @@ import type {
   NopNodeMetaExplanationQuery,
   NopNodeValueExplanation,
   NopNodeValueExplanationQuery,
-  NopScopeChainEntry,
 } from './types';
 
 const MAX_EVIDENCE = 6;
@@ -54,7 +54,7 @@ function summarizeValue(value: unknown) {
   return typeof value;
 }
 
-function summarizeScopeEntry(entry: NopScopeChainEntry) {
+function summarizeScopeEntry(entry: ScopeSnapshot) {
   return entry.path || entry.label || entry.id || 'scope';
 }
 

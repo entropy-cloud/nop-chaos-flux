@@ -61,9 +61,7 @@ export interface DispatchContext {
   isCurrentPreviewRun: (requestId: number) => boolean;
 }
 
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
-}
+import { isAbortError } from '@nop-chaos/flux-core';
 
 export async function dispatchReportDesignerCommand(
   ctx: DispatchContext,

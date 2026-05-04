@@ -2,13 +2,11 @@ import type {
   ActionResult,
   ExecutableApiRequest,
   ApiResponse,
-  ScopeRef,
   TemplateNode,
 } from '@nop-chaos/flux-core';
 import type {
   NopDebugEventNetworkSummary,
   NopDebuggerWindowConfig,
-  NopScopeChainEntry,
 } from './types';
 
 const DEFAULT_POSITION = { x: 24, y: 24 };
@@ -135,26 +133,7 @@ export function createRequestInstanceId() {
   return createRequestInstanceIdFromDefaultFactory();
 }
 
-export function buildScopeChain(scope: ScopeRef | undefined): NopScopeChainEntry[] | undefined {
-  if (!scope) {
-    return undefined;
-  }
-
-  const chain: NopScopeChainEntry[] = [];
-  let current: ScopeRef | undefined = scope;
-
-  while (current) {
-    chain.push({
-      id: current.id,
-      path: current.path,
-      label: current.path || current.id,
-      data: current.readOwn() as Record<string, unknown>,
-    });
-    current = current.parent;
-  }
-
-  return chain;
-}
+export { buildScopeChain } from '@nop-chaos/flux-core';
 
 export function buildNetworkSummary(input: {
   api: ExecutableApiRequest;
