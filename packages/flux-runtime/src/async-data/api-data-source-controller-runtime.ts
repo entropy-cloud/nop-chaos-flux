@@ -94,10 +94,14 @@ export function createApiDataSourceRequestRunner(
       mutable.activeRequestCount += 1;
       const activeController = controller;
 
-      const requestScope = input.runtime.createChildScope(input.scope, {}, {
-        source: 'custom',
-        pathSuffix: 'data-source-request',
-      });
+      const requestScope = input.runtime.createChildScope(
+        input.scope,
+        {},
+        {
+          source: 'custom',
+          pathSuffix: 'data-source-request',
+        },
+      );
       const trackedApi = evaluateCompiledApiConfig({
         compiledApi: input.compiledApi,
         scope: input.scope,
@@ -225,7 +229,9 @@ export function createApiDataSourceRequestRunner(
       });
 
       publishControllerData(input, mutable, mappedValue);
-      updateControllerState(input, mutable, (current) => toSuccessDataSourceState(current, mappedValue));
+      updateControllerState(input, mutable, (current) =>
+        toSuccessDataSourceState(current, mappedValue),
+      );
 
       if (evaluateControllerStopCondition(input, mutable)) {
         options.stop();
@@ -269,7 +275,9 @@ export function createApiDataSourceRequestRunner(
         return;
       }
 
-      updateControllerState(input, mutable, (current) => toErrorDataSourceState(current, caughtError));
+      updateControllerState(input, mutable, (current) =>
+        toErrorDataSourceState(current, caughtError),
+      );
 
       if (!input.silent) {
         reportRuntimeHostIssue({

@@ -11,7 +11,10 @@ import {
   useRendererRuntime,
 } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
-import { createFormComponentHandle, type FormLayoutContextValue } from '@nop-chaos/flux-react/unstable';
+import {
+  createFormComponentHandle,
+  type FormLayoutContextValue,
+} from '@nop-chaos/flux-react/unstable';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas';
 import { usePublishedFormStatus, usePublishedFormValues } from './form-status-publication';
@@ -145,14 +148,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         page: currentPage,
         validation: props.templateNode.validationPlan,
       }),
-    [
-      runtime,
-      formId,
-      formName,
-      parentScope,
-      currentPage,
-      props.templateNode.validationPlan,
-    ],
+    [runtime, formId, formName, parentScope, currentPage, props.templateNode.validationPlan],
   );
 
   const baseLifecycleScope = ownedForm.scope;

@@ -40,13 +40,13 @@ export function getChildFieldUiState(input: {
   const visited = input.fieldState.visited;
   const showError = Boolean(
     error &&
-      shouldShowFieldError(input.behavior, {
-        touched,
-        dirty,
-        visited,
-        submitting: input.fieldState.submitting,
-        submitAttempted: input.fieldState.submitAttempted,
-      }),
+    shouldShowFieldError(input.behavior, {
+      touched,
+      dirty,
+      visited,
+      submitting: input.fieldState.submitting,
+      submitAttempted: input.fieldState.submitAttempted,
+    }),
   );
 
   return {

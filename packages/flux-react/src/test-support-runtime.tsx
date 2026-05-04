@@ -309,7 +309,9 @@ function DispatchProbe(props: RendererComponentProps) {
         variant="ghost"
         size="sm"
         onClick={async () => {
-          const result = await props.helpers.dispatch(props.props.runAction as ActionSchema | ActionSchema[]);
+          const result = await props.helpers.dispatch(
+            props.props.runAction as ActionSchema | ActionSchema[],
+          );
           setResultText(result.ok ? String(result.data ?? '') : String(result.error ?? ''));
         }}
       >

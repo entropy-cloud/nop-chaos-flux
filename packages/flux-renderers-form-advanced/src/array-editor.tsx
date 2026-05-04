@@ -255,7 +255,12 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
 
   return (
-    <div className={cn('nop-array-editor', 'grid gap-3')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
+    <div
+      className={cn('nop-array-editor', 'grid gap-3')}
+      data-slot="field-control"
+      data-testid={props.meta.testid}
+      data-cid={props.meta.cid}
+    >
       {items.map((item, index) => {
         return (
           <ArrayEditorRow

@@ -163,7 +163,7 @@ export function scanTopLevelLets({ rule, relativePath, content }) {
         continue;
       }
 
-      if (char === '\'' || char === '"' || char === '`') {
+      if (char === "'" || char === '"' || char === '`') {
         inString = true;
         stringQuote = char;
         continue;
@@ -223,7 +223,9 @@ export async function scanFilesWithRules(rules) {
   }
 
   allResults.sort((a, b) => {
-    return a.ruleId.localeCompare(b.ruleId) || a.filePath.localeCompare(b.filePath) || a.line - b.line;
+    return (
+      a.ruleId.localeCompare(b.ruleId) || a.filePath.localeCompare(b.filePath) || a.line - b.line
+    );
   });
 
   return allResults;
@@ -243,7 +245,9 @@ export function printResults(results, rules, label = 'discover-audit-suspects') 
     grouped.get(result.ruleId).push(result);
   }
 
-  console.log(`[${label}] Found ${results.length} suspect matches across ${grouped.size} rule buckets.`);
+  console.log(
+    `[${label}] Found ${results.length} suspect matches across ${grouped.size} rule buckets.`,
+  );
 
   for (const rule of rules) {
     const bucket = grouped.get(rule.id);

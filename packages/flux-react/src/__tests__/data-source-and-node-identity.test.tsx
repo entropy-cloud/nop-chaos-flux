@@ -75,7 +75,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
                 name: 'user',
                 statusPath: 'userStatus',
               },
-                testState.expressionCompiler,
+              testState.expressionCompiler,
             ),
           });
 

@@ -109,50 +109,49 @@ export function createNodeSourcePropController(
         });
         return [entry, result] as const;
       }),
-    )
-      .then((settled) => {
-        if (controller.signal.aborted) return;
+    ).then((settled) => {
+      if (controller.signal.aborted) return;
 
-        const valuePatch: Record<string, unknown> = {};
-        const transientPatch: Record<string, SourceTransientState> = {};
+      const valuePatch: Record<string, unknown> = {};
+      const transientPatch: Record<string, SourceTransientState> = {};
 
-        for (const result of settled) {
-          if (result.status === 'fulfilled') {
-            const [entry, actionResult] = result.value;
-            valuePatch[entry.key] = actionResult.ok ? actionResult.data : undefined;
-            const stateKey = sourceStatePropKeys[entry.key];
-            if (stateKey) {
-              transientPatch[stateKey] = {
-                loading: false,
-                error: actionResult.ok ? undefined : actionResult.error,
-                status: actionResult.ok ? 'ready' : 'error',
-              };
+      for (const result of settled) {
+        if (result.status === 'fulfilled') {
+          const [entry, actionResult] = result.value;
+          valuePatch[entry.key] = actionResult.ok ? actionResult.data : undefined;
+          const stateKey = sourceStatePropKeys[entry.key];
+          if (stateKey) {
+            transientPatch[stateKey] = {
+              loading: false,
+              error: actionResult.ok ? undefined : actionResult.error,
+              status: actionResult.ok ? 'ready' : 'error',
+            };
+          }
+        } else {
+          const error = result.reason;
+          for (const entry of sourceEntries) {
+            if (!(entry.key in valuePatch)) {
+              valuePatch[entry.key] = undefined;
             }
-          } else {
-            const error = result.reason;
-            for (const entry of sourceEntries) {
-              if (!(entry.key in valuePatch)) {
-                valuePatch[entry.key] = undefined;
-              }
-              const stateKey = sourceStatePropKeys[entry.key];
-              if (stateKey && !(stateKey in transientPatch)) {
-                transientPatch[stateKey] = { loading: false, error, status: 'error' };
-              }
+            const stateKey = sourceStatePropKeys[entry.key];
+            if (stateKey && !(stateKey in transientPatch)) {
+              transientPatch[stateKey] = { loading: false, error, status: 'error' };
             }
           }
         }
+      }
 
-        const nextValue = { ...propsValue, ...valuePatch, ...transientPatch };
-        const next: ControllerSnapshot = { sourceInputs, value: nextValue };
+      const nextValue = { ...propsValue, ...valuePatch, ...transientPatch };
+      const next: ControllerSnapshot = { sourceInputs, value: nextValue };
 
-        if (
-          !sameInputs(currentSnapshot.sourceInputs, sourceInputs) ||
-          !shallowEqual(currentSnapshot.value, nextValue)
-        ) {
-          currentSnapshot = next;
-          notify();
-        }
-      });
+      if (
+        !sameInputs(currentSnapshot.sourceInputs, sourceInputs) ||
+        !shallowEqual(currentSnapshot.value, nextValue)
+      ) {
+        currentSnapshot = next;
+        notify();
+      }
+    });
   }
 
   function dispose() {

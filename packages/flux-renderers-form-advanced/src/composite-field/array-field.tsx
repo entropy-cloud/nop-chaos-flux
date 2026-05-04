@@ -130,11 +130,7 @@ function ArrayItem(props: {
         </FormContext.Provider>
       </div>
       {removable && (
-        <WrappedFieldAction
-          variant="destructive"
-          size="sm"
-          onClick={() => onRemove(index)}
-        >
+        <WrappedFieldAction variant="destructive" size="sm" onClick={() => onRemove(index)}>
           {t('flux.form.remove')}
         </WrappedFieldAction>
       )}
@@ -350,7 +346,12 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   }, [itemKind, modelGeneration, name, parentForm, scalarChildPaths, scalarItemField]);
 
   return (
-    <div className={cn('nop-array-field')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
+    <div
+      className={cn('nop-array-field')}
+      data-slot="field-control"
+      data-testid={props.meta.testid}
+      data-cid={props.meta.cid}
+    >
       <div data-slot="array-field-body">
         {itemEntries.map(({ item, index, itemIdentity, itemInstancePath }) => {
           return (
@@ -368,8 +369,8 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
               renderItem={() =>
                 asReactNode(
                   props.regions.item?.render({
-                  bindings: { index, value: item },
-                  instancePath: itemInstancePath,
+                    bindings: { index, value: item },
+                    instancePath: itemInstancePath,
                   }),
                 ) ?? null
               }
@@ -377,11 +378,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
           );
         })}
         {addable && !readOnly && !presentation.effectiveDisabled && (
-          <WrappedFieldAction
-            variant="outline"
-            size="sm"
-            onClick={handleAdd}
-          >
+          <WrappedFieldAction variant="outline" size="sm" onClick={handleAdd}>
             {t('flux.form.addItem')}
           </WrappedFieldAction>
         )}

@@ -384,13 +384,11 @@ describe('schema compiler diagnostics', () => {
       const compiler = createCompiler(openRenderer);
 
       expect(
-        compiler.validate?.(
-          {
-            type: 'open-renderer',
-            label: 'Hello',
-            lable: 'typo',
-          },
-        ),
+        compiler.validate?.({
+          type: 'open-renderer',
+          label: 'Hello',
+          lable: 'typo',
+        }),
       ).toEqual([]);
     });
   });

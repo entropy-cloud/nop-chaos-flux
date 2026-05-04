@@ -131,7 +131,11 @@ describe('validation runtime helper', () => {
 
     expect(
       validateRule(
-        { id: 'r1', rule: { kind: 'async' }, dependencyPaths: [] } as unknown as CompiledValidationRule,
+        {
+          id: 'r1',
+          rule: { kind: 'async' },
+          dependencyPaths: [],
+        } as unknown as CompiledValidationRule,
         '',
         field,
         scope,
@@ -140,7 +144,11 @@ describe('validation runtime helper', () => {
     ).toBeUndefined();
     expect(
       validateRule(
-        { id: 'r2', rule: { kind: 'missing' }, dependencyPaths: [] } as unknown as CompiledValidationRule,
+        {
+          id: 'r2',
+          rule: { kind: 'missing' },
+          dependencyPaths: [],
+        } as unknown as CompiledValidationRule,
         '',
         field,
         scope,
@@ -183,7 +191,12 @@ describe('import manager', () => {
     const currentBindings = vi.fn().mockReturnValue({ demo: { version: 1 } });
     const pop = vi.fn();
     const dispose = vi.fn();
-    const importStack = { installPrepared, currentBindings, pop, dispose } as unknown as ImportStack;
+    const importStack = {
+      installPrepared,
+      currentBindings,
+      pop,
+      dispose,
+    } as unknown as ImportStack;
     const actionScope = createActionScope({ id: 'scope-1' });
     const componentRegistry = { id: 'registry-1' } as unknown as ComponentHandleRegistry;
     const scope = createScopeRef({ id: 'page', path: '$page', initialData: {} });

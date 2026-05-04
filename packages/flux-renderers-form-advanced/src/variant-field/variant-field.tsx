@@ -88,7 +88,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     [props.schema],
   );
   const selectorMode =
-    (schemaProps.selector as { mode?: string } | undefined)?.mode ?? schemaProps.selectorMode ?? 'tabs';
+    (schemaProps.selector as { mode?: string } | undefined)?.mode ??
+    schemaProps.selectorMode ??
+    'tabs';
   const defaultVariant = schemaProps.defaultVariant;
 
   const rawValue = useCurrentFormState(
@@ -262,7 +264,17 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
       setUserSelectedKey(key);
     },
-    [activeKey, currentValue, name, parentForm, parentScope, props.helpers, props.node, readOnly, variants],
+    [
+      activeKey,
+      currentValue,
+      name,
+      parentForm,
+      parentScope,
+      props.helpers,
+      props.node,
+      readOnly,
+      variants,
+    ],
   );
 
   const triggerVariantSwitch = React.useCallback(
@@ -364,7 +376,12 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
     );
   };
 
-  const labelAlignValue = schemaProps.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
+  const labelAlignValue = schemaProps.labelAlign as
+    | 'top'
+    | 'left'
+    | 'right'
+    | 'inherit'
+    | undefined;
   const remarkValue =
     typeof schemaProps.remark === 'object' && schemaProps.remark !== null
       ? toFieldRemarkProps(schemaProps.remark as Parameters<typeof toFieldRemarkProps>[0])

@@ -8,17 +8,27 @@ import type { DataSet, DatasetStoreApi } from '@nop-chaos/word-editor-core';
 
 vi.mock('@nop-chaos/ui', () => {
   return {
-    Button: ({ children, onClick, title, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { title?: string }) => (
+    Button: ({
+      children,
+      onClick,
+      title,
+      ...props
+    }: React.ButtonHTMLAttributes<HTMLButtonElement> & { title?: string }) => (
       <button type="button" data-testid="button" onClick={onClick} title={title} {...props}>
         {children}
       </button>
     ),
-    ScrollArea: ({ children }: { children: React.ReactNode }) => <div data-testid="scroll-area">{children}</div>,
+    ScrollArea: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="scroll-area">{children}</div>
+    ),
     cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
   };
 });
 
-function createMockStore(datasets: DataSet[] = [], selectedDatasetId: string | null = null): DatasetStoreApi {
+function createMockStore(
+  datasets: DataSet[] = [],
+  selectedDatasetId: string | null = null,
+): DatasetStoreApi {
   const state = { datasets, selectedDatasetId };
   const listeners = new Set<() => void>();
 
@@ -63,9 +73,7 @@ describe('DatasetPanel', () => {
   it('shows add dataset button in empty state', () => {
     const onAddDataset = vi.fn();
     const store = createMockStore();
-    render(
-      <DatasetPanel store={store} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />,
-    );
+    render(<DatasetPanel store={store} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />);
 
     const addButton = screen.getByText('Add Dataset');
     expect(addButton).toBeInTheDocument();
@@ -128,9 +136,7 @@ describe('DatasetPanel', () => {
   it('calls onAddDataset when add button is clicked', async () => {
     const onAddDataset = vi.fn();
     const store = createMockStore();
-    render(
-      <DatasetPanel store={store} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />,
-    );
+    render(<DatasetPanel store={store} onAddDataset={onAddDataset} onEditDataset={vi.fn()} />);
 
     await userEvent.click(screen.getByTitle('Add Dataset'));
     expect(onAddDataset).toHaveBeenCalledTimes(1);
@@ -142,9 +148,7 @@ describe('DatasetPanel', () => {
       { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);
-    render(
-      <DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={onEditDataset} />,
-    );
+    render(<DatasetPanel store={store} onAddDataset={vi.fn()} onEditDataset={onEditDataset} />);
 
     const datasetEl = screen.getByText('Users').closest('[class*="cursor-pointer"]');
     if (datasetEl) {

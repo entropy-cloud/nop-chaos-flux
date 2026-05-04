@@ -193,8 +193,12 @@ describe('createSchemaCompiler', () => {
       type: 'text',
       empty: { type: 'text', text: 'No rows' },
     });
-    const plainNode = Array.isArray(plainCompiled.root) ? plainCompiled.root[0] : plainCompiled.root;
-    const regionNode = Array.isArray(regionCompiled.root) ? regionCompiled.root[0] : regionCompiled.root;
+    const plainNode = Array.isArray(plainCompiled.root)
+      ? plainCompiled.root[0]
+      : plainCompiled.root;
+    const regionNode = Array.isArray(regionCompiled.root)
+      ? regionCompiled.root[0]
+      : regionCompiled.root;
 
     expect(plainNode.propsProgram.value.empty).toBe('Nothing here');
     expect(plainNode.regions.empty).toBeUndefined();

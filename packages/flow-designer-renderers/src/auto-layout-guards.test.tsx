@@ -187,7 +187,9 @@ describe('DesignerPage auto layout guards', () => {
       kind: 'flow',
       name: 'Second',
       version: '1.0.0',
-      nodes: [{ id: 'node-2', type: 'task', position: { x: 10, y: 10 }, data: { label: 'Task 2' } }],
+      nodes: [
+        { id: 'node-2', type: 'task', position: { x: 10, y: 10 }, data: { label: 'Task 2' } },
+      ],
       edges: [],
       viewport: { x: 0, y: 0, zoom: 1 },
     });

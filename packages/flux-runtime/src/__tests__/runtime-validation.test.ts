@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRendererRegistry, type CompiledFormValidationModel, type RendererEnv } from '@nop-chaos/flux-core';
+import {
+  createRendererRegistry,
+  type CompiledFormValidationModel,
+  type RendererEnv,
+} from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index';
 import { textRenderer, env, compiledRule } from './test-fixtures';

@@ -1,7 +1,4 @@
-import {
-  registerRendererDefinitions,
-  type RendererRegistry,
-} from '@nop-chaos/flux-core';
+import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';
 import { dataRendererDefinitions } from './data-renderer-definitions';
 
 export * from './schemas';

@@ -12,7 +12,9 @@ export function useTablePagination(
   const renderScope = useRenderScope();
   const paginationOwnership = schemaProps.paginationOwnership ?? 'local';
   const paginationStatePath =
-    typeof schemaProps.paginationStatePath === 'string' ? schemaProps.paginationStatePath : undefined;
+    typeof schemaProps.paginationStatePath === 'string'
+      ? schemaProps.paginationStatePath
+      : undefined;
   const paginationEnabled = schemaProps.pagination?.enabled !== false;
 
   const [localCurrentPage, setLocalCurrentPage] = useState(1);

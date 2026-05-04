@@ -9,6 +9,7 @@
 ## P0 发现（3个）
 
 ### Q01-Q03: vitest.config.ts 环境不匹配
+
 - flow-designer-renderers, report-designer-renderers, spreadsheet-renderers 的 vitest.config.ts 设为 node 环境
 - 但 .tsx 测试使用 @testing-library/react（需 DOM）
 - **建议**: 改为 jsdom 环境

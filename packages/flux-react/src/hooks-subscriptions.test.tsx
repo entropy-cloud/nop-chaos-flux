@@ -22,20 +22,14 @@ function FieldErrorProbe() {
 }
 
 function PresentationProbe({ name }: { name: string }) {
-  useCurrentFormState(
-    (state) => state.fieldStates[name],
-    Object.is,
-    { path: name },
-  );
+  useCurrentFormState((state) => state.fieldStates[name], Object.is, { path: name });
   return null;
 }
 
 function MultiPathProbe() {
-  useCurrentFormState(
-    (state) => state.values.profile,
-    Object.is,
-    { paths: ['profile.email', 'profile.name'] },
-  );
+  useCurrentFormState((state) => state.values.profile, Object.is, {
+    paths: ['profile.email', 'profile.name'],
+  });
   return null;
 }
 

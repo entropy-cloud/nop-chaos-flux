@@ -401,8 +401,16 @@ describe('createImportStack', () => {
         stack.installPrepared({
           ownerNodeId: 'node-1',
           imports: [
-            { schemaUrl: '/schema.json', spec: { from: 'lib-a', as: 'dup' }, resolvedSpec: { from: 'lib-a', as: 'dup' } } satisfies PreparedImportSpec,
-            { schemaUrl: '/schema.json', spec: { from: 'lib-b', as: 'dup' }, resolvedSpec: { from: 'lib-b', as: 'dup' } } satisfies PreparedImportSpec,
+            {
+              schemaUrl: '/schema.json',
+              spec: { from: 'lib-a', as: 'dup' },
+              resolvedSpec: { from: 'lib-a', as: 'dup' },
+            } satisfies PreparedImportSpec,
+            {
+              schemaUrl: '/schema.json',
+              spec: { from: 'lib-b', as: 'dup' },
+              resolvedSpec: { from: 'lib-b', as: 'dup' },
+            } satisfies PreparedImportSpec,
           ],
           scope,
         }),

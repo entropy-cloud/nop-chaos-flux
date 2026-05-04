@@ -5,6 +5,7 @@
 整体评分 **A** 确认。所有渲染器严格遵循 RendererComponentProps 模式。
 
 复核逐项验证：
+
 - 无渲染器直接访问 store ✓
 - 仅 owner 渲染器创建 Context.Provider ✓
 - cn() 统一 class 合并 ✓

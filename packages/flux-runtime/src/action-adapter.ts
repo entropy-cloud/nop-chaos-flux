@@ -31,7 +31,10 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
   function resolveFormTarget(
     formId: string | undefined,
     ctx: ActionContext,
-  ): { kind: 'current' } | { kind: 'resolved'; form: import('@nop-chaos/flux-core').FormRuntime } | { kind: 'not-found'; formId: string } {
+  ):
+    | { kind: 'current' }
+    | { kind: 'resolved'; form: import('@nop-chaos/flux-core').FormRuntime }
+    | { kind: 'not-found'; formId: string } {
     if (!formId) {
       return { kind: 'current' };
     }
@@ -131,19 +134,36 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         case 'submitForm': {
           if (invocation.targeting.formId) {
             if (!ctx.componentRegistry) {
-              return { ok: false, error: new Error(`Form not found: ${invocation.targeting.formId} (no component registry)`) };
+              return {
+                ok: false,
+                error: new Error(
+                  `Form not found: ${invocation.targeting.formId} (no component registry)`,
+                ),
+              };
             }
             try {
-              const handle = ctx.componentRegistry.resolve({ componentId: invocation.targeting.formId });
+              const handle = ctx.componentRegistry.resolve({
+                componentId: invocation.targeting.formId,
+              });
               if (!handle) {
-                return { ok: false, error: new Error(`Form not found: ${invocation.targeting.formId}`) };
+                return {
+                  ok: false,
+                  error: new Error(`Form not found: ${invocation.targeting.formId}`),
+                };
               }
-              return handle.capabilities.invoke('submit', {
-                interactionId: ctx.interactionId,
-                signal: invocation.signal,
-              }, ctx);
+              return handle.capabilities.invoke(
+                'submit',
+                {
+                  interactionId: ctx.interactionId,
+                  signal: invocation.signal,
+                },
+                ctx,
+              );
             } catch {
-              return { ok: false, error: new Error(`Form not found: ${invocation.targeting.formId}`) };
+              return {
+                ok: false,
+                error: new Error(`Form not found: ${invocation.targeting.formId}`),
+              };
             }
           }
 

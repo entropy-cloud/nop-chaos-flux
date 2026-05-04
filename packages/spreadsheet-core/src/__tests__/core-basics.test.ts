@@ -485,14 +485,46 @@ describe('multi-column filter (AND semantics)', () => {
     const doc = createEmptyDocument();
     sheetId = doc.workbook.sheets[0].id;
     core = createSpreadsheetCore({ document: doc });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A1', row: 0, col: 0 }, value: 'x' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B1', row: 0, col: 1 }, value: 'm' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A2', row: 1, col: 0 }, value: 'y' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B2', row: 1, col: 1 }, value: 'm' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A3', row: 2, col: 0 }, value: 'x' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B3', row: 2, col: 1 }, value: 'n' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'A4', row: 3, col: 0 }, value: 'y' });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'B4', row: 3, col: 1 }, value: 'n' });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A1', row: 0, col: 0 },
+      value: 'x',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B1', row: 0, col: 1 },
+      value: 'm',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A2', row: 1, col: 0 },
+      value: 'y',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B2', row: 1, col: 1 },
+      value: 'm',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A3', row: 2, col: 0 },
+      value: 'x',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B3', row: 2, col: 1 },
+      value: 'n',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'A4', row: 3, col: 0 },
+      value: 'y',
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'B4', row: 3, col: 1 },
+      value: 'n',
+    });
   });
 
   it('should keep only rows matching ALL active column filters', async () => {
@@ -517,9 +549,7 @@ describe('multi-column filter (AND semantics)', () => {
 
     const snap = core.getSnapshot();
     const sheet = snap.document.workbook.sheets[0];
-    expect(sheet.filters?.columns).toEqual([
-      { col: 0, kind: 'cellValue', value: 'y' },
-    ]);
+    expect(sheet.filters?.columns).toEqual([{ col: 0, kind: 'cellValue', value: 'y' }]);
     expect(sheet.rows?.['0']?.filteredOut).toBe(true);
     expect(sheet.rows?.['1']?.filteredOut).toBe(false);
     expect(sheet.rows?.['2']?.filteredOut).toBe(true);
@@ -541,10 +571,26 @@ describe('multi-column filter (AND semantics)', () => {
   });
 
   it('should handle three-column AND filter', async () => {
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'C1', row: 0, col: 2 }, value: 1 });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'C2', row: 1, col: 2 }, value: 2 });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'C3', row: 2, col: 2 }, value: 1 });
-    await core.dispatch({ type: 'spreadsheet:setCellValue', cell: { sheetId, address: 'C4', row: 3, col: 2 }, value: 2 });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'C1', row: 0, col: 2 },
+      value: 1,
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'C2', row: 1, col: 2 },
+      value: 2,
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'C3', row: 2, col: 2 },
+      value: 1,
+    });
+    await core.dispatch({
+      type: 'spreadsheet:setCellValue',
+      cell: { sheetId, address: 'C4', row: 3, col: 2 },
+      value: 2,
+    });
 
     await core.dispatch({ type: 'spreadsheet:filterRowsByCellValue', sheetId, col: 0, value: 'x' });
     await core.dispatch({ type: 'spreadsheet:filterRowsByCellValue', sheetId, col: 1, value: 'm' });

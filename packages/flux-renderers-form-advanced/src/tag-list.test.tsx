@@ -52,9 +52,7 @@ describe('tag-list renderer', () => {
     );
 
     fireEvent.click(redTag);
-    await waitFor(() =>
-      expect(redTag.closest('[role="button"]')?.className).toBe(initialRedClass),
-    );
+    await waitFor(() => expect(redTag.closest('[role="button"]')?.className).toBe(initialRedClass));
   });
 
   it('validates required selections after the field has been touched in a form', async () => {

@@ -1,6 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getIn, type AdapterContext, type FormRuntime, type ScopeRef, type ValidationScopeRuntime, type ValueAdapter } from '@nop-chaos/flux-core';
-import { useCurrentForm, useCurrentFormState, useCurrentValidationScope, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  getIn,
+  type AdapterContext,
+  type FormRuntime,
+  type ScopeRef,
+  type ValidationScopeRuntime,
+  type ValueAdapter,
+} from '@nop-chaos/flux-core';
+import {
+  useCurrentForm,
+  useCurrentFormState,
+  useCurrentValidationScope,
+  useRenderScope,
+  useScopeSelector,
+} from '@nop-chaos/flux-react';
 import { shouldValidateOn, shouldValidateOnOwner } from './field-validation';
 import { useFieldPresentation } from './field-presentation';
 
@@ -158,7 +171,7 @@ export function useFieldHandlers(args: {
           scope.update(name, convertedValue);
         },
       }),
-      /* eslint-enable react-hooks/refs */
+    /* eslint-enable react-hooks/refs */
     [name, currentForm, currentValidationScope, scope, toFormValue, adapter, adapterContext],
   );
 }

@@ -115,18 +115,17 @@ export function normalizeNodeInput(
     return null;
   }
 
-  const strictOptions: CompileSchemaOptions | undefined =
-    runtime.strictMode
-      ? {
-          ...compileOptions,
-          validation: { strictMode: true, ...compileOptions?.validation },
-          diagnostics: {
-            enabled: true,
-            continueOnError: true,
-            ...compileOptions?.diagnostics,
-          },
-        }
-      : compileOptions;
+  const strictOptions: CompileSchemaOptions | undefined = runtime.strictMode
+    ? {
+        ...compileOptions,
+        validation: { strictMode: true, ...compileOptions?.validation },
+        diagnostics: {
+          enabled: true,
+          continueOnError: true,
+          ...compileOptions?.diagnostics,
+        },
+      }
+    : compileOptions;
 
   if (Array.isArray(input)) {
     if (input.length === 0) {
@@ -168,7 +167,7 @@ export function resolveRendererSlotContent(
     metaKey?: string;
     fallback?: React.ReactNode;
   },
-) : React.ReactNode {
+): React.ReactNode {
   const regionContent = props.regions[slotKey]?.render();
 
   if (regionContent !== undefined && regionContent !== null) {

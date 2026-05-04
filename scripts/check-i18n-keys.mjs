@@ -206,7 +206,13 @@ async function extractDefinedKeys(filePath) {
   const content = await readFile(filePath, 'utf-8');
   const keys = new Set();
 
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
 
   function getPropertyName(name) {
     if (ts.isIdentifier(name) || ts.isStringLiteral(name)) {

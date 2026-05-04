@@ -147,13 +147,11 @@ describe('DesignerPageRenderer tree mode', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-basic"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument,
-            config: createTreeTestConfig(),
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig(),
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -197,13 +195,11 @@ describe('DesignerPageRenderer tree mode', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-elk-init"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument,
-            config: createTreeTestConfig(),
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig(),
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -254,13 +250,11 @@ describe('DesignerPageRenderer tree mode', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-branches"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument,
-            config: createTreeTestConfig(),
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          treeDocument,
+          config: createTreeTestConfig(),
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -280,12 +274,10 @@ describe('DesignerPageRenderer tree mode', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-fallback"
-        schema={
-          {
-            type: 'designer-page',
-            config: createTreeTestConfig(),
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          config: createTreeTestConfig(),
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -304,24 +296,22 @@ describe('DesignerPageRenderer tree mode', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-graph-regression"
-        schema={
-          {
-            type: 'designer-page',
-            document: {
-              id: 'graph-1',
-              kind: 'test-graph',
-              name: 'Graph Test',
-              version: '1.0',
-              nodes: [
-                { id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task' } },
-                { id: 'n2', type: 'end', position: { x: 200, y: 0 }, data: { label: 'End' } },
-              ],
-              edges: [{ id: 'e1', type: 'default', source: 'n1', target: 'n2', data: {} }],
-              viewport: { x: 0, y: 0, zoom: 1 },
-            },
-            config: createGraphTestConfig(),
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'graph-1',
+            kind: 'test-graph',
+            name: 'Graph Test',
+            version: '1.0',
+            nodes: [
+              { id: 'n1', type: 'task', position: { x: 0, y: 0 }, data: { label: 'Task' } },
+              { id: 'n2', type: 'end', position: { x: 200, y: 0 }, data: { label: 'End' } },
+            ],
+            edges: [{ id: 'e1', type: 'default', source: 'n1', target: 'n2', data: {} }],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createGraphTestConfig(),
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -343,13 +333,11 @@ describe('DesignerPageRenderer tree mode', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-runtime-props"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument: '${$scope.treeDocument}',
-            config: '${$scope.config}',
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          treeDocument: '${$scope.treeDocument}',
+          config: '${$scope.config}',
+        }}
         data={{
           treeDocument: {
             id: 'tree-runtime-props',
@@ -384,13 +372,11 @@ describe('DesignerPageRenderer tree mode', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flow/graph-runtime-props"
-        schema={
-          {
-            type: 'designer-page',
-            document: '${$scope.document}',
-            config: '${$scope.config}',
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          document: '${$scope.document}',
+          config: '${$scope.config}',
+        }}
         data={{
           document: {
             id: 'graph-runtime-props',
@@ -427,13 +413,11 @@ describe('DesignerPageRenderer tree mode', () => {
     const { rerender } = render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-runtime-rerender"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument: '${$scope.treeDocument}',
-            config: '${$scope.config}',
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          treeDocument: '${$scope.treeDocument}',
+          config: '${$scope.config}',
+        }}
         data={{
           treeDocument: {
             id: 'tree-runtime-rerender-1',
@@ -460,13 +444,11 @@ describe('DesignerPageRenderer tree mode', () => {
     rerender(
       <SchemaRenderer
         schemaUrl="test://flow/tree-runtime-rerender"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument: '${$scope.treeDocument}',
-            config: '${$scope.config}',
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          treeDocument: '${$scope.treeDocument}',
+          config: '${$scope.config}',
+        }}
         data={{
           treeDocument: {
             id: 'tree-runtime-rerender-2',
@@ -535,13 +517,11 @@ describe('DesignerPageRenderer tree mode', () => {
     const { container, rerender } = render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-selection-continuity"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument: initialTreeDocument,
-            config,
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          treeDocument: initialTreeDocument,
+          config,
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -556,28 +536,26 @@ describe('DesignerPageRenderer tree mode', () => {
     rerender(
       <SchemaRenderer
         schemaUrl="test://flow/tree-selection-continuity"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument: {
-              ...initialTreeDocument,
-              root: {
-                ...initialTreeDocument.root,
+        schema={{
+          type: 'designer-page',
+          treeDocument: {
+            ...initialTreeDocument,
+            root: {
+              ...initialTreeDocument.root,
+              child: {
+                id: 'task-1',
+                type: 'task',
+                data: { label: 'Task 1 updated' },
                 child: {
-                  id: 'task-1',
-                  type: 'task',
-                  data: { label: 'Task 1 updated' },
-                  child: {
-                    id: 'end-1',
-                    type: 'end',
-                    data: { label: 'End' },
-                  },
+                  id: 'end-1',
+                  type: 'end',
+                  data: { label: 'End' },
                 },
               },
             },
-            config,
-          }
-        }
+          },
+          config,
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -618,13 +596,11 @@ describe('DesignerPageRenderer tree mode', () => {
     const { container, rerender } = render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-history-continuity"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument: initialTreeDocument,
-            config,
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          treeDocument: initialTreeDocument,
+          config,
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,
@@ -646,28 +622,26 @@ describe('DesignerPageRenderer tree mode', () => {
     rerender(
       <SchemaRenderer
         schemaUrl="test://flow/tree-history-continuity"
-        schema={
-          {
-            type: 'designer-page',
-            treeDocument: {
-              ...initialTreeDocument,
-              root: {
-                ...initialTreeDocument.root,
+        schema={{
+          type: 'designer-page',
+          treeDocument: {
+            ...initialTreeDocument,
+            root: {
+              ...initialTreeDocument.root,
+              child: {
+                id: 'task-1',
+                type: 'task',
+                data: { label: 'Task 1 updated' },
                 child: {
-                  id: 'task-1',
-                  type: 'task',
-                  data: { label: 'Task 1 updated' },
-                  child: {
-                    id: 'end-1',
-                    type: 'end',
-                    data: { label: 'End' },
-                  },
+                  id: 'end-1',
+                  type: 'end',
+                  data: { label: 'End' },
                 },
               },
             },
-            config,
-          }
-        }
+          },
+          config,
+        }}
         env={createRendererEnv()}
         formulaCompiler={createFormulaCompiler()}
       />,

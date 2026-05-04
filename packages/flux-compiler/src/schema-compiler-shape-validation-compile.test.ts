@@ -191,9 +191,12 @@ describe('compile and validate integration', () => {
     const compiler = makeCompiler([renderer]);
 
     expect(
-      compiler.validate?.({ type: 'text', text: 'hello', 'xui:unknownProp': 'value' }, {
-        validation: { namespacedPropertyPolicy: 'error' },
-      }),
+      compiler.validate?.(
+        { type: 'text', text: 'hello', 'xui:unknownProp': 'value' },
+        {
+          validation: { namespacedPropertyPolicy: 'error' },
+        },
+      ),
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -251,9 +254,7 @@ describe('compile and validate integration', () => {
     };
     const compiler = makeCompiler([renderer]);
 
-    expect(
-      compiler.validate?.({ type: 'data-source', action: 'ajax', args: { url: '' } }),
-    ).toEqual(
+    expect(compiler.validate?.({ type: 'data-source', action: 'ajax', args: { url: '' } })).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: 'invalid-source-shape',

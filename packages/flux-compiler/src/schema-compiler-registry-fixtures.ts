@@ -1,11 +1,5 @@
-import {
-  createRendererRegistry,
-  type RendererDefinition,
-} from '@nop-chaos/flux-core';
-import {
-  createExpressionCompiler,
-  createFormulaCompiler,
-} from '@nop-chaos/flux-formula';
+import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index';
 
 export const crudAuthoringTransform = (

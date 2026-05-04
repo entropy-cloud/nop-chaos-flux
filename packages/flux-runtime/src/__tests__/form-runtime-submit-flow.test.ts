@@ -200,12 +200,15 @@ describe('executeFormSubmit', () => {
         lifecycleState: 'active',
         runtimeFieldRegistrations: new Map(),
         childContracts: new Map([
-          ['child-1', {
-            mode: 'summary-gate',
-            active: true,
-            childOwnerId: 'detail-1',
-            getState: () => notReadyState,
-          }],
+          [
+            'child-1',
+            {
+              mode: 'summary-gate',
+              active: true,
+              childOwnerId: 'detail-1',
+              getState: () => notReadyState,
+            },
+          ],
         ]),
       },
       input: {
@@ -228,12 +231,15 @@ describe('executeFormSubmit', () => {
         lifecycleState: 'active',
         runtimeFieldRegistrations: new Map(),
         childContracts: new Map([
-          ['child-1', {
-            mode: 'summary-gate',
-            active: true,
-            childOwnerId: 'detail-1',
-            getState: () => validState,
-          }],
+          [
+            'child-1',
+            {
+              mode: 'summary-gate',
+              active: true,
+              childOwnerId: 'detail-1',
+              getState: () => validState,
+            },
+          ],
         ]),
       },
       input: {
@@ -256,12 +262,15 @@ describe('executeFormSubmit', () => {
         lifecycleState: 'active',
         runtimeFieldRegistrations: new Map(),
         childContracts: new Map([
-          ['inactive-child', {
-            mode: 'summary-gate',
-            active: false,
-            childOwnerId: 'detail-inactive',
-            getState: () => notValidState,
-          }],
+          [
+            'inactive-child',
+            {
+              mode: 'summary-gate',
+              active: false,
+              childOwnerId: 'detail-inactive',
+              getState: () => notValidState,
+            },
+          ],
         ]),
       },
       input: {

@@ -78,7 +78,9 @@ export function CrudToolbarBlocks(props: {
             key={`${slot}-statistics-${index}`}
             data-slot={`${slot}-toolbar-statistics`}
             className="text-sm text-muted-foreground"
-          >{t('flux.pagination.total', { count: summary.total ?? summary.itemCount ?? 0 })}</div>
+          >
+            {t('flux.pagination.total', { count: summary.total ?? summary.itemCount ?? 0 })}
+          </div>
         );
       case 'switch-per-page':
         return (
@@ -117,7 +119,12 @@ export function CrudToolbarBlocks(props: {
             >
               {t('flux.pagination.previous')}
             </Button>
-            <span className="text-sm text-muted-foreground">{t('flux.pagination.page', { current: pagination.currentPage, total: summary.total != null ? Math.ceil(summary.total / pagination.pageSize) : '?' })}</span>
+            <span className="text-sm text-muted-foreground">
+              {t('flux.pagination.page', {
+                current: pagination.currentPage,
+                total: summary.total != null ? Math.ceil(summary.total / pagination.pageSize) : '?',
+              })}
+            </span>
             <Button
               variant="outline"
               size="sm"

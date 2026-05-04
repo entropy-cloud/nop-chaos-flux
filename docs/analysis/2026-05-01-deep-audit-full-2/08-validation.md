@@ -7,11 +7,13 @@
 ## 发现
 
 ### [维度08-F1] 额外 isTouched 门控的 change 验证（低）
+
 - **文件**: `packages/flux-renderers-form/src/field-utils.tsx:135`
 - **现状**: 在 triggers: ['change'] 之上增加未记录的 isTouched 检查
 - **影响**: 性能优化但未文档化的隐式行为
 
 ### [维度08-F2] 非表单范围的 effectiveRequired（中）
+
 - **文件**: `packages/flux-renderers-form/src/field-utils.tsx:436-454`
 - **现状**: currentForm 未定义时回退到 Boolean(options?.required)，未检查 requiredWhen/requiredUnless
 - **影响**: ValidationScopeRuntime 支持的字段不显示动态必填星号

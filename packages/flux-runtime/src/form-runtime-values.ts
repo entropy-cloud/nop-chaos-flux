@@ -21,7 +21,10 @@ function reportDependentRevalidationFailure(path: string, error: unknown): void 
   console.warn(`[form-runtime] dependent revalidation failed for "${path}"`, error);
 }
 
-function attachDependentRevalidationFailureHandler(path: string, result: Promise<void> | void): void {
+function attachDependentRevalidationFailureHandler(
+  path: string,
+  result: Promise<void> | void,
+): void {
   if (!result || typeof (result as Promise<void>).catch !== 'function') {
     return;
   }

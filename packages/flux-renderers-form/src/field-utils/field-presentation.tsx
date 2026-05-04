@@ -62,13 +62,13 @@ export function useFieldPresentation(
         effectiveRequired: Boolean(options?.required),
         showError: Boolean(
           fieldState.error &&
-            shouldShowFieldError(behavior, {
-              touched: fieldState.touched,
-              dirty: fieldState.dirty,
-              visited: fieldState.visited,
-              submitting: fieldState.submitting,
-              submitAttempted: fieldState.submitAttempted,
-            }),
+          shouldShowFieldError(behavior, {
+            touched: fieldState.touched,
+            dirty: fieldState.dirty,
+            visited: fieldState.visited,
+            submitting: fieldState.submitting,
+            submitAttempted: fieldState.submitAttempted,
+          }),
         ),
         interactive: !options?.disabled && !options?.readOnly,
         readOnly: Boolean(options?.readOnly),

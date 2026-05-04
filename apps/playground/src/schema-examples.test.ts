@@ -55,10 +55,7 @@ describe('docs schema examples', () => {
     registerFormAdvancedRenderers(registry);
     registerDataRenderers(registry);
 
-    const markdown = readFileSync(
-      resolve(process.cwd(), '../../README.md'),
-      'utf8',
-    );
+    const markdown = readFileSync(resolve(process.cwd(), '../../README.md'), 'utf8');
     const schema = extractJsonExample(markdown);
     const diagnostics = validateSchema({
       schema,

@@ -83,10 +83,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
         schemaUrl="test://schema.json"
         schema={{
           type: 'page',
-          body: [
-            { type: 'validation-owner-probe' },
-            { type: 'validation-owner-state-probe' },
-          ],
+          body: [{ type: 'validation-owner-probe' }, { type: 'validation-owner-state-probe' }],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}
@@ -104,10 +101,7 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
         schemaUrl="test://schema.json"
         schema={{
           type: 'page',
-          body: [
-            { type: 'validation-owner-probe' },
-            { type: 'validation-owner-state-probe' },
-          ],
+          body: [{ type: 'validation-owner-probe' }, { type: 'validation-owner-state-probe' }],
         }}
         env={env}
         formulaCompiler={createFormulaCompiler()}

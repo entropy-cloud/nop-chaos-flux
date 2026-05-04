@@ -375,7 +375,12 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   }, [name, parentForm, pendingTransformOutOwner, schemaProps.transformOutAction]);
 
   return (
-    <div className={cn('nop-object-field')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
+    <div
+      className={cn('nop-object-field')}
+      data-slot="field-control"
+      data-testid={props.meta.testid}
+      data-cid={props.meta.cid}
+    >
       <FormContext.Provider value={childForm ?? undefined}>
         <ScopeContext.Provider value={childScope}>
           <div data-slot="object-field-body">{bodyContent}</div>

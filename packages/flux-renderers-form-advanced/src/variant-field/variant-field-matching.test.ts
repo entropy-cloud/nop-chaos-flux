@@ -12,16 +12,23 @@ describe('variant-field matching utilities', () => {
   it('matches built-in kinds and rejects unsupported values', () => {
     expect(matchesVariant({ key: 'missing' } as VariantOption, 'value')).toBe(false);
     expect(
-      matchesVariant({ key: 'string', match: { kind: 'typeof', value: 'string' } } as VariantOption, 'value'),
+      matchesVariant(
+        { key: 'string', match: { kind: 'typeof', value: 'string' } } as VariantOption,
+        'value',
+      ),
     ).toBe(true);
-    expect(matchesVariant({ key: 'array', match: { kind: 'array' } } as VariantOption, ['a'])).toBe(true);
+    expect(matchesVariant({ key: 'array', match: { kind: 'array' } } as VariantOption, ['a'])).toBe(
+      true,
+    );
     expect(
       matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as VariantOption, {
         name: 'Alice',
       }),
     ).toBe(true);
     expect(
-      matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as VariantOption, ['name']),
+      matchesVariant({ key: 'has-key', match: { kind: 'has-key', key: 'name' } } as VariantOption, [
+        'name',
+      ]),
     ).toBe(false);
     expect(
       matchesVariant(

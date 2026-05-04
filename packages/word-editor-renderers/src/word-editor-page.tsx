@@ -71,22 +71,25 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
       ? createSavedDocumentData({ data: initialDocument, paperSettings: null })
       : null;
   });
-  const updateSavedDocumentExtras = useCallback((extras: { charts: DocChart[]; codes: DocCode[] }) => {
-    setSavedDocument((current) => {
-      if (!current) {
-        return current;
-      }
+  const updateSavedDocumentExtras = useCallback(
+    (extras: { charts: DocChart[]; codes: DocCode[] }) => {
+      setSavedDocument((current) => {
+        if (!current) {
+          return current;
+        }
 
-      return {
-        ...current,
-        data: {
-          ...current.data,
-          charts: extras.charts,
-          codes: extras.codes,
-        },
-      };
-    });
-  }, []);
+        return {
+          ...current,
+          data: {
+            ...current.data,
+            charts: extras.charts,
+            codes: extras.codes,
+          },
+        };
+      });
+    },
+    [],
+  );
   useEffect(() => {
     return () => {
       mountedRef.current = false;
@@ -174,11 +177,7 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     [charts, codes, datasets, runtimeHostSummary, savedDocument?.data, selection],
   );
 
-  const hostScope = useHostScope(
-    hostScopeData,
-    props.path,
-    'word-editor',
-  );
+  const hostScope = useHostScope(hostScopeData, props.path, 'word-editor');
 
   const actionProvider = useMemo(
     () =>
@@ -193,7 +192,15 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         saveEvent: props.events.onSave,
         onDocumentSaved: updateSavedDocumentExtras,
       }),
-    [bridge, charts, codes, datasetStore, editorStore, props.events.onSave, updateSavedDocumentExtras],
+    [
+      bridge,
+      charts,
+      codes,
+      datasetStore,
+      editorStore,
+      props.events.onSave,
+      updateSavedDocumentExtras,
+    ],
   );
 
   useNamespaceRegistration(actionScope, 'word-editor', actionProvider);

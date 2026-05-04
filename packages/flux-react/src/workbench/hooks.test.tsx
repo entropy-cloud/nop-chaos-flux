@@ -83,7 +83,7 @@ describe('useHostScope', () => {
         <ScopeContext.Provider value={view.page.scope}>
           <HostScopeProbe
             scopeData={{ host: { status: 'updated' } }}
-              onCapture={(scope) => {
+            onCapture={(scope) => {
               testState.capturedScope = scope;
             }}
           />
@@ -94,7 +94,9 @@ describe('useHostScope', () => {
     expect(testState.capturedScope?.readOwn()).toEqual({
       host: { status: 'updated' },
     });
-    expect(JSON.stringify(testState.capturedScope?.materializeVisible())).not.toContain('remove-me');
+    expect(JSON.stringify(testState.capturedScope?.materializeVisible())).not.toContain(
+      'remove-me',
+    );
   });
 
   it('rejects writes to projected host fields', () => {

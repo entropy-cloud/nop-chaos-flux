@@ -40,7 +40,11 @@ export function resolveTableQuickEditConfig(
   }
 
   const config = column.quickEdit as TableColumnQuickEditConfig;
-  if (!column.name && config.body === undefined && !(column as Record<string, unknown>).quickEditBodyRegionKey) {
+  if (
+    !column.name &&
+    config.body === undefined &&
+    !(column as Record<string, unknown>).quickEditBodyRegionKey
+  ) {
     return undefined;
   }
 
@@ -91,7 +95,10 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
 
   const editorNode = hasCustomBody ? (
     asReactNode(
-      helpers.render(config.body!, { scope: rowScope, pathSuffix: `quickEdit.${field ?? 'custom'}` }),
+      helpers.render(config.body!, {
+        scope: rowScope,
+        pathSuffix: `quickEdit.${field ?? 'custom'}`,
+      }),
     )
   ) : (
     <Input

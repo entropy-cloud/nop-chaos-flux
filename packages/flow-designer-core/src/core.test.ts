@@ -238,8 +238,10 @@ describe('createDesignerCore', () => {
   });
 
   it('preserves port identity across add, reconnect, undo, and redo', () => {
-    const core = createDesignerCore(createDocumentWithEdgeChain(), createTestDesignerConfig()) as
-      typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
+    const core = createDesignerCore(
+      createDocumentWithEdgeChain(),
+      createTestDesignerConfig(),
+    ) as typeof createDesignerCore extends (...args: any[]) => infer R ? R : never;
 
     const added = (core as any).addEdge('start-1', 'end-1', undefined, 'out-1', 'in-1');
     expect(added).toMatchObject({ sourcePort: 'out-1', targetPort: 'in-1' });

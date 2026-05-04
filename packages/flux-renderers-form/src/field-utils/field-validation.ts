@@ -1,4 +1,9 @@
-import { getCompiledValidationField, type CompiledValidationBehavior, type FormRuntime, type ValidationScopeRuntime } from '@nop-chaos/flux-core';
+import {
+  getCompiledValidationField,
+  type CompiledValidationBehavior,
+  type FormRuntime,
+  type ValidationScopeRuntime,
+} from '@nop-chaos/flux-core';
 
 export const defaultValidationBehavior: CompiledValidationBehavior = {
   triggers: ['blur'],

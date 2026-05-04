@@ -262,7 +262,9 @@ describe('condition-builder renderer integration', () => {
 
     fireEvent.click(field!);
 
-    expect(JSON.parse(screen.getByTestId('form-state:filters').textContent ?? 'null')).toMatchObject({
+    expect(
+      JSON.parse(screen.getByTestId('form-state:filters').textContent ?? 'null'),
+    ).toMatchObject({
       children: [],
     });
   });

@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { FileText, ZoomIn, ZoomOut, Maximize, LayoutGrid, Printer, Rows3 } from 'lucide-react';
-import type { CanvasEditorBridge, EditorStoreApi, PaperSettings } from '@nop-chaos/word-editor-core';
+import type {
+  CanvasEditorBridge,
+  EditorStoreApi,
+  PaperSettings,
+} from '@nop-chaos/word-editor-core';
 import { PAPER_SIZE_PRESETS, PageMode, PaperDirection } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {

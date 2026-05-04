@@ -98,8 +98,8 @@ export interface RendererHelpers {
 
 export type RendererRenderOutput = unknown;
 
-export type RendererResolvedProps<S extends BaseSchema = BaseSchema> =
-  Record<string, any> & Partial<S>;
+export type RendererResolvedProps<S extends BaseSchema = BaseSchema> = Record<string, any> &
+  Partial<S>;
 
 export interface ReactionDebugEntry {
   id: string;

@@ -642,16 +642,18 @@ describe('WordEditorPage', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://word-editor/status-unmount"
-        schema={{
-          type: 'page',
-          body: [
-            defineWordEditorPageSchema({
-              type: 'word-editor-page',
-              statusPath: 'wordEditorStatus',
-            }),
-            { type: 'status-probe' },
-          ],
-        } as any}
+        schema={
+          {
+            type: 'page',
+            body: [
+              defineWordEditorPageSchema({
+                type: 'word-editor-page',
+                statusPath: 'wordEditorStatus',
+              }),
+              { type: 'status-probe' },
+            ],
+          } as any
+        }
         env={createEnv()}
         registry={registry}
         formulaCompiler={createFormulaCompiler()}

@@ -61,8 +61,9 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
   );
   const spreadsheetProvider = useMemo(
     () =>
-      createSpreadsheetActionProvider((command: SpreadsheetCommand) =>
-        spreadsheetCore.dispatch(command) as Promise<SpreadsheetCommandResult>,
+      createSpreadsheetActionProvider(
+        (command: SpreadsheetCommand) =>
+          spreadsheetCore.dispatch(command) as Promise<SpreadsheetCommandResult>,
       ),
     [spreadsheetCore],
   );
@@ -95,11 +96,7 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
     }),
     [spreadsheet],
   );
-  const spreadsheetScope = useHostScope(
-    spreadsheetScopeData,
-    props.path,
-    'spreadsheet',
-  );
+  const spreadsheetScope = useHostScope(spreadsheetScopeData, props.path, 'spreadsheet');
 
   const toolbarContent = props.regions.toolbar
     ? props.helpers.render(props.regions.toolbar.templateNode, {

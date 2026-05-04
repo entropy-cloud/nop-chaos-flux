@@ -353,7 +353,10 @@ describe('createReportDesignerCore', () => {
       },
     });
 
-    const previewPromise = previewCore.dispatch({ type: 'report-designer:preview', mode: 'inline' });
+    const previewPromise = previewCore.dispatch({
+      type: 'report-designer:preview',
+      mode: 'inline',
+    });
     await Promise.resolve();
 
     const stopResult = await previewCore.dispatch({ type: 'report-designer:stopPreview' });

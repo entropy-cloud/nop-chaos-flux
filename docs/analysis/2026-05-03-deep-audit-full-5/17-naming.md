@@ -22,12 +22,14 @@
 
 - **文件**: `docs/references/action-payload-matrix.md:26-37,53-58,138-150`
 - **证据片段**:
+
   ```md
   ### Targeting Fields
 
   - `dataPath`
     | `dataPath` | 响应写回目标路径 | **stable** — 保留独立字段 |
   ```
+
 - **严重程度**: P1
 - **冲突名称**: `dataPath` vs `path`
 - **冲突位置**: active reference 与当前 core type

@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRendererRegistry, type ImportedLibraryModule, type ScopeRef, type SchemaCompiler, type XuiImportSpec } from '@nop-chaos/flux-core';
+import {
+  createRendererRegistry,
+  type ImportedLibraryModule,
+  type ScopeRef,
+  type SchemaCompiler,
+  type XuiImportSpec,
+} from '@nop-chaos/flux-core';
 import { createScopeRef } from '../scope';
 import { createProjectedScopeStore } from '../projected-scope-store';
 import { createModuleCache, createRendererRuntime } from '../index';
@@ -75,9 +81,12 @@ describe('runtime factory utilities', () => {
     });
 
     await expect(
-      runtime.prepareSchema?.({ type: 'text', text: 'hello' }, {
-        schemaUrl: '/schema.json',
-      }),
+      runtime.prepareSchema?.(
+        { type: 'text', text: 'hello' },
+        {
+          schemaUrl: '/schema.json',
+        },
+      ),
     ).resolves.toEqual({
       preparedImports: new Map(),
     });
@@ -105,9 +114,12 @@ describe('runtime factory utilities', () => {
     });
 
     await expect(
-      runtime.prepareSchema?.({ type: 'text', text: 'hello' }, {
-        schemaUrl: '/schema.json',
-      }),
+      runtime.prepareSchema?.(
+        { type: 'text', text: 'hello' },
+        {
+          schemaUrl: '/schema.json',
+        },
+      ),
     ).rejects.toThrow('Schema preparation requires env.importLoader when xui:imports are present.');
   });
 

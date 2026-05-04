@@ -25,7 +25,8 @@ export function useTableSort(
       const value = getIn(scopeData, sortStatePath) as Record<string, unknown> | undefined;
       return {
         column: typeof value?.column === 'string' ? value.column : '',
-        direction: value?.direction === 'asc' || value?.direction === 'desc' ? value.direction : null,
+        direction:
+          value?.direction === 'asc' || value?.direction === 'desc' ? value.direction : null,
       } satisfies SortState;
     },
     (a, b) => a?.column === b?.column && a?.direction === b?.direction,

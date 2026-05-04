@@ -245,7 +245,8 @@ describe('variant-field renderer transform behavior', () => {
 
   it('drops stale async variant migrations when a newer switch wins', async () => {
     cleanup();
-    const pendingMigrations: Array<(result: { ok: true; data: Record<string, unknown> }) => void> = [];
+    const pendingMigrations: Array<(result: { ok: true; data: Record<string, unknown> }) => void> =
+      [];
     const importLoader = {
       load: vi.fn(async () => ({
         createNamespace: () => ({

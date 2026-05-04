@@ -141,11 +141,17 @@ export async function layoutTreeWithElk(
 
   const direction = treeConfig.layout.direction === 'TB' ? 'DOWN' : 'RIGHT';
 
-  const positions = await layoutWithElk(nodes, edges, nodeTypes, {
-    direction,
-    nodeSpacing: treeConfig.layout.nodeSpacing,
-    layerSpacing: treeConfig.layout.layerSpacing,
-  }, owner);
+  const positions = await layoutWithElk(
+    nodes,
+    edges,
+    nodeTypes,
+    {
+      direction,
+      nodeSpacing: treeConfig.layout.nodeSpacing,
+      layerSpacing: treeConfig.layout.layerSpacing,
+    },
+    owner,
+  );
 
   return nodes.map((node) => {
     const pos = positions.get(node.id);

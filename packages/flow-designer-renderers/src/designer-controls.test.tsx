@@ -189,7 +189,10 @@ describe('flow designer controls', () => {
     expect(document.querySelector('.nop-inspector')).toBeTruthy();
     expect(screen.getByText('名称')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '删除节点' }));
-    expect(mockState.context.dispatch).toHaveBeenCalledWith({ type: 'deleteNode', nodeId: 'node-1' });
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
+      type: 'deleteNode',
+      nodeId: 'node-1',
+    });
   });
 
   it('uses nodeType inspector schema before fallback fields', () => {
@@ -351,7 +354,10 @@ describe('flow designer controls', () => {
     render(<DefaultInspector />);
     expect(screen.getByText('Branch Node 2')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '定位节点' }));
-    expect(mockState.context.dispatch).toHaveBeenCalledWith({ type: 'selectNode', nodeId: 'n-branch-2' });
+    expect(mockState.context.dispatch).toHaveBeenCalledWith({
+      type: 'selectNode',
+      nodeId: 'n-branch-2',
+    });
   });
 
   it('opens createDialog-configured node types instead of dispatching addNode immediately', () => {

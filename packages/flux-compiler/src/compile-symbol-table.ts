@@ -57,7 +57,22 @@ export function createBaseCompileSymbolTable(): CompileSymbolTable {
       $Date: {
         name: '$Date',
         kind: 'builtin-namespace',
-        members: ['now', 'today', 'parse', 'format', 'year', 'month', 'day', 'hours', 'minutes', 'seconds', 'addDays', 'addMonths', 'addYears', 'diff'],
+        members: [
+          'now',
+          'today',
+          'parse',
+          'format',
+          'year',
+          'month',
+          'day',
+          'hours',
+          'minutes',
+          'seconds',
+          'addDays',
+          'addMonths',
+          'addYears',
+          'diff',
+        ],
       },
     },
   });

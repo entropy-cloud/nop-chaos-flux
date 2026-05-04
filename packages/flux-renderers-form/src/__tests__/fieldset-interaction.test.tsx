@@ -71,7 +71,11 @@ describe('fieldset collapsible interaction', () => {
       collapsed: true,
     });
 
-    render(wrapWithProviders(<FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />));
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
 
     const legend = screen.getByText('Personal Info');
     expect(legend).toBeTruthy();
@@ -89,7 +93,11 @@ describe('fieldset collapsible interaction', () => {
       collapsed: true,
     });
 
-    render(wrapWithProviders(<FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />));
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
 
     const legend = screen.getByText('Details');
     const body = document.querySelector('[data-slot="fieldset-body"]') as HTMLElement;
@@ -108,7 +116,11 @@ describe('fieldset collapsible interaction', () => {
       collapsed: true,
     });
 
-    render(wrapWithProviders(<FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />));
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
 
     const legend = screen.getByText('Settings');
     expect(legend.getAttribute('aria-expanded')).toBe('false');
@@ -126,7 +138,11 @@ describe('fieldset collapsible interaction', () => {
       collapsed: false,
     });
 
-    render(wrapWithProviders(<FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />));
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
 
     const legend = screen.getByText('Advanced');
     expect(legend.getAttribute('aria-expanded')).toBe('true');
@@ -143,7 +159,11 @@ describe('fieldset collapsible interaction', () => {
       collapsible: false,
     });
 
-    render(wrapWithProviders(<FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />));
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
 
     const legend = screen.getByText('Static Section');
     expect(legend.getAttribute('role')).toBeNull();

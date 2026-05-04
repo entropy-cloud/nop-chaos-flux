@@ -90,24 +90,24 @@ export function FieldList({ store, onFieldClick }: FieldListProps) {
                           <h3 className="text-sm font-medium text-[var(--nop-text-strong)] truncate">
                             {column.name}
                           </h3>
-                        <span
-                          className={cn(
-                            'px-1.5 py-0.5 text-[10px] font-medium rounded border',
-                            getTypeColor(column.type),
-                          )}
-                        >
-                          {getTypeLabel(column.type)}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[var(--nop-body-copy)] truncate">
-                        {column.label || column.name}
-                      </p>
-                      {column.description && (
-                        <p className="text-[10px] text-[var(--nop-body-copy)] opacity-70 mt-1 line-clamp-2">
-                          {column.description}
+                          <span
+                            className={cn(
+                              'px-1.5 py-0.5 text-[10px] font-medium rounded border',
+                              getTypeColor(column.type),
+                            )}
+                          >
+                            {getTypeLabel(column.type)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[var(--nop-body-copy)] truncate">
+                          {column.label || column.name}
                         </p>
-                      )}
-                    </div>
+                        {column.description && (
+                          <p className="text-[10px] text-[var(--nop-body-copy)] opacity-70 mt-1 line-clamp-2">
+                            {column.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </Button>
                   <Button

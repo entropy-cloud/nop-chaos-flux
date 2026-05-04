@@ -88,11 +88,18 @@ function shouldIgnoreAsyncFailure(relativePath, lineText, content, line) {
   const windowEnd = Math.min(lines.length, line + 5);
   const windowText = lines.slice(windowStart, windowEnd).join('\n');
 
-  if (windowText.includes('onClick={() => void') || windowText.includes('onMouseDown={(e) =>') || windowText.includes('onBlurCapture')) {
+  if (
+    windowText.includes('onClick={() => void') ||
+    windowText.includes('onMouseDown={(e) =>') ||
+    windowText.includes('onBlurCapture')
+  ) {
     return true;
   }
 
-  if (windowText.includes('try {') && (windowText.includes('catch') || windowText.includes('finally'))) {
+  if (
+    windowText.includes('try {') &&
+    (windowText.includes('catch') || windowText.includes('finally'))
+  ) {
     return true;
   }
 
@@ -169,7 +176,10 @@ export const asyncFailureRules = [
     severity: 'high',
     description: 'Possible fire-and-forget async with no explicit local failure path',
     include: (filePath) => /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(filePath) && !isTestFile(filePath),
-    patterns: [/\bvoid\s+[A-Za-z_$][\w$.]*\([^;\n]*\)\s*;?/g, /\.then\s*\([^\n]*\)\s*\.finally\s*\(/g],
+    patterns: [
+      /\bvoid\s+[A-Za-z_$][\w$.]*\([^;\n]*\)\s*;?/g,
+      /\.then\s*\([^\n]*\)\s*\.finally\s*\(/g,
+    ],
     filterMatch: ({ relativePath, lineText, content, line }) => {
       return !shouldIgnoreAsyncFailure(relativePath, lineText, content, line);
     },

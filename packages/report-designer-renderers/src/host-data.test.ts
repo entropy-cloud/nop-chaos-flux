@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
-import { createReportDesignerCore, createReportTemplateDocument } from '@nop-chaos/report-designer-core';
+import {
+  createReportDesignerCore,
+  createReportTemplateDocument,
+} from '@nop-chaos/report-designer-core';
 import { buildReportDesignerScopeData } from './host-data.js';
 
 describe('buildReportDesignerScopeData', () => {

@@ -293,18 +293,18 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       <FieldLabel content={labelContent} />
       <div data-slot="detail-view-viewer">{viewerContent}</div>
       {!effectiveDisabled && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              handleOpen().catch((error) => {
-                logDetailViewAsyncError('open', error);
-              });
-            }}
-          >
-            {triggerLabel}
-          </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            handleOpen().catch((error) => {
+              logDetailViewAsyncError('open', error);
+            });
+          }}
+        >
+          {triggerLabel}
+        </Button>
       )}
       <DetailSurface
         open={open}

@@ -184,7 +184,7 @@ export function TableHeaderRow({
                               typeof column.searchable === 'object' && column.searchable
                                 ? String(
                                     (column.searchable as { placeholder?: string }).placeholder ??
-                                       t('flux.table.search'),
+                                      t('flux.table.search'),
                                   )
                                 : t('flux.table.search')
                             }

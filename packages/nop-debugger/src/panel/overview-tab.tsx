@@ -71,7 +71,11 @@ export function OverviewTab(props: {
       <article className="ndbg-metric-card" data-error={strictMode ? undefined : ''}>
         <span className="ndbg-metric-label">{t('flux.debugger.strictValidation')}</span>
         <strong>{strictMode ? 'ON' : 'OFF'}</strong>
-        <span>{strictMode ? 'Unknown properties generate diagnostics' : 'Unknown properties silently become props'}</span>
+        <span>
+          {strictMode
+            ? 'Unknown properties generate diagnostics'
+            : 'Unknown properties silently become props'}
+        </span>
       </article>
     </div>
   );

@@ -1,5 +1,9 @@
 import React from 'react';
-import type { BaseSchema, RendererComponentProps, RendererResolvedProps } from '@nop-chaos/flux-core';
+import type {
+  BaseSchema,
+  RendererComponentProps,
+  RendererResolvedProps,
+} from '@nop-chaos/flux-core';
 import type { RendererDefinition } from './react-contracts';
 
 export function createAutoRendererComponent<

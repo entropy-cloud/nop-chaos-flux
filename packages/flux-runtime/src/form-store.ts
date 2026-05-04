@@ -115,21 +115,23 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       }
       listeners.add(listener);
 
-      const descendantUnsubscribers = pathPrefixes(path).slice(1).map((prefix) => {
-        let descendantListeners = descendantPathListeners.get(prefix);
-        if (!descendantListeners) {
-          descendantListeners = new Set();
-          descendantPathListeners.set(prefix, descendantListeners);
-        }
-        descendantListeners.add(listener);
-
-        return () => {
-          descendantListeners!.delete(listener);
-          if (descendantListeners!.size === 0) {
-            descendantPathListeners.delete(prefix);
+      const descendantUnsubscribers = pathPrefixes(path)
+        .slice(1)
+        .map((prefix) => {
+          let descendantListeners = descendantPathListeners.get(prefix);
+          if (!descendantListeners) {
+            descendantListeners = new Set();
+            descendantPathListeners.set(prefix, descendantListeners);
           }
-        };
-      });
+          descendantListeners.add(listener);
+
+          return () => {
+            descendantListeners!.delete(listener);
+            if (descendantListeners!.size === 0) {
+              descendantPathListeners.delete(prefix);
+            }
+          };
+        });
 
       return () => {
         listeners!.delete(listener);

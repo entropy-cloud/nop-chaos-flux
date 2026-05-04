@@ -27,8 +27,9 @@ export function DesignerXyflowNode(props: NodeProps) {
     () => ({
       config:
         typeof props.data === 'object' && props.data !== null
-          ? (((props.data as Record<string, unknown>).config as Record<string, unknown> | undefined) ??
-            (props.data as Record<string, unknown>))
+          ? (((props.data as Record<string, unknown>).config as
+              | Record<string, unknown>
+              | undefined) ?? (props.data as Record<string, unknown>))
           : undefined,
       node: {
         id: props.id,
@@ -37,7 +38,9 @@ export function DesignerXyflowNode(props: NodeProps) {
         data: props.data,
       },
       data: props.data,
-      ...(typeof props.data === 'object' && props.data !== null ? (props.data as Record<string, unknown>) : {}),
+      ...(typeof props.data === 'object' && props.data !== null
+        ? (props.data as Record<string, unknown>)
+        : {}),
     }),
     [props.id, props.data, data.typeId, data.label],
   );

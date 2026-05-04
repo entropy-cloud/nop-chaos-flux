@@ -1,4 +1,9 @@
-import { useCurrentForm, useCurrentFormState, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import {
+  useCurrentForm,
+  useCurrentFormState,
+  useRenderScope,
+  useScopeSelector,
+} from '@nop-chaos/flux-react';
 import { getIn } from '@nop-chaos/flux-core';
 import type { CodeEditorRendererProps } from './shared';
 

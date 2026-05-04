@@ -234,9 +234,7 @@ export function useCrudRuntimeState(args: {
           : toPositiveNumber(ownerQuery.refreshCount, 0),
       } satisfies CrudQueryState;
     },
-    (a, b) =>
-      a.refreshCount === b.refreshCount &&
-      shallowEqualRecords(a.values, b.values),
+    (a, b) => a.refreshCount === b.refreshCount && shallowEqualRecords(a.values, b.values),
   );
 
   const paginationState = useScopeSelector(
@@ -257,14 +255,11 @@ export function useCrudRuntimeState(args: {
     (a, b) => a.field === b.field && a.order === b.order,
   );
 
-  const filterState = useScopeSelector(
-    (scopeData) => {
-      const owner = toRecord(getIn(scopeData, ownerStatePath));
-      const filters = getIn(scopeData, filterStatePath);
-      return toRecord(filters ?? owner.filters);
-    },
-    shallowEqualRecords,
-  );
+  const filterState = useScopeSelector((scopeData) => {
+    const owner = toRecord(getIn(scopeData, ownerStatePath));
+    const filters = getIn(scopeData, filterStatePath);
+    return toRecord(filters ?? owner.filters);
+  }, shallowEqualRecords);
 
   const selectedRowKeys = useScopeSelector(
     (scopeData) => {

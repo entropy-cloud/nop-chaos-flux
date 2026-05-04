@@ -7,7 +7,10 @@ import type {
 import { validationErrorsEqual } from '@nop-chaos/flux-core';
 import { createReadonlyScopeBinding } from './status-owner';
 
-export function hasPendingValidationWork(state: FormStoreState, pendingValidationDebounceCount = 0): boolean {
+export function hasPendingValidationWork(
+  state: FormStoreState,
+  pendingValidationDebounceCount = 0,
+): boolean {
   if (pendingValidationDebounceCount > 0) {
     return true;
   }

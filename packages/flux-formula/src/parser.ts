@@ -72,7 +72,9 @@ class Parser {
   private enterRecursive(): void {
     this.depth += 1;
     if (this.depth > MAX_PARSER_DEPTH) {
-      throw new Error(`Parser depth limit exceeded (${MAX_PARSER_DEPTH}) at ${this.current().start}`) as FormulaSyntaxError;
+      throw new Error(
+        `Parser depth limit exceeded (${MAX_PARSER_DEPTH}) at ${this.current().start}`,
+      ) as FormulaSyntaxError;
     }
   }
 
@@ -372,52 +374,52 @@ class Parser {
     try {
       const token = this.current();
 
-    if (this.match('number')) {
-      this.consume();
-      return createLiteralNode(Number(token.value), token.value, token.start, token.end);
-    }
+      if (this.match('number')) {
+        this.consume();
+        return createLiteralNode(Number(token.value), token.value, token.start, token.end);
+      }
 
-    if (this.match('string')) {
-      this.consume();
-      return createLiteralNode(JSON.parse(token.value), token.value, token.start, token.end);
-    }
+      if (this.match('string')) {
+        this.consume();
+        return createLiteralNode(JSON.parse(token.value), token.value, token.start, token.end);
+      }
 
-    if (this.match('keyword', 'true') || this.match('keyword', 'false')) {
-      this.consume();
-      return createLiteralNode(token.value === 'true', token.value, token.start, token.end);
-    }
+      if (this.match('keyword', 'true') || this.match('keyword', 'false')) {
+        this.consume();
+        return createLiteralNode(token.value === 'true', token.value, token.start, token.end);
+      }
 
-    if (this.match('keyword', 'null')) {
-      this.consume();
-      return createLiteralNode(null, token.value, token.start, token.end);
-    }
+      if (this.match('keyword', 'null')) {
+        this.consume();
+        return createLiteralNode(null, token.value, token.start, token.end);
+      }
 
-    if (this.match('keyword', 'undefined')) {
-      this.consume();
-      return createLiteralNode(undefined, token.value, token.start, token.end);
-    }
+      if (this.match('keyword', 'undefined')) {
+        this.consume();
+        return createLiteralNode(undefined, token.value, token.start, token.end);
+      }
 
-    if (this.match('identifier')) {
-      this.consume();
-      return createIdentifierNode(token);
-    }
+      if (this.match('identifier')) {
+        this.consume();
+        return createIdentifierNode(token);
+      }
 
-    if (this.match('punctuation', '(')) {
-      this.consume();
-      const expression = this.parseArrowExpression();
-      this.expect('punctuation', ')');
-      return expression;
-    }
+      if (this.match('punctuation', '(')) {
+        this.consume();
+        const expression = this.parseArrowExpression();
+        this.expect('punctuation', ')');
+        return expression;
+      }
 
-    if (this.match('punctuation', '[')) {
-      return this.parseArrayExpression();
-    }
+      if (this.match('punctuation', '[')) {
+        return this.parseArrayExpression();
+      }
 
-    if (this.match('punctuation', '{')) {
-      return this.parseObjectExpression();
-    }
+      if (this.match('punctuation', '{')) {
+        return this.parseObjectExpression();
+      }
 
-    this.throwSyntaxError(`Unexpected token ${token.value || token.type}`);
+      this.throwSyntaxError(`Unexpected token ${token.value || token.type}`);
     } finally {
       this.leaveRecursive();
     }

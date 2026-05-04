@@ -333,7 +333,12 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   }, [childPaths, currentForm, modelGeneration, name]);
 
   return (
-    <div className={cn('nop-key-value', 'grid gap-3')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
+    <div
+      className={cn('nop-key-value', 'grid gap-3')}
+      data-slot="field-control"
+      data-testid={props.meta.testid}
+      data-cid={props.meta.cid}
+    >
       {pairs.map((pair, index) => {
         return (
           <KeyValueRow

@@ -124,7 +124,8 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
         const value = getItemValue(item, index);
         const titleRegion =
           typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
-        const titleContent = asReactNode(titleRegion?.render()) ?? item.title ?? item.label ?? value;
+        const titleContent =
+          asReactNode(titleRegion?.render()) ?? item.title ?? item.label ?? value;
         return (
           <TabsTrigger key={value} value={value} disabled={Boolean(item.disabled)}>
             {titleContent}

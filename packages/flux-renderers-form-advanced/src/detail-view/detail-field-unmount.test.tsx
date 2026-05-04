@@ -184,10 +184,11 @@ describe('detail-field unmount protection', () => {
       load: vi.fn(async () => ({
         createNamespace: () => ({
           kind: 'import' as const,
-          invoke: vi.fn(async () =>
-            await new Promise<{ ok: true; data: { street: string } }>((resolve) => {
-              pendingOpens.push(resolve);
-            }),
+          invoke: vi.fn(
+            async () =>
+              await new Promise<{ ok: true; data: { street: string } }>((resolve) => {
+                pendingOpens.push(resolve);
+              }),
           ),
         }),
       })),

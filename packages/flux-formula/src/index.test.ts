@@ -120,7 +120,7 @@ describe('createFormulaCompiler', () => {
       expression.exec(createScope({ user: null }), {
         ...env,
         monitor: { onError },
-      })
+      }),
     ).toThrow(/Expression evaluation failed/);
 
     expect(onError).toHaveBeenCalled();
@@ -176,11 +176,9 @@ describe('createFormulaCompiler', () => {
     expect(() =>
       compiler
         .compileExpression('${AND(flag, other)}')
-        .exec(createScope({ flag: true, other: true }), env)
+        .exec(createScope({ flag: true, other: true }), env),
     ).toThrow();
-    expect(() =>
-      compiler.compileExpression('${ABS(-3)}').exec(createScope({}), env)
-    ).toThrow();
+    expect(() => compiler.compileExpression('${ABS(-3)}').exec(createScope({}), env)).toThrow();
   });
 
   it('emits compile-time diagnostics for invalid dollar references', () => {

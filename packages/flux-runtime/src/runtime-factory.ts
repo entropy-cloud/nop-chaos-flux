@@ -469,7 +469,11 @@ export function createRendererRuntime(input: {
       }
 
       for (const validationScope of ownedValidationScopes) {
-        if (!Array.from(ownedFormRuntimes).some((formRuntime) => formRuntime.scopeId === validationScope.scopeId)) {
+        if (
+          !Array.from(ownedFormRuntimes).some(
+            (formRuntime) => formRuntime.scopeId === validationScope.scopeId,
+          )
+        ) {
           validationScope.dispose();
         }
       }

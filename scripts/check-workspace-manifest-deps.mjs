@@ -7,7 +7,8 @@ import { promisify } from 'util';
 const execFileAsync = promisify(execFile);
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = path.join(__dirname, '..');
-const workspaceImportPattern = /from\s+['"](@nop-chaos\/[^'"]+)['"]|import\s*\(['"](@nop-chaos\/[^'"]+)['"]\)/g;
+const workspaceImportPattern =
+  /from\s+['"](@nop-chaos\/[^'"]+)['"]|import\s*\(['"](@nop-chaos\/[^'"]+)['"]\)/g;
 
 function normalizeWorkspaceSpecifier(specifier) {
   const parts = specifier.split('/');
@@ -15,10 +16,14 @@ function normalizeWorkspaceSpecifier(specifier) {
 }
 
 async function getTrackedFiles() {
-  const { stdout } = await execFileAsync('git', ['ls-files', 'packages/*/src/**/*.ts', 'packages/*/src/**/*.tsx'], {
-    cwd: rootDir,
-    maxBuffer: 10 * 1024 * 1024,
-  });
+  const { stdout } = await execFileAsync(
+    'git',
+    ['ls-files', 'packages/*/src/**/*.ts', 'packages/*/src/**/*.tsx'],
+    {
+      cwd: rootDir,
+      maxBuffer: 10 * 1024 * 1024,
+    },
+  );
 
   return stdout
     .split(/\r?\n/)
@@ -115,14 +120,20 @@ async function main() {
   }
 
   if (problems.length > 0) {
-    console.error('[check-workspace-manifest-deps] ERROR: undeclared workspace imports found in package sources:');
+    console.error(
+      '[check-workspace-manifest-deps] ERROR: undeclared workspace imports found in package sources:',
+    );
     for (const problem of problems) {
-      console.error(`  - ${problem.filePath}: ${problem.specifier} missing from ${problem.packagePath}/package.json`);
+      console.error(
+        `  - ${problem.filePath}: ${problem.specifier} missing from ${problem.packagePath}/package.json`,
+      );
     }
     process.exit(1);
   }
 
-  console.log('[check-workspace-manifest-deps] All package source workspace imports are declared in local manifests');
+  console.log(
+    '[check-workspace-manifest-deps] All package source workspace imports are declared in local manifests',
+  );
 }
 
 main().catch((error) => {

@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CompiledFormValidationModel, CompiledValidationNode, ScopeRef } from '@nop-chaos/flux-core';
+import type {
+  CompiledFormValidationModel,
+  CompiledValidationNode,
+  ScopeRef,
+} from '@nop-chaos/flux-core';
 import { buildCompiledFormValidationModel } from '@nop-chaos/flux-core';
 import { createManagedFormRuntime } from '../form-runtime';
 import { createScopeRef, createScopeStore } from '../scope';
@@ -43,7 +47,9 @@ function makeNode(
   };
 }
 
-function makeFormModel(fields: Record<string, CompiledValidationNode>): CompiledFormValidationModel {
+function makeFormModel(
+  fields: Record<string, CompiledValidationNode>,
+): CompiledFormValidationModel {
   return buildCompiledFormValidationModel({
     behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
     nodes: {

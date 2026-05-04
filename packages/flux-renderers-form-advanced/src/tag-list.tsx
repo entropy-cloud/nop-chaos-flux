@@ -69,7 +69,12 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   }, [currentForm, labelText, modelGeneration, name]);
 
   return (
-    <div className={cn('nop-tag-list', 'flex flex-wrap gap-2.5')} data-slot="field-control" data-testid={props.meta.testid} data-cid={props.meta.cid}>
+    <div
+      className={cn('nop-tag-list', 'flex flex-wrap gap-2.5')}
+      data-slot="field-control"
+      data-testid={props.meta.testid}
+      data-cid={props.meta.cid}
+    >
       {tags.map((tag) => {
         const active = value.includes(tag);
 

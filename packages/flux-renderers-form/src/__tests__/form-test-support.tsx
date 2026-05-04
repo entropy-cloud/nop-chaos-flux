@@ -102,7 +102,8 @@ function ContactGroupRenderer(props: RendererComponentProps) {
   const form = useCurrentForm();
   const name = String(props.props.name ?? props.schema.name ?? '');
   const value = useCurrentFormState(
-    (state) => ((name ? getIn(state.values, name) : undefined) as Record<string, string> | undefined) ?? {},
+    (state) =>
+      ((name ? getIn(state.values, name) : undefined) as Record<string, string> | undefined) ?? {},
     Object.is,
     { path: name || undefined },
   );

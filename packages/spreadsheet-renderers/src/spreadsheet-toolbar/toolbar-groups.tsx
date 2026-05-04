@@ -40,8 +40,16 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
   return (
     <>
       <div className="rd-toolbar-group">
-        <ToolbarButton label="flux.spreadsheet.undoShortcut" icon={<Undo2 />} onClick={props.onUndo} />
-        <ToolbarButton label="flux.spreadsheet.redoShortcut" icon={<Redo2 />} onClick={props.onRedo} />
+        <ToolbarButton
+          label="flux.spreadsheet.undoShortcut"
+          icon={<Undo2 />}
+          onClick={props.onUndo}
+        />
+        <ToolbarButton
+          label="flux.spreadsheet.redoShortcut"
+          icon={<Redo2 />}
+          onClick={props.onRedo}
+        />
       </div>
       <Separator />
       <div className="rd-toolbar-group">

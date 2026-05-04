@@ -69,8 +69,9 @@ export function ReportDesignerPageRenderer(
   );
   const reportDesignerProvider = useMemo(
     () =>
-      createReportDesignerActionProvider((command: ReportDesignerCommand) =>
-        core.dispatch(command) as Promise<ReportDesignerCommandResult>,
+      createReportDesignerActionProvider(
+        (command: ReportDesignerCommand) =>
+          core.dispatch(command) as Promise<ReportDesignerCommandResult>,
       ),
     [core],
   );
@@ -237,16 +238,23 @@ export function ReportDesignerPageRenderer(
       rightPanel={
         hasRendererSlotContent(asReactNode(inspectorContent))
           ? asReactNode(inspectorContent)
-          : asReactNode(props.helpers.render({ type: 'report-inspector-shell' }, {
-              scope: reportDesignerScope,
-              actionScope,
-            }))
+          : asReactNode(
+              props.helpers.render(
+                { type: 'report-inspector-shell' },
+                {
+                  scope: reportDesignerScope,
+                  actionScope,
+                },
+              ),
+            )
       }
       rightCollapsed={rightCollapsed}
       onRightToggle={() => setRightCollapsed((v) => !v)}
       rightLabel={t('flux.reportDesigner.expandInspector')}
       dialogs={
-        hasRendererSlotContent(asReactNode(dialogsContent)) ? asReactNode(dialogsContent) : undefined
+        hasRendererSlotContent(asReactNode(dialogsContent))
+          ? asReactNode(dialogsContent)
+          : undefined
       }
     />
   );

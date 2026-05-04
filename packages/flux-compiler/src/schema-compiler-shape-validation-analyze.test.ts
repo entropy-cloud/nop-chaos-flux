@@ -71,9 +71,7 @@ describe('analyzeSchemaInput validation', () => {
     };
     const compiler = makeCompiler([renderer]);
 
-    expect(
-      compiler.validate?.({ type: 'button', onClick: { args: { path: 'x' } } }),
-    ).toEqual(
+    expect(compiler.validate?.({ type: 'button', onClick: { args: { path: 'x' } } })).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: 'invalid-action-shape',
@@ -159,9 +157,7 @@ describe('analyzeSchemaInput validation', () => {
     };
     const compiler = makeCompiler([renderer]);
 
-    expect(
-      compiler.validate?.({ type: 'page', data: { type: 'source', action: 123 } }),
-    ).toEqual(
+    expect(compiler.validate?.({ type: 'page', data: { type: 'source', action: 123 } })).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: 'invalid-source-shape',

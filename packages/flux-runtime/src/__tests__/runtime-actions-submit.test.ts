@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRendererRegistry, type ApiSchema, type RendererEnv, type RendererPlugin } from '@nop-chaos/flux-core';
+import {
+  createRendererRegistry,
+  type ApiSchema,
+  type RendererEnv,
+  type RendererPlugin,
+} from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index';
 import { textRenderer, env } from './test-fixtures';

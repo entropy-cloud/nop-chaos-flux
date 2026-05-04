@@ -391,9 +391,7 @@ export function createPerformanceSchema(mode: PerformanceMode): SchemaInput {
 
   if (mode !== 'table-only') {
     const scenarios =
-      mode === 'full-stress'
-        ? [STRESS_SCENARIOS[0], ...FULL_STRESS_SCENARIOS]
-        : STRESS_SCENARIOS;
+      mode === 'full-stress' ? [STRESS_SCENARIOS[0], ...FULL_STRESS_SCENARIOS] : STRESS_SCENARIOS;
 
     body.push({
       type: 'container',

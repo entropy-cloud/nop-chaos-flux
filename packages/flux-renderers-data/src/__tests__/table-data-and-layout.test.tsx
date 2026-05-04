@@ -160,22 +160,34 @@ describe('fixed column layout', () => {
     expect(layout.getExpandCellProps()).toMatchObject({ fixed: 'left' });
     expect(layout.getSelectionCellProps()).toMatchObject({ fixed: 'left' });
     expect(
-      layout.getColumnCellProps({ name: 'name', fixed: 'left', width: 120 } as TableColumnSchema, 0),
+      layout.getColumnCellProps(
+        { name: 'name', fixed: 'left', width: 120 } as TableColumnSchema,
+        0,
+      ),
     ).toMatchObject({
       fixed: 'left',
       style: expect.objectContaining({ left: '80px', width: 120 }),
     });
     expect(
-      layout.getColumnCellProps({ name: 'email', fixed: 'right', width: '180px' } as TableColumnSchema, 1),
+      layout.getColumnCellProps(
+        { name: 'email', fixed: 'right', width: '180px' } as TableColumnSchema,
+        1,
+      ),
     ).toMatchObject({
       fixed: 'right',
       style: expect.objectContaining({ right: '0px', width: '180px' }),
     });
-    expect(layout.getColumnCellProps({ name: 'role', width: 'bad' } as TableColumnSchema, 2)).toEqual({});
+    expect(
+      layout.getColumnCellProps({ name: 'role', width: 'bad' } as TableColumnSchema, 2),
+    ).toEqual({});
   });
 
   it('returns non-sticky layout when no fixed columns exist', () => {
-    const layout = createFixedColumnLayout({ type: 'table' } as TableSchema, [{ name: 'name' }] as TableColumnSchema[], false);
+    const layout = createFixedColumnLayout(
+      { type: 'table' } as TableSchema,
+      [{ name: 'name' }] as TableColumnSchema[],
+      false,
+    );
     expect(layout.hasStickyColumns).toBe(false);
     expect(layout.getExpandCellProps()).toEqual({});
     expect(layout.getSelectionCellProps()).toEqual({});
@@ -204,7 +216,10 @@ describe('table row rendering helpers', () => {
       isSelected: true,
       isEven: true,
     });
-    expect((flattened[0] as import('../table-renderer/table-body-row-rendering').FlattenedRow).rowInstancePath).toEqual([
+    expect(
+      (flattened[0] as import('../table-renderer/table-body-row-rendering').FlattenedRow)
+        .rowInstancePath,
+    ).toEqual([
       { repeatedTemplateId: 'page', instanceKey: 'root' },
       { repeatedTemplateId: 'table-row:unit', instanceKey: 'r1' },
     ]);

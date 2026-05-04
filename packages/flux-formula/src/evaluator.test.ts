@@ -350,8 +350,8 @@ describe('evaluateAst', () => {
     for (let i = 0; i < 300; i++) {
       expr = `(${expr} + 1)`;
     }
-    expect(() =>
-      evaluateAst(parseFormula(expr), { env, context: createContext({}) })
-    ).toThrow(/depth limit exceeded/);
+    expect(() => evaluateAst(parseFormula(expr), { env, context: createContext({}) })).toThrow(
+      /depth limit exceeded/,
+    );
   });
 });

@@ -11,7 +11,9 @@ import { env, pageRenderer, textRenderer } from '../test-support-core';
 const openDialogButtonRenderer = {
   type: 'open-dialog-button',
   component: (props: any) => (
-    <Button onClick={(event) => props.events.onClick?.(event)}>{String(props.props.label ?? '')}</Button>
+    <Button onClick={(event) => props.events.onClick?.(event)}>
+      {String(props.props.label ?? '')}
+    </Button>
   ),
 };
 
@@ -180,7 +182,11 @@ describe('SchemaRenderer page modalContainer', () => {
 
 describe('SchemaRenderer surface runtime seam', () => {
   it('uses caller-supplied surfaceRuntime for managed surfaces', async () => {
-    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, openDialogButtonRenderer]);
+    const SchemaRenderer = createSchemaRenderer([
+      pageRenderer,
+      textRenderer,
+      openDialogButtonRenderer,
+    ]);
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([pageRenderer, textRenderer, openDialogButtonRenderer]),
       env,

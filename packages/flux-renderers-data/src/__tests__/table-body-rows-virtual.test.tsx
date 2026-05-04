@@ -129,7 +129,9 @@ describe('TableBodyRows virtual body', () => {
           props={makeTableProps()}
           columns={[{ label: 'Name', name: 'name' } as any]}
           responsiveHiddenColumns={[]}
-          processedData={[{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }] as TableRowEntry[]}
+          processedData={
+            [{ rowKey: '1', sourceIndex: 0, record: { name: 'Alice' } }] as TableRowEntry[]
+          }
           rowScopeCache={rowScopeCache}
           rowRepeatedTemplateId="table-row:test"
           expandedRowKeys={new Set(['1'])}

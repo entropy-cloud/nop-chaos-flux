@@ -17,10 +17,7 @@ import {
   type ReportDesignerConfig,
   type ReportDesignerProfile,
 } from '@nop-chaos/report-designer-core';
-import {
-  defineReportDesignerPageSchema,
-  registerReportDesignerRenderers,
-} from './index.js';
+import { defineReportDesignerPageSchema, registerReportDesignerRenderers } from './index.js';
 import { createReportDesignerActionProvider } from './host-action-provider.js';
 
 const env: RendererEnv = {
@@ -328,18 +325,20 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
     const view = render(
       <SchemaRenderer
         schemaUrl="test://report/renderers-status-unmount"
-        schema={{
-          type: 'page',
-          body: [
-            defineReportDesignerPageSchema({
-              type: 'report-designer-page',
-              document,
-              designer: createRuntimeConfig(),
-              statusPath: 'reportStatus',
-            }),
-            { type: 'report-status-probe' },
-          ],
-        } as any}
+        schema={
+          {
+            type: 'page',
+            body: [
+              defineReportDesignerPageSchema({
+                type: 'report-designer-page',
+                document,
+                designer: createRuntimeConfig(),
+                statusPath: 'reportStatus',
+              }),
+              { type: 'report-status-probe' },
+            ],
+          } as any
+        }
         env={env}
         registry={registry}
         formulaCompiler={createFormulaCompiler()}

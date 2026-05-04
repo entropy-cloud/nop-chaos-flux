@@ -115,14 +115,17 @@ function isRegistrationContained(
     return false;
   }
 
-  return !registration.childPaths?.some((childPath) => !isOwnedRegistrationPath(sharedState, childPath));
+  return !registration.childPaths?.some(
+    (childPath) => !isOwnedRegistrationPath(sharedState, childPath),
+  );
 }
 
 export function registerField(
   sharedState: ManagedFormRuntimeSharedState,
   registration: RuntimeFieldRegistration,
 ): FieldRegistrationHandle {
-  const { runtimeFieldRegistrations, pathToRegistrationId, childPathToRegistrationId } = sharedState;
+  const { runtimeFieldRegistrations, pathToRegistrationId, childPathToRegistrationId } =
+    sharedState;
 
   if (sharedState.lifecycleState === 'disposed') {
     return {

@@ -35,9 +35,11 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
 
   return (
     <section className={cn('nop-report-inspector')} data-testid="report-inspector">
-      {(props.helpers.render(body, {
-        pathSuffix: 'inspector-body',
-      }) as React.ReactNode)}
+      {
+        props.helpers.render(body, {
+          pathSuffix: 'inspector-body',
+        }) as React.ReactNode
+      }
     </section>
   );
 }

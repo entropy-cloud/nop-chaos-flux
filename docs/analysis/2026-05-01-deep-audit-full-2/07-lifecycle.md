@@ -14,6 +14,7 @@
 ## useEffect 职责分类
 
 全部 useEffect 正确归属于 React 层：
+
 - 组件注册/卸载 ✓
 - 状态发布 (statusPath) ✓
 - 异步数据获取 + AbortController ✓

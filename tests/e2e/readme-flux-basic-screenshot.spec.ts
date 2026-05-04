@@ -12,7 +12,9 @@ test.describe.skip('README screenshots', () => {
   test('captures playground home screenshot', async ({ page }) => {
     await page.goto('/');
     await page.setViewportSize({ width: 1600, height: 900 });
-    await expect(page.locator('button', { hasText: 'Flux Basic' })).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('button', { hasText: 'Flux Basic' })).toBeVisible({
+      timeout: 20_000,
+    });
     await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
 
     await ensureDir(IMAGES_DIR);
@@ -29,9 +31,12 @@ test.describe.skip('README screenshots', () => {
     await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
 
     await ensureDir(IMAGES_DIR);
-    await page.locator('.nop-page').first().screenshot({
-      path: join(IMAGES_DIR, 'readme-flux-basic.png'),
-    });
+    await page
+      .locator('.nop-page')
+      .first()
+      .screenshot({
+        path: join(IMAGES_DIR, 'readme-flux-basic.png'),
+      });
   });
 
   test('captures flow designer screenshot', async ({ page }) => {

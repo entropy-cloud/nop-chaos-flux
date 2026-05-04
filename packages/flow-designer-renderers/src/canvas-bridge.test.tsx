@@ -313,7 +313,9 @@ describe('DesignerXyflowCanvasBridge', () => {
     );
 
     const mockEdge = { id: 'edge-1' };
-    expect(() => mockState.latestReactFlowProps.onReconnect(mockEdge, mockConnection)).not.toThrow();
+    expect(() =>
+      mockState.latestReactFlowProps.onReconnect(mockEdge, mockConnection),
+    ).not.toThrow();
     expect(onStartReconnect).toHaveBeenCalledWith('edge-1', undefined);
     expect(onCompleteReconnect).toHaveBeenCalledWith(
       'edge-1',

@@ -75,14 +75,14 @@ export function createXyflowEdges(
 ): Edge[] {
   const edgeType = documentMode === 'tree' ? 'dingflowEdge' : 'designerEdge';
   const branchFocusedNodeId = snapshot.activeBranch?.childId;
-    return snapshot.doc.edges.map((edge) => ({
-      id: edge.id,
-      type: edgeType,
-      source: edge.source,
-      target: edge.target,
-      sourceHandle: edge.sourcePort,
-      targetHandle: edge.targetPort,
-      label: String(edge.data.label ?? edge.id),
+  return snapshot.doc.edges.map((edge) => ({
+    id: edge.id,
+    type: edgeType,
+    source: edge.source,
+    target: edge.target,
+    sourceHandle: edge.sourcePort,
+    targetHandle: edge.targetPort,
+    label: String(edge.data.label ?? edge.id),
     data: {
       ...(edge.data ?? {}),
       label: String(edge.data.label ?? edge.id),

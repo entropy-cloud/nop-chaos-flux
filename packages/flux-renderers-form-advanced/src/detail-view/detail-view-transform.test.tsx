@@ -259,7 +259,9 @@ describe('detail-view renderer transform behavior', () => {
 
   it('drops stale open completions when a newer detail-view open request wins', async () => {
     cleanup();
-    const pendingOpens: Array<(value: { ok: true; data: { name: string; status: string } }) => void> = [];
+    const pendingOpens: Array<
+      (value: { ok: true; data: { name: string; status: string } }) => void
+    > = [];
     const importLoader = {
       load: vi.fn(async () => ({
         createNamespace: () => ({
@@ -335,21 +337,22 @@ describe('detail-view renderer transform behavior', () => {
           kind: 'import' as const,
           invoke: async (_method: string, payload: Record<string, unknown> | undefined) => {
             const value = payload?.value as Record<string, unknown> | undefined;
-            return await new Promise<{ ok: true; data: { updates: { name: string; status: string } } }>(
-              (resolve) => {
-                pendingCommits.push(() =>
-                  resolve({
-                    ok: true,
-                    data: {
-                      updates: {
-                        name: String(value?.name ?? ''),
-                        status: String(value?.status ?? ''),
-                      },
+            return await new Promise<{
+              ok: true;
+              data: { updates: { name: string; status: string } };
+            }>((resolve) => {
+              pendingCommits.push(() =>
+                resolve({
+                  ok: true,
+                  data: {
+                    updates: {
+                      name: String(value?.name ?? ''),
+                      status: String(value?.status ?? ''),
                     },
-                  }),
-                );
-              },
-            );
+                  },
+                }),
+              );
+            });
           },
         }),
       })),

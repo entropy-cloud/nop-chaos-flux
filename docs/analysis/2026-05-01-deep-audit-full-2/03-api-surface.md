@@ -3,11 +3,13 @@
 ## 发现
 
 ### [维度03-F1] field-utils 大批量公开导出内部表单字段工具 (P3)
+
 - **文件**: `packages/flux-renderers-form/src/index.tsx:20`
 - **现状**: `export * from './field-utils'` 导出 SyncValueResolution 等内部状态机细节
 - **建议**: 拆分到 field-utils-internal.ts
 
 ### [维度03-F2] test-support 文件缺少 package.json exports 声明 (P3)
+
 - **文件**: `packages/flux-renderers-form-advanced/src/test-support.tsx`
 - **现状**: 文件存在但 package.json exports 无 ./test-support 子路径
 

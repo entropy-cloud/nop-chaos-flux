@@ -23,7 +23,12 @@ afterEach(() => {
 describe('designer-page status publication', () => {
   it('publishes designer host status through literal statusPath', async () => {
     function StatusProbe() {
-      const status = useScopeSelector((data: Record<string, unknown>) => data.designerStatus as { kind: string; selectionKind: string; selectionCount: number } | undefined);
+      const status = useScopeSelector(
+        (data: Record<string, unknown>) =>
+          data.designerStatus as
+            | { kind: string; selectionKind: string; selectionCount: number }
+            | undefined,
+      );
       return (
         <span data-testid="designer-status">
           {status ? `${status.kind}:${status.selectionKind}:${status.selectionCount}` : ''}
@@ -44,30 +49,28 @@ describe('designer-page status publication', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flow/index-status"
-        schema={
-          {
-            type: 'page',
-            body: [
-              {
-                type: 'designer-page',
-                document: {
-                  id: 'doc-1',
-                  kind: 'flow',
-                  name: 'Example',
-                  version: '1.0.0',
-                  nodes: [],
-                  edges: [],
-                  viewport: { x: 0, y: 0, zoom: 1 },
-                },
-                config: createTestConfig(),
-                statusPath: 'designerStatus',
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'designer-page',
+              document: {
+                id: 'doc-1',
+                kind: 'flow',
+                name: 'Example',
+                version: '1.0.0',
+                nodes: [],
+                edges: [],
+                viewport: { x: 0, y: 0, zoom: 1 },
               },
-              {
-                type: 'designer-status-probe',
-              },
-            ],
-          }
-        }
+              config: createTestConfig(),
+              statusPath: 'designerStatus',
+            },
+            {
+              type: 'designer-status-probe',
+            },
+          ],
+        }}
         env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,
@@ -114,55 +117,53 @@ describe('designer-page status publication', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://flow/index-region-scope"
-        schema={
-          {
-            type: 'designer-page',
-            document: {
-              id: 'doc-1',
-              kind: 'flow',
-              name: 'Example',
-              version: '1.0.0',
-              nodes: [
-                {
-                  id: 'node-1',
-                  type: 'task',
-                  position: { x: 20, y: 40 },
-                  data: { label: 'Task 1' },
-                },
-                {
-                  id: 'node-2',
-                  type: 'end',
-                  position: { x: 220, y: 40 },
-                  data: { label: 'Task 2' },
-                },
-              ],
-              edges: [
-                {
-                  id: 'edge-1',
-                  type: 'default',
-                  source: 'node-1',
-                  target: 'node-2',
-                  data: { label: 'Edge 1' },
-                },
-              ],
-              viewport: { x: 0, y: 0, zoom: 1 },
-            },
-            config: createTestConfig(),
-            toolbar: [
-              { type: 'designer-region-probe' },
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [
               {
-                type: 'action-button',
-                label: 'Select edge',
-                onClick: {
-                  action: 'designer:selectEdge',
-                  args: { edgeId: 'edge-1' },
-                },
+                id: 'node-1',
+                type: 'task',
+                position: { x: 20, y: 40 },
+                data: { label: 'Task 1' },
+              },
+              {
+                id: 'node-2',
+                type: 'end',
+                position: { x: 220, y: 40 },
+                data: { label: 'Task 2' },
               },
             ],
-            inspector: { type: 'designer-region-probe' },
-            dialogs: { type: 'designer-region-probe' },
-          }
-        }
+            edges: [
+              {
+                id: 'edge-1',
+                type: 'default',
+                source: 'node-1',
+                target: 'node-2',
+                data: { label: 'Edge 1' },
+              },
+            ],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createTestConfig(),
+          toolbar: [
+            { type: 'designer-region-probe' },
+            {
+              type: 'action-button',
+              label: 'Select edge',
+              onClick: {
+                action: 'designer:selectEdge',
+                args: { edgeId: 'edge-1' },
+              },
+            },
+          ],
+          inspector: { type: 'designer-region-probe' },
+          dialogs: { type: 'designer-region-probe' },
+        }}
         env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,
@@ -205,42 +206,40 @@ describe('DesignerPageRenderer basic rendering', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/index-rendering"
-        schema={
-          {
-            type: 'designer-page',
-            document: {
-              id: 'doc-1',
-              kind: 'flow',
-              name: 'Example',
-              version: '1.0.0',
-              nodes: [
-                {
-                  id: 'node-1',
-                  type: 'task',
-                  position: { x: 20, y: 40 },
-                  data: { label: 'Task 1' },
-                },
-                {
-                  id: 'node-2',
-                  type: 'end',
-                  position: { x: 220, y: 40 },
-                  data: { label: 'Task 2' },
-                },
-              ],
-              edges: [
-                {
-                  id: 'edge-1',
-                  type: 'default',
-                  source: 'node-1',
-                  target: 'node-2',
-                  data: { label: 'Edge 1' },
-                },
-              ],
-              viewport: { x: 0, y: 0, zoom: 1 },
-            },
-            config: createTestConfig(),
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [
+              {
+                id: 'node-1',
+                type: 'task',
+                position: { x: 20, y: 40 },
+                data: { label: 'Task 1' },
+              },
+              {
+                id: 'node-2',
+                type: 'end',
+                position: { x: 220, y: 40 },
+                data: { label: 'Task 2' },
+              },
+            ],
+            edges: [
+              {
+                id: 'edge-1',
+                type: 'default',
+                source: 'node-1',
+                target: 'node-2',
+                data: { label: 'Edge 1' },
+              },
+            ],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createTestConfig(),
+        }}
         env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,
@@ -278,45 +277,43 @@ describe('DesignerPageRenderer basic rendering', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/index-toolbar"
-        schema={
-          {
-            type: 'designer-page',
-            document: {
-              id: 'doc-1',
-              kind: 'flow',
-              name: 'Example',
-              version: '1.0.0',
-              nodes: [
-                {
-                  id: 'node-1',
-                  type: 'task',
-                  position: { x: 20, y: 40 },
-                  data: { label: 'Task 1' },
-                },
-              ],
-              edges: [],
-              viewport: { x: 0, y: 0, zoom: 1 },
-            },
-            config: {
-              ...createTestConfig(),
-              nodeTypes: [
-                {
-                  id: 'task',
-                  label: 'Task',
-                  body: { type: 'text', text: 'Task' },
-                  defaults: { label: 'Task' },
-                  quickActions: { type: 'text', text: 'Quick actions' },
-                },
-                {
-                  id: 'end',
-                  label: 'End',
-                  body: { type: 'text', text: 'End' },
-                  defaults: { label: 'End' },
-                },
-              ],
-            },
-          }
-        }
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [
+              {
+                id: 'node-1',
+                type: 'task',
+                position: { x: 20, y: 40 },
+                data: { label: 'Task 1' },
+              },
+            ],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: {
+            ...createTestConfig(),
+            nodeTypes: [
+              {
+                id: 'task',
+                label: 'Task',
+                body: { type: 'text', text: 'Task' },
+                defaults: { label: 'Task' },
+                quickActions: { type: 'text', text: 'Quick actions' },
+              },
+              {
+                id: 'end',
+                label: 'End',
+                body: { type: 'text', text: 'End' },
+                defaults: { label: 'End' },
+              },
+            ],
+          },
+        }}
         env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
       />,

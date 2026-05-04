@@ -131,13 +131,13 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   const runtimeScope =
     inputValue.scopeBinding === 'none'
       ? scope
-        : createFormScopeWithBinding({
-            scope,
-            formId,
-            formName,
-            getStoreState: () => store.getState(),
-            getPendingValidationDebounceCount: () => pendingValidationDebounces.size,
-          });
+      : createFormScopeWithBinding({
+          scope,
+          formId,
+          formName,
+          getStoreState: () => store.getState(),
+          getPendingValidationDebounceCount: () => pendingValidationDebounces.size,
+        });
 
   const sharedState: ManagedFormRuntimeSharedState = {
     inputValue,

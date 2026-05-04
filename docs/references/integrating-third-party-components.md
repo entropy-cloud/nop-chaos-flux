@@ -498,27 +498,27 @@ function MyRenderer(props) {
 
 ## RendererDefinition Field Reference
 
-| Field                     | Required                              | Default     | Purpose                                                           |
-| ------------------------- | ------------------------------------- | ----------- | ----------------------------------------------------------------- |
-| `type`                    | yes                                   | —           | Unique string matching `schema.type`                              |
-| `component`               | yes on core contract                  | —           | The standard Flux renderer component                              |
-| `reactComponent`          | React-host convenience only           | —           | Plain React component path auto-wrapped by `@nop-chaos/flux-react` |
-| `displayName`             | no                                    | —           | Human-readable name for tooling                                   |
-| `category`                | no                                    | —           | Grouping for tooling (e.g. `"content"`, `"form"`)                 |
-| `icon`                    | no                                    | —           | Icon name for tooling                                             |
-| `sourcePackage`           | no                                    | —           | Package name for tooling                                          |
-| `defaultSchema`           | no                                    | —           | Default schema values when inserting                              |
-| `propSchema`              | no                                    | —           | Renderer-local prop schema metadata                               |
-| `regions`                 | no                                    | —           | Declared region names                                             |
-| `fields`                  | no                                    | —           | `SchemaFieldRule[]` for compiler field classification             |
-| `validation`              | no                                    | —           | `ValidationContributor` for form validation                       |
-| `wrap`                    | no                                    | `false`     | Wrap in `<FieldFrame>` (label + error chrome)                     |
-| `scopePolicy`             | no                                    | —           | Scope creation policy                                             |
-| `actionScopePolicy`       | no                                    | `'inherit'` | `'inherit'` or `'new'` action scope boundary                      |
-| `componentRegistryPolicy` | no                                    | `'inherit'` | `'inherit'` or `'new'` component registry boundary                |
-| `injectedLocals`          | no                                    | —           | Static injected-local metadata for compile-time symbol resolution |
-| `authoringTransform`      | no                                    | —           | Optional renderer-local schema transform before compilation       |
-| `staticCapable`           | no                                    | `false`     | Declares whether the renderer is static-rendering capable         |
+| Field                     | Required                    | Default     | Purpose                                                            |
+| ------------------------- | --------------------------- | ----------- | ------------------------------------------------------------------ |
+| `type`                    | yes                         | —           | Unique string matching `schema.type`                               |
+| `component`               | yes on core contract        | —           | The standard Flux renderer component                               |
+| `reactComponent`          | React-host convenience only | —           | Plain React component path auto-wrapped by `@nop-chaos/flux-react` |
+| `displayName`             | no                          | —           | Human-readable name for tooling                                    |
+| `category`                | no                          | —           | Grouping for tooling (e.g. `"content"`, `"form"`)                  |
+| `icon`                    | no                          | —           | Icon name for tooling                                              |
+| `sourcePackage`           | no                          | —           | Package name for tooling                                           |
+| `defaultSchema`           | no                          | —           | Default schema values when inserting                               |
+| `propSchema`              | no                          | —           | Renderer-local prop schema metadata                                |
+| `regions`                 | no                          | —           | Declared region names                                              |
+| `fields`                  | no                          | —           | `SchemaFieldRule[]` for compiler field classification              |
+| `validation`              | no                          | —           | `ValidationContributor` for form validation                        |
+| `wrap`                    | no                          | `false`     | Wrap in `<FieldFrame>` (label + error chrome)                      |
+| `scopePolicy`             | no                          | —           | Scope creation policy                                              |
+| `actionScopePolicy`       | no                          | `'inherit'` | `'inherit'` or `'new'` action scope boundary                       |
+| `componentRegistryPolicy` | no                          | `'inherit'` | `'inherit'` or `'new'` component registry boundary                 |
+| `injectedLocals`          | no                          | —           | Static injected-local metadata for compile-time symbol resolution  |
+| `authoringTransform`      | no                          | —           | Optional renderer-local schema transform before compilation        |
+| `staticCapable`           | no                          | `false`     | Declares whether the renderer is static-rendering capable          |
 
 ## Related Documents
 

@@ -3,11 +3,13 @@
 ## 发现
 
 ### [维度11-F1] snippet-panel.tsx 原生 button (P2)
+
 - **文件**: `packages/flux-code-editor/src/extensions/snippet-panel.tsx:25-32`
 - **现状**: PopoverTrigger render prop 使用原生 `<button>`，同文件38行已用 `<Button>`
 - **替换可行性**: 中（可能受 shadcn render prop 限制）
 
 ### [维度11-F2] crud-renderer-toolbar.tsx 原生 label (P2)
+
 - **文件**: `packages/flux-renderers-data/src/crud-renderer-toolbar.tsx:84`
 - **现状**: `<label>` 包裹 "Rows per page"，应使用 `<Label>`
 - **替换可行性**: 高

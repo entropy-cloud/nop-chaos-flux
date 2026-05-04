@@ -27,7 +27,10 @@ describe('remapValidationRunState', () => {
     ]);
     const pendingDebounces = new Map();
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
+      {
+        validationRuns,
+        pendingValidationDebounces: pendingDebounces,
+      } as FormRuntimeValidationRunState,
       'items',
       (i) => i - 1,
       vi.fn(),
@@ -45,7 +48,10 @@ describe('remapValidationRunState', () => {
       ['items.2.field', { timer: 2, resolve: vi.fn(), reject: vi.fn() }],
     ]);
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
+      {
+        validationRuns,
+        pendingValidationDebounces: pendingDebounces,
+      } as FormRuntimeValidationRunState,
       'items',
       (i) => i - 1,
       vi.fn(),
@@ -62,7 +68,10 @@ describe('remapValidationRunState', () => {
       ['items.2.field', { timer: 1, resolve: vi.fn(), reject: vi.fn() }],
     ]);
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
+      {
+        validationRuns,
+        pendingValidationDebounces: pendingDebounces,
+      } as FormRuntimeValidationRunState,
       'items',
       () => undefined,
       cancelFn,
@@ -72,9 +81,14 @@ describe('remapValidationRunState', () => {
 
   it('skips pending debounce when entry is missing', () => {
     const validationRuns = new Map<string, number>();
-    const pendingDebounces = new Map<string, PendingValidationDebounce | undefined>([['items.1.field', undefined]]);
+    const pendingDebounces = new Map<string, PendingValidationDebounce | undefined>([
+      ['items.1.field', undefined],
+    ]);
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
+      {
+        validationRuns,
+        pendingValidationDebounces: pendingDebounces,
+      } as FormRuntimeValidationRunState,
       'items',
       (i) => i - 1,
       vi.fn(),
@@ -86,7 +100,10 @@ describe('remapValidationRunState', () => {
     const validationRuns = new Map<string, number>([['items.0.name', 5]]);
     const pendingDebounces = new Map();
     remapValidationRunState(
-      { validationRuns, pendingValidationDebounces: pendingDebounces } as FormRuntimeValidationRunState,
+      {
+        validationRuns,
+        pendingValidationDebounces: pendingDebounces,
+      } as FormRuntimeValidationRunState,
       'items',
       (i) => i,
       vi.fn(),

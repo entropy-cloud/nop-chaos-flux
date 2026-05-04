@@ -139,9 +139,14 @@ export function createReportDesignerCore(
     return controller.signal;
   }
 
-  function clearOperationSignal(kind: 'refresh-derived-state' | 'refresh-field-sources', signal: AbortSignal) {
+  function clearOperationSignal(
+    kind: 'refresh-derived-state' | 'refresh-field-sources',
+    signal: AbortSignal,
+  ) {
     const current =
-      kind === 'refresh-derived-state' ? refreshDerivedStateController : refreshFieldSourcesController;
+      kind === 'refresh-derived-state'
+        ? refreshDerivedStateController
+        : refreshFieldSourcesController;
     if (current?.signal !== signal) {
       return;
     }
@@ -390,12 +395,12 @@ export function createReportDesignerCore(
       }
 
       disposed = true;
-        refreshDerivedStateController?.abort();
-        refreshFieldSourcesController?.abort();
-        previewController?.abort();
-        refreshDerivedStateController = undefined;
-        refreshFieldSourcesController = undefined;
-        previewController = undefined;
-      },
+      refreshDerivedStateController?.abort();
+      refreshFieldSourcesController?.abort();
+      previewController?.abort();
+      refreshDerivedStateController = undefined;
+      refreshFieldSourcesController = undefined;
+      previewController = undefined;
+    },
   };
 }

@@ -8,12 +8,14 @@ import {
   type ScopeRef,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import {
-  createComponentHandleRegistry,
-  createRendererRuntime,
-} from './index';
+import { createComponentHandleRegistry, createRendererRuntime } from './index';
 
-const defaultResolvedMeta: ResolvedNodeMeta = { visible: true, hidden: false, disabled: false, changed: false };
+const defaultResolvedMeta: ResolvedNodeMeta = {
+  visible: true,
+  hidden: false,
+  disabled: false,
+  changed: false,
+};
 
 const textRenderer: RendererDefinition = {
   type: 'text',

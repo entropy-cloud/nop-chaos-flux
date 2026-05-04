@@ -1,7 +1,11 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { BaseSchema, ExecutableApiRequest, RendererComponentProps } from '@nop-chaos/flux-core';
+import type {
+  BaseSchema,
+  ExecutableApiRequest,
+  RendererComponentProps,
+} from '@nop-chaos/flux-core';
 import type { RendererDefinition } from '../react-contracts';
 import { createDefaultEnv, createDefaultRegistry } from '../defaults';
 import { createAutoRendererComponent, ensureRendererComponent } from '../auto-renderer';

@@ -105,9 +105,7 @@ export function toActionResult(result: import('./designer-command-adapter').Desi
   };
 }
 
-export function buildDesignerScopeData(input: {
-  snapshot: DesignerSnapshot;
-}) {
+export function buildDesignerScopeData(input: { snapshot: DesignerSnapshot }) {
   const { snapshot } = input;
   const selectionKind = snapshot.activeBranch
     ? 'branch'

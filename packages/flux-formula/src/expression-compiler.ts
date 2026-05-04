@@ -23,7 +23,10 @@ export function createExpressionCompiler(
     compileNode<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledValueNode<T> {
       return compileNode(input, formulaCompiler, options);
     },
-    compileValue<T = unknown>(input: T, options?: ExpressionCompileOptions): CompiledRuntimeValue<T> {
+    compileValue<T = unknown>(
+      input: T,
+      options?: ExpressionCompileOptions,
+    ): CompiledRuntimeValue<T> {
       const node = compileNode(input, formulaCompiler, options);
 
       if (node.kind === 'static-node') {

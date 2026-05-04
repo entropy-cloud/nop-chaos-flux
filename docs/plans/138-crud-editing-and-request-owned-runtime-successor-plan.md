@@ -74,7 +74,7 @@ Exit Criteria:
 
 ### Phase 3 - Land Editing And Query-Sync Extensions
 
-Status: in progress
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`, related table/form integration, focused tests, docs/examples
 
 - [x] 落地第一版 `quickEdit` / `quickSaveAction` / `quickSaveItemAction` baseline
