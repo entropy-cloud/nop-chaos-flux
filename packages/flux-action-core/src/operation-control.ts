@@ -214,9 +214,10 @@ export async function withRetry<T>(
       break;
     }
 
-    const syntheticFailureCount = failureCount + 1;
+    failureCount += 1;
+    options.onFailedAttempt?.(failureCount, lastResult);
     if (retryDelay > 0) {
-      await waitWithAbort(getDelay(syntheticFailureCount));
+      await waitWithAbort(getDelay(failureCount));
     }
   }
 

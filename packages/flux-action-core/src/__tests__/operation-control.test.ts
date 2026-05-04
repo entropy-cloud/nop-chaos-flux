@@ -153,7 +153,7 @@ describe('withRetry', () => {
     );
     expect(result.result).toBe(3);
     expect(result.attempts).toBe(3);
-    expect(result.failureCount).toBe(0);
+    expect(result.failureCount).toBe(2);
   });
 
   it('returns last result when shouldStop never returns true and retries exhausted', async () => {

@@ -591,7 +591,7 @@ export function createSchemaCompiler(input: {
       const diagnostics = createSchemaCompilerDiagnosticsContext(
         {
           schemaUrl: options.schemaUrl,
-          diagnostics: { enabled: false },
+          diagnostics: { enabled: options?.diagnostics?.enabled ?? false },
         },
         'compile',
         options.schemaUrl,

@@ -14,8 +14,7 @@ import {
   isNamespacedAction,
   parseNamespacedAction,
 } from './action-parsing';
-
-const XUI_ACTIONS_NAMESPACE = '__xui_actions__';
+import { XUI_ACTIONS_NAMESPACE } from '@nop-chaos/flux-core';
 
 export function finishAction(
   ctx: ActionDispatcherContext,

@@ -394,6 +394,11 @@ async function dispatch(
 
         const message = error instanceof Error ? error.message : String(error);
         ctx.getEnv().notify('error', message);
+
+        previous = {
+          ...previous,
+          settledError: error,
+        };
       }
     }
 
@@ -422,5 +427,11 @@ export function createActionDispatcher(config: ActionDispatcherConfig) {
       action: ActionSchema | ActionSchema[] | CompiledActionProgram,
       actionCtx: ActionContext,
     ) => dispatch(ctx, action, actionCtx),
+    dispose() {
+      for (const [, pending] of ctx.pendingDebounces) {
+        if (pending.timer != null) clearTimeout(pending.timer);
+      }
+      ctx.pendingDebounces.clear();
+    },
   };
 }
