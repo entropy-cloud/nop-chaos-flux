@@ -1,0 +1,20 @@
+{
+  "minLines": 6,
+  "minTokens": 50,
+  "format": ["typescript", "javascript", "tsx", "css"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.d.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/coverage/**",
+    "**/.turbo/**",
+    "**/test-results/**"
+  ],
+  "threshold": 0,
+  "reporters": ["console"],
+  "silent": false,
+  "absolute": true
+}

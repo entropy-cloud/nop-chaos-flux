@@ -100,6 +100,10 @@ function isE2eFile(filePath) {
   return filePath.includes('.spec.') || filePath.startsWith('tests/e2e');
 }
 
+function isPlaygroundFile(filePath) {
+  return filePath.startsWith('apps/playground/');
+}
+
 function analyzeTsComplexity(content, filePath) {
   const isTsx = filePath.endsWith('.tsx') || filePath.endsWith('.jsx');
   const patterns = [
@@ -179,11 +183,14 @@ async function main() {
     totalCode = 0;
   let srcFiles = 0,
     testFiles = 0,
+    playgroundFiles = 0,
     otherFiles = 0;
   let srcCode = 0,
     testCode = 0,
+    playgroundCode = 0,
     srcLoc = 0,
-    testLoc = 0;
+    testLoc = 0,
+    playgroundLoc = 0;
   let unitFiles = 0,
     unitCode = 0,
     unitLoc = 0;
@@ -220,6 +227,7 @@ async function main() {
     const pkg = getPackage(filePath);
     const isTest = isTestFile(filePath);
     const isE2e = isE2eFile(filePath);
+    const isPlayground = isPlaygroundFile(filePath);
 
     if (!packageData.has(pkg)) {
       packageData.set(pkg, {
@@ -229,6 +237,7 @@ async function main() {
         comment: 0,
         code: 0,
         srcFiles: 0,
+        playgroundFiles: 0,
         testFiles: 0,
         otherFiles: 0,
         langs: new Map(),
@@ -241,6 +250,7 @@ async function main() {
     pd.comment += lc.comment;
     pd.code += lc.code;
     if (isTest) pd.testFiles++;
+    else if (isPlayground) pd.playgroundFiles++;
     else if (CODE_ONLY_EXT.has(ext)) pd.srcFiles++;
     else pd.otherFiles++;
 
@@ -264,12 +274,16 @@ async function main() {
     totalCode += lc.code;
 
     if (isTest) testFiles++;
+    else if (isPlayground) playgroundFiles++;
     else if (CODE_ONLY_EXT.has(ext)) srcFiles++;
     else otherFiles++;
 
     if (isTest) {
       testCode += lc.code;
       testLoc += lc.total;
+    } else if (isPlayground) {
+      playgroundCode += lc.code;
+      playgroundLoc += lc.total;
     } else if (CODE_ONLY_EXT.has(ext)) {
       srcCode += lc.code;
       srcLoc += lc.total;
@@ -334,6 +348,7 @@ async function main() {
   console.log(`
   Total files        : ${formatNumber(files.length)}
   Source files (code) : ${formatNumber(srcFiles)}
+  Playground files    : ${formatNumber(playgroundFiles)}
   Test files          : ${formatNumber(testFiles)}
   Other files         : ${formatNumber(otherFiles)}
 
@@ -343,16 +358,19 @@ async function main() {
   Blank lines         : ${formatNumber(totalBlank)} (${((totalBlank / totalLoc) * 100).toFixed(1)}%)
 
   Test-to-source ratio: ${srcFiles > 0 ? (testFiles / srcFiles).toFixed(2) : 'N/A'}
+  Playground/Source   : ${srcFiles > 0 ? (playgroundFiles / srcFiles).toFixed(2) : 'N/A'}
   Avg LOC per file    : ${(totalLoc / files.length).toFixed(1)}
   Avg code per file   : ${(totalCode / files.length).toFixed(1)}
 
-  ── Test vs Source ──────────────────────────────────────
+  ── Source vs Playground vs Test ───────────────────────
                         Files       LOC      Code
   Source files        : ${formatNumber(srcFiles).padStart(5)}  ${formatNumber(srcLoc).padStart(9)}  ${formatNumber(srcCode).padStart(9)}
+  Playground files    : ${formatNumber(playgroundFiles).padStart(5)}  ${formatNumber(playgroundLoc).padStart(9)}  ${formatNumber(playgroundCode).padStart(9)}
   Unit test files     : ${formatNumber(unitFiles).padStart(5)}  ${formatNumber(unitLoc).padStart(9)}  ${formatNumber(unitCode).padStart(9)}
   E2E test files      : ${formatNumber(e2eFiles).padStart(5)}  ${formatNumber(e2eLoc).padStart(9)}  ${formatNumber(e2eCode).padStart(9)}
   All test files      : ${formatNumber(testFiles).padStart(5)}  ${formatNumber(testLoc).padStart(9)}  ${formatNumber(testCode).padStart(9)}
 
+  Playground/Source   : ${srcCode > 0 ? (playgroundCode / srcCode).toFixed(2) : 'N/A'}
   Unit/Source (code)  : ${srcCode > 0 ? (unitCode / srcCode).toFixed(2) : 'N/A'}
   E2E/Source  (code)  : ${srcCode > 0 ? (e2eCode / srcCode).toFixed(2) : 'N/A'}
   All/Source  (code)  : ${srcCode > 0 ? (testCode / srcCode).toFixed(2) : 'N/A'}
@@ -392,11 +410,11 @@ ${[...docsCategories.entries()]
   const maxPkgCode = Math.max(...pkgRows.map(([, d]) => d.code));
 
   console.log(`
-  ${'Package'.padEnd(42)} ${'Files'.padStart(5)} ${'Code'.padStart(8)} ${'Cmt'.padStart(6)} ${'Test'.padStart(5)} ${'Src'.padStart(5)}  Distribution`);
-  console.log('  ' + '-'.repeat(100));
+  ${'Package'.padEnd(42)} ${'Files'.padStart(5)} ${'Code'.padStart(8)} ${'Cmt'.padStart(6)} ${'Test'.padStart(5)} ${'Pgd'.padStart(5)} ${'Src'.padStart(5)} ${'Oth'.padStart(5)}  Distribution`);
+  console.log('  ' + '-'.repeat(112));
   for (const [pkg, d] of pkgRows) {
     console.log(
-      `  ${pkg.padEnd(42)} ${formatNumber(d.files).padStart(5)} ${formatNumber(d.code).padStart(8)} ${formatNumber(d.comment).padStart(6)} ${formatNumber(d.testFiles).padStart(5)} ${formatNumber(d.srcFiles).padStart(5)}  ${bar(d.code, maxPkgCode, 15)}`,
+      `  ${pkg.padEnd(42)} ${formatNumber(d.files).padStart(5)} ${formatNumber(d.code).padStart(8)} ${formatNumber(d.comment).padStart(6)} ${formatNumber(d.testFiles).padStart(5)} ${formatNumber(d.playgroundFiles).padStart(5)} ${formatNumber(d.srcFiles).padStart(5)} ${formatNumber(d.otherFiles).padStart(5)}  ${bar(d.code, maxPkgCode, 15)}`,
     );
   }
 
@@ -447,13 +465,34 @@ ${[...docsCategories.entries()]
         f.ext === '.jsx' ||
         f.ext === '.mjs',
     )
-    .filter((f) => !isTestFile(f.path))
+    .filter((f) => !isTestFile(f.path) && !isPlaygroundFile(f.path))
     .sort((a, b) => b.code - a.code)
     .slice(0, 20);
 
   console.log(`\n  ${'File'.padEnd(65)} ${'LOC'.padStart(6)} ${'Code'.padStart(6)}`);
   console.log('  ' + '-'.repeat(80));
   for (const f of topFiles) {
+    console.log(
+      `  ${f.path.padEnd(65)} ${formatNumber(f.loc).padStart(6)} ${formatNumber(f.code).padStart(6)}`,
+    );
+  }
+
+  printSection('Largest Playground Files (by code lines, top 10)');
+  const topPlayground = fileSizes
+    .filter(
+      (f) =>
+        (f.ext === '.ts' ||
+          f.ext === '.tsx' ||
+          f.ext === '.js' ||
+          f.ext === '.jsx' ||
+          f.ext === '.mjs') && isPlaygroundFile(f.path),
+    )
+    .sort((a, b) => b.code - a.code)
+    .slice(0, 10);
+
+  console.log(`\n  ${'File'.padEnd(65)} ${'LOC'.padStart(6)} ${'Code'.padStart(6)}`);
+  console.log('  ' + '-'.repeat(80));
+  for (const f of topPlayground) {
     console.log(
       `  ${f.path.padEnd(65)} ${formatNumber(f.loc).padStart(6)} ${formatNumber(f.code).padStart(6)}`,
     );
