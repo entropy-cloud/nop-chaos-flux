@@ -163,6 +163,7 @@ export interface ActionResult {
   namespace?: string;
   sourceScopeId?: string;
   providerKind?: 'host' | 'import';
+  settledError?: unknown;
 }
 
 export interface FluxActionEvent {

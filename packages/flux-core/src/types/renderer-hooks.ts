@@ -15,6 +15,7 @@ import type {
   FormErrorQuery,
   FormFieldStateSnapshot,
   FormRuntime,
+  FormStoreState,
   PageRuntime,
   PageStoreApi,
   SurfaceRuntime,
@@ -123,6 +124,7 @@ export interface RendererHookApi {
   useScopeSelector<T, S = Record<string, unknown>>(
     selector: (scopeData: S) => T,
     equalityFn?: (a: T, b: T) => boolean,
+    options?: { enabled?: boolean; fallback?: T },
   ): T;
   useOwnScopeSelector<T, S = Record<string, unknown>>(
     selector: (scopeData: S) => T,
@@ -143,8 +145,16 @@ export interface RendererHookApi {
   ): DataSourceStatusSummary | undefined;
   useOwnedFieldState(path: string): FormFieldStateSnapshot;
   useChildFieldState(path: string): FormFieldStateSnapshot;
-  useAggregateError(path: string): ValidationError | undefined;
+  useAggregateError(path: string, options?: { enabled?: boolean }): ValidationError | undefined;
   useCurrentPage(): PageRuntime | undefined;
+  useCurrentFormState<T>(
+    selector: (state: FormStoreState) => T,
+    equalityFn?: (a: T, b: T) => boolean,
+    options?: { enabled?: boolean; path?: string; paths?: readonly string[] },
+  ): T;
+  useCurrentFormModelGeneration(): number;
+  useFormLayout(): { mode?: 'normal' | 'horizontal'; labelAlign?: 'top' | 'left' | 'right'; labelWidth?: string | number };
+  useStrictMode(): boolean;
   useCurrentSurfaceRuntime(): SurfaceRuntime | undefined;
   useCurrentNodeMeta(): RenderNodeMeta;
   useCurrentNodeInstance(): NodeInstance | undefined;

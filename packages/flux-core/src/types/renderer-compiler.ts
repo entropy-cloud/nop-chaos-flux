@@ -23,6 +23,7 @@ export interface ResolvedNodeProps {
 export interface ResolvedNodeMeta {
   id?: string;
   className?: string;
+  frameClassName?: string;
   visible: boolean;
   hidden: boolean;
   disabled: boolean;
@@ -58,6 +59,7 @@ export interface CompileNodeOptions {
   preparedImports?: ReadonlyMap<string, import('./compilation').PreparedImportSpec>;
   renderer: import('./renderer-core').RendererDefinition;
   fieldRules?: readonly SchemaFieldRule[];
+  diagnostics?: { enabled?: boolean };
 }
 
 export interface SchemaCompiler {

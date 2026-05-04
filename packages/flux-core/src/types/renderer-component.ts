@@ -79,4 +79,5 @@ export interface ComponentHandleRegistry {
   setHandleDebugData?(cid: number, data: ComponentHandleDebugData | undefined): void;
   getHandleDebugData?(cid: number): ComponentHandleDebugData | undefined;
   getDebugSnapshot?(): ComponentHandleRegistryDebugSnapshot;
+  dispose?(): void;
 }

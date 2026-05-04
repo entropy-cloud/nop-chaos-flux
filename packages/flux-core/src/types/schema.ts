@@ -23,6 +23,7 @@ export interface BaseSchema extends SchemaObject {
   label?: string;
   title?: string;
   className?: string;
+  frameClassName?: string;
   classAliases?: Record<string, string>;
   visible?: boolean | string;
   hidden?: boolean | string;

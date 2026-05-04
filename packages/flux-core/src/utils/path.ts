@@ -1,5 +1,7 @@
 import { isPlainObject } from './object';
 
+const DANGEROUS_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+
 const MAX_PARSE_PATH_CACHE_SIZE = 1000;
 const parsePathCache = new Map<string, readonly string[]>();
 
@@ -87,6 +89,9 @@ export function getIn(input: unknown, path: string): unknown {
   }
 
   return parsePath(path).reduce<unknown>((current, segment) => {
+    if (DANGEROUS_PATH_SEGMENTS.has(segment)) {
+      return undefined;
+    }
     if (current == null || typeof current !== 'object') {
       return undefined;
     }
@@ -105,6 +110,11 @@ export function setIn(
   }
 
   const segments = parsePath(path);
+  for (const seg of segments) {
+    if (DANGEROUS_PATH_SEGMENTS.has(seg)) {
+      throw new Error(`Path segment '${seg}' is not allowed`);
+    }
+  }
   const clone = Array.isArray(input) ? [...input] : { ...input };
   let cursor: any = clone;
 

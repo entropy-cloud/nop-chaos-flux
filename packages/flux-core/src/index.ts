@@ -65,3 +65,5 @@ export type {
 } from './workbench';
 
 export type { StructuralLoopBindings, StructuralLoopRenderContext } from './types/renderer-hooks';
+
+export { isAbortError, buildScopeChain } from './runtime-inspection';

@@ -94,6 +94,7 @@ export interface NodeRuntimeState {
 export type NodeMetaProgram = {
   id?: CompiledRuntimeValue<string | undefined>;
   className?: CompiledRuntimeValue<string | undefined>;
+  frameClassName?: CompiledRuntimeValue<string | undefined>;
   visible?: CompiledRuntimeValue<boolean | unknown>;
   hidden?: CompiledRuntimeValue<boolean | unknown>;
   disabled?: CompiledRuntimeValue<boolean | undefined>;
