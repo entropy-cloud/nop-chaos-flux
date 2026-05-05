@@ -24,7 +24,6 @@ function createValidationModel(
   return {
     rootPath,
     fields: {},
-    validationOrder: traversalOrder,
     order: traversalOrder,
     nodes: builtNodes,
     behavior: { triggers: ['blur'], showErrorOn: [] },

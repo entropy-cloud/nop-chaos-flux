@@ -318,7 +318,6 @@ describe('createRuntimeOwnedFactories', () => {
     const validation: CompiledFormValidationModel = {
       behavior: { triggers: ['blur'], showErrorOn: ['touched', 'submit'] },
       order: ['email'],
-      validationOrder: ['email'],
       dependents: {},
       rootPath: '',
       nodes: {

@@ -223,13 +223,13 @@ export const fragmentRenderHostRenderer: RendererDefinition = {
 export const fragmentScopeProbeHostRenderer: RendererDefinition = {
   type: 'fragment-scope-probe-host',
   component: FragmentScopeProbeHost,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
 export const scopedHostRenderer: RendererDefinition = {
   type: 'scoped-host',
   component: (props) => <section>{asReactNode(props.regions.body?.render())}</section>,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
   actionScopePolicy: 'new',
   componentRegistryPolicy: 'new',
 };
@@ -343,7 +343,7 @@ function ToggleHost(props: RendererComponentProps) {
 export const toggleHostRenderer: RendererDefinition = {
   type: 'toggle-host',
   component: ToggleHost,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
 export function createDispatchCaptureRenderer(

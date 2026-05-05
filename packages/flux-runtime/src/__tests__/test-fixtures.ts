@@ -22,7 +22,7 @@ export const textRenderer: RendererDefinition = {
 export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: () => null,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
 export const cardRenderer: RendererDefinition = {
@@ -48,7 +48,10 @@ export const importHostRenderer: RendererDefinition = {
 export const formRenderer: RendererDefinition = {
   type: 'form',
   component: () => null,
-  regions: ['body', 'actions'],
+  fields: [
+    { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'actions', kind: 'region', regionKey: 'actions' },
+  ],
   scopePolicy: 'form',
   validation: {
     kind: 'container',

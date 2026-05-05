@@ -109,7 +109,6 @@ describe('createRendererRuntime', () => {
           parent: '',
         },
       },
-      validationOrder: ['reviewers'],
       rootPath: '',
     };
 
@@ -134,7 +133,6 @@ describe('createRendererRuntime', () => {
       }),
     ).toMatchObject({
       order: ['reviewers', 'adminCode'],
-      validationOrder: ['reviewers', 'adminCode'],
       dependents: {
         role: ['adminCode'],
       },

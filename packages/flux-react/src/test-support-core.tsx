@@ -43,7 +43,7 @@ export const textRenderer: RendererDefinition = {
 export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: (props) => <section>{asReactNode(props.regions.body?.render())}</section>,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
 function FormStub(props: RendererComponentProps) {
@@ -81,7 +81,7 @@ function FormStub(props: RendererComponentProps) {
 export const formRenderer: RendererDefinition = {
   type: 'form',
   component: FormStub,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
   scopePolicy: 'form',
   componentRegistryPolicy: 'new',
   validation: {

@@ -215,7 +215,6 @@ export interface RendererDefinition<
   scopeExportContracts?: Readonly<Record<string, FluxValueShape>>;
   injectedLocals?: Readonly<Record<string, Omit<SymbolInfo, 'name'>>>;
   sourcePackage?: string;
-  regions?: readonly string[];
   fields?: readonly SchemaFieldRule[];
   authoringTransform?: BivariantCallback<
     [import('../schema-diagnostics').RendererAuthoringTransformContext<S>],

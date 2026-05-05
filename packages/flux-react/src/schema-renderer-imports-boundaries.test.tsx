@@ -1,5 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from './schema-renderer';
 import {
@@ -27,7 +28,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
       })),
     };
     const actionScopeIds: string[] = [];
-    const actionScopeProbeRenderer = {
+    const actionScopeProbeRenderer: RendererDefinition = {
       type: 'action-scope-probe',
       component: function ActionScopeProbe(props: any) {
         const actionScope = useCurrentActionScope();
@@ -40,7 +41,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
 
         return <div>{props.regions.body?.render()}</div>;
       },
-      regions: ['body'],
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
     };
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
