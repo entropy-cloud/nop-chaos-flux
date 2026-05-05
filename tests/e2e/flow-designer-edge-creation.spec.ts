@@ -11,7 +11,8 @@ test('creates a new edge through handle drag interaction', async ({ page }) => {
 
   const edgeCount = page.locator('.react-flow__edge');
   await expect(edgeCount).toHaveCount(6);
-  await expect(page.getByText('6 节点 · 6 边')).toBeVisible();
+  await expect(page.getByText('6 个节点')).toBeVisible();
+  await expect(page.getByText('6 条连线')).toBeVisible();
 
   await page.evaluate(() => {
     window.dispatchEvent(
@@ -25,5 +26,6 @@ test('creates a new edge through handle drag interaction', async ({ page }) => {
   });
 
   await expect(edgeCount).toHaveCount(7, { timeout: 10_000 });
-  await expect(page.getByText('6 节点 · 7 边')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('6 个节点')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('7 条连线')).toBeVisible({ timeout: 10_000 });
 });

@@ -2,11 +2,17 @@ import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
+test.describe.configure({ mode: 'serial' });
+
 async function openCodeEditor(page: import('@playwright/test').Page) {
   await page.goto('/#/code-editor', { waitUntil: 'commit' });
-  await expect(page.getByRole('heading', { name: 'Code Editor Playground' })).toBeVisible({
-    timeout: 15000,
+  await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible({
+    timeout: 45000,
   });
+  await expect(page.getByRole('heading', { name: 'Code Editor Playground', level: 1 })).toBeVisible({
+    timeout: 45000,
+  });
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
 /**

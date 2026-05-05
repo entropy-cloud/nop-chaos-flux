@@ -10,11 +10,11 @@ test('diagnoses layout CSS: height chain from viewport to ReactFlow', async ({ p
   await openFlowDesigner(page);
 
   const diag = await page.evaluate(() => {
+    const rootContainer = document.querySelector('.nop-workbench');
+    const canvasSlot = document.querySelector('[data-slot="workbench-canvas"]');
     const rfWrapper = document.querySelector('[data-testid="rf__wrapper"]');
-    const rfSurface = rfWrapper?.parentElement;
-    const canvasSlot = rfSurface?.parentElement;
+    const rfSurface = canvasSlot?.querySelector('.fd-xyflow-surface');
     const threeColGrid = canvasSlot?.parentElement;
-    const outerGrid = threeColGrid?.parentElement;
 
     const results: Record<string, any> = {};
 
@@ -45,7 +45,7 @@ test('diagnoses layout CSS: height chain from viewport to ReactFlow', async ({ p
       };
     };
 
-    measure('1_RootContainer', outerGrid as HTMLElement | null);
+    measure('1_RootContainer', rootContainer as HTMLElement | null);
     measure('2_ThreeColGrid', threeColGrid as HTMLElement | null);
     measure('3_CanvasSlot', canvasSlot as HTMLElement | null);
     measure('4_RfSurface', rfSurface as HTMLElement | null);

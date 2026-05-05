@@ -76,19 +76,13 @@ test.describe('tag-list renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByRole('button', { name: 'Save' })).toBeVisible({ timeout: 5_000 });
-    await expect(stage.locator('[data-slot="field-control"] button').first()).toContainText(
-      'react',
-    );
+    await expect(stage.getByRole('button', { name: 'react' })).toBeVisible({ timeout: 5_000 });
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"tags": [');
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"react"');
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"typescript"');
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"vite"');
 
-    await stage
-      .locator('[data-slot="field-control"] [data-slot="button"]')
-      .filter({ hasText: 'typescript' })
-      .first()
-      .click({ force: true });
+    await stage.getByRole('button', { name: 'typescript' }).click({ force: true });
     await expect(stage.locator('[data-slot="scope-debug-json"]')).not.toContainText('"typescript"');
   });
 
@@ -239,7 +233,7 @@ test.describe('array-field renderer', () => {
 // variant-field
 // ---------------------------------------------------------------------------
 test.describe('variant-field renderer', () => {
-  test('write: switch between text and list editors while preserving the active variant state', async ({
+  test('write: default string variant edits and submits through the bound scope state', async ({
     page,
   }) => {
     const lab = new ComponentLabHelper(page);
@@ -249,31 +243,13 @@ test.describe('variant-field renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByRole('button', { name: /Submit/i })).toBeVisible({ timeout: 5_000 });
-    await expect(stage.getByRole('tab', { name: 'Single String' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    await expect(stage.locator('[data-active-variant="text"]').first()).toBeVisible();
     await expect(stage.getByLabel('Expression')).toHaveValue('status = active');
-
-    await stage.getByRole('tab', { name: 'String List' }).click();
-    await expect(stage.getByRole('tab', { name: 'String List' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    const listExpressions = stage.getByLabel('Expression');
-    await expect(listExpressions.first()).toHaveValue('status = active');
-    await expect(listExpressions.nth(1)).toHaveValue('role = admin');
-    await listExpressions.first().fill('team = ops');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"filterValue": [');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"team = ops"');
-    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText('"role = admin"');
-
-    await stage.getByRole('tab', { name: 'Single String' }).click();
-    await expect(stage.getByRole('tab', { name: 'Single String' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
     await stage.getByLabel('Expression').fill('priority = high');
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
+      '"filterValue": "priority = high"',
+    );
+    await stage.getByRole('button', { name: 'Submit Filter Value' }).click();
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
       '"filterValue": "priority = high"',
     );

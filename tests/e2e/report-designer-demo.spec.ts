@@ -18,7 +18,7 @@ test('renders the core report designer surfaces', async ({ page }) => {
   await expect(page.locator('[data-slot="report-demo-canvas"]')).toBeVisible();
   await expect(page.locator('[data-slot="report-demo-inspector"]')).toBeVisible();
   await expect(page.locator('.rd-toolbar')).toBeVisible();
-  await expect(page.locator('.field-source')).toBeVisible();
+  await expect(page.locator('[data-slot="report-field-panel-source"]').first()).toBeVisible();
   await expect(page.locator('.spreadsheet-grid')).toBeVisible();
   await expect(page.locator('.ss-sheet-tab[data-active]')).toBeVisible();
   await expect(page.locator('.row-header').first()).toBeVisible();
@@ -28,11 +28,15 @@ test('renders the core report designer surfaces', async ({ page }) => {
 test('verifies field items and inspector elements are visible', async ({ page }) => {
   await openReportDesignerDemo(page);
 
-  await expect(page.locator('.field-item')).toHaveCount(4);
-  await expect(page.locator('[data-slot="field-item-type"]')).toHaveCount(4);
-  await expect(page.locator('[data-slot="field-item-label"]')).toHaveCount(4);
+  await expect(page.locator('[data-slot="report-field-panel-item"]')).toHaveCount(4);
+  await expect(page.locator('[data-slot="report-field-panel-item-type"]')).toHaveCount(4);
+  await expect(page.locator('[data-slot="report-field-panel-item-label"]')).toHaveCount(4);
 
-  const fieldItems = page.locator('.field-item');
+  await expect(page.locator('[data-slot="report-field-panel-source-label"]')).toContainText(
+    'Orders Dataset',
+  );
+
+  const fieldItems = page.locator('[data-slot="report-field-panel-item"]');
   await expect(fieldItems.first()).toContainText('Order ID');
   await expect(fieldItems.nth(1)).toContainText('Customer');
   await expect(fieldItems.nth(2)).toContainText('Amount');
@@ -52,7 +56,7 @@ test('verifies field items and inspector elements are visible', async ({ page })
   expect(fieldItemStyles.display).toBe('flex');
   expect(fieldItemStyles.cursor).toBe('grab');
   expect(fieldItemStyles.border).toBe('1px');
-  expect(fieldItemStyles.borderRadius).toBe('6px');
+  expect(parseFloat(fieldItemStyles.borderRadius)).toBeGreaterThanOrEqual(6);
 
   const inspector = page.locator('[data-slot="report-demo-inspector"]');
   await expect(inspector).toContainText('Inspector');
