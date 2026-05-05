@@ -179,7 +179,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   return (
     <div
       className={cn('nop-code-editor', props.meta.className)}
-      data-cid={props.node.cid}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
       data-testid={props.meta.testid}
       data-theme={editorTheme}
       data-fullscreen={isFullscreen || undefined}
