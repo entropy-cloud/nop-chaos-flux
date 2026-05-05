@@ -50,6 +50,7 @@ vi.mock('../container-hooks', () => ({
 }));
 
 vi.mock('@nop-chaos/ui', () => ({
+  cn: (...values: Array<string | undefined>) => values.filter(Boolean).join(' '),
   Dialog: ({ children, onOpenChange, noOverlay }: any) => (
     <div data-testid="dialog-root" data-no-overlay={String(noOverlay)}>
       <button type="button" data-testid="dialog-open-change" onClick={() => onOpenChange(false)}>

@@ -25,6 +25,7 @@ export {
   useCurrentForm,
   useCurrentValidationScope,
   useCurrentFormState,
+  useCurrentValidationValues,
   useCurrentFormErrors,
   useCurrentFormError,
   useCurrentFormFieldState,

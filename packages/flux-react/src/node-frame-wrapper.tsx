@@ -47,6 +47,10 @@ export function NodeFrameWrapper(props: {
 
   const labelAlignValue = schema.labelAlign as 'top' | 'left' | 'right' | 'inherit' | undefined;
   const labelWidthValue = schema.labelWidth as string | number | undefined;
+  const usesInteractiveControlRoot =
+    props.templateNode.type === 'array-editor' ||
+    props.templateNode.type === 'key-value' ||
+    props.templateNode.type === 'detail-field';
 
   return (
     <FieldFrame
@@ -59,6 +63,7 @@ export function NodeFrameWrapper(props: {
       labelRemark={labelRemarkValue}
       labelAlign={labelAlignValue === 'inherit' ? undefined : labelAlignValue}
       labelWidth={labelWidthValue}
+      rootTag={usesInteractiveControlRoot ? 'div' : undefined}
       layout={frameWrapMode === 'group' ? 'checkbox' : 'default'}
       className={props.resolvedMeta.frameClassName}
       testid={props.resolvedMeta.testid}

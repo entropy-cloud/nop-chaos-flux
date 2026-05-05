@@ -7,6 +7,8 @@ import { createSchemaRenderer } from '../schema-renderer';
 import { useCurrentValidationScope } from '../hooks';
 import { env, pageRenderer } from '../test-support-core';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRuntime } from '@nop-chaos/flux-runtime';
+import { createRendererRegistry } from '@nop-chaos/flux-core';
 
 const validationOwnerProbeRenderer = {
   type: 'validation-owner-probe',
@@ -153,5 +155,32 @@ describe('createSchemaRenderer validation owner boundary behavior', () => {
     });
 
     await screen.findByTestId('field-probe');
+  });
+
+  it('keeps managed surface-root owners bootstrapping when the opened body has no compiled validation plan', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([pageRenderer, validationOwnerProbeRenderer]),
+      env,
+      expressionCompiler: createFormulaCompiler() as any,
+    });
+    const page = runtime.createPageRuntime({});
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    const surfaceId = surfaceRuntime.open({
+      kind: 'dialog',
+      runtime,
+      scope: runtime.createChildScope(page.scope, { dialogId: 'd1' }, { pathSuffix: 'dialog' }),
+      surface: {
+        title: 'Dialog',
+        body: [{ type: 'validation-owner-probe' }],
+      },
+    });
+
+    const entry = surfaceRuntime.store.getState().entries.find((item) => item.id === surfaceId);
+    expect(entry?.validationOwner?.getScopeState()).toMatchObject({
+      lifecycleState: 'bootstrapping',
+      ready: false,
+    });
+    expect(entry?.validationOwner?.validation).toBeUndefined();
   });
 });

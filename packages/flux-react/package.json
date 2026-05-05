@@ -17,7 +17,7 @@
       "types": "./dist/unstable.d.ts",
       "default": "./dist/unstable.js"
     },
-    "./default-spacing.css": "./src/default-spacing.css"
+    "./default-spacing.css": "./dist/default-spacing.css"
   },
   "dependencies": {
     "@nop-chaos/flux-compiler": "workspace:*",
@@ -35,7 +35,7 @@
     "@types/use-sync-external-store": "^1.5.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/default-spacing.css dist/default-spacing.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

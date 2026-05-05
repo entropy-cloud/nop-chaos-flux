@@ -187,6 +187,32 @@ function useCurrentFormLikeStore(): FormStoreApi | undefined {
   return (form?.store ?? validationStore) as FormStoreApi | undefined;
 }
 
+function useCurrentValidationValuesSelector<T>(
+  selector: (values: Record<string, unknown>) => T,
+  equalityFn: (a: T, b: T) => boolean = Object.is,
+  options?: { enabled?: boolean; path?: string; paths?: readonly string[] },
+): T {
+  const currentForm = useCurrentForm();
+  const validationStore = useCurrentValidationStore();
+  const enabled = options?.enabled !== false;
+  const path = options?.path;
+  const paths = options?.paths;
+  const store = (currentForm?.store ?? validationStore) as FormStoreApi | undefined;
+  const subscribe = useMemo(
+    () => createFormStoreSubscribe(store, { enabled, path, paths }),
+    [enabled, path, paths, store],
+  );
+  const getSnapshot = useMemo(() => createFormStoreSnapshot(store, enabled), [enabled, store]);
+
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getSnapshot,
+    (state) => selector(state.values as Record<string, unknown>),
+    equalityFn,
+  );
+}
+
 function useStableFormErrorQuery(query?: FormErrorQuery) {
   const stablePath = query?.path;
   const stableOwnerPath = query?.ownerPath;
@@ -295,6 +321,14 @@ export function useCurrentFormState<T>(
     selector,
     equalityFn,
   );
+}
+
+export function useCurrentValidationValues<T>(
+  selector: (values: Record<string, unknown>) => T,
+  equalityFn: (a: T, b: T) => boolean = Object.is,
+  options?: { enabled?: boolean; path?: string; paths?: readonly string[] },
+): T {
+  return useCurrentValidationValuesSelector(selector, equalityFn, options);
 }
 
 export function useCurrentFormErrors(query?: FormErrorQuery): ValidationError[] {
@@ -483,6 +517,7 @@ export const rendererHooks = {
   useCurrentForm,
   useCurrentValidationScope,
   useCurrentFormState,
+  useCurrentValidationValues,
   useCurrentFormErrors,
   useCurrentFormError,
   useCurrentFormFieldState,

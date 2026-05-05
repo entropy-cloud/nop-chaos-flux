@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react';
+import { cloneElement, isValidElement, type ReactNode } from 'react';
 import {
   useAggregateError,
   useCurrentForm,
   useCurrentFormFieldState,
   useCurrentFormState,
+  useCurrentValidationValues,
   useCurrentValidationScope,
   useFormLayout,
 } from './hooks';
@@ -59,6 +60,14 @@ export interface FieldFrameProps {
   cid?: number;
   rootProps?: Record<string, string | number | undefined>;
   children: ReactNode;
+}
+
+function mergeDescribedBy(...values: Array<string | undefined>) {
+  const tokens = values
+    .flatMap((value) => (value ?? '').split(/\s+/))
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return tokens.length > 0 ? Array.from(new Set(tokens)).join(' ') : undefined;
 }
 
 const defaultBehavior: CompiledValidationBehavior = {
@@ -122,6 +131,20 @@ export function FieldFrame(props: FieldFrameProps) {
       paths: dynamicRequiredDependencyPaths,
     },
   );
+  const nonFormDynamicRequired = useCurrentValidationValues(
+    (values) => {
+      if (!hasDynamicRequiredRule || !name || !validationModel) {
+        return false;
+      }
+
+      return isFieldEffectivelyRequired(validationModel, name, values);
+    },
+    Object.is,
+    {
+      enabled: !currentForm && hasDynamicRequiredRule && Boolean(name),
+      paths: dynamicRequiredDependencyPaths,
+    },
+  );
 
   const error = aggregateError ?? fieldState.error;
   const showError = Boolean(
@@ -138,9 +161,30 @@ export function FieldFrame(props: FieldFrameProps) {
   const isGroup = layout === 'checkbox' || layout === 'radio';
   const Tag = isGroup ? 'fieldset' : (rootTag ?? 'label');
   const LabelTag = isGroup ? 'legend' : 'span';
-  const effectiveRequired = Boolean(required) || Boolean(dynamicRequired);
+  const effectiveRequired = Boolean(required) || Boolean(currentForm ? dynamicRequired : nonFormDynamicRequired);
   const errorId = name ? `${name}-error` : undefined;
   const controlId = name ? `${name}-control` : undefined;
+  const hintId = name && !error && hint ? `${name}-hint` : undefined;
+  const descriptionId = name && !error && !hint && description ? `${name}-description` : undefined;
+  const describedBy = mergeDescribedBy(showError ? errorId : undefined, hintId, descriptionId);
+  const childProps = isValidElement(children)
+    ? (children.props as {
+        id?: string;
+        'aria-describedby'?: string;
+        'aria-errormessage'?: string;
+        'aria-invalid'?: boolean;
+      })
+    : undefined;
+  const child = isValidElement(children)
+    ? cloneElement(children, {
+        ...( {
+          id: childProps?.id ?? controlId,
+          'aria-describedby': mergeDescribedBy(childProps?.['aria-describedby'], describedBy),
+          'aria-errormessage': showError ? errorId : undefined,
+          'aria-invalid': (childProps?.['aria-invalid'] ?? showError) || undefined,
+        } as Record<string, unknown> ),
+      })
+    : children;
 
   const effectiveLabelAlign = labelAlignProp ?? formLayout.labelAlign;
   const effectiveLabelWidth = labelWidthProp ?? formLayout.labelWidth;
@@ -185,11 +229,11 @@ export function FieldFrame(props: FieldFrameProps) {
 
       <div
         data-slot="field-control"
-        id={controlId}
-        aria-describedby={showError ? errorId : undefined}
+        aria-describedby={describedBy}
+        aria-errormessage={showError ? errorId : undefined}
         aria-invalid={showError || undefined}
       >
-        {children}
+        {child}
         {remark ? (
           <span
             data-slot="field-remark"
@@ -205,9 +249,13 @@ export function FieldFrame(props: FieldFrameProps) {
       ) : fieldState.validating ? (
         <span data-slot="field-hint">{t('flux.common.validating')}</span>
       ) : !error && hint ? (
-        <span data-slot="field-hint">{hint}</span>
+        <span data-slot="field-hint" id={hintId}>
+          {hint}
+        </span>
       ) : !error && !hint && description ? (
-        <span data-slot="field-description">{description}</span>
+        <span data-slot="field-description" id={descriptionId}>
+          {description}
+        </span>
       ) : null}
     </Tag>
   );

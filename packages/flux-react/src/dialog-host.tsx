@@ -7,8 +7,21 @@ import {
   useSurfaceScopeSnapshot,
 } from './dialog-host-surface';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from '@nop-chaos/ui';
-import { Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerTitle } from '@nop-chaos/ui';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  cn,
+} from '@nop-chaos/ui';
 import { resolveContainerElement } from './container-hooks';
 
 function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
@@ -36,7 +49,7 @@ export function DialogHost() {
     sameSurfaces,
   );
 
-  if (!page || !surfaceRuntime || surfaces.length === 0) {
+  if (!surfaceRuntime || surfaces.length === 0) {
     return null;
   }
 
@@ -71,9 +84,17 @@ function DialogView(props: {
   useSurfaceScopeSnapshot(props.surface.scope);
 
   const { surface, surfaceRuntime } = props;
+  const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
+    | ((nextOpen: boolean) => void)
+    | undefined;
   const handleClose = React.useCallback(() => {
+    if (handleDeclarativeOpenChange) {
+      handleDeclarativeOpenChange(false);
+      return;
+    }
+
     surfaceRuntime.close(surface.id);
-  }, [surface.id, surfaceRuntime]);
+  }, [handleDeclarativeOpenChange, surface.id, surfaceRuntime]);
 
   const surfaceContext = React.useMemo(
     () => ({
@@ -92,6 +113,7 @@ function DialogView(props: {
     ],
   );
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
+  const actionsNode = surface.actions ? renderSurfaceNode(surface.actions, surfaceContext) : null;
 
   const containerId =
     typeof surface.surface.container === 'string'
@@ -108,8 +130,12 @@ function DialogView(props: {
       }}
       containerElement={containerElement}
       noOverlay={!showMask}
+      closeOnOutsideClick={surface.surface.closeOnOutsideClick !== false}
     >
       <DialogContent
+        className={cn('nop-dialog', surface.meta?.className)}
+        data-testid={surface.meta?.testid || undefined}
+        data-cid={surface.meta?.cid || undefined}
         data-slot="dialog-surface"
         onClickCapture={(event) => {
           const target = event.target;
@@ -132,6 +158,7 @@ function DialogView(props: {
           <DialogBody>
             {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
           </DialogBody>
+          {actionsNode ? <DialogFooter>{actionsNode}</DialogFooter> : null}
         </SurfaceScopeProviders>
       </DialogContent>
     </Dialog>
@@ -146,9 +173,17 @@ function DrawerView(props: {
   useSurfaceScopeSnapshot(props.surface.scope);
 
   const { surface, surfaceRuntime } = props;
+  const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
+    | ((nextOpen: boolean) => void)
+    | undefined;
   const handleClose = React.useCallback(() => {
+    if (handleDeclarativeOpenChange) {
+      handleDeclarativeOpenChange(false);
+      return;
+    }
+
     surfaceRuntime.close(surface.id);
-  }, [surface.id, surfaceRuntime]);
+  }, [handleDeclarativeOpenChange, surface.id, surfaceRuntime]);
 
   const surfaceContext = React.useMemo(
     () => ({
@@ -167,6 +202,7 @@ function DrawerView(props: {
     ],
   );
   const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
+  const actionsNode = surface.actions ? renderSurfaceNode(surface.actions, surfaceContext) : null;
 
   const containerId =
     typeof surface.surface.container === 'string'
@@ -193,6 +229,9 @@ function DrawerView(props: {
       containerElement={containerElement}
     >
       <DrawerContent
+        className={cn('nop-drawer', surface.meta?.className)}
+        data-testid={surface.meta?.testid || undefined}
+        data-cid={surface.meta?.cid || undefined}
         data-slot="drawer-surface"
         showMask={showMask}
         onClickCapture={(event) => {
@@ -216,6 +255,7 @@ function DrawerView(props: {
           <DrawerBody>
             {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
           </DrawerBody>
+          {actionsNode ? <DrawerFooter>{actionsNode}</DrawerFooter> : null}
         </SurfaceScopeProviders>
       </DrawerContent>
     </Drawer>

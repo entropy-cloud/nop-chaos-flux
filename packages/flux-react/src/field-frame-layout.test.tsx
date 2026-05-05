@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import type { CompiledFormValidationModel } from '@nop-chaos/flux-core';
-import { FormContext, FormLayoutContext } from './contexts';
+import { FormContext, FormLayoutContext, ValidationContext } from './contexts';
 import { FieldFrame } from './field-frame';
 import { EMPTY_FORM_STORE_STATE } from './form-state';
 
@@ -278,6 +278,51 @@ describe('FieldFrame — dynamic required subscriptions', () => {
     expect(capturedPaths).toEqual(['contact.method', 'contact.enabled']);
     expect(container.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
   });
+
+  it('derives dynamic required from validation-owner values outside forms', () => {
+    const validationOwner = {
+      store: {
+        subscribe: () => () => undefined,
+        subscribeToPaths: () => () => undefined,
+        getState: () => ({
+          ...EMPTY_FORM_STORE_STATE,
+          values: {
+            contact: {
+              method: 'email',
+              enabled: true,
+            },
+          },
+        }),
+      },
+      validation: dynamicRequiredValidation,
+      getFieldState: () => ({ ownerId: 'owner', path: 'email', errors: [], validating: false }),
+      getScopeState: () => ({ ready: true, valid: true, validating: false, hasErrors: false }),
+      getScopeRootErrors: () => [],
+      isPathOwned: () => true,
+      validateAt: async () => ({ ok: true, errors: [] }),
+      validateSubtree: async () => ({ ok: true, errors: [] }),
+      validateAll: async () => ({ ok: true, errors: [] }),
+      applyChangesAndRevalidate: async () => ({ ok: true, errors: [] }),
+      applyExternalErrors: () => ({ ready: true, valid: true, validating: false, hasErrors: false }),
+      registerField: () => ({ registrationId: 'reg', unregister() {} }),
+      updateFieldRegistration: () => undefined,
+      notifyFieldHidden: () => undefined,
+      refreshCompiledModel: () => undefined,
+      dispose: () => undefined,
+      registerChildContract: () => undefined,
+      unregisterChildContract: () => undefined,
+    } as any;
+
+    const { container } = render(
+      <ValidationContext.Provider value={validationOwner}>
+        <FieldFrame name="email" label="Email">
+          input
+        </FieldFrame>
+      </ValidationContext.Provider>,
+    );
+
+    expect(container.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
+  });
 });
 
 describe('FieldFrame — ARIA attributes', () => {
@@ -383,5 +428,37 @@ describe('FieldFrame — ARIA attributes', () => {
     const errorEl = container.querySelector('[data-slot="field-error"]');
     expect(control?.getAttribute('aria-describedby')).toBe('f1-error');
     expect(errorEl?.id).toBe('f1-error');
+  });
+
+  it('forwards aria chain to the real control element', () => {
+    const state = {
+      ...EMPTY_FORM_STORE_STATE,
+      fieldStates: {
+        f1: {
+          touched: true,
+          errors: [{ path: 'f1', rule: 'required', message: 'Required', sourceKind: 'field' }],
+        },
+      },
+    };
+    const form = createMockForm({
+      store: { subscribe: () => () => undefined, getState: () => state },
+      validation: { behavior: { triggers: ['blur'], showErrorOn: ['touched'] } },
+    });
+
+    render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="f1" label="Name">
+          <input aria-label="Name input" />
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+
+    const input = document.querySelector('input[aria-label="Name input"]');
+    expect(input?.getAttribute('id')).toBe('f1-control');
+    expect(input?.getAttribute('aria-describedby')).toBe('f1-error');
+    expect(input?.getAttribute('aria-errormessage')).toBe('f1-error');
+    expect(input?.getAttribute('aria-invalid')).toBe('true');
+    const wrapper = document.querySelector('[data-slot="field-control"]');
+    expect(wrapper?.getAttribute('id')).toBeNull();
   });
 });
