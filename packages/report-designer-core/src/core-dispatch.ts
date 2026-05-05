@@ -10,12 +10,7 @@ import type {
 import { getTargetMeta } from './types.js';
 import type { ReportDesignerCommand, ReportDesignerCommandResult } from './commands.js';
 import type { ReportDesignerAdapterRegistry, ReportDesignerProfile } from './adapters.js';
-import {
-  applyFieldDrop,
-  cloneDocument,
-  mergeMetadata,
-  updateMetadata,
-} from './runtime/metadata.js';
+import { applyFieldDrop, cloneDocument, mergeMetadata, updateMetadata } from './runtime/metadata.js';
 import { createAdapterContext } from './runtime/adapter-context.js';
 import { resolvePreviewAdapter, runPreviewCommand } from './runtime/preview-commands.js';
 import {
@@ -290,7 +285,7 @@ export async function dispatchReportDesignerCommand(
         }
         const undoStack = [...current.undoStack];
         const prevDocument = undoStack.pop()!;
-        const redoStack = [...current.redoStack, cloneDocument(current.document)];
+        const redoStack = [...current.redoStack, current.document];
         store.setState((s) => ({
           ...s,
           document: prevDocument,
@@ -308,7 +303,7 @@ export async function dispatchReportDesignerCommand(
         }
         const redoStack = [...current.redoStack];
         const nextDocument = redoStack.pop()!;
-        const undoStack = [...current.undoStack, cloneDocument(current.document)];
+        const undoStack = [...current.undoStack, current.document];
         store.setState((s) => ({
           ...s,
           document: nextDocument,

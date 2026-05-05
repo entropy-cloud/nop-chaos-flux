@@ -13,12 +13,13 @@ export function createAdapterContext(input: {
   designer: ReportDesignerRuntimeSnapshot;
   profile?: ReportDesignerProfile;
 }): ReportDesignerAdapterContext {
+  const document = cloneDocument(input.document);
   return {
     config: input.config,
-    document: cloneDocument(input.document),
+    document,
     designer: {
       ...input.designer,
-      document: cloneDocument(input.designer.document),
+      document,
       activeMeta: cloneMetadataBag(input.designer.activeMeta as MetadataBag | undefined),
       fieldSources: input.designer.fieldSources.map((source) => ({
         ...source,

@@ -41,12 +41,7 @@ export async function loadFieldSources(args: {
 }): Promise<FieldSourceSnapshot[]> {
   const staticSources = args.staticFieldSourceTemplates.map(cloneFieldSourceSnapshot);
   const dynamicSources: FieldSourceSnapshot[] = [];
-  const adapterContext = createAdapterContext({
-    config: args.config,
-    document: args.document,
-    designer: args.getSnapshot(),
-    profile: args.profile,
-  });
+  let adapterContext: ReturnType<typeof createAdapterContext> | undefined;
 
   for (const fieldSource of args.config.fieldSources ?? []) {
     if (!fieldSource.provider || !args.selectedFieldSourceIds.has(fieldSource.id)) {
@@ -56,6 +51,12 @@ export async function loadFieldSources(args: {
     if (!provider) {
       continue;
     }
+    adapterContext ??= createAdapterContext({
+      config: args.config,
+      document: args.document,
+      designer: args.getSnapshot(),
+      profile: args.profile,
+    });
     const loaded = await provider.load(adapterContext);
     dynamicSources.push(...loaded);
   }

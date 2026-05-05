@@ -206,6 +206,17 @@ describe('createReportDesignerCore', () => {
     expect(exportedSheet.cells?.A1?.value).toBe('synced-cell');
   });
 
+  it('syncSpreadsheetDocument preserves the provided spreadsheet subtree reference', () => {
+    const nextSpreadsheet = cloneStructured(doc.spreadsheet);
+    nextSpreadsheet.workbook.sheets[0]!.cells = {
+      A1: { value: 'synced-cell', type: 'string' } as any,
+    };
+
+    core.syncSpreadsheetDocument(nextSpreadsheet);
+
+    expect(core.getSnapshot().document.spreadsheet).toBe(nextSpreadsheet);
+  });
+
   it('should track field drag state', async () => {
     const payload = {
       type: 'field',
@@ -500,5 +511,37 @@ describe('createReportDesignerCore', () => {
 
     await expect(refreshPromise).resolves.toEqual([{ id: 'remote', label: 'Remote', groups: [] }]);
     expect(fieldSourceProvider.load).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses one document snapshot for adapter context and designer snapshot', async () => {
+    let receivedContext:
+      | import('../adapters.js').ReportDesignerAdapterContext
+      | undefined;
+
+    const fieldSourceProvider: FieldSourceProvider = {
+      id: 'clone-count-provider',
+      load: vi.fn(async (context) => {
+        receivedContext = context;
+        return [];
+      }),
+    };
+
+    const cloneCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        fieldSources: [
+          { id: 'remote', label: 'Remote', provider: 'clone-count-provider', groups: [] },
+        ],
+      },
+      adapters: {
+        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
+      },
+    });
+
+    await cloneCore.refreshFieldSources();
+
+    expect(receivedContext).toBeDefined();
+    expect(receivedContext?.document).toBe(receivedContext?.designer.document);
   });
 });

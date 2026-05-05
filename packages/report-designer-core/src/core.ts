@@ -270,7 +270,7 @@ export function createReportDesignerCore(
     current: ReportDesignerInternalState,
   ): Partial<ReportDesignerInternalState> {
     const maxDepth = config.maxUndoDepth ?? 50;
-    const undoStack = [...current.undoStack, cloneDocument(current.document)];
+    const undoStack = [...current.undoStack, current.document];
     if (undoStack.length > maxDepth) undoStack.shift();
     return { undoStack, redoStack: [] };
   }
@@ -388,8 +388,7 @@ export function createReportDesignerCore(
           ...current,
           document: {
             ...current.document,
-            spreadsheet: cloneDocument({ ...current.document, spreadsheet: nextDocument })
-              .spreadsheet,
+            spreadsheet: nextDocument,
           },
         };
       });
