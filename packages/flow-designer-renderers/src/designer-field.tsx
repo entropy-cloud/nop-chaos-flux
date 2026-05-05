@@ -37,7 +37,11 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
   );
 
   return (
-    <div className="grid gap-1.5">
+    <div
+      className={props.meta.className ?? 'grid gap-1.5'}
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
+    >
       {label && (
         <Label className="block mb-1 text-xs font-medium text-muted-foreground">{label}</Label>
       )}

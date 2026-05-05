@@ -197,6 +197,33 @@ describe('designer-page status publication', () => {
 });
 
 describe('DesignerPageRenderer basic rendering', () => {
+  it('passes root meta through designer-canvas and designer-palette wrappers', () => {
+    const canvasDef = flowDesignerRendererDefinitions.find(
+      (definition) => definition.type === 'designer-canvas',
+    );
+    const paletteDef = flowDesignerRendererDefinitions.find(
+      (definition) => definition.type === 'designer-palette',
+    );
+
+    const canvas = canvasDef?.component?.({
+      meta: { className: 'canvas-root', testid: 'canvas-root', cid: 42 },
+    } as any) as React.ReactElement;
+    const palette = paletteDef?.component?.({
+      meta: { className: 'palette-root', testid: 'palette-root', cid: 7 },
+    } as any) as React.ReactElement;
+
+    expect(canvas.props.rootProps).toEqual({
+      className: 'canvas-root',
+      'data-testid': 'canvas-root',
+      'data-cid': '42',
+    });
+    expect(palette.props.rootProps).toEqual({
+      className: 'palette-root',
+      'data-testid': 'palette-root',
+      'data-cid': '7',
+    });
+  });
+
   it('renders the designer page with xyflow canvas', () => {
     const SchemaRenderer = createSchemaRenderer([
       ...basicTestRendererDefinitions,

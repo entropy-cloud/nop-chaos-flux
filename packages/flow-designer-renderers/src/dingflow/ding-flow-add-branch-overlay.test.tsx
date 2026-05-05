@@ -4,6 +4,8 @@ import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { DingFlowAddBranchOverlay } from './ding-flow-add-condition-overlay';
+import { DingFlowPlusButton } from './ding-flow-plus-button';
+import { DingFlowMergeOverlay } from './ding-flow-merge-overlay';
 
 describe('DingFlowAddBranchOverlay', () => {
   beforeEach(async () => {
@@ -20,5 +22,17 @@ describe('DingFlowAddBranchOverlay', () => {
     render(<DingFlowAddBranchOverlay onClick={vi.fn()} />);
 
     expect(screen.getByText('Add Branch')).toBeTruthy();
+  });
+
+  it('uses accessible labels for plus and merge controls', () => {
+    render(
+      <>
+        <DingFlowPlusButton onClick={vi.fn()} />
+        <DingFlowMergeOverlay onClick={vi.fn()} />
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Add node' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add merge node' })).toBeTruthy();
   });
 });

@@ -94,7 +94,7 @@ export function ReportDesignerPageRenderer(
   }, [actionScope, spreadsheetProvider]);
 
   useEffect(() => {
-    void core.refreshFieldSources();
+    void core.refreshFieldSources().catch(() => undefined);
   }, [core]);
 
   useEffect(() => {

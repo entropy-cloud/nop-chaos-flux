@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { vi } from 'vitest';
-import type { PreviewResult } from '../adapters.js';
+import type { PreviewResult, FieldSourceProvider } from '../adapters.js';
+import type { FieldSourceSnapshot } from '../types.js';
 import {
   createEmptyDocument,
   createReportDesignerCore,
@@ -458,16 +459,46 @@ describe('createReportDesignerCore', () => {
     const first = asyncCore.setSelectionTarget({ kind: 'workbook' });
     const second = asyncCore.setSelectionTarget({ kind: 'sheet', sheetId });
 
-    expect(resolvers.length).toBeGreaterThanOrEqual(3);
+    expect(resolvers.length).toBe(1);
 
     resolvers[0]?.([{ id: 'initial', label: 'Initial', groups: [] }]);
-    resolvers[1]?.([{ id: 'stale', label: 'Stale', groups: [] }]);
     await Promise.allSettled([first]);
-    expect(asyncCore.getSnapshot().fieldSources).toEqual([]);
+    expect(asyncCore.getSnapshot().fieldSources).toEqual([{ id: 'initial', label: 'Initial', groups: [] }]);
 
     asyncCore.dispose();
-    resolvers[2]?.([{ id: 'fresh', label: 'Fresh', groups: [] }]);
     await Promise.allSettled([second]);
-    expect(asyncCore.getSnapshot().fieldSources).toEqual([]);
+    expect(asyncCore.getSnapshot().fieldSources).toEqual([{ id: 'initial', label: 'Initial', groups: [] }]);
+  });
+
+  it('reuses the same in-flight field-source refresh during startup and explicit refresh', async () => {
+    let resolveLoad: ((value: FieldSourceSnapshot[]) => void) | undefined;
+    const fieldSourceProvider: FieldSourceProvider = {
+      id: 'async-provider',
+      load: vi.fn(
+        () =>
+          new Promise<FieldSourceSnapshot[]>((resolve) => {
+            resolveLoad = resolve;
+          }),
+      ),
+    };
+
+    const asyncCore = createReportDesignerCore({
+      document: doc,
+      config: {
+        kind: 'report-template',
+        fieldSources: [{ id: 'remote', label: 'Remote', provider: 'async-provider', groups: [] }],
+      },
+      adapters: {
+        fieldSources: new Map([[fieldSourceProvider.id, fieldSourceProvider]]),
+      },
+    });
+
+    const refreshPromise = asyncCore.refreshFieldSources();
+    expect(fieldSourceProvider.load).toHaveBeenCalledTimes(1);
+
+    resolveLoad?.([{ id: 'remote', label: 'Remote', groups: [] }]);
+
+    await expect(refreshPromise).resolves.toEqual([{ id: 'remote', label: 'Remote', groups: [] }]);
+    expect(fieldSourceProvider.load).toHaveBeenCalledTimes(1);
   });
 });

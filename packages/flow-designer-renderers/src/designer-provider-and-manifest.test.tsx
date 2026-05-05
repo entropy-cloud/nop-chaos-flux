@@ -215,6 +215,18 @@ describe('flowDesignerRendererDefinitions', () => {
     expect(rendererTypes).toContain('designer-palette');
   });
 
+  it('designer-canvas and designer-palette remain live registered renderer wrappers', () => {
+    const canvasDef = flowDesignerRendererDefinitions.find((definition) => definition.type === 'designer-canvas');
+    const paletteDef = flowDesignerRendererDefinitions.find((definition) => definition.type === 'designer-palette');
+
+    expect(canvasDef?.component).toBeTruthy();
+    expect(paletteDef?.component).toBeTruthy();
+    expect(canvasDef?.fields).toEqual([{ key: 'className', kind: 'prop' }]);
+    expect(paletteDef?.fields).toEqual([{ key: 'className', kind: 'prop' }]);
+    expect(canvasDef?.component?.name).toBe('DesignerCanvasRenderer');
+    expect(paletteDef?.component?.name).toBe('DesignerPaletteRenderer');
+  });
+
   it('designer-page renderer includes hostContract metadata', () => {
     const designerPageDef = flowDesignerRendererDefinitions.find(
       (definition) => definition.type === 'designer-page',

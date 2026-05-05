@@ -27,6 +27,8 @@ export function ReportInspectorShellRenderer(
     <section
       className={joinClassNames('nop-report-designer', props.meta.className)}
       data-slot="report-designer-inspector-shell"
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       {hasRendererSlotContent(titleContent) ? (
         <header data-slot="report-designer-section-header">

@@ -118,4 +118,14 @@ describe('SpreadsheetToolbar', () => {
     expect(props.onStyleTool).toHaveBeenCalled();
     expect(props.onToggleFindReplace).toHaveBeenCalled();
   });
+
+  it('exposes translated accessible labels on icon toolbar buttons', async () => {
+    await setupI18n();
+    render(<SpreadsheetToolbar {...createProps()} />);
+
+    expect(screen.getAllByRole('button', { name: 'Bold Ctrl+B' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Find & Replace Ctrl+F' }).length).toBeGreaterThan(
+      0,
+    );
+  });
 });

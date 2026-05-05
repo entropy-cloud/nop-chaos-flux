@@ -16,7 +16,7 @@ function selectInspectorSlice(data: Record<string, unknown>): InspectorSlice {
   const inspector = data.inspector as { resolvedSchema?: SchemaInput } | undefined;
   return {
     hasSelection: data.selectionTarget != null,
-    inspectorBody: data.inspectorBody as SchemaInput | undefined,
+    inspectorBody: data.inspectorPanels as SchemaInput | undefined,
     resolvedSchema: inspector?.resolvedSchema,
   };
 }
@@ -34,7 +34,11 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
 
   if (!hasSelection) {
     return (
-      <section className={cn('nop-report-inspector')}>
+      <section
+        className={cn('nop-report-inspector', props.meta.className)}
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
+      >
         <p data-slot="report-designer-empty">{noSelectionLabel}</p>
       </section>
     );
@@ -42,14 +46,22 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
 
   if (!body) {
     return (
-      <section className={cn('nop-report-inspector')}>
+      <section
+        className={cn('nop-report-inspector', props.meta.className)}
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
+      >
         <p data-slot="report-designer-empty">{emptyLabel}</p>
       </section>
     );
   }
 
   return (
-    <section className={cn('nop-report-inspector')} data-testid="report-inspector">
+    <section
+      className={cn('nop-report-inspector', props.meta.className)}
+      data-testid={props.meta.testid || 'report-inspector'}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
+    >
       {
         props.helpers.render(body, {
           pathSuffix: 'inspector-body',

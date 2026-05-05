@@ -36,8 +36,10 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
     <div
       className={cn(
         'nop-report-toolbar min-h-[44px] px-3 py-2 flex flex-wrap items-center gap-2 border border-border rounded-lg bg-background shadow-sm',
+        props.meta.className,
       )}
-      data-testid="report-toolbar"
+      data-testid={props.meta.testid || 'report-toolbar'}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       {items.map((item, index) => {
         switch (item.type) {
@@ -98,15 +100,20 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
           case 'switch': {
             const checked = evalBooleanExpr(item.active, snapshot);
             const disabled = evalBooleanExpr(item.disabled, snapshot);
+            const switchId = `report-toolbar-switch-${item.id ?? index}`;
             return (
               <span key={item.id ?? `switch-${index}`} className="flex items-center gap-1.5">
                 {item.label ? (
-                  <span className="text-sm text-muted-foreground">{item.label}</span>
+                  <span className="text-sm text-muted-foreground" id={switchId}>
+                    {item.label}
+                  </span>
                 ) : null}
                 <Switch
                   checked={checked}
                   disabled={disabled}
                   onCheckedChange={() => handleButtonClick(item)}
+                  aria-label={item.label ?? item.id ?? `switch-${index}`}
+                  aria-labelledby={item.label ? switchId : undefined}
                 />
               </span>
             );

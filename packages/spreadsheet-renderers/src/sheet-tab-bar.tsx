@@ -110,15 +110,7 @@ export function SheetTabBar({
             const isRenaming = renamingSheetId === sheet.id;
 
             return (
-              <Button
-                key={sheet.id}
-                variant="ghost"
-                size="xs"
-                className="ss-sheet-tab"
-                data-active={isActive || undefined}
-                onClick={() => handleTabClick(sheet.id)}
-                onDoubleClick={() => handleTabDoubleClick(sheet.id, sheet.name)}
-              >
+              <div key={sheet.id} className="ss-sheet-tab-item" data-active={isActive || undefined}>
                 {isRenaming ? (
                   <Input
                     ref={renameInputRef}
@@ -131,7 +123,14 @@ export function SheetTabBar({
                     size="sm"
                   />
                 ) : (
-                  <>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="ss-sheet-tab"
+                    data-active={isActive || undefined}
+                    onClick={() => handleTabClick(sheet.id)}
+                    onDoubleClick={() => handleTabDoubleClick(sheet.id, sheet.name)}
+                  >
                     {sheet.name}
                     {sheet.tabColor && (
                       <span
@@ -139,18 +138,22 @@ export function SheetTabBar({
                         style={{ backgroundColor: sheet.tabColor }}
                       />
                     )}
-                    {onRemoveSheet && canRemoveSheet && (
-                      <span
-                        className="ss-sheet-tab-close"
-                        onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
-                        aria-label="Remove sheet"
-                      >
-                        ×
-                      </span>
-                    )}
-                  </>
+                  </Button>
                 )}
-              </Button>
+                {onRemoveSheet && canRemoveSheet && !isRenaming ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="ss-sheet-tab-close"
+                    onClick={(e) => handleCloseClick(e, sheet.id, sheet.name)}
+                    aria-label={`Remove sheet ${sheet.name}`}
+                    title={`Remove sheet ${sheet.name}`}
+                  >
+                    ×
+                  </Button>
+                ) : null}
+              </div>
             );
           })}
         </div>

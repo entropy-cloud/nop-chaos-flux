@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { OutlinePanel } from '../panels/outline-panel.js';
 
@@ -88,6 +88,19 @@ describe('OutlinePanel', () => {
     expect(screen.getByText('Chapter 1')).toBeInTheDocument();
     expect(screen.getByText('Section 1.1')).toBeInTheDocument();
     expect(screen.getByText('Section 1.1.1')).toBeInTheDocument();
+  });
+
+  it('uses accessible toggle semantics for collapsible headings', () => {
+    const bridge = createMockBridge([
+      { id: 'h1', value: 'Chapter 1', level: 'first', titleId: 'h1' },
+      { id: 'h2', value: 'Section 1.1', level: 'second', titleId: 'h2' },
+    ]);
+    render(<OutlinePanel bridge={bridge as any} />);
+
+    const toggle = screen.getByRole('button', { name: 'Collapse outline' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: 'Expand outline' })).toBeInTheDocument();
   });
 
   it('handles bridge without command gracefully', () => {

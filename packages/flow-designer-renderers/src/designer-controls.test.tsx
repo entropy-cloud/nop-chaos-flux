@@ -176,7 +176,26 @@ describe('flow designer controls', () => {
       nodeType: 'task',
       position: { x: 180, y: 120 },
     });
+    expect(document.querySelector('[data-type="task"]')?.className).toContain(
+      'fd-palette-appearance-task',
+    );
     randomSpy.mockRestore();
+  });
+
+  it('uses disclosure button semantics for palette group headers', () => {
+    mockState.context.config = {
+      ...mockState.context.config,
+      nodeTypes: [{ id: 'task', label: 'Task' }],
+      palette: {
+        groups: [{ id: 'basic', label: 'Basic', nodeTypes: ['task'] }],
+      },
+    };
+
+    render(<DesignerPaletteContent />);
+    const header = screen.getByRole('button', { name: /Basic/ });
+    expect(header.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(header);
+    expect(screen.getByRole('button', { name: /Basic/ }).getAttribute('aria-expanded')).toBe('false');
   });
 
   it('dispatches delete actions from inspector buttons', () => {

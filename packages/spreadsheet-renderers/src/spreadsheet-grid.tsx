@@ -108,6 +108,13 @@ export function SpreadsheetGrid({
   onFieldDragOver,
   onFieldDragLeave,
 }: SpreadsheetGridProps) {
+  const clampCell = useCallback(
+    (row: number, col: number) => ({
+      row: Math.max(0, Math.min(rows - 1, row)),
+      col: Math.max(0, Math.min(cols - 1, col)),
+    }),
+    [cols, rows],
+  );
   const frozen: SpreadsheetFrozenPane | undefined = snapshot.activeSheet?.frozen;
   const activeSheetId = snapshot.activeSheet?.id ?? '';
   const selectedRange = getSelectedRange();
@@ -157,6 +164,20 @@ export function SpreadsheetGrid({
   const [scrollLeft, setScrollLeft] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(600);
   const [viewportWidth, setViewportWidth] = useState(800);
+
+  const moveSelection = useCallback(
+    (nextRow: number, nextCol: number) => {
+      const next = clampCell(nextRow, nextCol);
+      onCellClick(next.row, next.col);
+      requestAnimationFrame(() => {
+        const cell = scrollRef.current?.querySelector(
+          `td[data-row="${next.row}"][data-col="${next.col}"]`,
+        ) as HTMLElement | null;
+        cell?.focus();
+      });
+    },
+    [clampCell, onCellClick],
+  );
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -248,6 +269,9 @@ export function SpreadsheetGrid({
         key={c}
         className={cellStyle.className}
         style={style}
+        tabIndex={isSelected ? 0 : -1}
+        role="gridcell"
+        aria-selected={isSelected || inRange || undefined}
         data-row={r}
         data-col={c}
         data-cell-active={isSelected || undefined}
@@ -354,7 +378,54 @@ export function SpreadsheetGrid({
         className="spreadsheet-grid"
         data-fill-dragging={fillHandleState.isFilling || undefined}
         style={{ overflow: 'auto', position: 'relative' }}
+        tabIndex={0}
+        role="grid"
+        aria-label="Spreadsheet grid"
         onScroll={handleScroll}
+        onKeyDown={(event) => {
+          if (editingCell) {
+            return;
+          }
+
+          const active = selectedCell ?? { row: 0, col: 0 };
+
+          if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            moveSelection(active.row - 1, active.col);
+            return;
+          }
+          if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            moveSelection(active.row + 1, active.col);
+            return;
+          }
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            moveSelection(active.row, active.col - 1);
+            return;
+          }
+          if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            moveSelection(active.row, active.col + 1);
+            return;
+          }
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            onCellDoubleClick(active.row, active.col);
+            return;
+          }
+          if (
+            event.key.length === 1 &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.altKey
+          ) {
+            event.preventDefault();
+            onCellClick(active.row, active.col);
+            onCellDoubleClick(active.row, active.col);
+            onEditValueChange(event.key);
+          }
+        }}
         onMouseDown={(e) => {
           if (e.button === 0 && (e.target as HTMLElement).closest('td[data-row][data-col]')) {
             isDraggingRef.current = true;

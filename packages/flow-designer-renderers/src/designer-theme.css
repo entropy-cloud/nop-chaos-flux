@@ -45,6 +45,40 @@
   background: var(--fd-toolbar-bg);
 }
 
+.fd-palette-appearance-default {
+  background: linear-gradient(135deg, #64748b, #334155);
+}
+
+.fd-palette-appearance-start {
+  background: linear-gradient(135deg, #22c55e, #15803d);
+}
+
+.fd-palette-appearance-end {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.fd-palette-appearance-task,
+.fd-palette-appearance-process {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.fd-palette-appearance-condition,
+.fd-palette-appearance-merge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.fd-palette-appearance-parallel {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+.fd-palette-appearance-http {
+  background: linear-gradient(135deg, #06b6d4, #0f766e);
+}
+
+.fd-palette-appearance-data {
+  background: linear-gradient(135deg, #ec4899, #be185d);
+}
+
 .fd-xyflow-surface {
   background: var(--fd-canvas-bg);
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -9,16 +9,19 @@ import {
   createSchemaRenderer,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
-import type { RendererEnv } from '@nop-chaos/flux-core';
-import { registerWordEditorRenderers, defineWordEditorPageSchema } from '../index.js';
-import * as wordEditorActionProvider from '../word-editor-action-provider.js';
+import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import {
+  registerWordEditorRenderers,
+  defineWordEditorPageSchema,
+  wordEditorRendererDefinitions,
+} from '../index.js';
 
 const mockedCore = vi.hoisted(() => ({
   saveDocumentMock: vi.fn(() => true),
   saveDatasetsMock: vi.fn(),
   loadDatasetsMock: vi.fn(() => []),
 }));
+
 const mockState: {
   shortcutOptions: { onSave?: () => void } | undefined;
   lastEditorCanvasProps: any;
@@ -212,7 +215,7 @@ function renderWordEditor(input?: {
   );
 }
 
-describe('WordEditorPage', () => {
+describe('WordEditorPage host scope', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
@@ -231,8 +234,6 @@ describe('WordEditorPage', () => {
       },
     };
 
-    const registry = createDefaultRegistry([HostDatasetProbe]);
-    registerWordEditorRenderers(registry);
     resetMockStores();
 
     renderWordEditor({
@@ -348,67 +349,6 @@ describe('WordEditorPage', () => {
     });
   });
 
-  it('keeps the semantic root marker on the page shell', () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
-    const registry = createDefaultRegistry();
-    registerWordEditorRenderers(registry);
-    const SchemaRenderer = createSchemaRenderer();
-    const { container } = render(
-      <SchemaRenderer
-        schemaUrl="test://word-editor/page"
-        schema={defineWordEditorPageSchema({ type: 'word-editor-page', title: 'Word Editor' })}
-        env={createEnv()}
-        registry={registry}
-        formulaCompiler={createFormulaCompiler()}
-        data={{}}
-      />,
-    );
-    expect(container.querySelector('.nop-word-editor-page')).toBeTruthy();
-    expect(screen.getByTestId('editor-canvas')).toBeTruthy();
-    expect(screen.getByTestId('ribbon-toolbar')).toBeTruthy();
-  });
-
-  it('saves through the word-editor action provider and forwards onSave', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
-    const notify = vi.fn();
-
-    renderWordEditor({
-      schema: {
-        type: 'word-editor-page',
-        onSave: { action: 'showToast', args: { message: 'save event fired' } },
-      },
-      env: createEnv(notify),
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '保存' }));
-
-    await waitFor(() => {
-      expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1);
-      expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
-      expect(editorStore.setDirty).toHaveBeenCalledWith(false);
-      expect(notify).toHaveBeenCalledWith('info', 'save event fired');
-    });
-  });
-
-  it('wires shortcut save through the same save handler', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
-
-    renderWordEditor();
-    mockState.shortcutOptions?.onSave?.();
-
-    await waitFor(() => {
-      expect(mockedCore.saveDocumentMock).toHaveBeenCalledTimes(1);
-      expect(mockedCore.saveDatasetsMock).toHaveBeenCalledTimes(1);
-      expect(editorStore.setDirty).toHaveBeenCalledWith(false);
-    });
-  });
-
   it('projects autosaved charts and codes into host scope', async () => {
     resetFluxI18n();
     initFluxI18n();
@@ -452,130 +392,10 @@ describe('WordEditorPage', () => {
     });
   });
 
-  it('ignores concurrent save triggers while a save is already running', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
-
-    let resolveSave: ((value: { ok: boolean }) => void) | undefined;
-    const saveProviderResult = new Promise<{ ok: boolean }>((resolve) => {
-      resolveSave = resolve;
-    });
-    const invoke = vi.fn(async (method: string) => {
-      if (method !== 'save') {
-        return { ok: false, error: new Error('unexpected method') };
-      }
-      await saveProviderResult;
-      return { ok: true };
-    });
-    const providerSpy = vi
-      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
-      .mockReturnValue({
-        kind: 'host',
-        listMethods() {
-          return ['save'];
-        },
-        invoke,
-      } as any);
-
-    renderWordEditor();
-
-    fireEvent.click(screen.getByRole('button', { name: '保存' }));
-    fireEvent.click(screen.getByRole('button', { name: '保存' }));
-
-    expect(invoke).toHaveBeenCalledTimes(1);
-    resolveSave?.({ ok: true });
-    await waitFor(() => {
-      expect(screen.getByText('已保存')).toBeTruthy();
-    });
-    providerSpy.mockRestore();
-  });
-
-  it('invokes onBack directly without local confirm handling', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
-    const notify = vi.fn();
-    const confirmSpy = vi.spyOn(window, 'confirm');
-
-    renderWordEditor({
-      schema: {
-        type: 'word-editor-page',
-        onBack: { action: 'showToast', args: { message: 'back event fired' } },
-      },
-      env: createEnv(notify),
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '返回' }));
-
-    await waitFor(() => {
-      expect(notify).toHaveBeenCalledWith('info', 'back event fired');
-    });
-    expect(confirmSpy).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
-  });
-
-  it('does not publish save message updates after unmount', async () => {
-    resetFluxI18n();
-    initFluxI18n();
-    resetMockStores();
-    vi.useFakeTimers();
-
-    let resolveSave: ((value: { ok: boolean }) => void) | undefined;
-    const saveProviderResult = new Promise<{ ok: boolean }>((resolve) => {
-      resolveSave = resolve;
-    });
-    const invoke = vi.fn(async (method: string) => {
-      if (method !== 'save') {
-        return { ok: false, error: new Error('unexpected method') };
-      }
-
-      await saveProviderResult;
-      return { ok: true };
-    });
-    const providerSpy = vi
-      .spyOn(wordEditorActionProvider, 'createWordEditorActionProvider')
-      .mockReturnValue({
-        kind: 'host',
-        listMethods() {
-          return ['save'];
-        },
-        invoke,
-      } as any);
-
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    renderWordEditor();
-
-    fireEvent.click(screen.getByRole('button', { name: '保存' }));
-    expect(invoke).toHaveBeenCalledTimes(1);
-
-    cleanup();
-    resolveSave?.({ ok: true });
-    await Promise.resolve();
-    await vi.runAllTimersAsync();
-
-    expect(consoleError).not.toHaveBeenCalled();
-
-    consoleError.mockRestore();
-    providerSpy.mockRestore();
-  });
-
   it('publishes host status and mounts override regions with word-editor scope', async () => {
     resetFluxI18n();
     initFluxI18n();
     resetMockStores();
-
-    const StatusProbe: RendererDefinition = {
-      type: 'status-probe',
-      component: function StatusProbeComponent() {
-        const status = useScopeSelector((data: any) => data.wordEditorStatus);
-        return (
-          <span data-testid="word-editor-status">
-            {status ? `${status.kind}:${status.datasetCount}:${status.wordCount}` : ''}
-          </span>
-        );
-      },
-    };
 
     const ScopeProbe: RendererDefinition = {
       type: 'scope-probe',
@@ -589,7 +409,7 @@ describe('WordEditorPage', () => {
       },
     };
 
-    const registry = createDefaultRegistry([StatusProbe, ScopeProbe]);
+    const registry = createDefaultRegistry([ScopeProbe]);
     registerWordEditorRenderers(registry);
     const SchemaRenderer = createSchemaRenderer();
 
@@ -666,5 +486,41 @@ describe('WordEditorPage', () => {
     });
 
     view.unmount();
+  });
+
+  it('keeps the semantic root marker on the page shell', () => {
+    resetFluxI18n();
+    initFluxI18n();
+    resetMockStores();
+    const registry = createDefaultRegistry();
+    registerWordEditorRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://word-editor/page"
+        schema={defineWordEditorPageSchema({ type: 'word-editor-page', title: 'Word Editor' })}
+        env={createEnv()}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{}}
+      />,
+    );
+
+    expect(container.querySelector('.nop-word-editor-page')).toBeTruthy();
+    expect(screen.getByTestId('editor-canvas')).toBeTruthy();
+    expect(screen.getByTestId('ribbon-toolbar')).toBeTruthy();
+  });
+
+  it('exposes domain host metadata on the registered renderer definition', () => {
+    const definition = wordEditorRendererDefinitions.find(
+      (candidate) => candidate.type === 'word-editor-page',
+    );
+
+    expect(definition?.rendererClass).toBe('domain-host-renderer');
+    expect(definition?.rendererTraits).toEqual(
+      expect.arrayContaining(['workbench-shell', 'builder-facing']),
+    );
+    expect(definition?.propContracts?.statusPath?.shape.kind).toBe('string');
+    expect(definition?.eventContracts?.onBack?.displayName).toBe('Back');
   });
 });

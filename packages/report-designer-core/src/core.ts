@@ -117,8 +117,28 @@ export function createReportDesignerCore(
   let disposed = false;
   let refreshDerivedStateController: AbortController | undefined;
   let refreshFieldSourcesController: AbortController | undefined;
+  let refreshFieldSourcesPromise: Promise<FieldSourceSnapshot[]> | undefined;
+  let refreshFieldSourcesInput:
+    | {
+        document: ReportTemplateDocument;
+      }
+    | undefined;
   let previewController: AbortController | undefined;
   let previewRequestId = 0;
+
+  function getFieldSourceRefreshInput() {
+    const state = store.getState();
+    return {
+      document: state.document,
+    };
+  }
+
+  function matchesFieldSourceRefreshInput(
+    left: NonNullable<typeof refreshFieldSourcesInput>,
+    right: ReturnType<typeof getFieldSourceRefreshInput>,
+  ) {
+    return left.document === right.document;
+  }
 
   function createOperationSignal(kind: 'refresh-derived-state' | 'refresh-field-sources') {
     if (disposed) {
@@ -184,15 +204,7 @@ export function createReportDesignerCore(
 
     const snapshot = store.getState();
     try {
-      const fieldSources = await loadFieldSources({
-        config,
-        document: snapshot.document,
-        adapters: registry,
-        profile,
-        selectedFieldSourceIds,
-        staticFieldSourceTemplates,
-        getSnapshot: () => buildSnapshot(store.getState()),
-      });
+      const fieldSources = await refreshFieldSources();
 
       if (signal.aborted || disposed) {
         return [];
@@ -283,32 +295,58 @@ export function createReportDesignerCore(
   }
 
   async function refreshFieldSources(): Promise<FieldSourceSnapshot[]> {
+    const refreshInput = getFieldSourceRefreshInput();
+    if (
+      refreshFieldSourcesPromise &&
+      refreshFieldSourcesInput &&
+      matchesFieldSourceRefreshInput(refreshFieldSourcesInput, refreshInput)
+    ) {
+      return refreshFieldSourcesPromise;
+    }
+
     const signal = createOperationSignal('refresh-field-sources');
     if (signal.aborted) {
       return [];
     }
 
-    const fieldSources = await loadFieldSources({
+    const promise = loadFieldSources({
       config,
-      document: store.getState().document,
+      document: refreshInput.document,
       adapters: registry,
       profile,
       selectedFieldSourceIds,
       staticFieldSourceTemplates,
       getSnapshot: () => buildSnapshot(store.getState()),
-    });
+    })
+      .then((fieldSources) => {
+        if (signal.aborted || disposed) {
+          return [];
+        }
 
-    if (signal.aborted || disposed) {
-      clearOperationSignal('refresh-field-sources', signal);
-      return [];
-    }
+        store.setState((current) => ({ ...current, fieldSources }));
+        return fieldSources;
+      })
+      .catch((error) => {
+        if (signal.aborted || disposed) {
+          return [];
+        }
 
-    store.setState((current) => ({ ...current, fieldSources }));
-    clearOperationSignal('refresh-field-sources', signal);
-    return fieldSources;
+        throw error;
+      })
+      .finally(() => {
+        clearOperationSignal('refresh-field-sources', signal);
+        if (refreshFieldSourcesPromise === promise) {
+          refreshFieldSourcesPromise = undefined;
+          refreshFieldSourcesInput = undefined;
+        }
+      });
+
+    refreshFieldSourcesPromise = promise;
+    refreshFieldSourcesInput = refreshInput;
+    return promise;
   }
 
-  void refreshDerivedState();
+  void refreshDerivedState().catch(() => undefined);
 
   return {
     getSnapshot() {

@@ -33,6 +33,8 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
     <section
       className={joinClassNames('nop-report-designer', props.meta.className)}
       data-slot="report-field-panel-shell"
+      data-testid={props.meta.testid || undefined}
+      data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
       {hasRendererSlotContent(titleContent) ? (
         <header data-slot="report-designer-section-header">

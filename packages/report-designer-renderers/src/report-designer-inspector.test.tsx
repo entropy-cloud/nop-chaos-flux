@@ -92,4 +92,10 @@ describe('ReportInspectorRenderer', () => {
 
     expect(screen.getByText('Select something first')).toBeTruthy();
   });
+
+  it('passes root meta attributes through inspector root', () => {
+    renderInspector({ body: { type: 'text', text: 'Panel body' }, testid: 'inspector-root' });
+
+    expect(screen.getByTestId('inspector-root')).toBeTruthy();
+  });
 });

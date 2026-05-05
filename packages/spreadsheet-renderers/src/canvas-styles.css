@@ -640,12 +640,18 @@
   padding: 0 4px;
 }
 
+.ss-sheet-tab-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .ss-sheet-tab {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 16px;
+  padding: 6px 24px 6px 16px;
   background: linear-gradient(to bottom, #fafafa 0%, #f0f0f0 100%);
   border: 1px solid transparent;
   border-bottom: none;
@@ -714,6 +720,7 @@
   height: 20px;
   box-sizing: border-box;
   box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+  margin: 2px 1px 0 1px;
 }
 
 .ss-sheet-tab-rename:focus {
@@ -721,12 +728,15 @@
 }
 
 .ss-sheet-tab-close {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 16px;
   height: 16px;
-  margin-left: 2px;
   font-size: 14px;
   line-height: 1;
   color: #888888;
@@ -737,19 +747,20 @@
   font-weight: 300;
 }
 
-.ss-sheet-tab:hover .ss-sheet-tab-close {
+.ss-sheet-tab-item:hover .ss-sheet-tab-close,
+.ss-sheet-tab-item:focus-within .ss-sheet-tab-close {
   opacity: 1;
 }
 
 .ss-sheet-tab-close:hover {
   background-color: #ffebee;
   color: #d32f2f;
-  transform: scale(1.1);
+  transform: translateY(-50%) scale(1.1);
 }
 
 .ss-sheet-tab-close:active {
   background-color: #ffcdd2;
-  transform: scale(0.95);
+  transform: translateY(-50%) scale(0.95);
 }
 
 .ss-sheet-add {

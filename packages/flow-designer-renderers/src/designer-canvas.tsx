@@ -31,7 +31,13 @@ interface PopoverState {
   sourceKind: 'node' | 'branch-group' | 'merge';
 }
 
-export function DesignerCanvasContent() {
+export function DesignerCanvasContent(props: {
+  rootProps?: {
+    className?: string;
+    'data-testid'?: string;
+    'data-cid'?: string;
+  };
+} = {}) {
   const { dispatch, config } = useDesignerContext();
   const snapshot = useDesignerFullSnapshot();
   const [pendingConnectionSourceId, setPendingConnectionSourceId] = useState<string | null>(null);
@@ -285,7 +291,11 @@ export function DesignerCanvasContent() {
   });
 
   return (
-    <>
+    <div
+      className={props.rootProps?.className}
+      data-testid={props.rootProps?.['data-testid']}
+      data-cid={props.rootProps?.['data-cid']}
+    >
       {canvas}
       {popover && (
         <DingFlowAddNodeMenu
@@ -296,6 +306,6 @@ export function DesignerCanvasContent() {
           onClose={() => setPopover(null)}
         />
       )}
-    </>
+    </div>
   );
 }

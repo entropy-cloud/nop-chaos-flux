@@ -106,11 +106,16 @@ const reportDesignerProjection: HostProjectionContract = {
         kind: 'object',
         fields: {
           kind: { kind: 'string' },
+          dirty: { kind: 'boolean' },
           documentId: { kind: 'string' },
           documentName: { kind: 'string' },
           selectionTarget: selectionTargetShape,
           selectionKind: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'null' }] },
           inspector: inspectorShape,
+          inspectorPanels: {
+            kind: 'union',
+            anyOf: [{ kind: 'unknown' }, { kind: 'null' }],
+          },
           fieldDrag: { kind: 'object', fields: {} },
           preview: previewShape,
           activeMeta: { kind: 'unknown' },
@@ -118,7 +123,7 @@ const reportDesignerProjection: HostProjectionContract = {
           fieldSourceCount: { kind: 'number' },
           fieldCount: { kind: 'number' },
         },
-        optional: ['selectionKind', 'activeMeta'],
+        optional: ['selectionKind', 'activeMeta', 'inspectorPanels'],
       },
       description: 'Primary report-designer host projection.',
     },
@@ -130,29 +135,24 @@ const reportDesignerProjection: HostProjectionContract = {
       schema: spreadsheetShape,
       description: 'Nested spreadsheet projection exposed inside report designer.',
     },
-    fieldSources: {
-      schema: fieldSourcesShape,
-      description: 'Resolved field source snapshots.',
-    },
     inspector: {
       schema: inspectorShape,
       description: 'Inspector runtime state.',
+    },
+    inspectorPanels: {
+      schema: {
+        kind: 'union',
+        anyOf: [{ kind: 'unknown' }, { kind: 'null' }],
+      },
+      description: 'Resolved inspector schema for the current target.',
     },
     meta: {
       schema: metadataBagShape,
       description: 'Current active metadata bag.',
     },
-    preview: {
-      schema: previewShape,
-      description: 'Preview execution status.',
-    },
     selectionTarget: {
       schema: selectionTargetShape,
       description: 'Canonical current selection target.',
-    },
-    reportDocument: {
-      schema: { kind: 'object', fields: {} },
-      description: 'Current report template document.',
     },
     workbook: {
       schema: { kind: 'object', fields: {} },
@@ -182,9 +182,21 @@ const reportDesignerProjection: HostProjectionContract = {
       schema: { kind: 'string' },
       description: 'Current document name.',
     },
+    fieldSources: {
+      schema: fieldSourcesShape,
+      description: 'Resolved field source snapshots.',
+    },
     fieldCount: {
       schema: { kind: 'number' },
       description: 'Resolved field count.',
+    },
+    preview: {
+      schema: previewShape,
+      description: 'Preview execution status.',
+    },
+    reportDocument: {
+      schema: { kind: 'object', fields: {} },
+      description: 'Current report template document.',
     },
   },
 };

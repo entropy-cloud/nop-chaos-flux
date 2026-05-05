@@ -94,10 +94,12 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'designer-canvas',
     component: DesignerCanvasRenderer,
+    fields: [{ key: 'className', kind: 'prop' }],
   },
   {
     type: 'designer-palette',
     component: DesignerPaletteRenderer,
+    fields: [{ key: 'className', kind: 'prop' }],
   },
 ];
 

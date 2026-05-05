@@ -51,6 +51,14 @@ function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
 
+function getRootMetaProps(meta: RendererComponentProps['meta']) {
+  return {
+    className: meta.className,
+    'data-testid': meta.testid || undefined,
+    'data-cid': meta.cid != null ? String(meta.cid) : undefined,
+  };
+}
+
 function readDesignerResolvedProp<T>(
   props: RendererComponentProps<DesignerPageSchema>,
   key: string,
@@ -512,10 +520,10 @@ function DesignerPageInner({
   );
 }
 
-export function DesignerCanvasRenderer() {
-  return <DesignerCanvasContent />;
+export function DesignerCanvasRenderer(props: RendererComponentProps) {
+  return <DesignerCanvasContent rootProps={getRootMetaProps(props.meta)} />;
 }
 
-export function DesignerPaletteRenderer() {
-  return <DesignerPaletteContent />;
+export function DesignerPaletteRenderer(props: RendererComponentProps) {
+  return <DesignerPaletteContent rootProps={getRootMetaProps(props.meta)} />;
 }

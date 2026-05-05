@@ -3,7 +3,12 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
-import { createSpreadsheetBridge, SpreadsheetGrid, useSpreadsheetInteractions } from '../index.js';
+import {
+  createSpreadsheetBridge,
+  SpreadsheetGrid,
+  spreadsheetRendererDefinitions,
+  useSpreadsheetInteractions,
+} from '../index.js';
 
 function SpreadsheetGridHarness(props: {
   sheetId: string;
@@ -176,5 +181,45 @@ describe('spreadsheet grid selection', () => {
       expect(core.getSnapshot().selection.kind).toBe('cell');
       expect(core.getSnapshot().selection.anchor?.address).toBe('B2');
     });
+  });
+
+  it('supports keyboard navigation and keyboard entry from the grid root', async () => {
+    const documentModel = createEmptyDocument('grid-keyboard-navigation');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const grid = container.querySelector('[role="grid"]') as HTMLElement | null;
+    expect(grid).toBeTruthy();
+
+    grid?.focus();
+    fireEvent.keyDown(grid!, { key: 'ArrowRight' });
+    fireEvent.keyDown(grid!, { key: 'ArrowDown' });
+
+    await waitFor(() => {
+      expect(core.getSnapshot().selection.anchor?.address).toBe('B2');
+    });
+
+    fireEvent.keyDown(grid!, { key: 'x' });
+
+    await waitFor(() => {
+      expect(container.querySelector('input.ss-cell-edit-input')).toBeTruthy();
+      expect((container.querySelector('input.ss-cell-edit-input') as HTMLInputElement).value).toBe(
+        'x',
+      );
+    });
+  });
+
+  it('exposes domain host metadata on the registered spreadsheet page renderer', () => {
+    const definition = spreadsheetRendererDefinitions.find(
+      (candidate) => candidate.type === 'spreadsheet-page',
+    );
+
+    expect(definition?.rendererClass).toBe('domain-host-renderer');
+    expect(definition?.rendererTraits).toEqual(
+      expect.arrayContaining(['workbench-shell', 'builder-facing']),
+    );
+    expect(definition?.propContracts?.document?.required).toBe(true);
   });
 });

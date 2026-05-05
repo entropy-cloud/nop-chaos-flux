@@ -223,6 +223,12 @@ export function OutlinePanel({ bridge }: OutlinePanelProps) {
                         size="icon-xs"
                         onClick={() => toggleExpanded(index)}
                         className="p-0.5"
+                        aria-label={
+                          item.expanded
+                            ? t('flux.wordEditor.collapseOutline')
+                            : t('flux.wordEditor.expandOutline')
+                        }
+                        aria-expanded={item.expanded}
                       >
                         {item.expanded ? (
                           <ChevronDown className="w-3.5 h-3.5 text-[var(--nop-body-copy)]" />

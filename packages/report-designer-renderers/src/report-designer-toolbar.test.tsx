@@ -77,4 +77,12 @@ describe('report-toolbar renderer', () => {
     });
     expect(screen.queryByText('Undo')).toBeNull();
   });
+
+  it('exposes accessible semantics for toolbar switches', () => {
+    renderToolbarInPage({
+      itemsOverride: [{ id: 'preview', type: 'switch', label: 'Preview mode', action: 'report-designer:preview' }],
+    });
+
+    expect(screen.getByRole('switch', { name: 'Preview mode' })).toBeTruthy();
+  });
 });

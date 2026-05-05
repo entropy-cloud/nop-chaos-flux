@@ -244,8 +244,8 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
 
   useWordEditorShortcuts({ bridge, onSave: handleSave, scopeRef: rootRef });
 
-  const handleBack = useCallback(() => {
-    void props.events.onBack?.();
+  const handleBack = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    void props.events.onBack?.(event);
   }, [props.events]);
 
   const handleAddDataset = () => {
@@ -358,13 +358,14 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     <div className="flex flex-col">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-[var(--nop-nav-surface)]">
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            onClick={handleBack}
-            title={t('flux.wordEditor.back')}
-          >
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              onClick={handleBack}
+              title={t('flux.wordEditor.back')}
+              aria-label={t('flux.wordEditor.back')}
+            >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex items-center gap-2">

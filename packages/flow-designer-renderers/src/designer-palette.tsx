@@ -5,7 +5,31 @@ import { DesignerIcon } from './designer-icon';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge';
 import { Button, cn } from '@nop-chaos/ui';
 
-export function DesignerPaletteContent() {
+const PALETTE_APPEARANCE_BY_ID: Record<string, string> = {
+  start: 'fd-palette-appearance-start',
+  end: 'fd-palette-appearance-end',
+  task: 'fd-palette-appearance-task',
+  process: 'fd-palette-appearance-process',
+  condition: 'fd-palette-appearance-condition',
+  branch: 'fd-palette-appearance-condition',
+  merge: 'fd-palette-appearance-merge',
+  parallel: 'fd-palette-appearance-parallel',
+  http: 'fd-palette-appearance-http',
+  database: 'fd-palette-appearance-data',
+  table: 'fd-palette-appearance-data',
+};
+
+function resolvePaletteAppearance(nodeType: NodeTypeConfig) {
+  return PALETTE_APPEARANCE_BY_ID[nodeType.id] ?? 'fd-palette-appearance-default';
+}
+
+export function DesignerPaletteContent(props: {
+  rootProps?: {
+    className?: string;
+    'data-testid'?: string;
+    'data-cid'?: string;
+  };
+} = {}) {
   const { config, dispatch, openCreateDialog } = useDesignerContext();
   const activeNodeType = useDesignerSnapshotSelector((s) => s.activeNode?.type);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
@@ -42,7 +66,11 @@ export function DesignerPaletteContent() {
   const filteredGroups = paletteGroups.filter((g) => g.nodeTypes.length > 0);
 
   return (
-    <div className={cn('nop-palette h-full text-foreground')}>
+    <div
+      className={cn('nop-palette h-full text-foreground', props.rootProps?.className)}
+      data-testid={props.rootProps?.['data-testid']}
+      data-cid={props.rootProps?.['data-cid']}
+    >
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <div className="text-sm font-semibold text-foreground">节点库</div>
@@ -69,18 +97,22 @@ export function DesignerPaletteContent() {
             key={group.id}
             className="fd-panel-card rounded-lg border border-border p-2.5 mb-3 last:mb-0"
           >
-            <div
+            <Button
+              type="button"
+              variant="ghost"
               data-slot="designer-palette-group-header"
-              className="fd-panel-caption flex items-center gap-1.5 cursor-pointer text-xs font-semibold uppercase tracking-[0.18em] mb-2 px-1"
+              className="fd-panel-caption mb-2 flex w-full items-center justify-start gap-1.5 px-1 text-xs font-semibold uppercase tracking-[0.18em]"
               onClick={() => toggleGroup(group.id)}
+              aria-expanded={expandedGroups.has(group.id)}
+              aria-controls={`designer-palette-group-${group.id}`}
             >
               <span className="text-[10px] text-muted-foreground">
                 {expandedGroups.has(group.id) ? '▼' : '▶'}
               </span>
               <span>{group.label}</span>
-            </div>
+            </Button>
             {expandedGroups.has(group.id) && (
-              <div>
+              <div id={`designer-palette-group-${group.id}`}>
                 {group.nodeTypes.map((ntId) => {
                   const nt = nodeTypes.find((n) => n.id === ntId);
                   if (!nt) return null;
@@ -109,7 +141,7 @@ export function DesignerPaletteContent() {
                         <span
                           className={cn(
                             'w-8 h-8 rounded-lg inline-flex items-center justify-center text-white shrink-0',
-                            `nop-gradient-${nt.id}`,
+                            resolvePaletteAppearance(nt),
                           )}
                           data-type={nt.id}
                           aria-hidden="true"

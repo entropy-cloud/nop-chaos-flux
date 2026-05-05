@@ -167,4 +167,10 @@ describe('ReportFieldPanelRenderer', () => {
     expect(document.querySelector('[data-slot="report-field-panel-items"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="report-field-panel-item"]')).toBeTruthy();
   });
+
+  it('passes root meta attributes through the shell', () => {
+    renderFieldPanel({ testid: 'field-panel-root' });
+
+    expect(document.querySelector('[data-testid="field-panel-root"]')).toBeTruthy();
+  });
 });

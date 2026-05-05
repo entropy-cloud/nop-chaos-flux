@@ -70,6 +70,7 @@ export interface ReportDesignerHostData {
     selectionTarget: ReportSelectionTarget | undefined;
     selectionKind: ReportSelectionTarget['kind'] | undefined;
     inspector: ReportDesignerRuntimeSnapshot['inspector'];
+    inspectorPanels: ReportDesignerRuntimeSnapshot['inspector']['resolvedSchema'] | undefined;
     fieldDrag: ReportDesignerRuntimeSnapshot['fieldDrag'];
     preview: ReportDesignerRuntimeSnapshot['preview'];
     activeMeta: ReportDesignerRuntimeSnapshot['activeMeta'];
@@ -113,6 +114,7 @@ export function createHostData(
       selectionTarget: snapshot.selectionTarget,
       selectionKind: snapshot.selectionTarget?.kind,
       inspector: snapshot.inspector,
+      inspectorPanels: snapshot.inspector.resolvedSchema,
       fieldDrag: snapshot.fieldDrag,
       preview: snapshot.preview,
       activeMeta: snapshot.activeMeta,
@@ -159,6 +161,7 @@ export function buildReportDesignerScopeData(
       selectionTarget: snapshot.selectionTarget,
       selectionKind: snapshot.selectionTarget?.kind,
       inspector: snapshot.inspector,
+      inspectorPanels: snapshot.inspector.resolvedSchema,
       fieldDrag: snapshot.fieldDrag,
       preview: snapshot.preview,
       activeMeta: snapshot.activeMeta,
@@ -183,10 +186,12 @@ export function buildReportDesignerScopeData(
     canUndo: runtimeCanUndo,
     canRedo: runtimeCanRedo,
     documentName: snapshot.document.name,
+    fieldSources: snapshot.fieldSources,
     fieldCount,
     inspector: snapshot.inspector,
-    inspectorBody: snapshot.inspector.resolvedSchema,
+    inspectorPanels: snapshot.inspector.resolvedSchema,
     meta: snapshot.activeMeta,
+    preview: snapshot.preview,
   };
 }
 

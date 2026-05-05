@@ -63,13 +63,18 @@ describe('importTemplate / exportTemplate commands', () => {
     const spreadsheetDoc = createEmptyDocument();
     const originalDoc = createReportTemplateDocument(spreadsheetDoc, 'Original');
     const importedDoc = createReportTemplateDocument(createEmptyDocument(), 'Imported');
+    let currentDocument = originalDoc;
     const provider = {
       id: 'derived-source',
       load: vi
         .fn()
-        .mockReturnValueOnce([{ id: 'original-source', label: 'Original Source', groups: [] }])
-        .mockReturnValueOnce([{ id: 'original-source', label: 'Original Source', groups: [] }])
-        .mockReturnValueOnce([{ id: 'imported-source', label: 'Imported Source', groups: [] }]),
+        .mockImplementation(() => [
+          {
+            id: currentDocument.name === 'Imported' ? 'imported-source' : 'original-source',
+            label: currentDocument.name === 'Imported' ? 'Imported Source' : 'Original Source',
+            groups: [],
+          },
+        ]),
     };
 
     const core = createReportDesignerCore({
@@ -98,6 +103,7 @@ describe('importTemplate / exportTemplate commands', () => {
     core.registerCodec({
       id: 'json-codec',
       async importDocument() {
+        currentDocument = importedDoc;
         return importedDoc;
       },
       exportDocument() {
@@ -120,6 +126,11 @@ describe('importTemplate / exportTemplate commands', () => {
     expect(result.ok).toBe(true);
     expect(core.getSnapshot().selectionTarget).toBeUndefined();
     expect(core.getSnapshot().fieldSources.map((source) => source.id)).toEqual(['imported-source']);
+    expect(provider.load).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        document: expect.objectContaining({ name: 'Imported' }),
+      }),
+    );
     expect(core.getSnapshot().inspector.loading).toBe(false);
     expect(core.getSnapshot().inspector.error).toBeUndefined();
     expect(core.getSnapshot().inspector.resolvedSchema).toBeUndefined();

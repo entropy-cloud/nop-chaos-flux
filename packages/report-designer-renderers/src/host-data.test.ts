@@ -29,4 +29,27 @@ describe('buildReportDesignerScopeData', () => {
     expect(designer.dirty).toBe(true);
     expect(runtime.dirty).toBe(true);
   });
+
+  it('keeps canonical report designer projection vocabulary aligned', () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Vocabulary Report');
+    const core = createReportDesignerCore({
+      document,
+      config: { kind: 'report-template' },
+    });
+
+    const scopeData = buildReportDesignerScopeData(core, core.getSnapshot());
+    const designer = scopeData.designer as { inspectorPanels?: unknown; fieldSources?: unknown[] };
+
+    expect(scopeData).toHaveProperty('selectionTarget');
+    expect(scopeData).toHaveProperty('reportDocument');
+    expect(scopeData).toHaveProperty('fieldSources');
+    expect(scopeData).toHaveProperty('preview');
+    expect(scopeData).toHaveProperty('inspectorPanels');
+    expect(scopeData).not.toHaveProperty('target');
+    expect(scopeData).not.toHaveProperty('selection');
+    expect(scopeData).not.toHaveProperty('inspectorBody');
+    expect(designer).toHaveProperty('inspectorPanels');
+    expect(Array.isArray(designer.fieldSources)).toBe(true);
+  });
 });
