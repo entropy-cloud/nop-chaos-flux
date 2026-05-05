@@ -435,6 +435,14 @@ export async function validatePath(
     }
   }
 
+  if (!field && runtimeRegistration) {
+    const isHidden = sharedState.hiddenFields.has(path);
+    if (isHidden) {
+      commitPathValidationState({ sharedState, path, errors: [] });
+      return createValidationResult([]);
+    }
+  }
+
   if (!field && runtimeTarget.childPath && runtimeRegistration?.validateChild) {
     return validateRuntimeRegistrationChild(
       sharedState,

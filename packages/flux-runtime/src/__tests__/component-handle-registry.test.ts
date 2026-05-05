@@ -134,6 +134,34 @@ describe('createComponentHandleRegistry', () => {
     expect(child.getHandleDebugData!(21)).toBeUndefined();
   });
 
+  it('dispose() clears parent, children, and all handles', () => {
+    const parent = createComponentHandleRegistry({ id: 'parent-registry' });
+    const child = createComponentHandleRegistry({ id: 'child-registry', parent });
+    const parentHandle = createHandle({ id: 'pf', name: 'pname', _cid: 50 });
+    const childHandle = createHandle({ id: 'cf', name: 'cname', _cid: 51 });
+
+    parent.register(parentHandle);
+    child.register(childHandle);
+
+    // sanity: handles resolve before dispose
+    expect(parent.resolve({ componentId: 'pf' })).toBe(parentHandle);
+    expect(child.resolve({ componentId: 'cf' })).toBe(childHandle);
+    // child can see parent handle
+    expect(child.resolve({ componentId: 'pf' })).toBe(parentHandle);
+
+    parent.dispose!();
+
+    // parent handles gone
+    expect(parent.resolve({ componentId: 'pf' })).toBeUndefined();
+    // child handles gone (child was disposed recursively)
+    expect(child.resolve({ componentId: 'cf' })).toBeUndefined();
+    // child can no longer see parent handle
+    expect(child.resolve({ componentId: 'pf' })).toBeUndefined();
+
+    // dispose is safe to call again
+    expect(() => parent.dispose!()).not.toThrow();
+  });
+
   it('returns aggregated debug snapshots including child registries', () => {
     const parent = createComponentHandleRegistry({ id: 'parent-registry' });
     const child = createComponentHandleRegistry({ id: 'child-registry', parent });

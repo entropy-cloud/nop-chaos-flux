@@ -25,6 +25,7 @@ import type {
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import type { FormulaRegistry } from '@nop-chaos/flux-formula';
 import { createActionDispatcher } from '@nop-chaos/flux-action-core';
 import { createActionRuntimeAdapter } from './action-adapter';
 import { createActionScope } from './action-scope';
@@ -80,13 +81,14 @@ export function createRendererRuntime(input: {
   plugins?: RendererPlugin[];
   pageStore?: PageStoreApi;
   moduleCache?: ModuleCache;
+  formulaRegistry?: FormulaRegistry;
   strictMode?: boolean;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }): RendererRuntime {
   const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
   const plugins = sortRendererPlugins(input.plugins);
   const expressionCompiler =
-    input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler());
+    input.expressionCompiler ?? createExpressionCompiler(createFormulaCompiler(input.formulaRegistry));
   const defaultCidState = createCompiledCidState();
   const schemaCompiler =
     input.schemaCompiler ??

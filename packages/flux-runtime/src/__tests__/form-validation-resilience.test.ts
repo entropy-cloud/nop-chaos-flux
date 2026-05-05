@@ -103,5 +103,31 @@ describe('Form validation resilience (Promise.allSettled)', () => {
     expect(syncCalls).toContain('a');
     expect(syncCalls).toContain('b');
     expect(result).toBeDefined();
+    expect(result.ok).toBe(false);
+    expect(result.fieldErrors['a']).toBeDefined();
+    expect(result.fieldErrors['a']![0]!.rule).toBe('async');
+  });
+
+  it('normalizes non-Error thrown values into Error instances', async () => {
+    const parentStore = createScopeStore({ a: '' });
+    const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
+
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      initialValues: { a: '' },
+      parentScope,
+      validation: makeFormModel({
+        a: makeNode('a', true),
+      }),
+      validateRule(_compiledRule: any, _value: any, _field: any) {
+        throw 'string-error-value';
+      },
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const result = await runtime.validateForm();
+
+    expect(result).toBeDefined();
+    expect(result.ok).toBe(false);
   });
 });

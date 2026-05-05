@@ -131,6 +131,26 @@ describe('buildUrlWithParams', () => {
     const result = buildUrlWithParams('/api', { a: null, b: undefined });
     expect(result).toBe('/api');
   });
+
+  it('serializes array params as repeated key[] entries', () => {
+    const result = buildUrlWithParams('/api', { ids: [1, 2, 3] });
+    expect(result).toBe('/api?ids%5B%5D=1&ids%5B%5D=2&ids%5B%5D=3');
+  });
+
+  it('serializes object params as JSON string', () => {
+    const result = buildUrlWithParams('/api', {
+      filter: { status: 'active' },
+    });
+    const url = new URL(result, 'http://localhost');
+    expect(JSON.parse(url.searchParams.get('filter')!)).toEqual({
+      status: 'active',
+    });
+  });
+
+  it('skips null/undefined array items', () => {
+    const result = buildUrlWithParams('/api', { ids: [1, null, 3] });
+    expect(result).toBe('/api?ids%5B%5D=1&ids%5B%5D=3');
+  });
 });
 
 describe('prepareApiData', () => {

@@ -34,4 +34,20 @@ describe('path utils', () => {
       },
     });
   });
+
+  it('getIn returns undefined for dangerous path segments', () => {
+    const obj = { safe: { value: 1 } };
+    expect(getIn(obj, '__proto__')).toBeUndefined();
+    expect(getIn(obj, 'safe.constructor')).toBeUndefined();
+    expect(getIn(obj, 'prototype')).toBeUndefined();
+  });
+
+  it('setIn throws for dangerous path segments', () => {
+    const obj = { safe: 1 };
+    expect(() => setIn(obj, '__proto__', {})).toThrow(/not allowed/);
+    expect(() => setIn(obj, 'constructor', {})).toThrow(/not allowed/);
+    expect(() => setIn(obj, 'a.prototype.b', 1)).toThrow(/not allowed/);
+    // Verify Object.prototype was not polluted
+    expect((Object.prototype as any).polluted).toBeUndefined();
+  });
 });
