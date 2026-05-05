@@ -140,7 +140,7 @@ describe('crud schemaValidator', () => {
     ]);
   });
 
-  it('accepts legacy bulkActions authoring by lowering it to listActions before validation', () => {
+  it('rejects legacy bulkActions authoring', () => {
     expect(
       compiler.validate?.({
         type: 'crud',
@@ -152,7 +152,15 @@ describe('crud schemaValidator', () => {
         ],
         columns: [],
       } as any),
-    ).toEqual([]);
+    ).toEqual(
+      expect.arrayContaining([
+      expect.objectContaining({
+        code: 'invalid-property-shape',
+        path: '/bulkActions',
+        source: 'renderer',
+      }),
+      ]),
+    );
   });
 
   it('rejects legacy bulkActions when canonical listActions is also present', () => {
@@ -163,16 +171,18 @@ describe('crud schemaValidator', () => {
         listActions: [{ type: 'text', text: 'Refresh' }],
         columns: [],
       } as any),
-    ).toEqual([
+    ).toEqual(
+      expect.arrayContaining([
       expect.objectContaining({
         code: 'invalid-property-shape',
         path: '/bulkActions',
         source: 'renderer',
       }),
-    ]);
+      ]),
+    );
   });
 
-  it('lowers legacy filter, primaryField, and perPageField into live canonical crud fields before validation', () => {
+  it('rejects legacy filter, primaryField, and perPageField authoring', () => {
     expect(
       compiler.validate?.({
         type: 'crud',
@@ -183,6 +193,12 @@ describe('crud schemaValidator', () => {
         perPageField: 'pageSize',
         columns: [],
       } as any),
-    ).toEqual([]);
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'invalid-property-shape', path: '/filter', source: 'renderer' }),
+        expect.objectContaining({ code: 'invalid-property-shape', path: '/primaryField', source: 'renderer' }),
+        expect.objectContaining({ code: 'invalid-property-shape', path: '/perPageField', source: 'renderer' }),
+      ]),
+    );
   });
 });

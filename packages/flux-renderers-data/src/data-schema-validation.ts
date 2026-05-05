@@ -186,43 +186,37 @@ export function transformCrudAuthoringSchema(
     perPageField?: unknown;
   };
 
-  const nextSchema: Record<string, unknown> = { ...schema };
-
-  if (nextSchema.filter !== undefined && nextSchema.queryForm === undefined) {
-    nextSchema.queryForm = nextSchema.filter;
+  if (schema.filter !== undefined) {
+    context.emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(context.path, 'filter'),
+      message: 'crud.filter is no longer supported. Use canonical crud.queryForm.',
+    });
   }
 
-  if (nextSchema.primaryField !== undefined && nextSchema.rowKey === undefined) {
-    nextSchema.rowKey = nextSchema.primaryField;
+  if (schema.primaryField !== undefined) {
+    context.emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(context.path, 'primaryField'),
+      message: 'crud.primaryField is no longer supported. Use canonical crud.rowKey.',
+    });
   }
 
-  if (nextSchema.perPageField !== undefined && nextSchema.pageSizeField === undefined) {
-    nextSchema.pageSizeField = nextSchema.perPageField;
+  if (schema.perPageField !== undefined) {
+    context.emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(context.path, 'perPageField'),
+      message: 'crud.perPageField is no longer supported. Use canonical crud.pageSizeField.',
+    });
   }
 
-  delete nextSchema.filter;
-  delete nextSchema.primaryField;
-  delete nextSchema.perPageField;
-
-  if (nextSchema.bulkActions === undefined) {
-    return nextSchema as CrudSchema;
-  }
-
-  if (nextSchema.listActions !== undefined) {
+  if (schema.bulkActions !== undefined) {
     context.emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(context.path, 'bulkActions'),
-      message: 'crud.bulkActions cannot be used together with canonical crud.listActions.',
+      message: 'crud.bulkActions is no longer supported. Use canonical crud.listActions.',
     });
-    const { bulkActions, ...rest } = nextSchema;
-    void bulkActions;
-    return rest as CrudSchema;
   }
 
-  const { bulkActions, ...rest } = nextSchema;
-
-  return {
-    ...rest,
-    listActions: bulkActions as CrudSchema['listActions'],
-  } as CrudSchema;
+  return schema;
 }
