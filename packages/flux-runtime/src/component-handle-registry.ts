@@ -23,6 +23,7 @@ export function createComponentHandleRegistry(input: {
   const handlesByName = new Map<string, Set<ComponentHandle>>();
   const nameIndex = new Map<string, Set<number>>();
   const childRegistries = new Set<ComponentHandleRegistry>();
+  const debugEnabledListeners = new Set<() => void>();
 
   type RegistryWithChildren = ComponentHandleRegistry & {
     __childRegistries?: Set<ComponentHandleRegistry>;
@@ -265,12 +266,22 @@ export function createComponentHandleRegistry(input: {
     },
     setDebugEnabled(enabled: boolean) {
       debugEnabled = enabled;
+      for (const listener of debugEnabledListeners) {
+        listener();
+      }
       for (const child of childRegistries) {
         child.setDebugEnabled?.(enabled);
       }
       if (!enabled) {
         debugDataByCid.clear();
       }
+    },
+    subscribeDebugEnabled(listener: () => void) {
+      debugEnabledListeners.add(listener);
+
+      return () => {
+        debugEnabledListeners.delete(listener);
+      };
     },
     register(handle, options) {
       const nextCid = options?.cid ?? handle._cid;
@@ -391,6 +402,7 @@ export function createComponentHandleRegistry(input: {
       handlesById.clear();
       handlesByName.clear();
       nameIndex.clear();
+      debugEnabledListeners.clear();
     },
   } satisfies ComponentHandleRegistry;
 

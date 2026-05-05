@@ -232,4 +232,18 @@ describe('createComponentHandleRegistry', () => {
     expect(parent.debugEnabled).toBe(true);
     expect(child.debugEnabled).toBe(true);
   });
+
+  it('notifies subscribers when debugEnabled changes', () => {
+    const registry = createComponentHandleRegistry({ id: 'root-registry' });
+    const listener = vi.fn();
+
+    const unsubscribe = registry.subscribeDebugEnabled!(listener);
+
+    registry.setDebugEnabled!(true);
+    registry.setDebugEnabled!(false);
+    unsubscribe();
+    registry.setDebugEnabled!(true);
+
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
 });

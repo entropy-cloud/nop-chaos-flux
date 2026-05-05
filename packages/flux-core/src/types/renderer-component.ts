@@ -66,6 +66,7 @@ export interface ComponentHandleRegistry {
   parent?: ComponentHandleRegistry;
   debugEnabled?: boolean;
   setDebugEnabled?(enabled: boolean): void;
+  subscribeDebugEnabled?(listener: () => void): () => void;
   register(
     handle: ComponentHandle,
     options?: {
