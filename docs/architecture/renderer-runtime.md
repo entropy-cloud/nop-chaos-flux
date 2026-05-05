@@ -144,7 +144,7 @@ Practical ownership split:
 - `NodeRenderer` assembles the final renderer contract
 - owner renderers such as `form` create descendant runtime boundaries
 - `@nop-chaos/flux-core` owns only the host-neutral callable contract shape for renderer definitions and fragment helpers
-- `@nop-chaos/flux-react` owns the React-specialized aliases for `RendererDefinition`, `RenderRegionHandle`, `RendererHelpers`, and `SchemaRendererComponent`, including the optional `reactComponent` convenience registration path
+- `@nop-chaos/flux-react` owns the React-specialized aliases for `RendererDefinition`, `RenderRegionHandle`, `RendererHelpers`, and `SchemaRendererComponent`, plus the active React hook surface exported from `packages/flux-react/src/hooks.ts`
 
 ## NodeRenderer Responsibilities
 
@@ -564,7 +564,7 @@ Current scope-hook semantics are:
 - `useOwnScopeSelector()` subscribes only to the current scope's own snapshot, for paths that intentionally ignore parent-scope churn.
 - `readOwn()` remains a current-layer-only API; selector inheritance should come from hook choice, not hidden fields on own snapshots.
 
-Form-specific hooks such as `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormState`, `useCurrentFormFieldState`, `useValidationNodeState`, `useFieldError`, `useOwnedFieldState`, `useChildFieldState`, `useAggregateError`, and `useCurrentFormModelGeneration` also exist and are part of the active form integration surface.
+Form-specific hooks such as `useCurrentValidationScope`, `useCurrentFormErrors`, `useCurrentFormError`, `useCurrentFormState`, `useCurrentFormFieldState`, `useValidationNodeState`, `useFieldError`, `useOwnedFieldState`, `useChildFieldState`, `useAggregateError`, `useDataSourceStatus`, and `useCurrentFormModelGeneration` also exist and are part of the active form integration surface.
 
 Current form-hook implementation note:
 
@@ -580,7 +580,7 @@ Local schema rendering should prefer region handles over raw child schema whenev
 Region handle shape:
 
 ```ts
-interface RenderRegionHandle<R = React.ReactNode> {
+interface RenderRegionHandle<R = RendererRenderOutput> {
   key: string;
   templateNode: TemplateNode | TemplateNode[] | null;
   /** Declared slot parameter names for parameterized regions (e.g. ['item', 'index']). */

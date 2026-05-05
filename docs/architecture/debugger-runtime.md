@@ -89,6 +89,11 @@ Hosts obtain a controller through `createNopDebugger()` and integrate it at the 
 
 This keeps debugger attachment at the framework host boundary rather than inside individual renderers.
 
+Current enablement baseline:
+
+- `enabled: false` means the debugger controller remains a bounded no-op surface for automation/query APIs, but it must not enable component-registry debug capture or append debugger events.
+- performance-oriented render capture may be controlled separately from general debugger enablement through an explicit host gate such as `capturePerformance`; hosts that only want launcher/panel availability do not need to pay render-event collection cost.
+
 ## Unified Event Model
 
 The debugger event stream includes at least:
@@ -141,6 +146,7 @@ Current code-aligned baseline:
 - pinned error buffers keep only a small earliest/latest slice rather than full historical duplication
 - panel timeline virtualization activates for larger event lists instead of rendering the full list eagerly
 - search uses deferred input and filtered projections rather than re-running heavy UI work on every keystroke synchronously
+- render/update diagnostics are hint-only: authoritative counts come from explicit focused measurement surfaces, while debugger overview/node diagnostics expose bounded churn hints such as render commit count, render burst count, and unique-node fanout derived from the bounded ring
 
 ### Snapshot And Payload Discipline
 
@@ -172,6 +178,7 @@ Recommended rules:
 - `createDiagnosticReport()` and `exportSession()` should take explicit event limits or query filters for larger exports
 - redaction stays on the export/automation boundary, not as ad-hoc panel-only masking
 - the live panel should not implicitly pay the full cost of “maximum export fidelity” for every captured event
+- overview/report/node-diagnostics render counters must not overclaim benchmark authority when they are derived from throttled `render:start` plus unthrottled `render:end`; these surfaces should be labeled as churn hints unless a narrower authoritative contract is separately proven
 
 ## Inspection Model
 

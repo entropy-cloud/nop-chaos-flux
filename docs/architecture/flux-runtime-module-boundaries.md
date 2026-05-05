@@ -390,7 +390,7 @@ If a helper can be reused without knowledge of compiled regions or deep schema t
 
 Shared field chrome lives in `packages/flux-renderers-form/src/renderers/shared/`.
 
-`resolveGap` is part of the shared renderer/runtime surface through `@nop-chaos/flux-react`, while `flux-renderers-basic` still keeps its own local utility copy for package-internal layout renderers.
+`resolveGap` is part of the shared renderer/runtime surface through `@nop-chaos/flux-react`; `flux-renderers-basic` no longer keeps a local duplicate copy.
 
 `crud-renderer.tsx` now imports `createReadonlyScopeBinding` from `@nop-chaos/flux-react/unstable`; the implementation owner remains `@nop-chaos/flux-runtime` and is also still exported from `@nop-chaos/flux-runtime` root.
 

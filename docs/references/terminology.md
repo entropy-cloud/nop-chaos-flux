@@ -72,7 +72,9 @@ Typical examples are `body`, `actions`, `header`, or renderer-specific nested co
 
 ## `RenderRegionHandle`
 
-The React-side rendering handle for a compiled region.
+The host-neutral rendering handle for a compiled region.
+
+`@nop-chaos/flux-core` owns the callable contract shape. `@nop-chaos/flux-react` layers a React-specialized alias on top of it for React hosts.
 
 It gives renderer components a stable way to render a named fragment with optional local scope overrides.
 
@@ -334,8 +336,10 @@ The optional renderer-side contract that explains how a renderer participates in
 It lets the compiler learn:
 
 - whether the renderer is a field, container, or none
+- which validation-owner boundary semantics it publishes to descendants
 - how to derive its field path
 - which rules it contributes
+- whether descendant child paths should be compiled under a prefixed owner path
 
 ## `RuntimeFieldRegistration`
 

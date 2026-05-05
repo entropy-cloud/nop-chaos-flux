@@ -62,6 +62,8 @@ Each scenario page should focus on one theme such as:
 
 The point is not that a page contains only one renderer. The point is that one page has one primary validation story.
 
+Performance-focused scenario pages may expose same-environment comparative measurements, but they must describe the supported baseline honestly. For the current `performance-table` page, the baseline is a 1000-row dataset rendered through a paged visible table plus optional additive stress blocks; it is not a universal 1000-visible-row benchmark harness.
+
 ## Route Model
 
 ### Hash-Based Route Baseline
@@ -131,6 +133,7 @@ Rules:
 - launcher is a first-class debugger UI state
 - minimize/expand semantics should be explicit in the product language
 - launcher and panel positioning should be stable enough for repeated manual testing
+- playground hosts may keep the debugger launcher available while separately disabling high-frequency performance capture; the host boundary must make that choice explicit rather than forcing normal pages to pay render instrumentation cost
 
 ## Why This Design
 

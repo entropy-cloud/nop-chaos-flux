@@ -44,6 +44,7 @@ This is a normative design requirements document.
 6. Keep diagnostics and safety checks lightweight on hot paths.
 
 - Expensive deep compare/stringify operations should not run per interaction tick.
+- Debugger and performance instrumentation must be explicitly gated. Disabled mode must not execute equivalent render/update event append work, deep payload shaping, or debug-data capture just because the tooling package is present.
 
 ## Mandatory Requirements
 
@@ -72,6 +73,17 @@ This is a normative design requirements document.
 ## P6. Observability for performance-sensitive failures
 
 - Swallowed errors that can cause hidden degraded behavior are prohibited in runtime-critical paths.
+
+## P8. Comparative measurement surfaces must label what they actually measure
+
+- A playground or debug page may expose same-environment comparative measurements, but it must not present queueing/scheduling time as pure render cost.
+- If a metric includes scheduling, settle, or quiescence wait, the UI and docs must label that explicitly.
+- Page-level comparative measurement is allowed; cross-machine benchmark claims are not allowed unless a separate benchmark contract exists.
+
+## P9. Debug-only and perf-only paths must be owner-controlled
+
+- `debugger disabled` means the runtime/debugger boundary does not enable component-registry debug capture and does not append high-frequency debugger events.
+- Performance-specific debugger capture may use a separate explicit gate, but that gate must default to the ordinary-runtime-safe path unless the host deliberately enables it.
 
 ## P7. Field-state hooks must use per-path subscription, not full-store broadcast
 
