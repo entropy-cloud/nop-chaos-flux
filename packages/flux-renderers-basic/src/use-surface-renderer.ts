@@ -36,6 +36,7 @@ export function useSurfaceRenderer(
   const controlledOpen = resolvedProps.open;
   const [localOpen, setLocalOpen] = React.useState(Boolean(resolvedProps.defaultOpen ?? false));
   const effectiveOpen = controlledOpen !== undefined ? Boolean(controlledOpen) : localOpen;
+  const closedPublishedRef = React.useRef(false);
   const statusPath = typeof resolvedProps.statusPath === 'string' ? resolvedProps.statusPath : undefined;
   const declarativeScope = React.useMemo(
     () =>
@@ -190,48 +191,84 @@ export function useSurfaceRenderer(
     }
 
     if (effectiveOpen) {
+      closedPublishedRef.current = false;
       openSurface();
       return;
     }
 
     surfaceRuntime.close(id);
-    surfaceRuntime.publishClosed({
-      surfaceId: id,
-      kind,
-      scope: declarativeScope,
-      statusPath,
-    });
-  }, [declarativeScope, effectiveOpen, id, kind, openSurface, statusPath, surfaceRuntime]);
-
-  React.useEffect(() => {
-    return () => {
-      surfaceRuntime?.close(id);
-      surfaceRuntime?.publishClosed({
+    if (!closedPublishedRef.current) {
+      surfaceRuntime.publishClosed({
         surfaceId: id,
         kind,
         scope: declarativeScope,
         statusPath,
       });
+      closedPublishedRef.current = true;
+    }
+  }, [declarativeScope, effectiveOpen, id, kind, openSurface, statusPath, surfaceRuntime]);
+
+  React.useEffect(() => {
+    return () => {
+      surfaceRuntime?.close(id);
+      if (!closedPublishedRef.current) {
+        surfaceRuntime?.publishClosed({
+          surfaceId: id,
+          kind,
+          scope: declarativeScope,
+          statusPath,
+        });
+        closedPublishedRef.current = true;
+      }
     };
   }, [declarativeScope, id, kind, statusPath, surfaceRuntime]);
 
-  const entries = React.useSyncExternalStore(
+  const lastEntriesRef = React.useRef<SurfaceEntry[] | undefined>(undefined);
+  const lastSummaryRef = React.useRef<SurfaceStatusSummary | undefined>(undefined);
+
+  const summary = React.useSyncExternalStore(
     surfaceRuntime?.store.subscribe ?? (() => () => undefined),
-    () => surfaceRuntime?.store.getState().entries ?? [],
-    () => surfaceRuntime?.store.getState().entries ?? [],
+    () => {
+      const entries = surfaceRuntime?.store.getState().entries ?? [];
+      if (lastEntriesRef.current === entries && lastSummaryRef.current) {
+        return lastSummaryRef.current;
+      }
+
+      const runtimeEntry = entries.find((entry) => entry.id === id);
+      const activeId = entries.at(-1)?.id;
+      const nextSummary: SurfaceStatusSummary = {
+        id,
+        kind,
+        open: Boolean(runtimeEntry),
+        active: runtimeEntry?.id === activeId,
+        opening: false,
+        closing: false,
+      };
+
+      if (
+        lastSummaryRef.current &&
+        lastSummaryRef.current.open === nextSummary.open &&
+        lastSummaryRef.current.active === nextSummary.active &&
+        lastSummaryRef.current.opening === nextSummary.opening &&
+        lastSummaryRef.current.closing === nextSummary.closing
+      ) {
+        lastEntriesRef.current = entries;
+        return lastSummaryRef.current;
+      }
+
+      lastEntriesRef.current = entries;
+      lastSummaryRef.current = nextSummary;
+      return nextSummary;
+    },
+    () => ({
+      id,
+      kind,
+      open: false,
+      active: false,
+      opening: false,
+      closing: false,
+    }),
   );
-
-  const runtimeEntry = entries.find((entry) => entry.id === id);
-  const activeId = entries.at(-1)?.id;
-
-  const summary: SurfaceStatusSummary = {
-    id,
-    kind,
-    open: Boolean(runtimeEntry),
-    active: runtimeEntry?.id === activeId,
-    opening: false,
-    closing: false,
-  };
 
   return {
     summary,
