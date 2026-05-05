@@ -149,8 +149,25 @@ describe('nop-debugger automation api', () => {
     expect(nodeDiagnostics.nodeId).toBe('form-node');
     expect(nodeDiagnostics.countsByGroup.api).toBe(1);
     expect(nodeDiagnostics.countsByGroup.render).toBe(1);
+    expect(nodeDiagnostics.renderCommitCount).toBe(1);
+    expect(nodeDiagnostics.renderBurstCount).toBe(0);
     expect(nodeDiagnostics.rendererTypes).toContain('form');
     expect(nodeDiagnostics.latestApi?.network?.url).toBe('/api/users');
+  });
+
+  it('keeps registry debug capture disabled when debugger is disabled', () => {
+    const debuggerController = createNopDebugger({
+      id: 'disabled-registry-gate',
+      enabled: false,
+    });
+    const registry = {
+      setDebugEnabled: vi.fn(),
+    };
+
+    debuggerController.setComponentRegistry(registry as never);
+
+    expect(registry.setDebugEnabled).toHaveBeenCalledWith(false);
+    expect(debuggerController.getSnapshot().enabled).toBe(false);
   });
 
   it('exports sessions and interaction traces for AI analysis', async () => {

@@ -83,6 +83,7 @@ describe('debugger adapters', () => {
     };
     const decoratedEnv = decorateDebuggerEnv({
       enabled: true,
+      capturePerformance: true,
       env,
       store,
       redaction: normalizeRedactionOptions({ redactKeys: ['token'], mask: '[MASKED]' }),
@@ -190,6 +191,7 @@ describe('debugger adapters', () => {
 
     const sameEnv = decorateDebuggerEnv({
       enabled: false,
+      capturePerformance: false,
       env,
       store,
       redaction: normalizeRedactionOptions(undefined),
@@ -225,6 +227,7 @@ describe('debugger adapters', () => {
 
     const decoratedEnv = decorateDebuggerEnv({
       enabled: true,
+      capturePerformance: true,
       env,
       store,
       redaction: normalizeRedactionOptions(undefined),
@@ -253,5 +256,42 @@ describe('debugger adapters', () => {
       level: 'warning',
       summary: 'GET /api/abort aborted',
     });
+  });
+
+  it('can skip render events when performance capture is disabled', () => {
+    const store = createStore();
+    const env: RendererEnv = {
+      monitor: {
+        onRenderStart: vi.fn(),
+        onRenderEnd: vi.fn(),
+      },
+      async fetcher<T>() {
+        return { ok: true, status: 200, data: undefined as T };
+      },
+      notify() {
+        return undefined;
+      },
+    };
+
+    const decoratedEnv = decorateDebuggerEnv({
+      enabled: true,
+      capturePerformance: false,
+      env,
+      store,
+      redaction: normalizeRedactionOptions(undefined),
+      requestState: new Map(),
+      nextRequestInstanceId: createRequestInstanceIdFactory(),
+    });
+
+    decoratedEnv.monitor?.onRenderStart?.({ nodeId: 'node-1', path: 'body.0', type: 'text' });
+    decoratedEnv.monitor?.onRenderEnd?.({
+      nodeId: 'node-1',
+      path: 'body.0',
+      type: 'text',
+      durationMs: 4,
+    });
+    decoratedEnv.notify('info', 'still tracked');
+
+    expect(store.getSnapshot().events.map((event) => event.kind)).toEqual(['notify']);
   });
 });

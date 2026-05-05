@@ -117,12 +117,17 @@ describe('debugger automation helpers', () => {
         error: 0,
         node: 0,
       },
+      renderCommitCount: 0,
+      renderBurstCount: 0,
+      renderUniqueNodeCount: 0,
     };
     const diagnostics: NopNodeDiagnostics = {
       rendererTypes: [],
       totalEvents: 0,
       countsByGroup: {},
       countsByKind: {},
+      renderCommitCount: 0,
+      renderBurstCount: 0,
       recentEvents: [],
     };
     const trace: NopInteractionTrace = {
@@ -298,12 +303,17 @@ describe('debugger automation helpers', () => {
       errorCount: 0,
       totalEvents: 0,
       countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 },
+      renderCommitCount: 0,
+      renderBurstCount: 0,
+      renderUniqueNodeCount: 0,
     };
     const diagnostics: NopNodeDiagnostics = {
       rendererTypes: [],
       totalEvents: 0,
       countsByGroup: {},
       countsByKind: {},
+      renderCommitCount: 0,
+      renderBurstCount: 0,
       recentEvents: [],
     };
     const trace: NopInteractionTrace = {

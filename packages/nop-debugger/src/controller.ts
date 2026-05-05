@@ -89,6 +89,7 @@ function appendActionScopeSnapshotEvent(args: {
 export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebuggerController {
   const windowConfig = readWindowConfig();
   const enabled = options.enabled ?? windowConfig.enabled;
+  const capturePerformance = options.capturePerformance ?? enabled;
   const debuggerId = options.id ?? 'default';
   const sessionId = createSessionId(debuggerId);
   const maxEvents = options.maxEvents ?? 400;
@@ -295,11 +296,12 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     sessionId,
     automation,
     decorateEnv(env: RendererEnv) {
-      return decorateDebuggerEnv({
-        enabled,
-        env,
-        store,
-        redaction,
+        return decorateDebuggerEnv({
+          enabled,
+          capturePerformance,
+          env,
+          store,
+          redaction,
         requestState,
         nextRequestInstanceId,
       });
@@ -385,7 +387,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       }
       componentRegistry = registry ?? undefined;
       if (componentRegistry) {
-        componentRegistry.setDebugEnabled?.(true);
+        componentRegistry.setDebugEnabled?.(enabled);
       }
       currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
       currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
@@ -394,7 +396,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     },
     setActionScope(nextActionScope: ActionScope | null) {
       const actionScope = nextActionScope ?? undefined;
-      if (actionScope) {
+      if (enabled && actionScope) {
         appendActionScopeSnapshotEvent({
           store,
           actionScope,

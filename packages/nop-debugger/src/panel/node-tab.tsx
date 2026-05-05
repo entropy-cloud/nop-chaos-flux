@@ -282,8 +282,15 @@ export function NodeTab(props: {
             <>
               <div className="ndbg-overview">
                 <article className="ndbg-metric-card">
-                  <span className="ndbg-metric-label">{t('flux.debugger.renderEvents')}</span>
-                  <strong>{nodeDiagnostics.countsByGroup.render ?? 0}</strong>
+                  <span className="ndbg-metric-label">
+                    {t('flux.debugger.renderCommitHints')}
+                  </span>
+                  <strong>{nodeDiagnostics.renderCommitCount}</strong>
+                  <span>
+                    {t('flux.debugger.renderBurstHints', {
+                      burstCount: nodeDiagnostics.renderBurstCount,
+                    })}
+                  </span>
                 </article>
                 <article className="ndbg-metric-card">
                   <span className="ndbg-metric-label">{t('flux.debugger.actionEvents')}</span>

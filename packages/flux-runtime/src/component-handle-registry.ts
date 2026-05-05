@@ -341,6 +341,13 @@ export function createComponentHandleRegistry(input: {
       return resolveHandleByCid(cid);
     },
     setHandleDebugData(cid, data) {
+      if (!debugEnabled) {
+        if (data == null) {
+          debugDataByCid.delete(cid);
+        }
+        return;
+      }
+
       if (data) {
         debugDataByCid.set(cid, data);
         return;
@@ -401,6 +408,9 @@ export function createComponentHandleRegistry(input: {
       parentWithChildren.__childRegistries = new Set<ComponentHandleRegistry>();
     }
     parentWithChildren.__childRegistries.add(registry);
+    if (input.parent.debugEnabled) {
+      registry.setDebugEnabled(true);
+    }
   }
 
   return registry;

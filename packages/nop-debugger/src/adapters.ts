@@ -93,6 +93,7 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
 
 export function decorateDebuggerEnv(input: {
   enabled: boolean;
+  capturePerformance: boolean;
   env: RendererEnv;
   store: NopDebuggerStore;
   redaction: NormalizedRedactionOptions;
@@ -116,6 +117,7 @@ export function decorateDebuggerEnv(input: {
   const decoratedMonitor: RendererMonitor = {
     ...baseMonitor,
     onRenderStart(payload) {
+      if (input.capturePerformance) {
       input.store.append({
         kind: 'render:start',
         group: 'render',
@@ -127,9 +129,11 @@ export function decorateDebuggerEnv(input: {
         path: payload.path,
         rendererType: payload.type,
       });
+      }
       baseMonitor?.onRenderStart?.(payload);
     },
     onRenderEnd(payload) {
+      if (input.capturePerformance) {
       input.store.append({
         kind: 'render:end',
         group: 'render',
@@ -142,6 +146,7 @@ export function decorateDebuggerEnv(input: {
         rendererType: payload.type,
         durationMs: payload.durationMs,
       });
+      }
       baseMonitor?.onRenderEnd?.(payload);
     },
     onActionStart(payload) {

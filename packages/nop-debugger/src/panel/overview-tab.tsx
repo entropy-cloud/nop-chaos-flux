@@ -60,12 +60,21 @@ export function OverviewTab(props: {
           overview.slowestRenderMs != null && overview.slowestRenderMs > 16 ? '' : undefined
         }
       >
-        <span className="ndbg-metric-label">{t('flux.debugger.renders')}</span>
-        <strong>{overview.countsByGroup.render ?? 0}</strong>
+        <span className="ndbg-metric-label">{t('flux.debugger.renderCommitHints')}</span>
+        <strong>{overview.renderCommitCount}</strong>
         <span>
           {overview.slowestRenderMs != null
-            ? `Slowest: ${overview.slowestRenderMs}ms${overview.slowestRenderMs > 16 ? ' (slow)' : ''}`
-            : 'No render:end events'}
+            ? t('flux.debugger.slowestRenderCommit', {
+                ms: overview.slowestRenderMs,
+                suffix: overview.slowestRenderMs > 16 ? ' (slow)' : '',
+              })
+            : t('flux.debugger.noRenderCommitEvents')}
+        </span>
+        <span className="ndbg-metric-label">
+          {t('flux.debugger.renderBurstAndNodes', {
+            burstCount: overview.renderBurstCount,
+            nodeCount: overview.renderUniqueNodeCount,
+          })}
         </span>
       </article>
       <article className="ndbg-metric-card" data-error={strictMode ? undefined : ''}>

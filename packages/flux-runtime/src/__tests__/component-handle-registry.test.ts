@@ -134,6 +134,30 @@ describe('createComponentHandleRegistry', () => {
     expect(child.getHandleDebugData!(21)).toBeUndefined();
   });
 
+  it('ignores new debug data while debug capture is disabled', () => {
+    const registry = createComponentHandleRegistry({ id: 'root-registry' });
+
+    registry.setHandleDebugData!(33, {
+      resolvedMeta: { disabled: true },
+    } as any);
+
+    expect(registry.getHandleDebugData!(33)).toBeUndefined();
+
+    registry.setDebugEnabled!(true);
+    registry.setHandleDebugData!(33, {
+      resolvedMeta: { disabled: false },
+    } as any);
+    expect(registry.getHandleDebugData!(33)).toMatchObject({
+      resolvedMeta: { disabled: false },
+    });
+
+    registry.setDebugEnabled!(false);
+    registry.setHandleDebugData!(33, {
+      resolvedMeta: { disabled: true },
+    } as any);
+    expect(registry.getHandleDebugData!(33)).toBeUndefined();
+  });
+
   it('dispose() clears parent, children, and all handles', () => {
     const parent = createComponentHandleRegistry({ id: 'parent-registry' });
     const child = createComponentHandleRegistry({ id: 'child-registry', parent });
@@ -196,5 +220,16 @@ describe('createComponentHandleRegistry', () => {
         },
       ],
     });
+  });
+
+  it('inherits parent debugEnabled when a child registry is created later', () => {
+    const parent = createComponentHandleRegistry({ id: 'parent-registry' });
+
+    parent.setDebugEnabled!(true);
+
+    const child = createComponentHandleRegistry({ id: 'child-registry', parent });
+
+    expect(parent.debugEnabled).toBe(true);
+    expect(child.debugEnabled).toBe(true);
   });
 });

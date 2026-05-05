@@ -212,6 +212,9 @@ describe('diagnostics helpers', () => {
       error: 1,
       node: 0,
     });
+    expect(overview.renderCommitCount).toBe(1);
+    expect(overview.renderBurstCount).toBe(0);
+    expect(overview.renderUniqueNodeCount).toBe(1);
 
     const report = createDiagnosticReport('controller-a', snapshot, {
       query: { nodeId: 'node-1' },
@@ -237,6 +240,8 @@ describe('diagnostics helpers', () => {
     });
     expect(nodeDiagnostics.rendererTypes).toEqual(['form']);
     expect(nodeDiagnostics.recentEvents).toHaveLength(3);
+    expect(nodeDiagnostics.renderCommitCount).toBe(1);
+    expect(nodeDiagnostics.renderBurstCount).toBe(0);
 
     const trace = buildInteractionTrace(events, {
       nodeId: 'node-1',

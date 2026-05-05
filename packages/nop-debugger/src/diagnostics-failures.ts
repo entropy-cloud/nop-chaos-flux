@@ -45,7 +45,7 @@ function createFailureHints(
   }
 
   if (relatedEvents.filter((candidate) => candidate.kind === 'render:start').length >= 3) {
-    hints.push('repeated render bursts');
+    hints.push('repeated render burst hints');
   }
 
   return hints;
@@ -132,8 +132,8 @@ export function getNodeAnomalies(
     hints.push('request churn or aborts');
   }
 
-  if (diagnostics.recentEvents.filter((event) => event.kind === 'render:start').length >= 3) {
-    hints.push('repeated render bursts');
+  if (diagnostics.renderBurstCount >= 3) {
+    hints.push('repeated render burst hints');
   }
 
   return {

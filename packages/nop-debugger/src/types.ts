@@ -157,6 +157,9 @@ export interface NopDebuggerOverview {
   errorCount: number;
   totalEvents: number;
   countsByGroup: Record<NopDebuggerFilterKind, number>;
+   renderCommitCount: number;
+   renderBurstCount: number;
+   renderUniqueNodeCount: number;
   slowestRenderMs?: number;
 }
 
@@ -173,7 +176,9 @@ export interface NopNodeDiagnostics {
   totalEvents: number;
   countsByGroup: Partial<Record<NopDebuggerFilterKind, number>>;
   countsByKind: Partial<Record<NopDebugEventKind, number>>;
-  latestRender?: NopDebugEvent;
+   renderCommitCount: number;
+   renderBurstCount: number;
+   latestRender?: NopDebugEvent;
   latestAction?: NopDebugEvent;
   latestApi?: NopDebugEvent;
   latestError?: NopDebugEvent;
@@ -398,6 +403,7 @@ export interface NopErrorBufferOptions {
 export interface NopDebuggerOptions {
   id?: string;
   enabled?: boolean;
+  capturePerformance?: boolean;
   maxEvents?: number;
   exposeAutomationApi?: boolean;
   redaction?: NopDebuggerRedactionOptions;

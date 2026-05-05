@@ -219,10 +219,14 @@ export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
   );
 
   const renderEndEvents = events.filter((event) => event.kind === 'render:end');
+  const renderStartEvents = events.filter((event) => event.kind === 'render:start');
   const slowestRenderMs =
     renderEndEvents.length > 0
       ? Math.max(...renderEndEvents.map((event) => event.durationMs ?? 0))
       : undefined;
+  const renderUniqueNodeCount = new Set(
+    renderEndEvents.map((event) => event.nodeId).filter((value): value is string => !!value),
+  ).size;
 
   return {
     latestCompile: latestByKind('compile:end'),
@@ -232,6 +236,9 @@ export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
     errorCount: countsByGroup.error,
     totalEvents: events.length,
     countsByGroup,
+    renderCommitCount: renderEndEvents.length,
+    renderBurstCount: renderStartEvents.length,
+    renderUniqueNodeCount,
     slowestRenderMs,
   };
 }
@@ -326,6 +333,8 @@ export function buildNodeDiagnostics(
     totalEvents: allMatchingEvents.length,
     countsByGroup,
     countsByKind,
+    renderCommitCount: allMatchingEvents.filter((event) => event.kind === 'render:end').length,
+    renderBurstCount: allMatchingEvents.filter((event) => event.kind === 'render:start').length,
     latestRender: allMatchingEvents.find((event) => event.group === 'render'),
     latestAction: allMatchingEvents.find((event) => event.group === 'action'),
     latestApi: allMatchingEvents.find((event) => event.group === 'api'),
