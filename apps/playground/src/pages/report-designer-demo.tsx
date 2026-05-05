@@ -34,6 +34,7 @@ import {
   buildReportDesignerScopeData,
   registerReportDesignerRenderers,
 } from '@nop-chaos/report-designer-renderers';
+import { Button } from '@nop-chaos/ui';
 
 const fieldSources: FieldSourceSnapshot[] = [
   {
@@ -398,14 +399,16 @@ export function ReportDesignerDemo() {
           data-collapsed={paletteCollapsed || undefined}
         >
           <div data-slot="report-demo-panel-toolbar">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               data-slot="report-demo-panel-toggle"
               aria-label={paletteCollapsed ? 'Expand palette' : 'Collapse palette'}
               onClick={() => setPaletteCollapsed((value) => !value)}
             >
               {paletteCollapsed ? '>' : '<'}
-            </button>
+            </Button>
           </div>
           {!paletteCollapsed ? (
             <div data-slot="report-demo-field-panel">
