@@ -1,6 +1,6 @@
 # 215 Performance Measurement And Debugger Gating Plan
 
-> Plan Status: in progress
+> Plan Status: completed
 > Last Reviewed: 2026-05-05
 > Source: live repo audit of `apps/playground/src/pages/performance-table-page.tsx`, `apps/playground/src/pages/performance-table/schema.ts`, `packages/nop-debugger/src/{adapters.ts,controller.ts,diagnostics.ts,diagnostics-failures.ts,store.ts,panel/overview-tab.tsx,panel/node-tab.tsx}`, `docs/architecture/{performance-design-requirements.md,debugger-runtime.md,playground-experience.md}`
 > Related: `docs/plans/140-nop-debugger-ai-explanation-contracts-and-test-hardening-plan.md`, `docs/plans/214-report-designer-performance-hot-path-closure-plan.md`
@@ -131,35 +131,35 @@ Exit Criteria:
 
 ### Phase 4 - Close The Proof And Documentation Loop
 
-Status: in progress
+Status: completed
 Targets: focused tests/proof harnesses, `docs/architecture/{performance-design-requirements.md,debugger-runtime.md,playground-experience.md}`, this plan
 
 - Item Types: `Proof | Decision | Follow-up`
 
-- [ ] [Proof] Re-run the in-scope verification set and confirm the supported measurement/debugger baseline is reflected by focused proof plus retained e2e, not by UI wording only.
+- [x] [Proof] Re-run the in-scope verification set and confirm the supported measurement/debugger baseline is reflected by focused proof plus retained e2e, not by UI wording only.
 - [x] [Decision] Update affected owner docs to state the final supported measurement and gating baseline, including what is page-local comparative measurement, what is debug hint-only, what automation APIs mean, and what is explicitly gated.
 - [x] [Decision] Adjudicate any remaining out-of-scope optimization ideas into explicit deferred ownership rather than leaving them as implicit debt.
 
 Exit Criteria:
 
-- [ ] The live repo has one consistent owner-doc story for performance measurement, debugger diagnostics semantics, and debug-only instrumentation cost.
-- [ ] Focused proof covers the supported in-scope behavior, and retained e2e only checks the supported user-visible workflow rather than timing budgets.
-- [ ] Residual items are explicitly adjudicated instead of silently left as “future maybe”.
-- [ ] `docs/logs/` 对应日期条目已更新。
+- [x] The live repo has one consistent owner-doc story for performance measurement, debugger diagnostics semantics, and debug-only instrumentation cost.
+- [x] Focused proof covers the supported in-scope behavior, and retained e2e only checks the supported user-visible workflow rather than timing budgets.
+- [x] Residual items are explicitly adjudicated instead of silently left as “future maybe”.
+- [x] `docs/logs/` 对应日期条目已更新。
 
 ## Closure Gates
 
-- [ ] The performance page no longer overclaims inaccurate or stale metrics.
-- [ ] The in-scope measurement baseline is explicit: which numbers are trustworthy, what they measure, what they do not measure, and that this page is a same-environment comparative surface rather than a cross-machine benchmark.
-- [ ] `nop-debugger` no longer uses misleading render/update counters as if they were authoritative performance conclusions in panel UI, controller APIs, diagnostic reports, or exports.
-- [ ] The in-scope debug-only/perf-only gating rule is implemented and verified: the chosen disabled-mode boundary covers env wrappers, plugin/controller paths, and component-registry debug-data capture.
-- [ ] Focused proof exists for both the performance page measurement path and the debugger debug-enabled/debug-disabled behavior, including deterministic measurement math checks and automation-facing debugger checks.
-- [ ] Affected owner docs are synced to the live baseline, or the plan explicitly records `No owner-doc update required` where appropriate.
-- [ ] Independent closure audit confirms no remaining in-scope misleading measurement claim or ungated instrumentation hot path.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] The performance page no longer overclaims inaccurate or stale metrics.
+- [x] The in-scope measurement baseline is explicit: which numbers are trustworthy, what they measure, what they do not measure, and that this page is a same-environment comparative surface rather than a cross-machine benchmark.
+- [x] `nop-debugger` no longer uses misleading render/update counters as if they were authoritative performance conclusions in panel UI, controller APIs, diagnostic reports, or exports.
+- [x] The in-scope debug-only/perf-only gating rule is implemented and verified: the chosen disabled-mode boundary covers env wrappers, plugin/controller paths, and component-registry debug-data capture.
+- [x] Focused proof exists for both the performance page measurement path and the debugger debug-enabled/debug-disabled behavior, including deterministic measurement math checks and automation-facing debugger checks.
+- [x] Affected owner docs are synced to the live baseline, or the plan explicitly records `No owner-doc update required` where appropriate.
+- [x] Independent closure audit confirms no remaining in-scope misleading measurement claim or ungated instrumentation hot path.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -177,12 +177,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Implementation is landed for phases 1-3 and owner docs are synced, but the plan remains open until the full repo verification set and an independent closure audit complete Phase 4 and the closure gates.
+Status Note: Implementation, focused proof, full workspace verification, and independent closure audit are complete. The supported performance-measurement and debugger-gating baseline is now closed for this plan.
 
 Closure Audit Evidence:
 
-- Pending.
+- `ses_207a1af15ffeqQVcjUn2UgmKmJ` - APPROVE. Confirmed the performance-page baseline, debugger hint-only semantics, debug-only/perf-only gating fast paths, focused proof, and owner docs all satisfy the in-scope closure gates.
 
 Follow-up:
 
-- None yet. Confirmed in-scope gaps must be fixed before closure.
+- None.

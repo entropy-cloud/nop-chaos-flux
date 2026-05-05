@@ -89,8 +89,9 @@ Targets: in-scope vitest configs, Playwright files, i18n tests, related verifica
 
 - [x] [Fix] Add or restore the retained must-fix coverage gates for `flux-action-core`, `report-designer-renderers`, `spreadsheet-renderers`, `word-editor-renderers`, `flux-code-editor`, and `nop-debugger`.
 - [x] [Fix] Expand `flux-formula` coverage include so the retained public compiler-entry gap is closed.
-- [ ] [Fix] Expand retained must-fix test coverage where `full-7` identified real path gaps: form critical-path E2E, report-designer key writeback/action chain, and `flux-i18n` public semantic coverage.
-- [ ] [Fix] Replace the retained fixed-sleep Playwright waits in the in-scope files with stable programmatic readiness conditions.
+- [ ] [Fix] Expand retained must-fix test coverage where `full-7` identified real path gaps: form critical-path E2E and report-designer key writeback/action chain.
+- [x] [Fix] Expand retained must-fix test coverage for `flux-i18n` public initialization/reset/hook semantics.
+- [x] [Fix] Replace the retained fixed-sleep Playwright waits in the in-scope files with stable programmatic readiness conditions.
 - [ ] [Decision] Record which broader test-hardening ideas remain out of scope so the plan does not silently expand into a repo-wide test modernization campaign.
 
 Exit Criteria:
@@ -144,7 +145,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Partially completed. Phase 1 is closed: the oversized `flux-compiler` prop-coverage test was split into smaller modules, the `>700` hard-gate defect is gone, and the retained word-editor test-global pollution was fixed. Phase 2 is in progress with coverage-gate restoration landed and the in-scope Playwright fixed-sleep waits replaced by readiness-based assertions for `word-editor`, `debugger`, and `performance-table`. Phase 3 is also partially landed: active docs now reflect the current renderer/runtime baseline, and `flux-code-editor` source refs now use canonical `path` while still reading legacy `dataPath` for compatibility. Remaining test-hardening and `flux-i18n` semantic coverage still block full plan closure.
+Status Note: Partially completed. Phase 1 is closed: the oversized `flux-compiler` prop-coverage test was split into smaller modules, the `>700` hard-gate defect is gone, and the retained word-editor test-global pollution was fixed. Phase 2 is in progress with coverage-gate restoration landed, the in-scope Playwright fixed-sleep waits replaced by readiness-based assertions for `word-editor`, `debugger`, and `performance-table`, and `flux-i18n` now covered with focused tests for singleton init, formatter/reset semantics, dynamic resource injection, and `useFluxTranslation` language updates. Phase 3 is also partially landed: active docs now reflect the current renderer/runtime baseline, and `flux-code-editor` source refs now use canonical `path` while still reading legacy `dataPath` for compatibility. Remaining test-hardening blockers are the retained form critical-path E2E gap, the report-designer key writeback/action-chain E2E gap, and the still-pending out-of-scope-boundary decision note.
 
 Closure Audit Evidence:
 
