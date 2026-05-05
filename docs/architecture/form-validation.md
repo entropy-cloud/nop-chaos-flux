@@ -407,7 +407,7 @@ Immutable runtime input produced by the compiler, containing:
 
 - `rootPath` and `ownerId` for scope identity
 - optional `nodes` map of compiled validation nodes keyed by path
-- `validationOrder` for deterministic traversal
+- `order` for deterministic traversal
 - `dependents` map for dependency-triggered revalidation
 
 In the current exported live types, `CompiledValidationNode.kind` is one of: `field`, `object`, `array`, or `form`.

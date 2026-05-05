@@ -22,8 +22,8 @@ The gap is that a renderer sometimes needs to accept non-canonical authoring inp
 
 Typical examples:
 
-- `crud.bulkActions` should lower into canonical `crud.listActions`
-- migrated AMIS `filter`-like authoring should lower into canonical `queryForm`
+- `crud` compile-time transforms should accept only canonical authoring fields such as `listActions` and `queryForm`
+- migrated AMIS `filter`-like input must be converted before it reaches the live compiler
 - future toolbar sugar may need to lower into `toolbar`, `listActions`, and `columnSettings`
 
 These are not runtime concerns. They are authoring-to-canonical compile-time concerns.
@@ -105,9 +105,9 @@ Reason:
 
 Examples:
 
-- `crud.bulkActions` interacts with `toolbar` and `footerToolbar`
+- canonical `crud.listActions` interacts with `toolbar` and `footerToolbar`
 - `columns-toggler` interacts with `headerToolbar`, `columnsTogglable`, and `columnSettings`
-- `filter` and `autoGenerateFilter` both lower into the query-model surface
+- canonical `queryForm` and `autoGenerateQueryForm` define the query-model surface
 
 So the correct abstraction is node canonicalization, not a bag of unrelated field mappers.
 
@@ -123,14 +123,14 @@ Node-level compile-time transforms should follow these rules:
 
 ## Examples
 
-### Example 1: `crud.bulkActions` -> `crud.listActions`
+### Example 1: canonical `crud.listActions`
 
 Authoring input:
 
 ```json
 {
   "type": "crud",
-  "bulkActions": [{ "type": "button", "label": "批量删除" }]
+  "listActions": [{ "type": "button", "label": "批量删除" }]
 }
 ```
 
@@ -145,15 +145,15 @@ Canonical output:
 
 ### Example 2: migrated query sugar -> `queryForm`
 
-Authoring input may preserve an upstream migration field for tooling convenience, but the compiler should lower it into the canonical Flux query contract before runtime compile continues.
+Authoring input should already use the canonical Flux query contract before runtime compile continues.
 
 ## Diagnostics Policy
 
 The transform may emit diagnostics for authoring ambiguity, for example:
 
-- both `bulkActions` and `listActions` provided with incompatible values
-- both a sugar field and its canonical target field provided in conflicting ways
-- deprecated migration aliases that are still accepted but should be rewritten by tooling
+- multiple canonical action surfaces provided with incompatible values
+- two canonical fields provided in conflicting ways
+- non-canonical migration aliases that should be rejected or rewritten before compile
 
 The transform should not silently pick one side in a real conflict unless there is a documented precedence rule.
 
@@ -171,7 +171,7 @@ Current repo baseline:
 - global `RendererPlugin.beforeCompile` exists
 - renderer-local `schemaValidator` exists
 - renderer-local `authoringTransform` exists on `RendererDefinition`
-- `crud` uses it to lower legacy `bulkActions` authoring into canonical `listActions`
+- `crud` authoring transforms operate on canonical field names only
 
 ## Design Consequences
 

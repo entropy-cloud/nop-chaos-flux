@@ -1,6 +1,6 @@
 # 206 Public API And Schema Compatibility Convergence Plan
 
-> Plan Status: proposed
+> Plan Status: completed
 > Last Reviewed: 2026-05-05
 > Source: `docs/analysis/2026-05-05-open-ended-adversarial-review-01/round-05.md`, `docs/analysis/2026-05-05-open-ended-adversarial-review-01/round-07.md`, `docs/architecture/frontend-programming-model.md`, live repo re-audit on 2026-05-05
 > Related: `docs/plans/197-architecture-evolution-formula-di-treeshaking-build-config-plan.md`
@@ -61,87 +61,87 @@
 
 ### Phase 1 - Freeze Canonical API And Schema Decisions
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/frontend-programming-model.md`, `docs/architecture/debugger-runtime.md`, `docs/architecture/flux-formula.md`, `docs/architecture/node-level-compile-time-transforms.md`, `docs/architecture/form-validation.md`, `docs/components/crud/design.md`, `docs/references/form-validation-runtime-types.md`, this plan
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Re-audit each in-scope surface and record one explicit canonical contract for formula registry API, debugger inspect API, CRUD authoring vocabulary, and compiled validation traversal order.
-- [ ] Explicitly classify every removed surface as `Compatibility Alias` or `Parallel Public Surface`, not as convenience projection.
-- [ ] Update active docs so these in-scope surfaces no longer present compatibility aliases or dual-field contracts as supported peers of the canonical contract.
+- [x] Re-audit each in-scope surface and record one explicit canonical contract for formula registry API, debugger inspect API, CRUD authoring vocabulary, and compiled validation traversal order.
+- [x] Explicitly classify every removed surface as `Compatibility Alias` or `Parallel Public Surface`, not as convenience projection.
+- [x] Update active docs so these in-scope surfaces no longer present compatibility aliases or dual-field contracts as supported peers of the canonical contract.
 
 Exit Criteria:
 
-- [ ] Every in-scope subsystem has one named canonical contract and one documented removal target list.
-- [ ] Active docs for these in-scope surfaces no longer present compatibility aliases or dual-field contracts as co-equal peers.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Every in-scope subsystem has one named canonical contract and one documented removal target list.
+- [x] Active docs for these in-scope surfaces no longer present compatibility aliases or dual-field contracts as co-equal peers.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ### Phase 2 - Remove Parallel Package Public APIs
 
-Status: planned
+Status: completed
 Targets: `packages/flux-formula/src/{index.ts,registry.ts,compile/formula-compiler.ts,compile/static-eval.ts,evaluator.ts,builtins.ts}`, `packages/nop-debugger/src/{types.ts,controller.ts,automation.ts,index.tsx}`, focused tests, owner docs including `docs/architecture/flux-formula.md`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Remove process-global formula registry wrappers from the active root public API and converge runtime/compiler/builtin wiring onto the canonical instance-owned registry model.
-- [ ] Remove `inspectNode(cid)` from debugger controller/automation/public types and keep `inspectByCid(cid)` as the single canonical inspect entrypoint.
-- [ ] Add focused tests proving the surviving canonical APIs still satisfy runtime behavior and package-entry expectations after alias removal.
+- [x] Remove process-global formula registry wrappers from the active root public API and converge runtime/compiler/builtin wiring onto the canonical instance-owned registry model.
+- [x] Remove `inspectNode(cid)` from debugger controller/automation/public types and keep `inspectByCid(cid)` as the single canonical inspect entrypoint.
+- [x] Add focused tests proving the surviving canonical APIs still satisfy runtime behavior and package-entry expectations after alias removal.
 
 Exit Criteria:
 
-- [ ] `flux-formula` root public API exposes one registry-extension model, not both instance-local and global mutable owners.
-- [ ] debugger automation/controller/public types expose one canonical inspect entrypoint.
-- [ ] Focused tests prove canonical package surfaces still work after alias removal.
-- [ ] Affected owner docs and execution-day `docs/logs/` entry are updated.
+- [x] `flux-formula` root public API exposes one registry-extension model, not both instance-local and global mutable owners.
+- [x] debugger automation/controller/public types expose one canonical inspect entrypoint.
+- [x] Focused tests prove canonical package surfaces still work after alias removal.
+- [x] Affected owner docs and execution-day `docs/logs` entry are updated.
 
 ### Phase 3 - Remove Legacy Authoring And Dual-Field Contracts
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/data-schema-validation.ts`, `packages/flux-core/src/{types/validation.ts,validation-model.ts}`, focused tests, `docs/components/crud/design.md`, `docs/architecture/node-level-compile-time-transforms.md`, `docs/architecture/form-validation.md`, `docs/references/form-validation-runtime-types.md`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Stop accepting and lowering legacy CRUD authoring fields (`filter`, `primaryField`, `perPageField`, `bulkActions`) in the live authoring transform; keep only canonical CRUD schema fields.
-- [ ] Choose one canonical compiled validation traversal field and remove the parallel `order` / `validationOrder` contract from exported types, helpers, docs, and tests.
-- [ ] Add focused tests proving canonical CRUD authoring and canonical validation traversal semantics still work, while removed alias paths are no longer treated as supported baseline.
+- [x] Stop accepting and lowering legacy CRUD authoring fields (`filter`, `primaryField`, `perPageField`, `bulkActions`) in the live authoring transform; keep only canonical CRUD schema fields.
+- [x] Choose one canonical compiled validation traversal field and remove the parallel `order` / `validationOrder` contract from exported types, helpers, docs, and tests.
+- [x] Add focused tests proving canonical CRUD authoring and canonical validation traversal semantics still work, while removed alias paths are no longer treated as supported baseline.
 
 Exit Criteria:
 
-- [ ] CRUD authoring transform no longer accepts the in-scope legacy alias fields as supported input.
-- [ ] Compiled validation model exports one traversal-order contract, not two co-equal fields.
-- [ ] CRUD and validation owner docs describe only the landed canonical contract.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] CRUD authoring transform no longer accepts the in-scope legacy alias fields as supported input.
+- [x] Compiled validation model exports one traversal-order contract, not two co-equal fields.
+- [x] CRUD and validation owner docs describe only the landed canonical contract.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ### Phase 4 - Proof And Closure Audit
 
-Status: planned
+Status: completed
 Targets: focused tests across in-scope packages, affected owner docs, this plan
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] Re-audit the live repo for any remaining in-scope compatibility alias or parallel public surface that survived Phases 2-3.
-- [ ] Run required verification for code changes and keep workspace `typecheck` / `build` / `lint` / `test` as hard closure gates.
-- [ ] Perform an independent closure audit that checks semantics, not just exported names or deleted lines.
+- [x] Re-audit the live repo for any remaining in-scope compatibility alias or parallel public surface that survived Phases 2-3.
+- [x] Run required verification for code changes and keep workspace `typecheck` / `build` / `lint` / `test` as hard closure gates.
+- [x] Perform an independent closure audit that checks semantics, not just exported names or deleted lines.
 
 Exit Criteria:
 
-- [ ] No in-scope live compatibility alias or parallel public surface remains in active code/docs/tests.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
-- [ ] Independent closure audit evidence is recorded in this plan or the execution-day log.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] No in-scope live compatibility alias or parallel public surface remains in active code/docs/tests.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint`, and `pnpm test` are green.
+- [x] Independent closure audit evidence is recorded in this plan or the execution-day log.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ## Closure Gates
 
-- [ ] All in-scope confirmed compatibility aliases and parallel public surfaces are removed or explicitly adjudicated as out of scope with successor ownership.
-- [ ] All in-scope confirmed contract drifts between active docs and live code/tests are resolved.
-- [ ] No in-scope live defect or contract drift is silently downgraded to deferred or follow-up.
-- [ ] Active docs describe only the final supported canonical contract for the in-scope subsystems.
-- [ ] Required focused verification is complete for formula, debugger, CRUD, and validation contract convergence.
-- [ ] Independent subagent closure audit is completed and recorded.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope confirmed compatibility aliases and parallel public surfaces are removed or explicitly adjudicated as out of scope with successor ownership.
+- [x] All in-scope confirmed contract drifts between active docs and live code/tests are resolved.
+- [x] No in-scope live defect or contract drift is silently downgraded to deferred or follow-up.
+- [x] Active docs describe only the final supported canonical contract for the in-scope subsystems.
+- [x] Required focused verification is complete for formula, debugger, CRUD, and validation contract convergence.
+- [x] Independent subagent closure audit is completed and recorded.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -184,12 +184,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed. `flux-formula` now exposes only the instance-owned registry model, `nop-debugger` exposes only `inspectByCid(cid)`, CRUD compile-time validation rejects legacy alias authoring fields instead of lowering them, and compiled validation traversal is unified on `order`. Active docs, focused tests, and workspace verification were updated against the live repository baseline.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: Pending independent closure audit
-- Evidence: Pending
+- Reviewer / Agent: general subagent closure audit
+- Evidence: Independent audit after repo re-check found no remaining plan-owned compatibility alias or parallel public surface; workspace verification and focused searches over `inspectNode`, `validationOrder`, global formula wrappers, and CRUD legacy alias acceptance paths matched the landed canonical baseline.
 
 Follow-up:
 

@@ -18,8 +18,7 @@
 - `sourcePackage: '@nop-chaos/spreadsheet-renderers'`
 - `rendererClass: 'domain-host-renderer'`
 - `rendererTraits`: `workbench-shell`, `builder-facing`
-- 当前 regions: `toolbar`、`body`、`dialogs`
-- 当前 fields: `title` 为 `value-or-region`；`statusPath`、`document`、`config`、`readOnly` 为 `prop`
+- 当前 definition fields: `title` 为 `value-or-region`；`statusPath`、`document`、`config`、`readOnly` 为 `prop`；`toolbar`、`body`、`dialogs` 为 `region`
 
 ## 4. schema 设计
 
@@ -30,9 +29,14 @@
 
 ## 5. 字段分类
 
-- `title`: `value-or-region`
-- `statusPath`、`document`、`config`、`readOnly`: `value`
-- `toolbar`、`body`、`dialogs`: `region`
+- Canonical core contract:
+- `document`、`config`、`readOnly`: spreadsheet-page host owner 的核心输入
+- `toolbar`、`body`、`dialogs`: renderer definition `fields` 声明的 region surfaces
+- `title`: renderer definition `fields` 声明的 `value-or-region` surface
+- Derived convenience projection:
+- `statusPath`: 对宿主外部暴露的窄摘要发布入口，不是内部 host projection 的第二真源
+- Compatibility alias:
+- 当前 active baseline 无额外 spreadsheet-page top-level compatibility alias；若未来引入 mirror 字段，必须先在 owner doc 中分类
 
 ## 6. regions 与 slot 约定
 

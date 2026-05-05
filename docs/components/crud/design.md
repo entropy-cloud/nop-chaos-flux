@@ -130,7 +130,7 @@ Flux 不复制 AMIS 的字符串数组工具栏协议作为正式契约，但要
 
 - 依赖 selection 的操作直接写进 `listActions`
 - 是否禁用、显示哪些统计、传哪些 id，统一通过 `$crud.hasSelection`、`$crud.selectedRowKeys`、`$crud.selectionCount` 表达
-- `bulkActions` 只适合作为迁移别名或 authoring sugar，不应进入最终 canonical schema
+- `bulkActions` 不再属于支持中的 authoring surface；迁移输入必须先转成 canonical `listActions`
 
 ### 6.4 查询区建模
 

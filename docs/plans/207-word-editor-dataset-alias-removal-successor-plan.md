@@ -1,6 +1,6 @@
 # 207 Word-Editor Dataset Alias Removal Successor Plan
 
-> Plan Status: proposed
+> Plan Status: completed
 > Last Reviewed: 2026-05-05
 > Source: successor ownership assigned from `docs/plans/206-public-api-and-schema-compatibility-convergence-plan.md`, `docs/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`, `docs/analysis/2026-05-05-open-ended-adversarial-review-01/round-04.md`
 > Related: `docs/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`
@@ -48,80 +48,80 @@
 
 ### Phase 1 - Supersede The Old Compatibility Decision
 
-Status: planned
+Status: completed
 Targets: `docs/plans/181-word-editor-dataset-vocabulary-convergence-plan.md`, `docs/architecture/word-editor/design.md`, `docs/components/word-editor-page/design.md`, this plan
 
 - Item Types: `Decision | Fix`
 
-- [ ] Record that this plan supersedes plan 181's compatibility-alias retention decision for `DataSet*`.
-- [ ] Update owner docs so `DataSet*` is no longer described as supported compatibility surface.
+- [x] Record that this plan supersedes plan 181's compatibility-alias retention decision for `DataSet*`.
+- [x] Update owner docs so `DataSet*` is no longer described as supported compatibility surface.
 
 Exit Criteria:
 
-- [ ] supersession decision is explicit in plan/doc text
-- [ ] active docs no longer describe `DataSet*` as retained compatibility baseline
-- [ ] affected owner docs/plans are synced to the landed baseline
-- [ ] `docs/logs/` corresponding date entry is updated
+- [x] supersession decision is explicit in plan/doc text
+- [x] active docs no longer describe `DataSet*` as retained compatibility baseline
+- [x] affected owner docs/plans are synced to the landed baseline
+- [x] `docs/logs/` corresponding date entry is updated
 
 ### Phase 2 - Remove DataSet Aliases And Migrate Consumers
 
-Status: planned
+Status: completed
 Targets: in-scope code/tests above
 
 - Item Types: `Fix | Proof`
 
-- [ ] Remove `DataSet*` exports from `word-editor-core`.
-- [ ] Migrate all in-scope live consumers and tests to canonical `Dataset*` vocabulary.
-- [ ] Add or update focused tests proving the surviving public export surface is `Dataset*` only.
+- [x] Remove `DataSet*` exports from `word-editor-core`.
+- [x] Migrate all in-scope live consumers and tests to canonical `Dataset*` vocabulary.
+- [x] Add or update focused tests proving the surviving public export surface is `Dataset*` only.
 
 Exit Criteria:
 
-- [ ] `word-editor-core` public exports use only `Dataset*`
-- [ ] in-scope live consumers/tests use only `Dataset*`
-- [ ] focused tests cover the canonical export surface
-- [ ] affected owner docs/plans are synced to the landed baseline
-- [ ] `docs/logs/` corresponding date entry is updated
+- [x] `word-editor-core` public exports use only `Dataset*`
+- [x] in-scope live consumers/tests use only `Dataset*`
+- [x] focused tests cover the canonical export surface
+- [x] affected owner docs/plans are synced to the landed baseline
+- [x] `docs/logs/` corresponding date entry is updated
 
 ### Phase 3 - Verification And Closure Audit
 
-Status: planned
+Status: completed
 Targets: focused tests, owner docs, this plan
 
 - Item Types: `Proof`
 
-- [ ] Run required verification gates.
-- [ ] Perform independent closure audit.
+- [x] Run required verification gates.
+- [x] Perform independent closure audit.
 
 Exit Criteria:
 
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] independent closure audit evidence recorded
-- [ ] No owner-doc update required or owner-doc sync already completed in prior phases
-- [ ] `docs/logs/` corresponding date entry is updated
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] independent closure audit evidence recorded
+- [x] No owner-doc update required or owner-doc sync already completed in prior phases
+- [x] `docs/logs/` corresponding date entry is updated
 
 ## Closure Gates
 
-- [ ] superseded plan-181 compatibility decision is explicitly recorded
-- [ ] no in-scope `DataSet*` public alias or consumer remains
-- [ ] owner docs describe only canonical `Dataset*` vocabulary
-- [ ] required focused verification is complete
-- [ ] independent closure audit is completed
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] superseded plan-181 compatibility decision is explicitly recorded
+- [x] no in-scope `DataSet*` public alias or consumer remains
+- [x] owner docs describe only canonical `Dataset*` vocabulary
+- [x] required focused verification is complete
+- [x] independent closure audit is completed
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Closure
 
-Status Note: Pending.
+Status Note: Completed. `word-editor-core` no longer exports `DataSet*` aliases, in-scope consumers/tests use `Dataset*`, and active owner docs now describe only the canonical dataset vocabulary.
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: Pending
-- Evidence: Pending
+- Reviewer / Agent: general subagent closure audit
+- Evidence: Repo search over `DataSet*`, `createDataSet`, `validateDataSet`, and `dataSetColumnToExpression` found no active code/docs remaining in plan-owned surfaces after migration and verification.
 
 Follow-up:
 

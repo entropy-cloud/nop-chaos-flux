@@ -250,9 +250,9 @@ interface FormulaCompiler {
 }
 ```
 
-`CompiledExpression.exec(context, env)` 和 `CompiledStringTemplate.exec(context, env)` 在运行时调用 `evaluator(ast, toScope(context), env)`。
+`CompiledExpression.exec(context, env)` 和 `CompiledStringTemplate.exec(context, env)` 在运行时调用 evaluator，并显式传入当前 compiler 持有的 registry snapshot。
 
-函数和命名空间对象不从 `env` 注入，而是从公式模块内部的全局注册表读取。`env` 仍然保留给 monitor、fetcher、notify 等运行时基础设施使用。
+函数和命名空间对象不从 `env` 注入，而是从 `FormulaRegistry` snapshot 读取。`env` 仍然保留给 monitor、fetcher、notify 等运行时基础设施使用。
 
 ### 依赖追踪
 
@@ -262,46 +262,31 @@ interface FormulaCompiler {
 
 ## 内置函数
 
-函数采用全局注册机制，参考 `amis-react19/packages/amis-formula` 的做法。引擎内置以下函数，并允许应用在启动阶段全局扩展。
+函数通过实例级 `FormulaRegistry` 注册。`createFormulaCompiler(registry?)` 会持有一个 registry 实例；若调用方未提供，compiler 会创建自己的实例并安装 builtins。
 
-### 全局注册机制
-
-公式模块维护全局默认注册表：
+### Registry 模型
 
 ```ts
-type FormulaFunction = (...args: any[]) => any;
-type FormulaInvokeMode = 'eager' | 'lazy';
+const registry = createFormulaRegistry();
+installBuiltins(registry);
 
-const defaultFunctions: Record<string, FormulaFunction> = {};
-const defaultNamespaces: Record<string, unknown> = {};
-const defaultFunctionMeta: Record<string, { invoke: FormulaInvokeMode }> = {};
+registry.registerNamespace('$Math', Math);
+registry.registerFunction('MY_FN', (input: unknown) => input);
 
-export function registerFunction(
-  name: string,
-  fn: FormulaFunction,
-  options: { invoke?: FormulaInvokeMode } = {},
-) {
-  defaultFunctions[name] = fn;
-  defaultFunctionMeta[name] = { invoke: options.invoke ?? 'eager' };
-}
-
-export function registerNamespace(name: string, value: unknown) {
-  defaultNamespaces[name] = value;
-}
+const compiler = createFormulaCompiler(registry);
 ```
 
-求值器在执行时读取这套全局注册表快照：
+求值器在执行时读取当前 registry snapshot：
 
 ```ts
-const evaluator = new Evaluator({
-  scope,
-  functions: defaultFunctions,
-  namespaces: defaultNamespaces,
-  functionMeta: defaultFunctionMeta,
+evaluateAst(ast, {
+  env,
+  context,
+  registry: registry.getSnapshot(),
 });
 ```
 
-这与 amis-formula 的 `Evaluator.defaultFunctions + registerFunction()` 思路一致，只是这里除了函数外还增加了命名空间对象注册，以及函数调用模式元数据。
+这使 builtins/custom functions 的所有权跟随 compiler/runtime 实例，而不是依赖 process-global mutable state。
 
 ### 条件函数的短路求值
 
@@ -358,12 +343,12 @@ SWITCH(expr, ...caseValuePairs) {
 | `$JSON` | `JSON`（原生对象） | `$JSON.stringify(obj)`、`$JSON.parse(str)`             |
 | `$Date` | `DateHelper` 对象  | `$Date.now()`、`$Date.format(d, 'iso-date')`           |
 
-`$Math`、`$JSON`、`$Date` 通过全局命名空间注册表暴露，evaluator 将其作为内置 Identifier 处理，无需注册到 scope。
+`$Math`、`$JSON`、`$Date` 通过 registry namespace 暴露，evaluator 将其作为内置 Identifier 处理，无需注册到 scope。
 
 ```typescript
-registerNamespace('$Math', Math);
-registerNamespace('$JSON', JSON);
-registerNamespace('$Date', dateHelper);
+registry.registerNamespace('$Math', Math);
+registry.registerNamespace('$JSON', JSON);
+registry.registerNamespace('$Date', dateHelper);
 
 // evaluator Identifier 解析
 if (ast.type === 'Identifier' && namespaces[ast.name] !== undefined) {
@@ -403,7 +388,7 @@ const dateHelper = {
 
 ### 顶层函数
 
-以下函数因调用约定特殊（短路求值）或无法归入命名空间对象，仍作为顶层函数注册在全局函数注册表中：
+以下函数因调用约定特殊（短路求值）或无法归入命名空间对象，仍作为顶层函数注册在 registry 中：
 
 | 函数             | 签名                                                                    | 说明                    |
 | ---------------- | ----------------------------------------------------------------------- | ----------------------- |
@@ -526,9 +511,9 @@ const dateHelper = {
 | 数学函数     | `ABS()`/`MAX()`/`ROUND()` 等顶层函数   | `$Math.abs()`/`$Math.max()`/`$Math.round()` 等 |
 | JSON         | `ENCODEJSON()`/`DECODEJSON()` 顶层函数 | `$JSON.stringify()`/`$JSON.parse()`            |
 | 日期         | `NOW()`/`TODAY()`/`YEAR()` + moment.js | `$Date.now()`/`$Date.format()` + 原生 Intl     |
-| 函数注册     | 静态注册到全局 `Evaluator`             | 全局注册表，风格与 amis-formula 一致           |
+| 函数注册     | 静态注册到全局 `Evaluator`             | 实例级 `FormulaRegistry`                       |
 | 函数数量     | ~70 个顶层函数                         | ~25 个顶层函数 + 3 个命名空间对象              |
-| 中文大写金额 | `UPPERMONEY()`                         | 不内置，按需通过全局 `registerFunction()` 扩展 |
+| 中文大写金额 | `UPPERMONEY()`                         | 不内置，按需通过 registry 扩展                 |
 
 ### 架构差异
 

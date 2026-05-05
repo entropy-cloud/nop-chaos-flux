@@ -344,7 +344,7 @@ An unknown `type` is a compile-time schema diagnostic even when the JSON is synt
 
 ### 3. Renderer field metadata
 
-The compiler should reuse `RendererDefinition.fields` and `RendererDefinition.regions` as the first structural hint layer.
+The compiler should reuse `RendererDefinition.fields` as the first structural hint layer.
 
 This is a lowering/classification concern, not the same thing as ordinary renderer authoring metadata such as `propContracts`, `eventContracts`, or `componentCapabilityContracts`.
 

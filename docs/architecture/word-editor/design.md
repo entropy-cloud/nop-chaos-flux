@@ -16,19 +16,19 @@ The Word Editor is a document template designer built on `@hufe921/canvas-editor
 
 Pure TypeScript package with no React dependencies. Contains:
 
-| Module                    | Responsibility                                                                         |
-| ------------------------- | -------------------------------------------------------------------------------------- |
-| `editor-store.ts`         | Zustand store for editor state (mode, selection, dirty tracking)                       |
-| `dataset-store.ts`        | Zustand store for dataset management (data sources, fields)                            |
-| `canvas-editor-bridge.ts` | Bridge to `@hufe921/canvas-editor` instance commands                                   |
-| `document-io.ts`          | Document serialization/deserialization                                                 |
-| `template-expr.ts`        | Template expression parsing (`${expr}` syntax)                                         |
-| `template-tags.ts`        | Template tag definitions (`<c:for>`, `<c:if>`, etc.)                                   |
-| `template-model.ts`       | Template document model types                                                          |
-| `chart-model.ts`          | Chart placeholder model                                                                |
-| `code-model.ts`           | Code block model                                                                       |
-| `dataset-model.ts`        | Dataset and field definitions; deprecated `DataSet*` aliases remain compatibility-only |
-| `paper-settings.ts`       | Paper size and margin configuration                                                    |
+| Module                    | Responsibility                                                   |
+| ------------------------- | ---------------------------------------------------------------- |
+| `editor-store.ts`         | Zustand store for editor state (mode, selection, dirty tracking) |
+| `dataset-store.ts`        | Zustand store for dataset management (data sources, fields)      |
+| `canvas-editor-bridge.ts` | Bridge to `@hufe921/canvas-editor` instance commands             |
+| `document-io.ts`          | Document serialization/deserialization                           |
+| `template-expr.ts`        | Template expression parsing (`${expr}` syntax)                   |
+| `template-tags.ts`        | Template tag definitions (`<c:for>`, `<c:if>`, etc.)             |
+| `template-model.ts`       | Template document model types                                    |
+| `chart-model.ts`          | Chart placeholder model                                          |
+| `code-model.ts`           | Code block model                                                 |
+| `dataset-model.ts`        | Dataset and field definitions                                    |
+| `paper-settings.ts`       | Paper size and margin configuration                              |
 
 ### word-editor-renderers
 
@@ -96,7 +96,7 @@ Notes:
 
 - `paperSettings` belongs to the saved envelope, not `WordDocument`
 - datasets are maintained in the separate dataset store and projected through host scope as `datasets`
-- the canonical public vocabulary is `Dataset*`; legacy `DataSet*` exports remain only as explicit deprecated aliases for compatibility
+- the canonical public vocabulary is `Dataset*`
 - the live document model does not currently expose `watermark`
 - `document` in host scope is the persisted/autosaved document snapshot, not the realtime in-memory editor internals
 

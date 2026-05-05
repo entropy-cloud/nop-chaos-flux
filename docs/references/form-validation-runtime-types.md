@@ -137,7 +137,6 @@ interface CompiledFormValidationModel {
   behavior: CompiledValidationBehavior;
   dependents: Record<string, string[]>;
   nodes?: Record<string, CompiledValidationNode>;
-  validationOrder?: string[];
   rootPath?: string;
   ownerId?: string;
   defaultHiddenFieldPolicy?: HiddenFieldPolicy;
@@ -147,7 +146,7 @@ interface CompiledFormValidationModel {
 Current live note:
 
 - `CompiledFormValidationModel.order` and `behavior` are required
-- `nodes`, `validationOrder`, `rootPath`, and `ownerId` are optional on the exported type
+- `nodes`, `rootPath`, and `ownerId` are optional on the exported type
 
 ## Store And Snapshot Types
 
