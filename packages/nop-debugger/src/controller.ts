@@ -287,7 +287,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     explainNodeAsync: explainAsyncSummary,
   });
 
-  const plugin: RendererPlugin = createDebuggerPlugin(store);
+  const plugin: RendererPlugin = createDebuggerPlugin(store, enabled);
 
   const controller = {
     id: debuggerId,
@@ -307,7 +307,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
       });
     },
     onActionError(error: unknown, ctx: ActionContext) {
-      appendActionErrorEvent(store, error, ctx);
+      appendActionErrorEvent(store, error, ctx, enabled);
     },
     show() {
       store.show();

@@ -204,7 +204,7 @@ describe('debugger adapters', () => {
       nodeInstance: {
         templateNode: { id: 'node-root', templatePath: 'body.9', rendererType: 'form' },
       } as never,
-    });
+    }, true);
 
     expect(sameEnv).toBe(env);
     expect(store.getSnapshot().events[0]).toMatchObject({
@@ -212,6 +212,46 @@ describe('debugger adapters', () => {
       nodeId: 'node-root',
       rendererType: 'form',
     });
+  });
+
+  it('skips plugin and root action error payload work when disabled', () => {
+    const store = createStore();
+    const plugin = createDebuggerPlugin(store, false);
+    const errorPrototype: { toString(): string } = Error.prototype;
+    const formatSpy = vi.spyOn(errorPrototype, 'toString');
+
+    plugin.beforeCompile?.({ type: 'page' });
+    plugin.afterCompile?.({
+      root: { type: 'page', templatePath: 'root' } as never,
+      repeatedTemplates: new Map(),
+    });
+    plugin.beforeAction?.({ action: 'submitForm' } as never, {
+      nodeInstance: {
+        templateNode: { id: 'node-1', templatePath: 'body.0', rendererType: 'form' },
+      },
+    } as never);
+    plugin.onError?.(new Error('plugin failed'), {
+      phase: 'render',
+      error: new Error('plugin failed'),
+      nodeId: 'node-1',
+      path: 'body.0',
+    });
+    appendActionErrorEvent(
+      store,
+      new Error('root failed'),
+      {
+        runtime: {} as never,
+        scope: {} as never,
+        nodeInstance: {
+          templateNode: { id: 'node-root', templatePath: 'body.9', rendererType: 'form' },
+        } as never,
+      },
+      false,
+    );
+
+    expect(store.getSnapshot().events).toEqual([]);
+    expect(formatSpy).not.toHaveBeenCalled();
+    formatSpy.mockRestore();
   });
 
   it('records abort-like fetcher failures as api abort events', async () => {

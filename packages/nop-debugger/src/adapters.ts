@@ -32,10 +32,13 @@ function isAbortLikeError(error: unknown): boolean {
   return candidate.name === 'AbortError' || candidate.code === 'ABORT_ERR';
 }
 
-export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
+export function createDebuggerPlugin(store: NopDebuggerStore, enabled = true): RendererPlugin {
   return {
     name: 'nop-debugger',
     beforeCompile(schema: SchemaInput) {
+      if (!enabled) {
+        return schema;
+      }
       const rootType = Array.isArray(schema) ? schema[0]?.type : schema.type;
       store.append({
         kind: 'compile:start',
@@ -47,6 +50,9 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
       return schema;
     },
     afterCompile(template: CompiledTemplate) {
+      if (!enabled) {
+        return template;
+      }
       const normalized = normalizeCompiledRoot(template.root);
       store.append({
         kind: 'compile:end',
@@ -61,6 +67,9 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
       return template;
     },
     beforeAction(action, ctx) {
+      if (!enabled) {
+        return action;
+      }
       store.append({
         kind: 'action:start',
         group: 'action',
@@ -77,6 +86,9 @@ export function createDebuggerPlugin(store: NopDebuggerStore): RendererPlugin {
       return action;
     },
     onError(error, payload) {
+      if (!enabled) {
+        return;
+      }
       store.append({
         kind: 'error',
         group: 'error',
@@ -118,34 +130,34 @@ export function decorateDebuggerEnv(input: {
     ...baseMonitor,
     onRenderStart(payload) {
       if (input.capturePerformance) {
-      input.store.append({
-        kind: 'render:start',
-        group: 'render',
-        level: 'info',
-        source: 'monitor.onRenderStart',
-        summary: `${payload.type} render start`,
-        detail: `nodeId=${payload.nodeId} | path=${payload.path}`,
-        nodeId: payload.nodeId,
-        path: payload.path,
-        rendererType: payload.type,
-      });
+        input.store.append({
+          kind: 'render:start',
+          group: 'render',
+          level: 'info',
+          source: 'monitor.onRenderStart',
+          summary: `${payload.type} render start`,
+          detail: `nodeId=${payload.nodeId} | path=${payload.path}`,
+          nodeId: payload.nodeId,
+          path: payload.path,
+          rendererType: payload.type,
+        });
       }
       baseMonitor?.onRenderStart?.(payload);
     },
     onRenderEnd(payload) {
       if (input.capturePerformance) {
-      input.store.append({
-        kind: 'render:end',
-        group: 'render',
-        level: 'success',
-        source: 'monitor.onRenderEnd',
-        summary: `${payload.type} rendered in ${payload.durationMs}ms`,
-        detail: `nodeId=${payload.nodeId} | path=${payload.path}`,
-        nodeId: payload.nodeId,
-        path: payload.path,
-        rendererType: payload.type,
-        durationMs: payload.durationMs,
-      });
+        input.store.append({
+          kind: 'render:end',
+          group: 'render',
+          level: 'success',
+          source: 'monitor.onRenderEnd',
+          summary: `${payload.type} rendered in ${payload.durationMs}ms`,
+          detail: `nodeId=${payload.nodeId} | path=${payload.path}`,
+          nodeId: payload.nodeId,
+          path: payload.path,
+          rendererType: payload.type,
+          durationMs: payload.durationMs,
+        });
       }
       baseMonitor?.onRenderEnd?.(payload);
     },
@@ -332,7 +344,12 @@ export function appendActionErrorEvent(
   store: NopDebuggerStore,
   error: unknown,
   ctx: ActionContext,
+  enabled = true,
 ) {
+  if (!enabled) {
+    return;
+  }
+
   store.append({
     kind: 'error',
     group: 'error',
