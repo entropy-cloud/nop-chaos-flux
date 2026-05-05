@@ -224,3 +224,30 @@ describe('SchemaRenderer surface runtime seam', () => {
     runtime.dispose();
   });
 });
+
+describe('SchemaRenderer debug data gating', () => {
+  it('does not publish node debug data until registry debug capture is enabled', async () => {
+    const onComponentRegistryChange = vi.fn();
+    const SchemaRenderer = createSchemaRenderer([textRenderer]);
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://schema.json"
+        schema={{ type: 'text', text: 'Debug gated' }}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+        onComponentRegistryChange={onComponentRegistryChange}
+      />,
+    );
+
+    await waitFor(() => expect(onComponentRegistryChange).toHaveBeenCalledTimes(1));
+    const registry = onComponentRegistryChange.mock.calls[0][0];
+    const setHandleDebugDataSpy = vi.spyOn(registry, 'setHandleDebugData');
+
+    expect(setHandleDebugDataSpy).not.toHaveBeenCalled();
+
+    registry.setDebugEnabled?.(true);
+
+    await waitFor(() => expect(setHandleDebugDataSpy).toHaveBeenCalled());
+  });
+});

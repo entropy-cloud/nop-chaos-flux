@@ -83,7 +83,19 @@ function TestButtonRenderer(props: RendererComponentProps) {
       return;
     }
 
-    return componentRegistry.register(
+    const cid: number = props.meta.cid;
+
+    componentRegistry.setHandleDebugData?.(cid, {
+      nodeId: props.node.templateNode.id,
+      path: props.node.templateNode.templatePath,
+      rendererType: props.node.templateNode.rendererType,
+      nodeInstance: props.node,
+      resolvedMeta: props.meta,
+      resolvedProps: props.props,
+      updatedAt: Date.now(),
+    });
+
+    const unregister = componentRegistry.register(
       {
         type: 'button',
         capabilities: {
@@ -92,9 +104,14 @@ function TestButtonRenderer(props: RendererComponentProps) {
           },
         },
       },
-      { cid: props.meta.cid },
+      { cid },
     );
-  }, [componentRegistry, props.meta.cid]);
+
+    return () => {
+      componentRegistry.setHandleDebugData?.(cid, undefined);
+      unregister();
+    };
+  }, [componentRegistry, props.meta, props.node, props.props]);
 
   return (
     <Button

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import type {
   ComponentHandleRegistry,
   FormRuntime,
@@ -22,8 +23,14 @@ export function useNodeDebugData(
   resolvedPropsValue: ResolvedNodeProps['value'],
   currentForm?: FormRuntime,
 ): void {
+  const debugEnabled = useSyncExternalStore(
+    (listener) => activeComponentRegistry?.subscribeDebugEnabled?.(listener) ?? (() => undefined),
+    () => activeComponentRegistry?.debugEnabled ?? false,
+    () => activeComponentRegistry?.debugEnabled ?? false,
+  );
+
   useEffect(() => {
-    if (!activeComponentRegistry || typeof cid !== 'number') {
+    if (!activeComponentRegistry || typeof cid !== 'number' || !debugEnabled) {
       return;
     }
 
@@ -61,6 +68,7 @@ export function useNodeDebugData(
     };
   }, [
     activeComponentRegistry,
+    debugEnabled,
     cid,
     nodeInstance,
     activeScope,
