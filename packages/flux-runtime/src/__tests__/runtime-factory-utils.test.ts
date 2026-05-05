@@ -123,6 +123,50 @@ describe('runtime factory utilities', () => {
     ).rejects.toThrow('Schema preparation requires env.importLoader when xui:imports are present.');
   });
 
+  it('preserves preload import error cause and stack', async () => {
+    const sourceError = new Error('loader exploded');
+    sourceError.stack = 'loader-stack';
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        importLoader: {
+          load: vi.fn(async () => {
+            throw sourceError;
+          }),
+        },
+      },
+      schemaCompiler: {
+        compile: vi.fn(),
+        compileNode: vi.fn(),
+        prepare: vi.fn().mockResolvedValue({
+          preparedImports: new Map([
+            [
+              'demo',
+              {
+                schemaUrl: '/schema.json',
+                spec: { from: 'demo-lib', as: 'demo' },
+                resolvedSpec: { from: 'demo-lib', as: 'demo' },
+              },
+            ],
+          ]),
+        }),
+      } as unknown as SchemaCompiler,
+    });
+
+    await expect(
+      runtime.prepareSchema?.(
+        { type: 'text', text: 'hello' },
+        {
+          schemaUrl: '/schema.json',
+        },
+      ),
+    ).rejects.toMatchObject({
+      cause: sourceError,
+      stack: 'loader-stack',
+    });
+  });
+
   it('resolves prepared import urls, updates env references, and disposes idempotently', async () => {
     const executeDispose = vi.fn();
     const runtime = createRendererRuntime({

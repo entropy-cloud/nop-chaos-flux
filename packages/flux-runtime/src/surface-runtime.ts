@@ -1,4 +1,5 @@
 import type {
+  CompiledFormValidationModel,
   ScopeRef,
   SurfaceEntry,
   SurfaceRuntime,
@@ -17,6 +18,8 @@ export function createManagedSurfaceRuntime(
       parentScope?: ScopeRef;
       scopePath?: string;
       initialValues?: Record<string, any>;
+      validation?: CompiledFormValidationModel;
+      initialLifecycleState?: import('@nop-chaos/flux-core').ValidationOwnerLifecycleState;
     }) => ValidationScopeRuntime;
     releaseValidationOwner?: (owner: ValidationScopeRuntime) => void;
   } = {},
@@ -29,7 +32,7 @@ export function createManagedSurfaceRuntime(
     return `${scope.id}-${kind}-${surfaceCounter}`;
   }
 
-  function publishSurfaceStatus(entry: SurfaceEntry) {
+  function publishSurfaceStatus(entry: SurfaceEntry, active: boolean) {
     const statusPath =
       typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
     const ownerScope = entry.scope.parent ?? entry.scope;
@@ -37,7 +40,7 @@ export function createManagedSurfaceRuntime(
       id: entry.id,
       kind: entry.kind,
       open: true,
-      active: true,
+      active,
       opening: false,
       closing: false,
     });
@@ -61,6 +64,23 @@ export function createManagedSurfaceRuntime(
     });
   }
 
+  function publishClosedSummary(inputValue: {
+    surfaceId: string;
+    kind: SurfaceEntry['kind'];
+    scope: ScopeRef;
+    statusPath?: string;
+  }) {
+    const ownerScope = inputValue.scope.parent ?? inputValue.scope;
+    publishOwnerStatus(ownerScope, inputValue.statusPath, {
+      id: inputValue.surfaceId,
+      kind: inputValue.kind,
+      open: false,
+      active: false,
+      opening: false,
+      closing: false,
+    });
+  }
+
   function disposeOwnedScope(scopeId: string | undefined) {
     if (!scopeId) {
       return;
@@ -69,18 +89,30 @@ export function createManagedSurfaceRuntime(
     input.disposeScope?.(scopeId);
   }
 
+  function republishActiveStatuses() {
+    const entries = store.getState().entries;
+    const activeId = entries[entries.length - 1]?.id;
+
+    for (const entry of entries) {
+      publishSurfaceStatus(entry, entry.id === activeId);
+    }
+  }
+
   return {
     store,
-    open({ kind, surface, scope, options }) {
-      const surfaceId = createSurfaceId(scope, kind);
+    open({ kind, surface, scope, surfaceId, options }) {
+      const resolvedSurfaceId = surfaceId ?? createSurfaceId(scope, kind);
+      const ownerValidationPlan = options?.ownerTemplateNode?.validationPlan;
       const validationOwner = input.createValidationOwner?.({
-        id: `${surfaceId}-validation`,
+        id: `${resolvedSurfaceId}-validation`,
         parentScope: scope,
         scopePath: scope.path,
         initialValues: scope.readOwn(),
+        validation: ownerValidationPlan,
+        initialLifecycleState: ownerValidationPlan ? 'active' : 'bootstrapping',
       });
       const entry: SurfaceEntry = {
-        id: surfaceId,
+        id: resolvedSurfaceId,
         kind,
         surface,
         scope,
@@ -89,13 +121,43 @@ export function createManagedSurfaceRuntime(
         componentRegistry: options?.componentRegistry,
         ownerTemplateNode: options?.ownerTemplateNode,
         ownerNodeInstance: options?.ownerNodeInstance,
-        title: typeof surface.title === 'string' ? surface.title : surface.title || undefined,
-        body: surface.body || undefined,
+        title: options?.title ?? (typeof surface.title === 'string' ? surface.title : surface.title || undefined),
+        body: options?.body ?? (surface.body || undefined),
+        actions: options?.actions,
+        meta: options?.meta,
+        regionHandles: options?.regionHandles,
+        controlledOpen: options?.controlledOpen,
+        onOpen: options?.onOpen,
+        onClose: options?.onClose,
       };
 
       store.push(entry);
-      publishSurfaceStatus(entry);
+      republishActiveStatuses();
       return entry.id;
+    },
+    upsert(entry) {
+      store.upsert(entry);
+      republishActiveStatuses();
+    },
+    publishStatus(surfaceId) {
+      const entries = store.getState().entries;
+
+      if (!surfaceId) {
+        republishActiveStatuses();
+        return;
+      }
+
+      const activeId = entries[entries.length - 1]?.id;
+      const entry = entries.find((candidate) => candidate.id === surfaceId);
+
+      if (!entry) {
+        return;
+      }
+
+      publishSurfaceStatus(entry, entry.id === activeId);
+    },
+    publishClosed(inputValue) {
+      publishClosedSummary(inputValue);
     },
     close(surfaceId) {
       const removed = store.remove(surfaceId);
@@ -105,6 +167,7 @@ export function createManagedSurfaceRuntime(
         input.releaseValidationOwner?.(removed.validationOwner);
       }
       disposeOwnedScope(removed?.scope.id);
+      republishActiveStatuses();
     },
     closeTop() {
       const removed = store.remove();
@@ -114,6 +177,7 @@ export function createManagedSurfaceRuntime(
         input.releaseValidationOwner?.(removed.validationOwner);
       }
       disposeOwnedScope(removed?.scope.id);
+      republishActiveStatuses();
     },
   };
 }

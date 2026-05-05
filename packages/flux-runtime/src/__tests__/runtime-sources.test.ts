@@ -466,4 +466,62 @@ describe('createRendererRuntime', () => {
 
     registration.dispose();
   });
+
+  it('propagates top-level data-source retry into compiled control and runtime execution', async () => {
+    let callCount = 0;
+    const fetcherImpl: RendererEnv['fetcher'] = async <T>() => {
+      callCount += 1;
+
+      if (callCount < 3) {
+        return {
+          ok: false,
+          status: 500,
+          data: { message: `fail-${callCount}` } as T,
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        data: { value: 'loaded' } as T,
+      };
+    };
+    const fetcher = vi.fn(fetcherImpl);
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: {
+        ...env,
+        fetcher: ((api, ctx) => fetcher(api, ctx)) as RendererEnv['fetcher'],
+      },
+      expressionCompiler,
+    });
+    const page = runtime.createPageRuntime({});
+
+    const compiledSource = compileDataSource(
+      'retrying-source',
+      {
+        type: 'data-source',
+        action: 'ajax',
+        args: { url: '/api/retry-source' },
+        name: 'payload',
+        retry: { times: 2, delay: 0 },
+      },
+      expressionCompiler,
+    );
+
+    expect(compiledSource.control?.retry).toEqual({ times: 2, delay: 0 });
+
+    const registration = runtime.registerDataSource({
+      id: 'retrying-source',
+      scope: page.scope,
+      compiledSource,
+    });
+
+    await vi.waitFor(() => {
+      expect(page.scope.get('payload')).toEqual({ value: 'loaded' });
+    });
+
+    expect(callCount).toBe(3);
+    registration.dispose();
+  });
 });

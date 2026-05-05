@@ -231,6 +231,40 @@ describe('createRendererRuntime', () => {
     expect(dialogState.validationOwner?.scopeId).toBe(`${dialogState.id}-validation`);
   });
 
+  it('applies dialog data as the child-scope init patch', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ pageOnly: 'root' });
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: {
+          title: 'Dialog with data',
+          data: { recordId: 42, mode: 'edit' },
+          body: [{ type: 'text', text: 'Body' }],
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+      },
+    );
+
+    const dialogState = surfaceRuntime.store.getState().entries[0];
+    expect(dialogState.scope.get('dialogId')).toBe(dialogState.id);
+    expect(dialogState.scope.get('recordId')).toBe(42);
+    expect(dialogState.scope.get('mode')).toBe('edit');
+    expect(dialogState.scope.get('pageOnly')).toBe('root');
+  });
+
   it('stores ownerNodeInstance in dialog state when opened from a trigger node', async () => {
     const buttonRenderer: RendererDefinition = {
       type: 'button',
@@ -552,5 +586,40 @@ describe('createRendererRuntime', () => {
     expect(surfaceRuntime.store.getState().entries).toHaveLength(1);
     expect(surfaceRuntime.store.getState().entries[0].kind).toBe('drawer');
     expect(surfaceRuntime.store.getState().entries[0].surface.title).toBe('Args drawer');
+  });
+
+  it('applies drawer data as the child-scope init patch', async () => {
+    const registry = createRendererRegistry([textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ pageOnly: 'root' });
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    await runtime.dispatch(
+      {
+        action: 'openDrawer',
+        args: {
+          title: 'Drawer with data',
+          data: { recordId: 99, mode: 'preview' },
+          body: [{ type: 'text', text: 'Body' }],
+        },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+      },
+    );
+
+    const drawerState = surfaceRuntime.store.getState().entries[0];
+    expect(drawerState.scope.get('dialogId')).toBe(drawerState.id);
+    expect(drawerState.scope.get('drawerId')).toBe(drawerState.id);
+    expect(drawerState.scope.get('recordId')).toBe(99);
+    expect(drawerState.scope.get('mode')).toBe('preview');
+    expect(drawerState.scope.get('pageOnly')).toBe('root');
   });
 });

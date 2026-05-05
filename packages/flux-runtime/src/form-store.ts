@@ -441,6 +441,19 @@ export function createSurfaceStore(): SurfaceStoreApi {
       const state = store.getState();
       store.setState({ entries: [...state.entries, entry] });
     },
+    upsert(entry: SurfaceEntry) {
+      const state = store.getState();
+      const index = state.entries.findIndex((existing) => existing.id === entry.id);
+
+      if (index < 0) {
+        store.setState({ entries: [...state.entries, entry] });
+        return;
+      }
+
+      const nextEntries = state.entries.slice();
+      nextEntries[index] = entry;
+      store.setState({ entries: nextEntries });
+    },
     remove(surfaceId) {
       const state = store.getState();
 

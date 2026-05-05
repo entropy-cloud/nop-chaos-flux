@@ -20,7 +20,11 @@ export interface ActionAdapterInput {
   evaluate: <T = unknown>(target: unknown, scope: ScopeRef) => T;
   executeApiRequest: ApiRequestExecutor;
   runtime: RendererRuntime;
-  createDialogScope: (ctx: ActionContext) => ScopeRef;
+  createSurfaceScope: (
+    kind: 'dialog' | 'drawer',
+    ctx: ActionContext,
+    patch?: Record<string, unknown>,
+  ) => ScopeRef;
   getDialogActionScope?: (ctx: ActionContext) => ActionContext['actionScope'];
   getDialogComponentRegistry?: (ctx: ActionContext) => ActionContext['componentRegistry'];
 }
@@ -182,7 +186,11 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: false, error: new Error('openDialog requires surface runtime') };
           }
 
-          const dialogScope = input.createDialogScope(ctx);
+          const dialogData =
+            invocation.args?.data && typeof invocation.args.data === 'object'
+              ? (invocation.args.data as Record<string, unknown>)
+              : undefined;
+          const dialogScope = input.createSurfaceScope('dialog', ctx, dialogData);
           const dialogId = ctx.surfaceRuntime.open({
             kind: 'dialog',
             surface: invocation.args ?? {},
@@ -212,8 +220,10 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           if (ctx.surfaceRuntime) {
             if (surfaceId) {
               ctx.surfaceRuntime.close(surfaceId);
-            } else {
+            } else if (ctx.dialogId) {
               ctx.surfaceRuntime.close(ctx.dialogId);
+            } else {
+              ctx.surfaceRuntime.closeTop();
             }
           }
           return { ok: true };
@@ -224,17 +234,11 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: false, error: new Error('openDrawer requires surface runtime') };
           }
 
-          const drawerScope = runtime.createChildScope(
-            ctx.scope,
-            {
-              dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
-              drawerId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
-            },
-            {
-              scopeKey: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:drawer-scope`,
-              pathSuffix: 'drawer',
-            },
-          );
+          const drawerData =
+            invocation.args?.data && typeof invocation.args.data === 'object'
+              ? (invocation.args.data as Record<string, unknown>)
+              : undefined;
+          const drawerScope = input.createSurfaceScope('drawer', ctx, drawerData);
 
           const drawerId = ctx.surfaceRuntime.open({
             kind: 'drawer',
@@ -242,8 +246,8 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             scope: drawerScope,
             runtime,
             options: {
-              actionScope: ctx.actionScope,
-              componentRegistry: ctx.componentRegistry,
+              actionScope: input.getDialogActionScope?.(ctx) ?? ctx.actionScope,
+              componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
               ownerNodeInstance: ctx.nodeInstance,
             },
           });

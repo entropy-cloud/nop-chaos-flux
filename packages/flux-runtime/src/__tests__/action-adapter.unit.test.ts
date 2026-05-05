@@ -15,7 +15,7 @@ function createAdapter() {
       createChildScope: vi.fn(),
       refreshDataSource: vi.fn(),
     } as any,
-    createDialogScope: vi.fn(),
+    createSurfaceScope: vi.fn(),
   });
 }
 
@@ -43,7 +43,7 @@ function createBuiltInInvocation(
 describe('createActionRuntimeAdapter direct branches', () => {
   it('covers dialog, drawer, toast, submit, refresh, and unsupported built-in action branches', async () => {
     const notify = vi.fn();
-    const createDialogScope = vi.fn(() =>
+    const createSurfaceScope = vi.fn(() =>
       createScopeRef({ id: 'dialog-scope', path: '$dialog', initialData: {} }),
     );
     const createChildScope = vi.fn(() =>
@@ -60,7 +60,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
         createChildScope,
         refreshDataSource,
       } as any,
-      createDialogScope,
+      createSurfaceScope,
       getDialogActionScope: () => ({ id: 'dialog-action-scope' }) as any,
       getDialogComponentRegistry: () => ({ id: 'dialog-component-registry' }) as any,
     });
@@ -101,11 +101,11 @@ describe('createActionRuntimeAdapter direct branches', () => {
 
     await expect(
       adapter.invokeBuiltInAction(
-        createBuiltInInvocation('openDialog', { title: 'Dialog' }),
+        createBuiltInInvocation('openDialog', { title: 'Dialog', data: { recordId: 1 } }),
         openDialogCtx,
       ),
     ).resolves.toEqual({ ok: true, data: { dialogId: 'dialog-1' } });
-    expect(createDialogScope).toHaveBeenCalledWith(openDialogCtx);
+    expect(createSurfaceScope).toHaveBeenCalledWith('dialog', openDialogCtx, { recordId: 1 });
     expect(surfaceRuntime.open).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
@@ -161,21 +161,11 @@ describe('createActionRuntimeAdapter direct branches', () => {
     });
     await expect(
       adapter.invokeBuiltInAction(
-        createBuiltInInvocation('openDrawer', { title: 'Drawer' }),
+        createBuiltInInvocation('openDrawer', { title: 'Drawer', data: { recordId: 2 } }),
         openDrawerCtx,
       ),
     ).resolves.toEqual({ ok: true, data: { drawerId: 'drawer-1' } });
-    expect(createChildScope).toHaveBeenCalledWith(
-      openDrawerCtx.scope,
-      {
-        dialogId: 'node-2-pending',
-        drawerId: 'node-2-pending',
-      },
-      {
-        scopeKey: 'node-2:drawer-scope',
-        pathSuffix: 'drawer',
-      },
-    );
+    expect(createSurfaceScope).toHaveBeenCalledWith('drawer', openDrawerCtx, { recordId: 2 });
 
     await expect(
       adapter.invokeBuiltInAction(
@@ -240,7 +230,7 @@ describe('createActionRuntimeAdapter direct branches', () => {
         createChildScope: vi.fn(),
         refreshDataSource: vi.fn(),
       } as any,
-      createDialogScope: vi.fn(),
+      createSurfaceScope: vi.fn(),
     });
 
     await expect(

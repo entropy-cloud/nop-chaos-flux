@@ -288,9 +288,14 @@ export function createRendererRuntime(input: {
               } satisfies PreparedImportSpec,
             ] as const;
           } catch (error) {
-            throw new Error(
+            const wrappedError = new Error(
               `Imported namespace ${prepared.spec.as} failed to load: ${error instanceof Error ? error.message : String(error)}`,
+              error instanceof Error ? { cause: error } : undefined,
             );
+            if (error instanceof Error && error.stack) {
+              wrappedError.stack = error.stack;
+            }
+            throw wrappedError;
           }
         }),
       );
@@ -502,15 +507,21 @@ export function createRendererRuntime(input: {
     evaluate,
     executeApiRequest,
     runtime,
-    createDialogScope: (ctx) =>
-      createScopeRef({
-        id: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}:dialog-scope`,
-        path: `${ctx.scope.path}.dialog`,
+    createSurfaceScope: (kind, ctx, patch) => {
+      const ownerId = ctx.nodeInstance?.templateNode.id ?? ctx.scope.id;
+      const pendingId = `${ownerId}-pending`;
+
+      return createScopeRef({
+        id: `${ownerId}:${kind}-scope`,
+        path: `${ctx.scope.path}.${kind}`,
         parent: ctx.scope,
         initialData: {
-          dialogId: `${ctx.nodeInstance?.templateNode.id ?? ctx.scope.id}-pending`,
+          dialogId: pendingId,
+          ...(patch ?? {}),
+          ...(kind === 'drawer' ? { drawerId: pendingId } : {}),
         },
-      }),
+      });
+    },
   });
 
   const actionDispatcher = createActionDispatcher({

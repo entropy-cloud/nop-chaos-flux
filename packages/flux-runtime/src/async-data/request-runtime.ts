@@ -297,6 +297,11 @@ export async function executeApiSchema(
 
   if (!response.ok) {
     const responseData = response.data;
+    const retryMetadata = {
+      attempts: execution.retry.attempts,
+      failureCount: execution.retry.failureCount,
+      lastFailureReason: execution.retry.lastFailureReason,
+    };
 
     if (
       responseData &&
@@ -304,10 +309,10 @@ export async function executeApiSchema(
       'message' in (responseData as Record<string, unknown>) &&
       typeof (responseData as { message?: unknown }).message === 'string'
     ) {
-      throw new Error((responseData as { message: string }).message);
+      throw Object.assign(new Error((responseData as { message: string }).message), retryMetadata);
     }
 
-    throw new Error(`Request failed with status ${response.status}`);
+    throw Object.assign(new Error(`Request failed with status ${response.status}`), retryMetadata);
   }
 
   const adaptedData = applyResponseAdaptor(

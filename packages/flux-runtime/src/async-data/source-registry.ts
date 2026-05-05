@@ -138,6 +138,7 @@ export function createRuntimeSourceRegistry(input: {
           control: compiled.control
             ? {
                 dedup: compiled.control.dedup,
+                retry: compiled.control.retry,
                 throttle: compiled.control.throttle,
                 cacheTTL: compiled.control.cacheTTL,
                 cacheKey: compiled.control.cacheKey,

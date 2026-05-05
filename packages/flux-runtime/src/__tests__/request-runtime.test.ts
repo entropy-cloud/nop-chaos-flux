@@ -4,6 +4,7 @@ import type { ApiSchema, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
 import { createScopeRef, createScopeStore } from '../scope';
 import {
   createApiRequestExecutor,
+  executeApiSchema,
   extractScopeData,
   buildUrlWithParams,
   finalizeApiRequest,
@@ -558,5 +559,27 @@ describe('createApiRequestExecutor', () => {
 
     await expect(first).resolves.toMatchObject({ ok: true, data: { ok: true } });
     await expect(second).resolves.toMatchObject({ ok: true, data: { ok: true } });
+  });
+
+  it('preserves retry metadata on ok:false request failures', async () => {
+    const scope = createTestScope({});
+    const env = {
+      fetcher: vi.fn(async () => ({ ok: false, status: 500, data: { message: 'server failed' } })),
+    } as unknown as RendererEnv;
+    const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
+
+    await expect(
+      executeApiSchema(
+        { url: '/api/fail', type: 'test' },
+        scope,
+        env,
+        expressionCompiler,
+        { control: { retry: { times: 2, delay: 0 } } },
+      ),
+    ).rejects.toMatchObject({
+      message: 'server failed',
+      attempts: 3,
+      failureCount: 2,
+    });
   });
 });
