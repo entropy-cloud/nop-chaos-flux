@@ -8,7 +8,7 @@ import type {
 export interface PageSchema extends BaseSchema {
   type: 'page';
   title?: string;
-  data?: Record<string, any>;
+  data?: SchemaValue;
   statusPath?: string;
   body?: BaseSchema[];
   header?: BaseSchema[];
@@ -25,7 +25,7 @@ export interface DialogSchema extends BaseSchema {
   title?: string;
   body?: BaseSchema[];
   actions?: BaseSchema[];
-  data?: Record<string, unknown>;
+  data?: SchemaValue;
   open?: boolean;
   defaultOpen?: boolean;
   statusPath?: string;
@@ -39,7 +39,7 @@ export interface DrawerSchema extends BaseSchema {
   title?: string;
   body?: BaseSchema[];
   actions?: BaseSchema[];
-  data?: Record<string, unknown>;
+  data?: SchemaValue;
   open?: boolean;
   defaultOpen?: boolean;
   side?: 'left' | 'right' | 'top' | 'bottom';

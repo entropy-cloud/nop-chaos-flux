@@ -29,9 +29,11 @@ export const basicRendererDefinitions: RendererDefinition[] = [
         kind: 'injected-local',
       },
     },
-    regions: ['body', 'header', 'footer'],
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'body', kind: 'region', regionKey: 'body' },
+      { key: 'header', kind: 'region', regionKey: 'header' },
+      { key: 'footer', kind: 'region', regionKey: 'footer' },
       { key: 'modalContainer', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },
     ],
@@ -43,7 +45,11 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
-    regions: ['body', 'header', 'footer'],
+    fields: [
+      { key: 'body', kind: 'region', regionKey: 'body' },
+      { key: 'header', kind: 'region', regionKey: 'header' },
+      { key: 'footer', kind: 'region', regionKey: 'footer' },
+    ],
     staticCapable: true,
   },
   {
@@ -53,8 +59,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'fragment', body: [] },
     component: FragmentRenderer,
-    regions: ['body'],
     fields: [
+      { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'data', kind: 'prop' },
       { key: 'isolate', kind: 'prop' },
     ],
@@ -67,8 +73,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'loop', body: [] },
     component: LoopRenderer,
-    regions: ['empty'],
     fields: [
+      { key: 'empty', kind: 'region', regionKey: 'empty' },
       { key: 'items', kind: 'prop' },
       { key: 'itemName', kind: 'prop' },
       { key: 'indexName', kind: 'prop' },
@@ -101,7 +107,10 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'flex', body: [] },
     component: FlexRenderer,
-    regions: ['body', 'items'],
+    fields: [
+      { key: 'body', kind: 'region', regionKey: 'body' },
+      { key: 'items', kind: 'region', regionKey: 'items' },
+    ],
     staticCapable: true,
   },
   {
@@ -227,7 +236,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'advanced',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: DynamicRenderer,
-    regions: ['body'],
+    fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
   },
   {
     type: 'reaction',
@@ -250,9 +259,10 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: DialogRenderer,
-    regions: ['body', 'actions'],
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'body', kind: 'region', regionKey: 'body' },
+      { key: 'actions', kind: 'region', regionKey: 'actions' },
       { key: 'onOpen', kind: 'event' },
       { key: 'onClose', kind: 'event' },
       { key: 'data', kind: 'prop' },
@@ -266,9 +276,10 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: DrawerRenderer,
-    regions: ['body', 'actions'],
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'body', kind: 'region', regionKey: 'body' },
+      { key: 'actions', kind: 'region', regionKey: 'actions' },
       { key: 'onOpen', kind: 'event' },
       { key: 'onClose', kind: 'event' },
       { key: 'data', kind: 'prop' },
@@ -282,8 +293,8 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     component: TabsRenderer,
-    regions: ['toolbar'],
     fields: [
+      { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'onChange', kind: 'event' },
       { key: 'items', kind: 'prop' },
     ],
