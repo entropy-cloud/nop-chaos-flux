@@ -1,4 +1,4 @@
-import type { BaseSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 
 export interface DesignerPageSchemaInput {
@@ -7,6 +7,9 @@ export interface DesignerPageSchemaInput {
   document?: GraphDocument;
   treeDocument?: TreeDocument;
   statusPath?: string;
+  toolbar?: SchemaInput;
+  inspector?: SchemaInput;
+  dialogs?: SchemaInput;
 }
 
 export type DesignerPageSchema = BaseSchema & DesignerPageSchemaInput;

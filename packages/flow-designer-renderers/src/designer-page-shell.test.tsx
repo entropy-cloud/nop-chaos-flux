@@ -224,6 +224,54 @@ describe('DesignerPageRenderer basic rendering', () => {
     });
   });
 
+  it('declares designer-field authored fields and renders a stable root marker', () => {
+    const fieldDef = flowDesignerRendererDefinitions.find(
+      (definition) => definition.type === 'designer-field',
+    );
+
+    expect(fieldDef?.fields?.map((field) => field.key)).toEqual([
+      'label',
+      'name',
+      'fieldType',
+      'options',
+    ]);
+
+    const SchemaRenderer = createSchemaRenderer([
+      ...basicTestRendererDefinitions,
+      ...flowDesignerRendererDefinitions,
+    ]);
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://flow/index-designer-field"
+        schema={{
+          type: 'designer-page',
+          document: {
+            id: 'doc-1',
+            kind: 'flow',
+            name: 'Example',
+            version: '1.0.0',
+            nodes: [],
+            edges: [],
+            viewport: { x: 0, y: 0, zoom: 1 },
+          },
+          config: createTestConfig(),
+          inspector: {
+            type: 'designer-field',
+            name: 'title',
+            label: 'Title',
+            fieldType: 'text',
+          },
+        }}
+        env={createRendererEnv() as RendererEnv}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const root = view.container.querySelector('.nop-designer-field');
+    expect(root).toBeTruthy();
+  });
+
   it('renders the designer page with xyflow canvas', () => {
     const SchemaRenderer = createSchemaRenderer([
       ...basicTestRendererDefinitions,

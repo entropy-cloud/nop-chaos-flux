@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  cn,
 } from '@nop-chaos/ui';
 
 export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFieldSchema>) {
@@ -38,7 +39,7 @@ export function DesignerFieldRenderer(props: RendererComponentProps<DesignerFiel
 
   return (
     <div
-      className={props.meta.className ?? 'grid gap-1.5'}
+      className={cn('nop-designer-field', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >

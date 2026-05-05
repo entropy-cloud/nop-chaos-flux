@@ -92,6 +92,12 @@ export const flowDesignerRendererDefinitions: RendererDefinition[] = [
   {
     type: 'designer-field',
     component: DesignerFieldRenderer,
+    fields: [
+      { key: 'label', kind: 'value-or-region', regionKey: 'label' },
+      { key: 'name', kind: 'prop' },
+      { key: 'fieldType', kind: 'prop' },
+      { key: 'options', kind: 'prop' },
+    ],
   },
   {
     type: 'designer-canvas',
