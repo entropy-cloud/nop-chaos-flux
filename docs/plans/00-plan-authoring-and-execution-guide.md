@@ -1,8 +1,8 @@
 # Plan Authoring And Execution Guide
 
 > Status: active workflow guide
-> Last Reviewed: 2026-05-04
-> Sources: `docs/logs/2026/03-31.md`, `docs/logs/2026/04-03.md`, `docs/logs/2026/04-04.md`, `docs/logs/2026/04-07.md`, `docs/logs/2026/04-08.md`, `docs/logs/2026/04-09.md`, `docs/logs/2026/04-10.md`, `docs/logs/2026/05-04.md`
+> Last Reviewed: 2026-05-05
+> Sources: `docs/logs/2026/03-31.md`, `docs/logs/2026/04-03.md`, `docs/logs/2026/04-04.md`, `docs/logs/2026/04-07.md`, `docs/logs/2026/04-08.md`, `docs/logs/2026/04-09.md`, `docs/logs/2026/04-10.md`, `docs/logs/2026/05-04.md`, `docs/logs/2026/05-05.md`
 
 ## Goal
 
@@ -23,6 +23,7 @@
 4. 剩余工作没有明确归属，导致计划看起来完成，实际上还有隐含 debt。
 5. 把“最近一个 slice 已 landing”误当成“整份 plan 可关闭”，缺少独立 closure audit。
 6. 看到接口、类型、方法名已经出现，就误判对应语义已经完整落地，没有继续核对 live behavior 和 focused tests。
+7. 顶部 `Plan Status`、slice `Status`、phase `Exit Criteria`、`Closure Gates` 没有一起同步，导致文本里同时出现“completed”与未勾选 closure checklist 的矛盾状态。
 
 所以本指南只保留最少规则，并把它们直接体现在模板里。
 
@@ -46,6 +47,7 @@
 16. 允许 deferred 的是优化项或已裁定为 non-blocking 的 residual，不允许 deferred 的是已确认且仍在 scope 内的 live defect、contract gap、owner-doc drift、以及未满足的硬门禁。
 17. 如果某个 Phase 改变了 live baseline、public contract、或 owner behavior，该 Phase 的 Exit Criteria 必须包含相应文档更新项。纯测试拆分、纯工具整理、纯内部重构可以显式写明 `No owner-doc update required`，但不能默默跳过文档裁定。
 18. **Checklist 打勾是 closure 的前置条件，不是附带动作。** 执行完一个 item 后必须立即将对应 `- [ ]` 改为 `- [x]`。标记 `Plan Status: completed` 时，文件内不得残留任何未勾选的 in-scope checklist item。如果存在未勾选项，要么完成它，要么显式移入 `Deferred But Adjudicated` 并写清原因。
+19. **标记 `completed` 前，必须做一次文本一致性核对。** 至少逐项确认以下五处彼此一致：`Plan Status`、每个 slice 的 `Status`、每个 slice 的 `Exit Criteria`、`Closure Gates`、以及对应 `docs/logs/` 收口记录。任何一处仍显示未完成，都不能把 plan 视为真正关闭。
 
 ## Anti-Slacking Rule
 
@@ -318,10 +320,11 @@ Follow-up:
 1. 从头重读整份 plan，不只看最近 landing 的部分。
 2. 逐条核对每个 slice 的 `Exit Criteria`。
 3. 逐条核对 `Closure Gates`。
-4. 把剩余工作写进 `Follow-up`，明确 successor plan 或明确无剩余 debt。
-5. 明确区分“接口存在”与“行为完成”（对代码变更计划：至少抽查一轮 live code path 和 focused tests；对纯文档计划：抽查文档内容与 live repo 代码的一致性），确认实现语义真的满足 exit criteria。
-6. 由独立审阅者或独立子 agent 做 closure-audit，并在 plan 或对应 daily log 中记录证据。这里的独立子 agent 指为 closure audit 单独启动的 fresh session，而不是复用实现阶段的同一 task session 继续自查。
-7. 逐条检查 deferred / follow-up 项是否真的 non-blocking，确认没有把 in-scope live defect、contract drift、或硬门禁失败项偷偷改写成“后续再做”。
+4. 逐项核对文本一致性：`Plan Status`、每个 slice 的 `Status`、每个 slice 的 `Exit Criteria`、`Closure Gates`、`docs/logs/` 收口记录必须彼此一致，不能保留“顶部已 completed、内部仍未勾选”的状态。
+5. 把剩余工作写进 `Follow-up`，明确 successor plan 或明确无剩余 debt。
+6. 明确区分“接口存在”与“行为完成”（对代码变更计划：至少抽查一轮 live code path 和 focused tests；对纯文档计划：抽查文档内容与 live repo 代码的一致性），确认实现语义真的满足 exit criteria。
+7. 由独立审阅者或独立子 agent 做 closure-audit，并在 plan 或对应 daily log 中记录证据。这里的独立子 agent 指为 closure audit 单独启动的 fresh session，而不是复用实现阶段的同一 task session 继续自查。
+8. 逐条检查 deferred / follow-up 项是否真的 non-blocking，确认没有把 in-scope live defect、contract drift、或硬门禁失败项偷偷改写成“后续再做”。
 
 如果这些事没做完，就不要把 `Plan Status` 改成 `completed`。
 
