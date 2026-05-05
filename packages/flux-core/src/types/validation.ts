@@ -106,7 +106,6 @@ export interface CompiledFormValidationModel {
   behavior: CompiledValidationBehavior;
   dependents: Record<string, string[]>;
   nodes?: Record<string, CompiledValidationNode>;
-  validationOrder?: string[];
   rootPath?: string;
   ownerId?: string;
   defaultHiddenFieldPolicy?: HiddenFieldPolicy;

@@ -253,7 +253,6 @@ describe('validation-model', () => {
       });
       expect(model).toBeDefined();
       expect(model!.order).toEqual(['f']);
-      expect(model!.validationOrder).toEqual(['f']);
       expect(model!.rootPath).toBe('f');
       expect(model!.behavior).toBe(defaultBehavior);
       expect(model!.defaultHiddenFieldPolicy).toEqual({ validateWhenHidden: true });
@@ -265,22 +264,13 @@ describe('validation-model', () => {
       expect(getCompiledValidationTraversalOrder(undefined)).toEqual([]);
     });
 
-    it('prefers validationOrder when present', () => {
+    it('returns order when present', () => {
       const nodes: Record<string, CompiledValidationNode> = {
         a: makeFieldNode({ path: 'a' }),
         b: makeFieldNode({ path: 'b' }),
       };
       const model = buildCompiledFormValidationModel({ behavior: defaultBehavior, nodes });
       expect(getCompiledValidationTraversalOrder(model)).toEqual(['a', 'b']);
-    });
-
-    it('falls back to order when validationOrder is absent', () => {
-      const model = {
-        order: ['x', 'y'],
-        behavior: defaultBehavior,
-        dependents: {},
-      };
-      expect(getCompiledValidationTraversalOrder(model)).toEqual(['x', 'y']);
     });
   });
 

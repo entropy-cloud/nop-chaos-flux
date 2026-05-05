@@ -138,18 +138,17 @@ export function buildCompiledFormValidationModel(input: {
 }): CompiledFormValidationModel | undefined {
   const nodes = input.nodes;
   const rootPath = input.rootPath;
-  const validationOrder = buildCompiledValidationOrder(nodes, rootPath);
+  const order = buildCompiledValidationOrder(nodes, rootPath);
 
-  if (validationOrder.length === 0) {
+  if (order.length === 0) {
     return undefined;
   }
 
   return {
-    order: validationOrder,
+    order,
     behavior: input.behavior,
     dependents: buildCompiledValidationDependentMap(nodes),
     nodes,
-    validationOrder,
     rootPath,
     defaultHiddenFieldPolicy: input.defaultHiddenFieldPolicy,
   };
@@ -162,7 +161,7 @@ export function getCompiledValidationTraversalOrder(
     return [];
   }
 
-  return model.validationOrder ?? model.order;
+  return model.order;
 }
 
 export function getCompiledValidationDependents(
