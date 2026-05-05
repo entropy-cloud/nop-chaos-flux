@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { DatasetPanel } from '../panels/dataset-panel.js';
-import type { DataSet, DatasetStoreApi } from '@nop-chaos/word-editor-core';
+import type { Dataset, DatasetStoreApi } from '@nop-chaos/word-editor-core';
 
 vi.mock('@nop-chaos/ui', () => {
   return {
@@ -26,7 +26,7 @@ vi.mock('@nop-chaos/ui', () => {
 });
 
 function createMockStore(
-  datasets: DataSet[] = [],
+  datasets: Dataset[] = [],
   selectedDatasetId: string | null = null,
 ): DatasetStoreApi {
   const state = { datasets, selectedDatasetId };
@@ -80,7 +80,7 @@ describe('DatasetPanel', () => {
   });
 
   it('renders datasets when present', () => {
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
       { id: 'ds2', name: 'Products', description: 'Product table', type: 'api', columns: [] },
     ];
@@ -92,7 +92,7 @@ describe('DatasetPanel', () => {
   });
 
   it('shows type badges for datasets', () => {
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);
@@ -101,7 +101,7 @@ describe('DatasetPanel', () => {
   });
 
   it('shows column count', () => {
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       {
         id: 'ds1',
         name: 'Users',
@@ -119,7 +119,7 @@ describe('DatasetPanel', () => {
   });
 
   it('shows singular "column" for single column', () => {
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       {
         id: 'ds1',
         name: 'Users',
@@ -144,7 +144,7 @@ describe('DatasetPanel', () => {
 
   it('calls onEditDataset when a dataset item is clicked', async () => {
     const onEditDataset = vi.fn();
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'Users', description: 'User table', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);
@@ -158,7 +158,7 @@ describe('DatasetPanel', () => {
   });
 
   it('shows "No description" when dataset has no description', () => {
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'Users', description: '', type: 'sql', columns: [] },
     ];
     const store = createMockStore(datasets);

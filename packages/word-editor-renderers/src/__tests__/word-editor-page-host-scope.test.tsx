@@ -452,7 +452,7 @@ describe('WordEditorPage host scope', () => {
     const pageRenderer: RendererDefinition = {
       type: 'page',
       component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
-      regions: ['body'],
+      fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
     };
 
     const registry = createDefaultRegistry([pageRenderer, StatusProbe]);

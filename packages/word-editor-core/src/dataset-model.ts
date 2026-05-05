@@ -17,7 +17,7 @@ export interface Dataset {
 
 let _idCounter = 0;
 
-function generateDataSetId(): string {
+function generateDatasetId(): string {
   return `ds_${Date.now()}_${++_idCounter}`;
 }
 
@@ -82,7 +82,7 @@ export function validateDataset(dataset: DatasetValidationInput): DatasetValidat
 
 export function createDataset(overrides: Partial<Dataset> = {}): Dataset {
   const dataset: Dataset = {
-    id: overrides.id ?? generateDataSetId(),
+    id: overrides.id ?? generateDatasetId(),
     name: overrides.name ?? '',
     description: overrides.description ?? '',
     type: overrides.type ?? 'static',
@@ -104,18 +104,3 @@ export function createDataColumn(overrides: Partial<DataColumn> = {}): DataColum
 export function datasetColumnToExpression(datasetName: string, column: DataColumn): string {
   return `\${${datasetName}.${column.name}}`;
 }
-
-/** @deprecated Use `DatasetSourceType` instead. */
-export type DataSetSourceType = DatasetSourceType;
-/** @deprecated Use `Dataset` instead. */
-export type DataSet = Dataset;
-/** @deprecated Use `DatasetValidationResult` instead. */
-export type DataSetValidationResult = DatasetValidationResult;
-/** @deprecated Use `DatasetValidationInput` instead. */
-export type DataSetValidationInput = DatasetValidationInput;
-/** @deprecated Use `createDataset` instead. */
-export const createDataSet = createDataset;
-/** @deprecated Use `validateDataset` instead. */
-export const validateDataSet = validateDataset;
-/** @deprecated Use `datasetColumnToExpression` instead. */
-export const dataSetColumnToExpression = datasetColumnToExpression;

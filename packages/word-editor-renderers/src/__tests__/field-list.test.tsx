@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { FieldList } from '../panels/field-list.js';
-import type { DataSet, DataColumn } from '@nop-chaos/word-editor-core';
+import type { Dataset, DataColumn } from '@nop-chaos/word-editor-core';
 
 vi.mock('@nop-chaos/ui', () => {
   return {
@@ -17,7 +17,7 @@ vi.mock('@nop-chaos/ui', () => {
   };
 });
 
-function createMockStore(selectedDatasetId: string | null = null, datasets: DataSet[] = []) {
+function createMockStore(selectedDatasetId: string | null = null, datasets: Dataset[] = []) {
   let state = { datasets, selectedDatasetId };
   const listeners = new Set<() => void>();
 
@@ -58,7 +58,7 @@ describe('FieldList', () => {
   });
 
   it('shows empty state for dataset with no columns', () => {
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'TestDS', description: '', type: 'static', columns: [] },
     ];
     const store = createMockStore('ds1', datasets);
@@ -71,7 +71,7 @@ describe('FieldList', () => {
       { name: 'col1', label: 'Column 1', type: 'sql' },
       { name: 'col2', label: 'Column 2', type: 'api', description: 'An API column' },
     ];
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'TestDS', description: 'Test', type: 'sql', columns },
     ];
     const store = createMockStore('ds1', datasets);
@@ -85,7 +85,7 @@ describe('FieldList', () => {
 
   it('shows type badges for columns', () => {
     const columns: DataColumn[] = [{ name: 'col1', label: 'Column 1', type: 'sql' }];
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns },
     ];
     const store = createMockStore('ds1', datasets);
@@ -96,7 +96,7 @@ describe('FieldList', () => {
   it('calls onFieldClick when a column is clicked', async () => {
     const onFieldClick = vi.fn();
     const columns: DataColumn[] = [{ name: 'col1', label: 'Column 1', type: 'sql' }];
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns },
     ];
     const store = createMockStore('ds1', datasets);
@@ -111,7 +111,7 @@ describe('FieldList', () => {
     const columns: DataColumn[] = [
       { name: 'col1', label: 'Column 1', type: 'sql', description: 'A description' },
     ];
-    const datasets: DataSet[] = [
+    const datasets: Dataset[] = [
       { id: 'ds1', name: 'TestDS', description: '', type: 'sql', columns },
     ];
     const store = createMockStore('ds1', datasets);

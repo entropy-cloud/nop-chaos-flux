@@ -360,7 +360,6 @@ export interface NopDebuggerAutomationApi {
   createDiagnosticReport(options?: NopDiagnosticReportOptions): NopDiagnosticReport;
   exportSession(options?: NopDebuggerSessionExportOptions): NopDebuggerSessionExport;
   waitForEvent(options?: NopWaitForEventOptions): Promise<NopDebugEvent>;
-  inspectNode(cid: number): NopComponentInspectResult | undefined;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;
@@ -449,7 +448,6 @@ export interface NopDebuggerController {
   setActionScope(actionScope: ActionScope | null): void;
   setStrictMode(enabled: boolean): void;
   getComponentTree(): NopComponentTreeItem[];
-  inspectNode(cid: number): NopComponentInspectResult | undefined;
   inspectByCid(cid: number): NopComponentInspectResult | undefined;
   inspectByElement(element: HTMLElement): NopComponentInspectResult | undefined;
   evaluateNodeExpression(args: { cid: number; expression: string }): NopExpressionEvaluationResult;

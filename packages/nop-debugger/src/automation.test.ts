@@ -196,7 +196,6 @@ describe('debugger automation helpers', () => {
     const toggle = vi.fn();
     const setActiveTab = vi.fn();
     const setPanelPosition = vi.fn();
-    const inspectNode = vi.fn(() => undefined);
     const inspectByCid = vi.fn(() => undefined);
     const inspectByElement = vi.fn(() => undefined);
     const getLatestFailedRequest = vi.fn(() => undefined);
@@ -242,7 +241,6 @@ describe('debugger automation helpers', () => {
       unminimize: vi.fn(),
       setActiveTab,
       setPanelPosition,
-      inspectNode,
       inspectByCid,
       inspectByElement,
       evaluateNodeExpression,
@@ -383,7 +381,6 @@ describe('debugger automation helpers', () => {
       unminimize() {},
       setActiveTab() {},
       setPanelPosition() {},
-      inspectNode: vi.fn(() => undefined),
       inspectByCid: vi.fn(() => undefined),
       inspectByElement: vi.fn(() => undefined),
       evaluateNodeExpression: vi.fn(() => ({ expression: 'x', ok: true, value: 1 })),

@@ -12,7 +12,7 @@ export const textRenderer: RendererDefinition = {
 export const pageRenderer: RendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
-  regions: ['body'],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
 export const basicTestRendererDefinitions: RendererDefinition[] = [pageRenderer, textRenderer];

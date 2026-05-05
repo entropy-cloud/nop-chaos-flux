@@ -172,7 +172,7 @@ describe('controller inspector — basic lookup', () => {
     });
   });
 
-  it('inspectNode resolves mounted handles by cid', () => {
+  it('inspectByCid resolves mounted handles by cid', () => {
     const ctrl = createNopDebugger({ id: 'inspect-node-by-cid', enabled: true });
     const mockHandle = {
       id: 'handle-106',
@@ -188,14 +188,14 @@ describe('controller inspector — basic lookup', () => {
 
     ctrl.setComponentRegistry(mockRegistry as never);
 
-    expect(ctrl.inspectNode(106)).toMatchObject({
+    expect(ctrl.inspectByCid(106)).toMatchObject({
       cid: 106,
       mounted: true,
       handleId: 'handle-106',
     });
   });
 
-  it('inspectNode returns undefined when cid is not found', () => {
+  it('inspectByCid returns undefined when cid is not found', () => {
     const ctrl = createNopDebugger({ id: 'inspect-node-not-found', enabled: true });
     const mockRegistry = {
       id: 'reg-1',
@@ -204,7 +204,7 @@ describe('controller inspector — basic lookup', () => {
 
     ctrl.setComponentRegistry(mockRegistry as never);
 
-    expect(ctrl.inspectNode(107)).toBeUndefined();
+    expect(ctrl.inspectByCid(107)).toBeUndefined();
   });
 
   it('inspectByElement uses registry inspect payload for instancePath and scopeChain when available', () => {

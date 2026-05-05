@@ -23,9 +23,6 @@ export {
   createDataColumn,
   validateDataset,
   datasetColumnToExpression,
-  createDataSet,
-  validateDataSet,
-  dataSetColumnToExpression,
 } from './dataset-model.js';
 export type {
   Dataset,
@@ -33,9 +30,6 @@ export type {
   DatasetSourceType,
   DatasetValidationResult,
   DatasetValidationInput,
-  DataSet,
-  DataSetSourceType,
-  DataSetValidationInput,
   DataColumnInput,
 } from './dataset-model.js';
 export {

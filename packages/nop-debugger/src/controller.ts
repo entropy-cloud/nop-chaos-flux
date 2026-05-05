@@ -135,8 +135,6 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   let currentGetComponentTree = buildGetComponentTree(componentRegistry);
   let currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
 
-  const inspectNode = (cid: number) => currentInspectByCid(cid);
-
   const getSnapshot = () => store.getSnapshot();
   const getOverview = () => buildOverview(getSnapshot().events);
   const queryEvents = (query?: NopDebugEventQuery) => applyEventQuery(getSnapshot().events, query);
@@ -236,7 +234,6 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     createDiagnosticReport: createReport,
     exportSession,
     waitForEvent,
-    inspectNode,
     clear() {
       store.clear();
     },
@@ -411,7 +408,6 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     getComponentTree() {
       return currentGetComponentTree();
     },
-    inspectNode,
     inspectByCid(cid: number) {
       return currentInspectByCid(cid);
     },

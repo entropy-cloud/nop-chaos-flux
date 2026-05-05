@@ -247,7 +247,13 @@ describe('registerSpreadsheetRenderers', () => {
 
     const definition = registry.get('spreadsheet-page');
     expect(definition).toBeDefined();
-    expect(definition?.regions).toEqual(['toolbar', 'body', 'dialogs']);
+    expect(definition?.fields).toEqual(
+      expect.arrayContaining([
+        { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
+        { key: 'body', kind: 'region', regionKey: 'body' },
+        { key: 'dialogs', kind: 'region', regionKey: 'dialogs' },
+      ]),
+    );
     expect(definition?.actionScopePolicy).toBe('new');
   });
 

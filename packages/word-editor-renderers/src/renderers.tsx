@@ -60,7 +60,6 @@ export const wordEditorRendererDefinitions: RendererDefinition[] = [
         payload: { kind: 'object', fields: {} },
       },
     },
-    regions: ['toolbar', 'leftPanel', 'rightPanel'],
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'statusPath', kind: 'prop' },
@@ -70,6 +69,9 @@ export const wordEditorRendererDefinitions: RendererDefinition[] = [
       { key: 'datasets', kind: 'prop' },
       { key: 'initialCharts', kind: 'prop' },
       { key: 'initialCodes', kind: 'prop' },
+      { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
+      { key: 'leftPanel', kind: 'region', regionKey: 'leftPanel' },
+      { key: 'rightPanel', kind: 'region', regionKey: 'rightPanel' },
     ],
     actionScopePolicy: 'new',
     hostContract: wordEditorHostContract,

@@ -1,14 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   createDataset,
-  createDataSet,
   createDataColumn,
   validateDataset,
-  validateDataSet,
   datasetColumnToExpression,
-  dataSetColumnToExpression,
 } from '../dataset-model.js';
-import type { DataColumn, DatasetSourceType, DataSetSourceType } from '../dataset-model.js';
+import type { DataColumn, DatasetSourceType } from '../dataset-model.js';
 
 describe('DataColumn', () => {
   it('createDataColumn returns defaults', () => {
@@ -138,11 +135,6 @@ describe('validateDataset', () => {
     }
   });
 
-  it('keeps deprecated DataSetSourceType as an alias of DatasetSourceType', () => {
-    const types: DataSetSourceType[] = ['sql', 'api', 'mongo', 'static'];
-    expect(types).toHaveLength(4);
-  });
-
   it('rejects columns that are not an array', () => {
     const result = validateDataset({ name: 'test', type: 'sql', columns: 'bad' as any });
     expect(result.valid).toBe(false);
@@ -228,14 +220,9 @@ describe('datasetColumnToExpression', () => {
     expect(datasetColumnToExpression('users', col)).toBe('${users.user_email}');
   });
 
-  it('keeps deprecated dataset expression helper as an alias', () => {
+  it('formats legacy-looking dataset names without compatibility aliases', () => {
     const col = createDataColumn({ name: 'legacy_id', label: 'Legacy ID', type: 'sql' });
-    expect(dataSetColumnToExpression('legacy', col)).toBe('${legacy.legacy_id}');
-  });
-
-  it('keeps deprecated dataset creation and validation helpers as aliases', () => {
-    const ds = createDataSet({ name: 'legacy', type: 'api' });
-    expect(validateDataSet(ds).valid).toBe(true);
+    expect(datasetColumnToExpression('legacy', col)).toBe('${legacy.legacy_id}');
   });
 });
 
