@@ -27,6 +27,21 @@ describe('shared form renderer primitives', () => {
     expect(screen.getByText('Settings').tagName).toBe('LEGEND');
   });
 
+  it('label renders with htmlFor attribute when provided', () => {
+    render(<FieldLabel content="Email" htmlFor="email-input" />);
+
+    const label = screen.getByText('Email');
+    expect(label.tagName).toBe('LABEL');
+    expect(label.getAttribute('for')).toBe('email-input');
+  });
+
+  it('label does not have htmlFor when not provided', () => {
+    render(<FieldLabel content="Name" />);
+
+    const label = screen.getByText('Name');
+    expect(label.getAttribute('for')).toBeNull();
+  });
+
   it('renders validation errors before validating hints', () => {
     const { rerender } = render(<FieldHint errorMessage="Username is required" showError />);
 

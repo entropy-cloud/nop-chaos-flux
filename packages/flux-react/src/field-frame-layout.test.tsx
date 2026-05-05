@@ -279,3 +279,109 @@ describe('FieldFrame — dynamic required subscriptions', () => {
     expect(container.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
   });
 });
+
+describe('FieldFrame — ARIA attributes', () => {
+  it('error container has role="alert"', () => {
+    const state = {
+      ...EMPTY_FORM_STORE_STATE,
+      fieldStates: {
+        f1: {
+          touched: true,
+          errors: [{ path: 'f1', rule: 'required', message: 'Required', sourceKind: 'field' }],
+        },
+      },
+    };
+    const form = createMockForm({
+      store: { subscribe: () => () => undefined, getState: () => state },
+      validation: { behavior: { triggers: ['blur'], showErrorOn: ['touched'] } },
+    });
+
+    const { container } = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="f1" label="Name">
+          input
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+    const errorEl = container.querySelector('[data-slot="field-error"]');
+    expect(errorEl?.getAttribute('role')).toBe('alert');
+  });
+
+  it('field has aria-required when required', () => {
+    const { container } = render(
+      <FormContext.Provider value={createMockForm()}>
+        <FieldFrame name="f1" label="Name" required>
+          input
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+    const field = container.querySelector('.nop-field');
+    expect(field?.getAttribute('aria-required')).toBe('true');
+  });
+
+  it('field does not have aria-required when not required', () => {
+    const { container } = render(
+      <FormContext.Provider value={createMockForm()}>
+        <FieldFrame name="f1" label="Name">
+          input
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+    const field = container.querySelector('.nop-field');
+    expect(field?.hasAttribute('aria-required')).toBe(false);
+  });
+
+  it('control has aria-invalid when error is shown', () => {
+    const state = {
+      ...EMPTY_FORM_STORE_STATE,
+      fieldStates: {
+        f1: {
+          touched: true,
+          errors: [{ path: 'f1', rule: 'required', message: 'Required', sourceKind: 'field' }],
+        },
+      },
+    };
+    const form = createMockForm({
+      store: { subscribe: () => () => undefined, getState: () => state },
+      validation: { behavior: { triggers: ['blur'], showErrorOn: ['touched'] } },
+    });
+
+    const { container } = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="f1" label="Name">
+          input
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+    const control = container.querySelector('[data-slot="field-control"]');
+    expect(control?.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('control has aria-describedby pointing to error id when error is shown', () => {
+    const state = {
+      ...EMPTY_FORM_STORE_STATE,
+      fieldStates: {
+        f1: {
+          touched: true,
+          errors: [{ path: 'f1', rule: 'required', message: 'Required', sourceKind: 'field' }],
+        },
+      },
+    };
+    const form = createMockForm({
+      store: { subscribe: () => () => undefined, getState: () => state },
+      validation: { behavior: { triggers: ['blur'], showErrorOn: ['touched'] } },
+    });
+
+    const { container } = render(
+      <FormContext.Provider value={form}>
+        <FieldFrame name="f1" label="Name">
+          input
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+    const control = container.querySelector('[data-slot="field-control"]');
+    const errorEl = container.querySelector('[data-slot="field-error"]');
+    expect(control?.getAttribute('aria-describedby')).toBe('f1-error');
+    expect(errorEl?.id).toBe('f1-error');
+  });
+});

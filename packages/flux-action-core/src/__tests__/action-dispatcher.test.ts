@@ -644,6 +644,25 @@ describe('action-dispatcher dispatch ordering', () => {
     expect((result.error as Error).message).toContain('Unsupported action');
   });
 
+  it('dispose() can be called without error and clears pending debounces', () => {
+    const adapter = createMockAdapter();
+    const env = createMockEnv();
+    const runtime = createMockRuntime(env);
+    const evaluator = createMockEvaluator();
+    const dispatcher = createActionDispatcher({
+      getEnv: () => env,
+      evaluator,
+      adapter,
+      runtime,
+    });
+
+    // dispose() should not throw even with no pending debounces
+    expect(() => dispatcher.dispose()).not.toThrow();
+
+    // calling dispose() multiple times should be safe
+    expect(() => dispatcher.dispose()).not.toThrow();
+  });
+
   it('skips action when when-condition evaluates to false', async () => {
     const adapter = createMockAdapter();
     const env = createMockEnv();
