@@ -149,7 +149,7 @@ const HEADER_SCHEMA: SchemaInput = {
     { type: 'text', text: 'Performance Table Playground', className: 'text-2xl font-semibold' },
     {
       type: 'text',
-      text: '1000-row mixed-renderer table plus stress scenarios for sorting, selection, expanded rows, looped cell rendering, and broad row-scope updates.',
+      text: '1000-row dataset rendered through a paged mixed-renderer table plus attributable stress scenarios for sorting, selection, expanded rows, looped cell rendering, and broad row-scope updates.',
     },
     {
       type: 'text',
@@ -267,7 +267,7 @@ const STRESS_SCENARIOS: SchemaInput[] = [
       { type: 'text', text: 'Scenario A: Broad aggregate watchers', className: 'font-semibold' },
       {
         type: 'text',
-        text: 'Exercises wide formulas over the full 1000-row dataset to expose broad-access and full-scan costs.',
+      text: 'Exercises wide formulas over the full 1000-row dataset to expose broad-access and full-scan costs on top of the paged visible table baseline.',
       },
       { type: 'text', text: 'Total active rows: ${perfRows.filter(row => row.active).length}' },
       {
@@ -291,7 +291,7 @@ const STRESS_SCENARIOS: SchemaInput[] = [
       },
       {
         type: 'text',
-        text: 'Forces broad scope materialization and JSON serialization through `scope-debug`, which is closer to `scope.read()` hot paths than narrow path-based formulas.',
+        text: 'Forces broad scope materialization and JSON serialization through `scope-debug`, which is closer to `scope.read()` hot paths than narrow path-based formulas. Treat this as debug/perf stress, not an authoritative render benchmark.',
       },
       {
         type: 'scope-debug',
@@ -310,7 +310,7 @@ const FULL_STRESS_SCENARIOS: SchemaInput[] = [
       { type: 'text', text: 'Scenario B: Nested loop card list', className: 'font-semibold' },
       {
         type: 'text',
-        text: 'Exercises repeated child scopes outside the table using nested list rendering.',
+        text: 'Exercises repeated child scopes outside the paged table using nested list rendering.',
       },
       {
         type: 'loop',
@@ -363,7 +363,7 @@ const FULL_STRESS_SCENARIOS: SchemaInput[] = [
       { type: 'text', text: 'Scenario D: Editable subset form', className: 'font-semibold' },
       {
         type: 'text',
-        text: 'Exercises many mounted controlled fields at once without virtualization.',
+        text: 'Exercises many mounted controlled fields at once without virtualization on top of the same page baseline.',
       },
       {
         type: 'form',

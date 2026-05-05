@@ -87,7 +87,7 @@ const NAV_CARDS: NavCard[] = [
     title: 'Performance Table',
     eyebrow: 'Large Data Stress',
     description:
-      '1000-row mixed-renderer table plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.',
+      'Same-environment comparative measurement page for a 1000-row paged table baseline plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.',
   },
 ];
 

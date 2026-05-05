@@ -16,6 +16,9 @@ import {
   createRows,
   getModeDescription,
   INITIAL_METRICS,
+  recordProfilerCommit,
+  summarizeBatchRun,
+  waitForMetricQuiescence,
 } from './performance-table/index.js';
 import { createPerformanceSchema } from './performance-table/schema.js';
 
@@ -77,22 +80,14 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
     _phase: 'mount' | 'update' | 'nested-update',
     actualDuration: number,
   ) => {
-    const current = metricsRef.current;
-    const commitCount = current.commitCount + 1;
-    const next: RenderMetrics = {
-      commitCount,
-      lastActualDuration: actualDuration,
-      averageActualDuration:
-        (current.averageActualDuration * current.commitCount + actualDuration) / commitCount,
-      maxActualDuration: Math.max(current.maxActualDuration, actualDuration),
-      lastCommitAt: Date.now(),
-    };
+    const next = recordProfilerCommit(metricsRef.current, actualDuration, Date.now());
     metricsRef.current = next;
+    setMetrics(next);
   };
 
   async function runHostBatch(label: string, steps: number) {
     const before = metricsRef.current;
-    const startedAt = performance.now();
+    const schedulingStartedAt = performance.now();
 
     setBatchSummary(null);
 
@@ -107,19 +102,23 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
       });
     }
 
-    const endedAt = performance.now();
-    const after = metricsRef.current;
-    const commitsDelta = after.commitCount - before.commitCount;
-
-    setBatchSummary({
-      label,
-      steps,
-      durationMs: endedAt - startedAt,
-      commitsDelta,
-      avgCommitMs:
-        commitsDelta > 0 ? (after.averageActualDuration + before.averageActualDuration) / 2 : 0,
-      maxCommitMs: after.maxActualDuration,
+    const schedulingEndedAt = performance.now();
+    const after = await waitForMetricQuiescence({
+      getMetrics: () => metricsRef.current,
     });
+    const settledAt = performance.now();
+
+    setBatchSummary(
+      summarizeBatchRun({
+        label,
+        steps,
+        before,
+        after,
+        schedulingStartedAt,
+        schedulingEndedAt,
+        settledAt,
+      }),
+    );
   }
 
   const modeDescription = getModeDescription(mode);
@@ -135,12 +134,14 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
         </p>
         <h1 className="m-0 mb-4">Table Performance Playground</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)] mb-2">
-          Dedicated performance page for large-table and repeated-scope testing. The main scenario
-          mounts a 1000-row table with 10 mixed cell renderers.
+          Same-environment comparative measurement page for large-table and repeated-scope testing.
+          The baseline scenario mounts a 1000-row dataset through a paged table with 10 mixed cell
+          renderers.
         </p>
         <p className="text-base leading-relaxed text-[var(--nop-body-copy)]">
-          Additional scenarios on the same page intentionally stress broad aggregate formulas,
-          nested loop rendering, scope-owned table state, and many mounted editable controls.
+          Additional scenarios intentionally add broad aggregate formulas, nested loop rendering,
+          scope-owned table state, and many mounted editable controls so you can compare deltas in
+          the same runtime. These numbers are not a cross-machine benchmark.
         </p>
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
           <div className="rounded-[20px] border border-[var(--nop-playground-stage-border)] bg-[var(--nop-playground-stage-bg)] p-5">
@@ -226,9 +227,9 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
               </div>
             </div>
             <p className="mt-4 text-xs leading-relaxed text-[var(--nop-body-copy)]">
-              Compare mode-switch commits, sort/select interactions, and dataset mutation buttons.
-              If scope materialization is a hotspot, `Table Only` should be much cheaper than `Full
-              Stress`.
+              Trust the synchronized commit count and commit-duration totals for same-page
+              comparisons. Scheduling time includes enqueue plus settle delay, so compare it as a
+              page-local signal instead of raw render cost.
             </p>
             {batchSummary ? (
               <div className="mt-4 rounded-lg border border-[var(--nop-nav-border)] p-3 text-sm">
@@ -237,16 +238,25 @@ export function PerformanceTablePage({ onBack }: PerformanceTablePageProps) {
                   {batchSummary.label}: {batchSummary.steps} updates
                 </div>
                 <div className="text-[var(--nop-body-copy)]">
-                  Wall time: {batchSummary.durationMs.toFixed(1)} ms
+                  Scheduling + settle: {batchSummary.totalDurationMs.toFixed(1)} ms
                 </div>
                 <div className="text-[var(--nop-body-copy)]">
-                  Commit delta: {batchSummary.commitsDelta}
+                  Scheduling only: {batchSummary.schedulingDurationMs.toFixed(1)} ms
                 </div>
                 <div className="text-[var(--nop-body-copy)]">
-                  Avg commit baseline: {batchSummary.avgCommitMs.toFixed(1)} ms
+                  Quiescence wait: {batchSummary.quiescenceWaitMs.toFixed(1)} ms
                 </div>
                 <div className="text-[var(--nop-body-copy)]">
-                  Max commit seen: {batchSummary.maxCommitMs.toFixed(1)} ms
+                  Commit count: {batchSummary.commitsDelta}
+                </div>
+                <div className="text-[var(--nop-body-copy)]">
+                  Total commit duration: {batchSummary.totalCommitMs.toFixed(1)} ms
+                </div>
+                <div className="text-[var(--nop-body-copy)]">
+                  Average commit duration: {batchSummary.avgCommitMs.toFixed(1)} ms
+                </div>
+                <div className="text-[var(--nop-body-copy)]">
+                  Max commit duration seen: {batchSummary.maxCommitMs.toFixed(1)} ms
                 </div>
               </div>
             ) : null}

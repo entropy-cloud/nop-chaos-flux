@@ -2,17 +2,22 @@ export type PerformanceMode = 'table-only' | 'scope-read-stress' | 'full-stress'
 
 export type RenderMetrics = {
   commitCount: number;
+  totalActualDuration: number;
   lastActualDuration: number;
   averageActualDuration: number;
   maxActualDuration: number;
   lastCommitAt: number;
+  commitRevision: number;
 };
 
 export type BatchRunSummary = {
   label: string;
   steps: number;
-  durationMs: number;
+  schedulingDurationMs: number;
+  quiescenceWaitMs: number;
+  totalDurationMs: number;
   commitsDelta: number;
+  totalCommitMs: number;
   avgCommitMs: number;
   maxCommitMs: number;
 };
@@ -39,10 +44,12 @@ export type PerfRow = {
 
 export const INITIAL_METRICS: RenderMetrics = {
   commitCount: 0,
+  totalActualDuration: 0,
   lastActualDuration: 0,
   averageActualDuration: 0,
   maxActualDuration: 0,
   lastCommitAt: 0,
+  commitRevision: 0,
 };
 
 export function createRow(index: number): PerfRow {
@@ -110,10 +117,10 @@ export function createBatchTransform() {
 export function getModeDescription(mode: PerformanceMode): string {
   switch (mode) {
     case 'table-only':
-      return 'Only the 1000-row mixed table is mounted. Use this as the closest baseline for row-scope and table-cell cost.';
+      return 'Mounts a 1000-row dataset through a paged visible table only. Use this as the closest same-page baseline for visible table-cell and row-scope cost.';
     case 'scope-read-stress':
-      return 'Mounts the table plus broad aggregate formulas and full-scope serialization via scope-debug. Use this to approximate `scope.read()` / materialize-heavy workloads.';
+      return 'Mounts the paged table plus broad aggregate formulas and full-scope serialization via scope-debug. Use this to compare against materialize-heavy `scope.read()` style workloads.';
     case 'full-stress':
-      return 'Mounts the table plus aggregate, nested loop, scope-state, and editable-form stress blocks.';
+      return 'Mounts the paged table plus aggregate, nested loop, scope-state, and editable-form stress blocks for same-environment comparison.';
   }
 }

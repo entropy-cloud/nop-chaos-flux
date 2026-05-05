@@ -390,7 +390,7 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     title: 'Performance Table',
     eyebrow: 'Large Data Stress',
     description:
-      '1000-row mixed-renderer table plus loop, aggregate, selection, pagination, and editable-form stress scenarios.',
+      'Same-environment comparative page for a 1000-row paged table baseline plus aggregate, loop, selection, pagination, and editable-form stress scenarios.',
   },
 ];
 
