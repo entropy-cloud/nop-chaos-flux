@@ -338,8 +338,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
 export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> = {
   type: 'detail-view',
   component: DetailViewRenderer,
-  regions: ['viewer', 'content'],
   fields: [
+    { key: 'viewer', kind: 'region', regionKey: 'viewer' },
+    { key: 'content', kind: 'region', regionKey: 'content' },
     formLabelFieldRule,
     { key: 'scopePath', kind: 'prop' },
     { key: 'data', kind: 'prop' },

@@ -85,6 +85,5 @@ export const fieldsetRendererDefinition: RendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-form',
   defaultSchema: { type: 'fieldset', body: [] },
   component: FieldsetRenderer,
-  regions: ['body'],
-  fields: [],
+  fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };

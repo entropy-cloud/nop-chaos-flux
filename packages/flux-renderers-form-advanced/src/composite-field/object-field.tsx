@@ -415,9 +415,9 @@ export const objectFieldRendererDefinition: RendererDefinition = {
   type: 'object-field',
   component: ObjectFieldRenderer,
   wrap: true,
-  regions: ['body'],
   fields: [
     formLabelFieldRule,
+    { key: 'body', kind: 'region', regionKey: 'body' },
     { key: 'transformInAction', kind: 'prop' },
     { key: 'transformOutAction', kind: 'prop' },
   ],

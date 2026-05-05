@@ -448,9 +448,9 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 export const variantFieldRendererDefinition: RendererDefinition<VariantFieldSchema> = {
   type: 'variant-field',
   component: VariantFieldRenderer,
-  regions: ['content'],
   fields: [
     formLabelFieldRule,
+    { key: 'content', kind: 'region', regionKey: 'content' },
     { key: 'variants', kind: 'ignored' },
     { key: 'selector', kind: 'prop' },
     { key: 'selectorMode', kind: 'prop' },

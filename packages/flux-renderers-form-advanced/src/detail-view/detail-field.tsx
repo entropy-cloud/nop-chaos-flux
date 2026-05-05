@@ -260,8 +260,9 @@ export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema
   type: 'detail-field',
   component: DetailFieldRenderer,
   wrap: true,
-  regions: ['viewer', 'content'],
   fields: [
+    { key: 'viewer', kind: 'region', regionKey: 'viewer' },
+    { key: 'content', kind: 'region', regionKey: 'content' },
     formLabelFieldRule,
     { key: 'triggerLabel', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
