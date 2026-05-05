@@ -87,8 +87,8 @@ The following are architecture-level constraints distilled from historical regre
 - Render phase must stay side-effect free. Renderer paths must not call store writers or state setters during render. If synchronization is needed, buffer and flush in an effect.
 - Root page scope should be seeded when `SchemaRenderer` creates the page runtime. Effects should only reconcile subsequent prop changes so mount-time child effects do not lose writes to a later root-data sync.
 - Scope identity and lifecycle must stay stable. Fragment/dialog render paths should avoid unnecessary scope recreation and must preserve parent-child reactivity when parent scope data changes.
-- React host effects should not republish owner summaries that already belong to runtime owners. For example, `DialogHost` / `DrawerHost` may render the mounted surface tree, but `statusPath` publication belongs to `SurfaceRuntime` so React rendering does not create a second source of truth or write to the wrong scope.
-- When React-owned host shells or renderers publish `statusPath`, the publication effect must clear that path on unmount by writing `undefined`. Cleanup-safe publication is part of the supported host baseline so parent scopes do not retain stale summaries after a publisher disappears.
+- React host effects should not republish owner summaries that already belong to runtime owners. For example, `DialogHost` may render the mounted surface tree, but `statusPath` publication belongs to `SurfaceRuntime` so React rendering does not create a second source of truth or write to the wrong scope.
+- Surface-family cleanup follows the same runtime-owned summary contract for both declarative and action-opened entries: close/unmount writes the closed summary `{ open: false, active: false, opening: false, closing: false }` through `SurfaceRuntime`, not `undefined`.
 
 Use `docs/references/architecture-guardrails-from-bugs.md` for concrete anti-patterns, regression examples, and verification checks.
 
@@ -168,7 +168,7 @@ It is intentionally not the owner of every runtime boundary in the tree.
 - page runtime creation
 - form runtime creation
 - fragment child scope creation for `render({ bindings })`
-- dialog / drawer surface runtime ownership
+- dialog / drawer surface runtime ownership and root surface host rendering
 
 Those boundaries belong to the concrete creator path that introduces them.
 

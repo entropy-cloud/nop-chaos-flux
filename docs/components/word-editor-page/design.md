@@ -16,8 +16,10 @@
 
 - `type: 'word-editor-page'`
 - `sourcePackage: '@nop-chaos/word-editor-renderers'`
+- `rendererClass: 'domain-host-renderer'`
+- `rendererTraits`: `workbench-shell`, `builder-facing`
 - 当前 regions: `toolbar`、`leftPanel`、`rightPanel`
-- 当前 fields: `title` 为 `value-or-region`；`onBack`、`onSave` 为 `event`；`initialDocument`、`datasets`、`initialCharts`、`initialCodes` 为 `prop`
+- 当前 fields: `title` 为 `value-or-region`；`onBack`、`onSave` 为 `event`；`statusPath`、`initialDocument`、`datasets`、`initialCharts`、`initialCodes` 为 `prop`
 
 ## 4. schema 设计
 
@@ -46,7 +48,7 @@ interface WordEditorPageSchema {
 
 核心字段：
 
-- `onBack` 是可选回调；提供时用于返回上级页面
+- `onBack` 是可选回调；提供时用于返回上级页面，renderer 会向事件处理器透传原始 click event
 - `initialDocument` 和 `datasets` 是可选初始数据
 - `Dataset` 是当前公开契约词汇；`DataSet` 仅作为 `word-editor-core` 的兼容别名保留，不应继续作为本组件文档主写法
 - `initialCharts` / `initialCodes` 允许宿主直接注入初始占位符元数据

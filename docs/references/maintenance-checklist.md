@@ -181,7 +181,7 @@ Review:
 
 Examples:
 
-- changes in `apps/playground/src/app.tsx`
+- changes in `apps/playground/src/App.tsx`
 - changed recommended authoring patterns
 - changed representative schema flows
 

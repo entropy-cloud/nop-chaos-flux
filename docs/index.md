@@ -112,7 +112,7 @@ Choose the smallest document that matches the task.
 | Design Flux as the final DSL runtime, decide loader-vs-runtime extensibility boundaries, or model complex controls/design tools as special schema types | `docs/architecture/flux-dsl-vm-extensibility.md` | `docs/architecture/complex-control-host-protocol.md`, `docs/articles/flux-design-introduction.md` |
 | Plan or review a refactoring, or check low-code-specific design guidelines | `docs/references/refactoring-guidelines.md` | `docs/architecture/flux-design-principles.md` |
 | Review current renderer and runtime contracts by name | `docs/references/renderer-interfaces.md` | `packages/flux-core/src/index.ts` |
-| Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/app.tsx` |
+| Inspect a representative schema example | `docs/examples/user-management-schema.md` | `apps/playground/src/App.tsx` |
 | Inspect a DingTalk workflow tree example (TreeDocument JSON, DesignerConfig, FlowLong conversion) | `docs/examples/dingtalk-workflow-tree.md` | `docs/architecture/flow-designer/tree-mode.md` |
 | Inspect an action flow tree example (TreeDocument JSON, lowering to ActionSchema) | `docs/examples/action-flow-tree.md` | `docs/architecture/flow-designer/tree-mode.md`, `docs/architecture/action-algebra-formal-spec.md` |
 | Review prototype lessons or external research notes | `docs/references/` | the related architecture file for the active baseline |
@@ -183,7 +183,7 @@ Code-level contracts live primarily in:
 
 Example behavior is best cross-checked with:
 
-- `apps/playground/src/app.tsx`
+- `apps/playground/src/App.tsx`
 
 ## Directory Roles
 

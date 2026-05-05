@@ -248,6 +248,7 @@ The required flow is:
 Current baseline note:
 
 - `executeApiSchema(...)` now owns the main request convergence path used by ajax actions, form submit, validation, and data-source execution
+- `data-source` now preserves top-level schema `retry` through compile-time `CompiledOperationControl.retry` into runtime source execution, so source-backed ajax refresh uses the same retry/backoff contract as request-backed actions
 - callers may still pass declarative request objects; `executeApiSchema(...)` evaluates those values in scope before canonical request preparation so request execution semantics stay unified across actions, forms, validation, and data-sources
 - request preparation is split into explicit helpers, but the runtime now converges those helpers into one canonical executable request shape before fetch
 - dedup and runtime-local cache coordination are keyed by that final executable request semantics rather than only by the original declarative `ApiSchema`
@@ -740,12 +741,18 @@ The source abstraction is responsible for value production, not for built-in loa
 - if schema needs author-visible source status, the preferred cross-runtime contract is explicit `statusPath`
 - `statusPath` is readonly runtime summary data, not a second authoritative business value
 - narrower subsystems may still project additional summary values, but they must not replace the core `statusPath` contract with implicit hidden sibling paths
-- current source `statusPath` summary preserves the legacy `started`, `loading`, `ready`, `stale`, and `error` fields and additionally publishes timing/failure metadata such as `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, and `failureReason`; current baseline also adds optional convenience fields such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`
 
-Compatibility rule:
+Contract layering rule for `statusPath`:
 
-- when source state needs finer-grained loading semantics, add new fields rather than redefining or deleting existing `status`, `fetchStatus`, `loading`, or `ready` signals
-- consumers may continue using legacy fields, while newer consumers may opt into the finer-grained additive fields
+- canonical core state is the owner-defined source snapshot: `status`, `fetchStatus`, `stale`, `data`, `error`, `dataUpdatedAt`, `errorUpdatedAt`, `failureCount`, `failureReason`
+- derived convenience projection may add helper booleans derived from that core state, such as `hasData`, `hasError`, `isInitialLoading`, `isRefreshing`, and `inFlightCount`
+- compatibility aliases such as older summary vocabulary must be treated separately from derived helpers; they are not part of the preferred long-term contract just because they are also additive
+
+Normative guidance:
+
+- docs and new examples should describe the canonical core state first
+- convenience fields are acceptable when they are explicitly documented as derived helpers over the canonical state
+- compatibility-only status vocabulary should not be presented as a co-equal peer of the canonical state surface
 
 ### Retry Ownership
 

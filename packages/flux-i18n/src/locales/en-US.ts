@@ -337,6 +337,7 @@ export const enUS: Resource = {
       noTemplateTags: 'No template tags found',
       documentPreview: 'Document Preview',
       expandFieldPanel: 'Expand field panel',
+      collapseOutline: 'Collapse outline',
       expandOutline: 'Expand outline',
       noDocumentData: 'No document data available',
       insertHyperlink: 'Insert Hyperlink',

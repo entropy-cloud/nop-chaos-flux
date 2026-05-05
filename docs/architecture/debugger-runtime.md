@@ -27,9 +27,9 @@ Historical exploration, earlier proposals, and execution notes live in:
 - `packages/nop-debugger/src/automation.ts`
 - `packages/nop-debugger/src/panel.tsx`
 - `packages/nop-debugger/src/panel/use-inspect-mode.ts`
-- `apps/playground/src/app.tsx`
-- `apps/playground/src/pages/FluxBasicPage.tsx`
-- `apps/playground/src/pages/DebuggerLabPage.tsx`
+- `apps/playground/src/App.tsx`
+- `apps/playground/src/pages/flux-basic-page.tsx`
+- `apps/playground/src/pages/debugger-lab-page.tsx`
 - `tests/e2e/debugger.spec.ts`
 
 ## Design Position

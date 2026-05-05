@@ -16,8 +16,10 @@
 
 - `type: 'spreadsheet-page'`
 - `sourcePackage: '@nop-chaos/spreadsheet-renderers'`
+- `rendererClass: 'domain-host-renderer'`
+- `rendererTraits`: `workbench-shell`, `builder-facing`
 - 当前 regions: `toolbar`、`body`、`dialogs`
-- 当前 fields: `title` 为 `value-or-region`
+- 当前 fields: `title` 为 `value-or-region`；`statusPath`、`document`、`config`、`readOnly` 为 `prop`
 
 ## 4. schema 设计
 
@@ -29,7 +31,7 @@
 ## 5. 字段分类
 
 - `title`: `value-or-region`
-- `document`、`config`、`readOnly`: `value`
+- `statusPath`、`document`、`config`、`readOnly`: `value`
 - `toolbar`、`body`、`dialogs`: `region`
 
 ## 6. regions 与 slot 约定

@@ -13,12 +13,12 @@ It answers two questions:
 
 ## Current Code Anchors
 
-- `apps/playground/src/app.tsx`
+- `apps/playground/src/App.tsx`
 - `apps/playground/src/route-model.ts`
-- `apps/playground/src/useRoute.ts`
-- `apps/playground/src/component-lab/ComponentLabPage.tsx`
+- `apps/playground/src/use-route.ts`
+- `apps/playground/src/component-lab/component-lab-page.tsx`
 - `apps/playground/src/component-lab/renderer-lab-registry.ts`
-- `apps/playground/src/pages/HomePage.tsx`
+- `apps/playground/src/pages/home-page.tsx`
 - `packages/nop-debugger/src/panel.tsx`
 
 ## Design Position
@@ -79,7 +79,7 @@ Route spec types (`RouteSpec` in `apps/playground/src/route-model.ts`):
 | `#/lab/<id>`    | `lab-renderer` | Component Lab with a specific renderer selected                   |
 | `#/<domain-id>` | `domain`       | Existing domain host pages (flow-designer, report-designer, etc.) |
 
-The `useRoute` hook in `apps/playground/src/useRoute.ts` reads and writes the hash and exposes a stable `navigate(spec)` callback.
+The `useRoute` hook in `apps/playground/src/use-route.ts` reads and writes the hash and exposes a stable `navigate(spec)` callback.
 
 ### Route Inventory
 
@@ -93,7 +93,7 @@ The inventory is cross-checked against the live renderer registries by `route-ma
 
 ## Component Lab
 
-The Component Lab shell (`apps/playground/src/component-lab/ComponentLabPage.tsx`) provides:
+The Component Lab shell (`apps/playground/src/component-lab/component-lab-page.tsx`) provides:
 
 - left-side navigation listing all shared renderers grouped by category
 - per-renderer preview area driven by `RENDERER_LAB_REGISTRY`

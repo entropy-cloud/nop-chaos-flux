@@ -91,6 +91,24 @@ The current programming model includes these stable design rules:
 10. Keep `Resource` publication converged around `name` as the identity and default publication path, `mergeToScope: true` as the only narrowed special publish extension, and `statusPath` as readonly status summary.
 11. Keep host boundaries strict: read through readonly `Host Projection`, write through `Capability`, and keep bridge/controller/protocol objects host-private.
 
+## Contract Layering Rule
+
+Author-visible and integration-visible contracts must distinguish three different layers instead of mixing them into one flat surface:
+
+| Layer                            | Meaning                                                                                  | Expected treatment                                                          |
+| -------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `Canonical Core Contract`        | the authoritative owner-defined state, command, or identity surface                      | primary docs, primary examples, primary tests, preferred public vocabulary  |
+| `Derived Convenience Projection` | additive helper fields or helper reads deterministically derived from the canonical core | acceptable when clearly documented as derived and not treated as co-equal   |
+| `Compatibility Alias`            | an old or alternate public spelling/path/entry kept only for migration                   | explicit compatibility-only status, not promoted in new docs/examples/tests |
+
+Normative rules:
+
+1. A convenience projection is acceptable only when it is derived from the canonical contract without introducing a second owner model, second write path, or second public identity.
+2. A compatibility alias is not a convenience projection. If two public names mean the same thing, the non-canonical one must be documented and treated as compatibility-only.
+3. New architecture docs and new examples should describe the canonical contract first and keep convenience or compatibility surfaces in clearly labeled secondary sections.
+4. New tests should primarily lock the canonical contract. Compatibility tests are allowed only when the project has explicitly decided to retain that migration surface.
+5. In a v1 surface with no compatibility requirement, prefer deleting compatibility aliases instead of freezing them into root exports, schema validators, or top-level runtime contracts.
+
 ## Platform Layering
 
 A platform built on `Flux` should be understood as four layers:

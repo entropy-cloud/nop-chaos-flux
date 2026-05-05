@@ -336,6 +336,7 @@ export const zhCN: Resource = {
       noTemplateTags: '未找到模板标签',
       documentPreview: '文档预览',
       expandFieldPanel: '展开字段面板',
+      collapseOutline: '收起大纲',
       expandOutline: '展开大纲',
       noDocumentData: '无文档数据',
       insertHyperlink: '插入超链接',

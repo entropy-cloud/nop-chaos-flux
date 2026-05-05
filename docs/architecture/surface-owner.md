@@ -20,9 +20,8 @@
 
 Current live implementation note:
 
-- 当前 live 代码仍存在 renderer-path declarative surfaces 与 action-opened managed surfaces 的历史分裂。
-- 但从第一版长期基线看，这种分裂不应继续保留；后续实现应把两者收敛到同一个 `SurfaceRuntime` / root host / `SurfaceEntry` 模型。
-- 下文所有 owner 规则都以这个统一模型为准；live 代码若暂时未完全对齐，应视为实现待收口，而不是另立第二套文档基线。
+- 当前 live 基线已经收口到一个共享 surface-family runtime：declarative `type: 'dialog' | 'drawer'` 与 built-in `openDialog` / `openDrawer` 都注册到同一个 `SurfaceRuntime` / root host / `SurfaceEntry` stack。
+- React host 只负责渲染 root surface stack；surface open/close/status publication 与 active/top-surface 语义统一归 `SurfaceRuntime`。
 
 ## Core Claim
 
@@ -191,8 +190,8 @@ stack 中只有最上层 surface 拥有当前交互控制权。
 
 Current live implementation note:
 
-- 上面的 `statusPath` 规则是统一基线。
-- live 代码中如果 declarative path 仍未通过 `SurfaceRuntime` 发布，应视为实现待收口，而不是另一套契约。
+- 上面的 `statusPath` 规则已经是 live baseline。
+- declarative surface close / unmount 与 action-opened surface close 现在都会把同一路径写回 closed summary，而不是清成 `undefined`。
 
 局部读取规则：
 
@@ -292,10 +291,10 @@ future `sheet` 不能因为名字不同就自动获得独立 owner family。
 - the concrete host/owner creates one surface-family entry per opened surface, not `NodeRenderer`
 - each opened managed dialog or drawer entry owns its own surface-family owner instance and surface-root validation owner; both are disposed when the surface closes
 
-Current live split:
+Current live baseline:
 
-- 当前 live 代码可能还没有完全满足这条规则
-- 但目标基线已经明确：declarative `dialog` / `drawer` 也应成为 host-managed surface entry，而不是长期停留在 renderer-level wrapper path
+- declarative `dialog` / `drawer` 已成为 host-managed `SurfaceEntry`，并通过 root host stack 渲染。
+- 每个已打开 surface 都拥有 runtime-created child scope 和 surface-root validation owner；关闭后统一跟随 entry 生命周期释放。
 
 This rule is part of the broader creator-owned boundary model documented in `docs/architecture/renderer-runtime.md` -> "Execution Boundary Ownership Matrix".
 

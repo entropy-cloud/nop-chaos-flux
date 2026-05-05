@@ -29,8 +29,8 @@
 
 Current live implementation note:
 
-- 通用 declarative `type: 'drawer'` renderer 已落位。
-- 当前 live 代码对 `data` / host-managed entry / child scope 的收口可能尚未完全完成，但文档基线不再把这视为另一套合法长期模型。
+- 通用 declarative `type: 'drawer'` renderer 已落位，并已接入 shared `SurfaceRuntime` / root host stack。
+- declarative `drawer` 现在和 built-in `openDrawer` 一样注册为 `SurfaceEntry`、创建 runtime-owned child scope、共享 close/status publication/validation-owner 规则。
 
 ## 5. 字段分类
 

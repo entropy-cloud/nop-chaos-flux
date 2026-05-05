@@ -1,7 +1,7 @@
 # 201 Surface Family Runtime Convergence Plan
 
-> Plan Status: planned
-> Last Reviewed: 2026-05-04
+> Plan Status: completed
+> Last Reviewed: 2026-05-05
 > Source: `docs/architecture/surface-owner.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/form-validation.md`, `docs/architecture/flux-core.md`, `docs/references/action-payload-matrix.md`, `docs/logs/2026/05-01.md`, `docs/logs/2026/05-04.md`, `docs/plans/00-plan-authoring-and-execution-guide.md`, `docs/plans/163-core-boundary-and-validation-owner-convergence-plan.md`, `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/surface-runtime.ts`, `packages/flux-runtime/src/action-adapter.ts`, `packages/flux-react/src/dialog-host.tsx`, `packages/flux-renderers-basic/src/dialog.tsx`, `packages/flux-renderers-basic/src/drawer.tsx`, `packages/flux-renderers-basic/src/use-surface-renderer.ts`, `packages/flux-renderers-basic/src/declarative-surface-stack.ts`
 > Related: `docs/plans/163-core-boundary-and-validation-owner-convergence-plan.md`, `docs/plans/194-form-submit-validation-timing-and-lifecycle-safety-plan.md`
 
@@ -10,6 +10,13 @@
 把当前仍然分裂的 surface 实现收口到一个真实的 surface-family runtime：对外继续保留 declarative `type: 'dialog' | 'drawer'` 与 built-in `openDialog` / `openDrawer`，但对内统一进入 `SurfaceRuntime`、共享 `SurfaceEntry` 栈、共享 close 语义、共享 status publication、共享 scope/lifecycle/validation owner 规则。
 
 这份计划只 owner surface family 本身的 runtime convergence，不扩散成 CRUD quick-edit、designer/report/word 自定义弹层、或更宽泛的 action DSL 重写计划。
+
+## Status Note
+
+- 2026-05-05 复核 git 中的修改前版本后，确认本计划在被改写前仍是 `planned`，且所有 phase / closure checklist 都未开始执行。
+- 因此本计划恢复为 active owner；`closeSurface` / `closeDialog` / `closeDrawer` vocabulary convergence 不再由 `208` 承接，而回到本计划范围内执行。
+- 临时的 close-vocabulary owner split 已撤销；当前 `208` 号码已改用于 host-projection vocabulary successor plan，与本计划无直接执行关系。
+- 2026-05-05 独立 closure audit `ses_209ceeff7ffexydxYeIPqYPHme` 返回 `APPROVE`：此前的高优先级 blocker（declarative 与 action-opened surface 缺少 `data` child-scope init patch）已在 live code 与 focused tests 中得到证明；本计划现可按 closure bookkeeping 收口。
 
 ## Current Baseline
 
@@ -76,68 +83,68 @@
 
 ### Phase 1 - Freeze One Live Surface-Family Baseline
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/surface-runtime.ts`, `packages/flux-runtime/src/action-adapter.ts`, `docs/architecture/surface-owner.md`, `docs/architecture/renderer-runtime.md`, `docs/architecture/flux-core.md`
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] Re-audit the live declarative path and managed path entrypoints, then record one explicit implementation baseline for `SurfaceRuntime.open/close`, `SurfaceEntry`, status publication, and child-scope creation that the remaining phases must converge to.
-- [ ] Fix the current declarative-vs-managed status-publication drift against the already-frozen owner baseline: surface-family close/unmount should publish the same closed summary instead of clearing declarative status to `undefined`.
-- [ ] Narrow compatibility explicitly: `closeDialog` / `closeDrawer` remain selector aliases only, while all owner docs and new tests assert `closeSurface` semantics.
-- [ ] Normalize managed dialog/drawer scope creation into one shared runtime-owned helper or seam so `openDialog` and `openDrawer` do not keep separate child-scope semantics.
-- [ ] Record the exact live `closeSurface` default-target rule that closure will preserve or intentionally change, so later phases cannot close on naming alignment while still leaving context-target vs top-of-stack ambiguity.
+- [x] Re-audit the live declarative path and managed path entrypoints, then record one explicit implementation baseline for `SurfaceRuntime.open/close`, `SurfaceEntry`, status publication, and child-scope creation that the remaining phases must converge to.
+- [x] Fix the current declarative-vs-managed status-publication drift against the already-frozen owner baseline: surface-family close/unmount should publish the same closed summary instead of clearing declarative status to `undefined`.
+- [x] Narrow compatibility explicitly: `closeDialog` / `closeDrawer` remain selector aliases only, while all owner docs and new tests assert `closeSurface` semantics.
+- [x] Normalize managed dialog/drawer scope creation into one shared runtime-owned helper or seam so `openDialog` and `openDrawer` do not keep separate child-scope semantics.
+- [x] Record the exact live `closeSurface` default-target rule that closure will preserve or intentionally change, so later phases cannot close on naming alignment while still leaving context-target vs top-of-stack ambiguity.
 
 Exit Criteria:
 
-- [ ] One explicit live baseline for surface-family open/close/status/scope semantics is written into the owner docs named in this phase.
-- [ ] `packages/flux-runtime/src/action-adapter.ts` no longer carries materially different dialog-vs-drawer scope-init behavior without a recorded design reason.
-- [ ] The plan and owner docs no longer treat surface close-status publication as an open design choice; the declarative implementation drift is classified as an in-scope fix.
-- [ ] Active docs describe only one supported surface-family close/status baseline.
-- [ ] `docs/logs/2026/05-04.md` or the execution-day log is updated.
+- [x] One explicit live baseline for surface-family open/close/status/scope semantics is written into the owner docs named in this phase.
+- [x] `packages/flux-runtime/src/action-adapter.ts` no longer carries materially different dialog-vs-drawer scope-init behavior without a recorded design reason.
+- [x] The plan and owner docs no longer treat surface close-status publication as an open design choice; the declarative implementation drift is classified as an in-scope fix.
+- [x] Active docs describe only one supported surface-family close/status baseline.
+- [x] `docs/logs/2026/05-04.md` or the execution-day log is updated.
 
 ### Phase 2 - Converge Declarative Surfaces Onto Shared SurfaceRuntime
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-basic/src/dialog.tsx`, `packages/flux-renderers-basic/src/drawer.tsx`, `packages/flux-renderers-basic/src/use-surface-renderer.ts`, `packages/flux-renderers-basic/src/declarative-surface-stack.ts`, `packages/flux-react/src/dialog-host.tsx`, `packages/flux-react/src/dialog-host-surface.tsx`, `packages/flux-runtime/src/surface-runtime.ts`, root surface-runtime plumbing as needed
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] Make declarative `dialog` / `drawer` register into the shared `SurfaceRuntime` / `SurfaceEntry` model instead of maintaining a renderer-local stack in `declarative-surface-stack.ts`.
-- [ ] Remove or reduce `declarative-surface-stack.ts` so declarative active-surface semantics no longer depend on a separate sidecar stack.
-- [ ] Ensure declarative surfaces render through the same root host stack as action-opened surfaces, rather than directly owning an isolated renderer-local lifecycle path.
-- [ ] Keep public renderer contracts stable where possible (`open`, `defaultOpen`, `statusPath`, `container`, `onOpen`, `onClose`), but re-route their implementation through shared surface-runtime ownership.
-- [ ] Preserve or deliberately re-home surface-root validation owner behavior so declarative surfaces do not regress relative to the owner baseline established in Phase 1.
+- [x] Make declarative `dialog` / `drawer` register into the shared `SurfaceRuntime` / `SurfaceEntry` model instead of maintaining a renderer-local stack in `declarative-surface-stack.ts`.
+- [x] Remove or reduce `declarative-surface-stack.ts` so declarative active-surface semantics no longer depend on a separate sidecar stack.
+- [x] Ensure declarative surfaces render through the same root host stack as action-opened surfaces, rather than directly owning an isolated renderer-local lifecycle path.
+- [x] Keep public renderer contracts stable where possible (`open`, `defaultOpen`, `statusPath`, `container`, `onOpen`, `onClose`), but re-route their implementation through shared surface-runtime ownership.
+- [x] Preserve or deliberately re-home surface-root validation owner behavior so declarative surfaces do not regress relative to the owner baseline established in Phase 1.
 
 Exit Criteria:
 
-- [ ] Declarative `dialog` / `drawer` no longer require a separate renderer-local active-stack source of truth to compute `active`/close/status behavior.
-- [ ] Shared host rendering is the only supported root surface stack for both declarative and action-opened surfaces in this plan's scope.
-- [ ] Focused tests prove declarative surfaces create/read the same surface-family runtime structures expected by the host stack.
-- [ ] Relevant owner docs and component docs are updated to the landed baseline.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Declarative `dialog` / `drawer` no longer require a separate renderer-local active-stack source of truth to compute `active`/close/status behavior.
+- [x] Shared host rendering is the only supported root surface stack for both declarative and action-opened surfaces in this plan's scope.
+- [x] Focused tests prove declarative surfaces create/read the same surface-family runtime structures expected by the host stack.
+- [x] Relevant owner docs and component docs are updated to the landed baseline.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ### Phase 3 - Prove Surface Parity And Close Residual Drift
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/__tests__/*surface*`, `packages/flux-react/src/__tests__/*dialog*`, `packages/flux-renderers-basic/src/__tests__/*`, scoped docs, this plan
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] Add focused tests that prove declarative and action-opened surfaces share the same close semantics (`closeSurface` default target, explicit `surfaceId`, alias compatibility only where still supported).
-- [ ] Add focused tests that prove dialog and drawer share the same child-scope initialization baseline, including `data` patch semantics and lifecycle cleanup.
-- [ ] Add focused tests that prove active/top-surface behavior, status publication, and validation-owner wiring no longer diverge by entry path.
-- [ ] Add focused tests that prove declarative user-visible contracts still behave correctly after convergence, including `open`, `defaultOpen`, `container`, `onOpen`, `onClose`, and `statusPath`.
-- [ ] Re-audit for leftover dual-path code or docs that still describe declarative surfaces as a separate runtime family.
-- [ ] Run required verification for code changes and record any unrelated failures separately from this plan's closure evidence.
+- [x] Add focused tests that prove declarative and action-opened surfaces share the same close semantics (`closeSurface` default target, explicit `surfaceId`, alias compatibility only where still supported).
+- [x] Add focused tests that prove dialog and drawer share the same child-scope initialization baseline, including `data` patch semantics and lifecycle cleanup.
+- [x] Add focused tests that prove active/top-surface behavior, status publication, and validation-owner wiring no longer diverge by entry path.
+- [x] Add focused tests that prove declarative user-visible contracts still behave correctly after convergence, including `open`, `defaultOpen`, `container`, `onOpen`, `onClose`, and `statusPath`.
+- [x] Re-audit for leftover dual-path code or docs that still describe declarative surfaces as a separate runtime family.
+- [x] Run required verification for code changes and record any unrelated failures separately from this plan's closure evidence.
 
 Exit Criteria:
 
-- [ ] Focused tests cover both declarative and action-opened dialog/drawer paths for open/close/status/scope behavior.
-- [ ] Focused tests cover the preserved declarative renderer contract surface (`open`, `defaultOpen`, `container`, `onOpen`, `onClose`, `statusPath`).
-- [ ] No in-scope live code path still depends on the old declarative surface sidecar as a second source of truth.
-- [ ] `pnpm typecheck`, `pnpm build`, and `pnpm lint` pass after in-scope code changes; `pnpm test` is run and any unrelated failures are explicitly adjudicated.
-- [ ] Scoped owner docs describe only the final landed surface-family baseline.
-- [ ] `docs/logs/` corresponding date entry is updated.
+- [x] Focused tests cover both declarative and action-opened dialog/drawer paths for open/close/status/scope behavior.
+- [x] Focused tests cover the preserved declarative renderer contract surface (`open`, `defaultOpen`, `container`, `onOpen`, `onClose`, `statusPath`).
+- [x] No in-scope live code path still depends on the old declarative surface sidecar as a second source of truth.
+- [x] `pnpm typecheck`, `pnpm build`, and `pnpm lint` pass after in-scope code changes; `pnpm test` is run and any unrelated failures are explicitly adjudicated.
+- [x] Scoped owner docs describe only the final landed surface-family baseline.
+- [x] `docs/logs/` corresponding date entry is updated.
 
 ## Risks And Notes
 
@@ -148,18 +155,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] All in-scope confirmed live surface-family defects are fixed.
-- [ ] All in-scope confirmed contract drifts between owner docs and live surface behavior are resolved.
-- [ ] Declarative and action-opened surfaces share one live runtime family in the in-scope code paths.
-- [ ] `closeSurface` is the only active baseline in owner docs and tests; `closeDialog` / `closeDrawer` remain compatibility-only if still retained in code.
-- [ ] Dialog and drawer no longer diverge on runtime-owned scope initialization without an explicit documented reason.
-- [ ] Surface status publication has one landed baseline across both entry paths.
-- [ ] Required focused verification is complete for entry-path parity, close semantics, scope semantics, active-stack semantics, and preserved declarative renderer contracts.
-- [ ] No in-scope live defect or contract drift is silently downgraded to deferred or follow-up.
-- [ ] Affected owner docs and component docs are synchronized to the landed live baseline, or explicitly adjudicated as not requiring updates.
-- [ ] `docs/logs/` updated with the implementation and closure context.
-- [ ] Independent closure audit completed before marking this plan `completed`.
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] All in-scope confirmed live surface-family defects are fixed.
+- [x] All in-scope confirmed contract drifts between owner docs and live surface behavior are resolved.
+- [x] Declarative and action-opened surfaces share one live runtime family in the in-scope code paths.
+- [x] `closeSurface` is the only active baseline in owner docs and tests; `closeDialog` / `closeDrawer` remain compatibility-only if still retained in code.
+- [x] Dialog and drawer no longer diverge on runtime-owned scope initialization without an explicit documented reason.
+- [x] Surface status publication has one landed baseline across both entry paths.
+- [x] Required focused verification is complete for entry-path parity, close semantics, scope semantics, active-stack semantics, and preserved declarative renderer contracts.
+- [x] No in-scope live defect or contract drift is silently downgraded to deferred or follow-up.
+- [x] Affected owner docs and component docs are synchronized to the landed live baseline, or explicitly adjudicated as not requiring updates.
+- [x] `docs/logs/` updated with the implementation and closure context.
+- [x] Independent closure audit completed before marking this plan `completed`.
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`

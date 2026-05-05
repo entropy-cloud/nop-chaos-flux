@@ -19,7 +19,8 @@ Validation in Flux is owned by the nearest **validation-capable scope runtime**.
 Current live baseline note:
 
 - the shared owner-validation substrate in live code is still the managed `FormRuntime` implementation
-- `ValidationScopeRuntime` is the exported owner contract used by page/root and managed-surface non-form owners, even though the broader non-form owner family set is still intentionally narrow
+- `ValidationScopeRuntime` is the exported owner contract used by page/root and surface-family non-form owners
+- declarative `dialog` / `drawer` now use the same surface-root validation-owner path as action-opened surfaces because both register through shared `SurfaceRuntime`
 
 This means:
 
@@ -297,7 +298,7 @@ Current live baseline:
 1. `form` remains the primary submit-capable validation owner runtime family in ordinary shipped code paths
 2. `detail-field` / `detail-view` are live `create-owner` child-owner boundaries: the compiler marks them as owner boundaries, the renderer instantiates the child `FormRuntime` when the detail session opens, and the parent coordinates through child contracts while the detail owner is active
 3. `SchemaRenderer` page-owned root provisions a non-form validation owner when the render tree uses its own page scope; that owner is published first in `bootstrapping` and becomes `active` only after the compiled root validation plan attaches
-4. managed `dialog` / `drawer` surfaces opened through `SurfaceRuntime` provision their own surface-root validation owners, published by `DialogHost` around the surface body
+4. managed `dialog` / `drawer` surfaces opened through `SurfaceRuntime` provision their own surface-root validation owners, published by `DialogHost` around the surface body; they remain `bootstrapping` unless the opened compiled body already carries a root validation plan, and only active owners may execute ordinary validation
 5. embedded `SchemaRenderer` trees that render against `props.parentScope` remain parent-owned in the current baseline and do not auto-create a second page/root fallback owner
 6. broader non-form owner families such as filter/search panels still remain explicitly out of scope rather than broadly landed live behavior
 
@@ -380,9 +381,9 @@ Examples:
 Current live nearest-owner summary:
 
 1. inline/object/array/variant editors stay in the parent owner via projected form proxies and owner-root path rebasing
-2. projected child-editor validation metadata follows the same rebasing rule as value reads and writes, so relative child names continue to resolve field-level validation behavior against the projected owner-local subtree
+2. projected child-editor validation metadata follows the same rebasing rule as value reads and writes, including non-form owner paths, so relative child names continue to resolve field-level validation behavior against the projected owner-local subtree
 3. `detail-field` / `detail-view` are compiler-classified `create-owner` boundaries whose child owner is activated when the detail session opens
-4. the current supported owner-family set is still intentionally narrow: page-owned root, managed surface-root, ordinary `form`, and the detail child-owner path; broader non-form families remain out of scope
+4. the current supported owner-family set is still intentionally narrow: page-owned root, managed surface-root, ordinary `form`, and the detail child-owner path; within those owners, shared field chrome, `code-editor`, and `tag-list` now participate through the generic `ValidationScopeRuntime` path when no nearer form exists, while broader non-form owner families remain out of scope
 
 Owner-boundary rules in the supported families are:
 

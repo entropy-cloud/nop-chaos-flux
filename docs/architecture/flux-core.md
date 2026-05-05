@@ -139,8 +139,18 @@ The production direction is:
 - normal schema authors should not need to pass `surfaceId`
 - explicit surface targeting exists as a narrow extension path
 - `closeDialog` and `closeDrawer` may still exist as compatibility aliases, but active docs and new schema should use `closeSurface`
+- current live targeting rule is: close explicit `surfaceId` when provided; otherwise close the current action context surface via `ctx.dialogId`; if there is no current surface context, close the top-most active surface in the shared surface stack
 
 Architecturally, this should resolve through the nearest creator-owned surface boundary rather than through page-owned dialog state.
+
+### Shared surface-family runtime
+
+The current live baseline has one surface-family runtime for `dialog` / `drawer`.
+
+- declarative `type: 'dialog' | 'drawer'` and built-in `openDialog` / `openDrawer` both register `SurfaceEntry` instances into the same `SurfaceRuntime`
+- both paths render through the same root React surface host stack
+- both paths create runtime-owned child scopes and surface-root validation owners
+- surface close/unmount publishes the same closed summary through `statusPath` instead of clearing the path to `undefined`
 
 ## Main Layers
 
