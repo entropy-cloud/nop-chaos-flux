@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
 
+test.describe.configure({ mode: 'serial' });
+test.setTimeout(60_000);
+
 async function openReportDesignerDemo(page: import('@playwright/test').Page) {
   await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
   await expect(
@@ -98,6 +101,23 @@ test('toolbar actions are available to the spreadsheet editor', async ({ page })
   expect(count).toBeGreaterThan(10);
   await expect(toolbarButtons.first()).toBeVisible();
   await expect(toolbarButtons.last()).toBeVisible();
+});
+
+test('dragging a field onto a cell writes the cell value and binds report metadata', async ({
+  page,
+}) => {
+  await openReportDesignerDemo(page);
+
+  const field = page.locator('[data-slot="report-field-panel-item"]').first();
+  const targetCell = page.locator('td.ss-cell[data-row="0"][data-col="0"]').first();
+
+  await expect(field).toBeVisible();
+  await expect(targetCell).toBeVisible();
+
+  await field.dragTo(targetCell);
+
+  await expect(targetCell).toContainText('${orderId}');
+  await expect(targetCell).toHaveAttribute('data-cell-bound', /.+/);
 });
 
 test('sheet tab bar exposes the active sheet and add-sheet action', async ({ page }) => {
