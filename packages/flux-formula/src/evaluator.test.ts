@@ -354,4 +354,74 @@ describe('evaluateAst', () => {
       /depth limit exceeded/,
     );
   });
+
+  it('restores collector after expression throws', () => {
+    createFormulaCompiler();
+    const recordPath = vi.fn();
+    const outerCollector: ScopeDependencyCollector = {
+      recordPath,
+      recordWildcard: vi.fn(),
+    };
+    const ctx = createContext({ x: 1 }, outerCollector);
+
+    evaluateAst(parseFormula('x'), { env, context: ctx });
+    expect(recordPath).toHaveBeenCalledWith('x');
+
+    recordPath.mockClear();
+    expect(() =>
+      evaluateAst(parseFormula('nonexistent.foo.bar.baz()'), { env, context: ctx }),
+    ).toThrow();
+
+    recordPath.mockClear();
+    evaluateAst(parseFormula('x'), { env, context: ctx });
+    expect(recordPath).toHaveBeenCalledWith('x');
+  });
+
+  it('blocks dangerous member access (constructor, __proto__, prototype)', () => {
+    createFormulaCompiler();
+    const ctx = createContext({ obj: { safe: 1 } });
+
+    expect(() => evaluateAst(parseFormula('obj.constructor'), { env, context: ctx })).toThrow(
+      /not allowed/,
+    );
+    expect(() => evaluateAst(parseFormula('obj.__proto__'), { env, context: ctx })).toThrow(
+      /not allowed/,
+    );
+    expect(() => evaluateAst(parseFormula('obj.prototype'), { env, context: ctx })).toThrow(
+      /not allowed/,
+    );
+  });
+
+  it('blocks dangerous keys via computed member access', () => {
+    createFormulaCompiler();
+    const ctx = createContext({ obj: { safe: 1 }, key: 'constructor' });
+
+    expect(() => evaluateAst(parseFormula('obj[key]'), { env, context: ctx })).toThrow(
+      /not allowed/,
+    );
+  });
+
+  it('blocks dangerous keys in object literals', () => {
+    createFormulaCompiler();
+    const ctx = createContext({});
+
+    expect(() => evaluateAst(parseFormula('{constructor: 1}'), { env, context: ctx })).toThrow(
+      /not allowed/,
+    );
+    expect(() => evaluateAst(parseFormula('{__proto__: 1}'), { env, context: ctx })).toThrow(
+      /not allowed/,
+    );
+    expect(() => evaluateAst(parseFormula('{prototype: 1}'), { env, context: ctx })).toThrow(
+      /not allowed/,
+    );
+  });
+
+  it('object literal results have null prototype', () => {
+    createFormulaCompiler();
+    const ctx = createContext({});
+
+    const result = evaluateAst(parseFormula('{a: 1, b: 2}'), { env, context: ctx });
+    expect(Object.getPrototypeOf(result)).toBeNull();
+    expect(result).toEqual(expect.objectContaining({ a: 1, b: 2 }));
+  });
 });

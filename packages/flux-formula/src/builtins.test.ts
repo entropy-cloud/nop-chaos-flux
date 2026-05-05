@@ -129,4 +129,34 @@ describe('builtins', () => {
     expect(customEquals('a', 'a')).toBe(true);
     expect(customEquals('1', 1)).toBe(false);
   });
+
+  it('$JSON.parse strips dangerous keys from parsed objects', () => {
+    createFormulaCompiler();
+    const snapshot = getFormulaRegistrySnapshot();
+    const $JSON = snapshot.namespaces.$JSON as {
+      parse: (s: string) => unknown;
+      stringify: typeof JSON.stringify;
+    };
+
+    const result = $JSON.parse(
+      '{"safe": 1, "__proto__": {"polluted": true}, "constructor": "bad"}',
+    ) as Record<string, unknown>;
+    expect(result.safe).toBe(1);
+    expect('__proto__' in result).toBe(false);
+    expect('constructor' in result).toBe(false);
+    expect(Object.getPrototypeOf(result)).toBeNull();
+  });
+
+  it('$JSON.parse strips dangerous keys recursively', () => {
+    createFormulaCompiler();
+    const snapshot = getFormulaRegistrySnapshot();
+    const $JSON = snapshot.namespaces.$JSON as { parse: (s: string) => unknown };
+
+    const result = $JSON.parse('{"a": {"__proto__": "bad", "ok": true}}') as Record<
+      string,
+      any
+    >;
+    expect(result.a.ok).toBe(true);
+    expect('__proto__' in result.a).toBe(false);
+  });
 });

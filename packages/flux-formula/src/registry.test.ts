@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import {
   createFormulaCompiler,
+  createFormulaRegistry,
   getFormulaRegistrySnapshot,
   registerFunction,
   registerNamespace,
@@ -35,5 +36,21 @@ describe('formula registry', () => {
 
     const second = createFormulaCompiler();
     expect(second.compileExpression('${SUM(1, 2)}').exec({}, env)).toBe(3);
+  });
+
+  it('two createFormulaRegistry() instances do not pollute each other', () => {
+    const reg1 = createFormulaRegistry();
+    const reg2 = createFormulaRegistry();
+
+    reg1.registerFunction('FOO', () => 'from-reg1');
+    reg2.registerFunction('BAR', () => 'from-reg2');
+
+    const snap1 = reg1.getSnapshot();
+    const snap2 = reg2.getSnapshot();
+
+    expect(snap1.functions.FOO()).toBe('from-reg1');
+    expect(snap1.functions.BAR).toBeUndefined();
+    expect(snap2.functions.BAR()).toBe('from-reg2');
+    expect(snap2.functions.FOO).toBeUndefined();
   });
 });
