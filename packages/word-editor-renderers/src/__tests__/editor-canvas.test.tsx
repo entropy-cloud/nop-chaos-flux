@@ -22,6 +22,8 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
 });
 
 describe('EditorCanvas', () => {
+  const originalLocalStorage = globalThis.localStorage;
+
   beforeEach(() => {
     vi.useFakeTimers();
     Object.defineProperty(globalThis, 'localStorage', {
@@ -38,6 +40,15 @@ describe('EditorCanvas', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    if (originalLocalStorage) {
+      Object.defineProperty(globalThis, 'localStorage', {
+        value: originalLocalStorage,
+        configurable: true,
+      });
+      return;
+    }
+
+    Reflect.deleteProperty(globalThis, 'localStorage');
   });
 
   it('autosaves using live charts and codes instead of initial document extras', async () => {

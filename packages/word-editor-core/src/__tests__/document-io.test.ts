@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   createSavedDocumentData,
   saveDocument,
@@ -40,6 +40,10 @@ const localStorageState = {
 beforeEach(() => {
   localStorageState.current = createLocalStorageMock();
   vi.stubGlobal('localStorage', localStorageState.current);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('saveDocument', () => {

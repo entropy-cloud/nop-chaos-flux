@@ -1,5 +1,14 @@
 import { expect, test } from '@playwright/test';
 
+async function waitForIdleFrame(page: import('@playwright/test').Page) {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+      }),
+  );
+}
+
 async function openWordEditor(page: import('@playwright/test').Page) {
   await page.goto('/');
 
@@ -75,7 +84,6 @@ test.describe('Word Editor Page', () => {
     await expect(fieldsTab).toBeVisible();
 
     await fieldsTab.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('未选择数据集')).toBeVisible();
   });
@@ -94,10 +102,9 @@ test.describe('Word Editor Page', () => {
     const canvasElement = page.locator('canvas').first();
     await expect(canvasElement).toBeVisible({ timeout: 15000 });
     await canvasElement.click();
-    await page.waitForTimeout(300);
+    await waitForIdleFrame(page);
 
     await page.keyboard.type('Hello from E2E test');
-    await page.waitForTimeout(500);
 
     const wordCountDisplay = page.locator('[class*="tabular-nums"]').first();
     await expect(wordCountDisplay).toBeVisible();
@@ -118,8 +125,6 @@ test.describe('Word Editor Page', () => {
     await expect(underlineButton).toBeVisible();
     await underlineButton.click();
 
-    await page.waitForTimeout(300);
-
     await expect(boldButton).toBeVisible();
     await expect(italicButton).toBeVisible();
     await expect(underlineButton).toBeVisible();
@@ -131,7 +136,6 @@ test.describe('Word Editor Page', () => {
     const hyperlinkButton = page.getByTitle('Insert Hyperlink');
     await expect(hyperlinkButton).toBeVisible({ timeout: 15000 });
     await hyperlinkButton.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('插入超链接')).toBeVisible();
 
@@ -139,7 +143,7 @@ test.describe('Word Editor Page', () => {
     await expect(page.getByPlaceholder('URL (https://...)')).toBeVisible();
 
     await page.getByRole('button', { name: '取消' }).first().click();
-    await page.waitForTimeout(300);
+    await expect(page.getByText('插入超链接')).toHaveCount(0);
   });
 
   test('can open expression insert dialog', async ({ page }) => {
@@ -148,7 +152,6 @@ test.describe('Word Editor Page', () => {
     const exprButton = page.getByTitle('Insert Expression');
     await expect(exprButton).toBeVisible({ timeout: 15000 });
     await exprButton.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('插入模板表达式')).toBeVisible();
 
@@ -164,7 +167,6 @@ test.describe('Word Editor Page', () => {
     const addDatasetButton = page.getByTitle('Add Dataset');
     await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
     await addDatasetButton.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('Create Dataset')).toBeVisible();
 
@@ -184,7 +186,6 @@ test.describe('Word Editor Page', () => {
     const saveButton = page.getByRole('button', { name: '保存' });
     await expect(saveButton).toBeVisible({ timeout: 15000 });
     await saveButton.click();
-    await page.waitForTimeout(500);
 
     await expect
       .poll(
@@ -214,7 +215,6 @@ test.describe('Word Editor Page', () => {
     const searchButton = page.getByTitle('Search & Replace');
     await expect(searchButton).toBeVisible({ timeout: 15000 });
     await searchButton.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByPlaceholder('Search...')).toBeVisible();
     await expect(page.getByPlaceholder('Replace...')).toBeVisible();
@@ -226,7 +226,6 @@ test.describe('Word Editor Page', () => {
     const chartButton = page.getByTitle('Insert Chart');
     await expect(chartButton).toBeVisible({ timeout: 15000 });
     await chartButton.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('Create Chart')).toBeVisible();
 
@@ -242,7 +241,6 @@ test.describe('Word Editor Page', () => {
     const codeButton = page.getByTitle('Insert Barcode/QR Code');
     await expect(codeButton).toBeVisible({ timeout: 15000 });
     await codeButton.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('Create Code')).toBeVisible();
 

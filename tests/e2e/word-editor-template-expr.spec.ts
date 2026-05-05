@@ -49,7 +49,6 @@ test.describe('Template Expression Insertion', () => {
     await openWordEditor(page);
 
     await page.getByTitle('Insert Expression').click();
-    await page.waitForTimeout(300);
 
     const elTab = page.getByRole('tab', { name: 'EL 表达式' });
     await expect(elTab).toBeVisible();
@@ -61,7 +60,6 @@ test.describe('Template Expression Insertion', () => {
     await openWordEditor(page);
 
     await page.getByTitle('Insert Expression').click();
-    await page.waitForTimeout(300);
 
     const xplTab = page.getByRole('tab', { name: 'XPL 标签' });
     await xplTab.click();
@@ -74,10 +72,8 @@ test.describe('Template Expression Insertion', () => {
     await openWordEditor(page);
 
     await page.getByTitle('Insert Expression').click();
-    await page.waitForTimeout(300);
 
     await page.getByRole('tab', { name: 'XPL 标签' }).click();
-    await page.waitForTimeout(200);
 
     const tagSelect = page.getByRole('combobox').last();
     await expect(tagSelect).toBeVisible();
@@ -102,12 +98,10 @@ test.describe('Template Expression Insertion', () => {
     await openWordEditor(page);
 
     await page.getByTitle('Insert Expression').click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('插入模板表达式')).toBeVisible();
 
     await page.getByRole('button', { name: '取消' }).click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('插入模板表达式')).toHaveCount(0);
   });

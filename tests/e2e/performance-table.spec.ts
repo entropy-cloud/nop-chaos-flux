@@ -38,9 +38,14 @@ test.describe('Performance Table Page', () => {
     await expect(page.getByText('Host row mutation benchmark: 20 updates')).toBeVisible({
       timeout: 60_000,
     });
+    await expect(page.getByText(/Scheduling \+ settle:/)).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(/Commit count:/)).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(/Total commit duration:/)).toBeVisible({ timeout: 60_000 });
   });
 
   test('resets the measurement panel after a host benchmark run', async ({ page }) => {
+    test.setTimeout(120_000);
+
     await openPerformanceTable(page);
 
     await page.getByRole('button', { name: 'Run 20 Host Mutations' }).click();
@@ -97,10 +102,17 @@ test.describe('Performance Table Page', () => {
           .locator('[data-slot="table-pagination"] button, [data-slot="table-pagination"] a')
           .last();
         await next.click();
-        await page.waitForTimeout(500);
+        await expect(page.locator('table tbody tr')).toHaveCount(50);
       }
     }
-    await page.waitForTimeout(2000);
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const rows = document.querySelectorAll('table tbody tr');
+          return Array.from(rows).some((row) => row.textContent?.includes('951'));
+        }),
+      )
+      .toBe(true);
 
     const lastPageFirstRow = await page.evaluate(() => {
       const rows = document.querySelectorAll('table tbody tr');

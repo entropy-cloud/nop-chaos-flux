@@ -233,9 +233,7 @@ test.describe('array-field renderer', () => {
 // variant-field
 // ---------------------------------------------------------------------------
 test.describe('variant-field renderer', () => {
-  test('write: default string variant edits and submits through the bound scope state', async ({
-    page,
-  }) => {
+  test('write: switching tabs updates the active editor and bound scope state', async ({ page }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('variant-field');
 
@@ -243,8 +241,32 @@ test.describe('variant-field renderer', () => {
     const stage = lab.scenarioStage(slug);
     await expect(stage).toBeVisible();
     await expect(stage.getByRole('button', { name: /Submit/i })).toBeVisible({ timeout: 5_000 });
-    await expect(stage.locator('[data-active-variant="text"]').first()).toBeVisible();
+    const root = stage.locator('[data-active-variant]').first();
+    const textTab = stage.getByRole('tab', { name: 'Single String' }).first();
+    const listTab = stage.getByRole('tab', { name: 'String List' }).first();
+
+    await expect(root).toHaveAttribute('data-active-variant', 'text');
+    await expect(textTab).toHaveAttribute('aria-selected', 'true');
+    await expect(listTab).toHaveAttribute('aria-selected', 'false');
     await expect(stage.getByLabel('Expression')).toHaveValue('status = active');
+
+    await listTab.click({ force: true });
+
+    await expect(root).toHaveAttribute('data-active-variant', 'list');
+    await expect(textTab).toHaveAttribute('aria-selected', 'false');
+    await expect(listTab).toHaveAttribute('aria-selected', 'true');
+    await expect(
+      stage.getByText('Editing a string array. Add/remove rows to verify list output.'),
+    ).toBeVisible();
+    await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
+      '"filterValue": [\n    "status = active",\n    "role = admin"\n  ]',
+    );
+
+    await textTab.click({ force: true });
+
+    await expect(root).toHaveAttribute('data-active-variant', 'text');
+    await expect(textTab).toHaveAttribute('aria-selected', 'true');
+    await expect(listTab).toHaveAttribute('aria-selected', 'false');
     await stage.getByLabel('Expression').fill('priority = high');
     await expect(stage.locator('[data-slot="scope-debug-json"]')).toContainText(
       '"filterValue": "priority = high"',

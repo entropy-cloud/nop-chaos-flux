@@ -20,7 +20,6 @@ test('saves a document marker that survives a reload', async ({ page }) => {
   const canvasElement = page.locator('canvas').first();
   await expect(canvasElement).toBeVisible({ timeout: 15_000 });
   await canvasElement.click();
-  await page.waitForTimeout(300);
   await page.keyboard.type(marker);
 
   const saveButton = page.getByRole('button', { name: '保存' });

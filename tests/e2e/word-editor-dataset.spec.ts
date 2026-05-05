@@ -41,7 +41,6 @@ test.describe('Dataset Sidebar Panel', () => {
     const addDatasetButton = page.getByTitle('Add Dataset');
     await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
     await addDatasetButton.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('Create Dataset')).toBeVisible();
   });
@@ -52,13 +51,11 @@ test.describe('Dataset Sidebar Panel', () => {
     const addDatasetButton = page.getByTitle('Add Dataset');
     await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
     await addDatasetButton.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('Create Dataset')).toBeVisible();
 
     await page.getByPlaceholder('Enter dataset name').fill('TestDataset');
     await page.getByRole('button', { name: '保存' }).click();
-    await page.waitForTimeout(500);
 
     await expect(page.getByText('TestDataset')).toBeVisible();
   });
@@ -69,7 +66,6 @@ test.describe('Dataset Sidebar Panel', () => {
     const fieldsTab = page.getByRole('tab', { name: '字段' });
     await expect(fieldsTab).toBeVisible({ timeout: 15000 });
     await fieldsTab.click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('未选择数据集')).toBeVisible();
     await expect(page.getByText('选择数据集查看字段')).toBeVisible();
@@ -81,16 +77,13 @@ test.describe('Dataset Sidebar Panel', () => {
     const addDatasetButton = page.getByTitle('Add Dataset');
     await expect(addDatasetButton).toBeVisible({ timeout: 15000 });
     await addDatasetButton.click();
-    await page.waitForTimeout(300);
 
     await page.getByPlaceholder('Enter dataset name').fill('EditTarget');
     await page.getByRole('button', { name: '保存' }).click();
-    await page.waitForTimeout(500);
 
     await expect(page.getByText('EditTarget')).toBeVisible();
 
     await page.getByText('EditTarget').click();
-    await page.waitForTimeout(300);
 
     await expect(page.getByText('Edit Dataset')).toBeVisible();
     await expect(page.getByPlaceholder('Enter dataset name')).toHaveValue('EditTarget');

@@ -3,6 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 test.describe.configure({ mode: 'serial' });
+test.setTimeout(60000);
 
 async function openCodeEditor(page: import('@playwright/test').Page) {
   await page.goto('/#/code-editor', { waitUntil: 'commit' });
@@ -12,6 +13,7 @@ async function openCodeEditor(page: import('@playwright/test').Page) {
   await expect(page.getByRole('heading', { name: 'Code Editor Playground', level: 1 })).toBeVisible({
     timeout: 45000,
   });
+  await expect(findEditorByLabel(page, 'Plain Text')).toBeVisible({ timeout: 45000 });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
