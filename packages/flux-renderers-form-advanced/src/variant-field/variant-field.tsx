@@ -125,16 +125,23 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   const switchRequestIdRef = React.useRef(0);
 
   const activeKey = React.useMemo(() => {
-    if (matchedKey) return matchedKey;
     if (userSelectedKey) return userSelectedKey;
+    if (matchedKey) return matchedKey;
     if (detectedKey) return detectedKey;
     return initialKey;
   }, [matchedKey, userSelectedKey, detectedKey, initialKey]);
+
+  React.useEffect(() => {
+    if (userSelectedKey && matchedKey === userSelectedKey) {
+      setUserSelectedKey(undefined);
+    }
+  }, [matchedKey, userSelectedKey]);
 
   const activeOption = variants.find((v) => v.key === activeKey) ?? variants[0];
 
   const mountedRef = React.useRef(true);
   React.useEffect(() => {
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };
