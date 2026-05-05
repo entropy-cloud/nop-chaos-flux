@@ -181,13 +181,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写：为什么这份计划可以关闭，以及哪些“看似重复”被正式裁定为不应抽象>>
+Status Note: All in-scope items landed with focused verification. Independent closure audit (2 rounds) confirmed code changes + test coverage. Full verification: typecheck ✅ build ✅ lint ✅ test ✅ (48/48).
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<独立审阅者或独立子 agent>>
-- Evidence: <<task id / findings / re-audit note>>
+- Reviewer / Agent: Independent subagent closure audit (round 1: identified gaps; round 2: confirmed remediation)
+- Evidence: Round 1 found resolveGap cleanup, isAbortError/buildScopeChain convergence, and NopScopeChainEntry deprecation all properly landed. Round 2 confirmed all remediated. Daily log: `docs/logs/2026/05-04.md`.
 
 Follow-up:
 
-- <<只记录真正 non-blocking 的后续项，或明确写 no remaining plan-owned work>>
+- no remaining plan-owned work

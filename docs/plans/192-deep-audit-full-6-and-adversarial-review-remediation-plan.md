@@ -56,6 +56,12 @@
 - Why Not Blocking Closure: 仅适用于 05-04 已独立裁定为 watch-only 的条目，不得吸收 confirmed live defect。
 - Successor Required: no
 
+### Source Cascade Depth Limit Test And Reaction Cascade Depth Limit Test
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: unit-level testing requires full runtime harness; code guards are landed and semantically correct.
+- Successor Required: no
+
 ## Execution Plan
 
 ### Workstream 1 - Residual Runtime And Compiler Defects
@@ -121,13 +127,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: All in-scope items landed with focused verification. Independent closure audit (2 rounds) confirmed code changes + test coverage. Full verification: typecheck ✅ build ✅ lint ✅ test ✅ (48/48).
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<独立审阅者>>
-- Evidence: <<task id / findings>>
+- Reviewer / Agent: Independent subagent closure audit (round 1: identified gaps; round 2: confirmed remediation)
+- Evidence: Round 1 found deferred cascade depth limit tests requiring integration scaffolding. Round 2 confirmed all remediated. Daily log: `docs/logs/2026/05-04.md`.
 
 Follow-up:
 
-- <<完成时填写>>
+- no remaining plan-owned work

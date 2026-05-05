@@ -878,12 +878,12 @@ This means `xui:actions` compiles down to the same `ActionScope` registration me
 }
 ```
 
-The built-in actions (`validate`, `ajax`, `closeSurface`) remain platform semantics. `xui:actions` simply gives them a reusable name in the schema.
+The built-in actions (`ajax`, `closeSurface`) remain platform semantics; `validate` is a component capability invoked via `component:validate`, not a built-in action name. `xui:actions` simply gives action chains a reusable name in the schema.
 
 ### Naming Restrictions
 
 - names must be plain identifiers without `:` (to avoid collision with namespaced actions)
-- names must not match built-in action names (e.g., `ajax`, `setValue`, `validate`) — the compiler should emit a diagnostic if a name collides with a built-in, since it would be unreachable
+- names must not match built-in action names (e.g., `ajax`, `setValue`, `closeSurface`) — the compiler should emit a diagnostic if a name collides with a built-in, since it would be unreachable
 - names should use camelCase to match the existing action naming convention
 
 ### When Not To Use

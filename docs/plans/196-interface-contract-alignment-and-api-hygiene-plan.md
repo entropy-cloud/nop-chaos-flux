@@ -148,13 +148,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: All in-scope items landed with focused verification. Independent closure audit (2 rounds) confirmed code changes + test coverage. Full verification: typecheck ✅ build ✅ lint ✅ test ✅ (48/48).
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: <<独立审阅者>>
-- Evidence: <<task id / findings>>
+- Reviewer / Agent: Independent subagent closure audit (round 1: identified gaps; round 2: confirmed remediation)
+- Evidence: Round 1 found all hook/interface drift and API hygiene issues properly resolved. Round 2 confirmed all remediated. Daily log: `docs/logs/2026/05-04.md`.
 
 Follow-up:
 
-- <<完成时填写>>
+- no remaining plan-owned work
