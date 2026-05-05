@@ -240,7 +240,11 @@ describe('basicRendererDefinitions page and layout behavior', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText(':')).toBeTruthy());
+    await waitFor(() => {
+      expect(screen.queryByText('Dialog title')).toBeNull();
+      expect(screen.queryByText('Drawer title')).toBeNull();
+      expect(screen.getByText('false:false')).toBeTruthy();
+    });
     cleanup();
   });
 
@@ -422,6 +426,65 @@ describe('basicRendererDefinitions page and layout behavior', () => {
     );
 
     await waitFor(() => expect(screen.getByText('true:false')).toBeTruthy());
+    cleanup();
+  });
+
+  it('applies declarative dialog data as the child-scope init patch', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dialog',
+              title: 'Dialog title',
+              open: true,
+              data: { recordId: 7, mode: 'edit' },
+              body: [{ type: 'text', text: '${recordId}:${mode}:${pageOnly}:${dialogId}' }],
+            },
+          ],
+        }}
+        data={{ pageOnly: 'root' }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText(/7:edit:root:/)).toBeTruthy());
+    cleanup();
+  });
+
+  it('applies declarative drawer data as the child-scope init patch', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'drawer',
+              title: 'Drawer title',
+              open: true,
+              data: { recordId: 8, mode: 'preview' },
+              body: [
+                {
+                  type: 'text',
+                  text: '${recordId}:${mode}:${pageOnly}:${dialogId}:${drawerId}',
+                },
+              ],
+            },
+          ],
+        }}
+        data={{ pageOnly: 'root' }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText(/8:preview:root:.*:.*/)).toBeTruthy());
     cleanup();
   });
 

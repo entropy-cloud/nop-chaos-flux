@@ -25,6 +25,7 @@ export interface DialogSchema extends BaseSchema {
   title?: string;
   body?: BaseSchema[];
   actions?: BaseSchema[];
+  data?: Record<string, unknown>;
   open?: boolean;
   defaultOpen?: boolean;
   statusPath?: string;
@@ -38,6 +39,7 @@ export interface DrawerSchema extends BaseSchema {
   title?: string;
   body?: BaseSchema[];
   actions?: BaseSchema[];
+  data?: Record<string, unknown>;
   open?: boolean;
   defaultOpen?: boolean;
   side?: 'left' | 'right' | 'top' | 'bottom';
